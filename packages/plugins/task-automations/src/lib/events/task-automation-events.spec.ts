@@ -8,9 +8,13 @@ jest.mock('@gauzy/core', () => {
 	class ActivityLogEvent {
 		constructor(public readonly input: unknown) {}
 	}
+	class TaskLinkClosedEvent {
+		constructor(public readonly input: unknown) {}
+	}
 	class BaseEntityEventSubscriber {}
 	return {
 		ActivityLogEvent,
+		TaskLinkClosedEvent,
 		ActivityLog: class ActivityLog {},
 		BaseEntityEventSubscriber,
 		EventOutboxService: class EventOutboxService {},
@@ -31,12 +35,16 @@ jest.mock('@gauzy/core', () => {
 // The services are injected by type only: their own module graphs (entities, repositories) stay out of this suite.
 jest.mock('../services/task-automation-rule.service', () => ({ TaskAutomationRuleService: class TaskAutomationRuleService {} }));
 jest.mock('../services/task-automation-engine.service', () => ({ TaskAutomationEngine: class TaskAutomationEngine {} }));
+jest.mock('../services/task-automation-link-closure.store', () => ({ TaskAutomationLinkClosureStore: class TaskAutomationLinkClosureStore {} }));
+jest.mock('../services/task-automation-task-reader.service', () => ({ TaskAutomationTaskReader: class TaskAutomationTaskReader {} }));
 
 import 'reflect-metadata';
 import { ActionTypeEnum, ActorTypeEnum, BaseEntityEnum, TASK_AUTOMATION_EVENT_NAMES, TaskAutomationTriggerEnum } from '@gauzy/contracts';
-import { ActivityLogEvent } from '@gauzy/core';
+import { ActivityLogEvent, TaskLinkClosedEvent } from '@gauzy/core';
+import { linkClosureKeyOf } from '../engine/link-closed';
 import { TaskAutomationChangeCapture } from './task-automation-change.capture';
 import { parseLinkClosedEvent, TaskAutomationEventConsumer } from './task-automation-event.consumer';
+import { TaskAutomationLinkClosedCapture } from './task-automation-link-closed.capture';
 import { attributeActivity, attributedDescription } from './task-automation-activity.subscriber';
 
 const statusFact = {
@@ -118,6 +126,121 @@ describe('TaskAutomationChangeCapture', () => {
 		const { capture, outbox } = setup([TaskAutomationTriggerEnum.STATUS_CHANGED]);
 		outbox.append.mockRejectedValueOnce(new Error('database down'));
 		await expect(capture.handle(new ActivityLogEvent(statusFact as never))).resolves.toBeUndefined();
+	});
+});
+
+describe('TaskAutomationLinkClosedCapture', () => {
+	const closed = {
+		taskId: 'task-1',
+		tenantId: 'tenant-1',
+		organizationId: 'org-1',
+		provider: 'GitHub',
+		kind: 'pull_request',
+		url: 'https://github.com/acme/site/pull/7',
+		externalId: '9001',
+		merged: true
+	};
+
+	const setup = (triggers: string[], claimed = true, owned = true) => {
+		const rules = { enabledTriggers: jest.fn(async () => new Set(triggers)) };
+		const reader = { belongsTo: jest.fn(async () => owned) };
+		const closures = {
+			claimIn: jest.fn(async () => claimed),
+			claimInMikroOrm: jest.fn(async () => claimed),
+			exists: jest.fn(async () => false)
+		};
+		const outbox = { append: jest.fn(async () => ({})) };
+		// The claim and the append run in one transaction; `manager` is that transaction's.
+		const manager = {};
+		const dataSource = { manager: { transaction: jest.fn(async (work: (manager: unknown) => Promise<unknown>) => work(manager)) } };
+		const capture = new TaskAutomationLinkClosedCapture(rules as never, reader as never, closures as never, outbox as never, dataSource as never);
+		return { capture, rules, reader, closures, outbox, manager };
+	};
+
+	it('claims and appends a closed link in one transaction, in the task’s own partition, with its scope and identity', async () => {
+		const { capture, closures, outbox, manager, rules } = setup([TaskAutomationTriggerEnum.LINK_CLOSED]);
+		await capture.handle(new TaskLinkClosedEvent(closed as never) as never);
+		expect(rules.enabledTriggers).toHaveBeenCalledWith('tenant-1', 'org-1');
+		expect(closures.claimIn).toHaveBeenCalledWith(manager, {
+			tenantId: 'tenant-1',
+			organizationId: 'org-1',
+			taskId: 'task-1',
+			provider: 'github',
+			kind: 'pull_request',
+			externalId: '9001'
+		});
+		expect(outbox.append).toHaveBeenCalledTimes(1);
+		expect(outbox.append).toHaveBeenCalledWith(manager, {
+			name: TASK_AUTOMATION_EVENT_NAMES.LINK_CLOSED,
+			aggregateType: 'task',
+			aggregateId: 'task-1',
+			partitionKey: 'task-automation:task-1',
+			tenantId: 'tenant-1',
+			organizationId: 'org-1',
+			data: { ...closed, provider: 'github' }
+		});
+	});
+
+	it('appends nothing for a link reported before, a task not of the scope, or an organization without a link rule', async () => {
+		const again = setup([TaskAutomationTriggerEnum.LINK_CLOSED], false);
+		expect(await again.capture.report(closed)).toBe(false);
+		expect(again.outbox.append).not.toHaveBeenCalled();
+
+		const foreign = setup([TaskAutomationTriggerEnum.LINK_CLOSED], true, false);
+		expect(await foreign.capture.report(closed)).toBe(false);
+		expect(foreign.reader.belongsTo).toHaveBeenCalledWith('tenant-1', 'org-1', 'task-1');
+		// A scope the task is not of never reaches the organization's cached triggers.
+		expect(foreign.rules.enabledTriggers).not.toHaveBeenCalled();
+		expect(foreign.closures.claimIn).not.toHaveBeenCalled();
+		expect(foreign.outbox.append).not.toHaveBeenCalled();
+
+		const statusOnly = setup([TaskAutomationTriggerEnum.STATUS_CHANGED]);
+		expect(await statusOnly.capture.report(closed)).toBe(false);
+		expect(statusOnly.closures.claimIn).not.toHaveBeenCalled();
+		expect(statusOnly.outbox.append).not.toHaveBeenCalled();
+	});
+
+	it('drops a report with no task, scope, kind, provider or item to tell it by', async () => {
+		const { capture, rules, outbox } = setup([TaskAutomationTriggerEnum.LINK_CLOSED]);
+		for (const report of [
+			{ ...closed, taskId: undefined },
+			{ ...closed, organizationId: '' },
+			{ ...closed, kind: 'commit' },
+			{ ...closed, provider: ' ' },
+			{ ...closed, externalId: null, url: null },
+			{ ...closed, externalId: 'x'.repeat(256) },
+			null
+		]) {
+			expect(await capture.report(report)).toBe(false);
+		}
+		expect(rules.enabledTriggers).not.toHaveBeenCalled();
+		expect(outbox.append).not.toHaveBeenCalled();
+	});
+
+	it('fails the transaction when the append fails (its claim goes with it), and never throws to the integration', async () => {
+		const { capture, closures, outbox } = setup([TaskAutomationTriggerEnum.LINK_CLOSED]);
+		outbox.append.mockRejectedValueOnce(new Error('database down'));
+		await expect(capture.report(closed)).rejects.toThrow('database down');
+		expect(closures.exists).toHaveBeenCalled();
+		outbox.append.mockRejectedValueOnce(new Error('database down'));
+		await expect(capture.handle(new TaskLinkClosedEvent(closed as never) as never)).resolves.toBeUndefined();
+	});
+
+	it('appends nothing when another delivery committed the claim first (the unique key failed the insert)', async () => {
+		const { capture, closures, outbox } = setup([TaskAutomationTriggerEnum.LINK_CLOSED]);
+		closures.claimIn.mockRejectedValueOnce(new Error('UNIQUE constraint failed'));
+		closures.exists.mockResolvedValueOnce(true);
+		expect(await capture.report(closed)).toBe(false);
+		expect(outbox.append).not.toHaveBeenCalled();
+	});
+
+	it('tells a link by its provider’s id, else its address; the provider in lower case', () => {
+		const event = parseLinkClosedEvent(closed) as NonNullable<ReturnType<typeof parseLinkClosedEvent>>;
+		expect(event.merged).toBe(true);
+		expect(parseLinkClosedEvent({ ...closed, merged: 'yes' })?.merged).toBeUndefined();
+		expect(linkClosureKeyOf(event)).toMatchObject({ provider: 'github', externalId: '9001' });
+		expect(linkClosureKeyOf({ ...event, externalId: null })).toMatchObject({ externalId: closed.url });
+		expect(linkClosureKeyOf({ ...event, provider: 'p'.repeat(33) })).toBeNull();
 	});
 });
 

@@ -225,7 +225,7 @@ export interface ITaskAutomationTemplate {
 	trigger: ITaskAutomationTrigger;
 	conditions: ITaskAutomationCondition[];
 	actions: ITaskAutomationAction[];
-	/** The trigger needs an integration that reports it (none does yet for `LINK_CLOSED`). */
+	/** The trigger needs an integration that reports it (`LINK_CLOSED`: the GitHub integration does). */
 	requiresIntegration?: boolean;
 	/** The template needs values only the organization knows (a status, a label): the editor asks for them. */
 	needsInput?: boolean;
@@ -251,7 +251,8 @@ export const TASK_AUTOMATION_LIMITS = Object.freeze({
 
 /**
  * The outbox event a task change becomes when the organization has automations (`TaskAutomationChangeCapture`), and
- * the event an integration appends when a pull request or issue linked to a task closes (the `LINK_CLOSED` trigger).
+ * the event a closed pull request or issue linked to a task becomes (the `LINK_CLOSED` trigger): an integration reports
+ * the closed link as the platform's `TaskLinkClosedEvent`, and the automations append it once per task and link.
  */
 export const TASK_AUTOMATION_EVENT_NAMES = Object.freeze({
 	TASK_CHANGED: 'task_automation.task_changed',
@@ -287,7 +288,10 @@ export interface ITaskAutomationChangeEvent {
 	chain: ID[];
 }
 
-/** The payload of `task_link.closed`, appended by an integration (aggregate `task`, id the task's). */
+/**
+ * The payload of `task_link.closed` (aggregate `task`, id the task's), and of the platform's `TaskLinkClosedEvent` an
+ * integration publishes when it sees a pull request or issue linked to a task close.
+ */
 export interface ITaskLinkClosedEvent {
 	taskId: ID;
 	tenantId: ID;
@@ -296,5 +300,12 @@ export interface ITaskLinkClosedEvent {
 	provider: string;
 	kind: 'pull_request' | 'issue';
 	url?: string | null;
+	/**
+	 * The provider's stable id of the pull request or issue (GitHub: its numeric id, which survives a rename or a
+	 * transfer). With `provider`, `kind` and the task it is the link's identity: a link is reported once, however
+	 * often its close is delivered or the item is closed again after a reopen.
+	 */
 	externalId?: string | null;
+	/** A pull request: whether it was merged (`false`: closed without merging). Absent for an issue. */
+	merged?: boolean | null;
 }

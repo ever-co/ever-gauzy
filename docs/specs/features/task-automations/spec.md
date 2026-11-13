@@ -8,7 +8,7 @@
 **Branch**: `feat/task-automations`
 **Status**: `Draft`
 **Created**: 2026-11-11
-**Last updated**: 2026-11-11
+**Last updated**: 2026-11-13
 **Owner**: platform maintainers
 **Feature flag**: `GAUZY_TASK_AUTOMATIONS_ENABLED` (default off; only the exact value `true` turns it on)
 
@@ -64,6 +64,12 @@ that fails never fails the save.
   left it.
 - **Given** a rule that is switched off, **when** its trigger happens, **then** it does not run and its
   history does not grow.
+- **Given** the template "When a linked pull request or issue closes, set the status" and an organization that
+  connected the GitHub integration, **when** a pull request of a repository of that installation is merged or closed
+  and a task of the organization is linked to it — the task has a link to the pull request's address, or the pull
+  request's title or branch names the task by its reference (`WEB-42: fix the footer`, `feature/WEB-42-footer`) —
+  **then** within a few seconds the open task moves to the project's first done status, as the rule. **When** a GitHub
+  issue closes, **then** the task that mirrors it (the issue sync) and the tasks with a link to it move the same way.
 
 ### 2.2 Edge cases & failures
 
@@ -89,6 +95,11 @@ that fails never fails the save.
 - **Given** the template "When a linked pull request or issue closes, set the status", **when** no
   connected integration reports closed links, **then** the template is offered with the note that it
   needs such an integration, and the rule simply never fires until one does.
+- **Given** a pull request linked to a task, **when** GitHub delivers its close twice (a redelivery), or it is reopened
+  and closed again, **then** the rule runs once for that task and pull request. **When** the pull request names a
+  reference no task of the organization holds, is linked only to another organization's or tenant's task, or no
+  organization connected its installation, **then** nothing is reported. A pull request closed without merging is
+  reported too, saying so (`merged: false`).
 
 ## 3. Functional Requirements
 
@@ -114,7 +125,7 @@ that fails never fails the save.
 - **FR-5** Triggers: a task is created; a task's status changes (optionally only to, or from, given
   statuses); someone is added as an assignee; every sub-task of a task is done (the rule acts on the
   parent); a done sub-task is reopened (the rule acts on the parent); the due date of an open task
-  passes; a linked pull request or issue of the task closes (when an integration reports it).
+  passes; a linked pull request or issue of the task closes (when an integration reports it: GitHub, FR-18).
 - **FR-6** Conditions, all of which must hold for the task the rule acts on: its status is / is not one
   of; it is open / done; its priority is one of; it has / has none of the labels; it is assigned /
   unassigned; one of the given people is an assignee; it is / is not a sub-task; its title contains a
@@ -151,6 +162,27 @@ that fails never fails the save.
   change, no run, no notification).
 - **FR-16** The rule's changes MUST be made with the permissions of a system actor of the rule's
   organization: never as the rule's creator, never across organizations.
+
+### Closed links
+
+- **FR-18** The GitHub integration MUST report a closed pull request (merged or not) and a closed issue as a closed
+  link of each task of an organization that connected the delivery's installation and is linked to it: a pull request
+  by a link of the task to its address (`/pull/<n>` or `/issues/<n>`: one numbering) or by the task's upper-case
+  reference in its title or branch name; an issue by the task that mirrors it through that integration and by a link
+  of the task to its address. A report names the task, its tenant and organization, the provider, the kind
+  (`pull_request` / `issue`), the item's address and GitHub id, and for a pull request whether it was merged. Only
+  tasks read back in the organization are reported; never another organization's or tenant's.
+- **FR-19** A closed link MUST become `task_link.closed` at most once per task and link (provider, kind and the
+  provider's id of the item), however often its close is delivered or the item is closed again after a reopen; only
+  for a task of the organization the report names, and only while the organization has a rule of that trigger on. The
+  claim and the event MUST commit together: a close is never lost to a stop between them, and a delivery whose event
+  could not be appended is reported again when it is delivered again.
+- **FR-20** The Linear, Asana and Trello integrations report no closed link: an attachment as their APIs return it
+  is a title, an address and a few file facts, with no state of what it links to (no documented open, closed or merged
+  field), so there is nothing to tell a close by. A change of the item itself (its status) still reaches the platform
+  as the task's change, which the status triggers read. Their attachments are kept as links of the task, so one that
+  points at a GitHub pull request or issue is reported by the GitHub integration (FR-18) when the organization
+  connected that repository's installation.
 
 ### Compatibility
 
@@ -191,12 +223,15 @@ that fails never fails the save.
 - Rules across organizations, or acting on tasks other than the task itself or its parent.
 - Webhook or email actions, creating tasks, recurring tasks, custom code.
 - Triggers on comments, time logs or sprints.
-- Reporting closed pull requests or issues from the integrations (the trigger exists; an integration
-  that reports `task_link.closed` makes it fire).
+- Closed links from Linear, Asana and Trello on their own (FR-20); a pull request linked to a task by a commit message
+  or the pull request's description (only its title, its branch and the task's links count); an option to fire on a
+  merged pull request only (the report carries `merged`; a rule cannot test it yet).
 
 ## 7. Acceptance Criteria
 
 - [ ] Each template creates a working rule; each trigger, condition and action has a passing test.
+- [x] A closed GitHub pull request or issue linked to a task fires the link-closed template once per task and link,
+      never across tenants or organizations (T16).
 - [ ] A change is processed once per rule however often it is delivered; the due-date notice goes out
       once per task and due date.
 - [ ] The loop guard and the rate limit hold; a rule never runs on its own change.

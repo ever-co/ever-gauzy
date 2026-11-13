@@ -2,8 +2,8 @@
 
 **Feature ID**: `task-automations`
 **Plan**: `./plan.md`
-**Status**: `Phase 1 and 2 merged; Phase 3 (Ever Teams) in review`
-**Last updated**: 2026-11-12
+**Status**: `Phase 1 and 2 merged; Phase 3 (Ever Teams) in review; T16 (closed links) done`
+**Last updated**: 2026-11-13
 
 ---
 
@@ -35,5 +35,9 @@
 
 ## Follow-ups
 
-- [ ] **T16**. An integration that reports `task_link.closed` (GitHub pull requests, Linear / Asana / Trello attachments) so the link-closed template fires
+- [x] **T16**. An integration that reports `task_link.closed` (GitHub pull requests, Linear / Asana / Trello attachments) so the link-closed template fires
+  ([ever-gauzy#11908](https://github.com/ever-co/ever-gauzy/pull/11908): GitHub pull requests, merged or not, and
+  issues report it — a task link to the item, the task's reference in the pull request's title or branch, the mirrored
+  issue — once per task and link (`task_automation_link_closure`); Linear, Asana and Trello attachments carry no state to
+  report (spec FR-20), and one that points at GitHub is reported by the GitHub integration)
 - [ ] **T17**. Read-only view of the rules for members (open question in the spec)

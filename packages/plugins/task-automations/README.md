@@ -17,8 +17,9 @@ no route, no GraphQL field, no table, no outbox row, no schedule, no role grant.
   assignee; every sub-task of a task is done (acts on the parent); a done sub-task is reopened (acts on the parent);
   the due date of an open task passes (checked every 15 minutes, for due dates of the last 24 hours that passed after the
   rule was created: after a longer downtime, due dates older than a day are not reported); a linked pull request or
-  issue closes (`task_link.closed`, appended by an integration — no integration publishes it yet, so a rule with this
-  trigger fires once one does).
+  issue closes (`task_link.closed`: the GitHub integration reports a closed pull request, merged or not, linked to a
+  task by a task link to its address or by the task's reference in its title or branch, and a closed issue the task
+  mirrors or links to; see "Closed links" below).
 - **Conditions** (all must hold): status is / is not / of category; open / done; priority; labels; assigned /
   unassigned / assignee; sub-task or not; title contains.
 - **Actions** (in order): set the status (a status, or the first to-do / in-progress / done status of the task's
@@ -46,6 +47,21 @@ no route, no GraphQL field, no table, no outbox row, no schedule, no role grant.
    change. Rate limit: at most 20 automated changes per task in 10 minutes.
 5. One run of a task at a time, across the processes (a lock per task over the read, the checks, the write and the
    recorded outcome); a run that finds its task busy is put back and tried again.
+
+## Closed links
+
+An integration publishes the platform's `TaskLinkClosedEvent` (task, tenant, organization, provider, kind, address,
+the provider's id of the item, and for a pull request whether it merged). `TaskAutomationLinkClosedCapture` appends it
+as `task_link.closed` in the task's partition when the task is of the named organization and the organization has a
+`LINK_CLOSED` rule on, once per task and link: the close is claimed in `task_automation_link_closure` in the same
+transaction the event is appended in, so a redelivery, another API instance or the same pull request closed again after
+a reopen appends nothing, and a failed append leaves no claim (GitHub's redelivery reports it again); the API logs
+`A closed link was not handed to the automations: …`.
+
+The GitHub integration (`GithubTaskLinkService`) handles `pull_request.closed` and `issues.closed`; the GitHub App must
+send the **Pull requests** and **Issues** events. Linear, Asana and Trello report nothing of their own: their
+attachments carry no state (spec FR-20), and one that points at a GitHub pull request is reported by the GitHub
+integration when the organization connected that repository's installation.
 
 The worker hosts `TaskAutomationsSchedulePlugin` (the due-date schedule only); the API hosts `TaskAutomationsPlugin`
 (everything else, including the consumer of the schedule's queue). Without a queue root the API sweeps on its own timer;
