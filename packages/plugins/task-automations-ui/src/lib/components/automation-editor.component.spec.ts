@@ -63,6 +63,26 @@ describe('TaskAutomationEditorComponent', () => {
 		expect(find('to-statuses')).toBeNull();
 	});
 
+	it('offers “merged only” for a closed link alone, and saves what the box says', () => {
+		const { component, find, fixture, saved } = render();
+		expect(find('merged-only')).toBeNull();
+		component.setTrigger(TaskAutomationTriggerEnum.LINK_CLOSED);
+		fixture.detectChanges();
+		expect(find('merged-only')).not.toBeNull();
+		expect(find('merged-only')?.querySelector('input[type="checkbox"]')).not.toBeNull();
+		expect(component.draft().trigger.mergedOnly).toBe(false);
+
+		component.patchTrigger({ mergedOnly: true });
+		fixture.detectChanges();
+		expect((find('merged-only')?.querySelector('input[type="checkbox"]') as HTMLInputElement).checked).toBe(true);
+		component.submit();
+		expect(saved[0].trigger).toMatchObject({ type: TaskAutomationTriggerEnum.LINK_CLOSED, mergedOnly: true });
+
+		component.setTrigger(TaskAutomationTriggerEnum.TASK_CREATED);
+		fixture.detectChanges();
+		expect(find('merged-only')).toBeNull();
+	});
+
 	it('adds conditions and actions; a new type starts the line over; the last action stays', () => {
 		const { component, find, fixture } = render();
 		component.addCondition();
