@@ -1,5 +1,5 @@
 import { EntityManager, In } from 'typeorm';
-import { ID, IEmployee, ITimeLog, ITimeLogStoredRates } from '@gauzy/contracts';
+import { ID, ITimeLog, ITimeLogStoredRates } from '@gauzy/contracts';
 import { Employee, OrganizationProject, OrganizationProjectEmployee, TimeLog } from '../../core/entities/internal';
 import { CURRENT_MEMBERSHIP } from '../../organization-project/organization-project-rate.service';
 
@@ -135,31 +135,5 @@ export async function findStoredRatesOf(
 	return stored;
 }
 
-/** Whether a time log stores the rates that price it (a boolean column some drivers return as 0 or 1). */
-export function storesRates(log: Pick<ITimeLog, 'ratesStored'> | null | undefined): boolean {
-	const marker: unknown = log?.ratesStored;
-	return marker === true || marker === 1 || marker === '1' || marker === 'true';
-}
-
-/** A billing rate and its currency (empty: the organization's). */
-export interface BillingRate {
-	rate: number | string | null | undefined;
-	currency: string | null;
-}
-
-/**
- * The billing rate that prices a log's time: the one it stores, else, for a log recorded around the API, the
- * member's current rate, as all time was priced before rates were stored.
- *
- * @param log The log, with its employee when it may store no rate.
- */
-export function billingRateOfLog(
-	log: Pick<ITimeLog, 'billRateValue' | 'billRateCurrency' | 'ratesStored'> & {
-		employee?: Pick<IEmployee, 'billRateValue' | 'billRateCurrency'> | null;
-	}
-): BillingRate {
-	if (storesRates(log)) {
-		return { rate: log.billRateValue, currency: log.billRateCurrency ?? null };
-	}
-	return { rate: log.employee?.billRateValue, currency: log.employee?.billRateCurrency ?? null };
-}
+// Which rate prices a log is a pricing rule, without the ORM: it lives beside the pricing
+export { billingRateOfLog, storesRates } from './time-log-pricing';
