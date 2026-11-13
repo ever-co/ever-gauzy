@@ -6,6 +6,7 @@ import {
 	hasChanges,
 	IBulkChangeRecord,
 	normalizeBulkUpdate,
+	previousWithoutRecordNames,
 	recordIdsOf,
 	recordRefusalOf,
 	withRecordNames
@@ -171,6 +172,26 @@ describe('the records a change names', () => {
 		expect(withRecordNames(status, records)).toBe(status);
 		const unknown = { taskSizeId: 'nowhere' };
 		expect(withRecordNames(unknown, records)).toBe(unknown);
+	});
+
+	it('leaves out of the previous values a priority’s or size’s name that the record beside it gives back', () => {
+		expect(previousWithoutRecordNames({ priority: 'p0' as never, taskPriorityId: 'p-own', size: 'huge' as never, taskSizeId: 'z-own' }, records)).toEqual({
+			taskPriorityId: 'p-own',
+			taskSizeId: 'z-own'
+		});
+		// The shared record has no value: its name is what it gives back.
+		expect(previousWithoutRecordNames({ priority: 'Shared' as never, taskPriorityId: 'p-shared' }, records)).toEqual({ taskPriorityId: 'p-shared' });
+	});
+
+	it('keeps a name its record does not give back, one with no record, and a status', () => {
+		const renamed = { priority: 'p-zero' as never, taskPriorityId: 'p-own' };
+		expect(previousWithoutRecordNames(renamed, records)).toBe(renamed);
+		const none = { priority: TaskPriorityEnum.LOW, taskPriorityId: null };
+		expect(previousWithoutRecordNames(none, records)).toBe(none);
+		const unknown = { size: 'huge' as never, taskSizeId: 'nowhere' };
+		expect(previousWithoutRecordNames(unknown, records)).toBe(unknown);
+		const status = { status: 'qa' as never, taskStatusId: 's-own' };
+		expect(previousWithoutRecordNames(status, records)).toBe(status);
 	});
 
 	it('records the name a priority had, so the undo puts it back', () => {

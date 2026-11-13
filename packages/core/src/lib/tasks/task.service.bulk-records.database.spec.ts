@@ -32,6 +32,8 @@ import { TaskService } from './task.service';
  *   (`value || name`): a team's own priority is not one of the platform's values, so the change cannot name it, and
  *   the task would otherwise keep showing the priority it had. The undo (the previous values sent back) puts back
  *   both the record and the name.
+ * - **the previous values leave out a name the record the task held gives back**, so a client that cannot send a
+ *   team's own name knows the record alone puts it back; a name the record does not give back stays.
  *
  * SQLite runs by default. Postgres runs when the entities are mapped for it and an empty, throwaway database is given:
  *
@@ -234,18 +236,36 @@ function exercise(dialect: Dialect) {
 	);
 
 	it(
-		'puts back a team’s own priority from its record when the undo can only name the record',
+		'puts back a team’s own priority from its record alone, and leaves out the name the record gives back',
 		async () => {
 			await bulkUpdate({ taskPriorityId: PRIORITY_OWN });
 			const outcome = await bulkUpdate({ taskPriorityId: PRIORITY_SHARED });
 			expect(await taskRow(TASK_ONE)).toMatchObject({ priority: 'shared-priority', taskPriorityId: PRIORITY_SHARED });
 
-			// `p0` is not one of the platform's values: a client sends the record alone (the route refuses the name).
-			const items = outcome.results.map(({ taskId, previous }) => ({ taskId, changes: { taskPriorityId: previous?.taskPriorityId } }));
-			expect(items[0].changes).toEqual({ taskPriorityId: PRIORITY_OWN });
+			// `p0` is not one of the platform's values (the route would refuse it), and the record gives it back.
+			expect(outcome.results.map((result) => result.previous)).toEqual([{ taskPriorityId: PRIORITY_OWN }, { taskPriorityId: PRIORITY_OWN }]);
+			const items = outcome.results.map(({ taskId, previous }) => ({ taskId, changes: previous }));
 			await service.bulkUpdate({ organizationId: ORGANIZATION, items } as never, (id, update) => service.update(id, update));
 
 			expect(await taskRow(TASK_ONE)).toMatchObject({ priority: 'p0', taskPriorityId: PRIORITY_OWN });
+		},
+		TIMEOUT
+	);
+
+	it(
+		'keeps a name in the previous values when the record the task held does not give it back',
+		async () => {
+			await bulkUpdate({ taskPriorityId: PRIORITY_OWN }, [TASK_ONE]);
+			// The record is renamed after the change, and the other task holds a name its record never had.
+			await dataSource.getRepository(TaskPriority).update({ id: PRIORITY_OWN }, { value: 'p0-renamed' });
+			await dataSource.getRepository(Task).update({ id: TASK_TWO }, { taskPriorityId: PRIORITY_OWN } as never);
+
+			const outcome = await bulkUpdate({ taskPriorityId: PRIORITY_SHARED });
+
+			expect(outcome.results.map((result) => result.previous)).toEqual([
+				{ priority: 'p0', taskPriorityId: PRIORITY_OWN },
+				{ priority: TaskPriorityEnum.LOW, taskPriorityId: PRIORITY_OWN }
+			]);
 		},
 		TIMEOUT
 	);

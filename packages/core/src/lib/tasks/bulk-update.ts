@@ -146,6 +146,7 @@ function recordNameOf(record: IBulkChangeRecord | undefined): string | undefined
  * The changes with the name of a priority or size named by its record alone (`taskPriorityId` without `priority`):
  * the record's, as the task page writes it, so the task shows the record it now has. A name sent beside the record is
  * kept as sent (an undo puts back exactly the name the task held), and a record cleared (`null`) leaves the name.
+ * An undo that names the record alone gets the record's name back (see `previousWithoutRecordNames`).
  */
 export function withRecordNames(changes: ITaskBulkChanges, records: BulkChangeRecords): ITaskBulkChanges {
 	let named: ITaskBulkChanges | null = null;
@@ -157,6 +158,26 @@ export function withRecordNames(changes: ITaskBulkChanges, records: BulkChangeRe
 		named = { ...(named ?? changes), [nameField]: name } as ITaskBulkChanges;
 	}
 	return named ?? changes;
+}
+
+/**
+ * The previous values without a priority's or size's name that the record beside it gives back: when the record the
+ * task held names it exactly so (its value, else its name), the undo puts the name back by the record alone (see
+ * `withRecordNames`). A name its record does not give back stays: the task had no record, or its text no longer
+ * matches the record's (renamed since, or written without it). A client that must leave a name out (a team's own,
+ * which the route refuses) can then tell a full undo from a partial one by whether a name is left out at all.
+ */
+export function previousWithoutRecordNames(previous: ITaskBulkChanges, records: BulkChangeRecords): ITaskBulkChanges {
+	let trimmed: Record<string, unknown> | null = null;
+	for (const { idField, nameField, takesName } of BULK_RECORD_FIELDS) {
+		const id = previous[idField];
+		const name = previous[nameField];
+		if (!takesName || typeof id !== 'string' || !id || typeof name !== 'string') continue;
+		if (recordNameOf(records[idField].get(recordKey(id))) !== name) continue;
+		trimmed = trimmed ?? { ...previous };
+		delete trimmed[nameField];
+	}
+	return (trimmed as ITaskBulkChanges | null) ?? previous;
 }
 
 /** What `changesToUpdate` answers: the update to run, and the previous values that undo it. */

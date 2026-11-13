@@ -109,10 +109,12 @@ import { IFindOneOptions } from '../core/crud/icrud.service';
 import { Task } from './task.entity';
 import {
 	BulkChangeRecords,
+	BulkRecordField,
 	BulkUpdateRequestError,
 	changesToUpdate,
 	IBulkChangeRecord,
 	normalizeBulkUpdate,
+	previousWithoutRecordNames,
 	recordIdsOf,
 	recordKey,
 	recordRefusalOf,
@@ -3040,7 +3042,8 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * A status, priority or size named by its record must be one the task's organization may take (its own, the
 	 * tenant's shared one, a platform default): a task whose change names another organization's or tenant's record,
 	 * or none, is reported and left as it is. A priority or size named by its record alone takes the record's name
-	 * (see `withRecordNames`), and the previous values hold the name it had, so the undo puts both back.
+	 * (see `withRecordNames`), and the previous values hold the name it had, so the undo puts both back. They leave
+	 * that name out when the record the task held gives it back (see `previousWithoutRecordNames`).
 	 */
 	async bulkUpdate(
 		input: ITaskBulkUpdateInput,
@@ -3090,6 +3093,16 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				results.push({ taskId, ok: false, error: text, previous });
 			}
 		}
+		// The previous values leave out a priority's or size's name that the record the task held gives back, so a client
+		// that cannot send that name (a team's own) can tell a full undo from a partial one. Those records are read once.
+		const held = await this.bulkChangeRecordsOf(
+			results.map((result) => ({ taskId: result.taskId, changes: result.previous ?? {} })),
+			records,
+			['taskPriorityId', 'taskSizeId']
+		);
+		for (const result of results) {
+			if (result.previous) result.previous = previousWithoutRecordNames(result.previous, held);
+		}
 		const applied = results.filter((result) => result.ok).length;
 		return { applied, refused: results.length - applied, results };
 	}
@@ -3097,24 +3110,36 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	/**
 	 * The status, priority and size records a bulk update's items name, read once per kind whatever their tenant or
 	 * organization (as the save's own foreign-row check reads them), so `recordRefusalOf` can judge each one and
-	 * `withRecordNames` can name it. Soft-deleted rows are read too: their scope is what is judged.
+	 * `withRecordNames` can name it. Soft-deleted rows are read too: their scope is what is judged, and an undo may
+	 * put back a record retired since the change (the save has always stored such an id).
+	 *
+	 * @param items The items whose changes name the records.
+	 * @param known Records already read: only the others are read, and the answer holds both.
+	 * @param fields The id fields to read; every one by default.
 	 */
-	private async bulkChangeRecordsOf(items: ITaskBulkUpdateItem[]): Promise<BulkChangeRecords> {
+	private async bulkChangeRecordsOf(
+		items: ITaskBulkUpdateItem[],
+		known?: BulkChangeRecords,
+		fields: readonly BulkRecordField[] = ['taskStatusId', 'taskPriorityId', 'taskSizeId']
+	): Promise<BulkChangeRecords> {
 		const ids = recordIdsOf(items);
 		const manager = this.typeOrmRepository.manager;
-		const read = async (entity: typeof TaskStatus | typeof TaskPriority | typeof TaskSize, list: ID[]) => {
-			if (!list.length) return new Map<string, IBulkChangeRecord>();
+		const read = async (field: BulkRecordField, entity: typeof TaskStatus | typeof TaskPriority | typeof TaskSize) => {
+			const found = new Map<string, IBulkChangeRecord>(known?.[field] ?? []);
+			const list = fields.includes(field) ? ids[field].filter((id) => !found.has(recordKey(id))) : [];
+			if (!list.length) return found;
 			const rows = (await manager.find(entity as typeof TaskStatus, {
 				where: { id: In(list) },
 				select: { id: true, name: true, value: true, tenantId: true, organizationId: true },
 				withDeleted: true
 			})) as IBulkChangeRecord[];
-			return new Map(rows.map((row) => [recordKey(row.id), row]));
+			for (const row of rows) found.set(recordKey(row.id), row);
+			return found;
 		};
 		const [statuses, priorities, sizes] = await Promise.all([
-			read(TaskStatus, ids.taskStatusId),
-			read(TaskPriority, ids.taskPriorityId),
-			read(TaskSize, ids.taskSizeId)
+			read('taskStatusId', TaskStatus),
+			read('taskPriorityId', TaskPriority),
+			read('taskSizeId', TaskSize)
 		]);
 		return { taskStatusId: statuses, taskPriorityId: priorities, taskSizeId: sizes };
 	}
