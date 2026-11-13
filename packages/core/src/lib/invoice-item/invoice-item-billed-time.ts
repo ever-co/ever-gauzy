@@ -103,6 +103,24 @@ export function splitBilledTime<L extends IInvoiceItemCreateInput>(lines: L[]): 
 }
 
 /**
+ * Refuses lines that bill time of another organization than their invoice's: an invoice bills its own organization's
+ * time only, while the CRUD write holds each line to the caller's boundary, which a member of several organizations,
+ * or a tenant admin, reaches from all of them.
+ *
+ * @param billing The lines that bill time.
+ * @param invoiceOrganizationId The organization of the invoice they are saved on.
+ * @throws BadRequestException when a line states another organization, or the invoice states none.
+ */
+export function assertBillingInOrganization(billing: IBillingLine[], invoiceOrganizationId: ID | undefined): void {
+	const billsAnotherOrganization = billing.some(
+		(line) => String(line.organizationId) !== String(invoiceOrganizationId)
+	);
+	if (!invoiceOrganizationId || billsAnotherOrganization) {
+		throw new BadRequestException(TIME_LOG_NOT_BILLABLE);
+	}
+}
+
+/**
  * Saves lines and writes, on each time log they bill, the line that bills it, in one transaction on the ORM the
  * installation runs: a time log that cannot be billed rolls the whole save back.
  *
