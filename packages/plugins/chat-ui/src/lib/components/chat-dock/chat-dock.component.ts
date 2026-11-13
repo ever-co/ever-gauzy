@@ -397,7 +397,11 @@ export class ChatDockComponent {
 						this.accept(page.messages);
 						this.poll(conversation);
 					},
-					error: () => this.failed.set(true)
+					// The card says so, and the poll keeps trying: the first page it reads takes the note away.
+					error: () => {
+						this.failed.set(true);
+						this.poll(conversation);
+					}
 				});
 			},
 			error: () => this.failed.set(true)
@@ -417,7 +421,10 @@ export class ChatDockComponent {
 					return this.api.messages(conversation.id).pipe(catchError(() => EMPTY));
 				})
 			)
-			.subscribe((page) => this.accept(page.messages));
+			.subscribe((page) => {
+				this.failed.set(false);
+				this.accept(page.messages);
+			});
 	}
 
 	/**
