@@ -5680,7 +5680,8 @@
 			"INSTALL": "Instalar"
 		},
 		"ILLUSTRATION": {
-			"THIS_WEEK": "Esta semana"
+			"THIS_WEEK": "Esta semana",
+			"YOU": "Tú"
 		},
 		"ALL_DOWNLOADS": "Ver todas las descargas"
 	},

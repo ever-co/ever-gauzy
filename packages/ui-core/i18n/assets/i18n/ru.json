@@ -5703,7 +5703,8 @@
 			"INSTALL": "Установить"
 		},
 		"ILLUSTRATION": {
-			"THIS_WEEK": "Эта неделя"
+			"THIS_WEEK": "Эта неделя",
+			"YOU": "Вы"
 		},
 		"ALL_DOWNLOADS": "Все загрузки"
 	},

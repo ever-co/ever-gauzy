@@ -5679,7 +5679,8 @@
 			"INSTALL": "Installer"
 		},
 		"ILLUSTRATION": {
-			"THIS_WEEK": "Cette semaine"
+			"THIS_WEEK": "Cette semaine",
+			"YOU": "Vous"
 		},
 		"ALL_DOWNLOADS": "Voir tous les téléchargements"
 	},

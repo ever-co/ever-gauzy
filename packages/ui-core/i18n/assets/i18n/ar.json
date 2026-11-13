@@ -5676,7 +5676,8 @@
 			"INSTALL": "تثبيت"
 		},
 		"ILLUSTRATION": {
-			"THIS_WEEK": "هذا الأسبوع"
+			"THIS_WEEK": "هذا الأسبوع",
+			"YOU": "أنت"
 		},
 		"ALL_DOWNLOADS": "عرض كل التنزيلات"
 	},

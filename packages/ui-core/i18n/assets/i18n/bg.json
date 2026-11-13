@@ -5729,7 +5729,8 @@
 			"INSTALL": "Инсталиране"
 		},
 		"ILLUSTRATION": {
-			"THIS_WEEK": "Тази седмица"
+			"THIS_WEEK": "Тази седмица",
+			"YOU": "Вие"
 		},
 		"ALL_DOWNLOADS": "Всички изтегляния"
 	},

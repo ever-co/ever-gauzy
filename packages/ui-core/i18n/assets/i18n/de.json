@@ -5674,7 +5674,8 @@
 			"INSTALL": "Installieren"
 		},
 		"ILLUSTRATION": {
-			"THIS_WEEK": "Diese Woche"
+			"THIS_WEEK": "Diese Woche",
+			"YOU": "Sie"
 		},
 		"ALL_DOWNLOADS": "Alle Downloads anzeigen"
 	},

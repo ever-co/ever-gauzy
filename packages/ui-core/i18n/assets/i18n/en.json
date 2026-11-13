@@ -6242,7 +6242,8 @@
 			"INSTALL": "Install"
 		},
 		"ILLUSTRATION": {
-			"THIS_WEEK": "This week"
+			"THIS_WEEK": "This week",
+			"YOU": "You"
 		},
 		"ALL_DOWNLOADS": "See all downloads"
 	},
