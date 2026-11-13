@@ -103,7 +103,7 @@ import { Task } from './task.entity';
 import { BulkUpdateRequestError, changesToUpdate, normalizeBulkUpdate } from './bulk-update';
 import { derivedProjectKey, keysOfProject, normalizeTaskKey, parseTaskReference } from './task-reference';
 import { BUILT_IN_VIEW_DEFAULT_RELATIONS, BUILT_IN_VIEW_RELATIONS, builtInViewWindow, IBuiltInViewWindow, relationsTreeOf } from './built-in-views';
-import { dateBoundClause } from './views/view-filters';
+import { boundDayOf, dateBoundAdjustments, dateBoundClause } from './views/view-filters';
 import { TypeOrmOrganizationSprintTaskHistoryRepository } from './../organization-sprint/repository/type-orm-organization-sprint-task-history.repository';
 import { GetTaskByIdDTO } from './dto';
 import { prepareSQLQuery as p } from './../database/database.helper';
@@ -2931,7 +2931,9 @@ export class TaskService extends TenantAwareCrudService<Task> {
 
 	/**
 	 * The `dueDate` condition of the advanced filters: none, a range (either end may be open), or
-	 * "no due date", which wins over a range sent with it.
+	 * "no due date", which wins over a range sent with it. A range whose ends come with their calendar days
+	 * compares a date-only due date (midnight UTC of its day) with those days, so "due today" west of UTC holds
+	 * today's date-only due dates and not tomorrow's; one without them compares the instants, as before.
 	 */
 	private dueDateCondition(filters: ITaskAdvancedFilter): FindOptionsWhere<Task> {
 		const { dueDateFrom, dueDateTo, withoutDueDate } = filters;
@@ -2940,6 +2942,10 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		}
 		const from = this.validDate(dueDateFrom);
 		const to = this.validDate(dueDateTo);
+		const window = this.dueDateWindowOf(filters, from, to);
+		if (window) {
+			return { dueDate: dueDateWithin(window, 'filterDue') };
+		}
 		if (from && to) {
 			return { dueDate: Between(from, to) };
 		}
@@ -2971,13 +2977,28 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		if (!where.dueDate) {
 			const from = this.validDate(dueDateFrom);
 			const to = this.validDate(dueDateTo);
+			const window = this.dueDateWindowOf(filters, from, to);
 			if (withoutDueDate === true) {
 				condition.dueDate = null;
+			} else if (window) {
+				condition.$and = [...((where.$and as unknown[]) ?? []), ...mikroOrmDueDateWithin(window)];
 			} else if (from || to) {
 				condition.dueDate = { ...(from ? { $gte: from } : {}), ...(to ? { $lte: to } : {}) };
 			}
 		}
 		return condition;
+	}
+
+	/**
+	 * The due-date range of the advanced filters when the caller sent the calendar days of its ends
+	 * (`dueDateFromDay` / `dueDateToDay`), each kept only when its instant is that day's edge (the start of the first
+	 * day, the last instant of the last); `null` when neither end has one, so the range compares the instants as before.
+	 */
+	private dueDateWindowOf(filters: ITaskAdvancedFilter, from: Date | null, to: Date | null): DueDateWindow | null {
+		const fromDay = from ? boundDayOf(filters.dueDateFromDay, from, 'start') : undefined;
+		const toDay = to ? boundDayOf(filters.dueDateToDay, to, 'end') : undefined;
+		if (!fromDay && !toDay) return null;
+		return { ...(from ? { dueDateFrom: from, dueDateFromDay: fromDay } : {}), ...(to ? { dueDateTo: to, dueDateToDay: toDay } : {}) };
 	}
 
 	/** A date from a filter, or `null` when it is missing or not a valid date. */
@@ -3219,17 +3240,37 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	}
 }
 
+/** A due-date range, both ends inclusive, with the calendar day each end stands for when it is a day's edge. */
+type DueDateWindow = Pick<IBuiltInViewWindow, 'dueDateFrom' | 'dueDateTo' | 'dueDateFromDay' | 'dueDateToDay'>;
+
+/**
+ * The same range in MikroORM's query syntax: `$gte` / `$lte` on the instants as before, with the date-only values
+ * where the instant and the day disagree (`dateBoundAdjustments`) taken out (`$nin`) or added (`$or` … `$in`). A
+ * bound with no such value is the plain operator. Answers the conditions to `$and` together.
+ */
+function mikroOrmDueDateWithin(window: DueDateWindow): Record<string, unknown>[] {
+	const bound = (operator: '$gte' | '$lte', instant: Date, day: string | undefined) => {
+		const { added, removed } = dateBoundAdjustments(operator === '$gte' ? '>=' : '<=', instant, day);
+		const byInstant = { dueDate: { [operator]: instant, ...(removed.length ? { $nin: removed } : {}) } };
+		return added.length ? { $or: [byInstant, { dueDate: { $in: added } }] } : byInstant;
+	};
+	return [
+		...(window.dueDateFrom ? [bound('$gte', window.dueDateFrom, window.dueDateFromDay)] : []),
+		...(window.dueDateTo ? [bound('$lte', window.dueDateTo, window.dueDateToDay)] : [])
+	];
+}
+
 /**
  * The `dueDate` condition of a built-in view's window, both ends inclusive, or none for a window without dates. A due
  * date with a time of day is compared with the window's instants, as before; one stored as a date only (midnight UTC of
  * its day) is compared with the window's first and last days (`dateBoundClause`), so it counts on its own day in the
  * caller's zone. West of UTC, a task due today was midnight UTC, the evening before there, and so listed as overdue.
  */
-function dueDateWithin(window: IBuiltInViewWindow): FindOperator<Date> | undefined {
+function dueDateWithin(window: DueDateWindow, key = 'builtInDue'): FindOperator<Date> | undefined {
 	const clause = (column: string) => {
 		const bounds = [
-			...(window.dueDateFrom ? [dateBoundClause(column, '>=', window.dueDateFrom, window.dueDateFromDay, 'builtInDueFrom')] : []),
-			...(window.dueDateTo ? [dateBoundClause(column, '<=', window.dueDateTo, window.dueDateToDay, 'builtInDueTo')] : [])
+			...(window.dueDateFrom ? [dateBoundClause(column, '>=', window.dueDateFrom, window.dueDateFromDay, `${key}From`)] : []),
+			...(window.dueDateTo ? [dateBoundClause(column, '<=', window.dueDateTo, window.dueDateToDay, `${key}To`)] : [])
 		];
 		return { sql: bounds.map((bound) => bound.sql).join(' AND '), params: Object.assign({}, ...bounds.map((bound) => bound.params)) as Record<string, Date> };
 	};

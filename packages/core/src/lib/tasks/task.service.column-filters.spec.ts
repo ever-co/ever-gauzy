@@ -1,3 +1,4 @@
+// cspell:ignore Fromd
 import '../core/entities/internal';
 
 import { TaskPriorityEnum, TaskStatusEnum } from '@gauzy/contracts';
@@ -76,6 +77,70 @@ describe('TaskService advanced column filters', () => {
 			});
 			expect(build({ dueDateTo: TO })).toEqual({ dueDate: { $lte: new Date(TO) } });
 			expect(build({ withoutDueDate: true, dueDateFrom: FROM })).toEqual({ dueDate: null });
+		});
+	});
+
+	/**
+	 * "Due today" for a reader in UTC−4, as the dashboard sends it: the instants of the reader's day and the day itself.
+	 * A date-only due date is midnight UTC of its day, which is 20:00 the evening before there.
+	 */
+	describe('a range whose ends come with their calendar days', () => {
+		const today = {
+			dueDateFrom: '2026-11-18T04:00:00.000Z',
+			dueDateFromDay: '2026-11-18',
+			dueDateTo: '2026-11-19T03:59:59.999Z',
+			dueDateToDay: '2026-11-18'
+		};
+
+		it('compares a date-only due date with the days in the TypeORM where', () => {
+			const { dueDate } = service.buildAdvancedWhereCondition(today, {});
+			expect(dueDate.type).toBe('raw');
+			expect(dueDate.getSql('task.dueDate')).toBe(
+				'(task.dueDate >= :filterDueFrom OR task.dueDate = :filterDueFromd0) AND (task.dueDate <= :filterDueTo AND task.dueDate <> :filterDueTox0)'
+			);
+			expect(dueDate.objectLiteralParameters).toEqual({
+				filterDueFrom: new Date(today.dueDateFrom),
+				filterDueFromd0: new Date('2026-11-18T00:00:00.000Z'),
+				filterDueTo: new Date(today.dueDateTo),
+				filterDueTox0: new Date('2026-11-19T00:00:00.000Z')
+			});
+		});
+
+		it('says the same in the MikroORM employee query, next to an $and already there', () => {
+			expect(service.mikroOrmColumnFilters(today, { $and: [{ isDraft: false }] })).toEqual({
+				$and: [
+					{ isDraft: false },
+					{
+						$or: [
+							{ dueDate: { $gte: new Date(today.dueDateFrom) } },
+							{ dueDate: { $in: [new Date('2026-11-18T00:00:00.000Z')] } }
+						]
+					},
+					{ dueDate: { $lte: new Date(today.dueDateTo), $nin: [new Date('2026-11-19T00:00:00.000Z')] } }
+				]
+			});
+		});
+
+		it('compares the instants as before without the days, or with a day the instant is not an edge of', () => {
+			const instants = { dueDateFrom: today.dueDateFrom, dueDateTo: today.dueDateTo };
+			expect(service.buildAdvancedWhereCondition(instants, {})).toEqual({
+				dueDate: Between(new Date(today.dueDateFrom), new Date(today.dueDateTo))
+			});
+			expect(
+				service.buildAdvancedWhereCondition(
+					{ ...today, dueDateFromDay: '2026-11-25', dueDateToDay: '2026-11-25' },
+					{}
+				)
+			).toEqual({
+				dueDate: Between(new Date(today.dueDateFrom), new Date(today.dueDateTo))
+			});
+			expect(service.mikroOrmColumnFilters(instants, {})).toEqual({
+				dueDate: { $gte: new Date(today.dueDateFrom), $lte: new Date(today.dueDateTo) }
+			});
+			// "No due date" still wins.
+			expect(service.buildAdvancedWhereCondition({ ...today, withoutDueDate: true }, {})).toEqual({
+				dueDate: IsNull()
+			});
 		});
 	});
 });
