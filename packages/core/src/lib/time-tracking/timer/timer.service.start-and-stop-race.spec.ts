@@ -681,8 +681,71 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 				expect(rows.filter((row) => row.isRunning)).toEqual([expect.objectContaining({ id: 'run-2' })]);
 				expect(rows).toHaveLength(3);
 				expect(logger.warn).toHaveBeenCalledWith(
-					expect.stringContaining(`has run for ${EMPLOYEE_TURN_FAILSAFE_MS} ms`)
+					expect.stringContaining(`has run for over ${EMPLOYEE_TURN_FAILSAFE_MS} ms and the next one goes on`)
 				);
+			} finally {
+				jest.useRealTimers();
+			}
+		});
+
+		it('closes again a run whose create was on its way when the next start went on, and answers 408', async () => {
+			jest.useFakeTimers({ doNotFake: ['Date', 'nextTick', 'setImmediate', 'queueMicrotask'] });
+			try {
+				const rows: TimeLogRow[] = [];
+				let creates = 0;
+				let finishFirstCreate: () => void = () => undefined;
+				const { service, employee, employeeUpdates } = setup(rows, {
+					onCreate: () => {
+						creates += 1;
+						// The first start's create is sent, and its row is written only when the spec lets it
+						return creates === 1
+							? new Promise<void>((resolve) => (finishFirstCreate = resolve))
+							: undefined;
+					}
+				});
+
+				const first = start(service, TimeLogSourceEnum.WEB_TIMER).then(
+					() => 'started',
+					(error: Error) => error
+				);
+				const second = start(service, TimeLogSourceEnum.DESKTOP);
+
+				// The second goes on after the failsafe time, finds nothing going and starts its run
+				await jest.advanceTimersByTimeAsync(EMPLOYEE_TURN_FAILSAFE_MS);
+				await expect(second).resolves.toMatchObject({ id: 'run-1', isRunning: true });
+
+				// The first create lands after that: its run is closed where it started, and the first start answers 408
+				finishFirstCreate();
+				await expect(first).resolves.toBeInstanceOf(RequestTimeoutException);
+
+				expect(rows.filter((row) => row.isRunning)).toEqual([expect.objectContaining({ id: 'run-1' })]);
+				expect(rows.find((row) => row.id === 'run-2')).toMatchObject({ isRunning: false, stoppedAt: NOW });
+				// Only the second start marked the employee as tracking
+				expect(employeeUpdates).toHaveBeenCalledTimes(1);
+				expect(employee).toEqual({ isOnline: true, isTrackingTime: true });
+			} finally {
+				jest.useRealTimers();
+			}
+		});
+
+		it('lets a start that outlives the failsafe time finish as usual when no other start or stop waits', async () => {
+			jest.useFakeTimers({ doNotFake: ['Date', 'nextTick', 'setImmediate', 'queueMicrotask'] });
+			try {
+				const rows = [runningForAnHour()];
+				let finishUpdate: () => void = () => undefined;
+				const { service, employee, logger } = setup(rows, {
+					// Its update of the run going takes longer than the failsafe time
+					onUpdate: () => new Promise<void>((resolve) => (finishUpdate = resolve))
+				});
+
+				const starting = start(service, TimeLogSourceEnum.WEB_TIMER);
+				await jest.advanceTimersByTimeAsync(EMPLOYEE_TURN_FAILSAFE_MS + 10_000);
+				finishUpdate();
+
+				await expect(starting).resolves.toMatchObject({ id: 'run-1', isRunning: true });
+				expect(rows[0]).toMatchObject({ id: 'stopped', isRunning: false });
+				expect(employee).toEqual({ isOnline: true, isTrackingTime: true });
+				expect(logger.warn).not.toHaveBeenCalledWith(expect.stringContaining('the next one goes on'));
 			} finally {
 				jest.useRealTimers();
 			}

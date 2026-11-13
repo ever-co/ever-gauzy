@@ -107,7 +107,7 @@ const PROJECT_FROM_TASK_SOURCES: ReadonlyArray<string> = [TimeLogSourceEnum.TEAM
 const TEAM_TRACKING_SWITCH_SOURCES: ReadonlyArray<string> = [TimeLogSourceEnum.TEAMS, TimeLogSourceEnum.MOBILE];
 
 /**
- * How long a start or a stop of an employee's timer keeps their turn, in this process, before the next one goes on
+ * How long a start or a stop of an employee's timer keeps their turn, in this process, before the next one may go on
  * anyway: one that hangs holds the employee's timer this long at most, as the desktop timer's own lock does. It counts
  * from when the start or stop began, not from when the next one arrived.
  */
@@ -116,12 +116,26 @@ export const EMPLOYEE_TURN_FAILSAFE_MS = 120_000;
 /** A start or a stop holding the employee's turn (`inEmployeeTurn`). */
 export interface EmployeeTurn {
 	/**
-	 * Throws once the turn has passed to the next start or stop (`EMPLOYEE_TURN_FAILSAFE_MS`): from then on this one
-	 * writes no time log, so it neither creates a second run nor ends the next one's.
+	 * Whether this start or stop still holds the turn. It loses it only when the next one goes on after the failsafe
+	 * time (`EMPLOYEE_TURN_FAILSAFE_MS`): from then on it writes no time log, so it neither creates a second run nor
+	 * ends the next one's. One that is slow while nobody waits keeps it.
+	 */
+	isHeld(): boolean;
+
+	/**
+	 * Throws once the turn has passed to the next start or stop (see `isHeld`).
 	 *
 	 * @throws RequestTimeoutException when the turn has passed.
 	 */
 	assertHeld(): void;
+}
+
+/** The start or stop of an employee queued last in this process (`inEmployeeTurn`). */
+interface QueuedTurn {
+	/** Settles once that start or stop has settled, or once it has run for the failsafe time; never rejects. */
+	readonly end: Promise<void>;
+	/** Called by the next start or stop as it goes on: one still running then loses the turn. */
+	readonly passOn: () => void;
 }
 
 /**
@@ -455,6 +469,13 @@ export class TimerService {
 					isRunning: true
 				})
 			);
+
+			// The next start or stop went on while this run was being written, and may have read the runs going before
+			// it was: the run is closed again, and that one decides the timer and the employee's status
+			if (!turn.isHeld()) {
+				await this.closeRunCreatedLate(timeLog, tenantId);
+				turn.assertHeld();
+			}
 
 			// Update the employee's tracking status to reflect they are now tracking time
 			await this._employeeService.update(employeeId, {
@@ -1036,8 +1057,8 @@ export class TimerService {
 		}
 	}
 
-	/** The starts and stops running in this process, by employee: each waits for the one before it to settle. */
-	private static readonly employeeTurns = new Map<ID, Promise<unknown>>();
+	/** The start or stop queued last in this process, by employee: the next one waits for it (`inEmployeeTurn`). */
+	private static readonly employeeTurns = new Map<ID, QueuedTurn>();
 
 	/**
 	 * Runs `work`, a start or a stop of the employee's timer, once the start or stop of theirs before it in this
@@ -1048,19 +1069,22 @@ export class TimerService {
 	 * and the stop's cleanup then leaves the started run going (`stopRunningLog`).
 	 *
 	 * A start or a stop keeps the turn `EMPLOYEE_TURN_FAILSAFE_MS` at most from when it began: one that never settles
-	 * (a database that never answers) does not hold the employee's timer in this process for good. The next one then
-	 * goes on, and the one that hung writes no time log any more (`EmployeeTurn.assertHeld`, checked before each of
-	 * its writes), so it neither creates a second run nor ends the next one's. A write it had already sent can still
-	 * land: only a lock in the database would stop that.
+	 * (a database that never answers) does not hold the employee's timer in this process for good. The next one may then
+	 * go on, and once it does, the one that hung writes no time log any more (`EmployeeTurn`, checked before each of its
+	 * writes): it creates no second run and ends none of the next one's. A run it was already creating is closed again
+	 * (`closeRunCreatedLate`); any other write it had already sent can still land, which only a lock in the database
+	 * would stop.
 	 *
 	 * @param employeeId - The employee whose timer starts or stops.
 	 * @param work - The start or the stop, given the turn it holds.
 	 * @returns What `work` returns.
 	 */
 	private async inEmployeeTurn<T>(employeeId: ID, work: (turn: EmployeeTurn) => Promise<T>): Promise<T> {
-		const previous = TimerService.employeeTurns.get(employeeId) ?? Promise.resolve();
+		const previous = TimerService.employeeTurns.get(employeeId);
 		let isHeld = true;
+		let isSettled = false;
 		const turn: EmployeeTurn = {
+			isHeld: () => isHeld,
 			assertHeld: () => {
 				if (!isHeld) {
 					throw new RequestTimeoutException(
@@ -1069,22 +1093,31 @@ export class TimerService {
 				}
 			}
 		};
-		const run = previous.then(() => work(turn));
-		// The next start or stop goes on once this one settles, or once it has run for the failsafe time: the clock
-		// starts with this one, so those after it still go one at a time
-		const turnEnd = previous.then(() =>
-			TimerService.settledOrFailsafe(run, () => {
+		// Once the one before has settled, or has run for the failsafe time: still running, it then loses the turn
+		const begin = (previous?.end ?? Promise.resolve()).then(() => previous?.passOn());
+		const run = begin.then(() => work(turn));
+		const markSettled = () => {
+			isSettled = true;
+		};
+		run.then(markSettled, markSettled);
+		const queued: QueuedTurn = {
+			// The clock starts with this one, so those after it still go one at a time
+			end: begin.then(() => TimerService.settledOrFailsafe(run)),
+			passOn: () => {
+				if (isSettled || !isHeld) {
+					return;
+				}
 				isHeld = false;
 				this.logger.warn(
-					`A start or stop of employee ${employeeId} has run for ${EMPLOYEE_TURN_FAILSAFE_MS} ms: the next one goes on, and this one writes no time log any more.`
+					`A start or stop of employee ${employeeId} has run for over ${EMPLOYEE_TURN_FAILSAFE_MS} ms and the next one goes on: this one writes no time log any more.`
 				);
-			})
-		);
-		TimerService.employeeTurns.set(employeeId, turnEnd);
+			}
+		};
+		TimerService.employeeTurns.set(employeeId, queued);
 		try {
 			return await run;
 		} finally {
-			if (TimerService.employeeTurns.get(employeeId) === turnEnd) {
+			if (TimerService.employeeTurns.get(employeeId) === queued) {
 				TimerService.employeeTurns.delete(employeeId);
 			}
 		}
@@ -1095,15 +1128,11 @@ export class TimerService {
 	 * rejects.
 	 *
 	 * @param run - The start or the stop, which has just begun.
-	 * @param onFailsafe - Called when the failsafe time passes first.
 	 */
-	private static settledOrFailsafe(run: Promise<unknown>, onFailsafe: () => void): Promise<void> {
+	private static settledOrFailsafe(run: Promise<unknown>): Promise<void> {
 		let failsafe: ReturnType<typeof setTimeout> | undefined;
 		const timedOut = new Promise<void>((resolve) => {
-			failsafe = setTimeout(() => {
-				onFailsafe();
-				resolve();
-			}, EMPLOYEE_TURN_FAILSAFE_MS);
+			failsafe = setTimeout(resolve, EMPLOYEE_TURN_FAILSAFE_MS);
 			// The wait alone never keeps the process alive
 			failsafe.unref?.();
 		});
@@ -1112,6 +1141,32 @@ export class TimerService {
 			() => undefined
 		);
 		return Promise.race([settled, timedOut]).finally(() => clearTimeout(failsafe));
+	}
+
+	/**
+	 * Closes a run its start created after the next start or stop of the employee went on (`inEmployeeTurn`). That one
+	 * may have read the runs going before this run was written, and then neither ended it nor counted it: left running,
+	 * it would be a second timer beside the next one's. It ends where it started, as a start that did not happen,
+	 * unless the next one already ended it. If that fails, the employee's next start or stop ends it.
+	 *
+	 * @param timeLog - The run the start created.
+	 * @param tenantId - The employee's tenant.
+	 */
+	private async closeRunCreatedLate(timeLog: ITimeLog, tenantId: ID): Promise<void> {
+		const isEndedAlready = Boolean(await this.storedStoppedLog(timeLog.id, tenantId));
+		if (isEndedAlready) {
+			return;
+		}
+		const startedAt = moment.utc(timeLog.startedAt).toDate();
+		try {
+			await this._commandBus.execute(
+				new TimeLogUpdateCommand({ isRunning: false, startedAt, stoppedAt: startedAt }, timeLog.id)
+			);
+		} catch (error) {
+			this.logger.warn(
+				`Failed to close the time log ${timeLog.id}, created after the next start or stop went on; the employee's next start or stop ends it: ${error?.message}`
+			);
+		}
 	}
 
 	/**
