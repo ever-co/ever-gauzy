@@ -61,7 +61,7 @@ describe('due dates picked in one zone and read in another', () => {
 	it('keeps the day the other way round too, and for the picker itself', () => {
 		const stored = inZone(READER_ZONE, () => pickedAndSent('2026-11-14'));
 		expect(stored).toBe('2026-11-14T00:00:00.000Z');
-		for (const zone of [PICKER_ZONE, 'America/Los_Angeles', 'Pacific/Kiritimati', 'UTC', READER_ZONE]) {
+		for (const zone of [PICKER_ZONE, 'America/Los_Angeles', 'Pacific/Auckland', 'UTC', READER_ZONE]) {
 			inZone(zone, () => {
 				expect(`${zone} ${listShows(stored)}`).toBe(`${zone} Nov 14, 2026`);
 				expect(`${zone} ${dayOfStoredDate(stored)}`).toBe(`${zone} ${dayNumberOf(new Date(2026, 10, 14))}`);
