@@ -19,4 +19,6 @@ export interface IChangePasswordRequest {
 
 export interface IResetPasswordRequest {
 	email: string;
+	/** The client app's own page for setting a new password, for the link of the email. */
+	appResetPasswordUrl?: string;
 }
