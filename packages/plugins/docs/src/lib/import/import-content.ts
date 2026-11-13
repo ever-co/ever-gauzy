@@ -407,11 +407,14 @@ class ImportContentWalk {
 			if (node.type === 'image') {
 				// An image on a line of its own (the parser reads it as a block): resolved as one in running text is, and
 				// kept a block when it is one (a stored image, an attachment card); a page mention or the text standing in
-				// for it is a paragraph.
-				const resolved = this.image(node);
-				const inline = resolved.filter((child) => child.type !== 'image' && child.type !== 'fileAttachment');
-				if (inline.length) output.push({ type: 'paragraph', content: inline });
-				else output.push(...resolved);
+				// for it is a paragraph of its own.
+				for (const child of this.image(node)) {
+					output.push(
+						child.type === 'image' || child.type === 'fileAttachment'
+							? child
+							: { type: 'paragraph', content: [child] }
+					);
+				}
 				continue;
 			}
 			if (node.type === 'text' || node.type === 'hardBreak') {

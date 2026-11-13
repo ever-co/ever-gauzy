@@ -770,7 +770,7 @@ export class DocumentUploadService {
 		// A file the bound already refuses by its stored size is not fetched: a provider that answers a Buffer (local
 		// storage) would otherwise read it whole before the bound is checked. Only a caller's bound can be below the
 		// stored size (the per-file one is at least that size).
-		if (Number(document.fileSize) > maxBytes) {
+		if (Number(document.fileSize ?? 0) > maxBytes) {
 			throw new FileContentTooLargeError(maxBytes);
 		}
 		const provider = new FileStorage().setProvider(document.storageProvider).getProviderInstance();

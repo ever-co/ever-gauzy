@@ -397,8 +397,11 @@ function listNode(list: Tokens.List): IDocNode {
 	const task = list.items.some((item) => item.task);
 	const type = list.ordered ? 'orderedList' : task ? 'taskList' : 'bulletList';
 	const items: IDocNode[] = list.items.map((item) => {
-		const content = blockNodes(item.tokens as Tokens.Generic[], false);
-		const node: IDocNode = { type: task ? 'taskItem' : 'listItem', content: content.length ? content : [{ type: 'paragraph' }] };
+		const content = blockNodes(item.tokens as Tokens.Generic[]);
+		// The editor's list item opens with a paragraph (`paragraph block*`): an item that opens with an image (or any
+		// other block) gets an empty one first, which writes no Markdown of its own.
+		if (content[0]?.type !== 'paragraph') content.unshift({ type: 'paragraph' });
+		const node: IDocNode = { type: task ? 'taskItem' : 'listItem', content };
 		if (task) node.attrs = { checked: item.checked === true };
 		return node;
 	});
@@ -418,10 +421,9 @@ function tableNode(table: Tokens.Table): IDocNode | null {
 /**
  * The blocks of a run of block tokens. A paragraph that holds nothing but images (a Markdown image on a line of its own,
  * as the export writes an image) is those images as blocks, as the editor stores them: its `image` is a block node, so
- * a paragraph cannot hold one. Not in a list item (`liftImages` false), whose first block the editor needs to be a
- * paragraph.
+ * a paragraph cannot hold one.
  */
-function blockNodes(tokens: Tokens.Generic[] | undefined, liftImages = true): IDocNode[] {
+function blockNodes(tokens: Tokens.Generic[] | undefined): IDocNode[] {
 	const nodes: IDocNode[] = [];
 	for (const token of tokens ?? []) {
 		switch (token.type) {
@@ -436,7 +438,7 @@ function blockNodes(tokens: Tokens.Generic[] | undefined, liftImages = true): ID
 			case 'paragraph':
 			case 'text': {
 				const block = paragraph((token as Tokens.Paragraph).tokens ?? [token]);
-				nodes.push(...(liftImages ? (imagesAlone(block) ?? [block]) : [block]));
+				nodes.push(...(imagesAlone(block) ?? [block]));
 				break;
 			}
 			case 'list':
