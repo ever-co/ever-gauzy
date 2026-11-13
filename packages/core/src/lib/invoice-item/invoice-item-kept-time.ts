@@ -5,7 +5,7 @@ import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from '../core/crud';
 import { InvoiceItem, TimeLog } from '../core/entities/internal';
 import { prepareSQLQuery as p } from '../database/database.helper';
-import { ILinesTransaction, savedLineId } from './invoice-item-billed-time';
+import { ILinesTransaction, lockInvoice, savedLineId } from './invoice-item-billed-time';
 
 /** A line an invoice holds, as stored, and the time logs that name it. */
 export interface IHeldLine {
@@ -45,6 +45,9 @@ const RECORD_FIELDS = [
  * line that says what an old line said the time the old line held (see {@link unchangedLinesOf}). Deleting a line
  * clears the link of the time it billed (the foreign key sets it to null), so the link is written again.
  *
+ * The invoice is locked first: a replacement another request is running on it is waited for, and its lines are the
+ * ones this one reads and deletes. Otherwise both delete the old lines only, and the invoice keeps both new sets.
+ *
  * @param service The service, on the transaction (see `inLinesTransaction`).
  * @param transaction The transaction.
  * @param invoiceId The invoice whose lines are replaced.
@@ -61,6 +64,7 @@ export async function replaceLinesKeepingTime(
 	lines: IInvoiceItemCreateInput[],
 	named: ID[]
 ): Promise<InvoiceItem[]> {
+	await lockInvoice(transaction, invoiceId, RequestContext.currentTenantId());
 	const held = await heldTimeOf(service, transaction, invoiceId);
 	await service.delete({ invoiceId } as FindOptionsWhere<InvoiceItem>);
 	const saved = await service.saveMany(lines);

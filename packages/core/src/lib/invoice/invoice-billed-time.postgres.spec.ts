@@ -13,6 +13,9 @@ import { randomUUID } from 'node:crypto';
  * change waits for the void and is refused, instead of writing over it. A third connection voids the invoice and
  * commits once the change is seen waiting.
  *
+ * A replacement of an invoice's lines while another one is writing: it waits, then replaces the other's lines, so the
+ * invoice keeps one set. A third connection plays the other replacement and commits once this one is seen waiting.
+ *
  * Each ORM runs the invoice handlers as the routes dispatch them.
  *
  * Runs only when GAUZY_BILLED_TIME_SPEC_POSTGRES_URL names a PostgreSQL database that holds the migrated schema, such
@@ -63,18 +66,31 @@ const DAY = 24 * 60 * 60 * 1000;
 			{},
 			{}
 		);
+		const invoiceItemService = new loaded.InvoiceItemService(
+			new loaded.TypeOrmInvoiceItemRepository(dataSource.getRepository(loaded.InvoiceItem)),
+			new loaded.MikroOrmInvoiceItemRepository(orm.em, loaded.InvoiceItem)
+		);
 		// The ORM is a module constant of the CRUD base, read when the registry loaded; each run states its own.
-		Object.defineProperty(invoiceService, 'ormType', { get: () => ormType });
+		for (const service of [invoiceService, invoiceItemService]) {
+			Object.defineProperty(service, 'ormType', { get: () => ormType });
+		}
 		return {
 			create: (input: Row) =>
 				new loaded.InvoiceCreateHandler(invoiceService).execute(new loaded.InvoiceCreateCommand(input)),
 			update: (input: Row) =>
-				new loaded.InvoiceUpdateHandler(invoiceService).execute(new loaded.InvoiceUpdateCommand(input))
+				new loaded.InvoiceUpdateHandler(invoiceService).execute(new loaded.InvoiceUpdateCommand(input)),
+			replaceLines: (invoiceId: string, lines: Row[]) =>
+				new loaded.InvoiceItemBulkCreateHandler(invoiceItemService).execute(
+					new loaded.InvoiceItemBulkCreateCommand(invoiceId, lines)
+				)
 		};
 	};
 
-	/** A row with the columns given, and a placeholder in every other NOT NULL column without a default. */
-	const insert = async (table: string, row: Row): Promise<void> => {
+	/**
+	 * A row with the columns given, and a placeholder in every other NOT NULL column without a default, written by the
+	 * connection given (the spec's own by default).
+	 */
+	const insert = async (table: string, row: Row, connection: { query: Function } = dataSource): Promise<void> => {
 		const required: Row[] = await dataSource.query(
 			`SELECT "column_name", "data_type" FROM "information_schema"."columns" WHERE "table_schema" = current_schema() ` +
 				`AND "table_name" = $1 AND "is_nullable" = 'NO' AND "column_default" IS NULL`,
@@ -91,7 +107,7 @@ const DAY = 24 * 60 * 60 * 1000;
 		const keys = Object.keys(values);
 		const names = keys.map((key) => `"${key}"`).join(', ');
 		const marks = keys.map((_key, index) => `$${index + 1}`).join(', ');
-		await dataSource.query(
+		await connection.query(
 			`INSERT INTO "${table}" (${names}) VALUES (${marks})`,
 			keys.map((key) => values[key])
 		);
@@ -155,6 +171,24 @@ const DAY = 24 * 60 * 60 * 1000;
 			...row
 		});
 		return id;
+	};
+
+	/** A line of the invoice given, as an edit posts it. */
+	const lineSaying = (invoiceId: string, description: string): Row => ({
+		description,
+		price: 1,
+		quantity: 1,
+		totalValue: 1,
+		...scope,
+		invoiceId
+	});
+
+	const descriptionsOf = async (invoiceId: string): Promise<string[]> => {
+		const rows: Row[] = await dataSource.query(
+			`SELECT "description" FROM "invoice_item" WHERE "invoiceId" = $1 ORDER BY "description"`,
+			[invoiceId]
+		);
+		return rows.map((row) => row.description);
 	};
 
 	const statusOf = async (invoiceId: string): Promise<string> => {
@@ -270,6 +304,18 @@ const DAY = 24 * 60 * 60 * 1000;
 					InvoiceUpdateHandler: require('./commands/handlers/invoice.update.handler').InvoiceUpdateHandler,
 					InvoiceUpdateCommand: require('./commands/invoice.update.command').InvoiceUpdateCommand,
 					INVOICE_VOID_IS_FINAL: require('./invoice-final-status').INVOICE_VOID_IS_FINAL,
+					InvoiceItem: entities.InvoiceItem,
+					InvoiceItemService: require('../invoice-item/invoice-item.service').InvoiceItemService,
+					TypeOrmInvoiceItemRepository: require('../invoice-item/repository/type-orm-invoice-item.repository')
+						.TypeOrmInvoiceItemRepository,
+					MikroOrmInvoiceItemRepository:
+						require('../invoice-item/repository/mikro-orm-invoice-item.repository')
+							.MikroOrmInvoiceItemRepository,
+					InvoiceItemBulkCreateHandler:
+						require('../invoice-item/commands/handlers/invoice-item.bulk.create.handler')
+							.InvoiceItemBulkCreateHandler,
+					InvoiceItemBulkCreateCommand: require('../invoice-item/commands/invoice-item.bulk.create.command')
+						.InvoiceItemBulkCreateCommand,
 					EstimateEmail: entities.EstimateEmail,
 					PublicInvoiceService: require('../public-share/invoice/public-invoice.service')
 						.PublicInvoiceService,
@@ -410,6 +456,36 @@ const DAY = 24 * 60 * 60 * 1000;
 					reason: { status: 400, message: loaded.INVOICE_VOID_IS_FINAL }
 				});
 				expect(await statusOf(invoiceId)).toBe('VOID');
+			},
+			TIMEOUT
+		);
+
+		it(
+			"keeps one set of lines when a replacement runs while another one is writing the invoice's lines",
+			async () => {
+				const invoiceId = await storedInvoice('DRAFT');
+				await insert('invoice_item', { id: randomUUID(), ...lineSaying(invoiceId, 'old') });
+				// The other replacement, as far as it went: the invoice locked, the old line deleted, its own line saved.
+				const other = dataSource.createQueryRunner();
+				await other.connect();
+				await other.startTransaction();
+				await other.query(`SELECT "id" FROM "invoice" WHERE "id" = $1 FOR UPDATE`, [invoiceId]);
+				await other.query(`DELETE FROM "invoice_item" WHERE "invoiceId" = $1`, [invoiceId]);
+				await insert('invoice_item', { id: randomUUID(), ...lineSaying(invoiceId, 'first') }, other);
+
+				const replacing = Promise.allSettled([
+					handlers(ormType).replaceLines(invoiceId, [lineSaying(invoiceId, 'second')])
+				]);
+				try {
+					await untilWaiting(1, 'invoice');
+				} finally {
+					await other.commitTransaction();
+					await other.release();
+				}
+				const [replaced] = await replacing;
+
+				expect(replaced.status).toBe('fulfilled');
+				expect(await descriptionsOf(invoiceId)).toEqual(['second']);
 			},
 			TIMEOUT
 		);
