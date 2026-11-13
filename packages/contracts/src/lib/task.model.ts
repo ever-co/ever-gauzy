@@ -212,6 +212,11 @@ export const TASK_BULK_UPDATE_MAX = 100;
 /**
  * What a bulk update changes on a task. Lists take `add` / `remove` (applied to the task's current list) or `set`
  * (the whole list); the previous values the platform answers use `set`, so an undo is the same request with them.
+ *
+ * A status, priority or size the platform does not name (a team's own) is named by its record alone (`taskStatusId`,
+ * `taskPriorityId`, `taskSizeId`), which must be the task organization's, the tenant's shared one or a platform default.
+ * A priority or size named by its record alone takes the record's name (its value, else its name); a status keeps its
+ * text.
  */
 export interface ITaskBulkChanges {
 	status?: TaskStatusEnum | null;

@@ -136,19 +136,35 @@ export function undoRequest(
 }
 
 /**
+ * The record a previous priority or size name goes with: the platform gives a priority or size named by its record
+ * alone that record's name, so an undo that names the record puts the name back too. A status does not take its
+ * record's name, so its record never stands in for it.
+ */
+const NAMING_RECORD: Readonly<Partial<Record<'status' | 'priority' | 'size', keyof ITaskBulkChanges>>> = {
+	priority: 'taskPriorityId',
+	size: 'taskSizeId'
+};
+
+/**
  * The tasks an undo would put back only in part: their previous status, priority or size name is not one the
- * platform's bulk route takes (an older client wrote it), so the undo restores the record (`taskStatusId`, …) and
- * leaves the name as the change set it.
+ * platform's bulk route takes (an older client, or a team's own priority, wrote it), so the undo leaves it out and
+ * the name stays as the change set it. A priority or size whose record is put back beside it gets its name back
+ * from that record.
  */
 export function undoLosses(outcome: ITaskBulkUpdateOutcome | null | undefined): ID[] {
 	const lossy: ID[] = [];
 	for (const result of outcome?.results ?? []) {
 		if (!result.ok || !result.previous) continue;
 		const previous = result.previous as Record<string, unknown>;
-		const dropped = (['status', 'priority', 'size'] as const).some(
-			(key) =>
-				previous[key] !== undefined && previous[key] !== null && !ENUM_VALUES[key].has(String(previous[key]))
-		);
+		const dropped = (['status', 'priority', 'size'] as const).some((key) => {
+			const record = NAMING_RECORD[key];
+			return (
+				previous[key] !== undefined &&
+				previous[key] !== null &&
+				!ENUM_VALUES[key].has(String(previous[key])) &&
+				!(record && previous[record])
+			);
+		});
 		if (dropped) lossy.push(result.taskId);
 	}
 	return lossy;

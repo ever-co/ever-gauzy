@@ -58,6 +58,7 @@ import {
 	TimesheetStatus,
 	ITaskBuiltInViewQuery,
 	ITaskBulkUpdateInput,
+	ITaskBulkUpdateItem,
 	ITaskBulkUpdateOutcome,
 	ITaskBulkUpdateResult,
 	ITaskReferenceResolution,
@@ -95,6 +96,9 @@ import {
 	OrganizationProject,
 	OrganizationSprintTaskHistory,
 	TaskFormerReference,
+	TaskPriority,
+	TaskSize,
+	TaskStatus,
 	TimeLog,
 	Timesheet
 } from '../core/entities/internal';
@@ -103,7 +107,17 @@ import { TaskEvent } from '../event-bus/events/task.event';
 import { BaseEntityEventTypeEnum } from '../event-bus/base-entity-event';
 import { IFindOneOptions } from '../core/crud/icrud.service';
 import { Task } from './task.entity';
-import { BulkUpdateRequestError, changesToUpdate, normalizeBulkUpdate } from './bulk-update';
+import {
+	BulkChangeRecords,
+	BulkUpdateRequestError,
+	changesToUpdate,
+	IBulkChangeRecord,
+	normalizeBulkUpdate,
+	recordIdsOf,
+	recordKey,
+	recordRefusalOf,
+	withRecordNames
+} from './bulk-update';
 import { derivedProjectKey, keysOfProject, normalizeTaskKey, parseTaskReference } from './task-reference';
 import { BUILT_IN_VIEW_DEFAULT_RELATIONS, BUILT_IN_VIEW_RELATIONS, builtInViewWindow, IBuiltInViewWindow, relationsTreeOf } from './built-in-views';
 import { boundDayOf, dateBoundAdjustments, dateBoundClause } from './views/view-filters';
@@ -3022,6 +3036,11 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * sync events happen per task exactly as for one update), and the previous values are answered so the caller
 	 * can undo. A task that is missing, another organization's, or refused by its update is reported; the others
 	 * are applied. Tasks are applied one after another.
+	 *
+	 * A status, priority or size named by its record must be one the task's organization may take (its own, the
+	 * tenant's shared one, a platform default): a task whose change names another organization's or tenant's record,
+	 * or none, is reported and left as it is. A priority or size named by its record alone takes the record's name
+	 * (see `withRecordNames`), and the previous values hold the name it had, so the undo puts both back.
 	 */
 	async bulkUpdate(
 		input: ITaskBulkUpdateInput,
@@ -3038,6 +3057,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		}
 		const tenantId = tenantIdOf(input);
 		const organizationId = organizationIdOf(input);
+		const records = await this.bulkChangeRecordsOf(items);
 		const results: ITaskBulkUpdateResult[] = [];
 		for (const item of items) {
 			const taskId = String(item.taskId);
@@ -3055,7 +3075,12 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				results.push({ taskId, ok: false, error: 'TASK_NOT_FOUND: no such task in this organization.' });
 				continue;
 			}
-			const { update, previous } = changesToUpdate(task, item.changes);
+			const refusal = recordRefusalOf(item.changes, records, { tenantId, organizationId: task.organizationId ?? organizationId });
+			if (refusal) {
+				results.push({ taskId, ok: false, error: refusal });
+				continue;
+			}
+			const { update, previous } = changesToUpdate(task, withRecordNames(item.changes, records));
 			try {
 				await apply(task.id, update);
 				results.push({ taskId, ok: true, previous });
@@ -3067,6 +3092,31 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		}
 		const applied = results.filter((result) => result.ok).length;
 		return { applied, refused: results.length - applied, results };
+	}
+
+	/**
+	 * The status, priority and size records a bulk update's items name, read once per kind whatever their tenant or
+	 * organization (as the save's own foreign-row check reads them), so `recordRefusalOf` can judge each one and
+	 * `withRecordNames` can name it. Soft-deleted rows are read too: their scope is what is judged.
+	 */
+	private async bulkChangeRecordsOf(items: ITaskBulkUpdateItem[]): Promise<BulkChangeRecords> {
+		const ids = recordIdsOf(items);
+		const manager = this.typeOrmRepository.manager;
+		const read = async (entity: typeof TaskStatus | typeof TaskPriority | typeof TaskSize, list: ID[]) => {
+			if (!list.length) return new Map<string, IBulkChangeRecord>();
+			const rows = (await manager.find(entity as typeof TaskStatus, {
+				where: { id: In(list) },
+				select: { id: true, name: true, value: true, tenantId: true, organizationId: true },
+				withDeleted: true
+			})) as IBulkChangeRecord[];
+			return new Map(rows.map((row) => [recordKey(row.id), row]));
+		};
+		const [statuses, priorities, sizes] = await Promise.all([
+			read(TaskStatus, ids.taskStatusId),
+			read(TaskPriority, ids.taskPriorityId),
+			read(TaskSize, ids.taskSizeId)
+		]);
+		return { taskStatusId: statuses, taskPriorityId: priorities, taskSizeId: sizes };
 	}
 
 	/**
