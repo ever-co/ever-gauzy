@@ -198,7 +198,8 @@
 			"Broadcast": "Announcement",
 			"RateChangeRequest": "Rate change request",
 			"TaskUpdate": "Task update",
-			"TimerReminder": "Timer reminder"
+			"TimerReminder": "Timer reminder",
+			"Invoice": "Invoice"
 		}
 	},
 	"SETTINGS": {

@@ -43,7 +43,12 @@ export enum EmployeeNotificationTypeEnum {
 	 * preferences), or past twice it. Raised by the platform's timer reminder sweep, once per run and level. Stored as
 	 * 9 in DB.
 	 */
-	TIMER_REMINDER = 'TimerReminder'
+	TIMER_REMINDER = 'TimerReminder',
+	/**
+	 * An invoice or estimate of the organization needs the attention of whoever handles invoices: a client accepted or
+	 * declined an estimate from the link it was sent with. Stored as 10 in DB.
+	 */
+	INVOICE = 'Invoice'
 }
 
 /**
