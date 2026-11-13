@@ -9,6 +9,7 @@ import {
 	IOrganizationDepartment,
 	IOrganizationProject,
 	IOrganizationTeam,
+	IRole,
 	IUser,
 	IUserRegistrationInput,
 	LanguagesEnum,
@@ -24,6 +25,8 @@ import { TypeOrmOrganizationDepartmentRepository } from '../../../organization-d
 import { TypeOrmOrganizationProjectRepository } from '../../../organization-project/repository/type-orm-organization-project.repository';
 import { TypeOrmOrganizationTeamRepository } from '../../../organization-team/repository/type-orm-organization-team.repository';
 import { TypeOrmUserRepository } from '../../../user/repository/type-orm-user.repository';
+import { EmployeePlaceholderTransferService } from '../../../employee-placeholder/employee-placeholder-transfer.service';
+import { UserOrganizationService } from '../../../user-organization/user-organization.services';
 
 /**
  * Use this command for registering employees.
@@ -40,7 +43,9 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 		private readonly typeOrmOrganizationProjectRepository: TypeOrmOrganizationProjectRepository,
 		private readonly typeOrmOrganizationContactRepository: TypeOrmOrganizationContactRepository,
 		private readonly typeOrmOrganizationDepartmentRepository: TypeOrmOrganizationDepartmentRepository,
-		private readonly typeOrmOrganizationTeamRepository: TypeOrmOrganizationTeamRepository
+		private readonly typeOrmOrganizationTeamRepository: TypeOrmOrganizationTeamRepository,
+		private readonly placeholderTransferService: EmployeePlaceholderTransferService,
+		private readonly userOrganizationService: UserOrganizationService
 	) {}
 
 	/**
@@ -86,8 +91,21 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 				employee = await this.createEmployee(invite, user);
 			}
 
+			// A claim invitation hands a member without an account over to the person who accepts it: to their
+			// member of the invitation's organization, which an existing account working elsewhere gets now.
+			const isClaim = !!invite.placeholderEmployeeId;
+			if (isClaim) {
+				employee = await this.memberOfInvitationOrganization(invite, user, employee);
+			}
+
 			// Implementation for updating employee memberships based on the invite details
 			await this.updateEmployeeMemberships(invite, employee);
+
+			if (isClaim) {
+				const kept = { keepInviteId: invite.id };
+				const { placeholderEmployeeId, tenantId } = invite;
+				await this.placeholderTransferService.transfer(placeholderEmployeeId, employee.id, tenantId, kept);
+			}
 		} catch (error) {
 			// Nothing consumed the invite after all — hand it back rather than stranding it as
 			// ACCEPTED with no employee attached.
@@ -184,6 +202,33 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 		});
 
 		return await this.typeOrmEmployeeRepository.save(employee);
+	}
+
+	/**
+	 * The person's member of the invitation's organization: the one found when it is there, else the one the account
+	 * already has in it, else a new one, with the account joined to the organization. An account working in another
+	 * organization of the tenant is found by `findEmployee` with its member there, which a claim must never fill.
+	 *
+	 * @param invite The claim invitation being accepted.
+	 * @param user The account accepting it.
+	 * @param found The member the acceptance found or created.
+	 * @returns The member of the invitation's organization.
+	 */
+	private async memberOfInvitationOrganization(invite: IInvite, user: IUser, found: IEmployee): Promise<IEmployee> {
+		if (found.organizationId === invite.organizationId) {
+			return found;
+		}
+		const existing = await this.typeOrmEmployeeRepository.findOne({
+			where: { userId: user.id, organizationId: invite.organizationId }
+		});
+		if (existing) {
+			return existing;
+		}
+		const created = await this.createEmployee(invite, user);
+		// The account was found by its EMPLOYEE role (`findExistingEmployeeUser`), which is not loaded with it.
+		const withRole = { ...user, role: user.role ?? ({ name: RolesEnum.EMPLOYEE } as IRole) };
+		await this.userOrganizationService.addUserToOrganization(withRole, invite.organizationId);
+		return created;
 	}
 
 	/**
