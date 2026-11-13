@@ -213,6 +213,11 @@ const DAY = 24 * 60 * 60 * 1000;
 	};
 
 	const removeRunRows = async (): Promise<void> => {
+		// MikroORM saves a nested line here without its tenant: the spec does not register the subscriber that sets it.
+		await dataSource.query(
+			`DELETE FROM "invoice_item" WHERE "invoiceId" IN (SELECT "id" FROM "invoice" WHERE "tenantId" = $1)`,
+			[TENANT]
+		);
 		for (const table of TABLES) {
 			await dataSource.query(`DELETE FROM "${table}" WHERE "tenantId" = $1`, [TENANT]);
 		}
