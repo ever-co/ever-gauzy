@@ -78,6 +78,11 @@ type Invite {
 	userId: ID
 	"The person who issued the invitation, by identifier. The account is read on the user domain."
 	invitedByUserId: ID
+	"""
+	The member without an account a claim invitation hands over, by identifier: accepting it moves that
+	member's time to the person. Null for every other invitation, and once the member is gone.
+	"""
+	placeholderEmployeeId: ID
 	"The tenant the invitation belongs to, by identifier. Stamped by the delivered write."
 	tenantId: ID
 	"The organization the invitation is into, by identifier."
@@ -163,6 +168,7 @@ input InviteFilter {
 	roleId: IDFilter
 	userId: IDFilter
 	invitedByUserId: IDFilter
+	placeholderEmployeeId: IDFilter
 	tenantId: IDFilter
 	organizationId: IDFilter
 	isActive: BooleanFilter
