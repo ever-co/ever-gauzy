@@ -10,7 +10,7 @@ import { TypeOrmOrganizationProjectRepository } from './repository/type-orm-orga
 import { TypeOrmOrganizationProjectEmployeeRepository } from './repository/type-orm-organization-project-employee.repository';
 
 /** A membership left inactive or archived no longer ties the employee to the project (NULL counts as current). */
-const CURRENT_MEMBERSHIP = {
+export const CURRENT_MEMBERSHIP = {
 	isActive: Or(IsNull(), Equal(true)),
 	isArchived: Or(IsNull(), Equal(false))
 };
