@@ -560,22 +560,21 @@ function createStore() {
 			}
 			Object.assign(log, { startedAt: at(start), stoppedAt: at(stop) });
 		},
-		/** One command, for a new `start`–`stop` range, a log as its caller read it and one of that log's slots. */
-		send: (start: string, stop: string, timeLog: TimeLog, timeSlot: ITimeSlot) =>
+		/**
+		 * One command, for a new `start`–`stop` range and a log as its caller read it: naming no slot, as manual time and
+		 * the timer stop send it, or the slot the time-slot delete names.
+		 */
+		send: (start: string, stop: string, timeLog: TimeLog, timeSlot?: ITimeSlot) =>
 			handler.execute(new DeleteTimeSpanCommand({ start: at(start), end: at(stop) }, timeLog, timeSlot)),
 		/**
 		 * The cleanup for a new `start`–`stop` range, as its callers run it: the logs the conflict lookup reads (those the
-		 * range overlaps, with their slots: the TypeORM lookup joins them), then one command per slot of each, in turn.
-		 * The lookup names no order for the slots, so they can be sent latest first too.
+		 * range overlaps, with their slots: the TypeORM lookup joins them), then one command per log, naming no slot.
 		 */
-		async cleanUp(start: string, stop: string, order: 'earliest first' | 'latest first' = 'earliest first') {
+		async cleanUp(start: string, stop: string) {
 			const range = { start: at(start), end: at(stop) };
 			const results: boolean[] = [];
 			for (const timeLog of conflictsOver(range)) {
-				const timeSlots = order === 'latest first' ? [...timeLog.timeSlots].reverse() : timeLog.timeSlots;
-				for (const timeSlot of timeSlots) {
-					results.push(await handler.execute(new DeleteTimeSpanCommand(range, timeLog, timeSlot)));
-				}
+				results.push(await handler.execute(new DeleteTimeSpanCommand(range, timeLog)));
 			}
 			return results;
 		},
@@ -626,7 +625,7 @@ describe('DeleteTimeSpanHandler and a running log (#11823)', () => {
 		]);
 		// Nothing was updated, deleted or released.
 		expect(store.executed).toEqual([]);
-		expect(results).toEqual([false, false, false]);
+		expect(results).toEqual([false]);
 	});
 
 	it('CONTROL: the same log once stopped is removed by a range that covers it', async () => {
@@ -651,22 +650,19 @@ describe('DeleteTimeSpanHandler acts on the log as it now stands (#11823)', () =
 	/** The six slots of 08:00–09:00. */
 	const BEFORE_NINE = ['08:00', '08:10', '08:20', '08:30', '08:40', '08:50'];
 
-	it('leaves a log the command for an earlier slot already cut back alone, with every slot it holds', async () => {
+	it('leaves a log another cleanup already cut back alone, with every slot it holds', async () => {
 		const store = createStore();
 		store.addLog('tracked', '08:00', '11:00');
-		// The log as the conflict lookup read it for manual time over 09:00–10:00, then as the command for its first
-		// slot left it: ending where that range starts.
+		// The log as the conflict lookup read it for manual time over 09:00–10:00, then as another cleanup of that
+		// range left it (the same entry sent twice): ending where that range starts.
 		const asRead = store.read('tracked');
 		store.cut('tracked', '08:00', '09:00');
 
-		const results: boolean[] = [];
-		for (const timeSlot of asRead.timeSlots.slice(1)) {
-			results.push(await store.send('09:00', '10:00', asRead, timeSlot));
-		}
+		const result = await store.send('09:00', '10:00', asRead);
 
 		expect(store.timeline()).toEqual([{ range: '08:00-09:00', isRunning: false, slots: BEFORE_NINE }]);
 		expect(store.executed).toEqual([]);
-		expect(results).toEqual(Array(17).fill(false));
+		expect(result).toBe(false);
 	});
 
 	it('cuts a log back from where it now ends, not from where the lookup read it', async () => {
@@ -676,12 +672,7 @@ describe('DeleteTimeSpanHandler acts on the log as it now stands (#11823)', () =
 		const asRead = store.read('tracked');
 		store.cut('tracked', '08:00', '09:30');
 
-		await store.send(
-			'09:00',
-			'10:00',
-			asRead,
-			asRead.timeSlots.find((slot) => hhmm(slot.startedAt) === '09:10')
-		);
+		await store.send('09:00', '10:00', asRead);
 
 		expect(store.timeline()).toEqual([{ range: '08:00-09:00', isRunning: false, slots: BEFORE_NINE }]);
 	});
@@ -695,30 +686,28 @@ describe('DeleteTimeSpanHandler and a stopped log the new range takes one end of
 
 	afterEach(() => jest.restoreAllMocks());
 
-	describe.each(['earliest first', 'latest first'] as const)('its slots sent %s', (order) => {
-		it('keeps the slots before the new range when that range takes the end of the log', async () => {
-			const store = createStore();
-			store.addLog('tracked', '08:00', '10:00');
+	it('keeps the slots before the new range when that range takes the end of the log', async () => {
+		const store = createStore();
+		store.addLog('tracked', '08:00', '10:00');
 
-			await store.cleanUp('09:00', '11:00', order);
+		await store.cleanUp('09:00', '11:00');
 
-			expect(store.timeline()).toEqual([
-				{ range: '08:00-09:00', isRunning: false, slots: slotStarts('08:00', '09:00') }
-			]);
-			expect(store.slotCount()).toBe(6);
-		});
+		expect(store.timeline()).toEqual([
+			{ range: '08:00-09:00', isRunning: false, slots: slotStarts('08:00', '09:00') }
+		]);
+		expect(store.slotCount()).toBe(6);
+	});
 
-		it('keeps the slots after the new range when that range takes the start of the log', async () => {
-			const store = createStore();
-			store.addLog('tracked', '09:00', '11:00');
+	it('keeps the slots after the new range when that range takes the start of the log', async () => {
+		const store = createStore();
+		store.addLog('tracked', '09:00', '11:00');
 
-			await store.cleanUp('08:00', '10:00', order);
+		await store.cleanUp('08:00', '10:00');
 
-			expect(store.timeline()).toEqual([
-				{ range: '10:00-11:00', isRunning: false, slots: slotStarts('10:00', '11:00') }
-			]);
-			expect(store.slotCount()).toBe(6);
-		});
+		expect(store.timeline()).toEqual([
+			{ range: '10:00-11:00', isRunning: false, slots: slotStarts('10:00', '11:00') }
+		]);
+		expect(store.slotCount()).toBe(6);
 	});
 
 	it('keeps the log and its slots after the range when that range takes its start and ends between seconds', async () => {
@@ -743,33 +732,31 @@ describe('DeleteTimeSpanHandler and a stopped log the new range falls inside (#1
 
 	afterEach(() => jest.restoreAllMocks());
 
-	describe.each(['earliest first', 'latest first'] as const)('its slots sent %s', (order) => {
-		it('splits a log of 08:00 to 11:00 with 18 slots, by 09:00 to 10:00, into two logs holding 12 slots', async () => {
-			const store = createStore();
-			store.addLog('tracked', '08:00', '11:00');
+	it('splits a log of 08:00 to 11:00 with 18 slots, by 09:00 to 10:00, into two logs holding 12 slots', async () => {
+		const store = createStore();
+		store.addLog('tracked', '08:00', '11:00');
 
-			await store.cleanUp('09:00', '10:00', order);
+		await store.cleanUp('09:00', '10:00');
 
-			expect(store.timeline()).toEqual([
-				{ range: '08:00-09:00', isRunning: false, slots: slotStarts('08:00', '09:00') },
-				{ range: '10:00-11:00', isRunning: false, slots: slotStarts('10:00', '11:00') }
-			]);
-			expect(store.slotCount()).toBe(12);
-		});
+		expect(store.timeline()).toEqual([
+			{ range: '08:00-09:00', isRunning: false, slots: slotStarts('08:00', '09:00') },
+			{ range: '10:00-11:00', isRunning: false, slots: slotStarts('10:00', '11:00') }
+		]);
+		expect(store.slotCount()).toBe(12);
+	});
 
-		it('keeps with each part the slot its edge shares with a range off the ten-minute marks', async () => {
-			const store = createStore();
-			store.addLog('tracked', '08:00', '11:00');
+	it('keeps with each part the slot its edge shares with a range off the ten-minute marks', async () => {
+		const store = createStore();
+		store.addLog('tracked', '08:00', '11:00');
 
-			await store.cleanUp('09:05', '09:55', order);
+		await store.cleanUp('09:05', '09:55');
 
-			// 09:00 holds the first part's last five minutes and 09:50 the second part's first five.
-			expect(store.timeline()).toEqual([
-				{ range: '08:00-09:05', isRunning: false, slots: slotStarts('08:00', '09:05') },
-				{ range: '09:55-11:00', isRunning: false, slots: slotStarts('09:55', '11:00') }
-			]);
-			expect(store.slotCount()).toBe(14);
-		});
+		// 09:00 holds the first part's last five minutes and 09:50 the second part's first five.
+		expect(store.timeline()).toEqual([
+			{ range: '08:00-09:05', isRunning: false, slots: slotStarts('08:00', '09:05') },
+			{ range: '09:55-11:00', isRunning: false, slots: slotStarts('09:55', '11:00') }
+		]);
+		expect(store.slotCount()).toBe(14);
 	});
 
 	it('gives the second part the slot holding the range end when that end falls between seconds', async () => {
