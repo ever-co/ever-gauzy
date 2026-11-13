@@ -362,6 +362,12 @@ export class NewChannelDialogComponent implements OnInit, NewChannelContext {
 						{{ 'CHAT.DIALOG.DIRECT_WITH' | translate: { name: chosen()[0].name } }}
 					} @else if (chosen().length > 1) {
 						{{ 'CHAT.DIALOG.GROUP_OF' | translate: { count: chosen().length } }}
+					} @else {
+						<span class="keys" aria-hidden="true">
+							<span><kbd>↑</kbd><kbd>↓</kbd> {{ 'CHAT.DIALOG.KEY_MOVE' | translate }}</span>
+							<span><kbd>↵</kbd> {{ 'CHAT.DIALOG.KEY_ADD' | translate }}</span>
+							<span><kbd>Ctrl</kbd><kbd>↵</kbd> {{ 'CHAT.DIALOG.KEY_START' | translate }}</span>
+						</span>
 					}
 				</span>
 				<div class="actions">
@@ -646,6 +652,34 @@ export class NewChannelDialogComponent implements OnInit, NewChannelContext {
 				min-width: 0;
 				font-size: 0.8125rem;
 				opacity: 0.7;
+			}
+			.keys {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 0.25rem 0.75rem;
+			}
+			kbd {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				min-width: 1.125rem;
+				height: 1.125rem;
+				margin-right: 0.125rem;
+				padding: 0 0.25rem;
+				border: 1px solid var(--gauzy-border-default-color);
+				border-radius: 0.25rem;
+				background: transparent;
+				box-shadow: none;
+				color: inherit;
+				font-family: inherit;
+				font-size: 0.625rem;
+				font-weight: 600;
+				line-height: 1;
+			}
+			@media (max-width: 600px) {
+				.keys {
+					display: none;
+				}
 			}
 			.actions {
 				display: flex;
