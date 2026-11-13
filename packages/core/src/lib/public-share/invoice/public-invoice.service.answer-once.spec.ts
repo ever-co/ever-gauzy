@@ -8,7 +8,8 @@ import { PublicInvoiceService } from './public-invoice.service';
 /**
  * A client's answer to an estimate is written only when it changes the estimate's status, and the update's `affected`
  * count says so: the answer that changed it is the one the team is told of (`PublicInvoiceUpdateHandler`), once, even
- * when the same answer arrives twice at the same moment. Runs on a real better-sqlite3 database.
+ * when the same answer arrives twice at the same moment. Where the organization converts accepted estimates, the
+ * acceptance turns the estimate into a draft invoice, once, whatever its status. Runs on a real better-sqlite3 database.
  */
 
 const InvoiceSchema = new EntitySchema({
@@ -52,6 +53,20 @@ const answer = (status: string) =>
 	service.updateInvoice({ id: ESTIMATE, token } as never, { status } as never) as Promise<{ affected?: number }>;
 
 const statusNow = async () => (await invoices.findOneBy({ id: ESTIMATE })).status;
+
+/** The acceptance the public page sends where the organization converts accepted estimates. */
+const acceptAndConvert = () =>
+	service.updateInvoice(
+		{ id: ESTIMATE, token } as never,
+		{ status: 'DRAFT', isEstimate: false } as never
+	) as Promise<{
+		affected?: number;
+	}>;
+
+const documentNow = async () => {
+	const { status, isEstimate } = await invoices.findOneBy({ id: ESTIMATE });
+	return { status, isEstimate };
+};
 
 beforeAll(async () => {
 	dataSource = new DataSource({
@@ -131,5 +146,37 @@ describe('PublicInvoiceService.updateInvoice, a client answer to an estimate', (
 		await expect(answer('REJECTED')).resolves.toMatchObject({ affected: 1 });
 
 		expect(await statusNow()).toBe('REJECTED');
+	});
+});
+
+describe('PublicInvoiceService.updateInvoice, an acceptance where the organization converts accepted estimates', () => {
+	it('turns an estimate still in DRAFT into a draft invoice, as before', async () => {
+		await invoices.update({ id: ESTIMATE }, { status: 'DRAFT' });
+
+		await expect(acceptAndConvert()).resolves.toMatchObject({ affected: 1 });
+
+		expect(await documentNow()).toEqual({ status: 'DRAFT', isEstimate: false });
+	});
+
+	it('turns a sent estimate into a draft invoice once: converting it again changes no row', async () => {
+		await expect(acceptAndConvert()).resolves.toMatchObject({ affected: 1 });
+		await expect(acceptAndConvert()).resolves.toMatchObject({ affected: 0 });
+
+		expect(await documentNow()).toEqual({ status: 'DRAFT', isEstimate: false });
+	});
+
+	it('converts it once when the acceptance arrives twice at the same moment', async () => {
+		const results = await Promise.all([acceptAndConvert(), acceptAndConvert()]);
+
+		expect(results.map((result) => result.affected).sort()).toEqual([0, 1]);
+		expect(await documentNow()).toEqual({ status: 'DRAFT', isEstimate: false });
+	});
+
+	it('still converts a document stored with no estimate flag, as before', async () => {
+		await invoices.update({ id: ESTIMATE }, { isEstimate: null });
+
+		await expect(acceptAndConvert()).resolves.toMatchObject({ affected: 1 });
+
+		expect(await documentNow()).toEqual({ status: 'DRAFT', isEstimate: false });
 	});
 });
