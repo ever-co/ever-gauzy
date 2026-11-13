@@ -138,4 +138,9 @@ input TimerToggleInput {
 	(`TEAMS`, `MOBILE`) needs a plan for that day. Ignored unless it is today somewhere.
 	"""
 	planDay: String
+	"""
+	The running time log a stop or a toggle is for, as the client last saw it. When another log is the
+	running one, the stop is refused and that log goes on. A start ignores it.
+	"""
+	timeLogId: ID
 }

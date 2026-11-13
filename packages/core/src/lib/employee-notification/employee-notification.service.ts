@@ -19,6 +19,7 @@ import { LegacyFindManyOptions, LegacyFindOneOptions } from '../core/utils';
 import { redactDatabaseError } from '../core/errors/database-error';
 import { RequestContext } from '../core/context/request-context';
 import { EmployeeNotificationSettingService } from '../employee-notification-setting/employee-notification-setting.service';
+import { timerReminderHoursOf } from '../time-tracking/timer-reminder/timer-reminder.rules';
 import { EmployeeCreateNotificationEvent } from './events/employee-notification.event';
 import { EmployeeNotificationCreatedEvent } from './events/employee-notification-created.event';
 import { EmployeeNotificationUpdatedEvent } from './events/employee-notification-updated.event';
@@ -595,6 +596,9 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 						: undefined;
 				return taskUpdate !== false;
 			}
+			// A timer left running: switched off through the `preferences` JSON too (`timerReminderHours` null or 0).
+			case EmployeeNotificationTypeEnum.TIMER_REMINDER:
+				return timerReminderHoursOf(employeeNotificationSetting.preferences) !== null;
 			default:
 				throw new Error(`Unsupported notification type: ${type}`);
 		}

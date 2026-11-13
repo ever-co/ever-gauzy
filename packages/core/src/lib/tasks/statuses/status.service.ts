@@ -44,8 +44,8 @@ export class TaskStatusService extends TaskMetadataService<TaskStatus> {
 	 */
 	public async create(entity: IPartialEntity<TaskStatus>): Promise<ITaskStatus> {
 		try {
-			// Extract the template from the entity
-			const { template, ...partialEntity } = entity;
+			// Extract the template from the entity (with an uploaded icon stored as `withStoredIcon` completes it)
+			const { template, ...partialEntity } = await this.withStoredIcon(entity);
 
 			// Get the work flow for the template
 			const workFlow = TASK_STATUSES_TEMPLATES[template];

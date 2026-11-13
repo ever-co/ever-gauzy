@@ -1,7 +1,7 @@
 // Must stay first: see time-log.service.spec.ts.
 import '../../core/entities/internal';
 
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, ConflictException } from '@nestjs/common';
 import { PermissionsEnum, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
 import { singleRouteBody } from '../../api/bulk-create';
 import { BulkExecutor } from '../../api/bulk-executor.service';
@@ -9,12 +9,12 @@ import { FieldVisibility } from '../../api/field-visibility.service';
 import { RequestContext } from '../../core/context';
 import { OrganizationBelongsToUserConstraint } from '../../shared/validators/constraints/organization-belongs-to-user.constraint';
 import { OrganizationTeam } from '../../core/entities/internal';
-import { IGetConflictTimeLogCommand, TimeLogCreateCommand } from './commands';
+import { DeleteTimeSpanCommand, IGetConflictTimeLogCommand, TimeLogCreateCommand } from './commands';
 import { CreateManualTimeLogDTO } from './dto';
 import { TRACKING_FIELD_REQUIRED } from './organization-tracking-requirements';
 import { TimeLogController } from './time-log.controller';
 import { TimeLogResolver } from './time-log.resolver';
-import { TimeLogService } from './time-log.service';
+import { RUNNING_TIMER_OVERLAP, TimeLogService } from './time-log.service';
 
 /**
  * The desktop timer and the agent record time while offline, and upload it once back online: a timer stopped offline
@@ -80,8 +80,14 @@ const SEVERAL_TEAMS: IStoredContext = {
 	teamDefaultProjectId: null
 };
 
-function surfaces(stored: IStoredContext = SEVERAL_TEAMS) {
+/**
+ * @param stored The employee's teams and the projects of the task and of the team.
+ * @param overlapping The employee's logs the uploaded interval overlaps, as the conflict lookup reads them.
+ */
+function surfaces(stored: IStoredContext = SEVERAL_TEAMS, overlapping: Record<string, unknown>[] = []) {
 	const created: Record<string, unknown>[] = [];
+	/** The log of each slot the overlap cleanup was asked to clear. */
+	const trimmed: unknown[] = [];
 	const employeeRepository = {
 		findOne: jest.fn(async () => ({
 			id: EMPLOYEE,
@@ -92,7 +98,11 @@ function surfaces(stored: IStoredContext = SEVERAL_TEAMS) {
 	const commandBus = {
 		execute: jest.fn(async (command: unknown) => {
 			if (command instanceof IGetConflictTimeLogCommand) {
-				return [];
+				return overlapping;
+			}
+			if (command instanceof DeleteTimeSpanCommand) {
+				trimmed.push(command.timeLog.id);
+				return true;
 			}
 			if (command instanceof TimeLogCreateCommand) {
 				created.push(command.input as Record<string, unknown>);
@@ -136,7 +146,7 @@ function surfaces(stored: IStoredContext = SEVERAL_TEAMS) {
 
 	const resolver = new TimeLogResolver(service, commandBus as never, new BulkExecutor(visibility), guard as never);
 
-	return { created, controller, post, resolver };
+	return { created, trimmed, controller, post, resolver };
 }
 
 beforeEach(() => {
@@ -252,5 +262,43 @@ describe('POST /timesheet/time-log when the organization requires a team and a p
 		expect(error).toBeInstanceOf(BadRequestException);
 		expect(error.getResponse()).toMatchObject({ code: TRACKING_FIELD_REQUIRED });
 		expect(created).toHaveLength(0);
+	});
+});
+
+/**
+ * #11823 — the overlap cleanup never cuts a running log, so an upload over a timer that is still running (the
+ * employee's timer on another device) is refused with a 409. Both clients keep a refused upload and send it again at
+ * their next sync, and once that timer has stopped the upload is recorded, its range cleared from the stopped log.
+ */
+describe('POST /timesheet/time-log over a timer that is still running', () => {
+	/** The employee's timer, running since 10:30 with three heartbeats so far: inside the upload's 09:00–11:00. */
+	const runningTimer = {
+		id: 'running',
+		employeeId: EMPLOYEE,
+		organizationId: ORGANIZATION,
+		isRunning: true,
+		startedAt: new Date('2026-10-01T10:30:00.000Z'),
+		stoppedAt: new Date('2026-10-01T11:00:00.000Z'),
+		timeSlots: [{ id: 'running@10:30' }, { id: 'running@10:40' }, { id: 'running@10:50' }]
+	};
+
+	it('refuses the upload with a 409 and writes nothing, so the desktop keeps it for its next sync', async () => {
+		const { created, trimmed, post } = surfaces(SEVERAL_TEAMS, [runningTimer]);
+
+		const refusal = await post(desktopUpload).catch((caught) => caught);
+
+		expect(refusal).toBeInstanceOf(ConflictException);
+		expect(refusal.getResponse()).toMatchObject({ code: RUNNING_TIMER_OVERLAP });
+		expect(trimmed).toEqual([]);
+		expect(created).toHaveLength(0);
+	});
+
+	it('records the same upload at the sync after that timer stopped, clearing its range from the stopped log', async () => {
+		const { created, trimmed, post } = surfaces(SEVERAL_TEAMS, [{ ...runningTimer, isRunning: false }]);
+
+		await post(desktopUpload);
+
+		expect(trimmed).toEqual(['running', 'running', 'running']);
+		expect(created).toHaveLength(1);
 	});
 });

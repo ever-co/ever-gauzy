@@ -158,6 +158,8 @@ export interface IChatPerson {
 	userId: ID;
 	name: string;
 	imageUrl: string | null;
+	/** Their position in the organization (e.g. "Frontend Developer"), when one is set. */
+	position?: string | null;
 }
 
 export interface IChatMemberSummary {

@@ -1,7 +1,7 @@
 import { EventSubscriber } from 'typeorm';
 import { faker } from '@faker-js/faker';
 import { sluggable } from '@gauzy/utils';
-import { localFileUrl } from '../../core/file-storage/file-storage';
+import { iconFileUrl } from '../../image-asset/image-asset-icon';
 import { BaseEntityEventSubscriber } from '../../core/entities/subscribers/base-entity-event.subscriber';
 import { TaskStatus } from './status.entity';
 
@@ -54,14 +54,15 @@ export class TaskStatusSubscriber extends BaseEntityEventSubscriber<TaskStatus> 
 	}
 
 	/**
-	 * Sets the full icon URL for a `TaskStatus` entity, as served by the LOCAL file storage provider.
+	 * Sets the full icon URL for a `TaskStatus` entity: an uploaded icon from the provider that holds it, any other
+	 * icon as the LOCAL provider serves it (`iconFileUrl`).
 	 *
 	 * @param entity - The `TaskStatus` entity whose `fullIconUrl` needs to be set.
 	 * @returns A promise that resolves when the `fullIconUrl` is successfully set.
 	 */
 	private async setFullIconUrl(entity: TaskStatus): Promise<void> {
 		try {
-			entity.fullIconUrl = await localFileUrl(entity.icon);
+			entity.fullIconUrl = await iconFileUrl(entity.icon, entity.tenantId);
 		} catch (error) {
 			console.error('Error fetching the icon URL:', error);
 			throw error;

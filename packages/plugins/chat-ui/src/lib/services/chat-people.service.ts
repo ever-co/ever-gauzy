@@ -58,7 +58,8 @@ export function toPeople(records: readonly ChatPersonRecord[]): ChatPeople {
 			employeeId: String(record.employeeId),
 			userId: record.userId ? String(record.userId) : null,
 			name: record.name || String(record.employeeId),
-			imageUrl: record.imageUrl ?? null
+			imageUrl: record.imageUrl ?? null,
+			position: record.position?.trim() || undefined
 		};
 		byEmployee.set(person.employeeId, person);
 		if (person.userId) byUser.set(person.userId, person);

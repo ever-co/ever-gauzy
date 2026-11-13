@@ -1,3 +1,4 @@
+import { IUserUiPreferencesUpdateInput } from '@gauzy/contracts';
 import {
 	assertUiPreferencesSize,
 	MAX_UI_PREFERENCES_BYTES,
@@ -45,6 +46,15 @@ describe('ui-preferences.util', () => {
 			const current = { aiChat: { expanded: true } };
 			mergeUiPreferences(current, { aiChat: { expanded: false } });
 			expect(current).toEqual({ aiChat: { expanded: true } });
+		});
+
+		it("keeps the newsletter subscription a client's sign-up writes beside the other features (ever-co/ever-teams#5097)", () => {
+			const patch: IUserUiPreferencesUpdateInput = sanitizeUiPreferencesPatch({
+				newsletter: { subscribedAt: '2026-11-12T10:00:00.000Z', status: 'subscribed' }
+			});
+			const merged = mergeUiPreferences({ keyboard: { bindings: { save: 'mod+s' } } }, patch);
+			expect(merged.newsletter).toEqual({ subscribedAt: '2026-11-12T10:00:00.000Z', status: 'subscribed' });
+			expect(merged.keyboard).toEqual({ bindings: { save: 'mod+s' } });
 		});
 
 		it('ignores prototype-polluting feature keys', () => {

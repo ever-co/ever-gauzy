@@ -87,6 +87,7 @@ export const chatSchemaExtensions = gql`
 		userId: ID!
 		name: String!
 		imageUrl: String
+		position: String
 	}
 	type ChatReactionSummary {
 		emoji: String!

@@ -15,6 +15,8 @@ export interface ChatPerson {
 	userId: string | null;
 	name: string;
 	imageUrl: string | null;
+	/** Their position in the organization (e.g. "Frontend Developer"), when one is set. */
+	position?: string | null;
 }
 
 /** One piece of a rendered body: plain text, or a mention chip. */
@@ -465,6 +467,15 @@ export function isSameDay(a: Date | string | number, b: Date | string | number):
 /** Whether a conversation counts as unread for the list and the badges. */
 export function isUnread(conversation: Pick<IChatConversationWithState, 'state'>): boolean {
 	return (conversation.state?.unreadCount ?? 0) > 0 || (conversation.state?.mentionCount ?? 0) > 0;
+}
+
+/**
+ * Whether anything was ever written in a conversation. A direct or group conversation exists from the moment it is
+ * opened (from a person's page, the "New message" dialog), but the sidebar lists it only once it holds a message.
+ * My read marker counts too: it moves as soon as my own first message is sent, before the list is read again.
+ */
+export function hasMessages(conversation: Pick<IChatConversationWithState, 'messageCount' | 'lastMessageAt' | 'state'>): boolean {
+	return (conversation.messageCount ?? 0) > 0 || !!conversation.lastMessageAt || !!conversation.state?.lastReadMessageId;
 }
 
 /** The conversations in sidebar order: favourites, then by the newest message. */
