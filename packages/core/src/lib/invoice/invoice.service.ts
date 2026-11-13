@@ -8,6 +8,8 @@ import {
 	DecimalString,
 	ID,
 	IInvoice,
+	IInvoiceCreateInput,
+	IInvoiceItemCreateInput,
 	IOrganization,
 	InvoiceStats,
 	LanguagesEnum
@@ -27,6 +29,7 @@ import { OrganizationService } from './../organization';
 import { TypeOrmInvoiceRepository } from './repository/type-orm-invoice.repository';
 import { MikroOrmInvoiceRepository } from './repository/mikro-orm-invoice.repository';
 import { FavoriteService } from '../core/decorators';
+import { saveBillingTime, splitBilledTime } from '../invoice-item/invoice-item-billed-time';
 
 /**
  * What sending a document by e-mail did.
@@ -73,6 +76,35 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 		private readonly organizationService: OrganizationService
 	) {
 		super(typeOrmInvoiceRepository, mikroOrmInvoiceRepository);
+	}
+
+	/**
+	 * Creates an invoice and writes, on each time log a line names in `timeLogIds`, the line that bills it, in the
+	 * transaction that saves the invoice and its lines (see `saveBillingTime`). An invoice whose lines bill no time is
+	 * created as `create()` creates it.
+	 *
+	 * @param input The invoice and its lines, as the create route and the GraphQL mutation state them.
+	 * @returns The invoice created, with its lines.
+	 * @throws BadRequestException when a line names a time log it may not bill; nothing is saved.
+	 */
+	async createWithBilledTime(
+		input: IInvoiceCreateInput & { invoiceItems?: IInvoiceItemCreateInput[] }
+	): Promise<IInvoice> {
+		if (!input.invoiceItems) {
+			return await this.create(input);
+		}
+		const { lines, billing } = splitBilledTime(input.invoiceItems);
+		const invoice = { ...input, invoiceItems: lines };
+		if (billing.length === 0) {
+			return await this.create(invoice);
+		}
+		return await saveBillingTime(
+			this,
+			{ typeOrm: this.typeOrmRepository, mikroOrm: this.mikroOrmRepository },
+			(service) => service.create(invoice),
+			(created) => created.invoiceItems,
+			billing
+		);
 	}
 
 	/**

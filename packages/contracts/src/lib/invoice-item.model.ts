@@ -1,4 +1,4 @@
-import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
 import { IEmployee } from './employee.model';
 import { IExpense } from './expense.model';
 import { IInvoice } from './invoice.model';
@@ -45,4 +45,6 @@ export interface IInvoiceItemCreateInput
 	expenseId?: string;
 	applyTax?: boolean;
 	applyDiscount?: boolean;
+	/** The time logs the line bills, recorded with the line by the invoice create and the bulk save of lines. */
+	timeLogIds?: ID[];
 }
