@@ -27,7 +27,7 @@ import {
 } from '@gauzy/contracts';
 import { Employee } from '@gauzy/core';
 import { directKeyOf } from '../chat-direct-key';
-import { chatPresenceOf } from '../chat-presence';
+import { ChatPublishedPresence, chatPresenceOf, REALTIME_PRESENCE_ENTITY, REALTIME_PUBLISHED_PRESENCE_KEY } from '../chat-presence';
 import { CHAT_MAX_STATES, CHAT_PEOPLE_MAX } from '../chat.constants';
 import { ChatCategory } from '../entities/chat-category.entity';
 import { ChatConversation } from '../entities/chat-conversation.entity';
@@ -661,6 +661,7 @@ export class ChatConversationService {
 			relations: { user: true, organizationPosition: true },
 			take: CHAT_PEOPLE_MAX
 		});
+		const published = await this.publishedPresence(caller.tenantId, caller.organizationId);
 		const now = new Date();
 		return employees
 			.filter((employee) => !!employee.userId)
@@ -673,11 +674,31 @@ export class ChatConversationService {
 					name: full || user?.name || String(employee.id),
 					imageUrl: user?.imageUrl ?? null,
 					position: employee.organizationPosition?.name?.trim() || null,
-					presence: chatPresenceOf(employee, now),
+					presence: chatPresenceOf({ ...employee, published: published.get(String(employee.id)) }, now),
 					lastSeenAt: employee.lastSeenAt ?? null
 				};
 			})
 			.sort((a, b) => a.name.localeCompare(b.name));
+	}
+
+	/**
+	 * The merged presence the realtime plugin holds for each employee of the organization (its published row, `offline`
+	 * included), when that plugin is loaded; none otherwise, or when the read fails (presence is never worth failing
+	 * the people list for).
+	 */
+	private async publishedPresence(tenantId: ID, organizationId: ID): Promise<Map<string, ChatPublishedPresence>> {
+		const published = new Map<string, ChatPublishedPresence>();
+		if (typeof this.dataSource.hasMetadata !== 'function' || !this.dataSource.hasMetadata(REALTIME_PRESENCE_ENTITY)) return published;
+		try {
+			const rows = await this.dataSource.getRepository<{ employeeId: ID; status: string; updatedAt?: Date }>(REALTIME_PRESENCE_ENTITY).find({
+				select: { employeeId: true, status: true, updatedAt: true },
+				where: { tenantId, organizationId, connectionId: REALTIME_PUBLISHED_PRESENCE_KEY } as never
+			});
+			for (const row of rows) published.set(String(row.employeeId), { status: row.status, at: row.updatedAt ?? null });
+		} catch (error) {
+			this.logger.warn(`The published presence was not read: ${(error as Error)?.message}`);
+		}
+		return published;
 	}
 
 	/** The active employees of the tenant (and of one organization, when stated) among the ids. */
