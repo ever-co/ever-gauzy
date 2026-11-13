@@ -74,6 +74,8 @@ export interface ChatPersonRecord {
 	userId: ID;
 	name: string;
 	imageUrl: string | null;
+	/** Their position in the organization, when the API sends one. */
+	position?: string | null;
 }
 
 /**

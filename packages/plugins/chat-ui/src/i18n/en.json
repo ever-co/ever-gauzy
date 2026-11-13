@@ -190,6 +190,7 @@
 		"NO_CATEGORY": "No category",
 		"MEMBERS": "Members ({{count}})",
 		"MANAGER": "Manager",
+		"MEMBER": "Member",
 		"REMOVE": "Remove from the conversation",
 		"REMOVE_NAMED": "Remove {{name}} from the conversation",
 		"REMOVE_CONFIRM": "Remove {{name}} from this conversation?",
@@ -198,8 +199,17 @@
 		"GROUP_FULL": "A group holds at most {{max}} people.",
 		"DEFAULT_NOTE": "Every employee is in this channel.",
 		"SAVE": "Save",
-		"TAB_SETTINGS": "Settings",
-		"TAB_INTEGRATIONS": "Integrations"
+		"TAB_SETTINGS": "About",
+		"TAB_MEMBERS": "Members",
+		"TAB_INTEGRATIONS": "Integrations",
+		"READ_ONLY": "Only the managers of this conversation can change these settings.",
+		"NAME_REQUIRED": "A channel needs a name.",
+		"TOPIC_PLACEHOLDER": "Add a topic",
+		"TOPIC_HINT": "Shown under the name in the conversation header.",
+		"PRIVATE_ON": "Only the people added to it can see and join it.",
+		"PRIVATE_OFF": "Anyone in the organization can find and join it.",
+		"FIND_MEMBERS": "Find members",
+		"YOU": "you"
 	},
 	"CATEGORIES": {
 		"TITLE": "Channel categories",

@@ -637,17 +637,22 @@ export class ChatConversationService {
 	}
 
 	/**
-	 * The people chat shows: the active employees of the caller's organization with the name and picture a chat
-	 * user may see (no email, no rate, no settings). Every holder of `CHAT_VIEW` may read it, which the employee
+	 * The people chat shows: the active employees of the caller's organization with the name, picture and position a
+	 * chat user may see (no email, no rate, no settings). Every holder of `CHAT_VIEW` may read it, which the employee
 	 * routes of the platform do not allow: they need `ORG_EMPLOYEES_VIEW`, which an ordinary employee lacks.
 	 */
 	async people(caller: IChatCaller): Promise<IChatPerson[]> {
 		if (!caller.organizationId) return [];
 		const employees = await this.dataSource.getRepository(Employee).find({
 			// `user.name` is built after the load (a virtual column), never selected.
-			select: { id: true, userId: true, user: { id: true, firstName: true, lastName: true, imageUrl: true } } as never,
+			select: {
+				id: true,
+				userId: true,
+				user: { id: true, firstName: true, lastName: true, imageUrl: true },
+				organizationPosition: { id: true, name: true }
+			} as never,
 			where: { tenantId: caller.tenantId, organizationId: caller.organizationId, isActive: true, isArchived: false },
-			relations: { user: true },
+			relations: { user: true, organizationPosition: true },
 			take: CHAT_PEOPLE_MAX
 		});
 		return employees
@@ -659,7 +664,8 @@ export class ChatConversationService {
 					employeeId: employee.id as ID,
 					userId: employee.userId as ID,
 					name: full || user?.name || String(employee.id),
-					imageUrl: user?.imageUrl ?? null
+					imageUrl: user?.imageUrl ?? null,
+					position: employee.organizationPosition?.name?.trim() || null
 				};
 			})
 			.sort((a, b) => a.name.localeCompare(b.name));

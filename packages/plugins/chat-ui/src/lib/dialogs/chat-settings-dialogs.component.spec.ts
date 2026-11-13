@@ -24,7 +24,7 @@ const ME = 'e-me';
 const ANNA = 'e-anna';
 const BOB = 'e-bob';
 const person = (employeeId: string, name: string): ChatPerson => ({ employeeId, userId: `u-${employeeId}`, name, imageUrl: null });
-const people = [person(ME, 'Me'), person(ANNA, 'Anna'), person(BOB, 'Bob')];
+const people = [{ ...person(ME, 'Me'), position: 'Designer' }, person(ANNA, 'Anna'), person(BOB, 'Bob')];
 const PEOPLE = { byEmployee: new Map(people.map((item) => [item.employeeId, item])), byUser: new Map(), list: people };
 
 function channel(extra: Partial<IChatConversationWithState> = {}): IChatConversationWithState {
@@ -95,7 +95,7 @@ describe('ChannelSettingsDialogComponent', () => {
 	const dialog = () => fixture.componentInstance as unknown as Record<string, any>;
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const panel = () => fixture.debugElement.query(By.directive(ChatWebhooksPanelComponent)).componentInstance as unknown as Record<string, any>;
-	const tabTo = (tab: 'settings' | 'integrations') => {
+	const tabTo = (tab: 'settings' | 'members' | 'integrations') => {
 		(fixture.nativeElement.querySelector(`[data-test="tab-${tab}"]`) as HTMLButtonElement).click();
 		fixture.detectChanges();
 	};
@@ -112,13 +112,13 @@ describe('ChannelSettingsDialogComponent', () => {
 		expect(fixture.nativeElement.querySelector('[data-test="settings-members"]')).toBeNull();
 	});
 
-	it('keeps the Integrations tab while Settings shows, so a webhook made there is still listed on return', async () => {
+	it('keeps the Integrations tab while another tab shows, so a webhook made there is still listed on return', async () => {
 		await open({}, 'on');
 		webhooksApi.create.mockReturnValue(of({ webhook: webhook('w-1', 'CI'), url: 'https://api.example.com/api/chat/hooks/s', signingSecret: 'k' }));
 		tabTo('integrations');
 		panel().patch({ name: 'CI' });
 		panel().create();
-		tabTo('settings');
+		tabTo('members');
 		expect(fixture.nativeElement.querySelector('[data-test="settings-members"]')).not.toBeNull();
 		expect((fixture.nativeElement.querySelector('ngx-chat-webhooks-panel') as HTMLElement).hidden).toBe(true);
 		tabTo('integrations');
@@ -323,12 +323,20 @@ describe('ChannelSettingsDialogComponent', () => {
 		await open({}, 'on');
 		const tabs = fixture.nativeElement.querySelector('[data-test="settings-tabs"]') as HTMLElement;
 		const settingsTab = fixture.nativeElement.querySelector('[data-test="tab-settings"]') as HTMLButtonElement;
+		const membersTab = fixture.nativeElement.querySelector('[data-test="tab-members"]') as HTMLButtonElement;
 		const integrationsTab = fixture.nativeElement.querySelector('[data-test="tab-integrations"]') as HTMLButtonElement;
 		const panelId = settingsTab.getAttribute('aria-controls') as string;
 		expect(fixture.nativeElement.querySelector(`#${panelId}`)?.getAttribute('role')).toBe('tabpanel');
 		expect(settingsTab.getAttribute('tabindex')).toBe('0');
+		expect(membersTab.getAttribute('tabindex')).toBe('-1');
 		expect(integrationsTab.getAttribute('tabindex')).toBe('-1');
 		tabs.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+		fixture.detectChanges();
+		expect(dialog().tab()).toBe('members');
+		expect(document.activeElement).toBe(membersTab);
+		const membersPanel = fixture.nativeElement.querySelector(`#${membersTab.getAttribute('aria-controls')}`) as HTMLElement;
+		expect(membersPanel.getAttribute('aria-labelledby')).toBe(membersTab.id);
+		tabs.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true }));
 		fixture.detectChanges();
 		expect(dialog().tab()).toBe('integrations');
 		expect(document.activeElement).toBe(integrationsTab);
@@ -360,20 +368,44 @@ describe('ChannelSettingsDialogComponent', () => {
 
 	it('shows no Integrations tab where webhooks are off', async () => {
 		await open({});
-		expect(fixture.nativeElement.querySelector('[data-test="settings-tabs"]')).toBeNull();
+		expect(fixture.nativeElement.querySelector('[data-test="tab-settings"]')).not.toBeNull();
+		expect(fixture.nativeElement.querySelector('[data-test="tab-members"]')).not.toBeNull();
+		expect(fixture.nativeElement.querySelector('[data-test="tab-integrations"]')).toBeNull();
 	});
 
 	it('does not ask for webhooks of a channel I do not manage', async () => {
 		await open({ canManage: false }, 'on');
 		expect(webhooksApi.list).not.toHaveBeenCalled();
-		expect(fixture.nativeElement.querySelector('[data-test="settings-tabs"]')).toBeNull();
+		expect(fixture.nativeElement.querySelector('[data-test="tab-integrations"]')).toBeNull();
+		expect(fixture.nativeElement.querySelector('[data-test="settings-read-only"]')).not.toBeNull();
+	});
+
+	it('opens on the Members tab from the member count', async () => {
+		await open({ section: 'members' });
+		expect(dialog().tab()).toBe('members');
+		expect(fixture.nativeElement.querySelector('[data-test="settings-members"]')).not.toBeNull();
+		expect(fixture.nativeElement.querySelector('[data-test="settings-name"]')).toBeNull();
+	});
+
+	it('narrows the members to the search, and says when nobody matches', async () => {
+		await open({ section: 'members' });
+		dialog().memberQuery.set('ann');
+		fixture.detectChanges();
+		expect(dialog().shownMembers().map((member: { name: string }) => member.name)).toEqual(['Anna']);
+		dialog().memberQuery.set('zed');
+		fixture.detectChanges();
+		expect(fixture.nativeElement.querySelector('[data-test="settings-members-empty"]')).not.toBeNull();
 	});
 
 	it('lists the members, managers first, and offers the people not in yet', async () => {
 		await open({});
+		tabTo('members');
 		expect(api.members).toHaveBeenCalledWith('c1');
 		expect(dialog().members().map((member: { name: string }) => member.name)).toEqual(['Me', 'Anna']);
 		expect(dialog().addable().map((item: ChatPerson) => item.name)).toEqual(['Bob']);
+		// Each row says the person's position where one is set, and their role.
+		const meta = [...fixture.nativeElement.querySelectorAll('[data-test="member-meta"]')].map((item) => (item as HTMLElement).textContent?.replace(/\s+/g, ' ').trim());
+		expect(meta).toEqual(['Designer · CHAT.SETTINGS.MANAGER', 'CHAT.SETTINGS.MEMBER']);
 		// I am not offered to remove myself (that is leaving).
 		expect(fixture.nativeElement.querySelector(`[data-test="remove-member-${ME}"]`)).toBeNull();
 		expect(fixture.nativeElement.querySelector(`[data-test="remove-member-${ANNA}"]`)).not.toBeNull();
