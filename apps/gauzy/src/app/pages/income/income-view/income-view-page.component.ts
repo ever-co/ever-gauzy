@@ -146,6 +146,12 @@ export class IncomeViewPageComponent extends TranslationBaseComponent implements
 	private readonly store = inject(Store);
 	private readonly cdr = inject(ChangeDetectorRef);
 
+	// Explicit, so the compiler does not inherit the undecorated base class's constructor (NG2006); the base injects
+	// the TranslateService itself when it is given none.
+	constructor() {
+		super();
+	}
+
 	readonly PermissionsEnum = PermissionsEnum;
 	readonly favoriteEntity = BaseEntityEnum.Income;
 	readonly backLink = INCOME_LIST_LINK;
