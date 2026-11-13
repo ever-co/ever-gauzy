@@ -5657,6 +5657,31 @@
 			"COPY": "{{ name }} kopiëren"
 		}
 	},
+	"DOWNLOADS_PAGE": {
+		"TITLE": "Downloads",
+		"HEADLINE": "Houd tijd bij, waar je ook werkt",
+		"DESKTOP": {
+			"TITLE": "Desktop",
+			"DESCRIPTION": "Houd tijd bij vanaf je computer met de desktoptimer en houd je urenstaten gesynchroniseerd met de webapp.",
+			"DOWNLOAD_FOR": "Downloaden voor {{platform}}",
+			"ALSO_FOR": "Ook beschikbaar voor"
+		},
+		"MOBILE": {
+			"TITLE": "Mobiel",
+			"DESCRIPTION": "Start de timer, bekijk je taken en je uren onderweg.",
+			"PLATFORMS": "iOS en Android",
+			"DOWNLOAD": "Downloaden"
+		},
+		"EXTENSION": {
+			"TITLE": "Browserextensie",
+			"DESCRIPTION": "Start en stop de timer vanuit elk tabblad, zonder de webapp te openen.",
+			"INSTALL": "Installeren"
+		},
+		"ILLUSTRATION": {
+			"THIS_WEEK": "Deze week"
+		},
+		"ALL_DOWNLOADS": "Alle downloads bekijken"
+	},
 	"FOOTER": {
 		"BY": "door",
 		"RIGHTS_RESERVED": "Alle rechten voorbehouden.",

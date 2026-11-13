@@ -5657,6 +5657,31 @@
 			"COPY": "Copiar {{ name }}"
 		}
 	},
+	"DOWNLOADS_PAGE": {
+		"TITLE": "Downloads",
+		"HEADLINE": "Registre o tempo onde quer que você trabalhe",
+		"DESKTOP": {
+			"TITLE": "Desktop",
+			"DESCRIPTION": "Registre o tempo no seu computador com o temporizador para desktop e mantenha suas planilhas de horas sincronizadas com o aplicativo web.",
+			"DOWNLOAD_FOR": "Baixar para {{platform}}",
+			"ALSO_FOR": "Também disponível para"
+		},
+		"MOBILE": {
+			"TITLE": "Celular",
+			"DESCRIPTION": "Inicie o temporizador, confira suas tarefas e veja suas horas onde estiver.",
+			"PLATFORMS": "iOS e Android",
+			"DOWNLOAD": "Baixar"
+		},
+		"EXTENSION": {
+			"TITLE": "Extensão do navegador",
+			"DESCRIPTION": "Inicie e pare o temporizador em qualquer aba, sem abrir o aplicativo web.",
+			"INSTALL": "Instalar"
+		},
+		"ILLUSTRATION": {
+			"THIS_WEEK": "Esta semana"
+		},
+		"ALL_DOWNLOADS": "Ver todos os downloads"
+	},
 	"FOOTER": {
 		"BY": "by",
 		"RIGHTS_RESERVED": "Todos os direitos reservados.",

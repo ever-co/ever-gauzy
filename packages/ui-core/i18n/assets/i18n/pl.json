@@ -5656,6 +5656,31 @@
 			"COPY": "Kopiuj {{ name }}"
 		}
 	},
+	"DOWNLOADS_PAGE": {
+		"TITLE": "Pobieranie",
+		"HEADLINE": "Śledź czas wszędzie, gdzie pracujesz",
+		"DESKTOP": {
+			"TITLE": "Komputer",
+			"DESCRIPTION": "Śledź czas na komputerze za pomocą timera desktopowego i synchronizuj karty czasu pracy z aplikacją webową.",
+			"DOWNLOAD_FOR": "Pobierz dla {{platform}}",
+			"ALSO_FOR": "Dostępne także dla"
+		},
+		"MOBILE": {
+			"TITLE": "Telefon",
+			"DESCRIPTION": "Uruchamiaj timer, sprawdzaj zadania i swoje godziny w drodze.",
+			"PLATFORMS": "iOS i Android",
+			"DOWNLOAD": "Pobierz"
+		},
+		"EXTENSION": {
+			"TITLE": "Rozszerzenie przeglądarki",
+			"DESCRIPTION": "Uruchamiaj i zatrzymuj timer z dowolnej karty, bez otwierania aplikacji webowej.",
+			"INSTALL": "Zainstaluj"
+		},
+		"ILLUSTRATION": {
+			"THIS_WEEK": "Ten tydzień"
+		},
+		"ALL_DOWNLOADS": "Zobacz wszystkie pliki do pobrania"
+	},
 	"FOOTER": {
 		"BY": "przez",
 		"RIGHTS_RESERVED": "Wszelkie prawa zastrzeżone",

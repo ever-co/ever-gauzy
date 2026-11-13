@@ -5419,6 +5419,31 @@
 			"COPY": "Copy {{ name }}"
 		}
 	},
+	"DOWNLOADS_PAGE": {
+		"TITLE": "Gam",
+		"HEADLINE": "Lub kare ka mo keken ma itiyo iye",
+		"DESKTOP": {
+			"TITLE": "Kompiuta",
+			"DESCRIPTION": "Lub kare ki kompiuta ni ki timer me desktop, ci timesheet ni bedo marwate ki web app.",
+			"DOWNLOAD_FOR": "Gam pi {{platform}}",
+			"ALSO_FOR": "Tye bene pi"
+		},
+		"MOBILE": {
+			"TITLE": "Cim",
+			"DESCRIPTION": "Cak timer, nen tic ni ki cawa ni ka i tye ka wot.",
+			"PLATFORMS": "iOS ki Android",
+			"DOWNLOAD": "Gam"
+		},
+		"EXTENSION": {
+			"TITLE": "Lamed me browser",
+			"DESCRIPTION": "Cak dok juk timer ki i tab mo keken, labongo yabo web app.",
+			"INSTALL": "Ket"
+		},
+		"ILLUSTRATION": {
+			"THIS_WEEK": "Cabit man"
+		},
+		"ALL_DOWNLOADS": "Nen gam weng"
+	},
 	"FOOTER": {
 		"BY": "crwdns292:0crwdne292:0",
 		"RIGHTS_RESERVED": "crwdns8420:0crwdne8420:0",

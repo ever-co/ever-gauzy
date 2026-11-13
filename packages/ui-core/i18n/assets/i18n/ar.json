@@ -5655,6 +5655,31 @@
 			"COPY": "نسخ {{ name }}"
 		}
 	},
+	"DOWNLOADS_PAGE": {
+		"TITLE": "التنزيلات",
+		"HEADLINE": "تتبّع الوقت أينما تعمل",
+		"DESKTOP": {
+			"TITLE": "سطح المكتب",
+			"DESCRIPTION": "تتبّع الوقت من حاسوبك باستخدام مؤقت سطح المكتب، وابقِ جداول ساعاتك متزامنة مع تطبيق الويب.",
+			"DOWNLOAD_FOR": "تنزيل لنظام {{platform}}",
+			"ALSO_FOR": "متوفر أيضًا لـ"
+		},
+		"MOBILE": {
+			"TITLE": "الجوال",
+			"DESCRIPTION": "شغّل المؤقت وراجع مهامك واطّلع على ساعاتك أثناء التنقل.",
+			"PLATFORMS": "iOS وAndroid",
+			"DOWNLOAD": "تنزيل"
+		},
+		"EXTENSION": {
+			"TITLE": "إضافة المتصفح",
+			"DESCRIPTION": "شغّل المؤقت وأوقفه من أي تبويب دون فتح تطبيق الويب.",
+			"INSTALL": "تثبيت"
+		},
+		"ILLUSTRATION": {
+			"THIS_WEEK": "هذا الأسبوع"
+		},
+		"ALL_DOWNLOADS": "عرض كل التنزيلات"
+	},
 	"FOOTER": {
 		"BY": "قبل",
 		"RIGHTS_RESERVED": "جميع الحقوق محفوظة.",
