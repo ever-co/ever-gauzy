@@ -3,7 +3,7 @@ jest.mock('@gauzy/ui-core/core', () => ({ Store: class Store {}, ToastrService: 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NbDialogRef } from '@nebular/theme';
-import { of, Subject, throwError } from 'rxjs';
+import { NEVER, of, Subject, throwError } from 'rxjs';
 import {
 	ChatConversationKindEnum,
 	ChatMemberRoleEnum,
@@ -19,6 +19,7 @@ import { ChatUiService } from '../services/chat-ui.service';
 import { ChatWebhooksService } from '../services/chat-webhooks.service';
 import { CategoriesDialogComponent, ChannelSettingsContext, ChannelSettingsDialogComponent } from './chat-settings-dialogs.component';
 import { ChatWebhooksPanelComponent } from './chat-webhooks-panel.component';
+import { ChatPresenceService } from '../services/chat-presence.service';
 
 const ME = 'e-me';
 const ANNA = 'e-anna';
@@ -81,6 +82,7 @@ describe('ChannelSettingsDialogComponent', () => {
 			imports: [ChannelSettingsDialogComponent],
 			providers: [
 				{ provide: ChatUiService, useValue: api },
+				{ provide: ChatPresenceService, useValue: { presenceOf: () => 'offline', lastSeenOf: () => null, watch: () => NEVER, apply: () => undefined, applyList: () => undefined } },
 				{ provide: ChatWebhooksService, useValue: webhooksApi },
 				{ provide: NbDialogRef, useValue: { close, onBackdropClick: backdrop } }
 			]
@@ -545,6 +547,7 @@ describe('CategoriesDialogComponent', () => {
 			imports: [CategoriesDialogComponent],
 			providers: [
 				{ provide: ChatUiService, useValue: api },
+				{ provide: ChatPresenceService, useValue: { presenceOf: () => 'offline', lastSeenOf: () => null, watch: () => NEVER, apply: () => undefined, applyList: () => undefined } },
 				{ provide: NbDialogRef, useValue: { close } }
 			]
 		}).compileComponents();
