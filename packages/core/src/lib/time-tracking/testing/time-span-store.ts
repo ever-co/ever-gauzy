@@ -78,6 +78,12 @@ function asDependency<T>(double: unknown): T {
 	return double as T;
 }
 
+/** The ids a `where` names: one id, or the values of an `In(...)`. */
+function idsNamedBy(id: unknown): unknown[] {
+	const values = (id as { value?: unknown })?.value ?? id;
+	return [values].flat();
+}
+
 /**
  * The time logs and time slots of one employee, and the links between them, behind the repositories and the command
  * bus of the handlers that take a span of time out of a log: DeleteTimeSpanHandler, and the TimeLogUpdateHandler,
@@ -345,8 +351,8 @@ export class TimeSpanStore {
 		return log;
 	}
 
-	private deleteTimeLogs(ids: unknown): void {
-		const deleted = new Set([ids].flat());
+	private deleteTimeLogs(id: unknown): void {
+		const deleted = new Set(idsNamedBy(id));
 		for (const log of this.timeLogs) {
 			if (deleted.has(log.id)) {
 				log.deletedAt = new Date();
@@ -397,15 +403,42 @@ export class TimeSpanStore {
 		return query;
 	}
 
-	/** `relation(TimeSlot, 'timeLogs').of(slot)`: the join rows of one slot. */
-	private linksOf(slotId: string) {
-		const slot = this.timeSlots.find((stored) => stored.id === slotId);
+	/** `relation(TimeSlot, 'timeLogs').of(slots)`: the join rows of one slot or several. */
+	private linksOf(slotIds: string | string[]) {
+		const ids = [slotIds].flat();
+		const slots = this.timeSlots.filter((stored) => ids.includes(stored.id));
 		return {
 			remove: (timeLogId: string) => {
-				slot.timeLogs = slot.timeLogs.filter((link) => link.id !== timeLogId);
+				for (const slot of slots) {
+					slot.timeLogs = slot.timeLogs.filter((link) => link.id !== timeLogId);
+				}
+				return Promise.resolve();
+			},
+			add: (timeLogId: string) => {
+				for (const slot of slots) {
+					slot.timeLogs = [...slot.timeLogs, { id: timeLogId }];
+				}
 				return Promise.resolve();
 			}
 		};
+	}
+
+	/**
+	 * The slots a `find` by id reads, each with the logs that still hold it when they are joined; a deleted slot is not
+	 * read.
+	 *
+	 * @param options - The `where` naming the ids, and the relations joined.
+	 */
+	private timeSlotsById(options: {
+		where: { id: unknown };
+		relations?: { timeLogs?: boolean };
+	}): Array<ITimeSlot | StoredTimeSlot> {
+		const ids = idsNamedBy(options.where.id);
+		const live = this.timeSlots.filter((slot) => !slot.deletedAt && ids.includes(slot.id));
+		if (options.relations?.timeLogs) {
+			return live.map((slot) => this.joinedTimeSlot(slot));
+		}
+		return live.map((slot) => this.loadedTimeSlot(slot));
 	}
 
 	private timeLogRepository() {
@@ -417,14 +450,16 @@ export class TimeSpanStore {
 				return Promise.resolve({ affected: 1 });
 			},
 			save: (log: TimeLog) => Promise.resolve(this.saveTimeLog(log)),
-			softDelete: ({ id }: { id: { value: unknown } }) => Promise.resolve(this.deleteTimeLogs(id.value)),
-			delete: ({ id }: { id: { value: unknown } }) => Promise.resolve(this.deleteTimeLogs(id.value))
+			softDelete: ({ id }: { id: unknown }) => Promise.resolve(this.deleteTimeLogs(id)),
+			delete: ({ id }: { id: unknown }) => Promise.resolve(this.deleteTimeLogs(id))
 		};
 	}
 
 	private timeSlotRepository() {
 		return {
 			createQueryBuilder: () => this.timeSlotQuery(),
+			find: (options: { where: { id: unknown }; relations?: { timeLogs?: boolean } }) =>
+				Promise.resolve(this.timeSlotsById(options)),
 			update: ({ id }: { id: string }, changes: Partial<StoredTimeSlot>) => {
 				const slot = this.timeSlots.find((stored) => stored.id === id);
 				Object.assign(slot, changes);

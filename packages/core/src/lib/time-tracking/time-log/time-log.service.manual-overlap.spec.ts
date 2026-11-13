@@ -150,16 +150,16 @@ describe('TimeLogService: manual time over another entry of the same member', ()
 
 	/**
 	 * A split saves the copy of the entry's time after the new one, then shortens the entry. A failed shortening was
-	 * logged and the manual entry saved anyway, over an entry still holding that time.
+	 * logged and the manual entry saved anyway, over an entry still holding that time. The split is now undone, and
+	 * the manual time refused.
 	 */
-	it('manual time is refused, and not saved, when the entry it splits cannot be shortened', async () => {
+	it('manual time is refused, and the entry left whole, when the entry it splits cannot be shortened', async () => {
 		store.addTimeLog('manual', '10:00', '13:00', MANUAL_ENTRY);
 		store.failOn(TimeLogUpdateCommand);
 
 		await expect(addManualTime('11:00', '12:00')).rejects.toThrow('The database connection was lost');
 
-		const starts = store.shapes().map(([start]) => start);
-		expect(starts).not.toContain('11:00');
+		expect(store.shapes()).toEqual([['10:00', '13:00', slotStarts('10:00', '13:00')]]);
 	});
 
 	it('an entry starting inside the new one keeps its time after it', async () => {
