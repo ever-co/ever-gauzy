@@ -1,7 +1,8 @@
 // cspell:ignore Здравейте Потвърдете
 import { FindOperator } from 'typeorm';
+import { environment } from '@gauzy/config';
 import { LanguagesEnum } from '@gauzy/contracts';
-import { EmailTemplateRenderService } from './email-template-render.service';
+import { EmailTemplateRenderService, withDefaultBranding } from './email-template-render.service';
 import { SMTPUtils } from './utils';
 
 /**
@@ -135,5 +136,91 @@ describe('EmailTemplateRenderService locale fallback', () => {
 				service.render('email-verification/html', { locale: 'es', tenantId, name: 'Ana' })
 			).resolves.toBe('<p>Hello Ana (en)</p>');
 		});
+	});
+});
+
+/**
+ * Only some senders pass the app's branding to their template. The team invitation, the timesheet, invoice and
+ * Inbox emails pass none, and their templates then printed a logo without a source and a footer without a name.
+ */
+describe('EmailTemplateRenderService default branding', () => {
+	const DEPLOYMENT = {
+		appName: 'Gauzy',
+		appLogo: 'https://app.gauzy.co/assets/images/logos/logo_Gauzy.png',
+		appSignature: 'Gauzy Team',
+		appLink: 'https://app.gauzy.co/',
+		appEmailConfirmationUrl: 'https://app.gauzy.co/#/auth/confirm-email',
+		appMagicSignUrl: 'https://app.gauzy.co/#/auth/magic-sign-in',
+		companyLink: 'https://ever.co',
+		companyName: 'Ever Co. LTD'
+	};
+	const BRANDED: Row[] = [
+		{
+			name: 'invite-gauzy-teams/html',
+			languageCode: 'en',
+			...GLOBAL,
+			hbs: '<img src="{{appLogo}}" alt="{{appName}}"><p>{{teams}}</p><p>{{appSignature}}</p><a href="{{appLink}}">{{appName}}</a> <a href="{{companyLink}}">{{companyName}}</a>'
+		},
+		{ name: 'invite-gauzy-teams/subject', languageCode: 'en', ...GLOBAL, hbs: 'Join {{teams}} on {{appName}}' }
+	];
+
+	beforeEach(() => {
+		jest.replaceProperty(environment, 'appIntegrationConfig', DEPLOYMENT);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('prints the deployment branding in an email whose sender passes none', async () => {
+		const { service } = makeService(BRANDED);
+
+		await expect(service.render('invite-gauzy-teams/html', { teams: 'Web' })).resolves.toBe(
+			'<img src="https://app.gauzy.co/assets/images/logos/logo_Gauzy.png" alt="Gauzy"><p>Web</p><p>Gauzy Team</p>' +
+				'<a href="https://app.gauzy.co/">Gauzy</a> <a href="https://ever.co">Ever Co. LTD</a>'
+		);
+		await expect(service.render('invite-gauzy-teams/subject', { teams: 'Web' })).resolves.toBe('Join Web on Gauzy');
+	});
+
+	it('keeps the branding a sender passes, and fills only what it left out', async () => {
+		const { service } = makeService(BRANDED);
+		const locals = {
+			teams: 'Web',
+			appName: 'Ever Teams',
+			appLogo: 'https://app.ever.team/assets/ever-teams.png',
+			appSignature: 'Ever Teams',
+			appLink: 'https://app.ever.team/'
+		};
+
+		await expect(service.render('invite-gauzy-teams/html', locals)).resolves.toBe(
+			'<img src="https://app.ever.team/assets/ever-teams.png" alt="Ever Teams"><p>Web</p><p>Ever Teams</p>' +
+				'<a href="https://app.ever.team/">Ever Teams</a> <a href="https://ever.co">Ever Co. LTD</a>'
+		);
+	});
+
+	it('takes a blank value for one the sender left out', () => {
+		const filled = withDefaultBranding({ appName: '', appLogo: null, appSignature: undefined, appLink: '  ' });
+
+		expect(filled.appName).toBe('Gauzy');
+		expect(filled.appLogo).toBe(DEPLOYMENT.appLogo);
+		expect(filled.appSignature).toBe('Gauzy Team');
+		expect(filled.appLink).toBe(DEPLOYMENT.appLink);
+	});
+
+	it('adds only branding, and leaves the locals it was given untouched', () => {
+		const locals = { teams: 'Web', appName: 'Ever Teams' };
+		const filled = withDefaultBranding(locals);
+
+		expect(locals).toEqual({ teams: 'Web', appName: 'Ever Teams' });
+		expect(Object.keys(filled).sort()).toEqual(
+			['appLink', 'appLogo', 'appName', 'appSignature', 'companyLink', 'companyName', 'teams'].sort()
+		);
+		// The links an email is built on are the sender's to decide, never filled in here.
+		expect(filled).not.toHaveProperty('appMagicSignUrl');
+		expect(filled).not.toHaveProperty('appEmailConfirmationUrl');
+	});
+
+	it('fills nothing the deployment does not configure', () => {
+		jest.replaceProperty(environment, 'appIntegrationConfig', { appName: 'Gauzy' });
+
+		expect(withDefaultBranding({ teams: 'Web' })).toEqual({ teams: 'Web', appName: 'Gauzy' });
 	});
 });
