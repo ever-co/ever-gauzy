@@ -143,6 +143,8 @@ export interface ITasksByDateInput {
 	organizationSprintId?: Id;
 	dueDateFromDay?: string;
 	dueDateToDay?: string;
+	startDateFromDay?: string;
+	startDateToDay?: string;
 }
 
 /**
@@ -413,6 +415,8 @@ export class TaskResolver {
 		@Args('organizationSprintId', { type: () => ID, nullable: true }) organizationSprintId?: Id,
 		@Args('dueDateFromDay', { type: () => String, nullable: true }) dueDateFromDay?: string,
 		@Args('dueDateToDay', { type: () => String, nullable: true }) dueDateToDay?: string,
+		@Args('startDateFromDay', { type: () => String, nullable: true }) startDateFromDay?: string,
+		@Args('startDateToDay', { type: () => String, nullable: true }) startDateToDay?: string,
 		@Args('filter') filter?: ConnectionFilter,
 		@Args('sort') sort?: ConnectionSortKey[],
 		@Args('page') page?: ConnectionPageRequest,
@@ -433,6 +437,8 @@ export class TaskResolver {
 			dueDateTo,
 			dueDateFromDay,
 			dueDateToDay,
+			startDateFromDay,
+			startDateToDay,
 			isScreeningTask,
 			createdByUserId,
 			projectId,

@@ -42,6 +42,26 @@ export class TaskDateFilterInputDTO extends TenantOrganizationBaseDTO implements
 		type: () => String,
 		example: '2026-11-18',
 		description:
+			'The calendar day startDateFrom starts in the reader’s zone: a date-only start date is compared with it.'
+	})
+	@IsOptional()
+	@Matches(/^\d{4}-\d{2}-\d{2}$/)
+	startDateFromDay?: string;
+
+	@ApiPropertyOptional({
+		type: () => String,
+		example: '2026-11-18',
+		description:
+			'The calendar day startDateTo ends in the reader’s zone: a date-only start date is compared with it.'
+	})
+	@IsOptional()
+	@Matches(/^\d{4}-\d{2}-\d{2}$/)
+	startDateToDay?: string;
+
+	@ApiPropertyOptional({
+		type: () => String,
+		example: '2026-11-18',
+		description:
 			'The calendar day dueDateFrom starts in the reader’s zone: a date-only due date is compared with it.'
 	})
 	@IsOptional()
