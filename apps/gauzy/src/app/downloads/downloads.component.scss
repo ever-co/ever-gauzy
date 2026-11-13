@@ -522,6 +522,7 @@ $on-primary: var(--text-control-color, #ffffff);
 
 // Compact (Browser extension card): scaled down to sit under the toolbar of the drawn tab.
 .compact {
+  position: relative;
   width: min(calc(100% - 1.5rem), 20rem);
   margin: 0.625rem 0.75rem 0;
   margin-inline-start: auto;
@@ -861,7 +862,7 @@ $danger: var(--color-danger-default, #ff3d71);
 // ── Browser extension: a tab with the timer open from the toolbar ───────
 .browser {
   width: min(100%, 22rem);
-  height: 11rem;
+  height: 12.5rem;
   overflow: hidden;
   border-radius: 0.75rem 0.75rem 0 0;
   background: $surface-2;
@@ -912,7 +913,120 @@ $danger: var(--color-danger-default, #ff3d71);
   }
 }
 
-// ── Animation: page entrance ────────────────────────────────────────────
+// ── Animation: "You" cursors and what they click ────────────────────────
+// The component's one-second loop sets each cursor's `data-at` (where it is) and `is-pressing`
+// (a click this second); the cursor glides between spots with a transition and the clicked
+// control answers with a ring. Spots are measured from the drawn layouts above.
+.cursor {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  align-items: flex-start;
+  pointer-events: none;
+  transition:
+    inset-inline-start 0.9s cubic-bezier(0.65, 0, 0.35, 1),
+    top 0.9s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+.cursor-arrow {
+  flex: 0 0 auto;
+  width: 1.125rem;
+  height: 1.125rem;
+  overflow: visible;
+  transform-origin: 3px 2.5px;
+  fill: $primary;
+  stroke: #ffffff;
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.3));
+}
+
+.cursor-label {
+  margin-top: 0.875rem;
+  margin-inline-start: -0.25rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.375rem;
+  background: $primary;
+  color: $on-primary;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1rem;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.cursor.is-pressing .cursor-arrow {
+  animation: gz-dl-press 0.35s ease-out;
+}
+
+// Desktop window spots (from the window's top and start edges).
+.desktop-window .cursor {
+  &[data-at='team'] {
+    inset-inline-start: 58%;
+    top: 22rem;
+  }
+
+  &[data-at='project'] {
+    inset-inline-start: 62%;
+    top: 17.5rem;
+  }
+
+  &[data-at='client'] {
+    inset-inline-start: 42%;
+    top: 13rem;
+  }
+
+  &[data-at='pause'] {
+    inset-inline-start: calc(100% - 2.25rem);
+    top: 7.5rem;
+  }
+}
+
+// Extension timer spots (from the compact timer's top and start edges).
+.compact .cursor {
+  &[data-at='rest'] {
+    inset-inline-start: 38%;
+    top: 5.25rem;
+  }
+
+  &[data-at='play'] {
+    inset-inline-start: calc(100% - 6rem);
+    top: 3.25rem;
+  }
+}
+
+// A clicked field flashes a ring of the primary colour.
+.dw-select.is-pressed {
+  animation: gz-dl-flash 0.7s ease-out;
+}
+
+.dw-pause {
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
+
+  &.is-hovered {
+    transform: scale(1.08);
+    box-shadow: 0 0 0 4px color-mix(in srgb, #{$danger} 25%, transparent);
+  }
+}
+
+// The extension timer while running: the red pause state, as the web timer shows it.
+.play {
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease;
+
+  &.is-running {
+    border-color: color-mix(in srgb, #{$danger} 45%, transparent);
+    color: $danger;
+  }
+
+  &.is-pressed {
+    animation: gz-dl-flash 0.7s ease-out;
+  }
+}
+
 @keyframes gz-dl-rise {
   from {
     opacity: 0;
@@ -933,10 +1047,40 @@ $danger: var(--color-danger-default, #ff3d71);
   }
 }
 
-// Viewers who ask for less motion get the page without its entrance.
+@keyframes gz-dl-press {
+  40% {
+    transform: scale(0.8);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes gz-dl-flash {
+  0% {
+    box-shadow:
+      $ring,
+      0 0 0 0 color-mix(in srgb, #{$primary} 45%, transparent);
+  }
+  100% {
+    box-shadow:
+      $ring,
+      0 0 0 8px transparent;
+  }
+}
+
+// Viewers who ask for less motion get the still picture: no entrances, glides or flashes, and no
+// cursors (the loop does not run for them either, so nothing would move them).
 @media (prefers-reduced-motion: reduce) {
   .shell,
-  .bars span {
+  .bars span,
+  .cursor-arrow,
+  .dw-select,
+  .play {
     animation: none !important;
+  }
+
+  .cursor {
+    display: none;
   }
 }
