@@ -610,6 +610,9 @@ export class TimerService {
 		// Validate the date range and check if the timer is running
 		validateDateRange(request.startedAt, request.stoppedAt);
 
+		// When the stop arrived: a stop that names no time ends the run here, not after it waited for its turn
+		const receivedAt = moment.utc().toDate();
+
 		// Fetch the employee details. Turning tracking off does not refuse the stop: a timer still running when an
 		// admin turned it off could otherwise never be stopped, and would keep counting time
 		const employee = await this.findEmployee();
@@ -621,7 +624,7 @@ export class TimerService {
 
 		// With no other start or stop of the employee in between, in this process (inEmployeeTurn)
 		return await this.inEmployeeTurn(employeeId, (turn) =>
-			this.stopRunningLog(request, employeeId, organizationId, tenantId, turn)
+			this.stopRunningLog(request, employeeId, organizationId, tenantId, turn, receivedAt)
 		);
 	}
 
@@ -633,6 +636,7 @@ export class TimerService {
 	 * @param organizationId The employee's organization.
 	 * @param tenantId The employee's tenant.
 	 * @param turn The employee's turn this stop holds: once it has passed, the stop writes no time log.
+	 * @param receivedAt When the stop arrived, before it waited for its turn: the end of a stop that names none.
 	 * @returns The stopped log.
 	 * @throws NotAcceptableException when no log of the employee runs.
 	 * @throws RequestTimeoutException when the stop took so long that the next start or stop went on.
@@ -642,7 +646,8 @@ export class TimerService {
 		employeeId: ID,
 		organizationId: ID,
 		tenantId: ID,
-		turn: EmployeeTurn
+		turn: EmployeeTurn,
+		receivedAt?: Date
 	): Promise<ITimeLog> {
 		// The runs going as this stop begins, latest first: the latest is the one it stops, any other was left going
 		// beside it. The cleanup after the stop handles those only, never a run another client starts meanwhile.
@@ -661,7 +666,7 @@ export class TimerService {
 		this.assertStopIsForRunningLog(request, lastLog);
 
 		// Calculate stoppedAt date or use current date if not provided
-		const stoppedAt = await this.calculateStoppedAt(request, lastLog);
+		const stoppedAt = await this.calculateStoppedAt(request, lastLog, receivedAt);
 		this.debug(() => `last stopped at: ${stoppedAt}`);
 
 		// Log the case where stoppedAt is less than startedAt
@@ -911,9 +916,10 @@ export class TimerService {
 	 * @param {ITimeLog} lastLog - The last running time log, which may include time slots for more detailed tracking.
 	 * @returns {Promise<Date>} - A promise that resolves to the calculated stoppedAt date, adjusted as necessary.
 	 */
-	async calculateStoppedAt(request: ITimerToggleInput, lastLog: ITimeLog): Promise<Date> {
-		// Retrieve stoppedAt date or default to the current date if not provided
-		let stoppedAt = moment.utc(request.stoppedAt ?? moment.utc()).toDate();
+	async calculateStoppedAt(request: ITimerToggleInput, lastLog: ITimeLog, receivedAt?: Date): Promise<Date> {
+		// Retrieve stoppedAt date or default to when the stop was received (not when its turn came: a stop queued behind
+		// another start or stop of the employee must not count the wait as worked time), else the current date
+		let stoppedAt = moment.utc(request.stoppedAt ?? receivedAt ?? moment.utc()).toDate();
 
 		// Handle the DESKTOP source case, for a tracker's run only: not a run the desktop shows from another client
 		const isDesktopStopOfTrackerRun =
