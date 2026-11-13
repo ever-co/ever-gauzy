@@ -41,6 +41,9 @@
 				<mj-raw>{{/if}}</mj-raw>
 				<mj-text mj-class="heading">גיליון שעות הוגש</mj-text>
 				<mj-text>
+					שלום{{#if email}} {{email}}{{/if}},
+				</mj-text>
+				<mj-text>
 					גיליון שעות{{#if project}} בפרויקט <strong dir="auto" style="color: #18181B; font-weight: 600">{{project}}</strong>{{/if}} הוגש{{#if candidateName}} על ידי <strong dir="auto" style="color: #18181B; font-weight: 600">{{candidateName}}</strong>{{/if}}.
 				</mj-text>
 			</mj-column>

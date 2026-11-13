@@ -39,6 +39,9 @@
 				<mj-raw>{{/if}}</mj-raw>
 				<mj-text mj-class="heading">Изпратен е отчет за работно време</mj-text>
 				<mj-text>
+					Здравейте{{#if email}}, {{email}}{{/if}}!
+				</mj-text>
+				<mj-text>
 					Отчет за работно време{{#if project}} по проекта <strong dir="auto" style="color: #18181B; font-weight: 600">{{project}}</strong>{{/if}} беше изпратен{{#if candidateName}} от <strong dir="auto" style="color: #18181B; font-weight: 600">{{candidateName}}</strong>{{/if}}.
 				</mj-text>
 			</mj-column>

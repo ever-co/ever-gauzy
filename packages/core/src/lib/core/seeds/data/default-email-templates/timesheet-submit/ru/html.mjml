@@ -39,6 +39,9 @@
 				<mj-raw>{{/if}}</mj-raw>
 				<mj-text mj-class="heading">Табель отправлен</mj-text>
 				<mj-text>
+					Здравствуйте{{#if email}}, {{email}}{{/if}}!
+				</mj-text>
+				<mj-text>
 					Табель рабочего времени{{#if project}} по проекту <strong dir="auto" style="color: #18181B; font-weight: 600">{{project}}</strong>{{/if}} отправлен{{#if candidateName}} пользователем <strong dir="auto" style="color: #18181B; font-weight: 600">{{candidateName}}</strong>{{/if}}.
 				</mj-text>
 			</mj-column>

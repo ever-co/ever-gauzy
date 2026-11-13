@@ -39,6 +39,9 @@
 				<mj-raw>{{/if}}</mj-raw>
 				<mj-text mj-class="heading">Timesheet submitted</mj-text>
 				<mj-text>
+					Hi{{#if email}} {{email}}{{/if}},
+				</mj-text>
+				<mj-text>
 					A timesheet{{#if project}} for the project <strong dir="auto" style="color: #18181B; font-weight: 600">{{project}}</strong>{{/if}} was submitted{{#if candidateName}} by <strong dir="auto" style="color: #18181B; font-weight: 600">{{candidateName}}</strong>{{/if}}.
 				</mj-text>
 			</mj-column>
