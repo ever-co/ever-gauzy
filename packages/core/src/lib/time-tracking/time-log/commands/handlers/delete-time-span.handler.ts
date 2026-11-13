@@ -533,19 +533,34 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 
 	/**
 	 * Deletes the slot the time-slot delete names when its log's time no longer reaches it, which leaves the log as it
-	 * is, and recalculates the log's timesheet without the slot.
+	 * is, and recalculates the log's timesheet without the slot. A slot a running log holds too stays with that log,
+	 * which the time-slot delete never cuts: this log only lets go of it.
 	 *
 	 * @param log - The log holding the slot, as stored.
-	 * @param timeSlot - The slot to delete.
+	 * @param timeSlot - The slot to delete, with the logs holding it as the time-slot delete read them.
 	 * @param forceDelete - Whether to hard delete it (default: false).
-	 * @throws The error of the delete or of the recalculation.
+	 * @throws The error of the delete, of the unlink or of the recalculation.
 	 */
 	private async deleteTimeSlotOutsideLog(log: ITimeLog, timeSlot: ITimeSlot, forceDelete = false): Promise<void> {
-		const { organizationId, employeeId } = log;
-		const timeSlotsIds = [timeSlot.id];
-		await this._commandBus.execute(
-			new TimeSlotBulkDeleteCommand({ organizationId, employeeId, timeLog: log, timeSlotsIds }, forceDelete, true)
-		);
+		const runningTimeLogs = (timeSlot.timeLogs ?? []).filter((timeLog) => timeLog.isRunning);
+		const heldByRunningLog = runningTimeLogs.length > 0;
+		if (heldByRunningLog) {
+			await this.typeOrmTimeSlotRepository
+				.createQueryBuilder()
+				.relation(TimeSlot, 'timeLogs')
+				.of(timeSlot.id)
+				.remove(log.id);
+		} else {
+			const { organizationId, employeeId } = log;
+			const timeSlotsIds = [timeSlot.id];
+			await this._commandBus.execute(
+				new TimeSlotBulkDeleteCommand(
+					{ organizationId, employeeId, timeLog: log, timeSlotsIds },
+					forceDelete,
+					true
+				)
+			);
+		}
 		await this._commandBus.execute(new TimesheetRecalculateCommand(log.timesheetId));
 	}
 
