@@ -110,11 +110,14 @@ import { Task } from './task.entity';
 import {
 	BulkChangeRecords,
 	BulkRecordField,
+	BULK_RECORD_FIELDS,
 	BulkUpdateRequestError,
 	changesToUpdate,
+	hasChanges,
 	IBulkChangeRecord,
 	normalizeBulkUpdate,
 	previousWithoutRecordNames,
+	recordChangesOfUpdate,
 	recordIdsOf,
 	recordKey,
 	recordRefusalOf,
@@ -213,6 +216,14 @@ function isReferencedRowViolation(error: unknown): boolean {
 	});
 }
 
+/**
+ * The updates a bulk update hands to the single update once it has judged and named the records they name (see
+ * `bulkUpdate`), so the single update does not read those records again for each task. Keyed by the update object,
+ * which reaches `update` as it was handed over (the command carries it as it is), and dropped with it. An update that
+ * reaches `update` as a copy is judged again, which only costs the reads.
+ */
+const RECORDS_JUDGED = new WeakSet<object>();
+
 @FavoriteService(BaseEntityEnum.Task)
 @Injectable()
 export class TaskService extends TenantAwareCrudService<Task> {
@@ -269,7 +280,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			const userId = RequestContext.currentUserId();
 
 			const user = RequestContext.currentUser();
-			const { mentionEmployeeIds, moveTimeLogs, ...data } = input;
+			const { mentionEmployeeIds, moveTimeLogs, ...sent } = input;
 
 			// Find task relations
 			const relations: FindOptionsRelations<Task> = {
@@ -288,6 +299,11 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			};
 
 			const task = await this.findOneByIdString(id, { relations });
+
+			// The status, priority and size records the update moves the task to, judged and named as a bulk update's
+			// are: refused before anything is written when the task's organization may not take one. A bulk update has
+			// judged and named its own already.
+			const data = RECORDS_JUDGED.has(input) ? sent : await this.withUpdateRecords(sent, task, tenantId ?? task.tenantId);
 
 			const taskMembers = task.members;
 
@@ -3084,6 +3100,8 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				continue;
 			}
 			const { update, previous } = changesToUpdate(task, withRecordNames(item.changes, records));
+			// Judged and named above: the single update the change is applied by need not read the records again.
+			RECORDS_JUDGED.add(update);
 			try {
 				await apply(task.id, update);
 				results.push({ taskId, ok: true, previous });
@@ -3111,6 +3129,44 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		}
 		const applied = results.filter((result) => result.ok).length;
 		return { applied, refused: results.length - applied, results };
+	}
+
+	/**
+	 * A single update with the status, priority and size records it moves the task to judged and named as a bulk
+	 * update's are (see `recordChangesOfUpdate`): each must be one the task's organization may take (its own, the
+	 * tenant's shared one, a platform default), else the update is refused with `TASK_<KIND>_NOT_FOUND` before anything
+	 * is written; a priority or size moved to by its record alone takes the record's name (see `withRecordNames`). A
+	 * record the task already holds is not judged again and its name is left as sent, so a client that sends the whole
+	 * task back saves as before, and a name sent alone is written as before. A status keeps its text.
+	 *
+	 * @param sent The update as it was sent.
+	 * @param task The task as it is stored, with the records it holds.
+	 * @param tenantId The caller's tenant; without one, only a platform default is taken.
+	 * @returns The update to save: as sent, or with the records' names (and a record named twice named once).
+	 */
+	private async withUpdateRecords<T extends Partial<ITaskUpdateInput>>(sent: T, task: Task, tenantId: ID | undefined): Promise<T> {
+		const organizationId = sent.organizationId ?? task.organizationId;
+		// The records the task holds are its own to keep in its organization; moved to another one, each is judged there.
+		const staysInOrganization = !!organizationId && !!task.organizationId && recordKey(organizationId) === recordKey(task.organizationId);
+		const held = staysInOrganization ? task : {};
+		const { update, changes } = recordChangesOfUpdate(sent, held);
+		if (!hasChanges(changes)) return update;
+		// An id that is no uuid (a relation's id is not validated as one) names no record: it is refused below, not read
+		// (Postgres would fail the read instead).
+		const readable = BULK_RECORD_FIELDS.filter(({ idField }) => isUUID(changes[idField]));
+		const records = await this.bulkChangeRecordsOf(
+			[{ taskId: String(task.id), changes }],
+			undefined,
+			readable.map(({ idField }) => idField)
+		);
+		const refusal = recordRefusalOf(changes, records, { tenantId, organizationId });
+		if (refusal) {
+			throw new BadRequestException(refusal);
+		}
+		const named = withRecordNames(changes, records);
+		const names = BULK_RECORD_FIELDS.filter(({ nameField }) => changes[nameField] === undefined && named[nameField] !== undefined);
+		if (!names.length) return update;
+		return { ...update, ...Object.fromEntries(names.map(({ nameField }) => [nameField, named[nameField]])) };
 	}
 
 	/**

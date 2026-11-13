@@ -7,6 +7,7 @@ import {
 	IBulkChangeRecord,
 	normalizeBulkUpdate,
 	previousWithoutRecordNames,
+	recordChangesOfUpdate,
 	recordIdsOf,
 	recordRefusalOf,
 	withRecordNames
@@ -199,6 +200,64 @@ describe('the records a change names', () => {
 		const { update, previous } = changesToUpdate(task, withRecordNames({ taskPriorityId: 'p-own' }, records));
 		expect(update).toEqual({ priority: 'p0', taskPriorityId: 'p-own' });
 		expect(previous).toEqual({ priority: TaskPriorityEnum.LOW, taskPriorityId: null });
+	});
+});
+
+describe('the records a single update moves a task to', () => {
+	const held = { taskStatusId: 's-held', taskPriorityId: 'p-held', taskSizeId: null };
+
+	it('takes a record named by its id or by its relation, with the name sent beside it', () => {
+		const sent = { title: 'One', taskPriorityId: 'p-new', taskSize: { id: 'z-new', name: 'Huge' }, priority: 'P0' };
+		const { update, changes } = recordChangesOfUpdate(sent, held);
+		expect(update).toBe(sent);
+		expect(changes).toEqual({ taskPriorityId: 'p-new', priority: 'P0', taskSizeId: 'z-new' });
+	});
+
+	it('takes no change from the records the task holds, whatever their case, a cleared one, or a name alone', () => {
+		const sent = {
+			taskStatusId: 'S-HELD',
+			taskStatus: { id: 's-held' },
+			taskPriority: { id: 'p-held', value: 'p0' },
+			priority: TaskPriorityEnum.HIGH,
+			taskSizeId: null,
+			size: 'large'
+		};
+		expect(recordChangesOfUpdate(sent, held)).toEqual({ update: sent, changes: {} });
+		expect(hasChanges(recordChangesOfUpdate(sent, held).changes)).toBe(false);
+	});
+
+	it('judges every record named when the task holds none to keep (it moves to another organization)', () => {
+		expect(recordChangesOfUpdate({ taskStatusId: 's-held', taskPriority: { id: 'p-held' } }, {}).changes).toEqual({
+			taskStatusId: 's-held',
+			taskPriorityId: 'p-held'
+		});
+	});
+
+	it('saves the new id a client sends beside the relation the task holds, in both places', () => {
+		const sent = { taskPriorityId: 'p-new', taskPriority: { id: 'p-held', name: 'Held' }, priority: 'urgent' };
+		const { update, changes } = recordChangesOfUpdate(sent, held);
+		expect(update).toEqual({ taskPriorityId: 'p-new', taskPriority: { id: 'p-new' }, priority: 'urgent' });
+		expect(sent.taskPriority).toEqual({ id: 'p-held', name: 'Held' });
+		expect(changes).toEqual({ taskPriorityId: 'p-new', priority: 'urgent' });
+
+		const cleared = recordChangesOfUpdate({ taskStatusId: null, taskStatus: { id: 's-held' } }, held);
+		expect(cleared).toEqual({ update: { taskStatusId: null, taskStatus: null }, changes: {} });
+	});
+
+	it('saves a new relation sent beside the id the task holds, and the relation when both change, as the save takes it', () => {
+		const relationChanged = recordChangesOfUpdate({ taskPriorityId: 'p-held', taskPriority: { id: 'p-new' } }, held);
+		expect(relationChanged).toEqual({
+			update: { taskPriorityId: 'p-new', taskPriority: { id: 'p-new' } },
+			changes: { taskPriorityId: 'p-new' }
+		});
+		const bothChanged = recordChangesOfUpdate({ taskPriorityId: 'p-other', taskPriority: { id: 'p-new' } }, held);
+		expect(bothChanged.changes).toEqual({ taskPriorityId: 'p-new' });
+		expect(bothChanged.update).toEqual({ taskPriorityId: 'p-new', taskPriority: { id: 'p-new' } });
+	});
+
+	it('reads a relation without an id as naming none', () => {
+		const sent = { taskSize: { name: 'Huge' }, taskSizeId: 'z-new' };
+		expect(recordChangesOfUpdate(sent, held)).toEqual({ update: sent, changes: { taskSizeId: 'z-new' } });
 	});
 });
 
