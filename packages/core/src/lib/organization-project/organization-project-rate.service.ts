@@ -1,6 +1,12 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { Equal, IsNull, Or } from 'typeorm';
-import { ID, IOrganizationProjectRates, IOrganizationProjectRateUpdateInput, PermissionsEnum } from '@gauzy/contracts';
+import { EntityManager, Equal, IsNull, Or } from 'typeorm';
+import {
+	ID,
+	IOrganizationProjectRates,
+	IOrganizationProjectRateUpdateInput,
+	IRepricedTimeLogs,
+	PermissionsEnum
+} from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { Organization } from '../core/entities/internal';
 import { isSameId } from '../employee/own-rates';
@@ -8,6 +14,11 @@ import { assertCurrentUserBelongsToOrganization } from '../user-organization/ass
 import { OrganizationProject } from './organization-project.entity';
 import { TypeOrmOrganizationProjectRepository } from './repository/type-orm-organization-project.repository';
 import { TypeOrmOrganizationProjectEmployeeRepository } from './repository/type-orm-organization-project-employee.repository';
+import {
+	RepricedTime,
+	repriceMemberProjectTime,
+	repriceProjectTime
+} from '../time-tracking/time-log/time-log-repricing';
 
 /** A membership left inactive or archived no longer ties the employee to the project (NULL counts as current). */
 export const CURRENT_MEMBERSHIP = {
@@ -54,7 +65,7 @@ export class OrganizationProjectRateService {
 	async updateProjectRate(
 		projectId: ID,
 		input: IOrganizationProjectRateUpdateInput
-	): Promise<Pick<IOrganizationProjectRates, 'id' | 'billRateValue' | 'currency'>> {
+	): Promise<Pick<IOrganizationProjectRates, 'id' | 'billRateValue' | 'currency'> & IRepricedTimeLogs> {
 		const tenantId = RequestContext.currentTenantId();
 		const { organizationId, billRateValue } = input;
 		await this.assertMayManageRates(projectId, organizationId, tenantId);
@@ -65,14 +76,39 @@ export class OrganizationProjectRateService {
 			{ billRateValue }
 		);
 		const currency = await this.ratesCurrencyOf(project, organizationId, tenantId);
-		return { id: project.id, billRateValue, currency };
+		// The time logs store the project's own currency, empty meaning the organization's, as they are recorded with
+		const repriced = await this.repricedFrom(input, (manager, time) =>
+			repriceProjectTime(manager, time, project.id, { billRateValue, currency: project.currency ?? null })
+		);
+		return { id: project.id, billRateValue, currency, ...repriced };
+	}
+
+	/**
+	 * Gives the time logs started on or after the day a rate change names the new rate (see time-log-repricing.ts).
+	 *
+	 * @returns How many time logs took it, or nothing when the change names no day and past time keeps its price.
+	 */
+	private async repricedFrom(
+		input: IOrganizationProjectRateUpdateInput,
+		reprice: (manager: EntityManager, time: RepricedTime) => Promise<number>
+	): Promise<IRepricedTimeLogs> {
+		if (!input.applyFrom) {
+			return {};
+		}
+		const time = {
+			tenantId: RequestContext.currentTenantId(),
+			organizationId: input.organizationId,
+			from: new Date(input.applyFrom)
+		};
+		const repricedTimeLogs = await reprice(this.typeOrmOrganizationProjectRepository.manager, time);
+		return { repricedTimeLogs };
 	}
 
 	async updateMemberRate(
 		projectId: ID,
 		employeeId: ID,
 		input: IOrganizationProjectRateUpdateInput
-	): Promise<{ organizationProjectId: ID; employeeId: ID; billRateValue: number | null }> {
+	): Promise<{ organizationProjectId: ID; employeeId: ID; billRateValue: number | null } & IRepricedTimeLogs> {
 		const tenantId = RequestContext.currentTenantId();
 		const { organizationId, billRateValue } = input;
 		const managerEmployeeId = await this.assertMayManageRates(projectId, organizationId, tenantId);
@@ -97,7 +133,10 @@ export class OrganizationProjectRateService {
 			{ id: membership.id, tenantId },
 			{ billRateValue }
 		);
-		return { organizationProjectId: projectId, employeeId, billRateValue };
+		const repriced = await this.repricedFrom(input, (manager, time) =>
+			repriceMemberProjectTime(manager, time, projectId, employeeId, billRateValue)
+		);
+		return { organizationProjectId: projectId, employeeId, billRateValue, ...repriced };
 	}
 
 	/** The currency a project's client rates are in: the project's own, else the organization's. */

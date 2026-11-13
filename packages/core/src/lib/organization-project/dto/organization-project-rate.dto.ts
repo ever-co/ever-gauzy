@@ -1,6 +1,6 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsNumber, Max, Min, ValidateIf } from 'class-validator';
+import { IsDateString, IsNumber, IsOptional, Max, Min, ValidateIf } from 'class-validator';
 import { IOrganizationProjectRateUpdateInput } from '@gauzy/contracts';
 import { TenantOrganizationBaseDTO } from '../../core/dto';
 import { BILLING_RATE_MAX, toNullableBillingRate } from '../../shared/pipes/billing-rate.transform';
@@ -24,4 +24,15 @@ export class OrganizationProjectRateDTO
 	@Min(0)
 	@Max(BILLING_RATE_MAX)
 	readonly billRateValue: number | null;
+
+	@ApiPropertyOptional({
+		type: () => String,
+		format: 'date-time',
+		description:
+			'Apply the new rate to the time logs started on or after this day (time a live invoice bills keeps its ' +
+			'price). Without it, only time recorded from now on takes it.'
+	})
+	@IsOptional()
+	@IsDateString()
+	readonly applyFrom?: string;
 }
