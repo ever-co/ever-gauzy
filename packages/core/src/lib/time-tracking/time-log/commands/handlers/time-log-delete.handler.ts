@@ -82,6 +82,13 @@ export class TimeLogDeleteHandler implements ICommandHandler<TimeLogDeleteComman
 		// Loop through each time log and delete its associated time slots
 		for await (const timeLog of timeLogs) {
 			const { employeeId, organizationId, timeSlots } = timeLog;
+
+			// Read with its slots and holding none: without ids, the bulk delete would read every slot of the employee
+			const holdsNoSlots = Array.isArray(timeSlots) && timeSlots.length === 0;
+			if (holdsNoSlots) {
+				continue;
+			}
+
 			const timeSlotsIds = pluck(timeSlots, 'id');
 
 			// Delete time slots sequentially
