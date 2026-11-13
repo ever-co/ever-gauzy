@@ -435,6 +435,35 @@ function exercise(dialect: Dialect) {
 	);
 
 	it(
+		'saves a new record sent beside a cleared relation when the task holds none, and clears it beside the held one',
+		async () => {
+			await update({ taskPriority: null, taskPriorityId: PRIORITY_OWN });
+			expect(await taskRow()).toMatchObject({ priority: 'p0', taskPriorityId: PRIORITY_OWN });
+
+			await update({ title: 'Renamed', taskPriority: null, taskPriorityId: PRIORITY_OWN });
+			expect(await taskRow()).toMatchObject({ title: 'Renamed', priority: 'p0', taskPriorityId: null });
+		},
+		TIMEOUT
+	);
+
+	it(
+		'judges the records a task keeps against the organization it moves to',
+		async () => {
+			await update({ taskPriorityId: PRIORITY_OWN });
+
+			await expect(
+				service.update(TASK, {
+					organizationId: OTHER_ORGANIZATION,
+					title: 'Moved'
+				} as Partial<ITaskUpdateInput>)
+			).rejects.toThrow('TASK_PRIORITY_NOT_FOUND');
+
+			expect(await taskRow()).toMatchObject({ title: 'One', priority: 'p0', taskPriorityId: PRIORITY_OWN });
+		},
+		TIMEOUT
+	);
+
+	it(
 		'judges the records against the organization the task moves to, named by its relation',
 		async () => {
 			// The task's own organization's priority, sent with the task moving to the other organization.

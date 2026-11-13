@@ -57,6 +57,7 @@ import {
 	TaskSyncScopeEnum,
 	TimesheetStatus,
 	ITaskBuiltInViewQuery,
+	ITaskBulkChanges,
 	ITaskBulkUpdateInput,
 	ITaskBulkUpdateItem,
 	ITaskBulkUpdateOutcome,
@@ -3137,7 +3138,8 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * tenant's shared one, a platform default), else the update is refused with `TASK_<KIND>_NOT_FOUND` before anything
 	 * is written; a priority or size moved to by its record alone takes the record's name (see `withRecordNames`). A
 	 * record the task already holds is not judged again and its name is left as sent, so a client that sends the whole
-	 * task back saves as before, and a name sent alone is written as before. A status keeps its text.
+	 * task back saves as before, and a name sent alone is written as before. A status keeps its text. A task moved to
+	 * another organization has every record it holds afterwards judged there, those it keeps included.
 	 *
 	 * @param sent The update as it was sent.
 	 * @param task The task as it is stored, with the records it holds.
@@ -3148,27 +3150,34 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		// The organization the task is saved in: the one the update names (by its relation, which the save takes over the
 		// id, or by its id; the DTO accepts either), else its own.
 		const organizationId = sent.organization?.id ?? sent.organizationId ?? task.organizationId;
-		// The records the task holds are its own to keep in its organization; moved to another one, each is judged there.
 		const staysInOrganization = !!organizationId && !!task.organizationId && recordKey(organizationId) === recordKey(task.organizationId);
-		const held = staysInOrganization ? task : {};
-		const { update, changes } = recordChangesOfUpdate(sent, held);
-		if (!hasChanges(changes)) return update;
+		const { update, changes, named } = recordChangesOfUpdate(sent, task);
+		// In its organization, the records the task holds are its own to keep. Moved to another one, every record it holds
+		// afterwards (named, or kept) must be one that organization may take; only those it moves to are named.
+		const judged: ITaskBulkChanges = staysInOrganization ? changes : {};
+		if (!staysInOrganization) {
+			for (const { idField } of BULK_RECORD_FIELDS) {
+				const after = idField in named ? named[idField] : task[idField];
+				if (after) judged[idField] = after;
+			}
+		}
+		if (!hasChanges(judged)) return update;
 		// An id that is no uuid (a relation's id is not validated as one) names no record: it is refused below, not read
 		// (Postgres would fail the read instead).
-		const readable = BULK_RECORD_FIELDS.filter(({ idField }) => isUUID(changes[idField]));
+		const readable = BULK_RECORD_FIELDS.filter(({ idField }) => isUUID(judged[idField]));
 		const records = await this.bulkChangeRecordsOf(
-			[{ taskId: String(task.id), changes }],
+			[{ taskId: String(task.id), changes: judged }],
 			undefined,
 			readable.map(({ idField }) => idField)
 		);
-		const refusal = recordRefusalOf(changes, records, { tenantId, organizationId });
+		const refusal = recordRefusalOf(judged, records, { tenantId, organizationId });
 		if (refusal) {
 			throw new BadRequestException(refusal);
 		}
-		const named = withRecordNames(changes, records);
-		const names = BULK_RECORD_FIELDS.filter(({ nameField }) => changes[nameField] === undefined && named[nameField] !== undefined);
+		const withNames = withRecordNames(changes, records);
+		const names = BULK_RECORD_FIELDS.filter(({ nameField }) => changes[nameField] === undefined && withNames[nameField] !== undefined);
 		if (!names.length) return update;
-		return { ...update, ...Object.fromEntries(names.map(({ nameField }) => [nameField, named[nameField]])) };
+		return { ...update, ...Object.fromEntries(names.map(({ nameField }) => [nameField, withNames[nameField]])) };
 	}
 
 	/**

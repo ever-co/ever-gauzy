@@ -217,9 +217,10 @@ describe('the records a single update moves a task to', () => {
 
 	it('takes a record named by its id or by its relation, with the name sent beside it', () => {
 		const sent = { title: 'One', taskPriorityId: 'p-new', taskSize: { id: 'z-new', name: 'Huge' }, priority: 'P0' };
-		const { update, changes } = recordChangesOfUpdate(sent, held);
+		const { update, changes, named } = recordChangesOfUpdate(sent, held);
 		expect(update).toBe(sent);
 		expect(changes).toEqual({ taskPriorityId: 'p-new', priority: 'P0', taskSizeId: 'z-new' });
+		expect(named).toEqual({ taskPriorityId: 'p-new', taskSizeId: 'z-new' });
 	});
 
 	it('takes no change from the records the task holds, whatever their case, a cleared one, or a name alone', () => {
@@ -231,11 +232,13 @@ describe('the records a single update moves a task to', () => {
 			taskSizeId: null,
 			size: 'large'
 		};
-		expect(recordChangesOfUpdate(sent, held)).toEqual({ update: sent, changes: {} });
-		expect(hasChanges(recordChangesOfUpdate(sent, held).changes)).toBe(false);
+		const { update, changes, named } = recordChangesOfUpdate(sent, held);
+		expect(update).toBe(sent);
+		expect(hasChanges(changes)).toBe(false);
+		expect(named).toEqual({ taskStatusId: 's-held', taskPriorityId: 'p-held', taskSizeId: null });
 	});
 
-	it('judges every record named when the task holds none to keep (it moves to another organization)', () => {
+	it('judges every record named when the task holds none', () => {
 		expect(recordChangesOfUpdate({ taskStatusId: 's-held', taskPriority: { id: 'p-held' } }, {}).changes).toEqual({
 			taskStatusId: 's-held',
 			taskPriorityId: 'p-held'
@@ -250,14 +253,28 @@ describe('the records a single update moves a task to', () => {
 		expect(changes).toEqual({ taskPriorityId: 'p-new', priority: 'urgent' });
 
 		const cleared = recordChangesOfUpdate({ taskStatusId: null, taskStatus: { id: 's-held' } }, held);
-		expect(cleared).toEqual({ update: { taskStatusId: null, taskStatus: null }, changes: {} });
+		expect(cleared).toEqual({ update: { taskStatusId: null, taskStatus: null }, changes: {}, named: { taskStatusId: null } });
+	});
+
+	it('saves a new id beside a cleared relation when the task holds none, and clears it when the id is the held one', () => {
+		const added = recordChangesOfUpdate({ taskSize: null, taskSizeId: 'z-new' }, held);
+		expect(added).toEqual({
+			update: { taskSize: { id: 'z-new' }, taskSizeId: 'z-new' },
+			changes: { taskSizeId: 'z-new' },
+			named: { taskSizeId: 'z-new' }
+		});
+		const cleared = recordChangesOfUpdate({ taskPriority: null, taskPriorityId: 'p-held' }, held);
+		expect(cleared).toEqual({ update: { taskPriority: null, taskPriorityId: null }, changes: {}, named: { taskPriorityId: null } });
+		const relationAlone = { taskPriority: null };
+		expect(recordChangesOfUpdate(relationAlone, held)).toEqual({ update: relationAlone, changes: {}, named: { taskPriorityId: null } });
 	});
 
 	it('saves a new relation sent beside the id the task holds, and the relation when both change, as the save takes it', () => {
 		const relationChanged = recordChangesOfUpdate({ taskPriorityId: 'p-held', taskPriority: { id: 'p-new' } }, held);
 		expect(relationChanged).toEqual({
 			update: { taskPriorityId: 'p-new', taskPriority: { id: 'p-new' } },
-			changes: { taskPriorityId: 'p-new' }
+			changes: { taskPriorityId: 'p-new' },
+			named: { taskPriorityId: 'p-new' }
 		});
 		const bothChanged = recordChangesOfUpdate({ taskPriorityId: 'p-other', taskPriority: { id: 'p-new' } }, held);
 		expect(bothChanged.changes).toEqual({ taskPriorityId: 'p-new' });
@@ -266,7 +283,7 @@ describe('the records a single update moves a task to', () => {
 
 	it('reads a relation without an id as naming none', () => {
 		const sent = { taskSize: { name: 'Huge' }, taskSizeId: 'z-new' };
-		expect(recordChangesOfUpdate(sent, held)).toEqual({ update: sent, changes: { taskSizeId: 'z-new' } });
+		expect(recordChangesOfUpdate(sent, held)).toEqual({ update: sent, changes: { taskSizeId: 'z-new' }, named: { taskSizeId: 'z-new' } });
 	});
 });
 
