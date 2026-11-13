@@ -67,7 +67,7 @@ import {
 	projectIdForEntry,
 	teamIdForEntry
 } from '../time-log/organization-tracking-requirements';
-import { isTrackerSource } from '../time-log/tracker-source';
+import { isTrackerSource, postsHeartbeatSlots } from '../time-log/tracker-source';
 import { TypeOrmTimeLogRepository } from '../time-log/repository/type-orm-time-log.repository';
 import { MikroOrmTimeLogRepository } from '../time-log/repository/mikro-orm-time-log.repository';
 import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-employee.repository';
@@ -907,10 +907,11 @@ export class TimerService {
 	 * them (a timer that starts, or the run a stop just ended).
 	 *
 	 * A run from a client that is not a tracker ends through the update an explicit stop makes, so it gets its time
-	 * slots and counts in the worked time, where `replacedRunEnd` says: at its last heartbeat, or where the run after
-	 * it started when it never had one. A tracker's run (`isTrackerSource`: the desktop timer and the agent) keeps the
-	 * end its time slots give it (`ScheduleTimeLogEntriesCommand`), as does a run stored without a `stoppedAt`, which
-	 * has no heartbeat to go by; that command also stops a run whose stop here failed, as before.
+	 * slots and counts in the worked time, where `replacedRunEnd` says: at its last heartbeat (an Ever Teams or mobile
+	 * run's start counting as its first), or, for a client that sends none, where the run after it started. A
+	 * tracker's run (`isTrackerSource`: the desktop timer and the agent) keeps the end its time slots give it
+	 * (`ScheduleTimeLogEntriesCommand`), as does a run stored without a `stoppedAt`, which has no heartbeat to go by;
+	 * that command also stops a run whose stop here failed, as before.
 	 *
 	 * @param employeeId - The ID of the employee whose timers need to be stopped
 	 * @param organizationId - The ID of the organization to which the employee belongs
@@ -957,10 +958,12 @@ export class TimerService {
 	 *
 	 * One that has had heartbeats (its `stoppedAt` moved past its start, as the time slots its client posts move it,
 	 * or time slots of its own) ends at its last heartbeat: the later of its `stoppedAt` and the end of its last time
-	 * slot, so it never gets less than its time slots hold. A run left in a tab closed without a stop is not credited
-	 * with every hour up to the next start. One that never had a heartbeat (the web timer, the API clients) ends at
-	 * `nextRunStartedAt`, as an explicit stop then would. Never after `nextRunStartedAt`, so no time counts twice, and
-	 * never before its own start.
+	 * slot, so it never gets less than its time slots hold. So does a run of a client that posts a time slot on each
+	 * heartbeat (`postsHeartbeatSlots`: Ever Teams, mobile), its start counting as the first: one without any died in
+	 * its first minute, and ends at its start, as Ever Teams' own stale-timer guard ends it. A run left in a tab closed
+	 * without a stop is not credited with every hour up to the next start. A run of a client that sends no heartbeat
+	 * (the web timer, the API clients) ends at `nextRunStartedAt`, as an explicit stop then would. Never after
+	 * `nextRunStartedAt`, so no time counts twice, and never before its own start.
 	 *
 	 * @param log - The running log, with its time slots.
 	 * @param nextRunStartedAt - When the run after it started.
@@ -973,7 +976,9 @@ export class TimerService {
 		);
 		const lastHeartbeat = moment.max(moment.utc(log.stoppedAt), ...timeSlotEnds);
 		const hasHadHeartbeat = lastHeartbeat.isAfter(startedAt) || timeSlotEnds.length > 0;
-		const end = hasHadHeartbeat ? moment.min(lastHeartbeat, nextRunStartedAt) : nextRunStartedAt;
+		// A client that posts heartbeats counts the start as the first one: a run of theirs without any ends there
+		const endsAtLastHeartbeat = hasHadHeartbeat || postsHeartbeatSlots(log.source);
+		const end = endsAtLastHeartbeat ? moment.min(lastHeartbeat, nextRunStartedAt) : nextRunStartedAt;
 		return moment.max(startedAt, end).toDate();
 	}
 
