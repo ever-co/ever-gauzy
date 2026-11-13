@@ -59,7 +59,6 @@ import { FilesPanelComponent } from '../files-panel/files-panel.component';
 import { clearDraft, ComposerSubmission, MessageComposerComponent } from '../message-composer/message-composer.component';
 import { MessageAction, MessageItemComponent } from '../message-item/message-item.component';
 import { PersonAvatarComponent } from '../person-avatar/person-avatar.component';
-import { PresenceLabelComponent } from '../presence-label/presence-label.component';
 import { TypingIndicatorComponent } from '../typing-indicator/typing-indicator.component';
 
 /** How close to the bottom (px) counts as "reading the latest", for auto-scroll and read-on-view. */
@@ -133,7 +132,6 @@ export function unreadMarkerId(messages: readonly IChatMessageWithRelations[], s
 		MessageComposerComponent,
 		MessageItemComponent,
 		PersonAvatarComponent,
-		PresenceLabelComponent,
 		TypingIndicatorComponent
 	],
 	template: `
@@ -169,10 +167,6 @@ export function unreadMarkerId(messages: readonly IChatMessageWithRelations[], s
 							</button>
 						}
 					</div>
-					@if (conversation().kind === 'direct' && person(); as person) {
-						<!-- A direct conversation: whether the other person is here. -->
-						<ngx-chat-presence-label class="presence" [employeeId]="person.employeeId"></ngx-chat-presence-label>
-					}
 					@if (conversation().topic) {
 						<span class="topic" [attr.title]="conversation().topic">{{ conversation().topic }}</span>
 					}
