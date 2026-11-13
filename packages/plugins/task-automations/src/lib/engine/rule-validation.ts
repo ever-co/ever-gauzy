@@ -44,11 +44,20 @@ function cleanList(list: unknown, what: string): string[] {
 	return values;
 }
 
-/** The trigger as it is stored: its type and, for `STATUS_CHANGED` only, its status lists. */
+/**
+ * The trigger as it is stored: its type and, for `STATUS_CHANGED` only, its status lists; for `LINK_CLOSED` only,
+ * whether it waits for a merge (`mergedOnly`: a boolean, `false` when absent).
+ */
 export function normalizeTrigger(trigger: unknown): ITaskAutomationTrigger {
 	const value = (trigger ?? {}) as Partial<ITaskAutomationTrigger>;
 	if (!has(TaskAutomationTriggerEnum, value.type)) {
 		throw new TaskAutomationValidationError('The trigger is not one the platform knows.');
+	}
+	if (value.type === TaskAutomationTriggerEnum.LINK_CLOSED) {
+		if (value.mergedOnly !== undefined && value.mergedOnly !== null && typeof value.mergedOnly !== 'boolean') {
+			throw new TaskAutomationValidationError('The trigger’s “merged only” must be true or false.');
+		}
+		return { type: value.type, mergedOnly: value.mergedOnly === true };
 	}
 	if (value.type !== TaskAutomationTriggerEnum.STATUS_CHANGED) {
 		return { type: value.type };

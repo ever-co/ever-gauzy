@@ -3,7 +3,7 @@ import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 import { DataSource } from 'typeorm';
 import { IOutboxWriteInput, TASK_AUTOMATION_EVENT_NAMES, TaskAutomationTriggerEnum } from '@gauzy/contracts';
 import { EventOutboxService, getORMType, MultiORMEnum, TaskLinkClosedEvent } from '@gauzy/core';
-import { ITaskLinkClosureKey, linkClosureKeyOf, parseLinkClosedEvent } from '../engine/link-closed';
+import { ITaskLinkClosureKey, linkClosureKeyOf, linkMergeKeyOf, parseLinkClosedEvent } from '../engine/link-closed';
 import { ITaskAutomationMikroOrmTransaction, TaskAutomationLinkClosureStore } from '../services/task-automation-link-closure.store';
 import { TaskAutomationRuleService } from '../services/task-automation-rule.service';
 import { TaskAutomationTaskReader } from '../services/task-automation-task-reader.service';
@@ -20,6 +20,11 @@ import { TASK_AUTOMATION_AGGREGATE, taskAutomationPartitionKey } from '../task-a
  * nothing. It appends only for a task of the tenant and organization the report names, of an organization with a
  * `LINK_CLOSED` rule switched on (cached a few seconds, as the change capture), in the task's own partition, behind the
  * task's changes. Best effort, as the change capture: nothing is thrown back to the integration.
+ *
+ * A merged pull request's merge is claimed too, beside its close (spec FR-21): when the pull request was closed without
+ * merging before — its close was reported then — its merge after a reopen is appended once more, with
+ * `closedBefore: true`, for the rules that wait for a merge (`mergedOnly`) only; the other link rules already ran on
+ * the close. A close without merging never takes the merge's claim, so it cannot keep a later merge from those rules.
  */
 @Injectable()
 @EventsHandler(TaskLinkClosedEvent)
@@ -55,42 +60,57 @@ export class TaskAutomationLinkClosedCapture implements IEventHandler<TaskLinkCl
 		if (!(await this.reader.belongsTo(key.tenantId, key.organizationId, key.taskId))) return false;
 		const enabled = await this.rules.enabledTriggers(key.tenantId, key.organizationId);
 		if (!enabled.has(TaskAutomationTriggerEnum.LINK_CLOSED)) return false;
-		return this.claimAndAppend(key, {
+		const mergeKey = linkMergeKeyOf(closed, key);
+		return this.claimAndAppend(key, mergeKey, (closedBefore) => ({
 			name: TASK_AUTOMATION_EVENT_NAMES.LINK_CLOSED,
 			aggregateType: TASK_AUTOMATION_AGGREGATE,
 			aggregateId: key.taskId,
 			partitionKey: taskAutomationPartitionKey(key.taskId),
 			tenantId: key.tenantId,
 			organizationId: key.organizationId,
-			data: { ...closed, provider: key.provider, externalId: key.externalId } as unknown as Record<string, unknown>
-		});
+			// `closedBefore` is the claims' to say, never the integration's.
+			data: { ...closed, provider: key.provider, externalId: key.externalId, closedBefore } as unknown as Record<string, unknown>
+		}));
 	}
 
 	/**
-	 * The claim and the append in one transaction of the ORM `DB_ORM` configures (under MikroORM the outbox's TypeORM
-	 * entity maps its base columns only, so the row is written through MikroORM, and the claim joins that transaction);
-	 * the outbox's commit hook then wakes the dispatch pass. A claim another delivery committed first fails the insert:
-	 * the unique key decided, and the report is theirs.
+	 * The claims and the append in one transaction of the ORM `DB_ORM` configures (under MikroORM the outbox's TypeORM
+	 * entity maps its base columns only, so the row is written through MikroORM, and the claims join that transaction);
+	 * the outbox's commit hook then wakes the dispatch pass. The close is claimed, and a merged pull request's merge
+	 * beside it; the event is appended when either claim is new, saying whether the close was claimed before. A claim
+	 * another delivery committed first fails the insert: the unique key decided, and the report is theirs.
 	 */
-	private async claimAndAppend(key: ITaskLinkClosureKey, input: IOutboxWriteInput): Promise<boolean> {
+	private async claimAndAppend(
+		key: ITaskLinkClosureKey,
+		mergeKey: ITaskLinkClosureKey | null,
+		input: (closedBefore: boolean) => IOutboxWriteInput
+	): Promise<boolean> {
 		try {
 			if (getORMType() === MultiORMEnum.MikroORM) {
 				const em = this.outbox.mikroOrmEventOutboxRepository?.getEntityManager?.();
 				if (em) {
 					return await em.fork().transactional(async (transaction) => {
-						if (!(await this.closures.claimInMikroOrm(transaction as unknown as ITaskAutomationMikroOrmTransaction, key))) return false;
-						await this.outbox.append(transaction as never, input);
+						const claim = (claimed: ITaskLinkClosureKey) =>
+							this.closures.claimInMikroOrm(transaction as unknown as ITaskAutomationMikroOrmTransaction, claimed);
+						const closed = await claim(key);
+						const merged = mergeKey ? await claim(mergeKey) : false;
+						if (!closed && !merged) return false;
+						await this.outbox.append(transaction as never, input(!closed));
 						return true;
 					});
 				}
 			}
 			return await this.dataSource.manager.transaction(async (manager) => {
-				if (!(await this.closures.claimIn(manager, key))) return false;
-				await this.outbox.append(manager, input);
+				const closed = await this.closures.claimIn(manager, key);
+				const merged = mergeKey ? await this.closures.claimIn(manager, mergeKey) : false;
+				if (!closed && !merged) return false;
+				await this.outbox.append(manager, input(!closed));
 				return true;
 			});
 		} catch (error) {
-			if (await this.closures.exists(key)) return false;
+			// Whether another delivery made this report: a merge's claim says it for a merge (the close's may be the one
+			// a close without merging took long before, which says nothing of this delivery), the close's for a close.
+			if (await this.closures.exists(mergeKey ?? key)) return false;
 			throw error;
 		}
 	}
