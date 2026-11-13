@@ -74,6 +74,39 @@ describe('JwtRefreshTokenStrategy.validate', () => {
 		expect(user).toBeNull();
 	});
 
+	/**
+	 * A refresh keeps the organization its refresh token was minted for (ever-co/ever-gauzy#11827). The strategy reads
+	 * it from the token the token service has just verified, never from the request body, which the client writes.
+	 */
+	describe('the organization of the refresh token', () => {
+		const request = { body: { refresh_token: 'refresh-token', organizationId: 'organization-in-the-body' } } as any;
+
+		it('is recorded on the user from the verified token, not from the request body', async () => {
+			const { strategy, refreshTokenService } = build();
+			refreshTokenService.verify.mockResolvedValue({
+				isValid: true,
+				token: { userId: 'user-1', organizationId: 'organization-of-the-token' },
+				reason: null
+			} as any);
+
+			const user = await strategy.validate(request, { id: 'user-1' });
+
+			expect(user.refreshTokenOrganizationId).toBe('organization-of-the-token');
+		});
+
+		it.each([
+			['names none', { userId: 'user-1', organizationId: null }],
+			['was minted before organizations were in its payload', { userId: 'user-1' }]
+		])('is null when the refresh token %s', async (_label, token) => {
+			const { strategy, refreshTokenService } = build();
+			refreshTokenService.verify.mockResolvedValue({ isValid: true, token, reason: null } as any);
+
+			const user = await strategy.validate(request, { id: 'user-1' });
+
+			expect(user.refreshTokenOrganizationId).toBeNull();
+		});
+	});
+
 	describe('passport contract', () => {
 		const request = { body: { refresh_token: 'refresh-token' } } as any;
 

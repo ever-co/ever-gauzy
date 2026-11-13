@@ -121,7 +121,15 @@
 	} @else {
 		@switch (row.type) {
 			@case ('tags') {
-				<ga-only-tags [rowData]="row.tagsHost"></ga-only-tags>
+				@if (row.tagChips) {
+					<span class="record-tags-tinted">
+						@for (tag of row.tagChips; track $index) {
+							<nb-badge class="record-tag-tinted" [style.--tag-color]="tag.color" [text]="tag.name"></nb-badge>
+						}
+					</span>
+				} @else {
+					<ga-only-tags [rowData]="row.tagsHost"></ga-only-tags>
+				}
 			}
 			@case ('people') {
 				<ul class="record-people">

@@ -5,7 +5,9 @@ import { FeatureEnum, PermissionsEnum } from '@gauzy/contracts';
 import { defineDeclarativePlugin, PageExtensionDefinition, PluginRouteInput, PluginUiDefinition } from '@gauzy/plugin-ui';
 import { NavigationBuilderService, NavMenuBuilderService, PermissionsGuard } from '@gauzy/ui-core/core';
 import {
+	CHAT_EMPLOYEE_ACTIONS_SLOT,
 	CHAT_HEADER_ACTION_ID,
+	CHAT_MESSAGE_EMPLOYEE_EXTENSION_ID,
 	CHAT_LINK,
 	CHAT_NAV_BEFORE,
 	CHAT_NAV_ID,
@@ -79,6 +81,23 @@ export const CHAT_SEND_TASK_EXTENSION: PageExtensionDefinition = {
 	metadata: { title: 'Send to chat', icon: 'message-circle-outline' }
 };
 
+/**
+ * "Message" on an employee's page, for users who see the chat and may send (`CHAT_VIEW` and `CHAT_SEND`) where the tenant has the chat on: opens my
+ * direct conversation with them, which the API finds or creates for senders only (`POST /chat/direct`). The button
+ * itself shows only once the API serves the chat to the user.
+ */
+export const CHAT_MESSAGE_EMPLOYEE_EXTENSION: PageExtensionDefinition = {
+	id: CHAT_MESSAGE_EMPLOYEE_EXTENSION_ID,
+	slotId: CHAT_EMPLOYEE_ACTIONS_SLOT,
+	loadComponent: () =>
+		import('./components/message-employee-button/message-employee-button.component').then((m) => m.MessageEmployeeButtonComponent),
+	// Both: every chat route asks for `CHAT_VIEW`, and finding or creating the conversation for `CHAT_SEND` too.
+	permissions: [PermissionsEnum.CHAT_VIEW, PermissionsEnum.CHAT_SEND],
+	featureKey: FeatureEnum.FEATURE_CHAT,
+	order: 50,
+	metadata: { title: 'Message', icon: 'message-circle-outline' }
+};
+
 /** The nav-menu entry, added once the API confirmed it serves the chat (`ChatAvailabilityService`). */
 export const CHAT_NAV_SECTION = {
 	id: CHAT_NAV_ID,
@@ -140,7 +159,7 @@ const declarative = defineDeclarativePlugin('chat', {
 	version: '0.1.0',
 	location: CHAT_SECTIONS_LOCATION,
 	routes: [CHAT_PAGE_ROUTE],
-	extensions: [CHAT_SEND_TASK_EXTENSION],
+	extensions: [CHAT_SEND_TASK_EXTENSION, CHAT_MESSAGE_EMPLOYEE_EXTENSION],
 	featureKey: FeatureEnum.FEATURE_CHAT,
 	permissionKeys: [PermissionsEnum.CHAT_VIEW],
 	translationNamespace: 'CHAT',
@@ -150,7 +169,7 @@ const declarative = defineDeclarativePlugin('chat', {
 /**
  * Chat UI plugin (`@gauzy/plugin-chat-ui`): `/pages/chat` (the conversations of the organization: channels in
  * their categories, direct and group messages, threads, reactions, pins and mentions, with my unread state, live
- * through the realtime events), the header badge, the nav entry, and "Send to chat" on a task's page. Registered in `apps/gauzy/src/plugin-ui.config.ts`;
+ * through the realtime events), the header badge, the nav entry, "Send to chat" on a task's page and "Message" on an employee's page. Registered in `apps/gauzy/src/plugin-ui.config.ts`;
  * shows nothing but the route unless the API serves the chat.
  */
 export const ChatUiPlugin: PluginUiDefinition = {

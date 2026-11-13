@@ -433,6 +433,25 @@ function getRandomDateWithinLast3Months(): Date {
 	return randomDate.toDate();
 }
 
+/**
+ * Saves the seeded users, then writes when each confirmed their e-mail address and last signed in.
+ *
+ * `emailVerifiedAt` and `lastLoginAt` are `insert: false` columns, so that no API create can set them: TypeORM leaves
+ * them out of the INSERT of a new user, and every freshly seeded user, the demo accounts included, read as unverified.
+ * An UPDATE writes them, as it already did for a user that existed before the seed.
+ *
+ * @param dataSource - The seed's data source.
+ * @param users - The users to save, as the seed built them.
+ * @returns The saved users.
+ */
 const insertUsers = async (dataSource: DataSource, users: IUser[]): Promise<IUser[]> => {
-	return await dataSource.manager.save(users);
+	const savedUsers = await dataSource.manager.save(users);
+	for (const user of savedUsers) {
+		const { emailVerifiedAt, lastLoginAt } = user;
+		const seededTimes = { ...(emailVerifiedAt && { emailVerifiedAt }), ...(lastLoginAt && { lastLoginAt }) };
+		if (Object.keys(seededTimes).length > 0) {
+			await dataSource.manager.update(User, { id: user.id }, seededTimes);
+		}
+	}
+	return savedUsers;
 };

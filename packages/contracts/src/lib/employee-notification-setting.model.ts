@@ -42,6 +42,11 @@ export interface IEmployeeNotificationPreferences {
 	dnd?: { start: string; end: string; timeZone?: string } | null;
 	/** The hour (0–23, the employee's time zone) the daily digest is sent. Default 8. */
 	digestHour?: number;
+	/**
+	 * After how many hours a running timer is worth a reminder (`TimerReminder`), with one more at twice that and never
+	 * a third. Default 8; `null` or 0 for no reminder. A value outside (0, 24] reads as the default.
+	 */
+	timerReminderHours?: number | null;
 }
 
 /**

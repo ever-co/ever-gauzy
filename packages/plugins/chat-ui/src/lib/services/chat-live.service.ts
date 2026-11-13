@@ -7,7 +7,7 @@ import { API_PREFIX } from '@gauzy/ui-core/common';
 import { RealtimeSocketService } from '@gauzy/ui-core/core';
 import { CHAT_LIVE_SAFETY_POLL_MS } from '../chat-ui.constants';
 import { ChatAvailabilityService, isFinalRefusal } from './chat-availability.service';
-import { ChatHint, ChatLiveChannel, ChatLiveMode, ChatSocketStatus, pollTicks } from './chat-live';
+import { ChatHint, ChatLiveChannel, ChatLiveMode, ChatSocketStatus, ChatTypingSignal, pollTicks } from './chat-live';
 
 /** Whether the tab is shown (a hidden tab neither polls nor refetches; it catches up when shown again). */
 export function isTabVisible(): boolean {
@@ -26,6 +26,8 @@ export class ChatLiveService {
 
 	/** The chat events, as hints to refetch what they name. */
 	readonly hints$: Observable<ChatHint>;
+	/** The members' typing signals (where the platform offers them). */
+	readonly typing$: Observable<ChatTypingSignal>;
 	readonly mode$: Observable<ChatLiveMode>;
 	/**
 	 * When to catch up with what the stream may have missed: the mode became `live` (first time, after a reconnect)
@@ -51,6 +53,7 @@ export class ChatLiveService {
 			socketStatus$: socket.status$ as Observable<ChatSocketStatus>
 		});
 		this.hints$ = this.channel.hints$;
+		this.typing$ = this.channel.typing$;
 		this.mode$ = this.channel.mode$;
 		const shown$ =
 			typeof document === 'undefined'

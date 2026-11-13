@@ -586,7 +586,7 @@ describe('TaskResolver — one concept, two protocols, the same operations', () 
 		}
 	});
 
-	it('retires and restores a task through the service methods the inherited routes call', async () => {
+	it('retires and restores a task through the service methods the trash routes call', async () => {
 		const { resolver, taskService } = surfaces();
 
 		const retired = await resolver.softDeleteTask(PICKING);
@@ -731,10 +731,15 @@ describe('TaskResolver — the guard stack and the permission are the controller
 			PermissionsEnum.ALL_ORG_EDIT,
 			PermissionsEnum.ORG_TASK_EDIT
 		]);
-		// The inherited soft-delete pair runs under the class-level grant, because the controller does not
-		// override either route to state a narrower one.
-		expect(permissionOfField('softDeleteTask')).toEqual([PermissionsEnum.ALL_ORG_EDIT]);
-		expect(permissionOfField('recoverTask')).toEqual([PermissionsEnum.ALL_ORG_EDIT]);
+		// The trash pair takes what a delete takes (the controller overrides both routes to state it); with
+		// ORG_TASK_EDIT alone the service lets a manager of one of the task's teams through.
+		for (const field of ['softDeleteTask', 'recoverTask']) {
+			expect(permissionOfField(field)).toEqual([
+				PermissionsEnum.ALL_ORG_EDIT,
+				PermissionsEnum.ORG_TASK_DELETE,
+				PermissionsEnum.ORG_TASK_EDIT
+			]);
+		}
 		expect(permissionOfField('bulkUpdateTasks')).toEqual([PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_EDIT]);
 		for (const field of ['tasks', 'myTasks', 'task', 'taskCount', 'taskMaxNumber', 'taskByNumber', 'tasksByView', 'builtInViewTasks', 'resolveTaskReferences']) {
 			expect(permissionOfField(field)).toEqual([

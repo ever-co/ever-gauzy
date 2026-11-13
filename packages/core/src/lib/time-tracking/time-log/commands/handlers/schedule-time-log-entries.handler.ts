@@ -1,7 +1,7 @@
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import { Brackets, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
-import { isEmpty } from '@gauzy/utils';
+import { isEmpty, isNotEmpty } from '@gauzy/utils';
 import { ID, ITimeLog, ITimeSlot } from '@gauzy/contracts';
 import { prepareSQLQuery as p } from './../../../../database/database.helper';
 import { MultiORM, MultiORMEnum, getORMType } from './../../../../core/utils';
@@ -21,22 +21,33 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 
 	/**
 	 * Executes the scheduling of TimeLog entries based on the given command parameters.
-	 * This function is responsible for identifying any pending time logs for a specific tenant, organization,
-	 * and optionally an employee, and then processing each entry to ensure they are accurately tracked and updated.
+	 * This function is responsible for identifying any pending time logs of one employee, in their tenant and
+	 * organization, and then processing each entry to ensure they are accurately tracked and updated.
 	 *
 	 * The function first retrieves all pending TimeLog entries that match the given criteria,
 	 * then iterates through each of them to perform necessary adjustments such as stopping timers,
 	 * updating durations, and correcting the 'stoppedAt' timestamps based on the employee's activities.
 	 *
-	 * @param command The command containing the details needed to identify the pending TimeLog entries,
-	 *                including `tenantId`, `organizationId`, and optionally `employeeId`.
+	 * @param command The command containing the details needed to identify the pending TimeLog entries:
+	 *                `employeeId`, `organizationId` and `tenantId`, all three required.
 	 *
 	 * @returns A Promise that resolves when all pending TimeLog entries have been processed and updated.
+	 * @throws Error when one of the three ids is missing; nothing is closed then.
 	 */
 	public async execute(command: ScheduleTimeLogEntriesCommand): Promise<void> {
 		const { tenantId, organizationId, employeeId } = command;
 
-		// Retrieve all pending TimeLog entries based on the provided tenantId, organizationId, and employeeId (if available)
+		// One employee's entries only. The query below keeps its employee, organization and tenant filters only when
+		// the employee and organization ids are set: without them it would close the pending entries of every employee
+		// in every tenant. A missing tenant id is refused as well
+		const namesEmployeeScope = isNotEmpty(employeeId) && isNotEmpty(organizationId) && isNotEmpty(tenantId);
+		if (!namesEmployeeScope) {
+			throw new Error(
+				`Can't close pending time logs without an employee, organization and tenant id (employee: ${employeeId}, organization: ${organizationId}, tenant: ${tenantId}).`
+			);
+		}
+
+		// Retrieve all pending TimeLog entries of the employee, in their tenant and organization
 		const logs = await this.getPendingTimeLogs(tenantId, organizationId, employeeId);
 
 		// Iterate through each pending time log entry to process and update them as necessary

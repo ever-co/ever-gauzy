@@ -1,7 +1,15 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { NbButtonModule, NbCardModule, NbIconModule, NbPopoverModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
+import {
+	NbBadgeModule,
+	NbButtonModule,
+	NbCardModule,
+	NbIconModule,
+	NbPopoverModule,
+	NbSpinnerModule,
+	NbTooltipModule
+} from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslatePipe } from '@ngx-translate/core';
 import { PipesModule } from '../pipes/pipes.module';
@@ -25,6 +33,7 @@ import { FavoriteToggleModule } from '../favorite-toggle/favorite-toggle.module'
 @NgModule({
 	imports: [
 		CommonModule,
+		NbBadgeModule,
 		NbButtonModule,
 		NbCardModule,
 		NbIconModule,

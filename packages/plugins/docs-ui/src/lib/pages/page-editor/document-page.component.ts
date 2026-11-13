@@ -49,6 +49,7 @@ import { MoveSpaceDialogComponent } from '../../dialogs/move-space-dialog.compon
 import { RequestReviewDialogComponent } from '../../dialogs/request-review-dialog.component';
 import { DocumentShareDialogComponent } from '../../dialogs/share-dialog.component';
 import { DocsExportService } from '../../services/docs-export.service';
+import { DocsImportService } from '../../services/docs-import.service';
 import { DocumentPermissionService } from '../../services/document-permission.service';
 import { DocumentTreeStore, IDocsTreeNode } from '../../services/document-tree.store';
 import { DocumentsService } from '../../services/documents.service';
@@ -101,6 +102,7 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 	private readonly router = inject(Router);
 	private readonly documentsService = inject(DocumentsService);
 	private readonly exportService = inject(DocsExportService);
+	private readonly importService = inject(DocsImportService);
 	private readonly treeStore = inject(DocumentTreeStore);
 	private readonly documentPermission = inject(DocumentPermissionService);
 	private readonly dialogService = inject(NbDialogService);
@@ -132,6 +134,9 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 	private followRequest = 0;
 	public versionsOpen = false;
 	public menuOpen = false;
+	/** Whether the server exports PDFs (its probe answered); the PDF entries are hidden otherwise. */
+	public pdfExportAvailable = false;
+	public pdfBusy = false;
 	public iconPickerOpen = false;
 	public fullWidth = false;
 
@@ -213,6 +218,15 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 				takeUntilDestroyed(this.destroyRef)
 			)
 			.subscribe((id) => void this.load(id));
+
+		// The PDF export entries follow the server's probe (hidden while it answers 404, `docs-import-export` FR-17).
+		this.importService
+			.probePdf()
+			.pipe(takeUntilDestroyed(this.destroyRef))
+			.subscribe((capabilities) => {
+				this.pdfExportAvailable = !!capabilities;
+				this.cdr.markForCheck();
+			});
 
 		// `?view=full`: a sidebar favorite opens the page as wide as the shell allows, right rail closed
 		// (handover §4.P). Only that entry point carries it; the viewer can still toggle both afterwards.
@@ -610,6 +624,34 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 		if (!this.document) return;
 		const written = await this.exportService.downloadMarkdown(this.document, this.exportSource());
 		if (!written) this.toastrService.warning(this.translate.instant('DOCS.EXPORT.NOTHING_TO_EXPORT'));
+	}
+
+	/**
+	 * Downloads the page (or the page with the sub-pages the caller may read) as a PDF rendered by the server, with the
+	 * title and date in its header and a table of contents for a subtree. The server renders the page as saved: its
+	 * pending edits are saved first (a save in flight, or the live session's waiting edits), or nothing is exported.
+	 */
+	async exportPdf(subtree = false): Promise<void> {
+		this.menuOpen = false;
+		if (!this.document?.id || !this.isPage || this.pdfBusy) return;
+		// The page asked for: the component is reused when the route moves to another page while the saves settle.
+		const pageId = this.document.id as ID;
+		this.pdfBusy = true;
+		try {
+			if (this.editorComponent && !(await this.editorComponent.settleSaves())) {
+				this.toastrService.warning(this.translate.instant('DOCS.EXPORT.PDF_UNSAVED'));
+				return;
+			}
+			if (this.document?.id !== pageId) return;
+			const result = await this.importService.downloadPdf(pageId, { subtree });
+			if (!result.ok) {
+				const tooMany = result.error?.status === 413;
+				this.toastrService.danger(this.translate.instant(tooMany ? 'DOCS.EXPORT.PDF_TOO_MANY_PAGES' : 'DOCS.EXPORT.PDF_FAILED'));
+			}
+		} finally {
+			this.pdfBusy = false;
+			this.cdr.markForCheck();
+		}
 	}
 
 	/** Print-CSS PDF path (spec 05 §9.1 tier 3 — the browser's "Save as PDF"). */

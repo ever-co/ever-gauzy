@@ -93,6 +93,9 @@ senders work without changes.
 - **Reliability**: idempotency by optional `nonce`; interaction callbacks retried three
   times with backoff, each retry re-signed with a fresh timestamp but carrying the same
   `interactionId`, so a sender whose earlier response was lost does not act twice.
+  A member's click sent again with its `Idempotency-Key` (a double click, a
+  retry after a lost answer) is the same interaction and calls the app no
+  second time.
 - **Security & privacy**: secrets hashed at rest; URLs validated; signatures on
   callbacks; no employee data beyond name and id in callbacks.
 - **Observability**: per-webhook counters (accepted, rejected, rate-limited, callback

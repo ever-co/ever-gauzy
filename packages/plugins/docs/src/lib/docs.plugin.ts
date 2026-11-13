@@ -3,6 +3,9 @@ import { SeederModule, skipExport } from '@gauzy/core';
 import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy, IOnPluginSeedable } from '@gauzy/plugin';
 import { DocsModule } from './docs.module';
 import { ALL_DOC_ENTITIES, DocumentChunk, DocumentIndexState } from './entities';
+import { DocsCommentAnchorFieldResolver, DocsCommentAnchorResolver } from './graphql/docs-comment-anchor.resolver';
+import { docsSchemaExtensions } from './graphql/docs.schema';
+import { DocumentImportService } from './import/document-import.service';
 import { DocsRecoveryService } from './knowledge/queue/docs-recovery.service';
 import { DocsSeederService } from './seeds/docs-seeder.service';
 import { DocumentSubscriber } from './subscribers/document.subscriber';
@@ -35,6 +38,11 @@ skipExport(DocumentChunk, DocumentIndexState);
 	// "Metadata for entity DocumentInboundAddress not found". A hand-maintained duplicate of a list
 	// that already exists is a latent outage; there is now only one list.
 	entities: [...ALL_DOC_ENTITIES],
+	// The comment anchors of pages (`Comment.documentAnchor`, `documentCommentAnchors`, set / remove), the REST routes' twins.
+	extensions: {
+		schema: docsSchemaExtensions,
+		resolvers: [DocsCommentAnchorResolver, DocsCommentAnchorFieldResolver]
+	},
 	subscribers: [DocumentSubscriber, DocumentVersionSubscriber],
 	providers: [DocsSeederService]
 })
@@ -44,7 +52,8 @@ export class DocsPlugin implements IOnPluginBootstrap, IOnPluginDestroy, IOnPlug
 
 	constructor(
 		private readonly docsSeederService: DocsSeederService,
-		private readonly docsRecoveryService: DocsRecoveryService
+		private readonly docsRecoveryService: DocsRecoveryService,
+		private readonly documentImportService: DocumentImportService
 	) {}
 
 	/**
@@ -57,6 +66,8 @@ export class DocsPlugin implements IOnPluginBootstrap, IOnPluginDestroy, IOnPlug
 			console.log(chalk.green(`${DocsPlugin.name} is being bootstrapped...`));
 		}
 		this.docsRecoveryService.scheduleStartupScan();
+		// Imports whose job was lost (a Redis flush, an inline run in a process that stopped) are resumed.
+		this.documentImportService.scheduleStartupResume();
 	}
 
 	/**
@@ -64,6 +75,7 @@ export class DocsPlugin implements IOnPluginBootstrap, IOnPluginDestroy, IOnPlug
 	 */
 	onPluginDestroy(): void | Promise<void> {
 		this.docsRecoveryService.cancelStartupScan();
+		this.documentImportService.cancelStartupResume();
 		if (this.logEnabled) {
 			console.log(chalk.red(`${DocsPlugin.name} is being destroyed...`));
 		}

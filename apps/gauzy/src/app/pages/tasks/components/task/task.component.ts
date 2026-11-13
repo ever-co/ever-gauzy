@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { combineLatest, firstValueFrom, Observable, Subject } from 'rxjs';
@@ -13,6 +13,7 @@ import {
 	ServerDataSource,
 	Store,
 	TasksStoreService,
+	TaskTrashService,
 	TeamTasksStoreService,
 	GenericFavoriteService
 } from '@gauzy/ui-core/core';
@@ -99,6 +100,9 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 	selectedProject: IOrganizationProject;
 	selectedTeamIds: string[] = [];
 	public favoriteTasks: IFavorite[] = [];
+	/** Whether the platform keeps a trash for the organization's tasks (`GAUZY_TASK_TRASH_ENABLED`): the header links it. */
+	public hasTrash = false;
+	private readonly _taskTrash = inject(TaskTrashService);
 
 	constructor(
 		private readonly dialogService: NbDialogService,
@@ -405,7 +409,15 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 				distinctUntilChange(),
 				filter(([organization]) => !!organization),
 				tap(([organization, employee, project, team]) => {
+					if (this.organization?.id !== organization.id) this.hasTrash = false;
 					this.organization = organization;
+					// Only the answer for the organization still selected shows the link: a slower one for the previous
+					// organization changes nothing.
+					void this._taskTrash
+						.isEnabledOrFalse(organization.id, organization.tenantId)
+						.then((hasTrash) => {
+							if (this.organization?.id === organization.id) this.hasTrash = hasTrash;
+						});
 					this.selectedEmployeeId = employee?.id || null;
 					this.selectedProject = project;
 					this.selectedTeamIds = team?.id ? [team.id] : [];

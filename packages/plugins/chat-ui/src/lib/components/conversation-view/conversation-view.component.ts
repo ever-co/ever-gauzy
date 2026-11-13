@@ -32,10 +32,22 @@ import {
 } from '@gauzy/contracts';
 import { ToastrService } from '@gauzy/ui-core/core';
 import { applyCatchUp, reconcileWithNewest } from '../../chat-catch-up';
+import { ChatMemberPreview } from '../../chat-member-preview';
 import { canManageConversation } from '../../chat-categories';
 import { withTaskReference } from '../../chat-tasks';
 import { CHAT_LINK, CHAT_LIVE_AUDIT_MS, CHAT_MESSAGES_POLL_MS } from '../../chat-ui.constants';
-import { apiErrorMessage, continuesGroup, conversationPerson, conversationTitle, isSameDay, memberEmployeeIds, mergeMessages, newNonce } from '../../chat-ui.helpers';
+import {
+	apiErrorMessage,
+	ChatPerson,
+	continuesGroup,
+	conversationPerson,
+	conversationTitle,
+	isSameDay,
+	memberEmployeeIds,
+	mergeMessages,
+	newNonce,
+	ownPicture
+} from '../../chat-ui.helpers';
 import { ChatCreateTaskFlow } from '../../dialogs/chat-task-dialogs.component';
 import { ChannelSettingsContext, ChannelSettingsDialogComponent } from '../../dialogs/chat-settings-dialogs.component';
 import { ChatFilesStore } from '../../services/chat-files.store';
@@ -47,6 +59,7 @@ import { FilesPanelComponent } from '../files-panel/files-panel.component';
 import { clearDraft, ComposerSubmission, MessageComposerComponent } from '../message-composer/message-composer.component';
 import { MessageAction, MessageItemComponent } from '../message-item/message-item.component';
 import { PersonAvatarComponent } from '../person-avatar/person-avatar.component';
+import { TypingIndicatorComponent } from '../typing-indicator/typing-indicator.component';
 
 /** How close to the bottom (px) counts as "reading the latest", for auto-scroll and read-on-view. */
 const NEAR_BOTTOM_PX = 80;
@@ -118,7 +131,8 @@ export function unreadMarkerId(messages: readonly IChatMessageWithRelations[], s
 		FilesPanelComponent,
 		MessageComposerComponent,
 		MessageItemComponent,
-		PersonAvatarComponent
+		PersonAvatarComponent,
+		TypingIndicatorComponent
 	],
 	template: `
 		<section class="view" data-test="conversation-view">
@@ -167,7 +181,15 @@ export function unreadMarkerId(messages: readonly IChatMessageWithRelations[], s
 						[attr.aria-label]="'CHAT.SETTINGS.MEMBERS_OPEN' | translate"
 						(click)="openSettings('members')"
 					>
-						<nb-icon icon="people-outline"></nb-icon>
+						@if (memberFaces().length) {
+							<span class="faces">
+								@for (face of memberFaces(); track face.employeeId) {
+									<ngx-chat-person-avatar [person]="face" size="tiny"></ngx-chat-person-avatar>
+								}
+							</span>
+						} @else {
+							<nb-icon icon="people-outline"></nb-icon>
+						}
 						<span>{{ conversation().memberCount }}</span>
 					</button>
 					@if (isMember()) {
@@ -380,6 +402,7 @@ export function unreadMarkerId(messages: readonly IChatMessageWithRelations[], s
 				@if (conversation().archivedAt) {
 					<p class="bar notice"><nb-icon icon="archive-outline"></nb-icon> {{ 'CHAT.VIEW.ARCHIVED' | translate }}</p>
 				} @else if (isMember()) {
+					<ngx-chat-typing-indicator [conversationId]="conversation().id" [people]="people()" [meUserId]="meUserId()"></ngx-chat-typing-indicator>
 					<ngx-chat-message-composer
 						[people]="people()"
 						[conversationNames]="conversationNames()"
@@ -393,7 +416,9 @@ export function unreadMarkerId(messages: readonly IChatMessageWithRelations[], s
 						[draftKey]="draftKey()"
 						[resetToken]="resetToken()"
 						[canAttach]="canAttach()"
+						[keepsFiles]="!!editing()?.attachmentIds?.length"
 						(submitted)="onSubmit($event)"
+						(typing)="onTyping()"
 						(editCancelled)="editing.set(null)"
 					></ngx-chat-message-composer>
 				} @else {
@@ -525,6 +550,19 @@ export function unreadMarkerId(messages: readonly IChatMessageWithRelations[], s
 			}
 			.members nb-icon {
 				font-size: 1rem;
+			}
+			/* A few members' faces, overlapping, before the count. */
+			.faces {
+				display: inline-flex;
+				align-items: center;
+				margin-left: -0.25rem;
+			}
+			.faces ngx-chat-person-avatar {
+				border-radius: calc(var(--border-radius) * 0.625);
+				box-shadow: 0 0 0 2px var(--gauzy-card-1);
+			}
+			.faces ngx-chat-person-avatar + ngx-chat-person-avatar {
+				margin-left: -0.375rem;
 			}
 			.icon-button {
 				display: inline-flex;
@@ -935,6 +973,19 @@ export class ConversationViewComponent {
 	protected readonly plainTitle = computed(() => (this.isChannel() ? this.title().replace(/^#/, '') : this.title()));
 	/** The person a direct conversation is with, for the header and the intro. */
 	protected readonly person = computed(() => conversationPerson(this.conversation(), this.people().byEmployee, this.meEmployeeId()));
+	/** The first members for the member button (a channel comes without them in the list, so they are read). */
+	private readonly memberPreview = new ChatMemberPreview((id) => this.api.members(id));
+	/** Up to three members for the header's member button (those with a picture first), as Slack shows them. */
+	protected readonly memberFaces = computed<ChatPerson[]>(() => {
+		const byEmployee = this.people().byEmployee;
+		const known = this.memberPreview
+			.members(this.conversation())
+			.map((member) => byEmployee.get(String(member.employeeId)))
+			.filter((person): person is ChatPerson => !!person);
+		const withPicture = known.filter((person) => !!ownPicture(person.imageUrl));
+		const without = known.filter((person) => !ownPicture(person.imageUrl));
+		return [...withPicture, ...without].slice(0, 3);
+	});
 
 	/** The open header menu. */
 	protected readonly menu = signal<HeaderMenu>(null);
@@ -1005,6 +1056,13 @@ export class ConversationViewComponent {
 			const message = this.patch();
 			if (message) untracked(() => this.replace(message));
 		});
+		// The faces on the member button follow the conversation: its members are read again when its count changes.
+		effect(() => {
+			const conversation = this.conversation();
+			const isMember = this.isMember();
+			untracked(() => this.memberPreview.follow(conversation, isMember, () => this.conversation()));
+		});
+		this.destroyRef.onDestroy(() => this.memberPreview.destroy());
 		// A message that names a file not read yet reads the conversation's files (the pins too); only the messages of
 		// the open conversation count (a switch shows the previous one's for a moment).
 		effect(() => {
@@ -1136,7 +1194,11 @@ export class ConversationViewComponent {
 					filter(() => isTabVisible()),
 					takeUntilDestroyed(this.destroyRef)
 				)
-				.subscribe((hint) => this.refreshMessage(id, String(hint.messageId)))
+				.subscribe((hint) => {
+					this.refreshMessage(id, String(hint.messageId));
+					// A task changed from a card is told to the messages that show it: their cards read the task again.
+					if (hint.name === CHAT_EVENT_NAMES.MESSAGE_UPDATED) this.taskStore.refreshShownBy([...this.messages(), ...this.pins()], String(hint.messageId));
+				})
 		);
 		poll.add(this.live.catchUp$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.catchUp(id)));
 		this.poll = poll;
@@ -1199,6 +1261,8 @@ export class ConversationViewComponent {
 					const wasNearBottom = this.isNearBottom();
 					const result = applyCatchUp(this.messages(), before, this.touched, (loaded) => reconcileWithNewest(loaded, page));
 					this.messages.set(result.messages);
+					// A task changed while no hint reached this tab (hidden, offline): its cards read it again.
+					this.taskStore.refreshAll([...result.messages, ...this.pins()]);
 					if (result.replaced) this.hasBefore.set(page.hasBefore);
 					if (!result.added.length) return;
 					if (wasNearBottom) {
@@ -1420,6 +1484,11 @@ export class ConversationViewComponent {
 	}
 
 	// ---------------------------------------------------------------- messages
+
+	/** The person types in this conversation: the other members are told (best effort). */
+	protected onTyping(): void {
+		this.api.signalTyping(String(this.conversation().id));
+	}
 
 	protected onSubmit(submission: ComposerSubmission): void {
 		const id = String(this.conversation().id);

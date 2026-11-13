@@ -24,6 +24,7 @@ export type DocsActionId =
 	| 'copy-link'
 	| 'download'
 	| 'export-markdown'
+	| 'export-zip'
 	| 'knowledge-import'
 	| 'knowledge-exclude'
 	| 'archive'
@@ -202,6 +203,12 @@ export function buildDocsActionMenu(target: IDocsActionTarget, context: IDocsAct
 	if (target.kind === DocumentKindEnum.PAGE) {
 		share.push(item('export-markdown', 'DOCS.EXPORT.MARKDOWN', 'file-text-outline'));
 	}
+	// The server's zip of Markdown files: a folder with its pages, sub-folders and files, or a page with sub-pages (a page
+	// known to have some: a leaf page has its own Markdown export, and a page without a count is not offered a zip).
+	const hasSubPages = typeof target.childrenCount === 'number' && target.childrenCount > 0;
+	if (target.kind === DocumentKindEnum.FOLDER || (target.kind === DocumentKindEnum.PAGE && hasSubPages)) {
+		share.push(item('export-zip', target.kind === DocumentKindEnum.FOLDER ? 'DOCS.EXPORT.FOLDER_ZIP' : 'DOCS.EXPORT.ZIP_WITH_SUB_PAGES', 'archive-outline'));
+	}
 
 	// ─── AI knowledge (FOLDER has no body to index) ─────────────────
 	const knowledge = section();
@@ -276,8 +283,9 @@ export function docsActionMenuSignature(target: IDocsActionTarget, context: IDoc
 		String(target.id),
 		target.kind,
 		target.isArchived ? '1' : '0',
-		// An empty container drops "Duplicate with children".
-		target.childrenCount === 0 ? '1' : '0',
+		// An empty container drops "Duplicate with children"; a page known to have children offers the zip: unknown, none
+		// and some are three keys.
+		typeof target.childrenCount !== 'number' ? 'u' : target.childrenCount > 0 ? 'n' : '0',
 		target.knowledgeStatus ?? '',
 		context.isFavorite ? '1' : '0',
 		context.canMutate === false ? '0' : '1',

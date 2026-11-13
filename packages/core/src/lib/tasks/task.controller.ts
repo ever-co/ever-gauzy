@@ -10,7 +10,8 @@ import {
 	UseGuards,
 	Post,
 	Delete,
-	NotFoundException
+	NotFoundException,
+	UsePipes
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
@@ -39,9 +40,10 @@ import {
 import { Idempotent } from './../idempotency/idempotent.decorator';
 import { Permissions } from './../shared/decorators';
 import { CountQueryDTO } from './../shared/dto';
-import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
+import { AbstractValidationPipe, UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { CrudController, BaseQueryDTO } from './../core/crud';
+import { TenantOrganizationBaseDTO } from './../core/dto';
 import { Task } from './task.entity';
 import { TaskService } from './task.service';
 import { TaskCreateCommand, TaskUpdateCommand } from './commands';
@@ -56,11 +58,13 @@ import {
 	TaskMaxNumberQueryDTO,
 	TaskMemberDTO,
 	TaskQueryDTO,
+	TaskTrashQueryDTO,
 	TaskReferenceResolveDTO,
 	UpdateTaskDTO,
 	UpdateTaskStatusDTO
 } from './dto';
 import { TaskViewsEnabledGuard } from './task-views-enabled';
+import { TaskTrashEnabledGuard } from './task-trash-enabled';
 import { isBuiltInView } from './built-in-views';
 
 @ApiTags('Tasks')
@@ -122,6 +126,26 @@ export class TaskController extends CrudController<Task> {
 	@UseValidationPipe()
 	async getMaxTaskNumberByProject(@Query() options: TaskMaxNumberQueryDTO): Promise<number> {
 		return this.taskService.getMaxTaskNumberByProject(options);
+	}
+
+	/**
+	 * GET the trash: soft-deleted tasks of the caller's organization, most recently deleted first, optionally of one
+	 * team or project. With the delete grants (`ALL_ORG_EDIT`, `ORG_TASK_DELETE`) the whole organization's; with
+	 * `ORG_TASK_EDIT` alone, the trash of a team the caller manages, named by `organizationTeamId`. Behind
+	 * `GAUZY_TASK_TRASH_ENABLED` (404 otherwise, the probe a client reads). Declared before `/:id`.
+	 *
+	 * @param query The organization, the team or project, the search and the page.
+	 */
+	@ApiOperation({ summary: 'List the soft-deleted tasks (the trash).' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'The trashed tasks, most recently deleted first.' })
+	@ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Without the delete grants, name a team you manage.' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'The trash is not enabled on this server.' })
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_DELETE, PermissionsEnum.ORG_TASK_EDIT)
+	@UseGuards(TaskTrashEnabledGuard)
+	@Get('/trash')
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async findTrash(@Query() query: TaskTrashQueryDTO): Promise<IPagination<ITask>> {
+		return this.taskService.findTrash(query);
 	}
 
 	/**
@@ -522,6 +546,73 @@ export class TaskController extends CrudController<Task> {
 	})
 	async delete(@Param('id', UUIDValidationPipe) id: ID): Promise<DeleteResult> {
 		return this.taskService.deleteTask(id);
+	}
+
+	/**
+	 * DELETE a task to the trash (soft delete), under the grants a delete takes: the inherited route ran under the
+	 * class-level `ALL_ORG_EDIT` alone, so those who may delete a task could not trash it. Without `ALL_ORG_EDIT` or
+	 * `ORG_TASK_DELETE`, only a manager of one of the task's teams may (the service checks it).
+	 *
+	 * @param id The task.
+	 */
+	@ApiOperation({ summary: 'Move a task to the trash (soft delete).' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The task is in the trash.' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Task not found.' })
+	@ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Only a manager of one of the task teams may.' })
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_DELETE, PermissionsEnum.ORG_TASK_EDIT)
+	@Delete('/:id/soft')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRemove(@Param('id', UUIDValidationPipe) id: ID): Promise<Task> {
+		return this.taskService.softRemove(id);
+	}
+
+	/**
+	 * PUT a task back from the trash, under the same grants as moving it there.
+	 *
+	 * @param id The task.
+	 */
+	@ApiOperation({ summary: 'Restore a task from the trash.' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The task is restored.' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Task not found.' })
+	@ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Only a manager of one of the task teams may.' })
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_DELETE, PermissionsEnum.ORG_TASK_EDIT)
+	@Put('/:id/recover')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRecover(@Param('id', UUIDValidationPipe) id: ID): Promise<Task> {
+		return this.taskService.softRecover(id);
+	}
+
+	/**
+	 * DELETE a task for good, only while it is in the trash: the trash pages' Delete forever. The delete statement
+	 * itself requires the task to be in the trash, so a task someone restored after the trash was read stays (404),
+	 * where `DELETE /tasks/:id` would delete the live task. Under the grants of the trash and restore routes, behind
+	 * `GAUZY_TASK_TRASH_ENABLED` as the trash list is.
+	 *
+	 * @param id The task.
+	 * @param query The organization whose trash holds the task.
+	 */
+	@ApiOperation({ summary: 'Delete a task for good, only while it is in the trash.' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'The task is deleted for good.' })
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'No task with that id is in the trash of the organization, or the trash is not enabled.'
+	})
+	@ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Only a manager of one of the task teams may.' })
+	@ApiResponse({
+		status: HttpStatus.CONFLICT,
+		description: 'Other records (a linked issue, a key result) still point at the task; it stays in the trash.'
+	})
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_DELETE, PermissionsEnum.ORG_TASK_EDIT)
+	@UseGuards(TaskTrashEnabledGuard)
+	@Delete('/:id/trashed')
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async deleteTrashed(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Query() query: TenantOrganizationBaseDTO
+	): Promise<DeleteResult> {
+		return this.taskService.deleteTrashedTask(id, query?.organizationId ?? query?.organization?.id);
 	}
 
 	/**

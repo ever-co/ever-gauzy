@@ -50,6 +50,18 @@ describe('buildDocsActionMenu — one action set for tree, table and cards', () 
 			expect(page).not.toContain('download');
 		});
 
+		it('offers the zip of Markdown files for a folder, and for a page known to have sub-pages', () => {
+			const folder = buildDocsActionMenu(target({ kind: DocumentKindEnum.FOLDER, childrenCount: 0 }), context({ permissions: NO_PERMISSIONS }));
+			const parent = buildDocsActionMenu(target({ childrenCount: 3 }), context());
+			const zipItem = (items: NbMenuItem[]) => items.find((item) => docsActionOf(item) === 'export-zip');
+
+			expect(zipItem(folder)?.title).toBe('DOCS.EXPORT.FOLDER_ZIP');
+			expect(zipItem(parent)?.title).toBe('DOCS.EXPORT.ZIP_WITH_SUB_PAGES');
+			expect(actionsOf(buildDocsActionMenu(target({ childrenCount: 0 }), context()))).not.toContain('export-zip');
+			expect(actionsOf(buildDocsActionMenu(target(), context()))).not.toContain('export-zip');
+			expect(actionsOf(buildDocsActionMenu(target({ kind: DocumentKindEnum.FILE, childrenCount: 2 }), context()))).not.toContain('export-zip');
+		});
+
 		it('offers the deep duplicate only where there is a subtree to copy', () => {
 			expect(actionsOf(buildDocsActionMenu(target({ kind: DocumentKindEnum.FOLDER }), context()))).toContain(
 				'duplicate-deep'
@@ -298,9 +310,16 @@ describe('docsActionMenuSignature — the memo key the kebab bindings rely on', 
 		['kind', target({ kind: DocumentKindEnum.FILE })],
 		['archived', target({ isArchived: true })],
 		['knowledge status', target({ knowledgeStatus: DocumentKnowledgeStatusEnum.INDEXED })],
-		['empty-container state', target({ childrenCount: 0 })]
+		['empty-container state', target({ childrenCount: 0 })],
+		['known children (the zip of a page)', target({ childrenCount: 2 })]
 	])('changes when the %s changes', (_label, changed) => {
 		expect(docsActionMenuSignature(changed, context())).not.toBe(docsActionMenuSignature(target(), context()));
+	});
+
+	it('tells unknown, no and some children apart (the zip item follows them)', () => {
+		const keys = new Set([undefined, 0, 3].map((childrenCount) => docsActionMenuSignature(target({ childrenCount }), context())));
+		expect(keys.size).toBe(3);
+		expect(docsActionMenuSignature(target({ childrenCount: 3 }), context())).toBe(docsActionMenuSignature(target({ childrenCount: 7 }), context()));
 	});
 
 	it('changes when a permission, the star state or the surface changes', () => {

@@ -53,7 +53,13 @@ The UI has no switch of its own. It follows the API:
   edit and delete (own messages, or managers) and "Create task from message"
   (users with `ORG_TASK_ADD`), and shows its task cards (key, title and status
   where the reader may see the task, read through `GET /api/tasks?where[id]=…`,
-  which records no visit, unlike `GET /api/tasks/:id`), its
+  which records no visit, unlike `GET /api/tasks/:id`). A reader with
+  `ORG_TASK_EDIT` (or `ALL_ORG_EDIT`) who may write in the conversation changes
+  a card's status (the statuses of the task's project), priority and assignees
+  in place (`PATCH /api/chat/messages/:id/tasks/:taskId`: the task page's
+  update and activity log); the platform's refusal shows on the card, and the
+  cards of every conversation showing the task read it again when its message
+  is told it changed. The message also shows its
   files and a card for each web link: the site and the path, and, once the
   platform has a preview of the page (`GET /api/chat/link-preview`, which the
   platform fetches; on only with `GAUZY_CHAT_LINK_PREVIEWS_ENABLED=true`), the
@@ -69,8 +75,15 @@ The UI has no switch of its own. It follows the API:
   plugin (`POST /api/plugins/docs/documents/upload`) as the sender's private
   FILE document (`source: CHAT`, kept out of the knowledge base and of the AI
   classification) and goes out with the message as `attachmentIds`; a message
-  of files alone carries their names as its text (the API needs a body).
-  Messages show pictures inline and other files as links, read through the
+  of files alone goes with no text (the platform records the files' names, and
+  the thread list reads `📎 names`), and an edit of a message that keeps its
+  files may empty its text. A stored file taken off the composer, or left in it
+  when the person moves to another place, is discarded
+  (`DELETE /api/chat/attachments/:documentId`, best effort; the platform's 24 h
+  sweep takes the rest, and a file a send took is never discarded). A picture
+  whose size the platform read at the upload reserves its box (fitted into
+  320 × 240) before it loads. Messages show pictures inline and other files
+  as links, read through the
   conversation's files (`GET /api/chat/conversations/:id/files`, members
   only), which the header's Files pane lists too.
 - **Create task from message**: title (the message's first line to start
@@ -90,7 +103,17 @@ The UI has no switch of its own. It follows the API:
   conversation's manager, or its creator) adds and removes (not in a direct
   conversation or the default channel). Every member sees them.
 - **Channel categories** (`CHAT_MANAGE`, under Browse channels): add, rename,
-  move up or down, delete (the channels stay, uncategorized).
+  move up or down (one call saves the whole order in one transaction,
+  `POST /api/chat/categories/reorder`), delete (the channels stay,
+  uncategorized).
+- **Typing**: while the person types (at most every 3 s, never in edit mode)
+  the conversation's other members are told (`POST
+  /api/chat/conversations/:id/typing`, with the thread when it is one); a place
+  that refuses is not asked again, a platform without the route not at all. "Anna
+  is typing…" shows under the conversation and under a thread from the live
+  channel's `typing.signalled` (asked on the same subscription where the
+  platform offers it), each typist for the few seconds the signal asks, ended
+  by their message; a polite live region, its dots still under reduced motion.
 - **A thread** (right, `?thread=<rootMessageId>`): the root, the replies
   (a page at a time, newer ones live), follow / unfollow, and a composer
   with "also send to the conversation"; showing the replies marks the thread read.
@@ -127,8 +150,8 @@ and asks again.
 
 ## Not yet in this plugin
 
-The icon of a link preview (the platform serves pictures only), changing a task's status or assignee from its card
-(FR-14), search (`GET /chat/search` exists), presence and typing.
+The icon of a link preview (the platform serves pictures only), search
+(`GET /chat/search` exists), presence.
 
 ## Tests
 

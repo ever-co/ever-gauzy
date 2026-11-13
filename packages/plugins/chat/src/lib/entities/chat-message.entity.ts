@@ -8,7 +8,8 @@ import { MikroOrmChatMessageRepository } from './chat.repositories';
  * The body is a markdown subset with mention tokens (`<@employeeId>`, `<#conversationId>`, `<!channel>`,
  * `<!here>`); `mentionEmployeeIds` and `attachmentIds` are JSON arrays stored as text (the same on the three
  * databases). A deleted message keeps its row (soft delete through the base `deletedAt`) with an empty body when
- * it roots a thread, so the replies keep their context.
+ * it roots a thread, so the replies keep their context. A message of files only has an empty body too (and its
+ * attachments): `deletedAt` tells the two apart.
  */
 @MultiORMEntity('chat_message', { mikroOrmRepository: () => MikroOrmChatMessageRepository })
 export class ChatMessage extends TenantOrganizationBaseEntity {
@@ -64,6 +65,10 @@ export class ChatMessage extends TenantOrganizationBaseEntity {
 	/** JSON `string[]` of document ids. */
 	@MultiORMColumn({ type: 'text', nullable: true })
 	attachmentIds?: string | null;
+
+	/** The names the attached files had at the send (or the last edit), one per line: a message of files only reads as them. */
+	@MultiORMColumn({ type: 'text', nullable: true })
+	attachmentNames?: string | null;
 
 	@MultiORMColumn({ type: 'varchar', length: 64, nullable: true })
 	nonce?: string | null;

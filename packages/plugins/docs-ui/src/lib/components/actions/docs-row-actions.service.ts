@@ -12,6 +12,7 @@ import { CreateDialogComponent } from '../../dialogs/create-dialog.component';
 import { DocsDeleteDialogComponent, IDocsDeleteDialogResult } from '../../dialogs/delete-dialog.component';
 import { MoveDialogComponent } from '../../dialogs/move-dialog.component';
 import { DocsExportService } from '../../services/docs-export.service';
+import { DocsImportService } from '../../services/docs-import.service';
 import { DocumentTreeStore } from '../../services/document-tree.store';
 import { DocumentsService } from '../../services/documents.service';
 import { DocsActionId, IDocsActionTarget } from './docs-action-menu';
@@ -55,7 +56,9 @@ export class DocsRowActionsService implements OnDestroy {
 		private readonly router: Router,
 		private readonly favoriteStore: FavoriteStoreService,
 		private readonly genericFavoriteService: GenericFavoriteService,
-		private readonly store: Store
+		private readonly store: Store,
+		// The server's exports (the zip of Markdown files beside the PDF).
+		private readonly importExportService: DocsImportService
 	) {
 		// The store already loads (and reloads) favorites per organization, so the
 		// starred ids come off that stream instead of a second round trip per rendered row.
@@ -107,6 +110,8 @@ export class DocsRowActionsService implements OnDestroy {
 					return await this.download(target);
 				case 'export-markdown':
 					return await this.exportMarkdown(target);
+				case 'export-zip':
+					return await this.exportZip(target);
 				case 'knowledge-import':
 				case 'knowledge-exclude':
 					return await this.setKnowledge(target, action === 'knowledge-import');
@@ -257,6 +262,13 @@ export class DocsRowActionsService implements OnDestroy {
 			kind: target.kind
 		} as IDocument);
 		if (!written) this.toastrService.warning(this.getTranslation('DOCS.EXPORT.NOTHING_TO_EXPORT'));
+		return false;
+	}
+
+	/** A folder (its pages, sub-folders and files) or a page with its sub-pages, as the server's zip of Markdown files. */
+	private async exportZip(target: IDocsActionTarget): Promise<boolean> {
+		const { ok } = await this.importExportService.downloadMarkdownZip(target.id);
+		if (!ok) this.toastrService.danger(this.getTranslation('DOCS.EXPORT.ZIP_FAILED'));
 		return false;
 	}
 

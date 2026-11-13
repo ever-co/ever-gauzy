@@ -1,0 +1,112 @@
+// The income page's own pieces; the layout, panels, figures and record sections are the project page's.
+
+/* ── Header: the actions beside the back button ── */
+
+.income-page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+
+  // Edit and the icon buttons beside it, at the favorite star's height.
+  [nbButton] {
+    height: 1.75rem;
+  }
+}
+
+/* ── Headline: who paid, how it was booked, then the figures ── */
+
+// The income's mark: a rising line on the revenue tint, at the size of a project's logo on its page. Scoped as the
+// project header's own `.project-logo` rule is, which would otherwise keep it at the drawer's 2rem.
+.project-view-header .income-logo {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.5rem;
+  background-color: color-mix(in srgb, var(--gauzy-chart-revenue) 14%, transparent);
+  color: var(--gauzy-chart-revenue);
+
+  nb-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    font-size: 1.25rem;
+  }
+}
+
+// The page's title: larger than the drawer's.
+.income-title {
+  font-size: 1.125rem;
+  line-height: 1.5rem;
+}
+
+// The amount is the figure the page is about: it leads, a step larger than the others, in the revenue colour.
+.income-fact-amount dd {
+  gap: 0.125rem;
+}
+
+.income-amount {
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.5rem;
+  color: var(--gauzy-chart-revenue);
+
+  // The bonus icon the amount carries, at the figure's size.
+  ::ng-deep nb-icon {
+    width: 1rem;
+    height: 1rem;
+    margin-inline-start: 0.25rem;
+    font-size: 1rem;
+    vertical-align: -0.125rem;
+    color: var(--gauzy-text-color-2);
+  }
+}
+
+// The empty notes panel keeps its button under the message; the state's large muted icon is not the button's.
+.state--compact button {
+  margin-top: 0.5rem;
+
+  nb-icon {
+    width: 1rem;
+    height: 1rem;
+    font-size: 1rem;
+    color: inherit;
+  }
+}
+
+/* ── Charts ── */
+
+// A chart panel's controls on the header's right: the bars / line switch, then the range filter.
+.income-chart-controls {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+// The chart panels' range filter, at the project page's period switcher's size: the global input floor
+// would draw it 46px tall and stretch the panel's header.
+.income-chart-range {
+  flex: 0 0 auto;
+  min-width: 9rem;
+
+  // Matched to Nebular's own `nb-select.appearance-outline.size-small` so this rule outranks it.
+  &.appearance-outline.status-basic.size-small ::ng-deep .select-button {
+    min-height: 1.75rem !important;
+    height: 1.75rem;
+    padding: 0 1.75rem 0 0.625rem;
+    font-size: 0.75rem;
+    line-height: 1rem;
+    font-weight: 600;
+  }
+}
+
+/* ── Narrow pages ── */
+
+// The actions share a line with the back button and the page's name: Edit keeps its icon.
+@media screen and (max-width: 40rem) {
+  .income-page-action-label {
+    display: none;
+  }
+}

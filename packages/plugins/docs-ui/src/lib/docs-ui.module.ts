@@ -83,6 +83,8 @@ import { DocumentLinkDialogComponent } from './dialogs/link-dialog.component';
 import { DocsDeleteDialogComponent } from './dialogs/delete-dialog.component';
 import { MoveDialogComponent } from './dialogs/move-dialog.component';
 import { MoveSpaceDialogComponent } from './dialogs/move-space-dialog.component';
+import { DocsImportDialogComponent } from './dialogs/docs-import-dialog.component';
+import { DocsImportService } from './services/docs-import.service';
 import { RejectDialogComponent } from './dialogs/reject-dialog.component';
 import { RequestReviewDialogComponent } from './dialogs/request-review-dialog.component';
 import { DocumentShareDialogComponent } from './dialogs/share-dialog.component';
@@ -143,6 +145,7 @@ import { UploadQueueService } from './services/upload-queue.service';
 		ExtractedTextDialogComponent,
 		MoveDialogComponent,
 		MoveSpaceDialogComponent,
+		DocsImportDialogComponent,
 		DocsDeleteDialogComponent,
 		RejectDialogComponent,
 		RequestReviewDialogComponent,
@@ -218,6 +221,8 @@ import { UploadQueueService } from './services/upload-queue.service';
 		DocumentPermissionService,
 		UploadQueueService,
 		DocsExportService,
+		// Import of exported workspaces and PDF export (`docs-import-export`): probes, upload, poll, download.
+		DocsImportService,
 		DocsRowActionsService,
 		DocsSavedViewsService
 	]

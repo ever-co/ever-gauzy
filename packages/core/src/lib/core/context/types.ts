@@ -1,4 +1,4 @@
-import { IUser, LanguagesEnum, PermissionsEnum } from "@gauzy/contracts";
+import { ID, IUser, LanguagesEnum, PermissionsEnum } from "@gauzy/contracts";
 import type { IOAuthAppTokenGrant } from "../../auth/oauth-app-scope";
 
 /**
@@ -32,4 +32,11 @@ export interface IAuthenticatedUser extends IUser {
      * (`RequestContext.currentOAuthAppScopes()`, `auth/oauth-app-scope.ts`).
      */
     oauthApp?: IOAuthAppTokenGrant;
+    /**
+     * Set by `JwtRefreshTokenStrategy` only (`POST /auth/refresh-token`): the organization the refresh token was minted
+     * for, read from that token once it is verified (its signature and its stored, unrevoked record), or null when it
+     * names none. The refresh keeps the new tokens in it while the user is still an active member of it, so a switch
+     * made in another client does not move this one (`AuthService.rotateTokens`).
+     */
+    refreshTokenOrganizationId?: ID | null;
 }

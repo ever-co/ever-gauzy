@@ -85,6 +85,7 @@ import { assertContentSearchQueryLength } from './content-search.guard';
 import { DocumentAccessService } from './document-access.service';
 import { DocumentLiveBridge } from './document-live.bridge';
 import { collectEmployeeMentionIds } from './document-markdown';
+import { DOCS_SEARCH_SNIPPET_MAX_ITEMS, searchSnippetOf } from './document-search-snippet';
 import { DocumentSettingsService } from './document-settings.service';
 import { DocumentVersionService } from './document-version.service';
 
@@ -1044,7 +1045,43 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 			return entity;
 		});
 
+		if (params.q) {
+			await this.attachSearchSnippets(items, params);
+		}
+
 		return { items, total };
+	}
+
+	/**
+	 * The search snippet of each result of a search (`searchSnippet`: about 160 characters of plain text around the
+	 * first match, the matches as offsets). A content search reads the text of the page's results (at most
+	 * {@link DOCS_SEARCH_SNIPPET_MAX_ITEMS} of them, the content of a document that is not `searchable` left out, as
+	 * the search leaves it out); a name search has the description and the name's matches. Best effort: a result
+	 * whose text cannot be read keeps no snippet.
+	 */
+	private async attachSearchSnippets(items: Document[], params: GetDocumentsQueryDTO): Promise<void> {
+		const shown = items.slice(0, DOCS_SEARCH_SNIPPET_MAX_ITEMS);
+		const texts = new Map<string, { contentJson?: unknown; contentHtml?: string | null; extractedText?: string | null }>();
+		if (params.searchIn === 'content' && shown.length) {
+			try {
+				const rows = await this.typeOrmRepository
+					.createQueryBuilder('document')
+					.select(['document.id', 'document.contentJson', 'document.contentHtml', 'document.extractedText', 'document.searchable'])
+					.where(p(`"document"."id" IN (:...snippetIds)`), { snippetIds: shown.map((item) => item.id) })
+					.andWhere(p(`"document"."tenantId" = :snippetTenantId`), { snippetTenantId: RequestContext.currentTenantId() })
+					.getMany();
+				for (const row of rows) {
+					if (row.searchable !== false) {
+						texts.set(String(row.id), { contentJson: row.contentJson, contentHtml: row.contentHtml, extractedText: row.extractedText });
+					}
+				}
+			} catch (error) {
+				this.logger.warn(`Search snippets were not read: ${(error as Error).message}`);
+			}
+		}
+		for (const item of shown) {
+			(item as any).searchSnippet = searchSnippetOf(params.q, { name: item.name, description: item.description, ...(texts.get(String(item.id)) ?? {}) });
+		}
 	}
 
 	/**

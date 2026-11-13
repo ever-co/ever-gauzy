@@ -41,14 +41,16 @@
 
 			<div class="profile-actions">
 				<ngx-back-navigation class="back"></ngx-back-navigation>
-				<!-- The only action on a read-only page: hand over to the editor,
-				     behind the editor's own permission. -->
+				<!-- Hand over to the editor, behind the editor's own permission: the one labelled action, as on a
+				     task's page; what follows it are icon buttons. -->
 				<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_EMPLOYEES_EDIT, PermissionsEnum.PROFILE_EDIT]">
-					<button nbButton status="basic" size="small" (click)="edit()">
+					<button nbButton status="primary" size="tiny" type="button" (click)="edit()">
 						<nb-icon icon="edit-outline"></nb-icon>
 						{{ 'BUTTONS.EDIT' | translate }}
 					</button>
 				</ng-template>
+				<!-- What plugins add on this person (the chat's "Message" icon); empty without them. -->
+				<ga-page-extension-slot [slotId]="employeeActionsSlot"></ga-page-extension-slot>
 			</div>
 		</div>
 

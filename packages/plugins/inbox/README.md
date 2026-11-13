@@ -247,6 +247,12 @@ person's attention lands:
   notification for each follower except the actor (`packages/core/src/lib/entity-subscription/fan-out/`). The
   receiver's per-type switches apply; `TaskUpdate` is switched off per employee through the notification setting's
   `preferences.taskUpdate`. The follower records (`EntitySubscription`) already existed; this is what reads them.
+- **Timers left running.** With `GAUZY_TIMER_REMINDERS_ENABLED=true` (off by default), a timer that has run for the
+  employee's threshold (`preferences.timerReminderHours`, 8 by default, `null` or 0 for none), and again at twice it,
+  creates a `TimerReminder` notification about the time log, once per run and level
+  (`packages/core/src/lib/time-tracking/timer-reminder/`), for a run started within the last week. It is filed unread.
+  An open Ever Teams tab shows its own reminder and marks the notification read, and the email and push wait a few
+  minutes for that mark (below), so the reminder does not reach the person twice.
 - **Done.** `PATCH /inbox/items/:id/state { isDone }` (and `markInboxItem`) marks an item done: it leaves the open
   tabs and is found in the `done` tab (`?tab=done`); `isDone: false` brings it back. Doing an item reads it. Column
   `inbox_item_recipient.doneAt` (migration `1791000005200`).
@@ -266,9 +272,13 @@ API (its table) and the worker (its sweep). Every minute the worker's sweep (`In
    the employee's notification setting — the per-kind switch, then the email mode of the kind
    (`preferences.emailByType[kind]`, else `preferences.email`: `immediate` by default, `digest`, or `off`), the
    do-not-disturb window (`preferences.dnd`: an immediate email waits for the window's end) and the digest hour
-   (`preferences.digestHour`, 8 by default, in `preferences.dnd.timeZone`, else the user's time zone, else UTC);
+   (`preferences.digestHour`, 8 by default, in `preferences.dnd.timeZone`, else the user's time zone, else UTC). A
+   timer reminder is the one kind sent only while unread: one already read is decided as nothing, and the email at
+   once of an unread one waits three minutes first (`INBOX_DELIVERY_TIMER_REMINDER_GRACE_MS`), for the Ever Teams tab
+   that showed it to mark it read through the notification API. Every other kind is sent read or not;
 2. **sends the immediate emails** that are due (template `inbox-notification`: the entry's title, kind and text, a
-   link to it in the Inbox page);
+   link to it in the Inbox page), except a timer reminder read by then, whose row is closed unsent (the same goes for
+   one in a digest);
 3. **sends the digests** that are due as one email per person (template `inbox-digest`, newest first, up to fifty
    entries and a count): the people first (a bounded set), then each person's whole due set, so a digest is never
    a page of one; one per person and day, since a day's rows share the person's digest hour.
@@ -304,6 +314,7 @@ Inbox spec FR-13):
   when the row is closed as skipped: they are looking at the app, where the entry already is. A device the push service
   no longer knows (404 / 410) is removed; one that failed five times in a row is removed. `GAUZY_INBOX_VAPID_SUBJECT`
   names the sender (an `https:` URL or `mailto:`; the client's address by default).
+  A timer reminder's push waits as its email does, and is not sent once read.
 - **Where a push may go** is the platform's outbound-endpoint policy, the webhooks' (nothing that is not globally
   routable: no private, loopback or link-local address, no single-label or special-use host): refused at registration
   as text, resolved again before each push, and once more by the connection's own lookup; a device whose endpoint is

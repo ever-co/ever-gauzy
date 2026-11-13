@@ -14,15 +14,20 @@ import {
 	MaxLength,
 	MinLength,
 	Min,
+	ValidateNested
 } from 'class-validator';
 import {
 	CHAT_GROUP_MAX_MEMBERS,
 	CHAT_LINK_PREVIEW_URL_MAX_LENGTH,
 	CHAT_MESSAGE_MAX_ATTACHMENTS,
 	CHAT_MESSAGE_MAX_LENGTH,
+	CHAT_REORDER_MAX_CATEGORIES,
+	CHAT_REORDER_MAX_CHANNELS,
 	ChatNotifyLevelEnum,
 	ChatVisibilityEnum,
+	IChatCategoryChannelOrder,
 	IChatCategoryInput,
+	IChatCategoryReorderInput,
 	IChatConversationCreateInput,
 	IChatConversationUpdateInput,
 	IChatCreateTaskInput,
@@ -36,6 +41,8 @@ import {
 	IChatMessagesQuery,
 	IChatMessageUpdateInput,
 	IChatReadInput,
+	IChatTaskUpdateInput,
+	IChatTypingInput,
 	ID
 } from '@gauzy/contracts';
 import { CHAT_MAX_PAGE_SIZE } from '../chat.constants';
@@ -172,11 +179,15 @@ export class ChatReadDTO implements IChatReadInput {
 }
 
 export class ChatMessageCreateDTO implements IChatMessageCreateInput {
-	@ApiProperty({ type: () => String, maxLength: CHAT_MESSAGE_MAX_LENGTH })
+	@ApiPropertyOptional({
+		type: () => String,
+		maxLength: CHAT_MESSAGE_MAX_LENGTH,
+		description: 'The text; may be empty or left out when the message carries at least one attachment.'
+	})
+	@IsOptional()
 	@IsString()
-	@MinLength(1)
 	@MaxLength(CHAT_MESSAGE_MAX_LENGTH)
-	body!: string;
+	body?: string;
 
 	@ApiPropertyOptional({ type: () => String, description: 'Idempotency key chosen by the client.' })
 	@IsOptional()
@@ -226,9 +237,12 @@ export class ChatMessageCreateDTO implements IChatMessageCreateInput {
 }
 
 export class ChatMessageUpdateDTO implements IChatMessageUpdateInput {
-	@ApiProperty({ type: () => String, maxLength: CHAT_MESSAGE_MAX_LENGTH })
+	@ApiProperty({
+		type: () => String,
+		maxLength: CHAT_MESSAGE_MAX_LENGTH,
+		description: 'The new text; may be empty when the message, after the edit, carries at least one attachment.'
+	})
 	@IsString()
-	@MinLength(1)
 	@MaxLength(CHAT_MESSAGE_MAX_LENGTH)
 	body!: string;
 
@@ -363,4 +377,72 @@ export class ChatRestoreReadDTO {
 	@IsString()
 	@MaxLength(200_000)
 	snapshotId!: string;
+}
+
+export class ChatTaskUpdateDTO implements IChatTaskUpdateInput {
+	@ApiPropertyOptional({ type: () => String, description: "The status's name (a board column), as the task page writes it." })
+	@IsOptional()
+	@IsString()
+	@MinLength(1)
+	@MaxLength(255)
+	status?: string;
+
+	@ApiPropertyOptional({ type: () => String, nullable: true, description: 'The status record, when the status is one.' })
+	@IsOptional()
+	@IsUUID()
+	taskStatusId?: ID | null;
+
+	@ApiPropertyOptional({ type: () => String, nullable: true, description: "The priority's name; null clears it." })
+	@IsOptional()
+	@IsString()
+	@MaxLength(255)
+	priority?: string | null;
+
+	@ApiPropertyOptional({ type: () => String, nullable: true, description: 'The priority record, when the priority is one.' })
+	@IsOptional()
+	@IsUUID()
+	taskPriorityId?: ID | null;
+
+	@ApiPropertyOptional({ type: () => [String], description: 'All the assignees (an empty list unassigns everyone).' })
+	@IsOptional()
+	@IsArray()
+	@ArrayMaxSize(50)
+	@IsUUID('all', { each: true })
+	assigneeEmployeeIds?: ID[];
+}
+
+export class ChatTypingDTO implements IChatTypingInput {
+	@ApiPropertyOptional({ type: () => String, description: 'The thread I am typing in; left out for the conversation itself.' })
+	@IsOptional()
+	@IsUUID()
+	threadRootId?: ID;
+}
+
+export class ChatCategoryChannelOrderDTO implements IChatCategoryChannelOrder {
+	@ApiProperty({ type: () => String, nullable: true, description: 'The category; null for the uncategorized channels.' })
+	@IsOptional()
+	@IsUUID()
+	categoryId!: ID | null;
+
+	@ApiProperty({ type: () => [String], description: 'Its channels, first to last.' })
+	@IsArray()
+	@ArrayMaxSize(CHAT_REORDER_MAX_CHANNELS)
+	@IsUUID('all', { each: true })
+	conversationIds!: ID[];
+}
+
+export class ChatCategoryReorderDTO implements IChatCategoryReorderInput {
+	@ApiProperty({ type: () => [String], description: "The organization's categories, first to last." })
+	@IsArray()
+	@ArrayMaxSize(CHAT_REORDER_MAX_CATEGORIES)
+	@IsUUID('all', { each: true })
+	categoryIds!: ID[];
+
+	@ApiPropertyOptional({ type: () => [ChatCategoryChannelOrderDTO], description: 'The channels of each category, first to last.' })
+	@IsOptional()
+	@IsArray()
+	@ArrayMaxSize(CHAT_REORDER_MAX_CATEGORIES + 1)
+	@ValidateNested({ each: true })
+	@Type(() => ChatCategoryChannelOrderDTO)
+	channels?: ChatCategoryChannelOrderDTO[];
 }

@@ -26,7 +26,7 @@ import {
 import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-employee.repository';
 import { TypeOrmTimeLogRepository } from './repository/type-orm-time-log.repository';
 import { RequestContext } from '../../core/context';
-import { ForbiddenException } from '@nestjs/common';
+import { ConflictException, ForbiddenException } from '@nestjs/common';
 import { TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
 import {
 	DeleteTimeSpanCommand,
@@ -42,7 +42,7 @@ import { TimeSlotBulkDeleteHandler } from '../time-slot/commands/handlers/time-s
 import { generateTimeSlots } from '../time-slot/utils';
 import { Organization } from '../../organization/organization.entity';
 import { TimeLog } from './time-log.entity';
-import { TimeLogService } from './time-log.service';
+import { RUNNING_TIMER_OVERLAP, TimeLogService } from './time-log.service';
 
 const TENANT_ID = '5a1c2f0e-6d3b-4c8a-9e2f-1b7d4a6c8e90';
 const ORGANIZATION_ID = '0f9e8d7c-6b5a-4c3d-8e2f-1a0b9c8d7e6f';
@@ -907,6 +907,76 @@ describe('TimeLogService', () => {
 
 			expect(commandsOfType(IGetConflictTimeLogCommand)[0].input).toMatchObject({
 				organizationId: EMPLOYEE_ORGANIZATION_ID
+			});
+		});
+
+		/**
+		 * #11823 — the overlap cleanup never cuts a running log, so manual time over a timer that is still running is
+		 * refused with a 409 before anything is trimmed or written. A stopped log in the range is cleared as before.
+		 */
+		describe('manual time over a running timer (#11823)', () => {
+			/** The employee's timer, running since 09:30 with three heartbeats so far. */
+			const runningLog = {
+				id: 'running',
+				employeeId: TARGET_EMPLOYEE_ID,
+				organizationId: EMPLOYEE_ORGANIZATION_ID,
+				isRunning: true,
+				startedAt: new Date('2026-01-05T09:30:00.000Z'),
+				stoppedAt: new Date('2026-01-05T10:00:00.000Z'),
+				timeSlots: [{ id: 'running@09:30' }, { id: 'running@09:40' }, { id: 'running@09:50' }]
+			};
+			/** A log stopped at 09:10. */
+			const stoppedLog = {
+				id: 'stopped',
+				employeeId: TARGET_EMPLOYEE_ID,
+				organizationId: EMPLOYEE_ORGANIZATION_ID,
+				isRunning: false,
+				startedAt: new Date('2026-01-05T08:50:00.000Z'),
+				stoppedAt: new Date('2026-01-05T09:10:00.000Z'),
+				timeSlots: [{ id: 'stopped@08:50' }, { id: 'stopped@09:00' }]
+			};
+
+			let conflicts: unknown[];
+
+			beforeEach(() => {
+				execute.mockImplementation(async (command: unknown) =>
+					command instanceof IGetConflictTimeLogCommand ? conflicts : undefined
+				);
+				jest.spyOn(manualService, 'findOneByIdString').mockResolvedValue({
+					id: 'log-1',
+					employeeId: TARGET_EMPLOYEE_ID,
+					organizationId: EMPLOYEE_ORGANIZATION_ID
+				} as any);
+			});
+
+			it.each([
+				['adding', () => manualService.addManualTime({ ...request })],
+				['editing', () => manualService.updateManualTime('log-1', { ...request })]
+			])(
+				'refuses %s time over a running log with three slots with a 409, trimming and writing nothing',
+				async (_action, write) => {
+					conflicts = [stoppedLog, runningLog];
+
+					const refusal = await write().catch((thrown) => thrown);
+
+					expect(refusal).toBeInstanceOf(ConflictException);
+					expect((refusal as ConflictException).getResponse()).toMatchObject({ code: RUNNING_TIMER_OVERLAP });
+					expect(commandsOfType(DeleteTimeSpanCommand)).toEqual([]);
+					expect(commandsOfType(TimeLogCreateCommand)).toEqual([]);
+					expect(commandsOfType(TimeLogUpdateCommand)).toEqual([]);
+				}
+			);
+
+			it('CONTROL: still clears a stopped log in the range, slot by slot, and records the time', async () => {
+				conflicts = [stoppedLog];
+
+				await manualService.addManualTime({ ...request });
+
+				expect(commandsOfType(DeleteTimeSpanCommand).map((command) => command.timeSlot.id)).toEqual([
+					'stopped@08:50',
+					'stopped@09:00'
+				]);
+				expect(commandsOfType(TimeLogCreateCommand)).toHaveLength(1);
 			});
 		});
 
