@@ -174,7 +174,9 @@ that fails never fails the save.
   tasks read back in the organization are reported; never another organization's or tenant's.
 - **FR-19** A closed link MUST become `task_link.closed` at most once per task and link (provider, kind and the
   provider's id of the item), however often its close is delivered or the item is closed again after a reopen; only
-  for a task of the organization the report names, and only while the organization has a rule of that trigger on.
+  for a task of the organization the report names, and only while the organization has a rule of that trigger on. The
+  claim and the event MUST commit together: a close is never lost to a stop between them, and a delivery whose event
+  could not be appended is reported again when it is delivered again.
 - **FR-20** The Linear, Asana and Trello integrations report no closed link: an attachment as their APIs return it
   is a title, an address and a few file facts, with no state of what it links to (no documented open, closed or merged
   field), so there is nothing to tell a close by. A change of the item itself (its status) still reaches the platform

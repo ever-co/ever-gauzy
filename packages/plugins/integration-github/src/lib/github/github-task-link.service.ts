@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { CommandBus, EventBus } from '@nestjs/cqrs';
-import { DataSource, In } from 'typeorm';
+import { Brackets, DataSource, In } from 'typeorm';
 import { BaseEntityEnum, GithubPropertyMapEnum, ID, IIntegrationSetting, IntegrationEntity } from '@gauzy/contracts';
 import {
 	IntegrationMap,
@@ -11,8 +11,9 @@ import {
 	TaskService
 } from '@gauzy/core';
 import {
-	githubItemUrlPattern,
+	GITHUB_ITEM_URL_LIKE_ESCAPE,
 	GithubItemKind,
+	githubItemUrlPatterns,
 	IGithubItemAddress,
 	parseGithubItemUrl,
 	repositoryAddressOf,
@@ -23,12 +24,8 @@ import {
 /** The provider `task_link.closed` names for GitHub. */
 export const GITHUB_TASK_LINK_PROVIDER = 'github';
 
-/** How long a handled delivery is remembered (a redelivery inside it reports nothing), and how many are. */
-export const GITHUB_TASK_LINK_DELIVERY_MEMORY_MS = 60 * 60_000;
-export const GITHUB_TASK_LINK_DELIVERY_MEMORY_MAX = 5_000;
-
-/** The most links of one organization read for one item. */
-const LINKS_READ_MAX = 200;
+/** The links of one organization to an item are read this many at a time (the patterns find that item's links only). */
+const LINKS_PAGE = 200;
 
 interface IGithubWebhookRepository {
 	full_name?: string | null;
@@ -97,14 +94,15 @@ interface IGithubClosedItem {
  * or branch name; it is reported closed whether it was merged or not (`merged` says which). An issue is linked to the
  * task that mirrors it (the issue sync) and to a task with a link to its address.
  *
- * Once: a delivery handled here is remembered for an hour, so GitHub's redelivery of it reports nothing; across
- * instances, and for the same item closed again after a reopen, the automations keep one report per task and link.
+ * Once: a redelivery, a copy handled at the same time on another instance, or the same item closed again after a reopen
+ * reports the same tasks under the same identity (provider, kind, the item's GitHub id), and the automations append
+ * `task_link.closed` once per task and link — the claim and the event commit together, so a delivery whose report did not
+ * reach the outbox is reported again by GitHub's redelivery. A delivery that failed for an organization is thrown back
+ * once every organization was tried, so the receiver logs it.
  */
 @Injectable()
 export class GithubTaskLinkService {
 	private readonly logger = new Logger(GithubTaskLinkService.name);
-	/** Deliveries handled, by id, with when. */
-	private readonly delivered = new Map<string, number>();
 
 	constructor(
 		private readonly _commandBus: CommandBus,
@@ -154,8 +152,7 @@ export class GithubTaskLinkService {
 
 	/**
 	 * For each organization that bound the installation: its tasks linked to the item, read back in its scope, each
-	 * reported once. A delivery seen before reports nothing; one that failed somewhere is not remembered, so GitHub's
-	 * redelivery tries it again (the automations drop what was already reported).
+	 * reported once. Every organization is tried; when one failed, the delivery is thrown back afterwards.
 	 */
 	private async report(
 		deliveryId: string | null | undefined,
@@ -163,10 +160,9 @@ export class GithubTaskLinkService {
 		item: IGithubClosedItem,
 		linked: (scope: IGithubTaskLinkScope) => Promise<ID[]>
 	): Promise<number> {
-		const delivery = typeof deliveryId === 'string' && deliveryId.trim() ? deliveryId.trim() : null;
-		if (delivery && this.wasHandled(delivery)) return 0;
+		const about = `the closed GitHub ${item.kind} ${item.address.owner}/${item.address.repo}#${item.address.number} (delivery ${deliveryId ?? 'without id'})`;
 		let reported = 0;
-		let failed = false;
+		const failures: string[] = [];
 		for (const scope of await this.scopesOf(installationId)) {
 			try {
 				const taskIds = await this.tasksOf(scope, [...new Set(await linked(scope))]);
@@ -186,13 +182,14 @@ export class GithubTaskLinkService {
 					reported += 1;
 				}
 			} catch (error) {
-				failed = true;
-				this.logger.warn(
-					`The closed GitHub ${item.kind} ${item.address.owner}/${item.address.repo}#${item.address.number} was not reported for integration ${scope.integrationId}: ${(error as Error)?.message}`
-				);
+				failures.push(`integration ${scope.integrationId}: ${(error as Error)?.message}`);
 			}
 		}
-		if (delivery && !failed) this.remember(delivery);
+		if (failures.length) {
+			throw new Error(
+				`Not every task linked to ${about} was reported (${reported} were): ${failures.join('; ')}`
+			);
+		}
 		return reported;
 	}
 
@@ -227,19 +224,38 @@ export class GithubTaskLinkService {
 		return [...scopes.values()];
 	}
 
-	/** The tasks of the scope with a link to the item (pull request or issue: one numbering). */
+	/** The tasks of the scope with a link to the item (pull request or issue: one numbering), every page of them. */
 	private async tasksLinkingTo(scope: IGithubTaskLinkScope, address: IGithubItemAddress): Promise<ID[]> {
-		const rows = await this._dataSource
-			.getRepository(ResourceLink)
-			.createQueryBuilder('link')
-			.select(['link.id', 'link.entityId', 'link.url'])
-			.where('link.tenantId = :tenantId', { tenantId: scope.tenantId })
-			.andWhere('link.organizationId = :organizationId', { organizationId: scope.organizationId })
-			.andWhere('link.entity = :entity', { entity: BaseEntityEnum.Task })
-			.andWhere('LOWER(link.url) LIKE :pattern', { pattern: githubItemUrlPattern(address) })
-			.take(LINKS_READ_MAX)
-			.getMany();
-		return rows.filter((row) => sameGithubItem(parseGithubItemUrl(row.url), address)).map((row) => row.entityId);
+		const taskIds: ID[] = [];
+		for (let offset = 0; ; offset += LINKS_PAGE) {
+			const rows = await this._dataSource
+				.getRepository(ResourceLink)
+				.createQueryBuilder('link')
+				.select(['link.id', 'link.entityId', 'link.url'])
+				.where('link.tenantId = :tenantId', { tenantId: scope.tenantId })
+				.andWhere('link.organizationId = :organizationId', { organizationId: scope.organizationId })
+				.andWhere('link.entity = :entity', { entity: BaseEntityEnum.Task })
+				.andWhere(
+					new Brackets((patterns) => {
+						githubItemUrlPatterns(address).forEach((pattern, index) =>
+							patterns.orWhere(
+								`LOWER(link.url) LIKE :pattern${index} ESCAPE '${GITHUB_ITEM_URL_LIKE_ESCAPE}'`,
+								{
+									[`pattern${index}`]: pattern
+								}
+							)
+						);
+					})
+				)
+				.orderBy('link.id', 'ASC')
+				.skip(offset)
+				.take(LINKS_PAGE)
+				.getMany();
+			for (const row of rows) {
+				if (sameGithubItem(parseGithubItemUrl(row.url), address)) taskIds.push(row.entityId);
+			}
+			if (rows.length < LINKS_PAGE) return taskIds;
+		}
 	}
 
 	/** The tasks of the scope its references in a pull request's title and branch name resolve to. */
@@ -279,23 +295,5 @@ export class GithubTaskLinkService {
 		});
 		const found = new Set(rows.map((row) => row.id as ID));
 		return taskIds.filter((taskId) => found.has(taskId));
-	}
-
-	private wasHandled(delivery: string, now = Date.now()): boolean {
-		for (const [id, at] of this.delivered) {
-			if (now - at <= GITHUB_TASK_LINK_DELIVERY_MEMORY_MS) break;
-			this.delivered.delete(id);
-		}
-		return this.delivered.has(delivery);
-	}
-
-	private remember(delivery: string, now = Date.now()): void {
-		this.delivered.delete(delivery);
-		this.delivered.set(delivery, now);
-		while (this.delivered.size > GITHUB_TASK_LINK_DELIVERY_MEMORY_MAX) {
-			const oldest = this.delivered.keys().next().value;
-			if (oldest === undefined) break;
-			this.delivered.delete(oldest);
-		}
 	}
 }

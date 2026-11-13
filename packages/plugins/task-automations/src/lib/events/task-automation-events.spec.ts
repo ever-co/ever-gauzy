@@ -144,20 +144,24 @@ describe('TaskAutomationLinkClosedCapture', () => {
 	const setup = (triggers: string[], claimed = true, owned = true) => {
 		const rules = { enabledTriggers: jest.fn(async () => new Set(triggers)) };
 		const reader = { belongsTo: jest.fn(async () => owned) };
-		const claim = { id: 'closure-1' };
-		const closures = { claim: jest.fn(async () => (claimed ? claim : null)), release: jest.fn(async () => undefined) };
+		const closures = {
+			claimIn: jest.fn(async () => claimed),
+			claimInMikroOrm: jest.fn(async () => claimed),
+			exists: jest.fn(async () => false)
+		};
 		const outbox = { append: jest.fn(async () => ({})) };
+		// The claim and the append run in one transaction; `manager` is that transaction's.
 		const manager = {};
 		const dataSource = { manager: { transaction: jest.fn(async (work: (manager: unknown) => Promise<unknown>) => work(manager)) } };
 		const capture = new TaskAutomationLinkClosedCapture(rules as never, reader as never, closures as never, outbox as never, dataSource as never);
-		return { capture, rules, reader, closures, outbox, manager, claim };
+		return { capture, rules, reader, closures, outbox, manager };
 	};
 
-	it('appends a closed link once claimed, in the task’s own partition, with its scope and identity', async () => {
+	it('claims and appends a closed link in one transaction, in the task’s own partition, with its scope and identity', async () => {
 		const { capture, closures, outbox, manager, rules } = setup([TaskAutomationTriggerEnum.LINK_CLOSED]);
 		await capture.handle(new TaskLinkClosedEvent(closed as never) as never);
 		expect(rules.enabledTriggers).toHaveBeenCalledWith('tenant-1', 'org-1');
-		expect(closures.claim).toHaveBeenCalledWith({
+		expect(closures.claimIn).toHaveBeenCalledWith(manager, {
 			tenantId: 'tenant-1',
 			organizationId: 'org-1',
 			taskId: 'task-1',
@@ -187,12 +191,12 @@ describe('TaskAutomationLinkClosedCapture', () => {
 		expect(foreign.reader.belongsTo).toHaveBeenCalledWith('tenant-1', 'org-1', 'task-1');
 		// A scope the task is not of never reaches the organization's cached triggers.
 		expect(foreign.rules.enabledTriggers).not.toHaveBeenCalled();
-		expect(foreign.closures.claim).not.toHaveBeenCalled();
+		expect(foreign.closures.claimIn).not.toHaveBeenCalled();
 		expect(foreign.outbox.append).not.toHaveBeenCalled();
 
 		const statusOnly = setup([TaskAutomationTriggerEnum.STATUS_CHANGED]);
 		expect(await statusOnly.capture.report(closed)).toBe(false);
-		expect(statusOnly.closures.claim).not.toHaveBeenCalled();
+		expect(statusOnly.closures.claimIn).not.toHaveBeenCalled();
 		expect(statusOnly.outbox.append).not.toHaveBeenCalled();
 	});
 
@@ -213,11 +217,21 @@ describe('TaskAutomationLinkClosedCapture', () => {
 		expect(outbox.append).not.toHaveBeenCalled();
 	});
 
-	it('gives the claim back when the append fails, and never throws', async () => {
-		const { capture, closures, outbox, claim } = setup([TaskAutomationTriggerEnum.LINK_CLOSED]);
+	it('fails the transaction when the append fails (its claim goes with it), and never throws to the integration', async () => {
+		const { capture, closures, outbox } = setup([TaskAutomationTriggerEnum.LINK_CLOSED]);
+		outbox.append.mockRejectedValueOnce(new Error('database down'));
+		await expect(capture.report(closed)).rejects.toThrow('database down');
+		expect(closures.exists).toHaveBeenCalled();
 		outbox.append.mockRejectedValueOnce(new Error('database down'));
 		await expect(capture.handle(new TaskLinkClosedEvent(closed as never) as never)).resolves.toBeUndefined();
-		expect(closures.release).toHaveBeenCalledWith(claim);
+	});
+
+	it('appends nothing when another delivery committed the claim first (the unique key failed the insert)', async () => {
+		const { capture, closures, outbox } = setup([TaskAutomationTriggerEnum.LINK_CLOSED]);
+		closures.claimIn.mockRejectedValueOnce(new Error('UNIQUE constraint failed'));
+		closures.exists.mockResolvedValueOnce(true);
+		expect(await capture.report(closed)).toBe(false);
+		expect(outbox.append).not.toHaveBeenCalled();
 	});
 
 	it('tells a link by its provider’s id, else its address; the provider in lower case', () => {

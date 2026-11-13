@@ -53,9 +53,10 @@ no route, no GraphQL field, no table, no outbox row, no schedule, no role grant.
 An integration publishes the platform's `TaskLinkClosedEvent` (task, tenant, organization, provider, kind, address,
 the provider's id of the item, and for a pull request whether it merged). `TaskAutomationLinkClosedCapture` appends it
 as `task_link.closed` in the task's partition when the task is of the named organization and the organization has a
-`LINK_CLOSED` rule on, once per task and link: the close is claimed first in `task_automation_link_closure`, so a
-redelivery, another API instance or the same pull request closed again after a reopen appends nothing. A failed append
-gives the claim back; the API logs `A closed link was not handed to the automations: …`.
+`LINK_CLOSED` rule on, once per task and link: the close is claimed in `task_automation_link_closure` in the same
+transaction the event is appended in, so a redelivery, another API instance or the same pull request closed again after
+a reopen appends nothing, and a failed append leaves no claim (GitHub's redelivery reports it again); the API logs
+`A closed link was not handed to the automations: …`.
 
 The GitHub integration (`GithubTaskLinkService`) handles `pull_request.closed` and `issues.closed`; the GitHub App must
 send the **Pull requests** and **Issues** events. Linear, Asana and Trello report nothing of their own: their

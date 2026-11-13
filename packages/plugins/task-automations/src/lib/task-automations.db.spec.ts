@@ -15,6 +15,8 @@ const mockCaller: { tenantId: string | null; userId: string | null; organization
 	userId: null,
 	organizationId: null
 };
+/** The ORM `DB_ORM` names, as `getORMType` answers it. */
+const mockOrm = { current: 'typeorm' };
 
 jest.mock('@gauzy/core', () => {
 	const decorator = () => () => undefined;
@@ -60,7 +62,7 @@ jest.mock('@gauzy/core', () => {
 			}
 		},
 		MultiORMEnum: { TypeORM: 'typeorm', MikroORM: 'mikro-orm' },
-		getORMType: () => 'typeorm',
+		getORMType: () => mockOrm.current,
 		RequestContext: {
 			currentTenantId: () => mockCaller.tenantId,
 			currentUserId: () => mockCaller.userId,
@@ -94,6 +96,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { knex } from 'knex';
 import { DataSource, EntitySchema } from 'typeorm';
 import {
 	IOutboxWriteInput,
@@ -830,6 +833,66 @@ describe('Task automations on SQLite', () => {
 			// A report of the scope's own task goes through.
 			await capture.handle(report(task) as never);
 			expect(outbox.append).toHaveBeenCalledTimes(1);
+		});
+
+		it('leaves no claim when the append fails, so a later delivery of the close reports it', async () => {
+			await rules.create(scope, { templateKey: 'link-closed-sets-status' });
+			const task = await createTask();
+			const { capture, outbox } = pipeline();
+			outbox.append.mockRejectedValueOnce(new Error('database down'));
+			await capture.handle(report(task) as never);
+			// The claim was written in the append's transaction, and went with it.
+			expect(await dataSource.getRepository(TaskAutomationLinkClosure).count()).toBe(0);
+			await capture.handle(report(task) as never);
+			expect(outbox.append).toHaveBeenCalledTimes(2);
+			expect(await dataSource.getRepository(TaskAutomationLinkClosure).count()).toBe(1);
+		});
+
+		it('claims in the MikroORM transaction the event is appended in, under DB_ORM=mikro-orm', async () => {
+			await rules.create(scope, { templateKey: 'link-closed-sets-status' });
+			const task = await createTask();
+			// The SQL client a MikroORM transaction runs on, over the same database.
+			const sql = knex({ client: 'better-sqlite3', connection: { filename: dataSource.options.database as string }, useNullAsDefault: true });
+			const transactions: unknown[] = [];
+			const em = {
+				fork: () => ({
+					transactional: (work: (transaction: unknown) => Promise<unknown>) =>
+						sql.transaction((trx) => {
+							const transaction = { getTransactionContext: () => trx, getKnex: () => sql };
+							transactions.push(transaction);
+							return work(transaction);
+						})
+				})
+			};
+			const appended: IOutboxWriteInput[] = [];
+			const outbox = {
+				mikroOrmEventOutboxRepository: { getEntityManager: () => em },
+				append: jest.fn(async (transaction: unknown, input: IOutboxWriteInput) => {
+					expect(transactions).toContain(transaction);
+					appended.push(input);
+					return {};
+				})
+			};
+			const capture = new TaskAutomationLinkClosedCapture(rules, reader, new TaskAutomationLinkClosureStore(dataSource), outbox as never, dataSource);
+			mockOrm.current = 'mikro-orm';
+			try {
+				outbox.append.mockRejectedValueOnce(new Error('database down'));
+				await capture.handle(report(task) as never);
+				expect(await dataSource.getRepository(TaskAutomationLinkClosure).count()).toBe(0);
+
+				await capture.handle(report(task) as never);
+				await capture.handle(report(task) as never);
+				expect(appended).toHaveLength(1);
+				expect(appended[0]).toMatchObject({ name: 'task_link.closed', aggregateId: task, tenantId: TENANT, organizationId: ORG });
+				const rows = await dataSource.query(`SELECT * FROM "task_automation_link_closure"`);
+				expect(rows).toEqual([
+					expect.objectContaining({ tenantId: TENANT, organizationId: ORG, taskId: task, provider: 'github', kind: 'pull_request', externalId: '9001' })
+				]);
+				expect(rows[0].createdAt).toBeTruthy();
+			} finally {
+				mockOrm.current = 'typeorm';
+				await sql.destroy();
+			}
 		});
 
 		it('drops at the consumer an event whose payload names another scope than its envelope', async () => {

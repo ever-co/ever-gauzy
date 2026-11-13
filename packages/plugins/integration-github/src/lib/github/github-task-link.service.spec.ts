@@ -242,6 +242,22 @@ describe('GithubTaskLinkService', () => {
 			expect(published.map((event) => event.taskId).sort()).toEqual([footer, header].sort());
 		});
 
+		it('finds the linked task among many links to other items of the repository', async () => {
+			const decoy = await createTask();
+			// Links to items 70–79, 700–799 and 7000–7149, written before the one link to item 7.
+			for (const number of [
+				...Array.from({ length: 10 }, (_, index) => 70 + index),
+				...Array.from({ length: 100 }, (_, index) => 700 + index),
+				...Array.from({ length: 150 }, (_, index) => 7000 + index)
+			]) {
+				await link(decoy, `https://github.com/acme/site/pull/${number}`);
+			}
+			const task = await createTask();
+			await link(task, 'https://github.com/acme/site/issues/7#issuecomment-1');
+			expect(await service.pullRequestClosed('delivery-1', pullRequest())).toBe(1);
+			expect(published).toEqual([expect.objectContaining({ taskId: task })]);
+		});
+
 		it('reports nothing for a pull request no task is linked to', async () => {
 			const task = await createTask();
 			await link(task, 'https://github.com/acme/site/pull/70');
@@ -301,18 +317,36 @@ describe('GithubTaskLinkService', () => {
 			expect(published).toEqual([]);
 		});
 
-		it('reports nothing on a redelivery; a delivery that failed is tried again', async () => {
+		it('reports a redelivery under the same identity, which the automations keep once', async () => {
 			const task = await createTask();
 			await link(task, 'https://github.com/acme/site/pull/7');
 			expect(await service.pullRequestClosed('delivery-1', pullRequest())).toBe(1);
-			expect(await service.pullRequestClosed('delivery-1', pullRequest())).toBe(0);
-			expect(published).toHaveLength(1);
-
-			resolveReferences.mockRejectedValueOnce(new Error('database down'));
-			expect(await service.pullRequestClosed('delivery-2', pullRequest({ title: 'WEB-9' }))).toBe(0);
-			expect(await service.pullRequestClosed('delivery-2', pullRequest({ title: 'WEB-9' }))).toBe(1);
-			// The redelivery names the link by the same identity: the automations keep one report per task and link.
+			expect(await service.pullRequestClosed('delivery-1', pullRequest())).toBe(1);
+			// Same task, provider, kind and GitHub id: the claim of the first report keeps the second out of the outbox.
 			expect(published[1]).toEqual(published[0]);
+		});
+	});
+
+	describe('a delivery that fails', () => {
+		it('tries every organization, then throws, so the receiver logs it and a redelivery reports again', async () => {
+			settings.push({ integration: { id: SISTER_INTEGRATION, tenantId: TENANT, organizationId: SISTER_ORG } });
+			const ours = await createTask();
+			const sister = await createTask(TENANT, SISTER_ORG);
+			await link(ours, 'https://github.com/acme/site/pull/7');
+			await link(sister, 'https://github.com/acme/site/pull/7', TENANT, SISTER_ORG);
+			resolveReferences.mockRejectedValueOnce(new Error('database down'));
+			await expect(service.pullRequestClosed('delivery-1', pullRequest({ title: 'WEB-9' }))).rejects.toThrow(
+				/Not every task linked to the closed GitHub pull_request acme\/site#7 \(delivery delivery-1\) was reported \(1 were\): integration .*database down/
+			);
+			// The organization that could be read was reported.
+			expect(published.map((event) => event.taskId)).toEqual([sister]);
+			expect(await service.pullRequestClosed('delivery-1', pullRequest({ title: 'WEB-9' }))).toBe(2);
+		});
+
+		it('throws when the organizations of the installation cannot be read', async () => {
+			execute.mockRejectedValueOnce(new Error('database down'));
+			await expect(service.pullRequestClosed('delivery-1', pullRequest())).rejects.toThrow('database down');
+			expect(published).toEqual([]);
 		});
 	});
 

@@ -76,11 +76,12 @@ GitHub delivers pull_request.closed / issues.closed (signature verified; T16)
   └─ GithubTaskLinkService: the organizations that bound the installation (setting installation_id) → in each, the
      tasks linked to the item: a task link to its address (resource_link, entity Task), the task's upper-case reference
      in the pull request's title or branch (TaskService.resolveReferences), the task mirroring the issue (integration
-     map, entity Issue, this integration) → read back in the organization → TaskLinkClosedEvent per task (CQRS);
-     a handled delivery id is remembered for an hour
+     map, entity Issue, this integration) → read back in the organization → TaskLinkClosedEvent per task (CQRS); an
+     organization that failed is thrown back once all were tried (the receiver logs it)
   └─ TaskAutomationLinkClosedCapture: task of the named scope? LINK_CLOSED rule on in the organization (30 s cache)?
-     claim (tenantId, taskId, provider, kind, externalId) in task_automation_link_closure (taken → nothing) →
-     EventOutboxService.append(task_link.closed, partition task-automation:<taskId>); a failed append gives the claim back
+     in ONE transaction: claim (tenantId, taskId, provider, kind, externalId) in task_automation_link_closure (taken →
+     nothing) + EventOutboxService.append(task_link.closed, partition task-automation:<taskId>) — both commit or
+     neither (under MikroORM the claim joins the outbox's MikroORM transaction through its SQL client)
   └─ TaskAutomationEventConsumer → TaskAutomationEngine.processLinkClosed (run key <eventId>:<taskId>)
 schedule (worker fires every 15 min; the queue job runs in the API)
   └─ TaskAutomationDueSweepService: advisory lock; enabled DUE_DATE_PASSED rules; open tasks of each rule's scope

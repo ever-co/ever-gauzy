@@ -1,6 +1,6 @@
 import {
 	GITHUB_PULL_REQUEST_REFERENCES_MAX,
-	githubItemUrlPattern,
+	githubItemUrlPatterns,
 	parseGithubItemUrl,
 	repositoryAddressOf,
 	sameGithubItem,
@@ -62,8 +62,18 @@ describe('GitHub task links', () => {
 			expect(sameGithubItem(null, { owner: 'acme', repo: 'site', number: 7 })).toBe(false);
 		});
 
-		it('finds every address of the item with its LIKE pattern (the exact comparison follows)', () => {
-			expect(githubItemUrlPattern({ owner: 'acme', repo: 'site', number: 7 })).toBe('%github.com/acme/site/%/7%');
+		it('finds the item’s addresses with its LIKE patterns, and no other number’s, names escaped', () => {
+			const patterns = githubItemUrlPatterns({ owner: 'acme', repo: 'my_site', number: 7 });
+			expect(patterns).toEqual([
+				'%github.com/acme/my!_site/pull/7',
+				'%github.com/acme/my!_site/pull/7/%',
+				'%github.com/acme/my!_site/pull/7?%',
+				'%github.com/acme/my!_site/pull/7#%',
+				'%github.com/acme/my!_site/issues/7',
+				'%github.com/acme/my!_site/issues/7/%',
+				'%github.com/acme/my!_site/issues/7?%',
+				'%github.com/acme/my!_site/issues/7#%'
+			]);
 		});
 	});
 

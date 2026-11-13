@@ -65,12 +65,27 @@ export function sameGithubItem(a: IGithubItemAddress | null, b: IGithubItemAddre
 	return !!a && !!b && a.owner === b.owner && a.repo === b.repo && a.number === b.number;
 }
 
+/** The escape character of the `LIKE` patterns below (`ESCAPE '!'`: no owner or repository name holds it). */
+export const GITHUB_ITEM_URL_LIKE_ESCAPE = '!';
+
+/** A text matched literally inside a `LIKE` pattern escaped with {@link GITHUB_ITEM_URL_LIKE_ESCAPE}. */
+function likeLiteral(text: string): string {
+	return text.replace(/[!%_]/g, (character) => `${GITHUB_ITEM_URL_LIKE_ESCAPE}${character}`);
+}
+
 /**
- * The `LIKE` pattern (over the lower-cased address) that finds the links which may name an item; each is then parsed
- * and compared exactly, so the pattern only needs to keep every match.
+ * The `LIKE` patterns (over the lower-cased address, `ESCAPE '!'`) that find the links naming an item: its pull request
+ * and issue addresses, the number followed by nothing, a path, a query or an anchor — so `/pull/7` never pulls in
+ * `/pull/70`. Each link found is still parsed and compared exactly.
  */
-export function githubItemUrlPattern(address: IGithubItemAddress): string {
-	return `%github.com/${address.owner}/${address.repo}/%/${address.number}%`;
+export function githubItemUrlPatterns(address: IGithubItemAddress): string[] {
+	const repository = `%github.com/${likeLiteral(address.owner)}/${likeLiteral(address.repo)}/`;
+	const patterns: string[] = [];
+	for (const segment of ['pull', 'issues']) {
+		const item = `${repository}${segment}/${address.number}`;
+		patterns.push(item, `${item}/%`, `${item}?%`, `${item}#%`);
+	}
+	return patterns;
 }
 
 /** The task references a pull request's title and branch name, each once, title first. */
