@@ -44,7 +44,11 @@
 				<mj-text>
 					We received a request to reset the password of your {{appName}} account{{#if tenantName}} in the workspace <strong dir="auto" style="color: #18181B; font-weight: 600">{{tenantName}}</strong>{{/if}}.
 				</mj-text>
-				<mj-button href="{{ generatedUrl }}" target="_blank">Reset password</mj-button>
+				<mj-button padding="8px 10px 12px" href="{{ generatedUrl }}" target="_blank">Reset password</mj-button>
+				<mj-text mj-class="note" padding="0 10px 20px">
+					If the button does not work, copy this address into your browser:
+					<div dir="ltr" style="word-break: break-all">{{ generatedUrl }}</div>
+				</mj-text>
 				<mj-text mj-class="note">
 					The link expires shortly. If you did not ask for a new password, ignore this email: your password stays as it is.
 				</mj-text>

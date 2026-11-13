@@ -59,7 +59,11 @@
 				<mj-text>
 					או להצטרף בלחיצה אחת:
 				</mj-text>
-				<mj-button href="{{inviteLink}}" target="_blank">הצטרפות לצוות</mj-button>
+				<mj-button padding="8px 10px 12px" href="{{inviteLink}}" target="_blank">הצטרפות לצוות</mj-button>
+				<mj-text mj-class="note" padding="0 10px 20px">
+					אם הכפתור אינו פועל, אפשר להעתיק את הכתובת הזו לשורת הכתובת בדפדפן:
+					<div dir="ltr" style="word-break: break-all">{{inviteLink}}</div>
+				</mj-text>
 				<mj-raw>{{/if}}</mj-raw>
 				<mj-text mj-class="note">
 					אין לשתף את הקוד הזה עם אף אחד. אם לא ציפית להזמנה הזו, אפשר להתעלם מהודעה זו.

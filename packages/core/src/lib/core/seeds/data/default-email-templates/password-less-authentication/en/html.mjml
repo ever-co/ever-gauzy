@@ -54,7 +54,11 @@
 				<mj-text>
 					Or sign in with one click:
 				</mj-text>
-				<mj-button href="{{magicLink}}" target="_blank">Sign in to {{appName}}</mj-button>
+				<mj-button padding="8px 10px 12px" href="{{magicLink}}" target="_blank">Sign in to {{appName}}</mj-button>
+				<mj-text mj-class="note" padding="0 10px 20px">
+					If the button does not work, copy this address into your browser:
+					<div dir="ltr" style="word-break: break-all">{{magicLink}}</div>
+				</mj-text>
 				<mj-raw>{{/if}}</mj-raw>
 				<mj-text mj-class="note">
 					The code and the link expire shortly and work only once. Do not share them with anyone. If you did not try to sign in, you can ignore this email.

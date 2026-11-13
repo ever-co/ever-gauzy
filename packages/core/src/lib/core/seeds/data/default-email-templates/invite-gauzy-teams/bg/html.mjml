@@ -57,7 +57,11 @@
 				<mj-text>
 					Или се присъединете с едно щракване:
 				</mj-text>
-				<mj-button href="{{inviteLink}}" target="_blank">Присъединяване към екипа</mj-button>
+				<mj-button padding="8px 10px 12px" href="{{inviteLink}}" target="_blank">Присъединяване към екипа</mj-button>
+				<mj-text mj-class="note" padding="0 10px 20px">
+					Ако бутонът не работи, копирайте този адрес в адресната лента на браузъра:
+					<div dir="ltr" style="word-break: break-all">{{inviteLink}}</div>
+				</mj-text>
 				<mj-raw>{{/if}}</mj-raw>
 				<mj-text mj-class="note">
 					Не споделяйте този код с никого. Ако не сте очаквали тази покана, можете да пренебрегнете този имейл.

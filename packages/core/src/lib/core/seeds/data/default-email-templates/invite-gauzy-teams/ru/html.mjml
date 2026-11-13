@@ -57,7 +57,11 @@
 				<mj-text>
 					Или присоединитесь одним нажатием:
 				</mj-text>
-				<mj-button href="{{inviteLink}}" target="_blank">Присоединиться к команде</mj-button>
+				<mj-button padding="8px 10px 12px" href="{{inviteLink}}" target="_blank">Присоединиться к команде</mj-button>
+				<mj-text mj-class="note" padding="0 10px 20px">
+					Если кнопка не работает, скопируйте этот адрес в адресную строку браузера:
+					<div dir="ltr" style="word-break: break-all">{{inviteLink}}</div>
+				</mj-text>
 				<mj-raw>{{/if}}</mj-raw>
 				<mj-text mj-class="note">
 					Никому не сообщайте этот код. Если вы не ожидали этого приглашения, просто проигнорируйте это письмо.

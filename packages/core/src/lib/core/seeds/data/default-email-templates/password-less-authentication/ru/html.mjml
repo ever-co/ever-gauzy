@@ -54,7 +54,11 @@
 				<mj-text>
 					Или войдите одним нажатием:
 				</mj-text>
-				<mj-button href="{{magicLink}}" target="_blank">Войти в {{appName}}</mj-button>
+				<mj-button padding="8px 10px 12px" href="{{magicLink}}" target="_blank">Войти в {{appName}}</mj-button>
+				<mj-text mj-class="note" padding="0 10px 20px">
+					Если кнопка не работает, скопируйте этот адрес в адресную строку браузера:
+					<div dir="ltr" style="word-break: break-all">{{magicLink}}</div>
+				</mj-text>
 				<mj-raw>{{/if}}</mj-raw>
 				<mj-text mj-class="note">
 					Срок действия кода и ссылки скоро истечёт, и использовать их можно только один раз. Никому их не сообщайте. Если вы не пытались войти, просто проигнорируйте это письмо.

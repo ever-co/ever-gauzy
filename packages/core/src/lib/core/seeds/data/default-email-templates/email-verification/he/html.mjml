@@ -47,7 +47,11 @@
 					תודה שהצטרפת אל {{appName}}. יש לאמת את כתובת האימייל כדי להשלים את הגדרת החשבון.
 				</mj-text>
 				<mj-raw>{{#if verificationLink}}</mj-raw>
-				<mj-button href="{{verificationLink}}" target="_blank">אימות כתובת האימייל</mj-button>
+				<mj-button padding="8px 10px 12px" href="{{verificationLink}}" target="_blank">אימות כתובת האימייל</mj-button>
+				<mj-text mj-class="note" padding="0 10px 20px">
+					אם הכפתור אינו פועל, אפשר להעתיק את הכתובת הזו לשורת הכתובת בדפדפן:
+					<div dir="ltr" style="word-break: break-all">{{verificationLink}}</div>
+				</mj-text>
 				<mj-text>
 					או להזין את הקוד הזה בדף האימות:
 				</mj-text>

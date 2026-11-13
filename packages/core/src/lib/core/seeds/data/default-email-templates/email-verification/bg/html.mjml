@@ -45,7 +45,11 @@
 					Благодарим Ви, че се присъединихте към {{appName}}. Потвърдете имейл адреса си, за да завършите настройването на профила.
 				</mj-text>
 				<mj-raw>{{#if verificationLink}}</mj-raw>
-				<mj-button href="{{verificationLink}}" target="_blank">Потвърждаване на имейла</mj-button>
+				<mj-button padding="8px 10px 12px" href="{{verificationLink}}" target="_blank">Потвърждаване на имейла</mj-button>
+				<mj-text mj-class="note" padding="0 10px 20px">
+					Ако бутонът не работи, копирайте този адрес в адресната лента на браузъра:
+					<div dir="ltr" style="word-break: break-all">{{verificationLink}}</div>
+				</mj-text>
 				<mj-text>
 					Или въведете този код на страницата за потвърждение:
 				</mj-text>

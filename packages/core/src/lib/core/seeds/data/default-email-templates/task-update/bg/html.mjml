@@ -81,7 +81,11 @@
 					</table>
 				</mj-text>
 				<mj-raw>{{#if task_update_url}}</mj-raw>
-				<mj-button href="{{task_update_url}}" target="_blank">Отваряне на задачата</mj-button>
+				<mj-button padding="8px 10px 12px" href="{{task_update_url}}" target="_blank">Отваряне на задачата</mj-button>
+				<mj-text mj-class="note" padding="0 10px 20px">
+					Ако бутонът не работи, копирайте този адрес в адресната лента на браузъра:
+					<div dir="ltr" style="word-break: break-all">{{task_update_url}}</div>
+				</mj-text>
 				<mj-raw>{{/if}}</mj-raw>
 			</mj-column>
 		</mj-section>

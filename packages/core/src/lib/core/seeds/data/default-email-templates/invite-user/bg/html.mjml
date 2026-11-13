@@ -41,7 +41,11 @@
 				<mj-text>
 					Поканени сте да се присъедините към <strong dir="auto" style="color: #18181B; font-weight: 600">{{organizationName}}</strong> в {{appName}}{{#if role}} като <strong dir="auto" style="color: #18181B; font-weight: 600">{{role}}</strong>{{/if}}.
 				</mj-text>
-				<mj-button href="{{generatedUrl}}" target="_blank">Приемане на поканата</mj-button>
+				<mj-button padding="8px 10px 12px" href="{{generatedUrl}}" target="_blank">Приемане на поканата</mj-button>
+				<mj-text mj-class="note" padding="0 10px 20px">
+					Ако бутонът не работи, копирайте този адрес в адресната лента на браузъра:
+					<div dir="ltr" style="word-break: break-all">{{generatedUrl}}</div>
+				</mj-text>
 				<mj-text mj-class="note">
 					Ако имате някакви въпроси, можете да се свържете с нас, като отговорите на този имейл. Ако не сте очаквали тази покана, можете да пренебрегнете този имейл.
 				</mj-text>

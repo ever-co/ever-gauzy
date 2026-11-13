@@ -43,7 +43,11 @@
 				<mj-text>
 					הוזמנת להצטרף אל <strong dir="auto" style="color: #18181B; font-weight: 600">{{organizationName}}</strong> ב-{{appName}}.
 				</mj-text>
-				<mj-button href="{{generatedUrl}}" target="_blank">אישור ההזמנה</mj-button>
+				<mj-button padding="8px 10px 12px" href="{{generatedUrl}}" target="_blank">אישור ההזמנה</mj-button>
+				<mj-text mj-class="note" padding="0 10px 20px">
+					אם הכפתור אינו פועל, אפשר להעתיק את הכתובת הזו לשורת הכתובת בדפדפן:
+					<div dir="ltr" style="word-break: break-all">{{generatedUrl}}</div>
+				</mj-text>
 				<mj-text mj-class="note">
 					אם יש לך שאלות, אפשר להשיב להודעה זו. אם לא ציפית להזמנה הזו, אפשר להתעלם מהודעה זו.
 				</mj-text>

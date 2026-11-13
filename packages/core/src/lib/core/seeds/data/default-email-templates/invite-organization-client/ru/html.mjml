@@ -44,7 +44,11 @@
 				<mj-text>
 					<strong dir="auto" style="color: #18181B; font-weight: 600">{{organizationName}}</strong> приглашает вас присоединиться к ним в {{appName}}.
 				</mj-text>
-				<mj-button href="{{generatedUrl}}" target="_blank">Завершить регистрацию</mj-button>
+				<mj-button padding="8px 10px 12px" href="{{generatedUrl}}" target="_blank">Завершить регистрацию</mj-button>
+				<mj-text mj-class="note" padding="0 10px 20px">
+					Если кнопка не работает, скопируйте этот адрес в адресную строку браузера:
+					<div dir="ltr" style="word-break: break-all">{{generatedUrl}}</div>
+				</mj-text>
 				<mj-text mj-class="note">
 					Если вы не ожидали этого приглашения, просто проигнорируйте это письмо.
 				</mj-text>

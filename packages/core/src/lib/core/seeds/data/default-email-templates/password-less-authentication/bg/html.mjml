@@ -54,7 +54,11 @@
 				<mj-text>
 					Или влезте с едно щракване:
 				</mj-text>
-				<mj-button href="{{magicLink}}" target="_blank">Вход в {{appName}}</mj-button>
+				<mj-button padding="8px 10px 12px" href="{{magicLink}}" target="_blank">Вход в {{appName}}</mj-button>
+				<mj-text mj-class="note" padding="0 10px 20px">
+					Ако бутонът не работи, копирайте този адрес в адресната лента на браузъра:
+					<div dir="ltr" style="word-break: break-all">{{magicLink}}</div>
+				</mj-text>
 				<mj-raw>{{/if}}</mj-raw>
 				<mj-text mj-class="note">
 					Кодът и връзката изтичат скоро и могат да се използват само веднъж. Не ги споделяйте с никого. Ако не сте се опитвали да влезете, можете да пренебрегнете този имейл.

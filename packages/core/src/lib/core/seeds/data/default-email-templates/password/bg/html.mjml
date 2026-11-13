@@ -44,7 +44,11 @@
 				<mj-text>
 					Получихме заявка за нулиране на паролата на профила Ви в {{appName}}{{#if tenantName}} в работното пространство <strong dir="auto" style="color: #18181B; font-weight: 600">{{tenantName}}</strong>{{/if}}.
 				</mj-text>
-				<mj-button href="{{ generatedUrl }}" target="_blank">Нулиране на паролата</mj-button>
+				<mj-button padding="8px 10px 12px" href="{{ generatedUrl }}" target="_blank">Нулиране на паролата</mj-button>
+				<mj-text mj-class="note" padding="0 10px 20px">
+					Ако бутонът не работи, копирайте този адрес в адресната лента на браузъра:
+					<div dir="ltr" style="word-break: break-all">{{ generatedUrl }}</div>
+				</mj-text>
 				<mj-text mj-class="note">
 					Връзката изтича скоро. Ако не сте искали нова парола, пренебрегнете този имейл: паролата Ви остава същата.
 				</mj-text>
