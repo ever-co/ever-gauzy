@@ -67,7 +67,7 @@ describe('TaskService — TaskEvent DELETED', () => {
 
 		await expect(service.deleteTask('task-1')).resolves.toEqual({ affected: 1, raw: [] });
 
-		expect(remove).toHaveBeenCalledWith('task-1');
+		expect(remove).toHaveBeenCalledWith('task-1', { withDeleted: true });
 		expect(published()).toHaveLength(1);
 		const [event] = published();
 		expect(event).toBeInstanceOf(TaskEvent);

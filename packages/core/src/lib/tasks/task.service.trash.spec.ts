@@ -256,12 +256,40 @@ describe('TaskService — the trash', () => {
 
 			await expect(service.deleteTask('task-1')).resolves.toEqual({ affected: 1, raw: [] });
 
-			expect(remove).toHaveBeenCalledWith('task-1');
+			// Soft-deleted rows included: MikroORM's soft-delete filter would otherwise keep the statement off the task.
+			expect(remove).toHaveBeenCalledWith('task-1', { withDeleted: true });
 			expect(TenantAwareCrudService.prototype.findOneByIdString).toHaveBeenCalledWith('task-1', {
 				relations: { teams: true },
 				withDeleted: true
 			});
 			expect(published()).toEqual([]);
+		});
+
+		it('answers 409 TASK_STILL_REFERENCED when a foreign key refuses the delete, and publishes nothing', async () => {
+			signIn([PermissionsEnum.ORG_TASK_DELETE]);
+			for (const cause of [
+				Object.assign(new Error('violates foreign key constraint'), { code: '23503' }),
+				Object.assign(new Error('Cannot delete or update a parent row'), { code: 'ER_ROW_IS_REFERENCED_2' }),
+				Object.assign(new Error('FOREIGN KEY constraint failed'), { code: 'SQLITE_CONSTRAINT_FOREIGNKEY' }),
+				Object.assign(new Error('delete failed'), { name: 'ForeignKeyConstraintViolationException' })
+			]) {
+				jest.spyOn(TenantAwareCrudService.prototype, 'delete').mockRejectedValueOnce(
+					new NotFoundException('The record was not found', { cause })
+				);
+				const refusal = await service.deleteTask('task-1').catch((error: unknown) => error);
+				expect(refusal).toBeInstanceOf(ConflictException);
+				expect((refusal as ConflictException).message).toContain('TASK_STILL_REFERENCED');
+				expect((refusal as ConflictException).message).toContain('was not deleted');
+			}
+			expect(published()).toEqual([]);
+		});
+
+		it('passes any other failure through as it was (a 404)', async () => {
+			signIn([PermissionsEnum.ORG_TASK_DELETE]);
+			const failure = new NotFoundException('The record was not found', { cause: new Error('connection reset') });
+			jest.spyOn(TenantAwareCrudService.prototype, 'delete').mockRejectedValueOnce(failure);
+
+			await expect(service.deleteTask('task-1')).rejects.toBe(failure);
 		});
 	});
 

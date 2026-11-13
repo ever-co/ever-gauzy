@@ -151,6 +151,11 @@ const TASK_STILL_REFERENCED =
 	'TASK_STILL_REFERENCED: the task is still linked from other records (a linked issue or a key result), so it stays ' +
 	'in the trash; remove those links first.';
 
+/** The same refusal on the plain hard delete (`DELETE /tasks/:id`), whether the task is live or in the trash. */
+const TASK_STILL_REFERENCED_NOT_DELETED =
+	'TASK_STILL_REFERENCED: the task is still linked from other records (a linked issue or a key result), so it was ' +
+	'not deleted; remove those links first.';
+
 /** The driver codes of a statement refused because another row still references the row it deletes. */
 const REFERENCED_ROW_CODES = new Set([
 	'23503',
@@ -731,9 +736,17 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * permission, reaches this check. Without ALL_ORG_EDIT or ORG_TASK_DELETE, the caller must manage one
 	 * of the task's teams that belongs to the task's organization.
 	 *
+	 * A task in the trash is deleted for good as a live one is: on MikroORM, whose soft-delete filter applies to a native
+	 * delete too, the filter is lifted for the statement (`withDeleted`), as {@link deleteTrashedTask} lifts it.
+	 *
+	 * A task that other rows still point at through a foreign key without a delete rule of its own (a linked issue, a
+	 * key result) is refused by the database: the task stays, and the caller is told so (409 `TASK_STILL_REFERENCED`,
+	 * as {@link deleteTrashedTask} answers it) rather than that the task does not exist.
+	 *
 	 * @param id - The task to delete
 	 * @returns The result of the deletion
 	 * @throws ForbiddenException when the caller may not delete that task
+	 * @throws ConflictException when other records still reference the task
 	 */
 	async deleteTask(id: ID): Promise<DeleteResult> {
 		// A task in the trash is deleted for good on the same terms as a live one, by a team manager too.
@@ -752,7 +765,16 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			}
 		}
 
-		const result = await this.delete(id);
+		let result: DeleteResult;
+		try {
+			result = await this.delete(id, { withDeleted: true });
+		} catch (error) {
+			// The CRUD delete answers every failure as a 404, with the driver's error as its `cause`.
+			if (isReferencedRowViolation(error)) {
+				throw new ConflictException(TASK_STILL_REFERENCED_NOT_DELETED);
+			}
+			throw error;
+		}
 
 		if (task && !task.deletedAt && result?.affected) {
 			this.publishTaskEvent(task, BaseEntityEventTypeEnum.DELETED);
