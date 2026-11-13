@@ -226,7 +226,9 @@ describe('DocumentUploadService — the raw byte path reads the stored bytes in 
 			)
 		);
 		try {
-			const refusal = await rawService().getRawFile('doc-1', undefined, { maxBytes: 15 }).catch((error: unknown) => error);
+			const refusal = await rawService()
+				.getRawFile('doc-1', undefined, { maxBytes: 15 })
+				.catch((error: unknown) => error);
 			expect(refusal).toBeInstanceOf(FileContentTooLargeError);
 			expect((refusal as FileContentTooLargeError).maxBytes).toBe(15);
 			// Abandoned at the bound: the third chunk was never pulled.
