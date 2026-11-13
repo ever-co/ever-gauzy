@@ -82,6 +82,31 @@ describe('TaskListComponent', () => {
 		expect(pages).toEqual([false]);
 	});
 
+	it('shows a date-only due date as its own day to a reader east of UTC, and a moment in the reader’s zone', () => {
+		const zone = process.env['TZ'];
+		process.env['TZ'] = 'Africa/Johannesburg';
+		try {
+			render([
+				{
+					key: '',
+					label: '',
+					count: null,
+					rows: [
+						row('a', { dueDate: '2026-11-14T00:00:00.000Z' as never }),
+						row('b', { dueDate: '2026-11-15T03:59:59.000Z' as never })
+					]
+				}
+			]);
+			const days = Array.from(host().querySelectorAll('.cell.due[role="gridcell"]')).map((cell) =>
+				cell.textContent?.trim()
+			);
+			expect(days).toEqual(['Nov 14, 2026', 'Nov 15, 2026']);
+		} finally {
+			if (zone === undefined) delete process.env['TZ'];
+			else process.env['TZ'] = zone;
+		}
+	});
+
 	it('marks a passed due date of an open task, and draws initials', () => {
 		expect(isOverdue({ dueDate: new Date(2000, 1, 1), status: 'open' as never })).toBe(true);
 		expect(isOverdue({ dueDate: new Date(2000, 1, 1), status: 'done' as never })).toBe(false);

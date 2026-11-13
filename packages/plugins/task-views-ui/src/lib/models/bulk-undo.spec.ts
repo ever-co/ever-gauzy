@@ -40,11 +40,9 @@ describe('bulk request and undo', () => {
 			expect(hasChanges({ isArchived: false })).toBe(true);
 		});
 
-		it('sets a due date at the end of the day picked, or clears it', () => {
+		it('sets a due date as the day picked in the date-only form (midnight UTC), or clears it', () => {
 			const due = dueDateChanges(new Date(2026, 10, 20, 9, 30)).dueDate as Date;
-			expect([due.getFullYear(), due.getMonth(), due.getDate(), due.getHours(), due.getMinutes()]).toEqual([
-				2026, 10, 20, 23, 59
-			]);
+			expect(due.toISOString()).toBe('2026-11-20T00:00:00.000Z');
 			expect(dueDateChanges(null)).toEqual({ dueDate: null });
 		});
 	});
