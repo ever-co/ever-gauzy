@@ -42,7 +42,7 @@
 					Hi{{#if name}} {{name}}{{/if}},
 				</mj-text>
 				<mj-text>
-					Your time off request is now <strong dir="auto" style="color: #18181B; font-weight: 600">{{time_off_policy_requires_approval}}</strong>.{{#if time_off_policy_paid_status}} Payment status: <strong dir="auto" style="color: #18181B; font-weight: 600">{{time_off_policy_paid_status}}</strong>.{{/if}}
+					Your time off request is now <strong dir="auto" style="color: #18181B; font-weight: 600">{{time_off_policy_requires_approval}}</strong>. Payment status: <strong dir="auto" style="color: #18181B; font-weight: 600">{{#if time_off_policy_paid_status}}paid{{else}}unpaid{{/if}}</strong>.
 				</mj-text>
 			</mj-column>
 		</mj-section>

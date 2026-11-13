@@ -42,7 +42,7 @@
 					Здравствуйте{{#if name}}, {{name}}{{/if}}!
 				</mj-text>
 				<mj-text>
-					Ваша заявка на отпуск теперь имеет статус <strong dir="auto" style="color: #18181B; font-weight: 600">{{time_off_policy_requires_approval}}</strong>.{{#if time_off_policy_paid_status}} Статус оплаты: <strong dir="auto" style="color: #18181B; font-weight: 600">{{time_off_policy_paid_status}}</strong>.{{/if}}
+					Ваша заявка на отпуск теперь имеет статус <strong dir="auto" style="color: #18181B; font-weight: 600">{{time_off_policy_requires_approval}}</strong>. Статус оплаты: <strong dir="auto" style="color: #18181B; font-weight: 600">{{#if time_off_policy_paid_status}}оплачиваемый{{else}}неоплачиваемый{{/if}}</strong>.
 				</mj-text>
 			</mj-column>
 		</mj-section>

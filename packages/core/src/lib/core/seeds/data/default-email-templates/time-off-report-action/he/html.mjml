@@ -44,7 +44,7 @@
 					שלום{{#if name}} {{name}}{{/if}},
 				</mj-text>
 				<mj-text>
-					בקשת החופשה שלך נמצאת כעת בסטטוס <strong dir="auto" style="color: #18181B; font-weight: 600">{{time_off_policy_requires_approval}}</strong>.{{#if time_off_policy_paid_status}} סטטוס תשלום: <strong dir="auto" style="color: #18181B; font-weight: 600">{{time_off_policy_paid_status}}</strong>.{{/if}}
+					בקשת החופשה שלך נמצאת כעת בסטטוס <strong dir="auto" style="color: #18181B; font-weight: 600">{{time_off_policy_requires_approval}}</strong>. סטטוס תשלום: <strong dir="auto" style="color: #18181B; font-weight: 600">{{#if time_off_policy_paid_status}}בתשלום{{else}}ללא תשלום{{/if}}</strong>.
 				</mj-text>
 			</mj-column>
 		</mj-section>

@@ -42,7 +42,7 @@
 					Здравейте{{#if name}}, {{name}}{{/if}}!
 				</mj-text>
 				<mj-text>
-					Заявката Ви за отпуск вече е със статус <strong dir="auto" style="color: #18181B; font-weight: 600">{{time_off_policy_requires_approval}}</strong>.{{#if time_off_policy_paid_status}} Статус на плащането: <strong dir="auto" style="color: #18181B; font-weight: 600">{{time_off_policy_paid_status}}</strong>.{{/if}}
+					Заявката Ви за отпуск вече е със статус <strong dir="auto" style="color: #18181B; font-weight: 600">{{time_off_policy_requires_approval}}</strong>. Статус на плащането: <strong dir="auto" style="color: #18181B; font-weight: 600">{{#if time_off_policy_paid_status}}платен{{else}}неплатен{{/if}}</strong>.
 				</mj-text>
 			</mj-column>
 		</mj-section>
