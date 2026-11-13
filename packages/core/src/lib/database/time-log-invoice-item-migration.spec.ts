@@ -139,6 +139,18 @@ describe('time_log.invoiceItemId migration on Postgres', () => {
 		]);
 	});
 
+	it('takes no ACCESS EXCLUSIVE lock for a column created ahead of the deploy (no ALTER TABLE at all)', async () => {
+		const { queries, queryRunner } = scriptedRunner('postgres', { hasColumn: true, hasKeyAndIndex: true });
+
+		await new AddTimeLogInvoiceItem1791000008600().up(queryRunner);
+
+		expect(queries.some((sql) => sql.startsWith('ALTER TABLE'))).toBe(false);
+		expect(queries).toEqual([
+			'SELECT pg_advisory_xact_lock($1)',
+			`CREATE INDEX IF NOT EXISTS "${TIME_LOG_INVOICE_ITEM_INDEX}" ON "time_log" ("invoiceItemId")`
+		]);
+	});
+
 	it('drops the foreign key, the index and the column on down', async () => {
 		const { queries, queryRunner } = scriptedRunner('postgres', { hasColumn: true, hasKeyAndIndex: true });
 

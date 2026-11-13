@@ -80,8 +80,10 @@ export class AddTimeLogInvoiceItem1791000008600 implements MigrationInterface {
 
 	/** Adds the column when it is not there yet, then its index and its foreign key (inline on SQLite). */
 	private async addColumn(queryRunner: QueryRunner, dialect: Dialect): Promise<void> {
-		const needsColumnCheck = dialect !== 'postgres';
-		const hasColumn = needsColumnCheck && (await queryRunner.hasColumn(TABLE, INVOICE_ITEM));
+		// Asked first on every dialect: on PostgreSQL even `ADD COLUMN IF NOT EXISTS` takes an ACCESS EXCLUSIVE lock on
+		// `time_log` and waits behind every open transaction, while this catalog read takes none. So a column created
+		// ahead of the deploy (out of band, on a large table) costs the migration no lock. `IF NOT EXISTS` stays as a guard.
+		const hasColumn = await queryRunner.hasColumn(TABLE, INVOICE_ITEM);
 		if (!hasColumn) {
 			let ifNotExists = '';
 			if (dialect === 'postgres') {
