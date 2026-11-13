@@ -9852,6 +9852,18 @@ type Mutation {
   stopTimer(input: TimerToggleInput!): TimeLog
 
   """
+  Discards the caller's running timer: the run is removed with its time slots and screenshots, as if it
+  never started, and the answer is true. No permission to delete time is asked, since the time was
+  never kept.
+  
+  The delivered write refuses with 400 when nothing runs, with 403 when the organization turned
+  discarding off (code `TIMER_DISCARD_DISABLED`) or the run started longer ago than it allows (code
+  `TIMER_DISCARD_TOO_LATE`), and with 409 when the input names another time log than the running one,
+  which then goes on. Each refusal travels as the REST route raises it.
+  """
+  discardTimer(input: TimerDiscardInput!): Boolean!
+
+  """
   Raises a request to move the time booked to one project over to another. The request is filed in
   the pending state; nothing moves until an approver accepts it.
   """
@@ -44639,6 +44651,24 @@ input TimerToggleInput {
   """
   The running time log a stop or a toggle is for, as the client last saw it. When another log is the
   running one, the stop is refused and that log goes on. A start ignores it.
+  """
+  timeLogId: ID
+}
+
+"""
+What a caller states when it discards its running timer.
+
+Only what the delivered discard reads: the organization the route validates, and the running time log
+the discard is for. The tenant is stamped from the credential, as for the other three writes, and none
+of the start body's members is read by a discard.
+"""
+input TimerDiscardInput {
+  """The organization the running timer belongs to."""
+  organizationId: ID
+
+  """
+  The running time log the discard is for, as the client last saw it. When another log is the running
+  one, the discard is refused with 409 and that log goes on.
   """
   timeLogId: ID
 }

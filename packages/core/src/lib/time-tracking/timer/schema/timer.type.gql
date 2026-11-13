@@ -144,3 +144,20 @@ input TimerToggleInput {
 	"""
 	timeLogId: ID
 }
+
+"""
+What a caller states when it discards its running timer.
+
+Only what the delivered discard reads: the organization the route validates, and the running time log
+the discard is for. The tenant is stamped from the credential, as for the other three writes, and none
+of the start body's members is read by a discard.
+"""
+input TimerDiscardInput {
+	"The organization the running timer belongs to."
+	organizationId: ID
+	"""
+	The running time log the discard is for, as the client last saw it. When another log is the running
+	one, the discard is refused with 409 and that log goes on.
+	"""
+	timeLogId: ID
+}
