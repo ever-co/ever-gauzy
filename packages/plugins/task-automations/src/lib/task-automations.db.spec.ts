@@ -658,7 +658,8 @@ describe('Task automations on SQLite', () => {
 			execute: async (command: { id: string; input: Record<string, unknown> }) => {
 				const repository = dataSource.getRepository(Task as never);
 				const row = (await repository.findOne({ where: { id: command.id } as never, relations: { members: true, tags: true } as never })) as Record<string, unknown>;
-				const { organizationId: _organizationId, ...fields } = command.input;
+				const fields = { ...command.input };
+				delete fields['organizationId'];
 				Object.assign(row, fields);
 				return repository.save(row as never);
 			}
