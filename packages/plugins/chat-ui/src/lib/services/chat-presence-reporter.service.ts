@@ -19,10 +19,25 @@ const INPUT_EVENTS = ['pointerdown', 'pointermove', 'keydown', 'wheel', 'touchst
 /** The tabs of one browser tell each other when the person sets themselves away or back. */
 export const CHAT_PRESENCE_AWAY_CHANNEL = 'gauzy-chat-presence-away';
 
+/** When an away change was made, ordered the same way in every tab of one browser (they share a clock). */
+export interface AwayStamp {
+	/** Epoch ms, strictly increasing within a tab (a change in the same millisecond as the last one known moves on by one). */
+	at: number;
+	/** The tab that made it: two changes made at the same moment are ordered by it. */
+	tab: string;
+}
+
+/** Whether `a` was made after `b`. */
+export function isNewerAway(a: AwayStamp, b: AwayStamp | null): boolean {
+	if (!b) return true;
+	return a.at !== b.at ? a.at > b.at : a.tab > b.tab;
+}
+
 /** What a tab tells the others on {@link CHAT_PRESENCE_AWAY_CHANNEL}. */
 interface AwayMessage {
 	employeeId: string;
 	isAway: boolean;
+	stamp: AwayStamp;
 }
 
 /**
@@ -119,30 +134,41 @@ export class ChatPresenceReporterService {
 	}
 
 	/**
-	 * Keeps the away flag the same in every tab of this browser: a change in the store here is told to the others, and
-	 * one told by another tab is written to the store here (the header's avatar follows it too). Writing back what was
-	 * told changes nothing more, so the tabs do not echo each other.
+	 * Keeps the away flag the same in every tab of this browser: a change in the store here is stamped and told to the
+	 * others, and one told by another tab is written to the store here (the header's avatar follows it too) unless a
+	 * newer change is already known, so every tab ends on the latest change whatever order the messages arrive in.
+	 * Writing back what was told is not a change of this tab, so the tabs do not echo each other.
 	 */
 	private awaySync(): Observable<never> {
 		if (typeof BroadcastChannel === 'undefined') return EMPTY;
 		return new Observable<never>(() => {
 			const channel = new BroadcastChannel(CHAT_PRESENCE_AWAY_CHANNEL);
-			let last: AwayMessage | null = null;
+			/** The flag this tab holds for the signed-in person, and the newest change of it known here. */
+			let last: { employeeId: string; isAway: boolean } | null = null;
+			let latest: AwayStamp | null = null;
 			channel.onmessage = (event: MessageEvent<AwayMessage>) => {
-				const { employeeId, isAway } = event.data ?? ({} as AwayMessage);
+				const { employeeId, isAway, stamp } = event.data ?? ({} as AwayMessage);
 				const user = this.store.user;
-				if (typeof isAway !== 'boolean' || !user?.employee || employeeIdOf(user) !== employeeId) return;
+				if (typeof isAway !== 'boolean' || typeof stamp?.at !== 'number' || typeof stamp?.tab !== 'string') return;
+				if (!user?.employee || employeeIdOf(user) !== employeeId) return;
+				// An older change than one already known (made here, or told by another tab) never overwrites it.
+				if (!isNewerAway(stamp, latest)) return;
+				latest = stamp;
 				if (!!user.employee.isAway === isAway) return;
-				// Known before it is written: the store's change below is not a change of this tab, so it is not told back
-				// (two quick changes crossing on the way would otherwise bounce between the tabs for ever).
+				// Known before it is written: the store's change below is not a change of this tab, so it is not told back.
 				last = { employeeId, isAway };
 				this.store.user = { ...user, employee: { ...user.employee, isAway } };
 			};
 			const changes = (this.store.user$ as Observable<IUser | null | undefined>).subscribe((user) => {
 				const employeeId = employeeIdOf(user);
 				const current = employeeId ? { employeeId, isAway: !!user?.employee?.isAway } : null;
+				if (current && last?.employeeId !== current.employeeId) latest = null;
 				// A change of the same person's flag (not the first look at them, nor another person signing in).
-				if (current && last && last.employeeId === current.employeeId && last.isAway !== current.isAway) channel.postMessage(current);
+				if (current && last && last.employeeId === current.employeeId && last.isAway !== current.isAway) {
+					latest = { at: Math.max(Date.now(), (latest?.at ?? 0) + 1), tab: this.connectionId };
+					const message: AwayMessage = { ...current, stamp: latest };
+					channel.postMessage(message);
+				}
 				last = current;
 			});
 			return () => {
