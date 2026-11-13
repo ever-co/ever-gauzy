@@ -14,6 +14,13 @@
 		<main class="downloads-page">
 			<h1 class="headline">{{ 'DOWNLOADS_PAGE.HEADLINE' | translate }}</h1>
 
+			<!-- On a phone, the app for this device leads the page. -->
+			@if (isPhone && mobileUrl) {
+				<div class="app-grid is-single">
+					<ng-container *ngTemplateOutlet="mobileCard"></ng-container>
+				</div>
+			}
+
 			<!-- Desktop: copy and the installer for this OS on the start side, the timer drawing on the end side. -->
 			@if (primaryDesktop) {
 				<section class="shell" aria-labelledby="downloads-desktop-title">
@@ -24,7 +31,13 @@
 							</h2>
 							<p class="panel-description">{{ 'DOWNLOADS_PAGE.DESKTOP.DESCRIPTION' | translate }}</p>
 							<div class="hero-actions">
-								<a class="btn btn-solid" [href]="primaryDesktop.url" target="_blank" rel="noopener">
+								<a
+									class="btn btn-solid"
+									[href]="primaryDesktop.url"
+									target="_blank"
+									rel="noopener"
+									(click)="onDesktopDownload(primaryDesktop)"
+								>
 									<i [class]="primaryDesktop.icon" aria-hidden="true"></i>
 									{{
 										'DOWNLOADS_PAGE.DESKTOP.DOWNLOAD_FOR'
@@ -44,6 +57,7 @@
 													'DOWNLOADS_PAGE.DESKTOP.DOWNLOAD_FOR'
 														| translate: { platform: desktop.name }
 												"
+												(click)="onDesktopDownload(desktop)"
 											>
 												<i [class]="desktop.icon" aria-hidden="true"></i>
 												{{ desktop.name }}
@@ -52,20 +66,117 @@
 									</p>
 								}
 							</div>
+
+							<!--
+								After a desktop download: what happens next, in the desktop app's own
+								words (its "Custom / Network" or "Live" option and "API Host" field).
+							-->
+							@if (startedDownload(); as started) {
+								<div class="setup" aria-live="polite">
+									<p class="setup-opened">
+										<nb-icon icon="checkmark-circle-2-outline" aria-hidden="true"></nb-icon>
+										<span>
+											{{ 'DOWNLOADS_PAGE.SETUP.OPENED' | translate: { platform: started.name } }}
+											<span class="muted">{{
+												'DOWNLOADS_PAGE.SETUP.NOT_OPENED' | translate
+											}}</span>
+											<a [href]="started.url" target="_blank" rel="noopener">
+												{{ 'DOWNLOADS_PAGE.SETUP.TRY_AGAIN' | translate }}
+											</a>
+										</span>
+									</p>
+									<h3 class="setup-title">{{ 'DOWNLOADS_PAGE.SETUP.TITLE' | translate }}</h3>
+									<ol class="setup-steps">
+										<li>
+											@switch (started.platform) {
+												@case ('macos') {
+													{{ 'DOWNLOADS_PAGE.SETUP.INSTALL_MACOS' | translate }}
+												}
+												@case ('linux') {
+													{{ 'DOWNLOADS_PAGE.SETUP.INSTALL_LINUX' | translate }}
+												}
+												@default {
+													{{ 'DOWNLOADS_PAGE.SETUP.INSTALL_WINDOWS' | translate }}
+												}
+											}
+										</li>
+										<li>
+											@if (isLiveServer) {
+												{{
+													'DOWNLOADS_PAGE.SETUP.CONNECT_LIVE'
+														| translate
+															: { option: ('TIMER_TRACKER.SETUP.LIVE' | translate) }
+												}}
+											} @else {
+												{{
+													'DOWNLOADS_PAGE.SETUP.CONNECT_CUSTOM'
+														| translate
+															: {
+																	option:
+																		('TIMER_TRACKER.SETUP.CUSTOM_NETWORK'
+																		| translate),
+																	field: ('TIMER_TRACKER.SETUP.API_HOST' | translate)
+															  }
+												}}
+												<span class="address-row">
+													<code class="address" [title]="apiHost">{{ apiHost }}</code>
+													<button
+														type="button"
+														class="btn btn-soft btn-small"
+														(click)="copyApiHost()"
+														[attr.aria-label]="
+															apiHostCopied()
+																? ('BUTTONS.COPIED' | translate)
+																: ('DOWNLOADS_PAGE.SETUP.COPY_FIELD'
+																	| translate
+																		: {
+																				field:
+																					('TIMER_TRACKER.SETUP.API_HOST'
+																					| translate)
+																		  })
+														"
+													>
+														<nb-icon
+															[icon]="
+																apiHostCopied() ? 'checkmark-outline' : 'copy-outline'
+															"
+															aria-hidden="true"
+														></nb-icon>
+														{{
+															(apiHostCopied() ? 'BUTTONS.COPIED' : 'BUTTONS.COPY')
+																| translate
+														}}
+													</button>
+												</span>
+											}
+										</li>
+										<li>{{ 'DOWNLOADS_PAGE.SETUP.SIGN_IN' | translate }}</li>
+									</ol>
+								</div>
+							}
 						</div>
 
 						<!--
 							Decorative: the desktop app's timer window, mid-session, cut off by the
 							bottom of the card. Labels are the desktop timer's own TIMER_TRACKER keys.
 						-->
-						<div class="art art-desktop" aria-hidden="true">
+						<!--
+							Hands-on: pointer over the drawing hands it to the visitor — the cursor
+							steps aside and the pause button really pauses. Still aria-hidden and out
+							of the tab order: a mouse-only extra on a decorative picture.
+						-->
+						<div
+							class="art art-desktop"
+							aria-hidden="true"
+							[class.is-hands-on]="desktopTakeover()"
+							(pointerenter)="setDesktopTakeover(true)"
+							(pointerleave)="setDesktopTakeover(false)"
+						>
+							<span class="try-it">{{ 'DOWNLOADS_PAGE.ILLUSTRATION.TRY_IT' | translate }}</span>
 							<div class="desktop-window">
 								<span class="titlebar">
-									<img
-										class="titlebar-logo"
-										src="assets/images/logos/logo_Gauzy_512x512.png"
-										alt=""
-									/>
+									<!-- The app icon (favicon), drawn for 16px — as the desktop app's title bar shows it. -->
+									<img class="titlebar-logo" src="favicon.ico" alt="" />
 									<span class="titlebar-menu">Gauzy</span>
 									<span class="titlebar-menu">{{ 'TIMER_TRACKER.MENU.WINDOW' | translate }}</span>
 									<span class="titlebar-menu">…</span>
@@ -84,9 +195,16 @@
 
 									<span class="dw-timer">
 										<span class="dw-clock">{{ desktopClock() }}</span>
-										<span class="dw-pause" [class.is-hovered]="desktopCursor().at === 'pause'">
-											<i class="fas fa-pause"></i>
-										</span>
+										<button
+											type="button"
+											tabindex="-1"
+											class="dw-pause"
+											[class.is-hovered]="!desktopTakeover() && desktopCursor().at === 'pause'"
+											[class.is-paused]="!desktopRunning()"
+											(click)="toggleDesktopTimer()"
+										>
+											<i [class]="desktopRunning() ? 'fas fa-pause' : 'fas fa-play'"></i>
+										</button>
 									</span>
 									<span class="dw-totals">
 										<span>
@@ -106,7 +224,11 @@
 									</span>
 									<span
 										class="dw-select"
-										[class.is-pressed]="desktopCursor().at === 'client' && desktopCursor().press"
+										[class.is-pressed]="
+											!desktopTakeover() &&
+											desktopCursor().at === 'client' &&
+											desktopCursor().press
+										"
 									>
 										<span class="dw-placeholder">{{
 											'TIMER_TRACKER.PLACEHOLDERS.SELECT_CLIENT' | translate
@@ -117,7 +239,11 @@
 									<span class="dw-label">{{ 'TIMER_TRACKER.SELECT_PROJECT' | translate }}</span>
 									<span
 										class="dw-select"
-										[class.is-pressed]="desktopCursor().at === 'project' && desktopCursor().press"
+										[class.is-pressed]="
+											!desktopTakeover() &&
+											desktopCursor().at === 'project' &&
+											desktopCursor().press
+										"
 									>
 										<span class="project-badge">EG</span>
 										<span class="dw-value">Ever Gauzy</span>
@@ -159,6 +285,7 @@
 									class="cursor"
 									[attr.data-at]="desktopCursor().at"
 									[class.is-pressing]="desktopCursor().press"
+									[class.is-hidden]="desktopTakeover()"
 								>
 									<svg class="cursor-arrow" viewBox="0 0 20 20">
 										<path d="M3 2.5 16.5 9l-5.75 1.75L8 16.5Z" />
@@ -173,46 +300,10 @@
 				</section>
 			}
 
-			@if (mobileUrl || extensionUrl) {
+			@if ((mobileUrl && !isPhone) || extensionUrl) {
 				<div class="app-grid">
-					@if (mobileUrl) {
-						<section class="shell" aria-labelledby="downloads-mobile-title">
-							<div class="panel glow-center">
-								<h2 class="panel-title" id="downloads-mobile-title">
-									{{ 'DOWNLOADS_PAGE.MOBILE.TITLE' | translate }}
-								</h2>
-								<p class="panel-description">{{ 'DOWNLOADS_PAGE.MOBILE.DESCRIPTION' | translate }}</p>
-								<ul class="rows">
-									<li>
-										<span class="row-icon" aria-hidden="true"
-											><i class="fas fa-mobile-alt"></i
-										></span>
-										<span class="row-label">{{
-											'DOWNLOADS_PAGE.MOBILE.PLATFORMS' | translate
-										}}</span>
-										<a class="btn btn-soft" [href]="mobileUrl" target="_blank" rel="noopener">
-											{{ 'DOWNLOADS_PAGE.MOBILE.DOWNLOAD' | translate }}
-										</a>
-									</li>
-								</ul>
-
-								<!-- Decorative: a week of tracked hours on a phone. -->
-								<div class="art art-mobile" aria-hidden="true">
-									<div class="phone">
-										<span class="phone-notch"></span>
-										<span class="phone-label">{{
-											'DOWNLOADS_PAGE.ILLUSTRATION.THIS_WEEK' | translate
-										}}</span>
-										<span class="phone-total">31:08</span>
-										<span class="bars">
-											@for (height of weekBars; track $index) {
-												<span [style.height.%]="height" [style.--i]="$index"></span>
-											}
-										</span>
-									</div>
-								</div>
-							</div>
-						</section>
+					@if (mobileUrl && !isPhone) {
+						<ng-container *ngTemplateOutlet="mobileCard"></ng-container>
 					}
 
 					@if (extensionUrl) {
@@ -238,8 +329,18 @@
 									</li>
 								</ul>
 
-								<!-- Decorative: the extension's popup over a browser tab. -->
-								<div class="art art-extension" aria-hidden="true">
+								<!--
+									Decorative: the extension's popup over a browser tab. Hands-on like the
+									Desktop drawing: pointer over it, and play really starts the timer.
+								-->
+								<div
+									class="art art-extension"
+									aria-hidden="true"
+									[class.is-hands-on]="extensionTakeover()"
+									(pointerenter)="setExtensionTakeover(true)"
+									(pointerleave)="setExtensionTakeover(false)"
+								>
+									<span class="try-it">{{ 'DOWNLOADS_PAGE.ILLUSTRATION.TRY_IT' | translate }}</span>
 									<div class="browser">
 										<div class="browser-bar">
 											<span class="dots"><span></span><span></span><span></span></span>
@@ -260,15 +361,18 @@
 														{{ 'TIMER_TRACKER.TODAY' | translate }} {{ extensionClock() }}
 													</span>
 												</span>
-												<span
+												<button
+													type="button"
+													tabindex="-1"
 													class="play"
 													[class.is-running]="extensionRunning()"
-													[class.is-pressed]="extensionCursor().press"
+													[class.is-pressed]="!extensionTakeover() && extensionCursor().press"
+													(click)="toggleExtensionTimer()"
 												>
 													<i
 														[class]="extensionRunning() ? 'fas fa-pause' : 'fas fa-play'"
 													></i>
-												</span>
+												</button>
 												<span class="mode-switch">
 													<span class="is-on"><i class="fas fa-stopwatch"></i></span>
 													<span><nb-icon icon="menu-outline"></nb-icon></span>
@@ -280,6 +384,7 @@
 												class="cursor"
 												[attr.data-at]="extensionCursor().at"
 												[class.is-pressing]="extensionCursor().press"
+												[class.is-hidden]="extensionTakeover()"
 											>
 												<svg class="cursor-arrow" viewBox="0 0 20 20">
 													<path d="M3 2.5 16.5 9l-5.75 1.75L8 16.5Z" />
@@ -306,3 +411,38 @@
 		</main>
 	</nb-layout-column>
 </nb-layout>
+
+<!-- The Mobile card: first on phones, in the grid beside Browser extension elsewhere. -->
+<ng-template #mobileCard>
+	<section class="shell" aria-labelledby="downloads-mobile-title">
+		<div class="panel glow-center">
+			<h2 class="panel-title" id="downloads-mobile-title">
+				{{ 'DOWNLOADS_PAGE.MOBILE.TITLE' | translate }}
+			</h2>
+			<p class="panel-description">{{ 'DOWNLOADS_PAGE.MOBILE.DESCRIPTION' | translate }}</p>
+			<ul class="rows">
+				<li>
+					<span class="row-icon" aria-hidden="true"><i class="fas fa-mobile-alt"></i></span>
+					<span class="row-label">{{ 'DOWNLOADS_PAGE.MOBILE.PLATFORMS' | translate }}</span>
+					<a class="btn btn-soft" [href]="mobileUrl" target="_blank" rel="noopener">
+						{{ 'DOWNLOADS_PAGE.MOBILE.DOWNLOAD' | translate }}
+					</a>
+				</li>
+			</ul>
+
+			<!-- Decorative: a week of tracked hours on a phone. -->
+			<div class="art art-mobile" aria-hidden="true">
+				<div class="phone">
+					<span class="phone-notch"></span>
+					<span class="phone-label">{{ 'DOWNLOADS_PAGE.ILLUSTRATION.THIS_WEEK' | translate }}</span>
+					<span class="phone-total">31:08</span>
+					<span class="bars">
+						@for (height of weekBars; track $index) {
+							<span [style.height.%]="height" [style.--i]="$index"></span>
+						}
+					</span>
+				</div>
+			</div>
+		</div>
+	</section>
+</ng-template>
