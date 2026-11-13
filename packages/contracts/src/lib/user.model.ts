@@ -260,6 +260,8 @@ export interface ILastLoginAtInput {
 
 export interface IWorkspaceResponse extends IUserTokenInput {
 	user: IUser;
+	/** True when signing in to this workspace asks for a two-factor authentication code. */
+	twoFactorRequired?: boolean;
 }
 
 export interface IWorkSpace {
@@ -285,6 +287,8 @@ export interface IAuthResponse {
 	user: IUser;
 	token: string;
 	refresh_token?: string;
+	/** True when the organization of this session asks its members to turn on two-factor authentication and this user has not. */
+	twoFactorSetupRequired?: boolean;
 }
 export interface IUserCreateInput extends IRelationalImageAsset {
 	firstName?: string;

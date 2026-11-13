@@ -91,6 +91,8 @@ export interface IOrganization
 	requireClient?: boolean;
 	requireTeam?: boolean;
 	restrictTrackingSwitchToHigherRoles?: boolean;
+	/** Whether members are asked to turn on two-factor authentication at their next sign-in. Off by default. */
+	requireTwoFactor?: boolean;
 	timeFormat?: TimeFormatEnum;
 	defaultStartTime?: string;
 	defaultEndTime?: string;
