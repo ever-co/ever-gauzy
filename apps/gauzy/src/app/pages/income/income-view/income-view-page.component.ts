@@ -281,6 +281,8 @@ export class IncomeViewPageComponent extends TranslationBaseComponent implements
 		);
 		if (!edited) return;
 		this.setBusy(true);
+		// The page the edit is saved from: once it turns (another income or organization) or is left, no refresh.
+		const sequence = this.loadSequence;
 		try {
 			// As the list saves it: the income's own employee, not the form's employee control.
 			const { amount, organizationContact, valueDate, notes, currency, isBonus, tags } = edited;
@@ -296,7 +298,8 @@ export class IncomeViewPageComponent extends TranslationBaseComponent implements
 				...this.scope()
 			});
 			this.toastrService.success('NOTES.INCOME.EDIT_INCOME', { name: this.employeeName(income.employee) });
-			await this.refresh(income.id);
+			// Else the refresh would supersede the load of the page now shown, and leave it loading if it failed.
+			if (sequence === this.loadSequence) await this.refresh(income.id);
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		} finally {

@@ -180,4 +180,42 @@ describe('IncomeViewPageComponent dialogs', () => {
 
 		await expect(answer).resolves.toBeNull();
 	});
+
+	/** Edits an income through the form, saved by `save`: what the page reads after it, and the errors it reports. */
+	async function saveEdit(save: (internals: any) => Promise<unknown>) {
+		const { page, internals } = setup(() => pageOf([], { where: {} }));
+		const current = income('current', '2026-03-10', 10);
+		page.income = current;
+		internals.incomeId = current.id;
+		const { ref, onClose } = dialog();
+		const getAll = jest.fn(async () => ({ items: [current], total: 1 }));
+		const handleError = jest.fn();
+		Object.assign(internals.dialogService, { open: jest.fn(() => ref) });
+		Object.assign(internals.incomeService, { update: jest.fn(() => save(internals)), getAll });
+		Object.assign(internals.toastrService, { success: jest.fn() });
+		Object.assign(internals.errorHandler, { handleError });
+
+		const edit = page.edit();
+		onClose.next({ amount: 20, valueDate: new Date('2026-03-10T12:00:00'), isBonus: false, tags: [] });
+		await edit;
+		return { page, getAll, handleError };
+	}
+
+	it('reads the income again after an edit saved while the page still shows it', async () => {
+		const { page, getAll } = await saveEdit(async () => undefined);
+
+		expect(getAll).toHaveBeenCalledTimes(1);
+		expect(page.state).toBe('ready');
+	});
+
+	it('does not read the income again when the organization changed while the edit was saving', async () => {
+		const { getAll, handleError } = await saveEdit(async (internals) => {
+			// What switching the organization does first: a new load owns the page.
+			internals.organization = { id: 'other-org', tenantId: 'tenant' };
+			internals.loadSequence++;
+		});
+
+		expect(getAll).not.toHaveBeenCalled();
+		expect(handleError).not.toHaveBeenCalled();
+	});
 });
