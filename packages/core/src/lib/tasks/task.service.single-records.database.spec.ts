@@ -3,6 +3,7 @@ import '../core/entities/internal';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
+import { Logger } from '@nestjs/common';
 import { DataSource, DataSourceOptions, EntityTarget, ObjectLiteral } from 'typeorm';
 import { isPostgres } from '@gauzy/config';
 import { ITaskUpdateInput, IUser, PermissionsEnum, TaskPriorityEnum } from '@gauzy/contracts';
@@ -18,6 +19,8 @@ import {
 } from '../core/entities/internal';
 import { asTenantUser, createTenantFixture } from '../core/testing/tenant-isolation/tenant-isolation.fixtures';
 import { serializeEmbeddedTransactions } from '../database/embedded-transaction-queue';
+import { TaskCreateCommand } from './commands/task-create.command';
+import { TaskCreateHandler } from './commands/handlers/task-create.handler';
 import { Task } from './task.entity';
 import { TaskService } from './task.service';
 
@@ -33,6 +36,12 @@ import { TaskService } from './task.service';
  * - **a priority or size named by its record alone takes the record's name** (its value, else its name), as the task
  *   page writes it. A name sent beside it is kept as sent; a name sent alone is written as before; a status keeps its
  *   text.
+ *
+ * `POST /tasks` (and `createTask`, the bulk creates, the screening tasks and the integrations' imports, which all run
+ * the create command and `TaskService.create`) the same way: a record of the organization the task is created in, the
+ * tenant's shared one or a platform default, else the create is refused and no task is written; a priority or size
+ * named by its record alone takes the record's name; a task created with names only, or with its organization's
+ * records and their names (as an import sends them), is written as before.
  *
  * SQLite runs by default. Postgres runs when the entities are mapped for it and an empty, throwaway database is given:
  *
@@ -71,6 +80,32 @@ const SIZE_OTHER_TENANT = '85000000-0000-4000-8000-0000000000d5';
 
 const STATUS_OWN = '85000000-0000-4000-8000-0000000000e1';
 const STATUS_OTHER_ORGANIZATION = '85000000-0000-4000-8000-0000000000e4';
+
+/** The records an update or a create may not give a task of the organization, with the code it is refused with. */
+const REFUSED: Array<[string, Record<string, unknown>, string]> = [
+	['another organization’s priority', { taskPriorityId: PRIORITY_OTHER_ORGANIZATION }, 'TASK_PRIORITY_NOT_FOUND'],
+	['another organization’s size', { taskSizeId: SIZE_OTHER_ORGANIZATION }, 'TASK_SIZE_NOT_FOUND'],
+	['another organization’s status', { taskStatusId: STATUS_OTHER_ORGANIZATION }, 'TASK_STATUS_NOT_FOUND'],
+	[
+		'another organization’s priority named with a platform value',
+		{ taskPriorityId: PRIORITY_OTHER_ORGANIZATION, priority: TaskPriorityEnum.HIGH },
+		'TASK_PRIORITY_NOT_FOUND'
+	],
+	[
+		'another organization’s priority named by its relation',
+		{ taskPriority: { id: PRIORITY_OTHER_ORGANIZATION } },
+		'TASK_PRIORITY_NOT_FOUND'
+	],
+	['another tenant’s priority', { taskPriorityId: PRIORITY_OTHER_TENANT }, 'TASK_PRIORITY_NOT_FOUND'],
+	['another tenant’s size', { taskSizeId: SIZE_OTHER_TENANT }, 'TASK_SIZE_NOT_FOUND'],
+	['a priority that does not exist', { taskPriorityId: PRIORITY_UNKNOWN }, 'TASK_PRIORITY_NOT_FOUND'],
+	['a size named by a relation whose id is no uuid', { taskSize: { id: 'not-a-uuid' } }, 'TASK_SIZE_NOT_FOUND'],
+	[
+		'another organization’s priority named by its id beside a cleared relation',
+		{ taskPriority: null, taskPriorityId: PRIORITY_OTHER_ORGANIZATION },
+		'TASK_PRIORITY_NOT_FOUND'
+	]
+];
 
 const TABLES = [
 	'organization_sprint_task_history',
@@ -114,6 +149,7 @@ const POSTGRES: Dialect = {
 function exercise(dialect: Dialect) {
 	let dataSource: DataSource;
 	let service: TaskService;
+	let handler: TaskCreateHandler;
 	let restore: () => void;
 
 	/** A row with the columns given, and a placeholder in every other NOT NULL column without a default. */
@@ -146,6 +182,31 @@ function exercise(dialect: Dialect) {
 			select: {
 				id: true,
 				title: true,
+				status: true,
+				taskStatusId: true,
+				priority: true,
+				taskPriorityId: true,
+				size: true,
+				taskSizeId: true
+			}
+		});
+
+	/** A task created as `POST /tasks` and `createTask` create it: through the create command and the service. */
+	const create = (input: Record<string, unknown>) =>
+		handler.execute(
+			new TaskCreateCommand(
+				{ organizationId: ORGANIZATION, title: 'Created', status: 'open', ...input } as never,
+				false
+			)
+		);
+
+	const createdRows = () =>
+		dataSource.getRepository(Task).find({
+			where: { title: 'Created' },
+			select: {
+				id: true,
+				title: true,
+				organizationId: true,
 				status: true,
 				taskStatusId: true,
 				priority: true,
@@ -273,6 +334,22 @@ function exercise(dialect: Dialect) {
 			stub({}),
 			stub({ canManageEmployee: jest.fn(async () => true) })
 		);
+		// The create command as Nest builds it, over that service; what it only notifies or looks up is a stand-in.
+		handler = new TaskCreateHandler(
+			stub({ publish: jest.fn() }),
+			stub({ publish: jest.fn() }),
+			service,
+			stub({ findOneByIdString: jest.fn(async () => null) }),
+			stub({
+				findOneByIdString: jest.fn(async () => null),
+				findActiveEmployeesByEmployeeIds: jest.fn(async () => [])
+			}),
+			stub({ publishMention: jest.fn() }),
+			stub({ logActivity: jest.fn() }),
+			stub({ publishNotificationEvent: jest.fn() })
+		);
+		jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+		jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
 	}, TIMEOUT);
 
 	afterEach(() => {
@@ -290,30 +367,7 @@ function exercise(dialect: Dialect) {
 		taskSizeId: null
 	};
 
-	it.each([
-		['another organization’s priority', { taskPriorityId: PRIORITY_OTHER_ORGANIZATION }, 'TASK_PRIORITY_NOT_FOUND'],
-		['another organization’s size', { taskSizeId: SIZE_OTHER_ORGANIZATION }, 'TASK_SIZE_NOT_FOUND'],
-		['another organization’s status', { taskStatusId: STATUS_OTHER_ORGANIZATION }, 'TASK_STATUS_NOT_FOUND'],
-		[
-			'another organization’s priority named with a platform value',
-			{ taskPriorityId: PRIORITY_OTHER_ORGANIZATION, priority: TaskPriorityEnum.HIGH },
-			'TASK_PRIORITY_NOT_FOUND'
-		],
-		[
-			'another organization’s priority named by its relation',
-			{ taskPriority: { id: PRIORITY_OTHER_ORGANIZATION } },
-			'TASK_PRIORITY_NOT_FOUND'
-		],
-		['another tenant’s priority', { taskPriorityId: PRIORITY_OTHER_TENANT }, 'TASK_PRIORITY_NOT_FOUND'],
-		['another tenant’s size', { taskSizeId: SIZE_OTHER_TENANT }, 'TASK_SIZE_NOT_FOUND'],
-		['a priority that does not exist', { taskPriorityId: PRIORITY_UNKNOWN }, 'TASK_PRIORITY_NOT_FOUND'],
-		['a size named by a relation whose id is no uuid', { taskSize: { id: 'not-a-uuid' } }, 'TASK_SIZE_NOT_FOUND'],
-		[
-			'another organization’s priority named by its id beside a cleared relation',
-			{ taskPriority: null, taskPriorityId: PRIORITY_OTHER_ORGANIZATION },
-			'TASK_PRIORITY_NOT_FOUND'
-		]
-	] as Array<[string, Record<string, unknown>, string]>)(
+	it.each(REFUSED)(
 		'refuses %s, and changes nothing of the task',
 		async (_case, changes, code) => {
 			await expect(update({ title: 'Renamed', ...changes })).rejects.toThrow(code);
@@ -514,17 +568,124 @@ function exercise(dialect: Dialect) {
 		},
 		TIMEOUT
 	);
+
+	// ---------------------------------------------------------------- a task created with records
+
+	it.each(REFUSED)(
+		'refuses to create a task with %s, and writes none',
+		async (_case, records, code) => {
+			await expect(create(records)).rejects.toThrow(code);
+
+			expect(await createdRows()).toEqual([]);
+		},
+		TIMEOUT
+	);
+
+	it(
+		'creates a task with a priority and a size named by their records alone, with the records’ names',
+		async () => {
+			await create({ taskPriorityId: PRIORITY_OWN, taskSizeId: SIZE_OWN });
+
+			expect(await createdRows()).toMatchObject([
+				{ priority: 'p0', taskPriorityId: PRIORITY_OWN, size: 'huge', taskSizeId: SIZE_OWN }
+			]);
+		},
+		TIMEOUT
+	);
+
+	it(
+		'creates a task with the tenant’s shared priority (named by its name, having no value) or a platform default',
+		async () => {
+			await create({ taskPriorityId: PRIORITY_SHARED });
+			await create({ taskPriorityId: PRIORITY_DEFAULT });
+
+			const rows = await createdRows();
+			expect(rows.map(({ priority, taskPriorityId }) => ({ priority, taskPriorityId }))).toEqual(
+				expect.arrayContaining([
+					{ priority: 'Shared', taskPriorityId: PRIORITY_SHARED },
+					{ priority: TaskPriorityEnum.URGENT, taskPriorityId: PRIORITY_DEFAULT }
+				])
+			);
+			expect(rows).toHaveLength(2);
+		},
+		TIMEOUT
+	);
+
+	it(
+		'creates a task with a record named by its relation, and names it from the record',
+		async () => {
+			await create({ taskPriority: { id: PRIORITY_OWN } });
+
+			expect(await createdRows()).toMatchObject([{ priority: 'p0', taskPriorityId: PRIORITY_OWN }]);
+		},
+		TIMEOUT
+	);
+
+	it(
+		'creates a task with its organization’s records and the names sent beside them as sent, as an import sends them',
+		async () => {
+			// What the Jira, Linear, Asana and Trello imports send: the organization's own records found by name, with the
+			// names beside them.
+			await create({
+				status: 'In review',
+				taskStatusId: STATUS_OWN,
+				priority: 'P-zero',
+				taskPriorityId: PRIORITY_OWN
+			});
+
+			expect(await createdRows()).toMatchObject([
+				{ status: 'In review', taskStatusId: STATUS_OWN, priority: 'P-zero', taskPriorityId: PRIORITY_OWN }
+			]);
+		},
+		TIMEOUT
+	);
+
+	it(
+		'creates a task with names only as before, and with a status record without touching the status text',
+		async () => {
+			await create({ priority: TaskPriorityEnum.HIGH, size: 'large' });
+			expect(await createdRows()).toMatchObject([
+				{ priority: TaskPriorityEnum.HIGH, taskPriorityId: null, size: 'large', taskSizeId: null }
+			]);
+
+			await dataSource.getRepository(Task).delete({ title: 'Created' });
+			await create({ taskStatusId: STATUS_OWN });
+			expect(await createdRows()).toMatchObject([{ status: 'open', taskStatusId: STATUS_OWN }]);
+		},
+		TIMEOUT
+	);
+
+	it(
+		'judges the records against the organization the task is created in',
+		async () => {
+			// The other organization's priority is refused in this one, and this one's in the other.
+			await expect(create({ taskPriorityId: PRIORITY_OTHER_ORGANIZATION })).rejects.toThrow(
+				'TASK_PRIORITY_NOT_FOUND'
+			);
+			await expect(
+				service.create({
+					tenantId: TENANT,
+					organizationId: OTHER_ORGANIZATION,
+					title: 'Created',
+					taskPriorityId: PRIORITY_OWN
+				} as never)
+			).rejects.toThrow('TASK_PRIORITY_NOT_FOUND');
+
+			expect(await createdRows()).toEqual([]);
+		},
+		TIMEOUT
+	);
 }
 
 (isPostgres() ? describe.skip : describe)(
-	'TaskService single update with status, priority and size records, on a real SQLite database',
+	'TaskService single update and create with status, priority and size records, on a real SQLite database',
 	() => {
 		exercise(SQLITE);
 	}
 );
 
 (isPostgres() && process.env.GAUZY_TASK_SPEC_POSTGRES_URL ? describe : describe.skip)(
-	'TaskService single update with status, priority and size records, on a real Postgres database',
+	'TaskService single update and create with status, priority and size records, on a real Postgres database',
 	() => {
 		exercise(POSTGRES);
 	}

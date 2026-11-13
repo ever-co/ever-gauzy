@@ -253,6 +253,13 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * Creates a task, sanitizing the rich-text `description` HTML through the shared
 	 * server-side allowlist before persisting (see `sanitizeRichHtml`).
 	 *
+	 * The status, priority and size records it is created with are judged and named as an update's are (see
+	 * `withTaskRecords`): each must be one the task's organization may take (its own, the tenant's shared one, a
+	 * platform default), else the create is refused with `TASK_<KIND>_NOT_FOUND` before anything is written; a priority
+	 * or size named by its record alone takes the record's name. A task created with names only is written as before.
+	 * Every create funnels through here: `POST /tasks` and its bulk route, the GraphQL `createTask` and
+	 * `bulkCreateTasks`, the screening tasks and the integrations' imports.
+	 *
 	 * @param entity - The task creation input
 	 * @returns The created task
 	 */
@@ -261,7 +268,9 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		if (typeof input.description === 'string') {
 			input.description = sanitizeRichHtml(input.description);
 		}
-		return await super.create(entity);
+		const tenantId = RequestContext.currentTenantId() ?? (entity as { tenantId?: ID }).tenantId;
+		const created = await this.withTaskRecords(entity as Partial<ITaskUpdateInput>, null, tenantId);
+		return await super.create(created as IPartialEntity<Task>);
 	}
 
 	/**
@@ -304,7 +313,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			// The status, priority and size records the update moves the task to, judged and named as a bulk update's
 			// are: refused before anything is written when the task's organization may not take one. A bulk update has
 			// judged and named its own already.
-			const data = RECORDS_JUDGED.has(input) ? sent : await this.withUpdateRecords(sent, task, tenantId ?? task.tenantId);
+			const data = RECORDS_JUDGED.has(input) ? sent : await this.withTaskRecords(sent, task, tenantId ?? task.tenantId);
 
 			const taskMembers = task.members;
 
@@ -3144,34 +3153,37 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	}
 
 	/**
-	 * A single update with the status, priority and size records it moves the task to judged and named as a bulk
-	 * update's are (see `recordChangesOfUpdate`): each must be one the task's organization may take (its own, the
-	 * tenant's shared one, a platform default), else the update is refused with `TASK_<KIND>_NOT_FOUND` before anything
-	 * is written; a priority or size moved to by its record alone takes the record's name (see `withRecordNames`). A
+	 * A single update, or a create, with the status, priority and size records it gives the task judged and named as a
+	 * bulk update's are (see `recordChangesOfUpdate`): each must be one the task's organization may take (its own, the
+	 * tenant's shared one, a platform default), else the write is refused with `TASK_<KIND>_NOT_FOUND` before anything
+	 * is written; a priority or size given by its record alone takes the record's name (see `withRecordNames`). A
 	 * record the task already holds is not judged again and its name is left as sent, so a client that sends the whole
 	 * task back saves as before, and a name sent alone is written as before. A status keeps its text. A task moved to
-	 * another organization has every record it holds afterwards judged there, those it keeps included.
+	 * another organization has every record it holds afterwards judged there, those it keeps included. A task being
+	 * created holds none: every record it names is judged, in the organization it is created in.
 	 *
-	 * @param sent The update as it was sent.
-	 * @param task The task as it is stored, with the records it holds.
-	 * @param tenantId The caller's tenant (the update passes the task's when the request carries none); without one,
-	 * only a platform default is taken.
-	 * @returns The update to save: as sent, or with the records' names (and a record named twice named once).
+	 * @param sent The update or the create as it was sent.
+	 * @param task The task as it is stored, with the records it holds; `null` for a task being created.
+	 * @param tenantId The caller's tenant (the update passes the task's when the request carries none, the create the
+	 * one it is sent with); without one, only a platform default is taken.
+	 * @returns The write to save: as sent, or with the records' names (and a record named twice named once).
 	 */
-	private async withUpdateRecords<T extends Partial<ITaskUpdateInput>>(sent: T, task: Task, tenantId: ID | undefined): Promise<T> {
-		// The organization the task is saved in: the one the update names (by its relation, which the save takes over the
+	private async withTaskRecords<T extends Partial<ITaskUpdateInput>>(sent: T, task: Task | null, tenantId: ID | undefined): Promise<T> {
+		// The organization the task is saved in: the one the write names (by its relation, which the save takes over the
 		// id, or by its id; the DTO accepts either), else its own.
 		const namedOrganizationId = sent.organization?.id ?? sent.organizationId;
-		const organizationId = namedOrganizationId ?? task.organizationId;
+		const organizationId = namedOrganizationId ?? task?.organizationId;
 		const staysInOrganization =
-			!namedOrganizationId || (!!task.organizationId && recordKey(namedOrganizationId) === recordKey(task.organizationId));
-		const { update, changes, named } = recordChangesOfUpdate(sent, task);
+			!task ||
+			!namedOrganizationId ||
+			(!!task.organizationId && recordKey(namedOrganizationId) === recordKey(task.organizationId));
+		const { update, changes, named } = recordChangesOfUpdate(sent, task ?? {});
 		// In its organization, the records the task holds are its own to keep. Moved to another one, every record it holds
 		// afterwards (named, or kept) must be one that organization may take; only those it moves to are named.
 		const judged: ITaskBulkChanges = staysInOrganization ? changes : {};
 		if (!staysInOrganization) {
 			for (const { idField } of BULK_RECORD_FIELDS) {
-				const after = idField in named ? named[idField] : task[idField];
+				const after = idField in named ? named[idField] : task?.[idField];
 				if (after) judged[idField] = after;
 			}
 		}
@@ -3180,7 +3192,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		// (Postgres would fail the read instead).
 		const readable = BULK_RECORD_FIELDS.filter(({ idField }) => isUUID(judged[idField]));
 		const records = await this.bulkChangeRecordsOf(
-			[{ taskId: String(task.id), changes: judged }],
+			[{ taskId: String(task?.id ?? sent.id ?? ''), changes: judged }],
 			undefined,
 			readable.map(({ idField }) => idField)
 		);
