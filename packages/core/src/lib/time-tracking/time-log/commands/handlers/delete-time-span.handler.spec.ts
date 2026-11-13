@@ -76,7 +76,12 @@ function createHandler(storedLog: TimeLog = TRACKED_LOG) {
 		return undefined;
 	});
 
-	const handler = new DeleteTimeSpanHandler(timeLogRepository as any, {} as any, { execute } as any);
+	// The slot a time-slot delete names, as it is read again before it goes: held by no running log
+	const timeSlotRepository = {
+		find: jest.fn(async ({ where }: { where: { id: string } }) => [{ id: where.id, timeLogs: [] }])
+	};
+
+	const handler = new DeleteTimeSpanHandler(timeLogRepository as any, timeSlotRepository as any, { execute } as any);
 
 	return { handler, execute, timeLogRepository };
 }

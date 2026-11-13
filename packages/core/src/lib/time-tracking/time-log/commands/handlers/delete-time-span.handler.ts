@@ -536,13 +536,25 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	 * is, and recalculates the log's timesheet without the slot. A slot a running log holds too stays with that log,
 	 * which the time-slot delete never cuts: this log only lets go of it.
 	 *
+	 * The logs holding the slot are read again here: the time-slot delete read them before the cleanups queued ahead of
+	 * this one ran, and a timer may have started on the slot, or a running log let go of it, since.
+	 *
 	 * @param log - The log holding the slot, as stored.
-	 * @param timeSlot - The slot to delete, with the logs holding it as the time-slot delete read them.
+	 * @param timeSlot - The slot to delete.
 	 * @param forceDelete - Whether to hard delete it (default: false).
-	 * @throws The error of the delete, of the unlink or of the recalculation.
+	 * @throws The error of the read, of the delete, of the unlink or of the recalculation.
 	 */
 	private async deleteTimeSlotOutsideLog(log: ITimeLog, timeSlot: ITimeSlot, forceDelete = false): Promise<void> {
-		const runningTimeLogs = (timeSlot.timeLogs ?? []).filter((timeLog) => timeLog.isRunning);
+		const [current] = await this.typeOrmTimeSlotRepository.find({
+			where: { id: timeSlot.id },
+			relations: { timeLogs: true }
+		});
+		if (!current) {
+			// Another cleanup deleted it meanwhile: only the log's totals are left to count
+			await this._commandBus.execute(new TimesheetRecalculateCommand(log.timesheetId));
+			return;
+		}
+		const runningTimeLogs = (current.timeLogs ?? []).filter((timeLog) => timeLog.isRunning);
 		const heldByRunningLog = runningTimeLogs.length > 0;
 		if (heldByRunningLog) {
 			await this.typeOrmTimeSlotRepository

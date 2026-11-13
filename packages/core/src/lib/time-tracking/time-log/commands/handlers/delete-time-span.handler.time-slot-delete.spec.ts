@@ -91,4 +91,53 @@ describe('DeleteTimeSpanHandler: deleting a time slot its log no longer reaches 
 
 		expect(store.shapes()).toEqual(shapes);
 	});
+
+	/**
+	 * The time-slot delete reads the slot with its logs, and the cleanup of each log runs after the ones queued ahead of
+	 * it. The choice between letting go of the slot and deleting it was made from that first read: a timer started on the
+	 * slot meanwhile lost it, and a slot whose running log was gone by then was left behind with no log.
+	 */
+	it.each([
+		{
+			shape: 'a timer started on the slot after it was read keeps it',
+			heldByRunningLogWhenRead: false,
+			durations: [
+				['10:00', 600],
+				['10:10', 600],
+				['10:20', 600]
+			]
+		},
+		{
+			shape: 'the slot goes when the running log it was read with is gone by then',
+			heldByRunningLogWhenRead: true,
+			durations: [
+				['10:00', 600],
+				['10:10', 600]
+			]
+		}
+	])('$shape', async ({ heldByRunningLogWhenRead, durations }) => {
+		const store = new TimeSpanStore();
+		store.addTimeLog('cut', '10:00', '10:30');
+		const cut = store.timeLogs.find((timeLog) => timeLog.id === 'cut');
+		cut.stoppedAt = at('10:20');
+		const stored = store.timeSlots.find((slot) => slot.startedAt.getTime() === at('10:20').getTime());
+		if (heldByRunningLogWhenRead) {
+			store.addTimeLog('timer', '10:25', '10:30', { isRunning: true });
+		}
+		// The slot as the time-slot delete read it
+		const timeLogs = stored.timeLogs.map((link) => store.read(link.id));
+		const timeSlot = { ...stored, timeLogs } as unknown as ITimeSlot;
+		// What happened before this log's cleanup ran
+		if (heldByRunningLogWhenRead) {
+			store.timeLogs.find((timeLog) => timeLog.id === 'timer').deletedAt = new Date();
+		} else {
+			store.addTimeLog('timer', '10:25', '10:30', { isRunning: true });
+		}
+
+		await store.execute(
+			new DeleteTimeSpanCommand({ start: at('10:20'), end: at('10:30') }, store.read('cut'), timeSlot)
+		);
+
+		expect(store.timeSlotDurations()).toEqual(durations);
+	});
 });
