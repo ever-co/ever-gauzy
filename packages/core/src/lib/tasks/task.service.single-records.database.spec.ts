@@ -307,7 +307,12 @@ function exercise(dialect: Dialect) {
 		['another tenant’s priority', { taskPriorityId: PRIORITY_OTHER_TENANT }, 'TASK_PRIORITY_NOT_FOUND'],
 		['another tenant’s size', { taskSizeId: SIZE_OTHER_TENANT }, 'TASK_SIZE_NOT_FOUND'],
 		['a priority that does not exist', { taskPriorityId: PRIORITY_UNKNOWN }, 'TASK_PRIORITY_NOT_FOUND'],
-		['a size named by a relation whose id is no uuid', { taskSize: { id: 'not-a-uuid' } }, 'TASK_SIZE_NOT_FOUND']
+		['a size named by a relation whose id is no uuid', { taskSize: { id: 'not-a-uuid' } }, 'TASK_SIZE_NOT_FOUND'],
+		[
+			'another organization’s priority named by its id beside a cleared relation',
+			{ taskPriority: null, taskPriorityId: PRIORITY_OTHER_ORGANIZATION },
+			'TASK_PRIORITY_NOT_FOUND'
+		]
 	] as Array<[string, Record<string, unknown>, string]>)(
 		'refuses %s, and changes nothing of the task',
 		async (_case, changes, code) => {
@@ -425,6 +430,22 @@ function exercise(dialect: Dialect) {
 				priority: 'theirs',
 				taskPriorityId: PRIORITY_OTHER_ORGANIZATION
 			});
+		},
+		TIMEOUT
+	);
+
+	it(
+		'judges the records against the organization the task moves to, named by its relation',
+		async () => {
+			// The task's own organization's priority, sent with the task moving to the other organization.
+			await expect(
+				service.update(TASK, {
+					organization: { id: OTHER_ORGANIZATION },
+					taskPriorityId: PRIORITY_OWN
+				} as unknown as Partial<ITaskUpdateInput>)
+			).rejects.toThrow('TASK_PRIORITY_NOT_FOUND');
+
+			expect(await taskRow()).toMatchObject(AS_INSERTED);
 		},
 		TIMEOUT
 	);

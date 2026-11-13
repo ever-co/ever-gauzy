@@ -154,6 +154,15 @@ describe('the records a change names', () => {
 		);
 	});
 
+	it('takes only a platform default when the tenant is unknown, and refuses an id that was not read', () => {
+		const unknownTenant = { tenantId: undefined, organizationId: ORGANIZATION };
+		expect(recordRefusalOf({ taskPriorityId: 'p-default' }, records, unknownTenant)).toBeNull();
+		for (const id of ['p-own', 'p-shared']) {
+			expect(recordRefusalOf({ taskPriorityId: id }, records, unknownTenant)).toMatch(/^TASK_PRIORITY_NOT_FOUND/);
+		}
+		expect(recordRefusalOf({ taskSizeId: 'not-a-uuid' }, records, scope)).toMatch(/^TASK_SIZE_NOT_FOUND/);
+	});
+
 	it('gives a priority or size named by its record alone the record’s value, else its name', () => {
 		expect(withRecordNames({ taskPriorityId: 'p-own', taskSizeId: 'z-own' }, records)).toEqual({
 			taskPriorityId: 'p-own',
