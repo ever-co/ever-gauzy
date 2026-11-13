@@ -60,7 +60,7 @@ describe('TimerService.stopTimer from the desktop', () => {
 		const employee = { id: 'employee-1', organizationId: fixture.organizationId, tenantId: fixture.tenantId };
 		const employeeService = { findOneByUserId: jest.fn(async () => employee), update: jest.fn() };
 		service = new TimerService(
-			undefined as never,
+			{ find: jest.fn(async () => []) } as never,
 			undefined as never,
 			undefined as never,
 			undefined as never,
@@ -69,7 +69,7 @@ describe('TimerService.stopTimer from the desktop', () => {
 			undefined as never
 		);
 		Object.assign(service, {
-			getLastRunningLog: jest.fn(async () => runningLog),
+			getLastRunningLogs: jest.fn(async () => [runningLog]),
 			stopPreviousRunningTimers: jest.fn(async () => undefined),
 			handleConflictingTimeLogs: jest.fn(async () => undefined)
 		});
