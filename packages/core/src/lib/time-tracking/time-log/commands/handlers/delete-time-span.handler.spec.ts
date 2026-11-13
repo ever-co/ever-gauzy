@@ -125,6 +125,19 @@ describe('DeleteTimeSpanHandler', () => {
 	});
 
 	/**
+	 * The TypeORM conflict lookup inner-joins the slots, so it never lists a log holding none; the MikroORM lookup does.
+	 * Time saved over such a log leaves it as it is on both.
+	 */
+	it('leaves a log holding no slot as it is when time saved over it names none', async () => {
+		const slotless = { ...TRACKED_LOG, timeSlots: [] } as TimeLog;
+		const { handler, execute } = createHandler(slotless);
+
+		await expect(handler.execute(new DeleteTimeSpanCommand(COVERING_RANGE, slotless))).resolves.toBe(false);
+
+		expect(execute).not.toHaveBeenCalled();
+	});
+
+	/**
 	 * Deleting a time slot sends the slot's ten minutes as the span, once per log holding the slot. A log whose time
 	 * does not reach the slot is left as it is, and the slot still goes, as `DELETE /timesheet/time-slot` answers.
 	 */
