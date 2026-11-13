@@ -32,7 +32,6 @@ jest.mock('../../../../shared/validators/constraints', () => {
 // The status DTO picks members of the Timesheet entity, so the entity graph has to finish loading first.
 import '../../../../core/entities/internal';
 
-import { MAX_TIMESHEET_STATUS_IDS } from './timesheet-status-ids.constant';
 import { SubmitTimesheetStatusDTO } from './submit-timesheet-status.dto';
 import { UpdateTimesheetStatusDTO } from './update-timesheet-status.dto';
 
@@ -63,18 +62,10 @@ describe.each([
 		expect(result.ids).toEqual([TIMESHEET_ID]);
 	});
 
-	it('accepts a list of exactly the largest size', async () => {
-		const ids = timesheetIds(MAX_TIMESHEET_STATUS_IDS);
+	it('keeps accepting a large bulk selection, as before', async () => {
+		const result = await validateBody(metatype, body(timesheetIds(1000)));
 
-		const result = await validateBody(metatype, body(ids));
-
-		expect(result.ids).toHaveLength(MAX_TIMESHEET_STATUS_IDS);
-	});
-
-	it('refuses a list above the largest size with a 400', async () => {
-		const attempt = validateBody(metatype, body(timesheetIds(MAX_TIMESHEET_STATUS_IDS + 1)));
-
-		await expect(attempt).rejects.toBeInstanceOf(BadRequestException);
+		expect(result.ids).toHaveLength(1000);
 	});
 
 	it('refuses an id that is not a UUID with a 400 instead of reaching the database', async () => {

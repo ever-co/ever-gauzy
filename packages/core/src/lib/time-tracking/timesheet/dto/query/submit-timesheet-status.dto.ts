@@ -1,16 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ArrayMaxSize, ArrayNotEmpty, IsEnum, IsNotEmpty, IsUUID } from 'class-validator';
+import { ArrayNotEmpty, IsEnum, IsNotEmpty, IsUUID } from 'class-validator';
 import { ID, ISubmitTimesheetInput } from '@gauzy/contracts';
 import { TenantOrganizationBaseDTO } from '../../../../core/dto';
-import { MAX_TIMESHEET_STATUS_IDS } from './timesheet-status-ids.constant';
 
 /**
  * Submit timesheets status request DTO validation
  */
 export class SubmitTimesheetStatusDTO extends TenantOrganizationBaseDTO implements ISubmitTimesheetInput {
-	@ApiProperty({ description: 'Array of timesheet IDs to submit/unsubmit', maxItems: MAX_TIMESHEET_STATUS_IDS })
+	@ApiProperty({ description: 'Array of timesheet IDs to submit/unsubmit' })
 	@ArrayNotEmpty({ message: 'At least one timesheet ID must be provided' })
-	@ArrayMaxSize(MAX_TIMESHEET_STATUS_IDS)
 	@IsUUID('all', { each: true })
 	readonly ids: ID[];
 

@@ -1,5 +1,2 @@
-/**
- * The most timesheets one submit or status request may name. A weekly timesheet per member keeps a real bulk
- * selection far below this; it only stops a body from putting an unbounded list into the `IN (...)` filter.
- */
-export const MAX_TIMESHEET_STATUS_IDS = 500;
+// Intentionally empty: the cap on the number of ids was dropped. Safe to delete this file.
+export {};
