@@ -65,13 +65,10 @@ export const EmailTemplatesPageData = {
 	welcomeUserSubjectBulgarian: 'Добре дошли в Gauzy',
 	welcomeUserSubjectHebrew: 'ברוכים הבאים אל Gauzy',
 	welcomeUserSubjectRussian: 'Добро пожаловать в Gauzy',
-	inviteOrganizationClientSubjectEnglish:
-		"John Doe, you've been invited to Gauzy!",
-	inviteOrganizationClientSubjectBulgarian:
-		'Добре дошли в Gauzy™ user@domain.com',
-	inviteOrganizationClientSubjectHebrew: 'ברוך הבא לגוזי! user@domain.com',
-	inviteOrganizationClientSubjectRussian:
-		'Добро пожаловать в Gauzy user@domain.com!',
+	inviteOrganizationClientSubjectEnglish: 'Organization invited you to Gauzy',
+	inviteOrganizationClientSubjectBulgarian: 'Organization Ви покани в Gauzy',
+	inviteOrganizationClientSubjectHebrew: 'הוזמנת אל Gauzy על ידי Organization',
+	inviteOrganizationClientSubjectRussian: 'Organization приглашает вас в Gauzy',
 	inviteEmployeeSubjectEnglish: 'You have been invited to join Organization',
 	inviteEmployeeSubjectBulgarian: 'Поканени сте да се присъедините към Organization',
 	inviteEmployeeSubjectHebrew: 'הוזמנת להצטרף אל Organization',
