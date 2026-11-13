@@ -6,6 +6,7 @@ import { ID, ITimeLog, ITimeSlot } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/utils';
 import { moment } from '../../../../core/moment-extend';
 import { TimesheetRecalculateCommand } from '../../../timesheet/commands';
+import { TimeSlotBulkDeleteCommand } from '../../../time-slot/commands';
 import { TimeLog } from './../../time-log.entity';
 import { DeleteTimeSpanCommand } from '../delete-time-span.command';
 import { TimeLogUpdateCommand } from '../time-log-update.command';
@@ -106,12 +107,16 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 		const newTimeRange = moment.range(start, end); // Calculate the new time rang
 		const dbTimeRange = moment.range(startedAt, stoppedAt); // Calculate the database time range
 
-		// Nothing of the log is left in the new range: the command for an earlier slot of it already cut it back to the
-		// range's edge, or it only touches the range. It is left as it is, with every slot it holds; the cut below is
-		// decided from the log as it is stored now, never from the copy the command carries.
+		// Nothing of the log is left in the new range: an earlier command already cut it back to the range's edge, or it
+		// only touches the range. It is left as it is; the cut below is decided from the log as it is stored now, never
+		// from the copy the command carries. Only the slot the time-slot delete names goes.
 		if (!newTimeRange.overlaps(dbTimeRange, { adjacent: false })) {
 			this.debug(() => `Not Overlapping ${JSON.stringify({ newTimeRange, dbTimeRange })}`);
-			return false;
+			if (!timeSlot) {
+				return false;
+			}
+			await this.deleteTimeSlotOutsideLog(log, timeSlot, forceDelete);
+			return true;
 		}
 
 		if (moment(startedAt).isBetween(moment(start), moment(end), null, '[]')) {
@@ -524,6 +529,28 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 		if (log.employeeId) {
 			await this._commandBus.execute(new UpdateEmployeeTotalWorkedHoursCommand(log.employeeId));
 		}
+	}
+
+	/**
+	 * Deletes the slot the time-slot delete names when its log's time no longer reaches it, which leaves the log as it
+	 * is, and recalculates the log's timesheet without the slot.
+	 *
+	 * @param log - The log holding the slot, as stored.
+	 * @param timeSlot - The slot to delete.
+	 * @param forceDelete - Whether to hard delete it (default: false).
+	 * @throws The error of the delete or of the recalculation.
+	 */
+	private async deleteTimeSlotOutsideLog(
+		log: ITimeLog,
+		timeSlot: ITimeSlot,
+		forceDelete: boolean = false
+	): Promise<void> {
+		const { organizationId, employeeId } = log;
+		const timeSlotsIds = [timeSlot.id];
+		await this._commandBus.execute(
+			new TimeSlotBulkDeleteCommand({ organizationId, employeeId, timeLog: log, timeSlotsIds }, forceDelete, true)
+		);
+		await this._commandBus.execute(new TimesheetRecalculateCommand(log.timesheetId));
 	}
 
 	/**
