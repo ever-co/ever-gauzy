@@ -2,7 +2,7 @@
 jest.mock('./../../employee.service', () => ({ EmployeeService: class EmployeeService {} }));
 jest.mock('./../../../activity-log/activity-log.service', () => ({ ActivityLogService: class ActivityLogService {} }));
 
-import { IEmployeeUpdateInput, PermissionsEnum } from '@gauzy/contracts';
+import { IEmployeeUpdateInput, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { RequestContext } from './../../../core/context';
 import { TrackingTurnedOffEvent } from './../../../time-tracking/timer/events/tracking-turned-off.event';
 import { EmployeeUpdateCommand } from './../employee.update.command';
@@ -30,7 +30,12 @@ describe('EmployeeUpdateHandler — turning tracking off', () => {
 		};
 		handler = new EmployeeUpdateHandler(employeeService as never, {} as never, { publish } as never);
 
-		jest.spyOn(RequestContext, 'currentUser').mockReturnValue({ id: 'admin', employeeId: null } as never);
+		// An admin: only a higher role, or an admin, may switch an employee's tracking (ever-co/ever-teams#5015)
+		jest.spyOn(RequestContext, 'currentUser').mockReturnValue({
+			id: 'admin',
+			employeeId: null,
+			role: { name: RolesEnum.ADMIN }
+		} as never);
 		jest.spyOn(RequestContext, 'hasPermission').mockImplementation(
 			(permission) => permission === PermissionsEnum.ORG_EMPLOYEES_EDIT
 		);
