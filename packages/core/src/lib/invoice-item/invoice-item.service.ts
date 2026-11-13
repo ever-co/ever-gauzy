@@ -9,6 +9,8 @@ import {
 	assertBillingInOrganization,
 	assertBillingOnInvoice,
 	IBillingLine,
+	ILinesRepositories,
+	inLinesTransaction,
 	saveBillingTime,
 	splitBilledTime
 } from './invoice-item-billed-time';
@@ -36,8 +38,9 @@ export class InvoiceItemService extends TenantAwareCrudService<InvoiceItem> {
 	 * @description
 	 * This method first deletes any existing invoice items associated with the given `invoiceId`
 	 * to ensure that only the new items are stored. It then performs a bulk insert operation
-	 * to save the provided invoice items in the database. Items that name the time logs they bill
-	 * are replaced with that time in one transaction (`replaceLinesBillingTime`).
+	 * to save the provided invoice items in the database, in the same transaction: a save that
+	 * fails keeps the old items. Items that name the time logs they bill are replaced with that
+	 * time (`replaceLinesBillingTime`).
 	 */
 	async createBulk(invoiceId: ID, input: IInvoiceItemCreateInput[]): Promise<IInvoiceItem[]> {
 		const { lines, billing } = splitBilledTime(input);
@@ -46,11 +49,10 @@ export class InvoiceItemService extends TenantAwareCrudService<InvoiceItem> {
 		}
 
 		try {
-			// Remove existing invoice items for the given invoice
-			await this.delete({ invoiceId } as any);
-
-			// Insert new invoice items
-			return await this.saveMany(lines);
+			return await inLinesTransaction(this, this.ownRepositories(), async (service) => {
+				await service.delete({ invoiceId } as FindOptionsWhere<InvoiceItem>);
+				return await service.saveMany(lines);
+			});
 		} catch (error) {
 			throw new HttpException(
 				`Failed to create bulk invoice items: ${error.message}`,
@@ -81,7 +83,7 @@ export class InvoiceItemService extends TenantAwareCrudService<InvoiceItem> {
 		assertBillingInOrganization(billing, invoice?.organizationId);
 		return await saveBillingTime(
 			this,
-			{ typeOrm: this.typeOrmRepository, mikroOrm: this.mikroOrmRepository },
+			this.ownRepositories(),
 			async (service) => {
 				await service.delete({ invoiceId } as FindOptionsWhere<InvoiceItem>);
 				return await service.saveMany(lines);
@@ -89,6 +91,10 @@ export class InvoiceItemService extends TenantAwareCrudService<InvoiceItem> {
 			(saved) => saved,
 			billing
 		);
+	}
+
+	private ownRepositories(): ILinesRepositories<InvoiceItem> {
+		return { typeOrm: this.typeOrmRepository, mikroOrm: this.mikroOrmRepository };
 	}
 
 	/**

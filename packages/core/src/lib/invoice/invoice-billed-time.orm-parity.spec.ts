@@ -521,6 +521,21 @@ describe('Invoices record the time their lines bill, on TypeORM and on MikroORM'
 			expect(await linkOf(outsiders)).toBeNull();
 		});
 
+		it('keeps the old lines, and their time, when a replacement that bills no time fails half way', async () => {
+			const { invoiceId, lineId } = await earlierInvoice('DRAFT');
+			const kept = await timeLog({ invoiceItemId: lineId });
+			const replacement = { ...lineNamingNoTime('replacement'), invoiceId };
+			const unsaveable = { ...lineNamingNoTime('unsaveable'), price: null, invoiceId };
+
+			await expect(handlers(ormType).replaceLines(invoiceId, [replacement, unsaveable])).rejects.toMatchObject({
+				status: 500
+			});
+
+			expect(await count('invoice_item', 'id', lineId)).toBe(1);
+			expect(await lineOf(invoiceId, 'replacement')).toBeUndefined();
+			expect(await linkOf(kept)).toBe(lineId);
+		});
+
 		it('refuses to reopen a void invoice whose time another invoice bills since, and keeps it void', async () => {
 			const { invoiceId: voided, timeLogId } = await timeLogBilledBy('VOID');
 			const rebilling = invoiceWith([lineBilling('billed again', [timeLogId])]);
