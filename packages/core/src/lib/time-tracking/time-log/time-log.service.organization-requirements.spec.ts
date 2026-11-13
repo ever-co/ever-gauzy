@@ -83,7 +83,8 @@ describe('TimeLogService.addManualTime under the organization tracking requireme
 					return { canManageEmployee: jest.fn().mockResolvedValue(true) };
 				}
 				if (token === TypeOrmTimeLogRepository) {
-					return { metadata: { tableName: 'time_log' }, manager: { find, findOne } };
+					// No running timer of the employee besides the logs the overlap lookup returns (#11886)
+					return { metadata: { tableName: 'time_log' }, manager: { find, findOne }, find: async () => [] };
 				}
 				return {};
 			})
