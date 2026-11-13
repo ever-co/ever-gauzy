@@ -1,6 +1,7 @@
 // Must stay first: loads the entity graph before any handler pulls an entity (see activity.controller.spec.ts).
 import '../../../../core/entities/internal';
 
+import { Logger } from '@nestjs/common';
 import { RequestContext } from '../../../../core/context';
 import { TimesheetRecalculateCommand } from '../../../timesheet/commands';
 import { TimeSlotDurationRecalculateCommand } from '../time-slot-duration-recalculate.command';
@@ -113,6 +114,34 @@ describe('TimeSlotDurationRecalculateHandler', () => {
 		expect(repository.update.mock.calls).toEqual([[{ id: 'slot-1920', tenantId: TENANT }, { duration: 380 }]]);
 		const recalculations = execute.mock.calls.map(([command]) => command);
 		expect(recalculations).toEqual([new TimesheetRecalculateCommand('timer-week')]);
+	});
+
+	/**
+	 * One failed save rejected the whole recount: the timesheets of the slots saved before it were not recalculated, and
+	 * a retry skipped those slots, whose duration already matched.
+	 */
+	it('recalculates the timesheets of the slots it saved when another one fails to save, and logs the failure', async () => {
+		const first = timeLog('first', 'first-week', '10:00:00.000', '10:05:00.000');
+		const second = timeLog('second', 'second-week', '11:00:00.000', '11:05:00.000');
+		const stored = [
+			slot('slot-1000', '10:00:00.000', 600, [first]),
+			slot('slot-1100', '11:00:00.000', 600, [second])
+		];
+		const { handler, repository, execute } = createHandler(stored);
+		repository.update.mockImplementationOnce(async () => {
+			throw new Error('The database connection was lost');
+		});
+		const warn = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+
+		await handler.execute(recalculate(['slot-1000', 'slot-1100']));
+
+		expect(stored.map((timeSlot) => timeSlot.duration)).toEqual([600, 300]);
+		const recalculations = execute.mock.calls.map(([command]) => command);
+		expect(recalculations).toEqual([new TimesheetRecalculateCommand('second-week')]);
+		expect(warn).toHaveBeenCalledWith(
+			expect.stringContaining('The database connection was lost'),
+			expect.anything()
+		);
 	});
 
 	it('counts a slot at most its ten minutes', async () => {

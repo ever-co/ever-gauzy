@@ -63,9 +63,16 @@ export class TimeSlotDurationRecalculateHandler implements ICommandHandler<TimeS
 			const recalculated = timeSlots.map((timeSlot) => ({ timeSlot, duration: durationFromTimeLogs(timeSlot) }));
 			const changed = recalculated.filter(({ timeSlot, duration }) => duration !== timeSlot.duration);
 
+			// Every save settles: the timesheets of the slots saved are recalculated even when another save fails, since
+			// a retry would skip those slots, whose duration already matches. The failure is then logged below.
 			const saves = changed.map((recalculatedTimeSlot) => this.saveDuration(recalculatedTimeSlot));
-			await Promise.all(saves);
-			await this.recalculateTimesheets(changed);
+			const outcomes = await Promise.allSettled(saves);
+			const saved = changed.filter((_recalculatedTimeSlot, index) => outcomes[index].status === 'fulfilled');
+			await this.recalculateTimesheets(saved);
+			const failure = outcomes.find((outcome): outcome is PromiseRejectedResult => outcome.status === 'rejected');
+			if (failure) {
+				throw failure.reason;
+			}
 		} catch (error) {
 			this.logger.warn(`Error while recalculating time slot durations: ${error?.message ?? error}`, {
 				stack: error?.stack
