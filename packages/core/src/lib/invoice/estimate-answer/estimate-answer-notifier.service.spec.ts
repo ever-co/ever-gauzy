@@ -1,6 +1,8 @@
 // Must stay first: the entities barrel resolves the circular entity imports.
 import '../../core/entities/internal';
 
+import { AsyncLocalStorage } from 'node:async_hooks';
+import { ClsService } from 'nestjs-cls';
 import {
 	BaseEntityEnum,
 	EmployeeNotificationTypeEnum,
@@ -8,8 +10,10 @@ import {
 	LanguagesEnum,
 	PermissionsEnum
 } from '@gauzy/contracts';
+import { RequestContext } from '../../core/context/request-context';
 import { Employee } from '../../core/entities/internal';
 import { EmployeeCreateNotificationEvent } from '../../employee-notification/events/employee-notification.event';
+import { EstimateAnswerContextUnavailableError } from './estimate-answer-context';
 import { EstimateAnswerNotifier } from './estimate-answer-notifier.service';
 import { IEstimateAnswer } from './estimate-answered.event';
 
@@ -41,6 +45,9 @@ const accepted: IEstimateAnswer = {
 
 describe('EstimateAnswerNotifier', () => {
 	const savedEnv = { ...process.env };
+	const originalClsService = RequestContext['clsService'];
+
+	beforeAll(() => RequestContext.setClsService(new ClsService(new AsyncLocalStorage())));
 
 	function setup(stored: IInvoice | null, handlers: { id: string; userId: string }[]) {
 		const repository = {
@@ -63,6 +70,15 @@ describe('EstimateAnswerNotifier', () => {
 
 	afterAll(() => {
 		process.env = savedEnv;
+		RequestContext.setClsService(originalClsService);
+	});
+
+	/** Who the request context says is signed in, as a step of the notifier reads it. */
+	const signedIn = () => ({
+		tenantId: RequestContext.currentTenantId(),
+		organizationId: RequestContext.currentOrganizationId(),
+		userId: RequestContext.currentUserId(),
+		employeeId: RequestContext.currentEmployeeId()
 	});
 
 	it('gives every invoice handler of the organization an Invoice notification about the estimate', async () => {
@@ -87,6 +103,34 @@ describe('EstimateAnswerNotifier', () => {
 				tenantId: TENANT
 			}))
 		);
+	});
+
+	it("tells the team as nobody of the estimate's tenant and organization, the answer coming with nobody signed in", async () => {
+		const { notifier, eventBus, emailService } = setup(estimate(), [{ id: 'employee-1', userId: 'user-1' }]);
+		const seen: Record<string, unknown>[] = [];
+		eventBus.publish.mockImplementation(() => seen.push(signedIn()));
+		emailService.sendEstimateAnswered.mockImplementation(async () => {
+			seen.push(signedIn());
+		});
+		const publicRequest = { headers: {}, query: {}, params: {}, body: {} };
+
+		await RequestContext.runWithRequest(publicRequest as never, () => notifier.notify(accepted));
+
+		const nobodyOfTheTenant = { tenantId: TENANT, organizationId: ORGANIZATION, userId: null, employeeId: null };
+		expect(seen).toEqual([nobodyOfTheTenant, nobodyOfTheTenant]);
+	});
+
+	it('tells nobody when it cannot open a request context of the tenant, rather than file the notices without one', async () => {
+		const { notifier, eventBus, emailService } = setup(estimate(), [{ id: 'employee-1', userId: 'user-1' }]);
+		RequestContext.setClsService(undefined as never);
+		try {
+			await expect(notifier.notify(accepted)).rejects.toBeInstanceOf(EstimateAnswerContextUnavailableError);
+		} finally {
+			RequestContext.setClsService(new ClsService(new AsyncLocalStorage()));
+		}
+
+		expect(eventBus.publish).not.toHaveBeenCalled();
+		expect(emailService.sendEstimateAnswered).not.toHaveBeenCalled();
 	});
 
 	it('asks for the active employees of its organization whose role grants INVOICES_EDIT', async () => {

@@ -14,6 +14,7 @@ import { EmailService } from '../../email-send/email.service';
 import { EmployeeCreateNotificationEvent } from '../../employee-notification/events/employee-notification.event';
 import { inboxEmailsNotifications } from '../../employee-notification/inbox-notification-emails';
 import { TypeOrmInvoiceRepository } from '../repository/type-orm-invoice.repository';
+import { runInEstimateAnswerContext } from './estimate-answer-context';
 import { IEstimateAnswer } from './estimate-answered.event';
 import { clientNameOf, emailsCreator, estimateAnswerNotice, formattedAmountOf } from './estimate-answer.notice';
 
@@ -27,6 +28,9 @@ const INVOICE_HANDLING_PERMISSION = PermissionsEnum.INVOICES_EDIT;
  *   estimate (in-app always; by email and push as their notification settings say, where the Inbox sends them);
  * - the team member who created the estimate gets the `estimate-answered` email, unless the Inbox already emails them
  *   that notification (`emailsCreator`).
+ *
+ * The answer comes on a public route, where nobody is signed in: the team is told inside a request context of the
+ * estimate's tenant and organization (`runInEstimateAnswerContext`), which the notifications are filed in.
  */
 @Injectable()
 export class EstimateAnswerNotifier {
@@ -49,7 +53,12 @@ export class EstimateAnswerNotifier {
 			this.logger.warn(`Estimate ${answer.invoiceId} was answered but could not be read: nobody is told.`);
 			return;
 		}
+		const scope = { tenantId: estimate.tenantId, organizationId: estimate.organizationId };
+		await runInEstimateAnswerContext(scope, () => this.tellTeam(estimate, answer));
+	}
 
+	/** Notifies the invoice handlers in-app, and emails the estimate's creator unless the Inbox emails them already. */
+	private async tellTeam(estimate: IInvoice, answer: IEstimateAnswer): Promise<void> {
 		const notified = await this.findInvoiceHandlers(estimate.organizationId, estimate.tenantId);
 		const notice = estimateAnswerNotice(estimate, answer);
 		for (const { id: receiverEmployeeId } of notified) {
