@@ -1,10 +1,11 @@
 /**
  * The task list's advanced due-date filters (`filters[dueDateFrom]` / `filters[dueDateTo]`, what the Project Management
  * dashboard's "Overdue", "Due today" and "Due this week" send) on a real database: SQLite always, Postgres and MySQL
- * when `TASK_VIEWS_TEST_POSTGRES_URL` / `TASK_VIEWS_TEST_MYSQL_URL` point at a disposable database. Both ORMs' queries
- * are run: the TypeORM `where` (`buildAdvancedWhereCondition`) and the MikroORM employee query's column filters
- * (`mikroOrmColumnFilters`). The rows are written by TypeORM, as the platform writes a `Date` column, and read by
- * both, as `DB_ORM=mikro-orm` does on one database.
+ * when `TASK_VIEWS_TEST_POSTGRES_URL` / `TASK_VIEWS_TEST_MYSQL_URL` point at a disposable database. Every read path is
+ * run, and all must find the same tasks: the TypeORM `where` (`buildAdvancedWhereCondition`) as TypeORM runs it; the
+ * same `where` translated for MikroORM (`convertTypeORMWhereToMikroORM`, what the base `paginate` behind
+ * `/tasks/pagination` does under `DB_ORM=mikro-orm`); and the MikroORM employee query's own column filters
+ * (`mikroOrmColumnFilters`). The rows are written by TypeORM, as the platform writes a `Date` column.
  *
  * A due date that is a date only is midnight UTC of its day. The dashboard sends each end of a range as the instant of
  * the reader's day and as the day itself: a date only must count on its own day for a reader in UTC−4 and in UTC+2,
@@ -25,6 +26,7 @@ import { MySqlDriver } from '@mikro-orm/mysql';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { ITaskAdvancedFilter } from '@gauzy/contracts';
 import { TypeOrmCompatibleBetterSqliteDriver } from '@gauzy/config';
+import { convertTypeORMWhereToMikroORM } from '../core/utils';
 import { TaskService } from './task.service';
 
 type Target = { name: 'better-sqlite3' | 'postgres' | 'mysql'; url?: string };
@@ -161,14 +163,16 @@ describe.each(TARGETS)('advanced due-date filters on $name', (target) => {
 		await repository.insert(rowsFor(at).map((row) => ({ ...row, tenantId: 'ten' })));
 	}
 
-	/** The ids each ORM's query finds for the filters; both must agree. */
+	/** The ids each read path finds for the filters; all must agree. */
 	async function found(filters: ITaskAdvancedFilter): Promise<string[]> {
-		const where = service.buildAdvancedWhereCondition(filters, {});
-		const byTypeOrm = (await dataSource.getRepository(TypeOrmRow).find({ where: { tenantId: 'ten', ...where } })).map((row) => row.id).sort();
+		const where = { tenantId: 'ten', ...service.buildAdvancedWhereCondition(filters, {}) };
+		const byTypeOrm = (await dataSource.getRepository(TypeOrmRow).find({ where })).map((row) => row.id).sort();
+		const translated = convertTypeORMWhereToMikroORM(where as never);
+		const byPaginate = (await orm.em.fork().find(MikroRow, translated as never)).map((row) => row.id).sort();
 		const mikroWhere: Record<string, unknown> = { tenantId: 'ten' };
 		Object.assign(mikroWhere, service.mikroOrmColumnFilters(filters, mikroWhere));
-		const byMikroOrm = (await orm.em.fork().find(MikroRow, mikroWhere as never)).map((row) => row.id).sort();
-		expect(byMikroOrm).toEqual(byTypeOrm);
+		const byEmployeeQuery = (await orm.em.fork().find(MikroRow, mikroWhere as never)).map((row) => row.id).sort();
+		expect({ byPaginate, byEmployeeQuery }).toEqual({ byPaginate: byTypeOrm, byEmployeeQuery: byTypeOrm });
 		return byTypeOrm;
 	}
 

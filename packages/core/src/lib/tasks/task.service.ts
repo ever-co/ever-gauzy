@@ -22,7 +22,10 @@ import {
 	Between,
 	FindOptionsRelations,
 	LessThanOrEqual,
+	LessThan,
 	MoreThanOrEqual,
+	MoreThan,
+	And,
 	Raw,
 	SaveOptions,
 	Not,
@@ -2944,7 +2947,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		const to = this.validDate(dueDateTo);
 		const window = this.dueDateWindowOf(filters, from, to);
 		if (window) {
-			return { dueDate: dueDateWithin(window, 'filterDue') };
+			return { dueDate: dueDateFindOperator(window) };
 		}
 		if (from && to) {
 			return { dueDate: Between(from, to) };
@@ -3244,6 +3247,30 @@ export class TaskService extends TenantAwareCrudService<Task> {
 type DueDateWindow = Pick<IBuiltInViewWindow, 'dueDateFrom' | 'dueDateTo' | 'dueDateFromDay' | 'dueDateToDay'>;
 
 /**
+ * The same range as find operators every ORM's read takes: MikroORM's translation of a TypeORM `where` (the base
+ * `paginate` under `DB_ORM=mikro-orm`) has no `Raw`. Each bound is its operator on its instant, with the date-only
+ * midnights where the instant and the day disagree (`dateBoundAdjustments`) taken out (`Not(midnight)`) or taken in.
+ * A midnight a lower bound takes in lies below its instant, so "on or after the instant, or that midnight" is "on or
+ * after the midnight, and not strictly between it and the instant"; an upper bound mirrors it.
+ */
+function dueDateFindOperator(window: DueDateWindow): FindOperator<Date> | undefined {
+	const parts: FindOperator<Date>[] = [];
+	const bound = (lower: boolean, instant: Date, day: string | undefined) => {
+		const { added, removed } = dateBoundAdjustments(lower ? '>=' : '<=', instant, day);
+		const points = [...added, instant].sort((a, b) => a.getTime() - b.getTime());
+		parts.push(lower ? MoreThanOrEqual(points[0]) : LessThanOrEqual(points[points.length - 1]));
+		for (let at = 0; at + 1 < points.length; at += 1) {
+			parts.push(Not(And(MoreThan(points[at]), LessThan(points[at + 1]))));
+		}
+		removed.forEach((midnight) => parts.push(Not(midnight)));
+	};
+	if (window.dueDateFrom) bound(true, window.dueDateFrom, window.dueDateFromDay);
+	if (window.dueDateTo) bound(false, window.dueDateTo, window.dueDateToDay);
+	if (!parts.length) return undefined;
+	return parts.length === 1 ? parts[0] : And(...parts);
+}
+
+/**
  * The same range in MikroORM's query syntax: `$gte` / `$lte` on the instants as before, with the date-only values
  * where the instant and the day disagree (`dateBoundAdjustments`) taken out (`$nin`) or added (`$or` … `$in`). A
  * bound with no such value is the plain operator. Answers the conditions to `$and` together.
@@ -3266,11 +3293,11 @@ function mikroOrmDueDateWithin(window: DueDateWindow): Record<string, unknown>[]
  * its day) is compared with the window's first and last days (`dateBoundClause`), so it counts on its own day in the
  * caller's zone. West of UTC, a task due today was midnight UTC, the evening before there, and so listed as overdue.
  */
-function dueDateWithin(window: DueDateWindow, key = 'builtInDue'): FindOperator<Date> | undefined {
+function dueDateWithin(window: IBuiltInViewWindow): FindOperator<Date> | undefined {
 	const clause = (column: string) => {
 		const bounds = [
-			...(window.dueDateFrom ? [dateBoundClause(column, '>=', window.dueDateFrom, window.dueDateFromDay, `${key}From`)] : []),
-			...(window.dueDateTo ? [dateBoundClause(column, '<=', window.dueDateTo, window.dueDateToDay, `${key}To`)] : [])
+			...(window.dueDateFrom ? [dateBoundClause(column, '>=', window.dueDateFrom, window.dueDateFromDay, 'builtInDueFrom')] : []),
+			...(window.dueDateTo ? [dateBoundClause(column, '<=', window.dueDateTo, window.dueDateToDay, 'builtInDueTo')] : [])
 		];
 		return { sql: bounds.map((bound) => bound.sql).join(' AND '), params: Object.assign({}, ...bounds.map((bound) => bound.params)) as Record<string, Date> };
 	};
