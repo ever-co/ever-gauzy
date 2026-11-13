@@ -2733,7 +2733,16 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				...(sizes.length && { size: In(sizes) }),
 				...(types.length && { issueType: In(types) }),
 				...(minStartDate && maxStartDate && { startDate: Between(minStartDate, maxStartDate) }),
-				...(minDueDate && maxDueDate && { dueDate: Between(minDueDate, maxDueDate) }),
+				// The earliest and the latest due date, with the view's days of those ends: a date-only due date is
+				// compared with the days, as the advanced filters compare it (`dueDateCondition`).
+				...(minDueDate && maxDueDate
+					? this.dueDateCondition({
+							dueDateFrom: minDueDate,
+							dueDateTo: maxDueDate,
+							dueDateFromDay: viewFilters.dueDateFromDay,
+							dueDateToDay: viewFilters.dueDateToDay
+					  })
+					: {}),
 				// Only scope by organization when one is known: the view's organizationId is a nullable
 				// column and the stored query params may carry null (a null used to be dropped silently).
 				...(taskView.organizationId || organizationId
@@ -2785,6 +2794,14 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				organizationSprintId,
 				relations
 			} = params;
+			// A due-date range sent with the days of its ends compares a date-only due date with those days. An inverted
+			// range is refused under either ORM (the REST DTO refuses it first; GraphQL reaches this check).
+			const dueFrom = this.validDate(dueDateFrom);
+			const dueTo = this.validDate(dueDateTo);
+			if (dueFrom && dueTo && dueFrom > dueTo) {
+				throw new BadRequestException('"From" date must not be after "to" date');
+			}
+			const dueWindow = this.dueDateWindowOf(params, dueFrom, dueTo);
 
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM: {
@@ -2799,7 +2816,9 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						mikroWhere.startDate = { $lte: startDateTo };
 					}
 
-					if (isNotEmpty(dueDateFrom) && isNotEmpty(dueDateTo)) {
+					if (dueWindow) {
+						mikroWhere.$and = mikroOrmDueDateWithin(dueWindow);
+					} else if (isNotEmpty(dueDateFrom) && isNotEmpty(dueDateTo)) {
 						mikroWhere.dueDate = { $gte: dueDateFrom, $lte: dueDateTo };
 					} else if (isNotEmpty(dueDateFrom)) {
 						mikroWhere.dueDate = { $gte: dueDateFrom };
@@ -2829,9 +2848,18 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						})
 					);
 
-					// Apply the filters on startDate and dueDate
+					// Apply the filters on startDate and dueDate. The due date's bounds are bound as dates under names of their
+					// own, as the driver writes the column (an ISO text compares as text on SQLite, and `:from` / `:to` are
+					// the start date's), with a date-only due date compared with the days when the range carries them.
 					query = addBetween<Task>(query, 'startDate', startDateFrom, startDateTo, p);
-					query = addBetween<Task>(query, 'dueDate', dueDateFrom, dueDateTo, p);
+					const dueDate = dueDateClauseOf(
+						p(`"${query.alias}"."dueDate"`),
+						dueWindow ?? { dueDateFrom: dueFrom ?? undefined, dueDateTo: dueTo ?? undefined },
+						'dueDateFilter'
+					);
+					if (dueDate.sql) {
+						query.andWhere(`(${dueDate.sql})`, dueDate.params);
+					}
 
 					// Add Optional additional filters by
 					query.andWhere(
@@ -3013,7 +3041,11 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * (`dueDateFromDay` / `dueDateToDay`), each kept only when its instant is that day's edge (the start of the first
 	 * day, the last instant of the last); `null` when neither end has one, so the range compares the instants as before.
 	 */
-	private dueDateWindowOf(filters: ITaskAdvancedFilter, from: Date | null, to: Date | null): DueDateWindow | null {
+	private dueDateWindowOf(
+		filters: Pick<ITaskAdvancedFilter, 'dueDateFromDay' | 'dueDateToDay'>,
+		from: Date | null,
+		to: Date | null
+	): DueDateWindow | null {
 		const fromDay = from ? boundDayOf(filters.dueDateFromDay, from, 'start') : undefined;
 		const toDay = to ? boundDayOf(filters.dueDateToDay, to, 'end') : undefined;
 		if (!fromDay && !toDay) return null;
@@ -3375,15 +3407,33 @@ function mikroOrmDueDateWithin(window: DueDateWindow): Record<string, unknown>[]
  * caller's zone. West of UTC, a task due today was midnight UTC, the evening before there, and so listed as overdue.
  */
 function dueDateWithin(window: IBuiltInViewWindow): FindOperator<Date> | undefined {
-	const clause = (column: string) => {
-		const bounds = [
-			...(window.dueDateFrom ? [dateBoundClause(column, '>=', window.dueDateFrom, window.dueDateFromDay, 'builtInDueFrom')] : []),
-			...(window.dueDateTo ? [dateBoundClause(column, '<=', window.dueDateTo, window.dueDateToDay, 'builtInDueTo')] : [])
-		];
-		return { sql: bounds.map((bound) => bound.sql).join(' AND '), params: Object.assign({}, ...bounds.map((bound) => bound.params)) as Record<string, Date> };
-	};
 	if (!window.dueDateFrom && !window.dueDateTo) return undefined;
-	return Raw((column) => clause(column).sql, clause('dueDate').params);
+	return Raw(
+		(column) => dueDateClauseOf(column, window, 'builtInDue').sql,
+		dueDateClauseOf('dueDate', window, 'builtInDue').params
+	);
+}
+
+/**
+ * The SQL of a due-date range on `column`, both ends inclusive: each end compares the instant, and a date-only value
+ * (midnight UTC) with the end's day when it carries one (`dateBoundClause`). The bounds are bound as dates under
+ * `<key>From` / `<key>To`. Empty `sql` for a range without ends.
+ */
+function dueDateClauseOf(
+	column: string,
+	window: DueDateWindow,
+	key: string
+): { sql: string; params: Record<string, Date> } {
+	const bounds = [
+		...(window.dueDateFrom
+			? [dateBoundClause(column, '>=', window.dueDateFrom, window.dueDateFromDay, `${key}From`)]
+			: []),
+		...(window.dueDateTo ? [dateBoundClause(column, '<=', window.dueDateTo, window.dueDateToDay, `${key}To`)] : [])
+	];
+	return {
+		sql: bounds.map((bound) => bound.sql).join(' AND '),
+		params: Object.assign({}, ...bounds.map((bound) => bound.params)) as Record<string, Date>
+	};
 }
 
 /**
