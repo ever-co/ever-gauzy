@@ -29,7 +29,9 @@ export enum TokenPurposeEnum {
 	ESTIMATE = 'estimate',
 	APPOINTMENT = 'appointment',
 	INVITE = 'invite',
-	TEAM_JOIN = 'team-join'
+	TEAM_JOIN = 'team-join',
+	/** Proves a right first factor of one user for a few minutes, until a two-factor code completes the sign-in. */
+	TWO_FACTOR_CHALLENGE = 'two-factor-challenge'
 }
 
 export type PurposeTokenFailure = 'invalid' | 'expired' | 'purpose' | 'claims';
