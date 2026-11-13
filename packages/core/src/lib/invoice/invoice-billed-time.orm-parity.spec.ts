@@ -122,8 +122,8 @@ describe('Invoices record the time their lines bill, on TypeORM and on MikroORM'
 		return id;
 	};
 
-	/** An invoice saved earlier, in the status given, with one line. */
-	const earlierInvoice = async (status: string): Promise<{ invoiceId: string; lineId: string }> => {
+	/** An invoice saved earlier, in the status given, with one line; `row` makes it an estimate, for one. */
+	const earlierInvoice = async (status: string, row: Row = {}): Promise<{ invoiceId: string; lineId: string }> => {
 		const invoiceId = randomUUID();
 		await insert('invoice', {
 			id: invoiceId,
@@ -133,7 +133,8 @@ describe('Invoices record the time their lines bill, on TypeORM and on MikroORM'
 			currency: 'EUR',
 			discountValue: 0,
 			terms: 'earlier',
-			status
+			status,
+			...row
 		});
 		const lineId = randomUUID();
 		await insert('invoice_item', {
@@ -150,9 +151,10 @@ describe('Invoices record the time their lines bill, on TypeORM and on MikroORM'
 
 	/** A time log the line of an earlier invoice, in the status given, bills. */
 	const timeLogBilledBy = async (
-		status: string
+		status: string,
+		row: Row = {}
 	): Promise<{ invoiceId: string; lineId: string; timeLogId: string }> => {
-		const { invoiceId, lineId } = await earlierInvoice(status);
+		const { invoiceId, lineId } = await earlierInvoice(status, row);
 		const timeLogId = await timeLog({ invoiceItemId: lineId });
 		return { invoiceId, lineId, timeLogId };
 	};
@@ -389,6 +391,13 @@ describe('Invoices record the time their lines bill, on TypeORM and on MikroORM'
 					await dataSource.query(`DELETE FROM "invoice" WHERE "id" = ?`, [invoiceId]);
 					return timeLogId;
 				}
+			],
+			[
+				'of a rejected estimate',
+				async () => {
+					const { timeLogId } = await timeLogBilledBy('REJECTED', { isEstimate: 1 });
+					return timeLogId;
+				}
 			]
 		])('bills again the time %s', async (_label, freedTimeLog) => {
 			const freed = await freedTimeLog();
@@ -423,6 +432,13 @@ describe('Invoices record the time their lines bill, on TypeORM and on MikroORM'
 				'a time log a live invoice already bills',
 				async () => {
 					const { timeLogId, lineId } = await timeLogBilledBy('SENT');
+					return { timeLogId, link: lineId };
+				}
+			],
+			[
+				'a time log an accepted estimate already bills',
+				async () => {
+					const { timeLogId, lineId } = await timeLogBilledBy('ACCEPTED', { isEstimate: 1 });
 					return { timeLogId, link: lineId };
 				}
 			],

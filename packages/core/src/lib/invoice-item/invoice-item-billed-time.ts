@@ -8,7 +8,13 @@ import {
 	QueryOrder,
 	raw
 } from '@mikro-orm/core';
-import { ID, IInvoiceItemCreateInput, InvoiceStatusTypesEnum, PermissionsEnum } from '@gauzy/contracts';
+import {
+	EstimateStatusTypesEnum,
+	ID,
+	IInvoiceItemCreateInput,
+	InvoiceStatusTypesEnum,
+	PermissionsEnum
+} from '@gauzy/contracts';
 import { isMySQL, isPostgres } from '@gauzy/config';
 import { RequestContext } from '../core/context';
 import { MultiORM, MultiORMEnum } from '../core/utils';
@@ -19,11 +25,18 @@ import { prepareSQLQuery as p } from '../database/database.helper';
 /** The refusal of a save that names a time log it may not bill. It does not say which one, nor whose it is. */
 export const TIME_LOG_NOT_BILLABLE =
 	"INVOICE_TIME_LOG_NOT_BILLABLE: a line names a time log it cannot bill (another organization's, another " +
-	"employee's when you may bill only your own, a removed one, one named twice, or one an invoice that is not void " +
-	'already bills). Nothing was saved: read the time not invoiced yet (notInvoiced=true) and save again.';
+	"employee's when you may bill only your own, a removed one, one named twice, or one already billed by an invoice " +
+	'that is not void or an estimate that is neither void nor rejected). Nothing was saved: read the time not ' +
+	'invoiced yet (notInvoiced=true) and save again.';
 
-/** The values {@link notOnLiveInvoice} binds. */
-export const NOT_ON_LIVE_INVOICE_PARAMETERS = { billedTimeVoidStatus: InvoiceStatusTypesEnum.VOID };
+/**
+ * The values {@link notOnLiveInvoice} binds: the statuses whose document bills no time. A rejected estimate releases
+ * its time as a void invoice does; a draft, sent, viewed or accepted estimate holds it.
+ */
+export const NOT_ON_LIVE_INVOICE_PARAMETERS = {
+	billedTimeVoidStatus: InvoiceStatusTypesEnum.VOID,
+	billedTimeRejectedStatus: EstimateStatusTypesEnum.REJECTED
+};
 
 /** A time log's `invoiceItemId` as an update names it: by the table, which an update does not alias. */
 const UPDATED_TIME_LOG_INVOICE_ITEM = '"time_log"."invoiceItemId"';
@@ -31,7 +44,8 @@ const UPDATED_TIME_LOG_INVOICE_ITEM = '"time_log"."invoiceItemId"';
 /**
  * The condition that a time log is on no live invoice: the line its `invoiceItemId` names, if any, is removed, or
  * belongs to no invoice any more (deleting an invoice sets its lines' `invoiceId` to null), or to an invoice that is
- * removed or void. The link itself is kept in all those cases, as the record of what the line billed.
+ * removed or void, or to an estimate that is rejected. The link itself is kept in all those cases, as the record of
+ * what the line billed.
  *
  * @param invoiceItemColumn The time log's `invoiceItemId`, qualified by the name the statement gives the table.
  * @returns The condition, quoted for the database in use, binding {@link NOT_ON_LIVE_INVOICE_PARAMETERS}.
@@ -41,7 +55,8 @@ export function notOnLiveInvoice(invoiceItemColumn: string): string {
 		`NOT EXISTS (SELECT 1 FROM "invoice_item" "billing_line" ` +
 			`INNER JOIN "invoice" "billing_invoice" ON "billing_invoice"."id" = "billing_line"."invoiceId" ` +
 			`WHERE "billing_line"."id" = ${invoiceItemColumn} AND "billing_line"."deletedAt" IS NULL ` +
-			`AND "billing_invoice"."deletedAt" IS NULL AND "billing_invoice"."status" <> :billedTimeVoidStatus)`
+			`AND "billing_invoice"."deletedAt" IS NULL AND "billing_invoice"."status" <> :billedTimeVoidStatus ` +
+			`AND "billing_invoice"."status" <> :billedTimeRejectedStatus)`
 	);
 }
 

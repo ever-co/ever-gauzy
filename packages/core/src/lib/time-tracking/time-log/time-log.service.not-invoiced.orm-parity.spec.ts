@@ -68,6 +68,10 @@ describe('The time not invoiced yet, read on TypeORM and on MikroORM', () => {
 				new loaded.InvoiceUpdateHandler(invoiceService).execute(
 					new loaded.InvoiceUpdateCommand({ id, status: 'VOID' })
 				),
+			rejectEstimate: (id: string) =>
+				new loaded.InvoiceUpdateHandler(invoiceService).execute(
+					new loaded.InvoiceUpdateCommand({ id, status: 'REJECTED' })
+				),
 			deleteInvoice: (id: string) =>
 				new loaded.InvoiceDeleteHandler(invoiceService).execute(new loaded.InvoiceDeleteCommand(id))
 		};
@@ -137,9 +141,9 @@ describe('The time not invoiced yet, read on TypeORM and on MikroORM', () => {
 		return { invoiceId, lineId };
 	};
 
-	/** A log the line of an invoice in the status given bills. */
-	const billedLog = async (employeeId: string, description: string, status: string) => {
-		const { invoiceId, lineId } = await invoice(status);
+	/** A log the line of an invoice in the status given bills; `row` makes it an estimate, for one. */
+	const billedLog = async (employeeId: string, description: string, status: string, row: Row = {}) => {
+		const { invoiceId, lineId } = await invoice(status, row);
 		const timeLogId = await timeLog(employeeId, description, { invoiceItemId: lineId });
 		return { invoiceId, lineId, timeLogId };
 	};
@@ -304,6 +308,32 @@ describe('The time not invoiced yet, read on TypeORM and on MikroORM', () => {
 				'sent',
 				'void'
 			]);
+		});
+
+		it('leaves out the time a pending estimate bills, and reads the time of a rejected one', async () => {
+			const member = await employee();
+			const estimate = { isEstimate: 1 };
+			await billedLog(member, 'draft estimate', 'DRAFT', estimate);
+			await billedLog(member, 'sent estimate', 'SENT', estimate);
+			await billedLog(member, 'viewed estimate', 'VIEWED', estimate);
+			await billedLog(member, 'accepted estimate', 'ACCEPTED', estimate);
+			await billedLog(member, 'rejected estimate', 'REJECTED', estimate);
+
+			const notInvoiced = await routes(ormType).readNotInvoiced(member);
+
+			expect(descriptionsOf(notInvoiced)).toEqual(['rejected estimate']);
+		});
+
+		it('reads again the time of an estimate rejected through the invoice routes', async () => {
+			const member = await employee();
+			const { invoiceId } = await billedLog(member, 'billed', 'SENT', { isEstimate: 1 });
+			const beforeRejection = await routes(ormType).readNotInvoiced(member);
+
+			await routes(ormType).rejectEstimate(invoiceId);
+
+			const afterRejection = await routes(ormType).readNotInvoiced(member);
+			expect(descriptionsOf(beforeRejection)).toEqual([]);
+			expect(descriptionsOf(afterRejection)).toEqual(['billed']);
 		});
 
 		it('reads again the time of an invoice voided through the invoice routes', async () => {
