@@ -15,14 +15,24 @@ const params = { id: 'estimate-1', token: 'estimate-token' } as IInvoice;
  * change the status and tell nobody: the team now hears of an answer that changed the estimate, once.
  */
 describe('PublicInvoiceUpdateHandler', () => {
-	function setup(before: Partial<IInvoice> | null, { refuse = false, emailRead = 'ok' } = {}) {
-		const updated = { affected: 1 };
+	/**
+	 * @param before - The estimate as the handler reads it before the update.
+	 * @param options.affected - The rows each update changes, in turn: the service writes only a change of status.
+	 */
+	function setup(
+		before: Partial<IInvoice> | null,
+		{ refuse = false, emailRead = 'ok', affected = [1] as (number | undefined)[] } = {}
+	) {
+		const updated = { affected: affected[0] };
+		let updates = 0;
 		const service = {
 			updateInvoice: jest.fn(async () => {
 				if (refuse) {
 					throw new ForbiddenException('Invalid estimate token');
 				}
-				return updated;
+				const result = updates === 0 ? updated : { affected: affected[updates] };
+				updates += 1;
+				return result;
 			})
 		};
 		const invoices = { findOne: jest.fn(async () => before) };
@@ -78,13 +88,36 @@ describe('PublicInvoiceUpdateHandler', () => {
 		);
 	});
 
-	it('tells nobody of the same answer given again', async () => {
-		const { handler, service, eventBus } = setup({ ...sentEstimate, status: EstimateStatusTypesEnum.ACCEPTED });
+	it('tells nobody of the same answer given again, which changes no row', async () => {
+		const accepted = { ...sentEstimate, status: EstimateStatusTypesEnum.ACCEPTED };
+		const { handler, service, eventBus } = setup(accepted, { affected: [0] });
 
 		await handler.execute(answer(EstimateStatusTypesEnum.ACCEPTED));
 
 		expect(service.updateInvoice).toHaveBeenCalledTimes(1);
 		expect(eventBus.publish).not.toHaveBeenCalled();
+	});
+
+	it('tells the team once of two answers sent at the same moment, both read before either was saved', async () => {
+		// Both read SENT; the database lets the first update change the row, and the second changes none
+		const { handler, eventBus } = setup(sentEstimate, { affected: [1, 0] });
+
+		await Promise.all([
+			handler.execute(answer(EstimateStatusTypesEnum.ACCEPTED)),
+			handler.execute(answer(EstimateStatusTypesEnum.ACCEPTED))
+		]);
+
+		expect(eventBus.publish).toHaveBeenCalledTimes(1);
+	});
+
+	it('decides on the status read before when the database does not report the rows it changed', async () => {
+		const changed = setup(sentEstimate, { affected: [undefined] });
+		await changed.handler.execute(answer(EstimateStatusTypesEnum.ACCEPTED));
+		expect(changed.eventBus.publish).toHaveBeenCalledTimes(1);
+
+		const same = setup({ ...sentEstimate, status: EstimateStatusTypesEnum.ACCEPTED }, { affected: [undefined] });
+		await same.handler.execute(answer(EstimateStatusTypesEnum.ACCEPTED));
+		expect(same.eventBus.publish).not.toHaveBeenCalled();
 	});
 
 	it('tells nobody of a status that is no answer, or of a document that is no estimate', async () => {

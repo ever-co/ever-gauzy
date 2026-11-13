@@ -15,6 +15,12 @@ const ANSWERS: ReadonlyArray<string> = [EstimateStatusTypesEnum.ACCEPTED, Estima
 /** An estimate as it was before the client's answer. */
 type IEstimateBefore = Pick<IInvoice, 'id' | 'status' | 'isEstimate' | 'tenantId'>;
 
+/** How many rows the update changed, when the database driver reports it. */
+function changedRowsOf(result: IInvoice | UpdateResult): number | undefined {
+	const affected = (result as UpdateResult)?.affected;
+	return typeof affected === 'number' ? affected : undefined;
+}
+
 @CommandHandler(PublicInvoiceUpdateCommand)
 export class PublicInvoiceUpdateHandler implements ICommandHandler<PublicInvoiceUpdateCommand> {
 	private readonly logger = new Logger(PublicInvoiceUpdateHandler.name);
@@ -29,19 +35,20 @@ export class PublicInvoiceUpdateHandler implements ICommandHandler<PublicInvoice
 	) {}
 
 	/**
-	 * Saves the client's answer (`PublicInvoiceService.updateInvoice`, which checks the link), then, when it changed the
-	 * estimate to accepted or declined, tells the team (`EstimateAnsweredEvent`). The same answer given twice is told
-	 * once, and a refused answer not at all.
+	 * Saves the client's answer (`PublicInvoiceService.updateInvoice`, which checks the link and writes only a change of
+	 * status), then, when this answer changed the estimate to accepted or declined, tells the team
+	 * (`EstimateAnsweredEvent`). The same answer given twice, even at the same moment, is told once, and a refused
+	 * answer not at all.
 	 */
 	public async execute(command: PublicInvoiceUpdateCommand): Promise<IInvoice | UpdateResult> {
 		const { params, entity } = command;
 		const before = await this.estimateBefore(params.id);
 		const result = await this.publicInvoiceService.updateInvoice(params, entity);
-		await this.publishAnswer(params, entity, before);
+		await this.publishAnswer(params, entity, before, changedRowsOf(result));
 		return result;
 	}
 
-	/** The estimate's status before the answer, or null when it cannot be read (the update then decides). */
+	/** The estimate before the answer (whether it is one, its tenant), or null when it cannot be read. */
 	private async estimateBefore(id: IInvoice['id']): Promise<IEstimateBefore | null> {
 		try {
 			return await this.typeOrmInvoiceRepository.findOne({
@@ -53,11 +60,20 @@ export class PublicInvoiceUpdateHandler implements ICommandHandler<PublicInvoice
 		}
 	}
 
-	/** Publishes the answer when it changed an estimate to accepted or declined. Never fails the saved answer. */
-	private async publishAnswer(params: IInvoice, entity: IInvoiceUpdateInput, before: IEstimateBefore | null) {
+	/**
+	 * Publishes the answer when it changed an estimate to accepted or declined: the update changed a row. Where the
+	 * database does not report that count, the status read before the update decides. Never fails the saved answer.
+	 */
+	private async publishAnswer(
+		params: IInvoice,
+		entity: IInvoiceUpdateInput,
+		before: IEstimateBefore | null,
+		changedRows: number | undefined
+	) {
 		const status = entity?.status;
 		const isAnswer = ANSWERS.includes(status);
-		const isNewAnswer = Boolean(before?.isEstimate) && before.status !== status;
+		const hasChanged = changedRows === undefined ? before?.status !== status : changedRows > 0;
+		const isNewAnswer = Boolean(before?.isEstimate) && hasChanged;
 		if (!isAnswer || !isNewAnswer) {
 			return;
 		}
