@@ -473,10 +473,11 @@ const DELIBERATELY_OPEN: ReadonlyArray<string> = Object.freeze([
 	'TenantController.create',
 	// UserApiTokenController: own personal API tokens: a token is exchanged for a session with exactly its user's
 	// role and permissions, so it grants nothing the caller does not hold already. Each write states the caller's
-	// own user id (another user's token id is a 404), only a first-party session may make or revoke one (an
-	// OAuth-app token or a session from an API token is refused), and the server switch must be on
-	// (user-api-token.service.ts createOwn, revokeOwn, assertFirstPartyRequest; UserApiTokensEnabledGuard). The
-	// settings page is open to every signed-in user
+	// own user id (another user's token id is a 404), only a first-party session may make or revoke one (a
+	// session from an API token is refused, and so is an OAuth-app token unless the operator turned
+	// OAUTH_APP_TOKEN_SCOPE_ENFORCEMENT off, which gives such tokens the user's full role again), and the server
+	// switch must be on (user-api-token.service.ts createOwn, revokeOwn, assertFirstPartyRequest;
+	// UserApiTokensEnabledGuard). The settings page is open to every signed-in user
 	'UserApiTokenController.create',
 	'UserApiTokenController.revoke',
 	// UserController: own preferences: the service ignores any id in the payload and writes RequestContext.currentUserId()
