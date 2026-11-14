@@ -59,7 +59,7 @@
 		<mj-section padding="20px 16px 40px">
 			<mj-column>
 				<mj-text mj-class="footer">
-					&copy; 2019, <a href="{{appLink}}" target="_blank" style="color: #66666F; text-decoration: underline">{{appName}}</a>{{#if organizationName}} מאת <span dir="auto">{{organizationName}}</span>{{else}}{{#if companyName}} מאת <a href="{{companyLink}}" target="_blank" style="color: #66666F; text-decoration: underline">{{companyName}}</a>{{/if}}{{/if}}. כל הזכויות שמורות.
+					&copy; 2019, <a href="{{appLink}}" target="_blank" style="color: #66666F; text-decoration: underline">{{appName}}</a>{{#if organizationName}} על ידי <span dir="auto">{{organizationName}}</span>{{else}}{{#if companyName}} על ידי <a href="{{companyLink}}" target="_blank" style="color: #66666F; text-decoration: underline">{{companyName}}</a>{{/if}}{{/if}}. כל הזכויות שמורות.
 				</mj-text>
 			</mj-column>
 		</mj-section>
