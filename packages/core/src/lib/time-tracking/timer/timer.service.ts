@@ -911,16 +911,66 @@ export class TimerService {
 			throw new ForbiddenException(tooLateRefusal);
 		}
 
-		const forceDelete = true;
-		await this._commandBus.execute(new TimeLogDeleteCommand(runningLog as TimeLog, forceDelete));
+		// A stop from another tab or device may have landed since the read: it kept the entry, which is never removed
+		const isClaimed = await this.claimRunningLog(runningLog.id);
+		if (!isClaimed) {
+			throw new BadRequestException('No timer is running: there is nothing to discard.');
+		}
 
+		const forceDelete = true;
+		try {
+			await this._commandBus.execute(new TimeLogDeleteCommand(runningLog as TimeLog, forceDelete));
+		} catch (error) {
+			await this.releaseRunningLog(runningLog.id);
+			throw error;
+		}
+
+		// A run another device started meanwhile is left running, and keeps the employee tracking
 		const tenantId = RequestContext.currentTenantId() ?? request.tenantId;
 		const { id: employeeId, organizationId } = employee;
-		await this._employeeService.update(employeeId, {
-			isOnline: false,
-			isTrackingTime: false
-		});
-		await this.stopPreviousRunningTimers(employeeId, organizationId, tenantId);
+		await this.markNotTrackingWhenNothingRuns(employeeId, organizationId, tenantId);
+	}
+
+	/**
+	 * Takes the run for a discard: marks it as no longer running, in one statement that only changes it while it still
+	 * runs. A stop that landed first leaves nothing to take.
+	 *
+	 * @returns Whether the run still ran and is now the discard's to remove.
+	 */
+	private async claimRunningLog(timeLogId: ID): Promise<boolean> {
+		const stillRunning = { id: timeLogId, isRunning: true };
+		const taken = { isRunning: false };
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const changedRows = await this.mikroOrmTimeLogRepository.nativeUpdate(stillRunning, taken);
+				return changedRows > 0;
+			}
+			case MultiORMEnum.TypeORM:
+			default: {
+				const { affected } = await this.typeOrmTimeLogRepository.update(stillRunning, taken);
+				// Every driver of the platform reports the count; one that would not is read as a change
+				const isCountUnknown = typeof affected !== 'number';
+				return isCountUnknown || affected > 0;
+			}
+		}
+	}
+
+	/** Gives a run taken for a discard its running state back, when removing it failed. */
+	private async releaseRunningLog(timeLogId: ID): Promise<void> {
+		const taken = { id: timeLogId, isRunning: false };
+		const running = { isRunning: true };
+		try {
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM:
+					await this.mikroOrmTimeLogRepository.nativeUpdate(taken, running);
+					return;
+				case MultiORMEnum.TypeORM:
+				default:
+					await this.typeOrmTimeLogRepository.update(taken, running);
+			}
+		} catch (error) {
+			this.logger.warn(`Failed to give the running state back to time log ${timeLogId}: ${error?.message}`);
+		}
 	}
 
 	/**

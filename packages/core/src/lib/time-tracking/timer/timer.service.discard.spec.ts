@@ -53,23 +53,53 @@ interface OrganizationSettings {
 	discardTimerWithinMinutes?: number | null;
 }
 
-/** A `TimerService` over `rows`, on the given ORM, whose command bus removes the row a `TimeLogDeleteCommand` names. */
-function createService(ormType: MultiORMEnum, rows: TimeLogRow[], employee: Record<string, unknown>) {
+/** Applies `values` to the rows matching `where`, as one UPDATE statement would, and answers how many it changed. */
+function updateRows(rows: TimeLogRow[], where: Record<string, unknown>, values: Partial<TimeLogRow>): number {
+	const matching = findRows(rows, where);
+	for (const row of matching) {
+		Object.assign(row, values);
+	}
+	return matching.length;
+}
+
+/**
+ * A `TimerService` over `rows`, on the given ORM, whose command bus removes the row a `TimeLogDeleteCommand` names.
+ * `hooks.afterDelete` runs right after that removal, to play what another device does meanwhile.
+ */
+function createService(
+	ormType: MultiORMEnum,
+	rows: TimeLogRow[],
+	employee: Record<string, unknown>,
+	hooks: { afterDelete?: () => void; failDelete?: boolean } = {}
+) {
 	const typeOrmTimeLogRepository = {
-		findOne: async ({ where }: { where: Record<string, unknown> }) => findRows(rows, where)[0] ?? null
+		findOne: async ({ where }: { where: Record<string, unknown> }) => findRows(rows, where)[0] ?? null,
+		find: async ({ where }: { where: Record<string, unknown> }) => findRows(rows, where),
+		update: jest.fn(async (where: Record<string, unknown>, values: Partial<TimeLogRow>) => ({
+			affected: updateRows(rows, where, values)
+		}))
 	};
 	const mikroOrmTimeLogRepository = {
 		findOne: async (where: Record<string, unknown>) => {
 			const row = findRows(rows, where)[0];
 			// A MikroORM-loaded row: `wrapSerialize` calls its `toJSON`
 			return row ? { ...row, toJSON: () => ({ ...row }) } : null;
-		}
+		},
+		findAll: async ({ where }: { where: Record<string, unknown> }) =>
+			findRows(rows, where).map((row) => ({ ...row, toJSON: () => ({ ...row }) })),
+		nativeUpdate: jest.fn(async (where: Record<string, unknown>, values: Partial<TimeLogRow>) =>
+			updateRows(rows, where, values)
+		)
 	};
 	const execute = jest.fn(async (command: object) => {
 		if (command instanceof TimeLogDeleteCommand) {
+			if (hooks.failDelete) {
+				throw new Error('The database went away while the run was removed.');
+			}
 			const deleted = command.ids as { id: string };
 			const index = rows.findIndex((row) => row.id === deleted.id);
 			rows.splice(index, 1);
+			hooks.afterDelete?.();
 		}
 		return [];
 	});
@@ -77,12 +107,14 @@ function createService(ormType: MultiORMEnum, rows: TimeLogRow[], employee: Reco
 		findOneByUserId: jest.fn(async () => employee),
 		update: jest.fn(async () => undefined)
 	};
+	const typeOrmEmployeeRepository = { update: jest.fn(async () => ({ affected: 1 })) };
+	const mikroOrmEmployeeRepository = { nativeUpdate: jest.fn(async () => 1) };
 
 	const service = new TimerService(
 		typeOrmTimeLogRepository as never,
 		mikroOrmTimeLogRepository as never,
-		undefined as never,
-		undefined as never,
+		typeOrmEmployeeRepository as never,
+		mikroOrmEmployeeRepository as never,
 		employeeService as never,
 		{ execute } as never,
 		undefined as never
@@ -93,7 +125,23 @@ function createService(ormType: MultiORMEnum, rows: TimeLogRow[], employee: Reco
 		() => undefined
 	);
 
-	return { service, execute, employeeService, stopPreviousRunningTimers };
+	/** The "not tracking" write, through the repository of the ORM in use. */
+	const notTrackingWrites = () => {
+		if (ormType === MultiORMEnum.MikroORM) {
+			return mikroOrmEmployeeRepository.nativeUpdate.mock.calls;
+		}
+		return typeOrmEmployeeRepository.update.mock.calls;
+	};
+
+	return {
+		service,
+		execute,
+		employeeService,
+		stopPreviousRunningTimers,
+		notTrackingWrites,
+		typeOrmTimeLogRepository,
+		mikroOrmTimeLogRepository
+	};
 }
 
 describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])('TimerService discard (%s)', (ormType) => {
@@ -140,13 +188,29 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])('TimerService disca
 			stoppedAt: new Date('2026-11-13T10:01:00.000Z')
 		});
 
-	const setup = (rows: TimeLogRow[], organization: OrganizationSettings = {}) =>
-		createService(ormType, rows, {
-			id: EMPLOYEE_ID,
-			organizationId: fixture.organizationId,
-			tenantId: fixture.tenantId,
-			organization
-		});
+	const setup = (
+		rows: TimeLogRow[],
+		organization: OrganizationSettings = {},
+		hooks: { afterDelete?: () => void; failDelete?: boolean } = {}
+	) =>
+		createService(
+			ormType,
+			rows,
+			{
+				id: EMPLOYEE_ID,
+				organizationId: fixture.organizationId,
+				tenantId: fixture.tenantId,
+				organization
+			},
+			hooks
+		);
+
+	/** The employee, as the "not tracking" write names them. */
+	const trackedEmployee = () => ({
+		id: EMPLOYEE_ID,
+		organizationId: fixture.organizationId,
+		tenantId: fixture.tenantId
+	});
 
 	const discard = (service: TimerService, input: ITimerDiscardInput = {}) => service.discardTimer(input);
 
@@ -173,7 +237,7 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])('TimerService disca
 
 	it('removes the running log with its slots through the time log delete, and the employee no longer tracks time', async () => {
 		const rows = [stoppedLog(), runningLog(), otherEmployeesRunningLog()];
-		const { service, execute, employeeService, stopPreviousRunningTimers } = setup(rows);
+		const { service, execute, notTrackingWrites } = setup(rows);
 
 		await expect(discard(service)).resolves.toBeUndefined();
 
@@ -182,8 +246,55 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])('TimerService disca
 		expect(deleteCommand.forceDelete).toBe(true);
 		expect(deleteCommand.ids).toMatchObject({ id: RUNNING_LOG_ID, timeSlots: [{ id: 'slot-of-the-run' }] });
 		expect(rows.map((row) => row.id)).toEqual([STOPPED_LOG_ID, OTHER_RUNNING_LOG_ID]);
-		expect(employeeService.update).toHaveBeenCalledWith(EMPLOYEE_ID, { isOnline: false, isTrackingTime: false });
-		expect(stopPreviousRunningTimers).toHaveBeenCalledWith(EMPLOYEE_ID, fixture.organizationId, fixture.tenantId);
+		expect(notTrackingWrites()).toEqual([[trackedEmployee(), { isOnline: false, isTrackingTime: false }]]);
+	});
+
+	it('answers 400 and removes nothing when a stop from another tab lands between the read and the removal', async () => {
+		const rows = [runningLog()];
+		const { service, execute, typeOrmTimeLogRepository, mikroOrmTimeLogRepository } = setup(rows);
+		// The other tab's stop commits right after the discard read the run: the run is a saved entry now
+		const stopFromOtherTab = async () => {
+			rows[0].isRunning = false;
+			return 0;
+		};
+		typeOrmTimeLogRepository.update.mockImplementationOnce(async () => ({ affected: await stopFromOtherTab() }));
+		mikroOrmTimeLogRepository.nativeUpdate.mockImplementationOnce(stopFromOtherTab);
+
+		await expect(discard(service)).rejects.toBeInstanceOf(BadRequestException);
+		expect(execute).not.toHaveBeenCalled();
+		expect(rows).toEqual([expect.objectContaining({ id: RUNNING_LOG_ID, isRunning: false })]);
+	});
+
+	it('never stops a run another device starts meanwhile, and the employee still tracks time', async () => {
+		const rows = [runningLog()];
+		const newRun = timeLog({
+			id: OTHER_RUNNING_LOG_ID,
+			source: TimeLogSourceEnum.DESKTOP,
+			isRunning: true,
+			startedAt: NOW,
+			stoppedAt: NOW
+		});
+		const { service, stopPreviousRunningTimers, notTrackingWrites } = setup(
+			rows,
+			{},
+			{
+				afterDelete: () => rows.push(newRun)
+			}
+		);
+
+		await discard(service);
+
+		expect(rows).toEqual([expect.objectContaining({ id: OTHER_RUNNING_LOG_ID, isRunning: true })]);
+		expect(stopPreviousRunningTimers).not.toHaveBeenCalled();
+		expect(notTrackingWrites()).toEqual([]);
+	});
+
+	it('gives the run back when its removal fails, and the error travels', async () => {
+		const rows = [runningLog()];
+		const { service } = setup(rows, {}, { failDelete: true });
+
+		await expect(discard(service)).rejects.toThrow('The database went away');
+		expect(rows).toEqual([expect.objectContaining({ id: RUNNING_LOG_ID, isRunning: true })]);
 	});
 
 	it('answers 400 when nothing runs, and never removes a stopped entry, even one stopped a second earlier', async () => {
