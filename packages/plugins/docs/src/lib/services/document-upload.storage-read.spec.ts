@@ -47,7 +47,8 @@ jest.mock('../dto', () => ({}));
 import { Logger, NotFoundException, PayloadTooLargeException, BadRequestException } from '@nestjs/common';
 import { DocumentKindEnum } from '@gauzy/contracts';
 import { DOCS_FILE_TOO_LARGE, DOCS_FILE_TYPE_REJECTED } from '../docs.constants';
-import { DocumentUploadService } from './document-upload.service';
+import { FileContentTooLargeError, MAX_BUFFERED_FILE_BYTES } from '@gauzy/core';
+import { DocumentUploadService, rawReadBound } from './document-upload.service';
 
 /** A small PDF: the sniffer only needs the `%PDF` signature and a consistent extension / declared type. */
 const PDF = Buffer.from('%PDF-1.7\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF\n');
@@ -208,5 +209,59 @@ describe('DocumentUploadService — the raw byte path reads the stored bytes in 
 
 		expect(String(warned.mock.calls[0]?.[0])).toContain(fileRow.storageKey);
 		warned.mockRestore();
+	});
+
+	it('stops reading at a lower bound the caller states (an export budget), a file of no stored size too', async () => {
+		fileRow.fileSize = null as never;
+		const pulled: number[] = [];
+		const chunks = [PDF.subarray(0, 10), PDF.subarray(10, 20), PDF.subarray(20)];
+		providerStub.getFile.mockResolvedValue(
+			Readable.from(
+				(function* () {
+					for (const chunk of chunks) {
+						pulled.push(chunk.length);
+						yield chunk;
+					}
+				})()
+			)
+		);
+		try {
+			const refusal = await rawService()
+				.getRawFile('doc-1', undefined, { maxBytes: 15 })
+				.catch((error: unknown) => error);
+			expect(refusal).toBeInstanceOf(FileContentTooLargeError);
+			expect((refusal as FileContentTooLargeError).maxBytes).toBe(15);
+			// Abandoned at the bound: the third chunk was never pulled.
+			expect(pulled).toEqual([10, 10]);
+		} finally {
+			fileRow.fileSize = PDF.length;
+		}
+	});
+
+	it('reads as before without a bound of the caller, and a higher one never raises the per-file limit', async () => {
+		providerStub.getFile.mockResolvedValue(sdkBody(PDF));
+		expect((await rawService().getRawFile('doc-1')).buffer.equals(PDF)).toBe(true);
+		providerStub.getFile.mockResolvedValue(Buffer.alloc(2048));
+		// The per-file limit here is 1024 (the docs config), whatever the caller allows.
+		await expect(rawService().getRawFile('doc-1', undefined, { maxBytes: 1_000_000 })).rejects.toBeInstanceOf(
+			FileContentTooLargeError
+		);
+	});
+});
+
+describe('rawReadBound', () => {
+	it('is the per-file bound, unchanged, without a positive bound of the caller', () => {
+		expect(rawReadBound(1024)).toBe(1024);
+		expect(rawReadBound(0)).toBe(0);
+		for (const none of [undefined, 0, -5, Number.NaN, Number.POSITIVE_INFINITY]) {
+			expect(rawReadBound(1024, none)).toBe(1024);
+		}
+	});
+
+	it('is the lower of the two otherwise, the storage default standing in for a per-file bound of none', () => {
+		expect(rawReadBound(1024, 10)).toBe(10);
+		expect(rawReadBound(1024, 4096)).toBe(1024);
+		expect(rawReadBound(0, 10)).toBe(10);
+		expect(rawReadBound(0, MAX_BUFFERED_FILE_BYTES * 4)).toBe(MAX_BUFFERED_FILE_BYTES);
 	});
 });

@@ -1,6 +1,25 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { runInThisContext } from 'node:vm';
 import { ID, ITaskViewFilterGroup, ITaskViewInvalidFilter } from '@gauzy/contracts';
 import { FilterEditorComponent, fieldKey, invalidKey, operatorKey } from './filter-editor.component';
+
+/**
+ * Runs `body` with the clock in `zone`, as a browser there would be. Jest hands each test file a copy of
+ * `process.env`, so setting `TZ` on it changes nothing: Node reads the host process's `env.TZ`.
+ */
+function inZone<T>(zone: string, body: () => T): T {
+	const host = runInThisContext('process') as NodeJS.Process;
+	const previous = host.env['TZ'];
+	const current = Intl.DateTimeFormat().resolvedOptions().timeZone;
+	host.env['TZ'] = zone;
+	try {
+		return body();
+	} finally {
+		// Deleting `TZ` does not reset the clock's zone: set the one before first.
+		host.env['TZ'] = previous ?? current;
+		if (previous === undefined) delete host.env['TZ'];
+	}
+}
 
 const LABEL = '11111111-1111-4111-8111-111111111111' as ID;
 const GONE = '22222222-2222-4222-8222-222222222222' as ID;
@@ -73,6 +92,55 @@ describe('FilterEditorComponent', () => {
 		expect(host().querySelector('[data-path="0"]')?.classList.contains('invalid')).toBe(true);
 		(host().querySelector('[data-test="fix-invalid"]') as HTMLElement).click();
 		expect((changes[0]?.conditions[0] as { values: ID[] }).values).toEqual([LABEL]);
+	});
+
+	it('sends the day picked with its instant, for a reader in UTC−4 and one in UTC+2', () => {
+		const between: ITaskViewFilterGroup = { op: 'and', conditions: [{ field: 'dueDate', operator: 'between' }] };
+		const pick = (zone: string) =>
+			inZone(zone, () => {
+				changes = [];
+				render(between);
+				expect(new Date(2026, 10, 14).getTimezoneOffset()).toBe(zone === 'America/Caracas' ? 240 : -120);
+				const dateField = (index: number) =>
+					host().querySelectorAll('input[type="date"]')[index] as HTMLInputElement;
+				dateField(0).value = '2026-11-14';
+				dateField(0).dispatchEvent(new Event('change'));
+				render(changes[0]);
+				dateField(1).value = '2026-11-20';
+				dateField(1).dispatchEvent(new Event('change'));
+				return changes[1]?.conditions[0];
+			});
+		expect(pick('America/Caracas')).toEqual({
+			field: 'dueDate',
+			operator: 'between',
+			from: '2026-11-14T04:00:00.000Z',
+			fromDay: '2026-11-14',
+			to: '2026-11-21T03:59:59.999Z',
+			toDay: '2026-11-20'
+		});
+		expect(pick('Africa/Johannesburg')).toEqual({
+			field: 'dueDate',
+			operator: 'between',
+			from: '2026-11-13T22:00:00.000Z',
+			fromDay: '2026-11-14',
+			to: '2026-11-20T21:59:59.999Z',
+			toDay: '2026-11-20'
+		});
+	});
+
+	it('shows the day picked, not the reader’s day of its instant', () => {
+		// "On or after 14 Nov" picked in UTC+2: 22:00 UTC on the 13th, which is the 13th for a reader in UTC−4.
+		const after: ITaskViewFilterGroup = {
+			op: 'and',
+			conditions: [
+				{ field: 'dueDate', operator: 'after', from: '2026-11-13T22:00:00.000Z', fromDay: '2026-11-14' }
+			]
+		};
+		const shown = inZone('America/Caracas', () => {
+			render(after);
+			return (host().querySelector('input[type="date"]') as HTMLInputElement).value;
+		});
+		expect(shown).toBe('2026-11-14');
 	});
 
 	it('changes nothing while disabled', () => {

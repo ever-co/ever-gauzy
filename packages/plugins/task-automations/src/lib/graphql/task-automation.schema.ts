@@ -23,7 +23,7 @@ export const taskAutomationSchemaExtensions = gql`
 		isEnabled: Boolean!
 		position: Int!
 		templateKey: String
-		"The trigger: { type, toStatuses?, fromStatuses? }."
+		"The trigger: { type, toStatuses?, fromStatuses?, mergedOnly? }."
 		trigger: JSON!
 		"The conditions: [{ type, values?, text? }]."
 		conditions: JSON!

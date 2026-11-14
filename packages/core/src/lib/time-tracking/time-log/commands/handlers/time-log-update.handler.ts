@@ -14,6 +14,7 @@ import { MultiORM, MultiORMEnum, getORMType } from './../../../../core/utils';
 import { prepareSQLQuery as p } from './../../../../database/database.helper';
 import { TimeLog } from './../../time-log.entity';
 import { assertTimeLogReferencesOfTenant } from '../../time-log-references';
+import { postsHeartbeatSlots } from '../../tracker-source';
 import { TimeSlot } from '../../../time-slot/time-slot.entity';
 import { TimeLogUpdateCommand } from '../time-log-update.command';
 import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.repository';
@@ -26,10 +27,10 @@ import { MikroOrmTimeSlotRepository } from '../../../time-slot/repository/mikro-
 const TIME_LOG_SCOPE_FIELDS = ['id', 'tenantId', 'tenant', 'organizationId', 'organization', 'employee'] as const;
 
 /**
- * Clients that post a time slot on each heartbeat of a run: Ever Teams and its mobile app. A run of theirs that never
- * sent one has no slot when it stops (#11843).
+ * The most minutes one slot lookup names. Each minute is one more term of the lookup's OR: SQLite refuses an expression
+ * deeper than 1000, which a log moved by a week (about 1,008 ten-minute starts) passes.
  */
-const HEARTBEAT_SLOT_SOURCES: ReadonlyArray<string> = [TimeLogSourceEnum.TEAMS, TimeLogSourceEnum.MOBILE];
+const MINUTES_PER_LOOKUP = 200;
 
 /**
  * The starts stored within the minute a slot start names: from that minute up to the next one. A slot is stored at the
@@ -37,12 +38,6 @@ const HEARTBEAT_SLOT_SOURCES: ReadonlyArray<string> = [TimeLogSourceEnum.TEAMS, 
  *
  * @param startTime - The slot start, a whole minute.
  */
-/**
- * The most minutes one slot lookup names. Each minute is one more term of the lookup's OR: SQLite refuses an expression
- * deeper than 1000, which a log moved by a week (about 1,008 ten-minute starts) passes.
- */
-const MINUTES_PER_LOOKUP = 200;
-
 function minuteRange(startTime: Date): { from: Date; to: Date } {
 	const from = moment(startTime).startOf('minute');
 	const to = from.clone().add(1, 'minute');
@@ -239,7 +234,7 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 
 	/**
 	 * Whether an update gives the log the time slots of its range. The web timer posts none, so its runs always get
-	 * them. A run of a client that posts a slot on each heartbeat (HEARTBEAT_SLOT_SOURCES) gets them only when it has
+	 * them. A run of a client that posts a slot on each heartbeat (`postsHeartbeatSlots`) gets them only when it has
 	 * none, one that never sent a heartbeat, which the day's worked time otherwise leaves out (#11843); one that has
 	 * slots keeps those it posted. Desktop and the other trackers post their own.
 	 *
@@ -249,7 +244,7 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 		if (timeLog.source === TimeLogSourceEnum.WEB_TIMER) {
 			return true;
 		}
-		if (!HEARTBEAT_SLOT_SOURCES.includes(timeLog.source)) {
+		if (!postsHeartbeatSlots(timeLog.source)) {
 			return false;
 		}
 		const hasSlots = await this.hasTimeSlots(timeLog);
@@ -469,14 +464,18 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 			case MultiORMEnum.MikroORM: {
 				const em = this.mikroOrmTimeSlotRepository.getEntityManager();
 				const inMinutes = minutes.map(({ from, to }) => ({ startedAt: { $gte: from, $lt: to } }));
-				return (await em.find('TimeSlot', {
-					organizationId,
-					tenantId,
-					employeeId,
-					$or: inMinutes
-				} as any, {
-					populate: ['timeLogs', 'screenshots', 'activities', 'timeSlotMinutes']
-				})) as any[];
+				return (await em.find(
+					'TimeSlot',
+					{
+						organizationId,
+						tenantId,
+						employeeId,
+						$or: inMinutes
+					} as any,
+					{
+						populate: ['timeLogs', 'screenshots', 'activities', 'timeSlotMinutes']
+					}
+				)) as any[];
 			}
 			case MultiORMEnum.TypeORM:
 			default: {

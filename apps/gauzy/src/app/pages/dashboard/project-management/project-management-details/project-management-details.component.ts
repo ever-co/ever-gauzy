@@ -272,19 +272,29 @@ export class ProjectManagementDetailsComponent extends PaginationFilterBaseCompo
 			params.push({ field: 'priorities', search: [this.priorityFilter] });
 		}
 
+		// Each end goes as the instant of the reader's day and as the day itself: a due date stored as a date only
+		// (midnight UTC of its day) is compared with the day, so west of UTC it is not taken for the day before.
 		const today = moment(now).startOf('day');
+		const from = (start: moment.Moment) => {
+			params.push({ field: 'dueDateFrom', search: start.toISOString() });
+			params.push({ field: 'dueDateFromDay', search: start.format('YYYY-MM-DD') });
+		};
+		const to = (end: moment.Moment) => {
+			params.push({ field: 'dueDateTo', search: end.toISOString() });
+			params.push({ field: 'dueDateToDay', search: end.format('YYYY-MM-DD') });
+		};
 		switch (this.dueFilter) {
 			case 'overdue':
-				params.push({ field: 'dueDateTo', search: today.clone().subtract(1, 'millisecond').toISOString() });
+				to(today.clone().subtract(1, 'millisecond'));
 				break;
 			case 'today':
-				params.push({ field: 'dueDateFrom', search: today.toISOString() });
-				params.push({ field: 'dueDateTo', search: today.clone().endOf('day').toISOString() });
+				from(today);
+				to(today.clone().endOf('day'));
 				break;
 			case 'week':
 				// From today to the end of the locale's week; anything earlier is "Overdue".
-				params.push({ field: 'dueDateFrom', search: today.toISOString() });
-				params.push({ field: 'dueDateTo', search: today.clone().endOf('week').toISOString() });
+				from(today);
+				to(today.clone().endOf('week'));
 				break;
 			case 'none':
 				params.push({ field: 'withoutDueDate', search: true });

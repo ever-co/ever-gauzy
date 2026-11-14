@@ -141,6 +141,10 @@ export interface ITasksByDateInput {
 	createdByUserId?: Id;
 	projectId?: Id;
 	organizationSprintId?: Id;
+	dueDateFromDay?: string;
+	dueDateToDay?: string;
+	startDateFromDay?: string;
+	startDateToDay?: string;
 }
 
 /**
@@ -409,6 +413,10 @@ export class TaskResolver {
 		@Args('createdByUserId', { type: () => ID, nullable: true }) createdByUserId?: Id,
 		@Args('projectId', { type: () => ID, nullable: true }) projectId?: Id,
 		@Args('organizationSprintId', { type: () => ID, nullable: true }) organizationSprintId?: Id,
+		@Args('dueDateFromDay', { type: () => String, nullable: true }) dueDateFromDay?: string,
+		@Args('dueDateToDay', { type: () => String, nullable: true }) dueDateToDay?: string,
+		@Args('startDateFromDay', { type: () => String, nullable: true }) startDateFromDay?: string,
+		@Args('startDateToDay', { type: () => String, nullable: true }) startDateToDay?: string,
 		@Args('filter') filter?: ConnectionFilter,
 		@Args('sort') sort?: ConnectionSortKey[],
 		@Args('page') page?: ConnectionPageRequest,
@@ -419,12 +427,18 @@ export class TaskResolver {
 		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
 		@Args('offset', { type: () => Int, nullable: true }) offset?: number
 	): Promise<GraphqlConnection<Task>> {
+		// The days go with the instants as the REST route takes them: the service keeps a day only when its instant is
+		// that day's edge, so a malformed or mismatched day leaves the instants as they are.
 		const { items }: IPagination<Task> = await this.taskService.getTasksByDateFilters({
 			...this.scopeOfTheCaller(),
 			startDateFrom,
 			startDateTo,
 			dueDateFrom,
 			dueDateTo,
+			dueDateFromDay,
+			dueDateToDay,
+			startDateFromDay,
+			startDateToDay,
 			isScreeningTask,
 			createdByUserId,
 			projectId,

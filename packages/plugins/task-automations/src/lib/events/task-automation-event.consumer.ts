@@ -5,30 +5,16 @@ import {
 	IEventConsumer,
 	IEventConsumerContext,
 	IEventEnvelope,
-	ITaskLinkClosedEvent,
 	TASK_AUTOMATION_EVENT_NAMES
 } from '@gauzy/contracts';
 import { EventConsumerRegistry } from '@gauzy/core';
 import { parseChangeEvent } from '../engine/change-capture';
+import { parseLinkClosedEvent } from '../engine/link-closed';
 import { TaskAutomationEngine } from '../services/task-automation-engine.service';
 import { TASK_AUTOMATION_CONSUMER_KEY } from '../task-automation.constants';
 
-/** A closed link's payload back, or `null` when it is not one (its kind must be one the contract names). */
-export function parseLinkClosedEvent(data: unknown): ITaskLinkClosedEvent | null {
-	if (!data || typeof data !== 'object') return null;
-	const value = data as Partial<ITaskLinkClosedEvent>;
-	if (!value.taskId || !value.tenantId || !value.organizationId) return null;
-	if (value.kind !== 'issue' && value.kind !== 'pull_request') return null;
-	return {
-		taskId: String(value.taskId),
-		tenantId: String(value.tenantId),
-		organizationId: String(value.organizationId),
-		provider: String(value.provider ?? ''),
-		kind: value.kind,
-		url: value.url ?? null,
-		externalId: value.externalId ?? null
-	};
-}
+/** Where the consumer's specs and callers have always found it; it lives with the engine's pure functions. */
+export { parseLinkClosedEvent };
 
 /**
  * The outbox consumer that runs the rules (`subscriber:task-automations`). A delivery is recorded per event before the

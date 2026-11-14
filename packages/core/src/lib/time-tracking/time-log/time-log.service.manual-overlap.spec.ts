@@ -70,7 +70,8 @@ describe('TimeLogService: manual time over another entry of the same member', ()
 					return { canManageEmployee: jest.fn().mockResolvedValue(true) };
 				}
 				if (token === TypeOrmTimeLogRepository) {
-					return { metadata: { tableName: 'time_log' } };
+					// No timer of the member runs in these cases (the running-timer read of manual time finds none)
+					return { metadata: { tableName: 'time_log' }, find: jest.fn().mockResolvedValue([]) };
 				}
 				return {};
 			})

@@ -274,6 +274,20 @@
 			}
 		}
 
+		// ─── Comment ranges (docs-collaboration FR-16) ─────────────
+		// The text a thread was made on: a decoration, never a mark, so the page's text is
+		// unchanged. A click on it opens the thread; the thread asked for is lit stronger.
+		.gz-comment-range {
+			background: var(--color-warning-transparent-200);
+			border-bottom: 2px solid var(--color-warning-transparent-500);
+			cursor: pointer;
+		}
+
+		.gz-comment-range--active {
+			background: var(--color-warning-transparent-400);
+			border-bottom-color: var(--color-warning-default);
+		}
+
 		// Deep-link flash (`?block=…`) — self-clearing, applied by `highlightBlock()`.
 		.gz-block-flash {
 			animation: gz-block-flash 2s ease-out;

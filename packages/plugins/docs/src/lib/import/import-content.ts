@@ -404,7 +404,20 @@ class ImportContentWalk {
 				output.push({ ...node, content: inline.map((child) => (child.type === 'fileAttachment' ? this.fileLink(child) : child)) });
 				continue;
 			}
-			if (node.type === 'text' || node.type === 'image' || node.type === 'hardBreak') {
+			if (node.type === 'image') {
+				// An image on a line of its own (the parser reads it as a block): resolved as one in running text is, and
+				// kept a block when it is one (a stored image, an attachment card); a page mention or the text standing in
+				// for it is a paragraph of its own.
+				for (const child of this.image(node)) {
+					output.push(
+						child.type === 'image' || child.type === 'fileAttachment'
+							? child
+							: { type: 'paragraph', content: [child] }
+					);
+				}
+				continue;
+			}
+			if (node.type === 'text' || node.type === 'hardBreak') {
 				output.push(node);
 				continue;
 			}

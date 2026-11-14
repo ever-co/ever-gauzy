@@ -3,7 +3,7 @@
 **Feature ID**: `chat-incoming-webhooks`
 **Plan**: `./plan.md`
 **Status**: `In progress` (server: ever-gauzy #11799)
-**Last updated**: 2026-11-12
+**Last updated**: 2026-11-13
 
 ---
 
@@ -33,7 +33,7 @@
 
 - [x] **T14**. Angular `chat-ui`: Integrations tab (create, URL + secret once with copy, list, rename, icon, interaction URL, broadcast, rotate, revoke), hidden on 404; app messages (badge, name, icon, blocks, buttons with pending / failed); strings in every locale; specs ([#11808](https://github.com/ever-co/ever-gauzy/pull/11808), `1bffa230b6`)
 - [x] **T15**. Ever Teams `apps/web` chat: app messages (badge, blocks, buttons → interaction route) behind `NEXT_PUBLIC_CHAT_WEBHOOKS_ENABLED`; strings in all 13 locales; tests ([ever-teams#5071](https://github.com/ever-co/ever-teams/pull/5071), `c16f21b33e`)
-- [ ] **T16**. Ever Teams management UI (create / list / revoke webhooks) — follow-up unless time permits
+- [x] **T16**. Ever Teams management UI (`apps/web` chat, behind `NEXT_PUBLIC_CHAT_WEBHOOKS_ENABLED`): a channel's More > Integrations for the people who manage it, hidden where the list route answers 404 or 403; list (name, icon, creator, created, last used, counters, revoked), create (URL + signing secret shown once with copy buttons), edit, rotate and revoke (both confirmed); 403 / limit / refused-value errors worded; proxy mode twins (`no-store`); strings in all 13 locales; tests ([ever-teams#5183](https://github.com/ever-co/ever-teams/pull/5183), `754ad57664`)
 
 ## Phase 4b — Idempotent clicks
 

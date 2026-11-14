@@ -90,6 +90,7 @@ export interface IOrganization
 	requireTask?: boolean;
 	requireClient?: boolean;
 	requireTeam?: boolean;
+	restrictTrackingSwitchToHigherRoles?: boolean;
 	timeFormat?: TimeFormatEnum;
 	defaultStartTime?: string;
 	defaultEndTime?: string;

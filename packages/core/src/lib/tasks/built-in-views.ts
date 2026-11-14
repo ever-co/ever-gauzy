@@ -11,6 +11,12 @@ export interface IBuiltInViewWindow {
 	dueDateFrom?: Date;
 	/** Due on or before this instant. */
 	dueDateTo?: Date;
+	/**
+	 * The calendar days (`YYYY-MM-DD`) the window starts and ends on, in its zone. A due date stored as a date only
+	 * (midnight UTC of its day) is compared with these days rather than the instants, so it counts on its own day.
+	 */
+	dueDateFromDay?: string;
+	dueDateToDay?: string;
 	/** Leave out the tasks that are done. */
 	openOnly: boolean;
 }
@@ -46,6 +52,11 @@ export function zoneOffsetMinutes(at: Date, timeZone: string): number {
 	const read = (type: string) => Number(parts.find((part) => part.type === type)?.value ?? 0);
 	const asUtc = Date.UTC(read('year'), read('month') - 1, read('day'), read('hour'), read('minute'), read('second'));
 	return Math.round((asUtc - at.getTime()) / 60_000);
+}
+
+/** The calendar day an instant falls on in a time zone (`2026-11-14`). */
+export function dayIn(at: Date, timeZone: string): string {
+	return new Date(at.getTime() + zoneOffsetMinutes(at, timeZone) * 60_000).toISOString().slice(0, 10);
 }
 
 /** The start of the calendar day holding `at` in the time zone, as an instant. */
@@ -85,16 +96,17 @@ export function builtInViewWindow(key: TaskBuiltInViewEnum, now: Date, timeZone 
 		case TaskBuiltInViewEnum.THIS_WEEK: {
 			const from = startOfWeekIn(now, zone);
 			const to = new Date(addDays(from, 7, zone).getTime() - 1);
-			return { mine: true, dueDateFrom: from, dueDateTo: to, openOnly: false };
+			return { mine: true, dueDateFrom: from, dueDateTo: to, dueDateFromDay: dayIn(from, zone), dueDateToDay: dayIn(to, zone), openOnly: false };
 		}
 		case TaskBuiltInViewEnum.OVERDUE: {
 			const today = startOfDayIn(now, zone);
-			return { mine: true, dueDateTo: new Date(today.getTime() - 1), openOnly: true };
+			const to = new Date(today.getTime() - 1);
+			return { mine: true, dueDateTo: to, dueDateToDay: dayIn(to, zone), openOnly: true };
 		}
 		case TaskBuiltInViewEnum.DUE_SOON: {
 			const today = startOfDayIn(now, zone);
 			const to = new Date(addDays(today, DUE_SOON_DAYS + 1, zone).getTime() - 1);
-			return { mine: true, dueDateFrom: today, dueDateTo: to, openOnly: true };
+			return { mine: true, dueDateFrom: today, dueDateTo: to, dueDateFromDay: dayIn(today, zone), dueDateToDay: dayIn(to, zone), openOnly: true };
 		}
 		case TaskBuiltInViewEnum.MINE:
 		default:

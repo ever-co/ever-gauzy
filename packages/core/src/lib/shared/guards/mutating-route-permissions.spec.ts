@@ -370,6 +370,13 @@ const DELIBERATELY_OPEN: ReadonlyArray<string> = Object.freeze([
 	'EmployeeNotificationSettingController.softRecover',
 	'EmployeeNotificationSettingController.softRemove',
 	'EmployeeNotificationSettingController.update',
+	// EmployeeRateChangeRequestController: own request: an employee whose role lacks CHANGE_OWN_RATES asks the
+	// admins for another rate (Ever Teams shows the form to exactly those employees, so any permission would lock
+	// its audience out). The requester is the caller's own employee, never one the body names; a caller with none
+	// is refused, the caller must belong to the organization and be its employee, and the only effect is a
+	// notification to the organization's ORG_EMPLOYEES_EDIT holders; no rate changes
+	// (rate-change-request.service.ts request). Limited to 5 a minute
+	'EmployeeRateChangeRequestController.request',
 	// EmployeeSettingController: own settings: the rows carry employeeId, so TenantAwareCrudService scopes every
 	// read and write to the employee of the caller unless they hold CHANGE_SELECTED_EMPLOYEE; a caller with neither
 	// reaches no row and may not create one (employee-setting.service.ts findConditionsWithoutOwnEmployee, create)
@@ -417,6 +424,17 @@ const DELIBERATELY_OPEN: ReadonlyArray<string> = Object.freeze([
 	'MentionController.softRecover',
 	'MentionController.softRemove',
 	'MentionController.update',
+	// OrganizationProjectController: a project's client rate and its members' client rates on it are set by an
+	// admin or by a manager an admin flagged on that project, and a flagged manager's role (EMPLOYEE, typically)
+	// holds none of the admin permissions, so any permission on the route would let TenantPermissionGuard refuse
+	// them before the service decides (Ever Teams opens the project rates to both: use-project-people-rates.ts).
+	// The handler's empty @Permissions() replaces the class gate on purpose; OrganizationProjectRateService
+	// refuses anyone outside the organization and anyone who neither holds ORG_EMPLOYEES_EDIT or
+	// CHANGE_SELECTED_EMPLOYEE nor manages the project with the isManager flag (which only a
+	// CHANGE_SELECTED_EMPLOYEE holder raises), and a manager may not set their own member rate
+	// (organization-project-rate.service.ts assertMayManageRates, updateMemberRate)
+	'OrganizationProjectController.updateMemberRate',
+	'OrganizationProjectController.updateRate',
 	// OrganizationVendorController: the shared ga-vendor-select creates a vendor inline from the Expenses dialog, which expense editors
 	// reach without ALL_ORG_EDIT; renaming and deleting a vendor stay behind ALL_ORG_EDIT
 	'OrganizationVendorController.create',
@@ -453,6 +471,15 @@ const DELIBERATELY_OPEN: ReadonlyArray<string> = Object.freeze([
 	// TenantController: onboarding: a user without a tenant creates their own and becomes its SUPER_ADMIN
 	// (tenant.service.ts onboardTenant)
 	'TenantController.create',
+	// UserApiTokenController: own personal API tokens: a token is exchanged for a session with exactly its user's
+	// role and permissions, so it grants nothing the caller does not hold already. Each write states the caller's
+	// own user id (another user's token id is a 404), only a first-party session may make or revoke one (a
+	// session from an API token is refused, and so is an OAuth-app token unless the operator turned
+	// OAUTH_APP_TOKEN_SCOPE_ENFORCEMENT off, which gives such tokens the user's full role again), and the server
+	// switch must be on (user-api-token.service.ts createOwn, revokeOwn, assertFirstPartyRequest;
+	// UserApiTokensEnabledGuard). The settings page is open to every signed-in user
+	'UserApiTokenController.create',
+	'UserApiTokenController.revoke',
 	// UserController: own preferences: the service ignores any id in the payload and writes RequestContext.currentUserId()
 	// (user.service.ts:569, 583, 607)
 	'UserController.updatePreferredComponentLayout',

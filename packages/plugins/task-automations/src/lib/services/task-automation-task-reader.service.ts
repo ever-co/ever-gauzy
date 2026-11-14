@@ -51,6 +51,12 @@ export class TaskAutomationTaskReader {
 		return snapshot;
 	}
 
+	/** Whether a task (not deleted) is of the tenant and the organization: a closed link is reported only for one. */
+	async belongsTo(tenantId: ID, organizationId: ID, taskId: ID): Promise<boolean> {
+		const count = await this.dataSource.getRepository(Task).count({ where: { id: taskId, tenantId, organizationId } as never });
+		return count > 0;
+	}
+
 	/**
 	 * A task's assignees and labels as stored now, or `null` when the task is gone: what the writer applies a rule's
 	 * additions and removals to, read just before it writes.

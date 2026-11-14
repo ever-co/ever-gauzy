@@ -5,11 +5,11 @@ import { environment } from '@gauzy/config';
  *
  * Several endpoints accept a link from the caller and put it in an email that the API sends: the
  * sign-in code email (`appMagicSignUrl`), the verification email (`appEmailConfirmationUrl`), the
- * invitation emails (`callbackUrl`), the footer links of the branded emails (`appLink`,
- * `companyLink`), and the `Origin` / `originalUrl` that several emails use as the base of the links
- * they build. That is how Ever Teams sends its users to its own pages. Several of those links carry
- * a sign-in code or a verification / invitation token, so they may only lead to a front end of this
- * deployment.
+ * password reset email (`appResetPasswordUrl`), the invitation emails (`callbackUrl`), the footer
+ * links of the branded emails (`appLink`, `companyLink`), and the `Origin` / `originalUrl` that
+ * several emails use as the base of the links they build. That is how Ever Teams sends its users to
+ * its own pages. Several of those links carry a sign-in code or a verification / invitation / reset
+ * token, so they may only lead to a front end of this deployment.
  *
  * So a caller-supplied link is only honoured when its origin is one the deployment already serves:
  * `CLIENT_BASE_URL`, the configured `APP_EMAIL_CONFIRMATION_URL` / `APP_MAGIC_SIGN_URL` / `APP_LINK`,
@@ -175,6 +175,12 @@ export function withAllowedEmailLinks<T>(
 			// The deployment's own configured value (e.g. an already merged config): trusted as is.
 			continue;
 		}
+		if (isSameLink(value, defaults[field])) {
+			// The configured link written another way (`https://ever.co/` for `https://ever.co`, as a
+			// client that parses its links sends it): the configured one, and nothing to report.
+			result[field] = defaults[field];
+			continue;
+		}
 		const allowed = allowedEmailLink(value, env);
 		if (allowed) {
 			result[field] = allowed;
@@ -186,6 +192,13 @@ export function withAllowedEmailLinks<T>(
 		}
 	}
 	return result as T;
+}
+
+/** True when both are absolute http(s) URLs that parse to the same link. */
+function isSameLink(first: unknown, second: unknown): boolean {
+	const one = parseHttpUrl(first);
+	const other = parseHttpUrl(second);
+	return !!one && !!other && one.href === other.href;
 }
 
 /** The parsed URL when `value` is an absolute http(s) URL on an allowed origin, otherwise null. */
