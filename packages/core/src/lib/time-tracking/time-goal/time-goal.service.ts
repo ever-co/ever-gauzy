@@ -276,13 +276,17 @@ export class TimeGoalService extends TenantAwareCrudService<TimeGoal> {
 			teamIds.push(membership.organizationTeamId);
 			teamIdsByMember.set(membership.employeeId, teamIds);
 		}
-		const goals = await this.goalsCounting(
+		const countedGoals = await this.goalsCounting(
 			members.map(({ id }) => id),
 			memberships.map(({ organizationTeamId }) => organizationTeamId),
 			organizationId,
 			tenantId,
 			input.goalIds
 		);
+		// A goal the caller may not read stays out of the rows, as it does out of `findGoal`: a manager reading a member
+		// does not see the goals of the member's other teams.
+		const readable = await Promise.all(countedGoals.map((goal) => this.mayRead(goal)));
+		const goals = countedGoals.filter((_, index) => readable[index]);
 		if (goals.length === 0) {
 			return [];
 		}

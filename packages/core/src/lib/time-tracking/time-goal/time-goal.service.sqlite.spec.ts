@@ -607,6 +607,51 @@ describe('TimeGoalService on SQLite', () => {
 	);
 
 	it(
+		"leaves out of a manager's progress read the goals of a member's other team, which he may not read",
+		inRequest(async () => {
+			const research = '15000000-0000-4000-8000-000000000012';
+			const membership = '15000000-0000-4000-a000-0000000000f1';
+			await insertRow(OrganizationTeam, {
+				id: research,
+				tenantId: TENANT,
+				organizationId: ORGANIZATION,
+				name: 'Research',
+				isActive: true,
+				isArchived: false
+			});
+			await insertRow(OrganizationTeamEmployee, {
+				id: membership,
+				tenantId: TENANT,
+				organizationId: ORGANIZATION,
+				organizationTeamId: research,
+				employeeId: MARIE,
+				isManager: false,
+				isActive: true,
+				isArchived: false
+			});
+			try {
+				actAs(ADMIN, [PermissionsEnum.CHANGE_SELECTED_EMPLOYEE]);
+				await goal({ name: 'Research team', scope: TimeGoalScopeEnum.TEAM, organizationTeamId: research });
+
+				actAs(MARIE);
+				const own = await service.getProgress({ organizationId: ORGANIZATION, date: '2026-11-10' });
+				expect(Object.keys(rowsOf(own, MARIE))).toEqual(['Research team']);
+
+				actAs(MANAGER);
+				const managed = await service.getProgress({
+					organizationId: ORGANIZATION,
+					date: '2026-11-10',
+					organizationTeamId: TEAM
+				});
+				expect(Object.keys(rowsOf(managed, MARIE))).toEqual([]);
+			} finally {
+				await dataSource.query('DELETE FROM "organization_team_employee" WHERE "id" = ?', [membership]);
+			}
+		}),
+		TIMEOUT
+	);
+
+	it(
 		'leaves a field sent as null as it is',
 		inRequest(async () => {
 			actAs(MARIE);
