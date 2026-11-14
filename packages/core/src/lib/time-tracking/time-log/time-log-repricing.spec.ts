@@ -143,6 +143,26 @@ describe('re-pricing time from a day', () => {
 	);
 
 	it(
+		"changes a member's client rate and its currency, never the currency of the project's rate",
+		async () => {
+			await dataSource.query(`UPDATE "time_log" SET "projectBillRateCurrency" = 'EUR'`);
+
+			await repricing.repriceMemberProjectTime(dataSource.manager, october, PROJECT, MARIE, {
+				billRateValue: 95,
+				currency: 'USD'
+			});
+
+			expect(await ratesOf(LOG.october)).toMatchObject({
+				projectBillRateValue: 90,
+				projectBillRateCurrency: 'EUR',
+				projectMemberBillRateValue: 95,
+				projectMemberBillRateCurrency: 'USD'
+			});
+		},
+		TIMEOUT
+	);
+
+	it(
 		"stores the organization's currency with a pay rate that states none",
 		async () => {
 			await repricing.repriceMemberTime(dataSource.manager, october, MARIE, { payRateValue: 30 });
@@ -226,7 +246,8 @@ describe('re-pricing time from a day', () => {
 			expect(await ratesOf(LOG.october)).toMatchObject({
 				projectBillRateValue: 120,
 				projectBillRateCurrency: 'USD',
-				projectMemberBillRateValue: 95
+				projectMemberBillRateValue: 95,
+				projectMemberBillRateCurrency: 'USD'
 			});
 			expect(await ratesOf(LOG.paul)).toMatchObject({
 				projectBillRateValue: 120,

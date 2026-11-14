@@ -44,7 +44,8 @@ export const RATE_EDITOR_COLUMNS: Readonly<Record<string, readonly string[]>> = 
 		'payRateCurrency',
 		'projectBillRateValue',
 		'projectMemberBillRateValue',
-		'projectBillRateCurrency'
+		'projectBillRateCurrency',
+		'projectMemberBillRateCurrency'
 	]
 };
 

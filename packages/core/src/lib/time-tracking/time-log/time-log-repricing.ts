@@ -125,7 +125,7 @@ export async function repriceProjectTime(
 
 /**
  * Re-prices a member's time on a project from a day at their new client rate on it, in the project's currency of
- * the moment, which both client rates a log stores are in.
+ * the moment, stored with it apart from the project's client rate and its currency.
  *
  * @returns How many time logs took the new rate.
  */
@@ -138,7 +138,7 @@ export async function repriceMemberProjectTime(
 ): Promise<number> {
 	const values: Partial<TimeLog> = {
 		projectMemberBillRateValue: rate.billRateValue,
-		projectBillRateCurrency: rate.currency
+		projectMemberBillRateCurrency: rate.currency
 	};
 	return await reprice(manager, time, { projectId, employeeId }, values);
 }

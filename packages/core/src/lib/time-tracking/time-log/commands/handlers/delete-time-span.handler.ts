@@ -25,6 +25,7 @@ const STORED_RATE_FIELDS: Array<keyof TimeLog> = [
 	'projectBillRateValue',
 	'projectMemberBillRateValue',
 	'projectBillRateCurrency',
+	'projectMemberBillRateCurrency',
 	'ratesStored'
 ];
 

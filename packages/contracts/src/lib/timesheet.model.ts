@@ -212,8 +212,10 @@ export interface ITimeLogStoredRates {
 	projectBillRateValue?: number | null;
 	/** The member's client rate on the project when the log was recorded, over the project's. */
 	projectMemberBillRateValue?: number | null;
-	/** The currency of both client rates: the project's (empty: the organization's). */
+	/** The currency of the project's client rate. */
 	projectBillRateCurrency?: string | null;
+	/** The currency of the member's client rate on the project. */
+	projectMemberBillRateCurrency?: string | null;
 }
 
 /**

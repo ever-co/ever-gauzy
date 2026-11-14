@@ -40,6 +40,7 @@ const COLUMNS: ReadonlyArray<{ name: string; type: Readonly<Record<Dialect, stri
 	{ name: 'projectBillRateValue', type: RATE },
 	{ name: 'projectMemberBillRateValue', type: RATE },
 	{ name: 'projectBillRateCurrency', type: CURRENCY },
+	{ name: 'projectMemberBillRateCurrency', type: CURRENCY },
 	{ name: MARKER, type: FLAG }
 ];
 
@@ -48,8 +49,8 @@ const COLUMNS: ReadonlyArray<{ name: string; type: Readonly<Record<Dialect, stri
  *
  * - `billRateValue`, `billRateCurrency`: the member's billing rate;
  * - `payRateValue`, `payRateCurrency`: the member's pay rate;
- * - `projectBillRateValue`, `projectMemberBillRateValue`, `projectBillRateCurrency`: the project's client rate, the
- *   member's client rate on the project and the currency both are in;
+ * - `projectBillRateValue`, `projectBillRateCurrency`, `projectMemberBillRateValue`, `projectMemberBillRateCurrency`:
+ *   the project's client rate and the member's client rate on the project, each with its currency;
  * - `ratesStored`: whether the log stores them. A row written around the API (a restored archive) does not, and is
  *   priced at the current rates as before.
  *
@@ -181,9 +182,11 @@ const FILL: Readonly<Record<Dialect, ReadonlyArray<string>>> = {
 			`"projectBillRateCurrency" = COALESCE("project"."currency", (SELECT "currency" FROM "organization" WHERE "organization"."id" = "time_log"."organizationId")) ` +
 			`FROM "organization_project" "project" WHERE "project"."id" = "time_log"."projectId" ` +
 			`AND "project"."deletedAt" IS NULL AND "time_log"."ratesStored" IS NULL`,
-		`UPDATE "time_log" SET "projectMemberBillRateValue" = "member"."billRateValue" ` +
-			`FROM "organization_project_employee" "member" ` +
-			`WHERE "member"."organizationProjectId" = "time_log"."projectId" ` +
+		`UPDATE "time_log" SET "projectMemberBillRateValue" = "member"."billRateValue", ` +
+			`"projectMemberBillRateCurrency" = COALESCE("project"."currency", (SELECT "currency" FROM "organization" WHERE "organization"."id" = "time_log"."organizationId")) ` +
+			`FROM "organization_project_employee" "member", "organization_project" "project" ` +
+			`WHERE "project"."id" = "time_log"."projectId" AND "project"."deletedAt" IS NULL ` +
+			`AND "member"."organizationProjectId" = "time_log"."projectId" ` +
 			`AND "member"."employeeId" = "time_log"."employeeId" AND "member"."billRateValue" IS NOT NULL ` +
 			`AND ${CURRENT_MEMBERSHIP_PG} AND "time_log"."ratesStored" IS NULL`,
 		`UPDATE "time_log" SET "billRateValue" = "employee"."billRateValue", ` +
@@ -197,11 +200,13 @@ const FILL: Readonly<Record<Dialect, ReadonlyArray<string>>> = {
 			'SET `time_log`.`projectBillRateValue` = `project`.`billRateValue`, ' +
 			'`time_log`.`projectBillRateCurrency` = COALESCE(`project`.`currency`, (SELECT `currency` FROM `organization` WHERE `organization`.`id` = `time_log`.`organizationId`)) ' +
 			'WHERE `project`.`deletedAt` IS NULL AND `time_log`.`ratesStored` IS NULL',
-		'UPDATE `time_log` INNER JOIN `organization_project_employee` `member` ' +
+		'UPDATE `time_log` INNER JOIN `organization_project` `project` ON `project`.`id` = `time_log`.`projectId` ' +
+			'INNER JOIN `organization_project_employee` `member` ' +
 			'ON `member`.`organizationProjectId` = `time_log`.`projectId` ' +
 			'AND `member`.`employeeId` = `time_log`.`employeeId` ' +
-			'SET `time_log`.`projectMemberBillRateValue` = `member`.`billRateValue` ' +
-			`WHERE \`member\`.\`billRateValue\` IS NOT NULL AND ${CURRENT_MEMBERSHIP_MYSQL} ` +
+			'SET `time_log`.`projectMemberBillRateValue` = `member`.`billRateValue`, ' +
+			'`time_log`.`projectMemberBillRateCurrency` = COALESCE(`project`.`currency`, (SELECT `currency` FROM `organization` WHERE `organization`.`id` = `time_log`.`organizationId`)) ' +
+			`WHERE \`member\`.\`billRateValue\` IS NOT NULL AND \`project\`.\`deletedAt\` IS NULL AND ${CURRENT_MEMBERSHIP_MYSQL} ` +
 			'AND `time_log`.`ratesStored` IS NULL',
 		'UPDATE `time_log` INNER JOIN `employee` ON `employee`.`id` = `time_log`.`employeeId` ' +
 			'SET `time_log`.`billRateValue` = `employee`.`billRateValue`, ' +
@@ -221,8 +226,10 @@ const FILL: Readonly<Record<Dialect, ReadonlyArray<string>>> = {
 			`FROM "organization_project_employee" "member" ` +
 			`WHERE "member"."organizationProjectId" = "time_log"."projectId" ` +
 			`AND "member"."employeeId" = "time_log"."employeeId" AND "member"."billRateValue" IS NOT NULL ` +
-			`AND ${CURRENT_MEMBERSHIP_SQLITE} LIMIT 1) ` +
-			`WHERE "time_log"."projectId" IS NOT NULL AND "time_log"."ratesStored" IS NULL`,
+			`AND ${CURRENT_MEMBERSHIP_SQLITE} LIMIT 1), ` +
+			`"projectMemberBillRateCurrency" = COALESCE((SELECT "currency" FROM "organization_project" "project" WHERE "project"."id" = "time_log"."projectId"), (SELECT "currency" FROM "organization" WHERE "organization"."id" = "time_log"."organizationId")) ` +
+			`WHERE "time_log"."projectId" IS NOT NULL AND "time_log"."ratesStored" IS NULL ` +
+			`AND EXISTS (SELECT 1 FROM "organization_project" "project" WHERE "project"."id" = "time_log"."projectId" AND "project"."deletedAt" IS NULL)`,
 		`UPDATE "time_log" SET ` +
 			`"billRateValue" = (SELECT "billRateValue" FROM "employee" WHERE "employee"."id" = "time_log"."employeeId"), ` +
 			`"billRateCurrency" = COALESCE((SELECT "billRateCurrency" FROM "employee" WHERE "employee"."id" = "time_log"."employeeId"), (SELECT "currency" FROM "organization" WHERE "organization"."id" = "time_log"."organizationId")), ` +

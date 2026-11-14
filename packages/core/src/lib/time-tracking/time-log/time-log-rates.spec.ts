@@ -59,6 +59,7 @@ describe('time log rates', () => {
 				projectBillRateValue: 90,
 				projectMemberBillRateValue: 95.5,
 				projectBillRateCurrency: 'EUR',
+				projectMemberBillRateCurrency: 'EUR',
 				ratesStored: true
 			});
 			expect(reads[0].options.select).toMatchObject({ payRateValue: true, payRateCurrency: true });
@@ -120,7 +121,8 @@ describe('time log rates', () => {
 			expect(rates).toEqual({
 				projectBillRateValue: null,
 				projectMemberBillRateValue: null,
-				projectBillRateCurrency: null
+				projectBillRateCurrency: null,
+				projectMemberBillRateCurrency: null
 			});
 			expect(withoutProject.reads).toHaveLength(0);
 		});

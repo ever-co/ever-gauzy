@@ -12,6 +12,7 @@ const RATE_COLUMNS = [
 	'projectBillRateValue',
 	'projectMemberBillRateValue',
 	'projectBillRateCurrency',
+	'projectMemberBillRateCurrency',
 	'ratesStored'
 ];
 
@@ -57,7 +58,8 @@ describe('time log stored rates migration on SQLite', () => {
 		// Marie's own client rate on the site, and Paul's, left on an archived membership
 		await dataSource.query(
 			`INSERT INTO "organization_project_employee" VALUES ('m1', 'site', 'marie', 95, 1, 0, NULL), ` +
-				`('m2', 'site', 'paul', 70, 1, 1, NULL), ('m3', 'internal', 'marie', 60, 1, 0, '2026-09-01 00:00:00')`
+				`('m2', 'site', 'paul', 70, 1, 1, NULL), ('m3', 'internal', 'marie', 60, 1, 0, '2026-09-01 00:00:00'), ` +
+				`('m4', 'closed', 'marie', 65, 1, 0, NULL)`
 		);
 		await dataSource.query(
 			`INSERT INTO "time_log" VALUES ('marie-site', 'marie', 'site', 'org'), ('paul-site', 'paul', 'site', 'org'), ` +
@@ -104,6 +106,7 @@ describe('time log stored rates migration on SQLite', () => {
 			['projectBillRateValue', 'numeric(14,2)'],
 			['projectMemberBillRateValue', 'numeric(14,2)'],
 			['projectBillRateCurrency', 'varchar'],
+			['projectMemberBillRateCurrency', 'varchar'],
 			['ratesStored', 'boolean']
 		]);
 	});
@@ -119,6 +122,7 @@ describe('time log stored rates migration on SQLite', () => {
 			projectBillRateValue: 90,
 			projectMemberBillRateValue: 95,
 			projectBillRateCurrency: 'EUR',
+			projectMemberBillRateCurrency: 'EUR',
 			ratesStored: 1
 		});
 		// A rate that states no currency is stored in the organization's, so a later change cannot relabel it
@@ -145,7 +149,11 @@ describe('time log stored rates migration on SQLite', () => {
 			projectMemberBillRateValue: null,
 			ratesStored: 1
 		});
-		expect(await logOf('marie-closed')).toMatchObject({ projectBillRateValue: null, ratesStored: 1 });
+		expect(await logOf('marie-closed')).toMatchObject({
+			projectBillRateValue: null,
+			projectMemberBillRateValue: null,
+			ratesStored: 1
+		});
 	});
 
 	it('never refills a log that already stores its rates, and keeps the columns on down', async () => {
@@ -202,7 +210,7 @@ describe('time log stored rates migration on MySQL', () => {
 
 		expect(migration.mysqlLockName.length).toBeLessThanOrEqual(64);
 		expect(queries[0]).toBe('SELECT GET_LOCK(?, 120) AS `acquired`');
-		expect(queries.slice(1, 9)).toEqual([
+		expect(queries.slice(1, 10)).toEqual([
 			'ALTER TABLE `time_log` ADD COLUMN `billRateValue` decimal(14,2) NULL',
 			'ALTER TABLE `time_log` ADD COLUMN `billRateCurrency` varchar(255) NULL',
 			'ALTER TABLE `time_log` ADD COLUMN `payRateValue` decimal(14,2) NULL',
@@ -210,6 +218,7 @@ describe('time log stored rates migration on MySQL', () => {
 			'ALTER TABLE `time_log` ADD COLUMN `projectBillRateValue` decimal(14,2) NULL',
 			'ALTER TABLE `time_log` ADD COLUMN `projectMemberBillRateValue` decimal(14,2) NULL',
 			'ALTER TABLE `time_log` ADD COLUMN `projectBillRateCurrency` varchar(255) NULL',
+			'ALTER TABLE `time_log` ADD COLUMN `projectMemberBillRateCurrency` varchar(255) NULL',
 			'ALTER TABLE `time_log` ADD COLUMN `ratesStored` tinyint NULL'
 		]);
 		const fills = queries.filter((sql) => sql.startsWith('UPDATE'));

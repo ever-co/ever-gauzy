@@ -13,6 +13,7 @@ const STORED_RATES = {
 	projectBillRateValue: 90,
 	projectMemberBillRateValue: 95,
 	projectBillRateCurrency: 'EUR',
+	projectMemberBillRateCurrency: 'EUR',
 	ratesStored: true
 };
 

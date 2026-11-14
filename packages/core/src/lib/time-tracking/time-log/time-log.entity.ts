@@ -166,10 +166,15 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog, I
 	@MultiORMColumn({ ...billingRateColumn(), select: false, hidden: true })
 	projectMemberBillRateValue?: number | null;
 
-	/** The currency of both client rates: the project's. Empty, the organization's. */
+	/** The currency of the project's client rate: the project's when it was stored, else the organization's. */
 	@Exclude({ toPlainOnly: true })
 	@MultiORMColumn({ nullable: true, select: false, hidden: true })
 	projectBillRateCurrency?: string | null;
+
+	/** The currency of the member's client rate on the project, kept apart: each client rate changes on its own. */
+	@Exclude({ toPlainOnly: true })
+	@MultiORMColumn({ nullable: true, select: false, hidden: true })
+	projectMemberBillRateCurrency?: string | null;
 
 	/** Additional virtual columns */
 	@VirtualMultiOrmColumn()

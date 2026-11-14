@@ -10,7 +10,8 @@ const HIDDEN_RATES = [
 	'payRateCurrency',
 	'projectBillRateValue',
 	'projectMemberBillRateValue',
-	'projectBillRateCurrency'
+	'projectBillRateCurrency',
+	'projectMemberBillRateCurrency'
 ];
 
 const TIME_LOG = {

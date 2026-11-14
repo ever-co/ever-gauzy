@@ -71,9 +71,20 @@ export async function findClientRates(
 	scope: TimeLogRatesScope,
 	organizationCurrency?: string | null
 ): Promise<
-	Pick<TimeLogRatesToStore, 'projectBillRateValue' | 'projectMemberBillRateValue' | 'projectBillRateCurrency'>
+	Pick<
+		TimeLogRatesToStore,
+		| 'projectBillRateValue'
+		| 'projectMemberBillRateValue'
+		| 'projectBillRateCurrency'
+		| 'projectMemberBillRateCurrency'
+	>
 > {
-	const none = { projectBillRateValue: null, projectMemberBillRateValue: null, projectBillRateCurrency: null };
+	const none = {
+		projectBillRateValue: null,
+		projectMemberBillRateValue: null,
+		projectBillRateCurrency: null,
+		projectMemberBillRateCurrency: null
+	};
 	if (!scope.projectId) {
 		return none;
 	}
@@ -93,10 +104,13 @@ export async function findClientRates(
 		},
 		select: { id: true, billRateValue: true }
 	});
+	// Both client rates are in the project's currency when they are recorded; each keeps its own afterwards
+	const currency = project.currency || (await currencyOf(manager, scope, organizationCurrency));
 	return {
 		projectBillRateValue: rateOf(project.billRateValue),
 		projectMemberBillRateValue: rateOf(membership?.billRateValue),
-		projectBillRateCurrency: project.currency || (await currencyOf(manager, scope, organizationCurrency))
+		projectBillRateCurrency: currency,
+		projectMemberBillRateCurrency: currency
 	};
 }
 
@@ -160,6 +174,7 @@ export async function findStoredRatesOf(
 				projectBillRateValue: true,
 				projectMemberBillRateValue: true,
 				projectBillRateCurrency: true,
+				projectMemberBillRateCurrency: true,
 				ratesStored: true
 			},
 			withDeleted: true
@@ -175,6 +190,7 @@ export async function findStoredRatesOf(
 			projectBillRateValue: rateOf(row.projectBillRateValue),
 			projectMemberBillRateValue: rateOf(row.projectMemberBillRateValue),
 			projectBillRateCurrency: row.projectBillRateCurrency ?? null,
+			projectMemberBillRateCurrency: row.projectMemberBillRateCurrency ?? null,
 			ratesStored: row.ratesStored ?? null
 		});
 	}
