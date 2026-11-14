@@ -110,6 +110,8 @@ interface State {
 	allowEmployeeToSeeTrackedData: boolean;
 	managedTeams: string[];
 	teamMembers: string[];
+	/** The organization's default billing rate, when it sets one. */
+	defaultBillRate?: { defaultBillRateValue: number | null; defaultBillRateCurrency: string | null };
 }
 
 /** A link of Marie's "Client A, last month", and Marie an admin with an employee record in the organization. */
@@ -185,7 +187,12 @@ function serviceFor(state: State) {
 	const seen: { request?: IGetTimeLogReportInput; userIdInReport?: string; employeeIdInReport?: string } = {};
 	const repositories: Record<string, object> = {
 		Organization: {
-			findOne: async () => ({ id: ORGANIZATION, startWeekOn: WeekDaysEnum.MONDAY, currency: 'USD' }),
+			findOne: async () => ({
+				id: ORGANIZATION,
+				startWeekOn: WeekDaysEnum.MONDAY,
+				currency: 'USD',
+				...state.defaultBillRate
+			}),
 			find: async () => [{ id: ORGANIZATION, allowEmployeeToSeeTrackedData: state.allowEmployeeToSeeTrackedData }]
 		},
 		UserOrganization: {
@@ -336,6 +343,27 @@ describe('SavedReportPublicService', () => {
 		]);
 		expect(answer.days[0].logs[1].employeeLogs[0].employee).toMatchObject({
 			billRateValue: 50,
+			billRateCurrency: 'USD'
+		});
+	});
+
+	it("prices a member without a rate of their own at the organization's default, as the report page does", async () => {
+		const state = stateWith(token);
+		state.report.filters = {};
+		state.report.includeAmounts = true;
+		// Paul has no rate of his own: a member nobody set a rate for is stored with 0.
+		state.employees[1].billRateValue = 0;
+		state.defaultBillRate = { defaultBillRateValue: 30, defaultBillRateCurrency: null };
+		const { service } = serviceFor(state);
+
+		const answer = await service.read(token);
+
+		expect(answer.totals.amounts).toEqual([
+			{ currency: 'EUR', amount: 120 },
+			{ currency: 'USD', amount: 60 }
+		]);
+		expect(answer.days[0].logs[1].employeeLogs[0].employee).toMatchObject({
+			billRateValue: 30,
 			billRateCurrency: 'USD'
 		});
 	});

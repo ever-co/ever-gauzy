@@ -425,6 +425,17 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	restrictTrackingSwitchToHigherRoles?: boolean;
 
 	/**
+	 * Whether the organization's time logs keep the rates they were recorded at. On, a rate change without a day
+	 * prices only the time recorded from then on, and a change with a day re-prices the time from that day. Off (empty)
+	 * by default, as before the setting: a rate change without a day prices all the time already tracked.
+	 */
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
+	@MultiORMColumn({ nullable: true })
+	timeLogsKeepTheirRates?: boolean;
+
+	/**
 	 * Whether members are asked to turn on two-factor authentication: a sign-in of a member without it says so
 	 * (`twoFactorSetupRequired`), and the client takes them to the setup. Off by default, so that no member is asked
 	 * for a code an app they use cannot take yet.
@@ -455,6 +466,16 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@Max(1440)
 	@MultiORMColumn({ nullable: true })
 	discardTimerWithinMinutes?: number;
+
+	/**
+	 * Whether members may record breaks: time logs of type BREAK, taken from the timer or added by hand, which never count
+	 * as worked, billable or invoiced time. Off when unset, as before the setting existed: a break is then refused.
+	 */
+	@ApiPropertyOptional({ type: () => Boolean, default: false })
+	@IsOptional()
+	@IsBoolean()
+	@MultiORMColumn({ nullable: true, default: false })
+	allowBreaks?: boolean;
 
 	@MultiORMColumn({ default: 12 })
 	timeFormat?: 12 | 24;
@@ -515,6 +536,17 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 
 	@MultiORMColumn({ nullable: true })
 	daysUntilDue?: number;
+
+	/**
+	 * Whether the client of an unpaid invoice gets payment reminders by email: three days before the due date, then one,
+	 * seven and fourteen days after it, while the invoice is not fully paid. Off by default: nothing is emailed to a
+	 * client until the organization turns it on.
+	 */
+	@ApiPropertyOptional({ type: () => Boolean, default: false })
+	@IsOptional()
+	@IsBoolean()
+	@MultiORMColumn({ default: false })
+	invoiceRemindersEnabled?: boolean;
 
 	@MultiORMColumn({ default: false })
 	isRemoveIdleTime?: boolean;

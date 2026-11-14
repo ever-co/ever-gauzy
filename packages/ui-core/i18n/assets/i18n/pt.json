@@ -476,6 +476,8 @@
 			"DEFAULT_TERMS": "Termos padrão para faturas e orçamentos.",
 			"CONVERT_ESTIMATES": "Converter Estimativas",
 			"ALLOW_CONVERTING": "Converter automaticamente o orçamento aceito em fatura.",
+			"INVOICE_REMINDERS": "Lembretes de pagamento",
+			"SEND_INVOICE_REMINDERS": "Enviar um e-mail ao cliente de uma fatura não paga 3 dias antes do vencimento e, depois, 1, 7 e 14 dias após",
 			"DEFAULT_DAYS": "Dias padrão até a data de vencimento das faturas e orçamentos.",
 			"TEMPLATE_NAME": "Nome do Template",
 			"TEMPLATE_BODY": "Corpo do modelo.",
@@ -6831,6 +6833,7 @@
 			"email-reset": "Reiniciar o Email.",
 			"organization-team-join-request": "Pedido de adesão à equipe da organização",
 			"payment-receipt": "Recibo de pagamento",
+			"invoice-reminder": "Lembrete de fatura",
 			"reject-candidate": "Rejeitar Candidato"
 		},
 		"HTML_EDITOR": "Editor HTML",

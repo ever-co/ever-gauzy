@@ -27,6 +27,7 @@ import {
 	IPagination,
 	IEmployee,
 	IEmployeePayRate,
+	IEmployeeUpdateInput,
 	IEmployeePresence,
 	ID
 } from '@gauzy/contracts';
@@ -463,8 +464,31 @@ export class EmployeeController extends CrudController<Employee> {
 	@UseValidationPipe({ whitelist: true })
 	async update(@Param('id', UUIDValidationPipe) id: ID, @Body() entity: UpdateEmployeeDTO): Promise<IEmployee> {
 		await this._employeeService.assertOwnPayRateUnchanged(id, entity);
-		const changes = withoutOwnPayRateWrite(id, entity);
-		return await this._commandBus.execute(new EmployeeUpdateCommand(id, changes));
+		const { ratesApplyFrom, ...input } = entity;
+		if (ratesApplyFrom) {
+			this._employeeService.assertMayRepriceTimeOf(id);
+		}
+		const changes = withoutOwnPayRateWrite(id, input);
+		const employee = await this._commandBus.execute(new EmployeeUpdateCommand(id, changes));
+		return await this.withRepricedTime(id, employee, changes, ratesApplyFrom);
+	}
+
+	/**
+	 * The updated employee, with how many time logs took its new rates (`repricedTimeLogs`) when the update re-priced
+	 * any: from the day it named, or, without one, all the time already tracked unless the organization's time logs
+	 * keep their rates (see EmployeeService.repriceTimeFrom). Otherwise the answer is the employee as before.
+	 */
+	private async withRepricedTime(
+		id: ID,
+		employee: IEmployee,
+		changes: IEmployeeUpdateInput,
+		ratesApplyFrom: string | undefined
+	): Promise<IEmployee> {
+		const repricedTimeLogs = await this._employeeService.repriceTimeFrom(id, changes, ratesApplyFrom);
+		if (repricedTimeLogs === undefined) {
+			return employee;
+		}
+		return Object.assign(employee, { repricedTimeLogs });
 	}
 
 	/**
@@ -507,7 +531,12 @@ export class EmployeeController extends CrudController<Employee> {
 	@Put('/:id/profile')
 	@UseValidationPipe({ whitelist: true })
 	async updateProfile(@Param('id', UUIDValidationPipe) id: ID, @Body() entity: UpdateProfileDTO): Promise<IEmployee> {
-		return await this._commandBus.execute(new EmployeeUpdateCommand(id, entity));
+		const { ratesApplyFrom, ...changes } = entity;
+		if (ratesApplyFrom) {
+			this._employeeService.assertMayRepriceTimeOf(id);
+		}
+		const employee = await this._commandBus.execute(new EmployeeUpdateCommand(id, changes));
+		return await this.withRepricedTime(id, employee, changes, ratesApplyFrom);
 	}
 
 	/**

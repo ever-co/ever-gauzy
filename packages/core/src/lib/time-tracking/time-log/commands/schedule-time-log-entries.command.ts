@@ -11,11 +11,14 @@ export class ScheduleTimeLogEntriesCommand implements ICommand {
 	 * @param tenantId The employee's tenant. Required.
 	 * @param timeLogIds Only the running pending logs among these, when given: the runs the start or stop read. A log
 	 *                   stored stopped without an end is still given one.
+	 * @param replacedAt The start of the run that replaces the pending entries, if a start closes them: a running break
+	 *                   ends there.
 	 */
 	constructor(
 		public readonly employeeId?: ID,
 		public readonly organizationId?: ID,
 		public readonly tenantId?: ID,
-		public readonly timeLogIds?: ID[]
+		public readonly timeLogIds?: ID[],
+		public readonly replacedAt?: Date
 	) {}
 }

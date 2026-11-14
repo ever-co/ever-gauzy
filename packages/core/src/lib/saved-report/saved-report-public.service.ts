@@ -17,6 +17,7 @@ import { isDeactivatedEmployee } from '../auth/deactivated-employee';
 import { ManagedEmployeeService } from '../employee/managed-employee.service';
 import { RoleAuthorizationService } from '../role/role-authorization.service';
 import { canViewTrackedData } from '../shared/guards/employee-tracked-data.guard';
+import { billRateOf, DefaultBillRate, defaultBillRateOf } from '../time-tracking/time-log/default-bill-rate';
 import { TimeLogService } from '../time-tracking/time-log/time-log.service';
 import { UserService } from '../user/user.service';
 import { MikroOrmSavedReportRepository } from './repository/mikro-orm-saved-report.repository';
@@ -120,7 +121,13 @@ export class SavedReportPublicService {
 
 		const organization = await this.dataSource.getRepository(Organization).findOne({
 			where: { id: report.organizationId, tenantId: report.tenantId },
-			select: { id: true, startWeekOn: true, currency: true }
+			select: {
+				id: true,
+				startWeekOn: true,
+				currency: true,
+				defaultBillRateValue: true,
+				defaultBillRateCurrency: true
+			}
 		});
 		if (!organization) {
 			throw linkDoesNotWork();
@@ -153,7 +160,7 @@ export class SavedReportPublicService {
 		const projectClients = await this.projectClientsOf(pickedClients, days, report);
 		const kept = keepPickedClients(days, pickedClients, projectClients);
 
-		const rates = await this.ratesOf(report, kept, organization.currency);
+		const rates = await this.ratesOf(report, kept, organization.currency, defaultBillRateOf(organization));
 		const publicDays = publicDaysOf(kept, rates);
 		const includeAmounts = report.includeAmounts === true;
 
@@ -272,12 +279,14 @@ export class SavedReportPublicService {
 
 	/**
 	 * The rate of each member the report names, read now, when the author included amounts: a rate stated without a
-	 * currency is in the organization's, as on the report page. Null when amounts are left out.
+	 * currency is in the organization's, and a member without a rate of their own is priced at the organization's
+	 * default billing rate when it sets one (`billRateOf`), as on the report page. Null when amounts are left out.
 	 */
 	private async ratesOf(
 		report: SavedReport,
 		days: IReportDayGroupByDate[],
-		organizationCurrency: string | null | undefined
+		organizationCurrency: string | null | undefined,
+		defaultRate: DefaultBillRate | null
 	): Promise<ReadonlyMap<ID, ISavedReportRate> | null> {
 		if (report.includeAmounts !== true) {
 			return null;
@@ -292,8 +301,8 @@ export class SavedReportPublicService {
 		});
 		const rates = new Map<ID, ISavedReportRate>();
 		for (const employee of employees) {
-			const currency = employee.billRateCurrency || organizationCurrency || null;
-			rates.set(employee.id, { billRateValue: employee.billRateValue ?? null, billRateCurrency: currency });
+			const { rate, currency } = billRateOf(employee, organizationCurrency || null, defaultRate);
+			rates.set(employee.id, { billRateValue: rate ?? null, billRateCurrency: currency || null });
 		}
 		return rates;
 	}

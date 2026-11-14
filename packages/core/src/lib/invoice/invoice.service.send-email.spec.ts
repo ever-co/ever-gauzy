@@ -13,9 +13,18 @@ import { InvoiceService } from './invoice.service';
  * The collaborators are doubled with the calls the method makes: the estimate e-mail record, the
  * organization, the PDF and the mail transport.
  */
-function sender(overrides: { emailInvoice?: jest.Mock; createEstimateEmail?: jest.Mock; pdf?: Buffer | null } = {}) {
+function sender(
+	overrides: {
+		emailInvoice?: jest.Mock;
+		createEstimateEmail?: jest.Mock;
+		recordInvoiceDelivery?: jest.Mock;
+		pdf?: Buffer | null;
+	} = {}
+) {
 	const estimateEmailService = {
-		createEstimateEmail: overrides.createEstimateEmail ?? jest.fn(async () => ({ token: 'estimate-token' }))
+		createEstimateEmail:
+			overrides.createEstimateEmail ?? jest.fn(async () => ({ id: 'estimate-email-1', token: 'estimate-token' })),
+		recordInvoiceDelivery: overrides.recordInvoiceDelivery ?? jest.fn(async () => undefined)
 	};
 	const organizationService = { findOneByIdString: jest.fn(async () => ({ id: 'organization-1' })) };
 	const emailService = { emailInvoice: overrides.emailInvoice ?? jest.fn(async () => undefined) };
@@ -44,6 +53,18 @@ const send = (service: InvoiceService) =>
 		42,
 		'invoice-42',
 		true,
+		'https://app.example.com',
+		'organization-1'
+	);
+
+/** One invoice (not an estimate) emailed in French. */
+const sendInvoice = (service: InvoiceService) =>
+	service.sendEmail(
+		LanguagesEnum.FRENCH,
+		'billing@client.test',
+		43,
+		'invoice-43',
+		false,
 		'https://app.example.com',
 		'organization-1'
 	);
@@ -98,5 +119,58 @@ describe('InvoiceService.sendEmail — the outcome of a send', () => {
 
 		await expect(send(service)).resolves.toEqual({ sent: false, reason: 'EMAIL_NOT_PREPARED' });
 		expect(emailService.emailInvoice).not.toHaveBeenCalled();
+	});
+});
+
+/**
+ * An invoice's email records which invoice it delivered and in which language once the transport took it: the
+ * invoice's payment reminders go to that address, in that language. An estimate's email and an email that did not go
+ * record nothing, and a record that fails never turns a sent invoice into a failed send.
+ */
+describe('InvoiceService.sendEmail — where an invoice went', () => {
+	beforeEach(() => jest.spyOn(console, 'log').mockImplementation(() => undefined));
+	afterEach(() => jest.restoreAllMocks());
+
+	it('records the invoice and its language on the email once the transport took it', async () => {
+		const { service, estimateEmailService } = sender();
+
+		await expect(sendInvoice(service)).resolves.toEqual({ sent: true });
+
+		expect(estimateEmailService.recordInvoiceDelivery).toHaveBeenCalledWith(
+			'estimate-email-1',
+			'invoice-43',
+			LanguagesEnum.FRENCH
+		);
+	});
+
+	it("records nothing for an estimate's email", async () => {
+		const { service, estimateEmailService } = sender();
+
+		await expect(send(service)).resolves.toEqual({ sent: true });
+
+		expect(estimateEmailService.recordInvoiceDelivery).not.toHaveBeenCalled();
+	});
+
+	it('records nothing when the transport refused the email', async () => {
+		const { service, estimateEmailService } = sender({
+			emailInvoice: jest.fn(async () => {
+				throw new Error('connect ECONNREFUSED smtp.internal.example:587');
+			})
+		});
+
+		await expect(sendInvoice(service)).resolves.toEqual({ sent: false, reason: 'EMAIL_NOT_SENT' });
+
+		expect(estimateEmailService.recordInvoiceDelivery).not.toHaveBeenCalled();
+	});
+
+	it('still answers sent when the record fails: the invoice went', async () => {
+		const { service } = sender({
+			recordInvoiceDelivery: jest.fn(async () => {
+				throw new Error('update failed');
+			})
+		});
+
+		await expect(sendInvoice(service)).resolves.toEqual({ sent: true });
+		expect(console.log).toHaveBeenCalledWith(expect.stringContaining('gets no payment reminder'), 'update failed');
 	});
 });

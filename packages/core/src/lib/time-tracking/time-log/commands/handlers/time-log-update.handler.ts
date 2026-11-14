@@ -2,7 +2,7 @@ import { Logger, NotFoundException, Optional } from '@nestjs/common';
 import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
 import * as moment from 'moment';
 import { Brackets, DataSource, Repository } from 'typeorm';
-import { ID, ITimeLog, ITimeSlot, ITimesheet, TimeLogSourceEnum } from '@gauzy/contracts';
+import { ID, ITimeLog, ITimeSlot, ITimesheet, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/utils';
 import { TimesheetFirstOrCreateCommand, TimesheetRecalculateCommand } from './../../../timesheet/commands';
 import { TimeSlotBulkDeleteCommand } from '../../../time-slot/commands/time-slot-bulk-delete.command';
@@ -17,6 +17,7 @@ import { assertTimeLogReferencesOfTenant } from '../../time-log-references';
 import { postsHeartbeatSlots } from '../../tracker-source';
 import { TimeSlot } from '../../../time-slot/time-slot.entity';
 import { TimeLogUpdateCommand } from '../time-log-update.command';
+import { FindTimeLogRatesCommand, TimeLogRatesPart } from '../find-time-log-rates.command';
 import { updatedChange } from '../../time-log-history';
 import {
 	historySubject,
@@ -115,6 +116,9 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 		const employeeId: ID = changes.employeeId ?? previousEmployeeId;
 		const moved = String(employeeId) !== String(previousEmployeeId);
 
+		// The rates the log takes when it becomes someone else's time or another project's; it keeps its own otherwise
+		const rates = await this.ratesOfChange(timeLog, changes, employeeId, moved);
+
 		let timesheet: ITimesheet;
 		let updateTimeSlots: ITimeSlot[] = [];
 
@@ -156,17 +160,23 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 			// A move, in the order that leaves a recoverable state at every failure (no transaction can span the
 			// commands below; each writes through its own repositories):
 			// (a) the destination — the new employee's slots for the log's range (created where they have none);
-			const destination = await this.bulkCreateTimeSlots(
-				updateTimeSlots,
-				timeLog,
-				employeeId,
-				organizationId,
-				tenantId
-			);
+			// A break holds no time slots, so it takes none to the new employee either.
+			const movesBreak = { ...timeLog, ...changes }.logType === TimeLogType.BREAK;
+			let destination: ITimeSlot[] = [];
+			if (!movesBreak) {
+				destination = await this.bulkCreateTimeSlots(
+					updateTimeSlots,
+					timeLog,
+					employeeId,
+					organizationId,
+					tenantId
+				);
+			}
 			// (b) ONE save of the log — its new employee, its new timesheet and its new slots together. If it fails,
 			// nothing of the previous employee has been touched (at most the new employee keeps blank slots no log
 			// holds), and the error propagates;
 			Object.assign(timeLog, changes, timesheet ? { timesheetId: timesheet.id } : {}, { timeSlots: destination });
+			Object.assign(timeLog, rates);
 			await this.writeWithHistory(
 				stored,
 				timeLog,
@@ -200,7 +210,8 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 						{ id: logId, tenantId },
 						{
 							...changes,
-							...(timesheet ? { timesheetId: timesheet.id } : {})
+							...(timesheet ? { timesheetId: timesheet.id } : {}),
+							...rates
 						}
 					),
 				true
@@ -275,6 +286,10 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 	 * @param timeLog - The log as the update will store it: the stored row with the update's changes on top.
 	 */
 	private async takesSlotsOfItsRange(timeLog: ITimeLog): Promise<boolean> {
+		// A break holds no time slots, whoever runs it (see TimeLogCreateHandler)
+		if (timeLog.logType === TimeLogType.BREAK) {
+			return false;
+		}
 		if (timeLog.source === TimeLogSourceEnum.WEB_TIMER) {
 			return true;
 		}
@@ -283,6 +298,40 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 		}
 		const hasSlots = await this.hasTimeSlots(timeLog);
 		return !hasSlots;
+	}
+
+	/**
+	 * The rates an update gives the log: those of the moment when it becomes another member's time (all of them) or
+	 * another project's (the client rates), as a new log of that member or project would store; none otherwise, so
+	 * the log keeps the rates it was recorded with (see time-log-rates.ts).
+	 *
+	 * @param timeLog - The log as stored.
+	 * @param changes - The requested changes, without the scope fields.
+	 * @param employeeId - The employee the log belongs to once updated.
+	 * @param moved - Whether the update gives the log to another employee.
+	 */
+	private async ratesOfChange(
+		timeLog: ITimeLog,
+		changes: Partial<ITimeLog>,
+		employeeId: ID,
+		moved: boolean
+	): Promise<Partial<ITimeLog>> {
+		const namesProject = changes.projectId !== undefined;
+		const changesProject = namesProject && String(changes.projectId ?? '') !== String(timeLog.projectId ?? '');
+		if (!moved && !changesProject) {
+			return {};
+		}
+		let projectId = timeLog.projectId ?? null;
+		if (namesProject) {
+			projectId = changes.projectId ?? null;
+		}
+		let part: TimeLogRatesPart = 'client';
+		if (moved) {
+			part = 'all';
+		}
+		const scope = { tenantId: timeLog.tenantId, organizationId: timeLog.organizationId, employeeId, projectId };
+		const rates = await this.commandBus.execute(new FindTimeLogRatesCommand(scope, part));
+		return rates ?? {};
 	}
 
 	/**

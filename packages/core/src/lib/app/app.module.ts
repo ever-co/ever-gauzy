@@ -171,6 +171,8 @@ import { WebhookMaintenanceModule } from '../webhook/webhook-maintenance.module'
 import { TimerReminderMaintenanceModule } from '../time-tracking/timer-reminder/timer-reminder-maintenance.module';
 import { TimerReminderInlineModule } from '../time-tracking/timer-reminder/timer-reminder-inline';
 import { isTimerRemindersEnabled } from '../time-tracking/timer-reminder/timer-reminder-enabled';
+import { InvoiceReminderMaintenanceModule } from '../invoice/invoice-reminder/invoice-reminder-maintenance.module';
+import { InvoiceReminderInlineModule } from '../invoice/invoice-reminder/invoice-reminder-inline';
 import { OperationModule } from '../operation/operation.module';
 import { WebhookModule } from '../webhook/webhook.module';
 import { MeasurementModule } from '../measurement/measurement.module';
@@ -716,6 +718,10 @@ if (environment.EVER_TEAMS_CLIENT_IP_SECRET?.trim() && !clientIpSecretOf(environ
 		...(isTimerRemindersEnabled(process.env, (message) => console.warn(message))
 			? [isSchedulerQueueRootEnabled() ? TimerReminderMaintenanceModule : TimerReminderInlineModule]
 			: []),
+		// The payment reminders to the clients of unpaid invoices, which each organization turns on (off by default).
+		// With a queue, this process consumes the sweep the worker application schedules every hour: the mail settings
+		// and the invoice rendering it uses live here. Without a queue, this process sweeps on its own, every hour.
+		isSchedulerQueueRootEnabled() ? InvoiceReminderMaintenanceModule : InvoiceReminderInlineModule,
 		//Token cleanup scheduler is disabled by default; enable when ready
 		TokenModule.forRoot({ enableScheduler: false }),
 		AccessTokenModule,

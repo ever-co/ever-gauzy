@@ -771,6 +771,42 @@
 			"reason": "link to the Gauzy website (logo and footer of every page)"
 		},
 		{
+			"route": "/downloads",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "link to the Gauzy documentation"
+		},
+		{
+			"route": "/downloads",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "link to the Gauzy documentation"
+		},
+		{
+			"route": "/downloads",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "link to the Gauzy documentation"
+		},
+		{
+			"route": "/downloads",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "link to the Gauzy documentation"
+		},
+		{
+			"route": "/downloads",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "link to the company website (footer of every page)"
+		},
+		{
+			"route": "/downloads",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "link to the Gauzy website (logo and footer of every page)"
+		},
+		{
 			"route": "/legal/cookies",
 			"attribute": "href",
 			"url": "https://docs.gauzy.co/features/ai-agent-chat",

@@ -11,7 +11,8 @@ import {
 	ITimeGoalUpdateInput,
 	PermissionsEnum,
 	TimeGoalPeriodEnum,
-	TimeGoalScopeEnum
+	TimeGoalScopeEnum,
+	TimeLogType
 } from '@gauzy/contracts';
 import { RequestContext } from '../../core/context';
 import { TenantAwareCrudService } from '../../core/crud';
@@ -674,7 +675,8 @@ export class TimeGoalService extends TenantAwareCrudService<TimeGoal> {
 
 	/**
 	 * The time logs of the members that start in any of the periods read, with what a goal filters on, as the
-	 * statistics read tracked time (soft-deleted logs left out, a running log included).
+	 * statistics read tracked time (soft-deleted logs left out, a running log included). A break (time log type BREAK)
+	 * is not worked time and never counts toward a goal.
 	 */
 	private async countedLogsByMember(
 		periods: Array<{ employeeId: ID; start: Date; end: Date }>,
@@ -705,6 +707,7 @@ export class TimeGoalService extends TenantAwareCrudService<TimeGoal> {
 			.andWhere('time_log.employeeId IN (:...memberIds)', { memberIds })
 			.andWhere('time_log.startedAt >= :start', { start })
 			.andWhere('time_log.startedAt < :end', { end })
+			.andWhere('(time_log.logType IS NULL OR time_log.logType <> :breakType)', { breakType: TimeLogType.BREAK })
 			.getMany();
 
 		const logsByMember = new Map<ID, TimeGoalCountedLog[]>();

@@ -739,6 +739,7 @@
 		"northwind",
 		"nosniff",
 		"notarytool",
+		"nowait",
 		"notif",
 		"notused",
 		"neighbour",
@@ -1803,7 +1804,8 @@
 		"stunden",
 		"cros",
 		"slotless",
-		"enrolments"
+		"enrolments",
+		"unstored"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

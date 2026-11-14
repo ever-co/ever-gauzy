@@ -294,13 +294,14 @@ describe('TimeLogService and the organization default billing rate', () => {
 			expect(await clientBudget('cost')).toEqual(expect.objectContaining({ spent: 600 }));
 		});
 
-		it('prices a log without its employee at nothing in the client budget, as the project budget does', async () => {
+		it('prices a log without its employee the same in the client budget as in the project budget', async () => {
 			organizationLookup({ currency: 'EUR', defaultBillRateValue: 80 });
-			// The hour of a log whose employee was not loaded is no member's time, so no rate prices it
+			// Both budgets price a log through budgetCostOf (#11936): a log that stores no rate and has no member's
+			// rate is priced at the organization's default, whether or not its employee was loaded
 			const logs = [...timeLogs, { duration: 3600 }];
 
-			expect(await projectBudget('cost', logs)).toEqual(expect.objectContaining({ spent: 760 }));
-			expect(await clientBudget('cost', logs)).toEqual(expect.objectContaining({ spent: 760 }));
+			expect(await projectBudget('cost', logs)).toEqual(expect.objectContaining({ spent: 840 }));
+			expect(await clientBudget('cost', logs)).toEqual(expect.objectContaining({ spent: 840 }));
 		});
 
 		it('reads no organization for an hour budget, which prices nothing', async () => {

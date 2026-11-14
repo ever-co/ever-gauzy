@@ -15,6 +15,8 @@ jest.mock('@gauzy/core', () => ({
 	EventOutboxDispatchScheduleModule: class EventOutboxDispatchScheduleModule {},
 	EventOutboxMaintenanceModule: class EventOutboxMaintenanceModule {},
 	IdempotencyMaintenanceModule: class IdempotencyMaintenanceModule {},
+	InvoiceReminderMaintenanceModule: class InvoiceReminderMaintenanceModule {},
+	InvoiceReminderScheduleModule: class InvoiceReminderScheduleModule {},
 	JobExecutionModule: class JobExecutionModule {},
 	MentionModule: class MentionModule {},
 	TimerReminderMaintenanceModule: class TimerReminderMaintenanceModule {},
@@ -187,5 +189,25 @@ describe('worker AppModule', () => {
 			});
 		}
 		delete process.env.GAUZY_TIMER_REMINDERS_ENABLED;
+	});
+
+	/**
+	 * The payment reminders follow the timer reminders' split: the sweep sends emails through the mail settings and the
+	 * invoice rendering the API hosts, so this process fires the hourly schedule and never takes a sweep. There is no
+	 * installation switch: each organization turns the reminders on, and a sweep sends nothing until one does.
+	 */
+	it('fires the payment reminder schedule wherever a queue exists, and never hosts the sweep', async () => {
+		process.env.WORKER_QUEUE_ENABLED = 'true';
+
+		await jest.isolateModulesAsync(async () => {
+			const { AppModule: Isolated } = await import('./app.module');
+			const core = await import('@gauzy/core');
+			const order: any[] = Reflect.getMetadata(MODULE_METADATA.IMPORTS, Isolated) ?? [];
+
+			// A control: the queue-gated modules are present, and no switch but the queue's gates this schedule.
+			expect(order).toContain(core.IdempotencyMaintenanceModule);
+			expect(order).toContain(core.InvoiceReminderScheduleModule);
+			expect(order).not.toContain(core.InvoiceReminderMaintenanceModule);
+		});
 	});
 });
