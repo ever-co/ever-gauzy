@@ -6,6 +6,13 @@ export const TIMER_DISCARD_DISABLED = 'TIMER_DISCARD_DISABLED';
 /** The run started longer ago than the organization lets a run be discarded. */
 export const TIMER_DISCARD_TOO_LATE = 'TIMER_DISCARD_TOO_LATE';
 
+/**
+ * The run is a tracker's (the desktop timer), which is not discarded in this first delivery: an installed
+ * tracker links the time slots it uploads next to the newest log of its source, which after the removal would be the
+ * employee's previous entry.
+ */
+export const TIMER_DISCARD_TRACKER_RUN = 'TIMER_DISCARD_TRACKER_RUN';
+
 /** Why a discard is refused: a code a client can translate, and the message the API answers with it. */
 export interface ITimerDiscardRefusal {
 	code: typeof TIMER_DISCARD_DISABLED | typeof TIMER_DISCARD_TOO_LATE;

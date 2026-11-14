@@ -85,7 +85,7 @@ import {
 	exclusiveWindowEnd,
 	secondsWithinWindow
 } from './timer.helper';
-import { discardDisabledRefusal, discardTooLateRefusal } from './timer-discard-rule';
+import { discardDisabledRefusal, discardTooLateRefusal, TIMER_DISCARD_TRACKER_RUN } from './timer-discard-rule';
 import {
 	DAILY_PLAN_REQUIRED,
 	PLAN_RULE_SOURCES,
@@ -1062,7 +1062,8 @@ export class TimerService {
 	 * @param request The discard, with the running time log it is for when the client names one.
 	 * @throws ForbiddenException with the code TIMER_DISCARD_DISABLED or TIMER_DISCARD_TOO_LATE.
 	 * @throws BadRequestException when no timer runs.
-	 * @throws ConflictException when the discard names another time log than the running one: nothing is removed.
+	 * @throws ConflictException when the discard names another time log than the running one, or with the code
+	 * TIMER_DISCARD_TRACKER_RUN when the run is a tracker's: nothing is removed.
 	 */
 	async discardTimer(request: ITimerDiscardInput): Promise<void> {
 		const employee = await this.findEmployee({ organization: true });
@@ -1085,6 +1086,7 @@ export class TimerService {
 			}
 
 			this.assertDiscardIsForRunningLog(request, runningLog);
+			this.assertDiscardIsNotTrackerRun(runningLog);
 
 			const tooLateRefusal = discardTooLateRefusal(
 				employee.organization,
@@ -1167,6 +1169,23 @@ export class TimerService {
 		} catch (error) {
 			this.logger.warn(`Failed to give the running state back to time log ${timeLogId}: ${error?.message}`);
 		}
+	}
+
+	/**
+	 * Refuses the discard of a tracker's run (the desktop timer): an installed tracker links the time slots
+	 * it uploads next to the newest log of its source, not to the run it tracked, so after the removal they would land
+	 * on the employee's previous entry of another day, task or project.
+	 *
+	 * @throws ConflictException with the code TIMER_DISCARD_TRACKER_RUN.
+	 */
+	private assertDiscardIsNotTrackerRun(runningLog: ITimeLog): void {
+		if (!isTrackerSource(runningLog.source)) {
+			return;
+		}
+		throw new ConflictException({
+			code: TIMER_DISCARD_TRACKER_RUN,
+			message: 'A timer started from a tracker app cannot be discarded. Stop it from that app to end the run.'
+		});
 	}
 
 	/**

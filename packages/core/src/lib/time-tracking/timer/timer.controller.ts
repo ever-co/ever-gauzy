@@ -167,7 +167,7 @@ export class TimerController {
 	@ApiResponse({
 		status: HttpStatus.CONFLICT,
 		description:
-			'The discard names a time log (timeLogId) that is not the running one. Nothing is removed: the running timer goes on.'
+			'The discard names a time log (timeLogId) that is not the running one, or the run is a tracker app run (code TIMER_DISCARD_TRACKER_RUN). Nothing is removed: the running timer goes on.'
 	})
 	@Post('/discard')
 	@HttpCode(HttpStatus.NO_CONTENT)

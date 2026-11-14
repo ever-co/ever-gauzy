@@ -6,7 +6,7 @@ import { ITimerDiscardInput, TimeLogSourceEnum } from '@gauzy/contracts';
 import { MultiORMEnum } from '../../core/utils';
 import { asTenantUser, createTenantFixture } from '../../core/testing/tenant-isolation/tenant-isolation.fixtures';
 import { TimeLogDeleteCommand } from '../time-log/commands';
-import { TIMER_DISCARD_DISABLED, TIMER_DISCARD_TOO_LATE } from './timer-discard-rule';
+import { TIMER_DISCARD_DISABLED, TIMER_DISCARD_TOO_LATE, TIMER_DISCARD_TRACKER_RUN } from './timer-discard-rule';
 import { TimerService } from './timer.service';
 
 /**
@@ -374,6 +374,23 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])('TimerService disca
 		expect(execute).not.toHaveBeenCalled();
 		expect(rows.map((row) => row.id)).toEqual([STOPPED_LOG_ID, RUNNING_LOG_ID]);
 	});
+
+	it.each([TimeLogSourceEnum.DESKTOP])(
+		'answers 409 with its code to a %s run, before taking it: a tracker links its next slots to its newest log',
+		async (source) => {
+			const rows = [stoppedLog(), { ...runningLog(), source }];
+			const { service, execute, typeOrmTimeLogRepository, mikroOrmTimeLogRepository } = setup(rows);
+
+			await expect(refusalCode(discard(service))).resolves.toMatchObject({ code: TIMER_DISCARD_TRACKER_RUN });
+			expect(typeOrmTimeLogRepository.update).not.toHaveBeenCalled();
+			expect(mikroOrmTimeLogRepository.nativeUpdate).not.toHaveBeenCalled();
+			expect(execute).not.toHaveBeenCalled();
+			expect(rows.map((row) => [row.id, row.isRunning])).toEqual([
+				[STOPPED_LOG_ID, false],
+				[RUNNING_LOG_ID, true]
+			]);
+		}
+	);
 
 	it('discards the running log it names, its id in either case', async () => {
 		const rows = [runningLog()];
