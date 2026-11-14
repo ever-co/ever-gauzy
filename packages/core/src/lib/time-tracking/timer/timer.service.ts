@@ -2069,7 +2069,9 @@ export class TimerService {
 		turn?: EmployeeTurn
 	): Promise<ReplacedRunOverlaps[]> {
 		const holdsTime = moment.utc(stoppedAt).isAfter(moment.utc(log.startedAt));
-		const overlapping = holdsTime
+		// A break cuts nothing it overlaps, as at its own stop: work recorded over it keeps its time
+		const cutsOverlaps = holdsTime && !isBreak(log);
+		const overlapping = cutsOverlaps
 			? await this.findOverlappingLogIds(log, stoppedAt, runningAtRead, tenantId, organizationId)
 			: [];
 		// A lookup that took so long that the next start or stop went on leaves the run to that one, which may have

@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { DataSource, QueryRunner } from 'typeorm';
-import { AddOrganizationAllowBreaks1791000010100 } from './migrations/1791000010100-AddOrganizationAllowBreaks';
+import { AddOrganizationAllowBreaks1791000011700 } from './migrations/1791000011700-AddOrganizationAllowBreaks';
 
 /**
  * `organization.allowBreaks`, run for real on SQLite against a minimal fixture of the table: it arrives nullable with
@@ -44,7 +44,7 @@ describe('organization.allowBreaks migration on SQLite', () => {
 	const run = async (direction: 'up' | 'down') => {
 		const queryRunner = dataSource.createQueryRunner();
 		try {
-			await new AddOrganizationAllowBreaks1791000010100()[direction](queryRunner);
+			await new AddOrganizationAllowBreaks1791000011700()[direction](queryRunner);
 		} finally {
 			await queryRunner.release();
 		}
@@ -88,7 +88,7 @@ describe('organization.allowBreaks migration on MySQL', () => {
 				return [];
 			}
 		} as unknown as QueryRunner;
-		const migration = new AddOrganizationAllowBreaks1791000010100();
+		const migration = new AddOrganizationAllowBreaks1791000011700();
 
 		await migration.up(queryRunner);
 
@@ -114,7 +114,7 @@ describe('organization.allowBreaks migration on Postgres', () => {
 			}
 		} as unknown as QueryRunner;
 
-		await new AddOrganizationAllowBreaks1791000010100().up(queryRunner);
+		await new AddOrganizationAllowBreaks1791000011700().up(queryRunner);
 
 		expect(queries).toEqual([
 			'SELECT pg_advisory_xact_lock($1)',
@@ -133,7 +133,7 @@ describe('organization.allowBreaks migration on Postgres', () => {
 			}
 		} as unknown as QueryRunner;
 
-		await new AddOrganizationAllowBreaks1791000010100().down(queryRunner);
+		await new AddOrganizationAllowBreaks1791000011700().down(queryRunner);
 
 		expect(queries).toEqual(['ALTER TABLE "organization" DROP COLUMN IF EXISTS "allowBreaks"']);
 	});
