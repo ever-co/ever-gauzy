@@ -7,6 +7,7 @@ import {
 	IsDateString,
 	IsEnum,
 	IsNotEmpty,
+	IsObject,
 	IsOptional,
 	IsString,
 	IsTimeZone,
@@ -141,6 +142,7 @@ export class CreateSavedReportDTO
 
 	@ApiPropertyOptional({ type: () => SavedReportFiltersDTO })
 	@IsOptional()
+	@IsObject()
 	@ValidateNested()
 	@Type(() => SavedReportFiltersDTO)
 	filters?: SavedReportFiltersDTO | null;
