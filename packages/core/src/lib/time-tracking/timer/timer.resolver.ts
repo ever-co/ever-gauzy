@@ -5,6 +5,7 @@ import {
 	ID as Id,
 	ITimeLog,
 	ITimerStatus,
+	ITimerStartMoveInput,
 	ITimerStatusInput,
 	ITimerToggleInput,
 	PermissionsEnum
@@ -243,5 +244,20 @@ export class TimerResolver {
 	@Permissions(PermissionsEnum.TIME_TRACKER)
 	async stopTimer(@Args('input') input: ITimerToggleInput): Promise<ITimeLog | null> {
 		return await this.commandBus.execute(new StopTimerCommand(input));
+	}
+
+	/**
+	 * Moves the start of the caller's running timer, earlier or later, while it keeps running.
+	 *
+	 * The write calls the same service method the delivered `PUT /started-at` route calls, with the same body, and
+	 * answers what it answers: the running log, unprojected. Its refusals travel as the route raises them.
+	 *
+	 * **The answer is nullable for the reason the stop's is:** the write ends with the time log update, whose last
+	 * statement re-reads the row it wrote and answers nothing when the row is not there.
+	 */
+	@Mutation('moveTimerStart')
+	@Permissions(PermissionsEnum.TIME_TRACKER)
+	async moveTimerStart(@Args('input') input: ITimerStartMoveInput): Promise<ITimeLog | null> {
+		return await this.timerService.moveRunningTimerStart(input);
 	}
 }
