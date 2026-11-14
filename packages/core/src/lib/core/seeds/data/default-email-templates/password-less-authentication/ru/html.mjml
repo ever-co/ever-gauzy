@@ -1,62 +1,84 @@
-<mjml>
-  	<mj-body background-color="#fff">
-    	<mj-section>
-			<mj-column>
-				<mj-image
-					width="100px"
-					src="{{appLogo}}"
-				></mj-image>
-				<mj-divider
-					border-color="#1B005D"
-					border-width="1px"
-				></mj-divider>
-				<mj-text font-family="Helvetica">
-					<p>Hello {{email}},</p>
-					<p>Your login verification code: <strong>{{magicCode}}</strong></p>
-					<p>This login code allows you to securely access your account without a password. Simply click on the corresponding link below to log in without a password. Do not share the code with anyone.</p>
+<mjml lang="ru">
+	<mj-head>
+		<mj-title>Ваш код для входа</mj-title>
+		<mj-preview>Введите этот код, чтобы войти в {{appName}}. Срок его действия скоро истечёт.</mj-preview>
+		<mj-attributes>
+			<mj-all font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" />
+			<mj-text align="left" color="#3F3F46" font-size="15px" line-height="24px" padding="0 10px 16px" />
+			<mj-button align="left" background-color="#4F46E5" border-radius="8px" color="#FFFFFF" font-size="15px" font-weight="600" inner-padding="12px 24px" line-height="20px" padding="8px 10px 24px" />
+			<mj-divider border-color="#E4E4E7" border-width="1px" padding="8px 10px 24px" />
+			<mj-class name="brand" color="#18181B" font-size="18px" font-weight="600" line-height="24px" padding="6px 10px 28px" />
+			<mj-class name="eyebrow" color="#71717A" font-size="13px" font-weight="600" line-height="20px" padding="0 10px 4px" />
+			<mj-class name="heading" color="#18181B" font-size="22px" font-weight="600" line-height="30px" padding="0 10px 12px" />
+			<mj-class name="note" color="#71717A" font-size="13px" line-height="20px" />
+			<mj-class name="footer" align="center" color="#66666F" font-size="12px" line-height="18px" padding="0" />
+			<mj-class name="danger" background-color="#DC2626" />
+			<mj-class name="secondary" background-color="#FFFFFF" border="1px solid #D4D4D8" color="#18181B" inner-padding="11px 24px" />
+		</mj-attributes>
+		<mj-style>
+			@media only screen and (max-width: 479px) {
+				.email-card > table > tbody > tr > td { padding: 22px 12px 14px !important; }
+			}
+		</mj-style>
+	</mj-head>
+	<mj-body background-color="#F4F4F5" width="600px">
+		<mj-section padding="32px 16px 0">
+			<mj-column css-class="email-card" background-color="#FFFFFF" border="1px solid #E4E4E7" border-radius="12px" padding="30px 30px 20px">
+				<mj-raw>{{#if appLogo}}</mj-raw>
+				<mj-text font-size="0" line-height="0" padding="0 0 22px">
+					<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse: separate">
+						<tr>
+							<td bgcolor="#FFFFFF" style="background-color: #FFFFFF; background-image: linear-gradient(#FFFFFF, #FFFFFF); border-radius: 8px; padding: 6px 10px">
+								<a href="{{appLink}}" target="_blank" style="text-decoration: none"><img src="{{appLogo}}" alt="{{appName}}" height="24" style="display: block; height: 24px; width: auto; border: 0; outline: none; color: #18181B; font-size: 18px; font-weight: 600; line-height: 24px; text-decoration: none" /></a>
+							</td>
+						</tr>
+					</table>
 				</mj-text>
-				<mj-button
-					href="{{magicLink}}"
-					font-family="Helvetica"
-					background-color="#3366ff"
-					color="white"
-					target="_blank"
-				>
-					Click Here
-				</mj-button>
+				<mj-raw>{{else}}</mj-raw>
+				<mj-text mj-class="brand">{{appName}}</mj-text>
+				<mj-raw>{{/if}}</mj-raw>
+				<mj-text mj-class="heading">Ваш код для входа</mj-text>
 				<mj-text>
-    				This link and code will expire shortly. Please use them promptly. If the link doesn't work, you can use the login verification code directly.
+					Здравствуйте{{#if email}}, {{email}}{{/if}}!
 				</mj-text>
-				<mj-text
-					align="center"
-					font-family="Helvetica"
-				>
-					<p>
-						<span style="background-color: #32323205; text-align: center; font-weight: bold; padding: 15px;">
-							<strong>{{magicCode}}</strong>
-						</span>
-					</p>
+				<mj-text>
+					Введите этот код, чтобы войти в {{appName}}. Пароль не нужен.
 				</mj-text>
-				<mj-text font-family="Helvetica">
-					<p>Best regards,</p>
-					<p>{{appSignature}}</p>
+				<mj-text padding="4px 10px 20px">
+					<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse: separate">
+						<tr>
+							<td align="center" bgcolor="#F4F4F5" style="background-color: #F4F4F5; border: 1px solid #E4E4E7; border-radius: 10px; padding: 18px 12px; font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; font-size: 28px; font-weight: 600; line-height: 36px; letter-spacing: 6px; color: #18181B; direction: ltr">
+								{{magicCode}}
+							</td>
+						</tr>
+					</table>
 				</mj-text>
-				<mj-divider
-					border-color="#1B005D"
-					border-width="1px"
-				></mj-divider>
-				<mj-text
-					align="center"
-					font-size="12px"
-					font-family="helvetica"
-				>
-					© 2019,
-					<a href="{{appLink}}" style="color: #598bff">{{appName}}</a>
-					by
-					<a href="{{companyLink}}" style="color: #598bff">{{companyName}}</a>
-					All rights reserved.
+				<mj-raw>{{#if magicLink}}</mj-raw>
+				<mj-text>
+					Или войдите одним нажатием:
+				</mj-text>
+				<mj-button padding="8px 10px 12px" href="{{magicLink}}" target="_blank">Войти в {{appName}}</mj-button>
+				<mj-text mj-class="note" padding="0 10px 20px">
+					Если кнопка не работает, скопируйте этот адрес в адресную строку браузера:
+					<div dir="ltr" style="word-break: break-all">{{magicLink}}</div>
+				</mj-text>
+				<mj-raw>{{/if}}</mj-raw>
+				<mj-text mj-class="note">
+					Срок действия кода и ссылки скоро истечёт, и использовать их можно только один раз. Никому их не сообщайте. Если вы не пытались войти, просто проигнорируйте это письмо.
+				</mj-text>
+				<mj-divider />
+				<mj-text mj-class="note" padding="0 10px 12px">
+					С уважением,<br />
+					<span style="color: #18181B; font-weight: 600">{{appSignature}}</span>
 				</mj-text>
 			</mj-column>
 		</mj-section>
-  	</mj-body>
+		<mj-section padding="20px 16px 40px">
+			<mj-column>
+				<mj-text mj-class="footer">
+					&copy; 2019, <a href="{{appLink}}" target="_blank" style="color: #66666F; text-decoration: underline">{{appName}}</a>{{#if companyName}} от <a href="{{companyLink}}" target="_blank" style="color: #66666F; text-decoration: underline">{{companyName}}</a>{{/if}}. Все права защищены.
+				</mj-text>
+			</mj-column>
+		</mj-section>
+	</mj-body>
 </mjml>
