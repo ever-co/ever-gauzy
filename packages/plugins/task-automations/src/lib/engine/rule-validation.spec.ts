@@ -41,11 +41,7 @@ describe('rule validation', () => {
 			mergedOnly: false
 		});
 		expect(normalizeTrigger({ type: LINK_CLOSED })).toEqual({ type: LINK_CLOSED, mergedOnly: false });
-		expect(normalizeTrigger({ type: LINK_CLOSED, mergedOnly: null })).toEqual({
-			type: LINK_CLOSED,
-			mergedOnly: false
-		});
-		for (const mergedOnly of ['true', 1, {}, []]) {
+		for (const mergedOnly of [null, 'true', 1, {}, []]) {
 			expect(() => normalizeTrigger({ type: LINK_CLOSED, mergedOnly })).toThrow(/merged only/);
 		}
 		// Another trigger keeps no such setting.

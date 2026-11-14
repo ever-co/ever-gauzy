@@ -283,15 +283,45 @@ describe('TaskAutomationLinkClosedCapture', () => {
 		expect(unmerged.closures.exists).toHaveBeenCalledWith(closeKey);
 	});
 
+	it('tries a merge once more when a close without merging claimed the close meanwhile, and appends it as a merge after a close', async () => {
+		const { capture, closures, outbox, manager } = setup([TaskAutomationTriggerEnum.LINK_CLOSED]);
+		// The close without merging committed its claim between this delivery's lookup and its insert.
+		closures.claimIn.mockRejectedValueOnce(new Error('UNIQUE constraint failed'));
+		closures.exists.mockImplementation(async (key: { kind: string }) => key.kind !== TASK_LINK_MERGE_CLAIM_KIND);
+		closures.claimIn.mockImplementation(
+			async (_manager: unknown, key: { kind: string }) => key.kind === TASK_LINK_MERGE_CLAIM_KIND
+		);
+		expect(await capture.report(closed)).toBe(true);
+		expect(closures.claimIn.mock.calls.map(([, key]) => key.kind)).toEqual([
+			'pull_request',
+			'pull_request',
+			TASK_LINK_MERGE_CLAIM_KIND
+		]);
+		expect(outbox.append).toHaveBeenCalledTimes(1);
+		expect(outbox.append).toHaveBeenCalledWith(
+			manager,
+			expect.objectContaining({ data: expect.objectContaining({ merged: true, closedBefore: true }) })
+		);
+
+		// A close without merging that loses the same race is the other delivery's: not tried again.
+		const unmerged = setup([TaskAutomationTriggerEnum.LINK_CLOSED]);
+		unmerged.closures.claimIn.mockRejectedValueOnce(new Error('UNIQUE constraint failed'));
+		unmerged.closures.exists.mockResolvedValue(true);
+		expect(await unmerged.capture.report({ ...closed, merged: false })).toBe(false);
+		expect(unmerged.closures.claimIn).toHaveBeenCalledTimes(1);
+	});
+
 	it('throws a merge’s failed append though its close was claimed long before, so the merge is not lost as a repeat', async () => {
 		const { capture, closures, outbox } = setup([TaskAutomationTriggerEnum.LINK_CLOSED]);
 		closures.claimIn.mockImplementation(
 			async (_manager: unknown, key: { kind: string }) => key.kind === TASK_LINK_MERGE_CLAIM_KIND
 		);
 		closures.exists.mockImplementation(async (key: { kind: string }) => key.kind !== TASK_LINK_MERGE_CLAIM_KIND);
-		outbox.append.mockRejectedValueOnce(new Error('database down'));
+		outbox.append.mockRejectedValue(new Error('database down'));
 		await expect(capture.report(closed)).rejects.toThrow('database down');
 		expect(closures.exists).toHaveBeenCalledWith(mergeKey);
+		// Tried once more (the close's claim could have been another delivery's), then given up.
+		expect(outbox.append).toHaveBeenCalledTimes(2);
 	});
 
 	it('tells a link by its provider’s id, else its address; the provider in lower case', () => {

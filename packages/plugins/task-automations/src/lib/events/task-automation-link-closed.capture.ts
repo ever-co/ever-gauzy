@@ -87,11 +87,12 @@ export class TaskAutomationLinkClosedCapture implements IEventHandler<TaskLinkCl
 	}
 
 	/**
-	 * The claims and the append in one transaction of the ORM `DB_ORM` configures (under MikroORM the outbox's TypeORM
-	 * entity maps its base columns only, so the row is written through MikroORM, and the claims join that transaction);
-	 * the outbox's commit hook then wakes the dispatch pass. The close is claimed, and a merged pull request's merge
-	 * beside it; the event is appended when either claim is new, saying whether the close was claimed before. A claim
-	 * another delivery committed first fails the insert: the unique key decided, and the report is theirs.
+	 * Claims and appends (see {@link claimAndAppendOnce}). A claim another delivery committed first fails the insert:
+	 * the unique key decided, and the report is theirs. Whether another delivery made this report is told by the merge's
+	 * claim for a merge (the close's may be the one a close without merging took long before, which says nothing of this
+	 * delivery), by the close's for a close. A merge whose close another delivery claimed meanwhile — a close without
+	 * merging, delivered at the same moment — lost only the close's claim, which was not its to take: it is tried once
+	 * more, now as a merge after a reported close.
 	 */
 	private async claimAndAppend(
 		key: ITaskLinkClosureKey,
@@ -99,35 +100,53 @@ export class TaskAutomationLinkClosedCapture implements IEventHandler<TaskLinkCl
 		input: (closedBefore: boolean) => IOutboxWriteInput
 	): Promise<boolean> {
 		try {
-			if (getORMType() === MultiORMEnum.MikroORM) {
-				const em = this.outbox.mikroOrmEventOutboxRepository?.getEntityManager?.();
-				if (em) {
-					return await em.fork().transactional(async (transaction) => {
-						const claim = (claimed: ITaskLinkClosureKey) =>
-							this.closures.claimInMikroOrm(
-								transaction as unknown as ITaskAutomationMikroOrmTransaction,
-								claimed
-							);
-						const closed = await claim(key);
-						const merged = mergeKey ? await claim(mergeKey) : false;
-						if (!closed && !merged) return false;
-						await this.outbox.append(transaction as never, input(!closed));
-						return true;
-					});
-				}
-			}
-			return await this.dataSource.manager.transaction(async (manager) => {
-				const closed = await this.closures.claimIn(manager, key);
-				const merged = mergeKey ? await this.closures.claimIn(manager, mergeKey) : false;
-				if (!closed && !merged) return false;
-				await this.outbox.append(manager, input(!closed));
-				return true;
-			});
+			return await this.claimAndAppendOnce(key, mergeKey, input);
 		} catch (error) {
-			// Whether another delivery made this report: a merge's claim says it for a merge (the close's may be the one
-			// a close without merging took long before, which says nothing of this delivery), the close's for a close.
 			if (await this.closures.exists(mergeKey ?? key)) return false;
-			throw error;
+			if (!mergeKey || !(await this.closures.exists(key))) throw error;
+			try {
+				return await this.claimAndAppendOnce(key, mergeKey, input);
+			} catch (retryError) {
+				if (await this.closures.exists(mergeKey)) return false;
+				throw retryError;
+			}
 		}
+	}
+
+	/**
+	 * The claims and the append in one transaction of the ORM `DB_ORM` configures (under MikroORM the outbox's TypeORM
+	 * entity maps its base columns only, so the row is written through MikroORM, and the claims join that transaction);
+	 * the outbox's commit hook then wakes the dispatch pass. The close is claimed, and a merged pull request's merge
+	 * beside it; the event is appended when either claim is new, saying whether the close was claimed before.
+	 */
+	private async claimAndAppendOnce(
+		key: ITaskLinkClosureKey,
+		mergeKey: ITaskLinkClosureKey | null,
+		input: (closedBefore: boolean) => IOutboxWriteInput
+	): Promise<boolean> {
+		if (getORMType() === MultiORMEnum.MikroORM) {
+			const em = this.outbox.mikroOrmEventOutboxRepository?.getEntityManager?.();
+			if (em) {
+				return em.fork().transactional(async (transaction) => {
+					const claim = (claimed: ITaskLinkClosureKey) =>
+						this.closures.claimInMikroOrm(
+							transaction as unknown as ITaskAutomationMikroOrmTransaction,
+							claimed
+						);
+					const closed = await claim(key);
+					const merged = mergeKey ? await claim(mergeKey) : false;
+					if (!closed && !merged) return false;
+					await this.outbox.append(transaction as never, input(!closed));
+					return true;
+				});
+			}
+		}
+		return this.dataSource.manager.transaction(async (manager) => {
+			const closed = await this.closures.claimIn(manager, key);
+			const merged = mergeKey ? await this.closures.claimIn(manager, mergeKey) : false;
+			if (!closed && !merged) return false;
+			await this.outbox.append(manager, input(!closed));
+			return true;
+		});
 	}
 }

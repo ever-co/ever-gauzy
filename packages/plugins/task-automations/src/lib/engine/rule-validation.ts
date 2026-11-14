@@ -46,7 +46,8 @@ function cleanList(list: unknown, what: string): string[] {
 
 /**
  * The trigger as it is stored: its type and, for `STATUS_CHANGED` only, its status lists; for `LINK_CLOSED` only,
- * whether it waits for a merge (`mergedOnly`: a boolean, `false` when absent).
+ * whether it waits for a merge (`mergedOnly`: true or false, `false` when absent; `null` is refused, so a caller
+ * never turns the filter off by sending nothing in it).
  */
 export function normalizeTrigger(trigger: unknown): ITaskAutomationTrigger {
 	const value = (trigger ?? {}) as Partial<ITaskAutomationTrigger>;
@@ -54,7 +55,7 @@ export function normalizeTrigger(trigger: unknown): ITaskAutomationTrigger {
 		throw new TaskAutomationValidationError('The trigger is not one the platform knows.');
 	}
 	if (value.type === TaskAutomationTriggerEnum.LINK_CLOSED) {
-		if (value.mergedOnly !== undefined && value.mergedOnly !== null && typeof value.mergedOnly !== 'boolean') {
+		if (value.mergedOnly !== undefined && typeof value.mergedOnly !== 'boolean') {
 			throw new TaskAutomationValidationError('The trigger’s “merged only” must be true or false.');
 		}
 		return { type: value.type, mergedOnly: value.mergedOnly === true };
