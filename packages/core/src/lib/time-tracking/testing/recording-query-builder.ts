@@ -208,3 +208,48 @@ export function mockRequestContext(caller: {
 export function nextMacrotask(): Promise<void> {
 	return new Promise((resolve) => setImmediate(resolve));
 }
+
+/**
+ * Adds the parameters a `where` of a query builder double receives to `parameters`, those of the conditions a
+ * `new Brackets(...)` builds included.
+ *
+ * @param parameters - The parameters of the query, so far.
+ * @param condition - The condition: SQL, or brackets.
+ * @param values - The values the condition binds.
+ */
+export function addQueryParameters(
+	parameters: Record<string, unknown>,
+	condition: unknown,
+	values?: Record<string, unknown>
+): void {
+	const brackets = condition as { whereFactory?: (builder: unknown) => unknown };
+	if (typeof brackets?.whereFactory === 'function') {
+		const add = (inner: unknown, innerValues?: Record<string, unknown>) => {
+			addQueryParameters(parameters, inner, innerValues);
+			return inBrackets;
+		};
+		const inBrackets = { where: add, andWhere: add, orWhere: add };
+		brackets.whereFactory(inBrackets);
+	}
+	Object.assign(parameters, values);
+}
+
+/**
+ * The ranges of slot starts a lookup by minute names (`startFrom<n>` up to `startTo<n>`, as
+ * TimeLogUpdateHandler.findTimeSlots binds them), or none when it names no start.
+ *
+ * @param parameters - The parameters of the query.
+ */
+export function slotStartRanges(parameters: Record<string, unknown>): Array<{ from: number; to: number }> | undefined {
+	const prefix = 'startFrom';
+	const fromKeys = Object.keys(parameters).filter((key) => key.startsWith(prefix));
+	if (fromKeys.length === 0) {
+		return undefined;
+	}
+	return fromKeys.map((fromKey) => {
+		const index = fromKey.slice(prefix.length);
+		const from = new Date(parameters[fromKey] as Date).getTime();
+		const to = new Date(parameters[`startTo${index}`] as Date).getTime();
+		return { from, to };
+	});
+}

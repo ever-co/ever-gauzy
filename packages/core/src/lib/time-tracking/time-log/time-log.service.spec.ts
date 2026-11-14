@@ -41,6 +41,7 @@ import { TimesheetFirstOrCreateCommand, TimesheetRecalculateCommand } from '../t
 import { TimeSlotBulkDeleteCommand } from '../time-slot/commands';
 import { TimeSlotBulkDeleteHandler } from '../time-slot/commands/handlers/time-slot-bulk-delete.handler';
 import { generateTimeSlots } from '../time-slot/utils';
+import { addQueryParameters, slotStartRanges } from '../testing/recording-query-builder';
 import { Organization } from '../../organization/organization.entity';
 import { TimeLog } from './time-log.entity';
 import { RUNNING_TIMER_OVERLAP, TimeLogService } from './time-log.service';
@@ -1034,15 +1035,12 @@ describe('TimeLogService', () => {
 				expect(sent.getResponse()).toMatchObject({ runningTimeLog: { startedAt: '2026-01-05T09:30:00.000Z' } });
 			});
 
-			it('CONTROL: still clears a stopped log in the range, slot by slot, and records the time', async () => {
+			it('CONTROL: still clears a stopped log in the range, with one command for it, and records the time', async () => {
 				conflicts = [stoppedLog];
 
 				await manualService.addManualTime({ ...request });
 
-				expect(commandsOfType(DeleteTimeSpanCommand).map((command) => command.timeSlot.id)).toEqual([
-					'stopped@08:50',
-					'stopped@09:00'
-				]);
+				expect(commandsOfType(DeleteTimeSpanCommand).map((command) => command.timeLog.id)).toEqual(['stopped']);
 				expect(commandsOfType(TimeLogCreateCommand)).toHaveLength(1);
 			});
 		});
@@ -1422,17 +1420,15 @@ describe('TimeLogService', () => {
 				const timeSlotRepository = {
 					createQueryBuilder: () => {
 						const params: Record<string, any> = {};
+						const addParameters = (condition: unknown, values?: Record<string, unknown>) => {
+							addQueryParameters(params, condition, values);
+							return builder;
+						};
 						const builder = {
 							alias: 'time_slot',
 							leftJoinAndSelect: () => builder,
-							where: (_sql: string, values: Record<string, unknown>) => (
-								Object.assign(params, values),
-								builder
-							),
-							andWhere: (_sql: string, values: Record<string, unknown>) => (
-								Object.assign(params, values),
-								builder
-							),
+							where: addParameters,
+							andWhere: addParameters,
 							getParameters: () => params,
 							// The join-row operations of `relation(TimeSlot, 'timeLogs').of(slot)`.
 							relation: () => ({
@@ -1445,19 +1441,22 @@ describe('TimeLogService', () => {
 									}
 								})
 							}),
-							getMany: async () =>
-								slots.filter(
+							getMany: async () => {
+								const ranges = slotStartRanges(params);
+								return slots.filter(
 									(slot) =>
 										!slot.deletedAt &&
 										slot.organizationId === params.organizationId &&
 										slot.tenantId === params.tenantId &&
 										slot.employeeId === params.employeeId &&
-										(!params.startTimes ||
-											(params.startTimes as Date[]).some(
-												(time) => time.getTime() === slot.startedAt.getTime()
+										(!ranges ||
+											ranges.some(
+												({ from, to }) =>
+													slot.startedAt.getTime() >= from && slot.startedAt.getTime() < to
 											)) &&
 										(!params.timeSlotsIds || (params.timeSlotsIds as string[]).includes(slot.id))
-								)
+								);
+							}
 						};
 						return builder;
 					},
