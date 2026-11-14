@@ -48,17 +48,22 @@ const RELEASING_STATUSES = [InvoiceStatusTypesEnum.VOID, EstimateStatusTypesEnum
  *
  * @param timeLogIds The time logs billed now.
  * @param lineIds The lines that bill them now.
+ * @param invoiceTable The name the statement gives the invoice table: the table itself in an update.
  * @returns The condition, quoted for the database in use, and its parameters.
  */
-function releasedBy(timeLogIds: ID[], lineIds: ID[]): { condition: string; parameters: Record<string, ID> } {
+function releasedBy(
+	timeLogIds: ID[],
+	lineIds: ID[],
+	invoiceTable = 'invoice'
+): { condition: string; parameters: Record<string, ID> } {
 	const parameters: Record<string, ID> = {};
 	const timeLogNames = timeLogIds.map((id, index) => namedParameter(parameters, `releasedTimeLog${index}`, id));
 	const lineNames = lineIds.map((id, index) => namedParameter(parameters, `billingLine${index}`, id));
 	const condition = p(
-		`"invoice"."id" IN (SELECT "released_line"."invoiceId" FROM "invoice_item" "released_line" ` +
+		`"${invoiceTable}"."id" IN (SELECT "released_line"."invoiceId" FROM "invoice_item" "released_line" ` +
 			`INNER JOIN "time_log" "released_log" ON "released_log"."invoiceItemId" = "released_line"."id" ` +
 			`WHERE "released_log"."id" IN (${timeLogNames.join(', ')}) AND "released_line"."invoiceId" IS NOT NULL) ` +
-			`AND "invoice"."id" NOT IN (SELECT "billing_line"."invoiceId" FROM "invoice_item" "billing_line" ` +
+			`AND "${invoiceTable}"."id" NOT IN (SELECT "billing_line"."invoiceId" FROM "invoice_item" "billing_line" ` +
 			`WHERE "billing_line"."id" IN (${lineNames.join(', ')}) AND "billing_line"."invoiceId" IS NOT NULL)`
 	);
 	return { condition, parameters };
@@ -68,6 +73,55 @@ function releasedBy(timeLogIds: ID[], lineIds: ID[]): { condition: string; param
 function namedParameter(parameters: Record<string, ID>, name: string, value: ID): string {
 	parameters[name] = value;
 	return `:${name}`;
+}
+
+/**
+ * Locks, in id order, every document one of whose lines holds a time log billed now, whatever its status, where the
+ * database locks rows. Under READ COMMITTED each statement reads its own snapshot: a void another request has written
+ * but not committed would leave the document out of the marker update below, and once committed it would free the
+ * time for the time log update that follows, so the void document would stay unmarked. Locked first, the document is
+ * read as that void committed it.
+ */
+async function typeOrmLockReleasingDocuments(
+	manager: EntityManager,
+	timeLogIds: ID[],
+	lineIds: ID[],
+	tenantId: ID
+): Promise<void> {
+	if (!locksRows()) {
+		return;
+	}
+	const { condition, parameters } = releasedBy(timeLogIds, lineIds);
+	await manager
+		.createQueryBuilder(Invoice, 'invoice')
+		.withDeleted()
+		.select('invoice.id')
+		.where(p(`"invoice"."tenantId" = :tenantId`), { tenantId })
+		.andWhere(condition, parameters)
+		.orderBy('invoice.id', 'ASC')
+		.setLock('pessimistic_write')
+		.getRawMany();
+}
+
+/** The MikroORM form of {@link typeOrmLockReleasingDocuments}, on the transaction's entity manager. */
+async function mikroOrmLockReleasingDocuments(
+	em: MikroOrmEntityManager,
+	timeLogIds: ID[],
+	lineIds: ID[],
+	tenantId: ID
+): Promise<void> {
+	if (!locksRows()) {
+		return;
+	}
+	// A find names the table by an alias of its own: the condition is built on it, with the same named parameters
+	const { parameters } = releasedBy(timeLogIds, lineIds);
+	const releasedByKey = raw((alias: string) => releasedBy(timeLogIds, lineIds, alias).condition, parameters);
+	await em.find(Invoice, { tenantId, [releasedByKey]: [] } as FilterQuery<Invoice>, {
+		fields: ['id'],
+		orderBy: { id: QueryOrder.ASC },
+		lockMode: LockMode.PESSIMISTIC_WRITE,
+		filters: false
+	});
 }
 
 /**
@@ -85,6 +139,7 @@ async function typeOrmMarkReleasedTimeBilled(
 	if (timeLogIds.length === 0) {
 		return;
 	}
+	await typeOrmLockReleasingDocuments(manager, timeLogIds, lineIdsOf(lines), scope.tenantId);
 	const { condition, parameters } = releasedBy(timeLogIds, lineIdsOf(lines));
 	await manager
 		.createQueryBuilder()
@@ -107,6 +162,7 @@ async function mikroOrmMarkReleasedTimeBilled(
 	if (timeLogIds.length === 0) {
 		return;
 	}
+	await mikroOrmLockReleasingDocuments(em, timeLogIds, lineIdsOf(lines), scope.tenantId);
 	const { condition, parameters } = releasedBy(timeLogIds, lineIdsOf(lines));
 	const releasedByKey = raw(condition, parameters);
 	const where = {

@@ -417,6 +417,30 @@ const DAY = 24 * 60 * 60 * 1000;
 
 	describe.each(ORMS)('on %s', (ormType) => {
 		it(
+			'waits for a void of the invoice whose time it bills, and marks that invoice once the void commits',
+			async () => {
+				const released = await timeLog();
+				const source = invoiceBilling('source', [released]);
+				await handlers(ormType).create(source);
+				await dataSource.query(`UPDATE "invoice" SET "status" = 'SENT' WHERE "id" = $1`, [source.id]);
+				const billing = invoiceBilling('billing', [released]);
+
+				const outcome = await whileVoiding(source.id, () => handlers(ormType).create(billing), {
+					billedAgain: false
+				});
+
+				expect(outcome.status).toBe('fulfilled');
+				expect(await linkOf(released)).toBe(await lineOf(billing.id));
+				const [marked] = await dataSource.query(
+					`SELECT "releasedTimeBilledAt" FROM "invoice" WHERE "id" = $1`,
+					[source.id]
+				);
+				expect(marked.releasedTimeBilledAt).not.toBeNull();
+			},
+			TIMEOUT
+		);
+
+		it(
 			'bills the time once: one save wins, the other is refused with a 400 and saves nothing',
 			async () => {
 				const contested = await timeLog();
