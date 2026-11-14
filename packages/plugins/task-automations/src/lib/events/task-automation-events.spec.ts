@@ -41,7 +41,12 @@ jest.mock('../services/task-automation-task-reader.service', () => ({ TaskAutoma
 import 'reflect-metadata';
 import { ActionTypeEnum, ActorTypeEnum, BaseEntityEnum, TASK_AUTOMATION_EVENT_NAMES, TaskAutomationTriggerEnum } from '@gauzy/contracts';
 import { ActivityLogEvent, TaskLinkClosedEvent } from '@gauzy/core';
-import { linkClosureKeyOf, linkMergeKeyOf, TASK_LINK_MERGE_CLAIM_KIND } from '../engine/link-closed';
+import {
+	ITaskLinkClosureKey,
+	linkClosureKeyOf,
+	linkMergeKeyOf,
+	TASK_LINK_MERGE_CLAIM_KIND
+} from '../engine/link-closed';
 import { TaskAutomationChangeCapture } from './task-automation-change.capture';
 import { parseLinkClosedEvent, TaskAutomationEventConsumer } from './task-automation-event.consumer';
 import { TaskAutomationLinkClosedCapture } from './task-automation-link-closed.capture';
@@ -145,9 +150,9 @@ describe('TaskAutomationLinkClosedCapture', () => {
 		const rules = { enabledTriggers: jest.fn(async () => new Set(triggers)) };
 		const reader = { belongsTo: jest.fn(async () => owned) };
 		const closures = {
-			claimIn: jest.fn<Promise<boolean>, [unknown, { kind: string }]>(async () => claimed),
+			claimIn: jest.fn<Promise<boolean>, [unknown, ITaskLinkClosureKey]>(async () => claimed),
 			claimInMikroOrm: jest.fn(async () => claimed),
-			exists: jest.fn<Promise<boolean>, [{ kind: string }]>(async () => false)
+			exists: jest.fn<Promise<boolean>, [ITaskLinkClosureKey]>(async () => false)
 		};
 		const outbox = { append: jest.fn<Promise<unknown>, [unknown, unknown]>(async () => ({})) };
 		// The claim and the append run in one transaction; `manager` is that transaction's.
@@ -203,7 +208,7 @@ describe('TaskAutomationLinkClosedCapture', () => {
 		const { capture, closures, outbox, manager } = setup([TaskAutomationTriggerEnum.LINK_CLOSED]);
 		// The close was claimed when the pull request closed without merging; its merge is new.
 		closures.claimIn.mockImplementation(
-			async (_manager: unknown, key: { kind: string }) => key.kind === TASK_LINK_MERGE_CLAIM_KIND
+			async (_manager: unknown, key: ITaskLinkClosureKey) => key.kind === TASK_LINK_MERGE_CLAIM_KIND
 		);
 		expect(await capture.report({ ...closed, closedBefore: false })).toBe(true);
 		expect(outbox.append).toHaveBeenCalledWith(
@@ -287,9 +292,9 @@ describe('TaskAutomationLinkClosedCapture', () => {
 		const { capture, closures, outbox, manager } = setup([TaskAutomationTriggerEnum.LINK_CLOSED]);
 		// The close without merging committed its claim between this delivery's lookup and its insert.
 		closures.claimIn.mockRejectedValueOnce(new Error('UNIQUE constraint failed'));
-		closures.exists.mockImplementation(async (key: { kind: string }) => key.kind !== TASK_LINK_MERGE_CLAIM_KIND);
+		closures.exists.mockImplementation(async (key: ITaskLinkClosureKey) => key.kind !== TASK_LINK_MERGE_CLAIM_KIND);
 		closures.claimIn.mockImplementation(
-			async (_manager: unknown, key: { kind: string }) => key.kind === TASK_LINK_MERGE_CLAIM_KIND
+			async (_manager: unknown, key: ITaskLinkClosureKey) => key.kind === TASK_LINK_MERGE_CLAIM_KIND
 		);
 		expect(await capture.report(closed)).toBe(true);
 		expect(closures.claimIn.mock.calls.map(([, key]) => key.kind)).toEqual([
@@ -314,9 +319,9 @@ describe('TaskAutomationLinkClosedCapture', () => {
 	it('throws a merge’s failed append though its close was claimed long before, so the merge is not lost as a repeat', async () => {
 		const { capture, closures, outbox } = setup([TaskAutomationTriggerEnum.LINK_CLOSED]);
 		closures.claimIn.mockImplementation(
-			async (_manager: unknown, key: { kind: string }) => key.kind === TASK_LINK_MERGE_CLAIM_KIND
+			async (_manager: unknown, key: ITaskLinkClosureKey) => key.kind === TASK_LINK_MERGE_CLAIM_KIND
 		);
-		closures.exists.mockImplementation(async (key: { kind: string }) => key.kind !== TASK_LINK_MERGE_CLAIM_KIND);
+		closures.exists.mockImplementation(async (key: ITaskLinkClosureKey) => key.kind !== TASK_LINK_MERGE_CLAIM_KIND);
 		outbox.append.mockRejectedValue(new Error('database down'));
 		await expect(capture.report(closed)).rejects.toThrow('database down');
 		expect(closures.exists).toHaveBeenCalledWith(mergeKey);

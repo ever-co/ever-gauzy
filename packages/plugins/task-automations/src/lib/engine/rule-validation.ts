@@ -46,8 +46,8 @@ function cleanList(list: unknown, what: string): string[] {
 
 /**
  * The trigger as it is stored: its type and, for `STATUS_CHANGED` only, its status lists; for `LINK_CLOSED` only,
- * whether it waits for a merge (`mergedOnly`: true or false, `false` when absent; `null` is refused, so a caller
- * never turns the filter off by sending nothing in it).
+ * whether it waits for a merge (`mergedOnly`: absent reads as `false`; `null` and anything but `true` / `false` are
+ * refused with `400`).
  */
 export function normalizeTrigger(trigger: unknown): ITaskAutomationTrigger {
 	const value = (trigger ?? {}) as Partial<ITaskAutomationTrigger>;

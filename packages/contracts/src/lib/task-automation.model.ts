@@ -315,9 +315,10 @@ export interface ITaskLinkClosedEvent {
 	/** A pull request: whether it was merged (`false`: closed without merging). Absent for an issue. */
 	merged?: boolean | null;
 	/**
-	 * Set by the automations on `task_link.closed`, never by an integration: `true` when the link's close was handed to
-	 * the rules before — the pull request was closed without merging, reopened, and is now merged — so only the rules
-	 * that wait for a merge (`mergedOnly`) run on this event. `false` or absent: the link's first reported close.
+	 * Owned by the automations: the capture sets it on `task_link.closed` from its claims and overwrites any value
+	 * an integration's report carries. `true` when the link's close was handed to the rules before — the pull
+	 * request was closed without merging, reopened, and is now merged — so only the rules that wait for a merge
+	 * (`mergedOnly`) run on this event. `false` or absent: the link's first reported close.
 	 */
 	closedBefore?: boolean;
 }

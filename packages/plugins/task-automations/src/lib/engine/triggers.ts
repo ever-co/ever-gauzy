@@ -126,10 +126,14 @@ export function matchLinkClosedTrigger(
 		Partial<Pick<ITaskLinkClosedEvent, 'kind' | 'merged' | 'closedBefore'>>
 ): ITaskAutomationTriggerMatch | null {
 	if (trigger?.type !== TaskAutomationTriggerEnum.LINK_CLOSED || !event?.taskId) return null;
-	const fires =
-		trigger.mergedOnly === true && event.kind === 'pull_request'
-			? event.merged === true
-			: event.closedBefore !== true;
+	let fires: boolean;
+	if (trigger.mergedOnly === true && event.kind === 'pull_request') {
+		// A merged-only rule on a pull request: its merge, whether or not its close was reported before.
+		fires = event.merged === true;
+	} else {
+		// Any other rule, and a merged-only rule on an issue: the link's first reported close only.
+		fires = event.closedBefore !== true;
+	}
 	return fires ? { subjectTaskId: event.taskId } : null;
 }
 
