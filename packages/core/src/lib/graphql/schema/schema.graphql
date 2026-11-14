@@ -33837,6 +33837,12 @@ type Organization {
   """
   restrictTrackingSwitchToHigherRoles: Boolean!
 
+  """
+  Whether members may record breaks (time logs of type BREAK), which never count as worked, billable or invoiced time.
+  Off when null or false: a break is then refused.
+  """
+  allowBreaks: Boolean
+
   """Whether the organization renders times on a 12- or a 24-hour clock."""
   timeFormat: Int!
 

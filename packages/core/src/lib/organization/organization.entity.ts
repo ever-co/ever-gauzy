@@ -387,6 +387,16 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@MultiORMColumn({ default: false })
 	restrictTrackingSwitchToHigherRoles?: boolean;
 
+	/**
+	 * Whether members may record breaks: time logs of type BREAK, taken from the timer or added by hand, which never count
+	 * as worked, billable or invoiced time. Off when unset, as before the setting existed: a break is then refused.
+	 */
+	@ApiPropertyOptional({ type: () => Boolean, default: false })
+	@IsOptional()
+	@IsBoolean()
+	@MultiORMColumn({ nullable: true, default: false })
+	allowBreaks?: boolean;
+
 	@MultiORMColumn({ default: 12 })
 	timeFormat?: 12 | 24;
 
