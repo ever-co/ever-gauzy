@@ -51,6 +51,7 @@ function findRows(rows: TimeLogRow[], where: Record<string, unknown>): TimeLogRo
 interface OrganizationSettings {
 	allowDiscardTimer?: boolean | null;
 	discardTimerWithinMinutes?: number | null;
+	allowDeleteTime?: boolean | null;
 }
 
 /** Applies `values` to the rows matching `where`, as one UPDATE statement would, and answers how many it changed. */
@@ -395,12 +396,24 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])('TimerService disca
 	it('leaves the tracking status to the next start when its turn passed during the read after the removal', async () => {
 		let isHeld = true;
 		const rows = [runningLog()];
-		// The removal took past the turn's failsafe: a queued start may have begun its run and marked the employee
-		const { service, notTrackingWrites } = setup(rows, {}, { afterDelete: () => (isHeld = false) });
+		const { service, notTrackingWrites } = setup(rows);
 		jest.spyOn(service as unknown as { inEmployeeTurn: () => unknown }, 'inEmployeeTurn').mockImplementation(
 			(async (_employeeId: string, work: (turn: object) => Promise<unknown>) =>
 				work({ isHeld: () => isHeld, assertHeld: () => undefined })) as never
 		);
+		// The read of the runs left after the removal took past the turn's failsafe: a queued start may have begun its
+		// run and marked the employee meanwhile. The turn passes while that query is pending, so the status written
+		// after it must be decided on the turn as it is once the query answers.
+		const lookup = service as unknown as { findTimeLogsWhere: (...args: unknown[]) => Promise<unknown[]> };
+		const findTimeLogsWhere = lookup.findTimeLogsWhere.bind(service);
+		jest.spyOn(lookup, 'findTimeLogsWhere').mockImplementation(async (...args: unknown[]) => {
+			const found = await findTimeLogsWhere(...args);
+			const isAfterRemoval = rows.length === 0;
+			if (isAfterRemoval) {
+				isHeld = false;
+			}
+			return found;
+		});
 
 		await expect(discard(service)).resolves.toBeUndefined();
 
@@ -439,6 +452,31 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])('TimerService disca
 		await expect(refusalCode(discard(withoutRun.service))).resolves.toMatchObject({ code: TIMER_DISCARD_DISABLED });
 		expect(withRun.execute).not.toHaveBeenCalled();
 		expect(running).toHaveLength(1);
+	});
+
+	it('answers 403 with its code when the organization turned deleting time off, even with discarding on', async () => {
+		const running = [runningLog()];
+		const { service, execute } = setup(running, { allowDiscardTimer: true, allowDeleteTime: false });
+
+		await expect(refusalCode(discard(service))).resolves.toMatchObject({ code: TIMER_DISCARD_DISABLED });
+		expect(execute).not.toHaveBeenCalled();
+		expect(running).toEqual([expect.objectContaining({ id: RUNNING_LOG_ID, isRunning: true })]);
+	});
+
+	it("takes the run in the caller's tenant only", async () => {
+		const rows = [runningLog()];
+		const { service, typeOrmTimeLogRepository, mikroOrmTimeLogRepository } = setup(rows);
+
+		await discard(service);
+
+		const claims =
+			ormType === MultiORMEnum.MikroORM
+				? mikroOrmTimeLogRepository.nativeUpdate.mock.calls
+				: typeOrmTimeLogRepository.update.mock.calls;
+		expect(claims[0]).toEqual([
+			{ id: RUNNING_LOG_ID, tenantId: fixture.tenantId, isRunning: true },
+			{ isRunning: false }
+		]);
 	});
 
 	it('answers 403 with its code to a run older than the organization limit, and discards a younger one', async () => {

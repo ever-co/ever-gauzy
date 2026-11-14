@@ -146,7 +146,8 @@ export class TimerController {
 	 * Discard timer endpoint.
 	 *
 	 * Removes the caller's running timer, with its time slots, screenshots and activity, as if it never started. The
-	 * time was never kept, so the timer's own permission is enough: deleting time is not asked.
+	 * time was never kept, so the timer's own permission is enough: the role permission to delete time is not asked. An
+	 * organization that turned deleting time off refuses it, as one that turned discarding off does.
 	 *
 	 * @param entity - A DiscardTimerDTO object, naming the running time log the discard is for when the client knows it.
 	 */
@@ -162,7 +163,7 @@ export class TimerController {
 	@ApiResponse({
 		status: HttpStatus.FORBIDDEN,
 		description:
-			'The organization turned discarding off (code TIMER_DISCARD_DISABLED), or the run started longer ago than the organization allows (code TIMER_DISCARD_TOO_LATE). Nothing is removed.'
+			'The organization turned discarding or deleting time off (code TIMER_DISCARD_DISABLED), or the run started longer ago than the organization allows (code TIMER_DISCARD_TOO_LATE). Nothing is removed.'
 	})
 	@ApiResponse({
 		status: HttpStatus.CONFLICT,

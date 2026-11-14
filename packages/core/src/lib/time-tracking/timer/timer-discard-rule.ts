@@ -20,24 +20,36 @@ export interface ITimerDiscardRefusal {
 }
 
 /** The organization settings a discard depends on. */
-export type TimerDiscardSettings = Pick<IOrganization, 'allowDiscardTimer' | 'discardTimerWithinMinutes'>;
+export type TimerDiscardSettings = Pick<
+	IOrganization,
+	'allowDiscardTimer' | 'discardTimerWithinMinutes' | 'allowDeleteTime'
+>;
 
 const MILLISECONDS_PER_MINUTE = 60 * 1000;
 
 /**
  * The refusal of an organization that turned discarding off, or null when its members may discard. Only an explicit
- * `false` turns it off: the switch is on by default, and a null value counts as on.
+ * `false` turns it off: the switch is on by default, and a null value counts as on. An organization that turned
+ * deleting time off (`allowDeleteTime: false`) refuses a discard too: a discard removes the run, its time slots and its
+ * screenshots, which that organization keeps.
  *
  * @param settings The organization's settings, if known.
  */
 export function discardDisabledRefusal(settings: TimerDiscardSettings | null | undefined): ITimerDiscardRefusal | null {
 	const isTurnedOff = settings?.allowDiscardTimer === false;
-	if (!isTurnedOff) {
+	const keepsAllTime = settings?.allowDeleteTime === false;
+	if (!isTurnedOff && !keepsAllTime) {
 		return null;
+	}
+	if (isTurnedOff) {
+		return {
+			code: TIMER_DISCARD_DISABLED,
+			message: 'Discarding a running timer is turned off in this organization. Stop the timer to end the run.'
+		};
 	}
 	return {
 		code: TIMER_DISCARD_DISABLED,
-		message: 'Discarding a running timer is turned off in this organization. Stop the timer to end the run.'
+		message: 'Deleting time is turned off in this organization, so a running timer is not discarded. Stop the timer to end the run.'
 	};
 }
 

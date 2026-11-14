@@ -25,6 +25,23 @@ describe('timer discard rule', () => {
 				message: expect.stringMatching(/turned off/)
 			});
 		});
+
+		it.each([
+			['the discard switch on', { allowDiscardTimer: true, allowDeleteTime: false }],
+			['the discard switch not set', { allowDeleteTime: false }]
+		])('refuses with its code when the organization turned deleting time off, with %s', (_label, settings) => {
+			expect(discardDisabledRefusal(settings)).toEqual({
+				code: TIMER_DISCARD_DISABLED,
+				message: expect.stringMatching(/Deleting time is turned off/)
+			});
+		});
+
+		it.each([
+			['on', { allowDeleteTime: true }],
+			['null', { allowDeleteTime: null }]
+		])('allows discarding when deleting time is %s', (_label, settings) => {
+			expect(discardDisabledRefusal(settings)).toBeNull();
+		});
 	});
 
 	describe('discardTooLateRefusal', () => {

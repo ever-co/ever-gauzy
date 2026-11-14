@@ -9879,12 +9879,12 @@ type Mutation {
 
   """
   Discards the caller's running timer: the run is removed with its time slots and screenshots, as if it
-  never started, and the answer is true. No permission to delete time is asked, since the time was
+  never started, and the answer is true. The role permission to delete time is not asked, since the time was
   never kept. A time slot the run shares with another entry stays, with its screenshots, as part of
   that entry.
   
   The delivered write refuses with 400 when nothing runs, with 403 when the organization turned
-  discarding off (code `TIMER_DISCARD_DISABLED`) or the run started longer ago than it allows (code
+  discarding or deleting time off (code `TIMER_DISCARD_DISABLED`) or the run started longer ago than it allows (code
   `TIMER_DISCARD_TOO_LATE`), and with 409 when the input names another time log than the running one,
   or when the run is a tracker app's (code `TIMER_DISCARD_TRACKER_RUN`), which then goes on. Each
   refusal travels as the REST route raises it.

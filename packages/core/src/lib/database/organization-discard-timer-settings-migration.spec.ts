@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { DataSource, QueryRunner } from 'typeorm';
-import { AddOrganizationDiscardTimerSettings1791000010200 } from './migrations/1791000010200-AddOrganizationDiscardTimerSettings';
+import { AddOrganizationDiscardTimerSettings1791000011800 } from './migrations/1791000011800-AddOrganizationDiscardTimerSettings';
 
 /**
  * `organization.allowDiscardTimer` and `organization.discardTimerWithinMinutes`, run for real on SQLite against a
@@ -51,7 +51,7 @@ describe('organization discard timer settings migration on SQLite', () => {
 	const run = async (direction: 'up' | 'down') => {
 		const queryRunner = dataSource.createQueryRunner();
 		try {
-			await new AddOrganizationDiscardTimerSettings1791000010200()[direction](queryRunner);
+			await new AddOrganizationDiscardTimerSettings1791000011800()[direction](queryRunner);
 		} finally {
 			await queryRunner.release();
 		}
@@ -100,7 +100,7 @@ describe('organization discard timer settings migration on MySQL', () => {
 				return [];
 			}
 		} as unknown as QueryRunner;
-		const migration = new AddOrganizationDiscardTimerSettings1791000010200();
+		const migration = new AddOrganizationDiscardTimerSettings1791000011800();
 
 		await migration.up(queryRunner);
 
@@ -125,7 +125,7 @@ describe('organization discard timer settings migration on MySQL', () => {
 			}
 		} as unknown as QueryRunner;
 
-		await new AddOrganizationDiscardTimerSettings1791000010200().down(queryRunner);
+		await new AddOrganizationDiscardTimerSettings1791000011800().down(queryRunner);
 
 		expect(queries).toEqual(['ALTER TABLE `organization` DROP COLUMN `allowDiscardTimer`']);
 	});
@@ -144,7 +144,7 @@ describe('organization discard timer settings migration on Postgres', () => {
 			}
 		} as unknown as QueryRunner;
 
-		await new AddOrganizationDiscardTimerSettings1791000010200().up(queryRunner);
+		await new AddOrganizationDiscardTimerSettings1791000011800().up(queryRunner);
 
 		expect(queries).toEqual([
 			'SELECT pg_advisory_xact_lock($1)',
@@ -164,7 +164,7 @@ describe('organization discard timer settings migration on Postgres', () => {
 			}
 		} as unknown as QueryRunner;
 
-		await new AddOrganizationDiscardTimerSettings1791000010200().down(queryRunner);
+		await new AddOrganizationDiscardTimerSettings1791000011800().down(queryRunner);
 
 		expect(queries).toEqual([
 			'ALTER TABLE "organization" DROP COLUMN IF EXISTS "allowDiscardTimer"',

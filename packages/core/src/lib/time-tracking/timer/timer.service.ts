@@ -1093,9 +1093,9 @@ export class TimerService {
 
 	/**
 	 * Discards the caller's running timer: the run is removed with its time slots, screenshots and activity, through
-	 * the time log delete, as if it never started. The time was never kept, so no permission to delete time is asked.
-	 * The organization may turn discarding off (`allowDiscardTimer`) or allow it only for recent runs
-	 * (`discardTimerWithinMinutes`). Only the caller's running log is removed, never a stopped entry.
+	 * the time log delete, as if it never started. The time was never kept, so the role permission to delete time is
+	 * not asked. The organization may turn discarding off (`allowDiscardTimer`, or `allowDeleteTime`) or allow it only
+	 * for recent runs (`discardTimerWithinMinutes`). Only the caller's running log is removed, never a stopped entry.
 	 *
 	 * @param request The discard, with the running time log it is for when the client names one.
 	 * @throws ForbiddenException with the code TIMER_DISCARD_DISABLED or TIMER_DISCARD_TOO_LATE.
@@ -1139,7 +1139,7 @@ export class TimerService {
 			turn.assertHeld();
 
 			// A stop from another process may have landed since the read: it kept the entry, which is never removed
-			const isClaimed = await this.claimRunningLog(runningLog.id);
+			const isClaimed = await this.claimRunningLog(runningLog.id, tenantId);
 			if (!isClaimed) {
 				throw new BadRequestException('No timer is running: there is nothing to discard.');
 			}
@@ -1161,10 +1161,12 @@ export class TimerService {
 	 * Takes the run for a discard: marks it as no longer running, in one statement that only changes it while it still
 	 * runs. A stop that landed first leaves nothing to take.
 	 *
+	 * @param timeLogId The run.
+	 * @param tenantId The caller's tenant: the statement changes a row of that tenant only.
 	 * @returns Whether the run still ran and is now the discard's to remove.
 	 */
-	private async claimRunningLog(timeLogId: ID): Promise<boolean> {
-		const stillRunning = { id: timeLogId, isRunning: true };
+	private async claimRunningLog(timeLogId: ID, tenantId: ID): Promise<boolean> {
+		const stillRunning = { id: timeLogId, tenantId, isRunning: true };
 		const taken = { isRunning: false };
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
@@ -1186,7 +1188,7 @@ export class TimerService {
 	 * employee started meanwhile: the failed run then stays stopped, so that two timers never run.
 	 */
 	private async releaseRunningLog(timeLogId: ID, employeeId: ID, organizationId: ID, tenantId: ID): Promise<void> {
-		const taken = { id: timeLogId, isRunning: false };
+		const taken = { id: timeLogId, tenantId, isRunning: false };
 		const running = { isRunning: true };
 		try {
 			const otherRuns = await this.findTimeLogsWhere({ employeeId, organizationId, tenantId, isRunning: true });
