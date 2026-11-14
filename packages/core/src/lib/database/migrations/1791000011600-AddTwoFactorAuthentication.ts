@@ -57,11 +57,11 @@ const RULE = { table: 'organization', column: 'requireTwoFactor' } as const;
  * drops the table, and the column on Postgres and MySQL; SQLite keeps the column, as every additive column of this
  * platform is kept on the embedded dialect.
  */
-export class AddTwoFactorAuthentication1791000009900 implements MigrationInterface {
-	name = 'AddTwoFactorAuthentication1791000009900';
+export class AddTwoFactorAuthentication1791000011600 implements MigrationInterface {
+	name = 'AddTwoFactorAuthentication1791000011600';
 
 	/** Advisory lock key that serialises concurrent runs of this migration on Postgres. */
-	private readonly advisoryLockKey = 1791000009900;
+	private readonly advisoryLockKey = 1791000011600;
 
 	/**
 	 * Up Migration

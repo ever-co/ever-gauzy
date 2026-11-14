@@ -5,11 +5,11 @@ import { isMySQL, isPostgres } from '@gauzy/config';
 import { coreEntities } from '../core/entities';
 import { Organization, Tenant, User, UserTwoFactor } from '../core/entities/internal';
 import { isUniqueViolation } from '../core/errors/unique-violation';
-import { AddTwoFactorAuthentication1791000009900 } from './migrations/1791000009900-AddTwoFactorAuthentication';
+import { AddTwoFactorAuthentication1791000011600 } from './migrations/1791000011600-AddTwoFactorAuthentication';
 import { insertRow } from './testing/insert-row';
 
 /**
- * `1791000009900-AddTwoFactorAuthentication` run on a real database: the schema every other entity gives is built
+ * `1791000011600-AddTwoFactorAuthentication` run on a real database: the schema every other entity gives is built
  * first (TypeORM's synchronize), the table is dropped, and the migration creates it again. The table it creates must
  * be the one the entity declares (TypeORM's schema diff finds nothing to change), `up` twice must be harmless, a user
  * has one row at most, the row goes with its user, and `down` then `up` again leave the same table.
@@ -80,7 +80,7 @@ function exercise(options: () => DataSourceOptions) {
 		await dataSource?.destroy();
 	});
 
-	const migration = new AddTwoFactorAuthentication1791000009900();
+	const migration = new AddTwoFactorAuthentication1791000011600();
 
 	const up = async (inTransaction: boolean) => {
 		const queryRunner = dataSource.createQueryRunner();
@@ -195,11 +195,11 @@ const postgresUrl = process.env.GAUZY_MIGRATION_TEST_POSTGRES_URL;
 const mysqlUrl = process.env.GAUZY_MIGRATION_TEST_MYSQL_URL;
 const isSqlite = !isPostgres() && !isMySQL();
 
-(isSqlite ? describe : describe.skip)('AddTwoFactorAuthentication1791000009900 on SQLite', () => {
+(isSqlite ? describe : describe.skip)('AddTwoFactorAuthentication1791000011600 on SQLite', () => {
 	exercise(() => ({ type: 'better-sqlite3', database: ':memory:' }));
 });
 
-(isPostgres() && postgresUrl ? describe : describe.skip)('AddTwoFactorAuthentication1791000009900 on Postgres', () => {
+(isPostgres() && postgresUrl ? describe : describe.skip)('AddTwoFactorAuthentication1791000011600 on Postgres', () => {
 	exercise(() => ({ type: 'postgres', url: postgresUrl }));
 });
 
@@ -208,9 +208,9 @@ const isSqlite = !isPostgres() && !isMySQL();
  * synchronize of every entity does not build on MySQL (an index on a text column of another table). The fixture is
  * enough for every statement of the migration to run for real.
  */
-(mysqlUrl ? describe : describe.skip)('AddTwoFactorAuthentication1791000009900 on MySQL (minimal fixture)', () => {
+(mysqlUrl ? describe : describe.skip)('AddTwoFactorAuthentication1791000011600 on MySQL (minimal fixture)', () => {
 	let dataSource: DataSource;
-	const migration = new AddTwoFactorAuthentication1791000009900();
+	const migration = new AddTwoFactorAuthentication1791000011600();
 
 	const columnsOf = async (table: string): Promise<string[]> =>
 		(
