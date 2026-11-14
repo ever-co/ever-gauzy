@@ -10,8 +10,8 @@ import { EmailTemplateUtils } from '../../email-template/utils';
  * renderer would answer an empty email for a template it cannot find, so the reminder sweep sends nothing while the
  * template is missing, and says so in the log.
  */
-export class SeedInvoiceReminderEmailTemplate1791000011730 implements MigrationInterface {
-	name = 'SeedInvoiceReminderEmailTemplate1791000011730';
+export class SeedInvoiceReminderEmailTemplate1791000011930 implements MigrationInterface {
+	name = 'SeedInvoiceReminderEmailTemplate1791000011930';
 
 	public async up(queryRunner: QueryRunner): Promise<void> {
 		console.log(chalk.yellow(this.name + ' start running!'));

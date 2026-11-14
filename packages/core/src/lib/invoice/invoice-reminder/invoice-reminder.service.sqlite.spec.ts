@@ -9,7 +9,7 @@ import { DataSource } from 'typeorm';
 import { InvoiceStatusTypesEnum, LanguagesEnum } from '@gauzy/contracts';
 import { TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR } from '@gauzy/config';
 import { coreEntities } from '../../core/entities';
-import { CreateInvoiceReminderTable1791000011720 } from '../../database/migrations/1791000011720-CreateInvoiceReminderTable';
+import { CreateInvoiceReminderTable1791000011920 } from '../../database/migrations/1791000011920-CreateInvoiceReminderTable';
 import { INVOICE_REMINDER_SWEEP_PAGE_SIZE } from './invoice-reminder.constants';
 import { InvoiceReminder } from './invoice-reminder.entity';
 import { InvoiceReminderService } from './invoice-reminder.service';
@@ -92,7 +92,7 @@ describe('InvoiceReminderService on SQLite', () => {
 			`CREATE TABLE "email_template" ("id" varchar PRIMARY KEY NOT NULL, "name" varchar, "languageCode" varchar, "organizationId" varchar, "tenantId" varchar, "deletedAt" datetime)`
 		);
 		const runner = dataSource.createQueryRunner();
-		await new CreateInvoiceReminderTable1791000011720().up(runner);
+		await new CreateInvoiceReminderTable1791000011920().up(runner);
 		await runner.release();
 		for (const id of [TENANT, OTHER_TENANT]) await dataSource.query(`INSERT INTO "tenant" ("id") VALUES (?)`, [id]);
 		await seedTemplate();

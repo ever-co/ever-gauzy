@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { DataSource, QueryRunner } from 'typeorm';
-import { AddEstimateEmailInvoiceDelivery1791000011710 } from './migrations/1791000011710-AddEstimateEmailInvoiceDelivery';
+import { AddEstimateEmailInvoiceDelivery1791000011910 } from './migrations/1791000011910-AddEstimateEmailInvoiceDelivery';
 
 /**
  * `estimate_email.invoiceId` and `estimate_email.languageCode`, run for real on SQLite against a minimal fixture of the
@@ -51,7 +51,7 @@ describe('estimate_email invoice delivery migration on SQLite', () => {
 	const run = async (direction: 'up' | 'down') => {
 		const queryRunner = dataSource.createQueryRunner();
 		try {
-			await new AddEstimateEmailInvoiceDelivery1791000011710()[direction](queryRunner);
+			await new AddEstimateEmailInvoiceDelivery1791000011910()[direction](queryRunner);
 		} finally {
 			await queryRunner.release();
 		}
@@ -95,7 +95,7 @@ describe('estimate_email invoice delivery migration on MySQL', () => {
 				return sql.includes('GET_LOCK') ? [{ acquired: 1 }] : [];
 			}
 		} as unknown as QueryRunner;
-		const migration = new AddEstimateEmailInvoiceDelivery1791000011710();
+		const migration = new AddEstimateEmailInvoiceDelivery1791000011910();
 
 		await migration.up(queryRunner);
 
@@ -122,7 +122,7 @@ describe('estimate_email invoice delivery migration on MySQL', () => {
 			}
 		} as unknown as QueryRunner;
 
-		await new AddEstimateEmailInvoiceDelivery1791000011710().up(queryRunner);
+		await new AddEstimateEmailInvoiceDelivery1791000011910().up(queryRunner);
 
 		expect(queries).toEqual(['SELECT GET_LOCK(?, 120) AS `acquired`', 'SELECT RELEASE_LOCK(?)']);
 	});
@@ -141,7 +141,7 @@ describe('estimate_email invoice delivery migration on Postgres', () => {
 			}
 		} as unknown as QueryRunner;
 
-		await new AddEstimateEmailInvoiceDelivery1791000011710().up(queryRunner);
+		await new AddEstimateEmailInvoiceDelivery1791000011910().up(queryRunner);
 
 		expect(queries).toEqual([
 			'SELECT pg_advisory_xact_lock($1)',

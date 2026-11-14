@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { DataSource, QueryRunner } from 'typeorm';
-import { AddOrganizationInvoiceReminders1791000011700 } from './migrations/1791000011700-AddOrganizationInvoiceReminders';
+import { AddOrganizationInvoiceReminders1791000011900 } from './migrations/1791000011900-AddOrganizationInvoiceReminders';
 
 /**
  * `organization.invoiceRemindersEnabled`, run for real on SQLite against a minimal fixture of the table: it arrives as
@@ -47,7 +47,7 @@ describe('organization.invoiceRemindersEnabled migration on SQLite', () => {
 	const run = async (direction: 'up' | 'down') => {
 		const queryRunner = dataSource.createQueryRunner();
 		try {
-			await new AddOrganizationInvoiceReminders1791000011700()[direction](queryRunner);
+			await new AddOrganizationInvoiceReminders1791000011900()[direction](queryRunner);
 		} finally {
 			await queryRunner.release();
 		}
@@ -89,7 +89,7 @@ describe('organization.invoiceRemindersEnabled migration on MySQL', () => {
 				return [];
 			}
 		} as unknown as QueryRunner;
-		const migration = new AddOrganizationInvoiceReminders1791000011700();
+		const migration = new AddOrganizationInvoiceReminders1791000011900();
 
 		await migration.up(queryRunner);
 
@@ -115,7 +115,7 @@ describe('organization.invoiceRemindersEnabled migration on Postgres', () => {
 			}
 		} as unknown as QueryRunner;
 
-		await new AddOrganizationInvoiceReminders1791000011700().up(queryRunner);
+		await new AddOrganizationInvoiceReminders1791000011900().up(queryRunner);
 
 		expect(queries).toEqual([
 			'SELECT pg_advisory_xact_lock($1)',

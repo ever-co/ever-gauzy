@@ -32,11 +32,11 @@ const INDEX = { name: 'IDX_estimate_email_invoice', column: 'invoiceId' };
  * `down` drops the index and the columns on Postgres and MySQL. SQLite keeps them, as every additive column of this
  * platform is kept on the embedded dialect; kept nullable columns are invisible to a build without the entity members.
  */
-export class AddEstimateEmailInvoiceDelivery1791000011710 implements MigrationInterface {
-	name = 'AddEstimateEmailInvoiceDelivery1791000011710';
+export class AddEstimateEmailInvoiceDelivery1791000011910 implements MigrationInterface {
+	name = 'AddEstimateEmailInvoiceDelivery1791000011910';
 
 	/** Advisory lock key that serialises concurrent runs of this migration on Postgres. */
-	private readonly advisoryLockKey = 1791000011710;
+	private readonly advisoryLockKey = 1791000011910;
 
 	/** The MySQL named lock of this migration. MySQL refuses lock names over 64 characters. */
 	readonly mysqlLockName = `gauzy:migration:${this.advisoryLockKey}`;
