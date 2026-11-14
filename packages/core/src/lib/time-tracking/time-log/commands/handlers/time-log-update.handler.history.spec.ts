@@ -134,6 +134,22 @@ describe('TimeLogUpdateHandler: history of an edit', () => {
 		expect(record).not.toHaveBeenCalled();
 	});
 
+	it('records no removal for a field an in-process caller writes as undefined, which the row keeps', async () => {
+		const { handler, record } = setup();
+
+		await handler.execute(
+			new TimeLogUpdateCommand({ description: 'Beta', isBillable: undefined }, storedLog(), null, false, {})
+		);
+
+		const [, [entry]] = record.mock.calls[0];
+		expect(entry.change).toEqual({
+			action: ActionTypeEnum.Updated,
+			updatedFields: ['description'],
+			previousValues: [{ description: null }],
+			updatedValues: [{ description: 'Beta' }]
+		});
+	});
+
 	it('skips an update, with no row, when the entry was deleted for good since it was first read', async () => {
 		const { handler, transactionManager, transactionRepository, record } = setup();
 		transactionManager.findOne.mockResolvedValue(null);

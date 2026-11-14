@@ -559,7 +559,11 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 				return undefined;
 			}
 			const result = await write(manager.getRepository(TimeLog));
-			const edited = { ...current, ...written } as ITimeLog;
+			// A field written as undefined is left as stored (TypeORM skips it), so it is no change of the history
+			const definedWritten = Object.fromEntries(
+				Object.entries(written).filter(([, value]) => value !== undefined)
+			) as Partial<ITimeLog>;
+			const edited = { ...current, ...definedWritten } as ITimeLog;
 			const change = updatedChange(current, edited);
 			if (change) {
 				await recordTimeLogHistory(manager, [
