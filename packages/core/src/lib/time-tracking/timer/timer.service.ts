@@ -398,6 +398,11 @@ export class TimerService {
 		// Retrieve the employee information, with the organization whose switches the start must meet
 		const employee = await this.findEmployee({ organization: true });
 
+		// A member without an account never runs a timer, whatever its tracking switch says.
+		if (employee.isPlaceholder) {
+			throw new ForbiddenException('A member without an account does not run a timer.');
+		}
+
 		// Throw an exception if the employee is not found or tracking is disabled
 		if (!employee.isTrackingEnabled) {
 			throw new ForbiddenException(`The time tracking functionality has been disabled for you.`);

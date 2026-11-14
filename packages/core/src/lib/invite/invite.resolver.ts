@@ -133,6 +133,7 @@ const INVITE_FILTERABLE = {
 	roleId: 'ID',
 	userId: 'ID',
 	invitedByUserId: 'ID',
+	placeholderEmployeeId: 'ID',
 	tenantId: 'ID',
 	organizationId: 'ID',
 	isActive: 'BOOLEAN',
