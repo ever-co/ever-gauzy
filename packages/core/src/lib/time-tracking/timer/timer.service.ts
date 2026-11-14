@@ -362,7 +362,11 @@ export class TimerService {
 		const tenantId = RequestContext.currentTenantId() ?? request.tenantId;
 
 		// Determine the start date and time in UTC
-		const startedAt = moment.utc(request.startedAt ?? moment.utc()).toDate();
+		const receivedAt = moment.utc();
+		const startedAt = moment.utc(request.startedAt ?? receivedAt).toDate();
+		// A start the caller set earlier than the moment the request arrived; never one the server stamped itself
+		const setsStart = isNotEmpty(request.startedAt);
+		const startsInThePast = setsStart && receivedAt.diff(startedAt, 'seconds') >= 1;
 		this.debug(() => `new timer started at: ${startedAt}`);
 
 		// Retrieve the employee information, with the organization whose switches the start must meet
@@ -384,7 +388,9 @@ export class TimerService {
 		const startsBreak = logType === TimeLogType.BREAK;
 		if (startsBreak) {
 			assertBreaksAllowedIn(requirements);
-			await this.assertBreakStartOverlapsNothing({ employeeId, organizationId, tenantId }, startedAt);
+			if (startsInThePast) {
+				await this.assertBreakStartOverlapsNothing({ employeeId, organizationId, tenantId }, startedAt);
+			}
 		}
 
 		const teamIdToLog = await teamIdForEntry(manager, trackedEmployee, request, requirements);
@@ -456,7 +462,7 @@ export class TimerService {
 	}
 
 	/**
-	 * Refuses a break whose start, set in the past, would overlap another entry of the employee: a break never cuts other
+	 * Refuses a break whose start, set by the caller in the past, would overlap another entry of the employee: a break never cuts other
 	 * entries (see break-rules). A run still going overlaps it too, since that run keeps the end its own time gives it
 	 * when the start stops it: stop it first, or start the break now.
 	 *
@@ -469,10 +475,6 @@ export class TimerService {
 		startedAt: Date
 	): Promise<void> {
 		const now = moment.utc().toDate();
-		const startsInThePast = moment.utc(now).diff(startedAt, 'seconds') >= 1;
-		if (!startsInThePast) {
-			return;
-		}
 		const conflicts: ITimeLog[] = await this._commandBus.execute(
 			new IGetConflictTimeLogCommand({ ...employee, startDate: startedAt, endDate: now })
 		);

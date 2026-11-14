@@ -315,6 +315,22 @@ describe('TimerService.startTimer under the organization tracking requirements',
 		expect(createdLog()).toBeUndefined();
 	});
 
+	it('starts a break now while a run goes on, however long the employee read takes', async () => {
+		organization = { allowBreaks: true };
+		Object.assign(service, { getLastRunningLogs: jest.fn(async () => [{ id: 'running', isRunning: true }]) });
+		let clock = Date.parse('2026-11-16T12:00:00.000Z');
+		jest.spyOn(Date, 'now').mockImplementation(() => clock);
+		const readEmployee = findOneByUserId.getMockImplementation();
+		findOneByUserId.mockImplementationOnce(async (...args: unknown[]) => {
+			clock += 5000;
+			return readEmployee(...args);
+		});
+
+		await start({ logType: TimeLogType.BREAK });
+
+		expect(createdLog()).toMatchObject({ logType: TimeLogType.BREAK });
+	});
+
 	it('starts a break set in the past over nothing', async () => {
 		organization = { allowBreaks: true };
 		conflictsAre([]);
