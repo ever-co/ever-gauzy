@@ -150,7 +150,7 @@ describe('a token refresh refuses a member without an account', () => {
 	it('POST /auth/refresh-token answers 401 and leaves the refresh token unrotated', async () => {
 		const { service, generate, rotateRefreshToken } = buildAuthService();
 		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG_A);
-		jest.spyOn(RequestContext, 'currentUser').mockReturnValue(AMINA as any);
+		jest.spyOn(RequestContext, 'currentUser').mockReturnValue(AMINA as never);
 
 		await expect(service.rotateTokens('presented-refresh-token')).rejects.toBeInstanceOf(UnauthorizedException);
 
