@@ -81,10 +81,13 @@ beforeAll(async () => {
 	invoices = dataSource.getRepository('AnswerOnceSpecInvoice');
 	estimateEmails = dataSource.getRepository('AnswerOnceSpecEstimateEmail');
 
-	// The service's reads name relations the spec table does not have: forward the where only, and the update as is
+	// The service's reads name relations the spec table does not have: forward the where only, and the update as is.
+	// The answer is read locked and written in a transaction (#11898), on the spec table.
 	const invoiceRepository = {
 		findOneByOrFail: (where: object) => invoices.findOneByOrFail(where),
-		update: (criteria: object, entity: object) => invoices.update(criteria, entity)
+		update: (criteria: object, entity: object) => invoices.update(criteria, entity),
+		manager: dataSource.manager,
+		target: invoices.target
 	};
 	service = new PublicInvoiceService(invoiceRepository as never, estimateEmails as never);
 });
