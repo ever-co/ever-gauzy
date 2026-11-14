@@ -76,6 +76,11 @@ export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotComm
 
 		this.log(() => `Time Slot Request - Input: ${JSON.stringify(input)}`);
 
+		// A break holds no time slots: a slot is worked time, which a break never is
+		if (logType === TimeLogType.BREAK) {
+			throw new BadRequestException('A break holds no time slots.');
+		}
+
 		const tenantId = RequestContext.currentTenantId() || input.tenantId; // Retrieve the current tenant ID
 		const user = RequestContext.currentUser(); // Retrieve the current user
 		const hasChangeEmployeePermission = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);

@@ -2,6 +2,7 @@
 import '../../../../core/entities/internal';
 
 import { Brackets } from 'typeorm';
+import { TimeLogType } from '@gauzy/contracts';
 import { MultiORMEnum } from '../../../../core/utils';
 import { ScheduleTimeLogEntriesCommand } from '../schedule-time-log-entries.command';
 import { ScheduleTimeLogEntriesHandler } from './schedule-time-log-entries.handler';
@@ -29,6 +30,7 @@ interface TimeLogRow {
 	isRunning: boolean;
 	startedAt: Date;
 	stoppedAt: Date | null;
+	logType?: TimeLogType;
 }
 
 /** Two employees of two tenants, each with a timer running since 11:00. */
@@ -189,5 +191,24 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])('ScheduleTimeLogEnt
 
 		expect(table[0]).toMatchObject({ id: 'log-1', isRunning: false });
 		expect(table[1]).toMatchObject({ id: 'log-2', isRunning: true });
+	});
+
+	it('ends a running break at the moment it is replaced, where a run without slots gets ten seconds', async () => {
+		const { handler, table } = setup();
+		const breakStart = new Date('2026-11-12T10:30:00.000Z');
+		Object.assign(table[0], { logType: TimeLogType.BREAK, startedAt: breakStart, stoppedAt: breakStart });
+		const runStart = new Date('2026-11-12T10:30:00.000Z');
+		Object.assign(table[1], {
+			employeeId: 'employee-1',
+			organizationId: 'organization-1',
+			tenantId: 'tenant-1',
+			startedAt: runStart,
+			stoppedAt: runStart
+		});
+
+		await handler.execute(new ScheduleTimeLogEntriesCommand('employee-1', 'organization-1', 'tenant-1'));
+
+		expect(table[0]).toMatchObject({ isRunning: false, stoppedAt: NOW });
+		expect(table[1]).toMatchObject({ isRunning: false, stoppedAt: new Date('2026-11-12T10:30:10.000Z') });
 	});
 });

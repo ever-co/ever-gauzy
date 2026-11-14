@@ -2,7 +2,7 @@ import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import { Brackets, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
-import { ID, ITimeLog, ITimeSlot } from '@gauzy/contracts';
+import { ID, ITimeLog, ITimeSlot, TimeLogType } from '@gauzy/contracts';
 import { prepareSQLQuery as p } from './../../../../database/database.helper';
 import { MultiORM, MultiORMEnum, getORMType } from './../../../../core/utils';
 import { TimeLog } from './../../time-log.entity';
@@ -157,8 +157,12 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 		// The end worked out for the entry below, if any: `stopTimeLog` writes it on a log stored without one.
 		let stoppedAt: Date | undefined;
 
-		// Handle cases where there are no time slots
-		if (isEmpty(timeSlots)) {
+		// A break holds no time slots by design: it ends now, when the run that replaces it starts or its timer stops.
+		// The rule below for a run without slots (no sign of work after ten minutes) would cut it to ten seconds.
+		if (timeLog.logType === TimeLogType.BREAK) {
+			stoppedAt = moment.utc().toDate();
+			await this.saveTimeLog({ id: timeLog.id, stoppedAt });
+		} else if (isEmpty(timeSlots)) {
 			// Retrieve the last log's startedAt date
 			const startedAt = moment.utc(timeLog.startedAt);
 
