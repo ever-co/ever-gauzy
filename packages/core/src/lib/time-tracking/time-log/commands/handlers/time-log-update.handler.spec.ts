@@ -124,6 +124,20 @@ describe('TimeLogUpdateHandler (GHSA-6qvm-3wg4-26w4)', () => {
 		expect((handler as any).getConflictingStartTimes(previous, kept)).toEqual([at('09:40:00.000')]);
 	});
 
+	it('releases the slots a log started between seconds drops at the whole minutes they are stored at', () => {
+		const { handler } = createHandler();
+		const at = (time: string) => new Date(`2026-01-05T${time}Z`);
+		// The slots of a log started at 09:43:27.123, as the update regenerates them from that start...
+		const previous = generateTimeSlots(at('09:43:27.123'), at('10:10:00.000'));
+		// ...and those of its range from a new start at 10:00.
+		const kept = generateTimeSlots(at('10:00:00.000'), at('10:10:00.000'));
+
+		expect((handler as any).getConflictingStartTimes(previous, kept)).toEqual([
+			at('09:40:00.000'),
+			at('09:50:00.000')
+		]);
+	});
+
 	it('keeps the fields internal callers rely on (the timer stop sends isRunning / stoppedAt)', () => {
 		expect(omitScopeFields({ isRunning: false, stoppedAt: 'x', id: 'y', tenant: {}, organization: {}, employee: {} })).toEqual({
 			isRunning: false,

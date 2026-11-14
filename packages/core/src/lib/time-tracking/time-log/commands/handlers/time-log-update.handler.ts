@@ -1,6 +1,7 @@
 import { Logger, NotFoundException } from '@nestjs/common';
 import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
 import * as moment from 'moment';
+import { Brackets } from 'typeorm';
 import { ID, ITimeLog, ITimeSlot, ITimesheet, TimeLogSourceEnum } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/utils';
 import { TimesheetFirstOrCreateCommand, TimesheetRecalculateCommand } from './../../../timesheet/commands';
@@ -24,6 +25,24 @@ import { MikroOrmTimeSlotRepository } from '../../../time-slot/repository/mikro-
  * Input keys that decide WHERE a time log lives. They are never taken from the input.
  */
 const TIME_LOG_SCOPE_FIELDS = ['id', 'tenantId', 'tenant', 'organizationId', 'organization', 'employee'] as const;
+
+/**
+ * The most minutes one slot lookup names. Each minute is one more term of the lookup's OR: SQLite refuses an expression
+ * deeper than 1000, which a log moved by a week (about 1,008 ten-minute starts) passes.
+ */
+const MINUTES_PER_LOOKUP = 200;
+
+/**
+ * The starts stored within the minute a slot start names: from that minute up to the next one. A slot is stored at the
+ * start it was generated from, at `:00.000` from the desktop and with the milliseconds of the timer's start from the web.
+ *
+ * @param startTime - The slot start, a whole minute.
+ */
+function minuteRange(startTime: Date): { from: Date; to: Date } {
+	const from = moment(startTime).startOf('minute');
+	const to = from.clone().add(1, 'minute');
+	return { from: from.toDate(), to: to.toDate() };
+}
 
 /**
  * Returns a copy of the input without the scope fields.
@@ -294,6 +313,10 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 	 * start never has milliseconds: compared exactly, no slot matched, and every one the log held was released, the ones
 	 * it keeps included.
 	 *
+	 * The start times returned are whole minutes too. The existing slots are regenerated from the log's own start, so a
+	 * log started at 12:53:27.123, as a timer's is, gave 12:50:00.123, 13:00:00.123 and so on: no stored slot was found
+	 * at those times, and the log kept every slot of the time it dropped.
+	 *
 	 * @param slots - The existing time slots.
 	 * @param newSlots - The newly generated time slots.
 	 * @returns An array of conflicting start times that need to be removed.
@@ -303,7 +326,7 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 		const kept = new Set(newSlots.map(minuteOf));
 		return slots
 			.filter((existingSlot) => !kept.has(minuteOf(existingSlot)))
-			.map((slot) => new Date(slot.startedAt));
+			.map((slot) => new Date(minuteOf(slot)));
 	}
 
 	/**
@@ -405,6 +428,10 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 	 * The time slots of an employee at the given start times, with their time logs, screenshots, activities and
 	 * minute records.
 	 *
+	 * Each start is a whole minute (`getConflictingStartTimes`) and is read as that minute: an exact match missed the web
+	 * timer's slots, stored with the milliseconds of its start, and on SQLite TypeORM bound the list of dates as they are,
+	 * which the driver refuses. Each bound of a range is one date, which every driver binds.
+	 *
 	 * @param tenantId - The tenant.
 	 * @param organizationId - The organization.
 	 * @param employeeId - The employee.
@@ -417,20 +444,38 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 		employeeId: ID,
 		startTimes: Date[]
 	): Promise<ITimeSlot[]> {
-		let slots: ITimeSlot[] = [];
+		const minutes = startTimes.map(minuteRange);
+		const slots: ITimeSlot[] = [];
+		for (let first = 0; first < minutes.length; first += MINUTES_PER_LOOKUP) {
+			const batch = minutes.slice(first, first + MINUTES_PER_LOOKUP);
+			slots.push(...(await this.findTimeSlotsInMinutes(tenantId, organizationId, employeeId, batch)));
+		}
+		return slots;
+	}
 
+	/** The time slots of an employee started in one of the given minutes; see {@link findTimeSlots}. */
+	private async findTimeSlotsInMinutes(
+		tenantId: ID,
+		organizationId: ID,
+		employeeId: ID,
+		minutes: Array<{ from: Date; to: Date }>
+	): Promise<ITimeSlot[]> {
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
 				const em = this.mikroOrmTimeSlotRepository.getEntityManager();
-				slots = await em.find('TimeSlot', {
-					organizationId,
-					tenantId,
-					employeeId,
-					startedAt: { $in: startTimes }
-				} as any, {
-					populate: ['timeLogs', 'screenshots', 'activities', 'timeSlotMinutes']
-				}) as any[];
-				break;
+				const inMinutes = minutes.map(({ from, to }) => ({ startedAt: { $gte: from, $lt: to } }));
+				return (await em.find(
+					'TimeSlot',
+					{
+						organizationId,
+						tenantId,
+						employeeId,
+						$or: inMinutes
+					} as any,
+					{
+						populate: ['timeLogs', 'screenshots', 'activities', 'timeSlotMinutes']
+					}
+				)) as any[];
 			}
 			case MultiORMEnum.TypeORM:
 			default: {
@@ -449,15 +494,22 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 					.where(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId })
 					.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId })
 					.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId })
-					.andWhere(p(`"${query.alias}"."startedAt" IN (:...startTimes)`), { startTimes });
+					.andWhere(
+						new Brackets((inMinutes) => {
+							minutes.forEach(({ from, to }, index) => {
+								const startedAt = `"${query.alias}"."startedAt"`;
+								inMinutes.orWhere(
+									p(`${startedAt} >= :startFrom${index} AND ${startedAt} < :startTo${index}`),
+									{ [`startFrom${index}`]: from, [`startTo${index}`]: to }
+								);
+							});
+						})
+					);
 
 				// Get the conflicting time slots
-				slots = await query.getMany();
-				break;
+				return query.getMany();
 			}
 		}
-
-		return slots;
 	}
 
 	/**

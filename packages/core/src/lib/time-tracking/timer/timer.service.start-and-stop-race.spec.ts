@@ -14,6 +14,7 @@ import {
 	TimeLogUpdateCommand
 } from '../time-log/commands';
 import { ScheduleTimeLogEntriesHandler } from '../time-log/commands/handlers/schedule-time-log-entries.handler';
+import { TimeSlotDurationRecalculateCommand } from '../time-slot/commands';
 import { EMPLOYEE_TURN_FAILSAFE_MS, TimerService } from './timer.service';
 
 const EMPLOYEE_ID = 'employee-1';
@@ -103,6 +104,7 @@ function createService(
 	);
 	const updates: TimeLogUpdateCommand[] = [];
 	const timeSpanDeletes: DeleteTimeSpanCommand[] = [];
+	const recounts: TimeSlotDurationRecalculateCommand[] = [];
 	const logger = { debug: jest.fn(), warn: jest.fn() };
 
 	const write = (partial: Partial<TimeLogRow> & { id: string }): TimeLogRow => {
@@ -183,6 +185,11 @@ function createService(
 		if (command instanceof ScheduleTimeLogEntriesCommand) {
 			return cleanup.execute(command);
 		}
+		// The cut counts the slots it shares with the stopped run again
+		if (command instanceof TimeSlotDurationRecalculateCommand) {
+			recounts.push(command);
+			return undefined;
+		}
 		throw new Error(`Unexpected command ${(command as object)?.constructor?.name}`);
 	};
 
@@ -215,7 +222,7 @@ function createService(
 		_commandBus: { execute }
 	});
 
-	return { service, employee, employeeUpdates, updates, timeSpanDeletes, logger };
+	return { service, employee, employeeUpdates, updates, timeSpanDeletes, recounts, logger };
 }
 
 /**
@@ -368,7 +375,7 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 				run('synced', TimeLogSourceEnum.DESKTOP, syncedStart, {
 					isRunning: false,
 					stoppedAt: syncedEnd,
-					timeSlots: [{ startedAt: syncedStart, duration: 600 }]
+					timeSlots: [{ id: 'slot-of-the-synced-log', startedAt: syncedStart, duration: 600 }]
 				});
 
 			/** A finished web timer log from before the stop, inside the run it ends, with its time slot. */
@@ -412,7 +419,8 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 					expect.objectContaining({
 						newTime: { start: ONE_HOUR_AGO, end: NOW },
 						timeLog: expect.objectContaining({ id: 'older' }),
-						timeSlot: older.timeSlots[0]
+						// One cut per log: the command finds the log's slots itself
+						timeSlot: undefined
 					})
 				]);
 			});
@@ -420,11 +428,14 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 			it('cuts only the older one when a desktop log is synced over the same run during its update', async () => {
 				const older = olderLog();
 				const rows = [older, run('stopped', TimeLogSourceEnum.TEAMS, ONE_HOUR_AGO)];
-				const { service, timeSpanDeletes } = setup(rows, writtenDuringUpdate(rows, syncedLog()));
+				const { service, timeSpanDeletes, recounts } = setup(rows, writtenDuringUpdate(rows, syncedLog()));
 
 				await stop(service);
 
 				expect(timeSpanDeletes.map((command) => command.timeLog.id)).toEqual(['older']);
+				// Only the slots of the log cut are counted again: the synced log's stays as its client wrote it
+				const recountedIds = recounts.flatMap((command) => command.input.timeSlotsIds);
+				expect(recountedIds).not.toContain('slot-of-the-synced-log');
 			});
 
 			it('leaves alone the time slots of a run started between its read of the runs and of the overlaps', async () => {
