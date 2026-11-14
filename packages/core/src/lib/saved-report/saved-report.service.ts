@@ -169,7 +169,8 @@ export class SavedReportService extends TenantAwareCrudService<SavedReport> {
 	 * A link is lasting access: it reads the report with its author's access until it is turned off or ends, whatever
 	 * happens to the credential that asked for it. So only the author's own session turns one on
 	 * (`assertFirstPartyRequest`): a session started from a personal API token, or a third-party application's token,
-	 * would otherwise keep reading through the link after that token is revoked.
+	 * would otherwise keep reading through the link after that token is revoked. As for every first-party-only action,
+	 * an application's token is told apart while `OAUTH_APP_TOKEN_SCOPE_ENFORCEMENT` is on (its kill switch).
 	 *
 	 * @param id The report's id.
 	 * @param input When the link stops working, if it should.

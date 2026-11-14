@@ -430,8 +430,15 @@ async function removeCollisions(
 /**
  * Counts the organization's members again and stores the count, as `EmployeeSubscriber` does when an employee is
  * removed through the ORM: people only (an agent employee is not part of the headcount), not deleted.
+ *
+ * The organization row is locked first where the database locks rows (`FOR NO KEY UPDATE` on Postgres, the lock its
+ * update takes anyway; `FOR UPDATE` on MySQL). Two transfers in one organization lock different members, so without
+ * it each could count before the other commits, miss the other's removed placeholder, and store a count one too high.
+ * Locked, the second waits for the first to commit, and its count (a statement of its own, under READ COMMITTED)
+ * reads the first one's removal. SQLite runs one writer at a time.
  */
 async function recountMembers(queryRunner: QueryRunner, organizationId: ID, tenantId: ID): Promise<void> {
+	await lockOrganization(queryRunner, organizationId, tenantId);
 	const [row] = (await select(
 		queryRunner,
 		`SELECT COUNT(*) AS ${name(queryRunner, 'total')} FROM ${name(queryRunner, 'employee')} WHERE ${name(
@@ -450,6 +457,24 @@ async function recountMembers(queryRunner: QueryRunner, organizationId: ID, tena
 			'id'
 		)} = :organization AND ${name(queryRunner, 'tenantId')} = :tenant`,
 		{ total: Number(row?.total ?? 0), organization: organizationId, tenant: tenantId }
+	);
+}
+
+/** Locks the organization's row until the transaction ends, where the database locks rows (see {@link recountMembers}). */
+async function lockOrganization(queryRunner: QueryRunner, organizationId: ID, tenantId: ID): Promise<void> {
+	const type = queryRunner.connection.options.type;
+	const locks = type === 'postgres' || type === 'mysql' || type === 'mariadb';
+	if (!locks) {
+		return;
+	}
+	const forUpdate = type === 'postgres' ? ' FOR NO KEY UPDATE' : ' FOR UPDATE';
+	await select(
+		queryRunner,
+		`SELECT ${name(queryRunner, 'id')} FROM ${name(queryRunner, 'organization')} WHERE ${name(
+			queryRunner,
+			'id'
+		)} = :organization AND ${name(queryRunner, 'tenantId')} = :tenant${forUpdate}`,
+		{ organization: organizationId, tenant: tenantId }
 	);
 }
 
