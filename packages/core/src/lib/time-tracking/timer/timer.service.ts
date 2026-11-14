@@ -138,6 +138,12 @@ interface QueuedTurn {
 	readonly passOn: () => void;
 }
 
+/** A run another one replaced, as its stop wrote it, and the logs it overlapped before that stop: the ones it cuts. */
+interface ReplacedRunOverlaps {
+	readonly run: ITimeLog;
+	readonly overlapping: ID[];
+}
+
 /**
  * Whether a stop or a toggle names the time log it is for. Only a missing id (`undefined` or `null`) names none. An
  * empty one, which the GraphQL `ID` input lets through where the REST body refuses it, still names a log, which is not
@@ -145,6 +151,15 @@ interface QueuedTurn {
  */
 function isTimeLogNamed(input: ITimerToggleInput): boolean {
 	return input.timeLogId !== undefined && input.timeLogId !== null;
+}
+
+/**
+ * Where a log read back as stopped ends: nothing when it could not be read, or is stored without an end.
+ *
+ * @param log The log as read back (`storedStoppedLog`).
+ */
+function storedEndOf(log: ITimeLog | undefined): Date | undefined {
+	return log?.stoppedAt ? moment.utc(log.stoppedAt).toDate() : undefined;
 }
 
 @Injectable()
@@ -706,20 +721,24 @@ export class TimerService {
 			new TimeLogUpdateCommand(partialTimeLog, lastLog.id, request.manualTimeSlot)
 		);
 
-		// Stop the runs left going beside this one, and only those
+		// Stop the runs left going beside this one, and only those. They cut the logs they overlap after this run has
+		// cut its own (below): see `cutReplacedRunOverlaps`
+		const cutsOfRunsLeftGoing: ReplacedRunOverlaps[] = [];
 		await this.stopPreviousRunningTimers(
 			employeeId,
 			organizationId,
 			tenantId,
 			stoppedRunStartedAt,
 			runningLogIds,
-			turn
+			turn,
+			cutsOfRunsLeftGoing
 		);
 
 		// Handle conflicting time logs: the ones this run overlapped as the stop began
 		turn.assertHeld();
 		const forceDelete = false;
 		await this.handleConflictingTimeLogs(lastLog, tenantId, organizationId, forceDelete, overlappingAtStop);
+		await this.cutReplacedRunOverlaps(cutsOfRunsLeftGoing, tenantId, organizationId, turn);
 
 		// The employee no longer tracks time, unless a run is still going: one another client started meanwhile
 		await this.markNotTrackingAfterStop(employeeId, organizationId, tenantId);
@@ -870,7 +889,8 @@ export class TimerService {
 	 * tell from one written meanwhile.
 	 *
 	 * This read comes after the stop's read of the runs going (`runningAtStop`). A log running here that was not going
-	 * then was started in between, by another client: it is left out, as the runs started later are.
+	 * then was started in between, by another client: it is left out, as the runs started later are. A run a new one
+	 * replaces is read the same way before its stop (`endReplacedRun`).
 	 *
 	 * @param run The running log the stop ends, as read when the stop began.
 	 * @param stoppedAt Where the stop ends it.
@@ -1198,12 +1218,19 @@ export class TimerService {
 	 * started while the stop ran is its replacement, not a run left going, and keeps going. The command is given the
 	 * runs read here, after a start too, so a run written after that read is never its to end.
 	 *
+	 * A run stopped here then cuts the other logs of the employee it overlaps, as an explicit stop's cleanup does
+	 * (`handleConflictingTimeLogs`): only those read before its stop was written (`endReplacedRun`), so a log another
+	 * client writes meanwhile keeps its time. Ended at the next start rather than ten seconds after its own, a web timer
+	 * run would otherwise count twice the time of a manual entry made beforehand for a moment it then covered.
+	 *
 	 * @param employeeId - The ID of the employee whose timers need to be stopped
 	 * @param organizationId - The ID of the organization to which the employee belongs
 	 * @param tenantId - The ID of the tenant context
 	 * @param replacedAt - When the run replacing them started; now by default
 	 * @param onlyAmong - When given, only the runs among these ids are stopped; all of them by default
 	 * @param turn - The employee's turn of the start or stop calling: once it has passed, nothing more is stopped
+	 * @param cutsLeftToCaller - When given, the cuts are added there instead of made here, for a stop to make after
+	 * its own run's (`cutReplacedRunOverlaps`)
 	 */
 	async stopPreviousRunningTimers(
 		employeeId: ID,
@@ -1211,7 +1238,8 @@ export class TimerService {
 		tenantId: ID,
 		replacedAt: Date = moment.utc().toDate(),
 		onlyAmong?: ID[],
-		turn?: EmployeeTurn
+		turn?: EmployeeTurn,
+		cutsLeftToCaller?: ReplacedRunOverlaps[]
 	): Promise<void> {
 		try {
 			this.debug(() => 'Start previous running timers...');
@@ -1221,13 +1249,18 @@ export class TimerService {
 			const logs = onlyAmong ? runningLogs.filter((log) => onlyAmong.includes(log.id)) : runningLogs;
 			this.debug(() => `Last Running Logs Count: ${logs.length}`);
 
+			const readRunIds = logs.map((log) => log.id);
+
 			// The replacing run is the run after the latest, the latest the run after the one before it, and so on
 			let nextRunStartedAt = moment.utc(replacedAt);
+			const overlapsToCut: ReplacedRunOverlaps[] = [];
 			for (const log of logs) {
 				const isStoppedHere = !isTrackerSource(log.source) && Boolean(log.stoppedAt);
 				if (isStoppedHere) {
 					turn?.assertHeld();
-					await this.stopReplacedRun(log, this.replacedRunEnd(log, nextRunStartedAt), turn);
+					const stoppedAt = this.replacedRunEnd(log, nextRunStartedAt);
+					const ended = await this.endReplacedRun(log, stoppedAt, readRunIds, tenantId, organizationId, turn);
+					overlapsToCut.push(...ended);
 				}
 				nextRunStartedAt = moment.min(moment.utc(log.startedAt), nextRunStartedAt);
 			}
@@ -1238,15 +1271,58 @@ export class TimerService {
 				turn?.assertHeld();
 				// The command stops the runs read here, and only those: a run written since, by another client or by the
 				// next start once this one has outlived the failsafe time, is never its to end, however late it reads
-				const readRunIds = logs.map((log) => log.id);
-				await this._commandBus.execute(
-					new ScheduleTimeLogEntriesCommand(employeeId, organizationId, tenantId, readRunIds)
-				);
+				try {
+					await this._commandBus.execute(
+						new ScheduleTimeLogEntriesCommand(employeeId, organizationId, tenantId, readRunIds)
+					);
+				} catch (error) {
+					// The runs stopped above keep their end whatever happened to the others, and still cut the logs they
+					// overlap (below): stopped, no later start reads them again
+					this.logger.warn(`Failed to stop previous running timers: ${error?.message}`);
+				}
+			}
+
+			// Each run stopped here cuts the logs it overlapped before its stop, once every run read has its end
+			if (cutsLeftToCaller) {
+				cutsLeftToCaller.push(...overlapsToCut);
+			} else {
+				await this.cutReplacedRunOverlaps(overlapsToCut, tenantId, organizationId, turn);
 			}
 			this.debug(() => 'Stop previous running timers...');
 		} catch (error) {
 			// Log the error or handle it appropriately
 			this.logger.warn(`Failed to stop previous running timers: ${error?.message}`);
+		}
+	}
+
+	/**
+	 * Cuts the logs each run stopped in place of another overlapped before its stop (`endReplacedRun`), with the
+	 * cleanup of an explicit stop (`handleConflictingTimeLogs`), the latest run first.
+	 *
+	 * That order matters: a cut inside a log splits it, and the part after the cut is a new log, which the cut of
+	 * another run does not know (it looks for the logs it read before its stop). The log keeps its id on the part before
+	 * the cut, and each run ends where the run after it started, or before. So the latest range is cut first, then each
+	 * earlier one, which finds what is left of the log under its id. A stop cuts its own run's range before these.
+	 *
+	 * @param cuts - The runs as stopped, with the logs they overlapped, latest run first.
+	 * @param tenantId - The employee's tenant.
+	 * @param organizationId - The employee's organization.
+	 * @param turn - The employee's turn of the start or stop calling: once it has passed, nothing more is cut.
+	 */
+	private async cutReplacedRunOverlaps(
+		cuts: ReplacedRunOverlaps[],
+		tenantId: ID,
+		organizationId: ID,
+		turn?: EmployeeTurn
+	): Promise<void> {
+		try {
+			for (const { run, overlapping } of cuts) {
+				turn?.assertHeld();
+				const forceDelete = false;
+				await this.handleConflictingTimeLogs(run, tenantId, organizationId, forceDelete, overlapping);
+			}
+		} catch (error) {
+			this.logger.warn(`Failed to cut the logs the replaced runs overlap: ${error?.message}`);
 		}
 	}
 
@@ -1280,6 +1356,44 @@ export class TimerService {
 	}
 
 	/**
+	 * Ends a run another one replaces at `stoppedAt` (`stopReplacedRun`), having read first the other logs it overlaps up
+	 * to there, as an explicit stop reads them before its update (`findOverlappingLogIds`): the logs its cleanup may cut.
+	 *
+	 * @param log - The running log, as read with the runs going.
+	 * @param stoppedAt - Where it ends.
+	 * @param runningAtRead - The runs going as they were read: a running log among the overlaps that is not one of them
+	 * was started since, by another client, and is left out.
+	 * @param tenantId - The employee's tenant.
+	 * @param organizationId - The employee's organization.
+	 * @param turn - The employee's turn of the start or stop calling.
+	 * @returns The run as stopped, up to where it ends as stored, with the logs it overlapped, or nothing when there is
+	 * nothing to cut: it overlaps no other log, it ends at its own start and holds no time, or its stop could not be
+	 * written and it is left to `ScheduleTimeLogEntriesCommand`.
+	 */
+	private async endReplacedRun(
+		log: ITimeLog,
+		stoppedAt: Date,
+		runningAtRead: ID[],
+		tenantId: ID,
+		organizationId: ID,
+		turn?: EmployeeTurn
+	): Promise<ReplacedRunOverlaps[]> {
+		const holdsTime = moment.utc(stoppedAt).isAfter(moment.utc(log.startedAt));
+		const overlapping = holdsTime
+			? await this.findOverlappingLogIds(log, stoppedAt, runningAtRead, tenantId, organizationId)
+			: [];
+		// A lookup that took so long that the next start or stop went on leaves the run to that one, which may have
+		// ended it later meanwhile, as a stop's reads do (`stopRunningLog`)
+		turn?.assertHeld();
+		// Where the run ends as stored, which is not `stoppedAt` when another process stopped it while a try failed: the
+		// cuts go no further, so a log past the run's real end keeps its time
+		const storedEnd = await this.stopReplacedRun(log, stoppedAt, turn);
+		const holdsTimeAsStored = Boolean(storedEnd) && moment.utc(storedEnd).isAfter(moment.utc(log.startedAt));
+		const hasLogsToCut = holdsTimeAsStored && overlapping.length > 0;
+		return hasLogsToCut ? [{ run: { ...log, isRunning: false, stoppedAt: storedEnd }, overlapping }] : [];
+	}
+
+	/**
 	 * Stops a run replaced by another at the given time, as an explicit stop at that time would.
 	 *
 	 * When the update fails, the log is read back. The update writes the stop before its later steps, so a log that no
@@ -1290,19 +1404,23 @@ export class TimerService {
 	 * range is already the new one. If the second try fails too, the log keeps its stop, as
 	 * `ScheduleTimeLogEntriesCommand` only stops logs still running, and the warning says what may be missing. A log
 	 * still running had nothing written, so it gets the same update once more: left running, that command would end a
-	 * run without time slots ten seconds after its start. If the second try fails too, the log is left to that command,
-	 * which stops it as before. The new run starts either way.
+	 * run without time slots ten seconds after its start. If the second try fails too, the log is read back once more:
+	 * that try may also have written the stop before a later step failed, and the run then ends there. Otherwise it is
+	 * left to that command, which stops it as before. The new run starts either way.
 	 *
 	 * @param log - The running log.
 	 * @param stoppedAt - Where it ends.
 	 * @param turn - The employee's turn of the start or stop calling: once it has passed, there is no second try.
+	 * @returns Where the run ends as written: `stoppedAt` once a try went through, else the end read back, which is
+	 * another process's when it stopped the run meanwhile. Nothing when no stop was written or none can be read.
 	 */
-	private async stopReplacedRun(log: ITimeLog, stoppedAt: Date, turn?: EmployeeTurn): Promise<void> {
+	private async stopReplacedRun(log: ITimeLog, stoppedAt: Date, turn?: EmployeeTurn): Promise<Date | undefined> {
 		// With its own start too: an update naming none files the log under the current week's timesheet
 		const startedAt = moment.utc(log.startedAt).toDate();
 		const partialTimeLog: Partial<ITimeLog> = { isRunning: false, startedAt, stoppedAt };
 		try {
 			await this._commandBus.execute(new TimeLogUpdateCommand(partialTimeLog, log.id));
+			return stoppedAt;
 		} catch (error) {
 			const storedLog = await this.storedStoppedLog(log.id, log.tenantId);
 			// Past the failsafe time the next start or stop has gone on, and the run is its to end: no second try
@@ -1312,12 +1430,17 @@ export class TimerService {
 				try {
 					await this._commandBus.execute(new TimeLogUpdateCommand(partialTimeLog, log.id));
 					this.logger.warn(`Stopped the replaced time log ${log.id} on a second try: ${error?.message}`);
+					return stoppedAt;
 				} catch (retryError) {
+					// The second try, too, may have written the stop before a later step failed: read it back again
+					const storedNow = await this.storedStoppedLog(log.id, log.tenantId);
 					this.logger.warn(
-						`Failed to stop the replaced time log ${log.id} on a second try, left to the cleanup if it still runs: ${retryError?.message}`
+						storedNow
+							? `The replaced time log ${log.id} is stopped, but the second try failed: its time slots or totals may be incomplete: ${retryError?.message}`
+							: `Failed to stop the replaced time log ${log.id} on a second try, left to the cleanup if it still runs: ${retryError?.message}`
 					);
+					return storedEndOf(storedNow);
 				}
-				return;
 			}
 			try {
 				// The log as read before the first try, with the range the update releases slots from
@@ -1326,11 +1449,15 @@ export class TimerService {
 				this.logger.warn(
 					`Completed the stop of the replaced time log ${log.id} on a second try: ${error?.message}`
 				);
+				return stoppedAt;
 			} catch (retryError) {
 				this.logger.warn(
 					`Stopped the replaced time log ${log.id}, but its time slots or totals may be incomplete: ${retryError?.message}`
 				);
 			}
+			// The first try wrote the stop before it failed, or another process stopped the run meanwhile: it ends where
+			// it is stored
+			return storedEndOf((await this.storedStoppedLog(log.id, log.tenantId)) ?? storedLog);
 		}
 	}
 
