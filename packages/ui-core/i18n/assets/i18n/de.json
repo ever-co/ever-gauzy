@@ -5653,6 +5653,47 @@
 			"COPY": "{{ name }} kopieren"
 		}
 	},
+	"DOWNLOADS_PAGE": {
+		"TITLE": "Downloads",
+		"HEADLINE": "Zeit erfassen, wo immer Sie arbeiten",
+		"DESKTOP": {
+			"TITLE": "Desktop",
+			"DESCRIPTION": "Erfassen Sie Zeit an Ihrem Computer mit dem Desktop-Timer und halten Sie Ihre Stundenzettel mit der Web-App synchron.",
+			"DOWNLOAD_FOR": "Für {{platform}} herunterladen",
+			"ALSO_FOR": "Auch verfügbar für"
+		},
+		"SETUP": {
+			"OPENED": "Der Download-Link für {{platform}} wurde in einem neuen Tab geöffnet.",
+			"NOT_OPENED": "Nichts passiert?",
+			"TRY_AGAIN": "Erneut versuchen",
+			"TITLE": "Nächste Schritte",
+			"INSTALL_WINDOWS": "Führen Sie das heruntergeladene Installationsprogramm aus und folgen Sie den Schritten.",
+			"INSTALL_MACOS": "Öffnen Sie die heruntergeladene Datei und ziehen Sie die App in „Programme“.",
+			"INSTALL_LINUX": "Installieren Sie das heruntergeladene Paket oder starten Sie das AppImage.",
+			"CONNECT_CUSTOM": "Öffnen Sie die App, wählen Sie „{{option}}“ und füllen Sie Folgendes aus:",
+			"PORT_EMPTY": "Dieses Feld leeren",
+			"CONNECT_LIVE": "Öffnen Sie die App und wählen Sie „{{option}}“.",
+			"SIGN_IN": "Melden Sie sich mit der E-Mail-Adresse und dem Passwort an, die Sie hier verwenden.",
+			"COPY_FIELD": "{{field}} kopieren"
+		},
+		"MOBILE": {
+			"TITLE": "Mobil",
+			"DESCRIPTION": "Starten Sie den Timer, prüfen Sie Ihre Aufgaben und sehen Sie Ihre Stunden unterwegs.",
+			"PLATFORMS": "iOS und Android",
+			"DOWNLOAD": "Herunterladen"
+		},
+		"EXTENSION": {
+			"TITLE": "Browser-Erweiterung",
+			"DESCRIPTION": "Starten und stoppen Sie den Timer in jedem Tab, ohne die Web-App zu öffnen.",
+			"INSTALL": "Installieren"
+		},
+		"ILLUSTRATION": {
+			"THIS_WEEK": "Diese Woche",
+			"YOU": "Sie",
+			"TRY_IT": "Jetzt Sie: Klicken Sie auf den Timer"
+		},
+		"ALL_DOWNLOADS": "Alle Downloads anzeigen"
+	},
 	"FOOTER": {
 		"BY": "durch",
 		"RIGHTS_RESERVED": "Alle Rechte vorbehalten.",

@@ -94,6 +94,31 @@
 
 				<div class="sidebar-footer" [class.compacted]="!isExpanded()">
 					<gauzy-user [user$]="user$" [showIdentity]="isExpanded()" (clicked)="toggleUserMenu()"></gauzy-user>
+					<!-- Downloads page (full screen, outside this layout): desktop, mobile and browser-extension apps. -->
+					<a
+						class="footer-icon-button"
+						routerLink="/downloads"
+						[title]="'USER_MENU.DOWNLOAD_APPS' | translate"
+						[attr.aria-label]="'USER_MENU.DOWNLOAD_APPS' | translate"
+					>
+						<svg
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							aria-hidden="true"
+							focusable="false"
+						>
+							<g class="dl-monitor">
+								<path d="M18 8V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h8" />
+								<path d="M10 19v-3.96 3.15" />
+								<path d="M7 19h5" />
+							</g>
+							<rect class="dl-phone" width="6" height="10" x="16" y="12" rx="2" />
+						</svg>
+					</a>
 				</div>
 			</div>
 		</nb-sidebar>

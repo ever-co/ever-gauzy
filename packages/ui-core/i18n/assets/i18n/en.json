@@ -6221,6 +6221,47 @@
 			"COPY": "Copy {{ name }}"
 		}
 	},
+	"DOWNLOADS_PAGE": {
+		"TITLE": "Downloads",
+		"HEADLINE": "Track time everywhere you work",
+		"DESKTOP": {
+			"TITLE": "Desktop",
+			"DESCRIPTION": "Track time from your computer with the desktop timer, and keep your timesheets in sync with the web app.",
+			"DOWNLOAD_FOR": "Download for {{platform}}",
+			"ALSO_FOR": "Also available for"
+		},
+		"SETUP": {
+			"OPENED": "The {{platform}} download link opened in a new tab.",
+			"NOT_OPENED": "Nothing happened?",
+			"TRY_AGAIN": "Try again",
+			"TITLE": "Next steps",
+			"INSTALL_WINDOWS": "Run the installer you downloaded and follow its steps.",
+			"INSTALL_MACOS": "Open the downloaded file and drag the app into Applications.",
+			"INSTALL_LINUX": "Install the downloaded package, or run the AppImage.",
+			"CONNECT_CUSTOM": "Open the app, choose “{{option}}” and fill in:",
+			"PORT_EMPTY": "Clear this field",
+			"CONNECT_LIVE": "Open the app and choose “{{option}}”.",
+			"SIGN_IN": "Sign in with the email and password you use here.",
+			"COPY_FIELD": "Copy {{field}}"
+		},
+		"MOBILE": {
+			"TITLE": "Mobile",
+			"DESCRIPTION": "Start the timer, check your tasks and see your hours on the go.",
+			"PLATFORMS": "iOS and Android",
+			"DOWNLOAD": "Download"
+		},
+		"EXTENSION": {
+			"TITLE": "Browser extension",
+			"DESCRIPTION": "Start and stop the timer from any tab, without opening the web app.",
+			"INSTALL": "Install"
+		},
+		"ILLUSTRATION": {
+			"THIS_WEEK": "This week",
+			"YOU": "You",
+			"TRY_IT": "Your turn: click the timer"
+		},
+		"ALL_DOWNLOADS": "See all downloads"
+	},
 	"FOOTER": {
 		"BY": "by",
 		"RIGHTS_RESERVED": "All rights reserved.",
