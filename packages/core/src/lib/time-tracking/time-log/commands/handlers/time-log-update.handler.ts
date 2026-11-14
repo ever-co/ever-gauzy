@@ -37,6 +37,12 @@ const HEARTBEAT_SLOT_SOURCES: ReadonlyArray<string> = [TimeLogSourceEnum.TEAMS, 
  *
  * @param startTime - The slot start, a whole minute.
  */
+/**
+ * The most minutes one slot lookup names. Each minute is one more term of the lookup's OR: SQLite refuses an expression
+ * deeper than 1000, which a log moved by a week (about 1,008 ten-minute starts) passes.
+ */
+const MINUTES_PER_LOOKUP = 200;
+
 function minuteRange(startTime: Date): { from: Date; to: Date } {
 	const from = moment(startTime).startOf('minute');
 	const to = from.clone().add(1, 'minute');
@@ -443,22 +449,34 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 		employeeId: ID,
 		startTimes: Date[]
 	): Promise<ITimeSlot[]> {
-		let slots: ITimeSlot[] = [];
 		const minutes = startTimes.map(minuteRange);
+		const slots: ITimeSlot[] = [];
+		for (let first = 0; first < minutes.length; first += MINUTES_PER_LOOKUP) {
+			const batch = minutes.slice(first, first + MINUTES_PER_LOOKUP);
+			slots.push(...(await this.findTimeSlotsInMinutes(tenantId, organizationId, employeeId, batch)));
+		}
+		return slots;
+	}
 
+	/** The time slots of an employee started in one of the given minutes; see {@link findTimeSlots}. */
+	private async findTimeSlotsInMinutes(
+		tenantId: ID,
+		organizationId: ID,
+		employeeId: ID,
+		minutes: Array<{ from: Date; to: Date }>
+	): Promise<ITimeSlot[]> {
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
 				const em = this.mikroOrmTimeSlotRepository.getEntityManager();
 				const inMinutes = minutes.map(({ from, to }) => ({ startedAt: { $gte: from, $lt: to } }));
-				slots = await em.find('TimeSlot', {
+				return (await em.find('TimeSlot', {
 					organizationId,
 					tenantId,
 					employeeId,
 					$or: inMinutes
 				} as any, {
 					populate: ['timeLogs', 'screenshots', 'activities', 'timeSlotMinutes']
-				}) as any[];
-				break;
+				})) as any[];
 			}
 			case MultiORMEnum.TypeORM:
 			default: {
@@ -490,12 +508,9 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 					);
 
 				// Get the conflicting time slots
-				slots = await query.getMany();
-				break;
+				return query.getMany();
 			}
 		}
-
-		return slots;
 	}
 
 	/**

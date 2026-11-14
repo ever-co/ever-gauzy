@@ -24,7 +24,14 @@ const OTHER_EMPLOYEE_SLOT = '77777777-7777-4777-8777-777777777774';
 /** The whole minutes the release names: 09:40 and 09:50. */
 const RELEASED_MINUTES = [new Date('2026-01-05T09:40:00.000Z'), new Date('2026-01-05T09:50:00.000Z')];
 
-type Found = { mikroOrm: string[]; typeOrm: string[] };
+/** A week of ten-minute starts, as a log moved by a week releases: more terms than SQLite takes in one expression. */
+const WEEK_OF_STARTS = Array.from(
+	{ length: 1008 },
+	(_, step) => new Date(Date.UTC(2026, 0, 6) + step * 10 * 60 * 1000)
+);
+const LONG_RELEASE = [...RELEASED_MINUTES, ...WEEK_OF_STARTS];
+
+type Found = { mikroOrm: string[]; typeOrm: string[]; mikroOrmLong: string[]; typeOrmLong: string[] };
 
 async function measure(): Promise<Found> {
 	const previous = { DB_ORM: process.env.DB_ORM, DB_TYPE: process.env.DB_TYPE };
@@ -120,9 +127,9 @@ async function measure(): Promise<Found> {
 
 			// What the lookup answers, or its error: each ORM is read on its own.
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			const found = async (handler: any): Promise<string[]> => {
+			const found = async (handler: any, minutes: Date[] = RELEASED_MINUTES): Promise<string[]> => {
 				try {
-					const slots = await handler.findTimeSlots(TENANT, ORGANIZATION, EMPLOYEE, RELEASED_MINUTES);
+					const slots = await handler.findTimeSlots(TENANT, ORGANIZATION, EMPLOYEE, minutes);
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					return slots.map((slot: any) => slot.id).sort();
 				} catch (error) {
@@ -152,16 +159,24 @@ async function measure(): Promise<Found> {
 				discovery: { warnWhenNoEntities: false }
 			});
 			try {
-				measurement.mikroOrm = await found(
-					handlerWith({}, new MikroOrmTimeSlotRepository(mikroOrm.em.fork(), TimeSlot), MultiORMEnum.MikroORM)
+				const mikroOrmHandler = handlerWith(
+					{},
+					new MikroOrmTimeSlotRepository(mikroOrm.em.fork(), TimeSlot),
+					MultiORMEnum.MikroORM
 				);
+				measurement.mikroOrm = await found(mikroOrmHandler);
+				measurement.mikroOrmLong = await found(mikroOrmHandler, LONG_RELEASE);
 			} finally {
 				await mikroOrm.close(true);
 			}
 
-			measurement.typeOrm = await found(
-				handlerWith(new TypeOrmTimeSlotRepository(dataSource.getRepository(TimeSlot)), {}, MultiORMEnum.TypeORM)
+			const typeOrmHandler = handlerWith(
+				new TypeOrmTimeSlotRepository(dataSource.getRepository(TimeSlot)),
+				{},
+				MultiORMEnum.TypeORM
 			);
+			measurement.typeOrm = await found(typeOrmHandler);
+			measurement.typeOrmLong = await found(typeOrmHandler, LONG_RELEASE);
 		});
 	} finally {
 		if (dataSource?.isInitialized) {
@@ -190,6 +205,10 @@ describe('TimeLogUpdateHandler, the slots a shortened log releases, found by the
 	])('%s', (_name, orm) => {
 		it("finds a slot stored at the whole minute and one stored with the milliseconds of the timer's start", () => {
 			expect(measured[orm]).toEqual([DESKTOP_SLOT, WEB_SLOT].sort());
+		});
+
+		it('finds them among a week of released starts, more terms than SQLite takes in one expression', () => {
+			expect(measured[`${orm}Long`]).toEqual([DESKTOP_SLOT, WEB_SLOT].sort());
 		});
 	});
 });
