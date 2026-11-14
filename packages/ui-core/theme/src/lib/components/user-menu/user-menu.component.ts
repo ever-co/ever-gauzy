@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { environment } from '@gauzy/ui-config';
 import { IEmployee, IUser, IEmployeeUpdateInput } from '@gauzy/contracts';
-import { EmployeesService, ErrorHandlingService } from '@gauzy/ui-core/core';
+import { EmployeesService, ErrorHandlingService, Store } from '@gauzy/ui-core/core';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import {
 	BehaviorSubject,
@@ -103,7 +103,8 @@ export class UserMenuComponent implements OnInit, OnDestroy {
 	constructor(
 		private readonly _employeeService: EmployeesService,
 		private readonly _errorHandler: ErrorHandlingService,
-		private readonly _router: Router
+		private readonly _router: Router,
+		private readonly _store: Store
 	) {
 		this._user$ = new Observable();
 		this._employee$ = new BehaviorSubject(null);
@@ -222,12 +223,23 @@ export class UserMenuComponent implements OnInit, OnDestroy {
 			// the away flag of the user who just left lands on the menu.
 			if (lookupId === this.lookupId && this.employee?.id === id) {
 				this._employee$.next({ ...this.employee, ...payload });
+				this.publishAway(id, payload.isAway);
 			}
 		} catch (error) {
 			this._errorHandler.handleError(error);
 		} finally {
 			this._isUpdatingStatus$.next(false);
 		}
+	}
+
+	/**
+	 * Tells the rest of the app: the signed-in user's employee in the store carries the flag too, so the header's
+	 * avatar and the chat's presence (which reads it to report this person away) follow without a reload.
+	 */
+	private publishAway(employeeId: IEmployee['id'], isAway: boolean): void {
+		const current = this._store.user;
+		if (!current?.employee || current.employee.id !== employeeId) return;
+		this._store.user = { ...current, employee: { ...current.employee, isAway } };
 	}
 
 	public get employee(): IEmployee {

@@ -57,6 +57,7 @@ import {
 	TaskSyncScopeEnum,
 	TimesheetStatus,
 	ITaskBuiltInViewQuery,
+	ITaskBulkChanges,
 	ITaskBulkUpdateInput,
 	ITaskBulkUpdateItem,
 	ITaskBulkUpdateOutcome,
@@ -80,7 +81,7 @@ import {
 	parseFindOptionsSelect,
 	parseTypeORMFindToMikroOrm
 } from './../core/utils';
-import { addBetween, LIKE_OPERATOR } from './../core/util';
+import { LIKE_OPERATOR } from './../core/util';
 import { RequestContext } from '../core/context';
 import { TaskViewService } from './views/view.service';
 import { EntitySubscriptionService } from '../entity-subscription/entity-subscription.service';
@@ -110,11 +111,14 @@ import { Task } from './task.entity';
 import {
 	BulkChangeRecords,
 	BulkRecordField,
+	BULK_RECORD_FIELDS,
 	BulkUpdateRequestError,
 	changesToUpdate,
+	hasChanges,
 	IBulkChangeRecord,
 	normalizeBulkUpdate,
 	previousWithoutRecordNames,
+	recordChangesOfUpdate,
 	recordIdsOf,
 	recordKey,
 	recordRefusalOf,
@@ -213,6 +217,14 @@ function isReferencedRowViolation(error: unknown): boolean {
 	});
 }
 
+/**
+ * The updates a bulk update hands to the single update once it has judged and named the records they name (see
+ * `bulkUpdate`), so the single update does not read those records again for each task. Keyed by the update object,
+ * which reaches `update` as it was handed over (the command carries it as it is), and dropped with it. An update that
+ * reaches `update` as a copy is judged again, which only costs the reads.
+ */
+const RECORDS_JUDGED = new WeakSet<object>();
+
 @FavoriteService(BaseEntityEnum.Task)
 @Injectable()
 export class TaskService extends TenantAwareCrudService<Task> {
@@ -241,6 +253,13 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * Creates a task, sanitizing the rich-text `description` HTML through the shared
 	 * server-side allowlist before persisting (see `sanitizeRichHtml`).
 	 *
+	 * The status, priority and size records it is created with are judged and named as an update's are (see
+	 * `withTaskRecords`): each must be one the task's organization may take (its own, the tenant's shared one, a
+	 * platform default), else the create is refused with `TASK_<KIND>_NOT_FOUND` before anything is written; a priority
+	 * or size named by its record alone takes the record's name. A task created with names only is written as before.
+	 * Every create funnels through here: `POST /tasks` and its bulk route, the GraphQL `createTask` and
+	 * `bulkCreateTasks`, the screening tasks and the integrations' imports.
+	 *
 	 * @param entity - The task creation input
 	 * @returns The created task
 	 */
@@ -249,7 +268,9 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		if (typeof input.description === 'string') {
 			input.description = sanitizeRichHtml(input.description);
 		}
-		return await super.create(entity);
+		const tenantId = RequestContext.currentTenantId() ?? (entity as { tenantId?: ID }).tenantId;
+		const created = await this.withTaskRecords(entity as Partial<ITaskUpdateInput>, null, tenantId);
+		return await super.create(created as IPartialEntity<Task>);
 	}
 
 	/**
@@ -269,7 +290,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			const userId = RequestContext.currentUserId();
 
 			const user = RequestContext.currentUser();
-			const { mentionEmployeeIds, moveTimeLogs, ...data } = input;
+			const { mentionEmployeeIds, moveTimeLogs, ...sent } = input;
 
 			// Find task relations
 			const relations: FindOptionsRelations<Task> = {
@@ -288,6 +309,13 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			};
 
 			const task = await this.findOneByIdString(id, { relations });
+
+			// The status, priority and size records the update moves the task to, judged and named as a bulk update's
+			// are: refused before anything is written when the task's organization may not take one. A bulk update has
+			// judged and named its own already.
+			const data = RECORDS_JUDGED.has(input)
+				? sent
+				: await this.withTaskRecords(sent, task, tenantId ?? task.tenantId);
 
 			const taskMembers = task.members;
 
@@ -662,35 +690,34 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		}
 
 		try {
-			await Promise.all(
-				members.map((member: IEmployee) => {
-					this._eventBus.publish(
-						new CreateEntitySubscriptionEvent({
-							entity: BaseEntityEnum.Task,
-							entityId: updatedTaskId,
-							employeeId: member.id,
-							type: EntitySubscriptionTypeEnum.ASSIGNMENT,
-							organizationId,
-							tenantId
-						})
-					);
+			// Both publish synchronously: one pass over the members, nothing to await
+			for (const member of members) {
+				this._eventBus.publish(
+					new CreateEntitySubscriptionEvent({
+						entity: BaseEntityEnum.Task,
+						entityId: updatedTaskId,
+						employeeId: member.id,
+						type: EntitySubscriptionTypeEnum.ASSIGNMENT,
+						organizationId,
+						tenantId
+					})
+				);
 
-					this._employeeNotificationService.publishNotificationEvent(
-						{
-							entity: BaseEntityEnum.Task,
-							entityId: task.id,
-							type: EmployeeNotificationTypeEnum.ASSIGNMENT,
-							organizationId,
-							tenantId,
-							receiverEmployeeId: member.id,
-							sentByEmployeeId: user?.employeeId
-						},
-						NotificationActionTypeEnum.Assigned,
-						task.title,
-						user?.name
-					);
-				})
-			);
+				this._employeeNotificationService.publishNotificationEvent(
+					{
+						entity: BaseEntityEnum.Task,
+						entityId: task.id,
+						type: EmployeeNotificationTypeEnum.ASSIGNMENT,
+						organizationId,
+						tenantId,
+						receiverEmployeeId: member.id,
+						sentByEmployeeId: user?.employeeId
+					},
+					NotificationActionTypeEnum.Assigned,
+					task.title,
+					user?.name
+				);
+			}
 		} catch (error) {
 			console.error('Error publishing CreateSubscriptionEvent:', error);
 		}
@@ -2732,8 +2759,26 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				...(priorities.length && { priority: In(priorities) }),
 				...(sizes.length && { size: In(sizes) }),
 				...(types.length && { issueType: In(types) }),
-				...(minStartDate && maxStartDate && { startDate: Between(minStartDate, maxStartDate) }),
-				...(minDueDate && maxDueDate && { dueDate: Between(minDueDate, maxDueDate) }),
+				// The earliest and the latest start date, with the view's days of those ends: a date-only start date is
+				// compared with the days, as a due date is.
+				...(minStartDate && maxStartDate
+					? dateRangeCondition('startDate', {
+							from: minStartDate,
+							to: maxStartDate,
+							fromDay: viewFilters.startDateFromDay,
+							toDay: viewFilters.startDateToDay
+						})
+					: {}),
+				// The earliest and the latest due date, with the view's days of those ends: a date-only due date is
+				// compared with the days, as the advanced filters compare it (`dueDateCondition`).
+				...(minDueDate && maxDueDate
+					? this.dueDateCondition({
+							dueDateFrom: minDueDate,
+							dueDateTo: maxDueDate,
+							dueDateFromDay: viewFilters.dueDateFromDay,
+							dueDateToDay: viewFilters.dueDateToDay
+					  })
+					: {}),
 				// Only scope by organization when one is known: the view's organizationId is a nullable
 				// column and the stored query params may carry null (a null used to be dropped silently).
 				...(taskView.organizationId || organizationId
@@ -2785,26 +2830,41 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				organizationSprintId,
 				relations
 			} = params;
+			// A start-date or due-date range sent with the days of its ends compares a date-only value with those days;
+			// one sent without them compares the instants. An inverted range is refused under either ORM (the REST DTO
+			// refuses it first; GraphQL reaches this check).
+			const rangeOf = (
+				from: Date | string | undefined,
+				to: Date | string | undefined,
+				days: { fromDay?: unknown; toDay?: unknown }
+			) => {
+				const start = validDate(from);
+				const end = validDate(to);
+				if (start && end && start > end) {
+					throw new BadRequestException('"From" date must not be after "to" date');
+				}
+				return dayRangeOf(start, end, days) ?? { from: start ?? undefined, to: end ?? undefined };
+			};
+			const startRange = rangeOf(startDateFrom, startDateTo, {
+				fromDay: params.startDateFromDay,
+				toDay: params.startDateToDay
+			});
+			const dueRange = rangeOf(dueDateFrom, dueDateTo, {
+				fromDay: params.dueDateFromDay,
+				toDay: params.dueDateToDay
+			});
 
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM: {
 					const mikroWhere: any = { tenantId, organizationId, isScreeningTask };
 
 					// Date range filters
-					if (isNotEmpty(startDateFrom) && isNotEmpty(startDateTo)) {
-						mikroWhere.startDate = { $gte: startDateFrom, $lte: startDateTo };
-					} else if (isNotEmpty(startDateFrom)) {
-						mikroWhere.startDate = { $gte: startDateFrom };
-					} else if (isNotEmpty(startDateTo)) {
-						mikroWhere.startDate = { $lte: startDateTo };
-					}
-
-					if (isNotEmpty(dueDateFrom) && isNotEmpty(dueDateTo)) {
-						mikroWhere.dueDate = { $gte: dueDateFrom, $lte: dueDateTo };
-					} else if (isNotEmpty(dueDateFrom)) {
-						mikroWhere.dueDate = { $gte: dueDateFrom };
-					} else if (isNotEmpty(dueDateTo)) {
-						mikroWhere.dueDate = { $lte: dueDateTo };
+					const dateBounds = [
+						...mikroOrmDayRangeOn('startDate', startRange),
+						...mikroOrmDayRangeOn('dueDate', dueRange)
+					];
+					if (dateBounds.length) {
+						mikroWhere.$and = dateBounds;
 					}
 
 					if (isNotEmpty(createdByUserId)) mikroWhere.createdByUserId = createdByUserId;
@@ -2820,7 +2880,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				}
 				case MultiORMEnum.TypeORM:
 				default: {
-					let query = this.typeOrmRepository.createQueryBuilder(this.tableName);
+					const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 
 					query.andWhere(
 						new Brackets((qb: WhereExpressionBuilder) => {
@@ -2829,9 +2889,18 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						})
 					);
 
-					// Apply the filters on startDate and dueDate
-					query = addBetween<Task>(query, 'startDate', startDateFrom, startDateTo, p);
-					query = addBetween<Task>(query, 'dueDate', dueDateFrom, dueDateTo, p);
+					// Apply the filters on startDate and dueDate. Each range's bounds are bound as dates under names of their
+					// own, as the driver writes the column (an ISO text compares as text on SQLite), with a date-only value
+					// compared with the days when the range carries them.
+					for (const [column, range] of [
+						['startDate', startRange],
+						['dueDate', dueRange]
+					] as const) {
+						const dates = dayRangeClauseOf(p(`"${query.alias}"."${column}"`), range, `${column}Filter`);
+						if (dates.sql) {
+							query.andWhere(`(${dates.sql})`, dates.params);
+						}
+					}
 
 					// Add Optional additional filters by
 					query.andWhere(
@@ -2955,26 +3024,16 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * today's date-only due dates and not tomorrow's; one without them compares the instants, as before.
 	 */
 	private dueDateCondition(filters: ITaskAdvancedFilter): FindOptionsWhere<Task> {
-		const { dueDateFrom, dueDateTo, withoutDueDate } = filters;
+		const { dueDateFrom, dueDateTo, dueDateFromDay, dueDateToDay, withoutDueDate } = filters;
 		if (withoutDueDate === true) {
 			return { dueDate: IsNull() };
 		}
-		const from = this.validDate(dueDateFrom);
-		const to = this.validDate(dueDateTo);
-		const window = this.dueDateWindowOf(filters, from, to);
-		if (window) {
-			return { dueDate: dueDateFindOperator(window) };
-		}
-		if (from && to) {
-			return { dueDate: Between(from, to) };
-		}
-		if (from) {
-			return { dueDate: MoreThanOrEqual(from) };
-		}
-		if (to) {
-			return { dueDate: LessThanOrEqual(to) };
-		}
-		return {};
+		return dateRangeCondition('dueDate', {
+			from: dueDateFrom,
+			to: dueDateTo,
+			fromDay: dueDateFromDay,
+			toDay: dueDateToDay
+		});
 	}
 
 	/**
@@ -2994,39 +3053,18 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			condition.priority = { $in: priorities };
 		}
 		if (!where.dueDate) {
-			const from = this.validDate(dueDateFrom);
-			const to = this.validDate(dueDateTo);
-			const window = this.dueDateWindowOf(filters, from, to);
+			const from = validDate(dueDateFrom);
+			const to = validDate(dueDateTo);
+			const range = dayRangeOf(from, to, { fromDay: filters.dueDateFromDay, toDay: filters.dueDateToDay });
 			if (withoutDueDate === true) {
 				condition.dueDate = null;
-			} else if (window) {
-				condition.$and = [...((where.$and as unknown[]) ?? []), ...mikroOrmDueDateWithin(window)];
+			} else if (range) {
+				condition.$and = [...((where.$and as unknown[]) ?? []), ...mikroOrmDayRangeOn('dueDate', range)];
 			} else if (from || to) {
 				condition.dueDate = { ...(from ? { $gte: from } : {}), ...(to ? { $lte: to } : {}) };
 			}
 		}
 		return condition;
-	}
-
-	/**
-	 * The due-date range of the advanced filters when the caller sent the calendar days of its ends
-	 * (`dueDateFromDay` / `dueDateToDay`), each kept only when its instant is that day's edge (the start of the first
-	 * day, the last instant of the last); `null` when neither end has one, so the range compares the instants as before.
-	 */
-	private dueDateWindowOf(filters: ITaskAdvancedFilter, from: Date | null, to: Date | null): DueDateWindow | null {
-		const fromDay = from ? boundDayOf(filters.dueDateFromDay, from, 'start') : undefined;
-		const toDay = to ? boundDayOf(filters.dueDateToDay, to, 'end') : undefined;
-		if (!fromDay && !toDay) return null;
-		return { ...(from ? { dueDateFrom: from, dueDateFromDay: fromDay } : {}), ...(to ? { dueDateTo: to, dueDateToDay: toDay } : {}) };
-	}
-
-	/** A date from a filter, or `null` when it is missing or not a valid date. */
-	private validDate(value: Date | string | undefined | null): Date | null {
-		if (value === undefined || value === null || value === '') {
-			return null;
-		}
-		const date = new Date(value);
-		return Number.isNaN(date.getTime()) ? null : date;
 	}
 
 	// ------------------------------------------------------------------ task views extensions
@@ -3084,6 +3122,8 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				continue;
 			}
 			const { update, previous } = changesToUpdate(task, withRecordNames(item.changes, records));
+			// Judged and named above: the single update the change is applied by need not read the records again.
+			RECORDS_JUDGED.add(update);
 			try {
 				await apply(task.id, update);
 				results.push({ taskId, ok: true, previous });
@@ -3111,6 +3151,64 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		}
 		const applied = results.filter((result) => result.ok).length;
 		return { applied, refused: results.length - applied, results };
+	}
+
+	/**
+	 * A single update, or a create, with the status, priority and size records it gives the task judged and named as a
+	 * bulk update's are (see `recordChangesOfUpdate`): each must be one the task's organization may take (its own, the
+	 * tenant's shared one, a platform default), else the write is refused with `TASK_<KIND>_NOT_FOUND` before anything
+	 * is written; a priority or size given by its record alone takes the record's name (see `withRecordNames`). A
+	 * record the task already holds is not judged again and its name is left as sent, so a client that sends the whole
+	 * task back saves as before, and a name sent alone is written as before. A status keeps its text. A task moved to
+	 * another organization has every record it holds afterwards judged there, those it keeps included. A task being
+	 * created holds none: every record it names is judged, in the organization it is created in.
+	 *
+	 * @param sent The update or the create as it was sent.
+	 * @param task The task as it is stored, with the records it holds; `null` for a task being created.
+	 * @param tenantId The caller's tenant (the update passes the task's when the request carries none, the create the
+	 * one it is sent with); without one, only a platform default is taken.
+	 * @returns The write to save: as sent, or with the records' names (and a record named twice named once).
+	 */
+	private async withTaskRecords<T extends Partial<ITaskUpdateInput>>(
+		sent: T,
+		task: Task | null,
+		tenantId: ID | undefined
+	): Promise<T> {
+		// The organization the task is saved in: the one the write names (by its relation, which the save takes over the
+		// id, or by its id; the DTO accepts either), else its own.
+		const namedOrganizationId = sent.organization?.id ?? sent.organizationId;
+		const organizationId = namedOrganizationId ?? task?.organizationId;
+		const staysInOrganization =
+			!task ||
+			!namedOrganizationId ||
+			(!!task.organizationId && recordKey(namedOrganizationId) === recordKey(task.organizationId));
+		const { update, changes, named } = recordChangesOfUpdate(sent, task ?? {});
+		// In its organization, the records the task holds are its own to keep. Moved to another one, every record it holds
+		// afterwards (named, or kept) must be one that organization may take; only those it moves to are named.
+		const judged: ITaskBulkChanges = staysInOrganization ? changes : {};
+		if (!staysInOrganization) {
+			for (const { idField } of BULK_RECORD_FIELDS) {
+				const after = idField in named ? named[idField] : task?.[idField];
+				if (after) judged[idField] = after;
+			}
+		}
+		if (!hasChanges(judged)) return update;
+		// An id that is no uuid (a relation's id is not validated as one) names no record: it is refused below, not read
+		// (Postgres would fail the read instead).
+		const readable = BULK_RECORD_FIELDS.filter(({ idField }) => isUUID(judged[idField]));
+		const records = await this.bulkChangeRecordsOf(
+			[{ taskId: String(task?.id ?? sent.id ?? ''), changes: judged }],
+			undefined,
+			readable.map(({ idField }) => idField)
+		);
+		const refusal = recordRefusalOf(judged, records, { tenantId, organizationId });
+		if (refusal) {
+			throw new BadRequestException(refusal);
+		}
+		const withNames = withRecordNames(changes, records);
+		const names = BULK_RECORD_FIELDS.filter(({ nameField }) => changes[nameField] === undefined && withNames[nameField] !== undefined);
+		if (!names.length) return update;
+		return { ...update, ...Object.fromEntries(names.map(({ nameField }) => [nameField, withNames[nameField]])) };
 	}
 
 	/**
@@ -3324,8 +3422,70 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	}
 }
 
-/** A due-date range, both ends inclusive, with the calendar day each end stands for when it is a day's edge. */
-type DueDateWindow = Pick<IBuiltInViewWindow, 'dueDateFrom' | 'dueDateTo' | 'dueDateFromDay' | 'dueDateToDay'>;
+/**
+ * A date range, both ends inclusive and either one open, with the calendar day (`YYYY-MM-DD`) each end stands for when
+ * the caller sent it and the end's instant is that day's edge (see `dayRangeOf`). A value stored as a date only
+ * (midnight UTC of its day) is compared with those days, any other value with the instants (`dateBoundAdjustments`).
+ * The due date and the start date are filtered alike.
+ */
+interface IDayRange {
+	from?: Date;
+	to?: Date;
+	fromDay?: string;
+	toDay?: string;
+}
+
+/** A date from a filter, or `null` when it is missing or not a valid date. */
+function validDate(value: Date | string | undefined | null): Date | null {
+	if (value === undefined || value === null || value === '') {
+		return null;
+	}
+	const date = new Date(value);
+	return Number.isNaN(date.getTime()) ? null : date;
+}
+
+/**
+ * The range of these ends with the calendar days sent for them (`<field>FromDay` / `<field>ToDay`), each day kept only
+ * when its instant is that day's edge (`boundDayOf`: the start of the first day, the last instant of the last); `null`
+ * when neither end keeps one, so the range compares the instants as before.
+ */
+function dayRangeOf(
+	from: Date | null,
+	to: Date | null,
+	days: { fromDay?: unknown; toDay?: unknown }
+): IDayRange | null {
+	const fromDay = from ? boundDayOf(days.fromDay, from, 'start') : undefined;
+	const toDay = to ? boundDayOf(days.toDay, to, 'end') : undefined;
+	if (!fromDay && !toDay) return null;
+	return { ...(from ? { from, fromDay } : {}), ...(to ? { to, toDay } : {}) };
+}
+
+/**
+ * The condition on `property` of a range of instants a filter names, both ends inclusive and either one open (an
+ * invalid end is left out): with the calendar days of its ends, a date-only value is compared with the days
+ * (`dayRangeFindOperator`); without them, every value compares with the instants, as before. None without an end.
+ */
+function dateRangeCondition(
+	property: 'startDate' | 'dueDate',
+	range: { from?: Date | string | null; to?: Date | string | null; fromDay?: unknown; toDay?: unknown }
+): FindOptionsWhere<Task> {
+	const from = validDate(range.from);
+	const to = validDate(range.to);
+	const withDays = dayRangeOf(from, to, range);
+	if (withDays) {
+		return { [property]: dayRangeFindOperator(withDays) };
+	}
+	if (from && to) {
+		return { [property]: Between(from, to) };
+	}
+	if (from) {
+		return { [property]: MoreThanOrEqual(from) };
+	}
+	if (to) {
+		return { [property]: LessThanOrEqual(to) };
+	}
+	return {};
+}
 
 /**
  * The same range as find operators every ORM's read takes: MikroORM's translation of a TypeORM `where` (the base
@@ -3334,7 +3494,7 @@ type DueDateWindow = Pick<IBuiltInViewWindow, 'dueDateFrom' | 'dueDateTo' | 'due
  * A midnight a lower bound takes in lies below its instant, so "on or after the instant, or that midnight" is "on or
  * after the midnight, and not strictly between it and the instant"; an upper bound mirrors it.
  */
-function dueDateFindOperator(window: DueDateWindow): FindOperator<Date> | undefined {
+function dayRangeFindOperator(range: IDayRange): FindOperator<Date> | undefined {
 	const parts: FindOperator<Date>[] = [];
 	const bound = (lower: boolean, instant: Date, day: string | undefined) => {
 		const { added, removed } = dateBoundAdjustments(lower ? '>=' : '<=', instant, day);
@@ -3345,26 +3505,26 @@ function dueDateFindOperator(window: DueDateWindow): FindOperator<Date> | undefi
 		}
 		removed.forEach((midnight) => parts.push(Not(midnight)));
 	};
-	if (window.dueDateFrom) bound(true, window.dueDateFrom, window.dueDateFromDay);
-	if (window.dueDateTo) bound(false, window.dueDateTo, window.dueDateToDay);
+	if (range.from) bound(true, range.from, range.fromDay);
+	if (range.to) bound(false, range.to, range.toDay);
 	if (!parts.length) return undefined;
 	return parts.length === 1 ? parts[0] : And(...parts);
 }
 
 /**
- * The same range in MikroORM's query syntax: `$gte` / `$lte` on the instants as before, with the date-only values
- * where the instant and the day disagree (`dateBoundAdjustments`) taken out (`$nin`) or added (`$or` … `$in`). A
- * bound with no such value is the plain operator. Answers the conditions to `$and` together.
+ * The same range on `property` in MikroORM's query syntax: `$gte` / `$lte` on the instants as before, with the
+ * date-only values where the instant and the day disagree (`dateBoundAdjustments`) taken out (`$nin`) or added
+ * (`$or` … `$in`). A bound with no such value is the plain operator. Answers the conditions to `$and` together.
  */
-function mikroOrmDueDateWithin(window: DueDateWindow): Record<string, unknown>[] {
+function mikroOrmDayRangeOn(property: 'startDate' | 'dueDate', range: IDayRange): Record<string, unknown>[] {
 	const bound = (operator: '$gte' | '$lte', instant: Date, day: string | undefined) => {
 		const { added, removed } = dateBoundAdjustments(operator === '$gte' ? '>=' : '<=', instant, day);
-		const byInstant = { dueDate: { [operator]: instant, ...(removed.length ? { $nin: removed } : {}) } };
-		return added.length ? { $or: [byInstant, { dueDate: { $in: added } }] } : byInstant;
+		const byInstant = { [property]: { [operator]: instant, ...(removed.length ? { $nin: removed } : {}) } };
+		return added.length ? { $or: [byInstant, { [property]: { $in: added } }] } : byInstant;
 	};
 	return [
-		...(window.dueDateFrom ? [bound('$gte', window.dueDateFrom, window.dueDateFromDay)] : []),
-		...(window.dueDateTo ? [bound('$lte', window.dueDateTo, window.dueDateToDay)] : [])
+		...(range.from ? [bound('$gte', range.from, range.fromDay)] : []),
+		...(range.to ? [bound('$lte', range.to, range.toDay)] : [])
 	];
 }
 
@@ -3375,15 +3535,38 @@ function mikroOrmDueDateWithin(window: DueDateWindow): Record<string, unknown>[]
  * caller's zone. West of UTC, a task due today was midnight UTC, the evening before there, and so listed as overdue.
  */
 function dueDateWithin(window: IBuiltInViewWindow): FindOperator<Date> | undefined {
-	const clause = (column: string) => {
-		const bounds = [
-			...(window.dueDateFrom ? [dateBoundClause(column, '>=', window.dueDateFrom, window.dueDateFromDay, 'builtInDueFrom')] : []),
-			...(window.dueDateTo ? [dateBoundClause(column, '<=', window.dueDateTo, window.dueDateToDay, 'builtInDueTo')] : [])
-		];
-		return { sql: bounds.map((bound) => bound.sql).join(' AND '), params: Object.assign({}, ...bounds.map((bound) => bound.params)) as Record<string, Date> };
-	};
 	if (!window.dueDateFrom && !window.dueDateTo) return undefined;
-	return Raw((column) => clause(column).sql, clause('dueDate').params);
+	const range: IDayRange = {
+		from: window.dueDateFrom,
+		to: window.dueDateTo,
+		fromDay: window.dueDateFromDay,
+		toDay: window.dueDateToDay
+	};
+	return Raw(
+		(column) => dayRangeClauseOf(column, range, 'builtInDue').sql,
+		dayRangeClauseOf('dueDate', range, 'builtInDue').params
+	);
+}
+
+/**
+ * The SQL of a date range on `column`, both ends inclusive: each end compares the instant, and a date-only value
+ * (midnight UTC) with the end's day when it carries one (`dateBoundClause`). The bounds are bound as dates, as the
+ * driver writes the column (an ISO text compares as text on SQLite, and names UTC where the driver writes the
+ * process's local time), under `<key>From` / `<key>To`. Empty `sql` for a range without ends.
+ */
+function dayRangeClauseOf(
+	column: string,
+	range: IDayRange,
+	key: string
+): { sql: string; params: Record<string, Date> } {
+	const bounds = [
+		...(range.from ? [dateBoundClause(column, '>=', range.from, range.fromDay, `${key}From`)] : []),
+		...(range.to ? [dateBoundClause(column, '<=', range.to, range.toDay, `${key}To`)] : [])
+	];
+	return {
+		sql: bounds.map((bound) => bound.sql).join(' AND '),
+		params: Object.assign({}, ...bounds.map((bound) => bound.params)) as Record<string, Date>
+	};
 }
 
 /**

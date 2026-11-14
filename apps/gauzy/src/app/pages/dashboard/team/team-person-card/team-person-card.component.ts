@@ -1,5 +1,6 @@
-import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy, inject } from '@angular/core';
 import * as moment from 'moment-timezone';
+import { CHAT_DIRECT_WITH_PARAM, CHAT_LINK, ChatAvailabilityService } from '@gauzy/plugin-chat-ui';
 import { ITeamPerson, activityTone, formatDuration, formatPercent } from '../team-dashboard.utils';
 
 /**
@@ -24,6 +25,15 @@ export class TeamPersonCardComponent {
 	protected readonly formatPercent = formatPercent;
 	protected readonly activityTone = activityTone;
 
+	/**
+	 * Whether the API serves the chat to me here (asked once per user and organization, shared app-wide): "Message"
+	 * stays hidden where the chat is not loaded or switched off.
+	 */
+	protected readonly chatAvailable$ = inject(ChatAvailabilityService).available$;
+	/** "Message" opens the chat page on my direct conversation with the person (`/pages/chat?with=<employeeId>`). */
+	protected readonly chatLink = CHAT_LINK;
+	protected chatQueryParams: Record<string, string> = {};
+
 	private _person: ITeamPerson;
 	public get person(): ITeamPerson {
 		return this._person;
@@ -31,6 +41,7 @@ export class TeamPersonCardComponent {
 	@Input() public set person(value: ITeamPerson) {
 		this._person = value;
 		this.localTime = this._localTimeOf(value?.timeZone);
+		this.chatQueryParams = value?.employeeId ? { [CHAT_DIRECT_WITH_PARAM]: value.employeeId } : {};
 	}
 
 	/** The person's local time, as the employee page shows it; `null` without a known zone. */

@@ -1,6 +1,7 @@
-import { Logger, NotFoundException } from '@nestjs/common';
+import { Logger, NotFoundException, Optional } from '@nestjs/common';
 import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
 import * as moment from 'moment';
+import { Brackets, DataSource, Repository } from 'typeorm';
 import { ID, ITimeLog, ITimeSlot, ITimesheet, TimeLogSourceEnum } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/utils';
 import { TimesheetFirstOrCreateCommand, TimesheetRecalculateCommand } from './../../../timesheet/commands';
@@ -13,9 +14,17 @@ import { MultiORM, MultiORMEnum, getORMType } from './../../../../core/utils';
 import { prepareSQLQuery as p } from './../../../../database/database.helper';
 import { TimeLog } from './../../time-log.entity';
 import { assertTimeLogReferencesOfTenant } from '../../time-log-references';
+import { postsHeartbeatSlots } from '../../tracker-source';
 import { TimeSlot } from '../../../time-slot/time-slot.entity';
 import { TimeLogUpdateCommand } from '../time-log-update.command';
 import { FindTimeLogRatesCommand, TimeLogRatesPart } from '../find-time-log-rates.command';
+import { updatedChange } from '../../time-log-history';
+import {
+	historySubject,
+	lockedForChange,
+	recordTimeLogHistory,
+	TimeLogHistoryOptions
+} from '../../time-log-history.writer';
 import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.repository';
 import { TypeOrmTimeSlotRepository } from '../../../time-slot/repository/type-orm-time-slot.repository';
 import { MikroOrmTimeSlotRepository } from '../../../time-slot/repository/mikro-orm-time-slot.repository';
@@ -26,10 +35,22 @@ import { MikroOrmTimeSlotRepository } from '../../../time-slot/repository/mikro-
 const TIME_LOG_SCOPE_FIELDS = ['id', 'tenantId', 'tenant', 'organizationId', 'organization', 'employee'] as const;
 
 /**
- * Clients that post a time slot on each heartbeat of a run: Ever Teams and its mobile app. A run of theirs that never
- * sent one has no slot when it stops (#11843).
+ * The most minutes one slot lookup names. Each minute is one more term of the lookup's OR: SQLite refuses an expression
+ * deeper than 1000, which a log moved by a week (about 1,008 ten-minute starts) passes.
  */
-const HEARTBEAT_SLOT_SOURCES: ReadonlyArray<string> = [TimeLogSourceEnum.TEAMS, TimeLogSourceEnum.MOBILE];
+const MINUTES_PER_LOOKUP = 200;
+
+/**
+ * The starts stored within the minute a slot start names: from that minute up to the next one. A slot is stored at the
+ * start it was generated from, at `:00.000` from the desktop and with the milliseconds of the timer's start from the web.
+ *
+ * @param startTime - The slot start, a whole minute.
+ */
+function minuteRange(startTime: Date): { from: Date; to: Date } {
+	const from = moment(startTime).startOf('minute');
+	const to = from.clone().add(1, 'minute');
+	return { from: from.toDate(), to: to.toDate() };
+}
 
 /**
  * Returns a copy of the input without the scope fields.
@@ -54,7 +75,9 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 		private readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
 		private readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository,
 		private readonly mikroOrmTimeSlotRepository: MikroOrmTimeSlotRepository,
-		private readonly timeSlotService: TimeSlotService
+		private readonly timeSlotService: TimeSlotService,
+		// Records the history of a change a person makes; a handler built without it writes as before.
+		@Optional() private readonly dataSource?: DataSource
 	) {}
 
 	/**
@@ -69,9 +92,12 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 
 	public async execute(command: TimeLogUpdateCommand): Promise<ITimeLog> {
 		// Extract input parameters from the command
-		const { id, input, manualTimeSlot, forceDelete = false } = command;
+		const { id, input, manualTimeSlot, forceDelete = false, history } = command;
 
 		let timeLog: ITimeLog = await this.getTimeLogByIdOrInstance(id);
+
+		// The entry as stored, for its history: the move below writes the changes onto `timeLog` itself.
+		const stored: ITimeLog = { ...timeLog };
 
 		// Tenant and organization always come from the stored row, never from the input: the input is
 		// (partly) a request body, and spreading its tenantId/organizationId into the update re-pointed
@@ -146,7 +172,13 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 			// holds), and the error propagates;
 			Object.assign(timeLog, changes, timesheet ? { timesheetId: timesheet.id } : {}, { timeSlots: destination });
 			Object.assign(timeLog, rates);
-			await this.saveUpdatedTimeLog(timeLog);
+			await this.writeWithHistory(
+				stored,
+				timeLog,
+				history,
+				(repository) => this.saveUpdatedTimeLog(timeLog, repository),
+				true
+			);
 			timeLog = await this.typeOrmTimeLogRepository.findOneBy({ id: timeLog.id });
 			// (c) only then the previous employee's slots are released, below. If that fails, the log is fully
 			// moved, the previous employee may keep slots that no longer belong to it, and the error propagates.
@@ -161,13 +193,23 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 				(await this.takesSlotsOfItsRange({ ...timeLog, ...changes }));
 
 			// Update the time log in the repository
-			await this.typeOrmTimeLogRepository.update(
-				{ id: timeLog.id, tenantId },
-				{
-					...changes,
-					...(timesheet ? { timesheetId: timesheet.id } : {}),
-					...rates
-				}
+			const logId = timeLog.id;
+			// An entry deleted for good since it was first read stops the edit with a 404: the reads below would find
+			// no row to answer or to give slots to.
+			await this.writeWithHistory(
+				stored,
+				changes,
+				history,
+				(repository) =>
+					repository.update(
+						{ id: logId, tenantId },
+						{
+							...changes,
+							...(timesheet ? { timesheetId: timesheet.id } : {}),
+							...rates
+						}
+					),
+				true
 			);
 
 			// Retrieve the updated time log
@@ -226,7 +268,7 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 
 	/**
 	 * Whether an update gives the log the time slots of its range. The web timer posts none, so its runs always get
-	 * them. A run of a client that posts a slot on each heartbeat (HEARTBEAT_SLOT_SOURCES) gets them only when it has
+	 * them. A run of a client that posts a slot on each heartbeat (`postsHeartbeatSlots`) gets them only when it has
 	 * none, one that never sent a heartbeat, which the day's worked time otherwise leaves out (#11843); one that has
 	 * slots keeps those it posted. Desktop and the other trackers post their own.
 	 *
@@ -236,7 +278,7 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 		if (timeLog.source === TimeLogSourceEnum.WEB_TIMER) {
 			return true;
 		}
-		if (!HEARTBEAT_SLOT_SOURCES.includes(timeLog.source)) {
+		if (!postsHeartbeatSlots(timeLog.source)) {
 			return false;
 		}
 		const hasSlots = await this.hasTimeSlots(timeLog);
@@ -339,6 +381,10 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 	 * start never has milliseconds: compared exactly, no slot matched, and every one the log held was released, the ones
 	 * it keeps included.
 	 *
+	 * The start times returned are whole minutes too. The existing slots are regenerated from the log's own start, so a
+	 * log started at 12:53:27.123, as a timer's is, gave 12:50:00.123, 13:00:00.123 and so on: no stored slot was found
+	 * at those times, and the log kept every slot of the time it dropped.
+	 *
 	 * @param slots - The existing time slots.
 	 * @param newSlots - The newly generated time slots.
 	 * @returns An array of conflicting start times that need to be removed.
@@ -348,7 +394,7 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 		const kept = new Set(newSlots.map(minuteOf));
 		return slots
 			.filter((existingSlot) => !kept.has(minuteOf(existingSlot)))
-			.map((slot) => new Date(slot.startedAt));
+			.map((slot) => new Date(minuteOf(slot)));
 	}
 
 	/**
@@ -450,6 +496,10 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 	 * The time slots of an employee at the given start times, with their time logs, screenshots, activities and
 	 * minute records.
 	 *
+	 * Each start is a whole minute (`getConflictingStartTimes`) and is read as that minute: an exact match missed the web
+	 * timer's slots, stored with the milliseconds of its start, and on SQLite TypeORM bound the list of dates as they are,
+	 * which the driver refuses. Each bound of a range is one date, which every driver binds.
+	 *
 	 * @param tenantId - The tenant.
 	 * @param organizationId - The organization.
 	 * @param employeeId - The employee.
@@ -462,20 +512,38 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 		employeeId: ID,
 		startTimes: Date[]
 	): Promise<ITimeSlot[]> {
-		let slots: ITimeSlot[] = [];
+		const minutes = startTimes.map(minuteRange);
+		const slots: ITimeSlot[] = [];
+		for (let first = 0; first < minutes.length; first += MINUTES_PER_LOOKUP) {
+			const batch = minutes.slice(first, first + MINUTES_PER_LOOKUP);
+			slots.push(...(await this.findTimeSlotsInMinutes(tenantId, organizationId, employeeId, batch)));
+		}
+		return slots;
+	}
 
+	/** The time slots of an employee started in one of the given minutes; see {@link findTimeSlots}. */
+	private async findTimeSlotsInMinutes(
+		tenantId: ID,
+		organizationId: ID,
+		employeeId: ID,
+		minutes: Array<{ from: Date; to: Date }>
+	): Promise<ITimeSlot[]> {
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
 				const em = this.mikroOrmTimeSlotRepository.getEntityManager();
-				slots = await em.find('TimeSlot', {
-					organizationId,
-					tenantId,
-					employeeId,
-					startedAt: { $in: startTimes }
-				} as any, {
-					populate: ['timeLogs', 'screenshots', 'activities', 'timeSlotMinutes']
-				}) as any[];
-				break;
+				const inMinutes = minutes.map(({ from, to }) => ({ startedAt: { $gte: from, $lt: to } }));
+				return (await em.find(
+					'TimeSlot',
+					{
+						organizationId,
+						tenantId,
+						employeeId,
+						$or: inMinutes
+					} as any,
+					{
+						populate: ['timeLogs', 'screenshots', 'activities', 'timeSlotMinutes']
+					}
+				)) as any[];
 			}
 			case MultiORMEnum.TypeORM:
 			default: {
@@ -494,15 +562,22 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 					.where(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId })
 					.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId })
 					.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId })
-					.andWhere(p(`"${query.alias}"."startedAt" IN (:...startTimes)`), { startTimes });
+					.andWhere(
+						new Brackets((inMinutes) => {
+							minutes.forEach(({ from, to }, index) => {
+								const startedAt = `"${query.alias}"."startedAt"`;
+								inMinutes.orWhere(
+									p(`${startedAt} >= :startFrom${index} AND ${startedAt} < :startTo${index}`),
+									{ [`startFrom${index}`]: from, [`startTo${index}`]: to }
+								);
+							});
+						})
+					);
 
 				// Get the conflicting time slots
-				slots = await query.getMany();
-				break;
+				return query.getMany();
 			}
 		}
-
-		return slots;
 	}
 
 	/**
@@ -544,14 +619,73 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 	}
 
 	/**
+	 * Runs the write of an edit. Edited by a person (`history` given), the write and the entry's history row run in
+	 * one transaction, or neither does. The values before are those of the entry read under lock in that transaction:
+	 * an edit saved since the entry was first read is the one this edit replaces, and none can come in between.
+	 * Otherwise the write runs alone, as before.
+	 *
+	 * @param stored - The entry as first read, which names the row.
+	 * @param written - What the write stores: the changes of an update, the whole entry of a save.
+	 * @param history - Given by the routes through which a person edits an entry.
+	 * @param write - The write, through the repository it is handed.
+	 * @param refusesDeletedEntry - Whether an entry deleted for good since it was first read stops the edit with a
+	 * NotFoundException: a save (a move's) would insert the row again, and after an update, which matches no row, the
+	 * handler would read back no entry. Otherwise nothing is written and the write answers undefined.
+	 */
+	private async writeWithHistory<T>(
+		stored: ITimeLog,
+		written: Partial<ITimeLog>,
+		history: TimeLogHistoryOptions | undefined,
+		write: (repository: Repository<TimeLog>) => Promise<T>,
+		refusesDeletedEntry = false
+	): Promise<T | undefined> {
+		const recordsHistory = Boolean(history) && Boolean(this.dataSource);
+		if (!recordsHistory) {
+			return write(this.typeOrmTimeLogRepository);
+		}
+		return this.dataSource.transaction(async (manager) => {
+			const current = await manager.findOne(TimeLog, {
+				where: { id: stored.id, tenantId: stored.tenantId },
+				withDeleted: true,
+				...lockedForChange()
+			});
+			// An entry deleted for good in the meantime: nothing is written, nor recorded. TypeORM's save inserts a row
+			// no row has the key of, so a move stops here, before the previous employee's slots are released.
+			if (!current) {
+				if (refusesDeletedEntry) {
+					throw new NotFoundException('The time log was deleted.');
+				}
+				return undefined;
+			}
+			const result = await write(manager.getRepository(TimeLog));
+			// A field written as undefined is left as stored (TypeORM skips it), so it is no change of the history
+			const definedWritten = Object.fromEntries(
+				Object.entries(written).filter(([, value]) => value !== undefined)
+			) as Partial<ITimeLog>;
+			const edited = { ...current, ...definedWritten } as ITimeLog;
+			const change = updatedChange(current, edited);
+			if (change) {
+				await recordTimeLogHistory(manager, [
+					{ subject: historySubject(edited), change, reason: history.reason }
+				]);
+			}
+			return result;
+		});
+	}
+
+	/**
 	 * Saves the updated time log to the repository.
 	 *
 	 * @param timeLog - The time log to be saved.
+	 * @param repository - The repository to save through: a transaction's, when the save is recorded in the history.
 	 * @returns A promise that resolves to the saved `ITimeLog` or throws an error if saving fails.
 	 */
-	private async saveUpdatedTimeLog(timeLog: ITimeLog): Promise<ITimeLog> {
+	private async saveUpdatedTimeLog(
+		timeLog: ITimeLog,
+		repository: Repository<TimeLog> = this.typeOrmTimeLogRepository
+	): Promise<ITimeLog> {
 		try {
-			return await this.typeOrmTimeLogRepository.save(timeLog);
+			return await repository.save(timeLog);
 		} catch (error) {
 			// Logged as before, and re-thrown: a swallowed failure answered the row as if it had been saved, while
 			// the writes around it (a move's employee and slots) went ahead.

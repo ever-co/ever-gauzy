@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult, FindOneOptions, UpdateResult } from 'typeorm';
-import { ITimeLog, PermissionsEnum, ID, IManualTimeInput } from '@gauzy/contracts';
+import { IActivityLog, ITimeLog, PermissionsEnum, ID, IManualTimeInput, IPagination } from '@gauzy/contracts';
 import {
 	BulkExecutor,
 	BulkOperation,
@@ -41,11 +41,14 @@ import {
 	GetTimeLogConflictQueryDTO,
 	TimeLogBudgetQueryDTO,
 	TimeLogLimitQueryDTO,
+	TimeLogHistoryOrganizationQueryDTO,
+	TimeLogHistoryQueryDTO,
 	TimeLogListQueryDTO,
 	TimeLogQueryDTO
 } from './dto/query';
 import { TimeLogBodyTransformPipe } from './pipes';
 import { TimeLogConflictAccessGuard } from './guards/time-log-conflict-access.guard';
+import { TimeLogHistoryService } from './time-log-history.service';
 
 @ApiTags('TimeLog')
 @UseGuards(TenantBaseGuard, PermissionGuard)
@@ -55,7 +58,8 @@ export class TimeLogController {
 	constructor(
 		private readonly _timeLogService: TimeLogService,
 		private readonly bulkExecutor: BulkExecutor,
-		private readonly organizationPermissionGuard: OrganizationPermissionGuard
+		private readonly organizationPermissionGuard: OrganizationPermissionGuard,
+		private readonly _timeLogHistoryService?: TimeLogHistoryService
 	) {}
 
 	/**
@@ -274,6 +278,43 @@ export class TimeLogController {
 	}
 
 	/**
+	 * The changes people made to time entries over a period (added by hand, edited, status changed, deleted), newest
+	 * first, with the values before and after. Declared before `:id`, which would otherwise take `history` as an id.
+	 *
+	 * @param query The period, and optionally some members and some kinds of change.
+	 */
+	@ApiOperation({ summary: 'Changes made to time entries over a period, with the values before and after' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'A page of history rows (activity log rows of entity TimeLog)' })
+	@UseGuards(EmployeeTrackedDataGuard)
+	@Get('history')
+	@UseValidationPipe({ whitelist: true, transform: true })
+	async getHistory(@Query() query: TimeLogHistoryQueryDTO): Promise<IPagination<IActivityLog>> {
+		return await this._timeLogHistoryService.findPeriodHistory(query);
+	}
+
+	/**
+	 * The history of one time entry, newest first: each change with who made it, when, the values before and after,
+	 * and the reason given. Readable by the entry's owner, by people who manage them and by people who may see
+	 * everyone's time, in the entry's organization only.
+	 *
+	 * @param id The time entry.
+	 * @param query The organization the entry is read in, one of the caller's.
+	 */
+	@ApiOperation({ summary: 'The history of one time entry, newest first' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'The history rows of the entry' })
+	@ApiResponse({ status: HttpStatus.FORBIDDEN, description: "The caller may not read this member's time" })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'The organization has no such entry' })
+	@UseGuards(EmployeeTrackedDataGuard)
+	@Get(':id/history')
+	@UseValidationPipe({ whitelist: true, transform: true })
+	async getEntryHistory(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Query() query: TimeLogHistoryOrganizationQueryDTO
+	): Promise<IActivityLog[]> {
+		return await this._timeLogHistoryService.findEntryHistory(id, query.organizationId);
+	}
+
+	/**
 	 * Find time log by ID
 	 * @param id The ID of the time log.
 	 * @param options Additional options for finding the time log.
@@ -300,13 +341,15 @@ export class TimeLogController {
 	})
 	@ApiResponse({
 		status: HttpStatus.CONFLICT,
-		description: 'RUNNING_TIMER_OVERLAP: a timer is running over the range'
+		description:
+			'RUNNING_TIMER_OVERLAP: a timer is running over the range; `runningTimeLog` names it (id, startedAt, source)'
 	})
 	@Post()
 	@UseGuards(OrganizationPermissionGuard)
 	@Permissions(PermissionsEnum.ALLOW_MANUAL_TIME)
 	async addManualTime(
-		@Body(TimeLogBodyTransformPipe, new ValidationPipe({ transform: true, whitelist: true })) entity: CreateManualTimeLogDTO
+		@Body(TimeLogBodyTransformPipe, new ValidationPipe({ transform: true, whitelist: true }))
+		entity: CreateManualTimeLogDTO
 	): Promise<ITimeLog> {
 		return await this._timeLogService.addManualTime(entity);
 	}
@@ -406,7 +449,8 @@ export class TimeLogController {
 	})
 	@ApiResponse({
 		status: HttpStatus.CONFLICT,
-		description: 'RUNNING_TIMER_OVERLAP: a timer is running over the range'
+		description:
+			'RUNNING_TIMER_OVERLAP: a timer is running over the range; `runningTimeLog` names it (id, startedAt, source)'
 	})
 	@Put(':id')
 	@UseGuards(OrganizationPermissionGuard)
@@ -414,7 +458,8 @@ export class TimeLogController {
 	@OrganizationPolicyTarget(TimeLog)
 	async updateManualTime(
 		@Param('id', UUIDValidationPipe) id: ID,
-		@Body(TimeLogBodyTransformPipe, new ValidationPipe({ transform: true, whitelist: true })) entity: UpdateManualTimeLogDTO
+		@Body(TimeLogBodyTransformPipe, new ValidationPipe({ transform: true, whitelist: true }))
+		entity: UpdateManualTimeLogDTO
 	): Promise<ITimeLog> {
 		return await this._timeLogService.updateManualTime(id, entity);
 	}

@@ -2,6 +2,7 @@ import { IEmployee, IReportDayTaskRow, ITimeLog, ITimeLogStoredRates, OwedRateSo
 import { addDecimalStrings } from '../../money/decimal';
 import { isPayRateSet, StoredPayRate } from '../../employee/pay-rate';
 import { owedRateOf } from './owed-rate';
+import { DefaultBillRate } from './default-bill-rate';
 import { calculateBillableAmount } from './time-log.utils';
 
 type Rate = number | string | null | undefined;
@@ -42,37 +43,80 @@ export function storesRates(log: Pick<ITimeLog, 'ratesStored'> | null | undefine
 	return marker === true || marker === 1 || marker === '1' || marker === 'true';
 }
 
+/** Whether a rate prices time: only a positive one does. A member nobody set a rate for is stored with 0. */
+function isPositiveRate(rate: Rate): boolean {
+	return Number(rate) > 0;
+}
+
 /**
  * The billing rate that prices a log's time: the one it stores, else, for a log recorded around the API, the
  * member's current rate, as all time was priced before rates were stored. The currency is the rate's own; empty,
  * it is the organization's.
  *
+ * Where that rate is not positive (the member had no rate of their own) and the organization sets a default billing
+ * rate, the default prices the time, in the default's currency, as it prices a member without a rate on the live
+ * rates (`billRateOf`). The default is read when the report is read, never stored in the log: a log stores the
+ * member's own rates only.
+ *
  * @param log The log, with its employee when it may store no rate.
+ * @param defaultRate The organization's default billing rate, or null when it sets none or the caller does not price
+ * at it.
  */
-export function billingRateOfLog(log: PricedLog): PricedRate {
+export function billingRateOfLog(log: PricedLog, defaultRate: DefaultBillRate | null = null): PricedRate {
+	let own: PricedRate = { rate: log.employee?.billRateValue, currency: log.employee?.billRateCurrency ?? null };
 	if (storesRates(log)) {
-		return { rate: log.billRateValue, currency: log.billRateCurrency ?? null };
+		own = { rate: log.billRateValue, currency: log.billRateCurrency ?? null };
 	}
-	return { rate: log.employee?.billRateValue, currency: log.employee?.billRateCurrency ?? null };
+	const pricesAtDefault = !!defaultRate && !isPositiveRate(own.rate);
+	if (pricesAtDefault) {
+		return { rate: defaultRate.value, currency: defaultRate.currency };
+	}
+	return own;
 }
 
 /**
  * The billing rate that prices a log's time (see {@link billingRateOfLog}), its currency the organization's when
  * the rate states none.
  */
-export function billedRateOf(log: PricedLog, organizationCurrency: string | null): PricedRate {
-	const { rate, currency } = billingRateOfLog(log);
+export function billedRateOf(
+	log: PricedLog,
+	organizationCurrency: string | null,
+	defaultRate: DefaultBillRate | null = null
+): PricedRate {
+	const { rate, currency } = billingRateOfLog(log, defaultRate);
 	return { rate, currency: currency || organizationCurrency };
 }
 
 /**
- * What a log's time costs against a project or client budget: its hours at the billing rate that prices it, in
- * floating point as the budgets always added it; nothing without a rate.
+ * What a log's time costs against a project or client budget: its hours at the billing rate that prices it (the
+ * organization's default for a member without a rate, when it sets one), in floating point as the budgets always
+ * added it; nothing without a rate.
  */
-export function budgetCostOf(log: PricedLog & { duration?: number }): number {
-	const { rate } = billingRateOfLog(log);
+export function budgetCostOf(
+	log: PricedLog & { duration?: number },
+	defaultRate: DefaultBillRate | null = null
+): number {
+	const { rate } = billingRateOfLog(log, defaultRate);
 	const hourlyRate = Number(rate) || 0;
 	return ((Number(log.duration) || 0) / 3600) * hourlyRate;
+}
+
+/**
+ * Whether a budget report needs the organization's default billing rate: a cost budget whose time includes a log
+ * that the rate it stores (or, storing none, its member's) does not price. Hour budgets count hours and price nothing.
+ *
+ * @param targets The budget targets (projects or clients), each with its budget type and its time logs.
+ * @param hoursType The budget type that counts hours.
+ */
+export function budgetLogsNeedDefaultRate(
+	targets: ReadonlyArray<{ budgetType?: string; timeLogs?: ReadonlyArray<PricedLog> }>,
+	hoursType: string
+): boolean {
+	return targets.some((target) => {
+		const isCostBudget = target.budgetType !== hoursType;
+		const logs = target.timeLogs ?? [];
+		return isCostBudget && logs.some((log) => !isPositiveRate(billingRateOfLog(log).rate));
+	});
 }
 
 /** A rate as a report states it: a number, or null for none. */

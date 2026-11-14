@@ -484,11 +484,12 @@ jobs:
         # that is a date only (midnight UTC of its day) falls on its own day for a reader in UTC-4 and in UTC+2, a due date
         # with a time of day on the reader's day, and a view saved before the picked days came keeps its instants. The
         # built-in views ("Overdue", "Due soon", "This week", "Mine") the same way: due today is never overdue. And the
-        # task list's due-date filters with the days of their ends, on TypeORM and on MikroORM.
+        # task list's due-date filters with the days of their ends, on TypeORM and on MikroORM; `filter-by-date` /
+        # `tasksByDate` and a saved view's `dueDates` likewise, with the server in UTC and in UTC-4.
         env:
           TASK_VIEWS_TEST_POSTGRES_URL: postgres://migration_test:migration_test@127.0.0.1:${{ job.services.postgres.ports[5432] }}/migration_test
           TASK_VIEWS_TEST_MYSQL_URL: mysql://migration_test:migration_test@127.0.0.1:${{ job.services.mysql.ports[3306] }}/migration_test
-        run: node --experimental-vm-modules node_modules/jest/bin/jest.js -c packages/core/jest.config.ts --runInBand packages/core/src/lib/tasks/views/view-tasks.due-day.db.spec.ts packages/core/src/lib/tasks/task.service.built-in-views.db.spec.ts packages/core/src/lib/tasks/task.service.advanced-due-date.db.spec.ts
+        run: node --experimental-vm-modules node_modules/jest/bin/jest.js -c packages/core/jest.config.ts --runInBand packages/core/src/lib/tasks/views/view-tasks.due-day.db.spec.ts packages/core/src/lib/tasks/task.service.built-in-views.db.spec.ts packages/core/src/lib/tasks/task.service.advanced-due-date.db.spec.ts packages/core/src/lib/tasks/task.service.date-filters.db.spec.ts
 
       - name: Test the Ever Platform connection against the mock
         # The plugin against the mock platform of the SDK's dev tools (`@ever-co/connect-tools`, the

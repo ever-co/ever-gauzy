@@ -1,6 +1,6 @@
 import { NotFoundException, ConflictException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { UpdateResult } from 'typeorm';
+import { Raw, UpdateResult } from 'typeorm';
 import { IAppIntegrationConfig } from '@gauzy/common';
 import {
 	IEmployee,
@@ -17,19 +17,43 @@ import {
 import { AuthService } from '../../../auth/auth.service';
 import { InviteService } from '../../invite.service';
 import { InviteAcceptEmployeeCommand } from '../invite.accept-employee.command';
-import { OrganizationProjectEmployee, OrganizationTeamEmployee } from './../../../core/entities/internal';
+import {
+	Employee,
+	OrganizationProjectEmployee,
+	OrganizationTeamEmployee,
+	User,
+	UserOrganization
+} from './../../../core/entities/internal';
 import { TypeOrmEmployeeRepository } from '../../../employee/repository/type-orm-employee.repository';
 import { TypeOrmOrganizationContactRepository } from '../../../organization-contact/repository/type-orm-organization-contact.repository';
 import { TypeOrmOrganizationDepartmentRepository } from '../../../organization-department/repository/type-orm-organization-department.repository';
 import { TypeOrmOrganizationProjectRepository } from '../../../organization-project/repository/type-orm-organization-project.repository';
 import { TypeOrmOrganizationTeamRepository } from '../../../organization-team/repository/type-orm-organization-team.repository';
 import { TypeOrmUserRepository } from '../../../user/repository/type-orm-user.repository';
+import { EmployeePlaceholderTransferService } from '../../../employee-placeholder/employee-placeholder-transfer.service';
 
 /**
  * Use this command for registering employees.
  * This command first registers a user, then creates an employee entry for the organization.
  * If the above two steps are successful, it finally sets the invitation status to accepted
  */
+/**
+ * Runs a write, and runs it again, up to three times in all, while it fails: a deadlock or a dropped connection
+ * passes. The last failure is thrown.
+ */
+async function triedAgain<T>(write: () => Promise<T>, times = 3): Promise<T> {
+	for (let attempt = 1; ; attempt++) {
+		try {
+			return await write();
+		} catch (error) {
+			if (attempt >= times) {
+				throw error;
+			}
+			await new Promise((resolve) => setTimeout(resolve, 50 * attempt));
+		}
+	}
+}
+
 @CommandHandler(InviteAcceptEmployeeCommand)
 export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAcceptEmployeeCommand> {
 	constructor(
@@ -40,7 +64,8 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 		private readonly typeOrmOrganizationProjectRepository: TypeOrmOrganizationProjectRepository,
 		private readonly typeOrmOrganizationContactRepository: TypeOrmOrganizationContactRepository,
 		private readonly typeOrmOrganizationDepartmentRepository: TypeOrmOrganizationDepartmentRepository,
-		private readonly typeOrmOrganizationTeamRepository: TypeOrmOrganizationTeamRepository
+		private readonly typeOrmOrganizationTeamRepository: TypeOrmOrganizationTeamRepository,
+		private readonly placeholderTransferService: EmployeePlaceholderTransferService
 	) {}
 
 	/**
@@ -68,27 +93,55 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 
 		let user: IUser;
 		let employee: IEmployee;
+		// The account this claim registered, told by the registration as soon as it is saved.
+		let registeredId: string | undefined;
+
+		// A claim invitation hands a member without an account over to the person who accepts it (#11913).
+		const isClaim = !!invite.placeholderEmployeeId;
 
 		try {
-			// Inner try/catch is find-or-register control flow, not error handling: a missing
-			// employee user is the signal to create one.
-			try {
-				// Find existing employee user
-				user = await this.findExistingEmployeeUser(invite);
-
-				// Implementation to find an employee by user ID
-				employee = await this.findEmployee(user.id);
-			} catch (error) {
-				// New user registers before accepting the invitation
-				user = await this.registerNewUser(input, invite, languageCode);
-
-				// Create employee after creating user
+			if (isClaim) {
+				// Accepting signs in with the invitation alone, so a claim never opens an existing account, whatever
+				// its role: the person behind it is reached by a merge instead. It registers the person's new account.
+				if (await this.hasAccount(invite)) {
+					throw new ConflictException(
+						'This email already has an account: an admin merges the member without an account into theirs.'
+					);
+				}
+				user = await this.registerNewUser(input, invite, languageCode, (saved) => (registeredId = saved.id));
 				employee = await this.createEmployee(invite, user);
+			} else {
+				// Inner try/catch is find-or-register control flow, not error handling: a missing
+				// employee user is the signal to create one.
+				try {
+					// Find existing employee user
+					user = await this.findExistingEmployeeUser(invite);
+
+					// Implementation to find an employee by user ID
+					employee = await this.findEmployee(user.id);
+				} catch (error) {
+					// New user registers before accepting the invitation
+					user = await this.registerNewUser(input, invite, languageCode);
+
+					// Create employee after creating user
+					employee = await this.createEmployee(invite, user);
+				}
 			}
 
 			// Implementation for updating employee memberships based on the invite details
 			await this.updateEmployeeMemberships(invite, employee);
+
+			if (isClaim) {
+				const kept = { keepInviteId: invite.id };
+				const { placeholderEmployeeId, tenantId } = invite;
+				await this.placeholderTransferService.transfer(placeholderEmployeeId, employee.id, tenantId, kept);
+			}
 		} catch (error) {
+			// A failed claim retires the account it registered, even one a registration saved before failing: the next
+			// acceptance would otherwise find it and refuse.
+			if (registeredId) {
+				await this.retireClaimAccount(registeredId);
+			}
 			// Nothing consumed the invite after all — hand it back rather than stranding it as
 			// ACCEPTED with no employee attached.
 			await this.inviteService.releaseInvite(inviteId);
@@ -141,6 +194,66 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 	}
 
 	/**
+	 * Whether the invited email has an account in the invitation's tenant, whatever its role, compared without regard
+	 * to case.
+	 * @param invite The claim invitation being accepted.
+	 */
+	private async hasAccount(invite: IInvite): Promise<boolean> {
+		return (await this.accountsOf(invite)).length > 0;
+	}
+
+	/**
+	 * The live accounts of the invited email in the invitation's tenant, whatever their role, compared without regard
+	 * to case.
+	 * @param invite The claim invitation being accepted.
+	 */
+	private async accountsOf(invite: IInvite): Promise<IUser[]> {
+		const { tenantId } = invite;
+		const email = invite.email.toLowerCase();
+		return await this.typeOrmUserRepository.find({
+			where: { tenantId, email: Raw((column) => `LOWER(${column}) = :email`, { email }) }
+		});
+	}
+
+	/**
+	 * Retires the account a failed claim registered, as a merged placeholder's user is retired: deactivated, archived
+	 * and soft-deleted, with its members and organization links. Only that account, told by the registration as soon
+	 * as it was saved: never another one the same email gained meanwhile. Each write stands on its own, the account's
+	 * first, so one that fails does not keep the others from being made, and the claim's own error stays the one
+	 * reported. Not deleted: deleting a user makes the database check every table naming one.
+	 *
+	 * @param userId The account the claim registered.
+	 */
+	private async retireClaimAccount(userId: string): Promise<void> {
+		const retired = { isActive: false, isArchived: true, deletedAt: new Date() };
+		const { manager } = this.typeOrmUserRepository;
+		const attempt = async (what: string, write: () => Promise<unknown>): Promise<boolean> => {
+			try {
+				await write();
+				return true;
+			} catch (cleanup) {
+				console.error(`Failed to retire ${what} after a failed claim:`, cleanup);
+				return false;
+			}
+		};
+		// The account's write is the one the next acceptance depends on: tried again after a passing failure (a
+		// deadlock, a dropped connection). A database that keeps refusing it leaves the account to an admin, who
+		// merges the placeholder into that person's member as for any email that has an account.
+		const accountRetired = await attempt(`the account ${userId}`, () =>
+			triedAgain(() => manager.update(User, { id: userId }, retired))
+		);
+		if (!accountRetired) {
+			// Still live, the account keeps its member and links: the person signs in with it, and an admin merges the
+			// placeholder into that member (or files one for the account first, when the claim failed before making it).
+			return;
+		}
+		await attempt(`the members of ${userId}`, () => manager.update(Employee, { userId }, retired));
+		await attempt(`the organization links of ${userId}`, () =>
+			manager.update(UserOrganization, { userId }, retired)
+		);
+	}
+
+	/**
 	 * Registers a new user based on the invite details.
 	 * @param input The user registration input and app integration config.
 	 * @param invite The invite containing the organization details.
@@ -150,7 +263,8 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 	private async registerNewUser(
 		input: IUserRegistrationInput & Partial<IAppIntegrationConfig>,
 		invite: IInvite,
-		languageCode: LanguagesEnum
+		languageCode: LanguagesEnum,
+		onSaved?: (user: IUser) => void
 	): Promise<IUser> {
 		const { id: organizationId, tenantId } = invite.organization;
 		return await this.authService.register(
@@ -160,7 +274,8 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 				organizationId,
 				inviteId: invite.id
 			},
-			languageCode
+			languageCode,
+			onSaved
 		);
 	}
 

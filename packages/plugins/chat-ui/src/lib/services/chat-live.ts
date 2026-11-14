@@ -1,6 +1,7 @@
 import { asyncScheduler, BehaviorSubject, defer, merge, NEVER, Observable, of, OperatorFunction, SchedulerLike, Subject, Subscription, timer } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, finalize, ignoreElements, map, repeat, retry, share, switchMap, tap } from 'rxjs/operators';
 import { CHAT_EVENT_NAMES, CHAT_STREAMED_EVENTS, CHAT_TYPING_TTL_MS, ChatEventName, IRealtimeEventEnvelope, IRealtimeStatus, REALTIME_EVENT_NAMES } from '@gauzy/contracts';
+import { chatPresenceOf, ChatPresenceUpdate } from '../chat-presence';
 
 /**
  * The chat families of the platform's collaboration events (`packages/plugins/realtime/README.md`): what the chat
@@ -76,6 +77,11 @@ export function chatTypingOf(envelope: Partial<IRealtimeEventEnvelope> | null | 
 /** Whether the platform offers the typing signal on the subscription (its realtime status lists it). */
 export function servesTyping(status: IRealtimeStatus | null | undefined): boolean {
 	return (status?.signals ?? []).some((name) => name === REALTIME_EVENT_NAMES.TYPING_SIGNALLED);
+}
+
+/** Whether the platform offers the presence signal on the subscription (its realtime status lists it). */
+export function servesPresence(status: IRealtimeStatus | null | undefined): boolean {
+	return (status?.signals ?? []).some((name) => name === REALTIME_EVENT_NAMES.PRESENCE_CHANGED);
 }
 
 const CHAT_NAMES = new Set<string>(Object.values(CHAT_EVENT_NAMES));
@@ -183,7 +189,9 @@ export class ChatLiveChannel {
 	readonly hints$: Observable<ChatHint>;
 	/** The typing signals of the members (where the platform offers them), on the same subscription. */
 	readonly typing$: Observable<ChatTypingSignal>;
-	/** The subscription's envelopes, shared by `hints$` and `typing$`. */
+	/** The people's presence changes (where the platform offers them), on the same subscription. */
+	readonly presence$: Observable<ChatPresenceUpdate>;
+	/** The subscription's envelopes, shared by `hints$`, `typing$` and `presence$`. */
 	private readonly envelopes$: Observable<Partial<IRealtimeEventEnvelope>>;
 
 	private readonly modes = new BehaviorSubject<ChatLiveMode>('fallback');
@@ -208,6 +216,10 @@ export class ChatLiveChannel {
 		this.typing$ = this.envelopes$.pipe(
 			map((envelope) => chatTypingOf(envelope)),
 			filter((signal): signal is ChatTypingSignal => signal !== null)
+		);
+		this.presence$ = this.envelopes$.pipe(
+			map((envelope) => chatPresenceOf(envelope)),
+			filter((update): update is ChatPresenceUpdate => update !== null)
 		);
 	}
 
@@ -253,8 +265,12 @@ export class ChatLiveChannel {
 						}),
 						ignoreElements()
 					);
-					// The typing signal rides on the same subscription, where the platform offers it.
-					const names = [...CHAT_LIVE_SELECTION, ...(servesTyping(status) ? [REALTIME_EVENT_NAMES.TYPING_SIGNALLED] : [])];
+					// The typing and presence signals ride on the same subscription, where the platform offers them.
+					const names = [
+						...CHAT_LIVE_SELECTION,
+						...(servesTyping(status) ? [REALTIME_EVENT_NAMES.TYPING_SIGNALLED] : []),
+						...(servesPresence(status) ? [REALTIME_EVENT_NAMES.PRESENCE_CHANGED] : [])
+					];
 					const stream$ = defer(() => this.source.subscribe(CHAT_EVENTS_SUBSCRIPTION, { names })).pipe(
 						tap({
 							subscribe: () => {

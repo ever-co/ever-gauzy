@@ -1,6 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, effect, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NbButtonModule, NbIconModule, NbInputModule, NbSelectModule, NbToggleModule } from '@nebular/theme';
+import {
+	NbButtonModule,
+	NbCheckboxModule,
+	NbIconModule,
+	NbInputModule,
+	NbSelectModule,
+	NbToggleModule
+} from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import {
 	TASK_AUTOMATION_LIMITS,
@@ -38,13 +45,23 @@ export function withNamed(choices: readonly ITaskAutomationChoice[], named: read
 
 /**
  * The editor of one automation rule: its name, description, scope (a project, a team), whether it is on, its trigger
- * (with the statuses a status change waits for), its conditions and its actions, each with the picker its type needs.
+ * (with the statuses a status change waits for, and whether a closed link waits for a merge), its conditions and its
+ * actions, each with the picker its type needs.
  * It edits a copy of the draft it is given and hands the copy to `save`; the page sends it to the API.
  */
 @Component({
 	selector: 'ngx-task-automation-editor',
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [FormsModule, NbButtonModule, NbIconModule, NbInputModule, NbSelectModule, NbToggleModule, TranslatePipe],
+	imports: [
+		FormsModule,
+		NbButtonModule,
+		NbCheckboxModule,
+		NbIconModule,
+		NbInputModule,
+		NbSelectModule,
+		NbToggleModule,
+		TranslatePipe
+	],
 	templateUrl: './automation-editor.component.html',
 	styleUrl: './automation-editor.component.scss'
 })
@@ -98,7 +115,12 @@ export class TaskAutomationEditorComponent {
 					projectId: null,
 					organizationTeamId: null,
 					isEnabled: true,
-					trigger: { type: TaskAutomationTriggerEnum.STATUS_CHANGED, toStatuses: [], fromStatuses: [] },
+					trigger: {
+						type: TaskAutomationTriggerEnum.STATUS_CHANGED,
+						toStatuses: [],
+						fromStatuses: [],
+						mergedOnly: false
+					},
 					conditions: [],
 					actions: [newAction()]
 				};

@@ -256,94 +256,105 @@ export class NewChannelDialogComponent implements OnInit, NewChannelContext {
 	imports: [NbButtonModule, NbCardModule, NbIconModule, TranslatePipe, PersonAvatarComponent],
 	template: `
 		<nb-card class="direct" data-test="new-direct-dialog" role="dialog" aria-labelledby="new-direct-title" aria-describedby="new-direct-text">
-			<header class="head">
-				<div class="heading">
-					<h2 id="new-direct-title" class="title">{{ 'CHAT.DIALOG.NEW_MESSAGE' | translate }}</h2>
-					<p id="new-direct-text" class="subtitle">{{ 'CHAT.DIALOG.NEW_MESSAGE_TEXT' | translate: { max: max } }}</p>
+			<nb-card-header class="head">
+				<div class="head-line">
+					<span class="head-icon"><nb-icon icon="message-circle-outline"></nb-icon></span>
+					<div class="head-text">
+						<h5 id="new-direct-title" class="head-title">{{ 'CHAT.DIALOG.NEW_MESSAGE' | translate }}</h5>
+						<span id="new-direct-text" class="head-topic">{{ 'CHAT.DIALOG.NEW_MESSAGE_TEXT' | translate: { max: max } }}</span>
+					</div>
+					<button type="button" class="head-close" [attr.aria-label]="'CHAT.DIALOG.CLOSE' | translate" (click)="ref.close(null)">
+						<nb-icon icon="close-outline"></nb-icon>
+					</button>
 				</div>
-				<button type="button" class="dialog-close" [attr.aria-label]="'CHAT.DIALOG.CLOSE' | translate" (click)="ref.close(null)">
-					<nb-icon icon="close-outline"></nb-icon>
-				</button>
-			</header>
+			</nb-card-header>
 
-			<div class="to" [class.focused]="focused()" (click)="focusSearch()">
-				<span class="to-label">{{ 'CHAT.DIALOG.TO' | translate }}</span>
-				@for (person of chosen(); track person.employeeId) {
-					<span class="token" data-test="direct-token">
-						<ngx-chat-person-avatar [person]="person" size="tiny"></ngx-chat-person-avatar>
-						<span class="token-name">{{ person.name }}</span>
-						<button
-							type="button"
-							class="token-remove"
-							[attr.aria-label]="'CHAT.DIALOG.REMOVE_PERSON' | translate: { name: person.name }"
-							(click)="remove(person.employeeId); $event.stopPropagation()"
-						>
-							<nb-icon icon="close-outline"></nb-icon>
-						</button>
-					</span>
-				}
-				<input
-					#search
-					cdkFocusInitial
-					type="text"
-					class="to-input"
-					data-test="people-search"
-					autocomplete="off"
-					role="combobox"
-					aria-controls="new-direct-people"
-					aria-expanded="true"
-					[attr.aria-activedescendant]="candidates().length ? 'new-direct-person-' + highlighted() : null"
-					[placeholder]="(chosen().length ? 'CHAT.DIALOG.TO_MORE' : 'CHAT.DIALOG.TO_PLACEHOLDER') | translate"
-					[value]="query()"
-					(input)="onQuery($any($event.target).value)"
-					(keydown)="onKeydown($event)"
-					(focus)="focused.set(true)"
-					(blur)="focused.set(false)"
-				/>
-			</div>
-
-			<div class="section-label">{{ 'CHAT.DIALOG.PEOPLE' | translate }}</div>
-			<ul id="new-direct-people" class="list" role="listbox" aria-multiselectable="true">
-				@for (item of candidates(); track item.person.employeeId; let index = $index) {
-					@let isChosen = chosenIds().has(item.person.employeeId);
-					<li
-						role="option"
-						class="person-row"
-						[id]="'new-direct-person-' + index"
-						[attr.data-index]="index"
-						[attr.aria-selected]="isChosen"
-						[attr.aria-disabled]="!isChosen && full()"
-						[class.highlighted]="index === highlighted()"
-						[class.chosen]="isChosen"
-						[class.blocked]="!isChosen && full()"
-						(mouseenter)="highlighted.set(index)"
-						(mousedown)="$event.preventDefault()"
-						(click)="toggle(item.person.employeeId)"
-					>
-						<ngx-chat-person-avatar [person]="item.person" size="small"></ngx-chat-person-avatar>
-						<span class="row-name">{{ item.parts.before }}<mark>{{ item.parts.match }}</mark>{{ item.parts.after }}</span>
-						<span class="check" aria-hidden="true">
-							@if (isChosen) {
-								<nb-icon icon="checkmark-outline"></nb-icon>
-							}
+			<nb-card-body class="body">
+				<!-- The search, with the chosen people as removable chips in front of it (Backspace takes the last one back). -->
+				<div class="to" [class.focused]="focused()" (click)="focusSearch()">
+					<nb-icon class="to-icon" icon="search-outline" aria-hidden="true"></nb-icon>
+					@for (person of chosen(); track person.employeeId) {
+						<span class="token" data-test="direct-token">
+							<ngx-chat-person-avatar [person]="person" size="tiny" [presence]="false"></ngx-chat-person-avatar>
+							<span class="token-name">{{ person.name }}</span>
+							<button
+								type="button"
+								class="token-remove"
+								[attr.aria-label]="'CHAT.DIALOG.REMOVE_PERSON' | translate: { name: person.name }"
+								(click)="remove(person.employeeId); $event.stopPropagation()"
+							>
+								<nb-icon icon="close-outline"></nb-icon>
+							</button>
 						</span>
-					</li>
-				} @empty {
-					<li class="empty">
-						@if (query().trim()) {
-							{{ 'CHAT.DIALOG.NO_PEOPLE_FOR' | translate: { query: query().trim() } }}
-						} @else {
-							{{ 'CHAT.DIALOG.NO_PEOPLE' | translate }}
-						}
-					</li>
+					}
+					<input
+						#search
+						cdkFocusInitial
+						type="text"
+						class="to-input"
+						data-test="people-search"
+						autocomplete="off"
+						role="combobox"
+						aria-controls="new-direct-people"
+						aria-expanded="true"
+						[attr.aria-label]="'CHAT.DIALOG.SEARCH_PEOPLE' | translate"
+						[attr.aria-activedescendant]="candidates().length ? 'new-direct-person-' + highlighted() : null"
+						[placeholder]="(chosen().length ? 'CHAT.DIALOG.TO_MORE' : 'CHAT.DIALOG.TO_PLACEHOLDER') | translate"
+						[value]="query()"
+						(input)="onQuery($any($event.target).value)"
+						(keydown)="onKeydown($event)"
+						(focus)="focused.set(true)"
+						(blur)="focused.set(false)"
+					/>
+				</div>
+
+				<ul id="new-direct-people" class="list" role="listbox" aria-multiselectable="true" [attr.aria-label]="'CHAT.DIALOG.PEOPLE' | translate">
+					@for (item of candidates(); track item.person.employeeId; let index = $index) {
+						@let isChosen = chosenIds().has(item.person.employeeId);
+						<li
+							role="option"
+							class="person-row"
+							[id]="'new-direct-person-' + index"
+							[attr.data-index]="index"
+							[attr.aria-selected]="isChosen"
+							[attr.aria-disabled]="!isChosen && full()"
+							[class.highlighted]="index === highlighted()"
+							[class.chosen]="isChosen"
+							[class.blocked]="!isChosen && full()"
+							(mouseenter)="highlighted.set(index)"
+							(mousedown)="$event.preventDefault()"
+							(click)="toggle(item.person.employeeId)"
+						>
+							<ngx-chat-person-avatar [person]="item.person" size="medium"></ngx-chat-person-avatar>
+							<span class="row-text">
+								<span class="row-name">{{ item.parts.before }}<mark>{{ item.parts.match }}</mark>{{ item.parts.after }}</span>
+								@if (item.person.position) {
+									<span class="row-meta">{{ item.person.position }}</span>
+								}
+							</span>
+							<span class="check" aria-hidden="true">
+								@if (isChosen) {
+									<nb-icon icon="checkmark-outline"></nb-icon>
+								}
+							</span>
+						</li>
+					} @empty {
+						<li class="empty">
+							@if (query().trim()) {
+								{{ 'CHAT.DIALOG.NO_PEOPLE_FOR' | translate: { query: query().trim() } }}
+							} @else {
+								{{ 'CHAT.DIALOG.NO_PEOPLE' | translate }}
+							}
+						</li>
+					}
+				</ul>
+
+				@if (error()) {
+					<p class="error" role="alert">{{ error() }}</p>
 				}
-			</ul>
+			</nb-card-body>
 
-			@if (error()) {
-				<p class="error" role="alert">{{ error() }}</p>
-			}
-
-			<footer class="foot">
+			<nb-card-footer class="foot">
 				<span class="summary" aria-live="polite">
 					@if (full()) {
 						{{ 'CHAT.DIALOG.GROUP_FULL' | translate: { max: max } }}
@@ -360,82 +371,102 @@ export class NewChannelDialogComponent implements OnInit, NewChannelContext {
 					}
 				</span>
 				<div class="actions">
-					<button nbButton ghost size="small" type="button" (click)="ref.close(null)">{{ 'CHAT.DIALOG.CANCEL' | translate }}</button>
-					<button nbButton status="primary" size="small" type="button" data-test="direct-start" [disabled]="chosen().length === 0 || busy()" (click)="start()">
+					<button nbButton ghost type="button" (click)="ref.close(null)">{{ 'CHAT.DIALOG.CANCEL' | translate }}</button>
+					<button nbButton status="primary" type="button" data-test="direct-start" [disabled]="chosen().length === 0 || busy()" (click)="start()">
 						{{ (chosen().length > 1 ? 'CHAT.DIALOG.START_GROUP' : 'CHAT.DIALOG.OPEN_DIRECT') | translate }}
 					</button>
 				</div>
-			</footer>
+			</nb-card-footer>
 		</nb-card>
 	`,
 	styles: [
 		`
-			/* The dialog lives in the overlay, outside the chat page: it reads the theme's tokens, not the chat's. */
+			/* The look of the conversation settings (header, body, footer), so the chat's dialogs read as one. */
 			.direct {
 				display: flex;
 				flex-direction: column;
-				width: min(34rem, 94vw);
-				max-height: 85vh;
+				width: min(38rem, 94vw);
+				max-height: 90vh;
 				margin: 0;
-				overflow: hidden;
-				border: 1px solid var(--gauzy-border-default-color, rgba(127, 127, 127, 0.25));
-				border-radius: 0.75rem;
-				box-shadow: 0 1.25rem 3rem rgba(0, 0, 0, 0.35);
 			}
 			.head {
-				display: flex;
-				align-items: flex-start;
-				justify-content: space-between;
-				gap: 0.75rem;
-				padding: 1rem 1rem 0.875rem 1.25rem;
+				padding: 1rem 1.25rem;
 			}
-			.heading {
+			.head-line {
 				display: flex;
-				flex-direction: column;
-				gap: 0.125rem;
+				align-items: center;
+				gap: 0.625rem;
 				min-width: 0;
 			}
-			.title {
-				margin: 0;
-				font-size: 1.0625rem;
-				font-weight: 700;
-				line-height: 1.5rem;
-			}
-			.subtitle {
-				margin: 0;
-				color: var(--text-hint-color, inherit);
-				font-size: 0.75rem;
-				line-height: 1.125rem;
-			}
-			.dialog-close {
+			.head-icon {
 				display: inline-flex;
 				align-items: center;
 				justify-content: center;
 				width: 2rem;
 				height: 2rem;
+				flex: 0 0 auto;
+				border-radius: var(--border-radius);
+				background: var(--gauzy-sidebar-background-3);
+			}
+			.head-icon nb-icon {
+				font-size: 1.125rem;
+			}
+			.head-text {
+				display: flex;
+				flex-direction: column;
+				flex: 1 1 auto;
+				min-width: 0;
+			}
+			.head-title {
+				margin: 0;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+				font-size: 1.0625rem;
+				font-weight: 700;
+				line-height: 1.3;
+			}
+			.head-topic {
+				font-size: 0.8125rem;
+				line-height: 1.35;
+				opacity: 0.65;
+			}
+			.head-close {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				width: 2rem;
+				height: 2rem;
+				flex: 0 0 auto;
+				align-self: flex-start;
+				padding: 0;
 				border: 0;
-				border-radius: 0.375rem;
+				border-radius: var(--border-radius);
 				background: transparent;
-				color: var(--text-hint-color, inherit);
+				color: inherit;
+				opacity: 0.7;
 				cursor: pointer;
 			}
-			.dialog-close:hover,
-			.dialog-close:focus-visible {
-				background: var(--gauzy-hover-tint, rgba(127, 127, 127, 0.12));
-				color: var(--text-basic-color, inherit);
+			.head-close:hover,
+			.head-close:focus-visible {
+				background: var(--gauzy-hover-tint);
+				opacity: 1;
 			}
-			.dialog-close nb-icon {
+			.head-close nb-icon {
 				font-size: 1.25rem;
 			}
 
-			/* The "To:" field: chips of the chosen people, then the search, in one box. */
-			/* Only the list gives way when the dialog is short: the header, the field and the footer keep their height. */
-			.head,
-			.section-label,
-			.error,
-			.foot {
-				flex: 0 0 auto;
+			/* One fixed-height body: the search stays, the list scrolls under it. */
+			.body {
+				display: flex;
+				flex-direction: column;
+				gap: 1rem;
+				height: min(28rem, 62vh);
+				padding: 1.25rem;
+				overflow: hidden;
 			}
+
+			/* The search box, drawn as the theme's inputs are (as the members search is). */
 			.to {
 				display: flex;
 				flex: 0 0 auto;
@@ -443,29 +474,25 @@ export class NewChannelDialogComponent implements OnInit, NewChannelContext {
 				align-items: center;
 				align-content: flex-start;
 				gap: 0.375rem;
-				min-height: 2.75rem;
-				/* Many chips: the field scrolls after about four rows instead of pushing the list away. */
-				max-height: 9.5rem;
+				min-height: 2.5rem;
+				max-height: 7.5rem;
 				overflow-y: auto;
-				margin: 0 1.25rem;
-				padding: 0.4375rem 0.625rem;
-				border: 1px solid var(--gauzy-border-default-color, rgba(127, 127, 127, 0.3));
-				border-radius: 0.5rem;
+				padding: 0.3125rem 0.75rem;
+				box-sizing: border-box;
+				border: 1px solid var(--input-basic-border-color, var(--gauzy-border-default-color));
+				border-radius: var(--border-radius);
+				background: var(--input-basic-background-color, transparent);
 				cursor: text;
-				transition: border-color 0.12s ease, box-shadow 0.12s ease;
+				transition: border-color 0.12s ease;
 			}
 			.to.focused {
-				border-color: var(--text-hint-color, rgba(127, 127, 127, 0.6));
-				box-shadow: 0 0 0 0.1875rem var(--gauzy-hover-tint, rgba(127, 127, 127, 0.12));
+				border-color: var(--input-basic-focus-border-color, var(--color-primary-default));
 			}
-			.to-label {
-				display: inline-flex;
-				align-items: center;
-				height: 1.75rem;
-				margin-right: 0.125rem;
-				color: var(--text-hint-color, inherit);
-				font-size: 0.875rem;
-				font-weight: 600;
+			.to-icon {
+				flex: 0 0 auto;
+				margin-right: 0.25rem;
+				font-size: 1rem;
+				opacity: 0.55;
 			}
 			.token {
 				display: inline-flex;
@@ -476,8 +503,8 @@ export class NewChannelDialogComponent implements OnInit, NewChannelContext {
 				height: 1.75rem;
 				box-sizing: border-box;
 				padding: 0 0.125rem 0 0.25rem;
-				border-radius: 0.375rem;
-				background: var(--gauzy-active-tint, rgba(127, 127, 127, 0.18));
+				border-radius: calc(var(--border-radius) * 0.75);
+				background: var(--gauzy-sidebar-background-3);
 				font-size: 0.8125rem;
 				font-weight: 600;
 			}
@@ -492,118 +519,125 @@ export class NewChannelDialogComponent implements OnInit, NewChannelContext {
 				justify-content: center;
 				width: 1.375rem;
 				height: 1.375rem;
+				padding: 0;
 				border: 0;
 				border-radius: 0.25rem;
 				background: transparent;
-				color: var(--text-hint-color, inherit);
+				color: inherit;
+				opacity: 0.6;
 				cursor: pointer;
 			}
 			.token-remove:hover,
 			.token-remove:focus-visible {
-				background: var(--gauzy-hover-tint, rgba(127, 127, 127, 0.15));
-				color: var(--text-basic-color, inherit);
+				background: var(--gauzy-hover-tint);
+				opacity: 1;
 			}
 			.token-remove nb-icon {
 				font-size: 0.875rem;
 			}
-			/* A bare input inside the field; global form styles reach it, so all it shows is set here. */
+			/* A bare input inside the box; global form styles reach it, so all it shows is set here. */
 			.to-input {
 				flex: 1 1 8rem;
 				min-width: 8rem;
 				height: 1.75rem !important;
 				margin: 0 !important;
-				padding: 0 0.25rem !important;
+				padding: 0 !important;
 				border: 0 !important;
 				outline: 0 !important;
 				background: transparent !important;
 				box-shadow: none !important;
-				color: var(--text-basic-color, inherit) !important;
+				color: inherit !important;
 				font: inherit;
-				font-size: 0.875rem !important;
+				font-size: 0.9375rem !important;
 			}
 			.to-input::placeholder {
-				color: var(--text-hint-color, rgba(127, 127, 127, 0.9));
+				color: var(--input-basic-placeholder-text-color, inherit);
+				opacity: 0.6;
 			}
 
-			.section-label {
-				padding: 1rem 1.25rem 0.375rem;
-				color: var(--text-hint-color, inherit);
-				font-size: 0.6875rem;
-				font-weight: 700;
-				letter-spacing: 0.04em;
-				text-transform: uppercase;
-			}
+			/* The people, as the members list draws them. */
 			.list {
 				flex: 1 1 auto;
-				min-height: 7.5rem;
-				max-height: 22rem;
+				min-height: 0;
 				overflow-y: auto;
-				margin: 0;
-				padding: 0 0.75rem 0.5rem;
+				margin: 0 -0.5rem;
+				padding: 0;
 				list-style: none;
-				scrollbar-width: thin;
 			}
 			.person-row {
 				display: flex;
 				align-items: center;
 				gap: 0.625rem;
-				min-height: 2.5rem;
-				padding: 0.375rem 0.5rem;
-				border-radius: 0.5rem;
-				font-size: 0.875rem;
+				padding: 0.3125rem 0.5rem;
+				border-radius: calc(var(--border-radius) * 0.75);
 				cursor: pointer;
 			}
-			/* One highlighted row (mouse or arrows), in the neutral hover tint. */
+			/* One highlighted row (mouse or arrows). */
 			.person-row.highlighted {
-				background: var(--gauzy-hover-tint, rgba(127, 127, 127, 0.12));
+				background: var(--gauzy-hover-tint);
 			}
 			.person-row.blocked {
 				cursor: not-allowed;
 				opacity: 0.5;
 			}
-			.row-name {
+			.row-text {
+				display: flex;
+				flex-direction: column;
 				flex: 1 1 auto;
 				min-width: 0;
+				line-height: 1.25;
+			}
+			.row-name,
+			.row-meta {
 				overflow: hidden;
 				white-space: nowrap;
 				text-overflow: ellipsis;
+			}
+			.row-name {
+				font-size: 0.8125rem;
+				font-weight: 600;
 			}
 			.row-name mark {
 				padding: 0;
 				background: transparent;
 				color: inherit;
-				font-weight: 700;
+				font-weight: 800;
+				text-decoration: underline;
+				text-underline-offset: 0.15em;
 			}
-			.person-row.chosen .row-name {
-				font-weight: 600;
+			.row-meta {
+				font-size: 0.6875rem;
+				opacity: 0.6;
 			}
 			.check {
 				display: inline-flex;
 				align-items: center;
 				justify-content: center;
 				flex: 0 0 auto;
-				width: 1.25rem;
-				height: 1.25rem;
-				border: 1px solid var(--gauzy-border-default-color, rgba(127, 127, 127, 0.4));
-				border-radius: 50%;
+				width: 1.125rem;
+				height: 1.125rem;
+				box-sizing: border-box;
+				border: 1px solid var(--gauzy-border-default-color);
+				border-radius: 0.25rem;
 			}
 			.person-row.chosen .check {
-				border-color: transparent;
-				background: var(--text-basic-color, #222);
-				color: var(--gauzy-card-1, #fff);
+				border-color: var(--color-primary-default);
+				background: var(--color-primary-default);
+				color: var(--text-control-color);
 			}
 			.check nb-icon {
 				font-size: 0.875rem;
 			}
 			.empty {
 				padding: 1.5rem 0.5rem;
-				color: var(--text-hint-color, inherit);
-				font-size: 0.875rem;
 				text-align: center;
+				font-size: 0.8125rem;
+				opacity: 0.65;
 			}
 			.error {
-				margin: 0.25rem 1.25rem 0;
-				color: var(--color-danger-default, #e4493f);
+				flex: 0 0 auto;
+				margin: 0;
+				color: var(--color-danger-default);
 				font-size: 0.8125rem;
 			}
 
@@ -612,13 +646,12 @@ export class NewChannelDialogComponent implements OnInit, NewChannelContext {
 				align-items: center;
 				justify-content: space-between;
 				gap: 0.75rem;
-				padding: 0.75rem 1rem 0.75rem 1.25rem;
-				border-top: 1px solid var(--gauzy-border-default-color, rgba(127, 127, 127, 0.2));
+				padding: 0.75rem 1.25rem;
 			}
 			.summary {
 				min-width: 0;
-				color: var(--text-hint-color, inherit);
-				font-size: 0.75rem;
+				font-size: 0.8125rem;
+				opacity: 0.7;
 			}
 			.keys {
 				display: flex;
@@ -633,7 +666,7 @@ export class NewChannelDialogComponent implements OnInit, NewChannelContext {
 				height: 1.125rem;
 				margin-right: 0.125rem;
 				padding: 0 0.25rem;
-				border: 1px solid var(--gauzy-border-default-color, rgba(127, 127, 127, 0.35));
+				border: 1px solid var(--gauzy-border-default-color);
 				border-radius: 0.25rem;
 				background: transparent;
 				box-shadow: none;
@@ -643,15 +676,15 @@ export class NewChannelDialogComponent implements OnInit, NewChannelContext {
 				font-weight: 600;
 				line-height: 1;
 			}
-			.actions {
-				display: flex;
-				flex: 0 0 auto;
-				gap: 0.5rem;
-			}
 			@media (max-width: 600px) {
 				.keys {
 					display: none;
 				}
+			}
+			.actions {
+				display: flex;
+				flex: 0 0 auto;
+				gap: 0.5rem;
 			}
 		`
 	]

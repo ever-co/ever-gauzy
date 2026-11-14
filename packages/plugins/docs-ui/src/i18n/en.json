@@ -265,7 +265,12 @@
 		"TOAST_UPDATED": "Comment updated",
 		"TOAST_DELETED": "Comment deleted",
 		"TOAST_RESOLVED": "Comment resolved",
-		"TOAST_REOPENED": "Comment reopened"
+		"TOAST_REOPENED": "Comment reopened",
+		"RANGE_COMMENTING_ON": "Commenting on",
+		"RANGE_CLEAR": "Comment on the whole block instead",
+		"RANGE_GO_TO": "Show this text in the page",
+		"RANGE_ON_BLOCK": "The text this was on changed: it stays on its block",
+		"RANGE_GONE": "The text this was on is no longer on the page"
 	},
 	"ACTIVITY": {
 		"EMPTY": "No activity yet",
@@ -497,7 +502,7 @@
 			"UNAVAILABLE": "This image is no longer available"
 		},
 		"COMMENT": {
-			"ADD": "Comment on this block",
+			"ADD": "Comment on the selected text",
 			"MARKER_ARIA": "Open the comments on this block",
 			"DETACHED": "The block this thread was anchored to was deleted"
 		},
