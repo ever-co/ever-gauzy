@@ -1025,5 +1025,44 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 			});
 			expect(timeSpanDeletes).toEqual([]);
 		});
+
+		it('writes no stop over the next start once its lookup of the logs the run overlaps outlived the failsafe time', async () => {
+			jest.useFakeTimers({ doNotFake: ['Date', 'nextTick', 'setImmediate', 'queueMicrotask'] });
+			try {
+				const rows = [timeLog('web-run', TimeLogSourceEnum.WEB_TIMER, TWO_HOURS_AGO)];
+				let lookups = 0;
+				let finishFirstLookup: () => void = () => undefined;
+				const { service } = setup(rows, {
+					onConflictLookup: () => {
+						lookups += 1;
+						// The first start's lookup answers only when the spec lets it
+						return lookups === 1
+							? new Promise<void>((resolve) => (finishFirstLookup = resolve))
+							: undefined;
+					}
+				});
+
+				const first = startOnDesktop(service).then(
+					() => 'started',
+					(error: Error) => error
+				);
+				// The next start arrives a minute later
+				const aMinuteLater = new Date(NOW.getTime() + 60_000);
+				jest.spyOn(Date, 'now').mockReturnValue(aMinuteLater.getTime());
+				const second = startOnDesktop(service);
+
+				// It goes on after the failsafe time and ends the web run where it starts
+				await jest.advanceTimersByTimeAsync(EMPLOYEE_TURN_FAILSAFE_MS);
+				await expect(second).resolves.toMatchObject({ isRunning: true, startedAt: aMinuteLater });
+				expect(rows[0]).toMatchObject({ id: 'web-run', isRunning: false, stoppedAt: aMinuteLater });
+
+				// The first lookup answers after that: the first start leaves the web run as the next one ended it
+				finishFirstLookup();
+				await expect(first).resolves.toBeInstanceOf(RequestTimeoutException);
+				expect(rows[0]).toMatchObject({ id: 'web-run', isRunning: false, stoppedAt: aMinuteLater });
+			} finally {
+				jest.useRealTimers();
+			}
+		});
 	}
 );

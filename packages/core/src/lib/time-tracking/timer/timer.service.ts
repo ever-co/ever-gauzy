@@ -1321,6 +1321,9 @@ export class TimerService {
 		const overlapping = holdsTime
 			? await this.findOverlappingLogIds(log, stoppedAt, runningAtRead, tenantId, organizationId)
 			: [];
+		// A lookup that took so long that the next start or stop went on leaves the run to that one, which may have
+		// ended it later meanwhile, as a stop's reads do (`stopRunningLog`)
+		turn?.assertHeld();
 		const isStopped = await this.stopReplacedRun(log, stoppedAt, turn);
 		const hasLogsToCut = isStopped && overlapping.length > 0;
 		return hasLogsToCut ? [{ run: { ...log, isRunning: false, stoppedAt }, overlapping }] : [];
