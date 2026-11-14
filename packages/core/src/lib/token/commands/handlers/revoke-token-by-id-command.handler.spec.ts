@@ -115,6 +115,27 @@ describe('RevokeTokenByIdHandler', () => {
 		expect(write.updateStatus).not.toHaveBeenCalled();
 	});
 
+	it('revokes the token even when a use was recorded between its read and its write', async () => {
+		const rows = [activeRow()];
+		const { read, write } = table(rows);
+		// The use JwtStrategy records bumps the version, as both ORMs' updates do, once, right after the first read.
+		const realFind = read.findById.getMockImplementation();
+		let interleaved = false;
+		read.findById.mockImplementation(async (id: string) => {
+			const found = await realFind(id);
+			if (!interleaved) {
+				interleaved = true;
+				rows[0].version += 1;
+			}
+			return found;
+		});
+		const handler = new RevokeTokenByIdHandler(read as any, write as any);
+
+		await expect(handler.execute(command())).resolves.toBe(true);
+
+		expect(rows[0].status).toBe(TokenStatus.REVOKED);
+	});
+
 	it('answers false for an id that names no token', async () => {
 		const { read, write } = table([]);
 		const handler = new RevokeTokenByIdHandler(read as any, write as any);
