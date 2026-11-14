@@ -155,6 +155,10 @@ type Employee {
 	linkedInId: String
 	"What the row represents: `human` for a person, `agent` for an agent employee provisioned by an integration. Never written through this surface."
 	kind: String
+	"Whether this member has no account: kept for time and reports only, it never signs in and never runs a timer. Never written through this surface."
+	isPlaceholder: Boolean
+	"The email given when a member without an account was created, if any: never a login. Never written through this surface."
+	placeholderEmail: String
 	"The account this engagement belongs to. The account row is read from this surface's own `user(id)` by this identifier."
 	userId: ID
 	"The contact row the engagement keeps its postal and fiscal facts in, where it has one. The contact is read from the contact surface."
@@ -273,6 +277,7 @@ input EmployeeFilter {
 	upworkId: StringFilter
 	linkedInId: StringFilter
 	kind: StringFilter
+	isPlaceholder: BooleanFilter
 	userId: IDFilter
 	contactId: IDFilter
 	organizationPositionId: IDFilter

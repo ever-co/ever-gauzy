@@ -48,6 +48,11 @@ export interface IInvoice extends IBasePerTenantAndOrganizationEntityModel {
 	amountDue?: number;
 	hasRemainingAmountInvoiced?: boolean;
 	token?: string;
+	/**
+	 * When another document's line first billed time this void invoice or rejected estimate had released: from then on
+	 * it keeps its status, since making it live again would charge that time twice. Written by the API only.
+	 */
+	releasedTimeBilledAt?: Date | null;
 }
 
 export interface IInvoiceCreateInput extends IBasePerTenantAndOrganizationEntityModel {

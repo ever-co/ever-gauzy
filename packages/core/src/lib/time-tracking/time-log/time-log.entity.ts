@@ -264,8 +264,9 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 
 	/**
 	 * The invoice line that bills this time. The link alone does not make the time invoiced: it is only while the
-	 * line and its invoice are live and the invoice is not void, so a void or deleted invoice frees the time and
-	 * the link stays as a record until another line bills it. Deleting the line clears the link.
+	 * line and its invoice are live and the invoice is neither void nor a rejected estimate, so a void or deleted
+	 * invoice, or a rejected estimate, frees the time and the link stays as a record until another line bills it.
+	 * Deleting the line clears the link.
 	 */
 	@MultiORMManyToOne(() => InvoiceItem, {
 		nullable: true,

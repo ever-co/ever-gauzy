@@ -10,11 +10,12 @@ export class InviteBulkCreateHandler implements ICommandHandler<InviteBulkCreate
 	/**
 	 * Executes the bulk invite creation command.
 	 *
-	 * @param command - The InviteBulkCreateCommand containing the input data and language code.
+	 * @param command - The InviteBulkCreateCommand containing the input data and language code, and the member
+	 * without an account a claim hands over.
 	 * @returns A promise that resolves with the result of the bulk invite creation.
 	 */
 	public async execute(command: InviteBulkCreateCommand): Promise<ICreateEmailInvitesOutput> {
-		const { input, languageCode } = command;
-		return await this.inviteService.createBulk(input, languageCode);
+		const { input, languageCode, placeholderEmployeeId } = command;
+		return await this.inviteService.createBulk(input, languageCode, placeholderEmployeeId);
 	}
 }
