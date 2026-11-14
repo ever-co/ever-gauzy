@@ -1673,7 +1673,8 @@ export class AuthService extends SocialAuthService {
 	 */
 	async register(
 		input: IUserRegistrationInput & Partial<IAppIntegrationConfig>,
-		languageCode: LanguagesEnum
+		languageCode: LanguagesEnum,
+		onSaved?: (user: User) => void
 	): Promise<User> {
 		let tenant = input.user.tenant;
 		const { organizationId } = input;
@@ -1788,6 +1789,7 @@ export class AuthService extends SocialAuthService {
 				});
 				await this.mikroOrmUserRepository.persistAndFlush(userEntity);
 				user = this.serialize(userEntity);
+				onSaved?.(user);
 
 				// 3. Create employee for specific user
 				if (featureAsEmployee) {
@@ -1821,6 +1823,7 @@ export class AuthService extends SocialAuthService {
 					...(awaitsEmailConfirmation ? { isActive: false } : {})
 				});
 				user = await this.typeOrmUserRepository.save(entity);
+				onSaved?.(user);
 
 				// 3. Create employee for specific user
 				if (featureAsEmployee) {
