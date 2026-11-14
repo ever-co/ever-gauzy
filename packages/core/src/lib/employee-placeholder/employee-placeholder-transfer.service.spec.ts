@@ -82,8 +82,13 @@ describe('EmployeePlaceholderTransferService on SQLite', () => {
 		});
 		expect(await pointingAt(AMINA)).toEqual([]);
 		expect(await rows(`SELECT "id" FROM "employee" WHERE "id" = ?`, [AMINA])).toEqual([]);
-		expect(await rows(`SELECT "id" FROM "user" WHERE "id" = ?`, [AMINA_USER])).toEqual([]);
-		expect(await rows(`SELECT "id" FROM "user" WHERE "id" = ?`, [MARIE_USER])).toHaveLength(1);
+		// Retired rather than deleted: deleting a user makes the database check every table naming one.
+		const [aminaUser] = await rows(`SELECT "deletedAt", "isActive", "isArchived" FROM "user" WHERE "id" = ?`, [
+			AMINA_USER
+		]);
+		expect(aminaUser).toMatchObject({ isActive: 0, isArchived: 1, deletedAt: expect.any(String) });
+		const [marieUser] = await rows(`SELECT "deletedAt", "isActive" FROM "user" WHERE "id" = ?`, [MARIE_USER]);
+		expect(marieUser).toEqual({ deletedAt: null, isActive: 1 });
 
 		const marieLogs = await rows(`SELECT "id" FROM "time_log" WHERE "employeeId" = ? ORDER BY "id"`, [MARIE]);
 		expect(marieLogs.map((log) => log.id)).toEqual(['log-amina-1', 'log-amina-2', 'log-marie']);
@@ -167,9 +172,10 @@ describe('EmployeePlaceholderTransferService on SQLite', () => {
 	});
 
 	it('changes nothing when a step fails', async () => {
-		// A row of another table that keeps the placeholder's user: removing that user is refused, so the whole
-		// transfer is rolled back.
-		await dataSource.query(`INSERT INTO "user_note" ("id", "userId") VALUES ('note-1', ?)`, [AMINA_USER]);
+		// The last step, retiring the placeholder's user, is refused: the whole transfer is rolled back.
+		await dataSource.query(
+			`CREATE TRIGGER "refuse_user_change" BEFORE UPDATE ON "user" BEGIN SELECT RAISE(ABORT, 'refused'); END`
+		);
 
 		await expect(service.transfer(AMINA, MARIE, TENANT)).rejects.toThrow();
 
@@ -190,7 +196,8 @@ const REFERENCES: Array<[string, string]> = [
 ];
 
 const SCHEMA = [
-	`CREATE TABLE "user" ("id" varchar PRIMARY KEY NOT NULL, "tenantId" varchar, "email" varchar)`,
+	`CREATE TABLE "user" ("id" varchar PRIMARY KEY NOT NULL, "tenantId" varchar, "email" varchar,
+		"isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "deletedAt" datetime)`,
 	`CREATE TABLE "employee" (
 		"id" varchar PRIMARY KEY NOT NULL, "tenantId" varchar, "organizationId" varchar,
 		"userId" varchar REFERENCES "user" ("id") ON DELETE CASCADE,
@@ -219,7 +226,7 @@ const SCHEMA = [
 ];
 
 const FIXTURE = [
-	`INSERT INTO "user" VALUES ('${AMINA_USER}', '${TENANT}', NULL), ('${MARIE_USER}', '${TENANT}', 'marie@ever.co'), ('${PAUL_USER}', '${TENANT}', 'paul@ever.co')`,
+	`INSERT INTO "user" ("id", "tenantId", "email") VALUES ('${AMINA_USER}', '${TENANT}', NULL), ('${MARIE_USER}', '${TENANT}', 'marie@ever.co'), ('${PAUL_USER}', '${TENANT}', 'paul@ever.co')`,
 	`INSERT INTO "employee" ("id", "tenantId", "organizationId", "userId", "isPlaceholder", "billRateValue", "billRateCurrency")
 		VALUES ('${AMINA}', '${TENANT}', '${ORGANIZATION}', '${AMINA_USER}', 1, 40, 'USD')`,
 	`INSERT INTO "employee" ("id", "tenantId", "organizationId", "userId", "isPlaceholder", "payRateValue", "payRateCurrency")

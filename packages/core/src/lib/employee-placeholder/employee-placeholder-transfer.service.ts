@@ -39,7 +39,7 @@ interface TransferPair {
 
 /**
  * Moves what belongs to a member without an account (a placeholder) to a member with one, when the person claims it
- * or an admin merges it, then removes the placeholder and its user. Everything happens in one transaction.
+ * or an admin merges it, then removes the placeholder and retires its user. Everything happens in one transaction.
  *
  * What points at the placeholder is read from the database's own foreign keys, not from a list kept here: time logs,
  * time slots, timesheets, activities, task assignments, team, project and contact memberships, invoice lines,
@@ -80,7 +80,7 @@ export class EmployeePlaceholderTransferService {
 
 	/**
 	 * Moves everything of a member without an account to a member of the same organization who has an account, then
-	 * removes the placeholder and its user, in one transaction.
+	 * removes the placeholder and retires its user, in one transaction.
 	 *
 	 * @param placeholderId The member without an account.
 	 * @param targetId The member with an account who takes it all.
@@ -139,7 +139,7 @@ export class EmployeePlaceholderTransferService {
 		await run(queryRunner, `DELETE FROM ${name(queryRunner, 'employee')} WHERE ${name(queryRunner, 'id')} = :id`, {
 			id: placeholder.id
 		});
-		await removeUserIfUnused(queryRunner, placeholder.userId);
+		await retireUserIfUnused(queryRunner, placeholder.userId);
 
 		return summary;
 	}
@@ -404,8 +404,13 @@ async function removePendingClaims(queryRunner: QueryRunner, placeholderId: ID, 
 	);
 }
 
-/** Removes the placeholder's user, which was created for it alone, unless another employee still stands on it. */
-async function removeUserIfUnused(queryRunner: QueryRunner, userId: ID | undefined): Promise<void> {
+/**
+ * Retires the placeholder's user, created for it alone, unless another employee still stands on it: deactivated,
+ * archived and soft-deleted. Not deleted: deleting a user makes the database check every table naming a user (who
+ * created, changed or deleted each row), which takes minutes on a large database. With no email and no password, it
+ * never signed in and never can.
+ */
+async function retireUserIfUnused(queryRunner: QueryRunner, userId: ID | undefined): Promise<void> {
 	if (!userId) {
 		return;
 	}
@@ -421,9 +426,14 @@ async function removeUserIfUnused(queryRunner: QueryRunner, userId: ID | undefin
 	if (stillUsed) {
 		return;
 	}
-	await run(queryRunner, `DELETE FROM ${name(queryRunner, 'user')} WHERE ${name(queryRunner, 'id')} = :user`, {
-		user: userId
-	});
+	await run(
+		queryRunner,
+		`UPDATE ${name(queryRunner, 'user')} SET ${name(queryRunner, 'isActive')} = :active, ${name(
+			queryRunner,
+			'isArchived'
+		)} = :archived, ${name(queryRunner, 'deletedAt')} = :now WHERE ${name(queryRunner, 'id')} = :user`,
+		{ active: false, archived: true, now: new Date(), user: userId }
+	);
 }
 
 /** Rows of a table pointing at the employee, not deleted when the table keeps deleted rows. */
