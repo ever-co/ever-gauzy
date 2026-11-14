@@ -254,3 +254,23 @@ describe('AuthService.register never updates an employee row it did not create (
 		}
 	});
 });
+
+/**
+ * A caller that undoes a failed registration (a claim of a member without an account, ever-co/ever-gauzy#11913) must
+ * know the account it saved, which a registration failing after the save never returns.
+ */
+describe('AuthService.register tells the account it saved, before a later step can fail', () => {
+	it('hands the saved account to onSaved even when a later step of the registration fails', async () => {
+		const { service, employeeRepository } = buildService();
+		jest.spyOn(employeeRepository, 'save').mockRejectedValueOnce(new Error('employee save failed'));
+		const onSaved = jest.fn();
+		const register = service.register.bind(service) as (...args: unknown[]) => Promise<unknown>;
+
+		await expect(
+			register(registrationInput({ featureAsEmployee: true }), LanguagesEnum.ENGLISH, onSaved)
+		).rejects.toThrow('employee save failed');
+
+		expect(onSaved).toHaveBeenCalledTimes(1);
+		expect(onSaved).toHaveBeenCalledWith(expect.objectContaining({ id: NEW_USER_ID }));
+	});
+});

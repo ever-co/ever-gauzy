@@ -56,6 +56,12 @@ interface IInviteAssociations extends IRelationalUser, IRelationalRole {
 export interface IInvite extends IInviteBase, IInviteAssociations {
 	invitedByUser?: IUser;
 	invitedByUserId?: ID;
+	/**
+	 * The member without an account this invitation hands over: accepting it, with a new or an existing account,
+	 * moves that member's time, timesheets, assignments, teams and rates to the person, and removes the placeholder.
+	 * Null for every other invitation.
+	 */
+	placeholderEmployeeId?: ID | null;
 }
 
 export interface IInviteAcceptInput extends IUserRegistrationInput {
