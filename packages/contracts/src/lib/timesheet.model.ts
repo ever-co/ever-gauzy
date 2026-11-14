@@ -453,6 +453,8 @@ export interface IGetTimeLogReportInput extends IGetTimeLogInput {
 	includeTimeWithoutTeam?: boolean;
 	/** Leave out the time a live invoice bills: a line that is not removed, of an invoice neither removed nor void. */
 	notInvoiced?: boolean;
+	/** Keep breaks (time logs of type BREAK) in a read that lists entries. Totals never count breaks. */
+	includeBreaks?: boolean;
 }
 
 export interface IGetTimeLogConflictInput extends IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel {

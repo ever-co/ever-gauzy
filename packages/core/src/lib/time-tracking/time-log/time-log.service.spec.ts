@@ -320,8 +320,8 @@ describe('TimeLogService', () => {
 			const breakExclusion = '"time_log"."logType" <> :breakType';
 			const listsEntries = ['getTimeLogs', 'getDailyReportCharts'];
 
-			it.each(reportMethods.filter(([name]) => !listsEntries.includes(name)))(
-				'%s leaves breaks out of the worked time it totals',
+			it.each(reportMethods)(
+				'%s leaves breaks out when the request does not ask for them',
 				async (_name, run) => {
 					actAs({ canChangeSelectedEmployee: true });
 
@@ -334,11 +334,11 @@ describe('TimeLogService', () => {
 			);
 
 			it.each(reportMethods.filter(([name]) => listsEntries.includes(name)))(
-				'%s keeps breaks, which hold no time slot, with their type',
+				'%s keeps breaks, which hold no time slot, with their type when asked (includeBreaks)',
 				async (_name, run) => {
 					actAs({ canChangeSelectedEmployee: true });
 
-					await run(request);
+					await run({ ...request, includeBreaks: true });
 
 					const { conditions } = executedFilters(builder);
 					expect(conditions).not.toContain(breakExclusion);
@@ -363,7 +363,10 @@ describe('TimeLogService', () => {
 				actAs({ canChangeSelectedEmployee: true });
 
 				const total = await (service as any).buildMikroOrmTimeLogWhere(request);
-				const list = await (service as any).buildMikroOrmTimeLogWhere(request, { keepBreaks: true });
+				const list = await (service as any).buildMikroOrmTimeLogWhere(
+					{ ...request, includeBreaks: true },
+					{ keepBreaks: true }
+				);
 
 				expect(total.logType).toEqual({ $ne: TimeLogType.BREAK });
 				expect(list.logType).toBeUndefined();
@@ -386,13 +389,14 @@ describe('TimeLogService', () => {
 					duration: 3600
 				};
 
+				type ChartDay = { date: string; value: object };
+				const askingForBreaks = { ...request, includeBreaks: true };
 				builder.rows = [work, lunch];
-				const withBreak = (await service.getDailyReportCharts(request)) as { date: string; value: object }[];
+				const withBreak = (await service.getDailyReportCharts(askingForBreaks)) as ChartDay[];
 				builder.rows = [work];
-				const withoutBreak = (await service.getDailyReportCharts(request)) as { date: string; value: object }[];
+				const withoutBreak = (await service.getDailyReportCharts(askingForBreaks)) as ChartDay[];
 
-				const dayOf = (days: { date: string; value: object }[], date: string) =>
-					days.find((day) => day.date === date);
+				const dayOf = (days: ChartDay[], date: string) => days.find((day) => day.date === date);
 				expect(dayOf(withBreak, '2026-01-05').value).toMatchObject({ TRACKED: 3, BREAK: 1 });
 				expect(dayOf(withBreak, '2026-01-06').value).toMatchObject({ TRACKED: 0, BREAK: 0 });
 				expect(withoutBreak.every((day) => !(TimeLogType.BREAK in day.value))).toBe(true);

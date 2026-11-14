@@ -98,8 +98,8 @@ export const RUNNING_TIMER_OVERLAP = 'RUNNING_TIMER_OVERLAP';
 /** How a report read treats breaks (time logs of type BREAK, #11920). */
 export interface ITimeLogReadOptions {
 	/**
-	 * Keep breaks, with their type: the reads that list entries do. Every other read is a total of worked time,
-	 * which leaves breaks out unless the request names the types it wants.
+	 * Keep breaks, with their type: the reads that list entries do when the request asks (`includeBreaks`). Every
+	 * other read is a total of worked time, which leaves breaks out unless the request names the types it wants.
 	 */
 	keepBreaks?: boolean;
 }
@@ -150,7 +150,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
-				const where = await this.buildMikroOrmTimeLogWhere(request, { keepBreaks: true });
+				const keepBreaks = request.includeBreaks === true;
+				const where = await this.buildMikroOrmTimeLogWhere(request, { keepBreaks });
 				const populate = [
 					'employee',
 					'employee.user',
@@ -230,7 +231,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				});
 
 				// Apply filters to the query
-				await this.getFilterTimeLogQuery(query, request, { keepBreaks: true });
+				const keepBreaks = request.includeBreaks === true;
+				await this.getFilterTimeLogQuery(query, request, { keepBreaks });
 
 				const timeLogs = await query.getMany();
 
@@ -511,7 +513,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
-				const where = await this.buildMikroOrmTimeLogWhere(request, { keepBreaks: true });
+				const keepBreaks = request.includeBreaks === true;
+				const where = await this.buildMikroOrmTimeLogWhere(request, { keepBreaks });
 				const items = await this.mikroOrmRepository.find(where, {
 					populate: ['employee', 'timeSlots'] as any[],
 					orderBy: { startedAt: 'ASC' as any }
@@ -538,7 +541,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					}
 				});
 				// Apply additional conditions to the query based on request filters
-				await this.getFilterTimeLogQuery(query, request, { keepBreaks: true });
+				const keepBreaks = request.includeBreaks === true;
+				await this.getFilterTimeLogQuery(query, request, { keepBreaks });
 
 				// Execute the query and retrieve time logs
 				logs = await query.getMany();
