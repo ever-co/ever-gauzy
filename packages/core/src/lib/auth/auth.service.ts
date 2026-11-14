@@ -2964,7 +2964,8 @@ export class AuthService extends SocialAuthService {
 	}
 
 	/**
-	 * Whether the sign-ins of a user ask for a two-factor code.
+	 * Whether the sign-ins of a user ask for a two-factor code. Public for the other paths that end with a session (an
+	 * invitation accepted by an existing account).
 	 *
 	 * Nest always injects the two-factor store (the constructor parameter is required, so the application does not
 	 * start without it). An instance built by hand without it, as the unit specs of the other sign-in rules build
@@ -2972,7 +2973,7 @@ export class AuthService extends SocialAuthService {
 	 *
 	 * @param userId The user.
 	 */
-	private async asksForTwoFactorCode(userId: ID): Promise<boolean> {
+	public async asksForTwoFactorCode(userId: ID): Promise<boolean> {
 		if (!this.userTwoFactorService) {
 			return false;
 		}
