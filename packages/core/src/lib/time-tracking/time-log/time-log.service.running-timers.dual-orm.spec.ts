@@ -8,7 +8,8 @@ import * as path from 'path';
  * at a running log's last heartbeat (its start, for a web timer), and on TypeORM needs time slots. The running timers are
  * read here on a real SQLite database, with each ORM: the employee's own, in their organization and tenant, still running,
  * started before the range ends, and without the edited log. For a tracker's upload a tracker's run is left out too: it
- * keeps the end its slots give it.
+ * keeps the end its slots give it. The 409 names the run in the way, the first started, from the logs as each ORM reads
+ * them.
  */
 
 const TIMEOUT = 10 * 60 * 1000;
@@ -42,7 +43,13 @@ const LOG = {
 /** Where the manual range ends. */
 const RANGE_END = new Date('2026-01-05T10:00:00.000Z');
 
-type Reads = { found: string[]; foundWhileEditing: string[]; foundForTrackerUpload: string[] };
+type Reads = {
+	found: string[];
+	foundWhileEditing: string[];
+	foundForTrackerUpload: string[];
+	/** The body of the 409 refusing a tracker's upload over the runs found for it, as the client gets it. */
+	refusalOfTrackerUpload: unknown;
+};
 
 async function measure(): Promise<{ mikroOrm: Reads; typeOrm: Reads }> {
 	const previous = { DB_ORM: process.env.DB_ORM, DB_TYPE: process.env.DB_TYPE };
@@ -64,6 +71,7 @@ async function measure(): Promise<{ mikroOrm: Reads; typeOrm: Reads }> {
 			const { TypeOrmTimeLogRepository } = require('./repository/type-orm-time-log.repository');
 			const { MikroOrmTimeLogRepository } = require('./repository/mikro-orm-time-log.repository');
 			const { TimeLogService } = require('./time-log.service');
+			const { toSafeHttpException } = require('../../core/interceptors/safe-http-exception');
 
 			dataSource = new DataSource({
 				type: 'better-sqlite3',
@@ -146,8 +154,26 @@ async function measure(): Promise<{ mikroOrm: Reads; typeOrm: Reads }> {
 				return service;
 			};
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			const refusalOf = (service: any, running: unknown[]): unknown => {
+				try {
+					service.assertNoRunningTimerIn(running);
+				} catch (error) {
+					// Every error body is copied on its way out, then sent as JSON
+					return JSON.parse(JSON.stringify(toSafeHttpException(error).getResponse()));
+				}
+				return undefined;
+			};
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			const reads = async (service: any): Promise<Reads> => {
 				const idsOf = (logs: { id: string }[]) => logs.map((found) => found.id).sort();
+				const forTrackerUpload = await service.findRunningTimersStartedBefore(
+					RANGE_END,
+					EMPLOYEE,
+					ORGANIZATION,
+					TENANT,
+					undefined,
+					true
+				);
 				return {
 					found: idsOf(
 						await service.findRunningTimersStartedBefore(RANGE_END, EMPLOYEE, ORGANIZATION, TENANT)
@@ -161,16 +187,8 @@ async function measure(): Promise<{ mikroOrm: Reads; typeOrm: Reads }> {
 							LOG.edited
 						)
 					),
-					foundForTrackerUpload: idsOf(
-						await service.findRunningTimersStartedBefore(
-							RANGE_END,
-							EMPLOYEE,
-							ORGANIZATION,
-							TENANT,
-							undefined,
-							true
-						)
-					)
+					foundForTrackerUpload: idsOf(forTrackerUpload),
+					refusalOfTrackerUpload: refusalOf(service, forTrackerUpload)
 				};
 			};
 
@@ -235,6 +253,14 @@ describe('TimeLogService, the running timers a manual range falls over (#11886)'
 			expect(measured[orm].foundForTrackerUpload).toEqual(
 				[LOG.webTimer, LOG.teamsLastHeardAt0830, LOG.edited].sort()
 			);
+		});
+
+		it("names the Ever Teams run, the first started, in the 409 refusing a tracker's upload, as the client gets it", () => {
+			expect(measured[orm].refusalOfTrackerUpload).toEqual({
+				message: 'A timer is running over this time range. Stop it first, or choose a range outside it.',
+				code: 'RUNNING_TIMER_OVERLAP',
+				runningTimeLog: { id: LOG.teamsLastHeardAt0830, startedAt: '2026-01-05T08:00:00.000Z', source: 'TEAMS' }
+			});
 		});
 
 		it("leaves out a run started after the range, a stopped log, and other employees' and tenants'", () => {
