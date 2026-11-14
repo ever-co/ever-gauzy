@@ -528,6 +528,32 @@ describe('InvoiceReminderService on SQLite', () => {
 		);
 	});
 
+	it('starts the next pass where one out of time stopped, so a page slow to send does not hold back the rest', async () => {
+		for (let i = 0; i <= INVOICE_REMINDER_SWEEP_PAGE_SIZE; i++) {
+			await anInvoice({ dueIn: -DAY - HOUR - i * 60 * 1000 });
+		}
+		// The mail server times out on every send of the first page, which takes the whole pass
+		emails.sendInvoiceReminder.mockRejectedValue(new Error('SMTP timeout'));
+		expect(await service.sweep(NOW, 0)).toEqual(
+			expect.objectContaining({
+				checked: INVOICE_REMINDER_SWEEP_PAGE_SIZE,
+				failed: INVOICE_REMINDER_SWEEP_PAGE_SIZE
+			})
+		);
+		emails.sendInvoiceReminder.mockResolvedValue(true);
+
+		// The next pass goes on after that page, to the invoice the first one never reached
+		expect(await service.sweep(fromNow(HOUR), 0)).toEqual(expect.objectContaining({ checked: 1, reminded: 1 }));
+		// Having read to the end, the one after starts from the top again, and sends what failed
+		expect(await service.sweep(fromNow(2 * HOUR), 0)).toEqual(
+			expect.objectContaining({
+				checked: INVOICE_REMINDER_SWEEP_PAGE_SIZE,
+				reminded: INVOICE_REMINDER_SWEEP_PAGE_SIZE
+			})
+		);
+		expect(await claims()).toHaveLength(INVOICE_REMINDER_SWEEP_PAGE_SIZE + 1);
+	});
+
 	it('sends nothing, and says so, while the template is not seeded: the renderer would send an empty email', async () => {
 		await dataSource.query(`DELETE FROM "email_template"`);
 		await anInvoice({ dueIn: -DAY - HOUR });

@@ -98,6 +98,13 @@ function claimTimeOf(now: Date): Date {
 @Injectable()
 export class InvoiceReminderService {
 	private readonly logger = new Logger(InvoiceReminderService.name);
+	/**
+	 * Where the last pass of this process stopped when its time ran out: the next pass starts after it, and only a pass
+	 * that reads to the end of the list starts the next one from the top again. Without it, a page slow to send (a mail
+	 * server timing out) would take every pass's time, pass after pass, and the invoices after it would miss their
+	 * reminders.
+	 */
+	private resumeAfter: IInvoiceReminderInvoiceRow | null = null;
 
 	constructor(
 		private readonly dataSource: DataSource,
@@ -107,7 +114,8 @@ export class InvoiceReminderService {
 
 	/**
 	 * Sends the reminders that are due: reads the invoices that may be due one a page at a time, in the order they are
-	 * due, until the list is read or the time budget of the pass is spent.
+	 * due, until the list is read or the time budget of the pass is spent; a pass out of time leaves the rest to the
+	 * next one (see `resumeAfter`).
 	 *
 	 * @param now The moment the reminders are due at.
 	 * @param budgetMs How long the pass may keep reading pages.
@@ -124,7 +132,7 @@ export class InvoiceReminderService {
 			return report;
 		}
 		const startedAt = Date.now();
-		let after: IInvoiceReminderInvoiceRow | null = null;
+		let after = this.resumeAfter;
 		for (;;) {
 			const page = await this.invoicesThatMayBeDue(after, INVOICE_REMINDER_SWEEP_PAGE_SIZE, now);
 			report.checked += page.length;
@@ -132,7 +140,12 @@ export class InvoiceReminderService {
 				await this.remindPage(page, now, report);
 				after = page[page.length - 1];
 			}
-			if (page.length < INVOICE_REMINDER_SWEEP_PAGE_SIZE || Date.now() - startedAt >= budgetMs) {
+			if (page.length < INVOICE_REMINDER_SWEEP_PAGE_SIZE) {
+				this.resumeAfter = null;
+				break;
+			}
+			if (Date.now() - startedAt >= budgetMs) {
+				this.resumeAfter = after;
 				break;
 			}
 		}
