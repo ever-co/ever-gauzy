@@ -42,6 +42,6 @@
   report (spec FR-20), and one that points at GitHub is reported by the GitHub integration)
 - [ ] **T17**. Read-only view of the rules for members (open question in the spec)
 - [x] **T18**. "Merged pull requests only" on the link-closed trigger (spec FR-21): `mergedOnly` on the trigger
-  (validated, stored only when on), the merge claimed beside the close in `task_automation_link_closure` (kind
-  `pull_request.merged`, no migration) so a close without merging never blocks a later merge, `closedBefore` on
-  `task_link.closed`; the checkbox in the Gauzy rule editor (PR_LINK)
+      (validated, stored only when on), the merge claimed beside the close in `task_automation_link_closure` (kind
+      `pull_request.merged`, no migration) so a close without merging never blocks a later merge, `closedBefore` on
+      `task_link.closed`; the checkbox in the Gauzy rule editor ([ever-gauzy#11944](https://github.com/ever-co/ever-gauzy/pull/11944))
