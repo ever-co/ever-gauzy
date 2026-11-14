@@ -267,6 +267,21 @@ describe('InviteAcceptEmployeeHandler with a claim invitation', () => {
 		await expect(accept()).resolves.toBeDefined();
 	});
 
+	it("keeps the member and links of an account that cannot be retired, for an admin's merge", async () => {
+		const { accept, placeholderTransferService, userRepository } = build({ placeholderEmployeeId: PLACEHOLDER });
+		placeholderTransferService.transfer.mockRejectedValueOnce(new Error('transfer failed'));
+		userRepository.manager.update.mockImplementation(async (entity: unknown) => {
+			if (entity === User) throw new Error('database unavailable');
+		});
+
+		await expect(accept()).rejects.toThrow('transfer failed');
+
+		// The account stays live: the person signs in with it and an admin merges the placeholder into its member.
+		const { calls } = userRepository.manager.update.mock;
+		expect(calls.filter(([entity]) => entity === User)).toHaveLength(3);
+		expect(calls.filter(([entity]) => entity === Employee || entity === UserOrganization)).toHaveLength(0);
+	});
+
 	it('still retires the account when retiring its member or its organization links fails', async () => {
 		const { accept, placeholderTransferService, userRepository } = build({ placeholderEmployeeId: PLACEHOLDER });
 		placeholderTransferService.transfer.mockRejectedValueOnce(new Error('transfer failed'));

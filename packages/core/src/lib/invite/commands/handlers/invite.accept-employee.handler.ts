@@ -227,17 +227,26 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 	private async retireClaimAccount(userId: string): Promise<void> {
 		const retired = { isActive: false, isArchived: true, deletedAt: new Date() };
 		const { manager } = this.typeOrmUserRepository;
-		const attempt = async (what: string, write: () => Promise<unknown>) => {
+		const attempt = async (what: string, write: () => Promise<unknown>): Promise<boolean> => {
 			try {
 				await write();
+				return true;
 			} catch (cleanup) {
 				console.error(`Failed to retire ${what} after a failed claim:`, cleanup);
+				return false;
 			}
 		};
 		// The account's write is the one the next acceptance depends on: tried again after a passing failure (a
 		// deadlock, a dropped connection). A database that keeps refusing it leaves the account to an admin, who
 		// merges the placeholder into that person's member as for any email that has an account.
-		await attempt(`the account ${userId}`, () => triedAgain(() => manager.update(User, { id: userId }, retired)));
+		const accountRetired = await attempt(`the account ${userId}`, () =>
+			triedAgain(() => manager.update(User, { id: userId }, retired))
+		);
+		if (!accountRetired) {
+			// Still live, the account keeps its member and links: the person signs in with it, and an admin merges the
+			// placeholder into that member (or files one for the account first, when the claim failed before making it).
+			return;
+		}
 		await attempt(`the members of ${userId}`, () => manager.update(Employee, { userId }, retired));
 		await attempt(`the organization links of ${userId}`, () =>
 			manager.update(UserOrganization, { userId }, retired)
