@@ -77,6 +77,11 @@ export interface ITeamPerson {
 	day: ITeamPersonDay;
 	canViewDetails: boolean;
 	canViewProfile: boolean;
+	/**
+	 * Whether the card offers "Message" (my direct conversation with them in the chat): someone else, and I may see
+	 * the chat and send (`CHAT_VIEW` and `CHAT_SEND`). The card also waits for the API to serve the chat.
+	 */
+	canMessage: boolean;
 }
 
 /** A person's selected day, as their hover card summarizes it. */

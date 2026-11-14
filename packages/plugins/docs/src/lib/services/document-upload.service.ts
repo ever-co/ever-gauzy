@@ -754,22 +754,29 @@ export class DocumentUploadService {
 	 * @param id The FILE document id.
 	 * @param organizationId The selected organization the document is read with.
 	 * @param options `maxBytes`: a tighter bound of the caller's own (what an export has left of its byte budget). It
-	 * only ever lowers the per-file one, and a file past it is abandoned while it is read, never held whole.
+	 * only ever lowers the per-file one. A file whose stored size is past it is not read at all, and one of no stored
+	 * size (or a smaller one than its bytes) is abandoned at it while it is read, never held whole.
 	 * @returns The blob plus its hardened response metadata.
-	 * @throws FileContentTooLargeError when the stored bytes are more than the bound.
+	 * @throws FileContentTooLargeError when the stored bytes (or the stored size, under a caller's bound) are more than
+	 * the bound.
 	 */
 	async getRawFile(id: ID, organizationId?: ID, options: { maxBytes?: number } = {}): Promise<IDocumentRawFile> {
 		const document = await this.requireFileDocument(id, organizationId);
-		const provider = new FileStorage().setProvider(document.storageProvider).getProviderInstance();
 
 		// As bytes whatever the provider answers (the S3 family returns the SDK's body stream, whose `length` is
 		// undefined): bounded by the per-file limit, or by the document's own size if it was stored under a higher one,
 		// and by the caller's bound when it states a lower one.
+		const maxBytes = rawReadBound(Math.max(getDocsConfig().maxFileSize || 0, document.fileSize || 0), options.maxBytes);
+		// A file the bound already refuses by its stored size is not fetched: a provider that answers a Buffer (local
+		// storage) would otherwise read it whole before the bound is checked. Only a caller's bound can be below the
+		// stored size (the per-file one is at least that size).
+		if (Number(document.fileSize ?? 0) > maxBytes) {
+			throw new FileContentTooLargeError(maxBytes);
+		}
+		const provider = new FileStorage().setProvider(document.storageProvider).getProviderInstance();
 		let buffer: Buffer;
 		try {
-			buffer = await readStorageFileAsBuffer(provider, document.storageKey, {
-				maxBytes: rawReadBound(Math.max(getDocsConfig().maxFileSize || 0, document.fileSize || 0), options.maxBytes)
-			});
+			buffer = await readStorageFileAsBuffer(provider, document.storageKey, { maxBytes });
 		} catch (error) {
 			if (error instanceof StorageFileReadError) {
 				this.logger.warn(`Raw read of document ${id} failed: ${error.message}`);

@@ -6224,6 +6224,47 @@
 			"COPY": "复制{{ name }}"
 		}
 	},
+	"DOWNLOADS_PAGE": {
+		"TITLE": "下载",
+		"HEADLINE": "随时随地记录工作时间",
+		"DESKTOP": {
+			"TITLE": "桌面端",
+			"DESCRIPTION": "使用桌面计时器在电脑上记录时间，工时表与网页应用保持同步。",
+			"DOWNLOAD_FOR": "下载 {{platform}} 版",
+			"ALSO_FOR": "也适用于"
+		},
+		"SETUP": {
+			"OPENED": "{{platform}} 版下载链接已在新标签页中打开。",
+			"NOT_OPENED": "没有反应？",
+			"TRY_AGAIN": "重试",
+			"TITLE": "后续步骤",
+			"INSTALL_WINDOWS": "运行下载的安装程序并按步骤操作。",
+			"INSTALL_MACOS": "打开下载的文件，将应用拖入“应用程序”文件夹。",
+			"INSTALL_LINUX": "安装下载的软件包，或运行 AppImage。",
+			"CONNECT_CUSTOM": "打开应用，选择“{{option}}”，然后填写：",
+			"PORT_EMPTY": "清空此字段",
+			"CONNECT_LIVE": "打开应用并选择“{{option}}”。",
+			"SIGN_IN": "使用你在此处使用的邮箱和密码登录。",
+			"COPY_FIELD": "复制{{field}}"
+		},
+		"MOBILE": {
+			"TITLE": "移动端",
+			"DESCRIPTION": "随时随地启动计时器、查看任务和工时。",
+			"PLATFORMS": "iOS 和 Android",
+			"DOWNLOAD": "下载"
+		},
+		"EXTENSION": {
+			"TITLE": "浏览器扩展",
+			"DESCRIPTION": "在任意标签页中启动或停止计时器，无需打开网页应用。",
+			"INSTALL": "安装"
+		},
+		"ILLUSTRATION": {
+			"THIS_WEEK": "本周",
+			"YOU": "你",
+			"TRY_IT": "轮到你了：点击计时器"
+		},
+		"ALL_DOWNLOADS": "查看全部下载"
+	},
 	"FOOTER": {
 		"BY": "通过",
 		"RIGHTS_RESERVED": "版权所有。",

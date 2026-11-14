@@ -142,7 +142,8 @@ function surfaces(options: { granted?: PermissionsEnum[] } = {}) {
 		})
 	};
 	const service = new TimeLogService(
-		{} as never,
+		// No running timer of the employee besides the logs the overlap lookup returns (#11886)
+		{ find: async () => [] } as never,
 		{} as never,
 		employeeRepository as never,
 		{} as never,

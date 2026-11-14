@@ -414,6 +414,64 @@ describe('TaskResolver — the connection contract', () => {
 		expect(byView.nodes.map((node) => node.id)).toEqual([PICKING, EXCEPTION]);
 		expect(taskService.findTasksByViewQuery).toHaveBeenCalledWith(VIEW);
 	});
+
+	it('hands the reader the calendar days of a due-date window with its instants, as the REST route takes them', async () => {
+		const { resolver, taskService } = surfaces();
+		// "Due today" for a reader in UTC−4: the instants of their day, and the day.
+		const from = new Date('2026-11-18T04:00:00.000Z');
+		const to = new Date('2026-11-19T03:59:59.999Z');
+
+		await resolver.tasksByDate(
+			undefined,
+			undefined,
+			from,
+			to,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			'2026-11-18',
+			'2026-11-18'
+		);
+		expect(taskService.getTasksByDateFilters).toHaveBeenCalledWith(
+			expect.objectContaining({
+				dueDateFrom: from,
+				dueDateTo: to,
+				dueDateFromDay: '2026-11-18',
+				dueDateToDay: '2026-11-18'
+			})
+		);
+	});
+
+	it('hands the reader the calendar days of a start-date window with its instants, as the REST route takes them', async () => {
+		const { resolver, taskService } = surfaces();
+		// "Starts today" for a reader in UTC−4: the instants of their day, and the day.
+		const from = new Date('2026-11-18T04:00:00.000Z');
+		const to = new Date('2026-11-19T03:59:59.999Z');
+
+		await resolver.tasksByDate(
+			from,
+			to,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			'2026-11-18',
+			'2026-11-18'
+		);
+		expect(taskService.getTasksByDateFilters).toHaveBeenCalledWith(
+			expect.objectContaining({
+				startDateFrom: from,
+				startDateTo: to,
+				startDateFromDay: '2026-11-18',
+				startDateToDay: '2026-11-18'
+			})
+		);
+	});
 });
 
 describe('TaskResolver — the task views extensions, two protocols, the same operations', () => {

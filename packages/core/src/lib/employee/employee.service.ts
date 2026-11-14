@@ -280,6 +280,28 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	}
 
 	/**
+	 * Refuses to file a person for the account behind a member without an account (ever-co/ever-gauzy#11913). That
+	 * account is made for its member alone: it never signs in (the access-token guard reads only the member it finds),
+	 * and a claim or a merge retires it with the member. The person is reached by claiming or merging the member.
+	 *
+	 * @param userId The account to file a person for.
+	 * @param tenantId The tenant.
+	 * @throws ConflictException when the account stands behind a member without an account.
+	 */
+	public async assertNotPlaceholderAccount(userId: ID, tenantId: ID): Promise<void> {
+		const placeholders = await this.typeOrmRepository.count({
+			where: { userId, ...(tenantId ? { tenantId } : {}), isPlaceholder: true },
+			// A removed placeholder still stands on the account, and a recovery brings it back.
+			withDeleted: true
+		});
+		if (placeholders > 0) {
+			throw new ConflictException(
+				'This user stands behind a member without an account: claim or merge that member instead.'
+			);
+		}
+	}
+
+	/**
 	 * The tenant's `EMPLOYEE` role, which the account of an agent employee carries.
 	 *
 	 * @param manager The transaction manager.
@@ -327,7 +349,16 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 
 				const [mItems, mTotal] = await this.mikroOrmRepository.findAndCount(mWhere, {
 					populate: ['user'] as any[],
-					fields: ['id', 'isActive', 'isArchived', 'userId', 'isOnline', 'isAway'] as any[]
+					fields: [
+						'id',
+						'isActive',
+						'isArchived',
+						'userId',
+						'isOnline',
+						'isAway',
+						'isPlaceholder',
+						'placeholderEmail'
+					] as any[]
 				});
 				return { items: mItems.map((item) => this.serialize(item)), total: mTotal };
 
@@ -345,6 +376,8 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 						userId: true,
 						isOnline: true,
 						isAway: true,
+						isPlaceholder: true,
+						placeholderEmail: true,
 						user: {
 							id: true,
 							firstName: true,
@@ -671,6 +704,8 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 							userId: true,
 							isAway: true,
 							isOnline: true,
+							isPlaceholder: true,
+							placeholderEmail: true,
 							user: {
 								id: true,
 								firstName: true,
@@ -1002,7 +1037,9 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 							isArchived: true,
 							isAway: true,
 							isOnline: true,
-							kind: true
+							kind: true,
+							isPlaceholder: true,
+							placeholderEmail: true
 						},
 						...(options && options.relations
 							? { relations: parseFindOptionsRelations(options.relations) }

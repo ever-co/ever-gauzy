@@ -5656,6 +5656,47 @@
 			"COPY": "Kopiuj {{ name }}"
 		}
 	},
+	"DOWNLOADS_PAGE": {
+		"TITLE": "Pobieranie",
+		"HEADLINE": "Śledź czas wszędzie, gdzie pracujesz",
+		"DESKTOP": {
+			"TITLE": "Komputer",
+			"DESCRIPTION": "Śledź czas na komputerze za pomocą timera desktopowego i synchronizuj karty czasu pracy z aplikacją webową.",
+			"DOWNLOAD_FOR": "Pobierz dla {{platform}}",
+			"ALSO_FOR": "Dostępne także dla"
+		},
+		"SETUP": {
+			"OPENED": "Link do pobrania dla {{platform}} otworzył się w nowej karcie.",
+			"NOT_OPENED": "Nic się nie stało?",
+			"TRY_AGAIN": "Spróbuj ponownie",
+			"TITLE": "Następne kroki",
+			"INSTALL_WINDOWS": "Uruchom pobrany instalator i postępuj zgodnie z instrukcjami.",
+			"INSTALL_MACOS": "Otwórz pobrany plik i przeciągnij aplikację do folderu Aplikacje.",
+			"INSTALL_LINUX": "Zainstaluj pobrany pakiet lub uruchom plik AppImage.",
+			"CONNECT_CUSTOM": "Otwórz aplikację, wybierz „{{option}}” i wypełnij:",
+			"PORT_EMPTY": "Wyczyść to pole",
+			"CONNECT_LIVE": "Otwórz aplikację i wybierz „{{option}}”.",
+			"SIGN_IN": "Zaloguj się adresem e-mail i hasłem, których używasz tutaj.",
+			"COPY_FIELD": "Kopiuj: {{field}}"
+		},
+		"MOBILE": {
+			"TITLE": "Telefon",
+			"DESCRIPTION": "Uruchamiaj timer, sprawdzaj zadania i swoje godziny w drodze.",
+			"PLATFORMS": "iOS i Android",
+			"DOWNLOAD": "Pobierz"
+		},
+		"EXTENSION": {
+			"TITLE": "Rozszerzenie przeglądarki",
+			"DESCRIPTION": "Uruchamiaj i zatrzymuj timer z dowolnej karty, bez otwierania aplikacji webowej.",
+			"INSTALL": "Zainstaluj"
+		},
+		"ILLUSTRATION": {
+			"THIS_WEEK": "Ten tydzień",
+			"YOU": "Ty",
+			"TRY_IT": "Twoja kolej: kliknij timer"
+		},
+		"ALL_DOWNLOADS": "Zobacz wszystkie pliki do pobrania"
+	},
 	"FOOTER": {
 		"BY": "przez",
 		"RIGHTS_RESERVED": "Wszelkie prawa zastrzeżone",

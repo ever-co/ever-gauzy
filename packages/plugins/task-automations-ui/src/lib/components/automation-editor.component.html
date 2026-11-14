@@ -127,6 +127,18 @@
 				</div>
 			</div>
 		}
+		@if (draft().trigger.type === triggers.LINK_CLOSED) {
+			<div class="field">
+				<nb-checkbox
+					data-test="merged-only"
+					[checked]="draft().trigger.mergedOnly"
+					(checkedChange)="patchTrigger({ mergedOnly: $event })"
+				>
+					{{ 'TASK_AUTOMATIONS.FORM.MERGED_ONLY' | translate }}
+				</nb-checkbox>
+				<p class="hint">{{ 'TASK_AUTOMATIONS.FORM.MERGED_ONLY_HINT' | translate }}</p>
+			</div>
+		}
 
 		<h6 class="section">{{ 'TASK_AUTOMATIONS.FORM.IF' | translate }}</h6>
 		@if (!draft().conditions.length) {

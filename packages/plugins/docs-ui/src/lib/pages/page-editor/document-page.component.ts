@@ -35,11 +35,14 @@ import {
 	IDocumentFollowState,
 	PermissionsEnum
 } from '@gauzy/contracts';
+import type { IDocumentCommentAnchorInput, IDocumentCommentAnchorPosition } from '@gauzy/contracts';
 import { Store, ToastrService } from '@gauzy/ui-core/core';
 import { FavoriteToggleModule } from '@gauzy/ui-core/shared';
 import { DocumentsActions } from '../../+state/documents.actions';
 import { BlockCommentThreadComponent } from '../../editor/comments/block-comment-thread.component';
+import type { ICommentRange } from '../../editor/comments/comment-anchor.model';
 import { DocumentEditorComponent, IEditorStats, ITocAnchor } from '../../editor/document-editor.component';
+import type { IDocsCommentRequest } from '../../editor/document-editor.component';
 import { DOCS_EDITOR_SCHEMA_VERSION } from '../../editor/editor.constants';
 import { DocsSaveState } from '../../editor/services/document-autosave.service';
 import { DocumentStaticViewComponent } from '../../editor/read-only/document-static-view.component';
@@ -149,6 +152,12 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 	public commentBlockId: string | null = null;
 	/** `blockId`s the editor currently holds — lets the rail flag detached threads. */
 	public knownBlockIds: string[] = [];
+	/** The selected text the rail's next thread is made on (`docs-collaboration` FR-16); `null` comments on the block. */
+	public commentRange: IDocumentCommentAnchorInput | null = null;
+	/** The thread asked for (a highlighted range clicked, or its quote in the rail). */
+	public activeCommentThreadId: string | null = null;
+	/** Where each range thread is in the editor's document now, by thread. */
+	public commentRangePlaces: ReadonlyMap<string, IDocumentCommentAnchorPosition> | null = null;
 	/** A `?block=` deep link waiting for the editor to paint. */
 	private pendingBlockAnchor: string | null = null;
 
@@ -328,6 +337,9 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 			this.menuOpen = false;
 			this.commentBlockId = null;
 			this.knownBlockIds = [];
+			this.commentRange = null;
+			this.activeCommentThreadId = null;
+			this.commentRangePlaces = null;
 		}
 		try {
 			const loaded = await firstValueFrom(this.documentsService.getById(id, ['categories', 'tags']));
@@ -482,15 +494,23 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 		this.railOpen = true;
 		this.versionsOpen = false;
 		this.commentBlockId = null;
+		this.commentRange = null;
+		this.setActiveCommentThread(null);
 		this.refreshKnownBlocks();
 	}
 
-	/** The bubble menu's comment action, a gutter marker, or a `?block=` deep link. */
-	openCommentsFor(blockId: string): void {
+	/**
+	 * The bubble menu's comment action (with the selected text a new thread is made on), a gutter marker, a highlighted
+	 * comment range (with its thread), or a `?block=` deep link.
+	 */
+	openCommentsFor(request: string | IDocsCommentRequest): void {
+		const { blockId, range = null, threadId = null } = typeof request === 'string' ? { blockId: request } : request;
 		this.railTab = 'comments';
 		this.railOpen = true;
 		this.versionsOpen = false;
 		this.commentBlockId = blockId;
+		this.commentRange = range;
+		this.setActiveCommentThread(threadId);
 		this.refreshKnownBlocks();
 		this.cdr.markForCheck();
 	}
@@ -501,6 +521,38 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 	 */
 	onOpenCommentBlocks(blockIds: string[]): void {
 		this.editorComponent?.setCommentedBlocks(blockIds);
+	}
+
+	/** The rail's open threads made on a range of text: the editor highlights their text. */
+	onCommentRanges(ranges: ICommentRange[]): void {
+		this.editorComponent?.setCommentRanges(ranges);
+	}
+
+	/** A thread's quote was clicked in the rail: light its text in the page (or its block once the text is gone). */
+	onCommentRangeFocused(threadId: string): void {
+		this.activeCommentThreadId = threadId;
+		if (!this.editorComponent?.focusCommentRange(threadId)) {
+			const blockId = this.commentRangePlaces?.get(threadId)?.blockId;
+			if (blockId) this.editorComponent?.highlightBlock(blockId);
+		}
+		this.cdr.markForCheck();
+	}
+
+	/** The rail is done with the selection it was offering (posted, or dismissed): it is not offered again. */
+	onCommentRangeDone(): void {
+		this.commentRange = null;
+	}
+
+	/** The editor found the ranges again after edits: the rail shows the text each thread is on now. */
+	onCommentRangesResolved(places: ReadonlyMap<string, IDocumentCommentAnchorPosition>): void {
+		this.commentRangePlaces = places;
+		this.cdr.markForCheck();
+	}
+
+	/** The thread asked for, in the rail and in the editor (its range lit). */
+	private setActiveCommentThread(threadId: string | null): void {
+		this.activeCommentThreadId = threadId;
+		this.editorComponent?.setActiveCommentThread(threadId);
 	}
 
 	/** A thread header was clicked — jump to its block in the canvas. */

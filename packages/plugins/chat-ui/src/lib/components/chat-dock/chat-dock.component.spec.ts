@@ -2,13 +2,14 @@
 jest.mock('@gauzy/ui-core/core', () => ({ Store: class Store {}, ToastrService: class ToastrService {} }));
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { NEVER, of, throwError } from 'rxjs';
 import { IChatConversationWithState, IChatMessageWithRelations } from '@gauzy/contracts';
 import { Store, ToastrService } from '@gauzy/ui-core/core';
 import { CHAT_MESSAGES_POLL_MS } from '../../chat-ui.constants';
 import { ChatDockService } from '../../services/chat-dock.service';
 import { ChatUiService } from '../../services/chat-ui.service';
 import { ChatDockComponent } from './chat-dock.component';
+import { ChatPresenceService } from '../../services/chat-presence.service';
 
 const ANNA = { employeeId: 'e-anna', userId: 'u-anna', name: 'Anna', imageUrl: null };
 const CONVERSATION = { id: 'c1' } as IChatConversationWithState;
@@ -34,6 +35,7 @@ describe('ChatDockComponent', () => {
 			imports: [ChatDockComponent],
 			providers: [
 				{ provide: ChatUiService, useValue: api },
+				{ provide: ChatPresenceService, useValue: { presenceOf: () => 'offline', lastSeenOf: () => null, watch: () => NEVER, apply: () => undefined, applyList: () => undefined } },
 				{ provide: ChatDockService, useValue: { person: signal(ANNA), close: jest.fn() } },
 				{ provide: Store, useValue: { user$: of(null) } },
 				{ provide: ToastrService, useValue: { danger: jest.fn() } }

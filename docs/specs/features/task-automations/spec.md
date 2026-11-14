@@ -8,7 +8,7 @@
 **Branch**: `feat/task-automations`
 **Status**: `Draft`
 **Created**: 2026-11-11
-**Last updated**: 2026-11-13
+**Last updated**: 2026-11-14
 **Owner**: platform maintainers
 **Feature flag**: `GAUZY_TASK_AUTOMATIONS_ENABLED` (default off; only the exact value `true` turns it on)
 
@@ -100,6 +100,11 @@ that fails never fails the save.
   reference no task of the organization holds, is linked only to another organization's or tenant's task, or no
   organization connected its installation, **then** nothing is reported. A pull request closed without merging is
   reported too, saying so (`merged: false`).
+- **Given** a link rule with "Merged pull requests only", **when** a linked pull request is closed without merging,
+  **then** the rule does not run; **when** that pull request is reopened and merged, **then** the rule runs once for the
+  task, and a redelivery of the merge runs nothing. **When** a linked issue closes, **then** the rule runs as without
+  the option. A link rule without the option runs once on the pull request's first close, merged or not, as before —
+  not again on a merge that follows a reopen.
 
 ## 3. Functional Requirements
 
@@ -183,6 +188,13 @@ that fails never fails the save.
   as the task's change, which the status triggers read. Their attachments are kept as links of the task, so one that
   points at a GitHub pull request or issue is reported by the GitHub integration (FR-18) when the organization
   connected that repository's installation.
+- **FR-21** A link-closed trigger MAY be set to "merged pull requests only" (`mergedOnly`, default `false`; any other
+  value than true or false is refused with `400`): such a rule MUST NOT run for a pull request closed without merging,
+  MUST run once when the pull request is merged — also when the merge follows a close without merging and a reopen —
+  and MUST run for an issue's close as without the option. A close without merging MUST NOT use up the once-per-link
+  report the later merge needs: a merged pull request's merge is claimed beside its close, and a merge whose close was
+  reported before becomes `task_link.closed` once more, marked `closedBefore: true`, which only the merged-only rules
+  run on. Rules saved without the option, and the event's existing fields, MUST behave as before.
 
 ### Compatibility
 
@@ -224,14 +236,16 @@ that fails never fails the save.
 - Webhook or email actions, creating tasks, recurring tasks, custom code.
 - Triggers on comments, time logs or sprints.
 - Closed links from Linear, Asana and Trello on their own (FR-20); a pull request linked to a task by a commit message
-  or the pull request's description (only its title, its branch and the task's links count); an option to fire on a
-  merged pull request only (the report carries `merged`; a rule cannot test it yet).
+  or the pull request's description (only its title, its branch and the task's links count); telling an issue closed as
+  completed from one closed as not planned (FR-21 leaves an issue's close as it was).
 
 ## 7. Acceptance Criteria
 
 - [ ] Each template creates a working rule; each trigger, condition and action has a passing test.
 - [x] A closed GitHub pull request or issue linked to a task fires the link-closed template once per task and link,
       never across tenants or organizations (T16).
+- [x] A link rule set to "merged pull requests only" skips a pull request closed without merging and runs on its merge,
+      also after a reopen; rules without the option run as before (T18).
 - [ ] A change is processed once per rule however often it is delivered; the due-date notice goes out
       once per task and due date.
 - [ ] The loop guard and the rate limit hold; a rule never runs on its own change.

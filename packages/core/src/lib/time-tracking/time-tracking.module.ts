@@ -3,6 +3,7 @@ import { ActivityModule } from './activity/activity.module';
 import { CustomTrackingModule } from './custom-tracking/custom-tracking.module';
 import { ScreenshotModule } from './screenshot/screenshot.module';
 import { StatisticModule } from './statistic';
+import { TimeGoalModule } from './time-goal/time-goal.module';
 import { TimeLogModule } from './time-log/time-log.module';
 import { TimerModule } from './timer/timer.module';
 import { TimesheetModule } from './timesheet/timesheet.module';
@@ -15,6 +16,7 @@ import { TimeSlotModule } from './time-slot/time-slot.module';
 		ActivityModule,
 		CustomTrackingModule,
 		TimeLogModule,
+		TimeGoalModule,
 		TimeSlotModule,
 		ScreenshotModule,
 		StatisticModule,

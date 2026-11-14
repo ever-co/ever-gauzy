@@ -3,7 +3,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NbDialogService } from '@nebular/theme';
-import { Observable, catchError, firstValueFrom, map, of, switchMap } from 'rxjs';
+import { Observable, catchError, firstValueFrom, map, of, switchMap, tap } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { saveAs } from 'file-saver';
 import { BaseEntityEnum, ID, IInvoice } from '@gauzy/contracts';
@@ -67,6 +67,8 @@ export class InvoiceViewComponent extends TranslationBaseComponent implements On
 			switchMap((id: ID) =>
 				this._invoicesService.getById(id, relations, { tenantId: this._store.user.tenantId })
 			),
+			// A link may name the other page: an estimate turned into an invoice since it was made, or the reverse
+			tap((invoice: IInvoice) => this.openOnItsOwnPage(invoice)),
 			map((invoice: IInvoice) => {
 				this.invoice = invoice;
 				return invoice;
@@ -80,6 +82,24 @@ export class InvoiceViewComponent extends TranslationBaseComponent implements On
 			// Automatically unsubscribe when the component is destroyed
 			untilDestroyed(this)
 		);
+	}
+
+	/**
+	 * Opens a document on its own page when the link named the other one: an estimate that an acceptance (where the
+	 * organization converts accepted estimates) or a teammate turned into an invoice after the link was made, in a
+	 * notification, an email or a favorite, or the reverse. The other page shows it as what it is not, and its edit
+	 * saves it so: an invoice edited from the estimate page became an estimate again.
+	 *
+	 * @param invoice The document the page loaded.
+	 */
+	private openOnItsOwnPage(invoice: IInvoice | null): void {
+		if (!invoice?.id || Boolean(invoice.isEstimate) === Boolean(this.isEstimate)) {
+			return;
+		}
+		const page = invoice.isEstimate
+			? '/pages/accounting/invoices/estimates/view'
+			: '/pages/accounting/invoices/view';
+		this._router.navigate([page, invoice.id], { replaceUrl: true });
 	}
 
 	/**

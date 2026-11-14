@@ -4,6 +4,8 @@ import { yCursorPlugin } from '@tiptap/y-tiptap';
 import type { Observable, Subscription } from 'rxjs';
 import { Awareness, applyAwarenessUpdate, encodeAwarenessUpdate, removeAwarenessStates } from 'y-protocols/awareness';
 import * as Y from 'yjs';
+import type { LiveAnchorResolver, LiveRelativeRange } from '../comments/comment-anchor.model';
+import { LIVE_FIELD, base64, liveAnchorResolverOf, liveRelativeRangeOf } from './document-live.anchors';
 
 /**
  * The editor's half of a live session of a page (`docs-collaboration` T18; server: `DocsLivePlugin`).
@@ -76,6 +78,13 @@ export interface ILiveBinding {
 	readonly awareness: Awareness;
 	/** `Collaboration` on the document, and the co-editors' cursors. */
 	readonly extensions: Extension[];
+	/** Reads the live relative positions of comment anchors in the shared document (`docs-collaboration` FR-16). */
+	readonly anchorResolver: LiveAnchorResolver;
+	/**
+	 * The live relative positions of ranges of an editor bound to this document, as its state is now; null while the
+	 * editor is not bound to it.
+	 */
+	relativeRange(state: Parameters<typeof liveRelativeRangeOf>[0]): LiveRelativeRange | null;
 	start(): void;
 	/** Whether local edits are waiting to be sent (or being sent). */
 	hasPending(): boolean;
@@ -347,7 +356,9 @@ export function createLiveBinding(options: ILiveBindingOptions): ILiveBinding {
 	return {
 		doc,
 		awareness,
-		extensions: [Collaboration.configure({ document: doc, field: 'default' }) as unknown as Extension, cursor],
+		extensions: [Collaboration.configure({ document: doc, field: LIVE_FIELD }) as unknown as Extension, cursor],
+		anchorResolver: liveAnchorResolverOf(doc, LIVE_FIELD),
+		relativeRange: (state) => liveRelativeRangeOf(state, doc),
 		start: () => open(),
 		hasPending: () => pending.length > 0 || sending,
 		hasUnconfirmed: () => pending.length > 0 || sending || notTaken,
@@ -365,15 +376,6 @@ export function createLiveBinding(options: ILiveBindingOptions): ILiveBinding {
 			doc.destroy();
 		}
 	};
-}
-
-function base64(bytes: Uint8Array): string {
-	let binary = '';
-	const chunk = 0x8000;
-	for (let index = 0; index < bytes.length; index += chunk) {
-		binary += String.fromCharCode(...bytes.subarray(index, index + chunk));
-	}
-	return btoa(binary);
 }
 
 function fromBase64(encoded: string): Uint8Array {

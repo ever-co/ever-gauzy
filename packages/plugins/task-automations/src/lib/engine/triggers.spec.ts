@@ -126,6 +126,28 @@ describe('triggers', () => {
 		expect(matchLinkClosedTrigger({ type: TaskAutomationTriggerEnum.STATUS_CHANGED }, { taskId: 'task-9' })).toBeNull();
 	});
 
+	it('LINK_CLOSED, merged only: a pull request when merged, also after a reopen; an issue as without it (spec FR-21)', () => {
+		const any = { type: TaskAutomationTriggerEnum.LINK_CLOSED };
+		const mergedOnly = { type: TaskAutomationTriggerEnum.LINK_CLOSED, mergedOnly: true };
+		const fired = { subjectTaskId: 'task-9' };
+		const unmerged = { taskId: 'task-9', kind: 'pull_request' as const, merged: false };
+		const merged = { taskId: 'task-9', kind: 'pull_request' as const, merged: true };
+		const mergedAfterReopen = { ...merged, closedBefore: true };
+		const issue = { taskId: 'task-9', kind: 'issue' as const };
+
+		expect(matchLinkClosedTrigger(mergedOnly, unmerged)).toBeNull();
+		expect(matchLinkClosedTrigger(mergedOnly, merged)).toEqual(fired);
+		expect(matchLinkClosedTrigger(mergedOnly, mergedAfterReopen)).toEqual(fired);
+		expect(matchLinkClosedTrigger(mergedOnly, issue)).toEqual(fired);
+
+		// Without the option: every first close; the merge after a reopen is the merged-only rules' alone.
+		expect(matchLinkClosedTrigger(any, unmerged)).toEqual(fired);
+		expect(matchLinkClosedTrigger(any, merged)).toEqual(fired);
+		expect(matchLinkClosedTrigger({ ...any, mergedOnly: false }, merged)).toEqual(fired);
+		expect(matchLinkClosedTrigger(any, mergedAfterReopen)).toBeNull();
+		expect(matchLinkClosedTrigger(any, issue)).toEqual(fired);
+	});
+
 	it('checks that every sub-task is closed, and that there is one', () => {
 		expect(allChildrenClosed([], STATUSES)).toBe(false);
 		expect(allChildrenClosed([{ id: 'a', status: 'done', taskStatusId: null }, { id: 'b', status: 'cancelled', taskStatusId: null }], STATUSES)).toBe(true);

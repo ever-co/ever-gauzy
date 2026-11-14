@@ -54,6 +54,8 @@
 		"TO_STATUSES": "Moved to",
 		"FROM_STATUSES": "Moved from",
 		"ANY_STATUS": "Any status",
+		"MERGED_ONLY": "Merged pull requests only",
+		"MERGED_ONLY_HINT": "A pull request closed without merging does not run the rule; its merge after a reopen still does. An issue's close runs it as before.",
 		"IF": "If",
 		"NO_CONDITIONS": "No conditions: the actions run every time the trigger fires.",
 		"CONDITION": "Condition",

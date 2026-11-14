@@ -174,7 +174,10 @@ export interface ITimeLog
 	projectId?: ID;
 	organizationContact?: IOrganizationContact;
 	organizationContactId?: ID;
-	/** The invoice line that bills this time; the time is invoiced only while that line's invoice is live and not void. */
+	/**
+	 * The invoice line that bills this time; the time is invoiced only while that line's invoice is live, not void, and
+	 * not a rejected estimate.
+	 */
 	invoiceItemId?: ID;
 	source?: TimeLogSourceEnum;
 	startedAt?: Date;
@@ -449,7 +452,10 @@ export interface IGetTimeLogReportInput extends IGetTimeLogInput {
 	isEdited?: boolean;
 	billableOnly?: boolean;
 	includeTimeWithoutTeam?: boolean;
-	/** Leave out the time a live invoice bills: a line that is not removed, of an invoice neither removed nor void. */
+	/**
+	 * Leave out the time a live invoice bills: a line that is not removed, of an invoice neither removed nor void, nor
+	 * a rejected estimate.
+	 */
 	notInvoiced?: boolean;
 }
 

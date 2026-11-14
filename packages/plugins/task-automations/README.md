@@ -19,7 +19,7 @@ no route, no GraphQL field, no table, no outbox row, no schedule, no role grant.
   rule was created: after a longer downtime, due dates older than a day are not reported); a linked pull request or
   issue closes (`task_link.closed`: the GitHub integration reports a closed pull request, merged or not, linked to a
   task by a task link to its address or by the task's reference in its title or branch, and a closed issue the task
-  mirrors or links to; see "Closed links" below).
+  mirrors or links to; optionally only a merged pull request — "merged only"; see "Closed links" below).
 - **Conditions** (all must hold): status is / is not / of category; open / done; priority; labels; assigned /
   unassigned / assignee; sub-task or not; title contains.
 - **Actions** (in order): set the status (a status, or the first to-do / in-progress / done status of the task's
@@ -57,6 +57,12 @@ as `task_link.closed` in the task's partition when the task is of the named orga
 transaction the event is appended in, so a redelivery, another API instance or the same pull request closed again after
 a reopen appends nothing, and a failed append leaves no claim (GitHub's redelivery reports it again); the API logs
 `A closed link was not handed to the automations: …`.
+
+A `LINK_CLOSED` trigger with `mergedOnly: true` fires for a pull request only when it was merged; an issue's close fires
+as without it. A merged pull request's merge is claimed too, beside its close (kind `pull_request.merged` in the same
+table): a pull request closed without merging, reopened and then merged is appended once more on its merge, with
+`closedBefore: true`, and only the `mergedOnly` rules run on that event (the others ran on the close). Rules saved
+without the option keep `triggerConfig` empty and run as before (spec FR-21).
 
 The GitHub integration (`GithubTaskLinkService`) handles `pull_request.closed` and `issues.closed`; the GitHub App must
 send the **Pull requests** and **Issues** events. Linear, Asana and Trello report nothing of their own: their

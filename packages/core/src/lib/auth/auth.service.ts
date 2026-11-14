@@ -97,8 +97,16 @@ import { TypeOrmPasswordResetRepository } from './../password-reset/repository/t
 import { MikroOrmPasswordResetRepository } from './../password-reset/repository/mikro-orm-password-reset.repository';
 import { RoleService } from './../role/role.service';
 import { isDeactivatedEmployee } from './deactivated-employee';
+import { isPlaceholderAccount } from './placeholder-account';
 import { EmailConfirmationService } from './email-confirmation.service';
-import { warnRejectedEmailLink, withAllowedEmailLinks } from './email-link-origin';
+import {
+	allowedEmailLink,
+	allowedEmailLinkOrigins,
+	emailLinkOrigin,
+	isAllowedEmailLink,
+	warnRejectedEmailLink,
+	withAllowedEmailLinks
+} from './email-link-origin';
 import { signupRequiresEmailVerification } from './signup-email-verification';
 import { canResetPasswordByEmail } from './auth-switches/admin-password-reset';
 import {
@@ -975,27 +983,35 @@ export class AuthService extends SocialAuthService {
 	 * @returns True when the user has employee records and all of them are inactive or archived.
 	 */
 	private async isDeactivatedEmployeeUser(userId: ID): Promise<boolean> {
+		return isDeactivatedEmployee(await this.findEmployeeRecordsOfUser(userId));
+	}
+
+	/**
+	 * Every employee record of a user, inactive and archived ones included, in every organization, with what the
+	 * sign-in rules judge: whether it is active, archived, or a member without an account. Read straight from the
+	 * repository for the reasons given on `isDeactivatedEmployeeUser`. A failed lookup throws.
+	 *
+	 * @param userId The user whose records are read.
+	 * @returns The records.
+	 */
+	private async findEmployeeRecordsOfUser(
+		userId: ID
+	): Promise<Pick<Employee, 'isActive' | 'isArchived' | 'isPlaceholder'>[]> {
 		const options = {
 			where: { userId },
-			select: { id: true, isActive: true, isArchived: true }
+			select: { id: true, isActive: true, isArchived: true, isPlaceholder: true }
 		};
-
-		let employees: Pick<Employee, 'isActive' | 'isArchived'>[];
 
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
 				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<Employee>(options);
-				employees = (await this.mikroOrmEmployeeRepository.find(where, mikroOptions)) as Employee[];
-				break;
+				return (await this.mikroOrmEmployeeRepository.find(where, mikroOptions)) as Employee[];
 			}
 			case MultiORMEnum.TypeORM:
-				employees = await this.typeOrmEmployeeRepository.find(options);
-				break;
+				return await this.typeOrmEmployeeRepository.find(options);
 			default:
 				throw new Error(`ORM type not implemented: ${this.ormType}`);
 		}
-
-		return isDeactivatedEmployee(employees);
 	}
 
 	/**
@@ -1366,6 +1382,9 @@ export class AuthService extends SocialAuthService {
 			// Initialize an array to store reset links along with tenant and user information
 			const tenantUsersMap: { resetLink: string; tenant?: ITenant; user: IUser }[] = [];
 
+			// The page every link of this request opens
+			const baseURL = this.resetPasswordPage(request.appResetPasswordUrl);
+
 			// Iterate through users and generate reset links
 			for await (const user of users) {
 				const { email, tenantId } = user;
@@ -1405,9 +1424,6 @@ export class AuthService extends SocialAuthService {
 							})
 						);
 
-						// Initialize Base URL
-						let baseURL = `${environment.clientBaseUrl}/#/auth/reset-password`;
-
 						// Generate the reset link using the helper function
 						const resetLink = this.generateResetLink(baseURL, token, email, tenantId);
 
@@ -1442,6 +1458,37 @@ export class AuthService extends SocialAuthService {
 	}
 
 	/**
+	 * The page the link of the password reset email opens.
+	 *
+	 * A client app may ask for its own page (`appResetPasswordUrl`), as it does for the sign-in code
+	 * email: that is how Ever Teams opens its own page. The link carries the reset token, so the page
+	 * is used only on an origin this deployment serves (see email-link-origin.ts). Anything else gets
+	 * the Gauzy app's page, and the answer to the caller does not change.
+	 *
+	 * @param requested The page the caller asked for, if any.
+	 * @returns The page to build the reset links on.
+	 */
+	private resetPasswordPage(requested: unknown): string {
+		const ownPage = `${environment.clientBaseUrl}/#/auth/reset-password`;
+		if (requested === undefined || requested === null || requested === '') {
+			return ownPage;
+		}
+
+		// The link carries a token that sets the account's password: only an origin the deployment lists, even where
+		// EMAIL_LINK_ALLOWED_ORIGINS=* switches the check off for the other emailed links.
+		const isListed = isAllowedEmailLink(requested, allowedEmailLinkOrigins());
+		const page = isListed ? allowedEmailLink(requested) : null;
+		if (!page) {
+			warnRejectedEmailLink(this.logger, 'the password reset email')(
+				'appResetPasswordUrl',
+				emailLinkOrigin(requested)
+			);
+			return ownPage;
+		}
+		return page;
+	}
+
+	/**
 	 * Generates a password reset link.
 	 *
 	 * @param baseURL The base URL for the reset password page.
@@ -1462,8 +1509,15 @@ export class AuthService extends SocialAuthService {
 		// Convert query params object to a string
 		const queryString = buildQueryString(params);
 
-		// Combine base URL with query params
-		return `${baseURL}?${queryString}`;
+		// A hash-routed page (`/#/auth/reset-password`, the Gauzy app's) reads its parameters from the route after
+		// `#`; any other page from its own query, which comes before a fragment it may carry.
+		const hashAt = baseURL.indexOf('#');
+		const fragment = hashAt === -1 ? '' : baseURL.slice(hashAt);
+		if (fragment.startsWith('#/') || fragment.startsWith('#!/')) {
+			return `${baseURL}${fragment.includes('?') ? '&' : '?'}${queryString}`;
+		}
+		const page = hashAt === -1 ? baseURL : baseURL.slice(0, hashAt);
+		return `${page}${page.includes('?') ? '&' : '?'}${queryString}${fragment}`;
 	}
 
 	/**
@@ -1694,7 +1748,8 @@ export class AuthService extends SocialAuthService {
 	 */
 	async register(
 		input: IUserRegistrationInput & Partial<IAppIntegrationConfig>,
-		languageCode: LanguagesEnum
+		languageCode: LanguagesEnum,
+		onSaved?: (user: User) => void
 	): Promise<User> {
 		let tenant = input.user.tenant;
 		const { organizationId } = input;
@@ -1809,6 +1864,7 @@ export class AuthService extends SocialAuthService {
 				});
 				await this.mikroOrmUserRepository.persistAndFlush(userEntity);
 				user = this.serialize(userEntity);
+				onSaved?.(user);
 
 				// 3. Create employee for specific user
 				if (featureAsEmployee) {
@@ -1842,6 +1898,7 @@ export class AuthService extends SocialAuthService {
 					...(awaitsEmailConfirmation ? { isActive: false } : {})
 				});
 				user = await this.typeOrmUserRepository.save(entity);
+				onSaved?.(user);
 
 				// 3. Create employee for specific user
 				if (featureAsEmployee) {
@@ -2247,14 +2304,30 @@ export class AuthService extends SocialAuthService {
 					throw new Error(`Method not implemented for ORM type: ${this.ormType}`);
 			}
 
+			// The account of a member without an account (a placeholder) gets no access token either, whichever
+			// path asks for one. Its user has no email and no password, so no sign-in finds it; this is the guard
+			// behind that. The active record found above says it at no cost: no other member is ever filed for that
+			// user (EmployeeService.assertNotPlaceholderAccount).
+			if (employee?.isPlaceholder) {
+				this.logger.warn(`Access token refused: user ${user.id} stands behind a member without an account`);
+				throw new UnauthorizedException();
+			}
+
 			// A deactivated employee (every employee record inactive or archived) gets no access token,
 			// whichever path asks for one: password login, workspace sign-in, token refresh, workspace or
 			// organization switch, provider sign-in, OAuth app code exchange. This is the one place they all
 			// mint through. The active record found above already proves the user is not one, so only a
 			// user without one (an admin, a viewer, or an employee active elsewhere) pays for the lookup.
-			if (!employee && (await this.isDeactivatedEmployeeUser(user.id))) {
-				this.logger.warn(`Access token refused: user ${user.id} is a deactivated employee`);
-				throw new UnauthorizedException();
+			if (!employee) {
+				const records = await this.findEmployeeRecordsOfUser(user.id);
+				if (isPlaceholderAccount(records)) {
+					this.logger.warn(`Access token refused: user ${user.id} stands behind a member without an account`);
+					throw new UnauthorizedException();
+				}
+				if (isDeactivatedEmployee(records)) {
+					this.logger.warn(`Access token refused: user ${user.id} is a deactivated employee`);
+					throw new UnauthorizedException();
+				}
 			}
 
 			// Create a payload for the JWT token
