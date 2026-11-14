@@ -316,6 +316,89 @@ describe('TimeLogService', () => {
 		 * time logs, because an empty result never runs the grouping. The filter specs above all run on
 		 * an empty result, which is why they never caught it.
 		 */
+		describe('breaks (#11920)', () => {
+			const breakExclusion = '"time_log"."logType" <> :breakType';
+			const listsEntries = ['getTimeLogs', 'getDailyReportCharts'];
+
+			it.each(reportMethods.filter(([name]) => !listsEntries.includes(name)))(
+				'%s leaves breaks out of the worked time it totals',
+				async (_name, run) => {
+					actAs({ canChangeSelectedEmployee: true });
+
+					await run(request);
+
+					const { conditions, parameters } = executedFilters(builder);
+					expect(conditions).toContain(breakExclusion);
+					expect(parameters).toEqual(expect.objectContaining({ breakType: TimeLogType.BREAK }));
+				}
+			);
+
+			it.each(reportMethods.filter(([name]) => listsEntries.includes(name)))(
+				'%s keeps breaks, which hold no time slot, with their type',
+				async (_name, run) => {
+					actAs({ canChangeSelectedEmployee: true });
+
+					await run(request);
+
+					const { conditions } = executedFilters(builder);
+					expect(conditions).not.toContain(breakExclusion);
+					const slotOrBreak = (condition: string) =>
+						condition.includes('EXISTS') &&
+						condition.includes('OR "time_log"."logType" = :slotlessBreakType');
+					expect(conditions.some(slotOrBreak)).toBe(true);
+				}
+			);
+
+			it('answers a request that names the types it wants with those types only', async () => {
+				actAs({ canChangeSelectedEmployee: true });
+
+				await service.getDailyReport({ ...request, logType: [TimeLogType.BREAK] });
+
+				const { conditions } = executedFilters(builder);
+				expect(conditions).not.toContain(breakExclusion);
+				expect(conditions).toContain('"time_log"."logType" IN (:...logType)');
+			});
+
+			it('leaves breaks out of the MikroORM totals and keeps them in its entry list', async () => {
+				actAs({ canChangeSelectedEmployee: true });
+
+				const total = await (service as any).buildMikroOrmTimeLogWhere(request);
+				const list = await (service as any).buildMikroOrmTimeLogWhere(request, { keepBreaks: true });
+
+				expect(total.logType).toEqual({ $ne: TimeLogType.BREAK });
+				expect(list.logType).toBeUndefined();
+			});
+
+			it('adds a BREAK figure to the daily chart only for a period that holds a break', async () => {
+				actAs({ canChangeSelectedEmployee: true });
+				const work = {
+					id: 'work',
+					logType: TimeLogType.TRACKED,
+					startedAt: new Date('2026-01-05T09:00:00.000Z'),
+					stoppedAt: new Date('2026-01-05T12:00:00.000Z'),
+					duration: 3 * 3600
+				};
+				const lunch = {
+					id: 'lunch',
+					logType: TimeLogType.BREAK,
+					startedAt: new Date('2026-01-05T12:00:00.000Z'),
+					stoppedAt: new Date('2026-01-05T13:00:00.000Z'),
+					duration: 3600
+				};
+
+				builder.rows = [work, lunch];
+				const withBreak = (await service.getDailyReportCharts(request)) as { date: string; value: object }[];
+				builder.rows = [work];
+				const withoutBreak = (await service.getDailyReportCharts(request)) as { date: string; value: object }[];
+
+				const dayOf = (days: { date: string; value: object }[], date: string) =>
+					days.find((day) => day.date === date);
+				expect(dayOf(withBreak, '2026-01-05').value).toMatchObject({ TRACKED: 3, BREAK: 1 });
+				expect(dayOf(withBreak, '2026-01-06').value).toMatchObject({ TRACKED: 0, BREAK: 0 });
+				expect(withoutBreak.every((day) => !(TimeLogType.BREAK in day.value))).toBe(true);
+			});
+		});
+
 		describe('a request without a time zone', () => {
 			const LOG_STARTED_AT = '2026-01-06T22:00:00.000Z';
 
