@@ -159,14 +159,18 @@ async function readPair(
 	if (placeholderId === targetId) {
 		throw new BadRequestException('A member without an account cannot be merged into itself.');
 	}
-	const placeholder = await readEmployee(queryRunner, placeholderId, tenantId, lock);
+	// The placeholder is locked FOR UPDATE: it is deleted at the end, and a concurrent insert that references it must
+	// wait and then fail rather than leave a row pointing at a removed member.
+	const placeholder = await readEmployee(queryRunner, placeholderId, tenantId, lock ? 'update' : false);
 	if (!placeholder) {
 		throw new NotFoundException('The member without an account does not exist.');
 	}
 	if (!placeholder.isPlaceholder) {
 		throw new BadRequestException('This member has an account: only a member without one is claimed or merged.');
 	}
-	const target = await readEmployee(queryRunner, targetId, tenantId, lock);
+	// The target is locked FOR NO KEY UPDATE on Postgres: it serializes two transfers into the member without blocking
+	// the foreign-key checks of the member's own time logs, slots and screenshots written while this one runs.
+	const target = await readEmployee(queryRunner, targetId, tenantId, lock ? 'no-key' : false);
 	if (!target) {
 		throw new NotFoundException('The member to merge into does not exist.');
 	}
@@ -182,20 +186,21 @@ async function readPair(
 
 /**
  * One employee of the tenant, not deleted. Inside a transaction on Postgres and MySQL the row is locked for the rest of
- * it (`FOR UPDATE`), so that a claim and a merge of the same placeholder run one after the other; SQLite allows one
- * writer at a time.
+ * it, so that a claim and a merge of the same placeholder run one after the other; SQLite allows one writer at a time.
+ * `update` takes `FOR UPDATE`; `no-key` takes `FOR NO KEY UPDATE` on Postgres (it does not block foreign-key checks
+ * against the row) and `FOR UPDATE` on MySQL, which has no weaker row lock.
  */
 async function readEmployee(
 	queryRunner: QueryRunner,
 	id: ID,
 	tenantId: ID,
-	lock: boolean
+	lock: false | 'update' | 'no-key'
 ): Promise<TransferMember | null> {
 	const type = queryRunner.connection.options.type;
-	const locks = lock && (type === 'postgres' || type === 'mysql' || type === 'mariadb');
+	const locks = lock !== false && (type === 'postgres' || type === 'mysql' || type === 'mariadb');
 	let forUpdate = '';
 	if (locks) {
-		forUpdate = ' FOR UPDATE';
+		forUpdate = type === 'postgres' && lock === 'no-key' ? ' FOR NO KEY UPDATE' : ' FOR UPDATE';
 	}
 	const [row] = (await select(
 		queryRunner,

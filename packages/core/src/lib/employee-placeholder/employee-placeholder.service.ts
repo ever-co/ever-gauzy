@@ -216,7 +216,7 @@ export class EmployeePlaceholderService {
 		organizationId: ID,
 		teamIds: ID[] | undefined
 	): Promise<CreationScope> {
-		const organization = await findOneForUpdate(manager, Organization, { id: organizationId, tenantId });
+		const organization = await findOrganizationLocked(manager, organizationId, tenantId);
 		if (!organization) {
 			throw new NotFoundException('The organization does not exist in this tenant.');
 		}
@@ -398,4 +398,30 @@ function normalizedEmail(email: string | undefined): string | null {
 		return null;
 	}
 	return trimmed;
+}
+
+/**
+ * The organization of a creation, locked until the transaction ends, so that two creations in it run one after the
+ * other. On Postgres the lock is `FOR NO KEY UPDATE`, the lock its own `UPDATE` of a non-key column takes: `FOR UPDATE`
+ * would also block the foreign-key checks (`FOR KEY SHARE`) of every time log, time slot, activity and screenshot
+ * inserted in the organization meanwhile, so an import of many members stalled its time tracking. MySQL and SQLite read
+ * it as `findOneForUpdate` does.
+ *
+ * @param manager The transaction manager.
+ * @param id The organization.
+ * @param tenantId The request's tenant.
+ * @returns The organization, or `null` when the tenant has none with this id.
+ */
+async function findOrganizationLocked(manager: EntityManager, id: ID, tenantId: ID): Promise<Organization | null> {
+	if (manager.connection?.options?.type !== 'postgres') {
+		return await findOneForUpdate(manager, Organization, { id, tenantId });
+	}
+	const locked = (await manager.query(
+		`SELECT "id" FROM "organization" WHERE "id" = $1 AND "tenantId" = $2 FOR NO KEY UPDATE`,
+		[id, tenantId]
+	)) as Array<{ id: ID }>;
+	if (!locked?.length) {
+		return null;
+	}
+	return await manager.findOne(Organization, { where: { id, tenantId }, loadEagerRelations: false });
 }
