@@ -1,5 +1,6 @@
 import '../../../core/entities/internal';
 
+import { ConflictException } from '@nestjs/common';
 import { InviteAcceptEmployeeCommand } from '../invite.accept-employee.command';
 import { InviteAcceptEmployeeHandler } from './invite.accept-employee.handler';
 
@@ -61,9 +62,11 @@ function build(options: {
 			if (!existingUser || !roleMatches) throw new Error('EntityNotFound');
 			return existingUser;
 		}),
-		findOne: jest.fn(async ({ where }) =>
-			existingUser && where.email === existingUser.email ? existingUser : null
-		)
+		// The claim's lookup compares emails without regard to case (a `Raw` LOWER comparison).
+		findOne: jest.fn(async ({ where }) => {
+			const email = where.email?.objectLiteralParameters?.email ?? where.email;
+			return existingUser && email === existingUser.email.toLowerCase() ? existingUser : null;
+		})
 	};
 	const employeeRepository = {
 		findOneOrFail: jest.fn(async ({ where }) => {
@@ -101,8 +104,7 @@ function build(options: {
 		undefined as never,
 		undefined as never,
 		undefined as never,
-		placeholderTransferService as never,
-		userOrganizationService as never
+		placeholderTransferService as never
 	);
 	const accept = () =>
 		handler.execute(new InviteAcceptEmployeeCommand({ inviteId: invite.id, user: {} } as never, 'en' as never));
@@ -127,68 +129,25 @@ describe('InviteAcceptEmployeeHandler with a claim invitation', () => {
 		});
 	});
 
-	it("gives an existing account a member of the invitation's organization, never its member of another one", async () => {
-		const { accept, placeholderTransferService, userOrganizationService } = build({
-			placeholderEmployeeId: PLACEHOLDER,
-			existingUserId: 'user-amina',
-			employees: [{ id: 'employee-amina-elsewhere', userId: 'user-amina', organizationId: OTHER_ORGANIZATION }]
-		});
+	it('never opens an existing account, whatever its role, and hands nothing over', async () => {
+		// Accepting signs in with the invitation alone: an existing account would be opened without its password.
+		for (const existingRole of ['EMPLOYEE', 'MANAGER', 'ADMIN', 'SUPER_ADMIN']) {
+			for (const organizationId of [ORGANIZATION, OTHER_ORGANIZATION]) {
+				const { accept, placeholderTransferService, authService, inviteService, employeeRepository } = build({
+					placeholderEmployeeId: PLACEHOLDER,
+					existingUserId: 'user-amina',
+					existingRole,
+					employees: [{ id: 'employee-amina', userId: 'user-amina', organizationId }]
+				});
 
-		await accept();
+				await expect(accept()).rejects.toBeInstanceOf(ConflictException);
 
-		expect(placeholderTransferService.transfer).toHaveBeenCalledWith(
-			PLACEHOLDER,
-			'employee-of-user-amina',
-			TENANT,
-			{
-				keepInviteId: 'invite-1'
+				expect(authService.register).not.toHaveBeenCalled();
+				expect(employeeRepository.save).not.toHaveBeenCalled();
+				expect(placeholderTransferService.transfer).not.toHaveBeenCalled();
+				expect(inviteService.releaseInvite).toHaveBeenCalledWith('invite-1');
 			}
-		);
-		expect(userOrganizationService.addUserToOrganization).toHaveBeenCalledWith(
-			expect.objectContaining({ id: 'user-amina' }),
-			ORGANIZATION
-		);
-	});
-
-	it('hands the placeholder over to the member the account already has in the organization', async () => {
-		const { accept, placeholderTransferService, employeeRepository, userOrganizationService } = build({
-			placeholderEmployeeId: PLACEHOLDER,
-			existingUserId: 'user-amina',
-			employees: [{ id: 'employee-amina', userId: 'user-amina', organizationId: ORGANIZATION }]
-		});
-
-		await accept();
-
-		expect(placeholderTransferService.transfer).toHaveBeenCalledWith(PLACEHOLDER, 'employee-amina', TENANT, {
-			keepInviteId: 'invite-1'
-		});
-		expect(employeeRepository.save).not.toHaveBeenCalled();
-		// Joined to the organization again, which repairs a join an earlier, failed acceptance left out.
-		expect(userOrganizationService.addUserToOrganization).toHaveBeenCalledWith(
-			expect.objectContaining({ id: 'user-amina' }),
-			ORGANIZATION
-		);
-	});
-
-	it('reaches the existing account of an admin, never a second account for the same email', async () => {
-		const { accept, placeholderTransferService, authService } = build({
-			placeholderEmployeeId: PLACEHOLDER,
-			existingUserId: 'user-amina-admin',
-			existingRole: 'ADMIN',
-			employees: [
-				{ id: 'employee-amina-elsewhere', userId: 'user-amina-admin', organizationId: OTHER_ORGANIZATION }
-			]
-		});
-
-		await accept();
-
-		expect(authService.register).not.toHaveBeenCalled();
-		expect(placeholderTransferService.transfer).toHaveBeenCalledWith(
-			PLACEHOLDER,
-			'employee-of-user-amina-admin',
-			TENANT,
-			{ keepInviteId: 'invite-1' }
-		);
+		}
 	});
 
 	it('hands nothing over for any other invitation', async () => {

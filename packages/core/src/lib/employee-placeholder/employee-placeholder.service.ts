@@ -150,6 +150,14 @@ export class EmployeePlaceholderService {
 			);
 		}
 
+		// Accepting a claim signs in with the invitation alone, which must never open an existing account: the person
+		// behind an email that has one is reached by merging the placeholder into their member instead.
+		if (await hasAccount(manager, email, tenantId)) {
+			throw new ConflictException(
+				"This email already has an account: merge the member without an account into that person's member instead."
+			);
+		}
+
 		const role = await findEmployeeRole(manager, tenantId);
 		const fullName = [placeholder.user?.firstName, placeholder.user?.lastName].filter(Boolean).join(' ');
 		const link = input.callbackUrl
@@ -296,6 +304,14 @@ async function findMemberByEmail(
 		},
 		relations: { user: true }
 	});
+}
+
+/** Whether an account of the tenant has this email, compared without regard to case. */
+async function hasAccount(manager: EntityManager, email: string, tenantId: ID): Promise<boolean> {
+	const account = await manager.findOne(User, {
+		where: { tenantId, email: Raw((column) => `LOWER(${column}) = :email`, { email }) }
+	});
+	return !!account;
 }
 
 /**

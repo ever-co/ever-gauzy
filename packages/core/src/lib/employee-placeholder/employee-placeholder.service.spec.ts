@@ -99,7 +99,14 @@ function build() {
 				{ id: 'team-elsewhere', organizationId: OTHER_ORGANIZATION, tenantId: TENANT }
 			]
 		],
-		[User, [{ id: 'user-marie', email: 'Marie@Ever.co', tenantId: TENANT }]],
+		[
+			User,
+			[
+				{ id: 'user-marie', email: 'Marie@Ever.co', tenantId: TENANT },
+				// An account of the tenant with no member in ORGANIZATION: an admin of another organization, say.
+				{ id: 'user-zoe', email: 'Zoe@Ever.co', tenantId: TENANT }
+			]
+		],
 		[
 			Employee,
 			[
@@ -264,6 +271,17 @@ describe('EmployeePlaceholderService.sendClaim', () => {
 		expect(command.input.placeholderEmployeeId).toBeUndefined();
 		expect(invite.placeholderEmployeeId).toBe(placeholder.id);
 		expect(tables.get(Invite)?.[0]).toMatchObject({ id: 'invite-1', placeholderEmployeeId: placeholder.id });
+	});
+
+	it('refuses an email that has an account in the tenant, whatever its role or organization, and sends nothing', async () => {
+		const { service, commandBus } = build();
+		const placeholder = await service.create({ organizationId: ORGANIZATION, firstName: 'Amina' });
+
+		// Accepting a claim signs in with the invitation alone, which must never open an existing account.
+		await expect(
+			service.sendClaim(placeholder.id, { organizationId: ORGANIZATION, email: 'ZOE@ever.co' }, 'en' as never)
+		).rejects.toBeInstanceOf(ConflictException);
+		expect(commandBus.execute).not.toHaveBeenCalled();
 	});
 
 	it('refuses an email a member with an account already has: the placeholder is merged into theirs instead', async () => {

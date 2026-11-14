@@ -1,6 +1,6 @@
 import { NotFoundException, ConflictException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { UpdateResult } from 'typeorm';
+import { Raw, UpdateResult } from 'typeorm';
 import { IAppIntegrationConfig } from '@gauzy/common';
 import {
 	IEmployee,
@@ -9,7 +9,6 @@ import {
 	IOrganizationDepartment,
 	IOrganizationProject,
 	IOrganizationTeam,
-	IRole,
 	IUser,
 	IUserRegistrationInput,
 	LanguagesEnum,
@@ -26,7 +25,6 @@ import { TypeOrmOrganizationProjectRepository } from '../../../organization-proj
 import { TypeOrmOrganizationTeamRepository } from '../../../organization-team/repository/type-orm-organization-team.repository';
 import { TypeOrmUserRepository } from '../../../user/repository/type-orm-user.repository';
 import { EmployeePlaceholderTransferService } from '../../../employee-placeholder/employee-placeholder-transfer.service';
-import { UserOrganizationService } from '../../../user-organization/user-organization.services';
 
 /**
  * Use this command for registering employees.
@@ -44,8 +42,7 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 		private readonly typeOrmOrganizationContactRepository: TypeOrmOrganizationContactRepository,
 		private readonly typeOrmOrganizationDepartmentRepository: TypeOrmOrganizationDepartmentRepository,
 		private readonly typeOrmOrganizationTeamRepository: TypeOrmOrganizationTeamRepository,
-		private readonly placeholderTransferService: EmployeePlaceholderTransferService,
-		private readonly userOrganizationService: UserOrganizationService
+		private readonly placeholderTransferService: EmployeePlaceholderTransferService
 	) {}
 
 	/**
@@ -79,14 +76,15 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 
 		try {
 			if (isClaim) {
-				// The person's account whatever its role, so an admin's or a manager's email never gets a second
-				// account; else a new one. Then their member of the invitation's organization, which an account
-				// working elsewhere, or with no member at all, gets now.
-				const existing = await this.findExistingAccount(invite);
-				user = existing ?? (await this.registerNewUser(input, invite, languageCode));
-				employee = existing
-					? await this.memberOfInvitationOrganization(invite, existing)
-					: await this.createEmployee(invite, user);
+				// Accepting signs in with the invitation alone, so a claim never opens an existing account, whatever
+				// its role: the person behind it is reached by a merge instead. It registers the person's new account.
+				if (await this.hasAccount(invite)) {
+					throw new ConflictException(
+						'This email already has an account: an admin merges the member without an account into theirs.'
+					);
+				}
+				user = await this.registerNewUser(input, invite, languageCode);
+				employee = await this.createEmployee(invite, user);
 			} else {
 				// Inner try/catch is find-or-register control flow, not error handling: a missing
 				// employee user is the signal to create one.
@@ -166,17 +164,17 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 	}
 
 	/**
-	 * Finds the account of the invited email in the invitation's tenant, whatever its role, with its role.
+	 * Whether the invited email has an account in the invitation's tenant, whatever its role, compared without regard
+	 * to case.
 	 * @param invite The claim invitation being accepted.
-	 * @returns The account, or null when the email has none yet.
 	 */
-	private async findExistingAccount(invite: IInvite): Promise<IUser | null> {
-		const { tenantId, email } = invite;
-		return await this.typeOrmUserRepository.findOne({
-			where: { email, tenantId },
-			relations: { role: true },
-			order: { createdAt: 'DESC' }
+	private async hasAccount(invite: IInvite): Promise<boolean> {
+		const { tenantId } = invite;
+		const email = invite.email.toLowerCase();
+		const account = await this.typeOrmUserRepository.findOne({
+			where: { tenantId, email: Raw((column) => `LOWER(${column}) = :email`, { email }) }
 		});
+		return !!account;
 	}
 
 	/**
@@ -223,25 +221,6 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 		});
 
 		return await this.typeOrmEmployeeRepository.save(employee);
-	}
-
-	/**
-	 * An existing account's member of the invitation's organization: the one it already has there, else a new one.
-	 * Either way the account is joined to the organization, which also repairs a join an earlier, failed acceptance
-	 * left out (joining twice adds nothing). Its member of another organization is never the one a claim fills.
-	 *
-	 * @param invite The claim invitation being accepted.
-	 * @param user The account accepting it, with its role.
-	 * @returns The member of the invitation's organization.
-	 */
-	private async memberOfInvitationOrganization(invite: IInvite, user: IUser): Promise<IEmployee> {
-		const existing = await this.typeOrmEmployeeRepository.findOne({
-			where: { userId: user.id, organizationId: invite.organizationId }
-		});
-		const member = existing ?? (await this.createEmployee(invite, user));
-		const withRole = { ...user, role: user.role ?? ({ name: RolesEnum.EMPLOYEE } as IRole) };
-		await this.userOrganizationService.addUserToOrganization(withRole, invite.organizationId);
-		return member;
 	}
 
 	/**
