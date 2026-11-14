@@ -132,7 +132,11 @@ export class EmailTemplateRenderService {
 
 			// `hbs` is tenant-editable; Handlebars.compile() must only ever get a string, never an AST
 			// object (GHSA-48h9-vwf5-h8m7).
-			const template = Handlebars.compile(toTemplateSource(emailTemplate.hbs));
+			// A subject is plain text, so its values go out as written: escaped like the HTML part, an organization
+			// called "R&D" read "R&amp;D" in the subject line and in the email history. The HTML part stays escaped.
+			const template = Handlebars.compile(toTemplateSource(emailTemplate.hbs), {
+				noEscape: view.endsWith('/subject')
+			});
 			const html = template(withDefaultBranding(locals));
 			return html;
 		} catch (error) {

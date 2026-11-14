@@ -224,3 +224,29 @@ describe('EmailTemplateRenderService default branding', () => {
 		expect(withDefaultBranding({ teams: 'Web' })).toEqual({ teams: 'Web', appName: 'Gauzy' });
 	});
 });
+
+/**
+ * A subject is a line of plain text. Rendered like the HTML part, its values were HTML-escaped, and an organization
+ * called "R&D" read "R&amp;D" in the subject of its invitations and in the email history.
+ */
+describe('EmailTemplateRenderService subject values', () => {
+	const rows: Row[] = [
+		{ name: 'invite-user/subject', languageCode: 'en', ...GLOBAL, hbs: 'Join {{organizationName}}' },
+		{ name: 'invite-user/html', languageCode: 'en', ...GLOBAL, hbs: '<p>Join {{organizationName}}</p>' }
+	];
+	const locals = { organizationName: `R&D "Ada's" <Labs>` };
+
+	it('prints the values of a subject as they are written', async () => {
+		const { service } = makeService(rows);
+
+		await expect(service.render('invite-user/subject', locals)).resolves.toBe(`Join R&D "Ada's" <Labs>`);
+	});
+
+	it('still escapes the same values in the HTML part', async () => {
+		const { service } = makeService(rows);
+
+		await expect(service.render('invite-user/html', locals)).resolves.toBe(
+			'<p>Join R&amp;D &quot;Ada&#x27;s&quot; &lt;Labs&gt;</p>'
+		);
+	});
+});
