@@ -232,6 +232,15 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	@MultiORMColumn({ type: Boolean, nullable: true })
 	hasRemainingAmountInvoiced?: boolean;
 
+	/**
+	 * When another document's line first billed time this void invoice or rejected estimate had released (see
+	 * `invoice-final-status.ts`). Written by the billing of time only: without a validation decorator, no request body
+	 * sets it, since the API strips undeclared fields.
+	 */
+	@ApiPropertyOptional({ type: () => Date, readOnly: true })
+	@MultiORMColumn({ nullable: true })
+	releasedTimeBilledAt?: Date;
+
 	/** Bearer token for the public invoice view. */
 	@ExportRedacted()
 	@ApiPropertyOptional({ type: () => String })

@@ -25,7 +25,8 @@ export interface ITaskAutomationMikroOrmTransaction {
  * The closed links already handed to the automations (`task_automation_link_closure`). A close is claimed in the same
  * transaction its `task_link.closed` is appended in, under the unique `(tenantId, taskId, provider, kind, externalId)`:
  * both commit or neither does, so a close is never lost to a stop between them, and the same close delivered again —
- * on this instance or another, at once or later — finds the claim and appends nothing.
+ * on this instance or another, at once or later — finds the claim and appends nothing. A merged pull request's merge
+ * is claimed the same way, under the kind `pull_request.merged` (spec FR-21).
  */
 @Injectable()
 export class TaskAutomationLinkClosureStore {

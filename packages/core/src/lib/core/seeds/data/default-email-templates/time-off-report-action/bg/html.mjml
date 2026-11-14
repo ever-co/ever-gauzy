@@ -1,45 +1,60 @@
-<mjml>
-	<mj-body background-color="#fff">
-		<mj-section>
+<mjml lang="bg">
+	<mj-head>
+		<mj-title>Заявка за отпуск: {{time_off_policy_requires_approval}}</mj-title>
+		<mj-preview>Статусът на заявката Ви за отпуск е променен.</mj-preview>
+		<mj-attributes>
+			<mj-all font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" />
+			<mj-text align="left" color="#3F3F46" font-size="15px" line-height="24px" padding="0 10px 16px" />
+			<mj-button align="left" background-color="#4F46E5" border-radius="8px" color="#FFFFFF" font-size="15px" font-weight="600" inner-padding="12px 24px" line-height="20px" padding="8px 10px 24px" />
+			<mj-divider border-color="#E4E4E7" border-width="1px" padding="8px 10px 24px" />
+			<mj-class name="brand" color="#18181B" font-size="18px" font-weight="600" line-height="24px" padding="6px 10px 28px" />
+			<mj-class name="eyebrow" color="#71717A" font-size="13px" font-weight="600" line-height="20px" padding="0 10px 4px" />
+			<mj-class name="heading" color="#18181B" font-size="22px" font-weight="600" line-height="30px" padding="0 10px 12px" />
+			<mj-class name="note" color="#71717A" font-size="13px" line-height="20px" />
+			<mj-class name="footer" align="center" color="#66666F" font-size="12px" line-height="18px" padding="0" />
+			<mj-class name="danger" background-color="#DC2626" />
+			<mj-class name="secondary" background-color="#FFFFFF" border="1px solid #D4D4D8" color="#18181B" inner-padding="11px 24px" />
+		</mj-attributes>
+		<mj-style>
+			@media only screen and (max-width: 479px) {
+				.email-card > table > tbody > tr > td { padding: 22px 12px 14px !important; }
+			}
+		</mj-style>
+	</mj-head>
+	<mj-body background-color="#F4F4F5" width="600px">
+		<mj-section padding="32px 16px 0">
+			<mj-column css-class="email-card" background-color="#FFFFFF" border="1px solid #E4E4E7" border-radius="12px" padding="30px 30px 20px">
+				<mj-raw>{{#if appLogo}}</mj-raw>
+				<mj-text font-size="0" line-height="0" padding="0 0 22px">
+					<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse: separate">
+						<tr>
+							<td bgcolor="#FFFFFF" style="background-color: #FFFFFF; background-image: linear-gradient(#FFFFFF, #FFFFFF); border-radius: 8px; padding: 6px 10px">
+								<a href="{{appLink}}" target="_blank" style="text-decoration: none"><img src="{{appLogo}}" alt="{{appName}}" height="24" style="display: block; height: 24px; width: auto; border: 0; outline: none; color: #18181B; font-size: 18px; font-weight: 600; line-height: 24px; text-decoration: none" /></a>
+							</td>
+						</tr>
+					</table>
+				</mj-text>
+				<mj-raw>{{else}}</mj-raw>
+				<mj-text mj-class="brand">{{appName}}</mj-text>
+				<mj-raw>{{/if}}</mj-raw>
+				<mj-text mj-class="heading">Заявка за отпуск: {{time_off_policy_requires_approval}}</mj-text>
+				<mj-text>
+					Здравейте{{#if name}}, {{name}}{{/if}}!
+				</mj-text>
+				<mj-text>
+					Заявката Ви за отпуск вече е със статус <strong dir="auto" style="color: #18181B; font-weight: 600">{{time_off_policy_requires_approval}}</strong>. Статус на плащането: <strong dir="auto" style="color: #18181B; font-weight: 600">{{#if time_off_policy_paid_status}}платен{{else}}неплатен{{/if}}</strong>.
+				</mj-text>
+				<mj-divider />
+				<mj-text mj-class="note" padding="0 10px 12px">
+					С уважение,<br />
+					<span style="color: #18181B; font-weight: 600">{{appSignature}}</span>
+				</mj-text>
+			</mj-column>
+		</mj-section>
+		<mj-section padding="20px 16px 40px">
 			<mj-column>
-				<mj-image
-					width="100px"
-					src="{{appLogo}}"
-				></mj-image>
-				<mj-divider
-					border-color="#1B005D"
-					border-width="1px"
-				></mj-divider>
-				<mj-text font-size="20px" font-family="helvetica"
-					>Политика за изключено време
-					{{time_off_policy_requires_approval}}</mj-text
-				>
-				<mj-text font-size="16px" font-family="helvetica">
-					<p>скъп {{candidateName}},</p>
-					<p>
-						Заявката Ви за политика на изключване е
-						{{time_off_policy_requires_approval}}, състоянието на
-						плащането е {{time_off_policy_paid_status}}..!!
-					</p>
-				</mj-text>
-				<mj-text font-size="16px" font-family="helvetica">
-					<p>С Най-Добри Пожелания,</p>
-					<p>Gauzy Team</p>
-				</mj-text>
-				<mj-divider
-					border-color="#1B005D"
-					border-width="1px"
-				></mj-divider>
-				<mj-text align="center" font-size="12px" font-family="helvetica"
-					>© 2019,
-					<a href="{{appLink}}" style="color: #598bff"
-						>{{appName}}</a
-					>
-					by
-					<a href="{{companyLink}}" style="color: #598bff"
-						>{{companyName}}</a
-					>
-					All rights reserved.
+				<mj-text mj-class="footer">
+					&copy; 2019, <a href="{{appLink}}" target="_blank" style="color: #66666F; text-decoration: underline">{{appName}}</a>{{#if companyName}} от <a href="{{companyLink}}" target="_blank" style="color: #66666F; text-decoration: underline">{{companyName}}</a>{{/if}}. Всички права запазени.
 				</mj-text>
 			</mj-column>
 		</mj-section>

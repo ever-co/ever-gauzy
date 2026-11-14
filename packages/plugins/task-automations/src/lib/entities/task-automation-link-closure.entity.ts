@@ -10,7 +10,9 @@ export class MikroOrmTaskAutomationLinkClosureRepository extends MikroOrmBaseEnt
  * `task_automation_link_closure`: the closed links of tasks that became `task_link.closed` (spec T16). One row per task
  * and link, unique on `(tenantId, taskId, provider, kind, externalId)`: a close delivered again — the provider's
  * redelivery, another API instance, the same pull request closed again after a reopen — finds its row and appends
- * nothing. `taskId` has no foreign key, as a run's: the row outlives its task.
+ * nothing. A merged pull request also has a row of kind `pull_request.merged` for its merge (spec FR-21), so a close
+ * without merging never keeps its later merge from the rules that wait for one. `taskId` has no foreign key, as a
+ * run's: the row outlives its task.
  */
 @MultiORMEntity('task_automation_link_closure', { mikroOrmRepository: () => MikroOrmTaskAutomationLinkClosureRepository })
 export class TaskAutomationLinkClosure extends TenantOrganizationBaseEntity {

@@ -27,6 +27,9 @@ export function ruleFromRow(row: TaskAutomationRule): ITaskAutomationRule {
 	if (row.triggerType === TaskAutomationTriggerEnum.STATUS_CHANGED) {
 		trigger.toStatuses = Array.isArray(config.toStatuses) ? config.toStatuses.map(String) : [];
 		trigger.fromStatuses = Array.isArray(config.fromStatuses) ? config.fromStatuses.map(String) : [];
+	} else if (row.triggerType === TaskAutomationTriggerEnum.LINK_CLOSED) {
+		// A rule saved before the option has no settings: any close, as it always ran.
+		trigger.mergedOnly = config?.mergedOnly === true;
 	}
 	const conditions = parseJson<ITaskAutomationCondition[]>(row.conditions, []);
 	const actions = parseJson<ITaskAutomationAction[]>(row.actions, []);
@@ -51,12 +54,17 @@ export function ruleFromRow(row: TaskAutomationRule): ITaskAutomationRule {
 	} as ITaskAutomationRule;
 }
 
-/** The columns a rule's trigger, conditions and actions are stored in. */
+/**
+ * The columns a rule's trigger, conditions and actions are stored in. A `LINK_CLOSED` trigger keeps settings only when
+ * it waits for a merge, so a rule without the option is stored as before it existed.
+ */
 export function ruleColumns(rule: Pick<ITaskAutomationRule, 'trigger' | 'conditions' | 'actions'>) {
 	const config =
 		rule.trigger.type === TaskAutomationTriggerEnum.STATUS_CHANGED
 			? JSON.stringify({ toStatuses: rule.trigger.toStatuses ?? [], fromStatuses: rule.trigger.fromStatuses ?? [] })
-			: null;
+			: rule.trigger.type === TaskAutomationTriggerEnum.LINK_CLOSED && rule.trigger.mergedOnly === true
+				? JSON.stringify({ mergedOnly: true })
+				: null;
 	return {
 		triggerType: rule.trigger.type,
 		triggerConfig: config,

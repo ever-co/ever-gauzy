@@ -4,6 +4,12 @@ export const CHAT_PATH = 'chat';
 /** Absolute link of the page. */
 export const CHAT_LINK = `/pages/${CHAT_PATH}`;
 
+/**
+ * Query parameter of the page that opens my direct conversation with an employee (`/pages/chat?with=<employeeId>`),
+ * found or created on arrival; other pages (the Teams dashboard's member card) link with it.
+ */
+export const CHAT_DIRECT_WITH_PARAM = 'with';
+
 /** The registry location of the plugin's own sections. */
 export const CHAT_SECTIONS_LOCATION = 'chat-sections' as const;
 

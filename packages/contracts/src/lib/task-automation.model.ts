@@ -91,6 +91,11 @@ export interface ITaskAutomationTrigger {
 	toStatuses?: string[];
 	/** `STATUS_CHANGED`: only when the previous status was one of these. Empty or absent: any status. */
 	fromStatuses?: string[];
+	/**
+	 * `LINK_CLOSED`: a pull request fires only when it was merged — one closed without merging does not, and its merge
+	 * after a reopen still does; an issue's close fires as without it. `false` or absent: any close, merged or not.
+	 */
+	mergedOnly?: boolean;
 }
 
 /** A condition and its value. */
@@ -252,7 +257,8 @@ export const TASK_AUTOMATION_LIMITS = Object.freeze({
 /**
  * The outbox event a task change becomes when the organization has automations (`TaskAutomationChangeCapture`), and
  * the event a closed pull request or issue linked to a task becomes (the `LINK_CLOSED` trigger): an integration reports
- * the closed link as the platform's `TaskLinkClosedEvent`, and the automations append it once per task and link.
+ * the closed link as the platform's `TaskLinkClosedEvent`, and the automations append it once per task and link (and
+ * once more for a pull request merged after it was closed without merging, for the `mergedOnly` rules).
  */
 export const TASK_AUTOMATION_EVENT_NAMES = Object.freeze({
 	TASK_CHANGED: 'task_automation.task_changed',
@@ -308,4 +314,11 @@ export interface ITaskLinkClosedEvent {
 	externalId?: string | null;
 	/** A pull request: whether it was merged (`false`: closed without merging). Absent for an issue. */
 	merged?: boolean | null;
+	/**
+	 * Owned by the automations: the capture sets it on `task_link.closed` from its claims and overwrites any value
+	 * an integration's report carries. `true` when the link's close was handed to the rules before — the pull
+	 * request was closed without merging, reopened, and is now merged — so only the rules that wait for a merge
+	 * (`mergedOnly`) run on this event. `false` or absent: the link's first reported close.
+	 */
+	closedBefore?: boolean;
 }

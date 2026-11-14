@@ -41,6 +41,8 @@ import { EventHandlers } from './events/handlers';
 import { EmailConfirmationService } from './email-confirmation.service';
 import { EmailVerificationController } from './email-verification.controller';
 import { LoginAttemptModule } from './login-attempt.module';
+import { TwoFactorController } from './two-factor/two-factor.controller';
+import { UserTwoFactorModule } from './two-factor/user-two-factor.module';
 import { SocialAccountModule } from './social-account/social-account.module';
 import { OAuthClientModule } from './oauth-client/oauth-client.module';
 import { TermsAcceptanceModule } from '../terms-acceptance/terms-acceptance.module';
@@ -86,7 +88,8 @@ const strategies = [AuthenticatedUserCacheProvider, JwtStrategy, JwtRefreshToken
 				RefreshTokenModule,
 				OAuthClientModule,
 				TermsAcceptanceModule,
-				LoginAttemptModule
+				LoginAttemptModule,
+				UserTwoFactorModule
 			],
 			useClass: AuthService
 		}),
@@ -109,9 +112,10 @@ const strategies = [AuthenticatedUserCacheProvider, JwtStrategy, JwtRefreshToken
 		RefreshTokenModule,
 		OAuthClientModule,
 		TermsAcceptanceModule,
-		LoginAttemptModule
+		LoginAttemptModule,
+		UserTwoFactorModule
 	],
-	controllers: [AuthController, EmailVerificationController, UserSessionController],
+	controllers: [AuthController, EmailVerificationController, UserSessionController, TwoFactorController],
 	providers: [
 		...providers,
 		...CommandHandlers,

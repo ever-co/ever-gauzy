@@ -5,6 +5,7 @@ import { environment, TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR } from '@gauzy/confi
 import { sign, verify } from 'jsonwebtoken';
 import { DataSource, EntitySchema, Repository } from 'typeorm';
 import { signPurposeToken, TokenPurposeEnum } from '../../auth/purpose-token';
+import { INVOICE_REJECTED_IS_FINAL, INVOICE_VOID_IS_FINAL } from '../../invoice/invoice-final-status';
 import { PublicInvoiceService } from './public-invoice.service';
 
 /**
@@ -29,7 +30,9 @@ const InvoiceSchema = new EntitySchema({
 		tenantId: { type: 'varchar', nullable: true },
 		organizationId: { type: 'varchar', nullable: true },
 		status: { type: 'varchar', nullable: true },
-		internalNote: { type: 'text', nullable: true }
+		isEstimate: { type: 'boolean', nullable: true },
+		internalNote: { type: 'text', nullable: true },
+		releasedTimeBilledAt: { type: 'datetime', nullable: true }
 	}
 });
 
@@ -85,11 +88,12 @@ beforeAll(async () => {
 	invoices = dataSource.getRepository('PublicInvoiceSpecInvoice');
 	estimateEmails = dataSource.getRepository('PublicInvoiceSpecEstimateEmail');
 
-	// The service passes `select` / `relations` the spec table does not have; forward the where only.
+	// The read passes `select` / `relations` the spec table does not have; forward the where only. The answer runs in a
+	// transaction on the spec table.
 	const invoiceRepository = {
 		findOneOrFail: ({ where }) => invoices.findOneOrFail({ where }),
-		findOneByOrFail: (where) => invoices.findOneByOrFail(where),
-		update: (id, entity) => invoices.update(id, entity)
+		manager: dataSource.manager,
+		target: invoices.target
 	};
 	service = new PublicInvoiceService(invoiceRepository as any, estimateEmails as any);
 });
@@ -278,6 +282,64 @@ describe('PublicInvoiceService.updateInvoice (PUT estimate accept/reject, GHSA-2
 			service.updateInvoice({ id: VICTIM.id, token } as any, { status: 'ACCEPTED' } as any)
 		).rejects.toBeInstanceOf(ForbiddenException);
 		expect((await invoices.findOneBy({ id: VICTIM.id })).status).toBe('SENT');
+	});
+
+	it.each([
+		['accepted', { status: 'ACCEPTED' }],
+		['rejected', { status: 'REJECTED' }],
+		['accepted and turned into a draft invoice', { status: 'DRAFT', isEstimate: false }]
+	])('refuses to answer a void estimate whose released time another invoice bills (%s)', async (_label, answer) => {
+		await invoices.update(VICTIM.id, { status: 'VOID', releasedTimeBilledAt: new Date('2026-11-02T10:00:00Z') });
+		const token = estimateToken();
+		await storeEstimateEmail(token);
+
+		await expect(service.updateInvoice({ id: VICTIM.id, token } as any, answer as any)).rejects.toMatchObject({
+			status: 400,
+			message: INVOICE_VOID_IS_FINAL
+		});
+		expect((await invoices.findOneBy({ id: VICTIM.id })).status).toBe('VOID');
+	});
+
+	it.each([
+		['accepted', { status: 'ACCEPTED', isEstimate: true }],
+		['accepted and turned into a draft invoice', { status: 'DRAFT', isEstimate: false }]
+	])(
+		'refuses to answer again a rejected estimate whose released time another invoice bills (%s)',
+		async (_label, answer) => {
+			await invoices.update(VICTIM.id, {
+				status: 'REJECTED',
+				isEstimate: true,
+				releasedTimeBilledAt: new Date('2026-11-02T10:00:00Z')
+			});
+			const token = estimateToken();
+			await storeEstimateEmail(token);
+
+			await expect(service.updateInvoice({ id: VICTIM.id, token } as any, answer as any)).rejects.toMatchObject({
+				status: 400,
+				message: INVOICE_REJECTED_IS_FINAL
+			});
+			expect(await invoices.findOneBy({ id: VICTIM.id })).toMatchObject({ status: 'REJECTED', isEstimate: true });
+		}
+	);
+
+	it('takes an acceptance of a rejected estimate whose released time no other invoice bills, as before', async () => {
+		await invoices.update(VICTIM.id, { status: 'REJECTED', isEstimate: true });
+		const token = estimateToken();
+		await storeEstimateEmail(token);
+
+		await service.updateInvoice({ id: VICTIM.id, token } as any, { status: 'ACCEPTED', isEstimate: true } as any);
+
+		expect((await invoices.findOneBy({ id: VICTIM.id })).status).toBe('ACCEPTED');
+	});
+
+	it('still takes a second rejection of a rejected estimate', async () => {
+		await invoices.update(VICTIM.id, { status: 'REJECTED', isEstimate: true });
+		const token = estimateToken();
+		await storeEstimateEmail(token);
+
+		await service.updateInvoice({ id: VICTIM.id, token } as any, { status: 'REJECTED', isEstimate: true } as any);
+
+		expect((await invoices.findOneBy({ id: VICTIM.id })).status).toBe('REJECTED');
 	});
 
 	it('still reports a missing invoice as a bad request', async () => {

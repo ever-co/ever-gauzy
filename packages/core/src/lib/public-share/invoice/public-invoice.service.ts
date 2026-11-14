@@ -1,11 +1,14 @@
-import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, HttpException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, IsNull, MoreThan, Repository, UpdateResult } from 'typeorm';
+import { EntityManager, FindOptionsWhere, IsNull, MoreThan, Repository, UpdateResult } from 'typeorm';
 import { IInvoice, IInvoiceUpdateInput } from '@gauzy/contracts';
 import { EstimateEmail, Invoice } from './../../core/entities/internal';
+import { answerCriteria } from './estimate-answer-criteria';
 import { parseFindOptionsRelations } from '../../core/utils';
 import { TypeOrmInvoiceRepository } from '../../invoice/repository/type-orm-invoice.repository';
 import { isNonEmptyString, TokenPurposeEnum, verifyPurposeToken } from '../../auth/purpose-token';
+import { assertFinalStatusKept } from '../../invoice/invoice-final-status';
+import { locksRows, typeOrmRowLock } from '../../invoice-item/invoice-item-billed-time';
 
 @Injectable()
 export class PublicInvoiceService {
@@ -181,14 +184,29 @@ export class PublicInvoiceService {
 				throw new ForbiddenException('Invalid estimate token');
 			}
 
-			const invoice = await this.typeOrmInvoiceRepository.findOneByOrFail({
-				id: invoiceId,
-				organizationId: decoded.organizationId ?? IsNull(),
-				tenantId: decoded.tenantId
-			});
-			return await this.typeOrmInvoiceRepository.update(invoice.id, entity);
+			const answer = async (manager: EntityManager): Promise<UpdateResult> => {
+				const invoices = manager.getRepository<Invoice>(this.typeOrmInvoiceRepository.target);
+				const invoice = await invoices.findOneOrFail({
+					where: {
+						id: invoiceId,
+						organizationId: decoded.organizationId ?? IsNull(),
+						tenantId: decoded.tenantId
+					},
+					...typeOrmRowLock()
+				});
+				assertFinalStatusKept(invoice, entity.status);
+				// Only a change of status is written, so its `affected` count tells the answer that changed it
+				return await invoices.update(answerCriteria(invoice.id, entity), entity);
+			};
+			// Where the database locks rows (Postgres, MySQL), the invoice is read locked and written in one
+			// transaction: a void another request is writing is waited for and refused against, not written over.
+			// SQLite locks no rows and runs every write on its one connection, where a second transaction begun
+			// meanwhile fails ("cannot start a transaction within a transaction"): there the read and the conditional
+			// write run without one, and two answers at the same moment still change the estimate once.
+			const manager = this.typeOrmInvoiceRepository.manager;
+			return locksRows() ? await manager.transaction(answer) : await answer(manager);
 		} catch (error) {
-			if (error instanceof ForbiddenException) {
+			if (error instanceof HttpException) {
 				throw error;
 			}
 			throw new BadRequestException(error);

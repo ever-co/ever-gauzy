@@ -81,11 +81,28 @@
 		@if (person.bio) {
 		<p class="person-card-bio">{{ person.bio }}</p>
 		}
-		@if (person.employeeId && person.canViewProfile) {
-		<a class="person-card-action" [routerLink]="['/pages/employees/view', person.employeeId]">
-			{{ 'EMPLOYEES_PAGE.VIEW.VIEW_PROFILE' | translate }}
-			<nb-icon icon="arrow-forward-outline" aria-hidden="true"></nb-icon>
-		</a>
+		@let canMessage = person.employeeId && person.canMessage && (chatAvailable$ | async);
+		@let canViewProfile = person.employeeId && person.canViewProfile;
+		@if (canMessage || canViewProfile) {
+		<div class="person-card-actions">
+			@if (canMessage) {
+			<a
+				class="person-card-action"
+				data-test="team-person-message"
+				[routerLink]="chatLink"
+				[queryParams]="chatQueryParams"
+			>
+				<nb-icon icon="message-circle-outline" aria-hidden="true"></nb-icon>
+				{{ 'CHAT.PROFILE.MESSAGE' | translate }}
+			</a>
+			}
+			@if (canViewProfile) {
+			<a class="person-card-action" [routerLink]="['/pages/employees/view', person.employeeId]">
+				{{ 'EMPLOYEES_PAGE.VIEW.VIEW_PROFILE' | translate }}
+				<nb-icon icon="arrow-forward-outline" aria-hidden="true"></nb-icon>
+			</a>
+			}
+		</div>
 		}
 	</div>
 </div>

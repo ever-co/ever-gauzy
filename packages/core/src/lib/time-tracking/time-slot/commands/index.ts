@@ -5,6 +5,7 @@ export * from './time-slot-bulk-create.command';
 export * from './time-slot-create.command';
 export * from './time-slot-merge.command';
 export * from './time-slot-bulk-delete.command';
+export * from './time-slot-duration-recalculate.command';
 export * from './update-time-slot.command';
 export * from './schedule-time-slot-entries.command';
 export * from './../time-slot-minute/commands/create-time-slot-minutes.command';

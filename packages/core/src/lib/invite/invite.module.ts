@@ -18,6 +18,7 @@ import { OrganizationProjectModule } from './../organization-project/organizatio
 import { OrganizationContactModule } from './../organization-contact/organization-contact.module';
 import { OrganizationDepartmentModule } from './../organization-department/organization-department.module';
 import { UserOrganizationModule } from './../user-organization/user-organization.module';
+import { EmployeePlaceholderModule } from '../employee-placeholder/employee-placeholder.module';
 import { InviteController } from './invite.controller';
 import { Invite } from './invite.entity';
 import { InviteResolver } from './invite.resolver';
@@ -63,7 +64,9 @@ import { MikroOrmInviteRepository } from './repository/mikro-orm-invite.reposito
 		OrganizationTeamModule,
 		OrganizationTeamEmployeeModule,
 		UserOrganizationModule,
-		AuthModule
+		AuthModule,
+		// The transfer a claim invitation's acceptance runs (ever-co/ever-gauzy#11913).
+		EmployeePlaceholderModule
 	],
 	controllers: [InviteController],
 	providers: [

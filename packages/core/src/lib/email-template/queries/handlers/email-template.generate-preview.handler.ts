@@ -1,3 +1,4 @@
+// cspell:ignore cancle -- `cancleAppointmentUrl` is the name the appointment templates read
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import * as Handlebars from 'handlebars';
 import { ConfigService, environment } from '@gauzy/config';
@@ -26,9 +27,12 @@ export class EmailTemplateGeneratePreviewHandler implements IQueryHandler<EmailT
 		const clientBaseUrl = this.configService.get('clientBaseUrl');
 		const host = this.configService.get('host');
 		const { appName, appLogo, appSignature, appLink, companyLink, companyName } = environment.appIntegrationConfig;
+		// Where a sample button or link of the preview leads: this deployment's own front end.
+		const sampleLink = clientBaseUrl || host;
 
 		const handlebarsTemplate = Handlebars.compile(textToHtml);
 		const html = handlebarsTemplate({
+			...this.samplesOfConditionalParts(sampleLink),
 			organizationName: 'Organization',
 			email: 'user@domain.com',
 			name: 'John Doe',
@@ -86,12 +90,71 @@ export class EmailTemplateGeneratePreviewHandler implements IQueryHandler<EmailT
 				{
 					tenantName: 'Default',
 					userName: 'Default',
-					resetLink: 'https://github.com/ever-co/ever-gauzy'
+					resetLink: 'https://github.com/ever-co/ever-gauzy',
+					// The same list previews the Inbox digest, whose entries read these.
+					kindLabel: 'Mention',
+					title: 'John Doe mentioned you in a task',
+					body: 'Can you review this before the release?',
+					link: sampleLink
 				}
 			],
 			companyLink,
 			companyName
 		});
 		return { html };
+	}
+
+	/**
+	 * Sample values for the parts a template shows only when their variable has a value (a sign-in or invitation
+	 * link and its button, a one-time code, an optional name) and for the variables only one template reads. Without
+	 * them the preview of those templates had an empty code box and no button at all.
+	 *
+	 * @param link Where the sample buttons and links lead.
+	 * @returns The sample locals.
+	 */
+	private samplesOfConditionalParts(link: string): Record<string, unknown> {
+		return {
+			// Sign-in, verification, password and account emails
+			magicCode: generateAlphaNumericCode(),
+			magicLink: link,
+			verificationLink: link,
+			generatedUrl: link,
+			userName: 'John Doe',
+			tenantName: 'Default',
+			deletionLink: link,
+			expiresInMinutes: 30,
+			accounts: 1,
+			workspacesDeleted: 0,
+			allAccounts: true,
+			multipleAccounts: false,
+			workspace: 'Default',
+			// Invitations and teams
+			inviteLink: link,
+			code: generateAlphaNumericCode(),
+			fullName: 'John Doe',
+			employeeName: 'Alex',
+			// Invoices, estimates and payments
+			acceptUrl: link,
+			rejectUrl: link,
+			contactName: 'John Doe',
+			invoiceNumber: 1,
+			amount: 100,
+			// Appointments, hiring and timesheets
+			emails: 'participant@example.com, guest@example.com',
+			rescheduleAppointment: link,
+			cancleAppointmentUrl: link,
+			jobTitle: 'Software Engineer',
+			source: 'Web Timer',
+			// Inbox notification and digest
+			kindLabel: 'Mention',
+			title: 'John Doe mentioned you in a task',
+			body: 'Can you review this before the release?',
+			link,
+			count: 1,
+			plural: false,
+			more: 0,
+			inboxLink: link,
+			settingsLink: link
+		};
 	}
 }
