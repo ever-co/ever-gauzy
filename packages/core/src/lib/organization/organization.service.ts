@@ -46,8 +46,9 @@ export class OrganizationService extends TenantAwareCrudService<Organization> {
 	/**
 	 * Soft deletes an organization of the caller's tenant, and with it what a person meets it through: its teams
 	 * leave sign-in, the workspace pick and every team list, its members' last and default organization move to
-	 * another of theirs (or to none), and a token that names it is refused at its next call. Its projects, time and
-	 * invoices stay untouched; {@link softRecover} brings everything back (see `organization-deletion.ts`).
+	 * another of theirs (or to none), its invitations can no longer be accepted, and a token that names it is refused
+	 * at its next call. Its projects, time and invoices stay untouched; {@link softRecover} brings everything back
+	 * (see `organization-deletion.ts`).
 	 *
 	 * One transaction, through the TypeORM data source under either ORM: both read the same tables.
 	 *
@@ -69,8 +70,8 @@ export class OrganizationService extends TenantAwareCrudService<Organization> {
 	}
 
 	/**
-	 * Restores a soft-deleted organization of the caller's tenant with what its soft delete hid: its teams, team
-	 * memberships, organization memberships and member records come back as they were. A member the delete left
+	 * Restores a soft-deleted organization of the caller's tenant with what its soft delete hid: its invitations,
+	 * teams, team memberships, organization memberships and member records come back as they were. A member the delete left
 	 * with no organization lands in it again at their next sign-in.
 	 *
 	 * @param id - The organization.

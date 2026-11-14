@@ -86,6 +86,10 @@ const schemas = [
 		}
 	}),
 	new EntitySchema({
+		name: 'invite',
+		columns: { id: { type: 'varchar', primary: true }, ...ofOrganization, ...softDeletable }
+	}),
+	new EntitySchema({
 		name: 'organization_project',
 		columns: { id: { type: 'varchar', primary: true }, ...ofOrganization, ...softDeletable }
 	}),
@@ -235,6 +239,10 @@ describe('Soft deleting an organization (#11960)', () => {
 			},
 			{ id: 'dave', tenantId: TENANT, lastOrganizationId: TRIAL, defaultOrganizationId: null, lastTeamId: null }
 		]);
+		await insert('invite', [
+			{ id: 'invite-trial', tenantId: TENANT, organizationId: TRIAL },
+			{ id: 'invite-main', tenantId: TENANT, organizationId: MAIN }
+		]);
 		await insert('organization_project', [
 			{ id: 'project-trial', tenantId: TENANT, organizationId: TRIAL },
 			{ id: 'project-main', tenantId: TENANT, organizationId: MAIN }
@@ -277,10 +285,11 @@ describe('Soft deleting an organization (#11960)', () => {
 		}
 	});
 
-	it('marks the organization, its teams, team members, memberships and member records with one instant', async () => {
+	it('marks the organization, its invitations, teams, team members, memberships and members with one instant', async () => {
 		const hidden = await hide(ofTenant(TRIAL));
 
 		expect(hidden.rows).toEqual({
+			invite: 1,
 			organization_team_employee: 2,
 			organization_team: 1,
 			user_organization: 4,
@@ -288,7 +297,7 @@ describe('Soft deleting an organization (#11960)', () => {
 		});
 		const deletedAt = (await row('organization', TRIAL)).deletedAt;
 		expect(deletedAt).toBeTruthy();
-		for (const table of ['organization_team_employee', 'user_organization', 'employee']) {
+		for (const table of ['invite', 'organization_team_employee', 'user_organization', 'employee']) {
 			const ofTrial = (await rows(table)).filter((candidate) => candidate.organizationId === TRIAL);
 			expect(ofTrial.map((candidate) => candidate.deletedAt)).toEqual(ofTrial.map(() => deletedAt));
 		}
@@ -304,6 +313,7 @@ describe('Soft deleting an organization (#11960)', () => {
 		expect((await row('organization', MAIN)).deletedAt).toBeNull();
 		expect((await row('organization_team', MAIN_TEAM)).deletedAt).toBeNull();
 		expect((await row('organization_team_employee', 'otm-alice-main')).deletedAt).toBeNull();
+		expect((await row('invite', 'invite-main')).deletedAt).toBeNull();
 		const otherMemberships = (await rows('user_organization')).filter(
 			(candidate) => candidate.organizationId !== TRIAL
 		);
@@ -360,6 +370,7 @@ describe('Soft deleting an organization (#11960)', () => {
 			const before = await Promise.all(
 				[
 					'organization',
+					'invite',
 					'organization_team',
 					'organization_team_employee',
 					'user_organization',
@@ -371,6 +382,7 @@ describe('Soft deleting an organization (#11960)', () => {
 			const restored = await restore(ofTenant(TRIAL));
 
 			expect(restored.rows).toEqual({
+				invite: 1,
 				organization_team_employee: 2,
 				organization_team: 1,
 				user_organization: 4,
@@ -379,6 +391,7 @@ describe('Soft deleting an organization (#11960)', () => {
 			const after = await Promise.all(
 				[
 					'organization',
+					'invite',
 					'organization_team',
 					'organization_team_employee',
 					'user_organization',
@@ -404,6 +417,7 @@ describe('Soft deleting an organization (#11960)', () => {
 			const restored = await restore(ofTenant(MAIN));
 
 			expect(restored.rows).toEqual({
+				invite: 0,
 				organization_team_employee: 0,
 				organization_team: 0,
 				user_organization: 0,

@@ -8,9 +8,10 @@ import { ID } from '@gauzy/contracts';
  * Marking the organization row alone left everything a person meets it through in place: its teams were still
  * listed at sign-in and in the workspace pick, its members' tokens still named it, and their next sign-in landed
  * them in it. A soft delete therefore marks, with the organization's own `deletedAt`, the rows of the organization
- * that sign-in, team lists and tokens read: team memberships, teams, organization memberships and member records.
- * Every read through either ORM leaves out a soft-deleted row, so the organization leaves every screen, and a token
- * that names it, or one of its member records, is refused by `JwtStrategy` at its next call.
+ * that sign-in, team lists and tokens read: team memberships, teams, organization memberships and member records,
+ * and its invitations, which would otherwise make new members of it. Every read through either ORM leaves out a
+ * soft-deleted row, so the organization leaves every screen, an invitation of it can no longer be accepted, and a
+ * token that names it, or one of its member records, is refused by `JwtStrategy` at its next call.
  *
  * Nothing else is touched: projects, tasks, time logs and invoices stay as they are, and are out of reach because
  * no membership of the organization is left. A restore clears `deletedAt` on the rows that carry the organization's
@@ -36,10 +37,11 @@ export const ORGANIZATION_DELETE_REFUSED_MESSAGE =
 	'Delete it with DELETE /organization/:id/soft instead, which hides it and can be undone.';
 
 /**
- * The tables whose rows of the organization a soft delete marks, each read by sign-in, team lists or tokens:
- * team memberships, teams, organization memberships, member records.
+ * The tables whose rows of the organization a soft delete marks, each read by sign-in, team lists, tokens or the
+ * acceptance of an invitation: invitations, team memberships, teams, organization memberships, member records.
  */
 export const TABLES_HIDDEN_WITH_ORGANIZATION = [
+	'invite',
 	'organization_team_employee',
 	'organization_team',
 	'user_organization',
@@ -161,7 +163,7 @@ export async function restoreOrganization(
 		throw new NotFoundException('The organization was not found.');
 	}
 
-	const rows = { organization_team_employee: 0, organization_team: 0, user_organization: 0, employee: 0 };
+	const rows = { invite: 0, organization_team_employee: 0, organization_team: 0, user_organization: 0, employee: 0 };
 	if (stored.deletedAt === null || stored.deletedAt === undefined) {
 		return { rows, lastOrganizationRestored: 0 };
 	}
