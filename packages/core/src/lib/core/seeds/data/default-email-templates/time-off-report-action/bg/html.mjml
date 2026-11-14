@@ -44,6 +44,11 @@
 				<mj-text>
 					Заявката Ви за отпуск вече е със статус <strong dir="auto" style="color: #18181B; font-weight: 600">{{time_off_policy_requires_approval}}</strong>. Статус на плащането: <strong dir="auto" style="color: #18181B; font-weight: 600">{{#if time_off_policy_paid_status}}платен{{else}}неплатен{{/if}}</strong>.
 				</mj-text>
+				<mj-divider />
+				<mj-text mj-class="note" padding="0 10px 12px">
+					С уважение,<br />
+					<span style="color: #18181B; font-weight: 600">{{appSignature}}</span>
+				</mj-text>
 			</mj-column>
 		</mj-section>
 		<mj-section padding="20px 16px 40px">

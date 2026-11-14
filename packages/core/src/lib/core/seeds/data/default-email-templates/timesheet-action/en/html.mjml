@@ -44,6 +44,11 @@
 				<mj-text>
 					Your timesheet{{#if project}} for the project <strong dir="auto" style="color: #18181B; font-weight: 600">{{project}}</strong>{{/if}} is now <strong dir="auto" style="color: #18181B; font-weight: 600">{{timesheet_action}}</strong>.
 				</mj-text>
+				<mj-divider />
+				<mj-text mj-class="note" padding="0 10px 12px">
+					Best regards,<br />
+					<span style="color: #18181B; font-weight: 600">{{appSignature}}</span>
+				</mj-text>
 			</mj-column>
 		</mj-section>
 		<mj-section padding="20px 16px 40px">

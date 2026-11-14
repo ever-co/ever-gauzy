@@ -46,6 +46,11 @@
 				<mj-text>
 					גיליון שעות{{#if project}} בפרויקט <strong dir="auto" style="color: #18181B; font-weight: 600">{{project}}</strong>{{/if}} הוגש{{#if candidateName}} על ידי <strong dir="auto" style="color: #18181B; font-weight: 600">{{candidateName}}</strong>{{/if}}.
 				</mj-text>
+				<mj-divider />
+				<mj-text mj-class="note" padding="0 10px 12px">
+					בברכה,<br />
+					<span style="color: #18181B; font-weight: 600">{{appSignature}}</span>
+				</mj-text>
 			</mj-column>
 		</mj-section>
 		<mj-section padding="20px 16px 40px">

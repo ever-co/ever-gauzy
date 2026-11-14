@@ -55,7 +55,7 @@
 				<mj-divider />
 				<mj-text mj-class="note" padding="0 10px 12px">
 					С уважением,<br />
-					<span style="color: #18181B; font-weight: 600">Команда {{organizationName}}</span>
+					<span style="color: #18181B; font-weight: 600">{{appSignature}}</span>
 				</mj-text>
 			</mj-column>
 		</mj-section>

@@ -46,6 +46,11 @@
 				<mj-text>
 					בקשת הציוד שלך נמצאת כעת בסטטוס <strong dir="auto" style="color: #18181B; font-weight: 600">{{equipment_status}}</strong>.{{#if reason}} סיבה: {{reason}}{{/if}}
 				</mj-text>
+				<mj-divider />
+				<mj-text mj-class="note" padding="0 10px 12px">
+					בברכה,<br />
+					<span style="color: #18181B; font-weight: 600">{{appSignature}}</span>
+				</mj-text>
 			</mj-column>
 		</mj-section>
 		<mj-section padding="20px 16px 40px">
