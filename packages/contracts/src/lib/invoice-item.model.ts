@@ -45,6 +45,9 @@ export interface IInvoiceItemCreateInput
 	expenseId?: string;
 	applyTax?: boolean;
 	applyDiscount?: boolean;
-	/** The time logs the line bills, recorded with the line by the invoice create and the bulk save of lines. */
+	/**
+	 * The time logs the line bills, recorded with the line by the invoice create and the bulk save of lines. On the
+	 * bulk save, a line without it that repeats one of the invoice's lines unchanged keeps that line's time.
+	 */
 	timeLogIds?: ID[];
 }
