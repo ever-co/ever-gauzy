@@ -119,7 +119,8 @@ describe('TimeLogUpdateHandler, the stop of a run that sent no heartbeat (#11843
 		const { bulkCreate, savedRun } = await stopRun(TimeLogSourceEnum.TEAMS, { hasSlots: true });
 
 		expect(bulkCreate).not.toHaveBeenCalled();
-		expect(savedRun.timeSlots).toBeUndefined();
+		// Nothing replaces its slots: the run is not even saved again, its targeted update is the only write
+		expect(savedRun?.timeSlots).toBeUndefined();
 	});
 
 	it('still gives a web timer run the slots of its range, without reading its slots', async () => {

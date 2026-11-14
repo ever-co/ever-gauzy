@@ -225,8 +225,14 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 					);
 				}
 
-				// Update the time log in the repository (a failure propagates, before any slot is released)
-				await this.saveUpdatedTimeLog(timeLog);
+				// Update the time log in the repository (a failure propagates, before any slot is released). An update
+				// that makes no slot of its own (`manualTimeSlot`: the timer's start move, a deleted time span) has
+				// nothing to save that the targeted update above did not write, and saving the row read back would
+				// write every column a concurrent call changed since (a timer stop's `isRunning` and `stoppedAt`
+				// included) back to what it read.
+				if (!manualTimeSlot) {
+					await this.saveUpdatedTimeLog(timeLog);
+				}
 			}
 		}
 
@@ -386,10 +392,12 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 			return { remove: [], unlink: [] };
 		}
 
+		// Under MikroORM a slot's time logs are a collection, iterable but without array methods
+		const logsOf = (slot: ITimeSlot): ITimeLog[] => Array.from(slot.timeLogs ?? []);
 		const linked = (await this.findTimeSlots(tenantId, organizationId, employeeId, startTimes)).filter((slot) =>
-			(slot.timeLogs ?? []).some((log) => log.id === timeLog.id)
+			logsOf(slot).some((log) => log.id === timeLog.id)
 		);
-		const heldByAnother = (slot: ITimeSlot) => (slot.timeLogs ?? []).some((log) => log.id !== timeLog.id);
+		const heldByAnother = (slot: ITimeSlot) => logsOf(slot).some((log) => log.id !== timeLog.id);
 
 		return {
 			remove: linked.filter((slot) => !heldByAnother(slot)).map((slot) => slot.id),

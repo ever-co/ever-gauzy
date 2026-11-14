@@ -5,6 +5,8 @@ import {
 	NotFoundException,
 	ForbiddenException,
 	ConflictException,
+	HttpException,
+	HttpStatus,
 	NotAcceptableException,
 	RequestTimeoutException,
 	UnprocessableEntityException
@@ -21,26 +23,38 @@ import {
 	FindOptionsRelations,
 	FindOptionsWhere,
 	Or,
-	Equal
+	Equal,
+	EntityManager
 } from 'typeorm';
 import * as moment from 'moment';
 import {
 	TimeLogType,
 	ITimerStatus,
 	ITimerToggleInput,
+	ITimerStartMoveInput,
 	ITimerDiscardInput,
 	IDateRange,
 	TimeLogSourceEnum,
 	ITimerStatusInput,
 	ITimeLog,
 	PermissionsEnum,
+	RolesEnum,
 	ITimeSlot,
+	ITimesheet,
 	IEmployee,
 	IEmployeeFindInput,
 	ID
 } from '@gauzy/contracts';
+import { environment as env } from '@gauzy/config';
 import { isNotEmpty } from '@gauzy/utils';
-import { DailyPlan, Employee, OrganizationTeam, OrganizationTeamEmployee, TimeLog } from '../../core/entities/internal';
+import {
+	DailyPlan,
+	Employee,
+	OrganizationTeam,
+	OrganizationTeamEmployee,
+	TimeLog,
+	TimeSlot
+} from '../../core/entities/internal';
 import { RequestContext } from '../../core/context';
 import {
 	MultiORM,
@@ -64,8 +78,11 @@ import {
 	ScheduleTimeLogEntriesCommand,
 	TimeLogCreateCommand,
 	TimeLogDeleteCommand,
-	TimeLogUpdateCommand
+	TimeLogUpdateCommand,
+	UpdateEmployeeTotalWorkedHoursCommand
 } from '../time-log/commands';
+import { TimesheetFirstOrCreateCommand, TimesheetRecalculateCommand } from '../timesheet/commands';
+import { generateTimeSlots } from '../time-slot/utils';
 import {
 	assertRequiredContext,
 	projectIdForEntry,
@@ -96,6 +113,14 @@ import {
 	planHasTasks,
 	planHoldsTask
 } from './timer-plan-rule';
+import {
+	StartMoveRefusal,
+	TIMER_NOT_RUNNING,
+	TIMER_START_CHANGED,
+	TIMER_START_OVERLAP,
+	movesStartEarlier,
+	startMoveRefusal
+} from './timer-start-move-rule';
 
 // Get the type of the Object-Relational Mapping (ORM) used in the application.
 const ormType: MultiORM = getORMType();
@@ -144,6 +169,22 @@ interface QueuedTurn {
 	readonly passOn: () => void;
 }
 
+/** A ten-minute window of a run's range (`generateTimeSlots`): its start, its end, the seconds the run covers in it. */
+interface RunWindow {
+	startedAt: Date;
+	stoppedAt: Date;
+	duration: number;
+}
+
+/**
+ * The length of a run's window, in seconds.
+ *
+ * @param window - The window.
+ */
+function windowSecondsOf(window: RunWindow): number {
+	return moment.utc(window.stoppedAt).diff(moment.utc(window.startedAt).startOf('minute'), 'seconds');
+}
+
 /** A run another one replaced, as its stop wrote it, and the logs it overlapped before that stop: the ones it cuts. */
 interface ReplacedRunOverlaps {
 	readonly run: ITimeLog;
@@ -157,6 +198,22 @@ interface ReplacedRunOverlaps {
  */
 function isTimeLogNamed(input: ITimerToggleInput): boolean {
 	return input.timeLogId !== undefined && input.timeLogId !== null;
+}
+
+/**
+ * The exception that answers a refused move of the running timer's start: its status, its message and its code, which
+ * a client reads to say why in its own language.
+ */
+function startMoveException(refusal: StartMoveRefusal): HttpException {
+	const body = { message: refusal.message, code: refusal.code };
+	switch (refusal.status) {
+		case HttpStatus.FORBIDDEN:
+			return new ForbiddenException(body);
+		case HttpStatus.CONFLICT:
+			return new ConflictException(body);
+		default:
+			return new BadRequestException(body);
+	}
 }
 
 /**
@@ -810,6 +867,400 @@ export class TimerService {
 				'No running log found for this stop: the running timer started after the requested stop time.'
 			);
 		}
+	}
+
+	/**
+	 * Moves the start of the caller's running timer, earlier or later, while it keeps running: the entry stays one
+	 * entry. Marie clicked Start at 9:25 and began at 9:00; she sets 9:00 and her timer reads 25 more minutes.
+	 *
+	 * The move follows the rules of time changed by hand (`startMoveRefusal`): not later than now, the role's permission
+	 * and the organization's switch to change tracked time for any move, and to add time by hand for an earlier one,
+	 * and the organization's reason rule. A run of the desktop app or the agent is refused, since they upload its slots
+	 * themselves. An earlier start may not overlap another entry of the caller, and the minutes it adds get their
+	 * ten-minute slots, without activity. A later start goes through the time log update, which releases the slots
+	 * before it, with their screenshots and activity. The log is marked edited, with the reason given. The move takes
+	 * the employee's turn, as a start or a stop does (`inEmployeeTurn`).
+	 *
+	 * @param request - The new start, and the reason.
+	 * @returns The running log, the row the timer status answers as its `lastLog`.
+	 */
+	async moveRunningTimerStart(request: ITimerStartMoveInput): Promise<ITimeLog> {
+		const tenantId = RequestContext.currentTenantId();
+
+		const employee = await this.findEmployee({ organization: true });
+		if (!employee.isTrackingEnabled) {
+			throw new ForbiddenException(`The time tracking functionality has been disabled for you.`);
+		}
+
+		// With no start, stop or other move of the employee's timer in between, in this process (inEmployeeTurn)
+		return await this.inEmployeeTurn(employee.id, (turn) =>
+			this.moveStartInTurn(request, employee, tenantId, turn)
+		);
+	}
+
+	/**
+	 * Moves the start of the employee's running timer, as `moveRunningTimerStart` says, holding their turn: it reads
+	 * the run once the start or stop before it has settled, and writes no time log once the turn has passed to the
+	 * next one.
+	 *
+	 * @param request - The new start, and the reason.
+	 * @param employee - The caller's employee, with their organization.
+	 * @param tenantId - The caller's tenant.
+	 * @param turn - The employee's turn this move holds.
+	 * @returns The running log.
+	 * @throws RequestTimeoutException when the move took so long that the next start or stop went on.
+	 */
+	private async moveStartInTurn(
+		request: ITimerStartMoveInput,
+		employee: IEmployee,
+		tenantId: ID,
+		turn: EmployeeTurn
+	): Promise<ITimeLog> {
+		const runningLog = await this.getLastRunningLog();
+		const now = moment.utc().toDate();
+		const requestedStart = moment.utc(request.startedAt).toDate();
+		const refusal = startMoveRefusal({
+			runningLog,
+			requestedStart,
+			now,
+			reason: request.reason,
+			organization: employee.organization,
+			bypassesTimePolicy: this.bypassesTimePolicy(),
+			roleMayModifyTime: RequestContext.hasPermission(PermissionsEnum.ALLOW_MODIFY_TIME),
+			roleMayAddTime: RequestContext.hasPermission(PermissionsEnum.ALLOW_MANUAL_TIME)
+		});
+		if (refusal) {
+			throw startMoveException(refusal);
+		}
+
+		const runningSince = moment.utc(runningLog.startedAt);
+		const keepsItsStart = runningSince.isSame(requestedStart);
+		if (keepsItsStart) {
+			// A retry of a move whose slot work or recalculation failed finds the start already moved: it completes them
+			const run = await this.typeOrmTimeLogRepository.findOneBy({ id: runningLog.id, tenantId });
+			if (run) {
+				await this.coverRunFromItsStart(run, now);
+				// A later start that crossed a week leaves the timesheet of the run's first week counting the slots it
+				// released, and once that start is written, no move names that timesheet any more
+				const firstWeek: ITimesheet = await this._commandBus.execute(
+					new TimesheetFirstOrCreateCommand(run.createdAt, run.employeeId, run.organizationId)
+				);
+				await this.recalculateRun(run, firstWeek?.id);
+			}
+			return runningLog;
+		}
+
+		const addsMinutes = movesStartEarlier(runningLog.startedAt, requestedStart);
+		if (addsMinutes) {
+			await this.assertNoEntryBetween(runningLog, requestedStart, runningSince.toDate(), tenantId);
+		}
+
+		// The run as it is before the move, for the time log update below to tell which of its slots the move releases
+		const before = await this.typeOrmTimeLogRepository.findOneBy({ id: runningLog.id, tenantId });
+		const checkedStartStillStored = Boolean(before) && runningSince.isSame(before.startedAt);
+		if (!checkedStartStillStored) {
+			throw await this.moveRefusedMeanwhile(runningLog.id, tenantId);
+		}
+
+		const reason = (request.reason ?? '').trim();
+		const changes: Partial<ITimeLog> = {
+			startedAt: requestedStart,
+			editedAt: now,
+			...(reason ? { reason } : {})
+		};
+		const write: Partial<ITimeLog> = { ...changes };
+		const endAfterMove = await this.endAfterStartMove(before, requestedStart, now);
+		if (endAfterMove) {
+			write.stoppedAt = endAfterMove;
+		}
+
+		// The move is written only while the run still runs from the start it was checked against: a stop that landed
+		// since keeps its end, another move's start is checked again, and nothing moves.
+		turn.assertHeld();
+		const written = await this.typeOrmTimeLogRepository.update(
+			{ id: runningLog.id, tenantId, isRunning: true, startedAt: before.startedAt },
+			write
+		);
+		if (!written.affected) {
+			throw await this.moveRefusedMeanwhile(runningLog.id, tenantId);
+		}
+
+		// The time log update files the run under the timesheet of its new start and releases the slots before a later
+		// start, with their screenshots and activity. It reads the run as it was, known to run until now, and makes no slot
+		// of its own (`manualTimeSlot`): a run whose stop gives it the slots of its whole range must keep having none.
+		const leftTimesheetId = before.timesheetId;
+		const knownRun = Object.assign(before, { stoppedAt: now });
+		turn.assertHeld();
+		const moved: ITimeLog = await this._commandBus.execute(new TimeLogUpdateCommand(changes, knownRun, true));
+
+		// The update recalculated the timesheet the run is now under, not the one a start moved to another week left
+		const leavesTimesheet = Boolean(leftTimesheetId) && leftTimesheetId !== moved.timesheetId;
+		const slotsChanged = await this.coverRunFromItsStart(moved, now);
+		const totalsChanged = slotsChanged || leavesTimesheet;
+		if (totalsChanged) {
+			await this.recalculateRun(moved, leftTimesheetId);
+		}
+
+		return moved;
+	}
+
+	/**
+	 * Why a checked move found its run changed when it was written: stopped since (400, as with nothing running), or
+	 * its start moved by another call (409: the move is checked again from that start).
+	 *
+	 * @param timeLogId - The run.
+	 * @param tenantId - The caller's tenant.
+	 */
+	private async moveRefusedMeanwhile(timeLogId: ID, tenantId: ID): Promise<HttpException> {
+		const run = await this.typeOrmTimeLogRepository.findOneBy({ id: timeLogId, tenantId });
+		if (!run?.isRunning) {
+			return new BadRequestException({
+				message: 'The timer stopped before its start could move. Nothing was changed.',
+				code: TIMER_NOT_RUNNING
+			});
+		}
+		return new ConflictException({
+			message: 'The start of the timer changed while this move was checked. Nothing was changed: try again.',
+			code: TIMER_START_CHANGED
+		});
+	}
+
+	/**
+	 * Recalculates the timesheet a run is under, the one it left when given, and the employee's worked hours.
+	 *
+	 * @param run - The run, as stored.
+	 * @param leftTimesheetId - The timesheet the run left, if any.
+	 */
+	private async recalculateRun(run: ITimeLog, leftTimesheetId?: ID): Promise<void> {
+		const timesheetIds = new Set([run.timesheetId, leftTimesheetId].filter(Boolean));
+		for (const timesheetId of timesheetIds) {
+			await this._commandBus.execute(new TimesheetRecalculateCommand(timesheetId));
+		}
+		await this._commandBus.execute(new UpdateEmployeeTotalWorkedHoursCommand(run.employeeId));
+	}
+
+	/** A super admin, where the installation lets that role bypass the organization's time policy. */
+	private bypassesTimePolicy(): boolean {
+		return env.allowSuperAdminRole && RequestContext.hasRoles([RolesEnum.SUPER_ADMIN]);
+	}
+
+	/**
+	 * Refuses an earlier start that overlaps another entry of the caller, before anything is written. Manual time cuts
+	 * the entries it overlaps; a start moved over an earlier entry would cut it without saying so, so it is refused and
+	 * the answer names when the overlapped entry ends.
+	 *
+	 * @param runningLog - The run whose start moves.
+	 * @param from - The new start.
+	 * @param until - The former start.
+	 * @param tenantId - The caller's tenant.
+	 * @throws ConflictException with the code TIMER_START_OVERLAP.
+	 */
+	private async assertNoEntryBetween(runningLog: ITimeLog, from: Date, until: Date, tenantId: ID): Promise<void> {
+		const conflicts: ITimeLog[] = await this._commandBus.execute(
+			new IGetConflictTimeLogCommand({
+				startDate: from,
+				endDate: until,
+				employeeId: runningLog.employeeId,
+				organizationId: runningLog.organizationId,
+				tenantId,
+				ignoreId: runningLog.id
+			})
+		);
+		const overlapping = conflicts ?? [];
+		if (overlapping.length === 0) {
+			return;
+		}
+
+		const ends = overlapping.map((log) => moment.utc(log.stoppedAt ?? log.startedAt).valueOf());
+		const overlapsUntil = new Date(Math.max(...ends)).toISOString();
+		throw new ConflictException({
+			message: 'The new start overlaps another of your time entries. Choose a start after it ends.',
+			code: TIMER_START_OVERLAP,
+			overlapsUntil
+		});
+	}
+
+	/**
+	 * The end a run takes as its start moves, or undefined when it keeps its own: the end a start that replaces the run
+	 * reads as its last heartbeat (`replacedRunEnd`).
+	 *
+	 * A run that never had a heartbeat (its end on its start, no slot: a web timer's) keeps its end on its new start,
+	 * so a start that replaces it still ends it where that start begins. A run that had heartbeats keeps its last one,
+	 * or takes now as one when its new start passes it, so it never ends before it starts and the slot holding the new
+	 * start stays with it.
+	 *
+	 * @param run - The run as stored before the move.
+	 * @param requestedStart - The new start.
+	 * @param now - The moment of the move.
+	 */
+	private async endAfterStartMove(run: ITimeLog, requestedStart: Date, now: Date): Promise<Date | undefined> {
+		const knownUntil = moment.utc(run.stoppedAt ?? run.startedAt);
+		const held = await this.slotsHeldBy(run.id);
+		const endsAfterItsStart = knownUntil.isAfter(moment.utc(run.startedAt));
+		const holdsSlots = held.length > 0;
+		const hasHadHeartbeat = endsAfterItsStart || holdsSlots;
+		if (!hasHadHeartbeat) {
+			return requestedStart;
+		}
+
+		const startsAfterKnownEnd = moment.utc(requestedStart).isAfter(knownUntil);
+		if (startsAfterKnownEnd) {
+			return now;
+		}
+		return undefined;
+	}
+
+	/**
+	 * The time slots a time log holds, as stored.
+	 *
+	 * @param timeLogId - The time log.
+	 */
+	private async slotsHeldBy(timeLogId: ID): Promise<ITimeSlot[]> {
+		return await this.typeOrmTimeLogRepository.manager
+			.createQueryBuilder()
+			.relation(TimeLog, 'timeSlots')
+			.of(timeLogId)
+			.loadMany();
+	}
+
+	/**
+	 * Gives a run whose client posts its slots (a heartbeat-fed run) the slots of the time from its start to its first
+	 * slot, without activity, and gives that first slot the seconds the run covers in it, keeping its activity: an
+	 * earlier start's added minutes count in the slots, and so in the timesheet, as in the run's duration. A slot the
+	 * run shares with the entry before it keeps that entry's seconds besides the run's (`secondsInWindow`). A later start
+	 * inside the window of the run's first slot takes from that slot the seconds before it, which the release of the
+	 * time log update leaves, as it drops whole windows only.
+	 *
+	 * A run holding no slot is left as it is: its stop gives it the slots of its whole range, which a slot made here
+	 * would prevent. The writes run in one transaction and are idempotent (a slot is reused, its seconds counted from
+	 * the entries holding it): a failure leaves the slots as they were, and a retry of the move finds the same work to
+	 * do.
+	 *
+	 * @param run - The running log, as stored.
+	 * @param now - The moment of the move: the run covers its past up to it.
+	 * @returns Whether a slot changed, so the caller recalculates the totals.
+	 */
+	private async coverRunFromItsStart(run: ITimeLog, now: Date): Promise<boolean> {
+		const { id: timeLogId } = run;
+		const held = await this.slotsHeldBy(timeLogId);
+		if (held.length === 0) {
+			return false;
+		}
+
+		const windowOf = (slot: Pick<ITimeSlot, 'startedAt'>): number =>
+			moment.utc(slot.startedAt).startOf('minute').valueOf();
+		const firstHeldWindow = Math.min(...held.map(windowOf));
+		const coverage: RunWindow[] = generateTimeSlots(moment.utc(run.startedAt).toDate(), now).filter(
+			(window) => windowOf(window) <= firstHeldWindow
+		);
+		const heldByWindow = new Map(held.map((slot) => [windowOf(slot), slot]));
+
+		const missing = coverage.filter((window) => !heldByWindow.has(windowOf(window)));
+		// A held slot not yet full may gain seconds; the one holding the start may lose those a later start left out
+		const recount = coverage
+			.map((window, index) => ({ window, slot: heldByWindow.get(windowOf(window)), holdsTheStart: index === 0 }))
+			.filter((entry): entry is { window: RunWindow; slot: ITimeSlot; holdsTheStart: boolean } => {
+				const isHeld = entry.slot !== undefined;
+				if (!isHeld) {
+					return false;
+				}
+				const heldSeconds = Number(entry.slot.duration ?? 0);
+				const mayGain = heldSeconds < windowSecondsOf(entry.window);
+				const mayLose = entry.holdsTheStart && heldSeconds > entry.window.duration;
+				return mayGain || mayLose;
+			});
+		const mayChangeSlots = missing.length > 0 || recount.length > 0;
+		if (!mayChangeSlots) {
+			return false;
+		}
+
+		let changesSlots = missing.length > 0;
+		await this.typeOrmTimeLogRepository.manager.transaction(async (manager: EntityManager) => {
+			for (const { window, slot, holdsTheStart } of recount) {
+				const withHolders = await manager.findOne(TimeSlot, {
+					where: { id: slot.id } as FindOptionsWhere<TimeSlot>,
+					relations: { timeLogs: true }
+				});
+				if (!withHolders) {
+					continue;
+				}
+				const seconds = this.secondsInWindow(withHolders, run, window);
+				const heldSeconds = Number(withHolders.duration ?? 0);
+				const gainsSeconds = seconds > heldSeconds;
+				const losesSeconds = holdsTheStart && seconds < heldSeconds;
+				const changesDuration = gainsSeconds || losesSeconds;
+				if (changesDuration) {
+					await manager.update(TimeSlot, { id: slot.id }, { duration: seconds });
+					changesSlots = true;
+				}
+			}
+			for (const window of missing) {
+				const slotId = await this.slotOfWindow(manager, run, window);
+				await manager.createQueryBuilder().relation(TimeLog, 'timeSlots').of(timeLogId).add(slotId);
+			}
+		});
+		return changesSlots;
+	}
+
+	/**
+	 * The seconds a slot holds in its ten-minute window once the run covers its part: the run's, and those the
+	 * employee's other entries holding the slot cover there (the entry before the run, in the window both share),
+	 * never more than the window. Counted from the entries, not from the slot's seconds, so a move counts nothing twice.
+	 *
+	 * @param slot - The slot, with the entries holding it (`timeLogs`).
+	 * @param run - The run.
+	 * @param window - The window, with the seconds the run covers in it.
+	 */
+	private secondsInWindow(slot: ITimeSlot, run: ITimeLog, window: RunWindow): number {
+		const windowStart = moment.utc(window.startedAt).startOf('minute');
+		const windowEnd = moment.utc(window.stoppedAt);
+		const otherEntries = (slot.timeLogs ?? []).filter((log) => log.id !== run.id);
+		let seconds = window.duration;
+		for (const log of otherEntries) {
+			const from = moment.max(windowStart, moment.utc(log.startedAt));
+			const until = moment.min(windowEnd, moment.utc(log.stoppedAt ?? log.startedAt));
+			seconds += Math.max(0, until.diff(from, 'seconds'));
+		}
+		return Math.min(seconds, windowSecondsOf(window));
+	}
+
+	/**
+	 * The employee's slot that starts a ten-minute window, created without activity for the seconds the run covers in
+	 * it when there is none. A slot already there (the neighbouring entry's, in the window both share) is reused, and
+	 * gains those seconds, which no other entry of the employee covers (`assertNoEntryBetween`), keeping its activity.
+	 *
+	 * @param manager - The transaction's entity manager.
+	 * @param run - The run the window belongs to.
+	 * @param window - The window, from its start to its end, with the seconds the run covers in it.
+	 * @returns The slot's id.
+	 */
+	private async slotOfWindow(manager: EntityManager, run: ITimeLog, window: RunWindow): Promise<ID> {
+		const { employeeId, organizationId, tenantId } = run;
+		const windowStart = moment.utc(window.startedAt).startOf('minute');
+		const { start: startedAt } = getDateRangeFormat(windowStart, windowStart);
+		const where = { tenantId, organizationId, employeeId, startedAt } as FindOptionsWhere<TimeSlot>;
+		const existing = await manager.findOne(TimeSlot, { where, relations: { timeLogs: true } });
+		if (existing) {
+			const seconds = this.secondsInWindow(existing, run, window);
+			const gainsSeconds = seconds > Number(existing.duration ?? 0);
+			if (gainsSeconds) {
+				await manager.update(TimeSlot, { id: existing.id }, { duration: seconds });
+			}
+			return existing.id;
+		}
+
+		const slot = manager.create(TimeSlot, {
+			tenantId,
+			organizationId,
+			employeeId,
+			startedAt: startedAt as Date,
+			duration: window.duration,
+			keyboard: 0,
+			mouse: 0,
+			overall: 0
+		});
+		const created = await manager.save(slot);
+		return created.id;
 	}
 
 	/**

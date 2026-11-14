@@ -427,6 +427,16 @@ export interface ITimerToggleInput
 	timeLogId?: ID;
 }
 
+/**
+ * Moves the start of the caller's running timer, earlier or later, while it keeps running.
+ */
+export interface ITimerStartMoveInput {
+	/** The new start. Not later than now, and no overlap with another entry of the caller. */
+	startedAt: Date;
+	/** Why the tracked time changed. Required when the organization asks for a reason (`requireReason`). */
+	reason?: string;
+}
+
 /** A discard of the caller's running timer: the run is removed instead of kept. */
 export interface ITimerDiscardInput extends IBasePerTenantAndOrganizationEntityModel {
 	/**

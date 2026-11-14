@@ -33,6 +33,7 @@
 #   write decide whether the timer starts or stops.
 # - `startTimer` mirrors `POST /start`, which dispatches the start command.
 # - `stopTimer` mirrors `POST /stop`, which dispatches the stop command.
+# - `moveTimerStart` mirrors `PUT /started-at`, which calls the service's start move directly.
 # - `discardTimer` mirrors `POST /discard`, which calls the discard write directly. Its route answers
 #   204 with no body, so the field answers `true`: the write either removed the run or raised. It
 #   takes an input of its own, since it reads none of the start body.
@@ -136,6 +137,23 @@ extend type Mutation {
 	REST route raises, in this protocol's vocabulary.
 	"""
 	stopTimer(input: TimerToggleInput!): TimeLog
+
+	"""
+	Moves the start of the caller's running timer, earlier or later, while it keeps running, and answers
+	the running log: one entry, marked edited, with the reason given.
+
+	The move follows the rules of time changed by hand: not later than now (`TIMER_START_IN_FUTURE`), the
+	organization's switch on changing tracked time for any move (`TIMER_START_EDIT_NOT_ALLOWED`) and on
+	manual time for an earlier one (`TIMER_START_MANUAL_NOT_ALLOWED`), its reason rule
+	(`TIMER_START_REASON_REQUIRED`), and no overlap with another entry of the caller
+	(`TIMER_START_OVERLAP`). A run of the desktop app or the agent is refused (`TIMER_START_TRACKER_RUN`),
+	since they upload its slots themselves; with no running timer the move is refused
+	(`TIMER_NOT_RUNNING`).
+
+	Nullable for the reason the stop is: the write ends with a re-read of the row it updated, which
+	answers nothing when the row is not there.
+	"""
+	moveTimerStart(input: TimerStartMoveInput!): TimeLog
 
 	"""
 	Discards the caller's running timer: the run is removed with its time slots and screenshots, as if it
