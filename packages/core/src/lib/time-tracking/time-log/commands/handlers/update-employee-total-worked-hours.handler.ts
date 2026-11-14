@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { ConfigService, DatabaseTypeEnum } from '@gauzy/config';
-import { ID } from '@gauzy/contracts';
+import { ID, TimeLogType } from '@gauzy/contracts';
 import { prepareSQLQuery as p } from './../../../../database/database.helper';
 import { RequestContext } from './../../../../core/context';
 import { MultiORM, MultiORMEnum, getORMType } from './../../../../core/utils';
@@ -106,7 +106,8 @@ export class UpdateEmployeeTotalWorkedHoursHandler implements ICommandHandler<Up
 	}
 
 	/**
-	 * Get the database-specific sum query for calculating time duration between "startedAt" and "stoppedAt".
+	 * Get the database-specific sum query for calculating time duration between "startedAt" and "stoppedAt". A break
+	 * counts for nothing: it is never worked time.
 	 * @param logQueryAlias The alias for the table in the query.
 	 * @returns The database-specific sum query that returns a Number.
 	 */
@@ -122,6 +123,7 @@ export class UpdateEmployeeTotalWorkedHoursHandler implements ICommandHandler<Up
 					CAST(
 						SUM(
 							CASE
+								WHEN "${logQueryAlias}"."logType" = '${TimeLogType.BREAK}' THEN 0
 								WHEN (julianday("${logQueryAlias}"."stoppedAt") - julianday("${logQueryAlias}"."startedAt")) * 86400 >= 0
 								THEN (julianday("${logQueryAlias}"."stoppedAt") - julianday("${logQueryAlias}"."startedAt")) * 86400
 								ELSE 0
@@ -135,6 +137,7 @@ export class UpdateEmployeeTotalWorkedHoursHandler implements ICommandHandler<Up
 					CAST(
 						SUM(
 							CASE
+								WHEN "${logQueryAlias}"."logType" = '${TimeLogType.BREAK}' THEN 0
 								WHEN extract(epoch from ("${logQueryAlias}"."stoppedAt" - "${logQueryAlias}"."startedAt")) >= 0
 								THEN extract(epoch from ("${logQueryAlias}"."stoppedAt" - "${logQueryAlias}"."startedAt"))
 								ELSE 0
@@ -148,6 +151,7 @@ export class UpdateEmployeeTotalWorkedHoursHandler implements ICommandHandler<Up
 					CAST(
 						SUM(
 							CASE
+								WHEN \`${logQueryAlias}\`.\`logType\` = '${TimeLogType.BREAK}' THEN 0
 								WHEN TIMESTAMPDIFF(SECOND, \`${logQueryAlias}\`.\`startedAt\`, \`${logQueryAlias}\`.\`stoppedAt\`) >= 0
 								THEN TIMESTAMPDIFF(SECOND, \`${logQueryAlias}\`.\`startedAt\`, \`${logQueryAlias}\`.\`stoppedAt\`)
 								ELSE 0
