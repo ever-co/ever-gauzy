@@ -61,6 +61,8 @@ interface SlotRow {
 	startedAt: Date;
 	duration: number;
 	keyboard: number;
+	/** The other entries holding it (the entry before the run, say), by id. */
+	heldBy?: string[];
 }
 
 const time = (value: Date | string): number => new Date(value).getTime();
@@ -132,12 +134,22 @@ function createService(
 		// Writes made inside the transaction apply only when it completes
 		const created: SlotRow[] = [];
 		const links: string[] = [];
-		const raised: Array<{ id: string; duration: number }> = [];
+		const raised: Array<{ id: string; changes: Partial<SlotRow> }> = [];
 		const manager = {
-			findOne: async (_entity: unknown, { where }: { where: { startedAt: Date | string } }) =>
-				[...pool.values(), ...created].find(
-					(slot) => time(slot.startedAt) === instant(where.startedAt).getTime()
-				) ?? null,
+			findOne: async (_entity: unknown, { where }: { where: { id?: string; startedAt?: Date | string } }) => {
+				const slot = [...pool.values(), ...created].find((candidate) => {
+					if (where.id) {
+						return candidate.id === where.id;
+					}
+					return time(candidate.startedAt) === instant(where.startedAt as Date | string).getTime();
+				});
+				if (!slot) {
+					return null;
+				}
+				// With the entries holding it, as the relation `timeLogs` loads them
+				const timeLogs = (slot.heldBy ?? []).map((id) => rows.find((row) => row.id === id)).filter(Boolean);
+				return { ...slot, timeLogs };
+			},
 			create: (_entity: unknown, values: SlotRow) => ({ ...values }),
 			save: async (values: Omit<SlotRow, 'startedAt'> & { startedAt: Date | string }) => {
 				const startedAt = instant(values.startedAt);
@@ -145,8 +157,8 @@ function createService(
 				created.push(slot);
 				return slot;
 			},
-			update: async (_entity: unknown, { id }: { id: string }, { duration }: { duration: number }) => {
-				raised.push({ id, duration });
+			update: async (_entity: unknown, { id }: { id: string }, changes: Partial<SlotRow>) => {
+				raised.push({ id, changes });
 			},
 			createQueryBuilder: () => ({
 				relation: () => ({
@@ -164,7 +176,7 @@ function createService(
 		await work(manager);
 		created.forEach((slot) => pool.set(slot.id, slot));
 		links.forEach((id) => linked.add(id));
-		raised.forEach(({ id, duration }) => Object.assign(pool.get(id), { duration }));
+		raised.forEach(({ id, changes }) => Object.assign(pool.get(id), changes));
 	});
 	const typeOrmTimeLogRepository = {
 		findOne: async ({ where }: { where: Record<string, unknown> }) => findRows(rows, where)[0] ?? null,
@@ -430,7 +442,13 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 		it('gives the slot it shares with the entry before it the seconds it adds there, keeping its activity', async () => {
 			// Her entry from 8:30 to 9:01 holds 60 seconds of the 9:00 slot, with activity
 			const entryUntil0901 = timeLog({ id: EARLIER_LOG_ID, startedAt: at('08:30'), stoppedAt: at('09:01') });
-			const sharedSlot: SlotRow = { id: 'slot-0900', startedAt: at('09:00'), duration: 60, keyboard: 7 };
+			const sharedSlot: SlotRow = {
+				id: 'slot-0900',
+				startedAt: at('09:00'),
+				duration: 60,
+				keyboard: 7,
+				heldBy: [EARLIER_LOG_ID]
+			};
 			const rows = [entryUntil0901, runningLog()];
 			const { service, linkedSlots } = createService(ormType, rows, employeeIn(openOrganization), {
 				slots: [heartbeatSlot()],
@@ -441,6 +459,34 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 
 			// The 9:00 slot keeps the entry's 60 seconds and its activity, and gains the run's 540 from 9:01
 			expect(linkedSlots()).toEqual(['09:00:600:7', '09:10:600:0', '09:20:600:42']);
+		});
+
+		it('keeps the seconds of the entry before it in their shared slot over consecutive earlier moves', async () => {
+			// Her entry from 8:30 to 9:04 holds 240 seconds of the 9:00 slot, with activity
+			const entryUntil0904 = timeLog({ id: EARLIER_LOG_ID, startedAt: at('08:30'), stoppedAt: at('09:04') });
+			const sharedSlot: SlotRow = {
+				id: 'slot-0900',
+				startedAt: at('09:00'),
+				duration: 240,
+				keyboard: 7,
+				heldBy: [EARLIER_LOG_ID]
+			};
+			const rows = [entryUntil0904, runningLog()];
+			const { service, linkedSlots } = createService(ormType, rows, employeeIn(openOrganization), {
+				slots: [heartbeatSlot()],
+				neighbourSlots: [sharedSlot]
+			});
+
+			await service.moveRunningTimerStart({ startedAt: at('09:08') });
+			expect(linkedSlots()).toEqual(['09:00:360:7', '09:10:600:0', '09:20:600:42']);
+
+			// 240 seconds of the entry and 240 of the run, from 9:06
+			await service.moveRunningTimerStart({ startedAt: at('09:06') });
+			expect(linkedSlots()).toEqual(['09:00:480:7', '09:10:600:0', '09:20:600:42']);
+
+			// A retry of the same start counts nothing twice
+			await service.moveRunningTimerStart({ startedAt: at('09:06') });
+			expect(linkedSlots()).toEqual(['09:00:480:7', '09:10:600:0', '09:20:600:42']);
 		});
 
 		it('never lowers the seconds a slot already holds', async () => {

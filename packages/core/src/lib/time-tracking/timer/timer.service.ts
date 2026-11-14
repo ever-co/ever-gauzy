@@ -163,6 +163,22 @@ interface QueuedTurn {
 	readonly passOn: () => void;
 }
 
+/** A ten-minute window of a run's range (`generateTimeSlots`): its start, its end, the seconds the run covers in it. */
+interface RunWindow {
+	startedAt: Date;
+	stoppedAt: Date;
+	duration: number;
+}
+
+/**
+ * The length of a run's window, in seconds.
+ *
+ * @param window - The window.
+ */
+function windowSecondsOf(window: RunWindow): number {
+	return moment.utc(window.stoppedAt).diff(moment.utc(window.startedAt).startOf('minute'), 'seconds');
+}
+
 /**
  * Whether a stop or a toggle names the time log it is for. Only a missing id (`undefined` or `null`) names none. An
  * empty one, which the GraphQL `ID` input lets through where the REST body refuses it, still names a log, which is not
@@ -1075,11 +1091,13 @@ export class TimerService {
 	/**
 	 * Gives a run whose client posts its slots (a heartbeat-fed run) the slots of the time from its start to its first
 	 * slot, without activity, and gives that first slot the seconds the run covers in it, keeping its activity: an
-	 * earlier start's added minutes count in the slots, and so in the timesheet, as in the run's duration.
+	 * earlier start's added minutes count in the slots, and so in the timesheet, as in the run's duration. A slot the
+	 * run shares with the entry before it keeps that entry's seconds besides the run's (`secondsInWindow`).
 	 *
 	 * A run holding no slot is left as it is: its stop gives it the slots of its whole range, which a slot made here
-	 * would prevent. The writes run in one transaction and are idempotent (a slot is reused, a duration only ever
-	 * raised): a failure leaves the slots as they were, and a retry of the move finds the same work to do.
+	 * would prevent. The writes run in one transaction and are idempotent (a slot is reused, its seconds counted from
+	 * the entries holding it, a duration only ever raised): a failure leaves the slots as they were, and a retry of the
+	 * move finds the same work to do.
 	 *
 	 * @param run - The running log, as stored.
 	 * @param now - The moment of the move: the run covers its past up to it.
@@ -1095,33 +1113,69 @@ export class TimerService {
 		const windowOf = (slot: Pick<ITimeSlot, 'startedAt'>): number =>
 			moment.utc(slot.startedAt).startOf('minute').valueOf();
 		const firstHeldWindow = Math.min(...held.map(windowOf));
-		const coverage = generateTimeSlots(moment.utc(run.startedAt).toDate(), now).filter(
+		const coverage: RunWindow[] = generateTimeSlots(moment.utc(run.startedAt).toDate(), now).filter(
 			(window) => windowOf(window) <= firstHeldWindow
 		);
 		const heldByWindow = new Map(held.map((slot) => [windowOf(slot), slot]));
 
 		const missing = coverage.filter((window) => !heldByWindow.has(windowOf(window)));
-		const short = coverage
-			.map((window) => ({ slot: heldByWindow.get(windowOf(window)), seconds: window.duration }))
-			.filter((entry): entry is { slot: ITimeSlot; seconds: number } => {
+		// A held slot not yet full may gain seconds: the run's own, or those of a move before this one
+		const recount = coverage
+			.map((window) => ({ window, slot: heldByWindow.get(windowOf(window)) }))
+			.filter((entry): entry is { window: RunWindow; slot: ITimeSlot } => {
 				const isHeld = entry.slot !== undefined;
-				return isHeld && Number(entry.slot.duration ?? 0) < entry.seconds;
+				return isHeld && Number(entry.slot.duration ?? 0) < windowSecondsOf(entry.window);
 			});
-		const changesSlots = missing.length > 0 || short.length > 0;
-		if (!changesSlots) {
+		const mayChangeSlots = missing.length > 0 || recount.length > 0;
+		if (!mayChangeSlots) {
 			return false;
 		}
 
+		let changesSlots = missing.length > 0;
 		await this.typeOrmTimeLogRepository.manager.transaction(async (manager: EntityManager) => {
-			for (const { slot, seconds } of short) {
-				await manager.update(TimeSlot, { id: slot.id }, { duration: seconds });
+			for (const { window, slot } of recount) {
+				const withHolders = await manager.findOne(TimeSlot, {
+					where: { id: slot.id } as FindOptionsWhere<TimeSlot>,
+					relations: { timeLogs: true }
+				});
+				if (!withHolders) {
+					continue;
+				}
+				const seconds = this.secondsInWindow(withHolders, run, window);
+				const gainsSeconds = seconds > Number(withHolders.duration ?? 0);
+				if (gainsSeconds) {
+					await manager.update(TimeSlot, { id: slot.id }, { duration: seconds });
+					changesSlots = true;
+				}
 			}
 			for (const window of missing) {
 				const slotId = await this.slotOfWindow(manager, run, window);
 				await manager.createQueryBuilder().relation(TimeLog, 'timeSlots').of(timeLogId).add(slotId);
 			}
 		});
-		return true;
+		return changesSlots;
+	}
+
+	/**
+	 * The seconds a slot holds in its ten-minute window once the run covers its part: the run's, and those the
+	 * employee's other entries holding the slot cover there (the entry before the run, in the window both share),
+	 * never more than the window. Counted from the entries, not from the slot's seconds, so a move counts nothing twice.
+	 *
+	 * @param slot - The slot, with the entries holding it (`timeLogs`).
+	 * @param run - The run.
+	 * @param window - The window, with the seconds the run covers in it.
+	 */
+	private secondsInWindow(slot: ITimeSlot, run: ITimeLog, window: RunWindow): number {
+		const windowStart = moment.utc(window.startedAt).startOf('minute');
+		const windowEnd = moment.utc(window.stoppedAt);
+		const otherEntries = (slot.timeLogs ?? []).filter((log) => log.id !== run.id);
+		let seconds = window.duration;
+		for (const log of otherEntries) {
+			const from = moment.max(windowStart, moment.utc(log.startedAt));
+			const until = moment.min(windowEnd, moment.utc(log.stoppedAt ?? log.startedAt));
+			seconds += Math.max(0, until.diff(from, 'seconds'));
+		}
+		return Math.min(seconds, windowSecondsOf(window));
 	}
 
 	/**
@@ -1134,23 +1188,17 @@ export class TimerService {
 	 * @param window - The window, from its start to its end, with the seconds the run covers in it.
 	 * @returns The slot's id.
 	 */
-	private async slotOfWindow(
-		manager: EntityManager,
-		run: ITimeLog,
-		window: { startedAt: Date; stoppedAt: Date; duration: number }
-	): Promise<ID> {
+	private async slotOfWindow(manager: EntityManager, run: ITimeLog, window: RunWindow): Promise<ID> {
 		const { employeeId, organizationId, tenantId } = run;
 		const windowStart = moment.utc(window.startedAt).startOf('minute');
 		const { start: startedAt } = getDateRangeFormat(windowStart, windowStart);
 		const where = { tenantId, organizationId, employeeId, startedAt } as FindOptionsWhere<TimeSlot>;
-		const existing = await manager.findOne(TimeSlot, { where });
+		const existing = await manager.findOne(TimeSlot, { where, relations: { timeLogs: true } });
 		if (existing) {
-			const heldSeconds = Number(existing.duration ?? 0);
-			const windowSeconds = moment.utc(window.stoppedAt).diff(windowStart, 'seconds');
-			const sharedSeconds = Math.min(heldSeconds + window.duration, windowSeconds);
-			const gainsSeconds = sharedSeconds > heldSeconds;
+			const seconds = this.secondsInWindow(existing, run, window);
+			const gainsSeconds = seconds > Number(existing.duration ?? 0);
 			if (gainsSeconds) {
-				await manager.update(TimeSlot, { id: existing.id }, { duration: sharedSeconds });
+				await manager.update(TimeSlot, { id: existing.id }, { duration: seconds });
 			}
 			return existing.id;
 		}
