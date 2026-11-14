@@ -16,6 +16,12 @@ import { randomUUID } from 'node:crypto';
  * A replacement of an invoice's lines while another one is writing: it waits, then replaces the other's lines, so the
  * invoice keeps one set. A third connection plays the other replacement and commits once this one is seen waiting.
  *
+ * A billing of the time a void invoice released while a replacement of that invoice's lines runs: the replacement
+ * locks the invoice and then clears its deleted lines' time logs, so the billing locks the invoice before the time
+ * logs, and waits for it without holding them. A third connection plays the replacement. When another request links
+ * the time to that invoice while the billing waits for the time logs, the billing, which then holds them, does not wait
+ * for the invoice: it is refused with a 409 and the replacement goes through.
+ *
  * Each ORM runs the invoice handlers as the routes dispatch them.
  *
  * Runs only when GAUZY_BILLED_TIME_SPEC_POSTGRES_URL names a PostgreSQL database that holds the migrated schema, such
@@ -315,6 +321,7 @@ const DAY = 24 * 60 * 60 * 1000;
 					InvoiceUpdateHandler: require('./commands/handlers/invoice.update.handler').InvoiceUpdateHandler,
 					InvoiceUpdateCommand: require('./commands/invoice.update.command').InvoiceUpdateCommand,
 					INVOICE_VOID_IS_FINAL: require('./invoice-final-status').INVOICE_VOID_IS_FINAL,
+					BILLED_TIME_CHANGING: require('../invoice-item/invoice-item-billed-time').BILLED_TIME_CHANGING,
 					InvoiceItem: entities.InvoiceItem,
 					InvoiceItemService: require('../invoice-item/invoice-item.service').InvoiceItemService,
 					TypeOrmInvoiceItemRepository: require('../invoice-item/repository/type-orm-invoice-item.repository')
@@ -508,6 +515,90 @@ const DAY = 24 * 60 * 60 * 1000;
 
 				expect(sending.status).toBe('fulfilled');
 				expect(await statusOf(invoiceId)).toBe('SENT');
+			},
+			TIMEOUT
+		);
+
+		it(
+			"bills a void invoice's released time while that invoice's lines are replaced, without a deadlock",
+			async () => {
+				const released = await timeLog();
+				const source = invoiceBilling('source', [released]);
+				await handlers(ormType).create(source);
+				await dataSource.query(`UPDATE "invoice" SET "status" = 'VOID' WHERE "id" = $1`, [source.id]);
+				const billing = invoiceBilling('billing', [released]);
+				// The replacement of the void invoice's lines, as far as it went: the invoice locked.
+				const replacing = dataSource.createQueryRunner();
+				await replacing.connect();
+				await replacing.startTransaction();
+				await replacing.query(`SELECT "id" FROM "invoice" WHERE "id" = $1 FOR UPDATE`, [source.id]);
+
+				const outcomes = Promise.allSettled([handlers(ormType).create(billing)]);
+				try {
+					await untilWaiting(1, 'invoice');
+					// Deleting the lines clears the released time log's link: it needs the time log the billing names.
+					await replacing.query(`DELETE FROM "invoice_item" WHERE "invoiceId" = $1`, [source.id]);
+				} finally {
+					await replacing.commitTransaction();
+					await replacing.release();
+				}
+				const [billed] = await outcomes;
+
+				expect(billed.status).toBe('fulfilled');
+				expect(await linkOf(released)).toBe(await lineOf(billing.id));
+			},
+			TIMEOUT
+		);
+
+		it(
+			'refuses, without a deadlock, a billing whose time is linked meanwhile to an invoice whose lines are replaced',
+			async () => {
+				const contested = await timeLog();
+				const voided = await storedInvoice('VOID');
+				const voidedLine = randomUUID();
+				await insert('invoice_item', { id: voidedLine, ...lineSaying(voided, 'voided') });
+				const billing = invoiceBilling('billing', [contested]);
+				// Another request links the time to the void invoice's line, and has not committed yet.
+				const linking = dataSource.createQueryRunner();
+				await linking.connect();
+				await linking.startTransaction();
+				await linking.query(`UPDATE "time_log" SET "invoiceItemId" = $1 WHERE "id" = $2`, [
+					voidedLine,
+					contested
+				]);
+				const replacing = dataSource.createQueryRunner();
+				await replacing.connect();
+				await replacing.startTransaction();
+
+				const outcomes = Promise.allSettled([handlers(ormType).create(billing)]);
+				let deleted: PromiseSettledResult<unknown> | undefined;
+				try {
+					// The billing found no document to lock and waits for the time log, holding none.
+					await untilWaiting(1, 'time_log');
+					// The replacement of the void invoice's lines locks it, then the link commits.
+					await replacing.query(`SELECT "id" FROM "invoice" WHERE "id" = $1 FOR UPDATE`, [voided]);
+					await linking.commitTransaction();
+					// Deleting the lines clears the time log's link: it needs the time log the billing now holds.
+					[deleted] = await Promise.allSettled([
+						replacing.query(`DELETE FROM "invoice_item" WHERE "invoiceId" = $1`, [voided])
+					]);
+				} finally {
+					if (linking.isTransactionActive) {
+						await linking.rollbackTransaction();
+					}
+					await linking.release();
+					await replacing.commitTransaction();
+					await replacing.release();
+				}
+				const [billed] = await outcomes;
+
+				expect(deleted?.status).toBe('fulfilled');
+				expect(billed).toMatchObject({
+					status: 'rejected',
+					reason: { status: 409, message: loaded.BILLED_TIME_CHANGING }
+				});
+				expect(await linkOf(contested)).toBeNull();
+				expect(await invoiceCount(billing.id)).toBe(0);
 			},
 			TIMEOUT
 		);

@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { ID, IPagination, ISavedReport, ISavedReportShareResponse, SavedReportKindEnum } from '@gauzy/contracts';
+import { assertFirstPartyRequest } from '../auth/oauth-app-first-party';
 import { RequestContext } from '../core/context/request-context';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
 import {
@@ -165,11 +166,19 @@ export class SavedReportService extends TenantAwareCrudService<SavedReport> {
 	 * Turns a link on for one of the caller's reports, or replaces the one it has: a new token, whose digest replaces the
 	 * stored one, so the previous link stops working at once.
 	 *
+	 * A link is lasting access: it reads the report with its author's access until it is turned off or ends, whatever
+	 * happens to the credential that asked for it. So only the author's own session turns one on
+	 * (`assertFirstPartyRequest`): a session started from a personal API token, or a third-party application's token,
+	 * would otherwise keep reading through the link after that token is revoked. As for every first-party-only action,
+	 * an application's token is told apart while `OAUTH_APP_TOKEN_SCOPE_ENFORCEMENT` is on (its kill switch).
+	 *
 	 * @param id The report's id.
 	 * @param input When the link stops working, if it should.
 	 * @returns The token, this one time. Only its digest is stored.
+	 * @throws ForbiddenException for an API token session or an OAuth-app token.
 	 */
 	async shareOwn(id: ID, input: ShareSavedReportDTO): Promise<ISavedReportShareResponse> {
+		assertFirstPartyRequest('Sharing a saved report');
 		const stored = await this.ownOrFail(id);
 		const now = new Date();
 		const expiryProblem = shareExpiryProblemOf(input?.expiresAt, now);
