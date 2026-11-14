@@ -1,17 +1,23 @@
 // Downloads: a centred headline, a wide Desktop card, then Mobile and Browser extension side by
 // side. Each card is a soft outer ring around an inner panel; the illustrations are plain HTML
-// (no images) drawn from theme colours, so they follow light and dark themes. Every custom
-// property carries a fallback (`--gauzy-*` is undefined in the material themes); font sizes are
-// set on each text element because the theme's global paragraph rule (~15px) beats an inherited one.
-$border: var(--gauzy-border-default-color, rgba(126, 126, 143, 0.24));
+// (no images) drawn from theme colours, so they follow light and dark themes. Font sizes are set
+// on each text element because the theme's global paragraph rule (~15px) beats an inherited one.
+//
+// Colours come from the Gauzy theme tokens first (text, card, border, hover tint, shadow), with
+// the matching Nebular token as the fallback for themes that do not define a Gauzy one — never a
+// hard-coded colour. `$surface-2` stays on Nebular's second background: `--gauzy-card-2` is the
+// transparent card, and the drawn windows need a solid fill. Tints are mixed from the secondary
+// text token, so they follow the theme too.
+$border: var(--gauzy-border-default-color, var(--border-basic-color-3));
 $ring: inset 0 0 0 1px $border;
-$muted: var(--text-hint-color, rgba(126, 126, 143, 1));
-$text: var(--text-basic-color, #222b45);
-$surface: var(--background-basic-color-1, #ffffff);
-$surface-2: var(--background-basic-color-2, #f7f9fc);
-$tint: rgba(126, 126, 143, 0.14);
-$tint-strong: rgba(126, 126, 143, 0.24);
-$primary: var(--color-primary-default, #3366ff);
+$muted: var(--gauzy-text-color-2, var(--text-hint-color));
+$text: var(--gauzy-text-color-1, var(--text-basic-color));
+$surface: var(--gauzy-card-1, var(--card-background-color));
+$surface-2: var(--background-basic-color-2);
+$tint: var(--gauzy-hover-tint, color-mix(in srgb, #{$muted} 14%, transparent));
+$tint-strong: color-mix(in srgb, #{$muted} 24%, transparent);
+$primary: var(--color-primary-default);
+$shadow: var(--gauzy-shadow);
 
 :host {
   display: block;
@@ -34,7 +40,7 @@ $primary: var(--color-primary-default, #3366ff);
   height: 3.5rem;
   padding: 0 1rem;
   border-bottom: 1px solid $border;
-  background: var(--layout-background-color, var(--background-basic-color-3, #edf1f7));
+  background: var(--layout-background-color, var(--background-basic-color-3));
 }
 
 .back-button {
@@ -364,8 +370,10 @@ $primary: var(--color-primary-default, #3366ff);
 // will actually get: the desktop app's timer window in the Desktop card, and the web timer
 // (billable `$`, session and today readings, round play button, stopwatch / manual switch) in
 // the Browser extension card.
-$success: var(--color-success-default, #00d68f);
-$on-primary: var(--text-control-color, #ffffff);
+$success: var(--color-success-default);
+// Text and icons on a filled status colour (primary, success, danger, info): the theme's own
+// "control" foreground, white in every Gauzy theme, instead of a fixed white.
+$on-primary: var(--text-control-color);
 
 .art {
   display: flex;
@@ -382,7 +390,7 @@ $on-primary: var(--text-control-color, #ffffff);
   min-height: 28rem;
   margin-block: calc(var(--pad-y) * -1);
   margin-inline-end: calc(var(--pad-x) * -1);
-  background-image: radial-gradient(rgba(126, 126, 143, 0.3) 1px, transparent 1px);
+  background-image: radial-gradient(color-mix(in srgb, #{$muted} 30%, transparent) 1px, transparent 1px);
   background-size: 1rem 1rem;
 
   @media (max-width: 991.98px) {
@@ -406,9 +414,7 @@ $on-primary: var(--text-control-color, #ffffff);
   padding: 0.75rem 1rem 1rem;
   border-radius: 0.875rem;
   background: $surface-2;
-  box-shadow:
-    $ring,
-    0 16px 40px rgba(0, 0, 0, 0.16);
+  box-shadow: $ring, $shadow;
   color: $text;
 }
 
@@ -571,7 +577,7 @@ $on-primary: var(--text-control-color, #ffffff);
 // Title bar, organization picker, the running clock with its pause button, the day / week totals,
 // then the form. Positioned rather than laid out, so it never stretches the card; whatever runs
 // past the card's bottom edge is cut off by the panel.
-$danger: var(--color-danger-default, #ff3d71);
+$danger: var(--color-danger-default);
 
 .desktop-window {
   position: absolute;
@@ -584,9 +590,7 @@ $danger: var(--color-danger-default, #ff3d71);
   overflow: hidden;
   border-radius: 0.75rem 0.75rem 0 0;
   background: $surface-2;
-  box-shadow:
-    $ring,
-    0 16px 40px rgba(0, 0, 0, 0.16);
+  box-shadow: $ring, $shadow;
   color: $text;
 }
 
@@ -680,8 +684,8 @@ $danger: var(--color-danger-default, #ff3d71);
   width: 1.25rem;
   height: 1.25rem;
   border-radius: 0.25rem;
-  background: var(--color-info-default, #0095ff);
-  color: #ffffff;
+  background: var(--color-info-default);
+  color: $on-primary;
   font-size: 0.5625rem;
   font-weight: 600;
 }
@@ -713,7 +717,7 @@ $danger: var(--color-danger-default, #ff3d71);
   height: 2.5rem;
   border-radius: 50%;
   background: $danger;
-  color: #ffffff;
+  color: $on-primary;
 
   i {
     font-size: 0.9375rem;
@@ -866,9 +870,7 @@ $danger: var(--color-danger-default, #ff3d71);
   overflow: hidden;
   border-radius: 0.75rem 0.75rem 0 0;
   background: $surface-2;
-  box-shadow:
-    $ring,
-    0 12px 32px rgba(0, 0, 0, 0.12);
+  box-shadow: $ring, $shadow;
 }
 
 .browser-bar {
@@ -935,10 +937,9 @@ $danger: var(--color-danger-default, #ff3d71);
   overflow: visible;
   transform-origin: 3px 2.5px;
   fill: $primary;
-  stroke: #ffffff;
+  stroke: $on-primary;
   stroke-width: 1.5;
   stroke-linejoin: round;
-  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.3));
 }
 
 .cursor-label {
@@ -952,7 +953,7 @@ $danger: var(--color-danger-default, #ff3d71);
   font-weight: 600;
   line-height: 1rem;
   white-space: nowrap;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  box-shadow: $shadow;
 }
 
 .cursor.is-pressing .cursor-arrow {
@@ -1381,5 +1382,22 @@ $danger: var(--color-danger-default, #ff3d71);
   .try-it,
   .cursor {
     transition: none;
+  }
+}
+
+// ── Accessibility of the hands-on drawings ──────────────────────────────
+// The drawn form is grouped (so assistive technology can skip it as one block) without changing
+// the layout: the group is the same column the window content already is.
+.dw-form {
+  display: flex;
+  flex-direction: column;
+}
+
+// The drawn timer buttons are in the tab order: show where focus is, as other controls do.
+.dw-pause,
+.play {
+  &:focus-visible {
+    outline: 2px solid $primary;
+    outline-offset: 2px;
   }
 }

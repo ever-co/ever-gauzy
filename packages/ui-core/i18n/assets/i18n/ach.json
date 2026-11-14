@@ -5429,18 +5429,18 @@
 			"ALSO_FOR": "Tye bene pi"
 		},
 		"SETUP": {
-			"OPENED": "The {{platform}} download link opened in a new tab.",
-			"NOT_OPENED": "Nothing happened?",
-			"TRY_AGAIN": "Try again",
-			"TITLE": "Next steps",
-			"INSTALL_WINDOWS": "Run the installer you downloaded and follow its steps.",
-			"INSTALL_MACOS": "Open the downloaded file and drag the app into Applications.",
-			"INSTALL_LINUX": "Install the downloaded package, or run the AppImage.",
-			"CONNECT_CUSTOM": "Open the app, choose “{{option}}” and fill in:",
-			"PORT_EMPTY": "Clear this field",
-			"CONNECT_LIVE": "Open the app and choose “{{option}}”.",
-			"SIGN_IN": "Sign in with the email and password you use here.",
-			"COPY_FIELD": "Copy {{field}}"
+			"OPENED": "Kakube me gam pi {{platform}} oyabbe i tab manyen.",
+			"NOT_OPENED": "Pe gin mo otime?",
+			"TRY_AGAIN": "Tem doki",
+			"TITLE": "Gin ma lubo",
+			"INSTALL_WINDOWS": "Cak installer ma igamo ci ilub yo ne.",
+			"INSTALL_MACOS": "Yab pwail ma igamo ci iywa app i Applications.",
+			"INSTALL_LINUX": "Ket package ma igamo, onyo icak AppImage.",
+			"CONNECT_CUSTOM": "Yab app, yer “{{option}}” ci ipong:",
+			"PORT_EMPTY": "Wek kabedo man nono",
+			"CONNECT_LIVE": "Yab app ci iyer “{{option}}”.",
+			"SIGN_IN": "Donyo ki email ki mung me donyo ma itiyo kwedgi kany.",
+			"COPY_FIELD": "Kopi {{field}}"
 		},
 		"MOBILE": {
 			"TITLE": "Cim",
@@ -5455,8 +5455,8 @@
 		},
 		"ILLUSTRATION": {
 			"THIS_WEEK": "Cabit man",
-			"YOU": "You",
-			"TRY_IT": "Your turn: click the timer"
+			"YOU": "In",
+			"TRY_IT": "Kareni: dii timer"
 		},
 		"ALL_DOWNLOADS": "Nen gam weng"
 	},

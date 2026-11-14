@@ -6,16 +6,16 @@ import {
 	DestroyRef,
 	ElementRef,
 	HostListener,
-	Inject,
 	inject,
 	Injector,
 	NgZone,
 	signal
 } from '@angular/core';
 import { Location } from '@angular/common';
+import { Title } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { Environment, GAUZY_ENV } from '@gauzy/ui-config';
+import { GAUZY_ENV } from '@gauzy/ui-config';
 
 type DesktopPlatform = 'windows' | 'macos' | 'linux';
 
@@ -32,6 +32,10 @@ interface ICursorStep<T extends string> {
 	at: T;
 	press?: boolean;
 }
+
+/** The two hands-on drawings, and what is handing one to the visitor: a pointer or keyboard focus. */
+type Drawing = 'desktop' | 'extension';
+type HandsOnSource = 'pointer' | 'focus';
 
 /**
  * The server the desktop app's "Live" option connects to — the same constant its setup screen
@@ -96,22 +100,30 @@ const EXTENSION_STOP = 10;
 	standalone: false
 })
 export class DownloadsComponent {
+	private readonly environment = inject(GAUZY_ENV);
+	private readonly location = inject(Location);
+	private readonly router = inject(Router);
+	private readonly translateService = inject(TranslateService);
+	private readonly titleService = inject(Title);
+	private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+	private readonly ngZone = inject(NgZone);
+	private readonly destroyRef = inject(DestroyRef);
+	private readonly injector = inject(Injector);
+
 	/** The installer for the OS this page is open on — the Desktop card's main button. */
-	readonly primaryDesktop: IDesktopDownload | null;
+	protected readonly primaryDesktop: IDesktopDownload | null;
 	/** The other desktop installers, offered as plain links under the main button. */
-	readonly otherDesktops: IDesktopDownload[];
-	readonly mobileUrl: string;
-	readonly extensionUrl: string;
+	protected readonly otherDesktops: IDesktopDownload[];
+	protected readonly mobileUrl = this.environment.MOBILE_APP_DOWNLOAD_LINK || '';
+	protected readonly extensionUrl = this.environment.EXTENSION_DOWNLOAD_LINK || '';
 	/** The product site's full downloads page (older versions, server builds, …). */
-	readonly allDownloadsUrl: string;
+	protected readonly allDownloadsUrl = this.environment.PLATFORM_WEBSITE_DOWNLOAD_URL || '';
 
 	/** Bar heights (%) for the Mobile card's illustration — a made-up week, Monday first. */
-	readonly weekBars = [62, 84, 48, 92, 70, 18, 6];
+	protected readonly weekBars = [62, 84, 48, 92, 70, 18, 6];
 
 	/** Cache for {@link lastCaptureAgo}, keyed by language. */
 	private captureAgo = { lang: '', text: '' };
-
-	private readonly injector = inject(Injector);
 
 	/** Viewer asked for less motion: the scripted loop stays on its first frame. */
 	private readonly reducedMotion =
@@ -126,104 +138,101 @@ export class DownloadsComponent {
 	private readonly step = computed(() => this.tick() % LOOP_SECONDS);
 
 	/**
-	 * Hands-on mode: while the pointer is over a drawing, its cursor steps aside and the drawn
-	 * timer answers the visitor's own clicks instead of the script.
+	 * Hands-on mode: while a pointer is over a drawing or keyboard focus is inside it, its cursor
+	 * steps aside and the drawn timer answers the visitor's own clicks instead of the script. Each
+	 * source is tracked apart, so the pointer leaving does not take the drawing away from a
+	 * keyboard user (and the other way round).
 	 */
-	readonly desktopTakeover = signal(false);
-	readonly extensionTakeover = signal(false);
+	private readonly handsOn = signal<Record<Drawing, Record<HandsOnSource, boolean>>>({
+		desktop: { pointer: false, focus: false },
+		extension: { pointer: false, focus: false }
+	});
+	protected readonly desktopTakeover = computed(() => isHandsOn(this.handsOn().desktop));
+	protected readonly extensionTakeover = computed(() => isHandsOn(this.handsOn().extension));
 
 	/** Desktop window: a clock running from 00:00:05 (the visitor can pause it), and the cursor's step. */
-	readonly desktopRunning = signal(true);
+	protected readonly desktopRunning = signal(true);
 	private readonly desktopSeconds = signal(5);
-	readonly desktopClock = computed(() => formatClock(this.desktopSeconds()));
-	readonly desktopCursor = computed(() => DESKTOP_SCRIPT[this.step()]);
+	protected readonly desktopClock = computed(() => formatClock(this.desktopSeconds()));
+	protected readonly desktopCursor = computed(() => DESKTOP_SCRIPT[this.step()]);
 
 	/** Browser extension: the visitor's own session, used in hands-on mode. */
 	private readonly manualRunning = signal(false);
 	private readonly manualSeconds = signal(0);
 
 	/** Browser extension: whether the drawn timer is running, its reading, and the cursor's step. */
-	readonly extensionRunning = computed(() =>
+	protected readonly extensionRunning = computed(() =>
 		this.extensionTakeover() ? this.manualRunning() : this.step() >= EXTENSION_START && this.step() < EXTENSION_STOP
 	);
-	readonly extensionClock = computed(() => {
+	protected readonly extensionClock = computed(() => {
 		if (this.extensionTakeover()) {
 			return formatClock(this.manualSeconds());
 		}
 		return formatClock(this.extensionRunning() ? this.step() - EXTENSION_START : 0);
 	});
-	readonly extensionCursor = computed(() => EXTENSION_SCRIPT[this.step()]);
+	protected readonly extensionCursor = computed(() => EXTENSION_SCRIPT[this.step()]);
 
 	/**
 	 * Set once the visitor clicks a desktop download: opens the setup steps under the button for
 	 * that platform. Desktop links open in a new tab, so this page stays put to show them.
 	 */
-	readonly startedDownload = signal<IDesktopDownload | null>(null);
+	protected readonly startedDownload = signal<IDesktopDownload | null>(null);
 	/**
 	 * Where the desktop app should connect, split the way its "Custom / Network" setup asks for it:
 	 * an API Host (protocol + host name) and a separate Port. The two must be given apart because
 	 * that Port field is pre-filled with 3000 and overrides any port typed into API Host — an
 	 * address with no port therefore needs the field cleared, not left at 3000.
 	 */
-	readonly connectHost: string;
-	readonly connectPort: string;
+	protected readonly connectHost: string;
+	protected readonly connectPort: string;
 	/** The API is Gauzy's own cloud — exactly the URL the desktop app's "Live" option connects to. */
-	readonly isLiveServer: boolean;
+	protected readonly isLiveServer: boolean;
 	/** Which value's Copy button reads "Copied!" right now. */
-	readonly copiedField = signal<'host' | 'port' | null>(null);
+	protected readonly copiedField = signal<'host' | 'port' | null>(null);
 	private copiedTimer: ReturnType<typeof setTimeout> | null = null;
 
 	/** Opened on a phone: the Mobile card leads the page. */
-	readonly isPhone = detectPhone();
+	protected readonly isPhone = detectPhone();
 
-	constructor(
-		@Inject(GAUZY_ENV) environment: Environment,
-		private readonly location: Location,
-		private readonly router: Router,
-		private readonly translateService: TranslateService,
-		private readonly host: ElementRef<HTMLElement>,
-		ngZone: NgZone,
-		destroyRef: DestroyRef
-	) {
-		this.startAnimationClock(ngZone, destroyRef);
-		destroyRef.onDestroy(() => this.copiedTimer && clearTimeout(this.copiedTimer));
+	constructor() {
+		this.startAnimationClock();
+		this.restoreTitleOnLeave();
+		this.destroyRef.onDestroy(() => this.copiedTimer && clearTimeout(this.copiedTimer));
 
 		const desktops: IDesktopDownload[] = [
 			{
 				platform: 'windows',
 				name: 'Windows',
 				icon: 'fab fa-windows',
-				url: environment.DESKTOP_APP_DOWNLOAD_LINK_WINDOWS
+				url: this.environment.DESKTOP_APP_DOWNLOAD_LINK_WINDOWS
 			},
 			{
 				platform: 'macos',
 				name: 'macOS',
 				icon: 'fab fa-apple',
-				url: environment.DESKTOP_APP_DOWNLOAD_LINK_APPLE
+				url: this.environment.DESKTOP_APP_DOWNLOAD_LINK_APPLE
 			},
 			{
 				platform: 'linux',
 				name: 'Linux',
 				icon: 'fab fa-linux',
-				url: environment.DESKTOP_APP_DOWNLOAD_LINK_LINUX
+				url: this.environment.DESKTOP_APP_DOWNLOAD_LINK_LINUX
 			}
 		].filter((desktop) => !!desktop.url) as IDesktopDownload[];
 
 		const detected = detectDesktopPlatform();
 		this.primaryDesktop = desktops.find((desktop) => desktop.platform === detected) ?? desktops[0] ?? null;
 		this.otherDesktops = desktops.filter((desktop) => desktop !== this.primaryDesktop);
-		this.mobileUrl = environment.MOBILE_APP_DOWNLOAD_LINK || '';
-		this.extensionUrl = environment.EXTENSION_DOWNLOAD_LINK || '';
-		this.allDownloadsUrl = environment.PLATFORM_WEBSITE_DOWNLOAD_URL || '';
 
-		const api = parseUrl(environment.API_BASE_URL || (typeof window !== 'undefined' ? window.location.origin : ''));
-		this.connectHost = api ? `${api.protocol}//${api.hostname}` : environment.API_BASE_URL || '';
+		const apiBaseUrl = this.environment.API_BASE_URL;
+		const api = parseUrl(apiBaseUrl || (typeof window !== 'undefined' ? window.location.origin : ''));
+		this.connectHost = api ? `${api.protocol}//${api.hostname}` : apiBaseUrl || '';
 		this.connectPort = api?.port ?? '';
 		this.isLiveServer = api?.origin === DESKTOP_LIVE_SERVER;
 	}
 
 	/** A desktop download link was clicked: show the setup steps for that platform. */
-	onDesktopDownload(download: IDesktopDownload): void {
+	protected onDesktopDownload(download: IDesktopDownload): void {
 		this.startedDownload.set(download);
 	}
 
@@ -232,7 +241,7 @@ export class DownloadsComponent {
 	 * 1.5s. `navigator.clipboard` exists only in secure contexts, so a self-hosted install opened
 	 * over plain HTTP falls back to a selected textarea + `execCommand('copy')` (as on the About page).
 	 */
-	copyConnectValue(field: 'host' | 'port'): void {
+	protected copyConnectValue(field: 'host' | 'port'): void {
 		const value = field === 'host' ? this.connectHost : this.connectPort;
 		const done = () => {
 			this.copiedField.set(field);
@@ -253,28 +262,36 @@ export class DownloadsComponent {
 		}
 	}
 
-	/** Hands-on desktop window: pointer in → the visitor drives; pointer out → back to the script. */
-	setDesktopTakeover(active: boolean): void {
-		this.desktopTakeover.set(active);
-		if (!active) {
-			this.desktopRunning.set(true);
+	/**
+	 * A pointer entered / left a drawing, or keyboard focus moved into / out of it. When the
+	 * drawing goes back to the script, the visitor's changes are undone: the desktop clock runs
+	 * again and the extension session resets. Entering the extension drawing also starts it from
+	 * a stopped 00:00:00.
+	 */
+	protected setHandsOn(drawing: Drawing, source: HandsOnSource, active: boolean): void {
+		const wasOn = isHandsOn(this.handsOn()[drawing]);
+		this.handsOn.update((state) => ({ ...state, [drawing]: { ...state[drawing], [source]: active } }));
+		const isOn = isHandsOn(this.handsOn()[drawing]);
+		if (wasOn === isOn) {
+			return;
+		}
+		if (drawing === 'desktop') {
+			if (!isOn) {
+				this.desktopRunning.set(true);
+			}
+		} else {
+			this.manualRunning.set(false);
+			this.manualSeconds.set(0);
 		}
 	}
 
 	/** The drawn desktop pause / play button. */
-	toggleDesktopTimer(): void {
+	protected toggleDesktopTimer(): void {
 		this.desktopRunning.update((running) => !running);
 	}
 
-	/** Hands-on extension timer: each visit starts from a stopped 00:00:00. */
-	setExtensionTakeover(active: boolean): void {
-		this.extensionTakeover.set(active);
-		this.manualRunning.set(false);
-		this.manualSeconds.set(0);
-	}
-
 	/** The drawn extension play / pause button; stopping resets the session, as the web timer does. */
-	toggleExtensionTimer(): void {
+	protected toggleExtensionTimer(): void {
 		const running = !this.manualRunning();
 		this.manualRunning.set(running);
 		if (!running) {
@@ -284,7 +301,7 @@ export class DownloadsComponent {
 
 	/** Esc leaves the page, like the top bar's back arrow. */
 	@HostListener('document:keydown.escape')
-	onEscape(): void {
+	protected onEscape(): void {
 		this.goBack();
 	}
 
@@ -295,7 +312,7 @@ export class DownloadsComponent {
 	 * Read on each check (the translate pipes beside it refresh on a language switch), so the
 	 * result is cached per language.
 	 */
-	get lastCaptureAgo(): string {
+	protected get lastCaptureAgo(): string {
 		const lang = this.translateService.getCurrentLang() || 'en';
 		if (this.captureAgo.lang !== lang) {
 			let text: string;
@@ -310,6 +327,17 @@ export class DownloadsComponent {
 	}
 
 	/**
+	 * The route sets the tab title to "Downloads", but no other route in the app sets one, and
+	 * Angular's default title strategy only writes a title when the new route has one — so without
+	 * this, every page visited afterwards would keep saying "Downloads". The component is created
+	 * before the router applies the route's title, so the title read here is the previous page's.
+	 */
+	private restoreTitleOnLeave(): void {
+		const previousTitle = this.titleService.getTitle();
+		this.destroyRef.onDestroy(() => this.titleService.setTitle(previousTitle));
+	}
+
+	/**
 	 * The drawings' one-second clock. Each second it advances the scripted loop, the desktop clock
 	 * and the visitor's own extension session — but only while an animated drawing is on screen and
 	 * the tab is visible, so a background tab or a scrolled-away page costs nothing. The interval
@@ -317,7 +345,7 @@ export class DownloadsComponent {
 	 * writes refresh only this view. For reduced motion the script and the self-running clock stay
 	 * still, while a visitor's own clicks on the drawn timers still count.
 	 */
-	private startAnimationClock(ngZone: NgZone, destroyRef: DestroyRef): void {
+	private startAnimationClock(): void {
 		if (typeof window === 'undefined') {
 			return;
 		}
@@ -348,7 +376,7 @@ export class DownloadsComponent {
 			{ injector: this.injector }
 		);
 
-		const timer = ngZone.runOutsideAngular(() =>
+		const timer = this.ngZone.runOutsideAngular(() =>
 			setInterval(() => {
 				if (document.hidden || (observer && onScreen.size === 0)) {
 					return;
@@ -364,7 +392,7 @@ export class DownloadsComponent {
 				}
 			}, 1000)
 		);
-		destroyRef.onDestroy(() => {
+		this.destroyRef.onDestroy(() => {
 			clearInterval(timer);
 			observer?.disconnect();
 		});
@@ -376,7 +404,7 @@ export class DownloadsComponent {
 	 * so when this page was opened directly (a bookmark, a new tab), there is nothing in the app to
 	 * go back to, and the arrow goes to the dashboard instead of leaving the app.
 	 */
-	goBack(): void {
+	protected goBack(): void {
 		const navigationId = (this.location.getState() as { navigationId?: number } | null)?.navigationId ?? 1;
 		if (navigationId > 1) {
 			this.location.back();
@@ -384,6 +412,11 @@ export class DownloadsComponent {
 			this.router.navigateByUrl('/pages/dashboard');
 		}
 	}
+}
+
+/** A drawing is hands-on while either a pointer is over it or keyboard focus is inside it. */
+function isHandsOn(state: Record<HandsOnSource, boolean>): boolean {
+	return state.pointer || state.focus;
 }
 
 /** A phone (not a tablet or desktop), where the mobile app is the one to offer first. */
