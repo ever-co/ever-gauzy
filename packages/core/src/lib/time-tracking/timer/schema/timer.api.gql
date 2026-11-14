@@ -7,7 +7,7 @@
 # same permission, so a client that reaches a capability over one protocol is not given a narrower or
 # a wider one than the client that reaches it over the other.
 #
-# **Two of the five fields are computed answers, and they are root fields of their own because there
+# **Two of the six fields are computed answers, and they are root fields of their own because there
 # is no resource for them to hang off.** A timer's status is not a row: it has no identifier of its
 # own, nothing to withdraw and nothing to state. It is a computation over the time logs of a period —
 # the sum of the seconds already recorded, whether a log is open right now, and which log the answer
@@ -19,7 +19,7 @@
 #   whatever day it belongs to, and how long ago it stopped.
 #
 # That is why this file declares no connection, no node query and no count. The controller serves
-# `GET /status` and `GET /status/worked` and three writes, and nothing else: there is no list route
+# `GET /status` and `GET /status/worked` and four writes, and nothing else: there is no list route
 # for a connection to mirror, no `GET /:id` for a node query to mirror, and no `GET /count` for a
 # count to mirror. Where a client needs the rows a state was computed from, those are time logs and
 # belong to the surface that owns them; the states here name them by identifier so they can be read
@@ -33,6 +33,7 @@
 #   write decide whether the timer starts or stops.
 # - `startTimer` mirrors `POST /start`, which dispatches the start command.
 # - `stopTimer` mirrors `POST /stop`, which dispatches the stop command.
+# - `moveTimerStart` mirrors `PUT /started-at`, which calls the service's start move directly.
 #
 # **The three writes answer the log row itself, because that is what their routes answer.** The
 # controller declares each of them as answering a time log — the start as a log, the toggle and the
@@ -133,4 +134,21 @@ extend type Mutation {
 	REST route raises, in this protocol's vocabulary.
 	"""
 	stopTimer(input: TimerToggleInput!): TimeLog
+
+	"""
+	Moves the start of the caller's running timer, earlier or later, while it keeps running, and answers
+	the running log: one entry, marked edited, with the reason given.
+
+	The move follows the rules of time changed by hand: not later than now (`TIMER_START_IN_FUTURE`), the
+	organization's switch on changing tracked time for any move (`TIMER_START_EDIT_NOT_ALLOWED`) and on
+	manual time for an earlier one (`TIMER_START_MANUAL_NOT_ALLOWED`), its reason rule
+	(`TIMER_START_REASON_REQUIRED`), and no overlap with another entry of the caller
+	(`TIMER_START_OVERLAP`). A run of the desktop app or the agent is refused (`TIMER_START_TRACKER_RUN`),
+	since they upload its slots themselves; with no running timer the move is refused
+	(`TIMER_NOT_RUNNING`).
+
+	Nullable for the reason the stop is: the write ends with a re-read of the row it updated, which
+	answers nothing when the row is not there.
+	"""
+	moveTimerStart(input: TimerStartMoveInput!): TimeLog
 }

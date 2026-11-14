@@ -85,6 +85,7 @@ const TOUCHED_LOG = { id: LOG, employeeId: EMPLOYEE, isRunning: true };
 function surfaces() {
 	const timerService = {
 		toggleTimeLog: jest.fn().mockResolvedValue(TOUCHED_LOG),
+		moveRunningTimerStart: jest.fn().mockResolvedValue(TOUCHED_LOG),
 		getTimerWorkedStatus: jest.fn().mockResolvedValue(WORKED_STATUSES)
 	};
 	const commandBus = { execute: jest.fn().mockResolvedValue(TOUCHED_LOG) };
@@ -148,7 +149,7 @@ function rootFields(operation: 'Query' | 'Mutation'): string[] {
 const OWNED_QUERY_FIELDS = ['timerStatus', 'timerWorkedStatus'];
 
 /** The mutations this domain contributes, by the same reading. */
-const OWNED_MUTATION_FIELDS = ['startTimer', 'stopTimer', 'toggleTimer'];
+const OWNED_MUTATION_FIELDS = ['moveTimerStart', 'startTimer', 'stopTimer', 'toggleTimer'];
 
 /** The object types this domain declares, which is how the sweep below recognises its own fields. */
 const OWNED_TYPES = ['TimerStatus', 'TimerWorkedStatus'];
@@ -257,13 +258,13 @@ describe('TimerResolver — the SDL declares the capabilities the REST routes se
 
 	it('declares one mutation per delivered write route', () => {
 		expect(rootFields('Mutation')).toEqual(
-			expect.arrayContaining(['toggleTimer', 'startTimer', 'stopTimer'])
+			expect.arrayContaining(['toggleTimer', 'startTimer', 'stopTimer', 'moveTimerStart'])
 		);
 	});
 
 	it('declares the reads and the writes the controller serves, and no more', () => {
 		expect(ownedRootFields('Query')).toEqual(['timerStatus', 'timerWorkedStatus']);
-		expect(ownedRootFields('Mutation')).toEqual(['startTimer', 'stopTimer', 'toggleTimer']);
+		expect(ownedRootFields('Mutation')).toEqual(['moveTimerStart', 'startTimer', 'stopTimer', 'toggleTimer']);
 
 		// The resource has no list, no node read and no count, so the surface states none: a connection
 		// over rows the controller cannot list, or a count of a thing that is not a collection, would be
@@ -284,7 +285,14 @@ describe('TimerResolver — the SDL declares the capabilities the REST routes se
 		}
 
 		// Every field above names a handler that exists on the controller.
-		for (const handler of ['getTimerStatus', 'getTimerWorkedStatus', 'toggleTimer', 'startTimer', 'stopTimer']) {
+		for (const handler of [
+			'getTimerStatus',
+			'getTimerWorkedStatus',
+			'toggleTimer',
+			'startTimer',
+			'stopTimer',
+			'moveTimerStart'
+		]) {
 			expect(typeof handlersOf(TimerController)[handler]).toBe('function');
 		}
 	});
@@ -312,6 +320,7 @@ describe('TimerResolver — the SDL declares the capabilities the REST routes se
 		expect(fieldType('Mutation', 'toggleTimer')).toBe('TimeLog');
 		expect(fieldType('Mutation', 'startTimer')).toBe('TimeLog!');
 		expect(fieldType('Mutation', 'stopTimer')).toBe('TimeLog');
+		expect(fieldType('Mutation', 'moveTimerStart')).toBe('TimeLog');
 	});
 
 	it('answers the writes with the time-log domain’s own row, and declares no row of its own', () => {
@@ -430,6 +439,26 @@ describe('TimerResolver — the SDL declares the capabilities the REST routes se
 		expect(body).not.toMatch(/\borganization:/);
 	});
 
+	it('states the start move body as the route binds it: a start and a reason, and nothing else', () => {
+		const body = inputBody('TimerStartMoveInput');
+
+		expect(body).toMatch(/startedAt:\s*DateTime!/);
+		expect(body).toMatch(/reason:\s*String\b/);
+		expect(body).not.toMatch(/\btenantId:/);
+		expect(body).not.toMatch(/\borganizationId:/);
+		expect(fieldArgs('Mutation', 'moveTimerStart')).toEqual(['input']);
+	});
+
+	it('says that the move refuses a run of the desktop app or the agent', () => {
+		const mutation = schema.getType('Mutation') as unknown as {
+			getFields(): Record<string, { description?: string | null }>;
+		};
+		const description = mutation.getFields().moveTimerStart.description ?? '';
+
+		expect(description).toMatch(/desktop app or the agent/);
+		expect(description).toMatch(/TIMER_START_OVERLAP/);
+	});
+
 	it('says that a toggle naming a time log only ever stops it', () => {
 		const mutation = schema.getType('Mutation') as unknown as {
 			getFields(): Record<string, { description?: string | null }>;
@@ -521,6 +550,14 @@ describe('TimerResolver — one concept, two protocols, the same operations', ()
 		// The body is handed on as it was stated: the route passes its validated body to the service,
 		// and which of the two writes follows is the service's decision rather than a second one here.
 		expect(timerService.toggleTimeLog).toHaveBeenCalledWith(input);
+	});
+
+	it('moves the start through the same service method the delivered route calls, and answers its row', async () => {
+		const { resolver, timerService } = surfaces();
+		const input = { startedAt: new Date('2026-11-16T09:00:00.000Z'), reason: 'Forgot to start timer' };
+
+		expect(await resolver.moveTimerStart(input)).toBe(TOUCHED_LOG);
+		expect(timerService.moveRunningTimerStart).toHaveBeenCalledWith(input);
 	});
 
 	it('answers null for a toggle that produced no log, which is the route’s own declared answer', async () => {
@@ -646,7 +683,7 @@ describe('TimerResolver — the guard stack and the permission are the controlle
 			PermissionsEnum.TIME_TRACKER
 		]);
 
-		for (const field of ['toggleTimer', 'startTimer', 'stopTimer']) {
+		for (const field of ['toggleTimer', 'startTimer', 'stopTimer', 'moveTimerStart']) {
 			expect(Reflect.getMetadata(PERMISSIONS_METADATA, handlersOf(TimerController)[field])).toBeUndefined();
 			expect(permissionOfField(field)).toEqual([PermissionsEnum.TIME_TRACKER]);
 		}

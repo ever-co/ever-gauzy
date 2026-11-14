@@ -144,3 +144,15 @@ input TimerToggleInput {
 	"""
 	timeLogId: ID
 }
+
+"""
+The body of `moveTimerStart`, as `PUT /timesheet/timer/started-at` binds it: the new start and the
+reason. The tenant, the organization and the log come from the caller: the write moves the caller's
+own running timer and no other.
+"""
+input TimerStartMoveInput {
+	"The new start of the running timer, earlier or later. Not later than now."
+	startedAt: DateTime!
+	"Why the tracked time changed. Required when the organization asks for a reason."
+	reason: String
+}

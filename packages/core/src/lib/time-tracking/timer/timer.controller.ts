@@ -1,4 +1,4 @@
-import { Controller, UseGuards, HttpStatus, Post, Body, Get, Query } from '@nestjs/common';
+import { Controller, UseGuards, HttpStatus, Post, Put, Body, Get, Query } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ITimeLog, ITimerStatus, PermissionsEnum } from '@gauzy/contracts';
@@ -6,7 +6,7 @@ import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
 import { Permissions } from './../../shared/decorators';
 import { UseValidationPipe } from '../../shared/pipes';
 import { TimerService } from './timer.service';
-import { StartTimerDTO, StopTimerDTO, TimerStatusQueryDTO, ToggleTimerDTO } from './dto';
+import { MoveTimerStartDTO, StartTimerDTO, StopTimerDTO, TimerStatusQueryDTO, ToggleTimerDTO } from './dto';
 import { GetTimerStatusQuery } from './queries/get-timer-status.query';
 import { StartTimerCommand, StopTimerCommand } from './commands';
 
@@ -140,5 +140,37 @@ export class TimerController {
 	@UseValidationPipe()
 	async stopTimer(@Body() entity: StopTimerDTO): Promise<ITimeLog | null> {
 		return this._commandBus.execute(new StopTimerCommand(entity));
+	}
+
+	/**
+	 * Moves the start of the caller's running timer, earlier or later, while it keeps running.
+	 *
+	 * @param entity - The new start, and the reason.
+	 * @returns The running log, as the timer status answers it in `lastLog`.
+	 */
+	@ApiOperation({ summary: 'Move the start of the running timer' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'The running timer starts at the given time and keeps running: one entry, marked edited.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'TIMER_NOT_RUNNING: no timer runs. TIMER_START_IN_FUTURE: the start is later than now. TIMER_START_REASON_REQUIRED: the organization asks for a reason. Or an invalid body.'
+	})
+	@ApiResponse({
+		status: HttpStatus.FORBIDDEN,
+		description:
+			'TIMER_START_EDIT_NOT_ALLOWED: the organization does not allow changing tracked time. TIMER_START_MANUAL_NOT_ALLOWED: an earlier start adds time by hand, which the organization does not allow.'
+	})
+	@ApiResponse({
+		status: HttpStatus.CONFLICT,
+		description:
+			'TIMER_START_OVERLAP: an earlier start overlaps another entry (overlapsUntil is when that entry ends). TIMER_START_TRACKER_RUN: the timer runs in the desktop app or the agent.'
+	})
+	@Put('/started-at')
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async moveTimerStart(@Body() entity: MoveTimerStartDTO): Promise<ITimeLog> {
+		return await this.timerService.moveRunningTimerStart(entity);
 	}
 }

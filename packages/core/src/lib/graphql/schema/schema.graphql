@@ -9878,6 +9878,23 @@ type Mutation {
   stopTimer(input: TimerToggleInput!): TimeLog
 
   """
+  Moves the start of the caller's running timer, earlier or later, while it keeps running, and answers
+  the running log: one entry, marked edited, with the reason given.
+  
+  The move follows the rules of time changed by hand: not later than now (`TIMER_START_IN_FUTURE`), the
+  organization's switch on changing tracked time for any move (`TIMER_START_EDIT_NOT_ALLOWED`) and on
+  manual time for an earlier one (`TIMER_START_MANUAL_NOT_ALLOWED`), its reason rule
+  (`TIMER_START_REASON_REQUIRED`), and no overlap with another entry of the caller
+  (`TIMER_START_OVERLAP`). A run of the desktop app or the agent is refused (`TIMER_START_TRACKER_RUN`),
+  since they upload its slots themselves; with no running timer the move is refused
+  (`TIMER_NOT_RUNNING`).
+  
+  Nullable for the reason the stop is: the write ends with a re-read of the row it updated, which
+  answers nothing when the row is not there.
+  """
+  moveTimerStart(input: TimerStartMoveInput!): TimeLog
+
+  """
   Raises a request to move the time booked to one project over to another. The request is filed in
   the pending state; nothing moves until an approver accepts it.
   """
@@ -44656,6 +44673,23 @@ input TimerToggleInput {
   running one, the stop is refused and that log goes on. A start ignores it.
   """
   timeLogId: ID
+}
+
+"""
+The body of `moveTimerStart`, as `PUT /timesheet/timer/started-at` binds it: the new start and the
+reason. The tenant, the organization and the log come from the caller: the write moves the caller's
+own running timer and no other.
+"""
+input TimerStartMoveInput {
+  """
+  The new start of the running timer, earlier or later. Not later than now.
+  """
+  startedAt: DateTime!
+
+  """
+  Why the tracked time changed. Required when the organization asks for a reason.
+  """
+  reason: String
 }
 
 """
