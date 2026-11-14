@@ -67,6 +67,15 @@ describe('TwoFactorController', () => {
 			expect(userTwoFactorService.resetByAdministrator).not.toHaveBeenCalled();
 		});
 
+		it('never resets the administrator their own when their id is written in another case', async () => {
+			const { controller, userTwoFactorService, userService } = buildController();
+			// The database finds the account whatever the case of the id, and answers it in its own form.
+			userService.findOneByIdString.mockResolvedValueOnce({ id: ADMIN, role: { name: RolesEnum.ADMIN } });
+
+			await expect(controller.resetForMember(ADMIN.toUpperCase())).rejects.toBeInstanceOf(ForbiddenException);
+			expect(userTwoFactorService.resetByAdministrator).not.toHaveBeenCalled();
+		});
+
 		it("resets a super admin's only with the right to edit super admins", async () => {
 			const { controller, userTwoFactorService } = buildController(RolesEnum.SUPER_ADMIN);
 
