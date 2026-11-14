@@ -86,6 +86,21 @@ export class TimeGoal extends TenantOrganizationBaseEntity implements ITimeGoal 
 	@MultiORMColumn({ default: false })
 	billableOnly?: boolean;
 
+	/**
+	 * Whether the goal counts the projects it lists only. Kept apart from the list, so that a goal whose listed projects
+	 * are all deleted counts nothing rather than every project.
+	 */
+	@ApiPropertyOptional({ type: () => Boolean, readOnly: true })
+	@MultiORMColumn({ default: false })
+	listedProjectsOnly?: boolean;
+
+	/**
+	 * Whether the goal counts the clients it lists only, for the same reason.
+	 */
+	@ApiPropertyOptional({ type: () => Boolean, readOnly: true })
+	@MultiORMColumn({ default: false })
+	listedClientsOnly?: boolean;
+
 	/*
 	|--------------------------------------------------------------------------
 	| @ManyToOne

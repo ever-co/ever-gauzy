@@ -52,6 +52,8 @@ const TIME_GOAL: TableDefinition = {
 			`"period" character varying NOT NULL`,
 			`"scope" character varying NOT NULL`,
 			`"billableOnly" boolean NOT NULL DEFAULT false`,
+			`"listedProjectsOnly" boolean NOT NULL DEFAULT false`,
+			`"listedClientsOnly" boolean NOT NULL DEFAULT false`,
 			`"employeeId" uuid`,
 			`"organizationTeamId" uuid`
 		].join(', '),
@@ -74,6 +76,8 @@ const TIME_GOAL: TableDefinition = {
 			`"period" varchar NOT NULL`,
 			`"scope" varchar NOT NULL`,
 			`"billableOnly" boolean NOT NULL DEFAULT (0)`,
+			`"listedProjectsOnly" boolean NOT NULL DEFAULT (0)`,
+			`"listedClientsOnly" boolean NOT NULL DEFAULT (0)`,
 			`"employeeId" varchar`,
 			`"organizationTeamId" varchar`
 		].join(', '),
@@ -96,6 +100,8 @@ const TIME_GOAL: TableDefinition = {
 			'`period` varchar(255) NOT NULL',
 			'`scope` varchar(255) NOT NULL',
 			'`billableOnly` tinyint NOT NULL DEFAULT 0',
+			'`listedProjectsOnly` tinyint NOT NULL DEFAULT 0',
+			'`listedClientsOnly` tinyint NOT NULL DEFAULT 0',
 			'`employeeId` varchar(255) NULL',
 			'`organizationTeamId` varchar(255) NULL'
 		].join(', ')

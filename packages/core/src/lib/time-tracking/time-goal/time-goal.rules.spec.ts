@@ -177,6 +177,14 @@ describe('time goal rules', () => {
 			expect(trackedSecondsOf(logs, { organizationContactIds: ['client-a'] }, range, now)).toBe(2 * HOUR);
 		});
 
+		it('counts nothing for a goal whose listed projects or clients are all gone', () => {
+			const logs = [log({ projectOrganizationContactId: 'client-a' })];
+
+			expect(trackedSecondsOf(logs, {}, range, now)).toBe(1 * HOUR);
+			expect(trackedSecondsOf(logs, { listedProjectsOnly: true, projectIds: [] }, range, now)).toBe(0);
+			expect(trackedSecondsOf(logs, { listedClientsOnly: true, organizationContactIds: [] }, range, now)).toBe(0);
+		});
+
 		it('counts a log that matches every filter of the goal', () => {
 			const logs = [
 				log({ projectId: 'website', projectOrganizationContactId: 'client-a' }),

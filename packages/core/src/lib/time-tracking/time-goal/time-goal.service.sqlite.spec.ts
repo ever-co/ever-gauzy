@@ -554,6 +554,36 @@ describe('TimeGoalService on SQLite', () => {
 	);
 
 	it(
+		'counts nothing once every project a goal lists is gone, rather than every project',
+		inRequest(async () => {
+			const workshop = '15000000-0000-4000-8000-000000000043';
+			await insertRow(OrganizationProject, {
+				id: workshop,
+				tenantId: TENANT,
+				organizationId: ORGANIZATION,
+				name: 'Workshop'
+			});
+			actAs(MARIE);
+			await goal({ name: 'Workshop only', projectIds: [workshop] });
+			await track(MARIE, '2026-11-10', '09:00', 1, { projectId: workshop });
+			await track(MARIE, '2026-11-10', '13:00', 3);
+			const workshopOnly = async () =>
+				rowsOf(await service.getProgress({ organizationId: ORGANIZATION, date: '2026-11-10' }), MARIE)[
+					'Workshop only'
+				].trackedSeconds;
+			expect(await workshopOnly()).toBe(1 * HOUR);
+
+			// The link goes with the project through its foreign key, which this database otherwise leaves off.
+			await dataSource.query('PRAGMA foreign_keys = ON');
+			await dataSource.query('DELETE FROM "organization_project" WHERE "id" = ?', [workshop]);
+			await dataSource.query('PRAGMA foreign_keys = OFF');
+
+			expect(await workshopOnly()).toBe(0);
+		}),
+		TIMEOUT
+	);
+
+	it(
 		'refuses a target over its period, a team goal without its team, and a project of another organization',
 		inRequest(async () => {
 			actAs(MARIE);

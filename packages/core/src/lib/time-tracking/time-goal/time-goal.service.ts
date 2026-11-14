@@ -121,7 +121,9 @@ export class TimeGoalService extends TenantAwareCrudService<TimeGoal> {
 				organizationId: owner.organizationId,
 				tenantId,
 				projects: projects ?? [],
-				organizationContacts: organizationContacts ?? []
+				organizationContacts: organizationContacts ?? [],
+				listedProjectsOnly: (projects ?? []).length > 0,
+				listedClientsOnly: (organizationContacts ?? []).length > 0
 			})
 		);
 		return await this.findGoalOrFail(created.id);
@@ -152,8 +154,14 @@ export class TimeGoalService extends TenantAwareCrudService<TimeGoal> {
 		if (input.targetHours !== undefined) changes.targetHours = input.targetHours;
 		if (input.period !== undefined) changes.period = input.period;
 		if (input.billableOnly !== undefined) changes.billableOnly = input.billableOnly;
-		if (projects) changes.projects = projects;
-		if (organizationContacts) changes.organizationContacts = organizationContacts;
+		if (projects) {
+			changes.projects = projects;
+			changes.listedProjectsOnly = projects.length > 0;
+		}
+		if (organizationContacts) {
+			changes.organizationContacts = organizationContacts;
+			changes.listedClientsOnly = organizationContacts.length > 0;
+		}
 
 		await this.withoutEmployeeFilter(() => super.create(changes));
 		return await this.findGoalOrFail(goal.id);
@@ -307,7 +315,9 @@ export class TimeGoalService extends TenantAwareCrudService<TimeGoal> {
 				{
 					projectIds: (goal.projects ?? []).map(({ id }) => id),
 					organizationContactIds: (goal.organizationContacts ?? []).map(({ id }) => id),
-					billableOnly: goal.billableOnly === true
+					billableOnly: goal.billableOnly === true,
+					listedProjectsOnly: goal.listedProjectsOnly === true,
+					listedClientsOnly: goal.listedClientsOnly === true
 				},
 				{ start, end },
 				now

@@ -60,6 +60,10 @@ export interface ITimeGoalBase extends IBasePerTenantAndOrganizationEntityModel 
 export interface ITimeGoal extends ITimeGoalBase, IEmployeeEntityInput, IRelationalOrganizationTeam {
 	projects?: IOrganizationProject[];
 	organizationContacts?: IOrganizationContact[];
+	/** Set by the API: the goal counts its listed projects only, so a list emptied by deletions counts nothing. */
+	listedProjectsOnly?: boolean;
+	/** Set by the API: the goal counts its listed clients only, so a list emptied by deletions counts nothing. */
+	listedClientsOnly?: boolean;
 }
 
 /**

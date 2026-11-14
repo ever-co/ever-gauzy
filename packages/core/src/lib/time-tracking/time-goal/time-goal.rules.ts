@@ -54,6 +54,10 @@ export interface TimeGoalCountFilter {
 	projectIds?: ID[];
 	organizationContactIds?: ID[];
 	billableOnly?: boolean;
+	/** The goal counts its listed projects only, even when none is left. */
+	listedProjectsOnly?: boolean;
+	/** The goal counts its listed clients only, even when none is left. */
+	listedClientsOnly?: boolean;
 }
 
 /**
@@ -186,11 +190,13 @@ function matchesFilter(log: TimeGoalCountedLog, filter: TimeGoalCountFilter): bo
 	if (isBillableMismatch) {
 		return false;
 	}
-	const isProjectMismatch = projectIds.length > 0 && !projectIds.includes(log.projectId);
+	const isRestrictedToProjects = filter.listedProjectsOnly === true || projectIds.length > 0;
+	const isProjectMismatch = isRestrictedToProjects && !projectIds.includes(log.projectId);
 	if (isProjectMismatch) {
 		return false;
 	}
-	if (clientIds.length > 0) {
+	const isRestrictedToClients = filter.listedClientsOnly === true || clientIds.length > 0;
+	if (isRestrictedToClients) {
 		const isOnClient = clientIds.includes(log.organizationContactId);
 		const isOnClientProject = clientIds.includes(log.projectOrganizationContactId);
 		return isOnClient || isOnClientProject;
