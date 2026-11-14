@@ -2,6 +2,7 @@ import {
 	amountsOf,
 	billedRateOf,
 	budgetCostOf,
+	budgetLogsNeedDefaultRate,
 	owedLinesOf,
 	owedRateOfLog,
 	rateOfReportRow,
@@ -132,6 +133,37 @@ describe('time log pricing', () => {
 
 		it('costs nothing without a rate', () => {
 			expect(budgetCostOf({ ratesStored: true, billRateValue: null, duration: 3600 } as any)).toBe(0);
+		});
+
+		// The organization's default billing rate (#11919) prices the time of a member without a rate of their own, read
+		// when the report is read, as it prices it on the live rates
+		const defaultRate = { value: 80, currency: 'EUR' };
+
+		it("prices a log that stores no positive rate at the organization's default, in the default's currency", () => {
+			const unrated = { ratesStored: true, billRateValue: 0, billRateCurrency: 'BGN', duration: 2 * HOUR } as any;
+
+			expect(billedRateOf(unrated, 'BGN', defaultRate)).toEqual({ rate: 80, currency: 'EUR' });
+			expect(budgetCostOf(unrated, defaultRate)).toBe(160);
+			expect(budgetCostOf({ ...unrated, billRateValue: null }, defaultRate)).toBe(160);
+		});
+
+		it('keeps the rate a log stores, and a log without stored rates priced at its member, over the default', () => {
+			const rated = { ratesStored: true, billRateValue: 60, billRateCurrency: 'USD', duration: HOUR } as any;
+			const live = { ratesStored: null, employee: { billRateValue: 50, billRateCurrency: 'USD' }, duration: HOUR } as any;
+			const liveUnrated = { ratesStored: null, employee: { billRateValue: 0 }, duration: HOUR } as any;
+
+			expect(billedRateOf(rated, 'BGN', defaultRate)).toEqual({ rate: 60, currency: 'USD' });
+			expect(budgetCostOf(live, defaultRate)).toBe(50);
+			expect(budgetCostOf(liveUnrated, defaultRate)).toBe(80);
+		});
+
+		it('says a cost budget needs the default only when some of its time has no positive rate', () => {
+			const rated = { ratesStored: true, billRateValue: 60 } as any;
+			const unrated = { ratesStored: true, billRateValue: 0 } as any;
+
+			expect(budgetLogsNeedDefaultRate([{ budgetType: 'cost', timeLogs: [rated] }], 'hours')).toBe(false);
+			expect(budgetLogsNeedDefaultRate([{ budgetType: 'cost', timeLogs: [rated, unrated] }], 'hours')).toBe(true);
+			expect(budgetLogsNeedDefaultRate([{ budgetType: 'hours', timeLogs: [unrated] }], 'hours')).toBe(false);
 		});
 	});
 

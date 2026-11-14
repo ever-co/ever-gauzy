@@ -61,14 +61,27 @@ const COLUMNS: ReadonlyArray<{ name: string; type: Readonly<Record<Dialect, stri
  * statement that fills it: a run cut short (MySQL has no transactional DDL) is completed by the next one, and running
  * `up` again, or after SQLite's `down`, which keeps the columns, never overwrites a rate a log already stores.
  *
- * A transaction-scoped advisory lock (a named lock on MySQL) makes two API processes that boot at the same time
- * against one database run it one after the other.
+ * The fill runs in batches of logs, in the order of their ids, each batch one statement that commits on its own
+ * (`transaction = false`; Gauzy runs migrations in `each` mode): no statement rewrites or locks the whole table, and
+ * an API that is stopped while it boots on a large `time_log` (a startup probe) keeps the batches it wrote, the next
+ * boot filling the rest. Inside a transaction block (a rollback, or the `all` transaction mode, which both wrap the
+ * migration whatever it declares) the batches run in that transaction.
+ *
+ * Two API processes that boot at the same time against one database run it one after the other: on Postgres the
+ * migration-run lock serialises the whole run (and a transaction-scoped advisory lock this migration, inside a
+ * transaction block), on MySQL a named lock.
  *
  * `down` drops the columns on Postgres and MySQL. SQLite keeps them, as every additive column of this platform is
  * kept on the embedded dialect; a kept nullable column is invisible to a build without the entity members.
  */
 export class AddTimeLogStoredRates1791000011400 implements MigrationInterface {
 	name = 'AddTimeLogStoredRates1791000011400';
+
+	/** Each batch of the fill commits on its own (see above). */
+	transaction = false;
+
+	/** How many logs one statement of the fill writes at most. */
+	fillBatchSize = 5000;
 
 	/** Advisory lock key that serialises concurrent runs of this migration on Postgres. */
 	private readonly advisoryLockKey = 1791000011400;
@@ -109,9 +122,51 @@ export class AddTimeLogStoredRates1791000011400 implements MigrationInterface {
 				`ALTER TABLE ${quoted(dialect, TABLE)} ADD COLUMN ${quoted(dialect, column.name)} ${column.type[dialect]}`
 			);
 		}
-		for (const statement of FILL[dialect]) {
-			await queryRunner.query(statement);
+		await this.fill(queryRunner, dialect);
+	}
+
+	/**
+	 * Fills the logs that store no rate yet, batch after batch in the order of their ids: each batch is the logs up to
+	 * the id `fillBatchSize` logs further, and the last one every log after it. A batch whose logs are all filled
+	 * already (a run that resumes) writes nothing.
+	 */
+	private async fill(queryRunner: QueryRunner, dialect: Dialect): Promise<void> {
+		let after: string | null = null;
+		for (;;) {
+			const upTo = await this.batchEnd(queryRunner, dialect, after);
+			const range = idRange(dialect, after, upTo);
+			await queryRunner.query(FILL[dialect](range.condition), range.parameters);
+			const isLastBatch = upTo === null;
+			if (isLastBatch) {
+				return;
+			}
+			after = upTo;
 		}
+	}
+
+	/**
+	 * The id of the last log of the batch that starts after `after` (from the first log when null), or null when fewer
+	 * than `fillBatchSize` logs are left: that batch is the last.
+	 */
+	private async batchEnd(queryRunner: QueryRunner, dialect: Dialect, after: string | null): Promise<string | null> {
+		const id = quoted(dialect, 'id');
+		const parameters: string[] = [];
+		let where = '';
+		if (after !== null) {
+			parameters.push(after);
+			where = ` WHERE ${id} > ${placeholder(dialect, 1)}`;
+		}
+		const offset = Math.max(Math.floor(this.fillBatchSize), 1) - 1;
+		const rows = await queryRunner.query(
+			`SELECT ${id} AS ${quoted(dialect, 'batchEnd')} FROM ${quoted(dialect, TABLE)}${where} ` +
+				`ORDER BY ${id} LIMIT 1 OFFSET ${offset}`,
+			parameters
+		);
+		const end = Array.isArray(rows) ? rows[0]?.batchEnd : undefined;
+		if (end === undefined || end === null) {
+			return null;
+		}
+		return String(end);
 	}
 
 	public async down(queryRunner: QueryRunner): Promise<void> {
@@ -184,17 +239,56 @@ const SQLITE_MEMBER_RATE =
 	`AND "member"."employeeId" = "time_log"."employeeId" AND "member"."billRateValue" IS NOT NULL ` +
 	`AND ${CURRENT_MEMBERSHIP_SQLITE} AND EXISTS (SELECT 1 FROM ${SQLITE_LIVE_PROJECT}) LIMIT 1`;
 
+/** The id of the log a fill statement writes, as each dialect's statement names it. */
+const LOG_ID: Readonly<Record<Dialect, string>> = {
+	postgres: `"log"."id"`,
+	mysql: '`time_log`.`id`',
+	sqlite: `"time_log"."id"`
+};
+
+/** The n-th (1-based) parameter of a statement: `$n` on Postgres, `?` elsewhere. */
+function placeholder(dialect: Dialect, n: number): string {
+	if (dialect === 'postgres') {
+		return `$${n}`;
+	}
+	return '?';
+}
+
 /**
- * Today's rates on every log that stores none yet, in one statement that also marks it: each log is written once (a
- * table of a million logs is rewritten once, not three times), and a run cut short (MySQL has no transactional DDL)
- * leaves each log either filled and marked or untouched, which the next run fills. A marked log is never written again.
+ * The logs of one batch of the fill: those after `after` (from the first when null) and up to `upTo` (every one
+ * left when null), as a condition the fill statement adds to its own, and its parameters.
+ */
+function idRange(
+	dialect: Dialect,
+	after: string | null,
+	upTo: string | null
+): { condition: string; parameters: string[] } {
+	const parameters: string[] = [];
+	let condition = '';
+	if (after !== null) {
+		parameters.push(after);
+		condition += ` AND ${LOG_ID[dialect]} > ${placeholder(dialect, parameters.length)}`;
+	}
+	if (upTo !== null) {
+		parameters.push(upTo);
+		condition += ` AND ${LOG_ID[dialect]} <= ${placeholder(dialect, parameters.length)}`;
+	}
+	return { condition, parameters };
+}
+
+/**
+ * Today's rates on the logs of a batch that store none yet, in one statement that also marks them: each log is written
+ * once (a table of a million logs is rewritten once, not three times), and a run cut short leaves each log either
+ * filled and marked or untouched, which the next run fills. A marked log is never written again.
  *
  * The client rates come from a live project, the member's from a current membership of that project. Each stored
  * currency is the rate's own, else the organization's (an empty one counts as none), and a client rate there is none of
  * stores no currency.
+ *
+ * Each statement takes the batch's id range (see `idRange`), empty for a single pass.
  */
-const FILL: Readonly<Record<Dialect, ReadonlyArray<string>>> = {
-	postgres: [
+const FILL: Readonly<Record<Dialect, (range: string) => string>> = {
+	postgres: (range) =>
 		`UPDATE "time_log" SET "billRateValue" = "rates"."billRateValue", "billRateCurrency" = "rates"."billRateCurrency", ` +
 			`"payRateValue" = "rates"."payRateValue", "payRateCurrency" = "rates"."payRateCurrency", ` +
 			`"projectBillRateValue" = "rates"."projectBillRateValue", ` +
@@ -217,10 +311,9 @@ const FILL: Readonly<Record<Dialect, ReadonlyArray<string>>> = {
 			`LEFT JOIN LATERAL (SELECT "member"."billRateValue" FROM "organization_project_employee" "member" ` +
 			`WHERE "member"."organizationProjectId" = "project"."id" AND "member"."employeeId" = "log"."employeeId" ` +
 			`AND "member"."billRateValue" IS NOT NULL AND ${CURRENT_MEMBERSHIP_PG} LIMIT 1) "member" ON true ` +
-			`WHERE "log"."ratesStored" IS NULL) "rates" ` +
-			`WHERE "time_log"."id" = "rates"."id"`
-	],
-	mysql: [
+			`WHERE "log"."ratesStored" IS NULL${range}) "rates" ` +
+			`WHERE "time_log"."id" = "rates"."id"`,
+	mysql: (range) =>
 		'UPDATE `time_log` INNER JOIN `employee` ON `employee`.`id` = `time_log`.`employeeId` ' +
 			'LEFT JOIN `organization` ON `organization`.`id` = `time_log`.`organizationId` ' +
 			'LEFT JOIN `organization_project` `project` ' +
@@ -239,10 +332,10 @@ const FILL: Readonly<Record<Dialect, ReadonlyArray<string>>> = {
 			'`time_log`.`projectMemberBillRateCurrency` = CASE WHEN `member`.`billRateValue` IS NOT NULL ' +
 			"THEN COALESCE(NULLIF(`project`.`currency`, ''), `organization`.`currency`) END, " +
 			'`time_log`.`ratesStored` = 1 ' +
-			'WHERE `time_log`.`ratesStored` IS NULL'
-	],
+			'WHERE `time_log`.`ratesStored` IS NULL' +
+			range,
 	// Correlated sub-queries: an `UPDATE ... FROM` needs SQLite 3.33, older than some embedded builds.
-	sqlite: [
+	sqlite: (range) =>
 		`UPDATE "time_log" SET ` +
 			`"billRateValue" = (SELECT "billRateValue" FROM "employee" WHERE "employee"."id" = "time_log"."employeeId"), ` +
 			`"billRateCurrency" = COALESCE(NULLIF((SELECT "billRateCurrency" FROM "employee" WHERE "employee"."id" = "time_log"."employeeId"), ''), ${SQLITE_ORGANIZATION_CURRENCY}), ` +
@@ -256,8 +349,7 @@ const FILL: Readonly<Record<Dialect, ReadonlyArray<string>>> = {
 			`THEN COALESCE(NULLIF((SELECT "currency" FROM ${SQLITE_LIVE_PROJECT}), ''), ${SQLITE_ORGANIZATION_CURRENCY}) END, ` +
 			`"ratesStored" = 1 ` +
 			`WHERE EXISTS (SELECT 1 FROM "employee" WHERE "employee"."id" = "time_log"."employeeId") ` +
-			`AND "time_log"."ratesStored" IS NULL`
-	]
+			`AND "time_log"."ratesStored" IS NULL${range}`
 };
 
 /**

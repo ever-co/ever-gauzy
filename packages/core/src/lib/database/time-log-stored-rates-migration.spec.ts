@@ -85,10 +85,14 @@ describe('time log stored rates migration on SQLite', () => {
 		return row;
 	};
 
-	const run = async (direction: 'up' | 'down') => {
+	const run = async (direction: 'up' | 'down', fillBatchSize?: number) => {
 		const queryRunner = dataSource.createQueryRunner();
 		try {
-			await new AddTimeLogStoredRates1791000011400()[direction](queryRunner);
+			const migration = new AddTimeLogStoredRates1791000011400();
+			if (fillBatchSize !== undefined) {
+				migration.fillBatchSize = fillBatchSize;
+			}
+			await migration[direction](queryRunner);
 		} finally {
 			await queryRunner.release();
 		}
@@ -195,6 +199,17 @@ describe('time log stored rates migration on SQLite', () => {
 		expect((await columns()).map((column) => column.name)).toEqual(expect.arrayContaining(RATE_COLUMNS));
 	});
 
+	it('fills every log in batches, each committed on its own, the same as in one pass', async () => {
+		// Five logs in batches of two: three statements, the last one every log left
+		await run('up', 2);
+
+		const rows = await dataSource.query(`SELECT "id", "billRateValue", "ratesStored" FROM "time_log" ORDER BY "id"`);
+		expect(rows.every((row: { ratesStored: number }) => row.ratesStored === 1)).toBe(true);
+		expect(await logOf('marie-site')).toMatchObject({ billRateValue: 40, projectMemberBillRateValue: 95 });
+		expect(await logOf('paul-site')).toMatchObject({ billRateCurrency: 'BGN', projectBillRateValue: 90 });
+		expect(new AddTimeLogStoredRates1791000011400().transaction).toBe(false);
+	});
+
 	it('fills, on a later run, the logs a cut-short run left without rates', async () => {
 		await run('up');
 		// A run that stopped after adding the columns (MySQL has no transactional DDL) left this log unfilled
@@ -289,6 +304,43 @@ describe('time log stored rates migration on PostgreSQL', () => {
 		expect(fills[0]).toContain('INNER JOIN "employee"');
 		expect(fills[0]).toContain('"member"."billRateValue" IS NOT NULL');
 		expect(fills[0]).toContain('"ratesStored" = true');
+	});
+
+	it('fills a large table in batches of ids, each batch bounded on both sides after the first', async () => {
+		const statements: Array<{ sql: string; parameters: unknown[] }> = [];
+		// Two full batches, then fewer logs than a batch are left
+		const batchEnds = [[{ batchEnd: 'id-5000' }], [{ batchEnd: 'id-10000' }], []];
+		const queryRunner = {
+			connection: { options: { type: 'postgres' } },
+			isTransactionActive: false,
+			hasTable: async () => true,
+			hasColumn: async () => true,
+			query: async (sql: string, parameters: unknown[] = []) => {
+				statements.push({ sql, parameters });
+				if (sql.startsWith('SELECT "id" AS "batchEnd"')) {
+					return batchEnds.shift();
+				}
+				return [];
+			}
+		} as unknown as QueryRunner;
+
+		await new AddTimeLogStoredRates1791000011400().up(queryRunner);
+
+		// Outside a transaction block, the migration-run lock serialises the run: no transaction-scoped lock is taken
+		expect(statements.some(({ sql }) => sql.includes('pg_advisory_xact_lock'))).toBe(false);
+		const fills = statements.filter(({ sql }) => sql.startsWith('UPDATE'));
+		expect(fills).toHaveLength(3);
+		expect(fills[0].sql).toContain('WHERE "log"."ratesStored" IS NULL AND "log"."id" <= $1)');
+		expect(fills[0].parameters).toEqual(['id-5000']);
+		expect(fills[1].sql).toContain('AND "log"."id" > $1 AND "log"."id" <= $2)');
+		expect(fills[1].parameters).toEqual(['id-5000', 'id-10000']);
+		expect(fills[2].sql).toContain('WHERE "log"."ratesStored" IS NULL AND "log"."id" > $1)');
+		expect(fills[2].parameters).toEqual(['id-10000']);
+		const batchReads = statements.filter(({ sql }) => sql.startsWith('SELECT "id" AS "batchEnd"'));
+		expect(batchReads[0].sql).toBe('SELECT "id" AS "batchEnd" FROM "time_log" ORDER BY "id" LIMIT 1 OFFSET 4999');
+		expect(batchReads[1].sql).toBe(
+			'SELECT "id" AS "batchEnd" FROM "time_log" WHERE "id" > $1 ORDER BY "id" LIMIT 1 OFFSET 4999'
+		);
 	});
 
 	it('drops every column on down', async () => {
