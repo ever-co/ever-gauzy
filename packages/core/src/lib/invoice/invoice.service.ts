@@ -29,7 +29,12 @@ import { OrganizationService } from './../organization';
 import { TypeOrmInvoiceRepository } from './repository/type-orm-invoice.repository';
 import { MikroOrmInvoiceRepository } from './repository/mikro-orm-invoice.repository';
 import { FavoriteService } from '../core/decorators';
-import { holdFinalStatus, IInvoiceStatusChange, statesStatusOtherThanVoid } from './invoice-final-status';
+import {
+	holdFinalStatus,
+	IInvoiceStatusChange,
+	statesStatusOtherThanVoid,
+	withoutReleasedTimeMark
+} from './invoice-final-status';
 import {
 	assertBillingInOrganization,
 	ILinesRepositories,
@@ -97,8 +102,10 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 	 * saved earlier out of a final status; nothing is saved.
 	 */
 	async createWithBilledTime(
-		input: IInvoiceCreateInput & { invoiceItems?: IInvoiceItemCreateInput[] }
+		request: IInvoiceCreateInput & { invoiceItems?: IInvoiceItemCreateInput[] }
 	): Promise<IInvoice> {
+		// The mark of released time billed since is written by the billing only, never from a request body
+		const input = withoutReleasedTimeMark(request);
 		if (!input.invoiceItems) {
 			return await this.writeKeepingFinalStatus(input, (service) => service.create(input));
 		}

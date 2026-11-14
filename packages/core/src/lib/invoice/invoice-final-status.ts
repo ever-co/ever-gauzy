@@ -23,6 +23,20 @@ export interface IFinalStatusState {
 }
 
 /**
+ * The input without `releasedTimeBilledAt`. Only the billing of time writes that mark (see
+ * `typeOrmMarkReleasedTimeBilled`), never a request: `POST /invoices` does not whitelist its body, so a caller could
+ * otherwise send `null` with an existing id, unmark a document and take it out of its final status with the next
+ * change.
+ *
+ * @param input A create or update of an invoice, as a caller sent it.
+ */
+export function withoutReleasedTimeMark<T extends object>(input: T): T {
+	const copy = { ...input } as T & { releasedTimeBilledAt?: Date | null };
+	delete copy.releasedTimeBilledAt;
+	return copy;
+}
+
+/**
  * Whether a change states a status other than VOID: the only change a final status refuses, since a void document
  * stays void and a rejected estimate may still be voided. A change that states no status leaves the status as it is.
  *
