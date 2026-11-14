@@ -30,7 +30,7 @@ export interface IUserTwoFactor extends IBasePerTenantEntityModel {
 
 /** `GET /api/auth/two-factor`: the signed-in user's own state. */
 export interface ITwoFactorStatus {
-	/** Whether this server can keep authenticator secrets (it needs `ENCRYPTION_KEY`). */
+	/** Whether users can turn it on here: `TWO_FACTOR_ENABLED` is set, and `ENCRYPTION_KEY` to keep secrets. */
 	available: boolean;
 
 	/** Whether sign-ins ask for a code. */

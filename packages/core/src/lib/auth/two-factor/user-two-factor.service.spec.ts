@@ -25,6 +25,19 @@ const ORGANIZATION = '9c000000-0000-4000-8000-0000000000a1';
 const STRICT_ORGANIZATION = '9c000000-0000-4000-8000-0000000000a2';
 const ADMIN = '9c000000-0000-4000-8000-0000000000c1';
 
+// The operator's switch is on for every test of this file but the ones that turn it off themselves.
+const previousSwitch = process.env.TWO_FACTOR_ENABLED;
+beforeAll(() => {
+	process.env.TWO_FACTOR_ENABLED = 'true';
+});
+afterAll(() => {
+	if (previousSwitch === undefined) {
+		delete process.env.TWO_FACTOR_ENABLED;
+	} else {
+		process.env.TWO_FACTOR_ENABLED = previousSwitch;
+	}
+});
+
 /** The status of an HTTP error thrown by `promise`, or -1. */
 async function statusOf(promise: Promise<unknown>): Promise<number> {
 	try {
@@ -335,6 +348,61 @@ describe('UserTwoFactorService', () => {
 		},
 		TIMEOUT
 	);
+
+	describe("while the operator's switch is off", () => {
+		/** Runs `check` with `TWO_FACTOR_ENABLED` unset, then sets it back. */
+		const switchedOff = async (check: () => Promise<void>) => {
+			delete process.env.TWO_FACTOR_ENABLED;
+			try {
+				await check();
+			} finally {
+				process.env.TWO_FACTOR_ENABLED = 'true';
+			}
+		};
+
+		it(
+			'answers that it is not available, and refuses to start or finish a setup',
+			async () => {
+				const newcomer = await newUser();
+				const halfway = await newUser();
+				const { secret } = await service.enroll(halfway);
+
+				await switchedOff(async () => {
+					expect(service.isAvailable()).toBe(false);
+					expect((await service.statusOf(newcomer.id, true)).available).toBe(false);
+					await expect(service.enroll(newcomer)).rejects.toThrow(/TWO_FACTOR_ENABLED/);
+					expect(await statusOf(service.enroll(newcomer))).toBe(HttpStatus.FORBIDDEN);
+					expect(await statusOf(service.confirm(halfway.id, codeAt(secret)))).toBe(HttpStatus.FORBIDDEN);
+					expect(await service.isEnabled(halfway.id)).toBe(false);
+					expect(await service.isSetupRequired(newcomer.id, STRICT_ORGANIZATION, TENANT)).toBe(false);
+				});
+			},
+			TIMEOUT
+		);
+
+		it(
+			'keeps asking an account that has it on for its code, which can still replace its recovery codes and turn it off',
+			async () => {
+				const { user, secret } = await enabledUser();
+
+				await switchedOff(async () => {
+					expect(await service.isEnabled(user.id)).toBe(true);
+					expect(await service.enabledAmong([user.id])).toEqual(new Set([user.id]));
+					await expect(service.verifySecondFactor(user.id, { code: codeAt(secret) })).resolves.toEqual(
+						expect.objectContaining({ enabledAt: expect.any(Date) })
+					);
+					now += 30_000;
+					await expect(service.regenerateRecoveryCodes(user.id, { code: codeAt(secret) })).resolves.toEqual({
+						recoveryCodes: expect.any(Array)
+					});
+					now += 30_000;
+					await service.disable(user.id, { code: codeAt(secret) });
+					expect(await service.isEnabled(user.id)).toBe(false);
+				});
+			},
+			TIMEOUT
+		);
+	});
 });
 
 describe('UserTwoFactorService races and MikroORM reads', () => {

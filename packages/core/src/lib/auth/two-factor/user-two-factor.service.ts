@@ -2,6 +2,7 @@
 import {
 	BadRequestException,
 	ConflictException,
+	ForbiddenException,
 	Injectable,
 	Logger,
 	ServiceUnavailableException,
@@ -28,6 +29,7 @@ import { MikroOrmUserTwoFactorRepository } from './repository/mikro-orm-user-two
 import { TypeOrmUserTwoFactorRepository } from './repository/type-orm-user-two-factor.repository';
 import { buildOtpauthUrl, generateTotpSecret, matchingTimeStep } from './totp';
 import { twoFactorSecretProblem, twoFactorSecretProblemMessage } from './two-factor-secret';
+import { isTwoFactorEnrolmentOpen, TWO_FACTOR_SWITCHED_OFF_MESSAGE } from './two-factor-switch';
 import { UserTwoFactor } from './user-two-factor.entity';
 
 /** Wrong codes in a row after which the account's code checks are refused for a while: the next one is blocked. */
@@ -60,8 +62,9 @@ export interface TwoFactorEnrollee {
 /**
  * Two-factor authentication with an authenticator app, for one user at a time (ever-co/ever-gauzy#11916).
  *
- * - **Enrolment.** A secret is drawn and kept encrypted (`EncryptionService`); the user confirms it with a first code,
- *   which turns it on and answers ten recovery codes, once. Only their SHA-256 is kept.
+ * - **Enrolment.** Open while the operator's switch is on (`TWO_FACTOR_ENABLED`, see `two-factor-switch.ts`). A secret
+ *   is drawn and kept encrypted (`EncryptionService`); the user confirms it with a first code, which turns it on and
+ *   answers ten recovery codes, once. Only their SHA-256 is kept.
  * - **Checks.** A code is accepted for one 30-second step on each side of now, and each step once (replay); a recovery
  *   code once. Wrong proofs count per user (`TWO_FACTOR_ATTEMPT_RULE`): the sixth in a row is refused for a while.
  * - **Off.** The user turns it off with a proof; an administrator resets it, which is recorded on the row.
@@ -82,9 +85,12 @@ export class UserTwoFactorService extends CrudService<UserTwoFactor> {
 		super(typeOrmUserTwoFactorRepository, mikroOrmUserTwoFactorRepository);
 	}
 
-	/** Whether this server can keep authenticator secrets (it needs `ENCRYPTION_KEY`, see `two-factor-secret.ts`). */
+	/**
+	 * Whether users can turn it on here: the operator set `TWO_FACTOR_ENABLED` (see `two-factor-switch.ts`) and this
+	 * server can keep authenticator secrets (it needs `ENCRYPTION_KEY`, see `two-factor-secret.ts`).
+	 */
 	isAvailable(): boolean {
-		return twoFactorSecretProblem() === null;
+		return isTwoFactorEnrolmentOpen() && twoFactorSecretProblem() === null;
 	}
 
 	/**
@@ -162,7 +168,8 @@ export class UserTwoFactorService extends CrudService<UserTwoFactor> {
 	}
 
 	/**
-	 * Whether a sign-in must ask the member to set it up: their organization requires it and they have not turned it on.
+	 * Whether a sign-in must ask the member to set it up: their organization requires it, they have not turned it on,
+	 * and they can (the operator's switch is on).
 	 *
 	 * @param userId The member.
 	 * @param organizationId The organization of the session.
@@ -173,6 +180,9 @@ export class UserTwoFactorService extends CrudService<UserTwoFactor> {
 		organizationId: ID | null | undefined,
 		tenantId: ID | null | undefined
 	): Promise<boolean> {
+		if (!isTwoFactorEnrolmentOpen()) {
+			return false;
+		}
 		const isRequired = await this.isRequiredByOrganization(organizationId, tenantId);
 		if (!isRequired) {
 			return false;
@@ -213,10 +223,12 @@ export class UserTwoFactorService extends CrudService<UserTwoFactor> {
 	 *
 	 * @param user The signed-in user.
 	 * @param issuer The name the authenticator app shows; the API's own name by default.
+	 * @throws ForbiddenException while the operator's switch is off.
 	 * @throws ServiceUnavailableException when this server cannot keep secrets.
 	 * @throws ConflictException when it is already on.
 	 */
 	async enroll(user: TwoFactorEnrollee, issuer?: string): Promise<ITwoFactorEnrollment> {
+		this.assertEnrolmentOpen();
 		this.assertAvailable();
 
 		const row = await this.findOfUser(user.id);
@@ -245,10 +257,12 @@ export class UserTwoFactorService extends CrudService<UserTwoFactor> {
 	 *
 	 * @param userId The signed-in user.
 	 * @param code The first code.
+	 * @throws ForbiddenException while the operator's switch is off, even for an enrolment started before.
 	 * @throws BadRequestException when no enrolment waits for a code.
 	 * @throws UnauthorizedException for a wrong code; HttpException 429 after too many.
 	 */
 	async confirm(userId: ID, code: string): Promise<ITwoFactorConfirmation> {
+		this.assertEnrolmentOpen();
 		const row = await this.findOfUser(userId);
 		const isPending = Boolean(row?.secret) && !row?.enabledAt;
 		if (!isPending) {
@@ -521,6 +535,13 @@ export class UserTwoFactorService extends CrudService<UserTwoFactor> {
 	private changedOne(result: unknown): boolean {
 		const affected = (result as { affected?: number })?.affected;
 		return affected === 1;
+	}
+
+	/** Refuses turning it on while the operator's switch is off, saying which switch. */
+	private assertEnrolmentOpen(): void {
+		if (!isTwoFactorEnrolmentOpen()) {
+			throw new ForbiddenException(TWO_FACTOR_SWITCHED_OFF_MESSAGE);
+		}
 	}
 
 	/** Refuses an enrolment on a server that cannot keep secrets, saying what the operator must set. */

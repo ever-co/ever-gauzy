@@ -84,6 +84,7 @@ export class TwoFactorController {
 	 */
 	@ApiOperation({ summary: 'Start setting up two-factor authentication' })
 	@ApiResponse({ status: HttpStatus.CREATED, description: 'The secret and its otpauth address.' })
+	@ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'The operator has not set TWO_FACTOR_ENABLED.' })
 	@ApiResponse({ status: HttpStatus.CONFLICT, description: 'It is already on.' })
 	@ApiResponse({ status: HttpStatus.SERVICE_UNAVAILABLE, description: 'The server has no ENCRYPTION_KEY.' })
 	@Post('/enroll')
@@ -106,6 +107,7 @@ export class TwoFactorController {
 	 */
 	@ApiOperation({ summary: 'Turn on two-factor authentication with a first code' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'It is on; the ten recovery codes, shown once.' })
+	@ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'The operator has not set TWO_FACTOR_ENABLED.' })
 	@ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'The code is not right.' })
 	@ApiResponse({ status: HttpStatus.TOO_MANY_REQUESTS, description: 'Too many wrong codes in a row.' })
 	@HttpCode(HttpStatus.OK)
