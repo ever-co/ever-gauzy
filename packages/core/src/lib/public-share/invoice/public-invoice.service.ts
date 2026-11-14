@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, IsNull, MoreThan, Repository, UpdateResult } from 'typeorm';
 import { IInvoice, IInvoiceUpdateInput } from '@gauzy/contracts';
 import { EstimateEmail, Invoice } from './../../core/entities/internal';
+import { answerCriteria } from './estimate-answer-criteria';
 import { parseFindOptionsRelations } from '../../core/utils';
 import { TypeOrmInvoiceRepository } from '../../invoice/repository/type-orm-invoice.repository';
 import { isNonEmptyString, TokenPurposeEnum, verifyPurposeToken } from '../../auth/purpose-token';
@@ -186,7 +187,8 @@ export class PublicInvoiceService {
 				organizationId: decoded.organizationId ?? IsNull(),
 				tenantId: decoded.tenantId
 			});
-			return await this.typeOrmInvoiceRepository.update(invoice.id, entity);
+			// Only a change of status is written, so its `affected` count tells the answer that changed the estimate
+			return await this.typeOrmInvoiceRepository.update(answerCriteria(invoice.id, entity), entity);
 		} catch (error) {
 			if (error instanceof ForbiddenException) {
 				throw error;

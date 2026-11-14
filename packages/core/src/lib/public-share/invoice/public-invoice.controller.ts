@@ -1,5 +1,6 @@
 import { UseInterceptors, Controller, Get, Param, Query, Put, Body } from '@nestjs/common';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { Public } from '@gauzy/common';
 import { FindOptionsWhere, UpdateResult } from 'typeorm';
@@ -45,6 +46,9 @@ export class PublicInvoiceController {
 	/**
 	 * Update public estimate/invoice status
 	 *
+	 * Each answer that changes the estimate tells the team (in-app and by email), so a link holder flipping it is held to
+	 * a per-address budget of its own, where throttling is on.
+	 *
 	 * @param params
 	 * @param entity
 	 * @returns
@@ -58,6 +62,7 @@ export class PublicInvoiceController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found.'
 	})
+	@Throttle({ default: { limit: 5, ttl: 60000 } })
 	@Put(':id/:token')
 	@UseValidationPipe({ whitelist: true })
 	async updateInvoiceByEstimateEmailToken(
