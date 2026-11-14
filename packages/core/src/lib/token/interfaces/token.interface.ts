@@ -18,6 +18,11 @@ export interface ITokenConfig {
 	allowRotation: boolean;
 	allowMultipleSessions: boolean;
 	maxUsageCount?: number;
+	/**
+	 * How long after a token was rotated it is still answered when presented again (ms); undefined or 0 means not
+	 * at all. See `shared/rotation-reuse.ts`.
+	 */
+	rotationReuseWindow?: number;
 }
 
 // ---------------------------------------------------------------------------
