@@ -56,6 +56,13 @@ function build({ hash = 'hashed-password', passwordOk = true, codeOk = true } = 
 	const revokeById = jest.fn(async ({ tokenId, reason }: { tokenId: string; reason: string }) => {
 		expect(reason).toBe(USER_SESSION_SIGNED_OUT_REASON);
 		revoked.push(tokenId);
+		// A revoked token is no longer active, as the store answers it.
+		for (const list of [refreshTokens, accessTokens]) {
+			const index = list.findIndex((candidate) => candidate.id === tokenId);
+			if (index >= 0) {
+				list.splice(index, 1);
+			}
+		}
 		return true;
 	});
 
@@ -168,6 +175,79 @@ describe('UserSessionService.signOutOthers', () => {
 
 		await expect(service.signOutOthers({ password: 'right' })).rejects.toThrow(ConflictException);
 		expect(revoked).toEqual([]);
+	});
+});
+
+/**
+ * A token store where a refresh of the laptop lands while a sign-out runs: the laptop's refresh token is rotated (so
+ * revoking it fails), and its successor and a new access token appear, in the same session as the refresh token they
+ * replace (or, for a refresh token minted before sessions were named, in a new one).
+ */
+function storeWithRefreshDuringSignOut({ legacy = false } = {}) {
+	const laptopSession = legacy ? null : inSession('laptop');
+	const successorSession = inSession(legacy ? 'laptop-after-refresh' : 'laptop');
+	let refreshTokens: any[] = [
+		token('r-web', 'REFRESH_TOKEN_TYPE', inSession('web')),
+		token('r-laptop', 'REFRESH_TOKEN_TYPE', laptopSession)
+	];
+	let accessTokens: any[] = [token('a-web', 'ACCESS_TOKEN_TYPE', inSession('web'))];
+	const revoked: string[] = [];
+	const revokeById = jest.fn(async ({ tokenId }: { tokenId: string }) => {
+		if (tokenId === 'r-laptop') {
+			// The refresh got there first: the old token is rotated, its successor and a new access token are active.
+			refreshTokens = refreshTokens.filter((candidate) => candidate.id !== 'r-laptop');
+			refreshTokens.push({
+				...token('r-laptop-2', 'REFRESH_TOKEN_TYPE', successorSession),
+				rotatedFromTokenId: 'r-laptop'
+			});
+			accessTokens.push(token('a-laptop-2', 'ACCESS_TOKEN_TYPE', successorSession));
+			return false;
+		}
+		revoked.push(tokenId);
+		refreshTokens = refreshTokens.filter((candidate) => candidate.id !== tokenId);
+		accessTokens = accessTokens.filter((candidate) => candidate.id !== tokenId);
+		return true;
+	});
+	const attempt = { fail: jest.fn(async () => undefined), succeed: jest.fn(async () => undefined) };
+	const service = new UserSessionService(
+		{ findActive: jest.fn(async () => accessTokens), revokeById } as any,
+		{ findActive: jest.fn(async () => refreshTokens), revokeById } as any,
+		{ findOneByIdString: jest.fn(async () => ({ id: MARIE, email: 'marie@ever.co', hash: 'h' })) } as any,
+		{ verify: jest.fn(async () => true) } as any,
+		{ begin: jest.fn(async () => attempt) } as any
+	);
+	return { service, revoked };
+}
+
+describe('UserSessionService, a refresh landing while a sign-out runs', () => {
+	it('signs out the tokens the refresh minted for the session too', async () => {
+		const { service, revoked } = storeWithRefreshDuringSignOut();
+		requestFrom('web');
+
+		await service.signOutOthers({ password: 'right' });
+
+		expect(revoked.sort()).toEqual(['a-laptop-2', 'r-laptop-2']);
+	});
+
+	it('never reports a sign-out that left a token active', async () => {
+		const { service, services } = build();
+		// A token that stays active whatever the revocation answers.
+		services.refreshTokenService.revokeById.mockImplementation(async () => false);
+		services.accessTokenService.revokeById.mockImplementation(async () => false);
+		requestFrom('web');
+
+		await expect(service.signOutOthers({ password: 'right' })).rejects.toMatchObject({
+			response: { code: UserSessionRefusal.SIGN_OUT_INCOMPLETE }
+		});
+	});
+
+	it('follows a session minted before sessions were named into the session its refresh gave it', async () => {
+		const { service, revoked } = storeWithRefreshDuringSignOut({ legacy: true });
+		requestFrom('web');
+
+		await service.signOut('r-laptop');
+
+		expect(revoked.sort()).toEqual(['a-laptop-2', 'r-laptop-2']);
 	});
 });
 
