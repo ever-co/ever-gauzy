@@ -24,6 +24,8 @@ const AGENT_USER = {
 	role: { name: RolesEnum.EMPLOYEE }
 };
 const PERSON_USER = { id: 'user-person', email: 'ada@example.com', hash: 'digest', role: { name: RolesEnum.EMPLOYEE } };
+/** The account behind a member without an account (#11913): no email, no password. */
+const PLACEHOLDER_USER = { id: 'user-placeholder', email: null, hash: null, role: { name: RolesEnum.EMPLOYEE } };
 
 /**
  * `POST /employee` files people. An account that stands behind an agent employee (in any organization of the
@@ -34,6 +36,7 @@ describe('EmployeeCreateHandler refuses the account of an agent', () => {
 	let agentUserIds: Set<string>;
 	let employeeService: {
 		assertNotAgentAccount: jest.Mock;
+		assertNotPlaceholderAccount: jest.Mock;
 		findOneByWhereOptions: jest.Mock;
 		create: jest.Mock;
 	};
@@ -52,6 +55,12 @@ describe('EmployeeCreateHandler refuses the account of an agent', () => {
 					throw new ConflictException('This user stands behind an agent employee.');
 				}
 			}),
+			// What EmployeeService.assertNotPlaceholderAccount answers: 409 for the account of a member without one.
+			assertNotPlaceholderAccount: jest.fn(async (userId: string, tenantId: string) => {
+				if (tenantId === TENANT && userId === PLACEHOLDER_USER.id) {
+					throw new ConflictException('This user stands behind a member without an account.');
+				}
+			}),
 			findOneByWhereOptions: jest.fn(async () => {
 				throw new NotFoundException();
 			}),
@@ -63,7 +72,9 @@ describe('EmployeeCreateHandler refuses the account of an agent', () => {
 				if (!user) throw new NotFoundException();
 				return user;
 			}),
-			findOneByIdString: jest.fn(async (id: string) => [AGENT_USER, PERSON_USER].find((u) => u.id === id))
+			findOneByIdString: jest.fn(async (id: string) =>
+				[AGENT_USER, PERSON_USER, PLACEHOLDER_USER].find((u) => u.id === id)
+			)
 		};
 		userOrganizationService = { addUserToOrganization: jest.fn() };
 		handler = new EmployeeCreateHandler(
@@ -97,6 +108,17 @@ describe('EmployeeCreateHandler refuses the account of an agent', () => {
 		).rejects.toBeInstanceOf(ConflictException);
 
 		expect(employeeService.assertNotAgentAccount).toHaveBeenCalledWith(AGENT_USER.id, TENANT);
+		expect(employeeService.create).not.toHaveBeenCalled();
+	});
+
+	it('refuses the userId of the account behind a member without an account with 409 and files nothing', async () => {
+		await expect(
+			handler.execute(
+				new EmployeeCreateCommand({ organizationId: ORGANIZATION, userId: PLACEHOLDER_USER.id } as never)
+			)
+		).rejects.toBeInstanceOf(ConflictException);
+
+		expect(employeeService.assertNotPlaceholderAccount).toHaveBeenCalledWith(PLACEHOLDER_USER.id, TENANT);
 		expect(employeeService.create).not.toHaveBeenCalled();
 	});
 

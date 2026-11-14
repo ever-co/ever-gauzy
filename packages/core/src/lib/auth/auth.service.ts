@@ -2222,7 +2222,8 @@ export class AuthService extends SocialAuthService {
 
 			// The account of a member without an account (a placeholder) gets no access token either, whichever
 			// path asks for one. Its user has no email and no password, so no sign-in finds it; this is the guard
-			// behind that. The active record found above says it at no cost.
+			// behind that. The active record found above says it at no cost: no other member is ever filed for that
+			// user (EmployeeService.assertNotPlaceholderAccount).
 			if (employee?.isPlaceholder) {
 				this.logger.warn(`Access token refused: user ${user.id} stands behind a member without an account`);
 				throw new UnauthorizedException();

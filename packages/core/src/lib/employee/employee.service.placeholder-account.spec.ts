@@ -1,0 +1,39 @@
+import '../core/entities/internal';
+import { ConflictException } from '@nestjs/common';
+import { EmployeeService } from './employee.service';
+
+/**
+ * The account behind a member without an account (ever-co/ever-gauzy#11913) is made for that member alone: it never
+ * signs in, and a claim or a merge retires it with the member. No person is filed for it.
+ */
+describe('EmployeeService.assertNotPlaceholderAccount', () => {
+	const TENANT = 'tenant-1';
+
+	function build(placeholderUserIds: string[]) {
+		const count = jest.fn(async ({ where }) =>
+			where.isPlaceholder === true && where.tenantId === TENANT && placeholderUserIds.includes(where.userId)
+				? 1
+				: 0
+		);
+		const service: EmployeeService = Object.create(EmployeeService.prototype);
+		Object.assign(service, { typeOrmRepository: { count } });
+		return { service, count };
+	}
+
+	it('answers 409 for the account behind a member without an account', async () => {
+		const { service, count } = build(['user-placeholder']);
+
+		await expect(service.assertNotPlaceholderAccount('user-placeholder', TENANT)).rejects.toBeInstanceOf(
+			ConflictException
+		);
+		expect(count).toHaveBeenCalledWith({
+			where: { userId: 'user-placeholder', tenantId: TENANT, isPlaceholder: true }
+		});
+	});
+
+	it('lets any other account through', async () => {
+		const { service } = build(['user-placeholder']);
+
+		await expect(service.assertNotPlaceholderAccount('user-person', TENANT)).resolves.toBeUndefined();
+	});
+});

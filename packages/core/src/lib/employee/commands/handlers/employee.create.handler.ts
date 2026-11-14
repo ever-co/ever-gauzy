@@ -70,8 +70,9 @@ export class EmployeeCreateHandler implements ICommandHandler<EmployeeCreateComm
 			}
 
 			if (existingUser) {
-				// The account behind an agent is not filed as a person (409).
+				// The account behind an agent, or behind a member without an account, is not filed as a person (409).
 				await this._employeeService.assertNotAgentAccount(existingUser.id, tenantId);
+				await this._employeeService.assertNotPlaceholderAccount(existingUser.id, tenantId);
 
 				// Check if an employee already exists for this user in this organization
 				try {
@@ -158,9 +159,10 @@ export class EmployeeCreateHandler implements ICommandHandler<EmployeeCreateComm
 			this._emailService.welcomeUser(user, languageCode, organizationId, originUrl);
 			return employee;
 		} else {
-			// The account behind an agent is not filed as a person (409). Checked before the `try` below, which
-			// logs and swallows what fails.
+			// The account behind an agent, or behind a member without an account, is not filed as a person (409).
+			// Checked before the `try` below, which logs and swallows what fails.
 			await this._employeeService.assertNotAgentAccount(input.userId, RequestContext.currentTenantId());
+			await this._employeeService.assertNotPlaceholderAccount(input.userId, RequestContext.currentTenantId());
 
 			try {
 				const user = await this._userService.findOneByIdString(input.userId, {

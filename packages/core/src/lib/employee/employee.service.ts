@@ -280,6 +280,26 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	}
 
 	/**
+	 * Refuses to file a person for the account behind a member without an account (ever-co/ever-gauzy#11913). That
+	 * account is made for its member alone: it never signs in (the access-token guard reads only the member it finds),
+	 * and a claim or a merge retires it with the member. The person is reached by claiming or merging the member.
+	 *
+	 * @param userId The account to file a person for.
+	 * @param tenantId The tenant.
+	 * @throws ConflictException when the account stands behind a member without an account.
+	 */
+	public async assertNotPlaceholderAccount(userId: ID, tenantId: ID): Promise<void> {
+		const placeholders = await this.typeOrmRepository.count({
+			where: { userId, ...(tenantId ? { tenantId } : {}), isPlaceholder: true }
+		});
+		if (placeholders > 0) {
+			throw new ConflictException(
+				'This user stands behind a member without an account: claim or merge that member instead.'
+			);
+		}
+	}
+
+	/**
 	 * The tenant's `EMPLOYEE` role, which the account of an agent employee carries.
 	 *
 	 * @param manager The transaction manager.
