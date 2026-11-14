@@ -86,6 +86,15 @@ describe('time goal DTOs', () => {
 			expect(errors).toEqual([]);
 		});
 
+		it.each([['name'], ['comparison'], ['targetHours'], ['period']])(
+			'refuses %s sent as null',
+			async (property) => {
+				const { errors } = await check(UpdateTimeGoalDTO, { ...BASE, [property]: null });
+
+				expect(fields(errors)).toEqual([property]);
+			}
+		);
+
 		it('does not declare who a goal counts, so a whitelisting pipe drops it', async () => {
 			const { errors } = await check(
 				UpdateTimeGoalDTO,

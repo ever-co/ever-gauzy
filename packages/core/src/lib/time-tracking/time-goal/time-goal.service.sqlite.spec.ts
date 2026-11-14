@@ -607,6 +607,22 @@ describe('TimeGoalService on SQLite', () => {
 	);
 
 	it(
+		'leaves a field sent as null as it is',
+		inRequest(async () => {
+			actAs(MARIE);
+			const marieGoal = await goal({ name: 'Kept', billableOnly: true });
+
+			const updated = await service.updateGoal(marieGoal.id, {
+				organizationId: ORGANIZATION,
+				billableOnly: null as never,
+				targetHours: 12
+			});
+			expect([updated.billableOnly, updated.targetHours]).toEqual([true, 12]);
+		}),
+		TIMEOUT
+	);
+
+	it(
 		'refuses a target over its period, a team goal without its team, and a project of another organization',
 		inRequest(async () => {
 			actAs(MARIE);

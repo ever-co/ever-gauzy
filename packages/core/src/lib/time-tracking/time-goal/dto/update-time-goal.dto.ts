@@ -12,7 +12,10 @@ export class UpdateTimeGoalDTO
 	extends IntersectionType(
 		TenantOrganizationBaseDTO,
 		IntersectionType(
-			PartialType(PickType(TimeGoal, ['name', 'comparison', 'targetHours', 'period', 'billableOnly'] as const)),
+			// A field may be left out, never sent as null: `skipNullProperties: false` validates a null.
+			PartialType(PickType(TimeGoal, ['name', 'comparison', 'targetHours', 'period', 'billableOnly'] as const), {
+				skipNullProperties: false
+			}),
 			PickType(CreateTimeGoalDTO, ['projectIds', 'organizationContactIds'] as const)
 		)
 	)

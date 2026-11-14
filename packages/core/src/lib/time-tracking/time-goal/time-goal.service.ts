@@ -148,12 +148,14 @@ export class TimeGoalService extends TenantAwareCrudService<TimeGoal> {
 			tenantId
 		);
 
+		// A field sent as null is left as it is, as one left out: every one of them is required on a goal.
+		const isSent = (value: unknown) => value !== undefined && value !== null;
 		const changes: Partial<TimeGoal> = { id: goal.id };
-		if (input.name !== undefined) changes.name = input.name;
-		if (input.comparison !== undefined) changes.comparison = input.comparison;
-		if (input.targetHours !== undefined) changes.targetHours = input.targetHours;
-		if (input.period !== undefined) changes.period = input.period;
-		if (input.billableOnly !== undefined) changes.billableOnly = input.billableOnly;
+		if (isSent(input.name)) changes.name = input.name;
+		if (isSent(input.comparison)) changes.comparison = input.comparison;
+		if (isSent(input.targetHours)) changes.targetHours = input.targetHours;
+		if (isSent(input.period)) changes.period = input.period;
+		if (isSent(input.billableOnly)) changes.billableOnly = input.billableOnly;
 		if (projects) {
 			changes.projects = projects;
 			changes.listedProjectsOnly = projects.length > 0;
