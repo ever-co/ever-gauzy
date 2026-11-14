@@ -109,3 +109,44 @@ describe('OAuthUserService.authenticateMcpUser — failed attempts', () => {
 		});
 	});
 });
+
+/**
+ * ever-co/ever-gauzy#11916: the MCP login form takes a password and cannot ask for a two-factor code, so an account that
+ * has two-factor authentication on does not sign in through it with its password alone.
+ */
+describe('OAuthUserService.authenticateMcpUser — two-factor authentication', () => {
+	const EMAIL = 'protected@example.com';
+	const from = (ip: string) => ({ ip, headers: {}, res: { setHeader: jest.fn() } });
+
+	/** A service whose user repository's manager reads `twoFactorRows` rows with two-factor authentication on. */
+	const serviceWith = (twoFactorRows: number) => {
+		const count = jest.fn(async () => twoFactorRows);
+		const users = {
+			findOne: jest.fn(async () => ({ id: 'user-2', email: EMAIL, hash: 'hash' })),
+			manager: { getRepository: jest.fn(() => ({ count })) }
+		};
+		const service = new OAuthUserService(
+			users as never,
+			{ verify: jest.fn(async (password: string) => password === 'right-password') } as never,
+			new LoginAttemptService(null),
+			{ find: jest.fn(async () => []) } as never
+		);
+		return { service, count, users };
+	};
+
+	it('refuses the right password of an account that has it on', async () => {
+		const { service, count, users } = serviceWith(1);
+
+		expect(await service.authenticateMcpUser(EMAIL, 'right-password', from('198.51.100.1'))).toBeNull();
+		expect(users.manager.getRepository).toHaveBeenCalledWith('UserTwoFactor');
+		expect(count).toHaveBeenCalledWith({ where: expect.objectContaining({ userId: 'user-2' }) });
+	});
+
+	it('signs in an account without it as before', async () => {
+		const { service } = serviceWith(0);
+
+		expect(await service.authenticateMcpUser(EMAIL, 'right-password', from('198.51.100.1'))).toMatchObject({
+			id: 'user-2'
+		});
+	});
+});
