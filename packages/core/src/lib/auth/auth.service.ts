@@ -15,6 +15,7 @@ import {
 	IAuthResponse,
 	IChangePasswordRequest,
 	ID,
+	IEmployee,
 	ILastOrganization,
 	ILastTeam,
 	IOrganizationTeam,
@@ -26,6 +27,7 @@ import {
 	ISocialAccountLogin,
 	ITenant,
 	ITokenPair,
+	ITwoFactorVerifyInput,
 	IUser,
 	IUserCodeInput,
 	IUserEmailInput,
@@ -95,6 +97,7 @@ import { TypeOrmPasswordResetRepository } from './../password-reset/repository/t
 import { MikroOrmPasswordResetRepository } from './../password-reset/repository/mikro-orm-password-reset.repository';
 import { RoleService } from './../role/role.service';
 import { isDeactivatedEmployee } from './deactivated-employee';
+import { isPlaceholderAccount } from './placeholder-account';
 import { EmailConfirmationService } from './email-confirmation.service';
 import {
 	allowedEmailLink,
@@ -148,6 +151,13 @@ import {
 	narrowPermissionsToOAuthAppScopes,
 	narrowRolesToOAuthAppScopes
 } from './oauth-app-scope';
+import {
+	TwoFactorChallengeClaims,
+	TwoFactorRequiredException,
+	twoFactorRequiredFor,
+	verifyTwoFactorChallenge
+} from './two-factor/two-factor-challenge';
+import { UserTwoFactorService } from './two-factor/user-two-factor.service';
 
 @Injectable()
 export class AuthService extends SocialAuthService {
@@ -193,6 +203,8 @@ export class AuthService extends SocialAuthService {
 		private readonly oauthClientService: OAuthClientService,
 		private readonly termsAcceptanceService: TermsAcceptanceService,
 		private readonly loginAttemptService: LoginAttemptService,
+		// Whether a sign-in asks for a code: a session is issued only after it (ever-co/ever-gauzy#11916)
+		private readonly userTwoFactorService: UserTwoFactorService,
 		// The signup paywall, which opening a workspace honours too (inert unless billing is configured)
 		@Optional() private readonly stripeSubscriptionService?: StripeSubscriptionService
 	) {
@@ -643,6 +655,18 @@ export class AuthService extends SocialAuthService {
 			// Select the most recently updated user (already sorted by updatedAt DESC)
 			const { user: selectedUser, employee } = userValidations[0];
 
+			// Two-factor authentication on: the password was right, and the session waits for a code
+			// (`POST /auth/two-factor/verify`), which issues it as a workspace sign-in for this user would.
+			if (await this.asksForTwoFactorCode(selectedUser.id)) {
+				await attempt.succeed();
+				throw twoFactorRequiredFor({
+					userId: selectedUser.id,
+					email: selectedUser.email,
+					tenantId: selectedUser.tenantId ?? null,
+					lastOrganizationId: employee?.organizationId
+				});
+			}
+
 			// Determine organization context for tokens. The stored organization counts only while the user is
 			// still a member of it; a stale one is replaced (see `resolveStoredOrganizationId`).
 			let organizationId = employee?.organizationId || (await this.resolveStoredOrganizationId(selectedUser));
@@ -675,15 +699,22 @@ export class AuthService extends SocialAuthService {
 			// Credentials were good: forget the streak that preceded them.
 			await attempt.succeed();
 
+			const twoFactorSetupRequired = await this.isTwoFactorSetupRequired(selectedUser, organizationId);
+
 			return {
 				user: new User({
 					...selectedUser,
 					...(employee && { employee })
 				}),
 				token: access_token,
-				refresh_token: refresh_token
+				refresh_token: refresh_token,
+				...(twoFactorSetupRequired && { twoFactorSetupRequired })
 			};
 		} catch (error) {
+			// The password was right and the session waits for a two-factor code: the answer says so.
+			if (error instanceof TwoFactorRequiredException) {
+				throw error;
+			}
 			// Log the error with a timestamp and the error message for debugging
 			this.logger.error(`Login failed at ${new Date().toISOString()}: ${error.message}`);
 			// Every rejection of the credentials themselves is raised above as UnauthorizedException, and
@@ -952,27 +983,35 @@ export class AuthService extends SocialAuthService {
 	 * @returns True when the user has employee records and all of them are inactive or archived.
 	 */
 	private async isDeactivatedEmployeeUser(userId: ID): Promise<boolean> {
+		return isDeactivatedEmployee(await this.findEmployeeRecordsOfUser(userId));
+	}
+
+	/**
+	 * Every employee record of a user, inactive and archived ones included, in every organization, with what the
+	 * sign-in rules judge: whether it is active, archived, or a member without an account. Read straight from the
+	 * repository for the reasons given on `isDeactivatedEmployeeUser`. A failed lookup throws.
+	 *
+	 * @param userId The user whose records are read.
+	 * @returns The records.
+	 */
+	private async findEmployeeRecordsOfUser(
+		userId: ID
+	): Promise<Pick<Employee, 'isActive' | 'isArchived' | 'isPlaceholder'>[]> {
 		const options = {
 			where: { userId },
-			select: { id: true, isActive: true, isArchived: true }
+			select: { id: true, isActive: true, isArchived: true, isPlaceholder: true }
 		};
-
-		let employees: Pick<Employee, 'isActive' | 'isArchived'>[];
 
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
 				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<Employee>(options);
-				employees = (await this.mikroOrmEmployeeRepository.find(where, mikroOptions)) as Employee[];
-				break;
+				return (await this.mikroOrmEmployeeRepository.find(where, mikroOptions)) as Employee[];
 			}
 			case MultiORMEnum.TypeORM:
-				employees = await this.typeOrmEmployeeRepository.find(options);
-				break;
+				return await this.typeOrmEmployeeRepository.find(options);
 			default:
 				throw new Error(`ORM type not implemented: ${this.ormType}`);
 		}
-
-		return isDeactivatedEmployee(employees);
 	}
 
 	/**
@@ -1709,7 +1748,8 @@ export class AuthService extends SocialAuthService {
 	 */
 	async register(
 		input: IUserRegistrationInput & Partial<IAppIntegrationConfig>,
-		languageCode: LanguagesEnum
+		languageCode: LanguagesEnum,
+		onSaved?: (user: User) => void
 	): Promise<User> {
 		let tenant = input.user.tenant;
 		const { organizationId } = input;
@@ -1824,6 +1864,7 @@ export class AuthService extends SocialAuthService {
 				});
 				await this.mikroOrmUserRepository.persistAndFlush(userEntity);
 				user = this.serialize(userEntity);
+				onSaved?.(user);
 
 				// 3. Create employee for specific user
 				if (featureAsEmployee) {
@@ -1857,6 +1898,7 @@ export class AuthService extends SocialAuthService {
 					...(awaitsEmailConfirmation ? { isActive: false } : {})
 				});
 				user = await this.typeOrmUserRepository.save(entity);
+				onSaved?.(user);
 
 				// 3. Create employee for specific user
 				if (featureAsEmployee) {
@@ -2100,11 +2142,17 @@ export class AuthService extends SocialAuthService {
 
 				if (users.length === 1) {
 					const [user] = users;
-					const token = await this.getJwtAccessToken(user);
-					return { success: true, authData: { jwt: token, userId: user.id } };
+					// An account with two-factor authentication on gets no session here: it goes through the workspace
+					// picker below, whose sign-in asks for its code.
+					const asksForCode = await this.asksForTwoFactorCode(user.id);
+					if (!asksForCode) {
+						const token = await this.getJwtAccessToken(user);
+						return { success: true, authData: { jwt: token, userId: user.id } };
+					}
 				}
 
-				// Several workspaces: the person picks one, exactly as after a password sign-in.
+				// Several workspaces, or one that asks for a code: the person picks one, exactly as after a password
+				// sign-in.
 				const code = await this.issueWorkspaceSigninCode(users);
 				return { success: true, authData: { jwt: null, userId: null, workspaces: { email: value, code } } };
 			}
@@ -2256,14 +2304,30 @@ export class AuthService extends SocialAuthService {
 					throw new Error(`Method not implemented for ORM type: ${this.ormType}`);
 			}
 
+			// The account of a member without an account (a placeholder) gets no access token either, whichever
+			// path asks for one. Its user has no email and no password, so no sign-in finds it; this is the guard
+			// behind that. The active record found above says it at no cost: no other member is ever filed for that
+			// user (EmployeeService.assertNotPlaceholderAccount).
+			if (employee?.isPlaceholder) {
+				this.logger.warn(`Access token refused: user ${user.id} stands behind a member without an account`);
+				throw new UnauthorizedException();
+			}
+
 			// A deactivated employee (every employee record inactive or archived) gets no access token,
 			// whichever path asks for one: password login, workspace sign-in, token refresh, workspace or
 			// organization switch, provider sign-in, OAuth app code exchange. This is the one place they all
 			// mint through. The active record found above already proves the user is not one, so only a
 			// user without one (an admin, a viewer, or an employee active elsewhere) pays for the lookup.
-			if (!employee && (await this.isDeactivatedEmployeeUser(user.id))) {
-				this.logger.warn(`Access token refused: user ${user.id} is a deactivated employee`);
-				throw new UnauthorizedException();
+			if (!employee) {
+				const records = await this.findEmployeeRecordsOfUser(user.id);
+				if (isPlaceholderAccount(records)) {
+					this.logger.warn(`Access token refused: user ${user.id} stands behind a member without an account`);
+					throw new UnauthorizedException();
+				}
+				if (isDeactivatedEmployee(records)) {
+					this.logger.warn(`Access token refused: user ${user.id} is a deactivated employee`);
+					throw new UnauthorizedException();
+				}
 			}
 
 			// Create a payload for the JWT token
@@ -2280,7 +2344,7 @@ export class AuthService extends SocialAuthService {
 					? {
 							permissions:
 								user.role?.rolePermissions?.filter((rp) => rp.enabled).map((rp) => rp.permission) ?? null
-					  }
+						}
 					: {}),
 				ipAddress: RequestContext.currentIp(),
 				userAgent: RequestContext.currentUserAgent(),
@@ -2773,102 +2837,232 @@ export class AuthService extends SocialAuthService {
 
 			// The magic code was already consumed by signinWorkspacesByMagicCode.
 			// The signed JWT is the proof of auth — verify identity and account status only.
-			const where = {
-				id: userId,
-				email: payload.email,
-				tenantId,
-				isActive: true,
-				isArchived: false
-			};
+			const { user, employee } = await this.findSigninAccount(userId, payload.email, tenantId);
 
-			// Look up the user with role relation
-			let user: User;
-
-			switch (this.ormType) {
-				case MultiORMEnum.MikroORM: {
-					const parsed = parseTypeORMFindToMikroOrm<User>({ where, relations: { role: true } });
-					user = (await this.mikroOrmUserRepository.findOneOrFail(parsed.where, parsed.mikroOptions)) as User;
-					break;
-				}
-				case MultiORMEnum.TypeORM: {
-					user = await this.typeOrmUserRepository.findOneOrFail({ where, relations: { role: true } });
-					break;
-				}
-				default:
-					throw new Error(`ORM type not implemented: ${this.ormType}`);
+			// Two-factor authentication on: the first factor is proven (this token), and the session waits for a code
+			// (`POST /auth/two-factor/verify`), which issues it here with the same organization and team.
+			if (await this.asksForTwoFactorCode(user.id)) {
+				throw twoFactorRequiredFor({
+					userId: user.id,
+					email: user.email,
+					tenantId: user.tenantId ?? null,
+					lastOrganizationId,
+					lastTeamId
+				});
 			}
 
-			// Retrieve the employee details associated with the user
-			const employee = await this.employeeService.findOneByUserId(user.id);
-
-			// Check if the employee is active and not archived
-			if (employee && (!employee.isActive || employee.isArchived)) {
-				throw new UnauthorizedException();
-			}
-
-			// Determine organization context for tokens. The REQUESTED organization is a
-			// client-supplied hint, not an entitlement: unlike the server-persisted fallbacks
-			// it must be backed by an active membership (the same criteria `switchOrganization`
-			// enforces) before it may scope the token — otherwise any workspace-token holder
-			// could mint a token claiming a sibling organization of the tenant. An unbacked
-			// hint (e.g. a stale client cache after the membership was revoked) falls back to
-			// the persisted values instead of failing the whole signin. The persisted organization is held to
-			// the same membership rule: a stale one is replaced (see `resolveStoredOrganizationId`).
-			const storedOrganizationId = user.lastOrganizationId || null;
-			const requested =
-				!!lastOrganizationId &&
-				(await this.hasActiveOrganizationMembership(user.id, lastOrganizationId, user.tenantId));
-			let organizationId: ID | null;
-			if (requested) {
-				organizationId = lastOrganizationId;
-			} else {
-				organizationId = (await this.resolveStoredOrganizationId(user)) ?? employee?.organizationId;
-			}
-
-			// Same backfill as `login()`: a non-employee user with no persisted preference gets
-			// their first active organization membership so the token carries a usable scope.
-			if (!organizationId) {
-				organizationId = await this.resolveDefaultOrganizationId(user.id, user.tenantId);
-			}
-
-			// The organization `setLastOrganizationAndTeam` below persists: the requested one, or the one resolved for
-			// a user with nothing stored. A stored organization is not written again: a valid one is already there,
-			// and a stale one was already replaced by `resolveStoredOrganizationId` with a write conditional on the
-			// stale value, which a second, unconditional write here would undo when another request switched the
-			// user's organization in the meantime.
-			const organizationToStore = requested || !storedOrganizationId ? organizationId : undefined;
-
-			// Generate access and refresh tokens concurrently
-			const [accessToken, refreshToken] = await Promise.all([
-				this.getJwtAccessToken(user, organizationId),
-				this.getJwtRefreshToken(user, organizationId)
-			]);
-
-			await Promise.all([
-				// Store refresh token and update login metadata concurrently
-				this.userService.setCurrentRefreshToken(refreshToken, user.id),
-				this.userService.setUserLastLoginTimestamp(user.id),
-
-				// Persist the resolved organization/team preference so the DB stays
-				// in sync with whatever value was embedded in the tokens above.
-				this.userService.setLastOrganizationAndTeam(user.id, organizationToStore, lastTeamId)
-			]);
-
-			return {
-				user: new User({
-					...user,
-					...(employee && { employee })
-				}),
-				token: accessToken,
-				refresh_token: refreshToken
-			};
+			return await this.issueWorkspaceSession(user, employee, { lastOrganizationId, lastTeamId });
 		} catch (error) {
+			if (error instanceof TwoFactorRequiredException) {
+				throw error;
+			}
 			if (error?.name === 'TokenExpiredError') {
 				throw new BadRequestException('JWT token has been expired.');
 			}
 			this.logger.error(`Error while signin workspace for specific tenant: ${error?.message}`);
 			throw new UnauthorizedException(error?.message);
 		}
+	}
+
+	/**
+	 * Completes a sign-in that waited for a two-factor code (ever-co/ever-gauzy#11916): the challenge the sign-in
+	 * answered proves its first factor, the code (or a recovery code) the second, and the session is issued as the
+	 * workspace sign-in issues it, with the organization and team the sign-in asked for.
+	 *
+	 * @param input The challenge and the code.
+	 * @returns The session.
+	 * @throws UnauthorizedException for a challenge that is not valid or too old, a wrong code, or an account that can
+	 * no longer sign in; HttpException 429 after too many wrong codes.
+	 */
+	async signinWithTwoFactorCode(input: ITwoFactorVerifyInput): Promise<IAuthResponse> {
+		const claims: TwoFactorChallengeClaims = verifyTwoFactorChallenge(input?.challenge);
+
+		await this.userTwoFactorService.verifySecondFactor(claims.userId, input);
+
+		try {
+			const { user, employee } = await this.findSigninAccount(claims.userId, claims.email, claims.tenantId);
+			return await this.issueWorkspaceSession(user, employee, {
+				lastOrganizationId: claims.lastOrganizationId,
+				lastTeamId: claims.lastTeamId
+			});
+		} catch (error) {
+			this.logger.error(`Error while completing a two-factor sign-in: ${error?.message}`);
+			throw new UnauthorizedException();
+		}
+	}
+
+	/**
+	 * The account a proven sign-in names, if it may still sign in: active, not archived, and not a deactivated employee.
+	 *
+	 * @param userId The user.
+	 * @param email The address the proof was issued for.
+	 * @param tenantId The tenant, null for a user not onboarded yet.
+	 * @throws UnauthorizedException for an employee that is no longer active; the lookup throws for no account.
+	 */
+	private async findSigninAccount(
+		userId: ID,
+		email: string,
+		tenantId: ID | null
+	): Promise<{ user: User; employee: IEmployee | null }> {
+		const where = {
+			id: userId,
+			email,
+			tenantId,
+			isActive: true,
+			isArchived: false
+		};
+
+		// Look up the user with role relation
+		let user: User;
+
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const parsed = parseTypeORMFindToMikroOrm<User>({ where, relations: { role: true } });
+				user = (await this.mikroOrmUserRepository.findOneOrFail(parsed.where, parsed.mikroOptions)) as User;
+				break;
+			}
+			case MultiORMEnum.TypeORM: {
+				user = await this.typeOrmUserRepository.findOneOrFail({ where, relations: { role: true } });
+				break;
+			}
+			default:
+				throw new Error(`ORM type not implemented: ${this.ormType}`);
+		}
+
+		// Retrieve the employee details associated with the user
+		const employee = await this.employeeService.findOneByUserId(user.id);
+
+		// Check if the employee is active and not archived
+		if (employee && (!employee.isActive || employee.isArchived)) {
+			throw new UnauthorizedException();
+		}
+
+		return { user, employee };
+	}
+
+	/**
+	 * Issues the session of a proven workspace sign-in: its organization, its tokens, and the organization and team it
+	 * persists as the user's last ones.
+	 *
+	 * @param user The account.
+	 * @param employee Its employee, when it is one.
+	 * @param scope The organization and team the sign-in asked for.
+	 */
+	private async issueWorkspaceSession(
+		user: User,
+		employee: IEmployee | null,
+		{ lastOrganizationId, lastTeamId }: ILastOrganization & ILastTeam
+	): Promise<IAuthResponse> {
+		// Determine organization context for tokens. The REQUESTED organization is a
+		// client-supplied hint, not an entitlement: unlike the server-persisted fallbacks
+		// it must be backed by an active membership (the same criteria `switchOrganization`
+		// enforces) before it may scope the token — otherwise any workspace-token holder
+		// could mint a token claiming a sibling organization of the tenant. An unbacked
+		// hint (e.g. a stale client cache after the membership was revoked) falls back to
+		// the persisted values instead of failing the whole signin. The persisted organization is held to
+		// the same membership rule: a stale one is replaced (see `resolveStoredOrganizationId`).
+		const storedOrganizationId = user.lastOrganizationId || null;
+		const requested =
+			!!lastOrganizationId &&
+			(await this.hasActiveOrganizationMembership(user.id, lastOrganizationId, user.tenantId));
+		let organizationId: ID | null;
+		if (requested) {
+			organizationId = lastOrganizationId;
+		} else {
+			organizationId = (await this.resolveStoredOrganizationId(user)) ?? employee?.organizationId;
+		}
+
+		// Same backfill as `login()`: a non-employee user with no persisted preference gets
+		// their first active organization membership so the token carries a usable scope.
+		if (!organizationId) {
+			organizationId = await this.resolveDefaultOrganizationId(user.id, user.tenantId);
+		}
+
+		// The organization `setLastOrganizationAndTeam` below persists: the requested one, or the one resolved for
+		// a user with nothing stored. A stored organization is not written again: a valid one is already there,
+		// and a stale one was already replaced by `resolveStoredOrganizationId` with a write conditional on the
+		// stale value, which a second, unconditional write here would undo when another request switched the
+		// user's organization in the meantime.
+		const organizationToStore = requested || !storedOrganizationId ? organizationId : undefined;
+
+		// Generate access and refresh tokens concurrently
+		const [accessToken, refreshToken] = await Promise.all([
+			this.getJwtAccessToken(user, organizationId),
+			this.getJwtRefreshToken(user, organizationId)
+		]);
+
+		await Promise.all([
+			// Store refresh token and update login metadata concurrently
+			this.userService.setCurrentRefreshToken(refreshToken, user.id),
+			this.userService.setUserLastLoginTimestamp(user.id),
+
+			// Persist the resolved organization/team preference so the DB stays
+			// in sync with whatever value was embedded in the tokens above.
+			this.userService.setLastOrganizationAndTeam(user.id, organizationToStore, lastTeamId)
+		]);
+
+		const twoFactorSetupRequired = await this.isTwoFactorSetupRequired(user, organizationId);
+
+		return {
+			user: new User({
+				...user,
+				...(employee && { employee })
+			}),
+			token: accessToken,
+			refresh_token: refreshToken,
+			...(twoFactorSetupRequired && { twoFactorSetupRequired })
+		};
+	}
+
+	/**
+	 * Whether a new session must tell its member to set up two-factor authentication: their organization requires it
+	 * and they have not turned it on. A hint for the client only, so a failed read answers false and never fails the
+	 * sign-in.
+	 *
+	 * @param user The member.
+	 * @param organizationId The organization of the session.
+	 */
+	private async isTwoFactorSetupRequired(user: IUser, organizationId: ID | null | undefined): Promise<boolean> {
+		if (!this.userTwoFactorService) {
+			return false;
+		}
+		try {
+			return await this.userTwoFactorService.isSetupRequired(user.id, organizationId, user.tenantId);
+		} catch (error) {
+			this.logger.warn(
+				`Could not read whether user ${user.id} must set up two-factor authentication: ${error?.message}`
+			);
+			return false;
+		}
+	}
+
+	/**
+	 * Whether the sign-ins of a user ask for a two-factor code. Public for the other paths that end with a session (an
+	 * invitation accepted by an existing account).
+	 *
+	 * Nest always injects the two-factor store (the constructor parameter is required, so the application does not
+	 * start without it). An instance built by hand without it, as the unit specs of the other sign-in rules build
+	 * this service, has no store: nobody it signs in has two-factor authentication on.
+	 *
+	 * @param userId The user.
+	 */
+	public async asksForTwoFactorCode(userId: ID): Promise<boolean> {
+		if (!this.userTwoFactorService) {
+			return false;
+		}
+		return await this.userTwoFactorService.isEnabled(userId);
+	}
+
+	/**
+	 * Which of these users have two-factor authentication on, in one read (see {@link asksForTwoFactorCode}).
+	 *
+	 * @param userIds The users.
+	 */
+	private async usersAskingForTwoFactorCode(userIds: ID[]): Promise<Set<ID>> {
+		if (!this.userTwoFactorService) {
+			return new Set();
+		}
+		return await this.userTwoFactorService.enabledAmong(userIds);
 	}
 
 	/**
@@ -3052,9 +3246,12 @@ export class AuthService extends SocialAuthService {
 		code: string;
 		includeTeams: boolean;
 	}): Promise<IUserSigninWorkspaceResponse> {
+		// The accounts whose sign-in will ask for a two-factor code, read once for the whole list
+		const askingForCode = await this.usersAskingForTwoFactorCode(users.map((user: IUser) => user.id));
+
 		// Build all workspace responses concurrently — each user is independent
 		const workspaces = await Promise.all(
-			users.map((user: IUser) => this.createWorkspace(user, code, includeTeams))
+			users.map((user: IUser) => this.createWorkspace(user, code, includeTeams, askingForCode.has(user.id)))
 		);
 
 		return {
@@ -3071,9 +3268,15 @@ export class AuthService extends SocialAuthService {
 	 * @param user The user object of type IUser.
 	 * @param code The code used for generating the user token.
 	 * @param includeTeams Flag indicating whether to include team information in the response.
+	 * @param asksForCode Whether signing in to this workspace asks for a two-factor code (said only when it does).
 	 * @returns A promise that resolves to the workspace response object of type IWorkspaceResponse.
 	 */
-	private async createWorkspace(user: IUser, code: string, includeTeams: boolean): Promise<IWorkspaceResponse> {
+	private async createWorkspace(
+		user: IUser,
+		code: string,
+		includeTeams: boolean,
+		asksForCode = false
+	): Promise<IWorkspaceResponse> {
 		const tenantId = user.tenant ? user.tenantId : null;
 		const employeeId = await this.employeeService.findEmployeeIdByUserId(user.id);
 
@@ -3081,6 +3284,9 @@ export class AuthService extends SocialAuthService {
 			user: this.createUserObject(user),
 			token: this.generateToken(user, code)
 		};
+		if (asksForCode) {
+			workspace.twoFactorRequired = true;
+		}
 
 		if (includeTeams) {
 			try {
@@ -3301,6 +3507,17 @@ export class AuthService extends SocialAuthService {
 					throw new Error(`Method not implemented for ORM type: ${this.ormType}`);
 			}
 
+			// The account of the other workspace has two-factor authentication on: its session waits for its code, as a
+			// sign-in into it would (`POST /auth/two-factor/verify` issues it).
+			if (await this.asksForTwoFactorCode(user.id)) {
+				throw twoFactorRequiredFor({
+					userId: user.id,
+					email: user.email,
+					tenantId: user.tenantId ?? null,
+					lastOrganizationId: employee?.organizationId
+				});
+			}
+
 			// Determine organization context for tokens. The stored organization counts only while the user is
 			// still a member of it in the target workspace; a stale one is replaced (see
 			// `resolveStoredOrganizationId`).
@@ -3348,6 +3565,11 @@ export class AuthService extends SocialAuthService {
 				refresh_token: refresh_token
 			};
 		} catch (error) {
+			// The other workspace's account asks for its two-factor code: the answer says so.
+			if (error instanceof TwoFactorRequiredException) {
+				throw error;
+			}
+
 			this.logger.error(`Error while switching workspace: ${error?.message}`);
 
 			// Re-throw known exceptions for better error handling in the frontend

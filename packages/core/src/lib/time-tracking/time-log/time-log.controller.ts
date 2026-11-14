@@ -341,7 +341,8 @@ export class TimeLogController {
 	})
 	@ApiResponse({
 		status: HttpStatus.CONFLICT,
-		description: 'RUNNING_TIMER_OVERLAP: a timer is running over the range'
+		description:
+			'RUNNING_TIMER_OVERLAP: a timer is running over the range; `runningTimeLog` names it (id, startedAt, source)'
 	})
 	@Post()
 	@UseGuards(OrganizationPermissionGuard)
@@ -448,7 +449,8 @@ export class TimeLogController {
 	})
 	@ApiResponse({
 		status: HttpStatus.CONFLICT,
-		description: 'RUNNING_TIMER_OVERLAP: a timer is running over the range'
+		description:
+			'RUNNING_TIMER_OVERLAP: a timer is running over the range; `runningTimeLog` names it (id, startedAt, source)'
 	})
 	@Put(':id')
 	@UseGuards(OrganizationPermissionGuard)

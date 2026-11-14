@@ -93,7 +93,7 @@ function surfaces(
 	const created: Record<string, unknown>[] = [];
 	/** The history option of each create: what the entry's history records of it (ever-co/ever-gauzy#11922). */
 	const histories: unknown[] = [];
-	/** The log of each slot the overlap cleanup was asked to clear. */
+	/** The log each overlap cleanup command was for: one command per overlapped log. */
 	const trimmed: unknown[] = [];
 	const employeeRepository = {
 		findOne: jest.fn(async () => ({
@@ -329,7 +329,7 @@ describe('POST /timesheet/time-log over a timer that is still running', () => {
 
 		await post(desktopUpload);
 
-		expect(trimmed).toEqual(['running', 'running', 'running']);
+		expect(trimmed).toEqual(['running']);
 		expect(created).toHaveLength(1);
 	});
 

@@ -176,7 +176,7 @@ export function withAllowedEmailLinks<T>(
 			continue;
 		}
 		if (isSameLink(value, defaults[field])) {
-			// The configured link written another way (`https://ever.co/` for `https://ever.co`, as a
+			// The configured link written another way (`https://example.com/` for `https://example.com`, as a
 			// client that parses its links sends it): the configured one, and nothing to report.
 			result[field] = defaults[field];
 			continue;
