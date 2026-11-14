@@ -631,8 +631,11 @@ export class TimerService {
 		// Stop previous running timers
 		await this.stopPreviousRunningTimers(employeeId, organizationId, tenantId);
 
-		// Handle conflicting time logs
-		await this.handleConflictingTimeLogs(lastLog, tenantId, organizationId);
+		// Handle conflicting time logs. A break never cuts other entries (see break-rules), so its stop clears nothing
+		const stopsWork = !isBreak(lastLog);
+		if (stopsWork) {
+			await this.handleConflictingTimeLogs(lastLog, tenantId, organizationId);
+		}
 
 		// Return the last log
 		return lastLog;
