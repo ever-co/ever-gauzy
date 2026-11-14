@@ -1803,7 +1803,8 @@
 		"stunden",
 		"cros",
 		"slotless",
-		"enrolments"
+		"enrolments",
+		"unstored"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

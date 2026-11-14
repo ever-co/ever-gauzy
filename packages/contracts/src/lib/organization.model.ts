@@ -122,6 +122,8 @@ export interface IOrganization
 	requireClient?: boolean;
 	requireTeam?: boolean;
 	restrictTrackingSwitchToHigherRoles?: boolean;
+	/** Whether time logs keep the rates they were recorded at: a rate change without a day prices only new time. */
+	timeLogsKeepTheirRates?: boolean | null;
 	/** Whether members are asked to turn on two-factor authentication at their next sign-in. Off by default. */
 	requireTwoFactor?: boolean;
 	/** Whether a member may discard their own running timer. Null counts as allowed. */

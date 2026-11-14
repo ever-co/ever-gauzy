@@ -153,6 +153,12 @@ type Organization {
 	"""
 	restrictTrackingSwitchToHigherRoles: Boolean!
 	"""
+	Whether time logs keep the rates they were recorded at: a rate change without a day then prices only the time
+	recorded from then on. Off when null, as before the setting: a rate change prices all the time already tracked.
+	"""
+	timeLogsKeepTheirRates: Boolean
+
+	"""
 	Whether a member may discard their own running timer, which removes the run instead of keeping it. On by default,
 	and null counts as on.
 	"""

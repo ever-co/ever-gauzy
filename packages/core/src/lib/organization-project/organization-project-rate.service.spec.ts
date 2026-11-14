@@ -163,7 +163,8 @@ describe('OrganizationProjectRateService', () => {
 			}),
 			update: projectUpdate,
 			manager: {
-				findOne: jest.fn(async () => ({ id: ORGANIZATION, currency: 'USD' })),
+				// An organization whose time logs keep their rates: a change without a day re-prices nothing here
+				findOne: jest.fn(async () => ({ id: ORGANIZATION, currency: 'USD', timeLogsKeepTheirRates: true })),
 				count: jest.fn(async () => 1)
 			}
 		};

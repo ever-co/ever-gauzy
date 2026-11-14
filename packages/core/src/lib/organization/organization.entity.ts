@@ -425,6 +425,17 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	restrictTrackingSwitchToHigherRoles?: boolean;
 
 	/**
+	 * Whether the organization's time logs keep the rates they were recorded at. On, a rate change without a day
+	 * prices only the time recorded from then on, and a change with a day re-prices the time from that day. Off (empty)
+	 * by default, as before the setting: a rate change without a day prices all the time already tracked.
+	 */
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
+	@MultiORMColumn({ nullable: true })
+	timeLogsKeepTheirRates?: boolean;
+
+	/**
 	 * Whether members are asked to turn on two-factor authentication: a sign-in of a member without it says so
 	 * (`twoFactorSetupRequired`), and the client takes them to the setup. Off by default, so that no member is asked
 	 * for a code an app they use cannot take yet.

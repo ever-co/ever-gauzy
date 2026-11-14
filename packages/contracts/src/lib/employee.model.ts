@@ -206,6 +206,12 @@ export interface IEmployeeUpdateInput extends IBasePerTenantAndOrganizationEntit
 	billRateCurrency?: CurrenciesEnum;
 	payRateValue?: number | null;
 	payRateCurrency?: CurrenciesEnum | null;
+	/**
+	 * The day a billing or pay rate this update changes prices tracked time from: the time logs started on or after it
+	 * take the new rate, except time a live invoice bills. Without it all the time already tracked takes it, unless the
+	 * organization's time logs keep their rates (`timeLogsKeepTheirRates`): then only the time logs recorded from now on.
+	 */
+	ratesApplyFrom?: Date | string;
 	reWeeklyLimit?: number;
 	organizationDepartment?: IOrganizationDepartment;
 	organizationPosition?: IOrganizationPosition;
