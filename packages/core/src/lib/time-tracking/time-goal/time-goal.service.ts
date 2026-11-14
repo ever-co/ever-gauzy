@@ -201,14 +201,14 @@ export class TimeGoalService extends TenantAwareCrudService<TimeGoal> {
 		const tenantId = RequestContext.currentTenantId();
 		const { organizationId } = input;
 
-		const readable = await this.readableGoalsWhere(organizationId, tenantId);
-		const filters: FindOptionsWhere<TimeGoal> = { tenantId, organizationId };
-		if (input.employeeId) filters.employeeId = input.employeeId;
-		if (input.organizationTeamId) filters.organizationTeamId = input.organizationTeamId;
-		if (input.scope) filters.scope = input.scope;
-		if (input.includeArchived !== true) filters.isArchived = false;
+		const readable = await this.readableGoalsWhere(input, tenantId);
+		if (readable.length === 0) {
+			return { items: [], total: 0 };
+		}
+		const base: FindOptionsWhere<TimeGoal> = { tenantId, organizationId };
+		if (input.includeArchived !== true) base.isArchived = false;
 
-		const where = readable.map((alternative) => ({ ...alternative, ...filters }));
+		const where = readable.map((alternative) => ({ ...alternative, ...base }));
 		const [items, total] = await this.typeOrmRepository.findAndCount({
 			where,
 			relations: GOAL_RELATIONS,
@@ -504,16 +504,53 @@ export class TimeGoalService extends TenantAwareCrudService<TimeGoal> {
 	}
 
 	/**
-	 * The alternatives a list read may match, for the caller.
+	 * The alternatives a list read matches: what the caller may read, narrowed by the read's filters. A filter only
+	 * ever narrows an alternative, and an alternative a filter cannot match is left out, so no filter reaches a goal
+	 * the caller may not read. No alternative left means nothing to read.
 	 */
-	private async readableGoalsWhere(organizationId: ID, tenantId: ID): Promise<FindOptionsWhere<TimeGoal>[]> {
+	private async readableGoalsWhere(input: ITimeGoalFindInput, tenantId: ID): Promise<FindOptionsWhere<TimeGoal>[]> {
+		const { scope, employeeId, organizationTeamId } = input;
 		const actsForEveryEmployee = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
 		if (actsForEveryEmployee) {
-			return [{}];
+			const everything: FindOptionsWhere<TimeGoal> = {};
+			if (scope) everything.scope = scope;
+			if (employeeId) everything.employeeId = employeeId;
+			if (organizationTeamId) everything.organizationTeamId = organizationTeamId;
+			return [everything];
 		}
+
+		const { memberIds, teamIds } = await this.readableOwners(input.organizationId, tenantId);
+		const wantsScope = (wanted: TimeGoalScopeEnum) => !scope || scope === wanted;
+		const alternatives: FindOptionsWhere<TimeGoal>[] = [];
+
+		// A member goal has a member and no team.
+		const readsMemberGoals = wantsScope(TimeGoalScopeEnum.EMPLOYEE) && !organizationTeamId;
+		const readableMemberIds = memberIds.filter((id) => !employeeId || id === employeeId);
+		if (readsMemberGoals && readableMemberIds.length > 0) {
+			alternatives.push({ scope: TimeGoalScopeEnum.EMPLOYEE, employeeId: In(readableMemberIds) });
+		}
+		// A team goal has a team and no member.
+		const readsTeamGoals = wantsScope(TimeGoalScopeEnum.TEAM) && !employeeId;
+		const readableTeamIds = teamIds.filter((id) => !organizationTeamId || id === organizationTeamId);
+		if (readsTeamGoals && readableTeamIds.length > 0) {
+			alternatives.push({ scope: TimeGoalScopeEnum.TEAM, organizationTeamId: In(readableTeamIds) });
+		}
+		// An organization goal has neither.
+		const readsOrganizationGoals = wantsScope(TimeGoalScopeEnum.ORGANIZATION) && !employeeId && !organizationTeamId;
+		if (readsOrganizationGoals) {
+			alternatives.push({ scope: TimeGoalScopeEnum.ORGANIZATION });
+		}
+		return alternatives;
+	}
+
+	/**
+	 * Whose goals the caller reads, beyond the organization's: her own and those of the members of the teams she
+	 * manages, and those of the teams she belongs to. Nobody's for a caller without an employee.
+	 */
+	private async readableOwners(organizationId: ID, tenantId: ID): Promise<{ memberIds: ID[]; teamIds: ID[] }> {
 		const currentEmployeeId = RequestContext.currentUser()?.employeeId;
 		if (!currentEmployeeId) {
-			return [{ scope: TimeGoalScopeEnum.ORGANIZATION }];
+			return { memberIds: [], teamIds: [] };
 		}
 
 		const memberships = await this.typeOrmRepository.manager.find(OrganizationTeamEmployee, {
@@ -538,15 +575,7 @@ export class TimeGoalService extends TenantAwareCrudService<TimeGoal> {
 			});
 			managedMembers.forEach(({ employeeId }) => memberIds.add(employeeId));
 		}
-
-		const alternatives: FindOptionsWhere<TimeGoal>[] = [
-			{ scope: TimeGoalScopeEnum.EMPLOYEE, employeeId: In([...memberIds]) },
-			{ scope: TimeGoalScopeEnum.ORGANIZATION }
-		];
-		if (teamIds.length > 0) {
-			alternatives.push({ scope: TimeGoalScopeEnum.TEAM, organizationTeamId: In(teamIds) });
-		}
-		return alternatives;
+		return { memberIds: [...memberIds], teamIds };
 	}
 
 	/**

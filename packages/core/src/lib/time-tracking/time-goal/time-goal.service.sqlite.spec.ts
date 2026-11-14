@@ -524,6 +524,36 @@ describe('TimeGoalService on SQLite', () => {
 	);
 
 	it(
+		'never widens a list read past what the caller may read, whatever the filters',
+		inRequest(async () => {
+			actAs(MARIE);
+			await goal({ name: "Marie's goal" });
+			actAs(MANAGER);
+			await goal({ name: 'Team', scope: TimeGoalScopeEnum.TEAM, organizationTeamId: TEAM });
+			actAs(ADMIN, [PermissionsEnum.CHANGE_SELECTED_EMPLOYEE]);
+			await goal({ name: 'Everyone', scope: TimeGoalScopeEnum.ORGANIZATION });
+			const names = async (filters: Record<string, unknown>) =>
+				(await service.findGoals({ organizationId: ORGANIZATION, ...filters })).items.map(({ name }) => name);
+
+			actAs(OUTSIDER);
+			expect(await names({ scope: TimeGoalScopeEnum.EMPLOYEE })).toEqual([]);
+			expect(await names({ employeeId: MARIE })).toEqual([]);
+			expect(await names({ organizationTeamId: TEAM })).toEqual([]);
+			expect(await names({ scope: TimeGoalScopeEnum.TEAM })).toEqual([]);
+			expect(await names({ scope: TimeGoalScopeEnum.ORGANIZATION })).toEqual(['Everyone']);
+
+			actAs(PAUL);
+			expect(await names({ scope: TimeGoalScopeEnum.TEAM })).toEqual(['Team']);
+			expect(await names({ employeeId: MARIE })).toEqual([]);
+
+			actAs(MANAGER);
+			expect(await names({ employeeId: MARIE })).toEqual(["Marie's goal"]);
+			expect(await names({ organizationTeamId: TEAM })).toEqual(['Team']);
+		}),
+		TIMEOUT
+	);
+
+	it(
 		'refuses a target over its period, a team goal without its team, and a project of another organization',
 		inRequest(async () => {
 			actAs(MARIE);
