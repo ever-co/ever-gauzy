@@ -170,6 +170,7 @@ export * from '../../tax-line/tax-line.entity';
 export * from '../../tenant-api-key/tenant-api-key.entity';
 export * from '../../auth/oauth-client/oauth-client.entity';
 export * from '../../auth/user-api-token/user-api-token.entity';
+export * from '../../auth/two-factor/user-two-factor.entity';
 export * from '../../token/entities/token.entity';
 export * from '../../tenant/tenant-setting/tenant-setting.entity';
 export * from '../../tenant/tenant.entity';

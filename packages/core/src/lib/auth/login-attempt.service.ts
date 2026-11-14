@@ -15,7 +15,24 @@ type RedisClient = ReturnType<typeof createClient>;
 export enum LoginAttemptScope {
 	PASSWORD = 'password',
 	MAGIC_CODE = 'magic-code',
-	TEAM_JOIN_CODE = 'team-join-code'
+	TEAM_JOIN_CODE = 'team-join-code',
+	/** Codes of a two-factor authentication, counted per user (see `TWO_FACTOR_ATTEMPT_RULE`). */
+	TWO_FACTOR_CODE = 'two-factor-code'
+}
+
+/**
+ * A counting rule of its own, for a credential whose check is only reached by someone who already proved another
+ * one (a two-factor code follows a right password or e-mail code).
+ */
+export interface LoginAttemptRule {
+	/** Failures at which the block engages, and the concurrency cap. Defaults to `AUTH_MAX_FAILED_ATTEMPTS`. */
+	readonly maxFailures?: number;
+	/**
+	 * Whether failures from one client source are enough to block. The default rule waits for
+	 * {@link LOGIN_ATTEMPT_MIN_SOURCES}, so that anyone who knows an address cannot lock its account out; that
+	 * concern is gone where reaching the check already took the first factor.
+	 */
+	readonly blockOnSingleSource?: boolean;
 }
 
 /**
@@ -97,6 +114,8 @@ interface FailureInput {
 	readonly maxFailures: number;
 	/** Block length, and how long a partial streak is remembered, in milliseconds. */
 	readonly lockoutMs: number;
+	/** Whether failures from one source are enough to block (see {@link LoginAttemptRule}). */
+	readonly blockOnSingleSource: boolean;
 }
 
 /**
@@ -129,7 +148,9 @@ interface LoginAttemptStore {
 function shouldBlock(failures: number, distinctSources: number, input: FailureInput): boolean {
 	// A failure that cannot be attributed to any address cannot be shown to come from ONE source,
 	// so it must not earn the single-source leniency: the rule fails closed.
-	return failures >= input.maxFailures && (distinctSources >= LOGIN_ATTEMPT_MIN_SOURCES || input.unresolvedSource);
+	const sourcesSuffice =
+		input.blockOnSingleSource || distinctSources >= LOGIN_ATTEMPT_MIN_SOURCES || input.unresolvedSource;
+	return failures >= input.maxFailures && sourcesSuffice;
 }
 
 /**
@@ -430,12 +451,20 @@ export class LoginAttemptService {
 	 * @param request - The HTTP request carrying the credential, for a check that runs outside the API's
 	 * request context (the MCP OAuth server's login form); the client is attributed from it, and the
 	 * `Retry-After` header set on its response. Defaults to the current request context.
+	 * @param rule - A counting rule of the scope's own; by default the operator's (`AUTH_MAX_FAILED_ATTEMPTS`,
+	 * failures from at least {@link LOGIN_ATTEMPT_MIN_SOURCES} sources).
 	 * @returns The attempt to settle once the credential has been checked.
 	 * @throws HttpException 429 (with a `Retry-After` header) while the identifier is blocked, or
 	 * while it already has the maximum number of checks in flight.
 	 */
-	async begin(scope: LoginAttemptScope, identifier: string, request?: LoginAttemptRequest): Promise<LoginAttempt> {
-		const maxFailures = this.maxFailures;
+	async begin(
+		scope: LoginAttemptScope,
+		identifier: string,
+		request?: LoginAttemptRequest,
+		rule: LoginAttemptRule = {}
+	): Promise<LoginAttempt> {
+		const maxFailures = rule.maxFailures ?? this.maxFailures;
+		const blockOnSingleSource = rule.blockOnSingleSource === true;
 
 		if (maxFailures <= 0 || !identifier) {
 			return NOOP_ATTEMPT;
@@ -466,7 +495,8 @@ export class LoginAttemptService {
 				store.recordFailure(key, token, Date.now(), {
 					...source,
 					maxFailures,
-					lockoutMs: this.lockoutMs
+					lockoutMs: this.lockoutMs,
+					blockOnSingleSource
 				})
 			),
 			succeed: settle('clear', (store) => store.clear(key, token)),

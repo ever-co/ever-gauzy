@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { Repository, In, IsNull, Not } from 'typeorm';
 import {
 	LoginAttemptRequest,
 	LoginAttemptScope,
@@ -149,6 +149,13 @@ export class OAuthUserService {
 			}
 
 			await attempt.succeed();
+
+			// This form cannot ask for a two-factor code (ever-co/ever-gauzy#11916): an account that has it on does not sign in
+			// here with its password alone.
+			if (await this.asksForTwoFactorCode(user.id)) {
+				this.logger.warn(`MCP sign-in refused for user ${user.id}: two-factor authentication is on`);
+				return null;
+			}
 			return user;
 		} catch (error) {
 			// A database or hashing error says nothing about the password: it does not count against the account.
@@ -156,6 +163,25 @@ export class OAuthUserService {
 			this.logger.error('Error authenticating MCP user', (error as Error)?.stack || (error as Error)?.message);
 			return null;
 		}
+	}
+
+	/**
+	 * Whether the account has two-factor authentication on (`user_two_factor`, registered by this app's user module).
+	 *
+	 * Read through the user repository's manager, by entity name. A repository built without a manager (the unit specs of
+	 * the other sign-in rules stub it) knows no two-factor authentication.
+	 *
+	 * @param userId The user.
+	 */
+	private async asksForTwoFactorCode(userId: string): Promise<boolean> {
+		const manager = this.typeOrmRepository.manager;
+		if (!manager) {
+			return false;
+		}
+		const protectedAccounts = await manager
+			.getRepository('UserTwoFactor')
+			.count({ where: { userId, enabledAt: Not(IsNull()) } });
+		return protectedAccounts > 0;
 	}
 
 	/**

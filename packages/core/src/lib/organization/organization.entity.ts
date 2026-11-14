@@ -387,6 +387,17 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@MultiORMColumn({ default: false })
 	restrictTrackingSwitchToHigherRoles?: boolean;
 
+	/**
+	 * Whether members are asked to turn on two-factor authentication: a sign-in of a member without it says so
+	 * (`twoFactorSetupRequired`), and the client takes them to the setup. Off by default, so that no member is asked
+	 * for a code an app they use cannot take yet.
+	 */
+	@ApiPropertyOptional({ type: () => Boolean, default: false })
+	@IsOptional()
+	@IsBoolean()
+	@MultiORMColumn({ default: false })
+	requireTwoFactor?: boolean;
+
 	@MultiORMColumn({ default: 12 })
 	timeFormat?: 12 | 24;
 
