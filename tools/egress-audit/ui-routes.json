@@ -4,7 +4,7 @@
   "routes": [
     {
       "path": "/",
-      "file": "apps/gauzy/src/app/app.routes.ts:51",
+      "file": "apps/gauzy/src/app/app.routes.ts:59",
       "redirect_to": "pages",
       "source": "router"
     },
@@ -147,6 +147,11 @@
       "source": "router"
     },
     {
+      "path": "/downloads",
+      "file": "apps/gauzy/src/app/downloads/downloads-routing.module.ts:14",
+      "source": "router"
+    },
+    {
       "path": "/legal",
       "file": "packages/plugins/legal-ui/src/lib/legal.routes.ts:18",
       "redirect_to": "terms",
@@ -237,7 +242,7 @@
     },
     {
       "path": "/pages/accounting/income",
-      "file": "apps/gauzy/src/app/pages/income/income-routing.module.ts:14",
+      "file": "apps/gauzy/src/app/pages/income/income-routing.module.ts:13",
       "guards": [
         "PermissionsGuard"
       ],
@@ -245,7 +250,7 @@
     },
     {
       "path": "/pages/accounting/income/view/:id",
-      "file": "apps/gauzy/src/app/pages/income/income-routing.module.ts:25",
+      "file": "apps/gauzy/src/app/pages/income/income-routing.module.ts:24",
       "guards": [
         "PermissionsGuard"
       ],
@@ -2032,7 +2037,7 @@
     }
   ],
   "notes": [
-    "apps/gauzy/src/app/app.routes.ts:56: the wildcard route under / is not walked",
+    "apps/gauzy/src/app/app.routes.ts:64: the wildcard route under / is not walked",
     "apps/gauzy/src/app/pages/dashboard/dashboard.routes.ts:148: routes built at run time (_pageRouteRegistryService.getPageLocationRoutes('dashboard-sections')): add the routes it adds as manual entries",
     "apps/gauzy/src/app/pages/employees/activity/activity.routes.ts:26: routes built at run time (_pageRouteRegistryService.getPageLocationRoutes('time-activity-sections')): add the routes it adds as manual entries",
     "apps/gauzy/src/app/pages/employees/timesheet/timesheet.routes.ts:38: routes built at run time (_pageRouteRegistryService.getPageLocationRoutes('timesheet-sections')): add the routes it adds as manual entries",

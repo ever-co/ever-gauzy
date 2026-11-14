@@ -1798,7 +1798,12 @@
 		"indrelid",
 		"ordinality",
 		"regclass",
-		"unsaveable"
+		"unsaveable",
+		"heures",
+		"stunden",
+		"cros",
+		"slotless",
+		"enrolments"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
