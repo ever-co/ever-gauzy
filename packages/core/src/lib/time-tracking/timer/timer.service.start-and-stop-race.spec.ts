@@ -51,6 +51,8 @@ interface Hooks {
 	onConflictLookup?: () => Promise<void> | void;
 	/** Runs when the cleanup (`ScheduleTimeLogEntriesCommand`) reads the pending logs, before they are read. */
 	onPendingRead?: () => Promise<void> | void;
+	/** Runs when a `DeleteTimeSpanCommand` arrives, once it is recorded: the cut is made on the table only by a spec. */
+	onTimeSpanDelete?: (command: DeleteTimeSpanCommand) => Promise<void> | void;
 }
 
 const time = (value: Date | string | null): number => new Date(value).getTime();
@@ -178,6 +180,7 @@ function createService(
 		}
 		if (command instanceof DeleteTimeSpanCommand) {
 			timeSpanDeletes.push(command);
+			await hooks.onTimeSpanDelete?.(command);
 			return true;
 		}
 		if (command instanceof ScheduleTimeLogEntriesCommand) {
@@ -858,6 +861,362 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 			await otherStarting;
 
 			expect(events).toEqual(['update begins', 'other employee: create', 'update ends']);
+		});
+	}
+);
+
+/**
+ * A run a new one replaces ends at the next start (or at its last heartbeat) through the update an explicit stop makes,
+ * where it used to get ten seconds. The explicit stop then cuts the logs its run overlaps (`handleConflictingTimeLogs`);
+ * the replacement did not, so manual time entered ahead for a moment the run then covered counted twice: two hours of
+ * work read as two and a half. The replacement now cuts them too, bounded as the stop's cleanup is: only the logs read
+ * before its stop was written.
+ */
+describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
+	'TimerService ending the runs a new run replaces, over the logs they overlap (%s)',
+	(ormType) => {
+		const fixture = createTenantFixture();
+		const HALF_PAST_MIDNIGHT = new Date('2026-10-24T00:30:00.000Z');
+
+		/** A log of the employee: a run as a timer start writes it, unless `overrides` say otherwise. */
+		const timeLog = (
+			id: string,
+			source: TimeLogSourceEnum,
+			startedAt: Date,
+			overrides: Partial<TimeLogRow> = {}
+		): TimeLogRow => ({
+			id,
+			employeeId: EMPLOYEE_ID,
+			tenantId: fixture.tenantId,
+			organizationId: fixture.organizationId,
+			source,
+			isRunning: true,
+			startedAt,
+			stoppedAt: startedAt,
+			createdAt: startedAt,
+			...overrides
+		});
+
+		/** Half an hour of manual time from 00:30, entered the evening before, with its three ten-minute time slots. */
+		const manualEntry = () =>
+			timeLog('manual-entry', TimeLogSourceEnum.WEB_TIMER, HALF_PAST_MIDNIGHT, {
+				isRunning: false,
+				stoppedAt: ONE_HOUR_AGO,
+				createdAt: new Date('2026-10-23T20:00:00.000Z'),
+				timeSlots: [0, 10, 20].map((minute) => ({
+					startedAt: new Date(HALF_PAST_MIDNIGHT.getTime() + minute * 60 * 1000),
+					duration: 600
+				}))
+			});
+
+		/** The cuts of the entry's three time slots over the given range. */
+		const cutsOfEntry = (entry: TimeLogRow, start: Date, end: Date) =>
+			entry.timeSlots.map((timeSlot) =>
+				expect.objectContaining({
+					newTime: { start, end },
+					timeLog: expect.objectContaining({ id: 'manual-entry' }),
+					timeSlot
+				})
+			);
+
+		const setup = (rows: TimeLogRow[], hooks: Hooks = {}) => createService(ormType, fixture, rows, hooks);
+
+		const startOnDesktop = (service: TimerService) =>
+			service.startTimer({ source: TimeLogSourceEnum.DESKTOP } as ITimerToggleInput);
+
+		let restore: () => void;
+
+		beforeAll(() => defineConfig({ dbConnectionOptions: { type: DatabaseTypeEnum.postgres } }));
+
+		beforeEach(() => {
+			({ restore } = asTenantUser(fixture));
+			jest.spyOn(Date, 'now').mockReturnValue(NOW.getTime());
+			jest.spyOn(console, 'log').mockImplementation(() => undefined);
+		});
+
+		afterEach(() => {
+			restore();
+			jest.restoreAllMocks();
+		});
+
+		it('cuts a manual entry inside a web timer run it ends at the new start, as a stop at that time would', async () => {
+			const entry = manualEntry();
+			const rows = [entry, timeLog('web-run', TimeLogSourceEnum.WEB_TIMER, TWO_HOURS_AGO)];
+			const { service, timeSpanDeletes, logger } = setup(rows);
+
+			await startOnDesktop(service);
+
+			// 00:00 to 02:00 is the web run's now: the entry's half hour inside it is cut rather than counted twice
+			expect(rows[1]).toMatchObject({ id: 'web-run', isRunning: false, stoppedAt: NOW });
+			expect(timeSpanDeletes).toEqual(cutsOfEntry(entry, TWO_HOURS_AGO, NOW));
+			expect(logger.warn).not.toHaveBeenCalled();
+		});
+
+		it('leaves alone a log another client writes while the stop of the run it replaces is written', async () => {
+			const rows = [manualEntry(), timeLog('web-run', TimeLogSourceEnum.WEB_TIMER, TWO_HOURS_AGO)];
+			// Ten minutes from the desktop, synced with their time slot meanwhile
+			const syncedStart = new Date('2026-10-24T01:40:00.000Z');
+			const synced = timeLog('synced', TimeLogSourceEnum.DESKTOP, syncedStart, {
+				isRunning: false,
+				stoppedAt: new Date('2026-10-24T01:50:00.000Z'),
+				timeSlots: [{ startedAt: syncedStart, duration: 600 }]
+			});
+			const { service, timeSpanDeletes } = setup(rows, {
+				onUpdate: (command) => {
+					const isWebRunsStop = command.id === 'web-run' && !rows.includes(synced);
+					if (isWebRunsStop) {
+						rows.push(synced);
+					}
+				}
+			});
+
+			await startOnDesktop(service);
+
+			// The web run covers the synced ten minutes too: they stay the synced log's, as after a stop
+			expect(timeSpanDeletes.map((command) => command.timeLog.id)).toEqual([
+				'manual-entry',
+				'manual-entry',
+				'manual-entry'
+			]);
+		});
+
+		it('cuts a manual entry inside a run left going beside the one a stop ends, up to where that one started', async () => {
+			const entry = manualEntry();
+			const rows = [
+				entry,
+				timeLog('left-going', TimeLogSourceEnum.WEB_TIMER, TWO_HOURS_AGO),
+				timeLog('stopped', TimeLogSourceEnum.TEAMS, ONE_HOUR_AGO)
+			];
+			const { service, timeSpanDeletes } = setup(rows);
+
+			await service.stopTimer({ stoppedAt: NOW } as ITimerToggleInput);
+
+			// The stopped run's own hour, from 01:00, overlaps nothing; the run left going now ends at 01:00, over the entry
+			expect(rows[1]).toMatchObject({ id: 'left-going', isRunning: false, stoppedAt: ONE_HOUR_AGO });
+			expect(timeSpanDeletes).toEqual(cutsOfEntry(entry, TWO_HOURS_AGO, ONE_HOUR_AGO));
+		});
+
+		it('cuts nothing for an Ever Teams run that ends at its own start, which holds no time', async () => {
+			// It never had a heartbeat, and it started inside the entry's half hour
+			const startedAt = new Date('2026-10-24T00:40:00.000Z');
+			const rows = [manualEntry(), timeLog('replaced', TimeLogSourceEnum.TEAMS, startedAt)];
+			const { service, timeSpanDeletes } = setup(rows);
+
+			await startOnDesktop(service);
+
+			expect(rows[1]).toMatchObject({ id: 'replaced', isRunning: false, stoppedAt: startedAt });
+			expect(timeSpanDeletes).toEqual([]);
+		});
+
+		it('cuts nothing when the stop of the run it replaces could not be written, and the cleanup ends that run', async () => {
+			const rows = [manualEntry(), timeLog('web-run', TimeLogSourceEnum.WEB_TIMER, TWO_HOURS_AGO)];
+			const { service, timeSpanDeletes } = setup(rows, {
+				onUpdate: (command) => {
+					if (command.id === 'web-run') {
+						throw new Error('connection reset');
+					}
+				}
+			});
+
+			await startOnDesktop(service);
+
+			// Ten seconds after its start, as before: the entry's half hour is not the web run's, and stays the entry's
+			expect(rows[1]).toMatchObject({
+				id: 'web-run',
+				isRunning: false,
+				stoppedAt: new Date('2026-10-24T00:00:10.000Z')
+			});
+			expect(timeSpanDeletes).toEqual([]);
+		});
+
+		it('cuts the logs a replaced run overlaps when the second try of its stop wrote the stop, then failed', async () => {
+			const entry = manualEntry();
+			const rows = [entry, timeLog('web-run', TimeLogSourceEnum.WEB_TIMER, TWO_HOURS_AGO)];
+			let triesOfStop = 0;
+			const { service, timeSpanDeletes } = setup(rows, {
+				onUpdate: (command) => {
+					if (command.id !== 'web-run') {
+						return;
+					}
+					triesOfStop += 1;
+					if (triesOfStop === 1) {
+						// The first try fails before it writes anything
+						throw new Error('connection reset');
+					}
+					// The second writes the stop, then fails on the totals
+					Object.assign(rows[1], command.input);
+					throw new Error('deadlock detected');
+				}
+			});
+
+			await startOnDesktop(service);
+
+			// The web run ends at the new start all the same: the entry's half hour inside it is cut
+			expect(rows[1]).toMatchObject({ id: 'web-run', isRunning: false, stoppedAt: NOW });
+			expect(timeSpanDeletes).toEqual(cutsOfEntry(entry, TWO_HOURS_AGO, NOW));
+		});
+
+		it('cuts only up to where another process stopped the run when neither try of its stop wrote', async () => {
+			// Twenty minutes of manual time from 01:30, past where the run ends in the end
+			const entry = timeLog('manual-entry', TimeLogSourceEnum.WEB_TIMER, new Date('2026-10-24T01:30:00.000Z'), {
+				isRunning: false,
+				stoppedAt: new Date('2026-10-24T01:50:00.000Z'),
+				createdAt: new Date('2026-10-23T20:00:00.000Z'),
+				timeSlots: [{ startedAt: new Date('2026-10-24T01:30:00.000Z'), duration: 600 }]
+			});
+			const rows = [entry, timeLog('web-run', TimeLogSourceEnum.WEB_TIMER, TWO_HOURS_AGO)];
+			let triesOfStop = 0;
+			const { service, timeSpanDeletes } = setup(rows, {
+				onUpdate: (command) => {
+					if (command.id !== 'web-run') {
+						return;
+					}
+					triesOfStop += 1;
+					if (triesOfStop === 2) {
+						// Another API process stops the run at 01:00 meanwhile, and the second try fails before it writes
+						Object.assign(rows[1], { isRunning: false, stoppedAt: ONE_HOUR_AGO });
+					}
+					throw new Error('connection reset');
+				}
+			});
+
+			await startOnDesktop(service);
+
+			// The run holds 00:00 to 01:00: the entry, after it, keeps its time
+			expect(rows[1]).toMatchObject({ id: 'web-run', isRunning: false, stoppedAt: ONE_HOUR_AGO });
+			expect(timeSpanDeletes).toEqual([]);
+		});
+
+		it('cuts the logs a replaced run overlaps when the cleanup of the other runs fails after its stop', async () => {
+			const entry = manualEntry();
+			const rows = [entry, timeLog('web-run', TimeLogSourceEnum.WEB_TIMER, TWO_HOURS_AGO)];
+			const { service, timeSpanDeletes, logger } = setup(rows, {
+				onPendingRead: () => {
+					throw new Error('connection reset');
+				}
+			});
+
+			await startOnDesktop(service);
+
+			// Stopped, the web run is no run any later start would read: its cuts are made now or never
+			expect(rows[1]).toMatchObject({ id: 'web-run', isRunning: false, stoppedAt: NOW });
+			expect(timeSpanDeletes).toEqual(cutsOfEntry(entry, TWO_HOURS_AGO, NOW));
+			expect(logger.warn).toHaveBeenCalledWith(
+				expect.stringContaining('Failed to stop previous running timers: connection reset')
+			);
+		});
+
+		it('writes no stop over the next start once its lookup of the logs the run overlaps outlived the failsafe time', async () => {
+			jest.useFakeTimers({ doNotFake: ['Date', 'nextTick', 'setImmediate', 'queueMicrotask'] });
+			try {
+				const rows = [timeLog('web-run', TimeLogSourceEnum.WEB_TIMER, TWO_HOURS_AGO)];
+				let lookups = 0;
+				let finishFirstLookup: () => void = () => undefined;
+				const { service } = setup(rows, {
+					onConflictLookup: () => {
+						lookups += 1;
+						// The first start's lookup answers only when the spec lets it
+						return lookups === 1
+							? new Promise<void>((resolve) => (finishFirstLookup = resolve))
+							: undefined;
+					}
+				});
+
+				const first = startOnDesktop(service).then(
+					() => 'started',
+					(error: Error) => error
+				);
+				// The next start arrives a minute later
+				const aMinuteLater = new Date(NOW.getTime() + 60_000);
+				jest.spyOn(Date, 'now').mockReturnValue(aMinuteLater.getTime());
+				const second = startOnDesktop(service);
+
+				// It goes on after the failsafe time and ends the web run where it starts
+				await jest.advanceTimersByTimeAsync(EMPLOYEE_TURN_FAILSAFE_MS);
+				await expect(second).resolves.toMatchObject({ isRunning: true, startedAt: aMinuteLater });
+				expect(rows[0]).toMatchObject({ id: 'web-run', isRunning: false, stoppedAt: aMinuteLater });
+
+				// The first lookup answers after that: the first start leaves the web run as the next one ended it
+				finishFirstLookup();
+				await expect(first).resolves.toBeInstanceOf(RequestTimeoutException);
+				expect(rows[0]).toMatchObject({ id: 'web-run', isRunning: false, stoppedAt: aMinuteLater });
+			} finally {
+				jest.useRealTimers();
+			}
+		});
+
+		/**
+		 * The cut `DeleteTimeSpanHandler` makes, made on the table: a log the range covers goes, one it overlaps at an end
+		 * is trimmed, and one it falls inside splits, keeping its id on the part before the range while the part after it
+		 * is a new log holding the time slots from the range's end on. Nothing happens once nothing of the log is left in
+		 * the range, as for the commands of a log's other slots.
+		 */
+		const cutOnTable = (rows: TimeLogRow[]) => (command: DeleteTimeSpanCommand) => {
+			const row = rows.find((candidate) => candidate.id === command.timeLog.id);
+			const { start, end } = command.newTime;
+			const isLeftInRange =
+				row && time(row.startedAt) < time(end) && time(row.stoppedAt) > time(start) && !row.isRunning;
+			if (!isLeftInRange) {
+				return;
+			}
+			const startsBefore = time(row.startedAt) < time(start);
+			const endsAfter = time(row.stoppedAt) > time(end);
+			if (startsBefore && endsAfter) {
+				rows.push({
+					...row,
+					id: `${row.id}-after`,
+					startedAt: end,
+					timeSlots: (row.timeSlots ?? []).filter((slot) => time(slot.startedAt) >= time(end))
+				});
+			}
+			if (startsBefore) {
+				row.stoppedAt = start;
+				row.timeSlots = (row.timeSlots ?? []).filter((slot) => time(slot.startedAt) < time(start));
+			} else if (endsAfter) {
+				row.startedAt = end;
+				row.timeSlots = (row.timeSlots ?? []).filter((slot) => time(slot.startedAt) >= time(end));
+			} else {
+				rows.splice(rows.indexOf(row), 1);
+			}
+		};
+
+		it("cuts a manual entry the stopped run and a run left going beside it overlap, the stopped run's range first", async () => {
+			// Three hours of manual time from midnight, entered ahead, with its eighteen ten-minute time slots
+			const threeAm = new Date('2026-10-24T03:00:00.000Z');
+			const entry = timeLog('manual-entry', TimeLogSourceEnum.WEB_TIMER, TWO_HOURS_AGO, {
+				isRunning: false,
+				stoppedAt: threeAm,
+				createdAt: new Date('2026-10-23T20:00:00.000Z'),
+				timeSlots: Array.from({ length: 18 }, (_, index) => ({
+					startedAt: new Date(TWO_HOURS_AGO.getTime() + index * 10 * 60 * 1000),
+					duration: 600
+				}))
+			});
+			const rows = [
+				entry,
+				timeLog('left-going', TimeLogSourceEnum.WEB_TIMER, HALF_PAST_MIDNIGHT),
+				timeLog('stopped', TimeLogSourceEnum.TEAMS, ONE_HOUR_AGO)
+			];
+			const { service } = setup(rows, { onTimeSpanDelete: cutOnTable(rows) });
+
+			await service.stopTimer({ stoppedAt: NOW } as ITimerToggleInput);
+
+			// The stopped run holds 01:00 to 02:00 and the run left going 00:30 to 01:00: the entry keeps the rest only.
+			// Cut first, the run left going would split the entry at 01:00, and the part after it, a new log the stop
+			// did not read, would keep the stopped run's hour.
+			expect(rows.find((row) => row.id === 'stopped')).toMatchObject({ isRunning: false, stoppedAt: NOW });
+			expect(rows.find((row) => row.id === 'left-going')).toMatchObject({
+				isRunning: false,
+				stoppedAt: ONE_HOUR_AGO
+			});
+			expect(rows.find((row) => row.id === 'manual-entry')).toMatchObject({
+				startedAt: TWO_HOURS_AGO,
+				stoppedAt: HALF_PAST_MIDNIGHT
+			});
+			expect(rows.find((row) => row.id === 'manual-entry-after')).toMatchObject({
+				startedAt: NOW,
+				stoppedAt: threeAm
+			});
 		});
 	}
 );
