@@ -152,6 +152,13 @@ type Organization {
 	Off by default: whoever may edit the employee or the membership may switch it.
 	"""
 	restrictTrackingSwitchToHigherRoles: Boolean!
+	"""
+	Whether a member may discard their own running timer, which removes the run instead of keeping it. On by default,
+	and null counts as on.
+	"""
+	allowDiscardTimer: Boolean
+	"When set, a running timer may be discarded only within this many minutes of its start. Null sets no limit."
+	discardTimerWithinMinutes: Int
 	"Whether the organization renders times on a 12- or a 24-hour clock."
 	timeFormat: Int!
 	"Whether a document's tax and its discount are stated as separate lines."

@@ -1,4 +1,4 @@
-import { Controller, UseGuards, HttpStatus, Post, Body, Get, Query } from '@nestjs/common';
+import { Controller, UseGuards, HttpCode, HttpStatus, Post, Body, Get, Query } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ITimeLog, ITimerStatus, PermissionsEnum } from '@gauzy/contracts';
@@ -6,7 +6,7 @@ import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
 import { Permissions } from './../../shared/decorators';
 import { UseValidationPipe } from '../../shared/pipes';
 import { TimerService } from './timer.service';
-import { StartTimerDTO, StopTimerDTO, TimerStatusQueryDTO, ToggleTimerDTO } from './dto';
+import { DiscardTimerDTO, StartTimerDTO, StopTimerDTO, TimerStatusQueryDTO, ToggleTimerDTO } from './dto';
 import { GetTimerStatusQuery } from './queries/get-timer-status.query';
 import { StartTimerCommand, StopTimerCommand } from './commands';
 
@@ -140,5 +140,39 @@ export class TimerController {
 	@UseValidationPipe()
 	async stopTimer(@Body() entity: StopTimerDTO): Promise<ITimeLog | null> {
 		return this._commandBus.execute(new StopTimerCommand(entity));
+	}
+
+	/**
+	 * Discard timer endpoint.
+	 *
+	 * Removes the caller's running timer, with its time slots, screenshots and activity, as if it never started. The
+	 * time was never kept, so the timer's own permission is enough: deleting time is not asked.
+	 *
+	 * @param entity - A DiscardTimerDTO object, naming the running time log the discard is for when the client knows it.
+	 */
+	@ApiOperation({ summary: 'Discard the running timer' })
+	@ApiResponse({
+		status: HttpStatus.NO_CONTENT,
+		description: "The caller's running timer was discarded: the run, its time slots and screenshots are removed."
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'No timer is running, or the input is invalid. Nothing is removed.'
+	})
+	@ApiResponse({
+		status: HttpStatus.FORBIDDEN,
+		description:
+			'The organization turned discarding off (code TIMER_DISCARD_DISABLED), or the run started longer ago than the organization allows (code TIMER_DISCARD_TOO_LATE). Nothing is removed.'
+	})
+	@ApiResponse({
+		status: HttpStatus.CONFLICT,
+		description:
+			'The discard names a time log (timeLogId) that is not the running one. Nothing is removed: the running timer goes on.'
+	})
+	@Post('/discard')
+	@HttpCode(HttpStatus.NO_CONTENT)
+	@UseValidationPipe({ whitelist: true })
+	async discardTimer(@Body() entity: DiscardTimerDTO): Promise<void> {
+		await this.timerService.discardTimer(entity);
 	}
 }

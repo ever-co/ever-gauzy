@@ -424,6 +424,15 @@ export interface ITimerToggleInput
 	timeLogId?: ID;
 }
 
+/** A discard of the caller's running timer: the run is removed instead of kept. */
+export interface ITimerDiscardInput extends IBasePerTenantAndOrganizationEntityModel {
+	/**
+	 * The running time log the discard is for, as the client last saw it. A discard naming another log than the
+	 * running one is refused, and the running one goes on.
+	 */
+	timeLogId?: ID;
+}
+
 export interface IManualTimeInput extends IBasePerTenantAndOrganizationEntityModel {
 	employeeId?: ID;
 	projectId?: ID;

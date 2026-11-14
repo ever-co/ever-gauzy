@@ -1,6 +1,7 @@
 import {
 	Injectable,
 	Logger,
+	BadRequestException,
 	NotFoundException,
 	ForbiddenException,
 	ConflictException,
@@ -27,6 +28,7 @@ import {
 	TimeLogType,
 	ITimerStatus,
 	ITimerToggleInput,
+	ITimerDiscardInput,
 	IDateRange,
 	TimeLogSourceEnum,
 	ITimerStatusInput,
@@ -61,6 +63,7 @@ import {
 	IGetConflictTimeLogCommand,
 	ScheduleTimeLogEntriesCommand,
 	TimeLogCreateCommand,
+	TimeLogDeleteCommand,
 	TimeLogUpdateCommand
 } from '../time-log/commands';
 import {
@@ -82,6 +85,7 @@ import {
 	exclusiveWindowEnd,
 	secondsWithinWindow
 } from './timer.helper';
+import { discardDisabledRefusal, discardTooLateRefusal } from './timer-discard-rule';
 import {
 	DAILY_PLAN_REQUIRED,
 	PLAN_RULE_SOURCES,
@@ -1047,6 +1051,136 @@ export class TimerService {
 		this.debug(() => `Final last calculated stoppedAt: ${stoppedAt}`);
 		// Example log output: "Last calculated stoppedAt: 2024-09-24 20:00:00"
 		return stoppedAt;
+	}
+
+	/**
+	 * Discards the caller's running timer: the run is removed with its time slots, screenshots and activity, through
+	 * the time log delete, as if it never started. The time was never kept, so no permission to delete time is asked.
+	 * The organization may turn discarding off (`allowDiscardTimer`) or allow it only for recent runs
+	 * (`discardTimerWithinMinutes`). Only the caller's running log is removed, never a stopped entry.
+	 *
+	 * @param request The discard, with the running time log it is for when the client names one.
+	 * @throws ForbiddenException with the code TIMER_DISCARD_DISABLED or TIMER_DISCARD_TOO_LATE.
+	 * @throws BadRequestException when no timer runs.
+	 * @throws ConflictException when the discard names another time log than the running one: nothing is removed.
+	 */
+	async discardTimer(request: ITimerDiscardInput): Promise<void> {
+		const employee = await this.findEmployee({ organization: true });
+
+		const disabledRefusal = discardDisabledRefusal(employee.organization);
+		if (disabledRefusal) {
+			throw new ForbiddenException(disabledRefusal);
+		}
+
+		const includeTimeSlots = true;
+		const runningLog = await this.getLastRunningLog(includeTimeSlots);
+		if (!runningLog) {
+			throw new BadRequestException('No timer is running: there is nothing to discard.');
+		}
+
+		this.assertDiscardIsForRunningLog(request, runningLog);
+
+		const tooLateRefusal = discardTooLateRefusal(
+			employee.organization,
+			runningLog.startedAt,
+			moment.utc().toDate()
+		);
+		if (tooLateRefusal) {
+			throw new ForbiddenException(tooLateRefusal);
+		}
+
+		// A stop from another tab or device may have landed since the read: it kept the entry, which is never removed
+		const isClaimed = await this.claimRunningLog(runningLog.id);
+		if (!isClaimed) {
+			throw new BadRequestException('No timer is running: there is nothing to discard.');
+		}
+
+		const tenantId = RequestContext.currentTenantId() ?? request.tenantId;
+		const { id: employeeId, organizationId } = employee;
+
+		const forceDelete = true;
+		try {
+			await this._commandBus.execute(new TimeLogDeleteCommand(runningLog as TimeLog, forceDelete));
+		} catch (error) {
+			await this.releaseRunningLog(runningLog.id, employeeId, organizationId, tenantId);
+			throw error;
+		}
+
+		// A run another device started meanwhile is left running, and keeps the employee tracking
+		await this.markNotTrackingWhenNothingRuns(employeeId, organizationId, tenantId);
+	}
+
+	/**
+	 * Takes the run for a discard: marks it as no longer running, in one statement that only changes it while it still
+	 * runs. A stop that landed first leaves nothing to take.
+	 *
+	 * @returns Whether the run still ran and is now the discard's to remove.
+	 */
+	private async claimRunningLog(timeLogId: ID): Promise<boolean> {
+		const stillRunning = { id: timeLogId, isRunning: true };
+		const taken = { isRunning: false };
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const changedRows = await this.mikroOrmTimeLogRepository.nativeUpdate(stillRunning, taken);
+				return changedRows > 0;
+			}
+			case MultiORMEnum.TypeORM:
+			default: {
+				const { affected } = await this.typeOrmTimeLogRepository.update(stillRunning, taken);
+				// Every driver of the platform reports the count; one that would not is read as a change
+				const isCountUnknown = typeof affected !== 'number';
+				return isCountUnknown || affected > 0;
+			}
+		}
+	}
+
+	/**
+	 * Gives a run taken for a discard its running state back, when removing it failed. Not when another run of the
+	 * employee started meanwhile: the failed run then stays stopped, so that two timers never run.
+	 */
+	private async releaseRunningLog(timeLogId: ID, employeeId: ID, organizationId: ID, tenantId: ID): Promise<void> {
+		const taken = { id: timeLogId, isRunning: false };
+		const running = { isRunning: true };
+		try {
+			const otherRuns = await this.findTimeLogsWhere({ employeeId, organizationId, tenantId, isRunning: true });
+			const hasAnotherRun = otherRuns.length > 0;
+			if (hasAnotherRun) {
+				this.logger.warn(`Time log ${timeLogId} stays stopped: another run of the employee started meanwhile.`);
+				return;
+			}
+
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM:
+					await this.mikroOrmTimeLogRepository.nativeUpdate(taken, running);
+					return;
+				case MultiORMEnum.TypeORM:
+				default:
+					await this.typeOrmTimeLogRepository.update(taken, running);
+			}
+		} catch (error) {
+			this.logger.warn(`Failed to give the running state back to time log ${timeLogId}: ${error?.message}`);
+		}
+	}
+
+	/**
+	 * Refuses a discard naming another time log than the running one, as a stop naming one is: it comes from a view
+	 * still showing an earlier run, and would otherwise remove the newer run a start on another device or tab began.
+	 *
+	 * @throws ConflictException when the discard names another time log than the running one.
+	 */
+	private assertDiscardIsForRunningLog(request: ITimerDiscardInput, runningLog: ITimeLog): void {
+		if (!isTimeLogNamed(request)) {
+			return;
+		}
+		// Time log ids are UUIDs, whose letters compare in either case
+		const namesRunningLog = String(request.timeLogId).toLowerCase() === String(runningLog.id).toLowerCase();
+		if (namesRunningLog) {
+			return;
+		}
+		this.logger.warn(`Discard refused: it names another time log than the running one, ${runningLog.id}.`);
+		throw new ConflictException(
+			'This discard names a time log that is not the running one. Nothing was discarded: the running timer goes on.'
+		);
 	}
 
 	/**

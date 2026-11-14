@@ -7,7 +7,7 @@
 # same permission, so a client that reaches a capability over one protocol is not given a narrower or
 # a wider one than the client that reaches it over the other.
 #
-# **Two of the five fields are computed answers, and they are root fields of their own because there
+# **Two of the six fields are computed answers, and they are root fields of their own because there
 # is no resource for them to hang off.** A timer's status is not a row: it has no identifier of its
 # own, nothing to withdraw and nothing to state. It is a computation over the time logs of a period —
 # the sum of the seconds already recorded, whether a log is open right now, and which log the answer
@@ -19,7 +19,7 @@
 #   whatever day it belongs to, and how long ago it stopped.
 #
 # That is why this file declares no connection, no node query and no count. The controller serves
-# `GET /status` and `GET /status/worked` and three writes, and nothing else: there is no list route
+# `GET /status` and `GET /status/worked` and four writes, and nothing else: there is no list route
 # for a connection to mirror, no `GET /:id` for a node query to mirror, and no `GET /count` for a
 # count to mirror. Where a client needs the rows a state was computed from, those are time logs and
 # belong to the surface that owns them; the states here name them by identifier so they can be read
@@ -33,12 +33,15 @@
 #   write decide whether the timer starts or stops.
 # - `startTimer` mirrors `POST /start`, which dispatches the start command.
 # - `stopTimer` mirrors `POST /stop`, which dispatches the stop command.
+# - `discardTimer` mirrors `POST /discard`, which calls the discard write directly. Its route answers
+#   204 with no body, so the field answers `true`: the write either removed the run or raised. It
+#   takes an input of its own, since it reads none of the start body.
 #
-# **The three writes answer the log row itself, because that is what their routes answer.** The
-# controller declares each of them as answering a time log — the start as a log, the toggle and the
-# stop as a log or null — so a field that answered only the log's identifier would be a narrower answer
-# than the route's rather than the same answer in this protocol's spelling. The row is returned
-# unprojected: whatever the delivered write read back is what a client receives.
+# **The start, the stop and the toggle answer the log row itself, because that is what their routes
+# answer.** The controller declares each of them as answering a time log — the start as a log, the
+# toggle and the stop as a log or null — so a field that answered only the log's identifier would be a
+# narrower answer than the route's rather than the same answer in this protocol's spelling. The row is
+# returned unprojected: whatever the delivered write read back is what a client receives.
 #
 # The type is the time-log domain's own, declared by `time-log.type.gql`, and it is referenced here
 # rather than restated. That is the same rule the state members below follow from the other side: a
@@ -47,7 +50,7 @@
 # A state, by contrast, is not a row — `TimerStatus.lastLogId` and `TimerWorkedStatus.lastLogId` name
 # the log a computation was derived from, which is the identifier's job and not the row's.
 #
-# **The nullability of the three is the routes' and the handlers' own, and it differs between them.**
+# **The nullability of those three is the routes' and the handlers' own, and it differs between them.**
 # The start answers a row and never nothing: its handler ends by reading back the row it wrote through
 # a finder that raises on a miss, so its two outcomes are a row and a raised refusal. The toggle and
 # the stop answer a row *or null*, which is what their routes declare and what their handlers can
@@ -55,7 +58,7 @@
 # and a toggle that stops the timer ends where the stop ends. A non-null claim on those two would be a
 # promise the write can break.
 #
-# **The three writes take one input, because the two bodies the routes bind are one body.** `POST /stop`
+# **Those three writes take one input, because the two bodies the routes bind are one body.** `POST /stop`
 # validates its body against a DTO that widens the start body's two enum members to optional, and the
 # start DTO already states them as optional, so the two member sets are the same set. One input states
 # that set once, and a client that can start a timer can stop it with the same body.
@@ -133,4 +136,16 @@ extend type Mutation {
 	REST route raises, in this protocol's vocabulary.
 	"""
 	stopTimer(input: TimerToggleInput!): TimeLog
+
+	"""
+	Discards the caller's running timer: the run is removed with its time slots and screenshots, as if it
+	never started, and the answer is true. No permission to delete time is asked, since the time was
+	never kept.
+
+	The delivered write refuses with 400 when nothing runs, with 403 when the organization turned
+	discarding off (code `TIMER_DISCARD_DISABLED`) or the run started longer ago than it allows (code
+	`TIMER_DISCARD_TOO_LATE`), and with 409 when the input names another time log than the running one,
+	which then goes on. Each refusal travels as the REST route raises it.
+	"""
+	discardTimer(input: TimerDiscardInput!): Boolean!
 }
