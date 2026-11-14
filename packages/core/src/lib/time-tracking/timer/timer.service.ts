@@ -476,7 +476,7 @@ export class TimerService {
 	): Promise<void> {
 		const now = moment.utc().toDate();
 		const conflicts: ITimeLog[] = await this._commandBus.execute(
-			new IGetConflictTimeLogCommand({ ...employee, startDate: startedAt, endDate: now })
+			new IGetConflictTimeLogCommand({ ...employee, startDate: startedAt, endDate: now, includeSlotless: true })
 		);
 		const runningLogs = await this.getLastRunningLogs();
 		assertBreakOverlapsNothing([...(conflicts ?? []), ...runningLogs]);

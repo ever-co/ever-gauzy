@@ -112,16 +112,18 @@ export class GetConflictTimeLogHandler implements ICommandHandler<IGetConflictTi
 				conflictQuery = conflictQuery
 					.leftJoinAndSelect(`${conflictQuery.alias}.timeSlots`, 'timeSlots')
 					.where(p(`"${conflictQuery.alias}"."employeeId" = :employeeId`), { employeeId })
-					// A log with a slot takes part, as with the inner join this replaces, and so does a break, which holds none
-					.andWhere(
-						p(`("timeSlots"."id" IS NOT NULL OR "${conflictQuery.alias}"."logType" = :conflictBreakType)`),
-						{
-							conflictBreakType: TimeLogType.BREAK
-						}
-					)
 					.andWhere(p(`"${conflictQuery.alias}"."tenantId" = :tenantId`), { tenantId })
 					.andWhere(p(`"${conflictQuery.alias}"."organizationId" = :organizationId`), { organizationId })
 					.andWhere(query);
+				// A log with a slot takes part, as with the inner join this replaces, and so does a break, which holds none. A
+				// caller that asks for slotless logs as well (`includeSlotless`) gets every log of the range.
+				const keepsSlotless = input.includeSlotless === true;
+				if (!keepsSlotless) {
+					conflictQuery = conflictQuery.andWhere(
+						p(`("timeSlots"."id" IS NOT NULL OR "${conflictQuery.alias}"."logType" = :conflictBreakType)`),
+						{ conflictBreakType: TimeLogType.BREAK }
+					);
+				}
 				if (input.relations) {
 					input.relations.forEach((relation) => {
 						conflictQuery = conflictQuery.leftJoinAndSelect(`${conflictQuery.alias}.${relation}`, relation);

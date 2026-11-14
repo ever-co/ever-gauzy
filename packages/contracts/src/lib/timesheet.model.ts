@@ -462,6 +462,11 @@ export interface IGetTimeLogConflictInput extends IBasePerTenantAndOrganizationE
 	startDate: string | Date;
 	endDate: string | Date;
 	employeeId: ID;
+	/**
+	 * Also answer work logs without time slots. By default a work log takes part only with a slot; a break always does.
+	 * Set only by the server, for a break started in the past (#11920).
+	 */
+	includeSlotless?: boolean;
 }
 
 export interface IGetTimeSlotInput extends ITimeLogFilters, IBaseRelationsEntityModel {

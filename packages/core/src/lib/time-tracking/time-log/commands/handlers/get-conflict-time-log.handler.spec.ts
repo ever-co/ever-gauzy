@@ -88,7 +88,8 @@ describe('overlapCondition on stored time logs', () => {
 describe('GetConflictTimeLogHandler on TypeORM (#11920)', () => {
 	afterEach(() => jest.restoreAllMocks());
 
-	it('keeps a break, which holds no time slot, among the conflicts of a range', async () => {
+	/** Runs the TypeORM read for a range and answers the calls its query builder received, with their parameters. */
+	const conflictQueryOf = async (input: object) => {
 		const calls: string[] = [];
 		const parameters: Record<string, unknown> = {};
 		const query: Record<string, unknown> = { alias: 'TimeLog', getMany: async () => [] };
@@ -112,15 +113,28 @@ describe('GetConflictTimeLogHandler on TypeORM (#11920)', () => {
 				employeeId: 'employee-1',
 				organizationId: 'organization-1',
 				startDate: '2026-11-16T12:00:00.000Z',
-				endDate: '2026-11-16T13:00:00.000Z'
+				endDate: '2026-11-16T13:00:00.000Z',
+				...input
 			} as never)
 		);
+		return { calls, parameters };
+	};
+	const keepsBreaks = (call: string) =>
+		call.includes('"timeSlots"."id" IS NOT NULL OR "TimeLog"."logType" = :conflictBreakType');
+
+	it('keeps a break, which holds no time slot, among the conflicts of a range', async () => {
+		const { calls, parameters } = await conflictQueryOf({});
 
 		expect(calls).toContain('leftJoinAndSelect TimeLog.timeSlots');
 		expect(calls).not.toContain('innerJoinAndSelect TimeLog.timeSlots');
-		const keepsBreaks = (call: string) =>
-			call.includes('"timeSlots"."id" IS NOT NULL OR "TimeLog"."logType" = :conflictBreakType');
 		expect(calls.some(keepsBreaks)).toBe(true);
 		expect(parameters).toMatchObject({ conflictBreakType: TimeLogType.BREAK });
+	});
+
+	it('answers slotless work logs too when the caller asks (includeSlotless)', async () => {
+		const { calls } = await conflictQueryOf({ includeSlotless: true });
+
+		expect(calls).toContain('leftJoinAndSelect TimeLog.timeSlots');
+		expect(calls.some(keepsBreaks)).toBe(false);
 	});
 });

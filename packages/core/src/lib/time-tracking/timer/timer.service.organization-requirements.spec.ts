@@ -300,6 +300,9 @@ describe('TimerService.startTimer under the organization tracking requirements',
 		expect((refusal as ConflictException).getResponse()).toMatchObject({ code: BREAK_OVERLAP });
 		expect(createdLog()).toBeUndefined();
 		expect(stopPreviousRunningTimers).not.toHaveBeenCalled();
+		// A run that posted no slot counts too, so a slotless work log in the range is no blind spot
+		const conflictRead = execute.mock.calls.find(([command]) => command instanceof IGetConflictTimeLogCommand)?.[0];
+		expect(conflictRead?.input).toMatchObject({ includeSlotless: true });
 	});
 
 	it('refuses a break started in the past while a run goes on, which would keep the minutes it covers', async () => {
