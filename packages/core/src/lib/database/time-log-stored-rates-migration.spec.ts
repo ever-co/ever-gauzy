@@ -33,12 +33,12 @@ describe('time log stored rates migration on SQLite', () => {
 		);
 		await dataSource.query(
 			'CREATE TABLE "organization_project" ("id" varchar PRIMARY KEY NOT NULL, "billRateValue" numeric(14,2), ' +
-				'"currency" varchar)'
+				'"currency" varchar, "deletedAt" datetime)'
 		);
 		await dataSource.query(
 			'CREATE TABLE "organization_project_employee" ("id" varchar PRIMARY KEY NOT NULL, ' +
 				'"organizationProjectId" varchar, "employeeId" varchar, "billRateValue" numeric(14,2), ' +
-				'"isActive" boolean, "isArchived" boolean)'
+				'"isActive" boolean, "isArchived" boolean, "deletedAt" datetime)'
 		);
 		await dataSource.query(
 			'CREATE TABLE "time_log" ("id" varchar PRIMARY KEY NOT NULL, "employeeId" varchar, "projectId" varchar)'
@@ -48,15 +48,17 @@ describe('time log stored rates migration on SQLite', () => {
 			`INSERT INTO "employee" VALUES ('marie', 40, 'USD', 25, 'EUR'), ('paul', NULL, NULL, NULL, NULL)`
 		);
 		await dataSource.query(
-			`INSERT INTO "organization_project" VALUES ('site', 90, 'EUR'), ('internal', NULL, NULL)`
+			`INSERT INTO "organization_project" VALUES ('site', 90, 'EUR', NULL), ('internal', NULL, NULL, NULL), ` +
+				`('closed', 70, 'EUR', '2026-09-01 00:00:00')`
 		);
 		// Marie's own client rate on the site, and Paul's, left on an archived membership
 		await dataSource.query(
-			`INSERT INTO "organization_project_employee" VALUES ('m1', 'site', 'marie', 95, 1, 0), ('m2', 'site', 'paul', 70, 1, 1)`
+			`INSERT INTO "organization_project_employee" VALUES ('m1', 'site', 'marie', 95, 1, 0, NULL), ` +
+				`('m2', 'site', 'paul', 70, 1, 1, NULL), ('m3', 'internal', 'marie', 60, 1, 0, '2026-09-01 00:00:00')`
 		);
 		await dataSource.query(
 			`INSERT INTO "time_log" VALUES ('marie-site', 'marie', 'site'), ('paul-site', 'paul', 'site'), ` +
-				`('marie-alone', 'marie', NULL), ('marie-internal', 'marie', 'internal')`
+				`('marie-alone', 'marie', NULL), ('marie-internal', 'marie', 'internal'), ('marie-closed', 'marie', 'closed')`
 		);
 	});
 
@@ -129,11 +131,13 @@ describe('time log stored rates migration on SQLite', () => {
 			projectBillRateCurrency: null,
 			ratesStored: 1
 		});
+		// A removed membership and a removed project give no client rate, as the project rates read gives none
 		expect(await logOf('marie-internal')).toMatchObject({
 			projectBillRateValue: null,
 			projectMemberBillRateValue: null,
 			ratesStored: 1
 		});
+		expect(await logOf('marie-closed')).toMatchObject({ projectBillRateValue: null, ratesStored: 1 });
 	});
 
 	it('never refills a log that already stores its rates, and keeps the columns on down', async () => {

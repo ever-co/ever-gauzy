@@ -153,20 +153,20 @@ export class AddTimeLogStoredRates1791000009400 implements MigrationInterface {
 }
 
 /**
- * A membership left inactive or archived no longer gives its client rate, as the project rates read says (NULL
- * counts as current).
+ * A membership left inactive, archived or removed no longer gives its client rate, as the project rates read says
+ * (NULL counts as current).
  */
 const CURRENT_MEMBERSHIP_PG =
 	`("member"."isActive" IS NULL OR "member"."isActive" = true) ` +
-	`AND ("member"."isArchived" IS NULL OR "member"."isArchived" = false)`;
+	`AND ("member"."isArchived" IS NULL OR "member"."isArchived" = false) AND "member"."deletedAt" IS NULL`;
 
 const CURRENT_MEMBERSHIP_MYSQL =
 	'(`member`.`isActive` IS NULL OR `member`.`isActive` = 1) ' +
-	'AND (`member`.`isArchived` IS NULL OR `member`.`isArchived` = 0)';
+	'AND (`member`.`isArchived` IS NULL OR `member`.`isArchived` = 0) AND `member`.`deletedAt` IS NULL';
 
 const CURRENT_MEMBERSHIP_SQLITE =
 	`("member"."isActive" IS NULL OR "member"."isActive" = 1) ` +
-	`AND ("member"."isArchived" IS NULL OR "member"."isArchived" = 0)`;
+	`AND ("member"."isArchived" IS NULL OR "member"."isArchived" = 0) AND "member"."deletedAt" IS NULL`;
 
 /**
  * Today's rates on every log that stores none yet: the project's and the membership's client rates first, then the
@@ -178,7 +178,7 @@ const FILL: Readonly<Record<Dialect, ReadonlyArray<string>>> = {
 		`UPDATE "time_log" SET "projectBillRateValue" = "project"."billRateValue", ` +
 			`"projectBillRateCurrency" = "project"."currency" ` +
 			`FROM "organization_project" "project" WHERE "project"."id" = "time_log"."projectId" ` +
-			`AND "time_log"."ratesStored" IS NULL`,
+			`AND "project"."deletedAt" IS NULL AND "time_log"."ratesStored" IS NULL`,
 		`UPDATE "time_log" SET "projectMemberBillRateValue" = "member"."billRateValue" ` +
 			`FROM "organization_project_employee" "member" ` +
 			`WHERE "member"."organizationProjectId" = "time_log"."projectId" ` +
@@ -192,7 +192,8 @@ const FILL: Readonly<Record<Dialect, ReadonlyArray<string>>> = {
 	mysql: [
 		'UPDATE `time_log` INNER JOIN `organization_project` `project` ON `project`.`id` = `time_log`.`projectId` ' +
 			'SET `time_log`.`projectBillRateValue` = `project`.`billRateValue`, ' +
-			'`time_log`.`projectBillRateCurrency` = `project`.`currency` WHERE `time_log`.`ratesStored` IS NULL',
+			'`time_log`.`projectBillRateCurrency` = `project`.`currency` ' +
+			'WHERE `project`.`deletedAt` IS NULL AND `time_log`.`ratesStored` IS NULL',
 		'UPDATE `time_log` INNER JOIN `organization_project_employee` `member` ' +
 			'ON `member`.`organizationProjectId` = `time_log`.`projectId` ' +
 			'AND `member`.`employeeId` = `time_log`.`employeeId` ' +
@@ -209,8 +210,8 @@ const FILL: Readonly<Record<Dialect, ReadonlyArray<string>>> = {
 	// Correlated sub-queries: an `UPDATE ... FROM` needs SQLite 3.33, older than some embedded builds.
 	sqlite: [
 		`UPDATE "time_log" SET ` +
-			`"projectBillRateValue" = (SELECT "billRateValue" FROM "organization_project" "project" WHERE "project"."id" = "time_log"."projectId"), ` +
-			`"projectBillRateCurrency" = (SELECT "currency" FROM "organization_project" "project" WHERE "project"."id" = "time_log"."projectId") ` +
+			`"projectBillRateValue" = (SELECT "billRateValue" FROM "organization_project" "project" WHERE "project"."id" = "time_log"."projectId" AND "project"."deletedAt" IS NULL), ` +
+			`"projectBillRateCurrency" = (SELECT "currency" FROM "organization_project" "project" WHERE "project"."id" = "time_log"."projectId" AND "project"."deletedAt" IS NULL) ` +
 			`WHERE "time_log"."projectId" IS NOT NULL AND "time_log"."ratesStored" IS NULL`,
 		`UPDATE "time_log" SET "projectMemberBillRateValue" = (SELECT "member"."billRateValue" ` +
 			`FROM "organization_project_employee" "member" ` +
