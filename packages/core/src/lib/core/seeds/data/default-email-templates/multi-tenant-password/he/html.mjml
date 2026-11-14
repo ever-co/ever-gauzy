@@ -41,6 +41,9 @@
 				<mj-raw>{{/if}}</mj-raw>
 				<mj-text mj-class="heading">איפוס הסיסמה</mj-text>
 				<mj-text>
+					שלום,
+				</mj-text>
+				<mj-text>
 					לכתובת האימייל שלך יש חשבונות ביותר מסביבת עבודה אחת. יש לבחור את החשבון שאת הסיסמה שלו ברצונך לאפס:
 				</mj-text>
 				<mj-text padding="4px 10px 20px">
@@ -48,6 +51,10 @@
 						<tr>
 							<td style="padding: 4px 16px">
 								<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+									<tr>
+										<td align="right" valign="bottom" style="padding: 10px 0 0; font-size: 12px; font-weight: 600; line-height: 18px; color: #71717A; text-align: right">סביבת עבודה / משתמש</td>
+										<td align="left" valign="bottom" style="padding: 10px 0 0; font-size: 12px; font-weight: 600; line-height: 18px; color: #71717A; text-align: left">קישור לאיפוס הסיסמה</td>
+									</tr>
 									{{#each items}}
 									<tr>
 										<td align="right" valign="middle" style="{{#unless @first}}border-top: 1px solid #E4E4E7; {{/unless}}padding: 12px 0; text-align: right; word-break: break-word">

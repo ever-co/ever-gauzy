@@ -39,6 +39,9 @@
 				<mj-raw>{{/if}}</mj-raw>
 				<mj-text mj-class="heading">Reset your password</mj-text>
 				<mj-text>
+					Hello,
+				</mj-text>
+				<mj-text>
 					Your email address has accounts in more than one workspace. Choose the account whose password you want to reset:
 				</mj-text>
 				<mj-text padding="4px 10px 20px">
@@ -46,6 +49,10 @@
 						<tr>
 							<td style="padding: 4px 16px">
 								<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+									<tr>
+										<td align="left" valign="bottom" style="padding: 10px 0 0; font-size: 12px; font-weight: 600; line-height: 18px; color: #71717A; text-align: left">Workspace / User</td>
+										<td align="right" valign="bottom" style="padding: 10px 0 0; font-size: 12px; font-weight: 600; line-height: 18px; color: #71717A; text-align: right">Link to reset password</td>
+									</tr>
 									{{#each items}}
 									<tr>
 										<td align="left" valign="middle" style="{{#unless @first}}border-top: 1px solid #E4E4E7; {{/unless}}padding: 12px 0; text-align: left; word-break: break-word">

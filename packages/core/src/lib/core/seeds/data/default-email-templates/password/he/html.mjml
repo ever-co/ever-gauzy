@@ -46,6 +46,9 @@
 				<mj-text>
 					קיבלנו בקשה לאיפוס הסיסמה של החשבון שלך ב-{{appName}}{{#if tenantName}} בסביבת העבודה <strong dir="auto" style="color: #18181B; font-weight: 600">{{tenantName}}</strong>{{/if}}.
 				</mj-text>
+				<mj-text>
+					אם ביקשת לאפס את הסיסמה שלך, יש ללחוץ על הכפתור למטה:
+				</mj-text>
 				<mj-button padding="8px 10px 12px" href="{{ generatedUrl }}" target="_blank">איפוס הסיסמה</mj-button>
 				<mj-text mj-class="note" padding="0 10px 20px">
 					אם הכפתור אינו פועל, אפשר להעתיק את הכתובת הזו לשורת הכתובת בדפדפן:

@@ -39,6 +39,9 @@
 				<mj-raw>{{/if}}</mj-raw>
 				<mj-text mj-class="heading">Вас пригласили в {{organizationName}}</mj-text>
 				<mj-text>
+					Здравствуйте!
+				</mj-text>
+				<mj-text>
 					Вас пригласили присоединиться к <strong dir="auto" style="color: #18181B; font-weight: 600">{{organizationName}}</strong> в {{appName}}{{#if role}} в роли <strong dir="auto" style="color: #18181B; font-weight: 600">{{role}}</strong>{{/if}}.
 				</mj-text>
 				<mj-button padding="8px 10px 12px" href="{{generatedUrl}}" target="_blank">Принять приглашение</mj-button>

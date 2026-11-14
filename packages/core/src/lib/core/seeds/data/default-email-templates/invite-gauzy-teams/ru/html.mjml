@@ -39,7 +39,10 @@
 				<mj-raw>{{/if}}</mj-raw>
 				<mj-text mj-class="heading">Вас пригласили в команду</mj-text>
 				<mj-text>
-					Вас пригласили присоединиться к команде <strong dir="auto" style="color: #18181B; font-weight: 600">{{teams}}</strong> в {{appName}}. Приглашение отправлено на адрес <strong dir="auto" style="color: #18181B; font-weight: 600">{{email}}</strong>.
+					Здравствуйте{{#if email}}, {{email}}{{/if}}!
+				</mj-text>
+				<mj-text>
+					Вас пригласили присоединиться к команде <strong dir="auto" style="color: #18181B; font-weight: 600">{{teams}}</strong> в {{appName}}.
 				</mj-text>
 				<mj-text>
 					Введите этот код приглашения, чтобы присоединиться:

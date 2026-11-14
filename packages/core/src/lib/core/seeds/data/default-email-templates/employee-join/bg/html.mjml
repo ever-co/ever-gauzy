@@ -41,6 +41,9 @@
 				<mj-text>
 					Поканата беше приета: <strong dir="auto" style="color: #18181B; font-weight: 600">{{employeeName}}</strong> вече е част от <strong dir="auto" style="color: #18181B; font-weight: 600">{{organizationName}}</strong>.
 				</mj-text>
+				<mj-text>
+					Поздравления за добавянето на още един служител в <strong dir="auto" style="color: #18181B; font-weight: 600">{{organizationName}}</strong>. Радваме се, че сте с нас!
+				</mj-text>
 				<mj-divider />
 				<mj-text mj-class="note" padding="0 10px 12px">
 					С уважение,<br />

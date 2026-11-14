@@ -44,6 +44,9 @@
 				<mj-text>
 					Мы получили запрос на сброс пароля вашего аккаунта {{appName}}{{#if tenantName}} в рабочем пространстве <strong dir="auto" style="color: #18181B; font-weight: 600">{{tenantName}}</strong>{{/if}}.
 				</mj-text>
+				<mj-text>
+					Если вы запросили сброс пароля, нажмите кнопку ниже:
+				</mj-text>
 				<mj-button padding="8px 10px 12px" href="{{ generatedUrl }}" target="_blank">Сбросить пароль</mj-button>
 				<mj-text mj-class="note" padding="0 10px 20px">
 					Если кнопка не работает, скопируйте этот адрес в адресную строку браузера:

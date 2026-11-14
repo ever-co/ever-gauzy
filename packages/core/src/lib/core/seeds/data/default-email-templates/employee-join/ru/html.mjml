@@ -41,6 +41,9 @@
 				<mj-text>
 					Приглашение принято: <strong dir="auto" style="color: #18181B; font-weight: 600">{{employeeName}}</strong> теперь входит в <strong dir="auto" style="color: #18181B; font-weight: 600">{{organizationName}}</strong>.
 				</mj-text>
+				<mj-text>
+					Поздравляем с добавлением ещё одного сотрудника в <strong dir="auto" style="color: #18181B; font-weight: 600">{{organizationName}}</strong>. Мы рады, что вы с нами!
+				</mj-text>
 				<mj-divider />
 				<mj-text mj-class="note" padding="0 10px 12px">
 					С уважением,<br />

@@ -41,7 +41,10 @@
 				<mj-raw>{{/if}}</mj-raw>
 				<mj-text mj-class="heading">קוד הכניסה שלך</mj-text>
 				<mj-text>
-					יש להזין את הקוד הזה כדי להיכנס אל {{appName}} בתור <strong dir="auto" style="color: #18181B; font-weight: 600">{{email}}</strong>. אין צורך בסיסמה.
+					שלום{{#if email}} {{email}}{{/if}},
+				</mj-text>
+				<mj-text>
+					יש להזין את הקוד הזה כדי להיכנס אל {{appName}}. אין צורך בסיסמה.
 				</mj-text>
 				<mj-text padding="4px 10px 20px">
 					<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse: separate">

@@ -43,6 +43,9 @@
 				<mj-text>
 					ההזמנה התקבלה: <strong dir="auto" style="color: #18181B; font-weight: 600">{{employeeName}}</strong> כעת חלק מ-<strong dir="auto" style="color: #18181B; font-weight: 600">{{organizationName}}</strong>.
 				</mj-text>
+				<mj-text>
+					ברכות על הוספת עובד נוסף אל <strong dir="auto" style="color: #18181B; font-weight: 600">{{organizationName}}</strong>. אנו שמחים שהצטרפת אלינו!
+				</mj-text>
 				<mj-divider />
 				<mj-text mj-class="note" padding="0 10px 12px">
 					בברכה,<br />

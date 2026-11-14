@@ -39,7 +39,10 @@
 				<mj-raw>{{/if}}</mj-raw>
 				<mj-text mj-class="heading">Поканени сте в екип</mj-text>
 				<mj-text>
-					Поканени сте да се присъедините към екипа <strong dir="auto" style="color: #18181B; font-weight: 600">{{teams}}</strong> в {{appName}}. Поканата е за <strong dir="auto" style="color: #18181B; font-weight: 600">{{email}}</strong>.
+					Здравейте{{#if email}}, {{email}}{{/if}}!
+				</mj-text>
+				<mj-text>
+					Поканени сте да се присъедините към екипа <strong dir="auto" style="color: #18181B; font-weight: 600">{{teams}}</strong> в {{appName}}.
 				</mj-text>
 				<mj-text>
 					Въведете този код за покана, за да се присъедините:

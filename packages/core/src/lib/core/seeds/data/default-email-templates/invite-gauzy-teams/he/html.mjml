@@ -41,7 +41,10 @@
 				<mj-raw>{{/if}}</mj-raw>
 				<mj-text mj-class="heading">הוזמנת להצטרף לצוות</mj-text>
 				<mj-text>
-					הוזמנת להצטרף לצוות <strong dir="auto" style="color: #18181B; font-weight: 600">{{teams}}</strong> ב-{{appName}}. ההזמנה מיועדת לכתובת <strong dir="auto" style="color: #18181B; font-weight: 600">{{email}}</strong>.
+					שלום{{#if email}} {{email}}{{/if}},
+				</mj-text>
+				<mj-text>
+					הוזמנת להצטרף לצוות <strong dir="auto" style="color: #18181B; font-weight: 600">{{teams}}</strong> ב-{{appName}}.
 				</mj-text>
 				<mj-text>
 					יש להזין את קוד ההזמנה הזה כדי להצטרף:

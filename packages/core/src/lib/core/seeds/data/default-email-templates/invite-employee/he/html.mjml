@@ -41,6 +41,9 @@
 				<mj-raw>{{/if}}</mj-raw>
 				<mj-text mj-class="heading">הוזמנת להצטרף אל {{organizationName}}</mj-text>
 				<mj-text>
+					שלום,
+				</mj-text>
+				<mj-text>
 					הוזמנת להצטרף אל <strong dir="auto" style="color: #18181B; font-weight: 600">{{organizationName}}</strong> ב-{{appName}}.
 				</mj-text>
 				<mj-button padding="8px 10px 12px" href="{{generatedUrl}}" target="_blank">אישור ההזמנה</mj-button>

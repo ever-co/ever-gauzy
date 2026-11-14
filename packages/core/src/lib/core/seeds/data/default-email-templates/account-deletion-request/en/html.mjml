@@ -39,6 +39,9 @@
 				<mj-raw>{{/if}}</mj-raw>
 				<mj-text mj-class="heading">Confirm the deletion of your account</mj-text>
 				<mj-text>
+					Hello,
+				</mj-text>
+				<mj-text>
 					We received a request to delete the {{appName}} account(s) registered with <strong dir="auto" style="color: #18181B; font-weight: 600">{{email}}</strong>.
 				</mj-text>
 				<mj-text>

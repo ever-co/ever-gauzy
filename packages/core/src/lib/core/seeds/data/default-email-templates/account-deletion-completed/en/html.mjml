@@ -38,6 +38,9 @@
 				<mj-text mj-class="brand">{{appName}}</mj-text>
 				<mj-raw>{{/if}}</mj-raw>
 				<mj-text mj-class="heading">{{#if multipleAccounts}}Your accounts have been deleted{{else}}Your account has been deleted{{/if}}</mj-text>
+				<mj-text>
+					Hello,
+				</mj-text>
 				<mj-raw>{{#if allAccounts}}</mj-raw>
 				<mj-raw>{{#if multipleAccounts}}</mj-raw>
 				<mj-text>

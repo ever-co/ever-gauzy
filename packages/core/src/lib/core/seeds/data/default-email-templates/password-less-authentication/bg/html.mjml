@@ -39,7 +39,10 @@
 				<mj-raw>{{/if}}</mj-raw>
 				<mj-text mj-class="heading">Вашият код за вход</mj-text>
 				<mj-text>
-					Въведете този код, за да влезете в {{appName}} като <strong dir="auto" style="color: #18181B; font-weight: 600">{{email}}</strong>. Не е нужна парола.
+					Здравейте{{#if email}}, {{email}}{{/if}}!
+				</mj-text>
+				<mj-text>
+					Въведете този код, за да влезете в {{appName}}. Не е нужна парола.
 				</mj-text>
 				<mj-text padding="4px 10px 20px">
 					<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse: separate">

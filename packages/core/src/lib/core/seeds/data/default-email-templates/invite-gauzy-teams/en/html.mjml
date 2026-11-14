@@ -39,7 +39,10 @@
 				<mj-raw>{{/if}}</mj-raw>
 				<mj-text mj-class="heading">You have been invited to join a team</mj-text>
 				<mj-text>
-					You have been invited to join the team <strong dir="auto" style="color: #18181B; font-weight: 600">{{teams}}</strong> on {{appName}}. The invitation is for <strong dir="auto" style="color: #18181B; font-weight: 600">{{email}}</strong>.
+					Hi{{#if email}} {{email}}{{/if}},
+				</mj-text>
+				<mj-text>
+					You have been invited to join the team <strong dir="auto" style="color: #18181B; font-weight: 600">{{teams}}</strong> on {{appName}}.
 				</mj-text>
 				<mj-text>
 					Enter this invitation code to join:
