@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { DataSource, QueryRunner } from 'typeorm';
-import { AddOrganizationDefaultBillRate1791000010000 } from './migrations/1791000010000-AddOrganizationDefaultBillRate';
+import { AddOrganizationDefaultBillRate1791000010700 } from './migrations/1791000010700-AddOrganizationDefaultBillRate';
 
 /**
  * `organization.defaultBillRateValue` and `organization.defaultBillRateCurrency`, run for real on SQLite against a
@@ -40,7 +40,7 @@ describe('organization default billing rate migration on SQLite', () => {
 	const run = async (direction: 'up' | 'down') => {
 		const queryRunner = dataSource.createQueryRunner();
 		try {
-			await new AddOrganizationDefaultBillRate1791000010000()[direction](queryRunner);
+			await new AddOrganizationDefaultBillRate1791000010700()[direction](queryRunner);
 		} finally {
 			await queryRunner.release();
 		}
@@ -91,7 +91,7 @@ describe('organization default billing rate migration on MySQL', () => {
 				return [];
 			}
 		} as unknown as QueryRunner;
-		const migration = new AddOrganizationDefaultBillRate1791000010000();
+		const migration = new AddOrganizationDefaultBillRate1791000010700();
 
 		await migration.up(queryRunner);
 

@@ -36,11 +36,11 @@ const COLUMNS: ReadonlyArray<{ name: string; type: Readonly<Record<Dialect, stri
  * `down` drops the columns on Postgres and MySQL. SQLite keeps them, as every additive column of this platform is
  * kept on the embedded dialect; a kept nullable column is invisible to a build without the entity members.
  */
-export class AddOrganizationDefaultBillRate1791000010000 implements MigrationInterface {
-	name = 'AddOrganizationDefaultBillRate1791000010000';
+export class AddOrganizationDefaultBillRate1791000010700 implements MigrationInterface {
+	name = 'AddOrganizationDefaultBillRate1791000010700';
 
 	/** Advisory lock key that serialises concurrent runs of this migration on Postgres. */
-	private readonly advisoryLockKey = 1791000010000;
+	private readonly advisoryLockKey = 1791000010700;
 
 	/** The MySQL named lock of this migration. MySQL refuses lock names over 64 characters. */
 	readonly mysqlLockName = `gauzy:migration:${this.advisoryLockKey}`;
