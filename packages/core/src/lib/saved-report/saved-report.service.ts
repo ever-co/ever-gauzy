@@ -2,7 +2,12 @@ import { BadRequestException, Injectable, Logger, NotFoundException, Unauthorize
 import { ID, IPagination, ISavedReport, ISavedReportShareResponse, SavedReportKindEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context/request-context';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
-import { CreateSavedReportDTO, ShareSavedReportDTO, UpdateSavedReportDTO } from './dto/saved-report.dto';
+import {
+	CreateSavedReportDTO,
+	MAX_SAVED_REPORTS_PER_PAGE,
+	ShareSavedReportDTO,
+	UpdateSavedReportDTO
+} from './dto/saved-report.dto';
 import { MikroOrmSavedReportRepository } from './repository/mikro-orm-saved-report.repository';
 import { TypeOrmSavedReportRepository } from './repository/type-orm-saved-report.repository';
 import { SavedReport } from './saved-report.entity';
@@ -14,9 +19,6 @@ import {
 	SavedReportPeriodFields
 } from './saved-report.rules';
 import { generateSavedReportToken, hashSavedReportToken } from './saved-report-token';
-
-/** How many reports a list answers at most. */
-const MAX_LISTED_REPORTS = 200;
 
 /**
  * Saved reports, for their author only: nobody else lists, reads, changes, deletes or shares them through these
@@ -35,20 +37,25 @@ export class SavedReportService extends TenantAwareCrudService<SavedReport> {
 	}
 
 	/**
-	 * The caller's saved reports of one organization, newest first.
+	 * The caller's saved reports of one organization, newest first, a page at a time.
 	 *
 	 * @param organizationId The organization the reports are about.
+	 * @param page How many to skip, and how many to answer (at most {@link MAX_SAVED_REPORTS_PER_PAGE}).
+	 * @returns The page, and how many reports the caller has there in all.
 	 */
-	async listOwn(organizationId: ID): Promise<IPagination<ISavedReport>> {
+	async listOwn(organizationId: ID, page: { skip?: number; take?: number } = {}): Promise<IPagination<ISavedReport>> {
 		const authorId = this.currentUserIdOrFail();
+		const where = { authorId, organizationId };
+		const total = await this.count({ where });
 		const rows = await this.find({
-			where: { authorId, organizationId },
+			where,
 			order: { createdAt: 'DESC' },
-			take: MAX_LISTED_REPORTS
+			skip: page.skip ?? 0,
+			take: Math.min(page.take ?? MAX_SAVED_REPORTS_PER_PAGE, MAX_SAVED_REPORTS_PER_PAGE)
 		});
 		const now = new Date();
 		const items = rows.map((row) => savedReportView(row, now));
-		return { items, total: items.length };
+		return { items, total };
 	}
 
 	/**

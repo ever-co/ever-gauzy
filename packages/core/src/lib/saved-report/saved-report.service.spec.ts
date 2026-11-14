@@ -32,8 +32,12 @@ function serviceFor(caller: string) {
 	jest.spyOn(RequestContext, 'currentUserId').mockReturnValue(caller);
 	const service = new SavedReportService({} as never, {} as never);
 	const matches = (row: Row, where: Row) => Object.entries(where).every(([key, value]) => row[key] === value);
-	jest.spyOn(service, 'find').mockImplementation(
-		async (options: unknown) => rows.filter((row) => matches(row, (options as { where: Row }).where)) as never
+	jest.spyOn(service, 'find').mockImplementation(async (options: unknown) => {
+		const { where, skip = 0, take = rows.length } = options as { where: Row; skip?: number; take?: number };
+		return rows.filter((row) => matches(row, where)).slice(skip, skip + take) as never;
+	});
+	jest.spyOn(service, 'count').mockImplementation(
+		async (options: unknown) => rows.filter((row) => matches(row, (options as { where: Row }).where)).length
 	);
 	jest.spyOn(service, 'create').mockImplementation(async (entity: unknown) => {
 		const row = { id: 'new-report', tenantId: TENANT, ...(entity as Row) };
@@ -158,6 +162,23 @@ describe('SavedReportService', () => {
 			kind: SavedReportKindEnum.TIME_AND_ACTIVITY,
 			includeAmounts: false
 		});
+	});
+
+	it('lists the author reports a page at a time, with the count of all of them', async () => {
+		const { service } = serviceFor(MARIE);
+		for (const name of ['Second', 'Third']) {
+			await service.createOwn({
+				organizationId: ORGANIZATION,
+				name,
+				periodRule: SavedReportPeriodRuleEnum.THIS_WEEK
+			} as never);
+		}
+
+		const firstPage = await service.listOwn(ORGANIZATION, { take: 2 });
+		const secondPage = await service.listOwn(ORGANIZATION, { skip: 2, take: 2 });
+
+		expect([firstPage.items.length, firstPage.total]).toEqual([2, 3]);
+		expect([secondPage.items.length, secondPage.total]).toEqual([1, 3]);
 	});
 
 	it('switches a report from a rule to fixed days when the update clears the rule', async () => {

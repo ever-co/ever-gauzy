@@ -42,7 +42,7 @@ export class SavedReportController {
 	@Get('/')
 	@UseValidationPipe({ whitelist: true, transform: true })
 	async list(@Query() query: SavedReportListQueryDTO): Promise<IPagination<ISavedReport>> {
-		return await this.savedReportService.listOwn(query.organizationId);
+		return await this.savedReportService.listOwn(query.organizationId, { skip: query.skip, take: query.take });
 	}
 
 	@ApiOperation({ summary: "Read one of the caller's saved reports" })

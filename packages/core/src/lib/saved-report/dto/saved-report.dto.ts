@@ -6,6 +6,7 @@ import {
 	IsBoolean,
 	IsDateString,
 	IsEnum,
+	IsInt,
 	IsNotEmpty,
 	IsObject,
 	IsOptional,
@@ -13,7 +14,9 @@ import {
 	IsTimeZone,
 	IsUUID,
 	Matches,
+	Max,
 	MaxLength,
+	Min,
 	ValidateNested
 } from 'class-validator';
 import {
@@ -27,6 +30,9 @@ import {
 	SavedReportPeriodRuleEnum
 } from '@gauzy/contracts';
 import { TenantOrganizationBaseDTO } from '../../core/dto';
+
+/** How many reports one page of the list holds at most. */
+export const MAX_SAVED_REPORTS_PER_PAGE = 200;
 
 /** How many ids one filter holds at most. */
 const MAX_FILTER_IDS = 200;
@@ -171,5 +177,25 @@ export class ShareSavedReportDTO implements ISavedReportShareInput {
 	expiresAt?: string | null;
 }
 
-/** `GET /saved-reports`: the caller's reports of one organization. */
-export class SavedReportListQueryDTO extends PickType(TenantOrganizationBaseDTO, ['organizationId'] as const) {}
+/** `GET /saved-reports`: the caller's reports of one organization, a page at a time (the newest first). */
+export class SavedReportListQueryDTO extends PickType(TenantOrganizationBaseDTO, ['organizationId'] as const) {
+	@ApiPropertyOptional({ type: () => Number, minimum: 0, default: 0, description: 'How many reports to skip.' })
+	@IsOptional()
+	@Type(() => Number)
+	@IsInt()
+	@Min(0)
+	skip?: number;
+
+	@ApiPropertyOptional({
+		type: () => Number,
+		minimum: 1,
+		maximum: MAX_SAVED_REPORTS_PER_PAGE,
+		default: MAX_SAVED_REPORTS_PER_PAGE
+	})
+	@IsOptional()
+	@Type(() => Number)
+	@IsInt()
+	@Min(1)
+	@Max(MAX_SAVED_REPORTS_PER_PAGE)
+	take?: number;
+}
