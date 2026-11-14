@@ -254,6 +254,8 @@ async function insertPlaceholder(
 			allowScreenshotCapture: false
 		} as Partial<Employee>)
 	);
+	// A membership keeps the team's default for time tracking: a claim or a merge moves it to a member who tracks time
+	// there, while the placeholder itself never starts a timer.
 	for (const team of teams) {
 		await manager.save(
 			OrganizationTeamEmployee,
@@ -263,8 +265,7 @@ async function insertPlaceholder(
 				organizationTeamId: team.id,
 				organizationTeam: { id: team.id },
 				employeeId: employee.id,
-				employee: { id: employee.id },
-				isTrackingEnabled: false
+				employee: { id: employee.id }
 			} as Partial<OrganizationTeamEmployee>)
 		);
 	}

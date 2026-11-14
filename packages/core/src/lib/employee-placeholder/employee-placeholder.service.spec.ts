@@ -158,12 +158,10 @@ describe('EmployeePlaceholderService.create', () => {
 			user: { firstName: 'Amina', lastName: 'K.', email: null, hash: null, roleId: 'role-employee' }
 		});
 		expect(tables.get(OrganizationTeamEmployee)).toEqual([
-			expect.objectContaining({
-				organizationTeamId: 'team-design',
-				employeeId: employee.id,
-				isTrackingEnabled: false
-			})
+			expect.objectContaining({ organizationTeamId: 'team-design', employeeId: employee.id })
 		]);
+		// The membership keeps the team's default: a claim or a merge moves it to a member who tracks time there.
+		expect(tables.get(OrganizationTeamEmployee)?.[0].isTrackingEnabled).toBeUndefined();
 	});
 
 	it('creates one without an email', async () => {
