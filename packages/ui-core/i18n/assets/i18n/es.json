@@ -476,6 +476,8 @@
 			"DEFAULT_TERMS": "Términos por defecto para facturas y estimaciones.",
 			"CONVERT_ESTIMATES": "Convertir estimaciones.",
 			"ALLOW_CONVERTING": "Convertir automáticamente el presupuesto aceptado en factura.",
+			"INVOICE_REMINDERS": "Recordatorios de pago",
+			"SEND_INVOICE_REMINDERS": "Enviar un correo al cliente de una factura impagada 3 días antes de su vencimiento y luego 1, 7 y 14 días después",
 			"DEFAULT_DAYS": "Días predefinidos hasta el vencimiento de facturas y presupuestos.",
 			"TEMPLATE_NAME": "Nombre de la plantilla",
 			"TEMPLATE_BODY": "Cuerpo de plantilla.",
@@ -6833,6 +6835,7 @@
 			"email-reset": "Restablecimiento de correo electrónico.",
 			"organization-team-join-request": "Solicitud de unión al equipo de la organización",
 			"payment-receipt": "Recibo de pago",
+			"invoice-reminder": "Recordatorio de factura",
 			"reject-candidate": "Rechazar Candidato"
 		},
 		"HTML_EDITOR": "Editor HTML",

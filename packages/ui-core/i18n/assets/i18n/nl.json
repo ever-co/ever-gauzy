@@ -476,6 +476,8 @@
 			"DEFAULT_TERMS": "Standaardvoorwaarden voor facturen en schattingen",
 			"CONVERT_ESTIMATES": "Omzetten van schattingen",
 			"ALLOW_CONVERTING": "Automatisch geaccepteerde schatting omzetten naar factuur",
+			"INVOICE_REMINDERS": "Betalingsherinneringen",
+			"SEND_INVOICE_REMINDERS": "De klant van een onbetaalde factuur 3 dagen voor de vervaldatum e-mailen, en daarna 1, 7 en 14 dagen erna",
 			"DEFAULT_DAYS": "Standaard aantal dagen tot facturen en schattingen vervaldata.",
 			"TEMPLATE_NAME": "Naamsjabloon",
 			"TEMPLATE_BODY": "Sjablooninhoud",
@@ -6831,6 +6833,7 @@
 			"email-reset": "Email herstellen",
 			"organization-team-join-request": "Verzoek tot toetreding tot het organisatieteam",
 			"payment-receipt": "Betalingsbewijs",
+			"invoice-reminder": "Factuurherinnering",
 			"reject-candidate": "Kandidaat Afwijzen"
 		},
 		"HTML_EDITOR": "HTML-editor",

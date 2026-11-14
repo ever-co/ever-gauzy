@@ -309,6 +309,97 @@ export class EmailService {
 	}
 
 	/**
+	 * Reminds the client of an unpaid invoice that it is due soon, or overdue (`invoice-reminder`): to the address the
+	 * invoice was emailed to, in the language it was emailed in, with the invoice attached again as a PDF when one could
+	 * be generated, and a link to its public page when the organization shared one.
+	 *
+	 * Sent by the payment reminder sweep, so nothing is read from a request: the tenant is the organization's. Every
+	 * attempt is filed in the email history, which is where the organization sees its reminders. A failure is logged and
+	 * raised, so the sweep gives the reminder back and tries it again.
+	 *
+	 * @param input - The recipient, the organization and what the email says.
+	 * @returns Whether the email was handed to the mail transport: false for an address of a domain this platform never
+	 * emails, to which nothing is sent.
+	 */
+	async sendInvoiceReminder(input: {
+		languageCode: LanguagesEnum;
+		email: string;
+		organization: IOrganization;
+		invoiceId: ID;
+		invoiceNumber: number;
+		/** Past the due date, or before it. */
+		isOverdue: boolean;
+		/** The due date, as the organization writes a day. */
+		dueDate: string;
+		/** What is left to pay, as the language writes an amount. */
+		amountDue: string;
+		currency?: string | null;
+		contactName?: string | null;
+		/** The token of the invoice's public page, when the organization generated a link to it. */
+		publicToken?: string | null;
+		/** The invoice as a base64 PDF, when one could be generated. */
+		pdf?: string | null;
+	}): Promise<boolean> {
+		const { languageCode, email, organization, invoiceId, invoiceNumber, publicToken, pdf } = input;
+		const { id: organizationId, tenantId, name: organizationName } = organization;
+		const host = this.emailBaseUrl();
+
+		const sendOptions = {
+			template: EmailTemplateEnum.INVOICE_REMINDER,
+			message: {
+				to: email,
+				...(pdf
+					? { attachments: [{ filename: `Invoice-${invoiceNumber}.pdf`, content: pdf, encoding: 'base64' }] }
+					: {})
+			},
+			locals: {
+				// The deployment's name, logo and links, which the layout's header and footer show
+				...env.appIntegrationConfig,
+				locale: languageCode,
+				host,
+				organizationId,
+				tenantId,
+				organizationName,
+				invoiceNumber,
+				isOverdue: input.isOverdue,
+				dueDate: input.dueDate,
+				amountDue: input.amountDue,
+				currency: input.currency ?? '',
+				contactName: input.contactName ?? '',
+				// The invoice's public page, which the app serves at the link the organization generated
+				invoiceUrl: publicToken ? `${host}#/share/invoices/${invoiceId}/${publicToken}` : '',
+				isPdfAttached: Boolean(pdf)
+			}
+		};
+
+		const isEmailBlocked = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => email.includes(server));
+		if (isEmailBlocked) {
+			return false;
+		}
+
+		const body = {
+			templateName: sendOptions.template,
+			email,
+			languageCode,
+			organization,
+			message: ''
+		};
+		try {
+			const instance = await this.emailSendService.getEmailInstance({ organizationId, tenantId });
+			const sendResult = await instance.send(sendOptions);
+			body.message = sendResult.originalMessage;
+			return true;
+		} catch (error) {
+			this.logger.error(
+				`The payment reminder of invoice ${invoiceNumber} could not be emailed: ${describeEmailSendError(error)}`
+			);
+			throw error;
+		} finally {
+			await this.createEmailRecord(body);
+		}
+	}
+
+	/**
 	 * Sends an invitation email to an organization contact.
 	 *
 	 * @param organizationContact - The contact to invite.

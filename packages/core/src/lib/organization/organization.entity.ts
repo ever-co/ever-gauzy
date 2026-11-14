@@ -537,6 +537,17 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@MultiORMColumn({ nullable: true })
 	daysUntilDue?: number;
 
+	/**
+	 * Whether the client of an unpaid invoice gets payment reminders by email: three days before the due date, then one,
+	 * seven and fourteen days after it, while the invoice is not fully paid. Off by default: nothing is emailed to a
+	 * client until the organization turns it on.
+	 */
+	@ApiPropertyOptional({ type: () => Boolean, default: false })
+	@IsOptional()
+	@IsBoolean()
+	@MultiORMColumn({ default: false })
+	invoiceRemindersEnabled?: boolean;
+
 	@MultiORMColumn({ default: false })
 	isRemoveIdleTime?: boolean;
 

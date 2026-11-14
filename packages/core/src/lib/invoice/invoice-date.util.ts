@@ -11,9 +11,13 @@ import 'moment-timezone';
  * organization without one falls back to the server zone, as the reports do.
  */
 export function formatInvoiceDay(date: Date | string, organization: IOrganization): string {
-	const timeZone = organization?.timeZone?.trim() || moment.tz.guess();
 	return moment
 		.utc(date)
-		.tz(timeZone)
+		.tz(invoiceTimeZoneOf(organization))
 		.format(organization?.dateFormat || 'YYYY-MM-DD');
+}
+
+/** The zone an organization's invoice days are read in: its own, or the server's when it has none. */
+export function invoiceTimeZoneOf(organization: Pick<IOrganization, 'timeZone'> | null | undefined): string {
+	return organization?.timeZone?.trim() || moment.tz.guess();
 }

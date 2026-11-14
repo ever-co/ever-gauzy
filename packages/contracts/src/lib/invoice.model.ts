@@ -1,4 +1,4 @@
-import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
 import { IOrganization } from './organization.model';
 import { IOrganizationContact } from './organization-contact.model';
 import { IInvoiceItem } from './invoice-item.model';
@@ -170,4 +170,24 @@ export enum InvoiceTabsEnum {
 export enum TaxCalculationTypeEnum {
 	SIMPLE = 'SIMPLE',
 	COMPOSED = 'COMPOSED'
+}
+
+/**
+ * A payment reminder the platform emailed the client of an unpaid invoice, when the organization turned them on: one
+ * row per invoice, step and due date. Step 1 goes three days before the due date, steps 2, 3 and 4 one, seven and
+ * fourteen days after it. The row is the claim the sweep takes before it sends, so each reminder goes once.
+ */
+export interface IInvoiceReminder extends IBasePerTenantAndOrganizationEntityModel {
+	invoice?: IInvoice;
+	invoiceId: ID;
+	/** 1: before the due date; 2, 3, 4: one, seven and fourteen days after it. */
+	step: number;
+	/** The due date the step was counted from: a due date moved since starts the steps again. */
+	dueDate: Date;
+	/** Where the reminder went: the address the invoice was last emailed to. */
+	email: string;
+	/** When the sweep claimed it. */
+	claimedAt: Date;
+	/** When the mail transport took it; unset while it did not (an address of a domain the platform never emails). */
+	sentAt?: Date;
 }

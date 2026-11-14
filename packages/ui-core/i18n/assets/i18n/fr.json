@@ -476,6 +476,8 @@
 			"DEFAULT_TERMS": "Conditions par défaut pour les factures et les devis",
 			"CONVERT_ESTIMATES": "Convertir les estimations",
 			"ALLOW_CONVERTING": "Convertir automatiquement les offres acceptées en factures",
+			"INVOICE_REMINDERS": "Rappels de paiement",
+			"SEND_INVOICE_REMINDERS": "Envoyer un e-mail au client d'une facture impayée 3 jours avant son échéance, puis 1, 7 et 14 jours après",
 			"DEFAULT_DAYS": "Nombre de jours par défaut avant l'échéance des factures et des estimations.",
 			"TEMPLATE_NAME": "Nom du modèle",
 			"TEMPLATE_BODY": "Corps du modèle",
@@ -6829,6 +6831,7 @@
 			"email-reset": "Réinitialisation du courrier électronique",
 			"organization-team-join-request": "Demande de rejoindre l'équipe d'organisation",
 			"payment-receipt": "Reçu de paiement",
+			"invoice-reminder": "Rappel de facture",
 			"reject-candidate": "Rejeter le Candidat"
 		},
 		"HTML_EDITOR": "Éditeur HTML",

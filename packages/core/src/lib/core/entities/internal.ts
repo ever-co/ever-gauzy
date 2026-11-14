@@ -85,6 +85,7 @@ export * from '../../invite/invite.entity';
 export * from '../../invoice-estimate-history/invoice-estimate-history.entity';
 export * from '../../invoice-item/invoice-item.entity';
 export * from '../../invoice/invoice.entity';
+export * from '../../invoice/invoice-reminder/invoice-reminder.entity';
 export * from '../../keyresult-template/keyresult-template.entity';
 export * from '../../keyresult-update/keyresult-update.entity';
 export * from '../../keyresult/keyresult.entity';
