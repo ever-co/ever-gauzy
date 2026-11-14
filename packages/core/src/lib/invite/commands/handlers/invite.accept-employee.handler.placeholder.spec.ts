@@ -151,7 +151,7 @@ describe('InviteAcceptEmployeeHandler with a claim invitation', () => {
 	});
 
 	it('hands the placeholder over to the member the account already has in the organization', async () => {
-		const { accept, placeholderTransferService, employeeRepository } = build({
+		const { accept, placeholderTransferService, employeeRepository, userOrganizationService } = build({
 			placeholderEmployeeId: PLACEHOLDER,
 			existingUserId: 'user-amina',
 			employees: [{ id: 'employee-amina', userId: 'user-amina', organizationId: ORGANIZATION }]
@@ -163,6 +163,11 @@ describe('InviteAcceptEmployeeHandler with a claim invitation', () => {
 			keepInviteId: 'invite-1'
 		});
 		expect(employeeRepository.save).not.toHaveBeenCalled();
+		// Joined to the organization again, which repairs a join an earlier, failed acceptance left out.
+		expect(userOrganizationService.addUserToOrganization).toHaveBeenCalledWith(
+			expect.objectContaining({ id: 'user-amina' }),
+			ORGANIZATION
+		);
 	});
 
 	it('reaches the existing account of an admin, never a second account for the same email', async () => {

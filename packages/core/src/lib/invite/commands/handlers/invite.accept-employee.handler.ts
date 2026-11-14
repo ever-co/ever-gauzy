@@ -226,8 +226,9 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 	}
 
 	/**
-	 * An existing account's member of the invitation's organization: the one it already has there, else a new one,
-	 * with the account joined to the organization. Its member of another organization is never the one a claim fills.
+	 * An existing account's member of the invitation's organization: the one it already has there, else a new one.
+	 * Either way the account is joined to the organization, which also repairs a join an earlier, failed acceptance
+	 * left out (joining twice adds nothing). Its member of another organization is never the one a claim fills.
 	 *
 	 * @param invite The claim invitation being accepted.
 	 * @param user The account accepting it, with its role.
@@ -237,13 +238,10 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 		const existing = await this.typeOrmEmployeeRepository.findOne({
 			where: { userId: user.id, organizationId: invite.organizationId }
 		});
-		if (existing) {
-			return existing;
-		}
-		const created = await this.createEmployee(invite, user);
+		const member = existing ?? (await this.createEmployee(invite, user));
 		const withRole = { ...user, role: user.role ?? ({ name: RolesEnum.EMPLOYEE } as IRole) };
 		await this.userOrganizationService.addUserToOrganization(withRole, invite.organizationId);
-		return created;
+		return member;
 	}
 
 	/**
