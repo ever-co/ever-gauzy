@@ -392,6 +392,22 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])('TimerService disca
 		}
 	);
 
+	it('leaves the tracking status to the next start when its turn passed during the read after the removal', async () => {
+		let isHeld = true;
+		const rows = [runningLog()];
+		// The removal took past the turn's failsafe: a queued start may have begun its run and marked the employee
+		const { service, notTrackingWrites } = setup(rows, {}, { afterDelete: () => (isHeld = false) });
+		jest.spyOn(service as unknown as { inEmployeeTurn: () => unknown }, 'inEmployeeTurn').mockImplementation(
+			(async (_employeeId: string, work: (turn: object) => Promise<unknown>) =>
+				work({ isHeld: () => isHeld, assertHeld: () => undefined })) as never
+		);
+
+		await expect(discard(service)).resolves.toBeUndefined();
+
+		expect(rows).toEqual([]);
+		expect(notTrackingWrites()).toEqual([]);
+	});
+
 	it('discards the running log it names, its id in either case', async () => {
 		const rows = [runningLog()];
 		const { service, execute } = setup(rows);

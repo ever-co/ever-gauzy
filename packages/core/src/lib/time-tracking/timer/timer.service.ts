@@ -1115,7 +1115,7 @@ export class TimerService {
 			}
 
 			// A run another device started meanwhile is left running, and keeps the employee tracking
-			await this.markNotTrackingWhenNothingRuns(employeeId, organizationId, tenantId);
+			await this.markNotTrackingWhenNothingRuns(employeeId, organizationId, tenantId, turn);
 		});
 	}
 
@@ -1836,9 +1836,15 @@ export class TimerService {
 
 	/**
 	 * Marks the employee as not tracking once no timer of theirs runs: turned off for one team, a timer of another
-	 * team may still run. Left as it is when that cannot be read.
+	 * team may still run. Left as it is when that cannot be read, or when the turn it runs in (`turn`) passed to the
+	 * next start or stop during the read: that one decides the status.
 	 */
-	private async markNotTrackingWhenNothingRuns(employeeId: ID, organizationId: ID, tenantId: ID): Promise<void> {
+	private async markNotTrackingWhenNothingRuns(
+		employeeId: ID,
+		organizationId: ID,
+		tenantId: ID,
+		turn?: EmployeeTurn
+	): Promise<void> {
 		try {
 			const stillRunning = await this.findTimeLogsWhere({
 				employeeId,
@@ -1847,7 +1853,8 @@ export class TimerService {
 				isRunning: true
 			});
 			const hasNoTimerLeft = stillRunning.length === 0;
-			if (hasNoTimerLeft) {
+			const isTurnLost = turn !== undefined && !turn.isHeld();
+			if (hasNoTimerLeft && !isTurnLost) {
 				await this.markNotTracking(employeeId, organizationId, tenantId);
 			}
 		} catch (error) {
