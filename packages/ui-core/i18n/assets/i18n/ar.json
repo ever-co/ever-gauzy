@@ -475,6 +475,8 @@
 			"DEFAULT_TERMS": "شروط افتراضية للفواتير والتقديرات",
 			"CONVERT_ESTIMATES": "تحويل التقديرات",
 			"ALLOW_CONVERTING": "تحويل العرض المقبول تلقائيا إلى فاتورة",
+			"INVOICE_REMINDERS": "تذكيرات الدفع",
+			"SEND_INVOICE_REMINDERS": "إرسال بريد إلكتروني إلى عميل الفاتورة غير المدفوعة قبل تاريخ استحقاقها بـ 3 أيام، ثم بعده بيوم واحد و7 أيام و14 يومًا",
 			"DEFAULT_DAYS": "الأيام الافتراضية حتى تستحق الفواتير والتقديرات.",
 			"TEMPLATE_NAME": "اسم القالب",
 			"TEMPLATE_BODY": "جسم النموذج",
@@ -6829,6 +6831,7 @@
 			"email-reset": "إعادة تعيين البريد الإلكتروني",
 			"organization-team-join-request": "طلب انضمام فريق المنظمة",
 			"payment-receipt": "إيصال الدفع",
+			"invoice-reminder": "تذكير بالفاتورة",
 			"reject-candidate": "رفض المرشح"
 		},
 		"HTML_EDITOR": "محرر HTML",

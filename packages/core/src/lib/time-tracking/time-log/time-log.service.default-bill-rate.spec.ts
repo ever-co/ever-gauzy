@@ -76,7 +76,19 @@ describe('TimeLogService and the organization default billing rate', () => {
 	};
 
 	describe('weekly report', () => {
-		type WeeklyEntry = { employee: { id: string }; spent: number | null; currency: string | null };
+		type AnsweredDay = { sum: number; logs: Array<Record<string, unknown>> };
+		type WeeklyEntry = {
+			employee: { id: string };
+			dates: Record<string, AnsweredDay | 0>;
+			spent: number | null;
+			currency: string | null;
+		};
+
+		/** The logs a weekly entry answers, day by day. */
+		const answeredLogs = (entry: WeeklyEntry): Array<Record<string, unknown>> => {
+			const days = Object.values(entry.dates).filter((day): day is AnsweredDay => day !== 0);
+			return days.flatMap((day) => day.logs);
+		};
 
 		const log = (
 			employee: Record<string, unknown>,
@@ -188,6 +200,52 @@ describe('TimeLogService and the organization default billing rate', () => {
 			expect(find.mock.calls[0][1].populate).toEqual(expect.arrayContaining(['employee', 'organization']));
 			expect(report[0]).toEqual(expect.objectContaining({ spent: 800, currency: 'EUR' }));
 		});
+
+		it('answers each log without the organization the default was read from', async () => {
+			const byEmployee = await weekOf({
+				currency: 'USD',
+				defaultBillRateValue: 80,
+				defaultBillRateCurrency: 'EUR' as never
+			});
+			const logs = [...byEmployee.values()].flatMap(answeredLogs);
+
+			expect(byEmployee.get(UNRATED_EMPLOYEE_ID)).toEqual(
+				expect.objectContaining({ spent: 800, currency: 'EUR' })
+			);
+			expect(logs).toHaveLength(2);
+			for (const answered of logs) {
+				expect(answered).not.toHaveProperty('organization');
+			}
+		});
+
+		it('answers each log without the organization under MikroORM too, which populates it whole', async () => {
+			const organization = {
+				id: ORGANIZATION_ID,
+				name: 'Agency',
+				currency: 'USD',
+				defaultBillRateValue: '80.00'
+			};
+			const unrated = { id: UNRATED_EMPLOYEE_ID, billRateValue: '0.00', billRateCurrency: null };
+			const find = jest
+				.fn()
+				.mockResolvedValue([
+					log(unrated, organization as never, 'f1a2b3c4-0000-4000-8000-000000000004', 36000)
+				]);
+			const self = Object.create(TimeLogService.prototype, {
+				ormType: { value: MultiORMEnum.MikroORM },
+				mikroOrmRepository: { value: { find, getEntityManager: () => ({ findOne: jest.fn() }) } },
+				typeOrmRepository: { value: { manager: { find: jest.fn().mockResolvedValue([]) } } },
+				buildMikroOrmTimeLogWhere: { value: jest.fn().mockResolvedValue({}) },
+				serialize: { value: (entity: unknown) => entity }
+			});
+
+			const report = (await TimeLogService.prototype.getWeeklyReport.call(self, request)) as WeeklyEntry[];
+			const logs = report.flatMap(answeredLogs);
+
+			expect(report[0]).toEqual(expect.objectContaining({ spent: 800, currency: 'USD' }));
+			expect(logs).toHaveLength(1);
+			expect(logs[0]).not.toHaveProperty('organization');
+		});
 	});
 
 	describe('budget reports', () => {
@@ -200,17 +258,17 @@ describe('TimeLogService and the organization default billing rate', () => {
 			{ duration: 7200, employee: { billRateValue: 0 } }
 		];
 
-		const projectBudget = async (budgetType: string) => {
+		const projectBudget = async (budgetType: string, logs: Array<Record<string, unknown>> = timeLogs) => {
 			const projectBuilder = new RecordingQueryBuilder('organization_project');
-			projectBuilder.rows = [{ id: PROJECT_ID, name: 'Site', budget: 1000, budgetType, timeLogs }];
+			projectBuilder.rows = [{ id: PROJECT_ID, name: 'Site', budget: 1000, budgetType, timeLogs: logs }];
 			Object.assign(service.typeOrmOrganizationProjectRepository, { createQueryBuilder: () => projectBuilder });
 			const [report] = await service.getProjectBudgetLimit(request);
 			return report;
 		};
 
-		const clientBudget = async (budgetType: string) => {
+		const clientBudget = async (budgetType: string, logs: Array<Record<string, unknown>> = timeLogs) => {
 			const clientBuilder = new RecordingQueryBuilder('organization_contact');
-			clientBuilder.rows = [{ id: CLIENT_ID, name: 'Acme', budget: 1000, budgetType, timeLogs }];
+			clientBuilder.rows = [{ id: CLIENT_ID, name: 'Acme', budget: 1000, budgetType, timeLogs: logs }];
 			Object.assign(service.typeOrmOrganizationContactRepository, { createQueryBuilder: () => clientBuilder });
 			const [report] = await service.getClientBudgetLimit(request);
 			return report;
@@ -234,6 +292,16 @@ describe('TimeLogService and the organization default billing rate', () => {
 
 			expect(await projectBudget('cost')).toEqual(expect.objectContaining({ spent: 600 }));
 			expect(await clientBudget('cost')).toEqual(expect.objectContaining({ spent: 600 }));
+		});
+
+		it('prices a log without its employee the same in the client budget as in the project budget', async () => {
+			organizationLookup({ currency: 'EUR', defaultBillRateValue: 80 });
+			// Both budgets price a log through budgetCostOf (#11936): a log that stores no rate and has no member's
+			// rate is priced at the organization's default, whether or not its employee was loaded
+			const logs = [...timeLogs, { duration: 3600 }];
+
+			expect(await projectBudget('cost', logs)).toEqual(expect.objectContaining({ spent: 840 }));
+			expect(await clientBudget('cost', logs)).toEqual(expect.objectContaining({ spent: 840 }));
 		});
 
 		it('reads no organization for an hour budget, which prices nothing', async () => {

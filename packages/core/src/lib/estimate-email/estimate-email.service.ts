@@ -78,6 +78,19 @@ export class EstimateEmailService extends TenantAwareCrudService<EstimateEmail> 
 	}
 
 	/**
+	 * Records that an invoice's email went: which invoice it delivered, and in which language. Called once the mail
+	 * transport took the email (never for an estimate's): the invoice's payment reminders go to that address, in that
+	 * language.
+	 *
+	 * @param id - The email's row, as `createEstimateEmail` answered it.
+	 * @param invoiceId - The invoice the email delivered.
+	 * @param languageCode - The language the email was written in.
+	 */
+	async recordInvoiceDelivery(id: ID, invoiceId: ID, languageCode: string): Promise<void> {
+		await this.update(id, { invoiceId, languageCode });
+	}
+
+	/**
 	 * Validate estimate email
 	 *
 	 * @param params

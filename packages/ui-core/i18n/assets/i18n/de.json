@@ -476,6 +476,8 @@
 			"DEFAULT_TERMS": "Standardbedingungen für Rechnungen und Kostenvoranschläge",
 			"CONVERT_ESTIMATES": "Schätzung umwandeln",
 			"ALLOW_CONVERTING": "Automatisch angenommenen Kostenvoranschlag in Rechnung umwandeln.",
+			"INVOICE_REMINDERS": "Zahlungserinnerungen",
+			"SEND_INVOICE_REMINDERS": "Den Kunden einer unbezahlten Rechnung 3 Tage vor dem Fälligkeitsdatum per E-Mail erinnern, dann 1, 7 und 14 Tage danach",
 			"DEFAULT_DAYS": "Standardtage bis zur Fälligkeit von Rechnungen und Kostenvoranschlägen.",
 			"TEMPLATE_NAME": "Vorlage Name",
 			"TEMPLATE_BODY": "Vorlage Text",
@@ -6827,6 +6829,7 @@
 			"email-reset": "E-Mail zurücksetzen.",
 			"organization-team-join-request": "Organisationsteam beitreten Anfrage",
 			"payment-receipt": "Zahlungseingang",
+			"invoice-reminder": "Rechnungserinnerung",
 			"reject-candidate": "Kandidat ablehnen"
 		},
 		"HTML_EDITOR": "HTML-Editor",

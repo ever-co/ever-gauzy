@@ -474,6 +474,8 @@
 			"DEFAULT_TERMS": "Default terms for invoices and estimates",
 			"CONVERT_ESTIMATES": "Convert Estimates",
 			"ALLOW_CONVERTING": "Automatically convert accepted estimate to invoice",
+			"INVOICE_REMINDERS": "תזכורות תשלום",
+			"SEND_INVOICE_REMINDERS": "שליחת אימייל ללקוח של חשבונית שלא שולמה 3 ימים לפני מועד התשלום, ואחר כך 1, 7 ו-14 ימים אחריו",
 			"DEFAULT_DAYS": "Default days until invoices and estimates are due.",
 			"TEMPLATE_NAME": "Template Name",
 			"TEMPLATE_BODY": "Template Body",
@@ -6841,6 +6843,7 @@
 			"email-reset": "Email Reset",
 			"organization-team-join-request": "Organization team join request",
 			"payment-receipt": "קבלת תשלום",
+			"invoice-reminder": "תזכורת לחשבונית",
 			"reject-candidate": "לדחות את המועמד"
 		},
 		"HTML_EDITOR": "HTML Editor",

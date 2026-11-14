@@ -21,5 +21,6 @@ export class OrganizationSettingDTO extends PickType(Organization, [
 	'requireTwoFactor',
 	'allowDiscardTimer',
 	'discardTimerWithinMinutes',
-	'allowBreaks'
+	'allowBreaks',
+	'invoiceRemindersEnabled'
 ] as const) {}

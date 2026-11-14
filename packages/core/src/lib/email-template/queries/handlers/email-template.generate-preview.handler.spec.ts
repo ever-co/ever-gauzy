@@ -111,6 +111,14 @@ describe('EmailTemplateGeneratePreviewHandler sample values', () => {
 		);
 	});
 
+	it("previews a client's answer to an estimate as an acceptance, with the buttons' destinations", async () => {
+		const answered =
+			'{{#if isAccepted}}accepted{{else}}declined{{/if}} by {{contactEmail}}: ' +
+			'{{#if isConverted}}{{invoiceUrl}}{{else}}{{estimateUrl}}{{/if}}';
+		await expect(preview(answered)).resolves.toBe('accepted by client@example.com: http://localhost:4200');
+		await expect(preview('{{invoiceUrl}}')).resolves.toBe('http://localhost:4200');
+	});
+
 	it('fills the one-time codes and the optional names', async () => {
 		await expect(preview('{{magicCode}}')).resolves.toMatch(/^[A-Za-z0-9]+$/);
 		await expect(preview('{{code}}')).resolves.toMatch(/^[A-Za-z0-9]+$/);
