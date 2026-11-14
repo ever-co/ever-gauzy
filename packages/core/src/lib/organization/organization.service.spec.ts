@@ -5,7 +5,8 @@
 import '../core/entities/internal';
 
 import { ConflictException, NotFoundException } from '@nestjs/common';
-import { hideOrganization, restoreOrganization } from './organization-deletion';
+import { TenantAwareCrudService } from '../core/crud';
+import { hideOrganization, ORGANIZATION_DELETE_REFUSED, restoreOrganization } from './organization-deletion';
 import { OrganizationService } from './organization.service';
 
 jest.mock('./organization-deletion', () => ({
@@ -16,7 +17,7 @@ jest.mock('./organization-deletion', () => ({
 
 /**
  * The organization's delete routes (ever-co/ever-gauzy#11960): the soft delete and the restore go through the
- * organization's own deletion in one transaction.
+ * organization's own deletion in one transaction, and a delete for good the database refuses answers why.
  */
 const TENANT = 'tenant-1';
 const ORGANIZATION = 'org-1';
@@ -79,6 +80,34 @@ describe('OrganizationService — deleting an organization (#11960)', () => {
 			expect(findOneByIdString).toHaveBeenCalledWith(ORGANIZATION, { withDeleted: true });
 			expect(restoreOrganization).toHaveBeenCalledWith(manager, { id: ORGANIZATION, tenantId: TENANT });
 			expect(recovered.deletedAt).toBeNull();
+		});
+	});
+
+	describe('delete', () => {
+		it('answers 409 with the reason when the database refuses because other records point at it', async () => {
+			const refused = new NotFoundException('The record was not found', {
+				cause: Object.assign(new Error('violates foreign key constraint'), { code: '23503' })
+			});
+			jest.spyOn(TenantAwareCrudService.prototype, 'delete').mockRejectedValue(refused);
+
+			const error = await service.delete(ORGANIZATION).catch((caught) => caught);
+
+			expect(error).toBeInstanceOf(ConflictException);
+			expect(error.getResponse()).toMatchObject({ code: ORGANIZATION_DELETE_REFUSED });
+		});
+
+		it('keeps any other failure as it was', async () => {
+			const missing = new NotFoundException('The record was not found', { cause: new Error('connection lost') });
+			jest.spyOn(TenantAwareCrudService.prototype, 'delete').mockRejectedValue(missing);
+
+			await expect(service.delete(ORGANIZATION)).rejects.toBe(missing);
+		});
+
+		it('answers what the base answers when the delete goes through', async () => {
+			const result = { affected: 1, raw: [] };
+			jest.spyOn(TenantAwareCrudService.prototype, 'delete').mockResolvedValue(result);
+
+			await expect(service.delete(ORGANIZATION)).resolves.toBe(result);
 		});
 	});
 });

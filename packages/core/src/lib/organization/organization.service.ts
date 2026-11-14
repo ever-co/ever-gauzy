@@ -1,10 +1,18 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { DeleteResult, FindOptionsWhere } from 'typeorm';
 import { ID } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { IPartialEntity } from './../core/crud/icrud.service';
+import { isForeignKeyViolation } from './../core/errors';
 import { sanitizeRichHtml } from './../core/html-sanitizer';
+import { LegacyFindOneOptions } from './../core/utils';
 import { Organization } from './organization.entity';
-import { hideOrganization, restoreOrganization } from './organization-deletion';
+import {
+	hideOrganization,
+	ORGANIZATION_DELETE_REFUSED,
+	ORGANIZATION_DELETE_REFUSED_MESSAGE,
+	restoreOrganization
+} from './organization-deletion';
 import { TypeOrmOrganizationRepository } from './repository/type-orm-organization.repository';
 import { MikroOrmOrganizationRepository } from './repository/mikro-orm-organization.repository';
 
@@ -77,5 +85,33 @@ export class OrganizationService extends TenantAwareCrudService<Organization> {
 
 		organization.deletedAt = null;
 		return organization;
+	}
+
+	/**
+	 * Deletes an organization for good, as the CRUD base does, but answers a delete the database refuses because
+	 * other records still point at the organization (or at its members) with a 409 that says so, instead of the
+	 * base's 404 "The record was not found". Nothing is removed in that case: the statement is rolled back.
+	 *
+	 * @param criteria - The organization, by id or criteria.
+	 * @param options - The base's options.
+	 * @returns The delete result.
+	 * @throws ConflictException (`ORGANIZATION_DELETE_REFUSED`) when the database refuses the delete.
+	 */
+	public async delete(
+		criteria: string | FindOptionsWhere<Organization>,
+		options?: LegacyFindOneOptions<Organization>
+	): Promise<DeleteResult> {
+		try {
+			return await super.delete(criteria, options);
+		} catch (error) {
+			const refusedByReferences = error instanceof NotFoundException && isForeignKeyViolation(error.cause);
+			if (refusedByReferences) {
+				throw new ConflictException({
+					message: ORGANIZATION_DELETE_REFUSED_MESSAGE,
+					code: ORGANIZATION_DELETE_REFUSED
+				});
+			}
+			throw error;
+		}
 	}
 }
