@@ -1816,6 +1816,7 @@
 		"packages/**/*.seed.json",
 		"**/*.svg",
 		"**/*.mjml",
+		"**/default-email-templates/**/subject.hbs",
 		"tools/build/webpack.config.js",
 		"docker-compose.demo.yml",
 		"docker-compose.yml",
