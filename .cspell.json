@@ -1800,7 +1800,8 @@
 		"regclass",
 		"unsaveable",
 		"heures",
-		"stunden"
+		"stunden",
+		"cros"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
