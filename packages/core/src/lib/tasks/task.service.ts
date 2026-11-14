@@ -690,35 +690,34 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		}
 
 		try {
-			await Promise.all(
-				members.map((member: IEmployee) => {
-					this._eventBus.publish(
-						new CreateEntitySubscriptionEvent({
-							entity: BaseEntityEnum.Task,
-							entityId: updatedTaskId,
-							employeeId: member.id,
-							type: EntitySubscriptionTypeEnum.ASSIGNMENT,
-							organizationId,
-							tenantId
-						})
-					);
+			// Both publish synchronously: one pass over the members, nothing to await
+			for (const member of members) {
+				this._eventBus.publish(
+					new CreateEntitySubscriptionEvent({
+						entity: BaseEntityEnum.Task,
+						entityId: updatedTaskId,
+						employeeId: member.id,
+						type: EntitySubscriptionTypeEnum.ASSIGNMENT,
+						organizationId,
+						tenantId
+					})
+				);
 
-					this._employeeNotificationService.publishNotificationEvent(
-						{
-							entity: BaseEntityEnum.Task,
-							entityId: task.id,
-							type: EmployeeNotificationTypeEnum.ASSIGNMENT,
-							organizationId,
-							tenantId,
-							receiverEmployeeId: member.id,
-							sentByEmployeeId: user?.employeeId
-						},
-						NotificationActionTypeEnum.Assigned,
-						task.title,
-						user?.name
-					);
-				})
-			);
+				this._employeeNotificationService.publishNotificationEvent(
+					{
+						entity: BaseEntityEnum.Task,
+						entityId: task.id,
+						type: EmployeeNotificationTypeEnum.ASSIGNMENT,
+						organizationId,
+						tenantId,
+						receiverEmployeeId: member.id,
+						sentByEmployeeId: user?.employeeId
+					},
+					NotificationActionTypeEnum.Assigned,
+					task.title,
+					user?.name
+				);
+			}
 		} catch (error) {
 			console.error('Error publishing CreateSubscriptionEvent:', error);
 		}
