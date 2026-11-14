@@ -5663,14 +5663,15 @@
 			"ALSO_FOR": "Auch verfügbar für"
 		},
 		"SETUP": {
-			"OPENED": "Der Download für {{platform}} wurde in einem neuen Tab geöffnet.",
+			"OPENED": "Der Download-Link für {{platform}} wurde in einem neuen Tab geöffnet.",
 			"NOT_OPENED": "Nichts passiert?",
 			"TRY_AGAIN": "Erneut versuchen",
 			"TITLE": "Nächste Schritte",
 			"INSTALL_WINDOWS": "Führen Sie das heruntergeladene Installationsprogramm aus und folgen Sie den Schritten.",
 			"INSTALL_MACOS": "Öffnen Sie die heruntergeladene Datei und ziehen Sie die App in „Programme“.",
 			"INSTALL_LINUX": "Installieren Sie das heruntergeladene Paket oder starten Sie das AppImage.",
-			"CONNECT_CUSTOM": "Öffnen Sie die App, wählen Sie „{{option}}“ und fügen Sie dies in „{{field}}“ ein:",
+			"CONNECT_CUSTOM": "Öffnen Sie die App, wählen Sie „{{option}}“ und füllen Sie Folgendes aus:",
+			"PORT_EMPTY": "Dieses Feld leeren",
 			"CONNECT_LIVE": "Öffnen Sie die App und wählen Sie „{{option}}“.",
 			"SIGN_IN": "Melden Sie sich mit der E-Mail-Adresse und dem Passwort an, die Sie hier verwenden.",
 			"COPY_FIELD": "{{field}} kopieren"

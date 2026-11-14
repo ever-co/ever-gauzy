@@ -5667,14 +5667,15 @@
 			"ALSO_FOR": "Ook beschikbaar voor"
 		},
 		"SETUP": {
-			"OPENED": "De download voor {{platform}} is geopend in een nieuw tabblad.",
+			"OPENED": "De downloadlink voor {{platform}} is geopend in een nieuw tabblad.",
 			"NOT_OPENED": "Gebeurde er niets?",
 			"TRY_AGAIN": "Opnieuw proberen",
 			"TITLE": "Volgende stappen",
 			"INSTALL_WINDOWS": "Voer het gedownloade installatieprogramma uit en volg de stappen.",
 			"INSTALL_MACOS": "Open het gedownloade bestand en sleep de app naar Programma's.",
 			"INSTALL_LINUX": "Installeer het gedownloade pakket of start de AppImage.",
-			"CONNECT_CUSTOM": "Open de app, kies ‘{{option}}’ en plak dit in ‘{{field}}’:",
+			"CONNECT_CUSTOM": "Open de app, kies ‘{{option}}’ en vul in:",
+			"PORT_EMPTY": "Maak dit veld leeg",
 			"CONNECT_LIVE": "Open de app en kies ‘{{option}}’.",
 			"SIGN_IN": "Log in met het e-mailadres en wachtwoord dat je hier gebruikt.",
 			"COPY_FIELD": "{{field}} kopiëren"

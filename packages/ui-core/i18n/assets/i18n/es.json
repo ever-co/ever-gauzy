@@ -5669,14 +5669,15 @@
 			"ALSO_FOR": "También disponible para"
 		},
 		"SETUP": {
-			"OPENED": "La descarga para {{platform}} se abrió en una pestaña nueva.",
+			"OPENED": "El enlace de descarga para {{platform}} se abrió en una pestaña nueva.",
 			"NOT_OPENED": "¿No pasó nada?",
 			"TRY_AGAIN": "Intentar de nuevo",
 			"TITLE": "Próximos pasos",
 			"INSTALL_WINDOWS": "Ejecuta el instalador que descargaste y sigue los pasos.",
 			"INSTALL_MACOS": "Abre el archivo descargado y arrastra la aplicación a Aplicaciones.",
 			"INSTALL_LINUX": "Instala el paquete descargado o ejecuta el AppImage.",
-			"CONNECT_CUSTOM": "Abre la aplicación, elige «{{option}}» y pega esto en «{{field}}»:",
+			"CONNECT_CUSTOM": "Abre la aplicación, elige «{{option}}» y completa:",
+			"PORT_EMPTY": "Deja este campo vacío",
 			"CONNECT_LIVE": "Abre la aplicación y elige «{{option}}».",
 			"SIGN_IN": "Inicia sesión con el correo y la contraseña que usas aquí.",
 			"COPY_FIELD": "Copiar {{field}}"

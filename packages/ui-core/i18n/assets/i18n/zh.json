@@ -6234,14 +6234,15 @@
 			"ALSO_FOR": "也适用于"
 		},
 		"SETUP": {
-			"OPENED": "{{platform}} 版下载已在新标签页中打开。",
+			"OPENED": "{{platform}} 版下载链接已在新标签页中打开。",
 			"NOT_OPENED": "没有反应？",
 			"TRY_AGAIN": "重试",
 			"TITLE": "后续步骤",
 			"INSTALL_WINDOWS": "运行下载的安装程序并按步骤操作。",
 			"INSTALL_MACOS": "打开下载的文件，将应用拖入“应用程序”文件夹。",
 			"INSTALL_LINUX": "安装下载的软件包，或运行 AppImage。",
-			"CONNECT_CUSTOM": "打开应用，选择“{{option}}”，并将此内容粘贴到“{{field}}”：",
+			"CONNECT_CUSTOM": "打开应用，选择“{{option}}”，然后填写：",
+			"PORT_EMPTY": "清空此字段",
 			"CONNECT_LIVE": "打开应用并选择“{{option}}”。",
 			"SIGN_IN": "使用你在此处使用的邮箱和密码登录。",
 			"COPY_FIELD": "复制{{field}}"

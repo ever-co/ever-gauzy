@@ -114,39 +114,51 @@
 															: {
 																	option:
 																		('TIMER_TRACKER.SETUP.CUSTOM_NETWORK'
-																		| translate),
-																	field: ('TIMER_TRACKER.SETUP.API_HOST' | translate)
+																		| translate)
 															  }
 												}}
-												<span class="address-row">
-													<code class="address" [title]="apiHost">{{ apiHost }}</code>
-													<button
-														type="button"
-														class="btn btn-soft btn-small"
-														(click)="copyApiHost()"
-														[attr.aria-label]="
-															apiHostCopied()
-																? ('BUTTONS.COPIED' | translate)
-																: ('DOWNLOADS_PAGE.SETUP.COPY_FIELD'
-																	| translate
-																		: {
-																				field:
-																					('TIMER_TRACKER.SETUP.API_HOST'
-																					| translate)
-																		  })
-														"
-													>
-														<nb-icon
-															[icon]="
-																apiHostCopied() ? 'checkmark-outline' : 'copy-outline'
+												<!--
+													The setup screen's two fields, labelled as it labels them. Port
+													comes pre-filled with 3000 and overrides any port in API Host,
+													so an address without a port says to clear it.
+												-->
+												<span class="connect-fields">
+													<span class="connect-row">
+														<span class="connect-label">{{
+															'TIMER_TRACKER.SETUP.API_HOST' | translate
+														}}</span>
+														<ng-container
+															*ngTemplateOutlet="
+																copyField;
+																context: {
+																	field: 'host',
+																	value: connectHost,
+																	label: 'TIMER_TRACKER.SETUP.API_HOST'
+																}
 															"
-															aria-hidden="true"
-														></nb-icon>
-														{{
-															(apiHostCopied() ? 'BUTTONS.COPIED' : 'BUTTONS.COPY')
-																| translate
-														}}
-													</button>
+														></ng-container>
+													</span>
+													<span class="connect-row">
+														<span class="connect-label">{{
+															'TIMER_TRACKER.SETUP.PORT' | translate
+														}}</span>
+														@if (connectPort) {
+															<ng-container
+																*ngTemplateOutlet="
+																	copyField;
+																	context: {
+																		field: 'port',
+																		value: connectPort,
+																		label: 'TIMER_TRACKER.SETUP.PORT'
+																	}
+																"
+															></ng-container>
+														} @else {
+															<span class="connect-note">{{
+																'DOWNLOADS_PAGE.SETUP.PORT_EMPTY' | translate
+															}}</span>
+														}
+													</span>
 												</span>
 											}
 										</li>
@@ -445,4 +457,27 @@
 			</div>
 		</div>
 	</section>
+</ng-template>
+
+<!-- A value for the desktop setup with Copy inside its end edge (API Host, Port). -->
+<ng-template #copyField let-field="field" let-value="value" let-label="label">
+	<span class="address-field" [class.is-copied]="copiedField() === field">
+		<code class="address-value" [title]="value">{{ value }}</code>
+		<button
+			type="button"
+			class="address-copy"
+			(click)="copyConnectValue(field)"
+			[attr.aria-label]="
+				copiedField() === field
+					? ('BUTTONS.COPIED' | translate)
+					: ('DOWNLOADS_PAGE.SETUP.COPY_FIELD' | translate: { field: (label | translate) })
+			"
+		>
+			<nb-icon
+				[icon]="copiedField() === field ? 'checkmark-outline' : 'copy-outline'"
+				aria-hidden="true"
+			></nb-icon>
+			{{ (copiedField() === field ? 'BUTTONS.COPIED' : 'BUTTONS.COPY') | translate }}
+		</button>
+	</span>
 </ng-template>

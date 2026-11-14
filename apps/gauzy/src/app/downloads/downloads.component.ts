@@ -33,6 +33,12 @@ interface ICursorStep<T extends string> {
 	press?: boolean;
 }
 
+/**
+ * The server the desktop app's "Live" option connects to — the same constant its setup screen
+ * uses (`serverConfig.live.url` in desktop-ui-lib's setup component).
+ */
+const DESKTOP_LIVE_SERVER = 'https://api.gauzy.co';
+
 /** Length of the drawings' animation loop, in seconds (one step per second). */
 const LOOP_SECONDS = 12;
 
@@ -153,11 +159,18 @@ export class DownloadsComponent {
 	 * that platform. Desktop links open in a new tab, so this page stays put to show them.
 	 */
 	readonly startedDownload = signal<IDesktopDownload | null>(null);
-	/** Where the desktop app should connect: this installation's API, as the About page shows it. */
-	readonly apiHost: string;
-	/** The API is Gauzy's own cloud, so the desktop app's "Live" option is the one to pick. */
+	/**
+	 * Where the desktop app should connect, split the way its "Custom / Network" setup asks for it:
+	 * an API Host (protocol + host name) and a separate Port. The two must be given apart because
+	 * that Port field is pre-filled with 3000 and overrides any port typed into API Host — an
+	 * address with no port therefore needs the field cleared, not left at 3000.
+	 */
+	readonly connectHost: string;
+	readonly connectPort: string;
+	/** The API is Gauzy's own cloud — exactly the URL the desktop app's "Live" option connects to. */
 	readonly isLiveServer: boolean;
-	readonly apiHostCopied = signal(false);
+	/** Which value's Copy button reads "Copied!" right now. */
+	readonly copiedField = signal<'host' | 'port' | null>(null);
 	private copiedTimer: ReturnType<typeof setTimeout> | null = null;
 
 	/** Opened on a phone: the Mobile card leads the page. */
@@ -203,8 +216,10 @@ export class DownloadsComponent {
 		this.extensionUrl = environment.EXTENSION_DOWNLOAD_LINK || '';
 		this.allDownloadsUrl = environment.PLATFORM_WEBSITE_DOWNLOAD_URL || '';
 
-		this.apiHost = environment.API_BASE_URL || (typeof window !== 'undefined' ? window.location.origin : '');
-		this.isLiveServer = isGauzyCloud(this.apiHost);
+		const api = parseUrl(environment.API_BASE_URL || (typeof window !== 'undefined' ? window.location.origin : ''));
+		this.connectHost = api ? `${api.protocol}//${api.hostname}` : environment.API_BASE_URL || '';
+		this.connectPort = api?.port ?? '';
+		this.isLiveServer = api?.origin === DESKTOP_LIVE_SERVER;
 	}
 
 	/** A desktop download link was clicked: show the setup steps for that platform. */
@@ -213,26 +228,27 @@ export class DownloadsComponent {
 	}
 
 	/**
-	 * Copies the API host for the desktop app's setup; the button reads "Copied!" for 1.5s.
-	 * `navigator.clipboard` exists only in secure contexts, so a self-hosted install opened over
-	 * plain HTTP falls back to a selected textarea + `execCommand('copy')` (as on the About page).
+	 * Copies the API Host or the Port for the desktop app's setup; that button reads "Copied!" for
+	 * 1.5s. `navigator.clipboard` exists only in secure contexts, so a self-hosted install opened
+	 * over plain HTTP falls back to a selected textarea + `execCommand('copy')` (as on the About page).
 	 */
-	copyApiHost(): void {
+	copyConnectValue(field: 'host' | 'port'): void {
+		const value = field === 'host' ? this.connectHost : this.connectPort;
 		const done = () => {
-			this.apiHostCopied.set(true);
+			this.copiedField.set(field);
 			if (this.copiedTimer) {
 				clearTimeout(this.copiedTimer);
 			}
-			this.copiedTimer = setTimeout(() => this.apiHostCopied.set(false), 1500);
+			this.copiedTimer = setTimeout(() => this.copiedField.set(null), 1500);
 		};
 		if (navigator?.clipboard?.writeText) {
 			navigator.clipboard
-				.writeText(this.apiHost)
+				.writeText(value)
 				.then(done)
-				.catch(() => copyWithSelection(this.apiHost) && done());
+				.catch(() => copyWithSelection(value) && done());
 			return;
 		}
-		if (copyWithSelection(this.apiHost)) {
+		if (copyWithSelection(value)) {
 			done();
 		}
 	}
@@ -382,12 +398,12 @@ function detectPhone(): boolean {
 	return /iphone|ipod|android.*mobile|windows phone/i.test(navigator.userAgent ?? '');
 }
 
-/** Gauzy's own cloud API (api.gauzy.co and its subdomains), which the desktop app reaches as "Live". */
-function isGauzyCloud(apiHost: string): boolean {
+/** `url` parsed, or null when it is not a valid absolute URL. */
+function parseUrl(url: string): URL | null {
 	try {
-		return /(^|\.)gauzy\.co$/i.test(new URL(apiHost).hostname);
+		return new URL(url);
 	} catch {
-		return false;
+		return null;
 	}
 }
 
