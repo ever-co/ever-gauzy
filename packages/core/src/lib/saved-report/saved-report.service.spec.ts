@@ -111,13 +111,14 @@ describe('SavedReportService', () => {
 	it('turns a link on with a token shown once, stores only its digest, and replaces it with a new one', async () => {
 		const { service, rows } = serviceFor(MARIE);
 
-		const first = await service.shareOwn(REPORT, { expiresAt: '2027-01-01T00:00:00.000Z' });
+		const expiresAt = new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString();
+		const first = await service.shareOwn(REPORT, { expiresAt });
 		const firstDigest = rows[0].shareTokenHash;
 
 		expect(isWellFormedSavedReportToken(first.token)).toBe(true);
 		expect(firstDigest).toBe(hashSavedReportToken(first.token));
 		expect(JSON.stringify(rows[0])).not.toContain(first.token);
-		expect(rows[0].shareExpiresAt).toEqual(new Date('2027-01-01T00:00:00.000Z'));
+		expect(rows[0].shareExpiresAt).toEqual(new Date(expiresAt));
 
 		const second = await service.shareOwn(REPORT, {});
 
