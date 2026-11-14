@@ -1,4 +1,5 @@
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { IToken } from '../token/interfaces';
 import { ScopedTokenService } from '../token/scoped-token.service';
 import { ACCESS_TOKEN, IAccessTokenMetadata } from './type.token';
 
@@ -43,5 +44,22 @@ export class AccessTokenService {
 			rawToken,
 			reason
 		});
+	}
+
+	/**
+	 * @param tokenId The id an access token's payload carries (`tokenId`).
+	 * @returns Its stored record, or null when the store has no access token with this id.
+	 */
+	public async findById(tokenId: string): Promise<IToken | null> {
+		return this.tokenService.getTokenById(tokenId);
+	}
+
+	/**
+	 * Records a use of the access token: its last use becomes now.
+	 *
+	 * @param tokenId The stored token's id.
+	 */
+	public async touch(tokenId: string): Promise<void> {
+		await this.tokenService.touchToken(tokenId);
 	}
 }

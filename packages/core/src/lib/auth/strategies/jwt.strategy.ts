@@ -22,7 +22,13 @@ import { isAccessTokenPayload, JWT_ALGORITHMS } from '../purpose-token';
 import { EmployeeService } from '../../employee/employee.service';
 import { RoleAuthorizationService } from '../../role/role-authorization.service';
 import { UserOrganizationService } from '../../user-organization/user-organization.services';
+import { AccessTokenService } from '../../access-token/access-token.service';
+import { IToken } from '../../token/interfaces';
+import { isSignedOutSessionToken } from '../user-session/user-session-revocation';
 import { AuthenticatedUserCache } from './authenticated-user-cache';
+
+/** How often a request records the use of its access token: the session list's last activity is this accurate. */
+export const ACCESS_TOKEN_USE_RESOLUTION_MS = 5 * 60 * 1000;
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
@@ -37,7 +43,9 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 		private readonly _employeeService: EmployeeService,
 		private readonly _userOrganizationService: UserOrganizationService,
 		private readonly _roleAuthorizationService: RoleAuthorizationService,
-		@Optional() authenticatedUsers?: AuthenticatedUserCache
+		@Optional() authenticatedUsers?: AuthenticatedUserCache,
+		// AuthModule always provides it (it imports AccessTokenModule); without it the signed-out-session check is skipped.
+		@Optional() private readonly _accessTokenService?: AccessTokenService
 	) {
 		super({
 			jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -115,6 +123,12 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 			return new UnauthorizedException('unauthorized');
 		}
 
+		// A session its user signed out from another session ends at its next request (ever-co/ever-gauzy#11921). Read
+		// on every request, outside the validated-context cache, which two sessions of one user share.
+		if (await this.isSignedOutSession(payload)) {
+			return new UnauthorizedException('unauthorized');
+		}
+
 		// The rest reads the database. A context validated moments ago for the same claims is reused, and
 		// concurrent requests with the same claims share one lookup (JWT_AUTHENTICATED_USER_TTL_MS; 0 judges every
 		// request afresh). Only a context that authenticated is reused: a refusal is never remembered.
@@ -127,6 +141,50 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 		// above, which an OAuth-app token and a first-party token of the same user can share, so the context it keeps
 		// is never the narrowed one (each caller gets a copy).
 		return this.applyOAuthAppGrant(outcome, payload);
+	}
+
+	/**
+	 * Whether the access token belongs to a session its user signed out (see `user-session-revocation.ts`), read from the
+	 * token store by the id its payload carries. A token without that id (minted before the token store) and a token the
+	 * store does not hold are judged as before. A token still in use gets its use recorded, at most every
+	 * {@link ACCESS_TOKEN_USE_RESOLUTION_MS}, for the session list's last activity.
+	 *
+	 * @param payload - The verified access-token payload.
+	 * @returns True when the token's session was signed out.
+	 */
+	private async isSignedOutSession(payload: JwtPayload): Promise<boolean> {
+		const tokenId = payload['tokenId'];
+		const canCheck = !!this._accessTokenService && typeof tokenId === 'string' && tokenId.length > 0;
+		if (!canCheck) {
+			return false;
+		}
+
+		const stored = await this._accessTokenService.findById(tokenId);
+		if (!stored) {
+			return false;
+		}
+		if (isSignedOutSessionToken(stored)) {
+			return true;
+		}
+		this.recordUse(stored);
+		return false;
+	}
+
+	/**
+	 * Records a use of the token when its last recorded use is older than {@link ACCESS_TOKEN_USE_RESOLUTION_MS}. Not
+	 * awaited: the request never waits for it, and a failed write only leaves the last activity older.
+	 *
+	 * @param stored - The token's stored record.
+	 */
+	private recordUse(stored: IToken): void {
+		const lastUse = new Date(stored.lastUsedAt ?? 0).getTime();
+		const isStale = Date.now() - lastUse >= ACCESS_TOKEN_USE_RESOLUTION_MS;
+		if (!isStale) {
+			return;
+		}
+		this._accessTokenService.touch(stored.id).catch((error) => {
+			this.logger.warn(`Could not record the use of access token ${stored.id}: ${error?.message}`);
+		});
 	}
 
 	/**
