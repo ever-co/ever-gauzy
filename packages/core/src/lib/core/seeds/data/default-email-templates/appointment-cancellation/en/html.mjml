@@ -78,6 +78,9 @@
 						</tr>
 					</table>
 				</mj-text>
+				<mj-raw>{{#if cancleAppointmentUrl}}</mj-raw>
+				<mj-button mj-class="secondary" href="{{cancleAppointmentUrl}}" target="_blank">Cancel appointment</mj-button>
+				<mj-raw>{{/if}}</mj-raw>
 				<mj-text mj-class="note">
 					This notice was sent to the host and to every participant.
 				</mj-text>
