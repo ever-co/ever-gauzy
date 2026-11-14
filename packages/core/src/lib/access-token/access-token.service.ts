@@ -62,4 +62,26 @@ export class AccessTokenService {
 	public async touch(tokenId: string): Promise<void> {
 		await this.tokenService.touchToken(tokenId);
 	}
+
+	/**
+	 * @param userId The user.
+	 * @returns Their stored access tokens still active, newest first.
+	 */
+	public async findActive(userId: string): Promise<IToken[]> {
+		return this.tokenService.getActiveTokens(userId);
+	}
+
+	/**
+	 * Revokes one of a user's access tokens by its id.
+	 *
+	 * @returns Whether this call revoked it.
+	 */
+	public async revokeById(revocation: {
+		tokenId: string;
+		userId: string;
+		revokedById?: string;
+		reason?: string;
+	}): Promise<boolean> {
+		return this.tokenService.revokeTokenById(revocation);
+	}
 }
