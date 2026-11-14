@@ -70,6 +70,7 @@ import { EmployeeSettingModule } from '../employee-setting/employee-setting.modu
 import { EmployeeStatisticsModule } from '../employee-statistics/employee-statistics.module';
 import { EmployeeModule } from '../employee/employee.module';
 import { EmployeeAgentProfileModule } from '../employee-agent-profile/employee-agent-profile.module';
+import { EmployeePlaceholderModule } from '../employee-placeholder/employee-placeholder.module';
 import { EntitySubscriptionModule } from '../entity-subscription/entity-subscription.module';
 import { EquipmentSharingPolicyModule } from '../equipment-sharing-policy/equipment-sharing-policy.module';
 import { EquipmentSharingModule } from '../equipment-sharing/equipment-sharing.module';
@@ -200,6 +201,7 @@ import { TaskViewModule } from '../tasks/views/view.module';
 import { TaxLineModule } from '../tax-line/tax-line.module';
 import { OAuthClientModule } from '../auth/oauth-client/oauth-client.module';
 import { UserApiTokenModule } from '../auth/user-api-token/user-api-token.module';
+import { SavedReportModule } from '../saved-report/saved-report.module';
 import { TenantApiKeyModule } from '../tenant-api-key/tenant-api-key.module';
 import { TenantSettingModule } from '../tenant/tenant-setting/tenant-setting.module';
 import { TenantModule } from '../tenant/tenant.module';
@@ -458,6 +460,7 @@ if (environment.EVER_TEAMS_CLIENT_IP_SECRET?.trim() && !clientIpSecretOf(environ
 		SocialAccountModule,
 		EmployeeModule,
 		EmployeeAgentProfileModule,
+		EmployeePlaceholderModule,
 		EmployeeRecurringExpenseModule,
 		EmployeeAwardModule,
 		CandidateModule,
@@ -638,6 +641,7 @@ if (environment.EVER_TEAMS_CLIENT_IP_SECRET?.trim() && !clientIpSecretOf(environ
 		TenantApiKeyModule,
 		OAuthClientModule,
 		UserApiTokenModule,
+		SavedReportModule,
 		EmployeeRecentVisitModule,
 		SharedEntityModule,
 		BroadcastModule,

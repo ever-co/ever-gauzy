@@ -4,6 +4,7 @@ import {
 	ConflictException,
 	ForbiddenException,
 	HttpException,
+	Logger,
 	NotAcceptableException,
 	NotFoundException
 } from '@nestjs/common';
@@ -60,6 +61,8 @@ import {
 	TimeLogDeleteCommand,
 	TimeLogUpdateCommand
 } from './commands';
+import { ITimeSlotDurationRecalculateInput, TimeSlotDurationRecalculateCommand } from '../time-slot/commands';
+import { timeSlotIdsReachedBy } from '../time-slot/utils';
 import {
 	getDateRangeFormat,
 	getDaysBetweenDates,
@@ -89,6 +92,7 @@ import { Organization } from '../../organization/organization.entity';
 import { findStoredPayRates, isPayRateSet, mayReadPayRateOf, StoredPayRate } from '../../employee/pay-rate';
 import { TimeLog } from './time-log.entity';
 import { owedRateOf, payRateNeedsOrganizationCurrency } from './owed-rate';
+import { billRateOf, budgetNeedsDefaultRate, DefaultBillRate, defaultBillRateOf } from './default-bill-rate';
 import {
 	mikroOrmNotOnLiveInvoiceKey,
 	NOT_ON_LIVE_INVOICE_PARAMETERS,
@@ -104,8 +108,33 @@ import {
 /** The code of the refusal of manual time over a timer that is still running (409). */
 export const RUNNING_TIMER_OVERLAP = 'RUNNING_TIMER_OVERLAP';
 
+/** The body of a RUNNING_TIMER_OVERLAP refusal (409). */
+export interface IRunningTimerOverlap {
+	message: string;
+	code: typeof RUNNING_TIMER_OVERLAP;
+	/** The timer in the way, so a client can show which one it is. */
+	runningTimeLog: {
+		id: ID;
+		/** When it started (ISO 8601), or null for a log stored without a start. */
+		startedAt: string | null;
+		source: ITimeLog['source'] | null;
+	};
+}
+
+/**
+ * When a log started, in milliseconds since the epoch; a log stored without a valid start comes last.
+ *
+ * @param log The log.
+ */
+function startTimeOf(log: ITimeLog): number {
+	const time = log.startedAt ? new Date(log.startedAt).getTime() : Number.NaN;
+	return Number.isNaN(time) ? Number.POSITIVE_INFINITY : time;
+}
+
 @Injectable()
 export class TimeLogService extends TenantAwareCrudService<TimeLog> {
+	private readonly logger = new Logger(TimeLogService.name);
+
 	constructor(
 		readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
 		readonly mikroOrmTimeLogRepository: MikroOrmTimeLogRepository,
@@ -267,7 +296,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			case MultiORMEnum.MikroORM: {
 				const where = await this.buildMikroOrmTimeLogWhere(request);
 				const items = await this.mikroOrmRepository.find(where, {
-					populate: ['employee', 'employee.user', 'timeSlots'] as any[],
+					// The organization brings its default billing rate, which prices the week of a member without a rate
+					populate: ['employee', 'employee.user', 'timeSlots', 'organization'] as any[],
 					orderBy: { startedAt: 'ASC' as any }
 				});
 				logs = items.map((e) => this.serialize(e)) as ITimeLog[];
@@ -306,13 +336,21 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 								lastName: true,
 								imageUrl: true
 							}
+						},
+						// The default billing rate, which prices the week of a member without a rate, and its currency
+						organization: {
+							id: true,
+							currency: true,
+							defaultBillRateValue: true,
+							defaultBillRateCurrency: true
 						}
 					},
 					relations: {
 						// Related entities to be included in the result (the slots' figures are loaded apart, see below)
 						employee: {
 							user: true
-						}
+						},
+						organization: true
 					},
 					order: {
 						// Order results by the 'startedAt' field in ascending order
@@ -334,6 +372,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 		// A rate that states no currency is in the organization's, as the report page shows it; read only when needed
 		const organizationCurrency = await this.findCurrencyForRatesWithoutOne(logs, request.organizationId);
+
+		// The organization's default billing rate, read with the logs: it prices the week of a member without a rate
+		const defaultRate = defaultBillRateOf(logs.find((log) => log.organization)?.organization);
 
 		// Process weekly logs using lodash and Moment.js
 		const weeklyLogs = chain(logs)
@@ -362,9 +403,10 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					dates[date] = byDate[date] || 0;
 				});
 
-				// What the week's time costs at the employee's bill rate; null when they have no rate
-				const currency = employee?.billRateCurrency || organizationCurrency;
-				const spent = calculateBillableAmount(weeklyDuration, employee?.billRateValue, currency);
+				// What the week's time costs at the employee's bill rate, else at the organization's default; null when
+				// neither prices it
+				const { rate, currency } = billRateOf(employee, organizationCurrency, defaultRate);
+				const spent = calculateBillableAmount(weeklyDuration, rate, currency);
 
 				// Return the processed weekly logs data
 				return {
@@ -479,26 +521,51 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * @returns Its currency, or null when it is not set or there is no organization to read.
 	 */
 	private async findOrganizationCurrency(organizationId: ID | undefined): Promise<string | null> {
-		const tenantId = RequestContext.currentTenantId();
+		const organization = await this.findOrganizationPricing(organizationId, RequestContext.currentTenantId());
+		return organization?.currency || null;
+	}
+
+	/**
+	 * The organization's default billing rate, which prices the time of a member without a rate of their own.
+	 *
+	 * @param organizationId - The organization.
+	 * @param tenantId - The tenant it belongs to.
+	 * @returns The default with its currency, or null when the organization sets none or there is none to read.
+	 */
+	private async findDefaultBillRate(
+		organizationId: ID | undefined,
+		tenantId: ID | undefined
+	): Promise<DefaultBillRate | null> {
+		const organization = await this.findOrganizationPricing(organizationId, tenantId);
+		return defaultBillRateOf(organization);
+	}
+
+	/**
+	 * What prices an organization's amounts: its currency and its default billing rate.
+	 *
+	 * @param organizationId - The organization.
+	 * @param tenantId - The tenant it belongs to.
+	 * @returns Those columns, or null when there is no organization to read.
+	 */
+	private async findOrganizationPricing(
+		organizationId: ID | undefined,
+		tenantId: ID | undefined
+	): Promise<Pick<IOrganization, 'currency' | 'defaultBillRateValue' | 'defaultBillRateCurrency'> | null> {
 		if (!organizationId || !tenantId) {
 			return null;
 		}
-		let organization: Pick<IOrganization, 'currency'> | null;
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
-				organization = await this.mikroOrmRepository
+				return await this.mikroOrmRepository
 					.getEntityManager()
 					.findOne(Organization, { id: organizationId, tenantId });
-				break;
 			case MultiORMEnum.TypeORM:
 			default:
-				organization = await this.typeOrmRepository.manager.findOne(Organization, {
+				return await this.typeOrmRepository.manager.findOne(Organization, {
 					where: { id: organizationId, tenantId },
-					select: { id: true, currency: true }
+					select: { id: true, currency: true, defaultBillRateValue: true, defaultBillRateCurrency: true }
 				});
-				break;
 		}
-		return organization?.currency || null;
 	}
 
 	/**
@@ -1184,6 +1251,13 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			}
 		}
 
+		// The organization's default billing rate prices a cost budget's time of a member without a rate; read only then
+		let defaultRate: DefaultBillRate | null = null;
+		const needsDefaultRate = budgetNeedsDefaultRate(organizationProjects, OrganizationProjectBudgetTypeEnum.HOURS);
+		if (needsDefaultRate) {
+			defaultRate = await this.findDefaultBillRate(organizationId, tenantId);
+		}
+
 		const projects = organizationProjects.map(
 			(organizationProject: IOrganizationProject): IProjectBudgetLimitReport => {
 				const { budgetType, timeLogs = [] } = organizationProject;
@@ -1200,7 +1274,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					);
 				} else {
 					spent = timeLogs.reduce((totalAmount: number, log: ITimeLog) => {
-						const logAmount = log.employee ? (log.duration / 3600) * log.employee.billRateValue : 0;
+						const { rate } = billRateOf(log.employee, null, defaultRate);
+						const logAmount = log.employee ? (log.duration / 3600) * rate : 0;
 						return totalAmount + logAmount;
 					}, 0);
 				}
@@ -1405,16 +1480,24 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			}
 		}
 
+		// The organization's default billing rate prices a cost budget's time of a member without a rate; read only then
+		let defaultRate: DefaultBillRate | null = null;
+		const needsDefaultRate = budgetNeedsDefaultRate(organizationContacts, OrganizationContactBudgetTypeEnum.HOURS);
+		if (needsDefaultRate) {
+			defaultRate = await this.findDefaultBillRate(organizationId, tenantId);
+		}
+
 		const clients = organizationContacts.map(
 			(organizationContact: IOrganizationContact): IClientBudgetLimitReport => {
 				const { budgetType, timeLogs = [], ...contactWithoutTimeLogs } = organizationContact;
 				const budget = organizationContact.budget || 0;
 
 				const spent = timeLogs.reduce((total: number, log: ITimeLog) => {
+					const { rate } = billRateOf(log.employee, null, defaultRate);
 					const amount =
 						budgetType === OrganizationContactBudgetTypeEnum.HOURS
 							? total + log.duration / 3600
-							: total + (log.duration / 3600) * (log.employee?.billRateValue || 0);
+							: total + (log.duration / 3600) * (rate || 0);
 					return amount;
 				}, 0);
 
@@ -2013,16 +2096,32 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * The request is refused instead, before anything is trimmed or written. The desktop timer and the agent keep an
 	 * upload refused this way and send it again at their next sync: their offline time is recorded once that timer stops.
 	 *
-	 * @param conflicts The logs the new range overlaps.
-	 * @throws ConflictException with the code RUNNING_TIMER_OVERLAP.
+	 * The refusal names the timer in the way (`runningTimeLog`), so a client can show which one it is: the one that
+	 * started first, when several are running over the range. Every lookup is read before it, so none of them hides
+	 * an earlier timer the other found.
+	 *
+	 * @param found The logs the new range overlaps, and the running timers it falls over, as each lookup found them.
+	 * @throws ConflictException with the code RUNNING_TIMER_OVERLAP and the body `IRunningTimerOverlap`.
 	 */
-	private assertNoRunningTimerIn(conflicts: ITimeLog[] | null | undefined): void {
-		if ((conflicts ?? []).some((log) => log.isRunning)) {
-			throw new ConflictException({
-				message: 'A timer is running over this time range. Stop it first, or choose a range outside it.',
-				code: RUNNING_TIMER_OVERLAP
-			});
+	private assertNoRunningTimerIn(...found: Array<ITimeLog[] | null | undefined>): void {
+		const running = found.flatMap((logs) => logs ?? []).filter((log) => log.isRunning);
+		if (!running.length) {
+			return;
 		}
+		const inTheWay = running.reduce((first, log) => (startTimeOf(log) < startTimeOf(first) ? log : first));
+		const start = startTimeOf(inTheWay);
+		const body: IRunningTimerOverlap = {
+			message: 'A timer is running over this time range. Stop it first, or choose a range outside it.',
+			code: RUNNING_TIMER_OVERLAP,
+			runningTimeLog: {
+				id: inTheWay.id,
+				// A string, not the Date: every error body is copied on its way out (`toSafeHttpException`), and a
+				// Date has no fields of its own to copy, so it would reach the client as `{}`
+				startedAt: Number.isFinite(start) ? new Date(start).toISOString() : null,
+				source: inTheWay.source ?? null
+			}
+		};
+		throw new ConflictException(body);
 	}
 
 	/**
@@ -2124,12 +2223,35 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	}
 
 	/**
+	 * Gives the slots manual time shares with the entries it overlapped the time those entries spend in them, once the
+	 * manual entry is saved, or once its save failed after the overlapped entries were cut. Manual time that overlapped
+	 * no slot, or failed before any cut, sends nothing. It never throws: its failure is logged, so the error of a failed
+	 * save stays the one reported.
+	 *
+	 * @param input The employee and the slots the overlapped entries held within the manual time.
+	 */
+	private async recalculateSharedTimeSlots(input: ITimeSlotDurationRecalculateInput | undefined): Promise<void> {
+		if (isEmpty(input?.timeSlotsIds)) {
+			return;
+		}
+		try {
+			await this.commandBus.execute(new TimeSlotDurationRecalculateCommand(input));
+		} catch (error) {
+			this.logger.warn(`Error while recalculating the slots manual time shares: ${error?.message ?? error}`, {
+				stack: error?.stack
+			});
+		}
+	}
+
+	/**
 	 * Adds a manual time log entry.
 	 *
 	 * @param request The input data for the manual time log.
 	 * @returns The created time log entry.
 	 */
 	async addManualTime(request: IManualTimeEntry): Promise<ITimeLog> {
+		// The slots the overlapped entries share with the new one, known once the overlap is read
+		let sharedTimeSlots: ITimeSlotDurationRecalculateInput | undefined;
 		try {
 			const tenantId = RequestContext.currentTenantId();
 			const { employeeId, startedAt, stoppedAt } = request;
@@ -2182,9 +2304,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			// A running timer in the range is refused, never cut, including one the range falls over after its last
 			// heartbeat or before its first time slot, which the lookup above misses (#11886). Only a tracker's upload
 			// passes over a tracker's run, left open on the server while it was offline
-			this.assertNoRunningTimerIn(conflicts);
 			const isTrackerUpload = request.uploadedByTracker === true;
 			this.assertNoRunningTimerIn(
+				conflicts,
 				await this.findRunningTimersStartedBefore(
 					stoppedAt,
 					employeeId,
@@ -2195,19 +2317,17 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				)
 			);
 
-			// Resolve conflicts by deleting conflicting time slots
+			const times: IDateRange = {
+				start: new Date(startedAt),
+				end: new Date(stoppedAt)
+			};
+			const timeSlotsIds = timeSlotIdsReachedBy(times, conflicts);
+			sharedTimeSlots = { organizationId, employeeId, tenantId, timeSlotsIds };
+
+			// Resolve conflicts: each conflicting time log loses the new entry's time and keeps the rest
 			if (conflicts?.length) {
-				const times: IDateRange = {
-					start: new Date(startedAt),
-					end: new Date(stoppedAt)
-				};
-				// Loop through each conflicting time log
-				for await (const timeLog of conflicts) {
-					const { timeSlots = [] } = timeLog;
-					// Delete conflicting time slots
-					for await (const timeSlot of timeSlots) {
-						await this.commandBus.execute(new DeleteTimeSpanCommand(times, timeLog, timeSlot));
-					}
+				for (const timeLog of conflicts) {
+					await this.commandBus.execute(new DeleteTimeSpanCommand(times, timeLog));
 				}
 			}
 
@@ -2222,6 +2342,10 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				throw error;
 			}
 			throw new BadRequestException(`Failed to add manual time log: ${error?.message ?? error}`);
+		} finally {
+			// Those slots still count the overlapped time, and the new entry joined them without adding its own. Counted
+			// again after a failure too: the entries cut before it no longer hold that time.
+			await this.recalculateSharedTimeSlots(sharedTimeSlots);
 		}
 	}
 
@@ -2233,6 +2357,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * @returns The updated time log entry.
 	 */
 	async updateManualTime(id: ID, request: IManualTimeInput): Promise<ITimeLog> {
+		// The slots the overlapped entries share with the edited one, known once the overlap is read
+		let sharedTimeSlots: ITimeSlotDurationRecalculateInput | undefined;
 		try {
 			const tenantId = RequestContext.currentTenantId();
 			const { startedAt, stoppedAt, employeeId } = request;
@@ -2305,22 +2431,19 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 			// A running timer in the range is refused, never cut (the edited log itself is not among the conflicts),
 			// including one the range falls over after its last heartbeat or before its first time slot (#11886)
-			this.assertNoRunningTimerIn(conflicts);
 			this.assertNoRunningTimerIn(
+				conflicts,
 				await this.findRunningTimersStartedBefore(stoppedAt, employeeId, timeLog.organizationId, tenantId, id)
 			);
 
-			// Resolve conflicts by deleting conflicting time slots
-			if (conflicts?.length) {
-				const times: IDateRange = { start: new Date(startedAt), end: new Date(stoppedAt) };
+			const times: IDateRange = { start: new Date(startedAt), end: new Date(stoppedAt) };
+			const timeSlotsIds = timeSlotIdsReachedBy(times, conflicts);
+			sharedTimeSlots = { organizationId: timeLog.organizationId, employeeId, tenantId, timeSlotsIds };
 
-				// Loop through each conflicting time log
-				for await (const conflict of conflicts) {
-					const { timeSlots = [] } = conflict;
-					// Delete conflicting time slots
-					for await (const timeSlot of timeSlots) {
-						await this.commandBus.execute(new DeleteTimeSpanCommand(times, conflict, timeSlot));
-					}
+			// Resolve conflicts: each conflicting time log loses the edited entry's time and keeps the rest
+			if (conflicts?.length) {
+				for (const conflict of conflicts) {
+					await this.commandBus.execute(new DeleteTimeSpanCommand(times, conflict));
 				}
 			}
 
@@ -2338,6 +2461,10 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				throw error;
 			}
 			throw new BadRequestException(`Failed to update manual time log: ${error?.message ?? error}`);
+		} finally {
+			// Those slots still count the overlapped time, and the edited entry joined them without adding its own.
+			// Counted again after a failure too: the entries cut before it no longer hold that time.
+			await this.recalculateSharedTimeSlots(sharedTimeSlots);
 		}
 	}
 
