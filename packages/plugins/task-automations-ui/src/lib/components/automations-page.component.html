@@ -110,6 +110,9 @@
 										<div class="rule-name">{{ rule.name }}</div>
 										<div class="hint">
 											{{ 'TASK_AUTOMATIONS.TRIGGERS.' + rule.trigger.type | translate }}
+											@if (rule.trigger.mergedOnly) {
+												· {{ 'TASK_AUTOMATIONS.FORM.MERGED_ONLY' | translate }}
+											}
 											@if (rule.projectId) {
 												· {{ nameOf('projects', rule.projectId) }}
 											}

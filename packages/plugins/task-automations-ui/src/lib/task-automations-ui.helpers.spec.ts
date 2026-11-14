@@ -68,7 +68,12 @@ describe('task automations UI helpers', () => {
 	it('sends only what each type uses, and the status lists only for a status change', () => {
 		const draft = blankDraft();
 		draft.name = '  Assigned  ';
-		draft.trigger = { type: TaskAutomationTriggerEnum.TASK_ASSIGNED, toStatuses: ['done'], fromStatuses: [] };
+		draft.trigger = {
+			type: TaskAutomationTriggerEnum.TASK_ASSIGNED,
+			toStatuses: ['done'],
+			fromStatuses: [],
+			mergedOnly: true
+		};
 		draft.conditions = [{ ...newCondition(TaskAutomationConditionEnum.HAS_LABEL), values: ['a', 'a', ' '], text: 'dropped' }];
 		draft.actions = [
 			{ ...newAction(TaskAutomationActionEnum.NOTIFY_ASSIGNEES), tagIds: ['dropped'], message: '  ' },
@@ -84,6 +89,46 @@ describe('task automations UI helpers', () => {
 			conditions: [{ type: TaskAutomationConditionEnum.HAS_LABEL, values: ['a'] }],
 			actions: [{ type: TaskAutomationActionEnum.NOTIFY_ASSIGNEES }, { type: TaskAutomationActionEnum.SET_PRIORITY, priority: 'high' }]
 		});
+	});
+
+	it('sends “merged only” for a closed link alone, and reads it back from a saved rule (false when the rule has none)', () => {
+		const linkRule: ITaskAutomationRule = {
+			...rule,
+			trigger: { type: TaskAutomationTriggerEnum.LINK_CLOSED, mergedOnly: true }
+		};
+		const draft = draftOfRule(linkRule);
+		expect(draft.trigger.mergedOnly).toBe(true);
+		expect(ruleInputOfDraft(draft).trigger).toEqual({
+			type: TaskAutomationTriggerEnum.LINK_CLOSED,
+			mergedOnly: true
+		});
+
+		// A rule saved before the option: off, and sent as off.
+		const older = draftOfRule({ ...rule, trigger: { type: TaskAutomationTriggerEnum.LINK_CLOSED } });
+		expect(older.trigger.mergedOnly).toBe(false);
+		expect(ruleInputOfDraft(older).trigger).toEqual({
+			type: TaskAutomationTriggerEnum.LINK_CLOSED,
+			mergedOnly: false
+		});
+
+		// Another trigger never sends it, and a status change keeps its lists only.
+		expect(
+			ruleInputOfDraft({
+				...draft,
+				trigger: { ...draft.trigger, type: TaskAutomationTriggerEnum.STATUS_CHANGED, toStatuses: ['done'] }
+			}).trigger
+		).toEqual({ type: TaskAutomationTriggerEnum.STATUS_CHANGED, toStatuses: ['done'], fromStatuses: [] });
+
+		// The link template starts with it off.
+		const template: ITaskAutomationTemplate = {
+			key: 'link-closed-sets-status',
+			name: 'When a linked pull request or issue closes, set the status',
+			description: 'x',
+			trigger: { type: TaskAutomationTriggerEnum.LINK_CLOSED },
+			conditions: [],
+			actions: [{ type: TaskAutomationActionEnum.SET_STATUS, category: TaskAutomationStatusCategoryEnum.DONE }]
+		};
+		expect(draftOfTemplate(template).trigger.mergedOnly).toBe(false);
 	});
 
 	it('starts a rule from a template, switched off when the template needs the organization’s values', () => {
