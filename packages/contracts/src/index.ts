@@ -203,6 +203,7 @@ export * from './lib/tax-line.model';
 export * from './lib/tenant-api-key.model';
 export * from './lib/tenant.model';
 export * from './lib/terms-acceptance.model';
+export * from './lib/time-goal.model';
 export * from './lib/time-off.model';
 export * from './lib/time-slot-minute.model';
 export * from './lib/timesheet-statistics.model';

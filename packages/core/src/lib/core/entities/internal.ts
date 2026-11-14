@@ -184,6 +184,7 @@ export * from '../../time-tracking/activity/activity.entity';
 export * from '../../time-tracking/screenshot/screenshot.entity';
 export * from '../../time-tracking/time-log/time-log.entity';
 export * from '../../time-tracking/timer-reminder/time-log-reminder.entity';
+export * from '../../time-tracking/time-goal/time-goal.entity';
 export * from '../../time-tracking/time-slot/time-slot-minute/time-slot-minute.entity';
 export * from '../../time-tracking/time-slot/time-slot.entity';
 export * from '../../time-tracking/time-slot-session/time-slot-session.entity';
