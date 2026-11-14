@@ -153,15 +153,14 @@ describe('EmployeePlaceholderTransferService on SQLite', () => {
 		expect(await pointingAt(AMINA)).toEqual(REFERENCES.map(([table, column]) => `${table}.${column}`));
 	});
 
-	it('reads the tables outside the transaction, where a failed catalog statement cannot abort it', async () => {
-		// On Postgres, TypeORM's table reader asks for its own metadata table when a table has a generated column; the
-		// database has none, and the failed statement aborts the transaction it runs in.
-		const transaction = dataSource.manager.transaction.bind(dataSource.manager);
-		jest.spyOn(dataSource.manager, 'transaction').mockImplementation((async (work: (inner: any) => unknown) =>
-			transaction(async (inner) => {
-				jest.spyOn(inner.queryRunner, 'getTables').mockRejectedValue(new Error('aborted transaction'));
-				return work(inner);
-			})) as never);
+	it("works without TypeORM's table reader, which fails on a Postgres table with a generated column", async () => {
+		// The reader asks for TypeORM's own metadata table as soon as a table has a generated column; the database has
+		// none, so the reader throws (and, inside a transaction, aborts it).
+		const runner = dataSource.createQueryRunner();
+		jest.spyOn(Object.getPrototypeOf(runner), 'getTables').mockRejectedValue(
+			new Error('relation "typeorm_metadata" does not exist')
+		);
+		await runner.release();
 
 		await expect(service.transfer(AMINA, MARIE, TENANT)).resolves.toMatchObject({ timeLogs: 2 });
 		expect(await pointingAt(AMINA)).toEqual([]);

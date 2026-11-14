@@ -7,7 +7,7 @@ import {
 	InviteStatusEnum
 } from '@gauzy/contracts';
 import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
-import { EmployeeReference, UniqueKey, bareTableName, employeeReferences } from './employee-references';
+import { EmployeeReference, UniqueKey, bareTableName, readEmployeeReferences } from './employee-references';
 
 /** Named parameters of a statement, written `:name` in its SQL. */
 type Parameters = Record<string, unknown>;
@@ -102,14 +102,13 @@ export class EmployeePlaceholderTransferService {
 	}
 
 	/**
-	 * The columns pointing at an employee, read on a connection of their own before the transfer's transaction:
-	 * TypeORM's table reader asks Postgres for its own metadata table when a table has a generated column, and that
-	 * failed statement would abort the transaction it ran in.
+	 * The columns pointing at an employee, read from the database's catalog on a connection of their own, before the
+	 * transfer's transaction, which then holds its locks only for the writes.
 	 */
 	private async readReferences(): Promise<EmployeeReference[]> {
 		const queryRunner = this.typeOrmEmployeeRepository.manager.connection.createQueryRunner();
 		try {
-			return employeeReferences(await queryRunner.getTables());
+			return await readEmployeeReferences(queryRunner);
 		} finally {
 			await queryRunner.release();
 		}
