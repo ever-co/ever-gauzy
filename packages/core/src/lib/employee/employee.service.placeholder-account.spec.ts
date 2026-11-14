@@ -10,11 +10,12 @@ describe('EmployeeService.assertNotPlaceholderAccount', () => {
 	const TENANT = 'tenant-1';
 
 	function build(placeholderUserIds: string[]) {
-		const count = jest.fn(async ({ where }) =>
-			where.isPlaceholder === true && where.tenantId === TENANT && placeholderUserIds.includes(where.userId)
-				? 1
-				: 0
-		);
+		// The placeholders on each account; 'user-removed-placeholder' stands behind a soft-removed one.
+		const count = jest.fn(async ({ where, withDeleted }) => {
+			const live = placeholderUserIds.includes(where.userId);
+			const removed = where.userId === 'user-removed-placeholder' && withDeleted === true;
+			return where.isPlaceholder === true && where.tenantId === TENANT && (live || removed) ? 1 : 0;
+		});
 		const service: EmployeeService = Object.create(EmployeeService.prototype);
 		Object.assign(service, { typeOrmRepository: { count } });
 		return { service, count };
@@ -27,8 +28,17 @@ describe('EmployeeService.assertNotPlaceholderAccount', () => {
 			ConflictException
 		);
 		expect(count).toHaveBeenCalledWith({
-			where: { userId: 'user-placeholder', tenantId: TENANT, isPlaceholder: true }
+			where: { userId: 'user-placeholder', tenantId: TENANT, isPlaceholder: true },
+			withDeleted: true
 		});
+	});
+
+	it('answers 409 for the account behind a removed placeholder, which a recovery would bring back', async () => {
+		const { service } = build([]);
+
+		await expect(service.assertNotPlaceholderAccount('user-removed-placeholder', TENANT)).rejects.toBeInstanceOf(
+			ConflictException
+		);
 	});
 
 	it('lets any other account through', async () => {

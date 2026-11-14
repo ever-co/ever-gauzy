@@ -290,7 +290,9 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	 */
 	public async assertNotPlaceholderAccount(userId: ID, tenantId: ID): Promise<void> {
 		const placeholders = await this.typeOrmRepository.count({
-			where: { userId, ...(tenantId ? { tenantId } : {}), isPlaceholder: true }
+			where: { userId, ...(tenantId ? { tenantId } : {}), isPlaceholder: true },
+			// A removed placeholder still stands on the account, and a recovery brings it back.
+			withDeleted: true
 		});
 		if (placeholders > 0) {
 			throw new ConflictException(
