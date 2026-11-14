@@ -149,8 +149,12 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 			// nothing of the previous employee has been touched (at most the new employee keeps blank slots no log
 			// holds), and the error propagates;
 			Object.assign(timeLog, changes, timesheet ? { timesheetId: timesheet.id } : {}, { timeSlots: destination });
-			await this.writeWithHistory(stored, timeLog, history, (repository) =>
-				this.saveUpdatedTimeLog(timeLog, repository)
+			await this.writeWithHistory(
+				stored,
+				timeLog,
+				history,
+				(repository) => this.saveUpdatedTimeLog(timeLog, repository),
+				true
 			);
 			timeLog = await this.typeOrmTimeLogRepository.findOneBy({ id: timeLog.id });
 			// (c) only then the previous employee's slots are released, below. If that fails, the log is fully
@@ -526,13 +530,16 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 	 * @param written - What the write stores: the changes of an update, the whole entry of a save.
 	 * @param history - Given by the routes through which a person edits an entry.
 	 * @param write - The write, through the repository it is handed.
+	 * @param refusesDeletedEntry - Whether an entry deleted for good since it was first read stops the edit with a
+	 * NotFoundException: a save (a move's) would insert the row again. An update matches no row, so it is skipped.
 	 */
 	private async writeWithHistory<T>(
 		stored: ITimeLog,
 		written: Partial<ITimeLog>,
 		history: TimeLogHistoryOptions | undefined,
-		write: (repository: Repository<TimeLog>) => Promise<T>
-	): Promise<T> {
+		write: (repository: Repository<TimeLog>) => Promise<T>,
+		refusesDeletedEntry = false
+	): Promise<T | undefined> {
 		const recordsHistory = Boolean(history) && Boolean(this.dataSource);
 		if (!recordsHistory) {
 			return write(this.typeOrmTimeLogRepository);
@@ -543,11 +550,15 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 				withDeleted: true,
 				...lockedForChange()
 			});
-			const result = await write(manager.getRepository(TimeLog));
-			// An entry deleted for good in the meantime: the write changed nothing to record.
+			// An entry deleted for good in the meantime: nothing is written, nor recorded. TypeORM's save inserts a row
+			// no row has the key of, so a move stops here, before the previous employee's slots are released.
 			if (!current) {
-				return result;
+				if (refusesDeletedEntry) {
+					throw new NotFoundException('The time log was deleted.');
+				}
+				return undefined;
 			}
+			const result = await write(manager.getRepository(TimeLog));
 			const edited = { ...current, ...written } as ITimeLog;
 			const change = updatedChange(current, edited);
 			if (change) {

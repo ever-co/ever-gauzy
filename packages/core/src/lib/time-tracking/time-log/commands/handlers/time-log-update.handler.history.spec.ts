@@ -1,6 +1,7 @@
 // Must stay first: loads the entity graph before any handler pulls an entity (see activity.controller.spec.ts).
 import '../../../../core/entities/internal';
 
+import { NotFoundException } from '@nestjs/common';
 import { ActionTypeEnum } from '@gauzy/contracts';
 import { TimeLog } from '../../time-log.entity';
 import { recordTimeLogHistory } from '../../time-log-history.writer';
@@ -41,7 +42,10 @@ describe('TimeLogUpdateHandler: history of an edit', () => {
 		});
 
 	function setup() {
-		const transactionRepository = { update: jest.fn(async () => ({ affected: 1 })) };
+		const transactionRepository = {
+			update: jest.fn(async () => ({ affected: 1 })),
+			save: jest.fn(async (log: unknown) => log)
+		};
 		const transactionManager = {
 			getRepository: jest.fn(() => transactionRepository),
 			findOne: jest.fn(async () => storedLog())
@@ -127,6 +131,38 @@ describe('TimeLogUpdateHandler: history of an edit', () => {
 
 		await handler.execute(new TimeLogUpdateCommand({ description: '' }, storedLog(), null, false, {}));
 
+		expect(record).not.toHaveBeenCalled();
+	});
+
+	it('skips an update, with no row, when the entry was deleted for good since it was first read', async () => {
+		const { handler, transactionManager, transactionRepository, record } = setup();
+		transactionManager.findOne.mockResolvedValue(null);
+
+		await handler.execute(new TimeLogUpdateCommand({ description: 'Beta' }, storedLog(), null, false, {}));
+
+		expect(transactionRepository.update).not.toHaveBeenCalled();
+		expect(record).not.toHaveBeenCalled();
+	});
+
+	it('stops a move before its save when the entry was deleted for good since it was first read', async () => {
+		const { handler, transactionManager, transactionRepository, record } = setup();
+		transactionManager.findOne.mockResolvedValue(null);
+		const applyRelease = jest.fn(async () => undefined);
+		Object.assign(handler, {
+			commandBus: { execute: jest.fn(async () => ({ id: 'timesheet-amina' })) },
+			planRelease: jest.fn(async () => undefined),
+			bulkCreateTimeSlots: jest.fn(async () => []),
+			applyRelease
+		});
+
+		const refusal = handler.execute(
+			new TimeLogUpdateCommand({ employeeId: 'employee-amina' }, storedLog(), null, false, {})
+		);
+
+		await expect(refusal).rejects.toThrow(NotFoundException);
+		// A save would have inserted the deleted row again
+		expect(transactionRepository.save).not.toHaveBeenCalled();
+		expect(applyRelease).not.toHaveBeenCalled();
 		expect(record).not.toHaveBeenCalled();
 	});
 
