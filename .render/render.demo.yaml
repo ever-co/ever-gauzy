@@ -39,7 +39,7 @@ services:
           - key: JWT_VERIFICATION_TOKEN_SECRET
             generateValue: true
           - key: JWT_REFRESH_TOKEN_EXPIRATION_TIME
-            value: 86400
+            value: 604800
       healthCheckPath: /api/health
 
     - type: web
