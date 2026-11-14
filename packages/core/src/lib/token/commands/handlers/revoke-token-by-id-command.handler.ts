@@ -58,7 +58,9 @@ export class RevokeTokenByIdHandler implements ICommandHandler<RevokeTokenByIdCo
 
 		// The rule is the record's own method; a MikroORM read answers the row without it, see `tokenWithRules`.
 		const token = tokenWithRules(stored);
-		if (!token.canRevoke()) {
+		const isRevokedForAnotherReason = token.isRevoked() && token.revokedReason !== reason;
+		const mayRevise = !!command.dto.reviseRevoked && isRevokedForAnotherReason;
+		if (!token.canRevoke() && !mayRevise) {
 			return 'left';
 		}
 

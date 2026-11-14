@@ -136,6 +136,30 @@ describe('RevokeTokenByIdHandler', () => {
 		expect(rows[0].status).toBe(TokenStatus.REVOKED);
 	});
 
+	it('gives a token revoked for another reason the new reason when asked to', async () => {
+		const rows = [
+			activeRow({ status: TokenStatus.REVOKED, revokedAt: new Date(), revokedReason: 'User initiated logout' })
+		];
+		const { read, write } = table(rows);
+		const handler = new RevokeTokenByIdHandler(read as any, write as any);
+
+		await expect(handler.execute(command({ reviseRevoked: true }))).resolves.toBe(true);
+
+		expect(rows[0].revokedReason).toBe('Signed out from another session');
+	});
+
+	it('leaves a token revoked for another reason as it is by default', async () => {
+		const rows = [
+			activeRow({ status: TokenStatus.REVOKED, revokedAt: new Date(), revokedReason: 'User initiated logout' })
+		];
+		const { read, write } = table(rows);
+		const handler = new RevokeTokenByIdHandler(read as any, write as any);
+
+		await expect(handler.execute(command())).resolves.toBe(false);
+
+		expect(rows[0].revokedReason).toBe('User initiated logout');
+	});
+
 	it('answers false for an id that names no token', async () => {
 		const { read, write } = table([]);
 		const handler = new RevokeTokenByIdHandler(read as any, write as any);

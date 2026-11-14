@@ -256,6 +256,31 @@ describe('UserSessionService, a refresh landing while a sign-out runs', () => {
 	});
 });
 
+describe('UserSessionService, an access token logged out before its session is signed out', () => {
+	it('gives it the sign-out reason, so it is refused too, and leaves the current session and API tokens alone', async () => {
+		const loggedOut = (id: string, metadata: Record<string, unknown>) => ({
+			...token(id, 'ACCESS_TOKEN_TYPE', metadata),
+			status: TokenStatus.REVOKED,
+			revokedReason: 'User initiated logout'
+		});
+		const { service, services } = build({
+			revokedAccess: [
+				loggedOut('a-laptop-old', inSession('laptop')),
+				loggedOut('a-web-old', inSession('web')),
+				loggedOut('a-api-old', { apiTokenId: 'api-token-1' })
+			]
+		});
+		requestFrom('web');
+
+		await service.signOutOthers({ password: 'right' });
+
+		const revised = services.accessTokenService.revokeById.mock.calls
+			.map(([revocation]: any[]) => revocation)
+			.filter((revocation: any) => revocation.reviseRevoked);
+		expect(revised.map((revocation: any) => revocation.tokenId)).toEqual(['a-laptop-old']);
+	});
+});
+
 describe('UserSessionService.signOut', () => {
 	it('signs out one other session, its access and refresh tokens', async () => {
 		const { service, revoked } = build();

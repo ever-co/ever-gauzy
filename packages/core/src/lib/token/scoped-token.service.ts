@@ -8,8 +8,8 @@ import {
 	RotateTokenCommand,
 	TouchTokenCommand
 } from './commands';
-import { IGeneratedToken, IToken, IValidatedToken } from './interfaces';
-import { GetActiveTokensQuery, GetTokenByIdQuery, ValidateTokenQuery } from './queries';
+import { IGeneratedToken, IToken, ITokenQueryResult, IValidatedToken, TokenStatus } from './interfaces';
+import { GetActiveTokensQuery, GetTokenByIdQuery, GetTokensQuery, ValidateTokenQuery } from './queries';
 import { ScopedTokenConfig } from './scoped-config.registry';
 
 /**
@@ -125,8 +125,27 @@ export class ScopedTokenService {
 		userId: string;
 		revokedById?: string;
 		reason?: string;
+		reviseRevoked?: boolean;
 	}): Promise<boolean> {
 		return this.commandBus.execute(new RevokeTokenByIdCommand({ ...dto, tokenType: this.tokenType }));
+	}
+
+	/**
+	 * A user's tokens of this type created since `since` and revoked, read page by page.
+	 */
+	async getRevokedTokensSince(userId: string, since: Date): Promise<IToken[]> {
+		const pageSize = 100;
+		const tokens: IToken[] = [];
+		const filters = { userId, tokenType: this.tokenType, status: TokenStatus.REVOKED, createdAfter: since };
+		let hasMore = true;
+		while (hasMore) {
+			const page: ITokenQueryResult = await this.queryBus.execute(
+				new GetTokensQuery(filters, pageSize, tokens.length)
+			);
+			tokens.push(...page.items);
+			hasMore = page.items.length === pageSize && tokens.length < page.total;
+		}
+		return tokens;
 	}
 
 	/**

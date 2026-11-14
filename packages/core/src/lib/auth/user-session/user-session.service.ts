@@ -1,4 +1,5 @@
 import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { environment } from '@gauzy/config';
 import { ID, IUserSession, IUserSessionSignOutOthersInput, IUserSessionSignOutOthersResponse } from '@gauzy/contracts';
 import { AccessTokenService } from '../../access-token/access-token.service';
 import { RequestContext } from '../../core/context/request-context';
@@ -37,6 +38,9 @@ export enum UserSessionRefusal {
 
 /** How many read-and-revoke passes a sign-out makes; each catches the tokens a refresh minted during the last one. */
 const SIGN_OUT_PASSES = 5;
+
+/** The access token lifetime when `JWT_TOKEN_EXPIRATION_TIME` is not set, in seconds (as `AccessTokenModule`). */
+const DEFAULT_ACCESS_TOKEN_LIFETIME_S = 24 * 60 * 60;
 
 /** Whether a token belongs to a session: a refresh token, or a sign-in's access token (not an API token's). */
 function isSessionToken(token: IToken): boolean {
@@ -171,6 +175,7 @@ export class UserSessionService {
 			const tokens = await this.activeTokensOf(userId);
 			const targets = [...tokens.refreshTokens, ...tokens.accessTokens].filter(isPicked);
 			if (targets.length === 0) {
+				await this.reviseRevokedAccessTokens(userId, isPicked);
 				return;
 			}
 			await this.revoke(userId, targets);
@@ -179,6 +184,30 @@ export class UserSessionService {
 			code: UserSessionRefusal.SIGN_OUT_INCOMPLETE,
 			message: 'The session kept renewing its tokens while it was signed out: try again.'
 		});
+	}
+
+	/**
+	 * Gives the access tokens of signed-out sessions that were already revoked for another reason (a logout, which leaves
+	 * its token usable until it expires) the sign-out's reason, so that `JwtStrategy` refuses them too. Only tokens that
+	 * can still be valid are read: those created within the access token lifetime.
+	 */
+	private async reviseRevokedAccessTokens(userId: ID, isPicked: (token: IToken) => boolean): Promise<void> {
+		const lifetimeMs = (Number(environment.JWT_TOKEN_EXPIRATION_TIME) || DEFAULT_ACCESS_TOKEN_LIFETIME_S) * 1000;
+		const revoked = await this.accessTokenService.findRevokedSince(userId, new Date(Date.now() - lifetimeMs));
+		const toRevise = revoked.filter(
+			(token) => token.revokedReason !== USER_SESSION_SIGNED_OUT_REASON && isPicked(token)
+		);
+		await Promise.all(
+			toRevise.map((token) =>
+				this.accessTokenService.revokeById({
+					tokenId: token.id,
+					userId,
+					revokedById: userId,
+					reason: USER_SESSION_SIGNED_OUT_REASON,
+					reviseRevoked: true
+				})
+			)
+		);
 	}
 
 	/** The session the request is made from, null when its token names none. */

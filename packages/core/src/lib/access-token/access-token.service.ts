@@ -81,7 +81,17 @@ export class AccessTokenService {
 		userId: string;
 		revokedById?: string;
 		reason?: string;
+		reviseRevoked?: boolean;
 	}): Promise<boolean> {
 		return this.tokenService.revokeTokenById(revocation);
+	}
+
+	/**
+	 * @param userId The user.
+	 * @param since The oldest creation date read.
+	 * @returns Their access tokens created since then and revoked.
+	 */
+	public async findRevokedSince(userId: string, since: Date): Promise<IToken[]> {
+		return this.tokenService.getRevokedTokensSince(userId, since);
 	}
 }
