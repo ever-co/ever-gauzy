@@ -70,7 +70,7 @@ function createService(
 	ormType: MultiORMEnum,
 	rows: TimeLogRow[],
 	employee: Record<string, unknown>,
-	hooks: { afterDelete?: () => void; failDelete?: boolean } = {}
+	hooks: { beforeDelete?: () => void; afterDelete?: () => void; failDelete?: boolean } = {}
 ) {
 	const typeOrmTimeLogRepository = {
 		findOne: async ({ where }: { where: Record<string, unknown> }) => findRows(rows, where)[0] ?? null,
@@ -93,6 +93,7 @@ function createService(
 	};
 	const execute = jest.fn(async (command: object) => {
 		if (command instanceof TimeLogDeleteCommand) {
+			hooks.beforeDelete?.();
 			if (hooks.failDelete) {
 				throw new Error('The database went away while the run was removed.');
 			}
@@ -191,7 +192,7 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])('TimerService disca
 	const setup = (
 		rows: TimeLogRow[],
 		organization: OrganizationSettings = {},
-		hooks: { afterDelete?: () => void; failDelete?: boolean } = {}
+		hooks: { beforeDelete?: () => void; afterDelete?: () => void; failDelete?: boolean } = {}
 	) =>
 		createService(
 			ormType,
@@ -295,6 +296,24 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])('TimerService disca
 
 		await expect(discard(service)).rejects.toThrow('The database went away');
 		expect(rows).toEqual([expect.objectContaining({ id: RUNNING_LOG_ID, isRunning: true })]);
+	});
+
+	it('leaves the run stopped when its removal fails after another device started a run, so two never run', async () => {
+		const rows = [runningLog()];
+		const newRun = timeLog({
+			id: OTHER_RUNNING_LOG_ID,
+			source: TimeLogSourceEnum.DESKTOP,
+			isRunning: true,
+			startedAt: NOW,
+			stoppedAt: NOW
+		});
+		const { service } = setup(rows, {}, { beforeDelete: () => rows.push(newRun), failDelete: true });
+
+		await expect(discard(service)).rejects.toThrow('The database went away');
+		expect(rows).toEqual([
+			expect.objectContaining({ id: RUNNING_LOG_ID, isRunning: false }),
+			expect.objectContaining({ id: OTHER_RUNNING_LOG_ID, isRunning: true })
+		]);
 	});
 
 	it('answers 400 when nothing runs, and never removes a stopped entry, even one stopped a second earlier', async () => {

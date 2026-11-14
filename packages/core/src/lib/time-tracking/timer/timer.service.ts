@@ -917,17 +917,18 @@ export class TimerService {
 			throw new BadRequestException('No timer is running: there is nothing to discard.');
 		}
 
+		const tenantId = RequestContext.currentTenantId() ?? request.tenantId;
+		const { id: employeeId, organizationId } = employee;
+
 		const forceDelete = true;
 		try {
 			await this._commandBus.execute(new TimeLogDeleteCommand(runningLog as TimeLog, forceDelete));
 		} catch (error) {
-			await this.releaseRunningLog(runningLog.id);
+			await this.releaseRunningLog(runningLog.id, employeeId, organizationId, tenantId);
 			throw error;
 		}
 
 		// A run another device started meanwhile is left running, and keeps the employee tracking
-		const tenantId = RequestContext.currentTenantId() ?? request.tenantId;
-		const { id: employeeId, organizationId } = employee;
 		await this.markNotTrackingWhenNothingRuns(employeeId, organizationId, tenantId);
 	}
 
@@ -955,11 +956,21 @@ export class TimerService {
 		}
 	}
 
-	/** Gives a run taken for a discard its running state back, when removing it failed. */
-	private async releaseRunningLog(timeLogId: ID): Promise<void> {
+	/**
+	 * Gives a run taken for a discard its running state back, when removing it failed. Not when another run of the
+	 * employee started meanwhile: the failed run then stays stopped, so that two timers never run.
+	 */
+	private async releaseRunningLog(timeLogId: ID, employeeId: ID, organizationId: ID, tenantId: ID): Promise<void> {
 		const taken = { id: timeLogId, isRunning: false };
 		const running = { isRunning: true };
 		try {
+			const otherRuns = await this.findTimeLogsWhere({ employeeId, organizationId, tenantId, isRunning: true });
+			const hasAnotherRun = otherRuns.length > 0;
+			if (hasAnotherRun) {
+				this.logger.warn(`Time log ${timeLogId} stays stopped: another run of the employee started meanwhile.`);
+				return;
+			}
+
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
 					await this.mikroOrmTimeLogRepository.nativeUpdate(taken, running);
