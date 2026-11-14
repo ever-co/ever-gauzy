@@ -105,17 +105,27 @@ describe('employee placeholder migration on SQLite', () => {
 		expect(invite.placeholderEmployeeId).toBeNull();
 	});
 
-	it('is a no-op when run twice, drops the index on down and keeps the columns, and runs up again', async () => {
+	it('is a no-op when run twice, gives both tables their former schema and rows on down, and runs up again', async () => {
+		const schemaOf = async () =>
+			dataSource.query(
+				`SELECT "name", "sql" FROM "sqlite_master" WHERE "tbl_name" IN ('employee', 'invite') ORDER BY "name"`
+			);
+		const before = await schemaOf();
 		await run('up');
 		await expect(run('up')).resolves.toBeUndefined();
+		await dataSource.query(`UPDATE "invite" SET "placeholderEmployeeId" = ? WHERE "id" = ?`, [EMPLOYEE, INVITE]);
 
 		await run('down');
-		expect(await inviteIndexNames()).not.toContain(INVITE_PLACEHOLDER_EMPLOYEE_INDEX);
-		expect(await columnOf('employee', 'isPlaceholder')).toBeDefined();
-		expect(await columnOf('invite', 'placeholderEmployeeId')).toBeDefined();
+		expect(await schemaOf()).toEqual(before);
+		expect(await dataSource.query('PRAGMA foreign_key_list(invite)')).toEqual([]);
+		expect(await dataSource.query(`SELECT "id", "email" FROM "invite"`)).toEqual([
+			{ id: INVITE, email: 'amina@example.com' }
+		]);
+		expect(await dataSource.query(`SELECT "id" FROM "employee"`)).toEqual([{ id: EMPLOYEE }]);
 
 		await run('up');
 		expect(await inviteIndexNames()).toContain(INVITE_PLACEHOLDER_EMPLOYEE_INDEX);
+		expect(await columnOf('invite', 'placeholderEmployeeId')).toMatchObject({ notnull: 0, dflt_value: null });
 	});
 });
 

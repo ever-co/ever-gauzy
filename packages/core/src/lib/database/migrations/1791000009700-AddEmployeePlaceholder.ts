@@ -58,10 +58,8 @@ const PLACEHOLDER_EMPLOYEE: ColumnDefinition = {
  * transaction-scoped advisory lock (a named lock on MySQL) makes two API processes that boot at the same time against
  * one database run it one after the other.
  *
- * `down` drops the constraint, the index and the three columns on Postgres and MySQL. SQLite drops the index and keeps
- * the columns, as every additive column of this platform is kept on the embedded dialect: a column that carries a
- * foreign key is dropped there only by rebuilding `invite`, and a kept column with its default is invisible to a build
- * without the entity members.
+ * `down` drops the constraint, the index and the three columns on every database, and keeps every row. SQLite (3.35+)
+ * drops the invite's column together with the foreign key it carries inline, which gives the table its former schema.
  */
 export class AddEmployeePlaceholder1791000009700 implements MigrationInterface {
 	name = 'AddEmployeePlaceholder1791000009700';
@@ -175,7 +173,11 @@ export class AddEmployeePlaceholder1791000009700 implements MigrationInterface {
 				break;
 			case 'sqlite':
 				await queryRunner.query(`DROP INDEX IF EXISTS "${INVITE_PLACEHOLDER_EMPLOYEE_INDEX}"`);
-				console.log(chalk.gray(`${this.name}: the embedded dialect keeps its additive columns.`));
+				for (const column of [PLACEHOLDER_EMPLOYEE, PLACEHOLDER_EMAIL, IS_PLACEHOLDER]) {
+					if (await queryRunner.hasColumn(column.table, column.name)) {
+						await queryRunner.query(`ALTER TABLE "${column.table}" DROP COLUMN "${column.name}"`);
+					}
+				}
 				break;
 			case 'mysql':
 				await withMysqlNamedLock(queryRunner, this.mysqlLockName, () => this.mysqlDown(queryRunner));
