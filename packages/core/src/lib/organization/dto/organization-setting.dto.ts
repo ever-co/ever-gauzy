@@ -16,5 +16,6 @@ export class OrganizationSettingDTO extends PickType(Organization, [
 	'defaultBillRateValue',
 	'defaultBillRateCurrency',
 	'durationRoundingInterval',
-	'durationRoundingDirection'
+	'durationRoundingDirection',
+	'requireTwoFactor'
 ] as const) {}

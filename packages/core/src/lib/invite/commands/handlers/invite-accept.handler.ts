@@ -2,6 +2,7 @@ import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { IInvite, IUser, RolesEnum } from '@gauzy/contracts';
 import { AuthService } from './../../../auth/auth.service';
+import { TwoFactorRequiredException, twoFactorRequiredFor } from './../../../auth/two-factor/two-factor-challenge';
 import { UserService } from './../../../user/user.service';
 import { EmployeeService } from './../../../employee/employee.service';
 import { InviteService } from './../../invite.service';
@@ -114,6 +115,10 @@ export class InviteAcceptHandler implements ICommandHandler<InviteAcceptCommand>
 					return await this._authorizeUser(user);
 			}
 		} catch (error) {
+			// The account asks for its two-factor code: the 403 carries the challenge, untouched.
+			if (error instanceof TwoFactorRequiredException) {
+				throw error;
+			}
 			throw new BadRequestException(error);
 		}
 	}
@@ -153,6 +158,17 @@ export class InviteAcceptHandler implements ICommandHandler<InviteAcceptCommand>
 				throw new UnauthorizedException();
 			}
 
+			// An existing account with two-factor authentication on gets no session from the invitation alone: the answer is
+			// the challenge every other sign-in answers, completed at POST /auth/two-factor/verify (ever-co/ever-gauzy#11916).
+			if (await this.authService.asksForTwoFactorCode(user.id)) {
+				throw twoFactorRequiredFor({
+					userId: user.id,
+					email: user.email,
+					tenantId: user.tenantId ?? null,
+					lastOrganizationId: employee?.organizationId
+				});
+			}
+
 			// Generate both access and refresh tokens concurrently for efficiency.
 			const [access_token, refresh_token] = await Promise.all([
 				this.authService.getJwtAccessToken(user),
@@ -172,6 +188,10 @@ export class InviteAcceptHandler implements ICommandHandler<InviteAcceptCommand>
 				refresh_token: refresh_token
 			};
 		} catch (error) {
+			// The account asks for its two-factor code: the 403 carries the challenge, untouched.
+			if (error instanceof TwoFactorRequiredException) {
+				throw error;
+			}
 			throw new BadRequestException(error);
 		}
 	}
