@@ -37,12 +37,6 @@ interface ICursorStep<T extends string> {
 type Drawing = 'desktop' | 'extension';
 type HandsOnSource = 'pointer' | 'focus';
 
-/**
- * The server the desktop app's "Live" option connects to — the same constant its setup screen
- * uses (`serverConfig.live.url` in desktop-ui-lib's setup component).
- */
-const DESKTOP_LIVE_SERVER = 'https://api.gauzy.co';
-
 /** Length of the drawings' animation loop, in seconds (one step per second). */
 const LOOP_SECONDS = 12;
 
@@ -228,7 +222,12 @@ export class DownloadsComponent {
 		const api = parseUrl(apiBaseUrl || (typeof window !== 'undefined' ? window.location.origin : ''));
 		this.connectHost = api ? `${api.protocol}//${api.hostname}` : apiBaseUrl || '';
 		this.connectPort = api?.port ?? '';
-		this.isLiveServer = api?.origin === DESKTOP_LIVE_SERVER;
+		// The desktop app's "Live" option connects to the Gauzy cloud: offer it when this web app is the cloud's own
+		// (its origin is GAUZY_CLOUD_APP's). The cloud's API host is not written here: the egress audit allows Ever
+		// hosts in the Ever Platform modules only, and a web app reads its cloud address from its environment.
+		const cloudApp = parseUrl(this.environment.GAUZY_CLOUD_APP || '');
+		this.isLiveServer =
+			!!cloudApp && typeof window !== 'undefined' && window.location.origin === cloudApp.origin;
 	}
 
 	/** A desktop download link was clicked: show the setup steps for that platform. */
