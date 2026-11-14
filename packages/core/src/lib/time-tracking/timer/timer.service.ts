@@ -1340,8 +1340,9 @@ export class TimerService {
 	 * range is already the new one. If the second try fails too, the log keeps its stop, as
 	 * `ScheduleTimeLogEntriesCommand` only stops logs still running, and the warning says what may be missing. A log
 	 * still running had nothing written, so it gets the same update once more: left running, that command would end a
-	 * run without time slots ten seconds after its start. If the second try fails too, the log is left to that command,
-	 * which stops it as before. The new run starts either way.
+	 * run without time slots ten seconds after its start. If the second try fails too, the log is read back once more:
+	 * that try may also have written the stop before a later step failed, and the run then ends there. Otherwise it is
+	 * left to that command, which stops it as before. The new run starts either way.
 	 *
 	 * @param log - The running log.
 	 * @param stoppedAt - Where it ends.
@@ -1366,10 +1367,14 @@ export class TimerService {
 					this.logger.warn(`Stopped the replaced time log ${log.id} on a second try: ${error?.message}`);
 					return true;
 				} catch (retryError) {
+					// The second try, too, may have written the stop before a later step failed: read it back again
+					const isStoppedNow = Boolean(await this.storedStoppedLog(log.id, log.tenantId));
 					this.logger.warn(
-						`Failed to stop the replaced time log ${log.id} on a second try, left to the cleanup if it still runs: ${retryError?.message}`
+						isStoppedNow
+							? `Stopped the replaced time log ${log.id} on a second try, but its time slots or totals may be incomplete: ${retryError?.message}`
+							: `Failed to stop the replaced time log ${log.id} on a second try, left to the cleanup if it still runs: ${retryError?.message}`
 					);
-					return false;
+					return isStoppedNow;
 				}
 			}
 			try {
