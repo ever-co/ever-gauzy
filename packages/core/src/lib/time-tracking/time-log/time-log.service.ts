@@ -104,6 +104,29 @@ import {
 /** The code of the refusal of manual time over a timer that is still running (409). */
 export const RUNNING_TIMER_OVERLAP = 'RUNNING_TIMER_OVERLAP';
 
+/** The body of a RUNNING_TIMER_OVERLAP refusal (409). */
+export interface IRunningTimerOverlap {
+	message: string;
+	code: typeof RUNNING_TIMER_OVERLAP;
+	/** The timer in the way, so a client can show which one it is. */
+	runningTimeLog: {
+		id: ID;
+		/** When it started (ISO 8601), or null for a log stored without a start. */
+		startedAt: string | null;
+		source: ITimeLog['source'] | null;
+	};
+}
+
+/**
+ * When a log started, in milliseconds since the epoch; a log stored without a valid start comes last.
+ *
+ * @param log The log.
+ */
+function startTimeOf(log: ITimeLog): number {
+	const time = log.startedAt ? new Date(log.startedAt).getTime() : Number.NaN;
+	return Number.isNaN(time) ? Number.POSITIVE_INFINITY : time;
+}
+
 @Injectable()
 export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	constructor(
@@ -2013,16 +2036,31 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * The request is refused instead, before anything is trimmed or written. The desktop timer and the agent keep an
 	 * upload refused this way and send it again at their next sync: their offline time is recorded once that timer stops.
 	 *
+	 * The refusal names the timer in the way (`runningTimeLog`), so a client can show which one it is: the one that
+	 * started first, when several are running over the range.
+	 *
 	 * @param conflicts The logs the new range overlaps.
-	 * @throws ConflictException with the code RUNNING_TIMER_OVERLAP.
+	 * @throws ConflictException with the code RUNNING_TIMER_OVERLAP and the body `IRunningTimerOverlap`.
 	 */
 	private assertNoRunningTimerIn(conflicts: ITimeLog[] | null | undefined): void {
-		if ((conflicts ?? []).some((log) => log.isRunning)) {
-			throw new ConflictException({
-				message: 'A timer is running over this time range. Stop it first, or choose a range outside it.',
-				code: RUNNING_TIMER_OVERLAP
-			});
+		const running = (conflicts ?? []).filter((log) => log.isRunning);
+		if (!running.length) {
+			return;
 		}
+		const inTheWay = running.reduce((first, log) => (startTimeOf(log) < startTimeOf(first) ? log : first));
+		const start = startTimeOf(inTheWay);
+		const body: IRunningTimerOverlap = {
+			message: 'A timer is running over this time range. Stop it first, or choose a range outside it.',
+			code: RUNNING_TIMER_OVERLAP,
+			runningTimeLog: {
+				id: inTheWay.id,
+				// A string, not the Date: every error body is copied on its way out (`toSafeHttpException`), and a
+				// Date has no fields of its own to copy, so it would reach the client as `{}`
+				startedAt: Number.isFinite(start) ? new Date(start).toISOString() : null,
+				source: inTheWay.source ?? null
+			}
+		};
+		throw new ConflictException(body);
 	}
 
 	/**
