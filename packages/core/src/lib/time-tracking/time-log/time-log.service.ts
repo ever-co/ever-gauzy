@@ -83,7 +83,8 @@ import {
 	owedLinesOf,
 	owedRateOfLog,
 	PricedRate,
-	storesRates
+	storesRates,
+	totalsByCurrencyOf
 } from './time-log-pricing';
 import { findStoredRatesOf } from './time-log-rates';
 import {
@@ -963,14 +964,18 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					return Number(addDecimalStrings(total, item.amount));
 				}, 0);
 
-				return { date, value };
+				// The same total per currency: `value` adds every amount as it always did, whatever its currency
+				const valueByCurrency = totalsByCurrencyOf(byEmployee);
+
+				return { date, value, valueByCurrency };
 			})
 			.value();
 
 		// Map the result to an array of owed amount report chart data
 		const dates = days.map((date) => ({
 			date,
-			value: byDate[date]?.value || 0
+			value: byDate[date]?.value || 0,
+			valueByCurrency: byDate[date]?.valueByCurrency ?? []
 		}));
 
 		// Return the array of owed amount report chart data
@@ -1226,10 +1231,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 						0
 					);
 				} else {
-					spent = timeLogs.reduce(
-						(totalAmount: number, log: ITimeLog) => totalAmount + budgetCostOf(log),
-						0
-					);
+					spent = timeLogs.reduce((totalAmount: number, log: ITimeLog) => totalAmount + budgetCostOf(log), 0);
 				}
 
 				spentPercentage = (spent * 100) / budget;

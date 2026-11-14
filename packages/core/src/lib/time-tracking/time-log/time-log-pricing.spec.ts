@@ -1,4 +1,12 @@
-import { amountsOf, billedRateOf, budgetCostOf, owedLinesOf, owedRateOfLog, rateOfReportRow } from './time-log-pricing';
+import {
+	amountsOf,
+	billedRateOf,
+	budgetCostOf,
+	owedLinesOf,
+	owedRateOfLog,
+	rateOfReportRow,
+	totalsByCurrencyOf
+} from './time-log-pricing';
 
 const HOUR = 3600;
 
@@ -124,6 +132,23 @@ describe('time log pricing', () => {
 
 		it('costs nothing without a rate', () => {
 			expect(budgetCostOf({ ratesStored: true, billRateValue: null, duration: 3600 } as any)).toBe(0);
+		});
+	});
+
+	describe('totalsByCurrencyOf', () => {
+		it('adds the owed lines of a day per currency, never one currency to another', () => {
+			const lines = [
+				{ amount: 40, currency: 'EUR' },
+				{ amount: 1.1, currency: 'EUR' },
+				{ amount: 50, currency: 'USD' },
+				{ amount: 0, currency: null }
+			];
+
+			expect(totalsByCurrencyOf(lines)).toEqual([
+				{ currency: 'EUR', amount: 41.1 },
+				{ currency: 'USD', amount: 50 },
+				{ currency: null, amount: 0 }
+			]);
 		});
 	});
 

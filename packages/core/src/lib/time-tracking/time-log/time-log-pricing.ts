@@ -133,6 +133,26 @@ export function amountsOf<T extends { duration?: number }>(
 }
 
 /**
+ * The amounts of some lines added per currency, exactly: the total of one currency is never added to another's.
+ *
+ * @param lines The lines, each with its amount and the currency it is in.
+ * @returns One total per currency, in the order the currencies first appear.
+ */
+export function totalsByCurrencyOf(
+	lines: ReadonlyArray<{ amount: number; currency?: string | null }>
+): CurrencyAmount[] {
+	const byCurrency = new Map<string, CurrencyAmount>();
+	for (const line of lines) {
+		const currency = line.currency ?? null;
+		const key = currency ?? '';
+		const total = byCurrency.get(key) ?? { currency, amount: 0 };
+		total.amount = Number(addDecimalStrings(total.amount, line.amount));
+		byCurrency.set(key, total);
+	}
+	return [...byCurrency.values()];
+}
+
+/**
  * What a log's time is owed at. A log that stores its rates is owed at the pay rate it stores, else at the billing
  * rate it stores; a log recorded around the API is owed at the member's current rates, as before (`owedRateOf`).
  *
