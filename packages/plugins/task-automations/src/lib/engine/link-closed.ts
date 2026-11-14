@@ -30,7 +30,9 @@ function text(value: unknown): string | null {
 
 /**
  * A closed link's payload back, or `null` when it is not one: the task, its tenant and organization, and a kind the
- * contract names are required. `merged` and `closedBefore` are kept only as booleans.
+ * contract names are required. `merged` and `closedBefore` are kept only as booleans. One parser serves both sides: the
+ * consumer reads `closedBefore` from `task_link.closed`, where the capture set it; the capture parses an integration's
+ * report with it too, and then overwrites it from the claims, so an integration never decides it.
  */
 export function parseLinkClosedEvent(data: unknown): ITaskLinkClosedEvent | null {
 	if (!data || typeof data !== 'object') return null;

@@ -87,12 +87,12 @@ export class TaskAutomationLinkClosedCapture implements IEventHandler<TaskLinkCl
 	}
 
 	/**
-	 * Claims and appends (see {@link claimAndAppendOnce}). A claim another delivery committed first fails the insert:
-	 * the unique key decided, and the report is theirs. Whether another delivery made this report is told by the merge's
-	 * claim for a merge (the close's may be the one a close without merging took long before, which says nothing of this
-	 * delivery), by the close's for a close. A merge whose close another delivery claimed meanwhile — a close without
-	 * merging, delivered at the same moment — lost only the close's claim, which was not its to take: it is tried once
-	 * more, now as a merge after a reported close.
+	 * Claims and appends (see {@link claimAndAppendOnce}). A claim another delivery committed first fails the
+	 * insert: the unique key decided, and the report is theirs. Whether another delivery made this report is told
+	 * by the merge's claim for a merge (the close's may be the one a close without merging took long before, which
+	 * says nothing of this delivery), by the close's for a close. A merge whose close another delivery claimed
+	 * meanwhile — a close without merging, delivered at the same moment — lost only the close's claim, which was
+	 * not its to take: it is tried once more, now as a merge after a reported close.
 	 */
 	private async claimAndAppend(
 		key: ITaskLinkClosureKey,
@@ -102,8 +102,11 @@ export class TaskAutomationLinkClosedCapture implements IEventHandler<TaskLinkCl
 		try {
 			return await this.claimAndAppendOnce(key, mergeKey, input);
 		} catch (error) {
+			// Another delivery made this report (the merge's claim tells for a merge, the close's for a close).
 			if (await this.closures.exists(mergeKey ?? key)) return false;
+			// A close, or a merge whose close nobody claimed either: a real failure (a redelivery reports it again).
 			if (!mergeKey || !(await this.closures.exists(key))) throw error;
+			// A merge that lost only the close's claim to a close without merging: once more, as a merge after a close.
 			try {
 				return await this.claimAndAppendOnce(key, mergeKey, input);
 			} catch (retryError) {
