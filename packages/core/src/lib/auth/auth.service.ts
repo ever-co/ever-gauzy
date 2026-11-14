@@ -54,6 +54,7 @@ import {
 	Logger,
 	NotFoundException,
 	Optional,
+	ServiceUnavailableException,
 	UnauthorizedException
 } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
@@ -79,6 +80,7 @@ import { MikroOrmUserRepository } from '../user/repository/mikro-orm-user.reposi
 import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
 import { UserService } from '../user/user.service';
 import { RequestContext } from './../core/context';
+import { DATABASE_UNAVAILABLE_MESSAGE, isDatabaseUnavailableError } from './../core/errors/database-unavailable';
 import { IAuthenticatedUser } from './../core/context/types';
 import { runOutsideOrganizationBoundary } from './../core/crud/organization-boundary';
 import { OrganizationTeam, Tenant, User } from './../core/entities/internal';
@@ -148,6 +150,16 @@ import {
 	sessionForMint,
 	sessionOfRefreshToken
 } from './user-session/user-session-claims';
+
+/**
+ * A token could not be minted because the database was unreachable (a user, employee or sign-out marker read): a 503
+ * the client retries with the same token, as `JwtStrategy` answers, never a 401 that makes it sign in again.
+ */
+function throwIfDatabaseUnavailable(error: unknown): void {
+	if (isDatabaseUnavailableError(error)) {
+		throw new ServiceUnavailableException(DATABASE_UNAVAILABLE_MESSAGE, { cause: error });
+	}
+}
 
 @Injectable()
 export class AuthService extends SocialAuthService {
@@ -2261,6 +2273,7 @@ export class AuthService extends SocialAuthService {
 		} catch (error) {
 			// Log and rethrow any errors encountered during the process
 			this.logger.error('Error while generating JWT access token:', error?.message);
+			throwIfDatabaseUnavailable(error);
 			throw new UnauthorizedException();
 		}
 	}
@@ -2306,6 +2319,7 @@ export class AuthService extends SocialAuthService {
 			return this.refreshTokenService.generate(user.id, payload);
 		} catch (error) {
 			this.logger.error('Error while generating JWT refresh token:', error?.message);
+			throwIfDatabaseUnavailable(error);
 			throw new UnauthorizedException('Unable to generate refresh token');
 		}
 	}
@@ -2353,6 +2367,7 @@ export class AuthService extends SocialAuthService {
 			return this.refreshTokenService.rotate(token, payload);
 		} catch (error) {
 			this.logger.error('Error while rotating JWT refresh token:', error?.message);
+			throwIfDatabaseUnavailable(error);
 			throw new UnauthorizedException('Unable to rotate refresh token');
 		}
 	}
@@ -2393,9 +2408,11 @@ export class AuthService extends SocialAuthService {
 			// Return both the new access token and refresh token
 			return { token: access_token, refresh_token };
 		} catch (error) {
-			// If the error is an UnauthorizedException or subclass, re-throw it so controllers return 401
+			// If the error is an UnauthorizedException or subclass, re-throw it so controllers return 401, and an
+			// unreachable database as the 503 a client retries with the same token
 			if (
 				error instanceof UnauthorizedException ||
+				error instanceof ServiceUnavailableException ||
 				(error && typeof error.status === 'number' && error.status === 401)
 			) {
 				throw error;
@@ -2445,9 +2462,11 @@ export class AuthService extends SocialAuthService {
 			// Return both the new access token and refresh token
 			return { token: access_token, refresh_token };
 		} catch (error) {
-			// If the error is an UnauthorizedException or subclass, re-throw it so controllers return 401
+			// If the error is an UnauthorizedException or subclass, re-throw it so controllers return 401, and an
+			// unreachable database as the 503 a client retries with the same token
 			if (
 				error instanceof UnauthorizedException ||
+				error instanceof ServiceUnavailableException ||
 				(error && typeof error.status === 'number' && error.status === 401)
 			) {
 				throw error;

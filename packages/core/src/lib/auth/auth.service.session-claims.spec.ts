@@ -1,6 +1,6 @@
 import '../core/entities/internal';
 
-import { UnauthorizedException } from '@nestjs/common';
+import { ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
 import { sign } from 'jsonwebtoken';
 import { RequestContext } from '../core/context';
 import { AuthService } from './auth.service';
@@ -191,6 +191,26 @@ describe('AuthService, a mint in a signed-out session', () => {
 		await service.getJwtAccessToken(user, ORG);
 
 		expect(accessPayloads[0].sessionId).toBe('phone');
+	});
+
+	it('answers 503, not 401, when the database cannot be reached for the marker, so the client keeps its token', async () => {
+		const { service, accessPayloads } = buildAuthService();
+		const unreachable = Object.assign(new Error('connect ECONNREFUSED 10.0.0.5:5432'), {
+			code: 'ECONNREFUSED',
+			syscall: 'connect'
+		});
+		(service as any).accessTokenService.isSessionSignedOut.mockRejectedValue(unreachable);
+		inRequest({ userId: USER, claims: phone });
+
+		await expect(service.getJwtAccessToken(user, ORG)).rejects.toThrow(ServiceUnavailableException);
+		await expect(service.getJwtRefreshToken(user, ORG)).rejects.toThrow(ServiceUnavailableException);
+		inRequest({ userId: USER });
+		await expect(service.rotateTokens(sign({ id: USER, ...phone }, 'k'))).rejects.toThrow(
+			ServiceUnavailableException
+		);
+
+		expect(accessPayloads).toEqual([]);
+		expect((service as any).refreshTokenService.rotate).not.toHaveBeenCalled();
 	});
 
 	it('reads no marker for a session the request starts: a sign-in, or a refresh of an older token', async () => {
