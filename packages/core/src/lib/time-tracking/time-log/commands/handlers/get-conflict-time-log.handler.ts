@@ -1,6 +1,7 @@
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import * as moment from 'moment';
 import { ConfigService, DatabaseTypeEnum } from '@gauzy/config';
+import { TimeLogType } from '@gauzy/contracts';
 import { prepareSQLQuery as p } from './../../../../database/database.helper';
 import { TimeLog } from './../../time-log.entity';
 import { IGetConflictTimeLogCommand } from '../get-conflict-time-log.command';
@@ -109,8 +110,15 @@ export class GetConflictTimeLogHandler implements ICommandHandler<IGetConflictTi
 					stoppedAt
 				);
 				conflictQuery = conflictQuery
-					.innerJoinAndSelect(`${conflictQuery.alias}.timeSlots`, 'timeSlots')
+					.leftJoinAndSelect(`${conflictQuery.alias}.timeSlots`, 'timeSlots')
 					.where(p(`"${conflictQuery.alias}"."employeeId" = :employeeId`), { employeeId })
+					// A log with a slot takes part, as with the inner join this replaces, and so does a break, which holds none
+					.andWhere(
+						p(`("timeSlots"."id" IS NOT NULL OR "${conflictQuery.alias}"."logType" = :conflictBreakType)`),
+						{
+							conflictBreakType: TimeLogType.BREAK
+						}
+					)
 					.andWhere(p(`"${conflictQuery.alias}"."tenantId" = :tenantId`), { tenantId })
 					.andWhere(p(`"${conflictQuery.alias}"."organizationId" = :organizationId`), { organizationId })
 					.andWhere(query);
