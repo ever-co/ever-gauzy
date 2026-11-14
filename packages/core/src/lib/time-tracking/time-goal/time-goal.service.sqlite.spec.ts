@@ -584,6 +584,29 @@ describe('TimeGoalService on SQLite', () => {
 	);
 
 	it(
+		'refuses a read or a write that names no organization, and takes one named by organization.id',
+		inRequest(async () => {
+			actAs(MARIE);
+			const noOrganization = { organizationId: undefined } as never;
+			await expect(service.findGoals(noOrganization)).rejects.toBeInstanceOf(BadRequestException);
+			await expect(service.getProgress(noOrganization)).rejects.toBeInstanceOf(BadRequestException);
+			await expect(service.findGoal(MARIE, undefined as never)).rejects.toBeInstanceOf(BadRequestException);
+
+			const input = {
+				name: 'By object',
+				comparison: TimeGoalComparisonEnum.AT_LEAST,
+				targetHours: 5,
+				period: TimeGoalPeriodEnum.WEEK,
+				scope: TimeGoalScopeEnum.EMPLOYEE
+			};
+			await expect(service.createGoal(input as never)).rejects.toBeInstanceOf(BadRequestException);
+			const byObject = await service.createGoal({ ...input, organization: { id: ORGANIZATION } } as never);
+			expect(byObject.organizationId).toBe(ORGANIZATION);
+		}),
+		TIMEOUT
+	);
+
+	it(
 		'refuses a target over its period, a team goal without its team, and a project of another organization',
 		inRequest(async () => {
 			actAs(MARIE);

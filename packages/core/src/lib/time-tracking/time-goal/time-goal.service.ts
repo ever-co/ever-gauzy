@@ -85,7 +85,7 @@ export class TimeGoalService extends TenantAwareCrudService<TimeGoal> {
 	 */
 	async createGoal(input: ITimeGoalCreateInput): Promise<ITimeGoal> {
 		const tenantId = RequestContext.currentTenantId();
-		const owner = this.ownerOf(input);
+		const owner = this.ownerOf(input, this.organizationOf(input));
 
 		this.assertTargetFits(input.period, input.targetHours);
 		if (!(await this.mayWrite(owner))) {
@@ -133,7 +133,7 @@ export class TimeGoalService extends TenantAwareCrudService<TimeGoal> {
 	 * Changes what a goal asks for. A list of projects or clients replaces the goal's when sent.
 	 */
 	async updateGoal(id: ID, input: ITimeGoalUpdateInput): Promise<ITimeGoal> {
-		const goal = await this.findWritableGoal(id, input.organizationId);
+		const goal = await this.findWritableGoal(id, this.organizationOf(input));
 		const tenantId = RequestContext.currentTenantId();
 
 		const period = input.period ?? goal.period;
@@ -207,9 +207,9 @@ export class TimeGoalService extends TenantAwareCrudService<TimeGoal> {
 	 */
 	async findGoals(input: ITimeGoalFindInput): Promise<IPagination<ITimeGoal>> {
 		const tenantId = RequestContext.currentTenantId();
-		const { organizationId } = input;
+		const organizationId = this.organizationOf(input);
 
-		const readable = await this.readableGoalsWhere(input, tenantId);
+		const readable = await this.readableGoalsWhere(input, organizationId, tenantId);
 		if (readable.length === 0) {
 			return { items: [], total: 0 };
 		}
@@ -236,9 +236,9 @@ export class TimeGoalService extends TenantAwareCrudService<TimeGoal> {
 	 */
 	async getProgress(input: ITimeGoalProgressFindInput, now: Date = new Date()): Promise<ITimeGoalProgress[]> {
 		const tenantId = RequestContext.currentTenantId();
-		const { organizationId } = input;
+		const organizationId = this.organizationOf(input);
 
-		const memberIds = await this.readableMemberIds(input);
+		const memberIds = await this.readableMemberIds(input, organizationId);
 		if (memberIds.length === 0) {
 			return [];
 		}
@@ -342,8 +342,8 @@ export class TimeGoalService extends TenantAwareCrudService<TimeGoal> {
 	 * Who a new goal counts, from its scope: a member goal names its member (the caller when absent) and no team, a
 	 * team goal its team and no member, an organization goal neither.
 	 */
-	private ownerOf(input: ITimeGoalCreateInput): TimeGoalOwner {
-		const { scope, organizationId } = input;
+	private ownerOf(input: ITimeGoalCreateInput, organizationId: ID): TimeGoalOwner {
+		const { scope } = input;
 		if (scope === TimeGoalScopeEnum.EMPLOYEE) {
 			const employeeId = input.employeeId ?? RequestContext.currentUser()?.employeeId;
 			if (!employeeId) {
@@ -358,6 +358,19 @@ export class TimeGoalService extends TenantAwareCrudService<TimeGoal> {
 			return { scope, employeeId: null, organizationTeamId: input.organizationTeamId, organizationId };
 		}
 		return { scope, employeeId: null, organizationTeamId: null, organizationId };
+	}
+
+	/**
+	 * The organization a read or a write names, by `organizationId` or by `organization.id`. A read or write that names
+	 * none is refused: its organization predicate would be dropped (an undefined where value is ignored), or a goal
+	 * stored without one.
+	 */
+	private organizationOf(input: { organizationId?: ID; organization?: { id?: ID } }): ID {
+		const organizationId = input.organizationId ?? input.organization?.id;
+		if (!organizationId) {
+			throw new BadRequestException('A time goal is read and written in an organization: send organizationId.');
+		}
+		return organizationId;
 	}
 
 	/**
@@ -474,7 +487,7 @@ export class TimeGoalService extends TenantAwareCrudService<TimeGoal> {
 	private async findStoredGoal(id: ID, organizationId: ID): Promise<TimeGoal | null> {
 		const tenantId = RequestContext.currentTenantId();
 		return await this.typeOrmRepository.findOne({
-			where: { id, organizationId, tenantId },
+			where: { id, organizationId: this.organizationOf({ organizationId }), tenantId },
 			relations: GOAL_RELATIONS
 		});
 	}
@@ -518,7 +531,11 @@ export class TimeGoalService extends TenantAwareCrudService<TimeGoal> {
 	 * ever narrows an alternative, and an alternative a filter cannot match is left out, so no filter reaches a goal
 	 * the caller may not read. No alternative left means nothing to read.
 	 */
-	private async readableGoalsWhere(input: ITimeGoalFindInput, tenantId: ID): Promise<FindOptionsWhere<TimeGoal>[]> {
+	private async readableGoalsWhere(
+		input: ITimeGoalFindInput,
+		organizationId: ID,
+		tenantId: ID
+	): Promise<FindOptionsWhere<TimeGoal>[]> {
 		const { scope, employeeId, organizationTeamId } = input;
 		const actsForEveryEmployee = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
 		if (actsForEveryEmployee) {
@@ -529,7 +546,7 @@ export class TimeGoalService extends TenantAwareCrudService<TimeGoal> {
 			return [everything];
 		}
 
-		const { memberIds, teamIds } = await this.readableOwners(input.organizationId, tenantId);
+		const { memberIds, teamIds } = await this.readableOwners(organizationId, tenantId);
 		const wantsScope = (wanted: TimeGoalScopeEnum) => !scope || scope === wanted;
 		const alternatives: FindOptionsWhere<TimeGoal>[] = [];
 
@@ -591,7 +608,7 @@ export class TimeGoalService extends TenantAwareCrudService<TimeGoal> {
 	/**
 	 * The members a progress read covers, after the rules of {@link getProgress}.
 	 */
-	private async readableMemberIds(input: ITimeGoalProgressFindInput): Promise<ID[]> {
+	private async readableMemberIds(input: ITimeGoalProgressFindInput, organizationId: ID): Promise<ID[]> {
 		const requested = [...new Set(input.employeeIds ?? [])];
 		const teamIds = input.organizationTeamId ? [input.organizationTeamId] : [];
 		let memberIds: ID[] = [];
@@ -607,7 +624,7 @@ export class TimeGoalService extends TenantAwareCrudService<TimeGoal> {
 		} else if (requested.length > 0) {
 			const allowed = await Promise.all(
 				requested.map((employeeId) =>
-					this._managedEmployeeService.canManageEmployee(employeeId, undefined, input.organizationId)
+					this._managedEmployeeService.canManageEmployee(employeeId, undefined, organizationId)
 				)
 			);
 			memberIds = requested.filter((_, index) => allowed[index]);
