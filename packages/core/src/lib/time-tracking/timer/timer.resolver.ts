@@ -4,6 +4,7 @@ import { Args, ID, Mutation, Query, Resolver } from '@nestjs/graphql';
 import {
 	ID as Id,
 	ITimeLog,
+	ITimerDiscardInput,
 	ITimerStatus,
 	ITimerStatusInput,
 	ITimerToggleInput,
@@ -61,7 +62,7 @@ export interface ITimerWorkedStatus {
  * its own: every field below reaches the same `TimerService` method, dispatches the same command or
  * the same query, that the `/api/timesheet/timer` routes reach.
  *
- * **Two of the five fields are computed answers, and they are root fields of their own because there
+ * **Two of the six fields are computed answers, and they are root fields of their own because there
  * is no resource for them to hang off.** A timer's status is not a row: it has no identifier of its
  * own, nothing to withdraw and nothing to state, and what it answers is a computation over the time
  * logs of a period. So this surface declares no connection, no node query and no count — the
@@ -71,7 +72,7 @@ export interface ITimerWorkedStatus {
  * **The guard chain and the class permission are the controller's.** The class carries
  * `TenantPermissionGuard` and `PermissionGuard` with `TIME_TRACKER`, which is what
  * `TimerController` carries, and every field then states the permission its own route runs under: the
- * two status routes declare `ALL_ORG_VIEW` beside the class permission, and the three write routes
+ * two status routes declare `ALL_ORG_VIEW` beside the class permission, and the four write routes
  * declare none of their own and therefore run under the class one.
  *
  * **Neither read takes a `relations` argument, and that is a statement rather than an omission.** The
@@ -243,5 +244,19 @@ export class TimerResolver {
 	@Permissions(PermissionsEnum.TIME_TRACKER)
 	async stopTimer(@Args('input') input: ITimerToggleInput): Promise<ITimeLog | null> {
 		return await this.commandBus.execute(new StopTimerCommand(input));
+	}
+
+	/**
+	 * Discards the running timer.
+	 *
+	 * The write is the same service method the delivered `POST /discard` route calls, with the same input,
+	 * under the class permission alone, as that route runs. The route answers 204 with no body, so this field
+	 * answers `true`: the write either removed the run or raised, and a refusal travels as the route raises it.
+	 */
+	@Mutation('discardTimer')
+	@Permissions(PermissionsEnum.TIME_TRACKER)
+	async discardTimer(@Args('input') input: ITimerDiscardInput): Promise<boolean> {
+		await this.timerService.discardTimer(input);
+		return true;
 	}
 }

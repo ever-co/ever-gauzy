@@ -25,9 +25,9 @@ import { GetTimerStatusQuery } from './queries';
  * The timer over GraphQL.
  *
  * The delivered REST routes serve two computed reads — the caller's current state, and one worked
- * state per employee the read considered — and three writes that start, stop or toggle the timer. The
- * resource has no list, no node read and no count, so neither does this surface. This suite pins the
- * half of the two-protocol doctrine that is easy to get quietly wrong:
+ * state per employee the read considered — and four writes that start, stop, toggle or discard the
+ * timer. The resource has no list, no node read and no count, so neither does this surface. This suite
+ * pins the half of the two-protocol doctrine that is easy to get quietly wrong:
  *
  * - both computed answers are root fields of the one composed schema and are answered by the two types
  *   that state exactly what their own read fills — the state vocabulary and the running flag on the
@@ -38,12 +38,13 @@ import { GetTimerStatusQuery } from './queries';
  *   read would ignore is not offered at all;
  * - **the guard chain is the controller's and every field states the permission its own route runs
  *   under**, read from the controller's own metadata rather than restated: `ALL_ORG_VIEW` beside the
- *   class permission on the two status routes, and the class permission alone on the three writes,
+ *   class permission on the two status routes, and the class permission alone on the four writes,
  *   which declare none of their own;
- * - a duration is stated in seconds and never as an amount of money; **each of the three writes answers
- *   the log row its route answers**, unprojected and typed by the domain that owns it, with the
- *   nullability its own handler supports — a row and never nothing for the start, a row or nothing for
- *   the toggle and the stop — while the log a *state* was derived from stays an identifier;
+ * - a duration is stated in seconds and never as an amount of money; **each of the three writes that
+ *   keep a run answers the log row its route answers**, unprojected and typed by the domain that owns
+ *   it, with the nullability its own handler supports — a row and never nothing for the start, a row
+ *   or nothing for the toggle and the stop — while the log a *state* was derived from stays an
+ *   identifier, and the discard, whose route answers no body, answers true;
  * - `lastWorkedTask`, which the delivered status reads never fill, is not declared at all.
  */
 
@@ -85,6 +86,7 @@ const TOUCHED_LOG = { id: LOG, employeeId: EMPLOYEE, isRunning: true };
 function surfaces() {
 	const timerService = {
 		toggleTimeLog: jest.fn().mockResolvedValue(TOUCHED_LOG),
+		discardTimer: jest.fn().mockResolvedValue(undefined),
 		getTimerWorkedStatus: jest.fn().mockResolvedValue(WORKED_STATUSES)
 	};
 	const commandBus = { execute: jest.fn().mockResolvedValue(TOUCHED_LOG) };
@@ -148,7 +150,7 @@ function rootFields(operation: 'Query' | 'Mutation'): string[] {
 const OWNED_QUERY_FIELDS = ['timerStatus', 'timerWorkedStatus'];
 
 /** The mutations this domain contributes, by the same reading. */
-const OWNED_MUTATION_FIELDS = ['startTimer', 'stopTimer', 'toggleTimer'];
+const OWNED_MUTATION_FIELDS = ['discardTimer', 'startTimer', 'stopTimer', 'toggleTimer'];
 
 /** The object types this domain declares, which is how the sweep below recognises its own fields. */
 const OWNED_TYPES = ['TimerStatus', 'TimerWorkedStatus'];
@@ -257,13 +259,13 @@ describe('TimerResolver — the SDL declares the capabilities the REST routes se
 
 	it('declares one mutation per delivered write route', () => {
 		expect(rootFields('Mutation')).toEqual(
-			expect.arrayContaining(['toggleTimer', 'startTimer', 'stopTimer'])
+			expect.arrayContaining(['toggleTimer', 'startTimer', 'stopTimer', 'discardTimer'])
 		);
 	});
 
 	it('declares the reads and the writes the controller serves, and no more', () => {
 		expect(ownedRootFields('Query')).toEqual(['timerStatus', 'timerWorkedStatus']);
-		expect(ownedRootFields('Mutation')).toEqual(['startTimer', 'stopTimer', 'toggleTimer']);
+		expect(ownedRootFields('Mutation')).toEqual(['discardTimer', 'startTimer', 'stopTimer', 'toggleTimer']);
 
 		// The resource has no list, no node read and no count, so the surface states none: a connection
 		// over rows the controller cannot list, or a count of a thing that is not a collection, would be
@@ -284,7 +286,14 @@ describe('TimerResolver — the SDL declares the capabilities the REST routes se
 		}
 
 		// Every field above names a handler that exists on the controller.
-		for (const handler of ['getTimerStatus', 'getTimerWorkedStatus', 'toggleTimer', 'startTimer', 'stopTimer']) {
+		for (const handler of [
+			'getTimerStatus',
+			'getTimerWorkedStatus',
+			'toggleTimer',
+			'startTimer',
+			'stopTimer',
+			'discardTimer'
+		]) {
 			expect(typeof handlersOf(TimerController)[handler]).toBe('function');
 		}
 	});
@@ -312,6 +321,8 @@ describe('TimerResolver — the SDL declares the capabilities the REST routes se
 		expect(fieldType('Mutation', 'toggleTimer')).toBe('TimeLog');
 		expect(fieldType('Mutation', 'startTimer')).toBe('TimeLog!');
 		expect(fieldType('Mutation', 'stopTimer')).toBe('TimeLog');
+		// The discard's route answers 204 with no body: the field answers true, the write having removed the run or raised.
+		expect(fieldType('Mutation', 'discardTimer')).toBe('Boolean!');
 	});
 
 	it('answers the writes with the time-log domain’s own row, and declares no row of its own', () => {
@@ -428,6 +439,30 @@ describe('TimerResolver — the SDL declares the capabilities the REST routes se
 		expect(body).not.toMatch(/\btenantId:/);
 		expect(body).not.toMatch(/\bsentTo:/);
 		expect(body).not.toMatch(/\borganization:/);
+	});
+
+	it('states the discard body: the organization and the running time log it is for, nothing else', () => {
+		const body = inputBody('TimerDiscardInput');
+
+		expect(fieldArgs('Mutation', 'discardTimer')).toEqual(['input']);
+		expect(body).toMatch(/organizationId:\s*ID/);
+		expect(body).toMatch(/timeLogId:\s*ID/);
+		// The discard reads nothing of the start body, and the tenant is stamped from the credential.
+		for (const member of ['tenantId', 'source', 'taskId', 'startedAt', 'stoppedAt', 'sentTo']) {
+			expect(body).not.toMatch(new RegExp(`\\b${member}:`));
+		}
+	});
+
+	it('says what the discard refuses, as its route does', () => {
+		const mutation = schema.getType('Mutation') as unknown as {
+			getFields(): Record<string, { description?: string | null }>;
+		};
+		const description = mutation.getFields().discardTimer?.description ?? '';
+
+		expect(description).toMatch(/400 when nothing runs/);
+		expect(description).toMatch(/TIMER_DISCARD_DISABLED/);
+		expect(description).toMatch(/TIMER_DISCARD_TOO_LATE/);
+		expect(description).toMatch(/409/);
 	});
 
 	it('says that a toggle naming a time log only ever stops it', () => {
@@ -571,6 +606,22 @@ describe('TimerResolver — one concept, two protocols, the same operations', ()
 		expect(await resolver.stopTimer({ organizationId: ORGANIZATION })).toBeNull();
 	});
 
+	it('discards through the same service method the delivered route calls, and answers true', async () => {
+		const { resolver, timerService } = surfaces();
+		const input = { organizationId: ORGANIZATION, timeLogId: LOG };
+
+		expect(await resolver.discardTimer(input)).toBe(true);
+		expect(timerService.discardTimer).toHaveBeenCalledWith(input);
+	});
+
+	it('lets a refused discard travel as the route raises it, and answers nothing', async () => {
+		const { resolver, timerService } = surfaces();
+		const refusal = new Error('No timer is running: there is nothing to discard.');
+		timerService.discardTimer.mockRejectedValueOnce(refusal);
+
+		await expect(resolver.discardTimer({ organizationId: ORGANIZATION })).rejects.toBe(refusal);
+	});
+
 	it('surfaces a refusal as a 4xx that is not a 404', async () => {
 		const { resolver, commandBus } = surfaces();
 		const refusal = new Error('No running log found. Can\'t stop timer because it was already stopped.');
@@ -601,7 +652,8 @@ const ROUTE_PARITY: ReadonlyArray<{ field: string; route: string }> = [
 	{ field: 'timerWorkedStatus', route: 'getTimerWorkedStatus' },
 	{ field: 'toggleTimer', route: 'toggleTimer' },
 	{ field: 'startTimer', route: 'startTimer' },
-	{ field: 'stopTimer', route: 'stopTimer' }
+	{ field: 'stopTimer', route: 'stopTimer' },
+	{ field: 'discardTimer', route: 'discardTimer' }
 ];
 
 describe('TimerResolver — the guard stack and the permission are the controller’s, field by field', () => {
@@ -635,7 +687,7 @@ describe('TimerResolver — the guard stack and the permission are the controlle
 	});
 
 	it('states the two status permissions on the two status routes and the class one on the writes', () => {
-		// The two status routes declare `ALL_ORG_VIEW` beside the class permission; the three writes
+		// The two status routes declare `ALL_ORG_VIEW` beside the class permission; the four writes
 		// declare none of their own and therefore run under the class one.
 		expect(permissionOfField('timerStatus')).toEqual([
 			PermissionsEnum.ALL_ORG_VIEW,
@@ -646,7 +698,7 @@ describe('TimerResolver — the guard stack and the permission are the controlle
 			PermissionsEnum.TIME_TRACKER
 		]);
 
-		for (const field of ['toggleTimer', 'startTimer', 'stopTimer']) {
+		for (const field of ['toggleTimer', 'startTimer', 'stopTimer', 'discardTimer']) {
 			expect(Reflect.getMetadata(PERMISSIONS_METADATA, handlersOf(TimerController)[field])).toBeUndefined();
 			expect(permissionOfField(field)).toEqual([PermissionsEnum.TIME_TRACKER]);
 		}
