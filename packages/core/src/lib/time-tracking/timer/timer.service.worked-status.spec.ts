@@ -12,7 +12,7 @@ jest.mock('@gauzy/config', () => ({
 // Must stay first: see timer.service.spec.ts.
 import '../../core/entities/internal';
 
-import { ITimerStatus } from '@gauzy/contracts';
+import { ITimerStatus, TimeLogType } from '@gauzy/contracts';
 import { FindOperator } from 'typeorm';
 import { RequestContext } from '../../core/context';
 import { MultiORMEnum } from '../../core/utils';
@@ -47,9 +47,14 @@ describe('TimerService.getTimerWorkedStatus (MikroORM)', () => {
 			builder[method] = jest.fn(() => builder);
 		}
 		builder.toString = jest.fn(() => 'select ...');
-		const knex = Object.assign(jest.fn(() => builder), {
-			raw: jest.fn((sql: string) => (sql === 'select ...' ? Promise.resolve({ rows: [{ id: 'log-1' }] }) : sql))
-		});
+		const knex = Object.assign(
+			jest.fn(() => builder),
+			{
+				raw: jest.fn((sql: string) =>
+					sql === 'select ...' ? Promise.resolve({ rows: [{ id: 'log-1' }] }) : sql
+				)
+			}
+		);
 		const find = jest.fn().mockResolvedValue([]);
 
 		await TimerService.prototype.getTimerWorkedStatus.call(
@@ -81,6 +86,8 @@ interface TimeLogRow {
 	stoppedAt: Date;
 	createdAt: Date;
 	deletedAt: Date | null;
+	logType?: TimeLogType;
+	duration?: number;
 }
 
 /** An ORDER BY item as either branch builds it. */
@@ -340,6 +347,23 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 
 			expect(others).toEqual([]);
 			expect(status).toMatchObject({ running: true, timerStatus: 'running', lastLog: { id: 'running' } });
+		});
+
+		it('keeps a break as the last log, with no worked duration, and a work log with its own', async () => {
+			const lunch = log({
+				id: 'lunch',
+				logType: TimeLogType.BREAK,
+				duration: 3600,
+				startedAt: new Date('2026-10-24T09:00:00.000Z'),
+				stoppedAt: new Date('2026-10-24T10:00:00.000Z')
+			});
+			const work = { ...lunch, id: 'work', logType: TimeLogType.TRACKED };
+
+			const [onBreak] = await workedStatus([lunch]);
+			const [atWork] = await workedStatus([work]);
+
+			expect(onBreak).toMatchObject({ lastLog: { id: 'lunch' }, duration: 0, running: false });
+			expect(atWork).toMatchObject({ lastLog: { id: 'work' }, duration: 3600 });
 		});
 
 		it('still returns the latest log of an employee with no running log', async () => {

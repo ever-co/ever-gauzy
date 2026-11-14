@@ -456,6 +456,16 @@ describe('Invoices record the time their lines bill, on TypeORM and on MikroORM'
 			expect(await linkOf(twice)).toBeNull();
 		});
 
+		it('refuses a break, which is never billable time, and saves nothing', async () => {
+			const lunch = await timeLog({ logType: 'BREAK', isBillable: 0 });
+			const input = invoiceWith([lineBilling('lunch', [lunch])]);
+
+			await expect(handlers(ormType).create(input)).rejects.toMatchObject({ status: 400 });
+
+			expect(await count('invoice', 'id', input.id)).toBe(0);
+			expect(await linkOf(lunch)).toBeNull();
+		});
+
 		it("refuses a colleague's time to a caller who may only bill their own", async () => {
 			granted = [];
 			const colleagues = await timeLog({ employeeId: COLLEAGUE });

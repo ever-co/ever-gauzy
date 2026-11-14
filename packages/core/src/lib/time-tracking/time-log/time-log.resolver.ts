@@ -409,7 +409,8 @@ export class TimeLogResolver {
 		@Args('last', { type: () => Int, nullable: true }) last?: number,
 		@Args('before', { type: () => String, nullable: true }) before?: string,
 		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
-		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number,
+		@Args('includeBreaks', { type: () => Boolean, nullable: true }) includeBreaks?: boolean
 	): Promise<GraphqlConnection<TimeLog>> {
 		// The delivered list read answers the rows themselves rather than a page envelope, on both
 		// stores, which is why there is no `items` to unwrap here.
@@ -419,7 +420,8 @@ export class TimeLogResolver {
 			endDate,
 			employeeIds,
 			teamIds,
-			activityLevel
+			activityLevel,
+			includeBreaks
 		} as IGetTimeLogReportInput);
 
 		return buildConnection<TimeLog>({

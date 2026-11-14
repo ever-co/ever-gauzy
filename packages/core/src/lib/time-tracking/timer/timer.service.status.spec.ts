@@ -2,7 +2,7 @@
 import '../../core/entities/internal';
 
 import { DatabaseTypeEnum, defineConfig } from '@gauzy/config';
-import { ITimerStatus, ITimerStatusInput, TimeLogSourceEnum } from '@gauzy/contracts';
+import { ITimerStatus, ITimerStatusInput, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
 import { FindOperator } from 'typeorm';
 import * as moment from 'moment';
 import { MultiORMEnum } from '../../core/utils';
@@ -43,6 +43,7 @@ interface TimeLogRow {
 	stoppedAt: Date;
 	createdAt: Date;
 	duration: number;
+	logType?: TimeLogType;
 }
 
 const time = (value: unknown): number => new Date(value as Date).getTime();
@@ -296,6 +297,33 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])('TimerService.getTi
 		expect(status.running).toBe(true);
 		expect(status.lastLog).toMatchObject({ id: 'running-today' });
 		// 30 minutes completed, plus 01:30 to 02:00 running
+		expect(status.duration).toBe(HOUR);
+	});
+
+	it("leaves breaks out of today's worked time, the completed ones and the one running now", async () => {
+		const worked = timeLog({
+			id: 'worked',
+			startedAt: new Date('2026-10-24T00:00:00.000Z'),
+			stoppedAt: new Date('2026-10-24T01:00:00.000Z')
+		});
+		const lunch = timeLog({
+			id: 'lunch',
+			logType: TimeLogType.BREAK,
+			startedAt: new Date('2026-10-24T01:00:00.000Z'),
+			stoppedAt: new Date('2026-10-24T01:30:00.000Z')
+		});
+		const coffee = timeLog({
+			id: 'coffee',
+			logType: TimeLogType.BREAK,
+			isRunning: true,
+			startedAt: new Date('2026-10-24T01:40:00.000Z'),
+			stoppedAt: new Date('2026-10-24T01:40:00.000Z')
+		});
+
+		const status = await getTimerStatus([worked, lunch, coffee]);
+
+		expect(status.running).toBe(true);
+		expect(status.lastLog).toMatchObject({ id: 'coffee', logType: TimeLogType.BREAK });
 		expect(status.duration).toBe(HOUR);
 	});
 

@@ -1,8 +1,10 @@
 import { DatabaseTypeEnum } from '@gauzy/config';
+import { TimeLogType } from '@gauzy/contracts';
 import { prepareSQLQuery as p } from './../../database/database.helper';
 
 /**
  * Generates a duration query string based on the provided database type, log query alias, and slot query alias.
+ * A break counts for nothing: it is never worked time.
  *
  * @param dbType The type of database (e.g., sqlite, postgres, mysql).
  * @param logQueryAlias The alias used for the log query.
@@ -17,6 +19,7 @@ export const getDurationQueryString = (dbType: string, logQueryAlias: string, sl
 				ROUND(
 					SUM(
 						CASE
+							WHEN "${logQueryAlias}"."logType" = '${TimeLogType.BREAK}' THEN 0
 							WHEN (julianday(COALESCE("${logQueryAlias}"."stoppedAt", datetime('now'))) -
 								  julianday("${logQueryAlias}"."startedAt")) * 86400 >= 0
 							THEN (julianday(COALESCE("${logQueryAlias}"."stoppedAt", datetime('now'))) -
@@ -31,6 +34,7 @@ export const getDurationQueryString = (dbType: string, logQueryAlias: string, sl
 				ROUND(
 					SUM(
 						CASE
+							WHEN "${logQueryAlias}"."logType" = '${TimeLogType.BREAK}' THEN 0
 							WHEN extract(epoch from (COALESCE("${logQueryAlias}"."stoppedAt", NOW()) - "${logQueryAlias}"."startedAt")) >= 0
 							THEN extract(epoch from (COALESCE("${logQueryAlias}"."stoppedAt", NOW()) - "${logQueryAlias}"."startedAt"))
 							ELSE 0
@@ -43,6 +47,7 @@ export const getDurationQueryString = (dbType: string, logQueryAlias: string, sl
 				ROUND(
 					SUM(
 						CASE
+							WHEN \`${logQueryAlias}\`.\`logType\` = '${TimeLogType.BREAK}' THEN 0
 							WHEN TIMESTAMPDIFF(SECOND, \`${logQueryAlias}\`.\`startedAt\`, COALESCE(\`${logQueryAlias}\`.\`stoppedAt\`, NOW())) >= 0
 							THEN TIMESTAMPDIFF(SECOND, \`${logQueryAlias}\`.\`startedAt\`, COALESCE(\`${logQueryAlias}\`.\`stoppedAt\`, NOW()))
 							ELSE 0
@@ -56,7 +61,8 @@ export const getDurationQueryString = (dbType: string, logQueryAlias: string, sl
 };
 
 /**
- * Generates a SQL query string for calculating the total duration of tasks across all time.
+ * Generates a SQL query string for calculating the total duration of tasks across all time. A break counts for
+ * nothing: it is never worked time.
  * The query varies depending on the database type.
  *
  * @param dbType The type of the database (e.g., SQLite, PostgreSQL, MySQL).
@@ -71,6 +77,7 @@ export const getTotalDurationQueryString = (dbType: string, queryAlias: string):
 				ROUND(
 					SUM(
 						CASE
+							WHEN "${queryAlias}"."logType" = '${TimeLogType.BREAK}' THEN 0
 							WHEN (julianday(COALESCE("${queryAlias}"."stoppedAt", datetime('now'))) -
 								  julianday("${queryAlias}"."startedAt")) * 86400 >= 0
 							THEN (julianday(COALESCE("${queryAlias}"."stoppedAt", datetime('now'))) -
@@ -85,6 +92,7 @@ export const getTotalDurationQueryString = (dbType: string, queryAlias: string):
 				ROUND(
 					SUM(
 						CASE
+							WHEN "${queryAlias}"."logType" = '${TimeLogType.BREAK}' THEN 0
 							WHEN extract(epoch from (COALESCE("${queryAlias}"."stoppedAt", NOW()) - "${queryAlias}"."startedAt")) >= 0
 							THEN extract(epoch from (COALESCE("${queryAlias}"."stoppedAt", NOW()) - "${queryAlias}"."startedAt"))
 							ELSE 0
@@ -97,6 +105,7 @@ export const getTotalDurationQueryString = (dbType: string, queryAlias: string):
 				ROUND(
 					SUM(
 						CASE
+							WHEN \`${queryAlias}\`.\`logType\` = '${TimeLogType.BREAK}' THEN 0
 							WHEN TIMESTAMPDIFF(SECOND, \`${queryAlias}\`.\`startedAt\`, COALESCE(\`${queryAlias}\`.\`stoppedAt\`, NOW())) >= 0
 							THEN TIMESTAMPDIFF(SECOND, \`${queryAlias}\`.\`startedAt\`, COALESCE(\`${queryAlias}\`.\`stoppedAt\`, NOW()))
 							ELSE 0

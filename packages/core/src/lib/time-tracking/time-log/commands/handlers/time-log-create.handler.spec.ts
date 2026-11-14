@@ -1,7 +1,7 @@
 // Must stay first: loads the entity graph before any handler pulls an entity (see activity.controller.spec.ts).
 import '../../../../core/entities/internal';
 
-import { ITimeLog, TimeLogSourceEnum } from '@gauzy/contracts';
+import { ITimeLog, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
 import { RequestContext } from '../../../../core/context';
 import { IntegrationMapSyncTimeLogCommand } from '../../../../integration-map/commands/integration-map.sync-time-log.command';
 import { IntegrationMapSyncTimeLogHandler } from '../../../../integration-map/commands/handlers/integration-map.sync-time-log.handler';
@@ -185,5 +185,36 @@ describe('TimeLogCreateHandler: a running log is written with stoppedAt = starte
 			expect(saved).toHaveLength(1);
 			expect(saved[0]).toMatchObject({ isRunning: true, stoppedAt: STARTED_AT });
 		});
+	});
+});
+
+describe('TimeLogCreateHandler: a break holds no time slots', () => {
+	beforeEach(() => {
+		jest.spyOn(console, 'log').mockImplementation(() => undefined);
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT_ID);
+	});
+	afterEach(() => jest.restoreAllMocks());
+
+	it('writes a break without the blank slots a manual entry of the same range gets', async () => {
+		const { handler, saved } = createHandler();
+
+		await handler.execute(new TimeLogCreateCommand(input({ stoppedAt: STOPPED_AT, logType: TimeLogType.MANUAL })));
+		await handler.execute(new TimeLogCreateCommand(input({ stoppedAt: STOPPED_AT, logType: TimeLogType.BREAK })));
+
+		expect(saved[0].timeSlots.length).toBe(3);
+		expect(saved[1]).toMatchObject({ logType: TimeLogType.BREAK, timeSlots: [] });
+	});
+
+	it('drops the slots a break is sent with', async () => {
+		const { handler, saved } = createHandler();
+		const sentSlot = { startedAt: STARTED_AT, duration: 600, keyboard: 5, mouse: 5, overall: 300 };
+
+		await handler.execute(
+			new TimeLogCreateCommand(
+				input({ stoppedAt: STOPPED_AT, logType: TimeLogType.BREAK, timeSlots: [sentSlot] as any })
+			)
+		);
+
+		expect(saved[0].timeSlots).toEqual([]);
 	});
 });

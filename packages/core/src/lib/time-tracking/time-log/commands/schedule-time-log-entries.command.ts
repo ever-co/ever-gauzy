@@ -7,6 +7,8 @@ export class ScheduleTimeLogEntriesCommand implements ICommand {
 	constructor(
 		public readonly employeeId?: ID,
 		public readonly organizationId?: ID,
-		public readonly tenantId?: ID
+		public readonly tenantId?: ID,
+		/** The start of the run that replaces the pending entries, if a start closes them: a running break ends there. */
+		public readonly replacedAt?: Date
 	) {}
 }

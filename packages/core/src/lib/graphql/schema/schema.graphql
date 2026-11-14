@@ -3858,6 +3858,11 @@ type Query {
     before: String
     limit: Int
     offset: Int
+
+    """
+    Keep breaks (time logs of type BREAK) in the list. Without it they are left out, as before breaks existed.
+    """
+    includeBreaks: Boolean
   ): TimeLogConnection!
 
   """One time log of the caller's tenant, or null when there is none."""
@@ -33862,6 +33867,12 @@ type Organization {
   Off by default: whoever may edit the employee or the membership may switch it.
   """
   restrictTrackingSwitchToHigherRoles: Boolean!
+
+  """
+  Whether members may record breaks (time logs of type BREAK), which never count as worked, billable or invoiced time.
+  Off when null or false: a break is then refused.
+  """
+  allowBreaks: Boolean
 
   """Whether the organization renders times on a 12- or a 24-hour clock."""
   timeFormat: Int!

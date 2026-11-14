@@ -3,7 +3,11 @@ import '../../../../core/entities/internal';
 
 import { DataSource } from 'typeorm';
 import { DatabaseTypeEnum } from '@gauzy/config';
-import { overlapCondition } from './get-conflict-time-log.handler';
+import { TimeLogType } from '@gauzy/contracts';
+import { RequestContext } from '../../../../core/context';
+import { MultiORMEnum } from '../../../../core/utils';
+import { IGetConflictTimeLogCommand } from '../get-conflict-time-log.command';
+import { GetConflictTimeLogHandler, overlapCondition } from './get-conflict-time-log.handler';
 
 /**
  * A new time log conflicts with every existing log it overlaps. Only PostgreSQL tested a real overlap:
@@ -59,7 +63,9 @@ describe('overlapCondition on stored time logs', () => {
 	beforeAll(async () => {
 		dataSource = new DataSource({ type: 'better-sqlite3', database: ':memory:', logging: false });
 		await dataSource.initialize();
-		await dataSource.query('CREATE TABLE "time_log" ("id" varchar PRIMARY KEY, "startedAt" varchar, "stoppedAt" varchar)');
+		await dataSource.query(
+			'CREATE TABLE "time_log" ("id" varchar PRIMARY KEY, "startedAt" varchar, "stoppedAt" varchar)'
+		);
 		for (const [id, [startedAt, stoppedAt]] of Object.entries(logs)) {
 			await dataSource.query('INSERT INTO "time_log" VALUES (?, ?, ?)', [id, startedAt, stoppedAt]);
 		}
@@ -76,5 +82,59 @@ describe('overlapCondition on stored time logs', () => {
 		);
 
 		expect(rows.map(({ id }) => id)).toEqual(['enclosing', 'inside', 'overlapsEnd', 'overlapsStart', 'same']);
+	});
+});
+
+describe('GetConflictTimeLogHandler on TypeORM (#11920)', () => {
+	afterEach(() => jest.restoreAllMocks());
+
+	/** Runs the TypeORM read for a range and answers the calls its query builder received, with their parameters. */
+	const conflictQueryOf = async (input: object) => {
+		const calls: string[] = [];
+		const parameters: Record<string, unknown> = {};
+		const query: Record<string, unknown> = { alias: 'TimeLog', getMany: async () => [] };
+		for (const method of ['innerJoinAndSelect', 'leftJoinAndSelect', 'where', 'andWhere']) {
+			query[method] = (condition: string, values?: Record<string, unknown>) => {
+				calls.push(`${method} ${condition}`);
+				Object.assign(parameters, values ?? {});
+				return query;
+			};
+		}
+		const handler = new GetConflictTimeLogHandler(
+			{ createQueryBuilder: () => query } as never,
+			{} as never,
+			{ dbConnectionOptions: { type: DatabaseTypeEnum.postgres } } as never
+		);
+		Object.assign(handler, { ormType: MultiORMEnum.TypeORM });
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue('tenant-1');
+
+		await handler.execute(
+			new IGetConflictTimeLogCommand({
+				employeeId: 'employee-1',
+				organizationId: 'organization-1',
+				startDate: '2026-11-16T12:00:00.000Z',
+				endDate: '2026-11-16T13:00:00.000Z',
+				...input
+			} as never)
+		);
+		return { calls, parameters };
+	};
+	const keepsBreaks = (call: string) =>
+		call.includes('"timeSlots"."id" IS NOT NULL OR "TimeLog"."logType" = :conflictBreakType');
+
+	it('keeps a break, which holds no time slot, among the conflicts of a range', async () => {
+		const { calls, parameters } = await conflictQueryOf({});
+
+		expect(calls).toContain('leftJoinAndSelect TimeLog.timeSlots');
+		expect(calls).not.toContain('innerJoinAndSelect TimeLog.timeSlots');
+		expect(calls.some(keepsBreaks)).toBe(true);
+		expect(parameters).toMatchObject({ conflictBreakType: TimeLogType.BREAK });
+	});
+
+	it('answers slotless work logs too when the caller asks (includeSlotless)', async () => {
+		const { calls } = await conflictQueryOf({ includeSlotless: true });
+
+		expect(calls).toContain('leftJoinAndSelect TimeLog.timeSlots');
+		expect(calls.some(keepsBreaks)).toBe(false);
 	});
 });

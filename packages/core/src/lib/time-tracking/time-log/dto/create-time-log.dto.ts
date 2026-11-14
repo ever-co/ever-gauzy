@@ -7,16 +7,29 @@ import { ManualTimeLogDTO } from "./manual-time-log.dto";
 import { isTrackerSource } from "../tracker-source";
 
 /**
+ * The type of an entry added by hand: a BREAK when the body asks for one, MANUAL otherwise. Any other type a body
+ * names (TRACKED, IDLE, RESUMED) is still recorded as MANUAL, as before breaks existed.
+ *
+ * @param sent The type the body names, if any.
+ */
+export function manualEntryType(sent: unknown): TimeLogType {
+    if (sent === TimeLogType.BREAK) {
+        return TimeLogType.BREAK;
+    }
+    return TimeLogType.MANUAL;
+}
+
+/**
  * DTO for creating manual time logs.
  * Extends ManualTimeLogDTO and implements IManualTimeInput.
  */
 export class CreateManualTimeLogDTO extends ManualTimeLogDTO implements IManualTimeInput {
     /**
-    * Type of the time log (e.g., MANUAL).
+    * Type of the time log: MANUAL, or BREAK for a break added by hand (see manualEntryType).
     */
     @ApiProperty({ type: () => String, enum: TimeLogType })
     @IsEnum(TimeLogType)
-    @Transform(() => TimeLogType.MANUAL)
+    @Transform(({ value }: TransformFnParams) => manualEntryType(value))
     logType: TimeLogType;
 
     /**

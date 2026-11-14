@@ -68,6 +68,7 @@ import {
 	teamIdForEntry
 } from '../time-log/organization-tracking-requirements';
 import { isTrackerSource } from '../time-log/tracker-source';
+import { assertBreakOverlapsNothing, assertBreaksAllowedIn, isBreak } from '../time-log/break-rules';
 import { TypeOrmTimeLogRepository } from '../time-log/repository/type-orm-time-log.repository';
 import { MikroOrmTimeLogRepository } from '../time-log/repository/mikro-orm-time-log.repository';
 import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-employee.repository';
@@ -291,8 +292,9 @@ export class TimerService {
 		// stopped after `todayEnd` up to `todayEnd`. The running log is not among them (`isRunning: false`), and is
 		// left out by id as well, so its time is counted once, below.
 		const runningLogId = lastLog?.isRunning ? lastLog.id : null;
+		// A break is not worked time: neither a completed break nor a running one counts in today's duration.
 		status.duration += logs
-			.filter((log) => log && log.id !== runningLogId)
+			.filter((log) => log && log.id !== runningLogId && !isBreak(log))
 			.reduce(
 				(sum, log) => sum + secondsWithinWindow(log.startedAt, log.stoppedAt, todayWindowStart, countedUntil),
 				0
@@ -303,7 +305,8 @@ export class TimerService {
 			status.lastLog = lastLog;
 			status.running = lastLog.isRunning;
 
-			if (status.running) {
+			const isWorkRunning = status.running && !isBreak(lastLog);
+			if (isWorkRunning) {
 				// Today's duration holds only the part of the running log inside today's window: a timer started
 				// before `todayStart` counts from `todayStart`, its earlier part belongs to the day it started on.
 				// `lastLog` stays the whole log, so a client still reads the full session from its `startedAt`.
@@ -359,7 +362,11 @@ export class TimerService {
 		const tenantId = RequestContext.currentTenantId() ?? request.tenantId;
 
 		// Determine the start date and time in UTC
-		const startedAt = moment.utc(request.startedAt ?? moment.utc()).toDate();
+		const receivedAt = moment.utc();
+		const startedAt = moment.utc(request.startedAt ?? receivedAt).toDate();
+		// A start the caller set earlier than the moment the request arrived; never one the server stamped itself
+		const setsStart = isNotEmpty(request.startedAt);
+		const startsInThePast = setsStart && receivedAt.diff(startedAt, 'seconds') >= 1;
 		this.debug(() => `new timer started at: ${startedAt}`);
 
 		// Retrieve the employee information, with the organization whose switches the start must meet
@@ -376,11 +383,22 @@ export class TimerService {
 		const trackedEmployee = { employeeId, organizationId, tenantId };
 		const manager = this.typeOrmTimeLogRepository.manager;
 
+		// A break is refused unless the organization allows breaks; it is not work, so the rules on what work must name
+		// (plan, project, team, task) do not apply to it, and it is never billable.
+		const startsBreak = logType === TimeLogType.BREAK;
+		if (startsBreak) {
+			assertBreaksAllowedIn(requirements);
+			if (startsInThePast) {
+				await this.assertBreakStartOverlapsNothing({ employeeId, organizationId, tenantId }, startedAt);
+			}
+		}
+
 		const teamIdToLog = await teamIdForEntry(manager, trackedEmployee, request, requirements);
 
 		await this.assertTrackingOnInTeam(employeeId, organizationId, tenantId, teamIdToLog, source);
 
 		await this.assertPlannedWhenTeamRequiresIt({
+			isBreak: startsBreak,
 			employeeId,
 			organizationId,
 			tenantId,
@@ -401,12 +419,13 @@ export class TimerService {
 		);
 
 		const isTrackerStart = isTrackerSource(source);
-		if (!isTrackerStart) {
+		const meetsWorkRequirements = !isTrackerStart && !startsBreak;
+		if (meetsWorkRequirements) {
 			assertRequiredContext(requirements, { taskId, organizationTeamId: teamIdToLog, projectId: projectIdToLog });
 		}
 
 		// Stop any previous running timers
-		await this.stopPreviousRunningTimers(employeeId, organizationId, tenantId);
+		await this.stopPreviousRunningTimers(employeeId, organizationId, tenantId, startedAt);
 
 		// Create a new time log entry using the command bus
 		const timeLog = await this._commandBus.execute(
@@ -424,7 +443,7 @@ export class TimerService {
 				organizationContactId: organizationContactId || null,
 				organizationTeamId: teamIdToLog || null,
 				description: description || null,
-				isBillable: isBillable || false,
+				isBillable: Boolean(isBillable) && !startsBreak,
 				version: version || null,
 				isRunning: true
 			})
@@ -443,6 +462,27 @@ export class TimerService {
 	}
 
 	/**
+	 * Refuses a break whose start, set by the caller in the past, would overlap another entry of the employee: a break never cuts other
+	 * entries (see break-rules). A run still going overlaps it too, since that run keeps the end its own time gives it
+	 * when the start stops it: stop it first, or start the break now.
+	 *
+	 * @param employee The employee starting the break, in their organization and tenant.
+	 * @param startedAt The start of the break.
+	 * @throws ConflictException with the code BREAK_OVERLAP.
+	 */
+	private async assertBreakStartOverlapsNothing(
+		employee: { employeeId: ID; organizationId: ID; tenantId: ID },
+		startedAt: Date
+	): Promise<void> {
+		const now = moment.utc().toDate();
+		const conflicts: ITimeLog[] = await this._commandBus.execute(
+			new IGetConflictTimeLogCommand({ ...employee, startDate: startedAt, endDate: now, includeSlotless: true })
+		);
+		const runningLogs = await this.getLastRunningLogs();
+		assertBreakOverlapsNothing([...(conflicts ?? []), ...runningLogs]);
+	}
+
+	/**
 	 * Refuses an Ever Teams start for a team that requires a daily plan when the employee has no plan with tasks
 	 * for their day in that team, or when the task they start is in none of those plans. Their day is the one the
 	 * client sends (see planDatesForStart), or the days around today for a client that sends none. Ever Teams web
@@ -458,10 +498,12 @@ export class TimerService {
 		taskId?: ID;
 		source?: TimeLogSourceEnum;
 		planDay?: string;
+		isBreak?: boolean;
 	}): Promise<void> {
 		const { employeeId, organizationId, tenantId, organizationTeamId, taskId, source, planDay } = start;
 		const isPlanRuleClient = PLAN_RULE_SOURCES.includes(source);
-		if (!isPlanRuleClient) {
+		const plansWork = isPlanRuleClient && !start.isBreak;
+		if (!plansWork) {
 			return;
 		}
 		if (!organizationTeamId) {
@@ -617,8 +659,11 @@ export class TimerService {
 		// Stop previous running timers
 		await this.stopPreviousRunningTimers(employeeId, organizationId, tenantId);
 
-		// Handle conflicting time logs
-		await this.handleConflictingTimeLogs(lastLog, tenantId, organizationId);
+		// Handle conflicting time logs. A break never cuts other entries (see break-rules), so its stop clears nothing
+		const stopsWork = !isBreak(lastLog);
+		if (stopsWork) {
+			await this.handleConflictingTimeLogs(lastLog, tenantId, organizationId);
+		}
 
 		// Return the last log
 		return lastLog;
@@ -753,8 +798,9 @@ export class TimerService {
 		// Retrieve stoppedAt date or default to the current date if not provided
 		let stoppedAt = moment.utc(request.stoppedAt ?? moment.utc()).toDate();
 
-		// Handle the DESKTOP source case
-		if (request.source === TimeLogSourceEnum.DESKTOP) {
+		// Handle the DESKTOP source case. A break holds no slots: it ends when it is stopped, whoever stops it.
+		const followsDesktopSlots = request.source === TimeLogSourceEnum.DESKTOP && !isBreak(lastLog);
+		if (followsDesktopSlots) {
 			// Retrieve the most recent time slot from the last log
 			const lastTimeSlot: ITimeSlot | undefined = lastLog.timeSlots?.sort((a: ITimeSlot, b: ITimeSlot) =>
 				moment(b.startedAt).diff(a.startedAt)
@@ -900,7 +946,12 @@ export class TimerService {
 	 * @param organizationId - The ID of the organization to which the employee belongs
 	 * @param tenantId - The ID of the tenant context
 	 */
-	async stopPreviousRunningTimers(employeeId: ID, organizationId: ID, tenantId: ID): Promise<void> {
+	async stopPreviousRunningTimers(
+		employeeId: ID,
+		organizationId: ID,
+		tenantId: ID,
+		replacedAt?: Date
+	): Promise<void> {
 		try {
 			this.debug(() => 'Start previous running timers...');
 			// Retrieve any existing running logs for the employee
@@ -910,7 +961,9 @@ export class TimerService {
 			// If there are existing running logs, stop them before starting a new one
 			if (logs.length > 0) {
 				// Execute the ScheduleTimeLogEntriesCommand to stop all previous running timers
-				await this._commandBus.execute(new ScheduleTimeLogEntriesCommand(employeeId, organizationId, tenantId));
+				await this._commandBus.execute(
+					new ScheduleTimeLogEntriesCommand(employeeId, organizationId, tenantId, replacedAt)
+				);
 			}
 			this.debug(() => 'Stop previous running timers...');
 		} catch (error) {
@@ -1156,7 +1209,11 @@ export class TimerService {
 
 		/** Transform an array of ITimeLog objects into an array of ITimerStatus objects. */
 		const statistics: ITimerStatus[] = lastLogs.map((lastLog: ITimeLog) => {
-			const duration = lastLog?.duration ?? 0;
+			// A break is not worked time: it stays the last log, so a client sees its state, with no worked duration
+			let duration = lastLog?.duration ?? 0;
+			if (isBreak(lastLog)) {
+				duration = 0;
+			}
 			const running = lastLog?.isRunning ?? false;
 			const stoppedAt = lastLog?.stoppedAt ? moment(lastLog.stoppedAt) : moment().subtract(1, 'day'); // Default to 1 day ago if stoppedAt is not present
 

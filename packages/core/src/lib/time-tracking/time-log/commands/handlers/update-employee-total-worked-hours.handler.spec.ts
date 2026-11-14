@@ -9,6 +9,7 @@ import {
 } from '../../../../core/testing/tenant-isolation/tenant-isolation.fixtures';
 import { UpdateEmployeeTotalWorkedHoursCommand } from '../update-employee-total-worked-hours.command';
 import { UpdateEmployeeTotalWorkedHoursHandler } from './update-employee-total-worked-hours.handler';
+import { sumOverDayWithABreak } from '../../../testing/day-with-a-break';
 
 /**
  * The total is the sum of each time log's own start / stop. It used to join the log's time slots, so every
@@ -82,10 +83,13 @@ describe('UpdateEmployeeTotalWorkedHoursHandler', () => {
 			});
 		}
 		builder.first = jest.fn().mockResolvedValue({ duration: 7200 });
-		const knex = Object.assign(jest.fn(() => builder), {
-			raw: (sql: string) => sql,
-			userParams: { schema: 'public' }
-		});
+		const knex = Object.assign(
+			jest.fn(() => builder),
+			{
+				raw: (sql: string) => sql,
+				userParams: { schema: 'public' }
+			}
+		);
 		const handler = createHandler(MultiORMEnum.MikroORM, { mikroOrm: { getKnex: () => knex } });
 
 		await handler.execute(new UpdateEmployeeTotalWorkedHoursCommand(employeeId));
@@ -97,5 +101,16 @@ describe('UpdateEmployeeTotalWorkedHoursHandler', () => {
 			'time_log.tenantId': tenantA.tenantId
 		});
 		expect(employeeService.update).toHaveBeenCalledWith(employeeId, { totalWorkHours: 2 });
+	});
+
+	it('counts a break for nothing in the worked hours (the sum run on SQLite)', async () => {
+		const handler = createHandler(MultiORMEnum.TypeORM, {});
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		(handler as any)._configService = { dbConnectionOptions: { type: DatabaseTypeEnum.betterSqlite3 } };
+
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const seconds = await sumOverDayWithABreak((handler as any).getSumQuery('time_log'));
+
+		expect(seconds).toBeCloseTo(7 * 3600, 0);
 	});
 });

@@ -43,6 +43,7 @@ import { generateTimeSlots } from '../time-slot/utils';
 import { Organization } from '../../organization/organization.entity';
 import { TimeLog } from './time-log.entity';
 import { RUNNING_TIMER_OVERLAP, TimeLogService } from './time-log.service';
+import { BREAK_OVERLAP, BREAK_TYPE_LOCKED, BREAKS_NOT_ALLOWED } from './break-rules';
 
 const TENANT_ID = '5a1c2f0e-6d3b-4c8a-9e2f-1b7d4a6c8e90';
 const ORGANIZATION_ID = '0f9e8d7c-6b5a-4c3d-8e2f-1a0b9c8d7e6f';
@@ -315,6 +316,109 @@ describe('TimeLogService', () => {
 		 * time logs, because an empty result never runs the grouping. The filter specs above all run on
 		 * an empty result, which is why they never caught it.
 		 */
+		describe('breaks (#11920)', () => {
+			const breakExclusion = '"time_log"."logType" <> :breakType';
+			const listsEntries = ['getTimeLogs', 'getDailyReportCharts'];
+
+			it.each(reportMethods)(
+				'%s leaves breaks out when the request does not ask for them',
+				async (_name, run) => {
+					actAs({ canChangeSelectedEmployee: true });
+
+					await run(request);
+
+					const { conditions, parameters } = executedFilters(builder);
+					expect(conditions).toContain(breakExclusion);
+					expect(parameters).toEqual(expect.objectContaining({ breakType: TimeLogType.BREAK }));
+				}
+			);
+
+			it.each(reportMethods.filter(([name]) => listsEntries.includes(name)))(
+				'%s keeps breaks, which hold no time slot, with their type when asked (includeBreaks)',
+				async (_name, run) => {
+					actAs({ canChangeSelectedEmployee: true });
+
+					await run({ ...request, includeBreaks: true });
+
+					const { conditions } = executedFilters(builder);
+					expect(conditions).not.toContain(breakExclusion);
+					const slotOrBreak = (condition: string) =>
+						condition.includes('EXISTS') &&
+						condition.includes('OR "time_log"."logType" = :slotlessBreakType');
+					expect(conditions.some(slotOrBreak)).toBe(true);
+				}
+			);
+
+			it('keeps breaks in the entry list for a request that names their type, without includeBreaks', async () => {
+				actAs({ canChangeSelectedEmployee: true });
+
+				await service.getTimeLogs({ ...request, logType: [TimeLogType.BREAK] });
+
+				const { conditions } = executedFilters(builder);
+				const slotOrBreak = (condition: string) =>
+					condition.includes('OR "time_log"."logType" = :slotlessBreakType');
+				expect(conditions.some(slotOrBreak)).toBe(true);
+			});
+
+			it('leaves breaks out of a total even when the request names their type, so no amount prices one', async () => {
+				actAs({ canChangeSelectedEmployee: true });
+
+				await service.getOwedAmountReport({ ...request, logType: [TimeLogType.MANUAL, TimeLogType.BREAK] });
+
+				const { conditions } = executedFilters(builder);
+				expect(conditions).toContain(breakExclusion);
+				expect(conditions).toContain('"time_log"."logType" IN (:...logType)');
+			});
+
+			it('leaves breaks out of the MikroORM totals and keeps them in its entry list', async () => {
+				actAs({ canChangeSelectedEmployee: true });
+
+				const total = await (service as any).buildMikroOrmTimeLogWhere(request);
+				const list = await (service as any).buildMikroOrmTimeLogWhere(
+					{ ...request, includeBreaks: true },
+					{ listsEntries: true }
+				);
+
+				const named = await (service as any).buildMikroOrmTimeLogWhere({
+					...request,
+					logType: [TimeLogType.MANUAL, TimeLogType.BREAK]
+				});
+				expect(total.logType).toEqual({ $ne: TimeLogType.BREAK });
+				expect(named.logType).toEqual({ $in: [TimeLogType.MANUAL] });
+				expect(list.logType).toBeUndefined();
+			});
+
+			it('adds a BREAK figure to the daily chart only for a period that holds a break', async () => {
+				actAs({ canChangeSelectedEmployee: true });
+				const work = {
+					id: 'work',
+					logType: TimeLogType.TRACKED,
+					startedAt: new Date('2026-01-05T09:00:00.000Z'),
+					stoppedAt: new Date('2026-01-05T12:00:00.000Z'),
+					duration: 3 * 3600
+				};
+				const lunch = {
+					id: 'lunch',
+					logType: TimeLogType.BREAK,
+					startedAt: new Date('2026-01-05T12:00:00.000Z'),
+					stoppedAt: new Date('2026-01-05T13:00:00.000Z'),
+					duration: 3600
+				};
+
+				type ChartDay = { date: string; value: object };
+				const askingForBreaks = { ...request, includeBreaks: true };
+				builder.rows = [work, lunch];
+				const withBreak = (await service.getDailyReportCharts(askingForBreaks)) as ChartDay[];
+				builder.rows = [work];
+				const withoutBreak = (await service.getDailyReportCharts(askingForBreaks)) as ChartDay[];
+
+				const dayOf = (days: ChartDay[], date: string) => days.find((day) => day.date === date);
+				expect(dayOf(withBreak, '2026-01-05').value).toMatchObject({ TRACKED: 3, BREAK: 1 });
+				expect(dayOf(withBreak, '2026-01-06').value).toMatchObject({ TRACKED: 0, BREAK: 0 });
+				expect(withoutBreak.every((day) => !(TimeLogType.BREAK in day.value))).toBe(true);
+			});
+		});
+
 		describe('a request without a time zone', () => {
 			const LOG_STARTED_AT = '2026-01-06T22:00:00.000Z';
 
@@ -977,6 +1081,108 @@ describe('TimeLogService', () => {
 					'stopped@09:00'
 				]);
 				expect(commandsOfType(TimeLogCreateCommand)).toHaveLength(1);
+			});
+		});
+
+		describe('breaks added or edited by hand (#11920)', () => {
+			/** A stopped work entry of the employee, from 08:50 to 09:10. */
+			const workLog = {
+				id: 'work',
+				employeeId: TARGET_EMPLOYEE_ID,
+				organizationId: EMPLOYEE_ORGANIZATION_ID,
+				logType: TimeLogType.MANUAL,
+				isRunning: false,
+				startedAt: new Date('2026-01-05T08:50:00.000Z'),
+				stoppedAt: new Date('2026-01-05T09:10:00.000Z'),
+				timeSlots: [{ id: 'work@08:50' }, { id: 'work@09:00' }]
+			};
+			const breakRequest = { ...request, logType: TimeLogType.BREAK, isBillable: true } as IManualTimeInput;
+
+			let conflicts: unknown[];
+			let organization: Record<string, unknown>;
+			let storedLog: Record<string, unknown>;
+
+			beforeEach(() => {
+				conflicts = [];
+				organization = {
+					id: EMPLOYEE_ORGANIZATION_ID,
+					futureDateAllowed: true,
+					allowManualTime: true,
+					allowBreaks: true
+				};
+				storedLog = {
+					id: 'log-1',
+					employeeId: TARGET_EMPLOYEE_ID,
+					organizationId: EMPLOYEE_ORGANIZATION_ID,
+					logType: TimeLogType.BREAK
+				};
+				execute.mockImplementation(async (command: unknown) =>
+					command instanceof IGetConflictTimeLogCommand ? conflicts : undefined
+				);
+				jest.spyOn(manualService as any, 'findEmployeeInTenant').mockImplementation(async () => ({
+					id: TARGET_EMPLOYEE_ID,
+					organizationId: EMPLOYEE_ORGANIZATION_ID,
+					organization
+				}));
+				jest.spyOn(manualService, 'findOneByIdString').mockImplementation(async () => storedLog as any);
+			});
+
+			it('refuses a break where the organization does not allow breaks, and writes nothing', async () => {
+				organization.allowBreaks = false;
+
+				const refusal = await manualService.addManualTime({ ...breakRequest }).catch((thrown) => thrown);
+
+				expect(refusal).toBeInstanceOf(ForbiddenException);
+				expect((refusal as ForbiddenException).getResponse()).toMatchObject({ code: BREAKS_NOT_ALLOWED });
+				expect(commandsOfType(TimeLogCreateCommand)).toEqual([]);
+			});
+
+			it('refuses a break over a work entry with the overlap code, and cuts nothing', async () => {
+				conflicts = [workLog];
+
+				const refusal = await manualService.addManualTime({ ...breakRequest }).catch((thrown) => thrown);
+
+				expect(refusal).toBeInstanceOf(ConflictException);
+				expect((refusal as ConflictException).getResponse()).toMatchObject({ code: BREAK_OVERLAP });
+				expect(commandsOfType(DeleteTimeSpanCommand)).toEqual([]);
+				expect(commandsOfType(TimeLogCreateCommand)).toEqual([]);
+			});
+
+			it('adds a break over nothing, without the project the organization requires of work, never billable', async () => {
+				organization.requireProject = true;
+
+				await manualService.addManualTime({ ...breakRequest });
+
+				const [create] = commandsOfType(TimeLogCreateCommand);
+				expect(create.input).toMatchObject({ logType: TimeLogType.BREAK, isBillable: false });
+			});
+
+			it('refuses an edit that turns work into a break, or a break into work', async () => {
+				storedLog.logType = TimeLogType.MANUAL;
+				const intoBreak = await manualService
+					.updateManualTime('log-1', { ...breakRequest })
+					.catch((thrown) => thrown);
+				storedLog.logType = TimeLogType.BREAK;
+				const intoWork = await manualService
+					.updateManualTime('log-1', { ...request, logType: TimeLogType.MANUAL })
+					.catch((thrown) => thrown);
+
+				expect((intoBreak as ConflictException).getResponse()).toMatchObject({ code: BREAK_TYPE_LOCKED });
+				expect((intoWork as ConflictException).getResponse()).toMatchObject({ code: BREAK_TYPE_LOCKED });
+				expect(commandsOfType(TimeLogUpdateCommand)).toEqual([]);
+			});
+
+			it('refuses an edit that moves a break over a work entry, and keeps an edited break unbillable', async () => {
+				conflicts = [workLog];
+				const refusal = await manualService
+					.updateManualTime('log-1', { ...breakRequest })
+					.catch((thrown) => thrown);
+				expect((refusal as ConflictException).getResponse()).toMatchObject({ code: BREAK_OVERLAP });
+
+				conflicts = [];
+				await manualService.updateManualTime('log-1', { ...breakRequest });
+				const [update] = commandsOfType(TimeLogUpdateCommand);
+				expect(update.input).toMatchObject({ isBillable: false });
 			});
 		});
 

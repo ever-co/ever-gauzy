@@ -1,6 +1,6 @@
 import '../../../../core/entities/internal';
 
-import { PermissionsEnum } from '@gauzy/contracts';
+import { PermissionsEnum, TimeLogType } from '@gauzy/contracts';
 import { RequestContext } from '../../../../core/context';
 import { CreateTimeSlotCommand } from '../create-time-slot.command';
 import { CreateTimeSlotHandler } from './create-time-slot.handler';
@@ -127,5 +127,19 @@ describe('CreateTimeSlotHandler new slot', () => {
 			locationActivity: { moves: 3 },
 			customActivity: { focus: 4 }
 		});
+	});
+
+	it('refuses a slot for a break, which holds no time slots, and saves nothing', async () => {
+		const upload = handler.execute(
+			new CreateTimeSlotCommand({
+				organizationId: ORGANIZATION,
+				startedAt: '2026-10-22T03:10:00.000Z',
+				duration: 600,
+				logType: TimeLogType.BREAK
+			} as never)
+		);
+
+		await expect(upload).rejects.toThrow('A break holds no time slots.');
+		expect(saved).toEqual([]);
 	});
 });

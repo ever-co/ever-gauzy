@@ -75,13 +75,25 @@ export class TimeLogCreateHandler implements ICommandHandler<TimeLogCreateComman
 		// Create time log entity
 		const timeLog = this.createTimeLogEntity(input, tenantId, timesheet);
 
+		// A break holds no time slots: a slot is worked time (activity, screenshots), which a break never is, and the
+		// totals that read slots leave it out that way
+		const isBreak = input.logType === TimeLogType.BREAK;
+		const takesBlankSlots = Boolean(stoppedAt) && !isBreak;
+
 		// Generate blank time slots if stoppedAt is provided
-		let generatedTimeSlots: ITimeSlot[] = stoppedAt ? this.generateBlankTimeSlots(input, tenantId) : [];
+		let generatedTimeSlots: ITimeSlot[] = [];
+		if (takesBlankSlots) {
+			generatedTimeSlots = this.generateBlankTimeSlots(input, tenantId);
+		}
+		let sentTimeSlots = inputTimeSlots;
+		if (isBreak) {
+			sentTimeSlots = [];
+		}
 
 		// Merge input time slots with generated blank slots
 		const mergeTimeSlots = this.mergeTimeSlots(
 			generatedTimeSlots,
-			inputTimeSlots,
+			sentTimeSlots,
 			employeeId,
 			organizationId,
 			tenantId

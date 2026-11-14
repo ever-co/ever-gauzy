@@ -1,7 +1,7 @@
 import { Logger, NotFoundException } from '@nestjs/common';
 import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
 import * as moment from 'moment';
-import { ID, ITimeLog, ITimeSlot, ITimesheet, TimeLogSourceEnum } from '@gauzy/contracts';
+import { ID, ITimeLog, ITimeSlot, ITimesheet, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/utils';
 import { TimesheetFirstOrCreateCommand, TimesheetRecalculateCommand } from './../../../timesheet/commands';
 import { TimeSlotBulkDeleteCommand } from '../../../time-slot/commands/time-slot-bulk-delete.command';
@@ -130,13 +130,18 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 			// A move, in the order that leaves a recoverable state at every failure (no transaction can span the
 			// commands below; each writes through its own repositories):
 			// (a) the destination — the new employee's slots for the log's range (created where they have none);
-			const destination = await this.bulkCreateTimeSlots(
-				updateTimeSlots,
-				timeLog,
-				employeeId,
-				organizationId,
-				tenantId
-			);
+			// A break holds no time slots, so it takes none to the new employee either.
+			const movesBreak = { ...timeLog, ...changes }.logType === TimeLogType.BREAK;
+			let destination: ITimeSlot[] = [];
+			if (!movesBreak) {
+				destination = await this.bulkCreateTimeSlots(
+					updateTimeSlots,
+					timeLog,
+					employeeId,
+					organizationId,
+					tenantId
+				);
+			}
 			// (b) ONE save of the log — its new employee, its new timesheet and its new slots together. If it fails,
 			// nothing of the previous employee has been touched (at most the new employee keeps blank slots no log
 			// holds), and the error propagates;
@@ -227,6 +232,10 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 	 * @param timeLog - The log as the update will store it: the stored row with the update's changes on top.
 	 */
 	private async takesSlotsOfItsRange(timeLog: ITimeLog): Promise<boolean> {
+		// A break holds no time slots, whoever runs it (see TimeLogCreateHandler)
+		if (timeLog.logType === TimeLogType.BREAK) {
+			return false;
+		}
 		if (timeLog.source === TimeLogSourceEnum.WEB_TIMER) {
 			return true;
 		}

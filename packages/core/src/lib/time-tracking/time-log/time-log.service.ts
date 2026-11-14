@@ -90,9 +90,19 @@ import {
 	projectIdForEntry,
 	teamIdForEntry
 } from './organization-tracking-requirements';
+import { assertBreakOverlapsNothing, assertBreaksAllowedIn, assertBreakTypeKept, isBreak } from './break-rules';
 
 /** The code of the refusal of manual time over a timer that is still running (409). */
 export const RUNNING_TIMER_OVERLAP = 'RUNNING_TIMER_OVERLAP';
+
+/** How a report read treats breaks (time logs of type BREAK, #11920). */
+export interface ITimeLogReadOptions {
+	/**
+	 * The read lists entries (the entry list, the daily chart): it keeps breaks, with their type, when the request asks
+	 * for them (`includeBreaks`) or names their type. Every other read is a total of worked time.
+	 */
+	listsEntries?: boolean;
+}
 
 @Injectable()
 export class TimeLogService extends TenantAwareCrudService<TimeLog> {
@@ -140,7 +150,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
-				const where = await this.buildMikroOrmTimeLogWhere(request);
+				const where = await this.buildMikroOrmTimeLogWhere(request, { listsEntries: true });
 				const populate = [
 					'employee',
 					'employee.user',
@@ -220,7 +230,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				});
 
 				// Apply filters to the query
-				await this.getFilterTimeLogQuery(query, request);
+				await this.getFilterTimeLogQuery(query, request, { listsEntries: true });
 
 				const timeLogs = await query.getMany();
 
@@ -501,7 +511,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
-				const where = await this.buildMikroOrmTimeLogWhere(request);
+				const where = await this.buildMikroOrmTimeLogWhere(request, { listsEntries: true });
 				const items = await this.mikroOrmRepository.find(where, {
 					populate: ['employee', 'timeSlots'] as any[],
 					orderBy: { startedAt: 'ASC' as any }
@@ -528,7 +538,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					}
 				});
 				// Apply additional conditions to the query based on request filters
-				await this.getFilterTimeLogQuery(query, request);
+				await this.getFilterTimeLogQuery(query, request, { listsEntries: true });
 
 				// Execute the query and retrieve time logs
 				logs = await query.getMany();
@@ -539,6 +549,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		// The days the report covers, and the zone its rows are grouped by
 		const { days, timeZone } = this.reportDateRange(request);
 
+		// A BREAK figure joins the day only when the period holds a break, so a read without breaks answers as before
+		const hasBreaks = logs.some((log) => isBreak(log));
+
 		// Group time logs by date and calculate tracked, manual, idle, and resumed durations
 		const byDate = chain(logs)
 			.groupBy((log: ITimeLog) => moment.utc(log.startedAt).tz(timeZone).format('YYYY-MM-DD'))
@@ -548,15 +561,16 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				const ideal = calculateDuration(logs, TimeLogType.IDLE); //
 				const resumed = calculateDuration(logs, TimeLogType.RESUMED); //
 
-				return {
-					date,
-					value: {
-						[TimeLogType.TRACKED]: parseFloat((tracked / 3600).toFixed(1)),
-						[TimeLogType.MANUAL]: parseFloat((manual / 3600).toFixed(1)),
-						[TimeLogType.IDLE]: parseFloat((ideal / 3600).toFixed(1)),
-						[TimeLogType.RESUMED]: parseFloat((resumed / 3600).toFixed(1))
-					}
+				const value: Record<string, number> = {
+					[TimeLogType.TRACKED]: parseFloat((tracked / 3600).toFixed(1)),
+					[TimeLogType.MANUAL]: parseFloat((manual / 3600).toFixed(1)),
+					[TimeLogType.IDLE]: parseFloat((ideal / 3600).toFixed(1)),
+					[TimeLogType.RESUMED]: parseFloat((resumed / 3600).toFixed(1))
 				};
+				if (hasBreaks) {
+					value[TimeLogType.BREAK] = parseFloat((calculateDuration(logs, TimeLogType.BREAK) / 3600).toFixed(1));
+				}
+				return { date, value };
 			})
 			.value();
 
@@ -569,7 +583,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 						[TimeLogType.TRACKED]: 0,
 						[TimeLogType.MANUAL]: 0,
 						[TimeLogType.IDLE]: 0,
-						[TimeLogType.RESUMED]: 0
+						[TimeLogType.RESUMED]: 0,
+						...(hasBreaks && { [TimeLogType.BREAK]: 0 })
 					}
 				}
 			);
@@ -1154,6 +1169,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 							startDate: start,
 							endDate: end
 						});
+						// A break is never spent time (#11920)
+						qb.andWhere(p(`"timeLogs"."logType" <> :breakType`), { breakType: TimeLogType.BREAK });
 
 						if (isNotEmpty(employeeIds)) {
 							qb.andWhere(p(`"timeLogs"."employeeId" IN (:...employeeIds)`), {
@@ -1245,6 +1262,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				.andWhere('time_log.organizationId', organizationId)
 				.andWhere('time_log.startedAt', '>=', start)
 				.andWhere('time_log.startedAt', '<', end)
+				// A break is never spent time (#11920)
+				.andWhere('time_log.logType', '<>', TimeLogType.BREAK)
 				.whereNull('time_log.deletedAt')
 				.whereNull('employee.deletedAt');
 			if (isNotEmpty(employeeIds)) query = query.whereIn('time_log.employeeId', employeeIds);
@@ -1374,6 +1393,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 							startDate: start,
 							endDate: end
 						});
+						// A break is never spent time (#11920)
+						qb.andWhere(p(`"timeLogs"."logType" <> :breakType`), { breakType: TimeLogType.BREAK });
 
 						if (isNotEmpty(employeeIds)) {
 							qb.andWhere(p(`"timeLogs"."employeeId" IN (:...employeeIds)`), {
@@ -1431,7 +1452,11 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * @param request - The criteria for filtering TimeLogs.
 	 * @returns The modified query.
 	 */
-	async getFilterTimeLogQuery(query: SelectQueryBuilder<TimeLog>, request: IGetTimeLogReportInput) {
+	async getFilterTimeLogQuery(
+		query: SelectQueryBuilder<TimeLog>,
+		request: IGetTimeLogReportInput,
+		options: ITimeLogReadOptions = {}
+	) {
 		const { organizationId, projectIds = [], teamIds = [], taskIds = [] } = request;
 		let { employeeIds = [] } = request;
 
@@ -1557,6 +1582,11 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			query.andWhere(condition, { logType });
 		}
 
+		// A break is never worked time: a total leaves breaks out (#11920)
+		if (this.leavesBreaksOut(request, options)) {
+			query.andWhere(p(`"${query.alias}"."logType" <> :breakType`), { breakType: TimeLogType.BREAK });
+		}
+
 		/**
 		 * Apply a condition to the TypeORM query based on the 'isEdited' property in the request.
 		 * If 'isEdited' is true, filter rows where the 'editedAt' column is not null.
@@ -1588,7 +1618,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			query.andWhere(p(`"timeSlots"."tenantId" = :tenantId`), { tenantId });
 			query.andWhere(p(`"timeSlots"."organizationId" = :organizationId`), { organizationId });
 		} else {
-			this.requireTimeSlot(query, { tenantId, organizationId, ...activityRange });
+			this.requireTimeSlot(query, { tenantId, organizationId, ...activityRange }, this.keepsBreaks(request, options));
 		}
 
 		return query;
@@ -1662,7 +1692,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 	private requireTimeSlot(
 		query: SelectQueryBuilder<TimeLog>,
-		scope: { tenantId: ID; organizationId: ID; start?: number; end?: number }
+		scope: { tenantId: ID; organizationId: ID; start?: number; end?: number },
+		listsBreaks = false
 	): void {
 		const { tenantId, organizationId, start, end } = scope;
 		query.andWhere((qb: SelectQueryBuilder<TimeLog>) => {
@@ -1681,8 +1712,56 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					slotActivityEnd: end
 				});
 			}
-			return `EXISTS ${subQuery.getQuery()}`;
+			const slotExists = `EXISTS ${subQuery.getQuery()}`;
+			if (!listsBreaks) {
+				return slotExists;
+			}
+			// A break holds no slot by design: a read that lists entries keeps it all the same
+			query.setParameter('slotlessBreakType', TimeLogType.BREAK);
+			return `(${slotExists} OR ${p(`"${query.alias}"."logType" = :slotlessBreakType`)})`;
 		});
+	}
+
+	/**
+	 * Whether a report read leaves breaks out: every total of worked time does, even for a request that names their
+	 * type, so a break never reaches a duration, an owed amount or a spent budget. A read that lists entries keeps them
+	 * when asked (see `keepsBreaks`).
+	 *
+	 * @param request The report input.
+	 * @param options How the read treats breaks.
+	 */
+	private leavesBreaksOut(request: IGetTimeLogReportInput, options: ITimeLogReadOptions): boolean {
+		return !this.keepsBreaks(request, options);
+	}
+
+	/**
+	 * The MikroORM condition on the type of a read that leaves breaks out: the types the request names but BREAK, or
+	 * any type but BREAK when it names none.
+	 *
+	 * @param logType The types the request names, if any.
+	 */
+	private mikroOrmTypesWithoutBreaks(logType: IGetTimeLogReportInput['logType']): Record<string, unknown> {
+		const namedTypes: string[] = [].concat(logType ?? []);
+		if (namedTypes.length === 0) {
+			return { $ne: TimeLogType.BREAK };
+		}
+		return { $in: namedTypes.filter((type) => type !== TimeLogType.BREAK) };
+	}
+
+	/**
+	 * Whether a read keeps breaks: a read that lists entries does when the request asks for them (`includeBreaks`) or
+	 * names their type. A break holds no time slot, so such a read lets it through without one.
+	 *
+	 * @param request The report input.
+	 * @param options How the read treats breaks.
+	 */
+	private keepsBreaks(request: IGetTimeLogReportInput, options: ITimeLogReadOptions): boolean {
+		const listsEntries = options.listsEntries === true;
+		const asksForBreaks = request.includeBreaks === true;
+		const namedTypes: string[] = [].concat(request.logType ?? []);
+		const namesBreaks = namedTypes.includes(TimeLogType.BREAK);
+		const wantsBreaks = asksForBreaks || namesBreaks;
+		return listsEntries && wantsBreaks;
 	}
 
 	/**
@@ -1754,7 +1833,10 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * @param request - The criteria for filtering TimeLogs.
 	 * @returns A MikroORM-compatible where object.
 	 */
-	private async buildMikroOrmTimeLogWhere(request: IGetTimeLogReportInput): Promise<any> {
+	private async buildMikroOrmTimeLogWhere(
+		request: IGetTimeLogReportInput,
+		options: ITimeLogReadOptions = {}
+	): Promise<any> {
 		const { organizationId, projectIds = [], teamIds = [], taskIds = [] } = request;
 		let { employeeIds = [] } = request;
 
@@ -1812,6 +1894,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		}
 		if (isNotEmpty(request.logType)) {
 			where.logType = request.logType instanceof Array ? { $in: request.logType } : request.logType;
+		}
+		if (this.leavesBreaksOut(request, options)) {
+			where.logType = this.mikroOrmTypesWithoutBreaks(request.logType);
 		}
 
 		// An `isEdited` key with no value applies no filter, as in getFilterTimeLogQuery.
@@ -2049,7 +2134,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		);
 		const entry = { ...teamContext, projectId };
 		const isTrackerUpload = uploadedByTracker === true;
-		if (!isTrackerUpload) {
+		// A break is not work: the fields work must name (team, project, task) are not asked of it
+		const checksWorkFields = !isTrackerUpload && !isBreak(sent);
+		if (checksWorkFields) {
 			assertRequiredContext(requirements, entry);
 		}
 		return entry;
@@ -2088,6 +2175,12 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			// permissive organization, or none, and record time in an organization whose policy forbids it.
 			this.assertManualTimeAllowedIn(employee.organization);
 
+			// A break by hand needs the organization's breaks switch as well
+			const addsBreak = isBreak(request);
+			if (addsBreak) {
+				assertBreaksAllowedIn(employee.organization);
+			}
+
 			// Check if future dates are allowed for the organization
 			const futureDateAllowed: IOrganization['futureDateAllowed'] = employee.organization.futureDateAllowed;
 
@@ -2114,6 +2207,11 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			// A running timer in the range is refused, never cut
 			this.assertNoRunningTimerIn(conflicts);
 
+			// A break never cuts the entries it would overlap: it is refused instead
+			if (addsBreak) {
+				assertBreakOverlapsNothing(conflicts);
+			}
+
 			// Resolve conflicts by deleting conflicting time slots
 			if (conflicts?.length) {
 				const times: IDateRange = {
@@ -2132,9 +2230,12 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 			// Create the new time log entry. The handler reads it back through this service, whose employee
 			// filter would not find a log written for a member the caller manages.
-			return await this.withoutEmployeeFilter(() =>
-				this.commandBus.execute(new TimeLogCreateCommand({ ...entry, organizationId }))
-			);
+			const written = { ...entry, organizationId };
+			// A break is never billable
+			if (addsBreak) {
+				written.isBillable = false;
+			}
+			return await this.withoutEmployeeFilter(() => this.commandBus.execute(new TimeLogCreateCommand(written)));
 		} catch (error) {
 			// Never swallow the reason: a blanket message here hid a real database failure indefinitely.
 			if (error instanceof HttpException) {
@@ -2185,6 +2286,13 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			// other log, so the read reaches nothing the caller could not have edited.
 			const timeLog = await this.withoutEmployeeFilter(() => this.findOneByIdString(id));
 
+			// A break stays a break and work stays work; editing a break needs the breaks switch
+			assertBreakTypeKept(timeLog, request.logType);
+			const editsBreak = isBreak(timeLog);
+			if (editsBreak) {
+				assertBreaksAllowedIn(employee.organization);
+			}
+
 			// The update keeps the log's timesheet and time slots, while the conflict cleanup below deletes
 			// slots of `employeeId`: naming anyone but the log's owner would move the log without its time
 			// and erase that employee's overlapping work. Hence a refusal, before that cleanup runs.
@@ -2224,6 +2332,12 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 			// A running timer in the range is refused, never cut (the edited log itself is not among the conflicts)
 			this.assertNoRunningTimerIn(conflicts);
+
+			// A break never cuts the entries it would overlap
+			if (editsBreak) {
+				assertBreakOverlapsNothing(conflicts);
+				request.isBillable = false;
+			}
 
 			// Resolve conflicts by deleting conflicting time slots
 			if (conflicts?.length) {
