@@ -25,9 +25,10 @@ import { TimerService } from './timer.service';
  * Marie starts work at 9:00 and clicks Start at 9:25. The timer moves its running log's start, earlier or later,
  * under the rules of time changed by hand; the log stays one log and keeps running.
  *
- * The repositories answer from an in-memory table of time logs and a list of the running log's slot links; the
- * command bus applies the update to its row, answers the conflicts of a range from the table, and creates the slots
- * it is asked for.
+ * The repositories answer from an in-memory table of time logs and of the run's time slots. The move is written with
+ * a conditional update (the run must still run); the command bus answers the conflicts of a range from the table,
+ * applies the time log update to its row, and creates the slots it is asked for, linked to the run as the real
+ * bulk create links them.
  */
 
 const EMPLOYEE_ID = 'employee-1';
@@ -52,7 +53,15 @@ interface TimeLogRow {
 	reason?: string;
 }
 
+interface SlotRow {
+	id: string;
+	startedAt: Date;
+	duration: number;
+	keyboard: number;
+}
+
 const time = (value: Date): number => new Date(value).getTime();
+const at = (hhmm: string): Date => new Date(`2026-11-16T${hhmm}:00.000Z`);
 
 function findRows(rows: TimeLogRow[], where: Record<string, unknown>): TimeLogRow[] {
 	return rows
@@ -66,21 +75,52 @@ interface Organization {
 	requireReason: boolean;
 }
 
-function createService(ormType: MultiORMEnum, rows: TimeLogRow[], employee: Record<string, unknown>) {
-	const linkedSlotIds: string[] = [];
+interface Setup {
+	/** The slots linked to the run before the move (a heartbeat's, say). */
+	slots?: SlotRow[];
+	/** A stop of the run that lands between the move's read and its write. */
+	stopLandsBeforeTheWrite?: boolean;
+}
+
+function createService(
+	ormType: MultiORMEnum,
+	rows: TimeLogRow[],
+	employee: Record<string, unknown>,
+	{ slots = [], stopLandsBeforeTheWrite = false }: Setup = {}
+) {
+	const linked: SlotRow[] = slots.map((slot) => ({ ...slot }));
 	const relation = {
-		loadMany: jest.fn(async () => linkedSlotIds.map((id) => ({ id }))),
+		loadMany: jest.fn(async () => linked.map((slot) => ({ ...slot }))),
 		add: jest.fn(async (ids: string[]) => {
-			linkedSlotIds.push(...ids);
+			for (const id of ids) {
+				linked.push({ id, startedAt: new Date(id.replace('existing-', '')), duration: 0, keyboard: 0 });
+			}
 		})
 	};
+	const raiseDuration = jest.fn(
+		async (_entity: unknown, { id }: { id: string }, { duration }: { duration: number }) => {
+			const slot = linked.find((candidate) => candidate.id === id);
+			Object.assign(slot, { duration });
+		}
+	);
 	const typeOrmTimeLogRepository = {
 		findOne: async ({ where }: { where: Record<string, unknown> }) => findRows(rows, where)[0] ?? null,
 		findOneBy: async (where: Record<string, unknown>) => {
 			const row = findRows(rows, where)[0];
 			return row ? { ...row } : null;
 		},
-		manager: { createQueryBuilder: () => ({ relation: () => ({ of: () => relation }) }) }
+		update: jest.fn(async (where: Record<string, unknown>, changes: Partial<TimeLogRow>) => {
+			if (stopLandsBeforeTheWrite) {
+				rows.forEach((row) => Object.assign(row, { isRunning: false }));
+			}
+			const matching = findRows(rows, where);
+			matching.forEach((row) => Object.assign(row, changes));
+			return { affected: matching.length };
+		}),
+		manager: {
+			createQueryBuilder: () => ({ relation: () => ({ of: () => relation }) }),
+			update: raiseDuration
+		}
 	};
 	const mikroOrmTimeLogRepository = {
 		findOne: async (where: Record<string, unknown>) => {
@@ -90,7 +130,8 @@ function createService(ormType: MultiORMEnum, rows: TimeLogRow[], employee: Reco
 	};
 	const execute = jest.fn(async (command: unknown) => {
 		if (command instanceof TimeLogUpdateCommand) {
-			const row = rows.find((candidate) => candidate.id === command.id);
+			const id = typeof command.id === 'object' ? command.id.id : command.id;
+			const row = rows.find((candidate) => candidate.id === id);
 			Object.assign(row, command.input);
 			return { ...row };
 		}
@@ -104,7 +145,15 @@ function createService(ormType: MultiORMEnum, rows: TimeLogRow[], employee: Reco
 			);
 		}
 		if (command instanceof TimeSlotBulkCreateCommand) {
-			return command.slots.map((slot) => ({ ...slot, id: `slot-${new Date(slot.startedAt).toISOString()}` }));
+			const created = command.slots.map((slot) => ({
+				id: `slot-${new Date(slot.startedAt).toISOString()}`,
+				startedAt: new Date(slot.startedAt),
+				duration: slot.duration,
+				keyboard: slot.keyboard
+			}));
+			// The bulk create links each slot it creates to the log its `timeLogId` names
+			linked.push(...created);
+			return created;
 		}
 		return undefined;
 	});
@@ -126,8 +175,12 @@ function createService(ormType: MultiORMEnum, rows: TimeLogRow[], employee: Reco
 
 	const commandsOf = <T>(type: new (...args: never[]) => T): T[] =>
 		execute.mock.calls.map(([command]) => command).filter((command): command is T => command instanceof type);
+	const linkedSlots = () =>
+		[...linked]
+			.sort((a, b) => time(a.startedAt) - time(b.startedAt))
+			.map((slot) => `${new Date(slot.startedAt).toISOString().slice(11, 16)}:${slot.duration}:${slot.keyboard}`);
 
-	return { service, execute, relation, linkedSlotIds, commandsOf };
+	return { service, execute, relation, raiseDuration, linkedSlots, commandsOf, typeOrmTimeLogRepository };
 }
 
 describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
@@ -162,16 +215,24 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 				id: RUNNING_LOG_ID,
 				isRunning: true,
 				startedAt: RUNNING_SINCE,
-				stoppedAt: new Date('2026-11-16T09:50:00.000Z'),
+				stoppedAt: at('09:50'),
 				...overrides
 			});
+
+		/** The slot of the run's first heartbeat: 9:20 to 9:30, holding its five minutes from 9:25, with activity. */
+		const heartbeatSlot = (): SlotRow => ({
+			id: 'heartbeat-0920',
+			startedAt: at('09:20'),
+			duration: 300,
+			keyboard: 42
+		});
 
 		/** An entry of hers from 8:30 to 9:10. */
 		const earlierEntry = (): TimeLogRow =>
 			timeLog({
 				id: EARLIER_LOG_ID,
-				startedAt: new Date('2026-11-16T08:30:00.000Z'),
-				stoppedAt: new Date('2026-11-16T09:10:00.000Z')
+				startedAt: at('08:30'),
+				stoppedAt: at('09:10')
 			});
 
 		let restore: () => void;
@@ -192,7 +253,7 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 			const { service, commandsOf } = createService(ormType, rows, employeeIn(openOrganization));
 
 			const moved = await service.moveRunningTimerStart({
-				startedAt: new Date('2026-11-16T09:00:00.000Z'),
+				startedAt: at('09:00'),
 				reason: 'Forgot to start timer'
 			});
 
@@ -202,54 +263,110 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 			expect(rows[0]).toMatchObject({ reason: 'Forgot to start timer', isRunning: true });
 			expect(rows[0].editedAt).toEqual(NOW);
 			const [update] = commandsOf(TimeLogUpdateCommand);
-			expect(update.id).toBe(RUNNING_LOG_ID);
 			expect(update.input).not.toHaveProperty('stoppedAt');
 		});
 
-		it('gives the 25 added minutes their slots, without activity, and links them to the run', async () => {
+		it('writes the move only while the run still runs, and moves nothing when a stop lands first', async () => {
 			const rows = [runningLog()];
-			const { service, commandsOf, linkedSlotIds } = createService(ormType, rows, employeeIn(openOrganization));
+			const { service, commandsOf, typeOrmTimeLogRepository } = createService(
+				ormType,
+				rows,
+				employeeIn(openOrganization),
+				{ stopLandsBeforeTheWrite: true }
+			);
 
-			await service.moveRunningTimerStart({ startedAt: new Date('2026-11-16T09:00:00.000Z') });
+			const move = service.moveRunningTimerStart({ startedAt: at('09:40') });
+
+			await expect(move).rejects.toBeInstanceOf(BadRequestException);
+			await move.catch((error: BadRequestException) => {
+				expect(error.getResponse()).toMatchObject({ code: TIMER_NOT_RUNNING });
+			});
+			expect(typeOrmTimeLogRepository.update).toHaveBeenCalledWith(
+				expect.objectContaining({ id: RUNNING_LOG_ID, isRunning: true }),
+				expect.objectContaining({ startedAt: at('09:40') })
+			);
+			expect(rows[0].startedAt).toEqual(RUNNING_SINCE);
+			expect(commandsOf(TimeLogUpdateCommand)).toHaveLength(0);
+		});
+
+		it('lets the time log update make no slot of its own, and hands it the run as known until now', async () => {
+			const rows = [runningLog()];
+			const { service, commandsOf } = createService(ormType, rows, employeeIn(openOrganization));
+
+			await service.moveRunningTimerStart({ startedAt: at('09:40') });
+
+			const [update] = commandsOf(TimeLogUpdateCommand);
+			expect(update.manualTimeSlot).toBe(true);
+			expect(update.id).toMatchObject({ id: RUNNING_LOG_ID, startedAt: RUNNING_SINCE, stoppedAt: NOW });
+		});
+
+		it('gives a run without slots none: its stop fills its whole range, the added minutes included', async () => {
+			const rows = [runningLog()];
+			const { service, commandsOf, linkedSlots } = createService(ormType, rows, employeeIn(openOrganization));
+
+			await service.moveRunningTimerStart({ startedAt: at('09:00') });
+
+			expect(commandsOf(TimeSlotBulkCreateCommand)).toHaveLength(0);
+			expect(linkedSlots()).toEqual([]);
+		});
+
+		it('gives a run fed by heartbeats the slots of the 25 added minutes, without activity, keeping its own', async () => {
+			const rows = [runningLog()];
+			const { service, commandsOf, linkedSlots } = createService(ormType, rows, employeeIn(openOrganization), {
+				slots: [heartbeatSlot()]
+			});
+
+			await service.moveRunningTimerStart({ startedAt: at('09:00') });
 
 			const [bulk] = commandsOf(TimeSlotBulkCreateCommand);
-			expect(bulk.slots.map((slot) => new Date(slot.startedAt).toISOString())).toEqual([
-				'2026-11-16T09:00:00.000Z',
-				'2026-11-16T09:10:00.000Z',
-				'2026-11-16T09:20:00.000Z'
+			expect(bulk.slots.map((slot) => new Date(slot.startedAt).toISOString().slice(11, 16))).toEqual([
+				'09:00',
+				'09:10'
 			]);
-			expect(bulk.slots.map((slot) => slot.duration)).toEqual([600, 600, 300]);
 			for (const slot of bulk.slots) {
 				expect(slot).toMatchObject({ keyboard: 0, mouse: 0, overall: 0, timeLogId: RUNNING_LOG_ID });
 			}
-			expect(linkedSlotIds).toEqual([
-				'slot-2026-11-16T09:00:00.000Z',
-				'slot-2026-11-16T09:10:00.000Z',
-				'slot-2026-11-16T09:20:00.000Z'
-			]);
+			// The heartbeat's slot keeps its activity and gains the five minutes from 9:20 to 9:25
+			expect(linkedSlots()).toEqual(['09:00:600:0', '09:10:600:0', '09:20:600:42']);
 			expect(commandsOf(TimesheetRecalculateCommand).map((command) => command.id)).toEqual([TIMESHEET_ID]);
 			expect(commandsOf(UpdateEmployeeTotalWorkedHoursCommand)).toHaveLength(1);
 		});
 
-		it('does not link twice a slot the time log update already gave the run', async () => {
+		it('never lowers the seconds a slot already holds', async () => {
 			const rows = [runningLog()];
-			const { service, relation, linkedSlotIds } = createService(ormType, rows, employeeIn(openOrganization));
-			linkedSlotIds.push(
-				'slot-2026-11-16T09:00:00.000Z',
-				'slot-2026-11-16T09:10:00.000Z',
-				'slot-2026-11-16T09:20:00.000Z'
-			);
+			const fullSlot = { ...heartbeatSlot(), duration: 600 };
+			const { service, raiseDuration } = createService(ormType, rows, employeeIn(openOrganization), {
+				slots: [fullSlot]
+			});
 
-			await service.moveRunningTimerStart({ startedAt: new Date('2026-11-16T09:00:00.000Z') });
+			await service.moveRunningTimerStart({ startedAt: at('09:00') });
 
-			expect(relation.add).not.toHaveBeenCalled();
+			expect(raiseDuration).not.toHaveBeenCalled();
+		});
+
+		it('completes, on a retry of the same start, the slots a failed move left out', async () => {
+			// The move to 9:00 was written, then its slot work failed: the run starts at 9:00 and its slots at 9:20
+			const rows = [runningLog({ startedAt: at('09:00'), editedAt: at('09:59') })];
+			const { service, linkedSlots, commandsOf } = createService(ormType, rows, employeeIn(openOrganization), {
+				slots: [heartbeatSlot()]
+			});
+
+			const answer = await service.moveRunningTimerStart({ startedAt: at('09:00') });
+
+			expect(answer).toMatchObject({ id: RUNNING_LOG_ID });
+			expect(commandsOf(TimeLogUpdateCommand)).toHaveLength(0);
+			expect(linkedSlots()).toEqual(['09:00:600:0', '09:10:600:0', '09:20:600:42']);
 		});
 
 		it('refuses a start overlapping the entry that ends at 9:10, and the timer keeps its 9:25 start', async () => {
 			const rows = [earlierEntry(), runningLog()];
-			const { service, commandsOf } = createService(ormType, rows, employeeIn(openOrganization));
+			const { service, commandsOf, typeOrmTimeLogRepository } = createService(
+				ormType,
+				rows,
+				employeeIn(openOrganization)
+			);
 
-			const move = service.moveRunningTimerStart({ startedAt: new Date('2026-11-16T09:00:00.000Z') });
+			const move = service.moveRunningTimerStart({ startedAt: at('09:00') });
 
 			await expect(move).rejects.toBeInstanceOf(ConflictException);
 			await move.catch((error: ConflictException) => {
@@ -258,8 +375,8 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 					overlapsUntil: '2026-11-16T09:10:00.000Z'
 				});
 			});
+			expect(typeOrmTimeLogRepository.update).not.toHaveBeenCalled();
 			expect(commandsOf(TimeLogUpdateCommand)).toHaveLength(0);
-			expect(commandsOf(TimeSlotBulkCreateCommand)).toHaveLength(0);
 			expect(rows[1].startedAt).toEqual(RUNNING_SINCE);
 		});
 
@@ -267,7 +384,7 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 			const rows = [earlierEntry(), runningLog()];
 			const { service } = createService(ormType, rows, employeeIn(openOrganization));
 
-			const moved = await service.moveRunningTimerStart({ startedAt: new Date('2026-11-16T09:10:00.000Z') });
+			const moved = await service.moveRunningTimerStart({ startedAt: at('09:10') });
 
 			expect(new Date(moved.startedAt).toISOString()).toBe('2026-11-16T09:10:00.000Z');
 		});
@@ -276,7 +393,7 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 			const rows = [runningLog()];
 			const { service, commandsOf } = createService(ormType, rows, employeeIn(openOrganization));
 
-			const moved = await service.moveRunningTimerStart({ startedAt: new Date('2026-11-16T09:40:00.000Z') });
+			const moved = await service.moveRunningTimerStart({ startedAt: at('09:40') });
 
 			expect(new Date(moved.startedAt).toISOString()).toBe('2026-11-16T09:40:00.000Z');
 			expect(commandsOf(TimeLogUpdateCommand)[0].input).not.toHaveProperty('stoppedAt');
@@ -286,18 +403,27 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 
 		it('keeps the range of a run moved past its last heartbeat whole: its end becomes now', async () => {
 			const rows = [runningLog()];
-			const { service, commandsOf } = createService(ormType, rows, employeeIn(openOrganization));
+			const { service, typeOrmTimeLogRepository, commandsOf } = createService(
+				ormType,
+				rows,
+				employeeIn(openOrganization)
+			);
 
-			await service.moveRunningTimerStart({ startedAt: new Date('2026-11-16T09:55:00.000Z') });
+			await service.moveRunningTimerStart({ startedAt: at('09:55') });
 
-			expect(commandsOf(TimeLogUpdateCommand)[0].input).toMatchObject({ stoppedAt: NOW });
+			expect(typeOrmTimeLogRepository.update).toHaveBeenCalledWith(
+				expect.objectContaining({ isRunning: true }),
+				expect.objectContaining({ startedAt: at('09:55'), stoppedAt: NOW })
+			);
+			// The shared update never writes the end: a stop that lands after the move keeps its own
+			expect(commandsOf(TimeLogUpdateCommand)[0].input).not.toHaveProperty('stoppedAt');
 		});
 
 		it('answers 400 when no timer runs, and writes nothing', async () => {
 			const rows = [earlierEntry()];
 			const { service, execute } = createService(ormType, rows, employeeIn(openOrganization));
 
-			const move = service.moveRunningTimerStart({ startedAt: new Date('2026-11-16T09:00:00.000Z') });
+			const move = service.moveRunningTimerStart({ startedAt: at('09:00') });
 
 			await expect(move).rejects.toBeInstanceOf(BadRequestException);
 			await move.catch((error: BadRequestException) => {
@@ -310,7 +436,7 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 			const rows = [runningLog({ source: TimeLogSourceEnum.DESKTOP })];
 			const { service, execute } = createService(ormType, rows, employeeIn(openOrganization));
 
-			const move = service.moveRunningTimerStart({ startedAt: new Date('2026-11-16T09:00:00.000Z') });
+			const move = service.moveRunningTimerStart({ startedAt: at('09:00') });
 
 			await expect(move).rejects.toBeInstanceOf(ConflictException);
 			await move.catch((error: ConflictException) => {
@@ -323,7 +449,7 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 			const organization = { ...openOrganization, allowManualTime: false };
 
 			const earlier = createService(ormType, [runningLog()], employeeIn(organization));
-			const refused = earlier.service.moveRunningTimerStart({ startedAt: new Date('2026-11-16T09:00:00.000Z') });
+			const refused = earlier.service.moveRunningTimerStart({ startedAt: at('09:00') });
 			await expect(refused).rejects.toBeInstanceOf(ForbiddenException);
 			await refused.catch((error: ForbiddenException) => {
 				expect(error.getResponse()).toMatchObject({ code: TIMER_START_MANUAL_NOT_ALLOWED });
@@ -331,9 +457,7 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 			expect(earlier.execute).not.toHaveBeenCalled();
 
 			const later = createService(ormType, [runningLog()], employeeIn(organization));
-			const moved = await later.service.moveRunningTimerStart({
-				startedAt: new Date('2026-11-16T09:40:00.000Z')
-			});
+			const moved = await later.service.moveRunningTimerStart({ startedAt: at('09:40') });
 			expect(new Date(moved.startedAt).toISOString()).toBe('2026-11-16T09:40:00.000Z');
 		});
 
@@ -344,9 +468,9 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 				employeeIn(openOrganization, { isTrackingEnabled: false })
 			);
 
-			await expect(
-				service.moveRunningTimerStart({ startedAt: new Date('2026-11-16T09:40:00.000Z') })
-			).rejects.toBeInstanceOf(ForbiddenException);
+			await expect(service.moveRunningTimerStart({ startedAt: at('09:40') })).rejects.toBeInstanceOf(
+				ForbiddenException
+			);
 			expect(execute).not.toHaveBeenCalled();
 		});
 
