@@ -21,7 +21,7 @@ import { EncryptionService } from '../../common/encryption/encryption.service';
 import { CrudService } from '../../core/crud/crud.service';
 import { Organization } from '../../core/entities/internal';
 import { isUniqueViolation } from '../../core/errors/unique-violation';
-import { MultiORMEnum } from '../../core/utils';
+import { MultiORMEnum, parseTypeORMFindToMikroOrm } from '../../core/utils';
 import { LoginAttemptRule, LoginAttemptScope, LoginAttemptService } from '../login-attempt.service';
 import { findRecoveryCodeHash, generateRecoveryCodes, hashRecoveryCode } from './recovery-codes';
 import { MikroOrmUserTwoFactorRepository } from './repository/mikro-orm-user-two-factor.repository';
@@ -108,8 +108,24 @@ export class UserTwoFactorService extends CrudService<UserTwoFactor> {
 			return new Set();
 		}
 		const where = { userId: In(ids), enabledAt: Not(IsNull()) };
-		const rows = await this.find({ where, select: { id: true, userId: true } });
-		return new Set(rows.map((row) => row.userId));
+		let rows: UserTwoFactor[];
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				// Read the entities themselves: their `userId` mirrors the `user` relation and is not a column to select
+				const parsed = parseTypeORMFindToMikroOrm<UserTwoFactor>({ where });
+				rows = (await this.mikroOrmUserTwoFactorRepository.find(
+					parsed.where,
+					parsed.mikroOptions
+				)) as UserTwoFactor[];
+				break;
+			}
+			case MultiORMEnum.TypeORM:
+				rows = await this.typeOrmUserTwoFactorRepository.find({ where, select: { id: true, userId: true } });
+				break;
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
+		}
+		return new Set(rows.map((row) => userIdOf(row)));
 	}
 
 	/**
@@ -412,8 +428,15 @@ export class UserTwoFactorService extends CrudService<UserTwoFactor> {
 			return null;
 		}
 		switch (this.ormType) {
-			case MultiORMEnum.MikroORM:
-				return (await this.mikroOrmUserTwoFactorRepository.findOne({ userId })) ?? null;
+			case MultiORMEnum.MikroORM: {
+				const parsed = parseTypeORMFindToMikroOrm<UserTwoFactor>({ where: { userId } });
+				return (
+					((await this.mikroOrmUserTwoFactorRepository.findOne(
+						parsed.where,
+						parsed.mikroOptions
+					)) as UserTwoFactor) ?? null
+				);
+			}
 			case MultiORMEnum.TypeORM:
 				return (await this.typeOrmUserTwoFactorRepository.findOne({ where: { userId } })) ?? null;
 			default:
@@ -479,4 +502,15 @@ export class UserTwoFactorService extends CrudService<UserTwoFactor> {
 			throw new ServiceUnavailableException(twoFactorSecretProblemMessage(problem));
 		}
 	}
+}
+
+/**
+ * The user a row protects. Under MikroORM `userId` mirrors the `user` relation and may not be loaded; the relation's key
+ * always is.
+ *
+ * @param row The row.
+ */
+function userIdOf(row: UserTwoFactor): ID {
+	const relation = row.user as { id?: ID } | undefined;
+	return row.userId ?? relation?.id;
 }

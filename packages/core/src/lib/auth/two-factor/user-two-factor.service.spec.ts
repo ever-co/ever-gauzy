@@ -393,4 +393,18 @@ describe('UserTwoFactorService races and MikroORM reads', () => {
 		TIMEOUT
 	);
 
+	it('reads the users of the rows from their relation under MikroORM', async () => {
+		const rows = [{ id: 'row-1', user: { id: 'user-1' }, enabledAt: new Date() }];
+		const mikroOrm = { find: jest.fn(async () => rows), findOne: jest.fn(async () => rows[0]) };
+		const onMikroOrm = new UserTwoFactorService(
+			undefined,
+			mikroOrm as never,
+			new EncryptionService(),
+			new LoginAttemptService(null)
+		);
+		Object.defineProperty(onMikroOrm, 'ormType', { value: 'mikro-orm' });
+
+		expect(await onMikroOrm.enabledAmong(['user-1', 'user-2'])).toEqual(new Set(['user-1']));
+		expect(await onMikroOrm.isEnabled('user-1')).toBe(true);
+	});
 });
