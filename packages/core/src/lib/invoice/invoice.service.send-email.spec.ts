@@ -17,14 +17,14 @@ function sender(
 	overrides: {
 		emailInvoice?: jest.Mock;
 		createEstimateEmail?: jest.Mock;
-		recordInvoiceDelivery?: jest.Mock;
+		forgetInvoiceDelivery?: jest.Mock;
 		pdf?: Buffer | null;
 	} = {}
 ) {
 	const estimateEmailService = {
 		createEstimateEmail:
 			overrides.createEstimateEmail ?? jest.fn(async () => ({ id: 'estimate-email-1', token: 'estimate-token' })),
-		recordInvoiceDelivery: overrides.recordInvoiceDelivery ?? jest.fn(async () => undefined)
+		forgetInvoiceDelivery: overrides.forgetInvoiceDelivery ?? jest.fn(async () => undefined)
 	};
 	const organizationService = { findOneByIdString: jest.fn(async () => ({ id: 'organization-1' })) };
 	const emailService = { emailInvoice: overrides.emailInvoice ?? jest.fn(async () => undefined) };
@@ -123,35 +123,43 @@ describe('InvoiceService.sendEmail — the outcome of a send', () => {
 });
 
 /**
- * An invoice's email records which invoice it delivered and in which language once the transport took it: the
- * invoice's payment reminders go to that address, in that language. An estimate's email and an email that did not go
- * record nothing, and a record that fails never turns a sent invoice into a failed send.
+ * An invoice's email row names the invoice it delivers and its language from its creation, so no write after the send
+ * can fail to, and the invoice's payment reminders go to that address, in that language. When the email does not go,
+ * the row forgets both, so the reminders keep going where the invoice last went. An estimate's email names nothing.
  */
 describe('InvoiceService.sendEmail — where an invoice went', () => {
 	beforeEach(() => jest.spyOn(console, 'log').mockImplementation(() => undefined));
 	afterEach(() => jest.restoreAllMocks());
 
-	it('records the invoice and its language on the email once the transport took it', async () => {
+	it('names the invoice and its language on the email row it creates, and keeps them once the email went', async () => {
 		const { service, estimateEmailService } = sender();
 
 		await expect(sendInvoice(service)).resolves.toEqual({ sent: true });
 
-		expect(estimateEmailService.recordInvoiceDelivery).toHaveBeenCalledWith(
-			'estimate-email-1',
-			'invoice-43',
-			LanguagesEnum.FRENCH
+		expect(estimateEmailService.createEstimateEmail).toHaveBeenCalledWith('invoice-43', 'billing@client.test', {
+			languageCode: LanguagesEnum.FRENCH
+		});
+		expect(estimateEmailService.forgetInvoiceDelivery).not.toHaveBeenCalled();
+	});
+
+	it("names nothing on an estimate's email, and forgets nothing when it does not go", async () => {
+		const { service, estimateEmailService } = sender({
+			emailInvoice: jest.fn(async () => {
+				throw new Error('connect ECONNREFUSED smtp.internal.example:587');
+			})
+		});
+
+		await expect(send(service)).resolves.toEqual({ sent: false, reason: 'EMAIL_NOT_SENT' });
+
+		expect(estimateEmailService.createEstimateEmail).toHaveBeenCalledWith(
+			'invoice-42',
+			'buyer@example.com',
+			undefined
 		);
+		expect(estimateEmailService.forgetInvoiceDelivery).not.toHaveBeenCalled();
 	});
 
-	it("records nothing for an estimate's email", async () => {
-		const { service, estimateEmailService } = sender();
-
-		await expect(send(service)).resolves.toEqual({ sent: true });
-
-		expect(estimateEmailService.recordInvoiceDelivery).not.toHaveBeenCalled();
-	});
-
-	it('records nothing when the transport refused the email', async () => {
+	it('forgets them when the transport refused the email', async () => {
 		const { service, estimateEmailService } = sender({
 			emailInvoice: jest.fn(async () => {
 				throw new Error('connect ECONNREFUSED smtp.internal.example:587');
@@ -160,17 +168,28 @@ describe('InvoiceService.sendEmail — where an invoice went', () => {
 
 		await expect(sendInvoice(service)).resolves.toEqual({ sent: false, reason: 'EMAIL_NOT_SENT' });
 
-		expect(estimateEmailService.recordInvoiceDelivery).not.toHaveBeenCalled();
+		expect(estimateEmailService.forgetInvoiceDelivery).toHaveBeenCalledWith('estimate-email-1');
 	});
 
-	it('still answers sent when the record fails: the invoice went', async () => {
+	it('forgets them when no PDF could be attached', async () => {
+		const { service, estimateEmailService } = sender({ pdf: null });
+
+		await expect(sendInvoice(service)).resolves.toEqual({ sent: false, reason: 'DOCUMENT_NOT_GENERATED' });
+
+		expect(estimateEmailService.forgetInvoiceDelivery).toHaveBeenCalledWith('estimate-email-1');
+	});
+
+	it('still answers the failed send when forgetting fails, and says where the reminders may go', async () => {
 		const { service } = sender({
-			recordInvoiceDelivery: jest.fn(async () => {
+			emailInvoice: jest.fn(async () => {
+				throw new Error('connect ECONNREFUSED smtp.internal.example:587');
+			}),
+			forgetInvoiceDelivery: jest.fn(async () => {
 				throw new Error('update failed');
 			})
 		});
 
-		await expect(sendInvoice(service)).resolves.toEqual({ sent: true });
-		expect(console.log).toHaveBeenCalledWith(expect.stringContaining('gets no payment reminder'), 'update failed');
+		await expect(sendInvoice(service)).resolves.toEqual({ sent: false, reason: 'EMAIL_NOT_SENT' });
+		expect(console.log).toHaveBeenCalledWith(expect.stringContaining('may go to that address'), 'update failed');
 	});
 });

@@ -369,8 +369,12 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 		organizationId: string
 	): Promise<IInvoiceEmailOutcome> {
 		try {
-			//create estimate email record
-			const estimateEmail = await this.estimateEmailService.createEstimateEmail(invoiceId, email);
+			//create estimate email record: an invoice's names the invoice, and the language its reminders follow
+			const estimateEmail = await this.estimateEmailService.createEstimateEmail(
+				invoiceId,
+				email,
+				isEstimate ? undefined : { languageCode }
+			);
 			const organization: IOrganization = await this.organizationService.findOneByIdString(organizationId);
 			let step: IInvoiceEmailOutcome['reason'] = 'DOCUMENT_NOT_GENERATED';
 			try {
@@ -392,12 +396,12 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 					organization
 				);
 
-				if (!isEstimate) {
-					await this.recordInvoiceDelivery(estimateEmail.id, invoiceId, invoiceNumber, languageCode);
-				}
 				return { sent: true };
 			} catch (error) {
 				console.log(`Error while sending estimate email ${invoiceNumber}: %s`, error?.message);
+				if (!isEstimate) {
+					await this.forgetInvoiceDelivery(estimateEmail.id, invoiceNumber);
+				}
 
 				return { sent: false, reason: step };
 			}
@@ -409,21 +413,16 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 	}
 
 	/**
-	 * Records which invoice an email delivered, and in which language, once the mail transport took it: the invoice's
-	 * payment reminders go to the same address, in the same language. The invoice went whatever this write does, so a
-	 * failure is logged and the send still reports `sent`; that invoice then gets no reminder.
+	 * Takes back the delivery an invoice's email row named from its creation, when the email did not go: the invoice's
+	 * payment reminders keep going where it last went. The send's outcome is already known, so a failure is logged:
+	 * the row then still names the invoice, and its reminders may go to this address, each with the invoice attached.
 	 */
-	private async recordInvoiceDelivery(
-		estimateEmailId: ID,
-		invoiceId: ID,
-		invoiceNumber: number,
-		languageCode: LanguagesEnum
-	): Promise<void> {
+	private async forgetInvoiceDelivery(estimateEmailId: ID, invoiceNumber: number): Promise<void> {
 		try {
-			await this.estimateEmailService.recordInvoiceDelivery(estimateEmailId, invoiceId, languageCode);
+			await this.estimateEmailService.forgetInvoiceDelivery(estimateEmailId);
 		} catch (error) {
 			console.log(
-				`Invoice ${invoiceNumber} was emailed, but where it went was not recorded, so it gets no payment reminder: %s`,
+				`Invoice ${invoiceNumber} was not emailed, and its email row still names it, so its payment reminders may go to that address: %s`,
 				error?.message
 			);
 		}
