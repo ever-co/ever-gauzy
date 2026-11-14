@@ -5,6 +5,7 @@ import { TimeSlotBulkCreateHandler } from './time-slot-bulk-create.handler';
 import { DeleteTimeSlotHandler } from './delete-time-slot.handler';
 import { TimeSlotBulkDeleteHandler } from './time-slot-bulk-delete.handler';
 import { TimeSlotMergeHandler } from './time-slot-merge.handler';
+import { TimeSlotDurationRecalculateHandler } from './time-slot-duration-recalculate.handler';
 import { TimeSlotCreateHandler } from './time-slot-create.handler';
 import { ScheduleTimeSlotEntriesHandler } from './schedule-time-slot-entries.handler';
 import { UpdateTimeSlotMinutesHandler } from '../../time-slot-minute/commands/handlers/update-time-slot-minutes.handler';
@@ -18,6 +19,7 @@ export const CommandHandlers = [
 	TimeSlotBulkCreateHandler,
 	TimeSlotBulkDeleteHandler,
 	TimeSlotMergeHandler,
+	TimeSlotDurationRecalculateHandler,
 	TimeSlotCreateHandler,
 	ScheduleTimeSlotEntriesHandler,
 	CreateTimeSlotMinutesHandler,
