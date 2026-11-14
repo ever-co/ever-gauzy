@@ -107,5 +107,5 @@ jobs:
           NX_LOAD_DOT_ENV_FILES: 'false'
         run: |
           status=0
-          NODE_OPTIONS='--experimental-vm-modules --max-old-space-size=24576' node node_modules/jest/bin/jest.js -c packages/core/jest.config.ts --runInBand --ci             'packages/core/src/lib/(public-share/invoice|invoice|invoice-item)/'             || status=$?
+          NODE_OPTIONS='--experimental-vm-modules --max-old-space-size=24576' node node_modules/jest/bin/jest.js -c packages/core/jest.config.ts --runInBand --ci             'packages/core/src/lib/(time-tracking|auth|database|invoice|invoice-item|saved-report|employee|employee-placeholder|employee-notification|public-share|organization|organization-project|invite|token|user|shared|email-template|email-send|activity-log)/'             || status=$?
           exit "$status"
