@@ -7,7 +7,7 @@ import { ITimeLog, PermissionsEnum, TimeLogSourceEnum } from '@gauzy/contracts';
 import { RequestContext } from '../../core/context';
 import { MultiORMEnum } from '../../core/utils';
 import { asTenantUser, createTenantFixture } from '../../core/testing/tenant-isolation/tenant-isolation.fixtures';
-import { TimesheetRecalculateCommand } from '../timesheet/commands';
+import { TimesheetFirstOrCreateCommand, TimesheetRecalculateCommand } from '../timesheet/commands';
 import {
 	IGetConflictTimeLogCommand,
 	TimeLogUpdateCommand,
@@ -108,6 +108,10 @@ interface Setup {
 	slotLinkFails?: boolean;
 	/** The timesheet the time log update files the run under. */
 	timesheetAfterUpdate?: string;
+	/** The employee's timesheet for the day the run was created, as a timesheet lookup answers it. */
+	timesheetOfCreation?: string;
+	/** A timesheet whose first recalculation fails. */
+	recalculationFailsOnce?: string;
 }
 
 function createService(
@@ -206,7 +210,15 @@ function createService(
 			return row ? { ...row, toJSON: () => ({ ...row }) } : null;
 		}
 	};
+	let failingRecalculation = setup.recalculationFailsOnce;
 	const execute = jest.fn(async (command: unknown) => {
+		if (command instanceof TimesheetRecalculateCommand && command.id === failingRecalculation) {
+			failingRecalculation = undefined;
+			throw new Error('the timesheet could not be recalculated');
+		}
+		if (command instanceof TimesheetFirstOrCreateCommand) {
+			return setup.timesheetOfCreation ? { id: setup.timesheetOfCreation } : undefined;
+		}
 		if (command instanceof TimeLogUpdateCommand) {
 			const id = typeof command.id === 'object' ? command.id.id : command.id;
 			const row = rows.find((candidate) => candidate.id === id);
@@ -514,6 +526,36 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 			await service.moveRunningTimerStart({ startedAt: at('09:28') });
 
 			expect(linkedSlots()).toEqual(['09:20:180:42']);
+		});
+
+		it('recalculates on a retry the timesheet of the week the run started in, which a later start left', async () => {
+			// Started last Friday (last week's timesheet), moved to 9:40 today: last week's recalculation fails once
+			const lastFriday = new Date('2026-11-13T17:00:00.000Z');
+			const rows = [
+				runningLog({
+					source: TimeLogSourceEnum.WEB_TIMER,
+					startedAt: lastFriday,
+					stoppedAt: lastFriday,
+					createdAt: lastFriday,
+					timesheetId: PREVIOUS_WEEK_TIMESHEET_ID
+				})
+			];
+			const { service, commandsOf } = createService(ormType, rows, employeeIn(openOrganization), {
+				timesheetAfterUpdate: TIMESHEET_ID,
+				timesheetOfCreation: PREVIOUS_WEEK_TIMESHEET_ID,
+				recalculationFailsOnce: PREVIOUS_WEEK_TIMESHEET_ID
+			});
+			const recalculated = () => commandsOf(TimesheetRecalculateCommand).map((command) => command.id);
+
+			await expect(service.moveRunningTimerStart({ startedAt: at('09:40') })).rejects.toThrow(
+				'the timesheet could not be recalculated'
+			);
+			expect(recalculated()).toEqual([TIMESHEET_ID, PREVIOUS_WEEK_TIMESHEET_ID]);
+
+			await service.moveRunningTimerStart({ startedAt: at('09:40') });
+
+			// The retry finds the start moved, and recalculates both timesheets again
+			expect(recalculated().slice(2)).toEqual([TIMESHEET_ID, PREVIOUS_WEEK_TIMESHEET_ID]);
 		});
 
 		it('never lowers the seconds a slot already holds', async () => {

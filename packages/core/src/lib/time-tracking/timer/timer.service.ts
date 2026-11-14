@@ -39,6 +39,7 @@ import {
 	PermissionsEnum,
 	RolesEnum,
 	ITimeSlot,
+	ITimesheet,
 	IEmployee,
 	IEmployeeFindInput,
 	ID
@@ -78,7 +79,7 @@ import {
 	TimeLogUpdateCommand,
 	UpdateEmployeeTotalWorkedHoursCommand
 } from '../time-log/commands';
-import { TimesheetRecalculateCommand } from '../timesheet/commands';
+import { TimesheetFirstOrCreateCommand, TimesheetRecalculateCommand } from '../timesheet/commands';
 import { generateTimeSlots } from '../time-slot/utils';
 import {
 	assertRequiredContext,
@@ -910,7 +911,12 @@ export class TimerService {
 			const run = await this.typeOrmTimeLogRepository.findOneBy({ id: runningLog.id, tenantId });
 			if (run) {
 				await this.coverRunFromItsStart(run, now);
-				await this.recalculateRun(run);
+				// A later start that crossed a week leaves the timesheet of the run's first week counting the slots it
+				// released, and once that start is written, no move names that timesheet any more
+				const firstWeek: ITimesheet = await this._commandBus.execute(
+					new TimesheetFirstOrCreateCommand(run.createdAt, run.employeeId, run.organizationId)
+				);
+				await this.recalculateRun(run, firstWeek?.id);
 			}
 			return runningLog;
 		}
