@@ -3,6 +3,8 @@ import '../core/entities/internal';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { repriceMemberProjectTime, repriceProjectTime } from '../time-tracking/time-log/time-log-repricing';
+import { OrganizationProject } from './organization-project.entity';
+import { OrganizationProjectEmployee } from './organization-project-employee.entity';
 import { OrganizationProjectRateService } from './organization-project-rate.service';
 
 jest.mock('../user-organization/assert-organization-membership', () => ({
@@ -24,14 +26,21 @@ const FROM = '2026-10-01T00:00:00.000Z';
  */
 describe('OrganizationProjectRateService: a client rate applied from a day', () => {
 	let service: OrganizationProjectRateService;
+	let transactional: { update: jest.Mock };
+	let projectUpdate: jest.Mock;
 
 	beforeEach(() => {
 		(repriceProjectTime as jest.Mock).mockClear();
 		(repriceMemberProjectTime as jest.Mock).mockClear();
-		const manager = { findOne: jest.fn(async () => ({ id: ORGANIZATION, currency: 'EUR' })) };
+		transactional = { update: jest.fn(async () => ({ affected: 1 })) };
+		projectUpdate = jest.fn(async () => ({ affected: 1 }));
+		const manager = {
+			findOne: jest.fn(async () => ({ id: ORGANIZATION, currency: 'EUR' })),
+			transaction: jest.fn(async (work: (inner: unknown) => Promise<unknown>) => work(transactional))
+		};
 		const projectRepository = {
 			findOne: jest.fn(async () => ({ id: PROJECT, billRateValue: 90, currency: null })),
-			update: jest.fn(async () => ({ affected: 1 })),
+			update: projectUpdate,
 			manager
 		};
 		const membershipRepository = {
@@ -62,6 +71,15 @@ describe('OrganizationProjectRateService: a client rate applied from a day', () 
 			{ billRateValue: 120, currency: 'EUR' }
 		);
 		expect(answer).toEqual({ id: PROJECT, billRateValue: 120, currency: 'EUR', repricedTimeLogs: 4 });
+		// The rate and the time it re-prices are written in one transaction: a failed re-pricing keeps the old rate,
+		// and two dated changes of the same project run one after the other on its row
+		expect(transactional.update).toHaveBeenCalledWith(
+			OrganizationProject,
+			{ id: PROJECT, organizationId: ORGANIZATION, tenantId: TENANT },
+			{ billRateValue: 120 }
+		);
+		expect((repriceProjectTime as jest.Mock).mock.calls[0][0]).toBe(transactional);
+		expect(projectUpdate).not.toHaveBeenCalled();
 	});
 
 	it("gives a member's time on the project from the day their new client rate", async () => {
@@ -79,6 +97,12 @@ describe('OrganizationProjectRateService: a client rate applied from a day', () 
 			{ billRateValue: 95, currency: 'EUR' }
 		);
 		expect(answer).toMatchObject({ billRateValue: 95, repricedTimeLogs: 2 });
+		expect(transactional.update).toHaveBeenCalledWith(
+			OrganizationProjectEmployee,
+			{ id: 'membership-1', tenantId: TENANT },
+			{ billRateValue: 95 }
+		);
+		expect((repriceMemberProjectTime as jest.Mock).mock.calls[0][0]).toBe(transactional);
 	});
 
 	it('re-prices nothing without a day: past time keeps its price', async () => {
@@ -86,5 +110,9 @@ describe('OrganizationProjectRateService: a client rate applied from a day', () 
 
 		expect(repriceProjectTime).not.toHaveBeenCalled();
 		expect(answer).not.toHaveProperty('repricedTimeLogs');
+		expect(projectUpdate).toHaveBeenCalledWith(
+			{ id: PROJECT, organizationId: ORGANIZATION, tenantId: TENANT },
+			{ billRateValue: 120 }
+		);
 	});
 });

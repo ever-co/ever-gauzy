@@ -8,7 +8,7 @@ import {
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
-import { Organization } from '../core/entities/internal';
+import { Organization, OrganizationProjectEmployee } from '../core/entities/internal';
 import { isSameId } from '../employee/own-rates';
 import { assertCurrentUserBelongsToOrganization } from '../user-organization/assert-organization-membership';
 import { OrganizationProject } from './organization-project.entity';
@@ -70,38 +70,33 @@ export class OrganizationProjectRateService {
 		const { organizationId, billRateValue } = input;
 		await this.assertMayManageRates(projectId, organizationId, tenantId);
 		const project = await this.findProject(projectId, organizationId, tenantId);
-
-		await this.typeOrmOrganizationProjectRepository.update(
-			{ id: project.id, organizationId, tenantId },
-			{ billRateValue }
-		);
 		const currency = await this.ratesCurrencyOf(project, organizationId, tenantId);
+		const where = { id: project.id, organizationId, tenantId };
+
+		if (!input.applyFrom) {
+			await this.typeOrmOrganizationProjectRepository.update(where, { billRateValue });
+			return { id: project.id, billRateValue, currency };
+		}
 		// The time logs store the currency the rate is in, as they are recorded with
-		const repriced = await this.repricedFrom(input, (manager, time) =>
-			repriceProjectTime(manager, time, project.id, { billRateValue, currency })
-		);
-		return { id: project.id, billRateValue, currency, ...repriced };
+		const repricedTimeLogs = await this.inOneTransaction(async (manager) => {
+			await manager.update(OrganizationProject, where, { billRateValue });
+			const time = this.repricedTimeOf(input, tenantId);
+			return await repriceProjectTime(manager, time, project.id, { billRateValue, currency });
+		});
+		return { id: project.id, billRateValue, currency, repricedTimeLogs };
+	}
+
+	/** The time a dated rate change re-prices: the organization's time logs started on or after its day. */
+	private repricedTimeOf(input: IOrganizationProjectRateUpdateInput, tenantId: ID): RepricedTime {
+		return { tenantId, organizationId: input.organizationId, from: new Date(input.applyFrom) };
 	}
 
 	/**
-	 * Gives the time logs started on or after the day a rate change names the new rate (see time-log-repricing.ts).
-	 *
-	 * @returns How many time logs took it, or nothing when the change names no day and past time keeps its price.
+	 * Writes a dated rate change and the time it re-prices in one transaction (see time-log-repricing.ts): a failed
+	 * re-pricing leaves the previous rate, and two dated changes of the same rate run one after the other on its row.
 	 */
-	private async repricedFrom(
-		input: IOrganizationProjectRateUpdateInput,
-		reprice: (manager: EntityManager, time: RepricedTime) => Promise<number>
-	): Promise<IRepricedTimeLogs> {
-		if (!input.applyFrom) {
-			return {};
-		}
-		const time = {
-			tenantId: RequestContext.currentTenantId(),
-			organizationId: input.organizationId,
-			from: new Date(input.applyFrom)
-		};
-		const repricedTimeLogs = await reprice(this.typeOrmOrganizationProjectRepository.manager, time);
-		return { repricedTimeLogs };
+	private async inOneTransaction(work: (manager: EntityManager) => Promise<number>): Promise<number> {
+		return await this.typeOrmOrganizationProjectRepository.manager.transaction(work);
 	}
 
 	async updateMemberRate(
@@ -129,16 +124,19 @@ export class OrganizationProjectRateService {
 			throw new NotFoundException('This employee is not a member of the project.');
 		}
 
-		await this.typeOrmOrganizationProjectEmployeeRepository.update(
-			{ id: membership.id, tenantId },
-			{ billRateValue }
-		);
-		const repriced = await this.repricedFrom(input, async (manager, time) => {
-			const project = await this.findProject(projectId, organizationId, tenantId);
-			const currency = await this.ratesCurrencyOf(project, organizationId, tenantId);
+		const where = { id: membership.id, tenantId };
+		if (!input.applyFrom) {
+			await this.typeOrmOrganizationProjectEmployeeRepository.update(where, { billRateValue });
+			return { organizationProjectId: projectId, employeeId, billRateValue };
+		}
+		const project = await this.findProject(projectId, organizationId, tenantId);
+		const currency = await this.ratesCurrencyOf(project, organizationId, tenantId);
+		const repricedTimeLogs = await this.inOneTransaction(async (manager) => {
+			await manager.update(OrganizationProjectEmployee, where, { billRateValue });
+			const time = this.repricedTimeOf(input, tenantId);
 			return await repriceMemberProjectTime(manager, time, projectId, employeeId, { billRateValue, currency });
 		});
-		return { organizationProjectId: projectId, employeeId, billRateValue, ...repriced };
+		return { organizationProjectId: projectId, employeeId, billRateValue, repricedTimeLogs };
 	}
 
 	/** The currency a project's client rates are in: the project's own, else the organization's. */
