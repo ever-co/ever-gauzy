@@ -3,6 +3,7 @@ export * from './get-time-log-group-by-client.command';
 export * from './get-time-log-group-by-date.command';
 export * from './get-time-log-group-by-employee.command';
 export * from './get-time-log-group-by-project.command';
+export * from './find-time-log-rates.command';
 export * from './time-log-create.command';
 export * from './time-log-delete.command';
 export * from './time-log-update.command';

@@ -63,6 +63,7 @@ import { withoutAssignedComments } from '../comment/assigned-comments';
 import { assertCurrentUserBelongsToOrganization } from '../user-organization/assert-organization-membership';
 import { callerEmployeeId, changesPayRate, findStoredPayRates, mayReadPayRateOf } from './pay-rate';
 import { isSameId } from './own-rates';
+import { repriceMemberTime } from '../time-tracking/time-log/time-log-repricing';
 
 /**
  * Columns the employees table can be sorted by. Any other `order` key from the query string is ignored.
@@ -1252,6 +1253,62 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 				'You cannot change your own pay rate. Send a rate change request to an admin instead.'
 			);
 		}
+	}
+
+	/**
+	 * Refuses to re-price the time of an employee whose rates the caller may not change: one's own time needs
+	 * CHANGE_OWN_RATES, as changing one's own rates does, and anyone else's needs ORG_EMPLOYEES_EDIT. A member who keeps
+	 * their rate could otherwise give their past time the rate they have now.
+	 *
+	 * @throws ForbiddenException for any other caller.
+	 */
+	assertMayRepriceTimeOf(employeeId: ID): void {
+		const isOwnRecord = isSameId(callerEmployeeId(), employeeId);
+		let requiredPermission = PermissionsEnum.ORG_EMPLOYEES_EDIT;
+		if (isOwnRecord) {
+			requiredPermission = PermissionsEnum.CHANGE_OWN_RATES;
+		}
+		const mayReprice = RequestContext.hasPermission(requiredPermission);
+		if (!mayReprice) {
+			throw new ForbiddenException(
+				'You cannot apply a rate to time already tracked: only someone who may change these rates can.'
+			);
+		}
+	}
+
+	/**
+	 * Gives the employee's time logs started on or after `from` the billing or pay rate the update sent (see
+	 * time-log-repricing.ts). Without a day, past time keeps its price.
+	 *
+	 * @param employeeId - The employee the update changed.
+	 * @param changes - The update as it was written.
+	 * @param from - The day the new rates price time from.
+	 * @returns How many time logs took the new rates, or undefined when the update named no day.
+	 */
+	async repriceTimeFrom(
+		employeeId: ID,
+		changes: IEmployeeUpdateInput,
+		from: Date | string | undefined
+	): Promise<number | undefined> {
+		if (!from) {
+			return undefined;
+		}
+		const tenantId = RequestContext.currentTenantId();
+		const employee = await this.typeOrmRepository.findOne({
+			where: { id: employeeId, tenantId },
+			select: { id: true, organizationId: true }
+		});
+		if (!employee) {
+			throw new NotFoundException('Employee not found.');
+		}
+		const sent = {
+			billRateValue: changes.billRateValue,
+			billRateCurrency: changes.billRateCurrency,
+			payRateValue: changes.payRateValue,
+			payRateCurrency: changes.payRateCurrency
+		};
+		const time = { tenantId, organizationId: employee.organizationId, from: new Date(from) };
+		return await repriceMemberTime(this.typeOrmRepository.manager, time, employeeId, sent);
 	}
 }
 

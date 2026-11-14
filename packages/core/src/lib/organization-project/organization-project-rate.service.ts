@@ -1,16 +1,27 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { Equal, IsNull, Or } from 'typeorm';
-import { ID, IOrganizationProjectRates, IOrganizationProjectRateUpdateInput, PermissionsEnum } from '@gauzy/contracts';
+import { EntityManager, Equal, IsNull, Or } from 'typeorm';
+import {
+	ID,
+	IOrganizationProjectRates,
+	IOrganizationProjectRateUpdateInput,
+	IRepricedTimeLogs,
+	PermissionsEnum
+} from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
-import { Organization } from '../core/entities/internal';
+import { Organization, OrganizationProjectEmployee } from '../core/entities/internal';
 import { isSameId } from '../employee/own-rates';
 import { assertCurrentUserBelongsToOrganization } from '../user-organization/assert-organization-membership';
 import { OrganizationProject } from './organization-project.entity';
 import { TypeOrmOrganizationProjectRepository } from './repository/type-orm-organization-project.repository';
 import { TypeOrmOrganizationProjectEmployeeRepository } from './repository/type-orm-organization-project-employee.repository';
+import {
+	RepricedTime,
+	repriceMemberProjectTime,
+	repriceProjectTime
+} from '../time-tracking/time-log/time-log-repricing';
 
 /** A membership left inactive or archived no longer ties the employee to the project (NULL counts as current). */
-const CURRENT_MEMBERSHIP = {
+export const CURRENT_MEMBERSHIP = {
 	isActive: Or(IsNull(), Equal(true)),
 	isArchived: Or(IsNull(), Equal(false))
 };
@@ -54,25 +65,45 @@ export class OrganizationProjectRateService {
 	async updateProjectRate(
 		projectId: ID,
 		input: IOrganizationProjectRateUpdateInput
-	): Promise<Pick<IOrganizationProjectRates, 'id' | 'billRateValue' | 'currency'>> {
+	): Promise<Pick<IOrganizationProjectRates, 'id' | 'billRateValue' | 'currency'> & IRepricedTimeLogs> {
 		const tenantId = RequestContext.currentTenantId();
 		const { organizationId, billRateValue } = input;
 		await this.assertMayManageRates(projectId, organizationId, tenantId);
 		const project = await this.findProject(projectId, organizationId, tenantId);
-
-		await this.typeOrmOrganizationProjectRepository.update(
-			{ id: project.id, organizationId, tenantId },
-			{ billRateValue }
-		);
 		const currency = await this.ratesCurrencyOf(project, organizationId, tenantId);
-		return { id: project.id, billRateValue, currency };
+		const where = { id: project.id, organizationId, tenantId };
+
+		if (!input.applyFrom) {
+			await this.typeOrmOrganizationProjectRepository.update(where, { billRateValue });
+			return { id: project.id, billRateValue, currency };
+		}
+		// The time logs store the currency the rate is in, as they are recorded with
+		const repricedTimeLogs = await this.inOneTransaction(async (manager) => {
+			await manager.update(OrganizationProject, where, { billRateValue });
+			const time = this.repricedTimeOf(input, tenantId);
+			return await repriceProjectTime(manager, time, project.id, { billRateValue, currency });
+		});
+		return { id: project.id, billRateValue, currency, repricedTimeLogs };
+	}
+
+	/** The time a dated rate change re-prices: the organization's time logs started on or after its day. */
+	private repricedTimeOf(input: IOrganizationProjectRateUpdateInput, tenantId: ID): RepricedTime {
+		return { tenantId, organizationId: input.organizationId, from: new Date(input.applyFrom) };
+	}
+
+	/**
+	 * Writes a dated rate change and the time it re-prices in one transaction (see time-log-repricing.ts): a failed
+	 * re-pricing leaves the previous rate, and two dated changes of the same rate run one after the other on its row.
+	 */
+	private async inOneTransaction(work: (manager: EntityManager) => Promise<number>): Promise<number> {
+		return await this.typeOrmOrganizationProjectRepository.manager.transaction(work);
 	}
 
 	async updateMemberRate(
 		projectId: ID,
 		employeeId: ID,
 		input: IOrganizationProjectRateUpdateInput
-	): Promise<{ organizationProjectId: ID; employeeId: ID; billRateValue: number | null }> {
+	): Promise<{ organizationProjectId: ID; employeeId: ID; billRateValue: number | null } & IRepricedTimeLogs> {
 		const tenantId = RequestContext.currentTenantId();
 		const { organizationId, billRateValue } = input;
 		const managerEmployeeId = await this.assertMayManageRates(projectId, organizationId, tenantId);
@@ -93,11 +124,19 @@ export class OrganizationProjectRateService {
 			throw new NotFoundException('This employee is not a member of the project.');
 		}
 
-		await this.typeOrmOrganizationProjectEmployeeRepository.update(
-			{ id: membership.id, tenantId },
-			{ billRateValue }
-		);
-		return { organizationProjectId: projectId, employeeId, billRateValue };
+		const where = { id: membership.id, tenantId };
+		if (!input.applyFrom) {
+			await this.typeOrmOrganizationProjectEmployeeRepository.update(where, { billRateValue });
+			return { organizationProjectId: projectId, employeeId, billRateValue };
+		}
+		const project = await this.findProject(projectId, organizationId, tenantId);
+		const currency = await this.ratesCurrencyOf(project, organizationId, tenantId);
+		const repricedTimeLogs = await this.inOneTransaction(async (manager) => {
+			await manager.update(OrganizationProjectEmployee, where, { billRateValue });
+			const time = this.repricedTimeOf(input, tenantId);
+			return await repriceMemberProjectTime(manager, time, projectId, employeeId, { billRateValue, currency });
+		});
+		return { organizationProjectId: projectId, employeeId, billRateValue, repricedTimeLogs };
 	}
 
 	/** The currency a project's client rates are in: the project's own, else the organization's. */

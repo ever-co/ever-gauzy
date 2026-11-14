@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
-import { In } from 'typeorm';
-import { omit } from 'underscore';
+import { FindOptionsSelect, In } from 'typeorm';
+import { omit, pick } from 'underscore';
 import { ID, ITimeLog, ITimeSlot } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/utils';
 import { moment } from '../../../../core/moment-extend';
@@ -15,6 +15,25 @@ import { generateTimeSlots } from './../../../time-slot/utils';
 import { TimeSlot } from '../../../time-slot/time-slot.entity';
 import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.repository';
 import { TypeOrmTimeSlotRepository } from '../../../time-slot/repository/type-orm-time-slot.repository';
+
+/** The rates a time log stores (see time-log-rates.ts), which the second part of a split keeps. */
+const STORED_RATE_FIELDS: Array<keyof TimeLog> = [
+	'billRateValue',
+	'billRateCurrency',
+	'payRateValue',
+	'payRateCurrency',
+	'projectBillRateValue',
+	'projectMemberBillRateValue',
+	'projectBillRateCurrency',
+	'projectMemberBillRateCurrency',
+	'ratesStored'
+];
+
+/** The read of those rates, by name. */
+const STORED_RATE_SELECT: FindOptionsSelect<TimeLog> = Object.fromEntries([
+	['id', true],
+	...STORED_RATE_FIELDS.map((field) => [field, true])
+]);
 
 @CommandHandler(DeleteTimeSpanCommand)
 export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanCommand> {
@@ -367,9 +386,17 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 		const from = this.firstSlotStart(end, stoppedAt);
 		const timeSlots = (log.timeSlots ?? []).filter((slot) => !moment(slot.startedAt).isBefore(from));
 
+		// The same time, priced as the log was: the rates it stores, read by name since a generic read leaves the
+		// pay rate and the client rates out (see time-log-rates.ts).
+		const storedRates = await this.typeOrmTimeLogRepository.findOne({
+			where: { id: log.id },
+			select: STORED_RATE_SELECT
+		});
+
 		return await this.typeOrmTimeLogRepository.save(
 			new TimeLog({
 				...omit(log, ['id', 'createdAt', 'updatedAt', 'timeSlots', 'duration', 'isEdited']),
+				...pick(storedRates ?? {}, STORED_RATE_FIELDS),
 				startedAt: end,
 				stoppedAt,
 				timeSlots

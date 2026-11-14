@@ -1,6 +1,7 @@
 import { ApiPropertyOptional, PickType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsObject, IsOptional, ValidateNested } from 'class-validator';
+import { IsDateString, IsObject, IsOptional, Matches, ValidateNested } from 'class-validator';
+import { APPLY_FROM_PATTERN } from '../../shared/validators/apply-from';
 import { IntersectionType } from '@nestjs/mapped-types';
 import { IContact, IEmployeeUpdateInput } from '@gauzy/contracts';
 import { EmploymentDTO } from './employment.dto';
@@ -48,4 +49,20 @@ export class UpdateProfileDTO
 	@ValidateNested()
 	@Type(() => ProfileContactDTO)
 	readonly contact?: IContact;
+
+	/**
+	 * The day a billing or pay rate this update sets prices tracked time from. Without it only the time logs recorded
+	 * from now on take the new rate, and past time keeps its price.
+	 */
+	@ApiPropertyOptional({
+		type: () => String,
+		format: 'date-time',
+		description:
+			'Apply the rates this update sets to the time logs started on or after this day (time a live invoice ' +
+			'bills keeps its price). Without it, only time recorded from now on takes them.'
+	})
+	@IsOptional()
+	@IsDateString()
+	@Matches(APPLY_FROM_PATTERN, { message: 'ratesApplyFrom must be a date or a date-time with its offset' })
+	readonly ratesApplyFrom?: string;
 }

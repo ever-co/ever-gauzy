@@ -38,12 +38,7 @@ import { bulkOptionsOf } from '../../api/bulk.decorator';
 import { RequestContext } from '../../core/context';
 import { Idempotent } from '../../idempotency/idempotent.decorator';
 import { OrganizationPolicyTarget, Permissions } from '../../shared/decorators';
-import {
-	FeatureFlagGuard,
-	OrganizationPermissionGuard,
-	PermissionGuard,
-	TenantBaseGuard
-} from '../../shared/guards';
+import { FeatureFlagGuard, OrganizationPermissionGuard, PermissionGuard, TenantBaseGuard } from '../../shared/guards';
 // Imported from its own module rather than through the `shared/guards` barrel, and the difference matters:
 // `@UseGuards(...)` is evaluated when this class is defined, the barrel reaches `core/index.ts`, which reaches
 // `core.module` and every domain module — so in some load orders the guard comes back `undefined` and Nest
@@ -160,10 +155,17 @@ export interface ITimeLogOwedAmountReportEntry {
 	employees: ITimeLogOwedAmountReportEmployee[];
 }
 
+/** An amount in one currency, as `TimeLogCurrencyAmount` declares it. */
+export interface ITimeLogCurrencyAmount {
+	currency: string | null;
+	amount: number;
+}
+
 /** One day of the owed-amount chart, as `TimeLogOwedAmountReportChartPoint` declares it. */
 export interface ITimeLogOwedAmountReportChartPoint {
 	date: string;
 	value: number;
+	valueByCurrency?: ITimeLogCurrencyAmount[];
 }
 
 /**
@@ -194,6 +196,7 @@ export interface ITimeLogWeeklyReport {
 	activity?: number;
 	spent?: number | null;
 	currency?: string | null;
+	spentByCurrency?: ITimeLogCurrencyAmount[];
 }
 
 /**
@@ -706,7 +709,11 @@ export class TimeLogResolver {
 			})
 		);
 
-		return (answer ?? []).map((day: Record<string, any>) => ({ date: day.date, value: day.value }));
+		return (answer ?? []).map((day: Record<string, any>) => ({
+			date: day.date,
+			value: day.value,
+			valueByCurrency: day.valueByCurrency
+		}));
 	}
 
 	/**
@@ -762,7 +769,8 @@ export class TimeLogResolver {
 			sum: week.sum,
 			activity: week.activity,
 			spent: week.spent ?? null,
-			currency: week.currency ?? null
+			currency: week.currency ?? null,
+			spentByCurrency: week.spentByCurrency
 		}));
 	}
 
