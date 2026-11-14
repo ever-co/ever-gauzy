@@ -1,7 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { JoinColumn, RelationId } from 'typeorm';
 import { Exclude } from 'class-transformer';
-import { EntityRepositoryType } from '@mikro-orm/core';
 import {
 	ID,
 	ISavedReport,
@@ -26,8 +25,6 @@ import { MikroOrmSavedReportRepository } from './repository/mikro-orm-saved-repo
  */
 @MultiORMEntity('saved_report', { mikroOrmRepository: () => MikroOrmSavedReportRepository })
 export class SavedReport extends TenantOrganizationBaseEntity implements ISavedReport {
-	[EntityRepositoryType]?: MikroOrmSavedReportRepository;
-
 	@ApiProperty({ type: () => String, maxLength: 100 })
 	@MultiORMColumn({ length: 100 })
 	name: string;
