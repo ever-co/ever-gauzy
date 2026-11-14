@@ -391,7 +391,11 @@ export class UserTwoFactorService extends CrudService<UserTwoFactor> {
 			return null;
 		}
 		// Only a step after the last accepted one, in one statement: two uses of a code at once cannot both pass.
-		const stored = await this.update({ id: row.id, lastUsedTimeStep: LessThan(step) }, { lastUsedTimeStep: step });
+		// ... and only on the secret it was checked against: a reset and a new setup meanwhile replaced it.
+		const stored = await this.update(
+			{ id: row.id, secret: row.secret, lastUsedTimeStep: LessThan(step) },
+			{ lastUsedTimeStep: step }
+		);
 		if (!this.changedOne(stored)) {
 			return null;
 		}

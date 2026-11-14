@@ -408,3 +408,75 @@ describe('UserTwoFactorService races and MikroORM reads', () => {
 		expect(await onMikroOrm.isEnabled('user-1')).toBe(true);
 	});
 });
+
+/**
+ * A factor replaced between its proof and the write (an administrator's reset, then a new setup confirmed) is never
+ * acted on by the write: the step of an old code is not consumed on the new factor.
+ */
+describe('UserTwoFactorService: a code of a replaced factor', () => {
+	const previousKey = process.env.ENCRYPTION_KEY;
+	let dataSource: DataSource;
+	let service: UserTwoFactorService;
+	const T = Date.UTC(2026, 10, 14, 9, 0, 0);
+	const USER = { id: '9c000000-0000-4000-8000-0000000000f1', tenantId: TENANT, email: 'replaced@example.com' };
+
+	beforeAll(async () => {
+		process.env.ENCRYPTION_KEY = randomBytes(32).toString('base64');
+		dataSource = new DataSource({
+			type: 'better-sqlite3',
+			database: ':memory:',
+			entities: coreEntities,
+			synchronize: true,
+			logging: false
+		});
+		await dataSource.initialize();
+		await insertRow(dataSource, Tenant, { id: TENANT, name: 'Tenant' });
+		await insertRow(dataSource, User, { id: USER.id, tenantId: TENANT, email: USER.email });
+	}, TIMEOUT);
+
+	afterAll(async () => {
+		await dataSource?.destroy();
+		if (previousKey === undefined) {
+			delete process.env.ENCRYPTION_KEY;
+		} else {
+			process.env.ENCRYPTION_KEY = previousKey;
+		}
+	});
+
+	beforeEach(() => {
+		jest.spyOn(Date, 'now').mockReturnValue(T);
+		const repository = new TypeOrmUserTwoFactorRepository(dataSource.getRepository(UserTwoFactor));
+		service = new UserTwoFactorService(
+			repository,
+			undefined,
+			new EncryptionService(),
+			new LoginAttemptService(null)
+		);
+		jest.spyOn(service['logger'], 'log').mockImplementation(() => undefined);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it(
+		'does not consume the next step of an old secret on the factor that replaced it',
+		async () => {
+			const { secret: oldSecret } = await service.enroll(USER);
+			await service.confirm(USER.id, totpAt(oldSecret, T));
+			const reader = service as unknown as { findOfUser(id: string): Promise<unknown> };
+			const findOfUser = reader.findOfUser.bind(service);
+			const spy = jest.spyOn(reader, 'findOfUser').mockImplementation(async (id) => {
+				const read = await findOfUser(id);
+				spy.mockRestore();
+				await service.resetByAdministrator(USER.id, ADMIN);
+				const { secret } = await service.enroll(USER);
+				await service.confirm(USER.id, totpAt(secret, T));
+				return read;
+			});
+
+			expect(await statusOf(service.verifySecondFactor(USER.id, { code: totpAt(oldSecret, T + 30_000) }))).toBe(
+				HttpStatus.UNAUTHORIZED
+			);
+		},
+		TIMEOUT
+	);
+});
