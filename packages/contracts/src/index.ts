@@ -207,6 +207,7 @@ export * from './lib/timesheet-statistics.model';
 export * from './lib/timesheet.model';
 export * from './lib/oauth-client.model';
 export * from './lib/user-api-token.model';
+export * from './lib/user-session.model';
 export * from './lib/token.model';
 export * from './lib/translation.model';
 export * from './lib/tree-node.model';
