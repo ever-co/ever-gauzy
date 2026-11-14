@@ -9878,6 +9878,37 @@ type Mutation {
   stopTimer(input: TimerToggleInput!): TimeLog
 
   """
+  Moves the start of the caller's running timer, earlier or later, while it keeps running, and answers
+  the running log: one entry, marked edited, with the reason given.
+  
+  The move follows the rules of time changed by hand: not later than now (`TIMER_START_IN_FUTURE`), the
+  organization's switch on changing tracked time for any move (`TIMER_START_EDIT_NOT_ALLOWED`) and on
+  manual time for an earlier one (`TIMER_START_MANUAL_NOT_ALLOWED`), its reason rule
+  (`TIMER_START_REASON_REQUIRED`), and no overlap with another entry of the caller
+  (`TIMER_START_OVERLAP`). A run of the desktop app or the agent is refused (`TIMER_START_TRACKER_RUN`),
+  since they upload its slots themselves; with no running timer the move is refused
+  (`TIMER_NOT_RUNNING`).
+  
+  Nullable for the reason the stop is: the write ends with a re-read of the row it updated, which
+  answers nothing when the row is not there.
+  """
+  moveTimerStart(input: TimerStartMoveInput!): TimeLog
+
+  """
+  Discards the caller's running timer: the run is removed with its time slots and screenshots, as if it
+  never started, and the answer is true. The role permission to delete time is not asked, since the time was
+  never kept. A time slot the run shares with another entry stays, with its screenshots, as part of
+  that entry.
+  
+  The delivered write refuses with 400 when nothing runs, with 403 when the organization turned
+  discarding or deleting time off (code `TIMER_DISCARD_DISABLED`) or the run started longer ago than it allows (code
+  `TIMER_DISCARD_TOO_LATE`), and with 409 when the input names another time log than the running one,
+  or when the run is a tracker app's (code `TIMER_DISCARD_TRACKER_RUN`), which then goes on. Each
+  refusal travels as the REST route raises it.
+  """
+  discardTimer(input: TimerDiscardInput!): Boolean!
+
+  """
   Raises a request to move the time booked to one project over to another. The request is filed in
   the pending state; nothing moves until an approver accepts it.
   """
@@ -33887,6 +33918,17 @@ type Organization {
   """
   timeLogsKeepTheirRates: Boolean
 
+  """
+  Whether a member may discard their own running timer, which removes the run instead of keeping it. On by default,
+  and null counts as on.
+  """
+  allowDiscardTimer: Boolean
+
+  """
+  When set, a running timer may be discarded only within this many minutes of its start. Null sets no limit.
+  """
+  discardTimerWithinMinutes: Int
+
   """Whether the organization renders times on a 12- or a 24-hour clock."""
   timeFormat: Int!
 
@@ -44719,6 +44761,41 @@ input TimerToggleInput {
   """
   The running time log a stop or a toggle is for, as the client last saw it. When another log is the
   running one, the stop is refused and that log goes on. A start ignores it.
+  """
+  timeLogId: ID
+}
+
+"""
+The body of `moveTimerStart`, as `PUT /timesheet/timer/started-at` binds it: the new start and the
+reason. The tenant, the organization and the log come from the caller: the write moves the caller's
+own running timer and no other.
+"""
+input TimerStartMoveInput {
+  """
+  The new start of the running timer, earlier or later. Not later than now.
+  """
+  startedAt: DateTime!
+
+  """
+  Why the tracked time changed. Required when the organization asks for a reason.
+  """
+  reason: String
+}
+
+"""
+What a caller states when it discards its running timer.
+
+Only what the delivered discard reads: the organization the route validates, and the running time log
+the discard is for. The tenant is stamped from the credential, as for the other three writes, and none
+of the start body's members is read by a discard.
+"""
+input TimerDiscardInput {
+  """The organization the running timer belongs to."""
+  organizationId: ID
+
+  """
+  The running time log the discard is for, as the client last saw it. When another log is the running
+  one, the discard is refused with 409 and that log goes on.
   """
   timeLogId: ID
 }

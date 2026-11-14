@@ -144,3 +144,32 @@ input TimerToggleInput {
 	"""
 	timeLogId: ID
 }
+
+"""
+The body of `moveTimerStart`, as `PUT /timesheet/timer/started-at` binds it: the new start and the
+reason. The tenant, the organization and the log come from the caller: the write moves the caller's
+own running timer and no other.
+"""
+input TimerStartMoveInput {
+	"The new start of the running timer, earlier or later. Not later than now."
+	startedAt: DateTime!
+	"Why the tracked time changed. Required when the organization asks for a reason."
+	reason: String
+}
+
+"""
+What a caller states when it discards its running timer.
+
+Only what the delivered discard reads: the organization the route validates, and the running time log
+the discard is for. The tenant is stamped from the credential, as for the other three writes, and none
+of the start body's members is read by a discard.
+"""
+input TimerDiscardInput {
+	"The organization the running timer belongs to."
+	organizationId: ID
+	"""
+	The running time log the discard is for, as the client last saw it. When another log is the running
+	one, the discard is refused with 409 and that log goes on.
+	"""
+	timeLogId: ID
+}

@@ -5,6 +5,7 @@ import {
 	IsBoolean,
 	IsEnum,
 	IsIn,
+	IsInt,
 	IsNotEmpty,
 	IsNumber,
 	IsOptional,
@@ -444,6 +445,27 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@IsBoolean()
 	@MultiORMColumn({ default: false })
 	requireTwoFactor?: boolean;
+
+	/**
+	 * Whether a member may discard their own running timer, which removes the run instead of keeping it. On by
+	 * default, and a null value counts as allowed.
+	 */
+	@ApiPropertyOptional({ type: () => Boolean, default: true })
+	@IsOptional()
+	@IsBoolean()
+	@MultiORMColumn({ nullable: true, default: true })
+	allowDiscardTimer?: boolean;
+
+	/**
+	 * When set, a running timer may be discarded only within this many minutes of its start. No limit by default.
+	 */
+	@ApiPropertyOptional({ type: () => Number, minimum: 1, maximum: 1440 })
+	@IsOptional()
+	@IsInt()
+	@Min(1)
+	@Max(1440)
+	@MultiORMColumn({ nullable: true })
+	discardTimerWithinMinutes?: number;
 
 	@MultiORMColumn({ default: 12 })
 	timeFormat?: 12 | 24;
