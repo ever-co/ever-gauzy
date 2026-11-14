@@ -349,6 +349,17 @@ describe('TimeLogService', () => {
 				}
 			);
 
+			it('keeps breaks in the entry list for a request that names their type, without includeBreaks', async () => {
+				actAs({ canChangeSelectedEmployee: true });
+
+				await service.getTimeLogs({ ...request, logType: [TimeLogType.BREAK] });
+
+				const { conditions } = executedFilters(builder);
+				const slotOrBreak = (condition: string) =>
+					condition.includes('OR "time_log"."logType" = :slotlessBreakType');
+				expect(conditions.some(slotOrBreak)).toBe(true);
+			});
+
 			it('answers a request that names the types it wants with those types only', async () => {
 				actAs({ canChangeSelectedEmployee: true });
 
@@ -365,7 +376,7 @@ describe('TimeLogService', () => {
 				const total = await (service as any).buildMikroOrmTimeLogWhere(request);
 				const list = await (service as any).buildMikroOrmTimeLogWhere(
 					{ ...request, includeBreaks: true },
-					{ keepBreaks: true }
+					{ listsEntries: true }
 				);
 
 				expect(total.logType).toEqual({ $ne: TimeLogType.BREAK });

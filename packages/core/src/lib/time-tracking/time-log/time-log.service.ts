@@ -98,10 +98,10 @@ export const RUNNING_TIMER_OVERLAP = 'RUNNING_TIMER_OVERLAP';
 /** How a report read treats breaks (time logs of type BREAK, #11920). */
 export interface ITimeLogReadOptions {
 	/**
-	 * Keep breaks, with their type: the reads that list entries do when the request asks (`includeBreaks`). Every
-	 * other read is a total of worked time, which leaves breaks out unless the request names the types it wants.
+	 * The read lists entries (the entry list, the daily chart): it keeps breaks, with their type, when the request asks
+	 * for them (`includeBreaks`) or names their type. Every other read is a total of worked time.
 	 */
-	keepBreaks?: boolean;
+	listsEntries?: boolean;
 }
 
 @Injectable()
@@ -150,8 +150,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
-				const keepBreaks = request.includeBreaks === true;
-				const where = await this.buildMikroOrmTimeLogWhere(request, { keepBreaks });
+				const where = await this.buildMikroOrmTimeLogWhere(request, { listsEntries: true });
 				const populate = [
 					'employee',
 					'employee.user',
@@ -231,8 +230,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				});
 
 				// Apply filters to the query
-				const keepBreaks = request.includeBreaks === true;
-				await this.getFilterTimeLogQuery(query, request, { keepBreaks });
+				await this.getFilterTimeLogQuery(query, request, { listsEntries: true });
 
 				const timeLogs = await query.getMany();
 
@@ -513,8 +511,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
-				const keepBreaks = request.includeBreaks === true;
-				const where = await this.buildMikroOrmTimeLogWhere(request, { keepBreaks });
+				const where = await this.buildMikroOrmTimeLogWhere(request, { listsEntries: true });
 				const items = await this.mikroOrmRepository.find(where, {
 					populate: ['employee', 'timeSlots'] as any[],
 					orderBy: { startedAt: 'ASC' as any }
@@ -541,8 +538,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					}
 				});
 				// Apply additional conditions to the query based on request filters
-				const keepBreaks = request.includeBreaks === true;
-				await this.getFilterTimeLogQuery(query, request, { keepBreaks });
+				await this.getFilterTimeLogQuery(query, request, { listsEntries: true });
 
 				// Execute the query and retrieve time logs
 				logs = await query.getMany();
@@ -1622,7 +1618,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			query.andWhere(p(`"timeSlots"."tenantId" = :tenantId`), { tenantId });
 			query.andWhere(p(`"timeSlots"."organizationId" = :organizationId`), { organizationId });
 		} else {
-			this.requireTimeSlot(query, { tenantId, organizationId, ...activityRange }, options.keepBreaks === true);
+			this.requireTimeSlot(query, { tenantId, organizationId, ...activityRange }, this.keepsBreaks(request, options));
 		}
 
 		return query;
@@ -1728,16 +1724,32 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 	/**
 	 * Whether a report read leaves breaks out: every total of worked time does. A read that lists entries keeps them
-	 * (`keepBreaks`), and a request that names the types it wants is answered with those types, breaks included only
-	 * when named.
+	 * (see `keepsBreaks`), and a request that names the types it wants is answered with those types, breaks included
+	 * only when named.
 	 *
 	 * @param request The report input.
 	 * @param options How the read treats breaks.
 	 */
 	private leavesBreaksOut(request: IGetTimeLogReportInput, options: ITimeLogReadOptions): boolean {
-		const keepsBreaks = options.keepBreaks === true;
+		const keepsBreaks = this.keepsBreaks(request, options);
 		const namesTypes = isNotEmpty(request.logType);
 		return !keepsBreaks && !namesTypes;
+	}
+
+	/**
+	 * Whether a read keeps breaks: a read that lists entries does when the request asks for them (`includeBreaks`) or
+	 * names their type. A break holds no time slot, so such a read lets it through without one.
+	 *
+	 * @param request The report input.
+	 * @param options How the read treats breaks.
+	 */
+	private keepsBreaks(request: IGetTimeLogReportInput, options: ITimeLogReadOptions): boolean {
+		const listsEntries = options.listsEntries === true;
+		const asksForBreaks = request.includeBreaks === true;
+		const namedTypes: string[] = [].concat(request.logType ?? []);
+		const namesBreaks = namedTypes.includes(TimeLogType.BREAK);
+		const wantsBreaks = asksForBreaks || namesBreaks;
+		return listsEntries && wantsBreaks;
 	}
 
 	/**
