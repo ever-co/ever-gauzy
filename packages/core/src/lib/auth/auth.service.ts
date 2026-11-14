@@ -3123,7 +3123,10 @@ export class AuthService extends SocialAuthService {
 					)
 					.where(`${alias}.tenantId`, tenantId)
 					.andWhere(`${alias}.isActive`, true)
-					.andWhere(`${alias}.isArchived`, false);
+					.andWhere(`${alias}.isArchived`, false)
+					// Raw knex skips MikroORM's soft-delete filter: a deleted team (one of a soft-deleted
+					// organization included) is left out here as the TypeORM query builder leaves it out.
+					.whereNull(`${alias}.deletedAt`);
 
 				// Sub Query: only assigned teams for specific organizations
 				const orgSubQuery = knex('user_organization')
