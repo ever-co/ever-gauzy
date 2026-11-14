@@ -222,4 +222,19 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])('ScheduleTimeLogEnt
 
 		expect(table[0]).toMatchObject({ isRunning: false, stoppedAt: workStart });
 	});
+
+	it.each([
+		['at the same time as the break', '2026-11-12T10:30:00.000Z'],
+		['before the break', '2026-11-12T10:00:00.000Z']
+	])('ends a break at its own start when the run that replaces it starts %s', async (_when, workStart) => {
+		const { handler, table } = setup();
+		const breakStart = new Date('2026-11-12T10:30:00.000Z');
+		Object.assign(table[0], { logType: TimeLogType.BREAK, startedAt: breakStart, stoppedAt: breakStart });
+
+		await handler.execute(
+			new ScheduleTimeLogEntriesCommand('employee-1', 'organization-1', 'tenant-1', new Date(workStart))
+		);
+
+		expect(table[0]).toMatchObject({ isRunning: false, stoppedAt: breakStart });
+	});
 });

@@ -11,8 +11,9 @@ import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.rep
 import { MikroOrmTimeLogRepository } from '../../repository/mikro-orm-time-log.repository';
 
 /**
- * When a running break ends: at the start of the run that replaces it, when one is given and falls inside the break
- * (a start may be set earlier than now), else now.
+ * When a running break ends: at the start of the run that replaces it, when one is given (a start may be set earlier
+ * than now), held between the break's own start and now. A run starting with or before the break replaces all of it,
+ * so the break then ends at its own start.
  *
  * @param timeLog The running break.
  * @param replacedAt The start of the run that replaces it, if any.
@@ -23,8 +24,11 @@ export function breakEnd(timeLog: Pick<ITimeLog, 'startedAt'>, replacedAt?: Date
 		return now.toDate();
 	}
 	const replaced = moment.utc(replacedAt);
-	const insideBreak = replaced.isAfter(timeLog.startedAt) && replaced.isBefore(now);
-	if (!insideBreak) {
+	const breakStart = moment.utc(timeLog.startedAt);
+	if (replaced.isSameOrBefore(breakStart)) {
+		return breakStart.toDate();
+	}
+	if (replaced.isAfter(now)) {
 		return now.toDate();
 	}
 	return replaced.toDate();
