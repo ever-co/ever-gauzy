@@ -106,6 +106,10 @@ export class SavedReportService extends TenantAwareCrudService<SavedReport> {
 	 */
 	async updateOwn(id: ID, input: UpdateSavedReportDTO): Promise<ISavedReport> {
 		const stored = await this.ownOrFail(id);
+		const clearsRequiredField = input.name === null || input.kind === null || input.includeAmounts === null;
+		if (clearsRequiredField) {
+			throw new BadRequestException('The name, the report and the amounts choice can be changed, not cleared.');
+		}
 		const period = nextSavedReportPeriodOf(stored, input);
 		this.assertPeriod(period);
 

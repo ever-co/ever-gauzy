@@ -146,6 +146,19 @@ describe('SavedReportService', () => {
 		expect((await service.findOwn(REPORT)).isShared).toBe(false);
 	});
 
+	it('refuses to clear the name, the report kind or the amounts choice, with a 400 instead of a database error', async () => {
+		const { service, rows } = serviceFor(MARIE);
+
+		for (const cleared of [{ name: null }, { kind: null }, { includeAmounts: null }]) {
+			await expect(service.updateOwn(REPORT, cleared as never)).rejects.toThrow(BadRequestException);
+		}
+		expect(rows[0]).toMatchObject({
+			name: 'Client A, last month',
+			kind: SavedReportKindEnum.TIME_AND_ACTIVITY,
+			includeAmounts: false
+		});
+	});
+
 	it('switches a report from a rule to fixed days when the update clears the rule', async () => {
 		const { service, rows } = serviceFor(MARIE);
 
