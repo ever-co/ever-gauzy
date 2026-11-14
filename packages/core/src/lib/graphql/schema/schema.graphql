@@ -33885,6 +33885,19 @@ type Organization {
   timeFormat: Int!
 
   """
+  The interval, in minutes, a client rounds each duration to in the reports and exports it shows: 1, 5, 6, 10, 15, 30
+  or 60. The API stores the rule and rounds nothing itself, and stored time never changes. Null, the default, means
+  no rounding.
+  """
+  durationRoundingInterval: Int
+
+  """
+  Which way a client rounds a duration to that interval: `UP`, `DOWN` or `NEAREST`. Null, the default, means no
+  rounding. Carried as its own value: the vocabulary is the platform's `DurationRoundingDirectionEnum`.
+  """
+  durationRoundingDirection: String
+
+  """
   Whether a document's tax and its discount are stated as separate lines.
   """
   separateInvoiceItemTaxAndDiscount: Boolean

@@ -14,5 +14,7 @@ export class OrganizationSettingDTO extends PickType(Organization, [
 	'requireTeam',
 	'restrictTrackingSwitchToHigherRoles',
 	'defaultBillRateValue',
-	'defaultBillRateCurrency'
+	'defaultBillRateCurrency',
+	'durationRoundingInterval',
+	'durationRoundingDirection'
 ] as const) {}

@@ -1,11 +1,24 @@
 import { JoinColumn, JoinTable, RelationId } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, TransformFnParams } from 'class-transformer';
-import { IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, Max, Min } from 'class-validator';
+import {
+	IsBoolean,
+	IsEnum,
+	IsIn,
+	IsNotEmpty,
+	IsNumber,
+	IsOptional,
+	IsString,
+	IsUUID,
+	Max,
+	Min,
+	ValidateIf
+} from 'class-validator';
 import {
 	DEFAULT_INVITE_EXPIRY_PERIOD,
 	DEFAULT_PROFIT_BASED_BONUS,
-	DEFAULT_STANDARD_WORK_HOURS_PER_DAY
+	DEFAULT_STANDARD_WORK_HOURS_PER_DAY,
+	DURATION_ROUNDING_INTERVALS
 } from '@gauzy/constants';
 import {
 	DefaultValueDateTypeEnum,
@@ -30,6 +43,7 @@ import {
 	ID,
 	BonusTypeEnum,
 	CurrenciesEnum,
+	DurationRoundingDirectionEnum,
 	IUser
 } from '@gauzy/contracts';
 import {
@@ -61,6 +75,7 @@ import {
 } from './../core/decorators/entity';
 import { BILLING_RATE_MAX, billingRateColumn, toNullableBillingRate } from '../shared/pipes';
 import { MikroOrmOrganizationRepository } from './repository/mikro-orm-organization.repository';
+import { setsDurationRoundingRule } from './duration-rounding-rule';
 
 @MultiORMEntity('organization', { mikroOrmRepository: () => MikroOrmOrganizationRepository })
 export class Organization extends TenantBaseEntity implements IOrganization {
@@ -410,6 +425,33 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 
 	@MultiORMColumn({ default: 12 })
 	timeFormat?: 12 | 24;
+
+	/**
+	 * The interval, in minutes, a client rounds each duration to in the reports and exports it shows: one of
+	 * `DURATION_ROUNDING_INTERVALS`. The API stores the rule and rounds nothing itself. Null, the default, means no rounding.
+	 */
+	@ApiPropertyOptional({
+		type: () => Number,
+		enum: [...DURATION_ROUNDING_INTERVALS],
+		nullable: true,
+		description:
+			'Minutes a client rounds each duration to in reports and exports, set with a direction; null means no rounding'
+	})
+	@ValidateIf(setsDurationRoundingRule)
+	@IsIn(DURATION_ROUNDING_INTERVALS)
+	@MultiORMColumn({ nullable: true })
+	durationRoundingInterval?: number | null;
+
+	/** Which way a client rounds a duration to that interval: up, down or to the nearest. Null, the default, means none. */
+	@ApiPropertyOptional({
+		enum: DurationRoundingDirectionEnum,
+		nullable: true,
+		description: 'Which way a client rounds a duration to the interval, set with it; null means no rounding'
+	})
+	@ValidateIf(setsDurationRoundingRule)
+	@IsEnum(DurationRoundingDirectionEnum)
+	@MultiORMColumn({ nullable: true })
+	durationRoundingDirection?: DurationRoundingDirectionEnum | null;
 
 	@MultiORMColumn({ nullable: true })
 	separateInvoiceItemTaxAndDiscount?: boolean;
