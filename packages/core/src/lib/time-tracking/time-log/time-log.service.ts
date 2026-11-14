@@ -90,6 +90,7 @@ import {
 	projectIdForEntry,
 	teamIdForEntry
 } from './organization-tracking-requirements';
+import { assertBreakOverlapsNothing, assertBreaksAllowedIn, assertBreakTypeKept, isBreak } from './break-rules';
 
 /** The code of the refusal of manual time over a timer that is still running (409). */
 export const RUNNING_TIMER_OVERLAP = 'RUNNING_TIMER_OVERLAP';
@@ -2049,7 +2050,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		);
 		const entry = { ...teamContext, projectId };
 		const isTrackerUpload = uploadedByTracker === true;
-		if (!isTrackerUpload) {
+		// A break is not work: the fields work must name (team, project, task) are not asked of it
+		const checksWorkFields = !isTrackerUpload && !isBreak(sent);
+		if (checksWorkFields) {
 			assertRequiredContext(requirements, entry);
 		}
 		return entry;
@@ -2088,6 +2091,12 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			// permissive organization, or none, and record time in an organization whose policy forbids it.
 			this.assertManualTimeAllowedIn(employee.organization);
 
+			// A break by hand needs the organization's breaks switch as well
+			const addsBreak = isBreak(request);
+			if (addsBreak) {
+				assertBreaksAllowedIn(employee.organization);
+			}
+
 			// Check if future dates are allowed for the organization
 			const futureDateAllowed: IOrganization['futureDateAllowed'] = employee.organization.futureDateAllowed;
 
@@ -2114,6 +2123,11 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			// A running timer in the range is refused, never cut
 			this.assertNoRunningTimerIn(conflicts);
 
+			// A break never cuts the entries it would overlap: it is refused instead
+			if (addsBreak) {
+				assertBreakOverlapsNothing(conflicts);
+			}
+
 			// Resolve conflicts by deleting conflicting time slots
 			if (conflicts?.length) {
 				const times: IDateRange = {
@@ -2132,9 +2146,12 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 			// Create the new time log entry. The handler reads it back through this service, whose employee
 			// filter would not find a log written for a member the caller manages.
-			return await this.withoutEmployeeFilter(() =>
-				this.commandBus.execute(new TimeLogCreateCommand({ ...entry, organizationId }))
-			);
+			const written = { ...entry, organizationId };
+			// A break is never billable
+			if (addsBreak) {
+				written.isBillable = false;
+			}
+			return await this.withoutEmployeeFilter(() => this.commandBus.execute(new TimeLogCreateCommand(written)));
 		} catch (error) {
 			// Never swallow the reason: a blanket message here hid a real database failure indefinitely.
 			if (error instanceof HttpException) {
@@ -2185,6 +2202,13 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			// other log, so the read reaches nothing the caller could not have edited.
 			const timeLog = await this.withoutEmployeeFilter(() => this.findOneByIdString(id));
 
+			// A break stays a break and work stays work; editing a break needs the breaks switch
+			assertBreakTypeKept(timeLog, request.logType);
+			const editsBreak = isBreak(timeLog);
+			if (editsBreak) {
+				assertBreaksAllowedIn(employee.organization);
+			}
+
 			// The update keeps the log's timesheet and time slots, while the conflict cleanup below deletes
 			// slots of `employeeId`: naming anyone but the log's owner would move the log without its time
 			// and erase that employee's overlapping work. Hence a refusal, before that cleanup runs.
@@ -2224,6 +2248,12 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 			// A running timer in the range is refused, never cut (the edited log itself is not among the conflicts)
 			this.assertNoRunningTimerIn(conflicts);
+
+			// A break never cuts the entries it would overlap
+			if (editsBreak) {
+				assertBreakOverlapsNothing(conflicts);
+				request.isBillable = false;
+			}
 
 			// Resolve conflicts by deleting conflicting time slots
 			if (conflicts?.length) {
