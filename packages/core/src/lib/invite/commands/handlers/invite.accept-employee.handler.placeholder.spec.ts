@@ -249,6 +249,24 @@ describe('InviteAcceptEmployeeHandler with a claim invitation', () => {
 		expect(update).not.toHaveBeenCalledWith(UserOrganization, { userId: 'user-elsewhere' }, expect.anything());
 	});
 
+	it("retries the account's own retirement after a passing failure, so that accepting again starts over", async () => {
+		const { accept, placeholderTransferService, userRepository } = build({ placeholderEmployeeId: PLACEHOLDER });
+		placeholderTransferService.transfer.mockRejectedValueOnce(new Error('transfer failed'));
+		const update = userRepository.manager.update.getMockImplementation();
+		let refused = 0;
+		userRepository.manager.update.mockImplementation(
+			async (entity: unknown, where: Partial<Account>, values: Partial<Account>) => {
+				if (entity === User && refused++ === 0) throw new Error('deadlock detected');
+				return update?.(entity, where, values);
+			}
+		);
+
+		await expect(accept()).rejects.toThrow('transfer failed');
+
+		expect(userRepository.manager.update.mock.calls.filter(([entity]) => entity === User)).toHaveLength(2);
+		await expect(accept()).resolves.toBeDefined();
+	});
+
 	it('still retires the account when retiring its member or its organization links fails', async () => {
 		const { accept, placeholderTransferService, userRepository } = build({ placeholderEmployeeId: PLACEHOLDER });
 		placeholderTransferService.transfer.mockRejectedValueOnce(new Error('transfer failed'));

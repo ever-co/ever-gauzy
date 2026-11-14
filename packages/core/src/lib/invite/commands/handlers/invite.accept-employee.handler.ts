@@ -37,6 +37,23 @@ import { EmployeePlaceholderTransferService } from '../../../employee-placeholde
  * This command first registers a user, then creates an employee entry for the organization.
  * If the above two steps are successful, it finally sets the invitation status to accepted
  */
+/**
+ * Runs a write, and runs it again, up to three times in all, while it fails: a deadlock or a dropped connection
+ * passes. The last failure is thrown.
+ */
+async function triedAgain<T>(write: () => Promise<T>, times = 3): Promise<T> {
+	for (let attempt = 1; ; attempt++) {
+		try {
+			return await write();
+		} catch (error) {
+			if (attempt >= times) {
+				throw error;
+			}
+			await new Promise((resolve) => setTimeout(resolve, 50 * attempt));
+		}
+	}
+}
+
 @CommandHandler(InviteAcceptEmployeeCommand)
 export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAcceptEmployeeCommand> {
 	constructor(
@@ -217,7 +234,10 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 				console.error(`Failed to retire ${what} after a failed claim:`, cleanup);
 			}
 		};
-		await attempt(`the account ${userId}`, () => manager.update(User, { id: userId }, retired));
+		// The account's write is the one the next acceptance depends on: tried again after a passing failure (a
+		// deadlock, a dropped connection). A database that keeps refusing it leaves the account to an admin, who
+		// merges the placeholder into that person's member as for any email that has an account.
+		await attempt(`the account ${userId}`, () => triedAgain(() => manager.update(User, { id: userId }, retired)));
 		await attempt(`the members of ${userId}`, () => manager.update(Employee, { userId }, retired));
 		await attempt(`the organization links of ${userId}`, () =>
 			manager.update(UserOrganization, { userId }, retired)
