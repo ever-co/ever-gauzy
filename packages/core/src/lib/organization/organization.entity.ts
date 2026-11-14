@@ -59,6 +59,7 @@ import {
 	MultiORMManyToOne,
 	MultiORMOneToMany
 } from './../core/decorators/entity';
+import { BILLING_RATE_MAX, billingRateColumn, toNullableBillingRate } from '../shared/pipes';
 import { MikroOrmOrganizationRepository } from './repository/mikro-orm-organization.repository';
 
 @MultiORMEntity('organization', { mikroOrmRepository: () => MikroOrmOrganizationRepository })
@@ -117,6 +118,26 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@ColumnIndex()
 	@MultiORMColumn()
 	currency: string;
+
+	/**
+	 * The hourly rate billed for the time of a member who has no billing rate of their own: the last link of the price
+	 * chain (the member's client rate on the project, the project's client rate, the member's billing rate, then this).
+	 * Validated like a member's billing rate; null (the default) leaves such time without a price, as before.
+	 */
+	@ApiPropertyOptional({ type: () => Number, nullable: true })
+	@IsOptional()
+	@IsNumber()
+	@Max(BILLING_RATE_MAX)
+	@Transform(toNullableBillingRate)
+	@MultiORMColumn(billingRateColumn())
+	defaultBillRateValue?: number | null;
+
+	/** The currency of the default billing rate; null prices it in the organization's currency. */
+	@ApiPropertyOptional({ type: () => String, enum: CurrenciesEnum, nullable: true })
+	@IsOptional()
+	@IsEnum(CurrenciesEnum)
+	@MultiORMColumn({ nullable: true })
+	defaultBillRateCurrency?: CurrenciesEnum | null;
 
 	@MultiORMColumn({ nullable: true })
 	valueDate?: Date;

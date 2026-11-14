@@ -65,6 +65,13 @@ export interface IOrganization
 	overview: string;
 	skills: ISkill[];
 	currency: string;
+	/**
+	 * The hourly rate billed for the time of a member who has no billing rate of their own: the last link of the price
+	 * chain. Null (the default) leaves such time without a price.
+	 */
+	defaultBillRateValue?: number | null;
+	/** The currency of the default billing rate; null prices it in the organization's currency. */
+	defaultBillRateCurrency?: CurrenciesEnum | null;
 	defaultValueDateType: DefaultValueDateTypeEnum;
 	defaultAlignmentType?: string;
 	dateFormat?: string;
@@ -148,6 +155,8 @@ export interface IOrganizationCreateInput
 	totalEmployees?: number;
 	imageUrl?: string;
 	currency: CurrenciesEnum;
+	defaultBillRateValue?: number | null;
+	defaultBillRateCurrency?: CurrenciesEnum | null;
 	client_focus?: string;
 	show_income?: boolean;
 	show_profits?: boolean;
