@@ -13,6 +13,11 @@ import { CreateUserDTO } from './create-user.dto';
  * dropping the value, so the avatar never changed — and `{ imageId: null }` never cleared one.
  * It carries `@IsOptional()` + `@IsUUID()` from the entity, so `null` is accepted (clearing the
  * avatar) while a malformed id is still rejected.
+ *
+ * `timeZone` and `timeFormat` are declared for the same reason: the Ever Teams time zone picker sends
+ * `{ timeZone }` and the Angular employee settings send `{ timeZone, timeFormat }` here, and both were
+ * stripped while the route answered `202 Accepted`. They keep the entity's validation (an optional string,
+ * and the 12 or 24 hour clock).
  */
 class UpdateUserBaseDTO extends PickType(User, [
 	'defaultOrganizationId',
@@ -20,7 +25,9 @@ class UpdateUserBaseDTO extends PickType(User, [
 	'lastOrganizationId',
 	'lastTeamId',
 	'imageId',
-	'isActive'
+	'isActive',
+	'timeZone',
+	'timeFormat'
 ] as const) {}
 
 /**
