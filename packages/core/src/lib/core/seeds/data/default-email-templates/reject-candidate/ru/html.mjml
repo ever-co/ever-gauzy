@@ -57,8 +57,7 @@
 		<mj-section padding="20px 16px 40px">
 			<mj-column>
 				<mj-text mj-class="footer">
-					<a href="{{appLink}}" target="_blank" style="color: #66666F; text-decoration: underline">{{appName}}</a>
-					{{#if organizationName}}<br />&copy; <span dir="auto">{{organizationName}}</span>. Все права защищены.{{else}}{{#if companyName}}<br />&copy; <a href="{{companyLink}}" target="_blank" style="color: #66666F; text-decoration: underline">{{companyName}}</a>. Все права защищены.{{/if}}{{/if}}
+					&copy; 2019, <a href="{{appLink}}" target="_blank" style="color: #66666F; text-decoration: underline">{{appName}}</a>{{#if organizationName}} от <span dir="auto">{{organizationName}}</span>{{else}}{{#if companyName}} от <a href="{{companyLink}}" target="_blank" style="color: #66666F; text-decoration: underline">{{companyName}}</a>{{/if}}{{/if}}. Все права защищены.
 				</mj-text>
 			</mj-column>
 		</mj-section>
