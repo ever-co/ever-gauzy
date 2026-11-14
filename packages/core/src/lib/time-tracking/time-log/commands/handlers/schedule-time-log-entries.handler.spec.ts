@@ -211,4 +211,15 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])('ScheduleTimeLogEnt
 		expect(table[0]).toMatchObject({ isRunning: false, stoppedAt: NOW });
 		expect(table[1]).toMatchObject({ isRunning: false, stoppedAt: new Date('2026-11-12T10:30:10.000Z') });
 	});
+
+	it('ends a break at the start of the run that replaces it, set earlier than now', async () => {
+		const { handler, table } = setup();
+		const breakStart = new Date('2026-11-12T10:30:00.000Z');
+		Object.assign(table[0], { logType: TimeLogType.BREAK, startedAt: breakStart, stoppedAt: breakStart });
+		const workStart = new Date('2026-11-12T11:00:00.000Z');
+
+		await handler.execute(new ScheduleTimeLogEntriesCommand('employee-1', 'organization-1', 'tenant-1', workStart));
+
+		expect(table[0]).toMatchObject({ isRunning: false, stoppedAt: workStart });
+	});
 });

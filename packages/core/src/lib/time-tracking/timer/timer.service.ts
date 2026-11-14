@@ -419,7 +419,7 @@ export class TimerService {
 		}
 
 		// Stop any previous running timers
-		await this.stopPreviousRunningTimers(employeeId, organizationId, tenantId);
+		await this.stopPreviousRunningTimers(employeeId, organizationId, tenantId, startedAt);
 
 		// Create a new time log entry using the command bus
 		const timeLog = await this._commandBus.execute(
@@ -943,7 +943,12 @@ export class TimerService {
 	 * @param organizationId - The ID of the organization to which the employee belongs
 	 * @param tenantId - The ID of the tenant context
 	 */
-	async stopPreviousRunningTimers(employeeId: ID, organizationId: ID, tenantId: ID): Promise<void> {
+	async stopPreviousRunningTimers(
+		employeeId: ID,
+		organizationId: ID,
+		tenantId: ID,
+		replacedAt?: Date
+	): Promise<void> {
 		try {
 			this.debug(() => 'Start previous running timers...');
 			// Retrieve any existing running logs for the employee
@@ -953,7 +958,9 @@ export class TimerService {
 			// If there are existing running logs, stop them before starting a new one
 			if (logs.length > 0) {
 				// Execute the ScheduleTimeLogEntriesCommand to stop all previous running timers
-				await this._commandBus.execute(new ScheduleTimeLogEntriesCommand(employeeId, organizationId, tenantId));
+				await this._commandBus.execute(
+					new ScheduleTimeLogEntriesCommand(employeeId, organizationId, tenantId, replacedAt)
+				);
 			}
 			this.debug(() => 'Stop previous running timers...');
 		} catch (error) {

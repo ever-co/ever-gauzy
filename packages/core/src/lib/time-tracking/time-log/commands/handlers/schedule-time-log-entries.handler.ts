@@ -10,6 +10,26 @@ import { ScheduleTimeLogEntriesCommand } from '../schedule-time-log-entries.comm
 import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.repository';
 import { MikroOrmTimeLogRepository } from '../../repository/mikro-orm-time-log.repository';
 
+/**
+ * When a running break ends: at the start of the run that replaces it, when one is given and falls inside the break
+ * (a start may be set earlier than now), else now.
+ *
+ * @param timeLog The running break.
+ * @param replacedAt The start of the run that replaces it, if any.
+ */
+export function breakEnd(timeLog: Pick<ITimeLog, 'startedAt'>, replacedAt?: Date): Date {
+	const now = moment.utc();
+	if (!replacedAt) {
+		return now.toDate();
+	}
+	const replaced = moment.utc(replacedAt);
+	const insideBreak = replaced.isAfter(timeLog.startedAt) && replaced.isBefore(now);
+	if (!insideBreak) {
+		return now.toDate();
+	}
+	return replaced.toDate();
+}
+
 @CommandHandler(ScheduleTimeLogEntriesCommand)
 export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTimeLogEntriesCommand> {
 	protected ormType: MultiORM = getORMType();
@@ -35,7 +55,7 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 	 * @throws Error when one of the three ids is missing; nothing is closed then.
 	 */
 	public async execute(command: ScheduleTimeLogEntriesCommand): Promise<void> {
-		const { tenantId, organizationId, employeeId } = command;
+		const { tenantId, organizationId, employeeId, replacedAt } = command;
 
 		// One employee's entries only. The query below keeps its employee, organization and tenant filters only when
 		// the employee and organization ids are set: without them it would close the pending entries of every employee
@@ -52,7 +72,7 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 
 		// Iterate through each pending time log entry to process and update them as necessary
 		for await (const log of logs) {
-			await this.processTimeLogEntry(log);
+			await this.processTimeLogEntry(log, replacedAt);
 		}
 	}
 
@@ -151,16 +171,16 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 	 *
 	 * @param timeLog The time log entry to process
 	 */
-	private async processTimeLogEntry(timeLog: ITimeLog): Promise<void> {
+	private async processTimeLogEntry(timeLog: ITimeLog, replacedAt?: Date): Promise<void> {
 		const { timeSlots } = timeLog;
 
 		// The end worked out for the entry below, if any: `stopTimeLog` writes it on a log stored without one.
 		let stoppedAt: Date | undefined;
 
-		// A break holds no time slots by design: it ends now, when the run that replaces it starts or its timer stops.
-		// The rule below for a run without slots (no sign of work after ten minutes) would cut it to ten seconds.
+		// A break holds no time slots by design: it ends where the run that replaces it starts, or now. The rule below for
+		// a run without slots (no sign of work after ten minutes) would cut it to ten seconds.
 		if (timeLog.logType === TimeLogType.BREAK) {
-			stoppedAt = moment.utc().toDate();
+			stoppedAt = breakEnd(timeLog, replacedAt);
 			await this.saveTimeLog({ id: timeLog.id, stoppedAt });
 		} else if (isEmpty(timeSlots)) {
 			// Retrieve the last log's startedAt date
