@@ -203,6 +203,70 @@ const isSqlite = !isPostgres() && !isMySQL();
 	exercise(() => ({ type: 'postgres', url: postgresUrl }));
 });
 
-(isMySQL() && mysqlUrl ? describe : describe.skip)('AddTwoFactorAuthentication1791000009900 on MySQL', () => {
-	exercise(() => ({ type: 'mysql', url: mysqlUrl }));
+/**
+ * MySQL runs against a minimal fixture of the tables the migration references, not the whole schema: TypeORM's
+ * synchronize of every entity does not build on MySQL (an index on a text column of another table). The fixture is
+ * enough for every statement of the migration to run for real.
+ */
+(mysqlUrl ? describe : describe.skip)('AddTwoFactorAuthentication1791000009900 on MySQL (minimal fixture)', () => {
+	let dataSource: DataSource;
+	const migration = new AddTwoFactorAuthentication1791000009900();
+
+	const columnsOf = async (table: string): Promise<string[]> =>
+		(
+			await dataSource.query(
+				'SELECT `COLUMN_NAME` AS `name` FROM information_schema.COLUMNS WHERE `TABLE_SCHEMA` = DATABASE() AND `TABLE_NAME` = ?',
+				[table]
+			)
+		).map((row: { name: string }) => row.name);
+
+	const run = async (step: 'up' | 'down') => {
+		const queryRunner = dataSource.createQueryRunner();
+		try {
+			await migration[step](queryRunner);
+		} finally {
+			await queryRunner.release();
+		}
+	};
+
+	beforeAll(async () => {
+		dataSource = new DataSource({ type: 'mysql', url: mysqlUrl, logging: false });
+		await dataSource.initialize();
+		for (const table of [TABLE, 'organization', 'user', 'tenant']) {
+			await dataSource.query(`DROP TABLE IF EXISTS \`${table}\``);
+		}
+		await dataSource.query('CREATE TABLE `tenant` (`id` varchar(36) NOT NULL, PRIMARY KEY (`id`)) ENGINE=InnoDB');
+		await dataSource.query('CREATE TABLE `user` (`id` varchar(36) NOT NULL, PRIMARY KEY (`id`)) ENGINE=InnoDB');
+		await dataSource.query(
+			'CREATE TABLE `organization` (`id` varchar(36) NOT NULL, `name` varchar(255) NOT NULL, PRIMARY KEY (`id`)) ENGINE=InnoDB'
+		);
+		await dataSource.query('INSERT INTO `organization` (`id`, `name`) VALUES (?, ?)', [ORGANIZATION, 'Organization']);
+	}, TIMEOUT);
+
+	afterAll(async () => {
+		await dataSource?.destroy();
+	});
+
+	beforeEach(() => jest.spyOn(console, 'log').mockImplementation(() => undefined));
+	afterEach(() => jest.restoreAllMocks());
+
+	it(
+		'runs up, down and up again',
+		async () => {
+			await run('up');
+			await run('up');
+			expect(await columnsOf(TABLE)).toEqual(expect.arrayContaining(['userId', 'secret', 'recoveryCodes']));
+			const [organization] = await dataSource.query('SELECT `requireTwoFactor` AS `required` FROM `organization`');
+			expect(Number(organization.required)).toBe(0);
+
+			await run('down');
+			expect(await columnsOf(TABLE)).toEqual([]);
+			expect(await columnsOf('organization')).not.toContain('requireTwoFactor');
+
+			await run('up');
+			expect(await columnsOf(TABLE)).toContain('lastUsedTimeStep');
+			expect(await columnsOf('organization')).toContain('requireTwoFactor');
+		},
+		TIMEOUT
+	);
 });
