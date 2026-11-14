@@ -401,14 +401,14 @@ describe('Soft deleting an organization (#11960)', () => {
 			expect(after).toEqual(before);
 		});
 
-		it('points the members the delete left with no organization back at it; a moved member stays', async () => {
+		it("leaves the members' last and default organization where the delete moved them", async () => {
 			await hide(ofTenant(TRIAL));
-			const restored = await restore(ofTenant(TRIAL));
+			const moved = await rows('user');
 
-			expect((await row('user', 'bob')).lastOrganizationId).toBe(TRIAL);
-			expect((await row('user', 'dave')).lastOrganizationId).toBe(TRIAL);
-			expect((await row('user', 'alice')).lastOrganizationId).toBe(SIDE);
-			expect(restored.lastOrganizationRestored).toBe(2);
+			await restore(ofTenant(TRIAL));
+
+			// A pointer the delete cleared (bob's, dave's) reads like one never set: the restore touches neither.
+			expect(await rows('user')).toEqual(moved);
 		});
 
 		it('changes nothing for an organization that is not deleted', async () => {

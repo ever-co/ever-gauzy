@@ -71,8 +71,8 @@ export class OrganizationService extends TenantAwareCrudService<Organization> {
 
 	/**
 	 * Restores a soft-deleted organization of the caller's tenant with what its soft delete hid: its invitations,
-	 * teams, team memberships, organization memberships and member records come back as they were. A member the delete left
-	 * with no organization lands in it again at their next sign-in.
+	 * teams, team memberships, organization memberships and member records come back as they were. The members' last
+	 * and default organization stay where the delete moved them; its teams are listed at sign-in again.
 	 *
 	 * @param id - The organization.
 	 * @returns The organization.

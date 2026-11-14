@@ -73,8 +73,6 @@ export interface IOrganizationHidden {
 export interface IOrganizationRestored {
 	/** Rows restored, per table. */
 	rows: Record<HiddenWithOrganization, number>;
-	/** Members left with no organization by the delete whose last organization is this one again. */
-	lastOrganizationRestored: number;
 }
 
 /** How many identifiers one `IN (...)` list carries at most: far below every supported database's limit. */
@@ -135,9 +133,11 @@ export async function hideOrganization(
 
 /**
  * Restores a soft-deleted organization inside the caller's transaction: clears `deletedAt` on the organization and
- * on the rows of {@link TABLES_HIDDEN_WITH_ORGANIZATION} that carry the organization's exact value, then points
- * the members left with no last organization back at it. A member moved to another organization stays there, and
- * can switch back.
+ * on the rows of {@link TABLES_HIDDEN_WITH_ORGANIZATION} that carry the organization's exact value.
+ *
+ * The members' last and default organization stay where the delete moved them, or where they have been since: the
+ * restore cannot tell a pointer the delete cleared from one that was never set, and a pointer is the member's own
+ * choice. The organization's teams are listed at sign-in again, and a member picks it again from there.
  *
  * @param manager The transaction's entity manager.
  * @param organization The organization, already read in the caller's tenant (deleted rows included).
@@ -165,7 +165,7 @@ export async function restoreOrganization(
 
 	const rows = { invite: 0, organization_team_employee: 0, organization_team: 0, user_organization: 0, employee: 0 };
 	if (stored.deletedAt === null || stored.deletedAt === undefined) {
-		return { rows, lastOrganizationRestored: 0 };
+		return { rows };
 	}
 
 	// The value as the database returns it, so the comparison is the database's own: no conversion in between.
@@ -175,9 +175,7 @@ export async function restoreOrganization(
 		rows[table] = await setDeletedAt(manager, table, { tenantId, organizationId: id, deletedAt }, null);
 	}
 
-	const lastOrganizationRestored = await pointMembersWithoutOrganizationBack(manager, organization);
-
-	return { rows, lastOrganizationRestored };
+	return { rows };
 }
 
 /**
@@ -442,36 +440,4 @@ async function clearLastTeam(manager: EntityManager, tenantId: ID, teamIds: ID[]
 		cleared += result.affected ?? 0;
 	}
 	return cleared;
-}
-
-/**
- * Points the active members of a restored organization that have no last organization (the delete left them with
- * none) back at it, so their next sign-in lands in it as before.
- *
- * @param manager The transaction's entity manager.
- * @param organization The restored organization.
- * @returns How many users were pointed back.
- */
-async function pointMembersWithoutOrganizationBack(
-	manager: EntityManager,
-	{ id, tenantId }: IOrganizationOfTenant
-): Promise<number> {
-	const members: { userId: ID }[] = await manager
-		.createQueryBuilder('user_organization', 'membership')
-		.select('membership.userId', 'userId')
-		.where({ tenantId, organizationId: id, isActive: true, isArchived: false, deletedAt: IsNull() })
-		.getRawMany();
-
-	let restored = 0;
-	for (const chunk of chunks(members.map((member) => member.userId))) {
-		const result = await manager
-			.createQueryBuilder()
-			.update('user')
-			.set({ lastOrganizationId: id })
-			.where({ tenantId, id: In(chunk), lastOrganizationId: IsNull() })
-			.callListeners(false)
-			.execute();
-		restored += result.affected ?? 0;
-	}
-	return restored;
 }
