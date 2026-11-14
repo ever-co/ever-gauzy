@@ -24,7 +24,6 @@ import {
 import { RequestContext } from '../core/context';
 import {
 	Employee,
-	Invite,
 	Organization,
 	OrganizationTeam,
 	OrganizationTeamEmployee,
@@ -166,16 +165,15 @@ export class EmployeePlaceholderService {
 			invitationExpirationPeriod: input.invitationExpirationPeriod,
 			...link
 		} as ICreateEmailInvitesInput;
+		// The invitation is written as a claim before its email goes, so whoever accepts it gets the placeholder's time.
 		const output: ICreateEmailInvitesOutput = await this.commandBus.execute(
-			new InviteBulkCreateCommand(invitation, languageCode)
+			new InviteBulkCreateCommand(invitation, languageCode, placeholder.id)
 		);
 		const invite = output?.items?.[0];
 		if (!invite) {
 			throw new ConflictException('The claim invitation could not be created.');
 		}
-
-		await manager.update(Invite, { id: invite.id, tenantId }, { placeholderEmployeeId: placeholder.id });
-		return Object.assign(invite, { placeholderEmployeeId: placeholder.id });
+		return invite;
 	}
 
 	/** What merging a member without an account into a member would move. Writes nothing. */

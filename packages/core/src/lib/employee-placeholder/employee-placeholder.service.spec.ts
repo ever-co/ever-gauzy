@@ -121,9 +121,15 @@ function build() {
 	};
 	const commandBus = {
 		execute: jest.fn(async (command: InviteBulkCreateCommand) => {
-			const invite = { id: 'invite-1', email: command.input.emailIds[0], code: 'C0DE' };
-			tables.get(Invite)?.push(invite);
-			return { items: [invite], total: 1, ignored: 0 };
+			const invite = {
+				id: 'invite-1',
+				email: command.input.emailIds[0],
+				code: 'C0DE',
+				placeholderEmployeeId: command.placeholderEmployeeId
+			};
+			// The stored row and the answer are separate objects, so the row says what was written.
+			tables.get(Invite)?.push({ ...invite, tenantId: TENANT });
+			return { items: [{ ...invite }], total: 1, ignored: 0 };
 		})
 	};
 	const service = new EmployeePlaceholderService({ manager } as never, transferService as never, commandBus as never);
@@ -253,6 +259,9 @@ describe('EmployeePlaceholderService.sendClaim', () => {
 			callbackUrl: 'https://app.ever.team/auth/accept-invite',
 			queryParams: { email: 'email', code: 'code' }
 		});
+		// Written with the invitation, before its email goes: never an ordinary invitation in between.
+		expect(command.placeholderEmployeeId).toBe(placeholder.id);
+		expect(command.input.placeholderEmployeeId).toBeUndefined();
 		expect(invite.placeholderEmployeeId).toBe(placeholder.id);
 		expect(tables.get(Invite)?.[0]).toMatchObject({ id: 'invite-1', placeholderEmployeeId: placeholder.id });
 	});
