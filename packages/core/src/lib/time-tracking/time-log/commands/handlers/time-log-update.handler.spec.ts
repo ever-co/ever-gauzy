@@ -128,3 +128,34 @@ describe('TimeLogUpdateHandler (GHSA-6qvm-3wg4-26w4)', () => {
 		});
 	});
 });
+
+/**
+ * Under MikroORM, the slots the release reads carry their time logs as a collection, which is iterable and has no
+ * array methods: the release read them with `.some` and failed with a TypeError, so any update shortening a log (a
+ * later start of a running timer, a manual edit) answered 500 there.
+ */
+describe('TimeLogUpdateHandler release of slots read through MikroORM', () => {
+	/** A MikroORM collection, as far as the release needs it: iterable, with no array methods. */
+	class CollectionOf<T> {
+		constructor(private readonly items: T[]) {}
+
+		[Symbol.iterator](): Iterator<T> {
+			return this.items[Symbol.iterator]();
+		}
+	}
+
+	it('tells the slots only the log holds from the ones another log still holds', async () => {
+		const { handler } = createHandler();
+		const timeLog = { id: 'log-own' };
+		const alone = { id: 'slot-alone', timeLogs: new CollectionOf([{ id: 'log-own' }]) };
+		const shared = { id: 'slot-shared', timeLogs: new CollectionOf([{ id: 'log-own' }, { id: 'log-other' }]) };
+		const elsewhere = { id: 'slot-elsewhere', timeLogs: new CollectionOf([{ id: 'log-other' }]) };
+		jest.spyOn(handler as any, 'findTimeSlots').mockResolvedValue([alone, shared, elsewhere]);
+
+		const release = await (handler as any).planRelease(timeLog, TENANT_A, 'org-a', 'employee-a', [
+			new Date('2026-01-05T09:00:00.000Z')
+		]);
+
+		expect(release).toEqual({ remove: ['slot-alone'], unlink: ['slot-shared'] });
+	});
+});

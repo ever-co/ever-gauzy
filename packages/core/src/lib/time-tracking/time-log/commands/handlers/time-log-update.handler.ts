@@ -340,10 +340,12 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 			return { remove: [], unlink: [] };
 		}
 
+		// Under MikroORM a slot's time logs are a collection, iterable but without array methods
+		const logsOf = (slot: ITimeSlot): ITimeLog[] => Array.from(slot.timeLogs ?? []);
 		const linked = (await this.findTimeSlots(tenantId, organizationId, employeeId, startTimes)).filter((slot) =>
-			(slot.timeLogs ?? []).some((log) => log.id === timeLog.id)
+			logsOf(slot).some((log) => log.id === timeLog.id)
 		);
-		const heldByAnother = (slot: ITimeSlot) => (slot.timeLogs ?? []).some((log) => log.id !== timeLog.id);
+		const heldByAnother = (slot: ITimeSlot) => logsOf(slot).some((log) => log.id !== timeLog.id);
 
 		return {
 			remove: linked.filter((slot) => !heldByAnother(slot)).map((slot) => slot.id),
