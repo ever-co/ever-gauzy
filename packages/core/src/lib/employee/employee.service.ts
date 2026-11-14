@@ -327,7 +327,16 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 
 				const [mItems, mTotal] = await this.mikroOrmRepository.findAndCount(mWhere, {
 					populate: ['user'] as any[],
-					fields: ['id', 'isActive', 'isArchived', 'userId', 'isOnline', 'isAway'] as any[]
+					fields: [
+						'id',
+						'isActive',
+						'isArchived',
+						'userId',
+						'isOnline',
+						'isAway',
+						'isPlaceholder',
+						'placeholderEmail'
+					] as any[]
 				});
 				return { items: mItems.map((item) => this.serialize(item)), total: mTotal };
 
@@ -345,6 +354,8 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 						userId: true,
 						isOnline: true,
 						isAway: true,
+						isPlaceholder: true,
+						placeholderEmail: true,
 						user: {
 							id: true,
 							firstName: true,
@@ -671,6 +682,8 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 							userId: true,
 							isAway: true,
 							isOnline: true,
+							isPlaceholder: true,
+							placeholderEmail: true,
 							user: {
 								id: true,
 								firstName: true,
@@ -1002,7 +1015,9 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 							isArchived: true,
 							isAway: true,
 							isOnline: true,
-							kind: true
+							kind: true,
+							isPlaceholder: true,
+							placeholderEmail: true
 						},
 						...(options && options.relations
 							? { relations: parseFindOptionsRelations(options.relations) }
