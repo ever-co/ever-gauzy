@@ -122,6 +122,8 @@ export interface IOrganization
 	requireClient?: boolean;
 	requireTeam?: boolean;
 	restrictTrackingSwitchToHigherRoles?: boolean;
+	/** Whether members are asked to turn on two-factor authentication at their next sign-in. Off by default. */
+	requireTwoFactor?: boolean;
 	/** Whether a member may discard their own running timer. Null counts as allowed. */
 	allowDiscardTimer?: boolean | null;
 	/** When set, a running timer may be discarded only within this many minutes of its start. Null: no limit. */

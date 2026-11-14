@@ -1,11 +1,14 @@
+import { Optional } from '@nestjs/common';
 import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
-import { In, DeleteResult, UpdateResult } from 'typeorm';
+import { DataSource, In, DeleteResult, Repository, UpdateResult } from 'typeorm';
 import { pluck } from 'underscore';
 import { ID } from '@gauzy/contracts';
 import { TimesheetRecalculateCommand } from './../../../timesheet/commands/timesheet-recalculate.command';
 import { UpdateEmployeeTotalWorkedHoursCommand } from '../update-employee-total-worked-hours.command';
 import { TimeSlotBulkDeleteCommand } from './../../../time-slot/commands';
 import { TimeLogDeleteCommand } from '../time-log-delete.command';
+import { deletedChange } from '../../time-log-history';
+import { historySubject, recordTimeLogHistory, TimeLogHistoryOptions } from '../../time-log-history.writer';
 import { TimeLog } from './../../time-log.entity';
 import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.repository';
 import { MikroOrmTimeLogRepository } from '../..//repository/mikro-orm-time-log.repository';
@@ -15,7 +18,9 @@ export class TimeLogDeleteHandler implements ICommandHandler<TimeLogDeleteComman
 	constructor(
 		readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
 		readonly mikroOrmTimeLogRepository: MikroOrmTimeLogRepository,
-		private readonly _commandBus: CommandBus
+		private readonly _commandBus: CommandBus,
+		// Records the history of a change a person makes; a handler built without it writes as before.
+		@Optional() private readonly dataSource?: DataSource
 	) {}
 
 	/**
@@ -33,7 +38,7 @@ export class TimeLogDeleteHandler implements ICommandHandler<TimeLogDeleteComman
 	 * @returns A promise that resolves to a DeleteResult (for hard delete) or UpdateResult (for soft delete).
 	 */
 	public async execute(command: TimeLogDeleteCommand): Promise<DeleteResult | UpdateResult> {
-		const { ids, forceDelete = false } = command;
+		const { ids, forceDelete = false, history } = command;
 
 		// Step 1: Fetch time logs based on the provided IDs
 		const timeLogs = await this.fetchTimeLogs(ids);
@@ -42,7 +47,7 @@ export class TimeLogDeleteHandler implements ICommandHandler<TimeLogDeleteComman
 		await this.deleteTimeSlotsForLogs(timeLogs, forceDelete);
 
 		// Step 3: Perform soft delete or hard delete based on the `forceDelete` flag
-		const updateResult = await this.deleteTimeLogs(timeLogs, forceDelete);
+		const updateResult = await this.deleteTimeLogsWithHistory(timeLogs, forceDelete, history);
 
 		// Step 4: Recalculate timesheet and employee worked hours after deletion
 		await this.recalculateTimesheetAndEmployeeHours(timeLogs);
@@ -115,19 +120,58 @@ export class TimeLogDeleteHandler implements ICommandHandler<TimeLogDeleteComman
 	 * @param timeLogs - An array of time logs to be deleted or soft deleted.
 	 * @param forceDelete - A boolean flag indicating whether to force delete (hard delete) the time logs.
 	 *                      Defaults to `false`, meaning soft delete is performed by default.
+	 * @param repository - The repository to delete through: a transaction's, when the deletion is recorded.
 	 * @returns A promise that resolves to a DeleteResult (for hard delete) or UpdateResult (for soft delete).
 	 */
-	private async deleteTimeLogs(timeLogs: TimeLog[], forceDelete = false): Promise<DeleteResult | UpdateResult> {
+	private async deleteTimeLogs(
+		timeLogs: TimeLog[],
+		forceDelete = false,
+		repository: Repository<TimeLog> = this.typeOrmTimeLogRepository
+	): Promise<DeleteResult | UpdateResult> {
 		const logIds = timeLogs.map((log) => log.id); // Extract ids using map for simplicity
 		console.log('deleting time logs', logIds, forceDelete);
 
 		if (forceDelete) {
 			// Hard delete (permanent deletion)
-			return await this.typeOrmTimeLogRepository.delete({ id: In(logIds) });
+			return await repository.delete({ id: In(logIds) });
 		}
 
 		// Soft delete (mark records as deleted)
-		return await this.typeOrmTimeLogRepository.softDelete({ id: In(logIds) });
+		return await repository.softDelete({ id: In(logIds) });
+	}
+
+	/**
+	 * Deletes the time logs. Deleted by a person (`history` given), the entries and the history rows that keep what
+	 * each one held are written in one transaction, or neither is. Otherwise the deletion runs alone, as before.
+	 *
+	 * @param timeLogs - The time logs, as they were before the deletion.
+	 * @param forceDelete - Hard delete instead of soft delete.
+	 * @param history - Given by the route through which a person deletes entries.
+	 */
+	private async deleteTimeLogsWithHistory(
+		timeLogs: TimeLog[],
+		forceDelete: boolean,
+		history: TimeLogHistoryOptions | undefined
+	): Promise<DeleteResult | UpdateResult> {
+		const recordsHistory = Boolean(history) && Boolean(this.dataSource);
+		if (!recordsHistory) {
+			return this.deleteTimeLogs(timeLogs, forceDelete);
+		}
+		return this.dataSource.transaction(async (manager) => {
+			const repository = manager.getRepository(TimeLog);
+			// What each entry holds, read as stored: a log read through MikroORM arrives without its scalar ids
+			// (tenant, employee, project), which the history keeps.
+			const logIds = timeLogs.map((timeLog) => timeLog.id);
+			const stored = await repository.find({ where: { id: In(logIds) } });
+			const result = await this.deleteTimeLogs(timeLogs, forceDelete, repository);
+			const records = stored.map((timeLog) => ({
+				subject: historySubject(timeLog),
+				change: deletedChange(timeLog),
+				reason: history.reason
+			}));
+			await recordTimeLogHistory(manager, records);
+			return result;
+		});
 	}
 
 	/**
