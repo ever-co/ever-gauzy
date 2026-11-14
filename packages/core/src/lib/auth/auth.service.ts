@@ -59,7 +59,7 @@ import {
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { CommandBus } from '@nestjs/cqrs';
-import { JsonWebTokenError, JwtPayload } from 'jsonwebtoken';
+import { decode, JsonWebTokenError, JwtPayload } from 'jsonwebtoken';
 import * as moment from 'moment';
 import { DataSource, DeepPartial, EntityManager, In, IsNull, MoreThanOrEqual, Not, SelectQueryBuilder } from 'typeorm';
 import { pick } from 'underscore';
@@ -141,6 +141,12 @@ import {
 	narrowPermissionsToOAuthAppScopes,
 	narrowRolesToOAuthAppScopes
 } from './oauth-app-scope';
+import {
+	IUserSessionClaims,
+	keepSessionForRequest,
+	sessionClaimsForMint,
+	sessionOfRefreshToken
+} from './user-session/user-session-claims';
 
 @Injectable()
 export class AuthService extends SocialAuthService {
@@ -2239,6 +2245,7 @@ export class AuthService extends SocialAuthService {
 					: {}),
 				ipAddress: RequestContext.currentIp(),
 				userAgent: RequestContext.currentUserAgent(),
+				...this.firstPartySessionClaims(userId, metadata),
 				...(metadata?.clientId && { clientId: metadata.clientId }),
 				// Only the OAuth-app code exchange passes it: the client and scopes the user approved (oauth-app-scope.ts).
 				...(metadata?.oauthApp && { oauthApp: metadata.oauthApp }),
@@ -2287,6 +2294,7 @@ export class AuthService extends SocialAuthService {
 				role: user.role ? user.role.name : null,
 				ipAddress: RequestContext.currentIp(),
 				userAgent: RequestContext.currentUserAgent(),
+				...sessionClaimsForMint(user.id),
 				...(metadata?.clientId && { clientId: metadata.clientId })
 			};
 
@@ -2331,6 +2339,7 @@ export class AuthService extends SocialAuthService {
 				role: user.role ? user.role.name : null,
 				ipAddress: RequestContext.currentIp(),
 				userAgent: RequestContext.currentUserAgent(),
+				...sessionClaimsForMint(user.id),
 				...(metadata?.clientId && { clientId: metadata.clientId })
 			};
 
@@ -2410,6 +2419,9 @@ export class AuthService extends SocialAuthService {
 			// keeps the organization it works in; otherwise the stored one (see `resolveRefreshOrganizationId`).
 			const organizationId = await this.resolveRefreshOrganizationId(user);
 
+			// The new tokens stay in the session of the refresh token they replace (already verified by the guard).
+			keepSessionForRequest(user.id, sessionOfRefreshToken(decode(token)));
+
 			// Get and return the JWT access token for the user with organization context
 			// Generate the access token first (non-destructive). Only rotate the refresh token after
 			// successful access-token generation to avoid revoking the old refresh token if
@@ -2434,6 +2446,22 @@ export class AuthService extends SocialAuthService {
 			this.logger.error('Error while retrieving JWT access token from refresh token:', error?.message);
 			return null;
 		}
+	}
+
+	/**
+	 * The session claims of an access token: a sign-in's session for a first-party token, none for a token an API
+	 * token or a third-party application exchanged for, which are not sessions of the user (they have their own pages).
+	 *
+	 * @param userId The user the token is for.
+	 * @param metadata The metadata the token is minted with.
+	 * @returns The claims to write into the token.
+	 */
+	private firstPartySessionClaims(userId: ID, metadata?: IAccessTokenMetadata): Partial<IUserSessionClaims> {
+		const isDelegated = !!metadata?.apiTokenId || !!metadata?.oauthApp;
+		if (isDelegated) {
+			return {};
+		}
+		return sessionClaimsForMint(userId);
 	}
 
 	/**
