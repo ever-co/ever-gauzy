@@ -99,4 +99,36 @@ describe('default email templates', () => {
 			}
 		}
 	});
+
+	/**
+	 * The templates whose subject named the app before the redesign (`Welcome to Gauzy ...`, `... for {{appName}}`):
+	 * the name is how a reader tells which app an invitation, a code or a reset link comes from. Nothing else compares
+	 * a subject with the one it replaces, so a reworded subject can lose the name unnoticed, as the invitations and the
+	 * team-join request did.
+	 */
+	const SUBJECTS_THAT_NAME_THE_APP = [
+		'account-deletion-completed',
+		'account-deletion-request',
+		'email-reset',
+		'email-verification',
+		'invite-employee',
+		'invite-gauzy-teams',
+		'invite-organization-client',
+		'invite-user',
+		'multi-tenant-password',
+		'organization-team-join-request',
+		'password',
+		'password-less-authentication',
+		'task-update',
+		'welcome-user'
+	];
+
+	it.each(SUBJECTS_THAT_NAME_THE_APP)('%s names the app in its subject, in every language', (template) => {
+		for (const language of languagesOf(template)) {
+			expect({ language, reads: expressionsOf(read(template, language, 'subject.hbs')) }).toEqual({
+				language,
+				reads: expect.arrayContaining(['appName'])
+			});
+		}
+	});
 });
