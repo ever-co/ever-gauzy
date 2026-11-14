@@ -191,6 +191,46 @@ describe('TimeLogUpdateHandler writes a log once when it makes no slot of its ow
 
 		expect(save).not.toHaveBeenCalled();
 	});
+
+	it('keeps a stop that lands after it read the log back: the log stays stopped, with the end the stop wrote', async () => {
+		const { handler, timeLogRepository } = createHandler();
+		(handler as any).commandBus.execute.mockResolvedValue({ id: 'timesheet-1' });
+		jest.spyOn(handler as any, 'planRelease').mockResolvedValue({ remove: [], unlink: [] });
+		jest.spyOn(handler as any, 'applyRelease').mockResolvedValue(undefined);
+		jest.spyOn(handler as any, 'recalculateTimesheetAndEmployeeHours').mockResolvedValue(undefined);
+		// The running log as stored, which the update writes and reads back; a stop lands right after that read
+		const movedStart = new Date('2026-01-05T09:00:00.000Z');
+		const stopTime = new Date('2026-01-05T10:00:00.000Z');
+		const stored = {
+			id: 'log-own',
+			tenantId: TENANT_A,
+			organizationId: 'org-a',
+			employeeId: 'employee-a',
+			source: TimeLogSourceEnum.TEAMS,
+			isRunning: true,
+			startedAt: new Date('2026-01-05T09:25:00.000Z'),
+			stoppedAt: new Date('2026-01-05T09:50:00.000Z')
+		};
+		const runAsKnown = new TimeLog({ ...stored });
+		let stopLanded = false;
+		(timeLogRepository.update as jest.Mock).mockImplementation(async (_where: unknown, changes: object) =>
+			Object.assign(stored, changes)
+		);
+		(timeLogRepository.findOneBy as jest.Mock).mockImplementation(async () => {
+			const read = { ...stored };
+			if (!stopLanded) {
+				stopLanded = true;
+				Object.assign(stored, { isRunning: false, stoppedAt: stopTime });
+			}
+			return read;
+		});
+		(timeLogRepository as any).save = jest.fn(async (entity: object) => Object.assign(stored, entity));
+
+		// The timer's start move: it makes no slot of its own (manualTimeSlot)
+		await handler.execute(new TimeLogUpdateCommand({ startedAt: movedStart } as any, runAsKnown, true));
+
+		expect(stored).toMatchObject({ isRunning: false, stoppedAt: stopTime, startedAt: movedStart });
+	});
 });
 
 /**
