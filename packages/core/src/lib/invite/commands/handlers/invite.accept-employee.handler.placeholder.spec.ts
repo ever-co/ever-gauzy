@@ -1,4 +1,4 @@
-import '../../../core/entities/internal';
+import { Employee, User, UserOrganization } from '../../../core/entities/internal';
 
 import { ConflictException } from '@nestjs/common';
 import { InviteAcceptEmployeeCommand } from '../invite.accept-employee.command';
@@ -66,7 +66,9 @@ function build(options: {
 		findOne: jest.fn(async ({ where }) => {
 			const email = where.email?.objectLiteralParameters?.email ?? where.email;
 			return existingUser && email === existingUser.email.toLowerCase() ? existingUser : null;
-		})
+		}),
+		// What a failed claim retires again: the account it registered, its member and its organization links.
+		manager: { update: jest.fn(async () => undefined) }
 	};
 	const employeeRepository = {
 		findOneOrFail: jest.fn(async ({ where }) => {
@@ -114,7 +116,8 @@ function build(options: {
 		userOrganizationService,
 		inviteService,
 		employeeRepository,
-		authService
+		authService,
+		userRepository
 	};
 }
 
@@ -156,6 +159,22 @@ describe('InviteAcceptEmployeeHandler with a claim invitation', () => {
 		await accept();
 
 		expect(placeholderTransferService.transfer).not.toHaveBeenCalled();
+	});
+
+	it('retires the account a failed claim registered, so that accepting again starts over', async () => {
+		const { accept, placeholderTransferService, inviteService, userRepository } = build({
+			placeholderEmployeeId: PLACEHOLDER
+		});
+		placeholderTransferService.transfer.mockRejectedValueOnce(new Error('transfer failed'));
+
+		await expect(accept()).rejects.toThrow('transfer failed');
+
+		// Otherwise the next acceptance would find that account and refuse the claim.
+		const retired = { isActive: false, isArchived: true, deletedAt: expect.any(Date) };
+		expect(userRepository.manager.update).toHaveBeenCalledWith(Employee, { id: 'employee-of-user-new' }, retired);
+		expect(userRepository.manager.update).toHaveBeenCalledWith(UserOrganization, { userId: 'user-new' }, retired);
+		expect(userRepository.manager.update).toHaveBeenCalledWith(User, { id: 'user-new' }, retired);
+		expect(inviteService.releaseInvite).toHaveBeenCalledWith('invite-1');
 	});
 
 	it('gives the invitation back when the transfer fails', async () => {

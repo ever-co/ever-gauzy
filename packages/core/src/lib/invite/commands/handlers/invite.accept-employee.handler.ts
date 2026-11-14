@@ -17,7 +17,13 @@ import {
 import { AuthService } from '../../../auth/auth.service';
 import { InviteService } from '../../invite.service';
 import { InviteAcceptEmployeeCommand } from '../invite.accept-employee.command';
-import { OrganizationProjectEmployee, OrganizationTeamEmployee } from './../../../core/entities/internal';
+import {
+	Employee,
+	OrganizationProjectEmployee,
+	OrganizationTeamEmployee,
+	User,
+	UserOrganization
+} from './../../../core/entities/internal';
 import { TypeOrmEmployeeRepository } from '../../../employee/repository/type-orm-employee.repository';
 import { TypeOrmOrganizationContactRepository } from '../../../organization-contact/repository/type-orm-organization-contact.repository';
 import { TypeOrmOrganizationDepartmentRepository } from '../../../organization-department/repository/type-orm-organization-department.repository';
@@ -70,6 +76,8 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 
 		let user: IUser;
 		let employee: IEmployee;
+		// The account a claim registers, retired again when the claim fails.
+		let registered: IUser | undefined;
 
 		// A claim invitation hands a member without an account over to the person who accepts it (#11913).
 		const isClaim = !!invite.placeholderEmployeeId;
@@ -84,6 +92,7 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 					);
 				}
 				user = await this.registerNewUser(input, invite, languageCode);
+				registered = user;
 				employee = await this.createEmployee(invite, user);
 			} else {
 				// Inner try/catch is find-or-register control flow, not error handling: a missing
@@ -112,6 +121,10 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 				await this.placeholderTransferService.transfer(placeholderEmployeeId, employee.id, tenantId, kept);
 			}
 		} catch (error) {
+			// A failed claim retires the account it registered: the next acceptance would otherwise find it and refuse.
+			if (registered) {
+				await this.retireClaimAccount(registered, employee);
+			}
 			// Nothing consumed the invite after all — hand it back rather than stranding it as
 			// ACCEPTED with no employee attached.
 			await this.inviteService.releaseInvite(inviteId);
@@ -175,6 +188,28 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 			where: { tenantId, email: Raw((column) => `LOWER(${column}) = :email`, { email }) }
 		});
 		return !!account;
+	}
+
+	/**
+	 * Retires what a failed claim made for the person, as a merged placeholder's user is retired: the account it
+	 * registered, its member and its organization links, deactivated, archived and soft-deleted. Not deleted: deleting a
+	 * user makes the database check every table naming one. Best effort, so the claim's own error is the one reported.
+	 *
+	 * @param user The account the claim registered.
+	 * @param employee The member it made for that account, if it got that far.
+	 */
+	private async retireClaimAccount(user: IUser, employee: IEmployee | undefined): Promise<void> {
+		const retired = { isActive: false, isArchived: true, deletedAt: new Date() };
+		const { manager } = this.typeOrmUserRepository;
+		try {
+			if (employee?.id) {
+				await manager.update(Employee, { id: employee.id }, retired);
+			}
+			await manager.update(UserOrganization, { userId: user.id }, retired);
+			await manager.update(User, { id: user.id }, retired);
+		} catch (cleanup) {
+			console.error(`Failed to retire the account ${user.id} of a failed claim:`, cleanup);
+		}
 	}
 
 	/**
