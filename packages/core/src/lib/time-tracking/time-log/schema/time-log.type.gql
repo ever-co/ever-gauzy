@@ -326,13 +326,25 @@ type TimeLogOwedAmountReportEntry {
 }
 
 """
+An amount of money in one currency. Amounts in different currencies are never added together.
+"""
+type TimeLogCurrencyAmount {
+	"The currency the amount is in; null where neither the rate nor the organization states one."
+	currency: String
+	"The amount. Money."
+	amount: Decimal!
+}
+
+"""
 One day of the owed-amount chart: the whole day's total in one figure.
 """
 type TimeLogOwedAmountReportChartPoint {
 	"The day, as `YYYY-MM-DD` in the time zone the caller named."
 	date: String!
-	"What the organization owes for that day, over every employee. Money."
+	"What the organization owes for that day, over every employee, whatever their currencies. Money."
 	value: Decimal!
+	"The same day's total in each currency it is owed in."
+	valueByCurrency: [TimeLogCurrencyAmount!]!
 }
 
 """
@@ -388,8 +400,10 @@ type TimeLogWeeklyReport {
 	activity: Float
 	"What the week's tracked time costs at the employee's bill rate, rounded once to the minor unit of `currency`. Money; null without a rate."
 	spent: Decimal
-	"The currency `spent` is in: the employee's bill rate currency, or the organization's where the rate states none. Null without an amount."
+	"The currency `spent` is in: the employee's bill rate currency, or the organization's where the rate states none. Null without an amount, or when the week is priced in several currencies."
 	currency: String
+	"What the week's tracked time costs in each currency its time logs are priced in; empty without any rate."
+	spentByCurrency: [TimeLogCurrencyAmount!]!
 }
 
 """
