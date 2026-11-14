@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { DataSource, QueryRunner } from 'typeorm';
-import { AddOrganizationDurationRounding1791000009800 } from './migrations/1791000009800-AddOrganizationDurationRounding';
+import { AddOrganizationDurationRounding1791000010800 } from './migrations/1791000010800-AddOrganizationDurationRounding';
 
 /**
  * `organization.durationRoundingInterval` and `organization.durationRoundingDirection`, run for real on SQLite against a
@@ -52,7 +52,7 @@ describe('organization duration rounding migration on SQLite', () => {
 	const run = async (direction: 'up' | 'down') => {
 		const queryRunner = dataSource.createQueryRunner();
 		try {
-			await new AddOrganizationDurationRounding1791000009800()[direction](queryRunner);
+			await new AddOrganizationDurationRounding1791000010800()[direction](queryRunner);
 		} finally {
 			await queryRunner.release();
 		}
@@ -126,7 +126,7 @@ const recordingQueryRunner = (type: 'mysql' | 'postgres', queries: string[], has
 describe('organization duration rounding migration on MySQL', () => {
 	it('takes a named lock MySQL accepts and adds a nullable int and a nullable varchar', async () => {
 		const queries: string[] = [];
-		const migration = new AddOrganizationDurationRounding1791000009800();
+		const migration = new AddOrganizationDurationRounding1791000010800();
 
 		await migration.up(recordingQueryRunner('mysql', queries, false));
 
@@ -142,7 +142,7 @@ describe('organization duration rounding migration on MySQL', () => {
 	it('adds nothing when the columns exist, and drops both on down', async () => {
 		const upQueries: string[] = [];
 		const downQueries: string[] = [];
-		const migration = new AddOrganizationDurationRounding1791000009800();
+		const migration = new AddOrganizationDurationRounding1791000010800();
 
 		await migration.up(recordingQueryRunner('mysql', upQueries, true));
 		await migration.down(recordingQueryRunner('mysql', downQueries, true));
@@ -159,7 +159,7 @@ describe('organization duration rounding migration on Postgres', () => {
 	it('serialises concurrent runs and adds each column only when it is missing', async () => {
 		const queries: string[] = [];
 
-		await new AddOrganizationDurationRounding1791000009800().up(recordingQueryRunner('postgres', queries, false));
+		await new AddOrganizationDurationRounding1791000010800().up(recordingQueryRunner('postgres', queries, false));
 
 		expect(queries).toEqual([
 			'SELECT pg_advisory_xact_lock($1)',
@@ -171,7 +171,7 @@ describe('organization duration rounding migration on Postgres', () => {
 	it('drops both columns on down', async () => {
 		const queries: string[] = [];
 
-		await new AddOrganizationDurationRounding1791000009800().down(recordingQueryRunner('postgres', queries, true));
+		await new AddOrganizationDurationRounding1791000010800().down(recordingQueryRunner('postgres', queries, true));
 
 		expect(queries).toEqual([
 			'ALTER TABLE "organization" DROP COLUMN IF EXISTS "durationRoundingInterval"',
