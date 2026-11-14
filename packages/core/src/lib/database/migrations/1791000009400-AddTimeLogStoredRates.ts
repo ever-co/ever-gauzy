@@ -28,7 +28,7 @@ const FLAG: Readonly<Record<Dialect, string>> = {
 	mysql: 'tinyint NULL'
 };
 
-/** Added last, so a run cut short leaves it missing and the next run adds it and fills the rates. */
+/** The marker that the log stores its rates, set last by the fill. */
 const MARKER = 'ratesStored';
 
 /** The columns this migration adds, the marker last. */
@@ -54,8 +54,9 @@ const COLUMNS: ReadonlyArray<{ name: string; type: Readonly<Record<Dialect, stri
  *   priced at the current rates as before.
  *
  * Every existing log is filled with the rates of today and marked, so every amount read right after the migration is
- * the amount read right before it. The fill runs only in the run that adds the marker: running `up` again, or after
- * SQLite's `down`, which keeps the columns, never overwrites a rate a log already stores.
+ * the amount read right before it. The fill gives rates only to the logs that store none yet (`ratesStored` null), and
+ * marks each log last: a run cut short (MySQL has no transactional DDL) is completed by the next one, and running `up`
+ * again, or after SQLite's `down`, which keeps the columns, never overwrites a rate a log already stores.
  *
  * A transaction-scoped advisory lock (a named lock on MySQL) makes two API processes that boot at the same time
  * against one database run it one after the other.
@@ -90,13 +91,12 @@ export class AddTimeLogStoredRates1791000009400 implements MigrationInterface {
 		await this.addAndFill(queryRunner, dialect);
 	}
 
-	/** Adds each column the table does not have yet, then fills the rates when this run added the marker. */
+	/** Adds each column the table does not have yet, then fills the logs that store no rate yet. */
 	private async addAndFill(queryRunner: QueryRunner, dialect: Dialect): Promise<void> {
 		const hasTable = await queryRunner.hasTable(TABLE);
 		if (!hasTable) {
 			return;
 		}
-		const hadMarker = await queryRunner.hasColumn(TABLE, MARKER);
 		for (const column of COLUMNS) {
 			const hasColumn = await queryRunner.hasColumn(TABLE, column.name);
 			if (hasColumn) {
@@ -105,10 +105,6 @@ export class AddTimeLogStoredRates1791000009400 implements MigrationInterface {
 			await queryRunner.query(
 				`ALTER TABLE ${quoted(dialect, TABLE)} ADD COLUMN ${quoted(dialect, column.name)} ${column.type[dialect]}`
 			);
-		}
-		if (hadMarker) {
-			console.log(chalk.gray(`${this.name}: the time logs already store their rates, nothing is refilled.`));
-			return;
 		}
 		for (const statement of FILL[dialect]) {
 			await queryRunner.query(statement);
@@ -172,56 +168,64 @@ const CURRENT_MEMBERSHIP_SQLITE =
 	`("member"."isActive" IS NULL OR "member"."isActive" = 1) ` +
 	`AND ("member"."isArchived" IS NULL OR "member"."isArchived" = 0)`;
 
-/** The member's own rates of today on every log, which marks it; then the project's and the membership's. */
+/**
+ * Today's rates on every log that stores none yet: the project's and the membership's client rates first, then the
+ * member's own rates, which mark the log. Each statement only touches unmarked logs, so a run cut short anywhere is
+ * completed by the next one, and a marked log is never written again.
+ */
 const FILL: Readonly<Record<Dialect, ReadonlyArray<string>>> = {
 	postgres: [
-		`UPDATE "time_log" SET "billRateValue" = "employee"."billRateValue", ` +
-			`"billRateCurrency" = "employee"."billRateCurrency", "payRateValue" = "employee"."payRateValue", ` +
-			`"payRateCurrency" = "employee"."payRateCurrency", "ratesStored" = true ` +
-			`FROM "employee" WHERE "employee"."id" = "time_log"."employeeId"`,
 		`UPDATE "time_log" SET "projectBillRateValue" = "project"."billRateValue", ` +
 			`"projectBillRateCurrency" = "project"."currency" ` +
-			`FROM "organization_project" "project" WHERE "project"."id" = "time_log"."projectId"`,
+			`FROM "organization_project" "project" WHERE "project"."id" = "time_log"."projectId" ` +
+			`AND "time_log"."ratesStored" IS NULL`,
 		`UPDATE "time_log" SET "projectMemberBillRateValue" = "member"."billRateValue" ` +
 			`FROM "organization_project_employee" "member" ` +
 			`WHERE "member"."organizationProjectId" = "time_log"."projectId" ` +
 			`AND "member"."employeeId" = "time_log"."employeeId" AND "member"."billRateValue" IS NOT NULL ` +
-			`AND ${CURRENT_MEMBERSHIP_PG}`
+			`AND ${CURRENT_MEMBERSHIP_PG} AND "time_log"."ratesStored" IS NULL`,
+		`UPDATE "time_log" SET "billRateValue" = "employee"."billRateValue", ` +
+			`"billRateCurrency" = "employee"."billRateCurrency", "payRateValue" = "employee"."payRateValue", ` +
+			`"payRateCurrency" = "employee"."payRateCurrency", "ratesStored" = true ` +
+			`FROM "employee" WHERE "employee"."id" = "time_log"."employeeId" AND "time_log"."ratesStored" IS NULL`
 	],
 	mysql: [
-		'UPDATE `time_log` INNER JOIN `employee` ON `employee`.`id` = `time_log`.`employeeId` ' +
-			'SET `time_log`.`billRateValue` = `employee`.`billRateValue`, ' +
-			'`time_log`.`billRateCurrency` = `employee`.`billRateCurrency`, ' +
-			'`time_log`.`payRateValue` = `employee`.`payRateValue`, ' +
-			'`time_log`.`payRateCurrency` = `employee`.`payRateCurrency`, `time_log`.`ratesStored` = 1',
 		'UPDATE `time_log` INNER JOIN `organization_project` `project` ON `project`.`id` = `time_log`.`projectId` ' +
 			'SET `time_log`.`projectBillRateValue` = `project`.`billRateValue`, ' +
-			'`time_log`.`projectBillRateCurrency` = `project`.`currency`',
+			'`time_log`.`projectBillRateCurrency` = `project`.`currency` WHERE `time_log`.`ratesStored` IS NULL',
 		'UPDATE `time_log` INNER JOIN `organization_project_employee` `member` ' +
 			'ON `member`.`organizationProjectId` = `time_log`.`projectId` ' +
 			'AND `member`.`employeeId` = `time_log`.`employeeId` ' +
 			'SET `time_log`.`projectMemberBillRateValue` = `member`.`billRateValue` ' +
-			`WHERE \`member\`.\`billRateValue\` IS NOT NULL AND ${CURRENT_MEMBERSHIP_MYSQL}`
+			`WHERE \`member\`.\`billRateValue\` IS NOT NULL AND ${CURRENT_MEMBERSHIP_MYSQL} ` +
+			'AND `time_log`.`ratesStored` IS NULL',
+		'UPDATE `time_log` INNER JOIN `employee` ON `employee`.`id` = `time_log`.`employeeId` ' +
+			'SET `time_log`.`billRateValue` = `employee`.`billRateValue`, ' +
+			'`time_log`.`billRateCurrency` = `employee`.`billRateCurrency`, ' +
+			'`time_log`.`payRateValue` = `employee`.`payRateValue`, ' +
+			'`time_log`.`payRateCurrency` = `employee`.`payRateCurrency`, `time_log`.`ratesStored` = 1 ' +
+			'WHERE `time_log`.`ratesStored` IS NULL'
 	],
 	// Correlated sub-queries: an `UPDATE ... FROM` needs SQLite 3.33, older than some embedded builds.
 	sqlite: [
+		`UPDATE "time_log" SET ` +
+			`"projectBillRateValue" = (SELECT "billRateValue" FROM "organization_project" "project" WHERE "project"."id" = "time_log"."projectId"), ` +
+			`"projectBillRateCurrency" = (SELECT "currency" FROM "organization_project" "project" WHERE "project"."id" = "time_log"."projectId") ` +
+			`WHERE "time_log"."projectId" IS NOT NULL AND "time_log"."ratesStored" IS NULL`,
+		`UPDATE "time_log" SET "projectMemberBillRateValue" = (SELECT "member"."billRateValue" ` +
+			`FROM "organization_project_employee" "member" ` +
+			`WHERE "member"."organizationProjectId" = "time_log"."projectId" ` +
+			`AND "member"."employeeId" = "time_log"."employeeId" AND "member"."billRateValue" IS NOT NULL ` +
+			`AND ${CURRENT_MEMBERSHIP_SQLITE} LIMIT 1) ` +
+			`WHERE "time_log"."projectId" IS NOT NULL AND "time_log"."ratesStored" IS NULL`,
 		`UPDATE "time_log" SET ` +
 			`"billRateValue" = (SELECT "billRateValue" FROM "employee" WHERE "employee"."id" = "time_log"."employeeId"), ` +
 			`"billRateCurrency" = (SELECT "billRateCurrency" FROM "employee" WHERE "employee"."id" = "time_log"."employeeId"), ` +
 			`"payRateValue" = (SELECT "payRateValue" FROM "employee" WHERE "employee"."id" = "time_log"."employeeId"), ` +
 			`"payRateCurrency" = (SELECT "payRateCurrency" FROM "employee" WHERE "employee"."id" = "time_log"."employeeId"), ` +
 			`"ratesStored" = 1 ` +
-			`WHERE EXISTS (SELECT 1 FROM "employee" WHERE "employee"."id" = "time_log"."employeeId")`,
-		`UPDATE "time_log" SET ` +
-			`"projectBillRateValue" = (SELECT "billRateValue" FROM "organization_project" "project" WHERE "project"."id" = "time_log"."projectId"), ` +
-			`"projectBillRateCurrency" = (SELECT "currency" FROM "organization_project" "project" WHERE "project"."id" = "time_log"."projectId") ` +
-			`WHERE "time_log"."projectId" IS NOT NULL`,
-		`UPDATE "time_log" SET "projectMemberBillRateValue" = (SELECT "member"."billRateValue" ` +
-			`FROM "organization_project_employee" "member" ` +
-			`WHERE "member"."organizationProjectId" = "time_log"."projectId" ` +
-			`AND "member"."employeeId" = "time_log"."employeeId" AND "member"."billRateValue" IS NOT NULL ` +
-			`AND ${CURRENT_MEMBERSHIP_SQLITE} LIMIT 1) ` +
-			`WHERE "time_log"."projectId" IS NOT NULL`
+			`WHERE EXISTS (SELECT 1 FROM "employee" WHERE "employee"."id" = "time_log"."employeeId") ` +
+			`AND "time_log"."ratesStored" IS NULL`
 	]
 };
 

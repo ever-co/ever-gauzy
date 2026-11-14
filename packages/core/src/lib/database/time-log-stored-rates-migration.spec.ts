@@ -147,6 +147,19 @@ describe('time log stored rates migration on SQLite', () => {
 		expect(await logOf('marie-site')).toMatchObject({ billRateValue: 40, ratesStored: 1 });
 		expect((await columns()).map((column) => column.name)).toEqual(expect.arrayContaining(RATE_COLUMNS));
 	});
+
+	it('fills, on a later run, the logs a cut-short run left without rates', async () => {
+		await run('up');
+		// A run that stopped after adding the columns (MySQL has no transactional DDL) left this log unfilled
+		await dataSource.query(
+			`UPDATE "time_log" SET "ratesStored" = NULL, "billRateValue" = NULL, "payRateValue" = NULL WHERE "id" = 'marie-alone'`
+		);
+
+		await run('up');
+
+		expect(await logOf('marie-alone')).toMatchObject({ billRateValue: 40, payRateValue: 25, ratesStored: 1 });
+		expect(await logOf('marie-site')).toMatchObject({ billRateValue: 40, projectMemberBillRateValue: 95 });
+	});
 });
 
 /** A query runner that records its statements, on a database whose `time_log` has the columns given. */
@@ -189,17 +202,24 @@ describe('time log stored rates migration on MySQL', () => {
 		]);
 		const fills = queries.filter((sql) => sql.startsWith('UPDATE'));
 		expect(fills).toHaveLength(3);
-		expect(fills[0]).toContain('`time_log`.`ratesStored` = 1');
+		expect(fills[2]).toContain('`time_log`.`ratesStored` = 1');
+		for (const fill of fills) {
+			expect(fill).toContain('`time_log`.`ratesStored` IS NULL');
+		}
 		expect(queries[queries.length - 1]).toBe('SELECT RELEASE_LOCK(?)');
 	});
 
-	it('adds what a cut-short run left out, and fills nothing once the marker is there', async () => {
+	it('adds no column twice, and still fills the logs that store no rate yet', async () => {
 		const { queries, queryRunner } = recordingRunner('mysql', RATE_COLUMNS);
 
 		await new AddTimeLogStoredRates1791000009400().up(queryRunner);
 
 		expect(queries.some((sql) => sql.startsWith('ALTER TABLE'))).toBe(false);
-		expect(queries.some((sql) => sql.startsWith('UPDATE'))).toBe(false);
+		const fills = queries.filter((sql) => sql.startsWith('UPDATE'));
+		expect(fills).toHaveLength(3);
+		for (const fill of fills) {
+			expect(fill).toContain('`time_log`.`ratesStored` IS NULL');
+		}
 	});
 
 	it('drops every column on down', async () => {
@@ -221,8 +241,8 @@ describe('time log stored rates migration on PostgreSQL', () => {
 		expect(queries.filter((sql) => sql.startsWith('ALTER TABLE'))).toHaveLength(RATE_COLUMNS.length);
 		const fills = queries.filter((sql) => sql.startsWith('UPDATE'));
 		expect(fills).toHaveLength(3);
-		expect(fills[0]).toContain('FROM "employee"');
-		expect(fills[2]).toContain('"member"."billRateValue" IS NOT NULL');
+		expect(fills[2]).toContain('FROM "employee"');
+		expect(fills[1]).toContain('"member"."billRateValue" IS NOT NULL');
 	});
 
 	it('drops every column on down', async () => {
