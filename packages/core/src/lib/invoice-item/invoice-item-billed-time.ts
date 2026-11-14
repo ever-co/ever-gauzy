@@ -378,9 +378,18 @@ async function billTimeLogs(transaction: ILinesTransaction, lines: IBilledLine[]
  * Writes each line on the time logs it bills, on the transaction's TypeORM manager. The time logs are locked first, so
  * that two saves billing the same time log run one after the other, and each line's statement writes only the time
  * logs it may bill: when it writes fewer than it names, the save is refused.
+ *
+ * Documents are locked before time logs, the order of every write that holds an invoice and then writes its time logs:
+ * a replacement of a void invoice's lines locks the invoice, then deleting its lines clears their time logs' links
+ * (`ON DELETE SET NULL`). The documents whose lines hold the time billed are locked before the time logs, so a billing
+ * of that released time waits for the replacement instead of holding the time logs it needs (Postgres would abort one
+ * of the two as a deadlock). They are locked again once the time logs are, for a link a write committed meanwhile.
  */
 async function typeOrmBillTimeLogs(manager: EntityManager, lines: IBilledLine[], scope: IBillingScope): Promise<void> {
 	const timeLogIds = timeLogIdsOf(lines);
+	if (timeLogIds.length > 0) {
+		await typeOrmLockReleasingDocuments(manager, timeLogIds, lineIdsOf(lines), scope.tenantId);
+	}
 	await typeOrmLockTimeLogs(manager, timeLogIds, scope.tenantId);
 	await typeOrmMarkReleasedTimeBilled(manager, lines, scope);
 	const billedNowhereElse = notOnLiveInvoice(UPDATED_TIME_LOG_INVOICE_ITEM);
@@ -410,6 +419,10 @@ async function mikroOrmBillTimeLogs(
 	scope: IBillingScope
 ): Promise<void> {
 	const timeLogIds = timeLogIdsOf(lines);
+	// Documents before time logs, as on TypeORM.
+	if (timeLogIds.length > 0) {
+		await mikroOrmLockReleasingDocuments(em, timeLogIds, lineIdsOf(lines), scope.tenantId);
+	}
 	await mikroOrmLockTimeLogs(em, timeLogIds, scope.tenantId);
 	await mikroOrmMarkReleasedTimeBilled(em, lines, scope);
 	const billedNowhereElse = notOnLiveInvoice(UPDATED_TIME_LOG_INVOICE_ITEM);

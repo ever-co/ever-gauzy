@@ -1,6 +1,7 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { EntityManager, QueryRunner } from 'typeorm';
 import {
+	EmployeeKindEnum,
 	ID,
 	IEmployeePlaceholderMergePreview,
 	IEmployeePlaceholderTransferSummary,
@@ -22,6 +23,19 @@ const RATE_GROUPS: ReadonlyArray<ReadonlyArray<string>> = [
 	['payRateValue', 'payRateCurrency'],
 	['payPeriod']
 ];
+
+/**
+ * Tables whose rows hold data of their own rather than a membership: a row of the placeholder that collides with one
+ * of the member's on a unique key is not a duplicate, and is never dropped. A time off balance is a ledger (days
+ * accrued, taken, carried over) with its deductions under it (`ON DELETE CASCADE`), so both members having one for the
+ * same policy and year refuses the transfer until one of them is settled. What each table's row is, for the refusal.
+ */
+const NEVER_DROPPED: Readonly<Record<string, string>> = {
+	time_off_balance: 'a time off balance'
+};
+
+/** Columns every row of a tenant's organization holds, left out of a refusal's description of a row. */
+const SCOPE_COLUMNS = new Set(['tenantId', 'organizationId']);
 
 /** What a transfer reads of each of its two members. */
 interface TransferMember {
@@ -45,7 +59,11 @@ interface TransferPair {
  * time slots, timesheets, activities, task assignments, team, project and contact memberships, invoice lines,
  * expenses, and every table a plugin adds. A row that would collide on a unique key with a row the member already has
  * (a team both belong to, a task both are assigned) is the placeholder's duplicate and goes; every other row moves.
- * Nothing is left pointing at the removed placeholder.
+ * Nothing is left pointing at the removed placeholder. A row that holds data of its own ({@link NEVER_DROPPED}) is not
+ * a duplicate: such a collision refuses the transfer, and nothing changes.
+ *
+ * The placeholder is removed by a statement of its own, which no entity subscriber sees, so the organization's member
+ * count (`organization.totalEmployees`, kept by `EmployeeSubscriber`) is counted again in the same transaction.
  *
  * It runs on the TypeORM connection under either ORM setting, as the agent employee provisioning does.
  */
@@ -139,6 +157,7 @@ export class EmployeePlaceholderTransferService {
 		await run(queryRunner, `DELETE FROM ${name(queryRunner, 'employee')} WHERE ${name(queryRunner, 'id')} = :id`, {
 			id: placeholder.id
 		});
+		await recountMembers(queryRunner, placeholder.organizationId, tenantId);
 		await retireUserIfUnused(queryRunner, placeholder.userId);
 
 		return summary;
@@ -353,6 +372,9 @@ async function moveReference(
  * Removes the placeholder's rows that hold the same values as a row of the member on every other column of a unique
  * key (with the key's condition when the index is partial): moving them would break the key, and the member's row
  * already says the same thing. Values compared with `=`, so a NULL never collides, as in the databases' unique keys.
+ *
+ * In a table of {@link NEVER_DROPPED} the two rows do not say the same thing: a collision there is refused (409) with
+ * the values the two rows share, and the caller's transaction is rolled back.
  */
 async function removeCollisions(
 	queryRunner: QueryRunner,
@@ -381,6 +403,18 @@ async function removeCollisions(
 		{ placeholder: placeholderId, target: targetId }
 	)) as Array<Record<string, unknown>>;
 
+	const kept = NEVER_DROPPED[bareTableName(reference.table)];
+	if (kept && collisions.length > 0) {
+		const described = others.filter((it) => !SCOPE_COLUMNS.has(it));
+		const which = collisions
+			.map((collision) => described.map((it) => `${it} ${String(collision[it])}`).join(', '))
+			.join('; ');
+		throw new ConflictException(
+			`Both members have ${kept} with the same ${described.join(', ')} (${which}). Settle it on one of them ` +
+				`before merging: the member without an account's one would otherwise be deleted, with its history.`
+		);
+	}
+
 	for (const collision of collisions) {
 		const parameters: Parameters = { placeholder: placeholderId };
 		const sameRow = others
@@ -391,6 +425,32 @@ async function removeCollisions(
 			.join('');
 		await run(queryRunner, `DELETE FROM ${table} WHERE ${column} = :placeholder${sameRow}${condition}`, parameters);
 	}
+}
+
+/**
+ * Counts the organization's members again and stores the count, as `EmployeeSubscriber` does when an employee is
+ * removed through the ORM: people only (an agent employee is not part of the headcount), not deleted.
+ */
+async function recountMembers(queryRunner: QueryRunner, organizationId: ID, tenantId: ID): Promise<void> {
+	const [row] = (await select(
+		queryRunner,
+		`SELECT COUNT(*) AS ${name(queryRunner, 'total')} FROM ${name(queryRunner, 'employee')} WHERE ${name(
+			queryRunner,
+			'organizationId'
+		)} = :organization AND ${name(queryRunner, 'tenantId')} = :tenant AND ${name(
+			queryRunner,
+			'kind'
+		)} = :human AND ${name(queryRunner, 'deletedAt')} IS NULL`,
+		{ organization: organizationId, tenant: tenantId, human: EmployeeKindEnum.HUMAN }
+	)) as Array<{ total: unknown }>;
+	await run(
+		queryRunner,
+		`UPDATE ${name(queryRunner, 'organization')} SET ${name(queryRunner, 'totalEmployees')} = :total WHERE ${name(
+			queryRunner,
+			'id'
+		)} = :organization AND ${name(queryRunner, 'tenantId')} = :tenant`,
+		{ total: Number(row?.total ?? 0), organization: organizationId, tenant: tenantId }
+	);
 }
 
 /** Removes the pending claim invitations of the placeholder, except the one being accepted. */

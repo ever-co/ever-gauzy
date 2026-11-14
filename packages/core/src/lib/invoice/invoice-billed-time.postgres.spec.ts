@@ -16,6 +16,10 @@ import { randomUUID } from 'node:crypto';
  * A replacement of an invoice's lines while another one is writing: it waits, then replaces the other's lines, so the
  * invoice keeps one set. A third connection plays the other replacement and commits once this one is seen waiting.
  *
+ * A billing of the time a void invoice released while a replacement of that invoice's lines runs: the replacement
+ * locks the invoice and then clears its deleted lines' time logs, so the billing locks the invoice before the time
+ * logs, and waits for it without holding them. A third connection plays the replacement.
+ *
  * Each ORM runs the invoice handlers as the routes dispatch them.
  *
  * Runs only when GAUZY_BILLED_TIME_SPEC_POSTGRES_URL names a PostgreSQL database that holds the migrated schema, such
@@ -508,6 +512,37 @@ const DAY = 24 * 60 * 60 * 1000;
 
 				expect(sending.status).toBe('fulfilled');
 				expect(await statusOf(invoiceId)).toBe('SENT');
+			},
+			TIMEOUT
+		);
+
+		it(
+			"bills a void invoice's released time while that invoice's lines are replaced, without a deadlock",
+			async () => {
+				const released = await timeLog();
+				const source = invoiceBilling('source', [released]);
+				await handlers(ormType).create(source);
+				await dataSource.query(`UPDATE "invoice" SET "status" = 'VOID' WHERE "id" = $1`, [source.id]);
+				const billing = invoiceBilling('billing', [released]);
+				// The replacement of the void invoice's lines, as far as it went: the invoice locked.
+				const replacing = dataSource.createQueryRunner();
+				await replacing.connect();
+				await replacing.startTransaction();
+				await replacing.query(`SELECT "id" FROM "invoice" WHERE "id" = $1 FOR UPDATE`, [source.id]);
+
+				const outcomes = Promise.allSettled([handlers(ormType).create(billing)]);
+				try {
+					await untilWaiting(1, 'invoice');
+					// Deleting the lines clears the released time log's link: it needs the time log the billing names.
+					await replacing.query(`DELETE FROM "invoice_item" WHERE "invoiceId" = $1`, [source.id]);
+				} finally {
+					await replacing.commitTransaction();
+					await replacing.release();
+				}
+				const [billed] = await outcomes;
+
+				expect(billed.status).toBe('fulfilled');
+				expect(await linkOf(released)).toBe(await lineOf(billing.id));
 			},
 			TIMEOUT
 		);

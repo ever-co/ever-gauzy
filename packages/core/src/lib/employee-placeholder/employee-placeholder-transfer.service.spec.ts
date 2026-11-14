@@ -158,6 +158,66 @@ describe('EmployeePlaceholderTransferService on SQLite', () => {
 		expect(await pointingAt(AMINA)).toEqual(REFERENCES.map(([table, column]) => `${table}.${column}`));
 	});
 
+	it("counts the organization's members again: people only, not deleted, without the removed placeholder", async () => {
+		await dataSource.query(
+			`INSERT INTO "employee" ("id", "tenantId", "organizationId", "kind") VALUES ('employee-agent', ?, ?, 'agent')`,
+			[TENANT, ORGANIZATION]
+		);
+		await dataSource.query(
+			`INSERT INTO "employee" ("id", "tenantId", "organizationId", "deletedAt") VALUES ('employee-left', ?, ?, '2026-01-01')`,
+			[TENANT, ORGANIZATION]
+		);
+
+		await service.transfer(AMINA, MARIE, TENANT);
+
+		const organizations = await rows(`SELECT "id", "totalEmployees" FROM "organization" ORDER BY "id"`);
+		expect(organizations).toEqual([
+			{ id: ORGANIZATION, totalEmployees: 1 },
+			{ id: OTHER_ORGANIZATION, totalEmployees: 1 }
+		]);
+	});
+
+	it('refuses to merge when both members have a time off balance for the same policy and year, changing nothing', async () => {
+		await dataSource.query(
+			`INSERT INTO "time_off_balance" VALUES ('balance-amina', ?, ?, ?, 'policy-1', 2026, 12),
+				('balance-marie', ?, ?, ?, 'policy-1', 2026, 20)`,
+			[TENANT, ORGANIZATION, AMINA, TENANT, ORGANIZATION, MARIE]
+		);
+		await dataSource.query(
+			`INSERT INTO "time_off_balance_deduction" VALUES ('deduction-amina', 'balance-amina', 3)`
+		);
+
+		const refusal = service.transfer(AMINA, MARIE, TENANT);
+		await expect(refusal).rejects.toBeInstanceOf(ConflictException);
+		await expect(refusal).rejects.toThrow('policyId policy-1, year 2026');
+
+		expect(await rows(`SELECT "id", "employeeId" FROM "time_off_balance" ORDER BY "id"`)).toEqual([
+			{ id: 'balance-amina', employeeId: AMINA },
+			{ id: 'balance-marie', employeeId: MARIE }
+		]);
+		expect(await rows(`SELECT "id" FROM "time_off_balance_deduction"`)).toEqual([{ id: 'deduction-amina' }]);
+		expect(await pointingAt(AMINA)).toEqual(REFERENCES.map(([table, column]) => `${table}.${column}`));
+	});
+
+	it('moves a time off balance of a policy or year the member has none of, with its deductions', async () => {
+		await dataSource.query(
+			`INSERT INTO "time_off_balance" VALUES ('balance-amina', ?, ?, ?, 'policy-1', 2025, 12),
+				('balance-marie', ?, ?, ?, 'policy-1', 2026, 20)`,
+			[TENANT, ORGANIZATION, AMINA, TENANT, ORGANIZATION, MARIE]
+		);
+		await dataSource.query(
+			`INSERT INTO "time_off_balance_deduction" VALUES ('deduction-amina', 'balance-amina', 3)`
+		);
+
+		await service.transfer(AMINA, MARIE, TENANT);
+
+		expect(await rows(`SELECT "id", "employeeId" FROM "time_off_balance" ORDER BY "id"`)).toEqual([
+			{ id: 'balance-amina', employeeId: MARIE },
+			{ id: 'balance-marie', employeeId: MARIE }
+		]);
+		expect(await rows(`SELECT "id" FROM "time_off_balance_deduction"`)).toEqual([{ id: 'deduction-amina' }]);
+	});
+
 	it("works without TypeORM's table reader, which fails on a Postgres table with a generated column", async () => {
 		// The reader asks for TypeORM's own metadata table as soon as a table has a generated column; the database has
 		// none, so the reader throws (and, inside a transaction, aborts it).
@@ -201,9 +261,10 @@ const SCHEMA = [
 	`CREATE TABLE "employee" (
 		"id" varchar PRIMARY KEY NOT NULL, "tenantId" varchar, "organizationId" varchar,
 		"userId" varchar REFERENCES "user" ("id") ON DELETE CASCADE,
-		"isPlaceholder" boolean NOT NULL DEFAULT (0), "deletedAt" datetime,
+		"isPlaceholder" boolean NOT NULL DEFAULT (0), "kind" varchar NOT NULL DEFAULT ('human'), "deletedAt" datetime,
 		"billRateValue" numeric, "billRateCurrency" varchar, "minimumBillingRate" numeric,
 		"payRateValue" numeric, "payRateCurrency" varchar, "payPeriod" varchar)`,
+	`CREATE TABLE "organization" ("id" varchar PRIMARY KEY NOT NULL, "tenantId" varchar, "totalEmployees" integer)`,
 	`CREATE TABLE "organization_team" ("id" varchar PRIMARY KEY NOT NULL, "name" varchar)`,
 	// As in the real database: nothing keeps a member unique in a team.
 	`CREATE TABLE "organization_team_employee" ("id" varchar PRIMARY KEY NOT NULL,
@@ -222,7 +283,14 @@ const SCHEMA = [
 		"placeholderEmployeeId" varchar REFERENCES "employee" ("id") ON DELETE SET NULL)`,
 	// A table no list in the code names, as a plugin's would be: it must move as well.
 	`CREATE TABLE "extension_note" ("id" varchar PRIMARY KEY NOT NULL, "employeeId" varchar REFERENCES "employee" ("id"))`,
-	`CREATE TABLE "user_note" ("id" varchar PRIMARY KEY NOT NULL, "userId" varchar REFERENCES "user" ("id"))`
+	`CREATE TABLE "user_note" ("id" varchar PRIMARY KEY NOT NULL, "userId" varchar REFERENCES "user" ("id"))`,
+	// A ledger, unique per member, policy and year, with its deductions under it: a collision there is no duplicate.
+	`CREATE TABLE "time_off_balance" ("id" varchar PRIMARY KEY NOT NULL, "tenantId" varchar, "organizationId" varchar,
+		"employeeId" varchar NOT NULL REFERENCES "employee" ("id") ON DELETE CASCADE, "policyId" varchar, "year" integer,
+		"accrued" numeric)`,
+	`CREATE UNIQUE INDEX "IDX_time_off_balance_unique" ON "time_off_balance" ("tenantId", "organizationId", "employeeId", "policyId", "year")`,
+	`CREATE TABLE "time_off_balance_deduction" ("id" varchar PRIMARY KEY NOT NULL,
+		"balanceId" varchar NOT NULL REFERENCES "time_off_balance" ("id") ON DELETE CASCADE, "days" numeric)`
 ];
 
 const FIXTURE = [
@@ -233,6 +301,7 @@ const FIXTURE = [
 		VALUES ('${MARIE}', '${TENANT}', '${ORGANIZATION}', '${MARIE_USER}', 0, 20, 'EUR')`,
 	`INSERT INTO "employee" ("id", "tenantId", "organizationId", "userId", "isPlaceholder")
 		VALUES ('${PAUL}', '${TENANT}', '${OTHER_ORGANIZATION}', '${PAUL_USER}', 0)`,
+	`INSERT INTO "organization" VALUES ('${ORGANIZATION}', '${TENANT}', 2), ('${OTHER_ORGANIZATION}', '${TENANT}', 1)`,
 	`INSERT INTO "organization_team" VALUES ('team-a', 'Design'), ('team-b', 'Support')`,
 	`INSERT INTO "organization_team_employee" VALUES ('member-amina-a', 'team-a', '${AMINA}'), ('member-amina-b', 'team-b', '${AMINA}'), ('member-marie-b', 'team-b', '${MARIE}')`,
 	`INSERT INTO "task_employee" VALUES ('task-1', '${AMINA}'), ('task-2', '${AMINA}'), ('task-2', '${MARIE}')`,
