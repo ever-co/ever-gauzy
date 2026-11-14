@@ -1,5 +1,6 @@
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import { DataSource, EntitySchema } from 'typeorm';
+import { countOrganizationContents } from './organization-counts';
 import {
 	hideOrganization,
 	IOrganizationOfTenant,
@@ -413,6 +414,36 @@ describe('Soft deleting an organization (#11960)', () => {
 
 		it('answers 404 for an organization of another workspace', async () => {
 			expect(await failureOf(restore(ofTenant(FOREIGN)))).toBeInstanceOf(NotFoundException);
+		});
+	});
+
+	describe('counts', () => {
+		it('counts the teams, projects, members, tracked seconds, invoices and estimates it holds', async () => {
+			const counts = await countOrganizationContents(dataSource.manager, ofTenant(TRIAL));
+
+			expect(counts).toEqual({
+				teams: 1,
+				projects: 1,
+				members: 4,
+				trackedSeconds: 5400,
+				invoices: 2,
+				estimates: 1
+			});
+		});
+
+		it('leaves out what the soft delete hid, and comes back with the restore', async () => {
+			await hide(ofTenant(TRIAL));
+			expect(await countOrganizationContents(dataSource.manager, ofTenant(TRIAL))).toMatchObject({
+				teams: 0,
+				members: 0,
+				projects: 1
+			});
+
+			await restore(ofTenant(TRIAL));
+			expect(await countOrganizationContents(dataSource.manager, ofTenant(TRIAL))).toMatchObject({
+				teams: 1,
+				members: 4
+			});
 		});
 	});
 });

@@ -7,6 +7,7 @@ import { isForeignKeyViolation } from './../core/errors';
 import { sanitizeRichHtml } from './../core/html-sanitizer';
 import { LegacyFindOneOptions } from './../core/utils';
 import { Organization } from './organization.entity';
+import { countOrganizationContents, IOrganizationCounts } from './organization-counts';
 import {
 	hideOrganization,
 	ORGANIZATION_DELETE_REFUSED,
@@ -113,5 +114,22 @@ export class OrganizationService extends TenantAwareCrudService<Organization> {
 			}
 			throw error;
 		}
+	}
+
+	/**
+	 * Counts what an organization of the caller's tenant holds: teams, projects, members, tracked time, invoices and
+	 * estimates, for the confirmation an admin reads before deleting it.
+	 *
+	 * @param id - The organization.
+	 * @returns The counts.
+	 * @throws NotFoundException when the tenant has no such live organization.
+	 */
+	public async countContents(id: ID): Promise<IOrganizationCounts> {
+		const organization = await this.findOneByIdString(id);
+
+		return await countOrganizationContents(this.typeOrmRepository.manager, {
+			id: organization.id,
+			tenantId: organization.tenantId
+		});
 	}
 }
