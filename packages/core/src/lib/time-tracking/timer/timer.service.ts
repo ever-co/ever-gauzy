@@ -712,20 +712,24 @@ export class TimerService {
 			new TimeLogUpdateCommand(partialTimeLog, lastLog.id, request.manualTimeSlot)
 		);
 
-		// Stop the runs left going beside this one, and only those
+		// Stop the runs left going beside this one, and only those. They cut the logs they overlap after this run has
+		// cut its own (below): see `cutReplacedRunOverlaps`
+		const cutsOfRunsLeftGoing: ReplacedRunOverlaps[] = [];
 		await this.stopPreviousRunningTimers(
 			employeeId,
 			organizationId,
 			tenantId,
 			stoppedRunStartedAt,
 			runningLogIds,
-			turn
+			turn,
+			cutsOfRunsLeftGoing
 		);
 
 		// Handle conflicting time logs: the ones this run overlapped as the stop began
 		turn.assertHeld();
 		const forceDelete = false;
 		await this.handleConflictingTimeLogs(lastLog, tenantId, organizationId, forceDelete, overlappingAtStop);
+		await this.cutReplacedRunOverlaps(cutsOfRunsLeftGoing, tenantId, organizationId, turn);
 
 		// The employee no longer tracks time, unless a run is still going: one another client started meanwhile
 		await this.markNotTrackingAfterStop(employeeId, organizationId, tenantId);
@@ -1208,6 +1212,8 @@ export class TimerService {
 	 * @param replacedAt - When the run replacing them started; now by default
 	 * @param onlyAmong - When given, only the runs among these ids are stopped; all of them by default
 	 * @param turn - The employee's turn of the start or stop calling: once it has passed, nothing more is stopped
+	 * @param cutsLeftToCaller - When given, the cuts are added there instead of made here, for a stop to make after
+	 * its own run's (`cutReplacedRunOverlaps`)
 	 */
 	async stopPreviousRunningTimers(
 		employeeId: ID,
@@ -1215,7 +1221,8 @@ export class TimerService {
 		tenantId: ID,
 		replacedAt: Date = moment.utc().toDate(),
 		onlyAmong?: ID[],
-		turn?: EmployeeTurn
+		turn?: EmployeeTurn,
+		cutsLeftToCaller?: ReplacedRunOverlaps[]
 	): Promise<void> {
 		try {
 			this.debug(() => 'Start previous running timers...');
@@ -1253,15 +1260,46 @@ export class TimerService {
 			}
 
 			// Each run stopped here cuts the logs it overlapped before its stop, once every run read has its end
-			for (const { run, overlapping } of overlapsToCut) {
-				turn?.assertHeld();
-				const forceDelete = false;
-				await this.handleConflictingTimeLogs(run, tenantId, organizationId, forceDelete, overlapping);
+			if (cutsLeftToCaller) {
+				cutsLeftToCaller.push(...overlapsToCut);
+			} else {
+				await this.cutReplacedRunOverlaps(overlapsToCut, tenantId, organizationId, turn);
 			}
 			this.debug(() => 'Stop previous running timers...');
 		} catch (error) {
 			// Log the error or handle it appropriately
 			this.logger.warn(`Failed to stop previous running timers: ${error?.message}`);
+		}
+	}
+
+	/**
+	 * Cuts the logs each run stopped in place of another overlapped before its stop (`endReplacedRun`), with the
+	 * cleanup of an explicit stop (`handleConflictingTimeLogs`), the latest run first.
+	 *
+	 * That order matters: a cut inside a log splits it, and the part after the cut is a new log, which the cut of
+	 * another run does not know (it looks for the logs it read before its stop). The log keeps its id on the part before
+	 * the cut, and each run ends where the run after it started, or before. So the latest range is cut first, then each
+	 * earlier one, which finds what is left of the log under its id. A stop cuts its own run's range before these.
+	 *
+	 * @param cuts - The runs as stopped, with the logs they overlapped, latest run first.
+	 * @param tenantId - The employee's tenant.
+	 * @param organizationId - The employee's organization.
+	 * @param turn - The employee's turn of the start or stop calling: once it has passed, nothing more is cut.
+	 */
+	private async cutReplacedRunOverlaps(
+		cuts: ReplacedRunOverlaps[],
+		tenantId: ID,
+		organizationId: ID,
+		turn?: EmployeeTurn
+	): Promise<void> {
+		try {
+			for (const { run, overlapping } of cuts) {
+				turn?.assertHeld();
+				const forceDelete = false;
+				await this.handleConflictingTimeLogs(run, tenantId, organizationId, forceDelete, overlapping);
+			}
+		} catch (error) {
+			this.logger.warn(`Failed to cut the logs the replaced runs overlap: ${error?.message}`);
 		}
 	}
 

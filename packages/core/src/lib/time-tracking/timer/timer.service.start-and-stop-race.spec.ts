@@ -51,6 +51,8 @@ interface Hooks {
 	onConflictLookup?: () => Promise<void> | void;
 	/** Runs when the cleanup (`ScheduleTimeLogEntriesCommand`) reads the pending logs, before they are read. */
 	onPendingRead?: () => Promise<void> | void;
+	/** Runs when a `DeleteTimeSpanCommand` arrives, once it is recorded: the cut is made on the table only by a spec. */
+	onTimeSpanDelete?: (command: DeleteTimeSpanCommand) => Promise<void> | void;
 }
 
 const time = (value: Date | string | null): number => new Date(value).getTime();
@@ -178,6 +180,7 @@ function createService(
 		}
 		if (command instanceof DeleteTimeSpanCommand) {
 			timeSpanDeletes.push(command);
+			await hooks.onTimeSpanDelete?.(command);
 			return true;
 		}
 		if (command instanceof ScheduleTimeLogEntriesCommand) {
@@ -1090,6 +1093,80 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 			} finally {
 				jest.useRealTimers();
 			}
+		});
+
+		/**
+		 * The cut `DeleteTimeSpanHandler` makes, made on the table: a log the range covers goes, one it overlaps at an end
+		 * is trimmed, and one it falls inside splits, keeping its id on the part before the range while the part after it
+		 * is a new log holding the time slots from the range's end on. Nothing happens once nothing of the log is left in
+		 * the range, as for the commands of a log's other slots.
+		 */
+		const cutOnTable = (rows: TimeLogRow[]) => (command: DeleteTimeSpanCommand) => {
+			const row = rows.find((candidate) => candidate.id === command.timeLog.id);
+			const { start, end } = command.newTime;
+			const isLeftInRange =
+				row && time(row.startedAt) < time(end) && time(row.stoppedAt) > time(start) && !row.isRunning;
+			if (!isLeftInRange) {
+				return;
+			}
+			const startsBefore = time(row.startedAt) < time(start);
+			const endsAfter = time(row.stoppedAt) > time(end);
+			if (startsBefore && endsAfter) {
+				rows.push({
+					...row,
+					id: `${row.id}-after`,
+					startedAt: end,
+					timeSlots: (row.timeSlots ?? []).filter((slot) => time(slot.startedAt) >= time(end))
+				});
+			}
+			if (startsBefore) {
+				row.stoppedAt = start;
+				row.timeSlots = (row.timeSlots ?? []).filter((slot) => time(slot.startedAt) < time(start));
+			} else if (endsAfter) {
+				row.startedAt = end;
+				row.timeSlots = (row.timeSlots ?? []).filter((slot) => time(slot.startedAt) >= time(end));
+			} else {
+				rows.splice(rows.indexOf(row), 1);
+			}
+		};
+
+		it("cuts a manual entry the stopped run and a run left going beside it overlap, the stopped run's range first", async () => {
+			// Three hours of manual time from midnight, entered ahead, with its eighteen ten-minute time slots
+			const threeAm = new Date('2026-10-24T03:00:00.000Z');
+			const entry = timeLog('manual-entry', TimeLogSourceEnum.WEB_TIMER, TWO_HOURS_AGO, {
+				isRunning: false,
+				stoppedAt: threeAm,
+				createdAt: new Date('2026-10-23T20:00:00.000Z'),
+				timeSlots: Array.from({ length: 18 }, (_, index) => ({
+					startedAt: new Date(TWO_HOURS_AGO.getTime() + index * 10 * 60 * 1000),
+					duration: 600
+				}))
+			});
+			const rows = [
+				entry,
+				timeLog('left-going', TimeLogSourceEnum.WEB_TIMER, HALF_PAST_MIDNIGHT),
+				timeLog('stopped', TimeLogSourceEnum.TEAMS, ONE_HOUR_AGO)
+			];
+			const { service } = setup(rows, { onTimeSpanDelete: cutOnTable(rows) });
+
+			await service.stopTimer({ stoppedAt: NOW } as ITimerToggleInput);
+
+			// The stopped run holds 01:00 to 02:00 and the run left going 00:30 to 01:00: the entry keeps the rest only.
+			// Cut first, the run left going would split the entry at 01:00, and the part after it, a new log the stop
+			// did not read, would keep the stopped run's hour.
+			expect(rows.find((row) => row.id === 'stopped')).toMatchObject({ isRunning: false, stoppedAt: NOW });
+			expect(rows.find((row) => row.id === 'left-going')).toMatchObject({
+				isRunning: false,
+				stoppedAt: ONE_HOUR_AGO
+			});
+			expect(rows.find((row) => row.id === 'manual-entry')).toMatchObject({
+				startedAt: TWO_HOURS_AGO,
+				stoppedAt: HALF_PAST_MIDNIGHT
+			});
+			expect(rows.find((row) => row.id === 'manual-entry-after')).toMatchObject({
+				startedAt: NOW,
+				stoppedAt: threeAm
+			});
 		});
 	}
 );
