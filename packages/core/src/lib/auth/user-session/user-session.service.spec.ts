@@ -42,7 +42,7 @@ const inSession = (sessionId: string, extra: Record<string, unknown> = {}) => ({
 /**
  * Marie, signed in on the web (the request's session) and on her laptop, with a personal API token's session too.
  */
-function build({ hash = 'hashed-password', passwordOk = true, codeOk = true } = {}) {
+function build({ hash = 'hashed-password', passwordOk = true, codeOk = true, revokedAccess = [] as any[] } = {}) {
 	const refreshTokens = [
 		token('r-web', 'REFRESH_TOKEN_TYPE', inSession('web')),
 		token('r-laptop', 'REFRESH_TOKEN_TYPE', inSession('laptop'))
@@ -68,7 +68,11 @@ function build({ hash = 'hashed-password', passwordOk = true, codeOk = true } = 
 
 	const attempt = { fail: jest.fn(async () => undefined), succeed: jest.fn(async () => undefined) };
 	const services = {
-		accessTokenService: { findActive: jest.fn(async () => accessTokens), revokeById },
+		accessTokenService: {
+			findActive: jest.fn(async () => accessTokens),
+			findRevokedSince: jest.fn(async () => revokedAccess),
+			revokeById
+		},
 		refreshTokenService: { findActive: jest.fn(async () => refreshTokens), revokeById },
 		userService: {
 			findOneByIdString: jest.fn(async () => ({ id: MARIE, email: 'marie@ever.co', hash })),
@@ -210,7 +214,7 @@ function storeWithRefreshDuringSignOut({ legacy = false } = {}) {
 	});
 	const attempt = { fail: jest.fn(async () => undefined), succeed: jest.fn(async () => undefined) };
 	const service = new UserSessionService(
-		{ findActive: jest.fn(async () => accessTokens), revokeById } as any,
+		{ findActive: jest.fn(async () => accessTokens), findRevokedSince: jest.fn(async () => []), revokeById } as any,
 		{ findActive: jest.fn(async () => refreshTokens), revokeById } as any,
 		{ findOneByIdString: jest.fn(async () => ({ id: MARIE, email: 'marie@ever.co', hash: 'h' })) } as any,
 		{ verify: jest.fn(async () => true) } as any,
@@ -241,13 +245,14 @@ describe('UserSessionService, a refresh landing while a sign-out runs', () => {
 		});
 	});
 
-	it('follows a session minted before sessions were named into the session its refresh gave it', async () => {
+	it('refuses to sign out alone a session minted before sessions were named, whose access token names none', async () => {
 		const { service, revoked } = storeWithRefreshDuringSignOut({ legacy: true });
 		requestFrom('web');
 
-		await service.signOut('r-laptop');
-
-		expect(revoked.sort()).toEqual(['a-laptop-2', 'r-laptop-2']);
+		await expect(service.signOut('r-laptop')).rejects.toMatchObject({
+			response: { code: UserSessionRefusal.UNNAMED_SESSION }
+		});
+		expect(revoked).toEqual([]);
 	});
 });
 

@@ -30,7 +30,9 @@ export enum UserSessionRefusal {
 	/** The password or the code is wrong (or the code expired). */
 	CONFIRMATION_INVALID = 'SESSION_CONFIRMATION_INVALID',
 	/** A session kept renewing its tokens while it was signed out: try again. */
-	SIGN_OUT_INCOMPLETE = 'SESSION_SIGN_OUT_INCOMPLETE'
+	SIGN_OUT_INCOMPLETE = 'SESSION_SIGN_OUT_INCOMPLETE',
+	/** A session minted before sessions were named cannot be signed out alone: sign out all the others instead. */
+	UNNAMED_SESSION = 'SESSION_UNNAMED'
 }
 
 /** How many read-and-revoke passes a sign-out makes; each catches the tokens a refresh minted during the last one. */
@@ -98,8 +100,16 @@ export class UserSessionService {
 		if (!session) {
 			throw new NotFoundException('Session not found');
 		}
-		// A session is listed under its session id, or, minted before sessions were named, its refresh token's id.
-		const isOfSession = (token: IToken) => sessionIdOf(token) === sessionId || token.id === sessionId;
+		// A session minted before sessions were named is listed under its refresh token's id: its access token names no
+		// session, so it cannot be told apart from another device's.
+		const isUnnamed = session.tokens.every((token) => sessionIdOf(token) === null);
+		if (isUnnamed) {
+			throw new ConflictException({
+				code: UserSessionRefusal.UNNAMED_SESSION,
+				message: 'This session started before sessions were named: sign out all the other sessions instead.'
+			});
+		}
+		const isOfSession = (token: IToken) => sessionIdOf(token) === sessionId;
 		await this.signOutTokens(userId, isOfSession, this.currentSessionId());
 	}
 
@@ -134,13 +144,12 @@ export class UserSessionService {
 	}
 
 	/**
-	 * Revokes the user's tokens that `isTarget` picks, never those of the kept session, nor an API token's or an
+	 * Revokes the user's tokens that `isTarget` picks, never those of the kept session nor an API token's or an
 	 * application's, until a read finds none left.
 	 *
-	 * A refresh landing meanwhile rotates a picked refresh token (so revoking it fails) and mints a successor and a new
-	 * access token. Each pass reads the tokens again: a successor of a picked token, and every token of a picked
-	 * token's session, are picked too, which also follows a session minted before sessions were named into the session
-	 * its refresh gave it.
+	 * A refresh landing meanwhile rotates a picked refresh token and mints its successor and a new access token, in the
+	 * same session. Revoking the rotated token then fails, and it waits on the row the rotation locks, so the next read
+	 * sees what the rotation minted; a rotation that comes after finds its token revoked and fails.
 	 *
 	 * @throws ConflictException when tokens are still being minted after {@link SIGN_OUT_PASSES} passes.
 	 */
@@ -149,34 +158,18 @@ export class UserSessionService {
 		isTarget: (token: IToken) => boolean,
 		keptSessionId: string | null
 	): Promise<void> {
-		const pickedIds = new Set<string>();
-		const pickedSessions = new Set<string>();
 		const isPicked = (token: IToken): boolean => {
 			const sessionId = sessionIdOf(token);
 			const isKept = sessionId !== null && sessionId === keptSessionId;
 			if (isKept || !isSessionToken(token)) {
 				return false;
 			}
-			const inPickedSession = sessionId !== null && pickedSessions.has(sessionId);
-			const succeedsPicked = !!token.rotatedFromTokenId && pickedIds.has(token.rotatedFromTokenId);
-			return isTarget(token) || inPickedSession || succeedsPicked;
-		};
-		const pick = (tokens: IToken[]): IToken[] => {
-			const picked = tokens.filter(isPicked);
-			for (const token of picked) {
-				pickedIds.add(token.id);
-				const sessionId = sessionIdOf(token);
-				if (sessionId) {
-					pickedSessions.add(sessionId);
-				}
-			}
-			return picked;
+			return isTarget(token);
 		};
 
 		for (let pass = 1; pass <= SIGN_OUT_PASSES; pass++) {
 			const tokens = await this.activeTokensOf(userId);
-			// Refresh tokens first, so the sessions they name pick their access tokens in the same pass.
-			const targets = [...pick(tokens.refreshTokens), ...pick(tokens.accessTokens)];
+			const targets = [...tokens.refreshTokens, ...tokens.accessTokens].filter(isPicked);
 			if (targets.length === 0) {
 				return;
 			}
