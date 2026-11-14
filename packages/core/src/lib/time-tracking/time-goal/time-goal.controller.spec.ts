@@ -21,7 +21,10 @@ const route = (name: string) => {
 describe('TimeGoalController', () => {
 	it('admits the callers the time statistics admit, behind the tenant and permission guards', () => {
 		expect(Reflect.getMetadata(PATH_METADATA, TimeGoalController)).toBe('/time-goals');
-		expect(Reflect.getMetadata(GUARDS_METADATA, TimeGoalController)).toEqual([TenantPermissionGuard, PermissionGuard]);
+		expect(Reflect.getMetadata(GUARDS_METADATA, TimeGoalController)).toEqual([
+			TenantPermissionGuard,
+			PermissionGuard
+		]);
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, TimeGoalController)).toEqual([
 			PermissionsEnum.ADMIN_DASHBOARD_VIEW,
 			PermissionsEnum.TIME_TRACKER,
