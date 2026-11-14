@@ -1,11 +1,22 @@
 // Must stay first: loads the entity graph before the module pulls an entity (see activity.controller.spec.ts).
 import '../../core/entities/internal';
 
-import { Employee, OrganizationProject, OrganizationProjectEmployee, TimeLog } from '../../core/entities/internal';
+import {
+	Employee,
+	Organization,
+	OrganizationProject,
+	OrganizationProjectEmployee,
+	TimeLog
+} from '../../core/entities/internal';
 import { billingRateOfLog, findClientRates, findRatesToStore, findStoredRatesOf, storesRates } from './time-log-rates';
 
 /** A manager over fixed rows: the employee, the project and the membership as the database holds them. */
-function managerOver(rows: { employee?: object | null; project?: object | null; membership?: object | null }) {
+function managerOver(rows: {
+	employee?: object | null;
+	project?: object | null;
+	membership?: object | null;
+	organization?: object | null;
+}) {
 	const reads: Array<{ entity: unknown; options: any }> = [];
 	const manager = {
 		findOne: jest.fn(async (entity: unknown, options: any) => {
@@ -13,6 +24,7 @@ function managerOver(rows: { employee?: object | null; project?: object | null; 
 			if (entity === Employee) return rows.employee ?? null;
 			if (entity === OrganizationProject) return rows.project ?? null;
 			if (entity === OrganizationProjectEmployee) return rows.membership ?? null;
+			if (entity === Organization) return rows.organization ?? null;
 			return null;
 		}),
 		find: jest.fn(async () => [])
@@ -20,7 +32,7 @@ function managerOver(rows: { employee?: object | null; project?: object | null; 
 	return { manager: manager as any, reads };
 }
 
-const SCOPE = { tenantId: 'tenant-1', employeeId: 'marie', projectId: 'site' };
+const SCOPE = { tenantId: 'tenant-1', organizationId: 'organization-1', employeeId: 'marie', projectId: 'site' };
 
 describe('time log rates', () => {
 	describe('findRatesToStore', () => {
@@ -51,6 +63,28 @@ describe('time log rates', () => {
 			});
 			expect(reads[0].options.select).toMatchObject({ payRateValue: true, payRateCurrency: true });
 			expect(reads[0].options.where).toEqual({ id: 'marie', tenantId: 'tenant-1' });
+		});
+
+		it("stores the organization's currency for a rate that states none, so a later change cannot relabel it", async () => {
+			const { manager } = managerOver({
+				employee: {
+					id: 'marie',
+					billRateValue: 40,
+					billRateCurrency: null,
+					payRateValue: 25,
+					payRateCurrency: null
+				},
+				project: { id: 'site', billRateValue: 90, currency: null },
+				organization: { id: 'organization-1', currency: 'BGN' }
+			});
+
+			const rates = await findRatesToStore(manager, SCOPE);
+
+			expect(rates).toMatchObject({
+				billRateCurrency: 'BGN',
+				payRateCurrency: 'BGN',
+				projectBillRateCurrency: 'BGN'
+			});
 		});
 
 		it('stores no rate for a member who has none: their time stays without a price', async () => {

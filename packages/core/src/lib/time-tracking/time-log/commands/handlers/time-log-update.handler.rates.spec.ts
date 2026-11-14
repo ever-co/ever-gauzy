@@ -78,7 +78,12 @@ describe("TimeLogUpdateHandler: a log moved to another project or member takes t
 		await handler.execute(new TimeLogUpdateCommand({ projectId: 'internal' } as any, 'log-1'));
 
 		const [read] = ratesReads(commands);
-		expect(read.scope).toEqual({ tenantId: TENANT, employeeId: 'marie', projectId: 'internal' });
+		expect(read.scope).toEqual({
+			tenantId: TENANT,
+			organizationId: 'org-a',
+			employeeId: 'marie',
+			projectId: 'internal'
+		});
 		expect(read.part).toBe('client');
 		expect(timeLogRepository.update).toHaveBeenCalledWith(
 			{ id: 'log-1', tenantId: TENANT },
@@ -117,7 +122,12 @@ describe("TimeLogUpdateHandler: a log moved to another project or member takes t
 		await handler.execute(new TimeLogUpdateCommand({ employeeId: 'paul' } as any, 'log-1'));
 
 		const [read] = ratesReads(commands);
-		expect(read.scope).toEqual({ tenantId: TENANT, employeeId: 'paul', projectId: 'site' });
+		expect(read.scope).toEqual({
+			tenantId: TENANT,
+			organizationId: 'org-a',
+			employeeId: 'paul',
+			projectId: 'site'
+		});
 		expect(read.part).toBe('all');
 		expect(saved.mock.calls[0][0]).toMatchObject({ employeeId: 'paul', ...ALL_RATES });
 	});

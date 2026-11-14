@@ -91,7 +91,12 @@ describe('TimeLogCreateHandler: a new time log stores the rates of the moment', 
 		);
 
 		const read = commands.find((command) => command instanceof FindTimeLogRatesCommand) as FindTimeLogRatesCommand;
-		expect(read.scope).toEqual({ tenantId: TENANT_ID, employeeId: 'employee-1', projectId: 'project-1' });
+		expect(read.scope).toEqual({
+			tenantId: TENANT_ID,
+			organizationId: 'organization-1',
+			employeeId: 'employee-1',
+			projectId: 'project-1'
+		});
 		expect(read.part).toBe('all');
 		expect(saved).toHaveLength(1);
 		expect(saved[0]).toMatchObject(RATES_OF_THE_MOMENT);

@@ -1,7 +1,13 @@
 import { EntityManager, In } from 'typeorm';
 import { chunk } from 'underscore';
 import { ID, ITimeLog, ITimeLogStoredRates } from '@gauzy/contracts';
-import { Employee, OrganizationProject, OrganizationProjectEmployee, TimeLog } from '../../core/entities/internal';
+import {
+	Employee,
+	Organization,
+	OrganizationProject,
+	OrganizationProjectEmployee,
+	TimeLog
+} from '../../core/entities/internal';
 import { CURRENT_MEMBERSHIP } from '../../organization-project/organization-project-rate.service';
 
 type Rate = number | string | null | undefined;
@@ -23,8 +29,28 @@ export interface TimeLogRatesToStore extends ITimeLogStoredRates {
 /** The members of a time log that say whose time it is and on which project. */
 export interface TimeLogRatesScope {
 	tenantId: ID;
+	/** The organization whose currency a rate that states none is in. */
+	organizationId?: ID | null;
 	employeeId: ID;
 	projectId?: ID | null;
+}
+
+/**
+ * The organization's currency: what a rate that states none is in. It is stored with the rate, so a later change of
+ * the organization's currency never relabels a price already recorded.
+ */
+export async function findOrganizationCurrency(
+	manager: EntityManager,
+	scope: Pick<TimeLogRatesScope, 'tenantId' | 'organizationId'>
+): Promise<string | null> {
+	if (!scope.organizationId) {
+		return null;
+	}
+	const organization = await manager.findOne(Organization, {
+		where: { id: scope.organizationId, tenantId: scope.tenantId },
+		select: { id: true, currency: true }
+	});
+	return organization?.currency ?? null;
 }
 
 /** A rate as a column holds it: a number, or null for none. */
@@ -38,11 +64,12 @@ function rateOf(value: Rate): number | null {
 
 /**
  * The client rates of a project for one member, as the project rates read gives them: the project's, and the
- * member's own on it while the membership is current.
+ * member's own on it while the membership is current, in the project's currency, else the organization's.
  */
 export async function findClientRates(
 	manager: EntityManager,
-	scope: TimeLogRatesScope
+	scope: TimeLogRatesScope,
+	organizationCurrency?: string | null
 ): Promise<
 	Pick<TimeLogRatesToStore, 'projectBillRateValue' | 'projectMemberBillRateValue' | 'projectBillRateCurrency'>
 > {
@@ -69,8 +96,20 @@ export async function findClientRates(
 	return {
 		projectBillRateValue: rateOf(project.billRateValue),
 		projectMemberBillRateValue: rateOf(membership?.billRateValue),
-		projectBillRateCurrency: project.currency ?? null
+		projectBillRateCurrency: project.currency || (await currencyOf(manager, scope, organizationCurrency))
 	};
+}
+
+/** The organization currency already read, else read now. */
+async function currencyOf(
+	manager: EntityManager,
+	scope: TimeLogRatesScope,
+	known: string | null | undefined
+): Promise<string | null> {
+	if (known !== undefined) {
+		return known;
+	}
+	return await findOrganizationCurrency(manager, scope);
 }
 
 /**
@@ -85,12 +124,13 @@ export async function findRatesToStore(manager: EntityManager, scope: TimeLogRat
 		where: { id: scope.employeeId, tenantId: scope.tenantId },
 		select: { id: true, billRateValue: true, billRateCurrency: true, payRateValue: true, payRateCurrency: true }
 	});
-	const clientRates = await findClientRates(manager, scope);
+	const organizationCurrency = await findOrganizationCurrency(manager, scope);
+	const clientRates = await findClientRates(manager, scope, organizationCurrency);
 	return {
 		billRateValue: rateOf(employee?.billRateValue),
-		billRateCurrency: employee?.billRateCurrency ?? null,
+		billRateCurrency: employee?.billRateCurrency || organizationCurrency,
 		payRateValue: rateOf(employee?.payRateValue),
-		payRateCurrency: employee?.payRateCurrency ?? null,
+		payRateCurrency: employee?.payRateCurrency || organizationCurrency,
 		...clientRates,
 		ratesStored: true
 	};

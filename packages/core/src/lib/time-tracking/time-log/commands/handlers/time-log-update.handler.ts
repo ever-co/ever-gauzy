@@ -272,7 +272,7 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 		if (moved) {
 			part = 'all';
 		}
-		const scope = { tenantId: timeLog.tenantId, employeeId, projectId };
+		const scope = { tenantId: timeLog.tenantId, organizationId: timeLog.organizationId, employeeId, projectId };
 		const rates = await this.commandBus.execute(new FindTimeLogRatesCommand(scope, part));
 		return rates ?? {};
 	}

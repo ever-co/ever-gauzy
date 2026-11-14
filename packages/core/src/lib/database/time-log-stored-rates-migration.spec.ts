@@ -41,8 +41,11 @@ describe('time log stored rates migration on SQLite', () => {
 				'"isActive" boolean, "isArchived" boolean, "deletedAt" datetime)'
 		);
 		await dataSource.query(
-			'CREATE TABLE "time_log" ("id" varchar PRIMARY KEY NOT NULL, "employeeId" varchar, "projectId" varchar)'
+			'CREATE TABLE "time_log" ("id" varchar PRIMARY KEY NOT NULL, "employeeId" varchar, "projectId" varchar, ' +
+				'"organizationId" varchar)'
 		);
+		await dataSource.query('CREATE TABLE "organization" ("id" varchar PRIMARY KEY NOT NULL, "currency" varchar)');
+		await dataSource.query(`INSERT INTO "organization" VALUES ('org', 'BGN')`);
 		// Marie bills 40 USD and is paid 25 EUR; Paul has no rate yet
 		await dataSource.query(
 			`INSERT INTO "employee" VALUES ('marie', 40, 'USD', 25, 'EUR'), ('paul', NULL, NULL, NULL, NULL)`
@@ -57,8 +60,9 @@ describe('time log stored rates migration on SQLite', () => {
 				`('m2', 'site', 'paul', 70, 1, 1, NULL), ('m3', 'internal', 'marie', 60, 1, 0, '2026-09-01 00:00:00')`
 		);
 		await dataSource.query(
-			`INSERT INTO "time_log" VALUES ('marie-site', 'marie', 'site'), ('paul-site', 'paul', 'site'), ` +
-				`('marie-alone', 'marie', NULL), ('marie-internal', 'marie', 'internal'), ('marie-closed', 'marie', 'closed')`
+			`INSERT INTO "time_log" VALUES ('marie-site', 'marie', 'site', 'org'), ('paul-site', 'paul', 'site', 'org'), ` +
+				`('marie-alone', 'marie', NULL, 'org'), ('marie-internal', 'marie', 'internal', 'org'), ` +
+				`('marie-closed', 'marie', 'closed', 'org')`
 		);
 	});
 
@@ -117,7 +121,10 @@ describe('time log stored rates migration on SQLite', () => {
 			projectBillRateCurrency: 'EUR',
 			ratesStored: 1
 		});
+		// A rate that states no currency is stored in the organization's, so a later change cannot relabel it
 		expect(await logOf('paul-site')).toMatchObject({
+			billRateCurrency: 'BGN',
+			payRateCurrency: 'BGN',
 			billRateValue: null,
 			payRateValue: null,
 			projectBillRateValue: 90,
@@ -133,6 +140,7 @@ describe('time log stored rates migration on SQLite', () => {
 		});
 		// A removed membership and a removed project give no client rate, as the project rates read gives none
 		expect(await logOf('marie-internal')).toMatchObject({
+			projectBillRateCurrency: 'BGN',
 			projectBillRateValue: null,
 			projectMemberBillRateValue: null,
 			ratesStored: 1

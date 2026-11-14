@@ -76,7 +76,7 @@ export class TimeLogCreateHandler implements ICommandHandler<TimeLogCreateComman
 		// The rates of the moment price the log from now on: a later rate change leaves them unless it names an earlier
 		// day to apply from (see time-log-rates.ts). Never taken from the input: a client names no price for its time.
 		const rates = await this._commandBus.execute(
-			new FindTimeLogRatesCommand({ tenantId, employeeId, projectId: input.projectId ?? null })
+			new FindTimeLogRatesCommand({ tenantId, organizationId, employeeId, projectId: input.projectId ?? null })
 		);
 
 		// Create time log entity
