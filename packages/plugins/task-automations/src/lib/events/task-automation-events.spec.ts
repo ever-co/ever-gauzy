@@ -41,7 +41,12 @@ jest.mock('../services/task-automation-task-reader.service', () => ({ TaskAutoma
 import 'reflect-metadata';
 import { ActionTypeEnum, ActorTypeEnum, BaseEntityEnum, TASK_AUTOMATION_EVENT_NAMES, TaskAutomationTriggerEnum } from '@gauzy/contracts';
 import { ActivityLogEvent, TaskLinkClosedEvent } from '@gauzy/core';
-import { linkClosureKeyOf } from '../engine/link-closed';
+import {
+	ITaskLinkClosureKey,
+	linkClosureKeyOf,
+	linkMergeKeyOf,
+	TASK_LINK_MERGE_CLAIM_KIND
+} from '../engine/link-closed';
 import { TaskAutomationChangeCapture } from './task-automation-change.capture';
 import { parseLinkClosedEvent, TaskAutomationEventConsumer } from './task-automation-event.consumer';
 import { TaskAutomationLinkClosedCapture } from './task-automation-link-closed.capture';
@@ -145,11 +150,11 @@ describe('TaskAutomationLinkClosedCapture', () => {
 		const rules = { enabledTriggers: jest.fn(async () => new Set(triggers)) };
 		const reader = { belongsTo: jest.fn(async () => owned) };
 		const closures = {
-			claimIn: jest.fn(async () => claimed),
+			claimIn: jest.fn<Promise<boolean>, [unknown, ITaskLinkClosureKey]>(async () => claimed),
 			claimInMikroOrm: jest.fn(async () => claimed),
-			exists: jest.fn(async () => false)
+			exists: jest.fn<Promise<boolean>, [ITaskLinkClosureKey]>(async () => false)
 		};
-		const outbox = { append: jest.fn(async () => ({})) };
+		const outbox = { append: jest.fn<Promise<unknown>, [unknown, unknown]>(async () => ({})) };
 		// The claim and the append run in one transaction; `manager` is that transaction's.
 		const manager = {};
 		const dataSource = { manager: { transaction: jest.fn(async (work: (manager: unknown) => Promise<unknown>) => work(manager)) } };
@@ -157,18 +162,25 @@ describe('TaskAutomationLinkClosedCapture', () => {
 		return { capture, rules, reader, closures, outbox, manager };
 	};
 
+	const closeKey = {
+		tenantId: 'tenant-1',
+		organizationId: 'org-1',
+		taskId: 'task-1',
+		provider: 'github',
+		kind: 'pull_request',
+		externalId: '9001'
+	};
+	const mergeKey = { ...closeKey, kind: TASK_LINK_MERGE_CLAIM_KIND };
+
 	it('claims and appends a closed link in one transaction, in the task’s own partition, with its scope and identity', async () => {
 		const { capture, closures, outbox, manager, rules } = setup([TaskAutomationTriggerEnum.LINK_CLOSED]);
 		await capture.handle(new TaskLinkClosedEvent(closed as never) as never);
 		expect(rules.enabledTriggers).toHaveBeenCalledWith('tenant-1', 'org-1');
-		expect(closures.claimIn).toHaveBeenCalledWith(manager, {
-			tenantId: 'tenant-1',
-			organizationId: 'org-1',
-			taskId: 'task-1',
-			provider: 'github',
-			kind: 'pull_request',
-			externalId: '9001'
-		});
+		// The close, and the merge of the merged pull request beside it.
+		expect(closures.claimIn.mock.calls).toEqual([
+			[manager, closeKey],
+			[manager, mergeKey]
+		]);
 		expect(outbox.append).toHaveBeenCalledTimes(1);
 		expect(outbox.append).toHaveBeenCalledWith(manager, {
 			name: TASK_AUTOMATION_EVENT_NAMES.LINK_CLOSED,
@@ -177,8 +189,42 @@ describe('TaskAutomationLinkClosedCapture', () => {
 			partitionKey: 'task-automation:task-1',
 			tenantId: 'tenant-1',
 			organizationId: 'org-1',
-			data: { ...closed, provider: 'github' }
+			data: { ...closed, provider: 'github', closedBefore: false }
 		});
+	});
+
+	it('claims no merge for a close without merging or an issue, so a later merge is still reported (spec FR-21)', async () => {
+		const unmerged = setup([TaskAutomationTriggerEnum.LINK_CLOSED]);
+		expect(await unmerged.capture.report({ ...closed, merged: false })).toBe(true);
+		expect(unmerged.closures.claimIn.mock.calls).toEqual([[unmerged.manager, closeKey]]);
+		expect(unmerged.outbox.append.mock.calls[0][1]).toMatchObject({ data: { merged: false, closedBefore: false } });
+
+		const issue = setup([TaskAutomationTriggerEnum.LINK_CLOSED]);
+		expect(await issue.capture.report({ ...closed, kind: 'issue', merged: true })).toBe(true);
+		expect(issue.closures.claimIn.mock.calls).toEqual([[issue.manager, { ...closeKey, kind: 'issue' }]]);
+	});
+
+	it('appends a merge whose close was reported before, saying so; an integration cannot say it for the claims', async () => {
+		const { capture, closures, outbox, manager } = setup([TaskAutomationTriggerEnum.LINK_CLOSED]);
+		// The close was claimed when the pull request closed without merging; its merge is new.
+		closures.claimIn.mockImplementation(
+			async (_manager: unknown, key: ITaskLinkClosureKey) => key.kind === TASK_LINK_MERGE_CLAIM_KIND
+		);
+		expect(await capture.report({ ...closed, closedBefore: false })).toBe(true);
+		expect(outbox.append).toHaveBeenCalledWith(
+			manager,
+			expect.objectContaining({ data: expect.objectContaining({ merged: true, closedBefore: true }) })
+		);
+
+		// Both claimed before: the same merge delivered again appends nothing.
+		closures.claimIn.mockResolvedValue(false);
+		expect(await capture.report(closed)).toBe(false);
+		expect(outbox.append).toHaveBeenCalledTimes(1);
+
+		// A first close an integration calls a repeat is still the first close.
+		const fresh = setup([TaskAutomationTriggerEnum.LINK_CLOSED]);
+		await fresh.capture.report({ ...closed, merged: false, closedBefore: true });
+		expect(fresh.outbox.append.mock.calls[0][1]).toMatchObject({ data: { closedBefore: false } });
 	});
 
 	it('appends nothing for a link reported before, a task not of the scope, or an organization without a link rule', async () => {
@@ -231,7 +277,56 @@ describe('TaskAutomationLinkClosedCapture', () => {
 		closures.claimIn.mockRejectedValueOnce(new Error('UNIQUE constraint failed'));
 		closures.exists.mockResolvedValueOnce(true);
 		expect(await capture.report(closed)).toBe(false);
+		// A merge is another delivery's when its merge is claimed; a close when its close is.
+		expect(closures.exists).toHaveBeenCalledWith(mergeKey);
 		expect(outbox.append).not.toHaveBeenCalled();
+
+		const unmerged = setup([TaskAutomationTriggerEnum.LINK_CLOSED]);
+		unmerged.closures.claimIn.mockRejectedValueOnce(new Error('UNIQUE constraint failed'));
+		unmerged.closures.exists.mockResolvedValueOnce(true);
+		expect(await unmerged.capture.report({ ...closed, merged: false })).toBe(false);
+		expect(unmerged.closures.exists).toHaveBeenCalledWith(closeKey);
+	});
+
+	it('tries a merge once more when a close without merging claimed the close meanwhile, and appends it as a merge after a close', async () => {
+		const { capture, closures, outbox, manager } = setup([TaskAutomationTriggerEnum.LINK_CLOSED]);
+		// The close without merging committed its claim between this delivery's lookup and its insert.
+		closures.claimIn.mockRejectedValueOnce(new Error('UNIQUE constraint failed'));
+		closures.exists.mockImplementation(async (key: ITaskLinkClosureKey) => key.kind !== TASK_LINK_MERGE_CLAIM_KIND);
+		closures.claimIn.mockImplementation(
+			async (_manager: unknown, key: ITaskLinkClosureKey) => key.kind === TASK_LINK_MERGE_CLAIM_KIND
+		);
+		expect(await capture.report(closed)).toBe(true);
+		expect(closures.claimIn.mock.calls.map(([, key]) => key.kind)).toEqual([
+			'pull_request',
+			'pull_request',
+			TASK_LINK_MERGE_CLAIM_KIND
+		]);
+		expect(outbox.append).toHaveBeenCalledTimes(1);
+		expect(outbox.append).toHaveBeenCalledWith(
+			manager,
+			expect.objectContaining({ data: expect.objectContaining({ merged: true, closedBefore: true }) })
+		);
+
+		// A close without merging that loses the same race is the other delivery's: not tried again.
+		const unmerged = setup([TaskAutomationTriggerEnum.LINK_CLOSED]);
+		unmerged.closures.claimIn.mockRejectedValueOnce(new Error('UNIQUE constraint failed'));
+		unmerged.closures.exists.mockResolvedValue(true);
+		expect(await unmerged.capture.report({ ...closed, merged: false })).toBe(false);
+		expect(unmerged.closures.claimIn).toHaveBeenCalledTimes(1);
+	});
+
+	it('throws a merge’s failed append though its close was claimed long before, so the merge is not lost as a repeat', async () => {
+		const { capture, closures, outbox } = setup([TaskAutomationTriggerEnum.LINK_CLOSED]);
+		closures.claimIn.mockImplementation(
+			async (_manager: unknown, key: ITaskLinkClosureKey) => key.kind === TASK_LINK_MERGE_CLAIM_KIND
+		);
+		closures.exists.mockImplementation(async (key: ITaskLinkClosureKey) => key.kind !== TASK_LINK_MERGE_CLAIM_KIND);
+		outbox.append.mockRejectedValue(new Error('database down'));
+		await expect(capture.report(closed)).rejects.toThrow('database down');
+		expect(closures.exists).toHaveBeenCalledWith(mergeKey);
+		// Tried once more (the close's claim could have been another delivery's), then given up.
+		expect(outbox.append).toHaveBeenCalledTimes(2);
 	});
 
 	it('tells a link by its provider’s id, else its address; the provider in lower case', () => {
@@ -241,6 +336,14 @@ describe('TaskAutomationLinkClosedCapture', () => {
 		expect(linkClosureKeyOf(event)).toMatchObject({ provider: 'github', externalId: '9001' });
 		expect(linkClosureKeyOf({ ...event, externalId: null })).toMatchObject({ externalId: closed.url });
 		expect(linkClosureKeyOf({ ...event, provider: 'p'.repeat(33) })).toBeNull();
+		expect(parseLinkClosedEvent({ ...closed, closedBefore: true })?.closedBefore).toBe(true);
+		expect(parseLinkClosedEvent({ ...closed, closedBefore: 'yes' })?.closedBefore).toBeUndefined();
+		// The merge's claim: a merged pull request's only, under its own kind, which fits the column.
+		const key = linkClosureKeyOf(event) as NonNullable<ReturnType<typeof linkClosureKeyOf>>;
+		expect(linkMergeKeyOf(event, key)).toEqual({ ...key, kind: TASK_LINK_MERGE_CLAIM_KIND });
+		expect(linkMergeKeyOf({ ...event, merged: false }, key)).toBeNull();
+		expect(linkMergeKeyOf({ kind: 'issue', merged: true }, key)).toBeNull();
+		expect(TASK_LINK_MERGE_CLAIM_KIND.length).toBeLessThanOrEqual(24);
 	});
 });
 

@@ -115,7 +115,8 @@ export interface ITaskAutomationDraft {
 	projectId: string | null;
 	organizationTeamId: string | null;
 	isEnabled: boolean;
-	trigger: { type: TaskAutomationTriggerEnum; toStatuses: string[]; fromStatuses: string[] };
+	/** `mergedOnly`: a linked pull request fires the link trigger only when merged (`LINK_CLOSED` only). */
+	trigger: { type: TaskAutomationTriggerEnum; toStatuses: string[]; fromStatuses: string[]; mergedOnly: boolean };
 	conditions: ITaskAutomationConditionDraft[];
 	actions: ITaskAutomationActionDraft[];
 }
@@ -163,7 +164,8 @@ function triggerDraft(trigger: ITaskAutomationTrigger | null | undefined): ITask
 	return {
 		type: trigger?.type ?? TaskAutomationTriggerEnum.STATUS_CHANGED,
 		toStatuses: strings(trigger?.toStatuses),
-		fromStatuses: strings(trigger?.fromStatuses)
+		fromStatuses: strings(trigger?.fromStatuses),
+		mergedOnly: trigger?.mergedOnly === true
 	};
 }
 
@@ -239,12 +241,17 @@ export function actionOfDraft(draft: ITaskAutomationActionDraft): ITaskAutomatio
 	}
 }
 
-/** What saving the editor sends: the rule's fields, the trigger's status lists only for a status change. */
+/**
+ * What saving the editor sends: the rule's fields, the trigger's status lists only for a status change, "merged only"
+ * only for a closed link.
+ */
 export function ruleInputOfDraft(draft: ITaskAutomationDraft): ITaskAutomationRuleCreateInput {
 	const trigger: ITaskAutomationTrigger =
 		draft.trigger.type === TaskAutomationTriggerEnum.STATUS_CHANGED
 			? { type: draft.trigger.type, toStatuses: strings(draft.trigger.toStatuses), fromStatuses: strings(draft.trigger.fromStatuses) }
-			: { type: draft.trigger.type };
+			: draft.trigger.type === TaskAutomationTriggerEnum.LINK_CLOSED
+				? { type: draft.trigger.type, mergedOnly: draft.trigger.mergedOnly === true }
+				: { type: draft.trigger.type };
 	return {
 		name: draft.name.trim(),
 		description: draft.description.trim() || null,

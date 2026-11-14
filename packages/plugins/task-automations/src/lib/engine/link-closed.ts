@@ -3,13 +3,21 @@ import { ID, ITaskLinkClosedEvent } from '@gauzy/contracts';
 /** The longest provider name, kind and external id a link's identity keeps (the columns of `task_automation_link_closure`). */
 export const TASK_LINK_CLOSURE_LIMITS = Object.freeze({ provider: 32, kind: 24, externalId: 255 });
 
+/**
+ * The kind a pull request's merge is claimed under, beside its close (`pull_request`): a pull request closed without
+ * merging, reopened and merged is reported twice — its first close for every link rule, its merge for the rules that
+ * wait for one (`mergedOnly`) — and each of the two at most once. An issue has no merge.
+ */
+export const TASK_LINK_MERGE_CLAIM_KIND = 'pull_request.merged';
+
 /** The identity of a closed link of a task: what makes it reported once. */
 export interface ITaskLinkClosureKey {
 	tenantId: ID;
 	organizationId: ID;
 	taskId: ID;
 	provider: string;
-	kind: ITaskLinkClosedEvent['kind'];
+	/** The link's kind; {@link TASK_LINK_MERGE_CLAIM_KIND} for the claim of a pull request's merge. */
+	kind: ITaskLinkClosedEvent['kind'] | typeof TASK_LINK_MERGE_CLAIM_KIND;
 	externalId: string;
 }
 
@@ -22,7 +30,9 @@ function text(value: unknown): string | null {
 
 /**
  * A closed link's payload back, or `null` when it is not one: the task, its tenant and organization, and a kind the
- * contract names are required. `merged` is kept only as a boolean.
+ * contract names are required. `merged` and `closedBefore` are kept only as booleans. One parser serves both sides: the
+ * consumer reads `closedBefore` from `task_link.closed`, where the capture set it; the capture parses an integration's
+ * report with it too, and then overwrites it from the claims, so an integration never decides it.
  */
 export function parseLinkClosedEvent(data: unknown): ITaskLinkClosedEvent | null {
 	if (!data || typeof data !== 'object') return null;
@@ -39,6 +49,7 @@ export function parseLinkClosedEvent(data: unknown): ITaskLinkClosedEvent | null
 		externalId: value.externalId ?? null
 	};
 	if (typeof value.merged === 'boolean') event.merged = value.merged;
+	if (typeof value.closedBefore === 'boolean') event.closedBefore = value.closedBefore;
 	return event;
 }
 
@@ -60,4 +71,15 @@ export function linkClosureKeyOf(event: ITaskLinkClosedEvent): ITaskLinkClosureK
 		kind: event.kind,
 		externalId
 	};
+}
+
+/**
+ * The identity a pull request's merge is claimed under (the close's, of kind {@link TASK_LINK_MERGE_CLAIM_KIND}), or
+ * `null` when the closed link is no merged pull request.
+ */
+export function linkMergeKeyOf(
+	event: Pick<ITaskLinkClosedEvent, 'kind' | 'merged'>,
+	key: ITaskLinkClosureKey
+): ITaskLinkClosureKey | null {
+	return event.kind === 'pull_request' && event.merged === true ? { ...key, kind: TASK_LINK_MERGE_CLAIM_KIND } : null;
 }

@@ -113,12 +113,28 @@ export function matchChangeTrigger(
 	}
 }
 
-/** Whether a rule's trigger fires for a closed link (`task_link.closed`): the rule acts on the linked task. */
+/**
+ * Whether a rule's trigger fires for a closed link (`task_link.closed`): the rule acts on the linked task.
+ *
+ * A rule fires on the link's first reported close. With `mergedOnly`, a pull request fires only when it was merged —
+ * also when its merge comes after a close without merging and a reopen (`closedBefore`: the event only those rules
+ * run on) — and an issue as without it.
+ */
 export function matchLinkClosedTrigger(
 	trigger: ITaskAutomationTrigger,
-	event: Pick<ITaskLinkClosedEvent, 'taskId'>
+	event: Pick<ITaskLinkClosedEvent, 'taskId'> &
+		Partial<Pick<ITaskLinkClosedEvent, 'kind' | 'merged' | 'closedBefore'>>
 ): ITaskAutomationTriggerMatch | null {
-	return trigger?.type === TaskAutomationTriggerEnum.LINK_CLOSED && event?.taskId ? { subjectTaskId: event.taskId } : null;
+	if (trigger?.type !== TaskAutomationTriggerEnum.LINK_CLOSED || !event?.taskId) return null;
+	let fires: boolean;
+	if (trigger.mergedOnly === true && event.kind === 'pull_request') {
+		// A merged-only rule on a pull request: its merge, whether or not its close was reported before.
+		fires = event.merged === true;
+	} else {
+		// Any other rule, and a merged-only rule on an issue: the link's first reported close only.
+		fires = event.closedBefore !== true;
+	}
+	return fires ? { subjectTaskId: event.taskId } : null;
 }
 
 /** Every sub-task is done or cancelled (and there is at least one). */

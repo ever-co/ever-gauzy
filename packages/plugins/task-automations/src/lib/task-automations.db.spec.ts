@@ -577,6 +577,54 @@ describe('Task automations on SQLite', () => {
 			expect((await rules.list(scope)).map((rule) => rule.id)).toEqual([b.id]);
 		});
 
+		it('keep “merged only” on a link trigger, store nothing for a rule without it, and refuse a value that is not true or false', async () => {
+			const configOf = async (id: string) =>
+				(await dataSource.query(`SELECT "triggerConfig" FROM "task_automation_rule" WHERE "id" = ?`, [id]))[0]
+					.triggerConfig;
+			const plain = await rules.create(scope, { templateKey: 'link-closed-sets-status' });
+			expect(plain.trigger).toEqual({ type: TaskAutomationTriggerEnum.LINK_CLOSED, mergedOnly: false });
+			// Stored as a rule saved before the option existed.
+			expect(await configOf(plain.id as string)).toBeNull();
+
+			const merged = await rules.update(scope, plain.id as string, {
+				trigger: { type: TaskAutomationTriggerEnum.LINK_CLOSED, mergedOnly: true }
+			});
+			expect(merged.trigger).toEqual({ type: TaskAutomationTriggerEnum.LINK_CLOSED, mergedOnly: true });
+			expect(JSON.parse(await configOf(plain.id as string))).toEqual({ mergedOnly: true });
+			expect((await rules.get(scope, plain.id as string)).trigger).toEqual({
+				type: TaskAutomationTriggerEnum.LINK_CLOSED,
+				mergedOnly: true
+			});
+			// An edit that leaves the trigger out keeps it.
+			expect(
+				(await rules.update(scope, plain.id as string, { name: 'Merged moves to done' })).trigger.mergedOnly
+			).toBe(true);
+
+			await expect(
+				rules.update(scope, plain.id as string, {
+					trigger: { type: TaskAutomationTriggerEnum.LINK_CLOSED, mergedOnly: 'yes' } as never
+				})
+			).rejects.toThrow(/merged only/);
+			await expect(
+				rules.update(scope, plain.id as string, {
+					trigger: { type: TaskAutomationTriggerEnum.LINK_CLOSED, mergedOnly: 'yes' } as never
+				})
+			).rejects.toBeInstanceOf(BadRequestException);
+			const off = await rules.update(scope, plain.id as string, {
+				trigger: { type: TaskAutomationTriggerEnum.LINK_CLOSED, mergedOnly: false }
+			});
+			expect(off.trigger).toEqual({ type: TaskAutomationTriggerEnum.LINK_CLOSED, mergedOnly: false });
+			expect(await configOf(plain.id as string)).toBeNull();
+
+			// Another trigger keeps no such setting.
+			const assigned = await rules.create(scope, {
+				name: 'Assigned',
+				trigger: { type: TaskAutomationTriggerEnum.TASK_ASSIGNED, mergedOnly: true },
+				actions: [{ type: TaskAutomationActionEnum.NOTIFY_ASSIGNEES }]
+			});
+			expect(assigned.trigger).toEqual({ type: TaskAutomationTriggerEnum.TASK_ASSIGNED });
+		});
+
 		it('tell the capture which triggers are on, and forget it when a rule changes', async () => {
 			expect([...(await rules.enabledTriggers(TENANT, ORG))]).toEqual([]);
 			const rule = await rules.create(scope, { templateKey: 'assigned-moves-in-progress' });
@@ -813,6 +861,105 @@ describe('Task automations on SQLite', () => {
 			);
 		});
 
+		it('with “merged only”, a pull request closed without merging moves nothing; its merge after a reopen does, once (spec FR-21)', async () => {
+			const rule = await rules.create(scope, {
+				templateKey: 'link-closed-sets-status',
+				trigger: { type: TaskAutomationTriggerEnum.LINK_CLOSED, mergedOnly: true }
+			});
+			const task = await createTask();
+			const { capture, outbox, dispatch } = pipeline();
+
+			// Closed without merging: the rule waits for a merge.
+			await capture.handle(report(task, { merged: false }) as never);
+			await dispatch();
+			expect((await taskRow(task))['status']).toBe('open');
+			expect(writer.updates).toEqual([]);
+			expect(await runs.history(rule.id as string)).toEqual([]);
+
+			// Reopened, then merged: the close without merging did not use up the report the merge needs.
+			await capture.handle(report(task, { merged: true }) as never);
+			expect(outbox.append).toHaveBeenCalledTimes(2);
+			expect(outbox.append.mock.calls[1][1].data).toMatchObject({
+				kind: 'pull_request',
+				merged: true,
+				closedBefore: true
+			});
+			await dispatch();
+			expect((await taskRow(task))['status']).toBe('done');
+			expect(await runs.history(rule.id as string)).toEqual([
+				expect.objectContaining({ outcome: TaskAutomationRunOutcomeEnum.APPLIED, taskId: task })
+			]);
+
+			// The merge delivered again, or a close without merging after it, appends nothing.
+			await capture.handle(report(task, { merged: true }) as never);
+			await capture.handle(report(task, { merged: false }) as never);
+			expect(outbox.append).toHaveBeenCalledTimes(2);
+			expect(await runs.history(rule.id as string)).toHaveLength(1);
+		});
+
+		it('runs a rule without the option on the first close only, and a merged-only rule on a merge or an issue’s close', async () => {
+			const anyClose = await rules.create(scope, {
+				name: 'Any close starts the task',
+				trigger: { type: TaskAutomationTriggerEnum.LINK_CLOSED },
+				actions: [
+					{
+						type: TaskAutomationActionEnum.SET_STATUS,
+						category: TaskAutomationStatusCategoryEnum.IN_PROGRESS
+					}
+				]
+			});
+			const mergedOnly = await rules.create(scope, {
+				name: 'A merge closes the task',
+				trigger: { type: TaskAutomationTriggerEnum.LINK_CLOSED, mergedOnly: true },
+				actions: [
+					{ type: TaskAutomationActionEnum.SET_STATUS, category: TaskAutomationStatusCategoryEnum.DONE }
+				]
+			});
+			const runsOf = async (rule: { id?: string }) => (await runs.history(rule.id as string)).length;
+			const { capture, outbox, dispatch } = pipeline();
+
+			// Closed without merging, then reopened and merged.
+			const reopened = await createTask();
+			await capture.handle(report(reopened, { merged: false }) as never);
+			await dispatch();
+			expect((await taskRow(reopened))['status']).toBe('in-progress');
+			expect([await runsOf(anyClose), await runsOf(mergedOnly)]).toEqual([1, 0]);
+			await capture.handle(report(reopened, { merged: true }) as never);
+			await dispatch();
+			expect((await taskRow(reopened))['status']).toBe('done');
+			// The rule without the option ran on the close, as before: not again on the merge.
+			expect([await runsOf(anyClose), await runsOf(mergedOnly)]).toEqual([1, 1]);
+
+			// Merged at once: one event, both rules in their order.
+			const merged = await createTask();
+			await capture.handle(
+				report(merged, {
+					externalId: '9002',
+					url: 'https://github.com/acme/site/pull/8',
+					merged: true
+				}) as never
+			);
+			expect(outbox.append).toHaveBeenCalledTimes(3);
+			expect(outbox.append.mock.calls[2][1].data).toMatchObject({ merged: true, closedBefore: false });
+			await dispatch();
+			expect((await taskRow(merged))['status']).toBe('done');
+			expect([await runsOf(anyClose), await runsOf(mergedOnly)]).toEqual([2, 2]);
+
+			// An issue's close: the merged-only rule runs as without the option.
+			const issue = await createTask();
+			await capture.handle(
+				report(issue, {
+					kind: 'issue',
+					externalId: '77',
+					url: 'https://github.com/acme/site/issues/6',
+					merged: undefined
+				}) as never
+			);
+			await dispatch();
+			expect((await taskRow(issue))['status']).toBe('done');
+			expect([await runsOf(anyClose), await runsOf(mergedOnly)]).toEqual([3, 3]);
+		});
+
 		it('appends nothing for another tenant or organization, a missing task, or an organization without the rule', async () => {
 			const { capture, outbox } = pipeline();
 			const task = await createTask();
@@ -845,7 +992,8 @@ describe('Task automations on SQLite', () => {
 			expect(await dataSource.getRepository(TaskAutomationLinkClosure).count()).toBe(0);
 			await capture.handle(report(task) as never);
 			expect(outbox.append).toHaveBeenCalledTimes(2);
-			expect(await dataSource.getRepository(TaskAutomationLinkClosure).count()).toBe(1);
+			// The close, and the merge of the merged pull request (spec FR-21).
+			expect(await dataSource.getRepository(TaskAutomationLinkClosure).count()).toBe(2);
 		});
 
 		it('claims in the MikroORM transaction the event is appended in, under DB_ORM=mikro-orm', async () => {
@@ -884,9 +1032,25 @@ describe('Task automations on SQLite', () => {
 				await capture.handle(report(task) as never);
 				expect(appended).toHaveLength(1);
 				expect(appended[0]).toMatchObject({ name: 'task_link.closed', aggregateId: task, tenantId: TENANT, organizationId: ORG });
-				const rows = await dataSource.query(`SELECT * FROM "task_automation_link_closure"`);
+				const rows = await dataSource.query(`SELECT * FROM "task_automation_link_closure" ORDER BY "kind"`);
+				// The close, and the merge of the merged pull request (spec FR-21), both in the event's transaction.
 				expect(rows).toEqual([
-					expect.objectContaining({ tenantId: TENANT, organizationId: ORG, taskId: task, provider: 'github', kind: 'pull_request', externalId: '9001' })
+					expect.objectContaining({
+						tenantId: TENANT,
+						organizationId: ORG,
+						taskId: task,
+						provider: 'github',
+						kind: 'pull_request',
+						externalId: '9001'
+					}),
+					expect.objectContaining({
+						tenantId: TENANT,
+						organizationId: ORG,
+						taskId: task,
+						provider: 'github',
+						kind: 'pull_request.merged',
+						externalId: '9001'
+					})
 				]);
 				expect(rows[0].createdAt).toBeTruthy();
 			} finally {
