@@ -280,19 +280,26 @@ export class UserTwoFactorService extends CrudService<UserTwoFactor> {
 	 *
 	 * @param userId The user.
 	 * @param proof The code or the recovery code.
+	 * @returns The row of the factor the proof was checked against.
 	 * @throws UnauthorizedException for a wrong proof, or when it is not on; HttpException 429 after too many.
 	 */
-	async verifySecondFactor(userId: ID, proof: ITwoFactorCodeInput): Promise<void> {
-		await this.checkCounted(userId, async () => {
+	async verifySecondFactor(userId: ID, proof: ITwoFactorCodeInput): Promise<UserTwoFactor> {
+		return await this.checkCounted(userId, async () => {
 			const row = await this.findOfUser(userId);
 			if (!row?.enabledAt) {
 				throw new UnauthorizedException(TWO_FACTOR_NOT_ENABLED_MESSAGE);
 			}
 			const hasRecoveryCode = Boolean(proof?.recoveryCode?.trim());
+			let accepted: number | true | null;
 			if (hasRecoveryCode) {
-				return await this.useRecoveryCode(row, proof.recoveryCode);
+				accepted = await this.useRecoveryCode(row, proof.recoveryCode);
+			} else {
+				accepted = await this.acceptCode(row, proof?.code);
 			}
-			return await this.acceptCode(row, proof?.code);
+			if (accepted === null) {
+				return null;
+			}
+			return row;
 		});
 	}
 
@@ -303,8 +310,13 @@ export class UserTwoFactorService extends CrudService<UserTwoFactor> {
 	 * @param proof A current code or a recovery code.
 	 */
 	async disable(userId: ID, proof: ITwoFactorCodeInput): Promise<void> {
-		await this.verifySecondFactor(userId, proof);
-		await this.update({ userId }, { enabledAt: null, secret: null, recoveryCodes: null, lastUsedTimeStep: 0 });
+		const proven = await this.verifySecondFactor(userId, proof);
+		// Only the factor that was proven: a reset and a new setup meanwhile replaced it, and that one stays.
+		const cleared = await this.update(
+			{ id: proven.id, secret: proven.secret },
+			{ enabledAt: null, secret: null, recoveryCodes: null, lastUsedTimeStep: 0 }
+		);
+		this.assertSameFactor(cleared);
 	}
 
 	/**
@@ -314,9 +326,14 @@ export class UserTwoFactorService extends CrudService<UserTwoFactor> {
 	 * @param proof A current code or a recovery code.
 	 */
 	async regenerateRecoveryCodes(userId: ID, proof: ITwoFactorCodeInput): Promise<ITwoFactorRecoveryCodes> {
-		await this.verifySecondFactor(userId, proof);
+		const proven = await this.verifySecondFactor(userId, proof);
 		const recoveryCodes = generateRecoveryCodes();
-		await this.update({ userId, enabledAt: Not(IsNull()) }, { recoveryCodes: this.serializeHashes(recoveryCodes) });
+		// Only for the factor that was proven: codes must never come to authenticate a factor set up after the proof.
+		const stored = await this.update(
+			{ id: proven.id, secret: proven.secret, enabledAt: Not(IsNull()) },
+			{ recoveryCodes: this.serializeHashes(recoveryCodes) }
+		);
+		this.assertSameFactor(stored);
 		return { recoveryCodes };
 	}
 
@@ -491,6 +508,13 @@ export class UserTwoFactorService extends CrudService<UserTwoFactor> {
 	/** The stored form of new recovery codes. */
 	private serializeHashes(codes: readonly string[]): string {
 		return JSON.stringify(codes.map(hashRecoveryCode));
+	}
+
+	/** Refuses an action whose factor changed between its proof and its write. */
+	private assertSameFactor(result: unknown): void {
+		if (!this.changedOne(result)) {
+			throw new ConflictException('Two-factor authentication changed meanwhile. Check it and try again.');
+		}
 	}
 
 	/** Whether an update changed exactly one row. */

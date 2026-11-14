@@ -175,11 +175,15 @@ describe('UserTwoFactorService', () => {
 			const { user, secret } = await enabledUser();
 			const code = codeAt(secret);
 
-			await expect(service.verifySecondFactor(user.id, { code })).resolves.toBeUndefined();
+			await expect(service.verifySecondFactor(user.id, { code })).resolves.toEqual(
+				expect.objectContaining({ enabledAt: expect.any(Date) })
+			);
 			expect(await statusOf(service.verifySecondFactor(user.id, { code }))).toBe(HttpStatus.UNAUTHORIZED);
 
 			now += 30_000;
-			await expect(service.verifySecondFactor(user.id, { code: codeAt(secret) })).resolves.toBeUndefined();
+			await expect(service.verifySecondFactor(user.id, { code: codeAt(secret) })).resolves.toEqual(
+				expect.objectContaining({ enabledAt: expect.any(Date) })
+			);
 		},
 		TIMEOUT
 	);
@@ -191,7 +195,7 @@ describe('UserTwoFactorService', () => {
 
 			await expect(
 				service.verifySecondFactor(user.id, { recoveryCode: recoveryCodes[2].toLowerCase() })
-			).resolves.toBeUndefined();
+			).resolves.toEqual(expect.objectContaining({ enabledAt: expect.any(Date) }));
 			expect(await statusOf(service.verifySecondFactor(user.id, { recoveryCode: recoveryCodes[2] }))).toBe(
 				HttpStatus.UNAUTHORIZED
 			);
@@ -276,7 +280,7 @@ describe('UserTwoFactorService', () => {
 			);
 			await expect(
 				service.verifySecondFactor(user.id, { recoveryCode: fresh.recoveryCodes[0] })
-			).resolves.toBeUndefined();
+			).resolves.toEqual(expect.objectContaining({ enabledAt: expect.any(Date) }));
 		},
 		TIMEOUT
 	);
@@ -476,6 +480,105 @@ describe('UserTwoFactorService: a code of a replaced factor', () => {
 			expect(await statusOf(service.verifySecondFactor(USER.id, { code: totpAt(oldSecret, T + 30_000) }))).toBe(
 				HttpStatus.UNAUTHORIZED
 			);
+		},
+		TIMEOUT
+	);
+});
+
+/** Turning off and new recovery codes act only on the factor whose proof was checked. */
+describe('UserTwoFactorService: actions on a replaced factor', () => {
+	const previousKey = process.env.ENCRYPTION_KEY;
+	let dataSource: DataSource;
+	let service: UserTwoFactorService;
+	const T = Date.UTC(2026, 10, 14, 10, 0, 0);
+	let userCount = 0;
+
+	const newUser = async () => {
+		userCount++;
+		const user = {
+			id: `9c000000-0000-4000-8000-0000000002${String(userCount).padStart(2, '0')}`,
+			tenantId: TENANT,
+			email: `action${userCount}@example.com`
+		};
+		await insertRow(dataSource, User, { id: user.id, tenantId: TENANT, email: user.email });
+		return user;
+	};
+
+	const recoveryCodesOf = async (userId: string) =>
+		await dataSource.query(`SELECT "recoveryCodes" FROM "user_two_factor" WHERE "userId" = ?`, [userId]);
+
+	/** Turns it on at T, and makes the next call of `verifySecondFactor` replace the factor after its check. */
+	const replacedAfterProof = async () => {
+		const user = await newUser();
+		const { secret: oldSecret } = await service.enroll(user);
+		await service.confirm(user.id, totpAt(oldSecret, T));
+		const verify = service.verifySecondFactor.bind(service);
+		const replacement: { recoveryCodes?: unknown } = {};
+		jest.spyOn(service, 'verifySecondFactor').mockImplementationOnce(async (id, proof) => {
+			const proven = await verify(id, proof);
+			await service.resetByAdministrator(user.id, ADMIN);
+			const { secret } = await service.enroll(user);
+			await service.confirm(user.id, totpAt(secret, T + 60_000));
+			replacement.recoveryCodes = await recoveryCodesOf(user.id);
+			return proven;
+		});
+		return { user, replacement, proof: { code: totpAt(oldSecret, T + 30_000) } };
+	};
+
+	beforeAll(async () => {
+		process.env.ENCRYPTION_KEY = randomBytes(32).toString('base64');
+		dataSource = new DataSource({
+			type: 'better-sqlite3',
+			database: ':memory:',
+			entities: coreEntities,
+			synchronize: true,
+			logging: false
+		});
+		await dataSource.initialize();
+		await insertRow(dataSource, Tenant, { id: TENANT, name: 'Tenant' });
+	}, TIMEOUT);
+
+	afterAll(async () => {
+		await dataSource?.destroy();
+		if (previousKey === undefined) {
+			delete process.env.ENCRYPTION_KEY;
+		} else {
+			process.env.ENCRYPTION_KEY = previousKey;
+		}
+	});
+
+	beforeEach(() => {
+		jest.spyOn(Date, 'now').mockReturnValue(T + 30_000);
+		const repository = new TypeOrmUserTwoFactorRepository(dataSource.getRepository(UserTwoFactor));
+		service = new UserTwoFactorService(
+			repository,
+			undefined,
+			new EncryptionService(),
+			new LoginAttemptService(null)
+		);
+		jest.spyOn(service['logger'], 'log').mockImplementation(() => undefined);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it(
+		'turning off leaves the factor set up again after the proof',
+		async () => {
+			const { user, proof } = await replacedAfterProof();
+
+			expect(await statusOf(service.disable(user.id, proof))).toBe(HttpStatus.CONFLICT);
+			expect(await service.isEnabled(user.id)).toBe(true);
+		},
+		TIMEOUT
+	);
+
+	it(
+		'new recovery codes are never stored for the factor set up again after the proof',
+		async () => {
+			const { user, replacement, proof } = await replacedAfterProof();
+
+			expect(await statusOf(service.regenerateRecoveryCodes(user.id, proof))).toBe(HttpStatus.CONFLICT);
+			expect(await recoveryCodesOf(user.id)).toEqual(replacement.recoveryCodes);
 		},
 		TIMEOUT
 	);
