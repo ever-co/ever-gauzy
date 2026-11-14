@@ -7,7 +7,7 @@ import { isUniqueViolation } from '../../core/errors/unique-violation';
 import { EmailService } from '../../email-send/email.service';
 import { formattedAmountOf } from '../estimate-answer/estimate-answer.notice';
 import { instantOf } from '../../time-tracking/timer-reminder/timer-reminder.rules';
-import { formatInvoiceDay } from '../invoice-date.util';
+import { formatInvoiceDay, invoiceTimeZoneOf } from '../invoice-date.util';
 import { InvoiceService } from '../invoice.service';
 import { InvoiceReminder } from './invoice-reminder.entity';
 import { INVOICE_REMINDER_SWEEP_PAGE_SIZE, INVOICE_REMINDER_SWEEP_TIME_BUDGET_MS } from './invoice-reminder.constants';
@@ -44,6 +44,8 @@ export interface IInvoiceReminderInvoiceRow {
 	currency: string | null;
 	token: string | null;
 	toContactId: ID | null;
+	/** Its organization's time zone, which its due day is read in. */
+	timeZone: string | null;
 }
 
 /** The last email of an invoice: where, when and in which language it went. */
@@ -180,6 +182,7 @@ export class InvoiceReminderService {
 			.addSelect('invoice.currency', 'currency')
 			.addSelect('invoice.token', 'token')
 			.addSelect('invoice.toContactId', 'toContactId')
+			.addSelect('organization.timeZone', 'timeZone')
 			.where('organization.invoiceRemindersEnabled = :enabled', { enabled: true })
 			.andWhere('organization.deletedAt IS NULL')
 			.andWhere('organization.isActive = :active', { active: true })
@@ -248,7 +251,7 @@ export class InvoiceReminderService {
 			if (!delivery) {
 				continue;
 			}
-			const due = invoiceReminderDueAt(invoice.dueDate, delivery.emailedAt, now);
+			const due = invoiceReminderDueAt(invoice.dueDate, delivery.emailedAt, now, invoiceTimeZoneOf(invoice));
 			const left = amountLeftToPay(invoice.totalValue, invoice.alreadyPaid);
 			if (!due || left === null) {
 				continue;

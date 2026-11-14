@@ -1,7 +1,10 @@
 import { InvoiceStatusTypesEnum } from '@gauzy/contracts';
+import * as moment from 'moment';
+import 'moment-timezone';
 import { instantOf } from '../../time-tracking/timer-reminder/timer-reminder.rules';
 
-const DAY_MS = 24 * 60 * 60 * 1000;
+const HOUR_MS = 60 * 60 * 1000;
+const DAY_MS = 24 * HOUR_MS;
 
 /** One payment reminder of an invoice: its number, and when it is due, in days from the invoice's due date. */
 export interface IInvoiceReminderStep {
@@ -11,8 +14,9 @@ export interface IInvoiceReminderStep {
 
 /**
  * The payment reminders of an unpaid invoice: three days before its due date, then one, seven and fourteen days after
- * it. The due date is the day the form saved, as its picker's local midnight, so "one day after" is the moment the due
- * day is over.
+ * it. Each goes at the start of its calendar day in the organization's time zone, whatever time of the due day the
+ * invoice holds: the add and edit forms save the end of the picked day, other writers its midnight. So "one day after"
+ * is the moment the due day is over.
  */
 export const INVOICE_REMINDER_STEPS: ReadonlyArray<IInvoiceReminderStep> = [
 	{ step: 1, daysFromDueDate: -3 },
@@ -59,20 +63,23 @@ export interface IDueInvoiceReminder {
  * @param dueDate The invoice's due date, as a driver hands it (a raw SQLite read answers UTC text without its zone).
  * @param emailedAt When the invoice was last emailed to the client.
  * @param now The moment the sweep runs at.
+ * @param timeZone The zone the due day is read in: the organization's (see `invoiceTimeZoneOf`), as its emails print it.
  */
 export function invoiceReminderDueAt(
 	dueDate: Date | string,
 	emailedAt: Date | string,
-	now: Date
+	now: Date,
+	timeZone: string
 ): IDueInvoiceReminder | null {
 	const due = instantOf(dueDate);
 	const emailed = instantOf(emailedAt);
 	if (Number.isNaN(due) || Number.isNaN(emailed)) {
 		return null;
 	}
+	const dueDay = moment.utc(due).tz(timeZone).startOf('day');
 	let latest: IDueInvoiceReminder | null = null;
 	for (const { step, daysFromDueDate } of INVOICE_REMINDER_STEPS) {
-		const at = due + daysFromDueDate * DAY_MS;
+		const at = dueDay.clone().add(daysFromDueDate, 'days').valueOf();
 		if (at <= now.getTime()) {
 			latest = { step, at, isOverdue: daysFromDueDate > 0 };
 		}
@@ -103,14 +110,21 @@ export function amountLeftToPay(
 	return left > 0 ? left : null;
 }
 
-/** The earliest due date an invoice may have and still be due a reminder at `now`: the last step's, plus the grace. */
+/**
+ * The earliest due date an invoice may have and still be due a reminder at `now`, in any time zone: the last step's,
+ * plus the grace, plus the hour a clock change can add to the calendar days between. `invoiceReminderDueAt` decides.
+ */
 export function earliestRemindedDueDate(now: Date): Date {
 	const last = INVOICE_REMINDER_STEPS[INVOICE_REMINDER_STEPS.length - 1];
-	return new Date(now.getTime() - last.daysFromDueDate * DAY_MS - INVOICE_REMINDER_GRACE_MS);
+	return new Date(now.getTime() - last.daysFromDueDate * DAY_MS - INVOICE_REMINDER_GRACE_MS - HOUR_MS);
 }
 
-/** The latest due date an invoice may have and be due a reminder at `now`: the first step's. */
+/**
+ * The latest due date an invoice may have and be due a reminder at `now`, in any time zone: the first step's, plus the
+ * whole due day (the step goes at its start, the date may hold any time of it, and a clock change makes a day 25 hours
+ * long), plus the hour a clock change can take from the calendar days between. `invoiceReminderDueAt` decides.
+ */
 export function latestRemindedDueDate(now: Date): Date {
 	const first = INVOICE_REMINDER_STEPS[0];
-	return new Date(now.getTime() - first.daysFromDueDate * DAY_MS);
+	return new Date(now.getTime() - first.daysFromDueDate * DAY_MS + DAY_MS + 2 * HOUR_MS);
 }

@@ -246,6 +246,20 @@ describe('InvoiceReminderService on SQLite', () => {
 		expect(emails.sendInvoiceReminder).toHaveBeenCalledTimes(1);
 	});
 
+	it('reads a due date saved as the forms save it, the end of the picked day, in the organization zone', async () => {
+		// 30 November picked in Paris: saved as 30 November 23:59:59.999 there, 22:59:59.999 UTC
+		await anInvoice({ dueIn: -11 * HOUR - 1 });
+
+		// 30 November, 23:30 in Paris: the client still has the day to pay
+		await service.sweep(fromNow(-11 * HOUR - 30 * 60 * 1000));
+		expect(emails.sendInvoiceReminder).not.toHaveBeenCalled();
+
+		// 1 December, 00:30 in Paris: the day after the due date
+		await service.sweep(fromNow(-11 * HOUR + 30 * 60 * 1000));
+		expect(sent()).toEqual([expect.objectContaining({ isOverdue: true, dueDate: '30/11/2026' })]);
+		expect(await claims()).toEqual([expect.objectContaining({ step: 2 })]);
+	});
+
 	it('emails the reminder before the due date as not overdue', async () => {
 		await anInvoice({ dueIn: 3 * DAY - HOUR });
 
