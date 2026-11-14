@@ -68,7 +68,7 @@ import {
 	teamIdForEntry
 } from '../time-log/organization-tracking-requirements';
 import { isTrackerSource } from '../time-log/tracker-source';
-import { assertBreaksAllowedIn, isBreak } from '../time-log/break-rules';
+import { assertBreakOverlapsNothing, assertBreaksAllowedIn, isBreak } from '../time-log/break-rules';
 import { TypeOrmTimeLogRepository } from '../time-log/repository/type-orm-time-log.repository';
 import { MikroOrmTimeLogRepository } from '../time-log/repository/mikro-orm-time-log.repository';
 import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-employee.repository';
@@ -384,6 +384,7 @@ export class TimerService {
 		const startsBreak = logType === TimeLogType.BREAK;
 		if (startsBreak) {
 			assertBreaksAllowedIn(requirements);
+			await this.assertBreakStartOverlapsNothing({ employeeId, organizationId, tenantId }, startedAt);
 		}
 
 		const teamIdToLog = await teamIdForEntry(manager, trackedEmployee, request, requirements);
@@ -452,6 +453,30 @@ export class TimerService {
 
 		// Return the newly created time log entry
 		return timeLog;
+	}
+
+	/**
+	 * Refuses a break whose start, set in the past, would overlap a finished entry of the employee: a break never cuts
+	 * other entries (see break-rules). The entry running now is no overlap, since the start stops it.
+	 *
+	 * @param employee The employee starting the break, in their organization and tenant.
+	 * @param startedAt The start of the break.
+	 * @throws ConflictException with the code BREAK_OVERLAP.
+	 */
+	private async assertBreakStartOverlapsNothing(
+		employee: { employeeId: ID; organizationId: ID; tenantId: ID },
+		startedAt: Date
+	): Promise<void> {
+		const now = moment.utc().toDate();
+		const startsInThePast = moment.utc(now).diff(startedAt, 'seconds') >= 1;
+		if (!startsInThePast) {
+			return;
+		}
+		const conflicts: ITimeLog[] = await this._commandBus.execute(
+			new IGetConflictTimeLogCommand({ ...employee, startDate: startedAt, endDate: now })
+		);
+		const finished = (conflicts ?? []).filter((log) => !log.isRunning);
+		assertBreakOverlapsNothing(finished);
 	}
 
 	/**

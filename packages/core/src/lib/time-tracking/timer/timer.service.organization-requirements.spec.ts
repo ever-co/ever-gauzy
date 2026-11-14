@@ -1,13 +1,13 @@
 // Must stay first: see timer.service.spec.ts.
 import '../../core/entities/internal';
 
-import { BadRequestException, ForbiddenException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException } from '@nestjs/common';
 import { IOrganization, ITimerToggleInput, IUser, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
 import { OrganizationTeam, OrganizationTeamEmployee, Task } from '../../core/entities/internal';
 import { asTenantUser, createTenantFixture } from '../../core/testing/tenant-isolation/tenant-isolation.fixtures';
-import { TimeLogCreateCommand } from '../time-log/commands';
+import { IGetConflictTimeLogCommand, TimeLogCreateCommand } from '../time-log/commands';
 import { TRACKING_FIELD_REQUIRED } from '../time-log/organization-tracking-requirements';
-import { BREAKS_NOT_ALLOWED } from '../time-log/break-rules';
+import { BREAK_OVERLAP, BREAKS_NOT_ALLOWED } from '../time-log/break-rules';
 import { TimerService } from './timer.service';
 
 /**
@@ -275,6 +275,39 @@ describe('TimerService.startTimer under the organization tracking requirements',
 
 		expect(stopPreviousRunningTimers).toHaveBeenCalled();
 		expect(createdLog()).toMatchObject({ logType: TimeLogType.BREAK, taskId: 'task-1', isBillable: false });
+	});
+
+	/** The conflict read answers `conflicts`; every other command answers the new log. */
+	const conflictsAre = (conflicts: object[]) =>
+		execute.mockImplementation(async (command: unknown) => {
+			if (command instanceof IGetConflictTimeLogCommand) {
+				return conflicts;
+			}
+			return { id: 'log-new' };
+		});
+	const anHourAgo = () => new Date(Date.now() - 3600 * 1000);
+
+	it('refuses a break started in the past over a finished entry, and stops nothing', async () => {
+		organization = { allowBreaks: true };
+		conflictsAre([{ id: 'finished', isRunning: false }]);
+
+		const refusal = await start({ logType: TimeLogType.BREAK, startedAt: anHourAgo() } as ITimerToggleInput).catch(
+			(caught) => caught
+		);
+
+		expect(refusal).toBeInstanceOf(ConflictException);
+		expect((refusal as ConflictException).getResponse()).toMatchObject({ code: BREAK_OVERLAP });
+		expect(createdLog()).toBeUndefined();
+		expect(stopPreviousRunningTimers).not.toHaveBeenCalled();
+	});
+
+	it('starts a break started in the past over the run it replaces, which the start stops', async () => {
+		organization = { allowBreaks: true };
+		conflictsAre([{ id: 'running', isRunning: true }]);
+
+		await start({ logType: TimeLogType.BREAK, startedAt: anHourAgo() } as ITimerToggleInput);
+
+		expect(createdLog()).toMatchObject({ logType: TimeLogType.BREAK });
 	});
 
 	it('still refuses a start when tracking is disabled for the employee, before any switch', async () => {
