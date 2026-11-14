@@ -190,4 +190,38 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])('ScheduleTimeLogEnt
 		expect(table[0]).toMatchObject({ id: 'log-1', isRunning: false });
 		expect(table[1]).toMatchObject({ id: 'log-2', isRunning: true });
 	});
+
+	it('closes only the running logs the command names, and still ends a log stored without one', async () => {
+		const { handler, table } = setup();
+		const employeeOne = { employeeId: 'employee-1', organizationId: 'organization-1', tenantId: 'tenant-1' };
+		table.push(
+			// Started by another client after the stop read the runs going
+			{
+				id: 'log-started-meanwhile',
+				...employeeOne,
+				isRunning: true,
+				startedAt: new Date('2026-11-12T11:20:00.000Z'),
+				stoppedAt: new Date('2026-11-12T11:20:00.000Z')
+			},
+			// Stored stopped, without an end
+			{
+				id: 'log-without-end',
+				...employeeOne,
+				isRunning: false,
+				startedAt: new Date('2026-11-12T09:00:00.000Z'),
+				stoppedAt: null
+			}
+		);
+
+		await handler.execute(new ScheduleTimeLogEntriesCommand('employee-1', 'organization-1', 'tenant-1', ['log-1']));
+
+		const row = (id: string) => table.find((candidate) => candidate.id === id);
+		expect(row('log-1')).toMatchObject({ isRunning: false });
+		expect(row('log-started-meanwhile')).toMatchObject({ isRunning: true });
+		// No slot and over ten minutes old: ten seconds after its start, as every start and stop gave it on develop
+		expect(row('log-without-end')).toMatchObject({
+			isRunning: false,
+			stoppedAt: new Date('2026-11-12T09:00:10.000Z')
+		});
+	});
 });

@@ -6,6 +6,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { CHAT_MESSAGE_MAX_LENGTH, ChatMemberRoleEnum } from '@gauzy/contracts';
 import { ChatPerson, nameHue } from '../../chat-ui.helpers';
 import { PersonAvatarComponent } from '../person-avatar/person-avatar.component';
+import { PresenceLabelComponent } from '../presence-label/presence-label.component';
 
 /** How the person stands in the open conversation: their role and since when (null outside a conversation). */
 export interface PersonCardMembership {
@@ -22,7 +23,7 @@ export interface PersonCardMembership {
 @Component({
 	selector: 'ngx-chat-person-card',
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [DatePipe, RouterLink, NbIconModule, NbTooltipModule, TranslatePipe, PersonAvatarComponent],
+	imports: [DatePipe, RouterLink, NbIconModule, NbTooltipModule, TranslatePipe, PersonAvatarComponent, PresenceLabelComponent],
 	template: `
 		@let who = person();
 		<section class="profile" role="dialog" [attr.aria-label]="who.name" data-test="person-card">
@@ -53,6 +54,7 @@ export interface PersonCardMembership {
 						<span class="chip">{{ 'CHAT.PROFILE.YOU' | translate }}</span>
 					}
 				</div>
+				<ngx-chat-presence-label class="presence" [employeeId]="who.employeeId"></ngx-chat-presence-label>
 
 				@if (membership(); as member) {
 					<div class="meta">
@@ -161,6 +163,9 @@ export interface PersonCardMembership {
 				flex-direction: column;
 				gap: 0.375rem;
 				padding: 2.875rem 1rem 1rem;
+			}
+			.presence {
+				margin-top: 0.25rem;
 			}
 			.name-line {
 				display: flex;

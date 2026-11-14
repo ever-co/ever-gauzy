@@ -1,9 +1,10 @@
 // The ui-core barrel boots half the app (and needs packages this spec does not): what the chat names from it is doubled.
 jest.mock('@gauzy/ui-core/core', () => ({ Store: class Store {}, ToastrService: class ToastrService {} }));
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of, Subject, throwError } from 'rxjs';
+import { NEVER, of, Subject, throwError } from 'rxjs';
 import { ChatUiService, ChatUploadAnswer } from '../../services/chat-ui.service';
 import { clearDraft, ComposerSubmission, MessageComposerComponent } from './message-composer.component';
+import { ChatPresenceService } from '../../services/chat-presence.service';
 
 const PEOPLE = { byEmployee: new Map(), byUser: new Map(), list: [] };
 
@@ -28,7 +29,7 @@ describe('MessageComposerComponent', () => {
 		discardAttachment = jest.fn(() => of({ discarded: true }));
 		await TestBed.configureTestingModule({
 			imports: [MessageComposerComponent],
-			providers: [{ provide: ChatUiService, useValue: { uploadFile, discardAttachment } }]
+			providers: [{ provide: ChatUiService, useValue: { uploadFile, discardAttachment } }, { provide: ChatPresenceService, useValue: { presenceOf: () => 'offline', lastSeenOf: () => null, watch: () => NEVER, apply: () => undefined, applyList: () => undefined } }]
 		}).compileComponents();
 		fixture = TestBed.createComponent(MessageComposerComponent);
 		fixture.componentRef.setInput('people', PEOPLE);

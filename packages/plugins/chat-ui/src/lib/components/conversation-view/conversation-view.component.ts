@@ -184,7 +184,7 @@ export function unreadMarkerId(messages: readonly IChatMessageWithRelations[], s
 						@if (memberFaces().length) {
 							<span class="faces">
 								@for (face of memberFaces(); track face.employeeId) {
-									<ngx-chat-person-avatar [person]="face" size="tiny"></ngx-chat-person-avatar>
+									<ngx-chat-person-avatar [person]="face" size="tiny" [presence]="false"></ngx-chat-person-avatar>
 								}
 							</span>
 						} @else {

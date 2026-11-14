@@ -96,7 +96,14 @@ import { MikroOrmPasswordResetRepository } from './../password-reset/repository/
 import { RoleService } from './../role/role.service';
 import { isDeactivatedEmployee } from './deactivated-employee';
 import { EmailConfirmationService } from './email-confirmation.service';
-import { warnRejectedEmailLink, withAllowedEmailLinks } from './email-link-origin';
+import {
+	allowedEmailLink,
+	allowedEmailLinkOrigins,
+	emailLinkOrigin,
+	isAllowedEmailLink,
+	warnRejectedEmailLink,
+	withAllowedEmailLinks
+} from './email-link-origin';
 import { signupRequiresEmailVerification } from './signup-email-verification';
 import { canResetPasswordByEmail } from './auth-switches/admin-password-reset';
 import {
@@ -1336,6 +1343,9 @@ export class AuthService extends SocialAuthService {
 			// Initialize an array to store reset links along with tenant and user information
 			const tenantUsersMap: { resetLink: string; tenant?: ITenant; user: IUser }[] = [];
 
+			// The page every link of this request opens
+			const baseURL = this.resetPasswordPage(request.appResetPasswordUrl);
+
 			// Iterate through users and generate reset links
 			for await (const user of users) {
 				const { email, tenantId } = user;
@@ -1375,9 +1385,6 @@ export class AuthService extends SocialAuthService {
 							})
 						);
 
-						// Initialize Base URL
-						let baseURL = `${environment.clientBaseUrl}/#/auth/reset-password`;
-
 						// Generate the reset link using the helper function
 						const resetLink = this.generateResetLink(baseURL, token, email, tenantId);
 
@@ -1412,6 +1419,37 @@ export class AuthService extends SocialAuthService {
 	}
 
 	/**
+	 * The page the link of the password reset email opens.
+	 *
+	 * A client app may ask for its own page (`appResetPasswordUrl`), as it does for the sign-in code
+	 * email: that is how Ever Teams opens its own page. The link carries the reset token, so the page
+	 * is used only on an origin this deployment serves (see email-link-origin.ts). Anything else gets
+	 * the Gauzy app's page, and the answer to the caller does not change.
+	 *
+	 * @param requested The page the caller asked for, if any.
+	 * @returns The page to build the reset links on.
+	 */
+	private resetPasswordPage(requested: unknown): string {
+		const ownPage = `${environment.clientBaseUrl}/#/auth/reset-password`;
+		if (requested === undefined || requested === null || requested === '') {
+			return ownPage;
+		}
+
+		// The link carries a token that sets the account's password: only an origin the deployment lists, even where
+		// EMAIL_LINK_ALLOWED_ORIGINS=* switches the check off for the other emailed links.
+		const isListed = isAllowedEmailLink(requested, allowedEmailLinkOrigins());
+		const page = isListed ? allowedEmailLink(requested) : null;
+		if (!page) {
+			warnRejectedEmailLink(this.logger, 'the password reset email')(
+				'appResetPasswordUrl',
+				emailLinkOrigin(requested)
+			);
+			return ownPage;
+		}
+		return page;
+	}
+
+	/**
 	 * Generates a password reset link.
 	 *
 	 * @param baseURL The base URL for the reset password page.
@@ -1432,8 +1470,15 @@ export class AuthService extends SocialAuthService {
 		// Convert query params object to a string
 		const queryString = buildQueryString(params);
 
-		// Combine base URL with query params
-		return `${baseURL}?${queryString}`;
+		// A hash-routed page (`/#/auth/reset-password`, the Gauzy app's) reads its parameters from the route after
+		// `#`; any other page from its own query, which comes before a fragment it may carry.
+		const hashAt = baseURL.indexOf('#');
+		const fragment = hashAt === -1 ? '' : baseURL.slice(hashAt);
+		if (fragment.startsWith('#/') || fragment.startsWith('#!/')) {
+			return `${baseURL}${fragment.includes('?') ? '&' : '?'}${queryString}`;
+		}
+		const page = hashAt === -1 ? baseURL : baseURL.slice(0, hashAt);
+		return `${page}${page.includes('?') ? '&' : '?'}${queryString}${fragment}`;
 	}
 
 	/**

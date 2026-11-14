@@ -43,17 +43,26 @@ function findRows(rows: TimeLogRow[], where: Record<string, unknown>): TimeLogRo
 		.sort((a, b) => time(b.startedAt) - time(a.startedAt) || time(b.createdAt) - time(a.createdAt));
 }
 
+/** The update a stop sent: its read of the logs the run overlaps comes before it. */
+function sentUpdate(execute: jest.Mock): TimeLogUpdateCommand {
+	return execute.mock.calls.map(([command]) => command).find((command) => command instanceof TimeLogUpdateCommand);
+}
+
 /** A `TimerService` over `rows`, on the given ORM, whose command bus applies a `TimeLogUpdateCommand` to its row. */
 function createService(ormType: MultiORMEnum, rows: TimeLogRow[], employee: Record<string, string>) {
 	const typeOrmTimeLogRepository = {
-		findOne: async ({ where }: { where: Record<string, unknown> }) => findRows(rows, where)[0] ?? null
+		findOne: async ({ where }: { where: Record<string, unknown> }) => findRows(rows, where)[0] ?? null,
+		// A stop reads every run going as it begins, latest first (`getLastRunningLogs`)
+		find: async ({ where }: { where: Record<string, unknown> }) => findRows(rows, where)
 	};
 	const mikroOrmTimeLogRepository = {
 		findOne: async (where: Record<string, unknown>) => {
 			const row = findRows(rows, where)[0];
 			// A MikroORM-loaded row: `wrapSerialize` calls its `toJSON`
 			return row ? { ...row, toJSON: () => ({ ...row }) } : null;
-		}
+		},
+		findAll: async ({ where }: { where: Record<string, unknown> }) =>
+			findRows(rows, where).map((row) => ({ ...row, toJSON: () => ({ ...row }) }))
 	};
 	const execute = jest.fn(async (command: unknown) => {
 		if (command instanceof TimeLogUpdateCommand) {
@@ -158,7 +167,7 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 				})
 			);
 
-			const update = execute.mock.calls[0][0] as TimeLogUpdateCommand;
+			const update = sentUpdate(execute);
 			expect(update).toBeInstanceOf(TimeLogUpdateCommand);
 			expect(update.id).toBe('log-running');
 			expect(update.input).toEqual({ isRunning: false, stoppedAt: new Date('2026-11-12T11:00:00.000Z') });
@@ -175,7 +184,57 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 
 			await service.stopTimer(stopBody({ source: TimeLogSourceEnum.TEAMS }));
 
-			const update = execute.mock.calls[0][0] as TimeLogUpdateCommand;
+			const update = sentUpdate(execute);
+			expect(update.id).toBe('log-running');
+			expect(update.input).toEqual({ isRunning: false, stoppedAt: NOW });
+		});
+
+		it('answers 406 to a stop naming no time when a start took the turn after it arrived, and the newer run goes on', async () => {
+			const rows = [runningSince1030()];
+			const { service, execute, employeeService, stopPreviousRunningTimers, handleConflictingTimeLogs } =
+				setup(rows);
+			// The stop arrives at 11:30 (NOW). While it looks up the employee, before it takes the employee's turn, a
+			// start from another device gets the turn first: it stops the 10:30 run and begins one at 11:30:05.
+			const newerRun: TimeLogRow = {
+				...runningSince1030(),
+				id: 'log-newer',
+				source: TimeLogSourceEnum.WEB_TIMER,
+				startedAt: new Date('2026-11-12T11:30:05.000Z'),
+				stoppedAt: new Date('2026-11-12T11:30:05.000Z'),
+				createdAt: new Date('2026-11-12T11:30:05.000Z')
+			};
+			employeeService.findOneByUserId.mockImplementationOnce(async () => {
+				Object.assign(rows[0], { isRunning: false, stoppedAt: new Date('2026-11-12T11:30:05.000Z') });
+				rows.push(newerRun);
+				jest.spyOn(Date, 'now').mockReturnValue(new Date('2026-11-12T11:30:06.000Z').getTime());
+				return employee;
+			});
+
+			const stop = service.stopTimer(stopBody({ source: TimeLogSourceEnum.TEAMS }));
+
+			await expect(stop).rejects.toBeInstanceOf(NotAcceptableException);
+			expect(execute).not.toHaveBeenCalled();
+			expect(employeeService.update).not.toHaveBeenCalled();
+			expect(stopPreviousRunningTimers).not.toHaveBeenCalled();
+			expect(handleConflictingTimeLogs).not.toHaveBeenCalled();
+			expect(rows.find((row) => row.id === 'log-newer')).toMatchObject({
+				isRunning: true,
+				stoppedAt: new Date('2026-11-12T11:30:05.000Z')
+			});
+		});
+
+		it('stops a run that started before a stop naming no time arrived, at the time it arrived', async () => {
+			const rows = [runningSince1030()];
+			const { service, execute, employeeService } = setup(rows);
+			// The stop waits for its turn: by then it is 11:30:20, but it arrived at 11:30 (NOW)
+			employeeService.findOneByUserId.mockImplementationOnce(async () => {
+				jest.spyOn(Date, 'now').mockReturnValue(new Date('2026-11-12T11:30:20.000Z').getTime());
+				return employee;
+			});
+
+			await service.stopTimer(stopBody({ source: TimeLogSourceEnum.TEAMS }));
+
+			const update = sentUpdate(execute);
 			expect(update.id).toBe('log-running');
 			expect(update.input).toEqual({ isRunning: false, stoppedAt: NOW });
 		});
@@ -201,7 +260,7 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 				})
 			);
 
-			const update = execute.mock.calls[0][0] as TimeLogUpdateCommand;
+			const update = sentUpdate(execute);
 			expect(update.id).toBe('log-running');
 			expect(update.input).toEqual({ isRunning: false });
 			expect(rows[0]).toMatchObject({ isRunning: false, stoppedAt: new Date('2026-11-12T10:03:00.000Z') });
