@@ -258,17 +258,17 @@ describe('TimeLogService and the organization default billing rate', () => {
 			{ duration: 7200, employee: { billRateValue: 0 } }
 		];
 
-		const projectBudget = async (budgetType: string) => {
+		const projectBudget = async (budgetType: string, logs: Array<Record<string, unknown>> = timeLogs) => {
 			const projectBuilder = new RecordingQueryBuilder('organization_project');
-			projectBuilder.rows = [{ id: PROJECT_ID, name: 'Site', budget: 1000, budgetType, timeLogs }];
+			projectBuilder.rows = [{ id: PROJECT_ID, name: 'Site', budget: 1000, budgetType, timeLogs: logs }];
 			Object.assign(service.typeOrmOrganizationProjectRepository, { createQueryBuilder: () => projectBuilder });
 			const [report] = await service.getProjectBudgetLimit(request);
 			return report;
 		};
 
-		const clientBudget = async (budgetType: string) => {
+		const clientBudget = async (budgetType: string, logs: Array<Record<string, unknown>> = timeLogs) => {
 			const clientBuilder = new RecordingQueryBuilder('organization_contact');
-			clientBuilder.rows = [{ id: CLIENT_ID, name: 'Acme', budget: 1000, budgetType, timeLogs }];
+			clientBuilder.rows = [{ id: CLIENT_ID, name: 'Acme', budget: 1000, budgetType, timeLogs: logs }];
 			Object.assign(service.typeOrmOrganizationContactRepository, { createQueryBuilder: () => clientBuilder });
 			const [report] = await service.getClientBudgetLimit(request);
 			return report;
@@ -292,6 +292,15 @@ describe('TimeLogService and the organization default billing rate', () => {
 
 			expect(await projectBudget('cost')).toEqual(expect.objectContaining({ spent: 600 }));
 			expect(await clientBudget('cost')).toEqual(expect.objectContaining({ spent: 600 }));
+		});
+
+		it('prices a log without its employee at nothing in the client budget, as the project budget does', async () => {
+			organizationLookup({ currency: 'EUR', defaultBillRateValue: 80 });
+			// The hour of a log whose employee was not loaded is no member's time, so no rate prices it
+			const logs = [...timeLogs, { duration: 3600 }];
+
+			expect(await projectBudget('cost', logs)).toEqual(expect.objectContaining({ spent: 760 }));
+			expect(await clientBudget('cost', logs)).toEqual(expect.objectContaining({ spent: 760 }));
 		});
 
 		it('reads no organization for an hour budget, which prices nothing', async () => {

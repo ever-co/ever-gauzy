@@ -1499,12 +1499,15 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				const budget = organizationContact.budget || 0;
 
 				const spent = timeLogs.reduce((total: number, log: ITimeLog) => {
+					if (budgetType === OrganizationContactBudgetTypeEnum.HOURS) {
+						return total + log.duration / 3600;
+					}
+					// A log without its employee loaded is no member's time: priced at nothing, as the project budget does
+					if (!log.employee) {
+						return total;
+					}
 					const { rate } = billRateOf(log.employee, null, defaultRate);
-					const amount =
-						budgetType === OrganizationContactBudgetTypeEnum.HOURS
-							? total + log.duration / 3600
-							: total + (log.duration / 3600) * (rate || 0);
-					return amount;
+					return total + (log.duration / 3600) * (rate || 0);
 				}, 0);
 
 				const spentPercentage = (spent * 100) / budget;
