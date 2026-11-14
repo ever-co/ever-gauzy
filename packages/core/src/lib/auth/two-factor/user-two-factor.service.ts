@@ -245,12 +245,16 @@ export class UserTwoFactorService extends CrudService<UserTwoFactor> {
 
 		const recoveryCodes = generateRecoveryCodes();
 		const enabledAt = new Date();
+		// Only the secret the code was checked against: an enrolment started again meanwhile replaced it, and turning that
+		// one on would enable a secret nobody proved.
 		const turnedOn = await this.update(
-			{ id: row.id, enabledAt: IsNull() },
+			{ id: row.id, enabledAt: IsNull(), secret: row.secret },
 			{ enabledAt, recoveryCodes: this.serializeHashes(recoveryCodes), lastUsedTimeStep: step }
 		);
 		if (!this.changedOne(turnedOn)) {
-			throw new ConflictException('Two-factor authentication was turned on meanwhile.');
+			throw new ConflictException(
+				'The setup was started again or finished meanwhile: start it again and confirm with the new code.'
+			);
 		}
 		return { enabledAt, recoveryCodes };
 	}

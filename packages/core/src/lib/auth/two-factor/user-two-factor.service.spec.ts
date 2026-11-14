@@ -332,3 +332,65 @@ describe('UserTwoFactorService', () => {
 		TIMEOUT
 	);
 });
+
+describe('UserTwoFactorService races and MikroORM reads', () => {
+	const previousKey = process.env.ENCRYPTION_KEY;
+	let dataSource: DataSource;
+	let service: UserTwoFactorService;
+	const USER = { id: '9c000000-0000-4000-8000-0000000000e1', tenantId: TENANT, email: 'race@example.com' };
+
+	beforeAll(async () => {
+		process.env.ENCRYPTION_KEY = randomBytes(32).toString('base64');
+		dataSource = new DataSource({
+			type: 'better-sqlite3',
+			database: ':memory:',
+			entities: coreEntities,
+			synchronize: true,
+			logging: false
+		});
+		await dataSource.initialize();
+		await insertRow(dataSource, Tenant, { id: TENANT, name: 'Tenant' });
+		await insertRow(dataSource, User, { id: USER.id, tenantId: TENANT, email: USER.email });
+	}, TIMEOUT);
+
+	afterAll(async () => {
+		await dataSource?.destroy();
+		if (previousKey === undefined) {
+			delete process.env.ENCRYPTION_KEY;
+		} else {
+			process.env.ENCRYPTION_KEY = previousKey;
+		}
+	});
+
+	beforeEach(() => {
+		const repository = new TypeOrmUserTwoFactorRepository(dataSource.getRepository(UserTwoFactor));
+		service = new UserTwoFactorService(
+			repository,
+			undefined,
+			new EncryptionService(),
+			new LoginAttemptService(null)
+		);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it(
+		'does not turn on a secret that an enrolment started again put in place after the code was checked',
+		async () => {
+			const { secret } = await service.enroll(USER);
+			const checker = service as unknown as { acceptCode(row: unknown, code: string): Promise<number | null> };
+			const acceptCode = checker.acceptCode.bind(service);
+			jest.spyOn(checker, 'acceptCode').mockImplementation(async (row, code) => {
+				const step = await acceptCode(row, code);
+				// Another session starts the setup again, between the check and the write
+				await service.enroll(USER);
+				return step;
+			});
+
+			expect(await statusOf(service.confirm(USER.id, totpAt(secret, Date.now())))).toBe(HttpStatus.CONFLICT);
+			expect(await service.isEnabled(USER.id)).toBe(false);
+		},
+		TIMEOUT
+	);
+
+});
