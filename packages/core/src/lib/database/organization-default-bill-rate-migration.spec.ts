@@ -64,6 +64,15 @@ describe('organization default billing rate migration on SQLite', () => {
 
 		expect(await column('defaultBillRateValue')).toBeDefined();
 	});
+
+	it('runs up again after down, finding the columns the embedded dialect kept', async () => {
+		await run('up');
+		await run('down');
+		await expect(run('up')).resolves.toBeUndefined();
+
+		expect(await column('defaultBillRateValue')).toMatchObject({ type: 'numeric(14,2)', notnull: 0 });
+		expect(await column('defaultBillRateCurrency')).toMatchObject({ type: 'varchar', notnull: 0 });
+	});
 });
 
 describe('organization default billing rate migration on MySQL', () => {
