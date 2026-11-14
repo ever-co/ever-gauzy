@@ -458,6 +458,11 @@ const DELIBERATELY_OPEN: ReadonlyArray<string> = Object.freeze([
 	'UserController.updatePreferredComponentLayout',
 	'UserController.updatePreferredLanguage',
 	'UserController.updateUiPreferences',
+	// UserSessionController: own sessions: UserSessionService reads the tokens of RequestContext.currentUserId() only, a
+	// session id reaches one of them or nothing, and signing out the others needs the account's password or sign-in code
+	// (user-session.service.ts assertOwnerConfirmed)
+	'UserSessionController.signOut',
+	'UserSessionController.signOutOthers',
 	// WakatimeController (integration-wakatime plugin): own heartbeats: WakatimeService files every heartbeat under the
 	// employee of the caller, never one the body names, and refuses a caller with no employee (wakatime.service.ts
 	// parameterSanitize)

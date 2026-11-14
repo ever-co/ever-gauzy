@@ -1,4 +1,5 @@
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { IToken } from '../token/interfaces';
 import { ScopedTokenService } from '../token/scoped-token.service';
 import { ACCESS_TOKEN, IAccessTokenMetadata } from './type.token';
 
@@ -43,5 +44,54 @@ export class AccessTokenService {
 			rawToken,
 			reason
 		});
+	}
+
+	/**
+	 * @param tokenId The id an access token's payload carries (`tokenId`).
+	 * @returns Its stored record, or null when the store has no access token with this id.
+	 */
+	public async findById(tokenId: string): Promise<IToken | null> {
+		return this.tokenService.getTokenById(tokenId);
+	}
+
+	/**
+	 * Records a use of the access token: its last use becomes now.
+	 *
+	 * @param tokenId The stored token's id.
+	 */
+	public async touch(tokenId: string): Promise<void> {
+		await this.tokenService.touchToken(tokenId);
+	}
+
+	/**
+	 * @param userId The user.
+	 * @returns Their stored access tokens still active, newest first.
+	 */
+	public async findActive(userId: string): Promise<IToken[]> {
+		return this.tokenService.getActiveTokens(userId);
+	}
+
+	/**
+	 * Revokes one of a user's access tokens by its id.
+	 *
+	 * @returns Whether this call revoked it.
+	 */
+	public async revokeById(revocation: {
+		tokenId: string;
+		userId: string;
+		revokedById?: string;
+		reason?: string;
+		reviseRevoked?: boolean;
+	}): Promise<boolean> {
+		return this.tokenService.revokeTokenById(revocation);
+	}
+
+	/**
+	 * @param userId The user.
+	 * @param since The oldest creation date read.
+	 * @returns Their access tokens created since then and revoked.
+	 */
+	public async findRevokedSince(userId: string, since: Date): Promise<IToken[]> {
+		return this.tokenService.getRevokedTokensSince(userId, since);
 	}
 }
