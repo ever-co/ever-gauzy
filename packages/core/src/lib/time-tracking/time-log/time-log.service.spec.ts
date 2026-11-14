@@ -360,13 +360,13 @@ describe('TimeLogService', () => {
 				expect(conditions.some(slotOrBreak)).toBe(true);
 			});
 
-			it('answers a request that names the types it wants with those types only', async () => {
+			it('leaves breaks out of a total even when the request names their type, so no amount prices one', async () => {
 				actAs({ canChangeSelectedEmployee: true });
 
-				await service.getDailyReport({ ...request, logType: [TimeLogType.BREAK] });
+				await service.getOwedAmountReport({ ...request, logType: [TimeLogType.MANUAL, TimeLogType.BREAK] });
 
 				const { conditions } = executedFilters(builder);
-				expect(conditions).not.toContain(breakExclusion);
+				expect(conditions).toContain(breakExclusion);
 				expect(conditions).toContain('"time_log"."logType" IN (:...logType)');
 			});
 
@@ -379,7 +379,12 @@ describe('TimeLogService', () => {
 					{ listsEntries: true }
 				);
 
+				const named = await (service as any).buildMikroOrmTimeLogWhere({
+					...request,
+					logType: [TimeLogType.MANUAL, TimeLogType.BREAK]
+				});
 				expect(total.logType).toEqual({ $ne: TimeLogType.BREAK });
+				expect(named.logType).toEqual({ $in: [TimeLogType.MANUAL] });
 				expect(list.logType).toBeUndefined();
 			});
 

@@ -1723,17 +1723,29 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	}
 
 	/**
-	 * Whether a report read leaves breaks out: every total of worked time does. A read that lists entries keeps them
-	 * (see `keepsBreaks`), and a request that names the types it wants is answered with those types, breaks included
-	 * only when named.
+	 * Whether a report read leaves breaks out: every total of worked time does, even for a request that names their
+	 * type, so a break never reaches a duration, an owed amount or a spent budget. A read that lists entries keeps them
+	 * when asked (see `keepsBreaks`).
 	 *
 	 * @param request The report input.
 	 * @param options How the read treats breaks.
 	 */
 	private leavesBreaksOut(request: IGetTimeLogReportInput, options: ITimeLogReadOptions): boolean {
-		const keepsBreaks = this.keepsBreaks(request, options);
-		const namesTypes = isNotEmpty(request.logType);
-		return !keepsBreaks && !namesTypes;
+		return !this.keepsBreaks(request, options);
+	}
+
+	/**
+	 * The MikroORM condition on the type of a read that leaves breaks out: the types the request names but BREAK, or
+	 * any type but BREAK when it names none.
+	 *
+	 * @param logType The types the request names, if any.
+	 */
+	private mikroOrmTypesWithoutBreaks(logType: IGetTimeLogReportInput['logType']): Record<string, unknown> {
+		const namedTypes: string[] = [].concat(logType ?? []);
+		if (namedTypes.length === 0) {
+			return { $ne: TimeLogType.BREAK };
+		}
+		return { $in: namedTypes.filter((type) => type !== TimeLogType.BREAK) };
 	}
 
 	/**
@@ -1884,7 +1896,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			where.logType = request.logType instanceof Array ? { $in: request.logType } : request.logType;
 		}
 		if (this.leavesBreaksOut(request, options)) {
-			where.logType = { $ne: TimeLogType.BREAK };
+			where.logType = this.mikroOrmTypesWithoutBreaks(request.logType);
 		}
 
 		// An `isEdited` key with no value applies no filter, as in getFilterTimeLogQuery.
