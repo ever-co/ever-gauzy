@@ -1,4 +1,5 @@
 import {
+	CurrencyCode,
 	ID,
 	IEmployee,
 	IOrganizationProject,
@@ -12,6 +13,8 @@ import {
 	IReportDayTaskRow,
 	SAVED_REPORT_NO_CLIENT
 } from '@gauzy/contracts';
+import { currencyPrecision } from '../money/currency-precision';
+import { calculateBillableAmount } from '../time-tracking/time-log/time-log.utils';
 
 /** A member's billing rate, read when the link is opened, with the currency it is in. */
 export interface ISavedReportRate {
@@ -28,8 +31,6 @@ export type SavedReportDay = IReportDayGroupByDate & { sum?: number };
 type ProjectLog = IReportDayGroupByDate['logs'][number];
 type MemberLog = ProjectLog['employeeLogs'][number];
 
-const SECONDS_PER_HOUR = 3600;
-
 /** A count of seconds, 0 for anything that is not a finite number. */
 function secondsOf(value: unknown): number {
 	const seconds = Number(value);
@@ -39,9 +40,9 @@ function secondsOf(value: unknown): number {
 	return 0;
 }
 
-/** Money to the cent. */
-function roundedAmount(value: number): number {
-	return Math.round(value * 100) / 100;
+/** A sum of amounts at the decimals of their currency, without the noise binary addition leaves. */
+function roundedAmount(value: number, currency: string): number {
+	return Number(value.toFixed(currencyPrecision.decimalsFor(currency)));
 }
 
 /** The client a day's project log counts for: the one its project names, none for time without a project. */
@@ -162,14 +163,10 @@ function taskOf(row: IReportDayTaskRow): IPublicSavedReportTask {
 	return entry;
 }
 
-/** What a member's time is worth at their rate; null without a rate. */
+/** What a member's time is worth at their rate, rounded once to its currency, as an invoice line is; null without a rate. */
 function amountOf(seconds: number, rate: ISavedReportRate | null): number | null {
-	const value = rate?.billRateValue;
-	const hasRate = typeof value === 'number' && value > 0;
-	if (!hasRate) {
-		return null;
-	}
-	return roundedAmount((seconds / SECONDS_PER_HOUR) * value);
+	const currency = rate?.billRateCurrency as CurrencyCode | null;
+	return calculateBillableAmount(seconds, rate?.billRateValue, currency);
 }
 
 /** The rate a member is named with: theirs (or none stated) when amounts are shared, nothing otherwise. */
@@ -258,7 +255,7 @@ export function publicTotalsOf(
 	}
 	const amounts = [...byCurrency.entries()].map(([currency, amount]) => ({
 		currency,
-		amount: roundedAmount(amount)
+		amount: roundedAmount(amount, currency)
 	}));
 	return { duration, amounts };
 }

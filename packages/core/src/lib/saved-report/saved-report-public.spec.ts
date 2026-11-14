@@ -237,6 +237,27 @@ describe('publicTotalsOf', () => {
 	});
 });
 
+describe('amounts in currencies without two decimals', () => {
+	it('rounds each amount once to its currency minor unit, as an invoice line does', () => {
+		const rates = new Map<string, ISavedReportRate>([
+			[MARIE, { billRateValue: 1501, billRateCurrency: 'JPY' }],
+			[PAUL, { billRateValue: 7.25, billRateCurrency: 'KWD' }]
+		]);
+		const halfHour = day();
+		halfHour.logs[0].employeeLogs[0].sum = 1800;
+		halfHour.logs[1].employeeLogs[0].sum = 1000;
+
+		const days = publicDaysOf([halfHour, halfHour], rates);
+
+		expect(days[0].logs[0].employeeLogs[0].amount).toBe(751);
+		expect(days[0].logs[1].employeeLogs[0].amount).toBe(2.014);
+		expect(publicTotalsOf(days, true).amounts).toEqual([
+			{ currency: 'JPY', amount: 1502 },
+			{ currency: 'KWD', amount: 4.028 }
+		]);
+	});
+});
+
 describe('memberIdsOf and projectIdsOf', () => {
 	it('name each member and project of the report once', () => {
 		expect(memberIdsOf([day(), day()])).toEqual([MARIE, PAUL]);
