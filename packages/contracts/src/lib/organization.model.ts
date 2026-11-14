@@ -36,11 +36,35 @@ export enum ListsInputTypeEnum {
 	VENDORS = 'VENDORS'
 }
 
+/**
+ * Which way a duration that is not a whole number of rounding intervals goes: to the interval above, to the one
+ * below, or to the closer of the two.
+ */
+export enum DurationRoundingDirectionEnum {
+	UP = 'UP',
+	DOWN = 'DOWN',
+	NEAREST = 'NEAREST'
+}
+
+/**
+ * How a client rounds durations in the reports and exports it shows. The API stores the rule and rounds nothing
+ * itself, and stored time never changes.
+ *
+ * A rule is an interval with a direction, set together. Both are null by default, which rounds nothing, and a
+ * client reads a rule with either value null as no rounding.
+ */
+export interface IOrganizationDurationRoundingSetting {
+	/** The interval in minutes, one of `DURATION_ROUNDING_INTERVALS` (`@gauzy/constants`). */
+	durationRoundingInterval?: number | null;
+	durationRoundingDirection?: DurationRoundingDirectionEnum | null;
+}
+
 export interface IOrganization
 	extends IBasePerTenantEntityModel,
 		IRelationalImageAsset,
 		IOrganizationAgentSetting,
 		IOrganizationTimerSetting,
+		IOrganizationDurationRoundingSetting,
 		IScreenshotCaptureAcknowledgementRecord,
 		ITaggable {
 	name: string;
@@ -140,6 +164,7 @@ export interface IOrganizationCreateInput
 	extends IContact,
 		IRegisterAsEmployee,
 		IRelationalImageAsset,
+		IOrganizationDurationRoundingSetting,
 		IScreenshotCaptureSettingInput {
 	name: string;
 	isDefault?: boolean;
