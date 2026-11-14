@@ -156,6 +156,30 @@ describe('time log stored rates migration on SQLite', () => {
 		});
 	});
 
+	it("stores the organization's currency for a rate whose currency is an empty string", async () => {
+		// An empty currency states none, as when a log is recorded: the fill stores the organization's
+		await dataSource.query(`INSERT INTO "employee" VALUES ('lea', 30, '', 20, '')`);
+		await dataSource.query(`INSERT INTO "organization_project" VALUES ('blank', 50, '', NULL)`);
+		await dataSource.query(
+			`INSERT INTO "organization_project_employee" VALUES ('m5', 'blank', 'lea', 55, 1, 0, NULL)`
+		);
+		await dataSource.query(`INSERT INTO "time_log" VALUES ('lea-blank', 'lea', 'blank', 'org')`);
+
+		await run('up');
+
+		expect(await logOf('lea-blank')).toMatchObject({
+			billRateValue: 30,
+			billRateCurrency: 'BGN',
+			payRateValue: 20,
+			payRateCurrency: 'BGN',
+			projectBillRateValue: 50,
+			projectBillRateCurrency: 'BGN',
+			projectMemberBillRateValue: 55,
+			projectMemberBillRateCurrency: 'BGN',
+			ratesStored: 1
+		});
+	});
+
 	it('never refills a log that already stores its rates, and keeps the columns on down', async () => {
 		await run('up');
 		await dataSource.query(`UPDATE "employee" SET "billRateValue" = 50 WHERE "id" = 'marie'`);
