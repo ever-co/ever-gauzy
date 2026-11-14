@@ -76,9 +76,9 @@ export class OrganizationProjectRateService {
 			{ billRateValue }
 		);
 		const currency = await this.ratesCurrencyOf(project, organizationId, tenantId);
-		// The time logs store the project's own currency, empty meaning the organization's, as they are recorded with
+		// The time logs store the currency the rate is in, as they are recorded with
 		const repriced = await this.repricedFrom(input, (manager, time) =>
-			repriceProjectTime(manager, time, project.id, { billRateValue, currency: project.currency ?? null })
+			repriceProjectTime(manager, time, project.id, { billRateValue, currency })
 		);
 		return { id: project.id, billRateValue, currency, ...repriced };
 	}
@@ -133,9 +133,11 @@ export class OrganizationProjectRateService {
 			{ id: membership.id, tenantId },
 			{ billRateValue }
 		);
-		const repriced = await this.repricedFrom(input, (manager, time) =>
-			repriceMemberProjectTime(manager, time, projectId, employeeId, billRateValue)
-		);
+		const repriced = await this.repricedFrom(input, async (manager, time) => {
+			const project = await this.findProject(projectId, organizationId, tenantId);
+			const currency = await this.ratesCurrencyOf(project, organizationId, tenantId);
+			return await repriceMemberProjectTime(manager, time, projectId, employeeId, { billRateValue, currency });
+		});
 		return { organizationProjectId: projectId, employeeId, billRateValue, ...repriced };
 	}
 

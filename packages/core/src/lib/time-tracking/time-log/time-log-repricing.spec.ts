@@ -90,6 +90,8 @@ describe('re-pricing time from a day', () => {
 		const scope = { tenantId: TENANT, organizationId: ORGANIZATION };
 		// Today's rates, after the raise
 		await insert('employee', { ...scope, id: MARIE, billRateValue: 50, billRateCurrency: 'EUR', payRateValue: 30 });
+		await dataSource.query(`DELETE FROM "organization"`);
+		await insert('organization', { id: ORGANIZATION, tenantId: TENANT, name: 'Studio', currency: 'BGN' });
 		await insert('invoice', { ...scope, id: INVOICE, status: 'SENT' });
 		await insert('invoice_item', { ...scope, id: LINE, invoiceId: INVOICE });
 		const log = (id: string, startedAt: string, extra: Record<string, unknown> = {}) =>
@@ -136,6 +138,16 @@ describe('re-pricing time from a day', () => {
 				payRateValue: 25
 			});
 			expect(await ratesOf(LOG.september)).toMatchObject({ billRateValue: 40 });
+		},
+		TIMEOUT
+	);
+
+	it(
+		"stores the organization's currency with a pay rate that states none",
+		async () => {
+			await repricing.repriceMemberTime(dataSource.manager, october, MARIE, { payRateValue: 30 });
+
+			expect(await ratesOf(LOG.october)).toMatchObject({ payRateValue: 30, payRateCurrency: 'BGN' });
 		},
 		TIMEOUT
 	);
@@ -204,13 +216,10 @@ describe('re-pricing time from a day', () => {
 				billRateValue: 120,
 				currency: 'USD'
 			});
-			const memberCount = await repricing.repriceMemberProjectTime(
-				dataSource.manager,
-				october,
-				PROJECT,
-				MARIE,
-				95
-			);
+			const memberCount = await repricing.repriceMemberProjectTime(dataSource.manager, october, PROJECT, MARIE, {
+				billRateValue: 95,
+				currency: 'USD'
+			});
 
 			expect(projectCount).toBe(2);
 			expect(memberCount).toBe(1);

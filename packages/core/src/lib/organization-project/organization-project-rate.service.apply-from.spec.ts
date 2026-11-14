@@ -59,7 +59,7 @@ describe('OrganizationProjectRateService: a client rate applied from a day', () 
 			expect.anything(),
 			{ tenantId: TENANT, organizationId: ORGANIZATION, from: new Date(FROM) },
 			PROJECT,
-			{ billRateValue: 120, currency: null }
+			{ billRateValue: 120, currency: 'EUR' }
 		);
 		expect(answer).toEqual({ id: PROJECT, billRateValue: 120, currency: 'EUR', repricedTimeLogs: 4 });
 	});
@@ -76,7 +76,7 @@ describe('OrganizationProjectRateService: a client rate applied from a day', () 
 			{ tenantId: TENANT, organizationId: ORGANIZATION, from: new Date(FROM) },
 			PROJECT,
 			'employee-2',
-			95
+			{ billRateValue: 95, currency: 'EUR' }
 		);
 		expect(answer).toMatchObject({ billRateValue: 95, repricedTimeLogs: 2 });
 	});

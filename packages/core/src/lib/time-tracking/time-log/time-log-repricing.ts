@@ -3,6 +3,7 @@ import { ID } from '@gauzy/contracts';
 import { prepareSQLQuery as p } from '../../database/database.helper';
 import { NOT_ON_LIVE_INVOICE_PARAMETERS, notOnLiveInvoice } from '../../invoice-item/invoice-item-billed-time';
 import { Employee, TimeLog } from '../../core/entities/internal';
+import { findOrganizationCurrency } from './time-log-rates';
 
 /** A time log's `invoiceItemId` as an update names it: by the table, which an update does not alias. */
 const UPDATED_TIME_LOG_INVOICE_ITEM = '"time_log"."invoiceItemId"';
@@ -81,14 +82,17 @@ export async function repriceMemberTime(
 	if (!employee) {
 		return 0;
 	}
+	// A rate that states no currency is stored in the organization's, as a new log stores it
+	const organizationCurrency = await findOrganizationCurrency(manager, time);
 	const values: Partial<TimeLog> = {};
 	if (sendsBilling) {
 		values.billRateValue = sentOrStored(sent.billRateValue, employee.billRateValue);
-		values.billRateCurrency = sentOrStored(sent.billRateCurrency, employee.billRateCurrency);
+		values.billRateCurrency =
+			sentOrStored(sent.billRateCurrency, employee.billRateCurrency) || organizationCurrency;
 	}
 	if (sendsPay) {
 		values.payRateValue = sentOrStored(sent.payRateValue, employee.payRateValue);
-		values.payRateCurrency = sentOrStored(sent.payRateCurrency, employee.payRateCurrency);
+		values.payRateCurrency = sentOrStored(sent.payRateCurrency, employee.payRateCurrency) || organizationCurrency;
 	}
 	return await reprice(manager, time, { employeeId }, values);
 }
@@ -120,7 +124,8 @@ export async function repriceProjectTime(
 }
 
 /**
- * Re-prices a member's time on a project from a day at their new client rate on it.
+ * Re-prices a member's time on a project from a day at their new client rate on it, in the project's currency of
+ * the moment, which both client rates a log stores are in.
  *
  * @returns How many time logs took the new rate.
  */
@@ -129,7 +134,11 @@ export async function repriceMemberProjectTime(
 	time: RepricedTime,
 	projectId: ID,
 	employeeId: ID,
-	billRateValue: number | null
+	rate: { billRateValue: number | null; currency: string | null }
 ): Promise<number> {
-	return await reprice(manager, time, { projectId, employeeId }, { projectMemberBillRateValue: billRateValue });
+	const values: Partial<TimeLog> = {
+		projectMemberBillRateValue: rate.billRateValue,
+		projectBillRateCurrency: rate.currency
+	};
+	return await reprice(manager, time, { projectId, employeeId }, values);
 }
