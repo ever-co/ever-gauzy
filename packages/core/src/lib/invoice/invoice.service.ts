@@ -29,7 +29,19 @@ import { OrganizationService } from './../organization';
 import { TypeOrmInvoiceRepository } from './repository/type-orm-invoice.repository';
 import { MikroOrmInvoiceRepository } from './repository/mikro-orm-invoice.repository';
 import { FavoriteService } from '../core/decorators';
-import { saveBillingTime, splitBilledTime, TIME_LOG_NOT_BILLABLE } from '../invoice-item/invoice-item-billed-time';
+import {
+	holdFinalStatus,
+	IInvoiceStatusChange,
+	statesStatusOtherThanVoid,
+	withoutReleasedTimeMark
+} from './invoice-final-status';
+import {
+	assertBillingInOrganization,
+	ILinesRepositories,
+	inLinesTransaction,
+	saveBillingTime,
+	splitBilledTime
+} from '../invoice-item/invoice-item-billed-time';
 
 /**
  * What sending a document by e-mail did.
@@ -81,37 +93,98 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 	/**
 	 * Creates an invoice and writes, on each time log a line names in `timeLogIds`, the line that bills it, in the
 	 * transaction that saves the invoice and its lines (see `saveBillingTime`). An invoice whose lines bill no time is
-	 * created as `create()` creates it.
+	 * created as `create()` creates it. A create that names an invoice saved earlier updates it, so it keeps a final
+	 * status as an update does (see `writeKeepingFinalStatus`).
 	 *
 	 * @param input The invoice and its lines, as the create route and the GraphQL mutation state them.
 	 * @returns The invoice created, with its lines.
-	 * @throws BadRequestException when a line names a time log it may not bill; nothing is saved.
+	 * @throws BadRequestException when a line names a time log it may not bill, or the create would take an invoice
+	 * saved earlier out of a final status; nothing is saved.
 	 */
 	async createWithBilledTime(
-		input: IInvoiceCreateInput & { invoiceItems?: IInvoiceItemCreateInput[] }
+		request: IInvoiceCreateInput & { invoiceItems?: IInvoiceItemCreateInput[] }
 	): Promise<IInvoice> {
+		// The mark of released time billed since is written by the billing only, never from a request body
+		const input = withoutReleasedTimeMark(request);
 		if (!input.invoiceItems) {
-			return await this.create(input);
+			return await this.writeKeepingFinalStatus(input, (service) => service.create(input));
 		}
 		const { lines, billing } = splitBilledTime(input.invoiceItems);
 		const invoice = { ...input, invoiceItems: lines };
 		if (billing.length === 0) {
-			return await this.create(invoice);
+			return await this.writeKeepingFinalStatus(input, (service) => service.create(invoice));
 		}
 		// `create` holds the invoice's organization to the caller's boundary, not the one each nested line states: a line
 		// may only bill time of its invoice's organization (else a member of two organizations could bill one's time on
 		// the other's invoice).
 		const invoiceOrganizationId = input.organizationId ?? input.organization?.id;
-		if (!invoiceOrganizationId || billing.some((line) => String(line.organizationId) !== String(invoiceOrganizationId))) {
-			throw new BadRequestException(TIME_LOG_NOT_BILLABLE);
-		}
+		assertBillingInOrganization(billing, invoiceOrganizationId);
+		const leavesFinalStatus = await this.mayLeaveFinalStatus(input);
 		return await saveBillingTime(
 			this,
-			{ typeOrm: this.typeOrmRepository, mikroOrm: this.mikroOrmRepository },
-			(service) => service.create(invoice),
+			this.ownRepositories(),
+			async (service, transaction) => {
+				if (leavesFinalStatus) {
+					await holdFinalStatus(transaction, input);
+				}
+				return await service.create(invoice);
+			},
 			(created) => created.invoiceItems,
 			billing
 		);
+	}
+
+	/**
+	 * Writes a change to an invoice, or a new invoice, keeping a final status: a void invoice or estimate, or a rejected
+	 * estimate, is not taken out of it (see `assertFinalStatusKept`). A change that may do so runs in a transaction that
+	 * first locks the invoice and reads its status, so a void or a rejection another request writes meanwhile is waited
+	 * for and refused against, not written over. Any other change is written as it was, reading nothing more.
+	 *
+	 * @param change The change, or the new invoice, as the write states it.
+	 * @param write The write, run on the service it is given (the transaction's, when there is one).
+	 * @returns What the write answered.
+	 * @throws BadRequestException when the change states a status the invoice's final status refuses; nothing is saved.
+	 */
+	async writeKeepingFinalStatus(
+		change: IInvoiceStatusChange,
+		write: (service: InvoiceService) => Promise<IInvoice>
+	): Promise<IInvoice> {
+		const leavesFinalStatus = await this.mayLeaveFinalStatus(change);
+		if (!leavesFinalStatus) {
+			return await write(this);
+		}
+		return await inLinesTransaction(this, this.ownRepositories(), async (service, transaction) => {
+			await holdFinalStatus(transaction, change);
+			return await write(service);
+		});
+	}
+
+	/**
+	 * Whether a change may take an invoice out of a final status: it states a status other than VOID, for an invoice
+	 * the caller can read, removed or not, since a write by id updates a removed invoice too. A new id, or an invoice
+	 * the caller cannot read, is left to the write, which answers it as it did.
+	 */
+	private async mayLeaveFinalStatus(change: IInvoiceStatusChange): Promise<boolean> {
+		const namesInvoice = Boolean(change.id);
+		const statesOtherStatus = statesStatusOtherThanVoid(change.status);
+		if (!namesInvoice || !statesOtherStatus) {
+			return false;
+		}
+		const stored = await this.invoiceTheCallerReads(change.id);
+		return stored !== null;
+	}
+
+	/** The invoice of that id as the caller reads it, removed or not; `null` when the caller cannot read it. */
+	private async invoiceTheCallerReads(id: ID): Promise<Invoice | null> {
+		try {
+			return await this.findOneByIdString(id, { withDeleted: true });
+		} catch {
+			return null;
+		}
+	}
+
+	private ownRepositories(): ILinesRepositories<Invoice> {
+		return { typeOrm: this.typeOrmRepository, mikroOrm: this.mikroOrmRepository };
 	}
 
 	/**

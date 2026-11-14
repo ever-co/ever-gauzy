@@ -21076,6 +21076,16 @@ type Employee {
   kind: String
 
   """
+  Whether this member has no account: kept for time and reports only, it never signs in and never runs a timer. Never written through this surface.
+  """
+  isPlaceholder: Boolean
+
+  """
+  The email given when a member without an account was created, if any: never a login. Never written through this surface.
+  """
+  placeholderEmail: String
+
+  """
   The account this engagement belongs to. The account row is read from this surface's own `user(id)` by this identifier.
   """
   userId: ID
@@ -21200,6 +21210,7 @@ input EmployeeFilter {
   upworkId: StringFilter
   linkedInId: StringFilter
   kind: StringFilter
+  isPlaceholder: BooleanFilter
   userId: IDFilter
   contactId: IDFilter
   organizationPositionId: IDFilter
@@ -26680,6 +26691,12 @@ type Invite {
   invitedByUserId: ID
 
   """
+  The member without an account a claim invitation hands over, by identifier: accepting it moves that
+  member's time to the person. Null for every other invitation, and once the member is gone.
+  """
+  placeholderEmployeeId: ID
+
+  """
   The tenant the invitation belongs to, by identifier. Stamped by the delivered write.
   """
   tenantId: ID
@@ -26773,6 +26790,7 @@ input InviteFilter {
   roleId: IDFilter
   userId: IDFilter
   invitedByUserId: IDFilter
+  placeholderEmployeeId: IDFilter
   tenantId: IDFilter
   organizationId: IDFilter
   isActive: BooleanFilter
@@ -33865,6 +33883,19 @@ type Organization {
 
   """Whether the organization renders times on a 12- or a 24-hour clock."""
   timeFormat: Int!
+
+  """
+  The interval, in minutes, a client rounds each duration to in the reports and exports it shows: 1, 5, 6, 10, 15, 30
+  or 60. The API stores the rule and rounds nothing itself, and stored time never changes. Null, the default, means
+  no rounding.
+  """
+  durationRoundingInterval: Int
+
+  """
+  Which way a client rounds a duration to that interval: `UP`, `DOWN` or `NEAREST`. Null, the default, means no
+  rounding. Carried as its own value: the vocabulary is the platform's `DurationRoundingDirectionEnum`.
+  """
+  durationRoundingDirection: String
 
   """
   Whether a document's tax and its discount are stated as separate lines.

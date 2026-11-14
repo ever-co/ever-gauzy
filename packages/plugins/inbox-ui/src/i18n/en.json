@@ -180,7 +180,8 @@
 		"task": "Open task",
 		"comment": "Open comment",
 		"project": "Open project",
-		"agent": "Open agent"
+		"agent": "Open agent",
+		"estimate": "Open estimate"
 	},
 	"NOTIFICATIONS": {
 		"NO_EMPLOYEE": "Notifications are addressed to employees; this account has no employee profile.",
@@ -198,7 +199,8 @@
 			"Broadcast": "Announcement",
 			"RateChangeRequest": "Rate change request",
 			"TaskUpdate": "Task update",
-			"TimerReminder": "Timer reminder"
+			"TimerReminder": "Timer reminder",
+			"Invoice": "Invoice"
 		}
 	},
 	"SETTINGS": {

@@ -11,7 +11,7 @@ import {
 	InboxItemStatusEnum,
 	InboxTabEnum
 } from '@gauzy/contracts';
-import { INBOX_EMPLOYEE_LINK, INBOX_PROJECT_LINK, INBOX_TASK_LINK } from './inbox-ui.constants';
+import { INBOX_EMPLOYEE_LINK, INBOX_ESTIMATE_LINK, INBOX_PROJECT_LINK, INBOX_TASK_LINK } from './inbox-ui.constants';
 
 /** The page's tabs: the API's item tabs plus Notifications (read live from `/employee-notification`). */
 export type InboxUiTab = 'all' | 'decisions' | 'email' | 'notifications' | 'snoozed' | 'done' | 'archived';
@@ -147,14 +147,15 @@ export function snoozeUntil(preset: InboxSnoozePreset, now: Date = new Date()): 
 
 /** One of the links of an item (the detail pane's "Open …" buttons). */
 export interface InboxItemLink {
-	kind: 'task' | 'comment' | 'project' | 'agent';
+	kind: 'task' | 'comment' | 'project' | 'agent' | 'estimate';
 	commands: string[];
 	queryParams?: Record<string, string>;
 }
 
 /**
- * The task, project and agent an item links to, as router commands. A notification about a comment (a comment on
- * a record I follow, a mention in one) opens its task at the comment (`?comment=`), rather than the task alone.
+ * The task, project, agent and estimate an item links to, as router commands. A notification about a comment (a
+ * comment on a record I follow, a mention in one) opens its task at the comment (`?comment=`), rather than the task
+ * alone. One about an invoice (the `Invoice` kind: a client accepted or declined an estimate) opens the estimate.
  */
 export function linksOf(item: Pick<IInboxItem, 'taskId' | 'projectId' | 'agentEmployeeId' | 'entity' | 'entityId'>): InboxItemLink[] {
 	const links: InboxItemLink[] = [];
@@ -167,6 +168,9 @@ export function linksOf(item: Pick<IInboxItem, 'taskId' | 'projectId' | 'agentEm
 	}
 	if (item.projectId) links.push({ kind: 'project', commands: [INBOX_PROJECT_LINK, item.projectId, 'edit'] });
 	if (item.agentEmployeeId) links.push({ kind: 'agent', commands: [INBOX_EMPLOYEE_LINK, item.agentEmployeeId] });
+	if (item.entity === BaseEntityEnum.Invoice && item.entityId) {
+		links.push({ kind: 'estimate', commands: [INBOX_ESTIMATE_LINK, item.entityId] });
+	}
 	return links;
 }
 
@@ -470,7 +474,8 @@ const NOTIFICATION_TYPE_ICONS: Readonly<Record<string, string>> = {
 	[EmployeeNotificationTypeEnum.BROADCAST]: 'volume-up-outline',
 	[EmployeeNotificationTypeEnum.RATE_CHANGE_REQUEST]: 'trending-up-outline',
 	[EmployeeNotificationTypeEnum.TASK_UPDATE]: 'edit-2-outline',
-	[EmployeeNotificationTypeEnum.TIMER_REMINDER]: 'clock-outline'
+	[EmployeeNotificationTypeEnum.TIMER_REMINDER]: 'clock-outline',
+	[EmployeeNotificationTypeEnum.INVOICE]: 'file-text-outline'
 };
 
 /** The icon of a notification's type (a bell for a type the plugin does not know). */

@@ -599,6 +599,10 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 			// A timer left running: switched off through the `preferences` JSON too (`timerReminderHours` null or 0).
 			case EmployeeNotificationTypeEnum.TIMER_REMINDER:
 				return timerReminderHoursOf(employeeNotificationSetting.preferences) !== null;
+			// A client's answer to an estimate, for whoever handles invoices: no switch of its own, as for a rate
+			// change request; its email follows the per-kind email mode (`preferences.emailByType.Invoice`)
+			case EmployeeNotificationTypeEnum.INVOICE:
+				return true;
 			default:
 				throw new Error(`Unsupported notification type: ${type}`);
 		}

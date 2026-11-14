@@ -15,6 +15,7 @@ import { OrganizationModule } from './../organization/organization.module';
 import { PdfmakerService } from './pdfmaker.service';
 import { TypeOrmInvoiceRepository } from './repository/type-orm-invoice.repository';
 import { MikroOrmInvoiceRepository } from './repository/mikro-orm-invoice.repository';
+import { EstimateAnsweredHandler, EstimateAnswerNotifier } from './estimate-answer';
 
 /**
  * The finance document.
@@ -62,7 +63,10 @@ import { MikroOrmInvoiceRepository } from './repository/mikro-orm-invoice.reposi
 		PdfmakerService,
 		TypeOrmInvoiceRepository,
 		MikroOrmInvoiceRepository,
-		...CommandHandlers
+		...CommandHandlers,
+		// A client's answer to an estimate, published by the public estimate link, reaches the team
+		EstimateAnswerNotifier,
+		EstimateAnsweredHandler
 	],
 	exports: [InvoiceService, PdfmakerService, TypeOrmInvoiceRepository, MikroOrmInvoiceRepository, CqrsModule]
 })

@@ -53,7 +53,8 @@ export class TimeLogQueryDTO
 		type: () => Boolean,
 		description:
 			'Leave out the time a live invoice bills: a time log whose invoice line is not removed and belongs to an ' +
-			'invoice that is neither removed nor void. Without it, every log is counted, invoiced or not.'
+			'invoice that is neither removed nor void, nor a rejected estimate. Without it, every log is counted, ' +
+			'invoiced or not.'
 	})
 	@IsOptional()
 	@Transform(({ value }: TransformFnParams) => parseToBoolean(value))

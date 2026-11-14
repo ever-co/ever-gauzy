@@ -2,7 +2,8 @@ import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common
 import { IsNull } from 'typeorm';
 import * as Handlebars from 'handlebars';
 import { IEmailTemplate, IVerifySMTPTransport, LanguagesEnum } from '@gauzy/contracts';
-import { ISMTPConfig } from '@gauzy/common';
+import { IAppIntegrationConfig, ISMTPConfig } from '@gauzy/common';
+import { environment } from '@gauzy/config';
 import { isEmpty } from '@gauzy/utils';
 import { CustomSmtp } from '../core/entities/internal';
 import { SMTPUtils } from './utils';
@@ -15,6 +16,39 @@ import { toTemplateSource } from './../email-template/compile-mjml';
  */
 function uniqueLanguages(...languages: string[]): string[] {
 	return languages.filter((language, index) => !!language && languages.indexOf(language) === index);
+}
+
+/** What a template prints of the app that sends it: its name, logo, signature and link, and its company. */
+const BRANDING_KEYS = ['appName', 'appLogo', 'appSignature', 'appLink', 'companyLink', 'companyName'] as const;
+
+type Branding = Partial<Record<(typeof BRANDING_KEYS)[number], string>>;
+
+/**
+ * `locals` with each branding value its sender left out taken from this deployment's own (`APP_NAME`, `APP_LOGO`,
+ * `APP_SIGNATURE`, `APP_LINK`, `COMPANY_LINK`, `COMPANY_NAME`).
+ *
+ * Only some senders pass the branding (the sign-in code, verification, welcome and account deletion emails). The
+ * invitations and the timesheet, invoice and Inbox emails pass none, so their template printed a logo without a
+ * source and a footer without a name. A value the sender did pass, a client's own branding included, is kept as it is.
+ *
+ * @param locals The locals a sender gave the template.
+ * @returns The same locals, with the missing branding filled in.
+ */
+export function withDefaultBranding<T extends object>(locals: T): T {
+	const defaults: IAppIntegrationConfig = environment.appIntegrationConfig ?? {};
+	const given = (locals ?? {}) as Readonly<Record<string, unknown>>;
+	const branding: Branding = {};
+	for (const key of BRANDING_KEYS) {
+		if (isBlank(given[key]) && !isBlank(defaults[key])) {
+			branding[key] = defaults[key];
+		}
+	}
+	return { ...locals, ...branding };
+}
+
+/** Whether a branding value is missing: absent, or a string of nothing but spaces. */
+function isBlank(value: unknown): boolean {
+	return isEmpty(typeof value === 'string' ? value.trim() : value);
 }
 
 @Injectable()
@@ -98,8 +132,12 @@ export class EmailTemplateRenderService {
 
 			// `hbs` is tenant-editable; Handlebars.compile() must only ever get a string, never an AST
 			// object (GHSA-48h9-vwf5-h8m7).
-			const template = Handlebars.compile(toTemplateSource(emailTemplate.hbs));
-			const html = template(locals);
+			// A subject is plain text, so its values go out as written: escaped like the HTML part, an organization
+			// called "R&D" read "R&amp;D" in the subject line and in the email history. The HTML part stays escaped.
+			const template = Handlebars.compile(toTemplateSource(emailTemplate.hbs), {
+				noEscape: view.endsWith('/subject')
+			});
+			const html = template(withDefaultBranding(locals));
 			return html;
 		} catch (error) {
 			console.log('Error while rendering email template: %s', error);

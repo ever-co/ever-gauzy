@@ -36,11 +36,35 @@ export enum ListsInputTypeEnum {
 	VENDORS = 'VENDORS'
 }
 
+/**
+ * Which way a duration that is not a whole number of rounding intervals goes: to the interval above, to the one
+ * below, or to the closer of the two.
+ */
+export enum DurationRoundingDirectionEnum {
+	UP = 'UP',
+	DOWN = 'DOWN',
+	NEAREST = 'NEAREST'
+}
+
+/**
+ * How a client rounds durations in the reports and exports it shows. The API stores the rule and rounds nothing
+ * itself, and stored time never changes.
+ *
+ * A rule is an interval with a direction, set together. Both are null by default, which rounds nothing, and a
+ * client reads a rule with either value null as no rounding.
+ */
+export interface IOrganizationDurationRoundingSetting {
+	/** The interval in minutes, one of `DURATION_ROUNDING_INTERVALS` (`@gauzy/constants`). */
+	durationRoundingInterval?: number | null;
+	durationRoundingDirection?: DurationRoundingDirectionEnum | null;
+}
+
 export interface IOrganization
 	extends IBasePerTenantEntityModel,
 		IRelationalImageAsset,
 		IOrganizationAgentSetting,
 		IOrganizationTimerSetting,
+		IOrganizationDurationRoundingSetting,
 		IScreenshotCaptureAcknowledgementRecord,
 		ITaggable {
 	name: string;
@@ -65,6 +89,13 @@ export interface IOrganization
 	overview: string;
 	skills: ISkill[];
 	currency: string;
+	/**
+	 * The hourly rate billed for the time of a member who has no billing rate of their own: the last link of the price
+	 * chain. Null (the default) leaves such time without a price.
+	 */
+	defaultBillRateValue?: number | null;
+	/** The currency of the default billing rate; null prices it in the organization's currency. */
+	defaultBillRateCurrency?: CurrenciesEnum | null;
 	defaultValueDateType: DefaultValueDateTypeEnum;
 	defaultAlignmentType?: string;
 	dateFormat?: string;
@@ -140,6 +171,7 @@ export interface IOrganizationCreateInput
 	extends IContact,
 		IRegisterAsEmployee,
 		IRelationalImageAsset,
+		IOrganizationDurationRoundingSetting,
 		IScreenshotCaptureSettingInput {
 	name: string;
 	isDefault?: boolean;
@@ -148,6 +180,8 @@ export interface IOrganizationCreateInput
 	totalEmployees?: number;
 	imageUrl?: string;
 	currency: CurrenciesEnum;
+	defaultBillRateValue?: number | null;
+	defaultBillRateCurrency?: CurrenciesEnum | null;
 	client_focus?: string;
 	show_income?: boolean;
 	show_profits?: boolean;

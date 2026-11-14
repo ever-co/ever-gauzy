@@ -76,6 +76,8 @@ describe('Invoices record the time their lines bill, on TypeORM and on MikroORM'
 		return {
 			create: (input: Row) =>
 				new loaded.InvoiceCreateHandler(invoiceService).execute(new loaded.InvoiceCreateCommand(input)),
+			update: (input: Row) =>
+				new loaded.InvoiceUpdateHandler(invoiceService).execute(new loaded.InvoiceUpdateCommand(input)),
 			replaceLines: (invoiceId: string, lines: Row[]) =>
 				new loaded.InvoiceItemBulkCreateHandler(invoiceItemService).execute(
 					new loaded.InvoiceItemBulkCreateCommand(invoiceId, lines)
@@ -122,8 +124,8 @@ describe('Invoices record the time their lines bill, on TypeORM and on MikroORM'
 		return id;
 	};
 
-	/** An invoice saved earlier, in the status given, with one line. */
-	const earlierInvoice = async (status: string): Promise<{ invoiceId: string; lineId: string }> => {
+	/** An invoice saved earlier, in the status given, with one line; `row` makes it an estimate, for one. */
+	const earlierInvoice = async (status: string, row: Row = {}): Promise<{ invoiceId: string; lineId: string }> => {
 		const invoiceId = randomUUID();
 		await insert('invoice', {
 			id: invoiceId,
@@ -133,7 +135,8 @@ describe('Invoices record the time their lines bill, on TypeORM and on MikroORM'
 			currency: 'EUR',
 			discountValue: 0,
 			terms: 'earlier',
-			status
+			status,
+			...row
 		});
 		const lineId = randomUUID();
 		await insert('invoice_item', {
@@ -150,12 +153,23 @@ describe('Invoices record the time their lines bill, on TypeORM and on MikroORM'
 
 	/** A time log the line of an earlier invoice, in the status given, bills. */
 	const timeLogBilledBy = async (
-		status: string
+		status: string,
+		row: Row = {}
 	): Promise<{ invoiceId: string; lineId: string; timeLogId: string }> => {
-		const { invoiceId, lineId } = await earlierInvoice(status);
+		const { invoiceId, lineId } = await earlierInvoice(status, row);
 		const timeLogId = await timeLog({ invoiceItemId: lineId });
 		return { invoiceId, lineId, timeLogId };
 	};
+
+	/** The line of {@link earlierInvoice} as an edit re-posts it, unchanged and naming no time. */
+	const earlierLineAgain = (invoiceId: string): Row => ({
+		description: 'earlier',
+		price: 1,
+		quantity: 1,
+		totalValue: 1,
+		...scope,
+		invoiceId
+	});
 
 	/** A line as the web sends it, billing the time logs given. */
 	const lineBilling = (description: string, timeLogIds: string[]): Row => ({
@@ -172,8 +186,7 @@ describe('Invoices record the time their lines bill, on TypeORM and on MikroORM'
 	});
 
 	/** An invoice as the web creates it: its id made by the client, each line carrying it. */
-	const invoiceWith = (lines: Row[]): Row => {
-		const id = randomUUID();
+	const invoiceWith = (lines: Row[], id: string = randomUUID()): Row => {
 		return {
 			id,
 			...scope,
@@ -200,6 +213,34 @@ describe('Invoices record the time their lines bill, on TypeORM and on MikroORM'
 			[invoiceId, description]
 		);
 		return row?.id;
+	};
+
+	const statusOf = async (invoiceId: string): Promise<string> => {
+		const [row] = await dataSource.query(`SELECT "status" FROM "invoice" WHERE "id" = ?`, [invoiceId]);
+		return row.status;
+	};
+
+	const estimateStateOf = async (invoiceId: string): Promise<Row> => {
+		const [row] = await dataSource.query(
+			`SELECT "status", "isEstimate", "internalNote" FROM "invoice" WHERE "id" = ?`,
+			[invoiceId]
+		);
+		return row;
+	};
+
+	/** Records on a document that another one bills the time it released, as the billing of that time does. */
+	const markReleasedTimeBilled = async (invoiceId: string): Promise<void> => {
+		await dataSource.query(`UPDATE "invoice" SET "releasedTimeBilledAt" = ? WHERE "id" = ?`, [
+			'2026-11-02 10:00:00.000',
+			invoiceId
+		]);
+	};
+
+	const releasedTimeBilledAtOf = async (invoiceId: string): Promise<string | null> => {
+		const [row] = await dataSource.query(`SELECT "releasedTimeBilledAt" FROM "invoice" WHERE "id" = ?`, [
+			invoiceId
+		]);
+		return row.releasedTimeBilledAt;
 	};
 
 	const count = async (table: string, column: string, value: string): Promise<number> => {
@@ -243,6 +284,10 @@ describe('Invoices record the time their lines bill, on TypeORM and on MikroORM'
 						.MikroOrmInvoiceRepository,
 					InvoiceCreateHandler: require('./commands/handlers/invoice.create.handler').InvoiceCreateHandler,
 					InvoiceCreateCommand: require('./commands/invoice.create.command').InvoiceCreateCommand,
+					InvoiceUpdateHandler: require('./commands/handlers/invoice.update.handler').InvoiceUpdateHandler,
+					InvoiceUpdateCommand: require('./commands/invoice.update.command').InvoiceUpdateCommand,
+					INVOICE_VOID_IS_FINAL: require('./invoice-final-status').INVOICE_VOID_IS_FINAL,
+					INVOICE_REJECTED_IS_FINAL: require('./invoice-final-status').INVOICE_REJECTED_IS_FINAL,
 					InvoiceItemService: require('../invoice-item/invoice-item.service').InvoiceItemService,
 					TypeOrmInvoiceItemRepository: require('../invoice-item/repository/type-orm-invoice-item.repository')
 						.TypeOrmInvoiceItemRepository,
@@ -389,6 +434,13 @@ describe('Invoices record the time their lines bill, on TypeORM and on MikroORM'
 					await dataSource.query(`DELETE FROM "invoice" WHERE "id" = ?`, [invoiceId]);
 					return timeLogId;
 				}
+			],
+			[
+				'of a rejected estimate',
+				async () => {
+					const { timeLogId } = await timeLogBilledBy('REJECTED', { isEstimate: 1 });
+					return timeLogId;
+				}
 			]
 		])('bills again the time %s', async (_label, freedTimeLog) => {
 			const freed = await freedTimeLog();
@@ -423,6 +475,13 @@ describe('Invoices record the time their lines bill, on TypeORM and on MikroORM'
 				'a time log a live invoice already bills',
 				async () => {
 					const { timeLogId, lineId } = await timeLogBilledBy('SENT');
+					return { timeLogId, link: lineId };
+				}
+			],
+			[
+				'a time log an accepted estimate already bills',
+				async () => {
+					const { timeLogId, lineId } = await timeLogBilledBy('ACCEPTED', { isEstimate: 1 });
 					return { timeLogId, link: lineId };
 				}
 			],
@@ -493,6 +552,278 @@ describe('Invoices record the time their lines bill, on TypeORM and on MikroORM'
 			expect(await lineOf(invoiceId, 'replacement')).toBeUndefined();
 			expect(await linkOf(kept)).toBe(lineId);
 			expect(await linkOf(outsiders)).toBeNull();
+		});
+
+		it('keeps the time of a line a replacement re-posts unchanged, as the invoice edit screen does', async () => {
+			const { invoiceId, lineId } = await earlierInvoice('DRAFT');
+			const design = await timeLog({ invoiceItemId: lineId });
+			const review = await timeLog({ invoiceItemId: lineId });
+			const newFee = { ...lineNamingNoTime('new fee'), invoiceId };
+
+			await handlers(ormType).replaceLines(invoiceId, [earlierLineAgain(invoiceId), newFee]);
+
+			const replacement = await lineOf(invoiceId, 'earlier');
+			expect(replacement).toBeDefined();
+			expect(replacement).not.toBe(lineId);
+			expect(await linkOf(design)).toBe(replacement);
+			expect(await linkOf(review)).toBe(replacement);
+		});
+
+		it('releases the time of a line the replacement changes, or re-posts naming an empty list', async () => {
+			const changed = await earlierInvoice('DRAFT');
+			const changedLog = await timeLog({ invoiceItemId: changed.lineId });
+			const emptied = await earlierInvoice('DRAFT');
+			const emptiedLog = await timeLog({ invoiceItemId: emptied.lineId });
+			const changedLine = { ...earlierLineAgain(changed.invoiceId), quantity: 2, totalValue: 2 };
+			const emptiedLine = { ...earlierLineAgain(emptied.invoiceId), timeLogIds: [] };
+
+			await handlers(ormType).replaceLines(changed.invoiceId, [changedLine]);
+			await handlers(ormType).replaceLines(emptied.invoiceId, [emptiedLine]);
+
+			expect(await linkOf(changedLog)).toBeNull();
+			expect(await linkOf(emptiedLog)).toBeNull();
+		});
+
+		it('keeps the time of an unchanged line beside a line that names its own, which takes what it names', async () => {
+			const { invoiceId, lineId } = await earlierInvoice('DRAFT');
+			const named = await timeLog({ invoiceItemId: lineId });
+			const kept = await timeLog({ invoiceItemId: lineId });
+			const naming = { ...lineBilling('named again', [named]), invoiceId };
+
+			await handlers(ormType).replaceLines(invoiceId, [earlierLineAgain(invoiceId), naming]);
+
+			expect(await linkOf(named)).toBe(await lineOf(invoiceId, 'named again'));
+			expect(await linkOf(kept)).toBe(await lineOf(invoiceId, 'earlier'));
+		});
+
+		it('keeps the old lines, and their time, when a replacement that bills no time fails half way', async () => {
+			const { invoiceId, lineId } = await earlierInvoice('DRAFT');
+			const kept = await timeLog({ invoiceItemId: lineId });
+			const replacement = { ...lineNamingNoTime('replacement'), invoiceId };
+			const unsaveable = { ...lineNamingNoTime('unsaveable'), price: null, invoiceId };
+
+			await expect(handlers(ormType).replaceLines(invoiceId, [replacement, unsaveable])).rejects.toMatchObject({
+				status: 500
+			});
+
+			expect(await count('invoice_item', 'id', lineId)).toBe(1);
+			expect(await lineOf(invoiceId, 'replacement')).toBeUndefined();
+			expect(await linkOf(kept)).toBe(lineId);
+		});
+
+		it.each([
+			['a void invoice', 'VOID', {}],
+			['a rejected estimate', 'REJECTED', { isEstimate: 1 }]
+		])('records on %s that another invoice bills the time it released', async (_label, status, row) => {
+			const { invoiceId: released, timeLogId } = await timeLogBilledBy(status, row);
+			const { invoiceId: untouched } = await timeLogBilledBy(status, row);
+
+			await handlers(ormType).create(invoiceWith([lineBilling('billed again', [timeLogId])]));
+
+			expect(await releasedTimeBilledAtOf(released)).not.toBeNull();
+			expect(await releasedTimeBilledAtOf(untouched)).toBeNull();
+		});
+
+		it('records nothing on a void invoice whose own new lines bill the time it released', async () => {
+			const { invoiceId, timeLogId } = await timeLogBilledBy('VOID');
+
+			await handlers(ormType).replaceLines(invoiceId, [
+				{ ...lineBilling('billed again', [timeLogId]), invoiceId }
+			]);
+
+			expect(await releasedTimeBilledAtOf(invoiceId)).toBeNull();
+		});
+
+		it('records nothing when the billing is refused', async () => {
+			const { invoiceId: released, timeLogId } = await timeLogBilledBy('VOID');
+			const { lineId: liveLine } = await earlierInvoice('SENT');
+			const heldElsewhere = await timeLog({ invoiceItemId: liveLine });
+			const refused = invoiceWith([lineBilling('billed again', [timeLogId, heldElsewhere])]);
+
+			await expect(handlers(ormType).create(refused)).rejects.toMatchObject({ status: 400 });
+
+			expect(await releasedTimeBilledAtOf(released)).toBeNull();
+		});
+
+		it('refuses to reopen a void invoice whose time another invoice bills since, and keeps it void', async () => {
+			const { invoiceId: voided, timeLogId } = await timeLogBilledBy('VOID');
+			const rebilling = invoiceWith([lineBilling('billed again', [timeLogId])]);
+			await handlers(ormType).create(rebilling);
+			const rebillingLine = await lineOf(rebilling.id, 'billed again');
+
+			const reopening = handlers(ormType).update({ id: voided, status: 'DRAFT' });
+
+			await expect(reopening).rejects.toMatchObject({ status: 400, message: loaded.INVOICE_VOID_IS_FINAL });
+			expect(await statusOf(voided)).toBe('VOID');
+			expect(await linkOf(timeLogId)).toBe(rebillingLine);
+		});
+
+		it.each(['SENT', 'FULLY_PAID', 'REJECTED'])(
+			'moves a void invoice whose released time no other invoice bills to %s, as before',
+			async (status) => {
+				const { invoiceId } = await earlierInvoice('VOID');
+
+				await handlers(ormType).update({ id: invoiceId, status });
+
+				expect(await statusOf(invoiceId)).toBe(status);
+			}
+		);
+
+		it.each(['SENT', 'FULLY_PAID', 'REJECTED'])(
+			'refuses to move a void invoice whose released time another invoice bills to %s',
+			async (status) => {
+				const { invoiceId } = await earlierInvoice('VOID');
+				await markReleasedTimeBilled(invoiceId);
+
+				await expect(handlers(ormType).update({ id: invoiceId, status })).rejects.toMatchObject({
+					status: 400,
+					message: loaded.INVOICE_VOID_IS_FINAL
+				});
+
+				expect(await statusOf(invoiceId)).toBe('VOID');
+			}
+		);
+
+		it.each<[string, () => Promise<Row[]>]>([
+			['without time', async () => [lineNamingNoTime('reopened')]],
+			['billing time', async () => [lineBilling('reopened', [await timeLog()])]]
+		])(
+			'refuses to reopen a void invoice whose released time another invoice bills, through a create that names it (%s)',
+			async (_label, linesToPost) => {
+				const { invoiceId } = await earlierInvoice('VOID');
+				await markReleasedTimeBilled(invoiceId);
+				const reopening = invoiceWith(await linesToPost(), invoiceId);
+
+				await expect(handlers(ormType).create(reopening)).rejects.toMatchObject({
+					status: 400,
+					message: loaded.INVOICE_VOID_IS_FINAL
+				});
+
+				expect(await statusOf(invoiceId)).toBe('VOID');
+				expect(await lineOf(invoiceId, 'reopened')).toBeUndefined();
+			}
+		);
+
+		it.each<[string, Row, string]>([
+			['a void invoice', { status: 'VOID' }, 'INVOICE_VOID_IS_FINAL'],
+			['a rejected estimate', { status: 'REJECTED', isEstimate: 1 }, 'INVOICE_REJECTED_IS_FINAL']
+		])(
+			'refuses to reopen %s that was removed, once its released time is billed, and keeps its status',
+			async (_label, row, refusal) => {
+				const { invoiceId } = await earlierInvoice(row.status, row);
+				await markReleasedTimeBilled(invoiceId);
+				await dataSource.query(`UPDATE "invoice" SET "deletedAt" = ? WHERE "id" = ?`, [
+					'2026-11-01 00:00:00',
+					invoiceId
+				]);
+
+				const reopening = handlers(ormType).update({ id: invoiceId, status: 'DRAFT' });
+
+				await expect(reopening).rejects.toMatchObject({ status: 400, message: loaded[refusal] });
+				expect(await statusOf(invoiceId)).toBe(row.status);
+			}
+		);
+
+		it('still updates a void invoice that stays void, and moves a live one, to VOID included', async () => {
+			const { invoiceId: voided } = await earlierInvoice('VOID');
+			const { invoiceId: live } = await earlierInvoice('DRAFT');
+
+			await handlers(ormType).update({ id: voided, internalNote: 'kept void' });
+			await handlers(ormType).update({ id: voided, status: 'VOID', isArchived: true });
+			await handlers(ormType).update({ id: live, status: 'SENT' });
+			const sentStatus = await statusOf(live);
+			await handlers(ormType).update({ id: live, status: 'VOID' });
+
+			expect(await statusOf(voided)).toBe('VOID');
+			expect(sentStatus).toBe('SENT');
+			expect(await statusOf(live)).toBe('VOID');
+		});
+
+		it('refuses to accept a rejected estimate whose time another invoice bills since, and keeps it rejected', async () => {
+			const { invoiceId: rejected, timeLogId } = await timeLogBilledBy('REJECTED', { isEstimate: 1 });
+			const rebilling = invoiceWith([lineBilling('billed again', [timeLogId])]);
+			await handlers(ormType).create(rebilling);
+			const rebillingLine = await lineOf(rebilling.id, 'billed again');
+
+			const accepting = handlers(ormType).update({ id: rejected, status: 'ACCEPTED' });
+
+			await expect(accepting).rejects.toMatchObject({ status: 400, message: loaded.INVOICE_REJECTED_IS_FINAL });
+			expect(await statusOf(rejected)).toBe('REJECTED');
+			expect(await linkOf(timeLogId)).toBe(rebillingLine);
+		});
+
+		it.each<[string, Row]>([
+			['SENT', { status: 'SENT' }],
+			['DRAFT', { status: 'DRAFT' }],
+			['VIEWED', { status: 'VIEWED' }],
+			['ACCEPTED', { status: 'ACCEPTED' }],
+			['a draft invoice', { status: 'DRAFT', isEstimate: false }]
+		])(
+			'refuses to move a rejected estimate whose released time another invoice bills to %s',
+			async (_label, change) => {
+				const { invoiceId } = await earlierInvoice('REJECTED', { isEstimate: 1 });
+				await markReleasedTimeBilled(invoiceId);
+
+				const moving = handlers(ormType).update({ id: invoiceId, ...change, internalNote: 'reopened' });
+
+				await expect(moving).rejects.toMatchObject({ status: 400, message: loaded.INVOICE_REJECTED_IS_FINAL });
+				expect(await estimateStateOf(invoiceId)).toEqual({
+					status: 'REJECTED',
+					isEstimate: 1,
+					internalNote: null
+				});
+			}
+		);
+
+		it('accepts a rejected estimate whose released time no other invoice bills, as before', async () => {
+			const { invoiceId } = await earlierInvoice('REJECTED', { isEstimate: 1 });
+
+			await handlers(ormType).update({ id: invoiceId, status: 'ACCEPTED' });
+
+			expect(await statusOf(invoiceId)).toBe('ACCEPTED');
+		});
+
+		it('still updates a rejected estimate that stays rejected, and voids it', async () => {
+			const { invoiceId } = await earlierInvoice('REJECTED', { isEstimate: 1 });
+
+			await handlers(ormType).update({ id: invoiceId, internalNote: 'declined by phone' });
+			await handlers(ormType).update({ id: invoiceId, status: 'REJECTED', isArchived: true });
+			const keptState = await estimateStateOf(invoiceId);
+			await handlers(ormType).update({ id: invoiceId, status: 'VOID' });
+
+			expect(keptState).toEqual({ status: 'REJECTED', isEstimate: 1, internalNote: 'declined by phone' });
+			expect(await statusOf(invoiceId)).toBe('VOID');
+		});
+
+		it("refuses a replacement whose line bills another organization's time, even to a tenant admin", async () => {
+			// A tenant admin reaches every organization of the tenant, so the CRUD write lets the line through.
+			jest.spyOn(loaded.RequestContext, 'hasRoles').mockReturnValue(true);
+			const { invoiceId, lineId } = await earlierInvoice('DRAFT');
+			const kept = await timeLog({ invoiceItemId: lineId });
+			const outsiders = await timeLog({ organizationId: OTHER_ORG, employeeId: OUTSIDER });
+			const line = { ...lineBilling('outsider', [outsiders]), organizationId: OTHER_ORG, invoiceId };
+
+			await expect(handlers(ormType).replaceLines(invoiceId, [line])).rejects.toMatchObject({ status: 400 });
+
+			expect(await count('invoice_item', 'id', lineId)).toBe(1);
+			expect(await lineOf(invoiceId, 'outsider')).toBeUndefined();
+			expect(await linkOf(kept)).toBe(lineId);
+			expect(await linkOf(outsiders)).toBeNull();
+		});
+
+		it('refuses a replacement whose line bills time on another invoice than the one replaced', async () => {
+			const { invoiceId, lineId } = await earlierInvoice('DRAFT');
+			const { invoiceId: otherInvoiceId } = await earlierInvoice('DRAFT');
+			const kept = await timeLog({ invoiceItemId: lineId });
+			const free = await timeLog();
+			const line = { ...lineBilling('elsewhere', [free]), invoiceId: otherInvoiceId };
+
+			await expect(handlers(ormType).replaceLines(invoiceId, [line])).rejects.toMatchObject({ status: 400 });
+
+			expect(await count('invoice_item', 'id', lineId)).toBe(1);
+			expect(await lineOf(otherInvoiceId, 'elsewhere')).toBeUndefined();
+			expect(await linkOf(kept)).toBe(lineId);
+			expect(await linkOf(free)).toBeNull();
 		});
 	});
 });
