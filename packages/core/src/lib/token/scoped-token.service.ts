@@ -153,20 +153,38 @@ export class ScopedTokenService {
 
 	/**
 	 * A user's tokens of this type created since `since` and revoked, read page by page.
+	 *
+	 * The pages go newest first, each one up to the oldest token the last one returned, and never by offset: the token
+	 * read pages with `paginate`, which takes an offset as a page number on both ORMs, so an offset of 100 passed over
+	 * 9,900 rows and no token past the first hundred was read. The token the next page starts from comes again, once.
 	 */
 	async getRevokedTokensSince(userId: string, since: Date): Promise<IToken[]> {
 		const pageSize = 100;
-		const tokens: IToken[] = [];
+		const tokens = new Map<string, IToken>();
 		const filters = { userId, tokenType: this.tokenType, status: TokenStatus.REVOKED, createdAfter: since };
-		let hasMore = true;
-		while (hasMore) {
+		let createdBefore: Date | undefined;
+		for (;;) {
 			const page: ITokenQueryResult = await this.queryBus.execute(
-				new GetTokensQuery(filters, pageSize, tokens.length)
+				new GetTokensQuery(createdBefore ? { ...filters, createdBefore } : filters, pageSize)
 			);
-			tokens.push(...page.items);
-			hasMore = page.items.length === pageSize && tokens.length < page.total;
+			let added = 0;
+			for (const token of page.items) {
+				// A later page reads from `since` included, the first one after it: the same tokens either way
+				if (!tokens.has(token.id) && new Date(token.createdAt).getTime() > since.getTime()) {
+					tokens.set(token.id, token);
+					added++;
+				}
+			}
+			// A short page is the last one
+			if (page.items.length < pageSize) {
+				break;
+			}
+			// A full page of tokens already read: more of them share one instant than a page holds, so the next page
+			// starts just before that instant rather than read it again
+			const oldest = new Date(page.items[page.items.length - 1].createdAt);
+			createdBefore = added === 0 ? new Date(oldest.getTime() - 1) : oldest;
 		}
-		return tokens;
+		return [...tokens.values()];
 	}
 
 	/**

@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { NotFoundException } from '@nestjs/common';
 import { RevokeTokenByIdCommand, TouchTokenCommand } from './commands';
-import { GetTokenByIdQuery } from './queries';
+import { GetTokenByIdQuery, GetTokensQuery } from './queries';
 import { ScopedTokenService } from './scoped-token.service';
 
 function service(found: unknown) {
@@ -64,5 +64,61 @@ describe('ScopedTokenService, tokens named by their id', () => {
 		await scoped.touchToken('t1');
 
 		expect(commandBus.execute).toHaveBeenCalledWith(new TouchTokenCommand('t1'));
+	});
+});
+
+describe('ScopedTokenService, the revoked tokens of a user since a date', () => {
+	/**
+	 * 250 revoked tokens, one a second, read by a query double that answers like the token repository's `paginate`:
+	 * newest first, `limit` per read, and `offset` taken as a page number (on both ORMs) rather than a row count.
+	 */
+	let revokedTokens: { id: string; createdAt: Date }[];
+	beforeEach(() => {
+		revokedTokens = Array.from({ length: 250 }, (_, index) => ({
+			id: `t${index}`,
+			createdAt: new Date(Date.UTC(2026, 10, 14, 12, 0, index))
+		}));
+	});
+	const queryBus = {
+		execute: jest.fn(async (query: GetTokensQuery) => {
+			const { createdAfter, createdBefore } = query.filters;
+			const matching = revokedTokens
+				.filter((token) => !createdAfter || token.createdAt > createdAfter)
+				.filter((token) => !createdBefore || token.createdAt <= createdBefore)
+				.sort((left, right) => right.createdAt.getTime() - left.createdAt.getTime());
+			const limit = query.limit ?? 100;
+			const page = query.offset ?? 0;
+			let skip = 0;
+			if (page > 0) {
+				skip = limit * (page - 1);
+			}
+			return { items: matching.slice(skip, skip + limit), total: matching.length };
+		})
+	};
+
+	it('reads every one, past the first hundred, whatever the store does with an offset', async () => {
+		const scoped = new ScopedTokenService({} as any, queryBus as any, { tokenType: 'ACCESS_TOKEN_TYPE' } as any);
+
+		const tokens = await scoped.getRevokedTokensSince('u1', new Date(Date.UTC(2026, 10, 14)));
+
+		expect(new Set(tokens.map((token) => token.id)).size).toBe(250);
+		expect(tokens).toHaveLength(250);
+	});
+
+	it('goes on past a full page of tokens created at one instant, to the older ones', async () => {
+		const instant = new Date(Date.UTC(2026, 10, 14, 13));
+		revokedTokens = [
+			...Array.from({ length: 120 }, (_, index) => ({ id: `same${index}`, createdAt: instant })),
+			...Array.from({ length: 30 }, (_, index) => ({
+				id: `older${index}`,
+				createdAt: new Date(Date.UTC(2026, 10, 14, 12, 0, index))
+			}))
+		];
+		const scoped = new ScopedTokenService({} as any, queryBus as any, { tokenType: 'ACCESS_TOKEN_TYPE' } as any);
+
+		const ids = (await scoped.getRevokedTokensSince('u1', new Date(Date.UTC(2026, 10, 14)))).map(({ id }) => id);
+
+		expect(ids.filter((id) => id.startsWith('older'))).toHaveLength(30);
+		expect(new Set(ids).size).toBe(ids.length);
 	});
 });
