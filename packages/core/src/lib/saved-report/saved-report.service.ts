@@ -120,7 +120,12 @@ export class SavedReportService extends TenantAwareCrudService<SavedReport> {
 		const period = nextSavedReportPeriodOf(stored, input);
 		this.assertPeriod(period);
 
-		const changes: Partial<SavedReport> = { ...period };
+		const sendsPeriod =
+			input.periodRule !== undefined || input.startDate !== undefined || input.endDate !== undefined;
+		const changes: Partial<SavedReport> = {};
+		if (sendsPeriod) {
+			Object.assign(changes, period);
+		}
 		if (input.name !== undefined) {
 			changes.name = input.name;
 		}

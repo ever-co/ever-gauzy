@@ -181,6 +181,16 @@ describe('SavedReportService', () => {
 		expect([secondPage.items.length, secondPage.total]).toEqual([1, 3]);
 	});
 
+	it('writes the period only when the update sends one, so a concurrent change of it is not overwritten', async () => {
+		const { service } = serviceFor(MARIE);
+		const update = jest.spyOn(service, 'update');
+
+		await service.updateOwn(REPORT, { name: 'Client A, previous month' } as never);
+
+		const changes = update.mock.calls[0][1] as Record<string, unknown>;
+		expect(changes).toEqual({ name: 'Client A, previous month' });
+	});
+
 	it('switches a report from a rule to fixed days when the update clears the rule', async () => {
 		const { service, rows } = serviceFor(MARIE);
 
