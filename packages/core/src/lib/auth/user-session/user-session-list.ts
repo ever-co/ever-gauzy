@@ -17,7 +17,7 @@ export interface IUserSessionGroup {
 }
 
 /** Whether the token can still be used: not past its expiry. Its status is ACTIVE already (the store's read). */
-function isLive(token: IToken, now: Date): boolean {
+export function isLive(token: IToken, now: Date): boolean {
 	if (!token.expiresAt) {
 		return true;
 	}

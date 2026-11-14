@@ -64,6 +64,11 @@ function build({
 	const events: string[] = [];
 	const revokeById = jest.fn(async ({ tokenId, reason }: { tokenId: string; reason: string }) => {
 		expect(reason).toBe(USER_SESSION_SIGNED_OUT_REASON);
+		// The store revokes no token past its expiry (`canRevoke`): it stays active until the expiry cleanup
+		const stored = [...refreshTokens, ...accessTokens].find((candidate) => candidate.id === tokenId);
+		if (stored && stored.expiresAt.getTime() < Date.now()) {
+			return false;
+		}
 		revoked.push(tokenId);
 		events.push(`revoke ${tokenId}`);
 		// A revoked token is no longer active, as the store answers it.
@@ -431,6 +436,20 @@ describe('UserSessionService.signOut', () => {
 		requestFrom('web');
 
 		await service.signOut('laptop');
+
+		expect(revoked.sort()).toEqual(['a-laptop', 'r-laptop']);
+	});
+
+	it('finishes with an expired access token of the session still active, which nothing can use or revoke', async () => {
+		const { service, services, revoked } = build();
+		const accessTokens = await services.accessTokenService.findActive();
+		accessTokens.push({
+			...token('a-laptop-old', 'ACCESS_TOKEN_TYPE', inSession('laptop')),
+			expiresAt: new Date(Date.now() - 60 * 60 * 1000)
+		});
+		requestFrom('web');
+
+		await expect(service.signOut('laptop')).resolves.toBeUndefined();
 
 		expect(revoked.sort()).toEqual(['a-laptop', 'r-laptop']);
 	});

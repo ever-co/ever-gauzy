@@ -14,6 +14,7 @@ import { currentRequestSessionClaims } from './user-session-claims';
 import {
 	groupUserSessions,
 	isFirstPartyAccessToken,
+	isLive,
 	IUserSessionTokens,
 	listUserSessions,
 	sessionIdOf
@@ -194,10 +195,12 @@ export class UserSessionService {
 		keptSessionId: string | null,
 		signedOut: Set<string>
 	): Promise<void> {
+		// A token past its expiry is never picked: nothing can use it, and it cannot be revoked (`canRevoke`), so it
+		// would stay active until the expiry cleanup and keep every pass from finishing
 		const isPicked = (token: IToken): boolean => {
 			const sessionId = sessionIdOf(token);
 			const isKept = sessionId !== null && sessionId === keptSessionId;
-			if (isKept || !isSessionToken(token)) {
+			if (isKept || !isSessionToken(token) || !isLive(token, new Date())) {
 				return false;
 			}
 			return isTarget(token);
