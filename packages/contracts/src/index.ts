@@ -205,6 +205,7 @@ export * from './lib/tenant.model';
 export * from './lib/terms-acceptance.model';
 export * from './lib/time-goal.model';
 export * from './lib/time-off.model';
+export * from './lib/time-log-history.model';
 export * from './lib/time-slot-minute.model';
 export * from './lib/timesheet-statistics.model';
 export * from './lib/timesheet.model';
