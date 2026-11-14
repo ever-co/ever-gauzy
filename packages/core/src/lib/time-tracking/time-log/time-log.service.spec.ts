@@ -1126,6 +1126,35 @@ describe('TimeLogService', () => {
 				}
 			);
 
+			it.each([
+				['adding', () => manualService.addManualTime({ ...request })],
+				['editing', () => manualService.updateManualTime('log-1', { ...request })]
+			])(
+				'names the timer that started first when %s time over two, of which only the later reaches the range',
+				async (_action, write) => {
+					// A desktop run since 09:30 whose time slots the overlap lookup finds, and an Ever Teams run since 08:00
+					// last heard at 08:30, which only the lookup of the running timers finds
+					const since0930 = {
+						...runningSince8(TimeLogSourceEnum.DESKTOP, new Date('2026-01-05T09:50:00.000Z')),
+						id: 'running-since-09:30',
+						startedAt: new Date('2026-01-05T09:30:00.000Z'),
+						timeSlots: [{ id: 'since-09:30@09:30' }, { id: 'since-09:30@09:40' }]
+					};
+					const since0800 = runningSince8(TimeLogSourceEnum.TEAMS, new Date('2026-01-05T08:30:00.000Z'));
+					execute.mockImplementation(async (command: unknown) =>
+						command instanceof IGetConflictTimeLogCommand ? [since0930] : undefined
+					);
+					find.mockResolvedValue([since0930, since0800]);
+
+					const refusal = (await write().catch((thrown) => thrown)) as ConflictException;
+
+					expect(refusal.getResponse()).toMatchObject({
+						code: RUNNING_TIMER_OVERLAP,
+						runningTimeLog: { id: since0800.id, startedAt: EIGHT.toISOString() }
+					});
+				}
+			);
+
 			it("CONTROL: lets a tracker's upload through over a tracker's run, left open on the server while it was offline", async () => {
 				find.mockResolvedValue([
 					runningSince8(TimeLogSourceEnum.DESKTOP, new Date('2026-01-05T08:30:00.000Z'))

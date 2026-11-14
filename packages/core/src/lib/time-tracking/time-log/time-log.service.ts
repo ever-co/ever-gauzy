@@ -2037,13 +2037,14 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * upload refused this way and send it again at their next sync: their offline time is recorded once that timer stops.
 	 *
 	 * The refusal names the timer in the way (`runningTimeLog`), so a client can show which one it is: the one that
-	 * started first, when several are running over the range.
+	 * started first, when several are running over the range. Every lookup is read before it, so none of them hides
+	 * an earlier timer the other found.
 	 *
-	 * @param conflicts The logs the new range overlaps.
+	 * @param found The logs the new range overlaps, and the running timers it falls over, as each lookup found them.
 	 * @throws ConflictException with the code RUNNING_TIMER_OVERLAP and the body `IRunningTimerOverlap`.
 	 */
-	private assertNoRunningTimerIn(conflicts: ITimeLog[] | null | undefined): void {
-		const running = (conflicts ?? []).filter((log) => log.isRunning);
+	private assertNoRunningTimerIn(...found: Array<ITimeLog[] | null | undefined>): void {
+		const running = found.flatMap((logs) => logs ?? []).filter((log) => log.isRunning);
 		if (!running.length) {
 			return;
 		}
@@ -2220,9 +2221,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			// A running timer in the range is refused, never cut, including one the range falls over after its last
 			// heartbeat or before its first time slot, which the lookup above misses (#11886). Only a tracker's upload
 			// passes over a tracker's run, left open on the server while it was offline
-			this.assertNoRunningTimerIn(conflicts);
 			const isTrackerUpload = request.uploadedByTracker === true;
 			this.assertNoRunningTimerIn(
+				conflicts,
 				await this.findRunningTimersStartedBefore(
 					stoppedAt,
 					employeeId,
@@ -2343,8 +2344,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 			// A running timer in the range is refused, never cut (the edited log itself is not among the conflicts),
 			// including one the range falls over after its last heartbeat or before its first time slot (#11886)
-			this.assertNoRunningTimerIn(conflicts);
 			this.assertNoRunningTimerIn(
+				conflicts,
 				await this.findRunningTimersStartedBefore(stoppedAt, employeeId, timeLog.organizationId, tenantId, id)
 			);
 
