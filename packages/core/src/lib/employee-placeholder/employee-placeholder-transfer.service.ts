@@ -95,20 +95,36 @@ export class EmployeePlaceholderTransferService {
 		tenantId: ID,
 		options: { keepInviteId?: ID } = {}
 	): Promise<IEmployeePlaceholderTransferSummary> {
+		const references = await this.readReferences();
 		return await this.typeOrmEmployeeRepository.manager.transaction(async (manager: EntityManager) => {
-			return await this.transferWithin(manager, placeholderId, targetId, tenantId, options);
+			return await this.transferWithin(manager, references, placeholderId, targetId, tenantId, options);
 		});
+	}
+
+	/**
+	 * The columns pointing at an employee, read on a connection of their own before the transfer's transaction:
+	 * TypeORM's table reader asks Postgres for its own metadata table when a table has a generated column, and that
+	 * failed statement would abort the transaction it ran in.
+	 */
+	private async readReferences(): Promise<EmployeeReference[]> {
+		const queryRunner = this.typeOrmEmployeeRepository.manager.connection.createQueryRunner();
+		try {
+			return employeeReferences(await queryRunner.getTables());
+		} finally {
+			await queryRunner.release();
+		}
 	}
 
 	/**
 	 * The transfer, inside the caller's transaction.
 	 */
-	async transferWithin(
+	private async transferWithin(
 		manager: EntityManager,
+		references: EmployeeReference[],
 		placeholderId: ID,
 		targetId: ID,
 		tenantId: ID,
-		options: { keepInviteId?: ID } = {}
+		options: { keepInviteId?: ID }
 	): Promise<IEmployeePlaceholderTransferSummary> {
 		const queryRunner = manager.queryRunner;
 		const { placeholder, target } = await readPair(queryRunner, placeholderId, targetId, tenantId, true);
@@ -116,8 +132,7 @@ export class EmployeePlaceholderTransferService {
 		const summary = await summarize(queryRunner, placeholder.id);
 		await fillMissingRates(queryRunner, placeholder.id, target.id);
 
-		const tables = await queryRunner.getTables();
-		for (const reference of employeeReferences(tables)) {
+		for (const reference of references) {
 			await moveReference(queryRunner, reference, placeholder.id, target.id);
 		}
 

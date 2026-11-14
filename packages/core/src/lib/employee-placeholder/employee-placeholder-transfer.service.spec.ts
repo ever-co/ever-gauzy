@@ -153,6 +153,20 @@ describe('EmployeePlaceholderTransferService on SQLite', () => {
 		expect(await pointingAt(AMINA)).toEqual(REFERENCES.map(([table, column]) => `${table}.${column}`));
 	});
 
+	it('reads the tables outside the transaction, where a failed catalog statement cannot abort it', async () => {
+		// On Postgres, TypeORM's table reader asks for its own metadata table when a table has a generated column; the
+		// database has none, and the failed statement aborts the transaction it runs in.
+		const transaction = dataSource.manager.transaction.bind(dataSource.manager);
+		jest.spyOn(dataSource.manager, 'transaction').mockImplementation((async (work: (inner: any) => unknown) =>
+			transaction(async (inner) => {
+				jest.spyOn(inner.queryRunner, 'getTables').mockRejectedValue(new Error('aborted transaction'));
+				return work(inner);
+			})) as never);
+
+		await expect(service.transfer(AMINA, MARIE, TENANT)).resolves.toMatchObject({ timeLogs: 2 });
+		expect(await pointingAt(AMINA)).toEqual([]);
+	});
+
 	it('changes nothing when a step fails', async () => {
 		// A row of another table that keeps the placeholder's user: removing that user is refused, so the whole
 		// transfer is rolled back.
