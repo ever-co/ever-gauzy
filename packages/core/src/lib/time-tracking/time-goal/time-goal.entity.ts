@@ -1,6 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { JoinColumn, JoinTable, RelationId } from 'typeorm';
-import { EntityRepositoryType } from '@mikro-orm/core';
 import {
 	IsBoolean,
 	IsEnum,
@@ -49,8 +48,6 @@ export const TIME_GOAL_NAME_MAX_LENGTH = 255;
 
 @MultiORMEntity('time_goal', { mikroOrmRepository: () => MikroOrmTimeGoalRepository })
 export class TimeGoal extends TenantOrganizationBaseEntity implements ITimeGoal {
-	[EntityRepositoryType]?: MikroOrmTimeGoalRepository;
-
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
