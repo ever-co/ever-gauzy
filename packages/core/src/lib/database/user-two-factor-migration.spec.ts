@@ -240,7 +240,10 @@ const isSqlite = !isPostgres() && !isMySQL();
 		await dataSource.query(
 			'CREATE TABLE `organization` (`id` varchar(36) NOT NULL, `name` varchar(255) NOT NULL, PRIMARY KEY (`id`)) ENGINE=InnoDB'
 		);
-		await dataSource.query('INSERT INTO `organization` (`id`, `name`) VALUES (?, ?)', [ORGANIZATION, 'Organization']);
+		await dataSource.query('INSERT INTO `organization` (`id`, `name`) VALUES (?, ?)', [
+			ORGANIZATION,
+			'Organization'
+		]);
 	}, TIMEOUT);
 
 	afterAll(async () => {
@@ -256,7 +259,9 @@ const isSqlite = !isPostgres() && !isMySQL();
 			await run('up');
 			await run('up');
 			expect(await columnsOf(TABLE)).toEqual(expect.arrayContaining(['userId', 'secret', 'recoveryCodes']));
-			const [organization] = await dataSource.query('SELECT `requireTwoFactor` AS `required` FROM `organization`');
+			const [organization] = await dataSource.query(
+				'SELECT `requireTwoFactor` AS `required` FROM `organization`'
+			);
 			expect(Number(organization.required)).toBe(0);
 
 			await run('down');
