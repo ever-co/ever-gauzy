@@ -16,6 +16,7 @@ const OTHER_ORGANIZATION = 'organization-2';
 const PLACEHOLDER = 'employee-amina-placeholder';
 
 type Row = { id: string; userId: string; organizationId: string };
+type Account = { id: string; email: string; tenantId: string; role?: { name: string }; deletedAt?: Date | null };
 
 const invitation = (placeholderEmployeeId: string | null) => ({
 	id: 'invite-1',
@@ -52,8 +53,16 @@ function build(options: {
 		releaseInvite: jest.fn(async () => undefined),
 		update: jest.fn(async () => undefined)
 	};
+	// The tenant's accounts: the existing one, if any, and those the acceptances register ('user-new', then
+	// 'user-new-2', ...). A retired account keeps its row, soft-deleted.
+	const users: Account[] = existingUser ? [existingUser] : [];
 	const authService = {
-		register: jest.fn(async () => ({ id: 'user-new', email: invite.email, tenantId: TENANT }))
+		register: jest.fn(async () => {
+			const id = users.some((user) => user.id === 'user-new') ? `user-new-${users.length + 1}` : 'user-new';
+			const user = { id, email: invite.email, tenantId: TENANT, deletedAt: null };
+			users.push(user);
+			return user;
+		})
 	};
 	// The ordinary acceptance looks for an account with the EMPLOYEE role only (`findExistingEmployeeUser`).
 	const userRepository = {
@@ -62,13 +71,23 @@ function build(options: {
 			if (!existingUser || !roleMatches) throw new Error('EntityNotFound');
 			return existingUser;
 		}),
-		// The claim's lookup compares emails without regard to case (a `Raw` LOWER comparison).
 		findOne: jest.fn(async ({ where }) => {
 			const email = where.email?.objectLiteralParameters?.email ?? where.email;
-			return existingUser && email === existingUser.email.toLowerCase() ? existingUser : null;
+			return users.find((user) => !user.deletedAt && user.email.toLowerCase() === email) ?? null;
 		}),
-		// What a failed claim retires again: the account it registered, its member and its organization links.
-		manager: { update: jest.fn(async () => undefined) }
+		// The claim's lookup: the live accounts of the email, compared without regard to case (a `Raw` LOWER).
+		find: jest.fn(async ({ where }) => {
+			const email = where.email?.objectLiteralParameters?.email ?? where.email;
+			return users.filter((user) => !user.deletedAt && user.email.toLowerCase() === email);
+		}),
+		// What a failed claim retires again: the account it registered, its members and its organization links.
+		manager: {
+			update: jest.fn(async (entity: unknown, where: Partial<Account>, values: Partial<Account>) => {
+				if (entity === User) {
+					users.filter((user) => user.id === where.id).forEach((user) => Object.assign(user, values));
+				}
+			})
+		}
 	};
 	const employeeRepository = {
 		findOneOrFail: jest.fn(async ({ where }) => {
@@ -117,7 +136,8 @@ function build(options: {
 		inviteService,
 		employeeRepository,
 		authService,
-		userRepository
+		userRepository,
+		users
 	};
 }
 
@@ -171,10 +191,56 @@ describe('InviteAcceptEmployeeHandler with a claim invitation', () => {
 
 		// Otherwise the next acceptance would find that account and refuse the claim.
 		const retired = { isActive: false, isArchived: true, deletedAt: expect.any(Date) };
-		expect(userRepository.manager.update).toHaveBeenCalledWith(Employee, { id: 'employee-of-user-new' }, retired);
-		expect(userRepository.manager.update).toHaveBeenCalledWith(UserOrganization, { userId: 'user-new' }, retired);
 		expect(userRepository.manager.update).toHaveBeenCalledWith(User, { id: 'user-new' }, retired);
+		expect(userRepository.manager.update).toHaveBeenCalledWith(Employee, { userId: 'user-new' }, retired);
+		expect(userRepository.manager.update).toHaveBeenCalledWith(UserOrganization, { userId: 'user-new' }, retired);
 		expect(inviteService.releaseInvite).toHaveBeenCalledWith('invite-1');
+
+		await accept();
+
+		expect(placeholderTransferService.transfer).toHaveBeenLastCalledWith(
+			PLACEHOLDER,
+			'employee-of-user-new-2',
+			TENANT,
+			{ keepInviteId: 'invite-1' }
+		);
+	});
+
+	it('retires an account its registration saved before failing, so that accepting again starts over', async () => {
+		const { accept, authService, placeholderTransferService, userRepository, users } = build({
+			placeholderEmployeeId: PLACEHOLDER
+		});
+		// The account is saved, then a later step of the registration fails: the claim never gets it back.
+		authService.register.mockImplementationOnce(async () => {
+			users.push({ id: 'user-half', email: 'amina@ever.co', tenantId: TENANT, deletedAt: null });
+			throw new Error('organization link failed');
+		});
+
+		await expect(accept()).rejects.toThrow('organization link failed');
+
+		const retired = { isActive: false, isArchived: true, deletedAt: expect.any(Date) };
+		expect(userRepository.manager.update).toHaveBeenCalledWith(User, { id: 'user-half' }, retired);
+
+		await accept();
+
+		expect(placeholderTransferService.transfer).toHaveBeenCalledTimes(1);
+	});
+
+	it('still retires the account when retiring its member or its organization links fails', async () => {
+		const { accept, placeholderTransferService, userRepository } = build({ placeholderEmployeeId: PLACEHOLDER });
+		placeholderTransferService.transfer.mockRejectedValueOnce(new Error('transfer failed'));
+		const update = userRepository.manager.update.getMockImplementation();
+		userRepository.manager.update.mockImplementation(
+			async (entity: unknown, where: Partial<Account>, values: Partial<Account>) => {
+				if (entity !== User) throw new Error(`${String((entity as { name?: string }).name)} update failed`);
+				return update?.(entity, where, values);
+			}
+		);
+
+		await expect(accept()).rejects.toThrow('transfer failed');
+
+		expect(userRepository.manager.update).toHaveBeenCalledWith(User, { id: 'user-new' }, expect.anything());
+		await expect(accept()).resolves.toBeDefined();
 	});
 
 	it('gives the invitation back when the transfer fails', async () => {

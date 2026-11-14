@@ -76,8 +76,8 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 
 		let user: IUser;
 		let employee: IEmployee;
-		// The account a claim registers, retired again when the claim fails.
-		let registered: IUser | undefined;
+		// Whether a claim got past the account check: from there on, any account its email gains is this attempt's.
+		let registers = false;
 
 		// A claim invitation hands a member without an account over to the person who accepts it (#11913).
 		const isClaim = !!invite.placeholderEmployeeId;
@@ -91,8 +91,8 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 						'This email already has an account: an admin merges the member without an account into theirs.'
 					);
 				}
+				registers = true;
 				user = await this.registerNewUser(input, invite, languageCode);
-				registered = user;
 				employee = await this.createEmployee(invite, user);
 			} else {
 				// Inner try/catch is find-or-register control flow, not error handling: a missing
@@ -121,9 +121,10 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 				await this.placeholderTransferService.transfer(placeholderEmployeeId, employee.id, tenantId, kept);
 			}
 		} catch (error) {
-			// A failed claim retires the account it registered: the next acceptance would otherwise find it and refuse.
-			if (registered) {
-				await this.retireClaimAccount(registered, employee);
+			// A failed claim retires the account it registered, even one a registration saved before failing: the next
+			// acceptance would otherwise find it and refuse.
+			if (registers) {
+				await this.retireClaimAccounts(invite);
 			}
 			// Nothing consumed the invite after all — hand it back rather than stranding it as
 			// ACCEPTED with no employee attached.
@@ -182,33 +183,52 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 	 * @param invite The claim invitation being accepted.
 	 */
 	private async hasAccount(invite: IInvite): Promise<boolean> {
-		const { tenantId } = invite;
-		const email = invite.email.toLowerCase();
-		const account = await this.typeOrmUserRepository.findOne({
-			where: { tenantId, email: Raw((column) => `LOWER(${column}) = :email`, { email }) }
-		});
-		return !!account;
+		return (await this.accountsOf(invite)).length > 0;
 	}
 
 	/**
-	 * Retires what a failed claim made for the person, as a merged placeholder's user is retired: the account it
-	 * registered, its member and its organization links, deactivated, archived and soft-deleted. Not deleted: deleting a
-	 * user makes the database check every table naming one. Best effort, so the claim's own error is the one reported.
-	 *
-	 * @param user The account the claim registered.
-	 * @param employee The member it made for that account, if it got that far.
+	 * The live accounts of the invited email in the invitation's tenant, whatever their role, compared without regard
+	 * to case.
+	 * @param invite The claim invitation being accepted.
 	 */
-	private async retireClaimAccount(user: IUser, employee: IEmployee | undefined): Promise<void> {
+	private async accountsOf(invite: IInvite): Promise<IUser[]> {
+		const { tenantId } = invite;
+		const email = invite.email.toLowerCase();
+		return await this.typeOrmUserRepository.find({
+			where: { tenantId, email: Raw((column) => `LOWER(${column}) = :email`, { email }) }
+		});
+	}
+
+	/**
+	 * Retires the accounts a failed claim registered, as a merged placeholder's user is retired: deactivated, archived
+	 * and soft-deleted, with their members and organization links. The email had none when the claim got past its
+	 * check, so the ones it has now were made by this attempt, even by a registration that saved the account and then
+	 * failed. Each write stands on its own, the account's first, so one that fails does not keep the others from being
+	 * made, and the claim's own error stays the one reported. Not deleted: deleting a user makes the database check
+	 * every table naming one.
+	 *
+	 * @param invite The claim invitation whose acceptance failed.
+	 */
+	private async retireClaimAccounts(invite: IInvite): Promise<void> {
 		const retired = { isActive: false, isArchived: true, deletedAt: new Date() };
 		const { manager } = this.typeOrmUserRepository;
-		try {
-			if (employee?.id) {
-				await manager.update(Employee, { id: employee.id }, retired);
+		const attempt = async (what: string, write: () => Promise<unknown>) => {
+			try {
+				await write();
+			} catch (cleanup) {
+				console.error(`Failed to retire ${what} after a failed claim:`, cleanup);
 			}
-			await manager.update(UserOrganization, { userId: user.id }, retired);
-			await manager.update(User, { id: user.id }, retired);
-		} catch (cleanup) {
-			console.error(`Failed to retire the account ${user.id} of a failed claim:`, cleanup);
+		};
+		let accounts: IUser[] = [];
+		await attempt(`the accounts of invitation ${invite.id}`, async () => {
+			accounts = await this.accountsOf(invite);
+		});
+		for (const { id } of accounts) {
+			await attempt(`the account ${id}`, () => manager.update(User, { id }, retired));
+			await attempt(`the members of ${id}`, () => manager.update(Employee, { userId: id }, retired));
+			await attempt(`the organization links of ${id}`, () =>
+				manager.update(UserOrganization, { userId: id }, retired)
+			);
 		}
 	}
 
