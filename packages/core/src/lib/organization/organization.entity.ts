@@ -406,26 +406,26 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	timeFormat?: 12 | 24;
 
 	/**
-	 * The interval, in minutes, reports and exports round each duration to: one of `DURATION_ROUNDING_INTERVALS`.
-	 * Null, the default, rounds nothing. Stored time never changes: the rule applies to what is shown.
+	 * The interval, in minutes, a client rounds each duration to in the reports and exports it shows: one of
+	 * `DURATION_ROUNDING_INTERVALS`. The API stores the rule and rounds nothing itself. Null, the default, means no rounding.
 	 */
 	@ApiPropertyOptional({
 		type: () => Number,
 		enum: [...DURATION_ROUNDING_INTERVALS],
 		nullable: true,
 		description:
-			'Minutes each duration is rounded to in reports and exports, set with a direction; null rounds nothing'
+			'Minutes a client rounds each duration to in reports and exports, set with a direction; null means no rounding'
 	})
 	@ValidateIf(setsDurationRoundingRule)
 	@IsIn(DURATION_ROUNDING_INTERVALS)
 	@MultiORMColumn({ nullable: true })
 	durationRoundingInterval?: number | null;
 
-	/** Which way a duration goes to that interval: up, down or to the nearest. Null, the default, rounds nothing. */
+	/** Which way a client rounds a duration to that interval: up, down or to the nearest. Null, the default, means none. */
 	@ApiPropertyOptional({
 		enum: DurationRoundingDirectionEnum,
 		nullable: true,
-		description: 'Which way a duration is rounded to the interval, set with it; null rounds nothing'
+		description: 'Which way a client rounds a duration to the interval, set with it; null means no rounding'
 	})
 	@ValidateIf(setsDurationRoundingRule)
 	@IsEnum(DurationRoundingDirectionEnum)

@@ -47,7 +47,8 @@ export enum DurationRoundingDirectionEnum {
 }
 
 /**
- * How the organization rounds durations in what reports and exports show. Stored time never changes.
+ * How a client rounds durations in the reports and exports it shows. The API stores the rule and rounds nothing
+ * itself, and stored time never changes.
  *
  * A rule is an interval with a direction, set together. Both are null by default, which rounds nothing, and a
  * client reads a rule with either value null as no rounding.
