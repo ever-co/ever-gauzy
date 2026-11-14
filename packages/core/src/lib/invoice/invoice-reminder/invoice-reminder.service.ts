@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { Injectable, Logger } from '@nestjs/common';
-import { Brackets, DataSource, In, IsNull } from 'typeorm';
+import { Brackets, DataSource, In, IsNull, SelectQueryBuilder } from 'typeorm';
 import { EmailTemplateEnum, ID, IOrganization, LanguagesEnum } from '@gauzy/contracts';
 import { EmailTemplate, EstimateEmail, Invoice, Organization, OrganizationContact } from '../../core/entities/internal';
 import { isUniqueViolation } from '../../core/errors/unique-violation';
@@ -87,6 +87,9 @@ function claimTimeOf(now: Date): Date {
  *   through and the others send nothing. A send that fails gives the row back, so the next sweep tries again while the
  *   reminder is due. A process that stops between its claim and its send leaves the claim unsent: that reminder is lost
  *   rather than risked twice, since an email, unlike a notification, cannot be looked up once sent.
+ * - **Still due when it goes.** The invoice is read again right before its email goes: one paid, voided, given another
+ *   due date or emailed again while the sweep sent the ones before it, or whose organization turned the reminders off
+ *   meanwhile, gets nothing, and a payment made meanwhile shows in the amount.
  * - **Tenant by tenant.** Every read names the invoice's tenant, and each email goes through its organization's mail
  *   settings and is filed in its email history, which is where the organization sees the reminders it sent.
  * - **Never an empty email.** The renderer answers an empty email for a template it cannot find, so while the
@@ -155,16 +158,47 @@ export class InvoiceReminderService {
 	}
 
 	/**
-	 * A page of the invoices that may be due a reminder at `now`: sent and not paid in full, not an estimate, not
-	 * archived, of an active organization of their own tenant that turned the reminders on, and due between the last
-	 * step's grace and the first step's moment. Ordered by due date, then id, so the next page starts after this one.
+	 * A page of the invoices that may be due a reminder at `now` (see `remindedInvoices`), due between the last step's
+	 * grace and the first step's moment. Ordered by due date, then id, so the next page starts after this one.
 	 */
 	private async invoicesThatMayBeDue(
 		after: IInvoiceReminderInvoiceRow | null,
 		limit: number,
 		now: Date
 	): Promise<IInvoiceReminderInvoiceRow[]> {
-		const query = this.dataSource
+		const query = this.remindedInvoices()
+			.andWhere('invoice.dueDate >= :earliest', { earliest: earliestRemindedDueDate(now) })
+			.andWhere('invoice.dueDate <= :latest', { latest: latestRemindedDueDate(now) })
+			.orderBy('invoice.dueDate', 'ASC')
+			.addOrderBy('invoice.id', 'ASC')
+			.limit(limit);
+		if (after) {
+			query.andWhere(
+				new Brackets((next) =>
+					next
+						.where('invoice.dueDate > :afterDueDate', { afterDueDate: after.dueDate })
+						.orWhere('invoice.dueDate = :afterDueDate AND invoice.id > :afterId', { afterId: after.id })
+				)
+			);
+		}
+		return query.getRawMany<IInvoiceReminderInvoiceRow>();
+	}
+
+	/** The invoice as it is now, if it is still one the reminders go to (see `remindedInvoices`), or null. */
+	private async currentInvoice(invoice: IInvoiceReminderInvoiceRow): Promise<IInvoiceReminderInvoiceRow | null> {
+		const current = await this.remindedInvoices()
+			.andWhere('invoice.id = :id', { id: invoice.id })
+			.andWhere('invoice.tenantId = :tenantId', { tenantId: invoice.tenantId })
+			.getRawOne<IInvoiceReminderInvoiceRow>();
+		return current ?? null;
+	}
+
+	/**
+	 * The invoices the reminders go to: sent and not paid in full, not an estimate, not archived, with a due date, of an
+	 * active organization of their own tenant that turned the reminders on.
+	 */
+	private remindedInvoices(): SelectQueryBuilder<Invoice> {
+		return this.dataSource
 			.getRepository(Invoice)
 			.createQueryBuilder('invoice')
 			.innerJoin(
@@ -216,22 +250,7 @@ export class InvoiceReminderService {
 						.orWhere('invoice.isArchived = :archived', { archived: false })
 				)
 			)
-			.andWhere('invoice.dueDate IS NOT NULL')
-			.andWhere('invoice.dueDate >= :earliest', { earliest: earliestRemindedDueDate(now) })
-			.andWhere('invoice.dueDate <= :latest', { latest: latestRemindedDueDate(now) })
-			.orderBy('invoice.dueDate', 'ASC')
-			.addOrderBy('invoice.id', 'ASC')
-			.limit(limit);
-		if (after) {
-			query.andWhere(
-				new Brackets((next) =>
-					next
-						.where('invoice.dueDate > :afterDueDate', { afterDueDate: after.dueDate })
-						.orWhere('invoice.dueDate = :afterDueDate AND invoice.id > :afterId', { afterId: after.id })
-				)
-			);
-		}
-		return query.getRawMany<IInvoiceReminderInvoiceRow>();
+			.andWhere('invoice.dueDate IS NOT NULL');
 	}
 
 	/** Sends the reminders a page of invoices is due. */
@@ -272,7 +291,7 @@ export class InvoiceReminderService {
 			try {
 				const claim = await this.claim(invoice, due, delivery.email, now);
 				if (claim) {
-					await this.send(invoice, due, left, delivery, organization, contactNames, claim, now, report);
+					await this.send(invoice, due, delivery, organization, contactNames, claim, now, report);
 				}
 			} catch (error) {
 				report.failed += 1;
@@ -287,11 +306,14 @@ export class InvoiceReminderService {
 	 * Sends a claimed reminder, then records it as sent. A send that fails gives the claim back, so the next sweep tries
 	 * again while the reminder is due; one to a domain the platform never emails keeps its claim, unsent, so it is not
 	 * tried again.
+	 *
+	 * The page was read before the sends ahead of this one, and the PDF takes its time: the invoice is read again right
+	 * before the email goes, and a reminder that is no longer due (the invoice was paid, voided, given another due date
+	 * or emailed again, or its organization turned the reminders off) gives its claim back and goes nowhere.
 	 */
 	private async send(
 		invoice: IInvoiceReminderInvoiceRow,
 		due: IDueInvoiceReminder,
-		left: number,
 		delivery: IInvoiceDelivery,
 		organization: IOrganization,
 		contactNames: Map<string, string>,
@@ -302,19 +324,25 @@ export class InvoiceReminderService {
 		const languageCode = (delivery.languageCode as LanguagesEnum) || LanguagesEnum.ENGLISH;
 		let sent: boolean;
 		try {
+			const pdf = await this.pdfOf(invoice, languageCode);
+			const current = await this.stillDue(invoice, due, now);
+			if (!current) {
+				await this.release(claim);
+				return;
+			}
 			sent = await this.emails.sendInvoiceReminder({
 				languageCode,
 				email: delivery.email,
 				organization,
 				invoiceId: invoice.id,
-				invoiceNumber: Number(invoice.invoiceNumber),
+				invoiceNumber: Number(current.invoice.invoiceNumber),
 				isOverdue: due.isOverdue,
 				dueDate: formatInvoiceDay(new Date(instantOf(invoice.dueDate)), organization),
-				amountDue: formattedAmountOf(left, languageCode) ?? String(left),
-				currency: invoice.currency,
+				amountDue: formattedAmountOf(current.left, languageCode) ?? String(current.left),
+				currency: current.invoice.currency,
 				contactName: invoice.toContactId ? (contactNames.get(String(invoice.toContactId)) ?? null) : null,
-				publicToken: invoice.token,
-				pdf: await this.pdfOf(invoice, languageCode)
+				publicToken: current.invoice.token,
+				pdf
 			});
 		} catch (error) {
 			await this.release(claim);
@@ -326,6 +354,31 @@ export class InvoiceReminderService {
 		}
 		await this.recordSent(claim, now);
 		report.reminded += 1;
+	}
+
+	/**
+	 * The invoice as it is now, and what is left to pay on it, when the reminder claimed from the page is still due: the
+	 * invoice is still one the reminders go to, its due date did not move, the same step is due (an email of the invoice
+	 * sent since counts, as the rules have none go on its heels), and something is left to pay. Null otherwise.
+	 */
+	private async stillDue(
+		invoice: IInvoiceReminderInvoiceRow,
+		due: IDueInvoiceReminder,
+		now: Date
+	): Promise<{ invoice: IInvoiceReminderInvoiceRow; left: number } | null> {
+		const current = await this.currentInvoice(invoice);
+		if (!current || instantOf(current.dueDate) !== instantOf(invoice.dueDate)) {
+			return null;
+		}
+		const delivery = (await this.lastDeliveriesOf([current])).get(String(current.id));
+		const again = delivery
+			? invoiceReminderDueAt(current.dueDate, delivery.emailedAt, now, invoiceTimeZoneOf(current))
+			: null;
+		const left = amountLeftToPay(current.totalValue, current.alreadyPaid);
+		if (!again || again.step !== due.step || left === null) {
+			return null;
+		}
+		return { invoice: current, left };
 	}
 
 	/**

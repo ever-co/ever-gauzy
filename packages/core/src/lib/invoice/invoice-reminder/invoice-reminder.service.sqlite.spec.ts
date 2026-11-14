@@ -426,6 +426,93 @@ describe('InvoiceReminderService on SQLite', () => {
 		expect(emails.sendInvoiceReminder).toHaveBeenCalledTimes(3);
 	});
 
+	describe('an invoice that changes while the sweep emails the ones before it', () => {
+		/** Two invoices due the same reminder; the sweep emails the first, then the second. */
+		async function twoDue(): Promise<{ first: string; second: string }> {
+			const first = await anInvoice({ dueIn: -DAY - 2 * HOUR });
+			const second = await anInvoice({ dueIn: -DAY - HOUR });
+			return { first, second };
+		}
+
+		/** Runs `change` while the first invoice's reminder is being sent. */
+		function whileTheFirstIsSent(change: () => Promise<unknown>): void {
+			emails.sendInvoiceReminder.mockImplementationOnce(async () => {
+				await change();
+				return true;
+			});
+		}
+
+		it.each([
+			['paid in full', (id: string) => [`UPDATE "invoice" SET "status" = 'FULLY_PAID' WHERE "id" = ?`, [id]]],
+			['marked paid', (id: string) => [`UPDATE "invoice" SET "paid" = 1 WHERE "id" = ?`, [id]]],
+			['voided', (id: string) => [`UPDATE "invoice" SET "status" = 'VOID' WHERE "id" = ?`, [id]]],
+			['deleted', (id: string) => [`UPDATE "invoice" SET "deletedAt" = ? WHERE "id" = ?`, [stored(NOW), id]]],
+			[
+				'given another due date',
+				(id: string) => [`UPDATE "invoice" SET "dueDate" = ? WHERE "id" = ?`, [stored(fromNow(10 * DAY)), id]]
+			]
+		])('sends nothing for one %s meanwhile, and gives its claim back', async (_, update) => {
+			const { first, second } = await twoDue();
+			whileTheFirstIsSent(() => dataSource.query(...(update(second) as [string, unknown[]])));
+
+			const report = await service.sweep(NOW);
+
+			expect(sent().map((input) => input.invoiceId)).toEqual([first]);
+			expect(report).toEqual(expect.objectContaining({ reminded: 1, failed: 0 }));
+			expect((await claims()).map((claim) => claim.invoiceId)).toEqual([first]);
+		});
+
+		it('sends nothing once the organization turned the reminders off meanwhile', async () => {
+			const { first } = await twoDue();
+			whileTheFirstIsSent(() =>
+				dataSource.query(`UPDATE "organization" SET "invoiceRemindersEnabled" = 0 WHERE "id" = ?`, [
+					organization
+				])
+			);
+
+			await service.sweep(NOW);
+
+			expect(sent().map((input) => input.invoiceId)).toEqual([first]);
+			expect((await claims()).map((claim) => claim.invoiceId)).toEqual([first]);
+		});
+
+		it('sends nothing on the heels of the invoice emailed again meanwhile', async () => {
+			const { first, second } = await twoDue();
+			whileTheFirstIsSent(() =>
+				emailed(second, { at: NOW, email: 'billing@acme.test', languageCode: LanguagesEnum.ENGLISH })
+			);
+
+			await service.sweep(NOW);
+
+			expect(sent().map((input) => input.invoiceId)).toEqual([first]);
+		});
+
+		it('sends what is left to pay after a payment made meanwhile', async () => {
+			const { second } = await twoDue();
+			whileTheFirstIsSent(() =>
+				dataSource.query(`UPDATE "invoice" SET "alreadyPaid" = 1100 WHERE "id" = ?`, [second])
+			);
+
+			await service.sweep(NOW);
+
+			expect(sent().map((input) => input.amountDue)).toEqual(['1,000.00', '150.00']);
+		});
+
+		it('sends nothing for one paid while its own PDF was rendered', async () => {
+			const invoice = await anInvoice({ dueIn: -DAY - HOUR });
+			invoices.generateTenantInvoicePdf.mockImplementationOnce(async () => {
+				await dataSource.query(`UPDATE "invoice" SET "status" = 'FULLY_PAID' WHERE "id" = ?`, [invoice]);
+				return Buffer.from('%PDF');
+			});
+
+			const report = await service.sweep(NOW);
+
+			expect(emails.sendInvoiceReminder).not.toHaveBeenCalled();
+			expect(report).toEqual(expect.objectContaining({ reminded: 0, failed: 0 }));
+			expect(await claims()).toEqual([]);
+		});
+	});
+
 	it('reads every page of invoices', async () => {
 		for (let i = 0; i <= INVOICE_REMINDER_SWEEP_PAGE_SIZE; i++) {
 			await anInvoice({ dueIn: -DAY - HOUR - i * 60 * 1000 });
