@@ -67,4 +67,15 @@ describe.each([
 			'durationRoundingInterval'
 		]);
 	});
+
+	it('refuses one value cleared alone, which would leave half a rule stored', async () => {
+		expect(await invalidPropertiesOf({ durationRoundingInterval: null })).toEqual([
+			'durationRoundingInterval',
+			'durationRoundingDirection'
+		]);
+		expect(await invalidPropertiesOf({ durationRoundingDirection: null })).toEqual([
+			'durationRoundingInterval',
+			'durationRoundingDirection'
+		]);
+	});
 });
