@@ -1056,6 +1056,37 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 			expect(timeSpanDeletes).toEqual(cutsOfEntry(entry, TWO_HOURS_AGO, NOW));
 		});
 
+		it('cuts only up to where another process stopped the run when neither try of its stop wrote', async () => {
+			// Twenty minutes of manual time from 01:30, past where the run ends in the end
+			const entry = timeLog('manual-entry', TimeLogSourceEnum.WEB_TIMER, new Date('2026-10-24T01:30:00.000Z'), {
+				isRunning: false,
+				stoppedAt: new Date('2026-10-24T01:50:00.000Z'),
+				createdAt: new Date('2026-10-23T20:00:00.000Z'),
+				timeSlots: [{ startedAt: new Date('2026-10-24T01:30:00.000Z'), duration: 600 }]
+			});
+			const rows = [entry, timeLog('web-run', TimeLogSourceEnum.WEB_TIMER, TWO_HOURS_AGO)];
+			let triesOfStop = 0;
+			const { service, timeSpanDeletes } = setup(rows, {
+				onUpdate: (command) => {
+					if (command.id !== 'web-run') {
+						return;
+					}
+					triesOfStop += 1;
+					if (triesOfStop === 2) {
+						// Another API process stops the run at 01:00 meanwhile, and the second try fails before it writes
+						Object.assign(rows[1], { isRunning: false, stoppedAt: ONE_HOUR_AGO });
+					}
+					throw new Error('connection reset');
+				}
+			});
+
+			await startOnDesktop(service);
+
+			// The run holds 00:00 to 01:00: the entry, after it, keeps its time
+			expect(rows[1]).toMatchObject({ id: 'web-run', isRunning: false, stoppedAt: ONE_HOUR_AGO });
+			expect(timeSpanDeletes).toEqual([]);
+		});
+
 		it('cuts the logs a replaced run overlaps when the cleanup of the other runs fails after its stop', async () => {
 			const entry = manualEntry();
 			const rows = [entry, timeLog('web-run', TimeLogSourceEnum.WEB_TIMER, TWO_HOURS_AGO)];
