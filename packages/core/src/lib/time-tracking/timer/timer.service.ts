@@ -1092,12 +1092,14 @@ export class TimerService {
 	 * Gives a run whose client posts its slots (a heartbeat-fed run) the slots of the time from its start to its first
 	 * slot, without activity, and gives that first slot the seconds the run covers in it, keeping its activity: an
 	 * earlier start's added minutes count in the slots, and so in the timesheet, as in the run's duration. A slot the
-	 * run shares with the entry before it keeps that entry's seconds besides the run's (`secondsInWindow`).
+	 * run shares with the entry before it keeps that entry's seconds besides the run's (`secondsInWindow`). A later start
+	 * inside the window of the run's first slot takes from that slot the seconds before it, which the release of the
+	 * time log update leaves, as it drops whole windows only.
 	 *
 	 * A run holding no slot is left as it is: its stop gives it the slots of its whole range, which a slot made here
 	 * would prevent. The writes run in one transaction and are idempotent (a slot is reused, its seconds counted from
-	 * the entries holding it, a duration only ever raised): a failure leaves the slots as they were, and a retry of the
-	 * move finds the same work to do.
+	 * the entries holding it): a failure leaves the slots as they were, and a retry of the move finds the same work to
+	 * do.
 	 *
 	 * @param run - The running log, as stored.
 	 * @param now - The moment of the move: the run covers its past up to it.
@@ -1119,12 +1121,18 @@ export class TimerService {
 		const heldByWindow = new Map(held.map((slot) => [windowOf(slot), slot]));
 
 		const missing = coverage.filter((window) => !heldByWindow.has(windowOf(window)));
-		// A held slot not yet full may gain seconds: the run's own, or those of a move before this one
+		// A held slot not yet full may gain seconds; the one holding the start may lose those a later start left out
 		const recount = coverage
-			.map((window) => ({ window, slot: heldByWindow.get(windowOf(window)) }))
-			.filter((entry): entry is { window: RunWindow; slot: ITimeSlot } => {
+			.map((window, index) => ({ window, slot: heldByWindow.get(windowOf(window)), holdsTheStart: index === 0 }))
+			.filter((entry): entry is { window: RunWindow; slot: ITimeSlot; holdsTheStart: boolean } => {
 				const isHeld = entry.slot !== undefined;
-				return isHeld && Number(entry.slot.duration ?? 0) < windowSecondsOf(entry.window);
+				if (!isHeld) {
+					return false;
+				}
+				const heldSeconds = Number(entry.slot.duration ?? 0);
+				const mayGain = heldSeconds < windowSecondsOf(entry.window);
+				const mayLose = entry.holdsTheStart && heldSeconds > entry.window.duration;
+				return mayGain || mayLose;
 			});
 		const mayChangeSlots = missing.length > 0 || recount.length > 0;
 		if (!mayChangeSlots) {
@@ -1133,7 +1141,7 @@ export class TimerService {
 
 		let changesSlots = missing.length > 0;
 		await this.typeOrmTimeLogRepository.manager.transaction(async (manager: EntityManager) => {
-			for (const { window, slot } of recount) {
+			for (const { window, slot, holdsTheStart } of recount) {
 				const withHolders = await manager.findOne(TimeSlot, {
 					where: { id: slot.id } as FindOptionsWhere<TimeSlot>,
 					relations: { timeLogs: true }
@@ -1142,8 +1150,11 @@ export class TimerService {
 					continue;
 				}
 				const seconds = this.secondsInWindow(withHolders, run, window);
-				const gainsSeconds = seconds > Number(withHolders.duration ?? 0);
-				if (gainsSeconds) {
+				const heldSeconds = Number(withHolders.duration ?? 0);
+				const gainsSeconds = seconds > heldSeconds;
+				const losesSeconds = holdsTheStart && seconds < heldSeconds;
+				const changesDuration = gainsSeconds || losesSeconds;
+				if (changesDuration) {
 					await manager.update(TimeSlot, { id: slot.id }, { duration: seconds });
 					changesSlots = true;
 				}

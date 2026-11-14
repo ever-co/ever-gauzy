@@ -489,6 +489,33 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 			expect(linkedSlots()).toEqual(['09:00:480:7', '09:10:600:0', '09:20:600:42']);
 		});
 
+		it('takes from the slot holding a later start the seconds before it, keeping its activity', async () => {
+			const rows = [runningLog()];
+			const { service, linkedSlots, commandsOf } = createService(ormType, rows, employeeIn(openOrganization), {
+				slots: [heartbeatSlot()]
+			});
+
+			await service.moveRunningTimerStart({ startedAt: at('09:28') });
+
+			// The 9:20 slot held the five minutes from 9:25; from 9:28 the run covers two of them
+			expect(linkedSlots()).toEqual(['09:20:120:42']);
+			expect(commandsOf(TimesheetRecalculateCommand).map((command) => command.id)).toEqual([TIMESHEET_ID]);
+		});
+
+		it('keeps, in the slot holding a later start, the seconds of the entry before it', async () => {
+			// Her entry from 8:30 to 9:21 holds 60 seconds of the 9:20 slot, which the run's heartbeat raised to 360
+			const entryUntil0921 = timeLog({ id: EARLIER_LOG_ID, startedAt: at('08:30'), stoppedAt: at('09:21') });
+			const shared = { ...heartbeatSlot(), duration: 360, heldBy: [EARLIER_LOG_ID] };
+			const rows = [entryUntil0921, runningLog()];
+			const { service, linkedSlots } = createService(ormType, rows, employeeIn(openOrganization), {
+				slots: [shared]
+			});
+
+			await service.moveRunningTimerStart({ startedAt: at('09:28') });
+
+			expect(linkedSlots()).toEqual(['09:20:180:42']);
+		});
+
 		it('never lowers the seconds a slot already holds', async () => {
 			const rows = [runningLog()];
 			const fullSlot = { ...heartbeatSlot(), duration: 600 };
