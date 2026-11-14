@@ -122,6 +122,30 @@ describe('EmployeeCreateHandler refuses the account of an agent', () => {
 		expect(employeeService.create).not.toHaveBeenCalled();
 	});
 
+	it('never files a member without an account from a body, by email or by userId', async () => {
+		const placeholderFields = { isPlaceholder: true, placeholderEmail: 'someone@example.com' };
+		await handler.execute(
+			new EmployeeCreateCommand({
+				organizationId: ORGANIZATION,
+				user: { email: PERSON_USER.email },
+				...placeholderFields
+			} as never)
+		);
+		await handler.execute(
+			new EmployeeCreateCommand({
+				organizationId: ORGANIZATION,
+				userId: PERSON_USER.id,
+				...placeholderFields
+			} as never)
+		);
+
+		expect(employeeService.create).toHaveBeenCalledTimes(2);
+		for (const [created] of employeeService.create.mock.calls) {
+			expect(created).not.toHaveProperty('isPlaceholder');
+			expect(created).not.toHaveProperty('placeholderEmail');
+		}
+	});
+
 	it('CONTROL: without the check, the agent account was filed as a human employee', async () => {
 		employeeService.assertNotAgentAccount.mockResolvedValue(undefined);
 

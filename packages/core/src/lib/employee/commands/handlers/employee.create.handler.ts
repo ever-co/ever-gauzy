@@ -21,6 +21,17 @@ import { UserCreateCommand } from './../../../user/commands';
 import { RoleService } from './../../../role/role.service';
 import { UserService } from './../../../user/user.service';
 
+/**
+ * The input without the fields of a member without an account (ever-co/ever-gauzy#11913), which only the placeholder
+ * routes set: `POST /employee` and `POST /employee/bulk` pass their body on unchecked.
+ */
+function withoutPlaceholderFields<T extends object>(input: T): T {
+	const copy = { ...input } as T & { isPlaceholder?: unknown; placeholderEmail?: unknown };
+	delete copy.isPlaceholder;
+	delete copy.placeholderEmail;
+	return copy;
+}
+
 @CommandHandler(EmployeeCreateCommand)
 export class EmployeeCreateHandler implements ICommandHandler<EmployeeCreateCommand> {
 	constructor(
@@ -41,7 +52,9 @@ export class EmployeeCreateHandler implements ICommandHandler<EmployeeCreateComm
 	 * @throws SomeAppropriateException if an error occurs during the process.
 	 */
 	public async execute(command: EmployeeCreateCommand): Promise<IEmployee> {
-		const { input, originUrl = environment.clientBaseUrl } = command;
+		const { originUrl = environment.clientBaseUrl } = command;
+		// Only the placeholder routes make a member without an account (#11913): a body never sets its fields.
+		const input = withoutPlaceholderFields(command.input);
 		const languageCode = command.languageCode || LanguagesEnum.ENGLISH;
 		// Issue #9873: exit/logout can only be restricted on an existing employee, with an acknowledgement.
 		assertNoAgentRestrictionOnCreate(input);
