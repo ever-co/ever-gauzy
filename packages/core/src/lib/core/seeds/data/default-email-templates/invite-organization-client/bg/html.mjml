@@ -42,7 +42,7 @@
 					Здравейте{{#if name}}, {{name}}{{/if}}!
 				</mj-text>
 				<mj-text>
-					<strong dir="auto" style="color: #18181B; font-weight: 600">{{organizationName}}</strong> Ви покани да се присъедините към тях в {{appName}}.
+					<strong dir="auto" style="color: #18181B; font-weight: 600">{{organizationName}}</strong> Ви покани да се присъедините към {{appName}} - Платформа за бизнес управление с отворен код (ERP/CRM/HRM), фокусирана върху честността и прозрачността!
 				</mj-text>
 				<mj-button padding="8px 10px 12px" href="{{generatedUrl}}" target="_blank">Завършване на регистрацията</mj-button>
 				<mj-text mj-class="note" padding="0 10px 20px">

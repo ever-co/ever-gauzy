@@ -41,7 +41,10 @@
 				<mj-raw>{{/if}}</mj-raw>
 				<mj-text mj-class="heading">ברוכים הבאים אל {{appName}}</mj-text>
 				<mj-text>
-					תודה שנרשמת. החשבון שלך ב-{{appName}} עבור <strong dir="auto" style="color: #18181B; font-weight: 600">{{email}}</strong> מוכן, ואנחנו שמחים שהצטרפת אלינו.
+					שלום{{#if email}} {{email}}{{/if}},
+				</mj-text>
+				<mj-text>
+					תודה על הרשמתך ב-{{appName}} - פלטפורמת ניהול עסקי בקוד פתוח (ERP/CRM/HRM). החשבון שלך מוכן, ואנו שמחים לקבל אותך על הסיפון!
 				</mj-text>
 				<mj-raw>{{#if appLink}}</mj-raw>
 				<mj-button href="{{appLink}}" target="_blank">פתיחת {{appName}}</mj-button>

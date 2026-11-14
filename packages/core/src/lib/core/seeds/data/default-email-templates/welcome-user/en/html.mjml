@@ -39,7 +39,10 @@
 				<mj-raw>{{/if}}</mj-raw>
 				<mj-text mj-class="heading">Welcome to {{appName}}</mj-text>
 				<mj-text>
-					Thanks for signing up. Your {{appName}} account for <strong dir="auto" style="color: #18181B; font-weight: 600">{{email}}</strong> is ready, and we are glad to have you on board.
+					Hi{{#if email}} {{email}}{{/if}},
+				</mj-text>
+				<mj-text>
+					Thank you for your registration in {{appName}} - Open-Source Business Management Platform (ERP/CRM/HRM). Your account is ready, and we are happy to have you on board!
 				</mj-text>
 				<mj-raw>{{#if appLink}}</mj-raw>
 				<mj-button href="{{appLink}}" target="_blank">Open {{appName}}</mj-button>

@@ -44,7 +44,7 @@
 					שלום{{#if name}} {{name}}{{/if}},
 				</mj-text>
 				<mj-text>
-					הוזמנת על ידי <strong dir="auto" style="color: #18181B; font-weight: 600">{{organizationName}}</strong> להצטרף אליהם ב-{{appName}}.
+					הוזמנת על ידי <strong dir="auto" style="color: #18181B; font-weight: 600">{{organizationName}}</strong> להצטרף אל {{appName}} - פלטפורמת ניהול עסקי בקוד פתוח (ERP/CRM/HRM) המתמקדת בהוגנות ושקיפות!
 				</mj-text>
 				<mj-button padding="8px 10px 12px" href="{{generatedUrl}}" target="_blank">השלמת ההרשמה</mj-button>
 				<mj-text mj-class="note" padding="0 10px 20px">

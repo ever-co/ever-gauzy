@@ -39,7 +39,10 @@
 				<mj-raw>{{/if}}</mj-raw>
 				<mj-text mj-class="heading">Добро пожаловать в {{appName}}</mj-text>
 				<mj-text>
-					Спасибо за регистрацию. Ваш аккаунт {{appName}} для <strong dir="auto" style="color: #18181B; font-weight: 600">{{email}}</strong> готов, и мы рады, что вы с нами.
+					Здравствуйте{{#if email}}, {{email}}{{/if}}!
+				</mj-text>
+				<mj-text>
+					Благодарим вас за регистрацию в {{appName}} — платформе управления бизнесом с открытым исходным кодом (ERP/CRM/HRM). Ваш аккаунт готов, и мы рады, что вы на борту!
 				</mj-text>
 				<mj-raw>{{#if appLink}}</mj-raw>
 				<mj-button href="{{appLink}}" target="_blank">Открыть {{appName}}</mj-button>
