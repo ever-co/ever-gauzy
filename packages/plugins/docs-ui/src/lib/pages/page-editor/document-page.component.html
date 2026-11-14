@@ -366,6 +366,7 @@
 							(statsChanged)="onStatsChanged($event)"
 							(tocChanged)="onTocChanged($event)"
 							(commentRequested)="openCommentsFor($event)"
+							(commentRangesResolved)="onCommentRangesResolved($event)"
 							(schemaVersionChanged)="onSchemaVersionChanged($event)"
 						></gz-document-editor>
 					}
@@ -502,8 +503,14 @@
 										[documentName]="document.name"
 										[blockId]="commentBlockId"
 										[knownBlockIds]="knownBlockIds"
+										[range]="commentRange"
+										[activeThreadId]="activeCommentThreadId"
+										[rangePlaces]="commentRangePlaces"
 										(openBlocksChanged)="onOpenCommentBlocks($event)"
+										(rangesChanged)="onCommentRanges($event)"
 										(blockFocused)="onCommentBlockFocused($event)"
+										(rangeFocused)="onCommentRangeFocused($event)"
+										(rangeDone)="onCommentRangeDone()"
 									></gz-docs-block-comments>
 								</div>
 							}

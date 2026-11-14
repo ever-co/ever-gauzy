@@ -112,6 +112,22 @@ describe('bulk request and undo', () => {
 			expect(undoLosses(null)).toEqual([]);
 		});
 
+		it('takes a priority or size the platform puts back by its record as put back whole, and any name left out as a loss', () => {
+			const previousOf = (previous: Record<string, unknown>) => ({
+				applied: 1,
+				refused: 0,
+				results: [{ taskId: 'a' as ID, ok: true, previous: previous as never }]
+			});
+			// The platform leaves out a team's own name that the record beside it gives back: nothing is left out here.
+			expect(undoLosses(previousOf({ taskPriorityId: 'p-own' }))).toEqual([]);
+			expect(undoLosses(previousOf({ taskSizeId: 'z-own' }))).toEqual([]);
+			// A name it answers is one its record does not give back (none, or renamed since): leaving it out loses it.
+			expect(undoLosses(previousOf({ priority: 'p0', taskPriorityId: 'p-own' }))).toEqual(['a']);
+			expect(undoLosses(previousOf({ priority: 'p0', taskPriorityId: null }))).toEqual(['a']);
+			expect(undoLosses(previousOf({ size: 'huge' }))).toEqual(['a']);
+			expect(undoLosses(previousOf({ status: 'legacy-name', taskStatusId: 's0' }))).toEqual(['a']);
+		});
+
 		it('counts only those the undo did put back: a refused one is not partly restored', () => {
 			const lossy = ['b', 'd'] as ID[];
 			expect(

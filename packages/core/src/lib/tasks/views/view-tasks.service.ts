@@ -19,6 +19,8 @@ import { Task } from '../task.entity';
 import { TaskView } from './view.entity';
 import { TaskViewService } from './view.service';
 import {
+	dateBoundClause,
+	DateComparison,
 	decodeCursor,
 	encodeCursor,
 	filterOptionsOf,
@@ -28,6 +30,8 @@ import {
 	orderingOf,
 	pageLimitOf,
 	relativeWindow,
+	relativeWindowDays,
+	TASK_VIEW_DATE_ONLY_FIELDS,
 	TASK_VIEW_MANUAL_ORDER_MAX,
 	validateFilterTree
 } from './view-filters';
@@ -160,22 +164,27 @@ export class TaskViewTasksService {
 					return null;
 			}
 		}
-		// A date field.
+		// A date field. A due date may be a date only (midnight UTC of its day): a bound that carries its calendar day
+		// compares those by the day, so they fall on the day they name in every zone; moments compare as before.
 		const date = `task.${condition.field}`;
+		const byDay = TASK_VIEW_DATE_ONLY_FIELDS.includes(condition.field);
+		const bound = (comparison: DateComparison, instant: Date, day: string | undefined, name: string) => dateBoundClause(date, comparison, instant, byDay ? day : undefined, name);
+		const both = (lower: { sql: string; params: ObjectLiteral }, upper: { sql: string; params: ObjectLiteral }) => ({ sql: `${lower.sql} AND ${upper.sql}`, params: { ...lower.params, ...upper.params } });
 		switch (condition.operator) {
 			case 'isEmpty':
 				return { sql: `${date} IS NULL` };
 			case 'isNotEmpty':
 				return { sql: `${date} IS NOT NULL` };
 			case 'before':
-				return { sql: `${date} < :${key}`, params: { [key]: new Date(condition.to as string) } };
+				return bound('<', new Date(condition.to as string), condition.toDay, key);
 			case 'after':
-				return { sql: `${date} > :${key}`, params: { [key]: new Date(condition.from as string) } };
+				return bound('>', new Date(condition.from as string), condition.fromDay, key);
 			case 'between':
-				return { sql: `${date} >= :${key}a AND ${date} <= :${key}b`, params: { [`${key}a`]: new Date(condition.from as string), [`${key}b`]: new Date(condition.to as string) } };
+				return both(bound('>=', new Date(condition.from as string), condition.fromDay, `${key}a`), bound('<=', new Date(condition.to as string), condition.toDay, `${key}b`));
 			case 'relative': {
 				const window = relativeWindow(condition.relative!, now, timeZone);
-				return { sql: `${date} >= :${key}a AND ${date} < :${key}b`, params: { [`${key}a`]: window.from, [`${key}b`]: window.to } };
+				const days = relativeWindowDays(condition.relative, window, timeZone);
+				return both(bound('>=', window.from, days.fromDay, `${key}a`), bound('<', window.to, days.toDay, `${key}b`));
 			}
 			default:
 				return null;

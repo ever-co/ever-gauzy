@@ -18,12 +18,49 @@ import {
 } from './../../agent-exit-logout-restriction';
 import { assertOwnRatesMayChange, isSameId, removeOwnRateFields, withStoredOwnRates } from './../../own-rates';
 import { TrackingTurnedOffEvent } from './../../../time-tracking/timer/events/tracking-turned-off.event';
+import { callerRoleRank, keepsTrackingSwitch, rankOfRole } from './../../../time-tracking/timer/tracking-switch-rule';
 
 /** Whether the save turned the employee's time tracking off: it was on before, and the saved row has it off. */
 function turnsTrackingOff(before: IEmployee, saved: IEmployee): boolean {
 	const wasTracking = before?.isTrackingEnabled === true;
 	const isNowOff = saved?.isTrackingEnabled === false;
 	return wasTracking && isNowOff;
+}
+
+/** The input with the tracking switch, which the bodies of `PUT /employee/:id` and `updateEmployee` carry. */
+type EmployeeUpdateWithTracking = IEmployeeUpdateInput & Partial<Pick<IEmployee, 'isTrackingEnabled'>>;
+
+/**
+ * The input as the caller may save it. Where the employee's organization restricts the switch to higher roles
+ * (`restrictTrackingSwitchToHigherRoles`), the employee's time tracking switch is the caller's to write only when
+ * their role is above the employee's: an admin acts on anyone, admins included; a MANAGER on the other roles only;
+ * anyone else on no one. This switch counts in every team of the organization, so only the tenant roles rank here.
+ * Elsewhere, the default, whoever may edit the employee writes it, as before.
+ *
+ * Anyone else is refused a change of the switch. When they send it back as stored, as edit forms do, it is left out of
+ * the save: it was read before, and an admin may have changed it since, which that copy would overwrite.
+ *
+ * @param employee The employee as stored, with their organization and their user's role.
+ * @param input The changes the save writes.
+ * @returns The changes the caller may save.
+ * @throws ForbiddenException When the caller may not turn this employee's tracking on or off and the save would.
+ */
+function withTrackingSwitchAllowed(employee: IEmployee, input: EmployeeUpdateWithTracking): EmployeeUpdateWithTracking {
+	if (input.isTrackingEnabled === undefined) {
+		return input;
+	}
+	if (employee?.organization?.restrictTrackingSwitchToHigherRoles !== true) {
+		return input;
+	}
+	// Anything but true reads as off, as the timer reads it
+	const turnsOn = input.isTrackingEnabled === true;
+	const isOn = employee?.isTrackingEnabled === true;
+	if (keepsTrackingSwitch(callerRoleRank(), rankOfRole(employee?.user?.role?.name), turnsOn !== isOn)) {
+		return input;
+	}
+	const changes = { ...input };
+	delete changes.isTrackingEnabled;
+	return changes;
 }
 
 @CommandHandler(EmployeeUpdateCommand)
@@ -62,8 +99,11 @@ export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateComm
 		// Issue #9873: in EEA/UK a worker must always be able to exit and log out of the agent;
 		// elsewhere restricting either requires an explicit acknowledgement, recorded against the admin.
 		const employee: IEmployee = await this._employeeService.findOneByIdString(id, {
-			relations: { organization: { contact: true }, user: true, contact: true }
+			relations: { organization: { contact: true }, user: { role: true }, contact: true }
 		});
+
+		// Decided before anything is written: a refused switch stops the whole save
+		const allowedInput = withTrackingSwitchAllowed(employee, input);
 
 		const editsOwnRecord = isSameId(user?.employeeId, id);
 		const changesOwnRates = RequestContext.hasPermission(PermissionsEnum.CHANGE_OWN_RATES);
@@ -82,7 +122,7 @@ export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateComm
 		}
 
 		// The acknowledgement is a request flag, not an employee column.
-		const changes: IEmployeeUpdateInput = { ...input };
+		const changes: IEmployeeUpdateInput = { ...allowedInput };
 		delete changes.acknowledgeAgentExitLogoutRestriction;
 
 		const keepsStoredRates = editsOwnRecord && !changesOwnRates;

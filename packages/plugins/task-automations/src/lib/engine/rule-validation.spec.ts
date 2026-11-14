@@ -30,6 +30,29 @@ describe('rule validation', () => {
 		expect(() => normalizeTrigger(undefined)).toThrow(TaskAutomationValidationError);
 	});
 
+	it('keeps “merged only” on LINK_CLOSED alone, false when absent, and refuses a value that is not true or false', () => {
+		const LINK_CLOSED = TaskAutomationTriggerEnum.LINK_CLOSED;
+		expect(normalizeTrigger({ type: LINK_CLOSED, mergedOnly: true })).toEqual({
+			type: LINK_CLOSED,
+			mergedOnly: true
+		});
+		expect(normalizeTrigger({ type: LINK_CLOSED, mergedOnly: false })).toEqual({
+			type: LINK_CLOSED,
+			mergedOnly: false
+		});
+		expect(normalizeTrigger({ type: LINK_CLOSED })).toEqual({ type: LINK_CLOSED, mergedOnly: false });
+		for (const mergedOnly of [null, 'true', 1, {}, []]) {
+			expect(() => normalizeTrigger({ type: LINK_CLOSED, mergedOnly })).toThrow(/merged only/);
+		}
+		// Another trigger keeps no such setting.
+		expect(normalizeTrigger({ type: TaskAutomationTriggerEnum.TASK_ASSIGNED, mergedOnly: true })).toEqual({
+			type: TaskAutomationTriggerEnum.TASK_ASSIGNED
+		});
+		expect(
+			normalizeTrigger({ type: TaskAutomationTriggerEnum.STATUS_CHANGED, mergedOnly: true })
+		).not.toHaveProperty('mergedOnly');
+	});
+
 	it('keeps each condition’s value and nothing else, and refuses what is missing', () => {
 		expect(
 			normalizeConditions([

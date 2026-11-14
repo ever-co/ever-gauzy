@@ -1,16 +1,26 @@
-jest.mock('@gauzy/core', () => ({ Comment: class Comment {} }));
+jest.mock('@gauzy/core', () => ({
+	Comment: class Comment {},
+	// The storage read's own refusal of a file past its bound, as `readStorageFileAsBuffer` throws it.
+	FileContentTooLargeError: class FileContentTooLargeError extends Error {
+		constructor(readonly maxBytes: number) {
+			super(`The file is larger than the ${maxBytes} bytes that can be processed`);
+			this.name = 'FileContentTooLargeError';
+		}
+	}
+}));
 jest.mock('./document.service', () => ({ DocumentService: class DocumentService {} }));
 jest.mock('./document-upload.service', () => ({ DocumentUploadService: class DocumentUploadService {} }));
 jest.mock('../repositories/type-orm-document.repository', () => ({ TypeOrmDocumentRepository: class TypeOrmDocumentRepository {} }));
 jest.mock('../dto/update-document-content.dto', () => ({}));
 jest.mock('../dto/update-document-markdown.dto', () => ({}));
 
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import { ConflictException, Logger, NotFoundException } from '@nestjs/common';
 import { Writable } from 'node:stream';
 import { DocumentKindEnum } from '@gauzy/contracts';
+import { FileContentTooLargeError } from '@gauzy/core';
 import { DOCS_MARKDOWN_TOO_MANY_PAGES, DOCS_NOT_A_PAGE } from '../docs.constants';
 import { openOfficePackage } from '../knowledge/extraction/office-package.util';
-import { DocumentMarkdownService, folderIndexMarkdown, zipFileNameOf } from './document-markdown.service';
+import { DOCS_MARKDOWN_ASSETS_MAX_BYTES, DocumentMarkdownService, folderIndexMarkdown, zipFileNameOf } from './document-markdown.service';
 
 interface INode {
 	id: string;
@@ -22,6 +32,8 @@ interface INode {
 	contentJson?: unknown;
 	readable?: boolean;
 	bytes?: string;
+	/** The stored size; a file without one is read without knowing it. */
+	fileSize?: number | null;
 }
 
 const text = (value: string) => ({ type: 'paragraph', content: [{ type: 'text', text: value }] });
@@ -48,10 +60,13 @@ function buildService(tree: INode[] = TREE) {
 		})
 	};
 	const uploads = {
-		getRawFile: jest.fn(async (id: string) => {
+		// As the storage read does: a file past the stated bound is refused while it is read, never handed back whole.
+		getRawFile: jest.fn(async (id: string, _organizationId?: string, options?: { maxBytes?: number }) => {
 			const node = byId.get(id);
 			if (!node?.bytes) throw new NotFoundException();
-			return { buffer: Buffer.from(node.bytes), fileName: node.originalFilename };
+			const buffer = Buffer.from(node.bytes);
+			if (options?.maxBytes !== undefined && buffer.length > options.maxBytes) throw new FileContentTooLargeError(options.maxBytes);
+			return { buffer, fileName: node.originalFilename };
 		})
 	};
 	const repository = {
@@ -227,6 +242,118 @@ describe('DocumentMarkdownService subtree export of a folder', () => {
 		const root = await service.requireExportRoot(TREE[0].id as never);
 		const refusal = await service.writeSubtreeZip(root, undefined, new Writable({ write: (_chunk, _encoding, callback) => callback() })).catch((error) => error);
 		expect(refusal.getStatus?.()).toBe(413);
+	});
+
+	describe('the byte budget', () => {
+		const folder = TREE[0];
+		const file = (n: number, bytes: string, fileSize?: number | null): INode => ({
+			id: `a0000000-0000-4000-8000-0000000002${String(n).padStart(2, '0')}`,
+			kind: DocumentKindEnum.FILE,
+			name: `File ${n}`,
+			originalFilename: `file-${n}.bin`,
+			parentId: folder.id,
+			index: n,
+			bytes,
+			fileSize
+		});
+		/** The service with a budget of `bytes` (the real one is 256 MiB). */
+		const withBudget = (service: DocumentMarkdownService, bytes: number) => Object.defineProperty(service, 'assetsMaxBytes', { value: bytes });
+		const warnings = () => jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+
+		afterEach(() => jest.restoreAllMocks());
+
+		it('reads every file bounded by what is left of the budget, one without a stored size too', async () => {
+			const known = file(1, '123456789', 9);
+			const unknown = file(2, 'abc', null);
+			const { service, uploads } = buildService([folder, known, unknown]);
+			await zipOf(service, folder.id);
+			expect(uploads.getRawFile.mock.calls).toEqual([
+				[known.id, undefined, { maxBytes: DOCS_MARKDOWN_ASSETS_MAX_BYTES }],
+				[unknown.id, undefined, { maxBytes: DOCS_MARKDOWN_ASSETS_MAX_BYTES - 9 }]
+			]);
+		});
+
+		it('leaves out a file the read finds past the budget, lists it with its link, and goes on with the next', async () => {
+			const warned = warnings();
+			const first = file(1, '12345678');
+			const tooBig = file(2, '12345678');
+			const fits = file(3, '1234');
+			const afterFull = file(4, 'x');
+			const { service, uploads } = buildService([folder, first, tooBig, fits, afterFull]);
+			withBudget(service, 12);
+			const { result, zip } = await zipOf(service, folder.id);
+
+			expect(result.files).toBe(2);
+			expect(zip.readText('file-1.bin')).toBe('12345678');
+			expect(zip.readText('file-3.bin')).toBe('1234');
+			expect(zip.has('file-2.bin')).toBe(false);
+			expect(zip.has('file-4.bin')).toBe(false);
+			const index = zip.readText('index.md') ?? '';
+			expect(index).toContain(`(/api/plugins/docs/documents/${tooBig.id}/raw) (not included)`);
+			expect(index).toContain(`(/api/plugins/docs/documents/${afterFull.id}/raw) (not included)`);
+			// The file past the budget was read only up to it; with nothing left, the next one is not read at all.
+			expect(uploads.getRawFile.mock.calls.map(([id, , options]) => [id, options])).toEqual([
+				[first.id, { maxBytes: 12 }],
+				[tooBig.id, { maxBytes: 4 }],
+				[fits.id, { maxBytes: 4 }]
+			]);
+			// Logged as past the budget, as the stored-size check logs it, not as a file that could not be read.
+			const budgetWarnings = warned.mock.calls.map(([message]) => String(message)).filter((message) => message.includes('asset budget of 12 bytes is reached'));
+			expect(budgetWarnings).toHaveLength(2);
+			expect(budgetWarnings[0]).toContain(tooBig.id);
+		});
+
+		it('names the per-file limit, not the budget, when that lower bound refused the read', async () => {
+			const warned = warnings();
+			const big = file(1, '12345678');
+			const { service, uploads } = buildService([folder, big]);
+			withBudget(service, 100);
+			// The per-file limit (5 bytes here) is below what is left of the budget: the read is refused at it.
+			uploads.getRawFile.mockImplementationOnce(async () => {
+				throw new FileContentTooLargeError(5);
+			});
+			const { result, zip } = await zipOf(service, folder.id);
+
+			expect(result.files).toBe(0);
+			expect(zip.readText('index.md')).toContain(`(/api/plugins/docs/documents/${big.id}/raw) (not included)`);
+			const messages = warned.mock.calls.map(([message]) => String(message));
+			expect(messages.some((message) => message.includes('asset budget'))).toBe(false);
+			expect(messages).toContain(`Markdown export: file ${big.id} was not added (The file is larger than the 5 bytes that can be processed)`);
+		});
+
+		it('never reads a file whose stored size is past what is left', async () => {
+			warnings();
+			const first = file(1, '12345678', 8);
+			const stored = file(2, '12345', 5);
+			const { service, uploads } = buildService([folder, first, stored]);
+			withBudget(service, 12);
+			const { result } = await zipOf(service, folder.id);
+			expect(result.files).toBe(1);
+			expect(uploads.getRawFile).toHaveBeenCalledTimes(1);
+		});
+
+		it('bounds the files the pages show by what the folder files left of the same budget', async () => {
+			warnings();
+			const elsewhere = 'a0000000-0000-4000-8000-000000000299';
+			const page: INode = {
+				id: 'p0000000-0000-4000-8000-000000000298',
+				kind: DocumentKindEnum.PAGE,
+				name: 'Notes',
+				parentId: folder.id,
+				index: 0,
+				contentJson: { type: 'doc', content: [fileLink(elsewhere, 'the chart')] }
+			};
+			const own = file(1, '123456');
+			// A file the page shows from outside the folder: copied under assets/ only when it fits.
+			const outside: INode = { id: elsewhere, kind: DocumentKindEnum.FILE, name: 'Chart', originalFilename: 'chart.png', parentId: 'f0000000-0000-4000-8000-00000000ffff', index: 0, bytes: '123456' };
+			const { service, uploads } = buildService([folder, page, own, outside]);
+			withBudget(service, 10);
+			const { zip } = await zipOf(service, folder.id);
+
+			expect(uploads.getRawFile).toHaveBeenLastCalledWith(elsewhere, undefined, { maxBytes: 4 });
+			expect(zip.names().some((name) => name.startsWith('assets/'))).toBe(false);
+			expect(zip.readText('notes.md')).toContain(`/api/plugins/docs/documents/${elsewhere}/raw`);
+		});
 	});
 
 	it('zips an empty folder as an index that says so', async () => {

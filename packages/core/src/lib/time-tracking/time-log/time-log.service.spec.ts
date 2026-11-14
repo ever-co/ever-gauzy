@@ -27,6 +27,7 @@ import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-em
 import { TypeOrmTimeLogRepository } from './repository/type-orm-time-log.repository';
 import { RequestContext } from '../../core/context';
 import { ConflictException, ForbiddenException } from '@nestjs/common';
+import { LessThan, Not } from 'typeorm';
 import { TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
 import {
 	DeleteTimeSpanCommand,
@@ -791,7 +792,12 @@ describe('TimeLogService', () => {
 						return { canManageEmployee: jest.fn().mockResolvedValue(true) };
 					}
 					if (token === TypeOrmTimeLogRepository) {
-						return { metadata: { tableName: 'time_log' }, createQueryBuilder: () => builder };
+						return {
+							metadata: { tableName: 'time_log' },
+							createQueryBuilder: () => builder,
+							// The employee's running timers (`findRunningTimersStartedBefore`): none unless a test says so
+							find: jest.fn().mockResolvedValue([])
+						};
 					}
 					return {};
 				})
@@ -977,6 +983,102 @@ describe('TimeLogService', () => {
 					'stopped@09:00'
 				]);
 				expect(commandsOfType(TimeLogCreateCommand)).toHaveLength(1);
+			});
+		});
+
+		/**
+		 * #11886 — the overlap lookup matches the stored range, which ends at a running log's last heartbeat (its start,
+		 * for a web timer), and on TypeORM needs time slots: it missed a running web timer, an Ever Teams run before its
+		 * first heartbeat and one whose last heartbeat is before the range. The employee's timers still running that
+		 * started before the range ends are refused too, a tracker's included, except for a tracker's own upload.
+		 */
+		describe('manual time over a running timer the overlap lookup misses (#11886)', () => {
+			const EIGHT = new Date('2026-01-05T08:00:00.000Z');
+
+			/** The employee's timer, running since 08:00, from `source`, with its last heartbeat at `lastHeartbeat`. */
+			const runningSince8 = (source: TimeLogSourceEnum, lastHeartbeat: Date = EIGHT) => ({
+				id: `running-${source}`,
+				employeeId: TARGET_EMPLOYEE_ID,
+				organizationId: EMPLOYEE_ORGANIZATION_ID,
+				source,
+				isRunning: true,
+				startedAt: EIGHT,
+				stoppedAt: lastHeartbeat
+			});
+
+			let find: jest.Mock;
+
+			beforeEach(() => {
+				find = (manualService.typeOrmTimeLogRepository as unknown as { find: jest.Mock }).find;
+				jest.spyOn(manualService, 'findOneByIdString').mockResolvedValue({
+					id: 'log-1',
+					employeeId: TARGET_EMPLOYEE_ID,
+					organizationId: EMPLOYEE_ORGANIZATION_ID
+				} as any);
+			});
+
+			describe.each([
+				['adding', () => manualService.addManualTime({ ...request })],
+				['editing', () => manualService.updateManualTime('log-1', { ...request })]
+			])('%s time from 09:00 to 10:00', (_action, write) => {
+				it.each([
+					['a web timer, which posts no time slots', runningSince8(TimeLogSourceEnum.WEB_TIMER)],
+					['an Ever Teams run before its first heartbeat', runningSince8(TimeLogSourceEnum.TEAMS)],
+					[
+						'an Ever Teams run whose last heartbeat was at 08:30',
+						runningSince8(TimeLogSourceEnum.TEAMS, new Date('2026-01-05T08:30:00.000Z'))
+					],
+					[
+						'a desktop run whose last time slot ended at 08:30',
+						runningSince8(TimeLogSourceEnum.DESKTOP, new Date('2026-01-05T08:30:00.000Z'))
+					]
+				])('is refused with a 409 over %s, trimming and writing nothing', async (_label, running) => {
+					find.mockResolvedValue([running]);
+
+					const refusal = await write().catch((thrown) => thrown);
+
+					expect(refusal).toBeInstanceOf(ConflictException);
+					expect((refusal as ConflictException).getResponse()).toMatchObject({ code: RUNNING_TIMER_OVERLAP });
+					expect(commandsOfType(DeleteTimeSpanCommand)).toEqual([]);
+					expect(commandsOfType(TimeLogCreateCommand)).toEqual([]);
+					expect(commandsOfType(TimeLogUpdateCommand)).toEqual([]);
+				});
+			});
+
+			it("CONTROL: lets a tracker's upload through over a tracker's run, left open on the server while it was offline", async () => {
+				find.mockResolvedValue([
+					runningSince8(TimeLogSourceEnum.DESKTOP, new Date('2026-01-05T08:30:00.000Z'))
+				]);
+
+				await manualService.addManualTime({ ...request, uploadedByTracker: true });
+
+				expect(commandsOfType(TimeLogCreateCommand)).toHaveLength(1);
+			});
+
+			it('asks for the running logs of the employee, in their organization and tenant, started before the range ends', async () => {
+				await manualService.addManualTime({ ...request });
+
+				expect(find).toHaveBeenCalledWith({
+					where: {
+						employeeId: TARGET_EMPLOYEE_ID,
+						organizationId: EMPLOYEE_ORGANIZATION_ID,
+						tenantId: TENANT_ID,
+						isRunning: true,
+						startedAt: LessThan(request.stoppedAt)
+					}
+				});
+			});
+
+			it('leaves the edited log out of them', async () => {
+				await manualService.updateManualTime('log-1', { ...request });
+
+				expect(find).toHaveBeenCalledWith({
+					where: expect.objectContaining({
+						isRunning: true,
+						startedAt: LessThan(request.stoppedAt),
+						id: Not('log-1')
+					})
+				});
 			});
 		});
 

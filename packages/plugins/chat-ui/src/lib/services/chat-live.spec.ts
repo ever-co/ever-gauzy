@@ -1,5 +1,6 @@
 import { BehaviorSubject, Observable, of, Subject, Subscription, throwError } from 'rxjs';
 import { CHAT_STREAMED_EVENTS, IRealtimeEventEnvelope, IRealtimeStatus } from '@gauzy/contracts';
+import { ChatPresenceUpdate } from '../chat-presence';
 import {
 	CHAT_EVENTS_SUBSCRIPTION,
 	CHAT_LIVE_SELECTION,
@@ -185,6 +186,19 @@ describe('ChatLiveChannel', () => {
 		streams[0].next({ collaborationEvents: envelope('chat_message.created', { conversationId: CONVERSATION, messageId: MESSAGE }) });
 		expect(typing.map((signal) => signal.userId)).toEqual(['u-anna']);
 		expect(hints.map((hint) => hint.name)).toEqual(['chat_message.created']);
+		watching.unsubscribe();
+	});
+
+	it('streams the presence changes on the one subscription, where the platform offers them', () => {
+		const { channel, subscribe, streams, watching } = platform(() => of({ ...STATUS, signals: ['typing.signalled', 'presence.changed'] }));
+		const presence: ChatPresenceUpdate[] = [];
+		watching.add(channel.presence$.subscribe((update) => presence.push(update)));
+		expect(subscribe).toHaveBeenCalledWith(CHAT_EVENTS_SUBSCRIPTION, { names: [...CHAT_LIVE_SELECTION, 'typing.signalled', 'presence.changed'] });
+		streams[0].next({ collaborationEvents: envelope('presence.changed', { employeeId: 'e-anna', userId: 'u-anna', status: 'idle', revision: 4 }) });
+		streams[0].next({ collaborationEvents: envelope('chat_message.created', { conversationId: CONVERSATION, messageId: MESSAGE }) });
+		expect(presence.map(({ employeeId, presence, revision }) => ({ employeeId, presence, revision }))).toEqual([
+			{ employeeId: 'e-anna', presence: 'away', revision: 4 }
+		]);
 		watching.unsubscribe();
 	});
 

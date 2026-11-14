@@ -72,6 +72,189 @@ function dedupeItems(items: readonly ITaskBulkUpdateItem[]): ITaskBulkUpdateItem
 	return [...byId.values()];
 }
 
+/** A status, priority or size record a change names by its id, as the bulk update reads it to check and name it. */
+export interface IBulkChangeRecord {
+	id: ID;
+	name?: string | null;
+	value?: string | null;
+	tenantId?: ID | null;
+	organizationId?: ID | null;
+}
+
+/**
+ * The record ids a change can carry: the record each names, the name it goes with, and whether a record named alone
+ * gives the task its name. A status does not: the clients read a task's status by its record (`taskStatusId`), and a
+ * status named by its record alone has always left the status text as it was. A priority and a size do: the clients
+ * that read them by their name (Ever Teams, the platform's priority and size filters) would otherwise keep showing
+ * the one the task had, since a team's own priority or size cannot be named (the route takes only the platform's).
+ */
+export const BULK_RECORD_FIELDS = [
+	{ idField: 'taskStatusId', nameField: 'status', code: 'TASK_STATUS_NOT_FOUND', label: 'status', takesName: false },
+	{ idField: 'taskPriorityId', nameField: 'priority', code: 'TASK_PRIORITY_NOT_FOUND', label: 'priority', takesName: true },
+	{ idField: 'taskSizeId', nameField: 'size', code: 'TASK_SIZE_NOT_FOUND', label: 'size', takesName: true }
+] as const;
+
+export type BulkRecordField = (typeof BULK_RECORD_FIELDS)[number]['idField'];
+
+/** The records the items name, per id field, keyed by their id in lower case. */
+export type BulkChangeRecords = Readonly<Record<BulkRecordField, ReadonlyMap<string, IBulkChangeRecord>>>;
+
+/** How a record id is keyed: uuids compare case-insensitively (Postgres answers them in lower case). */
+export const recordKey = (id: ID): string => String(id).toLowerCase();
+
+/** The record ids the items name, per id field, each once; `null` clears and names none. */
+export function recordIdsOf(items: readonly ITaskBulkUpdateItem[]): Record<BulkRecordField, ID[]> {
+	const ids = {} as Record<BulkRecordField, ID[]>;
+	for (const { idField } of BULK_RECORD_FIELDS) {
+		const named = items.map((item) => item.changes?.[idField]).filter((id): id is ID => typeof id === 'string' && id.length > 0);
+		ids[idField] = [...new Map(named.map((id) => [recordKey(id), id])).values()];
+	}
+	return ids;
+}
+
+/**
+ * Why a task may not take the records its change names, or null when it may. A record must be one the task's
+ * organization may take: its own, the tenant's shared one (no organization), or a platform default (no tenant). A
+ * record of another organization or tenant, or an id that names none, reads as not found (as the chat card's check
+ * answers), so the answer tells nothing about other organizations. The first record refused is named.
+ */
+export function recordRefusalOf(
+	changes: ITaskBulkChanges,
+	records: BulkChangeRecords,
+	scope: { tenantId: ID | null | undefined; organizationId: ID | null | undefined }
+): string | null {
+	const same = (first: ID | null | undefined, second: ID | null | undefined) => !!first && !!second && recordKey(first) === recordKey(second);
+	for (const { idField, code, label } of BULK_RECORD_FIELDS) {
+		const id = changes[idField];
+		if (id === undefined || id === null) continue;
+		const record = records[idField].get(recordKey(id));
+		const inTenant = !!record && (!record.tenantId || same(record.tenantId, scope.tenantId));
+		const inOrganization = !!record && (!record.organizationId || same(record.organizationId, scope.organizationId));
+		if (!inTenant || !inOrganization) {
+			return `${code}: ${idField} names no ${label} of this organization.`;
+		}
+	}
+	return null;
+}
+
+/** The name a task holds for a record, as the task page writes it: its value, else its name. */
+function recordNameOf(record: IBulkChangeRecord | undefined): string | undefined {
+	return (record?.value ?? '').trim() || (record?.name ?? '').trim() || undefined;
+}
+
+/**
+ * The changes with the name of a priority or size named by its record alone (`taskPriorityId` without `priority`):
+ * the record's, as the task page writes it, so the task shows the record it now has. A name sent beside the record is
+ * kept as sent (an undo puts back exactly the name the task held), and a record cleared (`null`) leaves the name.
+ * An undo that names the record alone gets the record's name back (see `previousWithoutRecordNames`).
+ */
+export function withRecordNames(changes: ITaskBulkChanges, records: BulkChangeRecords): ITaskBulkChanges {
+	let named: ITaskBulkChanges | null = null;
+	for (const { idField, nameField, takesName } of BULK_RECORD_FIELDS) {
+		const id = changes[idField];
+		if (!takesName || id === undefined || id === null || changes[nameField] !== undefined) continue;
+		const name = recordNameOf(records[idField].get(recordKey(id)));
+		if (name === undefined) continue;
+		named = { ...(named ?? changes), [nameField]: name } as ITaskBulkChanges;
+	}
+	return named ?? changes;
+}
+
+/**
+ * The previous values without a priority's or size's name that the record beside it gives back: when the record the
+ * task held names it exactly so (its value, else its name), the undo puts the name back by the record alone (see
+ * `withRecordNames`). A name its record does not give back stays: the task had no record, or its text no longer
+ * matches the record's (renamed since, or written without it). A client that must leave a name out (a team's own,
+ * which the route refuses) can then tell a full undo from a partial one by whether a name is left out at all.
+ */
+export function previousWithoutRecordNames(previous: ITaskBulkChanges, records: BulkChangeRecords): ITaskBulkChanges {
+	let trimmed: Record<string, unknown> | null = null;
+	for (const { idField, nameField, takesName } of BULK_RECORD_FIELDS) {
+		const id = previous[idField];
+		const name = previous[nameField];
+		if (!takesName || typeof id !== 'string' || !id || typeof name !== 'string') continue;
+		if (recordNameOf(records[idField].get(recordKey(id))) !== name) continue;
+		trimmed = trimmed ?? { ...previous };
+		delete trimmed[nameField];
+	}
+	return (trimmed as ITaskBulkChanges | null) ?? previous;
+}
+
+/** The relation each record id is stored through: a single task update can name a record by either. */
+const RECORD_RELATIONS: Readonly<Record<BulkRecordField, 'taskStatus' | 'taskPriority' | 'taskSize'>> = {
+	taskStatusId: 'taskStatus',
+	taskPriorityId: 'taskPriority',
+	taskSizeId: 'taskSize'
+};
+
+/** The record a relation names: its id, null when the relation is cleared, undefined when it names none. */
+function relationRecordOf(value: unknown): ID | null | undefined {
+	if (value === null) return null;
+	const id = value && typeof value === 'object' ? (value as { id?: unknown }).id : undefined;
+	return typeof id === 'string' && id ? id : undefined;
+}
+
+/** What `recordChangesOfUpdate` answers. */
+export interface IUpdateRecordChanges<T> {
+	/** The update as it is saved: a record named both by its id and by its relation names one record in both. */
+	update: T;
+	/** The records the update moves the task to, each with the name sent beside it, in the bulk changes shape. */
+	changes: ITaskBulkChanges;
+	/** The record each field the update names is saved with (null: cleared); a field it does not name keeps the task's. */
+	named: Partial<Record<BulkRecordField, ID | null>>;
+}
+
+/** Whether two record ids name the same record, none being one too (no record, or a cleared one). */
+function sameRecord(first: ID | null | undefined, second: ID | null | undefined): boolean {
+	if (!first || !second) return !first && !second;
+	return recordKey(first) === recordKey(second);
+}
+
+/**
+ * The status, priority and size records a single task update (`PUT /tasks/:id`) moves the task to, in the changes
+ * shape the bulk update judges (`recordRefusalOf`) and names (`withRecordNames`), each with the name sent beside it.
+ * A record is named by its id (`taskPriorityId`) or by its relation (`taskPriority: { id }`). The record the task
+ * already holds is no change (a client sends the whole task back), and neither is a record cleared (`null`).
+ *
+ * A body can name a record both ways, and differently: a client that sends the whole task back with a new id beside
+ * the relation it read (or a `null` relation, the task holding none), or a new relation beside the id it read. The
+ * save takes the one that changes the task's record, except that it keeps an object relation over a new id, which was
+ * lost. So the update is answered naming in both places the one that changes the task's record, and the relation's
+ * when both do, as the save takes it.
+ *
+ * @param update The update as it was sent.
+ * @param held The records the task holds.
+ */
+export function recordChangesOfUpdate<T extends object>(update: T, held: Partial<Record<BulkRecordField, ID | null>>): IUpdateRecordChanges<T> {
+	const body = update as Record<string, unknown>;
+	let saved: Record<string, unknown> | null = null;
+	const changes: Record<string, unknown> = {};
+	const named: Partial<Record<BulkRecordField, ID | null>> = {};
+	for (const { idField, nameField } of BULK_RECORD_FIELDS) {
+		const relation = RECORD_RELATIONS[idField];
+		const byId = body[idField] as ID | null | undefined;
+		const byRelation = relationRecordOf(body[relation]);
+		let record = byRelation === undefined ? byId : byRelation;
+		if (byRelation !== undefined && byId !== undefined && !sameRecord(byId, byRelation)) {
+			// A copy whose fields are replaced, never changed in place: the caller's update (and its relations) stays as sent.
+			saved = saved ?? { ...body };
+			if (sameRecord(byRelation, held[idField])) {
+				// The relation as the task holds it, sent back with the task: the id beside it is the change.
+				record = byId;
+				saved[relation] = byId === null ? null : { id: byId };
+			} else {
+				saved[idField] = byRelation;
+			}
+		}
+		if (record === undefined) continue;
+		named[idField] = record;
+		if (record === null || sameRecord(record, held[idField])) continue;
+		changes[idField] = record;
+		if (body[nameField] !== undefined) changes[nameField] = body[nameField];
+	}
+	return { update: (saved ?? update) as T, changes: changes as ITaskBulkChanges, named };
+}
+
 /** What `changesToUpdate` answers: the update to run, and the previous values that undo it. */
 export interface IBulkChangeApplication {
 	update: Partial<ITaskUpdateInput>;

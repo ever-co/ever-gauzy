@@ -2,6 +2,7 @@ import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ZipArchive } from 'archiver';
 import { posix } from 'node:path';
 import { ID, IDocumentPdfExportCapabilities } from '@gauzy/contracts';
+import { FileContentTooLargeError } from '@gauzy/core';
 import { getDocsConfig } from '../docs.config';
 import { DOCS_PDF_TOO_MANY_PAGES } from '../docs.constants';
 import { Document } from '../entities/document.entity';
@@ -10,7 +11,11 @@ import { DocumentUploadService } from '../services/document-upload.service';
 import { buildPdfDefinition, IPdfPage, pdfDateOf, pdfFileNameOf, preparePdfImage, renderPdf } from './pdf-render';
 import { collectImageIds, IPdfImage } from './tiptap-pdf';
 
-/** The most image bytes (after re-encoding) one PDF export holds; an image past the budget is its alternative text. */
+/**
+ * The most image bytes one PDF export holds; an image past the budget is its alternative text. The re-encoded images
+ * count against it, and so does the file being read: an image file larger than what is left of the budget is not read
+ * whole (see `DocumentPdfService.loadImages`).
+ */
 export const DOCS_PDF_IMAGES_MAX_BYTES = 64 * 1024 * 1024;
 
 /**
@@ -54,6 +59,8 @@ export interface IDocumentPdf {
 @Injectable()
 export class DocumentPdfService {
 	private readonly logger = new Logger(DocumentPdfService.name);
+	/** The most image bytes one export holds (`DOCS_PDF_IMAGES_MAX_BYTES`; a spec makes it small). */
+	private readonly imagesMaxBytes: number = DOCS_PDF_IMAGES_MAX_BYTES;
 
 	constructor(
 		private readonly markdown: DocumentMarkdownService,
@@ -177,29 +184,54 @@ export class DocumentPdfService {
 		return renderPdf(buildPdfDefinition(pages, { title, date: pdfDateOf(), images, toc }));
 	}
 
-	/** The images the pages show, read with the caller's access, re-encoded, within {@link DOCS_PDF_IMAGES_MAX_BYTES}. */
+	/**
+	 * The images the pages show, read with the caller's access, re-encoded, within {@link DOCS_PDF_IMAGES_MAX_BYTES}.
+	 *
+	 * Each file is read within what is left of the budget, so the export never holds more image bytes than its budget,
+	 * the file being read included: a file whose stored size is past what is left is not read at all, one of no stored
+	 * size is abandoned at that bound while it is read, and with nothing left nothing more is read. Such an image is
+	 * left out (its alternative text stands in) even when its re-encoded copy would have fit, as the file is held whole
+	 * while it is re-encoded. The re-encoded copy is then counted against the budget, as before.
+	 */
 	private async loadImages(pages: IPdfPage[], organizationId?: ID): Promise<Map<string, IPdfImage & { dataUrl: string }>> {
 		const images = new Map<string, IPdfImage & { dataUrl: string }>();
 		let total = 0;
 		const ids = new Set<string>();
 		for (const page of pages) for (const id of collectImageIds(page.contentJson)) ids.add(id);
 		for (const id of ids) {
+			// With nothing left, nothing is read (a bound of 0 is no bound to the storage read).
+			const remaining = this.imagesMaxBytes - total;
+			if (remaining <= 0) {
+				this.warnPastBudget(id);
+				continue;
+			}
 			try {
-				const file = await this.uploads.getRawFile(id as ID, organizationId);
+				const file = await this.uploads.getRawFile(id as ID, organizationId, { maxBytes: remaining });
 				const image = await preparePdfImage(file.buffer, `img${images.size}`);
 				if (!image) continue;
-				if (total + image.bytes > DOCS_PDF_IMAGES_MAX_BYTES) {
-					this.logger.warn(`PDF export: image ${id} left out (the export's image budget is reached)`);
+				if (total + image.bytes > this.imagesMaxBytes) {
+					this.warnPastBudget(id);
 					continue;
 				}
 				total += image.bytes;
 				images.set(id, image);
 			} catch (error) {
-				// Not the caller's to read, gone, or not an image: its alternative text stands in.
+				if (error instanceof FileContentTooLargeError && error.maxBytes >= remaining) {
+					this.warnPastBudget(id);
+					continue;
+				}
+				// Not the caller's to read, gone, past the per-file limit, or not an image: its alternative text stands in.
 				this.logger.debug?.(`PDF export: image ${id} left out (${(error as Error)?.message ?? error})`);
 			}
 		}
 		return images;
+	}
+
+	/** Logs an image left out of an export because it does not fit what is left of the image budget. */
+	private warnPastBudget(id: string): void {
+		this.logger.warn(
+			`PDF export: image ${id} left out (the export's image budget of ${this.imagesMaxBytes} bytes is reached)`
+		);
 	}
 }
 

@@ -1,12 +1,17 @@
 import {
 	addMonths,
+	boundDayOf,
+	dateBoundClause,
+	dayIn,
 	decodeCursor,
 	encodeCursor,
 	filterOptionsOf,
 	groupingOf,
+	midnightOfDay,
 	orderingOf,
 	pageLimitOf,
 	relativeWindow,
+	relativeWindowDays,
 	startOfMonthIn,
 	validateFilterTree
 } from './view-filters';
@@ -96,6 +101,110 @@ describe('relative windows', () => {
 		expect(relativeWindow({ unit: 'week', direction: 'future', amount: 1 }, NOW, 'Mars/Olympus')).toEqual({ from: NOW, to: new Date('2026-11-16T00:00:00.000Z') });
 		expect(startOfMonthIn(new Date('2026-03-15T00:30:00.000Z'), 'America/New_York').toISOString()).toBe('2026-03-01T05:00:00.000Z');
 		expect(addMonths(new Date('2026-01-31T12:00:00.000Z'), 1, 'UTC').toISOString()).toBe('2026-02-01T00:00:00.000Z');
+	});
+});
+
+describe('date-only due dates, compared by their calendar day', () => {
+	// The bounds the filter editor makes of a picked day in a zone `offset` minutes east of UTC: the start of the day
+	// (`after`, `before`, the lower bound of `between`) or its last instant (the upper bound of `between`).
+	const startOf = (day: string, offset: number) => new Date(Date.parse(`${day}T00:00:00.000Z`) - offset * 60_000);
+	const lastOf = (day: string, offset: number) => new Date(Date.parse(`${day}T00:00:00.000Z`) + 86_400_000 - offset * 60_000 - 1);
+	const midnight = (day: string) => new Date(`${day}T00:00:00.000Z`);
+	const UTC_MINUS_4 = -240;
+	const UTC_PLUS_2 = 120;
+
+	it('keeps the day a bound was picked as when its instant is an edge of that day, and leaves out any other', () => {
+		const { tree } = validateFilterTree({
+			op: 'and',
+			conditions: [
+				{ field: 'dueDate', operator: 'between', from: startOf('2026-11-14', UTC_MINUS_4).toISOString(), fromDay: '2026-11-14', to: lastOf('2026-11-20', UTC_MINUS_4).toISOString(), toDay: '2026-11-20' },
+				// Not a calendar day (and a day for a bound "after" has not got), a day that does not exist, a day a week off.
+				{ field: 'dueDate', operator: 'after', from: '2026-11-14T04:00:00.000Z', fromDay: '14/11/2026', toDay: '2026-11-14' },
+				{ field: 'dueDate', operator: 'before', to: '2026-03-02T04:00:00.000Z', toDay: '2026-02-30' },
+				{ field: 'dueDate', operator: 'before', to: '2026-11-14T04:00:00.000Z', toDay: '2026-11-21' },
+				// A bound moved to the 15th by a client that left the 14th's day behind, and the start of a day as "between"'s end.
+				{ field: 'dueDate', operator: 'after', from: startOf('2026-11-15', UTC_MINUS_4).toISOString(), fromDay: '2026-11-14' },
+				{ field: 'dueDate', operator: 'between', from: startOf('2026-11-14', UTC_MINUS_4).toISOString(), to: startOf('2026-11-20', UTC_MINUS_4).toISOString(), toDay: '2026-11-20' }
+			]
+		});
+		expect(tree?.conditions).toEqual([
+			{ field: 'dueDate', operator: 'between', from: '2026-11-14T04:00:00.000Z', fromDay: '2026-11-14', to: '2026-11-21T03:59:59.999Z', toDay: '2026-11-20' },
+			{ field: 'dueDate', operator: 'after', from: '2026-11-14T04:00:00.000Z' },
+			{ field: 'dueDate', operator: 'before', to: '2026-03-02T04:00:00.000Z' },
+			{ field: 'dueDate', operator: 'before', to: '2026-11-14T04:00:00.000Z' },
+			{ field: 'dueDate', operator: 'after', from: '2026-11-15T04:00:00.000Z' },
+			{ field: 'dueDate', operator: 'between', from: '2026-11-14T04:00:00.000Z', to: '2026-11-20T04:00:00.000Z' }
+		]);
+		expect(midnightOfDay('2026-11-14')).toBe(Date.parse('2026-11-14T00:00:00.000Z'));
+		expect(midnightOfDay('2026-02-29')).toBeNull();
+		expect(midnightOfDay(20261114)).toBeNull();
+		// The start of the day and its last instant in the zones furthest east (UTC+14) and west (UTC−12) are edges of it.
+		for (const offset of [14 * 60, UTC_PLUS_2, 0, UTC_MINUS_4, -12 * 60]) {
+			expect(boundDayOf('2026-11-14', startOf('2026-11-14', offset), 'start')).toBe('2026-11-14');
+			expect(boundDayOf('2026-11-14', lastOf('2026-11-14', offset), 'end')).toBe('2026-11-14');
+		}
+		// The next day's start and the day before's end are not, except where zones 24 hours apart meet (UTC+14 and
+		// UTC−10: the 15th starts in one when the 14th starts in the other).
+		for (const offset of [UTC_PLUS_2, 0, UTC_MINUS_4]) {
+			expect(boundDayOf('2026-11-14', startOf('2026-11-15', offset), 'start')).toBeUndefined();
+			expect(boundDayOf('2026-11-14', lastOf('2026-11-13', offset), 'end')).toBeUndefined();
+		}
+		expect(boundDayOf('2026-11-14', 'never', 'start')).toBeUndefined();
+	});
+
+	it('west of UTC, takes a date only of the day picked into "on or after" and keeps it out of "before"', () => {
+		const from = startOf('2026-11-14', UTC_MINUS_4);
+		expect(dateBoundClause('task.dueDate', '>', from, '2026-11-14', 'f0')).toEqual({
+			sql: '(task.dueDate > :f0 OR task.dueDate = :f0d0)',
+			params: { f0: from, f0d0: midnight('2026-11-14') }
+		});
+		expect(dateBoundClause('task.dueDate', '<', from, '2026-11-14', 'f0')).toEqual({
+			sql: '(task.dueDate < :f0 AND task.dueDate <> :f0x0)',
+			params: { f0: from, f0x0: midnight('2026-11-14') }
+		});
+		// Both edges of "between 14 and 20 Nov": the 14th's date only is in, the 21st's (before the 20th ends there) is out.
+		expect(dateBoundClause('task.dueDate', '>=', from, '2026-11-14', 'f0a').sql).toBe('(task.dueDate >= :f0a OR task.dueDate = :f0ad0)');
+		const until = lastOf('2026-11-20', UTC_MINUS_4);
+		expect(dateBoundClause('task.dueDate', '<=', until, '2026-11-20', 'f0b')).toEqual({
+			sql: '(task.dueDate <= :f0b AND task.dueDate <> :f0bx0)',
+			params: { f0b: until, f0bx0: midnight('2026-11-21') }
+		});
+	});
+
+	it('east of UTC leaves the instants alone, which already sort the date-only values; in UTC "after" gains the day', () => {
+		const cases: Array<['<' | '<=' | '>' | '>=', string, Date]> = [
+			['>', '2026-11-14', startOf('2026-11-14', UTC_PLUS_2)],
+			['>=', '2026-11-14', startOf('2026-11-14', UTC_PLUS_2)],
+			['<', '2026-11-14', startOf('2026-11-14', UTC_PLUS_2)],
+			['<=', '2026-11-20', lastOf('2026-11-20', UTC_PLUS_2)],
+			['<=', '2026-11-20', lastOf('2026-11-20', 14 * 60)],
+			['>', '2026-11-14', startOf('2026-11-14', 14 * 60)]
+		];
+		for (const [comparison, day, instant] of cases) {
+			expect(dateBoundClause('task.dueDate', comparison, instant, day, 'f0')).toEqual({ sql: `task.dueDate ${comparison} :f0`, params: { f0: instant } });
+		}
+		// "after" compares with `>`: in UTC its instant is the day's own midnight, which a date only of that day is.
+		expect(dateBoundClause('task.dueDate', '>', midnight('2026-11-14'), '2026-11-14', 'f0').sql).toBe('(task.dueDate > :f0 OR task.dueDate = :f0d0)');
+		expect(dateBoundClause('task.dueDate', '>=', midnight('2026-11-14'), '2026-11-14', 'f0').sql).toBe('task.dueDate >= :f0');
+	});
+
+	it('compares as the instant alone without a day, or with one that is not near it', () => {
+		const from = startOf('2026-11-14', UTC_MINUS_4);
+		expect(dateBoundClause('task.dueDate', '>', from, undefined, 'f0')).toEqual({ sql: 'task.dueDate > :f0', params: { f0: from } });
+		expect(dateBoundClause('task.dueDate', '>', from, '2026-12-14', 'f0')).toEqual({ sql: 'task.dueDate > :f0', params: { f0: from } });
+		expect(dateBoundClause('task.dueDate', '>', from, 'soon', 'f0')).toEqual({ sql: 'task.dueDate > :f0', params: { f0: from } });
+	});
+
+	it('gives the bounds of a relative window that start a day their day, and leaves a bound at now a moment', () => {
+		const zone = 'America/Caracas';
+		const today = relativeWindow({ unit: 'day', direction: 'current' }, NOW, zone);
+		expect(relativeWindowDays({ unit: 'day', direction: 'current' }, today, zone)).toEqual({ fromDay: '2026-11-07', toDay: '2026-11-08' });
+		const past = relativeWindow({ unit: 'day', direction: 'past', amount: 7 }, NOW, zone);
+		expect(relativeWindowDays({ unit: 'day', direction: 'past', amount: 7 }, past, zone)).toEqual({ fromDay: '2026-10-31' });
+		const next = relativeWindow({ unit: 'week', direction: 'future', amount: 1 }, NOW, 'Mars/Olympus');
+		expect(relativeWindowDays({ unit: 'week', direction: 'future', amount: 1 }, next, 'Mars/Olympus')).toEqual({ toDay: '2026-11-16' });
+		expect(dayIn(new Date('2026-11-14T03:59:00.000Z'), zone)).toBe('2026-11-13');
+		expect(dayIn(new Date('2026-11-13T22:30:00.000Z'), 'Africa/Johannesburg')).toBe('2026-11-14');
 	});
 });
 

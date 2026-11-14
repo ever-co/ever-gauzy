@@ -159,7 +159,9 @@ export class TaskAutomationEngine {
 							: 'The due date has not passed yet.';
 				break;
 			case TaskAutomationTriggerEnum.LINK_CLOSED:
-				triggerNote = 'Runs when an integration reports that a linked pull request or issue closed.';
+				triggerNote = rule.trigger.mergedOnly
+					? 'Runs when an integration reports that a linked pull request was merged or a linked issue closed.'
+					: 'Runs when an integration reports that a linked pull request or issue closed.';
 				break;
 			default:
 				triggerMatches = false;

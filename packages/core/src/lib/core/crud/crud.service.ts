@@ -894,35 +894,44 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * Supports multiple ORM types, and throws if the ORM type is unsupported.
 	 *
 	 * @param criteria - Identifier or condition to delete specific record(s).
+	 * @param options - `withDeleted: true` deletes soft-deleted rows too. TypeORM's delete never filters them out;
+	 * MikroORM applies its soft-delete filter to a native delete as it does to a read, so the filter is lifted for the
+	 * statement.
 	 * @returns {Promise<DeleteResult>} - Result indicating the number of affected records.
+	 * @throws NotFoundException when the statement fails, with the driver's error as its `cause`.
 	 */
-	public async delete(criteria: string | number | FindOptionsWhere<T>): Promise<DeleteResult> {
+	public async delete(
+		criteria: string | number | FindOptionsWhere<T>,
+		options?: { withDeleted?: boolean }
+	): Promise<DeleteResult> {
 		// Outside the try: a malformed criteria is a 400 of its own, not a wrapped not-found.
 		assertCriteriaHasPredicate(criteria, 'delete');
 		try {
 			switch (this.ormType) {
-				case MultiORMEnum.MikroORM:
+				case MultiORMEnum.MikroORM: {
 					// Determine the appropriate filter for MikroORM based on the criteria type
-					let filter: MikroFilterQuery<T>;
-					if (typeof criteria === 'object') {
-						filter = criteria as MikroFilterQuery<T>;
-					} else {
-						filter = { id: criteria } as MikroFilterQuery<T>;
-					}
+					const filter: MikroFilterQuery<T> =
+						typeof criteria === 'object' ? (criteria as MikroFilterQuery<T>) : ({ id: criteria } as MikroFilterQuery<T>);
 
-					// Convert the filter to MikroORM-specific where and options
-					let { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>({ where: filter } as FindManyOptions);
+					// Convert the filter to MikroORM-specific where and options (`withDeleted` lifts the soft-delete filter)
+					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>({
+						where: filter,
+						withDeleted: options?.withDeleted === true
+					} as FindManyOptions);
 
 					// Execute delete operation with MikroORM
 					const affected = await this.mikroOrmRepository.nativeDelete(where, mikroOptions);
 					return { affected } as DeleteResult;
+				}
 				case MultiORMEnum.TypeORM:
 					return await this.typeOrmRepository.delete(criteria);
 				default:
 					throw new Error(`Not implemented for ${this.ormType}`);
 			}
 		} catch (error) {
-			throw new NotFoundException(`The record was not found`, safeErrorMessage(error));
+			// The answer stays a 404 with the redacted message; the driver's error goes along as `cause` (never into the
+			// response), so a caller can tell a refused delete — a row other rows still reference — from a missing one.
+			throw new NotFoundException(`The record was not found`, { cause: error, description: safeErrorMessage(error) });
 		}
 	}
 

@@ -7,11 +7,13 @@ import { isSchedulerQueueRootEnabled, SchedulerModule } from '@gauzy/scheduler';
 import { TASK_AUTOMATION_ENTITIES } from './entities';
 import { TaskAutomationChangeCapture } from './events/task-automation-change.capture';
 import { TaskAutomationEventConsumer } from './events/task-automation-event.consumer';
+import { TaskAutomationLinkClosedCapture } from './events/task-automation-link-closed.capture';
 import { TaskAutomationResolver } from './graphql/task-automation.resolver';
 import { TaskAutomationDueSweepScheduler } from './schedule/task-automation-due-sweep.scheduler';
 import { TaskAutomationDueSweepService } from './schedule/task-automation-due-sweep.service';
 import { TaskAutomationDueSweepTimer, TaskAutomationDueSweepWorker } from './schedule/task-automation-due-sweep.worker';
 import { TaskAutomationEngine } from './services/task-automation-engine.service';
+import { TaskAutomationLinkClosureStore } from './services/task-automation-link-closure.store';
 import { TaskAutomationRuleService } from './services/task-automation-rule.service';
 import { TaskAutomationRunStore } from './services/task-automation-run.store';
 import { TaskAutomationRunner } from './services/task-automation-runner.service';
@@ -24,7 +26,8 @@ import { TASK_AUTOMATION_MAINTENANCE_QUEUE_NAME } from './task-automation.consta
 /**
  * The task automations (`@gauzy/plugin-task-automations`), loaded by the API only when
  * `GAUZY_TASK_AUTOMATIONS_ENABLED=true`: the routes and GraphQL reads, the change capture (CQRS `ActivityLogEvent` →
- * outbox), the outbox consumer that runs the rules, and the due-date sweep. Without a queue root the API sweeps on a
+ * outbox), the closed-link capture (CQRS `TaskLinkClosedEvent` → outbox, once per task and link), the outbox consumer
+ * that runs the rules, and the due-date sweep. Without a queue root the API sweeps on a
  * timer of its own (`TaskAutomationDueSweepTimer`); with one, the worker's schedule asks and
  * `TaskAutomationsMaintenanceModule` runs it.
  */
@@ -34,7 +37,7 @@ import { TASK_AUTOMATION_MAINTENANCE_QUEUE_NAME } from './task-automation.consta
 		MikroOrmModule.forFeature(TASK_AUTOMATION_ENTITIES),
 		// The tenant and permission guards of the routes need the role permissions.
 		RolePermissionModule,
-		// `TaskUpdateCommand` (the actions), `ActivityLogEvent` (the capture), the notification event.
+		// `TaskUpdateCommand` (the actions), `ActivityLogEvent` and `TaskLinkClosedEvent` (the captures), the notification event.
 		CqrsModule,
 		// The outbox the capture appends to and the registry the consumer registers with (the same instances as the
 		// platform's: Nest builds one module per class).
@@ -51,6 +54,8 @@ import { TASK_AUTOMATION_MAINTENANCE_QUEUE_NAME } from './task-automation.consta
 		TaskAutomationEngine,
 		TaskAutomationDueSweepService,
 		TaskAutomationChangeCapture,
+		TaskAutomationLinkClosureStore,
+		TaskAutomationLinkClosedCapture,
 		TaskAutomationEventConsumer,
 		// Listed here as well as in the plugin's `extensions`: a resolver only the plugin metadata names is never
 		// registered, and the schema would advertise fields nothing resolves.
