@@ -9,7 +9,7 @@ import {
 	LanguagesEnum,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { Employee } from '../../core/entities/internal';
+import { Employee, UserOrganization } from '../../core/entities/internal';
 import { EmailService } from '../../email-send/email.service';
 import { EmployeeCreateNotificationEvent } from '../../employee-notification/events/employee-notification.event';
 import { inboxEmailsNotifications } from '../../employee-notification/inbox-notification-emails';
@@ -77,8 +77,29 @@ export class EstimateAnswerNotifier {
 
 		const notifiedUserIds = notified.map((employee) => employee.userId);
 		if (emailsCreator(estimate.createdByUser, notifiedUserIds, inboxEmailsNotifications())) {
-			await this.emailCreator(estimate, answer);
+			// The email carries the client's name, address, amount and answer: only to a creator still in the
+			// organization
+			const creatorId = estimate.createdByUser.id;
+			if (await this.belongsToOrganization(creatorId, estimate.organizationId, estimate.tenantId)) {
+				await this.emailCreator(estimate, answer);
+			} else {
+				this.logger.log(`The creator of estimate ${estimate.id} left its organization: not emailed.`);
+			}
 		}
+	}
+
+	/**
+	 * Whether the user still belongs to the organization: an active, unarchived membership of it in the tenant.
+	 * Ending a member's work disables the membership and leaves the user account active, so the account alone does
+	 * not say it. An admin with no employee profile has a membership too.
+	 */
+	private async belongsToOrganization(userId: ID, organizationId: ID, tenantId: ID): Promise<boolean> {
+		const memberships = await this.typeOrmInvoiceRepository.manager.find(UserOrganization, {
+			where: { userId, organizationId, tenantId, isActive: true, isArchived: false },
+			select: { id: true },
+			take: 1
+		});
+		return memberships.length > 0;
 	}
 
 	/**

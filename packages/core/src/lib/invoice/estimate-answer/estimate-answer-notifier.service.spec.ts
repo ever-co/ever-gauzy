@@ -11,7 +11,7 @@ import {
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { RequestContext } from '../../core/context/request-context';
-import { Employee } from '../../core/entities/internal';
+import { Employee, UserOrganization } from '../../core/entities/internal';
 import { EmployeeCreateNotificationEvent } from '../../employee-notification/events/employee-notification.event';
 import { EstimateAnswerContextUnavailableError } from './estimate-answer-context';
 import { EstimateAnswerNotifier } from './estimate-answer-notifier.service';
@@ -49,14 +49,21 @@ describe('EstimateAnswerNotifier', () => {
 
 	beforeAll(() => RequestContext.setClsService(new ClsService(new AsyncLocalStorage())));
 
-	function setup(stored: IInvoice | null, handlers: { id: string; userId: string }[]) {
+	function setup(
+		stored: IInvoice | null,
+		handlers: { id: string; userId: string }[],
+		memberships: { id: string }[] = [{ id: 'membership-of-the-creator' }]
+	) {
 		const repository = {
 			// Answers the stored document only where every condition of the read holds for it, as the database would
 			findOne: jest.fn(async ({ where }: { where: Record<string, unknown> }) => {
 				const row = stored as unknown as Record<string, unknown> | null;
 				return row && Object.entries(where).every(([key, value]) => row[key] === value) ? stored : null;
 			}),
-			manager: { find: jest.fn(async () => handlers) }
+			// The invoice handlers, or the creator's active memberships of the organization
+			manager: {
+				find: jest.fn(async (entity: unknown) => (entity === UserOrganization ? memberships : handlers))
+			}
 		};
 		const emailService = { sendEstimateAnswered: jest.fn(async () => undefined) };
 		const eventBus = { publish: jest.fn() };
@@ -268,6 +275,30 @@ describe('EstimateAnswerNotifier', () => {
 		await notifier.notify(accepted);
 
 		expect(emailService.sendEstimateAnswered).toHaveBeenCalledTimes(1);
+	});
+
+	it('does not email a creator who no longer belongs to the organization, and still notifies in-app', async () => {
+		const { notifier, emailService, eventBus, repository } = setup(
+			estimate(),
+			[{ id: 'employee-2', userId: 'user-accountant' }],
+			[]
+		);
+
+		await notifier.notify(accepted);
+
+		expect(eventBus.publish).toHaveBeenCalledTimes(1);
+		expect(repository.manager.find).toHaveBeenCalledWith(UserOrganization, {
+			where: {
+				userId: 'user-creator',
+				organizationId: ORGANIZATION,
+				tenantId: TENANT,
+				isActive: true,
+				isArchived: false
+			},
+			select: { id: true },
+			take: 1
+		});
+		expect(emailService.sendEstimateAnswered).not.toHaveBeenCalled();
 	});
 
 	it('notifies in-app only when the estimate has no known creator', async () => {
