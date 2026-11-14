@@ -145,6 +145,7 @@ export * from '../../resource-link/resource-link.entity';
 export * from '../../role-permission/role-permission.entity';
 export * from '../../role/role.entity';
 export * from '../../rule/rule.entity';
+export * from '../../saved-report/saved-report.entity';
 export * from '../../skills/skill.entity';
 export * from '../../search/search-document.entity';
 export * from '../../search/search-index-definition.entity';
