@@ -2,14 +2,14 @@ import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, ElementRef, inject, NgZone, OnInit, type Signal, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, NavigationEnd, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, NavigationStart, Router, RouterLink } from '@angular/router';
 import { NbCardModule, NbDialogService, NbIconModule, NbSpinnerModule } from '@nebular/theme';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { combineLatest, EMPTY, forkJoin, merge, Observable, of, Subscription, timer } from 'rxjs';
-import { auditTime, catchError, distinctUntilChanged, filter, map, startWith, switchMap } from 'rxjs/operators';
+import { auditTime, catchError, distinctUntilChanged, filter, map, startWith, switchMap, takeUntil } from 'rxjs/operators';
 import { ChatConversationKindEnum, IChatCategory, IChatConversationWithState, IChatMemberState, IChatMessageWithRelations, IChatStates, IOrganization, IUser, PermissionsEnum } from '@gauzy/contracts';
 import { Store, ToastrService } from '@gauzy/ui-core/core';
-import { CHAT_LINK, CHAT_LIST_POLL_MS, CHAT_LIVE_LIST_AUDIT_MS } from '../../chat-ui.constants';
+import { CHAT_DIRECT_WITH_PARAM, CHAT_LINK, CHAT_LIST_POLL_MS, CHAT_LIVE_LIST_AUDIT_MS } from '../../chat-ui.constants';
 import {
 	cardPlace,
 	ChatPerson,
@@ -952,6 +952,7 @@ export class ChatPageComponent implements OnInit {
 					this.states.set(states);
 					this.state.set('ready');
 					this.startListPolling();
+					this.openDirectFromLink();
 				},
 				error: (error: HttpErrorResponse) => {
 					if (token !== this.scopeToken) return;
@@ -1354,6 +1355,49 @@ export class ChatPageComponent implements OnInit {
 				},
 				error: () => {
 					if (token === this.scopeToken) this.toastr.danger('CHAT.DIALOG.FAILED');
+				}
+			});
+	}
+
+	/**
+	 * Arrived by `?with=<employeeId>` (the Teams dashboard's member card): opens my direct conversation with them,
+	 * created when there is none. The link is replaced in the history (by the conversation, or by the page without
+	 * the parameter), so Back does not ask again. Myself, or a failure, leaves the page as it is. Any navigation meanwhile
+	 * (another conversation, Unreads) drops the request: the page stays mounted across those, so a late answer must not
+	 * take the person back.
+	 */
+	private openDirectFromLink(): void {
+		const employeeId = this.route.snapshot.queryParamMap.get(CHAT_DIRECT_WITH_PARAM);
+		if (!employeeId) return;
+		const dropParam = () =>
+			void this.router.navigate([], {
+				relativeTo: this.viewRoute(),
+				queryParams: { [CHAT_DIRECT_WITH_PARAM]: null },
+				queryParamsHandling: 'merge',
+				replaceUrl: true
+			});
+		if (employeeId === this.meEmployeeId()) {
+			dropParam();
+			return;
+		}
+		const token = this.scopeToken;
+		this.api
+			.direct([employeeId])
+			.pipe(
+				takeUntil(this.router.events.pipe(filter((event) => event instanceof NavigationStart))),
+				takeUntilDestroyed(this.destroyRef)
+			)
+			.subscribe({
+				next: (answer) => {
+					if (token !== this.scopeToken || !answer.conversation) return;
+					this.upsert(answer.conversation);
+					this.api.notifyChanged();
+					void this.router.navigate([CHAT_LINK, String(answer.conversation.id)], { replaceUrl: true });
+				},
+				error: () => {
+					if (token !== this.scopeToken) return;
+					this.toastr.danger('CHAT.DIALOG.FAILED');
+					dropParam();
 				}
 			});
 	}
