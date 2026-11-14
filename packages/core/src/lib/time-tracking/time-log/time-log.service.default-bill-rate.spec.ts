@@ -76,7 +76,19 @@ describe('TimeLogService and the organization default billing rate', () => {
 	};
 
 	describe('weekly report', () => {
-		type WeeklyEntry = { employee: { id: string }; spent: number | null; currency: string | null };
+		type AnsweredDay = { sum: number; logs: Array<Record<string, unknown>> };
+		type WeeklyEntry = {
+			employee: { id: string };
+			dates: Record<string, AnsweredDay | 0>;
+			spent: number | null;
+			currency: string | null;
+		};
+
+		/** The logs a weekly entry answers, day by day. */
+		const answeredLogs = (entry: WeeklyEntry): Array<Record<string, unknown>> => {
+			const days = Object.values(entry.dates).filter((day): day is AnsweredDay => day !== 0);
+			return days.flatMap((day) => day.logs);
+		};
 
 		const log = (
 			employee: Record<string, unknown>,
@@ -187,6 +199,52 @@ describe('TimeLogService and the organization default billing rate', () => {
 
 			expect(find.mock.calls[0][1].populate).toEqual(expect.arrayContaining(['employee', 'organization']));
 			expect(report[0]).toEqual(expect.objectContaining({ spent: 800, currency: 'EUR' }));
+		});
+
+		it('answers each log without the organization the default was read from', async () => {
+			const byEmployee = await weekOf({
+				currency: 'USD',
+				defaultBillRateValue: 80,
+				defaultBillRateCurrency: 'EUR' as never
+			});
+			const logs = [...byEmployee.values()].flatMap(answeredLogs);
+
+			expect(byEmployee.get(UNRATED_EMPLOYEE_ID)).toEqual(
+				expect.objectContaining({ spent: 800, currency: 'EUR' })
+			);
+			expect(logs).toHaveLength(2);
+			for (const answered of logs) {
+				expect(answered).not.toHaveProperty('organization');
+			}
+		});
+
+		it('answers each log without the organization under MikroORM too, which populates it whole', async () => {
+			const organization = {
+				id: ORGANIZATION_ID,
+				name: 'Agency',
+				currency: 'USD',
+				defaultBillRateValue: '80.00'
+			};
+			const unrated = { id: UNRATED_EMPLOYEE_ID, billRateValue: '0.00', billRateCurrency: null };
+			const find = jest
+				.fn()
+				.mockResolvedValue([
+					log(unrated, organization as never, 'f1a2b3c4-0000-4000-8000-000000000004', 36000)
+				]);
+			const self = Object.create(TimeLogService.prototype, {
+				ormType: { value: MultiORMEnum.MikroORM },
+				mikroOrmRepository: { value: { find, getEntityManager: () => ({ findOne: jest.fn() }) } },
+				typeOrmRepository: { value: { manager: { find: jest.fn().mockResolvedValue([]) } } },
+				buildMikroOrmTimeLogWhere: { value: jest.fn().mockResolvedValue({}) },
+				serialize: { value: (entity: unknown) => entity }
+			});
+
+			const report = (await TimeLogService.prototype.getWeeklyReport.call(self, request)) as WeeklyEntry[];
+			const logs = report.flatMap(answeredLogs);
+
+			expect(report[0]).toEqual(expect.objectContaining({ spent: 800, currency: 'USD' }));
+			expect(logs).toHaveLength(1);
+			expect(logs[0]).not.toHaveProperty('organization');
 		});
 	});
 

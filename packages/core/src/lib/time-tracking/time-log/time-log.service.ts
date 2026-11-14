@@ -377,6 +377,11 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		// The organization's default billing rate, read with the logs: it prices the week of a member without a rate
 		const defaultRate = defaultBillRateOf(logs.find((log) => log.organization)?.organization);
 
+		// The organization was read for its default only: the logs are answered without it (MikroORM populates it whole)
+		for (const log of logs) {
+			delete log.organization;
+		}
+
 		// Process weekly logs using lodash and Moment.js
 		const weeklyLogs = chain(logs)
 			.groupBy('employeeId')
