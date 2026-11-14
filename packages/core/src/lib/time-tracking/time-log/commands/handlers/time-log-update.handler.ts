@@ -171,14 +171,21 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 
 			// Update the time log in the repository
 			const logId = timeLog.id;
-			await this.writeWithHistory(stored, changes, history, (repository) =>
-				repository.update(
-					{ id: logId, tenantId },
-					{
-						...changes,
-						...(timesheet ? { timesheetId: timesheet.id } : {})
-					}
-				)
+			// An entry deleted for good since it was first read stops the edit with a 404: the reads below would find
+			// no row to answer or to give slots to.
+			await this.writeWithHistory(
+				stored,
+				changes,
+				history,
+				(repository) =>
+					repository.update(
+						{ id: logId, tenantId },
+						{
+							...changes,
+							...(timesheet ? { timesheetId: timesheet.id } : {})
+						}
+					),
+				true
 			);
 
 			// Retrieve the updated time log
@@ -531,7 +538,8 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 	 * @param history - Given by the routes through which a person edits an entry.
 	 * @param write - The write, through the repository it is handed.
 	 * @param refusesDeletedEntry - Whether an entry deleted for good since it was first read stops the edit with a
-	 * NotFoundException: a save (a move's) would insert the row again. An update matches no row, so it is skipped.
+	 * NotFoundException: a save (a move's) would insert the row again, and after an update, which matches no row, the
+	 * handler would read back no entry. Otherwise nothing is written and the write answers undefined.
 	 */
 	private async writeWithHistory<T>(
 		stored: ITimeLog,

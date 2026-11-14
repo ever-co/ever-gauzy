@@ -150,12 +150,15 @@ describe('TimeLogUpdateHandler: history of an edit', () => {
 		});
 	});
 
-	it('skips an update, with no row, when the entry was deleted for good since it was first read', async () => {
-		const { handler, transactionManager, transactionRepository, record } = setup();
+	it('answers 404 for an update, with no write and no row, when the entry was deleted for good since it was first read', async () => {
+		const { handler, repository, transactionManager, transactionRepository, record } = setup();
 		transactionManager.findOne.mockResolvedValue(null);
+		// The entry is gone for the reads after the write too
+		repository.findOneBy.mockResolvedValue(null);
 
-		await handler.execute(new TimeLogUpdateCommand({ description: 'Beta' }, storedLog(), null, false, {}));
+		const refusal = handler.execute(new TimeLogUpdateCommand({ description: 'Beta' }, storedLog(), null, false, {}));
 
+		await expect(refusal).rejects.toThrow(NotFoundException);
 		expect(transactionRepository.update).not.toHaveBeenCalled();
 		expect(record).not.toHaveBeenCalled();
 	});
