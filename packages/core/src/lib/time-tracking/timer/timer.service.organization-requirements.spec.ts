@@ -95,7 +95,8 @@ describe('TimerService.startTimer under the organization tracking requirements',
 			undefined as never
 		);
 		stopPreviousRunningTimers = jest.fn(async () => undefined);
-		Object.assign(service, { stopPreviousRunningTimers });
+		// No run of the employee is going unless a test says otherwise
+		Object.assign(service, { stopPreviousRunningTimers, getLastRunningLogs: jest.fn(async () => []) });
 	});
 
 	afterEach(() => {
@@ -301,9 +302,22 @@ describe('TimerService.startTimer under the organization tracking requirements',
 		expect(stopPreviousRunningTimers).not.toHaveBeenCalled();
 	});
 
-	it('starts a break started in the past over the run it replaces, which the start stops', async () => {
+	it('refuses a break started in the past while a run goes on, which would keep the minutes it covers', async () => {
 		organization = { allowBreaks: true };
-		conflictsAre([{ id: 'running', isRunning: true }]);
+		conflictsAre([]);
+		Object.assign(service, { getLastRunningLogs: jest.fn(async () => [{ id: 'running', isRunning: true }]) });
+
+		const refusal = await start({ logType: TimeLogType.BREAK, startedAt: anHourAgo() } as ITimerToggleInput).catch(
+			(caught) => caught
+		);
+
+		expect((refusal as ConflictException).getResponse()).toMatchObject({ code: BREAK_OVERLAP });
+		expect(createdLog()).toBeUndefined();
+	});
+
+	it('starts a break set in the past over nothing', async () => {
+		organization = { allowBreaks: true };
+		conflictsAre([]);
 
 		await start({ logType: TimeLogType.BREAK, startedAt: anHourAgo() } as ITimerToggleInput);
 

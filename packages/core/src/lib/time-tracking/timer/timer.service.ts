@@ -456,8 +456,9 @@ export class TimerService {
 	}
 
 	/**
-	 * Refuses a break whose start, set in the past, would overlap a finished entry of the employee: a break never cuts
-	 * other entries (see break-rules). The entry running now is no overlap, since the start stops it.
+	 * Refuses a break whose start, set in the past, would overlap another entry of the employee: a break never cuts other
+	 * entries (see break-rules). A run still going overlaps it too, since that run keeps the end its own time gives it
+	 * when the start stops it: stop it first, or start the break now.
 	 *
 	 * @param employee The employee starting the break, in their organization and tenant.
 	 * @param startedAt The start of the break.
@@ -475,8 +476,8 @@ export class TimerService {
 		const conflicts: ITimeLog[] = await this._commandBus.execute(
 			new IGetConflictTimeLogCommand({ ...employee, startDate: startedAt, endDate: now })
 		);
-		const finished = (conflicts ?? []).filter((log) => !log.isRunning);
-		assertBreakOverlapsNothing(finished);
+		const runningLogs = await this.getLastRunningLogs();
+		assertBreakOverlapsNothing([...(conflicts ?? []), ...runningLogs]);
 	}
 
 	/**
