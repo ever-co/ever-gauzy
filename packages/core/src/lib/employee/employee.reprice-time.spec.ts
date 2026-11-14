@@ -58,7 +58,12 @@ describe('re-pricing an employee time from a day', () => {
 				'manager',
 				{ tenantId: 'tenant-1', organizationId: 'organization-1', from: new Date('2026-10-01') },
 				'employee-2',
-				{ billing: true, pay: false }
+				{
+					billRateValue: 50,
+					billRateCurrency: undefined,
+					payRateValue: undefined,
+					payRateCurrency: undefined
+				}
 			);
 		});
 

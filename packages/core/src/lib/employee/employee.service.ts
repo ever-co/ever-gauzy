@@ -1277,8 +1277,8 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	}
 
 	/**
-	 * Gives the employee's time logs started on or after `from` the billing and pay rates an update just set, for the
-	 * rates it sent (see time-log-repricing.ts). Without a day, past time keeps its price.
+	 * Gives the employee's time logs started on or after `from` the billing or pay rate the update sent (see
+	 * time-log-repricing.ts). Without a day, past time keeps its price.
 	 *
 	 * @param employeeId - The employee the update changed.
 	 * @param changes - The update as it was written.
@@ -1301,12 +1301,14 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 		if (!employee) {
 			throw new NotFoundException('Employee not found.');
 		}
-		const changed = {
-			billing: changes.billRateValue !== undefined || changes.billRateCurrency !== undefined,
-			pay: changes.payRateValue !== undefined || changes.payRateCurrency !== undefined
+		const sent = {
+			billRateValue: changes.billRateValue,
+			billRateCurrency: changes.billRateCurrency,
+			payRateValue: changes.payRateValue,
+			payRateCurrency: changes.payRateCurrency
 		};
 		const time = { tenantId, organizationId: employee.organizationId, from: new Date(from) };
-		return await repriceMemberTime(this.typeOrmRepository.manager, time, employeeId, changed);
+		return await repriceMemberTime(this.typeOrmRepository.manager, time, employeeId, sent);
 	}
 }
 

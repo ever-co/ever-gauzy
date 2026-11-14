@@ -14,10 +14,12 @@ export interface RepricedTime {
 	from: Date;
 }
 
-/** Which of a member's own rates a change re-prices. */
-export interface MemberRatesChanged {
-	billing: boolean;
-	pay: boolean;
+/** The member's own rates a change sent; a rate it leaves out keeps its stored value. */
+export interface MemberRatesSent {
+	billRateValue?: number | null;
+	billRateCurrency?: string | null;
+	payRateValue?: number | null;
+	payRateCurrency?: string | null;
 }
 
 /**
@@ -54,7 +56,9 @@ async function reprice(
 }
 
 /**
- * Re-prices a member's time from a day at the billing and pay rates they have now, for the rates their change set.
+ * Re-prices a member's time from a day at the billing or pay rate a change sent. The rate sent prices the time, not
+ * a rate read back after the save: another save between the two must not decide the price of this change. A value
+ * the change left out (the currency of a rate it sent alone) is read as stored.
  *
  * @returns How many time logs took the new rates.
  */
@@ -62,10 +66,12 @@ export async function repriceMemberTime(
 	manager: EntityManager,
 	time: RepricedTime,
 	employeeId: ID,
-	changed: MemberRatesChanged
+	sent: MemberRatesSent
 ): Promise<number> {
-	const changesNothing = !changed.billing && !changed.pay;
-	if (changesNothing) {
+	const sendsBilling = sent.billRateValue !== undefined || sent.billRateCurrency !== undefined;
+	const sendsPay = sent.payRateValue !== undefined || sent.payRateCurrency !== undefined;
+	const sendsNothing = !sendsBilling && !sendsPay;
+	if (sendsNothing) {
 		return 0;
 	}
 	const employee = await manager.findOne(Employee, {
@@ -76,15 +82,23 @@ export async function repriceMemberTime(
 		return 0;
 	}
 	const values: Partial<TimeLog> = {};
-	if (changed.billing) {
-		values.billRateValue = employee.billRateValue ?? null;
-		values.billRateCurrency = employee.billRateCurrency ?? null;
+	if (sendsBilling) {
+		values.billRateValue = sentOrStored(sent.billRateValue, employee.billRateValue);
+		values.billRateCurrency = sentOrStored(sent.billRateCurrency, employee.billRateCurrency);
 	}
-	if (changed.pay) {
-		values.payRateValue = employee.payRateValue ?? null;
-		values.payRateCurrency = employee.payRateCurrency ?? null;
+	if (sendsPay) {
+		values.payRateValue = sentOrStored(sent.payRateValue, employee.payRateValue);
+		values.payRateCurrency = sentOrStored(sent.payRateCurrency, employee.payRateCurrency);
 	}
 	return await reprice(manager, time, { employeeId }, values);
+}
+
+/** The value a change sent, else the stored one. */
+function sentOrStored<T>(sent: T | undefined, stored: T | null | undefined): T | null {
+	if (sent !== undefined) {
+		return sent;
+	}
+	return stored ?? null;
 }
 
 /**

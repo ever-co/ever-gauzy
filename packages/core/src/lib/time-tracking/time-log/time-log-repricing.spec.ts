@@ -127,10 +127,7 @@ describe('re-pricing time from a day', () => {
 	it(
 		"gives Marie's time from 1 October her new billing rate, and only that",
 		async () => {
-			const count = await repricing.repriceMemberTime(dataSource.manager, october, MARIE, {
-				billing: true,
-				pay: false
-			});
+			const count = await repricing.repriceMemberTime(dataSource.manager, october, MARIE, { billRateValue: 50 });
 
 			expect(count).toBe(1);
 			expect(await ratesOf(LOG.october)).toMatchObject({
@@ -146,7 +143,10 @@ describe('re-pricing time from a day', () => {
 	it(
 		'keeps the price of invoiced time, of removed time, of a log that stores no rate and of other members',
 		async () => {
-			await repricing.repriceMemberTime(dataSource.manager, october, MARIE, { billing: true, pay: true });
+			await repricing.repriceMemberTime(dataSource.manager, october, MARIE, {
+				billRateValue: 50,
+				payRateValue: 30
+			});
 
 			expect(await ratesOf(LOG.invoiced)).toMatchObject({ billRateValue: 40, payRateValue: 25 });
 			expect(await ratesOf(LOG.removed)).toMatchObject({ billRateValue: 40 });
@@ -161,13 +161,23 @@ describe('re-pricing time from a day', () => {
 		async () => {
 			await dataSource.query(`UPDATE "invoice" SET "status" = 'VOID'`);
 
-			const count = await repricing.repriceMemberTime(dataSource.manager, october, MARIE, {
-				billing: false,
-				pay: true
-			});
+			const count = await repricing.repriceMemberTime(dataSource.manager, october, MARIE, { payRateValue: 30 });
 
 			expect(count).toBe(2);
 			expect(await ratesOf(LOG.invoiced)).toMatchObject({ billRateValue: 40, payRateValue: 30 });
+		},
+		TIMEOUT
+	);
+
+	it(
+		'applies the rate the change sent, even when another save changed it meanwhile',
+		async () => {
+			// A second admin saved 60 with no day between this change's save and its re-pricing
+			await dataSource.query(`UPDATE "employee" SET "billRateValue" = 60 WHERE "id" = ?`, [MARIE]);
+
+			await repricing.repriceMemberTime(dataSource.manager, october, MARIE, { billRateValue: 50 });
+
+			expect(await ratesOf(LOG.october)).toMatchObject({ billRateValue: 50, billRateCurrency: 'EUR' });
 		},
 		TIMEOUT
 	);
@@ -178,7 +188,10 @@ describe('re-pricing time from a day', () => {
 			const elsewhere = { ...october, organizationId: OTHER_ORGANIZATION };
 
 			expect(
-				await repricing.repriceMemberTime(dataSource.manager, elsewhere, MARIE, { billing: true, pay: true })
+				await repricing.repriceMemberTime(dataSource.manager, elsewhere, MARIE, {
+					billRateValue: 50,
+					payRateValue: 30
+				})
 			).toBe(0);
 		},
 		TIMEOUT
