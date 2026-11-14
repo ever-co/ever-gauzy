@@ -74,28 +74,35 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 		let user: IUser;
 		let employee: IEmployee;
 
+		// A claim invitation hands a member without an account over to the person who accepts it (#11913).
+		const isClaim = !!invite.placeholderEmployeeId;
+
 		try {
-			// Inner try/catch is find-or-register control flow, not error handling: a missing
-			// employee user is the signal to create one.
-			try {
-				// Find existing employee user
-				user = await this.findExistingEmployeeUser(invite);
-
-				// Implementation to find an employee by user ID
-				employee = await this.findEmployee(user.id);
-			} catch (error) {
-				// New user registers before accepting the invitation
-				user = await this.registerNewUser(input, invite, languageCode);
-
-				// Create employee after creating user
-				employee = await this.createEmployee(invite, user);
-			}
-
-			// A claim invitation hands a member without an account over to the person who accepts it: to their
-			// member of the invitation's organization, which an existing account working elsewhere gets now.
-			const isClaim = !!invite.placeholderEmployeeId;
 			if (isClaim) {
-				employee = await this.memberOfInvitationOrganization(invite, user, employee);
+				// The person's account whatever its role, so an admin's or a manager's email never gets a second
+				// account; else a new one. Then their member of the invitation's organization, which an account
+				// working elsewhere, or with no member at all, gets now.
+				const existing = await this.findExistingAccount(invite);
+				user = existing ?? (await this.registerNewUser(input, invite, languageCode));
+				employee = existing
+					? await this.memberOfInvitationOrganization(invite, existing)
+					: await this.createEmployee(invite, user);
+			} else {
+				// Inner try/catch is find-or-register control flow, not error handling: a missing
+				// employee user is the signal to create one.
+				try {
+					// Find existing employee user
+					user = await this.findExistingEmployeeUser(invite);
+
+					// Implementation to find an employee by user ID
+					employee = await this.findEmployee(user.id);
+				} catch (error) {
+					// New user registers before accepting the invitation
+					user = await this.registerNewUser(input, invite, languageCode);
+
+					// Create employee after creating user
+					employee = await this.createEmployee(invite, user);
+				}
 			}
 
 			// Implementation for updating employee memberships based on the invite details
@@ -159,6 +166,20 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 	}
 
 	/**
+	 * Finds the account of the invited email in the invitation's tenant, whatever its role, with its role.
+	 * @param invite The claim invitation being accepted.
+	 * @returns The account, or null when the email has none yet.
+	 */
+	private async findExistingAccount(invite: IInvite): Promise<IUser | null> {
+		const { tenantId, email } = invite;
+		return await this.typeOrmUserRepository.findOne({
+			where: { email, tenantId },
+			relations: { role: true },
+			order: { createdAt: 'DESC' }
+		});
+	}
+
+	/**
 	 * Registers a new user based on the invite details.
 	 * @param input The user registration input and app integration config.
 	 * @param invite The invite containing the organization details.
@@ -205,19 +226,14 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 	}
 
 	/**
-	 * The person's member of the invitation's organization: the one found when it is there, else the one the account
-	 * already has in it, else a new one, with the account joined to the organization. An account working in another
-	 * organization of the tenant is found by `findEmployee` with its member there, which a claim must never fill.
+	 * An existing account's member of the invitation's organization: the one it already has there, else a new one,
+	 * with the account joined to the organization. Its member of another organization is never the one a claim fills.
 	 *
 	 * @param invite The claim invitation being accepted.
-	 * @param user The account accepting it.
-	 * @param found The member the acceptance found or created.
+	 * @param user The account accepting it, with its role.
 	 * @returns The member of the invitation's organization.
 	 */
-	private async memberOfInvitationOrganization(invite: IInvite, user: IUser, found: IEmployee): Promise<IEmployee> {
-		if (found.organizationId === invite.organizationId) {
-			return found;
-		}
+	private async memberOfInvitationOrganization(invite: IInvite, user: IUser): Promise<IEmployee> {
 		const existing = await this.typeOrmEmployeeRepository.findOne({
 			where: { userId: user.id, organizationId: invite.organizationId }
 		});
@@ -225,7 +241,6 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 			return existing;
 		}
 		const created = await this.createEmployee(invite, user);
-		// The account was found by its EMPLOYEE role (`findExistingEmployeeUser`), which is not loaded with it.
 		const withRole = { ...user, role: user.role ?? ({ name: RolesEnum.EMPLOYEE } as IRole) };
 		await this.userOrganizationService.addUserToOrganization(withRole, invite.organizationId);
 		return created;

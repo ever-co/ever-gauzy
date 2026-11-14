@@ -29,9 +29,22 @@ const invitation = (placeholderEmployeeId: string | null) => ({
 	teams: []
 });
 
-function build(options: { placeholderEmployeeId: string | null; existingUserId?: string; employees?: Row[] }) {
+function build(options: {
+	placeholderEmployeeId: string | null;
+	existingUserId?: string;
+	existingRole?: string;
+	employees?: Row[];
+}) {
 	const invite = invitation(options.placeholderEmployeeId);
 	const employees: Row[] = [...(options.employees ?? [])];
+	const existingUser = options.existingUserId
+		? {
+				id: options.existingUserId,
+				email: invite.email,
+				tenantId: TENANT,
+				role: { name: options.existingRole ?? 'EMPLOYEE' }
+			}
+		: null;
 	const inviteService = {
 		findOneByIdString: jest.fn(async () => invite),
 		claimInvite: jest.fn(async () => true),
@@ -41,11 +54,16 @@ function build(options: { placeholderEmployeeId: string | null; existingUserId?:
 	const authService = {
 		register: jest.fn(async () => ({ id: 'user-new', email: invite.email, tenantId: TENANT }))
 	};
+	// The ordinary acceptance looks for an account with the EMPLOYEE role only (`findExistingEmployeeUser`).
 	const userRepository = {
-		findOneOrFail: jest.fn(async () => {
-			if (!options.existingUserId) throw new Error('EntityNotFound');
-			return { id: options.existingUserId, email: invite.email, tenantId: TENANT };
-		})
+		findOneOrFail: jest.fn(async ({ where }) => {
+			const roleMatches = !where.role?.name || where.role.name === existingUser?.role.name;
+			if (!existingUser || !roleMatches) throw new Error('EntityNotFound');
+			return existingUser;
+		}),
+		findOne: jest.fn(async ({ where }) =>
+			existingUser && where.email === existingUser.email ? existingUser : null
+		)
 	};
 	const employeeRepository = {
 		findOneOrFail: jest.fn(async ({ where }) => {
@@ -88,7 +106,14 @@ function build(options: { placeholderEmployeeId: string | null; existingUserId?:
 	);
 	const accept = () =>
 		handler.execute(new InviteAcceptEmployeeCommand({ inviteId: invite.id, user: {} } as never, 'en' as never));
-	return { accept, placeholderTransferService, userOrganizationService, inviteService, employeeRepository };
+	return {
+		accept,
+		placeholderTransferService,
+		userOrganizationService,
+		inviteService,
+		employeeRepository,
+		authService
+	};
 }
 
 describe('InviteAcceptEmployeeHandler with a claim invitation', () => {
@@ -138,6 +163,27 @@ describe('InviteAcceptEmployeeHandler with a claim invitation', () => {
 			keepInviteId: 'invite-1'
 		});
 		expect(employeeRepository.save).not.toHaveBeenCalled();
+	});
+
+	it('reaches the existing account of an admin, never a second account for the same email', async () => {
+		const { accept, placeholderTransferService, authService } = build({
+			placeholderEmployeeId: PLACEHOLDER,
+			existingUserId: 'user-amina-admin',
+			existingRole: 'ADMIN',
+			employees: [
+				{ id: 'employee-amina-elsewhere', userId: 'user-amina-admin', organizationId: OTHER_ORGANIZATION }
+			]
+		});
+
+		await accept();
+
+		expect(authService.register).not.toHaveBeenCalled();
+		expect(placeholderTransferService.transfer).toHaveBeenCalledWith(
+			PLACEHOLDER,
+			'employee-of-user-amina-admin',
+			TENANT,
+			{ keepInviteId: 'invite-1' }
+		);
 	});
 
 	it('hands nothing over for any other invitation', async () => {
