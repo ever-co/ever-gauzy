@@ -1,6 +1,7 @@
 import { ApiPropertyOptional, PickType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsDateString, IsObject, IsOptional, ValidateNested } from 'class-validator';
+import { IsDateString, IsObject, IsOptional, Matches, ValidateNested } from 'class-validator';
+import { APPLY_FROM_PATTERN } from '../../shared/validators/apply-from';
 import { IntersectionType } from '@nestjs/mapped-types';
 import { IContact, IEmployeeUpdateInput } from '@gauzy/contracts';
 import { EmploymentDTO } from './employment.dto';
@@ -62,5 +63,6 @@ export class UpdateProfileDTO
 	})
 	@IsOptional()
 	@IsDateString()
+	@Matches(APPLY_FROM_PATTERN, { message: 'ratesApplyFrom must be a date or a date-time with its offset' })
 	readonly ratesApplyFrom?: string;
 }

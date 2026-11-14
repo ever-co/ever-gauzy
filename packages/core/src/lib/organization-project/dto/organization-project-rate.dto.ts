@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsDateString, IsNumber, IsOptional, Max, Min, ValidateIf } from 'class-validator';
+import { IsDateString, IsNumber, IsOptional, Matches, Max, Min, ValidateIf } from 'class-validator';
+import { APPLY_FROM_PATTERN } from '../../shared/validators/apply-from';
 import { IOrganizationProjectRateUpdateInput } from '@gauzy/contracts';
 import { TenantOrganizationBaseDTO } from '../../core/dto';
 import { BILLING_RATE_MAX, toNullableBillingRate } from '../../shared/pipes/billing-rate.transform';
@@ -34,5 +35,6 @@ export class OrganizationProjectRateDTO
 	})
 	@IsOptional()
 	@IsDateString()
+	@Matches(APPLY_FROM_PATTERN, { message: 'applyFrom must be a date or a date-time with its offset' })
 	readonly applyFrom?: string;
 }
