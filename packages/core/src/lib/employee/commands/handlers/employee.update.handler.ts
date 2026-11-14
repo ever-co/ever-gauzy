@@ -27,8 +27,12 @@ function turnsTrackingOff(before: IEmployee, saved: IEmployee): boolean {
 	return wasTracking && isNowOff;
 }
 
-/** The input with the tracking switch, which the bodies of `PUT /employee/:id` and `updateEmployee` carry. */
-type EmployeeUpdateWithTracking = IEmployeeUpdateInput & Partial<Pick<IEmployee, 'isTrackingEnabled'>>;
+/**
+ * The input with the tracking switch and the work dates, which the bodies of `PUT /employee/:id`,
+ * `PUT /employee/:id/profile` and `updateEmployee` carry.
+ */
+type EmployeeUpdateWithTracking = IEmployeeUpdateInput &
+	Partial<Pick<IEmployee, 'isTrackingEnabled' | 'startedWorkOn' | 'endWork'>>;
 
 /**
  * The input as the caller may save it. Where the employee's organization restricts the switch to higher roles
@@ -60,6 +64,79 @@ function withTrackingSwitchAllowed(employee: IEmployee, input: EmployeeUpdateWit
 	}
 	const changes = { ...input };
 	delete changes.isTrackingEnabled;
+	return changes;
+}
+
+/** Whether two work dates name the same instant; two empty ones do, an empty one and a date do not. */
+function isSameWorkDate(sent: Date | string | null | undefined, stored: Date | string | null | undefined): boolean {
+	const sentIsEmpty = sent === null || sent === undefined;
+	const storedIsEmpty = stored === null || stored === undefined;
+	if (sentIsEmpty || storedIsEmpty) {
+		return sentIsEmpty && storedIsEmpty;
+	}
+	return new Date(sent).getTime() === new Date(stored).getTime();
+}
+
+/**
+ * The tracking the employee subscriber leaves after this write, by the work dates it changes: a start date set to a
+ * date, or an end date cleared ("back to work"), turns it on; otherwise an end date set turns it off; otherwise the
+ * dates leave it alone (undefined).
+ */
+function trackingAfterWorkDates(
+	startChanged: boolean,
+	endChanged: boolean,
+	input: EmployeeUpdateWithTracking
+): boolean | undefined {
+	const startsWork = startChanged && !!input.startedWorkOn;
+	const resumesWork = endChanged && input.endWork === null;
+	if (startsWork || resumesWork) {
+		return true;
+	}
+	const endsWork = endChanged && !!input.endWork;
+	if (endsWork) {
+		return false;
+	}
+	return undefined;
+}
+
+/**
+ * The input as the caller may save its work dates. The employee subscriber turns the tracking on when a write changes
+ * the start date or clears the end date, and off when it sets the end date. Where the organization restricts the
+ * switch to higher roles (`restrictTrackingSwitchToHigherRoles`), a date change that would move the tracking is a
+ * switch like an explicit `isTrackingEnabled`, so only a caller who may switch this employee's tracking may make it.
+ *
+ * Anyone else is refused such a change. Work dates sent back as stored are left out of the save: an ORM that does not
+ * report which columns a write changes would read a stored start date as a start of work.
+ *
+ * @param employee The employee as stored, with their organization and their user's role.
+ * @param input The changes the save writes.
+ * @returns The changes the caller may save.
+ * @throws ForbiddenException When the caller may not turn this employee's tracking on or off and the dates would.
+ */
+function withWorkDatesAllowed(employee: IEmployee, input: EmployeeUpdateWithTracking): EmployeeUpdateWithTracking {
+	if (employee?.organization?.restrictTrackingSwitchToHigherRoles !== true) {
+		return input;
+	}
+	const sendsStart = input.startedWorkOn !== undefined;
+	const sendsEnd = input.endWork !== undefined;
+	if (!sendsStart && !sendsEnd) {
+		return input;
+	}
+	const startChanged = sendsStart && !isSameWorkDate(input.startedWorkOn, employee?.startedWorkOn);
+	const endChanged = sendsEnd && !isSameWorkDate(input.endWork, employee?.endWork);
+	const trackingAfter = trackingAfterWorkDates(startChanged, endChanged, input);
+	const isOn = employee?.isTrackingEnabled === true;
+	const movesTracking = trackingAfter !== undefined && trackingAfter !== isOn;
+	if (keepsTrackingSwitch(callerRoleRank(), rankOfRole(employee?.user?.role?.name), movesTracking)) {
+		return input;
+	}
+	const changes = { ...input };
+	if (sendsStart && !startChanged) {
+		delete changes.startedWorkOn;
+	}
+	if (sendsEnd && !endChanged) {
+		delete changes.endWork;
+	}
 	return changes;
 }
 
@@ -103,7 +180,7 @@ export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateComm
 		});
 
 		// Decided before anything is written: a refused switch stops the whole save
-		const allowedInput = withTrackingSwitchAllowed(employee, input);
+		const allowedInput = withWorkDatesAllowed(employee, withTrackingSwitchAllowed(employee, input));
 
 		const editsOwnRecord = isSameId(user?.employeeId, id);
 		const changesOwnRates = RequestContext.hasPermission(PermissionsEnum.CHANGE_OWN_RATES);
