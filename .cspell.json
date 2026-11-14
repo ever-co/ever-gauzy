@@ -1798,7 +1798,9 @@
 		"indrelid",
 		"ordinality",
 		"regclass",
-		"unsaveable"
+		"unsaveable",
+		"heures",
+		"stunden"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
