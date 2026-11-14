@@ -1,3 +1,4 @@
+// cspell:ignore efgh ijkl mnop
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 import { ID, ITwoFactorCodeInput, ITwoFactorEnrollInput, ITwoFactorVerifyInput } from '@gauzy/contracts';

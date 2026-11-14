@@ -1,3 +1,4 @@
+// cspell:ignore efgh ijkl mnop
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { encodeBase32 } from './totp';
 

@@ -1,3 +1,4 @@
+// cspell:ignore efgh ijkl mnop
 import {
 	findRecoveryCodeHash,
 	generateRecoveryCodes,

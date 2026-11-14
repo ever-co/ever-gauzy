@@ -1,3 +1,4 @@
+// cspell:ignore otpauth
 /**
  * Contract for two-factor authentication with an authenticator app (TOTP, RFC 6238): a user turns it on from a
  * signed-in session, and every sign-in that ends with a session then asks for a six-digit code (or a single-use

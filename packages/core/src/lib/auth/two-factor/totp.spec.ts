@@ -1,3 +1,4 @@
+// cspell:ignore gezd gezdgnbvgy gnbv hotp otpauth qojq tqojq tqojqgezdgnbvgy
 import {
 	buildOtpauthUrl,
 	decodeBase32,

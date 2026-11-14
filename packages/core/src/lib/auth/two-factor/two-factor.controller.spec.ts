@@ -1,3 +1,4 @@
+// cspell:ignore efgh ijkl mnop otpauth
 import '../../core/entities/internal';
 
 import { BadRequestException, ForbiddenException } from '@nestjs/common';

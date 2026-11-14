@@ -1,3 +1,4 @@
+// cspell:ignore otpauth
 import {
 	BadRequestException,
 	ConflictException,

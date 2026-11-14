@@ -1,3 +1,4 @@
+// cspell:ignore otpauth
 import '../../core/entities/internal';
 
 import { HttpException, HttpStatus } from '@nestjs/common';
