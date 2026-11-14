@@ -27,14 +27,14 @@ import {
 	removeNode,
 	setGroupOp,
 	updateNode,
-	withBound,
 	withField,
 	withOperator,
+	withPickedDay,
 	withRelative,
 	withValues,
 	withoutInvalid
 } from '../../models/filter-tree';
-import { dayOfInstant, instantOfDay } from '../../models/date-input';
+import { dayOfBound } from '../../models/date-input';
 import {
 	EMPTY_OPTIONS,
 	optionsOfField,
@@ -228,7 +228,7 @@ export const invalidKey = (reason: string) => `TASK_VIEWS.FILTER.INVALID.${reaso
 							fieldSize="tiny"
 							type="date"
 							[disabled]="disabled()"
-							[value]="day(condition.to, 'before')"
+							[value]="day(condition, 'to', 'before')"
 							(change)="setBound(path, 'to', $any($event.target).value, 'before')"
 							[attr.aria-label]="'TASK_VIEWS.FILTER.DATE_TO' | translate"
 						/>
@@ -239,7 +239,7 @@ export const invalidKey = (reason: string) => `TASK_VIEWS.FILTER.INVALID.${reaso
 							fieldSize="tiny"
 							type="date"
 							[disabled]="disabled()"
-							[value]="day(condition.from, 'from')"
+							[value]="day(condition, 'from', 'from')"
 							(change)="setBound(path, 'from', $any($event.target).value, 'from')"
 							[attr.aria-label]="'TASK_VIEWS.FILTER.DATE_FROM' | translate"
 						/>
@@ -250,7 +250,7 @@ export const invalidKey = (reason: string) => `TASK_VIEWS.FILTER.INVALID.${reaso
 							fieldSize="tiny"
 							type="date"
 							[disabled]="disabled()"
-							[value]="day(condition.from, 'from')"
+							[value]="day(condition, 'from', 'from')"
 							(change)="setBound(path, 'from', $any($event.target).value, 'from')"
 							[attr.aria-label]="'TASK_VIEWS.FILTER.DATE_FROM' | translate"
 						/>
@@ -260,7 +260,7 @@ export const invalidKey = (reason: string) => `TASK_VIEWS.FILTER.INVALID.${reaso
 							fieldSize="tiny"
 							type="date"
 							[disabled]="disabled()"
-							[value]="day(condition.to, 'until')"
+							[value]="day(condition, 'to', 'until')"
 							(change)="setBound(path, 'to', $any($event.target).value, 'until')"
 							[attr.aria-label]="'TASK_VIEWS.FILTER.DATE_TO' | translate"
 						/>
@@ -394,8 +394,12 @@ export class FilterEditorComponent {
 		return [...options, ...unknown];
 	}
 
-	protected day(instant: string | undefined, kind: 'from' | 'before' | 'until'): string {
-		return dayOfInstant(instant, kind);
+	protected day(
+		condition: ITaskViewFilterCondition,
+		bound: 'from' | 'to',
+		kind: 'from' | 'before' | 'until'
+	): string {
+		return dayOfBound(condition, bound, kind);
 	}
 
 	protected add(groupPath: FilterPath): void {
@@ -429,8 +433,9 @@ export class FilterEditorComponent {
 		this.change(path, (condition) => withValues(condition, values ?? []));
 	}
 
+	/** A day picked in a date field: the instant of it in the reader's zone, and the day itself for date-only due dates. */
 	protected setBound(path: FilterPath, bound: 'from' | 'to', day: string, kind: 'from' | 'before' | 'until'): void {
-		this.change(path, (condition) => withBound(condition, bound, instantOfDay(day, kind)));
+		this.change(path, (condition) => withPickedDay(condition, bound, day, kind));
 	}
 
 	protected setRelative(

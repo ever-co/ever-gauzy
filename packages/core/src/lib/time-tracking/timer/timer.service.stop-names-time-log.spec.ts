@@ -45,17 +45,26 @@ function findRows(rows: TimeLogRow[], where: Record<string, unknown>): TimeLogRo
 		.sort((a, b) => time(b.startedAt) - time(a.startedAt) || time(b.createdAt) - time(a.createdAt));
 }
 
+/** The update a stop sent: its read of the logs the run overlaps comes before it. */
+function sentUpdate(execute: jest.Mock): TimeLogUpdateCommand {
+	return execute.mock.calls.map(([command]) => command).find((command) => command instanceof TimeLogUpdateCommand);
+}
+
 /** A `TimerService` over `rows`, on the given ORM, whose command bus applies a `TimeLogUpdateCommand` to its row. */
 function createService(ormType: MultiORMEnum, rows: TimeLogRow[], employee: Record<string, string>) {
 	const typeOrmTimeLogRepository = {
-		findOne: async ({ where }: { where: Record<string, unknown> }) => findRows(rows, where)[0] ?? null
+		findOne: async ({ where }: { where: Record<string, unknown> }) => findRows(rows, where)[0] ?? null,
+		// A stop reads every run going as it begins, latest first (`getLastRunningLogs`)
+		find: async ({ where }: { where: Record<string, unknown> }) => findRows(rows, where)
 	};
 	const mikroOrmTimeLogRepository = {
 		findOne: async (where: Record<string, unknown>) => {
 			const row = findRows(rows, where)[0];
 			// A MikroORM-loaded row: `wrapSerialize` calls its `toJSON`
 			return row ? { ...row, toJSON: () => ({ ...row }) } : null;
-		}
+		},
+		findAll: async ({ where }: { where: Record<string, unknown> }) =>
+			findRows(rows, where).map((row) => ({ ...row, toJSON: () => ({ ...row }) }))
 	};
 	const execute = jest.fn(async (command: unknown) => {
 		if (command instanceof TimeLogUpdateCommand) {
@@ -170,7 +179,7 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 
 				const stopped = await service.stopTimer({ source: TimeLogSourceEnum.TEAMS, timeLogId: RUNNING_LOG_ID });
 
-				const update = execute.mock.calls[0][0] as TimeLogUpdateCommand;
+				const update = sentUpdate(execute);
 				expect(update).toBeInstanceOf(TimeLogUpdateCommand);
 				expect(update.id).toBe(RUNNING_LOG_ID);
 				expect(update.input).toEqual({ isRunning: false, stoppedAt: NOW });
@@ -183,7 +192,7 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 
 				await service.stopTimer({ source: TimeLogSourceEnum.TEAMS, timeLogId: RUNNING_LOG_ID.toUpperCase() });
 
-				expect((execute.mock.calls[0][0] as TimeLogUpdateCommand).id).toBe(RUNNING_LOG_ID);
+				expect(sentUpdate(execute).id).toBe(RUNNING_LOG_ID);
 			});
 
 			it('stops the running log when the stop names none, as before', async () => {
@@ -192,7 +201,7 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 
 				await service.stopTimer({ source: TimeLogSourceEnum.TEAMS });
 
-				const update = execute.mock.calls[0][0] as TimeLogUpdateCommand;
+				const update = sentUpdate(execute);
 				expect(update.id).toBe(RUNNING_LOG_ID);
 				expect(update.input).toEqual({ isRunning: false, stoppedAt: NOW });
 			});
@@ -203,7 +212,7 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 
 				await service.stopTimer({ source: TimeLogSourceEnum.TEAMS, timeLogId: null } as ITimerToggleInput);
 
-				expect((execute.mock.calls[0][0] as TimeLogUpdateCommand).id).toBe(RUNNING_LOG_ID);
+				expect(sentUpdate(execute).id).toBe(RUNNING_LOG_ID);
 			});
 
 			it('still answers 406 when nothing runs, whether or not the stop names a log', async () => {
@@ -275,7 +284,7 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 
 				await toggle(service, { source: TimeLogSourceEnum.TEAMS, timeLogId: RUNNING_LOG_ID });
 
-				expect((execute.mock.calls[0][0] as TimeLogUpdateCommand).id).toBe(RUNNING_LOG_ID);
+				expect(sentUpdate(execute).id).toBe(RUNNING_LOG_ID);
 				expect(startTimer).not.toHaveBeenCalled();
 			});
 

@@ -376,6 +376,17 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@MultiORMColumn({ default: false })
 	requireTeam?: boolean;
 
+	/**
+	 * Whether only someone of a higher role may turn a person's time tracking on or off: an admin for anyone (another
+	 * admin and themselves included), a manager for the members of their teams, never for themselves or another
+	 * manager. Off by default, as it was before the setting: whoever may edit the employee or the membership may switch it.
+	 */
+	@ApiPropertyOptional({ type: () => Boolean, default: false })
+	@IsOptional()
+	@IsBoolean()
+	@MultiORMColumn({ default: false })
+	restrictTrackingSwitchToHigherRoles?: boolean;
+
 	@MultiORMColumn({ default: 12 })
 	timeFormat?: 12 | 24;
 

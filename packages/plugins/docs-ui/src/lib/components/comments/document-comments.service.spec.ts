@@ -136,6 +136,48 @@ describe('DocumentCommentsService', () => {
 		expect(http.last.url).toMatch(new RegExp(`/comment/${COMMENT_ID}$`));
 	});
 
+	it("reads the page's comment ranges from the Docs plugin, scoped to the selected organization", async () => {
+		await firstValueFrom(service.anchors(DOCUMENT_ID));
+
+		expect(http.last.method).toBe('GET');
+		expect(http.last.url).toMatch(new RegExp(`/plugins/docs/documents/${DOCUMENT_ID}/comment-anchors$`));
+		expect(http.params.get('organizationId')).toBe(ORGANIZATION_ID);
+		expect(http.params.get('tenantId')).toBe(TENANT_ID);
+	});
+
+	it("PUTs a thread's range as the platform stores it, with the scope and nothing else", async () => {
+		const range = {
+			blockId: 'b1',
+			start: 10,
+			end: 19,
+			quote: 'brown fox',
+			prefix: 'The quick ',
+			suffix: ' jumps',
+			relativeStart: 'start-position',
+			relativeEnd: 'end-position'
+		};
+		await firstValueFrom(service.setAnchor(DOCUMENT_ID, COMMENT_ID, range));
+
+		expect(http.last.method).toBe('PUT');
+		expect(http.last.url).toMatch(
+			new RegExp(`/plugins/docs/documents/${DOCUMENT_ID}/comments/${COMMENT_ID}/anchor$`)
+		);
+		// The route forbids unknown fields: the body is the anchor and the scope only.
+		expect(http.last.body).toEqual({ organizationId: ORGANIZATION_ID, tenantId: TENANT_ID, ...range });
+	});
+
+	it('sends no "undefined" scope for the ranges when no organization is selected', async () => {
+		service = new DocumentCommentsService(http as never, { selectedOrganization: null } as unknown as Store);
+
+		await firstValueFrom(service.anchors(DOCUMENT_ID));
+		expect(http.params.keys()).toEqual([]);
+
+		await firstValueFrom(
+			service.setAnchor(DOCUMENT_ID, COMMENT_ID, { blockId: 'b1', start: 0, end: 1, quote: 'x' })
+		);
+		expect(http.last.body).toEqual({ blockId: 'b1', start: 0, end: 1, quote: 'x' });
+	});
+
 	it('still issues a scoped-by-entity query when no organization is selected', async () => {
 		service = new DocumentCommentsService(http as never, { selectedOrganization: null } as unknown as Store);
 

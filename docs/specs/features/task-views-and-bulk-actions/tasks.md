@@ -3,7 +3,7 @@
 **Feature ID**: `task-views-and-bulk-actions`
 **Plan**: `./plan.md`
 **Status**: `In review`
-**Last updated**: 2026-11-11
+**Last updated**: 2026-11-13
 
 ---
 
@@ -33,7 +33,7 @@
   manager; a project created with `taskKey: null`, or when the key lookup
   cannot run (no organization scope, a failed read), is created without one
 - [x] **T12**. GraphQL twins of the new routes
-- [ ] **T13**. Ever Teams lane `tasks-keyboard-and-views` (shortcut registry over `uiPreferences.keyboard`, bulk toolbar, saved views pages, palette groups)
+- [x] **T13**. Ever Teams lane `tasks-keyboard-and-views` (shortcut registry over `uiPreferences.keyboard`, bulk toolbar, saved views pages, palette groups) ([ever-teams#4970](https://github.com/ever-co/ever-teams/pull/4970), [ever-teams#5057](https://github.com/ever-co/ever-teams/pull/5057), [ever-teams#5058](https://github.com/ever-co/ever-teams/pull/5058), [ever-teams#5108](https://github.com/ever-co/ever-teams/pull/5108))
 
 **Status 2026-11-07:** phase 1 in ever-gauzy [#11688](https://github.com/ever-co/ever-gauzy/pull/11688) (ready for review; in-cluster build + bot threads next).
 

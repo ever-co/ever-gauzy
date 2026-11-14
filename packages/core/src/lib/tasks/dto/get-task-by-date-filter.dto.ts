@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDate, IsOptional, ValidateIf } from 'class-validator';
+import { IsDate, IsOptional, Matches, ValidateIf } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ITaskDateFilterInput } from '@gauzy/contracts';
 import { TenantOrganizationBaseDTO } from '../../core/dto';
@@ -37,4 +37,43 @@ export class TaskDateFilterInputDTO extends TenantOrganizationBaseDTO implements
 	@IsDate()
 	@ValidateIf((o) => o.dueDateFrom != null)
 	dueDateTo?: Date;
+
+	@ApiPropertyOptional({
+		type: () => String,
+		example: '2026-11-18',
+		description:
+			'The calendar day startDateFrom starts in the reader’s zone: a date-only start date is compared with it.'
+	})
+	@IsOptional()
+	@Matches(/^\d{4}-\d{2}-\d{2}$/)
+	startDateFromDay?: string;
+
+	@ApiPropertyOptional({
+		type: () => String,
+		example: '2026-11-18',
+		description:
+			'The calendar day startDateTo ends in the reader’s zone: a date-only start date is compared with it.'
+	})
+	@IsOptional()
+	@Matches(/^\d{4}-\d{2}-\d{2}$/)
+	startDateToDay?: string;
+
+	@ApiPropertyOptional({
+		type: () => String,
+		example: '2026-11-18',
+		description:
+			'The calendar day dueDateFrom starts in the reader’s zone: a date-only due date is compared with it.'
+	})
+	@IsOptional()
+	@Matches(/^\d{4}-\d{2}-\d{2}$/)
+	dueDateFromDay?: string;
+
+	@ApiPropertyOptional({
+		type: () => String,
+		example: '2026-11-18',
+		description: 'The calendar day dueDateTo ends in the reader’s zone: a date-only due date is compared with it.'
+	})
+	@IsOptional()
+	@Matches(/^\d{4}-\d{2}-\d{2}$/)
+	dueDateToDay?: string;
 }

@@ -150,7 +150,21 @@ export interface IGetTasksByViewFilters extends IBasePerTenantAndOrganizationEnt
 	priorities?: TaskPriorityEnum[];
 	sizes?: TaskSizeEnum[];
 	types?: TaskTypeEnum[];
+	/**
+	 * Starting between the earliest and the latest of these instants, both included. A view that stores the calendar
+	 * days (`YYYY-MM-DD`) of those two ends in `startDateFromDay` / `startDateToDay` (the start of the first day, the
+	 * last instant of the last, in the reader's zone) has a start date stored as a date only compared with those days;
+	 * without them, every start date compares with the instants.
+	 */
 	startDates?: Date[];
+	startDateFromDay?: string;
+	startDateToDay?: string;
+	/**
+	 * Due between the earliest and the latest of these instants, both included. A view that stores the calendar days
+	 * (`YYYY-MM-DD`) of those two ends in `dueDateFromDay` / `dueDateToDay` (the start of the first day, the last
+	 * instant of the last, in the reader's zone) has a due date stored as a date only compared with those days, as
+	 * `dueDateFrom` / `dueDateTo` are; without them, every due date compares with the instants.
+	 */
 	dueDates?: Date[];
 }
 
@@ -160,10 +174,30 @@ export interface ITaskDateFilterInput
 		IEmployeeEntityInput,
 		IRelationalOrganizationTeam,
 		IBaseRelationsEntityModel {
+	/** Starting on or after this instant. */
 	startDateFrom?: Date;
+	/** Starting on or before this instant. */
 	startDateTo?: Date;
+	/**
+	 * The calendar days (`YYYY-MM-DD`) `startDateFrom` starts and `startDateTo` ends, in the reader's zone, sent with
+	 * those instants (the start of the first day, the last instant of the last). A start date stored as a date only
+	 * (midnight UTC of its day) is compared with these days rather than the instants, so it counts on its own day west
+	 * of UTC too. Without them, every start date compares with the instants.
+	 */
+	startDateFromDay?: string;
+	startDateToDay?: string;
+	/** Due on or after this instant. */
 	dueDateFrom?: Date;
+	/** Due on or before this instant. */
 	dueDateTo?: Date;
+	/**
+	 * The calendar days (`YYYY-MM-DD`) `dueDateFrom` starts and `dueDateTo` ends, in the reader's zone, sent with those
+	 * instants (the start of the first day, the last instant of the last). A due date stored as a date only (midnight
+	 * UTC of its day) is compared with these days rather than the instants, so it counts on its own day west of UTC
+	 * too. Without them, every due date compares with the instants.
+	 */
+	dueDateFromDay?: string;
+	dueDateToDay?: string;
 }
 
 export interface ITaskAdvancedFilter extends IBaseRelationsEntityModel {
@@ -188,6 +222,14 @@ export interface ITaskAdvancedFilter extends IBaseRelationsEntityModel {
 	dueDateFrom?: Date;
 	/** Due on or before this instant. */
 	dueDateTo?: Date;
+	/**
+	 * The calendar days (`YYYY-MM-DD`) `dueDateFrom` starts and `dueDateTo` ends, in the reader's zone, sent with those
+	 * instants (the start of the first day, the last instant of the last). A due date stored as a date only (midnight
+	 * UTC of its day) is compared with these days rather than the instants, so it counts on its own day west of UTC
+	 * too. Without them (older callers), every due date compares with the instants.
+	 */
+	dueDateFromDay?: string;
+	dueDateToDay?: string;
 	/** Only tasks without a due date; takes precedence over `dueDateFrom` / `dueDateTo`. */
 	withoutDueDate?: boolean;
 }
@@ -204,6 +246,12 @@ export const TASK_BULK_UPDATE_MAX = 100;
 /**
  * What a bulk update changes on a task. Lists take `add` / `remove` (applied to the task's current list) or `set`
  * (the whole list); the previous values the platform answers use `set`, so an undo is the same request with them.
+ *
+ * A status, priority or size the platform does not name (a team's own) is named by its record alone (`taskStatusId`,
+ * `taskPriorityId`, `taskSizeId`), which must be the task organization's, the tenant's shared one or a platform default.
+ * A priority or size named by its record alone takes the record's name (its value, else its name); a status keeps its
+ * text. The previous values the platform answers leave out a priority's or size's name that the record beside it
+ * gives back, so an undo that sends the record alone loses nothing; a name they hold is one the record does not.
  */
 export interface ITaskBulkChanges {
 	status?: TaskStatusEnum | null;

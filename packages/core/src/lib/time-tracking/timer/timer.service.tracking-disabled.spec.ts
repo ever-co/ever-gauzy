@@ -4,7 +4,7 @@ import '../../core/entities/internal';
 import { ForbiddenException, NotAcceptableException } from '@nestjs/common';
 import { IUser } from '@gauzy/contracts';
 import { asTenantUser, createTenantFixture } from '../../core/testing/tenant-isolation/tenant-isolation.fixtures';
-import { TimeLogCreateCommand, TimeLogUpdateCommand } from '../time-log/commands';
+import { IGetConflictTimeLogCommand, TimeLogCreateCommand, TimeLogUpdateCommand } from '../time-log/commands';
 import { TimerService } from './timer.service';
 
 /**
@@ -41,12 +41,16 @@ describe('TimerService with the employee tracking turned off', () => {
 			if (command instanceof TimeLogUpdateCommand) {
 				return { ...runningLog, ...command.input };
 			}
+			// The logs the running one overlaps, which the stop reads before its update
+			if (command instanceof IGetConflictTimeLogCommand) {
+				return [];
+			}
 			return { id: 'log-new' };
 		});
 		updateEmployee = jest.fn(async () => undefined);
 		const employeeService = { findOneByUserId: jest.fn(async () => employee), update: updateEmployee };
 		service = new TimerService(
-			undefined as never,
+			{ find: jest.fn(async () => []) } as never,
 			undefined as never,
 			undefined as never,
 			undefined as never,
@@ -55,7 +59,7 @@ describe('TimerService with the employee tracking turned off', () => {
 			undefined as never
 		);
 		Object.assign(service, {
-			getLastRunningLog: jest.fn(async () => lastRunningLog),
+			getLastRunningLogs: jest.fn(async () => (lastRunningLog ? [lastRunningLog] : [])),
 			calculateStoppedAt: jest.fn(async () => stoppedAt),
 			stopPreviousRunningTimers: jest.fn(async () => undefined),
 			handleConflictingTimeLogs: jest.fn(async () => undefined)
@@ -71,7 +75,8 @@ describe('TimerService with the employee tracking turned off', () => {
 		const stopped = await service.stopTimer({});
 
 		expect(stopped).toMatchObject({ id: 'log-running', isRunning: false, stoppedAt });
-		const update = execute.mock.calls[0][0] as TimeLogUpdateCommand;
+		const commands = execute.mock.calls.map(([command]) => command);
+		const update = commands.find((command) => command instanceof TimeLogUpdateCommand) as TimeLogUpdateCommand;
 		expect(update).toBeInstanceOf(TimeLogUpdateCommand);
 		expect(update.id).toBe('log-running');
 		expect(updateEmployee).toHaveBeenCalledWith(employee.id, { isOnline: false, isTrackingTime: false });

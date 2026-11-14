@@ -10,7 +10,7 @@ import { join } from 'node:path';
 import { BadRequestException, ExecutionContext, NotFoundException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { buildSchema, printSchema } from 'graphql';
-import { PermissionsEnum } from '@gauzy/contracts';
+import { PermissionsEnum, TaskStatusEnum } from '@gauzy/contracts';
 import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
 import { CursorCodec } from '../api/cursor';
 import { RequestContext } from '../core/context';
@@ -107,7 +107,7 @@ function surfaces() {
 		resolveReferences: jest.fn().mockResolvedValue([{ reference: 'FUL-12', key: 'FUL', number: 12, resolved: true, taskId: PICKING }]),
 		// The route's method: applies the change to each task through the callback, and answers the outcome.
 		bulkUpdate: jest.fn(async (_input: unknown, apply: (id: string, update: unknown) => Promise<unknown>) => {
-			await apply(PICKING, { status: 'Done' });
+			await apply(PICKING, { status: TaskStatusEnum.DONE });
 			return { applied: 1, refused: 0, results: [{ taskId: PICKING, ok: true, previous: { status: 'In Progress' } }] };
 		}),
 		unassignEmployeeFromTeamTasks: jest.fn().mockResolvedValue(undefined),
@@ -414,6 +414,64 @@ describe('TaskResolver — the connection contract', () => {
 		expect(byView.nodes.map((node) => node.id)).toEqual([PICKING, EXCEPTION]);
 		expect(taskService.findTasksByViewQuery).toHaveBeenCalledWith(VIEW);
 	});
+
+	it('hands the reader the calendar days of a due-date window with its instants, as the REST route takes them', async () => {
+		const { resolver, taskService } = surfaces();
+		// "Due today" for a reader in UTC−4: the instants of their day, and the day.
+		const from = new Date('2026-11-18T04:00:00.000Z');
+		const to = new Date('2026-11-19T03:59:59.999Z');
+
+		await resolver.tasksByDate(
+			undefined,
+			undefined,
+			from,
+			to,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			'2026-11-18',
+			'2026-11-18'
+		);
+		expect(taskService.getTasksByDateFilters).toHaveBeenCalledWith(
+			expect.objectContaining({
+				dueDateFrom: from,
+				dueDateTo: to,
+				dueDateFromDay: '2026-11-18',
+				dueDateToDay: '2026-11-18'
+			})
+		);
+	});
+
+	it('hands the reader the calendar days of a start-date window with its instants, as the REST route takes them', async () => {
+		const { resolver, taskService } = surfaces();
+		// "Starts today" for a reader in UTC−4: the instants of their day, and the day.
+		const from = new Date('2026-11-18T04:00:00.000Z');
+		const to = new Date('2026-11-19T03:59:59.999Z');
+
+		await resolver.tasksByDate(
+			from,
+			to,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			'2026-11-18',
+			'2026-11-18'
+		);
+		expect(taskService.getTasksByDateFilters).toHaveBeenCalledWith(
+			expect.objectContaining({
+				startDateFrom: from,
+				startDateTo: to,
+				startDateFromDay: '2026-11-18',
+				startDateToDay: '2026-11-18'
+			})
+		);
+	});
 });
 
 describe('TaskResolver — the task views extensions, two protocols, the same operations', () => {
@@ -463,27 +521,29 @@ describe('TaskResolver — the task views extensions, two protocols, the same op
 	it('changes many tasks through the method the route calls, each by the same command the edit route dispatches', async () => {
 		const { resolver, taskService, commandBus } = surfaces();
 
-		const outcome = await resolver.bulkUpdateTasks({ organizationId: ORGANIZATION, taskIds: [PICKING], changes: { status: 'Done' } } as never);
+		// A status change names one of the platform's statuses (`TaskStatusEnum`), as the route's DTO takes it.
+		const outcome = await resolver.bulkUpdateTasks({ organizationId: ORGANIZATION, taskIds: [PICKING], changes: { status: TaskStatusEnum.DONE } } as never);
 
 		expect(outcome).toEqual({ applied: 1, refused: 0, results: [{ taskId: PICKING, ok: true, previous: { status: 'In Progress' } }] });
 		expect(taskService.bulkUpdate).toHaveBeenCalledWith(
-			expect.objectContaining({ organizationId: ORGANIZATION, taskIds: [PICKING], changes: { status: 'Done' } }),
+			expect.objectContaining({ organizationId: ORGANIZATION, taskIds: [PICKING], changes: { status: TaskStatusEnum.DONE } }),
 			expect.any(Function)
 		);
 		const command = commandBus.execute.mock.calls[0][0];
 		expect(command).toBeInstanceOf(TaskUpdateCommand);
 		expect(command.id).toBe(PICKING);
-		expect(command.input).toEqual({ status: 'Done' });
+		expect(command.input).toEqual({ status: TaskStatusEnum.DONE });
 	});
 
 	it('refuses a change the route\'s DTO would refuse before any task is touched, naming the member', async () => {
 		const { resolver, taskService } = surfaces();
 
-		await expect(resolver.bulkUpdateTasks({ taskIds: [PICKING], changes: { status: 'Nope' } } as never)).rejects.toMatchObject({
+		// A status's display name ('Done') is not one of the values: the route's DTO refuses it too.
+		await expect(resolver.bulkUpdateTasks({ taskIds: [PICKING], changes: { status: 'Done' } } as never)).rejects.toMatchObject({
 			message: expect.stringContaining('TASK_BULK_CHANGES_INVALID: changes.status')
 		});
 		await expect(
-			resolver.bulkUpdateTasks({ items: [{ taskId: PICKING, changes: { status: 'Done' } }, { taskId: EXCEPTION, changes: { setTagIds: ['x'] } }] } as never)
+			resolver.bulkUpdateTasks({ items: [{ taskId: PICKING, changes: { status: TaskStatusEnum.DONE } }, { taskId: EXCEPTION, changes: { setTagIds: ['x'] } }] } as never)
 		).rejects.toMatchObject({ message: expect.stringContaining('items.1.changes.setTagIds') });
 		expect(taskService.bulkUpdate).not.toHaveBeenCalled();
 

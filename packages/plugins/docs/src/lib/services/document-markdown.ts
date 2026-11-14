@@ -161,10 +161,19 @@ function quotedTitle(title: unknown): string {
 	return String(title).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 }
 
+/**
+ * Each line of `text` behind `prefix` (`first` on the first line). A blank line stays blank where the prefix is only
+ * indentation (between the blocks of a list item): indentation alone would make it a line of spaces, trailing
+ * whitespace in the export that reads the same as a blank line. A prefix with a marker of its own (`> `) is kept, as
+ * the block needs it on every line.
+ */
 function indentLines(text: string, prefix: string, first = prefix): string {
 	return text
 		.split('\n')
-		.map((line, index) => (index === 0 ? first : prefix) + line)
+		.map((line, index) => {
+			const lead = index === 0 ? first : prefix;
+			return line === '' && lead.trim() === '' ? '' : lead + line;
+		})
 		.join('\n');
 }
 
@@ -374,12 +383,25 @@ function paragraph(tokens: Tokens.Generic[] | undefined): IDocNode {
 	return content.length ? { type: 'paragraph', content } : { type: 'paragraph' };
 }
 
+/** The images a paragraph holds when it holds nothing else (whitespace aside), or null. */
+function imagesAlone(block: IDocNode): IDocNode[] | null {
+	const content = block.content ?? [];
+	const images = content.filter((child) => child.type === 'image');
+	const alone = content.every(
+		(child) => child.type === 'image' || (child.type === 'text' && !String(child.text ?? '').trim())
+	);
+	return images.length && alone ? images : null;
+}
+
 function listNode(list: Tokens.List): IDocNode {
 	const task = list.items.some((item) => item.task);
 	const type = list.ordered ? 'orderedList' : task ? 'taskList' : 'bulletList';
 	const items: IDocNode[] = list.items.map((item) => {
 		const content = blockNodes(item.tokens as Tokens.Generic[]);
-		const node: IDocNode = { type: task ? 'taskItem' : 'listItem', content: content.length ? content : [{ type: 'paragraph' }] };
+		// The editor's list item opens with a paragraph (`paragraph block*`): an item that opens with an image (or any
+		// other block) gets an empty one first, which writes no Markdown of its own.
+		if (content[0]?.type !== 'paragraph') content.unshift({ type: 'paragraph' });
+		const node: IDocNode = { type: task ? 'taskItem' : 'listItem', content };
 		if (task) node.attrs = { checked: item.checked === true };
 		return node;
 	});
@@ -396,6 +418,11 @@ function tableNode(table: Tokens.Table): IDocNode | null {
 	return rows.length ? { type: 'table', content: rows } : null;
 }
 
+/**
+ * The blocks of a run of block tokens. A paragraph that holds nothing but images (a Markdown image on a line of its own,
+ * as the export writes an image) is those images as blocks, as the editor stores them: its `image` is a block node, so
+ * a paragraph cannot hold one.
+ */
 function blockNodes(tokens: Tokens.Generic[] | undefined): IDocNode[] {
 	const nodes: IDocNode[] = [];
 	for (const token of tokens ?? []) {
@@ -409,9 +436,11 @@ function blockNodes(tokens: Tokens.Generic[] | undefined): IDocNode[] {
 				break;
 			}
 			case 'paragraph':
-			case 'text':
-				nodes.push(paragraph((token as Tokens.Paragraph).tokens ?? [token]));
+			case 'text': {
+				const block = paragraph((token as Tokens.Paragraph).tokens ?? [token]);
+				nodes.push(...(imagesAlone(block) ?? [block]));
 				break;
+			}
 			case 'list':
 				nodes.push(listNode(token as Tokens.List));
 				break;

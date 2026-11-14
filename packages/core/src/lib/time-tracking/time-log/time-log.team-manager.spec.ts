@@ -143,6 +143,8 @@ const TimeLogSchema = new EntitySchema<any>({
 		stoppedAt: { type: 'datetime' },
 		logType: { type: 'varchar', nullable: true },
 		source: { type: 'varchar', nullable: true },
+		// Manual time reads the employee's running timers before it records anything (#11886)
+		isRunning: { type: 'boolean', default: false },
 		description: { type: 'varchar', nullable: true },
 		reason: { type: 'varchar', nullable: true },
 		editedAt: { type: 'datetime', nullable: true },

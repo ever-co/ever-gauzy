@@ -5,5 +5,6 @@ export * from './conditions';
 export * from './actions';
 export * from './loop-guard';
 export * from './change-capture';
+export * from './link-closed';
 export * from './templates';
 export * from './rule-validation';

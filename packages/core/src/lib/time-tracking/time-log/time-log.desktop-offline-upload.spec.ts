@@ -83,8 +83,13 @@ const SEVERAL_TEAMS: IStoredContext = {
 /**
  * @param stored The employee's teams and the projects of the task and of the team.
  * @param overlapping The employee's logs the uploaded interval overlaps, as the conflict lookup reads them.
+ * @param running The employee's running logs started before the interval ends, as the time log repository reads them.
  */
-function surfaces(stored: IStoredContext = SEVERAL_TEAMS, overlapping: Record<string, unknown>[] = []) {
+function surfaces(
+	stored: IStoredContext = SEVERAL_TEAMS,
+	overlapping: Record<string, unknown>[] = [],
+	running: Record<string, unknown>[] = []
+) {
 	const created: Record<string, unknown>[] = [];
 	/** The log of each slot the overlap cleanup was asked to clear. */
 	const trimmed: unknown[] = [];
@@ -123,7 +128,7 @@ function surfaces(stored: IStoredContext = SEVERAL_TEAMS, overlapping: Record<st
 		})
 	};
 	const service = new TimeLogService(
-		{ manager } as never,
+		{ manager, find: jest.fn(async () => running) } as never,
 		{} as never,
 		employeeRepository as never,
 		{} as never,
@@ -300,5 +305,59 @@ describe('POST /timesheet/time-log over a timer that is still running', () => {
 
 		expect(trimmed).toEqual(['running', 'running', 'running']);
 		expect(created).toHaveLength(1);
+	});
+
+	/**
+	 * #11886: the overlap lookup matches the stored range, which ends at a running log's last heartbeat (its start, for
+	 * a web timer). A timer running since before the upload that it does not reach is refused as well, unless it is a
+	 * tracker's and a tracker uploads: a desktop run left open on the server when the desktop went offline ends where
+	 * its time slots end, so it holds back none of the time the desktop tracked offline. Time entered by hand is refused
+	 * over it, as over any running timer.
+	 */
+	describe('with a running timer the overlap lookup does not reach', () => {
+		const since0800 = (id: string, source: TimeLogSourceEnum, lastHeartbeat: string) => ({
+			id,
+			employeeId: EMPLOYEE,
+			organizationId: ORGANIZATION,
+			source,
+			isRunning: true,
+			startedAt: new Date('2026-10-01T08:00:00.000Z'),
+			stoppedAt: new Date(lastHeartbeat)
+		});
+
+		it('refuses the upload over a web timer running since 08:00, which posts no time slots', async () => {
+			const webTimer = since0800('web', TimeLogSourceEnum.WEB_TIMER, '2026-10-01T08:00:00.000Z');
+			const { created, trimmed, post } = surfaces(SEVERAL_TEAMS, [], [webTimer]);
+
+			const refusal = await post(desktopUpload).catch((caught) => caught);
+
+			expect(refusal).toBeInstanceOf(ConflictException);
+			expect(refusal.getResponse()).toMatchObject({ code: RUNNING_TIMER_OVERLAP });
+			expect(trimmed).toEqual([]);
+			expect(created).toHaveLength(0);
+		});
+
+		it("records the upload beside the desktop's own run, left open on the server until 09:00, its last time slot", async () => {
+			const desktopRun = since0800('desktop', TimeLogSourceEnum.DESKTOP, '2026-10-01T09:00:00.000Z');
+			const { created, post } = surfaces(SEVERAL_TEAMS, [], [desktopRun]);
+
+			await post(desktopUpload);
+
+			expect(created).toHaveLength(1);
+		});
+
+		it("refuses the same interval entered by hand while the desktop's run still runs", async () => {
+			const desktopRun = since0800('desktop', TimeLogSourceEnum.DESKTOP, '2026-10-01T09:00:00.000Z');
+			// One team and the task's project, so the organization's required fields are filled
+			const oneTeam = { teamIds: ['team-only'], taskProjectId: 'project-of-task', teamDefaultProjectId: null };
+			const { created, trimmed, post } = surfaces(oneTeam, [], [desktopRun]);
+
+			const refusal = await post(byHand).catch((caught) => caught);
+
+			expect(refusal).toBeInstanceOf(ConflictException);
+			expect(refusal.getResponse()).toMatchObject({ code: RUNNING_TIMER_OVERLAP });
+			expect(trimmed).toEqual([]);
+			expect(created).toHaveLength(0);
+		});
 	});
 });

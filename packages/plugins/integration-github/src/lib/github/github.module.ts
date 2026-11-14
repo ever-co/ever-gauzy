@@ -10,7 +10,8 @@ import {
 	IntegrationTenantModule,
 	OrganizationProjectModule,
 	PluginCommonModule,
-	RolePermissionModule
+	RolePermissionModule,
+	TaskModule
 } from '@gauzy/core';
 import { ConfigModule, environment } from '@gauzy/config';
 import { ProbotModule } from '../probot/probot.module';
@@ -27,6 +28,7 @@ import { GitHubHooksController } from './github.hooks.controller';
 import { GithubHooksService } from './github.hooks.service';
 import { GitHubSyncController } from './github-sync.controller';
 import { GithubSyncService } from './github-sync.service';
+import { GithubTaskLinkService } from './github-task-link.service';
 import { GitHubRepositoryController } from './repository/github-repository.controller';
 import { GithubRepositoryService } from './repository/github-repository.service';
 import { OrganizationGithubRepository } from './repository/github-repository.entity';
@@ -74,7 +76,8 @@ const { github } = environment;
 		forwardRef(() => IntegrationTenantModule),
 		forwardRef(() => IntegrationSettingModule),
 		forwardRef(() => IntegrationMapModule),
-
+		// `TaskService.resolveReferences`: the task references a closed pull request names (`GithubTaskLinkService`).
+		forwardRef(() => TaskModule)
 	],
 	controllers: [
 		GitHubAuthorizationController,
@@ -94,6 +97,7 @@ const { github } = environment;
 		GithubInstallationOwnershipService,
 		GithubSyncService,
 		GithubHooksService,
+		GithubTaskLinkService,
 		GithubRepositoryService,
 		GithubRepositoryIssueService,
 		// Define repositories heres
