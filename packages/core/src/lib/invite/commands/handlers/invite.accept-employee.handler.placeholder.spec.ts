@@ -57,10 +57,12 @@ function build(options: {
 	// 'user-new-2', ...). A retired account keeps its row, soft-deleted.
 	const users: Account[] = existingUser ? [existingUser] : [];
 	const authService = {
-		register: jest.fn(async () => {
+		// Like AuthService.register: the saved account is told to `onSaved` before the steps that follow.
+		register: jest.fn(async (_input: unknown, _language: unknown, onSaved?: (user: Account) => void) => {
 			const id = users.some((user) => user.id === 'user-new') ? `user-new-${users.length + 1}` : 'user-new';
 			const user = { id, email: invite.email, tenantId: TENANT, deletedAt: null };
 			users.push(user);
+			onSaved?.(user);
 			return user;
 		})
 	};
@@ -211,8 +213,10 @@ describe('InviteAcceptEmployeeHandler with a claim invitation', () => {
 			placeholderEmployeeId: PLACEHOLDER
 		});
 		// The account is saved, then a later step of the registration fails: the claim never gets it back.
-		authService.register.mockImplementationOnce(async () => {
-			users.push({ id: 'user-half', email: 'amina@ever.co', tenantId: TENANT, deletedAt: null });
+		authService.register.mockImplementationOnce(async (_input, _language, onSaved) => {
+			const user = { id: 'user-half', email: 'amina@ever.co', tenantId: TENANT, deletedAt: null };
+			users.push(user);
+			onSaved?.(user);
 			throw new Error('organization link failed');
 		});
 
@@ -224,6 +228,25 @@ describe('InviteAcceptEmployeeHandler with a claim invitation', () => {
 		await accept();
 
 		expect(placeholderTransferService.transfer).toHaveBeenCalledTimes(1);
+	});
+
+	it('never retires an account another registration made for the same email meanwhile', async () => {
+		const { accept, placeholderTransferService, userRepository, users } = build({
+			placeholderEmployeeId: PLACEHOLDER
+		});
+		// Someone registers the same email elsewhere while the claim runs, and then the claim fails.
+		placeholderTransferService.transfer.mockImplementationOnce(async () => {
+			users.push({ id: 'user-elsewhere', email: 'amina@ever.co', tenantId: TENANT, deletedAt: null });
+			throw new Error('transfer failed');
+		});
+
+		await expect(accept()).rejects.toThrow('transfer failed');
+
+		const { update } = userRepository.manager;
+		expect(update).toHaveBeenCalledWith(User, { id: 'user-new' }, expect.anything());
+		expect(update).not.toHaveBeenCalledWith(User, { id: 'user-elsewhere' }, expect.anything());
+		expect(update).not.toHaveBeenCalledWith(Employee, { userId: 'user-elsewhere' }, expect.anything());
+		expect(update).not.toHaveBeenCalledWith(UserOrganization, { userId: 'user-elsewhere' }, expect.anything());
 	});
 
 	it('still retires the account when retiring its member or its organization links fails', async () => {

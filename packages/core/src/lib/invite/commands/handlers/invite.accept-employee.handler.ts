@@ -76,8 +76,8 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 
 		let user: IUser;
 		let employee: IEmployee;
-		// Whether a claim got past the account check: from there on, any account its email gains is this attempt's.
-		let registers = false;
+		// The account this claim registered, told by the registration as soon as it is saved.
+		let registeredId: string | undefined;
 
 		// A claim invitation hands a member without an account over to the person who accepts it (#11913).
 		const isClaim = !!invite.placeholderEmployeeId;
@@ -91,8 +91,7 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 						'This email already has an account: an admin merges the member without an account into theirs.'
 					);
 				}
-				registers = true;
-				user = await this.registerNewUser(input, invite, languageCode);
+				user = await this.registerNewUser(input, invite, languageCode, (saved) => (registeredId = saved.id));
 				employee = await this.createEmployee(invite, user);
 			} else {
 				// Inner try/catch is find-or-register control flow, not error handling: a missing
@@ -123,8 +122,8 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 		} catch (error) {
 			// A failed claim retires the account it registered, even one a registration saved before failing: the next
 			// acceptance would otherwise find it and refuse.
-			if (registers) {
-				await this.retireClaimAccounts(invite);
+			if (registeredId) {
+				await this.retireClaimAccount(registeredId);
 			}
 			// Nothing consumed the invite after all — hand it back rather than stranding it as
 			// ACCEPTED with no employee attached.
@@ -200,16 +199,15 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 	}
 
 	/**
-	 * Retires the accounts a failed claim registered, as a merged placeholder's user is retired: deactivated, archived
-	 * and soft-deleted, with their members and organization links. The email had none when the claim got past its
-	 * check, so the ones it has now were made by this attempt, even by a registration that saved the account and then
-	 * failed. Each write stands on its own, the account's first, so one that fails does not keep the others from being
-	 * made, and the claim's own error stays the one reported. Not deleted: deleting a user makes the database check
-	 * every table naming one.
+	 * Retires the account a failed claim registered, as a merged placeholder's user is retired: deactivated, archived
+	 * and soft-deleted, with its members and organization links. Only that account, told by the registration as soon
+	 * as it was saved: never another one the same email gained meanwhile. Each write stands on its own, the account's
+	 * first, so one that fails does not keep the others from being made, and the claim's own error stays the one
+	 * reported. Not deleted: deleting a user makes the database check every table naming one.
 	 *
-	 * @param invite The claim invitation whose acceptance failed.
+	 * @param userId The account the claim registered.
 	 */
-	private async retireClaimAccounts(invite: IInvite): Promise<void> {
+	private async retireClaimAccount(userId: string): Promise<void> {
 		const retired = { isActive: false, isArchived: true, deletedAt: new Date() };
 		const { manager } = this.typeOrmUserRepository;
 		const attempt = async (what: string, write: () => Promise<unknown>) => {
@@ -219,17 +217,11 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 				console.error(`Failed to retire ${what} after a failed claim:`, cleanup);
 			}
 		};
-		let accounts: IUser[] = [];
-		await attempt(`the accounts of invitation ${invite.id}`, async () => {
-			accounts = await this.accountsOf(invite);
-		});
-		for (const { id } of accounts) {
-			await attempt(`the account ${id}`, () => manager.update(User, { id }, retired));
-			await attempt(`the members of ${id}`, () => manager.update(Employee, { userId: id }, retired));
-			await attempt(`the organization links of ${id}`, () =>
-				manager.update(UserOrganization, { userId: id }, retired)
-			);
-		}
+		await attempt(`the account ${userId}`, () => manager.update(User, { id: userId }, retired));
+		await attempt(`the members of ${userId}`, () => manager.update(Employee, { userId }, retired));
+		await attempt(`the organization links of ${userId}`, () =>
+			manager.update(UserOrganization, { userId }, retired)
+		);
 	}
 
 	/**
@@ -242,7 +234,8 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 	private async registerNewUser(
 		input: IUserRegistrationInput & Partial<IAppIntegrationConfig>,
 		invite: IInvite,
-		languageCode: LanguagesEnum
+		languageCode: LanguagesEnum,
+		onSaved?: (user: IUser) => void
 	): Promise<IUser> {
 		const { id: organizationId, tenantId } = invite.organization;
 		return await this.authService.register(
@@ -252,7 +245,8 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 				organizationId,
 				inviteId: invite.id
 			},
-			languageCode
+			languageCode,
+			onSaved
 		);
 	}
 
