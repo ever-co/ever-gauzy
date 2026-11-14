@@ -2,11 +2,12 @@
 import '../../core/entities/internal';
 
 import { BadRequestException, ForbiddenException } from '@nestjs/common';
-import { IOrganization, ITimerToggleInput, IUser, TimeLogSourceEnum } from '@gauzy/contracts';
+import { IOrganization, ITimerToggleInput, IUser, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
 import { OrganizationTeam, OrganizationTeamEmployee, Task } from '../../core/entities/internal';
 import { asTenantUser, createTenantFixture } from '../../core/testing/tenant-isolation/tenant-isolation.fixtures';
 import { TimeLogCreateCommand } from '../time-log/commands';
 import { TRACKING_FIELD_REQUIRED } from '../time-log/organization-tracking-requirements';
+import { BREAKS_NOT_ALLOWED } from '../time-log/break-rules';
 import { TimerService } from './timer.service';
 
 /**
@@ -252,6 +253,28 @@ describe('TimerService.startTimer under the organization tracking requirements',
 		await service.startTimer({ source: TimeLogSourceEnum.DESKTOP, taskId: 'task-1' });
 
 		expect(createdLog()).toMatchObject({ organizationTeamId: 'team-only', projectId: 'project-of-task' });
+	});
+
+	it('refuses a break where the organization does not allow breaks, and stops nothing', async () => {
+		organization = { allowBreaks: false };
+
+		const refusal = await start({ logType: TimeLogType.BREAK }).catch((caught) => caught);
+
+		expect(refusal).toBeInstanceOf(ForbiddenException);
+		expect((refusal as ForbiddenException).getResponse()).toMatchObject({ code: BREAKS_NOT_ALLOWED });
+		expect(createdLog()).toBeUndefined();
+		expect(stopPreviousRunningTimers).not.toHaveBeenCalled();
+	});
+
+	it('starts a break where breaks are allowed: it stops the run, needs no team or project, and bills nothing', async () => {
+		organization = { allowBreaks: true, requireTeam: true, requireProject: true };
+		teamsOfEmployee = ['team-a', 'team-b'];
+		taskProjectId = null;
+
+		await start({ logType: TimeLogType.BREAK, taskId: 'task-1', isBillable: true });
+
+		expect(stopPreviousRunningTimers).toHaveBeenCalled();
+		expect(createdLog()).toMatchObject({ logType: TimeLogType.BREAK, taskId: 'task-1', isBillable: false });
 	});
 
 	it('still refuses a start when tracking is disabled for the employee, before any switch', async () => {

@@ -68,6 +68,7 @@ import {
 	teamIdForEntry
 } from '../time-log/organization-tracking-requirements';
 import { isTrackerSource } from '../time-log/tracker-source';
+import { assertBreaksAllowedIn, isBreak } from '../time-log/break-rules';
 import { TypeOrmTimeLogRepository } from '../time-log/repository/type-orm-time-log.repository';
 import { MikroOrmTimeLogRepository } from '../time-log/repository/mikro-orm-time-log.repository';
 import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-employee.repository';
@@ -291,8 +292,9 @@ export class TimerService {
 		// stopped after `todayEnd` up to `todayEnd`. The running log is not among them (`isRunning: false`), and is
 		// left out by id as well, so its time is counted once, below.
 		const runningLogId = lastLog?.isRunning ? lastLog.id : null;
+		// A break is not worked time: neither a completed break nor a running one counts in today's duration.
 		status.duration += logs
-			.filter((log) => log && log.id !== runningLogId)
+			.filter((log) => log && log.id !== runningLogId && !isBreak(log))
 			.reduce(
 				(sum, log) => sum + secondsWithinWindow(log.startedAt, log.stoppedAt, todayWindowStart, countedUntil),
 				0
@@ -303,7 +305,8 @@ export class TimerService {
 			status.lastLog = lastLog;
 			status.running = lastLog.isRunning;
 
-			if (status.running) {
+			const isWorkRunning = status.running && !isBreak(lastLog);
+			if (isWorkRunning) {
 				// Today's duration holds only the part of the running log inside today's window: a timer started
 				// before `todayStart` counts from `todayStart`, its earlier part belongs to the day it started on.
 				// `lastLog` stays the whole log, so a client still reads the full session from its `startedAt`.
@@ -376,11 +379,19 @@ export class TimerService {
 		const trackedEmployee = { employeeId, organizationId, tenantId };
 		const manager = this.typeOrmTimeLogRepository.manager;
 
+		// A break is refused unless the organization allows breaks; it is not work, so the rules on what work must name
+		// (plan, project, team, task) do not apply to it, and it is never billable.
+		const startsBreak = logType === TimeLogType.BREAK;
+		if (startsBreak) {
+			assertBreaksAllowedIn(requirements);
+		}
+
 		const teamIdToLog = await teamIdForEntry(manager, trackedEmployee, request, requirements);
 
 		await this.assertTrackingOnInTeam(employeeId, organizationId, tenantId, teamIdToLog, source);
 
 		await this.assertPlannedWhenTeamRequiresIt({
+			isBreak: startsBreak,
 			employeeId,
 			organizationId,
 			tenantId,
@@ -401,7 +412,8 @@ export class TimerService {
 		);
 
 		const isTrackerStart = isTrackerSource(source);
-		if (!isTrackerStart) {
+		const meetsWorkRequirements = !isTrackerStart && !startsBreak;
+		if (meetsWorkRequirements) {
 			assertRequiredContext(requirements, { taskId, organizationTeamId: teamIdToLog, projectId: projectIdToLog });
 		}
 
@@ -424,7 +436,7 @@ export class TimerService {
 				organizationContactId: organizationContactId || null,
 				organizationTeamId: teamIdToLog || null,
 				description: description || null,
-				isBillable: isBillable || false,
+				isBillable: Boolean(isBillable) && !startsBreak,
 				version: version || null,
 				isRunning: true
 			})
@@ -458,10 +470,12 @@ export class TimerService {
 		taskId?: ID;
 		source?: TimeLogSourceEnum;
 		planDay?: string;
+		isBreak?: boolean;
 	}): Promise<void> {
 		const { employeeId, organizationId, tenantId, organizationTeamId, taskId, source, planDay } = start;
 		const isPlanRuleClient = PLAN_RULE_SOURCES.includes(source);
-		if (!isPlanRuleClient) {
+		const plansWork = isPlanRuleClient && !start.isBreak;
+		if (!plansWork) {
 			return;
 		}
 		if (!organizationTeamId) {
@@ -753,8 +767,9 @@ export class TimerService {
 		// Retrieve stoppedAt date or default to the current date if not provided
 		let stoppedAt = moment.utc(request.stoppedAt ?? moment.utc()).toDate();
 
-		// Handle the DESKTOP source case
-		if (request.source === TimeLogSourceEnum.DESKTOP) {
+		// Handle the DESKTOP source case. A break holds no slots: it ends when it is stopped, whoever stops it.
+		const followsDesktopSlots = request.source === TimeLogSourceEnum.DESKTOP && !isBreak(lastLog);
+		if (followsDesktopSlots) {
 			// Retrieve the most recent time slot from the last log
 			const lastTimeSlot: ITimeSlot | undefined = lastLog.timeSlots?.sort((a: ITimeSlot, b: ITimeSlot) =>
 				moment(b.startedAt).diff(a.startedAt)
