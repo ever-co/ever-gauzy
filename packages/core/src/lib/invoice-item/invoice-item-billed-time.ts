@@ -1,5 +1,5 @@
 import { BadRequestException, InternalServerErrorException } from '@nestjs/common';
-import { EntityManager, In, ObjectLiteral, Repository } from 'typeorm';
+import { EntityManager, FindOneOptions, In, ObjectLiteral, Repository } from 'typeorm';
 import {
 	EntityData,
 	EntityManager as MikroOrmEntityManager,
@@ -8,22 +8,176 @@ import {
 	QueryOrder,
 	raw
 } from '@mikro-orm/core';
-import { ID, IInvoiceItemCreateInput, InvoiceStatusTypesEnum, PermissionsEnum } from '@gauzy/contracts';
+import {
+	EstimateStatusTypesEnum,
+	ID,
+	IInvoiceItemCreateInput,
+	InvoiceStatusTypesEnum,
+	PermissionsEnum
+} from '@gauzy/contracts';
 import { isMySQL, isPostgres } from '@gauzy/config';
 import { RequestContext } from '../core/context';
 import { MultiORM, MultiORMEnum } from '../core/utils';
 import { MikroOrmBaseEntityRepository } from '../core/repository/mikro-orm-base-entity.repository';
-import { TimeLog } from '../core/entities/internal';
+import { Invoice, TimeLog } from '../core/entities/internal';
 import { prepareSQLQuery as p } from '../database/database.helper';
 
 /** The refusal of a save that names a time log it may not bill. It does not say which one, nor whose it is. */
 export const TIME_LOG_NOT_BILLABLE =
 	"INVOICE_TIME_LOG_NOT_BILLABLE: a line names a time log it cannot bill (another organization's, another " +
-	"employee's when you may bill only your own, a removed one, one named twice, or one an invoice that is not void " +
-	'already bills). Nothing was saved: read the time not invoiced yet (notInvoiced=true) and save again.';
+	"employee's when you may bill only your own, a removed one, one named twice, or one already billed by an invoice " +
+	'that is not void or an estimate that is neither void nor rejected). Nothing was saved: read the time not ' +
+	'invoiced yet (notInvoiced=true) and save again.';
 
-/** The values {@link notOnLiveInvoice} binds. */
-export const NOT_ON_LIVE_INVOICE_PARAMETERS = { billedTimeVoidStatus: InvoiceStatusTypesEnum.VOID };
+/**
+ * The values {@link notOnLiveInvoice} binds: the statuses whose document bills no time. A rejected estimate releases
+ * its time as a void invoice does; a draft, sent, viewed or accepted estimate holds it.
+ */
+export const NOT_ON_LIVE_INVOICE_PARAMETERS = {
+	billedTimeVoidStatus: InvoiceStatusTypesEnum.VOID,
+	billedTimeRejectedStatus: EstimateStatusTypesEnum.REJECTED
+};
+
+/** The statuses of a document that releases the time its lines bill: a void invoice or estimate, a rejected estimate. */
+const RELEASING_STATUSES = [InvoiceStatusTypesEnum.VOID, EstimateStatusTypesEnum.REJECTED];
+
+/**
+ * The condition, on an invoice an update names by its table, that one of its lines holds one of the time logs given,
+ * and that it is not the document of one of the lines given. Each value has its own named parameter, which both ORMs
+ * bind the same way.
+ *
+ * @param timeLogIds The time logs billed now.
+ * @param lineIds The lines that bill them now.
+ * @param invoiceTable The name the statement gives the invoice table: the table itself in an update.
+ * @returns The condition, quoted for the database in use, and its parameters.
+ */
+function releasedBy(
+	timeLogIds: ID[],
+	lineIds: ID[],
+	invoiceTable = 'invoice'
+): { condition: string; parameters: Record<string, ID> } {
+	const parameters: Record<string, ID> = {};
+	const timeLogNames = timeLogIds.map((id, index) => namedParameter(parameters, `releasedTimeLog${index}`, id));
+	const lineNames = lineIds.map((id, index) => namedParameter(parameters, `billingLine${index}`, id));
+	const condition = p(
+		`"${invoiceTable}"."id" IN (SELECT "released_line"."invoiceId" FROM "invoice_item" "released_line" ` +
+			`INNER JOIN "time_log" "released_log" ON "released_log"."invoiceItemId" = "released_line"."id" ` +
+			`WHERE "released_log"."id" IN (${timeLogNames.join(', ')}) AND "released_line"."invoiceId" IS NOT NULL) ` +
+			`AND "${invoiceTable}"."id" NOT IN (SELECT "billing_line"."invoiceId" FROM "invoice_item" "billing_line" ` +
+			`WHERE "billing_line"."id" IN (${lineNames.join(', ')}) AND "billing_line"."invoiceId" IS NOT NULL)`
+	);
+	return { condition, parameters };
+}
+
+/** Adds a named parameter, and answers its placeholder. */
+function namedParameter(parameters: Record<string, ID>, name: string, value: ID): string {
+	parameters[name] = value;
+	return `:${name}`;
+}
+
+/**
+ * Locks, in id order, every document one of whose lines holds a time log billed now, whatever its status, where the
+ * database locks rows. Under READ COMMITTED each statement reads its own snapshot: a void another request has written
+ * but not committed would leave the document out of the marker update below, and once committed it would free the
+ * time for the time log update that follows, so the void document would stay unmarked. Locked first, the document is
+ * read as that void committed it.
+ */
+async function typeOrmLockReleasingDocuments(
+	manager: EntityManager,
+	timeLogIds: ID[],
+	lineIds: ID[],
+	tenantId: ID
+): Promise<void> {
+	if (!locksRows()) {
+		return;
+	}
+	const { condition, parameters } = releasedBy(timeLogIds, lineIds);
+	await manager
+		.createQueryBuilder(Invoice, 'invoice')
+		.withDeleted()
+		.select('invoice.id')
+		.where(p(`"invoice"."tenantId" = :tenantId`), { tenantId })
+		.andWhere(condition, parameters)
+		.orderBy('invoice.id', 'ASC')
+		.setLock('pessimistic_write')
+		.getRawMany();
+}
+
+/** The MikroORM form of {@link typeOrmLockReleasingDocuments}, on the transaction's entity manager. */
+async function mikroOrmLockReleasingDocuments(
+	em: MikroOrmEntityManager,
+	timeLogIds: ID[],
+	lineIds: ID[],
+	tenantId: ID
+): Promise<void> {
+	if (!locksRows()) {
+		return;
+	}
+	// A find names the table by an alias of its own: the condition is built on it, with the same named parameters
+	const { parameters } = releasedBy(timeLogIds, lineIds);
+	const releasedByKey = raw((alias: string) => releasedBy(timeLogIds, lineIds, alias).condition, parameters);
+	await em.find(Invoice, { tenantId, [releasedByKey]: [] } as FilterQuery<Invoice>, {
+		fields: ['id'],
+		orderBy: { id: QueryOrder.ASC },
+		lockMode: LockMode.PESSIMISTIC_WRITE,
+		filters: false
+	});
+}
+
+/**
+ * Records on each void invoice or rejected estimate whose line still names a time log billed now that another
+ * document bills the time it released (`releasedTimeBilledAt`, see `assertFinalStatusKept`). It runs before the time
+ * logs are written, so that the documents it marks are locked until the billing ends: a status change that reads one
+ * of them waits, and then sees the mark.
+ */
+async function typeOrmMarkReleasedTimeBilled(
+	manager: EntityManager,
+	lines: IBilledLine[],
+	scope: IBillingScope
+): Promise<void> {
+	const timeLogIds = timeLogIdsOf(lines);
+	if (timeLogIds.length === 0) {
+		return;
+	}
+	await typeOrmLockReleasingDocuments(manager, timeLogIds, lineIdsOf(lines), scope.tenantId);
+	const { condition, parameters } = releasedBy(timeLogIds, lineIdsOf(lines));
+	await manager
+		.createQueryBuilder()
+		.update(Invoice)
+		.set({ releasedTimeBilledAt: new Date() })
+		.where(p(`"tenantId" = :tenantId`), { tenantId: scope.tenantId })
+		.andWhere(p(`"releasedTimeBilledAt" IS NULL`))
+		.andWhere(p(`"status" IN (:...releasingStatuses)`), { releasingStatuses: RELEASING_STATUSES })
+		.andWhere(condition, parameters)
+		.execute();
+}
+
+/** The MikroORM form of {@link typeOrmMarkReleasedTimeBilled}, on the transaction's entity manager. */
+async function mikroOrmMarkReleasedTimeBilled(
+	em: MikroOrmEntityManager,
+	lines: IBilledLine[],
+	scope: IBillingScope
+): Promise<void> {
+	const timeLogIds = timeLogIdsOf(lines);
+	if (timeLogIds.length === 0) {
+		return;
+	}
+	await mikroOrmLockReleasingDocuments(em, timeLogIds, lineIdsOf(lines), scope.tenantId);
+	const { condition, parameters } = releasedBy(timeLogIds, lineIdsOf(lines));
+	const releasedByKey = raw(condition, parameters);
+	const where = {
+		tenantId: scope.tenantId,
+		releasedTimeBilledAt: null,
+		status: { $in: RELEASING_STATUSES },
+		[releasedByKey]: []
+	} as FilterQuery<Invoice>;
+	await em.nativeUpdate(Invoice, where, { releasedTimeBilledAt: new Date() } as EntityData<Invoice>);
+}
+
+/** The ids of the lines given, each once. */
+function lineIdsOf(lines: IBilledLine[]): ID[] {
+	return [...new Set(lines.map((line) => line.lineId))];
+}
 
 /** A time log's `invoiceItemId` as an update names it: by the table, which an update does not alias. */
 const UPDATED_TIME_LOG_INVOICE_ITEM = '"time_log"."invoiceItemId"';
@@ -31,7 +185,8 @@ const UPDATED_TIME_LOG_INVOICE_ITEM = '"time_log"."invoiceItemId"';
 /**
  * The condition that a time log is on no live invoice: the line its `invoiceItemId` names, if any, is removed, or
  * belongs to no invoice any more (deleting an invoice sets its lines' `invoiceId` to null), or to an invoice that is
- * removed or void. The link itself is kept in all those cases, as the record of what the line billed.
+ * removed or void, or to an estimate that is rejected. The link itself is kept in all those cases, as the record of
+ * what the line billed.
  *
  * @param invoiceItemColumn The time log's `invoiceItemId`, qualified by the name the statement gives the table.
  * @returns The condition, quoted for the database in use, binding {@link NOT_ON_LIVE_INVOICE_PARAMETERS}.
@@ -41,7 +196,8 @@ export function notOnLiveInvoice(invoiceItemColumn: string): string {
 		`NOT EXISTS (SELECT 1 FROM "invoice_item" "billing_line" ` +
 			`INNER JOIN "invoice" "billing_invoice" ON "billing_invoice"."id" = "billing_line"."invoiceId" ` +
 			`WHERE "billing_line"."id" = ${invoiceItemColumn} AND "billing_line"."deletedAt" IS NULL ` +
-			`AND "billing_invoice"."deletedAt" IS NULL AND "billing_invoice"."status" <> :billedTimeVoidStatus)`
+			`AND "billing_invoice"."deletedAt" IS NULL AND "billing_invoice"."status" <> :billedTimeVoidStatus ` +
+			`AND "billing_invoice"."status" <> :billedTimeRejectedStatus)`
 	);
 }
 
@@ -53,10 +209,14 @@ export function mikroOrmNotOnLiveInvoiceKey(): string {
 	return raw((alias: string) => notOnLiveInvoice(`${alias}."invoiceItemId"`), NOT_ON_LIVE_INVOICE_PARAMETERS);
 }
 
-/** A line of a save that bills time: where it stands among the lines saved, its organization, and its time logs. */
+/**
+ * A line of a save that bills time: where it stands among the lines saved, its organization, the invoice it states
+ * (none when it is nested in the invoice it is saved with), and its time logs.
+ */
 export interface IBillingLine {
 	index: number;
 	organizationId: ID;
+	invoiceId?: ID;
 	timeLogIds: ID[];
 }
 
@@ -96,56 +256,122 @@ export function splitBilledTime<L extends IInvoiceItemCreateInput>(lines: L[]): 
 		const timeLogIds = distinctTimeLogIdsOf(line);
 		if (timeLogIds.length > 0) {
 			const organizationId = organizationOf(line);
-			billing.push({ index, organizationId, timeLogIds });
+			billing.push({ index, organizationId, invoiceId: line.invoiceId, timeLogIds });
 		}
 	}
 	return { lines: written, billing };
 }
 
 /**
- * Saves lines and writes, on each time log they bill, the line that bills it, in one transaction on the ORM the
- * installation runs: a time log that cannot be billed rolls the whole save back.
+ * Refuses lines that bill time of another organization than their invoice's: an invoice bills its own organization's
+ * time only, while the CRUD write holds each line to the caller's boundary, which a member of several organizations,
+ * or a tenant admin, reaches from all of them.
  *
- * On TypeORM, `save` is given a view of the service whose repository is the transaction's, so the tenant-aware writes
+ * @param billing The lines that bill time.
+ * @param invoiceOrganizationId The organization of the invoice they are saved on.
+ * @throws BadRequestException when a line states another organization, or the invoice states none.
+ */
+export function assertBillingInOrganization(billing: IBillingLine[], invoiceOrganizationId: ID | undefined): void {
+	const billsAnotherOrganization = billing.some(
+		(line) => String(line.organizationId) !== String(invoiceOrganizationId)
+	);
+	if (!invoiceOrganizationId || billsAnotherOrganization) {
+		throw new BadRequestException(TIME_LOG_NOT_BILLABLE);
+	}
+}
+
+/**
+ * Refuses lines that bill time but would be saved on another invoice than the one whose lines are replaced: their
+ * organization is checked against that invoice alone.
+ *
+ * @param billing The lines that bill time.
+ * @param invoiceId The invoice whose lines are replaced.
+ * @throws BadRequestException when a line states another invoice, or none.
+ */
+export function assertBillingOnInvoice(billing: IBillingLine[], invoiceId: ID): void {
+	const billsAnotherInvoice = billing.some((line) => String(line.invoiceId) !== String(invoiceId));
+	if (billsAnotherInvoice) {
+		throw new BadRequestException(TIME_LOG_NOT_BILLABLE);
+	}
+}
+
+/** The transaction a save of lines runs in: the entity manager of the ORM the installation runs. */
+export interface ILinesTransaction {
+	typeOrm?: EntityManager;
+	mikroOrm?: MikroOrmEntityManager;
+}
+
+/** A service's own repositories, one per ORM. */
+export interface ILinesRepositories<E extends ObjectLiteral> {
+	typeOrm: Repository<E>;
+	mikroOrm: MikroOrmBaseEntityRepository<E>;
+}
+
+/**
+ * Runs a save of lines, and what it writes besides them, in one transaction on the ORM the installation runs.
+ *
+ * On TypeORM, `work` is given a view of the service whose repository is the transaction's, so the tenant-aware writes
  * of the CRUD base, and their checks, run in the transaction (see `TaskService.inUpdateTransaction`). On MikroORM the
  * service's repositories follow the transaction on their own.
  *
  * @param service The service that saves the lines.
  * @param repositories The service's own repositories.
- * @param save The save, run on the service it is given.
- * @param savedLines The lines the save wrote, in the order of the request's lines.
- * @param billing The lines that bill time, as {@link splitBilledTime} found them.
- * @returns What the save answered.
+ * @param work The writes, run on the service and the transaction it is given.
+ * @returns What the writes answered.
  */
-export async function saveBillingTime<S extends { ormType: MultiORM }, E extends ObjectLiteral, R>(
+export async function inLinesTransaction<S extends { ormType: MultiORM }, E extends ObjectLiteral, R>(
 	service: S,
-	repositories: { typeOrm: Repository<E>; mikroOrm: MikroOrmBaseEntityRepository<E> },
-	save: (service: S) => Promise<R>,
-	savedLines: (saved: R) => Array<{ id?: ID }>,
-	billing: IBillingLine[]
+	repositories: ILinesRepositories<E>,
+	work: (service: S, transaction: ILinesTransaction) => Promise<R>
 ): Promise<R> {
-	const scope = billingScope();
 	if (service.ormType === MultiORMEnum.MikroORM) {
 		const entityManager = repositories.mikroOrm.getEntityManager();
-		return await entityManager.transactional(async (em) => {
-			const saved = await save(service);
-			const lines = savedLines(saved);
-			const billed = billedLinesOf(lines, billing);
-			await mikroOrmBillTimeLogs(em, billed, scope);
-			return saved;
-		});
+		return await entityManager.transactional(async (em) => await work(service, { mikroOrm: em }));
 	}
 	return await repositories.typeOrm.manager.transaction(async (manager) => {
 		const repository = manager.getRepository(repositories.typeOrm.target);
 		const inTransaction: S = Object.create(service, {
 			typeOrmRepository: { value: repository, configurable: true }
 		});
-		const saved = await save(inTransaction);
+		return await work(inTransaction, { typeOrm: manager });
+	});
+}
+
+/**
+ * Saves lines and writes, on each time log they bill, the line that bills it, in one transaction (see
+ * {@link inLinesTransaction}): a time log that cannot be billed rolls the whole save back.
+ *
+ * @param service The service that saves the lines.
+ * @param repositories The service's own repositories.
+ * @param save The save, run on the service and the transaction it is given.
+ * @param savedLines The lines the save wrote, in the order of the request's lines.
+ * @param billing The lines that bill time, as {@link splitBilledTime} found them.
+ * @returns What the save answered.
+ */
+export async function saveBillingTime<S extends { ormType: MultiORM }, E extends ObjectLiteral, R>(
+	service: S,
+	repositories: ILinesRepositories<E>,
+	save: (service: S, transaction: ILinesTransaction) => Promise<R>,
+	savedLines: (saved: R) => Array<{ id?: ID }>,
+	billing: IBillingLine[]
+): Promise<R> {
+	const scope = billingScope();
+	return await inLinesTransaction(service, repositories, async (inTransaction, transaction) => {
+		const saved = await save(inTransaction, transaction);
 		const lines = savedLines(saved);
 		const billed = billedLinesOf(lines, billing);
-		await typeOrmBillTimeLogs(manager, billed, scope);
+		await billTimeLogs(transaction, billed, scope);
 		return saved;
 	});
+}
+
+/** Writes each line on the time logs it bills, on the ORM of the transaction. */
+async function billTimeLogs(transaction: ILinesTransaction, lines: IBilledLine[], scope: IBillingScope): Promise<void> {
+	if (transaction.mikroOrm) {
+		await mikroOrmBillTimeLogs(transaction.mikroOrm, lines, scope);
+		return;
+	}
+	await typeOrmBillTimeLogs(transaction.typeOrm, lines, scope);
 }
 
 /**
@@ -156,6 +382,7 @@ export async function saveBillingTime<S extends { ormType: MultiORM }, E extends
 async function typeOrmBillTimeLogs(manager: EntityManager, lines: IBilledLine[], scope: IBillingScope): Promise<void> {
 	const timeLogIds = timeLogIdsOf(lines);
 	await typeOrmLockTimeLogs(manager, timeLogIds, scope.tenantId);
+	await typeOrmMarkReleasedTimeBilled(manager, lines, scope);
 	const billedNowhereElse = notOnLiveInvoice(UPDATED_TIME_LOG_INVOICE_ITEM);
 	// One line after the other: a line's statement must see what the lines before it billed (a time log named twice).
 	for (const line of lines) {
@@ -184,6 +411,7 @@ async function mikroOrmBillTimeLogs(
 ): Promise<void> {
 	const timeLogIds = timeLogIdsOf(lines);
 	await mikroOrmLockTimeLogs(em, timeLogIds, scope.tenantId);
+	await mikroOrmMarkReleasedTimeBilled(em, lines, scope);
 	const billedNowhereElse = notOnLiveInvoice(UPDATED_TIME_LOG_INVOICE_ITEM);
 	const employeeCondition = mikroOrmEmployeeCondition(scope);
 	for (const line of lines) {
@@ -236,8 +464,70 @@ async function mikroOrmLockTimeLogs(em: MikroOrmEntityManager, timeLogIds: ID[],
 }
 
 /** Whether the database locks rows for a transaction: PostgreSQL and MySQL do, SQLite runs one writer at a time. */
-function locksRows(): boolean {
+export function locksRows(): boolean {
 	return isPostgres() || isMySQL();
+}
+
+/** The `lock` of a TypeORM read that locks the rows it reads, where the database locks rows (see {@link locksRows}). */
+export function typeOrmRowLock(): Pick<FindOneOptions, 'lock'> {
+	if (!locksRows()) {
+		return {};
+	}
+	return { lock: { mode: 'pessimistic_write' } };
+}
+
+/** An invoice's status, and when its released time was billed again, as a locking read answers it. */
+export interface ILockedInvoice {
+	status?: string;
+	releasedTimeBilledAt?: Date | null;
+}
+
+/**
+ * Reads an invoice, removed or not, and locks its row until the transaction ends where the database locks rows: a
+ * write another request is making to it is waited for, and what that write stored is read.
+ *
+ * @param transaction The transaction.
+ * @param id The invoice.
+ * @param tenantId The caller's tenant, when there is one.
+ * @returns The invoice's status, or `null` when there is no such invoice.
+ */
+export async function lockInvoice(
+	transaction: ILinesTransaction,
+	id: ID,
+	tenantId: ID | undefined
+): Promise<ILockedInvoice | null> {
+	const where = invoiceOfTenant(id, tenantId);
+	if (transaction.mikroOrm) {
+		// Read apart from the identity map: the write that follows loads the whole invoice.
+		return await transaction.mikroOrm.findOne(Invoice, where as FilterQuery<Invoice>, {
+			fields: ['id', 'status', 'releasedTimeBilledAt'] as never,
+			filters: false,
+			disableIdentityMap: true,
+			lockMode: mikroOrmRowLock()
+		});
+	}
+	return await transaction.typeOrm.findOne(Invoice, {
+		where,
+		select: { id: true, status: true, releasedTimeBilledAt: true },
+		withDeleted: true,
+		loadEagerRelations: false,
+		...typeOrmRowLock()
+	});
+}
+
+function mikroOrmRowLock(): LockMode.PESSIMISTIC_WRITE | undefined {
+	if (!locksRows()) {
+		return undefined;
+	}
+	return LockMode.PESSIMISTIC_WRITE;
+}
+
+/** The invoice of that id, in the tenant given when there is one. */
+function invoiceOfTenant(id: ID, tenantId: ID | undefined): { id: ID; tenantId?: ID } {
+	if (!tenantId) {
+		return { id };
+	}
+	return { id, tenantId };
 }
 
 /**
@@ -283,7 +573,7 @@ function billedLineOf(saved: Array<{ id?: ID }>, line: IBillingLine): IBilledLin
  * The id of the line saved at a position. A save answers its lines in the order of the request; a line it did not
  * answer is not billed against a guess, and the transaction rolls back.
  */
-function savedLineId(saved: Array<{ id?: ID }>, index: number): ID {
+export function savedLineId(saved: Array<{ id?: ID }>, index: number): ID {
 	const id = saved?.[index]?.id;
 	if (!id) {
 		throw new InternalServerErrorException('INVOICE_LINE_NOT_SAVED: a line that bills time was not saved.');

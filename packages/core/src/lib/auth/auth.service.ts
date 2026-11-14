@@ -95,6 +95,7 @@ import { TypeOrmPasswordResetRepository } from './../password-reset/repository/t
 import { MikroOrmPasswordResetRepository } from './../password-reset/repository/mikro-orm-password-reset.repository';
 import { RoleService } from './../role/role.service';
 import { isDeactivatedEmployee } from './deactivated-employee';
+import { isPlaceholderAccount } from './placeholder-account';
 import { EmailConfirmationService } from './email-confirmation.service';
 import {
 	allowedEmailLink,
@@ -952,27 +953,35 @@ export class AuthService extends SocialAuthService {
 	 * @returns True when the user has employee records and all of them are inactive or archived.
 	 */
 	private async isDeactivatedEmployeeUser(userId: ID): Promise<boolean> {
+		return isDeactivatedEmployee(await this.findEmployeeRecordsOfUser(userId));
+	}
+
+	/**
+	 * Every employee record of a user, inactive and archived ones included, in every organization, with what the
+	 * sign-in rules judge: whether it is active, archived, or a member without an account. Read straight from the
+	 * repository for the reasons given on `isDeactivatedEmployeeUser`. A failed lookup throws.
+	 *
+	 * @param userId The user whose records are read.
+	 * @returns The records.
+	 */
+	private async findEmployeeRecordsOfUser(
+		userId: ID
+	): Promise<Pick<Employee, 'isActive' | 'isArchived' | 'isPlaceholder'>[]> {
 		const options = {
 			where: { userId },
-			select: { id: true, isActive: true, isArchived: true }
+			select: { id: true, isActive: true, isArchived: true, isPlaceholder: true }
 		};
-
-		let employees: Pick<Employee, 'isActive' | 'isArchived'>[];
 
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
 				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<Employee>(options);
-				employees = (await this.mikroOrmEmployeeRepository.find(where, mikroOptions)) as Employee[];
-				break;
+				return (await this.mikroOrmEmployeeRepository.find(where, mikroOptions)) as Employee[];
 			}
 			case MultiORMEnum.TypeORM:
-				employees = await this.typeOrmEmployeeRepository.find(options);
-				break;
+				return await this.typeOrmEmployeeRepository.find(options);
 			default:
 				throw new Error(`ORM type not implemented: ${this.ormType}`);
 		}
-
-		return isDeactivatedEmployee(employees);
 	}
 
 	/**
@@ -1709,7 +1718,8 @@ export class AuthService extends SocialAuthService {
 	 */
 	async register(
 		input: IUserRegistrationInput & Partial<IAppIntegrationConfig>,
-		languageCode: LanguagesEnum
+		languageCode: LanguagesEnum,
+		onSaved?: (user: User) => void
 	): Promise<User> {
 		let tenant = input.user.tenant;
 		const { organizationId } = input;
@@ -1824,6 +1834,7 @@ export class AuthService extends SocialAuthService {
 				});
 				await this.mikroOrmUserRepository.persistAndFlush(userEntity);
 				user = this.serialize(userEntity);
+				onSaved?.(user);
 
 				// 3. Create employee for specific user
 				if (featureAsEmployee) {
@@ -1857,6 +1868,7 @@ export class AuthService extends SocialAuthService {
 					...(awaitsEmailConfirmation ? { isActive: false } : {})
 				});
 				user = await this.typeOrmUserRepository.save(entity);
+				onSaved?.(user);
 
 				// 3. Create employee for specific user
 				if (featureAsEmployee) {
@@ -2256,14 +2268,30 @@ export class AuthService extends SocialAuthService {
 					throw new Error(`Method not implemented for ORM type: ${this.ormType}`);
 			}
 
+			// The account of a member without an account (a placeholder) gets no access token either, whichever
+			// path asks for one. Its user has no email and no password, so no sign-in finds it; this is the guard
+			// behind that. The active record found above says it at no cost: no other member is ever filed for that
+			// user (EmployeeService.assertNotPlaceholderAccount).
+			if (employee?.isPlaceholder) {
+				this.logger.warn(`Access token refused: user ${user.id} stands behind a member without an account`);
+				throw new UnauthorizedException();
+			}
+
 			// A deactivated employee (every employee record inactive or archived) gets no access token,
 			// whichever path asks for one: password login, workspace sign-in, token refresh, workspace or
 			// organization switch, provider sign-in, OAuth app code exchange. This is the one place they all
 			// mint through. The active record found above already proves the user is not one, so only a
 			// user without one (an admin, a viewer, or an employee active elsewhere) pays for the lookup.
-			if (!employee && (await this.isDeactivatedEmployeeUser(user.id))) {
-				this.logger.warn(`Access token refused: user ${user.id} is a deactivated employee`);
-				throw new UnauthorizedException();
+			if (!employee) {
+				const records = await this.findEmployeeRecordsOfUser(user.id);
+				if (isPlaceholderAccount(records)) {
+					this.logger.warn(`Access token refused: user ${user.id} stands behind a member without an account`);
+					throw new UnauthorizedException();
+				}
+				if (isDeactivatedEmployee(records)) {
+					this.logger.warn(`Access token refused: user ${user.id} is a deactivated employee`);
+					throw new UnauthorizedException();
+				}
 			}
 
 			// Create a payload for the JWT token

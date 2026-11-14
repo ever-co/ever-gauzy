@@ -22,6 +22,8 @@ export const INBOX_TASK_LINK = '/pages/tasks/view';
 export const INBOX_PROJECT_LINK = '/pages/organization/projects';
 /** The read-only employee page (edit needs more than `ORG_EMPLOYEES_VIEW`). */
 export const INBOX_EMPLOYEE_LINK = '/pages/employees/view';
+/** An estimate's page: the `Invoice` notifications are about estimates (a client's answer). */
+export const INBOX_ESTIMATE_LINK = '/pages/accounting/invoices/estimates/view';
 
 /** Settings → Inbox → Providers, relative to `/pages/settings` (`settings-sections`, G-P4-2). */
 export const INBOX_PROVIDERS_SETTINGS_PATH = 'inbox-providers';

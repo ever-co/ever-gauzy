@@ -1,4 +1,5 @@
 import {
+	IEmployee,
 	IInvite,
 	InviteStatusEnum,
 	IOrganizationDepartment,
@@ -14,6 +15,7 @@ import { Exclude } from 'class-transformer';
 import { IsEmail, IsEnum, IsNotEmpty, IsObject, IsOptional, IsString, IsUUID } from 'class-validator';
 import { JoinColumn, JoinTable, RelationId } from 'typeorm';
 import {
+	Employee,
 	OrganizationContact,
 	OrganizationDepartment,
 	OrganizationProject,
@@ -169,6 +171,27 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	invitedByUserId?: ID;
+
+	/**
+	 * The member without an account this invitation hands over (a claim): accepting it moves that member's time and
+	 * memberships to the person who accepts, then removes the placeholder. Null for every other invitation, and set
+	 * to null when the placeholder is removed. Set by the claim route only, never by an invitation body.
+	 */
+	@MultiORMManyToOne(() => Employee, {
+		nullable: true, // Indicates if the relation column value can be nullable or not.
+		onDelete: 'SET NULL' // Defines the database cascade action on delete.
+	})
+	@JoinColumn()
+	placeholderEmployee?: IEmployee;
+
+	/**
+	 * The identifier of the member without an account this invitation hands over.
+	 */
+	@ApiPropertyOptional({ type: () => String })
+	@RelationId((invite: Invite) => invite.placeholderEmployee)
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true, relationId: true })
+	placeholderEmployeeId?: ID;
 	/*
 	|--------------------------------------------------------------------------
 	| @ManyToMany

@@ -203,6 +203,7 @@ const EMPLOYEE_FILTERABLE = {
 	upworkId: 'STRING',
 	linkedInId: 'STRING',
 	kind: 'STRING',
+	isPlaceholder: 'BOOLEAN',
 	userId: 'ID',
 	contactId: 'ID',
 	organizationPositionId: 'ID',
