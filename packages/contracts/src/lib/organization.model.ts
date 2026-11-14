@@ -91,6 +91,8 @@ export interface IOrganization
 	requireClient?: boolean;
 	requireTeam?: boolean;
 	restrictTrackingSwitchToHigherRoles?: boolean;
+	/** Whether members may record breaks (time log type BREAK). Off when unset. */
+	allowBreaks?: boolean;
 	timeFormat?: TimeFormatEnum;
 	defaultStartTime?: string;
 	defaultEndTime?: string;

@@ -233,7 +233,9 @@ export enum TimeLogType {
 	TRACKED = 'TRACKED',
 	MANUAL = 'MANUAL',
 	IDLE = 'IDLE',
-	RESUMED = 'RESUMED'
+	RESUMED = 'RESUMED',
+	/** Time away from work. Counted apart: never in worked, billable or invoiced time. */
+	BREAK = 'BREAK'
 }
 
 export enum ManualTimeLogAction {
