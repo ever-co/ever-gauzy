@@ -1,5 +1,5 @@
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
-import { IValidatedToken } from '../token/interfaces';
+import { IToken, IValidatedToken } from '../token/interfaces';
 import { ScopedTokenService } from '../token/scoped-token.service';
 import { CURRENT_USER_PROVIDER, ICurrentUserProvider } from './current-user.provider';
 import { IRefreshTokenMetadata, REFRESH_TOKEN } from './type.token';
@@ -57,5 +57,34 @@ export class RefreshTokenService {
 
 	public getUserId(): string {
 		return this.currentUserProvider.getCurrentUserId();
+	}
+
+	/**
+	 * @param userId The user.
+	 * @returns Their stored refresh tokens still active (the latest of each rotation chain), newest first.
+	 */
+	public async findActive(userId: string): Promise<IToken[]> {
+		return this.tokenService.getActiveTokens(userId);
+	}
+
+	/**
+	 * @returns Whether the user signed the session out.
+	 */
+	public async isSessionSignedOut(userId: string, sessionId: string): Promise<boolean> {
+		return this.tokenService.isSessionSignedOut(userId, sessionId);
+	}
+
+	/**
+	 * Revokes one of a user's refresh tokens by its id.
+	 *
+	 * @returns Whether this call revoked it.
+	 */
+	public async revokeById(revocation: {
+		tokenId: string;
+		userId: string;
+		revokedById?: string;
+		reason?: string;
+	}): Promise<boolean> {
+		return this.tokenService.revokeTokenById(revocation);
 	}
 }

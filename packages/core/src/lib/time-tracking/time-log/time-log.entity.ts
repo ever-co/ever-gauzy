@@ -1,10 +1,12 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { OnLoad } from '@mikro-orm/core';
 import { RelationId, JoinColumn, AfterLoad } from 'typeorm';
+import { Exclude } from 'class-transformer';
 import { IsBoolean, IsDateString, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import * as moment from 'moment';
 import {
 	ITimeLog,
+	ITimeLogStoredRates,
 	TimeLogType,
 	TimeLogSourceEnum,
 	ITimesheet,
@@ -37,6 +39,7 @@ import {
 	MultiORMManyToOne,
 	VirtualMultiOrmColumn
 } from '../../core/decorators/entity';
+import { billingRateColumn } from '../../shared/pipes/billing-rate.transform';
 import { MikroOrmTimeLogRepository } from './repository/mikro-orm-time-log.repository';
 
 /**
@@ -46,7 +49,7 @@ import { MikroOrmTimeLogRepository } from './repository/mikro-orm-time-log.repos
 @ColumnIndex('IDX_time_log_tenant_org_employee_started', ['tenantId', 'organizationId', 'employeeId', 'startedAt'])
 @ColumnIndex('IDX_time_log_tenant_org_started', ['tenantId', 'organizationId', 'startedAt'])
 @MultiORMEntity('time_log', { mikroOrmRepository: () => MikroOrmTimeLogRepository })
-export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
+export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog, ITimeLogStoredRates {
 	@ApiProperty({ type: () => 'timestamptz' })
 	@IsDateString()
 	@ColumnIndex()
@@ -118,6 +121,60 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@ColumnIndex()
 	@MultiORMColumn({ update: false, nullable: true })
 	version?: string;
+
+	/*
+	|--------------------------------------------------------------------------
+	| The rates that price the log, recorded with it (see time-log-rates.ts)
+	|--------------------------------------------------------------------------
+	*/
+
+	/** The member's billing rate when the log was recorded. It prices the log's time while `ratesStored` is true. */
+	@ApiPropertyOptional({ type: () => Number, nullable: true, readOnly: true })
+	@MultiORMColumn(billingRateColumn())
+	billRateValue?: number | null;
+
+	/** The billing rate's currency. Empty, the organization's. */
+	@ApiPropertyOptional({ type: () => String, nullable: true, readOnly: true })
+	@MultiORMColumn({ nullable: true })
+	billRateCurrency?: string | null;
+
+	/**
+	 * Whether the log stores the rates that price it. Every log the API records does; a row written around it (a
+	 * restored archive) does not, and is priced at the current rates, as all time was before rates were stored.
+	 */
+	@ApiPropertyOptional({ type: () => Boolean, nullable: true, readOnly: true })
+	@MultiORMColumn({ nullable: true })
+	ratesStored?: boolean | null;
+
+	/** The member's pay rate when the log was recorded. Salary data: no generic read selects or serializes it. */
+	@Exclude({ toPlainOnly: true })
+	@MultiORMColumn({ ...billingRateColumn(), select: false, hidden: true })
+	payRateValue?: number | null;
+
+	/** The pay rate's currency. Empty, the organization's. */
+	@Exclude({ toPlainOnly: true })
+	@MultiORMColumn({ nullable: true, select: false, hidden: true })
+	payRateCurrency?: string | null;
+
+	/** The project's client rate when the log was recorded. Read by rate editors only, as on the project. */
+	@Exclude({ toPlainOnly: true })
+	@MultiORMColumn({ ...billingRateColumn(), select: false, hidden: true })
+	projectBillRateValue?: number | null;
+
+	/** The member's client rate on the project when the log was recorded, over the project's. */
+	@Exclude({ toPlainOnly: true })
+	@MultiORMColumn({ ...billingRateColumn(), select: false, hidden: true })
+	projectMemberBillRateValue?: number | null;
+
+	/** The currency of the project's client rate: the project's when it was stored, else the organization's. */
+	@Exclude({ toPlainOnly: true })
+	@MultiORMColumn({ nullable: true, select: false, hidden: true })
+	projectBillRateCurrency?: string | null;
+
+	/** The currency of the member's client rate on the project, kept apart: each client rate changes on its own. */
+	@Exclude({ toPlainOnly: true })
+	@MultiORMColumn({ nullable: true, select: false, hidden: true })
+	projectMemberBillRateCurrency?: string | null;
 
 	/** Additional virtual columns */
 	@VirtualMultiOrmColumn()

@@ -1,12 +1,16 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { ForbiddenException, NotAcceptableException } from '@nestjs/common';
-import { In } from 'typeorm';
+import { ForbiddenException, NotAcceptableException, Optional } from '@nestjs/common';
+import { DataSource, EntityManager, FindOptionsWhere, In } from 'typeorm';
 import { ID, ITimesheet, PermissionsEnum, TimesheetStatus } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/utils';
 import { RequestContext } from './../../../../core/context';
 import { EmailService } from './../../../../email-send/email.service';
 import { TimesheetUpdateStatusCommand } from '../timesheet-update-status.command';
 import { TimeSheetService } from '../../timesheet.service';
+import { Timesheet } from '../../timesheet.entity';
+import { TimeLog } from '../../../time-log/time-log.entity';
+import { statusChange } from '../../../time-log/time-log-history';
+import { historySubject, lockedForChange, recordTimeLogHistory } from '../../../time-log/time-log-history.writer';
 
 /**
  * The statuses a team manager may give a member's timesheet: approved or denied.
@@ -28,7 +32,12 @@ function assertTeamManagerStatus(status: TimesheetStatus): void {
 
 @CommandHandler(TimesheetUpdateStatusCommand)
 export class TimesheetUpdateStatusHandler implements ICommandHandler<TimesheetUpdateStatusCommand> {
-	constructor(readonly _timeSheetService: TimeSheetService, readonly _emailService: EmailService) {}
+	constructor(
+		readonly _timeSheetService: TimeSheetService,
+		readonly _emailService: EmailService,
+		// Records the change in the history of each entry of the timesheets; a handler built without it records nothing.
+		@Optional() private readonly dataSource?: DataSource
+	) {}
 
 	/**
 	 * Updates the status of one or multiple timesheets.
@@ -93,6 +102,73 @@ export class TimesheetUpdateStatusHandler implements ICommandHandler<TimesheetUp
 	}
 
 	/**
+	 * Writes the new status. With a data source, the status and the history of the timesheets' entries are written in
+	 * one transaction, or neither is, from the statuses read under lock in it: the history gives the status each change
+	 * replaced, one saved meanwhile included. Without one, the status alone, through the CRUD service.
+	 *
+	 * @param where The timesheets of the change.
+	 * @param updatePayload The status, and what goes with it.
+	 */
+	private async writeStatus(where: FindOptionsWhere<Timesheet>, updatePayload: Partial<ITimesheet>): Promise<void> {
+		if (!this.dataSource) {
+			await this._timeSheetService.update(where, updatePayload);
+			return;
+		}
+		await this.dataSource.transaction(async (manager) => {
+			const previousStatuses = await this.readStatuses(manager, where);
+			await manager.update(Timesheet, where, updatePayload);
+			await this.recordStatusHistory(manager, previousStatuses, updatePayload.status, updatePayload.reason);
+		});
+	}
+
+	/** The status of each timesheet before the change, locked until the transaction of the change ends. */
+	private async readStatuses(manager: EntityManager, where: FindOptionsWhere<Timesheet>): Promise<Map<ID, string>> {
+		const statuses = new Map<ID, string>();
+		const rows = await manager.find(Timesheet, { where, select: { id: true, status: true }, ...lockedForChange() });
+		rows.forEach((row) => statuses.set(row.id, row.status));
+		return statuses;
+	}
+
+	/**
+	 * Records the status change in the history of every entry of the timesheets whose status changed, in the
+	 * transaction of the change.
+	 *
+	 * @param manager The entity manager of that transaction.
+	 * @param previousStatuses The status of each timesheet before the change.
+	 * @param status The status after it.
+	 * @param reason The reason of a denial, when one was given.
+	 */
+	private async recordStatusHistory(
+		manager: EntityManager,
+		previousStatuses: ReadonlyMap<ID, string>,
+		status: string,
+		reason: string | null | undefined
+	): Promise<void> {
+		const changedTimesheetIds = [...previousStatuses.keys()].filter((id) => previousStatuses.get(id) !== status);
+		if (changedTimesheetIds.length === 0) {
+			return;
+		}
+		const entries = await manager.find(TimeLog, {
+			where: { timesheetId: In(changedTimesheetIds) },
+			select: {
+				id: true,
+				employeeId: true,
+				organizationId: true,
+				tenantId: true,
+				taskId: true,
+				projectId: true,
+				timesheetId: true
+			}
+		});
+		const records = entries.map((entry) => ({
+			subject: historySubject(entry),
+			change: statusChange(previousStatuses.get(entry.timesheetId), status),
+			reason
+		}));
+		await recordTimeLogHistory(manager, records);
+	}
+
+	/**
 	 * Writes the new status, reads the timesheets back and e-mails their employees.
 	 */
 	private async applyStatusChange(
@@ -101,8 +177,8 @@ export class TimesheetUpdateStatusHandler implements ICommandHandler<TimesheetUp
 		tenantId: ID,
 		updatePayload: Partial<ITimesheet>
 	): Promise<ITimesheet[]> {
-		// Update timesheets
-		await this._timeSheetService.update({ id: In(ids), organizationId, tenantId }, updatePayload);
+		// Update timesheets, and the history of their entries with them
+		await this.writeStatus({ id: In(ids), organizationId, tenantId }, updatePayload);
 
 		// Fetch updated timesheets with employee and user details
 		const timesheets = await this._timeSheetService.find({

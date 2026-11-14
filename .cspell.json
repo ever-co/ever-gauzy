@@ -1801,7 +1801,10 @@
 		"unsaveable",
 		"heures",
 		"stunden",
-		"cros"
+		"cros",
+		"slotless",
+		"enrolments",
+		"unstored"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

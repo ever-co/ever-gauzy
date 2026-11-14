@@ -59,6 +59,16 @@ export class TimeLogQueryDTO
 	@IsOptional()
 	@Transform(({ value }: TransformFnParams) => parseToBoolean(value))
 	readonly notInvoiced: boolean;
+
+	@ApiPropertyOptional({
+		type: () => Boolean,
+		description:
+			'Keep breaks (time logs of type BREAK) in the entry list and the daily chart. Without it they are left out, ' +
+			'as before breaks existed; a total of worked time never counts them.'
+	})
+	@IsOptional()
+	@Transform(({ value }: TransformFnParams) => parseToBoolean(value))
+	readonly includeBreaks: boolean;
 }
 
 /**
@@ -68,7 +78,8 @@ export class TimeLogQueryDTO
 export class TimeLogBudgetQueryDTO extends OmitType(TimeLogQueryDTO, [
 	'billableOnly',
 	'includeTimeWithoutTeam',
-	'notInvoiced'
+	'notInvoiced',
+	'includeBreaks'
 ] as const) {}
 
 /**

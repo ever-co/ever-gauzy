@@ -13,7 +13,8 @@ import {
 	ID,
 	IInvoiceItemCreateInput,
 	InvoiceStatusTypesEnum,
-	PermissionsEnum
+	PermissionsEnum,
+	TimeLogType
 } from '@gauzy/contracts';
 import { isMySQL, isPostgres } from '@gauzy/config';
 import { RequestContext } from '../core/context';
@@ -394,6 +395,8 @@ async function typeOrmBillTimeLogs(manager: EntityManager, lines: IBilledLine[],
 			.andWhere(p(`"tenantId" = :tenantId`), { tenantId: scope.tenantId })
 			.andWhere(p(`"organizationId" = :organizationId`), { organizationId: line.organizationId })
 			.andWhere(p(`"deletedAt" IS NULL`))
+			// A break is never billable time: a line that names one writes fewer logs than it names, and is refused
+			.andWhere(p(`"logType" <> :breakType`), { breakType: TimeLogType.BREAK })
 			.andWhere(billedNowhereElse, NOT_ON_LIVE_INVOICE_PARAMETERS);
 		if (scope.employeeId) {
 			query.andWhere(p(`"employeeId" = :employeeId`), { employeeId: scope.employeeId });
@@ -422,6 +425,8 @@ async function mikroOrmBillTimeLogs(
 			tenantId: scope.tenantId,
 			organizationId: line.organizationId,
 			deletedAt: null,
+			// A break is never billable time (see typeOrmBillTimeLogs)
+			logType: { $ne: TimeLogType.BREAK },
 			...employeeCondition,
 			[billedNowhereElseKey]: []
 		} as FilterQuery<TimeLog>;

@@ -2,7 +2,14 @@
 import '../../core/entities/internal';
 
 import { DatabaseTypeEnum, defineConfig } from '@gauzy/config';
-import { ITimeLog, ITimerStatus, ITimerStatusInput, ITimerToggleInput, TimeLogSourceEnum } from '@gauzy/contracts';
+import {
+	ITimeLog,
+	ITimerStatus,
+	ITimerStatusInput,
+	ITimerToggleInput,
+	TimeLogSourceEnum,
+	TimeLogType
+} from '@gauzy/contracts';
 import { FindOperator } from 'typeorm';
 import { TimeLog } from '../../core/entities/internal';
 import { MultiORMEnum } from '../../core/utils';
@@ -637,6 +644,30 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 				expect(logger.warn).not.toHaveBeenCalled();
 			}
 		);
+
+		it.each([TimeLogSourceEnum.TEAMS, TimeLogSourceEnum.MOBILE, TimeLogSourceEnum.WEB_TIMER])(
+			'ends a %s break where the new run starts: a break has no heartbeat, whatever its client',
+			async (source) => {
+				const rows = [run('replaced', source, TWO_HOURS_AGO)];
+				Object.assign(rows[0], { logType: TimeLogType.BREAK });
+				const { service } = setup(rows);
+
+				await startOnDesktop(service);
+
+				// 02:00, where work starts again, not 00:00 as for a run whose client died before its first heartbeat
+				expect(rows[0]).toMatchObject({ isRunning: false, stoppedAt: NOW });
+			}
+		);
+
+		it('ends a break at its own start when the new run is named to start before it', async () => {
+			const rows = [run('replaced', TimeLogSourceEnum.TEAMS, TWO_HOURS_AGO)];
+			Object.assign(rows[0], { logType: TimeLogType.BREAK });
+			const { service } = setup(rows);
+
+			await startOnDesktop(service, new Date(TWO_HOURS_AGO.getTime() - 60_000));
+
+			expect(rows[0]).toMatchObject({ isRunning: false, stoppedAt: TWO_HOURS_AGO });
+		});
 
 		it('ends it at the start the new run names', async () => {
 			const rows = [run('replaced', TimeLogSourceEnum.WEB_TIMER, TWO_HOURS_AGO)];

@@ -336,8 +336,7 @@ function ownedRootFields(operation: 'Query' | 'Mutation'): string[] {
 /** The arguments one root field declares, in the order a client states them. */
 function fieldArgs(operation: 'Query' | 'Mutation', field: string): string[] {
 	const root = schema.getType(operation) as
-		| { getFields(): Record<string, { args: readonly { name: string }[] }> }
-		| undefined;
+		{ getFields(): Record<string, { args: readonly { name: string }[] }> } | undefined;
 
 	return (root?.getFields()?.[field]?.args ?? []).map((argument) => argument.name);
 }
@@ -345,8 +344,7 @@ function fieldArgs(operation: 'Query' | 'Mutation', field: string): string[] {
 /** The type one root field answers with, as the schema states it. */
 function fieldType(operation: 'Query' | 'Mutation', field: string): string {
 	const root = schema.getType(operation) as
-		| { getFields(): Record<string, { type: { toString(): string } }> }
-		| undefined;
+		{ getFields(): Record<string, { type: { toString(): string } }> } | undefined;
 
 	return root?.getFields()?.[field]?.type.toString() ?? '';
 }
@@ -548,7 +546,8 @@ describe('TimeLogResolver — the SDL declares the capabilities the REST routes 
 			'last',
 			'before',
 			'limit',
-			'offset'
+			'offset',
+			'includeBreaks'
 		]);
 
 		// The node read takes one argument and the conflict read the five its own route binds.
@@ -711,9 +710,7 @@ describe('TimeLogResolver — which members the surface exposes, and which it re
 		expect(entry).toMatch(/\blogs: \[TimeLogDailyReportEntry!\]!/);
 		expect(entry).toMatch(/\bemployeeLogs: \[TimeLogDailyReportGroup!\]!/);
 		expect(entry).toMatch(/\bprojectLogs: \[TimeLogDailyReportGroup!\]!/);
-		expect(typeBody('TimeLogDailyReportGroup')).toMatch(
-			/\btasks: \[TimeLogDailyReportTask!\]!/
-		);
+		expect(typeBody('TimeLogDailyReportGroup')).toMatch(/\btasks: \[TimeLogDailyReportTask!\]!/);
 	});
 
 	it('carries every money member as `Decimal` and never as `Float`', () => {
@@ -760,6 +757,18 @@ describe('TimeLogResolver — which members the surface exposes, and which it re
 });
 
 describe('TimeLogResolver — the connection contract', () => {
+	it('hands includeBreaks to the list read, as the REST list takes it (#11920)', async () => {
+		const { resolver, timeLogService } = surfaces();
+
+		await (resolver.timeLogs as (...args: unknown[]) => Promise<unknown>)(
+			ORGANIZATION,
+			...Array.from({ length: 14 }, () => undefined),
+			true
+		);
+
+		expect(timeLogService.getTimeLogs).toHaveBeenCalledWith(expect.objectContaining({ includeBreaks: true }));
+	});
+
 	it('answers the list with nodes, edges, a total and the boundary cursors', async () => {
 		const { resolver, timeLogService } = surfaces();
 
@@ -838,26 +847,14 @@ describe('TimeLogResolver — the connection contract', () => {
 	it('narrows by the fields the filter declares, and refuses the ones it does not', async () => {
 		const { resolver } = surfaces();
 
-		const byType = await resolver.timeLogs(
-			ORGANIZATION,
-			undefined,
-			undefined,
-			undefined,
-			undefined,
-			undefined,
-			{ logType: { eq: TimeLogType.MANUAL } }
-		);
+		const byType = await resolver.timeLogs(ORGANIZATION, undefined, undefined, undefined, undefined, undefined, {
+			logType: { eq: TimeLogType.MANUAL }
+		});
 		expect(byType.nodes.map((node) => node.id)).toEqual([FIRST]);
 
-		const byEdited = await resolver.timeLogs(
-			ORGANIZATION,
-			undefined,
-			undefined,
-			undefined,
-			undefined,
-			undefined,
-			{ isEdited: { eq: true } }
-		);
+		const byEdited = await resolver.timeLogs(ORGANIZATION, undefined, undefined, undefined, undefined, undefined, {
+			isEdited: { eq: true }
+		});
 		expect(byEdited.nodes.map((node) => node.id)).toEqual([SECOND]);
 
 		const byDuration = await resolver.timeLogs(
@@ -871,26 +868,14 @@ describe('TimeLogResolver — the connection contract', () => {
 		);
 		expect(byDuration.nodes.map((node) => node.id)).toEqual([FIRST]);
 
-		const byStart = await resolver.timeLogs(
-			ORGANIZATION,
-			undefined,
-			undefined,
-			undefined,
-			undefined,
-			undefined,
-			{ startedAt: { lt: new Date('2026-03-01T10:00:00.000Z') } }
-		);
+		const byStart = await resolver.timeLogs(ORGANIZATION, undefined, undefined, undefined, undefined, undefined, {
+			startedAt: { lt: new Date('2026-03-01T10:00:00.000Z') }
+		});
 		expect(byStart.nodes.map((node) => node.id)).toEqual([FIRST]);
 
-		const byProject = await resolver.timeLogs(
-			ORGANIZATION,
-			undefined,
-			undefined,
-			undefined,
-			undefined,
-			undefined,
-			{ projectId: { in: [PROJECT] } }
-		);
+		const byProject = await resolver.timeLogs(ORGANIZATION, undefined, undefined, undefined, undefined, undefined, {
+			projectId: { in: [PROJECT] }
+		});
 		expect(byProject.nodes.map((node) => node.id)).toEqual([FIRST]);
 
 		// A relation is not filterable, because the rows carry no relation to narrow by.
@@ -1035,7 +1020,18 @@ describe('TimeLogResolver — the connection contract', () => {
 		const { resolver } = surfaces();
 
 		const error = await resolver
-			.timeLogs(ORGANIZATION, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, 500)
+			.timeLogs(
+				ORGANIZATION,
+				undefined,
+				undefined,
+				undefined,
+				undefined,
+				undefined,
+				undefined,
+				undefined,
+				undefined,
+				500
+			)
 			.catch((thrown) => thrown);
 
 		expect(isRefusal(error)).toBe(true);
@@ -1182,9 +1178,7 @@ describe('TimeLogResolver — one concept, two protocols, the same operations', 
 
 		// The delivered map is keyed by the four log types; the type states them as four members whose
 		// values are hours.
-		expect(answer).toEqual([
-			{ date: '2026-03-01', value: { tracked: 0.5, manual: 1, idle: 0, resumed: 0.2 } }
-		]);
+		expect(answer).toEqual([{ date: '2026-03-01', value: { tracked: 0.5, manual: 1, idle: 0, resumed: 0.2 } }]);
 	});
 
 	it('answers the owed amounts through the same service method its route calls, as money and seconds', async () => {
@@ -1301,12 +1295,7 @@ describe('TimeLogResolver — one concept, two protocols, the same operations', 
 			startedAt: ROWS[0].startedAt,
 			stoppedAt: ROWS[0].stoppedAt
 		});
-		expect(Object.keys(week.dates[0].logs[0]).sort()).toEqual([
-			'employeeId',
-			'id',
-			'startedAt',
-			'stoppedAt'
-		]);
+		expect(Object.keys(week.dates[0].logs[0]).sort()).toEqual(['employeeId', 'id', 'startedAt', 'stoppedAt']);
 	});
 
 	it('answers the time limits through the same service method its route calls, with the period passed through', async () => {
@@ -1563,9 +1552,7 @@ describe('TimeLogResolver — one concept, two protocols, the same operations', 
 
 		timeLogService.deleteTimeLogs.mockRejectedValueOnce(refusal);
 
-		await expect(resolver.deleteTimeLogs({ logIds: [FIRST], organizationId: ORGANIZATION })).rejects.toBe(
-			refusal
-		);
+		await expect(resolver.deleteTimeLogs({ logIds: [FIRST], organizationId: ORGANIZATION })).rejects.toBe(refusal);
 	});
 });
 
@@ -1605,9 +1592,7 @@ describe('TimeLogResolver — the guard stack and the permission are the route�
 		// resource's. A resolver that guessed the wrong one would refuse callers this controller serves.
 		expect(controllerGuards).toEqual(expect.arrayContaining([TenantBaseGuard, PermissionGuard]));
 		expect(controllerGuards).not.toContain(TenantPermissionGuard);
-		expect(resolverGuards).toEqual(
-			expect.arrayContaining([TenantBaseGuard, PermissionGuard, FeatureFlagGuard])
-		);
+		expect(resolverGuards).toEqual(expect.arrayContaining([TenantBaseGuard, PermissionGuard, FeatureFlagGuard]));
 		expect(resolverGuards).not.toContain(TenantPermissionGuard);
 
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, TimeLogResolver)).toEqual(

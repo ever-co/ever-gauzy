@@ -10,8 +10,11 @@
  * bootstraps the entity graph before the service layer.
  */
 import '../../core/entities/internal';
-import { HttpStatus } from '@nestjs/common';
+import { HttpStatus, RequestMethod } from '@nestjs/common';
+import { HTTP_CODE_METADATA, METHOD_METADATA, PATH_METADATA } from '@nestjs/common/constants';
 import { Test, TestingModule } from '@nestjs/testing';
+import { PermissionsEnum } from '@gauzy/contracts';
+import { PERMISSIONS_METADATA } from '@gauzy/constants';
 import { TimerController } from './timer.controller';
 describe('Timer Controller', () => {
 	let controller: TimerController;
@@ -50,5 +53,78 @@ describe('Timer Controller OpenAPI responses', () => {
 
 		expect(responses[HttpStatus.NOT_ACCEPTABLE]?.description).toMatch(/stoppedAt/);
 		expect(responses[HttpStatus.CONFLICT]?.description).toMatch(/timeLogId/);
+	});
+});
+
+/**
+ * `PUT /timesheet/timer/started-at` moves the start of the caller's running timer. It answers what the service
+ * answers, and its OpenAPI document names every refusal by its code.
+ */
+describe('Timer Controller moving the start of the running timer', () => {
+	/** `@nestjs/swagger`'s key for the responses a route declares (`DECORATORS.API_RESPONSE`, in its ESM constants). */
+	const API_RESPONSE = 'swagger/apiResponse';
+	const handler = () => TimerController.prototype.moveTimerStart;
+
+	it('is a PUT on /started-at', () => {
+		expect(Reflect.getMetadata(PATH_METADATA, handler())).toBe('/started-at');
+		expect(Reflect.getMetadata(METHOD_METADATA, handler())).toBe(RequestMethod.PUT);
+	});
+
+	it('declares its refusals with their codes', () => {
+		const responses: Record<string, { description?: string }> = Reflect.getMetadata(API_RESPONSE, handler()) ?? {};
+
+		expect(responses[HttpStatus.BAD_REQUEST]?.description).toMatch(/TIMER_NOT_RUNNING/);
+		expect(responses[HttpStatus.BAD_REQUEST]?.description).toMatch(/TIMER_START_IN_FUTURE/);
+		expect(responses[HttpStatus.FORBIDDEN]?.description).toMatch(/TIMER_START_MANUAL_NOT_ALLOWED/);
+		expect(responses[HttpStatus.CONFLICT]?.description).toMatch(/TIMER_START_OVERLAP/);
+		expect(responses[HttpStatus.CONFLICT]?.description).toMatch(/TIMER_START_TRACKER_RUN/);
+	});
+
+	it('answers the log the service moved', async () => {
+		const moved = { id: 'log-1', startedAt: new Date('2026-11-16T09:00:00.000Z'), isRunning: true };
+		const timerService = { moveRunningTimerStart: jest.fn(async () => moved) };
+		const controller = new TimerController(timerService as never, undefined as never, undefined as never);
+		const body = { startedAt: new Date('2026-11-16T09:00:00.000Z'), reason: 'Forgot to start timer' };
+
+		await expect(controller.moveTimerStart(body)).resolves.toBe(moved);
+		expect(timerService.moveRunningTimerStart).toHaveBeenCalledWith(body);
+	});
+});
+
+/**
+ * Issue #11923 — `POST /timesheet/timer/discard` removes the caller's running timer and answers 204, under the
+ * timer's own TIME_TRACKER permission; its refusals are in the OpenAPI document.
+ */
+describe('Timer Controller discard', () => {
+	const API_RESPONSE = 'swagger/apiResponse';
+	const discardRoute = TimerController.prototype.discardTimer;
+
+	it('is POST /discard and answers 204 with its 400, 403 and 409 refusals declared', () => {
+		const responses: Record<string, { description?: string }> =
+			Reflect.getMetadata(API_RESPONSE, discardRoute) ?? {};
+
+		expect(Reflect.getMetadata(PATH_METADATA, discardRoute)).toBe('/discard');
+		expect(Reflect.getMetadata(METHOD_METADATA, discardRoute)).toBe(RequestMethod.POST);
+		expect(Reflect.getMetadata(HTTP_CODE_METADATA, discardRoute)).toBe(HttpStatus.NO_CONTENT);
+		expect(responses[HttpStatus.BAD_REQUEST]?.description).toMatch(/No timer is running/);
+		expect(responses[HttpStatus.FORBIDDEN]?.description).toMatch(/TIMER_DISCARD_DISABLED.*TIMER_DISCARD_TOO_LATE/s);
+		expect(responses[HttpStatus.CONFLICT]?.description).toMatch(/timeLogId/);
+	});
+
+	it("needs the timer's permission and no permission to delete time", () => {
+		const permissionsOf = (target: object): PermissionsEnum[] =>
+			Reflect.getMetadata(PERMISSIONS_METADATA, target) ?? [];
+
+		expect(permissionsOf(discardRoute)).toEqual([]);
+		expect(permissionsOf(TimerController)).toEqual([PermissionsEnum.TIME_TRACKER]);
+	});
+
+	it('hands the body to the service and answers nothing', async () => {
+		const discardTimer = jest.fn(async () => undefined);
+		const controller = new TimerController({ discardTimer } as never, undefined as never, undefined as never);
+		const body = { organizationId: 'organization-1', timeLogId: 'log-1' };
+
+		await expect(controller.discardTimer(body as never)).resolves.toBeUndefined();
+		expect(discardTimer).toHaveBeenCalledWith(body);
 	});
 });
