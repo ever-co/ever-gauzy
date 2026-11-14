@@ -236,7 +236,9 @@ export enum TimeLogType {
 	TRACKED = 'TRACKED',
 	MANUAL = 'MANUAL',
 	IDLE = 'IDLE',
-	RESUMED = 'RESUMED'
+	RESUMED = 'RESUMED',
+	/** Time away from work. Counted apart: never in worked, billable or invoiced time. */
+	BREAK = 'BREAK'
 }
 
 export enum ManualTimeLogAction {
@@ -476,6 +478,8 @@ export interface IGetTimeLogReportInput extends IGetTimeLogInput {
 	 * a rejected estimate.
 	 */
 	notInvoiced?: boolean;
+	/** Keep breaks (time logs of type BREAK) in a read that lists entries. Totals never count breaks. */
+	includeBreaks?: boolean;
 }
 
 export interface IGetTimeLogConflictInput extends IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel {
@@ -483,6 +487,11 @@ export interface IGetTimeLogConflictInput extends IBasePerTenantAndOrganizationE
 	startDate: string | Date;
 	endDate: string | Date;
 	employeeId: ID;
+	/**
+	 * Also answer work logs without time slots. By default a work log takes part only with a slot; a break always does.
+	 * Set only by the server, for a break started in the past (#11920).
+	 */
+	includeSlotless?: boolean;
 }
 
 export interface IGetTimeSlotInput extends ITimeLogFilters, IBaseRelationsEntityModel {

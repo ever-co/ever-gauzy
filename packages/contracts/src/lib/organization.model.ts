@@ -128,6 +128,8 @@ export interface IOrganization
 	allowDiscardTimer?: boolean | null;
 	/** When set, a running timer may be discarded only within this many minutes of its start. Null: no limit. */
 	discardTimerWithinMinutes?: number | null;
+	/** Whether members may record breaks (time log type BREAK). Off when unset. */
+	allowBreaks?: boolean;
 	timeFormat?: TimeFormatEnum;
 	defaultStartTime?: string;
 	defaultEndTime?: string;

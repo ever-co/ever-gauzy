@@ -19,5 +19,6 @@ export class OrganizationSettingDTO extends PickType(Organization, [
 	'durationRoundingDirection',
 	'requireTwoFactor',
 	'allowDiscardTimer',
-	'discardTimerWithinMinutes'
+	'discardTimerWithinMinutes',
+	'allowBreaks'
 ] as const) {}
