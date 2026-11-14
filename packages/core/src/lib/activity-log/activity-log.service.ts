@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
-import { FindManyOptions, FindOptionsOrder, FindOptionsWhere } from 'typeorm';
+import { FindManyOptions, FindOptionsOrder, FindOptionsWhere, Not } from 'typeorm';
 import {
 	ActionTypeEnum,
 	ActorTypeEnum,
@@ -100,13 +100,19 @@ export class ActivityLogService extends TenantAwareCrudService<ActivityLog> {
 		const orderField = allowedOrderFields.includes(orderBy) ? orderBy : 'createdAt';
 		const orderDirection = allowedOrderDirections.includes(order.toUpperCase()) ? order.toUpperCase() : 'DESC';
 
+		// A time entry history is read through the time log routes, which apply the time scoping: this route checks no
+		// permission, so it never answers those rows.
+		if (entity === BaseEntityEnum.TimeLog) {
+			return { items: [], total: 0 };
+		}
+
 		// Define order option
 		const orderOption: FindOptionsOrder<ActivityLog> = { [orderField]: orderDirection };
 
 		// Build the 'where' condition using concise syntax
 		const where: FindOptionsWhere<ActivityLog> = {
 			...(organizationId && { organizationId }),
-			...(entity && { entity }),
+			entity: entity ?? Not(BaseEntityEnum.TimeLog),
 			...(entityId && { entityId }),
 			...(action && { action }),
 			...(isNotNullOrUndefined(actorType) && { actorType }),

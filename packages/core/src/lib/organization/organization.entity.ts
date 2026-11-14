@@ -5,6 +5,7 @@ import {
 	IsBoolean,
 	IsEnum,
 	IsIn,
+	IsInt,
 	IsNotEmpty,
 	IsNumber,
 	IsOptional,
@@ -424,6 +425,17 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	restrictTrackingSwitchToHigherRoles?: boolean;
 
 	/**
+	 * Whether the organization's time logs keep the rates they were recorded at. On, a rate change without a day
+	 * prices only the time recorded from then on, and a change with a day re-prices the time from that day. Off (empty)
+	 * by default, as before the setting: a rate change without a day prices all the time already tracked.
+	 */
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
+	@MultiORMColumn({ nullable: true })
+	timeLogsKeepTheirRates?: boolean;
+
+	/**
 	 * Whether members are asked to turn on two-factor authentication: a sign-in of a member without it says so
 	 * (`twoFactorSetupRequired`), and the client takes them to the setup. Off by default, so that no member is asked
 	 * for a code an app they use cannot take yet.
@@ -433,6 +445,37 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@IsBoolean()
 	@MultiORMColumn({ default: false })
 	requireTwoFactor?: boolean;
+
+	/**
+	 * Whether a member may discard their own running timer, which removes the run instead of keeping it. On by
+	 * default, and a null value counts as allowed.
+	 */
+	@ApiPropertyOptional({ type: () => Boolean, default: true })
+	@IsOptional()
+	@IsBoolean()
+	@MultiORMColumn({ nullable: true, default: true })
+	allowDiscardTimer?: boolean;
+
+	/**
+	 * When set, a running timer may be discarded only within this many minutes of its start. No limit by default.
+	 */
+	@ApiPropertyOptional({ type: () => Number, minimum: 1, maximum: 1440 })
+	@IsOptional()
+	@IsInt()
+	@Min(1)
+	@Max(1440)
+	@MultiORMColumn({ nullable: true })
+	discardTimerWithinMinutes?: number;
+
+	/**
+	 * Whether members may record breaks: time logs of type BREAK, taken from the timer or added by hand, which never count
+	 * as worked, billable or invoiced time. Off when unset, as before the setting existed: a break is then refused.
+	 */
+	@ApiPropertyOptional({ type: () => Boolean, default: false })
+	@IsOptional()
+	@IsBoolean()
+	@MultiORMColumn({ nullable: true, default: false })
+	allowBreaks?: boolean;
 
 	@MultiORMColumn({ default: 12 })
 	timeFormat?: 12 | 24;

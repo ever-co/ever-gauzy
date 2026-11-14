@@ -38,12 +38,7 @@ import { bulkOptionsOf } from '../../api/bulk.decorator';
 import { RequestContext } from '../../core/context';
 import { Idempotent } from '../../idempotency/idempotent.decorator';
 import { OrganizationPolicyTarget, Permissions } from '../../shared/decorators';
-import {
-	FeatureFlagGuard,
-	OrganizationPermissionGuard,
-	PermissionGuard,
-	TenantBaseGuard
-} from '../../shared/guards';
+import { FeatureFlagGuard, OrganizationPermissionGuard, PermissionGuard, TenantBaseGuard } from '../../shared/guards';
 // Imported from its own module rather than through the `shared/guards` barrel, and the difference matters:
 // `@UseGuards(...)` is evaluated when this class is defined, the barrel reaches `core/index.ts`, which reaches
 // `core.module` and every domain module — so in some load orders the guard comes back `undefined` and Nest
@@ -152,6 +147,7 @@ export interface ITimeLogOwedAmountReportEmployee {
 	employeeId?: Id;
 	duration: number;
 	amount: number;
+	currency?: string | null;
 }
 
 /** One day of the owed-amount report, as `TimeLogOwedAmountReportEntry` declares it. */
@@ -160,10 +156,17 @@ export interface ITimeLogOwedAmountReportEntry {
 	employees: ITimeLogOwedAmountReportEmployee[];
 }
 
+/** An amount in one currency, as `TimeLogCurrencyAmount` declares it. */
+export interface ITimeLogCurrencyAmount {
+	currency: string | null;
+	amount: number;
+}
+
 /** One day of the owed-amount chart, as `TimeLogOwedAmountReportChartPoint` declares it. */
 export interface ITimeLogOwedAmountReportChartPoint {
 	date: string;
 	value: number;
+	valueByCurrency?: ITimeLogCurrencyAmount[];
 }
 
 /**
@@ -194,6 +197,7 @@ export interface ITimeLogWeeklyReport {
 	activity?: number;
 	spent?: number | null;
 	currency?: string | null;
+	spentByCurrency?: ITimeLogCurrencyAmount[];
 }
 
 /**
@@ -409,7 +413,8 @@ export class TimeLogResolver {
 		@Args('last', { type: () => Int, nullable: true }) last?: number,
 		@Args('before', { type: () => String, nullable: true }) before?: string,
 		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
-		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number,
+		@Args('includeBreaks', { type: () => Boolean, nullable: true }) includeBreaks?: boolean
 	): Promise<GraphqlConnection<TimeLog>> {
 		// The delivered list read answers the rows themselves rather than a page envelope, on both
 		// stores, which is why there is no `items` to unwrap here.
@@ -419,7 +424,8 @@ export class TimeLogResolver {
 			endDate,
 			employeeIds,
 			teamIds,
-			activityLevel
+			activityLevel,
+			includeBreaks
 		} as IGetTimeLogReportInput);
 
 		return buildConnection<TimeLog>({
@@ -656,7 +662,8 @@ export class TimeLogResolver {
 			employees: (day.employees ?? []).map((line) => ({
 				employeeId: line.employee?.id,
 				duration: line.duration,
-				amount: line.amount
+				amount: line.amount,
+				currency: line.currency
 			}))
 		}));
 	}
@@ -706,7 +713,11 @@ export class TimeLogResolver {
 			})
 		);
 
-		return (answer ?? []).map((day: Record<string, any>) => ({ date: day.date, value: day.value }));
+		return (answer ?? []).map((day: Record<string, any>) => ({
+			date: day.date,
+			value: day.value,
+			valueByCurrency: day.valueByCurrency
+		}));
 	}
 
 	/**
@@ -762,7 +773,8 @@ export class TimeLogResolver {
 			sum: week.sum,
 			activity: week.activity,
 			spent: week.spent ?? null,
-			currency: week.currency ?? null
+			currency: week.currency ?? null,
+			spentByCurrency: week.spentByCurrency
 		}));
 	}
 

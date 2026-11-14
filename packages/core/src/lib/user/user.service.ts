@@ -21,6 +21,7 @@ import {
 	UpdateResult,
 	DeleteResult,
 	MoreThan,
+	MoreThanOrEqual,
 	IsNull
 } from 'typeorm';
 import { EventBus } from '@nestjs/cqrs';
@@ -1231,6 +1232,51 @@ export class UserService extends TenantAwareCrudService<User> {
 			default:
 				throw new Error(`ORM type not implemented: ${this.ormType}`);
 		}
+	}
+
+	/**
+	 * Spends the sign-in code of one user to confirm an action of theirs (signing out their other sessions), when it
+	 * matches and has not expired.
+	 *
+	 * One conditional write checks and spends it, so two requests racing on one code cannot both pass: the code and its
+	 * expiry stay in the WHERE clause, and only the first request matches the row. The same code, which the sign-in code
+	 * e-mail gave every account of the address, is then spent on the address's other accounts too, as a sign-in spends
+	 * it (`invalidateMagicCode`).
+	 *
+	 * @param userId - The user confirming the action.
+	 * @param email - Their address.
+	 * @param code - The code they sent.
+	 * @param now - The time the code must not have expired at.
+	 * @returns Whether the code matched and is now spent.
+	 */
+	async claimSignInCode(userId: ID, email: string, code: string, now: Date = new Date()): Promise<boolean> {
+		const update = { code: null, codeExpireAt: null };
+		let claimed: number;
+
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				claimed = await this.mikroOrmUserRepository.nativeUpdate(
+					{ id: userId, code, codeExpireAt: { $gte: now } },
+					update
+				);
+				break;
+			case MultiORMEnum.TypeORM: {
+				const { affected } = await this.typeOrmUserRepository.update(
+					{ id: userId, code, codeExpireAt: MoreThanOrEqual(now) },
+					update
+				);
+				claimed = affected ?? 0;
+				break;
+			}
+			default:
+				throw new Error(`ORM type not implemented: ${this.ormType}`);
+		}
+
+		if (claimed === 0) {
+			return false;
+		}
+		await this.invalidateMagicCode(email, code);
+		return true;
 	}
 
 	/**

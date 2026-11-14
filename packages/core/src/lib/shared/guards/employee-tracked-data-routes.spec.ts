@@ -101,7 +101,9 @@ const GUARDED: [Function, string, string[]][] = [
 			'getTimeLimitReport',
 			'getProjectBudgetLimit',
 			'clientBudgetLimit',
-			'getLogs'
+			'getLogs',
+			'getHistory',
+			'getEntryHistory'
 		]
 	],
 	[TimeSlotController, 'TimeSlotController', ['findAll']],

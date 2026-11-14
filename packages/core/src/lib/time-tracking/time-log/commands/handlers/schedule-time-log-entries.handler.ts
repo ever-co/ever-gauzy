@@ -2,13 +2,14 @@ import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import { Brackets, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
-import { ID, ITimeLog, ITimeSlot } from '@gauzy/contracts';
+import { ID, ITimeLog, ITimeSlot, TimeLogType } from '@gauzy/contracts';
 import { prepareSQLQuery as p } from './../../../../database/database.helper';
 import { MultiORM, MultiORMEnum, getORMType } from './../../../../core/utils';
 import { TimeLog } from './../../time-log.entity';
 import { ScheduleTimeLogEntriesCommand } from '../schedule-time-log-entries.command';
 import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.repository';
 import { MikroOrmTimeLogRepository } from '../../repository/mikro-orm-time-log.repository';
+import { breakEnd } from '../../break-rules';
 
 @CommandHandler(ScheduleTimeLogEntriesCommand)
 export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTimeLogEntriesCommand> {
@@ -35,7 +36,7 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 	 * @throws Error when one of the three ids is missing; nothing is closed then.
 	 */
 	public async execute(command: ScheduleTimeLogEntriesCommand): Promise<void> {
-		const { tenantId, organizationId, employeeId, timeLogIds } = command;
+		const { tenantId, organizationId, employeeId, timeLogIds, replacedAt } = command;
 
 		// One employee's entries only. The query below keeps its employee, organization and tenant filters only when
 		// the employee and organization ids are set: without them it would close the pending entries of every employee
@@ -57,7 +58,7 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 
 		// Iterate through each pending time log entry to process and update them as necessary
 		for await (const log of logs) {
-			await this.processTimeLogEntry(log);
+			await this.processTimeLogEntry(log, replacedAt);
 		}
 	}
 
@@ -99,10 +100,9 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 
 				// Re-fetch as entities with timeSlots populated (matching TypeORM's relations: { timeSlots: true })
 				const ids = results.map((r: any) => r.id);
-				return await this.mikroOrmTimeLogRepository.find(
-					{ id: { $in: ids } } as any,
-					{ populate: ['timeSlots'] as any }
-				);
+				return await this.mikroOrmTimeLogRepository.find({ id: { $in: ids } } as any, {
+					populate: ['timeSlots'] as any
+				});
 			}
 			case MultiORMEnum.TypeORM:
 			default: {
@@ -156,14 +156,18 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 	 *
 	 * @param timeLog The time log entry to process
 	 */
-	private async processTimeLogEntry(timeLog: ITimeLog): Promise<void> {
+	private async processTimeLogEntry(timeLog: ITimeLog, replacedAt?: Date): Promise<void> {
 		const { timeSlots } = timeLog;
 
 		// The end worked out for the entry below, if any: `stopTimeLog` writes it on a log stored without one.
 		let stoppedAt: Date | undefined;
 
-		// Handle cases where there are no time slots
-		if (isEmpty(timeSlots)) {
+		// A break holds no time slots by design: it ends where the run that replaces it starts, or now. The rule below for
+		// a run without slots (no sign of work after ten minutes) would cut it to ten seconds.
+		if (timeLog.logType === TimeLogType.BREAK) {
+			stoppedAt = breakEnd(timeLog, replacedAt);
+			await this.saveTimeLog({ id: timeLog.id, stoppedAt });
+		} else if (isEmpty(timeSlots)) {
 			// Retrieve the last log's startedAt date
 			const startedAt = moment.utc(timeLog.startedAt);
 
