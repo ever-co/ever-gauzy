@@ -128,6 +128,13 @@ describe('Inbox UI helpers', () => {
 		expect(linksOf({ entity: BaseEntityEnum.Comment, entityId: 'c' })).toEqual([]);
 	});
 
+	it("links an invoice notification's estimate, a client's answer to it", () => {
+		expect(linksOf({ entity: BaseEntityEnum.Invoice, entityId: 'estimate-1' })).toEqual([
+			{ kind: 'estimate', commands: ['/pages/accounting/invoices/estimates/view', 'estimate-1'] }
+		]);
+		expect(linksOf({ entity: BaseEntityEnum.Invoice })).toEqual([]);
+	});
+
 	it('reads my recipient state; a reader without one sees the item as read', () => {
 		const now = new Date('2026-10-16T12:00:00Z');
 		const recipient = { isRead: false, isArchived: false, snoozedUntil: new Date('2026-10-16T13:00:00Z') };

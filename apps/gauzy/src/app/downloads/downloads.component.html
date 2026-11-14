@@ -1,0 +1,512 @@
+<!--
+	Full-screen page: routed outside /pages, so there is no nav sidebar, header or footer. nb-layout
+	still wraps it for the theme's background, typography and scrolling.
+-->
+<nb-layout>
+	<nb-layout-column class="downloads-column">
+		<header class="topbar">
+			<button type="button" class="back-button" (click)="goBack()" [attr.aria-label]="'BUTTONS.BACK' | translate">
+				<nb-icon icon="arrow-back-outline" aria-hidden="true"></nb-icon>
+			</button>
+			<span class="topbar-title">{{ 'DOWNLOADS_PAGE.TITLE' | translate }}</span>
+		</header>
+
+		<main class="downloads-page">
+			<h1 class="headline">{{ 'DOWNLOADS_PAGE.HEADLINE' | translate }}</h1>
+
+			<!-- On a phone, the app for this device leads the page. -->
+			@if (isPhone && mobileUrl) {
+				<div class="app-grid is-single">
+					<ng-container *ngTemplateOutlet="mobileCard"></ng-container>
+				</div>
+			}
+
+			<!-- Desktop: copy and the installer for this OS on the start side, the timer drawing on the end side. -->
+			@if (primaryDesktop) {
+				<section class="shell" aria-labelledby="downloads-desktop-title">
+					<div class="panel hero">
+						<div class="panel-copy">
+							<h2 class="panel-title" id="downloads-desktop-title">
+								{{ 'DOWNLOADS_PAGE.DESKTOP.TITLE' | translate }}
+							</h2>
+							<p class="panel-description">{{ 'DOWNLOADS_PAGE.DESKTOP.DESCRIPTION' | translate }}</p>
+							<div class="hero-actions">
+								<a
+									class="btn btn-solid"
+									[href]="primaryDesktop.url"
+									target="_blank"
+									rel="noopener"
+									(click)="onDesktopDownload(primaryDesktop)"
+								>
+									<i [class]="primaryDesktop.icon" aria-hidden="true"></i>
+									{{
+										'DOWNLOADS_PAGE.DESKTOP.DOWNLOAD_FOR'
+											| translate: { platform: primaryDesktop.name }
+									}}
+								</a>
+								@if (otherDesktops.length) {
+									<p class="other-platforms">
+										<span>{{ 'DOWNLOADS_PAGE.DESKTOP.ALSO_FOR' | translate }}</span>
+										@for (desktop of otherDesktops; track desktop.platform) {
+											<a
+												class="platform-link"
+												[href]="desktop.url"
+												target="_blank"
+												rel="noopener"
+												[attr.aria-label]="
+													'DOWNLOADS_PAGE.DESKTOP.DOWNLOAD_FOR'
+														| translate: { platform: desktop.name }
+												"
+												(click)="onDesktopDownload(desktop)"
+											>
+												<i [class]="desktop.icon" aria-hidden="true"></i>
+												{{ desktop.name }}
+											</a>
+										}
+									</p>
+								}
+							</div>
+
+							<!--
+								After a desktop download: what happens next, in the desktop app's own
+								words (its "Custom / Network" or "Live" option and "API Host" field).
+							-->
+							@if (startedDownload(); as started) {
+								<div class="setup" aria-live="polite">
+									<p class="setup-opened">
+										<nb-icon icon="checkmark-circle-2-outline" aria-hidden="true"></nb-icon>
+										<span>
+											{{ 'DOWNLOADS_PAGE.SETUP.OPENED' | translate: { platform: started.name } }}
+											<span class="muted">{{
+												'DOWNLOADS_PAGE.SETUP.NOT_OPENED' | translate
+											}}</span>
+											<a [href]="started.url" target="_blank" rel="noopener">
+												{{ 'DOWNLOADS_PAGE.SETUP.TRY_AGAIN' | translate }}
+											</a>
+										</span>
+									</p>
+									<h3 class="setup-title">{{ 'DOWNLOADS_PAGE.SETUP.TITLE' | translate }}</h3>
+									<ol class="setup-steps">
+										<li>
+											@switch (started.platform) {
+												@case ('macos') {
+													{{ 'DOWNLOADS_PAGE.SETUP.INSTALL_MACOS' | translate }}
+												}
+												@case ('linux') {
+													{{ 'DOWNLOADS_PAGE.SETUP.INSTALL_LINUX' | translate }}
+												}
+												@default {
+													{{ 'DOWNLOADS_PAGE.SETUP.INSTALL_WINDOWS' | translate }}
+												}
+											}
+										</li>
+										<li>
+											@if (isLiveServer) {
+												{{
+													'DOWNLOADS_PAGE.SETUP.CONNECT_LIVE'
+														| translate
+															: { option: ('TIMER_TRACKER.SETUP.LIVE' | translate) }
+												}}
+											} @else {
+												{{
+													'DOWNLOADS_PAGE.SETUP.CONNECT_CUSTOM'
+														| translate
+															: {
+																	option:
+																		('TIMER_TRACKER.SETUP.CUSTOM_NETWORK'
+																		| translate)
+															  }
+												}}
+												<!--
+													The setup screen's two fields, labelled as it labels them. Port
+													comes pre-filled with 3000 and overrides any port in API Host,
+													so an address without a port says to clear it.
+												-->
+												<span class="connect-fields">
+													<span class="connect-row">
+														<span class="connect-label">{{
+															'TIMER_TRACKER.SETUP.API_HOST' | translate
+														}}</span>
+														<ng-container
+															*ngTemplateOutlet="
+																copyField;
+																context: {
+																	field: 'host',
+																	value: connectHost,
+																	label: 'TIMER_TRACKER.SETUP.API_HOST'
+																}
+															"
+														></ng-container>
+													</span>
+													<span class="connect-row">
+														<span class="connect-label">{{
+															'TIMER_TRACKER.SETUP.PORT' | translate
+														}}</span>
+														@if (connectPort) {
+															<ng-container
+																*ngTemplateOutlet="
+																	copyField;
+																	context: {
+																		field: 'port',
+																		value: connectPort,
+																		label: 'TIMER_TRACKER.SETUP.PORT'
+																	}
+																"
+															></ng-container>
+														} @else {
+															<span class="connect-note">{{
+																'DOWNLOADS_PAGE.SETUP.PORT_EMPTY' | translate
+															}}</span>
+														}
+													</span>
+												</span>
+											}
+										</li>
+										<li>{{ 'DOWNLOADS_PAGE.SETUP.SIGN_IN' | translate }}</li>
+									</ol>
+								</div>
+							}
+						</div>
+
+						<!--
+							The desktop app's timer window, mid-session, cut off by the bottom of the
+							card. Labels are the desktop timer's own TIMER_TRACKER keys.
+							Hands-on: a pointer over the drawing or keyboard focus on its timer button
+							hands it to the visitor — the cursor steps aside and the button really
+							pauses and resumes. Everything except that button is decorative and hidden
+							from assistive technology; the button has a real name and is in the tab order.
+						-->
+						<div
+							class="art art-desktop"
+							role="group"
+							[attr.aria-label]="'DOWNLOADS_PAGE.ILLUSTRATION.TRY_IT' | translate"
+							[class.is-hands-on]="desktopTakeover()"
+							(pointerenter)="setHandsOn('desktop', 'pointer', true)"
+							(pointerleave)="setHandsOn('desktop', 'pointer', false)"
+							(focusin)="setHandsOn('desktop', 'focus', true)"
+							(focusout)="setHandsOn('desktop', 'focus', false)"
+						>
+							<span class="try-it" aria-hidden="true">{{
+								'DOWNLOADS_PAGE.ILLUSTRATION.TRY_IT' | translate
+							}}</span>
+							<div class="desktop-window">
+								<span class="titlebar" aria-hidden="true">
+									<!-- The app icon (favicon), drawn for 16px — as the desktop app's title bar shows it. -->
+									<img class="titlebar-logo" src="favicon.ico" alt="" />
+									<span class="titlebar-menu">Gauzy</span>
+									<span class="titlebar-menu">{{ 'TIMER_TRACKER.MENU.WINDOW' | translate }}</span>
+									<span class="titlebar-menu">…</span>
+									<span class="titlebar-controls">
+										<nb-icon icon="minus-outline"></nb-icon>
+										<nb-icon icon="close-outline"></nb-icon>
+									</span>
+								</span>
+
+								<span class="window-content">
+									<span class="dw-select org-select" aria-hidden="true">
+										<img class="org-logo" src="assets/images/logos/ever.jpg" alt="" />
+										<span class="dw-value">Ever Tech</span>
+										<nb-icon icon="chevron-down-outline"></nb-icon>
+									</span>
+
+									<span class="dw-timer">
+										<span class="dw-clock" aria-hidden="true">{{ desktopClock() }}</span>
+										<button
+											type="button"
+											class="dw-pause"
+											[class.is-hovered]="!desktopTakeover() && desktopCursor().at === 'pause'"
+											[class.is-paused]="!desktopRunning()"
+											[attr.aria-label]="
+												(desktopRunning()
+													? 'TIMER_TRACKER.STOP_TIMER'
+													: 'TIMER_TRACKER.START_TIMER'
+												) | translate
+											"
+											(click)="toggleDesktopTimer()"
+										>
+											<i
+												[class]="desktopRunning() ? 'fas fa-pause' : 'fas fa-play'"
+												aria-hidden="true"
+											></i>
+										</button>
+									</span>
+									<span class="dw-totals" aria-hidden="true">
+										<span>
+											<span class="muted">{{ 'TIMER_TRACKER.TODAY' | translate }}</span>
+											00h 00m
+										</span>
+										<span>
+											<span class="muted">{{ 'TIMESHEET.WEEK' | translate }}</span>
+											31h 59m
+											<span class="dw-limit">{{ 'TIMER_TRACKER.NO_LIMIT' | translate }}</span>
+										</span>
+									</span>
+
+									<!-- The drawn form: decorative, so hidden from assistive technology. -->
+									<span class="dw-form" aria-hidden="true">
+										<span class="dw-label">
+											{{ 'TIMER_TRACKER.SELECT_CLIENT' | translate }}
+											<nb-icon icon="edit-outline"></nb-icon>
+										</span>
+										<span
+											class="dw-select"
+											[class.is-pressed]="
+												!desktopTakeover() &&
+												desktopCursor().at === 'client' &&
+												desktopCursor().press
+											"
+										>
+											<span class="dw-placeholder">{{
+												'TIMER_TRACKER.PLACEHOLDERS.SELECT_CLIENT' | translate
+											}}</span>
+											<nb-icon icon="chevron-down-outline"></nb-icon>
+										</span>
+
+										<span class="dw-label">{{ 'TIMER_TRACKER.SELECT_PROJECT' | translate }}</span>
+										<span
+											class="dw-select"
+											[class.is-pressed]="
+												!desktopTakeover() &&
+												desktopCursor().at === 'project' &&
+												desktopCursor().press
+											"
+										>
+											<span class="project-badge">EG</span>
+											<span class="dw-value">Ever Gauzy</span>
+											<nb-icon icon="chevron-down-outline"></nb-icon>
+										</span>
+
+										<span class="dw-label">{{ 'TIMER_TRACKER.SELECT_TEAM' | translate }}</span>
+										<span class="dw-select">
+											<span class="dw-placeholder">{{
+												'TIMER_TRACKER.PLACEHOLDERS.SELECT_TEAM' | translate
+											}}</span>
+											<nb-icon icon="chevron-down-outline"></nb-icon>
+										</span>
+
+										<span class="dw-label">{{ 'TIMER_TRACKER.SELECT_TASK' | translate }}</span>
+										<span class="dw-select">
+											<span class="dw-placeholder">{{
+												'TIMER_TRACKER.PLACEHOLDERS.SELECT_TASK' | translate
+											}}</span>
+											<nb-icon icon="chevron-down-outline"></nb-icon>
+										</span>
+
+										<span class="dw-label">{{ 'TIMER_TRACKER.DESCRIPTION' | translate }}</span>
+										<span class="dw-textarea dw-placeholder">
+											{{ 'TIMER_TRACKER.PLACEHOLDERS.DESCRIPTION' | translate }}
+										</span>
+
+										<span class="dw-toggle">
+											<span class="dw-switch"></span>
+											{{ 'TIMER_TRACKER.ACTIVITY_WATCH_INTEGRATION' | translate }}
+										</span>
+										<span class="dw-capture">
+											{{ 'TIMER_TRACKER.LAST_CAPTURE_TAKEN' | translate }} {{ lastCaptureAgo }}
+										</span>
+									</span>
+								</span>
+
+								<!-- The "You" cursor; its step comes from the component's loop. -->
+								<span
+									class="cursor"
+									aria-hidden="true"
+									[attr.data-at]="desktopCursor().at"
+									[class.is-pressing]="desktopCursor().press"
+									[class.is-hidden]="desktopTakeover()"
+								>
+									<svg class="cursor-arrow" viewBox="0 0 20 20">
+										<path d="M3 2.5 16.5 9l-5.75 1.75L8 16.5Z" />
+									</svg>
+									<span class="cursor-label">{{
+										'DOWNLOADS_PAGE.ILLUSTRATION.YOU' | translate
+									}}</span>
+								</span>
+							</div>
+						</div>
+					</div>
+				</section>
+			}
+
+			@if ((mobileUrl && !isPhone) || extensionUrl) {
+				<div class="app-grid">
+					@if (mobileUrl && !isPhone) {
+						<ng-container *ngTemplateOutlet="mobileCard"></ng-container>
+					}
+
+					@if (extensionUrl) {
+						<section class="shell" aria-labelledby="downloads-extension-title">
+							<div class="panel glow-end">
+								<h2 class="panel-title" id="downloads-extension-title">
+									{{ 'DOWNLOADS_PAGE.EXTENSION.TITLE' | translate }}
+								</h2>
+								<p class="panel-description">
+									{{ 'DOWNLOADS_PAGE.EXTENSION.DESCRIPTION' | translate }}
+								</p>
+								<ul class="rows">
+									<li>
+										<span class="row-icon" aria-hidden="true"><i class="fab fa-chrome"></i></span>
+										<span class="row-label">Chrome</span>
+										<a class="btn btn-soft" [href]="extensionUrl" target="_blank" rel="noopener">
+											{{ 'DOWNLOADS_PAGE.EXTENSION.INSTALL' | translate }}
+											<nb-icon
+												icon="diagonal-arrow-right-up-outline"
+												aria-hidden="true"
+											></nb-icon>
+										</a>
+									</li>
+								</ul>
+
+								<!--
+									The extension's popup over a browser tab. Hands-on like the Desktop
+									drawing (pointer or keyboard focus): play really starts the timer.
+									Only that button is exposed to assistive technology.
+								-->
+								<div
+									class="art art-extension"
+									role="group"
+									[attr.aria-label]="'DOWNLOADS_PAGE.ILLUSTRATION.TRY_IT' | translate"
+									[class.is-hands-on]="extensionTakeover()"
+									(pointerenter)="setHandsOn('extension', 'pointer', true)"
+									(pointerleave)="setHandsOn('extension', 'pointer', false)"
+									(focusin)="setHandsOn('extension', 'focus', true)"
+									(focusout)="setHandsOn('extension', 'focus', false)"
+								>
+									<span class="try-it" aria-hidden="true">{{
+										'DOWNLOADS_PAGE.ILLUSTRATION.TRY_IT' | translate
+									}}</span>
+									<div class="browser">
+										<div class="browser-bar" aria-hidden="true">
+											<span class="dots"><span></span><span></span><span></span></span>
+											<span class="address"></span>
+											<span class="ext-badge"><nb-icon icon="clock-outline"></nb-icon></span>
+										</div>
+										<!-- The timer in its compact form, opened from the toolbar. -->
+										<div class="timer-card compact">
+											<span class="timer-controls" aria-hidden="true">
+												<nb-icon icon="expand-outline"></nb-icon>
+												<nb-icon icon="close-outline"></nb-icon>
+											</span>
+											<span class="timer-main">
+												<span class="billable" aria-hidden="true">$</span>
+												<span class="reading" aria-hidden="true">
+													<span class="session">{{ extensionClock() }}</span>
+													<span class="today">
+														{{ 'TIMER_TRACKER.TODAY' | translate }} {{ extensionClock() }}
+													</span>
+												</span>
+												<button
+													type="button"
+													class="play"
+													[class.is-running]="extensionRunning()"
+													[class.is-pressed]="!extensionTakeover() && extensionCursor().press"
+													[attr.aria-label]="
+														(extensionRunning()
+															? 'TIMER_TRACKER.STOP_TIMER'
+															: 'TIMER_TRACKER.START_TIMER'
+														) | translate
+													"
+													(click)="toggleExtensionTimer()"
+												>
+													<i
+														[class]="extensionRunning() ? 'fas fa-pause' : 'fas fa-play'"
+														aria-hidden="true"
+													></i>
+												</button>
+												<span class="mode-switch" aria-hidden="true">
+													<span class="is-on"><i class="fas fa-stopwatch"></i></span>
+													<span><nb-icon icon="menu-outline"></nb-icon></span>
+												</span>
+											</span>
+
+											<!-- The "You" cursor: starts the timer, lets it run, stops it. -->
+											<span
+												class="cursor"
+												aria-hidden="true"
+												[attr.data-at]="extensionCursor().at"
+												[class.is-pressing]="extensionCursor().press"
+												[class.is-hidden]="extensionTakeover()"
+											>
+												<svg class="cursor-arrow" viewBox="0 0 20 20">
+													<path d="M3 2.5 16.5 9l-5.75 1.75L8 16.5Z" />
+												</svg>
+												<span class="cursor-label">{{
+													'DOWNLOADS_PAGE.ILLUSTRATION.YOU' | translate
+												}}</span>
+											</span>
+										</div>
+									</div>
+								</div>
+							</div>
+						</section>
+					}
+				</div>
+			}
+
+			@if (allDownloadsUrl) {
+				<a class="all-downloads" [href]="allDownloadsUrl" target="_blank" rel="noopener">
+					{{ 'DOWNLOADS_PAGE.ALL_DOWNLOADS' | translate }}
+					<nb-icon icon="arrow-forward-outline" aria-hidden="true"></nb-icon>
+				</a>
+			}
+		</main>
+	</nb-layout-column>
+</nb-layout>
+
+<!-- The Mobile card: first on phones, in the grid beside Browser extension elsewhere. -->
+<ng-template #mobileCard>
+	<section class="shell" aria-labelledby="downloads-mobile-title">
+		<div class="panel glow-center">
+			<h2 class="panel-title" id="downloads-mobile-title">
+				{{ 'DOWNLOADS_PAGE.MOBILE.TITLE' | translate }}
+			</h2>
+			<p class="panel-description">{{ 'DOWNLOADS_PAGE.MOBILE.DESCRIPTION' | translate }}</p>
+			<ul class="rows">
+				<li>
+					<span class="row-icon" aria-hidden="true"><i class="fas fa-mobile-alt"></i></span>
+					<span class="row-label">{{ 'DOWNLOADS_PAGE.MOBILE.PLATFORMS' | translate }}</span>
+					<a class="btn btn-soft" [href]="mobileUrl" target="_blank" rel="noopener">
+						{{ 'DOWNLOADS_PAGE.MOBILE.DOWNLOAD' | translate }}
+					</a>
+				</li>
+			</ul>
+
+			<!-- Decorative: a week of tracked hours on a phone. -->
+			<div class="art art-mobile" aria-hidden="true">
+				<div class="phone">
+					<span class="phone-notch"></span>
+					<span class="phone-label">{{ 'DOWNLOADS_PAGE.ILLUSTRATION.THIS_WEEK' | translate }}</span>
+					<span class="phone-total">31:08</span>
+					<span class="bars">
+						@for (height of weekBars; track $index) {
+							<span [style.height.%]="height" [style.--i]="$index"></span>
+						}
+					</span>
+				</div>
+			</div>
+		</div>
+	</section>
+</ng-template>
+
+<!-- A value for the desktop setup with Copy inside its end edge (API Host, Port). -->
+<ng-template #copyField let-field="field" let-value="value" let-label="label">
+	<span class="address-field" [class.is-copied]="copiedField() === field">
+		<code class="address-value" [title]="value">{{ value }}</code>
+		<button
+			type="button"
+			class="address-copy"
+			(click)="copyConnectValue(field)"
+			[attr.aria-label]="
+				copiedField() === field
+					? ('BUTTONS.COPIED' | translate)
+					: ('DOWNLOADS_PAGE.SETUP.COPY_FIELD' | translate: { field: (label | translate) })
+			"
+		>
+			<nb-icon
+				[icon]="copiedField() === field ? 'checkmark-outline' : 'copy-outline'"
+				aria-hidden="true"
+			></nb-icon>
+			{{ (copiedField() === field ? 'BUTTONS.COPIED' : 'BUTTONS.COPY') | translate }}
+		</button>
+	</span>
+</ng-template>

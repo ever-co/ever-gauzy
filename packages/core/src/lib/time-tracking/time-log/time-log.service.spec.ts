@@ -41,10 +41,12 @@ import { TimesheetFirstOrCreateCommand, TimesheetRecalculateCommand } from '../t
 import { TimeSlotBulkDeleteCommand } from '../time-slot/commands';
 import { TimeSlotBulkDeleteHandler } from '../time-slot/commands/handlers/time-slot-bulk-delete.handler';
 import { generateTimeSlots } from '../time-slot/utils';
+import { addQueryParameters, slotStartRanges } from '../testing/recording-query-builder';
 import { Organization } from '../../organization/organization.entity';
 import { TimeLog } from './time-log.entity';
 import { RUNNING_TIMER_OVERLAP, TimeLogService } from './time-log.service';
 import { BREAK_OVERLAP, BREAK_TYPE_LOCKED, BREAKS_NOT_ALLOWED } from './break-rules';
+import { toSafeHttpException } from '../../core/interceptors/safe-http-exception';
 
 const TENANT_ID = '5a1c2f0e-6d3b-4c8a-9e2f-1b7d4a6c8e90';
 const ORGANIZATION_ID = '0f9e8d7c-6b5a-4c3d-8e2f-1a0b9c8d7e6f';
@@ -1025,11 +1027,12 @@ describe('TimeLogService', () => {
 		 * refused with a 409 before anything is trimmed or written. A stopped log in the range is cleared as before.
 		 */
 		describe('manual time over a running timer (#11823)', () => {
-			/** The employee's timer, running since 09:30 with three heartbeats so far. */
+			/** The employee's Ever Teams timer, running since 09:30 with three heartbeats so far. */
 			const runningLog = {
 				id: 'running',
 				employeeId: TARGET_EMPLOYEE_ID,
 				organizationId: EMPLOYEE_ORGANIZATION_ID,
+				source: TimeLogSourceEnum.TEAMS,
 				isRunning: true,
 				startedAt: new Date('2026-01-05T09:30:00.000Z'),
 				stoppedAt: new Date('2026-01-05T10:00:00.000Z'),
@@ -1077,15 +1080,71 @@ describe('TimeLogService', () => {
 				}
 			);
 
-			it('CONTROL: still clears a stopped log in the range, slot by slot, and records the time', async () => {
+			it.each([
+				['adding', () => manualService.addManualTime({ ...request })],
+				['editing', () => manualService.updateManualTime('log-1', { ...request })]
+			])(
+				'names the running log in the 409 when %s time: its id, its start and its source',
+				async (_action, write) => {
+					conflicts = [stoppedLog, runningLog];
+
+					const refusal = (await write().catch((thrown) => thrown)) as ConflictException;
+
+					expect(refusal.getResponse()).toEqual({
+						message:
+							'A timer is running over this time range. Stop it first, or choose a range outside it.',
+						code: RUNNING_TIMER_OVERLAP,
+						runningTimeLog: {
+							id: 'running',
+							startedAt: '2026-01-05T09:30:00.000Z',
+							source: TimeLogSourceEnum.TEAMS
+						}
+					});
+				}
+			);
+
+			it('names the timer that started first when several run over the range', async () => {
+				const since0945 = {
+					...runningLog,
+					id: 'running-since-09:45',
+					startedAt: new Date('2026-01-05T09:45:00.000Z')
+				};
+				conflicts = [since0945, runningLog];
+
+				const refusal = (await manualService
+					.addManualTime({ ...request })
+					.catch((thrown) => thrown)) as ConflictException;
+
+				expect(refusal.getResponse()).toMatchObject({ runningTimeLog: { id: 'running' } });
+			});
+
+			it('still answers a 409 over a running log stored without a start, naming it without one', async () => {
+				conflicts = [{ ...runningLog, startedAt: null }];
+
+				const refusal = await manualService.addManualTime({ ...request }).catch((thrown) => thrown);
+
+				expect(refusal).toBeInstanceOf(ConflictException);
+				expect(refusal.getResponse()).toMatchObject({ runningTimeLog: { id: 'running', startedAt: null } });
+			});
+
+			it('keeps the start in the body the client gets, which every error body is copied into on its way out', async () => {
+				conflicts = [runningLog];
+
+				const refusal = (await manualService
+					.addManualTime({ ...request })
+					.catch((thrown) => thrown)) as ConflictException;
+				const sent = toSafeHttpException(refusal);
+
+				expect(sent.getStatus()).toBe(409);
+				expect(sent.getResponse()).toMatchObject({ runningTimeLog: { startedAt: '2026-01-05T09:30:00.000Z' } });
+			});
+
+			it('CONTROL: still clears a stopped log in the range, with one command for it, and records the time', async () => {
 				conflicts = [stoppedLog];
 
 				await manualService.addManualTime({ ...request });
 
-				expect(commandsOfType(DeleteTimeSpanCommand).map((command) => command.timeSlot.id)).toEqual([
-					'stopped@08:50',
-					'stopped@09:00'
-				]);
+				expect(commandsOfType(DeleteTimeSpanCommand).map((command) => command.timeLog.id)).toEqual(['stopped']);
 				expect(commandsOfType(TimeLogCreateCommand)).toHaveLength(1);
 			});
 		});
@@ -1274,6 +1333,55 @@ describe('TimeLogService', () => {
 					expect(commandsOfType(TimeLogUpdateCommand)).toEqual([]);
 				});
 			});
+
+			it.each([
+				['web timer', TimeLogSourceEnum.WEB_TIMER],
+				['Ever Teams', TimeLogSourceEnum.TEAMS],
+				['desktop', TimeLogSourceEnum.DESKTOP]
+			])(
+				'names the %s run the lookup misses in the 409: its id, its start and its source',
+				async (_label, source) => {
+					find.mockResolvedValue([runningSince8(source)]);
+
+					const refusal = (await manualService
+						.addManualTime({ ...request })
+						.catch((thrown) => thrown)) as ConflictException;
+
+					expect(refusal.getResponse()).toMatchObject({
+						code: RUNNING_TIMER_OVERLAP,
+						runningTimeLog: { id: `running-${source}`, startedAt: EIGHT.toISOString(), source }
+					});
+				}
+			);
+
+			it.each([
+				['adding', () => manualService.addManualTime({ ...request })],
+				['editing', () => manualService.updateManualTime('log-1', { ...request })]
+			])(
+				'names the timer that started first when %s time over two, of which only the later reaches the range',
+				async (_action, write) => {
+					// A desktop run since 09:30 whose time slots the overlap lookup finds, and an Ever Teams run since 08:00
+					// last heard at 08:30, which only the lookup of the running timers finds
+					const since0930 = {
+						...runningSince8(TimeLogSourceEnum.DESKTOP, new Date('2026-01-05T09:50:00.000Z')),
+						id: 'running-since-09:30',
+						startedAt: new Date('2026-01-05T09:30:00.000Z'),
+						timeSlots: [{ id: 'since-09:30@09:30' }, { id: 'since-09:30@09:40' }]
+					};
+					const since0800 = runningSince8(TimeLogSourceEnum.TEAMS, new Date('2026-01-05T08:30:00.000Z'));
+					execute.mockImplementation(async (command: unknown) =>
+						command instanceof IGetConflictTimeLogCommand ? [since0930] : undefined
+					);
+					find.mockResolvedValue([since0930, since0800]);
+
+					const refusal = (await write().catch((thrown) => thrown)) as ConflictException;
+
+					expect(refusal.getResponse()).toMatchObject({
+						code: RUNNING_TIMER_OVERLAP,
+						runningTimeLog: { id: since0800.id, startedAt: EIGHT.toISOString() }
+					});
+				}
+			);
 
 			it("CONTROL: lets a tracker's upload through over a tracker's run, left open on the server while it was offline", async () => {
 				find.mockResolvedValue([
@@ -1542,17 +1650,15 @@ describe('TimeLogService', () => {
 				const timeSlotRepository = {
 					createQueryBuilder: () => {
 						const params: Record<string, any> = {};
+						const addParameters = (condition: unknown, values?: Record<string, unknown>) => {
+							addQueryParameters(params, condition, values);
+							return builder;
+						};
 						const builder = {
 							alias: 'time_slot',
 							leftJoinAndSelect: () => builder,
-							where: (_sql: string, values: Record<string, unknown>) => (
-								Object.assign(params, values),
-								builder
-							),
-							andWhere: (_sql: string, values: Record<string, unknown>) => (
-								Object.assign(params, values),
-								builder
-							),
+							where: addParameters,
+							andWhere: addParameters,
 							getParameters: () => params,
 							// The join-row operations of `relation(TimeSlot, 'timeLogs').of(slot)`.
 							relation: () => ({
@@ -1565,19 +1671,22 @@ describe('TimeLogService', () => {
 									}
 								})
 							}),
-							getMany: async () =>
-								slots.filter(
+							getMany: async () => {
+								const ranges = slotStartRanges(params);
+								return slots.filter(
 									(slot) =>
 										!slot.deletedAt &&
 										slot.organizationId === params.organizationId &&
 										slot.tenantId === params.tenantId &&
 										slot.employeeId === params.employeeId &&
-										(!params.startTimes ||
-											(params.startTimes as Date[]).some(
-												(time) => time.getTime() === slot.startedAt.getTime()
+										(!ranges ||
+											ranges.some(
+												({ from, to }) =>
+													slot.startedAt.getTime() >= from && slot.startedAt.getTime() < to
 											)) &&
 										(!params.timeSlotsIds || (params.timeSlotsIds as string[]).includes(slot.id))
-								)
+								);
+							}
 						};
 						return builder;
 					},

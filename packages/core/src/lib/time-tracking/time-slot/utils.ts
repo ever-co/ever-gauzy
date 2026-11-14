@@ -1,4 +1,58 @@
 import * as moment from 'moment';
+import { ID, IDateRange, ITimeLog, ITimeSlot } from '@gauzy/contracts';
+
+/** A time slot covers the ten minutes from its start, as `TimeSlotSubscriber` sets its `stoppedAt`. */
+const TIME_SLOT_MINUTES = 10;
+
+/**
+ * The end of the ten minutes a time slot covers.
+ *
+ * @param timeSlot - The time slot.
+ */
+export function timeSlotEnd(timeSlot: ITimeSlot): Date {
+	const slotEnd = moment(timeSlot.startedAt).add(TIME_SLOT_MINUTES, 'minutes');
+	return slotEnd.toDate();
+}
+
+/**
+ * Whether time from `from` to `to` reaches into the ten minutes of a time slot.
+ *
+ * @param timeSlot - The time slot.
+ * @param from - The start of the time.
+ * @param to - The end of the time.
+ */
+export function reachesTimeSlot(timeSlot: ITimeSlot, from: Date, to: Date): boolean {
+	const startsBeforeSlotEnds = moment(from).isBefore(timeSlotEnd(timeSlot));
+	const endsAfterSlotStarts = moment(to).isAfter(timeSlot.startedAt);
+	return startsBeforeSlotEnds && endsAfterSlotStarts;
+}
+
+/**
+ * The milliseconds of the time from `from` to `to` that lie inside the ten minutes of a time slot.
+ *
+ * @param timeSlot - The time slot.
+ * @param from - The start of the time.
+ * @param to - The end of the time.
+ */
+export function timeInTimeSlot(timeSlot: ITimeSlot, from: Date, to: Date): number {
+	const timeStart = moment.max(moment(timeSlot.startedAt), moment(from));
+	const timeEnd = moment.min(moment(timeSlotEnd(timeSlot)), moment(to));
+	const milliseconds = timeEnd.diff(timeStart);
+	return Math.max(milliseconds, 0);
+}
+
+/**
+ * The ids of the time slots the logs hold whose ten minutes the span reaches, each once.
+ *
+ * @param span - The span.
+ * @param timeLogs - The logs, with their time slots.
+ */
+export function timeSlotIdsReachedBy(span: IDateRange, timeLogs: ITimeLog[] = []): ID[] {
+	const timeSlots = timeLogs.flatMap((timeLog) => timeLog.timeSlots ?? []);
+	const reached = timeSlots.filter((timeSlot) => reachesTimeSlot(timeSlot, span.start, span.end));
+	const ids = reached.map((timeSlot) => timeSlot.id);
+	return [...new Set(ids)];
+}
 
 /**
  * Generates time slots in 10-minute intervals between a start and end time.

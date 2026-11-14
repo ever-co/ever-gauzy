@@ -24,7 +24,8 @@ describe('JwtRefreshTokenStrategy.validate', () => {
 	function build(user: any = { ...activeUser }) {
 		const userService = { findOneByIdString: jest.fn(async () => user) };
 		const refreshTokenService = {
-			verify: jest.fn(async () => ({ isValid: true, token: { userId: 'user-1' }, reason: null }))
+			verify: jest.fn(async () => ({ isValid: true, token: { userId: 'user-1' }, reason: null })),
+			isSessionSignedOut: jest.fn(async () => false)
 		};
 		const strategy = new JwtRefreshTokenStrategy(userService as any, refreshTokenService as any);
 		return { strategy, userService, refreshTokenService };
@@ -104,6 +105,49 @@ describe('JwtRefreshTokenStrategy.validate', () => {
 			const user = await strategy.validate(request, { id: 'user-1' });
 
 			expect(user.refreshTokenOrganizationId).toBeNull();
+		});
+	});
+
+	/**
+	 * A session its user signed out never refreshes again (ever-co/ever-gauzy#11921), with a refresh token minted in it
+	 * after the sign-out too: the strategy reads the sign-out marker of the session the verified token names.
+	 */
+	describe('a signed-out session', () => {
+		const request = { body: { refresh_token: 'refresh-token' } } as any;
+		const inLaptopSession = { userId: 'user-1', sessionId: 'laptop', sessionStartedAt: '2026-11-14T08:00:00.000Z' };
+
+		it('refuses a refresh token of a session its user signed out', async () => {
+			const { strategy, refreshTokenService, userService } = build();
+			refreshTokenService.verify.mockResolvedValue({
+				isValid: true,
+				token: inLaptopSession,
+				reason: null
+			} as any);
+			refreshTokenService.isSessionSignedOut.mockResolvedValue(true);
+
+			await expect(strategy.validate(request, { id: 'user-1' })).rejects.toBeInstanceOf(UnauthorizedException);
+
+			expect(refreshTokenService.isSessionSignedOut).toHaveBeenCalledWith('user-1', 'laptop');
+			expect(userService.findOneByIdString).not.toHaveBeenCalled();
+		});
+
+		it('accepts a refresh token of a session still signed in', async () => {
+			const { strategy, refreshTokenService } = build();
+			refreshTokenService.verify.mockResolvedValue({
+				isValid: true,
+				token: inLaptopSession,
+				reason: null
+			} as any);
+
+			await expect(strategy.validate(request, { id: 'user-1' })).resolves.toMatchObject({ id: 'user-1' });
+		});
+
+		it('reads no marker for a refresh token minted before sessions were named', async () => {
+			const { strategy, refreshTokenService } = build();
+
+			await strategy.validate(request, { id: 'user-1' });
+
+			expect(refreshTokenService.isSessionSignedOut).not.toHaveBeenCalled();
 		});
 	});
 

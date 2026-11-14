@@ -1,4 +1,4 @@
-import { Controller, UseGuards, HttpStatus, Post, Body, Get, Query } from '@nestjs/common';
+import { Controller, UseGuards, HttpCode, HttpStatus, Post, Put, Body, Get, Query } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ITimeLog, ITimerStatus, PermissionsEnum } from '@gauzy/contracts';
@@ -6,7 +6,14 @@ import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
 import { Permissions } from './../../shared/decorators';
 import { UseValidationPipe } from '../../shared/pipes';
 import { TimerService } from './timer.service';
-import { StartTimerDTO, StopTimerDTO, TimerStatusQueryDTO, ToggleTimerDTO } from './dto';
+import {
+	DiscardTimerDTO,
+	MoveTimerStartDTO,
+	StartTimerDTO,
+	StopTimerDTO,
+	TimerStatusQueryDTO,
+	ToggleTimerDTO
+} from './dto';
 import { GetTimerStatusQuery } from './queries/get-timer-status.query';
 import { StartTimerCommand, StopTimerCommand } from './commands';
 
@@ -140,5 +147,72 @@ export class TimerController {
 	@UseValidationPipe()
 	async stopTimer(@Body() entity: StopTimerDTO): Promise<ITimeLog | null> {
 		return this._commandBus.execute(new StopTimerCommand(entity));
+	}
+
+	/**
+	 * Discard timer endpoint.
+	 *
+	 * Removes the caller's running timer, with its time slots, screenshots and activity, as if it never started. The
+	 * time was never kept, so the timer's own permission is enough: the role permission to delete time is not asked. An
+	 * organization that turned deleting time off refuses it, as one that turned discarding off does.
+	 *
+	 * @param entity - A DiscardTimerDTO object, naming the running time log the discard is for when the client knows it.
+	 */
+	@ApiOperation({ summary: 'Discard the running timer' })
+	@ApiResponse({
+		status: HttpStatus.NO_CONTENT,
+		description: "The caller's running timer was discarded: the run, its time slots and screenshots are removed."
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'No timer is running, or the input is invalid. Nothing is removed.'
+	})
+	@ApiResponse({
+		status: HttpStatus.FORBIDDEN,
+		description:
+			'The organization turned discarding or deleting time off (code TIMER_DISCARD_DISABLED), or the run started longer ago than the organization allows (code TIMER_DISCARD_TOO_LATE). Nothing is removed.'
+	})
+	@ApiResponse({
+		status: HttpStatus.CONFLICT,
+		description:
+			'The discard names a time log (timeLogId) that is not the running one, or the run is a tracker app run (code TIMER_DISCARD_TRACKER_RUN). Nothing is removed: the running timer goes on.'
+	})
+	@Post('/discard')
+	@HttpCode(HttpStatus.NO_CONTENT)
+	@UseValidationPipe({ whitelist: true })
+	async discardTimer(@Body() entity: DiscardTimerDTO): Promise<void> {
+		await this.timerService.discardTimer(entity);
+	}
+
+	/**
+	 * Moves the start of the caller's running timer, earlier or later, while it keeps running.
+	 *
+	 * @param entity - The new start, and the reason.
+	 * @returns The running log, as the timer status answers it in `lastLog`.
+	 */
+	@ApiOperation({ summary: 'Move the start of the running timer' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'The running timer starts at the given time and keeps running: one entry, marked edited.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'TIMER_NOT_RUNNING: no timer runs. TIMER_START_IN_FUTURE: the start is later than now. TIMER_START_REASON_REQUIRED: the organization asks for a reason. Or an invalid body.'
+	})
+	@ApiResponse({
+		status: HttpStatus.FORBIDDEN,
+		description:
+			'TIMER_START_EDIT_NOT_ALLOWED: the organization does not allow changing tracked time. TIMER_START_MANUAL_NOT_ALLOWED: an earlier start adds time by hand, which the organization does not allow.'
+	})
+	@ApiResponse({
+		status: HttpStatus.CONFLICT,
+		description:
+			'TIMER_START_OVERLAP: an earlier start overlaps another entry (overlapsUntil is when that entry ends). TIMER_START_TRACKER_RUN: the timer runs in the desktop app or the agent.'
+	})
+	@Put('/started-at')
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async moveTimerStart(@Body() entity: MoveTimerStartDTO): Promise<ITimeLog> {
+		return await this.timerService.moveRunningTimerStart(entity);
 	}
 }

@@ -1,11 +1,25 @@
 import { JoinColumn, JoinTable, RelationId } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, TransformFnParams } from 'class-transformer';
-import { IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, Max, Min } from 'class-validator';
+import {
+	IsBoolean,
+	IsEnum,
+	IsIn,
+	IsInt,
+	IsNotEmpty,
+	IsNumber,
+	IsOptional,
+	IsString,
+	IsUUID,
+	Max,
+	Min,
+	ValidateIf
+} from 'class-validator';
 import {
 	DEFAULT_INVITE_EXPIRY_PERIOD,
 	DEFAULT_PROFIT_BASED_BONUS,
-	DEFAULT_STANDARD_WORK_HOURS_PER_DAY
+	DEFAULT_STANDARD_WORK_HOURS_PER_DAY,
+	DURATION_ROUNDING_INTERVALS
 } from '@gauzy/constants';
 import {
 	DefaultValueDateTypeEnum,
@@ -30,6 +44,7 @@ import {
 	ID,
 	BonusTypeEnum,
 	CurrenciesEnum,
+	DurationRoundingDirectionEnum,
 	IUser
 } from '@gauzy/contracts';
 import {
@@ -59,7 +74,9 @@ import {
 	MultiORMManyToOne,
 	MultiORMOneToMany
 } from './../core/decorators/entity';
+import { BILLING_RATE_MAX, billingRateColumn, toNullableBillingRate } from '../shared/pipes';
 import { MikroOrmOrganizationRepository } from './repository/mikro-orm-organization.repository';
+import { setsDurationRoundingRule } from './duration-rounding-rule';
 
 @MultiORMEntity('organization', { mikroOrmRepository: () => MikroOrmOrganizationRepository })
 export class Organization extends TenantBaseEntity implements IOrganization {
@@ -117,6 +134,26 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@ColumnIndex()
 	@MultiORMColumn()
 	currency: string;
+
+	/**
+	 * The hourly rate billed for the time of a member who has no billing rate of their own: the last link of the price
+	 * chain (the member's client rate on the project, the project's client rate, the member's billing rate, then this).
+	 * Validated like a member's billing rate; null (the default) leaves such time without a price, as before.
+	 */
+	@ApiPropertyOptional({ type: () => Number, nullable: true })
+	@IsOptional()
+	@IsNumber()
+	@Max(BILLING_RATE_MAX)
+	@Transform(toNullableBillingRate)
+	@MultiORMColumn(billingRateColumn())
+	defaultBillRateValue?: number | null;
+
+	/** The currency of the default billing rate; null prices it in the organization's currency. */
+	@ApiPropertyOptional({ type: () => String, enum: CurrenciesEnum, nullable: true })
+	@IsOptional()
+	@IsEnum(CurrenciesEnum)
+	@MultiORMColumn({ nullable: true })
+	defaultBillRateCurrency?: CurrenciesEnum | null;
 
 	@MultiORMColumn({ nullable: true })
 	valueDate?: Date;
@@ -388,6 +425,38 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	restrictTrackingSwitchToHigherRoles?: boolean;
 
 	/**
+	 * Whether members are asked to turn on two-factor authentication: a sign-in of a member without it says so
+	 * (`twoFactorSetupRequired`), and the client takes them to the setup. Off by default, so that no member is asked
+	 * for a code an app they use cannot take yet.
+	 */
+	@ApiPropertyOptional({ type: () => Boolean, default: false })
+	@IsOptional()
+	@IsBoolean()
+	@MultiORMColumn({ default: false })
+	requireTwoFactor?: boolean;
+
+	/**
+	 * Whether a member may discard their own running timer, which removes the run instead of keeping it. On by
+	 * default, and a null value counts as allowed.
+	 */
+	@ApiPropertyOptional({ type: () => Boolean, default: true })
+	@IsOptional()
+	@IsBoolean()
+	@MultiORMColumn({ nullable: true, default: true })
+	allowDiscardTimer?: boolean;
+
+	/**
+	 * When set, a running timer may be discarded only within this many minutes of its start. No limit by default.
+	 */
+	@ApiPropertyOptional({ type: () => Number, minimum: 1, maximum: 1440 })
+	@IsOptional()
+	@IsInt()
+	@Min(1)
+	@Max(1440)
+	@MultiORMColumn({ nullable: true })
+	discardTimerWithinMinutes?: number;
+
+	/**
 	 * Whether members may record breaks: time logs of type BREAK, taken from the timer or added by hand, which never count
 	 * as worked, billable or invoiced time. Off when unset, as before the setting existed: a break is then refused.
 	 */
@@ -399,6 +468,33 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 
 	@MultiORMColumn({ default: 12 })
 	timeFormat?: 12 | 24;
+
+	/**
+	 * The interval, in minutes, a client rounds each duration to in the reports and exports it shows: one of
+	 * `DURATION_ROUNDING_INTERVALS`. The API stores the rule and rounds nothing itself. Null, the default, means no rounding.
+	 */
+	@ApiPropertyOptional({
+		type: () => Number,
+		enum: [...DURATION_ROUNDING_INTERVALS],
+		nullable: true,
+		description:
+			'Minutes a client rounds each duration to in reports and exports, set with a direction; null means no rounding'
+	})
+	@ValidateIf(setsDurationRoundingRule)
+	@IsIn(DURATION_ROUNDING_INTERVALS)
+	@MultiORMColumn({ nullable: true })
+	durationRoundingInterval?: number | null;
+
+	/** Which way a client rounds a duration to that interval: up, down or to the nearest. Null, the default, means none. */
+	@ApiPropertyOptional({
+		enum: DurationRoundingDirectionEnum,
+		nullable: true,
+		description: 'Which way a client rounds a duration to the interval, set with it; null means no rounding'
+	})
+	@ValidateIf(setsDurationRoundingRule)
+	@IsEnum(DurationRoundingDirectionEnum)
+	@MultiORMColumn({ nullable: true })
+	durationRoundingDirection?: DurationRoundingDirectionEnum | null;
 
 	@MultiORMColumn({ nullable: true })
 	separateInvoiceItemTaxAndDiscount?: boolean;
