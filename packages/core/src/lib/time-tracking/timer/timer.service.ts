@@ -1206,7 +1206,11 @@ export class TimerService {
 
 		/** Transform an array of ITimeLog objects into an array of ITimerStatus objects. */
 		const statistics: ITimerStatus[] = lastLogs.map((lastLog: ITimeLog) => {
-			const duration = lastLog?.duration ?? 0;
+			// A break is not worked time: it stays the last log, so a client sees its state, with no worked duration
+			let duration = lastLog?.duration ?? 0;
+			if (isBreak(lastLog)) {
+				duration = 0;
+			}
 			const running = lastLog?.isRunning ?? false;
 			const stoppedAt = lastLog?.stoppedAt ? moment(lastLog.stoppedAt) : moment().subtract(1, 'day'); // Default to 1 day ago if stoppedAt is not present
 
