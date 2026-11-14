@@ -4,10 +4,10 @@ import { DataSource, DataSourceOptions, EntityTarget, ObjectLiteral } from 'type
 import { isMySQL, isPostgres } from '@gauzy/config';
 import { coreEntities } from '../core/entities';
 import { Organization, OrganizationContact, OrganizationProject, Tenant, TimeGoal } from '../core/entities/internal';
-import { CreateTimeGoalTables1791000009500 } from './migrations/1791000009500-CreateTimeGoalTables';
+import { CreateTimeGoalTables1791000010900 } from './migrations/1791000010900-CreateTimeGoalTables';
 
 /**
- * `1791000009500-CreateTimeGoalTables` run on a real database. The time goal tables must be the tables the entity
+ * `1791000010900-CreateTimeGoalTables` run on a real database. The time goal tables must be the tables the entity
  * declares (TypeORM's schema diff finds nothing to change), `up` twice must be harmless, a goal must keep its projects
  * and clients and lose the link when either side goes, and `down` must drop the tables.
  *
@@ -180,7 +180,7 @@ function exercise(harness: Harness) {
 		}
 	});
 
-	const migration = new CreateTimeGoalTables1791000009500();
+	const migration = new CreateTimeGoalTables1791000010900();
 
 	const up = async (inTransaction: boolean) => {
 		const queryRunner = dataSource.createQueryRunner();
@@ -279,19 +279,19 @@ const postgresUrl = process.env.GAUZY_MIGRATION_TEST_POSTGRES_URL;
 const mysqlUrl = process.env.GAUZY_MIGRATION_TEST_MYSQL_URL;
 const isEmbedded = !isPostgres() && !isMySQL();
 
-(isEmbedded ? describe : describe.skip)('CreateTimeGoalTables1791000009500 on SQLite', () => {
+(isEmbedded ? describe : describe.skip)('CreateTimeGoalTables1791000010900 on SQLite', () => {
 	exercise(wholeSchema(() => ({ type: 'better-sqlite3', database: ':memory:' })));
 });
 
-(isPostgres() && postgresUrl ? describe : describe.skip)('CreateTimeGoalTables1791000009500 on Postgres', () => {
+(isPostgres() && postgresUrl ? describe : describe.skip)('CreateTimeGoalTables1791000010900 on Postgres', () => {
 	exercise(wholeSchema(() => ({ type: 'postgres', url: postgresUrl })));
 });
 
-(isMySQL() && mysqlUrl ? describe : describe.skip)('CreateTimeGoalTables1791000009500 on MySQL', () => {
+(isMySQL() && mysqlUrl ? describe : describe.skip)('CreateTimeGoalTables1791000010900 on MySQL', () => {
 	exercise(referencedTablesOnly(() => ({ type: 'mysql', url: mysqlUrl })));
 });
 
-describe('CreateTimeGoalTables1791000009500 statements', () => {
+describe('CreateTimeGoalTables1791000010900 statements', () => {
 	beforeEach(() => jest.spyOn(console, 'log').mockImplementation(() => undefined));
 	afterEach(() => jest.restoreAllMocks());
 
@@ -309,9 +309,9 @@ describe('CreateTimeGoalTables1791000009500 statements', () => {
 			})
 		};
 
-		await new CreateTimeGoalTables1791000009500().up(queryRunner as never);
+		await new CreateTimeGoalTables1791000010900().up(queryRunner as never);
 
-		expect(statements[0]).toEqual({ sql: 'SELECT pg_advisory_xact_lock($1)', params: [1791000009500] });
+		expect(statements[0]).toEqual({ sql: 'SELECT pg_advisory_xact_lock($1)', params: [1791000010900] });
 		const created = statements.filter(({ sql }) => sql.startsWith('CREATE TABLE')).map(({ sql }) => sql);
 		expect(created).toHaveLength(3);
 		expect(created[0]).toMatch(/^CREATE TABLE IF NOT EXISTS "time_goal" /);
@@ -338,7 +338,7 @@ describe('CreateTimeGoalTables1791000009500 statements', () => {
 			})
 		};
 
-		await new CreateTimeGoalTables1791000009500().up(queryRunner as never);
+		await new CreateTimeGoalTables1791000010900().up(queryRunner as never);
 
 		expect(statements[0]).toBe('SELECT GET_LOCK(?, 30) AS acquired');
 		expect(statements[1]).toMatch(/^CREATE TABLE IF NOT EXISTS `time_goal` /);
@@ -356,7 +356,7 @@ describe('CreateTimeGoalTables1791000009500 statements', () => {
 			})
 		};
 
-		await new CreateTimeGoalTables1791000009500().down(queryRunner as never);
+		await new CreateTimeGoalTables1791000010900().down(queryRunner as never);
 
 		expect(statements).toEqual([
 			'DROP TABLE IF EXISTS "time_goal_organization_contact"',

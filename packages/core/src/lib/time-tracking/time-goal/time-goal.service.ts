@@ -126,7 +126,7 @@ export class TimeGoalService extends TenantAwareCrudService<TimeGoal> {
 				listedClientsOnly: (organizationContacts ?? []).length > 0
 			})
 		);
-		return await this.findGoalOrFail(created.id);
+		return await this.findGoalOrFail(created.id, owner.organizationId);
 	}
 
 	/**
@@ -166,7 +166,7 @@ export class TimeGoalService extends TenantAwareCrudService<TimeGoal> {
 		}
 
 		await this.withoutEmployeeFilter(() => super.create(changes));
-		return await this.findGoalOrFail(goal.id);
+		return await this.findGoalOrFail(goal.id, goal.organizationId);
 	}
 
 	/**
@@ -518,10 +518,13 @@ export class TimeGoalService extends TenantAwareCrudService<TimeGoal> {
 		throw new NotFoundException('Time goal not found');
 	}
 
-	/** A goal just written, as answered. */
-	private async findGoalOrFail(id: ID): Promise<TimeGoal> {
+	/** A goal just written, as answered: read in its organization, as every other read of the service is. */
+	private async findGoalOrFail(id: ID, organizationId: ID): Promise<TimeGoal> {
 		const tenantId = RequestContext.currentTenantId();
-		return await this.typeOrmRepository.findOneOrFail({ where: { id, tenantId }, relations: GOAL_RELATIONS });
+		return await this.typeOrmRepository.findOneOrFail({
+			where: { id, organizationId, tenantId },
+			relations: GOAL_RELATIONS
+		});
 	}
 
 	/** Archives or restores a goal the caller may change. */
@@ -529,7 +532,7 @@ export class TimeGoalService extends TenantAwareCrudService<TimeGoal> {
 		const goal = await this.findWritableGoal(id, organizationId);
 		const archivedAt = isArchived ? new Date() : null;
 		await this.withoutEmployeeFilter(() => super.create({ id: goal.id, isArchived, archivedAt }));
-		return await this.findGoalOrFail(goal.id);
+		return await this.findGoalOrFail(goal.id, goal.organizationId);
 	}
 
 	/**

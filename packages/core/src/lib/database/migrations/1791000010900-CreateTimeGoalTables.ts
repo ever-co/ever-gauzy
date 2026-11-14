@@ -254,11 +254,11 @@ const TABLES: ReadonlyArray<TableDefinition> = [TIME_GOAL, TIME_GOAL_PROJECT, TI
  *
  * `down` drops the three tables, the pivots first (their indexes and foreign keys go with them).
  */
-export class CreateTimeGoalTables1791000009500 implements MigrationInterface {
-	name = 'CreateTimeGoalTables1791000009500';
+export class CreateTimeGoalTables1791000010900 implements MigrationInterface {
+	name = 'CreateTimeGoalTables1791000010900';
 
 	/** Advisory lock key that serialises concurrent runs of this migration on Postgres. */
-	private readonly advisoryLockKey = 1791000009500;
+	private readonly advisoryLockKey = 1791000010900;
 
 	/** The MySQL named lock of this migration. MySQL refuses lock names over 64 characters. */
 	readonly mysqlLockName = `gauzy:migration:${this.advisoryLockKey}`;

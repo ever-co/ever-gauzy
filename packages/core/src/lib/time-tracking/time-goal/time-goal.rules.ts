@@ -129,7 +129,8 @@ export function periodRangeOf(
 	let next = day.clone().add(1, 'day');
 
 	if (period === TimeGoalPeriodEnum.WEEK) {
-		const weekStartIndex = WEEK_DAY_INDEX[weekStart ?? WeekDaysEnum.MONDAY];
+		// A stored week start outside WeekDaysEnum falls back to Monday instead of an invalid range
+		const weekStartIndex = WEEK_DAY_INDEX[weekStart as WeekDaysEnum] ?? WEEK_DAY_INDEX[WeekDaysEnum.MONDAY];
 		const daysSinceWeekStart = (day.day() - weekStartIndex + 7) % 7;
 		first = day.clone().subtract(daysSinceWeekStart, 'days');
 		next = first.clone().add(7, 'days');
