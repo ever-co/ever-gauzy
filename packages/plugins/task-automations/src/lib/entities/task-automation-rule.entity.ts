@@ -39,7 +39,7 @@ export class TaskAutomationRule extends TenantOrganizationBaseEntity {
 	@MultiORMColumn({ type: 'varchar', length: 32 })
 	triggerType!: TaskAutomationTriggerEnum;
 
-	/** JSON: the trigger's settings (`toStatuses`, `fromStatuses`). */
+	/** JSON: the trigger's settings (`toStatuses`, `fromStatuses`; `mergedOnly`). */
 	@MultiORMColumn({ type: 'text', nullable: true })
 	triggerConfig?: string | null;
 

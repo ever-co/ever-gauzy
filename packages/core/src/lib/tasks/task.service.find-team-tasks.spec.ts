@@ -21,7 +21,7 @@ describe('TaskService.findTeamTasks (MikroORM) — employee scoping', () => {
 	let createQueryBuilder: jest.Mock;
 	let service: TaskService;
 
-	const teamTasks = (members?: { id: string }, filters?: Record<string, string[]>) =>
+	const teamTasks = (members?: { id: string }, filters?: Record<string, unknown>) =>
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		service.findTeamTasks({ where: { organizationId: employee.organizationId, members }, filters } as any);
 	const where = () => findAndCount.mock.calls[0][0];
@@ -125,6 +125,24 @@ describe('TaskService.findTeamTasks (MikroORM) — employee scoping', () => {
 			await teamTasks(undefined, { teams: ['team-1'] });
 
 			expect(where().teams).toEqual({ members: { employeeId: 'employee-1' }, id: { $in: ['team-1'] } });
+		});
+
+		it('translates a due-date range sent with its days, with no `Raw` for MikroORM to refuse', async () => {
+			({ restore } = asTenantUser(employee, { permissions: [PermissionsEnum.CHANGE_SELECTED_EMPLOYEE] }));
+			// "Due today" for a reader in UTC−4, as the dashboard sends it.
+			const from = new Date('2026-11-18T04:00:00.000Z');
+			const to = new Date('2026-11-19T03:59:59.999Z');
+
+			await teamTasks(undefined, { dueDateFrom: from, dueDateFromDay: '2026-11-18', dueDateTo: to, dueDateToDay: '2026-11-18' });
+
+			// Today's date-only due date (midnight UTC) is in, the time between it and the reader's midnight is not, and
+			// tomorrow's date-only due date is out.
+			expect(where()).toEqual(
+				expect.objectContaining({
+					dueDate: { $gte: new Date('2026-11-18T00:00:00.000Z'), $lte: to, $ne: new Date('2026-11-19T00:00:00.000Z') },
+					$and: [{ $not: { dueDate: { $gt: new Date('2026-11-18T00:00:00.000Z'), $lt: from } } }]
+				})
+			);
 		});
 
 		it('applies nothing without filters', async () => {

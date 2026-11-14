@@ -273,6 +273,15 @@
 		"VIEW_PROFILE": "View profile",
 		"SENT": "Sent to {{name}}"
 	},
+	"PRESENCE": {
+		"ONLINE": "Online",
+		"AWAY": "Away",
+		"OFFLINE": "Offline",
+		"LAST_SEEN_JUST_NOW": "Last seen just now",
+		"LAST_SEEN_MINUTES": "Last seen {{count}} min ago",
+		"LAST_SEEN_TODAY": "Last seen today at {{time}}",
+		"LAST_SEEN_DATE": "Last seen {{date}}"
+	},
 	"APP": {
 		"PENDING": "Sending to the app…",
 		"DONE": "Sent to the app",

@@ -20,6 +20,7 @@ import {
 } from './chat-ui.constants';
 import { ChatHeaderBadgeComponent } from './components/chat-header-badge/chat-header-badge.component';
 import { ChatAvailabilityService } from './services/chat-availability.service';
+import { ChatPresenceReporterService } from './services/chat-presence-reporter.service';
 import en from '../i18n/en.json';
 
 /**
@@ -169,7 +170,7 @@ const declarative = defineDeclarativePlugin('chat', {
 /**
  * Chat UI plugin (`@gauzy/plugin-chat-ui`): `/pages/chat` (the conversations of the organization: channels in
  * their categories, direct and group messages, threads, reactions, pins and mentions, with my unread state, live
- * through the realtime events), the header badge, the nav entry, "Send to chat" on a task's page and "Message" on an employee's page. Registered in `apps/gauzy/src/plugin-ui.config.ts`;
+ * through the realtime events, with who is online), the header badge, the nav entry, "Send to chat" on a task's page and "Message" on an employee's page. Registered in `apps/gauzy/src/plugin-ui.config.ts`;
  * shows nothing but the route unless the API serves the chat.
  */
 export const ChatUiPlugin: PluginUiDefinition = {
@@ -177,5 +178,7 @@ export const ChatUiPlugin: PluginUiDefinition = {
 	bootstrap: (injector: Injector) => {
 		declarative.bootstrap?.(injector);
 		registerChatEntryPoints(injector);
+		// From every page: tells the organization this person is here, for the presence dots of the chat.
+		injector.get(ChatPresenceReporterService).start();
 	}
 };

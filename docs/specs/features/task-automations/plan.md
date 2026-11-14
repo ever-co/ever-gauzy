@@ -26,6 +26,7 @@ hints behave exactly as for a person's change. The Gauzy app gets a lazy `@gauzy
 | Schedules | `@ScheduledJob` + `@QueueWorker` (`@gauzy/scheduler`), `isSchedulerQueueRootEnabled` (the Inbox sweep's layout) | queue `task-automation-maintenance`, job `task-automation.due-sweep`, every 15 min; a Postgres advisory lock keeps one sweep at a time |
 | Tri-dialect migrations | the Inbox plugin's `migration-helpers.ts` | copied (the plugin owns its helpers, as each plugin does) |
 | Role grants | `SeedChatRolePermissions` / `DEFAULT_ROLE_PERMISSIONS` | `TASK_AUTOMATION_MANAGE` for super admin, admin, manager |
+| "A linked pull request or issue closed" (T16) | core `TaskLinkClosedEvent` (CQRS), published by the GitHub integration (`GithubTaskLinkService`, hooks `pull_request.closed` / `issues.closed`) | `TaskAutomationLinkClosedCapture` appends `task_link.closed` once per task and link |
 
 ## 3. Data model
 
@@ -48,8 +49,13 @@ hints behave exactly as for a person's change. The Gauzy app gets a lazy `@gauzy
 `ruleId` (the idempotency key), `triggerType`, `outcome` varchar(24), `depth` int, `details` text (JSON), `error` text,
 `durationMs` int. Indexes `(ruleId, createdAt)` (history) and `(taskId, createdAt)` (rate limit).
 
-Migrations: `1791000007810-CreateTaskAutomationTables`, `1791000007820-SeedTaskAutomationRolePermissions`
-(idempotent, Postgres-serialised, reversible table drop; the grant's `down` is a no-op as for the other seeds).
+`task_automation_link_closure` (base columns, plus): `taskId` (no FK), `provider` varchar(32), `kind` varchar(24),
+`externalId` varchar(255) — unique `(tenantId, taskId, provider, kind, externalId)`: the closed links already handed to
+the automations (T16).
+
+Migrations: `1791000007810-CreateTaskAutomationTables`, `1791000007820-SeedTaskAutomationRolePermissions`,
+`1791000009110-CreateTaskAutomationLinkClosureTable` (idempotent, Postgres-serialised, reversible table drop; the
+grant's `down` is a no-op as for the other seeds).
 
 ## 4. Event flow
 
@@ -66,6 +72,17 @@ dispatch pass (queue job in the API; inline sweep without a queue)
           rate limit, conditions on the re-read task, actions through TaskUpdateCommand inside the system-actor
           context (marker: rule, run, depth + 1, chain + rule) → the change's own ActivityLogEvent is captured
           with depth + 1, and the ActivityLog row is attributed to the rule
+GitHub delivers pull_request.closed / issues.closed (signature verified; T16)
+  └─ GithubTaskLinkService: the organizations that bound the installation (setting installation_id) → in each, the
+     tasks linked to the item: a task link to its address (resource_link, entity Task), the task's upper-case reference
+     in the pull request's title or branch (TaskService.resolveReferences), the task mirroring the issue (integration
+     map, entity Issue, this integration) → read back in the organization → TaskLinkClosedEvent per task (CQRS); an
+     organization that failed is thrown back once all were tried (the receiver logs it)
+  └─ TaskAutomationLinkClosedCapture: task of the named scope? LINK_CLOSED rule on in the organization (30 s cache)?
+     in ONE transaction: claim (tenantId, taskId, provider, kind, externalId) in task_automation_link_closure (taken →
+     nothing) + EventOutboxService.append(task_link.closed, partition task-automation:<taskId>) — both commit or
+     neither (under MikroORM the claim joins the outbox's MikroORM transaction through its SQL client)
+  └─ TaskAutomationEventConsumer → TaskAutomationEngine.processLinkClosed (run key <eventId>:<taskId>)
 schedule (worker fires every 15 min; the queue job runs in the API)
   └─ TaskAutomationDueSweepService: advisory lock; enabled DUE_DATE_PASSED rules; open tasks of each rule's scope
      due in (max(now − 24 h, rule.createdAt), now]; run key due:<taskId>:<dueDate>
@@ -81,8 +98,9 @@ lock.
 
 - **Triggers** (`TaskAutomationTriggerEnum`): `TASK_CREATED`, `STATUS_CHANGED` (`toStatuses` / `fromStatuses`, matched
   on the status value or id), `TASK_ASSIGNED` (members added), `ALL_SUBTASKS_DONE` and `SUBTASK_REOPENED` (subject =
-  the parent), `DUE_DATE_PASSED` (schedule), `LINK_CLOSED` (event `task_link.closed` from any integration; none
-  reports it yet).
+  the parent), `DUE_DATE_PASSED` (schedule), `LINK_CLOSED` (event `task_link.closed`; the GitHub integration reports
+  closed pull requests, merged or not, and closed issues — Linear, Asana and Trello attachments carry no state to
+  report, spec FR-20).
 - **Done** = the task's `TaskStatus` has `isDone`, else its status value is `done`, `completed` or `closed`. **To-do /
   in progress** likewise (`isTodo` / `isInProgress`, else `open`, `backlog` / `in-progress`). A cancelled task counts
   as done for "all sub-tasks done" and as not open for the due-date trigger.
@@ -121,7 +139,8 @@ lock.
 | `services/task-automation-engine.service.ts` | a change → matching rules and subjects; dry run |
 | `services/task-automation-task-reader.service.ts` | the task snapshot the engine reads (status, flags, members, tags, parent, sub-tasks) |
 | `services/task-automation-writer.service.ts` | `TaskUpdateCommand` inside the system actor's context; notices |
-| `events/` | `TaskAutomationChangeCapture` (CQRS handler), `TaskAutomationEventConsumer` (outbox), `TaskAutomationActivitySubscriber` (attribution) |
+| `services/task-automation-link-closure.store.ts` | the once-per-task-and-link claim of a closed link |
+| `events/` | `TaskAutomationChangeCapture` and `TaskAutomationLinkClosedCapture` (CQRS handlers → outbox), `TaskAutomationEventConsumer` (outbox), `TaskAutomationActivitySubscriber` (attribution) |
 | `schedule/` | scheduler, worker, due sweep, in-process fallback timer |
 | `task-automation.controller.ts`, `dto/` | REST |
 | `graphql/` | `taskAutomationRules`, `taskAutomationRule`, `taskAutomationRuns`, `taskAutomationTemplates` |
@@ -149,10 +168,15 @@ Unit specs for each trigger, condition and action (pure functions), the status c
 rate limit, the change capture (activity fact → change), the runner (idempotent claim, outcomes, partial failure),
 the engine (rule order, scope, subjects for the parent triggers), the dry run (no write), the due sweep (window,
 once per due date), the DTO validation, the flag, the plugin lists of the API and the worker, and the migration on
-SQLite.
+SQLite. Closed links (T16): the link capture (units); the closure table and a closed pull request end to end on SQLite
+(report → capture → outbox → consumer → engine: the task moves once; a redelivery, another tenant or organization, a
+missing task append nothing); the GitHub report on SQLite (`github-task-link.service.spec.ts`: links, references,
+mirrored issues, the organizations of the installation, deleted tasks, redelivery), its address and reference parsing,
+and its hooks.
 
 ## 9. Phases
 
 1. Platform (this PR): contracts, plugin, migrations, REST + GraphQL reads, specs.
 2. Angular: `@gauzy/plugin-task-automations-ui` (Settings → Automations).
 3. Ever Teams: Settings → Automations, 13 locales.
+4. T16: the GitHub integration reports closed linked pull requests and issues (`task_link.closed`).

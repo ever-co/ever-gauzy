@@ -23,12 +23,22 @@ import { TranslateService } from '@ngx-translate/core';
 import { Editor, Extension } from '@tiptap/core';
 import { firstValueFrom } from 'rxjs';
 import { ID, IDocument, JsonData } from '@gauzy/contracts';
+import type { IDocumentCommentAnchorInput, IDocumentCommentAnchorPosition } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-core/core';
 import { DocsLiveService } from '../services/docs-live.service';
 import { DocumentsService } from '../services/documents.service';
 import type { ILiveBinding, ILiveState } from './live/document-live.binding';
 import { stripDataUrlImages } from './extensions/base64-guard.plugin';
-import { collectBlockIds, setCommentedBlocks } from './extensions/block-comments.plugin';
+import { type ICommentRange, rangePlaceKindOf } from './comments/comment-anchor.model';
+import {
+	collectBlockIds,
+	commentRangeBounds,
+	enclosingBlockId,
+	setActiveCommentThread,
+	setCommentRanges,
+	setCommentedBlocks
+} from './extensions/block-comments.plugin';
+import { selectionCommentAnchor } from './extensions/comment-ranges';
 import { createDocumentEditorExtensions } from './extensions/document-extensions';
 import { DOCS_EDITOR_SCHEMA_VERSION } from './editor.constants';
 import { FloatingBlockMenuComponent } from './menus/floating-block-menu.component';
@@ -55,6 +65,29 @@ export interface ITocAnchor {
 	isScrolledOver?: boolean;
 	dom?: HTMLElement;
 }
+
+/** What the page is asked to open in its Comments rail. */
+export interface IDocsCommentRequest {
+	/** The block whose threads to show. */
+	blockId: string;
+	/**
+	 * The selected text a new thread is made on (the bubble menu's comment action, Mod-Alt-M), when text is selected
+	 * (`docs-collaboration` FR-16); `null` comments on the block.
+	 */
+	range?: IDocumentCommentAnchorInput | null;
+	/** The thread asked for: a highlighted range, or the marker of a block lit only by a range. */
+	threadId?: string | null;
+}
+
+/** What the rail last pushed into the editor: drawn again on an editor rebuilt for the same page. */
+interface ICommentMarks {
+	documentId: ID | null;
+	open: readonly string[];
+	ranges: readonly ICommentRange[];
+	activeThread: string | null;
+}
+
+const NO_COMMENT_MARKS: ICommentMarks = { documentId: null, open: [], ranges: [], activeThread: null };
 
 const READ_WPM = 200;
 
@@ -107,10 +140,17 @@ export class DocumentEditorComponent implements OnChanges, OnDestroy {
 	@Output() statsChanged = new EventEmitter<IEditorStats>();
 	@Output() created = new EventEmitter<Editor>();
 	/**
-	 * A block's comment thread was requested — from the bubble menu's comment action or
-	 * from a gutter marker (spec 05 §8). The page chrome owns the Comments rail.
+	 * A block's comment thread was requested — from the bubble menu's comment action (with the
+	 * selected text the thread is made on), from a gutter marker, or from a highlighted comment
+	 * range (with its thread) (spec 05 §8, `docs-collaboration` FR-16). The page chrome owns the
+	 * Comments rail.
 	 */
-	@Output() commentRequested = new EventEmitter<string>();
+	@Output() commentRequested = new EventEmitter<IDocsCommentRequest>();
+	/**
+	 * Where each comment range is in the document now, by thread, each time the ranges are found again after edits
+	 * (the rail shows the text a thread is on now).
+	 */
+	@Output() commentRangesResolved = new EventEmitter<ReadonlyMap<string, IDocumentCommentAnchorPosition>>();
 	/**
 	 * `metadata.schemaVersion` of the content just loaded — `null` for content saved before
 	 * the stamp existed (spec 05 §9.1). The page warns when it is ahead of this build.
@@ -177,6 +217,18 @@ export class DocumentEditorComponent implements OnChanges, OnDestroy {
 	 * ships without the reserved field, and the next one carries it.
 	 */
 	private crdtEncoder: ICrdtEncoder | null = null;
+
+	/** What the rail last pushed in (open blocks, ranges, the lit thread), drawn again when the editor is rebuilt. */
+	private commentMarks: ICommentMarks = NO_COMMENT_MARKS;
+
+	/** The comment range places last told to the page, so an unchanged answer is not sent again. */
+	private lastRangePlaces = '';
+
+	/**
+	 * A thread asked for before its range was handed in (a resolved thread is lit only once the rail knows it is the
+	 * one asked for): it is scrolled to when its range arrives.
+	 */
+	private pendingRangeFocus: string | null = null;
 
 	constructor() {
 		// A real DOM is required — construct only in the browser (spec 05 §3.8).
@@ -303,7 +355,72 @@ export class DocumentEditorComponent implements OnChanges, OnDestroy {
 	 * gutter markers. Called by the page's Comments rail — the editor never fetches comments.
 	 */
 	setCommentedBlocks(blockIds: readonly string[]): void {
+		this.rememberCommentMarks({ open: [...blockIds] });
 		setCommentedBlocks(this.editor, blockIds);
+	}
+
+	/**
+	 * Publishes the open threads made on a range of text (`docs-collaboration` FR-16); the editor highlights their text
+	 * where it finds it now, and keeps finding it as the page is edited. Called by the page's Comments rail.
+	 */
+	setCommentRanges(ranges: readonly ICommentRange[]): void {
+		this.rememberCommentMarks({ ranges: [...ranges] });
+		setCommentRanges(this.editor, ranges);
+		const pending = this.pendingRangeFocus;
+		if (pending && ranges.some((range) => range.threadId === pending)) this.focusCommentRange(pending);
+	}
+
+	/** Lights one thread's range (or none). */
+	setActiveCommentThread(threadId: string | null): void {
+		if (threadId !== this.pendingRangeFocus) this.pendingRangeFocus = null;
+		this.rememberCommentMarks({ activeThread: threadId });
+		setActiveCommentThread(this.editor, threadId);
+	}
+
+	/**
+	 * Lights a thread's range and scrolls it into view, opening the collapsed toggles it is in.
+	 *
+	 * @param threadId The thread (its first comment).
+	 * @returns False when the thread's text is not lit (yet): the editor scrolls to it once it is (its range handed in,
+	 *   the editor built, a live page synced), and the caller shows its block meanwhile when it knows one.
+	 */
+	focusCommentRange(threadId: string): boolean {
+		if (!threadId) return false;
+		this.setActiveCommentThread(threadId);
+		const editor = this.editor && !this.editor.isDestroyed ? this.editor : null;
+		const bounds = editor ? commentRangeBounds(editor.state, threadId) : null;
+		this.pendingRangeFocus = bounds ? null : threadId;
+		if (!editor || !bounds) return false;
+		this.revealCollapsedDetails(editor, bounds.from);
+		const escaped = typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(threadId) : threadId;
+		let element = this.editorHostRef?.nativeElement?.querySelector<HTMLElement>(
+			`.gz-comment-range[data-thread-id="${escaped}"]`
+		);
+		if (!element) {
+			try {
+				const { node } = editor.view.domAtPos(bounds.from);
+				element = node instanceof HTMLElement ? node : node.parentElement;
+			} catch {
+				element = null;
+			}
+		}
+		if (typeof element?.scrollIntoView === 'function')
+			element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+		return true;
+	}
+
+	/**
+	 * Opens the collapsed toggles (`details`) around a position, outermost first, as a click on each toggle would: a
+	 * range inside one is in the page but not in sight.
+	 */
+	private revealCollapsedDetails(editor: Editor, pos: number): void {
+		const $pos = editor.state.doc.resolve(pos);
+		for (let depth = 1; depth <= $pos.depth; depth += 1) {
+			if ($pos.node(depth).type.name !== 'details') continue;
+			const dom = editor.view.nodeDOM($pos.before(depth));
+			if (!(dom instanceof HTMLElement) || dom.classList.contains('is-open')) continue;
+			dom.querySelector<HTMLButtonElement>(':scope > button')?.click();
+		}
 	}
 
 	/** Every `blockId` in the document — lets the rail flag threads whose block was deleted. */
@@ -364,6 +481,7 @@ export class DocumentEditorComponent implements OnChanges, OnDestroy {
 
 	private teardownEditor(): void {
 		this.buildGeneration += 1;
+		this.lastRangePlaces = '';
 		this.suggestionHost.close();
 		this.uploadService.destroy();
 		this.liveBinding?.destroy();
@@ -520,7 +638,14 @@ export class DocumentEditorComponent implements OnChanges, OnDestroy {
 				promptUrl: (titleKey) => this.promptUrl(titleKey)
 			},
 			onTocUpdate: (anchors) => this.zone.run(() => this.tocChanged.emit(anchors as ITocAnchor[])),
-			onOpenCommentThread: (blockId) => this.zone.run(() => this.commentRequested.emit(blockId)),
+			onOpenCommentThread: (blockId, threadId) =>
+				this.zone.run(() => this.commentRequested.emit({ blockId, threadId: threadId ?? null })),
+			onCommentSelection: () => this.zone.run(() => this.commentOnSelection()),
+			commentLiveResolver: () => this.liveBinding?.anchorResolver ?? null,
+			onCommentRangesResolved: (places) => {
+				this.publishRangePlaces(places);
+				this.retryRangeFocus(places);
+			},
 			collab: !!binding
 		});
 
@@ -577,6 +702,7 @@ export class DocumentEditorComponent implements OnChanges, OnDestroy {
 		});
 
 		this.currentDocumentId = this.document?.id ?? null;
+		this.redrawCommentMarks();
 		this.loadedSchemaVersion = readSchemaVersion(this.document);
 		this.schemaVersionChanged.emit(this.loadedSchemaVersion);
 		// Fire-and-forget: the chunk lands well inside the 2 s autosave debounce, and a
@@ -593,6 +719,73 @@ export class DocumentEditorComponent implements OnChanges, OnDestroy {
 			this.autosave.init(this.document.id, this.document.updatedAt as never, () => this.buildPayload());
 		}
 		this.cdr.markForCheck();
+	}
+
+	// ─── Comment ranges (`docs-collaboration` FR-16) ─────────────
+
+	/**
+	 * The bubble menu's comment action: the block the selection starts in, and the selected text as the new thread's
+	 * range (with its live relative positions while the page is edited live).
+	 */
+	requestComment(blockId: string): void {
+		if (blockId) this.commentRequested.emit({ blockId, range: this.selectionCommentRange() });
+	}
+
+	/** Mod-Alt-M: comment on the selection, as the bubble menu's action does. */
+	private commentOnSelection(): void {
+		const blockId = enclosingBlockId(this.editor);
+		if (blockId) this.requestComment(blockId);
+	}
+
+	/** The selection as a comment's range; null without selected text (the comment is then on its block). */
+	private selectionCommentRange(): IDocumentCommentAnchorInput | null {
+		const state = this.editor?.state;
+		if (!state) return null;
+		const live =
+			this.liveBinding && this.liveState?.phase === 'live' ? this.liveBinding.relativeRange(state) : null;
+		return selectionCommentAnchor(state, live);
+	}
+
+	/**
+	 * Tells the page where the ranges are now. Later than the editor's own update: a rail that pushed ranges in while
+	 * the page was being checked would otherwise see one of its inputs change under that same check.
+	 */
+	private publishRangePlaces(places: ReadonlyMap<string, IDocumentCommentAnchorPosition>): void {
+		const key = JSON.stringify([...places]);
+		if (key === this.lastRangePlaces) return;
+		this.lastRangePlaces = key;
+		void Promise.resolve().then(() => this.zone.run(() => this.commentRangesResolved.emit(places)));
+	}
+
+	/**
+	 * A thread asked for before its text was lit (no editor yet, a live page before its sync) is scrolled to once the
+	 * ranges are found with it on the page. Later than the editor's own update, which is still dispatching.
+	 */
+	private retryRangeFocus(places: ReadonlyMap<string, IDocumentCommentAnchorPosition>): void {
+		const pending = this.pendingRangeFocus;
+		if (!pending || rangePlaceKindOf(places.get(pending)) !== 'range') return;
+		void Promise.resolve().then(() => {
+			if (this.pendingRangeFocus === pending) this.zone.run(() => this.focusCommentRange(pending));
+		});
+	}
+
+	/** Keeps what the rail pushed in, for this page. */
+	private rememberCommentMarks(marks: Partial<Omit<ICommentMarks, 'documentId'>>): void {
+		const documentId = (this.currentDocumentId ?? this.document?.id ?? null) as ID | null;
+		const base =
+			String(this.commentMarks.documentId ?? '') === String(documentId ?? '')
+				? this.commentMarks
+				: { ...NO_COMMENT_MARKS, documentId };
+		this.commentMarks = { ...base, ...marks, documentId };
+	}
+
+	/** Draws again, on an editor just built, what the rail pushed in for the same page (a live session that ended). */
+	private redrawCommentMarks(): void {
+		const marks = this.commentMarks;
+		if (!this.editor || String(marks.documentId ?? '') !== String(this.currentDocumentId ?? '')) return;
+		if (marks.open.length) setCommentedBlocks(this.editor, marks.open);
+		if (marks.ranges.length) setCommentRanges(this.editor, marks.ranges);
+		if (marks.activeThread) setActiveCommentThread(this.editor, marks.activeThread);
 	}
 
 	/** The status line of a live page. */

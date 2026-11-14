@@ -1,4 +1,23 @@
+import { runInThisContext } from 'node:vm';
 import { ProjectManagementDetailsComponent } from './project-management-details.component';
+
+/**
+ * Runs `body` with the clock in `zone`, as a browser there would be. Jest hands each test file a copy of
+ * `process.env`, so setting `TZ` on it changes nothing: Node reads the host process's `env.TZ`.
+ */
+function inZone<T>(zone: string, body: () => T): T {
+	const host = runInThisContext('process') as NodeJS.Process;
+	const previous = host.env['TZ'];
+	const current = Intl.DateTimeFormat().resolvedOptions().timeZone;
+	host.env['TZ'] = zone;
+	try {
+		return body();
+	} finally {
+		// Deleting `TZ` does not reset the clock's zone: set the one before first.
+		host.env['TZ'] = previous ?? current;
+		if (previous === undefined) delete host.env['TZ'];
+	}
+}
 
 /**
  * With an employee selected, the table switches to `GET /tasks/employee`, whose service reads the
@@ -86,6 +105,9 @@ describe('ProjectManagementDetailsComponent filter bar', () => {
 	it('treats overdue as due before today and not closed, unless a status tab is picked', () => {
 		const overdue = params({ dueFilter: 'overdue' });
 		expect(new Date(overdue.dueDateTo as string)).toEqual(new Date(2026, 9, 27, 23, 59, 59, 999));
+		expect(overdue.dueDateToDay).toBe('2026-10-27');
+		expect(overdue).not.toHaveProperty('dueDateFrom');
+		expect(overdue).not.toHaveProperty('dueDateFromDay');
 		expect(overdue.statuses).not.toEqual(expect.arrayContaining(['done']));
 		expect(overdue.statuses).not.toEqual(expect.arrayContaining(['completed']));
 		expect(overdue.statuses).not.toEqual(expect.arrayContaining(['cancelled']));
@@ -98,12 +120,45 @@ describe('ProjectManagementDetailsComponent filter bar', () => {
 		const today = params({ dueFilter: 'today' });
 		expect(new Date(today.dueDateFrom as string)).toEqual(new Date(2026, 9, 28, 0, 0, 0, 0));
 		expect(new Date(today.dueDateTo as string)).toEqual(new Date(2026, 9, 28, 23, 59, 59, 999));
+		expect([today.dueDateFromDay, today.dueDateToDay]).toEqual(['2026-10-28', '2026-10-28']);
 	});
 
 	it('runs "Due this week" from today, not from the start of the week', () => {
 		const week = params({ dueFilter: 'week' });
 		expect(new Date(week.dueDateFrom as string)).toEqual(new Date(2026, 9, 28, 0, 0, 0, 0));
 		expect(new Date(week.dueDateTo as string).getTime()).toBeGreaterThan(new Date(2026, 9, 28, 23, 59).getTime());
+		expect(week.dueDateFromDay).toBe('2026-10-28');
+		// The day the week's last instant falls on, whichever day the locale ends its week.
+		const end = new Date(week.dueDateTo as string);
+		const pad = (value: number) => String(value).padStart(2, '0');
+		expect(week.dueDateToDay).toBe(`${end.getFullYear()}-${pad(end.getMonth() + 1)}-${pad(end.getDate())}`);
+	});
+
+	it('sends each end of a due-date range as the reader’s instant and as its day, west and east of UTC', () => {
+		expect(inZone('America/Caracas', () => new Date(2026, 9, 28).getTimezoneOffset())).toBe(240);
+		const at = (zone: string, dueFilter: string) =>
+			inZone(zone, () =>
+				Object.fromEntries(
+					withFilters({ dueFilter })
+						.advancedFilters(new Date(2026, 9, 28, 12, 0, 0))
+						.filter(({ field }: { field: string }) => field.startsWith('dueDate'))
+						.map(({ field, search }: { field: string; search: unknown }) => [field, search])
+				)
+			);
+		// A reader in UTC−4: today starts at 04:00 UTC, and a date-only due date of the 28th is 00:00 UTC.
+		expect(at('America/Caracas', 'today')).toEqual({
+			dueDateFrom: '2026-10-28T04:00:00.000Z',
+			dueDateFromDay: '2026-10-28',
+			dueDateTo: '2026-10-29T03:59:59.999Z',
+			dueDateToDay: '2026-10-28'
+		});
+		expect(at('America/Caracas', 'overdue')).toEqual({ dueDateTo: '2026-10-28T03:59:59.999Z', dueDateToDay: '2026-10-27' });
+		expect(at('Africa/Johannesburg', 'today')).toEqual({
+			dueDateFrom: '2026-10-27T22:00:00.000Z',
+			dueDateFromDay: '2026-10-28',
+			dueDateTo: '2026-10-28T21:59:59.999Z',
+			dueDateToDay: '2026-10-28'
+		});
 	});
 
 	it('asks for tasks without a due date', () => {

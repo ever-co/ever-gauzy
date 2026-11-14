@@ -18,10 +18,14 @@ import {
 	In,
 	FindOptionsWhere,
 	FindManyOptions,
+	FindOperator,
 	Between,
 	FindOptionsRelations,
 	LessThanOrEqual,
+	LessThan,
 	MoreThanOrEqual,
+	MoreThan,
+	And,
 	Raw,
 	SaveOptions,
 	Not,
@@ -53,7 +57,9 @@ import {
 	TaskSyncScopeEnum,
 	TimesheetStatus,
 	ITaskBuiltInViewQuery,
+	ITaskBulkChanges,
 	ITaskBulkUpdateInput,
+	ITaskBulkUpdateItem,
 	ITaskBulkUpdateOutcome,
 	ITaskBulkUpdateResult,
 	ITaskReferenceResolution,
@@ -75,7 +81,7 @@ import {
 	parseFindOptionsSelect,
 	parseTypeORMFindToMikroOrm
 } from './../core/utils';
-import { addBetween, LIKE_OPERATOR } from './../core/util';
+import { LIKE_OPERATOR } from './../core/util';
 import { RequestContext } from '../core/context';
 import { TaskViewService } from './views/view.service';
 import { EntitySubscriptionService } from '../entity-subscription/entity-subscription.service';
@@ -91,6 +97,9 @@ import {
 	OrganizationProject,
 	OrganizationSprintTaskHistory,
 	TaskFormerReference,
+	TaskPriority,
+	TaskSize,
+	TaskStatus,
 	TimeLog,
 	Timesheet
 } from '../core/entities/internal';
@@ -99,9 +108,25 @@ import { TaskEvent } from '../event-bus/events/task.event';
 import { BaseEntityEventTypeEnum } from '../event-bus/base-entity-event';
 import { IFindOneOptions } from '../core/crud/icrud.service';
 import { Task } from './task.entity';
-import { BulkUpdateRequestError, changesToUpdate, normalizeBulkUpdate } from './bulk-update';
+import {
+	BulkChangeRecords,
+	BulkRecordField,
+	BULK_RECORD_FIELDS,
+	BulkUpdateRequestError,
+	changesToUpdate,
+	hasChanges,
+	IBulkChangeRecord,
+	normalizeBulkUpdate,
+	previousWithoutRecordNames,
+	recordChangesOfUpdate,
+	recordIdsOf,
+	recordKey,
+	recordRefusalOf,
+	withRecordNames
+} from './bulk-update';
 import { derivedProjectKey, keysOfProject, normalizeTaskKey, parseTaskReference } from './task-reference';
-import { BUILT_IN_VIEW_DEFAULT_RELATIONS, BUILT_IN_VIEW_RELATIONS, builtInViewWindow, relationsTreeOf } from './built-in-views';
+import { BUILT_IN_VIEW_DEFAULT_RELATIONS, BUILT_IN_VIEW_RELATIONS, builtInViewWindow, IBuiltInViewWindow, relationsTreeOf } from './built-in-views';
+import { boundDayOf, dateBoundAdjustments, dateBoundClause } from './views/view-filters';
 import { TypeOrmOrganizationSprintTaskHistoryRepository } from './../organization-sprint/repository/type-orm-organization-sprint-task-history.repository';
 import { GetTaskByIdDTO } from './dto';
 import { prepareSQLQuery as p } from './../database/database.helper';
@@ -151,6 +176,11 @@ const TASK_STILL_REFERENCED =
 	'TASK_STILL_REFERENCED: the task is still linked from other records (a linked issue or a key result), so it stays ' +
 	'in the trash; remove those links first.';
 
+/** The same refusal on the plain hard delete (`DELETE /tasks/:id`), whether the task is live or in the trash. */
+const TASK_STILL_REFERENCED_NOT_DELETED =
+	'TASK_STILL_REFERENCED: the task is still linked from other records (a linked issue or a key result), so it was ' +
+	'not deleted; remove those links first.';
+
 /** The driver codes of a statement refused because another row still references the row it deletes. */
 const REFERENCED_ROW_CODES = new Set([
 	'23503',
@@ -187,6 +217,14 @@ function isReferencedRowViolation(error: unknown): boolean {
 	});
 }
 
+/**
+ * The updates a bulk update hands to the single update once it has judged and named the records they name (see
+ * `bulkUpdate`), so the single update does not read those records again for each task. Keyed by the update object,
+ * which reaches `update` as it was handed over (the command carries it as it is), and dropped with it. An update that
+ * reaches `update` as a copy is judged again, which only costs the reads.
+ */
+const RECORDS_JUDGED = new WeakSet<object>();
+
 @FavoriteService(BaseEntityEnum.Task)
 @Injectable()
 export class TaskService extends TenantAwareCrudService<Task> {
@@ -215,6 +253,13 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * Creates a task, sanitizing the rich-text `description` HTML through the shared
 	 * server-side allowlist before persisting (see `sanitizeRichHtml`).
 	 *
+	 * The status, priority and size records it is created with are judged and named as an update's are (see
+	 * `withTaskRecords`): each must be one the task's organization may take (its own, the tenant's shared one, a
+	 * platform default), else the create is refused with `TASK_<KIND>_NOT_FOUND` before anything is written; a priority
+	 * or size named by its record alone takes the record's name. A task created with names only is written as before.
+	 * Every create funnels through here: `POST /tasks` and its bulk route, the GraphQL `createTask` and
+	 * `bulkCreateTasks`, the screening tasks and the integrations' imports.
+	 *
 	 * @param entity - The task creation input
 	 * @returns The created task
 	 */
@@ -223,7 +268,9 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		if (typeof input.description === 'string') {
 			input.description = sanitizeRichHtml(input.description);
 		}
-		return await super.create(entity);
+		const tenantId = RequestContext.currentTenantId() ?? (entity as { tenantId?: ID }).tenantId;
+		const created = await this.withTaskRecords(entity as Partial<ITaskUpdateInput>, null, tenantId);
+		return await super.create(created as IPartialEntity<Task>);
 	}
 
 	/**
@@ -243,7 +290,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			const userId = RequestContext.currentUserId();
 
 			const user = RequestContext.currentUser();
-			const { mentionEmployeeIds, moveTimeLogs, ...data } = input;
+			const { mentionEmployeeIds, moveTimeLogs, ...sent } = input;
 
 			// Find task relations
 			const relations: FindOptionsRelations<Task> = {
@@ -262,6 +309,13 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			};
 
 			const task = await this.findOneByIdString(id, { relations });
+
+			// The status, priority and size records the update moves the task to, judged and named as a bulk update's
+			// are: refused before anything is written when the task's organization may not take one. A bulk update has
+			// judged and named its own already.
+			const data = RECORDS_JUDGED.has(input)
+				? sent
+				: await this.withTaskRecords(sent, task, tenantId ?? task.tenantId);
 
 			const taskMembers = task.members;
 
@@ -731,9 +785,17 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * permission, reaches this check. Without ALL_ORG_EDIT or ORG_TASK_DELETE, the caller must manage one
 	 * of the task's teams that belongs to the task's organization.
 	 *
+	 * A task in the trash is deleted for good as a live one is: on MikroORM, whose soft-delete filter applies to a native
+	 * delete too, the filter is lifted for the statement (`withDeleted`), as {@link deleteTrashedTask} lifts it.
+	 *
+	 * A task that other rows still point at through a foreign key without a delete rule of its own (a linked issue, a
+	 * key result) is refused by the database: the task stays, and the caller is told so (409 `TASK_STILL_REFERENCED`,
+	 * as {@link deleteTrashedTask} answers it) rather than that the task does not exist.
+	 *
 	 * @param id - The task to delete
 	 * @returns The result of the deletion
 	 * @throws ForbiddenException when the caller may not delete that task
+	 * @throws ConflictException when other records still reference the task
 	 */
 	async deleteTask(id: ID): Promise<DeleteResult> {
 		// A task in the trash is deleted for good on the same terms as a live one, by a team manager too.
@@ -752,7 +814,16 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			}
 		}
 
-		const result = await this.delete(id);
+		let result: DeleteResult;
+		try {
+			result = await this.delete(id, { withDeleted: true });
+		} catch (error) {
+			// The CRUD delete answers every failure as a 404, with the driver's error as its `cause`.
+			if (isReferencedRowViolation(error)) {
+				throw new ConflictException(TASK_STILL_REFERENCED_NOT_DELETED);
+			}
+			throw error;
+		}
 
 		if (task && !task.deletedAt && result?.affected) {
 			this.publishTaskEvent(task, BaseEntityEventTypeEnum.DELETED);
@@ -2689,8 +2760,26 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				...(priorities.length && { priority: In(priorities) }),
 				...(sizes.length && { size: In(sizes) }),
 				...(types.length && { issueType: In(types) }),
-				...(minStartDate && maxStartDate && { startDate: Between(minStartDate, maxStartDate) }),
-				...(minDueDate && maxDueDate && { dueDate: Between(minDueDate, maxDueDate) }),
+				// The earliest and the latest start date, with the view's days of those ends: a date-only start date is
+				// compared with the days, as a due date is.
+				...(minStartDate && maxStartDate
+					? dateRangeCondition('startDate', {
+							from: minStartDate,
+							to: maxStartDate,
+							fromDay: viewFilters.startDateFromDay,
+							toDay: viewFilters.startDateToDay
+						})
+					: {}),
+				// The earliest and the latest due date, with the view's days of those ends: a date-only due date is
+				// compared with the days, as the advanced filters compare it (`dueDateCondition`).
+				...(minDueDate && maxDueDate
+					? this.dueDateCondition({
+							dueDateFrom: minDueDate,
+							dueDateTo: maxDueDate,
+							dueDateFromDay: viewFilters.dueDateFromDay,
+							dueDateToDay: viewFilters.dueDateToDay
+					  })
+					: {}),
 				// Only scope by organization when one is known: the view's organizationId is a nullable
 				// column and the stored query params may carry null (a null used to be dropped silently).
 				...(taskView.organizationId || organizationId
@@ -2742,26 +2831,41 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				organizationSprintId,
 				relations
 			} = params;
+			// A start-date or due-date range sent with the days of its ends compares a date-only value with those days;
+			// one sent without them compares the instants. An inverted range is refused under either ORM (the REST DTO
+			// refuses it first; GraphQL reaches this check).
+			const rangeOf = (
+				from: Date | string | undefined,
+				to: Date | string | undefined,
+				days: { fromDay?: unknown; toDay?: unknown }
+			) => {
+				const start = validDate(from);
+				const end = validDate(to);
+				if (start && end && start > end) {
+					throw new BadRequestException('"From" date must not be after "to" date');
+				}
+				return dayRangeOf(start, end, days) ?? { from: start ?? undefined, to: end ?? undefined };
+			};
+			const startRange = rangeOf(startDateFrom, startDateTo, {
+				fromDay: params.startDateFromDay,
+				toDay: params.startDateToDay
+			});
+			const dueRange = rangeOf(dueDateFrom, dueDateTo, {
+				fromDay: params.dueDateFromDay,
+				toDay: params.dueDateToDay
+			});
 
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM: {
 					const mikroWhere: any = { tenantId, organizationId, isScreeningTask };
 
 					// Date range filters
-					if (isNotEmpty(startDateFrom) && isNotEmpty(startDateTo)) {
-						mikroWhere.startDate = { $gte: startDateFrom, $lte: startDateTo };
-					} else if (isNotEmpty(startDateFrom)) {
-						mikroWhere.startDate = { $gte: startDateFrom };
-					} else if (isNotEmpty(startDateTo)) {
-						mikroWhere.startDate = { $lte: startDateTo };
-					}
-
-					if (isNotEmpty(dueDateFrom) && isNotEmpty(dueDateTo)) {
-						mikroWhere.dueDate = { $gte: dueDateFrom, $lte: dueDateTo };
-					} else if (isNotEmpty(dueDateFrom)) {
-						mikroWhere.dueDate = { $gte: dueDateFrom };
-					} else if (isNotEmpty(dueDateTo)) {
-						mikroWhere.dueDate = { $lte: dueDateTo };
+					const dateBounds = [
+						...mikroOrmDayRangeOn('startDate', startRange),
+						...mikroOrmDayRangeOn('dueDate', dueRange)
+					];
+					if (dateBounds.length) {
+						mikroWhere.$and = dateBounds;
 					}
 
 					if (isNotEmpty(createdByUserId)) mikroWhere.createdByUserId = createdByUserId;
@@ -2777,7 +2881,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				}
 				case MultiORMEnum.TypeORM:
 				default: {
-					let query = this.typeOrmRepository.createQueryBuilder(this.tableName);
+					const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 
 					query.andWhere(
 						new Brackets((qb: WhereExpressionBuilder) => {
@@ -2786,9 +2890,18 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						})
 					);
 
-					// Apply the filters on startDate and dueDate
-					query = addBetween<Task>(query, 'startDate', startDateFrom, startDateTo, p);
-					query = addBetween<Task>(query, 'dueDate', dueDateFrom, dueDateTo, p);
+					// Apply the filters on startDate and dueDate. Each range's bounds are bound as dates under names of their
+					// own, as the driver writes the column (an ISO text compares as text on SQLite), with a date-only value
+					// compared with the days when the range carries them.
+					for (const [column, range] of [
+						['startDate', startRange],
+						['dueDate', dueRange]
+					] as const) {
+						const dates = dayRangeClauseOf(p(`"${query.alias}"."${column}"`), range, `${column}Filter`);
+						if (dates.sql) {
+							query.andWhere(`(${dates.sql})`, dates.params);
+						}
+					}
 
 					// Add Optional additional filters by
 					query.andWhere(
@@ -2907,25 +3020,21 @@ export class TaskService extends TenantAwareCrudService<Task> {
 
 	/**
 	 * The `dueDate` condition of the advanced filters: none, a range (either end may be open), or
-	 * "no due date", which wins over a range sent with it.
+	 * "no due date", which wins over a range sent with it. A range whose ends come with their calendar days
+	 * compares a date-only due date (midnight UTC of its day) with those days, so "due today" west of UTC holds
+	 * today's date-only due dates and not tomorrow's; one without them compares the instants, as before.
 	 */
 	private dueDateCondition(filters: ITaskAdvancedFilter): FindOptionsWhere<Task> {
-		const { dueDateFrom, dueDateTo, withoutDueDate } = filters;
+		const { dueDateFrom, dueDateTo, dueDateFromDay, dueDateToDay, withoutDueDate } = filters;
 		if (withoutDueDate === true) {
 			return { dueDate: IsNull() };
 		}
-		const from = this.validDate(dueDateFrom);
-		const to = this.validDate(dueDateTo);
-		if (from && to) {
-			return { dueDate: Between(from, to) };
-		}
-		if (from) {
-			return { dueDate: MoreThanOrEqual(from) };
-		}
-		if (to) {
-			return { dueDate: LessThanOrEqual(to) };
-		}
-		return {};
+		return dateRangeCondition('dueDate', {
+			from: dueDateFrom,
+			to: dueDateTo,
+			fromDay: dueDateFromDay,
+			toDay: dueDateToDay
+		});
 	}
 
 	/**
@@ -2945,24 +3054,18 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			condition.priority = { $in: priorities };
 		}
 		if (!where.dueDate) {
-			const from = this.validDate(dueDateFrom);
-			const to = this.validDate(dueDateTo);
+			const from = validDate(dueDateFrom);
+			const to = validDate(dueDateTo);
+			const range = dayRangeOf(from, to, { fromDay: filters.dueDateFromDay, toDay: filters.dueDateToDay });
 			if (withoutDueDate === true) {
 				condition.dueDate = null;
+			} else if (range) {
+				condition.$and = [...((where.$and as unknown[]) ?? []), ...mikroOrmDayRangeOn('dueDate', range)];
 			} else if (from || to) {
 				condition.dueDate = { ...(from ? { $gte: from } : {}), ...(to ? { $lte: to } : {}) };
 			}
 		}
 		return condition;
-	}
-
-	/** A date from a filter, or `null` when it is missing or not a valid date. */
-	private validDate(value: Date | string | undefined | null): Date | null {
-		if (value === undefined || value === null || value === '') {
-			return null;
-		}
-		const date = new Date(value);
-		return Number.isNaN(date.getTime()) ? null : date;
 	}
 
 	// ------------------------------------------------------------------ task views extensions
@@ -2974,6 +3077,12 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * sync events happen per task exactly as for one update), and the previous values are answered so the caller
 	 * can undo. A task that is missing, another organization's, or refused by its update is reported; the others
 	 * are applied. Tasks are applied one after another.
+	 *
+	 * A status, priority or size named by its record must be one the task's organization may take (its own, the
+	 * tenant's shared one, a platform default): a task whose change names another organization's or tenant's record,
+	 * or none, is reported and left as it is. A priority or size named by its record alone takes the record's name
+	 * (see `withRecordNames`), and the previous values hold the name it had, so the undo puts both back. They leave
+	 * that name out when the record the task held gives it back (see `previousWithoutRecordNames`).
 	 */
 	async bulkUpdate(
 		input: ITaskBulkUpdateInput,
@@ -2990,6 +3099,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		}
 		const tenantId = tenantIdOf(input);
 		const organizationId = organizationIdOf(input);
+		const records = await this.bulkChangeRecordsOf(items);
 		const results: ITaskBulkUpdateResult[] = [];
 		for (const item of items) {
 			const taskId = String(item.taskId);
@@ -3007,7 +3117,14 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				results.push({ taskId, ok: false, error: 'TASK_NOT_FOUND: no such task in this organization.' });
 				continue;
 			}
-			const { update, previous } = changesToUpdate(task, item.changes);
+			const refusal = recordRefusalOf(item.changes, records, { tenantId, organizationId: task.organizationId ?? organizationId });
+			if (refusal) {
+				results.push({ taskId, ok: false, error: refusal });
+				continue;
+			}
+			const { update, previous } = changesToUpdate(task, withRecordNames(item.changes, records));
+			// Judged and named above: the single update the change is applied by need not read the records again.
+			RECORDS_JUDGED.add(update);
 			try {
 				await apply(task.id, update);
 				results.push({ taskId, ok: true, previous });
@@ -3017,8 +3134,119 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				results.push({ taskId, ok: false, error: text, previous });
 			}
 		}
+		// The previous values leave out a priority's or size's name that the record the task held gives back, so a client
+		// that cannot send that name (a team's own) can tell a full undo from a partial one. Those records are read once,
+		// after the tasks changed: a read that fails keeps the previous values whole (a client then reports a name it
+		// leaves out as not put back) rather than fail an update that was applied.
+		try {
+			const held = await this.bulkChangeRecordsOf(
+				results.map((result) => ({ taskId: result.taskId, changes: result.previous ?? {} })),
+				records,
+				['taskPriorityId', 'taskSizeId']
+			);
+			for (const result of results) {
+				if (result.previous) result.previous = previousWithoutRecordNames(result.previous, held);
+			}
+		} catch (error) {
+			console.warn('[Task] Bulk update: the previous priority and size records could not be read:', (error as Error)?.message);
+		}
 		const applied = results.filter((result) => result.ok).length;
 		return { applied, refused: results.length - applied, results };
+	}
+
+	/**
+	 * A single update, or a create, with the status, priority and size records it gives the task judged and named as a
+	 * bulk update's are (see `recordChangesOfUpdate`): each must be one the task's organization may take (its own, the
+	 * tenant's shared one, a platform default), else the write is refused with `TASK_<KIND>_NOT_FOUND` before anything
+	 * is written; a priority or size given by its record alone takes the record's name (see `withRecordNames`). A
+	 * record the task already holds is not judged again and its name is left as sent, so a client that sends the whole
+	 * task back saves as before, and a name sent alone is written as before. A status keeps its text. A task moved to
+	 * another organization has every record it holds afterwards judged there, those it keeps included. A task being
+	 * created holds none: every record it names is judged, in the organization it is created in.
+	 *
+	 * @param sent The update or the create as it was sent.
+	 * @param task The task as it is stored, with the records it holds; `null` for a task being created.
+	 * @param tenantId The caller's tenant (the update passes the task's when the request carries none, the create the
+	 * one it is sent with); without one, only a platform default is taken.
+	 * @returns The write to save: as sent, or with the records' names (and a record named twice named once).
+	 */
+	private async withTaskRecords<T extends Partial<ITaskUpdateInput>>(
+		sent: T,
+		task: Task | null,
+		tenantId: ID | undefined
+	): Promise<T> {
+		// The organization the task is saved in: the one the write names (by its relation, which the save takes over the
+		// id, or by its id; the DTO accepts either), else its own.
+		const namedOrganizationId = sent.organization?.id ?? sent.organizationId;
+		const organizationId = namedOrganizationId ?? task?.organizationId;
+		const staysInOrganization =
+			!task ||
+			!namedOrganizationId ||
+			(!!task.organizationId && recordKey(namedOrganizationId) === recordKey(task.organizationId));
+		const { update, changes, named } = recordChangesOfUpdate(sent, task ?? {});
+		// In its organization, the records the task holds are its own to keep. Moved to another one, every record it holds
+		// afterwards (named, or kept) must be one that organization may take; only those it moves to are named.
+		const judged: ITaskBulkChanges = staysInOrganization ? changes : {};
+		if (!staysInOrganization) {
+			for (const { idField } of BULK_RECORD_FIELDS) {
+				const after = idField in named ? named[idField] : task?.[idField];
+				if (after) judged[idField] = after;
+			}
+		}
+		if (!hasChanges(judged)) return update;
+		// An id that is no uuid (a relation's id is not validated as one) names no record: it is refused below, not read
+		// (Postgres would fail the read instead).
+		const readable = BULK_RECORD_FIELDS.filter(({ idField }) => isUUID(judged[idField]));
+		const records = await this.bulkChangeRecordsOf(
+			[{ taskId: String(task?.id ?? sent.id ?? ''), changes: judged }],
+			undefined,
+			readable.map(({ idField }) => idField)
+		);
+		const refusal = recordRefusalOf(judged, records, { tenantId, organizationId });
+		if (refusal) {
+			throw new BadRequestException(refusal);
+		}
+		const withNames = withRecordNames(changes, records);
+		const names = BULK_RECORD_FIELDS.filter(({ nameField }) => changes[nameField] === undefined && withNames[nameField] !== undefined);
+		if (!names.length) return update;
+		return { ...update, ...Object.fromEntries(names.map(({ nameField }) => [nameField, withNames[nameField]])) };
+	}
+
+	/**
+	 * The status, priority and size records a bulk update's items name, read once per kind whatever their tenant or
+	 * organization (as the save's own foreign-row check reads them), so `recordRefusalOf` can judge each one and
+	 * `withRecordNames` can name it. Soft-deleted rows are read too: their scope is what is judged, and an undo may
+	 * put back a record retired since the change (the save has always stored such an id).
+	 *
+	 * @param items The items whose changes name the records.
+	 * @param known Records already read: only the others are read, and the answer holds both.
+	 * @param fields The id fields to read; every one by default.
+	 */
+	private async bulkChangeRecordsOf(
+		items: ITaskBulkUpdateItem[],
+		known?: BulkChangeRecords,
+		fields: readonly BulkRecordField[] = ['taskStatusId', 'taskPriorityId', 'taskSizeId']
+	): Promise<BulkChangeRecords> {
+		const ids = recordIdsOf(items);
+		const manager = this.typeOrmRepository.manager;
+		const read = async (field: BulkRecordField, entity: typeof TaskStatus | typeof TaskPriority | typeof TaskSize) => {
+			const found = new Map<string, IBulkChangeRecord>(known?.[field] ?? []);
+			const list = fields.includes(field) ? ids[field].filter((id) => !found.has(recordKey(id))) : [];
+			if (!list.length) return found;
+			const rows = (await manager.find(entity as typeof TaskStatus, {
+				where: { id: In(list) },
+				select: { id: true, name: true, value: true, tenantId: true, organizationId: true },
+				withDeleted: true
+			})) as IBulkChangeRecord[];
+			for (const row of rows) found.set(recordKey(row.id), row);
+			return found;
+		};
+		const [statuses, priorities, sizes] = await Promise.all([
+			read('taskStatusId', TaskStatus),
+			read('taskPriorityId', TaskPriority),
+			read('taskSizeId', TaskSize)
+		]);
+		return { taskStatusId: statuses, taskPriorityId: priorities, taskSizeId: sizes };
 	}
 
 	/**
@@ -3122,8 +3350,9 @@ export class TaskService extends TenantAwareCrudService<Task> {
 
 	/**
 	 * The caller's tasks of a built-in view (`mine`, `this-week`, `overdue`, `due-soon`), the day and week bounds
-	 * computed in the caller's time zone. The caller is the signed-in employee; a user without an employee has no
-	 * tasks of their own.
+	 * computed in the caller's time zone (the request's `timeZone`, UTC when it names none the runtime knows). The
+	 * caller is the signed-in employee; a user without an employee has no tasks of their own. A due date stored as a
+	 * date only counts on its own day: due today is never overdue, west of UTC included.
 	 */
 	async findBuiltInView(key: TaskBuiltInViewEnum, query: ITaskBuiltInViewQuery): Promise<IPagination<ITask>> {
 		// The caller's own employee record: `currentEmployeeId()` answers null for a `CHANGE_SELECTED_EMPLOYEE` holder.
@@ -3139,12 +3368,9 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			organizationId,
 			isScreeningTask: false
 		};
-		if (window.dueDateFrom && window.dueDateTo) {
-			where.dueDate = Between(window.dueDateFrom, window.dueDateTo);
-		} else if (window.dueDateFrom) {
-			where.dueDate = MoreThanOrEqual(window.dueDateFrom);
-		} else if (window.dueDateTo) {
-			where.dueDate = LessThanOrEqual(window.dueDateTo);
+		const dueDate = dueDateWithin(window);
+		if (dueDate) {
+			where.dueDate = dueDate;
 		}
 		// A task whose status is unset is still open: `NOT IN` alone would drop it (SQL `NOT IN` never matches NULL).
 		const closed = [TaskStatusEnum.DONE, TaskStatusEnum.COMPLETED, TaskStatusEnum.CANCELLED];
@@ -3171,13 +3397,15 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			.select(['task.id'])
 			.where(wheres)
 			.andWhere((qb) => {
+				// Quoted by the connection's own driver: hard-coded double quotes are a syntax error on MySQL.
+				const column = (table: string, name: string) => `${qb.escape(table)}.${qb.escape(name)}`;
 				const membership = qb
 					.subQuery()
-					.select('"task_employee"."taskId"')
+					.select(column('task_employee', 'taskId'))
 					.from('task_employee', 'task_employee')
-					.where('"task_employee"."employeeId" = :employeeId')
+					.where(`${column('task_employee', 'employeeId')} = :employeeId`)
 					.getQuery();
-				return `"task"."id" IN ${membership}`;
+				return `${column('task', 'id')} IN ${membership}`;
 			})
 			.setParameter('employeeId', employeeId)
 			.orderBy('task.dueDate', 'ASC')
@@ -3193,6 +3421,153 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		const byId = new Map(rows.map((task) => [String(task.id), task]));
 		return { items: ids.map((id) => byId.get(String(id))).filter((task): task is Task => !!task), total };
 	}
+}
+
+/**
+ * A date range, both ends inclusive and either one open, with the calendar day (`YYYY-MM-DD`) each end stands for when
+ * the caller sent it and the end's instant is that day's edge (see `dayRangeOf`). A value stored as a date only
+ * (midnight UTC of its day) is compared with those days, any other value with the instants (`dateBoundAdjustments`).
+ * The due date and the start date are filtered alike.
+ */
+interface IDayRange {
+	from?: Date;
+	to?: Date;
+	fromDay?: string;
+	toDay?: string;
+}
+
+/** A date from a filter, or `null` when it is missing or not a valid date. */
+function validDate(value: Date | string | undefined | null): Date | null {
+	if (value === undefined || value === null || value === '') {
+		return null;
+	}
+	const date = new Date(value);
+	return Number.isNaN(date.getTime()) ? null : date;
+}
+
+/**
+ * The range of these ends with the calendar days sent for them (`<field>FromDay` / `<field>ToDay`), each day kept only
+ * when its instant is that day's edge (`boundDayOf`: the start of the first day, the last instant of the last); `null`
+ * when neither end keeps one, so the range compares the instants as before.
+ */
+function dayRangeOf(
+	from: Date | null,
+	to: Date | null,
+	days: { fromDay?: unknown; toDay?: unknown }
+): IDayRange | null {
+	const fromDay = from ? boundDayOf(days.fromDay, from, 'start') : undefined;
+	const toDay = to ? boundDayOf(days.toDay, to, 'end') : undefined;
+	if (!fromDay && !toDay) return null;
+	return { ...(from ? { from, fromDay } : {}), ...(to ? { to, toDay } : {}) };
+}
+
+/**
+ * The condition on `property` of a range of instants a filter names, both ends inclusive and either one open (an
+ * invalid end is left out): with the calendar days of its ends, a date-only value is compared with the days
+ * (`dayRangeFindOperator`); without them, every value compares with the instants, as before. None without an end.
+ */
+function dateRangeCondition(
+	property: 'startDate' | 'dueDate',
+	range: { from?: Date | string | null; to?: Date | string | null; fromDay?: unknown; toDay?: unknown }
+): FindOptionsWhere<Task> {
+	const from = validDate(range.from);
+	const to = validDate(range.to);
+	const withDays = dayRangeOf(from, to, range);
+	if (withDays) {
+		return { [property]: dayRangeFindOperator(withDays) };
+	}
+	if (from && to) {
+		return { [property]: Between(from, to) };
+	}
+	if (from) {
+		return { [property]: MoreThanOrEqual(from) };
+	}
+	if (to) {
+		return { [property]: LessThanOrEqual(to) };
+	}
+	return {};
+}
+
+/**
+ * The same range as find operators every ORM's read takes: MikroORM's translation of a TypeORM `where` (the base
+ * `paginate` under `DB_ORM=mikro-orm`) has no `Raw`. Each bound is its operator on its instant, with the date-only
+ * midnights where the instant and the day disagree (`dateBoundAdjustments`) taken out (`Not(midnight)`) or taken in.
+ * A midnight a lower bound takes in lies below its instant, so "on or after the instant, or that midnight" is "on or
+ * after the midnight, and not strictly between it and the instant"; an upper bound mirrors it.
+ */
+function dayRangeFindOperator(range: IDayRange): FindOperator<Date> | undefined {
+	const parts: FindOperator<Date>[] = [];
+	const bound = (lower: boolean, instant: Date, day: string | undefined) => {
+		const { added, removed } = dateBoundAdjustments(lower ? '>=' : '<=', instant, day);
+		const points = [...added, instant].sort((a, b) => a.getTime() - b.getTime());
+		parts.push(lower ? MoreThanOrEqual(points[0]) : LessThanOrEqual(points[points.length - 1]));
+		for (let at = 0; at + 1 < points.length; at += 1) {
+			parts.push(Not(And(MoreThan(points[at]), LessThan(points[at + 1]))));
+		}
+		removed.forEach((midnight) => parts.push(Not(midnight)));
+	};
+	if (range.from) bound(true, range.from, range.fromDay);
+	if (range.to) bound(false, range.to, range.toDay);
+	if (!parts.length) return undefined;
+	return parts.length === 1 ? parts[0] : And(...parts);
+}
+
+/**
+ * The same range on `property` in MikroORM's query syntax: `$gte` / `$lte` on the instants as before, with the
+ * date-only values where the instant and the day disagree (`dateBoundAdjustments`) taken out (`$nin`) or added
+ * (`$or` … `$in`). A bound with no such value is the plain operator. Answers the conditions to `$and` together.
+ */
+function mikroOrmDayRangeOn(property: 'startDate' | 'dueDate', range: IDayRange): Record<string, unknown>[] {
+	const bound = (operator: '$gte' | '$lte', instant: Date, day: string | undefined) => {
+		const { added, removed } = dateBoundAdjustments(operator === '$gte' ? '>=' : '<=', instant, day);
+		const byInstant = { [property]: { [operator]: instant, ...(removed.length ? { $nin: removed } : {}) } };
+		return added.length ? { $or: [byInstant, { [property]: { $in: added } }] } : byInstant;
+	};
+	return [
+		...(range.from ? [bound('$gte', range.from, range.fromDay)] : []),
+		...(range.to ? [bound('$lte', range.to, range.toDay)] : [])
+	];
+}
+
+/**
+ * The `dueDate` condition of a built-in view's window, both ends inclusive, or none for a window without dates. A due
+ * date with a time of day is compared with the window's instants, as before; one stored as a date only (midnight UTC of
+ * its day) is compared with the window's first and last days (`dateBoundClause`), so it counts on its own day in the
+ * caller's zone. West of UTC, a task due today was midnight UTC, the evening before there, and so listed as overdue.
+ */
+function dueDateWithin(window: IBuiltInViewWindow): FindOperator<Date> | undefined {
+	if (!window.dueDateFrom && !window.dueDateTo) return undefined;
+	const range: IDayRange = {
+		from: window.dueDateFrom,
+		to: window.dueDateTo,
+		fromDay: window.dueDateFromDay,
+		toDay: window.dueDateToDay
+	};
+	return Raw(
+		(column) => dayRangeClauseOf(column, range, 'builtInDue').sql,
+		dayRangeClauseOf('dueDate', range, 'builtInDue').params
+	);
+}
+
+/**
+ * The SQL of a date range on `column`, both ends inclusive: each end compares the instant, and a date-only value
+ * (midnight UTC) with the end's day when it carries one (`dateBoundClause`). The bounds are bound as dates, as the
+ * driver writes the column (an ISO text compares as text on SQLite, and names UTC where the driver writes the
+ * process's local time), under `<key>From` / `<key>To`. Empty `sql` for a range without ends.
+ */
+function dayRangeClauseOf(
+	column: string,
+	range: IDayRange,
+	key: string
+): { sql: string; params: Record<string, Date> } {
+	const bounds = [
+		...(range.from ? [dateBoundClause(column, '>=', range.from, range.fromDay, `${key}From`)] : []),
+		...(range.to ? [dateBoundClause(column, '<=', range.to, range.toDay, `${key}To`)] : [])
+	];
+	return {
+		sql: bounds.map((bound) => bound.sql).join(' AND '),
+		params: Object.assign({}, ...bounds.map((bound) => bound.params)) as Record<string, Date>
+	};
 }
 
 /**

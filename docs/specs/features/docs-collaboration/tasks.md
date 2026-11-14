@@ -3,7 +3,7 @@
 **Feature ID**: `docs-collaboration`
 **Plan**: `./plan.md`
 **Status**: `In review`
-**Last updated**: 2026-11-12 (T19–T23)
+**Last updated**: 2026-11-13 (T19–T24b)
 
 ---
 
@@ -83,10 +83,12 @@
 - [x] **T23**. Ever Teams: range comments (highlight, panel, live relative
       positions), the anchor proxies, the folder zip export (ever-teams
       `feat/docs-platform-gaps`)
-- [ ] **T24**. The Angular Docs UI: snippets in the search results and the zip
-      export of a folder or a page with sub-pages (`feat/docs-ui-platform-gaps`,
-      done); range comments in the Angular editor (open: its block comments
-      keep working, a range thread made in Ever Teams shows on its block)
+- [x] **T24**. The Angular Docs UI: snippets in the search results and the zip
+      export of a folder or a page with sub-pages ([#11846](https://github.com/ever-co/ever-gauzy/pull/11846))
+- [x] **T24b**. Range comments in the Angular editor: a thread on selected text
+      keeps its range, the text is lit and found again after edits (live by its
+      relative positions), the rail shows the text it is on now; block threads
+      unchanged, ranges shared with Ever Teams ([#11929](https://github.com/ever-co/ever-gauzy/pull/11929))
 - [ ] **T25**. Manual check on dev with `GAUZY_DOCS_COLLAB_ENABLED=true` (a
       range found again after edits, live and saved; a follower's Inbox entry
       opens the thread; a folder's zip opened)

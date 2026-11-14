@@ -2,6 +2,7 @@
 import '../core/entities/internal';
 
 import { ForbiddenException } from '@nestjs/common';
+import { RolesEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { TrackingTurnedOffEvent } from '../time-tracking/timer/events/tracking-turned-off.event';
 import { OrganizationTeamEmployeeService } from './organization-team-employee.service';
@@ -33,9 +34,27 @@ describe('OrganizationTeamEmployeeService.updateMember', () => {
 			_eventBus: { publish },
 			update,
 			findOneByWhereOptions: findMembership,
-			withoutEmployeeFilter: (work: () => Promise<unknown>) => work()
+			withoutEmployeeFilter: (work: () => Promise<unknown>) => work(),
+			typeOrmOrganizationTeamEmployeeRepository: {
+				// The membership read with its roles before a switch changes: a plain member of the team
+				findOne: jest.fn(async () => ({
+					...membership,
+					...stored,
+					role: null,
+					isManager: false,
+					employee: { user: { role: { name: RolesEnum.EMPLOYEE } } }
+				})),
+				// The caller manages the team
+				exists: jest.fn(async () => true)
+			}
 		});
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue('tenant-1');
+		// Their manager: an employee who manages the team, and may switch its members (ever-co/ever-teams#5015)
+		jest.spyOn(RequestContext, 'currentUser').mockReturnValue({
+			id: 'manager-user',
+			employeeId: 'manager-employee',
+			role: { name: RolesEnum.EMPLOYEE }
+		} as never);
 	});
 
 	afterEach(() => jest.restoreAllMocks());

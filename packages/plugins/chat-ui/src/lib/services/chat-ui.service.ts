@@ -78,6 +78,10 @@ export interface ChatPersonRecord {
 	imageUrl: string | null;
 	/** Their position in the organization, when the API sends one. */
 	position?: string | null;
+	/** Their presence when the list was read (`active`, `idle`, `offline`), when the API sends it. */
+	presence?: string | null;
+	/** When one of their tabs last reported, when the API sends it. */
+	lastSeenAt?: string | Date | null;
 }
 
 /**

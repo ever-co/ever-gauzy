@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, TransformFnParams, Type } from 'class-transformer';
-import { ArrayMaxSize, IsArray, IsBoolean, IsDate, IsEnum, IsOptional, IsUUID } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsBoolean, IsDate, IsEnum, IsOptional, IsUUID, Matches } from 'class-validator';
 import { ID, ITaskAdvancedFilter, TaskPriorityEnum, TaskStatusEnum } from '@gauzy/contracts';
 
 export class TaskAdvancedFilterDTO implements ITaskAdvancedFilter {
@@ -113,6 +113,25 @@ export class TaskAdvancedFilterDTO implements ITaskAdvancedFilter {
 	@Type(() => Date)
 	@IsDate()
 	dueDateTo?: Date;
+
+	@ApiPropertyOptional({
+		type: () => String,
+		example: '2026-11-14',
+		description:
+			'The calendar day dueDateFrom starts in the reader’s zone: a date-only due date is compared with it.'
+	})
+	@IsOptional()
+	@Matches(/^\d{4}-\d{2}-\d{2}$/)
+	dueDateFromDay?: string;
+
+	@ApiPropertyOptional({
+		type: () => String,
+		example: '2026-11-20',
+		description: 'The calendar day dueDateTo ends in the reader’s zone: a date-only due date is compared with it.'
+	})
+	@IsOptional()
+	@Matches(/^\d{4}-\d{2}-\d{2}$/)
+	dueDateToDay?: string;
 
 	@ApiPropertyOptional({
 		type: () => Boolean,

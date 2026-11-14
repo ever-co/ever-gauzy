@@ -1,9 +1,10 @@
 import { inject, Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { catchError, map, shareReplay } from 'rxjs/operators';
+import { catchError, map, shareReplay, tap } from 'rxjs/operators';
 import { ID } from '@gauzy/contracts';
 import { ChatPerson } from '../chat-ui.helpers';
 import { ChatPersonRecord, ChatUiService } from './chat-ui.service';
+import { ChatPresenceService } from './chat-presence.service';
 
 /** The people of the organization, by employee id and by user id, plus the list for the pickers. */
 export interface ChatPeople {
@@ -23,13 +24,17 @@ export const EMPTY_PEOPLE: ChatPeople = { byEmployee: new Map(), byUser: new Map
 @Injectable({ providedIn: 'root' })
 export class ChatPeopleService {
 	private readonly api = inject(ChatUiService);
+	private readonly presence = inject(ChatPresenceService);
 	private readonly cache = new Map<string, Observable<ChatPeople>>();
 
 	people(organizationId: ID, tenantId: ID): Observable<ChatPeople> {
 		const key = `${tenantId}:${organizationId}`;
 		let cached = this.cache.get(key);
 		if (!cached) {
+			const askedAt = Date.now();
 			cached = this.api.people().pipe(
+				// The list says who is here too: the avatars show it before the first presence event.
+				tap((records) => this.presence.applyList(records, askedAt)),
 				map((records) => toPeople(records)),
 				catchError(() => {
 					// A refusal is not kept: the next reader asks again (the chat may be served a moment later).

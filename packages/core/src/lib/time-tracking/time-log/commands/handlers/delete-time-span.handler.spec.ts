@@ -471,7 +471,8 @@ function createStore() {
 			}
 		};
 		const service = new TimeLogService(
-			{} as never,
+			// No running timer of the employee besides the logs the overlap lookup returns (#11886)
+			{ find: async () => [] } as never,
 			{} as never,
 			{ findOne: async () => employee } as never,
 			{} as never,

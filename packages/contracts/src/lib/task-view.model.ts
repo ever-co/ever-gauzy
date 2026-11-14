@@ -90,6 +90,15 @@ export interface ITaskViewFilterCondition {
 	/** ISO instants for `after` / `between` and `before` / `between`. */
 	from?: string;
 	to?: string;
+	/**
+	 * The calendar day (`YYYY-MM-DD`) a person picked for `from` / `to`, sent with the instant the editor made of it: the
+	 * start of that day in their zone (`after`, `before`, the lower bound of `between`), or its last instant (the upper
+	 * bound of `between`). A due date stored as a date only (midnight UTC of its day) is compared with this day rather
+	 * than the instant, so it falls on its own day for a reader in any zone. Without it (views saved before it came, a
+	 * caller that sends instants), both kinds of value compare with the instant.
+	 */
+	fromDay?: string;
+	toDay?: string;
 	relative?: ITaskViewRelativeDate;
 }
 

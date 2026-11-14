@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, HttpException, NotFoundException } from '@nestjs/common';
 import {
 	And,
 	DeleteResult,
@@ -34,6 +34,7 @@ import {
 	isWithinOrganizationBoundary
 } from './organization-boundary';
 import { ITryRequest } from './try-request';
+import { redactDatabaseError } from '../errors/database-error';
 
 /** The columns this service scopes a statement by. */
 type ScopeColumn = 'tenantId' | 'employeeId' | 'organizationId';
@@ -1405,8 +1406,10 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 * DELETE source related to tenant
 	 *
 	 * @param criteria - A string ID or a set of conditions to identify which record to delete.
-	 * @param options - Additional options for querying, such as extra conditions or query parameters.
+	 * @param options - Additional options for querying, such as extra conditions or query parameters; `withDeleted: true`
+	 * deletes a soft-deleted row too (see {@link CrudService.delete}).
 	 * @returns {Promise<DeleteResult>} - The result of the delete operation.
+	 * @throws NotFoundException when the statement fails, with the driver's error as its `cause`.
 	 */
 	public async delete(criteria: string | FindOptionsWhere<T>, options?: LegacyFindOneOptions<T>): Promise<DeleteResult> {
 		try {
@@ -1432,15 +1435,19 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 				this.whereInsideOrganizationBoundary({
 					...where,
 					...this.findConditionsWithTenantByUser(user)
-				})
+				}),
+				{ withDeleted: options?.withDeleted === true }
 			);
 		} catch (err) {
 			// A malformed criteria (no predicate) is the caller's error, not a missing record.
 			if (err instanceof BadRequestException) {
 				throw err;
 			}
-			console.error('Error during delete operation:', err);
-			throw new NotFoundException(`The record was not found`, err);
+			const cause = err instanceof HttpException && err.cause !== undefined ? err.cause : err;
+			// Logged without the bound values a driver error carries (a log is shipped and kept).
+			console.error('Error during delete operation:', redactDatabaseError(cause));
+			// The same answer as ever (no description); the driver's error stays reachable as `cause`.
+			throw new NotFoundException(`The record was not found`, { cause });
 		}
 	}
 

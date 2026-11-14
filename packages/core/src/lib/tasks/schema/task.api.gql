@@ -144,6 +144,28 @@ extend type Query {
 		createdByUserId: ID
 		projectId: ID
 		organizationSprintId: ID
+		"""
+		The calendar day (`YYYY-MM-DD`) `dueDateFrom` starts, in the reader's zone, sent with that instant: a due date
+		stored as a date only (midnight UTC of its day) is compared with this day rather than the instant, so it counts on
+		its own day west of UTC too. Omitted, every due date compares with the instant.
+		"""
+		dueDateFromDay: String
+		"""
+		The calendar day (`YYYY-MM-DD`) `dueDateTo` ends, in the reader's zone, sent with that instant (the day's last
+		instant): a due date stored as a date only is compared with this day rather than the instant.
+		"""
+		dueDateToDay: String
+		"""
+		The calendar day (`YYYY-MM-DD`) `startDateFrom` starts, in the reader's zone, sent with that instant: a start
+		date stored as a date only (midnight UTC of its day) is compared with this day rather than the instant, so it
+		counts on its own day west of UTC too. Omitted, every start date compares with the instant.
+		"""
+		startDateFromDay: String
+		"""
+		The calendar day (`YYYY-MM-DD`) `startDateTo` ends, in the reader's zone, sent with that instant (the day's last
+		instant): a start date stored as a date only is compared with this day rather than the instant.
+		"""
+		startDateToDay: String
 		filter: TaskFilter
 		sort: [TaskSort!]
 		page: PageInput

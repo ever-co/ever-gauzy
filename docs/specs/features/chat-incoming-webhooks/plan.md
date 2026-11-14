@@ -107,7 +107,8 @@ settings read; the REST surface is the contract).
   Messages: App badge, webhook name and icon, the block subset (header, section text, fields side by side,
   divider, context, buttons; buttons call the interaction route and show pending / failed).
 - Ever Teams (`apps/web` chat): the same rendering behind `NEXT_PUBLIC_CHAT_WEBHOOKS_ENABLED` (default off),
-  strings in all 13 locales. The management UI stays in the Angular app (Teams: follow-up, `tasks.md`).
+  strings in all 13 locales; the management UI under the same switch, as a channel's More > Integrations dialog
+  (the Angular tab's behaviour and wording; hidden on 404 / 403; ever-teams #5183, T16).
 
 ## 7. Security & Permissions
 
