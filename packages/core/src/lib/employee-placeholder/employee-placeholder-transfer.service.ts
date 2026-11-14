@@ -114,9 +114,18 @@ export class EmployeePlaceholderTransferService {
 		options: { keepInviteId?: ID } = {}
 	): Promise<IEmployeePlaceholderTransferSummary> {
 		const references = await this.readReferences();
-		return await this.typeOrmEmployeeRepository.manager.transaction(async (manager: EntityManager) => {
-			return await this.transferWithin(manager, references, placeholderId, targetId, tenantId, options);
-		});
+		const manager = this.typeOrmEmployeeRepository.manager;
+		const body = async (inTransaction: EntityManager) =>
+			await this.transferWithin(inTransaction, references, placeholderId, targetId, tenantId, options);
+		// MySQL's REPEATABLE READ answers every plain read from the snapshot of the transaction's first one, so the
+		// member count, read after the organization's lock, would miss a transfer committed while it waited
+		// (`recountMembers`). READ COMMITTED reads what is committed at each statement, as PostgreSQL does by default;
+		// SQLite takes no isolation level.
+		const type = manager.connection.options.type;
+		if (type === 'mysql' || type === 'mariadb') {
+			return await manager.transaction('READ COMMITTED', body);
+		}
+		return await manager.transaction(body);
 	}
 
 	/**
@@ -434,8 +443,8 @@ async function removeCollisions(
  * The organization row is locked first where the database locks rows (`FOR NO KEY UPDATE` on Postgres, the lock its
  * update takes anyway; `FOR UPDATE` on MySQL). Two transfers in one organization lock different members, so without
  * it each could count before the other commits, miss the other's removed placeholder, and store a count one too high.
- * Locked, the second waits for the first to commit, and its count (a statement of its own, under READ COMMITTED)
- * reads the first one's removal. SQLite runs one writer at a time.
+ * Locked, the second waits for the first to commit, and its count (a statement of its own, under READ COMMITTED, which
+ * the transfer's transaction runs at on MySQL too) reads the first one's removal. SQLite runs one writer at a time.
  */
 async function recountMembers(queryRunner: QueryRunner, organizationId: ID, tenantId: ID): Promise<void> {
 	await lockOrganization(queryRunner, organizationId, tenantId);

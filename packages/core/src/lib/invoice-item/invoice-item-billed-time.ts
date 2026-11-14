@@ -149,14 +149,18 @@ async function mikroOrmLockReleasingDocuments(
 }
 
 /**
- * Runs a lock of documents, and answers a lock that could not be taken without waiting with
- * {@link BILLED_TIME_CHANGING} (409). The transaction is rolled back, so the billing saves nothing.
+ * Runs a lock of documents, and answers a lock that could not be taken without waiting, or that the database broke as
+ * a deadlock, with {@link BILLED_TIME_CHANGING} (409). The transaction is rolled back, so the billing saves nothing.
+ *
+ * A deadlock is still possible before the time logs are locked: a replacement of an invoice's lines that bills time
+ * locks its own invoice first, whatever its id, and another billing can lock the documents in id order around it. The
+ * database then aborts one of the two, and that one is told to save again rather than given a 500.
  */
 async function refusingLockedDocuments<T>(lock: () => Promise<T>): Promise<T> {
 	try {
 		return await lock();
 	} catch (error) {
-		if (isLockNotAvailable(error)) {
+		if (isLockNotAvailable(error) || isDeadlock(error)) {
 			throw new ConflictException(BILLED_TIME_CHANGING);
 		}
 		throw error;
@@ -175,6 +179,14 @@ function isLockNotAvailable(error: unknown): boolean {
 	const onMySql = codes.includes('ER_LOCK_NOWAIT') || numbers.includes(3572);
 	const onMariaDb = codes.includes('ER_LOCK_WAIT_TIMEOUT') || numbers.includes(1205);
 	return onPostgres || onMySql || onMariaDb;
+}
+
+/** Whether an error is a deadlock the database broke by aborting this transaction: PostgreSQL `40P01`, MySQL 1213. */
+function isDeadlock(error: unknown): boolean {
+	const raised = error as { code?: unknown; errno?: unknown; driverError?: { code?: unknown; errno?: unknown } };
+	const codes = [raised?.code, raised?.driverError?.code];
+	const numbers = [raised?.errno, raised?.driverError?.errno];
+	return codes.includes('40P01') || codes.includes('ER_LOCK_DEADLOCK') || numbers.includes(1213);
 }
 
 /**
