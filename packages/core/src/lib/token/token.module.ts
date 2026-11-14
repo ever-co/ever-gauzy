@@ -23,8 +23,10 @@ import {
 	CleanupInactiveTokensHandler,
 	CreateTokenHandler,
 	RevokeAllUserTokensHandler,
+	RevokeTokenByIdHandler,
 	RevokeTokenHandler,
-	RotateTokenHandler
+	RotateTokenHandler,
+	TouchTokenHandler
 } from './commands';
 
 // Query Handlers
@@ -66,7 +68,9 @@ const CommandHandlers: Type<unknown>[] = [
 	RevokeTokenHandler,
 	RevokeAllUserTokensHandler,
 	CleanupExpiredTokensHandler,
-	CleanupInactiveTokensHandler
+	CleanupInactiveTokensHandler,
+	RevokeTokenByIdHandler,
+	TouchTokenHandler
 ];
 
 const QueryHandlers: Type<unknown>[] = [

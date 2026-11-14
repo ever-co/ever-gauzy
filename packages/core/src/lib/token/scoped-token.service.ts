@@ -1,8 +1,15 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { CreateTokenCommand, RevokeAllUserTokensCommand, RevokeTokenCommand, RotateTokenCommand } from './commands';
+import {
+	CreateTokenCommand,
+	RevokeAllUserTokensCommand,
+	RevokeTokenByIdCommand,
+	RevokeTokenCommand,
+	RotateTokenCommand,
+	TouchTokenCommand
+} from './commands';
 import { IGeneratedToken, IToken, IValidatedToken } from './interfaces';
-import { GetActiveTokensQuery, ValidateTokenQuery } from './queries';
+import { GetActiveTokensQuery, GetTokenByIdQuery, ValidateTokenQuery } from './queries';
 import { ScopedTokenConfig } from './scoped-config.registry';
 
 /**
@@ -88,5 +95,44 @@ export class ScopedTokenService {
 	 */
 	async getActiveTokens(userId: string): Promise<IToken[]> {
 		return this.queryBus.execute(new GetActiveTokensQuery(userId, this.tokenType));
+	}
+
+	/**
+	 * The stored token with this id, when it is of this service's type; null otherwise.
+	 */
+	async getTokenById(tokenId: string): Promise<IToken | null> {
+		try {
+			const token: IToken = await this.queryBus.execute(new GetTokenByIdQuery(tokenId));
+			if (token.tokenType !== this.tokenType) {
+				return null;
+			}
+			return token;
+		} catch (error) {
+			if (error instanceof NotFoundException) {
+				return null;
+			}
+			throw error;
+		}
+	}
+
+	/**
+	 * Revoke one of a user's tokens of this type by its id (tokenType automatically set).
+	 *
+	 * @returns Whether this call revoked it.
+	 */
+	async revokeTokenById(dto: {
+		tokenId: string;
+		userId: string;
+		revokedById?: string;
+		reason?: string;
+	}): Promise<boolean> {
+		return this.commandBus.execute(new RevokeTokenByIdCommand({ ...dto, tokenType: this.tokenType }));
+	}
+
+	/**
+	 * Record a use of a stored token: its last use becomes now.
+	 */
+	async touchToken(tokenId: string): Promise<void> {
+		return this.commandBus.execute(new TouchTokenCommand(tokenId));
 	}
 }
