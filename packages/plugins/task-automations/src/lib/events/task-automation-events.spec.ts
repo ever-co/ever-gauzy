@@ -145,11 +145,11 @@ describe('TaskAutomationLinkClosedCapture', () => {
 		const rules = { enabledTriggers: jest.fn(async () => new Set(triggers)) };
 		const reader = { belongsTo: jest.fn(async () => owned) };
 		const closures = {
-			claimIn: jest.fn(async (_manager: unknown, _key: { kind: string }) => claimed),
+			claimIn: jest.fn<Promise<boolean>, [unknown, { kind: string }]>(async () => claimed),
 			claimInMikroOrm: jest.fn(async () => claimed),
-			exists: jest.fn(async (_key: { kind: string }) => false)
+			exists: jest.fn<Promise<boolean>, [{ kind: string }]>(async () => false)
 		};
-		const outbox = { append: jest.fn(async (_manager: unknown, _input: unknown) => ({})) };
+		const outbox = { append: jest.fn<Promise<unknown>, [unknown, unknown]>(async () => ({})) };
 		// The claim and the append run in one transaction; `manager` is that transaction's.
 		const manager = {};
 		const dataSource = { manager: { transaction: jest.fn(async (work: (manager: unknown) => Promise<unknown>) => work(manager)) } };
@@ -202,9 +202,14 @@ describe('TaskAutomationLinkClosedCapture', () => {
 	it('appends a merge whose close was reported before, saying so; an integration cannot say it for the claims', async () => {
 		const { capture, closures, outbox, manager } = setup([TaskAutomationTriggerEnum.LINK_CLOSED]);
 		// The close was claimed when the pull request closed without merging; its merge is new.
-		closures.claimIn.mockImplementation(async (_manager: unknown, key: { kind: string }) => key.kind === TASK_LINK_MERGE_CLAIM_KIND);
+		closures.claimIn.mockImplementation(
+			async (_manager: unknown, key: { kind: string }) => key.kind === TASK_LINK_MERGE_CLAIM_KIND
+		);
 		expect(await capture.report({ ...closed, closedBefore: false })).toBe(true);
-		expect(outbox.append).toHaveBeenCalledWith(manager, expect.objectContaining({ data: expect.objectContaining({ merged: true, closedBefore: true }) }));
+		expect(outbox.append).toHaveBeenCalledWith(
+			manager,
+			expect.objectContaining({ data: expect.objectContaining({ merged: true, closedBefore: true }) })
+		);
 
 		// Both claimed before: the same merge delivered again appends nothing.
 		closures.claimIn.mockResolvedValue(false);
@@ -280,7 +285,9 @@ describe('TaskAutomationLinkClosedCapture', () => {
 
 	it('throws a merge’s failed append though its close was claimed long before, so the merge is not lost as a repeat', async () => {
 		const { capture, closures, outbox } = setup([TaskAutomationTriggerEnum.LINK_CLOSED]);
-		closures.claimIn.mockImplementation(async (_manager: unknown, key: { kind: string }) => key.kind === TASK_LINK_MERGE_CLAIM_KIND);
+		closures.claimIn.mockImplementation(
+			async (_manager: unknown, key: { kind: string }) => key.kind === TASK_LINK_MERGE_CLAIM_KIND
+		);
 		closures.exists.mockImplementation(async (key: { kind: string }) => key.kind !== TASK_LINK_MERGE_CLAIM_KIND);
 		outbox.append.mockRejectedValueOnce(new Error('database down'));
 		await expect(capture.report(closed)).rejects.toThrow('database down');

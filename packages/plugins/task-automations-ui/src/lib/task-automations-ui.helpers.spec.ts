@@ -68,7 +68,12 @@ describe('task automations UI helpers', () => {
 	it('sends only what each type uses, and the status lists only for a status change', () => {
 		const draft = blankDraft();
 		draft.name = '  Assigned  ';
-		draft.trigger = { type: TaskAutomationTriggerEnum.TASK_ASSIGNED, toStatuses: ['done'], fromStatuses: [], mergedOnly: true };
+		draft.trigger = {
+			type: TaskAutomationTriggerEnum.TASK_ASSIGNED,
+			toStatuses: ['done'],
+			fromStatuses: [],
+			mergedOnly: true
+		};
 		draft.conditions = [{ ...newCondition(TaskAutomationConditionEnum.HAS_LABEL), values: ['a', 'a', ' '], text: 'dropped' }];
 		draft.actions = [
 			{ ...newAction(TaskAutomationActionEnum.NOTIFY_ASSIGNEES), tagIds: ['dropped'], message: '  ' },
@@ -87,19 +92,31 @@ describe('task automations UI helpers', () => {
 	});
 
 	it('sends “merged only” for a closed link alone, and reads it back from a saved rule (false when the rule has none)', () => {
-		const linkRule: ITaskAutomationRule = { ...rule, trigger: { type: TaskAutomationTriggerEnum.LINK_CLOSED, mergedOnly: true } };
+		const linkRule: ITaskAutomationRule = {
+			...rule,
+			trigger: { type: TaskAutomationTriggerEnum.LINK_CLOSED, mergedOnly: true }
+		};
 		const draft = draftOfRule(linkRule);
 		expect(draft.trigger.mergedOnly).toBe(true);
-		expect(ruleInputOfDraft(draft).trigger).toEqual({ type: TaskAutomationTriggerEnum.LINK_CLOSED, mergedOnly: true });
+		expect(ruleInputOfDraft(draft).trigger).toEqual({
+			type: TaskAutomationTriggerEnum.LINK_CLOSED,
+			mergedOnly: true
+		});
 
 		// A rule saved before the option: off, and sent as off.
 		const older = draftOfRule({ ...rule, trigger: { type: TaskAutomationTriggerEnum.LINK_CLOSED } });
 		expect(older.trigger.mergedOnly).toBe(false);
-		expect(ruleInputOfDraft(older).trigger).toEqual({ type: TaskAutomationTriggerEnum.LINK_CLOSED, mergedOnly: false });
+		expect(ruleInputOfDraft(older).trigger).toEqual({
+			type: TaskAutomationTriggerEnum.LINK_CLOSED,
+			mergedOnly: false
+		});
 
 		// Another trigger never sends it, and a status change keeps its lists only.
 		expect(
-			ruleInputOfDraft({ ...draft, trigger: { ...draft.trigger, type: TaskAutomationTriggerEnum.STATUS_CHANGED, toStatuses: ['done'] } }).trigger
+			ruleInputOfDraft({
+				...draft,
+				trigger: { ...draft.trigger, type: TaskAutomationTriggerEnum.STATUS_CHANGED, toStatuses: ['done'] }
+			}).trigger
 		).toEqual({ type: TaskAutomationTriggerEnum.STATUS_CHANGED, toStatuses: ['done'], fromStatuses: [] });
 
 		// The link template starts with it off.

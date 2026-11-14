@@ -1,7 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 import { DataSource } from 'typeorm';
-import { IOutboxWriteInput, TASK_AUTOMATION_EVENT_NAMES, TaskAutomationTriggerEnum } from '@gauzy/contracts';
+import {
+	IOutboxWriteInput,
+	ITaskLinkClosedEvent,
+	TASK_AUTOMATION_EVENT_NAMES,
+	TaskAutomationTriggerEnum
+} from '@gauzy/contracts';
 import { EventOutboxService, getORMType, MultiORMEnum, TaskLinkClosedEvent } from '@gauzy/core';
 import { ITaskLinkClosureKey, linkClosureKeyOf, linkMergeKeyOf, parseLinkClosedEvent } from '../engine/link-closed';
 import { ITaskAutomationMikroOrmTransaction, TaskAutomationLinkClosureStore } from '../services/task-automation-link-closure.store';
@@ -61,16 +66,24 @@ export class TaskAutomationLinkClosedCapture implements IEventHandler<TaskLinkCl
 		const enabled = await this.rules.enabledTriggers(key.tenantId, key.organizationId);
 		if (!enabled.has(TaskAutomationTriggerEnum.LINK_CLOSED)) return false;
 		const mergeKey = linkMergeKeyOf(closed, key);
-		return this.claimAndAppend(key, mergeKey, (closedBefore) => ({
-			name: TASK_AUTOMATION_EVENT_NAMES.LINK_CLOSED,
-			aggregateType: TASK_AUTOMATION_AGGREGATE,
-			aggregateId: key.taskId,
-			partitionKey: taskAutomationPartitionKey(key.taskId),
-			tenantId: key.tenantId,
-			organizationId: key.organizationId,
+		return this.claimAndAppend(key, mergeKey, (closedBefore) => {
 			// `closedBefore` is the claims' to say, never the integration's.
-			data: { ...closed, provider: key.provider, externalId: key.externalId, closedBefore } as unknown as Record<string, unknown>
-		}));
+			const data: ITaskLinkClosedEvent = {
+				...closed,
+				provider: key.provider,
+				externalId: key.externalId,
+				closedBefore
+			};
+			return {
+				name: TASK_AUTOMATION_EVENT_NAMES.LINK_CLOSED,
+				aggregateType: TASK_AUTOMATION_AGGREGATE,
+				aggregateId: key.taskId,
+				partitionKey: taskAutomationPartitionKey(key.taskId),
+				tenantId: key.tenantId,
+				organizationId: key.organizationId,
+				data: data as unknown as Record<string, unknown>
+			};
+		});
 	}
 
 	/**
@@ -91,7 +104,10 @@ export class TaskAutomationLinkClosedCapture implements IEventHandler<TaskLinkCl
 				if (em) {
 					return await em.fork().transactional(async (transaction) => {
 						const claim = (claimed: ITaskLinkClosureKey) =>
-							this.closures.claimInMikroOrm(transaction as unknown as ITaskAutomationMikroOrmTransaction, claimed);
+							this.closures.claimInMikroOrm(
+								transaction as unknown as ITaskAutomationMikroOrmTransaction,
+								claimed
+							);
 						const closed = await claim(key);
 						const merged = mergeKey ? await claim(mergeKey) : false;
 						if (!closed && !merged) return false;

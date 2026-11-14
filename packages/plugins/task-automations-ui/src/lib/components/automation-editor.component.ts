@@ -1,6 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, effect, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NbButtonModule, NbCheckboxModule, NbIconModule, NbInputModule, NbSelectModule, NbToggleModule } from '@nebular/theme';
+import {
+	NbButtonModule,
+	NbCheckboxModule,
+	NbIconModule,
+	NbInputModule,
+	NbSelectModule,
+	NbToggleModule
+} from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import {
 	TASK_AUTOMATION_LIMITS,
@@ -45,7 +52,16 @@ export function withNamed(choices: readonly ITaskAutomationChoice[], named: read
 @Component({
 	selector: 'ngx-task-automation-editor',
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [FormsModule, NbButtonModule, NbCheckboxModule, NbIconModule, NbInputModule, NbSelectModule, NbToggleModule, TranslatePipe],
+	imports: [
+		FormsModule,
+		NbButtonModule,
+		NbCheckboxModule,
+		NbIconModule,
+		NbInputModule,
+		NbSelectModule,
+		NbToggleModule,
+		TranslatePipe
+	],
 	templateUrl: './automation-editor.component.html',
 	styleUrl: './automation-editor.component.scss'
 })
@@ -99,7 +115,12 @@ export class TaskAutomationEditorComponent {
 					projectId: null,
 					organizationTeamId: null,
 					isEnabled: true,
-					trigger: { type: TaskAutomationTriggerEnum.STATUS_CHANGED, toStatuses: [], fromStatuses: [], mergedOnly: false },
+					trigger: {
+						type: TaskAutomationTriggerEnum.STATUS_CHANGED,
+						toStatuses: [],
+						fromStatuses: [],
+						mergedOnly: false
+					},
 					conditions: [],
 					actions: [newAction()]
 				};

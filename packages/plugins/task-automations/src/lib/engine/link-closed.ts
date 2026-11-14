@@ -75,6 +75,9 @@ export function linkClosureKeyOf(event: ITaskLinkClosedEvent): ITaskLinkClosureK
  * The identity a pull request's merge is claimed under (the close's, of kind {@link TASK_LINK_MERGE_CLAIM_KIND}), or
  * `null` when the closed link is no merged pull request.
  */
-export function linkMergeKeyOf(event: Pick<ITaskLinkClosedEvent, 'kind' | 'merged'>, key: ITaskLinkClosureKey): ITaskLinkClosureKey | null {
+export function linkMergeKeyOf(
+	event: Pick<ITaskLinkClosedEvent, 'kind' | 'merged'>,
+	key: ITaskLinkClosureKey
+): ITaskLinkClosureKey | null {
 	return event.kind === 'pull_request' && event.merged === true ? { ...key, kind: TASK_LINK_MERGE_CLAIM_KIND } : null;
 }

@@ -122,11 +122,14 @@ export function matchChangeTrigger(
  */
 export function matchLinkClosedTrigger(
 	trigger: ITaskAutomationTrigger,
-	event: Pick<ITaskLinkClosedEvent, 'taskId'> & Partial<Pick<ITaskLinkClosedEvent, 'kind' | 'merged' | 'closedBefore'>>
+	event: Pick<ITaskLinkClosedEvent, 'taskId'> &
+		Partial<Pick<ITaskLinkClosedEvent, 'kind' | 'merged' | 'closedBefore'>>
 ): ITaskAutomationTriggerMatch | null {
 	if (trigger?.type !== TaskAutomationTriggerEnum.LINK_CLOSED || !event?.taskId) return null;
 	const fires =
-		trigger.mergedOnly === true && event.kind === 'pull_request' ? event.merged === true : event.closedBefore !== true;
+		trigger.mergedOnly === true && event.kind === 'pull_request'
+			? event.merged === true
+			: event.closedBefore !== true;
 	return fires ? { subjectTaskId: event.taskId } : null;
 }
 
