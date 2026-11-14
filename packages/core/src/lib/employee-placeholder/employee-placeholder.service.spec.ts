@@ -132,6 +132,7 @@ function build() {
 				id: 'invite-1',
 				email: command.input.emailIds[0],
 				code: 'C0DE',
+				token: 'bearer-token',
 				placeholderEmployeeId: command.placeholderEmployeeId
 			};
 			// The stored row and the answer are separate objects, so the row says what was written.
@@ -271,6 +272,9 @@ describe('EmployeePlaceholderService.sendClaim', () => {
 		expect(command.input.placeholderEmployeeId).toBeUndefined();
 		expect(invite.placeholderEmployeeId).toBe(placeholder.id);
 		expect(tables.get(Invite)?.[0]).toMatchObject({ id: 'invite-1', placeholderEmployeeId: placeholder.id });
+		// The invitation's token and code are the email's to use: its sender never gets them.
+		expect(invite).not.toHaveProperty('token');
+		expect(invite).not.toHaveProperty('code');
 	});
 
 	it('refuses an email that has an account in the tenant, whatever its role or organization, and sends nothing', async () => {

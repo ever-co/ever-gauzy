@@ -181,7 +181,11 @@ export class EmployeePlaceholderService {
 		if (!invite) {
 			throw new ConflictException('The claim invitation could not be created.');
 		}
-		return invite;
+		// The invitation's token and code are the email's to use: its sender never gets them.
+		const sent: Partial<IInvite> & { code?: string } = { ...invite };
+		delete sent.token;
+		delete sent.code;
+		return sent as IInvite;
 	}
 
 	/** What merging a member without an account into a member would move. Writes nothing. */
