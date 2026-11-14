@@ -1056,6 +1056,25 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 			expect(timeSpanDeletes).toEqual(cutsOfEntry(entry, TWO_HOURS_AGO, NOW));
 		});
 
+		it('cuts the logs a replaced run overlaps when the cleanup of the other runs fails after its stop', async () => {
+			const entry = manualEntry();
+			const rows = [entry, timeLog('web-run', TimeLogSourceEnum.WEB_TIMER, TWO_HOURS_AGO)];
+			const { service, timeSpanDeletes, logger } = setup(rows, {
+				onPendingRead: () => {
+					throw new Error('connection reset');
+				}
+			});
+
+			await startOnDesktop(service);
+
+			// Stopped, the web run is no run any later start would read: its cuts are made now or never
+			expect(rows[1]).toMatchObject({ id: 'web-run', isRunning: false, stoppedAt: NOW });
+			expect(timeSpanDeletes).toEqual(cutsOfEntry(entry, TWO_HOURS_AGO, NOW));
+			expect(logger.warn).toHaveBeenCalledWith(
+				expect.stringContaining('Failed to stop previous running timers: connection reset')
+			);
+		});
+
 		it('writes no stop over the next start once its lookup of the logs the run overlaps outlived the failsafe time', async () => {
 			jest.useFakeTimers({ doNotFake: ['Date', 'nextTick', 'setImmediate', 'queueMicrotask'] });
 			try {

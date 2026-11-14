@@ -1254,9 +1254,15 @@ export class TimerService {
 				turn?.assertHeld();
 				// The command stops the runs read here, and only those: a run written since, by another client or by the
 				// next start once this one has outlived the failsafe time, is never its to end, however late it reads
-				await this._commandBus.execute(
-					new ScheduleTimeLogEntriesCommand(employeeId, organizationId, tenantId, readRunIds)
-				);
+				try {
+					await this._commandBus.execute(
+						new ScheduleTimeLogEntriesCommand(employeeId, organizationId, tenantId, readRunIds)
+					);
+				} catch (error) {
+					// The runs stopped above keep their end whatever happened to the others, and still cut the logs they
+					// overlap (below): stopped, no later start reads them again
+					this.logger.warn(`Failed to stop previous running timers: ${error?.message}`);
+				}
 			}
 
 			// Each run stopped here cuts the logs it overlapped before its stop, once every run read has its end
