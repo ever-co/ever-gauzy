@@ -450,6 +450,22 @@ describe('TaskDueReminderService on SQLite', () => {
 		expect(filed).toHaveLength(0);
 	});
 
+	it('resumes where a sweep out of time stopped, so later assignments are reached too', async () => {
+		// Two people on many tasks: the first page is all due later than the reminder of the second person
+		const ada = await employee({ preferences: { taskDueReminderHours: 1 } });
+		for (let index = 0; index < 200; index++) await task([ada], { dueDate: inHours(2 + index / 1000) });
+		const grace = await employee();
+		const late = await task([grace], { dueDate: inHours(10) });
+
+		// No time budget: each sweep reads one page
+		const first = await service.sweep(NOW, 0);
+		const second = await service.sweep(NOW, 0);
+
+		expect(first).toMatchObject({ checked: 200, reminded: 0 });
+		expect(second).toMatchObject({ checked: 1, reminded: 1 });
+		expect(filed.map(({ input }) => input.entityId)).toEqual([late]);
+	});
+
 	it('reads through more assignments than a page holds', async () => {
 		const ada = await employee();
 		for (let index = 0; index < 205; index++) await task([ada], { dueDate: inHours(1 + index / 100) });

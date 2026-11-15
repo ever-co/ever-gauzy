@@ -9,13 +9,13 @@ import {
 	NotificationActionTypeEnum
 } from '@gauzy/contracts';
 import { RequestContext } from '../../core/context/request-context';
-import { Employee, EntitySubscription, Task } from '../../core/entities/internal';
+import { Employee, EntitySubscription, OrganizationProjectEmployee, Task } from '../../core/entities/internal';
 import { CommentEvent } from '../../comment/events';
 import { EmployeeNotificationService } from '../../employee-notification/employee-notification.service';
 import { EventBus } from '../../event-bus/event-bus';
 import { TaskEvent } from '../../event-bus/events/task.event';
 import { OrganizationProjectChangedEvent } from '../../organization-project/events/organization-project-changed.event';
-import { projectChangeMessageOf } from '../../organization-project/project-notifications';
+import { projectChangeMessageOf, shortenedName } from '../../organization-project/project-notifications';
 import { isNotificationFanOutEnabled } from './fan-out-enabled';
 
 /** The members of a task update that count as "the task changed" for its followers. */
@@ -124,8 +124,10 @@ export class FollowerFanOutService implements OnModuleInit, OnModuleDestroy {
 	}
 
 	/**
-	 * A project's status, dates or archiving changed: its followers (its members, who follow it from the moment they are
-	 * added; not the actor) are told what changed, in the notification's message.
+	 * A project's status, dates or archiving changed: its followers who are its members now (they follow it from the
+	 * moment they are added; not the actor) are told what changed, in the notification's message. A follower who is not
+	 * a member, one taken off the project who kept a subscription or one who subscribed by hand, is not told: the
+	 * project's name and changes reach its members alone.
 	 */
 	async onProjectChanged(event: OrganizationProjectChangedEvent): Promise<void> {
 		const { project, changes } = event;
@@ -139,9 +141,19 @@ export class FollowerFanOutService implements OnModuleInit, OnModuleDestroy {
 			organizationId: project.organizationId ?? undefined,
 			type: EmployeeNotificationTypeEnum.TASK_UPDATE,
 			action: NotificationActionTypeEnum.Updated,
-			entityName: project.name ?? null,
-			message: projectChangeMessageOf(changes)
+			entityName: shortenedName(project.name),
+			message: projectChangeMessageOf(changes),
+			among: await this.projectMemberIds(project.id, project.tenantId)
 		});
+	}
+
+	/** The employees who are members of a project now. */
+	private async projectMemberIds(projectId: ID, tenantId: ID): Promise<ReadonlySet<string>> {
+		const rows = await this.dataSource.getRepository(OrganizationProjectEmployee).find({
+			select: { employeeId: true },
+			where: { organizationProjectId: projectId, tenantId }
+		});
+		return new Set(rows.map((row) => String(row.employeeId)));
 	}
 
 	/**
@@ -159,11 +171,17 @@ export class FollowerFanOutService implements OnModuleInit, OnModuleDestroy {
 		commentId?: ID;
 		/** What changed, when the title alone does not say it. */
 		message?: string;
+		/** When given, only the followers among these employees are told. */
+		among?: ReadonlySet<string>;
 	}): Promise<number> {
 		try {
 			const actorEmployeeId = RequestContext.currentEmployeeId() ?? RequestContext.currentUser()?.employeeId ?? null;
 			const followers = await this.followersOf(input.entity, input.entityId, input.tenantId, input.organizationId ?? null);
-			const receivers = followers.filter((employeeId) => !actorEmployeeId || String(employeeId) !== String(actorEmployeeId));
+			const receivers = followers.filter(
+				(employeeId) =>
+					(!actorEmployeeId || String(employeeId) !== String(actorEmployeeId)) &&
+					(!input.among || input.among.has(String(employeeId)))
+			);
 			if (!receivers.length) {
 				return 0;
 			}

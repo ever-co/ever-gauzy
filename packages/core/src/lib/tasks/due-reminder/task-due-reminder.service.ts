@@ -114,15 +114,23 @@ function claimTimeOf(now: Date): Date {
 export class TaskDueReminderService {
 	private readonly logger = new Logger(TaskDueReminderService.name);
 
+	/**
+	 * The last assignment the last sweep read. The next sweep resumes after it, and wraps round to the earliest once it
+	 * reaches the end, so a list longer than one sweep's budget (the assignments of people who turned the reminders off,
+	 * or whose threshold is not reached, stay in it) is read through in turn, not from its start every time. Kept by
+	 * each process: the claims make two processes that read the same assignment harmless.
+	 */
+	private cursor: ITaskDueReminderRow | null = null;
+
 	constructor(
 		private readonly dataSource: DataSource,
 		private readonly notifications: EmployeeNotificationService
 	) {}
 
 	/**
-	 * Files the reminders that are due: reads the assignees of the tasks due soon a page at a time, the earliest due
-	 * first, until the list is read or the time budget of the pass is spent (the next pass starts again from the
-	 * earliest, whose reminders are the most pressing).
+	 * Files the reminders that are due: reads the assignees of the tasks due soon a page at a time, in due date order,
+	 * from where the last sweep stopped to the end, then from the earliest round to where it began, until the list is
+	 * read or the time budget of the pass is spent.
 	 *
 	 * @param now The moment the reminders are due at.
 	 * @param budgetMs How long the pass may keep reading pages.
@@ -133,16 +141,37 @@ export class TaskDueReminderService {
 	): Promise<ITaskDueReminderSweepReport> {
 		const report: ITaskDueReminderSweepReport = { checked: 0, reminded: 0, recovered: 0, failed: 0 };
 		const startedAt = Date.now();
-		let after: ITaskDueReminderRow | null = null;
+		const start = this.cursor;
+		let after = start;
+		let hasWrapped = false;
 
 		for (;;) {
-			const page = await this.assigneesOfTasksDueSoon(after, TASK_DUE_REMINDER_SWEEP_PAGE_SIZE, now);
+			// Once wrapped round to the earliest, the pass reads up to where it began
+			const page = await this.assigneesOfTasksDueSoon(
+				after,
+				TASK_DUE_REMINDER_SWEEP_PAGE_SIZE,
+				now,
+				hasWrapped ? start : null
+			);
 			report.checked += page.length;
 			if (page.length) {
 				await this.remindPage(page, now, report);
 				after = page[page.length - 1];
+				this.cursor = after;
 			}
-			if (page.length < TASK_DUE_REMINDER_SWEEP_PAGE_SIZE || Date.now() - startedAt >= budgetMs) {
+			const isOutOfTime = Date.now() - startedAt >= budgetMs;
+			if (page.length < TASK_DUE_REMINDER_SWEEP_PAGE_SIZE) {
+				// The end of the list. A pass that began after the earliest reads the ones before, with the time left.
+				if (start !== null && !hasWrapped && !isOutOfTime) {
+					hasWrapped = true;
+					after = null;
+					continue;
+				}
+				// Read through, or the earliest are next: the next pass starts with them
+				this.cursor = null;
+				break;
+			}
+			if (isOutOfTime) {
 				break;
 			}
 		}
@@ -163,7 +192,8 @@ export class TaskDueReminderService {
 	private async assigneesOfTasksDueSoon(
 		after: ITaskDueReminderRow | null,
 		limit: number,
-		now: Date
+		now: Date,
+		until: ITaskDueReminderRow | null = null
 	): Promise<ITaskDueReminderRow[]> {
 		const query = this.dataSource
 			.getRepository(Task)
@@ -250,6 +280,21 @@ export class TaskDueReminderService {
 							{
 								afterEmployeeId: after.employeeId
 							}
+						)
+				)
+			);
+		}
+		if (until) {
+			query.andWhere(
+				new Brackets((upTo) =>
+					upTo
+						.where('task.dueDate < :untilDueDate', { untilDueDate: until.dueDate })
+						.orWhere('task.dueDate = :untilDueDate AND task.id < :untilTaskId', {
+							untilTaskId: until.taskId
+						})
+						.orWhere(
+							'task.dueDate = :untilDueDate AND task.id = :untilTaskId AND employee.id <= :untilEmployeeId',
+							{ untilEmployeeId: until.employeeId }
 						)
 				)
 			);

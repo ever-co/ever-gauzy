@@ -260,7 +260,10 @@ person's attention lands:
   unless the task is done, cancelled, archived or a draft. A due date saved as a day is due once that day is over in
   the assignee's time zone.
 - **Added to a project.** An employee added to a project (from the project's form, or from their own projects) gets
-  an `Assignment` notification about the project, as a task's new assignees do, and follows the project.
+  an `Assignment` notification about the project, as a task's new assignees do, and follows the project. A project's
+  changes reach the followers who are its members now. Employees added from their own projects before this change
+  do not follow those projects (nothing is backfilled), so they hear of their changes once they are added again or
+  follow them.
 - **Done.** `PATCH /inbox/items/:id/state { isDone }` (and `markInboxItem`) marks an item done: it leaves the open
   tabs and is found in the `done` tab (`?tab=done`); `isDone: false` brings it back. Doing an item reads it. Column
   `inbox_item_recipient.doneAt` (migration `1791000005200`).

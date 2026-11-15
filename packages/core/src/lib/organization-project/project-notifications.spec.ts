@@ -48,6 +48,16 @@ describe('project notifications', () => {
 			expect(event.input.title).toBe('Admin Assigned you to the Project "Website"');
 		});
 
+		it('shortens a long project name, and a long actor name, so the title fits its column', () => {
+			const [event] = projectMemberAddedEvents({ ...project, name: 'p'.repeat(255) }, ['employee-1'], {
+				employeeId: 'employee-admin',
+				name: 'a'.repeat(255)
+			});
+
+			expect(event.input.title.length).toBeLessThanOrEqual(255);
+			expect(event.input.title).toMatch(/^a+… Assigned you to the Project "p+…"$/);
+		});
+
 		it('tells nobody when nobody was added', () => {
 			expect(projectMemberAddedEvents(project, [], { employeeId: 'employee-admin', name: 'Ada' })).toEqual([]);
 		});

@@ -99,12 +99,20 @@ describe('FollowerFanOutService.onProjectChanged', () => {
 	function build() {
 		jest.spyOn(RequestContext, 'currentEmployeeId').mockReturnValue('employee-editor');
 		jest.spyOn(RequestContext, 'currentUser').mockReturnValue({ firstName: 'Ada', lastName: 'Lovelace', employeeId: 'employee-editor' });
-		const subscriptions = [{ employeeId: 'employee-editor' }, { employeeId: 'employee-1' }, { employeeId: 'employee-2' }];
+		// employee-3 follows it but is no longer a member (taken off, or subscribed by hand)
+		const subscriptions = [
+			{ employeeId: 'employee-editor' },
+			{ employeeId: 'employee-1' },
+			{ employeeId: 'employee-2' },
+			{ employeeId: 'employee-3' }
+		];
+		const members = [{ employeeId: 'employee-editor' }, { employeeId: 'employee-1' }, { employeeId: 'employee-2' }];
 		const dataSource = {
-			getRepository: jest.fn(() => ({
-				find: jest.fn(async ({ select }: { select: Record<string, boolean> }) =>
-					select.employeeId ? subscriptions : subscriptions.map((row) => ({ id: row.employeeId }))
-				)
+			getRepository: jest.fn((entity: { name?: string }) => ({
+				find: jest.fn(async ({ select }: { select: Record<string, boolean> }) => {
+					if (entity?.name === 'OrganizationProjectEmployee') return members;
+					return select.employeeId ? subscriptions : subscriptions.map((row) => ({ id: row.employeeId }));
+				})
 			}))
 		};
 		const notifications = { publishNotificationEvent: jest.fn() };
@@ -117,7 +125,7 @@ describe('FollowerFanOutService.onProjectChanged', () => {
 			{ field: 'endDate', from: null, to: '2026-12-15' }
 		]);
 
-	it("tells the project's followers, not its editor, what changed", async () => {
+	it("tells the project's followers who are its members, not its editor, what changed", async () => {
 		process.env.GAUZY_NOTIFICATION_FANOUT_ENABLED = 'true';
 		const { service, notifications } = build();
 
