@@ -40,7 +40,12 @@ import { EmployeeService } from '../employee/employee.service';
 import { EmployeeRecentVisitService } from '../employee-recent-visit/employee-recent-visit.service';
 import { OrganizationProject } from './organization-project.entity';
 import { OrganizationProjectChangedEvent } from './events/organization-project-changed.event';
-import { IProjectChange, projectArchiveChangeOf, projectChangesOf, projectMemberAddedEvents } from './project-notifications';
+import {
+	IProjectChange,
+	projectArchiveChangeOf,
+	projectChangesOf,
+	projectMemberAddedEvents
+} from './project-notifications';
 import { actorDisplayName } from '../entity-subscription/fan-out/follower-fan-out.service';
 import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
 import { TypeOrmOrganizationProjectRepository } from './repository/type-orm-organization-project.repository';
@@ -215,7 +220,8 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			}
 
 			// Tell the members they were added (not the creator, about themselves)
-			notifyAddedMembers(this._eventBus, 
+			notifyAddedMembers(
+				this._eventBus,
 				{ id: project.id, name: project.name, organizationId, tenantId },
 				employees.map(({ id }) => id)
 			);
@@ -332,7 +338,12 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 
 			// Tell the members when the project's state or dates changed
 			this.publishProjectChanges(
-				{ id: organizationProjectId, name: updatedProject.name ?? organizationProject.name, organizationId, tenantId },
+				{
+					id: organizationProjectId,
+					name: updatedProject.name ?? organizationProject.name,
+					organizationId,
+					tenantId
+				},
 				projectChangesOf(organizationProject, entity as Record<string, unknown>)
 			);
 
@@ -531,7 +542,8 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			await this.typeOrmOrganizationProjectEmployeeRepository.save(newProjectMembers);
 
 			// Tell the new members they were added (not the editor, about themselves)
-			notifyAddedMembers(this._eventBus, 
+			notifyAddedMembers(
+				this._eventBus,
 				{ id: organizationProjectId, name: projectName, organizationId, tenantId },
 				newMembers.map(({ id }) => id)
 			);
@@ -1054,7 +1066,11 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 				// The member follows the projects they were added to, and is told of it, as when a project's own form adds them
 				for (const project of updatedProjectsToAdd) {
 					this.followProject(project.id, member.id, organizationId, tenantId);
-					notifyAddedMembers(this._eventBus, { id: project.id, name: project.name, organizationId, tenantId }, [member.id]);
+					notifyAddedMembers(
+						this._eventBus,
+						{ id: project.id, name: project.name, organizationId, tenantId },
+						[member.id]
+					);
 				}
 			}
 

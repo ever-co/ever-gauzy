@@ -132,13 +132,16 @@ export class TaskDueReminderService {
 	 * from where the last sweep stopped to the end, then from the earliest round to where it began, until the list is
 	 * read or the time budget of the pass is spent.
 	 *
-	 * @param now The moment the reminders are due at.
+	 * @param now The moment the reminders are due at. Unset (the schedule's sweeps), the clock is read again for each
+	 * page and each reminder, so a reminder reached late in a long pass is judged, and worded, at its own moment: a task
+	 * that fell due meanwhile is not reminded of as still to come.
 	 * @param budgetMs How long the pass may keep reading pages.
 	 */
 	async sweep(
-		now: Date = new Date(),
+		now?: Date,
 		budgetMs: number = TASK_DUE_REMINDER_SWEEP_TIME_BUDGET_MS
 	): Promise<ITaskDueReminderSweepReport> {
+		const clock = (): Date => now ?? new Date();
 		const report: ITaskDueReminderSweepReport = { checked: 0, reminded: 0, recovered: 0, failed: 0 };
 		const startedAt = Date.now();
 		const start = this.cursor;
@@ -150,12 +153,12 @@ export class TaskDueReminderService {
 			const page = await this.assigneesOfTasksDueSoon(
 				after,
 				TASK_DUE_REMINDER_SWEEP_PAGE_SIZE,
-				now,
+				clock(),
 				hasWrapped ? start : null
 			);
 			report.checked += page.length;
 			if (page.length) {
-				await this.remindPage(page, now, report);
+				await this.remindPage(page, clock, report);
 				after = page[page.length - 1];
 				this.cursor = after;
 			}
@@ -302,16 +305,20 @@ export class TaskDueReminderService {
 		return query.getRawMany<ITaskDueReminderRow>();
 	}
 
-	/** Files the reminders a page of assignments is due, and the ones a stopped process left unfiled. */
+	/**
+	 * Files the reminders a page of assignments is due, and the ones a stopped process left unfiled. Each one is judged at
+	 * the moment the clock gives when its turn comes (see {@link sweep}).
+	 */
 	private async remindPage(
 		page: ITaskDueReminderRow[],
-		now: Date,
+		clock: () => Date,
 		report: ITaskDueReminderSweepReport
 	): Promise<void> {
 		const preferences = await this.preferencesOf(page);
 		const claims = await this.claimsOf(page);
 
 		for (const row of page) {
+			const now = clock();
 			const ofEmployee = preferences.get(this.employeeKeyOf(row));
 			const hours = taskDueReminderHoursOf(ofEmployee);
 			if (hours === null) {

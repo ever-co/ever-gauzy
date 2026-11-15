@@ -92,6 +92,8 @@ describe('OrganizationProjectService.updateByEmployee — a member added from th
 			saveMany: jest.fn(),
 			typeOrmOrganizationProjectEmployeeRepository: { delete: jest.fn() },
 			_entitySubscriptionService: { deleteForEmployee: jest.fn() },
+			// The private projects kept from the caller (ever-co/ever-gauzy#11465): none here
+			typeOrmRepository: { find: jest.fn().mockResolvedValue([]) },
 			_eventBus: { publish }
 		});
 		return service as unknown as Pick<OrganizationProjectService, 'updateByEmployee'> & {
@@ -172,6 +174,8 @@ describe('OrganizationProjectService — the members hear of the changes that ma
 			findOneByIdString: jest.fn().mockResolvedValue({ ...before }),
 			prepareTaskKey: jest.fn(),
 			_activityLogService: { logActivity: jest.fn() },
+			// The private projects kept from the caller (ever-co/ever-gauzy#11465): none here
+			typeOrmRepository: { find: jest.fn().mockResolvedValue([]) },
 			_eventBus: { publish }
 		});
 		jest.spyOn(TenantAwareCrudService.prototype, 'findOneByIdString').mockResolvedValue({ ...before } as never);
