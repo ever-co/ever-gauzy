@@ -98,4 +98,13 @@ describe('the refresh token lifetime', () => {
 
 		expect(manifestValue(manifest, 'JWT_REFRESH_TOKEN_EXPIRATION_TIME')).toBeGreaterThan(accessLifetime);
 	});
+
+	it('is checked again by Nx whenever one of those files changes', () => {
+		// They are outside the project, so a cached run of its tests would otherwise pass for a file it never read
+		const { inputs } = JSON.parse(read('packages/config/project.json')).targets.test;
+
+		expect(inputs).toEqual(
+			expect.arrayContaining([...SAMPLES, ...DEMO_DEPLOYMENTS].map((file) => `{workspaceRoot}/${file}`))
+		);
+	});
 });
