@@ -152,7 +152,8 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 			this.publishCreated(notification);
 			return notification;
 		} catch (error) {
-			this.logger.error('Error while creating employee notification:', error);
+			// Redacted: a driver error carries the bound values (titles, a Board's link with its key) in its parameters.
+			this.logger.error('Error while creating employee notification:', redactDatabaseError(error));
 			throw new BadRequestException('Error while creating notification', error);
 		}
 	}
