@@ -7,6 +7,7 @@ import { MultiORMEnum } from '../../../../core/utils';
 import { TimesheetFirstOrCreateCommand, TimesheetRecalculateCommand } from '../../../timesheet/commands';
 import { TimeSlotBulkDeleteCommand } from '../../../time-slot/commands';
 import { generateTimeSlots } from '../../../time-slot/utils';
+import { TimeLog } from '../../time-log.entity';
 import { TimeLogUpdateCommand } from '../time-log-update.command';
 import { TimeLogUpdateHandler } from './time-log-update.handler';
 
@@ -56,11 +57,17 @@ function createRun(source: TimeLogSourceEnum) {
 		stoppedAt: at('09:00'),
 		isRunning: true
 	};
+	/** The run as a stop read it before its first try. */
+	const firstRead = { ...run };
 	const slots: IStoredSlot[] = [];
 	const hardDeleted: string[] = [];
 	let created = 0;
 	/** What another write of the run stores just before this one fails (see `stopElsewhereFirst`). */
 	let landsFirst: Partial<typeof run> | undefined;
+	/** What another stop of the run stores just before this one writes, without failing it (see `stopElsewhereBeforeWrite`). */
+	let stoppedBeforeWrite: Partial<typeof run> | undefined;
+	/** The start another call moves the run to just before this one writes (see `moveStartElsewhereBeforeWrite`). */
+	let movedBeforeWrite: Date | undefined;
 	/** Whether the insert's merge folds the slots sharing a start into the first one, as `TimeSlotMergeHandler` does. */
 	let mergesSlotsSharingAStart = false;
 	/** Whether the insert finds an existing slot by its exact start, as `TimeSlotBulkCreateHandler` does, or by minute. */
@@ -108,13 +115,29 @@ function createRun(source: TimeLogSourceEnum) {
 
 	const timeLogRepository = {
 		findOneBy: jest.fn(async () => ({ ...run })),
-		update: jest.fn(async (_where: object, changes: object) => {
+		update: jest.fn(async (where: { isRunning?: boolean; startedAt?: Date }, changes: object) => {
 			if (landsFirst) {
 				Object.assign(run, landsFirst);
 				landsFirst = undefined;
 				throw new Error('The stopWrite failed');
 			}
+			if (stoppedBeforeWrite) {
+				Object.assign(run, stoppedBeforeWrite);
+				stoppedBeforeWrite = undefined;
+			}
+			if (movedBeforeWrite) {
+				run.startedAt = movedBeforeWrite;
+				movedBeforeWrite = undefined;
+			}
 			failIfDue('stopWrite');
+			// A write that asks for a running row matches no row once the run is stopped
+			if (where?.isRunning === true && !run.isRunning) {
+				return { affected: 0 };
+			}
+			// Nor one that asks for the start the run had once it starts elsewhere
+			if (where?.startedAt != null && new Date(where.startedAt).getTime() !== run.startedAt.getTime()) {
+				return { affected: 0 };
+			}
 			Object.assign(run, changes);
 			return { affected: 1 };
 		})
@@ -214,10 +237,14 @@ function createRun(source: TimeLogSourceEnum) {
 	jest.spyOn(handler as any, 'findTimeSlots').mockImplementation(async (...args: unknown[]) =>
 		slotsAt(args[3] as Date[]).map(slotEntity)
 	);
-	// The save of the log read back: its columns, and its `timeSlots` as its join rows
+	// The save of the log read back: its columns, and its `timeSlots` as its join rows. A log saved without
+	// `timeSlots` (read back without the relation) leaves its join rows as they are, as TypeORM's save does
 	jest.spyOn(handler as any, 'saveUpdatedTimeLog').mockImplementation(async (log: any) => {
 		failIfDue('save');
-		const linked = new Set((log.timeSlots ?? []).map((slot: ITimeSlot) => slot.id));
+		if (log.timeSlots === undefined) {
+			return log;
+		}
+		const linked = new Set((log.timeSlots as ITimeSlot[]).map((slot: ITimeSlot) => slot.id));
 		for (const slot of slots) {
 			const others = slot.timeLogIds.filter((id) => id !== RUN);
 			slot.timeLogIds = linked.has(slot.id) ? [...others, RUN] : others;
@@ -231,12 +258,43 @@ function createRun(source: TimeLogSourceEnum) {
 		fail(write: Write, times = 1) {
 			failing[write] = times;
 		},
-		/** The stop the timer sends, at `time`; the error it raised, if any. */
+		/** The stop the timer sends, at `time` (`stopsRun`); the error it raised, if any. */
 		stop: (time: string) =>
-			handler.execute(new TimeLogUpdateCommand({ isRunning: false, stoppedAt: at(time) }, RUN)).then(
-				() => undefined,
-				(error: Error) => error.message
-			),
+			handler
+				.execute(
+					new TimeLogUpdateCommand(
+						{ isRunning: false, stoppedAt: at(time) },
+						RUN,
+						undefined,
+						false,
+						undefined,
+						true
+					)
+				)
+				.then(
+					() => undefined,
+					(error: Error) => error.message
+				),
+		/**
+		 * The same stop sent with the run as it was read before a first try, running, and its start, as
+		 * `TimerService.stopReplacedRun` sends its second try; the error it raised, if any.
+		 */
+		stopAsFirstRead: (time: string) =>
+			handler
+				.execute(
+					new TimeLogUpdateCommand(
+						{ isRunning: false, startedAt: firstRead.startedAt, stoppedAt: at(time) },
+						new TimeLog({ ...firstRead }),
+						undefined,
+						false,
+						undefined,
+						true
+					)
+				)
+				.then(
+					() => undefined,
+					(error: Error) => error.message
+				),
 		/** An edit of the log's end to `time`; the error it raised, if any. */
 		editEnd: (time: string) =>
 			handler.execute(new TimeLogUpdateCommand({ stoppedAt: at(time) }, RUN)).then(
@@ -269,6 +327,20 @@ function createRun(source: TimeLogSourceEnum) {
 		/** Another stop of the run, at `time`, goes through just before this stop's own write fails. */
 		stopElsewhereFirst(time: string) {
 			landsFirst = { isRunning: false, stoppedAt: at(time) };
+		},
+		/**
+		 * Another stop of the run, at `time`, goes through just before this stop writes: one of another API process that
+		 * took the employee's timer turn over once this one outlived it.
+		 */
+		stopElsewhereBeforeWrite(time: string) {
+			stoppedBeforeWrite = { isRunning: false, stoppedAt: at(time) };
+		},
+		/**
+		 * Another call moves the start of the still running run to `time` just before this stop writes: the start move of
+		 * another API process that took the employee's timer turn over once this one outlived it.
+		 */
+		moveStartElsewhereBeforeWrite(time: string) {
+			movedBeforeWrite = at(time);
 		},
 		/** The timesheets recalculated, by id. */
 		recalculated: () =>
@@ -469,5 +541,89 @@ describe('TimeLogUpdateHandler, an edit of a web timer log whose write fails aft
 		expect(store.slotsOf(OTHER_LOG)).toEqual(['09:10']);
 		// The 09:20 slot the edit inserted is given back
 		expect(store.slotCount()).toBe(2);
+	});
+});
+
+describe.each([
+	['a web timer run', TimeLogSourceEnum.WEB_TIMER],
+	['an Ever Teams run that posted no slot', TimeLogSourceEnum.TEAMS],
+	['a mobile run that posted no slot', TimeLogSourceEnum.MOBILE]
+])('TimeLogUpdateHandler, the stop of %s that another start or stop stopped meanwhile (#11826)', (_run, source) => {
+	beforeEach(() => {
+		jest.spyOn(console, 'log').mockImplementation(() => undefined);
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+	});
+	afterEach(() => jest.restoreAllMocks());
+
+	it('leaves the end the other stop wrote, gives back the slots past it, and is refused', async () => {
+		const store = createRun(source);
+		store.stopElsewhereBeforeWrite('09:20');
+
+		const outcome = await store.stop('09:30');
+
+		// The slots of the range the other stop stored stay the run's, as that stop gave it them (#11889); the ones past
+		// its end, which only this stop wanted, go
+		expect(store.state()).toEqual({ isRunning: false, stoppedAt: '09:20', slots: slotStarts('09:00', '09:20') });
+		expect(store.slotCount()).toBe(slotStarts('09:00', '09:20').length);
+		expect(outcome).toBe('This timer was already stopped by another start or stop.');
+	});
+
+	it('is refused as well when its own read already finds the run stopped by the other stop', async () => {
+		const store = createRun(source);
+		// The other stop landed before this one's handler read the run
+		Object.assign(store.run, { isRunning: false, stoppedAt: at('09:20') });
+
+		const outcome = await store.stop('09:30');
+
+		expect(store.state()).toEqual({ isRunning: false, stoppedAt: '09:20', slots: [] });
+		expect(store.slotCount()).toBe(0);
+		expect(outcome).toBe('This timer was already stopped by another start or stop.');
+	});
+
+	it('completes a second try of the same stop, sent with the run as first read, after its first try wrote the row', async () => {
+		const store = createRun(source);
+		// The first try writes the stop, then the save of the run read back fails
+		store.fail('save');
+		await store.stop('09:30');
+
+		const outcome = await store.stopAsFirstRead('09:30');
+
+		expect(outcome).toBeUndefined();
+		expect(store.state()).toEqual({ isRunning: false, stoppedAt: '09:30', slots: slotStarts('09:00', '09:30') });
+	});
+
+	it('refuses the second try when an edit moved the start of the row its first try stopped', async () => {
+		const store = createRun(source);
+		store.fail('save');
+		await store.stop('09:30');
+		// An edit moves the start of the stopped entry before the second try
+		Object.assign(store.run, { startedAt: at('09:10') });
+
+		const outcome = await store.stopAsFirstRead('09:30');
+
+		expect(outcome).toBe('This timer was already stopped by another start or stop.');
+		expect(store.run.startedAt).toEqual(at('09:10'));
+		expect(store.state()).toMatchObject({ isRunning: false, stoppedAt: '09:30' });
+	});
+
+	it('is refused, and leaves the run going from the moved start, when another call moved its start before the write', async () => {
+		const store = createRun(source);
+		store.moveStartElsewhereBeforeWrite('09:10');
+
+		// The stop of a replaced run names the start it read (`stopReplacedRun`)
+		const outcome = await store.stopAsFirstRead('09:30');
+
+		expect(outcome).toBe('This timer was already stopped by another start or stop.');
+		expect(store.run).toMatchObject({ isRunning: true, startedAt: at('09:10'), stoppedAt: at('09:00') });
+	});
+
+	it('still writes an edit of a stopped log, which is no stop of a run', async () => {
+		const store = createRun(source);
+		await store.stop('09:30');
+
+		const outcome = await store.editEnd('09:40');
+
+		expect(outcome).toBeUndefined();
+		expect(store.state()).toMatchObject({ isRunning: false, stoppedAt: '09:40' });
 	});
 });

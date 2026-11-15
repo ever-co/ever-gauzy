@@ -6,7 +6,7 @@ import { TimeLogSourceEnum } from '@gauzy/contracts';
  * would keep the tracked time on the machine for good. They also send time slots while they run, so the time slots of
  * their runs say when work on them stopped (see `TimerService.stopPreviousRunningTimers`).
  */
-const TRACKER_SOURCES: ReadonlyArray<string> = [TimeLogSourceEnum.DESKTOP];
+export const TRACKER_SOURCES: ReadonlyArray<string> = [TimeLogSourceEnum.DESKTOP];
 
 /**
  * Whether a timer start or a time upload comes from a tracker whose time is never refused, or a run from one.

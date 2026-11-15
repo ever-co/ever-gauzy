@@ -1,7 +1,7 @@
-import { Logger, NotFoundException, Optional } from '@nestjs/common';
+import { ConflictException, Logger, NotFoundException, Optional } from '@nestjs/common';
 import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
 import * as moment from 'moment';
-import { Brackets, DataSource, Repository } from 'typeorm';
+import { Brackets, DataSource, FindOptionsWhere, Repository } from 'typeorm';
 import { ID, ITimeLog, ITimeSlot, ITimesheet, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/utils';
 import { TimesheetFirstOrCreateCommand, TimesheetRecalculateCommand } from './../../../timesheet/commands';
@@ -107,6 +107,27 @@ function rangeSlotsBefore(timeLog: ITimeLog, slots: ITimeSlot[]): IRangeSlotsBef
 	};
 }
 
+/** The code of the refusal of a stop whose run another start or stop stopped since it was read. */
+export const TIME_LOG_NO_LONGER_RUNNING = 'TIME_LOG_NO_LONGER_RUNNING';
+
+/**
+ * Whether a row a stop's write found no longer running was stopped by this same stop: an earlier try of it wrote the
+ * row, then a later step failed, and this is the try that completes it (`TimerService.stopReplacedRun`). Another start
+ * or stop ends the run somewhere else. The row must still hold the range this stop writes: its end, and its start when
+ * the stop names one. An edit that moved the start since leaves no try to complete, as the slots of this stop's range
+ * would no longer be the row's.
+ *
+ * @param current - The row as stored now, if any.
+ * @param changes - The stop.
+ */
+function isStoppedByThisStop(current: ITimeLog | null, changes: Partial<ITimeLog>): boolean {
+	const isStopped = Boolean(current) && !current.isRunning;
+	const namesItsEnd = changes?.stoppedAt != null;
+	const keepsItsEnd = namesItsEnd && isSameInstant(current?.stoppedAt, changes.stoppedAt);
+	const keepsItsStart = changes?.startedAt == null || isSameInstant(current?.startedAt, changes.startedAt);
+	return isStopped && keepsItsEnd && keepsItsStart;
+}
+
 /** Whether two stored instants are the same one, both missing included. */
 function isSameInstant(a: Date | string | null | undefined, b: Date | string | null | undefined): boolean {
 	if (a == null || b == null) {
@@ -142,7 +163,7 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 
 	public async execute(command: TimeLogUpdateCommand): Promise<ITimeLog> {
 		// Extract input parameters from the command
-		const { id, input, manualTimeSlot, forceDelete = false, history } = command;
+		const { id, input, manualTimeSlot, forceDelete = false, history, stopsRun = false } = command;
 
 		let timeLog: ITimeLog = await this.getTimeLogByIdOrInstance(id);
 
@@ -249,6 +270,19 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 
 			// Update the time log in the repository
 			const logId = timeLog.id;
+			// The timer's stop of a run it read as running (`stopsRun`) writes only while the row still runs, whatever
+			// the read above found: another start or stop may have stopped it since, one that took the employee's timer
+			// turn over once this one outlived it (ever-co/ever-gauzy#11826), and its end is the one that stands. A stop
+			// that names the run's start (`stopReplacedRun`, `closeRunCreatedLate`) writes only while the run still
+			// starts there, as the start move writes only from the start it checked: a move that went through since
+			// keeps its start, and the stop is refused below.
+			const where: FindOptionsWhere<TimeLog> = { id: logId, tenantId };
+			if (stopsRun) {
+				where.isRunning = true;
+				if (changes.startedAt != null) {
+					where.startedAt = changes.startedAt;
+				}
+			}
 			// An entry deleted for good since it was first read stops the edit with a 404: the reads below would find
 			// no row to answer or to give slots to.
 			const writeUpdate = () =>
@@ -256,15 +290,28 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 					stored,
 					changes,
 					history,
-					(repository) =>
-						repository.update(
-							{ id: logId, tenantId },
-							{
-								...changes,
-								...(timesheet ? { timesheetId: timesheet.id } : {}),
-								...rates
-							}
-						),
+					async (repository) => {
+						const result = await repository.update(where, {
+							...changes,
+							...(timesheet ? { timesheetId: timesheet.id } : {}),
+							...rates
+						});
+						const isFencedOut = stopsRun && result?.affected === 0;
+						if (!isFencedOut) {
+							return result;
+						}
+						// A row this same stop wrote on an earlier try is completed: the rest of the stop goes on
+						const current = await repository.findOneBy({ id: logId, tenantId });
+						if (isStoppedByThisStop(current, changes)) {
+							return result;
+						}
+						// Stopped by another start or stop: nothing written, the slots of the range are given back
+						// (`writeWithRangeSlots`), and the stop is refused
+						throw new ConflictException({
+							message: 'This timer was already stopped by another start or stop.',
+							code: TIME_LOG_NO_LONGER_RUNNING
+						});
+					},
 					true
 				);
 
