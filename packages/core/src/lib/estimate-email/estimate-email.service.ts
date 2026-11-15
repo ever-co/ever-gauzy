@@ -25,6 +25,9 @@ export class EstimateEmailService extends TenantAwareCrudService<EstimateEmail> 
 	 *
 	 * @param {ID} id - The unique identifier of the invoice.
 	 * @param {string} email - The recipient's email address.
+	 * @param invoiceDelivery - For an invoice's email (never an estimate's), the language it is written in: the row
+	 * then names the invoice and the language from its creation, so no write after the send can fail to, and the
+	 * invoice's payment reminders go to this address unless the email does not go (`forgetInvoiceDelivery`).
 	 * @returns {Promise<IEstimateEmail>} - A promise resolving to the created estimate email entry.
 	 *
 	 * @throws {HttpException} - Throws an `HttpException` if an error occurs during processing.
@@ -33,7 +36,11 @@ export class EstimateEmailService extends TenantAwareCrudService<EstimateEmail> 
 	 * This method retrieves the invoice and its associated organization, determines the token expiration,
 	 * generates a JWT token, and saves the estimate email details, including the expiration date and security token.
 	 */
-	async createEstimateEmail(id: ID, email: string): Promise<IEstimateEmail> {
+	async createEstimateEmail(
+		id: ID,
+		email: string,
+		invoiceDelivery?: { languageCode: string }
+	): Promise<IEstimateEmail> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
 
@@ -68,7 +75,8 @@ export class EstimateEmailService extends TenantAwareCrudService<EstimateEmail> 
 					email,
 					expireDate,
 					convertAcceptedEstimates: invoice.organization?.convertAcceptedEstimates ?? false,
-					token
+					token,
+					...(invoiceDelivery ? { invoiceId: invoice.id, languageCode: invoiceDelivery.languageCode } : {})
 				})
 			);
 		} catch (error) {
@@ -78,16 +86,13 @@ export class EstimateEmailService extends TenantAwareCrudService<EstimateEmail> 
 	}
 
 	/**
-	 * Records that an invoice's email went: which invoice it delivered, and in which language. Called once the mail
-	 * transport took the email (never for an estimate's): the invoice's payment reminders go to that address, in that
-	 * language.
+	 * Takes back what an invoice's email row names of its delivery, when the email did not go: the row stays, as the
+	 * record of an attempt, and no longer names the invoice, so its payment reminders keep going where it last went.
 	 *
 	 * @param id - The email's row, as `createEstimateEmail` answered it.
-	 * @param invoiceId - The invoice the email delivered.
-	 * @param languageCode - The language the email was written in.
 	 */
-	async recordInvoiceDelivery(id: ID, invoiceId: ID, languageCode: string): Promise<void> {
-		await this.update(id, { invoiceId, languageCode });
+	async forgetInvoiceDelivery(id: ID): Promise<void> {
+		await this.update(id, { invoiceId: null, languageCode: null });
 	}
 
 	/**

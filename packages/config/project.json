@@ -50,6 +50,25 @@
 		},
 		"test": {
 			"executor": "@nx/jest:jest",
+			"inputs": [
+				"default",
+				"^production",
+				"{workspaceRoot}/jest.preset.js",
+				"{workspaceRoot}/jest.resolver.js",
+				"{workspaceRoot}/jest.interop.js",
+				"{workspaceRoot}/jest.angular-defaults.ts",
+				"{workspaceRoot}/.env.sample",
+				"{workspaceRoot}/.env.compose",
+				"{workspaceRoot}/.env.demo.compose",
+				"{workspaceRoot}/.env.docker",
+				"{workspaceRoot}/.env.local",
+				"{workspaceRoot}/.deploy/k8s/k8s-manifest.demo.yaml",
+				"{workspaceRoot}/.deploy/k8s/k8s-manifest.civo.demo.yaml",
+				"{workspaceRoot}/.deploy/k8s/k8s-manifest.cw.demo.yaml",
+				"{workspaceRoot}/.render/render.demo.yaml",
+				"{workspaceRoot}/render.yaml",
+				"{workspaceRoot}/.fly/applications/api/fly.toml"
+			],
 			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
 			"options": {
 				"jestConfig": "packages/config/jest.config.ts"

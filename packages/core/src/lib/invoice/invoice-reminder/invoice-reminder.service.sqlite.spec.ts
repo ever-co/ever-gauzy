@@ -12,6 +12,7 @@ import { coreEntities } from '../../core/entities';
 import { CreateInvoiceReminderTable1791000011920 } from '../../database/migrations/1791000011920-CreateInvoiceReminderTable';
 import { INVOICE_REMINDER_SWEEP_PAGE_SIZE } from './invoice-reminder.constants';
 import { InvoiceReminder } from './invoice-reminder.entity';
+import { latestRemindedDueDate } from './invoice-reminder.rules';
 import { InvoiceReminderService } from './invoice-reminder.service';
 
 /**
@@ -45,6 +46,8 @@ interface IInvoiceFixture {
 	alreadyPaid?: number | null;
 	token?: string | null;
 	contactName?: string | null;
+	/** When the invoice was created, from NOW; a month before it by default. */
+	createdIn?: number;
 	/** When the invoice was emailed, from NOW; null: never emailed from the platform. */
 	emailedIn?: number | null;
 	email?: string;
@@ -83,7 +86,7 @@ describe('InvoiceReminderService on SQLite', () => {
 			`CREATE TABLE "organization_contact" ("id" varchar PRIMARY KEY NOT NULL, "tenantId" varchar, "name" varchar, "deletedAt" datetime)`
 		);
 		await dataSource.query(
-			`CREATE TABLE "invoice" ("id" varchar PRIMARY KEY NOT NULL, "tenantId" varchar, "organizationId" varchar, "invoiceNumber" numeric, "dueDate" datetime, "totalValue" numeric, "alreadyPaid" numeric, "currency" varchar, "token" varchar, "toContactId" varchar, "status" varchar, "isEstimate" boolean, "paid" boolean, "isArchived" boolean DEFAULT (0), "deletedAt" datetime)`
+			`CREATE TABLE "invoice" ("id" varchar PRIMARY KEY NOT NULL, "tenantId" varchar, "organizationId" varchar, "invoiceNumber" numeric, "dueDate" datetime, "totalValue" numeric, "alreadyPaid" numeric, "currency" varchar, "token" varchar, "toContactId" varchar, "status" varchar, "isEstimate" boolean, "paid" boolean, "isArchived" boolean DEFAULT (0), "createdAt" datetime NOT NULL, "deletedAt" datetime)`
 		);
 		await dataSource.query(
 			`CREATE TABLE "estimate_email" ("id" varchar PRIMARY KEY NOT NULL, "tenantId" varchar, "organizationId" varchar, "email" varchar, "invoiceId" varchar, "languageCode" varchar, "createdAt" datetime NOT NULL, "deletedAt" datetime)`
@@ -157,7 +160,7 @@ describe('InvoiceReminderService on SQLite', () => {
 		}
 		invoiceNumber += 1;
 		await dataSource.query(
-			`INSERT INTO "invoice" ("id", "tenantId", "organizationId", "invoiceNumber", "dueDate", "totalValue", "alreadyPaid", "currency", "token", "toContactId", "status", "isEstimate", "paid", "isArchived", "deletedAt") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			`INSERT INTO "invoice" ("id", "tenantId", "organizationId", "invoiceNumber", "dueDate", "totalValue", "alreadyPaid", "currency", "token", "toContactId", "status", "isEstimate", "paid", "isArchived", "createdAt", "deletedAt") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 			[
 				id,
 				tenantId,
@@ -173,6 +176,7 @@ describe('InvoiceReminderService on SQLite', () => {
 				options.isEstimate === undefined ? 0 : options.isEstimate === null ? null : Number(options.isEstimate),
 				options.paid === undefined ? 0 : options.paid === null ? null : Number(options.paid),
 				options.isArchived ? 1 : 0,
+				stored(fromNow(options.createdIn ?? -30 * DAY)),
 				options.deleted ? stored(fromNow(-HOUR)) : null
 			]
 		);
@@ -487,6 +491,34 @@ describe('InvoiceReminderService on SQLite', () => {
 			expect(sent().map((input) => input.invoiceId)).toEqual([first]);
 		});
 
+		it('sends nothing to an address whose email did not go after all, and the next sweep writes to the last one that did', async () => {
+			const { first, second } = await twoDue();
+			// The second invoice's newest row: an email still going out, named from its creation two days ago
+			await emailed(second, {
+				at: fromNow(-2 * DAY),
+				email: 'pending@acme.test',
+				languageCode: LanguagesEnum.FRENCH
+			});
+			whileTheFirstIsSent(() =>
+				dataSource.query(
+					`UPDATE "estimate_email" SET "invoiceId" = NULL, "languageCode" = NULL WHERE "email" = ?`,
+					['pending@acme.test']
+				)
+			);
+
+			await service.sweep(NOW);
+
+			expect(sent().map((input) => input.invoiceId)).toEqual([first]);
+			expect((await claims()).map((claim) => claim.invoiceId)).toEqual([first]);
+
+			await service.sweep(fromNow(HOUR));
+
+			expect(sent().map((input) => [input.invoiceId, input.email, input.languageCode])).toEqual([
+				[first, 'billing@acme.test', LanguagesEnum.ENGLISH],
+				[second, 'billing@acme.test', LanguagesEnum.ENGLISH]
+			]);
+		});
+
 		it('sends what is left to pay after a payment made meanwhile', async () => {
 			const { second } = await twoDue();
 			whileTheFirstIsSent(() =>
@@ -524,6 +556,90 @@ describe('InvoiceReminderService on SQLite', () => {
 			expect.objectContaining({
 				checked: INVOICE_REMINDER_SWEEP_PAGE_SIZE + 1,
 				reminded: INVOICE_REMINDER_SWEEP_PAGE_SIZE + 1
+			})
+		);
+	});
+
+	it('starts the next pass where one out of time stopped, so a page slow to send does not hold back the rest', async () => {
+		for (let i = 0; i <= INVOICE_REMINDER_SWEEP_PAGE_SIZE; i++) {
+			await anInvoice({ dueIn: -DAY - HOUR - i * 60 * 1000 });
+		}
+		// The mail server times out on every send of the first page, which takes the whole pass
+		emails.sendInvoiceReminder.mockRejectedValue(new Error('SMTP timeout'));
+		expect(await service.sweep(NOW, 0)).toEqual(
+			expect.objectContaining({
+				checked: INVOICE_REMINDER_SWEEP_PAGE_SIZE,
+				failed: INVOICE_REMINDER_SWEEP_PAGE_SIZE
+			})
+		);
+		emails.sendInvoiceReminder.mockResolvedValue(true);
+
+		// The next pass goes on after that page, to the invoice the first one never reached
+		expect(await service.sweep(fromNow(HOUR), 0)).toEqual(expect.objectContaining({ checked: 1, reminded: 1 }));
+		// Having read to the end, the one after starts from the top again, and sends what failed
+		expect(await service.sweep(fromNow(2 * HOUR), 0)).toEqual(
+			expect.objectContaining({
+				checked: INVOICE_REMINDER_SWEEP_PAGE_SIZE,
+				reminded: INVOICE_REMINDER_SWEEP_PAGE_SIZE
+			})
+		);
+		expect(await claims()).toHaveLength(INVOICE_REMINDER_SWEEP_PAGE_SIZE + 1);
+	});
+
+	it('ends each read of the list at the due date it started with, so invoices coming in after the cursor do not hold back the ones before it', async () => {
+		for (let i = 0; i <= INVOICE_REMINDER_SWEEP_PAGE_SIZE; i++) {
+			await anInvoice({ dueIn: -DAY - HOUR - i * 60 * 1000 });
+		}
+		/** A page of invoices that come into the window by `at`, after every invoice there before. */
+		const comingIn = async (at: Date) => {
+			for (let i = 0; i < INVOICE_REMINDER_SWEEP_PAGE_SIZE; i++) {
+				await anInvoice({ dueIn: latestRemindedDueDate(at).getTime() - NOW.getTime() - i * 1000 });
+			}
+		};
+		// The mail server times out on every send of the first page, which takes the whole pass
+		emails.sendInvoiceReminder.mockRejectedValue(new Error('SMTP timeout'));
+		await service.sweep(NOW, 0);
+		emails.sendInvoiceReminder.mockResolvedValue(true);
+
+		// A full page comes into the window before each pass: the read still ends with the invoice it never reached
+		await comingIn(fromNow(HOUR));
+		expect(await service.sweep(fromNow(HOUR), 0)).toEqual(expect.objectContaining({ checked: 1, reminded: 1 }));
+		// So the next pass starts from the top again, and sends what failed
+		await comingIn(fromNow(2 * HOUR));
+		expect(await service.sweep(fromNow(2 * HOUR), 0)).toEqual(
+			expect.objectContaining({
+				checked: INVOICE_REMINDER_SWEEP_PAGE_SIZE,
+				reminded: INVOICE_REMINDER_SWEEP_PAGE_SIZE
+			})
+		);
+	});
+
+	it('ends each read of the list with the invoices there when it started, so invoices created after it do not hold back the ones before the cursor', async () => {
+		for (let i = 0; i <= INVOICE_REMINDER_SWEEP_PAGE_SIZE; i++) {
+			await anInvoice({ dueIn: -DAY - HOUR - i * 60 * 1000 });
+		}
+		let created = 0;
+		/** A page of invoices created at `at`, due right after every invoice there before, within the read's window. */
+		const createdAt = async (at: Date) => {
+			for (let i = 0; i < INVOICE_REMINDER_SWEEP_PAGE_SIZE; i++) {
+				created += 1;
+				await anInvoice({ dueIn: -DAY - HOUR + created * 1000, createdIn: at.getTime() - NOW.getTime() });
+			}
+		};
+		// The mail server times out on every send of the first page, which takes the whole pass
+		emails.sendInvoiceReminder.mockRejectedValue(new Error('SMTP timeout'));
+		await service.sweep(NOW, 0);
+		emails.sendInvoiceReminder.mockResolvedValue(true);
+
+		// A full page is created before each pass: the read still ends with the invoice it never reached
+		await createdAt(fromNow(HOUR - 60 * 1000));
+		expect(await service.sweep(fromNow(HOUR), 0)).toEqual(expect.objectContaining({ checked: 1, reminded: 1 }));
+		// So the next pass starts from the top again, and sends what failed
+		await createdAt(fromNow(2 * HOUR - 60 * 1000));
+		expect(await service.sweep(fromNow(2 * HOUR), 0)).toEqual(
+			expect.objectContaining({
+				checked: INVOICE_REMINDER_SWEEP_PAGE_SIZE,
+				reminded: INVOICE_REMINDER_SWEEP_PAGE_SIZE
 			})
 		);
 	});

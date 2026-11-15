@@ -4,6 +4,7 @@ import { ITokenHasher } from '../../interfaces/jwt-service.interface';
 import { ITokenReadRepository, ITokenWriteRepository } from '../../interfaces/token-repository.interface';
 import { ITokenPayload, IValidatedToken, TokenStatus } from '../../interfaces/token.interface';
 import { TokenReadRepositoryToken, TokenWriteRepositoryToken } from '../../shared';
+import { findTokenToRotateAgain } from '../../shared/rotation-reuse';
 import { TokenHasher } from '../../shared/token-hasher';
 import { tokenWithRules } from '../../shared/token-rules';
 import { TokenConfigRegistry } from '../../token-config.registry';
@@ -88,6 +89,20 @@ export class ValidateTokenHandler implements IQueryHandler<ValidateTokenQuery, I
 			maxUsageCount: config.maxUsageCount,
 			threshold: checkInactivity ? config.threshold : undefined
 		};
+
+		// A token rotated moments ago is still let in, for the rotation to answer it again (see
+		// `findTokenToRotateAgain`). Its use is not recorded: the rotated record stays as its rotation left it.
+		if (tokenRecord.isRotated()) {
+			const tokenToRotate = await findTokenToRotateAgain(tokenRecord, config, (id) =>
+				this.tokenReadRepository.findById(id)
+			);
+			if (tokenToRotate) {
+				this.logger.debug(
+					`Rotated token let in within the reuse window: id=${tokenRecord.id} type=${tokenType}`
+				);
+				return { isValid: true, token: payload };
+			}
+		}
 
 		if (!tokenRecord.isUsable(usabilityConfig)) {
 			// Determine the precise failure reason for the side-effect and response.

@@ -58,6 +58,24 @@ export class TokenRepository extends CrudService<Token> implements ITokenReposit
 		return this.findOneByWhereOptions({ id });
 	}
 
+	async findByIdWithLock(id: string): Promise<IToken | null> {
+		if (this.ormType === MultiORMEnum.TypeORM) {
+			return this.typeOrmTokenRepository
+				.createQueryBuilder('token')
+				.where('token.id = :id', { id })
+				.setLock('pessimistic_write')
+				.getOne();
+		}
+
+		const token = await this.mikroOrmTokenRepository.findOne({ id });
+		if (token) {
+			const em = this.mikroOrmTokenRepository.getEntityManager();
+			await em.lock(token, LockMode.PESSIMISTIC_WRITE);
+			await em.refresh(token);
+		}
+		return token;
+	}
+
 	async findActiveByUserAndType(userId: string, tokenType: string): Promise<IToken[]> {
 		return this.find({
 			where: { userId, tokenType, status: TokenStatus.ACTIVE },

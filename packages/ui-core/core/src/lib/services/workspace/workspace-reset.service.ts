@@ -53,7 +53,7 @@ export class WorkspaceResetService implements OnDestroy {
 				await this.applyWorkspaceData(response, preferredLanguage, themeName);
 			}),
 			catchError((error) => {
-				this.toastrService.danger('Failed to switch workspace', 'Error');
+				this.toastrService.danger('WORKSPACES.SWITCH.WORKSPACE_FAILED');
 				throw error;
 			})
 		);
@@ -95,7 +95,7 @@ export class WorkspaceResetService implements OnDestroy {
 		}
 
 		// STEP 5: Success notification
-		this.toastrService.success('Workspace switched successfully!', 'Success');
+		this.toastrService.success('WORKSPACES.SWITCH.WORKSPACE_SUCCESS');
 
 		// STEP 6: Reload page to ensure everything is refreshed
 		// A full page reload is necessary to:

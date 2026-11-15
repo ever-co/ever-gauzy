@@ -18,6 +18,11 @@ export interface ITokenReadRepository {
 	findById(id: string): Promise<IToken | null>;
 
 	/**
+	 * Find a token by ID with pessimistic locking for atomic updates
+	 */
+	findByIdWithLock(id: string): Promise<IToken | null>;
+
+	/**
 	 * Find active tokens for a user by token type
 	 */
 	findActiveByUserAndType(userId: string, tokenType: string): Promise<IToken[]>;
