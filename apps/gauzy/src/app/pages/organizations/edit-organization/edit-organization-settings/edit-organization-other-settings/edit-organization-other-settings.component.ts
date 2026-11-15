@@ -209,6 +209,7 @@ export class EditOrganizationOtherSettingsComponent
 			currencyPosition: [CurrencyPosition.LEFT],
 			discountAfterTax: [],
 			convertAcceptedEstimates: [false],
+			invoiceRemindersEnabled: [false],
 			daysUntilDue: [],
 			invoiceTemplate: [],
 			estimateTemplate: [],

@@ -304,6 +304,14 @@ export {
 	TimerReminderScheduleModule,
 	TimerReminderService
 } from './lib/time-tracking/timer-reminder';
+// The payment reminders to the clients of unpaid invoices. The worker application fires their schedule, so it imports
+// the schedule's module by name (the API consumes it).
+export {
+	InvoiceReminderMaintenanceModule,
+	InvoiceReminderModule,
+	InvoiceReminderScheduleModule,
+	InvoiceReminderService
+} from './lib/invoice/invoice-reminder';
 
 export * from './lib/database/database.module';
 // Export-archive opt-out for plugin entities holding DERIVED data (extracted text, embeddings,

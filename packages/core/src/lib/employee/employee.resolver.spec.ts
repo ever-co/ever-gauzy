@@ -116,7 +116,8 @@ function surfaces() {
 		findMembers: jest.fn().mockResolvedValue({ items: ROWS, total: ROWS.length }),
 		delete: jest.fn().mockResolvedValue({ affected: 1 }),
 		softRemovedById: jest.fn().mockResolvedValue({ ...ROWS[0], deletedAt: new Date('2026-04-01T10:00:00.000Z') }),
-		softRecoverById: jest.fn().mockResolvedValue({ ...ROWS[0], deletedAt: null })
+		softRecoverById: jest.fn().mockResolvedValue({ ...ROWS[0], deletedAt: null }),
+		repriceTimeFrom: jest.fn().mockResolvedValue(undefined)
 	};
 	const commandBus = { execute: jest.fn().mockResolvedValue(ROWS[0]) };
 	// The caller belongs to `MY_TEAM` only, and shares a team or project with `COLLEAGUES`.
@@ -970,6 +971,18 @@ describe('EmployeeResolver — one concept, two protocols, the same operations',
 			expect.objectContaining({ id: FIRST, employeeLevel: 'Lead', isActive: false })
 		);
 		expect(command.input).not.toHaveProperty('description');
+	});
+
+	it('gives a rate change the re-pricing its REST route gives', async () => {
+		const { resolver, commandBus, employeeService } = surfaces();
+
+		await resolver.updateEmployeeProfile({ id: FIRST, billRateValue: 150 });
+
+		const command = commandBus.execute.mock.calls[0][0];
+		expect(employeeService.repriceTimeFrom).toHaveBeenCalledWith(FIRST, command.input, undefined);
+		expect(commandBus.execute.mock.invocationCallOrder[0]).toBeLessThan(
+			employeeService.repriceTimeFrom.mock.invocationCallOrder[0]
+		);
 	});
 
 	it('edits the caller’s own profile through the same command its route dispatches', async () => {

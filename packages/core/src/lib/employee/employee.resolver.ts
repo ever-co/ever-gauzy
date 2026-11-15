@@ -203,6 +203,7 @@ const EMPLOYEE_FILTERABLE = {
 	upworkId: 'STRING',
 	linkedInId: 'STRING',
 	kind: 'STRING',
+	isPlaceholder: 'BOOLEAN',
 	userId: 'ID',
 	contactId: 'ID',
 	organizationPositionId: 'ID',
@@ -628,9 +629,7 @@ export class EmployeeResolver {
 	@Mutation('updateEmployee')
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	async updateEmployee(@Args('input') input: IUpdateEmployeeInput): Promise<Employee> {
-		return await this.commandBus.execute(
-			new EmployeeUpdateCommand(input.id, this.updatePayload(input))
-		);
+		return await this.updateAndReprice(input.id, this.updatePayload(input));
 	}
 
 	/**
@@ -645,9 +644,18 @@ export class EmployeeResolver {
 	@Mutation('updateEmployeeProfile')
 	@Permissions(PermissionsEnum.PROFILE_EDIT)
 	async updateEmployeeProfile(@Args('input') input: IUpdateEmployeeProfileInput): Promise<Employee> {
-		return await this.commandBus.execute(
-			new EmployeeUpdateCommand(input.id, this.updatePayload(input))
-		);
+		return await this.updateAndReprice(input.id, this.updatePayload(input));
+	}
+
+	/**
+	 * The update both edit mutations dispatch, then the time a rate it changed re-prices, as on the REST routes: all
+	 * the time already tracked unless the organization's time logs keep their rates (see
+	 * EmployeeService.repriceTimeFrom).
+	 */
+	private async updateAndReprice(id: Id, changes: IEmployeeUpdateInput): Promise<Employee> {
+		const employee = await this.commandBus.execute(new EmployeeUpdateCommand(id, changes));
+		await this.employeeService.repriceTimeFrom(id, changes, undefined);
+		return employee;
 	}
 
 	/**

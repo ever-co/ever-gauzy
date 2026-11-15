@@ -16,6 +16,7 @@ import { MikroOrmOrganizationRepository } from './../../organization/repository/
 import { TimeLog } from './time-log.entity';
 import { TimeLogController } from './time-log.controller';
 import { TimeLogService } from './time-log.service';
+import { TimeLogHistoryService } from './time-log-history.service';
 import { TimeLogResolver } from './time-log.resolver';
 import { TimeSlotModule } from './../time-slot/time-slot.module';
 import { TypeOrmTimeLogRepository } from './repository/type-orm-time-log.repository';
@@ -37,6 +38,7 @@ import { MikroOrmTimeLogRepository } from './repository/mikro-orm-time-log.repos
 	],
 	providers: [
 		TimeLogService,
+		TimeLogHistoryService,
 		// The GraphQL view of the same resource: declared here because a resolver can only inject
 		// services its own module can reach, and this module is what reaches them — the service every
 		// field calls, and the command bus the conflict read and the three writes dispatch through.

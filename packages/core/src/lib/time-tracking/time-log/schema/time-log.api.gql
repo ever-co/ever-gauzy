@@ -101,6 +101,8 @@ extend type Query {
 		before: String
 		limit: Int
 		offset: Int
+		"Keep breaks (time logs of type BREAK) in the list. Without it they are left out, as before breaks existed."
+		includeBreaks: Boolean
 	): TimeLogConnection!
 
 	"""

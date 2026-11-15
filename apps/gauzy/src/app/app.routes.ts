@@ -36,6 +36,14 @@ export const appRoutes: Routes = [
 		canActivate: [AuthGuard, AppModuleGuard]
 	},
 	{
+		// Downloads (desktop, mobile and browser-extension apps), opened from the
+		// sidebar footer. Outside 'pages' for the same reason as 'ai-chat': it is a
+		// full-screen page with its own back bar, not a page inside the app shell.
+		path: 'downloads',
+		loadChildren: () => import('./downloads/downloads.module').then((m) => m.DownloadsModule),
+		canActivate: [AuthGuard, AppModuleGuard]
+	},
+	{
 		path: 'share',
 		loadChildren: () => import('@gauzy/plugin-public-layout-ui').then((m) => m.PublicLayoutModule),
 		canActivate: []

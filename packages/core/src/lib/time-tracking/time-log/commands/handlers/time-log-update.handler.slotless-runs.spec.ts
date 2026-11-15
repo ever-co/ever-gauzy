@@ -1,7 +1,7 @@
 // Must stay first: loads the entity graph before any handler pulls an entity (see activity.controller.spec.ts).
 import '../../../../core/entities/internal';
 
-import { TimeLogSourceEnum } from '@gauzy/contracts';
+import { TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
 import { RequestContext } from '../../../../core/context';
 import { MultiORMEnum } from '../../../../core/utils';
 import { TimeLogUpdateCommand } from '../time-log-update.command';
@@ -27,7 +27,8 @@ async function stopRun(
 		hasSlots = false,
 		manualTimeSlot = false,
 		slotReadFails = false,
-		edit = {} as { source?: TimeLogSourceEnum }
+		edit = {} as { source?: TimeLogSourceEnum },
+		logType = TimeLogType.TRACKED
 	} = {}
 ) {
 	const run = {
@@ -36,6 +37,7 @@ async function stopRun(
 		organizationId: 'org-a',
 		employeeId: 'employee-a',
 		source,
+		logType,
 		startedAt: STARTED,
 		stoppedAt: STARTED,
 		isRunning: true
@@ -119,7 +121,8 @@ describe('TimeLogUpdateHandler, the stop of a run that sent no heartbeat (#11843
 		const { bulkCreate, savedRun } = await stopRun(TimeLogSourceEnum.TEAMS, { hasSlots: true });
 
 		expect(bulkCreate).not.toHaveBeenCalled();
-		expect(savedRun.timeSlots).toBeUndefined();
+		// Nothing replaces its slots: the run is not even saved again, its targeted update is the only write
+		expect(savedRun?.timeSlots).toBeUndefined();
 	});
 
 	it('still gives a web timer run the slots of its range, without reading its slots', async () => {
@@ -166,4 +169,15 @@ describe('TimeLogUpdateHandler, the stop of a run that sent no heartbeat (#11843
 
 		expect(bulkCreate).not.toHaveBeenCalled();
 	});
+
+	it.each([TimeLogSourceEnum.WEB_TIMER, TimeLogSourceEnum.TEAMS, TimeLogSourceEnum.MOBILE])(
+		'gives a %s break no slots of its range: a break is never worked time',
+		async (source) => {
+			const { bulkCreate, savedRun } = await stopRun(source, { logType: TimeLogType.BREAK });
+
+			expect(savedRun).toMatchObject({ isRunning: false, stoppedAt: STOPPED });
+			expect(bulkCreate).not.toHaveBeenCalled();
+			expect(savedRun.timeSlots).toBeUndefined();
+		}
+	);
 });

@@ -91,7 +91,9 @@ function surfaces(
 	running: Record<string, unknown>[] = []
 ) {
 	const created: Record<string, unknown>[] = [];
-	/** The log of each slot the overlap cleanup was asked to clear. */
+	/** The history option of each create: what the entry's history records of it (ever-co/ever-gauzy#11922). */
+	const histories: unknown[] = [];
+	/** The log each overlap cleanup command was for: one command per overlapped log. */
 	const trimmed: unknown[] = [];
 	const employeeRepository = {
 		findOne: jest.fn(async () => ({
@@ -111,6 +113,7 @@ function surfaces(
 			}
 			if (command instanceof TimeLogCreateCommand) {
 				created.push(command.input as Record<string, unknown>);
+				histories.push(command.history);
 				return { id: `log-${created.length}` };
 			}
 			throw new Error(`Unexpected command ${String(command)}`);
@@ -151,7 +154,7 @@ function surfaces(
 
 	const resolver = new TimeLogResolver(service, commandBus as never, new BulkExecutor(visibility), guard as never);
 
-	return { created, trimmed, controller, post, resolver };
+	return { created, histories, trimmed, controller, post, resolver };
 }
 
 beforeEach(() => {
@@ -275,6 +278,29 @@ describe('POST /timesheet/time-log when the organization requires a team and a p
  * employee's timer on another device) is refused with a 409. Both clients keep a refused upload and send it again at
  * their next sync, and once that timer has stopped the upload is recorded, its range cleared from the stopped log.
  */
+describe("POST /timesheet/time-log and the entry's history", () => {
+	it('records the time a person enters, with the reason they give', async () => {
+		const { histories, post } = surfaces();
+
+		await post({
+			...byHand,
+			organizationTeamId: 'team-b',
+			projectId: 'project-named',
+			reason: 'Forgot to start the timer'
+		});
+
+		expect(histories).toEqual([{ reason: 'Forgot to start the timer' }]);
+	});
+
+	it('records nothing of the time a tracker uploads, as nothing of the time its timer records', async () => {
+		const { histories, post } = surfaces();
+
+		await post(desktopUpload);
+
+		expect(histories).toEqual([undefined]);
+	});
+});
+
 describe('POST /timesheet/time-log over a timer that is still running', () => {
 	/** The employee's timer, running since 10:30 with three heartbeats so far: inside the upload's 09:00–11:00. */
 	const runningTimer = {
@@ -303,7 +329,7 @@ describe('POST /timesheet/time-log over a timer that is still running', () => {
 
 		await post(desktopUpload);
 
-		expect(trimmed).toEqual(['running', 'running', 'running']);
+		expect(trimmed).toEqual(['running']);
 		expect(created).toHaveLength(1);
 	});
 
