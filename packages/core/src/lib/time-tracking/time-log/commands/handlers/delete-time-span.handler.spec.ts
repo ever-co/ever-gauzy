@@ -230,6 +230,8 @@ interface IStoredLog {
 	projectId?: string;
 	taskId?: string;
 	description?: string;
+	/** The log a split cut this one from, when it is the part after the new range. */
+	splitFromTimeLogId?: string;
 	deletedAt?: Date;
 }
 
@@ -567,6 +569,9 @@ function createStore({ slotDeleteOrm = MultiORMEnum.TypeORM }: { slotDeleteOrm?:
 		throw new Error(`Unexpected command ${(command as object)?.constructor?.name}`);
 	});
 	const handler = new DeleteTimeSpanHandler(timeLogRepository as any, timeSlotRepository as any, commandBus as any);
+	/** The same handler on another API process, or after a restart: a new instance over the same data. */
+	const handlerOnAnotherProcess = () =>
+		new DeleteTimeSpanHandler(timeLogRepository as any, timeSlotRepository as any, commandBus as any);
 
 	/** The logs the conflict lookup reads for a range: those it overlaps, with their slots (the TypeORM lookup joins them). */
 	const conflictsOver = (range: { start: Date; end: Date }) =>
@@ -733,6 +738,16 @@ function createStore({ slotDeleteOrm = MultiORMEnum.TypeORM }: { slotDeleteOrm?:
 			const results: boolean[] = [];
 			for (const timeLog of conflictsOver(range)) {
 				results.push(await handler.execute(new DeleteTimeSpanCommand(range, timeLog, undefined, forceDelete)));
+			}
+			return results;
+		},
+		/** The same cleanup, run by the handler of another API process (or of this one after a restart). */
+		async cleanUpOnAnotherProcess(start: string, stop: string) {
+			const range = { start: at(start), end: at(stop) };
+			const other = handlerOnAnotherProcess();
+			const results: boolean[] = [];
+			for (const timeLog of conflictsOver(range)) {
+				results.push(await other.execute(new DeleteTimeSpanCommand(range, timeLog)));
 			}
 			return results;
 		},
@@ -1071,44 +1086,84 @@ describe('DeleteTimeSpanHandler when a split fails (#11823)', () => {
 		expect(outcome).toBe('The unlink failed');
 	});
 
-	it('raises instead of splitting again a log whose failed recovery left its second part', async () => {
+	/** The retry of a cleanup: on the API process where the split failed, or on another one (or after a restart, #11887). */
+	const RETRIES = [
+		['on the same API process', 'cleanUp'],
+		['on another API process, or after a restart (#11887)', 'cleanUpOnAnotherProcess']
+	] as const;
+
+	it.each(RETRIES)(
+		'raises instead of splitting again a log whose failed recovery left its second part, %s',
+		async (_where, retry) => {
+			const store = createStore();
+			store.addLog('tracked', '08:00', '11:00');
+			// The cut fails, then so does the delete of the second part that would have undone the split.
+			store.fail('update');
+			store.fail('delete');
+
+			const first = await store.cleanUp('09:00', '10:00').then(raised, raised);
+			const leftBehind = store.timeline();
+			const retried = await store[retry]('09:00', '10:00').then(raised, raised);
+
+			// The log, whole, and the second part beside it, as the failed recovery left them...
+			expect(leftBehind).toEqual([
+				{ range: '08:00-11:00', isRunning: false, slots: slotStarts('08:00', '11:00') },
+				{ range: '10:00-11:00', isRunning: false, slots: slotStarts('10:00', '11:00') }
+			]);
+			expect(first).toBe('The update failed');
+			// ...and no further copy: the next cleanup of that log refuses to split it.
+			expect(store.timeline()).toEqual(leftBehind);
+			expect(retried).toContain('second part');
+		}
+	);
+
+	it.each(RETRIES)(
+		'splits the log again once the second part a failed recovery left has been deleted, %s',
+		async (_where, retry) => {
+			const store = createStore();
+			store.addLog('tracked', '08:00', '11:00');
+			store.fail('update');
+			store.fail('delete');
+			await store.cleanUp('09:00', '10:00').then(raised, raised);
+			const [, leftBehind] = store.rows();
+			store.discard(leftBehind.id);
+
+			const retried = await store[retry]('09:00', '10:00').then(raised, raised);
+
+			expect(store.timeline()).toEqual([
+				{ range: '08:00-09:00', isRunning: false, slots: slotStarts('08:00', '09:00') },
+				{ range: '10:00-11:00', isRunning: false, slots: slotStarts('10:00', '11:00') }
+			]);
+			expect(retried).toBeUndefined();
+		}
+	);
+
+	it('saves the second part with the id of the log it was cut from, and the log with none (#11887)', async () => {
 		const store = createStore();
 		store.addLog('tracked', '08:00', '11:00');
-		// The cut fails, then so does the delete of the second part that would have undone the split.
-		store.fail('update');
-		store.fail('delete');
 
-		const first = await store.cleanUp('09:00', '10:00').then(raised, raised);
-		const leftBehind = store.timeline();
-		const retried = await store.cleanUp('09:00', '10:00').then(raised, raised);
+		await store.cleanUp('09:00', '10:00');
 
-		// The log, whole, and the second part beside it, as the failed recovery left them...
-		expect(leftBehind).toEqual([
-			{ range: '08:00-11:00', isRunning: false, slots: slotStarts('08:00', '11:00') },
-			{ range: '10:00-11:00', isRunning: false, slots: slotStarts('10:00', '11:00') }
+		expect(store.rows().map(({ id, splitFromTimeLogId }) => ({ id, splitFromTimeLogId }))).toEqual([
+			{ id: 'tracked', splitFromTimeLogId: undefined },
+			{ id: expect.not.stringMatching(/^tracked$/), splitFromTimeLogId: 'tracked' }
 		]);
-		expect(first).toBe('The update failed');
-		// ...and no further copy: the next cleanup of that log refuses to split it.
-		expect(store.timeline()).toEqual(leftBehind);
-		expect(retried).toContain('second part');
 	});
 
-	it('splits the log again once the second part a failed recovery left has been deleted', async () => {
+	it('splits a log again, on another API process, when the part of its earlier split went through (#11887)', async () => {
 		const store = createStore();
 		store.addLog('tracked', '08:00', '11:00');
-		store.fail('update');
-		store.fail('delete');
-		await store.cleanUp('09:00', '10:00').then(raised, raised);
-		const [, leftBehind] = store.rows();
-		store.discard(leftBehind.id);
+		await store.cleanUp('09:00', '10:00');
 
-		const retried = await store.cleanUp('09:00', '10:00').then(raised, raised);
+		// That part starts after the log's new end: it does not duplicate the log's time.
+		const outcome = await store.cleanUpOnAnotherProcess('08:20', '08:40').then(raised, raised);
 
 		expect(store.timeline()).toEqual([
-			{ range: '08:00-09:00', isRunning: false, slots: slotStarts('08:00', '09:00') },
+			{ range: '08:00-08:20', isRunning: false, slots: slotStarts('08:00', '08:20') },
+			{ range: '08:40-09:00', isRunning: false, slots: slotStarts('08:40', '09:00') },
 			{ range: '10:00-11:00', isRunning: false, slots: slotStarts('10:00', '11:00') }
 		]);
-		expect(retried).toBeUndefined();
+		expect(outcome).toBeUndefined();
 	});
 
 	it('splits a log that a separate log overlaps up to the same end, as older data can have them', async () => {

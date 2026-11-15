@@ -160,6 +160,7 @@ import {
 	sessionForMint,
 	sessionOfRefreshToken
 } from './user-session/user-session-claims';
+import { sessionSourceOf } from './user-session/user-session-client';
 import {
 	TwoFactorChallengeClaims,
 	TwoFactorRequiredException,
@@ -2369,6 +2370,8 @@ export class AuthService extends SocialAuthService {
 					: {}),
 				ipAddress: RequestContext.currentIp(),
 				userAgent: RequestContext.currentUserAgent(),
+				// Which app the request came from, for the sessions list (ever-co/ever-gauzy#11983)
+				...sessionSourceOf(RequestContext.currentRequest()?.headers),
 				...sessionClaims,
 				...(metadata?.clientId && { clientId: metadata.clientId }),
 				// Only the OAuth-app code exchange passes it: the client and scopes the user approved (oauth-app-scope.ts).
@@ -2421,6 +2424,7 @@ export class AuthService extends SocialAuthService {
 				role: user.role ? user.role.name : null,
 				ipAddress: RequestContext.currentIp(),
 				userAgent: RequestContext.currentUserAgent(),
+				...sessionSourceOf(RequestContext.currentRequest()?.headers),
 				...sessionClaims,
 				...(metadata?.clientId && { clientId: metadata.clientId })
 			};
@@ -2469,6 +2473,7 @@ export class AuthService extends SocialAuthService {
 				role: user.role ? user.role.name : null,
 				ipAddress: RequestContext.currentIp(),
 				userAgent: RequestContext.currentUserAgent(),
+				...sessionSourceOf(RequestContext.currentRequest()?.headers),
 				...sessionClaims,
 				...(metadata?.clientId && { clientId: metadata.clientId })
 			};

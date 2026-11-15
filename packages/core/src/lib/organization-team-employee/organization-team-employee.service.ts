@@ -1,5 +1,5 @@
 import { EventBus } from '@nestjs/cqrs';
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { DeleteResult, Equal, FindOptionsWhere, IsNull, Or, UpdateResult } from 'typeorm';
 import {
 	BaseEntityEnum,
@@ -26,6 +26,7 @@ import { IWorkingEmployeeLookup } from '../employee/former-employees';
 import { mayFlagTeamManagers, teamRoleAfterEdit } from './team-manager-membership';
 import { TrackingTurnedOffEvent } from '../time-tracking/timer/events/tracking-turned-off.event';
 import {
+	assertTrackingSwitchAsSeen,
 	callerRoleRank,
 	keepsTrackingSwitch,
 	mayActAsTeamManager,
@@ -538,7 +539,8 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 		memberId: ID,
 		entity: IOrganizationTeamEmployeeUpdateInput
 	): Promise<OrganizationTeamEmployee | UpdateResult> {
-		const changes = await this.withTrackingSwitchAllowed(memberId, entity);
+		const asSeen = await this.withTrackingSwitchAsSeen(memberId, entity);
+		const changes = await this.withTrackingSwitchAllowed(memberId, asSeen);
 		const membershipTurnedOff = await this.membershipTrackingTurnsOff(memberId, changes);
 		const result = await this.update(memberId, changes);
 		if (membershipTurnedOff) {
@@ -548,6 +550,46 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 			);
 		}
 		return result;
+	}
+
+	/**
+	 * The update without `expectedIsTrackingEnabled`, the switch the caller's screen showed: a request flag, never
+	 * written. When it is sent and the stored switch differs (no value reads as on, as the timer reads it), someone
+	 * changed it since that screen was read, and the update is refused before anything is written: it would act on a
+	 * state that is gone, for example stop a timer started since (ever-co/ever-gauzy#11830).
+	 *
+	 * Read past the employee filter: a team manager changes another member's row. An update that names no membership
+	 * of the team is left to `update`, which changes no row then.
+	 *
+	 * @param memberId The membership to update.
+	 * @param entity The changes, scoped by organization and team as for {@link update}.
+	 * @returns The changes without the flag.
+	 * @throws ConflictException With the code TRACKING_SWITCH_CHANGED when the stored switch differs.
+	 */
+	private async withTrackingSwitchAsSeen(
+		memberId: ID,
+		entity: IOrganizationTeamEmployeeUpdateInput
+	): Promise<IOrganizationTeamEmployeeUpdateInput> {
+		const { expectedIsTrackingEnabled, ...changes } = entity;
+		const saysWhatItSaw = expectedIsTrackingEnabled !== undefined && expectedIsTrackingEnabled !== null;
+		if (!saysWhatItSaw) {
+			return changes;
+		}
+		const tenantId = RequestContext.currentTenantId() || entity.tenantId;
+		const { organizationId, organizationTeamId } = entity;
+		let membership: OrganizationTeamEmployee;
+		try {
+			membership = await this.withoutEmployeeFilter(() =>
+				this.findOneByWhereOptions({ id: memberId, tenantId, organizationId, organizationTeamId })
+			);
+		} catch (error) {
+			if (error instanceof NotFoundException) {
+				return changes;
+			}
+			throw error;
+		}
+		assertTrackingSwitchAsSeen(membership.isTrackingEnabled !== false, expectedIsTrackingEnabled);
+		return changes;
 	}
 
 	/**

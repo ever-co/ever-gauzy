@@ -12,6 +12,19 @@ const EmployeeNotificationTemplates = {
 };
 
 /**
+ * How a title names a kind of record where its entity name is not a word a reader knows: a project is stored as an
+ * `OrganizationProject`. Every other kind is named as stored (`Task`).
+ */
+const ENTITY_LABELS: Partial<Record<BaseEntityEnum, string>> = {
+	[BaseEntityEnum.OrganizationProject]: 'Project'
+};
+
+/** The word a title names a kind of record with. */
+export function entityLabelOf(entity: BaseEntityEnum): string {
+	return ENTITY_LABELS[entity] ?? entity;
+}
+
+/**
  * Generates a notification title by replacing placeholders in a predefined template.
  *
  * This function retrieves a template corresponding to the provided notification action
@@ -20,7 +33,7 @@ const EmployeeNotificationTemplates = {
  *
  * The supported placeholders are:
  * - `{action}`: Will be replaced with the `action` parameter, indicating the notification type.
- * - `{entity}`: Will be replaced with the `entity` parameter, indicating the type of entity associated with the notification.
+ * - `{entity}`: Will be replaced with the word for the `entity` parameter (see `entityLabelOf`), indicating the type of entity associated with the notification.
  * - `{entityName}`: Will be replaced with the `entityName` parameter, providing context about the specific entity.
  * - `{employeeName}`: Will be replaced with the `employeeName` parameter, specifying the employee related to the notification.
  *
@@ -45,7 +58,7 @@ export function generateNotificationTitle(
 			case 'action':
 				return action;
 			case 'entity':
-				return entity;
+				return entityLabelOf(entity);
 			case 'entityName':
 				return entityName;
 			case 'employeeName':
