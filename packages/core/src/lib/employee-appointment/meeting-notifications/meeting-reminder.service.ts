@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
+import { MikroORM } from '@mikro-orm/core';
 import { Brackets, DataSource, In, IsNull, LessThanOrEqual } from 'typeorm';
 import {
 	BaseEntityEnum,
@@ -123,7 +124,9 @@ export class MeetingReminderService {
 
 	constructor(
 		private readonly dataSource: DataSource,
-		private readonly notifications: EmployeeNotificationService
+		private readonly notifications: EmployeeNotificationService,
+		/** Opens the MikroORM request context a notification is written in under DB_ORM=mikro-orm. */
+		@Optional() private readonly orm?: MikroORM
 	) {}
 
 	/**
@@ -341,8 +344,10 @@ export class MeetingReminderService {
 			tenantId: meeting.tenantId
 		};
 		try {
-			await runInMeetingReminderContext({ tenantId: meeting.tenantId, organizationId: meeting.organizationId }, () =>
-				this.notifications.create(input)
+			await runInMeetingReminderContext(
+				{ tenantId: meeting.tenantId, organizationId: meeting.organizationId },
+				() => this.notifications.create(input),
+				this.orm
 			);
 		} catch (error) {
 			if (!(await this.isFiled(claim.employeeNotificationId, meeting.tenantId))) {
