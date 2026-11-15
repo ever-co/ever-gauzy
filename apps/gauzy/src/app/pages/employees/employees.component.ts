@@ -612,7 +612,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 			this.loading = true; // Indicate loading state
 			const { id: organizationId, tenantId } = this.organization;
 
-			this.smartTableSource = new ServerDataSource(this._httpClient, {
+			const source: ServerDataSource = new ServerDataSource(this._httpClient, {
 				endPoint: `${API_PREFIX}/employee/pagination`,
 				relations: ['user', 'tags'],
 				withDeleted: this.includeDeleted, // Include soft-deleted records if flag is true
@@ -629,10 +629,16 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 					};
 				},
 				finalize: () => {
-					this.updatePagination(this.smartTableSource.count());
+					// A source since replaced (another Kind, say) answers for a list no longer shown: its count and
+					// its end must not end the loading state of the newer read (#12012).
+					if (source !== this.smartTableSource) {
+						return;
+					}
+					this.updatePagination(source.count());
 					this.loading = false; // Update loading state
 				}
 			});
+			this.smartTableSource = source;
 		} finally {
 			this.loading = false; // Update loading state
 		}

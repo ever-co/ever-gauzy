@@ -52,4 +52,29 @@ describe('EmployeesComponent card grid loading state', () => {
 		expect(component.loading).toBe(false);
 		expect(component.employees).toEqual([{ id: 'person-1' }]);
 	});
+
+	it('lets only the newest source end the loading state, so an older answer never says there are no employees', () => {
+		const component = Object.create(EmployeesComponent.prototype) as EmployeesComponent & Record<string, any>;
+		component.organization = { id: 'org-1', tenantId: 'tenant-1' };
+		component.filters = {};
+		component['_httpClient'] = {};
+		component.updatePagination = jest.fn();
+
+		// A first Kind's source, then the next Kind's, whose page is still being read
+		component.setSmartTableSource();
+		const older = component.smartTableSource;
+		component.setSmartTableSource();
+		const newer = component.smartTableSource;
+		component.loading = true;
+
+		older['conf'].finalize();
+
+		expect(component.loading).toBe(true);
+		expect(component.updatePagination).not.toHaveBeenCalled();
+
+		newer['conf'].finalize();
+
+		expect(component.loading).toBe(false);
+		expect(component.updatePagination).toHaveBeenCalledWith(0);
+	});
 });
