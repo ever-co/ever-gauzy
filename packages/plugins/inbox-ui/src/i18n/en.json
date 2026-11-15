@@ -23,7 +23,6 @@
 		"HINT": "Try another search, or clear the filters."
 	},
 	"SELECT": "Select an item to see it here.",
-	"SELECT_HINT": "Open a message to read it, reply, or act on it.",
 	"WELCOME": {
 		"TITLE": "Everything that needs you, in one place",
 		"DECISIONS_TEXT": "Answer questions, approve requests and handle escalations right here; your answer goes back to where it was asked.",
