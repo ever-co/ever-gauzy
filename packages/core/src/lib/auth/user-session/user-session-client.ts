@@ -49,6 +49,13 @@ const ELECTRON_APP_NAME = /\(KHTML, like Gecko\) (.+?)\/[\w.-]+ Chrome\//;
 /** The name an iOS app's user agent starts with ("EverTeams/1 CFNetwork/1568.200.51 Darwin/24.1.0"). */
 const IOS_APP_NAME = /^([^/]+)\/[\w.-]+ CFNetwork\//;
 
+/**
+ * A web host as a session records and shows it ("app.ever.team", "localhost:3030", "[::1]:3030"): a DNS name of 253
+ * characters at most or a bracketed IPv6 address, with its port when it has one. The `Origin` header is what the
+ * client says, so a longer or stranger host is never written into a token, nor read back from one.
+ */
+export const WEB_HOST = /^(?:[\w.-]{1,253}|\[[\dA-Fa-f:.]{2,45}\])(?::\d{1,5})?$/;
+
 /** What a sign-in or a renewal records about the app it came from, beside its user agent. */
 export interface IUserSessionSource {
 	appName?: string;
@@ -149,7 +156,8 @@ export function appNameInUserAgent(userAgent: string | null | undefined): string
 
 /**
  * The web host a request comes from ("app.ever.team"), from its `Origin` header: a browser sends it on a cross-origin
- * call and on a POST. Null for anything but an http or https origin (an app's own scheme, `null`).
+ * call and on a POST. Null for anything but an http or https origin (an app's own scheme, `null`), and for a host that
+ * is not a plain {@link WEB_HOST} (one past 253 characters).
  *
  * @param origin The `Origin` header.
  * @returns The host, with its port when it has one, or null.
@@ -160,7 +168,8 @@ export function originHostOf(origin: unknown): string | null {
 	}
 	try {
 		const url = new URL(origin);
-		return url.protocol === 'https:' || url.protocol === 'http:' ? url.host : null;
+		const isWeb = url.protocol === 'https:' || url.protocol === 'http:';
+		return isWeb && WEB_HOST.test(url.host) ? url.host : null;
 	} catch {
 		return null;
 	}

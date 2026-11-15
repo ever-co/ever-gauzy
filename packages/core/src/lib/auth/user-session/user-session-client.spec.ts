@@ -129,6 +129,15 @@ describe('the app of a session', () => {
 				expect(originHostOf(origin)).toBeNull();
 			}
 		);
+
+		it('reads no host longer than a DNS name can be, so a forged Origin never swells the tokens', () => {
+			const longest = `${'a'.repeat(63)}.${'b'.repeat(63)}.${'c'.repeat(63)}.${'d'.repeat(56)}.team`;
+
+			// CONTROL: a host of 253 characters, the most a DNS name has, is read
+			expect(originHostOf(`https://${longest}`)).toBe(longest);
+			expect(originHostOf(`https://x${longest}`)).toBeNull();
+			expect(sessionSourceOf({ origin: `https://${'a'.repeat(4000)}.team` })).toEqual({});
+		});
 	});
 
 	describe('sessionSourceOf, what a sign-in or a renewal records beside the user agent', () => {
