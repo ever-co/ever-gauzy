@@ -631,6 +631,8 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 				}
 			})
 			.onClose.pipe(
+				// The dialog answers only when it sent the email: a cancel leaves the list as it is (#12011)
+				filter(Boolean),
 				tap(() => this._refresh$.next(true)),
 				tap(() => this.invoices$.next(true)),
 				untilDestroyed(this)
@@ -651,6 +653,8 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 				}
 			})
 			.onClose.pipe(
+				// The dialog answers only when it saved the note: a cancel leaves the list as it is (#12011)
+				filter(Boolean),
 				tap(() => this._refresh$.next(true)),
 				tap(() => this.invoices$.next(true)),
 				untilDestroyed(this)

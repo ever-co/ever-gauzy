@@ -44,7 +44,8 @@ export class AddInternalNoteComponent extends TranslationBaseComponent implement
 			internalNote: this.form.value.internalNote
 		});
 		this.toastrService.success('INVOICES_PAGE.INTERNAL_NOTE.NOTE_SAVED');
-		this.dialogRef.close();
+		// The list behind it refreshes only on this answer, not on a cancel
+		this.dialogRef.close(true);
 	}
 
 	cancel() {
