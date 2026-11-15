@@ -99,7 +99,7 @@ function stringOrNull(value: unknown): string | null {
 	return value;
 }
 
-/** A web host as a token recorded it ("app.ever.team", "localhost:3030", "[::1]:3030"), otherwise null. */
+/** A web host as a token recorded it ("app.example.com", "localhost:3030", "[::1]:3030"), otherwise null. */
 function hostOrNull(value: unknown): string | null {
 	if (typeof value !== 'string' || !WEB_HOST.test(value)) {
 		return null;
