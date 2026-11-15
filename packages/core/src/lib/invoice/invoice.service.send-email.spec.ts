@@ -18,6 +18,7 @@ function sender(
 		emailInvoice?: jest.Mock;
 		createEstimateEmail?: jest.Mock;
 		forgetInvoiceDelivery?: jest.Mock;
+		findOrganization?: jest.Mock;
 		pdf?: Buffer | null;
 	} = {}
 ) {
@@ -26,7 +27,9 @@ function sender(
 			overrides.createEstimateEmail ?? jest.fn(async () => ({ id: 'estimate-email-1', token: 'estimate-token' })),
 		forgetInvoiceDelivery: overrides.forgetInvoiceDelivery ?? jest.fn(async () => undefined)
 	};
-	const organizationService = { findOneByIdString: jest.fn(async () => ({ id: 'organization-1' })) };
+	const organizationService = {
+		findOneByIdString: overrides.findOrganization ?? jest.fn(async () => ({ id: 'organization-1' }))
+	};
 	const emailService = { emailInvoice: overrides.emailInvoice ?? jest.fn(async () => undefined) };
 	const service = new InvoiceService(
 		{} as never,
@@ -168,6 +171,19 @@ describe('InvoiceService.sendEmail — where an invoice went', () => {
 
 		await expect(sendInvoice(service)).resolves.toEqual({ sent: false, reason: 'EMAIL_NOT_SENT' });
 
+		expect(estimateEmailService.forgetInvoiceDelivery).toHaveBeenCalledWith('estimate-email-1');
+	});
+
+	it('forgets them when the organization could not be read', async () => {
+		const { service, emailService, estimateEmailService } = sender({
+			findOrganization: jest.fn(async () => {
+				throw new Error('organization not found');
+			})
+		});
+
+		await expect(sendInvoice(service)).resolves.toEqual({ sent: false, reason: 'EMAIL_NOT_PREPARED' });
+
+		expect(emailService.emailInvoice).not.toHaveBeenCalled();
 		expect(estimateEmailService.forgetInvoiceDelivery).toHaveBeenCalledWith('estimate-email-1');
 	});
 
