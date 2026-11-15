@@ -76,6 +76,7 @@
 	"UNREADS": {
 		"TITLE": "Unreads",
 		"EMPTY": "You are all caught up.",
+		"EMPTY_HINT": "Conversations with messages you have not read yet show up here, newest first.",
 		"MARK_ALL_READ": "Mark all as read",
 		"MARKED": "{{count}} conversations marked as read.",
 		"UNDO": "Undo",
@@ -83,6 +84,7 @@
 	},
 	"THREADS": {
 		"TITLE": "Threads",
+		"EMPTY_TITLE": "No threads yet",
 		"EMPTY": "You follow no threads yet. Reply to a message to follow its thread.",
 		"UNREAD_REPLIES": "{{count}} unread replies",
 		"REPLIES": "{{count}} replies",
