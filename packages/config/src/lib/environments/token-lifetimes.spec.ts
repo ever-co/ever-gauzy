@@ -25,30 +25,53 @@ const DEMO_DEPLOYMENTS = [
 	'.deploy/k8s/k8s-manifest.civo.demo.yaml',
 	'.deploy/k8s/k8s-manifest.cw.demo.yaml',
 	'.render/render.demo.yaml',
-	'render.yaml'
+	'render.yaml',
+	'.fly/applications/api/fly.toml'
 ];
 
 const read = (file: string) => readFileSync(join(REPOSITORY, file), 'utf8');
 
-/** The number a `NAME=123` line of an env file gives, or null when the file does not set it. */
-function envValue(file: string, name: string): number | null {
-	const line = new RegExp(`^${name}=(\\d+)\\s*$`, 'm').exec(read(file));
-	return line ? Number(line[1]) : null;
+/**
+ * A value as a whole number of seconds, bare or between a pair of quotes. Null when it is empty (the API then takes
+ * the code default); NaN when it is something else, so that a value the API would read its own way (`parseInt` takes
+ * `604800e3` as 604800) fails a comparison instead of being taken for an unset one.
+ */
+function seconds(value: string): number | null {
+	if (/^(['"]?)\1$/.test(value)) {
+		return null;
+	}
+	const whole = /^(['"]?)(\d+)\1$/.exec(value);
+	return whole ? Number(whole[2]) : NaN;
 }
 
 /**
- * The number a manifest gives a variable: the whole `value` on the line after its name, bare or between a pair of
- * quotes. Null when the manifest does not set it, or sets something that is not a whole number of seconds.
+ * The number a manifest gives a variable: the whole `value` on the line after its name (see `seconds`). Null when the
+ * manifest does not give the variable a value.
  */
 function manifestValueIn(manifest: string, name: string): number | null {
 	// `\r?` twice: a checkout may end its lines with CRLF
-	const entry = new RegExp(`(?:name|key): ${name}[ \\t]*\\r?\\n[ \\t]*value: (['"]?)(\\d+)\\1[ \\t]*\\r?$`, 'm').exec(
+	const entry = new RegExp(`(?:name|key): ${name}[ \\t]*\\r?\\n[ \\t]*value:[ \\t]*(.*?)[ \\t]*\\r?$`, 'm').exec(
 		manifest
 	);
-	return entry ? Number(entry[2]) : null;
+	return entry ? seconds(entry[1]) : null;
 }
 
-const manifestValue = (file: string, name: string) => manifestValueIn(read(file), name);
+/**
+ * The number a `NAME=123` line gives a variable: an env file's, or a Fly configuration's `NAME = "123"` (see
+ * `seconds`). Null when no line sets it.
+ */
+function assignmentValueIn(text: string, name: string): number | null {
+	const line = new RegExp(`^[ \\t]*${name}[ \\t]*=[ \\t]*(.*?)[ \\t]*\\r?$`, 'm').exec(text);
+	return line ? seconds(line[1]) : null;
+}
+
+/** The number a file of the repository gives a variable, read the way a file of its kind states it. */
+const valueIn = (file: string, name: string) =>
+	file.endsWith('.yaml') ? manifestValueIn(read(file), name) : assignmentValueIn(read(file), name);
+
+/** The access token lifetime a file gives: the code default when unset, NaN (failing a comparison) when refused. */
+const accessLifetimeIn = (file: string) =>
+	valueIn(file, 'JWT_TOKEN_EXPIRATION_TIME') ?? DEFAULT_ACCESS_TOKEN_LIFETIME_S;
 
 describe('the value a manifest gives a variable', () => {
 	it.each([
@@ -66,9 +89,42 @@ describe('the value a manifest gives a variable', () => {
 		['is a fraction', '- key: LIFETIME\n  value: 604800.5\n'],
 		['has one quote of a pair', "- name: LIFETIME\n  value: '604800\n"],
 		['has quotes that differ', '- name: LIFETIME\n  value: \'604800"\n'],
-		['belongs to another variable', '- key: OTHER\n  value: 604800\n']
-	])('is not read from a value that %s', (_case, manifest) => {
+		['is a placeholder', "- name: LIFETIME\n  value: '$LIFETIME'\n"]
+	])('is refused, not taken for an unset one, when it %s', (_case, manifest) => {
+		expect(manifestValueIn(manifest, 'LIFETIME')).toBeNaN();
+	});
+
+	it.each([
+		['belongs to another variable', '- key: OTHER\n  value: 604800\n'],
+		['is empty', "- name: LIFETIME\n  value: ''\n"]
+	])('is unset when the value %s', (_case, manifest) => {
 		expect(manifestValueIn(manifest, 'LIFETIME')).toBeNull();
+	});
+});
+
+describe('the value a `NAME=123` line gives a variable', () => {
+	it.each([
+		['bare', 'LIFETIME=604800\n', 604800],
+		['between quotes, with spaces around the sign (Fly)', '  LIFETIME = "604800"\n', 604800],
+		['in a file whose lines end with CRLF', 'OTHER=1\r\nLIFETIME=604800\r\n', 604800],
+		['at the end of the file', 'LIFETIME=604800', 604800]
+	])('is read %s', (_case, text, value) => {
+		expect(assignmentValueIn(text, 'LIFETIME')).toBe(value);
+	});
+
+	it.each([
+		['goes on after the digits', 'LIFETIME=604800e3\n'],
+		['has one quote of a pair', 'LIFETIME="604800\n']
+	])('is refused, not taken for an unset one, when it %s', (_case, text) => {
+		expect(assignmentValueIn(text, 'LIFETIME')).toBeNaN();
+	});
+
+	it.each([
+		['only another variable is set', 'OTHER=604800\n'],
+		['the line is a comment', '# LIFETIME=604800\n'],
+		['the value is empty', 'LIFETIME=\n']
+	])('is unset when %s', (_case, text) => {
+		expect(assignmentValueIn(text, 'LIFETIME')).toBeNull();
 	});
 });
 
@@ -78,25 +134,21 @@ describe('the refresh token lifetime', () => {
 	});
 
 	it.each(SAMPLES)('is the code default in %s', (sample) => {
-		expect(envValue(sample, 'JWT_REFRESH_TOKEN_EXPIRATION_TIME')).toBe(DEFAULT_JWT_REFRESH_TOKEN_EXPIRATION_TIME);
+		expect(valueIn(sample, 'JWT_REFRESH_TOKEN_EXPIRATION_TIME')).toBe(DEFAULT_JWT_REFRESH_TOKEN_EXPIRATION_TIME);
 	});
 
 	it.each(SAMPLES)('outlives the access token in %s', (sample) => {
-		const accessLifetime = envValue(sample, 'JWT_TOKEN_EXPIRATION_TIME') ?? DEFAULT_ACCESS_TOKEN_LIFETIME_S;
-
-		expect(envValue(sample, 'JWT_REFRESH_TOKEN_EXPIRATION_TIME')).toBeGreaterThan(accessLifetime);
+		expect(valueIn(sample, 'JWT_REFRESH_TOKEN_EXPIRATION_TIME')).toBeGreaterThan(accessLifetimeIn(sample));
 	});
 
-	it.each(DEMO_DEPLOYMENTS)('is the code default in the demo deployment %s', (manifest) => {
-		expect(manifestValue(manifest, 'JWT_REFRESH_TOKEN_EXPIRATION_TIME')).toBe(
+	it.each(DEMO_DEPLOYMENTS)('is the code default in the demo deployment %s', (deployment) => {
+		expect(valueIn(deployment, 'JWT_REFRESH_TOKEN_EXPIRATION_TIME')).toBe(
 			DEFAULT_JWT_REFRESH_TOKEN_EXPIRATION_TIME
 		);
 	});
 
-	it.each(DEMO_DEPLOYMENTS)('outlives the access token in the demo deployment %s', (manifest) => {
-		const accessLifetime = manifestValue(manifest, 'JWT_TOKEN_EXPIRATION_TIME') ?? DEFAULT_ACCESS_TOKEN_LIFETIME_S;
-
-		expect(manifestValue(manifest, 'JWT_REFRESH_TOKEN_EXPIRATION_TIME')).toBeGreaterThan(accessLifetime);
+	it.each(DEMO_DEPLOYMENTS)('outlives the access token in the demo deployment %s', (deployment) => {
+		expect(valueIn(deployment, 'JWT_REFRESH_TOKEN_EXPIRATION_TIME')).toBeGreaterThan(accessLifetimeIn(deployment));
 	});
 
 	it('is checked again by Nx whenever one of those files changes', () => {

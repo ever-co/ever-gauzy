@@ -66,7 +66,8 @@
 				"{workspaceRoot}/.deploy/k8s/k8s-manifest.civo.demo.yaml",
 				"{workspaceRoot}/.deploy/k8s/k8s-manifest.cw.demo.yaml",
 				"{workspaceRoot}/.render/render.demo.yaml",
-				"{workspaceRoot}/render.yaml"
+				"{workspaceRoot}/render.yaml",
+				"{workspaceRoot}/.fly/applications/api/fly.toml"
 			],
 			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
 			"options": {
