@@ -32,6 +32,7 @@ import {
 	INVOICE_SCHEDULE_CLIENT,
 	INVOICE_SCHEDULE_EXISTS,
 	INVOICE_SCHEDULE_START_AFTER_BILLED,
+	INVOICE_SCHEDULE_START_DAY,
 	InvoiceScheduleService
 } from './invoice-schedule.service';
 
@@ -261,6 +262,10 @@ describe('InvoiceScheduleService on SQLite', () => {
 			await expect(monthlyFor(ACME)).rejects.toThrow(new ConflictException(INVOICE_SCHEDULE_EXISTS));
 			await expect(monthlyFor(ELSEWHERE)).rejects.toThrow(new BadRequestException(INVOICE_SCHEDULE_CLIENT));
 			await expect(monthlyFor(GLOBEX, '2026-02-30')).rejects.toThrow(BadRequestException);
+			// Its first run day would fall in the year 10000, which no day key spells: refused before anything is saved
+			await expect(monthlyFor(GLOBEX, '9999-12-31')).rejects.toThrow(
+				new BadRequestException(INVOICE_SCHEDULE_START_DAY)
+			);
 			expect(await dataSource.getRepository(InvoiceSchedule).count()).toBe(1);
 		}),
 		TIMEOUT
