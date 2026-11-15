@@ -224,21 +224,21 @@ const ARCHIVE_STEP = 5;
 				padding: 2.5rem 1.75rem 2rem;
 			}
 			.welcome-head {
-				margin-bottom: 2rem;
-				text-align: center;
+				margin-bottom: 1.5rem;
+				text-align: start;
 			}
 			.welcome-head h3 {
 				margin: 0;
 				color: var(--w-text);
-				font-size: clamp(1.5rem, 1.1rem + 1.4vw, 2.25rem);
+				font-size: 1.375rem;
 				font-weight: 500;
-				line-height: 1.2;
-				letter-spacing: -0.015em;
+				line-height: 1.3;
+				letter-spacing: -0.01em;
 			}
 			.welcome-head p {
-				margin: 0.625rem 0 0;
+				margin: 0.375rem 0 0;
 				color: var(--w-muted);
-				font-size: 0.9375rem;
+				font-size: 0.875rem;
 			}
 
 			.tiles {
