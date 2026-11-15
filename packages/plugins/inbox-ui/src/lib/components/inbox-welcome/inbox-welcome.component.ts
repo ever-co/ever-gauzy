@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, DestroyRef, effect, ElementRef, inject, NgZone, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, effect, ElementRef, inject, input, NgZone, output, signal } from '@angular/core';
 import { NbIconModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import { InboxItemKindEnum } from '@gauzy/contracts';
@@ -110,53 +110,55 @@ const ARCHIVE_STEP = 5;
 					</div>
 				</section>
 
-				<section class="tile">
-					<div class="tile-inner">
-						<div class="tile-text">
-							<h4>{{ 'INBOX.TABS.email' | translate }}</h4>
-							<p>{{ 'INBOX.WELCOME.EMAIL_TEXT' | translate }}</p>
-						</div>
-						<div class="tile-row">
-							<nb-icon icon="email-outline"></nb-icon>
-							<span>{{ 'INBOX.WELCOME.EMAIL_LABEL' | translate }}</span>
-							<button
-								type="button"
-								class="button"
-								data-test="welcome-email"
-								[attr.aria-label]="'INBOX.WELCOME.OPEN_EMAIL_LABEL' | translate"
-								(click)="openTab.emit('email')"
-							>
-								{{ 'INBOX.WELCOME.OPEN' | translate }} <nb-icon icon="arrow-forward-outline"></nb-icon>
-							</button>
-						</div>
-						<div class="tile-art bottom" aria-hidden="true">
-							<div class="mock mail">
-								@if (mailArrived()) {
-									<div class="mail-row is-new" [class.unread]="!mailRead()">
-										<span class="dot" data-tone="3"></span>
-										<span class="mock-lines">
-											<span class="name-row"><i class="line strong w35"></i><i class="line time"></i></span>
-											<i class="line w80"></i>
-										</span>
-										<span class="unread-dot"></span>
-									</div>
-								}
-								@for (row of mailRows; track $index) {
-									<div class="mail-row" [class.unread]="row.unread">
-										<span class="dot" [attr.data-tone]="row.tone"></span>
-										<span class="mock-lines">
-											<span class="name-row"><i class="line strong" [style.width.%]="row.name"></i><i class="line time"></i></span>
-											<i class="line" [style.width.%]="row.text"></i>
-										</span>
-										<span class="unread-dot"></span>
-									</div>
-								}
+				@if (emailAvailable()) {
+					<section class="tile">
+						<div class="tile-inner">
+							<div class="tile-text">
+								<h4>{{ 'INBOX.TABS.email' | translate }}</h4>
+								<p>{{ 'INBOX.WELCOME.EMAIL_TEXT' | translate }}</p>
+							</div>
+							<div class="tile-row">
+								<nb-icon icon="email-outline"></nb-icon>
+								<span>{{ 'INBOX.WELCOME.EMAIL_LABEL' | translate }}</span>
+								<button
+									type="button"
+									class="button"
+									data-test="welcome-email"
+									[attr.aria-label]="'INBOX.WELCOME.OPEN_EMAIL_LABEL' | translate"
+									(click)="openTab.emit('email')"
+								>
+									{{ 'INBOX.WELCOME.OPEN' | translate }} <nb-icon icon="arrow-forward-outline"></nb-icon>
+								</button>
+							</div>
+							<div class="tile-art bottom" aria-hidden="true">
+								<div class="mock mail">
+									@if (mailArrived()) {
+										<div class="mail-row is-new" [class.unread]="!mailRead()">
+											<span class="dot" data-tone="3"></span>
+											<span class="mock-lines">
+												<span class="name-row"><i class="line strong w35"></i><i class="line time"></i></span>
+												<i class="line w80"></i>
+											</span>
+											<span class="unread-dot"></span>
+										</div>
+									}
+									@for (row of mailRows; track $index) {
+										<div class="mail-row" [class.unread]="row.unread">
+											<span class="dot" [attr.data-tone]="row.tone"></span>
+											<span class="mock-lines">
+												<span class="name-row"><i class="line strong" [style.width.%]="row.name"></i><i class="line time"></i></span>
+												<i class="line" [style.width.%]="row.text"></i>
+											</span>
+											<span class="unread-dot"></span>
+										</div>
+									}
+								</div>
 							</div>
 						</div>
-					</div>
-				</section>
+					</section>
+				}
 
-				<section class="tile">
+				<section class="tile" [class.full]="!emailAvailable()">
 					<div class="tile-inner">
 						<div class="tile-text">
 							<h4>{{ 'INBOX.SHORTCUTS.TITLE' | translate }}</h4>
@@ -251,7 +253,8 @@ const ARCHIVE_STEP = 5;
 				border: 1px solid var(--w-border);
 				border-radius: calc(var(--border-radius) * 3);
 			}
-			.tile.wide {
+			.tile.wide,
+			.tile.full {
 				grid-column: 1 / -1;
 			}
 			.tile-inner {
@@ -828,6 +831,7 @@ export class InboxWelcomeComponent {
 
 	readonly openTab = output<InboxUiTab>();
 	readonly openShortcuts = output<void>();
+	readonly emailAvailable = input(false);
 
 	protected readonly decisionKinds = [InboxItemKindEnum.QUESTION, InboxItemKindEnum.APPROVAL, InboxItemKindEnum.ESCALATION];
 	protected readonly keys = ['j', 'k', 'e'] as const;
