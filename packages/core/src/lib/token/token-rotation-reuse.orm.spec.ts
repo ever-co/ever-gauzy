@@ -56,8 +56,12 @@ interface IRun {
 }
 
 async function runThroughBothOrms(): Promise<{ typeorm: IRun; mikroorm: IRun }> {
-	const previous = process.env.DB_ORM;
+	const previous = { DB_ORM: process.env.DB_ORM, DB_TYPE: process.env.DB_TYPE };
 	process.env.DB_ORM = 'mikro-orm';
+	// The entities and the rotation ask the configuration, not the connection, which database they talk to. This
+	// store is SQLite whatever the environment names: with another `DB_TYPE` the entities would take that database's
+	// column types and the rotation would ask for a row lock, and SQLite has neither.
+	process.env.DB_TYPE = 'better-sqlite3';
 
 	const database = join(tmpdir(), `token-rotation-reuse-${process.pid}-${Date.now()}.sqlite`);
 	const runs: { typeorm?: IRun; mikroorm?: IRun } = {};
@@ -250,8 +254,10 @@ async function runThroughBothOrms(): Promise<{ typeorm: IRun; mikroorm: IRun }> 
 			}
 		});
 	} finally {
-		if (previous === undefined) delete process.env.DB_ORM;
-		else process.env.DB_ORM = previous;
+		for (const [name, value] of Object.entries(previous)) {
+			if (value === undefined) delete process.env[name];
+			else process.env[name] = value;
+		}
 		for (const file of [database, `${database}-wal`, `${database}-shm`]) {
 			rmSync(file, { force: true });
 		}
