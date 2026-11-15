@@ -36,11 +36,41 @@ function envValue(file: string, name: string): number | null {
 	return line ? Number(line[1]) : null;
 }
 
-/** The number a manifest gives a variable: its `value` on the line after its name. */
-function manifestValue(file: string, name: string): number | null {
-	const entry = new RegExp(`(?:name|key): ${name}\\s*\\n\\s*value: '?(\\d+)'?`).exec(read(file));
-	return entry ? Number(entry[1]) : null;
+/**
+ * The number a manifest gives a variable: the whole `value` on the line after its name, bare or between a pair of
+ * quotes. Null when the manifest does not set it, or sets something that is not a whole number of seconds.
+ */
+function manifestValueIn(manifest: string, name: string): number | null {
+	// `\r?` twice: a checkout may end its lines with CRLF
+	const entry = new RegExp(`(?:name|key): ${name}[ \\t]*\\r?\\n[ \\t]*value: (['"]?)(\\d+)\\1[ \\t]*\\r?$`, 'm').exec(
+		manifest
+	);
+	return entry ? Number(entry[2]) : null;
 }
+
+const manifestValue = (file: string, name: string) => manifestValueIn(read(file), name);
+
+describe('the value a manifest gives a variable', () => {
+	it.each([
+		['bare', '- key: LIFETIME\n  value: 604800\n', 604800],
+		['between single quotes', "- name: LIFETIME\n  value: '604800'\n", 604800],
+		['between double quotes', '- name: LIFETIME\n  value: "604800"\n', 604800],
+		['in a file whose lines end with CRLF', "- name: LIFETIME\r\n  value: '604800'\r\n", 604800],
+		['at the end of the file', '- key: LIFETIME\n  value: 604800', 604800]
+	])('is read %s', (_case, manifest, value) => {
+		expect(manifestValueIn(manifest, 'LIFETIME')).toBe(value);
+	});
+
+	it.each([
+		['goes on after the digits', '- key: LIFETIME\n  value: 604800e3\n'],
+		['is a fraction', '- key: LIFETIME\n  value: 604800.5\n'],
+		['has one quote of a pair', "- name: LIFETIME\n  value: '604800\n"],
+		['has quotes that differ', '- name: LIFETIME\n  value: \'604800"\n'],
+		['belongs to another variable', '- key: OTHER\n  value: 604800\n']
+	])('is not read from a value that %s', (_case, manifest) => {
+		expect(manifestValueIn(manifest, 'LIFETIME')).toBeNull();
+	});
+});
 
 describe('the refresh token lifetime', () => {
 	it('outlives the access token by default', () => {
