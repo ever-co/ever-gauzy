@@ -411,6 +411,32 @@ describe('ProjectBoardComponent', () => {
 			expect(toastr.danger).toHaveBeenCalledWith(error);
 		});
 
+		it("puts the card back and says so when the save fails while the host's reload of the board is read", async () => {
+			const component = await board();
+			const [open, done] = component.board.value;
+			const error = new Error('refused');
+			let refuse: () => void;
+			put.mockReturnValue(new Observable((subscriber) => (refuse = () => subscriber.error(error))));
+			pointerOver('done');
+
+			const dropped = release(component, {
+				previousContainer: { data: open },
+				container: { data: open },
+				item: { data: open.cards[1] },
+				isPointerOverContainer: false
+			});
+			// The host reads the board again while the save is on its way: the card stays on screen
+			http.get.mockImplementation(() => NEVER);
+			component.reloadKey = 1;
+			component.ngOnChanges({ reloadKey: new SimpleChange(0, 1, false) });
+			refuse();
+			await dropped;
+
+			expect(ids(open)).toEqual([PARENT_ID, 'sub-1']);
+			expect(ids(done)).toEqual(['sub-2']);
+			expect(toastr.danger).toHaveBeenCalledWith(error);
+		});
+
 		it('marks the column that will take the card, not its own, and clears the mark when the drag ends', async () => {
 			const component = await board();
 			const [open] = component.board.value;

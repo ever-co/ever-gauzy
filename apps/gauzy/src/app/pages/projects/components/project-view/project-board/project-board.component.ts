@@ -319,7 +319,6 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 		// Where the column's order puts it, as a reload will: the parent's card stays first.
 		this.sortCards(target);
 		card.saving = true;
-		const sequence = this._sequence;
 		try {
 			// The status alone: a title or anything else read when the board loaded would undo a newer edit.
 			await firstValueFrom(
@@ -332,8 +331,9 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 			);
 			this.taskMoved.emit(card.id);
 		} catch (error) {
-			// A reload since the drop replaced the board: there is no card left to put back.
-			if (sequence !== this._sequence) return;
+			// A reload since the drop replaced the board: there is no card left to put back. A reload of the same
+			// board still on its way keeps the card on screen: it goes back, and the failure is told (#12009).
+			if (!this.board.value.includes(target)) return;
 			const current = target.cards.indexOf(card);
 			if (current > -1) {
 				transferArrayItem(target.cards, from.cards, current, Math.min(index, from.cards.length));
