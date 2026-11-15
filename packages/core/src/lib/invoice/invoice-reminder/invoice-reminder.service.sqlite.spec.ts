@@ -46,6 +46,8 @@ interface IInvoiceFixture {
 	alreadyPaid?: number | null;
 	token?: string | null;
 	contactName?: string | null;
+	/** When the invoice was created, from NOW; a month before it by default. */
+	createdIn?: number;
 	/** When the invoice was emailed, from NOW; null: never emailed from the platform. */
 	emailedIn?: number | null;
 	email?: string;
@@ -84,7 +86,7 @@ describe('InvoiceReminderService on SQLite', () => {
 			`CREATE TABLE "organization_contact" ("id" varchar PRIMARY KEY NOT NULL, "tenantId" varchar, "name" varchar, "deletedAt" datetime)`
 		);
 		await dataSource.query(
-			`CREATE TABLE "invoice" ("id" varchar PRIMARY KEY NOT NULL, "tenantId" varchar, "organizationId" varchar, "invoiceNumber" numeric, "dueDate" datetime, "totalValue" numeric, "alreadyPaid" numeric, "currency" varchar, "token" varchar, "toContactId" varchar, "status" varchar, "isEstimate" boolean, "paid" boolean, "isArchived" boolean DEFAULT (0), "deletedAt" datetime)`
+			`CREATE TABLE "invoice" ("id" varchar PRIMARY KEY NOT NULL, "tenantId" varchar, "organizationId" varchar, "invoiceNumber" numeric, "dueDate" datetime, "totalValue" numeric, "alreadyPaid" numeric, "currency" varchar, "token" varchar, "toContactId" varchar, "status" varchar, "isEstimate" boolean, "paid" boolean, "isArchived" boolean DEFAULT (0), "createdAt" datetime NOT NULL, "deletedAt" datetime)`
 		);
 		await dataSource.query(
 			`CREATE TABLE "estimate_email" ("id" varchar PRIMARY KEY NOT NULL, "tenantId" varchar, "organizationId" varchar, "email" varchar, "invoiceId" varchar, "languageCode" varchar, "createdAt" datetime NOT NULL, "deletedAt" datetime)`
@@ -158,7 +160,7 @@ describe('InvoiceReminderService on SQLite', () => {
 		}
 		invoiceNumber += 1;
 		await dataSource.query(
-			`INSERT INTO "invoice" ("id", "tenantId", "organizationId", "invoiceNumber", "dueDate", "totalValue", "alreadyPaid", "currency", "token", "toContactId", "status", "isEstimate", "paid", "isArchived", "deletedAt") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			`INSERT INTO "invoice" ("id", "tenantId", "organizationId", "invoiceNumber", "dueDate", "totalValue", "alreadyPaid", "currency", "token", "toContactId", "status", "isEstimate", "paid", "isArchived", "createdAt", "deletedAt") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 			[
 				id,
 				tenantId,
@@ -174,6 +176,7 @@ describe('InvoiceReminderService on SQLite', () => {
 				options.isEstimate === undefined ? 0 : options.isEstimate === null ? null : Number(options.isEstimate),
 				options.paid === undefined ? 0 : options.paid === null ? null : Number(options.paid),
 				options.isArchived ? 1 : 0,
+				stored(fromNow(options.createdIn ?? -30 * DAY)),
 				options.deleted ? stored(fromNow(-HOUR)) : null
 			]
 		);
@@ -575,6 +578,36 @@ describe('InvoiceReminderService on SQLite', () => {
 		expect(await service.sweep(fromNow(HOUR), 0)).toEqual(expect.objectContaining({ checked: 1, reminded: 1 }));
 		// So the next pass starts from the top again, and sends what failed
 		await comingIn(fromNow(2 * HOUR));
+		expect(await service.sweep(fromNow(2 * HOUR), 0)).toEqual(
+			expect.objectContaining({
+				checked: INVOICE_REMINDER_SWEEP_PAGE_SIZE,
+				reminded: INVOICE_REMINDER_SWEEP_PAGE_SIZE
+			})
+		);
+	});
+
+	it('ends each read of the list with the invoices there when it started, so invoices created after it do not hold back the ones before the cursor', async () => {
+		for (let i = 0; i <= INVOICE_REMINDER_SWEEP_PAGE_SIZE; i++) {
+			await anInvoice({ dueIn: -DAY - HOUR - i * 60 * 1000 });
+		}
+		let created = 0;
+		/** A page of invoices created at `at`, due right after every invoice there before, within the read's window. */
+		const createdAt = async (at: Date) => {
+			for (let i = 0; i < INVOICE_REMINDER_SWEEP_PAGE_SIZE; i++) {
+				created += 1;
+				await anInvoice({ dueIn: -DAY - HOUR + created * 1000, createdIn: at.getTime() - NOW.getTime() });
+			}
+		};
+		// The mail server times out on every send of the first page, which takes the whole pass
+		emails.sendInvoiceReminder.mockRejectedValue(new Error('SMTP timeout'));
+		await service.sweep(NOW, 0);
+		emails.sendInvoiceReminder.mockResolvedValue(true);
+
+		// A full page is created before each pass: the read still ends with the invoice it never reached
+		await createdAt(fromNow(HOUR - 60 * 1000));
+		expect(await service.sweep(fromNow(HOUR), 0)).toEqual(expect.objectContaining({ checked: 1, reminded: 1 }));
+		// So the next pass starts from the top again, and sends what failed
+		await createdAt(fromNow(2 * HOUR - 60 * 1000));
 		expect(await service.sweep(fromNow(2 * HOUR), 0)).toEqual(
 			expect.objectContaining({
 				checked: INVOICE_REMINDER_SWEEP_PAGE_SIZE,
