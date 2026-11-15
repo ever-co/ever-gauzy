@@ -23,7 +23,7 @@ import {
 	ITeamNotificationDefaults
 } from '@gauzy/contracts';
 import { isMySQL, isPostgres } from '@gauzy/config';
-import { teamNotificationDefaultsTransformer } from '../employee-notification-setting/team-notification-defaults';
+import { teamNotificationDefaultsTransformer } from '../employee-notification-setting/team-notification-defaults.rules';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsNotEmpty, IsObject, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
