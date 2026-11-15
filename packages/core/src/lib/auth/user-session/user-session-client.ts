@@ -50,7 +50,7 @@ const ELECTRON_APP_NAME = /\(KHTML, like Gecko\) (.+?)\/[\w.-]+ Chrome\//;
 const IOS_APP_NAME = /^([^/]+)\/[\w.-]+ CFNetwork\//;
 
 /**
- * A web host as a session records and shows it ("app.ever.team", "localhost:3030", "[::1]:3030"): a DNS name of 253
+ * A web host as a session records and shows it ("app.example.com", "localhost:3030", "[::1]:3030"): a DNS name of 253
  * characters at most or a bracketed IPv6 address, with its port when it has one. The `Origin` header is what the
  * client says, so a longer or stranger host is never written into a token, nor read back from one.
  */
@@ -155,7 +155,7 @@ export function appNameInUserAgent(userAgent: string | null | undefined): string
 }
 
 /**
- * The web host a request comes from ("app.ever.team"), from its `Origin` header: a browser sends it on a cross-origin
+ * The web host a request comes from ("app.example.com"), from its `Origin` header: a browser sends it on a cross-origin
  * call and on a POST. Null for anything but an http or https origin (an app's own scheme, `null`), and for a host that
  * is not a plain {@link WEB_HOST} (one past 253 characters).
  *

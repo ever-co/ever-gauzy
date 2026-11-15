@@ -16,6 +16,7 @@ import {
 	nextDigestAt,
 	preferencesOf,
 	retryDelayMs,
+	storedInstantOf,
 	windowEndAfter,
 	withoutTrailingSlashes
 } from './inbox-delivery-rules';
@@ -289,6 +290,82 @@ describe('decidePushDelivery', () => {
 	it("holds a push until the do-not-disturb window ends, in the window's own time zone", () => {
 		const held = decidePushDelivery({ now: NOW, type: mention, setting: { preferences: { dnd: { start: '12:00', end: '16:00' } } }, userTimeZone: 'Europe/Sofia', hasSubscription: true });
 		expect(held).toEqual({ mode: InboxDeliveryModeEnum.IMMEDIATE, dueAt: new Date('2026-11-07T14:00:00.000Z'), digestKey: null });
+	});
+});
+
+/**
+ * ever-co/ever-gauzy#11892: Ever Teams counts a timer reminder's wait from the notification's `createdAt`
+ * (`timerReminderGoesOutAt`), and a tab skips its own reminder once that moment is near. The lane counted it from the
+ * sweep that took the reminder in, up to a minute later, so a do-not-disturb window starting in between held the
+ * email and push until morning after the tab had already stood down.
+ */
+describe("a timer reminder's wait counts from its filing (#11892)", () => {
+	const timer = EmployeeNotificationTypeEnum.TIMER_REMINDER;
+	const night = { preferences: { dnd: { start: '22:00', end: '07:00' } } };
+
+	/** The email and push decisions of one entry, decided at `now` for an entry filed at `filedAt`. */
+	const decisionsOf = (input: { now: Date; filedAt: Date; type?: string; setting?: IDeliverySettingLike | null }) => {
+		const shared = {
+			now: input.now,
+			filedAt: input.filedAt,
+			type: input.type ?? timer,
+			setting: input.setting ?? null,
+			userTimeZone: 'UTC'
+		};
+		return {
+			email: decideEmailDelivery(shared).dueAt,
+			push: decidePushDelivery({ ...shared, hasSubscription: true }).dueAt
+		};
+	};
+
+	it('is due three minutes after the filing, not after the sweep that took it in', () => {
+		const filed = { filedAt: new Date('2026-11-07T21:56:30.000Z'), now: new Date('2026-11-07T21:57:00.000Z') };
+		const due = new Date('2026-11-07T21:59:30.000Z');
+
+		expect(decisionsOf(filed)).toEqual({ email: due, push: due });
+		// Do-not-disturb from 22:00 starts after that moment, as Ever Teams computes it
+		expect(decisionsOf({ ...filed, setting: night })).toEqual({ email: due, push: due });
+	});
+
+	it('waits for the end of the do-not-disturb window that the moment falls in', () => {
+		const filed = { filedAt: new Date('2026-11-07T21:57:30.000Z'), now: new Date('2026-11-07T21:58:00.000Z') };
+		const morning = new Date('2026-11-08T07:00:00.000Z');
+
+		expect(decisionsOf({ ...filed, setting: night })).toEqual({ email: morning, push: morning });
+	});
+
+	it('goes at once when a late sweep takes it in after the wait, and still not inside do-not-disturb', () => {
+		const late = { filedAt: new Date('2026-11-07T20:00:00.000Z'), now: new Date('2026-11-07T21:30:00.000Z') };
+		expect(decisionsOf(late)).toEqual({ email: late.now, push: late.now });
+
+		const lateAtNight = {
+			filedAt: new Date('2026-11-07T21:50:00.000Z'),
+			now: new Date('2026-11-07T22:30:00.000Z')
+		};
+		const morning = new Date('2026-11-08T07:00:00.000Z');
+		expect(decisionsOf({ ...lateAtNight, setting: night })).toEqual({ email: morning, push: morning });
+	});
+
+	it('leaves every other kind as it was: at once, from the sweep', () => {
+		const filed = { filedAt: new Date('2026-11-07T21:56:30.000Z'), now: new Date('2026-11-07T21:57:00.000Z') };
+
+		expect(decisionsOf({ ...filed, type: EmployeeNotificationTypeEnum.MENTION })).toEqual({
+			email: filed.now,
+			push: filed.now
+		});
+	});
+
+	it('reads a stored filing time as UTC when SQLite answers it without its zone', () => {
+		const filedAt = new Date('2026-11-07T21:56:30.250Z');
+
+		expect(storedInstantOf(filedAt)).toEqual(filedAt);
+		expect(storedInstantOf('2026-11-07 21:56:30.250')).toEqual(filedAt);
+		expect(storedInstantOf('2026-11-07T21:56:30.250Z')).toEqual(filedAt);
+		expect(storedInstantOf('2026-11-07T23:56:30.250+02:00')).toEqual(filedAt);
+		expect(storedInstantOf(null)).toBeNull();
+		expect(storedInstantOf('')).toBeNull();
+		expect(storedInstantOf('not a time')).toBeNull();
+		expect(storedInstantOf(new Date(Number.NaN))).toBeNull();
 	});
 });
 

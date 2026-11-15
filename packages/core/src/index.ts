@@ -497,6 +497,9 @@ export * from './lib/webhook';
 export * from './lib/job-execution';
 export * from './lib/job-dead-letter';
 export * from './lib/auth/purpose-token';
+// The front ends a link may lead to, for a package that sends a person back to one: the payment plugin's checkout,
+// whose provider returns the client to the invoice's public page.
+export { allowedEmailLinkOrigins, isAllowedEmailLink } from './lib/auth/email-link-origin';
 export {
 	getPlaceholderImageUrl,
 	isDummyImageUrl,
