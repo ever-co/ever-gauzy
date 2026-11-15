@@ -376,9 +376,11 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 				email,
 				isEstimate ? undefined : { languageCode }
 			);
-			const organization: IOrganization = await this.organizationService.findOneByIdString(organizationId);
-			let step: IInvoiceEmailOutcome['reason'] = 'DOCUMENT_NOT_GENERATED';
+			// Read inside the try: an invoice's row already names the invoice, so any failure from here on clears it
+			let step: IInvoiceEmailOutcome['reason'] = 'EMAIL_NOT_PREPARED';
 			try {
+				const organization: IOrganization = await this.organizationService.findOneByIdString(organizationId);
+				step = 'DOCUMENT_NOT_GENERATED';
 				//generate estimate/invoice pdf and attached in email
 				const buffer: Buffer = await this.generateInvoicePdf(invoiceId, languageCode);
 				if (!buffer) throw new Error('PDF generation failed');
