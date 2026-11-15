@@ -50,6 +50,49 @@ const CARD_CLOSE_DELAY_MS = 250;
 /** A first guess of the card's height, before it is drawn (its place is measured again once it is). */
 const CARD_HEIGHT_GUESS_PX = 300;
 
+/**
+ * The welcome screen's sketches play a 12-second loop, one step a second, as the Downloads page's drawings do. Each
+ * step says where a drawn "You" cursor is and whether it clicks there.
+ */
+const WELCOME_LOOP_SECONDS = 12;
+interface WelcomeCursorStep<T extends string> {
+	at: T;
+	press?: boolean;
+}
+/** Channel: the cursor clicks the composer, "types" a message (seconds 2–4), then clicks Send (second 5). */
+const CHANNEL_SCRIPT: WelcomeCursorStep<'list' | 'composer' | 'send'>[] = [
+	{ at: 'list' },
+	{ at: 'composer' },
+	{ at: 'composer', press: true },
+	{ at: 'composer' },
+	{ at: 'send' },
+	{ at: 'send', press: true },
+	{ at: 'list' },
+	{ at: 'list' },
+	{ at: 'list' },
+	{ at: 'list' },
+	{ at: 'list' },
+	{ at: 'list' }
+];
+/** Browse channels: the cursor moves to the second channel's Join button and clicks it (second 5). */
+const BROWSE_SCRIPT: WelcomeCursorStep<'search' | 'join'>[] = [
+	{ at: 'search' },
+	{ at: 'search' },
+	{ at: 'search' },
+	{ at: 'join' },
+	{ at: 'join' },
+	{ at: 'join', press: true },
+	{ at: 'join' },
+	{ at: 'search' },
+	{ at: 'search' },
+	{ at: 'search' },
+	{ at: 'search' },
+	{ at: 'search' }
+];
+/** The second the message is sent, the channel joined and the teammate's reply arrives; all reset on the loop's last second. */
+const WELCOME_ACT_STEP = 5;
+const WELCOME_RESET_STEP = WELCOME_LOOP_SECONDS - 1;
+
 /** The window's size, for placing the card. */
 function viewportSize(): { width: number; height: number } {
 	return { width: window.innerWidth, height: window.innerHeight };
@@ -737,6 +780,36 @@ export class ChatPageComponent implements OnInit {
 
 	protected readonly chatLink = CHAT_LINK;
 
+	/** The welcome screen's sketches: a few messages in a channel (avatar tone, line widths in %) and a few channels. */
+	protected readonly mockRows = [
+		{ tone: 1, name: 28, text: 82 },
+		{ tone: 2, name: 22, text: 64 },
+		{ tone: 3, name: 34, text: 74 },
+		{ tone: 1, name: 28, text: 48 }
+	];
+	protected readonly mockChannels = [38, 52, 30, 44];
+	/** The direct-message sketch: a row with no name is a follow-up from the same person (no avatar, no name). */
+	protected readonly mockDirect = [
+		{ tone: 2, name: 26, lines: [80, 52] },
+		{ tone: 1, name: 20, lines: [66] },
+		{ tone: 0, name: 0, lines: [44] },
+		{ tone: 2, name: 26, lines: [72] }
+	];
+	/** The message "I" send in the channel sketch, and the teammate's reply in the direct-message one. */
+	protected readonly mockSent = { tone: 1, name: 22, text: 58 };
+	protected readonly mockReply = { tone: 2, name: 26, lines: [62, 38] };
+
+	/** The welcome sketches' loop (see {@link WELCOME_LOOP_SECONDS}); it stays on its first frame for reduced motion. */
+	private readonly welcomeStep = signal(0);
+	protected readonly channelCursor = computed(() => CHANNEL_SCRIPT[this.welcomeStep()]);
+	protected readonly channelTyping = computed(() => this.welcomeStep() >= 2 && this.welcomeStep() < WELCOME_ACT_STEP);
+	protected readonly channelSent = computed(() => this.welcomeStep() >= WELCOME_ACT_STEP && this.welcomeStep() < WELCOME_RESET_STEP);
+	/** The teammate types while I type in the channel, and replies when my message goes out. */
+	protected readonly directTyping = computed(() => this.welcomeStep() >= 2 && this.welcomeStep() < WELCOME_ACT_STEP);
+	protected readonly directReplied = computed(() => this.welcomeStep() >= WELCOME_ACT_STEP && this.welcomeStep() < WELCOME_RESET_STEP);
+	protected readonly browseCursor = computed(() => BROWSE_SCRIPT[this.welcomeStep()]);
+	protected readonly browseJoined = computed(() => this.welcomeStep() >= WELCOME_ACT_STEP && this.welcomeStep() < WELCOME_RESET_STEP);
+
 	protected readonly state = signal<ChatPageState>('loading');
 	protected readonly conversations = signal<IChatConversationWithState[]>([]);
 	protected readonly categories = signal<IChatCategory[]>([]);
@@ -890,6 +963,24 @@ export class ChatPageComponent implements OnInit {
 		this.followScope();
 		this.followRoute();
 		this.followScrollForCard();
+		this.playWelcome();
+	}
+
+	/**
+	 * The welcome sketches' one-second clock. It advances only while the welcome screen is shown and the tab is
+	 * visible, so an open conversation or a background tab costs nothing. The interval runs outside Angular's zone
+	 * so it does not run change detection for the whole app; the signal write refreshes only this view. For reduced
+	 * motion it does not start: the sketches stay on their first frame and the cursors are hidden by the styles.
+	 */
+	private playWelcome(): void {
+		if (typeof window === 'undefined' || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+		const timer = this.zone.runOutsideAngular(() =>
+			setInterval(() => {
+				if (this.state() !== 'ready' || this.view() !== 'home' || !isTabVisible()) return;
+				this.welcomeStep.update((step) => (step + 1) % WELCOME_LOOP_SECONDS);
+			}, 1000)
+		);
+		this.destroyRef.onDestroy(() => clearInterval(timer));
 	}
 
 	/** Every user / organization change drops what is shown and asks the API again for the new scope. */
