@@ -93,6 +93,9 @@ const BROWSE_SCRIPT: WelcomeCursorStep<'search' | 'join'>[] = [
 const WELCOME_ACT_STEP = 5;
 const WELCOME_RESET_STEP = WELCOME_LOOP_SECONDS - 1;
 
+/** A thread tile's link names the thread with this much of its message, at most. */
+const LINK_PREVIEW_CHARS = 80;
+
 /** The window's size, for placing the card. */
 function viewportSize(): { width: number; height: number } {
 	return { width: window.innerWidth, height: window.innerHeight };
@@ -224,7 +227,12 @@ function viewportSize(): { width: number; height: number } {
 																				<span class="count mention">&#64;{{ conversation.state.mentionCount }}</span>
 																			}
 																		</span>
-																		<a class="button" [routerLink]="link(conversation.id)">{{ 'CHAT.WELCOME.OPEN' | translate }} <nb-icon icon="arrow-forward-outline"></nb-icon></a>
+																		<a
+																			class="button"
+																			[routerLink]="link(conversation.id)"
+																			[attr.aria-label]="'CHAT.UNREADS.OPEN_LABEL' | translate: { name: cardTitle(conversation) }"
+																			>{{ 'CHAT.WELCOME.OPEN' | translate }} <nb-icon icon="arrow-forward-outline"></nb-icon
+																		></a>
 																	</div>
 																</div>
 															</section>
@@ -287,7 +295,13 @@ function viewportSize(): { width: number; height: number } {
 																				<span class="count mention">{{ 'CHAT.THREADS.UNREAD_REPLIES' | translate: { count: thread.unreadReplies } }}</span>
 																			}
 																		</span>
-																		<a class="button" [routerLink]="link(thread.conversationId)" [queryParams]="{ thread: thread.id }">{{ 'CHAT.THREADS.VIEW' | translate }} <nb-icon icon="arrow-forward-outline"></nb-icon></a>
+																		<a
+																			class="button"
+																			[routerLink]="link(thread.conversationId)"
+																			[queryParams]="{ thread: thread.id }"
+																			[attr.aria-label]="(shortPreview(thread) ? 'CHAT.THREADS.VIEW_LABEL_PREVIEW' : 'CHAT.THREADS.VIEW_LABEL') | translate: { name: titleOf(thread.conversationId), preview: shortPreview(thread) }"
+																			>{{ 'CHAT.THREADS.VIEW' | translate }} <nb-icon icon="arrow-forward-outline"></nb-icon
+																		></a>
 																	</div>
 																</div>
 															</section>
@@ -754,7 +768,7 @@ function viewportSize(): { width: number; height: number } {
 			.tile {
 				padding: 0.375rem;
 				border: 1px solid var(--chat-border);
-				border-radius: 1.5rem;
+				border-radius: calc(var(--border-radius) * 3);
 			}
 			.tile.wide {
 				grid-column: 1 / -1;
@@ -769,7 +783,7 @@ function viewportSize(): { width: number; height: number } {
 				/* Each tile lays out and paints on its own: an animating sketch never invalidates the rest of the page. */
 				contain: layout paint;
 				border: 1px solid var(--chat-border);
-				border-radius: 1.125rem;
+				border-radius: calc(var(--border-radius) * 2.25);
 				background: radial-gradient(130% 70% at 0% 100%, var(--chat-accent-soft-2), transparent 70%), var(--chat-sidebar-bg);
 			}
 			.tile.wide .tile-inner {
@@ -847,6 +861,7 @@ function viewportSize(): { width: number; height: number } {
 			.welcome .button,
 			.item-tile .button {
 				gap: 0.5rem;
+				border-radius: var(--border-radius);
 				height: 2.5rem;
 				padding: 0 1.125rem;
 				border-color: transparent;
@@ -901,13 +916,13 @@ function viewportSize(): { width: number; height: number } {
 				max-width: 22rem;
 				border: 1px solid var(--chat-border-strong);
 				background: var(--chat-bg);
-				box-shadow: 0 1.25rem 2.5rem rgba(0, 0, 0, 0.18);
+				box-shadow: var(--gauzy-shadow);
 			}
 			/* The drawings have fixed heights, so a message arriving scrolls the older ones up instead of growing the card. */
 			.mock.window {
 				position: relative;
 				margin-bottom: -1px;
-				border-radius: 0.875rem 0.875rem 0 0;
+				border-radius: calc(var(--border-radius) * 1.75) calc(var(--border-radius) * 1.75) 0 0;
 				border-bottom: 0;
 			}
 			.mock.direct,
@@ -915,7 +930,7 @@ function viewportSize(): { width: number; height: number } {
 				position: relative;
 				height: 12.5rem;
 				border-bottom: 0;
-				border-radius: 1rem 1rem 0 0;
+				border-radius: calc(var(--border-radius) * 2) calc(var(--border-radius) * 2) 0 0;
 			}
 			.mock-body,
 			.mock.direct {
@@ -924,8 +939,9 @@ function viewportSize(): { width: number; height: number } {
 			}
 			/* The messages scrolling out at the top fade away. */
 			.mock-body {
-				-webkit-mask-image: linear-gradient(to bottom, transparent, #000 2.5rem);
-				mask-image: linear-gradient(to bottom, transparent, #000 2.5rem);
+				/* A mask reads only alpha: any opaque colour does, here the text's own. */
+				-webkit-mask-image: linear-gradient(to bottom, transparent, currentColor 2.5rem);
+				mask-image: linear-gradient(to bottom, transparent, currentColor 2.5rem);
 			}
 			.mock.direct::before {
 				content: '';
@@ -999,14 +1015,14 @@ function viewportSize(): { width: number; height: number } {
 				width: 1.75rem;
 				height: 1.75rem;
 				flex: 0 0 auto;
-				border-radius: 0.5rem;
+				border-radius: var(--border-radius);
 				background: var(--chat-accent);
 			}
 			.dot[data-tone='2'] {
-				background: var(--color-success-default, #00b887);
+				background: var(--color-success-default);
 			}
 			.dot[data-tone='3'] {
-				background: var(--color-warning-default, #ffaa00);
+				background: var(--color-warning-default);
 			}
 			.mock-lines {
 				display: flex;
@@ -1022,7 +1038,7 @@ function viewportSize(): { width: number; height: number } {
 				margin: 0 1rem 1rem;
 				padding: 0.5rem 0.5rem 0.5rem 0.875rem;
 				border: 1px solid var(--chat-border);
-				border-radius: 0.625rem;
+				border-radius: calc(var(--border-radius) * 1.25);
 				transition: border-color 0.2s ease;
 			}
 			.mock-composer.is-focused {
@@ -1059,7 +1075,7 @@ function viewportSize(): { width: number; height: number } {
 				justify-content: center;
 				width: 1.75rem;
 				height: 1.75rem;
-				border-radius: 0.5rem;
+				border-radius: var(--border-radius);
 				background: var(--chat-accent);
 				color: var(--chat-on-accent);
 			}
@@ -1092,7 +1108,7 @@ function viewportSize(): { width: number; height: number } {
 				display: inline-flex;
 				gap: 0.25rem;
 				padding: 0.5rem 0.625rem;
-				border-radius: 0.625rem;
+				border-radius: calc(var(--border-radius) * 1.25);
 				background: var(--chat-elevated);
 			}
 			.typing-dots span {
@@ -1133,7 +1149,7 @@ function viewportSize(): { width: number; height: number } {
 				margin-bottom: 0.5rem;
 				padding: 0.5rem 0.75rem;
 				border: 1px solid var(--chat-border);
-				border-radius: 0.5rem;
+				border-radius: var(--border-radius);
 				color: var(--chat-muted);
 			}
 			.mock-channel {
@@ -1141,7 +1157,7 @@ function viewportSize(): { width: number; height: number } {
 				align-items: center;
 				gap: 0.625rem;
 				padding: 0.5rem 0.5rem;
-				border-radius: 0.5rem;
+				border-radius: var(--border-radius);
 				color: var(--chat-muted);
 				transition: background-color 0.25s ease;
 			}
@@ -1158,7 +1174,7 @@ function viewportSize(): { width: number; height: number } {
 				justify-content: center;
 				width: 2.75rem;
 				height: 1.375rem;
-				border-radius: 0.375rem;
+				border-radius: calc(var(--border-radius) * 0.75);
 				background: var(--chat-accent-soft-2);
 				transition: background-color 0.2s ease, color 0.2s ease;
 			}
@@ -1222,14 +1238,14 @@ function viewportSize(): { width: number; height: number } {
 				margin-top: 0.875rem;
 				margin-inline-start: -0.25rem;
 				padding: 0.125rem 0.5rem;
-				border-radius: 0.375rem;
+				border-radius: calc(var(--border-radius) * 0.75);
 				background: var(--chat-accent);
 				color: var(--chat-on-accent);
 				font-size: 0.6875rem;
 				font-weight: 600;
 				line-height: 1rem;
 				white-space: nowrap;
-				box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.2);
+				box-shadow: var(--gauzy-shadow);
 			}
 			.cursor.is-pressing .cursor-arrow {
 				animation: chat-welcome-press 0.35s ease-out;
@@ -1527,7 +1543,7 @@ function viewportSize(): { width: number; height: number } {
 				padding: 1.25rem 1rem 1.5rem;
 			}
 			.mock-channel .read {
-				color: var(--color-success-default, #00b887);
+				color: var(--color-success-default);
 			}
 			/* The thread under a message, lined up with its text: the repliers' small avatars and the replies link. */
 			.mock-thread {
@@ -1540,7 +1556,7 @@ function viewportSize(): { width: number; height: number } {
 			.dot.mini {
 				width: 1rem;
 				height: 1rem;
-				border-radius: 0.3125rem;
+				border-radius: calc(var(--border-radius) * 0.625);
 			}
 			.line.accent {
 				margin-inline-start: 0.25rem;
@@ -1601,7 +1617,7 @@ function viewportSize(): { width: number; height: number } {
 				width: 2.25rem;
 				height: 2.25rem;
 				flex: 0 0 auto;
-				border-radius: 0.5rem;
+				border-radius: var(--border-radius);
 				background: var(--chat-elevated);
 				color: var(--chat-text);
 			}
@@ -1715,6 +1731,8 @@ export class ChatPageComponent implements OnInit {
 	private readonly welcomeStep = signal(0);
 	private readonly welcomeEl = viewChild<ElementRef<HTMLElement>>('welcome');
 	private readonly injector = inject(Injector);
+	/** The viewer's reduced-motion setting, followed while the page is open (it can change at any time). */
+	private readonly reducedMotion = signal(false);
 	protected readonly channelCursor = computed(() => CHANNEL_SCRIPT[this.welcomeStep()]);
 	protected readonly channelTyping = computed(() => this.welcomeStep() >= 2 && this.welcomeStep() < WELCOME_ACT_STEP);
 	protected readonly channelSent = computed(() => this.welcomeStep() >= WELCOME_ACT_STEP && this.welcomeStep() < WELCOME_RESET_STEP);
@@ -1886,15 +1904,24 @@ export class ChatPageComponent implements OnInit {
 	 * that stops being true, so an open conversation, Unreads or Threads have no timer at all. While it runs, a tick
 	 * is skipped when the tab is hidden or the welcome screen is not rendered (the main pane is display:none on a
 	 * phone while the list shows). It runs outside Angular's zone so it does not run change detection for the whole
-	 * app; the signal write refreshes only this view. For reduced motion it never starts: the sketches stay on their
-	 * first frame and the cursors are hidden by the styles.
+	 * app; the signal write refreshes only this view. With reduced motion asked for it does not run, and turning that
+	 * setting on while the screen is open stops it at once: the sketches go back to their first frame and stay there,
+	 * and the styles hide the cursors.
 	 */
 	private playWelcome(): void {
-		if (typeof window === 'undefined' || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+		if (typeof window === 'undefined') return;
+		const motion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+		if (motion) {
+			this.reducedMotion.set(motion.matches);
+			const onMotionChange = (event: MediaQueryListEvent) => this.reducedMotion.set(event.matches);
+			motion.addEventListener('change', onMotionChange);
+			this.destroyRef.onDestroy(() => motion.removeEventListener('change', onMotionChange));
+		}
 		effect(
 			(onCleanup) => {
-				if (this.state() !== 'ready' || this.view() !== 'home') return;
+				const playing = this.state() === 'ready' && this.view() === 'home' && !this.reducedMotion();
 				this.welcomeStep.set(0);
+				if (!playing) return;
 				const timer = this.zone.runOutsideAngular(() =>
 					setInterval(() => {
 						const welcome = this.welcomeEl()?.nativeElement;
@@ -2441,6 +2468,12 @@ export class ChatPageComponent implements OnInit {
 
 	protected preview(thread: ChatFollowedThread): string {
 		return messagePreview(thread, this.people().byEmployee, this.conversationNames());
+	}
+
+	/** The start of a thread's message, for its tile link's name: enough to tell apart two threads of one conversation. */
+	protected shortPreview(thread: ChatFollowedThread): string {
+		const preview = this.preview(thread).replace(/\s+/g, ' ').trim();
+		return preview.length > LINK_PREVIEW_CHARS ? `${preview.slice(0, LINK_PREVIEW_CHARS).trimEnd()}…` : preview;
 	}
 
 	protected link(conversationId: string): string {

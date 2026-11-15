@@ -77,6 +77,7 @@
 		"TITLE": "Unreads",
 		"EMPTY": "You are all caught up.",
 		"EMPTY_HINT": "Conversations with messages you have not read yet show up here, newest first.",
+		"OPEN_LABEL": "Open {{name}}",
 		"MARK_ALL_READ": "Mark all as read",
 		"MARKED": "{{count}} conversations marked as read.",
 		"UNDO": "Undo",
@@ -97,6 +98,8 @@
 		"LOAD_MORE": "Load more replies",
 		"OPEN": "Open thread",
 		"VIEW": "View thread",
+		"VIEW_LABEL": "View thread in {{name}}",
+		"VIEW_LABEL_PREVIEW": "View thread in {{name}}: {{preview}}",
 		"LAST_REPLY": "Last reply {{time}}"
 	},
 	"TYPING": {
