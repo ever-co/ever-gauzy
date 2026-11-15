@@ -2,18 +2,20 @@ import { ChangeDetectionStrategy, Component, computed, DestroyRef, effect, Eleme
 import { NbIconModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import { InboxItemKindEnum } from '@gauzy/contracts';
-import { InboxUiTab, kindIconOf } from '../../inbox-ui.helpers';
+import { INBOX_UI_TAB_ICONS, InboxUiTab, kindIconOf } from '../../inbox-ui.helpers';
 
 const LOOP_SECONDS = 12;
 const RESET_STEP = LOOP_SECONDS - 1;
 
-const DECISION_SCRIPT: ReadonlyArray<{ at: 'rest' | 'approve'; press?: boolean }> = [
+type CursorStep<T extends string> = { at: T; press?: boolean };
+
+const DECISION_SCRIPT: ReadonlyArray<CursorStep<'rest' | 'approve' | 'send'>> = [
 	{ at: 'rest' },
 	{ at: 'rest' },
-	{ at: 'approve' },
 	{ at: 'approve' },
 	{ at: 'approve', press: true },
-	{ at: 'approve' },
+	{ at: 'send' },
+	{ at: 'send', press: true },
 	{ at: 'rest' },
 	{ at: 'rest' },
 	{ at: 'rest' },
@@ -21,27 +23,60 @@ const DECISION_SCRIPT: ReadonlyArray<{ at: 'rest' | 'approve'; press?: boolean }
 	{ at: 'rest' },
 	{ at: 'rest' }
 ];
-const APPROVED_STEP = 5;
+const APPROVE_CHOSEN_STEP = 3;
+const ANSWERED_STEP = 6;
 
-const MAIL_ARRIVES_STEP = 2;
-const MAIL_READ_STEP = 8;
-
-const KEY_SCRIPT: ReadonlyArray<{ selected: number; key?: 'j' | 'k' | 'e' }> = [
-	{ selected: 0 },
-	{ selected: 0 },
-	{ selected: 1, key: 'j' },
-	{ selected: 2, key: 'j' },
-	{ selected: 2 },
-	{ selected: 2, key: 'e' },
-	{ selected: 3 },
-	{ selected: 3 },
-	{ selected: 3 },
-	{ selected: 1, key: 'k' },
-	{ selected: 1 },
-	{ selected: 0 }
+const MAIL_SCRIPT: ReadonlyArray<CursorStep<'rest' | 'pill' | 'row'>> = [
+	{ at: 'rest' },
+	{ at: 'rest' },
+	{ at: 'pill' },
+	{ at: 'pill', press: true },
+	{ at: 'row' },
+	{ at: 'row', press: true },
+	{ at: 'rest' },
+	{ at: 'rest' },
+	{ at: 'rest' },
+	{ at: 'rest' },
+	{ at: 'rest' },
+	{ at: 'rest' }
 ];
-const ARCHIVED_ROW = 2;
-const ARCHIVE_STEP = 5;
+const MAIL_PILL_STEP = 1;
+const MAIL_SHOWN_STEP = 4;
+const MAIL_READ_STEP = 6;
+
+const NOTES_SCRIPT: ReadonlyArray<CursorStep<'rest' | 'markAll'>> = [
+	{ at: 'rest' },
+	{ at: 'rest' },
+	{ at: 'rest' },
+	{ at: 'rest' },
+	{ at: 'rest' },
+	{ at: 'rest' },
+	{ at: 'markAll' },
+	{ at: 'markAll', press: true },
+	{ at: 'rest' },
+	{ at: 'rest' },
+	{ at: 'rest' },
+	{ at: 'rest' }
+];
+const NOTES_READ_STEP = 8;
+
+const LATER_SCRIPT: ReadonlyArray<{ open: number | null; key?: 'j' | 'k' | 'e' | 'd' }> = [
+	{ open: null },
+	{ open: 0, key: 'j' },
+	{ open: 1, key: 'j' },
+	{ open: 1 },
+	{ open: 1, key: 'e' },
+	{ open: null },
+	{ open: null },
+	{ open: 0, key: 'j' },
+	{ open: 0 },
+	{ open: 0 },
+	{ open: 0 },
+	{ open: null }
+];
+const ARCHIVED_ROW = 1;
+const ARCHIVE_STEP = 4;
+const TOAST_LAST_STEP = 8;
 
 @Component({
 	selector: 'ngx-inbox-welcome',
@@ -50,8 +85,8 @@ const ARCHIVE_STEP = 5;
 	template: `
 		<div class="welcome-inner">
 			<header class="welcome-head">
-				<h3>{{ 'INBOX.WELCOME.TITLE' | translate }}</h3>
-				<p>{{ 'INBOX.SELECT' | translate }}</p>
+				<h3>{{ headKey() + '.TITLE' | translate }}</h3>
+				<p>{{ headKey() + '.TEXT' | translate }}</p>
 			</header>
 
 			<div class="tiles">
@@ -90,16 +125,33 @@ const ARCHIVE_STEP = 5;
 									<i class="line strong w70"></i>
 									<i class="line w90"></i>
 									<i class="line w60"></i>
-									<div class="decision-actions">
-										@if (approved()) {
-											<span class="decided"><nb-icon icon="checkmark-circle-2-outline"></nb-icon><i class="line"></i></span>
-										} @else {
-											<span class="act approve" [class.is-hovered]="decisionCursor().at === 'approve'" [class.is-pressed]="!!decisionCursor().press">
-												<nb-icon icon="checkmark-outline"></nb-icon>
+									@if (answered()) {
+										<div class="answered">
+											<span class="answered-line"><nb-icon icon="checkmark-circle-2-outline"></nb-icon><i class="line"></i></span>
+											<i class="line w45"></i>
+										</div>
+									} @else {
+										<div class="choices">
+											<span
+												class="choice"
+												[class.is-chosen]="approveChosen()"
+												[class.is-pressed]="decisionCursor().at === 'approve' && !!decisionCursor().press"
+											>
+												<span class="choice-dot"></span><i class="line"></i>
 											</span>
-											<span class="act reject"><nb-icon icon="close-outline"></nb-icon></span>
-										}
-									</div>
+											<span class="choice"><span class="choice-dot"></span><i class="line"></i></span>
+										</div>
+										<div class="composer">
+											<span class="note"><i class="line w40"></i></span>
+											<span
+												class="send"
+												[class.is-ready]="approveChosen()"
+												[class.is-pressed]="decisionCursor().at === 'send' && !!decisionCursor().press"
+											>
+												<nb-icon icon="paper-plane-outline"></nb-icon>
+											</span>
+										</div>
+									}
 								</div>
 								<span class="cursor" [attr.data-at]="decisionCursor().at" [class.is-pressing]="!!decisionCursor().press">
 									<svg class="cursor-arrow" viewBox="0 0 20 20"><path d="M3 2.5 16.5 9l-5.75 1.75L8 16.5Z" /></svg>
@@ -124,7 +176,7 @@ const ARCHIVE_STEP = 5;
 									type="button"
 									class="button"
 									data-test="welcome-email"
-									[attr.aria-label]="'INBOX.WELCOME.OPEN_EMAIL_LABEL' | translate"
+									[attr.aria-label]="'INBOX.WELCOME.OPEN_TAB_LABEL' | translate: { tab: ('INBOX.TABS.email' | translate) }"
 									(click)="openTab.emit('email')"
 								>
 									{{ 'INBOX.WELCOME.OPEN' | translate }} <nb-icon icon="arrow-forward-outline"></nb-icon>
@@ -132,8 +184,18 @@ const ARCHIVE_STEP = 5;
 							</div>
 							<div class="tile-art bottom" aria-hidden="true">
 								<div class="mock mail">
-									@if (mailArrived()) {
-										<div class="mail-row is-new" [class.unread]="!mailRead()">
+									@if (mailPill()) {
+										<span class="new-pill" [class.is-pressed]="mailCursor().at === 'pill' && !!mailCursor().press">
+											<nb-icon icon="arrow-upward-outline"></nb-icon><i class="line"></i>
+										</span>
+									}
+									@if (mailShown()) {
+										<div
+											class="mail-row is-new"
+											[class.unread]="!mailRead()"
+											[class.is-open]="mailRead()"
+											[class.is-pressed]="mailCursor().at === 'row' && !!mailCursor().press"
+										>
 											<span class="dot" data-tone="3"></span>
 											<span class="mock-lines">
 												<span class="name-row"><i class="line strong w35"></i><i class="line time"></i></span>
@@ -152,6 +214,10 @@ const ARCHIVE_STEP = 5;
 											<span class="unread-dot"></span>
 										</div>
 									}
+									<span class="cursor" [attr.data-at]="mailCursor().at" [class.is-pressing]="!!mailCursor().press">
+										<svg class="cursor-arrow" viewBox="0 0 20 20"><path d="M3 2.5 16.5 9l-5.75 1.75L8 16.5Z" /></svg>
+										<span class="cursor-label">{{ 'INBOX.WELCOME.YOU' | translate }}</span>
+									</span>
 								</div>
 							</div>
 						</div>
@@ -161,35 +227,106 @@ const ARCHIVE_STEP = 5;
 				<section class="tile" [class.full]="!emailAvailable()">
 					<div class="tile-inner">
 						<div class="tile-text">
-							<h4>{{ 'INBOX.SHORTCUTS.TITLE' | translate }}</h4>
-							<p>{{ 'INBOX.WELCOME.SHORTCUTS_TEXT' | translate }}</p>
+							<h4>{{ 'INBOX.TABS.notifications' | translate }}</h4>
+							<p>{{ 'INBOX.WELCOME.NOTIFICATIONS_TEXT' | translate }}</p>
 						</div>
 						<div class="tile-row">
-							<nb-icon icon="keypad-outline"></nb-icon>
-							<span>{{ 'INBOX.WELCOME.SHORTCUTS_LABEL' | translate }}</span>
+							<nb-icon icon="bell-outline"></nb-icon>
+							<span>{{ 'INBOX.WELCOME.NOTIFICATIONS_LABEL' | translate }}</span>
 							<button
 								type="button"
 								class="button"
-								data-test="welcome-shortcuts"
-								[attr.aria-label]="'INBOX.WELCOME.OPEN_SHORTCUTS_LABEL' | translate"
-								(click)="openShortcuts.emit()"
+								data-test="welcome-notifications"
+								[attr.aria-label]="'INBOX.WELCOME.OPEN_TAB_LABEL' | translate: { tab: ('INBOX.TABS.notifications' | translate) }"
+								(click)="openTab.emit('notifications')"
 							>
 								{{ 'INBOX.WELCOME.OPEN' | translate }} <nb-icon icon="arrow-forward-outline"></nb-icon>
 							</button>
 						</div>
 						<div class="tile-art bottom" aria-hidden="true">
-							<div class="mock keys">
-								<div class="key-rows">
-									@for (row of keyRows(); track row.id) {
-										<div class="key-row" [class.is-selected]="row.id === keyStep().selected" [class.is-leaving]="row.id === leavingRow()">
+							<div class="mock notes">
+								<div class="notes-bar">
+									@if (notesRead()) {
+										<span class="caught-up"><nb-icon icon="checkmark-outline"></nb-icon><i class="line"></i></span>
+									} @else {
+										<span class="unread-summary"><i class="line strong"></i><span class="count-chip"></span></span>
+									}
+									<span class="spacer"></span>
+									<span class="mark-all" [class.is-pressed]="notesCursor().at === 'markAll' && !!notesCursor().press">
+										<nb-icon icon="done-all-outline"></nb-icon><i class="line"></i>
+									</span>
+								</div>
+								@for (note of notes; track $index) {
+									<div class="note-row" [class.unread]="note.unread && !notesRead()">
+										<span class="note-icon"><nb-icon [icon]="note.icon"></nb-icon></span>
+										<span class="mock-lines">
+											<span class="name-row"><i class="line strong" [style.width.%]="note.name"></i><i class="line time"></i></span>
+											<i class="line" [style.width.%]="note.text"></i>
+										</span>
+										<span class="unread-dot"></span>
+									</div>
+								}
+								<span class="cursor" [attr.data-at]="notesCursor().at" [class.is-pressing]="!!notesCursor().press">
+									<svg class="cursor-arrow" viewBox="0 0 20 20"><path d="M3 2.5 16.5 9l-5.75 1.75L8 16.5Z" /></svg>
+									<span class="cursor-label">{{ 'INBOX.WELCOME.YOU' | translate }}</span>
+								</span>
+							</div>
+						</div>
+					</div>
+				</section>
+
+				<section class="tile wide">
+					<div class="tile-inner">
+						<div class="tile-text">
+							<h4>{{ 'INBOX.WELCOME.LATER_TITLE' | translate }}</h4>
+							<p>{{ 'INBOX.WELCOME.LATER_TEXT' | translate }}</p>
+							<div class="tile-cta">
+								<div class="tab-buttons">
+									@for (entry of laterTabs; track entry) {
+										<button
+											type="button"
+											class="button"
+											[attr.data-test]="'welcome-' + entry"
+											[attr.aria-label]="'INBOX.WELCOME.OPEN_TAB_LABEL' | translate: { tab: ('INBOX.TABS.' + entry | translate) }"
+											(click)="openTab.emit(entry)"
+										>
+											<nb-icon [icon]="tabIcons[entry]"></nb-icon>
+											{{ 'INBOX.TABS.' + entry | translate }}
+										</button>
+									}
+								</div>
+								<button type="button" class="link-button" data-test="welcome-shortcuts" (click)="openShortcuts.emit()">
+									<nb-icon icon="keypad-outline"></nb-icon>
+									{{ 'INBOX.SHORTCUTS.TITLE' | translate }}
+									<kbd>?</kbd>
+								</button>
+							</div>
+						</div>
+						<div class="tile-art dotted" aria-hidden="true">
+							<div class="mock window later">
+								<div class="mock-bar">
+									<nb-icon icon="inbox-outline"></nb-icon>
+									<i class="line w30"></i>
+								</div>
+								<div class="later-rows">
+									@for (row of laterRows(); track row.id) {
+										<div class="later-row" [class.is-open]="row.id === laterStep().open" [class.is-leaving]="row.id === leavingRow()">
 											<span class="dot mini" [attr.data-tone]="row.tone"></span>
 											<i class="line" [style.width.%]="row.width"></i>
 										</div>
 									}
 								</div>
+								<div class="toast-slot">
+									@if (toastShown()) {
+										<span class="toast">
+											<span>{{ 'INBOX.UNDO.ARCHIVED' | translate: { count: 1 } }}</span>
+											<span class="toast-undo">{{ 'INBOX.UNDO.ACTION' | translate }}</span>
+										</span>
+									}
+								</div>
 								<div class="keycaps">
 									@for (key of keys; track key) {
-										<kbd [class.is-pressed]="keyStep().key === key">{{ key }}</kbd>
+										<kbd [class.is-pressed]="laterStep().key === key">{{ key }}</kbd>
 									}
 								</div>
 							</div>
@@ -219,6 +356,7 @@ const ARCHIVE_STEP = 5;
 				--w-accent: var(--color-primary-default);
 				--w-accent-soft: var(--color-primary-transparent-200);
 				--w-on-accent: var(--text-control-color);
+				--w-success: var(--color-success-default);
 			}
 			.welcome-inner {
 				max-width: 60rem;
@@ -272,7 +410,7 @@ const ARCHIVE_STEP = 5;
 			.tile.wide .tile-inner {
 				display: grid;
 				grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
-				min-height: 17rem;
+				min-height: 18rem;
 			}
 			.tile-text {
 				display: flex;
@@ -338,6 +476,11 @@ const ARCHIVE_STEP = 5;
 				flex: 1 1 auto;
 				min-width: 0;
 			}
+			.tab-buttons {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 0.5rem;
+			}
 
 			.button {
 				display: inline-flex;
@@ -370,7 +513,27 @@ const ARCHIVE_STEP = 5;
 			.button.primary:hover {
 				opacity: 0.88;
 			}
-			.button:focus-visible {
+			.link-button {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.5rem;
+				padding: 0;
+				border: 0;
+				background: none;
+				color: var(--w-muted);
+				font: inherit;
+				font-size: 0.875rem;
+				font-weight: 500;
+				cursor: pointer;
+			}
+			.link-button:hover {
+				color: var(--w-text);
+			}
+			.link-button nb-icon {
+				font-size: 1rem;
+			}
+			.button:focus-visible,
+			.link-button:focus-visible {
 				outline: 2px solid var(--w-accent);
 				outline-offset: 2px;
 			}
@@ -432,6 +595,12 @@ const ARCHIVE_STEP = 5;
 			.w35 {
 				width: 35%;
 			}
+			.w40 {
+				width: 40%;
+			}
+			.w45 {
+				width: 45%;
+			}
 			.w60 {
 				width: 60%;
 			}
@@ -460,7 +629,7 @@ const ARCHIVE_STEP = 5;
 				border-radius: calc(var(--border-radius) * 0.625);
 			}
 			.dot[data-tone='2'] {
-				background: var(--color-success-default);
+				background: var(--w-success);
 			}
 			.dot[data-tone='3'] {
 				background: var(--color-warning-default);
@@ -490,6 +659,22 @@ const ARCHIVE_STEP = 5;
 				align-items: center;
 				gap: 0.5rem;
 			}
+			.unread-dot {
+				width: 0.5rem;
+				height: 0.5rem;
+				flex: 0 0 auto;
+				margin-top: 0.375rem;
+				border-radius: 50%;
+				background: var(--w-accent);
+				opacity: 0;
+				transition: opacity 0.3s ease;
+			}
+			.unread .unread-dot {
+				opacity: 1;
+			}
+			.unread .line.strong {
+				background: var(--w-muted);
+			}
 
 			.decision {
 				display: flex;
@@ -510,70 +695,141 @@ const ARCHIVE_STEP = 5;
 				border-radius: 999px;
 				background: var(--w-accent-soft);
 			}
-			.decision-actions {
+			.choices {
+				display: flex;
+				gap: 0.5rem;
+				height: 1.75rem;
+				margin-top: 0.5rem;
+			}
+			.choice {
+				position: relative;
+				display: inline-flex;
+				align-items: center;
+				gap: 0.5rem;
+				width: 5.5rem;
+				height: 1.75rem;
+				padding: 0 0.625rem;
+				border: 1px solid var(--w-border-strong);
+				border-radius: var(--border-radius);
+				transition: border-color 0.2s ease;
+			}
+			.choice .line {
+				flex: 1 1 auto;
+			}
+			.choice-dot {
+				width: 0.625rem;
+				height: 0.625rem;
+				flex: 0 0 auto;
+				border: 1px solid var(--w-border-strong);
+				border-radius: 50%;
+				transition: background-color 0.2s ease, border-color 0.2s ease;
+			}
+			.choice.is-chosen {
+				border-color: var(--w-accent);
+			}
+			.choice.is-chosen .choice-dot {
+				border-color: var(--w-accent);
+				background: var(--w-accent);
+			}
+			.composer {
 				display: flex;
 				align-items: center;
 				gap: 0.5rem;
 				height: 2rem;
-				margin-top: 0.5rem;
 			}
-			.act {
+			.note {
+				display: flex;
+				align-items: center;
+				flex: 1 1 auto;
+				height: 2rem;
+				padding: 0 0.625rem;
+				border: 1px solid var(--w-border);
+				border-radius: var(--border-radius);
+			}
+			.send {
 				position: relative;
 				display: inline-flex;
 				align-items: center;
 				justify-content: center;
-				width: 5.5rem;
+				width: 3rem;
 				height: 2rem;
+				flex: 0 0 auto;
 				border-radius: var(--border-radius);
+				background: var(--w-line);
+				color: var(--w-muted);
+				transition: background-color 0.2s ease, color 0.2s ease;
 			}
-			.act nb-icon {
-				font-size: 1rem;
-			}
-			.act.approve {
+			.send.is-ready {
 				background: var(--w-accent);
 				color: var(--w-on-accent);
-				transition: transform 0.2s ease;
 			}
-			.act.approve.is-hovered {
-				transform: scale(1.04);
+			.send nb-icon {
+				font-size: 0.875rem;
 			}
-			.act.reject {
-				width: 5rem;
-				border: 1px solid var(--w-border-strong);
-				color: var(--w-muted);
-			}
-			.decided {
-				display: inline-flex;
-				align-items: center;
-				gap: 0.5rem;
-				height: 2rem;
-				padding: 0 0.75rem;
-				border-radius: var(--border-radius);
-				background: color-mix(in srgb, var(--color-success-default) 14%, transparent);
-				color: var(--color-success-default);
+			.answered {
+				display: flex;
+				flex-direction: column;
+				justify-content: center;
+				gap: 0.625rem;
+				height: 4.25rem;
+				margin-top: 0.5rem;
 				animation: welcome-rise 0.35s ease-out both;
 			}
-			.decided nb-icon {
+			.answered-line {
+				display: inline-flex;
+				align-items: center;
+				align-self: flex-start;
+				gap: 0.5rem;
+				height: 1.75rem;
+				padding: 0 0.75rem;
+				border-radius: var(--border-radius);
+				background: color-mix(in srgb, var(--w-success) 14%, transparent);
+				color: var(--w-success);
+			}
+			.answered-line nb-icon {
 				font-size: 1rem;
 			}
-			.decided .line {
+			.answered-line .line {
 				width: 5rem;
 				background: currentColor;
 				opacity: 0.45;
 			}
 
 			.mock.mail,
-			.mock.keys {
+			.mock.notes {
 				display: flex;
 				flex-direction: column;
 				height: 12.5rem;
-				overflow: hidden;
 			}
 			.mock.mail {
 				gap: 0.125rem;
 				padding: 0.5rem;
 			}
+			.new-pill {
+				position: relative;
+				display: inline-flex;
+				align-items: center;
+				align-self: center;
+				gap: 0.375rem;
+				height: 1.5rem;
+				margin: 0.125rem 0 0.25rem;
+				padding: 0 0.75rem;
+				border-radius: 999px;
+				background: var(--w-accent);
+				color: var(--w-on-accent);
+				animation: welcome-rise 0.35s ease-out both;
+			}
+			.new-pill nb-icon {
+				font-size: 0.75rem;
+			}
+			.new-pill .line {
+				width: 3rem;
+				height: 0.375rem;
+				background: currentColor;
+				opacity: 0.6;
+			}
 			.mail-row {
+				position: relative;
 				display: flex;
 				align-items: flex-start;
 				flex: 0 0 auto;
@@ -582,42 +838,102 @@ const ARCHIVE_STEP = 5;
 				border-radius: var(--border-radius);
 				transition: background-color 0.3s ease;
 			}
-			.mail-row.unread .line.strong {
-				background: var(--w-muted);
-			}
-			.unread-dot {
-				width: 0.5rem;
-				height: 0.5rem;
-				flex: 0 0 auto;
-				margin-top: 0.375rem;
-				border-radius: 50%;
-				background: var(--w-accent);
-				opacity: 0;
-				transition: opacity 0.3s ease;
-			}
-			.mail-row.unread .unread-dot {
-				opacity: 1;
-			}
 			.mail-row.is-new {
 				animation: welcome-rise 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 			}
-			.mail-row.is-new.unread {
+			.mail-row.is-open {
 				background: var(--w-hover);
 			}
 
-			.mock.keys {
-				gap: 0.75rem;
-				padding: 0.75rem;
+			.notes-bar {
+				display: flex;
+				align-items: center;
+				gap: 0.5rem;
+				padding: 0.625rem 0.75rem;
+				border-bottom: 1px solid var(--w-border);
 			}
-			.key-rows {
+			.unread-summary {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.5rem;
+			}
+			.unread-summary .line {
+				width: 4rem;
+			}
+			.count-chip {
+				width: 1.25rem;
+				height: 1rem;
+				border-radius: 999px;
+				background: var(--w-accent);
+			}
+			.caught-up {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.375rem;
+				color: var(--w-success);
+				animation: welcome-rise 0.35s ease-out both;
+			}
+			.caught-up nb-icon {
+				font-size: 0.875rem;
+			}
+			.caught-up .line {
+				width: 4rem;
+				background: currentColor;
+				opacity: 0.45;
+			}
+			.mark-all {
+				position: relative;
+				display: inline-flex;
+				align-items: center;
+				gap: 0.375rem;
+				height: 1.5rem;
+				padding: 0 0.625rem;
+				border-radius: var(--border-radius);
+				background: var(--w-hover);
+				color: var(--w-text);
+			}
+			.mark-all nb-icon {
+				font-size: 0.875rem;
+			}
+			.mark-all .line {
+				width: 2.25rem;
+				height: 0.375rem;
+			}
+			.note-row {
+				display: flex;
+				align-items: flex-start;
+				flex: 0 0 auto;
+				gap: 0.625rem;
+				padding: 0.625rem 0.75rem;
+			}
+			.note-icon {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				width: 1.5rem;
+				height: 1.5rem;
+				flex: 0 0 auto;
+				border-radius: 50%;
+				background: var(--w-accent-soft);
+				color: var(--w-accent);
+			}
+			.note-icon nb-icon {
+				font-size: 0.875rem;
+			}
+
+			.mock.later {
 				display: flex;
 				flex-direction: column;
-				flex: 1 1 auto;
+			}
+			.later-rows {
+				display: flex;
+				flex-direction: column;
 				gap: 0.25rem;
-				min-height: 0;
+				height: 8.25rem;
+				padding: 0.75rem;
 				overflow: hidden;
 			}
-			.key-row {
+			.later-row {
 				position: relative;
 				display: flex;
 				align-items: center;
@@ -628,7 +944,7 @@ const ARCHIVE_STEP = 5;
 				border-radius: var(--border-radius);
 				transition: background-color 0.25s ease;
 			}
-			.key-row::before {
+			.later-row::before {
 				content: '';
 				position: absolute;
 				inset: 0.375rem auto 0.375rem 0;
@@ -638,19 +954,43 @@ const ARCHIVE_STEP = 5;
 				opacity: 0;
 				transition: opacity 0.25s ease;
 			}
-			.key-row.is-selected {
+			.later-row.is-open {
 				background: var(--w-hover);
 			}
-			.key-row.is-selected::before {
+			.later-row.is-open::before {
 				opacity: 1;
 			}
-			.key-row.is-leaving {
+			.later-row.is-leaving {
 				animation: welcome-leave 0.5s ease-in forwards;
+			}
+			.toast-slot {
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				height: 2.25rem;
+				padding: 0 0.75rem;
+			}
+			.toast {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.75rem;
+				height: 1.75rem;
+				padding: 0 0.75rem;
+				border-radius: var(--border-radius);
+				background: var(--tooltip-background-color);
+				color: var(--tooltip-text-color);
+				font-size: 0.75rem;
+				white-space: nowrap;
+				box-shadow: var(--gauzy-shadow);
+				animation: welcome-rise 0.3s ease-out both;
+			}
+			.toast-undo {
+				font-weight: 600;
 			}
 			.keycaps {
 				display: flex;
 				gap: 0.375rem;
-				padding-top: 0.625rem;
+				padding: 0.625rem 0.75rem 0.75rem;
 				border-top: 1px solid var(--w-border);
 			}
 			kbd {
@@ -671,13 +1011,22 @@ const ARCHIVE_STEP = 5;
 				font-weight: 600;
 				transition: transform 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 			}
+			.link-button kbd {
+				min-width: 1.375rem;
+				height: 1.375rem;
+				color: var(--w-muted);
+			}
 			kbd.is-pressed {
 				border-color: var(--w-accent);
 				color: var(--w-accent);
 				transform: translateY(1px);
 			}
 
-			.act.is-pressed::after,
+			.choice.is-pressed::after,
+			.send.is-pressed::after,
+			.new-pill.is-pressed::after,
+			.mail-row.is-pressed::after,
+			.mark-all.is-pressed::after,
 			kbd.is-pressed::after {
 				content: '';
 				position: absolute;
@@ -701,13 +1050,37 @@ const ARCHIVE_STEP = 5;
 			:host-context([dir='rtl']) .cursor {
 				--flip: -1;
 			}
-			.cursor[data-at='rest'] {
-				--x: 60%;
-				--y: 4.25rem;
+			.window .cursor[data-at='rest'] {
+				--x: 62%;
+				--y: 4.5rem;
 			}
-			.cursor[data-at='approve'] {
-				--x: 3.375rem;
+			.window .cursor[data-at='approve'] {
+				--x: 3.25rem;
 				--y: 9.75rem;
+			}
+			.window .cursor[data-at='send'] {
+				--x: calc(100% - 2.85rem);
+				--y: 12.05rem;
+			}
+			.mail .cursor[data-at='rest'] {
+				--x: 70%;
+				--y: 7.5rem;
+			}
+			.mail .cursor[data-at='pill'] {
+				--x: 52%;
+				--y: 1.05rem;
+			}
+			.mail .cursor[data-at='row'] {
+				--x: 42%;
+				--y: 1.65rem;
+			}
+			.notes .cursor[data-at='rest'] {
+				--x: 56%;
+				--y: 7.25rem;
+			}
+			.notes .cursor[data-at='markAll'] {
+				--x: calc(100% - 3.1rem);
+				--y: 1.05rem;
 			}
 			.cursor-arrow {
 				flex: 0 0 auto;
@@ -745,10 +1118,13 @@ const ARCHIVE_STEP = 5;
 				animation-delay: 0.06s;
 			}
 			.tile:nth-child(2) {
-				animation-delay: 0.14s;
+				animation-delay: 0.12s;
 			}
 			.tile:nth-child(3) {
-				animation-delay: 0.22s;
+				animation-delay: 0.18s;
+			}
+			.tile:nth-child(4) {
+				animation-delay: 0.24s;
 			}
 			@keyframes welcome-rise {
 				from {
@@ -832,34 +1208,55 @@ export class InboxWelcomeComponent {
 	readonly openTab = output<InboxUiTab>();
 	readonly openShortcuts = output<void>();
 	readonly emailAvailable = input(false);
+	readonly tab = input<InboxUiTab>('all');
+
+	protected readonly headKey = computed(() => `INBOX.WELCOME.HEAD.${this.tab() === 'notifications' ? 'all' : this.tab()}`);
 
 	protected readonly decisionKinds = [InboxItemKindEnum.QUESTION, InboxItemKindEnum.APPROVAL, InboxItemKindEnum.ESCALATION];
-	protected readonly keys = ['j', 'k', 'e'] as const;
+	protected readonly laterTabs: readonly InboxUiTab[] = ['snoozed', 'done', 'archived'];
+	protected readonly tabIcons = INBOX_UI_TAB_ICONS;
+	protected readonly keys = ['j', 'k', 'e', 'd'] as const;
 	protected readonly mailRows = [
 		{ tone: 1, name: 30, text: 72, unread: true },
 		{ tone: 2, name: 24, text: 58, unread: false },
 		{ tone: 1, name: 34, text: 66, unread: false }
 	];
-	private readonly allKeyRows = [
+	protected readonly notes = [
+		{ icon: 'at-outline', name: 34, text: 70, unread: true },
+		{ icon: 'person-add-outline', name: 28, text: 58, unread: true },
+		{ icon: 'message-circle-outline', name: 32, text: 64, unread: false },
+		{ icon: 'calendar-outline', name: 26, text: 52, unread: false }
+	];
+	private readonly allLaterRows = [
 		{ id: 0, tone: 1, width: 62 },
-		{ id: 1, tone: 2, width: 48 },
-		{ id: 2, tone: 3, width: 70 },
-		{ id: 3, tone: 1, width: 54 },
-		{ id: 4, tone: 2, width: 44 }
+		{ id: 1, tone: 3, width: 48 },
+		{ id: 2, tone: 2, width: 70 },
+		{ id: 3, tone: 1, width: 54 }
 	];
 
 	private readonly step = signal(0);
 	private readonly reducedMotion = signal(false);
 
+	private readonly playing = (from: number) => this.step() >= from && this.step() < RESET_STEP;
+
 	protected readonly decisionCursor = computed(() => DECISION_SCRIPT[this.step()]);
-	protected readonly approved = computed(() => this.step() >= APPROVED_STEP && this.step() < RESET_STEP);
-	protected readonly mailArrived = computed(() => this.step() >= MAIL_ARRIVES_STEP && this.step() < RESET_STEP);
-	protected readonly mailRead = computed(() => this.step() >= MAIL_READ_STEP);
-	protected readonly keyStep = computed(() => KEY_SCRIPT[this.step()]);
+	protected readonly approveChosen = computed(() => this.playing(APPROVE_CHOSEN_STEP));
+	protected readonly answered = computed(() => this.playing(ANSWERED_STEP));
+
+	protected readonly mailCursor = computed(() => MAIL_SCRIPT[this.step()]);
+	protected readonly mailPill = computed(() => this.step() >= MAIL_PILL_STEP && this.step() < MAIL_SHOWN_STEP);
+	protected readonly mailShown = computed(() => this.playing(MAIL_SHOWN_STEP));
+	protected readonly mailRead = computed(() => this.playing(MAIL_READ_STEP));
+
+	protected readonly notesCursor = computed(() => NOTES_SCRIPT[this.step()]);
+	protected readonly notesRead = computed(() => this.playing(NOTES_READ_STEP));
+
+	protected readonly laterStep = computed(() => LATER_SCRIPT[this.step()]);
 	protected readonly leavingRow = computed(() => (this.step() === ARCHIVE_STEP ? ARCHIVED_ROW : null));
-	protected readonly keyRows = computed(() =>
-		this.step() > ARCHIVE_STEP && this.step() < RESET_STEP ? this.allKeyRows.filter((row) => row.id !== ARCHIVED_ROW) : this.allKeyRows
+	protected readonly laterRows = computed(() =>
+		this.playing(ARCHIVE_STEP + 1) ? this.allLaterRows.filter((row) => row.id !== ARCHIVED_ROW) : this.allLaterRows
 	);
+	protected readonly toastShown = computed(() => this.step() >= ARCHIVE_STEP && this.step() <= TOAST_LAST_STEP);
 
 	constructor() {
 		if (typeof window === 'undefined') return;

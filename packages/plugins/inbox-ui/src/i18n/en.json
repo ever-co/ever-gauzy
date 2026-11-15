@@ -22,19 +22,44 @@
 		"TITLE": "Nothing matches these filters",
 		"HINT": "Try another search, or clear the filters."
 	},
-	"SELECT": "Select an item to read it, answer it or act on it.",
 	"WELCOME": {
-		"TITLE": "Everything addressed to you, in one place",
+		"HEAD": {
+			"all": {
+				"TITLE": "Everything addressed to you",
+				"TEXT": "Decisions, email and notices that are not snoozed, done or archived. Select one to read it, answer it or act on it."
+			},
+			"decisions": {
+				"TITLE": "Decisions addressed to you",
+				"TEXT": "Questions, approvals and escalations. Select one to answer it; your answer goes back to where it was asked."
+			},
+			"email": {
+				"TITLE": "Email from your mailboxes",
+				"TEXT": "Select a message to read it."
+			},
+			"snoozed": {
+				"TITLE": "Snoozed until later",
+				"TEXT": "Each item comes back to your inbox when its time is up. Select one to see it, or wake it now."
+			},
+			"done": {
+				"TITLE": "Items you marked done",
+				"TEXT": "Select one to see it, or mark it not done to bring it back to your inbox."
+			},
+			"archived": {
+				"TITLE": "Items you archived",
+				"TEXT": "Select one to see it, or unarchive it to bring it back to your inbox."
+			}
+		},
 		"DECISIONS_TEXT": "Answer questions, approve requests and handle escalations right here; your answer goes back to where it was asked.",
 		"OPEN_DECISIONS": "Open decisions",
 		"KINDS": "Decisions can be",
-		"EMAIL_TEXT": "Read the email of your mailboxes next to everything else.",
+		"EMAIL_TEXT": "Messages from your mailboxes, next to everything else. Opening one marks it read.",
 		"EMAIL_LABEL": "Your mailboxes",
-		"SHORTCUTS_TEXT": "Move through the list, archive and mark items done without leaving the keyboard.",
-		"SHORTCUTS_LABEL": "Press ? to see them all",
+		"NOTIFICATIONS_TEXT": "Mentions, assignments, comments and other updates from Gauzy. Select one to mark it read, or mark them all read at once.",
+		"NOTIFICATIONS_LABEL": "Your Gauzy updates",
+		"LATER_TITLE": "Snoozed, done and archived",
+		"LATER_TEXT": "Snooze an item until later, mark it done when it is handled, or archive it. It leaves your inbox for its own tab, where you can bring it back, and each move can be undone.",
 		"OPEN": "Open",
-		"OPEN_EMAIL_LABEL": "Open the Email tab",
-		"OPEN_SHORTCUTS_LABEL": "Open the keyboard shortcuts",
+		"OPEN_TAB_LABEL": "Open the {{ tab }} tab",
 		"YOU": "You"
 	},
 	"BACK": "Back to the list",

@@ -631,6 +631,7 @@ export function apiMessage(error: unknown): string | null {
 										<ngx-inbox-welcome
 											data-test="no-selection"
 											[emailAvailable]="emailAvailable()"
+											[tab]="tab()"
 											(openTab)="selectTab($event)"
 											(openShortcuts)="openShortcuts()"
 										></ngx-inbox-welcome>
