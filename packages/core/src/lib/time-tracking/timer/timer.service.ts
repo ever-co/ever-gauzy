@@ -576,27 +576,33 @@ export class TimerService {
 			// A start that took so long that the next one went on creates no run beside that one's
 			turn.assertHeld();
 
-			// Create a new time log entry using the command bus
+			// Create a new time log entry using the command bus. It is written in one transaction with the check that the
+			// close above left no other run going (`isOnlyRun`): when one still runs, nothing is written and the start is
+			// refused (ever-co/ever-gauzy#11826)
 			const timeLog = await this._commandBus.execute(
-				new TimeLogCreateCommand({
-					organizationId,
-					tenantId,
-					employeeId,
-					startedAt,
-					stoppedAt: startedAt,
-					duration: 0,
-					source: source || TimeLogSourceEnum.WEB_TIMER,
-					logType: logType || TimeLogType.TRACKED,
-					projectId: projectIdToLog || null,
-					taskId: taskId || null,
-					organizationContactId: organizationContactId || null,
-					organizationTeamId: teamIdToLog || null,
-					description: description || null,
-					// A break is never billable
-					isBillable: Boolean(isBillable) && !startsBreak,
-					version: version || null,
-					isRunning: true
-				})
+				new TimeLogCreateCommand(
+					{
+						organizationId,
+						tenantId,
+						employeeId,
+						startedAt,
+						stoppedAt: startedAt,
+						duration: 0,
+						source: source || TimeLogSourceEnum.WEB_TIMER,
+						logType: logType || TimeLogType.TRACKED,
+						projectId: projectIdToLog || null,
+						taskId: taskId || null,
+						organizationContactId: organizationContactId || null,
+						organizationTeamId: teamIdToLog || null,
+						description: description || null,
+						// A break is never billable
+						isBillable: Boolean(isBillable) && !startsBreak,
+						version: version || null,
+						isRunning: true
+					},
+					undefined,
+					{ isOnlyRun: true }
+				)
 			);
 
 			// The next start or stop went on while this run was being written, and may have read the runs going before

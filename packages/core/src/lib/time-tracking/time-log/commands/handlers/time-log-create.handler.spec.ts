@@ -281,3 +281,106 @@ describe('TimeLogCreateHandler: history of time added by hand', () => {
 		expect(record).not.toHaveBeenCalled();
 	});
 });
+
+/**
+ * A timer start closed the employee's runs going, then wrote its own run through other connections: a close that
+ * failed, or a run written between the two, left the employee with two runs going (ever-co/ever-gauzy#11826). A
+ * start's run is now written in one transaction with the check, under the employee's row lock, that no other run of a
+ * timer client is still going.
+ */
+describe("TimeLogCreateHandler: a timer start's run is the only run going", () => {
+	beforeEach(() => {
+		jest.spyOn(console, 'log').mockImplementation(() => undefined);
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT_ID);
+	});
+	afterEach(() => jest.restoreAllMocks());
+
+	/** A handler whose transaction finds `going` runs of the employee still going. */
+	function createStart(going: number, failsInsert?: Error) {
+		const transactionRepository = {
+			save: jest.fn(async (timeLog: TimeLog) => {
+				if (failsInsert) {
+					throw failsInsert;
+				}
+				return timeLog;
+			})
+		};
+		const transactionManager = {
+			getRepository: jest.fn(() => transactionRepository),
+			findOne: jest.fn(async () => ({ id: EMPLOYEE_ID })),
+			count: jest.fn(async () => going)
+		};
+		const dataSource = {
+			transaction: jest.fn(async (work: (manager: unknown) => Promise<void>) => work(transactionManager))
+		};
+		const { handler } = createHandler(dataSource);
+		const repository = (handler as unknown as { typeOrmTimeLogRepository: { save: jest.Mock } })
+			.typeOrmTimeLogRepository;
+		return { handler, repository, dataSource, transactionManager, transactionRepository };
+	}
+
+	const startRun = (source = TimeLogSourceEnum.WEB_TIMER) =>
+		new TimeLogCreateCommand(input({ source, isRunning: true, stoppedAt: STARTED_AT }), undefined, {
+			isOnlyRun: true
+		});
+
+	/** The refusal's code, or undefined when the run was written. */
+	const refusalCodeOf = (work: Promise<unknown>) =>
+		work.then(
+			() => undefined,
+			(error: { getResponse?: () => { code?: string } }) => error?.getResponse?.()?.code ?? String(error)
+		);
+
+	it('writes nothing and refuses the start while another run of the employee is still going', async () => {
+		const { handler, repository, transactionManager, transactionRepository } = createStart(1);
+
+		expect(await refusalCodeOf(handler.execute(startRun()))).toBe('TIMER_STILL_RUNNING');
+
+		expect(transactionRepository.save).not.toHaveBeenCalled();
+		expect(repository.save).not.toHaveBeenCalled();
+		// Checked after the employee's row was read for the lock, in the same transaction
+		expect(transactionManager.findOne).toHaveBeenCalledTimes(1);
+		expect(transactionManager.findOne.mock.invocationCallOrder[0]).toBeLessThan(
+			transactionManager.count.mock.invocationCallOrder[0]
+		);
+	});
+
+	it("counts the employee's running rows of timer clients only, not a tracker's uploads", async () => {
+		const { handler, transactionManager } = createStart(0);
+
+		await handler.execute(startRun(TimeLogSourceEnum.DESKTOP));
+
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const options = (transactionManager.count.mock.calls[0] as unknown[])[1] as { where: Record<string, any> };
+		expect(options.where).toMatchObject({ employeeId: EMPLOYEE_ID, tenantId: TENANT_ID, isRunning: true });
+		expect(JSON.stringify(options.where.source)).toContain(TimeLogSourceEnum.DESKTOP);
+		expect(options.where.source.type).toBe('not');
+	});
+
+	it('writes the run in the transaction of the check when no other run is going', async () => {
+		const { handler, repository, dataSource, transactionRepository } = createStart(0);
+
+		await handler.execute(startRun());
+
+		expect(dataSource.transaction).toHaveBeenCalledTimes(1);
+		expect(transactionRepository.save).toHaveBeenCalledTimes(1);
+		expect(repository.save).not.toHaveBeenCalled();
+	});
+
+	it("refuses the start when the running-log key refuses its run, written past another start's check", async () => {
+		const duplicate = Object.assign(new Error('duplicate key value violates unique constraint'), { code: '23505' });
+		const { handler } = createStart(0, duplicate);
+
+		expect(await refusalCodeOf(handler.execute(startRun()))).toBe('TIMER_STILL_RUNNING');
+	});
+
+	it('leaves a log written without the option as before: no transaction, no check', async () => {
+		const { handler, repository, dataSource, transactionManager } = createStart(1);
+
+		await handler.execute(new TimeLogCreateCommand(input({ stoppedAt: STOPPED_AT })));
+
+		expect(dataSource.transaction).not.toHaveBeenCalled();
+		expect(transactionManager.count).not.toHaveBeenCalled();
+		expect(repository.save).toHaveBeenCalledTimes(1);
+	});
+});
