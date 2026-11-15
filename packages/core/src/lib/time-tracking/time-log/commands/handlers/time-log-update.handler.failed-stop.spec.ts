@@ -7,6 +7,7 @@ import { MultiORMEnum } from '../../../../core/utils';
 import { TimesheetFirstOrCreateCommand, TimesheetRecalculateCommand } from '../../../timesheet/commands';
 import { TimeSlotBulkDeleteCommand } from '../../../time-slot/commands';
 import { generateTimeSlots } from '../../../time-slot/utils';
+import { TimeLog } from '../../time-log.entity';
 import { TimeLogUpdateCommand } from '../time-log-update.command';
 import { TimeLogUpdateHandler } from './time-log-update.handler';
 
@@ -56,6 +57,8 @@ function createRun(source: TimeLogSourceEnum) {
 		stoppedAt: at('09:00'),
 		isRunning: true
 	};
+	/** The run as a stop read it before its first try. */
+	const firstRead = { ...run };
 	const slots: IStoredSlot[] = [];
 	const hardDeleted: string[] = [];
 	let created = 0;
@@ -224,10 +227,14 @@ function createRun(source: TimeLogSourceEnum) {
 	jest.spyOn(handler as any, 'findTimeSlots').mockImplementation(async (...args: unknown[]) =>
 		slotsAt(args[3] as Date[]).map(slotEntity)
 	);
-	// The save of the log read back: its columns, and its `timeSlots` as its join rows
+	// The save of the log read back: its columns, and its `timeSlots` as its join rows. A log saved without
+	// `timeSlots` (read back without the relation) leaves its join rows as they are, as TypeORM's save does
 	jest.spyOn(handler as any, 'saveUpdatedTimeLog').mockImplementation(async (log: any) => {
 		failIfDue('save');
-		const linked = new Set((log.timeSlots ?? []).map((slot: ITimeSlot) => slot.id));
+		if (log.timeSlots === undefined) {
+			return log;
+		}
+		const linked = new Set((log.timeSlots as ITimeSlot[]).map((slot: ITimeSlot) => slot.id));
 		for (const slot of slots) {
 			const others = slot.timeLogIds.filter((id) => id !== RUN);
 			slot.timeLogIds = linked.has(slot.id) ? [...others, RUN] : others;
@@ -241,12 +248,43 @@ function createRun(source: TimeLogSourceEnum) {
 		fail(write: Write, times = 1) {
 			failing[write] = times;
 		},
-		/** The stop the timer sends, at `time`; the error it raised, if any. */
+		/** The stop the timer sends, at `time` (`stopsRun`); the error it raised, if any. */
 		stop: (time: string) =>
-			handler.execute(new TimeLogUpdateCommand({ isRunning: false, stoppedAt: at(time) }, RUN)).then(
-				() => undefined,
-				(error: Error) => error.message
-			),
+			handler
+				.execute(
+					new TimeLogUpdateCommand(
+						{ isRunning: false, stoppedAt: at(time) },
+						RUN,
+						undefined,
+						false,
+						undefined,
+						true
+					)
+				)
+				.then(
+					() => undefined,
+					(error: Error) => error.message
+				),
+		/**
+		 * The same stop sent with the run as it was read before a first try, running, as `TimerService.stopReplacedRun`
+		 * sends its second try; the error it raised, if any.
+		 */
+		stopAsFirstRead: (time: string) =>
+			handler
+				.execute(
+					new TimeLogUpdateCommand(
+						{ isRunning: false, stoppedAt: at(time) },
+						new TimeLog({ ...firstRead }),
+						undefined,
+						false,
+						undefined,
+						true
+					)
+				)
+				.then(
+					() => undefined,
+					(error: Error) => error.message
+				),
 		/** An edit of the log's end to `time`; the error it raised, if any. */
 		editEnd: (time: string) =>
 			handler.execute(new TimeLogUpdateCommand({ stoppedAt: at(time) }, RUN)).then(
@@ -511,6 +549,30 @@ describe.each([
 		expect(store.state()).toEqual({ isRunning: false, stoppedAt: '09:20', slots: slotStarts('09:00', '09:20') });
 		expect(store.slotCount()).toBe(slotStarts('09:00', '09:20').length);
 		expect(outcome).toBe('This timer was already stopped by another start or stop.');
+	});
+
+	it('is refused as well when its own read already finds the run stopped by the other stop', async () => {
+		const store = createRun(source);
+		// The other stop landed before this one's handler read the run
+		Object.assign(store.run, { isRunning: false, stoppedAt: at('09:20') });
+
+		const outcome = await store.stop('09:30');
+
+		expect(store.state()).toEqual({ isRunning: false, stoppedAt: '09:20', slots: [] });
+		expect(store.slotCount()).toBe(0);
+		expect(outcome).toBe('This timer was already stopped by another start or stop.');
+	});
+
+	it('completes a second try of the same stop, sent with the run as first read, after its first try wrote the row', async () => {
+		const store = createRun(source);
+		// The first try writes the stop, then the save of the run read back fails
+		store.fail('save');
+		await store.stop('09:30');
+
+		const outcome = await store.stopAsFirstRead('09:30');
+
+		expect(outcome).toBeUndefined();
+		expect(store.state()).toEqual({ isRunning: false, stoppedAt: '09:30', slots: slotStarts('09:00', '09:30') });
 	});
 
 	it('still writes an edit of a stopped log, which is no stop of a run', async () => {

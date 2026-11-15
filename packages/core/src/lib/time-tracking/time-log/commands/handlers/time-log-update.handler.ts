@@ -111,14 +111,17 @@ function rangeSlotsBefore(timeLog: ITimeLog, slots: ITimeSlot[]): IRangeSlotsBef
 export const TIME_LOG_NO_LONGER_RUNNING = 'TIME_LOG_NO_LONGER_RUNNING';
 
 /**
- * Whether an update stops a run that was running when it was read: the stop the timer sends, and the end it gives a run
- * another start replaces. Its write then lands only while the row still runs.
+ * Whether a row a stop's write found no longer running was stopped by this same stop: an earlier try of it wrote the
+ * row, then a later step failed, and this is the try that completes it (`TimerService.stopReplacedRun`). Another start
+ * or stop ends the run somewhere else.
  *
- * @param stored - The log as first read.
- * @param changes - The update.
+ * @param current - The row as stored now, if any.
+ * @param changes - The stop.
  */
-export function stopsRunAsRead(stored: Pick<ITimeLog, 'isRunning'>, changes: Partial<ITimeLog>): boolean {
-	return stored?.isRunning === true && changes?.isRunning === false;
+function isStoppedByThisStop(current: ITimeLog | null, changes: Partial<ITimeLog>): boolean {
+	const isStopped = Boolean(current) && !current.isRunning;
+	const namesItsEnd = changes?.stoppedAt != null;
+	return isStopped && namesItsEnd && isSameInstant(current.stoppedAt, changes.stoppedAt);
 }
 
 /** Whether two stored instants are the same one, both missing included. */
@@ -156,7 +159,7 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 
 	public async execute(command: TimeLogUpdateCommand): Promise<ITimeLog> {
 		// Extract input parameters from the command
-		const { id, input, manualTimeSlot, forceDelete = false, history } = command;
+		const { id, input, manualTimeSlot, forceDelete = false, history, stopsRun = false } = command;
 
 		let timeLog: ITimeLog = await this.getTimeLogByIdOrInstance(id);
 
@@ -263,10 +266,9 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 
 			// Update the time log in the repository
 			const logId = timeLog.id;
-			// A stop of a run read as running writes only while the row still runs (`stopsRunAsRead`): another start
-			// or stop may have stopped it since, one that took the employee's timer turn over once this one outlived
-			// it (ever-co/ever-gauzy#11826), and its end is the one that stands.
-			const stopsRun = stopsRunAsRead(stored, changes);
+			// The timer's stop of a run it read as running (`stopsRun`) writes only while the row still runs, whatever
+			// the read above found: another start or stop may have stopped it since, one that took the employee's timer
+			// turn over once this one outlived it (ever-co/ever-gauzy#11826), and its end is the one that stands.
 			const where: FindOptionsWhere<TimeLog> = stopsRun
 				? { id: logId, tenantId, isRunning: true }
 				: { id: logId, tenantId };
@@ -283,15 +285,21 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 							...(timesheet ? { timesheetId: timesheet.id } : {}),
 							...rates
 						});
-						// Nothing written: the slots of the range are given back (`writeWithRangeSlots`), and the
-						// stop is refused
-						if (stopsRun && result?.affected === 0) {
-							throw new ConflictException({
-								message: 'This timer was already stopped by another start or stop.',
-								code: TIME_LOG_NO_LONGER_RUNNING
-							});
+						const isFencedOut = stopsRun && result?.affected === 0;
+						if (!isFencedOut) {
+							return result;
 						}
-						return result;
+						// A row this same stop wrote on an earlier try is completed: the rest of the stop goes on
+						const current = await repository.findOneBy({ id: logId, tenantId });
+						if (isStoppedByThisStop(current, changes)) {
+							return result;
+						}
+						// Stopped by another start or stop: nothing written, the slots of the range are given back
+						// (`writeWithRangeSlots`), and the stop is refused
+						throw new ConflictException({
+							message: 'This timer was already stopped by another start or stop.',
+							code: TIME_LOG_NO_LONGER_RUNNING
+						});
 					},
 					true
 				);
