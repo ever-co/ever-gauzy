@@ -8,6 +8,7 @@ import {
 	InboxItemKindEnum,
 	InboxItemSourceEnum
 } from '@gauzy/contracts';
+import { teamNotificationDefaultsByEmployee, withTeamNotificationDefaults } from '@gauzy/core';
 import { InboxItem } from '../entities/inbox-item.entity';
 import { InboxItemRecipient } from '../entities/inbox-item-recipient.entity';
 import { InboxNamedLocks } from '../email/database/named-locks';
@@ -533,8 +534,16 @@ export class InboxDeliveryService {
 		return user ?? null;
 	}
 
+	/**
+	 * The employee's notification setting, its preferences with their team's defaults under them (a key the employee left
+	 * unset takes the team's value); a team default applies to an employee who has no setting yet too.
+	 */
 	private async settingOf(employeeId: ID, tenantId: ID): Promise<ObjectLiteral | null> {
-		return (await this.dataSource.getRepository<ObjectLiteral>('EmployeeNotificationSetting').findOne({ where: { employeeId, tenantId } } as never)) ?? null;
+		const setting =
+			(await this.dataSource.getRepository<ObjectLiteral>('EmployeeNotificationSetting').findOne({ where: { employeeId, tenantId } } as never)) ?? null;
+		const defaults = (await teamNotificationDefaultsByEmployee(this.dataSource, [{ employeeId, tenantId }])).get(`${tenantId}:${employeeId}`);
+		if (!defaults) return setting;
+		return { ...(setting ?? {}), preferences: withTeamNotificationDefaults(setting?.['preferences'], defaults) };
 	}
 
 	private async markSent(rows: InboxDelivery[], now: Date): Promise<void> {
