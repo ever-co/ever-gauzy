@@ -9,6 +9,7 @@ import {
 	Put,
 	Delete,
 	HttpCode,
+	NotFoundException,
 	Query,
 	UsePipes
 } from '@nestjs/common';
@@ -276,7 +277,9 @@ export class EmployeeAppointmentController extends CrudController<EmployeeAppoin
 
 	/**
 	 * The meeting a deletion cancels, read in the caller's scope before it goes, with its invitees: null when the caller
-	 * may not read it (the deletion then answers as before) or it was already cancelled.
+	 * may not read it (not found in their scope: the deletion then answers as before) or it was already cancelled. Any
+	 * other failure of the reads fails the request before anything is deleted, so the invitees are never left untold of
+	 * a deletion that went through.
 	 */
 	private async cancellationOf(id: ID): Promise<{ meeting: IMeetingSnapshot; inviteeIds: ID[] } | null> {
 		try {
@@ -297,8 +300,11 @@ export class EmployeeAppointmentController extends CrudController<EmployeeAppoin
 				},
 				inviteeIds
 			};
-		} catch {
-			return null;
+		} catch (error) {
+			if (error instanceof NotFoundException) {
+				return null;
+			}
+			throw error;
 		}
 	}
 

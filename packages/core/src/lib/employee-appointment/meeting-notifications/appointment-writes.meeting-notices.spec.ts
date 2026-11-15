@@ -313,7 +313,7 @@ describe('appointment writes and the meeting notices', () => {
 			const employeeAppointmentService = {
 				findOneByIdString: appointment
 					? jest.fn().mockResolvedValue(appointment)
-					: jest.fn().mockRejectedValue(new Error('not found')),
+					: jest.fn().mockRejectedValue(new NotFoundException('not found')),
 				delete: jest.fn().mockResolvedValue({ affected: 1 }),
 				softRemove: jest.fn().mockResolvedValue({})
 			};
@@ -376,6 +376,19 @@ describe('appointment writes and the meeting notices', () => {
 			await hidden.controller.delete('appointment-1');
 			expect(hidden.employeeAppointmentService.delete).toHaveBeenCalled();
 			expect(hidden.meetingNotifications.notify).not.toHaveBeenCalled();
+		});
+
+		it('deletes nothing when the meeting or its invitees cannot be read for another reason than its absence', async () => {
+			const unread = setup(appointment, ['invitee-1']);
+			unread.employeeAppointmentService.findOneByIdString.mockRejectedValue(new Error('connection lost'));
+			await expect(unread.controller.delete('appointment-1')).rejects.toThrow('connection lost');
+			expect(unread.employeeAppointmentService.delete).not.toHaveBeenCalled();
+
+			const uninvited = setup(appointment, ['invitee-1']);
+			uninvited.meetingNotifications.inviteeIdsOf.mockRejectedValue(new Error('connection lost'));
+			await expect(uninvited.controller.softRemove('appointment-1')).rejects.toThrow('connection lost');
+			expect(uninvited.employeeAppointmentService.softRemove).not.toHaveBeenCalled();
+			expect(uninvited.meetingNotifications.notify).not.toHaveBeenCalled();
 		});
 	});
 
