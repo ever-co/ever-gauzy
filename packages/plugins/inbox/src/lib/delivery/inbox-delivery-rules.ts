@@ -220,16 +220,41 @@ export function isSentOnlyWhileUnread(type: string | null | undefined): boolean 
 }
 
 /**
- * When an email at once or a push goes: now, or after a timer reminder's wait; then after the do-not-disturb window
- * when that moment falls inside it.
+ * The instant of a stored time, or null when there is none. A raw SQLite read answers the text TypeORM wrote, the UTC
+ * time without its zone (`2026-11-11 08:00:00.000`), which `Date` would read as local time.
+ */
+export function storedInstantOf(value: unknown): Date | null {
+	if (value instanceof Date) return Number.isFinite(value.getTime()) ? value : null;
+	if (typeof value !== 'string' || !value.trim()) return null;
+	const text = value.trim();
+	const hasNoZone = /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}(:\d{2}(\.\d+)?)?$/.test(text);
+	const instant = new Date(hasNoZone ? `${text.replace(' ', 'T')}Z` : text);
+	return Number.isFinite(instant.getTime()) ? instant : null;
+}
+
+/**
+ * When a timer reminder's wait ends: {@link INBOX_DELIVERY_TIMER_REMINDER_GRACE_MS} after it was filed (the
+ * notification's `createdAt`, the moment Ever Teams counts from), or after `now` when that is unknown. A sweep that
+ * takes the reminder in after its wait is over sends it at once.
+ */
+function timerReminderWaitEnd(now: Date, filedAt: Date | null | undefined): Date {
+	const start = filedAt ?? now;
+	const waitEnd = start.getTime() + INBOX_DELIVERY_TIMER_REMINDER_GRACE_MS;
+	return new Date(Math.max(waitEnd, now.getTime()));
+}
+
+/**
+ * When an email at once or a push goes: now, or at the end of a timer reminder's wait; then after the do-not-disturb
+ * window when that moment falls inside it.
  */
 function immediateDueAt(
 	now: Date,
 	type: string | null | undefined,
 	preferences: IEmployeeNotificationPreferences,
-	timeZone: string
+	timeZone: string,
+	filedAt?: Date | null
 ): Date {
-	const from = isSentOnlyWhileUnread(type) ? new Date(now.getTime() + INBOX_DELIVERY_TIMER_REMINDER_GRACE_MS) : now;
+	const from = isSentOnlyWhileUnread(type) ? timerReminderWaitEnd(now, filedAt) : now;
 	const dnd = preferences.dnd;
 	return dnd && isWithinWindow(localClockOf(from, timeZone), dnd) ? windowEndAfter(from, dnd, timeZone) : from;
 }
@@ -240,8 +265,8 @@ function immediateDueAt(
  * next digest at the person's hour.
  *
  * A timer reminder the person had already read when it is decided (an open Ever Teams tab showed it and marked it
- * read) gets nothing, and its email at once waits for that mark ({@link isSentOnlyWhileUnread}).
- * `alreadyRead` changes nothing for any other kind.
+ * read) gets nothing, and its email at once waits for that mark ({@link isSentOnlyWhileUnread}), counted from
+ * `filedAt`, when the reminder was filed. `alreadyRead` and `filedAt` change nothing for any other kind.
  */
 export function decideEmailDelivery(input: {
 	now: Date;
@@ -249,6 +274,7 @@ export function decideEmailDelivery(input: {
 	setting: IDeliverySettingLike | null | undefined;
 	userTimeZone?: string | null;
 	alreadyRead?: boolean;
+	filedAt?: Date | null;
 }): IDeliveryDecision {
 	if (input.alreadyRead && isSentOnlyWhileUnread(input.type))
 		return { mode: InboxDeliveryModeEnum.NONE, dueAt: null, digestKey: null };
@@ -263,7 +289,7 @@ export function decideEmailDelivery(input: {
 	}
 	return {
 		mode: InboxDeliveryModeEnum.IMMEDIATE,
-		dueAt: immediateDueAt(input.now, input.type, preferences, timeZone),
+		dueAt: immediateDueAt(input.now, input.type, preferences, timeZone, input.filedAt),
 		digestKey: null
 	};
 }
@@ -284,7 +310,8 @@ export function pushOnFor(preferences: IEmployeeNotificationPreferences, type: s
  * off, or push is off for it; else a push at once — after the do-not-disturb window when the entry falls inside it
  * (FR-11). Whether the person is looking at the app is decided when the push is due, not here.
  *
- * A timer reminder is pushed only while unread, after the same wait as its email (see {@link decideEmailDelivery}).
+ * A timer reminder is pushed only while unread, after the same wait as its email, counted from the same `filedAt`
+ * (see {@link decideEmailDelivery}).
  */
 export function decidePushDelivery(input: {
 	now: Date;
@@ -293,6 +320,7 @@ export function decidePushDelivery(input: {
 	userTimeZone?: string | null;
 	hasSubscription: boolean;
 	alreadyRead?: boolean;
+	filedAt?: Date | null;
 }): IDeliveryDecision {
 	const none: IDeliveryDecision = { mode: InboxDeliveryModeEnum.NONE, dueAt: null, digestKey: null };
 	if (!input.hasSubscription) return none;
@@ -303,7 +331,7 @@ export function decidePushDelivery(input: {
 	const timeZone = timeZoneOf(preferences, input.userTimeZone);
 	return {
 		mode: InboxDeliveryModeEnum.IMMEDIATE,
-		dueAt: immediateDueAt(input.now, input.type, preferences, timeZone),
+		dueAt: immediateDueAt(input.now, input.type, preferences, timeZone, input.filedAt),
 		digestKey: null
 	};
 }
