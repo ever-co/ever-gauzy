@@ -487,6 +487,34 @@ describe('InvoiceReminderService on SQLite', () => {
 			expect(sent().map((input) => input.invoiceId)).toEqual([first]);
 		});
 
+		it('sends nothing to an address whose email did not go after all, and the next sweep writes to the last one that did', async () => {
+			const { first, second } = await twoDue();
+			// The second invoice's newest row: an email still going out, named from its creation two days ago
+			await emailed(second, {
+				at: fromNow(-2 * DAY),
+				email: 'pending@acme.test',
+				languageCode: LanguagesEnum.FRENCH
+			});
+			whileTheFirstIsSent(() =>
+				dataSource.query(
+					`UPDATE "estimate_email" SET "invoiceId" = NULL, "languageCode" = NULL WHERE "email" = ?`,
+					['pending@acme.test']
+				)
+			);
+
+			await service.sweep(NOW);
+
+			expect(sent().map((input) => input.invoiceId)).toEqual([first]);
+			expect((await claims()).map((claim) => claim.invoiceId)).toEqual([first]);
+
+			await service.sweep(fromNow(HOUR));
+
+			expect(sent().map((input) => [input.invoiceId, input.email, input.languageCode])).toEqual([
+				[first, 'billing@acme.test', LanguagesEnum.ENGLISH],
+				[second, 'billing@acme.test', LanguagesEnum.ENGLISH]
+			]);
+		});
+
 		it('sends what is left to pay after a payment made meanwhile', async () => {
 			const { second } = await twoDue();
 			whileTheFirstIsSent(() =>
