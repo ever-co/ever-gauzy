@@ -265,6 +265,7 @@ describe('EmployeeUpdateHandler — the work dates switch the tracking as the ro
 
 	let orm: MikroORM<BetterSqliteDriver>;
 	let adminSwitchesTo: boolean | undefined;
+	let publish: jest.Mock;
 	let handler: EmployeeUpdateHandler;
 
 	beforeAll(async () => {
@@ -323,7 +324,8 @@ describe('EmployeeUpdateHandler — the work dates switch the tracking as the ro
 				return entity;
 			}
 		};
-		handler = new EmployeeUpdateHandler(service as never, {} as never, { publish: jest.fn() } as never);
+		publish = jest.fn();
+		handler = new EmployeeUpdateHandler(service as never, {} as never, { publish } as never);
 	});
 
 	afterEach(() => jest.restoreAllMocks());
@@ -366,6 +368,18 @@ describe('EmployeeUpdateHandler — the work dates switch the tracking as the ro
 		expect(row.isTrackingEnabled).toBe(false);
 	});
 
+	it("publishes no stop of its own for the admin's switch off, which published its own", async () => {
+		asCaller(RolesEnum.EMPLOYEE, SELF);
+		await storeEmployee(true);
+		adminSwitchesTo = false;
+
+		const saved = await save({ startedWorkOn: NEW_START });
+
+		// The saved row shows the admin's "off" while the handler read "on": that stop is not this save's.
+		expect(saved.isTrackingEnabled).toBe(false);
+		expect(publish).not.toHaveBeenCalled();
+	});
+
 	it('still lets an admin turn the tracking on through the start date', async () => {
 		asCaller(RolesEnum.ADMIN, 'employee-admin');
 		await storeEmployee(false);
@@ -373,5 +387,15 @@ describe('EmployeeUpdateHandler — the work dates switch the tracking as the ro
 		await save({ startedWorkOn: NEW_START });
 
 		expect(await stored()).toMatchObject({ startedWorkOn: NEW_START, isTrackingEnabled: true });
+	});
+
+	it('still publishes the stop of an admin who ends the work, which turns the tracking off', async () => {
+		asCaller(RolesEnum.ADMIN, 'employee-admin');
+		await storeEmployee(true);
+
+		await save({ endWork: NEW_END });
+
+		expect(await stored()).toMatchObject({ endWork: NEW_END, isTrackingEnabled: false });
+		expect(publish).toHaveBeenCalledTimes(1);
 	});
 });
