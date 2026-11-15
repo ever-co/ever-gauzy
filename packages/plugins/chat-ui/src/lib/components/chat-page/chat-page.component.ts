@@ -464,7 +464,7 @@ function viewportSize(): { width: number; height: number } {
 																<button type="button" class="button" (click)="openNewDirect()">{{ 'CHAT.LIST.NEW_MESSAGE' | translate }}</button>
 															</div>
 															<div class="tile-art bottom" aria-hidden="true">
-																<!-- Messages as in Slack or Discord: avatar, name and time, then the text; a follow-up from the same person has no avatar. -->
+																<!-- Messages as a conversation shows them: avatar, name and time, then the text; a follow-up from the same person has no avatar. -->
 																<div class="mock direct">
 																	@for (row of mockDirect; track $index) {
 																		<div class="mock-message" [class.follow-up]="!row.name">
