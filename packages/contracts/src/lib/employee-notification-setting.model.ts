@@ -55,6 +55,16 @@ export interface IEmployeeNotificationPreferences {
 }
 
 /**
+ * A team's defaults for its members' notifications: what a member who chose nothing for a key of their own
+ * preferences gets instead of the platform's default. A member's own choice wins, key by key, and kind by kind for
+ * `emailByType` and `pushByType`. Unset (the default) changes nothing.
+ */
+export type ITeamNotificationDefaults = Pick<
+	IEmployeeNotificationPreferences,
+	'email' | 'emailByType' | 'push' | 'pushByType' | 'taskUpdate' | 'timerReminderHours' | 'taskDueReminderHours'
+>;
+
+/**
  * Input type for creating a new employee notification setting.
  */
 export interface IEmployeeNotificationSettingCreateInput extends OmitFields<IEmployeeNotificationSetting> {}
