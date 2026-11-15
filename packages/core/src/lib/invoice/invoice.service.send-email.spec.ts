@@ -1,3 +1,5 @@
+import { decode } from 'jsonwebtoken';
+import { IsNull } from 'typeorm';
 import { LanguagesEnum } from '@gauzy/contracts';
 import { InvoiceService } from './invoice.service';
 
@@ -221,5 +223,166 @@ describe('InvoiceService.sendEmail — where an invoice went', () => {
 
 		await expect(sendInvoice(service)).resolves.toEqual({ sent: false, reason: 'EMAIL_NOT_SENT' });
 		expect(console.log).toHaveBeenCalledWith(expect.stringContaining('may go to that address'), 'update failed');
+	});
+});
+
+/**
+ * An invoice's email links to its public page (ever-co/ever-gauzy#11856): the client opens the invoice there without an
+ * account. The link is the invoice's own share token, kept as it is, so a link the client already holds still works.
+ */
+describe('InvoiceService.sendEmail — the link to the public page', () => {
+	beforeEach(() => jest.spyOn(console, 'log').mockImplementation(() => undefined));
+	afterEach(() => jest.restoreAllMocks());
+
+	it("passes the invoice's share token to the email", async () => {
+		const { service, emailService } = sender();
+		jest.spyOn(service, 'publicLinkTokenOf').mockResolvedValue('share-token');
+
+		await expect(sendInvoice(service)).resolves.toEqual({ sent: true });
+
+		expect(service.publicLinkTokenOf).toHaveBeenCalledWith('invoice-43');
+		expect(emailService.emailInvoice).toHaveBeenCalledWith(
+			LanguagesEnum.FRENCH,
+			'billing@client.test',
+			Buffer.from('%PDF').toString('base64'),
+			43,
+			'invoice-43',
+			false,
+			'estimate-token',
+			'https://app.example.com',
+			{ id: 'organization-1' },
+			'share-token'
+		);
+	});
+
+	it("never reads a share token for an estimate's email", async () => {
+		const { service } = sender();
+		jest.spyOn(service, 'publicLinkTokenOf').mockResolvedValue('share-token');
+
+		await expect(send(service)).resolves.toEqual({ sent: true });
+
+		expect(service.publicLinkTokenOf).not.toHaveBeenCalled();
+	});
+
+	it('still sends the invoice when it has no link to give', async () => {
+		const { service, emailService } = sender();
+		jest.spyOn(service, 'publicLinkTokenOf').mockResolvedValue(null);
+
+		await expect(sendInvoice(service)).resolves.toEqual({ sent: true });
+
+		expect(emailService.emailInvoice.mock.calls[0]).toHaveLength(9);
+	});
+});
+
+/** The share token an invoice's email carries, and the revocation of a link. */
+describe('InvoiceService — the public link of an invoice', () => {
+	const INVOICE = { id: 'invoice-7', tenantId: 'tenant-1', organizationId: 'organization-1' };
+
+	/**
+	 * `read`: the token the invoice has when it is read through the service (possibly a cached entity).
+	 * `inDatabase`: the token the database holds after the write, read back through the repository that wrote it.
+	 */
+	function linker(read: string | null, inDatabase: string | null = null) {
+		const update = jest.fn(async () => ({ affected: 1 }));
+		const findOne = jest.fn(async () => ({ id: INVOICE.id, token: inDatabase }));
+		const service = new InvoiceService(
+			{ update, findOne } as never,
+			{} as never,
+			{} as never,
+			{} as never,
+			{} as never,
+			{} as never,
+			{} as never
+		);
+		const reads = jest
+			.spyOn(service, 'findOneByIdString')
+			.mockImplementation(async () => ({ ...INVOICE, token: read }) as never);
+		return { service, update, findOne, reads };
+	}
+
+	/** The claims of the token a write stored. */
+	const claimsOfWrite = (update: jest.Mock, call: number) =>
+		decode((update.mock.calls[call] as unknown as [unknown, { token: string }])[1].token) as Record<
+			string,
+			unknown
+		>;
+
+	beforeEach(() => jest.spyOn(console, 'log').mockImplementation(() => undefined));
+	afterEach(() => jest.restoreAllMocks());
+
+	it('keeps the token the invoice already has, so a link the client holds still opens it', async () => {
+		const { service, update } = linker('created-token');
+
+		await expect(service.publicLinkTokenOf(INVOICE.id)).resolves.toBe('created-token');
+		expect(update).not.toHaveBeenCalled();
+	});
+
+	it('gives an invoice whose link was revoked a new token, written only where it still has none', async () => {
+		const { service, update } = linker(null, 'written-token');
+
+		await expect(service.publicLinkTokenOf(INVOICE.id)).resolves.toBe('written-token');
+
+		expect(update).toHaveBeenCalledTimes(1);
+		const [where, values] = update.mock.calls[0] as unknown as [Record<string, unknown>, { token: string }];
+		expect(where).toMatchObject({ id: INVOICE.id, tenantId: INVOICE.tenantId });
+		// Conditional on the token still being null: a send at the same moment that wrote first keeps its link
+		expect(where.token).toEqual(IsNull());
+		expect(typeof values.token).toBe('string');
+	});
+
+	it('never signs the revoked token again, even within the same second (CodeRabbit on #11993)', async () => {
+		const { service, update } = linker(null, 'written-token');
+
+		await service.publicLinkTokenOf(INVOICE.id);
+		await service.publicLinkTokenOf(INVOICE.id);
+
+		const first = claimsOfWrite(update, 0);
+		const second = claimsOfWrite(update, 1);
+		expect(first.jti).toEqual(expect.any(String));
+		expect(second.jti).not.toBe(first.jti);
+	});
+
+	it('answers the token another send wrote first', async () => {
+		const { service, update } = linker(null, 'token-of-the-other-send');
+		update.mockResolvedValue({ affected: 0 });
+
+		await expect(service.publicLinkTokenOf(INVOICE.id)).resolves.toBe('token-of-the-other-send');
+	});
+
+	it('reads the token back from the database, not from the entity read before the write (CodeRabbit on #11993)', async () => {
+		// Under MikroORM a second read through the service can answer the cached entity, still without a token
+		const { service, findOne, reads } = linker(null, 'written-token');
+
+		await expect(service.publicLinkTokenOf(INVOICE.id)).resolves.toBe('written-token');
+
+		expect(reads).toHaveBeenCalledTimes(1);
+		expect(findOne).toHaveBeenCalledWith({
+			where: { id: INVOICE.id, tenantId: INVOICE.tenantId },
+			select: { id: true, token: true }
+		});
+	});
+
+	it('answers null when the invoice cannot be read, so the email goes without a link', async () => {
+		const { service, reads } = linker(null);
+		reads.mockRejectedValue(new Error('not found'));
+
+		await expect(service.publicLinkTokenOf(INVOICE.id)).resolves.toBeNull();
+	});
+
+	it("revokes a link by clearing the token of the caller's invoice", async () => {
+		const { service, update, reads } = linker('created-token');
+
+		await service.revokeLink(INVOICE.id);
+
+		expect(reads).toHaveBeenCalledWith(INVOICE.id);
+		expect(update).toHaveBeenCalledWith({ id: INVOICE.id, tenantId: INVOICE.tenantId }, { token: null });
+	});
+
+	it("revokes nothing for an invoice outside the caller's tenant", async () => {
+		const { service, update, reads } = linker(null);
+		reads.mockRejectedValue(new Error('Record not found'));
+
+		await expect(service.revokeLink(INVOICE.id)).rejects.toThrow('Record not found');
+		expect(update).not.toHaveBeenCalled();
 	});
 });

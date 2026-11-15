@@ -1,6 +1,6 @@
 import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
 import { Invoice } from './invoice.entity';
-import { Between, FindOperator, In, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
+import { Between, FindOperator, In, IsNull, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { EmailService } from './../email-send/email.service';
 import {
@@ -23,6 +23,7 @@ import { I18nService } from 'nestjs-i18n';
 import * as moment from 'moment';
 import { EstimateEmailService } from '../estimate-email/estimate-email.service';
 import { Readable } from 'stream';
+import { randomUUID } from 'node:crypto';
 import { PdfmakerService } from './pdfmaker.service';
 import { generateInvoicePdfDefinition, generateInvoicePaymentPdfDefinition } from './index';
 import { OrganizationService } from './../organization';
@@ -386,6 +387,9 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 				if (!buffer) throw new Error('PDF generation failed');
 				const base64 = buffer?.toString('base64');
 
+				// An invoice's email links to its public page, where the client opens it without an account
+				const publicToken = isEstimate ? null : await this.publicLinkTokenOf(invoiceId);
+
 				step = 'EMAIL_NOT_SENT';
 				const handed = await this.emailService.emailInvoice(
 					languageCode,
@@ -396,7 +400,8 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 					isEstimate,
 					estimateEmail.token,
 					origin,
-					organization
+					organization,
+					...(publicToken ? [publicToken] : [])
 				);
 				if (!handed) throw new Error('the address is of a domain the platform never emails');
 
@@ -433,6 +438,59 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 	}
 
 	/**
+	 * The token of an invoice's public page, for the email that sends the invoice. Every invoice gets one when it is
+	 * created (`InvoiceSubscriber`), and that one is kept: a new token would revoke a link the client may already hold.
+	 * An invoice whose link was revoked gets a new one, because sending the invoice shares it again. The new token is
+	 * written only where the invoice still has none, so two sends at once mail the same link.
+	 *
+	 * A failure is logged and answers null: the email then goes without the link, as it did before links were mailed.
+	 *
+	 * @returns The token, or null when the invoice could not be given one.
+	 */
+	async publicLinkTokenOf(invoiceId: ID): Promise<string | null> {
+		try {
+			const invoice = await this.findOneByIdString(invoiceId);
+			if (invoice.token) {
+				return invoice.token;
+			}
+			// A claim of its own: a token signed in the same second as the revoked one would otherwise be that same token
+			const token = signPurposeToken(TokenPurposeEnum.INVOICE_SHARE, {
+				id: invoice.id,
+				organizationId: invoice.organizationId,
+				tenantId: invoice.tenantId,
+				jti: randomUUID()
+			});
+			await this.typeOrmInvoiceRepository.update(
+				{ id: invoice.id, tenantId: invoice.tenantId, token: IsNull() },
+				{ token }
+			);
+			// Read back from the database through the repository that wrote it: a send at the same moment may have written
+			// its token first, and that is the one that holds. The entity read above may be cached (MikroORM's identity
+			// map) with the token it had before the write.
+			const stored = await this.typeOrmInvoiceRepository.findOne({
+				where: { id: invoice.id, tenantId: invoice.tenantId },
+				select: { id: true, token: true }
+			});
+			return stored?.token ?? null;
+		} catch (error) {
+			console.log(`Invoice ${invoiceId} is emailed without a link to its public page: %s`, error?.message);
+			return null;
+		}
+	}
+
+	/**
+	 * Revokes the public link of an invoice or an estimate: the link stops opening it, wherever it was sent. Generating
+	 * a link again, or sending an invoice again, makes a new one.
+	 *
+	 * @param invoiceId An invoice of the caller's tenant.
+	 * @throws NotFoundException when the caller's tenant has no such invoice.
+	 */
+	async revokeLink(invoiceId: ID): Promise<void> {
+		const invoice = await this.findOneByIdString(invoiceId);
+		await this.typeOrmInvoiceRepository.update({ id: invoice.id, tenantId: invoice.tenantId }, { token: null });
+	}
+
+	/**
 	 * Generate invoice public link
 	 *
 	 * @param invoiceId
@@ -441,10 +499,12 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 	async generateLink(invoiceId: string): Promise<IInvoice> {
 		try {
 			const invoice = await this.findOneByIdString(invoiceId);
+			// A claim of its own, so a link generated again in the same second is never the one it replaces
 			const payload = {
 				id: invoice.id,
 				organizationId: invoice.organizationId,
-				tenantId: invoice.tenantId
+				tenantId: invoice.tenantId,
+				jti: randomUUID()
 			};
 			return await this.create({
 				id: invoiceId,
