@@ -96,8 +96,8 @@ const MYSQL: Dialect = {
  *
  * Drops the key (and MySQL's column). The runs stopped by `up` stay stopped.
  */
-export class AddTimeLogOneRunningTimerPerEmployee1791000018700 implements MigrationInterface {
-	name = 'AddTimeLogOneRunningTimerPerEmployee1791000018700';
+export class AddTimeLogOneRunningTimerPerEmployee1791000018800 implements MigrationInterface {
+	name = 'AddTimeLogOneRunningTimerPerEmployee1791000018800';
 
 	/**
 	 * Up Migration
@@ -153,6 +153,14 @@ export class AddTimeLogOneRunningTimerPerEmployee1791000018700 implements Migrat
 	 * @param queryRunner
 	 */
 	public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<void> {
+		if (queryRunner.isTransactionActive) {
+			// Writers wait until the key is built: a second running run written by an API process still on the
+			// previous release between the stop of the older runs and the build would fail the build. Reads go on.
+			// Give up after 5 s rather than queue every writer behind a long transaction; the next start runs this
+			// again, and the stop of the older runs then takes the run written meanwhile too.
+			await queryRunner.query(`SET LOCAL lock_timeout = '5s'`);
+			await queryRunner.query(`LOCK TABLE "time_log" IN SHARE ROW EXCLUSIVE MODE`);
+		}
 		await queryRunner.query(this.stopRunsWithoutStartStatement(POSTGRES));
 		await queryRunner.query(this.stopOlderRunsStatement(POSTGRES));
 		await queryRunner.query(
@@ -199,7 +207,11 @@ export class AddTimeLogOneRunningTimerPerEmployee1791000018700 implements Migrat
 	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<void> {
 		await queryRunner.query(this.stopRunsWithoutStartStatement(MYSQL));
 		// MySQL refuses a subquery on the table an UPDATE writes: the next starts are read into a derived table first.
-		// The end is set before the run stops: MySQL reads each assignment after those before it
+		// The end reads no column the stop writes but `stoppedAt` itself, read as stored whatever order MySQL assigns
+		// the two columns of a multiple-table UPDATE in.
+		// Each DDL below commits what came before it, and LOCK TABLES would end the migration's transaction: a second
+		// running run written by an API process still on the previous release before the key is built fails the build,
+		// and the next start runs this again (the column and the key are checked first), its stop then taking that run.
 		const end = this.replacedRunEnd('`run`', '`next`', MYSQL);
 		await queryRunner.query(
 			`UPDATE \`time_log\` AS \`run\` JOIN (${this.nextRunStarts(MYSQL)}) AS \`next\` ON \`next\`.\`id\` = \`run\`.\`id\` SET \`run\`.\`stoppedAt\` = ${end}, \`run\`.\`isRunning\` = 0`

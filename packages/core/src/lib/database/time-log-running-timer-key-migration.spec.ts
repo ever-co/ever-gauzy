@@ -6,10 +6,10 @@ import { TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
 import { coreEntities } from '../core/entities';
 import { TimeLog, TimeSlot } from '../core/entities/internal';
 import { isUniqueViolation } from '../core/errors/unique-violation';
-import { AddTimeLogOneRunningTimerPerEmployee1791000018700 } from './migrations/1791000018700-AddTimeLogOneRunningTimerPerEmployee';
+import { AddTimeLogOneRunningTimerPerEmployee1791000018800 } from './migrations/1791000018800-AddTimeLogOneRunningTimerPerEmployee';
 
 /**
- * `1791000018700-AddTimeLogOneRunningTimerPerEmployee` on a real SQLite database whose schema the entities build: one
+ * `1791000018800-AddTimeLogOneRunningTimerPerEmployee` on a real SQLite database whose schema the entities build: one
  * running timer run per employee, the desktop's running uploads left out (ever-co/ever-gauzy#11826). Rows that already
  * break the key are stopped first, where a start replacing them would have ended them, the latest run kept. Each test
  * starts from a database of its own, as before the migration.
@@ -31,10 +31,10 @@ function placeholder(type: unknown): unknown {
 	return 'x';
 }
 
-(isPostgres() ? describe.skip : describe)('AddTimeLogOneRunningTimerPerEmployee1791000018700 on SQLite', () => {
+(isPostgres() ? describe.skip : describe)('AddTimeLogOneRunningTimerPerEmployee1791000018800 on SQLite', () => {
 	let dataSource: DataSource;
 	let next = 0;
-	const migration = new AddTimeLogOneRunningTimerPerEmployee1791000018700();
+	const migration = new AddTimeLogOneRunningTimerPerEmployee1791000018800();
 
 	const runMigration = async (step: 'up' | 'down') => {
 		const queryRunner = dataSource.createQueryRunner();

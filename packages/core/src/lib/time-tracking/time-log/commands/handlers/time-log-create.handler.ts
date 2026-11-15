@@ -19,6 +19,7 @@ import { createdChange } from '../../time-log-history';
 import {
 	historySubject,
 	lockedForChange,
+	locksRowsForChange,
 	recordTimeLogHistory,
 	TimeLogHistoryOptions
 } from '../../time-log-history.writer';
@@ -69,11 +70,12 @@ function timerStillRunning(): ConflictException {
 /**
  * Refuses a timer start's run while another run of the employee is still going: the start's close of the runs going
  * failed to stop one, or a run was written since. Read under the employee's row lock, which every start of the employee
- * takes in the same transaction before writing its run, so two starts check and write one after the other (SQLite runs
- * one writer at a time). A tracker's rows are left out: the desktop stores the time it uploads as running by design, and
- * the start's close ends them on its own (`ScheduleTimeLogEntriesCommand`).
+ * takes in the same transaction before writing its run, so two starts check and write one after the other. SQLite takes
+ * no row lock and writes without a transaction here: the running-log key refuses a run written between the check and
+ * the insert. A tracker's rows are left out: the desktop stores the time it uploads as running by design, and the
+ * start's close ends them on its own (`ScheduleTimeLogEntriesCommand`).
  *
- * @param manager - The transaction the run is written in.
+ * @param manager - The transaction the run is written in, or the repository's manager on SQLite.
  * @param timeLog - The run about to be written.
  * @throws ConflictException with the code TIMER_STILL_RUNNING.
  */
@@ -192,13 +194,21 @@ export class TimeLogCreateHandler implements ICommandHandler<TimeLogCreateComman
 	): Promise<void> {
 		const recordsHistory = Boolean(history) && Boolean(this.dataSource);
 		const isOnlyRun = Boolean(options?.isOnlyRun) && Boolean(this.dataSource);
-		if (!recordsHistory && !isOnlyRun) {
-			await this.typeOrmTimeLogRepository.save(timeLog);
-			return;
-		}
-		// Added by a person: the entry and its history row are written together, or neither is. A timer start's run:
-		// it is written with the check that no other run is still going, or not at all.
+		// A timer start's run is checked under the employee's row lock, in the transaction it is written in, where the
+		// database locks rows. SQLite locks none and runs every write on its one connection, where a transaction begun
+		// beside another nests into it, and the refusal's rollback would take the other request's writes with it: there
+		// the check and the insert run without one, and the running-log key refuses a run written between them.
+		const checksInTransaction = isOnlyRun && locksRowsForChange();
 		try {
+			if (!recordsHistory && !checksInTransaction) {
+				if (isOnlyRun) {
+					await assertNoRunGoing(this.typeOrmTimeLogRepository.manager, timeLog);
+				}
+				await this.typeOrmTimeLogRepository.save(timeLog);
+				return;
+			}
+			// Added by a person: the entry and its history row are written together, or neither is. A timer start's
+			// run: it is written with the check that no other run is still going, or not at all.
 			await this.dataSource.transaction(async (manager) => {
 				if (isOnlyRun) {
 					await assertNoRunGoing(manager, timeLog);

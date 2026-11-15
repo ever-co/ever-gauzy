@@ -283,16 +283,20 @@ describe('TimeLogCreateHandler: history of time added by hand', () => {
 	});
 });
 
+/** The mocked history writer itself, whose dialect answer a case sets (the handler reads it through this module). */
+const historyWriter: { locksRowsForChange: () => boolean } = jest.requireMock('../../time-log-history.writer');
+
 /**
  * A timer start closed the employee's runs going, then wrote its own run through other connections: a close that
  * failed, or a run written between the two, left the employee with two runs going (ever-co/ever-gauzy#11826). A
  * start's run is now written in one transaction with the check, under the employee's row lock, that no other run of a
- * timer client is still going.
+ * timer client is still going, where the database locks rows (PostgreSQL, MySQL).
  */
 describe("TimeLogCreateHandler: a timer start's run is the only run going", () => {
 	beforeEach(() => {
 		jest.spyOn(console, 'log').mockImplementation(() => undefined);
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT_ID);
+		jest.spyOn(historyWriter, 'locksRowsForChange').mockReturnValue(true);
 	});
 	afterEach(() => jest.restoreAllMocks());
 
@@ -388,5 +392,79 @@ describe("TimeLogCreateHandler: a timer start's run is the only run going", () =
 		expect(dataSource.transaction).not.toHaveBeenCalled();
 		expect(transactionManager.count).not.toHaveBeenCalled();
 		expect(repository.save).toHaveBeenCalledTimes(1);
+	});
+});
+
+/**
+ * SQLite takes no row lock and runs every write on its one connection, where a transaction begun beside another nests
+ * into it, and the refusal's rollback would take the other request's writes with it (as `PublicInvoiceService` notes).
+ * There a start's run is checked and written without a transaction, and the running-log key refuses a run written
+ * between the two.
+ */
+describe("TimeLogCreateHandler: a timer start's run is the only run going, on SQLite", () => {
+	beforeEach(() => {
+		jest.spyOn(console, 'log').mockImplementation(() => undefined);
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT_ID);
+		jest.spyOn(historyWriter, 'locksRowsForChange').mockReturnValue(false);
+	});
+	afterEach(() => jest.restoreAllMocks());
+
+	/** A handler whose repository's manager finds `going` runs of the employee still going. */
+	function createStart(going: number) {
+		const dataSource = { transaction: jest.fn() };
+		const { handler } = createHandler(dataSource);
+		const repository = (
+			handler as unknown as { typeOrmTimeLogRepository: { save: jest.Mock; manager?: unknown } }
+		).typeOrmTimeLogRepository;
+		const manager = {
+			findOne: jest.fn(async () => ({ id: EMPLOYEE_ID })),
+			count: jest.fn(async () => going)
+		};
+		repository.manager = manager;
+		return { handler, repository, dataSource, manager };
+	}
+
+	const startRun = () =>
+		new TimeLogCreateCommand(
+			input({ source: TimeLogSourceEnum.WEB_TIMER, isRunning: true, stoppedAt: STARTED_AT }),
+			undefined,
+			{ isOnlyRun: true }
+		);
+
+	/** The refusal's code, or undefined when the run was written. */
+	const refusalCodeOf = (work: Promise<unknown>) =>
+		work.then(
+			() => undefined,
+			(error: { getResponse?: () => { code?: string } }) => error?.getResponse?.()?.code ?? String(error)
+		);
+
+	it('checks that no other run is going, then writes the run, without a transaction', async () => {
+		const { handler, repository, dataSource, manager } = createStart(0);
+
+		await handler.execute(startRun());
+
+		expect(dataSource.transaction).not.toHaveBeenCalled();
+		expect(manager.count).toHaveBeenCalledTimes(1);
+		expect(repository.save).toHaveBeenCalledTimes(1);
+		expect(manager.count.mock.invocationCallOrder[0]).toBeLessThan(repository.save.mock.invocationCallOrder[0]);
+	});
+
+	it('writes nothing and refuses the start while another run of the employee is still going', async () => {
+		const { handler, repository, dataSource } = createStart(1);
+
+		expect(await refusalCodeOf(handler.execute(startRun()))).toBe('TIMER_STILL_RUNNING');
+
+		expect(dataSource.transaction).not.toHaveBeenCalled();
+		expect(repository.save).not.toHaveBeenCalled();
+	});
+
+	it('refuses the start when the running-log key refuses a run written between the check and the insert', async () => {
+		const { handler, repository } = createStart(0);
+		const duplicate = Object.assign(new Error('UNIQUE constraint failed: time_log.employeeId'), {
+			code: 'SQLITE_CONSTRAINT_UNIQUE'
+		});
+		repository.save.mockRejectedValueOnce(duplicate);
+
+		expect(await refusalCodeOf(handler.execute(startRun()))).toBe('TIMER_STILL_RUNNING');
 	});
 });

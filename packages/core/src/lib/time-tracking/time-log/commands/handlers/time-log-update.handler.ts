@@ -272,10 +272,17 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 			const logId = timeLog.id;
 			// The timer's stop of a run it read as running (`stopsRun`) writes only while the row still runs, whatever
 			// the read above found: another start or stop may have stopped it since, one that took the employee's timer
-			// turn over once this one outlived it (ever-co/ever-gauzy#11826), and its end is the one that stands.
-			const where: FindOptionsWhere<TimeLog> = stopsRun
-				? { id: logId, tenantId, isRunning: true }
-				: { id: logId, tenantId };
+			// turn over once this one outlived it (ever-co/ever-gauzy#11826), and its end is the one that stands. A stop
+			// that names the run's start (`stopReplacedRun`, `closeRunCreatedLate`) writes only while the run still
+			// starts there, as the start move writes only from the start it checked: a move that went through since
+			// keeps its start, and the stop is refused below.
+			const where: FindOptionsWhere<TimeLog> = { id: logId, tenantId };
+			if (stopsRun) {
+				where.isRunning = true;
+				if (changes.startedAt != null) {
+					where.startedAt = changes.startedAt;
+				}
+			}
 			// An entry deleted for good since it was first read stops the edit with a 404: the reads below would find
 			// no row to answer or to give slots to.
 			const writeUpdate = () =>
