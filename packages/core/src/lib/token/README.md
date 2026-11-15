@@ -179,7 +179,9 @@ const token = await this.tokenRepository.findByHashWithLock(tokenHash);
 A rotated token is refused. A type that sets `rotationReuseWindow` answers it again for that long after its
 rotation, by rotating the token its line of rotations ends with: a client whose answer was lost, or that sent the
 same token twice at once, keeps its session. The line keeps one active token at its end, and a rotated token opens
-nothing once that token is revoked or expired (`shared/rotation-reuse.ts`).
+nothing once that token is revoked or expired (`shared/rotation-reuse.ts`). The token at the end of the line is
+locked before it is rotated (`findByIdWithLock`), as the presented one is: a request that presents it at the same
+moment waits, then follows the line one token further.
 
 **Optimistic Locking** (for updates):
 

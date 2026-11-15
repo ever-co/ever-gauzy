@@ -1,5 +1,14 @@
 import 'reflect-metadata';
 import { randomUUID } from 'node:crypto';
+import { NotFoundException } from '@nestjs/common';
+
+// The database the handlers believe they talk to: SQLite as the environment has it, until a case says it locks rows
+jest.mock('@gauzy/config', () => {
+	const actual = jest.requireActual('@gauzy/config');
+	return { ...actual, isBetterSqlite3: jest.fn(actual.isBetterSqlite3) };
+});
+
+import { isBetterSqlite3 } from '@gauzy/config';
 import { RotateTokenCommand } from './commands/rotate-token.command';
 import { RotateTokenHandler } from './commands/handlers/rotate-token-command.handler';
 import { IToken, ITokenConfig, ITokenPayload, TokenStatus } from './interfaces';
@@ -18,8 +27,12 @@ import { TokenConfigRegistry } from './token-config.registry';
  *
  * **What is real here.** The handlers that judge a token (`ValidateTokenHandler`, as the refresh guard asks it) and
  * that rotate one (`RotateTokenHandler`), and the config registry. The store is a table in memory that answers what
- * the repository answers, with the compare-and-set on `version` the rotation relies on; the JWT service and the
- * hasher are stood in for.
+ * the repository answers, with the compare-and-set on `version` the rotation relies on and the one successor a token
+ * may have; the JWT service and the hasher are stood in for.
+ *
+ * **What is not.** A row lock: the table has none. A read under a lock answers the row as it is by then, which is
+ * what a database answers once the lock is granted, and a case that needs another request in between runs it right
+ * after the read that came before the lock (`afterReadOf`).
  */
 
 const USER = 'marie';
@@ -39,6 +52,12 @@ type Row = Partial<IToken> & { id: string; version: number; status: TokenStatus 
 function tokenTable(successorOnTheRelation = false) {
 	const rows: Row[] = [];
 	const writes: string[] = [];
+	/** The ids read one by one, in order, without a lock. */
+	const reads: string[] = [];
+	/** What another request does right after a token is read without a lock, once. */
+	const afterRead = new Map<string, () => Promise<unknown>>();
+	/** Whether the store answers a token it does not hold by throwing, as `TokenRepository` does, or with null. */
+	const missing = { throws: false };
 	const find = (id: string) => rows.find((row) => row.id === id);
 	// As the repositories answer a token: with its rules, and never the stored row itself
 	const answer = (row: Row | undefined) => {
@@ -55,12 +74,27 @@ function tokenTable(successorOnTheRelation = false) {
 	const repository = {
 		findByHash: async (tokenHash: string) => answer(rows.find((row) => row.tokenHash === tokenHash)),
 		findByHashWithLock: async (tokenHash: string) => answer(rows.find((row) => row.tokenHash === tokenHash)),
-		findById: async (id: string) => answer(find(id)),
+		findById: async (id: string) => {
+			reads.push(id);
+			const answered = answer(find(id));
+			if (!answered && missing.throws) {
+				throw new NotFoundException('The requested record was not found');
+			}
+			const otherRequest = afterRead.get(id);
+			afterRead.delete(id);
+			await otherRequest?.();
+			return answered;
+		},
+		findByIdWithLock: async (id: string) => answer(find(id)),
 		findActiveByUserAndType: async (userId: string, tokenType: string) =>
 			rows
 				.filter((row) => row.userId === userId && row.tokenType === tokenType && row.status === 'ACTIVE')
 				.map((row) => answer(row)),
 		create: async (data: Partial<IToken>) => {
+			// A token has one successor: the unique index on `rotatedFromTokenId`
+			if (data.rotatedFromTokenId && rows.some((row) => row.rotatedFromTokenId === data.rotatedFromTokenId)) {
+				throw new Error('duplicate key value violates unique constraint on "rotatedFromTokenId"');
+			}
 			const row = {
 				rotatedFromTokenId: null,
 				rotatedToTokenId: null,
@@ -95,8 +129,9 @@ function tokenTable(successorOnTheRelation = false) {
 		},
 		transaction: async <T>(work: (inTransaction: typeof repository) => Promise<T>) => work(repository)
 	};
+	const afterReadOf = (id: string, otherRequest: () => Promise<unknown>) => afterRead.set(id, otherRequest);
 
-	return { rows, writes, find, repository };
+	return { rows, writes, reads, missing, find, repository, afterReadOf };
 }
 
 /** The refresh tokens of one deployment, with a reuse window of `reuseWindowSeconds` after a rotation. */
@@ -183,12 +218,16 @@ function refreshTokens(reuseWindowSeconds: number | undefined, successorOnTheRel
 	const revoke = (jwt: string) => {
 		Object.assign(stored(jwt), { status: TokenStatus.REVOKED, revokedAt: new Date() });
 	};
+	const active = () => table.rows.filter((row) => row.status === TokenStatus.ACTIVE);
 
-	return { ...table, signIn, validate, rotate, refresh, stored, revoke };
+	return { ...table, signIn, validate, rotate, refresh, stored, revoke, active };
 }
 
 /** Time passes. */
 const wait = (milliseconds: number) => jest.setSystemTime(Date.now() + milliseconds);
+
+/** The handlers talk to a database that locks rows: PostgreSQL or MySQL. */
+const onADatabaseThatLocksRows = () => jest.mocked(isBetterSqlite3).mockReturnValue(false);
 
 beforeEach(() => {
 	jest.useFakeTimers();
@@ -197,6 +236,7 @@ beforeEach(() => {
 
 afterEach(() => {
 	jest.useRealTimers();
+	jest.mocked(isBetterSqlite3).mockImplementation(jest.requireActual('@gauzy/config').isBetterSqlite3);
 });
 
 describe('a refresh token presented again after it was rotated', () => {
@@ -336,6 +376,90 @@ describe('a refresh token presented again after it was rotated', () => {
 
 		expect(await tokens.validate(first)).toEqual({ isValid: false, reason: 'Token is rotated' });
 		await expect(tokens.rotate(first)).rejects.toThrow('Token is not active');
+	});
+});
+
+describe('a rotated refresh token presented while another request rotates the token after it', () => {
+	it('is answered by following the line that request moved on, where the database locks rows', async () => {
+		onADatabaseThatLocksRows();
+		const tokens = refreshTokens(10);
+		const first = await tokens.signIn();
+		const held = (await tokens.refresh(first)).token;
+		wait(3 * SECOND);
+		// The client that holds the answer refreshes with it at the moment the first token is presented again: its
+		// rotation is committed after this request has read the token, and before this request locks it
+		let fromTheOtherRequest = '';
+		tokens.afterReadOf(tokens.stored(held).id, async () => {
+			fromTheOtherRequest = await tokens.rotate(held);
+		});
+
+		const again = await tokens.rotate(first);
+
+		// Both requests are answered, and the line is still one line
+		expect(tokens.stored(held)).toEqual(
+			expect.objectContaining({
+				status: TokenStatus.ROTATED,
+				rotatedToTokenId: tokens.stored(fromTheOtherRequest).id
+			})
+		);
+		expect(tokens.stored(fromTheOtherRequest)).toEqual(
+			expect.objectContaining({ status: TokenStatus.ROTATED, rotatedToTokenId: tokens.stored(again).id })
+		);
+		expect(tokens.active()).toEqual([tokens.stored(again)]);
+		expect((await tokens.validate(again)).isValid).toBe(true);
+	});
+
+	it('locks the token it rotates where the database locks rows, and asks SQLite for no lock', async () => {
+		const tokens = refreshTokens(10);
+		const lockedReads = jest.spyOn(tokens.repository, 'findByIdWithLock');
+		const first = await tokens.signIn();
+		const second = (await tokens.refresh(first)).token;
+
+		await tokens.rotate(first);
+		expect(lockedReads).not.toHaveBeenCalled();
+
+		onADatabaseThatLocksRows();
+		const third = tokens.rows.find((row) => row.rotatedFromTokenId === tokens.stored(second).id);
+		await tokens.rotate(first);
+		expect(lockedReads.mock.calls).toEqual([[third.id]]);
+	});
+});
+
+describe('the line of rotations after a token presented again', () => {
+	/** A session whose token was rotated `rotations` times in a row, faster than any client does. */
+	const rotatedTimes = async (rotations: number) => {
+		const tokens = refreshTokens(10);
+		const first = await tokens.signIn();
+		let current = first;
+		for (let rotation = 0; rotation < rotations; rotation += 1) {
+			current = (await tokens.refresh(current)).token;
+		}
+		tokens.reads.length = 0;
+		return { tokens, first };
+	};
+
+	it('is followed to its end, twenty rotations away', async () => {
+		const { tokens, first } = await rotatedTimes(20);
+
+		expect((await tokens.validate(first)).isValid).toBe(true);
+		expect(tokens.reads).toHaveLength(20);
+	});
+
+	it('is given up on past twenty rotations, without reading the token that would not be looked at', async () => {
+		const { tokens, first } = await rotatedTimes(21);
+
+		expect(await tokens.validate(first)).toEqual({ isValid: false, reason: 'Token is rotated' });
+		expect(tokens.reads).toHaveLength(20);
+	});
+
+	it('opens nothing when one of its tokens is gone, where the store says so by throwing', async () => {
+		const tokens = refreshTokens(10);
+		const first = await tokens.signIn();
+		const second = (await tokens.refresh(first)).token;
+		tokens.rows.splice(tokens.rows.indexOf(tokens.stored(second)), 1);
+		tokens.missing.throws = true;
+
+		expect(await tokens.validate(first)).toEqual({ isValid: false, reason: 'Token is rotated' });
 	});
 });
 

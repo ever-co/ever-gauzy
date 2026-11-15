@@ -1,8 +1,12 @@
+import { NotFoundException } from '@nestjs/common';
 import { IToken, ITokenConfig, TokenStatus } from '../interfaces';
 import { tokenWithRules } from './token-rules';
 
-/** How many rotations are followed from the token that was presented before the search gives up. */
+/** How many rotations are followed from a token to find the one its line ends with, before the search gives up. */
 const MAX_ROTATIONS_FOLLOWED = 20;
+
+/** Reads a stored token by its id. */
+type ReadToken = (id: string) => Promise<IToken | null>;
 
 /**
  * The id of the token a rotated one was replaced with.
@@ -13,6 +17,71 @@ const MAX_ROTATIONS_FOLLOWED = 20;
  */
 function successorIdOf(token: IToken): string | null {
 	return token.rotatedToTokenId ?? token.rotatedToToken?.id ?? null;
+}
+
+/** The id of the token that follows `token` in its line of rotations, or null for the token the line ends with. */
+function nextIdOf(token: IToken): string | null {
+	return token.status === TokenStatus.ROTATED ? successorIdOf(token) : null;
+}
+
+/** Reads a token the store may not hold: `TokenRepository` answers that by throwing `NotFoundException`. */
+async function readIfStored(read: ReadToken, id: string): Promise<IToken | null> {
+	try {
+		return await read(id);
+	} catch (error) {
+		if (error instanceof NotFoundException) {
+			return null;
+		}
+		throw error;
+	}
+}
+
+/**
+ * Follows a line of rotations from `first`, the token that replaced `origin`, to the token the line ends with.
+ *
+ * @param origin The token the line is followed for: every token of the line belongs to its user and is of its type.
+ * @param first The token that replaced it.
+ * @param findById Reads a stored token.
+ * @param lockAndRead Given by a caller about to write the token it finds: reads a token again once no other
+ *   transaction can change it. A line that another request moved on between the read and the lock is followed
+ *   further, so that two requests never rotate the same token.
+ * @returns The token the line ends with, or null when the line cannot be followed to its end: one of its tokens is
+ *   missing or belongs elsewhere, or the end is more than `MAX_ROTATIONS_FOLLOWED` rotations away.
+ */
+async function followRotations(
+	origin: IToken,
+	first: IToken,
+	findById: ReadToken,
+	lockAndRead?: ReadToken
+): Promise<IToken | null> {
+	let token: IToken | null = first;
+	for (let followed = 1; followed <= MAX_ROTATIONS_FOLLOWED; followed += 1) {
+		const isOfTheSameLine = token.userId === origin.userId && token.tokenType === origin.tokenType;
+		if (!isOfTheSameLine) {
+			return null;
+		}
+		let nextId = nextIdOf(token);
+		if (!nextId && lockAndRead) {
+			// The end of the line as it was read. It is the end once no one else can rotate it
+			token = await readIfStored(lockAndRead, token.id);
+			if (!token) {
+				return null;
+			}
+			nextId = nextIdOf(token);
+		}
+		if (!nextId) {
+			return tokenWithRules(token);
+		}
+		// The token after the last rotation followed is not read: it would not be looked at
+		if (followed < MAX_ROTATIONS_FOLLOWED) {
+			token = await readIfStored(findById, nextId);
+			if (!token) {
+				return null;
+			}
+		}
+	}
+
+	return null;
 }
 
 /**
@@ -35,41 +104,29 @@ function successorIdOf(token: IToken): string | null {
  * @param presented The stored token that was presented.
  * @param config The configuration of its type.
  * @param findById Reads a stored token.
+ * @param lockAndRead Reads a stored token again under a row lock, where the database has one: the rotation gives
+ *   it, so that the token it is about to rotate cannot be rotated by another request meanwhile.
  * @returns The active token its line of rotations ends with, or null.
  */
 export async function findTokenToRotateAgain(
 	presented: IToken,
 	config: Pick<ITokenConfig, 'rotationReuseWindow'>,
-	findById: (id: string) => Promise<IToken | null>
+	findById: ReadToken,
+	lockAndRead?: ReadToken
 ): Promise<IToken | null> {
 	const reuseWindow = config.rotationReuseWindow;
-	const firstSuccessorId = presented.status === TokenStatus.ROTATED ? successorIdOf(presented) : null;
+	const firstSuccessorId = nextIdOf(presented);
 	if (!reuseWindow || reuseWindow <= 0 || !firstSuccessorId || tokenWithRules(presented).isExpired()) {
 		return null;
 	}
 
-	let successor = await findById(firstSuccessorId);
-	const replacedAt = successor ? new Date(successor.createdAt).getTime() : Number.NaN;
+	const first = await readIfStored(findById, firstSuccessorId);
+	const replacedAt = first ? new Date(first.createdAt).getTime() : Number.NaN;
 	// Written this way round so that a time that cannot be read refuses the token
-	if (!(Date.now() - replacedAt <= reuseWindow)) {
+	if (!first || !(Date.now() - replacedAt <= reuseWindow)) {
 		return null;
 	}
 
-	for (let followed = 0; followed < MAX_ROTATIONS_FOLLOWED; followed += 1) {
-		const isOfTheSameLine = successor.userId === presented.userId && successor.tokenType === presented.tokenType;
-		if (!isOfTheSameLine) {
-			return null;
-		}
-		const nextId = successor.status === TokenStatus.ROTATED ? successorIdOf(successor) : null;
-		if (!nextId) {
-			const last = tokenWithRules(successor);
-			return last.canRotate() ? last : null;
-		}
-		successor = await findById(nextId);
-		if (!successor) {
-			return null;
-		}
-	}
-
-	return null;
+	const last = await followRotations(presented, first, findById, lockAndRead);
+	return last?.canRotate() ? last : null;
 }

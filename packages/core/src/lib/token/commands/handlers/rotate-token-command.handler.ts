@@ -52,10 +52,17 @@ export class RotateTokenHandler implements ICommandHandler<RotateTokenCommand, I
 			}
 
 			// A token rotated moments ago is answered again, by rotating the token its line of rotations ends with
-			// (see `findTokenToRotateAgain`). Any other token that is not active is refused.
+			// (see `findTokenToRotateAgain`). Any other token that is not active is refused. That token is locked as
+			// the presented one is, where the database locks rows: a request that presents it at the same moment
+			// waits for this one, or is waited for, and the two never rotate the same token.
 			const oldToken = presentedToken.isActivated()
 				? presentedToken
-				: await findTokenToRotateAgain(presentedToken, config, (id) => repository.findById(id));
+				: await findTokenToRotateAgain(
+						presentedToken,
+						config,
+						(id) => repository.findById(id),
+						isBetterSqlite3() ? undefined : (id) => repository.findByIdWithLock(id)
+					);
 
 			if (!oldToken) {
 				throw new UnauthorizedException('Token is not active');
