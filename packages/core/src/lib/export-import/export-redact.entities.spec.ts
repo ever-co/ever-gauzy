@@ -318,7 +318,13 @@ describe('export redaction of the real entity graph', () => {
 			'DocumentIndexState.contentHash':
 				'a digest of document content used to detect re-indexing work, not a credential — and the entity is skipExport()-ed in docs.plugin.ts',
 			'SubscriptionBilling.chargeClaimToken':
-				'a lock id: a random UUID a billing pass writes so its own conditional writes can tell its claim from another pass’s. No route or input accepts it, so it opens nothing, and a cycle imported mid-charge must keep it: heldByCharge() reads it, and the next pass recovers the stale claim'
+				'a lock id: a random UUID a billing pass writes so its own conditional writes can tell its claim from another pass’s. No route or input accepts it, so it opens nothing, and a cycle imported mid-charge must keep it: heldByCharge() reads it, and the next pass recovers the stale claim',
+			'ChatLinkPreview.urlHash':
+				'the SHA-256 of the link’s `url`, which the same row carries in clear, so masking it hides nothing; it is the preview cache’s NOT NULL lookup key (unique with tenantId), and an imported preview without it is never found again',
+			'ChatWebhook.tokenHint':
+				'the last 4 characters of a 256-bit URL secret, kept so a manager can tell two webhooks apart: the sibling of UserApiToken.prefix, and the same tail maskSecret itself leaves on an exported token. The secret’s digest, `tokenHash`, is blanked',
+			'InboxPushSubscription.endpointHash':
+				'the SHA-256 of the push `endpoint`, which the same row carries in clear, so masking it hides nothing; it is only the NOT NULL unique key an endpoint is too long to be on (MySQL), which re-subscribing looks the row up by'
 		};
 
 		/** `refreshTokenTtl` -> ['refresh', 'token', 'ttl'] */
