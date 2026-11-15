@@ -571,8 +571,9 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	/**
 	 * Finishes the release of a cut that wrote the log's new range and then failed, in the cut's own order: the slots
 	 * outside that range only the log still holds are deleted, hard or soft as the cut was asked (the cut deletes them
-	 * in one go, so they are all still there when that delete failed, and none when it went through), the log is taken
-	 * off the slots it still holds there with another log, and the totals the cut recalculates last are recalculated.
+	 * in one go, so they are all still there when that delete failed, and none when it went through), each only while
+	 * the log still holds it alone, the log is taken off the slots it still holds there with another log, and the totals
+	 * the cut recalculates last are recalculated.
 	 *
 	 * @param log - The time log as it was read before the cut.
 	 * @param stored - The same log as stored after the cut, which may have filed it under another week's timesheet.
@@ -588,22 +589,32 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 		forceDelete: boolean
 	): Promise<void> {
 		const heldBy = (slot: ITimeSlot) => (slot.timeLogs ?? []).map((held) => held.id);
-		const heldOutside = slots.filter(outside).filter((slot) => heldBy(slot).includes(log.id));
+		const heldOutside = (standing: ITimeSlot[]) =>
+			standing.filter(outside).filter((slot) => heldBy(slot).includes(log.id));
 		const heldByAnother = (slot: ITimeSlot) => heldBy(slot).some((id) => id !== log.id);
 
-		const own = heldOutside.filter((slot) => !heldByAnother(slot)).map((slot) => slot.id);
+		let standing = slots;
+		const own = heldOutside(standing)
+			.filter((slot) => !heldByAnother(slot))
+			.map((slot) => slot.id);
 		if (own.length > 0) {
+			// Deleted only while the log still holds each of them alone, as the slot delete reads them (its conditional
+			// mode): a slot another log took since they were read here, a timer started in its ten minutes, stays.
 			const { organizationId, employeeId, tenantId } = log;
 			await this._commandBus.execute(
 				new TimeSlotBulkDeleteCommand(
 					{ organizationId, employeeId, tenantId, timeLog: log, timeSlotsIds: own },
 					forceDelete,
-					true
+					false
 				)
 			);
+			// What is left of them, with their logs as they now are
+			standing = await this.slotsAsTheyStand(log);
 		}
 
-		const shared = heldOutside.filter(heldByAnother).map((slot) => slot.id);
+		const shared = heldOutside(standing)
+			.filter(heldByAnother)
+			.map((slot) => slot.id);
 		if (shared.length > 0) {
 			await this.typeOrmTimeSlotRepository
 				.createQueryBuilder()

@@ -306,6 +306,23 @@ function createStore({ slotDeleteOrm = MultiORMEnum.TypeORM }: { slotDeleteOrm?:
 
 	/** For each kind of write made to fail: how many of its calls succeed first, then how many fail. */
 	const failing: Partial<Record<StoreWrite, { succeeding: number; times: number }>> = {};
+	/**
+	 * What another request writes just before a read of slots by id for a delete, and how many of those reads go by
+	 * before it (see `linkBeforeSlotDelete`).
+	 */
+	let beforeSlotDeleteRead: { readsToSkip: number; write: () => void } | undefined;
+	const runBeforeSlotDeleteRead = () => {
+		if (!beforeSlotDeleteRead) {
+			return;
+		}
+		if (beforeSlotDeleteRead.readsToSkip > 0) {
+			beforeSlotDeleteRead.readsToSkip--;
+			return;
+		}
+		const { write } = beforeSlotDeleteRead;
+		beforeSlotDeleteRead = undefined;
+		write();
+	};
 	/** Fails this write when its turn has come, as a lost connection or a lock timeout would. */
 	const failIfDue = (write: StoreWrite) => {
 		const failure = failing[write];
@@ -433,6 +450,10 @@ function createStore({ slotDeleteOrm = MultiORMEnum.TypeORM }: { slotDeleteOrm?:
 					}
 				}),
 				getMany: async () => {
+					// The slot delete's read names the slots by id
+					if (params.timeSlotsIds) {
+						runBeforeSlotDeleteRead();
+					}
 					const ranges = slotStartRanges(params);
 					const isAtStart = (start: Date) =>
 						!ranges || ranges.some(({ from, to }) => start.getTime() >= from && start.getTime() < to);
@@ -491,8 +512,9 @@ function createStore({ slotDeleteOrm = MultiORMEnum.TypeORM }: { slotDeleteOrm?:
 	 * their logs, its soft delete (each slot stamped, then one flush) and its hard delete (one remove and flush).
 	 */
 	const timeSlotEntityManager = {
-		find: jest.fn(async (_entity: string, where: Record<string, any>) =>
-			liveSlots()
+		find: jest.fn(async (_entity: string, where: Record<string, any>) => {
+			runBeforeSlotDeleteRead();
+			return liveSlots()
 				.filter(
 					(slot) =>
 						slot.tenantId === where.tenantId &&
@@ -500,8 +522,8 @@ function createStore({ slotDeleteOrm = MultiORMEnum.TypeORM }: { slotDeleteOrm?:
 						slot.employeeId === where.employeeId &&
 						(!where.id || (where.id.$in as string[]).includes(slot.id))
 				)
-				.map((slot) => slotEntity(slot, true))
-		),
+				.map((slot) => slotEntity(slot, true));
+		}),
 		persistAndFlush: jest.fn(async (persisted: ITimeSlot[]) => {
 			failIfDue('slotRemoval');
 			softDeleteSlots(persisted.filter((slot) => slot.deletedAt).map(({ id }) => id));
@@ -617,6 +639,19 @@ function createStore({ slotDeleteOrm = MultiORMEnum.TypeORM }: { slotDeleteOrm?:
 		fail(write: StoreWrite, succeeding = 0, times = 1) {
 			failing[write] = { succeeding, times };
 		},
+		/**
+		 * Another request links a log to a slot just before a slot delete reads the slots it deletes, once `readsToSkip`
+		 * such reads have gone by: after the cleanup decided which slots are its log's alone.
+		 */
+		linkBeforeSlotDelete(slotId: string, logId: string, readsToSkip = 0) {
+			const write = () => {
+				const slot = slots.find((stored) => stored.id === slotId);
+				slot.timeLogIds = [...slot.timeLogIds, logId];
+			};
+			beforeSlotDeleteRead = { readsToSkip, write };
+		},
+		/** The starts of the slots a log id holds, whether a log of that id is stored or not. */
+		slotsHeldBy: (logId: string) => slotsOf(logId).map((slot) => hhmm(slot.startedAt)),
 		/** Records manual time over `start`–`stop` for the employee, as `POST /timesheet/time-log` does. */
 		addManualTime: (start: string, stop: string) =>
 			manualTimeService().addManualTime({
@@ -1259,6 +1294,24 @@ describe('DeleteTimeSpanHandler when a cut at one end or a delete fails (#11823)
 					expect(outcome).toBe('The slotRemoval failed');
 				}
 			);
+
+			it('keeps a slot another log took after the slots were read, and only lets go of it', async () => {
+				const store = createStore({ slotDeleteOrm });
+				store.addLog('tracked', '08:00', '10:00');
+				store.fail('slotRemoval');
+				// A timer started in the 08:30 slot takes it once the recovery has read which slots the log holds alone,
+				// before the slot delete reads them (the cut's own failed delete read them first)
+				store.linkBeforeSlotDelete('tracked@08:30', 'timer-run', 1);
+
+				const outcome = await store.cleanUp('07:00', '09:00', true).then(raised, raised);
+
+				expect(store.timeline()).toEqual([
+					{ range: '09:00-10:00', isRunning: false, slots: slotStarts('09:00', '10:00') }
+				]);
+				expect(store.slotsHeldBy('timer-run')).toEqual(['08:30']);
+				expect(store.deletedSlots().hard).not.toContain('tracked@08:30');
+				expect(outcome).toBe('The slotRemoval failed');
+			});
 
 			it('deletes them for good when the cut was a force delete', async () => {
 				const store = createStore({ slotDeleteOrm });
