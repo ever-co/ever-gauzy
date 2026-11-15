@@ -23,6 +23,7 @@ import { I18nService } from 'nestjs-i18n';
 import * as moment from 'moment';
 import { EstimateEmailService } from '../estimate-email/estimate-email.service';
 import { Readable } from 'stream';
+import { randomUUID } from 'node:crypto';
 import { PdfmakerService } from './pdfmaker.service';
 import { generateInvoicePdfDefinition, generateInvoicePaymentPdfDefinition } from './index';
 import { OrganizationService } from './../organization';
@@ -452,18 +453,25 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 			if (invoice.token) {
 				return invoice.token;
 			}
+			// A claim of its own: a token signed in the same second as the revoked one would otherwise be that same token
 			const token = signPurposeToken(TokenPurposeEnum.INVOICE_SHARE, {
 				id: invoice.id,
 				organizationId: invoice.organizationId,
-				tenantId: invoice.tenantId
+				tenantId: invoice.tenantId,
+				jti: randomUUID()
 			});
 			await this.typeOrmInvoiceRepository.update(
 				{ id: invoice.id, tenantId: invoice.tenantId, token: IsNull() },
 				{ token }
 			);
-			// Read back: a send at the same moment may have written its token first, and that is the one that holds
-			const { token: stored } = await this.findOneByIdString(invoiceId);
-			return stored ?? null;
+			// Read back from the database through the repository that wrote it: a send at the same moment may have written
+			// its token first, and that is the one that holds. The entity read above may be cached (MikroORM's identity
+			// map) with the token it had before the write.
+			const stored = await this.typeOrmInvoiceRepository.findOne({
+				where: { id: invoice.id, tenantId: invoice.tenantId },
+				select: { id: true, token: true }
+			});
+			return stored?.token ?? null;
 		} catch (error) {
 			console.log(`Invoice ${invoiceId} is emailed without a link to its public page: %s`, error?.message);
 			return null;
@@ -491,10 +499,12 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 	async generateLink(invoiceId: string): Promise<IInvoice> {
 		try {
 			const invoice = await this.findOneByIdString(invoiceId);
+			// A claim of its own, so a link generated again in the same second is never the one it replaces
 			const payload = {
 				id: invoice.id,
 				organizationId: invoice.organizationId,
-				tenantId: invoice.tenantId
+				tenantId: invoice.tenantId,
+				jti: randomUUID()
 			};
 			return await this.create({
 				id: invoiceId,
