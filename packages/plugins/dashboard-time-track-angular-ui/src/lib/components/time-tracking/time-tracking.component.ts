@@ -88,6 +88,9 @@ enum Windows {
 	MEMBERS = 5
 }
 
+/** What the auto refresh and a deletion push: the same scope read again, without the cards' loading states. */
+const BACKGROUND_REFRESH = 'background';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'gz-time-tracking-dashboard',
@@ -114,6 +117,8 @@ export class TimeTrackingComponent
 
 	public organization: IOrganization;
 	logs$: Subject<any> = new Subject();
+	/** A read asked for by a new scope is waiting in the debounce: it shows the loading states. */
+	private _scopeReadPending = false;
 
 	timeSlotLoading = false;
 	activitiesLoading = false;
@@ -197,9 +202,17 @@ export class TimeTrackingComponent
 			.subscribe();
 		this.logs$
 			.pipe(
+				// A read asked for by a new scope wins over a background refresh met within the debounce
+				tap((reason) => {
+					if (reason !== BACKGROUND_REFRESH) this._scopeReadPending = true;
+				}),
 				debounceTime(200),
 				tap(() => this._galleryService.clearGallery()),
-				tap(async () => await this.getStatistics()),
+				tap(async () => {
+					const inBackground = !this._scopeReadPending;
+					this._scopeReadPending = false;
+					await this.getStatistics(inBackground);
+				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -274,18 +287,24 @@ export class TimeTrackingComponent
 		this._changeRef.detectChanges();
 	}
 
-	async getStatistics() {
+	/**
+	 * Reads every section of the page.
+	 *
+	 * @param inBackground The same scope read again (the auto refresh, after a deletion): the cards keep what they
+	 * show, without their loading states, until the answers replace it (#12022).
+	 */
+	async getStatistics(inBackground = false) {
 		if (!this.organization) {
 			return;
 		}
 		await Promise.allSettled([
-			this.getCounts(),
-			this.getTimeSlots(),
-			this.getActivities(),
-			this.getProjects(),
-			this.getTasks(),
-			this.getManualTimes(),
-			this.getMembers()
+			this.getCounts(inBackground),
+			this.getTimeSlots(inBackground),
+			this.getActivities(inBackground),
+			this.getProjects(inBackground),
+			this.getTasks(inBackground),
+			this.getManualTimes(inBackground),
+			this.getMembers(inBackground)
 		]);
 	}
 
@@ -330,18 +349,18 @@ export class TimeTrackingComponent
 			this.autoRefresh$ = timer(0, 60000 * 5)
 				.pipe(
 					filter((timer) => !!timer),
-					tap(() => this.logs$.next(true)),
+					tap(() => this.logs$.next(BACKGROUND_REFRESH)),
 					untilDestroyed(this)
 				)
 				.subscribe();
 		}
 	}
 
-	async getTimeSlots(): Promise<void> {
+	async getTimeSlots(inBackground = false): Promise<void> {
 		if (this._isWindowHidden(Windows.RECENT_ACTIVITIES)) return;
 
 		try {
-			this.timeSlotLoading = true;
+			if (!inBackground) this.timeSlotLoading = true;
 			const request: IGetTimeSlotStatistics = this.payloads$.getValue();
 			this.timeSlotEmployees = await this._timesheetStatisticsService.getTimeSlots(request);
 		} catch (error) {
@@ -351,11 +370,11 @@ export class TimeTrackingComponent
 		}
 	}
 
-	async getCounts(): Promise<void> {
+	async getCounts(inBackground = false): Promise<void> {
 		if (this._isAllWidgetsHidden()) return;
 
 		try {
-			this.countsLoading = true;
+			if (!inBackground) this.countsLoading = true;
 			const request: IGetCountsStatistics = this.payloads$.getValue();
 			this.counts = await this._timesheetStatisticsService.getCounts(request);
 		} catch (error) {
@@ -365,11 +384,11 @@ export class TimeTrackingComponent
 		}
 	}
 
-	async getActivities(): Promise<void> {
+	async getActivities(inBackground = false): Promise<void> {
 		if (this._isWindowHidden(Windows.APPS_URLS)) return;
 
 		try {
-			this.activitiesLoading = true;
+			if (!inBackground) this.activitiesLoading = true;
 			const request: IGetActivitiesStatistics = this.payloads$.getValue();
 			const activities = await this._timesheetStatisticsService.getActivities(request);
 			const sum = reduce(activities, (memo, activity) => memo + parseInt(activity.duration + '', 10), 0);
@@ -384,11 +403,11 @@ export class TimeTrackingComponent
 		}
 	}
 
-	async getProjects(): Promise<void> {
+	async getProjects(inBackground = false): Promise<void> {
 		if (this._isWindowHidden(Windows.PROJECTS)) return;
 
 		try {
-			this.projectsLoading = true;
+			if (!inBackground) this.projectsLoading = true;
 			const request: IGetProjectsStatistics = this.payloads$.getValue();
 			this.projects = await this._timesheetStatisticsService.getProjects(request);
 		} catch (error) {
@@ -398,10 +417,10 @@ export class TimeTrackingComponent
 		}
 	}
 
-	async getTasks(): Promise<void> {
+	async getTasks(inBackground = false): Promise<void> {
 		if (this._isWindowHidden(Windows.TASKS)) return;
 
-		this.tasksLoading = true;
+		if (!inBackground) this.tasksLoading = true;
 
 		try {
 			const request: IGetTasksStatistics = this.payloads$.getValue();
@@ -414,11 +433,11 @@ export class TimeTrackingComponent
 		}
 	}
 
-	async getManualTimes(): Promise<void> {
+	async getManualTimes(inBackground = false): Promise<void> {
 		if (this._isWindowHidden(Windows.MANUAL_TIMES)) return;
 
 		try {
-			this.manualTimeLoading = true;
+			if (!inBackground) this.manualTimeLoading = true;
 			const request: IGetManualTimesStatistics = this.payloads$.getValue();
 			this.manualTimes = await this._timesheetStatisticsService.getManualTimes(request);
 		} catch (error) {
@@ -428,7 +447,7 @@ export class TimeTrackingComponent
 		}
 	}
 
-	async getMembers(): Promise<void> {
+	async getMembers(inBackground = false): Promise<void> {
 		if (
 			!(await this._ngxPermissionsService.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) ||
 			this._isWindowHidden(Windows.MEMBERS)
@@ -437,7 +456,7 @@ export class TimeTrackingComponent
 		}
 
 		try {
-			this.memberLoading = true;
+			if (!inBackground) this.memberLoading = true;
 
 			const request: IGetMembersStatistics = this.payloads$.getValue();
 			const members = await this._timesheetStatisticsService.getMembers(request);
@@ -474,7 +493,7 @@ export class TimeTrackingComponent
 	}
 
 	onDelete() {
-		this.logs$.next(true);
+		this.logs$.next(BACKGROUND_REFRESH);
 	}
 
 	ngOnDestroy() {
