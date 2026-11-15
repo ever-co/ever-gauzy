@@ -1137,10 +1137,11 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	 */
 	async updateByEmployee(input: IOrganizationProjectEditByEmployeeInput): Promise<boolean> {
 		// A project kept private from the caller is not there for them: no membership of it is added or removed,
-		// or an editor could join a private project and then see it as its member (see hiddenProjectIds)
+		// or an editor could join a private project and then see it as its member (see hiddenProjectIds). A withdrawn
+		// (soft-deleted) one counts too: its memberships are kept for its restore, and are not the caller's to remove.
 		const listedProjectIds = [...(input?.addedProjectIds ?? []), ...(input?.removedProjectIds ?? [])];
 		if (listedProjectIds.length) {
-			const hidden = new Set(await this.hiddenProjectIds());
+			const hidden = new Set(await this.hiddenProjectIds({ withDeleted: true }));
 			if (listedProjectIds.some((projectId) => hidden.has(projectId))) {
 				throw new NotFoundException('The requested record was not found');
 			}

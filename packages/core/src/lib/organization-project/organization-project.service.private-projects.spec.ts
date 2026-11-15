@@ -352,6 +352,8 @@ describe('OrganizationProjectService with private projects', () => {
 					member: { id: MARIE }
 				} as never)
 			).rejects.toBeInstanceOf(NotFoundException);
+			// A withdrawn private project is read too: its memberships are kept for its restore
+			expect(privateProjectsRead).toHaveBeenLastCalledWith(expect.objectContaining({ withDeleted: true }));
 			expect(find).not.toHaveBeenCalled();
 			expect(removeMembership).not.toHaveBeenCalled();
 		});
