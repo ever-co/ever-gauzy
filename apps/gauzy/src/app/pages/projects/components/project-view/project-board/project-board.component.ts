@@ -351,7 +351,9 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 			(this.projectId || this.parentId) &&
 			(changes['projectId'] || changes['parentId'] || changes['organizationId'] || changes['reloadKey'])
 		) {
-			void this.load();
+			// The host's reload after a change it made (a status move): the same board, read again (#12009)
+			const isReload = !changes['projectId'] && !changes['parentId'] && !changes['organizationId'];
+			void this.load(isReload);
 		}
 	}
 
@@ -445,12 +447,16 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 		this._endObserver?.observe(this._end);
 	}
 
-	private async load(): Promise<void> {
+	/**
+	 * @param keepsShown The same board read again: its columns stay on screen until the new ones replace them,
+	 * instead of every column going and coming back. Another project or task starts from an empty board.
+	 */
+	private async load(keepsShown = false): Promise<void> {
 		const sequence = ++this._sequence;
 		// The board is replaced, and a dragged card with it: no end of that drag will be reported.
 		this.endDrag();
 		const { parentId } = this;
-		this.board = loading([]);
+		this.board = loading(keepsShown ? this.board.value : []);
 		this.total = 0;
 		this.loadingMore = false;
 		this.loadMoreFailed = false;

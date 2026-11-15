@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, SimpleChange } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { of, throwError } from 'rxjs';
+import { NEVER, of, throwError } from 'rxjs';
 import { ITask } from '@gauzy/contracts';
 import { Store, TimesheetStatisticsService, ToastrService } from '@gauzy/ui-core/core';
 import { ProjectBoardComponent } from './project-board.component';
@@ -93,6 +93,31 @@ describe('ProjectBoardComponent', () => {
 		expect(http.get).toHaveBeenCalled();
 	});
 
+	it("keeps its columns and cards on screen while the host's reload is read (#12009)", async () => {
+		const component = await board();
+		const shown = cards(component);
+		// The reload's reads are still on their way
+		http.get.mockImplementation(() => NEVER);
+
+		component.reloadKey = 1;
+		component.ngOnChanges({ reloadKey: new SimpleChange(0, 1, false) });
+
+		expect(component.board.loading).toBe(true);
+		expect(cards(component)).toBe(shown);
+		expect(shown).toBe(3);
+	});
+
+	it('CONTROL: another task starts from an empty board', async () => {
+		const component = await board();
+		http.get.mockImplementation(() => NEVER);
+
+		component.parentId = 'eeeeeeee-5555-4555-8555-555555555555';
+		component.ngOnChanges({ parentId: new SimpleChange(PARENT_ID, component.parentId, false) });
+
+		expect(component.board.loading).toBe(true);
+		expect(cards(component)).toBe(0);
+	});
+
 	it('narrows the cards to the filter, and a moved card stays in its new column', async () => {
 		const component = await board();
 		const [open, done] = component.board.value;
@@ -135,7 +160,12 @@ describe('ProjectBoardComponent', () => {
 		};
 
 		const release = (component: ProjectBoardComponent, overrides: Record<string, unknown>) =>
-			component.drop({ isPointerOverContainer: true, currentIndex: 0, dropPoint: { x: 1, y: 1 }, ...overrides } as any);
+			component.drop({
+				isPointerOverContainer: true,
+				currentIndex: 0,
+				dropPoint: { x: 1, y: 1 },
+				...overrides
+			} as any);
 
 		const ids = (column: { cards: { id: string }[] }) => column.cards.map((card) => card.id);
 
