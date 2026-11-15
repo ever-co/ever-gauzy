@@ -27,6 +27,7 @@ import {
 	MEETING_REMINDER_SWEEP_TIME_BUDGET_MS
 } from './meeting-reminder.constants';
 import {
+	isMeetingScheduled,
 	MAX_MEETING_REMINDER_MINUTES,
 	MEETING_STARTING_GRACE_MS,
 	MeetingReminderLevel,
@@ -96,8 +97,9 @@ function claimTimeOf(now: Date): Date {
  *   setting, 15 minutes when unset, none when `null` or 0), and a minute before the start. A sweep that finds both due
  *   at once (the meeting was booked inside the lead, or no sweep ran meanwhile) files the second alone. A meeting that
  *   started more than five minutes ago is past reminding.
- * - **Whom.** Its host and its invitees, while they are active employees of its tenant. A meeting cancelled, marked
- *   completed or deleted reminds nobody.
+ * - **Whom.** Its host and its invitees, while they are active employees of its organization and tenant. A meeting
+ *   cancelled, marked completed or deleted reminds nobody, nor does one changed while its page was being reminded of:
+ *   each reminder reads the meeting again before it is filed.
  * - **A meeting moved.** The start is part of each reminder's key: a meeting moved to another time is reminded of at
  *   its new time, and the reminder of its old time, never due any more, is never filed.
  * - **Once, whatever the processes and their failures.** The sweep inserts an `employee_appointment_reminder` row for
@@ -170,7 +172,7 @@ export class MeetingReminderService {
 			.leftJoin(
 				Employee,
 				'host',
-				'host.id = appointment.employeeId AND host.tenantId = appointment.tenantId AND host.deletedAt IS NULL AND host.isActive = :active AND (host.isArchived IS NULL OR host.isArchived = :archived)',
+				'host.id = appointment.employeeId AND host.tenantId = appointment.tenantId AND host.organizationId = appointment.organizationId AND host.deletedAt IS NULL AND host.isActive = :active AND (host.isArchived IS NULL OR host.isArchived = :archived)',
 				{ active: true, archived: false }
 			)
 			.select('appointment.id', 'id')
@@ -297,6 +299,14 @@ export class MeetingReminderService {
 			await this.recordFiled(claim, now);
 			return;
 		}
+		// The page was read before the reminders ahead of this one were filed: the meeting may have been cancelled or moved,
+		// or the receiver left out, meanwhile. A reminder no longer due gives its claim back (one taken over stays)
+		if (!(await this.isStillDue(due))) {
+			if (!takenOver) {
+				await this.release(claim);
+			}
+			return;
+		}
 		const { title, message } = meetingNotice(due.level === 1 ? 'reminder' : 'starting', {
 			agenda: meeting.agenda,
 			startDateTime: meeting.startDateTime,
@@ -334,6 +344,36 @@ export class MeetingReminderService {
 		if (takenOver) {
 			report.recovered += 1;
 		}
+	}
+
+	/**
+	 * Whether the reminder is still due as the meeting stands now: not cancelled, completed or deleted, starting when the
+	 * reminder says, and the receiver still its host or one of its invitees.
+	 */
+	private async isStillDue(due: IMeetingReminderDue): Promise<boolean> {
+		const { meeting, employeeId } = due;
+		const current = await this.dataSource
+			.getRepository(EmployeeAppointment)
+			.createQueryBuilder('appointment')
+			.select('appointment.startDateTime', 'startDateTime')
+			.addSelect('appointment.status', 'status')
+			.addSelect('appointment.employeeId', 'employeeId')
+			.where('appointment.id = :id', { id: meeting.id })
+			.andWhere('appointment.tenantId = :tenantId', { tenantId: meeting.tenantId })
+			.getRawOne<{ startDateTime: Date | string; status: EmployeeAppointmentStatus | string | null; employeeId: ID | null }>();
+		if (
+			!current ||
+			!isMeetingScheduled(current.status) ||
+			instantOf(current.startDateTime) !== instantOf(meeting.startDateTime)
+		) {
+			return false;
+		}
+		if (current.employeeId && String(current.employeeId) === String(employeeId)) {
+			return true;
+		}
+		// Its invitees as they are now (the host the page read does not count: the meeting may have changed hands)
+		const invitees = await this.attendeesOf([{ ...meeting, hostEmployeeId: null }]);
+		return (invitees.get(String(meeting.id)) ?? []).some((id) => String(id) === String(employeeId));
 	}
 
 	/**
@@ -436,8 +476,9 @@ export class MeetingReminderService {
 	}
 
 	/**
-	 * Who each meeting concerns: its host, and its invitees that are active employees of its tenant, without repeats.
-	 * An invitation row may name its meeting by either key.
+	 * Who each meeting concerns: its host, and its invitees that are active employees of its organization and tenant,
+	 * without repeats. An invitation row may name its meeting by either key; one naming an employee of another
+	 * organization (another route than the appointment's own writes it) reminds them of nothing.
 	 */
 	private async attendeesOf(page: IMeetingReminderRow[]): Promise<Map<string, ID[]>> {
 		const byId = new Map(page.map((meeting) => [String(meeting.id), meeting]));
@@ -450,6 +491,7 @@ export class MeetingReminderService {
 			.addSelect('invitee.employeeAppointmentId', 'employeeAppointmentId')
 			.addSelect('invitee.employeeId', 'employeeId')
 			.addSelect('invitee.tenantId', 'tenantId')
+			.addSelect('employee.organizationId', 'organizationId')
 			.where(
 				new Brackets((key) =>
 					key
@@ -467,7 +509,13 @@ export class MeetingReminderService {
 					})
 				)
 			)
-			.getRawMany<{ appointmentId: ID | null; employeeAppointmentId: ID | null; employeeId: ID; tenantId: ID }>();
+			.getRawMany<{
+				appointmentId: ID | null;
+				employeeAppointmentId: ID | null;
+				employeeId: ID;
+				tenantId: ID;
+				organizationId: ID | null;
+			}>();
 
 		const attendees = new Map<string, ID[]>();
 		const add = (meetingId: string, employeeId: ID | null | undefined) => {
@@ -486,8 +534,12 @@ export class MeetingReminderService {
 		for (const row of rows) {
 			for (const key of [row.appointmentId, row.employeeAppointmentId]) {
 				const meeting = key ? byId.get(String(key)) : undefined;
-				// Only a row of the meeting's own tenant counts
-				if (meeting && String(meeting.tenantId) === String(row.tenantId)) {
+				// Only a row of the meeting's own tenant, naming an employee of its own organization, counts
+				if (
+					meeting &&
+					String(meeting.tenantId) === String(row.tenantId) &&
+					String(meeting.organizationId) === String(row.organizationId)
+				) {
 					add(String(meeting.id), row.employeeId);
 				}
 			}

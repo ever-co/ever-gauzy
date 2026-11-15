@@ -107,7 +107,8 @@ export class EmployeeAppointmentController extends CrudController<EmployeeAppoin
 	 * invitees is a meeting they attend: this lists those, neither cancelled nor deleted, with their time, place and
 	 * host, so the invitee can see and join them. A caller with no employee record is invited to nothing.
 	 *
-	 * @param query The range of the meetings' times (`startDate`, `endDate`), both optional.
+	 * @param query The range of the meetings' times (`startDate`, `endDate`), both optional. Without `startDate` it starts
+	 * now: the meetings not over yet.
 	 */
 	@ApiOperation({ summary: 'Find the meetings the current employee is invited to' })
 	@ApiResponse({

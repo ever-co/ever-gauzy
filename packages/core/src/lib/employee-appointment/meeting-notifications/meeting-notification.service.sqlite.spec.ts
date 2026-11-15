@@ -87,7 +87,7 @@ describe('MeetingNotificationService on SQLite', () => {
 
 	async function appointment(
 		hostEmployeeId: string | null,
-		options: { startsIn?: number; status?: string; agenda?: string } = {}
+		options: { startsIn?: number; status?: string; agenda?: string; organizationId?: string } = {}
 	): Promise<IMeetingSnapshot> {
 		const id = randomUUID();
 		const start = new Date(NOW + (options.startsIn ?? 60 * MINUTE));
@@ -97,7 +97,7 @@ describe('MeetingNotificationService on SQLite', () => {
 			[
 				id,
 				TENANT,
-				ORGANIZATION,
+				options.organizationId ?? ORGANIZATION,
 				hostEmployeeId,
 				options.agenda ?? 'Sprint review',
 				'https://app.ever.team/meet/jitsi?room=U3ByaW50',
@@ -109,7 +109,7 @@ describe('MeetingNotificationService on SQLite', () => {
 		return {
 			id,
 			tenantId: TENANT,
-			organizationId: ORGANIZATION,
+			organizationId: options.organizationId ?? ORGANIZATION,
 			employeeId: hostEmployeeId,
 			agenda: options.agenda ?? 'Sprint review',
 			startDateTime: start,
@@ -225,6 +225,17 @@ describe('MeetingNotificationService on SQLite', () => {
 			expect(notifications.create).not.toHaveBeenCalled();
 		});
 
+		it("tells only the employees of the meeting's organization and tenant", async () => {
+			const meeting = await appointment(null);
+			const colleague = await employee();
+			const elsewhere = await employee({ organizationId: OTHER_ORGANIZATION });
+			const stranger = await employee({ tenantId: OTHER_TENANT });
+			const gone = await employee({ deleted: true });
+
+			expect(await service.notify('changed', meeting, [elsewhere, colleague, stranger, gone], { now: NOW })).toBe(1);
+			expect(notifications.create.mock.calls.map(([input]) => input.receiverEmployeeId)).toEqual([colleague]);
+		});
+
 		it('files the others when one notice fails, and never throws', async () => {
 			const meeting = await appointment(null);
 			const [first, second] = [await employee(), await employee()];
@@ -247,7 +258,7 @@ describe('MeetingNotificationService on SQLite', () => {
 				await service.replaceInvitees(meeting, [invitee]);
 			}
 
-			const invitations = await service.invitationsOf(invitee, TENANT);
+			const invitations = await service.invitationsOf(invitee, TENANT, {}, NOW);
 
 			expect(invitations.map((one) => one.agenda)).toEqual(['Sprint review', 'Planning']);
 			expect(invitations[0]).toEqual({
@@ -276,10 +287,45 @@ describe('MeetingNotificationService on SQLite', () => {
 			expect(await range(70 * MINUTE, 80 * MINUTE)).toHaveLength(1);
 			expect(await range(0, 60 * MINUTE)).toHaveLength(0);
 			expect(await range(90 * MINUTE, 120 * MINUTE)).toHaveLength(0);
-			expect(await service.invitationsOf(invitee, OTHER_TENANT)).toEqual([]);
+			expect(await service.invitationsOf(invitee, OTHER_TENANT, {}, NOW)).toEqual([]);
 			await expect(service.invitationsOf(invitee, TENANT, { startDate: 'soon' })).rejects.toThrow(
 				'startDate must be a date.'
 			);
+		});
+
+		it('lists the meetings not over yet unless an earlier start is asked', async () => {
+			const invitee = await employee();
+			const past = await appointment(null, { startsIn: -3 * 60 * MINUTE, agenda: 'Retro' });
+			const running = await appointment(null, { startsIn: -10 * MINUTE, agenda: 'Stand-up' });
+			const next = await appointment(null, { startsIn: 60 * MINUTE, agenda: 'Planning' });
+			for (const meeting of [past, running, next]) {
+				await service.replaceInvitees(meeting, [invitee]);
+			}
+
+			expect((await service.invitationsOf(invitee, TENANT, {}, NOW)).map((one) => one.agenda)).toEqual([
+				'Stand-up',
+				'Planning'
+			]);
+			const fromYesterday = { startDate: new Date(NOW - 24 * 60 * MINUTE).toISOString() };
+			expect((await service.invitationsOf(invitee, TENANT, fromYesterday, NOW)).map((one) => one.agenda)).toEqual([
+				'Retro',
+				'Stand-up',
+				'Planning'
+			]);
+		});
+
+		it('lists no meeting of another organization, whatever row names the invitee', async () => {
+			const invitee = await employee();
+			const ours = await appointment(null, { agenda: 'Ours' });
+			const theirs = await appointment(null, { agenda: 'Theirs', organizationId: OTHER_ORGANIZATION });
+			for (const meeting of [ours, theirs]) {
+				await dataSource.query(
+					`INSERT INTO "appointment_employee" ("id", "tenantId", "organizationId", "appointmentId", "employeeAppointmentId", "employeeId") VALUES (?, ?, ?, ?, ?, ?)`,
+					[randomUUID(), TENANT, meeting.organizationId, meeting.id, meeting.id, invitee]
+				);
+			}
+
+			expect((await service.invitationsOf(invitee, TENANT, {}, NOW)).map((one) => one.agenda)).toEqual(['Ours']);
 		});
 	});
 });

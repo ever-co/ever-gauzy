@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import { Brackets, DataSource, In } from 'typeorm';
+import { Brackets, DataSource, EntityManager, In } from 'typeorm';
 import {
 	BaseEntityEnum,
 	EmployeeAppointmentStatus,
@@ -59,9 +59,13 @@ export class MeetingNotificationService {
 		private readonly notifications: EmployeeNotificationService
 	) {}
 
-	/** The employees invited to an appointment, whichever of its two keys their rows name it by. */
-	async inviteeIdsOf(appointmentId: ID, tenantId: ID): Promise<ID[]> {
-		const rows = await this.dataSource
+	/**
+	 * The employees invited to an appointment, whichever of its two keys their rows name it by.
+	 *
+	 * @param manager The transaction to read in, when the read is part of one.
+	 */
+	async inviteeIdsOf(appointmentId: ID, tenantId: ID, manager: EntityManager = this.dataSource.manager): Promise<ID[]> {
+		const rows = await manager
 			.getRepository(AppointmentEmployee)
 			.createQueryBuilder('invitee')
 			.select('invitee.employeeId', 'employeeId')
@@ -109,38 +113,58 @@ export class MeetingNotificationService {
 		return ids;
 	}
 
-	/** Makes the appointment's invitees exactly `ids`, and says who was added and who removed. */
+	/**
+	 * Makes the appointment's invitees exactly `ids`, and says who was added and who removed.
+	 *
+	 * One transaction reads the invitees and writes the difference, so a write that fails leaves them as they were. On
+	 * PostgreSQL and MySQL it first locks the appointment's row: two requests replacing the invitees of one meeting at
+	 * the same moment then run one after the other, and the second sees the first one's invitees (rather than both adding
+	 * theirs to the list they both read). SQLite writes one transaction at a time.
+	 */
 	async replaceInvitees(appointment: IMeetingSnapshot, ids: ID[]): Promise<IMeetingInviteeChange> {
-		const current = await this.inviteeIdsOf(appointment.id, appointment.tenantId);
 		const wanted = uniqueIds(ids);
-		const added = wanted.filter((id) => !current.includes(id));
-		const removed = current.filter((id) => !wanted.includes(id));
-		const kept = current.filter((id) => wanted.includes(id));
+		return this.dataSource.transaction(async (manager) => {
+			if (locksRows(manager)) {
+				await manager
+					.getRepository(EmployeeAppointment)
+					.createQueryBuilder('appointment')
+					.select('appointment.id', 'id')
+					.where('appointment.id = :id', { id: appointment.id })
+					.setLock('pessimistic_write')
+					.getRawOne();
+			}
+			const current = await this.inviteeIdsOf(appointment.id, appointment.tenantId, manager);
+			const added = wanted.filter((id) => !current.includes(id));
+			const removed = current.filter((id) => !wanted.includes(id));
+			const kept = current.filter((id) => wanted.includes(id));
 
-		if (removed.length) {
-			const invitees = this.dataSource.getRepository(AppointmentEmployee);
-			const ofTenant = { tenantId: appointment.tenantId, employeeId: In(removed) };
-			// A row may name the appointment by either key (the Angular app writes both, older rows the first only)
-			await invitees.delete({ ...ofTenant, appointmentId: appointment.id });
-			await invitees.delete({ ...ofTenant, employeeAppointmentId: appointment.id });
-		}
-		if (added.length) {
-			await this.dataSource.getRepository(AppointmentEmployee).insert(
-				added.map((employeeId) => ({
-					appointmentId: appointment.id,
-					employeeAppointmentId: appointment.id,
-					employeeId,
-					tenantId: appointment.tenantId,
-					organizationId: appointment.organizationId
-				}))
-			);
-		}
-		return { added, removed, kept };
+			const invitees = manager.getRepository(AppointmentEmployee);
+			if (removed.length) {
+				const ofTenant = { tenantId: appointment.tenantId, employeeId: In(removed) };
+				// A row may name the appointment by either key (the Angular app writes both, older rows the first only)
+				await invitees.delete({ ...ofTenant, appointmentId: appointment.id });
+				await invitees.delete({ ...ofTenant, employeeAppointmentId: appointment.id });
+			}
+			if (added.length) {
+				await invitees.insert(
+					added.map((employeeId) => ({
+						appointmentId: appointment.id,
+						employeeAppointmentId: appointment.id,
+						employeeId,
+						tenantId: appointment.tenantId,
+						organizationId: appointment.organizationId
+					}))
+				);
+			}
+			return { added, removed, kept };
+		});
 	}
 
 	/**
 	 * Tells each receiver about the meeting with a `Meeting` notification, its time in their own time zone. The one who
-	 * made the change is not told about it. A meeting that ended already is worth no notice at all.
+	 * made the change is not told about it. A meeting that ended already is worth no notice at all. Only employees of the
+	 * meeting's own organization and tenant are told: an invitation row written by another route (the booking pages'
+	 * `/appointment-employees`) that names anyone else tells them nothing.
 	 *
 	 * @returns How many notices were filed.
 	 */
@@ -155,19 +179,30 @@ export class MeetingNotificationService {
 		if (!receivers.length || hasEnded(meeting, now)) {
 			return 0;
 		}
-		let timeZones = new Map<string, string | null>();
+		let timeZones: Map<string, string | null>;
 		try {
-			timeZones = await this.timeZonesOf(receivers, meeting.tenantId);
+			timeZones = await this.timeZonesOf(receivers, meeting.tenantId, meeting.organizationId);
 		} catch (error) {
-			this.logger.warn(`The time zones of a meeting's invitees were not read: ${(error as Error)?.message ?? error}`);
+			this.logger.warn(
+				`The ${kind} notice of meeting ${meeting.id} was filed for nobody: its receivers were not read: ${
+					(error as Error)?.message ?? error
+				}`
+			);
+			return 0;
 		}
+		// By id in lower case: a uuid column answers it so, whatever case the request named it in
+		const zoneOf = new Map([...timeZones].map(([id, zone]) => [id.toLowerCase(), zone]));
 		let filed = 0;
 		for (const receiverEmployeeId of receivers) {
+			// Not an employee of the meeting's organization and tenant (or no longer one)
+			if (!zoneOf.has(receiverEmployeeId.toLowerCase())) {
+				continue;
+			}
 			const { title, message } = meetingNotice(kind, {
 				agenda: meeting.agenda,
 				startDateTime: meeting.startDateTime,
 				endDateTime: meeting.endDateTime,
-				timeZone: timeZones.get(receiverEmployeeId) ?? null,
+				timeZone: zoneOf.get(receiverEmployeeId.toLowerCase()) ?? null,
 				now
 			});
 			try {
@@ -194,21 +229,27 @@ export class MeetingNotificationService {
 		return filed;
 	}
 
-	/** The time zone of each employee's user, in the tenant. */
-	async timeZonesOf(employeeIds: ID[], tenantId: ID): Promise<Map<string, string | null>> {
+	/**
+	 * The time zone of each employee's user, for the employees of the tenant (and of the organization, when one is
+	 * named) among those asked: one missing from the answer is none of theirs.
+	 */
+	async timeZonesOf(employeeIds: ID[], tenantId: ID, organizationId?: ID | null): Promise<Map<string, string | null>> {
 		const zones = new Map<string, string | null>();
 		if (!employeeIds.length) {
 			return zones;
 		}
-		const rows = await this.dataSource
+		const query = this.dataSource
 			.getRepository(Employee)
 			.createQueryBuilder('employee')
-			.innerJoin(User, 'user', 'user.id = employee.userId')
+			.leftJoin(User, 'user', 'user.id = employee.userId')
 			.select('employee.id', 'employeeId')
 			.addSelect('user.timeZone', 'timeZone')
 			.where('employee.id IN (:...employeeIds)', { employeeIds })
-			.andWhere('employee.tenantId = :tenantId', { tenantId })
-			.getRawMany<{ employeeId: ID; timeZone: string | null }>();
+			.andWhere('employee.tenantId = :tenantId', { tenantId });
+		if (organizationId) {
+			query.andWhere('employee.organizationId = :organizationId', { organizationId });
+		}
+		const rows = await query.getRawMany<{ employeeId: ID; timeZone: string | null }>();
 		for (const row of rows) {
 			zones.set(String(row.employeeId), row.timeZone ?? null);
 		}
@@ -216,15 +257,18 @@ export class MeetingNotificationService {
 	}
 
 	/**
-	 * The meetings an employee is invited to, in their tenant, by start time: those neither cancelled nor deleted, that
-	 * run within the range when one is given (a meeting that overlaps it counts), each with the name of its host.
+	 * The meetings an employee is invited to, in their tenant and organization, by start time: those neither cancelled
+	 * nor deleted, that run within the range (a meeting that overlaps it counts), each with the name of its host. Without
+	 * a start, the range starts `now`: the meetings not over yet, so a long history never hides the next ones behind
+	 * MEETING_INVITATIONS_LIMIT; an earlier start reads the past ones.
 	 */
 	async invitationsOf(
 		employeeId: ID,
 		tenantId: ID,
-		range: IEmployeeAppointmentInvitationFindInput = {}
+		range: IEmployeeAppointmentInvitationFindInput = {},
+		now: number = Date.now()
 	): Promise<IEmployeeAppointmentInvitation[]> {
-		const startDate = dateOf(range.startDate, 'startDate');
+		const startDate = dateOf(range.startDate, 'startDate') ?? new Date(now);
 		const endDate = dateOf(range.endDate, 'endDate');
 		// The meetings the employee's invitation rows name, by either key. Read first, then the meetings by id: the first
 		// key is a text column on PostgreSQL and the meeting's id a uuid, which no join compares without a cast.
@@ -245,6 +289,13 @@ export class MeetingNotificationService {
 		const query = this.dataSource
 			.getRepository(EmployeeAppointment)
 			.createQueryBuilder('appointment')
+			// Only a meeting of the invitee's own organization: a row another route wrote cannot show them anyone else's
+			.innerJoin(
+				Employee,
+				'invitee',
+				'invitee.id = :inviteeEmployeeId AND invitee.tenantId = appointment.tenantId AND invitee.organizationId = appointment.organizationId',
+				{ inviteeEmployeeId: employeeId }
+			)
 			.leftJoin(Employee, 'host', 'host.id = appointment.employeeId AND host.tenantId = appointment.tenantId')
 			.leftJoin(User, 'hostUser', 'hostUser.id = host.userId')
 			.select('appointment.id', 'id')
@@ -271,9 +322,7 @@ export class MeetingNotificationService {
 			.orderBy('appointment.startDateTime', 'ASC')
 			.addOrderBy('appointment.id', 'ASC')
 			.limit(MEETING_INVITATIONS_LIMIT);
-		if (startDate) {
-			query.andWhere('appointment.endDateTime > :startDate', { startDate });
-		}
+		query.andWhere('appointment.endDateTime > :startDate', { startDate });
 		if (endDate) {
 			query.andWhere('appointment.startDateTime < :endDate', { endDate });
 		}
@@ -314,6 +363,11 @@ export class MeetingNotificationService {
 		}
 		return invitations;
 	}
+}
+
+/** Whether the transaction's database takes a row lock (`FOR UPDATE`): PostgreSQL and MySQL do, SQLite does not. */
+function locksRows(manager: EntityManager): boolean {
+	return ['postgres', 'mysql', 'mariadb'].includes(String(manager.connection.options.type));
 }
 
 /** Ids, as strings, without empties and repeats, in their first order. */

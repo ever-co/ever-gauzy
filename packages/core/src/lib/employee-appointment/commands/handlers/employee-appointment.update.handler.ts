@@ -1,3 +1,4 @@
+import { NotFoundException } from '@nestjs/common';
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import { EmployeeAppointmentService } from '../../employee-appointment.service';
 import { EmployeeAppointmentUpdateCommand } from '../employee-appointment.update.command';
@@ -83,7 +84,11 @@ export class EmployeeAppointmentUpdateHandler implements ICommandHandler<Employe
 		return updatedAppointment;
 	}
 
-	/** The meeting before the update, or null when the caller may not read it (the update then answers as before). */
+	/**
+	 * The meeting before the update, or null when the caller may not read it (not found in their scope: the update then
+	 * answers as before). Any other failure of the read fails the request before anything is written, so an invitee
+	 * change it carries is never dropped while the update answers success.
+	 */
 	private async meetingBefore(id: ID): Promise<IMeetingSnapshot | null> {
 		try {
 			const appointment = await this.employeeAppointmentService.findOneByIdString(id);
@@ -99,8 +104,11 @@ export class EmployeeAppointmentUpdateHandler implements ICommandHandler<Employe
 				endDateTime: appointment.endDateTime,
 				status: appointment.status ?? null
 			};
-		} catch {
-			return null;
+		} catch (error) {
+			if (error instanceof NotFoundException) {
+				return null;
+			}
+			throw error;
 		}
 	}
 
@@ -112,8 +120,10 @@ export class EmployeeAppointmentUpdateHandler implements ICommandHandler<Employe
 	private async tellInvitees(before: IMeetingSnapshot, after: IMeetingSnapshot, inviteeIds?: ID[]): Promise<void> {
 		const sentByEmployeeId = RequestContext.currentEmployeeId() ?? RequestContext.currentUser()?.employeeId ?? null;
 		const invitedBefore = await this.meetingNotifications.inviteeIdsOf(before.id, before.tenantId);
+		// The rows are written under the meeting as it is now: an update that moved it to another organization files its new
+		// invitees there, where they were checked
 		const change = inviteeIds
-			? await this.meetingNotifications.replaceInvitees(before, inviteeIds)
+			? await this.meetingNotifications.replaceInvitees(after, inviteeIds)
 			: { added: [], removed: [], kept: invitedBefore };
 
 		if (!isMeetingScheduled(before.status)) {
