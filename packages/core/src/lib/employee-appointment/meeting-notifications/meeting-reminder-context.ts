@@ -1,6 +1,8 @@
 import { randomUUID } from 'node:crypto';
+import { MikroORM, RequestContext as MikroOrmRequestContext } from '@mikro-orm/core';
 import { ID } from '@gauzy/contracts';
 import { RequestContext } from '../../core/context/request-context';
+import { getORMType, MultiORMEnum } from '../../core/utils';
 
 /** The tenant and organization a reminder is filed in: the meeting's own. */
 export interface IMeetingReminderScope {
@@ -39,17 +41,30 @@ export class MeetingReminderContextUnavailableError extends Error {
  * nothing of an enclosing request (as the timer reminders and the Inbox delivery file their rows). Refuses to run `fn`
  * when the context is not the tenant's: a process without the request context store would otherwise file the reminder
  * with no tenant at all.
+ *
+ * Under DB_ORM=mikro-orm the notification is written through MikroORM, which refuses a write on its global
+ * EntityManager outside a request: `fn` then also runs in a MikroORM request context of its own, on a forked
+ * EntityManager, as the API's requests and its seeding do.
  */
-export async function runInMeetingReminderContext<T>(scope: IMeetingReminderScope, fn: () => Promise<T>): Promise<T> {
+export async function runInMeetingReminderContext<T>(
+	scope: IMeetingReminderScope,
+	fn: () => Promise<T>,
+	orm?: MikroORM | null
+): Promise<T> {
 	const request = { user: meetingReminderUserOf(scope), headers: {}, query: {}, params: {}, body: {} };
-	return RequestContext.runWithRequest(
-		request as never,
-		async () => {
-			if (RequestContext.currentTenantId() !== scope.tenantId) {
-				throw new MeetingReminderContextUnavailableError();
-			}
-			return fn();
-		},
-		{ id: randomUUID() as ID }
-	);
+	const inTenant = () =>
+		RequestContext.runWithRequest(
+			request as never,
+			async () => {
+				if (RequestContext.currentTenantId() !== scope.tenantId) {
+					throw new MeetingReminderContextUnavailableError();
+				}
+				return fn();
+			},
+			{ id: randomUUID() as ID }
+		);
+	if (orm && getORMType() === MultiORMEnum.MikroORM) {
+		return MikroOrmRequestContext.create(orm.em, inTenant);
+	}
+	return inTenant();
 }
