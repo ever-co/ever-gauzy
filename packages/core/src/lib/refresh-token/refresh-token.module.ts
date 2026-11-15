@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TokenModule } from '../token/token.module';
 import { CURRENT_USER_PROVIDER, RequestContextCurrentUserProvider } from './current-user.provider';
+import { refreshTokenReuseWindowMs } from './refresh-token-reuse-window';
 import { RefreshTokenService } from './refresh-token.service';
 import { JWT_REFRESH_TOKEN, REFRESH_TOKEN, REFRESH_TOKEN_TYPE } from './type.token';
 
@@ -19,7 +20,11 @@ import { JWT_REFRESH_TOKEN, REFRESH_TOKEN, REFRESH_TOKEN_TYPE } from './type.tok
 					DEFAULT_JWT_REFRESH_TOKEN_EXPIRATION_TIME * 1000, // 7 days, as the environment states it
 				threshold: 7 * 24 * 60 * 60 * 1000, // 7 days
 				allowRotation: true,
-				allowMultipleSessions: true
+				allowMultipleSessions: true,
+				// A refresh token just rotated is answered again for a few seconds (ever-co/ever-gauzy#11955)
+				rotationReuseWindow: refreshTokenReuseWindowMs(
+					configService.get<string>('JWT_REFRESH_TOKEN_REUSE_WINDOW')
+				)
 			}),
 			jwtServiceToken: JWT_REFRESH_TOKEN,
 			serviceToken: REFRESH_TOKEN
