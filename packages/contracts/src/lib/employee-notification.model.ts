@@ -60,7 +60,18 @@ export enum EmployeeNotificationTypeEnum {
 	 * (`taskDueReminderHours` of the notification preferences). Raised by the platform's task due reminder sweep, once
 	 * per task, employee and due date. Stored as 12 in DB.
 	 */
-	TASK_DUE_REMINDER = 'TaskDueReminder'
+	TASK_DUE_REMINDER = 'TaskDueReminder',
+	/**
+	 * A colleague shared a Board with the employee, from the Boards app. A Board is no record of the platform: the
+	 * notification names it in its `metadata` (`board`: the room or snapshot, its name and the link the sender chose to
+	 * send, see `IEmployeeNotificationBoard`). Stored as 13 in DB.
+	 */
+	BOARD_SHARE = 'BoardShare',
+	/**
+	 * A colleague mentioned the employee in a Board, from the Boards app; the Board is named as for `BOARD_SHARE`. Not
+	 * a `MENTION`, which is about a record of the platform: each has its own email and push modes. Stored as 14 in DB.
+	 */
+	BOARD_MENTION = 'BoardMention'
 }
 
 /**

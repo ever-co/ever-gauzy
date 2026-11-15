@@ -680,6 +680,11 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 			// A task due soon: switched off through the `preferences` JSON (`taskDueReminderHours` null or 0).
 			case EmployeeNotificationTypeEnum.TASK_DUE_REMINDER:
 				return taskDueReminderHoursOf(employeeNotificationSetting.preferences) !== null;
+			// A Board shared with the employee, or a mention of them in one: no switch of their own, as for a meeting; their
+			// email and push follow the per-kind modes (`preferences.emailByType.BoardShare`, `pushByType.BoardMention`, …)
+			case EmployeeNotificationTypeEnum.BOARD_SHARE:
+			case EmployeeNotificationTypeEnum.BOARD_MENTION:
+				return true;
 			default:
 				throw new Error(`Unsupported notification type: ${type}`);
 		}

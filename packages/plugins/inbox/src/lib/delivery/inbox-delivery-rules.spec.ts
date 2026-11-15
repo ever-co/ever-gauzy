@@ -10,6 +10,7 @@ import {
 	isSentOnlyWhileUnread,
 	nextLocalDate,
 	isWithinWindow,
+	kindLabelOf,
 	kindSwitchOf,
 	localClockOf,
 	minutesOfDay,
@@ -143,6 +144,22 @@ describe('the preferences', () => {
 		expect(kindSwitchOf({}, { taskDueReminderHours: 0 }, due)).toBe(false);
 		// The timer's switch is its own
 		expect(kindSwitchOf({}, { timerReminderHours: null }, due)).toBe(true);
+	});
+
+	it("takes a Board shared or a mention in a Board whatever the switches of the other kinds say, by the kind's own email and push modes", () => {
+		const allOff = { payment: false, assignment: false, invitation: false, mention: false, comment: false, message: false };
+		for (const board of [EmployeeNotificationTypeEnum.BOARD_SHARE, EmployeeNotificationTypeEnum.BOARD_MENTION]) {
+			expect(kindSwitchOf(allOff, {}, board)).toBe(true);
+			expect(emailModeOf({}, board)).toBe('immediate');
+			expect(emailModeOf({ emailByType: { [board]: 'digest' } }, board)).toBe('digest');
+			expect(decidePushDelivery({ now: NOW, type: board, setting: { preferences: { pushByType: { [board]: false } } }, hasSubscription: true }).mode).toBe(
+				InboxDeliveryModeEnum.NONE
+			);
+		}
+		expect(kindLabelOf(EmployeeNotificationTypeEnum.BOARD_SHARE)).toBe('Board shared');
+		expect(kindLabelOf(EmployeeNotificationTypeEnum.BOARD_MENTION)).toBe('Board mention');
+		// A mention in a Board is not a mention in a task: switching one off leaves the other
+		expect(emailModeOf({ emailByType: { Mention: 'off' } }, EmployeeNotificationTypeEnum.BOARD_MENTION)).toBe('immediate');
 	});
 
 	it("reads the kind's email mode, else the one for every kind, else immediate", () => {

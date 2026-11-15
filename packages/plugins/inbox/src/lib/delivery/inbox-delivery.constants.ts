@@ -51,7 +51,9 @@ export const INBOX_DELIVERY_KIND_LABELS: Record<string, string> = {
 	[EmployeeNotificationTypeEnum.TIMER_REMINDER]: 'Timer reminder',
 	[EmployeeNotificationTypeEnum.INVOICE]: 'Invoice',
 	[EmployeeNotificationTypeEnum.MEETING]: 'Meeting',
-	[EmployeeNotificationTypeEnum.TASK_DUE_REMINDER]: 'Task due'
+	[EmployeeNotificationTypeEnum.TASK_DUE_REMINDER]: 'Task due',
+	[EmployeeNotificationTypeEnum.BOARD_SHARE]: 'Board shared',
+	[EmployeeNotificationTypeEnum.BOARD_MENTION]: 'Board mention'
 };
 
 /** How many entries one sweep takes in and sends, from the environment. */

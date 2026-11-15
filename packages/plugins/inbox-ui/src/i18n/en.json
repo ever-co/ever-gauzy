@@ -240,7 +240,9 @@
 			"TimerReminder": "Timer reminder",
 			"Invoice": "Invoice",
 			"Meeting": "Meeting",
-			"TaskDueReminder": "Task due"
+			"TaskDueReminder": "Task due",
+			"BoardShare": "Board shared",
+			"BoardMention": "Board mention"
 		}
 	},
 	"SETTINGS": {

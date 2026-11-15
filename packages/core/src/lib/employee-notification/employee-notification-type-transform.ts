@@ -40,6 +40,10 @@ export class EmployeeNotificationTypeTransformer implements ValueTransformer {
 				return 11;
 			case EmployeeNotificationTypeEnum.TASK_DUE_REMINDER:
 				return 12;
+			case EmployeeNotificationTypeEnum.BOARD_SHARE:
+				return 13;
+			case EmployeeNotificationTypeEnum.BOARD_MENTION:
+				return 14;
 			default:
 				throw new Error(`Unsupported notification type: ${value}`);
 		}
@@ -79,6 +83,10 @@ export class EmployeeNotificationTypeTransformer implements ValueTransformer {
 				return EmployeeNotificationTypeEnum.MEETING;
 			case 12:
 				return EmployeeNotificationTypeEnum.TASK_DUE_REMINDER;
+			case 13:
+				return EmployeeNotificationTypeEnum.BOARD_SHARE;
+			case 14:
+				return EmployeeNotificationTypeEnum.BOARD_MENTION;
 			default:
 				throw new Error(`Unknown notification type value: ${value}`);
 		}
