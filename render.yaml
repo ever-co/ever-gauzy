@@ -43,7 +43,7 @@ services:
           - key: JWT_VERIFICATION_TOKEN_SECRET
             generateValue: true
           - key: JWT_REFRESH_TOKEN_EXPIRATION_TIME
-            value: 86400
+            value: 604800
           - key: ALLOWED_ORIGINS
             value: https://ever-gauzy-webapp.onrender.com
       healthCheckPath: /api/health
