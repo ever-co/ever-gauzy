@@ -300,14 +300,165 @@ function viewportSize(): { width: number; height: number } {
 										}
 									}
 									@default {
-										<div class="state home" data-test="pick">
-											<span class="state-icon accent"><nb-icon icon="message-circle-outline"></nb-icon></span>
-											<h3>{{ 'CHAT.VIEW.HOME_TITLE' | translate }}</h3>
-											<p>{{ 'CHAT.VIEW.PICK' | translate }}</p>
-											<div class="home-actions">
-												<button type="button" class="button primary" (click)="openNewChannel()"><nb-icon icon="hash-outline"></nb-icon> {{ 'CHAT.LIST.NEW_CHANNEL' | translate }}</button>
-												<button type="button" class="button" (click)="openNewDirect()"><nb-icon icon="edit-2-outline"></nb-icon> {{ 'CHAT.LIST.NEW_MESSAGE' | translate }}</button>
-												<button type="button" class="button" (click)="openBrowse()"><nb-icon icon="search-outline"></nb-icon> {{ 'CHAT.LIST.BROWSE' | translate }}</button>
+										<div class="welcome" data-test="pick">
+											<div class="welcome-inner">
+												<header class="welcome-head">
+													<h3>{{ 'CHAT.VIEW.HOME_TITLE' | translate }}</h3>
+													<p>{{ 'CHAT.VIEW.PICK' | translate }}</p>
+												</header>
+
+												<div class="tiles">
+													<!-- Channels: the wide tile, text on the left and a channel window on the right. -->
+													<section class="tile wide">
+														<div class="tile-inner">
+															<div class="tile-text">
+																<h4>{{ 'CHAT.LIST.CHANNELS' | translate }}</h4>
+																<p>{{ 'CHAT.WELCOME.CHANNELS_TEXT' | translate }}</p>
+																<div class="tile-cta">
+																	<button type="button" class="button primary" (click)="openNewChannel()"><nb-icon icon="hash-outline"></nb-icon> {{ 'CHAT.LIST.NEW_CHANNEL' | translate }}</button>
+																	<p class="kinds">
+																		<span>{{ 'CHAT.WELCOME.CHANNELS_KINDS' | translate }}</span>
+																		<strong><nb-icon icon="hash-outline"></nb-icon> {{ 'CHAT.WELCOME.PUBLIC' | translate }}</strong>
+																		<strong><nb-icon icon="lock-outline"></nb-icon> {{ 'CHAT.LIST.PRIVATE' | translate }}</strong>
+																	</p>
+																</div>
+															</div>
+															<div class="tile-art dotted" aria-hidden="true">
+																<div class="mock window">
+																	<div class="mock-bar">
+																		<nb-icon icon="hash-outline"></nb-icon>
+																		<i class="line w30"></i>
+																		<span class="spacer"></span>
+																		<nb-icon icon="minus-outline"></nb-icon>
+																		<nb-icon icon="close-outline"></nb-icon>
+																	</div>
+																	<div class="mock-body">
+																		@for (row of mockRows; track $index) {
+																			<div class="mock-message">
+																				<span class="dot" [attr.data-tone]="row.tone"></span>
+																				<span class="mock-lines">
+																					<span class="name-row"><i class="line strong" [style.width.%]="row.name"></i><i class="line time"></i></span>
+																					<i class="line" [style.width.%]="row.text"></i>
+																				</span>
+																			</div>
+																		}
+																		@if (channelSent()) {
+																			<div class="mock-message is-new">
+																				<span class="dot" [attr.data-tone]="mockSent.tone"></span>
+																				<span class="mock-lines">
+																					<span class="name-row"><i class="line strong" [style.width.%]="mockSent.name"></i><i class="line time"></i></span>
+																					<i class="line" [style.width.%]="mockSent.text"></i>
+																				</span>
+																			</div>
+																		}
+																	</div>
+																	<div class="mock-composer" [class.is-focused]="channelTyping()">
+																		@if (channelTyping()) {
+																			<span class="draft"><i class="line"></i><span class="caret"></span></span>
+																		} @else {
+																			<i class="line faint w40"></i>
+																		}
+																		<span class="send" [class.is-pressed]="channelCursor().press && channelCursor().at === 'send'"><nb-icon icon="paper-plane-outline"></nb-icon></span>
+																	</div>
+																	<!-- The "You" cursor; its step comes from the welcome loop. -->
+																	<span class="cursor" [attr.data-at]="channelCursor().at" [class.is-pressing]="channelCursor().press">
+																		<svg class="cursor-arrow" viewBox="0 0 20 20"><path d="M3 2.5 16.5 9l-5.75 1.75L8 16.5Z" /></svg>
+																		<span class="cursor-label">{{ 'CHAT.WELCOME.YOU' | translate }}</span>
+																	</span>
+																</div>
+															</div>
+														</div>
+													</section>
+
+													<!-- Direct messages. -->
+													<section class="tile">
+														<div class="tile-inner">
+															<div class="tile-text">
+																<h4>{{ 'CHAT.LIST.DIRECT' | translate }}</h4>
+																<p>{{ 'CHAT.WELCOME.DIRECT_TEXT' | translate }}</p>
+															</div>
+															<div class="tile-row">
+																<nb-icon icon="people-outline"></nb-icon>
+																<span>{{ 'CHAT.WELCOME.DIRECT_LABEL' | translate }}</span>
+																<button type="button" class="button" (click)="openNewDirect()">{{ 'CHAT.LIST.NEW_MESSAGE' | translate }}</button>
+															</div>
+															<div class="tile-art bottom" aria-hidden="true">
+																<!-- Messages as in Slack or Discord: avatar, name and time, then the text; a follow-up from the same person has no avatar. -->
+																<div class="mock direct">
+																	@for (row of mockDirect; track $index) {
+																		<div class="mock-message" [class.follow-up]="!row.name">
+																			@if (row.name) {
+																				<span class="dot" [attr.data-tone]="row.tone"></span>
+																			}
+																			<span class="mock-lines">
+																				@if (row.name) {
+																					<span class="name-row"><i class="line strong" [style.width.%]="row.name"></i><i class="line time"></i></span>
+																				}
+																				@for (width of row.lines; track $index) {
+																					<i class="line" [style.width.%]="width"></i>
+																				}
+																			</span>
+																		</div>
+																	}
+																	@if (directTyping()) {
+																		<div class="mock-message typing">
+																			<span class="dot" [attr.data-tone]="mockReply.tone"></span>
+																			<span class="typing-dots"><span></span><span></span><span></span></span>
+																		</div>
+																	}
+																	@if (directReplied()) {
+																		<div class="mock-message is-new">
+																			<span class="dot" [attr.data-tone]="mockReply.tone"></span>
+																			<span class="mock-lines">
+																				<span class="name-row"><i class="line strong" [style.width.%]="mockReply.name"></i><i class="line time"></i></span>
+																				@for (width of mockReply.lines; track $index) {
+																					<i class="line" [style.width.%]="width"></i>
+																				}
+																			</span>
+																		</div>
+																	}
+																</div>
+															</div>
+														</div>
+													</section>
+
+													<!-- Browse channels. -->
+													<section class="tile">
+														<div class="tile-inner">
+															<div class="tile-text">
+																<h4>{{ 'CHAT.LIST.BROWSE' | translate }}</h4>
+																<p>{{ 'CHAT.WELCOME.BROWSE_TEXT' | translate }}</p>
+															</div>
+															<div class="tile-row">
+																<nb-icon icon="search-outline"></nb-icon>
+																<span>{{ 'CHAT.WELCOME.BROWSE_LABEL' | translate }}</span>
+																<button type="button" class="button" (click)="openBrowse()">{{ 'CHAT.WELCOME.OPEN' | translate }} <nb-icon icon="arrow-forward-outline"></nb-icon></button>
+															</div>
+															<div class="tile-art bottom" aria-hidden="true">
+																<div class="mock list">
+																	<div class="mock-search"><nb-icon icon="search-outline"></nb-icon><i class="line w40"></i></div>
+																	@for (width of mockChannels; track $index; let i = $index) {
+																		<!-- The second channel is the one the cursor joins. -->
+																		<div class="mock-channel" [class.is-hovered]="i === 1 && browseCursor().at === 'join'">
+																			<nb-icon icon="hash-outline"></nb-icon>
+																			<i class="line strong" [style.width.%]="width"></i>
+																			<span class="spacer"></span>
+																			<span class="pill" [class.is-joined]="i === 1 && browseJoined()" [class.is-pressed]="i === 1 && !!browseCursor().press">
+																				@if (i === 1 && browseJoined()) {
+																					<nb-icon icon="checkmark-outline"></nb-icon>
+																				}
+																			</span>
+																		</div>
+																	}
+																	<span class="cursor" [attr.data-at]="browseCursor().at" [class.is-pressing]="browseCursor().press">
+																		<svg class="cursor-arrow" viewBox="0 0 20 20"><path d="M3 2.5 16.5 9l-5.75 1.75L8 16.5Z" /></svg>
+																		<span class="cursor-label">{{ 'CHAT.WELCOME.YOU' | translate }}</span>
+																	</span>
+																</div>
+															</div>
+														</div>
+													</section>
+												</div>
 											</div>
 										</div>
 									}
