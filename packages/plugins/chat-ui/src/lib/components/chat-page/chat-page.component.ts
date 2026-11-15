@@ -712,9 +712,6 @@ function viewportSize(): { width: number; height: number } {
 			.state-icon.danger {
 				color: var(--chat-danger);
 			}
-			.state-icon.success {
-				color: var(--color-success-default, #00b887);
-			}
 			/*
 			 * The welcome screen (no conversation open), laid out like the Downloads page: a centred headline,
 			 * then tiles in a double frame (an outer ring around the card), the wide one with its text on the
@@ -845,7 +842,8 @@ function viewportSize(): { width: number; height: number } {
 			.tile-row .button {
 				flex: 0 0 auto;
 			}
-			.welcome .button {
+			.welcome .button,
+			.item-tile .button {
 				gap: 0.5rem;
 				height: 2.5rem;
 				padding: 0 1.125rem;
@@ -854,7 +852,8 @@ function viewportSize(): { width: number; height: number } {
 				font-size: 0.9375rem;
 				font-weight: 500;
 			}
-			.welcome .button:hover:not(:disabled) {
+			.welcome .button:hover:not(:disabled),
+			.item-tile .button:hover:not(:disabled) {
 				background: var(--chat-active-tint);
 			}
 			.welcome .button.primary {
@@ -866,7 +865,8 @@ function viewportSize(): { width: number; height: number } {
 				filter: none;
 				opacity: 0.88;
 			}
-			.welcome .button:focus-visible {
+			.welcome .button:focus-visible,
+			.item-tile .button:focus-visible {
 				outline: 2px solid var(--chat-accent);
 				outline-offset: 2px;
 			}
@@ -1400,9 +1400,16 @@ function viewportSize(): { width: number; height: number } {
 				opacity: 0.5;
 				cursor: default;
 			}
+			/* Unreads and Threads follow the welcome screen: soft buttons, medium weights, the rows in a centred column. */
 			.simple-header .button {
-				height: 1.875rem;
-				font-size: 0.75rem;
+				height: 2rem;
+				border-color: transparent;
+				background: var(--chat-hover);
+				font-size: 0.8125rem;
+				font-weight: 500;
+			}
+			.simple-header .button:hover:not(:disabled) {
+				background: var(--chat-active-tint);
 			}
 			.simple {
 				display: flex;
@@ -1431,7 +1438,7 @@ function viewportSize(): { width: number; height: number } {
 				margin: 0;
 				color: var(--chat-text);
 				font-size: 0.9375rem;
-				font-weight: 800;
+				font-weight: 600;
 			}
 			.icon-button {
 				display: inline-flex;
@@ -1450,43 +1457,116 @@ function viewportSize(): { width: number; height: number } {
 				display: none;
 				margin-left: -0.5rem;
 			}
-			.rows {
-				display: flex;
-				flex-direction: column;
-				gap: 0.5rem;
+			/*
+			 * Unreads and Threads, laid out like the Downloads page: under the top bar (which names the page), a grid of
+			 * framed tiles (the welcome tiles' ring, without the glow), one per conversation or thread: a title with its
+			 * time, a short description, and an action row pinned to the bottom so the rows of a grid line up.
+			 */
+			.simple-scroll {
 				flex: 1 1 auto;
 				min-height: 0;
 				overflow-y: auto;
-				margin: 0;
-				padding: 1rem 1.25rem;
-				list-style: none;
+				container-type: inline-size;
 			}
-			/* Bootstrap's global .card stacks its content (flex-direction: column): these cards are one line. */
-			.card {
+			.simple-inner {
+				max-width: 64rem;
+				margin: 0 auto;
+				padding: 2rem 2rem 2.5rem;
+			}
+			.item-tiles {
+				display: grid;
+				grid-template-columns: repeat(2, minmax(0, 1fr));
+				gap: 1.25rem;
+			}
+			/* A shade off the page, toward the text colour: a little lighter on dark themes, a little darker on light ones. */
+			.item-tile .tile-inner,
+			.empty-tile .tile-inner {
+				background: color-mix(in srgb, var(--chat-text) 3.5%, var(--chat-bg));
+			}
+			.item-tile .tile-inner {
+				min-height: 0;
+				padding: 2rem 2.25rem;
+			}
+			.tile.wide.empty-tile .tile-inner {
+				min-height: 17rem;
+			}
+			.mock-rows {
 				display: flex;
-				flex-direction: row;
-				min-width: 0;
+				flex-direction: column;
+				gap: 0.25rem;
+				padding: 0.75rem 0.75rem 1.25rem;
+			}
+			.mock-rows.thread {
+				gap: 1rem;
+				padding: 1.25rem 1rem 1.5rem;
+			}
+			.mock-channel .read {
+				color: var(--color-success-default, #00b887);
+			}
+			/* The thread under a message, lined up with its text: the repliers' small avatars and the replies link. */
+			.mock-thread {
+				display: flex;
 				align-items: center;
-				gap: 0.875rem;
-				padding: 0.75rem 1rem;
-				border: 1px solid var(--chat-border);
-				border-radius: 0.625rem;
-				background: var(--chat-bg);
-				color: inherit;
-				text-decoration: none;
-				transition: background-color 0.1s ease, border-color 0.1s ease, box-shadow 0.1s ease;
+				gap: 0.375rem;
+				margin-top: -0.5rem;
+				padding-inline-start: 2.5rem;
 			}
-			.card:hover {
-				border-color: var(--chat-border-strong);
-				background: var(--chat-message-hover);
-				box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.06);
-				text-decoration: none;
+			.dot.mini {
+				width: 1rem;
+				height: 1rem;
+				border-radius: 0.3125rem;
 			}
-			.card.thread-card {
-				align-items: flex-start;
+			.line.accent {
+				margin-inline-start: 0.25rem;
+				background: var(--chat-accent);
 			}
-			.card.thread-card.unread {
-				box-shadow: inset 3px 0 0 var(--chat-accent);
+			.item-head {
+				display: flex;
+				align-items: baseline;
+				gap: 1rem;
+			}
+			.item-head h4 {
+				flex: 1 1 auto;
+				min-width: 0;
+				margin: 0;
+				overflow: hidden;
+				color: var(--chat-text);
+				font-size: 1.25rem;
+				font-weight: 600;
+				line-height: 1.3;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+			}
+			.item-head time {
+				flex: 0 0 auto;
+				color: var(--chat-muted);
+				font-size: 0.8125rem;
+			}
+			.item-text {
+				margin: 0.5rem 0 0;
+				color: var(--chat-muted);
+				font-size: 0.9375rem;
+				line-height: 1.6;
+				overflow-wrap: anywhere;
+			}
+			.item-text.clamp {
+				overflow: hidden;
+				display: -webkit-box;
+				-webkit-line-clamp: 2;
+				-webkit-box-orient: vertical;
+			}
+			.item-tile .tile-row {
+				margin: auto 0 0;
+				padding-top: 1.75rem;
+			}
+			.item-tile .tile-row > .card-icon {
+				flex: 0 0 auto;
+			}
+			.row-label {
+				display: inline-flex;
+				flex-wrap: wrap;
+				align-items: center;
+				gap: 0.5rem;
 			}
 			.card-icon {
 				display: inline-flex;
@@ -1502,51 +1582,16 @@ function viewportSize(): { width: number; height: number } {
 			.card-icon nb-icon {
 				font-size: 1.125rem;
 			}
-			.card-main {
-				display: flex;
-				flex-direction: column;
-				gap: 0.125rem;
-				flex: 1 1 auto;
-				min-width: 0;
-			}
-			.card-main strong {
-				color: var(--chat-text);
-				font-size: 0.8125rem;
-				font-weight: 800;
-			}
-			.card-main time,
-			.thread-meta {
-				color: var(--chat-muted);
-				font-size: 0.6875rem;
-			}
-			.thread-meta {
-				display: flex;
-				gap: 0.5rem;
-				margin-top: 0.25rem;
-			}
-			.replies {
-				color: var(--chat-link);
-				font-weight: 700;
-			}
-			.preview {
-				overflow: hidden;
-				display: -webkit-box;
-				-webkit-line-clamp: 2;
-				-webkit-box-orient: vertical;
-				color: var(--chat-text);
-				font-size: 0.8125rem;
-				line-height: 1.4;
-			}
-			.meta {
-				display: flex;
-				align-items: center;
-				gap: 0.375rem;
-				flex: 0 0 auto;
-				align-self: center;
-			}
-			.go {
-				color: var(--chat-muted);
-				font-size: 1rem;
+			@container (max-width: 40rem) {
+				.simple-inner {
+					padding: 2rem 1rem;
+				}
+				.item-tiles {
+					grid-template-columns: minmax(0, 1fr);
+				}
+				.item-tile .tile-inner {
+					padding: 1.5rem;
+				}
 			}
 			.count {
 				min-width: 1.375rem;
@@ -1556,7 +1601,7 @@ function viewportSize(): { width: number; height: number } {
 				background: var(--chat-active-tint);
 				color: var(--chat-text);
 				font-size: 0.6875rem;
-				font-weight: 800;
+				font-weight: 600;
 				line-height: 1.25rem;
 				text-align: center;
 				white-space: nowrap;
@@ -1564,20 +1609,6 @@ function viewportSize(): { width: number; height: number } {
 			.count.mention {
 				background: var(--chat-danger);
 				color: var(--chat-on-accent);
-			}
-			.caught-up {
-				display: flex;
-				flex-direction: column;
-				align-items: center;
-				gap: 0.75rem;
-				padding: 3rem 1rem;
-				text-align: center;
-			}
-			.caught-up p {
-				max-width: 24rem;
-				margin: 0;
-				color: var(--chat-muted);
-				font-size: 0.8125rem;
 			}
 			@media (max-width: 1200px) {
 				.panes.with-thread {
@@ -1607,8 +1638,8 @@ function viewportSize(): { width: number; height: number } {
 				}
 			}
 			@media (max-width: 600px) {
-				.rows {
-					padding: 0.75rem;
+				.welcome-head {
+					margin-bottom: 1.5rem;
 				}
 				.simple-header {
 					padding-left: 0.75rem;
