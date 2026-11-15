@@ -33918,6 +33918,13 @@ type Organization {
   restrictTrackingSwitchToHigherRoles: Boolean!
 
   """
+  Whether a private project (`public` false) is kept to its members and managers and to those who hold
+  `ACCESS_PRIVATE_PROJECTS`: no project read answers it to anyone else. A project whose `public` is unset counts as
+  public. Off by default: every project of the organization is listed to whoever may view projects.
+  """
+  enforcePrivateProjects: Boolean!
+
+  """
   Whether time logs keep the rates they were recorded at: a rate change without a day then prices only the time
   recorded from then on. Off when null, as before the setting: a rate change prices all the time already tracked.
   """
