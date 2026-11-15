@@ -2088,10 +2088,10 @@ export class TimerService {
 	/**
 	 * Stops a run replaced by another at the given time, as an explicit stop at that time would.
 	 *
-	 * When the update fails, the log is read back. The update writes the stop before its later steps, so a log that no
-	 * longer runs was stopped and a later step failed. Those steps run again safely from what was written: the web
-	 * timer's time slots are created only where missing and linked to the stopped range, the timesheet and worked hours
-	 * are recomputed. So the update is sent once more to complete them, given the log as it was before the first try:
+	 * When the update fails, the log is read back. The update writes the stop after the time slots of its range and
+	 * before its later steps (#11889), so a log that no longer runs was stopped with its slots and a later step failed.
+	 * Those steps run again safely from what was written: the time slots are created only where missing and linked to
+	 * the stopped range, the timesheet and worked hours are recomputed. So the update is sent once more to complete them, given the log as it was before the first try:
 	 * the update plans the release of the slots past an end it moves back from the range it is given, and the stored
 	 * range is already the new one. If the second try fails too, the log keeps its stop, as
 	 * `ScheduleTimeLogEntriesCommand` only stops logs still running, and the warning says what may be missing. A log
@@ -2482,8 +2482,9 @@ export class TimerService {
 	}
 
 	/**
-	 * The log as stored after a failed stop, when it no longer runs: the update writes the stop before its later
-	 * steps, so a failure after that write still stopped it. Undefined when it still runs or cannot be read.
+	 * The log as stored after a failed stop, when it no longer runs: the update writes the stop after the time slots of
+	 * its range and before its later steps (#11889), so a failure after that write still stopped it, and one before it
+	 * left the run running. Undefined when it still runs or cannot be read.
 	 */
 	private async storedStoppedLog(timeLogId: ID, tenantId: ID): Promise<ITimeLog | undefined> {
 		try {
