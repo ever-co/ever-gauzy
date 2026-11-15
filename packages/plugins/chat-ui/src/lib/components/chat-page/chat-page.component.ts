@@ -642,22 +642,659 @@ function viewportSize(): { width: number; height: number } {
 			.state-icon nb-icon {
 				font-size: 1.625rem;
 			}
-			.state-icon.accent {
-				background: var(--chat-accent-soft);
-				color: var(--chat-accent);
-			}
 			.state-icon.danger {
 				color: var(--chat-danger);
 			}
 			.state-icon.success {
 				color: var(--color-success-default, #00b887);
 			}
-			.home-actions {
+			/*
+			 * The welcome screen (no conversation open), laid out like the Downloads page: a centred headline,
+			 * then tiles in a double frame (an outer ring around the card), the wide one with its text on the
+			 * left and a sketch of a channel on the right, two half-width ones with an action row and a sketch
+			 * at the bottom. A faint accent glow rises from the bottom of each card; the sketches are drawn with
+			 * the theme's tints, so the screen follows the light and the dark themes.
+			 */
+			.welcome {
+				height: 100%;
+				overflow-y: auto;
+				container-type: inline-size;
+			}
+			.welcome-inner {
+				max-width: 64rem;
+				margin: 0 auto;
+				padding: 3rem 2rem 2.5rem;
+			}
+			.welcome-head {
+				margin-bottom: 2.25rem;
+				text-align: center;
+			}
+			.welcome-head h3 {
+				margin: 0;
+				color: var(--chat-text);
+				font-size: clamp(1.625rem, 1.2rem + 1.6vw, 2.5rem);
+				font-weight: 500;
+				line-height: 1.2;
+				letter-spacing: -0.015em;
+			}
+			.welcome-head p {
+				margin: 0.625rem 0 0;
+				color: var(--chat-muted);
+				font-size: 0.9375rem;
+			}
+			.tiles {
+				display: grid;
+				grid-template-columns: repeat(2, minmax(0, 1fr));
+				gap: 1.25rem;
+			}
+			.tile {
+				padding: 0.375rem;
+				border: 1px solid var(--chat-border);
+				border-radius: 1.5rem;
+			}
+			.tile.wide {
+				grid-column: 1 / -1;
+			}
+			.tile-inner {
+				position: relative;
+				display: flex;
+				flex-direction: column;
+				height: 100%;
+				min-height: 22rem;
+				overflow: hidden;
+				border: 1px solid var(--chat-border);
+				border-radius: 1.125rem;
+				background: radial-gradient(130% 70% at 0% 100%, var(--chat-accent-soft-2), transparent 70%), var(--chat-sidebar-bg);
+			}
+			.tile.wide .tile-inner {
+				display: grid;
+				grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+				min-height: 21rem;
+			}
+			.tile-text {
+				display: flex;
+				flex-direction: column;
+				padding: 2.25rem 2.25rem 0;
+			}
+			.tile.wide .tile-text {
+				padding-bottom: 2.25rem;
+			}
+			.tile-text h4 {
+				margin: 0;
+				color: var(--chat-text);
+				font-size: 1.25rem;
+				font-weight: 600;
+				line-height: 1.3;
+			}
+			.tile-text p {
+				max-width: 34rem;
+				margin: 0.5rem 0 0;
+				color: var(--chat-muted);
+				font-size: 0.9375rem;
+				line-height: 1.6;
+			}
+			.tile-cta {
+				display: flex;
+				flex-direction: column;
+				align-items: flex-start;
+				gap: 1.25rem;
+				margin-top: auto;
+				padding-top: 2rem;
+			}
+			.tile-text p.kinds {
 				display: flex;
 				flex-wrap: wrap;
-				justify-content: center;
+				align-items: center;
+				gap: 0.5rem 1rem;
+				margin: 0;
+				font-size: 0.875rem;
+			}
+			.kinds strong {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.25rem;
+				color: var(--chat-text);
+				font-weight: 500;
+			}
+			.kinds nb-icon {
+				font-size: 1rem;
+			}
+			.tile-row {
+				display: flex;
+				align-items: center;
+				gap: 0.75rem;
+				margin: 1.75rem 2.25rem 0;
+				color: var(--chat-text);
+				font-size: 0.9375rem;
+				font-weight: 500;
+			}
+			.tile-row > nb-icon {
+				font-size: 1.25rem;
+			}
+			.tile-row > span {
+				flex: 1 1 auto;
+				min-width: 0;
+			}
+			.tile-row .button {
+				flex: 0 0 auto;
+			}
+			.welcome .button {
 				gap: 0.5rem;
-				margin-top: 1rem;
+				height: 2.5rem;
+				padding: 0 1.125rem;
+				border-color: transparent;
+				background: var(--chat-hover);
+				font-size: 0.9375rem;
+				font-weight: 500;
+			}
+			.welcome .button:hover:not(:disabled) {
+				background: var(--chat-active-tint);
+			}
+			.welcome .button.primary {
+				background: var(--chat-text);
+				color: var(--chat-bg);
+			}
+			.welcome .button.primary:hover:not(:disabled) {
+				background: var(--chat-text);
+				filter: none;
+				opacity: 0.88;
+			}
+			.welcome .button:focus-visible {
+				outline: 2px solid var(--chat-accent);
+				outline-offset: 2px;
+			}
+
+			/* The sketches: lines and dots in the theme's tints, nothing to read. */
+			.tile-art {
+				position: relative;
+				display: flex;
+				justify-content: center;
+				min-width: 0;
+				pointer-events: none;
+			}
+			.tile-art.dotted {
+				align-items: flex-end;
+				padding: 2.75rem 2.5rem 0;
+				background-image: radial-gradient(var(--chat-border-strong) 1px, transparent 1.5px);
+				background-size: 1.125rem 1.125rem;
+				background-position: center;
+			}
+			.tile-art.bottom {
+				flex: 1 1 auto;
+				align-items: flex-end;
+				margin-top: 2.5rem;
+				padding: 0 2.25rem;
+			}
+			.mock {
+				width: 100%;
+				max-width: 22rem;
+				border: 1px solid var(--chat-border-strong);
+				background: var(--chat-bg);
+				box-shadow: 0 1.25rem 2.5rem rgba(0, 0, 0, 0.18);
+			}
+			/* The drawings have fixed heights, so a message arriving scrolls the older ones up instead of growing the card. */
+			.mock.window {
+				position: relative;
+				margin-bottom: -1px;
+				border-radius: 0.875rem 0.875rem 0 0;
+				border-bottom: 0;
+			}
+			.mock.direct,
+			.mock.list {
+				position: relative;
+				height: 12.5rem;
+				border-bottom: 0;
+				border-radius: 1rem 1rem 0 0;
+			}
+			.mock-body,
+			.mock.direct {
+				justify-content: flex-end;
+				overflow: hidden;
+			}
+			/* The messages scrolling out at the top fade away. */
+			.mock-body {
+				-webkit-mask-image: linear-gradient(to bottom, transparent, #000 2.5rem);
+				mask-image: linear-gradient(to bottom, transparent, #000 2.5rem);
+			}
+			.mock.direct::before {
+				content: '';
+				position: absolute;
+				inset: 0 0 auto;
+				z-index: 1;
+				height: 2.5rem;
+				background: linear-gradient(var(--chat-bg), transparent);
+			}
+			.line {
+				display: block;
+				height: 0.5rem;
+				border-radius: 999px;
+				background: var(--chat-active-tint);
+			}
+			.line.strong {
+				height: 0.5625rem;
+				background: var(--chat-border-strong);
+			}
+			.w30 {
+				width: 30%;
+			}
+			.w35 {
+				width: 35%;
+			}
+			.w40 {
+				width: 40%;
+			}
+			.w45 {
+				width: 45%;
+			}
+			.w50 {
+				width: 50%;
+			}
+			.w60 {
+				width: 60%;
+			}
+			.w70 {
+				width: 70%;
+			}
+			.spacer {
+				flex: 1 1 auto;
+			}
+			.mock-bar {
+				display: flex;
+				align-items: center;
+				gap: 0.5rem;
+				padding: 0.75rem 1rem;
+				border-bottom: 1px solid var(--chat-border);
+				color: var(--chat-muted);
+			}
+			.mock-bar nb-icon {
+				font-size: 1rem;
+			}
+			.mock-bar > nb-icon:first-child {
+				color: var(--chat-text);
+			}
+			.mock-body {
+				display: flex;
+				flex-direction: column;
+				gap: 1.125rem;
+				height: 12.75rem;
+				padding: 1rem 1rem 1.25rem;
+			}
+			.mock-message {
+				display: flex;
+				align-items: flex-start;
+				gap: 0.75rem;
+			}
+			.dot {
+				width: 1.75rem;
+				height: 1.75rem;
+				flex: 0 0 auto;
+				border-radius: 0.5rem;
+				background: var(--chat-accent);
+			}
+			.dot[data-tone='2'] {
+				background: var(--color-success-default, #00b887);
+			}
+			.dot[data-tone='3'] {
+				background: var(--color-warning-default, #ffaa00);
+			}
+			.mock-lines {
+				display: flex;
+				flex-direction: column;
+				gap: 0.4375rem;
+				flex: 1 1 auto;
+				padding-top: 0.25rem;
+			}
+			.mock-composer {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				margin: 0 1rem 1rem;
+				padding: 0.5rem 0.5rem 0.5rem 0.875rem;
+				border: 1px solid var(--chat-border);
+				border-radius: 0.625rem;
+				transition: border-color 0.2s ease, box-shadow 0.2s ease;
+			}
+			.mock-composer.is-focused {
+				border-color: var(--chat-accent);
+				box-shadow: 0 0 0 3px var(--chat-accent-soft);
+			}
+			.line.faint {
+				opacity: 0.6;
+			}
+			/* What the cursor "types": a line that grows in steps, with a blinking caret after it. */
+			.draft {
+				display: flex;
+				align-items: center;
+				gap: 0.1875rem;
+				flex: 1 1 auto;
+				min-width: 0;
+			}
+			.draft .line {
+				width: 0;
+				background: var(--chat-border-strong);
+				animation: chat-welcome-type 2.6s steps(14, end) forwards;
+			}
+			.caret {
+				width: 2px;
+				height: 0.875rem;
+				flex: 0 0 auto;
+				border-radius: 1px;
+				background: var(--chat-accent);
+				animation: chat-welcome-blink 1s steps(1) infinite;
+			}
+			.send {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				width: 1.75rem;
+				height: 1.75rem;
+				border-radius: 0.5rem;
+				background: var(--chat-accent);
+				color: var(--chat-on-accent);
+			}
+			.send nb-icon {
+				font-size: 0.875rem;
+			}
+			.name-row {
+				display: flex;
+				align-items: center;
+				gap: 0.5rem;
+			}
+			.line.time {
+				width: 1.75rem;
+				height: 0.375rem;
+				flex: 0 0 auto;
+				opacity: 0.7;
+			}
+			.mock.direct {
+				display: flex;
+				flex-direction: column;
+				gap: 1rem;
+				padding: 1.25rem 1rem 1rem;
+			}
+			/* "Someone is typing": three dots bouncing one after another where their message will be. */
+			.mock-message.typing {
+				align-items: center;
+				animation: chat-welcome-rise 0.3s ease-out both;
+			}
+			.typing-dots {
+				display: inline-flex;
+				gap: 0.25rem;
+				padding: 0.5rem 0.625rem;
+				border-radius: 0.625rem;
+				background: var(--chat-elevated);
+			}
+			.typing-dots span {
+				width: 0.375rem;
+				height: 0.375rem;
+				border-radius: 50%;
+				background: var(--chat-muted);
+				animation: chat-welcome-bounce 1.1s ease-in-out infinite;
+			}
+			.typing-dots span:nth-child(2) {
+				animation-delay: 0.15s;
+			}
+			.typing-dots span:nth-child(3) {
+				animation-delay: 0.3s;
+			}
+			/* A message that just arrived rises in. */
+			.mock-message.is-new {
+				animation: chat-welcome-rise 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+			}
+			/* A follow-up lines up with the text above it: the avatar's width plus the gap. */
+			.mock-message.follow-up {
+				margin-top: -0.625rem;
+				padding-left: 2.5rem;
+			}
+			.mock-message.follow-up .mock-lines {
+				padding-top: 0;
+			}
+			.mock.list {
+				display: flex;
+				flex-direction: column;
+				gap: 0.25rem;
+				padding: 1rem 0.75rem;
+			}
+			.mock-search {
+				display: flex;
+				align-items: center;
+				gap: 0.5rem;
+				margin-bottom: 0.5rem;
+				padding: 0.5rem 0.75rem;
+				border: 1px solid var(--chat-border);
+				border-radius: 0.5rem;
+				color: var(--chat-muted);
+			}
+			.mock-channel {
+				display: flex;
+				align-items: center;
+				gap: 0.625rem;
+				padding: 0.5rem 0.5rem;
+				border-radius: 0.5rem;
+				color: var(--chat-muted);
+				transition: background-color 0.25s ease;
+			}
+			.mock-channel.is-hovered {
+				background: var(--chat-hover);
+			}
+			.mock-search nb-icon,
+			.mock-channel nb-icon {
+				font-size: 1rem;
+			}
+			.pill {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				width: 2.75rem;
+				height: 1.375rem;
+				border-radius: 0.375rem;
+				background: var(--chat-accent-soft-2);
+				transition: background-color 0.2s ease, color 0.2s ease;
+			}
+			.pill.is-joined {
+				background: var(--chat-accent);
+				color: var(--chat-on-accent);
+			}
+			.pill nb-icon {
+				font-size: 0.875rem;
+			}
+			.send.is-pressed,
+			.pill.is-pressed {
+				animation: chat-welcome-flash 0.7s ease-out;
+			}
+
+			/*
+			 * The "You" cursors, as on the Downloads page: the welcome loop sets each one's data-at (where it is) and
+			 * is-pressing (a click this second); it glides between spots and the clicked control answers with a ring.
+			 * Spots are measured from the drawings above (from the drawing's top and start edges).
+			 */
+			.cursor {
+				position: absolute;
+				z-index: 2;
+				top: 0;
+				inset-inline-start: 0;
+				display: flex;
+				align-items: flex-start;
+				pointer-events: none;
+				transition: inset-inline-start 0.9s cubic-bezier(0.65, 0, 0.35, 1), top 0.9s cubic-bezier(0.65, 0, 0.35, 1);
+			}
+			.cursor-arrow {
+				flex: 0 0 auto;
+				width: 1.125rem;
+				height: 1.125rem;
+				overflow: visible;
+				transform-origin: 3px 2.5px;
+				fill: var(--chat-accent);
+				stroke: var(--chat-on-accent);
+				stroke-width: 1.5;
+				stroke-linejoin: round;
+			}
+			.cursor-label {
+				margin-top: 0.875rem;
+				margin-inline-start: -0.25rem;
+				padding: 0.125rem 0.5rem;
+				border-radius: 0.375rem;
+				background: var(--chat-accent);
+				color: var(--chat-on-accent);
+				font-size: 0.6875rem;
+				font-weight: 600;
+				line-height: 1rem;
+				white-space: nowrap;
+				box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.2);
+			}
+			.cursor.is-pressing .cursor-arrow {
+				animation: chat-welcome-press 0.35s ease-out;
+			}
+			.window .cursor[data-at='list'] {
+				inset-inline-start: 64%;
+				top: 6.5rem;
+			}
+			.window .cursor[data-at='composer'] {
+				inset-inline-start: 34%;
+				top: 16.25rem;
+			}
+			.window .cursor[data-at='send'] {
+				inset-inline-start: calc(100% - 2.75rem);
+				top: 16.25rem;
+			}
+			.list .cursor[data-at='search'] {
+				inset-inline-start: 58%;
+				top: 1.875rem;
+			}
+			.list .cursor[data-at='join'] {
+				inset-inline-start: calc(100% - 2.875rem);
+				top: 7.375rem;
+			}
+
+			/* The page opening: the headline and the cards rise in one after another, the sketches' messages too. */
+			.welcome-head,
+			.tile {
+				animation: chat-welcome-rise 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+			}
+			.tile:nth-child(1) {
+				animation-delay: 0.06s;
+			}
+			.tile:nth-child(2) {
+				animation-delay: 0.14s;
+			}
+			.tile:nth-child(3) {
+				animation-delay: 0.22s;
+			}
+			.mock-body .mock-message,
+			.mock.direct .mock-message,
+			.mock-channel {
+				animation: chat-welcome-rise 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+				animation-delay: 0.4s;
+			}
+			/* (The channel list's first child is its search field, so its channels start at the second.) */
+			.mock-body .mock-message:nth-child(2),
+			.mock.direct .mock-message:nth-child(2),
+			.mock-channel:nth-child(3) {
+				animation-delay: 0.48s;
+			}
+			.mock-body .mock-message:nth-child(3),
+			.mock.direct .mock-message:nth-child(3),
+			.mock-channel:nth-child(4) {
+				animation-delay: 0.56s;
+			}
+			.mock-body .mock-message:nth-child(4),
+			.mock.direct .mock-message:nth-child(4),
+			.mock-channel:nth-child(5) {
+				animation-delay: 0.64s;
+			}
+			.mock-body .mock-message.is-new,
+			.mock.direct .mock-message.is-new,
+			.mock.direct .mock-message.typing {
+				animation-delay: 0s;
+			}
+			@keyframes chat-welcome-rise {
+				from {
+					opacity: 0;
+					transform: translateY(0.75rem);
+				}
+				to {
+					opacity: 1;
+					transform: none;
+				}
+			}
+			@keyframes chat-welcome-press {
+				40% {
+					transform: scale(0.8);
+				}
+				100% {
+					transform: scale(1);
+				}
+			}
+			@keyframes chat-welcome-flash {
+				0% {
+					box-shadow: 0 0 0 0 var(--chat-accent-soft-2);
+				}
+				30% {
+					box-shadow: 0 0 0 4px var(--chat-accent-soft-2);
+				}
+				100% {
+					box-shadow: 0 0 0 8px transparent;
+				}
+			}
+			@keyframes chat-welcome-type {
+				to {
+					width: 55%;
+				}
+			}
+			@keyframes chat-welcome-blink {
+				50% {
+					opacity: 0;
+				}
+			}
+			@keyframes chat-welcome-bounce {
+				0%,
+				60%,
+				100% {
+					transform: none;
+					opacity: 0.5;
+				}
+				30% {
+					transform: translateY(-0.25rem);
+					opacity: 1;
+				}
+			}
+			/* Less motion asked for: the still picture, with no entrances, typing or cursors (the loop does not run either). */
+			@media (prefers-reduced-motion: reduce) {
+				.welcome *,
+				.welcome-head,
+				.tile {
+					animation: none !important;
+					transition: none !important;
+				}
+				.cursor {
+					display: none;
+				}
+			}
+			@container (max-width: 44rem) {
+				.welcome-inner {
+					padding: 2rem 1rem;
+				}
+				.tiles {
+					grid-template-columns: minmax(0, 1fr);
+				}
+				.tile.wide .tile-inner {
+					grid-template-columns: minmax(0, 1fr);
+				}
+				.tile.wide .tile-text {
+					padding-bottom: 0;
+				}
+				.tile-art.dotted {
+					padding-top: 2rem;
+				}
+				.tile-text {
+					padding: 1.75rem 1.5rem 0;
+				}
+				.tile-row {
+					margin: 1.5rem 1.5rem 0;
+				}
+				.tile-art.bottom {
+					padding: 0 1.5rem;
+				}
 			}
 			.button {
 				display: inline-flex;
