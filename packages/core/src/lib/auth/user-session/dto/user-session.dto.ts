@@ -48,7 +48,7 @@ export class UserSessionResponseDTO implements IUserSession {
 
 	@ApiPropertyOptional({
 		type: () => String,
-		example: 'app.ever.team',
+		example: 'app.example.com',
 		description: "The web host the session was opened from, when a browser's request said it."
 	})
 	appOrigin?: string;

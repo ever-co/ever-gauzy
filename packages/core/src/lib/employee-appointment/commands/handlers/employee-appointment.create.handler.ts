@@ -2,11 +2,12 @@ import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import { EmployeeAppointmentService } from '../../employee-appointment.service';
 import { EmployeeAppointmentCreateCommand } from '../employee-appointment.create.command';
 import { EmployeeAppointment } from '../../employee-appointment.entity';
-import { LanguagesEnum } from '@gauzy/contracts';
+import { ID, LanguagesEnum } from '@gauzy/contracts';
 import { EmailService } from './../../../email-send/email.service';
 import { EmployeeService } from '../../../employee/employee.service';
 import { OrganizationService } from '../../../organization/organization.service';
 import { RequestContext } from '../../../core/context';
+import { MeetingNotificationService } from '../../meeting-notifications/meeting-notification.service';
 
 @CommandHandler(EmployeeAppointmentCreateCommand)
 export class EmployeeAppointmentCreateHandler
@@ -15,7 +16,8 @@ export class EmployeeAppointmentCreateHandler
 		private readonly employeeAppointmentService: EmployeeAppointmentService,
 		private readonly emailService: EmailService,
 		private readonly employeeService: EmployeeService,
-		private readonly organizationService: OrganizationService
+		private readonly organizationService: OrganizationService,
+		private readonly meetingNotifications: MeetingNotificationService
 	) { }
 
 	public async execute(
@@ -32,6 +34,18 @@ export class EmployeeAppointmentCreateHandler
 		const organization = await this.organizationService.findOneByIdString(
 			employeeAppointmentInput.organizationId
 		);
+		const tenantId = RequestContext.currentTenantId();
+
+		// The employees invited to the meeting (ever-co/ever-teams#5022): checked before anything is written, so a
+		// request naming someone outside the organization creates nothing
+		const inviteeIds: ID[] =
+			employeeAppointmentInput.inviteeEmployeeIds !== undefined
+				? await this.meetingNotifications.checkedInviteeIdsOf(
+					employeeAppointmentInput.inviteeEmployeeIds,
+					{ organizationId: organization?.id, tenantId },
+					employee?.id
+				)
+				: [];
 
 		appointment.employee = employee;
 		appointment.organization = organization;
@@ -49,7 +63,7 @@ export class EmployeeAppointmentCreateHandler
 		appointment.startDateTime = employeeAppointmentInput.startDateTime;
 		appointment.endDateTime = employeeAppointmentInput.endDateTime;
 		appointment.location = employeeAppointmentInput.location;
-		appointment.tenantId = RequestContext.currentTenantId();
+		appointment.tenantId = tenantId;
 
 		const createdAppointment = await this.employeeAppointmentService.create(
 			appointment
@@ -57,6 +71,22 @@ export class EmployeeAppointmentCreateHandler
 
 		if (appointment.emails) {
 			this._sendAppointmentEmail(appointment, languageCode);
+		}
+
+		if (inviteeIds.length) {
+			const meeting = {
+				id: createdAppointment.id,
+				tenantId: createdAppointment.tenantId ?? tenantId,
+				organizationId: createdAppointment.organizationId ?? organization?.id,
+				employeeId: createdAppointment.employeeId ?? employee?.id ?? null,
+				agenda: createdAppointment.agenda,
+				startDateTime: createdAppointment.startDateTime,
+				endDateTime: createdAppointment.endDateTime
+			};
+			await this.meetingNotifications.replaceInvitees(meeting, inviteeIds);
+			await this.meetingNotifications.notify('invited', meeting, inviteeIds, {
+				sentByEmployeeId: RequestContext.currentEmployeeId() ?? RequestContext.currentUser()?.employeeId ?? null
+			});
 		}
 
 		return createdAppointment;

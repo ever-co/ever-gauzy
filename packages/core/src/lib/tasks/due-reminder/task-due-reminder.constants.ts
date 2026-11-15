@@ -22,5 +22,8 @@ export const TASK_DUE_REMINDER_SWEEP_TIME_BUDGET_MS = 4 * 60 * 1000;
  */
 export const TASK_DUE_REMINDER_STALE_CLAIM_MS = 10 * 60 * 1000;
 
-/** How often an API without a queue sweeps in-process, as the queue's schedule does. */
+/**
+ * How often an API without a queue sweeps in-process, as the queue's schedule does; also the shortest window a reminder
+ * is looked for in, so a threshold shorter than the time between two sweeps is still met.
+ */
 export const TASK_DUE_REMINDER_INLINE_SWEEP_MS = 5 * 60 * 1000;

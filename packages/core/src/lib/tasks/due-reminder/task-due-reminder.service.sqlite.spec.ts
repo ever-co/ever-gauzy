@@ -72,7 +72,7 @@ describe('TaskDueReminderService on SQLite', () => {
 		await dataSource.query(`CREATE TABLE "tenant" ("id" varchar PRIMARY KEY NOT NULL)`);
 		await dataSource.query(`CREATE TABLE "organization" ("id" varchar PRIMARY KEY NOT NULL)`);
 		await dataSource.query(
-			`CREATE TABLE "user" ("id" varchar PRIMARY KEY NOT NULL, "timeZone" varchar, "deletedAt" datetime)`
+			`CREATE TABLE "user" ("id" varchar PRIMARY KEY NOT NULL, "timeZone" varchar, "lastTeamId" varchar, "deletedAt" datetime)`
 		);
 		await dataSource.query(
 			`CREATE TABLE "employee" ("id" varchar PRIMARY KEY NOT NULL, "tenantId" varchar, "organizationId" varchar, "userId" varchar, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "deletedAt" datetime)`
@@ -85,6 +85,12 @@ describe('TaskDueReminderService on SQLite', () => {
 		);
 		await dataSource.query(
 			`CREATE TABLE "task_employee" ("taskId" varchar NOT NULL, "employeeId" varchar NOT NULL)`
+		);
+		await dataSource.query(
+			`CREATE TABLE "organization_team" ("id" varchar PRIMARY KEY NOT NULL, "tenantId" varchar, "organizationId" varchar, "notificationDefaults" text, "isArchived" boolean DEFAULT (0), "deletedAt" datetime)`
+		);
+		await dataSource.query(
+			`CREATE TABLE "organization_team_employee" ("id" varchar PRIMARY KEY NOT NULL, "tenantId" varchar, "organizationTeamId" varchar, "employeeId" varchar, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "deletedAt" datetime)`
 		);
 		await dataSource.query(
 			`CREATE TABLE "employee_notification_setting" ("id" varchar PRIMARY KEY NOT NULL, "tenantId" varchar, "organizationId" varchar, "employeeId" varchar, "preferences" text, "deletedAt" datetime)`
@@ -251,6 +257,20 @@ describe('TaskDueReminderService on SQLite', () => {
 		]);
 	});
 
+	it('meets a threshold shorter than the time between two sweeps: its window is never shorter than that', async () => {
+		// 0.01 hours is 36 seconds: a task due in 3 minutes is inside no window of its own size at NOW
+		const minute = await employee({ preferences: { taskDueReminderHours: 0.01 } });
+		await task([minute], { dueDate: new Date(NOW.getTime() + 3 * 60_000) });
+		await task([await employee({ preferences: { taskDueReminderHours: 0.01 } })], {
+			dueDate: new Date(NOW.getTime() + 6 * 60_000),
+			title: 'Later'
+		});
+
+		await service.sweep(NOW);
+
+		expect(filed.map(({ input }) => input.receiverEmployeeId)).toEqual([minute]);
+	});
+
 	it("reads a due date that names a day in the assignee's zone: due once their day is over", async () => {
 		// Friday the 20th, saved as midnight UTC. At noon UTC on Thursday, Paris has 35 hours left and Los Angeles 44.
 		const friday = new Date('2026-11-20T00:00:00.000Z');
@@ -314,6 +334,27 @@ describe('TaskDueReminderService on SQLite', () => {
 		]);
 		expect(filed[0].contextTenantId).toBe(OTHER_TENANT);
 		expect(filed[0].contextOrganizationId).toBe(OTHER_ORGANIZATION);
+	});
+
+	it("follows the team's default threshold where the assignee chose none, and the assignee's own where they did", async () => {
+		const teamId = randomUUID();
+		await dataSource.query(
+			`INSERT INTO "organization_team" ("id", "tenantId", "organizationId", "notificationDefaults") VALUES (?, ?, ?, ?)`,
+			[teamId, TENANT, ORGANIZATION, JSON.stringify({ taskDueReminderHours: 48 })]
+		);
+		const choseNothing = await employee();
+		const ownTwoHours = await employee({ preferences: { taskDueReminderHours: 2 } });
+		for (const member of [choseNothing, ownTwoHours]) {
+			await dataSource.query(
+				`INSERT INTO "organization_team_employee" ("id", "tenantId", "organizationTeamId", "employeeId") VALUES (?, ?, ?, ?)`,
+				[randomUUID(), TENANT, teamId, member]
+			);
+		}
+		await task([choseNothing, ownTwoHours], { dueDate: inHours(30) });
+
+		await service.sweep(NOW);
+
+		expect(filed.map(({ input }) => input.receiverEmployeeId)).toEqual([choseNothing]);
 	});
 
 	it('reminds again of a due date moved since', async () => {

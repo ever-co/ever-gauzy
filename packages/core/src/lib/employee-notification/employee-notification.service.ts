@@ -28,6 +28,7 @@ import { EmployeeNotification } from './employee-notification.entity';
 import { TypeOrmEmployeeNotificationRepository } from './repository/type-orm-employee-notification.repository';
 import { MikroOrmEmployeeNotificationRepository } from './repository/mikro-orm-employee-notification.repository';
 import { generateNotificationTitle } from './employee-notification.helper';
+import { BoardInvitationDTO, boardInvitationsOf } from './board-invitation';
 
 /**
  * How long an unread notification absorbs an identical one (see `findRedeliveredNotification`).
@@ -222,6 +223,73 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 			receiverEmployeeId,
 			sentByEmployeeId: senderEmployeeId
 		});
+	}
+
+	/**
+	 * Invites the teammates a member picked to the Board they open from Ever Teams (ever-co/ever-teams#5022): each
+	 * active member of the team among them gets an `Invitation` about the team, filed as the caller. The caller must be
+	 * an employee and an active member of that team; teammates who are not are left out, and nobody is told twice: a
+	 * teammate who still has the same invitation unread in their Inbox is not given another one (see
+	 * {@link pendingBoardInvitationReceiversOf}), so opening Boards with the same teammates again and again, or retrying
+	 * a request that failed half-way, leaves each of them one entry.
+	 *
+	 * @returns How many teammates were invited (those whose earlier invitation is still unread included).
+	 * @throws ForbiddenException when the caller has no employee record or is no active member of the team.
+	 */
+	async inviteToBoard(input: BoardInvitationDTO): Promise<{ invited: number }> {
+		const user = RequestContext.currentUser();
+		const employeeId = RequestContext.currentEmployeeId() ?? user?.employeeId;
+		const tenantId = RequestContext.currentTenantId();
+		if (!employeeId || !tenantId) {
+			throw new ForbiddenException('Only an employee can invite teammates to a Board.');
+		}
+		const name = [user?.firstName, user?.lastName].filter((part) => part && part.trim()).join(' ') || user?.name || user?.email || '';
+		const invitations = await boardInvitationsOf(this.typeOrmRepository.manager.connection, input, { employeeId, name, tenantId });
+		const pending = await this.pendingBoardInvitationReceiversOf(invitations);
+		for (const invitation of invitations) {
+			if (pending.has(String(invitation.receiverEmployeeId))) {
+				continue;
+			}
+			await this.create(invitation);
+		}
+		return { invited: invitations.length };
+	}
+
+	/**
+	 * The receivers of these Board invitations (all about one team, from one sender) who still have the same invitation
+	 * unread and not archived: same type, team, sender and title. Best effort: when the check fails, every invitation is
+	 * filed, as before it existed.
+	 */
+	private async pendingBoardInvitationReceiversOf(invitations: IEmployeeNotificationCreateInput[]): Promise<Set<string>> {
+		const [first] = invitations;
+		if (!first) {
+			return new Set();
+		}
+		try {
+			const unread = await this.find({
+				where: {
+					type: first.type,
+					entity: first.entity,
+					entityId: first.entityId,
+					sentByEmployeeId: first.sentByEmployeeId,
+					receiverEmployeeId: In(invitations.map((invitation) => invitation.receiverEmployeeId)),
+					tenantId: first.tenantId,
+					organizationId: first.organizationId,
+					isRead: false,
+					isArchived: false
+				}
+			});
+			// The title is compared here: an invitation to join the same team from the same sender is another notification
+			return new Set(
+				unread
+					.filter((notification) => notification.title === first.title)
+					.map((notification) => String(notification.receiverEmployeeId))
+			);
+		} catch (error) {
+			// Redacted: a driver error carries the bound values (ids, the notification title) in its text.
+			this.logger.warn('Board invitation check failed, filing every invitation:', redactDatabaseError(error));
+			return new Set();
+		}
 	}
 
 	/**
@@ -603,6 +671,11 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 			// A client's answer to an estimate, for whoever handles invoices: no switch of its own, as for a rate
 			// change request; its email follows the per-kind email mode (`preferences.emailByType.Invoice`)
 			case EmployeeNotificationTypeEnum.INVOICE:
+				return true;
+			// A meeting the employee hosts or is invited to: no switch of its own, as for an invoice; its email and push follow
+			// the per-kind modes (`preferences.emailByType.Meeting`, `pushByType.Meeting`), and its reminder before the start
+			// follows `preferences.meetingReminderMinutes`
+			case EmployeeNotificationTypeEnum.MEETING:
 				return true;
 			// A task due soon: switched off through the `preferences` JSON (`taskDueReminderHours` null or 0).
 			case EmployeeNotificationTypeEnum.TASK_DUE_REMINDER:

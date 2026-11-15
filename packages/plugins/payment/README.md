@@ -86,3 +86,66 @@ one, creating a refund reason, and re-processing an inbound callback.
 `@gauzy/plugin-order` — a collection settles an order, and the order rows are
 read by the reconciliation that compares what was collected with what was
 ordered.
+
+## Invoices paid online
+
+A client who received an invoice by email opens it on its public page and pays it there
+(`src/lib/invoice-payment`). The organization connects a **payment connector**: a small service it runs next to
+the payment provider it already has, holding that provider's keys. The API never holds them and no card data
+reaches it.
+
+1. **Connect.** `PUT /api/invoice-payments/connection` with the connector's HTTPS `checkoutEndpoint`
+   (`PAYMENT_PROVIDERS_EDIT`) registers a provider of code `signed-checkout` and answers, once, the
+   `signingSecret` the connector signs with, and the `notificationUrl` it posts to.
+   `POST /api/invoice-payments/connection/rotate-secret` gives a new secret; the old one stops working at once.
+   The secret is derived from the API's `ENCRYPTION_KEY` (or `JWT_SECRET` when that is unset), never stored.
+2. **Checkout.** The public page asks `GET /api/public/invoice-payments/invoice/:id/:token` whether to offer
+   Pay, and `POST /api/public/invoice-payments/invoice/:id/:token/checkout` with its `returnUrl` opens a
+   checkout. These routes are the API's part: the Pay button is the Ever Teams public invoice page's (#11856), and
+   the Gauzy app's own public invoice view does not offer it yet. The `returnUrl` must be on a front end of this
+   deployment (`CLIENT_BASE_URL`, or an origin listed in `EMAIL_LINK_ALLOWED_ORIGINS`). The API posts to the
+   connector, signed:
+
+    ```json
+    {
+    	"reference": "<invoice id>",
+    	"invoiceNumber": 42,
+    	"amount": "120.50",
+    	"currency": "EUR",
+    	"returnUrl": "https://…",
+    	"isTestMode": false
+    }
+    ```
+
+    and the connector answers `{ "url": "https://…" }`, the provider's checkout page the client is sent to. The
+    amount is what is still due, computed by the API from the invoice and its payments, at the currency's precision
+    (the invoice's total rounded half up to its decimals: 2 for EUR, 0 for JPY, 3 for KWD).
+
+3. **Notification.** Once the provider confirms, the connector posts to the `notificationUrl`, signed:
+
+    ```json
+    {
+    	"id": "<notification id>",
+    	"type": "payment.succeeded",
+    	"data": {
+    		"reference": "<invoice id>",
+    		"paymentId": "<provider payment id>",
+    		"amount": "120.50",
+    		"currency": "EUR",
+    		"isTestMode": false
+    	}
+    }
+    ```
+
+    The API records the payment against the invoice (once per `paymentId`, which a success must carry) and sets
+    it Paid, Partially paid or Overpaid. `payment.failed` and `payment.canceled` change nothing. A payment taken in
+    test mode (`isTestMode` not `false`), or through a connector in test mode, is logged and never recorded. A
+    payment on a voided invoice is recorded for a refund and the invoice stays void. The `amount` is in the
+    invoice's currency and holds no fraction of its smallest unit. The payment is recorded as captured
+    (`authorizedAmount` = `capturedAmount` = `amount`), and the notification `id` is its `reference` when it fits
+    the column's 64 characters, and always its `metadata.notificationId`.
+
+Every message carries `x-gauzy-payment-timestamp` (Unix seconds) and
+`x-gauzy-payment-signature: hex(HMAC_SHA256(signingSecret, "<timestamp>.<raw body>"))`. A notification that is
+not signed with the connector's secret, or was signed more than five minutes ago, is refused before anything is
+written.

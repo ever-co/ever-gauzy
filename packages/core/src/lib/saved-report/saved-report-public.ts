@@ -14,6 +14,8 @@ import {
 	SAVED_REPORT_NO_CLIENT
 } from '@gauzy/contracts';
 import { currencyPrecision } from '../money/currency-precision';
+import { DefaultBillRate } from '../time-tracking/time-log/default-bill-rate';
+import { amountsOf, billedRateOf, PricedRate, totalsByCurrencyOf } from '../time-tracking/time-log/time-log-pricing';
 import { calculateBillableAmount } from '../time-tracking/time-log/time-log.utils';
 
 /** A member's billing rate, read when the link is opened, with the currency it is in. */
@@ -21,6 +23,17 @@ export interface ISavedReportRate {
 	billRateValue: number | null;
 	billRateCurrency: string | null;
 }
+
+/**
+ * What an entry's rate is completed with, as the report page and the budgets complete it: the organization's currency
+ * for a rate stated without one, and its default billing rate for an entry without a rate.
+ */
+export interface SavedReportEntryPricing {
+	organizationCurrency: string | null;
+	defaultRate: DefaultBillRate | null;
+}
+
+const NO_ENTRY_PRICING: SavedReportEntryPricing = { organizationCurrency: null, defaultRate: null };
 
 /** The client of each project of the report, as the project states it now; null for a project without a client. */
 export type ProjectClients = ReadonlyMap<ID, ID | null>;
@@ -184,22 +197,93 @@ function sharedRateOf(
 	return { billRateValue: null, billRateCurrency: null };
 }
 
+/** Whether a row of the daily report states the rate that prices its entry (every row of this API does). */
+function statesEntryRate(row: IReportDayTaskRow): boolean {
+	return 'billRateValue' in row;
+}
+
+/** A rate as the answer states it: a number, or null for none. */
+function stateRate(rate: PricedRate['rate']): number | null {
+	const isMissing = rate === null || rate === undefined || rate === '';
+	if (isMissing) {
+		return null;
+	}
+	return Number(rate);
+}
+
+/**
+ * The rate that prices an entry, as the report page prices its row: the rate the row states (the one its log stores,
+ * else the member's current rate, see `rateOfReportRow`), completed as `billedRateOf` completes it for the budgets.
+ * A row that states none is priced at the member's rate, as all time was before rates were stored.
+ */
+function entryRateOf(
+	row: IReportDayTaskRow,
+	memberRate: ISavedReportRate,
+	pricing: SavedReportEntryPricing
+): PricedRate {
+	if (!statesEntryRate(row)) {
+		return { rate: memberRate.billRateValue, currency: memberRate.billRateCurrency };
+	}
+	const statedLog = { ratesStored: true, billRateValue: row.billRateValue, billRateCurrency: row.billRateCurrency };
+	return billedRateOf(statedLog, pricing.organizationCurrency, pricing.defaultRate);
+}
+
+/** Amounts with a currency, as the answer states them. */
+function statedAmountsOf(
+	amounts: ReadonlyArray<{ currency: string | null; amount: number }>
+): IPublicSavedReportAmount[] {
+	return amounts
+		.filter((line): line is IPublicSavedReportAmount => !!line.currency)
+		.map(({ currency, amount }) => ({ currency, amount }));
+}
+
+/**
+ * What a member's time is worth when amounts are shared: each entry at the rate that prices it, summed per rate and
+ * currency and priced once per sum (`amountsOf`), as the API's other reports price time. Rows that state no rate are
+ * priced at the member's rate, rounded once to its currency, as an invoice line is.
+ */
+function pricedMemberLogOf(
+	publicLog: IPublicSavedReportMemberLog,
+	rows: ReadonlyArray<IReportDayTaskRow>,
+	memberRate: ISavedReportRate,
+	pricing: SavedReportEntryPricing
+): IPublicSavedReportMemberLog {
+	if (!rows.some(statesEntryRate)) {
+		const amount = amountOf(publicLog.sum, memberRate);
+		const amounts = statedAmountsOf(amount === null ? [] : [{ currency: memberRate.billRateCurrency, amount }]);
+		return { ...publicLog, amounts, amount };
+	}
+	const entries = rows.map((row) => ({
+		duration: secondsOf(row.duration),
+		...entryRateOf(row, memberRate, pricing)
+	}));
+	const tasks = publicLog.tasks.map((task, index) => ({
+		...task,
+		billRateValue: stateRate(entries[index].rate),
+		billRateCurrency: entries[index].currency
+	}));
+	const amounts = statedAmountsOf(amountsOf(entries, (entry) => entry));
+	const amount = amounts.length === 1 ? amounts[0].amount : null;
+	return { ...publicLog, tasks, amounts, amount };
+}
+
 /** One member's time on a project on a day. */
 function memberLogOf(
 	memberLog: MemberLog,
-	rates: ReadonlyMap<ID, ISavedReportRate> | null
+	rates: ReadonlyMap<ID, ISavedReportRate> | null,
+	pricing: SavedReportEntryPricing
 ): IPublicSavedReportMemberLog {
 	const rate = sharedRateOf(rates, memberLog.employee?.id);
-	const sum = secondsOf(memberLog.sum);
+	const rows = memberLog.tasks ?? [];
 	const publicLog: IPublicSavedReportMemberLog = {
 		employee: memberOf(memberLog.employee, rate),
-		sum,
-		tasks: (memberLog.tasks ?? []).map(taskOf)
+		sum: secondsOf(memberLog.sum),
+		tasks: rows.map(taskOf)
 	};
-	if (rate) {
-		publicLog.amount = amountOf(sum, rate);
+	if (!rate) {
+		return publicLog;
 	}
-	return publicLog;
+	return pricedMemberLogOf(publicLog, rows, rate, pricing);
 }
 
 /**
@@ -207,26 +291,32 @@ function memberLogOf(
  * and amounts appear only when `rates` is given, that is when the author included amounts. Activity, notes, e-mails and
  * pictures never do.
  *
+ * Each entry is then priced at the rate that prices its row on the report page (see `entryRateOf`), so a member whose
+ * rate changed since shows the amount the report page shows.
+ *
  * @param days The daily report, grouped by date.
  * @param rates Each member's rate, when the author included amounts; null otherwise.
+ * @param pricing The organization's currency and default billing rate, which complete an entry's rate.
  */
 export function publicDaysOf(
 	days: ReadonlyArray<IReportDayGroupByDate>,
-	rates: ReadonlyMap<ID, ISavedReportRate> | null
+	rates: ReadonlyMap<ID, ISavedReportRate> | null,
+	pricing: SavedReportEntryPricing = NO_ENTRY_PRICING
 ): IPublicSavedReportDay[] {
 	return days.map((day) => ({
 		date: day.date,
 		sum: daySecondsOf(day.logs ?? []),
 		logs: (day.logs ?? []).map((projectLog) => ({
 			project: projectOf(projectLog.project),
-			employeeLogs: (projectLog.employeeLogs ?? []).map((memberLog) => memberLogOf(memberLog, rates))
+			employeeLogs: (projectLog.employeeLogs ?? []).map((memberLog) => memberLogOf(memberLog, rates, pricing))
 		}))
 	}));
 }
 
 /**
- * The report's total time and, when amounts are shared, what it is worth per currency: amounts in different currencies
- * are never added. A member without a rate adds time and no amount.
+ * The report's total time and, when amounts are shared, what it is worth per currency: the amounts of its members,
+ * added exactly within a currency, and amounts in different currencies never added. Time without a rate adds time
+ * and no amount.
  *
  * @param days The days of the public answer.
  * @param includeAmounts Whether the author included amounts.
@@ -236,24 +326,19 @@ export function publicTotalsOf(
 	includeAmounts: boolean
 ): { duration: number; amounts?: IPublicSavedReportAmount[] } {
 	let duration = 0;
-	const byCurrency = new Map<string, number>();
+	const lines: IPublicSavedReportAmount[] = [];
 	for (const day of days) {
 		for (const projectLog of day.logs) {
 			for (const memberLog of projectLog.employeeLogs) {
 				duration += memberLog.sum;
-				const amount = memberLog.amount;
-				const currency = memberLog.employee.billRateCurrency;
-				const hasAmount = typeof amount === 'number' && !!currency;
-				if (hasAmount) {
-					byCurrency.set(currency, (byCurrency.get(currency) ?? 0) + amount);
-				}
+				lines.push(...(memberLog.amounts ?? []));
 			}
 		}
 	}
 	if (!includeAmounts) {
 		return { duration };
 	}
-	const amounts = [...byCurrency.entries()].map(([currency, amount]) => ({
+	const amounts = statedAmountsOf(totalsByCurrencyOf(lines)).map(({ currency, amount }) => ({
 		currency,
 		amount: roundedAmount(amount, currency)
 	}));
