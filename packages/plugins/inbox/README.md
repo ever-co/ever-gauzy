@@ -253,6 +253,11 @@ person's attention lands:
   (`packages/core/src/lib/time-tracking/timer-reminder/`), for a run started within the last week. It is filed unread.
   An open Ever Teams tab shows its own reminder and marks the notification read, and the email and push wait a few
   minutes for that mark (below), so the reminder does not reach the person twice.
+- **Tasks due soon.** With `GAUZY_TASK_DUE_REMINDERS_ENABLED=true` (off by default), each assignee of a task that is
+  due in less than their threshold (`preferences.taskDueReminderHours`, 24 by default, `null` or 0 for none) gets a
+  `TaskDueReminder` notification about the task, once per due date (`packages/core/src/lib/tasks/due-reminder/`),
+  unless the task is done, cancelled, archived or a draft. A due date saved as a day is due once that day is over in
+  the assignee's time zone.
 - **Done.** `PATCH /inbox/items/:id/state { isDone }` (and `markInboxItem`) marks an item done: it leaves the open
   tabs and is found in the `done` tab (`?tab=done`); `isDone: false` brings it back. Doing an item reads it. Column
   `inbox_item_recipient.doneAt` (migration `1791000005200`).

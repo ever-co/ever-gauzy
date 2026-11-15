@@ -166,6 +166,7 @@ export * from '../../tasks/sizes/size.entity';
 export * from '../../tasks/statuses/status.entity';
 export * from '../../tasks/screening-tasks/screening-task.entity';
 export * from '../../tasks/task.entity';
+export * from '../../tasks/due-reminder/task-due-reminder.entity';
 export * from '../../tasks/versions/version.entity';
 export * from '../../tasks/views/view.entity';
 export * from '../../tax-line/tax-line.entity';
