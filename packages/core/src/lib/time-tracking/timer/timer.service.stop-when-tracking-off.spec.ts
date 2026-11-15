@@ -98,7 +98,8 @@ describe('TimerService.stopRunningTimersOf', () => {
 			.mockResolvedValueOnce([runningLog])
 			.mockResolvedValueOnce([{ ...runningLog, isRunning: false }])
 			.mockResolvedValue([]);
-		execute.mockRejectedValueOnce(new Error('time slots failed'));
+		// A step after the stop's write: the recalculation of the totals
+		execute.mockRejectedValueOnce(new Error('the recalculation failed'));
 		jest.spyOn((service as unknown as { logger: { warn: () => void } }).logger, 'warn').mockImplementation(
 			() => undefined
 		);
@@ -111,6 +112,24 @@ describe('TimerService.stopRunningTimersOf', () => {
 			{ id: 'employee-1', organizationId: 'organization-1', tenantId: 'tenant-1' },
 			{ isOnline: false, isTrackingTime: false }
 		);
+	});
+
+	it('reports no stop, and keeps the employee tracking, when the update failed before writing the stop (#11889)', async () => {
+		findLogs.mockReset();
+		findLogs
+			.mockResolvedValueOnce([runningLog])
+			.mockResolvedValueOnce([{ ...runningLog, isRunning: true }])
+			.mockResolvedValue([runningLog]);
+		// The update gives the run the slots of its range before it writes the stop: when they cannot be written, it
+		// writes nothing, and the run goes on
+		execute.mockRejectedValueOnce(new Error('The slot insert failed'));
+		silenceWarnings();
+
+		const stopped = await service.stopRunningTimersOf(scope);
+
+		expect(findLogs).toHaveBeenNthCalledWith(2, { where: { id: 'log-running', tenantId: 'tenant-1' } });
+		expect(stopped).toEqual([]);
+		expect(updateEmployee).not.toHaveBeenCalled();
 	});
 
 	it('goes on with the other timers when reading back a failed stop fails too', async () => {

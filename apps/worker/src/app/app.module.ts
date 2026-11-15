@@ -4,11 +4,14 @@ import {
 	EventOutboxDispatchScheduleModule,
 	IdempotencyMaintenanceModule,
 	InvoiceReminderScheduleModule,
+	InvoiceScheduleScheduleModule,
 	isMeetingRemindersEnabled,
+	isTaskDueRemindersEnabled,
 	isTimerRemindersEnabled,
 	JobExecutionModule,
 	MeetingReminderScheduleModule,
 	MentionModule,
+	TaskDueReminderScheduleModule,
 	TimerReminderScheduleModule,
 	TokenModule,
 	WebhookMaintenanceModule
@@ -101,11 +104,23 @@ import { WORKER_DEFAULT_QUEUE, WORKER_QUEUE_ENABLED, WORKER_SCHEDULER_ENABLED } 
 			? [MeetingReminderScheduleModule]
 			: []),
 		/**
+		 * The task due reminders' schedule (off unless `GAUZY_TASK_DUE_REMINDERS_ENABLED=true`), and only the schedule,
+		 * for the timer reminders' reason: the API consumes the queue (`TaskDueReminderMaintenanceModule`).
+		 */
+		...(WORKER_QUEUE_ENABLED && isTaskDueRemindersEnabled(process.env, (message) => console.warn(message))
+			? [TaskDueReminderScheduleModule]
+			: []),
+		/**
 		 * The payment reminders' hourly schedule, and only the schedule: the sweep runs in the API, which consumes the
 		 * queue (`InvoiceReminderMaintenanceModule`) and hosts the mail settings and the invoice rendering it uses. Each
 		 * organization turns the reminders on, so a sweep sends nothing until one does.
 		 */
 		...(WORKER_QUEUE_ENABLED ? [InvoiceReminderScheduleModule] : []),
+		/**
+		 * The hourly schedule of the clients billed on a schedule, and only the schedule: the sweep runs in the API,
+		 * which consumes the queue (`InvoiceScheduleMaintenanceModule`) and saves, renders and sends the invoices.
+		 */
+		...(WORKER_QUEUE_ENABLED ? [InvoiceScheduleScheduleModule] : []),
 		/**
 		 * The ledger a scheduled pass is recorded in.
 		 *

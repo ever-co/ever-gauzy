@@ -271,6 +271,8 @@ describe('TimeLogUpdateHandler stopping a run', () => {
 		jest.spyOn(handler as any, 'planRelease').mockResolvedValue({ remove: [], unlink: [] });
 		jest.spyOn(handler as any, 'applyRelease').mockResolvedValue(undefined);
 		jest.spyOn(handler as any, 'recalculateTimesheetAndEmployeeHours').mockResolvedValue(undefined);
+		// The employee's slots at the starts of the range a web timer run takes: none (#11889)
+		jest.spyOn(handler as any, 'findTimeSlots').mockResolvedValue([]);
 	});
 	afterEach(() => jest.restoreAllMocks());
 

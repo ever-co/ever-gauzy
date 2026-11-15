@@ -351,3 +351,22 @@ export interface ITaskBuiltInViewQuery extends IBasePerTenantAndOrganizationEnti
 	/** `relations` the page carries (the same as the task list). */
 	relations?: string[];
 }
+
+/**
+ * A reminder the platform sent an assignee about a task's due date (`TaskDueReminder`). One row per task, employee and
+ * due date, so each reminder is sent once whatever the processes, and a due date moved since is reminded of again.
+ */
+export interface ITaskDueReminder extends IBasePerTenantAndOrganizationEntityModel {
+	task?: ITask;
+	taskId: ID;
+	employee?: IEmployee;
+	employeeId: ID;
+	/** The due date the reminder was about. */
+	dueDate: Date;
+	/** The id its notification is filed under, chosen with the claim. */
+	employeeNotificationId: ID;
+	/** When the claim was taken, or taken over from a process that stopped before it filed the notification. */
+	claimedAt: Date;
+	/** When its notification was filed; unset while it is not. */
+	filedAt?: Date;
+}

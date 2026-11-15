@@ -17,15 +17,21 @@ jest.mock('@gauzy/core', () => ({
 	IdempotencyMaintenanceModule: class IdempotencyMaintenanceModule {},
 	InvoiceReminderMaintenanceModule: class InvoiceReminderMaintenanceModule {},
 	InvoiceReminderScheduleModule: class InvoiceReminderScheduleModule {},
+	InvoiceScheduleMaintenanceModule: class InvoiceScheduleMaintenanceModule {},
+	InvoiceScheduleScheduleModule: class InvoiceScheduleScheduleModule {},
 	JobExecutionModule: class JobExecutionModule {},
 	MentionModule: class MentionModule {},
+	TaskDueReminderMaintenanceModule: class TaskDueReminderMaintenanceModule {},
+	TaskDueReminderScheduleModule: class TaskDueReminderScheduleModule {},
 	TimerReminderMaintenanceModule: class TimerReminderMaintenanceModule {},
 	TimerReminderScheduleModule: class TimerReminderScheduleModule {},
 	WebhookMaintenanceModule: class WebhookMaintenanceModule {},
 	TokenModule: { forRoot: jest.fn(() => ({ module: class TokenModule {} })) },
 	// The switch, read as the real one reads it, so a case states the environment it is about
 	isTimerRemindersEnabled: (env: Record<string, string | undefined>) =>
-		env['GAUZY_TIMER_REMINDERS_ENABLED'] === 'true'
+		env['GAUZY_TIMER_REMINDERS_ENABLED'] === 'true',
+	isTaskDueRemindersEnabled: (env: Record<string, string | undefined>) =>
+		env['GAUZY_TASK_DUE_REMINDERS_ENABLED'] === 'true'
 }));
 
 jest.mock('@gauzy/plugin', () => {
@@ -192,6 +198,35 @@ describe('worker AppModule', () => {
 	});
 
 	/**
+	 * The task due reminders follow the timer reminders' split: this process fires the schedule and never takes a sweep,
+	 * and registers nothing of them while they are switched off.
+	 */
+	it('fires the task due reminder schedule only when the reminders are on, and never hosts the sweep', async () => {
+		process.env.WORKER_QUEUE_ENABLED = 'true';
+
+		for (const [switched, expected] of [
+			['true', true],
+			[undefined, false]
+		] as const) {
+			if (switched === undefined) {
+				delete process.env.GAUZY_TASK_DUE_REMINDERS_ENABLED;
+			} else {
+				process.env.GAUZY_TASK_DUE_REMINDERS_ENABLED = switched;
+			}
+			await jest.isolateModulesAsync(async () => {
+				const { AppModule: Isolated } = await import('./app.module');
+				const core = await import('@gauzy/core');
+				const order: any[] = Reflect.getMetadata(MODULE_METADATA.IMPORTS, Isolated) ?? [];
+
+				expect(order).toContain(core.IdempotencyMaintenanceModule);
+				expect(order.includes(core.TaskDueReminderScheduleModule)).toBe(expected);
+				expect(order).not.toContain(core.TaskDueReminderMaintenanceModule);
+			});
+		}
+		delete process.env.GAUZY_TASK_DUE_REMINDERS_ENABLED;
+	});
+
+	/**
 	 * The payment reminders follow the timer reminders' split: the sweep sends emails through the mail settings and the
 	 * invoice rendering the API hosts, so this process fires the hourly schedule and never takes a sweep. There is no
 	 * installation switch: each organization turns the reminders on, and a sweep sends nothing until one does.
@@ -208,6 +243,23 @@ describe('worker AppModule', () => {
 			expect(order).toContain(core.IdempotencyMaintenanceModule);
 			expect(order).toContain(core.InvoiceReminderScheduleModule);
 			expect(order).not.toContain(core.InvoiceReminderMaintenanceModule);
+		});
+	});
+
+	/**
+	 * The invoices of the clients billed on a schedule follow the payment reminders: this process fires the hourly
+	 * schedule, and the API, which saves, renders and sends the invoices, takes the sweep.
+	 */
+	it('fires the hourly sweep of the invoice schedules wherever a queue exists, and never hosts the sweep', async () => {
+		process.env.WORKER_QUEUE_ENABLED = 'true';
+
+		await jest.isolateModulesAsync(async () => {
+			const { AppModule: Isolated } = await import('./app.module');
+			const core = await import('@gauzy/core');
+			const order: any[] = Reflect.getMetadata(MODULE_METADATA.IMPORTS, Isolated) ?? [];
+
+			expect(order).toContain(core.InvoiceScheduleScheduleModule);
+			expect(order).not.toContain(core.InvoiceScheduleMaintenanceModule);
 		});
 	});
 });

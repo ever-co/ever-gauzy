@@ -31,7 +31,14 @@ export interface IOrganizationTeamEmployeeFindInput
 		Pick<IBaseOrganizationTeamEmployee, 'isManager' | 'isTrackingEnabled'> {}
 
 // Interface for Organization Team Employee Update Input
-export interface IOrganizationTeamEmployeeUpdateInput extends IBaseOrganizationTeamEmployee {}
+export interface IOrganizationTeamEmployeeUpdateInput extends IBaseOrganizationTeamEmployee {
+	/**
+	 * The member's time tracking switch in the team as the caller's screen showed it (no value reads as on). When it is
+	 * sent and the stored switch differs, someone changed it since that screen was read: the update is refused with
+	 * 409 `TRACKING_SWITCH_CHANGED` and writes nothing. A request flag, never stored.
+	 */
+	expectedIsTrackingEnabled?: boolean;
+}
 
 // Interface for Organization Team Employee Active Task Update Input
 export interface IOrganizationTeamEmployeeActiveTaskUpdateInput

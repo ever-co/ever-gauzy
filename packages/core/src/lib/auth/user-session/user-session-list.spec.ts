@@ -1,6 +1,7 @@
 // cspell:ignore KHTML
 import { UserSessionAppEnum } from '@gauzy/contracts';
 import { IToken, TokenStatus } from '../../token/interfaces';
+import { sessionSourceOf } from './user-session-client';
 import { groupUserSessions, isFirstPartyAccessToken, listUserSessions } from './user-session-list';
 
 const NOW = new Date('2026-11-14T12:00:00.000Z');
@@ -130,6 +131,54 @@ describe('listUserSessions', () => {
 		};
 
 		expect(listUserSessions(tokens, null, NOW)).toEqual([]);
+	});
+
+	it('names the app of a session: as it named itself, else as its user agent carries it, and its web host (#11983)', () => {
+		const DESKTOP_TIMER_UA =
+			'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) gauzy-desktop-timer/0.1.0 Chrome/130.0.6723.170 Electron/33.2.1 Safari/537.36';
+		const startedAt = '2026-11-14T08:00:00.000Z';
+		const tokens = {
+			refreshTokens: [
+				token({
+					id: 'r-web',
+					metadata: session('web', startedAt, {
+						userAgent: LAPTOP_UA,
+						appName: 'Ever Teams',
+						appOrigin: 'app.ever.team'
+					})
+				}),
+				token({ id: 'r-timer', metadata: session('timer', startedAt, { userAgent: DESKTOP_TIMER_UA }) }),
+				token({
+					id: 'r-other',
+					metadata: session('other', startedAt, { userAgent: LAPTOP_UA, appName: '<b>forged</b>' })
+				})
+			],
+			accessTokens: []
+		};
+
+		const byId = Object.fromEntries(listUserSessions(tokens, null, NOW).map((listed) => [listed.id, listed]));
+
+		expect(byId['web']).toMatchObject({ appName: 'Ever Teams', appOrigin: 'app.ever.team' });
+		expect(byId['timer']).toMatchObject({ appName: 'gauzy-desktop-timer' });
+		expect(byId['timer']).not.toHaveProperty('appOrigin');
+		expect(byId['other']).not.toHaveProperty('appName');
+		expect(byId['other']).not.toHaveProperty('appOrigin');
+	});
+
+	it('keeps an IPv6 web host from the request it was recorded from to the answer (#11983)', () => {
+		const source = sessionSourceOf({ origin: 'http://[::1]:3030' });
+		const tokens = {
+			refreshTokens: [
+				token({
+					id: 'r-local',
+					metadata: session('local', '2026-11-14T08:00:00.000Z', { userAgent: LAPTOP_UA, ...source })
+				})
+			],
+			accessTokens: []
+		};
+
+		expect(source).toEqual({ appOrigin: '[::1]:3030' });
+		expect(listUserSessions(tokens, null, NOW)[0]).toMatchObject({ appOrigin: '[::1]:3030' });
 	});
 });
 

@@ -1,3 +1,5 @@
+import { decode } from 'jsonwebtoken';
+import { IsNull } from 'typeorm';
 import { LanguagesEnum } from '@gauzy/contracts';
 import { InvoiceService } from './invoice.service';
 
@@ -17,17 +19,20 @@ function sender(
 	overrides: {
 		emailInvoice?: jest.Mock;
 		createEstimateEmail?: jest.Mock;
-		recordInvoiceDelivery?: jest.Mock;
+		forgetInvoiceDelivery?: jest.Mock;
+		findOrganization?: jest.Mock;
 		pdf?: Buffer | null;
 	} = {}
 ) {
 	const estimateEmailService = {
 		createEstimateEmail:
 			overrides.createEstimateEmail ?? jest.fn(async () => ({ id: 'estimate-email-1', token: 'estimate-token' })),
-		recordInvoiceDelivery: overrides.recordInvoiceDelivery ?? jest.fn(async () => undefined)
+		forgetInvoiceDelivery: overrides.forgetInvoiceDelivery ?? jest.fn(async () => undefined)
 	};
-	const organizationService = { findOneByIdString: jest.fn(async () => ({ id: 'organization-1' })) };
-	const emailService = { emailInvoice: overrides.emailInvoice ?? jest.fn(async () => undefined) };
+	const organizationService = {
+		findOneByIdString: overrides.findOrganization ?? jest.fn(async () => ({ id: 'organization-1' }))
+	};
+	const emailService = { emailInvoice: overrides.emailInvoice ?? jest.fn(async () => true) };
 	const service = new InvoiceService(
 		{} as never,
 		{} as never,
@@ -49,7 +54,7 @@ function sender(
 const send = (service: InvoiceService) =>
 	service.sendEmail(
 		LanguagesEnum.ENGLISH,
-		'buyer@example.com',
+		'buyer@client.test',
 		42,
 		'invoice-42',
 		true,
@@ -79,7 +84,7 @@ describe('InvoiceService.sendEmail — the outcome of a send', () => {
 		await expect(send(service)).resolves.toEqual({ sent: true });
 		expect(emailService.emailInvoice).toHaveBeenCalledWith(
 			LanguagesEnum.ENGLISH,
-			'buyer@example.com',
+			'buyer@client.test',
 			Buffer.from('%PDF').toString('base64'),
 			42,
 			'invoice-42',
@@ -103,6 +108,12 @@ describe('InvoiceService.sendEmail — the outcome of a send', () => {
 		expect(JSON.stringify(outcome)).not.toContain('smtp.internal');
 	});
 
+	it('answers EMAIL_NOT_SENT when the address is of a domain the platform never emails', async () => {
+		const { service } = sender({ emailInvoice: jest.fn(async () => false) });
+
+		await expect(send(service)).resolves.toEqual({ sent: false, reason: 'EMAIL_NOT_SENT' });
+	});
+
 	it('answers DOCUMENT_NOT_GENERATED when no PDF could be attached, and sends nothing', async () => {
 		const { service, emailService } = sender({ pdf: null });
 
@@ -123,35 +134,43 @@ describe('InvoiceService.sendEmail — the outcome of a send', () => {
 });
 
 /**
- * An invoice's email records which invoice it delivered and in which language once the transport took it: the
- * invoice's payment reminders go to that address, in that language. An estimate's email and an email that did not go
- * record nothing, and a record that fails never turns a sent invoice into a failed send.
+ * An invoice's email row names the invoice it delivers and its language from its creation, so no write after the send
+ * can fail to, and the invoice's payment reminders go to that address, in that language. When the email does not go,
+ * the row forgets both, so the reminders keep going where the invoice last went. An estimate's email names nothing.
  */
 describe('InvoiceService.sendEmail — where an invoice went', () => {
 	beforeEach(() => jest.spyOn(console, 'log').mockImplementation(() => undefined));
 	afterEach(() => jest.restoreAllMocks());
 
-	it('records the invoice and its language on the email once the transport took it', async () => {
+	it('names the invoice and its language on the email row it creates, and keeps them once the email went', async () => {
 		const { service, estimateEmailService } = sender();
 
 		await expect(sendInvoice(service)).resolves.toEqual({ sent: true });
 
-		expect(estimateEmailService.recordInvoiceDelivery).toHaveBeenCalledWith(
-			'estimate-email-1',
-			'invoice-43',
-			LanguagesEnum.FRENCH
+		expect(estimateEmailService.createEstimateEmail).toHaveBeenCalledWith('invoice-43', 'billing@client.test', {
+			languageCode: LanguagesEnum.FRENCH
+		});
+		expect(estimateEmailService.forgetInvoiceDelivery).not.toHaveBeenCalled();
+	});
+
+	it("names nothing on an estimate's email, and forgets nothing when it does not go", async () => {
+		const { service, estimateEmailService } = sender({
+			emailInvoice: jest.fn(async () => {
+				throw new Error('connect ECONNREFUSED smtp.internal.example:587');
+			})
+		});
+
+		await expect(send(service)).resolves.toEqual({ sent: false, reason: 'EMAIL_NOT_SENT' });
+
+		expect(estimateEmailService.createEstimateEmail).toHaveBeenCalledWith(
+			'invoice-42',
+			'buyer@client.test',
+			undefined
 		);
+		expect(estimateEmailService.forgetInvoiceDelivery).not.toHaveBeenCalled();
 	});
 
-	it("records nothing for an estimate's email", async () => {
-		const { service, estimateEmailService } = sender();
-
-		await expect(send(service)).resolves.toEqual({ sent: true });
-
-		expect(estimateEmailService.recordInvoiceDelivery).not.toHaveBeenCalled();
-	});
-
-	it('records nothing when the transport refused the email', async () => {
+	it('forgets them when the transport refused the email', async () => {
 		const { service, estimateEmailService } = sender({
 			emailInvoice: jest.fn(async () => {
 				throw new Error('connect ECONNREFUSED smtp.internal.example:587');
@@ -160,17 +179,210 @@ describe('InvoiceService.sendEmail — where an invoice went', () => {
 
 		await expect(sendInvoice(service)).resolves.toEqual({ sent: false, reason: 'EMAIL_NOT_SENT' });
 
-		expect(estimateEmailService.recordInvoiceDelivery).not.toHaveBeenCalled();
+		expect(estimateEmailService.forgetInvoiceDelivery).toHaveBeenCalledWith('estimate-email-1');
 	});
 
-	it('still answers sent when the record fails: the invoice went', async () => {
+	it('forgets them when the address is of a domain the platform never emails', async () => {
+		const { service, estimateEmailService } = sender({ emailInvoice: jest.fn(async () => false) });
+
+		await expect(sendInvoice(service)).resolves.toEqual({ sent: false, reason: 'EMAIL_NOT_SENT' });
+
+		expect(estimateEmailService.forgetInvoiceDelivery).toHaveBeenCalledWith('estimate-email-1');
+	});
+
+	it('forgets them when the organization could not be read', async () => {
+		const { service, emailService, estimateEmailService } = sender({
+			findOrganization: jest.fn(async () => {
+				throw new Error('organization not found');
+			})
+		});
+
+		await expect(sendInvoice(service)).resolves.toEqual({ sent: false, reason: 'EMAIL_NOT_PREPARED' });
+
+		expect(emailService.emailInvoice).not.toHaveBeenCalled();
+		expect(estimateEmailService.forgetInvoiceDelivery).toHaveBeenCalledWith('estimate-email-1');
+	});
+
+	it('forgets them when no PDF could be attached', async () => {
+		const { service, estimateEmailService } = sender({ pdf: null });
+
+		await expect(sendInvoice(service)).resolves.toEqual({ sent: false, reason: 'DOCUMENT_NOT_GENERATED' });
+
+		expect(estimateEmailService.forgetInvoiceDelivery).toHaveBeenCalledWith('estimate-email-1');
+	});
+
+	it('still answers the failed send when forgetting fails, and says where the reminders may go', async () => {
 		const { service } = sender({
-			recordInvoiceDelivery: jest.fn(async () => {
+			emailInvoice: jest.fn(async () => {
+				throw new Error('connect ECONNREFUSED smtp.internal.example:587');
+			}),
+			forgetInvoiceDelivery: jest.fn(async () => {
 				throw new Error('update failed');
 			})
 		});
 
+		await expect(sendInvoice(service)).resolves.toEqual({ sent: false, reason: 'EMAIL_NOT_SENT' });
+		expect(console.log).toHaveBeenCalledWith(expect.stringContaining('may go to that address'), 'update failed');
+	});
+});
+
+/**
+ * An invoice's email links to its public page (ever-co/ever-gauzy#11856): the client opens the invoice there without an
+ * account. The link is the invoice's own share token, kept as it is, so a link the client already holds still works.
+ */
+describe('InvoiceService.sendEmail — the link to the public page', () => {
+	beforeEach(() => jest.spyOn(console, 'log').mockImplementation(() => undefined));
+	afterEach(() => jest.restoreAllMocks());
+
+	it("passes the invoice's share token to the email", async () => {
+		const { service, emailService } = sender();
+		jest.spyOn(service, 'publicLinkTokenOf').mockResolvedValue('share-token');
+
 		await expect(sendInvoice(service)).resolves.toEqual({ sent: true });
-		expect(console.log).toHaveBeenCalledWith(expect.stringContaining('gets no payment reminder'), 'update failed');
+
+		expect(service.publicLinkTokenOf).toHaveBeenCalledWith('invoice-43');
+		expect(emailService.emailInvoice).toHaveBeenCalledWith(
+			LanguagesEnum.FRENCH,
+			'billing@client.test',
+			Buffer.from('%PDF').toString('base64'),
+			43,
+			'invoice-43',
+			false,
+			'estimate-token',
+			'https://app.example.com',
+			{ id: 'organization-1' },
+			'share-token'
+		);
+	});
+
+	it("never reads a share token for an estimate's email", async () => {
+		const { service } = sender();
+		jest.spyOn(service, 'publicLinkTokenOf').mockResolvedValue('share-token');
+
+		await expect(send(service)).resolves.toEqual({ sent: true });
+
+		expect(service.publicLinkTokenOf).not.toHaveBeenCalled();
+	});
+
+	it('still sends the invoice when it has no link to give', async () => {
+		const { service, emailService } = sender();
+		jest.spyOn(service, 'publicLinkTokenOf').mockResolvedValue(null);
+
+		await expect(sendInvoice(service)).resolves.toEqual({ sent: true });
+
+		expect(emailService.emailInvoice.mock.calls[0]).toHaveLength(9);
+	});
+});
+
+/** The share token an invoice's email carries, and the revocation of a link. */
+describe('InvoiceService — the public link of an invoice', () => {
+	const INVOICE = { id: 'invoice-7', tenantId: 'tenant-1', organizationId: 'organization-1' };
+
+	/**
+	 * `read`: the token the invoice has when it is read through the service (possibly a cached entity).
+	 * `inDatabase`: the token the database holds after the write, read back through the repository that wrote it.
+	 */
+	function linker(read: string | null, inDatabase: string | null = null) {
+		const update = jest.fn(async () => ({ affected: 1 }));
+		const findOne = jest.fn(async () => ({ id: INVOICE.id, token: inDatabase }));
+		const service = new InvoiceService(
+			{ update, findOne } as never,
+			{} as never,
+			{} as never,
+			{} as never,
+			{} as never,
+			{} as never,
+			{} as never
+		);
+		const reads = jest
+			.spyOn(service, 'findOneByIdString')
+			.mockImplementation(async () => ({ ...INVOICE, token: read }) as never);
+		return { service, update, findOne, reads };
+	}
+
+	/** The claims of the token a write stored. */
+	const claimsOfWrite = (update: jest.Mock, call: number) =>
+		decode((update.mock.calls[call] as unknown as [unknown, { token: string }])[1].token) as Record<
+			string,
+			unknown
+		>;
+
+	beforeEach(() => jest.spyOn(console, 'log').mockImplementation(() => undefined));
+	afterEach(() => jest.restoreAllMocks());
+
+	it('keeps the token the invoice already has, so a link the client holds still opens it', async () => {
+		const { service, update } = linker('created-token');
+
+		await expect(service.publicLinkTokenOf(INVOICE.id)).resolves.toBe('created-token');
+		expect(update).not.toHaveBeenCalled();
+	});
+
+	it('gives an invoice whose link was revoked a new token, written only where it still has none', async () => {
+		const { service, update } = linker(null, 'written-token');
+
+		await expect(service.publicLinkTokenOf(INVOICE.id)).resolves.toBe('written-token');
+
+		expect(update).toHaveBeenCalledTimes(1);
+		const [where, values] = update.mock.calls[0] as unknown as [Record<string, unknown>, { token: string }];
+		expect(where).toMatchObject({ id: INVOICE.id, tenantId: INVOICE.tenantId });
+		// Conditional on the token still being null: a send at the same moment that wrote first keeps its link
+		expect(where.token).toEqual(IsNull());
+		expect(typeof values.token).toBe('string');
+	});
+
+	it('never signs the revoked token again, even within the same second (CodeRabbit on #11993)', async () => {
+		const { service, update } = linker(null, 'written-token');
+
+		await service.publicLinkTokenOf(INVOICE.id);
+		await service.publicLinkTokenOf(INVOICE.id);
+
+		const first = claimsOfWrite(update, 0);
+		const second = claimsOfWrite(update, 1);
+		expect(first.jti).toEqual(expect.any(String));
+		expect(second.jti).not.toBe(first.jti);
+	});
+
+	it('answers the token another send wrote first', async () => {
+		const { service, update } = linker(null, 'token-of-the-other-send');
+		update.mockResolvedValue({ affected: 0 });
+
+		await expect(service.publicLinkTokenOf(INVOICE.id)).resolves.toBe('token-of-the-other-send');
+	});
+
+	it('reads the token back from the database, not from the entity read before the write (CodeRabbit on #11993)', async () => {
+		// Under MikroORM a second read through the service can answer the cached entity, still without a token
+		const { service, findOne, reads } = linker(null, 'written-token');
+
+		await expect(service.publicLinkTokenOf(INVOICE.id)).resolves.toBe('written-token');
+
+		expect(reads).toHaveBeenCalledTimes(1);
+		expect(findOne).toHaveBeenCalledWith({
+			where: { id: INVOICE.id, tenantId: INVOICE.tenantId },
+			select: { id: true, token: true }
+		});
+	});
+
+	it('answers null when the invoice cannot be read, so the email goes without a link', async () => {
+		const { service, reads } = linker(null);
+		reads.mockRejectedValue(new Error('not found'));
+
+		await expect(service.publicLinkTokenOf(INVOICE.id)).resolves.toBeNull();
+	});
+
+	it("revokes a link by clearing the token of the caller's invoice", async () => {
+		const { service, update, reads } = linker('created-token');
+
+		await service.revokeLink(INVOICE.id);
+
+		expect(reads).toHaveBeenCalledWith(INVOICE.id);
+		expect(update).toHaveBeenCalledWith({ id: INVOICE.id, tenantId: INVOICE.tenantId }, { token: null });
+	});
+
+	it("revokes nothing for an invoice outside the caller's tenant", async () => {
+		const { service, update, reads } = linker(null);
+		reads.mockRejectedValue(new Error('Record not found'));
+
+		await expect(service.revokeLink(INVOICE.id)).rejects.toThrow('Record not found');
+		expect(update).not.toHaveBeenCalled();
 	});
 });

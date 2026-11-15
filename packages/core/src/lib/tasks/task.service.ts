@@ -276,6 +276,9 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	/**
 	 * Update task, if already exist
 	 *
+	 * Organization-wide: the routes check `ALL_ORG_EDIT` or `ORG_TASK_EDIT` only, and no team is checked here, unlike
+	 * a delete (see {@link assertMayRemoveTask}).
+	 *
 	 * @param id - The ID of the task to update
 	 * @param input - The data to update the task with
 	 * @returns The updated task
@@ -835,6 +838,10 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * Refuses to remove, trash or restore a task unless the caller may: `ALL_ORG_EDIT` or `ORG_TASK_DELETE` for any task
 	 * of the organization; otherwise (the routes admit `ORG_TASK_EDIT` so a team manager reaches this) only a manager
 	 * of one of the task's teams of the task's organization.
+	 *
+	 * An edit has no such team check, on purpose: `ORG_TASK_EDIT` edits any task of the organization ({@link update}),
+	 * because the Angular task, sprint and key result pages, the desktop timer, the agent and Ever Teams' project
+	 * archiving update tasks outside the caller's teams. Only removing a task is kept to the teams one manages.
 	 *
 	 * @param id - The task
 	 * @param withDeleted - Whether the task may be in the trash (a restore, or a delete for good)

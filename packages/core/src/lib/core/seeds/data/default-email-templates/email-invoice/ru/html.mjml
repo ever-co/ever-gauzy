@@ -41,6 +41,9 @@
 				<mj-text>
 					Счёт приложен к этому письму в формате PDF.
 				</mj-text>
+				<mj-raw>{{#if invoiceUrl}}</mj-raw>
+				<mj-button href="{{invoiceUrl}}" target="_blank">Открыть счёт</mj-button>
+				<mj-raw>{{/if}}</mj-raw>
 			</mj-column>
 		</mj-section>
 		<mj-section padding="20px 16px 40px">

@@ -134,6 +134,16 @@ describe('the preferences', () => {
 		expect(kindSwitchOf({}, { timerReminderHours: 0 }, timer)).toBe(false);
 	});
 
+	it('takes a due date reminder unless the employee turned those reminders off', () => {
+		const due = EmployeeNotificationTypeEnum.TASK_DUE_REMINDER;
+		expect(kindSwitchOf({}, {}, due)).toBe(true);
+		expect(kindSwitchOf({}, { taskDueReminderHours: 48 }, due)).toBe(true);
+		expect(kindSwitchOf({}, { taskDueReminderHours: null }, due)).toBe(false);
+		expect(kindSwitchOf({}, { taskDueReminderHours: 0 }, due)).toBe(false);
+		// The timer's switch is its own
+		expect(kindSwitchOf({}, { timerReminderHours: null }, due)).toBe(true);
+	});
+
 	it("reads the kind's email mode, else the one for every kind, else immediate", () => {
 		expect(emailModeOf({}, EmployeeNotificationTypeEnum.MENTION)).toBe('immediate');
 		expect(emailModeOf({ email: false }, EmployeeNotificationTypeEnum.MENTION)).toBe('off');
