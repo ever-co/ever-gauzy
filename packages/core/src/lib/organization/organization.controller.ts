@@ -33,6 +33,7 @@ import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { OrganizationCreateCommand, OrganizationUpdateCommand } from './commands';
 import { Organization } from './organization.entity';
 import { OrganizationService } from './organization.service';
+import { IOrganizationCounts } from './organization-counts';
 import { CreateOrganizationDTO, UpdateOrganizationDTO } from './dto';
 import { OrganizationFindOptionsQueryDTO } from './dto/organization-find-options.dto';
 import { SensitiveRelations } from '../core/decorators/sensitive-relations.decorator';
@@ -149,6 +150,34 @@ export class OrganizationController extends CrudController<Organization> {
 		@Query() options: OrganizationFindOptionsQueryDTO
 	): Promise<IOrganization> {
 		return await this.organizationService.findOneByIdString(id, options);
+	}
+
+	/**
+	 * GET what an organization holds
+	 *
+	 * Counts the teams, projects, members, tracked seconds, invoices and estimates of an organization of the tenant,
+	 * for the confirmation an admin reads before deleting it. Under the controller's `ALL_ORG_EDIT`, as the delete
+	 * and the restore are.
+	 *
+	 * @param id The unique ID of the organization
+	 * @returns The counts
+	 */
+	@ApiOperation({ summary: 'Count what an organization holds, for the confirmation before it is deleted.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'The counts: teams, projects, members, trackedSeconds, invoices and estimates.'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'No organization found with the provided ID.'
+	})
+	@ApiParam({
+		name: 'id',
+		description: 'The unique identifier (UUID) of the organization.'
+	})
+	@Get(':id/counts')
+	async counts(@Param('id', UUIDValidationPipe) id: ID): Promise<IOrganizationCounts> {
+		return await this.organizationService.countContents(id);
 	}
 
 	/**
