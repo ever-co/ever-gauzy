@@ -346,17 +346,10 @@ export class InvoiceScheduleRunService {
 		if (!isRetryable) {
 			return null;
 		}
-		// Only one process takes it again: the update matches the run as it was read. The period's last day is the one
-		// billed now: a failed run of an earlier timeline that started on the same day may have ended on another.
+		// Only one process takes it again: the update matches the run as it was read
 		const taken = await runs.update(
 			{ id: earlier.id, status: earlier.status, claimedAt: earlier.claimedAt },
-			{
-				status: InvoiceScheduleRunStatusEnum.CLAIMED,
-				reason: null,
-				finishedAt: null,
-				claimedAt,
-				periodEnd: period.endDay
-			}
+			{ status: InvoiceScheduleRunStatusEnum.CLAIMED, reason: null, finishedAt: null, claimedAt }
 		);
 		if (taken.affected !== 1) {
 			return null;
@@ -375,6 +368,13 @@ export class InvoiceScheduleRunService {
 			}
 		});
 		if (!saved) {
+			// Nothing was saved for it: the run now bills the period as the timeline states it. A failed run of an
+			// earlier timeline that started on the same day may have ended on another day. A run whose invoice was
+			// saved keeps the period that invoice bills.
+			if (run.periodEnd !== period.endDay) {
+				await runs.update({ id: run.id, claimedAt: run.claimedAt }, { periodEnd: period.endDay });
+				run.periodEnd = period.endDay;
+			}
 			return { run };
 		}
 		const isDraft = saved.status === InvoiceStatusTypesEnum.DRAFT;
