@@ -12,13 +12,18 @@ import {
 	IPagination,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { Between, DeleteResult, FindOptionsWhere, In, QueryRunner, UpdateResult } from 'typeorm';
+import { Between, DataSource, DeleteResult, FindOptionsWhere, In, QueryRunner, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
 import { runOutsideOrganizationBoundary } from '../core/crud/organization-boundary';
 import { Employee } from '../core/entities/internal';
 import { LegacyFindManyOptions, LegacyFindOneOptions } from '../core/utils';
 import { redactDatabaseError } from '../core/errors/database-error';
+import {
+	lockConnectionSlots,
+	releaseLockConnectionSlot,
+	takeLockConnectionSlot
+} from '../database/lock-connection-slots';
 import { RequestContext } from '../core/context/request-context';
 import { EmployeeNotificationSettingService } from '../employee-notification-setting/employee-notification-setting.service';
 import { timerReminderHoursOf } from '../time-tracking/timer-reminder/timer-reminder.rules';
@@ -362,13 +367,15 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 	/**
 	 * Runs `work` alone among the Board notification requests of the same sender, kind and Board at the same link:
 	 *
-	 * - in this process, the Board notification requests run one after the other, whatever their Board: the lock
-	 *   below holds a pooled connection while `work` takes another one, so a process never sets more than one aside
-	 *   for these locks and `work` always finds the rest of the pool;
+	 * - in this process, the Board notification requests run one after the other, whatever their Board;
 	 * - PostgreSQL: a transaction-scoped advisory lock, which the other API processes wait for too, held on a
 	 *   connection of its own while `work` runs on the service's own;
 	 * - MySQL: a named lock (`GET_LOCK`) on a connection of its own, released after `work`;
 	 * - SQLite, or a pool of a single connection (which `work` needs): the process's own order only.
+	 *
+	 * The lock's connection comes from the pool `work` draws on, so it takes a slot of the budget every lock holder of
+	 * the process shares (`database/lock-connection-slots.ts`, as tenant onboarding does): `work` always finds the rest
+	 * of the pool, and the request waits for a slot holding no connection meanwhile.
 	 *
 	 * The lock is named after a digest, never the link itself (its `#` part may hold the Board's encryption key). Best
 	 * effort: when the lock cannot be had within {@link BOARD_NOTIFICATION_LOCK_WAIT_SECONDS} or the database refuses
@@ -394,15 +401,29 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 		await run;
 	}
 
-	/** `work` while holding the database lock `lockName` where the database has one (see `inBoardNotificationTurn`). */
+	/** `work` under a lock-connection slot and the database lock `lockName`, where the database has one. */
 	private async withBoardNotificationLock(lockName: string, work: () => Promise<void>): Promise<void> {
 		const dataSource = this.typeOrmRepository.manager.connection;
 		const type = dataSource?.options?.type;
-		// The drivers' own pool size when none is set
-		const poolSize = Number((dataSource?.options as { poolSize?: number } | undefined)?.poolSize ?? 10);
-		if ((type !== 'postgres' && type !== 'mysql') || poolSize < 2) {
+		const slots = lockConnectionSlots(dataSource?.options as { poolSize?: number; extra?: { max?: number } });
+		if ((type !== 'postgres' && type !== 'mysql') || slots < 1) {
 			return await work();
 		}
+		await takeLockConnectionSlot(slots);
+		try {
+			await this.inBoardNotificationLock(dataSource, type, lockName, work);
+		} finally {
+			releaseLockConnectionSlot();
+		}
+	}
+
+	/** `work` while holding the database lock `lockName`, on a connection of its own (see `inBoardNotificationTurn`). */
+	private async inBoardNotificationLock(
+		dataSource: DataSource,
+		type: 'postgres' | 'mysql',
+		lockName: string,
+		work: () => Promise<void>
+	): Promise<void> {
 		let runner: QueryRunner | undefined;
 		let locked = false;
 		try {
