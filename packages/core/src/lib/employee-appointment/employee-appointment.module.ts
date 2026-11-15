@@ -11,6 +11,8 @@ import { EmailSendModule } from '../email-send/email-send.module';
 import { EmployeeModule } from '../employee/employee.module';
 import { OrganizationModule } from '../organization/organization.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
+import { EmployeeNotificationModule } from '../employee-notification/employee-notification.module';
+import { MeetingNotificationService } from './meeting-notifications/meeting-notification.service';
 import { TypeOrmEmployeeAppointmentRepository } from './repository/type-orm-employee-appointment.repository';
 import { MikroOrmEmployeeAppointmentRepository } from './repository/mikro-orm-employee-appointment.repository';
 
@@ -36,11 +38,14 @@ import { MikroOrmEmployeeAppointmentRepository } from './repository/mikro-orm-em
 		EmployeeModule,
 		OrganizationModule,
 		RolePermissionModule,
+		// The notices a meeting's invitees get (ever-co/ever-teams#5022)
+		EmployeeNotificationModule,
 		CqrsModule
 	],
 	controllers: [EmployeeAppointmentController],
 	providers: [
 		EmployeeAppointmentService,
+		MeetingNotificationService,
 		// The GraphQL view of the same resource.
 		EmployeeAppointmentResolver,
 		TypeOrmEmployeeAppointmentRepository,
@@ -49,6 +54,7 @@ import { MikroOrmEmployeeAppointmentRepository } from './repository/mikro-orm-em
 	],
 	exports: [
 		EmployeeAppointmentService,
+		MeetingNotificationService,
 		TypeOrmEmployeeAppointmentRepository,
 		MikroOrmEmployeeAppointmentRepository,
 		// Re-exported for the resolver, which is hosted by the module that names the GraphQL endpoint.

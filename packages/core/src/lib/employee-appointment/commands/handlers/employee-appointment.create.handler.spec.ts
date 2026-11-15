@@ -18,7 +18,8 @@ describe('EmployeeAppointmentCreateHandler optional minutes', () => {
 			employeeAppointmentService as never,
 			{ sendAppointmentMail: jest.fn() } as never,
 			{ findOneByIdString: jest.fn() } as never,
-			organizationService as never
+			organizationService as never,
+			{} as never
 		);
 		const create = (input: Partial<IEmployeeAppointmentCreateInput>) =>
 			handler.execute(

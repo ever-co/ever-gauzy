@@ -5,9 +5,11 @@ import {
 	IdempotencyMaintenanceModule,
 	InvoiceReminderScheduleModule,
 	InvoiceScheduleScheduleModule,
+	isMeetingRemindersEnabled,
 	isTaskDueRemindersEnabled,
 	isTimerRemindersEnabled,
 	JobExecutionModule,
+	MeetingReminderScheduleModule,
 	MentionModule,
 	TaskDueReminderScheduleModule,
 	TimerReminderScheduleModule,
@@ -95,6 +97,11 @@ import { WORKER_DEFAULT_QUEUE, WORKER_QUEUE_ENABLED, WORKER_SCHEDULER_ENABLED } 
 		 */
 		...(WORKER_QUEUE_ENABLED && isTimerRemindersEnabled(process.env, (message) => console.warn(message))
 			? [TimerReminderScheduleModule]
+			: []),
+		// The meeting reminders' schedule (off unless `GAUZY_MEETING_REMINDERS_ENABLED=true`), and only the schedule, for the
+		// timer reminders' reason: the API consumes it (`MeetingReminderMaintenanceModule`).
+		...(WORKER_QUEUE_ENABLED && isMeetingRemindersEnabled(process.env, (message) => console.warn(message))
+			? [MeetingReminderScheduleModule]
 			: []),
 		/**
 		 * The task due reminders' schedule (off unless `GAUZY_TASK_DUE_REMINDERS_ENABLED=true`), and only the schedule,

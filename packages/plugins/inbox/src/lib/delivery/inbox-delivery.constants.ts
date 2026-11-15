@@ -50,6 +50,7 @@ export const INBOX_DELIVERY_KIND_LABELS: Record<string, string> = {
 	[EmployeeNotificationTypeEnum.TASK_UPDATE]: 'Task update',
 	[EmployeeNotificationTypeEnum.TIMER_REMINDER]: 'Timer reminder',
 	[EmployeeNotificationTypeEnum.INVOICE]: 'Invoice',
+	[EmployeeNotificationTypeEnum.MEETING]: 'Meeting',
 	[EmployeeNotificationTypeEnum.TASK_DUE_REMINDER]: 'Task due'
 };
 

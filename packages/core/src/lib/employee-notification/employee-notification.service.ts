@@ -604,6 +604,11 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 			// change request; its email follows the per-kind email mode (`preferences.emailByType.Invoice`)
 			case EmployeeNotificationTypeEnum.INVOICE:
 				return true;
+			// A meeting the employee hosts or is invited to: no switch of its own, as for an invoice; its email and push follow
+			// the per-kind modes (`preferences.emailByType.Meeting`, `pushByType.Meeting`), and its reminder before the start
+			// follows `preferences.meetingReminderMinutes`
+			case EmployeeNotificationTypeEnum.MEETING:
+				return true;
 			// A task due soon: switched off through the `preferences` JSON (`taskDueReminderHours` null or 0).
 			case EmployeeNotificationTypeEnum.TASK_DUE_REMINDER:
 				return taskDueReminderHoursOf(employeeNotificationSetting.preferences) !== null;
