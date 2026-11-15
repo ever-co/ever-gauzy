@@ -234,7 +234,8 @@ Rotates an existing token (creates new, marks old as rotated).
 
 #### revokeToken(dto: IRevokeTokenDto): Promise<void>
 
-Revokes a specific token.
+Revokes a specific token. Given a token that was already rotated, it revokes the token its line of rotations ends
+with: the session goes on with that one, so it is the one a sign-out has to end.
 
 #### revokeAllUserTokens(userId, tokenType, revokedBy?, reason?): Promise<number>
 

@@ -9,6 +9,8 @@ jest.mock('@gauzy/config', () => {
 });
 
 import { isBetterSqlite3 } from '@gauzy/config';
+import { RevokeTokenCommand } from './commands/revoke-token.command';
+import { RevokeTokenHandler } from './commands/handlers/revoke-token-command.handler';
 import { RotateTokenCommand } from './commands/rotate-token.command';
 import { RotateTokenHandler } from './commands/handlers/rotate-token-command.handler';
 import { IToken, ITokenConfig, ITokenPayload, TokenStatus } from './interfaces';
@@ -26,9 +28,9 @@ import { TokenConfigRegistry } from './token-config.registry';
  * "Token is rotated", and a valid session ended.
  *
  * **What is real here.** The handlers that judge a token (`ValidateTokenHandler`, as the refresh guard asks it) and
- * that rotate one (`RotateTokenHandler`), and the config registry. The store is a table in memory that answers what
- * the repository answers, with the compare-and-set on `version` the rotation relies on and the one successor a token
- * may have; the JWT service and the hasher are stood in for.
+ * that rotate one (`RotateTokenHandler`) or revoke one (`RevokeTokenHandler`), and the config registry. The store is
+ * a table in memory that answers what the repository answers, with the compare-and-set on `version` the rotation
+ * relies on and the one successor a token may have; the JWT service and the hasher are stood in for.
  *
  * **What is not.** A row lock: the table has none. A read under a lock answers the row as it is by then, which is
  * what a database answers once the lock is granted, and a case that needs another request in between runs it right
@@ -174,6 +176,7 @@ function refreshTokens(reuseWindowSeconds: number | undefined, successorOnTheRel
 		hasher as never
 	);
 	const rotateHandler = new RotateTokenHandler(table.repository as never, registry, hasher as never);
+	const revokeHandler = new RevokeTokenHandler(table.repository as never, table.repository as never, hasher as never);
 
 	/** A sign-in: the first refresh token of a session. */
 	const signIn = async () => {
@@ -218,9 +221,14 @@ function refreshTokens(reuseWindowSeconds: number | undefined, successorOnTheRel
 	const revoke = (jwt: string) => {
 		Object.assign(stored(jwt), { status: TokenStatus.REVOKED, revokedAt: new Date() });
 	};
+	/** What a sign-out asks of the refresh token the client sends with it. */
+	const signOut = (jwt: string) =>
+		revokeHandler.execute(
+			new RevokeTokenCommand({ rawToken: jwt, revokedById: USER, reason: 'User initiated logout' })
+		);
 	const active = () => table.rows.filter((row) => row.status === TokenStatus.ACTIVE);
 
-	return { ...table, signIn, validate, rotate, refresh, stored, revoke, active };
+	return { ...table, signIn, validate, rotate, refresh, stored, revoke, signOut, active };
 }
 
 /** Time passes. */
@@ -463,7 +471,68 @@ describe('the line of rotations after a token presented again', () => {
 	});
 });
 
+describe('a sign-out given a refresh token that was already rotated', () => {
+	it('ends the session, which goes on with a later token', async () => {
+		const tokens = refreshTokens(10);
+		const first = await tokens.signIn();
+		const earlier = (await tokens.refresh(first)).token;
+		wait(3 * SECOND);
+		// The first token is presented again and answered: the session goes on with that later token
+		const later = (await tokens.refresh(first)).token;
+
+		// The client that kept the earlier answer signs out with it
+		await tokens.signOut(earlier);
+
+		expect(tokens.stored(later)).toEqual(
+			expect.objectContaining({
+				status: TokenStatus.REVOKED,
+				revokedById: USER,
+				revokedReason: 'User initiated logout'
+			})
+		);
+		expect(tokens.active()).toHaveLength(0);
+		expect(await tokens.refresh(later)).toEqual({ refused: 'Token is revoked' });
+		expect(await tokens.refresh(first)).toEqual({ refused: 'Token is rotated' });
+	});
+
+	it('ends it long after the reuse window is over', async () => {
+		const tokens = refreshTokens(10);
+		const first = await tokens.signIn();
+		const second = (await tokens.refresh(first)).token;
+		const third = (await tokens.refresh(second)).token;
+		wait(DAY);
+
+		await tokens.signOut(first);
+
+		expect(tokens.stored(third).status).toBe(TokenStatus.REVOKED);
+		expect(tokens.active()).toHaveLength(0);
+	});
+
+	it('writes nothing when the session has already ended', async () => {
+		const tokens = refreshTokens(10);
+		const first = await tokens.signIn();
+		const second = (await tokens.refresh(first)).token;
+		await tokens.signOut(second);
+		const writesSoFar = tokens.writes.length;
+
+		await tokens.signOut(first);
+
+		expect(tokens.writes).toHaveLength(writesSoFar);
+	});
+});
+
 describe('a refresh token that is active', () => {
+	it('is revoked by a sign-out, as before', async () => {
+		const tokens = refreshTokens(10);
+		const first = await tokens.signIn();
+
+		await tokens.signOut(first);
+
+		expect(tokens.stored(first)).toEqual(
+			expect.objectContaining({ status: TokenStatus.REVOKED, revokedReason: 'User initiated logout' })
+		);
+	});
+
 	it('is rotated as before: the old one is refused once the window is over, the new one renews the session', async () => {
 		const tokens = refreshTokens(10);
 		const first = await tokens.signIn();

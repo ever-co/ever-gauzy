@@ -130,3 +130,20 @@ export async function findTokenToRotateAgain(
 	const last = await followRotations(presented, first, findById, lockAndRead);
 	return last?.canRotate() ? last : null;
 }
+
+/**
+ * The token a session goes on with when the token at hand was already rotated: the one its line of rotations ends
+ * with, whatever its state, or null when the line cannot be followed.
+ *
+ * A sign-out asks for it. A client can hold a rotated token in good faith (the earlier of two answers to one
+ * refresh, see `findTokenToRotateAgain`), and so can the owner of a token that someone else presented first. The
+ * rotated token has nothing left to revoke itself: the session is ended by revoking the token it goes on with.
+ *
+ * @param rotated The stored token at hand.
+ * @param findById Reads a stored token.
+ */
+export async function findEndOfRotationLine(rotated: IToken, findById: ReadToken): Promise<IToken | null> {
+	const firstSuccessorId = nextIdOf(rotated);
+	const first = firstSuccessorId ? await readIfStored(findById, firstSuccessorId) : null;
+	return first ? followRotations(rotated, first, findById) : null;
+}

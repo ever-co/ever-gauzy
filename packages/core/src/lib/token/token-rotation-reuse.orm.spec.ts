@@ -53,6 +53,8 @@ interface IRun {
 	afterTheWindow: { validated: unknown; rotated: unknown };
 	/** Within the window, once the token that replaced the old one is revoked. */
 	afterARevocation: { validated: unknown; rotated: unknown };
+	/** Once a client signs out with the earlier of two answers: the later token, which the session went on with. */
+	afterASignOutWithTheEarlierAnswer: { laterToken: string; validated: unknown };
 }
 
 async function runThroughBothOrms(): Promise<{ typeorm: IRun; mikroorm: IRun }> {
@@ -232,13 +234,27 @@ async function runThroughBothOrms(): Promise<{ typeorm: IRun; mikroorm: IRun }> 
 							rotated: await rotated(signedOut)
 						};
 
+						// And one whose client received two answers for the same token, kept the earlier one, and
+						// signs out with it
+						const answeredTwice = await signIn();
+						const earlier = (await rotated(answeredTwice)) as string;
+						const later = (await rotated(answeredTwice)) as string;
+						await inRequest().revoke.execute(
+							new RevokeTokenCommand({ rawToken: earlier, revokedById: userId, reason: 'Logout' })
+						);
+						const afterASignOutWithTheEarlierAnswer = {
+							laterToken: (await storedRow(idOf(later))).status,
+							validated: await validated(later)
+						};
+
 						return {
 							presentedAgain: { letIn, answered },
 							answeredTokenIsValid,
 							line,
 							activeTokens: Number(active),
 							afterTheWindow,
-							afterARevocation
+							afterARevocation,
+							afterASignOutWithTheEarlierAnswer
 						};
 					} finally {
 						ormTypeSpy.mockRestore();
@@ -307,6 +323,18 @@ describe('a rotated refresh token presented again, in the store of each ORM', ()
 			rotated: { failed: 'Token is not active' }
 		});
 	});
+
+	it.each(['typeorm', 'mikroorm'] as const)(
+		'is signed out by the earlier of two answers, which ends the session with the later token on %s',
+		(orm) => {
+			const run = { typeorm, mikroorm }[orm];
+
+			expect(run.afterASignOutWithTheEarlierAnswer).toEqual({
+				laterToken: 'REVOKED',
+				validated: { isValid: false, reason: 'Token is revoked' }
+			});
+		}
+	);
 
 	it('answers on MikroORM what it answers on TypeORM', () => {
 		const comparable = (run: IRun) => ({ ...run, presentedAgain: { answered: run.presentedAgain.answered } });
