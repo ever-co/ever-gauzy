@@ -1,13 +1,15 @@
-import { ForbiddenException } from '@nestjs/common';
+import { ConflictException, ForbiddenException } from '@nestjs/common';
 import { RolesEnum } from '@gauzy/contracts';
 import { RequestContext } from '../../core/context';
 import {
+	assertTrackingSwitchAsSeen,
 	callerRoleRank,
 	keepsTrackingSwitch,
 	mayActAsTeamManager,
 	mayTurnTrackingOf,
 	rankInTeam,
 	rankOfRole,
+	TRACKING_SWITCH_CHANGED,
 	TrackingSwitchRank
 } from './tracking-switch-rule';
 
@@ -139,5 +141,31 @@ describe('tracking switch rule', () => {
 			jest.spyOn(RequestContext, 'currentOAuthAppScopes').mockReturnValue([]);
 			expect(mayActAsTeamManager()).toBe(false);
 		});
+	});
+
+	// A save from a screen read before someone turned the switch acted on a state that was gone (ever-co/ever-gauzy#11830)
+	describe('assertTrackingSwitchAsSeen', () => {
+		it('lets through a save that does not say what its screen showed, or showed the stored switch', () => {
+			expect(() => assertTrackingSwitchAsSeen(true, undefined)).not.toThrow();
+			expect(() => assertTrackingSwitchAsSeen(true, true)).not.toThrow();
+			expect(() => assertTrackingSwitchAsSeen(false, false)).not.toThrow();
+		});
+
+		it.each([
+			{ stored: true, shown: false },
+			{ stored: false, shown: true }
+		])(
+			'refuses with TRACKING_SWITCH_CHANGED when the screen showed $shown and $stored is stored',
+			({ stored, shown }) => {
+				let refusal: unknown;
+				try {
+					assertTrackingSwitchAsSeen(stored, shown);
+				} catch (error) {
+					refusal = error;
+				}
+				expect(refusal).toBeInstanceOf(ConflictException);
+				expect((refusal as ConflictException).getResponse()).toMatchObject({ code: TRACKING_SWITCH_CHANGED });
+			}
+		);
 	});
 });
