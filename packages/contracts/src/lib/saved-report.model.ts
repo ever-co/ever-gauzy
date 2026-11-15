@@ -131,6 +131,14 @@ export interface IPublicSavedReportTask {
 	client: IPublicSavedReportNamed | null;
 	/** The entry's team; stated (null for the time without a team) when the report counts the time without a team. */
 	organizationTeamId?: ID | null;
+	/**
+	 * The billing rate that prices this entry, as the report page prices its row: the rate the entry stores, else the
+	 * member's current rate, else the organization's default billing rate for a member without a rate. Only when the
+	 * author included amounts.
+	 */
+	billRateValue?: number | null;
+	/** The currency of `billRateValue` (the organization's when the rate states none). */
+	billRateCurrency?: string | null;
 }
 
 /** One member's time on one project on one day. */
@@ -139,7 +147,12 @@ export interface IPublicSavedReportMemberLog {
 	/** Seconds. */
 	sum: number;
 	tasks: IPublicSavedReportTask[];
-	/** What the time is worth at the member's rate; only when the author included amounts and the member has a rate. */
+	/**
+	 * What the time is worth, each entry at the rate that prices it, per currency; only when the author included
+	 * amounts. Empty when nothing of it has a rate.
+	 */
+	amounts?: IPublicSavedReportAmount[];
+	/** The one amount of `amounts`; null when the time has no rate or is priced in more than one currency. */
 	amount?: number | null;
 }
 
