@@ -114,7 +114,7 @@ export function meetingWhenText(
 			? format.formatRange(new Date(startAt), new Date(endAt))
 			: format.format(new Date(startAt));
 	// The runtime's formats put narrow and thin spaces around the times; plain spaces read alike in every mail client
-	return `${range.replace(/[   ]/g, ' ')} (${zone})`;
+	return `${range.replace(/[\u00a0\u2009\u202f]/g, ' ')} (${zone})`;
 }
 
 /** The meeting's title as a notification quotes it: on one line, cut to MAX_QUOTED_AGENDA_LENGTH. */
