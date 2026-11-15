@@ -63,6 +63,11 @@ function createRun(source: TimeLogSourceEnum) {
 	let landsFirst: Partial<typeof run> | undefined;
 	/** Whether the insert's merge folds the slots sharing a start into the first one, as `TimeSlotMergeHandler` does. */
 	let mergesSlotsSharingAStart = false;
+	/** Whether the insert finds an existing slot by its exact start, as `TimeSlotBulkCreateHandler` does, or by minute. */
+	let insertsByExactStart = false;
+	/** Whether every read answers the same instance of a slot, updated in place, as MikroORM's identity map does. */
+	let keepsOneInstancePerSlot = false;
+	const instances = new Map<string, { id: string; startedAt: Date; timeLogs: Array<{ id: string }> }>();
 
 	const failing: Partial<Record<Write, number>> = {};
 	const failIfDue = (write: Write) => {
@@ -78,12 +83,20 @@ function createRun(source: TimeLogSourceEnum) {
 			.filter((slot) => slot.timeLogIds.includes(logId))
 			.sort((a, b) => a.startedAt.getTime() - b.startedAt.getTime());
 	/** A slot as a lookup with its logs answers it. */
-	const slotEntity = (slot: IStoredSlot) =>
-		({
+	const slotEntity = (slot: IStoredSlot) => {
+		const read = {
 			id: slot.id,
 			startedAt: new Date(slot.startedAt),
 			timeLogs: slot.timeLogIds.map((id) => ({ id }))
-		}) as unknown as ITimeSlot;
+		};
+		if (!keepsOneInstancePerSlot) {
+			return read as unknown as ITimeSlot;
+		}
+		// The instance an earlier read answered, now holding what this read found
+		const instance = instances.get(slot.id) ?? read;
+		instances.set(slot.id, Object.assign(instance, read));
+		return instance as unknown as ITimeSlot;
+	};
 	/** The slots starting within the minutes of the given starts. */
 	const slotsAt = (starts: Date[]) =>
 		slots.filter((slot) =>
@@ -144,7 +157,10 @@ function createRun(source: TimeLogSourceEnum) {
 			failIfDue('slotInsert');
 			const starts = requested.map((slot) => new Date(slot.startedAt));
 			for (const slot of requested) {
-				const exists = slotsAt([new Date(slot.startedAt)]).length > 0;
+				const start = new Date(slot.startedAt);
+				const exists = insertsByExactStart
+					? slots.some((stored) => stored.startedAt.getTime() === start.getTime())
+					: slotsAt([start]).length > 0;
 				if (!exists) {
 					slots.push({
 						id: `slot-${++created}`,
@@ -227,9 +243,20 @@ function createRun(source: TimeLogSourceEnum) {
 				() => undefined,
 				(error: Error) => error.message
 			),
-		/** Another log of the employee holds a slot at `time`, as two logs meeting inside one ten-minute slot do. */
-		addSlotOfAnotherLog(time: string) {
-			slots.push({ id: `shared@${time}`, startedAt: at(time), timeLogIds: [OTHER_LOG] });
+		/**
+		 * Another log of the employee holds a slot at `time` (and `ms` milliseconds, as the web timer stores them), as two
+		 * logs meeting inside one ten-minute slot do.
+		 */
+		addSlotOfAnotherLog(time: string, ms = 0) {
+			slots.push({ id: `shared@${time}`, startedAt: new Date(at(time).getTime() + ms), timeLogIds: [OTHER_LOG] });
+		},
+		/** The insert finds an existing slot by its exact start, as `TimeSlotBulkCreateHandler` does. */
+		insertByExactStart() {
+			insertsByExactStart = true;
+		},
+		/** Every read answers the same instance of a slot, updated in place, as MikroORM's identity map does. */
+		keepOneInstancePerSlot() {
+			keepsOneInstancePerSlot = true;
 		},
 		/** The run holds a slot at `time`. */
 		addSlotOfTheRun(time: string) {
@@ -383,6 +410,27 @@ describe.each([
 		expect(store.state()).toEqual({ isRunning: false, stoppedAt: '09:20', slots: slotStarts('09:00', '09:20') });
 		expect(store.slotCount()).toBe(2);
 		expect(outcome).toBe('The stopWrite failed');
+	});
+
+	it("lets go of another log's slot the merge moved its link onto, when each read answers the same instance (MikroORM)", async () => {
+		const store = createRun(source);
+		// Another log's slot at 09:10:00.500: the insert, matching starts exactly, adds one at 09:10, and the merge
+		// folds it into that older slot, which then holds the run too. Read again, the instance read before the write
+		// says so as well.
+		store.addSlotOfAnotherLog('09:10', 500);
+		store.insertByExactStart();
+		store.mergeSlotsSharingAStart();
+		store.keepOneInstancePerSlot();
+		store.fail('stopWrite');
+
+		const outcome = await store.stop('09:30');
+
+		expect(outcome).toBe('The stopWrite failed');
+		// Left holding that slot, a run that posts heartbeat slots would count as having some, and a stop sent again
+		// would not give it the slots of its range
+		expect(store.state()).toEqual(STILL_RUNNING);
+		expect(store.slotsOf(OTHER_LOG)).toEqual(['09:10']);
+		expect(store.slotCount()).toBe(1);
 	});
 
 	it('leaves the run stopped with every slot of its range when the save after the stop fails', async () => {

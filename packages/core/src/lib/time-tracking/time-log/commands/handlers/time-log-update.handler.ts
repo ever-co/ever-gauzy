@@ -87,6 +87,26 @@ function slotMinute(slot: Pick<ITimeSlot, 'startedAt'>): number {
 	return moment(slot.startedAt).startOf('minute').valueOf();
 }
 
+/**
+ * The employee's slots at a range's starts, as read before a write of that range, in plain values: the ids of those
+ * slots, and the ids and start minutes of the ones the log held (see `giveRangeSlotsBack`).
+ */
+interface IRangeSlotsBefore {
+	ids: Set<ID>;
+	heldIds: Set<ID>;
+	heldMinutes: Set<number>;
+}
+
+/** The plain values of the slots read before a write of a range (see `IRangeSlotsBefore`). */
+function rangeSlotsBefore(timeLog: ITimeLog, slots: ITimeSlot[]): IRangeSlotsBefore {
+	const held = slots.filter((slot) => holdsSlot(timeLog, slot));
+	return {
+		ids: new Set(slots.map((slot) => slot.id)),
+		heldIds: new Set(held.map((slot) => slot.id)),
+		heldMinutes: new Set(held.map(slotMinute))
+	};
+}
+
 /** Whether two stored instants are the same one, both missing included. */
 function isSameInstant(a: Date | string | null | undefined, b: Date | string | null | undefined): boolean {
 	if (a == null || b == null) {
@@ -709,7 +729,12 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 		write: () => Promise<unknown>
 	): Promise<ITimeSlot[]> {
 		const starts = updateTimeSlots.map((slot) => moment(slot.startedAt).startOf('minute').toDate());
-		const before = await this.findTimeSlots(tenantId, organizationId, employeeId, starts);
+		// Taken as plain values before any write: under MikroORM the slots read are the request's own instances, which
+		// the merge run by the insert, and the reads after it, update in place
+		const before = rangeSlotsBefore(
+			timeLog,
+			await this.findTimeSlots(tenantId, organizationId, employeeId, starts)
+		);
 		try {
 			const rangeSlots = await this.bulkCreateTimeSlots(
 				updateTimeSlots,
@@ -768,15 +793,12 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 	 * the slots it was given, and those deleted here count no more.
 	 *
 	 * @param timeLog - The log, as read before the write.
-	 * @param before - The employee's slots at those starts, with their logs, as read before the write.
+	 * @param before - The employee's slots at those starts, and those the log held, as read before the write.
 	 * @param at - The employee's slots to read: those of the employee at the range's starts.
 	 */
-	private async giveRangeSlotsBack(timeLog: ITimeLog, before: ITimeSlot[], at: IRangeSlotsAt): Promise<void> {
+	private async giveRangeSlotsBack(timeLog: ITimeLog, before: IRangeSlotsBefore, at: IRangeSlotsAt): Promise<void> {
 		try {
-			const existed = new Set(before.map((slot) => slot.id));
-			const heldBefore = before.filter((slot) => holdsSlot(timeLog, slot));
-			const heldBeforeIds = new Set(heldBefore.map((slot) => slot.id));
-			const startsHeldBefore = new Set(heldBefore.map(slotMinute));
+			const { ids: existed, heldIds: heldBeforeIds, heldMinutes: startsHeldBefore } = before;
 			const standing = await this.findTimeSlots(at.tenantId, at.organizationId, at.employeeId, at.starts, true);
 			let taken = standing.filter((slot) => holdsSlot(timeLog, slot) && !heldBeforeIds.has(slot.id));
 			if (taken.length === 0) {
