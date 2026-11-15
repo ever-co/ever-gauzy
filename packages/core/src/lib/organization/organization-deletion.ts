@@ -400,7 +400,12 @@ async function movePointer(
 	const usersByTarget = new Map<ID | null, ID[]>();
 	for (const userId of userIds) {
 		const target = nextOrganization.get(userId) ?? null;
-		usersByTarget.set(target, [...(usersByTarget.get(target) ?? []), userId]);
+		const group = usersByTarget.get(target);
+		if (group) {
+			group.push(userId);
+		} else {
+			usersByTarget.set(target, [userId]);
+		}
 	}
 
 	let moved = 0;
