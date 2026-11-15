@@ -86,3 +86,56 @@ one, creating a refund reason, and re-processing an inbound callback.
 `@gauzy/plugin-order` — a collection settles an order, and the order rows are
 read by the reconciliation that compares what was collected with what was
 ordered.
+
+## Invoices paid online
+
+A client who received an invoice by email opens it on its public page and pays it there
+(`src/lib/invoice-payment`). The organization connects a **payment connector**: a small service it runs next to
+the payment provider it already has, holding that provider's keys. The API never holds them and no card data
+reaches it.
+
+1. **Connect.** `PUT /api/invoice-payments/connection` with the connector's HTTPS `checkoutEndpoint`
+   (`PAYMENT_PROVIDERS_EDIT`) registers a provider of code `signed-checkout` and answers, once, the
+   `signingSecret` the connector signs with, and the `notificationUrl` it posts to.
+   `POST /api/invoice-payments/connection/rotate-secret` gives a new secret; the old one stops working at once.
+   The secret is derived from the API's `ENCRYPTION_KEY` (or `JWT_SECRET` when that is unset), never stored.
+2. **Checkout.** The public page asks `GET /api/public/invoice-payments/invoice/:id/:token` whether to offer
+   Pay, and `POST /api/public/invoice-payments/invoice/:id/:token/checkout` with its `returnUrl` opens a
+   checkout. The API posts to the connector, signed:
+
+    ```json
+    {
+    	"reference": "<invoice id>",
+    	"invoiceNumber": 42,
+    	"amount": "120.50",
+    	"currency": "EUR",
+    	"returnUrl": "https://…",
+    	"isTestMode": false
+    }
+    ```
+
+    and the connector answers `{ "url": "https://…" }`, the provider's checkout page the client is sent to. The
+    amount is what is still due, computed by the API from the invoice and its payments.
+
+3. **Notification.** Once the provider confirms, the connector posts to the `notificationUrl`, signed:
+
+    ```json
+    {
+    	"id": "<notification id>",
+    	"type": "payment.succeeded",
+    	"data": {
+    		"reference": "<invoice id>",
+    		"paymentId": "<provider payment id>",
+    		"amount": "120.50",
+    		"currency": "EUR"
+    	}
+    }
+    ```
+
+    The API records the payment against the invoice (once per `paymentId`) and sets it Paid, Partially paid or
+    Overpaid. `payment.failed` and `payment.canceled` change nothing.
+
+Every message carries `x-gauzy-payment-timestamp` (Unix seconds) and
+`x-gauzy-payment-signature: hex(HMAC_SHA256(signingSecret, "<timestamp>.<raw body>"))`. A notification that is
+not signed with the connector's secret, or was signed more than five minutes ago, is refused before anything is
+written.
