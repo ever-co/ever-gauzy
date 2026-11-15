@@ -309,7 +309,8 @@ export class InvoiceReminderService {
 	 *
 	 * The page was read before the sends ahead of this one, and the PDF takes its time: the invoice is read again right
 	 * before the email goes, and a reminder that is no longer due (the invoice was paid, voided, given another due date
-	 * or emailed again, or its organization turned the reminders off) gives its claim back and goes nowhere.
+	 * or emailed again, the email the page read as its last did not go after all, or its organization turned the
+	 * reminders off) gives its claim back and goes nowhere.
 	 */
 	private async send(
 		invoice: IInvoiceReminderInvoiceRow,
@@ -325,7 +326,7 @@ export class InvoiceReminderService {
 		let sent: boolean;
 		try {
 			const pdf = await this.pdfOf(invoice, languageCode);
-			const current = await this.stillDue(invoice, due, now);
+			const current = await this.stillDue(invoice, due, delivery, now);
 			if (!current) {
 				await this.release(claim);
 				return;
@@ -358,22 +359,26 @@ export class InvoiceReminderService {
 
 	/**
 	 * The invoice as it is now, and what is left to pay on it, when the reminder claimed from the page is still due: the
-	 * invoice is still one the reminders go to, its due date did not move, the same step is due (an email of the invoice
-	 * sent since counts, as the rules have none go on its heels), and something is left to pay. Null otherwise.
+	 * invoice is still one the reminders go to, its due date did not move, it was last emailed to the address and in the
+	 * language the page read (an email row names its invoice from its creation, and forgets it when the email does not
+	 * go), the same step is due (an email of the invoice sent since counts, as the rules have none go on its heels), and
+	 * something is left to pay. Null otherwise.
 	 */
 	private async stillDue(
 		invoice: IInvoiceReminderInvoiceRow,
 		due: IDueInvoiceReminder,
+		delivery: IInvoiceDelivery,
 		now: Date
 	): Promise<{ invoice: IInvoiceReminderInvoiceRow; left: number } | null> {
 		const current = await this.currentInvoice(invoice);
 		if (!current || instantOf(current.dueDate) !== instantOf(invoice.dueDate)) {
 			return null;
 		}
-		const delivery = (await this.lastDeliveriesOf([current])).get(String(current.id));
-		const again = delivery
-			? invoiceReminderDueAt(current.dueDate, delivery.emailedAt, now, invoiceTimeZoneOf(current))
-			: null;
+		const last = (await this.lastDeliveriesOf([current])).get(String(current.id));
+		if (!last || last.email !== delivery.email || last.languageCode !== delivery.languageCode) {
+			return null;
+		}
+		const again = invoiceReminderDueAt(current.dueDate, last.emailedAt, now, invoiceTimeZoneOf(current));
 		const left = amountLeftToPay(current.totalValue, current.alreadyPaid);
 		if (!again || again.step !== due.step || left === null) {
 			return null;
