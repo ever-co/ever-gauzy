@@ -76,8 +76,13 @@ interface IMeetingReminderDue {
 	meeting: IMeetingReminderRow;
 	employeeId: ID;
 	level: MeetingReminderLevel;
+	/** The receiver's lead, in minutes (null for none), which the level was read from. */
+	minutes: number | null;
 	timeZone: string | null;
 }
+
+/** The sweep's moment, moved on by the time the pass has taken so far: what a reminder is checked and worded at. */
+type MeetingReminderClock = () => Date;
 
 /**
  * A claim's time, to the second. It is also its holder's token: a process gives a claim back only while the claim still
@@ -134,13 +139,14 @@ export class MeetingReminderService {
 	): Promise<IMeetingReminderSweepReport> {
 		const report: IMeetingReminderSweepReport = { checked: 0, reminded: 0, recovered: 0, failed: 0 };
 		const startedAt = Date.now();
+		const clock: MeetingReminderClock = () => new Date(now.getTime() + Math.max(0, Date.now() - startedAt));
 		let after: IMeetingReminderRow | null = null;
 
 		for (;;) {
 			const page = await this.meetingsStartingSoon(after, MEETING_REMINDER_SWEEP_PAGE_SIZE, now);
 			report.checked += page.length;
 			if (page.length) {
-				await this.remindPage(page, now, report);
+				await this.remindPage(page, now, report, clock);
 				after = page[page.length - 1];
 			}
 			if (page.length < MEETING_REMINDER_SWEEP_PAGE_SIZE || Date.now() - startedAt >= budgetMs) {
@@ -220,7 +226,8 @@ export class MeetingReminderService {
 	private async remindPage(
 		page: IMeetingReminderRow[],
 		now: Date,
-		report: IMeetingReminderSweepReport
+		report: IMeetingReminderSweepReport,
+		clock: MeetingReminderClock = () => now
 	): Promise<void> {
 		const attendees = await this.attendeesOf(page);
 		const employeeIds = [...new Set([...attendees.values()].flat())];
@@ -252,13 +259,14 @@ export class MeetingReminderService {
 					meeting,
 					employeeId,
 					level,
+					minutes,
 					timeZone: timeZones.get(String(employeeId)) ?? null
 				};
 				try {
 					if (!claimed) {
 						const claim = await this.claim(due, now);
 						if (claim) {
-							await this.file(due, claim, now, report, false);
+							await this.file(due, claim, now, report, false, clock);
 						}
 					} else if (
 						!claimed.filedAt &&
@@ -267,7 +275,7 @@ export class MeetingReminderService {
 						// Claimed by a process that stopped before it filed the notification: taken over, and filed under
 						// the claim's own id
 						if (await this.takeOver(claimed, now)) {
-							await this.file(due, claimed, now, report, true);
+							await this.file(due, claimed, now, report, true, clock);
 						}
 					}
 				} catch (error) {
@@ -292,16 +300,23 @@ export class MeetingReminderService {
 		claim: IMeetingReminderClaim,
 		now: Date,
 		report: IMeetingReminderSweepReport,
-		takenOver: boolean
+		takenOver: boolean,
+		clock: MeetingReminderClock = () => now
 	): Promise<void> {
 		const { meeting } = due;
 		if (takenOver && (await this.isFiled(claim.employeeNotificationId, meeting.tenantId))) {
 			await this.recordFiled(claim, now);
 			return;
 		}
-		// The page was read before the reminders ahead of this one were filed: the meeting may have been cancelled or moved,
-		// or the receiver left out, meanwhile. A reminder no longer due gives its claim back (one taken over stays)
-		if (!(await this.isStillDue(due))) {
+		// The page was read before the reminders ahead of this one were filed: its moment may have passed (a slow filing
+		// before it), or the meeting may have been cancelled, moved or handed to another organization, or the receiver left
+		// out, meanwhile. A reminder no longer due gives its claim back (one taken over stays); the next sweep files the
+		// one due then, if any.
+		const at = clock();
+		if (
+			meetingReminderLevelAt(at.getTime(), instantOf(meeting.startDateTime), due.minutes) !== due.level ||
+			!(await this.isStillDue(due))
+		) {
 			if (!takenOver) {
 				await this.release(claim);
 			}
@@ -312,7 +327,7 @@ export class MeetingReminderService {
 			startDateTime: meeting.startDateTime,
 			endDateTime: meeting.endDateTime,
 			timeZone: due.timeZone,
-			now: now.getTime()
+			now: at.getTime()
 		});
 		const input: IEmployeeNotificationCreateInput & { id: ID } = {
 			id: claim.employeeNotificationId,
@@ -347,8 +362,9 @@ export class MeetingReminderService {
 	}
 
 	/**
-	 * Whether the reminder is still due as the meeting stands now: not cancelled, completed or deleted, starting when the
-	 * reminder says, and the receiver still its host or one of its invitees.
+	 * Whether the reminder is still due as the meeting stands now: not cancelled, completed or deleted, of the
+	 * organization it was read in, starting when the reminder says, and the receiver still its host or one of its
+	 * invitees.
 	 */
 	private async isStillDue(due: IMeetingReminderDue): Promise<boolean> {
 		const { meeting, employeeId } = due;
@@ -358,12 +374,19 @@ export class MeetingReminderService {
 			.select('appointment.startDateTime', 'startDateTime')
 			.addSelect('appointment.status', 'status')
 			.addSelect('appointment.employeeId', 'employeeId')
+			.addSelect('appointment.organizationId', 'organizationId')
 			.where('appointment.id = :id', { id: meeting.id })
 			.andWhere('appointment.tenantId = :tenantId', { tenantId: meeting.tenantId })
-			.getRawOne<{ startDateTime: Date | string; status: EmployeeAppointmentStatus | string | null; employeeId: ID | null }>();
+			.getRawOne<{
+				startDateTime: Date | string;
+				status: EmployeeAppointmentStatus | string | null;
+				employeeId: ID | null;
+				organizationId: ID | null;
+			}>();
 		if (
 			!current ||
 			!isMeetingScheduled(current.status) ||
+			String(current.organizationId) !== String(meeting.organizationId) ||
 			instantOf(current.startDateTime) !== instantOf(meeting.startDateTime)
 		) {
 			return false;

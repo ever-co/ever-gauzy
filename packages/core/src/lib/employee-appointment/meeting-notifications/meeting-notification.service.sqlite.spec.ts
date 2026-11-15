@@ -130,6 +130,14 @@ describe('MeetingNotificationService on SQLite', () => {
 			);
 
 			expect(ids).toEqual([first, second]);
+			// One employee named in two cases is one employee, and the host is the host in either case
+			expect(
+				await service.checkedInviteeIdsOf(
+					[first.toUpperCase(), first, host.toUpperCase()],
+					{ organizationId: ORGANIZATION, tenantId: TENANT },
+					host
+				)
+			).toEqual([first]);
 		});
 
 		it('refuses someone of another organization or tenant, a deleted employee, and anything but a list of ids', async () => {
@@ -174,6 +182,11 @@ describe('MeetingNotificationService on SQLite', () => {
 				kept: [second]
 			});
 			expect((await service.inviteeIdsOf(meeting.id, TENANT)).sort()).toEqual([second, third].sort());
+			// Named again in upper case, they are the same invitees: nobody is removed and added back
+			const again = await service.replaceInvitees(meeting, [second.toUpperCase(), third.toUpperCase()]);
+			expect(again.added).toEqual([]);
+			expect(again.removed).toEqual([]);
+			expect([...again.kept].sort()).toEqual([second, third].sort());
 		});
 
 		it('removes an invitee whose row names the meeting by the old key only', async () => {

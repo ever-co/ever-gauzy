@@ -130,9 +130,14 @@ describe('appointment writes and the meeting notices', () => {
 			organization?: { id: string; tenantId: string }
 		) => {
 			const meetingNotifications = meetingNotificationsDouble(invited);
+			// The stored meeting: the update writes its patch there, and a read answers it as it is then
+			const current: Record<string, unknown> = { ...stored, ...before };
 			const employeeAppointmentService = {
-				findOneByIdString: jest.fn().mockResolvedValue({ ...stored, ...before }),
-				update: jest.fn().mockResolvedValue({})
+				findOneByIdString: jest.fn(async () => ({ ...current })),
+				update: jest.fn(async (_id: string, patch: Record<string, unknown>) => {
+					Object.assign(current, patch);
+					return {};
+				})
 			};
 			const handler = new EmployeeAppointmentUpdateHandler(
 				employeeAppointmentService as never,
@@ -144,7 +149,7 @@ describe('appointment writes and the meeting notices', () => {
 				handler.execute(new EmployeeAppointmentUpdateCommand('appointment-1', data as IEmployeeAppointmentUpdateInput));
 			const kinds = () =>
 				meetingNotifications.notify.mock.calls.map(([kind, , receivers]) => [kind, receivers] as [string, string[]]);
-			return { meetingNotifications, employeeAppointmentService, update, kinds };
+			return { meetingNotifications, employeeAppointmentService, update, kinds, current };
 		};
 
 		it('invites the added, tells the removed, and tells the kept what changed', async () => {
@@ -239,6 +244,57 @@ describe('appointment writes and the meeting notices', () => {
 				expect.objectContaining({ id: 'appointment-1', organizationId: 'org-2', tenantId: 'tenant-1' }),
 				['invitee-1', 'invitee-2']
 			);
+		});
+
+		it('checks and stores the invitees under the organization the meeting keeps when the caller may not move it', async () => {
+			// A caller confined to their organization: the service drops a move to another one from the write
+			jest.spyOn(RequestContext, 'currentUser').mockReturnValue({ id: 'user-1', lastOrganizationId: 'org-1' } as never);
+			jest.spyOn(RequestContext, 'hasRoles').mockReturnValue(false);
+			const { update, meetingNotifications, employeeAppointmentService, current } = setup(['invitee-1'], {}, {
+				id: 'org-2',
+				tenantId: 'tenant-1'
+			});
+			employeeAppointmentService.update.mockImplementation(async (_id: string, patch: Record<string, unknown>) => {
+				const written = { ...patch };
+				delete written['organizationId'];
+				Object.assign(current, written);
+				return {};
+			});
+
+			await update({ organizationId: 'org-2', inviteeEmployeeIds: ['invitee-1', 'invitee-2'] });
+
+			expect(meetingNotifications.checkedInviteeIdsOf).toHaveBeenCalledWith(
+				['invitee-1', 'invitee-2'],
+				{ organizationId: 'org-1', tenantId: 'tenant-1' },
+				'host-1'
+			);
+			expect(meetingNotifications.replaceInvitees).toHaveBeenCalledWith(
+				expect.objectContaining({ id: 'appointment-1', organizationId: 'org-1' }),
+				['invitee-1', 'invitee-2']
+			);
+		});
+
+		it('tells the invitees of the meeting as stored after the write, not as read before it', async () => {
+			const { update, meetingNotifications, employeeAppointmentService, current } = setup(['invitee-1']);
+			const later = new Date('2030-11-12T15:00:00.000Z');
+			// Another request moves the meeting between this one's read and its write
+			employeeAppointmentService.update.mockImplementation(async (_id: string, patch: Record<string, unknown>) => {
+				Object.assign(current, { startDateTime: later }, patch);
+				return {};
+			});
+
+			await update({ location: 'Room 4' });
+
+			const changed = meetingNotifications.notify.mock.calls.find(([kind]) => kind === 'changed');
+			expect(changed?.[1]).toEqual(expect.objectContaining({ location: 'Room 4', startDateTime: later }));
+		});
+
+		it('invites everyone invited when the update puts a cancelled meeting back on', async () => {
+			const { update, kinds } = setup(['kept-1'], { status: EmployeeAppointmentStatus.CANCELLED });
+
+			await update({ status: EmployeeAppointmentStatus.SCHEDULED, inviteeEmployeeIds: ['kept-1', 'added-1'] });
+
+			expect(kinds()).toEqual([['invited', ['added-1', 'kept-1']]]);
 		});
 
 		it('writes nothing when an invitee is refused', async () => {

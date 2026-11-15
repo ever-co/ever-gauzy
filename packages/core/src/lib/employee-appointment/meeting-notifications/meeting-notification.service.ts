@@ -97,7 +97,8 @@ export class MeetingNotificationService {
 		if (!Array.isArray(value) || value.some((id) => typeof id !== 'string' || !id.trim())) {
 			throw new BadRequestException('inviteeEmployeeIds must be a list of employee ids.');
 		}
-		const ids = uniqueIds(value as ID[]).filter((id) => id !== hostEmployeeId);
+		const host = canonicalId(hostEmployeeId);
+		const ids = uniqueIds(value as ID[]).filter((id) => id !== host);
 		if (!ids.length) {
 			return [];
 		}
@@ -175,7 +176,8 @@ export class MeetingNotificationService {
 		options: { sentByEmployeeId?: ID | null; now?: number } = {}
 	): Promise<number> {
 		const now = options.now ?? Date.now();
-		const receivers = uniqueIds(receiverIds).filter((id) => id !== options.sentByEmployeeId);
+		const sender = canonicalId(options.sentByEmployeeId);
+		const receivers = uniqueIds(receiverIds).filter((id) => id !== sender);
 		if (!receivers.length || hasEnded(meeting, now)) {
 			return 0;
 		}
@@ -190,19 +192,19 @@ export class MeetingNotificationService {
 			);
 			return 0;
 		}
-		// By id in lower case: a uuid column answers it so, whatever case the request named it in
-		const zoneOf = new Map([...timeZones].map(([id, zone]) => [id.toLowerCase(), zone]));
+		// By id in lower case, as the receivers are
+		const zoneOf = new Map([...timeZones].map(([id, zone]) => [canonicalId(id), zone]));
 		let filed = 0;
 		for (const receiverEmployeeId of receivers) {
 			// Not an employee of the meeting's organization and tenant (or no longer one)
-			if (!zoneOf.has(receiverEmployeeId.toLowerCase())) {
+			if (!zoneOf.has(receiverEmployeeId)) {
 				continue;
 			}
 			const { title, message } = meetingNotice(kind, {
 				agenda: meeting.agenda,
 				startDateTime: meeting.startDateTime,
 				endDateTime: meeting.endDateTime,
-				timeZone: zoneOf.get(receiverEmployeeId.toLowerCase()) ?? null,
+				timeZone: zoneOf.get(receiverEmployeeId) ?? null,
 				now
 			});
 			try {
@@ -370,9 +372,18 @@ function locksRows(manager: EntityManager): boolean {
 	return ['postgres', 'mysql', 'mariadb'].includes(String(manager.connection.options.type));
 }
 
-/** Ids, as strings, without empties and repeats, in their first order. */
+/**
+ * An id in the one case the platform writes them in, lower case, or null for none. A uuid column (PostgreSQL) compares
+ * ids whatever their case, text compares them as written: so the ids a request names, the stored ones and the host's
+ * are compared in one case, and one employee named in two cases is one employee.
+ */
+function canonicalId(id: ID | null | undefined): ID | null {
+	return typeof id === 'string' && id.length > 0 ? (id.toLowerCase() as ID) : null;
+}
+
+/** Ids, in lower case, without empties and repeats, in their first order. */
 function uniqueIds(ids: Array<ID | null | undefined>): ID[] {
-	return [...new Set(ids.filter((id): id is ID => typeof id === 'string' && id.length > 0))];
+	return [...new Set(ids.map(canonicalId).filter((id): id is ID => id !== null))];
 }
 
 /** Whether the meeting is over at `now`: its end, else its start, has passed. */

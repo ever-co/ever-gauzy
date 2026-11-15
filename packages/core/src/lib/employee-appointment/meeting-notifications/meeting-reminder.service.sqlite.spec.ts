@@ -335,16 +335,19 @@ describe('MeetingReminderService on SQLite', () => {
 		expect(filed.map((one) => one.input.receiverEmployeeId)).toEqual([colleague]);
 	});
 
-	it('files nothing for a meeting cancelled or moved, or for an invitee left out, while its page is reminded of', async () => {
+	it('files nothing for a meeting cancelled, moved or handed over, or for an invitee left out, while its page is reminded of', async () => {
 		const host = await employee();
 		const invitee = await employee();
 		const leaver = await employee();
 		const mover = await employee();
+		const colleague = await employee();
 		await meeting(host, { startsIn: 10 * MINUTE });
 		const cancelled = await meeting(null, { startsIn: 11 * MINUTE, invitees: [invitee] });
 		await meeting(null, { startsIn: 12 * MINUTE, invitees: [leaver] });
 		const moved = await meeting(mover, { startsIn: 13 * MINUTE });
-		// While the first reminder is filed, the host of the others cancels one, moves one, and leaves an invitee out
+		const handedOver = await meeting(null, { startsIn: 14 * MINUTE, invitees: [colleague] });
+		// While the first reminder is filed, the others are cancelled, moved, left by an invitee, and handed to another
+		// organization
 		const fileAsUsual = notifications.create.getMockImplementation() as (input: unknown) => Promise<unknown>;
 		notifications.create.mockImplementationOnce(async (input: unknown) => {
 			await dataSource.query(`UPDATE "employee_appointment" SET "status" = 'Cancelled' WHERE "id" = ?`, [cancelled]);
@@ -354,14 +357,40 @@ describe('MeetingReminderService on SQLite', () => {
 				moved
 			]);
 			await dataSource.query(`DELETE FROM "appointment_employee" WHERE "employeeId" = ?`, [leaver]);
+			await dataSource.query(`UPDATE "employee_appointment" SET "organizationId" = ? WHERE "id" = ?`, [
+				OTHER_ORGANIZATION,
+				handedOver
+			]);
 			return fileAsUsual(input);
 		});
 
 		const report = await service.sweep(NOW);
 
-		expect(report).toEqual(expect.objectContaining({ checked: 4, reminded: 1, failed: 0 }));
+		expect(report).toEqual(expect.objectContaining({ checked: 5, reminded: 1, failed: 0 }));
 		expect(filed.map((one) => one.input.receiverEmployeeId)).toEqual([host]);
 		// The claims of the reminders no longer due were given back
+		expect(await reminders()).toHaveLength(1);
+	});
+
+	it('files no reminder whose moment passed while the reminders before it were filed', async () => {
+		const first = await employee();
+		const second = await employee();
+		await meeting(first, { startsIn: 30 * 1000 });
+		await meeting(second, { startsIn: 40 * 1000 });
+		// The first filing takes ten minutes: the second meeting is then long started
+		const realNow = Date.now;
+		let late = 0;
+		jest.spyOn(Date, 'now').mockImplementation(() => realNow.call(Date) + late);
+		const fileAsUsual = notifications.create.getMockImplementation() as (input: unknown) => Promise<unknown>;
+		notifications.create.mockImplementationOnce(async (input: unknown) => {
+			late = 10 * MINUTE;
+			return fileAsUsual(input);
+		});
+
+		const report = await service.sweep(NOW);
+
+		expect(report).toEqual(expect.objectContaining({ reminded: 1, failed: 0 }));
+		expect(filed.map((one) => one.input.receiverEmployeeId)).toEqual([first]);
 		expect(await reminders()).toHaveLength(1);
 	});
 

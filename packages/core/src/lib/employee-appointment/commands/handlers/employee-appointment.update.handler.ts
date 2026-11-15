@@ -9,6 +9,7 @@ import { EmployeeService } from '../../../employee/employee.service';
 import { OrganizationService } from '../../../organization/organization.service';
 import { isNotEmpty } from '@gauzy/utils';
 import { RequestContext } from '../../../core/context';
+import { isWithinOrganizationBoundary } from '../../../core/crud/organization-boundary';
 import {
 	IMeetingSnapshot,
 	MeetingNotificationService
@@ -63,14 +64,19 @@ export class EmployeeAppointmentUpdateHandler implements ICommandHandler<Employe
 		// The meeting as it stood, read in the caller's scope (a meeting the caller may not read is not found), for what
 		// its invitees are told (ever-co/ever-teams#5022). Only read when the change can concern them.
 		const before = await this.meetingBefore(id);
+		// The organization the meeting keeps: the update moves it only into an organization the caller may reach (the
+		// service drops any other from the write), so the invitees are checked against the one it will have
+		const keptOrganizationId =
+			before &&
+			newAppointment.organizationId &&
+			!isWithinOrganizationBoundary(newAppointment.organizationId)
+				? before.organizationId
+				: newAppointment.organizationId ?? before?.organizationId;
 		const inviteeIds: ID[] | undefined =
 			data.inviteeEmployeeIds !== undefined && before
 				? await this.meetingNotifications.checkedInviteeIdsOf(
 						data.inviteeEmployeeIds,
-						{
-							organizationId: newAppointment.organizationId ?? before.organizationId,
-							tenantId: newAppointment.tenantId ?? before.tenantId
-						},
+						{ organizationId: keptOrganizationId, tenantId: before.tenantId },
 						newAppointment.employeeId ?? before.employeeId
 				  )
 				: undefined;
@@ -78,7 +84,16 @@ export class EmployeeAppointmentUpdateHandler implements ICommandHandler<Employe
 		const updatedAppointment = await this.employeeAppointmentService.update(id, newAppointment);
 
 		if (before) {
-			await this.tellInvitees(before, { ...before, ...newAppointment }, inviteeIds);
+			// What the invitees are told is the meeting as stored once written, read again: a field this request left out
+			// is the stored one, not the one read before the write (another request may have changed it in between), and
+			// a column the service did not write (an organization out of the caller's reach) is the one it kept
+			const after = (await this.meetingAfter(id)) ?? {
+				...before,
+				...newAppointment,
+				organizationId: keptOrganizationId,
+				tenantId: before.tenantId
+			};
+			await this.tellInvitees(before, after, inviteeIds);
 		}
 
 		return updatedAppointment;
@@ -91,19 +106,7 @@ export class EmployeeAppointmentUpdateHandler implements ICommandHandler<Employe
 	 */
 	private async meetingBefore(id: ID): Promise<IMeetingSnapshot | null> {
 		try {
-			const appointment = await this.employeeAppointmentService.findOneByIdString(id);
-			return {
-				id: appointment.id,
-				tenantId: appointment.tenantId,
-				organizationId: appointment.organizationId,
-				employeeId: appointment.employeeId ?? null,
-				agenda: appointment.agenda,
-				description: appointment.description ?? null,
-				location: appointment.location ?? null,
-				startDateTime: appointment.startDateTime,
-				endDateTime: appointment.endDateTime,
-				status: appointment.status ?? null
-			};
+			return snapshotOf(await this.employeeAppointmentService.findOneByIdString(id));
 		} catch (error) {
 			if (error instanceof NotFoundException) {
 				return null;
@@ -113,9 +116,23 @@ export class EmployeeAppointmentUpdateHandler implements ICommandHandler<Employe
 	}
 
 	/**
+	 * The meeting as stored after the update, or null when it cannot be read back (an update that handed it to another
+	 * employee may have taken it out of the caller's scope): the invitees are then told of the meeting as the request
+	 * left it.
+	 */
+	private async meetingAfter(id: ID): Promise<IMeetingSnapshot | null> {
+		try {
+			return snapshotOf(await this.employeeAppointmentService.findOneByIdString(id));
+		} catch {
+			return null;
+		}
+	}
+
+	/**
 	 * Writes the invitees the request named, then tells them what changed: a meeting cancelled now tells everyone who
 	 * was invited; otherwise those added are invited, those left out are told they no longer are, and those kept are
-	 * told when, where or what the meeting is changed. A meeting that was already cancelled tells nobody anything.
+	 * told when, where or what the meeting is changed. A meeting that was already cancelled or completed tells nobody
+	 * anything, unless this update puts it back on: everyone invited to it then is told they are invited.
 	 */
 	private async tellInvitees(before: IMeetingSnapshot, after: IMeetingSnapshot, inviteeIds?: ID[]): Promise<void> {
 		const sentByEmployeeId = RequestContext.currentEmployeeId() ?? RequestContext.currentUser()?.employeeId ?? null;
@@ -127,6 +144,11 @@ export class EmployeeAppointmentUpdateHandler implements ICommandHandler<Employe
 			: { added: [], removed: [], kept: invitedBefore };
 
 		if (!isMeetingScheduled(before.status)) {
+			if (isMeetingScheduled(after.status)) {
+				await this.meetingNotifications.notify('invited', after, [...change.added, ...change.kept], {
+					sentByEmployeeId
+				});
+			}
 			return;
 		}
 		if (after.status === EmployeeAppointmentStatus.CANCELLED) {
@@ -139,4 +161,20 @@ export class EmployeeAppointmentUpdateHandler implements ICommandHandler<Employe
 			await this.meetingNotifications.notify('changed', after, change.kept, { sentByEmployeeId });
 		}
 	}
+}
+
+/** What the invitees are told about: the appointment's own fields. */
+function snapshotOf(appointment: EmployeeAppointment): IMeetingSnapshot {
+	return {
+		id: appointment.id,
+		tenantId: appointment.tenantId,
+		organizationId: appointment.organizationId,
+		employeeId: appointment.employeeId ?? null,
+		agenda: appointment.agenda,
+		description: appointment.description ?? null,
+		location: appointment.location ?? null,
+		startDateTime: appointment.startDateTime,
+		endDateTime: appointment.endDateTime,
+		status: appointment.status ?? null
+	};
 }
