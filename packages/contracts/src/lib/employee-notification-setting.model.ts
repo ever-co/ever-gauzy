@@ -47,6 +47,12 @@ export interface IEmployeeNotificationPreferences {
 	 * a third. Default 8; `null` or 0 for no reminder. A value outside (0, 24] reads as the default.
 	 */
 	timerReminderHours?: number | null;
+	/**
+	 * How many minutes before a meeting the employee hosts or is invited to they are reminded of it (`Meeting`), on top
+	 * of the notice when it is about to start. Default 15; `null` or 0 for no reminder before (the notice at the start
+	 * still comes). A value outside (0, 1440] reads as the default.
+	 */
+	meetingReminderMinutes?: number | null;
 }
 
 /**
