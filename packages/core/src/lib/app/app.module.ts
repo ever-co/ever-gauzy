@@ -171,6 +171,9 @@ import { WebhookMaintenanceModule } from '../webhook/webhook-maintenance.module'
 import { TimerReminderMaintenanceModule } from '../time-tracking/timer-reminder/timer-reminder-maintenance.module';
 import { TimerReminderInlineModule } from '../time-tracking/timer-reminder/timer-reminder-inline';
 import { isTimerRemindersEnabled } from '../time-tracking/timer-reminder/timer-reminder-enabled';
+import { MeetingReminderMaintenanceModule } from '../employee-appointment/meeting-notifications/meeting-reminder-maintenance.module';
+import { MeetingReminderInlineModule } from '../employee-appointment/meeting-notifications/meeting-reminder-inline';
+import { isMeetingRemindersEnabled } from '../employee-appointment/meeting-notifications/meeting-reminder-enabled';
 import { InvoiceReminderMaintenanceModule } from '../invoice/invoice-reminder/invoice-reminder-maintenance.module';
 import { InvoiceReminderInlineModule } from '../invoice/invoice-reminder/invoice-reminder-inline';
 import { OperationModule } from '../operation/operation.module';
@@ -717,6 +720,12 @@ if (environment.EVER_TEAMS_CLIENT_IP_SECRET?.trim() && !clientIpSecretOf(environ
 		// process sweeps on its own, every minute.
 		...(isTimerRemindersEnabled(process.env, (message) => console.warn(message))
 			? [isSchedulerQueueRootEnabled() ? TimerReminderMaintenanceModule : TimerReminderInlineModule]
+			: []),
+		// The reminders before a meeting and when it is about to start (off unless GAUZY_MEETING_REMINDERS_ENABLED=true), on
+		// the timer reminders' terms: with a queue, this process consumes the sweep the worker application schedules every
+		// minute, where the notification's listeners live; without one, it sweeps on its own, every minute.
+		...(isMeetingRemindersEnabled(process.env, (message) => console.warn(message))
+			? [isSchedulerQueueRootEnabled() ? MeetingReminderMaintenanceModule : MeetingReminderInlineModule]
 			: []),
 		// The payment reminders to the clients of unpaid invoices, which each organization turns on (off by default).
 		// With a queue, this process consumes the sweep the worker application schedules every hour: the mail settings
