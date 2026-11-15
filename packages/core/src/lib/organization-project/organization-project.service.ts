@@ -39,6 +39,8 @@ import { ActivityLogService } from '../activity-log/activity-log.service';
 import { EmployeeService } from '../employee/employee.service';
 import { EmployeeRecentVisitService } from '../employee-recent-visit/employee-recent-visit.service';
 import { OrganizationProject } from './organization-project.entity';
+import { projectMemberAddedEvents } from './project-notifications';
+import { actorDisplayName } from '../entity-subscription/fan-out/follower-fan-out.service';
 import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
 import { TypeOrmOrganizationProjectRepository } from './repository/type-orm-organization-project.repository';
 import { MikroOrmOrganizationProjectRepository } from './repository/mikro-orm-organization-project.repository';
@@ -211,6 +213,12 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 				console.error('Error subscribing creators and assignees to the project:', error);
 			}
 
+			// Tell the members they were added (not the creator, about themselves)
+			notifyAddedMembers(this._eventBus, 
+				{ id: project.id, name: project.name, organizationId, tenantId },
+				employees.map(({ id }) => id)
+			);
+
 			// Generate the activity log
 			this._activityLogService.logActivity<OrganizationProject>(
 				BaseEntityEnum.OrganizationProject,
@@ -285,7 +293,8 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 					tenantId,
 					projectMembers,
 					managerIds,
-					memberIds
+					memberIds,
+					organizationProject.name
 				);
 			}
 			// Update nested entity (Organization Project Members)
@@ -388,6 +397,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	 * @param employees - Array of employees to be assigned to the project
 	 * @param managerIds - Array of employee IDs to be assigned as managers
 	 * @param memberIds - Array of employee IDs to be assigned as members
+	 * @param projectName - The project's name, which tells the new members where they were added
 	 * @returns Promise<void>
 	 */
 	async updateOrganizationProjectMembers(
@@ -396,7 +406,8 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		tenantId: ID,
 		employees: IEmployee[],
 		managerIds: ID[],
-		memberIds: ID[]
+		memberIds: ID[],
+		projectName?: string
 	): Promise<void> {
 		const membersToUpdate = new Set([...managerIds, ...memberIds].filter(Boolean));
 
@@ -511,6 +522,12 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			} catch (error) {}
 
 			await this.typeOrmOrganizationProjectEmployeeRepository.save(newProjectMembers);
+
+			// Tell the new members they were added (not the editor, about themselves)
+			notifyAddedMembers(this._eventBus, 
+				{ id: organizationProjectId, name: projectName, organizationId, tenantId },
+				newMembers.map(({ id }) => id)
+			);
 		}
 	}
 
@@ -1019,6 +1036,12 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 
 				// Save updated projects
 				await this.saveMany(updatedProjectsToAdd);
+
+				// The member follows the projects they were added to, and is told of it, as when a project's own form adds them
+				for (const project of updatedProjectsToAdd) {
+					this.followProject(project.id, member.id, organizationId, tenantId);
+					notifyAddedMembers(this._eventBus, { id: project.id, name: project.name, organizationId, tenantId }, [member.id]);
+				}
 			}
 
 			// Handle removing projects
@@ -1029,12 +1052,53 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 					organizationId,
 					tenantId
 				});
+
+				// The member no longer follows the projects they were taken off
+				await this.unfollowProjects(removedProjectIds, member.id, organizationId, tenantId);
 			}
 
 			return true;
 		} catch (error) {
 			console.log('Error while updating project by employee:', error);
 			throw new HttpException({ message: 'Error while updating project by employee' }, HttpStatus.BAD_REQUEST);
+		}
+	}
+
+	/** Makes an employee a follower of a project they were added to. Best effort, as above. */
+	private followProject(projectId: ID, employeeId: ID, organizationId: ID, tenantId: ID): void {
+		try {
+			this._eventBus.publish(
+				new CreateEntitySubscriptionEvent({
+					entity: BaseEntityEnum.OrganizationProject,
+					entityId: projectId,
+					employeeId,
+					type: EntitySubscriptionTypeEnum.ASSIGNMENT,
+					organizationId,
+					tenantId
+				})
+			);
+		} catch (error) {
+			console.error('Error subscribing the member to the project:', error);
+		}
+	}
+
+	/** Ends an employee's following of the projects they were taken off. Best effort, as above. */
+	private async unfollowProjects(projectIds: ID[], employeeId: ID, organizationId: ID, tenantId: ID): Promise<void> {
+		try {
+			await Promise.all(
+				projectIds.map((projectId) =>
+					this._entitySubscriptionService.deleteForEmployee({
+						entity: BaseEntityEnum.OrganizationProject,
+						entityId: projectId,
+						employeeId,
+						type: EntitySubscriptionTypeEnum.ASSIGNMENT,
+						organizationId,
+						tenantId
+					})
+				)
+			);
+		} catch (error) {
+			console.error('Error unsubscribing the member from the projects:', error);
 		}
 	}
 
@@ -1203,4 +1267,32 @@ export function isProjectKeyConflict(error: unknown): boolean {
 	const isUniqueViolation =
 		codes.includes('23505') || codes.includes('ER_DUP_ENTRY') || codes.includes('1062') || codes.some((code) => code.startsWith('SQLITE_CONSTRAINT'));
 	return isUniqueViolation && /UQ_organization_project_organization_task_key|taskKey/i.test(message);
+}
+
+/**
+ * Tells employees they were added to a project (an `Assignment` notification about it, as a task's new assignees are
+ * told), except the one who added them. Best effort: a notification that cannot be published never fails the change
+ * that was saved.
+ *
+ * @param eventBus - The bus the notifications travel on.
+ * @param project - The project, its organization and its tenant.
+ * @param employeeIds - The employees just added.
+ */
+function notifyAddedMembers(
+	eventBus: EventBus,
+	project: { id: ID; name?: string | null; organizationId: ID; tenantId: ID },
+	employeeIds: ID[]
+): void {
+	try {
+		const user = RequestContext.currentUser();
+		const actor = {
+			employeeId: RequestContext.currentEmployeeId() ?? user?.employeeId ?? null,
+			name: actorDisplayName(user)
+		};
+		for (const event of projectMemberAddedEvents(project, employeeIds, actor)) {
+			eventBus.publish(event);
+		}
+	} catch (error) {
+		console.error('Error notifying the members added to the project:', error);
+	}
 }
