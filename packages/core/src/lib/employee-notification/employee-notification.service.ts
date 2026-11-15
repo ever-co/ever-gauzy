@@ -29,6 +29,8 @@ import { TypeOrmEmployeeNotificationRepository } from './repository/type-orm-emp
 import { MikroOrmEmployeeNotificationRepository } from './repository/mikro-orm-employee-notification.repository';
 import { generateNotificationTitle } from './employee-notification.helper';
 import { BoardInvitationDTO, boardInvitationsOf } from './board-invitation';
+import { BoardNotificationDTO, BoardNotificationType, boardNotificationsOf, isSameBoard } from './board-notification';
+import { oauthAppScopesAllowWrites, oauthAppScopesOf } from '../auth/oauth-app-scope';
 
 /**
  * How long an unread notification absorbs an identical one (see `findRedeliveredNotification`).
@@ -289,6 +291,86 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 		} catch (error) {
 			// Redacted: a driver error carries the bound values (ids, the notification title) in its text.
 			this.logger.warn('Board invitation check failed, filing every invitation:', redactDatabaseError(error));
+			return new Set();
+		}
+	}
+
+	/**
+	 * Tells the colleagues a member picked about a Board, from the Boards app (ever-co/ever-teams#5022): a `BoardShare`
+	 * when the member shares it with them, a `BoardMention` when the member mentions them in it. Each employee named
+	 * who works in the organization gets one, filed as the caller (see {@link boardNotificationsOf}); nobody is told
+	 * twice: a colleague who still has the same notification unread, about the same Board at the same link, is not
+	 * given another one, so a mention made again and again, or a request retried, leaves one entry.
+	 *
+	 * The Boards app sends nothing but the caller's sign-in: the tenant is the one of the sign-in, and the organization
+	 * the one the body names, else the caller's last one, else the one of their employee. The link is kept as sent and
+	 * never logged: its `#` part may hold the Board's encryption key.
+	 *
+	 * @returns How many colleagues were told (those whose earlier notification is still unread included).
+	 * @throws ForbiddenException when no user is signed in, the sign-in is a third-party app's that may not write, or
+	 * the caller works in no organization the request may use.
+	 */
+	async notifyAboutBoard(type: BoardNotificationType, input: BoardNotificationDTO): Promise<{ notified: number }> {
+		const user = RequestContext.currentUser();
+		const tenantId = RequestContext.currentTenantId();
+		if (!user?.id || !tenantId) {
+			throw new ForbiddenException('Only an employee can tell their colleagues about a Board.');
+		}
+		// The route takes no tenant header, so TenantPermissionGuard, which refuses a third-party app's token without a
+		// write scope on every write, is not on it: the same rule is applied here.
+		const scopes = oauthAppScopesOf(user);
+		if (scopes !== null && !oauthAppScopesAllowWrites(scopes)) {
+			throw new ForbiddenException('This app may not send notifications.');
+		}
+		const name = [user.firstName, user.lastName].filter((part) => part && part.trim()).join(' ') || user.name || user.email || '';
+		const notifications = await boardNotificationsOf(this.typeOrmRepository.manager.connection, type, input, {
+			userId: user.id,
+			tenantId,
+			name,
+			lastOrganizationId: RequestContext.currentOrganizationId(),
+			employeeId: RequestContext.currentEmployeeId() ?? user.employeeId
+		});
+		const pending = await this.pendingBoardNotificationReceiversOf(notifications);
+		for (const notification of notifications) {
+			if (pending.has(String(notification.receiverEmployeeId))) {
+				continue;
+			}
+			await this.create(notification);
+		}
+		return { notified: notifications.length };
+	}
+
+	/**
+	 * The receivers of these Board notifications (all of one kind, about one Board, from one sender) who still have one
+	 * about the same Board at the same link unread and not archived. Best effort: when the check fails, every
+	 * notification is filed, as for the Board invitations.
+	 */
+	private async pendingBoardNotificationReceiversOf(notifications: IEmployeeNotificationCreateInput[]): Promise<Set<string>> {
+		const [first] = notifications;
+		const board = first?.metadata?.board;
+		if (!first || !board) {
+			return new Set();
+		}
+		try {
+			const unread = await this.find({
+				where: {
+					type: first.type,
+					sentByEmployeeId: first.sentByEmployeeId,
+					receiverEmployeeId: In(notifications.map((notification) => notification.receiverEmployeeId)),
+					tenantId: first.tenantId,
+					organizationId: first.organizationId,
+					isRead: false,
+					isArchived: false
+				}
+			});
+			return new Set(
+				unread
+					.filter((notification) => isSameBoard(notification.metadata?.board, board))
+					.map((notification) => String(notification.receiverEmployeeId))
+			);
+		} catch (error) {
+			// Redacted: a driver error carries the bound values in its text and parameters.
+			this.logger.warn('Board notification check failed, filing every notification:', redactDatabaseError(error));
 			return new Set();
 		}
 	}
