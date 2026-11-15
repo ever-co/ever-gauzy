@@ -671,6 +671,9 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				const request = ++this.cardsRequest;
 				const source = this.smartTableSource;
+				// The source's set-up has already put `loading` back: without it the grid would say there are no
+				// employees while this page is read. The source's `finalize` ends it, on an answer or an error.
+				this.loading = true;
 				await source.getElements();
 				// The Kind filter (or a newer request) changed the list while this page was loading: its rows
 				// belong to the previous list, which the grid no longer shows.
