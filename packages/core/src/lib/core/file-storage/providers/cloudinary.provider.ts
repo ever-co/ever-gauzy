@@ -211,6 +211,9 @@ export class CloudinaryProvider extends Provider<CloudinaryProvider> {
 			return fileURL;
 		}
 
+		// The instance `FileStorage` hands out is shared by every tenant: read the request tenant's settings first
+		this.setCloudinaryConfiguration();
+
 		// Construct a new URL using the Cloudinary configuration
 		return new URL(join(this.config.cloud_name, fileURL), this.config.baseUrl).toString();
 	}
@@ -232,6 +235,9 @@ export class CloudinaryProvider extends Provider<CloudinaryProvider> {
 		}
 
 		try {
+			// The instance `FileStorage` hands out is shared by every tenant: read the request tenant's settings first
+			this.setCloudinaryConfiguration();
+
 			// Attempt to construct a new URL using the Cloudinary configuration
 			return new URL(join(this.config.cloud_name, filePath), this.config.baseUrl).toString();
 		} catch (error) {
