@@ -2,7 +2,15 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
 import { RelationId } from 'typeorm';
 import { ID, IUser } from '@gauzy/contracts';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, TenantBaseEntity, User } from '@gauzy/core';
+import {
+	ColumnIndex,
+	ExportRedacted,
+	MultiORMColumn,
+	MultiORMEntity,
+	MultiORMManyToOne,
+	TenantBaseEntity,
+	User
+} from '@gauzy/core';
 
 /**
  * A Gauzy session that was opened through Ever ID, remembered by the identity provider's session id
@@ -43,8 +51,10 @@ export class ZitadelSession extends TenantBaseEntity {
 	 * The Ever ID refresh token of this session, encrypted (AES-256-GCM, by the Ever Platform connection plugin, as it
 	 * stores the installation's keys), together with the issuer it came from. Kept only while the App Launcher is on
 	 * (`EVER_APP_LAUNCHER_ENABLED=true`), and NULL otherwise. Never selected unless asked for, never serialized, never
-	 * returned by a route and never logged; it goes with the session record.
+	 * returned by a route and never logged; it goes with the session record. Blank in an export archive, like every
+	 * sealed credential: an import has no use for it.
 	 */
+	@ExportRedacted({ blank: true })
 	@MultiORMColumn({ type: 'text', nullable: true, select: false, hidden: true })
 	everRefreshTokenEncrypted?: string | null;
 }
