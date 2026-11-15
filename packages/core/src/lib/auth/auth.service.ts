@@ -3139,6 +3139,12 @@ export class AuthService extends SocialAuthService {
 
 				sq = sq.whereIn(`${alias}.organizationId`, orgSubQuery);
 
+				// Only teams of an organization that is not soft deleted, whatever the state of the team's own row
+				sq = sq.whereIn(
+					`${alias}.organizationId`,
+					knex('organization').select('organization.id').whereNull('organization.deletedAt')
+				);
+
 				// Sub Query: only assigned teams for a specific employee
 				const teamSubQuery = knex('organization_team_employee')
 					.select('organization_team_employee.organizationTeamId')
@@ -3194,6 +3200,16 @@ export class AuthService extends SocialAuthService {
 				// Sub Query to get only assigned teams for specific organizations
 				query.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => {
 					return p(`"${query.alias}"."organizationId" IN ` + orgSubQuery(cb));
+				});
+
+				// Only teams of an organization that is not soft deleted, whatever the state of the team's own row
+				query.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => {
+					const liveOrganizations = cb
+						.subQuery()
+						.select(p('"organization"."id"'))
+						.from('organization', 'organization')
+						.where(p('"organization"."deletedAt" IS NULL'));
+					return p(`"${query.alias}"."organizationId" IN ` + liveOrganizations.getQuery());
 				});
 
 				// Sub Query to get only assigned teams for a specific employee for specific tenant

@@ -16,9 +16,14 @@ import { AuthService } from './auth.service';
  * The teams a sign-in lists (`current_teams` of the workspace pick) leave out a soft-deleted team, a team of a
  * soft-deleted organization included (ever-co/ever-gauzy#11960), under both ORMs. The TypeORM query builder leaves
  * deleted teams out on its own; the MikroORM branch reads through raw knex, which skips the soft-delete filter.
+ *
+ * A team whose own row is live in a soft-deleted organization (one saved by a request that was already past its
+ * checks when the delete committed) is left out too.
  */
 const TENANT = 'tenant-1';
 const ORGANIZATION = 'org-1';
+const DELETED_ORGANIZATION = 'org-2';
+const DELETED_AT = new Date('2026-11-14T10:00:00Z');
 const USER = 'user-1';
 const EMPLOYEE = 'employee-1';
 
@@ -31,6 +36,13 @@ const flags = {
 } as const;
 
 const schemas = [
+	new EntitySchema({
+		name: 'organization',
+		columns: {
+			id: { type: 'varchar', primary: true },
+			deletedAt: { type: 'datetime', nullable: true, deleteDate: true }
+		}
+	}),
 	new EntitySchema({
 		name: 'organization_team',
 		columns: {
@@ -87,6 +99,9 @@ describe('AuthService — the teams a sign-in lists leave out a deleted team (#1
 		const insert = (table: string, values: Record<string, unknown>[]) =>
 			dataSource.createQueryBuilder().insert().into(table).values(values).execute();
 		const ofOrganization = { tenantId: TENANT, organizationId: ORGANIZATION };
+		const ofDeletedOrganization = { tenantId: TENANT, organizationId: DELETED_ORGANIZATION };
+
+		await insert('organization', [{ id: ORGANIZATION }, { id: DELETED_ORGANIZATION, deletedAt: DELETED_AT }]);
 
 		await insert('organization_team', [
 			{ id: 'team-live', name: 'Live', createdAt: new Date('2026-11-01T00:00:00Z'), ...ofOrganization },
@@ -94,15 +109,21 @@ describe('AuthService — the teams a sign-in lists leave out a deleted team (#1
 				id: 'team-deleted',
 				name: 'Deleted',
 				createdAt: new Date('2026-11-02T00:00:00Z'),
-				deletedAt: new Date('2026-11-14T10:00:00Z'),
+				deletedAt: DELETED_AT,
 				...ofOrganization
-			}
+			},
+			// Saved after the delete of its organization committed: its own row is live
+			{ id: 'team-late', name: 'Late', createdAt: new Date('2026-11-14T10:00:01Z'), ...ofDeletedOrganization }
 		]);
 		await insert('organization_team_employee', [
 			{ id: 'member-live', organizationTeamId: 'team-live', employeeId: EMPLOYEE, ...ofOrganization },
-			{ id: 'member-deleted', organizationTeamId: 'team-deleted', employeeId: EMPLOYEE, ...ofOrganization }
+			{ id: 'member-deleted', organizationTeamId: 'team-deleted', employeeId: EMPLOYEE, ...ofOrganization },
+			{ id: 'member-late', organizationTeamId: 'team-late', employeeId: EMPLOYEE, ...ofDeletedOrganization }
 		]);
-		await insert('user_organization', [{ id: 'membership', userId: USER, ...ofOrganization }]);
+		await insert('user_organization', [
+			{ id: 'membership', userId: USER, ...ofOrganization },
+			{ id: 'membership-deleted', userId: USER, deletedAt: DELETED_AT, ...ofDeletedOrganization }
+		]);
 
 		knexClient = knex({ client: 'better-sqlite3', connection: { filename: dbPath }, useNullAsDefault: true });
 	});
