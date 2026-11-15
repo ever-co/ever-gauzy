@@ -92,4 +92,10 @@ describe('the refresh token lifetime', () => {
 			DEFAULT_JWT_REFRESH_TOKEN_EXPIRATION_TIME
 		);
 	});
+
+	it.each(DEMO_DEPLOYMENTS)('outlives the access token in the demo deployment %s', (manifest) => {
+		const accessLifetime = manifestValue(manifest, 'JWT_TOKEN_EXPIRATION_TIME') ?? DEFAULT_ACCESS_TOKEN_LIFETIME_S;
+
+		expect(manifestValue(manifest, 'JWT_REFRESH_TOKEN_EXPIRATION_TIME')).toBeGreaterThan(accessLifetime);
+	});
 });
