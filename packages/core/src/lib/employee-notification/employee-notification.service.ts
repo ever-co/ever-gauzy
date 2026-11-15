@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
 import {
@@ -11,7 +12,7 @@ import {
 	IPagination,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { Between, DeleteResult, FindOptionsWhere, In, UpdateResult } from 'typeorm';
+import { Between, DeleteResult, FindOptionsWhere, In, QueryRunner, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
 import { runOutsideOrganizationBoundary } from '../core/crud/organization-boundary';
@@ -41,9 +42,15 @@ import { oauthAppScopesAllowWrites, oauthAppScopesOf } from '../auth/oauth-app-s
  */
 export const EMPLOYEE_NOTIFICATION_REDELIVERY_WINDOW_MS = 60 * 1000;
 
+/** How long a Board notification request waits for another one about the same Board before it files anyway. */
+const BOARD_NOTIFICATION_LOCK_WAIT_SECONDS = 5;
+
 @Injectable()
 export class EmployeeNotificationService extends TenantAwareCrudService<EmployeeNotification> {
 	readonly logger = new Logger(EmployeeNotificationService.name);
+
+	/** The Board notification requests of this process in progress, by lock name (see `inBoardNotificationTurn`). */
+	private static readonly boardNotificationTurns = new Map<string, Promise<unknown>>();
 
 	constructor(
 		readonly typeOrmEmployeeNotificationRepository: TypeOrmEmployeeNotificationRepository,
@@ -334,19 +341,127 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 		if (notifications.length === 0) {
 			return { notified: 0 };
 		}
-		// `boardNotificationsOf` checked that the caller works in the organization it picked and kept only colleagues who
-		// work there: the unread check and the inserts are about that organization, which need not be the one of the
-		// caller's token, so its boundary is lifted for them.
-		await runOutsideOrganizationBoundary(async () => {
-			const pending = await this.pendingBoardNotificationReceiversOf(notifications);
-			for (const notification of notifications) {
-				if (pending.has(String(notification.receiverEmployeeId))) {
-					continue;
+		// One request at a time per sender, kind and Board, so that two overlapping identical requests (a retry) cannot
+		// both find no unread notification and both file one. `boardNotificationsOf` checked that the caller works in
+		// the organization it picked and kept only colleagues who work there: the unread check and the inserts are about
+		// that organization, which need not be the one of the caller's token, so its boundary is lifted for them.
+		await this.inBoardNotificationTurn(notifications[0], () =>
+			runOutsideOrganizationBoundary(async () => {
+				const pending = await this.pendingBoardNotificationReceiversOf(notifications);
+				for (const notification of notifications) {
+					if (pending.has(String(notification.receiverEmployeeId))) {
+						continue;
+					}
+					await this.create(notification);
 				}
-				await this.create(notification);
-			}
-		});
+			})
+		);
 		return { notified: notifications.length };
+	}
+
+	/**
+	 * Runs `work` alone among the Board notification requests of the same sender, kind and Board at the same link:
+	 *
+	 * - in this process, they run one after the other;
+	 * - PostgreSQL: a transaction-scoped advisory lock, which the other API processes wait for too, held on a
+	 *   connection of its own while `work` runs on the service's own;
+	 * - MySQL: a named lock (`GET_LOCK`) on a connection of its own, released after `work`;
+	 * - SQLite: the process's own order (a single API process).
+	 *
+	 * The lock is named after a digest, never the link itself (its `#` part may hold the Board's encryption key). Best
+	 * effort: when the lock cannot be had within {@link BOARD_NOTIFICATION_LOCK_WAIT_SECONDS} or the database refuses
+	 * it, `work` runs anyway, as a request did before the lock.
+	 */
+	private async inBoardNotificationTurn(
+		first: IEmployeeNotificationCreateInput,
+		work: () => Promise<void>
+	): Promise<void> {
+		const board = first.metadata?.board;
+		const reference = board?.roomId ? `room:${board.roomId}` : `snapshot:${board?.snapshotId ?? ''}`;
+		const digest = createHash('sha256')
+			.update([first.tenantId, first.type, first.sentByEmployeeId, reference, board?.link ?? ''].join('\u0000'))
+			.digest('hex')
+			.slice(0, 32);
+		const lockName = `board-notification:${digest}`;
+
+		const turns = EmployeeNotificationService.boardNotificationTurns;
+		const previous = turns.get(lockName) ?? Promise.resolve();
+		const run = previous.then(() => this.withBoardNotificationLock(lockName, work));
+		const settled = run.catch(() => undefined);
+		turns.set(lockName, settled);
+		try {
+			await run;
+		} finally {
+			if (turns.get(lockName) === settled) {
+				turns.delete(lockName);
+			}
+		}
+	}
+
+	/** `work` while holding the database lock `lockName` where the database has one (see `inBoardNotificationTurn`). */
+	private async withBoardNotificationLock(lockName: string, work: () => Promise<void>): Promise<void> {
+		const dataSource = this.typeOrmRepository.manager.connection;
+		const type = dataSource?.options?.type;
+		if (type !== 'postgres' && type !== 'mysql') {
+			return await work();
+		}
+		let runner: QueryRunner | undefined;
+		let locked = false;
+		try {
+			runner = dataSource.createQueryRunner();
+			await runner.connect();
+			if (type === 'postgres') {
+				await runner.startTransaction();
+				await runner.query(`SET LOCAL lock_timeout = '${BOARD_NOTIFICATION_LOCK_WAIT_SECONDS}s'`);
+				await runner.query('SELECT pg_advisory_xact_lock(hashtextextended($1, 0))', [lockName]);
+				locked = true;
+			} else {
+				const [row] = await runner.query(
+					`SELECT GET_LOCK(?, ${BOARD_NOTIFICATION_LOCK_WAIT_SECONDS}) AS \`acquired\``,
+					[`gauzy:${lockName}`]
+				);
+				locked = Number(row?.acquired) === 1;
+			}
+		} catch (error) {
+			this.logger.warn(`Board notification lock not taken, filing without it: ${(error as Error)?.message}`);
+		}
+		try {
+			await work();
+		} finally {
+			await this.releaseBoardNotificationLock(runner, type, lockName, locked);
+		}
+	}
+
+	/** Gives the lock of `withBoardNotificationLock` back and its connection to the pool. Never throws. */
+	private async releaseBoardNotificationLock(
+		runner: QueryRunner | undefined,
+		type: string,
+		lockName: string,
+		locked: boolean
+	): Promise<void> {
+		if (!runner) {
+			return;
+		}
+		try {
+			if (type === 'postgres') {
+				// The advisory lock is the transaction's: it ends with it. A failed statement left nothing to keep.
+				if (locked) {
+					await runner.commitTransaction();
+				} else if (runner.isTransactionActive) {
+					await runner.rollbackTransaction();
+				}
+			} else if (locked) {
+				await runner.query('SELECT RELEASE_LOCK(?)', [`gauzy:${lockName}`]);
+			}
+		} catch (error) {
+			this.logger.warn(`Board notification lock not released cleanly: ${(error as Error)?.message}`);
+		} finally {
+			try {
+				await runner.release();
+			} catch {
+				// The pool takes a broken connection back by itself
+			}
+		}
 	}
 
 	/**

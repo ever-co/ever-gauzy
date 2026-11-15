@@ -11,12 +11,17 @@ const BEN = '0b6e2f8e-4c1a-4b8e-9a51-2f7c1d0a00b1';
 const CLEO = '0b6e2f8e-4c1a-4b8e-9a51-2f7c1d0a00c1';
 const LINK = 'https://boards.example/#room=r00m,secret-key';
 
+/** Lets every pending callback run, as a database round trip would. */
+const roundTrip = () => new Promise((resolve) => setImmediate(resolve));
+
 /**
  * A Board notification from the Boards app (ever-co/ever-teams#5022, review on ever-co/ever-gauzy#12007):
  * - it is filed in the organization `boardNotificationsOf` checked the caller works in, even when that is not the
- *   organization of their token (their last one): the organization boundary of the CRUD base would refuse it.
+ *   organization of their token (their last one): the organization boundary of the CRUD base would refuse it;
+ * - two identical requests that overlap file each colleague's notification once: the unread check and the insert run
+ *   one request after the other, in this process and, through a database lock, across API processes.
  */
-describe('EmployeeNotificationService — notifyAboutBoard, in the organization the caller picked', () => {
+describe('EmployeeNotificationService — notifyAboutBoard, organization and overlapping requests', () => {
 	const fixture = createTenantFixture({
 		user: { employeeId: 'employee-ana', firstName: 'Ana', lastName: 'Lima' } as IUser
 	});
@@ -112,4 +117,111 @@ describe('EmployeeNotificationService — notifyAboutBoard, in the organization 
 		});
 	});
 
+	it('files each colleague once when two identical requests overlap', async () => {
+		const service = serviceOn();
+		const stored: Array<Record<string, unknown>> = [];
+		jest.spyOn(service, 'find').mockImplementation(async () => {
+			await roundTrip();
+			return stored.filter((row) => !row['isRead']) as never;
+		});
+		const create = jest.spyOn(service, 'create').mockImplementation(async (notification) => {
+			await roundTrip();
+			const row = { ...notification, isRead: false };
+			stored.push(row);
+			return row as never;
+		});
+		const request = { ...input, organizationId: ORGANIZATION_B };
+
+		await Promise.all([
+			service.notifyAboutBoard(EmployeeNotificationTypeEnum.BOARD_SHARE, request),
+			service.notifyAboutBoard(EmployeeNotificationTypeEnum.BOARD_SHARE, request)
+		]);
+
+		expect(create.mock.calls.map(([notification]) => notification.receiverEmployeeId)).toEqual([BEN, CLEO]);
+	});
+
+	it('holds a transaction-scoped advisory lock on PostgreSQL while it checks and files, named without the link', async () => {
+		const steps: string[] = [];
+		const runner = {
+			connect: jest.fn(async () => steps.push('connect')),
+			startTransaction: jest.fn(async () => steps.push('begin')),
+			query: jest.fn<Promise<unknown>, [string, unknown[]?]>(async (sql) => steps.push(sql)),
+			commitTransaction: jest.fn(async () => steps.push('commit')),
+			rollbackTransaction: jest.fn(async () => steps.push('rollback')),
+			release: jest.fn(async () => steps.push('release'))
+		};
+		const service = serviceOn({ options: { type: 'postgres' }, createQueryRunner: () => runner });
+		jest.spyOn(service, 'find').mockImplementation(async () => {
+			steps.push('check');
+			return [];
+		});
+		jest.spyOn(service, 'create').mockImplementation(async (notification) => {
+			steps.push(`file ${notification.receiverEmployeeId}`);
+			return notification as never;
+		});
+
+		await service.notifyAboutBoard(EmployeeNotificationTypeEnum.BOARD_SHARE, {
+			...input,
+			organizationId: ORGANIZATION_B
+		});
+
+		expect(steps).toEqual([
+			'connect',
+			'begin',
+			"SET LOCAL lock_timeout = '5s'",
+			'SELECT pg_advisory_xact_lock(hashtextextended($1, 0))',
+			'check',
+			`file ${BEN}`,
+			`file ${CLEO}`,
+			'commit',
+			'release'
+		]);
+		const lockCall = runner.query.mock.calls.find(([sql]) => String(sql).includes('pg_advisory_xact_lock'));
+		const lockName = String((lockCall?.[1] as unknown[] | undefined)?.[0]);
+		expect(lockName).toMatch(/^board-notification:[0-9a-f]{32}$/);
+		expect(lockName).not.toContain('secret-key');
+	});
+
+	it('holds a named lock on MySQL while it checks and files, and still files when the lock stays taken', async () => {
+		const steps: string[] = [];
+		let acquired = 1;
+		const runner = {
+			connect: jest.fn(async () => steps.push('connect')),
+			query: jest.fn<Promise<unknown>, [string, unknown[]?]>(async (sql) => {
+				steps.push(sql);
+				return String(sql).startsWith('SELECT GET_LOCK') ? [{ acquired }] : [];
+			}),
+			release: jest.fn(async () => steps.push('release'))
+		};
+		const service = serviceOn({ options: { type: 'mysql' }, createQueryRunner: () => runner });
+		jest.spyOn(service, 'find').mockImplementation(async () => {
+			steps.push('check');
+			return [];
+		});
+		const create = jest.spyOn(service, 'create').mockImplementation(async (notification) => {
+			steps.push(`file ${notification.receiverEmployeeId}`);
+			return notification as never;
+		});
+		const request = { ...input, organizationId: ORGANIZATION_B };
+
+		await service.notifyAboutBoard(EmployeeNotificationTypeEnum.BOARD_SHARE, request);
+
+		expect(steps).toEqual([
+			'connect',
+			'SELECT GET_LOCK(?, 5) AS `acquired`',
+			'check',
+			`file ${BEN}`,
+			`file ${CLEO}`,
+			'SELECT RELEASE_LOCK(?)',
+			'release'
+		]);
+
+		// Another process kept the lock past the wait: the notifications are filed all the same (best effort)
+		steps.length = 0;
+		create.mockClear();
+		acquired = 0;
+		await service.notifyAboutBoard(EmployeeNotificationTypeEnum.BOARD_SHARE, request);
+		expect(create).toHaveBeenCalledTimes(2);
+		expect(steps).not.toContain('SELECT RELEASE_LOCK(?)');
+	});
 });
