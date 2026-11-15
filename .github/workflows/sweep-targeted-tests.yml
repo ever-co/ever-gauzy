@@ -102,10 +102,14 @@ jobs:
         # app. It goes through yarn, not Nx, so `.env.local` is not loaded here either.
         run: yarn config:dev
 
-      - name: Run the suites of the code the PR sweep rounds 5 and 6 touch
+      - name: Run the suites of the code PRs 11975-11981 touch
         env:
           NX_LOAD_DOT_ENV_FILES: 'false'
         run: |
           status=0
-          NODE_OPTIONS='--experimental-vm-modules --max-old-space-size=24576' node node_modules/jest/bin/jest.js -c packages/core/jest.config.ts --runInBand --ci             'packages/core/src/lib/(auth/two\-factor/two\-factor\-secret\.spec\.ts|auth/two\-factor/two\-factor\-switch\.spec\.ts|auth/user\-session/user\-session\-revocation\.spec\.ts|database/migration\-smoke\.spec\.ts|database/mikro\-orm\-options\.spec\.ts|employee\-notification/inbox\-notification\-emails\.spec\.ts|employee/agent\-employee\.spec\.ts|employee/rate\-change\-request/rate\-change\-request\.controller\.spec\.ts|invoice/invoice\-billed\-time\.postgres\.spec\.ts|invoice/invoice\-currency\.util\.spec\.ts|organization/dto/organization\-setting\.time\-log\-rates\.dto\.spec\.ts|saved\-report/dto/saved\-report\.dto\.spec\.ts|time\-tracking/screenshot/commands/handlers/screenshot\-update\.handler\.spec\.ts|time\-tracking/time\-log/dto/create\-time\-log\.dto\.spec\.ts|time\-tracking/time\-log/time\-log\.seed\.spec\.ts|shared/guards/mutating\-route\-permissions\.spec\.ts)'             || status=$?
+          J='node node_modules/jest/bin/jest.js'
+          export NODE_OPTIONS='--experimental-vm-modules --max-old-space-size=24576'
+          $J -c packages/core/jest.config.ts --runInBand --ci 'packages/core/src/lib/(core/file\-storage/providers/cloudinary\.provider\.spec\.ts|core/file\-storage/storage\-endpoint\-policy\.spec\.ts|core/file\-storage/tenant\-storage\-settings\.spec\.ts|email\-send/email\.service\.email\-invoice\.spec\.ts|email\-send/email\.service\.email\-links\.spec\.ts|estimate\-email/estimate\-email\.invoice\-delivery\.spec\.ts|invoice/invoice\-reminder/invoice\-reminder\.rules\.spec\.ts|invoice/invoice\-reminder/invoice\-reminder\.service\.sqlite\.spec\.ts|invoice/invoice\-reminder/invoice\-reminder\.worker\.spec\.ts|invoice/invoice\.service\.send\-email\.spec\.ts|time\-tracking/time\-log/commands/handlers/delete\-time\-span\.handler\.spec\.ts|time\-tracking/time\-slot/commands/handlers/time\-slot\-bulk\-delete\.handler\.spec\.ts)' || status=$?
+          $J -c packages/scheduler/jest.config.ts --runInBand --ci packages/scheduler || status=$?
+          $J -c packages/plugins/order/jest.config.ts --runInBand --ci 'packages/plugins/order/src/lib/order\-invoicing/order\-invoicing\.adapter\.spec\.ts' || status=$?
           exit "$status"
