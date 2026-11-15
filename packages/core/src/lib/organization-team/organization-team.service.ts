@@ -355,7 +355,11 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 				logo,
 				imageId,
 				projects,
-				defaultProjectId
+				defaultProjectId,
+				// The notification defaults keep their known keys with a valid value each, as on an update
+				...(input.notificationDefaults !== undefined
+					? { notificationDefaults: teamNotificationDefaultsOf(input.notificationDefaults) }
+					: {})
 			});
 
 			// Subscribe creator and assignees to the team
