@@ -9,7 +9,8 @@ import { TimesheetFirstOrCreateCommand } from '../../../timesheet/commands';
 import { generateTimeSlots } from '../../../time-slot/utils';
 import { TimeLog } from '../../time-log.entity';
 import { TimeLogCreateCommand } from '../time-log-create.command';
-import { recordTimeLogHistory } from '../../time-log-history.writer';
+import { lockedForChange, recordTimeLogHistory } from '../../time-log-history.writer';
+import { Employee } from '../../../../core/entities/internal';
 import { isRunningTimeLogInput, TimeLogCreateHandler, withRunningLogStoppedAt } from './time-log-create.handler';
 
 // The tenant check on project / task / client / team has its own spec (time-log-references.spec.ts).
@@ -338,8 +339,13 @@ describe("TimeLogCreateHandler: a timer start's run is the only run going", () =
 
 		expect(transactionRepository.save).not.toHaveBeenCalled();
 		expect(repository.save).not.toHaveBeenCalled();
-		// Checked after the employee's row was read for the lock, in the same transaction
+		// Checked after the employee's row was read for the lock, in the same transaction: this employee, in their
+		// tenant, with the lock the dialect takes (none on SQLite, whose single writer serializes)
 		expect(transactionManager.findOne).toHaveBeenCalledTimes(1);
+		expect(transactionManager.findOne).toHaveBeenCalledWith(Employee, {
+			where: { id: EMPLOYEE_ID, tenantId: TENANT_ID },
+			...lockedForChange()
+		});
 		expect(transactionManager.findOne.mock.invocationCallOrder[0]).toBeLessThan(
 			transactionManager.count.mock.invocationCallOrder[0]
 		);
