@@ -274,15 +274,20 @@ export class InvoiceScheduleService extends TenantAwareCrudService<InvoiceSchedu
 		tenantId: ID,
 		organizationId: ID
 	): Promise<Map<ID, InvoiceScheduleRun>> {
+		// One row per schedule, its latest: a read never grows with a schedule's history
+		const runs = await Promise.all(
+			schedules.map((schedule) =>
+				this.dataSource.getRepository(InvoiceScheduleRun).findOne({
+					where: { invoiceScheduleId: schedule.id, tenantId, organizationId },
+					relations: { invoice: true },
+					select: this.runFields(),
+					order: { claimedAt: 'DESC' }
+				})
+			)
+		);
 		const latest = new Map<ID, InvoiceScheduleRun>();
-		const runs = await this.dataSource.getRepository(InvoiceScheduleRun).find({
-			where: { invoiceScheduleId: In(schedules.map(({ id }) => id)), tenantId, organizationId },
-			relations: { invoice: true },
-			select: this.runFields(),
-			order: { claimedAt: 'DESC' }
-		});
 		for (const run of runs) {
-			if (!latest.has(run.invoiceScheduleId)) {
+			if (run) {
 				latest.set(run.invoiceScheduleId, run);
 			}
 		}
