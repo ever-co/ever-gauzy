@@ -295,10 +295,10 @@ describe("A timer reminder's email and push, on SQLite", () => {
 	 * filing): a timer reminder about the run's time log unless another kind is named.
 	 */
 	async function notifyAndFile(
-		overrides: { type?: string; isRead?: boolean } = {}
+		overrides: { type?: string; isRead?: boolean; createdAt?: Date } = {}
 	): Promise<{ notification: EmployeeNotification; itemId: string; filedAt: Date }> {
 		const id = randomUUID();
-		const createdAt = new Date();
+		const createdAt = overrides.createdAt ?? new Date();
 		const isTimerReminder =
 			(overrides.type ?? EmployeeNotificationTypeEnum.TIMER_REMINDER) ===
 			EmployeeNotificationTypeEnum.TIMER_REMINDER;
@@ -511,6 +511,30 @@ describe("A timer reminder's email and push, on SQLite", () => {
 		});
 		expect(mailer.sendNotification).not.toHaveBeenCalled();
 		expect(pusher.send).not.toHaveBeenCalled();
+	});
+
+	it('is due three minutes after its filing when the sweep takes it in 30 seconds later (#11892)', async () => {
+		const { itemId, filedAt } = await notifyAndFile();
+
+		expect(await delivery.sweep(new Date(filedAt.getTime() + 30 * SECOND))).toMatchObject({ decided: 2 });
+
+		expect((await rowsOf(itemId)).map((row) => [row.channel, new Date(row.dueAt as Date).getTime()])).toEqual([
+			[InboxDeliveryChannelEnum.EMAIL, afterWait(filedAt).getTime()],
+			[InboxDeliveryChannelEnum.PUSH, afterWait(filedAt).getTime()]
+		]);
+	});
+
+	it("counts from the notification's filing when its Inbox entry was filed late, as Ever Teams does (#11892)", async () => {
+		// The recovery sweep files an entry the live filing missed: the entry is newer than the notification
+		const createdAt = new Date(Date.now() - 2 * 60 * SECOND);
+		const { itemId } = await notifyAndFile({ createdAt });
+
+		await delivery.sweep(new Date());
+
+		expect((await rowsOf(itemId)).map((row) => new Date(row.dueAt as Date).getTime())).toEqual([
+			afterWait(createdAt).getTime(),
+			afterWait(createdAt).getTime()
+		]);
 	});
 
 	it('any other kind is emailed and pushed at once, as it always was, read in the app or not', async () => {

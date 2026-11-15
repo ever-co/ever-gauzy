@@ -30,7 +30,8 @@ import {
 	isSentOnlyWhileUnread,
 	kindLabelOf,
 	metadataOf,
-	retryDelayMs
+	retryDelayMs,
+	storedInstantOf
 } from './inbox-delivery-rules';
 import { InboxDeliveryPusher, InboxPushGoneError, InboxPushRefusedError } from './push/inbox-delivery-pusher';
 import { InboxPushSubscriptionService } from './push/inbox-push-subscription.service';
@@ -60,6 +61,9 @@ interface IIntakeRow {
 	metadata: unknown;
 	/** The recipient's read state when the entry is decided (a boolean, or 0 / 1 as some drivers answer it). */
 	isRead: unknown;
+	/** Where the entry comes from: a notification's entry names it here. */
+	externalSource: string | null;
+	externalId: string | null;
 }
 
 /** A read flag as the drivers answer it: a boolean, or 0 / 1. */
@@ -176,6 +180,8 @@ export class InboxDeliveryService {
 			.addSelect('item.organizationId', 'organizationId')
 			.addSelect('item.metadata', 'metadata')
 			.addSelect('recipient.isRead', 'isRead')
+			.addSelect('item.externalSource', 'externalSource')
+			.addSelect('item.externalId', 'externalId')
 			.where('recipient.createdAt >= :since', { since })
 			.andWhere('item.kind = :kind AND item.source = :source', { kind: InboxItemKindEnum.NOTIFICATION, source: InboxItemSourceEnum.GAUZY })
 			.andWhere((qb) => {
@@ -212,6 +218,9 @@ export class InboxDeliveryService {
 		// A timer reminder read already (an open tab showed it and marked it read) is decided as nothing, which also
 		// keeps it from being taken in again; the read state changes nothing for any other kind.
 		const alreadyRead = isReadFlag(row.isRead);
+		// A timer reminder's wait counts from its filing, as Ever Teams counts it, not from this sweep
+		let filedAt: Date | null = null;
+		if (isSentOnlyWhileUnread(type)) filedAt = await this.filedAtOf(row);
 		const decision =
 			channel === InboxDeliveryChannelEnum.PUSH
 				? decidePushDelivery({
@@ -220,9 +229,17 @@ export class InboxDeliveryService {
 						setting,
 						userTimeZone: user?.timeZone ?? null,
 						hasSubscription: !!(await this.subscriptions?.hasAny(row.tenantId, row.userId)),
-						alreadyRead
+						alreadyRead,
+						filedAt
 					})
-				: decideEmailDelivery({ now, type, setting, userTimeZone: user?.timeZone ?? null, alreadyRead });
+				: decideEmailDelivery({
+						now,
+						type,
+						setting,
+						userTimeZone: user?.timeZone ?? null,
+						alreadyRead,
+						filedAt
+					});
 		const repository = this.dataSource.getRepository(InboxDelivery);
 		try {
 			await repository.insert({
@@ -244,6 +261,20 @@ export class InboxDeliveryService {
 			if (await repository.exists({ where: { inboxItemId: row.inboxItemId, userId: row.userId, channel } })) return false;
 			throw error;
 		}
+	}
+
+	/**
+	 * When an entry's notification was filed: its `createdAt`, read in the row's tenant, which is what Ever Teams reads
+	 * through `/employee-notification`. The Inbox entry's own is the same for a live filing, but newer for one the
+	 * recovery sweep filed late. Null when the entry is no notification's, or the notification is gone.
+	 */
+	private async filedAtOf(row: IIntakeRow): Promise<Date | null> {
+		if (row.externalSource !== INBOX_NOTIFICATION_EXTERNAL_SOURCE || !row.externalId) return null;
+		const notification = (await this.dataSource.getRepository<ObjectLiteral>('EmployeeNotification').findOne({
+			select: { id: true, createdAt: true },
+			where: { id: row.externalId, tenantId: row.tenantId }
+		} as never)) as { createdAt?: unknown } | null;
+		return storedInstantOf(notification?.createdAt);
 	}
 
 	// ---------------------------------------------------------------- sending
