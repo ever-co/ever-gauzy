@@ -12,6 +12,7 @@ import { coreEntities } from '../../core/entities';
 import { CreateInvoiceReminderTable1791000011920 } from '../../database/migrations/1791000011920-CreateInvoiceReminderTable';
 import { INVOICE_REMINDER_SWEEP_PAGE_SIZE } from './invoice-reminder.constants';
 import { InvoiceReminder } from './invoice-reminder.entity';
+import { latestRemindedDueDate } from './invoice-reminder.rules';
 import { InvoiceReminderService } from './invoice-reminder.service';
 
 /**
@@ -552,6 +553,34 @@ describe('InvoiceReminderService on SQLite', () => {
 			})
 		);
 		expect(await claims()).toHaveLength(INVOICE_REMINDER_SWEEP_PAGE_SIZE + 1);
+	});
+
+	it('ends each read of the list at the due date it started with, so invoices coming in after the cursor do not hold back the ones before it', async () => {
+		for (let i = 0; i <= INVOICE_REMINDER_SWEEP_PAGE_SIZE; i++) {
+			await anInvoice({ dueIn: -DAY - HOUR - i * 60 * 1000 });
+		}
+		/** A page of invoices that come into the window by `at`, after every invoice there before. */
+		const comingIn = async (at: Date) => {
+			for (let i = 0; i < INVOICE_REMINDER_SWEEP_PAGE_SIZE; i++) {
+				await anInvoice({ dueIn: latestRemindedDueDate(at).getTime() - NOW.getTime() - i * 1000 });
+			}
+		};
+		// The mail server times out on every send of the first page, which takes the whole pass
+		emails.sendInvoiceReminder.mockRejectedValue(new Error('SMTP timeout'));
+		await service.sweep(NOW, 0);
+		emails.sendInvoiceReminder.mockResolvedValue(true);
+
+		// A full page comes into the window before each pass: the read still ends with the invoice it never reached
+		await comingIn(fromNow(HOUR));
+		expect(await service.sweep(fromNow(HOUR), 0)).toEqual(expect.objectContaining({ checked: 1, reminded: 1 }));
+		// So the next pass starts from the top again, and sends what failed
+		await comingIn(fromNow(2 * HOUR));
+		expect(await service.sweep(fromNow(2 * HOUR), 0)).toEqual(
+			expect.objectContaining({
+				checked: INVOICE_REMINDER_SWEEP_PAGE_SIZE,
+				reminded: INVOICE_REMINDER_SWEEP_PAGE_SIZE
+			})
+		);
 	});
 
 	it('sends nothing, and says so, while the template is not seeded: the renderer would send an empty email', async () => {

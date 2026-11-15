@@ -99,12 +99,14 @@ function claimTimeOf(now: Date): Date {
 export class InvoiceReminderService {
 	private readonly logger = new Logger(InvoiceReminderService.name);
 	/**
-	 * Where the last pass of this process stopped when its time ran out: the next pass starts after it, and only a pass
-	 * that reads to the end of the list starts the next one from the top again. Without it, a page slow to send (a mail
-	 * server timing out) would take every pass's time, pass after pass, and the invoices after it would miss their
-	 * reminders.
+	 * The read of the list that the last pass of this process left unfinished when its time ran out: where it stopped,
+	 * and the latest due date it reads to, fixed when it started. The next pass goes on after where it stopped, and only
+	 * a pass that reads to that due date starts the next read from the top again. Without the cursor, a page slow to
+	 * send (a mail server timing out) would take every pass's time, pass after pass, and the invoices after it would
+	 * miss their reminders; without the bound, invoices coming into the window after the cursor could keep a read from
+	 * ever ending, and the ones before it would wait.
 	 */
-	private resumeAfter: IInvoiceReminderInvoiceRow | null = null;
+	private unfinished: { after: IInvoiceReminderInvoiceRow | null; until: Date } | null = null;
 
 	constructor(
 		private readonly dataSource: DataSource,
@@ -115,7 +117,7 @@ export class InvoiceReminderService {
 	/**
 	 * Sends the reminders that are due: reads the invoices that may be due one a page at a time, in the order they are
 	 * due, until the list is read or the time budget of the pass is spent; a pass out of time leaves the rest to the
-	 * next one (see `resumeAfter`).
+	 * next one (see `unfinished`).
 	 *
 	 * @param now The moment the reminders are due at.
 	 * @param budgetMs How long the pass may keep reading pages.
@@ -132,20 +134,21 @@ export class InvoiceReminderService {
 			return report;
 		}
 		const startedAt = Date.now();
-		let after = this.resumeAfter;
+		const until = this.unfinished?.until ?? latestRemindedDueDate(now);
+		let after = this.unfinished?.after ?? null;
 		for (;;) {
-			const page = await this.invoicesThatMayBeDue(after, INVOICE_REMINDER_SWEEP_PAGE_SIZE, now);
+			const page = await this.invoicesThatMayBeDue(after, INVOICE_REMINDER_SWEEP_PAGE_SIZE, now, until);
 			report.checked += page.length;
 			if (page.length) {
 				await this.remindPage(page, now, report);
 				after = page[page.length - 1];
 			}
 			if (page.length < INVOICE_REMINDER_SWEEP_PAGE_SIZE) {
-				this.resumeAfter = null;
+				this.unfinished = null;
 				break;
 			}
 			if (Date.now() - startedAt >= budgetMs) {
-				this.resumeAfter = after;
+				this.unfinished = { after, until };
 				break;
 			}
 		}
@@ -172,16 +175,19 @@ export class InvoiceReminderService {
 
 	/**
 	 * A page of the invoices that may be due a reminder at `now` (see `remindedInvoices`), due between the last step's
-	 * grace and the first step's moment. Ordered by due date, then id, so the next page starts after this one.
+	 * grace and the first step's moment, and no later than `until`, the bound of the read of the list it belongs to.
+	 * Ordered by due date, then id, so the next page starts after this one.
 	 */
 	private async invoicesThatMayBeDue(
 		after: IInvoiceReminderInvoiceRow | null,
 		limit: number,
-		now: Date
+		now: Date,
+		until: Date
 	): Promise<IInvoiceReminderInvoiceRow[]> {
+		const latest = Math.min(latestRemindedDueDate(now).getTime(), until.getTime());
 		const query = this.remindedInvoices()
 			.andWhere('invoice.dueDate >= :earliest', { earliest: earliestRemindedDueDate(now) })
-			.andWhere('invoice.dueDate <= :latest', { latest: latestRemindedDueDate(now) })
+			.andWhere('invoice.dueDate <= :latest', { latest: new Date(latest) })
 			.orderBy('invoice.dueDate', 'ASC')
 			.addOrderBy('invoice.id', 'ASC')
 			.limit(limit);
