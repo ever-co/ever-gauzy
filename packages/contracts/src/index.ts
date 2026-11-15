@@ -114,6 +114,7 @@ export * from './lib/integration.model';
 export * from './lib/invite.model';
 export * from './lib/invoice-estimate-history.model';
 export * from './lib/invoice-item.model';
+export * from './lib/invoice-schedule.model';
 export * from './lib/invoice.model';
 export * from './lib/issue-type.model';
 export * from './lib/job-dead-letter.model';
