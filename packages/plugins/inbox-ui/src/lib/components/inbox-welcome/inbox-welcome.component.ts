@@ -4,15 +4,9 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { InboxItemKindEnum } from '@gauzy/contracts';
 import { InboxUiTab, kindIconOf } from '../../inbox-ui.helpers';
 
-/**
- * The welcome's sketches play a 12-second loop, one step a second (as the Downloads page's drawings and the chat's
- * welcome do). Each step of a script says where a drawn "You" cursor is, or which key is pressed.
- */
 const LOOP_SECONDS = 12;
-/** The loop's last second puts every sketch back to its first frame. */
 const RESET_STEP = LOOP_SECONDS - 1;
 
-/** Decisions: the cursor moves to Approve and clicks it (second 4); the request shows as approved from second 5. */
 const DECISION_SCRIPT: ReadonlyArray<{ at: 'rest' | 'approve'; press?: boolean }> = [
 	{ at: 'rest' },
 	{ at: 'rest' },
@@ -29,14 +23,9 @@ const DECISION_SCRIPT: ReadonlyArray<{ at: 'rest' | 'approve'; press?: boolean }
 ];
 const APPROVED_STEP = 5;
 
-/** Email: a message arrives unread (second 2) and is read (second 8). */
 const MAIL_ARRIVES_STEP = 2;
 const MAIL_READ_STEP = 8;
 
-/**
- * Keyboard shortcuts: the selected row (by id) and the key pressed that second. j, j moves down two rows, e archives
- * the selected one (it leaves at second 5, gone from second 6, the next one selected), k moves back up.
- */
 const KEY_SCRIPT: ReadonlyArray<{ selected: number; key?: 'j' | 'k' | 'e' }> = [
 	{ selected: 0 },
 	{ selected: 0 },
@@ -54,17 +43,6 @@ const KEY_SCRIPT: ReadonlyArray<{ selected: number; key?: 'j' | 'k' | 'e' }> = [
 const ARCHIVED_ROW = 2;
 const ARCHIVE_STEP = 5;
 
-/**
- * The reading pane with no item open (`/pages/inbox`), laid out like the Downloads page and the chat's welcome: a
- * centred headline, then framed tiles with a short text, an action and a drawn sketch of the inbox at work. Decisions
- * (a "You" cursor approves a request), Email (a message arrives and is read) and Keyboard shortcuts (j, k and e move
- * through the list and archive).
- *
- * The sketches' clock lives here, not in the page: it exists only while no item is open, a tick refreshes only this
- * view, and it skips ticks while the tab is hidden or the pane is not rendered (the pane is display:none on a phone
- * while the list shows). With reduced motion asked for, even when that is turned on while the pane is open, the
- * sketches stay on their first frame and the cursor is hidden.
- */
 @Component({
 	selector: 'ngx-inbox-welcome',
 	changeDetection: ChangeDetectionStrategy.OnPush,
@@ -77,7 +55,6 @@ const ARCHIVE_STEP = 5;
 			</header>
 
 			<div class="tiles">
-				<!-- Decisions: the wide tile, its text on the left and a request being approved on the right. -->
 				<section class="tile wide">
 					<div class="tile-inner">
 						<div class="tile-text">
@@ -124,7 +101,6 @@ const ARCHIVE_STEP = 5;
 										}
 									</div>
 								</div>
-								<!-- The "You" cursor; its step comes from the loop. -->
 								<span class="cursor" [attr.data-at]="decisionCursor().at" [class.is-pressing]="!!decisionCursor().press">
 									<svg class="cursor-arrow" viewBox="0 0 20 20"><path d="M3 2.5 16.5 9l-5.75 1.75L8 16.5Z" /></svg>
 									<span class="cursor-label">{{ 'INBOX.WELCOME.YOU' | translate }}</span>
@@ -134,7 +110,6 @@ const ARCHIVE_STEP = 5;
 					</div>
 				</section>
 
-				<!-- Email: a message arrives at the top of the list, unread, and is read. -->
 				<section class="tile">
 					<div class="tile-inner">
 						<div class="tile-text">
@@ -181,7 +156,6 @@ const ARCHIVE_STEP = 5;
 					</div>
 				</section>
 
-				<!-- Keyboard shortcuts: the selection moves with j and k, e archives the selected row. -->
 				<section class="tile">
 					<div class="tile-inner">
 						<div class="tile-text">
@@ -225,10 +199,6 @@ const ARCHIVE_STEP = 5;
 	`,
 	styles: [
 		`
-			/*
-			 * The welcome's own tokens, from the theme's (no literal colours: every theme defines these), so it follows
-			 * the light and the dark themes. The tiles are a shade off the pane, toward the text colour.
-			 */
 			:host {
 				display: block;
 				flex: 1 1 auto;
@@ -271,7 +241,6 @@ const ARCHIVE_STEP = 5;
 				font-size: 0.9375rem;
 			}
 
-			/* Tiles in a double frame (a ring around the card), as on the Downloads page. */
 			.tiles {
 				display: grid;
 				grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -292,7 +261,6 @@ const ARCHIVE_STEP = 5;
 				height: 100%;
 				min-height: 20rem;
 				overflow: hidden;
-				/* Each tile lays out and paints on its own: an animating sketch never invalidates the rest of the page. */
 				contain: layout paint;
 				border: 1px solid var(--w-border);
 				border-radius: calc(var(--border-radius) * 2.25);
@@ -368,7 +336,6 @@ const ARCHIVE_STEP = 5;
 				min-width: 0;
 			}
 
-			/* Soft buttons, the main one filled with the text colour (light on dark themes, dark on light ones). */
 			.button {
 				display: inline-flex;
 				align-items: center;
@@ -405,7 +372,6 @@ const ARCHIVE_STEP = 5;
 				outline-offset: 2px;
 			}
 
-			/* The sketches: lines and dots in the theme's tints, nothing to read. */
 			.tile-art {
 				position: relative;
 				display: flex;
@@ -426,7 +392,6 @@ const ARCHIVE_STEP = 5;
 				margin-top: 2rem;
 				padding: 0 2rem;
 			}
-			/* Layout containment: a sketch's changes (a row arriving, a key pressed) never lay out the page. */
 			.mock {
 				position: relative;
 				contain: layout;
@@ -523,7 +488,6 @@ const ARCHIVE_STEP = 5;
 				gap: 0.5rem;
 			}
 
-			/* Decisions: a request with Approve and Reject; once approved, a green "decided" line. */
 			.decision {
 				display: flex;
 				flex-direction: column;
@@ -595,7 +559,6 @@ const ARCHIVE_STEP = 5;
 				opacity: 0.45;
 			}
 
-			/* Email: rows with an unread dot; the new one arrives on top and is read. */
 			.mock.mail,
 			.mock.keys {
 				display: flex;
@@ -639,7 +602,6 @@ const ARCHIVE_STEP = 5;
 				background: var(--w-hover);
 			}
 
-			/* Keyboard shortcuts: a list with the selected row marked, and the keys under it. */
 			.mock.keys {
 				gap: 0.75rem;
 				padding: 0.75rem;
@@ -712,7 +674,6 @@ const ARCHIVE_STEP = 5;
 				transform: translateY(1px);
 			}
 
-			/* A click or a key press answers with a ring that grows and fades: transform and opacity only. */
 			.act.is-pressed::after,
 			kbd.is-pressed::after {
 				content: '';
@@ -724,12 +685,6 @@ const ARCHIVE_STEP = 5;
 				animation: welcome-ring 0.7s ease-out forwards;
 			}
 
-			/*
-			 * The "You" cursor, as on the Downloads page: the loop sets its data-at (where it is) and is-pressing (a
-			 * click this second). It is a transparent layer the size of its drawing, moved with transform, so the glide
-			 * runs on the compositor (a translate in % is a share of the drawing's width). --flip mirrors it for
-			 * right-to-left pages. Spots are measured from the drawing above.
-			 */
 			.cursor {
 				position: absolute;
 				inset: 0;
@@ -779,7 +734,6 @@ const ARCHIVE_STEP = 5;
 				animation: welcome-press 0.35s ease-out;
 			}
 
-			/* The pane opening: the headline and the tiles rise in one after another. */
 			.welcome-head,
 			.tile {
 				animation: welcome-rise 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
@@ -827,7 +781,6 @@ const ARCHIVE_STEP = 5;
 					transform: scale(1.35);
 				}
 			}
-			/* Less motion asked for: the still picture, with no entrances, rings or cursor (the loop does not run either). */
 			@media (prefers-reduced-motion: reduce) {
 				:host *,
 				:host *::after,
@@ -839,7 +792,6 @@ const ARCHIVE_STEP = 5;
 					display: none;
 				}
 			}
-			/* A narrow pane: one column, the wide tile's sketch under its text. */
 			@container (max-width: 44rem) {
 				.welcome-inner {
 					padding: 2rem 1rem;
@@ -874,20 +826,16 @@ export class InboxWelcomeComponent {
 	private readonly destroyRef = inject(DestroyRef);
 	private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
-	/** A tile's main action: show that tab of the list. */
 	readonly openTab = output<InboxUiTab>();
-	/** The shortcuts tile's action: the sheet of keyboard shortcuts. */
 	readonly openShortcuts = output<void>();
 
 	protected readonly decisionKinds = [InboxItemKindEnum.QUESTION, InboxItemKindEnum.APPROVAL, InboxItemKindEnum.ESCALATION];
 	protected readonly keys = ['j', 'k', 'e'] as const;
-	/** The email sketch's rows (avatar tone, line widths in %); the first one unread. */
 	protected readonly mailRows = [
 		{ tone: 1, name: 30, text: 72, unread: true },
 		{ tone: 2, name: 24, text: 58, unread: false },
 		{ tone: 1, name: 34, text: 66, unread: false }
 	];
-	/** The shortcuts sketch's rows, by id. */
 	private readonly allKeyRows = [
 		{ id: 0, tone: 1, width: 62 },
 		{ id: 1, tone: 2, width: 48 },
@@ -896,9 +844,7 @@ export class InboxWelcomeComponent {
 		{ id: 4, tone: 2, width: 44 }
 	];
 
-	/** The loop's second; it stays at 0 for reduced motion. */
 	private readonly step = signal(0);
-	/** The viewer's reduced-motion setting, followed while the pane is shown (it can change at any time). */
 	private readonly reducedMotion = signal(false);
 
 	protected readonly decisionCursor = computed(() => DECISION_SCRIPT[this.step()]);
@@ -920,8 +866,6 @@ export class InboxWelcomeComponent {
 			motion.addEventListener('change', onMotionChange);
 			this.destroyRef.onDestroy(() => motion.removeEventListener('change', onMotionChange));
 		}
-		// The one-second clock, outside Angular's zone (the signal write refreshes only this view). It starts from the
-		// first frame, stops when reduced motion is turned on, and is cleared when the pane goes (an item is opened).
 		effect((onCleanup) => {
 			this.step.set(0);
 			if (this.reducedMotion()) return;

@@ -557,7 +557,6 @@ export function apiMessage(error: unknown): string | null {
 											</div>
 										} @empty {
 											@if (!loading()) {
-												<!-- As the Downloads page's cards: a framed tile, its text over a faint drawing of a list. -->
 												<div class="empty-tile" data-test="empty">
 													<div class="empty-inner">
 														<div class="empty-text">
@@ -629,7 +628,6 @@ export function apiMessage(error: unknown): string | null {
 											(stateChanged)="changeState(item, $event)"
 										></ngx-inbox-item-detail>
 									} @else {
-										<!-- Nothing open: the Downloads-style welcome, its tiles leading to Decisions, Email and the shortcuts. -->
 										<ngx-inbox-welcome
 											data-test="no-selection"
 											(openTab)="selectTab($event)"
@@ -1485,11 +1483,6 @@ export function apiMessage(error: unknown): string | null {
 				min-height: 16rem;
 			}
 
-			/*
-			 * The empty list, as the Downloads page's cards: a ring around a card a shade off the pane, its title, hint
-			 * and (when filtered) Clear filters, then a faint drawing of a list. Theme tokens only, the radii scaled from
-			 * the theme's --border-radius.
-			 */
 			.empty-tile {
 				margin: 0.75rem;
 				padding: 0.3125rem;
@@ -1806,7 +1799,6 @@ export class InboxPageComponent implements OnInit {
 	private readonly destroyRef = inject(DestroyRef);
 
 	protected readonly tabs = INBOX_UI_TABS;
-	/** The empty list's drawing: its rows' title widths (%). */
 	protected readonly emptyRows = [46, 34, 52];
 	protected readonly tabIcons = INBOX_UI_TAB_ICONS;
 	protected readonly myMailboxLink = INBOX_MY_MAILBOX_LINK;
