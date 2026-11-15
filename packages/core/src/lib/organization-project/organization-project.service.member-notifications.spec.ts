@@ -217,6 +217,26 @@ describe('OrganizationProjectService — the members hear of the changes that ma
 		expect(published(OrganizationProjectChangedEvent)).toEqual([]);
 	});
 
+	it('publishes that an edit archived the project, after what it changed in the status', async () => {
+		await service().update('project-1', {
+			organizationId: ORGANIZATION,
+			status: ProjectStatusEnum.COMPLETED,
+			isArchived: true
+		} as never);
+
+		const [event] = published(OrganizationProjectChangedEvent);
+		expect(event.changes).toEqual([
+			{ field: 'status', from: 'in progress', to: 'completed' },
+			{ field: 'archived', from: 'false', to: 'true' }
+		]);
+	});
+
+	it('publishes nothing for an edit that names the archive state the project already has', async () => {
+		await service().update('project-1', { organizationId: ORGANIZATION, isArchived: false } as never);
+
+		expect(published(OrganizationProjectChangedEvent)).toEqual([]);
+	});
+
 	it('publishes that the project was archived', async () => {
 		await service().setArchived('project-1', true);
 

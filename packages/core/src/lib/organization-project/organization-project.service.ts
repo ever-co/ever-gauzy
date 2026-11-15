@@ -361,7 +361,13 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 				loggedInput
 			);
 
-			// Tell the members when the project's state or dates changed
+			// Tell the members when the project's state or dates changed, or when the body archived it or brought it
+			// back (as the archive routes tell them)
+			const requestedArchive = (entity as Record<string, unknown>)['isArchived'];
+			const archiveChange =
+				typeof requestedArchive === 'boolean'
+					? projectArchiveChangeOf(!!organizationProject.isArchived, requestedArchive)
+					: null;
 			this.publishProjectChanges(
 				{
 					id: organizationProjectId,
@@ -369,7 +375,10 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 					organizationId,
 					tenantId
 				},
-				projectChangesOf(organizationProject, entity as Record<string, unknown>)
+				[
+					...projectChangesOf(organizationProject, entity as Record<string, unknown>),
+					...(archiveChange ? [archiveChange] : [])
+				]
 			);
 
 			return updatedProject;
