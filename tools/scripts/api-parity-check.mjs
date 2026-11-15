@@ -148,15 +148,26 @@ const GRAPHQL_ONLY = {
 /**
  * REST resources that are deliberately one-sided, with the reason.
  *
- * These are the links between two aggregates — a product and a channel, a variant and a tag — which
- * GraphQL models as fields on the aggregate they belong to rather than as roots of their own, because
- * a link has no independent existence to expose. REST addresses them as resources of their own
+ * The first three are the links between two aggregates — a product and a channel, a variant and a tag —
+ * which GraphQL models as fields on the aggregate they belong to rather than as roots of their own,
+ * because a link has no independent existence to expose. REST addresses them as resources of their own
  * because a route cannot express a field of a field.
+ *
+ * The other three are the routes of an invoice paid online (ever-co/ever-gauzy#11856), served by one
+ * controller with no prefix of its own, so each is named by its route minus its parameters: a webhook
+ * the payment connector signs, an unauthenticated write the invoice's public page makes, and the
+ * settings that wire the connector, whose row GraphQL already reads.
  */
 const REST_ONLY = {
 	'product-channels': 'The link between a product and a channel, reached over GraphQL through the product.',
 	'product-variant-channels': 'The link between a variant and a channel, reached over GraphQL through the variant.',
-	'product-variant-tags': 'The link between a variant and a tag, reached over GraphQL through the variant.'
+	'product-variant-tags': 'The link between a variant and a tag, reached over GraphQL through the variant.',
+	'invoice-payments-connection':
+		'The organization’s connection to its payment connector is its `signed-checkout` payment provider, which GraphQL reads as `paymentProvider`/`paymentProviders` with its non-secret configuration; the two writes REST adds, connect (`PUT`) and `rotate-secret` (`POST`, a child of this route), answer the connector’s signing secret once (PAYMENT_PROVIDERS_EDIT) and set up an integration whose other two ends, below, are REST-only.',
+	'public-invoice-payments-invoice':
+		'Paying an invoice from its public page: whether the page offers Pay, and the checkout (`…/checkout`, a child of this route), addressed by the invoice’s share link (`:id/:token`) for a caller with no account. The checkout is an unauthenticated write that calls the organization’s connector, throttled per client, and is kept to the one route the page calls rather than also opened as a public GraphQL mutation; the share link’s invoice read itself is mirrored, as `invoiceByToken`.',
+	'public-invoice-payments-notifications':
+		'The payment connector’s notification: a webhook its server posts with no account, authenticated only by an HMAC over the raw request body (`x-gauzy-payment-signature`), which no GraphQL operation carries.'
 };
 
 /**

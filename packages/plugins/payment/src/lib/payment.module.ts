@@ -19,10 +19,7 @@ import { RefundLineService } from './refund-line/refund-line.service';
 import { RefundReasonService } from './refund-reason/refund-reason.service';
 import { PaymentWebhookEventService } from './payment-webhook-event/payment-webhook-event.service';
 import { InvoicePaymentService } from './invoice-payment/invoice-payment.service';
-import {
-	InvoicePaymentConnectionController,
-	PublicInvoicePaymentController
-} from './invoice-payment/invoice-payment.controller';
+import { InvoicePaymentController } from './invoice-payment/invoice-payment.controller';
 import { ReturnRefundService } from './return-refund/return-refund.service';
 import { PaymentProviderController } from './payment-provider/payment-provider.controller';
 import { PaymentCollectionController } from './payment-collection/payment-collection.controller';
@@ -122,8 +119,7 @@ export const ALL_PAYMENT_ENTITIES = [
 		PaymentAccountHolderController,
 		PaymentMethodTokenController,
 		// An invoice paid online from its public page, and the organization's connection to its payment connector.
-		PublicInvoicePaymentController,
-		InvoicePaymentConnectionController
+		InvoicePaymentController
 	],
 	providers: [
 		PaymentProviderService,
