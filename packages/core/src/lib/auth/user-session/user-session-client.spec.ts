@@ -1,6 +1,12 @@
 // cspell:ignore KHTML okhttp Équipe
 import { UserSessionAppEnum } from '@gauzy/contracts';
-import { appNameOf, describeSessionClient, originHostOf, sessionSourceOf } from './user-session-client';
+import {
+	appNameInUserAgent,
+	appNameOf,
+	describeSessionClient,
+	originHostOf,
+	sessionSourceOf
+} from './user-session-client';
 
 describe('describeSessionClient', () => {
 	it.each([
@@ -62,6 +68,11 @@ describe('describeSessionClient', () => {
  * Ever Teams, Cloc and Works, and two of them on one device look alike by their user agent alone.
  */
 describe('the app of a session', () => {
+	const CHROME_UA =
+		'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
+	const electronUa = (name: string) =>
+		`Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) ${name}/0.1.0 Chrome/130.0.6723.170 Electron/33.2.1 Safari/537.36`;
+
 	describe('appNameOf, the name an app gives itself', () => {
 		it.each([
 			['Ever Teams', 'Ever Teams'],
@@ -82,6 +93,25 @@ describe('the app of a session', () => {
 			['more than 64 characters', 'x'.repeat(65)]
 		])('refuses %s', (_case, given) => {
 			expect(appNameOf(given)).toBeNull();
+		});
+	});
+
+	describe('appNameInUserAgent, the name a user agent carries', () => {
+		it.each([
+			['the desktop timer', electronUa('gauzy-desktop-timer'), 'gauzy-desktop-timer'],
+			['a desktop app named with spaces', electronUa('Ever Teams Desktop'), 'Ever Teams Desktop'],
+			['the iOS app', 'EverTeams/1 CFNetwork/1568.200.51 Darwin/24.1.0', 'EverTeams']
+		])('reads it in %s', (_case, userAgent, name) => {
+			expect(appNameInUserAgent(userAgent)).toBe(name);
+		});
+
+		it.each([
+			['a browser', CHROME_UA],
+			["an Electron app that kept Electron's own name", electronUa('Electron')],
+			['the Android app, whose agent names its HTTP library only', 'okhttp/4.12.0'],
+			['no user agent', null]
+		])('finds none in %s', (_case, userAgent) => {
+			expect(appNameInUserAgent(userAgent)).toBeNull();
 		});
 	});
 

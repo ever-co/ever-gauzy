@@ -1,4 +1,4 @@
-// cspell:ignore okhttp Dalvik
+// cspell:ignore okhttp Dalvik KHTML
 import { UserSessionAppEnum } from '@gauzy/contracts';
 
 /** What a session's user agent tells about the app it was opened from. */
@@ -42,6 +42,12 @@ export const CLIENT_APP_HEADER = 'x-client-app';
 
 /** A plain app name: letters, digits, spaces and `. _ ' -`, 64 characters at most, starting with a letter or digit. */
 const APP_NAME = /^[\p{L}\p{N}][\p{L}\p{N} ._'-]{0,63}$/u;
+
+/** The name an Electron app's default user agent carries before `Chrome/` ("gauzy-desktop-timer/0.1.0 Chrome/…"). */
+const ELECTRON_APP_NAME = /\(KHTML, like Gecko\) (.+?)\/[\w.-]+ Chrome\//;
+
+/** The name an iOS app's user agent starts with ("EverTeams/1 CFNetwork/1568.200.51 Darwin/24.1.0"). */
+const IOS_APP_NAME = /^([^/]+)\/[\w.-]+ CFNetwork\//;
 
 /** What a sign-in or a renewal records about the app it came from, beside its user agent. */
 export interface IUserSessionSource {
@@ -122,6 +128,23 @@ export function appNameOf(value: unknown): string | null {
 	}
 	const name = value.trim().replace(/\s+/g, ' ');
 	return APP_NAME.test(name) ? name : null;
+}
+
+/**
+ * The name of the app a user agent carries: an Electron app's default agent names it before `Chrome/`, an iOS app's
+ * starts with it. A browser's names none, and neither does an Android app's, which names its HTTP library only.
+ *
+ * @param userAgent The user agent the session's token recorded.
+ * @returns The name, or null.
+ */
+export function appNameInUserAgent(userAgent: string | null | undefined): string | null {
+	if (!userAgent) {
+		return null;
+	}
+	const electronName = DESKTOP_APP.test(userAgent) ? ELECTRON_APP_NAME.exec(userAgent)?.[1] : undefined;
+	const name = appNameOf(electronName ?? IOS_APP_NAME.exec(userAgent)?.[1]);
+	// An Electron app that never set its name sends Electron's own
+	return name === 'Electron' ? null : name;
 }
 
 /**
