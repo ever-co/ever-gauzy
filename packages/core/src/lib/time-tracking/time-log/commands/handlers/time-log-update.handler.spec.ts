@@ -147,6 +147,107 @@ describe('TimeLogUpdateHandler (GHSA-6qvm-3wg4-26w4)', () => {
 });
 
 /**
+ * Under MikroORM, the slots the release reads carry their time logs as a collection, which is iterable and has no
+ * array methods: the release read them with `.some` and failed with a TypeError, so any update shortening a log (a
+ * later start of a running timer, a manual edit) answered 500 there.
+ */
+describe('TimeLogUpdateHandler release of slots read through MikroORM', () => {
+	/** A MikroORM collection, as far as the release needs it: iterable, with no array methods. */
+	class CollectionOf<T> {
+		constructor(private readonly items: T[]) {}
+
+		[Symbol.iterator](): Iterator<T> {
+			return this.items[Symbol.iterator]();
+		}
+	}
+
+	it('tells the slots only the log holds from the ones another log still holds', async () => {
+		const { handler } = createHandler();
+		const timeLog = { id: 'log-own' };
+		const alone = { id: 'slot-alone', timeLogs: new CollectionOf([{ id: 'log-own' }]) };
+		const shared = { id: 'slot-shared', timeLogs: new CollectionOf([{ id: 'log-own' }, { id: 'log-other' }]) };
+		const elsewhere = { id: 'slot-elsewhere', timeLogs: new CollectionOf([{ id: 'log-other' }]) };
+		jest.spyOn(handler as any, 'findTimeSlots').mockResolvedValue([alone, shared, elsewhere]);
+
+		const release = await (handler as any).planRelease(timeLog, TENANT_A, 'org-a', 'employee-a', [
+			new Date('2026-01-05T09:00:00.000Z')
+		]);
+
+		expect(release).toEqual({ remove: ['slot-alone'], unlink: ['slot-shared'] });
+	});
+});
+
+/**
+ * An update that makes no slot of its own (`manualTimeSlot`, as the timer's start move sends) re-saved the row it
+ * had just read back. TypeORM writes every column that differs from the database at save time, so a timer stop
+ * landing between that read and that save was undone: the log ran again, with its old end. Such an update now
+ * writes the row once, through its targeted update only.
+ */
+describe('TimeLogUpdateHandler writes a log once when it makes no slot of its own', () => {
+	beforeEach(() => {
+		jest.spyOn(console, 'log').mockImplementation(() => undefined);
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT_A);
+	});
+	afterEach(() => jest.restoreAllMocks());
+
+	it('never re-saves the row it read back', async () => {
+		const { handler } = createHandler();
+		(handler as any).commandBus.execute.mockResolvedValue({ id: 'timesheet-1' });
+		jest.spyOn(handler as any, 'planRelease').mockResolvedValue({ remove: [], unlink: [] });
+		jest.spyOn(handler as any, 'applyRelease').mockResolvedValue(undefined);
+		jest.spyOn(handler as any, 'recalculateTimesheetAndEmployeeHours').mockResolvedValue(undefined);
+		const save = jest.spyOn(handler as any, 'saveUpdatedTimeLog').mockResolvedValue(undefined);
+
+		// A start moved by the timer: the update makes no slot of its own (manualTimeSlot)
+		await handler.execute(
+			new TimeLogUpdateCommand({ startedAt: new Date('2026-01-05T09:00:00.000Z') } as any, 'log-own', true)
+		);
+
+		expect(save).not.toHaveBeenCalled();
+	});
+
+	it('keeps a stop that lands after it read the log back: the log stays stopped, with the end the stop wrote', async () => {
+		const { handler, timeLogRepository } = createHandler();
+		(handler as any).commandBus.execute.mockResolvedValue({ id: 'timesheet-1' });
+		jest.spyOn(handler as any, 'planRelease').mockResolvedValue({ remove: [], unlink: [] });
+		jest.spyOn(handler as any, 'applyRelease').mockResolvedValue(undefined);
+		jest.spyOn(handler as any, 'recalculateTimesheetAndEmployeeHours').mockResolvedValue(undefined);
+		// The running log as stored, which the update writes and reads back; a stop lands right after that read
+		const movedStart = new Date('2026-01-05T09:00:00.000Z');
+		const stopTime = new Date('2026-01-05T10:00:00.000Z');
+		const stored = {
+			id: 'log-own',
+			tenantId: TENANT_A,
+			organizationId: 'org-a',
+			employeeId: 'employee-a',
+			source: TimeLogSourceEnum.TEAMS,
+			isRunning: true,
+			startedAt: new Date('2026-01-05T09:25:00.000Z'),
+			stoppedAt: new Date('2026-01-05T09:50:00.000Z')
+		};
+		const runAsKnown = new TimeLog({ ...stored });
+		let stopLanded = false;
+		(timeLogRepository.update as jest.Mock).mockImplementation(async (_where: unknown, changes: object) =>
+			Object.assign(stored, changes)
+		);
+		(timeLogRepository.findOneBy as jest.Mock).mockImplementation(async () => {
+			const read = { ...stored };
+			if (!stopLanded) {
+				stopLanded = true;
+				Object.assign(stored, { isRunning: false, stoppedAt: stopTime });
+			}
+			return read;
+		});
+		(timeLogRepository as any).save = jest.fn(async (entity: object) => Object.assign(stored, entity));
+
+		// The timer's start move: it makes no slot of its own (manualTimeSlot)
+		await handler.execute(new TimeLogUpdateCommand({ startedAt: movedStart } as any, runAsKnown, true));
+
+		expect(stored).toMatchObject({ isRunning: false, stoppedAt: stopTime, startedAt: movedStart });
+	});
+});
+
+/**
  * The timer stops a replaced run through this update (`TimerService.stopPreviousRunningTimers`) and relies on what it
  * does: the start the update names picks the log's timesheet (naming none picks the week of now); the stop is written
  * before the later steps (time slots, timesheet, worked hours), so a failure in them leaves the log stopped; and the

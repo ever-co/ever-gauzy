@@ -199,13 +199,14 @@ export class TwoFactorController {
 	async resetForMember(@Param('userId', UUIDValidationPipe) userId: ID): Promise<{ reset: boolean }> {
 		assertFirstPartyRequest("Resetting a member's two-factor authentication");
 		const administratorId = RequestContext.currentUserId();
-		if (userId === administratorId) {
+		// Read in the administrator's tenant: a member of another workspace is not found.
+		const member = await this.userService.findOneByIdString(userId, { relations: { role: true } });
+		// Compared on the account found, not on the id as typed: the database finds an id written in any case.
+		if (member.id === administratorId) {
 			throw new ForbiddenException(
 				'Turn your own two-factor authentication off from your settings, with a code.'
 			);
 		}
-		// Read in the administrator's tenant: a member of another workspace is not found.
-		const member = await this.userService.findOneByIdString(userId, { relations: { role: true } });
 		const isSuperAdmin = member.role?.name === RolesEnum.SUPER_ADMIN;
 		if (isSuperAdmin && !RequestContext.hasPermission(PermissionsEnum.SUPER_ADMIN_EDIT)) {
 			throw new ForbiddenException();

@@ -19,6 +19,7 @@ import {
 	TimeGoalPeriodEnum,
 	TimeGoalScopeEnum,
 	TimeGoalStateEnum,
+	TimeLogType,
 	WeekDaysEnum
 } from '@gauzy/contracts';
 import { RequestContext } from '../../core/context';
@@ -120,7 +121,7 @@ describe('TimeGoalService on SQLite', () => {
 		date: string,
 		time: string,
 		hours: number,
-		options: { projectId?: ID | null; isBillable?: boolean; running?: boolean } = {}
+		options: { projectId?: ID | null; isBillable?: boolean; running?: boolean; logType?: TimeLogType } = {}
 	): Promise<void> {
 		const startedAt = new Date(`${date}T${time}:00+01:00`);
 		const stoppedAt = options.running ? null : new Date(startedAt.getTime() + hours * HOUR * 1000);
@@ -134,7 +135,8 @@ describe('TimeGoalService on SQLite', () => {
 			stoppedAt,
 			isRunning: options.running === true,
 			isBillable: options.isBillable ?? true,
-			projectId: options.projectId === undefined ? CLIENT_A_WEBSITE : options.projectId
+			projectId: options.projectId === undefined ? CLIENT_A_WEBSITE : options.projectId,
+			...(options.logType ? { logType: options.logType } : {})
 		});
 	}
 
@@ -301,6 +303,23 @@ describe('TimeGoalService on SQLite', () => {
 			)['Client A, at least 20 h a week'];
 			expect(friday.trackedSeconds).toBe(21 * HOUR);
 			expect(friday.state).toBe(TimeGoalStateEnum.ACHIEVED);
+		}),
+		TIMEOUT
+	);
+
+	it(
+		'leaves a break out of the hours a goal counts: it is not worked time',
+		inRequest(async () => {
+			actAs(MARIE);
+			await goal({ name: 'Client A, at least 20 h a week', organizationContactIds: [CLIENT_A] });
+			await track(MARIE, '2026-11-09', '09:00', 4);
+			await track(MARIE, '2026-11-09', '13:00', 1, { logType: TimeLogType.BREAK });
+
+			const monday = rowsOf(
+				await service.getProgress({ organizationId: ORGANIZATION, date: '2026-11-09' }),
+				MARIE
+			)['Client A, at least 20 h a week'];
+			expect(monday.trackedSeconds).toBe(4 * HOUR);
 		}),
 		TIMEOUT
 	);

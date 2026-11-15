@@ -476,6 +476,8 @@
 			"DEFAULT_TERMS": "Termini predefiniti per fatture e preventivi",
 			"CONVERT_ESTIMATES": "Convertire le stime",
 			"ALLOW_CONVERTING": "Converti automaticamente l'accettazione dell'importo preventivato in fattura",
+			"INVOICE_REMINDERS": "Promemoria di pagamento",
+			"SEND_INVOICE_REMINDERS": "Inviare un'e-mail al cliente di una fattura non pagata 3 giorni prima della scadenza, poi 1, 7 e 14 giorni dopo",
 			"DEFAULT_DAYS": "Giorni predefiniti fino alla scadenza delle fatture e dei preventivi",
 			"TEMPLATE_NAME": "Nome del modello",
 			"TEMPLATE_BODY": "Corpo del modello",
@@ -6831,6 +6833,7 @@
 			"email-reset": "Resetta Email",
 			"organization-team-join-request": "Richiesta di adesione al team organizzativo",
 			"payment-receipt": "Ricevuta di pagamento",
+			"invoice-reminder": "Promemoria fattura",
 			"reject-candidate": "Rifiuta Candidato"
 		},
 		"HTML_EDITOR": "Editor di HTML",

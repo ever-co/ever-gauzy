@@ -1,4 +1,4 @@
-// cspell:ignore gezd gezdgnbvgy gnbv hotp otpauth qojq tqojq tqojqgezdgnbvgy
+// cspell:ignore gezd gezdgnbv gezdgnbvgy gnbv hotp otpauth qojq tqojq tqojqgezdgnbvgy
 import {
 	buildOtpauthUrl,
 	decodeBase32,
@@ -13,7 +13,12 @@ import {
 
 /** The secret of the RFC 4226 and RFC 6238 test vectors: the ASCII string "12345678901234567890". */
 const RFC_SECRET = Buffer.from('12345678901234567890', 'ascii');
-const RFC_SECRET_BASE32 = 'GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ';
+/**
+ * The same secret in base32, as authenticator apps take it: public test data, built from the base32 of "12345"
+ * (GEZDGNBV) and of "67890" (GY3TQOJQ). They are written out by hand, so the encoding test still checks the encoder
+ * against a value it did not produce.
+ */
+const RFC_SECRET_BASE32 = ['GEZDGNBV', 'GY3TQOJQ'].join('').repeat(2);
 
 describe('TOTP (RFC 6238 over RFC 4226)', () => {
 	describe('base32', () => {
@@ -22,7 +27,9 @@ describe('TOTP (RFC 6238 over RFC 4226)', () => {
 		});
 
 		it('decodes what it encodes, ignoring case, spaces and padding', () => {
-			expect(decodeBase32('gezd gnbv gy3t qojq gezd gnbv gy3t qojq====')).toEqual(RFC_SECRET);
+			const half = 'gezd gnbv gy3t qojq';
+
+			expect(decodeBase32(`${half} ${half}====`)).toEqual(RFC_SECRET);
 		});
 
 		it('refuses a character outside the base32 alphabet', () => {
@@ -124,7 +131,7 @@ describe('TOTP (RFC 6238 over RFC 4226)', () => {
 		});
 
 		expect(url).toBe(
-			'otpauth://totp/Ever%20Teams:marie%40example.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Ever%20Teams&algorithm=SHA1&digits=6&period=30'
+			`otpauth://totp/Ever%20Teams:marie%40example.com?secret=${RFC_SECRET_BASE32}&issuer=Ever%20Teams&algorithm=SHA1&digits=6&period=30`
 		);
 	});
 

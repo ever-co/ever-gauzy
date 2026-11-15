@@ -56,12 +56,13 @@ import {
 	Logger,
 	NotFoundException,
 	Optional,
+	ServiceUnavailableException,
 	UnauthorizedException
 } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { CommandBus } from '@nestjs/cqrs';
-import { JsonWebTokenError, JwtPayload } from 'jsonwebtoken';
+import { decode, JsonWebTokenError, JwtPayload } from 'jsonwebtoken';
 import * as moment from 'moment';
 import { DataSource, DeepPartial, EntityManager, In, IsNull, MoreThanOrEqual, Not, SelectQueryBuilder } from 'typeorm';
 import { pick } from 'underscore';
@@ -81,6 +82,7 @@ import { MikroOrmUserRepository } from '../user/repository/mikro-orm-user.reposi
 import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
 import { UserService } from '../user/user.service';
 import { RequestContext } from './../core/context';
+import { DATABASE_UNAVAILABLE_MESSAGE, isDatabaseUnavailableError } from './../core/errors/database-unavailable';
 import { IAuthenticatedUser } from './../core/context/types';
 import { runOutsideOrganizationBoundary } from './../core/crud/organization-boundary';
 import { OrganizationTeam, Tenant, User } from './../core/entities/internal';
@@ -152,12 +154,29 @@ import {
 	narrowRolesToOAuthAppScopes
 } from './oauth-app-scope';
 import {
+	IUserSessionClaims,
+	keepSessionForRequest,
+	readSessionClaims,
+	sessionForMint,
+	sessionOfRefreshToken
+} from './user-session/user-session-claims';
+import {
 	TwoFactorChallengeClaims,
 	TwoFactorRequiredException,
 	twoFactorRequiredFor,
 	verifyTwoFactorChallenge
 } from './two-factor/two-factor-challenge';
 import { UserTwoFactorService } from './two-factor/user-two-factor.service';
+
+/**
+ * A token could not be minted because the database was unreachable (a user, employee or sign-out marker read): a 503
+ * the client retries with the same token, as `JwtStrategy` answers, never a 401 that makes it sign in again.
+ */
+function throwIfDatabaseUnavailable(error: unknown): void {
+	if (isDatabaseUnavailableError(error)) {
+		throw new ServiceUnavailableException(DATABASE_UNAVAILABLE_MESSAGE, { cause: error });
+	}
+}
 
 @Injectable()
 export class AuthService extends SocialAuthService {
@@ -2330,6 +2349,8 @@ export class AuthService extends SocialAuthService {
 				}
 			}
 
+			const sessionClaims = await this.firstPartySessionClaims(userId, metadata);
+
 			// Create a payload for the JWT token
 			const payload: JwtPayload = {
 				id: user.id,
@@ -2348,6 +2369,7 @@ export class AuthService extends SocialAuthService {
 					: {}),
 				ipAddress: RequestContext.currentIp(),
 				userAgent: RequestContext.currentUserAgent(),
+				...sessionClaims,
 				...(metadata?.clientId && { clientId: metadata.clientId }),
 				// Only the OAuth-app code exchange passes it: the client and scopes the user approved (oauth-app-scope.ts).
 				...(metadata?.oauthApp && { oauthApp: metadata.oauthApp }),
@@ -2360,6 +2382,7 @@ export class AuthService extends SocialAuthService {
 		} catch (error) {
 			// Log and rethrow any errors encountered during the process
 			this.logger.error('Error while generating JWT access token:', error?.message);
+			throwIfDatabaseUnavailable(error);
 			throw new UnauthorizedException();
 		}
 	}
@@ -2387,6 +2410,8 @@ export class AuthService extends SocialAuthService {
 				throw new Error('User ID or email is missing.');
 			}
 
+			const sessionClaims = await this.liveSessionClaims(user.id);
+
 			// Construct the JWT payload with organization context
 			const payload = {
 				id: user.id,
@@ -2396,12 +2421,14 @@ export class AuthService extends SocialAuthService {
 				role: user.role ? user.role.name : null,
 				ipAddress: RequestContext.currentIp(),
 				userAgent: RequestContext.currentUserAgent(),
+				...sessionClaims,
 				...(metadata?.clientId && { clientId: metadata.clientId })
 			};
 
 			return this.refreshTokenService.generate(user.id, payload);
 		} catch (error) {
 			this.logger.error('Error while generating JWT refresh token:', error?.message);
+			throwIfDatabaseUnavailable(error);
 			throw new UnauthorizedException('Unable to generate refresh token');
 		}
 	}
@@ -2431,6 +2458,8 @@ export class AuthService extends SocialAuthService {
 				throw new Error('User ID or email is missing.');
 			}
 
+			const sessionClaims = await this.liveSessionClaims(user.id);
+
 			// Construct the JWT payload with organization context
 			const payload = {
 				id: user.id,
@@ -2440,12 +2469,14 @@ export class AuthService extends SocialAuthService {
 				role: user.role ? user.role.name : null,
 				ipAddress: RequestContext.currentIp(),
 				userAgent: RequestContext.currentUserAgent(),
+				...sessionClaims,
 				...(metadata?.clientId && { clientId: metadata.clientId })
 			};
 
 			return this.refreshTokenService.rotate(token, payload);
 		} catch (error) {
 			this.logger.error('Error while rotating JWT refresh token:', error?.message);
+			throwIfDatabaseUnavailable(error);
 			throw new UnauthorizedException('Unable to rotate refresh token');
 		}
 	}
@@ -2486,9 +2517,11 @@ export class AuthService extends SocialAuthService {
 			// Return both the new access token and refresh token
 			return { token: access_token, refresh_token };
 		} catch (error) {
-			// If the error is an UnauthorizedException or subclass, re-throw it so controllers return 401
+			// If the error is an UnauthorizedException or subclass, re-throw it so controllers return 401, and an
+			// unreachable database as the 503 a client retries with the same token
 			if (
 				error instanceof UnauthorizedException ||
+				error instanceof ServiceUnavailableException ||
 				(error && typeof error.status === 'number' && error.status === 401)
 			) {
 				throw error;
@@ -2519,6 +2552,12 @@ export class AuthService extends SocialAuthService {
 			// keeps the organization it works in; otherwise the stored one (see `resolveRefreshOrganizationId`).
 			const organizationId = await this.resolveRefreshOrganizationId(user);
 
+			// The new tokens stay in the session of the refresh token they replace (already verified by the guard). A
+			// refresh token minted before sessions were named starts one here: a session no sign-out can have named yet.
+			const refreshPayload = decode(token);
+			const isNamedSession = readSessionClaims(refreshPayload) !== null;
+			keepSessionForRequest(user.id, sessionOfRefreshToken(refreshPayload), isNamedSession);
+
 			// Get and return the JWT access token for the user with organization context
 			// Generate the access token first (non-destructive). Only rotate the refresh token after
 			// successful access-token generation to avoid revoking the old refresh token if
@@ -2532,9 +2571,11 @@ export class AuthService extends SocialAuthService {
 			// Return both the new access token and refresh token
 			return { token: access_token, refresh_token };
 		} catch (error) {
-			// If the error is an UnauthorizedException or subclass, re-throw it so controllers return 401
+			// If the error is an UnauthorizedException or subclass, re-throw it so controllers return 401, and an
+			// unreachable database as the 503 a client retries with the same token
 			if (
 				error instanceof UnauthorizedException ||
+				error instanceof ServiceUnavailableException ||
 				(error && typeof error.status === 'number' && error.status === 401)
 			) {
 				throw error;
@@ -2543,6 +2584,49 @@ export class AuthService extends SocialAuthService {
 			this.logger.error('Error while retrieving JWT access token from refresh token:', error?.message);
 			return null;
 		}
+	}
+
+	/**
+	 * The session claims of an access token: a sign-in's session for a first-party token, none for a token an API
+	 * token or a third-party application exchanged for, which are not sessions of the user (they have their own pages).
+	 *
+	 * @param userId The user the token is for.
+	 * @param metadata The metadata the token is minted with.
+	 * @returns The claims to write into the token.
+	 */
+	private async firstPartySessionClaims(
+		userId: ID,
+		metadata?: IAccessTokenMetadata
+	): Promise<Partial<IUserSessionClaims>> {
+		const isDelegated = !!metadata?.apiTokenId || !!metadata?.oauthApp;
+		if (isDelegated) {
+			return {};
+		}
+		return this.liveSessionClaims(userId);
+	}
+
+	/**
+	 * The session claims of a token minted now for `userId` (see `sessionForMint`), refused for a session its user signed
+	 * out (ever-co/ever-gauzy#11921). A request authenticated just before the sign-out (an organization or workspace
+	 * switch, a refresh) still reaches this mint; reading the sign-out marker here keeps it from minting a token in the
+	 * signed-out session after the sign-out's last read of the session's tokens. A session this request starts is new,
+	 * and is not read.
+	 *
+	 * @param userId The user the token is for.
+	 * @returns The claims to write into the token.
+	 * @throws UnauthorizedException when the session was signed out.
+	 */
+	private async liveSessionClaims(userId: ID): Promise<IUserSessionClaims> {
+		const { claims, inherited } = sessionForMint(userId);
+		if (!inherited) {
+			return claims;
+		}
+		const isSignedOut = await this.accessTokenService.isSessionSignedOut(userId, claims.sessionId);
+		if (isSignedOut) {
+			this.logger.warn(`Token refused: session ${claims.sessionId} of user ${userId} was signed out`);
+			throw new UnauthorizedException();
+		}
+		return claims;
 	}
 
 	/**

@@ -475,6 +475,8 @@
 			"DEFAULT_TERMS": "Domyślne warunki dla faktur i wycen",
 			"CONVERT_ESTIMATES": "Przekształcić szacunki",
 			"ALLOW_CONVERTING": "Automatycznie przelicz akceptowaną wycenę na fakturę",
+			"INVOICE_REMINDERS": "Przypomnienia o płatności",
+			"SEND_INVOICE_REMINDERS": "Wysyłaj e-mail do klienta z nieopłaconą fakturą 3 dni przed terminem płatności, a potem 1, 7 i 14 dni po nim",
 			"DEFAULT_DAYS": "Domyślna liczba dni na wystawienie faktury i wyceny",
 			"TEMPLATE_NAME": "Nazwa szablonu",
 			"TEMPLATE_BODY": "Treść szablonu",
@@ -6830,6 +6832,7 @@
 			"email-reset": "Resetuj Email",
 			"organization-team-join-request": "Wniosek o dołączenie do zespołu organizacji",
 			"payment-receipt": "Wysłać potwierdzenie płatności",
+			"invoice-reminder": "Przypomnienie o fakturze",
 			"reject-candidate": "Odrzuć Kandydata"
 		},
 		"HTML_EDITOR": "Edytor HTML",

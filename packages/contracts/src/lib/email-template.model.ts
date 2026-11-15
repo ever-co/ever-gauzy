@@ -45,6 +45,8 @@ export enum EmailTemplateEnum {
 	EMAIL_ESTIMATE = 'email-estimate',
 	/** To the team member who created an estimate: the client accepted or declined it from `email-estimate`. */
 	ESTIMATE_ANSWERED = 'estimate-answered',
+	/** To the client of an unpaid invoice: it is due soon, or overdue (the organization's payment reminders). */
+	INVOICE_REMINDER = 'invoice-reminder',
 	EMPLOYEE_JOIN = 'employee-join',
 	EMAIL_RESET = 'email-reset',
 	ORGANIZATION_TEAM_JOIN_REQUEST = 'organization-team-join-request',

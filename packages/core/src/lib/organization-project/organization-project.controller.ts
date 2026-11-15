@@ -20,6 +20,7 @@ import {
 	IOrganizationProject,
 	IOrganizationProjectEditByEmployeeInput,
 	IOrganizationProjectRates,
+	IRepricedTimeLogs,
 	IOrganizationProjectSetting,
 	IPagination,
 	PermissionsEnum
@@ -98,7 +99,7 @@ export class OrganizationProjectController extends CrudController<OrganizationPr
 	async updateRate(
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Body() input: OrganizationProjectRateDTO
-	): Promise<Pick<IOrganizationProjectRates, 'id' | 'billRateValue' | 'currency'>> {
+	): Promise<Pick<IOrganizationProjectRates, 'id' | 'billRateValue' | 'currency'> & IRepricedTimeLogs> {
 		return await this.organizationProjectRateService.updateProjectRate(id, input);
 	}
 
@@ -118,7 +119,7 @@ export class OrganizationProjectController extends CrudController<OrganizationPr
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Param('employeeId', UUIDValidationPipe) employeeId: ID,
 		@Body() input: OrganizationProjectRateDTO
-	): Promise<{ organizationProjectId: ID; employeeId: ID; billRateValue: number | null }> {
+	): Promise<{ organizationProjectId: ID; employeeId: ID; billRateValue: number | null } & IRepricedTimeLogs> {
 		return await this.organizationProjectRateService.updateMemberRate(id, employeeId, input);
 	}
 

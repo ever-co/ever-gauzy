@@ -1,4 +1,4 @@
-import { BadRequestException, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, ConflictException, InternalServerErrorException } from '@nestjs/common';
 import { EntityManager, FindOneOptions, In, ObjectLiteral, Repository } from 'typeorm';
 import {
 	EntityData,
@@ -13,7 +13,8 @@ import {
 	ID,
 	IInvoiceItemCreateInput,
 	InvoiceStatusTypesEnum,
-	PermissionsEnum
+	PermissionsEnum,
+	TimeLogType
 } from '@gauzy/contracts';
 import { isMySQL, isPostgres } from '@gauzy/config';
 import { RequestContext } from '../core/context';
@@ -37,6 +38,13 @@ export const NOT_ON_LIVE_INVOICE_PARAMETERS = {
 	billedTimeVoidStatus: InvoiceStatusTypesEnum.VOID,
 	billedTimeRejectedStatus: EstimateStatusTypesEnum.REJECTED
 };
+
+/**
+ * The refusal of a billing whose time another request linked to a document that is locked right now, while this one
+ * held the time logs: waiting there could deadlock, so the save is refused and can be sent again.
+ */
+export const BILLED_TIME_CHANGING =
+	'BILLED_TIME_CHANGING: another request is changing the documents that hold this time. Save again.';
 
 /** The statuses of a document that releases the time its lines bill: a void invoice or estimate, a rejected estimate. */
 const RELEASING_STATUSES = [InvoiceStatusTypesEnum.VOID, EstimateStatusTypesEnum.REJECTED];
@@ -76,31 +84,44 @@ function namedParameter(parameters: Record<string, ID>, name: string, value: ID)
 }
 
 /**
+ * How a lock of the documents that hold the time waits: `wait` before the time logs are locked, `fail` after, when the
+ * billing holds them and must not wait for a document (see {@link typeOrmBillTimeLogs}).
+ */
+type DocumentLockWait = 'wait' | 'fail';
+
+/**
  * Locks, in id order, every document one of whose lines holds a time log billed now, whatever its status, where the
  * database locks rows. Under READ COMMITTED each statement reads its own snapshot: a void another request has written
  * but not committed would leave the document out of the marker update below, and once committed it would free the
  * time for the time log update that follows, so the void document would stay unmarked. Locked first, the document is
  * read as that void committed it.
+ *
+ * With `fail` the lock does not wait (`NOWAIT`): a document this transaction already holds is locked again at once,
+ * and one another request holds refuses the billing with {@link BILLED_TIME_CHANGING}.
  */
 async function typeOrmLockReleasingDocuments(
 	manager: EntityManager,
 	timeLogIds: ID[],
 	lineIds: ID[],
-	tenantId: ID
+	tenantId: ID,
+	wait: DocumentLockWait
 ): Promise<void> {
 	if (!locksRows()) {
 		return;
 	}
 	const { condition, parameters } = releasedBy(timeLogIds, lineIds);
-	await manager
+	const query = manager
 		.createQueryBuilder(Invoice, 'invoice')
 		.withDeleted()
 		.select('invoice.id')
 		.where(p(`"invoice"."tenantId" = :tenantId`), { tenantId })
 		.andWhere(condition, parameters)
 		.orderBy('invoice.id', 'ASC')
-		.setLock('pessimistic_write')
-		.getRawMany();
+		.setLock('pessimistic_write');
+	if (wait === 'fail') {
+		query.setOnLocked('nowait');
+	}
+	await refusingLockedDocuments(() => query.getRawMany());
 }
 
 /** The MikroORM form of {@link typeOrmLockReleasingDocuments}, on the transaction's entity manager. */
@@ -108,7 +129,8 @@ async function mikroOrmLockReleasingDocuments(
 	em: MikroOrmEntityManager,
 	timeLogIds: ID[],
 	lineIds: ID[],
-	tenantId: ID
+	tenantId: ID,
+	wait: DocumentLockWait
 ): Promise<void> {
 	if (!locksRows()) {
 		return;
@@ -116,12 +138,56 @@ async function mikroOrmLockReleasingDocuments(
 	// A find names the table by an alias of its own: the condition is built on it, with the same named parameters
 	const { parameters } = releasedBy(timeLogIds, lineIds);
 	const releasedByKey = raw((alias: string) => releasedBy(timeLogIds, lineIds, alias).condition, parameters);
-	await em.find(Invoice, { tenantId, [releasedByKey]: [] } as FilterQuery<Invoice>, {
-		fields: ['id'],
-		orderBy: { id: QueryOrder.ASC },
-		lockMode: LockMode.PESSIMISTIC_WRITE,
-		filters: false
-	});
+	const lockMode = wait === 'fail' ? LockMode.PESSIMISTIC_WRITE_OR_FAIL : LockMode.PESSIMISTIC_WRITE;
+	await refusingLockedDocuments(() =>
+		em.find(Invoice, { tenantId, [releasedByKey]: [] } as FilterQuery<Invoice>, {
+			fields: ['id'],
+			orderBy: { id: QueryOrder.ASC },
+			lockMode,
+			filters: false
+		})
+	);
+}
+
+/**
+ * Runs a lock of documents, and answers a lock that could not be taken without waiting, or that the database broke as
+ * a deadlock, with {@link BILLED_TIME_CHANGING} (409). The transaction is rolled back, so the billing saves nothing.
+ *
+ * A deadlock is still possible before the time logs are locked: a replacement of an invoice's lines that bills time
+ * locks its own invoice first, whatever its id, and another billing can lock the documents in id order around it. The
+ * database then aborts one of the two, and that one is told to save again rather than given a 500.
+ */
+async function refusingLockedDocuments<T>(lock: () => Promise<T>): Promise<T> {
+	try {
+		return await lock();
+	} catch (error) {
+		if (isLockNotAvailable(error) || isDeadlock(error)) {
+			throw new ConflictException(BILLED_TIME_CHANGING);
+		}
+		throw error;
+	}
+}
+
+/**
+ * Whether an error is a `NOWAIT` lock that was not available: PostgreSQL `55P03`, MySQL 3572, MariaDB 1205. Both ORMs
+ * copy the driver's `code` and `errno` onto the error they throw; TypeORM also keeps the driver's error.
+ */
+function isLockNotAvailable(error: unknown): boolean {
+	const raised = error as { code?: unknown; errno?: unknown; driverError?: { code?: unknown; errno?: unknown } };
+	const codes = [raised?.code, raised?.driverError?.code];
+	const numbers = [raised?.errno, raised?.driverError?.errno];
+	const onPostgres = codes.includes('55P03');
+	const onMySql = codes.includes('ER_LOCK_NOWAIT') || numbers.includes(3572);
+	const onMariaDb = codes.includes('ER_LOCK_WAIT_TIMEOUT') || numbers.includes(1205);
+	return onPostgres || onMySql || onMariaDb;
+}
+
+/** Whether an error is a deadlock the database broke by aborting this transaction: PostgreSQL `40P01`, MySQL 1213. */
+function isDeadlock(error: unknown): boolean {
+	const raised = error as { code?: unknown; errno?: unknown; driverError?: { code?: unknown; errno?: unknown } };
+	const codes = [raised?.code, raised?.driverError?.code];
+	const numbers = [raised?.errno, raised?.driverError?.errno];
+	return codes.includes('40P01') || codes.includes('ER_LOCK_DEADLOCK') || numbers.includes(1213);
 }
 
 /**
@@ -139,7 +205,7 @@ async function typeOrmMarkReleasedTimeBilled(
 	if (timeLogIds.length === 0) {
 		return;
 	}
-	await typeOrmLockReleasingDocuments(manager, timeLogIds, lineIdsOf(lines), scope.tenantId);
+	await typeOrmLockReleasingDocuments(manager, timeLogIds, lineIdsOf(lines), scope.tenantId, 'fail');
 	const { condition, parameters } = releasedBy(timeLogIds, lineIdsOf(lines));
 	await manager
 		.createQueryBuilder()
@@ -162,7 +228,7 @@ async function mikroOrmMarkReleasedTimeBilled(
 	if (timeLogIds.length === 0) {
 		return;
 	}
-	await mikroOrmLockReleasingDocuments(em, timeLogIds, lineIdsOf(lines), scope.tenantId);
+	await mikroOrmLockReleasingDocuments(em, timeLogIds, lineIdsOf(lines), scope.tenantId, 'fail');
 	const { condition, parameters } = releasedBy(timeLogIds, lineIdsOf(lines));
 	const releasedByKey = raw(condition, parameters);
 	const where = {
@@ -378,9 +444,20 @@ async function billTimeLogs(transaction: ILinesTransaction, lines: IBilledLine[]
  * Writes each line on the time logs it bills, on the transaction's TypeORM manager. The time logs are locked first, so
  * that two saves billing the same time log run one after the other, and each line's statement writes only the time
  * logs it may bill: when it writes fewer than it names, the save is refused.
+ *
+ * Documents are locked before time logs, the order of every write that holds an invoice and then writes its time logs:
+ * a replacement of a void invoice's lines locks the invoice, then deleting its lines clears their time logs' links
+ * (`ON DELETE SET NULL`). The documents whose lines hold the time billed are locked before the time logs, so a billing
+ * of that released time waits for the replacement instead of holding the time logs it needs (Postgres would abort one
+ * of the two as a deadlock). They are locked again once the time logs are, for a link a write committed meanwhile,
+ * without waiting: holding the time logs, the billing never waits for a document. A document linked meanwhile that
+ * another request holds refuses the save with {@link BILLED_TIME_CHANGING} (409), and it can be sent again.
  */
 async function typeOrmBillTimeLogs(manager: EntityManager, lines: IBilledLine[], scope: IBillingScope): Promise<void> {
 	const timeLogIds = timeLogIdsOf(lines);
+	if (timeLogIds.length > 0) {
+		await typeOrmLockReleasingDocuments(manager, timeLogIds, lineIdsOf(lines), scope.tenantId, 'wait');
+	}
 	await typeOrmLockTimeLogs(manager, timeLogIds, scope.tenantId);
 	await typeOrmMarkReleasedTimeBilled(manager, lines, scope);
 	const billedNowhereElse = notOnLiveInvoice(UPDATED_TIME_LOG_INVOICE_ITEM);
@@ -394,6 +471,8 @@ async function typeOrmBillTimeLogs(manager: EntityManager, lines: IBilledLine[],
 			.andWhere(p(`"tenantId" = :tenantId`), { tenantId: scope.tenantId })
 			.andWhere(p(`"organizationId" = :organizationId`), { organizationId: line.organizationId })
 			.andWhere(p(`"deletedAt" IS NULL`))
+			// A break is never billable time: a line that names one writes fewer logs than it names, and is refused
+			.andWhere(p(`"logType" <> :breakType`), { breakType: TimeLogType.BREAK })
 			.andWhere(billedNowhereElse, NOT_ON_LIVE_INVOICE_PARAMETERS);
 		if (scope.employeeId) {
 			query.andWhere(p(`"employeeId" = :employeeId`), { employeeId: scope.employeeId });
@@ -410,6 +489,10 @@ async function mikroOrmBillTimeLogs(
 	scope: IBillingScope
 ): Promise<void> {
 	const timeLogIds = timeLogIdsOf(lines);
+	// Documents before time logs, as on TypeORM.
+	if (timeLogIds.length > 0) {
+		await mikroOrmLockReleasingDocuments(em, timeLogIds, lineIdsOf(lines), scope.tenantId, 'wait');
+	}
 	await mikroOrmLockTimeLogs(em, timeLogIds, scope.tenantId);
 	await mikroOrmMarkReleasedTimeBilled(em, lines, scope);
 	const billedNowhereElse = notOnLiveInvoice(UPDATED_TIME_LOG_INVOICE_ITEM);
@@ -422,6 +505,8 @@ async function mikroOrmBillTimeLogs(
 			tenantId: scope.tenantId,
 			organizationId: line.organizationId,
 			deletedAt: null,
+			// A break is never billable time (see typeOrmBillTimeLogs)
+			logType: { $ne: TimeLogType.BREAK },
 			...employeeCondition,
 			[billedNowhereElseKey]: []
 		} as FilterQuery<TimeLog>;

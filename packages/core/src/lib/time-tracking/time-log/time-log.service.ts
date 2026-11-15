@@ -27,6 +27,7 @@ import {
 	IGetTimeLogConflictInput,
 	IGetTimeLogReportInput,
 	ITimeLog,
+	ITimeLogStoredRates,
 	ITimeSlot,
 	TimeLogType,
 	IAmountOwedReport,
@@ -74,12 +75,7 @@ import {
 import { RequestContext } from '../../core/context';
 import { moment } from './../../core/moment-extend';
 import { addDecimalStrings } from '../../money/decimal';
-import {
-	calculateAverage,
-	calculateAverageActivity,
-	calculateBillableAmount,
-	calculateDuration
-} from './time-log.utils';
+import { calculateAverage, calculateAverageActivity, calculateDuration } from './time-log.utils';
 import { prepareSQLQuery as p } from './../../database/database.helper';
 import { TypeOrmTimeLogRepository } from './repository/type-orm-time-log.repository';
 import { isTrackerSource } from './tracker-source';
@@ -91,9 +87,22 @@ import { ManagedEmployeeService } from '../../employee/managed-employee.service'
 import { Organization } from '../../organization/organization.entity';
 import { findStoredPayRates, isPayRateSet, mayReadPayRateOf, StoredPayRate } from '../../employee/pay-rate';
 import { TimeLog } from './time-log.entity';
+import {
+	amountsOf,
+	billedRateOf,
+	billingRateOfLog,
+	budgetCostOf,
+	budgetLogsNeedDefaultRate,
+	OwedLogRate,
+	owedLinesOf,
+	owedRateOfLog,
+	PricedRate,
+	storesRates,
+	totalsByCurrencyOf
+} from './time-log-pricing';
+import { findStoredRatesOf } from './time-log-rates';
 import type { TimeLogHistoryOptions } from './time-log-history.writer';
-import { owedRateOf, payRateNeedsOrganizationCurrency } from './owed-rate';
-import { billRateOf, budgetNeedsDefaultRate, DefaultBillRate, defaultBillRateOf } from './default-bill-rate';
+import { DefaultBillRate, defaultBillRateOf } from './default-bill-rate';
 import {
 	mikroOrmNotOnLiveInvoiceKey,
 	NOT_ON_LIVE_INVOICE_PARAMETERS,
@@ -105,9 +114,25 @@ import {
 	projectIdForEntry,
 	teamIdForEntry
 } from './organization-tracking-requirements';
+import {
+	assertBreakOverlapsNothing,
+	assertBreaksAllowedIn,
+	assertBreakTypeKept,
+	assertWorkOverlapsNoBreak,
+	isBreak
+} from './break-rules';
 
 /** The code of the refusal of manual time over a timer that is still running (409). */
 export const RUNNING_TIMER_OVERLAP = 'RUNNING_TIMER_OVERLAP';
+
+/** How a report read treats breaks (time logs of type BREAK, #11920). */
+export interface ITimeLogReadOptions {
+	/**
+	 * The read lists entries (the entry list, the daily chart): it keeps breaks, with their type, when the request asks
+	 * for them (`includeBreaks`) or names their type. Every other read is a total of worked time.
+	 */
+	listsEntries?: boolean;
+}
 
 /** The body of a RUNNING_TIMER_OVERLAP refusal (409). */
 export interface IRunningTimerOverlap {
@@ -180,7 +205,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
-				const where = await this.buildMikroOrmTimeLogWhere(request);
+				const where = await this.buildMikroOrmTimeLogWhere(request, { listsEntries: true });
 				const populate = [
 					'employee',
 					'employee.user',
@@ -260,7 +285,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				});
 
 				// Apply filters to the query
-				await this.getFilterTimeLogQuery(query, request);
+				await this.getFilterTimeLogQuery(query, request, { listsEntries: true });
 
 				const timeLogs = await query.getMany();
 
@@ -323,12 +348,16 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 						employeeId: true,
 						startedAt: true,
 						stoppedAt: true,
+						// The rate each log stores prices its time (see time-log-pricing.ts)
+						billRateValue: true,
+						billRateCurrency: true,
+						ratesStored: true,
 						employee: {
 							id: true,
 							userId: true,
 							isAway: true,
 							isOnline: true,
-							// The rate the week's `spent` is priced at, as the owed-amount report reads it
+							// The rate a log that stores none is priced at, as the owed-amount report reads it
 							billRateValue: true,
 							billRateCurrency: true,
 							user: {
@@ -377,6 +406,11 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		// The organization's default billing rate, read with the logs: it prices the week of a member without a rate
 		const defaultRate = defaultBillRateOf(logs.find((log) => log.organization)?.organization);
 
+		// The organization was read for its default only: the logs are answered without it (MikroORM populates it whole)
+		for (const log of logs) {
+			delete log.organization;
+		}
+
 		// Process weekly logs using lodash and Moment.js
 		const weeklyLogs = chain(logs)
 			.groupBy('employeeId')
@@ -404,10 +438,17 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					dates[date] = byDate[date] || 0;
 				});
 
-				// What the week's time costs at the employee's bill rate, else at the organization's default; null when
-				// neither prices it
-				const { rate, currency } = billRateOf(employee, organizationCurrency, defaultRate);
-				const spent = calculateBillableAmount(weeklyDuration, rate, currency);
+				// What the week's time costs, each log at the billing rate it stores (the organization's default for a
+				// member without a rate), one amount per currency; `spent` and `currency` state it while it is in one
+				// currency, as before, and are null without any rate
+				const spentByCurrency = amountsOf(logs, (log) => billedRateOf(log, organizationCurrency, defaultRate));
+				const isInOneCurrency = spentByCurrency.length === 1;
+				let spent: number | null = null;
+				let currency: string | null = null;
+				if (isInOneCurrency) {
+					spent = spentByCurrency[0].amount;
+					currency = spentByCurrency[0].currency || null;
+				}
 
 				// Return the processed weekly logs data
 				return {
@@ -416,7 +457,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					sum: weeklyDuration || null,
 					activity: parseFloat(parseFloat(weeklyActivity + '').toFixed(2)),
 					spent,
-					currency: spent === null ? null : currency || null
+					currency,
+					spentByCurrency
 				};
 			})
 			.value();
@@ -429,14 +471,15 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 *
 	 * @param employee - The employee, as a report loaded it.
 	 */
-	private hasRateWithoutCurrency(employee: IEmployee | null | undefined): boolean {
-		return !!employee && !employee.billRateCurrency && Number(employee.billRateValue) > 0;
+	private hasRateWithoutCurrency(rate: PricedRate): boolean {
+		return !rate.currency && Number(rate.rate) > 0;
 	}
 
 	/**
-	 * The currency of the rates that state none: the organization's, read only when some log has such a rate.
+	 * The currency of the rates that state none: the organization's, read only when the billing rate that prices
+	 * some log states none.
 	 *
-	 * @param logs - The logs a report prices, each with its employee.
+	 * @param logs - The logs a report prices, each with the rate it stores and its employee.
 	 * @param organizationId - The organization the report is about.
 	 * @returns The currency, or null when no rate needs one or the organization states none.
 	 */
@@ -444,33 +487,90 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		logs: ITimeLog[],
 		organizationId: ID | undefined
 	): Promise<string | null> {
-		return logs.some(({ employee }) => this.hasRateWithoutCurrency(employee))
-			? await this.findOrganizationCurrency(organizationId)
-			: null;
+		const needsIt = logs.some((log) => this.hasRateWithoutCurrency(billingRateOfLog(log)));
+		if (!needsIt) {
+			return null;
+		}
+		return await this.findOrganizationCurrency(organizationId);
 	}
 
 	/**
-	 * What the owed-amount report and its chart answer for an employee's day: priced once, in exact decimals, to
-	 * the decimals of the rate's currency, as the weekly report prices a week. The employee's pay rate prices it once
-	 * a rate editor set it, else their billing rate, as before pay rates existed (see `owedRateOf`).
+	 * What the owed-amount report and its chart owe for an employee's day: one line per currency, each log at the
+	 * rate it stores, the time of one rate priced once, in exact decimals, as the weekly report prices a week (see
+	 * `owedLinesOf`). An employee without a rate is owed nothing, which both surfaces declare as a number.
 	 *
-	 * @param duration - The seconds of the day.
-	 * @param employee - The employee, with their bill rate and its currency.
-	 * @param payRates - The pay rates set, by employee id.
-	 * @param organizationCurrency - The currency of a rate that states none.
-	 * @returns The amount, the rate that priced it and its currency. An employee without a rate is owed nothing,
-	 *   which both surfaces declare as a number.
+	 * @param logs - The employee's logs of the day.
+	 * @param owedAt - What each log's time is owed at.
 	 */
-	private owedLine(
-		duration: number,
-		employee: IEmployee | null | undefined,
-		payRates: Map<ID, StoredPayRate>,
-		organizationCurrency: string | null
-	): { amount: number; rateSource: OwedRateSource; currency: string | null } {
-		const payRate = payRates.get(employee?.id ?? '');
-		const owed = owedRateOf(employee, payRate, organizationCurrency);
-		const amount = calculateBillableAmount(duration, owed.rate, owed.currency) ?? 0;
-		return { amount, rateSource: owed.rateSource, currency: owed.currency };
+	private owedLinesOfDay(
+		logs: ITimeLog[],
+		owedAt: (log: ITimeLog) => OwedLogRate
+	): Array<{
+		employee: IEmployee | null;
+		amount: number;
+		duration: number;
+		rateSource: OwedRateSource;
+		currency: string | null;
+	}> {
+		const employee = logs[0]?.employee ?? null;
+		return owedLinesOf(logs, owedAt).map((line) => ({
+			employee,
+			amount: line.amount,
+			duration: line.duration,
+			rateSource: line.rateSource,
+			currency: line.currency
+		}));
+	}
+
+	/**
+	 * What the time of each log is owed at: the pay rate the log stores once a rate editor set one, else the billing
+	 * rate it stores; a log that stores no rate, the employee's current rates, as before rates were stored on time
+	 * logs. A pay rate is read only for the employees whose pay rate the caller may read: an amount over a duration
+	 * would otherwise tell a manager a teammate's pay rate, so the others' time is priced at their billing rate.
+	 *
+	 * @param logs - The logs the report prices, each with its employee.
+	 * @param organizationId - The organization the report is about.
+	 */
+	private async owedRatesOf(logs: ITimeLog[], organizationId?: ID): Promise<(log: ITimeLog) => OwedLogRate> {
+		const storedPayRates = await this.findStoredPayRatesOf(logs);
+		const logsWithoutRates = logs.filter((log) => !storesRates(log));
+		const livePayRates = await this.findPayRatesOf(logsWithoutRates, organizationId);
+		const owedAt = (log: ITimeLog, organizationCurrency: string | null) =>
+			owedRateOfLog(log, storedPayRates.get(log.id), livePayRates.get(log.employeeId), organizationCurrency);
+
+		// A rate that states no currency is in the organization's, read only when some rate needs it
+		const needsOrganizationCurrency = logs.some((log) => this.needsOrganizationCurrency(owedAt(log, null)));
+		let organizationCurrency: string | null = null;
+		if (needsOrganizationCurrency) {
+			organizationCurrency = await this.findOrganizationCurrency(organizationId);
+		}
+		return (log: ITimeLog) => owedAt(log, organizationCurrency);
+	}
+
+	/** Whether an owed rate is in the organization's currency: a set pay rate, or a billing rate above zero, naming none. */
+	private needsOrganizationCurrency(owed: OwedLogRate): boolean {
+		if (owed.currency) {
+			return false;
+		}
+		if (owed.rateSource === 'pay') {
+			return isPayRateSet(owed.rate);
+		}
+		return Number(owed.rate) > 0;
+	}
+
+	/**
+	 * The pay rates the given logs store, for the logs that store their rates and whose employee's pay rate the caller
+	 * may read (their own, or anyone's for a holder of ORG_EMPLOYEES_EDIT). Read by name: no generic read selects them.
+	 */
+	private async findStoredPayRatesOf(logs: ITimeLog[]): Promise<Map<ID, ITimeLogStoredRates>> {
+		const tenantId = RequestContext.currentTenantId();
+		const readableLogs = logs.filter((log) => storesRates(log) && mayReadPayRateOf(log.employeeId));
+		const hasNothingToRead = !tenantId || readableLogs.length === 0;
+		if (hasNothingToRead) {
+			return new Map();
+		}
+		const timeLogIds = readableLogs.map((log) => log.id);
+		return await findStoredRatesOf(this.typeOrmRepository.manager, timeLogIds, tenantId);
 	}
 
 	/**
@@ -495,24 +595,6 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			}
 		}
 		return payRates;
-	}
-
-	/** The organization's currency, read only when a billing rate or a pay rate that prices the report states none. */
-	private async findCurrencyForOwedAmounts(
-		logs: ITimeLog[],
-		payRates: Map<ID, StoredPayRate>,
-		organizationId: ID | undefined
-	): Promise<string | null> {
-		const currency = await this.findCurrencyForRatesWithoutOne(logs, organizationId);
-		if (currency) {
-			return currency;
-		}
-		const setPayRates = Array.from(payRates.values());
-		const payRateNeedsIt = setPayRates.some((payRate) => payRateNeedsOrganizationCurrency(payRate));
-		if (!payRateNeedsIt) {
-			return null;
-		}
-		return await this.findOrganizationCurrency(organizationId);
 	}
 
 	/**
@@ -579,7 +661,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
-				const where = await this.buildMikroOrmTimeLogWhere(request);
+				const where = await this.buildMikroOrmTimeLogWhere(request, { listsEntries: true });
 				const items = await this.mikroOrmRepository.find(where, {
 					populate: ['employee', 'timeSlots'] as any[],
 					orderBy: { startedAt: 'ASC' as any }
@@ -606,7 +688,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					}
 				});
 				// Apply additional conditions to the query based on request filters
-				await this.getFilterTimeLogQuery(query, request);
+				await this.getFilterTimeLogQuery(query, request, { listsEntries: true });
 
 				// Execute the query and retrieve time logs
 				logs = await query.getMany();
@@ -617,6 +699,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		// The days the report covers, and the zone its rows are grouped by
 		const { days, timeZone } = this.reportDateRange(request);
 
+		// A BREAK figure joins the day only when the period holds a break, so a read without breaks answers as before
+		const hasBreaks = logs.some((log) => isBreak(log));
+
 		// Group time logs by date and calculate tracked, manual, idle, and resumed durations
 		const byDate = chain(logs)
 			.groupBy((log: ITimeLog) => moment.utc(log.startedAt).tz(timeZone).format('YYYY-MM-DD'))
@@ -626,15 +711,16 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				const ideal = calculateDuration(logs, TimeLogType.IDLE); //
 				const resumed = calculateDuration(logs, TimeLogType.RESUMED); //
 
-				return {
-					date,
-					value: {
-						[TimeLogType.TRACKED]: parseFloat((tracked / 3600).toFixed(1)),
-						[TimeLogType.MANUAL]: parseFloat((manual / 3600).toFixed(1)),
-						[TimeLogType.IDLE]: parseFloat((ideal / 3600).toFixed(1)),
-						[TimeLogType.RESUMED]: parseFloat((resumed / 3600).toFixed(1))
-					}
+				const value: Record<string, number> = {
+					[TimeLogType.TRACKED]: parseFloat((tracked / 3600).toFixed(1)),
+					[TimeLogType.MANUAL]: parseFloat((manual / 3600).toFixed(1)),
+					[TimeLogType.IDLE]: parseFloat((ideal / 3600).toFixed(1)),
+					[TimeLogType.RESUMED]: parseFloat((resumed / 3600).toFixed(1))
 				};
+				if (hasBreaks) {
+					value[TimeLogType.BREAK] = parseFloat((calculateDuration(logs, TimeLogType.BREAK) / 3600).toFixed(1));
+				}
+				return { date, value };
 			})
 			.value();
 
@@ -647,7 +733,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 						[TimeLogType.TRACKED]: 0,
 						[TimeLogType.MANUAL]: 0,
 						[TimeLogType.IDLE]: 0,
-						[TimeLogType.RESUMED]: 0
+						[TimeLogType.RESUMED]: 0,
+						...(hasBreaks && { [TimeLogType.BREAK]: 0 })
 					}
 				}
 			);
@@ -712,6 +799,10 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 						taskId: true,
 						organizationContactId: true,
 						organizationTeamId: statesTeam,
+						// Each row states the billing rate that prices its entry (see time-log-pricing.ts)
+						billRateValue: true,
+						billRateCurrency: true,
+						ratesStored: true,
 						project: {
 							id: true,
 							name: true,
@@ -734,6 +825,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 							userId: true,
 							isAway: true,
 							isOnline: true,
+							// The rate a row of a log that stores none states, as the weekly report reads it
+							billRateValue: true,
+							billRateCurrency: true,
 							user: {
 								id: true,
 								firstName: true,
@@ -863,32 +957,17 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			}
 		}
 
-		// A rate that states no currency is in the organization's, as on the weekly report
-		const payRates = await this.findPayRatesOf(timeLogs, request.organizationId);
-		const organizationCurrency = await this.findCurrencyForOwedAmounts(timeLogs, payRates, request.organizationId);
+		// What each log is owed at: the rate it stores, a rate that states no currency in the organization's
+		const owedAt = await this.owedRatesOf(timeLogs, request.organizationId);
 
 		const dailyLogs: any = chain(timeLogs)
 			.groupBy((log) => moment.utc(log.startedAt).tz(timeZone).format('YYYY-MM-DD'))
 			.map((byDateLogs: ITimeLog[], date: string) => {
+				// One line per employee, or one per currency when the rates of their day are in several
 				const byEmployee = chain(byDateLogs)
 					.groupBy('employeeId')
-					.map((byEmployeeLogs: ITimeLog[]) => {
-						// Calculate average duration for specific employee.
-						const durationSum = calculateAverage(pluck(byEmployeeLogs, 'duration'));
-
-						// Retrieve employee details
-						const employee = byEmployeeLogs.length > 0 ? byEmployeeLogs[0].employee : null;
-
-						const owed = this.owedLine(durationSum, employee, payRates, organizationCurrency);
-
-						return {
-							employee,
-							amount: owed.amount,
-							duration: durationSum,
-							rateSource: owed.rateSource,
-							currency: owed.currency
-						};
-					})
+					.map((byEmployeeLogs: ITimeLog[]) => this.owedLinesOfDay(byEmployeeLogs, owedAt))
+					.flatten(true)
 					.value();
 
 				return {
@@ -972,30 +1051,16 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		// The days the report covers, and the zone its rows are grouped by
 		const { days, timeZone } = this.reportDateRange(request);
 
-		// A rate that states no currency is in the organization's, as on the weekly report
-		const payRates = await this.findPayRatesOf(timeLogs, request.organizationId);
-		const organizationCurrency = await this.findCurrencyForOwedAmounts(timeLogs, payRates, request.organizationId);
+		// What each log is owed at, as on the owed-amount report
+		const owedAt = await this.owedRatesOf(timeLogs, request.organizationId);
 
 		const byDate: any = chain(timeLogs)
 			.groupBy((log: ITimeLog) => moment.utc(log.startedAt).tz(timeZone).format('YYYY-MM-DD'))
 			.mapObject((byDateLogs: ITimeLog[], date) => {
 				const byEmployee = chain(byDateLogs)
 					.groupBy('employeeId')
-					.map((byEmployeeLogs: ITimeLog[]) => {
-						// Calculate average duration for specific employee.
-						const durationSum = calculateAverage(pluck(byEmployeeLogs, 'duration'));
-
-						// Retrieve employee details
-						const employee = byEmployeeLogs.length > 0 ? byEmployeeLogs[0].employee : null;
-
-						const owed = this.owedLine(durationSum, employee, payRates, organizationCurrency);
-
-						return {
-							employee,
-							amount: owed.amount,
-							duration: durationSum
-						};
-					})
+					.map((byEmployeeLogs: ITimeLog[]) => this.owedLinesOfDay(byEmployeeLogs, owedAt))
+					.flatten(true)
 					.value();
 
 				// The total owed for all employees on a specific date, added exactly: as doubles, 1.1 + 2.2 is
@@ -1004,14 +1069,18 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					return Number(addDecimalStrings(total, item.amount));
 				}, 0);
 
-				return { date, value };
+				// The same total per currency: `value` adds every amount as it always did, whatever its currency
+				const valueByCurrency = totalsByCurrencyOf(byEmployee);
+
+				return { date, value, valueByCurrency };
 			})
 			.value();
 
 		// Map the result to an array of owed amount report chart data
 		const dates = days.map((date) => ({
 			date,
-			value: byDate[date]?.value || 0
+			value: byDate[date]?.value || 0,
+			valueByCurrency: byDate[date]?.valueByCurrency ?? []
 		}));
 
 		// Return the array of owed amount report chart data
@@ -1232,6 +1301,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 							startDate: start,
 							endDate: end
 						});
+						// A break is never spent time (#11920)
+						qb.andWhere(p(`"timeLogs"."logType" <> :breakType`), { breakType: TimeLogType.BREAK });
 
 						if (isNotEmpty(employeeIds)) {
 							qb.andWhere(p(`"timeLogs"."employeeId" IN (:...employeeIds)`), {
@@ -1254,7 +1325,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 		// The organization's default billing rate prices a cost budget's time of a member without a rate; read only then
 		let defaultRate: DefaultBillRate | null = null;
-		const needsDefaultRate = budgetNeedsDefaultRate(organizationProjects, OrganizationProjectBudgetTypeEnum.HOURS);
+		const needsDefaultRate = budgetLogsNeedDefaultRate(organizationProjects, OrganizationProjectBudgetTypeEnum.HOURS);
 		if (needsDefaultRate) {
 			defaultRate = await this.findDefaultBillRate(organizationId, tenantId);
 		}
@@ -1274,11 +1345,10 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 						0
 					);
 				} else {
-					spent = timeLogs.reduce((totalAmount: number, log: ITimeLog) => {
-						const { rate } = billRateOf(log.employee, null, defaultRate);
-						const logAmount = log.employee ? (log.duration / 3600) * rate : 0;
-						return totalAmount + logAmount;
-					}, 0);
+					spent = timeLogs.reduce(
+						(totalAmount: number, log: ITimeLog) => totalAmount + budgetCostOf(log, defaultRate),
+						0
+					);
 				}
 
 				spentPercentage = (spent * 100) / budget;
@@ -1331,6 +1401,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				.andWhere('time_log.organizationId', organizationId)
 				.andWhere('time_log.startedAt', '>=', start)
 				.andWhere('time_log.startedAt', '<', end)
+				// A break is never spent time (#11920)
+				.andWhere('time_log.logType', '<>', TimeLogType.BREAK)
 				.whereNull('time_log.deletedAt')
 				.whereNull('employee.deletedAt');
 			if (isNotEmpty(employeeIds)) query = query.whereIn('time_log.employeeId', employeeIds);
@@ -1368,6 +1440,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					'time_log.startedAt as startedAt',
 					'time_log.stoppedAt as stoppedAt',
 					`time_log.${timeLogKey} as targetId`,
+					'time_log.billRateValue as billRateValue',
+					'time_log.billRateCurrency as billRateCurrency',
+					'time_log.ratesStored as ratesStored',
 					'employee.billRateValue as employee_billRateValue'
 				)
 				.whereIn(`time_log.${timeLogKey}`, matchedIds)
@@ -1381,6 +1456,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				id: row.id,
 				// No column holds a log's duration: the entity works it out when it loads, and this read loads none
 				duration: moment.utc(row.stoppedAt || new Date()).diff(moment.utc(row.startedAt), 'seconds'),
+				billRateValue: row.billRateValue,
+				billRateCurrency: row.billRateCurrency,
+				ratesStored: row.ratesStored,
 				employee: { billRateValue: row.employee_billRateValue }
 			});
 			timeLogsByTarget[row.targetId] = timeLogs;
@@ -1460,6 +1538,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 							startDate: start,
 							endDate: end
 						});
+						// A break is never spent time (#11920)
+						qb.andWhere(p(`"timeLogs"."logType" <> :breakType`), { breakType: TimeLogType.BREAK });
 
 						if (isNotEmpty(employeeIds)) {
 							qb.andWhere(p(`"timeLogs"."employeeId" IN (:...employeeIds)`), {
@@ -1483,7 +1563,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 		// The organization's default billing rate prices a cost budget's time of a member without a rate; read only then
 		let defaultRate: DefaultBillRate | null = null;
-		const needsDefaultRate = budgetNeedsDefaultRate(organizationContacts, OrganizationContactBudgetTypeEnum.HOURS);
+		const needsDefaultRate = budgetLogsNeedDefaultRate(organizationContacts, OrganizationContactBudgetTypeEnum.HOURS);
 		if (needsDefaultRate) {
 			defaultRate = await this.findDefaultBillRate(organizationId, tenantId);
 		}
@@ -1494,11 +1574,10 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				const budget = organizationContact.budget || 0;
 
 				const spent = timeLogs.reduce((total: number, log: ITimeLog) => {
-					const { rate } = billRateOf(log.employee, null, defaultRate);
 					const amount =
 						budgetType === OrganizationContactBudgetTypeEnum.HOURS
 							? total + log.duration / 3600
-							: total + (log.duration / 3600) * (rate || 0);
+							: total + budgetCostOf(log, defaultRate);
 					return amount;
 				}, 0);
 
@@ -1525,7 +1604,11 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * @param request - The criteria for filtering TimeLogs.
 	 * @returns The modified query.
 	 */
-	async getFilterTimeLogQuery(query: SelectQueryBuilder<TimeLog>, request: IGetTimeLogReportInput) {
+	async getFilterTimeLogQuery(
+		query: SelectQueryBuilder<TimeLog>,
+		request: IGetTimeLogReportInput,
+		options: ITimeLogReadOptions = {}
+	) {
 		const { organizationId, projectIds = [], teamIds = [], taskIds = [] } = request;
 		let { employeeIds = [] } = request;
 
@@ -1651,6 +1734,11 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			query.andWhere(condition, { logType });
 		}
 
+		// A break is never worked time: a total leaves breaks out (#11920)
+		if (this.leavesBreaksOut(request, options)) {
+			query.andWhere(p(`"${query.alias}"."logType" <> :breakType`), { breakType: TimeLogType.BREAK });
+		}
+
 		/**
 		 * Apply a condition to the TypeORM query based on the 'isEdited' property in the request.
 		 * If 'isEdited' is true, filter rows where the 'editedAt' column is not null.
@@ -1682,7 +1770,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			query.andWhere(p(`"timeSlots"."tenantId" = :tenantId`), { tenantId });
 			query.andWhere(p(`"timeSlots"."organizationId" = :organizationId`), { organizationId });
 		} else {
-			this.requireTimeSlot(query, { tenantId, organizationId, ...activityRange });
+			this.requireTimeSlot(query, { tenantId, organizationId, ...activityRange }, this.keepsBreaks(request, options));
 		}
 
 		return query;
@@ -1756,7 +1844,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 	private requireTimeSlot(
 		query: SelectQueryBuilder<TimeLog>,
-		scope: { tenantId: ID; organizationId: ID; start?: number; end?: number }
+		scope: { tenantId: ID; organizationId: ID; start?: number; end?: number },
+		listsBreaks = false
 	): void {
 		const { tenantId, organizationId, start, end } = scope;
 		query.andWhere((qb: SelectQueryBuilder<TimeLog>) => {
@@ -1775,8 +1864,56 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					slotActivityEnd: end
 				});
 			}
-			return `EXISTS ${subQuery.getQuery()}`;
+			const slotExists = `EXISTS ${subQuery.getQuery()}`;
+			if (!listsBreaks) {
+				return slotExists;
+			}
+			// A break holds no slot by design: a read that lists entries keeps it all the same
+			query.setParameter('slotlessBreakType', TimeLogType.BREAK);
+			return `(${slotExists} OR ${p(`"${query.alias}"."logType" = :slotlessBreakType`)})`;
 		});
+	}
+
+	/**
+	 * Whether a report read leaves breaks out: every total of worked time does, even for a request that names their
+	 * type, so a break never reaches a duration, an owed amount or a spent budget. A read that lists entries keeps them
+	 * when asked (see `keepsBreaks`).
+	 *
+	 * @param request The report input.
+	 * @param options How the read treats breaks.
+	 */
+	private leavesBreaksOut(request: IGetTimeLogReportInput, options: ITimeLogReadOptions): boolean {
+		return !this.keepsBreaks(request, options);
+	}
+
+	/**
+	 * The MikroORM condition on the type of a read that leaves breaks out: the types the request names but BREAK, or
+	 * any type but BREAK when it names none.
+	 *
+	 * @param logType The types the request names, if any.
+	 */
+	private mikroOrmTypesWithoutBreaks(logType: IGetTimeLogReportInput['logType']): Record<string, unknown> {
+		const namedTypes: string[] = [].concat(logType ?? []);
+		if (namedTypes.length === 0) {
+			return { $ne: TimeLogType.BREAK };
+		}
+		return { $in: namedTypes.filter((type) => type !== TimeLogType.BREAK) };
+	}
+
+	/**
+	 * Whether a read keeps breaks: a read that lists entries does when the request asks for them (`includeBreaks`) or
+	 * names their type. A break holds no time slot, so such a read lets it through without one.
+	 *
+	 * @param request The report input.
+	 * @param options How the read treats breaks.
+	 */
+	private keepsBreaks(request: IGetTimeLogReportInput, options: ITimeLogReadOptions): boolean {
+		const listsEntries = options.listsEntries === true;
+		const asksForBreaks = request.includeBreaks === true;
+		const namedTypes: string[] = [].concat(request.logType ?? []);
+		const namesBreaks = namedTypes.includes(TimeLogType.BREAK);
+		const wantsBreaks = asksForBreaks || namesBreaks;
+		return listsEntries && wantsBreaks;
 	}
 
 	/**
@@ -1848,7 +1985,10 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * @param request - The criteria for filtering TimeLogs.
 	 * @returns A MikroORM-compatible where object.
 	 */
-	private async buildMikroOrmTimeLogWhere(request: IGetTimeLogReportInput): Promise<any> {
+	private async buildMikroOrmTimeLogWhere(
+		request: IGetTimeLogReportInput,
+		options: ITimeLogReadOptions = {}
+	): Promise<any> {
 		const { organizationId, projectIds = [], teamIds = [], taskIds = [] } = request;
 		let { employeeIds = [] } = request;
 
@@ -1906,6 +2046,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		}
 		if (isNotEmpty(request.logType)) {
 			where.logType = request.logType instanceof Array ? { $in: request.logType } : request.logType;
+		}
+		if (this.leavesBreaksOut(request, options)) {
+			where.logType = this.mikroOrmTypesWithoutBreaks(request.logType);
 		}
 
 		// An `isEdited` key with no value applies no filter, as in getFilterTimeLogQuery.
@@ -2217,7 +2360,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		);
 		const entry = { ...teamContext, projectId };
 		const isTrackerUpload = uploadedByTracker === true;
-		if (!isTrackerUpload) {
+		// A break is not work: the fields work must name (team, project, task) are not asked of it
+		const checksWorkFields = !isTrackerUpload && !isBreak(sent);
+		if (checksWorkFields) {
 			assertRequiredContext(requirements, entry);
 		}
 		return entry;
@@ -2279,6 +2424,12 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			// permissive organization, or none, and record time in an organization whose policy forbids it.
 			this.assertManualTimeAllowedIn(employee.organization);
 
+			// A break by hand needs the organization's breaks switch as well
+			const addsBreak = isBreak(request);
+			if (addsBreak) {
+				assertBreaksAllowedIn(employee.organization);
+			}
+
 			// Check if future dates are allowed for the organization
 			const futureDateAllowed: IOrganization['futureDateAllowed'] = employee.organization.futureDateAllowed;
 
@@ -2318,6 +2469,14 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				)
 			);
 
+			// A break never cuts the entries it would overlap: it is refused instead. Work over a recorded break is
+			// refused too, so the break stays as recorded (a tracker's own upload is left to the tracker's rules)
+			if (addsBreak) {
+				assertBreakOverlapsNothing(conflicts);
+			} else if (!isTrackerUpload) {
+				assertWorkOverlapsNoBreak(conflicts);
+			}
+
 			const times: IDateRange = {
 				start: new Date(startedAt),
 				end: new Date(stoppedAt)
@@ -2335,12 +2494,17 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			// Create the new time log entry. The handler reads it back through this service, whose employee
 			// filter would not find a log written for a member the caller manages. Time added by a person is
 			// recorded in the entry's history; the time a tracker uploads is not, as the time its timer records.
+			const written = { ...entry, organizationId };
+			// A break is never billable
+			if (addsBreak) {
+				written.isBillable = false;
+			}
 			let history: TimeLogHistoryOptions | undefined;
 			if (!isTrackerUpload) {
 				history = { reason: request.reason ?? null };
 			}
 			return await this.withoutEmployeeFilter(() =>
-				this.commandBus.execute(new TimeLogCreateCommand({ ...entry, organizationId }, history))
+				this.commandBus.execute(new TimeLogCreateCommand(written, history))
 			);
 		} catch (error) {
 			// Never swallow the reason: a blanket message here hid a real database failure indefinitely.
@@ -2398,6 +2562,13 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			// other log, so the read reaches nothing the caller could not have edited.
 			const timeLog = await this.withoutEmployeeFilter(() => this.findOneByIdString(id));
 
+			// A break stays a break and work stays work; editing a break needs the breaks switch
+			assertBreakTypeKept(timeLog, request.logType);
+			const editsBreak = isBreak(timeLog);
+			if (editsBreak) {
+				assertBreaksAllowedIn(employee.organization);
+			}
+
 			// The update keeps the log's timesheet and time slots, while the conflict cleanup below deletes
 			// slots of `employeeId`: naming anyone but the log's owner would move the log without its time
 			// and erase that employee's overlapping work. Hence a refusal, before that cleanup runs.
@@ -2441,6 +2612,14 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				conflicts,
 				await this.findRunningTimersStartedBefore(stoppedAt, employeeId, timeLog.organizationId, tenantId, id)
 			);
+
+			// A break never cuts the entries it would overlap, and work never moves over a recorded break
+			if (editsBreak) {
+				assertBreakOverlapsNothing(conflicts);
+				request.isBillable = false;
+			} else {
+				assertWorkOverlapsNoBreak(conflicts);
+			}
 
 			const times: IDateRange = { start: new Date(startedAt), end: new Date(stoppedAt) };
 			const timeSlotsIds = timeSlotIdsReachedBy(times, conflicts);

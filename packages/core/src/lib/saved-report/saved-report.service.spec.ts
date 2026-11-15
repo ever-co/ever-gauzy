@@ -1,6 +1,8 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { SavedReportKindEnum, SavedReportPeriodRuleEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context/request-context';
+import { sign } from 'jsonwebtoken';
+import { USER_API_TOKEN_CLAIM } from '../auth/user-api-token/user-api-token-session';
 import { SavedReportService, savedReportView } from './saved-report.service';
 import { hashSavedReportToken, isWellFormedSavedReportToken } from './saved-report-token';
 
@@ -130,6 +132,21 @@ describe('SavedReportService', () => {
 		expect(rows[0].shareTokenHash).toBe(hashSavedReportToken(second.token));
 		expect(rows[0].shareTokenHash).not.toBe(firstDigest);
 		expect(rows[0].shareExpiresAt).toBeNull();
+	});
+
+	it('turns no link on for a session started from an API token, or for an application token', async () => {
+		const { service, rows } = serviceFor(MARIE);
+
+		const bearer = jest
+			.spyOn(RequestContext, 'currentToken')
+			.mockReturnValue(sign({ id: MARIE, [USER_API_TOKEN_CLAIM]: 'api-token' }, 'secret'));
+		await expect(service.shareOwn(REPORT, {})).rejects.toThrow(ForbiddenException);
+		bearer.mockRestore();
+
+		jest.spyOn(RequestContext, 'currentOAuthAppScopes').mockReturnValue(['reports']);
+		await expect(service.shareOwn(REPORT, {})).rejects.toThrow(ForbiddenException);
+
+		expect(rows[0]).toMatchObject({ shareTokenHash: null, sharedAt: null });
 	});
 
 	it('refuses a link end date in the past', async () => {

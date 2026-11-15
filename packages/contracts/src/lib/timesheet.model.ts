@@ -190,6 +190,35 @@ export interface ITimeLog
 	isBillable?: boolean;
 	isRunning?: boolean;
 	isEdited?: boolean;
+	/**
+	 * The member's billing rate when the log was recorded, and its currency (empty: the organization's). It prices
+	 * the log's time when `ratesStored` is true; a rate change moves it only from the date its editor names.
+	 */
+	billRateValue?: number | null;
+	billRateCurrency?: string | null;
+	/**
+	 * Whether the log stores the rates that price it. A log recorded outside the API (a restored archive) stores
+	 * none and is priced at the current rates.
+	 */
+	ratesStored?: boolean | null;
+}
+
+/**
+ * The rates a time log stores beside its billing rate. Generic reads never answer them: the pay rate is salary data
+ * and the client rates are read by rate editors only, as on the employee and the project.
+ */
+export interface ITimeLogStoredRates {
+	/** The member's pay rate when the log was recorded, and its currency (empty: the organization's). */
+	payRateValue?: number | null;
+	payRateCurrency?: string | null;
+	/** The project's client rate when the log was recorded. */
+	projectBillRateValue?: number | null;
+	/** The member's client rate on the project when the log was recorded, over the project's. */
+	projectMemberBillRateValue?: number | null;
+	/** The currency of the project's client rate. */
+	projectBillRateCurrency?: string | null;
+	/** The currency of the member's client rate on the project. */
+	projectMemberBillRateCurrency?: string | null;
 }
 
 /**
@@ -236,7 +265,9 @@ export enum TimeLogType {
 	TRACKED = 'TRACKED',
 	MANUAL = 'MANUAL',
 	IDLE = 'IDLE',
-	RESUMED = 'RESUMED'
+	RESUMED = 'RESUMED',
+	/** Time away from work. Counted apart: never in worked, billable or invoiced time. */
+	BREAK = 'BREAK'
 }
 
 export enum ManualTimeLogAction {
@@ -427,6 +458,25 @@ export interface ITimerToggleInput
 	timeLogId?: ID;
 }
 
+/**
+ * Moves the start of the caller's running timer, earlier or later, while it keeps running.
+ */
+export interface ITimerStartMoveInput {
+	/** The new start. Not later than now, and no overlap with another entry of the caller. */
+	startedAt: Date;
+	/** Why the tracked time changed. Required when the organization asks for a reason (`requireReason`). */
+	reason?: string;
+}
+
+/** A discard of the caller's running timer: the run is removed instead of kept. */
+export interface ITimerDiscardInput extends IBasePerTenantAndOrganizationEntityModel {
+	/**
+	 * The running time log the discard is for, as the client last saw it. A discard naming another log than the
+	 * running one is refused, and the running one goes on.
+	 */
+	timeLogId?: ID;
+}
+
 export interface IManualTimeInput extends IBasePerTenantAndOrganizationEntityModel {
 	employeeId?: ID;
 	projectId?: ID;
@@ -457,6 +507,8 @@ export interface IGetTimeLogReportInput extends IGetTimeLogInput {
 	 * a rejected estimate.
 	 */
 	notInvoiced?: boolean;
+	/** Keep breaks (time logs of type BREAK) in a read that lists entries. Totals never count breaks. */
+	includeBreaks?: boolean;
 }
 
 export interface IGetTimeLogConflictInput extends IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel {
@@ -464,6 +516,11 @@ export interface IGetTimeLogConflictInput extends IBasePerTenantAndOrganizationE
 	startDate: string | Date;
 	endDate: string | Date;
 	employeeId: ID;
+	/**
+	 * Also answer work logs without time slots. By default a work log takes part only with a slot; a break always does.
+	 * Set only by the server, for a break started in the past (#11920).
+	 */
+	includeSlotless?: boolean;
 }
 
 export interface IGetTimeSlotInput extends ITimeLogFilters, IBaseRelationsEntityModel {
@@ -492,6 +549,12 @@ export interface IReportDayTaskRow {
 	duration?: number;
 	client?: (Pick<IOrganizationContact, 'id' | 'name'> & { imageUrl?: string | null }) | null;
 	organizationTeamId?: ID | null;
+	/**
+	 * The billing rate that prices this entry, and its currency (empty: the organization's): the rate the log stores,
+	 * or the member's current rate for a log that stores none.
+	 */
+	billRateValue?: number | null;
+	billRateCurrency?: string | null;
 }
 
 export interface IReportDayGroupByDate {
@@ -512,6 +575,10 @@ export type OwedRateSource = 'pay' | 'billing';
 
 export interface IAmountOwedReport {
 	date: string;
+	/**
+	 * One line per employee, or one per currency when the rates their time logs store that day are in several:
+	 * amounts in different currencies are never added.
+	 */
 	employees: {
 		employee: IEmployee;
 		duration: number;

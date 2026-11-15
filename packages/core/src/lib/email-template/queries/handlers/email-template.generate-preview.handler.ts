@@ -139,6 +139,12 @@ export class EmailTemplateGeneratePreviewHandler implements IQueryHandler<EmailT
 			contactName: 'John Doe',
 			invoiceNumber: 1,
 			amount: 100,
+			// A client's answer to an estimate: an acceptance, with its "Open the estimate" button
+			isAccepted: true,
+			isConverted: false,
+			contactEmail: 'client@example.com',
+			estimateUrl: link,
+			invoiceUrl: link,
 			// Appointments, hiring and timesheets
 			emails: 'participant@example.com, guest@example.com',
 			rescheduleAppointment: link,
