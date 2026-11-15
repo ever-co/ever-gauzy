@@ -8160,7 +8160,14 @@
 			"SELECT_WORKSPACE_FOR": "Select Workspace for",
 			"OPEN": "Open"
 		},
-		"EDIT_EMAIL": "Edit email"
+		"EDIT_EMAIL": "Edit email",
+		"SWITCH": {
+			"WORKSPACE_SUCCESS": "Workspace switched successfully!",
+			"WORKSPACE_FAILED": "Failed to switch workspace",
+			"ORGANIZATION_FAILED": "Failed to switch organization",
+			"ORGANIZATION_FAILED_TRY_AGAIN": "Failed to switch organization. Please try again.",
+			"ORGANIZATION_APPLY_FAILED": "Failed to apply organization data"
+		}
 	},
 	"WORKSPACE_CREATE": {
 		"ACCOUNT_CREATION": {

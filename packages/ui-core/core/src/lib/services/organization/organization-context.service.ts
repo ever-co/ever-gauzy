@@ -55,21 +55,21 @@ export class OrganizationContextService {
 			);
 
 			if (!response) {
-				this.toastrService.danger('Failed to switch organization', 'Error');
+				this.toastrService.danger('WORKSPACES.SWITCH.ORGANIZATION_FAILED');
 				return false;
 			}
 
 			// Apply the new authentication data
 			const applied = this.applyOrganizationData(response, organization);
 			if (!applied) {
-				this.toastrService.danger('Failed to apply organization data', 'Error');
+				this.toastrService.danger('WORKSPACES.SWITCH.ORGANIZATION_APPLY_FAILED');
 				return false;
 			}
 
 			return true;
 		} catch (error) {
 			console.error('[OrganizationContextService] Error switching organization:', error);
-			this.toastrService.danger('Failed to switch organization. Please try again.', 'Error');
+			this.toastrService.danger('WORKSPACES.SWITCH.ORGANIZATION_FAILED_TRY_AGAIN');
 			return false;
 		}
 	}
