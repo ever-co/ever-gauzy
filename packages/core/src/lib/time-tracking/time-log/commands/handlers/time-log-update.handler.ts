@@ -65,6 +65,23 @@ export function omitScopeFields<T extends object>(input: T): Partial<T> {
 	return changes;
 }
 
+/** The employee's slots at the starts of a log's range: where a write of that range reads them. */
+interface IRangeSlotsAt {
+	tenantId: ID;
+	organizationId: ID;
+	employeeId: ID;
+	/** The range's slot starts, each a whole minute. */
+	starts: Date[];
+}
+
+/**
+ * Whether a slot, as a lookup with its logs answers it, is held by the log. Under MikroORM a slot's time logs are a
+ * collection, iterable but without array methods.
+ */
+function holdsSlot(timeLog: ITimeLog, slot: ITimeSlot): boolean {
+	return Array.from(slot.timeLogs ?? []).some((log) => log.id === timeLog.id);
+}
+
 @CommandHandler(TimeLogUpdateCommand)
 export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateCommand> {
 	protected ormType: MultiORM = getORMType();
@@ -201,39 +218,50 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 			const logId = timeLog.id;
 			// An entry deleted for good since it was first read stops the edit with a 404: the reads below would find
 			// no row to answer or to give slots to.
-			await this.writeWithHistory(
-				stored,
-				changes,
-				history,
-				(repository) =>
-					repository.update(
-						{ id: logId, tenantId },
-						{
-							...changes,
-							...(timesheet ? { timesheetId: timesheet.id } : {}),
-							...rates
-						}
-					),
-				true
-			);
+			const writeUpdate = () =>
+				this.writeWithHistory(
+					stored,
+					changes,
+					history,
+					(repository) =>
+						repository.update(
+							{ id: logId, tenantId },
+							{
+								...changes,
+								...(timesheet ? { timesheetId: timesheet.id } : {}),
+								...rates
+							}
+						),
+					true
+				);
+
+			// The time slots of the new range, for Web Timer, and for a heartbeat-posting run that has none
+			// (takesRangeSlots, above), are created and linked to the log BEFORE the update writes that range (see
+			// `writeWithRangeSlots`). The answer is every slot of the employee at those starts — the ones created and the
+			// ones they already had there (another of their logs may share a ten-minute slot) — and, as
+			// TimeLogCreateHandler does, it becomes the log's slots below.
+			let rangeSlots: ITimeSlot[] = [];
+			if (takesRangeSlots) {
+				rangeSlots = await this.writeWithRangeSlots(
+					updateTimeSlots,
+					timeLog,
+					employeeId,
+					organizationId,
+					tenantId,
+					writeUpdate
+				);
+			} else {
+				await writeUpdate();
+			}
 
 			// Retrieve the updated time log
 			timeLog = await this.typeOrmTimeLogRepository.findOneBy({ id: timeLog.id });
 
 			if (needToUpdateTimeSlots) {
-				// Create new time slots if needed for Web Timer, and for a heartbeat-posting run that has none
-				// (takesRangeSlots, above). The answer is every slot of the employee at those starts — the ones created
-				// and the ones they already had there (another of their logs may share a ten-minute slot) — and, as
-				// TimeLogCreateHandler does, it becomes the log's slots, so the save links the log to each of them, an
+				// The slots of its range become the log's slots, so the save keeps the log linked to each of them, an
 				// existing slot included.
 				if (takesRangeSlots) {
-					timeLog.timeSlots = await this.bulkCreateTimeSlots(
-						updateTimeSlots,
-						timeLog,
-						employeeId,
-						organizationId,
-						tenantId
-					);
+					timeLog.timeSlots = rangeSlots;
 				}
 
 				// Update the time log in the repository (a failure propagates, before any slot is released). An update
@@ -521,19 +549,22 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 	 * @param organizationId - The organization.
 	 * @param employeeId - The employee.
 	 * @param startTimes - The slot start times.
+	 * @param refresh - Whether MikroORM reads the slots and their logs again even when its context holds them: after
+	 * writes made through TypeORM in the same request, as the links a write of a range makes (#11889).
 	 * @returns The slots found.
 	 */
 	private async findTimeSlots(
 		tenantId: ID,
 		organizationId: ID,
 		employeeId: ID,
-		startTimes: Date[]
+		startTimes: Date[],
+		refresh = false
 	): Promise<ITimeSlot[]> {
 		const minutes = startTimes.map(minuteRange);
 		const slots: ITimeSlot[] = [];
 		for (let first = 0; first < minutes.length; first += MINUTES_PER_LOOKUP) {
 			const batch = minutes.slice(first, first + MINUTES_PER_LOOKUP);
-			slots.push(...(await this.findTimeSlotsInMinutes(tenantId, organizationId, employeeId, batch)));
+			slots.push(...(await this.findTimeSlotsInMinutes(tenantId, organizationId, employeeId, batch, refresh)));
 		}
 		return slots;
 	}
@@ -543,7 +574,8 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 		tenantId: ID,
 		organizationId: ID,
 		employeeId: ID,
-		minutes: Array<{ from: Date; to: Date }>
+		minutes: Array<{ from: Date; to: Date }>,
+		refresh = false
 	): Promise<ITimeSlot[]> {
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
@@ -558,7 +590,8 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 						$or: inMinutes
 					} as any,
 					{
-						populate: ['timeLogs', 'screenshots', 'activities', 'timeSlotMinutes']
+						populate: ['timeLogs', 'screenshots', 'activities', 'timeSlotMinutes'],
+						...(refresh ? { refresh: true } : {})
 					}
 				)) as any[];
 			}
@@ -633,6 +666,123 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 
 		// Assign regenerated TimeSlot entries for existed TimeLog
 		return await this.timeSlotService.bulkCreate(slots, employeeId, organizationId);
+	}
+
+	/**
+	 * Gives a log the time slots of its new range, then writes that range (`write`), in this order (#11889): the slots
+	 * are created where the employee has none, the log is linked to each one it does not hold yet, and only then is the
+	 * range written (a stop's end, and `isRunning: false`). A failure on the way gives the slots at those starts back
+	 * as they were (see `giveRangeSlotsBack`) and is raised, so the log is left as it was: a stopped run still runs,
+	 * with nothing written, and a stop sent again stops it. Once the range is written, the log holds every slot of it.
+	 *
+	 * The range used to be written first: a stop whose slot insert failed left the run stopped without slots, out of
+	 * the day's worked time, and a stop sent again was refused, as nothing ran any more.
+	 *
+	 * @param updateTimeSlots - The slots of the new range.
+	 * @param timeLog - The log as stored, before the write.
+	 * @param employeeId - The log's employee.
+	 * @param organizationId - The log's organization.
+	 * @param tenantId - The log's tenant.
+	 * @param write - The write of the new range.
+	 * @returns Every slot of the employee at the range's starts, which become the log's slots.
+	 * @throws The error of the insert, of the link or of the write.
+	 */
+	private async writeWithRangeSlots(
+		updateTimeSlots: ITimeSlot[],
+		timeLog: ITimeLog,
+		employeeId: ID,
+		organizationId: ID,
+		tenantId: ID,
+		write: () => Promise<unknown>
+	): Promise<ITimeSlot[]> {
+		const starts = updateTimeSlots.map((slot) => moment(slot.startedAt).startOf('minute').toDate());
+		const before = await this.findTimeSlots(tenantId, organizationId, employeeId, starts);
+		try {
+			const rangeSlots = await this.bulkCreateTimeSlots(
+				updateTimeSlots,
+				timeLog,
+				employeeId,
+				organizationId,
+				tenantId
+			);
+			await this.linkToRangeSlots(timeLog, rangeSlots, { tenantId, organizationId, employeeId, starts });
+			await write();
+			return rangeSlots;
+		} catch (error) {
+			await this.giveRangeSlotsBack(timeLog, before, { tenantId, organizationId, employeeId, starts });
+			throw error;
+		}
+	}
+
+	/**
+	 * Links a log to each slot of its range it does not hold yet: the insert links the slots it creates, not the ones
+	 * the employee already had at those starts.
+	 *
+	 * @param timeLog - The log.
+	 * @param rangeSlots - The slots of its range.
+	 * @param at - The employee's slots to read: those of the employee at the range's starts.
+	 */
+	private async linkToRangeSlots(timeLog: ITimeLog, rangeSlots: ITimeSlot[], at: IRangeSlotsAt): Promise<void> {
+		const rangeIds = new Set(rangeSlots.map((slot) => slot.id));
+		const standing = await this.findTimeSlots(at.tenantId, at.organizationId, at.employeeId, at.starts, true);
+		const notHeld = standing
+			.filter((slot) => rangeIds.has(slot.id) && !holdsSlot(timeLog, slot))
+			.map((slot) => slot.id);
+		if (notHeld.length > 0) {
+			await this.typeOrmTimeSlotRepository
+				.createQueryBuilder()
+				.relation(TimeSlot, 'timeLogs')
+				.of(notHeld)
+				.add(timeLog.id);
+		}
+	}
+
+	/**
+	 * Gives back the slots at a range's starts as they were before a failed write of that range (see
+	 * `writeWithRangeSlots`): the log lets go of each slot it did not hold then, and a slot created since that only the
+	 * log holds is deleted for good, as it holds no screenshot or activity yet (the slot delete removes it only while
+	 * the log still holds it alone). A failure here is logged; the write's own error stays the one raised.
+	 *
+	 * @param timeLog - The log.
+	 * @param before - The employee's slots at those starts, with their logs, as read before the write.
+	 * @param at - The employee's slots to read: those of the employee at the range's starts.
+	 */
+	private async giveRangeSlotsBack(timeLog: ITimeLog, before: ITimeSlot[], at: IRangeSlotsAt): Promise<void> {
+		try {
+			const existed = new Set(before.map((slot) => slot.id));
+			const heldBefore = new Set(before.filter((slot) => holdsSlot(timeLog, slot)).map((slot) => slot.id));
+			const standing = await this.findTimeSlots(at.tenantId, at.organizationId, at.employeeId, at.starts, true);
+			const taken = standing.filter((slot) => holdsSlot(timeLog, slot) && !heldBefore.has(slot.id));
+			const heldByThisLogAlone = (slot: ITimeSlot) =>
+				Array.from(slot.timeLogs ?? []).every((log) => log.id === timeLog.id);
+			const created = taken
+				.filter((slot) => !existed.has(slot.id) && heldByThisLogAlone(slot))
+				.map((slot) => slot.id);
+			const linked = taken.filter((slot) => !created.includes(slot.id)).map((slot) => slot.id);
+
+			if (created.length > 0) {
+				const { organizationId, employeeId, tenantId } = at;
+				await this.commandBus.execute(
+					new TimeSlotBulkDeleteCommand(
+						{ organizationId, employeeId, tenantId, timeLog, timeSlotsIds: created },
+						true,
+						false
+					)
+				);
+			}
+			if (linked.length > 0) {
+				await this.typeOrmTimeSlotRepository
+					.createQueryBuilder()
+					.relation(TimeSlot, 'timeLogs')
+					.of(linked)
+					.remove(timeLog.id);
+			}
+		} catch (undoError) {
+			this.logger.error(
+				`Error while giving back the time slots of time log ${timeLog.id} after a failed write: ${undoError?.message ?? undoError}`,
+				undoError?.stack
+			);
+		}
 	}
 
 	/**
