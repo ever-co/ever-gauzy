@@ -19,10 +19,12 @@ import {
 	ITaskSize,
 	ITaskStatus,
 	ITaskVersion,
-	ITaskView
+	ITaskView,
+	ITeamNotificationDefaults
 } from '@gauzy/contracts';
+import { isMySQL, isPostgres } from '@gauzy/config';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsObject, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
 	Comment,
 	DailyPlan,
@@ -130,6 +132,17 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	@IsBoolean()
 	@MultiORMColumn({ default: false })
 	requirePlanToTrack?: boolean;
+
+	/**
+	 * The defaults of the team's members' notifications: what a member who chose nothing for a key of their own
+	 * preferences gets (ever-co/ever-teams#5022). Null, the default, changes nothing. Saved as
+	 * `teamNotificationDefaultsOf` keeps it: the known keys with a valid value each.
+	 */
+	@ApiPropertyOptional({ type: () => Object, nullable: true })
+	@IsOptional()
+	@IsObject()
+	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text', nullable: true })
+	notificationDefaults?: ITeamNotificationDefaults | null;
 
 	/**
 	 * Optional property representing the team type (boolean true/false).
