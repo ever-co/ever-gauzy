@@ -6,6 +6,7 @@ import {
 	ForbiddenException,
 	Injectable,
 	Logger,
+	NotFoundException,
 	ServiceUnavailableException,
 	UnauthorizedException
 } from '@nestjs/common';
@@ -35,7 +36,8 @@ import {
 	confirmedAmountOf,
 	isPayable,
 	readNotification,
-	standingAfterPayments
+	standingAfterPayments,
+	standingMayChange
 } from './invoice-payment.rules';
 import {
 	PAYMENT_SIGNATURE_HEADER,
@@ -259,12 +261,22 @@ export class InvoicePaymentService {
 	 * Records a confirmed payment against its invoice, in one transaction that locks the invoice where the database
 	 * locks rows: two notifications at once count each payment once in the invoice's standing.
 	 *
-	 * @returns Whether the notification changed something: false for a failed or cancelled payment, or one recorded
-	 * already.
+	 * A payment taken in test mode, or by a connector in test mode, is never recorded: test money never settles an
+	 * invoice. A payment that lands on a voided invoice is recorded against it, for the team to refund, and the invoice
+	 * stays void.
+	 *
+	 * @returns Whether the notification changed something: false for a failed or cancelled payment, a test payment, or
+	 * one recorded already.
 	 * @throws BadRequestException when the payment cannot be recorded against the invoice it names.
 	 */
 	async applyNotification(provider: IPaymentProvider, notification: IInvoicePaymentNotification): Promise<boolean> {
 		if (notification.outcome !== InvoicePaymentOutcome.SUCCEEDED) {
+			return false;
+		}
+		if (notification.isTestMode || provider.isTestMode) {
+			this.logger.log(
+				`A test payment of connector ${provider.id} was received and not recorded against an invoice.`
+			);
 			return false;
 		}
 		return this.invoices.manager.transaction(async (manager: EntityManager) => {
@@ -313,6 +325,12 @@ export class InvoicePaymentService {
 			const payments = await manager.find(Payment, {
 				where: { invoiceId: invoice.id, tenantId: provider.tenantId, deletedAt: IsNull() } as never
 			});
+			if (!standingMayChange(invoice)) {
+				this.logger.warn(
+					`A payment landed on voided invoice ${invoice.id}: it is recorded for a refund, and the invoice stays void.`
+				);
+				return true;
+			}
 			const standing = standingAfterPayments(invoice, payments as never);
 			if (standing) {
 				await manager.update(Invoice, { id: invoice.id, tenantId: provider.tenantId }, {
@@ -354,12 +372,12 @@ export class InvoicePaymentService {
 		}
 		const existing = await this.paymentProviderService.findProviderByCode(SIGNED_CHECKOUT_PROVIDER_CODE);
 		if (existing) {
-			const configuration = (existing.configuration ?? {}) as IConnectorConfiguration;
-			const updated = await this.paymentProviderService.updateProvider(existing.id, {
-				isEnabled: input.isEnabled ?? existing.isEnabled,
-				isTestMode: input.isTestMode ?? existing.isTestMode,
-				configuration: { ...configuration, checkoutEndpoint, eventMap: CONNECTOR_EVENT_MAP }
-			} as never);
+			// Only what the settings own: the signing version stays what a rotation at the same moment wrote
+			const updated = await this.updateConnector(existing.id, () => ({
+				...(input.isEnabled === undefined ? {} : { isEnabled: input.isEnabled }),
+				...(input.isTestMode === undefined ? {} : { isTestMode: input.isTestMode }),
+				configuration: { checkoutEndpoint, eventMap: CONNECTOR_EVENT_MAP }
+			}));
 			return this.describe(updated);
 		}
 		const source = this.keySourceOrFail();
@@ -388,14 +406,11 @@ export class InvoicePaymentService {
 		if (!existing) {
 			throw new BadRequestException('INVOICE_PAYMENT_NOT_CONNECTED');
 		}
-		const configuration = (existing.configuration ?? {}) as IConnectorConfiguration;
-		const updated = await this.paymentProviderService.updateProvider(existing.id, {
-			configuration: {
-				...configuration,
-				signingKeyVersion: (configuration.signingKeyVersion ?? 0) + 1,
-				signingKeySource: this.keySourceOrFail()
-			}
-		} as never);
+		const signingKeySource = this.keySourceOrFail();
+		// The version is raised from the one read under the lock: two rotations at once give two versions
+		const updated = await this.updateConnector(existing.id, (configuration) => ({
+			configuration: { signingKeyVersion: (configuration.signingKeyVersion ?? 0) + 1, signingKeySource }
+		}));
 		return { ...this.describe(updated), signingSecret: this.secretOf(updated) };
 	}
 
@@ -451,6 +466,45 @@ export class InvoicePaymentService {
 				isEnabled: true,
 				deletedAt: IsNull()
 			} as never
+		});
+	}
+
+	/**
+	 * Changes a connector of the caller's organization: its row is read and written in one transaction that locks it
+	 * where the database locks rows (Postgres, MySQL; SQLite runs one transaction at a time), and only the fields the
+	 * change names are written. A settings save and a secret rotation at the same moment each keep what the other wrote.
+	 *
+	 * @throws NotFoundException when the organization has no such connector.
+	 */
+	private async updateConnector(
+		id: ID,
+		change: (configuration: IConnectorConfiguration) => {
+			isEnabled?: boolean;
+			isTestMode?: boolean;
+			configuration: Partial<IConnectorConfiguration> & Record<string, unknown>;
+		}
+	): Promise<IPaymentProvider> {
+		const tenantId = RequestContext.currentTenantId();
+		const organizationId = RequestContext.currentOrganizationId();
+		return this.typeOrmPaymentProviderRepository.manager.transaction(async (manager: EntityManager) => {
+			const current = await manager.findOne(PaymentProvider, {
+				where: { id, tenantId, organizationId, code: SIGNED_CHECKOUT_PROVIDER_CODE } as never,
+				...this.rowLock(manager)
+			});
+			if (!current) {
+				throw new NotFoundException('PAYMENT_PROVIDER_NOT_FOUND');
+			}
+			const configuration = (current.configuration ?? {}) as IConnectorConfiguration & Record<string, unknown>;
+			const { configuration: changed, ...fields } = change(configuration);
+			await manager.update(
+				PaymentProvider,
+				{ id: current.id, tenantId, organizationId } as never,
+				{
+					...fields,
+					configuration: { ...configuration, ...changed }
+				} as never
+			);
+			return manager.findOne(PaymentProvider, { where: { id: current.id, tenantId, organizationId } as never });
 		});
 	}
 
@@ -511,13 +565,33 @@ export class InvoicePaymentService {
 		return RequestContext.runWithRequest(request as never, fn, { id: randomUUID() as ID });
 	}
 
-	/** Posts a signed body to the connector and reads its JSON answer, refusing private addresses and redirects. */
+	/**
+	 * Posts a signed body to the connector and reads its JSON answer, refusing private addresses and redirects. The
+	 * answer is settled once, whatever happens: an error or an aborted reply, an answer past its size cap, or no
+	 * complete answer within the deadline, all reject with 502.
+	 */
 	private postSigned(url: string, secret: string, body: string): Promise<Record<string, unknown> | null> {
 		if (getUnsafeOutboundUrlReason(url) !== null) {
 			return Promise.reject(new BadRequestException('INVOICE_PAYMENT_ENDPOINT_INVALID'));
 		}
 		this.agent ??= createSsrfSafeHttpsAgent();
 		return new Promise((resolve, reject) => {
+			let isSettled = false;
+			let deadline: ReturnType<typeof setTimeout> | undefined;
+			const settle = (outcome: () => void) => {
+				if (isSettled) {
+					return;
+				}
+				isSettled = true;
+				clearTimeout(deadline);
+				outcome();
+			};
+			const fail = (reason: string) =>
+				settle(() => {
+					this.logger.warn(`The payment connector's checkout failed: ${reason}`);
+					call.destroy();
+					reject(new BadGatewayException('INVOICE_PAYMENT_CHECKOUT_FAILED'));
+				});
 			const call = httpsRequest(
 				url,
 				{
@@ -537,30 +611,32 @@ export class InvoicePaymentService {
 						size += chunk.length;
 						if (size > CHECKOUT_ANSWER_MAX_BYTES) {
 							response.destroy();
-							reject(new BadGatewayException('INVOICE_PAYMENT_CHECKOUT_FAILED'));
+							fail('the answer is too large');
 							return;
 						}
 						chunks.push(chunk);
 					});
+					response.on('error', (error: Error) => fail(`the answer broke off (${error.message})`));
+					response.on('aborted', () => fail('the answer was aborted'));
 					response.on('end', () => {
 						const status = response.statusCode ?? 0;
 						if (status < 200 || status >= 300) {
-							this.logger.warn(`The payment connector answered ${status} to a checkout.`);
-							return reject(new BadGatewayException('INVOICE_PAYMENT_CHECKOUT_FAILED'));
+							fail(`it answered ${status}`);
+							return;
 						}
 						try {
-							resolve(JSON.parse(Buffer.concat(chunks).toString('utf8')));
+							const answer = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+							settle(() => resolve(answer));
 						} catch {
-							reject(new BadGatewayException('INVOICE_PAYMENT_CHECKOUT_FAILED'));
+							fail('the answer is not JSON');
 						}
 					});
 				}
 			);
-			call.on('timeout', () => call.destroy(new Error('timeout')));
-			call.on('error', (error) => {
-				this.logger.warn(`The payment connector could not be reached: ${error.message}`);
-				reject(new BadGatewayException('INVOICE_PAYMENT_CHECKOUT_FAILED'));
-			});
+			// The socket timeout only covers silence: a reply that trickles in forever is cut at the deadline
+			deadline = setTimeout(() => fail('no complete answer in time'), CHECKOUT_TIMEOUT_MS);
+			call.on('timeout', () => fail('the connector went silent'));
+			call.on('error', (error: Error) => fail(`it could not be reached (${error.message})`));
 			call.end(body);
 		});
 	}

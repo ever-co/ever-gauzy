@@ -1,11 +1,16 @@
+import { EventEmitter } from 'node:events';
+import { request as httpsRequest } from 'node:https';
 import '@gauzy/core';
 import { BadGatewayException, BadRequestException, ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import { InvoiceStatusTypesEnum } from '@gauzy/contracts';
-import { Invoice, Payment, TokenPurposeEnum, signPurposeToken } from '@gauzy/core';
+import { Invoice, Payment, RequestContext, TokenPurposeEnum, signPurposeToken } from '@gauzy/core';
 import { PaymentWebhookEventStatus } from '../payment.types';
 import { signedHeaders, signingSecretOf } from './invoice-payment-signature';
 import { SIGNED_CHECKOUT_PROVIDER_CODE } from './invoice-payment.rules';
 import { InvoicePaymentService } from './invoice-payment.service';
+
+// The connector's HTTPS answer is played by hand: a reply that breaks off, or never ends
+jest.mock('node:https', () => ({ ...jest.requireActual('node:https'), request: jest.fn() }));
 
 /**
  * Paying an invoice online (ever-co/ever-gauzy#11856), with the repositories doubled in memory:
@@ -85,7 +90,19 @@ function world(invoiceFields: Partial<Invoice> = {}) {
 		)
 	};
 	const paymentRepository = { find: jest.fn(async () => payments.map((payment) => ({ ...payment }))) };
+	const providerManager = {
+		connection: { options: { type: 'sqlite' } },
+		findOne: jest.fn(async (_entity: unknown, { where }: { where: Record<string, unknown> }) =>
+			matches(provider as never, where) ? { ...provider, configuration: { ...provider.configuration } } : null
+		),
+		update: jest.fn(async (_entity: unknown, _where: unknown, values: Record<string, unknown>) => {
+			Object.assign(provider, values);
+		})
+	};
 	const providers = {
+		manager: {
+			transaction: jest.fn(async (work: (m: typeof providerManager) => unknown) => work(providerManager))
+		},
 		findOne: jest.fn(async ({ where }: { where: Record<string, unknown> }) =>
 			matches(provider as never, where) ? { ...provider } : null
 		)
@@ -109,14 +126,20 @@ function world(invoiceFields: Partial<Invoice> = {}) {
 			events.find((event) => event.id === id).status = PaymentWebhookEventStatus.FAILED;
 		})
 	};
+	// The registration as a request read it earlier: a rotation may have changed the row since
+	const staleProvider = { ...provider, configuration: { ...provider.configuration } };
+	const providerService = {
+		findProviderByCode: jest.fn(async () => staleProvider),
+		createProvider: jest.fn()
+	};
 	const service = new InvoicePaymentService(
 		invoices as never,
 		paymentRepository as never,
 		providers as never,
-		{} as never,
+		providerService as never,
 		webhookEvents as never
 	);
-	return { service, invoice, token, payments, provider, updates, webhookEvents, manager };
+	return { service, invoice, token, payments, provider, updates, webhookEvents, manager, staleProvider };
 }
 
 /** A notification of the connector, signed with its secret unless another one is given. */
@@ -124,7 +147,7 @@ function notification(data: Record<string, unknown>, options: { id?: string; typ
 	const body = JSON.stringify({
 		id: options.id ?? 'evt_1',
 		type: options.type ?? 'payment.succeeded',
-		data: { reference: INVOICE_ID, paymentId: 'pay_1', currency: 'EUR', ...data }
+		data: { reference: INVOICE_ID, paymentId: 'pay_1', currency: 'EUR', isTestMode: false, ...data }
 	});
 	const secret = options.secret ?? (signingSecretOf(PROVIDER_ID, 1, 'k', { ENCRYPTION_KEY: ENV_KEY }) as string);
 	return { headers: signedHeaders(secret, body), rawBody: Buffer.from(body) };
@@ -346,5 +369,116 @@ describe('InvoicePaymentService', () => {
 			);
 			expect(payments).toHaveLength(0);
 		});
+	});
+});
+
+describe('InvoicePaymentService — review of #11996 (Greptile)', () => {
+	const savedKey = process.env['ENCRYPTION_KEY'];
+	beforeEach(() => {
+		process.env['ENCRYPTION_KEY'] = ENV_KEY;
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORGANIZATION);
+	});
+	afterEach(() => {
+		if (savedKey === undefined) delete process.env['ENCRYPTION_KEY'];
+		else process.env['ENCRYPTION_KEY'] = savedKey;
+		jest.restoreAllMocks();
+		jest.useRealTimers();
+	});
+
+	it('records a payment that lands on a voided invoice, and keeps the invoice void', async () => {
+		const { service, payments, invoice } = world({ status: InvoiceStatusTypesEnum.VOID });
+		const { headers, rawBody } = notification({ amount: '100' });
+
+		await service.receiveNotification(PROVIDER_ID, headers, rawBody);
+
+		expect(payments).toHaveLength(1);
+		expect(invoice.status).toBe(InvoiceStatusTypesEnum.VOID);
+		expect(invoice.alreadyPaid).toBeUndefined();
+	});
+
+	it('never records a payment taken in test mode', async () => {
+		const { service, payments, invoice, webhookEvents } = world();
+		const { headers, rawBody } = notification({ amount: '100', isTestMode: true });
+
+		await service.receiveNotification(PROVIDER_ID, headers, rawBody);
+
+		expect(payments).toHaveLength(0);
+		expect(invoice.status).toBe(InvoiceStatusTypesEnum.SENT);
+		expect(webhookEvents.markIgnored).toHaveBeenCalledWith('evt_1');
+	});
+
+	it('never records a payment through a connector in test mode, even one that says it was live', async () => {
+		const { service, payments, provider } = world();
+		provider.isTestMode = true;
+		const { headers, rawBody } = notification({ amount: '100' });
+
+		await service.receiveNotification(PROVIDER_ID, headers, rawBody);
+
+		expect(payments).toHaveLength(0);
+	});
+
+	it('keeps the signing version a rotation wrote while the settings were being saved', async () => {
+		const { service, provider } = world();
+		// The rotation landed after the settings request read the registration (version 1)
+		provider.configuration = { ...provider.configuration, signingKeyVersion: 2 };
+
+		await service.connect({ checkoutEndpoint: 'https://pay.example.com/v2/checkout' });
+
+		expect(provider.configuration).toMatchObject({
+			checkoutEndpoint: 'https://pay.example.com/v2/checkout',
+			signingKeyVersion: 2
+		});
+	});
+
+	it('raises the signing version from the one stored, not from an earlier read', async () => {
+		const { service, provider } = world();
+		provider.configuration = { ...provider.configuration, signingKeyVersion: 3 };
+
+		const rotated = await service.rotateSecret();
+
+		expect(provider.configuration.signingKeyVersion).toBe(4);
+		expect(rotated.signingSecret).toBe(signingSecretOf(PROVIDER_ID, 4, 'k', { ENCRYPTION_KEY: ENV_KEY }));
+	});
+
+	/** The connector's reply, played by hand. */
+	function connectorReplies(play: (response: EventEmitter & { statusCode: number }) => void) {
+		const call = Object.assign(new EventEmitter(), { end: jest.fn(), destroy: jest.fn() });
+		(httpsRequest as unknown as jest.Mock).mockImplementation((_url, _options, onResponse) => {
+			const response = Object.assign(new EventEmitter(), { statusCode: 200, destroy: jest.fn() });
+			setImmediate(() => {
+				onResponse(response);
+				play(response);
+			});
+			return call;
+		});
+		return call;
+	}
+
+	it('fails the checkout when the reply breaks off', async () => {
+		const { service, token } = world();
+		connectorReplies((response) => {
+			response.emit('data', Buffer.from('{"url":"https://pay.exa'));
+			response.emit('aborted');
+			response.emit('error', new Error('socket hang up'));
+		});
+
+		await expect(service.startCheckout(INVOICE_ID, token, 'https://app.ever.team/')).rejects.toBeInstanceOf(
+			BadGatewayException
+		);
+	});
+
+	it('fails the checkout when the reply never ends, at the deadline', async () => {
+		jest.useFakeTimers({ doNotFake: ['nextTick', 'setImmediate'] });
+		const { service, token } = world();
+		const call = connectorReplies((response) => response.emit('data', Buffer.from('{"url":')));
+
+		const checkout = service.startCheckout(INVOICE_ID, token, 'https://app.ever.team/');
+		const outcome = expect(checkout).rejects.toBeInstanceOf(BadGatewayException);
+		await new Promise((resolve) => setImmediate(resolve));
+		await jest.advanceTimersByTimeAsync(10_001);
+
+		await outcome;
+		expect(call.destroy).toHaveBeenCalled();
 	});
 });

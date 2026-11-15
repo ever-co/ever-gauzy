@@ -127,13 +127,16 @@ reaches it.
     		"reference": "<invoice id>",
     		"paymentId": "<provider payment id>",
     		"amount": "120.50",
-    		"currency": "EUR"
+    		"currency": "EUR",
+    		"isTestMode": false
     	}
     }
     ```
 
-    The API records the payment against the invoice (once per `paymentId`) and sets it Paid, Partially paid or
-    Overpaid. `payment.failed` and `payment.canceled` change nothing.
+    The API records the payment against the invoice (once per `paymentId`, which a success must carry) and sets
+    it Paid, Partially paid or Overpaid. `payment.failed` and `payment.canceled` change nothing. A payment taken in
+    test mode (`isTestMode` not `false`), or through a connector in test mode, is logged and never recorded. A
+    payment on a voided invoice is recorded for a refund and the invoice stays void.
 
 Every message carries `x-gauzy-payment-timestamp` (Unix seconds) and
 `x-gauzy-payment-signature: hex(HMAC_SHA256(signingSecret, "<timestamp>.<raw body>"))`. A notification that is
