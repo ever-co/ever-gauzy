@@ -47,6 +47,11 @@ export interface IEmployeeNotificationPreferences {
 	 * a third. Default 8; `null` or 0 for no reminder. A value outside (0, 24] reads as the default.
 	 */
 	timerReminderHours?: number | null;
+	/**
+	 * How many hours before a task's due date the employee is reminded of it (`TaskDueReminder`), for the tasks they are
+	 * assigned to. Default 24; `null` or 0 for no reminder. A value outside (0, 168] reads as the default.
+	 */
+	taskDueReminderHours?: number | null;
 }
 
 /**
