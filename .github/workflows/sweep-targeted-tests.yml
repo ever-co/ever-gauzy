@@ -102,14 +102,16 @@ jobs:
         # app. It goes through yarn, not Nx, so `.env.local` is not loaded here either.
         run: yarn config:dev
 
-      - name: Run the suites of the code PRs 11975-11981 touch
+      - name: Run the suites of the code PRs 11984-11993 touch
         env:
           NX_LOAD_DOT_ENV_FILES: 'false'
         run: |
           status=0
           J='node node_modules/jest/bin/jest.js'
           export NODE_OPTIONS='--experimental-vm-modules --max-old-space-size=24576'
-          $J -c packages/core/jest.config.ts --runInBand --ci 'packages/core/src/lib/(core/file\-storage/providers/cloudinary\.provider\.spec\.ts|core/file\-storage/storage\-endpoint\-policy\.spec\.ts|core/file\-storage/tenant\-storage\-settings\.spec\.ts|email\-send/email\.service\.email\-invoice\.spec\.ts|email\-send/email\.service\.email\-links\.spec\.ts|estimate\-email/estimate\-email\.invoice\-delivery\.spec\.ts|invoice/invoice\-reminder/invoice\-reminder\.rules\.spec\.ts|invoice/invoice\-reminder/invoice\-reminder\.service\.sqlite\.spec\.ts|invoice/invoice\-reminder/invoice\-reminder\.worker\.spec\.ts|invoice/invoice\.service\.send\-email\.spec\.ts|time\-tracking/time\-log/commands/handlers/delete\-time\-span\.handler\.spec\.ts|time\-tracking/time\-slot/commands/handlers/time\-slot\-bulk\-delete\.handler\.spec\.ts)' || status=$?
-          $J -c packages/scheduler/jest.config.ts --runInBand --ci packages/scheduler || status=$?
-          $J -c packages/plugins/order/jest.config.ts --runInBand --ci 'packages/plugins/order/src/lib/order\-invoicing/order\-invoicing\.adapter\.spec\.ts' || status=$?
+          $J -c packages/core/jest.config.ts --runInBand --ci 'packages/core/src/lib/(invoice\-schedule/|time\-tracking/(timer|time\-log)/|organization\-project/|graphql/|tasks/due\-reminder/|public\-share/invoice/|email\-send/|email\-template/|auth/user\-session/|organization\-team\-employee/|employee/(commands/handlers/employee\.update|dto/update\-profile)|database/(invoice\-schedule\-migration|organization\-enforce\-private\-projects\-migration)|export\-import/export\-redact|core/decorators/entity/json\-column|app/app\.module|entity\-subscription/fan\-out/follower|employee\-notification/employee\-notification(\-type\-transform|\.service\.in\-app\-always\-on)|invoice/invoice\.service\.(send\-email|tenant\-pdf)|auth/auth\.service\.session\-claims)' || status=$?
+          $J -c packages/plugins/inbox/jest.config.ts --runInBand --ci 'packages/plugins/inbox/src/lib/delivery/inbox\-delivery\-rules\.spec\.ts' || status=$?
+          $J -c packages/plugins/inbox-ui/jest.config.ts --runInBand --ci 'packages/plugins/inbox\-ui/src/lib/inbox\-ui\.helpers\.spec\.ts' || status=$?
+          $J -c apps/worker/jest.config.ts --runInBand --ci 'apps/worker/src/app/app\.module\.spec\.ts' || status=$?
+          $J -c packages/ui-core/jest.config.ts --runInBand --ci 'packages/ui\-core/core/src/lib/services/employee/employees\.service\.tracking\-switch\.spec\.ts' || status=$?
           exit "$status"
