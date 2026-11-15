@@ -47,7 +47,8 @@ import {
  * What sending a document by e-mail did.
  *
  * `reason` names the step that failed when the message was not sent: the estimate e-mail record or the
- * organization could not be prepared, the PDF could not be generated, or the mail transport refused it.
+ * organization could not be prepared, the PDF could not be generated, or the message was not sent (the mail
+ * transport refused it, or the address is of a domain the platform never emails, such as `@example.com`).
  */
 export interface IInvoiceEmailOutcome {
 	/** Whether the message was handed to the mail transport. */
@@ -386,7 +387,7 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 				const base64 = buffer?.toString('base64');
 
 				step = 'EMAIL_NOT_SENT';
-				await this.emailService.emailInvoice(
+				const handed = await this.emailService.emailInvoice(
 					languageCode,
 					email,
 					base64,
@@ -397,6 +398,7 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 					origin,
 					organization
 				);
+				if (!handed) throw new Error('the address is of a domain the platform never emails');
 
 				return { sent: true };
 			} catch (error) {

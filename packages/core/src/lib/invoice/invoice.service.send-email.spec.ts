@@ -30,7 +30,7 @@ function sender(
 	const organizationService = {
 		findOneByIdString: overrides.findOrganization ?? jest.fn(async () => ({ id: 'organization-1' }))
 	};
-	const emailService = { emailInvoice: overrides.emailInvoice ?? jest.fn(async () => undefined) };
+	const emailService = { emailInvoice: overrides.emailInvoice ?? jest.fn(async () => true) };
 	const service = new InvoiceService(
 		{} as never,
 		{} as never,
@@ -52,7 +52,7 @@ function sender(
 const send = (service: InvoiceService) =>
 	service.sendEmail(
 		LanguagesEnum.ENGLISH,
-		'buyer@example.com',
+		'buyer@client.test',
 		42,
 		'invoice-42',
 		true,
@@ -82,7 +82,7 @@ describe('InvoiceService.sendEmail — the outcome of a send', () => {
 		await expect(send(service)).resolves.toEqual({ sent: true });
 		expect(emailService.emailInvoice).toHaveBeenCalledWith(
 			LanguagesEnum.ENGLISH,
-			'buyer@example.com',
+			'buyer@client.test',
 			Buffer.from('%PDF').toString('base64'),
 			42,
 			'invoice-42',
@@ -104,6 +104,12 @@ describe('InvoiceService.sendEmail — the outcome of a send', () => {
 
 		expect(outcome).toEqual({ sent: false, reason: 'EMAIL_NOT_SENT' });
 		expect(JSON.stringify(outcome)).not.toContain('smtp.internal');
+	});
+
+	it('answers EMAIL_NOT_SENT when the address is of a domain the platform never emails', async () => {
+		const { service } = sender({ emailInvoice: jest.fn(async () => false) });
+
+		await expect(send(service)).resolves.toEqual({ sent: false, reason: 'EMAIL_NOT_SENT' });
 	});
 
 	it('answers DOCUMENT_NOT_GENERATED when no PDF could be attached, and sends nothing', async () => {
@@ -156,7 +162,7 @@ describe('InvoiceService.sendEmail — where an invoice went', () => {
 
 		expect(estimateEmailService.createEstimateEmail).toHaveBeenCalledWith(
 			'invoice-42',
-			'buyer@example.com',
+			'buyer@client.test',
 			undefined
 		);
 		expect(estimateEmailService.forgetInvoiceDelivery).not.toHaveBeenCalled();
@@ -168,6 +174,14 @@ describe('InvoiceService.sendEmail — where an invoice went', () => {
 				throw new Error('connect ECONNREFUSED smtp.internal.example:587');
 			})
 		});
+
+		await expect(sendInvoice(service)).resolves.toEqual({ sent: false, reason: 'EMAIL_NOT_SENT' });
+
+		expect(estimateEmailService.forgetInvoiceDelivery).toHaveBeenCalledWith('estimate-email-1');
+	});
+
+	it('forgets them when the address is of a domain the platform never emails', async () => {
+		const { service, estimateEmailService } = sender({ emailInvoice: jest.fn(async () => false) });
 
 		await expect(sendInvoice(service)).resolves.toEqual({ sent: false, reason: 'EMAIL_NOT_SENT' });
 
