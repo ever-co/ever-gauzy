@@ -3,6 +3,11 @@ import '../core/entities/internal';
 import { EmployeeNotificationTypeEnum, IUser } from '@gauzy/contracts';
 import { RequestContext } from '../core/context/request-context';
 import { CrudService } from '../core/crud/crud.service';
+import {
+	lockConnectionSlots,
+	releaseLockConnectionSlot,
+	takeLockConnectionSlot
+} from '../database/lock-connection-slots';
 import { asTenantUser, createTenantFixture } from '../core/testing/tenant-isolation/tenant-isolation.fixtures';
 import { EmployeeNotificationService } from './employee-notification.service';
 
@@ -265,6 +270,42 @@ describe('EmployeeNotificationService — notifyAboutBoard, organization and ove
 		// is set aside for the locks, so the work always finds one
 		expect(mostHeld).toBe(1);
 		expect(create).toHaveBeenCalledTimes(6);
+	});
+
+	it('takes its lock connection from the budget shared with the other lock holders of the process, as onboarding', async () => {
+		const runner = {
+			connect: jest.fn(async () => undefined),
+			startTransaction: jest.fn(async () => undefined),
+			query: jest.fn<Promise<unknown>, [string, unknown[]?]>(async () => undefined),
+			commitTransaction: jest.fn(async () => undefined),
+			rollbackTransaction: jest.fn(async () => undefined),
+			release: jest.fn(async () => undefined)
+		};
+		const createQueryRunner = jest.fn(() => runner);
+		// A pool of two: one connection may be set aside for a lock, the other is for the locked work
+		const service = serviceOn({ options: { type: 'postgres', poolSize: 2 }, createQueryRunner });
+		jest.spyOn(service, 'find').mockResolvedValue([]);
+		const create = jest.spyOn(service, 'create').mockImplementation(async (notification) => notification as never);
+
+		// An onboarding of the same process holds that one slot, with its lock connection
+		await takeLockConnectionSlot(lockConnectionSlots({ poolSize: 2 }));
+		const request = service.notifyAboutBoard(EmployeeNotificationTypeEnum.BOARD_SHARE, {
+			...input,
+			organizationId: ORGANIZATION_B
+		});
+		try {
+			for (let round = 0; round < 5; round++) {
+				await roundTrip();
+			}
+			// The Board request waits for the slot, holding no connection: the onboarding's work has the other one
+			expect(createQueryRunner).not.toHaveBeenCalled();
+			expect(create).not.toHaveBeenCalled();
+		} finally {
+			releaseLockConnectionSlot();
+		}
+		await request;
+		expect(createQueryRunner).toHaveBeenCalledTimes(1);
+		expect(create).toHaveBeenCalledTimes(2);
 	});
 
 	it('takes no database lock with a pool of one connection, which the work needs, and still files', async () => {
