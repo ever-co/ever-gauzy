@@ -69,7 +69,8 @@ export class MeetingNotificationService {
 			.andWhere(
 				new Brackets((appointment) =>
 					appointment
-						.where('invitee.appointmentId = :appointmentId', { appointmentId })
+						// Two parameters: the first key is a text column on PostgreSQL, the second a uuid, and one parameter has one type
+						.where('invitee.appointmentId = :appointmentKey', { appointmentKey: appointmentId })
 						.orWhere('invitee.employeeAppointmentId = :appointmentId', { appointmentId })
 				)
 			)
@@ -225,14 +226,25 @@ export class MeetingNotificationService {
 	): Promise<IEmployeeAppointmentInvitation[]> {
 		const startDate = dateOf(range.startDate, 'startDate');
 		const endDate = dateOf(range.endDate, 'endDate');
+		// The meetings the employee's invitation rows name, by either key. Read first, then the meetings by id: the first
+		// key is a text column on PostgreSQL and the meeting's id a uuid, which no join compares without a cast.
+		const keys = await this.dataSource
+			.getRepository(AppointmentEmployee)
+			.createQueryBuilder('invitee')
+			.select('invitee.appointmentId', 'appointmentId')
+			.addSelect('invitee.employeeAppointmentId', 'employeeAppointmentId')
+			.where('invitee.employeeId = :employeeId', { employeeId })
+			.andWhere('invitee.tenantId = :tenantId', { tenantId })
+			.getRawMany<{ appointmentId: string | null; employeeAppointmentId: string | null }>();
+		const appointmentIds = uniqueIds(keys.flatMap((key) => [key.employeeAppointmentId, key.appointmentId])).filter(
+			(id) => UUID.test(id)
+		);
+		if (!appointmentIds.length) {
+			return [];
+		}
 		const query = this.dataSource
 			.getRepository(EmployeeAppointment)
 			.createQueryBuilder('appointment')
-			.innerJoin(
-				AppointmentEmployee,
-				'invitee',
-				'invitee.tenantId = appointment.tenantId AND (invitee.appointmentId = appointment.id OR invitee.employeeAppointmentId = appointment.id)'
-			)
 			.leftJoin(Employee, 'host', 'host.id = appointment.employeeId AND host.tenantId = appointment.tenantId')
 			.leftJoin(User, 'hostUser', 'hostUser.id = host.userId')
 			.select('appointment.id', 'id')
@@ -247,7 +259,7 @@ export class MeetingNotificationService {
 			.addSelect('hostUser.firstName', 'hostFirstName')
 			.addSelect('hostUser.lastName', 'hostLastName')
 			.addSelect('hostUser.email', 'hostEmail')
-			.where('invitee.employeeId = :employeeId', { employeeId })
+			.where('appointment.id IN (:...appointmentIds)', { appointmentIds })
 			.andWhere('appointment.tenantId = :tenantId', { tenantId })
 			.andWhere(
 				new Brackets((status) =>
@@ -279,7 +291,7 @@ export class MeetingNotificationService {
 			hostLastName: string | null;
 			hostEmail: string | null;
 		}>();
-		// One row per invitation row: an employee named twice (by both keys) reads the meeting once
+		// One row per meeting, whichever keys named it
 		const seen = new Set<string>();
 		const invitations: IEmployeeAppointmentInvitation[] = [];
 		for (const row of rows) {
@@ -327,3 +339,6 @@ function dateOf(value: Date | string | undefined, name: string): Date | undefine
 	}
 	return date;
 }
+
+/** An id the uuid key of an appointment can hold: anything else in an invitation row matches no appointment. */
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

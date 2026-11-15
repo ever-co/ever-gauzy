@@ -453,7 +453,8 @@ export class MeetingReminderService {
 			.where(
 				new Brackets((key) =>
 					key
-						.where('invitee.appointmentId IN (:...ids)', { ids })
+						// Two parameter lists: the first key is a text column on PostgreSQL, the second a uuid
+						.where('invitee.appointmentId IN (:...keys)', { keys: ids })
 						.orWhere('invitee.employeeAppointmentId IN (:...ids)', { ids })
 				)
 			)
