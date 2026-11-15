@@ -471,6 +471,14 @@ const DELIBERATELY_OPEN: ReadonlyArray<string> = Object.freeze([
 	// TenantController: onboarding: a user without a tenant creates their own and becomes its SUPER_ADMIN
 	// (tenant.service.ts onboardTenant)
 	'TenantController.create',
+	// TwoFactorController: the caller's own two-factor authentication: each route reads RequestContext.currentUser() /
+	// currentUserId(), nothing in the body names a user, and a first-party session is required (assertFirstPartyRequest);
+	// turning it off and new recovery codes also need a current code (two-factor.controller.ts). Resetting another
+	// member's goes through resetForMember, behind ORG_USERS_EDIT
+	'TwoFactorController.confirm',
+	'TwoFactorController.disable',
+	'TwoFactorController.enroll',
+	'TwoFactorController.regenerateRecoveryCodes',
 	// UserApiTokenController: own personal API tokens: a token is exchanged for a session with exactly its user's
 	// role and permissions, so it grants nothing the caller does not hold already. Each write states the caller's
 	// own user id (another user's token id is a 404), only a first-party session may make or revoke one (a
