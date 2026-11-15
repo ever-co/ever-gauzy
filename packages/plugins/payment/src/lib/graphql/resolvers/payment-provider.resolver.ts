@@ -49,6 +49,14 @@ import {
  * caller with nothing red anywhere. One statement on the class puts every field behind it, and a tenant
  * that switched the capability off is answered the refusal a disabled capability's routes answer with a
  * 404.
+ *
+ * **An invoice paid online is reached here through its provider row.** The organization's connection to its
+ * payment connector (`src/lib/invoice-payment`, the `InvoicePayment` REST surface) is one of these registrations,
+ * of code `signed-checkout`, and `paymentProvider`/`paymentProviders` read it like any other, with its non-secret
+ * configuration. The rest of that surface is REST-only and acknowledged as such, with the reason, in
+ * `tools/scripts/api-parity-check.mjs` (`REST_ONLY`): the connect and rotate-secret writes that answer the
+ * connector's signing secret, the invoice's public page reached by its share link, and the connector's signed
+ * notification.
  */
 @Resolver('PaymentProvider')
 @UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
