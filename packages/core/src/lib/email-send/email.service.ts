@@ -168,6 +168,8 @@ export class EmailService {
 	 * @param organization
 	 * @param publicToken The token of the invoice's public page, which the email of an invoice links to. An estimate's
 	 * email links to its accept and decline pages instead.
+	 * @returns Whether the email was handed to the mail transport: false for an address of a domain the platform never
+	 * emails, which is not sent.
 	 */
 	async emailInvoice(
 		languageCode: LanguagesEnum,
@@ -180,7 +182,7 @@ export class EmailService {
 		origin: string,
 		organization: IOrganization,
 		publicToken?: string | null
-	) {
+	): Promise<boolean> {
 		const tenantId = RequestContext.currentTenantId();
 		const { id: organizationId } = organization;
 		const baseUrl = this.emailBaseUrl(origin);
@@ -230,6 +232,7 @@ export class EmailService {
 				await this.createEmailRecord(body);
 			}
 		}
+		return !isEmailBlocked;
 	}
 
 	/**
