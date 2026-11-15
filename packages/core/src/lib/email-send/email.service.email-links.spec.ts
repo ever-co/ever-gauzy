@@ -112,6 +112,58 @@ describe('EmailService - caller-supplied links', () => {
 			expect(locals().acceptUrl.startsWith(`${env.clientBaseUrl}#/auth/estimate/`)).toBe(true);
 			expect(locals().rejectUrl.startsWith(`${env.clientBaseUrl}#/auth/estimate/`)).toBe(true);
 			expect(locals().host).toBe(env.clientBaseUrl);
+			// An estimate's email links to its answer pages, never to a public page
+			expect(locals().invoiceUrl).toBe('');
+		});
+
+		it("an invoice's link to its public page, on an Origin the deployment serves", async () => {
+			await service.emailInvoice(
+				LanguagesEnum.ENGLISH,
+				'client@ever.co',
+				'cGRm',
+				2,
+				'invoice-2',
+				false,
+				'estimate-email-token',
+				TEAMS,
+				organization,
+				'share-token'
+			);
+
+			expect(locals().invoiceUrl).toBe(`${TEAMS}#/share/invoices/invoice-2/share-token`);
+		});
+
+		it("an invoice's link to its public page, never on a foreign Origin", async () => {
+			await service.emailInvoice(
+				LanguagesEnum.ENGLISH,
+				'client@ever.co',
+				'cGRm',
+				2,
+				'invoice-2',
+				false,
+				'estimate-email-token',
+				FOREIGN,
+				organization,
+				'share-token'
+			);
+
+			expect(locals().invoiceUrl).toBe(`${env.clientBaseUrl}#/share/invoices/invoice-2/share-token`);
+		});
+
+		it('no link for an invoice that has no public page', async () => {
+			await service.emailInvoice(
+				LanguagesEnum.ENGLISH,
+				'client@ever.co',
+				'cGRm',
+				2,
+				'invoice-2',
+				false,
+				'estimate-email-token',
+				TEAMS,
+				organization
+			);
+
+			expect(locals().invoiceUrl).toBe('');
 		});
 
 		it('client invitation link', async () => {

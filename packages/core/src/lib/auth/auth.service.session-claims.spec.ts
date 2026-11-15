@@ -61,9 +61,17 @@ function buildAuthService() {
 	return { service, accessPayloads, refreshPayloads, signedOut };
 }
 
-/** A request, public (a sign-in) or made by `userId` with a bearer token carrying `claims`. */
-function inRequest({ userId, claims }: { userId: string | null; claims?: Record<string, unknown> }) {
-	jest.spyOn(RequestContext, 'currentRequest').mockReturnValue({});
+/** A request, public (a sign-in) or made by `userId` with a bearer token carrying `claims`, and its `headers`. */
+function inRequest({
+	userId,
+	claims,
+	headers
+}: {
+	userId: string | null;
+	claims?: Record<string, unknown>;
+	headers?: Record<string, string>;
+}) {
+	jest.spyOn(RequestContext, 'currentRequest').mockReturnValue(headers ? { headers } : {});
 	jest.spyOn(RequestContext, 'currentUserId').mockReturnValue(userId);
 	jest.spyOn(RequestContext, 'currentToken').mockReturnValue(claims ? sign({ id: userId, ...claims }, 'k') : null);
 	if (userId) {
@@ -150,6 +158,47 @@ describe('AuthService, the session a minted token names', () => {
 		await service.getJwtAccessToken(user, ORG, { oauthApp: { clientId: 'app', scopes: ['read'] } as any });
 
 		expect(accessPayloads[0].sessionId).toBeUndefined();
+	});
+});
+
+/**
+ * Every token of a sign-in or a renewal records the app it came from (ever-co/ever-gauzy#11983): the name the app gives
+ * itself in `X-Client-App`, and the web host of a browser's request. The sessions list names each session with them.
+ */
+describe('AuthService, the app a minted token records', () => {
+	const fromEverTeams = { 'x-client-app': 'Ever Teams', origin: 'https://app.ever.team' };
+	const everTeams = { appName: 'Ever Teams', appOrigin: 'app.ever.team' };
+
+	it('records the app of a sign-in in its access and refresh tokens', async () => {
+		const { service, accessPayloads, refreshPayloads } = buildAuthService();
+		inRequest({ userId: null, headers: fromEverTeams });
+
+		await Promise.all([service.getJwtAccessToken(user, ORG), service.getJwtRefreshToken(user, ORG)]);
+
+		expect(accessPayloads[0]).toMatchObject(everTeams);
+		expect(refreshPayloads[0]).toMatchObject(everTeams);
+	});
+
+	it('records the app of a renewal, whose tokens the sessions list reads', async () => {
+		const { service, accessPayloads, refreshPayloads } = buildAuthService();
+		inRequest({ userId: USER, headers: fromEverTeams });
+
+		await service.rotateTokens(
+			sign({ id: USER, sessionId: 'laptop', sessionStartedAt: '2026-11-10T08:00:00.000Z' }, 'k')
+		);
+
+		expect(accessPayloads[0]).toMatchObject(everTeams);
+		expect(refreshPayloads[0]).toMatchObject(everTeams);
+	});
+
+	it('records nothing a request does not tell, and no name that is not a plain one', async () => {
+		const { service, accessPayloads } = buildAuthService();
+		inRequest({ userId: null, headers: { 'x-client-app': '<img src=x>', origin: 'null' } });
+
+		await service.getJwtAccessToken(user, ORG);
+
+		expect(accessPayloads[0]).not.toHaveProperty('appName');
+		expect(accessPayloads[0]).not.toHaveProperty('appOrigin');
 	});
 });
 

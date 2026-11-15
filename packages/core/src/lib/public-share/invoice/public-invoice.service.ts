@@ -1,7 +1,7 @@
-import { BadRequestException, ForbiddenException, HttpException, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, HttpException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, FindOptionsWhere, IsNull, MoreThan, Repository, UpdateResult } from 'typeorm';
-import { IInvoice, IInvoiceUpdateInput } from '@gauzy/contracts';
+import { IInvoice, IInvoiceUpdateInput, InvoiceStatusTypesEnum } from '@gauzy/contracts';
 import { EstimateEmail, Invoice } from './../../core/entities/internal';
 import { answerCriteria } from './estimate-answer-criteria';
 import { parseFindOptionsRelations } from '../../core/utils';
@@ -12,6 +12,8 @@ import { locksRows, typeOrmRowLock } from '../../invoice-item/invoice-item-bille
 
 @Injectable()
 export class PublicInvoiceService {
+	private readonly logger = new Logger(PublicInvoiceService.name);
+
 	constructor(
 		@InjectRepository(Invoice)
 		private readonly typeOrmInvoiceRepository: TypeOrmInvoiceRepository,
@@ -58,7 +60,7 @@ export class PublicInvoiceService {
 
 		try {
 			// Get invoice
-			let invoice = await this.typeOrmInvoiceRepository.findOneOrFail({
+			const invoice = await this.typeOrmInvoiceRepository.findOneOrFail({
 				select: {
 					tenant: {
 						name: true,
@@ -132,14 +134,45 @@ export class PublicInvoiceService {
 				...(relations ? { relations: parseFindOptionsRelations(relations) } : {})
 			});
 
+			// A voided invoice is no longer owed: its link stops opening it, as a revoked link does
+			if (invoice.status === InvoiceStatusTypesEnum.VOID) {
+				throw new ForbiddenException();
+			}
+
 			// `select` above names relations only, so TypeORM selects every invoice column. The internal note is
 			// written for the organization, never for whoever holds the share link, so it is not served here.
 			delete invoice.internalNote;
 
-			return invoice;
+			return await this.markViewed(invoice);
 		} catch {
 			throw new ForbiddenException();
 		}
+	}
+
+	/**
+	 * Opening the link is the client seeing the invoice: a sent invoice or estimate becomes Viewed. Only one still at
+	 * Sent moves, by a conditional write, so a status set meanwhile (a payment, a void) is never written over. A failed
+	 * write is logged and the invoice is still served: the client came to read it.
+	 *
+	 * @param invoice The invoice as read for the link.
+	 * @returns The invoice, with its status as it now stands.
+	 */
+	private async markViewed(invoice: Invoice): Promise<Invoice> {
+		if (invoice.status !== InvoiceStatusTypesEnum.SENT) {
+			return invoice;
+		}
+		try {
+			const { affected } = await this.typeOrmInvoiceRepository.update(
+				{ id: invoice.id, tenantId: invoice.tenantId, status: InvoiceStatusTypesEnum.SENT },
+				{ status: InvoiceStatusTypesEnum.VIEWED }
+			);
+			if (affected) {
+				invoice.status = InvoiceStatusTypesEnum.VIEWED;
+			}
+		} catch (error) {
+			this.logger.warn(`Invoice ${invoice.id} was opened from its link but not marked viewed: ${error?.message}`);
+		}
+		return invoice;
 	}
 
 	/**

@@ -1,7 +1,7 @@
 import { IUserSession } from '@gauzy/contracts';
 import { IToken } from '../../token/interfaces';
 import { USER_API_TOKEN_CLAIM } from '../user-api-token/user-api-token-session';
-import { describeSessionClient } from './user-session-client';
+import { appNameInUserAgent, appNameOf, describeSessionClient, WEB_HOST } from './user-session-client';
 import { readSessionClaims } from './user-session-claims';
 
 /** A user's active tokens, as the token store holds them. */
@@ -99,6 +99,14 @@ function stringOrNull(value: unknown): string | null {
 	return value;
 }
 
+/** A web host as a token recorded it ("app.ever.team", "localhost:3030", "[::1]:3030"), otherwise null. */
+function hostOrNull(value: unknown): string | null {
+	if (typeof value !== 'string' || !WEB_HOST.test(value)) {
+		return null;
+	}
+	return value;
+}
+
 /**
  * Describes one session for its user.
  *
@@ -115,6 +123,9 @@ export function describeUserSession(group: IUserSessionGroup, currentSessionId: 
 	const userAgent = stringOrNull(metadata['userAgent']);
 	const ipAddress = stringOrNull(metadata['ipAddress']);
 	const client = describeSessionClient(userAgent);
+	// Which app (ever-co/ever-gauzy#11983): the name it gave itself, else the one its user agent carries
+	const appName = appNameOf(metadata['appName']) ?? appNameInUserAgent(userAgent);
+	const appOrigin = hostOrNull(metadata['appOrigin']);
 
 	const startedAt = timeOf(readSessionClaims(newest.metadata)?.sessionStartedAt);
 	const oldestCreation = Math.min(...group.tokens.map((token) => timeOf(token.createdAt) ?? Date.now()));
@@ -124,6 +135,8 @@ export function describeUserSession(group: IUserSessionGroup, currentSessionId: 
 		id: group.id,
 		current: group.id === currentSessionId,
 		app: client.app,
+		...(appName && { appName }),
+		...(appOrigin && { appOrigin }),
 		browser: client.browser,
 		os: client.os,
 		userAgent,

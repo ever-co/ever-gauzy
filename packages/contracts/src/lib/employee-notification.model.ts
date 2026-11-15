@@ -48,7 +48,13 @@ export enum EmployeeNotificationTypeEnum {
 	 * An invoice or estimate of the organization needs the attention of whoever handles invoices: a client accepted or
 	 * declined an estimate from the link it was sent with. Stored as 10 in DB.
 	 */
-	INVOICE = 'Invoice'
+	INVOICE = 'Invoice',
+	/**
+	 * A task the employee is assigned to is due soon: its due date is less than their reminder threshold away
+	 * (`taskDueReminderHours` of the notification preferences). Raised by the platform's task due reminder sweep, once
+	 * per task, employee and due date. Stored as 12 in DB.
+	 */
+	TASK_DUE_REMINDER = 'TaskDueReminder'
 }
 
 /**

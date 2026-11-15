@@ -148,22 +148,27 @@ export class EmployeesService {
 	}
 
 	/**
-	 * Updates the time tracking status for an employee.
+	 * Updates the time tracking status for an employee. The save names the status the screen showed: when someone
+	 * changed it since, the API refuses the save (409) and writes nothing, so a stale screen never acts on a state
+	 * that is gone.
 	 *
 	 * @param id - The ID of the employee.
 	 * @param action - Boolean indicating whether to enable or disable time tracking.
 	 * @param request - Additional data related to the employee (e.g., tenant and organization).
+	 * @param shownAs - Whether the screen showed the employee's time tracking enabled when the person acted.
 	 * @returns A promise that resolves with the updated employee object.
 	 */
 	setEmployeeTimeTrackingStatus(
 		id: ID,
 		action: boolean,
-		request: IBasePerTenantAndOrganizationEntityModel
+		request: IBasePerTenantAndOrganizationEntityModel,
+		shownAs: boolean
 	): Promise<IEmployee> {
 		return this.forgettingMe(() =>
 			firstValueFrom(
 				this.http.put<IEmployee>(`${API_PREFIX}/employee/${id}`, {
 					isTrackingEnabled: action,
+					expectedIsTrackingEnabled: shownAs,
 					...request
 				})
 			)
