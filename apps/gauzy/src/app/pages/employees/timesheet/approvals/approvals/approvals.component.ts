@@ -137,7 +137,11 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements A
 				relations: [...(this.showEmployee ? ['employee', 'employee.user'] : [])]
 			});
 			if (fetchId === this._fetchId) {
-				this.timesheets = timesheets;
+				this.timesheets = keepsShown ? this._keepChecks(timesheets) : timesheets;
+				if (keepsShown) {
+					this.allChecked =
+						this.visibleTimesheets.length > 0 && this.visibleTimesheets.every((t: any) => t.checked);
+				}
 			}
 		} catch (error) {
 			console.log('Error while getting timesheets for selected date range');
@@ -154,8 +158,26 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements A
 	 * their new status shows once read. A new period or filter is still read under the loading state.
 	 */
 	private _refreshAfterChange(): void {
-		this.allChecked = false;
+		// The rows the change was made on are done with; rows checked while the read is on its way stay checked
+		this.checkedAll(false);
 		void this.getTimeSheets({ keepsShown: true });
+	}
+
+	/**
+	 * The rows checked while a read after a change was on its way stay checked on the rows that replace them.
+	 *
+	 * @param timesheets The timesheets just read
+	 */
+	private _keepChecks(timesheets: ITimesheet[]): ITimesheet[] {
+		const checkedIds = new Set(
+			this.timesheets.filter((timesheet: any) => timesheet.checked).map((timesheet: ITimesheet) => timesheet.id)
+		);
+		(timesheets || []).forEach((timesheet: any) => {
+			if (checkedIds.has(timesheet.id)) {
+				timesheet.checked = true;
+			}
+		});
+		return timesheets;
 	}
 
 	/**
