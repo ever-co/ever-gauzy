@@ -122,6 +122,17 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog, I
 	@MultiORMColumn({ update: false, nullable: true })
 	version?: string;
 
+	/**
+	 * The log this one was cut from, when a split saved it as the part after the new range (see
+	 * `DeleteTimeSpanHandler`). Written in the same save as the part. While a part of a log still ends where the log
+	 * ends and starts inside it (a split whose cut and undo both failed), the log is not split again, on any API
+	 * process. Set by the API only: no request body names it.
+	 */
+	@ApiPropertyOptional({ type: () => String, readOnly: true })
+	@ColumnIndex()
+	@MultiORMColumn({ type: 'uuid', nullable: true })
+	splitFromTimeLogId?: ID;
+
 	/*
 	|--------------------------------------------------------------------------
 	| The rates that price the log, recorded with it (see time-log-rates.ts)

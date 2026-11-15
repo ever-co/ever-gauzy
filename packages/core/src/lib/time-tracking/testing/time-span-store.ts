@@ -85,6 +85,17 @@ function idsNamedBy(id: unknown): unknown[] {
 	return [values].flat();
 }
 
+/** Whether a stored log has every column a `where` names, a date compared by its time. */
+function matchesColumns(log: TimeLog, where: Record<string, unknown>): boolean {
+	return Object.entries(where).every(([column, value]) => {
+		const stored = (log as unknown as Record<string, unknown>)[column];
+		if (value instanceof Date) {
+			return stored instanceof Date && stored.getTime() === value.getTime();
+		}
+		return stored === value;
+	});
+}
+
 /**
  * The time logs and time slots of one employee, and the links between them, behind the repositories and the command
  * bus of the handlers that take a span of time out of a log: DeleteTimeSpanHandler, and the TimeLogUpdateHandler,
@@ -446,6 +457,13 @@ export class TimeSpanStore {
 		return {
 			findOne: ({ where }: { where: { id: string } }) => Promise.resolve(this.read(where.id)),
 			findOneBy: ({ id }: { id: string }) => Promise.resolve(this.copyOfTimeLog(id)),
+			// The logs not deleted whose columns equal every one the `where` names (a date by its time)
+			find: ({ where }: { where: Record<string, unknown> }) =>
+				Promise.resolve(
+					this.timeLogs
+						.filter((log) => !log.deletedAt && matchesColumns(log, where))
+						.map((log) => this.copyOfTimeLog(log.id))
+				),
 			update: ({ id }: { id: string }, changes: Partial<TimeLog>) => {
 				Object.assign(this.liveTimeLog(id), changes);
 				return Promise.resolve({ affected: 1 });
