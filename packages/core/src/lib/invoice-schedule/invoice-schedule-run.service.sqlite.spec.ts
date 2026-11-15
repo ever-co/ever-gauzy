@@ -23,6 +23,7 @@ import { CrudService } from '../core/crud/crud.service';
 import { MultiORMEnum } from '../core/utils';
 import {
 	Employee,
+	EstimateEmail,
 	Invoice,
 	InvoiceItem,
 	InvoiceSchedule,
@@ -372,6 +373,7 @@ describe('InvoiceScheduleRunService on SQLite', () => {
 		authorPermissions = ADMIN_PERMISSIONS;
 		sentEmails = [];
 		sendSucceeds = true;
+		await dataSource.query('DELETE FROM "estimate_email"');
 		await dataSource.query('DELETE FROM "invoice_schedule_run"');
 		await dataSource.query('DELETE FROM "invoice_schedule"');
 		await dataSource.query('UPDATE "time_log" SET "invoiceItemId" = NULL');
@@ -659,6 +661,98 @@ describe('InvoiceScheduleRunService on SQLite', () => {
 			expect(await runs()).toMatchObject([
 				{ status: InvoiceScheduleRunStatusEnum.DRAFTED, invoiceId: invoice.id }
 			]);
+		},
+		TIMEOUT
+	);
+	it(
+		'bills a log started in the last second of the period',
+		async () => {
+			await schedule();
+			const lastSecond = await track(MARIE, '2026-10-31', '23:59', 1);
+			await dataSource
+				.getRepository(TimeLog)
+				.update({ id: lastSecond }, { startedAt: new Date('2026-10-31T23:59:59+01:00') });
+
+			await service.sweep(new Date('2026-11-01T06:00:00Z'));
+
+			expect(await billedLogIds()).toEqual([lastSecond]);
+		},
+		TIMEOUT
+	);
+
+	it(
+		'gives the invoice of a period the same id each time, so a second save of the period can only meet the first',
+		async () => {
+			await schedule();
+			await track(MARIE, '2026-10-05', '09:00', 3);
+
+			await service.sweep(new Date('2026-11-01T06:00:00Z'));
+
+			const [invoice] = await madeInvoices();
+			expect(invoice.id).toBe(scheduledInvoiceIdOf(SCHEDULE, '2026-10-01'));
+			expect(scheduledInvoiceIdOf(SCHEDULE, '2026-11-01')).not.toBe(invoice.id);
+			expect(invoice.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+		},
+		TIMEOUT
+	);
+
+	it(
+		'sends the draft a stopped process saved and did not send, an hour later',
+		async () => {
+			await schedule({ sendInvoice: true });
+			await track(MARIE, '2026-10-05', '09:00', 3);
+			sendSucceeds = false;
+			await service.sweep(new Date('2026-11-01T06:00:00Z'));
+			// As if the process had stopped after saving the invoice, before its email went
+			await dataSource
+				.getRepository(InvoiceScheduleRun)
+				.update(
+					{ invoiceScheduleId: SCHEDULE },
+					{ status: InvoiceScheduleRunStatusEnum.CLAIMED, invoiceId: null }
+				);
+			sentEmails = [];
+			sendSucceeds = true;
+
+			await service.sweep(new Date('2026-11-01T07:30:00Z'));
+
+			const [invoice] = await madeInvoices();
+			expect(sentEmails).toEqual([{ email: 'billing@acme.test', invoiceId: invoice.id }]);
+			expect(invoice.status).toBe('SENT');
+			expect(await runs()).toMatchObject([{ status: InvoiceScheduleRunStatusEnum.SENT, invoiceId: invoice.id }]);
+		},
+		TIMEOUT
+	);
+
+	it(
+		'only marks Sent a draft whose email went before the process stopped: the client gets no second email',
+		async () => {
+			await schedule({ sendInvoice: true });
+			await track(MARIE, '2026-10-05', '09:00', 3);
+			sendSucceeds = false;
+			await service.sweep(new Date('2026-11-01T06:00:00Z'));
+			const [draft] = await madeInvoices();
+			// The email went and its delivery was recorded; the process stopped before marking the invoice Sent
+			await insertRow(EstimateEmail, {
+				tenantId: TENANT,
+				organizationId: ORGANIZATION,
+				invoiceId: draft.id,
+				email: 'billing@acme.test',
+				token: 'token',
+				expireDate: new Date('2026-11-08T00:00:00Z')
+			});
+			await dataSource
+				.getRepository(InvoiceScheduleRun)
+				.update(
+					{ invoiceScheduleId: SCHEDULE },
+					{ status: InvoiceScheduleRunStatusEnum.CLAIMED, invoiceId: null }
+				);
+			sentEmails = [];
+
+			await service.sweep(new Date('2026-11-01T07:30:00Z'));
+
+			expect(sentEmails).toEqual([]);
+			expect((await madeInvoices())[0].status).toBe('SENT');
+			expect(await runs()).toMatchObject([{ status: InvoiceScheduleRunStatusEnum.SENT, invoiceId: draft.id }]);
 		},
 		TIMEOUT
 	);

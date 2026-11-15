@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { Injectable, Logger } from '@nestjs/common';
 import { DataSource, In, IsNull, MoreThan } from 'typeorm';
 import * as moment from 'moment';
@@ -19,6 +19,7 @@ import { IAuthenticatedUser } from '../core/context/types';
 import { RequestContext } from '../core/context/request-context';
 import {
 	Employee,
+	EstimateEmail,
 	Invoice,
 	Organization,
 	OrganizationContact,
@@ -107,6 +108,23 @@ export function dueDaysOf(clientTermDays: unknown, organizationDaysUntilDue: unk
 		return organizationDays;
 	}
 	return STANDARD_DUE_DAYS;
+}
+
+/**
+ * The id of the invoice a schedule makes for a period: the same each time it is asked, so a run that a stopped process
+ * left claimed finds the invoice that process saved (or not), whenever it is taken again, and a second save of the
+ * period can only meet the first. A name-based UUID (version 5 layout) over the schedule and the period's first day.
+ */
+export function scheduledInvoiceIdOf(scheduleId: ID, periodStart: string): ID {
+	const hex = createHash('sha256').update(`invoice-schedule:${scheduleId}:${periodStart}`).digest('hex');
+	const variant = ((parseInt(hex[16], 16) & 0x3) | 0x8).toString(16);
+	return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-5${hex.slice(13, 16)}-${variant}${hex.slice(17, 20)}-${hex.slice(20, 32)}` as ID;
+}
+
+/** A claimed run, and the draft a stopped process saved for it and did not send yet, when there is one. */
+interface IClaim {
+	run: InvoiceScheduleRun;
+	unsent?: Invoice | null;
 }
 
 /** A claim's time, to the second: MySQL keeps no fraction of a second. */
@@ -204,11 +222,16 @@ export class InvoiceScheduleRunService {
 			if (!period) {
 				return;
 			}
-			const run = await this.claim(schedule, period, now);
-			if (!run) {
+			const claim = await this.claim(schedule, period, now);
+			if (!claim) {
 				return;
 			}
-			const end = await this.runAsAuthor(schedule, period, organization, timeZone);
+			const { run, unsent } = claim;
+			const end = unsent
+				? await this.asAuthor(schedule, (author) => this.sendSaved(schedule, unsent, author))
+				: await this.asAuthor(schedule, (author) =>
+						this.bill(schedule, period, organization, timeZone, author)
+					);
 			await this.finish(run, end);
 			this.count(end, report);
 		} catch (error) {
@@ -260,12 +283,16 @@ export class InvoiceScheduleRunService {
 	/**
 	 * Claims the period's run: inserts it, or takes again a run of the period that failed, or that a stopped process
 	 * left claimed, an hour after it was claimed. Null when another process holds it, or it already ended.
+	 *
+	 * A claim a stopped process left behind is checked for the invoice it saved, by the id the period's invoice always
+	 * has: that invoice is recorded on the run instead of a second one being made, and a draft the schedule was to send
+	 * is handed back to be sent.
 	 */
 	private async claim(
 		schedule: InvoiceSchedule,
 		period: IRankedInvoiceSchedulePeriod,
 		now: Date
-	): Promise<InvoiceScheduleRun | null> {
+	): Promise<IClaim | null> {
 		const runs = this.dataSource.getRepository(InvoiceScheduleRun);
 		const claimedAt = claimTimeOf(now);
 		const key = { invoiceScheduleId: schedule.id, periodStart: period.startDay, tenantId: schedule.tenantId };
@@ -277,7 +304,7 @@ export class InvoiceScheduleRunService {
 				status: InvoiceScheduleRunStatusEnum.CLAIMED,
 				claimedAt
 			});
-			return await runs.findOneBy(key);
+			return { run: await runs.findOneBy(key) };
 		} catch (error) {
 			if (!isUniqueViolation(error)) {
 				throw error;
@@ -300,33 +327,29 @@ export class InvoiceScheduleRunService {
 		if (taken.affected !== 1) {
 			return null;
 		}
-		if (earlier.status === InvoiceScheduleRunStatusEnum.CLAIMED) {
-			const made = await this.invoiceMadeBy(schedule, earlier);
-			if (made) {
-				const status =
-					made.status === InvoiceStatusTypesEnum.SENT
-						? InvoiceScheduleRunStatusEnum.SENT
-						: InvoiceScheduleRunStatusEnum.DRAFTED;
-				await this.finish(earlier, { status, invoiceId: made.id });
-				return null;
+		const run = await runs.findOneBy({ id: earlier.id });
+		const saved = await this.dataSource.getRepository(Invoice).findOne({
+			where: { id: scheduledInvoiceIdOf(schedule.id, period.startDay), tenantId: schedule.tenantId },
+			withDeleted: true,
+			select: {
+				id: true,
+				status: true,
+				deletedAt: true,
+				invoiceNumber: true,
+				organizationId: true,
+				tenantId: true
 			}
-		}
-		return await runs.findOneBy({ id: earlier.id });
-	}
-
-	/** The invoice a stopped process made for a claimed run before it could record it, if it made one. */
-	private async invoiceMadeBy(schedule: InvoiceSchedule, run: InvoiceScheduleRun): Promise<Invoice | null> {
-		return await this.dataSource.getRepository(Invoice).findOne({
-			where: {
-				tenantId: schedule.tenantId,
-				organizationId: schedule.organizationId,
-				organizationContactId: schedule.organizationContactId,
-				terms: invoiceTermsOf({ startDay: run.periodStart, endDay: run.periodEnd }),
-				isEstimate: false,
-				createdAt: MoreThan(new Date(new Date(run.claimedAt).getTime() - 1000))
-			},
-			select: { id: true, status: true }
 		});
+		if (!saved) {
+			return { run };
+		}
+		const isDraft = saved.status === InvoiceStatusTypesEnum.DRAFT;
+		if (isDraft && schedule.sendInvoice && !saved.deletedAt) {
+			return { run, unsent: saved };
+		}
+		const status = isDraft ? InvoiceScheduleRunStatusEnum.DRAFTED : InvoiceScheduleRunStatusEnum.SENT;
+		await this.finish(run, { status, invoiceId: saved.deletedAt ? null : saved.id });
+		return null;
 	}
 
 	/** Records how a run ended. */
@@ -344,36 +367,51 @@ export class InvoiceScheduleRunService {
 	}
 
 	/**
-	 * Runs the period with the access of the schedule's author, as their own request would: inside a request context of
-	 * theirs, read again now.
+	 * Runs work with the access of the schedule's author, as their own request would: inside a request context of
+	 * theirs, read again now. An author who can no longer make invoices of the organization makes nothing.
 	 */
-	private async runAsAuthor(
+	private async asAuthor(
 		schedule: InvoiceSchedule,
-		period: IRankedInvoiceSchedulePeriod,
-		organization: Organization,
-		timeZone: string
+		work: (author: IAuthenticatedUser) => Promise<IRunEnd>
 	): Promise<IRunEnd> {
+		const refused = {
+			status: InvoiceScheduleRunStatusEnum.FAILED,
+			reason: InvoiceScheduleRunReasonEnum.AUTHOR_CANNOT_INVOICE
+		};
 		const author = await this.authorAsTheyAreNow(schedule);
 		if (!author) {
-			return {
-				status: InvoiceScheduleRunStatusEnum.FAILED,
-				reason: InvoiceScheduleRunReasonEnum.AUTHOR_CANNOT_INVOICE
-			};
+			return refused;
 		}
 		const request = { user: author, headers: {}, query: {}, params: {}, body: {} };
 		return await RequestContext.runWithRequest(
 			request as never,
 			async () => {
 				if (!(await this.authorMayInvoice(schedule))) {
-					return {
-						status: InvoiceScheduleRunStatusEnum.FAILED,
-						reason: InvoiceScheduleRunReasonEnum.AUTHOR_CANNOT_INVOICE
-					};
+					return refused;
 				}
-				return await this.bill(schedule, period, organization, timeZone, author);
+				return await work(author);
 			},
 			{ id: randomUUID() as ID }
 		);
+	}
+
+	/**
+	 * Sends the draft a stopped process saved and did not send, unless the invoice's own email went already (its
+	 * delivery is recorded): then it is only marked Sent, and the client gets no second email.
+	 */
+	private async sendSaved(schedule: InvoiceSchedule, saved: Invoice, author: IAuthenticatedUser): Promise<IRunEnd> {
+		const delivered = await this.dataSource.getRepository(EstimateEmail).count({
+			where: { invoiceId: saved.id, tenantId: schedule.tenantId }
+		});
+		if (delivered > 0) {
+			await this.markSent(saved);
+			return { status: InvoiceScheduleRunStatusEnum.SENT, invoiceId: saved.id };
+		}
+		const client = await this.dataSource.getRepository(OrganizationContact).findOne({
+			where: { id: schedule.organizationContactId, tenantId: schedule.tenantId },
+			select: { id: true, primaryEmail: true }
+		});
+		return { invoiceId: saved.id, ...(await this.send(saved, client, author, null)) };
 	}
 
 	/**
@@ -566,7 +604,7 @@ export class InvoiceScheduleRunService {
 		const { tenantId, organizationId } = schedule;
 		const descriptions = await this.descriptionsOf(invoice.lines, schedule, projects);
 		const dueDay = addDaysToDay(period.runDay, dueDaysOf(client.paymentTermsDays, organization.daysUntilDue));
-		const id = randomUUID() as ID;
+		const id = scheduledInvoiceIdOf(schedule.id, period.startDay);
 		const lines = [...invoice.lines].sort((first, second) =>
 			descriptions.get(first.key).localeCompare(descriptions.get(second.key))
 		);
@@ -710,6 +748,12 @@ export class InvoiceScheduleRunService {
 				reason: InvoiceScheduleRunReasonEnum.EMAIL_NOT_SENT
 			};
 		}
+		await this.markSent(invoice);
+		return { status: InvoiceScheduleRunStatusEnum.SENT, reason: leftOut };
+	}
+
+	/** Marks an invoice Sent while it is still a draft, as the invoice's own send does. */
+	private async markSent(invoice: Pick<IInvoice, 'id' | 'organizationId' | 'tenantId'>): Promise<void> {
 		const change = {
 			id: invoice.id,
 			status: InvoiceStatusTypesEnum.SENT,
@@ -717,6 +761,5 @@ export class InvoiceScheduleRunService {
 			tenantId: invoice.tenantId
 		};
 		await this.invoiceService.writeKeepingFinalStatus(change, (service) => service.create(change));
-		return { status: InvoiceScheduleRunStatusEnum.SENT, reason: leftOut };
 	}
 }
