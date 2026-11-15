@@ -3,7 +3,13 @@
 		<h5 class="title">
 			{{ (isEstimate ? 'INVOICES_PAGE.EMAIL.EMAIL_ESTIMATE' : 'INVOICES_PAGE.EMAIL.EMAIL_INVOICE') | translate }}
 		</h5>
-		<button type="button" class="cancel" [attr.aria-label]="'BUTTONS.CLOSE' | translate" (click)="cancel()">
+		<button
+			type="button"
+			class="cancel"
+			[attr.aria-label]="'BUTTONS.CLOSE' | translate"
+			[disabled]="sending"
+			(click)="cancel()"
+		>
 			<i class="fas fa-times" aria-hidden="true"></i>
 		</button>
 	</nb-card-header>
@@ -29,10 +35,10 @@
 	</nb-card-body>
 	<!-- `text-left` is the e2e hook for the confirm button; the row below aligns them. -->
 	<nb-card-footer class="text-left">
-		<button nbButton ghost status="basic" size="small" (click)="cancel()">
+		<button nbButton ghost status="basic" size="small" [disabled]="sending" (click)="cancel()">
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
-		<button (click)="sendEmail()" status="success" [disabled]="form.invalid" nbButton size="small">
+		<button (click)="sendEmail()" status="success" [disabled]="form.invalid || sending" nbButton size="small">
 			<nb-icon icon="email-outline"></nb-icon>
 			{{ 'BUTTONS.SEND' | translate }}
 		</button>
