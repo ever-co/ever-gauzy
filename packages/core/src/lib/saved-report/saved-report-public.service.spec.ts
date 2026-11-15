@@ -368,6 +368,43 @@ describe('SavedReportPublicService', () => {
 		});
 	});
 
+	it('prices each entry at the rate its log stores, as the report page does, when the member bills another rate today', async () => {
+		const state = stateWith(token);
+		state.report.filters = {};
+		state.report.includeAmounts = true;
+		const { service, timeLogService } = serviceFor(state);
+		// Marie bills 40 EUR today, but her 3 hours were logged at 25 EUR, the rate her log stores. Paul's log stores
+		// none: his row states his rate of today, without a currency of its own.
+		const days = dailyReport();
+		const [website, meetings] = days[0].logs;
+		website.employeeLogs[0].tasks = website.employeeLogs[0].tasks.map((row) => ({
+			...row,
+			billRateValue: 25,
+			billRateCurrency: 'EUR'
+		}));
+		meetings.employeeLogs[0].tasks = meetings.employeeLogs[0].tasks.map((row) => ({
+			...row,
+			billRateValue: 50,
+			billRateCurrency: null
+		}));
+		timeLogService.getDailyReport.mockResolvedValueOnce(days);
+
+		const answer = await service.read(token);
+
+		expect(answer.totals.amounts).toEqual([
+			{ currency: 'EUR', amount: 75 },
+			{ currency: 'USD', amount: 100 }
+		]);
+		expect(answer.days[0].logs[0].employeeLogs[0].tasks[0]).toMatchObject({
+			billRateValue: 25,
+			billRateCurrency: 'EUR'
+		});
+		expect(answer.days[0].logs[0].employeeLogs[0].employee).toMatchObject({
+			billRateValue: 40,
+			billRateCurrency: 'EUR'
+		});
+	});
+
 	it('names the members of the picked team for a manager of it, as the report page does', async () => {
 		const state = stateWith(token, {
 			permissions: [PermissionsEnum.TIME_TRACKER],
