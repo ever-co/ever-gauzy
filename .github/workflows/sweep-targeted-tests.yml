@@ -102,15 +102,11 @@ jobs:
         # app. It goes through yarn, not Nx, so `.env.local` is not loaded here either.
         run: yarn config:dev
 
-      - name: Run the suites of the code PRs 11995-12001 touch
+      - name: Run the suites of the code PRs 12003-12004 touch
         env:
           NX_LOAD_DOT_ENV_FILES: 'false'
         run: |
           status=0
-          J='node node_modules/jest/bin/jest.js'
           export NODE_OPTIONS='--experimental-vm-modules --max-old-space-size=24576'
-          $J -c packages/core/jest.config.ts --runInBand --ci 'packages/core/src/lib/(employee\-appointment/|employee\-notification/|employee\-notification\-setting/|tasks/due\-reminder/|time\-tracking/timer\-reminder/|organization\-project/organization\-project\.service\.member\-notifications|organization\-team/organization\-team\.service\.|saved\-report/|database/employee\-appointment\-reminder\-migration|time\-tracking/time\-log/time\-log\-pricing)' || status=$?
-          $J -c packages/plugins/inbox/jest.config.ts --runInBand --ci 'packages/plugins/inbox/src/lib/delivery/' || status=$?
-          $J -c packages/plugins/payment/jest.config.ts --runInBand --ci 'packages/plugins/payment/src/lib/invoice\-payment/' || status=$?
-          $J -c apps/worker/jest.config.ts --runInBand --ci 'apps/worker/src/app/app\.module\.spec\.ts' || status=$?
+          node node_modules/jest/bin/jest.js -c packages/core/jest.config.ts --runInBand --ci 'packages/core/src/lib/(database/time\-log\-running\-timer\-key\-migration|time\-tracking/time\-log/|time\-tracking/timer/|employee/commands/handlers/employee\.update\.handler|employee/employee\.subscriber)' || status=$?
           exit "$status"
