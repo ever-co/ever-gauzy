@@ -176,6 +176,8 @@ import { TaskDueReminderInlineModule } from '../tasks/due-reminder/task-due-remi
 import { isTaskDueRemindersEnabled } from '../tasks/due-reminder/task-due-reminder-enabled';
 import { InvoiceReminderMaintenanceModule } from '../invoice/invoice-reminder/invoice-reminder-maintenance.module';
 import { InvoiceReminderInlineModule } from '../invoice/invoice-reminder/invoice-reminder-inline';
+import { InvoiceScheduleMaintenanceModule } from '../invoice-schedule/invoice-schedule-maintenance.module';
+import { InvoiceScheduleInlineModule } from '../invoice-schedule/invoice-schedule-inline';
 import { OperationModule } from '../operation/operation.module';
 import { WebhookModule } from '../webhook/webhook.module';
 import { MeasurementModule } from '../measurement/measurement.module';
@@ -207,6 +209,7 @@ import { TaxLineModule } from '../tax-line/tax-line.module';
 import { OAuthClientModule } from '../auth/oauth-client/oauth-client.module';
 import { UserApiTokenModule } from '../auth/user-api-token/user-api-token.module';
 import { SavedReportModule } from '../saved-report/saved-report.module';
+import { InvoiceScheduleModule } from '../invoice-schedule/invoice-schedule.module';
 import { TenantApiKeyModule } from '../tenant-api-key/tenant-api-key.module';
 import { TenantSettingModule } from '../tenant/tenant-setting/tenant-setting.module';
 import { TenantModule } from '../tenant/tenant.module';
@@ -647,6 +650,7 @@ if (environment.EVER_TEAMS_CLIENT_IP_SECRET?.trim() && !clientIpSecretOf(environ
 		OAuthClientModule,
 		UserApiTokenModule,
 		SavedReportModule,
+		InvoiceScheduleModule,
 		EmployeeRecentVisitModule,
 		SharedEntityModule,
 		BroadcastModule,
@@ -731,6 +735,9 @@ if (environment.EVER_TEAMS_CLIENT_IP_SECRET?.trim() && !clientIpSecretOf(environ
 		// With a queue, this process consumes the sweep the worker application schedules every hour: the mail settings
 		// and the invoice rendering it uses live here. Without a queue, this process sweeps on its own, every hour.
 		isSchedulerQueueRootEnabled() ? InvoiceReminderMaintenanceModule : InvoiceReminderInlineModule,
+		// The invoices of the clients billed on a schedule (#11855): nothing runs for an organization without one. With a
+		// queue, this process consumes the hourly sweep the worker application schedules; without one, it sweeps itself.
+		isSchedulerQueueRootEnabled() ? InvoiceScheduleMaintenanceModule : InvoiceScheduleInlineModule,
 		//Token cleanup scheduler is disabled by default; enable when ready
 		TokenModule.forRoot({ enableScheduler: false }),
 		AccessTokenModule,
