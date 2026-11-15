@@ -208,3 +208,13 @@ export function lockedForChange(): Pick<FindOneOptions, 'lock'> {
 	}
 	return { lock: { mode: 'pessimistic_write' } };
 }
+
+/**
+ * Whether the database locks the rows a change reads (see {@link lockedForChange}): PostgreSQL and MySQL do. SQLite
+ * takes no row lock and runs every write on its one connection, where a transaction begun beside another one nests
+ * into it: a write that only needs a lock to be safe runs there without a transaction (as `PublicInvoiceService`
+ * answers an invoice), and a unique key refuses the write that came in between.
+ */
+export function locksRowsForChange(): boolean {
+	return !(isSqlite() || isBetterSqlite3());
+}
