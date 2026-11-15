@@ -4,6 +4,7 @@ import {
 	EventOutboxDispatchScheduleModule,
 	IdempotencyMaintenanceModule,
 	InvoiceReminderScheduleModule,
+	InvoiceScheduleScheduleModule,
 	isTimerRemindersEnabled,
 	JobExecutionModule,
 	MentionModule,
@@ -99,6 +100,11 @@ import { WORKER_DEFAULT_QUEUE, WORKER_QUEUE_ENABLED, WORKER_SCHEDULER_ENABLED } 
 		 * organization turns the reminders on, so a sweep sends nothing until one does.
 		 */
 		...(WORKER_QUEUE_ENABLED ? [InvoiceReminderScheduleModule] : []),
+		/**
+		 * The hourly schedule of the clients billed on a schedule, and only the schedule: the sweep runs in the API,
+		 * which consumes the queue (`InvoiceScheduleMaintenanceModule`) and saves, renders and sends the invoices.
+		 */
+		...(WORKER_QUEUE_ENABLED ? [InvoiceScheduleScheduleModule] : []),
 		/**
 		 * The ledger a scheduled pass is recorded in.
 		 *
