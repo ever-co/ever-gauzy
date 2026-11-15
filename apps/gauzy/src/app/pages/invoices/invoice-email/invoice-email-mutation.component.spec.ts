@@ -14,6 +14,7 @@ describe('InvoiceEmailMutationComponent answers', () => {
 		component.form = { value: { email: 'client@example.com' } };
 		component.sending = false;
 		component['sent'] = false;
+		component['_settled'] = Promise.resolve();
 		component['store'] = { user: { tenantId: 'tenant-1' } };
 		component['invoiceService'] = {
 			sendEmail: jest.fn(async () => undefined),
@@ -65,5 +66,24 @@ describe('InvoiceEmailMutationComponent answers', () => {
 		component.cancel();
 
 		expect(component['dialogRef'].close).toHaveBeenCalledWith('ok');
+	});
+
+	it('tells a list it was closed under (Escape, the backdrop) whether the email went out, once the send ends', async () => {
+		const component = emailDialog();
+		let deliver: () => void;
+		component['invoiceService'].sendEmail = jest.fn(() => new Promise<void>((resolve) => (deliver = resolve)));
+
+		const sending = component.sendEmail();
+		const changed = component.changed();
+		deliver();
+		await sending;
+
+		await expect(changed).resolves.toBe(true);
+	});
+
+	it('CONTROL: nothing sent, nothing changed', async () => {
+		const component = emailDialog();
+
+		await expect(component.changed()).resolves.toBe(false);
 	});
 });

@@ -44,8 +44,8 @@ import {
 } from '@gauzy/contracts';
 import { distinctUntilChange, isNotEmpty, toUTC } from '@gauzy/ui-core/common';
 import { Router } from '@angular/router';
-import { first, map, filter, tap, debounceTime } from 'rxjs/operators';
-import { Subject, firstValueFrom, combineLatest, BehaviorSubject } from 'rxjs';
+import { first, map, filter, tap, debounceTime, switchMap } from 'rxjs/operators';
+import { Subject, firstValueFrom, combineLatest, BehaviorSubject, from, of } from 'rxjs';
 import * as moment from 'moment';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { API_PREFIX, ComponentEnum } from '@gauzy/ui-core/common';
@@ -623,15 +623,19 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 				data: selectedItem
 			});
 		}
-		this.dialogService
-			.open(InvoiceEmailMutationComponent, {
-				context: {
-					invoice: this.selectedInvoice,
-					isEstimate: this.isEstimate
-				}
-			})
-			.onClose.pipe(
-				// The dialog answers only when it sent the email: a cancel leaves the list as it is (#12011)
+		const dialogRef = this.dialogService.open(InvoiceEmailMutationComponent, {
+			context: {
+				invoice: this.selectedInvoice,
+				isEstimate: this.isEstimate
+			}
+		});
+		dialogRef.onClose
+			.pipe(
+				// The dialog answers only when it sent the email: a cancel leaves the list as it is (#12011). Closed by
+				// Escape or its backdrop, it is asked whether the email went out once a send on its way has ended.
+				switchMap((answer) =>
+					answer ? of(true) : from(dialogRef.componentRef?.instance?.changed() ?? Promise.resolve(false))
+				),
 				filter(Boolean),
 				tap(() => this._refresh$.next(true)),
 				tap(() => this.invoices$.next(true)),
@@ -646,14 +650,18 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 	}
 
 	addInternalNote() {
-		this.dialogService
-			.open(AddInternalNoteComponent, {
-				context: {
-					invoice: this.selectedInvoice
-				}
-			})
-			.onClose.pipe(
-				// The dialog answers only when it saved the note: a cancel leaves the list as it is (#12011)
+		const dialogRef = this.dialogService.open(AddInternalNoteComponent, {
+			context: {
+				invoice: this.selectedInvoice
+			}
+		});
+		dialogRef.onClose
+			.pipe(
+				// The dialog answers only when it saved the note: a cancel leaves the list as it is (#12011). Closed by
+				// Escape or its backdrop, it is asked whether the note was saved once a save on its way has ended.
+				switchMap((answer) =>
+					answer ? of(true) : from(dialogRef.componentRef?.instance?.changed() ?? Promise.resolve(false))
+				),
 				filter(Boolean),
 				tap(() => this._refresh$.next(true)),
 				tap(() => this.invoices$.next(true)),

@@ -24,6 +24,8 @@ export class InvoiceEmailMutationComponent extends TranslationBaseComponent impl
 	sending = false;
 	/** The email went out: closing the dialog still brings the list up to date, even after a later step failed. */
 	private sent = false;
+	/** Ends with the send on its way, if any. */
+	private _settled: Promise<void> = Promise.resolve();
 
 	constructor(
 		public readonly translateService: TranslateService,
@@ -56,6 +58,8 @@ export class InvoiceEmailMutationComponent extends TranslationBaseComponent impl
 		const { email } = this.form.value;
 
 		this.sending = true;
+		let settle = (): void => undefined;
+		this._settled = new Promise<void>((resolve) => (settle = resolve));
 		try {
 			await this.invoiceService.sendEmail(
 				email,
@@ -79,7 +83,17 @@ export class InvoiceEmailMutationComponent extends TranslationBaseComponent impl
 			this.dialogRef.close('ok');
 		} finally {
 			this.sending = false;
+			settle();
 		}
+	}
+
+	/**
+	 * Whether the email went out, once a send on its way has ended. Escape and the backdrop close the dialog
+	 * without an answer, even mid-send: the list behind asks this instead (#12011).
+	 */
+	async changed(): Promise<boolean> {
+		await this._settled;
+		return this.sent;
 	}
 
 	async invoiceEstimateSendHistory() {

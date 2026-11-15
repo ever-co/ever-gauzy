@@ -11,6 +11,8 @@ describe('AddInternalNoteComponent answers', () => {
 		component.invoice = { id: 'invoice-1' };
 		component.form = { value: { internalNote: 'Paid by wire' } };
 		component.saving = false;
+		component['saved'] = false;
+		component['_settled'] = Promise.resolve();
 		component['invoiceService'] = { updateAction: jest.fn(async () => undefined) };
 		component['toastrService'] = { success: jest.fn() };
 		component['dialogRef'] = { close: jest.fn() };
@@ -47,5 +49,19 @@ describe('AddInternalNoteComponent answers', () => {
 
 		expect(component.saving).toBe(false);
 		expect(component['dialogRef'].close).not.toHaveBeenCalled();
+		await expect(component.changed()).resolves.toBe(false);
+	});
+
+	it('tells a list it was closed under (Escape, the backdrop) whether the note was saved, once the save ends', async () => {
+		const component = noteDialog();
+		let store: () => void;
+		component['invoiceService'].updateAction = jest.fn(() => new Promise<void>((resolve) => (store = resolve)));
+
+		const saving = component.addNote();
+		const changed = component.changed();
+		store();
+		await saving;
+
+		await expect(changed).resolves.toBe(true);
 	});
 });
