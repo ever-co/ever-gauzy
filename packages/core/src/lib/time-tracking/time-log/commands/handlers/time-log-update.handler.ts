@@ -113,7 +113,9 @@ export const TIME_LOG_NO_LONGER_RUNNING = 'TIME_LOG_NO_LONGER_RUNNING';
 /**
  * Whether a row a stop's write found no longer running was stopped by this same stop: an earlier try of it wrote the
  * row, then a later step failed, and this is the try that completes it (`TimerService.stopReplacedRun`). Another start
- * or stop ends the run somewhere else.
+ * or stop ends the run somewhere else. The row must still hold the range this stop writes: its end, and its start when
+ * the stop names one. An edit that moved the start since leaves no try to complete, as the slots of this stop's range
+ * would no longer be the row's.
  *
  * @param current - The row as stored now, if any.
  * @param changes - The stop.
@@ -121,7 +123,9 @@ export const TIME_LOG_NO_LONGER_RUNNING = 'TIME_LOG_NO_LONGER_RUNNING';
 function isStoppedByThisStop(current: ITimeLog | null, changes: Partial<ITimeLog>): boolean {
 	const isStopped = Boolean(current) && !current.isRunning;
 	const namesItsEnd = changes?.stoppedAt != null;
-	return isStopped && namesItsEnd && isSameInstant(current.stoppedAt, changes.stoppedAt);
+	const keepsItsEnd = namesItsEnd && isSameInstant(current?.stoppedAt, changes.stoppedAt);
+	const keepsItsStart = changes?.startedAt == null || isSameInstant(current?.startedAt, changes.startedAt);
+	return isStopped && keepsItsEnd && keepsItsStart;
 }
 
 /** Whether two stored instants are the same one, both missing included. */

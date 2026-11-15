@@ -266,14 +266,14 @@ function createRun(source: TimeLogSourceEnum) {
 					(error: Error) => error.message
 				),
 		/**
-		 * The same stop sent with the run as it was read before a first try, running, as `TimerService.stopReplacedRun`
-		 * sends its second try; the error it raised, if any.
+		 * The same stop sent with the run as it was read before a first try, running, and its start, as
+		 * `TimerService.stopReplacedRun` sends its second try; the error it raised, if any.
 		 */
 		stopAsFirstRead: (time: string) =>
 			handler
 				.execute(
 					new TimeLogUpdateCommand(
-						{ isRunning: false, stoppedAt: at(time) },
+						{ isRunning: false, startedAt: firstRead.startedAt, stoppedAt: at(time) },
 						new TimeLog({ ...firstRead }),
 						undefined,
 						false,
@@ -573,6 +573,20 @@ describe.each([
 
 		expect(outcome).toBeUndefined();
 		expect(store.state()).toEqual({ isRunning: false, stoppedAt: '09:30', slots: slotStarts('09:00', '09:30') });
+	});
+
+	it('refuses the second try when an edit moved the start of the row its first try stopped', async () => {
+		const store = createRun(source);
+		store.fail('save');
+		await store.stop('09:30');
+		// An edit moves the start of the stopped entry before the second try
+		Object.assign(store.run, { startedAt: at('09:10') });
+
+		const outcome = await store.stopAsFirstRead('09:30');
+
+		expect(outcome).toBe('This timer was already stopped by another start or stop.');
+		expect(store.run.startedAt).toEqual(at('09:10'));
+		expect(store.state()).toMatchObject({ isRunning: false, stoppedAt: '09:30' });
 	});
 
 	it('still writes an edit of a stopped log, which is no stop of a run', async () => {
