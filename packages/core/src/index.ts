@@ -312,6 +312,15 @@ export {
 	MeetingReminderScheduleModule,
 	MeetingReminderService
 } from './lib/employee-appointment/meeting-notifications';
+// The reminders of a task's due date to its assignees. The worker application fires their schedule, so it imports the
+// schedule's module by name (the API consumes it), behind the switch both processes read.
+export {
+	isTaskDueRemindersEnabled,
+	TaskDueReminderMaintenanceModule,
+	TaskDueReminderModule,
+	TaskDueReminderScheduleModule,
+	TaskDueReminderService
+} from './lib/tasks/due-reminder';
 // The payment reminders to the clients of unpaid invoices. The worker application fires their schedule, so it imports
 // the schedule's module by name (the API consumes it).
 export {
@@ -320,6 +329,14 @@ export {
 	InvoiceReminderScheduleModule,
 	InvoiceReminderService
 } from './lib/invoice/invoice-reminder';
+// The invoices of the clients billed on a schedule. The worker application fires the sweep's schedule, so it imports
+// the schedule's module by name (the API consumes it).
+export {
+	InvoiceScheduleMaintenanceModule,
+	InvoiceScheduleRunModule,
+	InvoiceScheduleRunService,
+	InvoiceScheduleScheduleModule
+} from './lib/invoice-schedule';
 
 export * from './lib/database/database.module';
 // Export-archive opt-out for plugin entities holding DERIVED data (extracted text, embeddings,

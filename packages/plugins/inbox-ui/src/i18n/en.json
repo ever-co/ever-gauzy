@@ -201,7 +201,8 @@
 			"TaskUpdate": "Task update",
 			"TimerReminder": "Timer reminder",
 			"Invoice": "Invoice",
-			"Meeting": "Meeting"
+			"Meeting": "Meeting",
+			"TaskDueReminder": "Task due"
 		}
 	},
 	"SETTINGS": {

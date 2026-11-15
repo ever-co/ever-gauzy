@@ -9,11 +9,13 @@ import {
 	NotificationActionTypeEnum
 } from '@gauzy/contracts';
 import { RequestContext } from '../../core/context/request-context';
-import { Employee, EntitySubscription, Task } from '../../core/entities/internal';
+import { Employee, EntitySubscription, OrganizationProjectEmployee, Task } from '../../core/entities/internal';
 import { CommentEvent } from '../../comment/events';
 import { EmployeeNotificationService } from '../../employee-notification/employee-notification.service';
 import { EventBus } from '../../event-bus/event-bus';
 import { TaskEvent } from '../../event-bus/events/task.event';
+import { OrganizationProjectChangedEvent } from '../../organization-project/events/organization-project-changed.event';
+import { projectChangeMessageOf, shortenedName } from '../../organization-project/project-notifications';
 import { isNotificationFanOutEnabled } from './fan-out-enabled';
 
 /** The members of a task update that count as "the task changed" for its followers. */
@@ -44,8 +46,9 @@ export function actorDisplayName(user: { firstName?: string; lastName?: string; 
  *
  * The platform already records who follows what (`EntitySubscription`: the creator and the assignees of a task,
  * the author of a comment, whoever was mentioned, anyone who subscribed by hand) but, until now, told nobody.
- * This service closes the loop for two facts: a comment on a followed record (`EmployeeNotificationTypeEnum.COMMENT`)
- * and a change of a followed task's status, priority, due date or members (`TASK_UPDATE`). Each follower gets one
+ * This service closes the loop for three facts: a comment on a followed record (`EmployeeNotificationTypeEnum.COMMENT`),
+ * a change of a followed task's status, priority, due date or members, and a change of a followed project's status or
+ * dates, or its archiving (both `TASK_UPDATE`; a project's members follow it). Each follower gets one
  * notification through the same event the assignment and mention notifications travel, so the receiver's own
  * per-type switches apply; the actor is never told about their own change.
  *
@@ -121,6 +124,39 @@ export class FollowerFanOutService implements OnModuleInit, OnModuleDestroy {
 	}
 
 	/**
+	 * A project's status, dates or archiving changed: its followers who are its members now (they follow it from the
+	 * moment they are added; not the actor) are told what changed, in the notification's message. A follower who is not
+	 * a member, one taken off the project who kept a subscription or one who subscribed by hand, is not told: the
+	 * project's name and changes reach its members alone.
+	 */
+	async onProjectChanged(event: OrganizationProjectChangedEvent): Promise<void> {
+		const { project, changes } = event;
+		if (!this.enabled || !project?.id || !project.tenantId || !changes?.length) {
+			return;
+		}
+		await this.notifyFollowers({
+			entity: BaseEntityEnum.OrganizationProject,
+			entityId: project.id,
+			tenantId: project.tenantId,
+			organizationId: project.organizationId ?? undefined,
+			type: EmployeeNotificationTypeEnum.TASK_UPDATE,
+			action: NotificationActionTypeEnum.Updated,
+			entityName: shortenedName(project.name),
+			message: projectChangeMessageOf(changes),
+			among: await this.projectMemberIds(project.id, project.tenantId)
+		});
+	}
+
+	/** The employees who are members of a project now. */
+	private async projectMemberIds(projectId: ID, tenantId: ID): Promise<ReadonlySet<string>> {
+		const rows = await this.dataSource.getRepository(OrganizationProjectEmployee).find({
+			select: { employeeId: true },
+			where: { organizationProjectId: projectId, tenantId }
+		});
+		return new Set(rows.map((row) => String(row.employeeId)));
+	}
+
+	/**
 	 * Publishes one notification event per follower of the record, except the actor.
 	 */
 	async notifyFollowers(input: {
@@ -133,11 +169,19 @@ export class FollowerFanOutService implements OnModuleInit, OnModuleDestroy {
 		entityName?: string | null;
 		/** The comment the notification is about, when it is about one. */
 		commentId?: ID;
+		/** What changed, when the title alone does not say it. */
+		message?: string;
+		/** When given, only the followers among these employees are told. */
+		among?: ReadonlySet<string>;
 	}): Promise<number> {
 		try {
 			const actorEmployeeId = RequestContext.currentEmployeeId() ?? RequestContext.currentUser()?.employeeId ?? null;
 			const followers = await this.followersOf(input.entity, input.entityId, input.tenantId, input.organizationId ?? null);
-			const receivers = followers.filter((employeeId) => !actorEmployeeId || String(employeeId) !== String(actorEmployeeId));
+			const receivers = followers.filter(
+				(employeeId) =>
+					(!actorEmployeeId || String(employeeId) !== String(actorEmployeeId)) &&
+					(!input.among || input.among.has(String(employeeId)))
+			);
 			if (!receivers.length) {
 				return 0;
 			}
@@ -153,7 +197,8 @@ export class FollowerFanOutService implements OnModuleInit, OnModuleDestroy {
 						...(actorEmployeeId ? { sentByEmployeeId: actorEmployeeId } : {}),
 						organizationId: input.organizationId,
 						tenantId: input.tenantId,
-						...(input.commentId ? { commentId: input.commentId } : {})
+						...(input.commentId ? { commentId: input.commentId } : {}),
+						...(input.message ? { message: input.message } : {})
 					},
 					input.action,
 					entityName,

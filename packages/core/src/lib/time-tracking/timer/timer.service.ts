@@ -122,6 +122,13 @@ import {
 	movesStartEarlier,
 	startMoveRefusal
 } from './timer-start-move-rule';
+import {
+	HeldTimerTurn,
+	SqlTimerTurnStore,
+	takeTimerTurn,
+	TimerTurnOptions,
+	TimerTurnStore
+} from './employee-timer-turn';
 
 // Get the type of the Object-Relational Mapping (ORM) used in the application.
 const ormType: MultiORM = getORMType();
@@ -141,9 +148,24 @@ const TEAM_TRACKING_SWITCH_SOURCES: ReadonlyArray<string> = [TimeLogSourceEnum.T
 /**
  * How long a start or a stop of an employee's timer keeps their turn, in this process, before the next one may go on
  * anyway: one that hangs holds the employee's timer this long at most, as the desktop timer's own lock does. It counts
- * from when the start or stop began, not from when the next one arrived.
+ * from when the start or stop holds the turn every API process shares (`inEmployeeTurn`), not from when the next one
+ * arrived.
  */
 export const EMPLOYEE_TURN_FAILSAFE_MS = 120_000;
+
+/**
+ * How a start or stop takes the employee's turn every API process shares (`employee_timer_turn`): the turn lasts the
+ * failsafe time, as the order in each process does, and a start or stop waits for it as long, trying again every tenth
+ * of a second. A holder gives it up 5 s before it ends, against clocks that drift between API processes.
+ */
+export const EMPLOYEE_TIMER_TURN_OPTIONS: TimerTurnOptions = {
+	lengthMs: EMPLOYEE_TURN_FAILSAFE_MS,
+	waitMs: EMPLOYEE_TURN_FAILSAFE_MS,
+	retryMs: 100,
+	marginMs: 5_000,
+	now: () => Date.now(),
+	sleep: (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+};
 
 /** A start or a stop holding the employee's turn (`inEmployeeTurn`). */
 export interface EmployeeTurn {
@@ -1781,18 +1803,25 @@ export class TimerService {
 
 	/**
 	 * Runs `work`, a start or a stop of the employee's timer, once the start or stop of theirs before it in this
-	 * process has settled. Interleaved, a start read the run a stop was closing as still going and closed it a second
-	 * time, and two starts at once both found nothing going and both created a run.
+	 * process has settled, and once it holds the employee's turn every API process shares (`employee_timer_turn`).
+	 * Interleaved, a start read the run a stop was closing as still going and closed it a second time, and two starts
+	 * at once both found nothing going and both created a run; a stop reaching one API process while a start reached
+	 * another closed the new run at once (ever-co/ever-gauzy#11826).
 	 *
-	 * The API processes do not share this order: a start and a stop reaching two of them at once still interleave,
-	 * and the stop's cleanup then leaves the started run going (`stopRunningLog`).
+	 * The shared turn is a lease of `EMPLOYEE_TURN_FAILSAFE_MS`: a start or stop waits for it, holding no database
+	 * connection meanwhile, and gives it back once it has settled. A process that stops or hangs holds it until it
+	 * ends, then the next one takes it over. When the turns cannot be read or written, the start or stop goes on in
+	 * this process's order alone, as before the shared turn; when the turn stays taken for as long as a start or stop
+	 * waits, it is refused with a 408 and runs nothing (`takeTimerTurn`).
 	 *
-	 * A start or a stop keeps the turn `EMPLOYEE_TURN_FAILSAFE_MS` at most from when it began: one that never settles
+	 * A start or a stop keeps the turn `EMPLOYEE_TURN_FAILSAFE_MS` at most from when it holds the shared turn (its wait
+	 * for that turn is bounded by the same time on its own): one that never settles
 	 * (a database that never answers) does not hold the employee's timer in this process for good. The next one may then
 	 * go on, and once it does, the one that hung writes no time log any more (`EmployeeTurn`, checked before each of its
 	 * writes): it creates no second run and ends none of the next one's. A run it was already creating is closed again
 	 * (`closeRunCreatedLate`), and its cleanup ends only the runs it read (`stopPreviousRunningTimers`). Another write
-	 * it had already sent can still land, which only a lock in the database would stop.
+	 * it had already sent can still land. The same holds for a start or stop that outlives its shared turn: it writes
+	 * nothing more once another process may have taken the turn over.
 	 *
 	 * @param employeeId - The employee whose timer starts or stops.
 	 * @param work - The start or the stop, given the turn it holds.
@@ -1800,12 +1829,15 @@ export class TimerService {
 	 */
 	private async inEmployeeTurn<T>(employeeId: ID, work: (turn: EmployeeTurn) => Promise<T>): Promise<T> {
 		const previous = TimerService.employeeTurns.get(employeeId);
-		let isHeld = true;
+		let isHeldHere = true;
 		let isSettled = false;
+		// The turn every API process shares, once taken
+		let sharedTurn: HeldTimerTurn | undefined;
+		const isHeld = () => isHeldHere && (sharedTurn?.isHeld() ?? true);
 		const turn: EmployeeTurn = {
-			isHeld: () => isHeld,
+			isHeld,
 			assertHeld: () => {
-				if (!isHeld) {
+				if (!isHeld()) {
 					throw new RequestTimeoutException(
 						'Your timer took too long to answer, and a later start or stop went ahead. Check your timer.'
 					);
@@ -1814,19 +1846,35 @@ export class TimerService {
 		};
 		// Once the one before has settled, or has run for the failsafe time: still running, it then loses the turn
 		const begin = (previous?.end ?? Promise.resolve()).then(() => previous?.passOn());
-		const run = begin.then(() => work(turn));
+		// The turn every API process shares; refused (408) when it stayed taken for as long as a start or stop waits
+		const sharedTaken = begin.then(async () => {
+			sharedTurn = await this.takeSharedTurn(employeeId);
+		});
+		const run = sharedTaken.then(async () => {
+			try {
+				// One whose turn here passed to the next one while it waited for the shared turn does nothing
+				turn.assertHeld();
+				return await work(turn);
+			} finally {
+				await sharedTurn.giveBack();
+			}
+		});
 		const markSettled = () => {
 			isSettled = true;
 		};
 		run.then(markSettled, markSettled);
 		const queued: QueuedTurn = {
-			// The clock starts with this one, so those after it still go one at a time
-			end: begin.then(() => TimerService.settledOrFailsafe(run)),
+			// The clock starts with this one, so those after it still go one at a time. The failsafe time counts from
+			// when it holds the shared turn: a wait for a turn another API process holds does not shorten its own run.
+			// The wait itself is bounded on its own (the same failsafe time, should a statement never answer).
+			end: begin
+				.then(() => TimerService.settledOrFailsafe(sharedTaken))
+				.then(() => TimerService.settledOrFailsafe(run)),
 			passOn: () => {
-				if (isSettled || !isHeld) {
+				if (isSettled || !isHeldHere) {
 					return;
 				}
-				isHeld = false;
+				isHeldHere = false;
 				this.logger.warn(
 					`A start or stop of employee ${employeeId} has run for over ${EMPLOYEE_TURN_FAILSAFE_MS} ms and the next one goes on: this one writes no time log any more.`
 				);
@@ -1840,6 +1888,25 @@ export class TimerService {
 				TimerService.employeeTurns.delete(employeeId);
 			}
 		}
+	}
+
+	/**
+	 * Takes the employee's turn every API process shares, waiting while another start or stop holds it
+	 * (`takeTimerTurn`).
+	 *
+	 * @param employeeId - The employee whose timer starts or stops.
+	 * @returns The turn, to give back once the start or stop has settled.
+	 */
+	private async takeSharedTurn(employeeId: ID): Promise<HeldTimerTurn> {
+		return await takeTimerTurn(this.timerTurnStore(), employeeId, EMPLOYEE_TIMER_TURN_OPTIONS);
+	}
+
+	/**
+	 * The store of the employees' timer turns, on the connection TypeORM opens whichever ORM the API runs with (the
+	 * migrations and the team and project reads of a start use it too).
+	 */
+	protected timerTurnStore(): TimerTurnStore {
+		return new SqlTimerTurnStore(this.typeOrmTimeLogRepository?.manager);
 	}
 
 	/**
@@ -2088,10 +2155,10 @@ export class TimerService {
 	/**
 	 * Stops a run replaced by another at the given time, as an explicit stop at that time would.
 	 *
-	 * When the update fails, the log is read back. The update writes the stop before its later steps, so a log that no
-	 * longer runs was stopped and a later step failed. Those steps run again safely from what was written: the web
-	 * timer's time slots are created only where missing and linked to the stopped range, the timesheet and worked hours
-	 * are recomputed. So the update is sent once more to complete them, given the log as it was before the first try:
+	 * When the update fails, the log is read back. The update writes the stop after the time slots of its range and
+	 * before its later steps (#11889), so a log that no longer runs was stopped with its slots and a later step failed.
+	 * Those steps run again safely from what was written: the time slots are created only where missing and linked to
+	 * the stopped range, the timesheet and worked hours are recomputed. So the update is sent once more to complete them, given the log as it was before the first try:
 	 * the update plans the release of the slots past an end it moves back from the range it is given, and the stored
 	 * range is already the new one. If the second try fails too, the log keeps its stop, as
 	 * `ScheduleTimeLogEntriesCommand` only stops logs still running, and the warning says what may be missing. A log
@@ -2482,8 +2549,9 @@ export class TimerService {
 	}
 
 	/**
-	 * The log as stored after a failed stop, when it no longer runs: the update writes the stop before its later
-	 * steps, so a failure after that write still stopped it. Undefined when it still runs or cannot be read.
+	 * The log as stored after a failed stop, when it no longer runs: the update writes the stop after the time slots of
+	 * its range and before its later steps (#11889), so a failure after that write still stopped it, and one before it
+	 * left the run running. Undefined when it still runs or cannot be read.
 	 */
 	private async storedStoppedLog(timeLogId: ID, tenantId: ID): Promise<ITimeLog | undefined> {
 		try {

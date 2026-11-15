@@ -54,7 +54,13 @@ export enum EmployeeNotificationTypeEnum {
 	 * it, it was changed or cancelled, or it starts soon. The notification's entity is the appointment; its title says
 	 * which of these it is (see `meeting-notification.rules.ts`). Stored as 11 in DB.
 	 */
-	MEETING = 'Meeting'
+	MEETING = 'Meeting',
+	/**
+	 * A task the employee is assigned to is due soon: its due date is less than their reminder threshold away
+	 * (`taskDueReminderHours` of the notification preferences). Raised by the platform's task due reminder sweep, once
+	 * per task, employee and due date. Stored as 12 in DB.
+	 */
+	TASK_DUE_REMINDER = 'TaskDueReminder'
 }
 
 /**

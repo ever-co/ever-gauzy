@@ -33918,6 +33918,13 @@ type Organization {
   restrictTrackingSwitchToHigherRoles: Boolean!
 
   """
+  Whether a private project (`public` false) is kept to its members and managers and to those who hold
+  `ACCESS_PRIVATE_PROJECTS`: no project read answers it to anyone else. A project whose `public` is unset counts as
+  public. Off by default: every project of the organization is listed to whoever may view projects.
+  """
+  enforcePrivateProjects: Boolean!
+
+  """
   Whether time logs keep the rates they were recorded at: a rate change without a day then prices only the time
   recorded from then on. Off when null, as before the setting: a rate change prices all the time already tracked.
   """
@@ -50928,7 +50935,8 @@ type OrderQuoteDelivery {
   """
   Why it was not sent: NO_RECIPIENT (the order carries no e-mail), EMAIL_NOT_PREPARED,
   DOCUMENT_NOT_GENERATED, or EMAIL_NOT_SENT (the mail transport refused it — typically an installation
-  with no mail server configured).
+  with no mail server configured — or the address is of a domain the platform never emails, such as
+  @example.com).
   """
   reason: String
 }

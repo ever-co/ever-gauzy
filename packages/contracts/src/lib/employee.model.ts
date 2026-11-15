@@ -255,6 +255,12 @@ export interface IEmployeeUpdateInput extends IBasePerTenantAndOrganizationEntit
 	isTrackingTime?: boolean;
 	// True mean active, false away
 	isAway?: boolean;
+	/**
+	 * The time tracking switch as the caller's screen showed it. When it is sent and the stored switch differs, someone
+	 * changed it since that screen was read: the save is refused with 409 `TRACKING_SWITCH_CHANGED` and writes nothing.
+	 * A request flag, never stored.
+	 */
+	expectedIsTrackingEnabled?: boolean;
 }
 
 export interface IEmployeeCreateInput extends IBasePerTenantAndOrganizationEntityMutationInput, ITaggable {

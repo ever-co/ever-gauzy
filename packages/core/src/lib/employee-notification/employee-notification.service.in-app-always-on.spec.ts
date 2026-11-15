@@ -21,7 +21,7 @@ describe('EmployeeNotificationService.create — in-app is always on', () => {
 		mention: false,
 		comment: false,
 		message: false,
-		preferences: { taskUpdate: false, timerReminderHours: null }
+		preferences: { taskUpdate: false, timerReminderHours: null, taskDueReminderHours: null }
 	} as IEmployeeNotificationSetting;
 
 	function serviceWith(setting: IEmployeeNotificationSetting | 'missing') {
@@ -61,7 +61,8 @@ describe('EmployeeNotificationService.create — in-app is always on', () => {
 		EmployeeNotificationTypeEnum.TASK_UPDATE,
 		EmployeeNotificationTypeEnum.TIMER_REMINDER,
 		EmployeeNotificationTypeEnum.INVOICE,
-		EmployeeNotificationTypeEnum.MEETING
+		EmployeeNotificationTypeEnum.MEETING,
+		EmployeeNotificationTypeEnum.TASK_DUE_REMINDER
 	])('saves a %s notification for a receiver who switched the kind off, and tells the listeners', async (type) => {
 		const { service, saved, eventBus } = serviceWith(ALL_OFF);
 

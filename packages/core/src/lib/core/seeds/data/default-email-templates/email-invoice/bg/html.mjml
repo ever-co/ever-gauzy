@@ -41,6 +41,9 @@
 				<mj-text>
 					Фактурата е прикачена към този имейл като PDF файл.
 				</mj-text>
+				<mj-raw>{{#if invoiceUrl}}</mj-raw>
+				<mj-button href="{{invoiceUrl}}" target="_blank">Преглед на фактурата</mj-button>
+				<mj-raw>{{/if}}</mj-raw>
 			</mj-column>
 		</mj-section>
 		<mj-section padding="20px 16px 40px">

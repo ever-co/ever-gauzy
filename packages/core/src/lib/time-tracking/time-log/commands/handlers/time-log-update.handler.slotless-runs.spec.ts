@@ -74,6 +74,8 @@ async function stopRun(
 	);
 	(handler as any).ormType = MultiORMEnum.TypeORM;
 	jest.spyOn(handler as any, 'planRelease').mockResolvedValue({ remove: [], unlink: [] });
+	// The employee's slots at the starts of the range the stop gives the run: none (#11889)
+	jest.spyOn(handler as any, 'findTimeSlots').mockResolvedValue([]);
 	jest.spyOn(handler as any, 'applyRelease').mockResolvedValue(undefined);
 	jest.spyOn(handler as any, 'recalculateTimesheetAndEmployeeHours').mockResolvedValue(undefined);
 	const save = jest.spyOn(handler as any, 'saveUpdatedTimeLog').mockImplementation(async (log) => log);
