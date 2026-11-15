@@ -83,9 +83,14 @@ function placeholder(type: unknown): unknown {
 			stoppedAt: stoppedAt ? new Date(stoppedAt) : null
 		});
 
-	/** A time slot of `logId`, from `startedAt`, `duration` seconds long. */
-	const slotOf = async (logId: string, startedAt: string, duration: number) => {
-		const slotId = await insert(TimeSlot, { employeeId: EMPLOYEE, startedAt: new Date(startedAt), duration });
+	/** A time slot of `logId`, from `startedAt`, `duration` seconds long, deleted at `deletedAt` when given. */
+	const slotOf = async (logId: string, startedAt: string, duration: number, deletedAt?: Date) => {
+		const slotId = await insert(TimeSlot, {
+			employeeId: EMPLOYEE,
+			startedAt: new Date(startedAt),
+			duration,
+			...(deletedAt ? { deletedAt } : {})
+		});
 		await dataSource.query(`INSERT INTO "time_slot_time_logs" ("timeSlotId", "timeLogId") VALUES (?, ?)`, [
 			slotId,
 			logId
@@ -139,6 +144,8 @@ function placeholder(type: unknown): unknown {
 			const webOld = await runOf(EMPLOYEE, TimeLogSourceEnum.WEB_TIMER, '2026-11-15T07:30:00Z');
 			const teamsOld = await runOf(EMPLOYEE, TimeLogSourceEnum.TEAMS, '2026-11-15T08:00:00Z');
 			await slotOf(teamsOld, '2026-11-15T08:20:00Z', 600);
+			// A deleted slot that would end later counts for nothing, as the run's relation leaves it out
+			await slotOf(teamsOld, '2026-11-15T08:40:00Z', 600, new Date('2026-11-15T08:55:00Z'));
 			const breakOld = await runOf(EMPLOYEE, TimeLogSourceEnum.WEB_TIMER, '2026-11-15T08:40:00Z', {
 				logType: TimeLogType.BREAK
 			});

@@ -260,7 +260,7 @@ export class AddTimeLogOneRunningTimerPerEmployee1791000018700 implements Migrat
 		const timerRun = (alias: string) =>
 			`${col(alias, 'isRunning')} = ${running} AND ${col(alias, 'deletedAt')} IS NULL AND ${col(alias, 'source')} <> 'DESKTOP' AND ${col(alias, 'startedAt')} IS NOT NULL`;
 		const startsAfter = `(${col('newer', 'startedAt')} > ${col('older', 'startedAt')} OR (${col('newer', 'startedAt')} = ${col('older', 'startedAt')} AND ${col('newer', 'id')} > ${col('older', 'id')}))`;
-		const lastSlotEnd = `(SELECT MAX(${slotEnd(`${q}slot${q}`)}) FROM ${q}time_slot_time_logs${q} AS ${q}link${q} JOIN ${q}time_slot${q} AS ${q}slot${q} ON ${col('slot', 'id')} = ${col('link', 'timeSlotId')} WHERE ${col('link', 'timeLogId')} = ${col('older', 'id')})`;
+		const lastSlotEnd = `(SELECT MAX(${slotEnd(`${q}slot${q}`)}) FROM ${q}time_slot_time_logs${q} AS ${q}link${q} JOIN ${q}time_slot${q} AS ${q}slot${q} ON ${col('slot', 'id')} = ${col('link', 'timeSlotId')} WHERE ${col('link', 'timeLogId')} = ${col('older', 'id')} AND ${col('slot', 'deletedAt')} IS NULL)`;
 		return `SELECT ${col('older', 'id')} AS ${q}id${q}, MIN(${col('newer', 'startedAt')}) AS ${q}startedAt${q}, ${lastSlotEnd} AS ${q}lastSlotEnd${q} FROM ${q}time_log${q} AS ${q}older${q} JOIN ${q}time_log${q} AS ${q}newer${q} ON ${col('newer', 'employeeId')} = ${col('older', 'employeeId')} AND ${timerRun('newer')} AND ${startsAfter} WHERE ${timerRun('older')} GROUP BY ${col('older', 'id')}`;
 	}
 
