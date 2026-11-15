@@ -41,6 +41,7 @@
 		"@nestjs/graphql": "^14.0.3",
 		"@nestjs/mapped-types": "^12.0.0",
 		"@nestjs/swagger": "^12.0.2",
+		"@nestjs/throttler": "^6.7.1",
 		"@nestjs/typeorm": "^12.0.2",
 		"chalk": "^4.1.0",
 		"class-validator": "^0.15.1",

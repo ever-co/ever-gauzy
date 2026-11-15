@@ -17,10 +17,15 @@ import {
 } from '../../core/entities/internal';
 import { isUniqueViolation } from '../../core/errors/unique-violation';
 import { EmployeeNotificationService } from '../../employee-notification/employee-notification.service';
+import {
+	teamNotificationDefaultsByEmployee,
+	withTeamNotificationDefaults
+} from '../../employee-notification-setting/team-notification-defaults';
 import { runInTimerReminderContext } from '../../time-tracking/timer-reminder/timer-reminder-context';
 import { instantOf, notificationPreferencesOf } from '../../time-tracking/timer-reminder/timer-reminder.rules';
 import { TaskDueReminder } from './task-due-reminder.entity';
 import {
+	TASK_DUE_REMINDER_INLINE_SWEEP_MS,
 	TASK_DUE_REMINDER_STALE_CLAIM_MS,
 	TASK_DUE_REMINDER_SWEEP_PAGE_SIZE,
 	TASK_DUE_REMINDER_SWEEP_TIME_BUDGET_MS
@@ -322,7 +327,10 @@ export class TaskDueReminderService {
 			}
 			const timeZone = notificationPreferencesOf(ofEmployee).dnd?.timeZone || row.userTimeZone || null;
 			const dueMoment = taskDueMomentOf(row.dueDate, timeZone);
-			if (!isTaskDueReminderDue(dueMoment, hours, now.getTime())) {
+			// A threshold shorter than the time between two sweeps (five minutes, queued or in-process) could let the
+			// whole window fall between them: the window is never shorter than that time, so a sweep always meets it
+			const windowHours = Math.max(hours, TASK_DUE_REMINDER_INLINE_SWEEP_MS / HOUR_MS);
+			if (!isTaskDueReminderDue(dueMoment, windowHours, now.getTime())) {
 				continue;
 			}
 			const own = claims.get(this.claimKeyOf(row));
@@ -513,6 +521,14 @@ export class TaskDueReminderService {
 		const preferences = new Map<string, unknown>();
 		for (const setting of settings) {
 			preferences.set(this.employeeKeyOf(setting), setting.preferences);
+		}
+		// A key the employee left unset takes the default of their team, when it has one
+		const teamDefaults = await teamNotificationDefaultsByEmployee(
+			this.dataSource,
+			page.map((row) => ({ employeeId: row.employeeId, tenantId: row.tenantId }))
+		);
+		for (const [key, defaults] of teamDefaults) {
+			preferences.set(key, withTeamNotificationDefaults(preferences.get(key), defaults));
 		}
 		return preferences;
 	}

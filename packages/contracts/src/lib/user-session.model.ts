@@ -31,7 +31,7 @@ export interface IUserSession {
 	 */
 	appName?: string;
 
-	/** The web host the session was opened from ("app.ever.team"), when a browser's request said it. */
+	/** The web host the session was opened from ("app.example.com"), when a browser's request said it. */
 	appOrigin?: string;
 
 	/** The browser and its major version ("Chrome 131"), when the user agent names one. */

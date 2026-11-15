@@ -48,11 +48,28 @@ export interface IEmployeeNotificationPreferences {
 	 */
 	timerReminderHours?: number | null;
 	/**
+	 * How many minutes before a meeting the employee hosts or is invited to they are reminded of it (`Meeting`), on top
+	 * of the notice when it is about to start. Default 15; `null` or 0 for no reminder before (the notice at the start
+	 * still comes). A value outside (0, 1440] reads as the default.
+	 */
+	meetingReminderMinutes?: number | null;
+	/**
 	 * How many hours before a task's due date the employee is reminded of it (`TaskDueReminder`), for the tasks they are
 	 * assigned to. Default 24; `null` or 0 for no reminder. A value outside (0, 168] reads as the default.
 	 */
 	taskDueReminderHours?: number | null;
 }
+
+/**
+ * A team's defaults for its members' notifications: what a member who chose nothing for a key of their own
+ * preferences gets instead of the platform's default. A member's own choice wins at every level: key by key, kind by
+ * kind for `emailByType` and `pushByType`, and a member's `email` or `push` for every kind over the team's per-kind
+ * ones. Unset (the default) changes nothing.
+ */
+export type ITeamNotificationDefaults = Pick<
+	IEmployeeNotificationPreferences,
+	'email' | 'emailByType' | 'push' | 'pushByType' | 'taskUpdate' | 'timerReminderHours' | 'taskDueReminderHours'
+>;
 
 /**
  * Input type for creating a new employee notification setting.

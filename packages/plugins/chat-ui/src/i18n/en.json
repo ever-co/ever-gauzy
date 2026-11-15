@@ -62,9 +62,22 @@
 		"NOT_MEMBER": "You are viewing {{name}}. Join to send messages.",
 		"CLOSE": "Close"
 	},
+	"WELCOME": {
+		"CHANNELS_TEXT": "Bring the team together in channels, one for each topic, project or client, and keep every discussion in one place.",
+		"CHANNELS_KINDS": "Channels can be",
+		"PUBLIC": "Public",
+		"DIRECT_TEXT": "Message a teammate one-on-one, or a few people at once, without opening a channel.",
+		"DIRECT_LABEL": "Teammates and small groups",
+		"BROWSE_TEXT": "Find the channels your team already uses and join the ones you need.",
+		"BROWSE_LABEL": "All public channels",
+		"OPEN": "Open",
+		"YOU": "You"
+	},
 	"UNREADS": {
 		"TITLE": "Unreads",
 		"EMPTY": "You are all caught up.",
+		"EMPTY_HINT": "Conversations with messages you have not read yet show up here, newest first.",
+		"OPEN_LABEL": "Open {{name}}",
 		"MARK_ALL_READ": "Mark all as read",
 		"MARKED": "{{count}} conversations marked as read.",
 		"UNDO": "Undo",
@@ -72,6 +85,7 @@
 	},
 	"THREADS": {
 		"TITLE": "Threads",
+		"EMPTY_TITLE": "No threads yet",
 		"EMPTY": "You follow no threads yet. Reply to a message to follow its thread.",
 		"UNREAD_REPLIES": "{{count}} unread replies",
 		"REPLIES": "{{count}} replies",
@@ -84,6 +98,8 @@
 		"LOAD_MORE": "Load more replies",
 		"OPEN": "Open thread",
 		"VIEW": "View thread",
+		"VIEW_LABEL": "View thread in {{name}}",
+		"VIEW_LABEL_PREVIEW": "View thread in {{name}}: {{preview}}",
 		"LAST_REPLY": "Last reply {{time}}"
 	},
 	"TYPING": {

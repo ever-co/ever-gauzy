@@ -20,6 +20,8 @@ jest.mock('@gauzy/core', () => ({
 	InvoiceScheduleMaintenanceModule: class InvoiceScheduleMaintenanceModule {},
 	InvoiceScheduleScheduleModule: class InvoiceScheduleScheduleModule {},
 	JobExecutionModule: class JobExecutionModule {},
+	MeetingReminderMaintenanceModule: class MeetingReminderMaintenanceModule {},
+	MeetingReminderScheduleModule: class MeetingReminderScheduleModule {},
 	MentionModule: class MentionModule {},
 	TaskDueReminderMaintenanceModule: class TaskDueReminderMaintenanceModule {},
 	TaskDueReminderScheduleModule: class TaskDueReminderScheduleModule {},
@@ -31,7 +33,9 @@ jest.mock('@gauzy/core', () => ({
 	isTimerRemindersEnabled: (env: Record<string, string | undefined>) =>
 		env['GAUZY_TIMER_REMINDERS_ENABLED'] === 'true',
 	isTaskDueRemindersEnabled: (env: Record<string, string | undefined>) =>
-		env['GAUZY_TASK_DUE_REMINDERS_ENABLED'] === 'true'
+		env['GAUZY_TASK_DUE_REMINDERS_ENABLED'] === 'true',
+	isMeetingRemindersEnabled: (env: Record<string, string | undefined>) =>
+		env['GAUZY_MEETING_REMINDERS_ENABLED'] === 'true'
 }));
 
 jest.mock('@gauzy/plugin', () => {
@@ -224,6 +228,37 @@ describe('worker AppModule', () => {
 			});
 		}
 		delete process.env.GAUZY_TASK_DUE_REMINDERS_ENABLED;
+	});
+
+	/**
+	 * The meeting reminders follow the timer reminders' split: this process fires the per-minute schedule and never takes a
+	 * sweep (the API hosts the listeners a reminder's notification reaches), and registers nothing of them while they are
+	 * switched off.
+	 */
+	it('fires the meeting reminder schedule only when the reminders are on, and never hosts the sweep', async () => {
+		process.env.WORKER_QUEUE_ENABLED = 'true';
+
+		for (const [switched, expected] of [
+			['true', true],
+			['false', false],
+			[undefined, false]
+		] as const) {
+			if (switched === undefined) {
+				delete process.env.GAUZY_MEETING_REMINDERS_ENABLED;
+			} else {
+				process.env.GAUZY_MEETING_REMINDERS_ENABLED = switched;
+			}
+			await jest.isolateModulesAsync(async () => {
+				const { AppModule: Isolated } = await import('./app.module');
+				const core = await import('@gauzy/core');
+				const order: any[] = Reflect.getMetadata(MODULE_METADATA.IMPORTS, Isolated) ?? [];
+
+				expect(order).toContain(core.IdempotencyMaintenanceModule);
+				expect(order.includes(core.MeetingReminderScheduleModule)).toBe(expected);
+				expect(order).not.toContain(core.MeetingReminderMaintenanceModule);
+			});
+		}
+		delete process.env.GAUZY_MEETING_REMINDERS_ENABLED;
 	});
 
 	/**
