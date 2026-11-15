@@ -33,7 +33,7 @@ function meetingNotificationsDouble(invited: string[] = []) {
 			kept: invited.filter((id) => ids.includes(id))
 		})),
 		inviteeIdsOf: jest.fn(async () => invited),
-		notify: jest.fn(async () => 1)
+		notify: jest.fn(async (..._args: unknown[]) => 1)
 	};
 }
 

@@ -1,7 +1,7 @@
 import '../core/entities/internal';
 
 import { DataSource, DataSourceOptions, EntityTarget, ObjectLiteral } from 'typeorm';
-import { isPostgres } from '@gauzy/config';
+import { isMySQL, isPostgres } from '@gauzy/config';
 import { coreEntities } from '../core/entities';
 import {
 	Employee,
@@ -216,13 +216,19 @@ function exercise(options: () => DataSourceOptions) {
 }
 
 const postgresUrl = process.env.GAUZY_MIGRATION_TEST_POSTGRES_URL;
+const mysqlUrl = process.env.GAUZY_MIGRATION_TEST_MYSQL_URL;
+const isServerDialect = isPostgres() || isMySQL();
 
-(isPostgres() ? describe.skip : describe)('CreateEmployeeAppointmentReminderTable1791000012250 on SQLite', () => {
+(isServerDialect ? describe.skip : describe)('CreateEmployeeAppointmentReminderTable1791000012250 on SQLite', () => {
 	exercise(() => ({ type: 'better-sqlite3', database: ':memory:' }));
 });
 
 (isPostgres() && postgresUrl ? describe : describe.skip)('CreateEmployeeAppointmentReminderTable1791000012250 on Postgres', () => {
 	exercise(() => ({ type: 'postgres', url: postgresUrl }));
+});
+
+(isMySQL() && mysqlUrl ? describe : describe.skip)('CreateEmployeeAppointmentReminderTable1791000012250 on MySQL', () => {
+	exercise(() => ({ type: 'mysql', url: mysqlUrl }));
 });
 
 describe('CreateEmployeeAppointmentReminderTable1791000012250 statements', () => {

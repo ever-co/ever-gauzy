@@ -15,7 +15,8 @@ describe('EmployeeAppointmentUpdateHandler false and zero values', () => {
 		const handler = new EmployeeAppointmentUpdateHandler(
 			employeeAppointmentService as never,
 			{ findOneByIdString: jest.fn() } as never,
-			{ findOneByIdString: jest.fn() } as never
+			{ findOneByIdString: jest.fn() } as never,
+			{} as never
 		);
 		const update = (data: Partial<IEmployeeAppointmentUpdateInput>) =>
 			handler.execute(new EmployeeAppointmentUpdateCommand('appointment-1', data as IEmployeeAppointmentUpdateInput));
