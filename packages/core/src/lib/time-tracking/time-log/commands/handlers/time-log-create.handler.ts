@@ -1,6 +1,6 @@
-import { Optional } from '@nestjs/common';
+import { ConflictException, Optional } from '@nestjs/common';
 import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
-import { DataSource } from 'typeorm';
+import { DataSource, EntityManager, In, IsNull, Not } from 'typeorm';
 import * as moment from 'moment';
 import { TimeLogType, TimeLogSourceEnum, ID, ITimeSlot, ITimesheet } from '@gauzy/contracts';
 import { TimeSlotService } from '../../../time-slot/time-slot.service';
@@ -9,11 +9,20 @@ import { UpdateEmployeeTotalWorkedHoursCommand } from '../../commands/update-emp
 import { RequestContext } from '../../../../core/context';
 import { TimeLogService } from '../../time-log.service';
 import { TimeLog } from '../../time-log.entity';
+import { Employee } from '../../../../core/entities/internal';
+import { isUniqueViolation } from '../../../../core/errors/unique-violation';
+import { TRACKER_SOURCES } from '../../tracker-source';
 import { assertTimeLogReferencesOfTenant } from '../../time-log-references';
-import { TimeLogCreateCommand } from '../time-log-create.command';
+import { TimeLogCreateCommand, TimeLogCreateOptions } from '../time-log-create.command';
 import { FindTimeLogRatesCommand } from '../find-time-log-rates.command';
 import { createdChange } from '../../time-log-history';
-import { historySubject, recordTimeLogHistory, TimeLogHistoryOptions } from '../../time-log-history.writer';
+import {
+	historySubject,
+	lockedForChange,
+	locksRowsForChange,
+	recordTimeLogHistory,
+	TimeLogHistoryOptions
+} from '../../time-log-history.writer';
 import { MikroOrmTimeLogRepository } from '../../repository/mikro-orm-time-log.repository';
 import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.repository';
 
@@ -44,6 +53,47 @@ export function withRunningLogStoppedAt<T extends Partial<TimeLog>>(input: T): T
 		return input;
 	}
 	return { ...input, stoppedAt: input.startedAt };
+}
+
+/** The code of the refusal of a timer start while another run of the employee is still going. */
+export const TIMER_STILL_RUNNING = 'TIMER_STILL_RUNNING';
+
+/** The refusal of a timer start while another run of the employee is still going. */
+function timerStillRunning(): ConflictException {
+	return new ConflictException({
+		message:
+			'Your previous timer is still running and could not be stopped, so no new one was started. Stop it, then start again.',
+		code: TIMER_STILL_RUNNING
+	});
+}
+
+/**
+ * Refuses a timer start's run while another run of the employee is still going: the start's close of the runs going
+ * failed to stop one, or a run was written since. Read under the employee's row lock, which every start of the employee
+ * takes in the same transaction before writing its run, so two starts check and write one after the other. SQLite takes
+ * no row lock and writes without a transaction here: the running-log key refuses a run written between the check and
+ * the insert. A tracker's rows are left out: the desktop stores the time it uploads as running by design, and the
+ * start's close ends them on its own (`ScheduleTimeLogEntriesCommand`).
+ *
+ * @param manager - The transaction the run is written in, or the repository's manager on SQLite.
+ * @param timeLog - The run about to be written.
+ * @throws ConflictException with the code TIMER_STILL_RUNNING.
+ */
+async function assertNoRunGoing(manager: EntityManager, timeLog: TimeLog): Promise<void> {
+	const { employeeId, tenantId } = timeLog;
+	await manager.findOne(Employee, { where: { id: employeeId, tenantId }, ...lockedForChange() });
+	const going = await manager.count(TimeLog, {
+		where: {
+			employeeId,
+			tenantId,
+			isRunning: true,
+			deletedAt: IsNull(),
+			source: Not(In([...TRACKER_SOURCES]))
+		}
+	});
+	if (going > 0) {
+		throw timerStillRunning();
+	}
 }
 
 @CommandHandler(TimeLogCreateCommand)
@@ -117,7 +167,7 @@ export class TimeLogCreateHandler implements ICommandHandler<TimeLogCreateComman
 		// Bulk create time slots
 		timeLog.timeSlots = await this._timeSlotService.bulkCreate(mergeTimeSlots, employeeId, organizationId);
 
-		await this.saveTimeLog(timeLog, command.history);
+		await this.saveTimeLog(timeLog, command.history, command.options);
 
 		// Recalculate timesheet activity
 		await this.recalculateTimesheet(timesheet);
@@ -137,19 +187,47 @@ export class TimeLogCreateHandler implements ICommandHandler<TimeLogCreateComman
 	 * @param timesheet ITimesheet
 	 * @returns TimeLog
 	 */
-	private async saveTimeLog(timeLog: TimeLog, history: TimeLogHistoryOptions | undefined): Promise<void> {
+	private async saveTimeLog(
+		timeLog: TimeLog,
+		history: TimeLogHistoryOptions | undefined,
+		options?: TimeLogCreateOptions
+	): Promise<void> {
 		const recordsHistory = Boolean(history) && Boolean(this.dataSource);
-		if (!recordsHistory) {
-			await this.typeOrmTimeLogRepository.save(timeLog);
-			return;
+		const isOnlyRun = Boolean(options?.isOnlyRun) && Boolean(this.dataSource);
+		// A timer start's run is checked under the employee's row lock, in the transaction it is written in, where the
+		// database locks rows. SQLite locks none and runs every write on its one connection, where a transaction begun
+		// beside another nests into it, and the refusal's rollback would take the other request's writes with it: there
+		// the check and the insert run without one, and the running-log key refuses a run written between them.
+		const checksInTransaction = isOnlyRun && locksRowsForChange();
+		try {
+			if (!recordsHistory && !checksInTransaction) {
+				if (isOnlyRun) {
+					await assertNoRunGoing(this.typeOrmTimeLogRepository.manager, timeLog);
+				}
+				await this.typeOrmTimeLogRepository.save(timeLog);
+				return;
+			}
+			// Added by a person: the entry and its history row are written together, or neither is. A timer start's
+			// run: it is written with the check that no other run is still going, or not at all.
+			await this.dataSource.transaction(async (manager) => {
+				if (isOnlyRun) {
+					await assertNoRunGoing(manager, timeLog);
+				}
+				await manager.getRepository(TimeLog).save(timeLog);
+				if (recordsHistory) {
+					await recordTimeLogHistory(manager, [
+						{ subject: historySubject(timeLog), change: createdChange(timeLog), reason: history.reason }
+					]);
+				}
+			});
+		} catch (error) {
+			// The running-log key refused a second run written past the check (ever-co/ever-gauzy#11826)
+			const isSecondRun = isOnlyRun && (isUniqueViolation(error) || isUniqueViolation(error?.driverError));
+			if (isSecondRun) {
+				throw timerStillRunning();
+			}
+			throw error;
 		}
-		// Added by a person: the entry and its history row are written together, or neither is.
-		await this.dataSource.transaction(async (manager) => {
-			await manager.getRepository(TimeLog).save(timeLog);
-			await recordTimeLogHistory(manager, [
-				{ subject: historySubject(timeLog), change: createdChange(timeLog), reason: history.reason }
-			]);
-		});
 	}
 
 	private createTimeLogEntity(input: Partial<TimeLog>, tenantId: ID, timesheet: ITimesheet): TimeLog {

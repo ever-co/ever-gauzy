@@ -14,6 +14,7 @@ const TENANT = '11111111-1111-4111-8111-111111111111';
 const OTHER_TENANT = '11111111-1111-4111-8111-111111111112';
 const ORGANIZATION = '22222222-2222-4222-8222-222222222222';
 const EMPLOYEE = '44444444-4444-4444-8444-444444444441';
+const OTHER_EMPLOYEE = '44444444-4444-4444-8444-444444444442';
 const RUN_WITH_SLOT = '66666666-6666-4666-8666-666666666661';
 const RUN_WITHOUT_SLOT = '66666666-6666-4666-8666-666666666662';
 const SLOT = '77777777-7777-4777-8777-777777777771';
@@ -83,12 +84,16 @@ async function measure(): Promise<{ mikroOrm: Reads; typeOrm: Reads }> {
 			await insert('tenant', { id: OTHER_TENANT, name: 'Other tenant' });
 			await insert('organization', { id: ORGANIZATION, tenantId: TENANT, name: 'Organization' });
 			await insert('employee', { id: EMPLOYEE, tenantId: TENANT, organizationId: ORGANIZATION });
-			for (const id of [RUN_WITH_SLOT, RUN_WITHOUT_SLOT]) {
+			// Each run of its own employee: one employee holds one running timer run (#11826)
+			for (const [id, employeeId] of [
+				[RUN_WITH_SLOT, EMPLOYEE],
+				[RUN_WITHOUT_SLOT, OTHER_EMPLOYEE]
+			]) {
 				await insert('time_log', {
 					id,
 					tenantId: TENANT,
 					organizationId: ORGANIZATION,
-					employeeId: EMPLOYEE,
+					employeeId,
 					source: 'TEAMS',
 					logType: 'TRACKED',
 					startedAt: '2026-01-05 09:00:00',
