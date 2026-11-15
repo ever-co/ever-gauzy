@@ -368,6 +368,20 @@ describe('EmployeeUpdateHandler — the work dates switch the tracking as the ro
 		expect(row.isTrackingEnabled).toBe(false);
 	});
 
+	it("keeps an admin's switch on made after the check, under the employee's own end date", async () => {
+		asCaller(RolesEnum.EMPLOYEE, SELF);
+		await storeEmployee(false);
+		adminSwitchesTo = true;
+
+		await save({ endWork: NEW_END });
+
+		const row = await stored();
+		expect(row.endWork).toEqual(NEW_END);
+		expect(row.isArchived).toBe(true);
+		expect(row.isTrackingEnabled).toBe(true);
+		expect(publish).not.toHaveBeenCalled();
+	});
+
 	it("publishes no stop of its own for the admin's switch off, which published its own", async () => {
 		asCaller(RolesEnum.EMPLOYEE, SELF);
 		await storeEmployee(true);
