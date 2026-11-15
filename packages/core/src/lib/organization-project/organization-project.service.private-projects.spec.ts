@@ -103,11 +103,12 @@ describe('OrganizationProjectService with private projects', () => {
 	let privateProjectsRead: jest.Mock;
 	let permissions: PermissionsEnum[];
 	let employeeId: string | null;
+	let ormType: jest.SpyInstance;
 
 	beforeEach(() => {
 		permissions = [];
 		employeeId = PAUL;
-		jest.spyOn(CrudService.prototype, 'ormType', 'get').mockReturnValue(MultiORMEnum.TypeORM);
+		ormType = jest.spyOn(CrudService.prototype, 'ormType', 'get').mockReturnValue(MultiORMEnum.TypeORM);
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
 		jest.spyOn(RequestContext, 'currentUser').mockImplementation(
 			() => ({ id: 'user-paul', tenantId: TENANT, employeeId }) as never
@@ -162,6 +163,20 @@ describe('OrganizationProjectService with private projects', () => {
 			(RequestContext.currentEmployeeId as jest.Mock).mockReturnValue(null);
 
 			expect(await service.hiddenProjectIds()).toEqual([]);
+		});
+
+		it('reads the memberships through TypeORM under MikroORM too, so a member keeps their private project', async () => {
+			// A MikroORM membership leaves `employeeId` unset and its serialized row drops the unloaded `employee`
+			ormType.mockReturnValue(MultiORMEnum.MikroORM);
+			const mikroOrmFind = jest.fn();
+			Object.assign(service, { mikroOrmRepository: { find: mikroOrmFind } });
+
+			employeeId = MARIE;
+			expect(await service.hiddenProjectIds()).toEqual([]);
+			employeeId = PAUL;
+			expect(await service.hiddenProjectIds()).toEqual([CONFIDENTIAL]);
+			expect(privateProjectsRead).toHaveBeenCalledTimes(2);
+			expect(mikroOrmFind).not.toHaveBeenCalled();
 		});
 	});
 
@@ -231,6 +246,24 @@ describe('OrganizationProjectService with private projects', () => {
 				hiddenProjectIds: [CONFIDENTIAL]
 			});
 		});
+
+		it('MikroORM synced projects leave it out beside the caller own `where[id]`, never over it', async () => {
+			ormType.mockReturnValue(MultiORMEnum.MikroORM);
+			const findAndCount = jest.fn().mockResolvedValue([[], 0]);
+			Object.assign(service, { mikroOrmMapsCustomField: () => true, mikroOrmRepository: { findAndCount } });
+
+			await service.findSyncedProjects({ where: { id: 'project-1' } } as never);
+
+			expect(findAndCount).toHaveBeenCalledWith(
+				{
+					id: 'project-1',
+					tenantId: TENANT,
+					customFields: { repository: { id: 'project-1', tenantId: TENANT } },
+					$and: [{ id: { $nin: [CONFIDENTIAL] } }]
+				},
+				expect.anything()
+			);
+		});
 	});
 
 	describe('one project by its id', () => {
@@ -275,6 +308,69 @@ describe('OrganizationProjectService with private projects', () => {
 
 			await expect(service.delete(CONFIDENTIAL)).resolves.toEqual({ raw: [], affected: 1 });
 			expect(remove).toHaveBeenCalledWith(CONFIDENTIAL, undefined);
+		});
+
+		it('cannot be withdrawn or restored by Paul, and the restore check reads withdrawn projects too', async () => {
+			const softRemove = jest.spyOn(CrudService.prototype, 'softRemove').mockResolvedValue({} as never);
+			const softRecover = jest.spyOn(CrudService.prototype, 'softRecover').mockResolvedValue({} as never);
+
+			await expect(service.softRemove(CONFIDENTIAL)).rejects.toBeInstanceOf(NotFoundException);
+			await expect(service.softRecover(CONFIDENTIAL)).rejects.toBeInstanceOf(NotFoundException);
+			expect(privateProjectsRead).toHaveBeenLastCalledWith(expect.objectContaining({ withDeleted: true }));
+			expect(softRemove).not.toHaveBeenCalled();
+			expect(softRecover).not.toHaveBeenCalled();
+		});
+
+		it('is withdrawn and restored for Marie, its member', async () => {
+			employeeId = MARIE;
+			const softRemove = jest.spyOn(CrudService.prototype, 'softRemove').mockResolvedValue({} as never);
+			const softRecover = jest.spyOn(CrudService.prototype, 'softRecover').mockResolvedValue({} as never);
+
+			await service.softRemove(CONFIDENTIAL);
+			await service.softRecover(CONFIDENTIAL);
+
+			expect(softRemove).toHaveBeenCalledWith(CONFIDENTIAL, undefined, undefined);
+			expect(softRecover).toHaveBeenCalledWith(CONFIDENTIAL, undefined, undefined);
+		});
+
+		it('Paul can neither join it nor take anyone off it through the by-employee edit, and nothing is written', async () => {
+			const find = jest.spyOn(TenantAwareCrudService.prototype, 'find').mockResolvedValue([]);
+			const removeMembership = jest.fn();
+			Object.assign(service, { typeOrmOrganizationProjectEmployeeRepository: { delete: removeMembership } });
+
+			await expect(
+				service.updateByEmployee({
+					organizationId: ORGANIZATION,
+					addedProjectIds: [CONFIDENTIAL],
+					member: { id: PAUL }
+				} as never)
+			).rejects.toBeInstanceOf(NotFoundException);
+			await expect(
+				service.updateByEmployee({
+					organizationId: ORGANIZATION,
+					removedProjectIds: [CONFIDENTIAL],
+					member: { id: MARIE }
+				} as never)
+			).rejects.toBeInstanceOf(NotFoundException);
+			expect(find).not.toHaveBeenCalled();
+			expect(removeMembership).not.toHaveBeenCalled();
+		});
+
+		it('Marie, its member, still changes its memberships through the by-employee edit', async () => {
+			employeeId = MARIE;
+			const removeMembership = jest.fn().mockResolvedValue({ raw: [], affected: 1 });
+			Object.assign(service, { typeOrmOrganizationProjectEmployeeRepository: { delete: removeMembership } });
+
+			await expect(
+				service.updateByEmployee({
+					organizationId: ORGANIZATION,
+					removedProjectIds: [CONFIDENTIAL],
+					member: { id: MARIE }
+				} as never)
+			).resolves.toBe(true);
+			expect(removeMembership).toHaveBeenCalledWith(
+				expect.objectContaining({ employeeId: MARIE, organizationId: ORGANIZATION, tenantId: TENANT })
+			);
 		});
 	});
 });

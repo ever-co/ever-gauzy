@@ -8,7 +8,17 @@ import {
 	ConflictException,
 	NotFoundException
 } from '@nestjs/common';
-import { Brackets, DeleteResult, FindOptionsWhere, ILike, In, IsNull, Not, SelectQueryBuilder } from 'typeorm';
+import {
+	Brackets,
+	DeleteResult,
+	FindOptionsWhere,
+	ILike,
+	In,
+	IsNull,
+	Not,
+	SaveOptions,
+	SelectQueryBuilder
+} from 'typeorm';
 import { EntityProperty, FilterQuery, raw } from '@mikro-orm/core';
 import {
 	ActionTypeEnum,
@@ -32,6 +42,7 @@ import { CustomEmbeddedFieldConfig } from '@gauzy/common';
 import { isNotEmpty } from '@gauzy/utils';
 import { RelationsQueryDTO } from '../shared/dto';
 import { BaseQueryDTO, TenantAwareCrudService } from '../core/crud';
+import { IFindOneOptions } from '../core/crud/icrud.service';
 import { archivedStates, withArchivedLinks, withArchivedScope } from '../core/crud/archived-scope';
 import { sanitizeRichHtml } from '../core/html-sanitizer';
 import { RequestContext } from '../core/context';
@@ -707,6 +718,43 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	}
 
 	/**
+	 * Withdraws (soft-deletes) a project (`DELETE /organization-projects/:id/soft`, `softDeleteOrganizationProject`).
+	 * One kept private from the caller is answered as one that does not exist.
+	 *
+	 * @param id - The project.
+	 * @param options - Find options, passed to the base method unchanged.
+	 * @param saveOptions - Save options, passed to the base method unchanged.
+	 * @returns The withdrawn project.
+	 */
+	public async softRemove(
+		id: ID,
+		options?: IFindOneOptions<OrganizationProject>,
+		saveOptions?: SaveOptions
+	): Promise<OrganizationProject> {
+		await this.assertProjectVisible(id);
+		return super.softRemove(id, options, saveOptions);
+	}
+
+	/**
+	 * Restores a withdrawn project (`PUT /organization-projects/:id/recover`, `recoverOrganizationProject`). One kept
+	 * private from the caller is answered as one that does not exist; the check reads withdrawn projects too, since
+	 * the project to restore is one.
+	 *
+	 * @param id - The project.
+	 * @param options - Find options, passed to the base method unchanged.
+	 * @param saveOptions - Save options, passed to the base method unchanged.
+	 * @returns The restored project.
+	 */
+	public async softRecover(
+		id: ID,
+		options?: IFindOneOptions<OrganizationProject>,
+		saveOptions?: SaveOptions
+	): Promise<OrganizationProject> {
+		await this.assertProjectVisible(id, { withDeleted: true });
+		return super.softRecover(id, options, saveOptions);
+	}
+
+	/**
 	 * The projects the caller may not see.
 	 *
 	 * Where an organization keeps its private projects private (`enforcePrivateProjects`), a project stated private
@@ -717,7 +765,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	 *
 	 * @returns The ids of the projects to leave out of the caller's reads.
 	 */
-	async hiddenProjectIds(): Promise<ID[]> {
+	async hiddenProjectIds(options: { withDeleted?: boolean } = {}): Promise<ID[]> {
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId();
 		if (!user || !tenantId || RequestContext.hasPermission(PermissionsEnum.ACCESS_PRIVATE_PROJECTS)) {
@@ -728,23 +776,17 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		const employeeId = RequestContext.currentEmployeeId() ?? user.employeeId ?? null;
 		const where = { tenantId, public: false, organization: { enforcePrivateProjects: true } };
 
-		let privateProjects: IProjectWithMemberships[];
-		switch (this.ormType) {
-			case MultiORMEnum.MikroORM: {
-				const items = await this.mikroOrmRepository.find(where as FilterQuery<OrganizationProject>, {
-					populate: ['members'] as never[]
-				});
-				privateProjects = items.map((e) => this.serialize(e)) as IProjectWithMemberships[];
-				break;
-			}
-			case MultiORMEnum.TypeORM:
-			default:
-				privateProjects = await this.typeOrmRepository.find({
-					select: { id: true, members: { id: true, employeeId: true } },
-					where: where as FindOptionsWhere<OrganizationProject>,
-					relations: { members: true }
-				});
-		}
+		// Read through TypeORM under either ORM, as the task-key reads of this service are: a MikroORM membership
+		// leaves `employeeId` unset (the column is mapped through `employee`), and `serialize()` drops the unloaded
+		// `employee` reference, so a MikroORM read could not name any member and hid every private project from its
+		// own members. TypeORM answers the `employeeId` column itself.
+		const privateProjects: IProjectWithMemberships[] = await this.typeOrmRepository.find({
+			select: { id: true, members: { id: true, employeeId: true } },
+			where: where as FindOptionsWhere<OrganizationProject>,
+			relations: { members: true },
+			// A withdrawn (soft-deleted) project is read too where the caller is about to restore it
+			...(options.withDeleted ? { withDeleted: true } : {})
+		});
 		return hiddenProjectIdsOf(privateProjects, employeeId);
 	}
 
@@ -752,10 +794,11 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	 * Refuses a project the caller may not see (see {@link hiddenProjectIds}) as one that does not exist.
 	 *
 	 * @param id - The project.
+	 * @param options - `withDeleted` reads withdrawn (soft-deleted) projects too, for a restore.
 	 * @throws NotFoundException when the project is kept private from the caller.
 	 */
-	private async assertProjectVisible(id: ID): Promise<void> {
-		if ((await this.hiddenProjectIds()).includes(id)) {
+	private async assertProjectVisible(id: ID, options: { withDeleted?: boolean } = {}): Promise<void> {
+		if ((await this.hiddenProjectIds(options)).includes(id)) {
 			throw new NotFoundException('The requested record was not found');
 		}
 	}
@@ -1004,11 +1047,6 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 					criteria[key] = value;
 				}
 				criteria['tenantId'] = tenantId;
-				// The private projects the caller may not see stay out (see hiddenProjectIds)
-				const hiddenProjectIds = await this.hiddenProjectIds();
-				if (hiddenProjectIds.length) {
-					criteria['id'] = { $nin: hiddenProjectIds };
-				}
 
 				const joinsRepository = this.mikroOrmMapsCustomField('repository');
 				let where: Record<string, unknown>;
@@ -1021,6 +1059,9 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 						.quoteIdentifier('repositoryId');
 					where = { ...criteria, [raw((alias: string) => `${alias}.${column}`)]: { $ne: null } };
 				}
+				// The private projects the caller may not see stay out (see hiddenProjectIds): on the project alone, in
+				// the entity-level `$and`, beside the caller's own `where[id]` rather than over it
+				where = whereWithoutHiddenProjects(where, await this.hiddenProjectIds(), MultiORMEnum.MikroORM);
 
 				const [items, total] = await this.mikroOrmRepository.findAndCount(
 					where as FilterQuery<OrganizationProject>,
@@ -1095,6 +1136,15 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	 * @returns A Promise that resolves to `true` when the update is successful.
 	 */
 	async updateByEmployee(input: IOrganizationProjectEditByEmployeeInput): Promise<boolean> {
+		// A project kept private from the caller is not there for them: no membership of it is added or removed,
+		// or an editor could join a private project and then see it as its member (see hiddenProjectIds)
+		const listedProjectIds = [...(input?.addedProjectIds ?? []), ...(input?.removedProjectIds ?? [])];
+		if (listedProjectIds.length) {
+			const hidden = new Set(await this.hiddenProjectIds());
+			if (listedProjectIds.some((projectId) => hidden.has(projectId))) {
+				throw new NotFoundException('The requested record was not found');
+			}
+		}
 		try {
 			const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
 			const { organizationId, addedProjectIds = [], removedProjectIds = [], member } = input;
