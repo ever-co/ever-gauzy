@@ -190,6 +190,9 @@ export function kindSwitchOf(setting: IDeliverySettingLike | null | undefined, p
 		// A timer left running: off when the employee turned the reminders off (`timerReminderHours` null or 0).
 		case EmployeeNotificationTypeEnum.TIMER_REMINDER:
 			return preferences.timerReminderHours !== null && preferences.timerReminderHours !== 0;
+		// A task due soon: off when the employee turned the due reminders off (`taskDueReminderHours` null or 0).
+		case EmployeeNotificationTypeEnum.TASK_DUE_REMINDER:
+			return preferences.taskDueReminderHours !== null && preferences.taskDueReminderHours !== 0;
 		default:
 			return true;
 	}
