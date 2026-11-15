@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { Logger, NotFoundException } from '@nestjs/common';
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import { EmployeeAppointmentService } from '../../employee-appointment.service';
 import { EmployeeAppointmentUpdateCommand } from '../employee-appointment.update.command';
@@ -21,6 +21,8 @@ import {
 
 @CommandHandler(EmployeeAppointmentUpdateCommand)
 export class EmployeeAppointmentUpdateHandler implements ICommandHandler<EmployeeAppointmentUpdateCommand> {
+	private readonly logger = new Logger(EmployeeAppointmentUpdateHandler.name);
+
 	constructor(
 		private employeeAppointmentService: EmployeeAppointmentService,
 		private employeeService: EmployeeService,
@@ -87,13 +89,20 @@ export class EmployeeAppointmentUpdateHandler implements ICommandHandler<Employe
 			// What the invitees are told is the meeting as stored once written, read again: a field this request left out
 			// is the stored one, not the one read before the write (another request may have changed it in between), and
 			// a column the service did not write (an organization out of the caller's reach) is the one it kept
-			const after = (await this.meetingAfter(id)) ?? {
-				...before,
-				...newAppointment,
-				organizationId: keptOrganizationId,
-				tenantId: before.tenantId
-			};
-			await this.tellInvitees(before, after, inviteeIds);
+			const stored = await this.meetingAfter(id);
+			if (stored) {
+				await this.tellInvitees(before, stored, inviteeIds);
+			} else {
+				// Not read back: the invitees the request named are still written, in the organization the meeting keeps,
+				// but nobody is told anything rather than told of a meeting this request may not know as it is stored
+				this.logger.warn(`Meeting ${id} was not read back after its update: its invitees were told nothing`);
+				if (inviteeIds) {
+					await this.meetingNotifications.replaceInvitees(
+						{ ...before, ...newAppointment, organizationId: keptOrganizationId, tenantId: before.tenantId },
+						inviteeIds
+					);
+				}
+			}
 		}
 
 		return updatedAppointment;
@@ -117,8 +126,7 @@ export class EmployeeAppointmentUpdateHandler implements ICommandHandler<Employe
 
 	/**
 	 * The meeting as stored after the update, or null when it cannot be read back (an update that handed it to another
-	 * employee may have taken it out of the caller's scope): the invitees are then told of the meeting as the request
-	 * left it.
+	 * employee may have taken it out of the caller's scope, or the read failed): the invitees are then told nothing.
 	 */
 	private async meetingAfter(id: ID): Promise<IMeetingSnapshot | null> {
 		try {
@@ -129,21 +137,37 @@ export class EmployeeAppointmentUpdateHandler implements ICommandHandler<Employe
 	}
 
 	/**
-	 * Writes the invitees the request named, then tells them what changed: a meeting cancelled now tells everyone who
-	 * was invited; otherwise those added are invited, those left out are told they no longer are, and those kept are
-	 * told when, where or what the meeting is changed. A meeting that was already cancelled or completed tells nobody
+	 * Writes the invitees the request named, and tells them what changed: a meeting cancelled now tells everyone who
+	 * was invited; otherwise those kept are told when, where or what the meeting is changed, those added are invited,
+	 * and those left out are told they no longer are. A meeting that was already cancelled or completed tells nobody
 	 * anything, unless this update puts it back on: everyone invited to it then is told they are invited.
+	 *
+	 * A cancellation and a change are told before the invitees are written: the meeting is stored already, so a write
+	 * of the invitees that fails (the request fails, and a retry finds the meeting cancelled or changed already) must
+	 * not leave them untold. An invitation and a removal follow the write they announce.
 	 */
 	private async tellInvitees(before: IMeetingSnapshot, after: IMeetingSnapshot, inviteeIds?: ID[]): Promise<void> {
 		const sentByEmployeeId = RequestContext.currentEmployeeId() ?? RequestContext.currentUser()?.employeeId ?? null;
 		const invitedBefore = await this.meetingNotifications.inviteeIdsOf(before.id, before.tenantId);
+		const wasScheduled = isMeetingScheduled(before.status);
+		const isCancelled = after.status === EmployeeAppointmentStatus.CANCELLED;
+
+		if (wasScheduled && isCancelled) {
+			await this.meetingNotifications.notify('cancelled', before, invitedBefore, { sentByEmployeeId });
+		} else if (wasScheduled && isMeetingChangeWorthTelling(before, after)) {
+			// Those invited before who stay invited (all of them when the request names no invitees)
+			const wanted = inviteeIds ? new Set(inviteeIds.map((id) => String(id).toLowerCase())) : null;
+			const kept = wanted ? invitedBefore.filter((id) => wanted.has(String(id).toLowerCase())) : invitedBefore;
+			await this.meetingNotifications.notify('changed', after, kept, { sentByEmployeeId });
+		}
+
 		// The rows are written under the meeting as it is now: an update that moved it to another organization files its new
 		// invitees there, where they were checked
 		const change = inviteeIds
 			? await this.meetingNotifications.replaceInvitees(after, inviteeIds)
 			: { added: [], removed: [], kept: invitedBefore };
 
-		if (!isMeetingScheduled(before.status)) {
+		if (!wasScheduled) {
 			if (isMeetingScheduled(after.status)) {
 				await this.meetingNotifications.notify('invited', after, [...change.added, ...change.kept], {
 					sentByEmployeeId
@@ -151,15 +175,11 @@ export class EmployeeAppointmentUpdateHandler implements ICommandHandler<Employe
 			}
 			return;
 		}
-		if (after.status === EmployeeAppointmentStatus.CANCELLED) {
-			await this.meetingNotifications.notify('cancelled', before, invitedBefore, { sentByEmployeeId });
+		if (isCancelled) {
 			return;
 		}
 		await this.meetingNotifications.notify('invited', after, change.added, { sentByEmployeeId });
 		await this.meetingNotifications.notify('removed', before, change.removed, { sentByEmployeeId });
-		if (isMeetingChangeWorthTelling(before, after)) {
-			await this.meetingNotifications.notify('changed', after, change.kept, { sentByEmployeeId });
-		}
 	}
 }
 

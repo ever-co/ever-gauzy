@@ -162,9 +162,9 @@ describe('appointment writes and the meeting notices', () => {
 				'added-1'
 			]);
 			expect(kinds()).toEqual([
+				['changed', ['kept-1']],
 				['invited', ['added-1']],
-				['removed', ['removed-1']],
-				['changed', ['kept-1']]
+				['removed', ['removed-1']]
 			]);
 			const changed = meetingNotifications.notify.mock.calls.find(([kind]) => kind === 'changed');
 			expect(changed?.[1]).toEqual(expect.objectContaining({ startDateTime: new Date('2030-11-12T14:00:00.000Z') }));
@@ -178,9 +178,9 @@ describe('appointment writes and the meeting notices', () => {
 
 			expect(meetingNotifications.replaceInvitees).not.toHaveBeenCalled();
 			expect(kinds()).toEqual([
+				['changed', ['invitee-1']],
 				['invited', []],
-				['removed', []],
-				['changed', ['invitee-1']]
+				['removed', []]
 			]);
 		});
 
@@ -287,6 +287,37 @@ describe('appointment writes and the meeting notices', () => {
 
 			const changed = meetingNotifications.notify.mock.calls.find(([kind]) => kind === 'changed');
 			expect(changed?.[1]).toEqual(expect.objectContaining({ location: 'Room 4', startDateTime: later }));
+		});
+
+		it('tells nobody anything when the meeting is not read back, and still writes the invitees', async () => {
+			const { update, meetingNotifications, employeeAppointmentService, current } = setup(['invitee-1']);
+			employeeAppointmentService.findOneByIdString
+				.mockResolvedValueOnce({ ...current })
+				.mockRejectedValueOnce(new Error('connection lost'));
+
+			await update({ location: 'Room 4', inviteeEmployeeIds: ['invitee-1', 'invitee-2'] });
+
+			expect(meetingNotifications.replaceInvitees).toHaveBeenCalledWith(
+				expect.objectContaining({ id: 'appointment-1', organizationId: 'org-1' }),
+				['invitee-1', 'invitee-2']
+			);
+			expect(meetingNotifications.notify).not.toHaveBeenCalled();
+		});
+
+		it('tells a cancellation and a change even when writing the invitees then fails', async () => {
+			const cancelling = setup(['invitee-1']);
+			cancelling.meetingNotifications.replaceInvitees.mockRejectedValue(new Error('down'));
+			await expect(
+				cancelling.update({ status: EmployeeAppointmentStatus.CANCELLED, inviteeEmployeeIds: ['invitee-2'] })
+			).rejects.toThrow('down');
+			expect(cancelling.kinds()).toEqual([['cancelled', ['invitee-1']]]);
+
+			const moving = setup(['kept-1', 'removed-1']);
+			moving.meetingNotifications.replaceInvitees.mockRejectedValue(new Error('down'));
+			await expect(
+				moving.update({ startDateTime: new Date('2030-11-12T14:00:00.000Z'), inviteeEmployeeIds: ['kept-1'] })
+			).rejects.toThrow('down');
+			expect(moving.kinds()).toEqual([['changed', ['kept-1']]]);
 		});
 
 		it('invites everyone invited when the update puts a cancelled meeting back on', async () => {
