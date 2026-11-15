@@ -257,6 +257,20 @@ describe('TaskDueReminderService on SQLite', () => {
 		]);
 	});
 
+	it('meets a threshold shorter than the time between two sweeps: its window is never shorter than that', async () => {
+		// 0.01 hours is 36 seconds: a task due in 3 minutes is inside no window of its own size at NOW
+		const minute = await employee({ preferences: { taskDueReminderHours: 0.01 } });
+		await task([minute], { dueDate: new Date(NOW.getTime() + 3 * 60_000) });
+		await task([await employee({ preferences: { taskDueReminderHours: 0.01 } })], {
+			dueDate: new Date(NOW.getTime() + 6 * 60_000),
+			title: 'Later'
+		});
+
+		await service.sweep(NOW);
+
+		expect(filed.map(({ input }) => input.receiverEmployeeId)).toEqual([minute]);
+	});
+
 	it("reads a due date that names a day in the assignee's zone: due once their day is over", async () => {
 		// Friday the 20th, saved as midnight UTC. At noon UTC on Thursday, Paris has 35 hours left and Los Angeles 44.
 		const friday = new Date('2026-11-20T00:00:00.000Z');
