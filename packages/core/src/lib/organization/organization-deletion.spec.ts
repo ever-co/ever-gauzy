@@ -237,7 +237,15 @@ describe('Soft deleting an organization (#11960)', () => {
 				defaultOrganizationId: TRIAL,
 				lastTeamId: MAIN_TEAM
 			},
-			{ id: 'dave', tenantId: TENANT, lastOrganizationId: TRIAL, defaultOrganizationId: null, lastTeamId: null }
+			{ id: 'dave', tenantId: TENANT, lastOrganizationId: TRIAL, defaultOrganizationId: null, lastTeamId: null },
+			// gina's last team is a team of TRIAL deleted earlier
+			{
+				id: 'gina',
+				tenantId: TENANT,
+				lastOrganizationId: MAIN,
+				defaultOrganizationId: null,
+				lastTeamId: TRIAL_OLD_TEAM
+			}
 		]);
 		await insert('invite', [
 			{ id: 'invite-trial', tenantId: TENANT, organizationId: TRIAL },
@@ -336,13 +344,15 @@ describe('Soft deleting an organization (#11960)', () => {
 		expect(hidden).toMatchObject({ lastOrganizationMoved: 3, defaultOrganizationMoved: 2 });
 	});
 
-	it('clears a last team that is one of its teams, and only those', async () => {
+	it('clears a last team that is one of its teams, a team deleted earlier included, and only those', async () => {
 		const hidden = await hide(ofTenant(TRIAL));
 
 		expect((await row('user', 'alice')).lastTeamId).toBeNull();
 		expect((await row('user', 'bob')).lastTeamId).toBeNull();
+		expect((await row('user', 'gina')).lastTeamId).toBeNull();
 		expect((await row('user', 'carol')).lastTeamId).toBe(MAIN_TEAM);
-		expect(hidden.lastTeamCleared).toBe(2);
+		expect(hidden.lastTeamCleared).toBe(3);
+		expect((await row('organization_team', TRIAL_OLD_TEAM)).deletedAt).toBeTruthy();
 	});
 
 	it('refuses the last organization of a workspace, says why, and marks nothing', async () => {

@@ -111,8 +111,7 @@ export async function hideOrganization(
 		throw new ConflictException({ message: LAST_ORGANIZATION_MESSAGE, code: ORGANIZATION_LAST_OF_WORKSPACE });
 	}
 
-	// Read before the teams are marked: the reads below leave soft-deleted rows out.
-	const teamIds = await liveTeamIds(manager, organization);
+	const teamIds = await teamIdsOf(manager, organization);
 
 	const rows = {} as Record<HiddenWithOrganization, number>;
 	for (const table of TABLES_HIDDEN_WITH_ORGANIZATION) {
@@ -209,17 +208,19 @@ async function lockLiveOrganizations(manager: EntityManager, tenantId: ID): Prom
 }
 
 /**
- * The organization's teams not deleted yet.
+ * Every team of the organization, a team deleted earlier included: a last team that names one of them is cleared,
+ * whichever it is.
  *
  * @param manager The transaction's entity manager.
  * @param organization The organization.
  * @returns Their identifiers.
  */
-async function liveTeamIds(manager: EntityManager, { id, tenantId }: IOrganizationOfTenant): Promise<ID[]> {
+async function teamIdsOf(manager: EntityManager, { id, tenantId }: IOrganizationOfTenant): Promise<ID[]> {
 	const teams: { id: ID }[] = await manager
 		.createQueryBuilder('organization_team', 'team')
+		.withDeleted()
 		.select('team.id', 'id')
-		.where({ tenantId, organizationId: id, deletedAt: IsNull() })
+		.where({ tenantId, organizationId: id })
 		.getRawMany();
 	return teams.map((row) => row.id);
 }
