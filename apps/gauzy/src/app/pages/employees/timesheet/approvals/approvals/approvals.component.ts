@@ -122,12 +122,15 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements A
 	 * answers, so an answer fetched without the employee cannot replace one
 	 * fetched with it.
 	 */
-	async getTimeSheets() {
+	async getTimeSheets({ keepsShown = false }: { keepsShown?: boolean } = {}) {
 		if (!this.organization) {
 			return;
 		}
 		const fetchId = ++this._fetchId;
-		this.loading = true;
+		// A read after a change to some rows keeps the list usable, without its giant spinner (#12014)
+		if (!keepsShown) {
+			this.loading = true;
+		}
 		try {
 			const timesheets = await this.timesheetService.getTimeSheets({
 				...this.getFilterRequest(this.request),
@@ -144,6 +147,15 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements A
 				this.loading = false;
 			}
 		}
+	}
+
+	/**
+	 * After an approval, a denial or a submission: the timesheets are read again while the rows stay usable, and
+	 * their new status shows once read. A new period or filter is still read under the loading state.
+	 */
+	private _refreshAfterChange(): void {
+		this.allChecked = false;
+		void this.getTimeSheets({ keepsShown: true });
 	}
 
 	/**
@@ -188,7 +200,7 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements A
 			})
 			.finally(() => {
 				this.saving = false;
-				this.subject$.next(true);
+				this._refreshAfterChange();
 			});
 	}
 
@@ -216,7 +228,7 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements A
 			})
 			.finally(() => {
 				this.saving = false;
-				this.subject$.next(true);
+				this._refreshAfterChange();
 			});
 	}
 
