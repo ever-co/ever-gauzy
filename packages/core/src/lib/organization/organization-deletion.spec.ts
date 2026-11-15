@@ -31,7 +31,7 @@ const softDeletable = { deletedAt: { type: 'datetime', nullable: true, deleteDat
 const ofOrganization = { tenantId: { type: 'varchar' }, organizationId: { type: 'varchar' } } as const;
 const activity = {
 	isActive: { type: 'boolean', default: true },
-	isArchived: { type: 'boolean', default: false }
+	isArchived: { type: 'boolean', default: false, nullable: true }
 } as const;
 
 const schemas = [
@@ -433,12 +433,23 @@ describe('Soft deleting an organization (#11960)', () => {
 
 	describe('counts', () => {
 		it('counts the teams, projects, members, tracked seconds, invoices and estimates it holds', async () => {
+			// One more member whose archive flag is unset (the column is nullable), and one archived member
+			await dataSource
+				.createQueryBuilder()
+				.insert()
+				.into('employee')
+				.values([
+					{ id: 'emp-erin', tenantId: TENANT, organizationId: TRIAL, userId: 'erin', isArchived: null },
+					{ id: 'emp-frank', tenantId: TENANT, organizationId: TRIAL, userId: 'frank', isArchived: true }
+				])
+				.execute();
+
 			const counts = await countOrganizationContents(dataSource.manager, ofTenant(TRIAL));
 
 			expect(counts).toEqual({
 				teams: 1,
 				projects: 1,
-				members: 4,
+				members: 5,
 				trackedSeconds: 5400,
 				invoices: 2,
 				estimates: 1

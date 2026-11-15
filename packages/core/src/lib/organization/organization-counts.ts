@@ -12,7 +12,7 @@ export interface IOrganizationCounts {
 	teams: number;
 	/** Its projects. */
 	projects: number;
-	/** Its members: member records that are not archived (an inactive member still counts). */
+	/** Its members: member records that are not archived, the flag false or unset (an inactive member counts). */
 	members: number;
 	/** The time tracked in it, in seconds, over every time log (a running one up to now). */
 	trackedSeconds: number;
@@ -41,7 +41,10 @@ export async function countOrganizationContents(
 
 	const teams = await countRows(manager, 'organization_team', ofOrganization);
 	const projects = await countRows(manager, 'organization_project', ofOrganization);
-	const members = await countRows(manager, 'employee', { ...ofOrganization, isArchived: false });
+	const members = await countRows(manager, 'employee', [
+		{ ...ofOrganization, isArchived: false },
+		{ ...ofOrganization, isArchived: IsNull() }
+	]);
 	const invoices = await countRows(manager, 'invoice', [
 		{ ...ofOrganization, isEstimate: false },
 		{ ...ofOrganization, isEstimate: IsNull() }
