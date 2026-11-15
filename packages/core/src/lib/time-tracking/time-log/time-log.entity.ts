@@ -48,6 +48,13 @@ import { MikroOrmTimeLogRepository } from './repository/mikro-orm-time-log.repos
  */
 @ColumnIndex('IDX_time_log_tenant_org_employee_started', ['tenantId', 'organizationId', 'employeeId', 'startedAt'])
 @ColumnIndex('IDX_time_log_tenant_org_started', ['tenantId', 'organizationId', 'startedAt'])
+// One running timer run per employee (`AddTimeLogOneRunningTimerPerEmployee1791000018700`). The desktop's rows are left
+// out: it stores the time it uploads as running by design. MySQL has no filtered index: the migration indexes a virtual
+// generated `runningTimerKey` column there instead, which no entity declares.
+@ColumnIndex('UQ_time_log_running_timer_employee', ['employeeId'], {
+	unique: true,
+	where: `"isRunning" = true AND "deletedAt" IS NULL AND "source" <> 'DESKTOP'`
+})
 @MultiORMEntity('time_log', { mikroOrmRepository: () => MikroOrmTimeLogRepository })
 export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog, ITimeLogStoredRates {
 	@ApiProperty({ type: () => 'timestamptz' })
