@@ -3,7 +3,7 @@ import '../core/entities/internal';
 import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
-import { EmployeeNotificationTypeEnum } from '@gauzy/contracts';
+import { BaseEntityEnum, EmployeeNotificationTypeEnum } from '@gauzy/contracts';
 import {
 	BoardNotificationDTO,
 	boardNotificationsOf,
@@ -136,8 +136,8 @@ describe('boardNotificationsOf', () => {
 			{
 				type: EmployeeNotificationTypeEnum.BOARD_SHARE,
 				title: 'Ana Lima shared the Board "Sprint plan" with you',
-				entity: null,
-				entityId: null,
+				entity: BaseEntityEnum.Organization,
+				entityId: ORG,
 				metadata: { board },
 				receiverEmployeeId: BEN,
 				sentByEmployeeId: ANA,

@@ -75,10 +75,10 @@ describe('notificationItemInput', () => {
 	it('carries the Board a notification names into the metadata, where Ever Teams opens it from', () => {
 		const board = { roomId: 'r00m', name: 'Sprint plan', link: 'https://boards.example/' };
 		const input = notificationItemInput(
-			{ ...notification, type: EmployeeNotificationTypeEnum.BOARD_SHARE, entity: null, entityId: null, metadata: { board } } as never,
+			{ ...notification, type: EmployeeNotificationTypeEnum.BOARD_SHARE, entity: 'Organization', entityId: 'org', metadata: { board } } as never,
 			'u2'
 		);
-		expect(input).toMatchObject({ entity: null, entityId: null, taskId: null });
+		expect(input).toMatchObject({ entity: 'Organization', entityId: 'org', taskId: null });
 		expect(input?.metadata).toEqual({
 			notificationId: 'n1',
 			notificationType: EmployeeNotificationTypeEnum.BOARD_SHARE,

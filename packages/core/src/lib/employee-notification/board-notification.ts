@@ -14,6 +14,7 @@ import {
 } from 'class-validator';
 import { DataSource, In } from 'typeorm';
 import {
+	BaseEntityEnum,
 	EmployeeNotificationTypeEnum,
 	ID,
 	IEmployeeNotificationBoard,
@@ -243,9 +244,10 @@ export async function boardNotificationsOf(
 		.map((key) => ({
 			type,
 			title,
-			// A Board is no record of the platform: the notification names it in its metadata
-			entity: null,
-			entityId: null,
+			// A Board is no record of the platform: the notification is about the organization (the table needs an entity,
+			// and the Inbox entry's entity id is a uuid, which a room id is not), and names the Board in its metadata
+			entity: BaseEntityEnum.Organization,
+			entityId: senderEmployee.organizationId,
 			metadata: { board },
 			receiverEmployeeId: working.get(key) as ID,
 			sentByEmployeeId: senderEmployee.id,

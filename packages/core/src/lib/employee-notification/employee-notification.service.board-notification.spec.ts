@@ -1,7 +1,7 @@
 import '../core/entities/internal';
 
 import { ForbiddenException } from '@nestjs/common';
-import { EmployeeNotificationTypeEnum, IUser } from '@gauzy/contracts';
+import { BaseEntityEnum, EmployeeNotificationTypeEnum, IUser } from '@gauzy/contracts';
 import { RequestContext } from '../core/context/request-context';
 import { asTenantUser, createTenantFixture } from '../core/testing/tenant-isolation/tenant-isolation.fixtures';
 import { EmployeeNotificationService } from './employee-notification.service';
@@ -84,8 +84,8 @@ describe('EmployeeNotificationService — notifyAboutBoard', () => {
 			{
 				type: EmployeeNotificationTypeEnum.BOARD_SHARE,
 				title: 'Ana Lima shared the Board "Sprint plan" with you',
-				entity: null,
-				entityId: null,
+				entity: BaseEntityEnum.Organization,
+				entityId: fixture.organizationId,
 				metadata: { board },
 				receiverEmployeeId: BEN,
 				sentByEmployeeId: 'employee-ana',
