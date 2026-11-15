@@ -50,6 +50,17 @@ describe('task due reminder rules', () => {
 			expect(new Date(taskDueMomentOf(friday, 'Not/AZone')).toISOString()).toBe('2026-11-21T00:00:00.000Z');
 		});
 
+		it('ends a day whose midnight a DST change skips when the next day starts, not an hour later', () => {
+			// Asia/Amman went from 00:00 to 01:00 on 2021-03-26: that day ends at 2021-03-27 00:00 (UTC+3)
+			expect(new Date(taskDueMomentOf('2021-03-26T00:00:00.000Z', 'Asia/Amman')).toISOString()).toBe(
+				'2021-03-26T21:00:00.000Z'
+			);
+			// and the day before ends when 2021-03-26 starts, at its 01:00 (UTC+3)
+			expect(new Date(taskDueMomentOf('2021-03-25T00:00:00.000Z', 'Asia/Amman')).toISOString()).toBe(
+				'2021-03-25T22:00:00.000Z'
+			);
+		});
+
 		it('reads the day of a date-only value as SQLite returns it (UTC text without its zone)', () => {
 			expect(new Date(taskDueMomentOf('2026-11-20 00:00:00.000', 'UTC')).toISOString()).toBe(
 				'2026-11-21T00:00:00.000Z'

@@ -66,8 +66,10 @@ export function taskDueMomentOf(
 	if (!isDayOnlyDueDate(dueDate)) {
 		return instant;
 	}
-	const day = moment.utc(instant).format('YYYY-MM-DD');
-	return moment.tz(day, knownTimeZoneOf(timeZone)).add(1, 'day').valueOf();
+	// The start of the next calendar day in the person's zone, read from that day itself. A picked day whose midnight a
+	// DST change skips (Asia/Amman, 2021-03-26) starts at 01:00, and a day added to that start ended it an hour late.
+	const nextDay = moment.utc(instant).add(1, 'day').format('YYYY-MM-DD');
+	return moment.tz(nextDay, knownTimeZoneOf(timeZone)).valueOf();
 }
 
 /**
