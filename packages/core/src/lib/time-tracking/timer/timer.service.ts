@@ -148,7 +148,8 @@ const TEAM_TRACKING_SWITCH_SOURCES: ReadonlyArray<string> = [TimeLogSourceEnum.T
 /**
  * How long a start or a stop of an employee's timer keeps their turn, in this process, before the next one may go on
  * anyway: one that hangs holds the employee's timer this long at most, as the desktop timer's own lock does. It counts
- * from when the start or stop began, not from when the next one arrived.
+ * from when the start or stop holds the turn every API process shares (`inEmployeeTurn`), not from when the next one
+ * arrived.
  */
 export const EMPLOYEE_TURN_FAILSAFE_MS = 120_000;
 
@@ -1810,9 +1811,11 @@ export class TimerService {
 	 * The shared turn is a lease of `EMPLOYEE_TURN_FAILSAFE_MS`: a start or stop waits for it, holding no database
 	 * connection meanwhile, and gives it back once it has settled. A process that stops or hangs holds it until it
 	 * ends, then the next one takes it over. When the turns cannot be read or written, the start or stop goes on in
-	 * this process's order alone, as before the shared turn (`takeTimerTurn`).
+	 * this process's order alone, as before the shared turn; when the turn stays taken for as long as a start or stop
+	 * waits, it is refused with a 408 and runs nothing (`takeTimerTurn`).
 	 *
-	 * A start or a stop keeps the turn `EMPLOYEE_TURN_FAILSAFE_MS` at most from when it began: one that never settles
+	 * A start or a stop keeps the turn `EMPLOYEE_TURN_FAILSAFE_MS` at most from when it holds the shared turn (its wait
+	 * for that turn is bounded by the same time on its own): one that never settles
 	 * (a database that never answers) does not hold the employee's timer in this process for good. The next one may then
 	 * go on, and once it does, the one that hung writes no time log any more (`EmployeeTurn`, checked before each of its
 	 * writes): it creates no second run and ends none of the next one's. A run it was already creating is closed again
@@ -1843,9 +1846,14 @@ export class TimerService {
 		};
 		// Once the one before has settled, or has run for the failsafe time: still running, it then loses the turn
 		const begin = (previous?.end ?? Promise.resolve()).then(() => previous?.passOn());
-		const run = begin.then(async () => {
+		// The turn every API process shares; refused (408) when it stayed taken for as long as a start or stop waits
+		const sharedTaken = begin.then(async () => {
 			sharedTurn = await this.takeSharedTurn(employeeId);
+		});
+		const run = sharedTaken.then(async () => {
 			try {
+				// One whose turn here passed to the next one while it waited for the shared turn does nothing
+				turn.assertHeld();
 				return await work(turn);
 			} finally {
 				await sharedTurn.giveBack();
@@ -1856,8 +1864,12 @@ export class TimerService {
 		};
 		run.then(markSettled, markSettled);
 		const queued: QueuedTurn = {
-			// The clock starts with this one, so those after it still go one at a time
-			end: begin.then(() => TimerService.settledOrFailsafe(run)),
+			// The clock starts with this one, so those after it still go one at a time. The failsafe time counts from
+			// when it holds the shared turn: a wait for a turn another API process holds does not shorten its own run.
+			// The wait itself is bounded on its own (the same failsafe time, should a statement never answer).
+			end: begin
+				.then(() => TimerService.settledOrFailsafe(sharedTaken))
+				.then(() => TimerService.settledOrFailsafe(run)),
 			passOn: () => {
 				if (isSettled || !isHeldHere) {
 					return;

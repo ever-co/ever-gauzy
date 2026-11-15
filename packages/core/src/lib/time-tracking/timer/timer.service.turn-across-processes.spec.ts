@@ -1,7 +1,8 @@
 // Must stay first: see timer.service.spec.ts.
 import '../../core/entities/internal';
 
-import { EmployeeTurn, TimerService } from './timer.service';
+import { RequestTimeoutException } from '@nestjs/common';
+import { EMPLOYEE_TURN_FAILSAFE_MS, EmployeeTurn, TimerService } from './timer.service';
 import { takeTimerTurn, TimerTurnOptions, TimerTurnStore } from './employee-timer-turn';
 
 const EMPLOYEE_ID = '11826000-0000-4000-8000-0000000000e1';
@@ -113,5 +114,57 @@ describe('TimerService — the turn every API process shares', () => {
 		});
 
 		await expect(inEmployeeTurn(async (turn) => turn.isHeld())).resolves.toBe(true);
+	});
+
+	describe('with the clock mocked', () => {
+		beforeEach(() => {
+			// The timers and the clock: the polls of a wait for the shared turn sleep on them
+			jest.useFakeTimers({ doNotFake: ['nextTick', 'setImmediate', 'queueMicrotask'] });
+		});
+		afterEach(() => {
+			jest.useRealTimers();
+		});
+
+		it('gives a start or stop its whole failsafe time once it holds the shared turn, however long it waited for it', async () => {
+			// Another API process holds the turn for 110 s
+			const otherProcess = await takeTimerTurn(store, EMPLOYEE_ID, OTHER_PROCESS_TURN);
+			setTimeout(() => void otherProcess.giveBack(), 110_000);
+			let firstTurn: EmployeeTurn | undefined;
+			let finishFirst: () => void = () => undefined;
+			const order: string[] = [];
+
+			const first = inEmployeeTurn((turn) => {
+				firstTurn = turn;
+				return new Promise<void>((resolve) => (finishFirst = resolve));
+			});
+			const second = inEmployeeTurn(async () => {
+				order.push('second');
+			});
+			await jest.advanceTimersByTimeAsync(130_000);
+
+			// Twenty seconds into its run, the first still holds its turn, and the next one in this process waits
+			expect(firstTurn?.isHeld()).toBe(true);
+			expect(order).toEqual([]);
+
+			finishFirst();
+			await first;
+			await second;
+			expect(order).toEqual(['second']);
+			expect(store.rows.size).toBe(0);
+		});
+
+		it('refuses with a 408, and runs nothing, a start or stop whose shared turn stayed taken as long as it waits', async () => {
+			// A holder whose turn outlasts the wait: a process whose clock runs ahead
+			await takeTimerTurn(store, EMPLOYEE_ID, { ...OTHER_PROCESS_TURN, lengthMs: 600_000 });
+			const work = jest.fn(async () => 'ran');
+
+			const outcome = inEmployeeTurn(work).catch((error: unknown) => error);
+			await jest.advanceTimersByTimeAsync(EMPLOYEE_TURN_FAILSAFE_MS + 1_000);
+
+			await expect(outcome).resolves.toBeInstanceOf(RequestTimeoutException);
+			expect(work).not.toHaveBeenCalled();
+			// The holder keeps its turn
+			expect(store.rows.size).toBe(1);
+		});
 	});
 });

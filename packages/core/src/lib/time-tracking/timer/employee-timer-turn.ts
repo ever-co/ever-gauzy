@@ -1,4 +1,4 @@
-import { Logger } from '@nestjs/common';
+import { Logger, RequestTimeoutException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { EntityManager } from 'typeorm';
 import { ID } from '@gauzy/contracts';
@@ -89,7 +89,7 @@ export interface HeldTimerTurn {
 export interface TimerTurnOptions {
 	/** How long a turn lasts once taken, in milliseconds. */
 	readonly lengthMs: number;
-	/** How long to wait for a turn another holder has, in milliseconds, before going on without one. */
+	/** How long to wait for a turn another holder has, in milliseconds, before the start or stop is refused. */
 	readonly waitMs: number;
 	/** The pause between two tries, in milliseconds. */
 	readonly retryMs: number;
@@ -115,14 +115,18 @@ const UNKEPT_TURN: HeldTimerTurn = {
  * that long at most: the next one then takes it over.
  *
  * When the store fails (a database error, a table not migrated yet), the start or stop goes on without a turn, as it
- * did before the store existed: a timer never stops working because of the store. When the turn stays taken past
- * `waitMs`, the start or stop goes on as well; a turn ends after `lengthMs`, so this only happens to a holder that
- * outlived its own turn.
+ * did before the store existed: a timer never stops working because of the store.
+ *
+ * When the turn stays taken past `waitMs`, the start or stop is refused and runs nothing. A turn one holder took ends
+ * after `lengthMs`, which the wait covers, so the wait only runs out while the turn keeps passing to other starts or
+ * stops of the employee, or while a holder whose clock runs ahead of this one keeps it: going on then would run beside
+ * a start or stop that still holds the turn, which is what the turn is there to prevent.
  *
  * @param store The shared store.
  * @param employeeId The employee whose timer starts or stops.
  * @param options The lengths and clock.
  * @returns The turn held, to give back once the start or stop has settled.
+ * @throws RequestTimeoutException when the turn stayed taken for `waitMs`.
  */
 export async function takeTimerTurn(
 	store: TimerTurnStore,
@@ -131,30 +135,33 @@ export async function takeTimerTurn(
 ): Promise<HeldTimerTurn> {
 	const holder = randomUUID();
 	const waitUntil = options.now() + options.waitMs;
-	try {
-		while (true) {
-			const now = options.now();
+	while (true) {
+		const now = options.now();
+		const endsAt = now + options.lengthMs;
+		let isTaken: boolean;
+		try {
 			await store.dropEnded(employeeId, now);
-			const endsAt = now + options.lengthMs;
-			const isTaken = await store.tryTake(employeeId, holder, endsAt);
-			if (isTaken) {
-				return heldTurn(store, employeeId, holder, endsAt, options);
-			}
-			if (options.now() >= waitUntil) {
-				logger.warn(
-					`The timer turn of employee ${employeeId} stayed taken for ${options.waitMs} ms: this start or stop goes on without it.`
-				);
-				return UNKEPT_TURN;
-			}
-			await options.sleep(options.retryMs);
+			isTaken = await store.tryTake(employeeId, holder, endsAt);
+		} catch (error) {
+			logger.warn(
+				`The timer turns could not be read or written; the start or stop of employee ${employeeId} goes on without one: ${
+					(error as Error)?.message
+				}`
+			);
+			return UNKEPT_TURN;
 		}
-	} catch (error) {
-		logger.warn(
-			`The timer turns could not be read or written; the start or stop of employee ${employeeId} goes on without one: ${
-				(error as Error)?.message
-			}`
-		);
-		return UNKEPT_TURN;
+		if (isTaken) {
+			return heldTurn(store, employeeId, holder, endsAt, options);
+		}
+		if (options.now() >= waitUntil) {
+			logger.warn(
+				`The timer turn of employee ${employeeId} stayed taken for ${options.waitMs} ms: this start or stop is refused.`
+			);
+			throw new RequestTimeoutException(
+				'Another start or stop of your timer is still going on. Try again in a moment.'
+			);
+		}
+		await options.sleep(options.retryMs);
 	}
 }
 

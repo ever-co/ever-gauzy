@@ -1,3 +1,4 @@
+import { RequestTimeoutException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { isPostgres } from '@gauzy/config';
 import { CreateEmployeeTimerTurnTable1791000012100 } from '../../database/migrations/1791000012100-CreateEmployeeTimerTurnTable';
@@ -127,15 +128,34 @@ describe('takeTimerTurn', () => {
 		expect(store.rows.get(EMPLOYEE)).toBeDefined();
 	});
 
-	it('goes on without a turn once it waited as long as it may', async () => {
+	it('refuses the start or stop once it waited as long as it may, and leaves the turn to its holder', async () => {
 		const clock = fakeClock();
 		const store = memoryStore();
-		// A holder whose turn outlasts the wait: a process whose clock runs behind
-		await takeTimerTurn(store, EMPLOYEE, optionsOf(clock, { lengthMs: 600_000 }));
+		// A holder whose turn outlasts the wait: a process whose clock runs ahead
+		const holder = await takeTimerTurn(store, EMPLOYEE, optionsOf(clock, { lengthMs: 600_000 }));
 
-		const turn = await takeTimerTurn(store, EMPLOYEE, optionsOf(clock, { waitMs: 1_000 }));
+		const refusal = takeTimerTurn(store, EMPLOYEE, optionsOf(clock, { waitMs: 1_000 }));
 
+		await expect(refusal).rejects.toThrow(RequestTimeoutException);
 		expect(clock.waits).toHaveLength(10);
+		// Going on would have run beside the holder, which still has its turn
+		expect(holder.isHeld()).toBe(true);
+		expect(store.rows.size).toBe(1);
+	});
+
+	it('takes the turn on its last try when the holder gives it back just as the wait runs out', async () => {
+		const clock = fakeClock();
+		const store = memoryStore();
+		const holder = await takeTimerTurn(store, EMPLOYEE, optionsOf(clock));
+		const sleep = async (ms: number) => {
+			await clock.sleep(ms);
+			if (clock.waits.length === 10) {
+				await holder.giveBack();
+			}
+		};
+
+		const turn = await takeTimerTurn(store, EMPLOYEE, optionsOf(clock, { waitMs: 1_000, sleep }));
+
 		expect(turn.isHeld()).toBe(true);
 	});
 
