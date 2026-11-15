@@ -266,36 +266,72 @@ function viewportSize(): { width: number; height: number } {
 												<span class="header-icon"><nb-icon icon="message-square-outline"></nb-icon></span>
 												<h5>{{ 'CHAT.THREADS.TITLE' | translate }}</h5>
 											</header>
-											<ul class="rows">
-												@for (thread of threads(); track thread.id) {
-													<li>
-														<a class="card thread-card" [class.unread]="thread.unreadReplies > 0" [routerLink]="link(thread.conversationId)" [queryParams]="{ thread: thread.id }">
-															<span class="card-icon"><nb-icon icon="message-square-outline"></nb-icon></span>
-															<span class="card-main">
-																<strong>{{ titleOf(thread.conversationId) }}</strong>
-																<span class="preview">{{ preview(thread) }}</span>
-																<span class="thread-meta">
-																	<span class="replies">{{ 'CHAT.THREADS.REPLIES' | translate: { count: thread.replyCount } }}</span>
-																	@if (thread.lastReplyAt) {
-																		<time>{{ 'CHAT.THREADS.LAST_REPLY' | translate: { time: (thread.lastReplyAt | date: 'short') } }}</time>
-																	}
-																</span>
-															</span>
-															<span class="meta">
-																@if (thread.unreadReplies > 0) {
-																	<span class="count mention">{{ 'CHAT.THREADS.UNREAD_REPLIES' | translate: { count: thread.unreadReplies } }}</span>
-																}
-																<nb-icon class="go" icon="arrow-ios-forward-outline"></nb-icon>
-															</span>
-														</a>
-													</li>
-												} @empty {
-													<li class="caught-up">
-														<span class="state-icon"><nb-icon icon="message-square-outline"></nb-icon></span>
-														<p>{{ 'CHAT.THREADS.EMPTY' | translate }}</p>
-													</li>
-												}
-											</ul>
+											<div class="simple-scroll">
+												<div class="simple-inner">
+													<div class="item-tiles">
+														@for (thread of threads(); track thread.id) {
+															<section class="tile item-tile">
+																<div class="tile-inner">
+																	<div class="item-head">
+																		<h4>{{ titleOf(thread.conversationId) }}</h4>
+																		@if (thread.lastReplyAt) {
+																			<time>{{ thread.lastReplyAt | date: 'short' }}</time>
+																		}
+																	</div>
+																	<p class="item-text clamp">{{ preview(thread) }}</p>
+																	<div class="tile-row">
+																		<span class="card-icon"><nb-icon icon="message-square-outline"></nb-icon></span>
+																		<span class="row-label">
+																			{{ 'CHAT.THREADS.REPLIES' | translate: { count: thread.replyCount } }}
+																			@if (thread.unreadReplies > 0) {
+																				<span class="count mention">{{ 'CHAT.THREADS.UNREAD_REPLIES' | translate: { count: thread.unreadReplies } }}</span>
+																			}
+																		</span>
+																		<a class="button" [routerLink]="link(thread.conversationId)" [queryParams]="{ thread: thread.id }">{{ 'CHAT.THREADS.VIEW' | translate }} <nb-icon icon="arrow-forward-outline"></nb-icon></a>
+																	</div>
+																</div>
+															</section>
+														} @empty {
+															<section class="tile wide empty-tile" data-test="threads-empty">
+																<div class="tile-inner">
+																	<div class="tile-text">
+																		<h4>{{ 'CHAT.THREADS.EMPTY_TITLE' | translate }}</h4>
+																		<p>{{ 'CHAT.THREADS.EMPTY' | translate }}</p>
+																	</div>
+																	<!-- A message with its thread under it: the repliers' avatars and the "N replies" link. -->
+																	<div class="tile-art dotted" aria-hidden="true">
+																		<div class="mock window">
+																			<div class="mock-bar"><nb-icon icon="hash-outline"></nb-icon><i class="line w30"></i></div>
+																			<div class="mock-rows thread">
+																				<div class="mock-message">
+																					<span class="dot" data-tone="2"></span>
+																					<span class="mock-lines">
+																						<span class="name-row"><i class="line strong w30"></i><i class="line time"></i></span>
+																						<i class="line w70"></i>
+																						<i class="line w45"></i>
+																					</span>
+																				</div>
+																				<div class="mock-thread">
+																					<span class="dot mini" data-tone="1"></span>
+																					<span class="dot mini" data-tone="3"></span>
+																					<i class="line accent w30"></i>
+																				</div>
+																				<div class="mock-message">
+																					<span class="dot" data-tone="3"></span>
+																					<span class="mock-lines">
+																						<span class="name-row"><i class="line strong w35"></i><i class="line time"></i></span>
+																						<i class="line w60"></i>
+																					</span>
+																				</div>
+																			</div>
+																		</div>
+																	</div>
+																</div>
+															</section>
+														}
+													</div>
+												</div>
+											</div>
 										</section>
 									}
 									@case ('conversation') {
