@@ -1,6 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, DestroyRef, ElementRef, inject, NgZone, OnInit, type Signal, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, effect, ElementRef, inject, Injector, NgZone, OnInit, type Signal, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, NavigationStart, Router, RouterLink } from '@angular/router';
 import { NbCardModule, NbDialogService, NbIconModule, NbSpinnerModule } from '@nebular/theme';
@@ -49,6 +49,52 @@ const CARD_SWITCH_DELAY_MS = 150;
 const CARD_CLOSE_DELAY_MS = 250;
 /** A first guess of the card's height, before it is drawn (its place is measured again once it is). */
 const CARD_HEIGHT_GUESS_PX = 300;
+
+/**
+ * The welcome screen's sketches play a 12-second loop, one step a second, as the Downloads page's drawings do. Each
+ * step says where a drawn "You" cursor is and whether it clicks there.
+ */
+const WELCOME_LOOP_SECONDS = 12;
+interface WelcomeCursorStep<T extends string> {
+	at: T;
+	press?: boolean;
+}
+/** Channel: the cursor clicks the composer, "types" a message (seconds 2–4), then clicks Send (second 5). */
+const CHANNEL_SCRIPT: WelcomeCursorStep<'list' | 'composer' | 'send'>[] = [
+	{ at: 'list' },
+	{ at: 'composer' },
+	{ at: 'composer', press: true },
+	{ at: 'composer' },
+	{ at: 'send' },
+	{ at: 'send', press: true },
+	{ at: 'list' },
+	{ at: 'list' },
+	{ at: 'list' },
+	{ at: 'list' },
+	{ at: 'list' },
+	{ at: 'list' }
+];
+/** Browse channels: the cursor moves to the second channel's Join button and clicks it (second 5). */
+const BROWSE_SCRIPT: WelcomeCursorStep<'search' | 'join'>[] = [
+	{ at: 'search' },
+	{ at: 'search' },
+	{ at: 'search' },
+	{ at: 'join' },
+	{ at: 'join' },
+	{ at: 'join', press: true },
+	{ at: 'join' },
+	{ at: 'search' },
+	{ at: 'search' },
+	{ at: 'search' },
+	{ at: 'search' },
+	{ at: 'search' }
+];
+/** The second the message is sent, the channel joined and the teammate's reply arrives; all reset on the loop's last second. */
+const WELCOME_ACT_STEP = 5;
+const WELCOME_RESET_STEP = WELCOME_LOOP_SECONDS - 1;
+
+/** A thread tile's link names the thread with this much of its message, at most. */
+const LINK_PREVIEW_CHARS = 80;
 
 /** The window's size, for placing the card. */
 function viewportSize(): { width: number; height: number } {
@@ -148,41 +194,77 @@ function viewportSize(): { width: number; height: number } {
 													</button>
 												}
 											</header>
-											<ul class="rows">
-												@for (conversation of unreads(); track conversation.id) {
-													<li>
-														<a class="card" [routerLink]="link(conversation.id)">
-															<span class="card-icon">
-																@if (conversation.kind === 'channel') {
-																	<nb-icon [icon]="conversation.visibility === 'private' ? 'lock-outline' : 'hash-outline'"></nb-icon>
-																} @else if (personOf(conversation); as person) {
-																	<ngx-chat-person-avatar [person]="person"></ngx-chat-person-avatar>
-																} @else {
-																	<nb-icon icon="people-outline"></nb-icon>
-																}
-															</span>
-															<span class="card-main">
-																<strong>{{ cardTitle(conversation) }}</strong>
-																@if (conversation.lastMessageAt) {
-																	<time>{{ conversation.lastMessageAt | date: 'medium' }}</time>
-																}
-															</span>
-															<span class="meta">
-																@if (conversation.state?.mentionCount) {
-																	<span class="count mention">&#64;{{ conversation.state.mentionCount }}</span>
-																}
-																<span class="count">{{ conversation.state?.unreadCount }}</span>
-																<nb-icon class="go" icon="arrow-ios-forward-outline"></nb-icon>
-															</span>
-														</a>
-													</li>
-												} @empty {
-													<li class="caught-up">
-														<span class="state-icon success"><nb-icon icon="checkmark-circle-2-outline"></nb-icon></span>
-														<p>{{ 'CHAT.UNREADS.EMPTY' | translate }}</p>
-													</li>
-												}
-											</ul>
+											<!-- Laid out like the Downloads page: a grid of framed tiles, or one wide tile with a drawing when there is nothing. -->
+											<div class="simple-scroll">
+												<div class="simple-inner">
+													<!-- One tile per conversation, as the Downloads page's cards: title, description, then an action row. -->
+													<div class="item-tiles">
+														@for (conversation of unreads(); track conversation.id) {
+															<section class="tile item-tile">
+																<div class="tile-inner">
+																	<div class="item-head">
+																		<h4>{{ cardTitle(conversation) }}</h4>
+																		@if (conversation.lastMessageAt) {
+																			<time>{{ conversation.lastMessageAt | date: 'short' }}</time>
+																		}
+																	</div>
+																	@if (conversation.topic) {
+																		<p class="item-text">{{ conversation.topic }}</p>
+																	}
+																	<div class="tile-row">
+																		<span class="card-icon">
+																			@if (conversation.kind === 'channel') {
+																				<nb-icon [icon]="conversation.visibility === 'private' ? 'lock-outline' : 'hash-outline'"></nb-icon>
+																			} @else if (personOf(conversation); as person) {
+																				<ngx-chat-person-avatar [person]="person"></ngx-chat-person-avatar>
+																			} @else {
+																				<nb-icon icon="people-outline"></nb-icon>
+																			}
+																		</span>
+																		<span class="row-label">
+																			{{ 'CHAT.LIST.UNREAD_IN' | translate: { count: conversation.state?.unreadCount } }}
+																			@if (conversation.state?.mentionCount) {
+																				<span class="count mention">&#64;{{ conversation.state.mentionCount }}</span>
+																			}
+																		</span>
+																		<a
+																			class="button"
+																			[routerLink]="link(conversation.id)"
+																			[attr.aria-label]="'CHAT.UNREADS.OPEN_LABEL' | translate: { name: cardTitle(conversation) }"
+																			>{{ 'CHAT.WELCOME.OPEN' | translate }} <nb-icon icon="arrow-forward-outline"></nb-icon
+																		></a>
+																	</div>
+																</div>
+															</section>
+														} @empty {
+															<section class="tile wide empty-tile" data-test="unreads-empty">
+																<div class="tile-inner">
+																	<div class="tile-text">
+																		<h4>{{ 'CHAT.UNREADS.EMPTY' | translate }}</h4>
+																		<p>{{ 'CHAT.UNREADS.EMPTY_HINT' | translate }}</p>
+																	</div>
+																	<!-- Every conversation read: a list with a double check on each row. -->
+																	<div class="tile-art dotted" aria-hidden="true">
+																		<div class="mock window">
+																			<div class="mock-bar"><nb-icon icon="radio-button-on-outline"></nb-icon><i class="line w30"></i></div>
+																			<div class="mock-rows">
+																				@for (width of mockChannels; track $index) {
+																					<div class="mock-channel">
+																						<nb-icon icon="hash-outline"></nb-icon>
+																						<i class="line strong" [style.width.%]="width"></i>
+																						<span class="spacer"></span>
+																						<nb-icon class="read" icon="done-all-outline"></nb-icon>
+																					</div>
+																				}
+																			</div>
+																		</div>
+																	</div>
+																</div>
+															</section>
+														}
+													</div>
+												</div>
+											</div>
 										</section>
 									}
 									@case ('threads') {
@@ -192,36 +274,78 @@ function viewportSize(): { width: number; height: number } {
 												<span class="header-icon"><nb-icon icon="message-square-outline"></nb-icon></span>
 												<h5>{{ 'CHAT.THREADS.TITLE' | translate }}</h5>
 											</header>
-											<ul class="rows">
-												@for (thread of threads(); track thread.id) {
-													<li>
-														<a class="card thread-card" [class.unread]="thread.unreadReplies > 0" [routerLink]="link(thread.conversationId)" [queryParams]="{ thread: thread.id }">
-															<span class="card-icon"><nb-icon icon="message-square-outline"></nb-icon></span>
-															<span class="card-main">
-																<strong>{{ titleOf(thread.conversationId) }}</strong>
-																<span class="preview">{{ preview(thread) }}</span>
-																<span class="thread-meta">
-																	<span class="replies">{{ 'CHAT.THREADS.REPLIES' | translate: { count: thread.replyCount } }}</span>
-																	@if (thread.lastReplyAt) {
-																		<time>{{ 'CHAT.THREADS.LAST_REPLY' | translate: { time: (thread.lastReplyAt | date: 'short') } }}</time>
-																	}
-																</span>
-															</span>
-															<span class="meta">
-																@if (thread.unreadReplies > 0) {
-																	<span class="count mention">{{ 'CHAT.THREADS.UNREAD_REPLIES' | translate: { count: thread.unreadReplies } }}</span>
-																}
-																<nb-icon class="go" icon="arrow-ios-forward-outline"></nb-icon>
-															</span>
-														</a>
-													</li>
-												} @empty {
-													<li class="caught-up">
-														<span class="state-icon"><nb-icon icon="message-square-outline"></nb-icon></span>
-														<p>{{ 'CHAT.THREADS.EMPTY' | translate }}</p>
-													</li>
-												}
-											</ul>
+											<div class="simple-scroll">
+												<div class="simple-inner">
+													<div class="item-tiles">
+														@for (thread of threads(); track thread.id) {
+															<section class="tile item-tile">
+																<div class="tile-inner">
+																	<div class="item-head">
+																		<h4>{{ titleOf(thread.conversationId) }}</h4>
+																		@if (thread.lastReplyAt) {
+																			<time>{{ thread.lastReplyAt | date: 'short' }}</time>
+																		}
+																	</div>
+																	<p class="item-text clamp">{{ preview(thread) }}</p>
+																	<div class="tile-row">
+																		<span class="card-icon"><nb-icon icon="message-square-outline"></nb-icon></span>
+																		<span class="row-label">
+																			{{ 'CHAT.THREADS.REPLIES' | translate: { count: thread.replyCount } }}
+																			@if (thread.unreadReplies > 0) {
+																				<span class="count mention">{{ 'CHAT.THREADS.UNREAD_REPLIES' | translate: { count: thread.unreadReplies } }}</span>
+																			}
+																		</span>
+																		<a
+																			class="button"
+																			[routerLink]="link(thread.conversationId)"
+																			[queryParams]="{ thread: thread.id }"
+																			[attr.aria-label]="(shortPreview(thread) ? 'CHAT.THREADS.VIEW_LABEL_PREVIEW' : 'CHAT.THREADS.VIEW_LABEL') | translate: { name: titleOf(thread.conversationId), preview: shortPreview(thread) }"
+																			>{{ 'CHAT.THREADS.VIEW' | translate }} <nb-icon icon="arrow-forward-outline"></nb-icon
+																		></a>
+																	</div>
+																</div>
+															</section>
+														} @empty {
+															<section class="tile wide empty-tile" data-test="threads-empty">
+																<div class="tile-inner">
+																	<div class="tile-text">
+																		<h4>{{ 'CHAT.THREADS.EMPTY_TITLE' | translate }}</h4>
+																		<p>{{ 'CHAT.THREADS.EMPTY' | translate }}</p>
+																	</div>
+																	<!-- A message with its thread under it: the repliers' avatars and the "N replies" link. -->
+																	<div class="tile-art dotted" aria-hidden="true">
+																		<div class="mock window">
+																			<div class="mock-bar"><nb-icon icon="hash-outline"></nb-icon><i class="line w30"></i></div>
+																			<div class="mock-rows thread">
+																				<div class="mock-message">
+																					<span class="dot" data-tone="2"></span>
+																					<span class="mock-lines">
+																						<span class="name-row"><i class="line strong w30"></i><i class="line time"></i></span>
+																						<i class="line w70"></i>
+																						<i class="line w45"></i>
+																					</span>
+																				</div>
+																				<div class="mock-thread">
+																					<span class="dot mini" data-tone="1"></span>
+																					<span class="dot mini" data-tone="3"></span>
+																					<i class="line accent w30"></i>
+																				</div>
+																				<div class="mock-message">
+																					<span class="dot" data-tone="3"></span>
+																					<span class="mock-lines">
+																						<span class="name-row"><i class="line strong w35"></i><i class="line time"></i></span>
+																						<i class="line w60"></i>
+																					</span>
+																				</div>
+																			</div>
+																		</div>
+																	</div>
+																</div>
+															</section>
+														}
+													</div>
+												</div>
+											</div>
 										</section>
 									}
 									@case ('conversation') {
@@ -257,14 +381,165 @@ function viewportSize(): { width: number; height: number } {
 										}
 									}
 									@default {
-										<div class="state home" data-test="pick">
-											<span class="state-icon accent"><nb-icon icon="message-circle-outline"></nb-icon></span>
-											<h3>{{ 'CHAT.VIEW.HOME_TITLE' | translate }}</h3>
-											<p>{{ 'CHAT.VIEW.PICK' | translate }}</p>
-											<div class="home-actions">
-												<button type="button" class="button primary" (click)="openNewChannel()"><nb-icon icon="hash-outline"></nb-icon> {{ 'CHAT.LIST.NEW_CHANNEL' | translate }}</button>
-												<button type="button" class="button" (click)="openNewDirect()"><nb-icon icon="edit-2-outline"></nb-icon> {{ 'CHAT.LIST.NEW_MESSAGE' | translate }}</button>
-												<button type="button" class="button" (click)="openBrowse()"><nb-icon icon="search-outline"></nb-icon> {{ 'CHAT.LIST.BROWSE' | translate }}</button>
+										<div class="welcome" data-test="pick" #welcome>
+											<div class="welcome-inner">
+												<header class="welcome-head">
+													<h3>{{ 'CHAT.VIEW.HOME_TITLE' | translate }}</h3>
+													<p>{{ 'CHAT.VIEW.PICK' | translate }}</p>
+												</header>
+
+												<div class="tiles">
+													<!-- Channels: the wide tile, text on the left and a channel window on the right. -->
+													<section class="tile wide">
+														<div class="tile-inner">
+															<div class="tile-text">
+																<h4>{{ 'CHAT.LIST.CHANNELS' | translate }}</h4>
+																<p>{{ 'CHAT.WELCOME.CHANNELS_TEXT' | translate }}</p>
+																<div class="tile-cta">
+																	<button type="button" class="button primary" (click)="openNewChannel()"><nb-icon icon="hash-outline"></nb-icon> {{ 'CHAT.LIST.NEW_CHANNEL' | translate }}</button>
+																	<p class="kinds">
+																		<span>{{ 'CHAT.WELCOME.CHANNELS_KINDS' | translate }}</span>
+																		<strong><nb-icon icon="hash-outline"></nb-icon> {{ 'CHAT.WELCOME.PUBLIC' | translate }}</strong>
+																		<strong><nb-icon icon="lock-outline"></nb-icon> {{ 'CHAT.LIST.PRIVATE' | translate }}</strong>
+																	</p>
+																</div>
+															</div>
+															<div class="tile-art dotted" aria-hidden="true">
+																<div class="mock window">
+																	<div class="mock-bar">
+																		<nb-icon icon="hash-outline"></nb-icon>
+																		<i class="line w30"></i>
+																		<span class="spacer"></span>
+																		<nb-icon icon="minus-outline"></nb-icon>
+																		<nb-icon icon="close-outline"></nb-icon>
+																	</div>
+																	<div class="mock-body">
+																		@for (row of mockRows; track $index) {
+																			<div class="mock-message">
+																				<span class="dot" [attr.data-tone]="row.tone"></span>
+																				<span class="mock-lines">
+																					<span class="name-row"><i class="line strong" [style.width.%]="row.name"></i><i class="line time"></i></span>
+																					<i class="line" [style.width.%]="row.text"></i>
+																				</span>
+																			</div>
+																		}
+																		@if (channelSent()) {
+																			<div class="mock-message is-new">
+																				<span class="dot" [attr.data-tone]="mockSent.tone"></span>
+																				<span class="mock-lines">
+																					<span class="name-row"><i class="line strong" [style.width.%]="mockSent.name"></i><i class="line time"></i></span>
+																					<i class="line" [style.width.%]="mockSent.text"></i>
+																				</span>
+																			</div>
+																		}
+																	</div>
+																	<div class="mock-composer" [class.is-focused]="channelTyping()">
+																		@if (channelTyping()) {
+																			<span class="draft"><i class="line"></i><span class="caret"></span></span>
+																		} @else {
+																			<i class="line faint w40"></i>
+																		}
+																		<span class="send" [class.is-pressed]="channelCursor().press && channelCursor().at === 'send'"><nb-icon icon="paper-plane-outline"></nb-icon></span>
+																	</div>
+																	<!-- The "You" cursor; its step comes from the welcome loop. -->
+																	<span class="cursor" [attr.data-at]="channelCursor().at" [class.is-pressing]="channelCursor().press">
+																		<svg class="cursor-arrow" viewBox="0 0 20 20"><path d="M3 2.5 16.5 9l-5.75 1.75L8 16.5Z" /></svg>
+																		<span class="cursor-label">{{ 'CHAT.WELCOME.YOU' | translate }}</span>
+																	</span>
+																</div>
+															</div>
+														</div>
+													</section>
+
+													<!-- Direct messages. -->
+													<section class="tile">
+														<div class="tile-inner">
+															<div class="tile-text">
+																<h4>{{ 'CHAT.LIST.DIRECT' | translate }}</h4>
+																<p>{{ 'CHAT.WELCOME.DIRECT_TEXT' | translate }}</p>
+															</div>
+															<div class="tile-row">
+																<nb-icon icon="people-outline"></nb-icon>
+																<span>{{ 'CHAT.WELCOME.DIRECT_LABEL' | translate }}</span>
+																<button type="button" class="button" (click)="openNewDirect()">{{ 'CHAT.LIST.NEW_MESSAGE' | translate }}</button>
+															</div>
+															<div class="tile-art bottom" aria-hidden="true">
+																<!-- Messages as a conversation shows them: avatar, name and time, then the text; a follow-up from the same person has no avatar. -->
+																<div class="mock direct">
+																	@for (row of mockDirect; track $index) {
+																		<div class="mock-message" [class.follow-up]="!row.name">
+																			@if (row.name) {
+																				<span class="dot" [attr.data-tone]="row.tone"></span>
+																			}
+																			<span class="mock-lines">
+																				@if (row.name) {
+																					<span class="name-row"><i class="line strong" [style.width.%]="row.name"></i><i class="line time"></i></span>
+																				}
+																				@for (width of row.lines; track $index) {
+																					<i class="line" [style.width.%]="width"></i>
+																				}
+																			</span>
+																		</div>
+																	}
+																	@if (directTyping()) {
+																		<div class="mock-message typing">
+																			<span class="dot" [attr.data-tone]="mockReply.tone"></span>
+																			<span class="typing-dots"><span></span><span></span><span></span></span>
+																		</div>
+																	}
+																	@if (directReplied()) {
+																		<div class="mock-message is-new">
+																			<span class="dot" [attr.data-tone]="mockReply.tone"></span>
+																			<span class="mock-lines">
+																				<span class="name-row"><i class="line strong" [style.width.%]="mockReply.name"></i><i class="line time"></i></span>
+																				@for (width of mockReply.lines; track $index) {
+																					<i class="line" [style.width.%]="width"></i>
+																				}
+																			</span>
+																		</div>
+																	}
+																</div>
+															</div>
+														</div>
+													</section>
+
+													<!-- Browse channels. -->
+													<section class="tile">
+														<div class="tile-inner">
+															<div class="tile-text">
+																<h4>{{ 'CHAT.LIST.BROWSE' | translate }}</h4>
+																<p>{{ 'CHAT.WELCOME.BROWSE_TEXT' | translate }}</p>
+															</div>
+															<div class="tile-row">
+																<nb-icon icon="search-outline"></nb-icon>
+																<span>{{ 'CHAT.WELCOME.BROWSE_LABEL' | translate }}</span>
+																<button type="button" class="button" (click)="openBrowse()">{{ 'CHAT.WELCOME.OPEN' | translate }} <nb-icon icon="arrow-forward-outline"></nb-icon></button>
+															</div>
+															<div class="tile-art bottom" aria-hidden="true">
+																<div class="mock list">
+																	<div class="mock-search"><nb-icon icon="search-outline"></nb-icon><i class="line w40"></i></div>
+																	@for (width of mockChannels; track $index; let i = $index) {
+																		<!-- The second channel is the one the cursor joins. -->
+																		<div class="mock-channel" [class.is-hovered]="i === 1 && browseCursor().at === 'join'">
+																			<nb-icon icon="hash-outline"></nb-icon>
+																			<i class="line strong" [style.width.%]="width"></i>
+																			<span class="spacer"></span>
+																			<span class="pill" [class.is-joined]="i === 1 && browseJoined()" [class.is-pressed]="i === 1 && !!browseCursor().press">
+																				@if (i === 1 && browseJoined()) {
+																					<nb-icon icon="checkmark-outline"></nb-icon>
+																				}
+																			</span>
+																		</div>
+																	}
+																	<span class="cursor" [attr.data-at]="browseCursor().at" [class.is-pressing]="browseCursor().press">
+																		<svg class="cursor-arrow" viewBox="0 0 20 20"><path d="M3 2.5 16.5 9l-5.75 1.75L8 16.5Z" /></svg>
+																		<span class="cursor-label">{{ 'CHAT.WELCOME.YOU' | translate }}</span>
+																	</span>
+																</div>
+															</div>
+														</div>
+													</section>
+												</div>
 											</div>
 										</div>
 									}
@@ -448,22 +723,683 @@ function viewportSize(): { width: number; height: number } {
 			.state-icon nb-icon {
 				font-size: 1.625rem;
 			}
-			.state-icon.accent {
-				background: var(--chat-accent-soft);
-				color: var(--chat-accent);
-			}
 			.state-icon.danger {
 				color: var(--chat-danger);
 			}
-			.state-icon.success {
-				color: var(--color-success-default, #00b887);
+			/*
+			 * The welcome screen (no conversation open), laid out like the Downloads page: a centred headline,
+			 * then tiles in a double frame (an outer ring around the card), the wide one with its text on the
+			 * left and a sketch of a channel on the right, two half-width ones with an action row and a sketch
+			 * at the bottom. A faint accent glow rises from the bottom of each card; the sketches are drawn with
+			 * the theme's tints, so the screen follows the light and the dark themes.
+			 */
+			.welcome {
+				height: 100%;
+				overflow-y: auto;
+				container-type: inline-size;
 			}
-			.home-actions {
+			.welcome-inner {
+				max-width: 64rem;
+				margin: 0 auto;
+				padding: 3rem 2rem 2.5rem;
+			}
+			.welcome-head {
+				margin-bottom: 2.25rem;
+				text-align: center;
+			}
+			.welcome-head h3 {
+				margin: 0;
+				color: var(--chat-text);
+				font-size: clamp(1.625rem, 1.2rem + 1.6vw, 2.5rem);
+				font-weight: 500;
+				line-height: 1.2;
+				letter-spacing: -0.015em;
+			}
+			.welcome-head p {
+				margin: 0.625rem 0 0;
+				color: var(--chat-muted);
+				font-size: 0.9375rem;
+			}
+			.tiles {
+				display: grid;
+				grid-template-columns: repeat(2, minmax(0, 1fr));
+				gap: 1.25rem;
+			}
+			.tile {
+				padding: 0.375rem;
+				border: 1px solid var(--chat-border);
+				border-radius: calc(var(--border-radius) * 3);
+			}
+			.tile.wide {
+				grid-column: 1 / -1;
+			}
+			.tile-inner {
+				position: relative;
+				display: flex;
+				flex-direction: column;
+				height: 100%;
+				min-height: 22rem;
+				overflow: hidden;
+				/* Each tile lays out and paints on its own: an animating sketch never invalidates the rest of the page. */
+				contain: layout paint;
+				border: 1px solid var(--chat-border);
+				border-radius: calc(var(--border-radius) * 2.25);
+				background: radial-gradient(130% 70% at 0% 100%, var(--chat-accent-soft-2), transparent 70%), var(--chat-sidebar-bg);
+			}
+			.tile.wide .tile-inner {
+				display: grid;
+				grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+				min-height: 21rem;
+			}
+			.tile-text {
+				display: flex;
+				flex-direction: column;
+				padding: 2.25rem 2.25rem 0;
+			}
+			.tile.wide .tile-text {
+				padding-bottom: 2.25rem;
+			}
+			.tile-text h4 {
+				margin: 0;
+				color: var(--chat-text);
+				font-size: 1.25rem;
+				font-weight: 600;
+				line-height: 1.3;
+			}
+			.tile-text p {
+				max-width: 34rem;
+				margin: 0.5rem 0 0;
+				color: var(--chat-muted);
+				font-size: 0.9375rem;
+				line-height: 1.6;
+			}
+			.tile-cta {
+				display: flex;
+				flex-direction: column;
+				align-items: flex-start;
+				gap: 1.25rem;
+				margin-top: auto;
+				padding-top: 2rem;
+			}
+			.tile-text p.kinds {
 				display: flex;
 				flex-wrap: wrap;
-				justify-content: center;
+				align-items: center;
+				gap: 0.5rem 1rem;
+				margin: 0;
+				font-size: 0.875rem;
+			}
+			.kinds strong {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.25rem;
+				color: var(--chat-text);
+				font-weight: 500;
+			}
+			.kinds nb-icon {
+				font-size: 1rem;
+			}
+			.tile-row {
+				display: flex;
+				align-items: center;
+				gap: 0.75rem;
+				margin: 1.75rem 2.25rem 0;
+				color: var(--chat-text);
+				font-size: 0.9375rem;
+				font-weight: 500;
+			}
+			.tile-row > nb-icon {
+				font-size: 1.25rem;
+			}
+			.tile-row > span {
+				flex: 1 1 auto;
+				min-width: 0;
+			}
+			.tile-row .button {
+				flex: 0 0 auto;
+			}
+			.welcome .button,
+			.item-tile .button {
 				gap: 0.5rem;
-				margin-top: 1rem;
+				border-radius: var(--border-radius);
+				height: 2.5rem;
+				padding: 0 1.125rem;
+				border-color: transparent;
+				background: var(--chat-hover);
+				font-size: 0.9375rem;
+				font-weight: 500;
+			}
+			.welcome .button:hover:not(:disabled),
+			.item-tile .button:hover:not(:disabled) {
+				background: var(--chat-active-tint);
+			}
+			.welcome .button.primary {
+				background: var(--chat-text);
+				color: var(--chat-bg);
+			}
+			.welcome .button.primary:hover:not(:disabled) {
+				background: var(--chat-text);
+				filter: none;
+				opacity: 0.88;
+			}
+			.welcome .button:focus-visible,
+			.item-tile .button:focus-visible {
+				outline: 2px solid var(--chat-accent);
+				outline-offset: 2px;
+			}
+
+			/* The sketches: lines and dots in the theme's tints, nothing to read. */
+			.tile-art {
+				position: relative;
+				display: flex;
+				justify-content: center;
+				min-width: 0;
+				pointer-events: none;
+			}
+			.tile-art.dotted {
+				align-items: flex-end;
+				padding: 2.75rem 2.5rem 0;
+				background-image: radial-gradient(var(--chat-border-strong) 1px, transparent 1.5px);
+				background-size: 1.125rem 1.125rem;
+				background-position: center;
+			}
+			.tile-art.bottom {
+				flex: 1 1 auto;
+				align-items: flex-end;
+				margin-top: 2.5rem;
+				padding: 0 2.25rem;
+			}
+			/* Layout containment: a sketch's changes (a message arriving, a line being typed) never lay out the page. */
+			.mock {
+				contain: layout;
+				width: 100%;
+				max-width: 22rem;
+				border: 1px solid var(--chat-border-strong);
+				background: var(--chat-bg);
+				box-shadow: var(--gauzy-shadow);
+			}
+			/* The drawings have fixed heights, so a message arriving scrolls the older ones up instead of growing the card. */
+			.mock.window {
+				position: relative;
+				margin-bottom: -1px;
+				border-radius: calc(var(--border-radius) * 1.75) calc(var(--border-radius) * 1.75) 0 0;
+				border-bottom: 0;
+			}
+			.mock.direct,
+			.mock.list {
+				position: relative;
+				height: 12.5rem;
+				border-bottom: 0;
+				border-radius: calc(var(--border-radius) * 2) calc(var(--border-radius) * 2) 0 0;
+			}
+			.mock-body,
+			.mock.direct {
+				justify-content: flex-end;
+				overflow: hidden;
+			}
+			/* The messages scrolling out at the top fade away. */
+			.mock-body {
+				/* A mask reads only alpha: any opaque colour does, here the text's own. */
+				-webkit-mask-image: linear-gradient(to bottom, transparent, currentColor 2.5rem);
+				mask-image: linear-gradient(to bottom, transparent, currentColor 2.5rem);
+			}
+			.mock.direct::before {
+				content: '';
+				position: absolute;
+				inset: 0 0 auto;
+				z-index: 1;
+				height: 2.5rem;
+				background: linear-gradient(var(--chat-bg), transparent);
+			}
+			.line {
+				display: block;
+				height: 0.5rem;
+				border-radius: 999px;
+				background: var(--chat-active-tint);
+			}
+			.line.strong {
+				height: 0.5625rem;
+				background: var(--chat-border-strong);
+			}
+			.w30 {
+				width: 30%;
+			}
+			.w35 {
+				width: 35%;
+			}
+			.w40 {
+				width: 40%;
+			}
+			.w45 {
+				width: 45%;
+			}
+			.w50 {
+				width: 50%;
+			}
+			.w60 {
+				width: 60%;
+			}
+			.w70 {
+				width: 70%;
+			}
+			.spacer {
+				flex: 1 1 auto;
+			}
+			.mock-bar {
+				display: flex;
+				align-items: center;
+				gap: 0.5rem;
+				padding: 0.75rem 1rem;
+				border-bottom: 1px solid var(--chat-border);
+				color: var(--chat-muted);
+			}
+			.mock-bar nb-icon {
+				font-size: 1rem;
+			}
+			.mock-bar > nb-icon:first-child {
+				color: var(--chat-text);
+			}
+			.mock-body {
+				display: flex;
+				flex-direction: column;
+				gap: 1.125rem;
+				height: 12.75rem;
+				padding: 1rem 1rem 1.25rem;
+			}
+			.mock-message {
+				display: flex;
+				align-items: flex-start;
+				gap: 0.75rem;
+			}
+			.dot {
+				width: 1.75rem;
+				height: 1.75rem;
+				flex: 0 0 auto;
+				border-radius: var(--border-radius);
+				background: var(--chat-accent);
+			}
+			.dot[data-tone='2'] {
+				background: var(--color-success-default);
+			}
+			.dot[data-tone='3'] {
+				background: var(--color-warning-default);
+			}
+			.mock-lines {
+				display: flex;
+				flex-direction: column;
+				gap: 0.4375rem;
+				flex: 1 1 auto;
+				padding-top: 0.25rem;
+			}
+			.mock-composer {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				margin: 0 1rem 1rem;
+				padding: 0.5rem 0.5rem 0.5rem 0.875rem;
+				border: 1px solid var(--chat-border);
+				border-radius: calc(var(--border-radius) * 1.25);
+				transition: border-color 0.2s ease;
+			}
+			.mock-composer.is-focused {
+				border-color: var(--chat-accent);
+				box-shadow: 0 0 0 3px var(--chat-accent-soft);
+			}
+			.line.faint {
+				opacity: 0.6;
+			}
+			/* What the cursor "types": a line that grows in steps, with a blinking caret after it. */
+			.draft {
+				display: flex;
+				align-items: center;
+				gap: 0.1875rem;
+				flex: 1 1 auto;
+				min-width: 0;
+			}
+			.draft .line {
+				width: 0;
+				background: var(--chat-border-strong);
+				animation: chat-welcome-type 2.6s steps(14, end) forwards;
+			}
+			.caret {
+				width: 2px;
+				height: 0.875rem;
+				flex: 0 0 auto;
+				border-radius: 1px;
+				background: var(--chat-accent);
+				animation: chat-welcome-blink 1s steps(1) infinite;
+			}
+			.send {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				width: 1.75rem;
+				height: 1.75rem;
+				border-radius: var(--border-radius);
+				background: var(--chat-accent);
+				color: var(--chat-on-accent);
+			}
+			.send nb-icon {
+				font-size: 0.875rem;
+			}
+			.name-row {
+				display: flex;
+				align-items: center;
+				gap: 0.5rem;
+			}
+			.line.time {
+				width: 1.75rem;
+				height: 0.375rem;
+				flex: 0 0 auto;
+				opacity: 0.7;
+			}
+			.mock.direct {
+				display: flex;
+				flex-direction: column;
+				gap: 1rem;
+				padding: 1.25rem 1rem 1rem;
+			}
+			/* "Someone is typing": three dots bouncing one after another where their message will be. */
+			.mock-message.typing {
+				align-items: center;
+				animation: chat-welcome-rise 0.3s ease-out both;
+			}
+			.typing-dots {
+				display: inline-flex;
+				gap: 0.25rem;
+				padding: 0.5rem 0.625rem;
+				border-radius: calc(var(--border-radius) * 1.25);
+				background: var(--chat-elevated);
+			}
+			.typing-dots span {
+				width: 0.375rem;
+				height: 0.375rem;
+				border-radius: 50%;
+				background: var(--chat-muted);
+				animation: chat-welcome-bounce 1.1s ease-in-out infinite;
+			}
+			.typing-dots span:nth-child(2) {
+				animation-delay: 0.15s;
+			}
+			.typing-dots span:nth-child(3) {
+				animation-delay: 0.3s;
+			}
+			/* A message that just arrived rises in. */
+			.mock-message.is-new {
+				animation: chat-welcome-rise 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+			}
+			/* A follow-up lines up with the text above it: the avatar's width plus the gap. */
+			.mock-message.follow-up {
+				margin-top: -0.625rem;
+				padding-left: 2.5rem;
+			}
+			.mock-message.follow-up .mock-lines {
+				padding-top: 0;
+			}
+			.mock.list {
+				display: flex;
+				flex-direction: column;
+				gap: 0.25rem;
+				padding: 1rem 0.75rem;
+			}
+			.mock-search {
+				display: flex;
+				align-items: center;
+				gap: 0.5rem;
+				margin-bottom: 0.5rem;
+				padding: 0.5rem 0.75rem;
+				border: 1px solid var(--chat-border);
+				border-radius: var(--border-radius);
+				color: var(--chat-muted);
+			}
+			.mock-channel {
+				display: flex;
+				align-items: center;
+				gap: 0.625rem;
+				padding: 0.5rem 0.5rem;
+				border-radius: var(--border-radius);
+				color: var(--chat-muted);
+				transition: background-color 0.25s ease;
+			}
+			.mock-channel.is-hovered {
+				background: var(--chat-hover);
+			}
+			.mock-search nb-icon,
+			.mock-channel nb-icon {
+				font-size: 1rem;
+			}
+			.pill {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				width: 2.75rem;
+				height: 1.375rem;
+				border-radius: calc(var(--border-radius) * 0.75);
+				background: var(--chat-accent-soft-2);
+				transition: background-color 0.2s ease, color 0.2s ease;
+			}
+			.pill.is-joined {
+				background: var(--chat-accent);
+				color: var(--chat-on-accent);
+			}
+			.pill nb-icon {
+				font-size: 0.875rem;
+			}
+			/* A click answers with a ring that grows and fades: transform and opacity only, so no repaint per frame. */
+			.send,
+			.pill {
+				position: relative;
+			}
+			.send.is-pressed::after,
+			.pill.is-pressed::after {
+				content: '';
+				position: absolute;
+				inset: 0;
+				border-radius: inherit;
+				box-shadow: 0 0 0 3px var(--chat-accent-soft-2);
+				pointer-events: none;
+				animation: chat-welcome-ring 0.7s ease-out forwards;
+			}
+
+			/*
+			 * The "You" cursors, as on the Downloads page: the welcome loop sets each one's data-at (where it is) and
+			 * is-pressing (a click this second); it glides between spots and the clicked control answers with a ring.
+			 * Spots are measured from the drawings above (from the drawing's top and start edges).
+			 *
+			 * The cursor is a transparent layer the size of its drawing (inset: 0), moved with transform: a translate in %
+			 * is then a share of the drawing's width, as left: x% was, but the glide runs on the compositor with no layout
+			 * or paint per frame. --x and --y are the spot; --flip mirrors it for right-to-left pages.
+			 */
+			.cursor {
+				position: absolute;
+				inset: 0;
+				z-index: 2;
+				display: flex;
+				align-items: flex-start;
+				pointer-events: none;
+				transform: translate(calc(var(--x, 0px) * var(--flip, 1)), var(--y, 0px));
+				transition: transform 0.9s cubic-bezier(0.65, 0, 0.35, 1);
+			}
+			:host-context([dir='rtl']) .cursor {
+				--flip: -1;
+			}
+			.cursor-arrow {
+				flex: 0 0 auto;
+				width: 1.125rem;
+				height: 1.125rem;
+				overflow: visible;
+				transform-origin: 3px 2.5px;
+				fill: var(--chat-accent);
+				stroke: var(--chat-on-accent);
+				stroke-width: 1.5;
+				stroke-linejoin: round;
+			}
+			.cursor-label {
+				margin-top: 0.875rem;
+				margin-inline-start: -0.25rem;
+				padding: 0.125rem 0.5rem;
+				border-radius: calc(var(--border-radius) * 0.75);
+				background: var(--chat-accent);
+				color: var(--chat-on-accent);
+				font-size: 0.6875rem;
+				font-weight: 600;
+				line-height: 1rem;
+				white-space: nowrap;
+				box-shadow: var(--gauzy-shadow);
+			}
+			.cursor.is-pressing .cursor-arrow {
+				animation: chat-welcome-press 0.35s ease-out;
+			}
+			.window .cursor[data-at='list'] {
+				--x: 64%;
+				--y: 6.5rem;
+			}
+			.window .cursor[data-at='composer'] {
+				--x: 34%;
+				--y: 16.25rem;
+			}
+			.window .cursor[data-at='send'] {
+				--x: calc(100% - 2.75rem);
+				--y: 16.25rem;
+			}
+			.list .cursor[data-at='search'] {
+				--x: 58%;
+				--y: 1.875rem;
+			}
+			.list .cursor[data-at='join'] {
+				--x: calc(100% - 2.875rem);
+				--y: 7.375rem;
+			}
+
+			/* The page opening: the headline and the cards rise in one after another, the sketches' messages too. */
+			.welcome-head,
+			.tile {
+				animation: chat-welcome-rise 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+			}
+			.tile:nth-child(1) {
+				animation-delay: 0.06s;
+			}
+			.tile:nth-child(2) {
+				animation-delay: 0.14s;
+			}
+			.tile:nth-child(3) {
+				animation-delay: 0.22s;
+			}
+			.mock-body .mock-message,
+			.mock.direct .mock-message,
+			.mock-channel {
+				animation: chat-welcome-rise 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+				animation-delay: 0.4s;
+			}
+			/* (The channel list's first child is its search field, so its channels start at the second.) */
+			.mock-body .mock-message:nth-child(2),
+			.mock.direct .mock-message:nth-child(2),
+			.mock-channel:nth-child(3) {
+				animation-delay: 0.48s;
+			}
+			.mock-body .mock-message:nth-child(3),
+			.mock.direct .mock-message:nth-child(3),
+			.mock-channel:nth-child(4) {
+				animation-delay: 0.56s;
+			}
+			.mock-body .mock-message:nth-child(4),
+			.mock.direct .mock-message:nth-child(4),
+			.mock-channel:nth-child(5) {
+				animation-delay: 0.64s;
+			}
+			.mock-body .mock-message.is-new,
+			.mock.direct .mock-message.is-new,
+			.mock.direct .mock-message.typing {
+				animation-delay: 0s;
+			}
+			@keyframes chat-welcome-rise {
+				from {
+					opacity: 0;
+					transform: translateY(0.75rem);
+				}
+				to {
+					opacity: 1;
+					transform: none;
+				}
+			}
+			@keyframes chat-welcome-press {
+				40% {
+					transform: scale(0.8);
+				}
+				100% {
+					transform: scale(1);
+				}
+			}
+			@keyframes chat-welcome-ring {
+				from {
+					opacity: 1;
+					transform: scale(1);
+				}
+				to {
+					opacity: 0;
+					transform: scale(1.35);
+				}
+			}
+			@keyframes chat-welcome-type {
+				to {
+					width: 55%;
+				}
+			}
+			@keyframes chat-welcome-blink {
+				50% {
+					opacity: 0;
+				}
+			}
+			@keyframes chat-welcome-bounce {
+				0%,
+				60%,
+				100% {
+					transform: none;
+					opacity: 0.5;
+				}
+				30% {
+					transform: translateY(-0.25rem);
+					opacity: 1;
+				}
+			}
+			/* Less motion asked for: the still picture, with no entrances, typing or cursors (the loop does not run either). */
+			@media (prefers-reduced-motion: reduce) {
+				.welcome *,
+				.simple-scroll *,
+				.welcome-head,
+				.tile {
+					animation: none !important;
+					transition: none !important;
+				}
+				.cursor {
+					display: none;
+				}
+			}
+			@container (max-width: 44rem) {
+				.welcome-inner {
+					padding: 2rem 1rem;
+				}
+				.tiles {
+					grid-template-columns: minmax(0, 1fr);
+				}
+				.tile.wide .tile-inner {
+					grid-template-columns: minmax(0, 1fr);
+				}
+				.tile.wide .tile-text {
+					padding-bottom: 0;
+				}
+				.tile-art.dotted {
+					padding-top: 2rem;
+				}
+				.tile-text {
+					padding: 1.75rem 1.5rem 0;
+				}
+				.tile-row {
+					margin: 1.5rem 1.5rem 0;
+				}
+				.tile-art.bottom {
+					padding: 0 1.5rem;
+				}
 			}
 			.button {
 				display: inline-flex;
@@ -502,9 +1438,16 @@ function viewportSize(): { width: number; height: number } {
 				opacity: 0.5;
 				cursor: default;
 			}
+			/* Unreads and Threads follow the welcome screen: soft buttons, medium weights, the rows in a centred column. */
 			.simple-header .button {
-				height: 1.875rem;
-				font-size: 0.75rem;
+				height: 2rem;
+				border-color: transparent;
+				background: var(--chat-hover);
+				font-size: 0.8125rem;
+				font-weight: 500;
+			}
+			.simple-header .button:hover:not(:disabled) {
+				background: var(--chat-active-tint);
 			}
 			.simple {
 				display: flex;
@@ -533,7 +1476,7 @@ function viewportSize(): { width: number; height: number } {
 				margin: 0;
 				color: var(--chat-text);
 				font-size: 0.9375rem;
-				font-weight: 800;
+				font-weight: 600;
 			}
 			.icon-button {
 				display: inline-flex;
@@ -552,43 +1495,120 @@ function viewportSize(): { width: number; height: number } {
 				display: none;
 				margin-left: -0.5rem;
 			}
-			.rows {
-				display: flex;
-				flex-direction: column;
-				gap: 0.5rem;
+			/*
+			 * Unreads and Threads, laid out like the Downloads page: under the top bar (which names the page), a grid of
+			 * framed tiles (the welcome tiles' ring, without the glow), one per conversation or thread: a title with its
+			 * time, a short description, and an action row pinned to the bottom so the rows of a grid line up.
+			 */
+			.simple-scroll {
 				flex: 1 1 auto;
 				min-height: 0;
 				overflow-y: auto;
-				margin: 0;
-				padding: 1rem 1.25rem;
-				list-style: none;
+				container-type: inline-size;
 			}
-			/* Bootstrap's global .card stacks its content (flex-direction: column): these cards are one line. */
-			.card {
+			.simple-inner {
+				max-width: 64rem;
+				margin: 0 auto;
+				padding: 2rem 2rem 2.5rem;
+			}
+			.item-tiles {
+				display: grid;
+				grid-template-columns: repeat(2, minmax(0, 1fr));
+				gap: 1.25rem;
+			}
+			/* A shade off the page, toward the text colour: a little lighter on dark themes, a little darker on light ones. */
+			.item-tile .tile-inner,
+			.empty-tile .tile-inner {
+				background: color-mix(in srgb, var(--chat-text) 3.5%, var(--chat-bg));
+			}
+			.item-tile .tile-inner {
+				min-height: 0;
+				padding: 2rem 2.25rem;
+			}
+			/* Only the first tiles rise in: the ones further down a long list are off screen when the view opens. */
+			.item-tile:nth-child(n + 9) {
+				animation: none;
+			}
+			.tile.wide.empty-tile .tile-inner {
+				min-height: 17rem;
+			}
+			.mock-rows {
 				display: flex;
-				flex-direction: row;
-				min-width: 0;
+				flex-direction: column;
+				gap: 0.25rem;
+				padding: 0.75rem 0.75rem 1.25rem;
+			}
+			.mock-rows.thread {
+				gap: 1rem;
+				padding: 1.25rem 1rem 1.5rem;
+			}
+			.mock-channel .read {
+				color: var(--color-success-default);
+			}
+			/* The thread under a message, lined up with its text: the repliers' small avatars and the replies link. */
+			.mock-thread {
+				display: flex;
 				align-items: center;
-				gap: 0.875rem;
-				padding: 0.75rem 1rem;
-				border: 1px solid var(--chat-border);
-				border-radius: 0.625rem;
-				background: var(--chat-bg);
-				color: inherit;
-				text-decoration: none;
-				transition: background-color 0.1s ease, border-color 0.1s ease, box-shadow 0.1s ease;
+				gap: 0.375rem;
+				margin-top: -0.5rem;
+				padding-inline-start: 2.5rem;
 			}
-			.card:hover {
-				border-color: var(--chat-border-strong);
-				background: var(--chat-message-hover);
-				box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.06);
-				text-decoration: none;
+			.dot.mini {
+				width: 1rem;
+				height: 1rem;
+				border-radius: calc(var(--border-radius) * 0.625);
 			}
-			.card.thread-card {
-				align-items: flex-start;
+			.line.accent {
+				margin-inline-start: 0.25rem;
+				background: var(--chat-accent);
 			}
-			.card.thread-card.unread {
-				box-shadow: inset 3px 0 0 var(--chat-accent);
+			.item-head {
+				display: flex;
+				align-items: baseline;
+				gap: 1rem;
+			}
+			.item-head h4 {
+				flex: 1 1 auto;
+				min-width: 0;
+				margin: 0;
+				overflow: hidden;
+				color: var(--chat-text);
+				font-size: 1.25rem;
+				font-weight: 600;
+				line-height: 1.3;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+			}
+			.item-head time {
+				flex: 0 0 auto;
+				color: var(--chat-muted);
+				font-size: 0.8125rem;
+			}
+			.item-text {
+				margin: 0.5rem 0 0;
+				color: var(--chat-muted);
+				font-size: 0.9375rem;
+				line-height: 1.6;
+				overflow-wrap: anywhere;
+			}
+			.item-text.clamp {
+				overflow: hidden;
+				display: -webkit-box;
+				-webkit-line-clamp: 2;
+				-webkit-box-orient: vertical;
+			}
+			.item-tile .tile-row {
+				margin: auto 0 0;
+				padding-top: 1.75rem;
+			}
+			.item-tile .tile-row > .card-icon {
+				flex: 0 0 auto;
+			}
+			.row-label {
+				display: inline-flex;
+				flex-wrap: wrap;
+				align-items: center;
+				gap: 0.5rem;
 			}
 			.card-icon {
 				display: inline-flex;
@@ -597,58 +1617,23 @@ function viewportSize(): { width: number; height: number } {
 				width: 2.25rem;
 				height: 2.25rem;
 				flex: 0 0 auto;
-				border-radius: 0.5rem;
+				border-radius: var(--border-radius);
 				background: var(--chat-elevated);
 				color: var(--chat-text);
 			}
 			.card-icon nb-icon {
 				font-size: 1.125rem;
 			}
-			.card-main {
-				display: flex;
-				flex-direction: column;
-				gap: 0.125rem;
-				flex: 1 1 auto;
-				min-width: 0;
-			}
-			.card-main strong {
-				color: var(--chat-text);
-				font-size: 0.8125rem;
-				font-weight: 800;
-			}
-			.card-main time,
-			.thread-meta {
-				color: var(--chat-muted);
-				font-size: 0.6875rem;
-			}
-			.thread-meta {
-				display: flex;
-				gap: 0.5rem;
-				margin-top: 0.25rem;
-			}
-			.replies {
-				color: var(--chat-link);
-				font-weight: 700;
-			}
-			.preview {
-				overflow: hidden;
-				display: -webkit-box;
-				-webkit-line-clamp: 2;
-				-webkit-box-orient: vertical;
-				color: var(--chat-text);
-				font-size: 0.8125rem;
-				line-height: 1.4;
-			}
-			.meta {
-				display: flex;
-				align-items: center;
-				gap: 0.375rem;
-				flex: 0 0 auto;
-				align-self: center;
-			}
-			.go {
-				color: var(--chat-muted);
-				font-size: 1rem;
+			@container (max-width: 40rem) {
+				.simple-inner {
+					padding: 2rem 1rem;
+				}
+				.item-tiles {
+					grid-template-columns: minmax(0, 1fr);
+				}
+				.item-tile .tile-inner {
+					padding: 1.5rem;
+				}
 			}
 			.count {
 				min-width: 1.375rem;
@@ -658,7 +1643,7 @@ function viewportSize(): { width: number; height: number } {
 				background: var(--chat-active-tint);
 				color: var(--chat-text);
 				font-size: 0.6875rem;
-				font-weight: 800;
+				font-weight: 600;
 				line-height: 1.25rem;
 				text-align: center;
 				white-space: nowrap;
@@ -666,20 +1651,6 @@ function viewportSize(): { width: number; height: number } {
 			.count.mention {
 				background: var(--chat-danger);
 				color: var(--chat-on-accent);
-			}
-			.caught-up {
-				display: flex;
-				flex-direction: column;
-				align-items: center;
-				gap: 0.75rem;
-				padding: 3rem 1rem;
-				text-align: center;
-			}
-			.caught-up p {
-				max-width: 24rem;
-				margin: 0;
-				color: var(--chat-muted);
-				font-size: 0.8125rem;
 			}
 			@media (max-width: 1200px) {
 				.panes.with-thread {
@@ -709,8 +1680,8 @@ function viewportSize(): { width: number; height: number } {
 				}
 			}
 			@media (max-width: 600px) {
-				.rows {
-					padding: 0.75rem;
+				.welcome-head {
+					margin-bottom: 1.5rem;
 				}
 				.simple-header {
 					padding-left: 0.75rem;
@@ -736,6 +1707,40 @@ export class ChatPageComponent implements OnInit {
 	private readonly destroyRef = inject(DestroyRef);
 
 	protected readonly chatLink = CHAT_LINK;
+
+	/** The welcome screen's sketches: a few messages in a channel (avatar tone, line widths in %) and a few channels. */
+	protected readonly mockRows = [
+		{ tone: 1, name: 28, text: 82 },
+		{ tone: 2, name: 22, text: 64 },
+		{ tone: 3, name: 34, text: 74 },
+		{ tone: 1, name: 28, text: 48 }
+	];
+	protected readonly mockChannels = [38, 52, 30, 44];
+	/** The direct-message sketch: a row with no name is a follow-up from the same person (no avatar, no name). */
+	protected readonly mockDirect = [
+		{ tone: 2, name: 26, lines: [80, 52] },
+		{ tone: 1, name: 20, lines: [66] },
+		{ tone: 0, name: 0, lines: [44] },
+		{ tone: 2, name: 26, lines: [72] }
+	];
+	/** The message "I" send in the channel sketch, and the teammate's reply in the direct-message one. */
+	protected readonly mockSent = { tone: 1, name: 22, text: 58 };
+	protected readonly mockReply = { tone: 2, name: 26, lines: [62, 38] };
+
+	/** The welcome sketches' loop (see {@link WELCOME_LOOP_SECONDS}); it stays on its first frame for reduced motion. */
+	private readonly welcomeStep = signal(0);
+	private readonly welcomeEl = viewChild<ElementRef<HTMLElement>>('welcome');
+	private readonly injector = inject(Injector);
+	/** The viewer's reduced-motion setting, followed while the page is open (it can change at any time). */
+	private readonly reducedMotion = signal(false);
+	protected readonly channelCursor = computed(() => CHANNEL_SCRIPT[this.welcomeStep()]);
+	protected readonly channelTyping = computed(() => this.welcomeStep() >= 2 && this.welcomeStep() < WELCOME_ACT_STEP);
+	protected readonly channelSent = computed(() => this.welcomeStep() >= WELCOME_ACT_STEP && this.welcomeStep() < WELCOME_RESET_STEP);
+	/** The teammate types while I type in the channel, and replies when my message goes out. */
+	protected readonly directTyping = computed(() => this.welcomeStep() >= 2 && this.welcomeStep() < WELCOME_ACT_STEP);
+	protected readonly directReplied = computed(() => this.welcomeStep() >= WELCOME_ACT_STEP && this.welcomeStep() < WELCOME_RESET_STEP);
+	protected readonly browseCursor = computed(() => BROWSE_SCRIPT[this.welcomeStep()]);
+	protected readonly browseJoined = computed(() => this.welcomeStep() >= WELCOME_ACT_STEP && this.welcomeStep() < WELCOME_RESET_STEP);
 
 	protected readonly state = signal<ChatPageState>('loading');
 	protected readonly conversations = signal<IChatConversationWithState[]>([]);
@@ -890,6 +1895,44 @@ export class ChatPageComponent implements OnInit {
 		this.followScope();
 		this.followRoute();
 		this.followScrollForCard();
+		this.playWelcome();
+	}
+
+	/**
+	 * The welcome sketches' one-second clock. The interval exists only while the welcome screen is shown: an effect
+	 * starts it (from the first frame) when the page is ready with no conversation open, and clears it as soon as
+	 * that stops being true, so an open conversation, Unreads or Threads have no timer at all. While it runs, a tick
+	 * is skipped when the tab is hidden or the welcome screen is not rendered (the main pane is display:none on a
+	 * phone while the list shows). It runs outside Angular's zone so it does not run change detection for the whole
+	 * app; the signal write refreshes only this view. With reduced motion asked for it does not run, and turning that
+	 * setting on while the screen is open stops it at once: the sketches go back to their first frame and stay there,
+	 * and the styles hide the cursors.
+	 */
+	private playWelcome(): void {
+		if (typeof window === 'undefined') return;
+		const motion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+		if (motion) {
+			this.reducedMotion.set(motion.matches);
+			const onMotionChange = (event: MediaQueryListEvent) => this.reducedMotion.set(event.matches);
+			motion.addEventListener('change', onMotionChange);
+			this.destroyRef.onDestroy(() => motion.removeEventListener('change', onMotionChange));
+		}
+		effect(
+			(onCleanup) => {
+				const playing = this.state() === 'ready' && this.view() === 'home' && !this.reducedMotion();
+				this.welcomeStep.set(0);
+				if (!playing) return;
+				const timer = this.zone.runOutsideAngular(() =>
+					setInterval(() => {
+						const welcome = this.welcomeEl()?.nativeElement;
+						if (!isTabVisible() || !welcome || welcome.checkVisibility?.() === false) return;
+						this.welcomeStep.update((step) => (step + 1) % WELCOME_LOOP_SECONDS);
+					}, 1000)
+				);
+				onCleanup(() => clearInterval(timer));
+			},
+			{ injector: this.injector }
+		);
 	}
 
 	/** Every user / organization change drops what is shown and asks the API again for the new scope. */
@@ -1425,6 +2468,12 @@ export class ChatPageComponent implements OnInit {
 
 	protected preview(thread: ChatFollowedThread): string {
 		return messagePreview(thread, this.people().byEmployee, this.conversationNames());
+	}
+
+	/** The start of a thread's message, for its tile link's name: enough to tell apart two threads of one conversation. */
+	protected shortPreview(thread: ChatFollowedThread): string {
+		const preview = this.preview(thread).replace(/\s+/g, ' ').trim();
+		return preview.length > LINK_PREVIEW_CHARS ? `${preview.slice(0, LINK_PREVIEW_CHARS).trimEnd()}…` : preview;
 	}
 
 	protected link(conversationId: string): string {
