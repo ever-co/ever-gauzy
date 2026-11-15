@@ -1,6 +1,6 @@
 import { ApiPropertyOptional, PickType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsDateString, IsObject, IsOptional, Matches, ValidateNested } from 'class-validator';
+import { IsBoolean, IsDateString, IsObject, IsOptional, Matches, ValidateNested } from 'class-validator';
 import { APPLY_FROM_PATTERN } from '../../shared/validators/apply-from';
 import { IntersectionType } from '@nestjs/mapped-types';
 import { IContact, IEmployeeUpdateInput } from '@gauzy/contracts';
@@ -67,4 +67,17 @@ export class UpdateProfileDTO
 	@IsDateString()
 	@Matches(APPLY_FROM_PATTERN, { message: 'ratesApplyFrom must be a date or a date-time with its offset' })
 	readonly ratesApplyFrom?: string;
+
+	/**
+	 * The time tracking switch as the caller's screen showed it. Both routes keep it: this one's work dates can switch
+	 * tracking too, and `UpdateEmployeeDTO` is built from this DTO.
+	 */
+	@ApiPropertyOptional({
+		type: () => Boolean,
+		description:
+			'The time tracking switch as the caller saw it. When the stored switch differs, the save is refused with 409 TRACKING_SWITCH_CHANGED and writes nothing. Not stored.'
+	})
+	@IsOptional()
+	@IsBoolean()
+	readonly expectedIsTrackingEnabled?: boolean;
 }

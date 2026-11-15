@@ -51,13 +51,4 @@ export class UpdateEmployeeDTO
 	@IsOptional()
 	@IsBoolean()
 	acknowledgeAgentExitLogoutRestriction?: boolean;
-
-	@ApiPropertyOptional({
-		type: () => Boolean,
-		description:
-			'The time tracking switch as the caller saw it. When the stored switch differs, the save is refused with 409 TRACKING_SWITCH_CHANGED and writes nothing. Not stored.'
-	})
-	@IsOptional()
-	@IsBoolean()
-	expectedIsTrackingEnabled?: boolean;
 }
