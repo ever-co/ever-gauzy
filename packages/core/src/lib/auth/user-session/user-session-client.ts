@@ -37,6 +37,18 @@ const DESKTOP_APP = /Electron\//;
 /** User agents of native mobile apps, which send their HTTP library's rather than a browser's. */
 const MOBILE_APP = /okhttp\/|CFNetwork\/|Expo\/|ReactNative|Dalvik\//;
 
+/** The header in which a first-party app names itself on its requests ("Ever Teams"), ever-co/ever-gauzy#11983. */
+export const CLIENT_APP_HEADER = 'x-client-app';
+
+/** A plain app name: letters, digits, spaces and `. _ ' -`, 64 characters at most, starting with a letter or digit. */
+const APP_NAME = /^[\p{L}\p{N}][\p{L}\p{N} ._'-]{0,63}$/u;
+
+/** What a sign-in or a renewal records about the app it came from, beside its user agent. */
+export interface IUserSessionSource {
+	appName?: string;
+	appOrigin?: string;
+}
+
 /** The browser and its major version ("Chrome 131"), or null. */
 function browserOf(userAgent: string): string | null {
 	for (const { name, pattern } of BROWSERS) {
@@ -94,4 +106,52 @@ export function describeSessionClient(userAgent: string | null | undefined): IUs
 		return { app: UserSessionAppEnum.WEB, browser, os };
 	}
 	return { app: UserSessionAppEnum.UNKNOWN, browser: null, os };
+}
+
+/**
+ * An app name as a client gave it, its spaces collapsed; null for anything that is not a plain name (a header sent
+ * twice, markup, control characters, more than 64 characters). It is what the client says, as a user agent is: good
+ * for naming a session to its user, never for a decision.
+ *
+ * @param value The name as the request or the token holds it.
+ * @returns The name, or null.
+ */
+export function appNameOf(value: unknown): string | null {
+	if (typeof value !== 'string') {
+		return null;
+	}
+	const name = value.trim().replace(/\s+/g, ' ');
+	return APP_NAME.test(name) ? name : null;
+}
+
+/**
+ * The web host a request comes from ("app.ever.team"), from its `Origin` header: a browser sends it on a cross-origin
+ * call and on a POST. Null for anything but an http or https origin (an app's own scheme, `null`).
+ *
+ * @param origin The `Origin` header.
+ * @returns The host, with its port when it has one, or null.
+ */
+export function originHostOf(origin: unknown): string | null {
+	if (typeof origin !== 'string' || !origin) {
+		return null;
+	}
+	try {
+		const url = new URL(origin);
+		return url.protocol === 'https:' || url.protocol === 'http:' ? url.host : null;
+	} catch {
+		return null;
+	}
+}
+
+/**
+ * What a sign-in or a renewal records about the app it came from, beside its user agent: the name the app gives in
+ * `X-Client-App`, and the web host of a browser's request. Only what the request tells.
+ *
+ * @param headers The request's headers.
+ * @returns The app's name and web host, each when the request tells it.
+ */
+export function sessionSourceOf(headers: Record<string, unknown> | null | undefined): IUserSessionSource {
+	const appName = appNameOf(headers?.[CLIENT_APP_HEADER]);
+	const appOrigin = originHostOf(headers?.['origin']);
+	return { ...(appName && { appName }), ...(appOrigin && { appOrigin }) };
 }
