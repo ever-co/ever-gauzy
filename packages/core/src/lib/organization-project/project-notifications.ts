@@ -96,6 +96,16 @@ export function projectChangeMessageOf(changes: ReadonlyArray<IProjectChange>): 
 		.join(' ');
 }
 
+/** The longest project name a title quotes, and the longest actor name it gives: the title column holds 255 on MySQL. */
+const MAX_QUOTED_NAME_LENGTH = 120;
+const MAX_ACTOR_NAME_LENGTH = 80;
+
+/** A name shortened to `max` characters, an ellipsis at the end of one that was cut. */
+export function shortenedName(name: string | null | undefined, max = MAX_QUOTED_NAME_LENGTH): string {
+	const text = (name ?? '').replace(/\s+/g, ' ').trim();
+	return text.length > max ? `${text.slice(0, max - 1).trimEnd()}…` : text;
+}
+
 /**
  * The notifications that tell employees they were added to a project: an `Assignment` about the project, as a task's
  * new assignees are told (`Ana Assigned you to the Project "Website"`). The employee who added them is not told about
@@ -116,8 +126,8 @@ export function projectMemberAddedEvents(
 	const title = generateNotificationTitle(
 		NotificationActionTypeEnum.Assigned,
 		BaseEntityEnum.OrganizationProject,
-		project.name ?? '',
-		actor.name
+		shortenedName(project.name),
+		shortenedName(actor.name, MAX_ACTOR_NAME_LENGTH)
 	);
 	return receivers.map(
 		(receiverEmployeeId) =>

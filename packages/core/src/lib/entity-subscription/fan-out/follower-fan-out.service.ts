@@ -15,7 +15,7 @@ import { EmployeeNotificationService } from '../../employee-notification/employe
 import { EventBus } from '../../event-bus/event-bus';
 import { TaskEvent } from '../../event-bus/events/task.event';
 import { OrganizationProjectChangedEvent } from '../../organization-project/events/organization-project-changed.event';
-import { projectChangeMessageOf } from '../../organization-project/project-notifications';
+import { projectChangeMessageOf, shortenedName } from '../../organization-project/project-notifications';
 import { isNotificationFanOutEnabled } from './fan-out-enabled';
 
 /** The members of a task update that count as "the task changed" for its followers. */
@@ -139,7 +139,7 @@ export class FollowerFanOutService implements OnModuleInit, OnModuleDestroy {
 			organizationId: project.organizationId ?? undefined,
 			type: EmployeeNotificationTypeEnum.TASK_UPDATE,
 			action: NotificationActionTypeEnum.Updated,
-			entityName: project.name ?? null,
+			entityName: shortenedName(project.name),
 			message: projectChangeMessageOf(changes)
 		});
 	}
