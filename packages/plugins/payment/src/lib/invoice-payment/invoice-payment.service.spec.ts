@@ -397,6 +397,31 @@ describe('InvoicePaymentService — review of #11996 (Greptile)', () => {
 		expect(invoice.alreadyPaid).toBeUndefined();
 	});
 
+	it('records a captured payment: its authorised and captured amounts are the amount', async () => {
+		const { service, payments } = world();
+		const { headers, rawBody } = notification({ amount: '100' });
+
+		await service.receiveNotification(PROVIDER_ID, headers, rawBody);
+
+		expect(payments[0]).toMatchObject({
+			authorizedAmount: '100',
+			capturedAmount: '100',
+			reference: 'evt_1',
+			metadata: { notificationId: 'evt_1' }
+		});
+		expect(payments[0].capturedAt).toBeInstanceOf(Date);
+	});
+
+	it('keeps a notification id longer than the payment reference holds in the metadata only', async () => {
+		const { service, payments } = world();
+		const id = `evt_${'x'.repeat(96)}`;
+		const { headers, rawBody } = notification({ amount: '100' }, { id });
+
+		await service.receiveNotification(PROVIDER_ID, headers, rawBody);
+
+		expect(payments[0]).toMatchObject({ reference: null, metadata: { notificationId: id } });
+	});
+
 	it('never records a payment taken in test mode', async () => {
 		const { service, payments, invoice, webhookEvents } = world();
 		const { headers, rawBody } = notification({ amount: '100', isTestMode: true });

@@ -43,13 +43,22 @@ function moneyOf(amount: number | string | null | undefined, currency: string | 
 }
 
 /**
+ * The invoice's total at its currency's precision (half up): what a provider can charge and what the client is shown.
+ * A total stored with more decimals than the currency has (33.333333 EUR) would otherwise be asked as such at checkout,
+ * and the payment of 33.33 the provider confirms would leave the invoice Partially paid for a fraction of a cent.
+ */
+function totalOf(invoice: IPayableInvoice): Money | null {
+	return moneyOf(invoice.totalValue, invoice.currency)?.round() ?? null;
+}
+
+/**
  * What the client still owes: the invoice's total less the payments recorded against it, never below zero. Only the
  * payments in the invoice's currency count; another currency cannot be summed with it.
  *
  * @returns The amount due, or null when the invoice has no total or no currency.
  */
 export function amountDueOf(invoice: IPayableInvoice, payments: ReadonlyArray<IRecordedAmount>): Money | null {
-	const total = moneyOf(invoice.totalValue, invoice.currency);
+	const total = totalOf(invoice);
 	if (!total) {
 		return null;
 	}
@@ -108,7 +117,7 @@ export function standingAfterPayments(
 	invoice: IPayableInvoice,
 	payments: ReadonlyArray<IRecordedAmount>
 ): IInvoiceStanding | null {
-	const total = moneyOf(invoice.totalValue, invoice.currency);
+	const total = totalOf(invoice);
 	if (!total) {
 		return null;
 	}
@@ -236,12 +245,16 @@ export function readNotification(rawBody: Buffer | undefined): IInvoicePaymentNo
  * The amount a confirmed payment records, in the invoice's currency.
  *
  * @returns The amount, or null when the notification's currency is not the invoice's or its amount is not a positive
- * amount of money: such a payment is not recorded, and the notification is kept as failed for someone to look at.
+ * amount of money the currency can hold (no fraction of its smallest unit): such a payment is not recorded, and the
+ * notification is kept as failed for someone to look at.
  */
 export function confirmedAmountOf(invoice: IPayableInvoice, notification: IInvoicePaymentNotification): Money | null {
 	const amount = moneyOf(notification.amount, notification.currency);
 	const invoiceCurrency = String(invoice.currency ?? '').toUpperCase();
 	if (!amount || !amount.isPositive() || amount.currency !== invoiceCurrency) {
+		return null;
+	}
+	if (amount.round().compare(amount) !== 0) {
 		return null;
 	}
 	return amount;

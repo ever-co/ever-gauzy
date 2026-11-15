@@ -47,6 +47,13 @@ describe('amountDueOf', () => {
 		expect(amountDueOf({ ...INVOICE, totalValue: null }, [])).toBeNull();
 		expect(amountDueOf({ ...INVOICE, currency: null }, [])).toBeNull();
 	});
+
+	it("is asked at the currency's precision, never in a fraction of its smallest unit", () => {
+		expect(amountDueOf({ ...INVOICE, totalValue: 33.333333 }, [])?.amount).toBe('33.33');
+		expect(amountDueOf({ ...INVOICE, totalValue: '10.005' }, [])?.amount).toBe('10.01');
+		expect(amountDueOf({ ...INVOICE, currency: 'JPY', totalValue: 1000.4 }, [])?.amount).toBe('1000');
+		expect(amountDueOf({ ...INVOICE, currency: 'KWD', totalValue: '12.3456' }, [])?.amount).toBe('12.346');
+	});
 });
 
 describe('isPayable', () => {
@@ -91,6 +98,16 @@ describe('standingAfterPayments', () => {
 				{ amount: '100.50', currency: 'EUR' }
 			])
 		).toEqual({ alreadyPaid: '120.5', amountDue: '0', paid: true, status: InvoiceStatusTypesEnum.FULLY_PAID });
+	});
+
+	it("is Paid when the payments cover the total at the currency's precision", () => {
+		const invoice = { ...INVOICE, totalValue: 33.333333 };
+		expect(standingAfterPayments(invoice, [{ amount: '33.33', currency: 'EUR' }])).toEqual({
+			alreadyPaid: '33.33',
+			amountDue: '0',
+			paid: true,
+			status: InvoiceStatusTypesEnum.FULLY_PAID
+		});
 	});
 
 	it('is Overpaid past the total, with nothing due', () => {
@@ -188,5 +205,15 @@ describe('confirmedAmountOf', () => {
 		expect(confirmedAmountOf(INVOICE, readNotification(succeeded({ amount: '0' })))).toBeNull();
 		expect(confirmedAmountOf(INVOICE, readNotification(succeeded({ amount: '-5' })))).toBeNull();
 		expect(confirmedAmountOf(INVOICE, readNotification(succeeded({ amount: '12abc' })))).toBeNull();
+	});
+
+	it("refuses a fraction of the currency's smallest unit", () => {
+		expect(confirmedAmountOf(INVOICE, readNotification(succeeded({ amount: '120.505' })))).toBeNull();
+		expect(confirmedAmountOf(INVOICE, readNotification(succeeded({ amount: '0.001' })))).toBeNull();
+		const yen = { ...INVOICE, currency: 'JPY' };
+		expect(confirmedAmountOf(yen, readNotification(succeeded({ amount: '1000.5', currency: 'JPY' })))).toBeNull();
+		expect(confirmedAmountOf(yen, readNotification(succeeded({ amount: '1000', currency: 'JPY' })))?.amount).toBe(
+			'1000'
+		);
 	});
 });

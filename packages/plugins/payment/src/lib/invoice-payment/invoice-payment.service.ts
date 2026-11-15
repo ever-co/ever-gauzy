@@ -97,6 +97,8 @@ const CONNECTOR_EVENT_MAP: Record<string, string> = {
 
 /** The longest a checkout request may take, in milliseconds. */
 const CHECKOUT_TIMEOUT_MS = 10_000;
+/** The longest `Payment.reference` holds: a longer notification id is kept in the payment's metadata only. */
+const PAYMENT_REFERENCE_MAX_LENGTH = 64;
 /** The largest checkout answer read, in bytes: it only carries a URL and an id. */
 const CHECKOUT_ANSWER_MAX_BYTES = 16 * 1024;
 
@@ -305,6 +307,7 @@ export class InvoicePaymentService {
 			if (recorded) {
 				return false;
 			}
+			const paidAt = new Date();
 			await manager.save(
 				Payment,
 				manager.create(Payment, {
@@ -312,11 +315,20 @@ export class InvoicePaymentService {
 					organizationContactId: invoice.toContactId ?? null,
 					amount: amount.amount,
 					currency: amount.currency,
-					paymentDate: new Date(),
+					paymentDate: paidAt,
 					paymentMethod: PaymentMethodEnum.ONLINE,
 					paymentProviderId: provider.id,
 					externalId: notification.paymentId,
-					reference: notification.eventId,
+					// The provider confirmed a captured payment: its lifecycle amounts are the amount, as a captured
+					// provider-backed payment's are, so a later refund reads what was taken
+					authorizedAmount: amount.amount,
+					capturedAmount: amount.amount,
+					authorizedAt: paidAt,
+					capturedAt: paidAt,
+					// The column holds 64 characters: the whole notification id stays in the metadata and the log
+					reference:
+						notification.eventId.length <= PAYMENT_REFERENCE_MAX_LENGTH ? notification.eventId : null,
+					metadata: { notificationId: notification.eventId },
 					note: 'Paid online from the invoice link',
 					tenantId: provider.tenantId,
 					organizationId: provider.organizationId
