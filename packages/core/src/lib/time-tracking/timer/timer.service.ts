@@ -240,6 +240,16 @@ function startMoveException(refusal: StartMoveRefusal): HttpException {
 }
 
 /**
+ * The timer's stop of a run it read as running (`stopsRun`): written only while the row still runs.
+ *
+ * @param stop - The stop's changes.
+ * @param run - The run, by id or as read.
+ */
+function stopOf(stop: Partial<ITimeLog>, run: ID | TimeLog): TimeLogUpdateCommand {
+	return new TimeLogUpdateCommand(stop, run, undefined, false, undefined, true);
+}
+
+/**
  * Where a log read back as stopped ends: nothing when it could not be read, or is stored without an end.
  *
  * @param log The log as read back (`storedStoppedLog`).
@@ -576,27 +586,33 @@ export class TimerService {
 			// A start that took so long that the next one went on creates no run beside that one's
 			turn.assertHeld();
 
-			// Create a new time log entry using the command bus
+			// Create a new time log entry using the command bus. It is written in one transaction with the check that the
+			// close above left no other run going (`isOnlyRun`): when one still runs, nothing is written and the start is
+			// refused (ever-co/ever-gauzy#11826)
 			const timeLog = await this._commandBus.execute(
-				new TimeLogCreateCommand({
-					organizationId,
-					tenantId,
-					employeeId,
-					startedAt,
-					stoppedAt: startedAt,
-					duration: 0,
-					source: source || TimeLogSourceEnum.WEB_TIMER,
-					logType: logType || TimeLogType.TRACKED,
-					projectId: projectIdToLog || null,
-					taskId: taskId || null,
-					organizationContactId: organizationContactId || null,
-					organizationTeamId: teamIdToLog || null,
-					description: description || null,
-					// A break is never billable
-					isBillable: Boolean(isBillable) && !startsBreak,
-					version: version || null,
-					isRunning: true
-				})
+				new TimeLogCreateCommand(
+					{
+						organizationId,
+						tenantId,
+						employeeId,
+						startedAt,
+						stoppedAt: startedAt,
+						duration: 0,
+						source: source || TimeLogSourceEnum.WEB_TIMER,
+						logType: logType || TimeLogType.TRACKED,
+						projectId: projectIdToLog || null,
+						taskId: taskId || null,
+						organizationContactId: organizationContactId || null,
+						organizationTeamId: teamIdToLog || null,
+						description: description || null,
+						// A break is never billable
+						isBillable: Boolean(isBillable) && !startsBreak,
+						version: version || null,
+						isRunning: true
+					},
+					undefined,
+					{ isOnlyRun: true }
+				)
 			);
 
 			// The next start or stop went on while this run was being written, and may have read the runs going before
@@ -861,7 +877,7 @@ export class TimerService {
 
 		// Execute the command to update the time log entry
 		lastLog = await this._commandBus.execute(
-			new TimeLogUpdateCommand(partialTimeLog, lastLog.id, request.manualTimeSlot)
+			new TimeLogUpdateCommand(partialTimeLog, lastLog.id, request.manualTimeSlot, false, undefined, true)
 		);
 
 		// Stop the runs left going beside this one, and only those. They cut the logs they overlap after this run has
@@ -1946,7 +1962,14 @@ export class TimerService {
 		const startedAt = moment.utc(timeLog.startedAt).toDate();
 		try {
 			await this._commandBus.execute(
-				new TimeLogUpdateCommand({ isRunning: false, startedAt, stoppedAt: startedAt }, timeLog.id)
+				new TimeLogUpdateCommand(
+					{ isRunning: false, startedAt, stoppedAt: startedAt },
+					timeLog.id,
+					undefined,
+					false,
+					undefined,
+					true
+				)
 			);
 		} catch (error) {
 			this.logger.warn(
@@ -2178,7 +2201,7 @@ export class TimerService {
 		const startedAt = moment.utc(log.startedAt).toDate();
 		const partialTimeLog: Partial<ITimeLog> = { isRunning: false, startedAt, stoppedAt };
 		try {
-			await this._commandBus.execute(new TimeLogUpdateCommand(partialTimeLog, log.id));
+			await this._commandBus.execute(stopOf(partialTimeLog, log.id));
 			return stoppedAt;
 		} catch (error) {
 			const storedLog = await this.storedStoppedLog(log.id, log.tenantId);
@@ -2187,7 +2210,7 @@ export class TimerService {
 			if (!storedLog) {
 				// Nothing was written: the same update once more, so the run ends where it should
 				try {
-					await this._commandBus.execute(new TimeLogUpdateCommand(partialTimeLog, log.id));
+					await this._commandBus.execute(stopOf(partialTimeLog, log.id));
 					this.logger.warn(`Stopped the replaced time log ${log.id} on a second try: ${error?.message}`);
 					return stoppedAt;
 				} catch (retryError) {
@@ -2204,7 +2227,7 @@ export class TimerService {
 			try {
 				// The log as read before the first try, with the range the update releases slots from
 				const logBeforeStop = new TimeLog({ ...log, timeSlots: undefined });
-				await this._commandBus.execute(new TimeLogUpdateCommand(partialTimeLog, logBeforeStop));
+				await this._commandBus.execute(stopOf(partialTimeLog, logBeforeStop));
 				this.logger.warn(
 					`Completed the stop of the replaced time log ${log.id} on a second try: ${error?.message}`
 				);
@@ -2529,7 +2552,7 @@ export class TimerService {
 			// Each stop on its own: one that fails leaves the others stopped, and those are still returned
 			try {
 				const stoppedLog = await this._commandBus.execute(
-					new TimeLogUpdateCommand(partialTimeLog, runningLog.id)
+					new TimeLogUpdateCommand(partialTimeLog, runningLog.id, undefined, false, undefined, true)
 				);
 				stoppedLogs.push(stoppedLog);
 			} catch (error) {
