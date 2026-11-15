@@ -11,6 +11,7 @@ import { coreEntities } from '../core/entities';
 import {
 	teamNotificationDefaultsByEmployee,
 	teamNotificationDefaultsOf,
+	teamNotificationDefaultsTransformer,
 	withTeamNotificationDefaults
 } from './team-notification-defaults';
 
@@ -48,6 +49,17 @@ describe('teamNotificationDefaultsOf', () => {
 		expect(teamNotificationDefaultsOf({ email: 'loud' })).toBeNull();
 		expect(teamNotificationDefaultsOf(null)).toBeNull();
 		expect(teamNotificationDefaultsOf('not json')).toBeNull();
+	});
+});
+
+describe('teamNotificationDefaultsTransformer', () => {
+	it("stores the defaults as JSON in the text column of SQLite, the specs' database, and reads them back as kept", () => {
+		const stored = teamNotificationDefaultsTransformer.to({ taskDueReminderHours: 48 });
+		expect(stored).toBe('{"taskDueReminderHours":48}');
+		expect(teamNotificationDefaultsTransformer.from(stored)).toEqual({ taskDueReminderHours: 48 });
+		expect(teamNotificationDefaultsTransformer.from({ email: 'digest', bogus: 1 })).toEqual({ email: 'digest' });
+		expect(teamNotificationDefaultsTransformer.to(null)).toBeNull();
+		expect(teamNotificationDefaultsTransformer.from(null)).toBeNull();
 	});
 });
 

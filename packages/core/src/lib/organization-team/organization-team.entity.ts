@@ -23,6 +23,7 @@ import {
 	ITeamNotificationDefaults
 } from '@gauzy/contracts';
 import { isMySQL, isPostgres } from '@gauzy/config';
+import { teamNotificationDefaultsTransformer } from '../employee-notification-setting/team-notification-defaults';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsNotEmpty, IsObject, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
@@ -141,7 +142,11 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	@ApiPropertyOptional({ type: () => Object, nullable: true })
 	@IsOptional()
 	@IsObject()
-	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text', nullable: true })
+	@MultiORMColumn({
+		type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text',
+		nullable: true,
+		transformer: teamNotificationDefaultsTransformer
+	})
 	notificationDefaults?: ITeamNotificationDefaults | null;
 
 	/**

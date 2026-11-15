@@ -1,4 +1,5 @@
 import { Logger } from '@nestjs/common';
+import { isBetterSqlite3, isSqlite } from '@gauzy/config';
 import { Brackets, DataSource } from 'typeorm';
 import {
 	EmployeeNotificationEmailMode,
@@ -94,6 +95,19 @@ export function withTeamNotificationDefaults(
 	}
 	return merged;
 }
+
+/**
+ * How the defaults are stored: an object on PostgreSQL (`jsonb`) and MySQL (`json`), its JSON on SQLite, whose column
+ * is `text`. Read back, either is the defaults as `teamNotificationDefaultsOf` keeps them.
+ */
+export const teamNotificationDefaultsTransformer = {
+	to(value: ITeamNotificationDefaults | null | undefined): ITeamNotificationDefaults | string | null | undefined {
+		return value && typeof value === 'object' && (isSqlite() || isBetterSqlite3()) ? JSON.stringify(value) : value;
+	},
+	from(value: unknown): ITeamNotificationDefaults | null {
+		return value === null || value === undefined ? null : teamNotificationDefaultsOf(value);
+	}
+};
 
 /**
  * The team whose defaults apply to each of the given employees, and those defaults: the team the employee's user last
