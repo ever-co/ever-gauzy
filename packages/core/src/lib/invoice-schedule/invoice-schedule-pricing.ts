@@ -275,9 +275,13 @@ export function linePriceOf(input: ILinePriceInput): ILinePrice {
 	return { rate: null, currency: null, source: null };
 }
 
-/** Hours to the hundredth. */
+/**
+ * Hours to the hundredth, half up. The seconds are divided by the seconds of a hundredth of an hour (36) in one step:
+ * a tie such as 3618 s (1.005 h) is then exactly a half, where hours times a hundred came out at 100.49999999999999
+ * and lost the hundredth.
+ */
 export function decimalHoursOf(seconds: number): number {
-	return Math.round((seconds / SECONDS_PER_HOUR) * HUNDREDTHS) / HUNDREDTHS;
+	return Math.round(seconds / (SECONDS_PER_HOUR / HUNDREDTHS)) / HUNDREDTHS;
 }
 
 /** To the cent, half up: the binary error of the arithmetic behind the amount is cleared first (10.005 is 10.01). */

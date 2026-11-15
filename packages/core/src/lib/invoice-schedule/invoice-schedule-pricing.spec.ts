@@ -1,6 +1,7 @@
 import { DurationRoundingDirectionEnum, InvoiceScheduleGroupingEnum } from '@gauzy/contracts';
 import {
 	billableEntriesOf,
+	decimalHoursOf,
 	durationRoundingRuleOf,
 	invoiceTimeOf,
 	lineAmountOf,
@@ -128,6 +129,15 @@ describe('scheduled invoice pricing', () => {
 	it('states an amount as hours times rate, to the cent, half up', () => {
 		expect(lineAmountOf(1.15, 12.5)).toBe(14.38);
 		expect(lineAmountOf(10, 80)).toBe(800);
+	});
+
+	it('states hours to the hundredth, half up, a tie included', () => {
+		// 3618 s is 1.005 h: as hours times a hundred, it came out at 100.49999999999999 and lost the hundredth
+		expect(decimalHoursOf(3618)).toBe(1.01);
+		expect(decimalHoursOf(3617)).toBe(1);
+		expect(decimalHoursOf(5400)).toBe(1.5);
+		expect(decimalHoursOf(18)).toBe(0.01);
+		expect(decimalHoursOf(17)).toBe(0);
 	});
 
 	describe('lines', () => {

@@ -95,6 +95,8 @@ describe('InvoiceScheduleRunService on SQLite', () => {
 	let sentEmails: Array<{ email: string; invoiceId: ID }>;
 	let sendSucceeds = true;
 	let logCount = 0;
+	/** What happens elsewhere while a run reads its time, when a case says. */
+	let duringTimeRead: (() => Promise<void>) | null = null;
 
 	/** Inserts a row with the columns given and a placeholder in every other NOT NULL column without a default. */
 	async function insertRow(entity: EntityTarget<ObjectLiteral>, row: Record<string, unknown>): Promise<void> {
@@ -307,6 +309,7 @@ describe('InvoiceScheduleRunService on SQLite', () => {
 				notInvoiced?: boolean;
 			}) => {
 				expect(RequestContext.currentUser()?.id).toBe(ADMIN);
+				await duringTimeRead?.();
 				const query = dataSource
 					.getRepository(TimeLog)
 					.createQueryBuilder('time_log')
@@ -373,6 +376,7 @@ describe('InvoiceScheduleRunService on SQLite', () => {
 		authorPermissions = ADMIN_PERMISSIONS;
 		sentEmails = [];
 		sendSucceeds = true;
+		duringTimeRead = null;
 		await dataSource.query('DELETE FROM "estimate_email"');
 		await dataSource.query('DELETE FROM "invoice_schedule_run"');
 		await dataSource.query('DELETE FROM "invoice_schedule"');
@@ -753,6 +757,106 @@ describe('InvoiceScheduleRunService on SQLite', () => {
 			expect(sentEmails).toEqual([]);
 			expect((await madeInvoices())[0].status).toBe('SENT');
 			expect(await runs()).toMatchObject([{ status: InvoiceScheduleRunStatusEnum.SENT, invoiceId: draft.id }]);
+		},
+		TIMEOUT
+	);
+
+	it(
+		'keeps on its run the draft a stopped process saved, when its author may no longer send it',
+		async () => {
+			await schedule({ sendInvoice: true });
+			await track(MARIE, '2026-10-05', '09:00', 3);
+			sendSucceeds = false;
+			await service.sweep(new Date('2026-11-01T06:00:00Z'));
+			const [draft] = await madeInvoices();
+			// As if the process had stopped after saving the invoice, before its email went
+			await dataSource
+				.getRepository(InvoiceScheduleRun)
+				.update(
+					{ invoiceScheduleId: SCHEDULE },
+					{ status: InvoiceScheduleRunStatusEnum.CLAIMED, invoiceId: null }
+				);
+			sentEmails = [];
+			sendSucceeds = true;
+			authorPermissions = [PermissionsEnum.INVOICES_VIEW, PermissionsEnum.ALL_ORG_VIEW];
+
+			const report = await service.sweep(new Date('2026-11-01T07:30:00Z'));
+
+			expect(sentEmails).toEqual([]);
+			expect((await madeInvoices())[0].status).toBe('DRAFT');
+			expect(report).toMatchObject({ invoiced: 1, sent: 0, failed: 1 });
+			// The period is billed, by the draft: the run keeps it, and says why it was not sent
+			expect(await runs()).toMatchObject([
+				{
+					status: InvoiceScheduleRunStatusEnum.NOT_SENT,
+					reason: InvoiceScheduleRunReasonEnum.AUTHOR_CANNOT_INVOICE,
+					invoiceId: draft.id
+				}
+			]);
+		},
+		TIMEOUT
+	);
+
+	it(
+		'records nothing over a run another process took again meanwhile, which then records the invoice made',
+		async () => {
+			await schedule();
+			await track(MARIE, '2026-10-05', '09:00', 3);
+			// While this process reads the time, another one takes the run again, as after an hour without news of it
+			duringTimeRead = async () => {
+				duringTimeRead = null;
+				await dataSource
+					.getRepository(InvoiceScheduleRun)
+					.update({ invoiceScheduleId: SCHEDULE }, { claimedAt: new Date('2026-11-01T07:00:00Z') });
+			};
+
+			await service.sweep(new Date('2026-11-01T06:00:00Z'));
+
+			const [invoice] = await madeInvoices();
+			expect(await runs()).toMatchObject([
+				{ status: InvoiceScheduleRunStatusEnum.CLAIMED, invoiceId: null, finishedAt: null }
+			]);
+
+			// That claim gets old in turn: the run is taken again, and records the invoice saved for its period
+			await service.sweep(new Date('2026-11-01T08:00:00Z'));
+
+			expect(await madeInvoices()).toHaveLength(1);
+			expect(await runs()).toMatchObject([
+				{ status: InvoiceScheduleRunStatusEnum.DRAFTED, invoiceId: invoice.id }
+			]);
+		},
+		TIMEOUT
+	);
+
+	it(
+		'takes again a failed run of an earlier timeline that started on the same day, for the period billed now',
+		async () => {
+			await schedule();
+			await track(MARIE, '2026-10-05', '09:00', 3);
+			// The week from 1 October failed while the schedule was weekly; it is monthly from that day now
+			await dataSource.getRepository(InvoiceScheduleRun).insert({
+				tenantId: TENANT,
+				organizationId: ORGANIZATION,
+				invoiceScheduleId: SCHEDULE,
+				periodStart: '2026-10-01',
+				periodEnd: '2026-10-07',
+				status: InvoiceScheduleRunStatusEnum.FAILED,
+				reason: InvoiceScheduleRunReasonEnum.AUTHOR_CANNOT_INVOICE,
+				claimedAt: new Date('2026-10-08T06:00:00Z'),
+				finishedAt: new Date('2026-10-08T06:00:00Z')
+			} as never);
+
+			await service.sweep(new Date('2026-11-01T06:00:00Z'));
+
+			const [invoice] = await madeInvoices();
+			expect(await runs()).toMatchObject([
+				{
+					periodStart: '2026-10-01',
+					periodEnd: '2026-10-31',
+					status: InvoiceScheduleRunStatusEnum.DRAFTED,
+					invoiceId: invoice.id
+				}
+			]);
 		},
 		TIMEOUT
 	);

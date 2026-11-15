@@ -133,6 +133,18 @@ function claimTimeOf(now: Date): Date {
 }
 
 /**
+ * How the run of a draft a stopped process saved ends: the draft stays on its run whatever its send does. When the
+ * author may no longer send it, the invoice was still made and is kept as a draft, so the run says so (`NOT_SENT`,
+ * with the refusal as its reason) rather than failing without the link: the period counts as billed.
+ */
+function endOfRecovered(saved: Pick<IInvoice, 'id'>, end: IRunEnd): IRunEnd {
+	if (end.status === InvoiceScheduleRunStatusEnum.FAILED) {
+		return { status: InvoiceScheduleRunStatusEnum.NOT_SENT, reason: end.reason ?? null, invoiceId: saved.id };
+	}
+	return { ...end, invoiceId: end.invoiceId ?? saved.id };
+}
+
+/**
  * Makes the invoices that billing schedules are due to make (ever-co/ever-gauzy#11855).
  *
  * - **Which periods.** For each schedule that is not paused, the period whose run day has come in its organization's
@@ -210,9 +222,21 @@ export class InvoiceScheduleRunService {
 		});
 	}
 
-	/** Runs a schedule when its period is due and this process claims it. */
-	private async runIfDue(schedule: InvoiceSchedule, now: Date, report: IInvoiceScheduleSweepReport): Promise<void> {
+	/**
+	 * Runs a schedule when its period is due and this process claims it. The schedule is read again first: its page
+	 * was read before the schedules ahead of it ran, which can take minutes, and a schedule paused, deleted or given
+	 * another timeline since must not be run as it was.
+	 */
+	private async runIfDue(listed: InvoiceSchedule, now: Date, report: IInvoiceScheduleSweepReport): Promise<void> {
 		try {
+			const schedule = await this.dataSource.getRepository(InvoiceSchedule).findOneBy({
+				id: listed.id,
+				tenantId: listed.tenantId,
+				pausedAt: IsNull()
+			});
+			if (!schedule) {
+				return;
+			}
 			const organization = await this.organizationOf(schedule);
 			if (!organization) {
 				return;
@@ -228,7 +252,10 @@ export class InvoiceScheduleRunService {
 			}
 			const { run, unsent } = claim;
 			const end = unsent
-				? await this.asAuthor(schedule, (author) => this.sendSaved(schedule, unsent, author))
+				? endOfRecovered(
+						unsent,
+						await this.asAuthor(schedule, (author) => this.sendSaved(schedule, unsent, author))
+					)
 				: await this.asAuthor(schedule, (author) =>
 						this.bill(schedule, period, organization, timeZone, author)
 					);
@@ -236,7 +263,7 @@ export class InvoiceScheduleRunService {
 			this.count(end, report);
 		} catch (error) {
 			report.failed++;
-			this.logger.error(`Invoice schedule ${schedule.id} could not run: ${(error as Error)?.message ?? error}`);
+			this.logger.error(`Invoice schedule ${listed.id} could not run: ${(error as Error)?.message ?? error}`);
 		}
 	}
 
@@ -319,10 +346,17 @@ export class InvoiceScheduleRunService {
 		if (!isRetryable) {
 			return null;
 		}
-		// Only one process takes it again: the update matches the run as it was read
+		// Only one process takes it again: the update matches the run as it was read. The period's last day is the one
+		// billed now: a failed run of an earlier timeline that started on the same day may have ended on another.
 		const taken = await runs.update(
 			{ id: earlier.id, status: earlier.status, claimedAt: earlier.claimedAt },
-			{ status: InvoiceScheduleRunStatusEnum.CLAIMED, reason: null, finishedAt: null, claimedAt }
+			{
+				status: InvoiceScheduleRunStatusEnum.CLAIMED,
+				reason: null,
+				finishedAt: null,
+				claimedAt,
+				periodEnd: period.endDay
+			}
 		);
 		if (taken.affected !== 1) {
 			return null;
@@ -352,10 +386,14 @@ export class InvoiceScheduleRunService {
 		return null;
 	}
 
-	/** Records how a run ended. */
-	private async finish(run: Pick<InvoiceScheduleRun, 'id'>, end: IRunEnd): Promise<void> {
-		await this.dataSource.getRepository(InvoiceScheduleRun).update(
-			{ id: run.id },
+	/**
+	 * Records how a run ended, as long as this process still holds its claim: the update matches the claim it took. A
+	 * process that ran past an hour may have had the run taken again by another (see `claim`), and must not write its
+	 * outcome over that one's.
+	 */
+	private async finish(run: Pick<InvoiceScheduleRun, 'id' | 'claimedAt'>, end: IRunEnd): Promise<void> {
+		const recorded = await this.dataSource.getRepository(InvoiceScheduleRun).update(
+			{ id: run.id, status: InvoiceScheduleRunStatusEnum.CLAIMED, claimedAt: run.claimedAt },
 			{
 				status: end.status,
 				reason: end.reason ?? null,
@@ -364,6 +402,11 @@ export class InvoiceScheduleRunService {
 				finishedAt: new Date()
 			}
 		);
+		if (recorded.affected === 0) {
+			this.logger.warn(
+				`Invoice schedule run ${run.id} was taken again by another process: its end is not recorded`
+			);
+		}
 	}
 
 	/**
