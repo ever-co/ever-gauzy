@@ -191,41 +191,72 @@ function viewportSize(): { width: number; height: number } {
 													</button>
 												}
 											</header>
-											<ul class="rows">
-												@for (conversation of unreads(); track conversation.id) {
-													<li>
-														<a class="card" [routerLink]="link(conversation.id)">
-															<span class="card-icon">
-																@if (conversation.kind === 'channel') {
-																	<nb-icon [icon]="conversation.visibility === 'private' ? 'lock-outline' : 'hash-outline'"></nb-icon>
-																} @else if (personOf(conversation); as person) {
-																	<ngx-chat-person-avatar [person]="person"></ngx-chat-person-avatar>
-																} @else {
-																	<nb-icon icon="people-outline"></nb-icon>
-																}
-															</span>
-															<span class="card-main">
-																<strong>{{ cardTitle(conversation) }}</strong>
-																@if (conversation.lastMessageAt) {
-																	<time>{{ conversation.lastMessageAt | date: 'medium' }}</time>
-																}
-															</span>
-															<span class="meta">
-																@if (conversation.state?.mentionCount) {
-																	<span class="count mention">&#64;{{ conversation.state.mentionCount }}</span>
-																}
-																<span class="count">{{ conversation.state?.unreadCount }}</span>
-																<nb-icon class="go" icon="arrow-ios-forward-outline"></nb-icon>
-															</span>
-														</a>
-													</li>
-												} @empty {
-													<li class="caught-up">
-														<span class="state-icon success"><nb-icon icon="checkmark-circle-2-outline"></nb-icon></span>
-														<p>{{ 'CHAT.UNREADS.EMPTY' | translate }}</p>
-													</li>
-												}
-											</ul>
+											<!-- Laid out like the Downloads page: a grid of framed tiles, or one wide tile with a drawing when there is nothing. -->
+											<div class="simple-scroll">
+												<div class="simple-inner">
+													<!-- One tile per conversation, as the Downloads page's cards: title, description, then an action row. -->
+													<div class="item-tiles">
+														@for (conversation of unreads(); track conversation.id) {
+															<section class="tile item-tile">
+																<div class="tile-inner">
+																	<div class="item-head">
+																		<h4>{{ cardTitle(conversation) }}</h4>
+																		@if (conversation.lastMessageAt) {
+																			<time>{{ conversation.lastMessageAt | date: 'short' }}</time>
+																		}
+																	</div>
+																	@if (conversation.topic) {
+																		<p class="item-text">{{ conversation.topic }}</p>
+																	}
+																	<div class="tile-row">
+																		<span class="card-icon">
+																			@if (conversation.kind === 'channel') {
+																				<nb-icon [icon]="conversation.visibility === 'private' ? 'lock-outline' : 'hash-outline'"></nb-icon>
+																			} @else if (personOf(conversation); as person) {
+																				<ngx-chat-person-avatar [person]="person"></ngx-chat-person-avatar>
+																			} @else {
+																				<nb-icon icon="people-outline"></nb-icon>
+																			}
+																		</span>
+																		<span class="row-label">
+																			{{ 'CHAT.LIST.UNREAD_IN' | translate: { count: conversation.state?.unreadCount } }}
+																			@if (conversation.state?.mentionCount) {
+																				<span class="count mention">&#64;{{ conversation.state.mentionCount }}</span>
+																			}
+																		</span>
+																		<a class="button" [routerLink]="link(conversation.id)">{{ 'CHAT.WELCOME.OPEN' | translate }} <nb-icon icon="arrow-forward-outline"></nb-icon></a>
+																	</div>
+																</div>
+															</section>
+														} @empty {
+															<section class="tile wide empty-tile" data-test="unreads-empty">
+																<div class="tile-inner">
+																	<div class="tile-text">
+																		<h4>{{ 'CHAT.UNREADS.EMPTY' | translate }}</h4>
+																		<p>{{ 'CHAT.UNREADS.EMPTY_HINT' | translate }}</p>
+																	</div>
+																	<!-- Every conversation read: a list with a double check on each row. -->
+																	<div class="tile-art dotted" aria-hidden="true">
+																		<div class="mock window">
+																			<div class="mock-bar"><nb-icon icon="radio-button-on-outline"></nb-icon><i class="line w30"></i></div>
+																			<div class="mock-rows">
+																				@for (width of mockChannels; track $index) {
+																					<div class="mock-channel">
+																						<nb-icon icon="hash-outline"></nb-icon>
+																						<i class="line strong" [style.width.%]="width"></i>
+																						<span class="spacer"></span>
+																						<nb-icon class="read" icon="done-all-outline"></nb-icon>
+																					</div>
+																				}
+																			</div>
+																		</div>
+																	</div>
+																</div>
+															</section>
+														}
+													</div>
+												</div>
+											</div>
 										</section>
 									}
 									@case ('threads') {
