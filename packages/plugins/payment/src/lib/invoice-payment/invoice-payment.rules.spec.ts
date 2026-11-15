@@ -5,7 +5,8 @@ import {
 	confirmedAmountOf,
 	isPayable,
 	readNotification,
-	standingAfterPayments
+	standingAfterPayments,
+	standingMayChange
 } from './invoice-payment.rules';
 
 /** The rules of paying an invoice online (ever-co/ever-gauzy#11856). */
@@ -17,7 +18,14 @@ const succeeded = (data: Record<string, unknown> = {}) =>
 	body({
 		id: 'evt_1',
 		type: 'payment.succeeded',
-		data: { reference: REFERENCE, paymentId: 'pay_1', amount: '120.50', currency: 'eur', ...data }
+		data: {
+			reference: REFERENCE,
+			paymentId: 'pay_1',
+			amount: '120.50',
+			currency: 'eur',
+			isTestMode: false,
+			...data
+		}
 	});
 
 describe('amountDueOf', () => {
@@ -103,8 +111,29 @@ describe('readNotification', () => {
 			reference: REFERENCE,
 			paymentId: 'pay_1',
 			amount: '120.50',
-			currency: 'EUR'
+			currency: 'EUR',
+			isTestMode: false
 		});
+	});
+
+	it('refuses a payment that succeeded without the provider payment id (Greptile on #11996)', () => {
+		expect(readNotification(succeeded({ paymentId: undefined }))).toBeNull();
+		expect(readNotification(succeeded({ paymentId: '' }))).toBeNull();
+	});
+
+	it('reads a failed payment without a payment id', () => {
+		const failed = body({
+			id: 'evt_3',
+			type: 'payment.failed',
+			data: { reference: REFERENCE, amount: '1', currency: 'EUR', isTestMode: false }
+		});
+		expect(readNotification(failed)).toMatchObject({ outcome: InvoicePaymentOutcome.FAILED, paymentId: null });
+	});
+
+	it('reads a payment that does not say it was live as a test (Greptile on #11996)', () => {
+		expect(readNotification(succeeded({ isTestMode: undefined }))?.isTestMode).toBe(true);
+		expect(readNotification(succeeded({ isTestMode: true }))?.isTestMode).toBe(true);
+		expect(readNotification(succeeded({ isTestMode: 'false' }))?.isTestMode).toBe(true);
 	});
 
 	it('reads a type it does not know with no outcome', () => {
@@ -129,6 +158,19 @@ describe('readNotification', () => {
 	])('refuses %s', (_label, raw) => {
 		expect(readNotification(raw as Buffer | undefined)).toBeNull();
 	});
+});
+
+describe('standingMayChange', () => {
+	it('never lets a payment change a voided invoice (Greptile on #11996)', () => {
+		expect(standingMayChange({ ...INVOICE, status: InvoiceStatusTypesEnum.VOID })).toBe(false);
+	});
+
+	it.each([InvoiceStatusTypesEnum.SENT, InvoiceStatusTypesEnum.VIEWED, InvoiceStatusTypesEnum.PARTIALLY_PAID])(
+		'lets a payment count on a %s invoice',
+		(status) => {
+			expect(standingMayChange({ ...INVOICE, status })).toBe(true);
+		}
+	);
 });
 
 describe('confirmedAmountOf', () => {

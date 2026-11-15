@@ -70,6 +70,15 @@ function paidOf(currency: string, payments: ReadonlyArray<IRecordedAmount>): Mon
 	return paid;
 }
 
+/**
+ * Whether a payment the provider confirmed may change the invoice's standing: never a voided invoice's. A void is final
+ * (`invoice-final-status.ts`); a payment that lands after it is recorded against the invoice for the team to refund,
+ * and the invoice stays void.
+ */
+export function standingMayChange(invoice: IPayableInvoice): boolean {
+	return invoice.status !== InvoiceStatusTypesEnum.VOID;
+}
+
 /** Whether the client may pay an invoice online: a sent invoice, not an estimate, with something left to pay. */
 export function isPayable(invoice: IPayableInvoice, amountDue: Money | null): boolean {
 	return (
@@ -137,10 +146,18 @@ export interface IInvoicePaymentNotification {
 	outcome: InvoicePaymentOutcome | null;
 	/** The invoice the checkout was opened for: its id, which the API sent as the checkout's reference. */
 	reference: string;
-	/** The provider's id of the payment, kept on the payment row: a payment is never recorded twice. */
-	paymentId: string;
+	/**
+	 * The provider's id of the payment, kept on the payment row: a payment is never recorded twice. Required for a
+	 * payment that succeeded; null for another outcome that names none.
+	 */
+	paymentId: string | null;
 	amount: string;
 	currency: string;
+	/**
+	 * Whether the provider took the payment in its test mode. A test payment is never recorded against an invoice: a
+	 * success that does not say it was live is read as a test.
+	 */
+	isTestMode: boolean;
 }
 
 const ID_SHAPE = /^[\w.:-]{1,255}$/;
@@ -156,7 +173,8 @@ function textOf(value: unknown): string | null {
  *
  * ```json
  * { "id": "evt_1", "type": "payment.succeeded",
- *   "data": { "reference": "<invoice id>", "paymentId": "pay_1", "amount": "120.50", "currency": "EUR" } }
+ *   "data": { "reference": "<invoice id>", "paymentId": "pay_1", "amount": "120.50", "currency": "EUR",
+ *             "isTestMode": false } }
  * ```
  *
  * @returns The notification, or null when the body is not one. A type the rules do not know has a null outcome.
@@ -185,21 +203,32 @@ export function readNotification(rawBody: Buffer | undefined): IInvoicePaymentNo
 	if (!reference || !UUID_SHAPE.test(reference)) {
 		return null;
 	}
-	const paymentId = textOf(fields['paymentId']) ?? eventId;
-	const amount = typeof fields['amount'] === 'number' ? String(fields['amount']) : textOf(fields['amount']);
-	const currency = textOf(fields['currency'])?.toUpperCase() ?? null;
-	if (!ID_SHAPE.test(paymentId) || !amount || !currency) {
+	const outcomes = Object.values(InvoicePaymentOutcome) as string[];
+	const outcome = outcomes.includes(kind) ? (kind as InvoicePaymentOutcome) : null;
+	// A payment is recorded once per provider payment id: a success without one could be recorded twice under two
+	// notification ids, so it is not a notification the API can apply
+	const paymentId = textOf(fields['paymentId']);
+	const hasPaymentId = paymentId !== null && ID_SHAPE.test(paymentId);
+	if (paymentId !== null && !hasPaymentId) {
 		return null;
 	}
-	const outcomes = Object.values(InvoicePaymentOutcome) as string[];
+	if (outcome === InvoicePaymentOutcome.SUCCEEDED && !hasPaymentId) {
+		return null;
+	}
+	const amount = typeof fields['amount'] === 'number' ? String(fields['amount']) : textOf(fields['amount']);
+	const currency = textOf(fields['currency'])?.toUpperCase() ?? null;
+	if (!amount || !currency) {
+		return null;
+	}
 	return {
 		eventId,
 		type: kind,
-		outcome: outcomes.includes(kind) ? (kind as InvoicePaymentOutcome) : null,
+		outcome,
 		reference,
 		paymentId,
 		amount,
-		currency
+		currency,
+		isTestMode: fields['isTestMode'] !== false
 	};
 }
 
