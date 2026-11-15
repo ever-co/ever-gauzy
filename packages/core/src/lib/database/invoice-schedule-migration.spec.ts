@@ -155,6 +155,8 @@ function exercise(options: () => DataSourceOptions) {
 	it(
 		'keeps one schedule per client and one run per period, and deletes as the entities say',
 		async () => {
+			// The tables, whether or not the test before made them: `up` is harmless when they exist
+			await up(false);
 			const scope = { tenantId: TENANT, organizationId: ORGANIZATION };
 			await insertRow(dataSource, Tenant, { id: TENANT, name: 'Tenant' });
 			await insertRow(dataSource, Organization, { id: ORGANIZATION, tenantId: TENANT, name: 'Organization' });

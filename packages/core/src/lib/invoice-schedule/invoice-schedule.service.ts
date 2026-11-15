@@ -24,9 +24,16 @@ import { TypeOrmInvoiceScheduleRepository } from './repository/type-orm-invoice-
 export const INVOICE_SCHEDULE_EXISTS =
 	'INVOICE_SCHEDULE_EXISTS: this client already has a billing schedule. Change that one instead.';
 
-/** The refusal of a start day that does not exist. */
+/** The refusal of a start day that does not exist, or that is too late for its periods to be counted. */
 export const INVOICE_SCHEDULE_START_DAY =
-	'INVOICE_SCHEDULE_START_DAY: the start day must be a day that exists, written YYYY-MM-DD.';
+	'INVOICE_SCHEDULE_START_DAY: the start day must be a day that exists, written YYYY-MM-DD, no later than 9998-12-31.';
+
+/**
+ * The last start day a schedule takes: its first period, a month at most, must end on a day that can be written
+ * `YYYY-MM-DD`. A start day in 9999 would put its run day in the year 10000, which no day key spells, and every read of
+ * the organization's schedules would fail on it.
+ */
+const LAST_START_DAY = '9998-12-31';
 
 /**
  * The refusal of a new timeline (frequency or start day) that would bill again days a run already billed: it starts
@@ -262,7 +269,7 @@ export class InvoiceScheduleService extends TenantAwareCrudService<InvoiceSchedu
 	}
 
 	private assertStartDay(startDay: string): void {
-		if (!isRealDay(startDay)) {
+		if (!isRealDay(startDay) || startDay > LAST_START_DAY) {
 			throw new BadRequestException(INVOICE_SCHEDULE_START_DAY);
 		}
 	}
