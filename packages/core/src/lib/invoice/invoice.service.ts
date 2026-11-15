@@ -1,6 +1,6 @@
 import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
 import { Invoice } from './invoice.entity';
-import { Between, FindOperator, In, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
+import { Between, FindOperator, In, IsNull, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { EmailService } from './../email-send/email.service';
 import {
@@ -379,6 +379,9 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 				if (!buffer) throw new Error('PDF generation failed');
 				const base64 = buffer?.toString('base64');
 
+				// An invoice's email links to its public page, where the client opens it without an account
+				const publicToken = isEstimate ? null : await this.publicLinkTokenOf(invoiceId);
+
 				step = 'EMAIL_NOT_SENT';
 				await this.emailService.emailInvoice(
 					languageCode,
@@ -389,7 +392,8 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 					isEstimate,
 					estimateEmail.token,
 					origin,
-					organization
+					organization,
+					...(publicToken ? [publicToken] : [])
 				);
 
 				if (!isEstimate) {
@@ -427,6 +431,52 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 				error?.message
 			);
 		}
+	}
+
+	/**
+	 * The token of an invoice's public page, for the email that sends the invoice. Every invoice gets one when it is
+	 * created (`InvoiceSubscriber`), and that one is kept: a new token would revoke a link the client may already hold.
+	 * An invoice whose link was revoked gets a new one, because sending the invoice shares it again. The new token is
+	 * written only where the invoice still has none, so two sends at once mail the same link.
+	 *
+	 * A failure is logged and answers null: the email then goes without the link, as it did before links were mailed.
+	 *
+	 * @returns The token, or null when the invoice could not be given one.
+	 */
+	async publicLinkTokenOf(invoiceId: ID): Promise<string | null> {
+		try {
+			const invoice = await this.findOneByIdString(invoiceId);
+			if (invoice.token) {
+				return invoice.token;
+			}
+			const token = signPurposeToken(TokenPurposeEnum.INVOICE_SHARE, {
+				id: invoice.id,
+				organizationId: invoice.organizationId,
+				tenantId: invoice.tenantId
+			});
+			await this.typeOrmInvoiceRepository.update(
+				{ id: invoice.id, tenantId: invoice.tenantId, token: IsNull() },
+				{ token }
+			);
+			// Read back: a send at the same moment may have written its token first, and that is the one that holds
+			const { token: stored } = await this.findOneByIdString(invoiceId);
+			return stored ?? null;
+		} catch (error) {
+			console.log(`Invoice ${invoiceId} is emailed without a link to its public page: %s`, error?.message);
+			return null;
+		}
+	}
+
+	/**
+	 * Revokes the public link of an invoice or an estimate: the link stops opening it, wherever it was sent. Generating
+	 * a link again, or sending an invoice again, makes a new one.
+	 *
+	 * @param invoiceId An invoice of the caller's tenant.
+	 * @throws NotFoundException when the caller's tenant has no such invoice.
+	 */
+	async revokeLink(invoiceId: ID): Promise<void> {
+		const invoice = await this.findOneByIdString(invoiceId);
+		await this.typeOrmInvoiceRepository.update({ id: invoice.id, tenantId: invoice.tenantId }, { token: null });
 	}
 
 	/**

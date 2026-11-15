@@ -288,6 +288,19 @@ export class InvoiceController extends CrudController<Invoice> {
 		return await this.commandBus.execute(new InvoiceGenerateLinkCommand(uuid));
 	}
 
+	/**
+	 * Revokes the public link of an invoice or an estimate: the link stops opening it, wherever it was sent. Generating
+	 * a link again, or sending the invoice again, makes a new one.
+	 */
+	@ApiOperation({ summary: 'Revoke the public link of an invoice or an estimate' })
+	@ApiResponse({ status: HttpStatus.NO_CONTENT, description: 'The link no longer opens the invoice' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found' })
+	@HttpCode(HttpStatus.NO_CONTENT)
+	@Delete(':id/link')
+	async revokeLink(@Param('id', UUIDValidationPipe) id: IInvoice['id']): Promise<void> {
+		await this.invoiceService.revokeLink(id);
+	}
+
 	@ApiOperation({ summary: 'Delete record' })
 	@ApiResponse({
 		status: HttpStatus.NO_CONTENT,
