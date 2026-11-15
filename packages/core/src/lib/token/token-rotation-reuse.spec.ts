@@ -400,9 +400,13 @@ describe('a rotated refresh token presented while another request rotates the to
 		tokens.afterReadOf(tokens.stored(held).id, async () => {
 			fromTheOtherRequest = await tokens.rotate(held);
 		});
+		const lockedReads = jest.spyOn(tokens.repository, 'findByIdWithLock');
 
 		const again = await tokens.rotate(first);
 
+		// The token the other request answered is read under the lock as well, once the lock showed the line moved on:
+		// a plain read in a snapshot (MySQL's REPEATABLE READ) may not see it yet
+		expect(lockedReads.mock.calls).toEqual([[tokens.stored(held).id], [tokens.stored(fromTheOtherRequest).id]]);
 		// Both requests are answered, and the line is still one line
 		expect(tokens.stored(held)).toEqual(
 			expect.objectContaining({
@@ -418,6 +422,8 @@ describe('a rotated refresh token presented while another request rotates the to
 	});
 
 	it('locks the token it rotates where the database locks rows, and asks SQLite for no lock', async () => {
+		// SQLite, whatever `DB_TYPE` the environment names
+		jest.mocked(isBetterSqlite3).mockReturnValue(true);
 		const tokens = refreshTokens(10);
 		const lockedReads = jest.spyOn(tokens.repository, 'findByIdWithLock');
 		const first = await tokens.signIn();

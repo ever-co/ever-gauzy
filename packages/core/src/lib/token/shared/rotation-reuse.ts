@@ -44,7 +44,9 @@ async function readIfStored(read: ReadToken, id: string): Promise<IToken | null>
  * @param findById Reads a stored token.
  * @param lockAndRead Given by a caller about to write the token it finds: reads a token again once no other
  *   transaction can change it. A line that another request moved on between the read and the lock is followed
- *   further, so that two requests never rotate the same token.
+ *   further, so that two requests never rotate the same token. The tokens after it are read under the lock too: a
+ *   plain read in a transaction that reads a snapshot (MySQL's `REPEATABLE READ`) may not see the successor the
+ *   other request has just committed, while a read under the lock does.
  * @returns The token the line ends with, or null when the line cannot be followed to its end: one of its tokens is
  *   missing or belongs elsewhere, or the end is more than `MAX_ROTATIONS_FOLLOWED` rotations away.
  */
@@ -55,18 +57,21 @@ async function followRotations(
 	lockAndRead?: ReadToken
 ): Promise<IToken | null> {
 	let token: IToken | null = first;
+	// Set once a token of the line was read under the lock: each token after it is read under the lock as well
+	let readUnderLock: ReadToken | null = null;
 	for (let followed = 1; followed <= MAX_ROTATIONS_FOLLOWED; followed += 1) {
 		const isOfTheSameLine = token.userId === origin.userId && token.tokenType === origin.tokenType;
 		if (!isOfTheSameLine) {
 			return null;
 		}
 		let nextId = nextIdOf(token);
-		if (!nextId && lockAndRead) {
+		if (!nextId && lockAndRead && !readUnderLock) {
 			// The end of the line as it was read. It is the end once no one else can rotate it
 			token = await readIfStored(lockAndRead, token.id);
 			if (!token) {
 				return null;
 			}
+			readUnderLock = lockAndRead;
 			nextId = nextIdOf(token);
 		}
 		if (!nextId) {
@@ -74,7 +79,7 @@ async function followRotations(
 		}
 		// The token after the last rotation followed is not read: it would not be looked at
 		if (followed < MAX_ROTATIONS_FOLLOWED) {
-			token = await readIfStored(findById, nextId);
+			token = await readIfStored(readUnderLock ?? findById, nextId);
 			if (!token) {
 				return null;
 			}
