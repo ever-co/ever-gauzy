@@ -187,7 +187,9 @@ export class ProjectActivityComponent implements OnChanges {
 			(this.projectId || this.taskId) &&
 			(changes['projectId'] || changes['taskId'] || changes['organizationId'] || changes['reloadKey'])
 		) {
-			void this.load();
+			// The host's reload after a change it made: the same feed, read again (#12009)
+			const isReload = !changes['projectId'] && !changes['taskId'] && !changes['organizationId'];
+			void this.load(isReload);
 		}
 	}
 
@@ -213,13 +215,21 @@ export class ProjectActivityComponent implements OnChanges {
 		);
 	}
 
-	private async load(): Promise<void> {
+	/**
+	 * @param keepsShown The same feed read again: its entries stay on screen until the new ones replace them.
+	 * Another project or task starts from an empty feed.
+	 */
+	private async load(keepsShown = false): Promise<void> {
 		const sequence = ++this._sequence;
 		const { organizationId, tenantId, projectId } = this;
-		this.feed = loading([]);
-		this.days = [];
-		void this.source.load([]);
-		this.partial = false;
+		if (keepsShown) {
+			this.feed = loading(this.feed.value);
+		} else {
+			this.feed = loading([]);
+			this.days = [];
+			void this.source.load([]);
+			this.partial = false;
+		}
 		// The statuses the tasks take, as the board's columns, for the colours of the status moves; read beside the
 		// feed, and a failed read leaves the moves uncoloured.
 		this._statuses = [];
