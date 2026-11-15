@@ -39,7 +39,12 @@ import {
 } from '../core/entities/internal';
 import { NOT_ON_LIVE_INVOICE_PARAMETERS, notOnLiveInvoice } from '../invoice-item/invoice-item-billed-time';
 import { InvoiceService } from '../invoice/invoice.service';
-import { InvoiceScheduleRunService } from './invoice-schedule-run.service';
+import { InvoiceScheduleRunService, scheduledInvoiceIdOf } from './invoice-schedule-run.service';
+
+/** An instant as the time read hands it to SQLite (`getDateRangeFormat`): in UTC, to the second. */
+function sqliteSecondOf(instant: Date): string {
+	return new Date(instant).toISOString().slice(0, 19).replace('T', ' ');
+}
 
 /** Booting the whole entity graph on SQLite takes a while. */
 const TIMEOUT = 600_000;
@@ -308,8 +313,8 @@ describe('InvoiceScheduleRunService on SQLite', () => {
 					.andWhere('"time_log"."projectId" IN (:...projectIds)', { projectIds: request.projectIds })
 					.andWhere(
 						new Brackets((qb) => {
-							qb.where('"time_log"."startedAt" >= :start', { start: request.startDate });
-							qb.andWhere('"time_log"."startedAt" < :end', { end: request.endDate });
+							qb.where('"time_log"."startedAt" >= :start', { start: sqliteSecondOf(request.startDate) });
+							qb.andWhere('"time_log"."startedAt" < :end', { end: sqliteSecondOf(request.endDate) });
 						})
 					)
 					.andWhere('"time_log"."logType" <> :breakType', { breakType: TimeLogType.BREAK });

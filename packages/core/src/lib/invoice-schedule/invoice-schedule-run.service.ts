@@ -460,7 +460,8 @@ export class InvoiceScheduleRunService {
 			tenantId,
 			organizationId,
 			startDate: moment.tz(period.startDay, timeZone).startOf('day').toDate(),
-			endDate: moment.tz(period.endDay, timeZone).endOf('day').toDate(),
+			// The time read's end is exclusive: the next period's first instant, so a log started in the last second counts
+			endDate: moment.tz(period.runDay, timeZone).startOf('day').toDate(),
 			timeZone,
 			projectIds,
 			billableOnly: true,
