@@ -304,6 +304,15 @@ export {
 	TimerReminderScheduleModule,
 	TimerReminderService
 } from './lib/time-tracking/timer-reminder';
+// The reminders of a task's due date to its assignees. The worker application fires their schedule, so it imports the
+// schedule's module by name (the API consumes it), behind the switch both processes read.
+export {
+	isTaskDueRemindersEnabled,
+	TaskDueReminderMaintenanceModule,
+	TaskDueReminderModule,
+	TaskDueReminderScheduleModule,
+	TaskDueReminderService
+} from './lib/tasks/due-reminder';
 // The payment reminders to the clients of unpaid invoices. The worker application fires their schedule, so it imports
 // the schedule's module by name (the API consumes it).
 export {

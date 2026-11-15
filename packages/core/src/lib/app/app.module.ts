@@ -171,6 +171,9 @@ import { WebhookMaintenanceModule } from '../webhook/webhook-maintenance.module'
 import { TimerReminderMaintenanceModule } from '../time-tracking/timer-reminder/timer-reminder-maintenance.module';
 import { TimerReminderInlineModule } from '../time-tracking/timer-reminder/timer-reminder-inline';
 import { isTimerRemindersEnabled } from '../time-tracking/timer-reminder/timer-reminder-enabled';
+import { TaskDueReminderMaintenanceModule } from '../tasks/due-reminder/task-due-reminder-maintenance.module';
+import { TaskDueReminderInlineModule } from '../tasks/due-reminder/task-due-reminder-inline';
+import { isTaskDueRemindersEnabled } from '../tasks/due-reminder/task-due-reminder-enabled';
 import { InvoiceReminderMaintenanceModule } from '../invoice/invoice-reminder/invoice-reminder-maintenance.module';
 import { InvoiceReminderInlineModule } from '../invoice/invoice-reminder/invoice-reminder-inline';
 import { InvoiceScheduleMaintenanceModule } from '../invoice-schedule/invoice-schedule-maintenance.module';
@@ -721,6 +724,12 @@ if (environment.EVER_TEAMS_CLIENT_IP_SECRET?.trim() && !clientIpSecretOf(environ
 		// process sweeps on its own, every minute.
 		...(isTimerRemindersEnabled(process.env, (message) => console.warn(message))
 			? [isSchedulerQueueRootEnabled() ? TimerReminderMaintenanceModule : TimerReminderInlineModule]
+			: []),
+		// The reminders of a task's due date to its assignees (off unless GAUZY_TASK_DUE_REMINDERS_ENABLED=true), run as
+		// the timer reminders are: with a queue, this process consumes the sweep the worker application schedules every
+		// five minutes; without a queue, it sweeps on its own, every five minutes.
+		...(isTaskDueRemindersEnabled(process.env, (message) => console.warn(message))
+			? [isSchedulerQueueRootEnabled() ? TaskDueReminderMaintenanceModule : TaskDueReminderInlineModule]
 			: []),
 		// The payment reminders to the clients of unpaid invoices, which each organization turns on (off by default).
 		// With a queue, this process consumes the sweep the worker application schedules every hour: the mail settings
