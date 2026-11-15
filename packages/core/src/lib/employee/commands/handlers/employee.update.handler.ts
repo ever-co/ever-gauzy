@@ -18,7 +18,12 @@ import {
 } from './../../agent-exit-logout-restriction';
 import { assertOwnRatesMayChange, isSameId, removeOwnRateFields, withStoredOwnRates } from './../../own-rates';
 import { TrackingTurnedOffEvent } from './../../../time-tracking/timer/events/tracking-turned-off.event';
-import { callerRoleRank, keepsTrackingSwitch, rankOfRole } from './../../../time-tracking/timer/tracking-switch-rule';
+import {
+	assertTrackingSwitchAsSeen,
+	callerRoleRank,
+	keepsTrackingSwitch,
+	rankOfRole
+} from './../../../time-tracking/timer/tracking-switch-rule';
 
 /** Whether the save turned the employee's time tracking off: it was on before, and the saved row has it off. */
 function turnsTrackingOff(before: IEmployee, saved: IEmployee): boolean {
@@ -179,6 +184,10 @@ export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateComm
 			relations: { organization: { contact: true }, user: { role: true }, contact: true }
 		});
 
+		// A save from a screen whose tracking switch is no longer the stored one would act on a state that is gone,
+		// for example stop a timer started since: refused before anything is written (ever-co/ever-gauzy#11830)
+		assertTrackingSwitchAsSeen(employee?.isTrackingEnabled === true, input.expectedIsTrackingEnabled);
+
 		// Decided before anything is written: a refused switch stops the whole save
 		const allowedInput = withWorkDatesAllowed(employee, withTrackingSwitchAllowed(employee, input));
 
@@ -198,9 +207,10 @@ export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateComm
 			throw new BadRequestException(restrictionError);
 		}
 
-		// The acknowledgement is a request flag, not an employee column.
+		// The acknowledgement and the switch the screen showed are request flags, not employee columns.
 		const changes: IEmployeeUpdateInput = { ...allowedInput };
 		delete changes.acknowledgeAgentExitLogoutRestriction;
+		delete changes.expectedIsTrackingEnabled;
 
 		const keepsStoredRates = editsOwnRecord && !changesOwnRates;
 		if (keepsStoredRates) {
