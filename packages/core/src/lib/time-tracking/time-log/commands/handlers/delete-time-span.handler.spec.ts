@@ -251,10 +251,16 @@ interface IStoredSlot {
 	deletedAt?: Date;
 }
 
-function createStore() {
+/**
+ * @param slotDeleteOrm - The ORM the slot delete (`TimeSlotBulkDeleteHandler`) runs on: TypeORM removes the slots
+ * through the repository, MikroORM through the entity manager, in one flush. The rest of the store is TypeORM's.
+ */
+function createStore({ slotDeleteOrm = MultiORMEnum.TypeORM }: { slotDeleteOrm?: MultiORMEnum } = {}) {
 	const logs: IStoredLog[] = [];
 	const slots: IStoredSlot[] = [];
 	const executed: unknown[] = [];
+	/** The slots deleted for good, which leave the store. */
+	const hardDeleted: string[] = [];
 	/** The timesheets and the employees whose totals were recalculated, in turn (a recalculation that failed is not). */
 	const recalculated = { timesheets: [] as string[], employees: [] as string[] };
 	let created = 0;
@@ -452,10 +458,57 @@ function createStore() {
 		),
 		softRemove: jest.fn(async (removed: ITimeSlot[]) => {
 			failIfDue('slotRemoval');
-			for (const slot of slots.filter(({ id }) => removed.some((entity) => entity.id === id))) {
-				slot.deletedAt = new Date();
-			}
+			softDeleteSlots(removed.map(({ id }) => id));
 			return removed;
+		}),
+		remove: jest.fn(async (removed: ITimeSlot[]) => {
+			failIfDue('slotRemoval');
+			hardDeleteSlots(removed.map(({ id }) => id));
+			return removed;
+		})
+	};
+
+	/** A soft delete stamps the slots; their join rows stay, as the soft-deleted rows keep them. */
+	function softDeleteSlots(ids: string[]) {
+		for (const slot of slots.filter(({ id }) => ids.includes(id))) {
+			slot.deletedAt = new Date();
+		}
+	}
+
+	/** A hard delete removes the slots with their join rows. */
+	function hardDeleteSlots(ids: string[]) {
+		for (const id of ids) {
+			const index = slots.findIndex((slot) => slot.id === id);
+			if (index >= 0) {
+				slots.splice(index, 1);
+				hardDeleted.push(id);
+			}
+		}
+	}
+
+	/**
+	 * The entity manager `TimeSlotBulkDeleteHandler` deletes through on MikroORM: its read of the slots by id with
+	 * their logs, its soft delete (each slot stamped, then one flush) and its hard delete (one remove and flush).
+	 */
+	const timeSlotEntityManager = {
+		find: jest.fn(async (_entity: string, where: Record<string, any>) =>
+			liveSlots()
+				.filter(
+					(slot) =>
+						slot.tenantId === where.tenantId &&
+						slot.organizationId === where.organizationId &&
+						slot.employeeId === where.employeeId &&
+						(!where.id || (where.id.$in as string[]).includes(slot.id))
+				)
+				.map((slot) => slotEntity(slot, true))
+		),
+		persistAndFlush: jest.fn(async (persisted: ITimeSlot[]) => {
+			failIfDue('slotRemoval');
+			softDeleteSlots(persisted.filter((slot) => slot.deletedAt).map(({ id }) => id));
+		}),
+		removeAndFlush: jest.fn(async (removed: ITimeSlot[]) => {
+			failIfDue('slotRemoval');
+			hardDeleteSlots(removed.map(({ id }) => id));
 		})
 	};
 
@@ -467,10 +520,14 @@ function createStore() {
 		{} as any,
 		{ generateTimeSlots } as any
 	);
-	const slotDeleteHandler = new TimeSlotBulkDeleteHandler(timeSlotRepository as any, {} as any);
-	for (const typeOrmOnly of [updateHandler, slotDeleteHandler]) {
-		Object.defineProperty(typeOrmOnly, 'ormType', { value: MultiORMEnum.TypeORM });
-	}
+	const slotDeleteHandler = new TimeSlotBulkDeleteHandler(
+		timeSlotRepository as any,
+		{
+			getEntityManager: () => timeSlotEntityManager
+		} as any
+	);
+	Object.defineProperty(updateHandler, 'ormType', { value: MultiORMEnum.TypeORM });
+	Object.defineProperty(slotDeleteHandler, 'ormType', { value: slotDeleteOrm });
 	const logDeleteHandler = new TimeLogDeleteHandler(timeLogRepository as any, {} as any, commandBus as any);
 	commandBus.execute.mockImplementation(async (command: unknown) => {
 		executed.push(command);
@@ -636,11 +693,11 @@ function createStore() {
 		 * The cleanup for a new `start`–`stop` range, as its callers run it: the logs the conflict lookup reads (those the
 		 * range overlaps, with their slots: the TypeORM lookup joins them), then one command per log, naming no slot.
 		 */
-		async cleanUp(start: string, stop: string) {
+		async cleanUp(start: string, stop: string, forceDelete = false) {
 			const range = { start: at(start), end: at(stop) };
 			const results: boolean[] = [];
 			for (const timeLog of conflictsOver(range)) {
-				results.push(await handler.execute(new DeleteTimeSpanCommand(range, timeLog)));
+				results.push(await handler.execute(new DeleteTimeSpanCommand(range, timeLog, undefined, forceDelete)));
 			}
 			return results;
 		},
@@ -662,7 +719,12 @@ function createStore() {
 				.sort((a, b) => a.startedAt.getTime() - b.startedAt.getTime())
 				.map((log) => ({ ...log })),
 		/** How many slots the employee still has. */
-		slotCount: () => liveSlots().length
+		slotCount: () => liveSlots().length,
+		/** The ids of the slots deleted so far: soft (stamped, still stored) and hard (gone). */
+		deletedSlots: () => ({
+			soft: slots.filter((slot) => slot.deletedAt).map((slot) => slot.id),
+			hard: [...hardDeleted]
+		})
 	};
 }
 
@@ -1152,8 +1214,123 @@ describe('DeleteTimeSpanHandler when a cut at one end or a delete fails (#11823)
 
 		const outcome = await store.cleanUp('2026-10-10T22:00', '2026-10-11T00:00').then(raised, raised);
 
+		expect(store.timeline()).toEqual([
+			{
+				range: '00:00-01:00',
+				isRunning: false,
+				slots: slotStarts('2026-10-11T00:00', '2026-10-11T01:00')
+			}
+		]);
 		expect(store.rows().map((row) => row.timesheetId)).toEqual([after]);
 		expect(store.recalculated()).toEqual({ timesheets: [before, after], employees: [EMPLOYEE_ID] });
+		expect(outcome).toBe('The slotRemoval failed');
+	});
+
+	/**
+	 * #11888: the cut writes the log's new start or end, then deletes in one go the slots only the log held outside it.
+	 * When that delete fails, nothing of it went through, and the log used to keep those slots outside its new range.
+	 */
+	describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
+		'when the cut fails to delete the slots it drops, the slot delete running on %s (#11888)',
+		(slotDeleteOrm) => {
+			it.each([
+				['takes its start', '07:00', '09:00', '09:00', '10:00'],
+				['takes its end', '09:00', '11:00', '08:00', '09:00']
+			] as const)(
+				'deletes the slots outside the new range, and raises the error, when the range %s',
+				async (_shape, start, stop, keptFrom, keptTo) => {
+					const store = createStore({ slotDeleteOrm });
+					store.addLog('tracked', '08:00', '10:00');
+					store.fail('slotRemoval');
+
+					const outcome = await store.cleanUp(start, stop).then(raised, raised);
+
+					expect(store.timeline()).toEqual([
+						{ range: `${keptFrom}-${keptTo}`, isRunning: false, slots: slotStarts(keptFrom, keptTo) }
+					]);
+					// Soft deleted, as the cut was asked
+					expect(store.deletedSlots().soft).toHaveLength(6);
+					expect(store.deletedSlots().hard).toEqual([]);
+					// The cut stopped before its totals: the recovery recalculates them.
+					expect(store.recalculated()).toEqual({
+						timesheets: [timesheetOf(at('08:00'))],
+						employees: [EMPLOYEE_ID]
+					});
+					expect(outcome).toBe('The slotRemoval failed');
+				}
+			);
+
+			it('deletes them for good when the cut was a force delete', async () => {
+				const store = createStore({ slotDeleteOrm });
+				store.addLog('tracked', '08:00', '10:00');
+				store.fail('slotRemoval');
+
+				const outcome = await store.cleanUp('07:00', '09:00', true).then(raised, raised);
+
+				expect(store.timeline()).toEqual([
+					{ range: '09:00-10:00', isRunning: false, slots: slotStarts('09:00', '10:00') }
+				]);
+				expect(store.deletedSlots().hard).toEqual(
+					slotStarts('08:00', '09:00').map((hhmm) => `tracked@${hhmm}`)
+				);
+				expect(store.deletedSlots().soft).toEqual([]);
+				expect(outcome).toBe('The slotRemoval failed');
+			});
+
+			it.each([
+				['takes its start', '07:00', '09:00'],
+				['takes its end', '09:00', '11:00']
+			] as const)(
+				'gives the log its range back, with every slot, when the range %s and the slots cannot be deleted at all',
+				async (_shape, start, stop) => {
+					const store = createStore({ slotDeleteOrm });
+					store.addLog('tracked', '08:00', '10:00');
+					store.fail('slotRemoval', 0, Infinity);
+
+					const outcome = await store.cleanUp(start, stop).then(raised, raised);
+
+					expect(store.timeline()).toEqual(AS_IT_WAS);
+					expect(store.rows().map((row) => row.timesheetId)).toEqual([timesheetOf(at('08:00'))]);
+					expect(store.slotCount()).toBe(12);
+					expect(outcome).toBe('The slotRemoval failed');
+				}
+			);
+		}
+	);
+
+	it('gives the log its range and its timesheet back when it had been moved to the week of its new start (#11888)', async () => {
+		const store = createStore();
+		store.addLog('tracked', '2026-10-10T23:00', '2026-10-11T01:00');
+		const before = timesheetOf(at('2026-10-10T23:00'));
+		store.fail('slotRemoval', 0, Infinity);
+
+		const outcome = await store.cleanUp('2026-10-10T22:00', '2026-10-11T00:00').then(raised, raised);
+
+		expect(store.timeline()).toEqual([
+			{
+				range: '23:00-01:00',
+				isRunning: false,
+				slots: slotStarts('2026-10-10T23:00', '2026-10-11T01:00')
+			}
+		]);
+		expect(store.rows().map((row) => row.timesheetId)).toEqual([before]);
+		expect(outcome).toBe('The slotRemoval failed');
+	});
+
+	it('deletes the slots only the log held before its new start and lets go of the shared one, when the cut fails to delete them (#11888)', async () => {
+		const store = createStore();
+		// The previous log ends at 08:05, inside the 08:00 slot, which both logs hold.
+		store.addLog('previous', '07:30', '08:05');
+		store.addLog('tracked', '08:05', '10:00');
+		store.share('tracked@08:00', 'previous');
+		store.fail('slotRemoval');
+
+		const outcome = await store.cleanUp('08:05', '09:00').then(raised, raised);
+
+		expect(store.timeline()).toEqual([
+			{ range: '07:30-08:05', isRunning: false, slots: slotStarts('07:30', '08:05') },
+			{ range: '09:00-10:00', isRunning: false, slots: slotStarts('09:00', '10:00') }
+		]);
 		expect(outcome).toBe('The slotRemoval failed');
 	});
 });
