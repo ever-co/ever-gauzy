@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional, PickType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsBoolean, IsEnum, IsInt, IsOptional, IsUUID, Matches, Max, Min } from 'class-validator';
+import { IsBoolean, IsEnum, IsInt, IsOptional, IsUUID, Matches, Max, Min, ValidateIf } from 'class-validator';
 import {
 	ID,
 	IInvoiceScheduleCreateInput,
@@ -56,25 +56,28 @@ export class CreateInvoiceScheduleDTO
 	sendInvoice?: boolean;
 }
 
+/** Validates a field whenever it is sent, null included: a change can set it, never clear it. */
+const whenSent = ValidateIf((_object: unknown, value: unknown) => value !== undefined);
+
 /** `PUT /invoice-schedules/:id`: what is sent replaces what is stored; `paused` pauses or resumes the schedule. */
 export class UpdateInvoiceScheduleDTO extends InvoiceScheduleScopeDTO implements IInvoiceScheduleUpdateInput {
 	@ApiPropertyOptional({ enum: InvoiceScheduleFrequencyEnum })
-	@IsOptional()
+	@whenSent
 	@IsEnum(InvoiceScheduleFrequencyEnum)
 	frequency?: InvoiceScheduleFrequencyEnum;
 
 	@ApiPropertyOptional({ type: () => String, example: '2026-10-01' })
-	@IsOptional()
+	@whenSent
 	@Matches(DAY_SHAPE)
 	startDay?: string;
 
 	@ApiPropertyOptional({ enum: InvoiceScheduleGroupingEnum })
-	@IsOptional()
+	@whenSent
 	@IsEnum(InvoiceScheduleGroupingEnum)
 	grouping?: InvoiceScheduleGroupingEnum;
 
 	@ApiPropertyOptional({ type: () => Boolean })
-	@IsOptional()
+	@whenSent
 	@IsBoolean()
 	sendInvoice?: boolean;
 
@@ -82,7 +85,7 @@ export class UpdateInvoiceScheduleDTO extends InvoiceScheduleScopeDTO implements
 		type: () => Boolean,
 		description: 'true pauses the schedule; false resumes it, from today: the periods it skipped are not billed.'
 	})
-	@IsOptional()
+	@whenSent
 	@IsBoolean()
 	paused?: boolean;
 }
