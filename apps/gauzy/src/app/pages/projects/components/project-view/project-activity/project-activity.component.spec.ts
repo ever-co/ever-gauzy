@@ -165,7 +165,7 @@ describe('ProjectActivityComponent', () => {
 		expect(entry.status.to).toEqual({ name: 'In Review', color: '#F3D8B0' });
 	});
 
-	it('leaves a move uncoloured when the statuses cannot be read', async () => {
+	it('leaves a move without colour when the statuses cannot be read', async () => {
 		http.get.mockImplementation((url: string, options: { params: HttpParams }) => {
 			if (url.endsWith('/task-statuses')) return throwError(() => new Error('403'));
 			return of({ items: logsByEntity[options.params.get('entityId')] || [] });

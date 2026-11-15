@@ -231,7 +231,7 @@ export class ProjectActivityComponent implements OnChanges {
 			this.partial = false;
 		}
 		// The statuses the tasks take, as the board's columns, for the colours of the status moves; read beside the
-		// feed, and a failed read leaves the moves uncoloured.
+		// feed, and a failed read leaves the moves without colour.
 		this._statuses = [];
 		const statuses = this.fetchStatuses().catch((): ITaskStatus[] => []);
 		if (this.taskId) return this.loadTask(sequence, statuses);
