@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, SimpleChange } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { NEVER, of, throwError } from 'rxjs';
+import { NEVER, Observable, of, throwError } from 'rxjs';
 import { ITask } from '@gauzy/contracts';
 import { Store, TimesheetStatisticsService, ToastrService } from '@gauzy/ui-core/core';
 import { ProjectBoardComponent } from './project-board.component';
@@ -93,9 +93,10 @@ describe('ProjectBoardComponent', () => {
 		expect(http.get).toHaveBeenCalled();
 	});
 
-	it("keeps its columns and cards on screen while the host's reload is read (#12009)", async () => {
+	it("keeps its columns, cards and counts on screen while the host's reload is read (#12009)", async () => {
 		const component = await board();
 		const shown = cards(component);
+		const { totalCards, shownCards } = component;
 		// The reload's reads are still on their way
 		http.get.mockImplementation(() => NEVER);
 
@@ -105,6 +106,50 @@ describe('ProjectBoardComponent', () => {
 		expect(component.board.loading).toBe(true);
 		expect(cards(component)).toBe(shown);
 		expect(shown).toBe(3);
+		expect(component.totalCards).toBe(totalCards);
+		expect(totalCards).toBe(3);
+		expect(component.shownCards).toBe(shownCards);
+	});
+
+	it("reads no further page while the host's reload is read, then counts from its answer", async () => {
+		const subtasks = (page: () => Observable<unknown>) =>
+			http.get.mockImplementation((url: string) => {
+				if (url.endsWith('/task-statuses')) return of({ items: STATUSES });
+				if (url.endsWith(`/tasks/${PARENT_ID}`)) return parent$();
+				return page();
+			});
+		subtasks(() => of({ items: [task('sub-1', 'open'), task('sub-2', 'done')], total: 3 }));
+		const component = await board();
+		expect(component.shownCards).toBe('3+');
+		expect(component.totalCards).toBe(4);
+
+		let answer: (page: unknown) => void;
+		subtasks(
+			() =>
+				new Observable((subscriber) => {
+					answer = (page) => {
+						subscriber.next(page);
+						subscriber.complete();
+					};
+				})
+		);
+		component.reloadKey = 1;
+		component.ngOnChanges({ reloadKey: new SimpleChange(0, 1, false) });
+		http.get.mockClear();
+
+		await component.loadMore();
+
+		expect(http.get).not.toHaveBeenCalled();
+		expect(component.shownCards).toBe('3+');
+		expect(component.totalCards).toBe(4);
+
+		answer({ items: [task('sub-1', 'open')], total: 1 });
+		for (let i = 0; i < 5; i++) await new Promise((resolve) => setTimeout(resolve));
+
+		expect(component.board.loading).toBe(false);
+		expect(cards(component)).toBe(2);
+		expect(component.totalCards).toBe(2);
+		expect(component.hasMore).toBe(false);
 	});
 
 	it('CONTROL: another task starts from an empty board', async () => {

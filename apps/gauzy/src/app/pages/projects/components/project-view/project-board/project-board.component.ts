@@ -363,7 +363,8 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 
 	/** Reads the next page onto the board. */
 	async loadMore(): Promise<void> {
-		if (this.loadingMore || !this.hasMore) return;
+		// While the board is read again, the pages it shows are being replaced: the next one waits for the answer.
+		if (this.loadingMore || this.board.loading || !this.hasMore) return;
 		const sequence = this._sequence;
 		this.loadingMore = true;
 		this.loadMoreFailed = false;
@@ -457,12 +458,10 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 		this.endDrag();
 		const { parentId } = this;
 		this.board = loading(keepsShown ? this.board.value : []);
-		this.total = 0;
+		// The same board read again keeps its counts beside the cards it keeps, until the answer replaces both.
+		if (!keepsShown) this.resetPages();
 		this.loadingMore = false;
 		this.loadMoreFailed = false;
-		this._offset = 0;
-		this._placed = new Set();
-		this.hasParent = false;
 		this._worked = null;
 		this._projectWorked = undefined;
 		try {
@@ -479,6 +478,7 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 					: Promise.resolve<ITask | null>(null)
 			]);
 			if (sequence !== this._sequence) return;
+			this.resetPages();
 			const columns = this.toColumns(statuses);
 			// The parent goes on before the pages, which read its subtasks only.
 			if (parent?.id) {
@@ -489,11 +489,24 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 			this.addPage(columns, page);
 			this.board = loaded(columns);
 			void this.loadProgress(sequence);
+			// A board read again kept its end in place: watched afresh, it reports whether the next page is in reach.
+			if (keepsShown) this.watchEnd();
 		} catch {
-			if (sequence === this._sequence) this.board = failed([]);
+			if (sequence === this._sequence) {
+				this.resetPages();
+				this.board = failed([]);
+			}
 		} finally {
 			this._changeDetectorRef.markForCheck();
 		}
+	}
+
+	/** The board's paging from its start: no page read, no card placed, no parent. */
+	private resetPages(): void {
+		this.total = 0;
+		this._offset = 0;
+		this._placed = new Set();
+		this.hasParent = false;
 	}
 
 	private get relations(): string[] {
