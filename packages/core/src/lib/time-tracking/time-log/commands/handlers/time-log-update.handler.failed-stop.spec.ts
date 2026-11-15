@@ -4,7 +4,7 @@ import '../../../../core/entities/internal';
 import { ID, ITimeSlot, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
 import { RequestContext } from '../../../../core/context';
 import { MultiORMEnum } from '../../../../core/utils';
-import { TimesheetFirstOrCreateCommand } from '../../../timesheet/commands';
+import { TimesheetFirstOrCreateCommand, TimesheetRecalculateCommand } from '../../../timesheet/commands';
 import { TimeSlotBulkDeleteCommand } from '../../../time-slot/commands';
 import { generateTimeSlots } from '../../../time-slot/utils';
 import { TimeLogUpdateCommand } from '../time-log-update.command';
@@ -22,6 +22,7 @@ const ORGANIZATION = 'org-a';
 const EMPLOYEE = 'employee-a';
 const RUN = 'run';
 const OTHER_LOG = 'other-log';
+const TIMESHEET = 'timesheet-0';
 
 /** 2026-01-05 at `HH:mm`, UTC. */
 const at = (time: string) => new Date(`2026-01-05T${time}:00.000Z`);
@@ -48,6 +49,7 @@ function createRun(source: TimeLogSourceEnum) {
 		tenantId: TENANT,
 		organizationId: ORGANIZATION,
 		employeeId: EMPLOYEE,
+		timesheetId: TIMESHEET,
 		source,
 		logType: TimeLogType.TRACKED,
 		startedAt: at('09:00'),
@@ -57,6 +59,10 @@ function createRun(source: TimeLogSourceEnum) {
 	const slots: IStoredSlot[] = [];
 	const hardDeleted: string[] = [];
 	let created = 0;
+	/** What another write of the run stores just before this one fails (see `stopElsewhereFirst`). */
+	let landsFirst: Partial<typeof run> | undefined;
+	/** Whether the insert's merge folds the slots sharing a start into the first one, as `TimeSlotMergeHandler` does. */
+	let mergesSlotsSharingAStart = false;
 
 	const failing: Partial<Record<Write, number>> = {};
 	const failIfDue = (write: Write) => {
@@ -90,6 +96,11 @@ function createRun(source: TimeLogSourceEnum) {
 	const timeLogRepository = {
 		findOneBy: jest.fn(async () => ({ ...run })),
 		update: jest.fn(async (_where: object, changes: object) => {
+			if (landsFirst) {
+				Object.assign(run, landsFirst);
+				landsFirst = undefined;
+				throw new Error('The stopWrite failed');
+			}
 			failIfDue('stopWrite');
 			Object.assign(run, changes);
 			return { affected: 1 };
@@ -140,6 +151,16 @@ function createRun(source: TimeLogSourceEnum) {
 						startedAt: new Date(slot.startedAt),
 						timeLogIds: [slot.timeLogId]
 					});
+				}
+			}
+			if (mergesSlotsSharingAStart) {
+				// One slot per start, the first stored: it takes the logs of the others, which go
+				for (const start of starts) {
+					const [kept, ...others] = slotsAt([start]);
+					for (const other of others) {
+						kept.timeLogIds = [...new Set([...kept.timeLogIds, ...other.timeLogIds])];
+						slots.splice(slots.indexOf(other), 1);
+					}
 				}
 			}
 			failIfDue('slotMerge');
@@ -200,10 +221,34 @@ function createRun(source: TimeLogSourceEnum) {
 				() => undefined,
 				(error: Error) => error.message
 			),
+		/** An edit of the log's end to `time`; the error it raised, if any. */
+		editEnd: (time: string) =>
+			handler.execute(new TimeLogUpdateCommand({ stoppedAt: at(time) }, RUN)).then(
+				() => undefined,
+				(error: Error) => error.message
+			),
 		/** Another log of the employee holds a slot at `time`, as two logs meeting inside one ten-minute slot do. */
 		addSlotOfAnotherLog(time: string) {
 			slots.push({ id: `shared@${time}`, startedAt: at(time), timeLogIds: [OTHER_LOG] });
 		},
+		/** The run holds a slot at `time`. */
+		addSlotOfTheRun(time: string) {
+			slots.push({ id: `own@${time}`, startedAt: at(time), timeLogIds: [RUN] });
+		},
+		/** The insert's merge folds the slots sharing a start into the first one stored, as it does on TypeORM. */
+		mergeSlotsSharingAStart() {
+			mergesSlotsSharingAStart = true;
+		},
+		/** Another stop of the run, at `time`, goes through just before this stop's own write fails. */
+		stopElsewhereFirst(time: string) {
+			landsFirst = { isRunning: false, stoppedAt: at(time) };
+		},
+		/** The timesheets recalculated, by id. */
+		recalculated: () =>
+			commandBus.execute.mock.calls
+				.map(([command]) => command)
+				.filter((command) => command instanceof TimesheetRecalculateCommand)
+				.map((command) => (command as TimesheetRecalculateCommand).id),
 		/** The run as stored, with the starts of the slots it holds. */
 		state: () => ({
 			isRunning: run.isRunning,
@@ -308,6 +353,38 @@ describe.each([
 		}
 	);
 
+	it('recalculates the timesheet once it has deleted the slots it inserted, which the merge counted', async () => {
+		const store = createRun(source);
+		store.fail('stopWrite');
+
+		await store.stop('09:30');
+
+		expect(store.slotCount()).toBe(0);
+		expect(store.recalculated()).toEqual([TIMESHEET]);
+	});
+
+	it('recalculates nothing when the slot insert failed before writing any slot', async () => {
+		const store = createRun(source);
+		store.fail('slotInsert');
+
+		await store.stop('09:30');
+
+		expect(store.recalculated()).toEqual([]);
+	});
+
+	it('keeps the slots of the range another stop of the run wrote in the meantime, and gives back the rest', async () => {
+		const store = createRun(source);
+		// A stop at 09:20 (the tracking turned off, or one from another API process) goes through, then this one's
+		// write of 09:30 fails: the run holds the slots of the range that stop wrote
+		store.stopElsewhereFirst('09:20');
+
+		const outcome = await store.stop('09:30');
+
+		expect(store.state()).toEqual({ isRunning: false, stoppedAt: '09:20', slots: slotStarts('09:00', '09:20') });
+		expect(store.slotCount()).toBe(2);
+		expect(outcome).toBe('The stopWrite failed');
+	});
+
 	it('leaves the run stopped with every slot of its range when the save after the stop fails', async () => {
 		const store = createRun(source);
 		store.fail('save');
@@ -316,5 +393,33 @@ describe.each([
 
 		expect(store.state()).toEqual({ isRunning: false, stoppedAt: '09:30', slots: slotStarts('09:00', '09:30') });
 		expect(outcome).toBe('The save failed');
+	});
+});
+
+describe('TimeLogUpdateHandler, an edit of a web timer log whose write fails after the merge of its slots (#11889)', () => {
+	beforeEach(() => {
+		jest.spyOn(console, 'log').mockImplementation(() => undefined);
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+	});
+	afterEach(() => jest.restoreAllMocks());
+
+	it('leaves the log the slot the merge moved its link onto, at a start where it held one', async () => {
+		const store = createRun(TimeLogSourceEnum.WEB_TIMER);
+		// A log of 09:00 to 09:20, and an older slot of another log at 09:10, beside the log's own slot there
+		Object.assign(store.run, { isRunning: false, stoppedAt: at('09:20') });
+		store.addSlotOfAnotherLog('09:10');
+		store.addSlotOfTheRun('09:00');
+		store.addSlotOfTheRun('09:10');
+		// The insert's merge keeps the older slot at 09:10, with both logs, and the log's own one there goes
+		store.mergeSlotsSharingAStart();
+		store.fail('stopWrite');
+
+		const outcome = await store.editEnd('09:30');
+
+		expect(outcome).toBe('The stopWrite failed');
+		expect(store.state()).toEqual({ isRunning: false, stoppedAt: '09:20', slots: ['09:00', '09:10'] });
+		expect(store.slotsOf(OTHER_LOG)).toEqual(['09:10']);
+		// The 09:20 slot the edit inserted is given back
+		expect(store.slotCount()).toBe(2);
 	});
 });

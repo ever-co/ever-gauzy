@@ -82,6 +82,19 @@ function holdsSlot(timeLog: ITimeLog, slot: ITimeSlot): boolean {
 	return Array.from(slot.timeLogs ?? []).some((log) => log.id === timeLog.id);
 }
 
+/** The whole minute a slot starts in, as the lookups of a range's slots read it (see `minuteRange`). */
+function slotMinute(slot: Pick<ITimeSlot, 'startedAt'>): number {
+	return moment(slot.startedAt).startOf('minute').valueOf();
+}
+
+/** Whether two stored instants are the same one, both missing included. */
+function isSameInstant(a: Date | string | null | undefined, b: Date | string | null | undefined): boolean {
+	if (a == null || b == null) {
+		return a == null && b == null;
+	}
+	return new Date(a).getTime() === new Date(b).getTime();
+}
+
 @CommandHandler(TimeLogUpdateCommand)
 export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateCommand> {
 	protected ormType: MultiORM = getORMType();
@@ -743,22 +756,43 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 	 * log holds is deleted for good, as it holds no screenshot or activity yet (the slot delete removes it only while
 	 * the log still holds it alone). A failure here is logged; the write's own error stays the one raised.
 	 *
-	 * @param timeLog - The log.
+	 * Two things stay as they are:
+	 * - the slots of the range a write of the log that went through since stored (another stop of the same run, as
+	 *   the stop of a tracking turned off; see `startsWrittenSince`): that write gave the log those slots. The log is
+	 *   read again just before, so only a write landing between that read and this cleanup can still lose them;
+	 * - the link of a slot at a start where the log held a slot before: the merge of the employee's slots
+	 *   (`TimeSlotMergeHandler`, run by the insert) keeps one slot per start and moves the links of the others onto
+	 *   it, so the log still holding a slot there holds its own time.
+	 *
+	 * Once slots were given back, the timesheet and the employee's worked hours are recalculated: the merge counted
+	 * the slots it was given, and those deleted here count no more.
+	 *
+	 * @param timeLog - The log, as read before the write.
 	 * @param before - The employee's slots at those starts, with their logs, as read before the write.
 	 * @param at - The employee's slots to read: those of the employee at the range's starts.
 	 */
 	private async giveRangeSlotsBack(timeLog: ITimeLog, before: ITimeSlot[], at: IRangeSlotsAt): Promise<void> {
 		try {
 			const existed = new Set(before.map((slot) => slot.id));
-			const heldBefore = new Set(before.filter((slot) => holdsSlot(timeLog, slot)).map((slot) => slot.id));
+			const heldBefore = before.filter((slot) => holdsSlot(timeLog, slot));
+			const heldBeforeIds = new Set(heldBefore.map((slot) => slot.id));
+			const startsHeldBefore = new Set(heldBefore.map(slotMinute));
 			const standing = await this.findTimeSlots(at.tenantId, at.organizationId, at.employeeId, at.starts, true);
-			const taken = standing.filter((slot) => holdsSlot(timeLog, slot) && !heldBefore.has(slot.id));
+			let taken = standing.filter((slot) => holdsSlot(timeLog, slot) && !heldBeforeIds.has(slot.id));
+			if (taken.length === 0) {
+				return;
+			}
+			const writtenSince = await this.startsWrittenSince(timeLog, at.tenantId);
+			taken = taken.filter((slot) => !writtenSince.has(slotMinute(slot)));
+
 			const heldByThisLogAlone = (slot: ITimeSlot) =>
 				Array.from(slot.timeLogs ?? []).every((log) => log.id === timeLog.id);
 			const created = taken
 				.filter((slot) => !existed.has(slot.id) && heldByThisLogAlone(slot))
 				.map((slot) => slot.id);
-			const linked = taken.filter((slot) => !created.includes(slot.id)).map((slot) => slot.id);
+			const linked = taken
+				.filter((slot) => !created.includes(slot.id) && !startsHeldBefore.has(slotMinute(slot)))
+				.map((slot) => slot.id);
 
 			if (created.length > 0) {
 				const { organizationId, employeeId, tenantId } = at;
@@ -777,12 +811,37 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 					.of(linked)
 					.remove(timeLog.id);
 			}
+			if (created.length > 0 || linked.length > 0) {
+				await this.recalculateTimesheetAndEmployeeHours(timeLog.timesheetId, at.employeeId);
+			}
 		} catch (undoError) {
 			this.logger.error(
 				`Error while giving back the time slots of time log ${timeLog.id} after a failed write: ${undoError?.message ?? undoError}`,
 				undoError?.stack
 			);
 		}
+	}
+
+	/**
+	 * The slot starts of the log's range as it is now stored, when a write of the log went through since it was read
+	 * before a failed write of its range (see `giveRangeSlotsBack`): another stop of the same run, from a tracking turned
+	 * off or from another API process. That write gave the log the slots of the range it stored. None while the log is
+	 * stored as it was read (its range and whether it runs), or is no longer there.
+	 *
+	 * @param timeLog - The log, as read before the failed write.
+	 * @param tenantId - The log's tenant.
+	 */
+	private async startsWrittenSince(timeLog: ITimeLog, tenantId: ID): Promise<Set<number>> {
+		const stored = await this.typeOrmTimeLogRepository.findOneBy({ id: timeLog.id, tenantId });
+		const isAsRead =
+			!stored ||
+			(Boolean(stored.isRunning) === Boolean(timeLog.isRunning) &&
+				isSameInstant(stored.startedAt, timeLog.startedAt) &&
+				isSameInstant(stored.stoppedAt, timeLog.stoppedAt));
+		if (isAsRead) {
+			return new Set();
+		}
+		return new Set(this.timeSlotService.generateTimeSlots(stored.startedAt, stored.stoppedAt).map(slotMinute));
 	}
 
 	/**
