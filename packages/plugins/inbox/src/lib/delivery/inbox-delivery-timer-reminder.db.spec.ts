@@ -43,7 +43,11 @@ jest.mock('@gauzy/core', () => {
 			currentTenantId: () => mockCaller.tenantId,
 			currentUserId: () => mockCaller.userId,
 			hasPermission: (permission: string) => mockCaller.permissions.includes(permission)
-		}
+		},
+		// The team defaults the delivery reads under each employee's own preferences: none here, as for an employee
+		// whose team keeps none (their reading and merging are specified in core)
+		teamNotificationDefaultsByEmployee: async () => new Map(),
+		withTeamNotificationDefaults: (own: unknown) => own
 	};
 });
 

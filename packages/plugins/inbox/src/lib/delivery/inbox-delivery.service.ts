@@ -6,8 +6,10 @@ import {
 	InboxDeliveryChannelEnum,
 	InboxDeliveryModeEnum,
 	InboxItemKindEnum,
-	InboxItemSourceEnum
+	InboxItemSourceEnum,
+	ITeamNotificationDefaults
 } from '@gauzy/contracts';
+import { teamNotificationDefaultsByEmployee, withTeamNotificationDefaults } from '@gauzy/core';
 import { InboxItem } from '../entities/inbox-item.entity';
 import { InboxItemRecipient } from '../entities/inbox-item-recipient.entity';
 import { InboxNamedLocks } from '../email/database/named-locks';
@@ -36,6 +38,10 @@ import {
 import { InboxDeliveryPusher, InboxPushGoneError, InboxPushRefusedError } from './push/inbox-delivery-pusher';
 import { InboxPushSubscriptionService } from './push/inbox-push-subscription.service';
 import { INBOX_PUSH_FOCUSED_WINDOW_MS, INBOX_PUSH_NO_SUBSCRIPTION, INBOX_PUSH_SKIPPED_FOCUSED } from './push/inbox-push.constants';
+
+/** How long the team defaults read for an employee are reused, and how many employees are kept at most. */
+const TEAM_DEFAULTS_READ_TTL_MS = 60_000;
+const TEAM_DEFAULTS_READ_MAX = 5000;
 
 /** What one sweep did. */
 export interface IInboxDeliverySweepReport {
@@ -100,6 +106,9 @@ interface IDeliveryUser {
  */
 @Injectable()
 export class InboxDeliveryService {
+	/** The team defaults read for each employee lately (see `teamDefaultsOf`). */
+	private readonly teamDefaultsRead = new Map<string, { defaults: ITeamNotificationDefaults | null; at: number }>();
+
 	private readonly logger = new Logger(InboxDeliveryService.name);
 	/** One sweep at a time across the workers (a transaction-scoped advisory lock on PostgreSQL, `GET_LOCK` on MySQL). */
 	private readonly locks: InboxNamedLocks;
@@ -564,8 +573,31 @@ export class InboxDeliveryService {
 		return user ?? null;
 	}
 
+	/**
+	 * The employee's notification setting, its preferences with their team's defaults under them (a key the employee left
+	 * unset takes the team's value); a team default applies to an employee who has no setting yet too.
+	 */
 	private async settingOf(employeeId: ID, tenantId: ID): Promise<ObjectLiteral | null> {
-		return (await this.dataSource.getRepository<ObjectLiteral>('EmployeeNotificationSetting').findOne({ where: { employeeId, tenantId } } as never)) ?? null;
+		const setting =
+			(await this.dataSource.getRepository<ObjectLiteral>('EmployeeNotificationSetting').findOne({ where: { employeeId, tenantId } } as never)) ?? null;
+		const defaults = await this.teamDefaultsOf(employeeId, tenantId);
+		if (!defaults) return setting;
+		return { ...(setting ?? {}), preferences: withTeamNotificationDefaults(setting?.['preferences'], defaults) };
+	}
+
+	/**
+	 * The team defaults of an employee, read once a minute at most: a sweep decides many entries of the same people, on
+	 * two channels, and a team's defaults change seldom. A change reaches the decisions within the minute.
+	 */
+	private async teamDefaultsOf(employeeId: ID, tenantId: ID): Promise<ITeamNotificationDefaults | null> {
+		const key = `${tenantId}:${employeeId}`;
+		const now = Date.now();
+		const kept = this.teamDefaultsRead.get(key);
+		if (kept && now - kept.at < TEAM_DEFAULTS_READ_TTL_MS) return kept.defaults;
+		const defaults = (await teamNotificationDefaultsByEmployee(this.dataSource, [{ employeeId, tenantId }])).get(key) ?? null;
+		if (this.teamDefaultsRead.size >= TEAM_DEFAULTS_READ_MAX) this.teamDefaultsRead.clear();
+		this.teamDefaultsRead.set(key, { defaults, at: now });
+		return defaults;
 	}
 
 	private async markSent(rows: InboxDelivery[], now: Date): Promise<void> {

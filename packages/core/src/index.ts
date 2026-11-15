@@ -313,6 +313,12 @@ export {
 	TaskDueReminderScheduleModule,
 	TaskDueReminderService
 } from './lib/tasks/due-reminder';
+// A team's defaults under its members' own notification preferences, which the Inbox delivery reads too.
+export {
+	teamNotificationDefaultsByEmployee,
+	teamNotificationDefaultsOf,
+	withTeamNotificationDefaults
+} from './lib/employee-notification-setting/team-notification-defaults';
 // The payment reminders to the clients of unpaid invoices. The worker application fires their schedule, so it imports
 // the schedule's module by name (the API consumes it).
 export {
