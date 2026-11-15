@@ -1,6 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, DestroyRef, ElementRef, inject, NgZone, OnInit, type Signal, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, effect, ElementRef, inject, Injector, NgZone, OnInit, type Signal, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, NavigationStart, Router, RouterLink } from '@angular/router';
 import { NbCardModule, NbDialogService, NbIconModule, NbSpinnerModule } from '@nebular/theme';
@@ -367,7 +367,7 @@ function viewportSize(): { width: number; height: number } {
 										}
 									}
 									@default {
-										<div class="welcome" data-test="pick">
+										<div class="welcome" data-test="pick" #welcome>
 											<div class="welcome-inner">
 												<header class="welcome-head">
 													<h3>{{ 'CHAT.VIEW.HOME_TITLE' | translate }}</h3>
@@ -766,6 +766,8 @@ function viewportSize(): { width: number; height: number } {
 				height: 100%;
 				min-height: 22rem;
 				overflow: hidden;
+				/* Each tile lays out and paints on its own: an animating sketch never invalidates the rest of the page. */
+				contain: layout paint;
 				border: 1px solid var(--chat-border);
 				border-radius: 1.125rem;
 				background: radial-gradient(130% 70% at 0% 100%, var(--chat-accent-soft-2), transparent 70%), var(--chat-sidebar-bg);
@@ -892,7 +894,9 @@ function viewportSize(): { width: number; height: number } {
 				margin-top: 2.5rem;
 				padding: 0 2.25rem;
 			}
+			/* Layout containment: a sketch's changes (a message arriving, a line being typed) never lay out the page. */
 			.mock {
+				contain: layout;
 				width: 100%;
 				max-width: 22rem;
 				border: 1px solid var(--chat-border-strong);
@@ -1019,7 +1023,7 @@ function viewportSize(): { width: number; height: number } {
 				padding: 0.5rem 0.5rem 0.5rem 0.875rem;
 				border: 1px solid var(--chat-border);
 				border-radius: 0.625rem;
-				transition: border-color 0.2s ease, box-shadow 0.2s ease;
+				transition: border-color 0.2s ease;
 			}
 			.mock-composer.is-focused {
 				border-color: var(--chat-accent);
@@ -1165,25 +1169,43 @@ function viewportSize(): { width: number; height: number } {
 			.pill nb-icon {
 				font-size: 0.875rem;
 			}
-			.send.is-pressed,
-			.pill.is-pressed {
-				animation: chat-welcome-flash 0.7s ease-out;
+			/* A click answers with a ring that grows and fades: transform and opacity only, so no repaint per frame. */
+			.send,
+			.pill {
+				position: relative;
+			}
+			.send.is-pressed::after,
+			.pill.is-pressed::after {
+				content: '';
+				position: absolute;
+				inset: 0;
+				border-radius: inherit;
+				box-shadow: 0 0 0 3px var(--chat-accent-soft-2);
+				pointer-events: none;
+				animation: chat-welcome-ring 0.7s ease-out forwards;
 			}
 
 			/*
 			 * The "You" cursors, as on the Downloads page: the welcome loop sets each one's data-at (where it is) and
 			 * is-pressing (a click this second); it glides between spots and the clicked control answers with a ring.
 			 * Spots are measured from the drawings above (from the drawing's top and start edges).
+			 *
+			 * The cursor is a transparent layer the size of its drawing (inset: 0), moved with transform: a translate in %
+			 * is then a share of the drawing's width, as left: x% was, but the glide runs on the compositor with no layout
+			 * or paint per frame. --x and --y are the spot; --flip mirrors it for right-to-left pages.
 			 */
 			.cursor {
 				position: absolute;
+				inset: 0;
 				z-index: 2;
-				top: 0;
-				inset-inline-start: 0;
 				display: flex;
 				align-items: flex-start;
 				pointer-events: none;
-				transition: inset-inline-start 0.9s cubic-bezier(0.65, 0, 0.35, 1), top 0.9s cubic-bezier(0.65, 0, 0.35, 1);
+				transform: translate(calc(var(--x, 0px) * var(--flip, 1)), var(--y, 0px));
+				transition: transform 0.9s cubic-bezier(0.65, 0, 0.35, 1);
+			}
+			:host-context([dir='rtl']) .cursor {
+				--flip: -1;
 			}
 			.cursor-arrow {
 				flex: 0 0 auto;
@@ -1213,24 +1235,24 @@ function viewportSize(): { width: number; height: number } {
 				animation: chat-welcome-press 0.35s ease-out;
 			}
 			.window .cursor[data-at='list'] {
-				inset-inline-start: 64%;
-				top: 6.5rem;
+				--x: 64%;
+				--y: 6.5rem;
 			}
 			.window .cursor[data-at='composer'] {
-				inset-inline-start: 34%;
-				top: 16.25rem;
+				--x: 34%;
+				--y: 16.25rem;
 			}
 			.window .cursor[data-at='send'] {
-				inset-inline-start: calc(100% - 2.75rem);
-				top: 16.25rem;
+				--x: calc(100% - 2.75rem);
+				--y: 16.25rem;
 			}
 			.list .cursor[data-at='search'] {
-				inset-inline-start: 58%;
-				top: 1.875rem;
+				--x: 58%;
+				--y: 1.875rem;
 			}
 			.list .cursor[data-at='join'] {
-				inset-inline-start: calc(100% - 2.875rem);
-				top: 7.375rem;
+				--x: calc(100% - 2.875rem);
+				--y: 7.375rem;
 			}
 
 			/* The page opening: the headline and the cards rise in one after another, the sketches' messages too. */
@@ -1292,15 +1314,14 @@ function viewportSize(): { width: number; height: number } {
 					transform: scale(1);
 				}
 			}
-			@keyframes chat-welcome-flash {
-				0% {
-					box-shadow: 0 0 0 0 var(--chat-accent-soft-2);
+			@keyframes chat-welcome-ring {
+				from {
+					opacity: 1;
+					transform: scale(1);
 				}
-				30% {
-					box-shadow: 0 0 0 4px var(--chat-accent-soft-2);
-				}
-				100% {
-					box-shadow: 0 0 0 8px transparent;
+				to {
+					opacity: 0;
+					transform: scale(1.35);
 				}
 			}
 			@keyframes chat-welcome-type {
@@ -1328,6 +1349,7 @@ function viewportSize(): { width: number; height: number } {
 			/* Less motion asked for: the still picture, with no entrances, typing or cursors (the loop does not run either). */
 			@media (prefers-reduced-motion: reduce) {
 				.welcome *,
+				.simple-scroll *,
 				.welcome-head,
 				.tile {
 					animation: none !important;
@@ -1486,6 +1508,10 @@ function viewportSize(): { width: number; height: number } {
 			.item-tile .tile-inner {
 				min-height: 0;
 				padding: 2rem 2.25rem;
+			}
+			/* Only the first tiles rise in: the ones further down a long list are off screen when the view opens. */
+			.item-tile:nth-child(n + 9) {
+				animation: none;
 			}
 			.tile.wide.empty-tile .tile-inner {
 				min-height: 17rem;
@@ -1687,6 +1713,8 @@ export class ChatPageComponent implements OnInit {
 
 	/** The welcome sketches' loop (see {@link WELCOME_LOOP_SECONDS}); it stays on its first frame for reduced motion. */
 	private readonly welcomeStep = signal(0);
+	private readonly welcomeEl = viewChild<ElementRef<HTMLElement>>('welcome');
+	private readonly injector = inject(Injector);
 	protected readonly channelCursor = computed(() => CHANNEL_SCRIPT[this.welcomeStep()]);
 	protected readonly channelTyping = computed(() => this.welcomeStep() >= 2 && this.welcomeStep() < WELCOME_ACT_STEP);
 	protected readonly channelSent = computed(() => this.welcomeStep() >= WELCOME_ACT_STEP && this.welcomeStep() < WELCOME_RESET_STEP);
@@ -1853,20 +1881,31 @@ export class ChatPageComponent implements OnInit {
 	}
 
 	/**
-	 * The welcome sketches' one-second clock. It advances only while the welcome screen is shown and the tab is
-	 * visible, so an open conversation or a background tab costs nothing. The interval runs outside Angular's zone
-	 * so it does not run change detection for the whole app; the signal write refreshes only this view. For reduced
-	 * motion it does not start: the sketches stay on their first frame and the cursors are hidden by the styles.
+	 * The welcome sketches' one-second clock. The interval exists only while the welcome screen is shown: an effect
+	 * starts it (from the first frame) when the page is ready with no conversation open, and clears it as soon as
+	 * that stops being true, so an open conversation, Unreads or Threads have no timer at all. While it runs, a tick
+	 * is skipped when the tab is hidden or the welcome screen is not rendered (the main pane is display:none on a
+	 * phone while the list shows). It runs outside Angular's zone so it does not run change detection for the whole
+	 * app; the signal write refreshes only this view. For reduced motion it never starts: the sketches stay on their
+	 * first frame and the cursors are hidden by the styles.
 	 */
 	private playWelcome(): void {
 		if (typeof window === 'undefined' || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
-		const timer = this.zone.runOutsideAngular(() =>
-			setInterval(() => {
-				if (this.state() !== 'ready' || this.view() !== 'home' || !isTabVisible()) return;
-				this.welcomeStep.update((step) => (step + 1) % WELCOME_LOOP_SECONDS);
-			}, 1000)
+		effect(
+			(onCleanup) => {
+				if (this.state() !== 'ready' || this.view() !== 'home') return;
+				this.welcomeStep.set(0);
+				const timer = this.zone.runOutsideAngular(() =>
+					setInterval(() => {
+						const welcome = this.welcomeEl()?.nativeElement;
+						if (!isTabVisible() || !welcome || welcome.checkVisibility?.() === false) return;
+						this.welcomeStep.update((step) => (step + 1) % WELCOME_LOOP_SECONDS);
+					}, 1000)
+				);
+				onCleanup(() => clearInterval(timer));
+			},
+			{ injector: this.injector }
 		);
-		this.destroyRef.onDestroy(() => clearInterval(timer));
 	}
 
 	/** Every user / organization change drops what is shown and asks the API again for the new scope. */
