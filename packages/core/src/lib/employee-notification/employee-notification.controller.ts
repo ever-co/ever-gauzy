@@ -1,5 +1,6 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import {
 	ID,
 	IEmployeeNotification,
@@ -101,6 +102,9 @@ export class EmployeeNotificationController extends CrudController<EmployeeNotif
 	@ApiOperation({ summary: 'Invite teammates to a Board' })
 	@ApiResponse({ status: HttpStatus.CREATED, description: 'How many teammates were invited' })
 	@ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'The caller is no employee, or no active member of the team' })
+	@ApiResponse({ status: HttpStatus.TOO_MANY_REQUESTS, description: 'Too many invitations in a short time' })
+	// A large selection goes out in requests of MAX_BOARD_INVITEES: 10 a minute covers 500 teammates
+	@Throttle({ default: { limit: 10, ttl: 60000 } })
 	@HttpCode(HttpStatus.CREATED)
 	@Post('/board-invitation')
 	@UseValidationPipe({ whitelist: true })

@@ -53,9 +53,27 @@ export function boardInvitationTitle(actorName: string, teamName: string | null 
 }
 
 /**
+ * How two employee ids are compared: `IsUUID` takes a UUID in either case, and the database answers with the one it
+ * stores, so a picked teammate named in upper case is still found.
+ */
+function idKeyOf(id: ID | null | undefined): string {
+	return String(id ?? '').toLowerCase();
+}
+
+/**
+ * Whether a membership counts for a Board invitation: the membership is active, and its employee still works. "End
+ * Work" deactivates and archives the employee but keeps their team memberships (for a return), and a removed employee
+ * is not read back at all.
+ */
+function isWorkingMember(member: OrganizationTeamEmployee): boolean {
+	const employee = member.employee;
+	return member.isActive !== false && !!employee && employee.isActive !== false && employee.isArchived !== true;
+}
+
+/**
  * The notifications of a Board invitation: one `Invitation` about the team for each picked teammate who is an active
- * member of it, never for the inviter, each teammate once. The inviter must be an active member of the team too, so a
- * member can only reach the people they work with, and only in a team of their own tenant.
+ * member of it and still works, never for the inviter, each teammate once. The inviter must be such a member of the
+ * team too, so a member can only reach the people they work with, and only in a team of their own tenant.
  *
  * @param dataSource The database the team and its memberships are read from.
  * @param input The team and the picked teammates.
@@ -76,18 +94,21 @@ export async function boardInvitationsOf(
 		throw new NotFoundException('The team was not found.');
 	}
 	const members = await dataSource.getRepository(OrganizationTeamEmployee).find({
-		select: { employeeId: true, isActive: true },
+		select: { employeeId: true, isActive: true, employee: { id: true, isActive: true, isArchived: true } },
+		relations: { employee: true },
 		where: { organizationTeamId: team.id, tenantId: inviter.tenantId }
 	});
-	const active = new Set(
-		members.filter((member) => member.isActive !== false).map((member) => String(member.employeeId))
+	// The stored id of each teammate who counts, by its comparison key
+	const active = new Map(
+		members.filter(isWorkingMember).map((member) => [idKeyOf(member.employeeId), member.employeeId] as const)
 	);
-	if (!active.has(String(inviter.employeeId))) {
+	const inviterKey = idKeyOf(inviter.employeeId);
+	if (!active.has(inviterKey)) {
 		throw new ForbiddenException('Only a member of the team can invite its members to a Board.');
 	}
-	const receivers = [...new Set(input.receiverEmployeeIds.map(String))].filter(
-		(employeeId) => employeeId !== String(inviter.employeeId) && active.has(employeeId)
-	);
+	const receivers = [...new Set(input.receiverEmployeeIds.map(idKeyOf))]
+		.filter((key) => key !== inviterKey && active.has(key))
+		.map((key) => active.get(key) as ID);
 	const title = boardInvitationTitle(inviter.name, team.name);
 	return receivers.map((receiverEmployeeId) => ({
 		type: EmployeeNotificationTypeEnum.INVITATION,
