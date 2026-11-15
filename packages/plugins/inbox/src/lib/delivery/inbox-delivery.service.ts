@@ -10,10 +10,6 @@ import {
 	ITeamNotificationDefaults
 } from '@gauzy/contracts';
 import { teamNotificationDefaultsByEmployee, withTeamNotificationDefaults } from '@gauzy/core';
-
-/** How long the team defaults read for an employee are reused, and how many employees are kept at most. */
-const TEAM_DEFAULTS_READ_TTL_MS = 60_000;
-const TEAM_DEFAULTS_READ_MAX = 5000;
 import { InboxItem } from '../entities/inbox-item.entity';
 import { InboxItemRecipient } from '../entities/inbox-item-recipient.entity';
 import { InboxNamedLocks } from '../email/database/named-locks';
@@ -41,6 +37,10 @@ import {
 import { InboxDeliveryPusher, InboxPushGoneError, InboxPushRefusedError } from './push/inbox-delivery-pusher';
 import { InboxPushSubscriptionService } from './push/inbox-push-subscription.service';
 import { INBOX_PUSH_FOCUSED_WINDOW_MS, INBOX_PUSH_NO_SUBSCRIPTION, INBOX_PUSH_SKIPPED_FOCUSED } from './push/inbox-push.constants';
+
+/** How long the team defaults read for an employee are reused, and how many employees are kept at most. */
+const TEAM_DEFAULTS_READ_TTL_MS = 60_000;
+const TEAM_DEFAULTS_READ_MAX = 5000;
 
 /** What one sweep did. */
 export interface IInboxDeliverySweepReport {

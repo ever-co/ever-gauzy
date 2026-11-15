@@ -22,6 +22,7 @@ export async function teamNotificationDefaultsByEmployee(
 ): Promise<Map<string, ITeamNotificationDefaults>> {
 	const found = new Map<string, ITeamNotificationDefaults>();
 	const ids = [...new Set(employees.map(({ employeeId }) => String(employeeId)))];
+	const tenantIds = [...new Set(employees.map(({ tenantId }) => String(tenantId)))];
 	if (!ids.length) return found;
 	let rows: Array<{ employeeId: ID; tenantId: ID; teamId: ID; notificationDefaults: unknown; lastTeamId: ID | null }>;
 	try {
@@ -45,11 +46,20 @@ export async function teamNotificationDefaultsByEmployee(
 			.addSelect('team.notificationDefaults', 'notificationDefaults')
 			.addSelect('user.lastTeamId', 'lastTeamId')
 			.where('membership.employeeId IN (:...ids)', { ids })
+			.andWhere('membership.tenantId IN (:...tenantIds)', { tenantIds })
+			// A membership counts while it is active and not archived, as `OrganizationTeamService` reads one
 			.andWhere(
 				new Brackets((active) =>
 					active
 						.where('membership.isActive IS NULL')
 						.orWhere('membership.isActive = :active', { active: true })
+				)
+			)
+			.andWhere(
+				new Brackets((archived) =>
+					archived
+						.where('membership.isArchived IS NULL')
+						.orWhere('membership.isArchived = :membershipNotArchived', { membershipNotArchived: false })
 				)
 			)
 			.andWhere(
@@ -76,7 +86,9 @@ export async function teamNotificationDefaultsByEmployee(
 	}
 	for (const [key, teams] of teamsOf) {
 		const current = teams.find((team) => team.lastTeamId && String(team.teamId) === String(team.lastTeamId));
-		const team = current ?? (teams.length === 1 ? teams[0] : null);
+		// Two rows of one team (a membership saved twice) are still one team
+		const distinctTeams = new Set(teams.map((team) => String(team.teamId)));
+		const team = current ?? (distinctTeams.size === 1 ? teams[0] : null);
 		const defaults = team ? teamNotificationDefaultsOf(team.notificationDefaults) : null;
 		if (defaults) found.set(key, defaults);
 	}

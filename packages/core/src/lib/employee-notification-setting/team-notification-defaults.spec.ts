@@ -72,16 +72,40 @@ describe('withTeamNotificationDefaults', () => {
 
 	it('fills each key the member left unset, and keeps every one they set, kind by kind', () => {
 		expect(
-			withTeamNotificationDefaults(
-				{ email: 'off', emailByType: { Comment: 'digest' }, timerReminderHours: 4 },
-				defaults
-			)
+			withTeamNotificationDefaults({ emailByType: { Comment: 'digest' }, timerReminderHours: 4 }, defaults)
 		).toEqual({
-			email: 'off',
+			email: 'digest',
 			emailByType: { Mention: 'immediate', Comment: 'digest' },
 			timerReminderHours: 4,
 			taskDueReminderHours: 48
 		});
+	});
+
+	it("keeps a member's mode for every kind over the team's per-kind modes, and their push over the team's", () => {
+		// Email off for every kind is the member's choice for each kind they did not set one by one
+		expect(withTeamNotificationDefaults({ email: 'off', emailByType: { Comment: 'digest' } }, defaults)).toEqual({
+			email: 'off',
+			emailByType: { Comment: 'digest' },
+			taskDueReminderHours: 48
+		});
+		const pushOff = withTeamNotificationDefaults({ push: false }, { push: true, pushByType: { Mention: true } });
+		expect(pushOff).toEqual({ push: false });
+		const teamDefaults = { pushByType: { Mention: true } };
+		expect(withTeamNotificationDefaults({ pushByType: { Comment: false } }, teamDefaults)).toEqual({
+			pushByType: { Mention: true, Comment: false }
+		});
+	});
+
+	it("reads the `email: true` the platform creates a setting with as unset, so the team's mode applies", () => {
+		expect(withTeamNotificationDefaults({ email: true, inApp: true }, defaults)).toEqual({
+			email: 'digest',
+			inApp: true,
+			emailByType: { Mention: 'immediate', Comment: 'off' },
+			taskDueReminderHours: 48
+		});
+		// A member who turned email off with the boolean keeps it off
+		expect(withTeamNotificationDefaults({ email: false }, defaults).email).toBe(false);
+		expect(withTeamNotificationDefaults({ email: false }, defaults).emailByType).toBeUndefined();
 	});
 
 	it('keeps a choice of none: a member who turned a reminder off keeps it off', () => {
@@ -122,7 +146,7 @@ describe('teamNotificationDefaultsByEmployee on SQLite', () => {
 			`CREATE TABLE "organization_team" ("id" varchar PRIMARY KEY NOT NULL, "tenantId" varchar, "organizationId" varchar, "notificationDefaults" text, "isArchived" boolean DEFAULT (0), "deletedAt" datetime)`
 		);
 		await dataSource.query(
-			`CREATE TABLE "organization_team_employee" ("id" varchar PRIMARY KEY NOT NULL, "tenantId" varchar, "organizationTeamId" varchar, "employeeId" varchar, "isActive" boolean DEFAULT (1), "deletedAt" datetime)`
+			`CREATE TABLE "organization_team_employee" ("id" varchar PRIMARY KEY NOT NULL, "tenantId" varchar, "organizationTeamId" varchar, "employeeId" varchar, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "deletedAt" datetime)`
 		);
 	});
 
@@ -148,7 +172,7 @@ describe('teamNotificationDefaultsByEmployee on SQLite', () => {
 
 	async function employee(
 		teams: string[],
-		options: { lastTeamId?: string; tenantId?: string; inactive?: string[] } = {}
+		options: { lastTeamId?: string; tenantId?: string; inactive?: string[]; archived?: string[] } = {}
 	): Promise<string> {
 		const id = randomUUID();
 		const userId = randomUUID();
@@ -163,8 +187,15 @@ describe('teamNotificationDefaultsByEmployee on SQLite', () => {
 		);
 		for (const teamId of teams) {
 			await dataSource.query(
-				`INSERT INTO "organization_team_employee" ("id", "tenantId", "organizationTeamId", "employeeId", "isActive") VALUES (?, ?, ?, ?, ?)`,
-				[randomUUID(), tenantId, teamId, id, options.inactive?.includes(teamId) ? 0 : 1]
+				`INSERT INTO "organization_team_employee" ("id", "tenantId", "organizationTeamId", "employeeId", "isActive", "isArchived") VALUES (?, ?, ?, ?, ?, ?)`,
+				[
+					randomUUID(),
+					tenantId,
+					teamId,
+					id,
+					options.inactive?.includes(teamId) ? 0 : 1,
+					options.archived?.includes(teamId) ? 1 : 0
+				]
 			);
 		}
 		return id;
@@ -213,6 +244,26 @@ describe('teamNotificationDefaultsByEmployee on SQLite', () => {
 		]);
 
 		expect(found.size).toBe(0);
+	});
+
+	it('leaves out an archived membership, and a membership removed since, so their team no longer applies', async () => {
+		const design = await team({ taskDueReminderHours: 48 });
+		const support = await team({ email: 'digest' });
+		const ada = await employee([design, support], { archived: [design] });
+		const grace = await employee([design]);
+		await dataSource.query(
+			`UPDATE "organization_team_employee" SET "deletedAt" = CURRENT_TIMESTAMP WHERE "employeeId" = ?`,
+			[grace]
+		);
+
+		const found = await teamNotificationDefaultsByEmployee(dataSource, [
+			{ employeeId: ada, tenantId: TENANT },
+			{ employeeId: grace, tenantId: TENANT }
+		]);
+
+		// Ada's one live team is support: its defaults apply, not the archived membership's
+		expect(found.get(`${TENANT}:${ada}`)).toEqual({ email: 'digest' });
+		expect(found.has(`${TENANT}:${grace}`)).toBe(false);
 	});
 
 	it('reads none when the defaults cannot be read, so nothing waits on them', async () => {

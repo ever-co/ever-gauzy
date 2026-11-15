@@ -9,8 +9,7 @@ import { notificationPreferencesOf } from '../time-tracking/timer-reminder/timer
 /**
  * A team's defaults for its members' notifications (ever-co/ever-teams#5022): what a member who chose nothing for a
  * key of their own notification preferences gets, instead of the platform's default. A member's own choice always
- * wins, key by key and, for the per-kind email modes and push switches, kind by kind. A team without defaults (the
- * default) changes nothing.
+ * wins, at every level (see `withTeamNotificationDefaults`). A team without defaults (the default) changes nothing.
  */
 
 const EMAIL_MODES: ReadonlyArray<EmployeeNotificationEmailMode> = ['immediate', 'digest', 'off'];
@@ -68,9 +67,17 @@ export function teamNotificationDefaultsOf(raw: unknown): ITeamNotificationDefau
 }
 
 /**
- * A member's notification preferences with their team's defaults under them: each key the member left unset takes the
- * team's value, and each kind of `emailByType` and `pushByType` the member left unset takes the team's. Without
- * defaults, the member's preferences as they are.
+ * A member's notification preferences with their team's defaults under them. Whatever the member chose wins over
+ * whatever the team chose, at every level: for a kind, the member's own mode or switch for it, else the member's own
+ * for every kind, else the team's for it, else the team's for every kind, else the platform's. So:
+ * - each key the member left unset takes the team's value;
+ * - each kind of `emailByType` the member left unset takes the team's, but only while the member chose no `email`
+ *   for every kind (a member who turned email off for every kind keeps it off, whatever the team's per-kind modes);
+ *   the same for `pushByType` and `push`;
+ * - `email: true` reads as unset: it is what the platform writes in the setting it creates for a receiver who has none
+ *   (`{ email: true, inApp: true }`), and it already reads as the platform's default (`immediate`).
+ *
+ * Without defaults, the member's preferences as they are.
  *
  * @param own The `preferences` of the member's notification setting (an object or its JSON).
  * @param defaults The defaults of the member's team.
@@ -82,12 +89,17 @@ export function withTeamNotificationDefaults(
 	const preferences = notificationPreferencesOf(own);
 	if (!defaults) return preferences;
 	const merged: IEmployeeNotificationPreferences = { ...preferences };
-	for (const [key, value] of Object.entries(defaults) as Array<[keyof ITeamNotificationDefaults, unknown]>) {
-		if (key === 'emailByType' || key === 'pushByType') {
-			merged[key] = { ...(value as object), ...(preferences[key] ?? {}) } as never;
-		} else if (preferences[key] === undefined) {
-			merged[key] = value as never;
-		}
+	const ownEmail = preferences.email === true ? undefined : preferences.email;
+	if (ownEmail === undefined) {
+		if (defaults.email !== undefined) merged.email = defaults.email;
+		if (defaults.emailByType) merged.emailByType = { ...defaults.emailByType, ...(preferences.emailByType ?? {}) };
+	}
+	if (preferences.push === undefined) {
+		if (defaults.push !== undefined) merged.push = defaults.push;
+		if (defaults.pushByType) merged.pushByType = { ...defaults.pushByType, ...(preferences.pushByType ?? {}) };
+	}
+	for (const key of ['taskUpdate', 'timerReminderHours', 'taskDueReminderHours'] as const) {
+		if (preferences[key] === undefined && defaults[key] !== undefined) merged[key] = defaults[key] as never;
 	}
 	return merged;
 }
