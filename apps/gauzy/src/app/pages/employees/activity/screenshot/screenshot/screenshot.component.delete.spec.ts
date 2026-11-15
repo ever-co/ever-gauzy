@@ -1,4 +1,4 @@
-import { BehaviorSubject, Subject } from 'rxjs';
+import { BehaviorSubject, lastValueFrom, Subject } from 'rxjs';
 import { ScreenshotComponent } from './screenshot.component';
 
 /**
@@ -51,6 +51,37 @@ describe('ScreenshotComponent deletion', () => {
 
 		expect(component.loading).toBe(false);
 		expect(shownSlotIds(component)).toEqual(['a', 'b']);
+	});
+
+	const answeredWithSurvivor = () => {
+		const component = pageWithTwoSlots();
+		const removeGalleryItems = jest.fn();
+		component['_galleryService'] = { removeGalleryItems };
+		component['_galleryItemIds'] = new Set(['shot-a', 'shot-b']);
+		const survivor = {
+			...slot('b', '2026-11-15T09:10:00Z'),
+			screenshots: [{ id: 'shot-b', thumbUrl: 'b-thumb', fullUrl: 'b-full' }]
+		};
+		component['_timesheetService'] = { getTimeSlots: jest.fn(async () => [survivor]) };
+		return { component, removeGalleryItems };
+	};
+
+	it('keeps the screenshots of the cards still on screen in the gallery once the read after a deletion answers', async () => {
+		const { component, removeGalleryItems } = answeredWithSurvivor();
+
+		await lastValueFrom(component['fetchTimeSlotsScreenshots'](true));
+
+		// The kept card's `ngxGallery` does not append its screenshot again: only the deleted one leaves the store
+		expect(removeGalleryItems).toHaveBeenCalledWith([{ id: 'shot-a' }]);
+		expect(shownSlotIds(component)).toEqual(['b']);
+	});
+
+	it('CONTROL: a new read drops every screenshot of the previous load, as its cards are built again', async () => {
+		const { component, removeGalleryItems } = answeredWithSurvivor();
+
+		await lastValueFrom(component['fetchTimeSlotsScreenshots']());
+
+		expect(removeGalleryItems).toHaveBeenCalledWith([{ id: 'shot-a' }, { id: 'shot-b' }]);
 	});
 
 	it('CONTROL: a new read (another day or filter) still empties the page under its loading state', () => {

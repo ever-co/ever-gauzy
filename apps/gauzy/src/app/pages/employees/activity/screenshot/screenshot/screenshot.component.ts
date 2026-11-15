@@ -212,7 +212,7 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 		return from(this._timesheetService.getTimeSlots(payloads)).pipe(
 			tap((timeSlots: ITimeSlot[]) => {
 				this.originalTimeSlots = timeSlots;
-				this._syncGallery(timeSlots);
+				this._syncGallery(timeSlots, keepsShown);
 				this.timeSlots = this.groupTimeSlots(timeSlots);
 			}),
 			catchError((error) => {
@@ -511,18 +511,24 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 	 * screenshot of a slot that is no longer its minute's primary card, and because
 	 * the store keeps the first item per id, it also kept the old copy over the new.
 	 *
+	 * A read after a deletion keeps the cards on screen instead, and a kept card's
+	 * `ngxGallery` does not append its screenshots again: only the screenshots the
+	 * answer no longer has leave the store (#12010).
+	 *
 	 * @param slots The time slots that were just fetched.
+	 * @param keepsShown The read kept the cards on screen (a read after a deletion).
 	 */
-	private _syncGallery(slots: ITimeSlot[]): void {
-		if (this._galleryItemIds.size) {
-			this._galleryService.removeGalleryItems(
-				[...this._galleryItemIds].map((id: ID) => ({ id } as GalleryItem))
-			);
-		}
-
-		this._galleryItemIds = new Set<ID>(
+	private _syncGallery(slots: ITimeSlot[], keepsShown = false): void {
+		const fetchedIds = new Set<ID>(
 			slots.flatMap((slot: ITimeSlot) => (slot.screenshots ?? []).map((screenshot: IScreenshot) => screenshot.id))
 		);
+		const staleIds = [...this._galleryItemIds].filter((id: ID) => !keepsShown || !fetchedIds.has(id));
+
+		if (staleIds.length) {
+			this._galleryService.removeGalleryItems(staleIds.map((id: ID) => ({ id } as GalleryItem)));
+		}
+
+		this._galleryItemIds = fetchedIds;
 	}
 
 	ngOnDestroy(): void {
