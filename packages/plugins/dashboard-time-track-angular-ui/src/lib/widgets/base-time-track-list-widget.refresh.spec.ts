@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { BehaviorSubject, NEVER, Observable, of } from 'rxjs';
+import { BehaviorSubject, NEVER, Observable, of, Subject } from 'rxjs';
 import {
 	DASHBOARD_WIDGET_CONTEXT,
 	IDashboardWidgetContext,
@@ -38,7 +38,7 @@ const scope = (startDate: string): IDashboardWidgetContext =>
 describe('BaseTimeTrackListWidgetComponent reloads', () => {
 	let context$: BehaviorSubject<IDashboardWidgetContext>;
 
-	const loadedWidget = () => {
+	const loadedWidget = (firstAnswer?: () => Observable<{ id: string }[]>) => {
 		context$ = new BehaviorSubject(scope('2026-11-09T00:00:00.000Z'));
 		TestBed.configureTestingModule({
 			providers: [
@@ -47,12 +47,19 @@ describe('BaseTimeTrackListWidgetComponent reloads', () => {
 			]
 		});
 		const widget = TestBed.runInInjectionContext(() => new ProbeWidget());
+		if (firstAnswer) widget.answer = firstAnswer;
 		widget.ngOnInit();
 		return widget;
 	};
 
-	it('shows its first rows after the skeleton', () => {
-		const widget = loadedWidget();
+	it('shows the skeleton until its first rows come, then the rows', () => {
+		const firstRows = new Subject<{ id: string }[]>();
+		const widget = loadedWidget(() => firstRows);
+
+		expect(widget.loading()).toBe(true);
+		expect(widget.shownRows).toEqual([]);
+
+		firstRows.next([{ id: 'row-1' }]);
 
 		expect(widget.loading()).toBe(false);
 		expect(widget.shownRows).toEqual([{ id: 'row-1' }]);

@@ -207,10 +207,12 @@ export class TimeTrackingComponent
 					if (reason !== BACKGROUND_REFRESH) this._scopeReadPending = true;
 				}),
 				debounceTime(200),
-				tap(() => this._galleryService.clearGallery()),
 				tap(async () => {
 					const inBackground = !this._scopeReadPending;
 					this._scopeReadPending = false;
+					// A background read keeps the screenshots on screen, whose gallery items are appended only when
+					// their cards are created: only a new scope empties the gallery
+					if (!inBackground) this._galleryService.clearGallery();
 					await this.getStatistics(inBackground);
 				}),
 				untilDestroyed(this)

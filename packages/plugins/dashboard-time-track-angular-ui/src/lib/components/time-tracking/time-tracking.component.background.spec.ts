@@ -1,4 +1,4 @@
-import { Subject } from 'rxjs';
+import { BehaviorSubject, NEVER, Subject } from 'rxjs';
 import { TimeTrackingComponent } from './time-tracking.component';
 
 /**
@@ -11,7 +11,7 @@ describe('TimeTrackingComponent background reads', () => {
 		const component = Object.create(TimeTrackingComponent.prototype) as TimeTrackingComponent & Record<string, any>;
 		component.organization = { id: 'org-1' };
 		component.countsLoading = false;
-		component.payloads$ = { getValue: () => ({ organizationId: 'org-1' }) };
+		component.payloads$ = new BehaviorSubject<any>({ organizationId: 'org-1' });
 		component.widgets = [{ hide: false }] as any;
 		component['_widgetService'] = { widgets: [] };
 		component['_windowService'] = { windows: [] };
@@ -45,5 +45,56 @@ describe('TimeTrackingComponent background reads', () => {
 		component.onDelete();
 
 		expect(reads).toHaveBeenCalledWith('background');
+	});
+
+	describe('the reads asked for within the debounce', () => {
+		beforeEach(() => jest.useFakeTimers());
+		afterEach(() => jest.useRealTimers());
+
+		const listening = () => {
+			const component = dashboard();
+			component['_store'] = { user$: NEVER };
+			component['_galleryService'] = { clearGallery: jest.fn() };
+			component.payloads$ = new BehaviorSubject<any>(null);
+			component.getStatistics = jest.fn(async () => undefined);
+			component.ngOnInit();
+			return component;
+		};
+
+		it.each([
+			[true, 'background'],
+			['background', true]
+		])('a new scope wins over a background refresh met within the debounce (%p, then %p)', (first, second) => {
+			const component = listening();
+
+			component.logs$.next(first);
+			component.logs$.next(second);
+			jest.advanceTimersByTime(200);
+
+			expect(component.getStatistics).toHaveBeenCalledTimes(1);
+			expect(component.getStatistics).toHaveBeenCalledWith(false);
+			expect(component['_galleryService'].clearGallery).toHaveBeenCalledTimes(1);
+		});
+
+		it('a background refresh alone reads in the background and keeps the gallery of the screenshots shown', () => {
+			const component = listening();
+
+			component.logs$.next('background');
+			jest.advanceTimersByTime(200);
+
+			expect(component.getStatistics).toHaveBeenCalledWith(true);
+			expect(component['_galleryService'].clearGallery).not.toHaveBeenCalled();
+		});
+
+		it('a new scope read does not carry over to the next background refresh', () => {
+			const component = listening();
+
+			component.logs$.next(true);
+			jest.advanceTimersByTime(200);
+			component.logs$.next('background');
+			jest.advanceTimersByTime(200);
+
+			expect((component.getStatistics as jest.Mock).mock.calls).toEqual([[false], [true]]);
+		});
 	});
 });
