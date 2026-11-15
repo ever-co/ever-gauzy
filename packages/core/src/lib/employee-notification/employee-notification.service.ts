@@ -27,6 +27,7 @@ import { EmployeeNotification } from './employee-notification.entity';
 import { TypeOrmEmployeeNotificationRepository } from './repository/type-orm-employee-notification.repository';
 import { MikroOrmEmployeeNotificationRepository } from './repository/mikro-orm-employee-notification.repository';
 import { generateNotificationTitle } from './employee-notification.helper';
+import { BoardInvitationDTO, boardInvitationsOf } from './board-invitation';
 
 /**
  * How long an unread notification absorbs an identical one (see `findRedeliveredNotification`).
@@ -221,6 +222,29 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 			receiverEmployeeId,
 			sentByEmployeeId: senderEmployeeId
 		});
+	}
+
+	/**
+	 * Invites the teammates a member picked to the Board they open from Ever Teams (ever-co/ever-teams#5022): each
+	 * active member of the team among them gets an `Invitation` about the team, filed as the caller. The caller must be
+	 * an employee and an active member of that team; teammates who are not are left out, and nobody is told twice.
+	 *
+	 * @returns How many teammates were invited.
+	 * @throws ForbiddenException when the caller has no employee record or is no active member of the team.
+	 */
+	async inviteToBoard(input: BoardInvitationDTO): Promise<{ invited: number }> {
+		const user = RequestContext.currentUser();
+		const employeeId = RequestContext.currentEmployeeId() ?? user?.employeeId;
+		const tenantId = RequestContext.currentTenantId();
+		if (!employeeId || !tenantId) {
+			throw new ForbiddenException('Only an employee can invite teammates to a Board.');
+		}
+		const name = [user?.firstName, user?.lastName].filter((part) => part && part.trim()).join(' ') || user?.name || user?.email || '';
+		const invitations = await boardInvitationsOf(this.typeOrmRepository.manager.connection, input, { employeeId, name, tenantId });
+		for (const invitation of invitations) {
+			await this.create(invitation);
+		}
+		return { invited: invitations.length };
 	}
 
 	/**

@@ -13,6 +13,7 @@ import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { UUIDValidationPipe, UseValidationPipe } from '../shared/pipes';
 import { EmployeeNotificationService } from './employee-notification.service';
 import { EmployeeNotification } from './employee-notification.entity';
+import { BoardInvitationDTO } from './board-invitation';
 
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions()
@@ -91,6 +92,20 @@ export class EmployeeNotificationController extends CrudController<EmployeeNotif
 	@Post()
 	async create(@Body() entity: IEmployeeNotificationCreateInput): Promise<EmployeeNotification> {
 		return (await this._employeeNotificationService.createForCaller(entity)) as EmployeeNotification;
+	}
+
+	/**
+	 * Invites the teammates the caller picked to the Board they open from Ever Teams: each active member of the team
+	 * among them gets an `Invitation` in their Inbox (ever-co/ever-teams#5022).
+	 */
+	@ApiOperation({ summary: 'Invite teammates to a Board' })
+	@ApiResponse({ status: HttpStatus.CREATED, description: 'How many teammates were invited' })
+	@ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'The caller is no employee, or no active member of the team' })
+	@HttpCode(HttpStatus.CREATED)
+	@Post('/board-invitation')
+	@UseValidationPipe({ whitelist: true })
+	async inviteToBoard(@Body() input: BoardInvitationDTO): Promise<{ invited: number }> {
+		return await this._employeeNotificationService.inviteToBoard(input);
 	}
 
 	/**
