@@ -12,7 +12,7 @@ import { BaseEntityEnum, EmployeeNotificationTypeEnum, IEmployeeNotificationCrea
 import { TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR } from '@gauzy/config';
 import { coreEntities } from '../../core/entities';
 import { RequestContext } from '../../core/context/request-context';
-import { CreateEmployeeAppointmentReminderTable1791000012250 } from '../../database/migrations/1791000012250-CreateEmployeeAppointmentReminderTable';
+import { CreateEmployeeAppointmentReminderTable1791000018640 } from '../../database/migrations/1791000018640-CreateEmployeeAppointmentReminderTable';
 import { EmployeeAppointmentReminder } from './employee-appointment-reminder.entity';
 import { MEETING_REMINDER_STALE_CLAIM_MS } from './meeting-reminder.constants';
 import { MeetingReminderService } from './meeting-reminder.service';
@@ -86,7 +86,7 @@ describe('MeetingReminderService on SQLite', () => {
 			`CREATE TABLE "employee_notification" ("id" varchar PRIMARY KEY NOT NULL, "tenantId" varchar, "entityId" varchar, "title" varchar, "deletedAt" datetime)`
 		);
 		const runner = dataSource.createQueryRunner();
-		await new CreateEmployeeAppointmentReminderTable1791000012250().up(runner);
+		await new CreateEmployeeAppointmentReminderTable1791000018640().up(runner);
 		await runner.release();
 		for (const id of [TENANT, OTHER_TENANT]) await dataSource.query(`INSERT INTO "tenant" ("id") VALUES (?)`, [id]);
 		for (const id of [ORGANIZATION, OTHER_ORGANIZATION])
@@ -322,6 +322,47 @@ describe('MeetingReminderService on SQLite', () => {
 		await service.sweep(NOW);
 
 		expect(filed).toEqual([]);
+	});
+
+	it('reminds no employee of another organization of its tenant, as its host or as its invitee', async () => {
+		const elsewhereHost = await employee({ organizationId: OTHER_ORGANIZATION });
+		const elsewhereInvitee = await employee({ organizationId: OTHER_ORGANIZATION });
+		const colleague = await employee();
+		await meeting(elsewhereHost, { startsIn: 10 * MINUTE, invitees: [elsewhereInvitee, colleague] });
+
+		await service.sweep(NOW);
+
+		expect(filed.map((one) => one.input.receiverEmployeeId)).toEqual([colleague]);
+	});
+
+	it('files nothing for a meeting cancelled or moved, or for an invitee left out, while its page is reminded of', async () => {
+		const host = await employee();
+		const invitee = await employee();
+		const leaver = await employee();
+		const mover = await employee();
+		await meeting(host, { startsIn: 10 * MINUTE });
+		const cancelled = await meeting(null, { startsIn: 11 * MINUTE, invitees: [invitee] });
+		await meeting(null, { startsIn: 12 * MINUTE, invitees: [leaver] });
+		const moved = await meeting(mover, { startsIn: 13 * MINUTE });
+		// While the first reminder is filed, the host of the others cancels one, moves one, and leaves an invitee out
+		const fileAsUsual = notifications.create.getMockImplementation() as (input: unknown) => Promise<unknown>;
+		notifications.create.mockImplementationOnce(async (input: unknown) => {
+			await dataSource.query(`UPDATE "employee_appointment" SET "status" = 'Cancelled' WHERE "id" = ?`, [cancelled]);
+			await dataSource.query(`UPDATE "employee_appointment" SET "startDateTime" = ?, "endDateTime" = ? WHERE "id" = ?`, [
+				stored(at(120 * MINUTE)),
+				stored(at(150 * MINUTE)),
+				moved
+			]);
+			await dataSource.query(`DELETE FROM "appointment_employee" WHERE "employeeId" = ?`, [leaver]);
+			return fileAsUsual(input);
+		});
+
+		const report = await service.sweep(NOW);
+
+		expect(report).toEqual(expect.objectContaining({ checked: 4, reminded: 1, failed: 0 }));
+		expect(filed.map((one) => one.input.receiverEmployeeId)).toEqual([host]);
+		// The claims of the reminders no longer due were given back
+		expect(await reminders()).toHaveLength(1);
 	});
 
 	it('reads an invitation row that names its meeting by the old key only', async () => {

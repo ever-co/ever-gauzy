@@ -12,10 +12,10 @@ import {
 	User
 } from '../core/entities/internal';
 import { isUniqueViolation } from '../core/errors/unique-violation';
-import { CreateEmployeeAppointmentReminderTable1791000012250 } from './migrations/1791000012250-CreateEmployeeAppointmentReminderTable';
+import { CreateEmployeeAppointmentReminderTable1791000018640 } from './migrations/1791000018640-CreateEmployeeAppointmentReminderTable';
 
 /**
- * `1791000012250-CreateEmployeeAppointmentReminderTable` run on a real database: the schema every other entity gives is built
+ * `1791000018640-CreateEmployeeAppointmentReminderTable` run on a real database: the schema every other entity gives is built
  * first (TypeORM's synchronize), the table is dropped, and the migration creates it again. The table it creates must
  * be the one the entity declares (TypeORM's schema diff finds nothing to change), `up` twice must be harmless, the
  * unique key must refuse a second reminder of one meeting, employee, level and start, a reminder must go with its
@@ -101,14 +101,15 @@ function exercise(options: () => DataSourceOptions) {
 			logging: false
 		} as DataSourceOptions);
 		await dataSource.initialize();
-		await dataSource.query(`DROP TABLE "${TABLE}"`);
+		// Unquoted: a plain lowercase name needs no quotes on any of the three, and MySQL reads double quotes as a string
+		await dataSource.query(`DROP TABLE ${TABLE}`);
 	}, TIMEOUT);
 
 	afterAll(async () => {
 		await dataSource?.destroy();
 	});
 
-	const migration = new CreateEmployeeAppointmentReminderTable1791000012250();
+	const migration = new CreateEmployeeAppointmentReminderTable1791000018640();
 
 	const up = async (inTransaction: boolean) => {
 		const queryRunner = dataSource.createQueryRunner();
@@ -219,19 +220,19 @@ const postgresUrl = process.env.GAUZY_MIGRATION_TEST_POSTGRES_URL;
 const mysqlUrl = process.env.GAUZY_MIGRATION_TEST_MYSQL_URL;
 const isServerDialect = isPostgres() || isMySQL();
 
-(isServerDialect ? describe.skip : describe)('CreateEmployeeAppointmentReminderTable1791000012250 on SQLite', () => {
+(isServerDialect ? describe.skip : describe)('CreateEmployeeAppointmentReminderTable1791000018640 on SQLite', () => {
 	exercise(() => ({ type: 'better-sqlite3', database: ':memory:' }));
 });
 
-(isPostgres() && postgresUrl ? describe : describe.skip)('CreateEmployeeAppointmentReminderTable1791000012250 on Postgres', () => {
+(isPostgres() && postgresUrl ? describe : describe.skip)('CreateEmployeeAppointmentReminderTable1791000018640 on Postgres', () => {
 	exercise(() => ({ type: 'postgres', url: postgresUrl }));
 });
 
-(isMySQL() && mysqlUrl ? describe : describe.skip)('CreateEmployeeAppointmentReminderTable1791000012250 on MySQL', () => {
+(isMySQL() && mysqlUrl ? describe : describe.skip)('CreateEmployeeAppointmentReminderTable1791000018640 on MySQL', () => {
 	exercise(() => ({ type: 'mysql', url: mysqlUrl }));
 });
 
-describe('CreateEmployeeAppointmentReminderTable1791000012250 statements', () => {
+describe('CreateEmployeeAppointmentReminderTable1791000018640 statements', () => {
 	beforeEach(() => jest.spyOn(console, 'log').mockImplementation(() => undefined));
 	afterEach(() => jest.restoreAllMocks());
 
@@ -249,9 +250,9 @@ describe('CreateEmployeeAppointmentReminderTable1791000012250 statements', () =>
 			})
 		};
 
-		await new CreateEmployeeAppointmentReminderTable1791000012250().up(queryRunner as never);
+		await new CreateEmployeeAppointmentReminderTable1791000018640().up(queryRunner as never);
 
-		expect(statements[0]).toEqual({ sql: 'SELECT pg_advisory_xact_lock($1)', params: [1791000012250] });
+		expect(statements[0]).toEqual({ sql: 'SELECT pg_advisory_xact_lock($1)', params: [1791000018640] });
 		expect(statements[1].sql).toMatch(/^CREATE TABLE IF NOT EXISTS "employee_appointment_reminder"/);
 		expect(statements.map(({ sql }) => sql)).toContain(
 			'CREATE UNIQUE INDEX IF NOT EXISTS "IDX_employee_appointment_reminder_key" ON "employee_appointment_reminder" ("employeeAppointmentId", "employeeId", "level", "startDateTime")'
@@ -274,7 +275,7 @@ describe('CreateEmployeeAppointmentReminderTable1791000012250 statements', () =>
 			})
 		};
 
-		await new CreateEmployeeAppointmentReminderTable1791000012250().up(queryRunner as never);
+		await new CreateEmployeeAppointmentReminderTable1791000018640().up(queryRunner as never);
 
 		expect(statements[0]).toBe('SELECT GET_LOCK(?, 30) AS acquired');
 		expect(statements[1]).toMatch(/^CREATE TABLE IF NOT EXISTS `employee_appointment_reminder`/);
@@ -288,7 +289,7 @@ describe('CreateEmployeeAppointmentReminderTable1791000012250 statements', () =>
 	it('refuses a database it does not know before any statement', async () => {
 		const queryRunner = { connection: { options: { type: 'oracle' } }, query: jest.fn() };
 
-		await expect(new CreateEmployeeAppointmentReminderTable1791000012250().up(queryRunner as never)).rejects.toThrow(
+		await expect(new CreateEmployeeAppointmentReminderTable1791000018640().up(queryRunner as never)).rejects.toThrow(
 			'Unsupported database'
 		);
 		expect(queryRunner.query).not.toHaveBeenCalled();

@@ -37,7 +37,6 @@ export interface IEmployeeAppointmentFindInput {
 	organization?: IOrganizationFindInput;
 }
 
-
 export interface IEmployeeAppointmentCreateInput extends IBasePerTenantAndOrganizationEntityModel {
 	employeeId?: string;
 	description?: string;
@@ -95,7 +94,10 @@ export interface IEmployeeAppointmentInvitation {
 	host: { employeeId: ID | null; name: string | null };
 }
 
-/** The range `GET /employee-appointment/invited` lists, by the meetings' times (both optional). */
+/**
+ * The range `GET /employee-appointment/invited` lists, by the meetings' times (both optional). Without `startDate`, the
+ * range starts now: the meetings not over yet; an earlier `startDate` lists past ones too.
+ */
 export interface IEmployeeAppointmentInvitationFindInput {
 	startDate?: Date | string;
 	endDate?: Date | string;

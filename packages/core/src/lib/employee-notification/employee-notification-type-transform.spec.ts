@@ -8,7 +8,7 @@ import { EmployeeNotificationTypeTransformer } from './employee-notification-typ
 describe('EmployeeNotificationTypeTransformer', () => {
 	const transformer = new EmployeeNotificationTypeTransformer();
 
-	it('stores each kind as its own integer: the timer reminder as 9, an invoice as 10, a meeting as 11 and a task due soon as 12', () => {
+	it('stores each kind as its own integer, the timer reminder as 9, an invoice as 10, a meeting as 11 and a task due soon as 12', () => {
 		expect(Object.values(EmployeeNotificationTypeEnum).map((type) => [type, transformer.to(type)])).toEqual([
 			[EmployeeNotificationTypeEnum.PAYMENT, 0],
 			[EmployeeNotificationTypeEnum.ASSIGNMENT, 1],

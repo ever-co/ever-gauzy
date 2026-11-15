@@ -1,7 +1,7 @@
 // Must stay first: loads the entity graph before the handlers pull an entity.
 import '../../core/entities/internal';
 
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import {
 	EmployeeAppointmentStatus,
 	IEmployeeAppointmentCreateInput,
@@ -124,7 +124,11 @@ describe('appointment writes and the meeting notices', () => {
 			endDateTime: END,
 			status: null as EmployeeAppointmentStatus | null
 		};
-		const setup = (invited: string[], before: Partial<typeof stored> = {}) => {
+		const setup = (
+			invited: string[],
+			before: Partial<typeof stored> = {},
+			organization?: { id: string; tenantId: string }
+		) => {
 			const meetingNotifications = meetingNotificationsDouble(invited);
 			const employeeAppointmentService = {
 				findOneByIdString: jest.fn().mockResolvedValue({ ...stored, ...before }),
@@ -133,7 +137,7 @@ describe('appointment writes and the meeting notices', () => {
 			const handler = new EmployeeAppointmentUpdateHandler(
 				employeeAppointmentService as never,
 				{ findOneByIdString: jest.fn() } as never,
-				{ findOneByIdString: jest.fn() } as never,
+				{ findOneByIdString: jest.fn().mockResolvedValue(organization) } as never,
 				meetingNotifications as never
 			);
 			const update = (data: Partial<IEmployeeAppointmentUpdateInput>) =>
@@ -201,13 +205,40 @@ describe('appointment writes and the meeting notices', () => {
 
 		it('updates as before, telling nobody, a meeting the caller may not read', async () => {
 			const { update, employeeAppointmentService, meetingNotifications } = setup(['invitee-1']);
-			employeeAppointmentService.findOneByIdString.mockRejectedValue(new Error('not found'));
+			employeeAppointmentService.findOneByIdString.mockRejectedValue(new NotFoundException('not found'));
 
 			await update({ agenda: 'Renamed', inviteeEmployeeIds: ['invitee-2'] });
 
 			expect(employeeAppointmentService.update).toHaveBeenCalledWith('appointment-1', { agenda: 'Renamed' });
 			expect(meetingNotifications.checkedInviteeIdsOf).not.toHaveBeenCalled();
 			expect(meetingNotifications.notify).not.toHaveBeenCalled();
+		});
+
+		it('writes nothing when the meeting cannot be read for another reason than its absence', async () => {
+			const { update, employeeAppointmentService, meetingNotifications } = setup(['invitee-1']);
+			employeeAppointmentService.findOneByIdString.mockRejectedValue(new Error('connection lost'));
+
+			await expect(update({ inviteeEmployeeIds: ['invitee-2'] })).rejects.toThrow('connection lost');
+
+			expect(employeeAppointmentService.update).not.toHaveBeenCalled();
+			expect(meetingNotifications.replaceInvitees).not.toHaveBeenCalled();
+			expect(meetingNotifications.notify).not.toHaveBeenCalled();
+		});
+
+		it('stores the invitees under the organization the update moves the meeting to', async () => {
+			const { update, meetingNotifications } = setup(['invitee-1'], {}, { id: 'org-2', tenantId: 'tenant-1' });
+
+			await update({ organizationId: 'org-2', inviteeEmployeeIds: ['invitee-1', 'invitee-2'] });
+
+			expect(meetingNotifications.checkedInviteeIdsOf).toHaveBeenCalledWith(
+				['invitee-1', 'invitee-2'],
+				{ organizationId: 'org-2', tenantId: 'tenant-1' },
+				'host-1'
+			);
+			expect(meetingNotifications.replaceInvitees).toHaveBeenCalledWith(
+				expect.objectContaining({ id: 'appointment-1', organizationId: 'org-2', tenantId: 'tenant-1' }),
+				['invitee-1', 'invitee-2']
+			);
 		});
 
 		it('writes nothing when an invitee is refused', async () => {

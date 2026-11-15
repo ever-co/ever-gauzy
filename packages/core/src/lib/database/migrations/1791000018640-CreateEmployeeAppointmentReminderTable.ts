@@ -170,11 +170,11 @@ const COLUMNS: Record<Dialect, string> = {
  *
  * `down` drops the table (its indexes and foreign keys go with it).
  */
-export class CreateEmployeeAppointmentReminderTable1791000012250 implements MigrationInterface {
-	name = 'CreateEmployeeAppointmentReminderTable1791000012250';
+export class CreateEmployeeAppointmentReminderTable1791000018640 implements MigrationInterface {
+	name = 'CreateEmployeeAppointmentReminderTable1791000018640';
 
 	/** Advisory lock key that serialises concurrent runs of this migration on Postgres. */
-	private readonly advisoryLockKey = 1791000012250;
+	private readonly advisoryLockKey = 1791000018640;
 
 	/** The MySQL named lock of this migration. MySQL refuses lock names over 64 characters. */
 	readonly mysqlLockName = `gauzy:migration:${this.advisoryLockKey}`;

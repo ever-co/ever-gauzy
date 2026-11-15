@@ -1,6 +1,7 @@
 // Must stay first: loads the entity graph before the handler pulls an entity.
 import '../../../core/entities/internal';
 
+import { NotFoundException } from '@nestjs/common';
 import { IEmployeeAppointmentUpdateInput } from '@gauzy/contracts';
 import { EmployeeAppointmentUpdateCommand } from '../employee-appointment.update.command';
 import { EmployeeAppointmentUpdateHandler } from './employee-appointment.update.handler';
@@ -11,7 +12,11 @@ import { EmployeeAppointmentUpdateHandler } from './employee-appointment.update.
  */
 describe('EmployeeAppointmentUpdateHandler false and zero values', () => {
 	const setup = () => {
-		const employeeAppointmentService = { update: jest.fn().mockResolvedValue({}) };
+		// The meeting is not read in the caller's scope, so no invitee is told anything: what is under test is the write
+		const employeeAppointmentService = {
+			update: jest.fn().mockResolvedValue({}),
+			findOneByIdString: jest.fn().mockRejectedValue(new NotFoundException())
+		};
 		const handler = new EmployeeAppointmentUpdateHandler(
 			employeeAppointmentService as never,
 			{ findOneByIdString: jest.fn() } as never,
