@@ -181,14 +181,20 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 				// Ensure payload changes are distinct
 				distinctUntilChange(),
 				// Filter to ensure a valid organization and payloads
-				filter((payloads: ITimeLogFilters) => !!this.organization && !!payloads)
+				filter((payloads: ITimeLogFilters) => !!this.organization && !!payloads),
+				// A new day or filter: the list is read under its loading state
+				map(() => false)
 			),
 			// The BehaviorSubject's seed value is `false`, which this filter drops, so a refresh only
 			// re-fetches when something explicitly asks for one.
-			this.refreshTrigger$.pipe(filter((value) => !!this.organization && !!value))
+			this.refreshTrigger$.pipe(
+				filter((value) => !!this.organization && !!value),
+				// After an add, edit or delete: the rows stay usable while the list is read again (#12013)
+				map(() => true)
+			)
 		).pipe(
 			// SwitchMap to fetch time logs using provided payloads
-			switchMap(() => this._getDailyLogs()),
+			switchMap((isRefresh: boolean) => this._getDailyLogs(isRefresh)),
 			// Ensure lifecycle management to avoid memory leaks
 			untilDestroyed(this)
 		);
@@ -196,8 +202,11 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 
 	/**
 	 * Retrieves daily time logs based on payloads and handles observables.
+	 *
+	 * @param isRefresh A read after an add, edit or delete: the rows on screen stay, without the list's giant
+	 * spinner, until the answer replaces them. A new day or filter is read under that loading state.
 	 */
-	private _getDailyLogs(): Observable<ITimeLog[]> {
+	private _getDailyLogs(isRefresh = false): Observable<ITimeLog[]> {
 		// Extract organizationId from the organization object
 		const organizationId = this.organization?.id;
 
@@ -206,8 +215,8 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 			return of([]); // No valid organization, return empty array
 		}
 
-		// Set loading to true
-		this.loading = true;
+		// Set loading to true, except for a refresh of the rows already shown
+		this.loading = !isRefresh;
 
 		// Get the current payloads value
 		const payloads = this.payloads$.getValue();
