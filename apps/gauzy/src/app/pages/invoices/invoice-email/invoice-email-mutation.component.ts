@@ -20,6 +20,10 @@ export class InvoiceEmailMutationComponent extends TranslationBaseComponent impl
 	isEstimate: boolean;
 	invoiceItems: IInvoiceItem[];
 	createdInvoice: IInvoice;
+	/** The email is being sent: the dialog cannot be cancelled meanwhile, or the list behind would miss it (#12011). */
+	sending = false;
+	/** The email went out: closing the dialog still brings the list up to date, even after a later step failed. */
+	private sent = false;
 
 	constructor(
 		public readonly translateService: TranslateService,
@@ -44,29 +48,38 @@ export class InvoiceEmailMutationComponent extends TranslationBaseComponent impl
 	}
 
 	async sendEmail() {
+		if (this.sending) {
+			return;
+		}
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.invoice.fromOrganization;
 		const { email } = this.form.value;
 
-		await this.invoiceService.sendEmail(
-			email,
-			this.invoice.invoiceNumber,
-			this.invoice.id ? this.invoice.id : this.createdInvoice.id,
-			this.isEstimate,
-			organizationId,
-			tenantId
-		);
+		this.sending = true;
+		try {
+			await this.invoiceService.sendEmail(
+				email,
+				this.invoice.invoiceNumber,
+				this.invoice.id ? this.invoice.id : this.createdInvoice.id,
+				this.isEstimate,
+				organizationId,
+				tenantId
+			);
+			this.sent = true;
 
-		if (this.invoice.id) {
-			await this.invoiceService.updateAction(this.invoice.id, {
-				status: InvoiceStatusTypesEnum.SENT
-			});
+			if (this.invoice.id) {
+				await this.invoiceService.updateAction(this.invoice.id, {
+					status: InvoiceStatusTypesEnum.SENT
+				});
+			}
+
+			await this.invoiceEstimateSendHistory();
+
+			this.toastrService.success('INVOICES_PAGE.EMAIL.EMAIL_SENT');
+			this.dialogRef.close('ok');
+		} finally {
+			this.sending = false;
 		}
-
-		await this.invoiceEstimateSendHistory();
-
-		this.toastrService.success('INVOICES_PAGE.EMAIL.EMAIL_SENT');
-		this.dialogRef.close('ok');
 	}
 
 	async invoiceEstimateSendHistory() {
@@ -92,6 +105,8 @@ export class InvoiceEmailMutationComponent extends TranslationBaseComponent impl
 	}
 
 	cancel() {
-		this.dialogRef.close();
+		// Once the email went out, the invoice changed even if its status or history then failed: the list behind
+		// still reads it again (#12011)
+		this.dialogRef.close(this.sent ? 'ok' : undefined);
 	}
 }
