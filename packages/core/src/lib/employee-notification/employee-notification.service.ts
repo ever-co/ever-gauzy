@@ -14,6 +14,7 @@ import {
 import { Between, DeleteResult, FindOptionsWhere, In, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
+import { runOutsideOrganizationBoundary } from '../core/crud/organization-boundary';
 import { Employee } from '../core/entities/internal';
 import { LegacyFindManyOptions, LegacyFindOneOptions } from '../core/utils';
 import { redactDatabaseError } from '../core/errors/database-error';
@@ -330,13 +331,21 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 			lastOrganizationId: RequestContext.currentOrganizationId(),
 			employeeId: RequestContext.currentEmployeeId() ?? user.employeeId
 		});
-		const pending = await this.pendingBoardNotificationReceiversOf(notifications);
-		for (const notification of notifications) {
-			if (pending.has(String(notification.receiverEmployeeId))) {
-				continue;
-			}
-			await this.create(notification);
+		if (notifications.length === 0) {
+			return { notified: 0 };
 		}
+		// `boardNotificationsOf` checked that the caller works in the organization it picked and kept only colleagues who
+		// work there: the unread check and the inserts are about that organization, which need not be the one of the
+		// caller's token, so its boundary is lifted for them.
+		await runOutsideOrganizationBoundary(async () => {
+			const pending = await this.pendingBoardNotificationReceiversOf(notifications);
+			for (const notification of notifications) {
+				if (pending.has(String(notification.receiverEmployeeId))) {
+					continue;
+				}
+				await this.create(notification);
+			}
+		});
 		return { notified: notifications.length };
 	}
 
