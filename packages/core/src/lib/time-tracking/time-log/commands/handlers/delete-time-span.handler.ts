@@ -235,7 +235,8 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 				await this.finishFailedCut(
 					log,
 					(stored) => moment(stored.startedAt).isSame(end),
-					(slot) => moment(slot.startedAt).isBefore(firstKept)
+					(slot) => moment(slot.startedAt).isBefore(firstKept),
+					forceDelete
 				);
 				throw error;
 			}
@@ -295,7 +296,8 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 				await this.finishFailedCut(
 					log,
 					(stored) => moment(stored.stoppedAt).isSame(start),
-					(slot) => !moment(slot.startedAt).isBefore(start)
+					(slot) => !moment(slot.startedAt).isBefore(start),
+					forceDelete
 				);
 				throw error;
 			}
@@ -336,7 +338,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 		} catch (error) {
 			this.logger.error(`Error while cutting back time log ${log.id}: ${error?.message ?? error}`, error?.stack);
 			try {
-				await this.recoverFailedSplit(log, start, secondPart);
+				await this.recoverFailedSplit(log, start, secondPart, forceDelete);
 			} catch (recoveryError) {
 				// The part left behind still names this log (`splitFromTimeLogId`): the next split of it is refused
 				// until one of the two is deleted (see `assertNoSecondPartLeft`).
@@ -430,15 +432,27 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	 * @param log - The time log as it was read before the split, with its slots.
 	 * @param start - The start of the new range, the end the cut gives the log.
 	 * @param secondPart - The second part.
+	 * @param forceDelete - Whether the cut hard deletes what goes.
 	 */
-	private async recoverFailedSplit(log: TimeLog, start: Date, secondPart: TimeLog): Promise<void> {
+	private async recoverFailedSplit(
+		log: TimeLog,
+		start: Date,
+		secondPart: TimeLog,
+		forceDelete: boolean
+	): Promise<void> {
 		const slots = await this.slotsAsTheyStand(log);
 		const heldBy = (slot: ITimeSlot) => (slot.timeLogs ?? []).map((held) => held.id);
 		const stored = await this.typeOrmTimeLogRepository.findOne({ where: { id: log.id } });
 		const cut = moment(stored?.stoppedAt).isSame(start);
 
 		if (cut && slots.length < (log.timeSlots ?? []).length) {
-			await this.finishRelease(log, stored, slots, (slot) => !moment(slot.startedAt).isBefore(start));
+			await this.finishRelease(
+				log,
+				stored,
+				slots,
+				(slot) => !moment(slot.startedAt).isBefore(start),
+				forceDelete
+			);
 			return;
 		}
 
@@ -451,32 +465,44 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 				.add(log.id);
 		}
 
-		const { startedAt, stoppedAt, timesheetId } = log;
-		await this.typeOrmTimeLogRepository.update(
-			{ id: log.id, tenantId: log.tenantId },
-			{ startedAt, stoppedAt, timesheetId }
-		);
+		await this.restoreRange(log);
 		await this.typeOrmTimeLogRepository.delete({ id: secondPart.id });
 	}
 
 	/**
-	 * After a cut at one end failed: when it had written the log's new start or end, the release is finished as far as
-	 * it can be (see `finishRelease`), for the log's own slots there may already be deleted; when it had not, nothing
-	 * was written. A failure here is logged, and the cut's own error stays the one raised.
+	 * After a cut at one end failed: when it had written the log's new start or end, the log is left holding no slot
+	 * outside that range. The release is finished (see `finishRelease`): the cut may have failed on the delete of the
+	 * slots only the log held there, which goes in one go, so they may all still be there. When the release cannot be
+	 * finished and the log still holds every slot it held before the cut, nothing of it was deleted, and the log gets
+	 * its range and timesheet back instead. When the cut had not written the new start or end, nothing was written.
+	 * A failure here is logged, and the cut's own error stays the one raised.
 	 *
 	 * @param log - The time log as it was read before the cut, with its slots.
 	 * @param isCut - Whether the log as stored has its new start or end.
 	 * @param outside - Whether a slot lies outside the log's new range.
+	 * @param forceDelete - Whether the cut hard deletes what goes.
 	 */
 	private async finishFailedCut(
 		log: ITimeLog,
 		isCut: (stored: ITimeLog) => boolean,
-		outside: (slot: ITimeSlot) => boolean
+		outside: (slot: ITimeSlot) => boolean,
+		forceDelete: boolean
 	): Promise<void> {
 		try {
 			const stored = await this.typeOrmTimeLogRepository.findOne({ where: { id: log.id } });
-			if (stored && isCut(stored)) {
-				await this.finishRelease(log, stored, await this.slotsAsTheyStand(log), outside);
+			if (!stored || !isCut(stored)) {
+				return;
+			}
+			try {
+				await this.finishRelease(log, stored, await this.slotsAsTheyStand(log), outside, forceDelete);
+			} catch (releaseError) {
+				if (!(await this.holdsEverySlot(log))) {
+					throw releaseError;
+				}
+				this.logger.warn(
+					`Time log ${log.id} gets its range back, as its slots outside the new one could not be deleted: ${releaseError?.message ?? releaseError}`
+				);
+				await this.restoreRange(log);
 			}
 		} catch (finishError) {
 			this.logger.error(
@@ -484,6 +510,30 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 				finishError?.stack
 			);
 		}
+	}
+
+	/**
+	 * Whether the log still holds every slot it held when it was read: none of them was deleted or taken off it.
+	 *
+	 * @param log - The time log as it was read, with its slots.
+	 */
+	private async holdsEverySlot(log: ITimeLog): Promise<boolean> {
+		const slots = await this.slotsAsTheyStand(log);
+		const holdsIt = (slot: ITimeSlot) => (slot.timeLogs ?? []).some((held) => held.id === log.id);
+		return slots.length === (log.timeSlots ?? []).length && slots.every(holdsIt);
+	}
+
+	/**
+	 * Gives a log back the range and the timesheet it had when it was read, which a cut had changed.
+	 *
+	 * @param log - The time log as it was read before the cut.
+	 */
+	private async restoreRange(log: ITimeLog): Promise<void> {
+		const { startedAt, stoppedAt, timesheetId } = log;
+		await this.typeOrmTimeLogRepository.update(
+			{ id: log.id, tenantId: log.tenantId },
+			{ startedAt, stoppedAt, timesheetId }
+		);
 	}
 
 	/**
@@ -516,25 +566,51 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	}
 
 	/**
-	 * Finishes the release of a cut that wrote the log's new range, deleted the slots the log alone held there, and then
-	 * failed: the log is taken off the slots it still holds outside that range with another log (the unlinks the cut
-	 * did not get to), and the totals the cut recalculates last are recalculated.
+	 * Finishes the release of a cut that wrote the log's new range and then failed, in the cut's own order: the slots
+	 * outside that range only the log still holds are deleted, hard or soft as the cut was asked (the cut deletes them
+	 * in one go, so they are all still there when that delete failed, and none when it went through), each only while
+	 * the log still holds it alone, the log is taken off the slots it still holds there with another log, and the totals
+	 * the cut recalculates last are recalculated.
 	 *
 	 * @param log - The time log as it was read before the cut.
 	 * @param stored - The same log as stored after the cut, which may have filed it under another week's timesheet.
 	 * @param slots - The slots the log held before the cut, as they now stand, with their logs.
 	 * @param outside - Whether a slot lies outside the log's new range.
+	 * @param forceDelete - Whether the cut hard deletes what goes.
 	 */
 	private async finishRelease(
 		log: ITimeLog,
 		stored: ITimeLog,
 		slots: ITimeSlot[],
-		outside: (slot: ITimeSlot) => boolean
+		outside: (slot: ITimeSlot) => boolean,
+		forceDelete: boolean
 	): Promise<void> {
 		const heldBy = (slot: ITimeSlot) => (slot.timeLogs ?? []).map((held) => held.id);
-		const shared = slots
-			.filter(outside)
-			.filter((slot) => heldBy(slot).includes(log.id) && heldBy(slot).some((id) => id !== log.id))
+		const heldOutside = (standing: ITimeSlot[]) =>
+			standing.filter(outside).filter((slot) => heldBy(slot).includes(log.id));
+		const heldByAnother = (slot: ITimeSlot) => heldBy(slot).some((id) => id !== log.id);
+
+		let standing = slots;
+		const own = heldOutside(standing)
+			.filter((slot) => !heldByAnother(slot))
+			.map((slot) => slot.id);
+		if (own.length > 0) {
+			// Deleted only while the log still holds each of them alone, as the slot delete reads them (its conditional
+			// mode): a slot another log took since they were read here, a timer started in its ten minutes, stays.
+			const { organizationId, employeeId, tenantId } = log;
+			await this._commandBus.execute(
+				new TimeSlotBulkDeleteCommand(
+					{ organizationId, employeeId, tenantId, timeLog: log, timeSlotsIds: own },
+					forceDelete,
+					false
+				)
+			);
+			// What is left of them, with their logs as they now are
+			standing = await this.slotsAsTheyStand(log);
+		}
+
+		const shared = heldOutside(standing)
+			.filter(heldByAnother)
 			.map((slot) => slot.id);
 		if (shared.length > 0) {
 			await this.typeOrmTimeSlotRepository

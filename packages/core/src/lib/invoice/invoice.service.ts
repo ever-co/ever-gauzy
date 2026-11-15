@@ -47,7 +47,8 @@ import {
  * What sending a document by e-mail did.
  *
  * `reason` names the step that failed when the message was not sent: the estimate e-mail record or the
- * organization could not be prepared, the PDF could not be generated, or the mail transport refused it.
+ * organization could not be prepared, the PDF could not be generated, or the message was not sent (the mail
+ * transport refused it, or the address is of a domain the platform never emails, such as `@example.com`).
  */
 export interface IInvoiceEmailOutcome {
 	/** Whether the message was handed to the mail transport. */
@@ -369,18 +370,24 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 		organizationId: string
 	): Promise<IInvoiceEmailOutcome> {
 		try {
-			//create estimate email record
-			const estimateEmail = await this.estimateEmailService.createEstimateEmail(invoiceId, email);
-			const organization: IOrganization = await this.organizationService.findOneByIdString(organizationId);
-			let step: IInvoiceEmailOutcome['reason'] = 'DOCUMENT_NOT_GENERATED';
+			//create estimate email record: an invoice's names the invoice, and the language its reminders follow
+			const estimateEmail = await this.estimateEmailService.createEstimateEmail(
+				invoiceId,
+				email,
+				isEstimate ? undefined : { languageCode }
+			);
+			// Read inside the try: an invoice's row already names the invoice, so any failure from here on clears it
+			let step: IInvoiceEmailOutcome['reason'] = 'EMAIL_NOT_PREPARED';
 			try {
+				const organization: IOrganization = await this.organizationService.findOneByIdString(organizationId);
+				step = 'DOCUMENT_NOT_GENERATED';
 				//generate estimate/invoice pdf and attached in email
 				const buffer: Buffer = await this.generateInvoicePdf(invoiceId, languageCode);
 				if (!buffer) throw new Error('PDF generation failed');
 				const base64 = buffer?.toString('base64');
 
 				step = 'EMAIL_NOT_SENT';
-				await this.emailService.emailInvoice(
+				const handed = await this.emailService.emailInvoice(
 					languageCode,
 					email,
 					base64,
@@ -391,13 +398,14 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 					origin,
 					organization
 				);
+				if (!handed) throw new Error('the address is of a domain the platform never emails');
 
-				if (!isEstimate) {
-					await this.recordInvoiceDelivery(estimateEmail.id, invoiceId, invoiceNumber, languageCode);
-				}
 				return { sent: true };
 			} catch (error) {
 				console.log(`Error while sending estimate email ${invoiceNumber}: %s`, error?.message);
+				if (!isEstimate) {
+					await this.forgetInvoiceDelivery(estimateEmail.id, invoiceNumber);
+				}
 
 				return { sent: false, reason: step };
 			}
@@ -409,21 +417,16 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 	}
 
 	/**
-	 * Records which invoice an email delivered, and in which language, once the mail transport took it: the invoice's
-	 * payment reminders go to the same address, in the same language. The invoice went whatever this write does, so a
-	 * failure is logged and the send still reports `sent`; that invoice then gets no reminder.
+	 * Takes back the delivery an invoice's email row named from its creation, when the email did not go: the invoice's
+	 * payment reminders keep going where it last went. The send's outcome is already known, so a failure is logged:
+	 * the row then still names the invoice, and its reminders may go to this address, each with the invoice attached.
 	 */
-	private async recordInvoiceDelivery(
-		estimateEmailId: ID,
-		invoiceId: ID,
-		invoiceNumber: number,
-		languageCode: LanguagesEnum
-	): Promise<void> {
+	private async forgetInvoiceDelivery(estimateEmailId: ID, invoiceNumber: number): Promise<void> {
 		try {
-			await this.estimateEmailService.recordInvoiceDelivery(estimateEmailId, invoiceId, languageCode);
+			await this.estimateEmailService.forgetInvoiceDelivery(estimateEmailId);
 		} catch (error) {
 			console.log(
-				`Invoice ${invoiceNumber} was emailed, but where it went was not recorded, so it gets no payment reminder: %s`,
+				`Invoice ${invoiceNumber} was not emailed, and its email row still names it, so its payment reminders may go to that address: %s`,
 				error?.message
 			);
 		}
