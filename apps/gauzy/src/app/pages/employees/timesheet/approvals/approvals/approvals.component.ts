@@ -122,19 +122,26 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements A
 	 * answers, so an answer fetched without the employee cannot replace one
 	 * fetched with it.
 	 */
-	async getTimeSheets() {
+	async getTimeSheets({ keepsShown = false }: { keepsShown?: boolean } = {}) {
 		if (!this.organization) {
 			return;
 		}
 		const fetchId = ++this._fetchId;
-		this.loading = true;
+		// A read after a change to some rows keeps the list usable, without its giant spinner (#12014)
+		if (!keepsShown) {
+			this.loading = true;
+		}
 		try {
 			const timesheets = await this.timesheetService.getTimeSheets({
 				...this.getFilterRequest(this.request),
 				relations: [...(this.showEmployee ? ['employee', 'employee.user'] : [])]
 			});
 			if (fetchId === this._fetchId) {
-				this.timesheets = timesheets;
+				this.timesheets = keepsShown ? this._keepChecks(timesheets) : timesheets;
+				if (keepsShown) {
+					this.allChecked =
+						this.visibleTimesheets.length > 0 && this.visibleTimesheets.every((t: any) => t.checked);
+				}
 			}
 		} catch (error) {
 			console.log('Error while getting timesheets for selected date range');
@@ -144,6 +151,33 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements A
 				this.loading = false;
 			}
 		}
+	}
+
+	/**
+	 * After an approval, a denial or a submission: the timesheets are read again while the rows stay usable, and
+	 * their new status shows once read. A new period or filter is still read under the loading state.
+	 */
+	private _refreshAfterChange(): void {
+		// The rows the change was made on are done with; rows checked while the read is on its way stay checked
+		this.checkedAll(false);
+		void this.getTimeSheets({ keepsShown: true });
+	}
+
+	/**
+	 * The rows checked while a read after a change was on its way stay checked on the rows that replace them.
+	 *
+	 * @param timesheets The timesheets just read
+	 */
+	private _keepChecks(timesheets: ITimesheet[]): ITimesheet[] {
+		const checkedIds = new Set(
+			this.timesheets.filter((timesheet: any) => timesheet.checked).map((timesheet: ITimesheet) => timesheet.id)
+		);
+		(timesheets || []).forEach((timesheet: any) => {
+			if (checkedIds.has(timesheet.id)) {
+				timesheet.checked = true;
+			}
+		});
+		return timesheets;
 	}
 
 	/**
@@ -188,7 +222,7 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements A
 			})
 			.finally(() => {
 				this.saving = false;
-				this.subject$.next(true);
+				this._refreshAfterChange();
 			});
 	}
 
@@ -216,7 +250,7 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements A
 			})
 			.finally(() => {
 				this.saving = false;
-				this.subject$.next(true);
+				this._refreshAfterChange();
 			});
 	}
 

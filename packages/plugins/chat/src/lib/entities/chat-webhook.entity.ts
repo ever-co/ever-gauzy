@@ -1,5 +1,5 @@
 import { ID } from '@gauzy/contracts';
-import { MultiORMColumn, MultiORMEntity, TenantOrganizationBaseEntity } from '@gauzy/core';
+import { ExportRedacted, MultiORMColumn, MultiORMEntity, TenantOrganizationBaseEntity } from '@gauzy/core';
 import { MikroOrmChatWebhookRepository } from './chat.repositories';
 
 /**
@@ -21,13 +21,16 @@ export class ChatWebhook extends TenantOrganizationBaseEntity {
 	@MultiORMColumn({ type: 'varchar', length: 2048, nullable: true })
 	interactionUrl?: string | null;
 
+	// a digest of the URL secret, which is a bearer token: blank, never hint a digest
+	@ExportRedacted({ blank: true })
 	@MultiORMColumn({ type: 'varchar', length: 64 })
 	tokenHash!: string;
 
 	@MultiORMColumn({ type: 'varchar', length: 8 })
 	tokenHint!: string;
 
-	/** Sealed (`cw1:…`); never answered by any route. */
+	/** Sealed (`cw1:…`); never answered by any route, and blank in an export archive. */
+	@ExportRedacted({ blank: true })
 	@MultiORMColumn({ type: 'text', nullable: true })
 	signingSecret?: string | null;
 

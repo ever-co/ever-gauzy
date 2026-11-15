@@ -2,10 +2,16 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { EntityRepositoryType } from '@mikro-orm/core';
 import { JoinColumn, RelationId } from 'typeorm';
-import { IsBoolean, IsDateString, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
-import { ID, IEmployeeNotification, EmployeeNotificationTypeEnum, IEmployee } from '@gauzy/contracts';
+import { IsBoolean, IsDateString, IsEnum, IsObject, IsOptional, IsString, IsUUID } from 'class-validator';
+import {
+	ID,
+	IEmployeeNotification,
+	IEmployeeNotificationMetadata,
+	EmployeeNotificationTypeEnum,
+	IEmployee
+} from '@gauzy/contracts';
 import { BasePerEntityType, Employee } from '../core/entities/internal';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '../core/decorators/entity';
+import { ColumnIndex, JsonColumn, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '../core/decorators/entity';
 import { EmployeeNotificationTypeTransformer } from './employee-notification-type-transform';
 import { MikroOrmEmployeeNotificationRepository } from './repository/mikro-orm-employee-notification.repository';
 
@@ -81,6 +87,17 @@ export class EmployeeNotification extends BasePerEntityType implements IEmployee
 	@IsUUID()
 	@MultiORMColumn({ type: 'uuid', nullable: true })
 	commentId?: ID;
+
+	/**
+	 * What the notification says about a thing outside the platform, which no column holds: the Board of a
+	 * `BoardShare` or a `BoardMention` (its room or snapshot, its name and the link its sender chose to send). Null for
+	 * every other kind. JSON: `jsonb` on Postgres, `json` on MySQL, text on SQLite.
+	 */
+	@ApiPropertyOptional({ type: () => Object, nullable: true })
+	@IsOptional()
+	@IsObject()
+	@JsonColumn<IEmployeeNotificationMetadata>({ nullable: true })
+	metadata?: IEmployeeNotificationMetadata | null;
 
 	/*
     |--------------------------------------------------------------------------

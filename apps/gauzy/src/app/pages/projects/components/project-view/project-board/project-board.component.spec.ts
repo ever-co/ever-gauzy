@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, SimpleChange } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { of, throwError } from 'rxjs';
+import { NEVER, Observable, of, throwError } from 'rxjs';
 import { ITask } from '@gauzy/contracts';
 import { Store, TimesheetStatisticsService, ToastrService } from '@gauzy/ui-core/core';
 import { ProjectBoardComponent } from './project-board.component';
@@ -93,6 +93,76 @@ describe('ProjectBoardComponent', () => {
 		expect(http.get).toHaveBeenCalled();
 	});
 
+	it("keeps its columns, cards and counts on screen while the host's reload is read (#12009)", async () => {
+		const component = await board();
+		const shown = cards(component);
+		const { totalCards, shownCards } = component;
+		// The reload's reads are still on their way
+		http.get.mockImplementation(() => NEVER);
+
+		component.reloadKey = 1;
+		component.ngOnChanges({ reloadKey: new SimpleChange(0, 1, false) });
+
+		expect(component.board.loading).toBe(true);
+		expect(cards(component)).toBe(shown);
+		expect(shown).toBe(3);
+		expect(component.totalCards).toBe(totalCards);
+		expect(totalCards).toBe(3);
+		expect(component.shownCards).toBe(shownCards);
+	});
+
+	it("reads no further page while the host's reload is read, then counts from its answer", async () => {
+		const subtasks = (page: () => Observable<unknown>) =>
+			http.get.mockImplementation((url: string) => {
+				if (url.endsWith('/task-statuses')) return of({ items: STATUSES });
+				if (url.endsWith(`/tasks/${PARENT_ID}`)) return parent$();
+				return page();
+			});
+		subtasks(() => of({ items: [task('sub-1', 'open'), task('sub-2', 'done')], total: 3 }));
+		const component = await board();
+		expect(component.shownCards).toBe('3+');
+		expect(component.totalCards).toBe(4);
+
+		let answer: (page: unknown) => void;
+		subtasks(
+			() =>
+				new Observable((subscriber) => {
+					answer = (page) => {
+						subscriber.next(page);
+						subscriber.complete();
+					};
+				})
+		);
+		component.reloadKey = 1;
+		component.ngOnChanges({ reloadKey: new SimpleChange(0, 1, false) });
+		http.get.mockClear();
+
+		await component.loadMore();
+
+		expect(http.get).not.toHaveBeenCalled();
+		expect(component.shownCards).toBe('3+');
+		expect(component.totalCards).toBe(4);
+
+		answer({ items: [task('sub-1', 'open')], total: 1 });
+		for (let i = 0; i < 5; i++) await new Promise((resolve) => setTimeout(resolve));
+
+		expect(component.board.loading).toBe(false);
+		expect(cards(component)).toBe(2);
+		expect(component.totalCards).toBe(2);
+		expect(component.hasMore).toBe(false);
+	});
+
+	it('CONTROL: another task starts from an empty board', async () => {
+		const component = await board();
+		http.get.mockImplementation(() => NEVER);
+
+		component.parentId = 'eeeeeeee-5555-4555-8555-555555555555';
+		component.ngOnChanges({ parentId: new SimpleChange(PARENT_ID, component.parentId, false) });
+
+		expect(component.board.loading).toBe(true);
+		expect(cards(component)).toBe(0);
+	});
+
 	it('narrows the cards to the filter, and a moved card stays in its new column', async () => {
 		const component = await board();
 		const [open, done] = component.board.value;
@@ -135,7 +205,12 @@ describe('ProjectBoardComponent', () => {
 		};
 
 		const release = (component: ProjectBoardComponent, overrides: Record<string, unknown>) =>
-			component.drop({ isPointerOverContainer: true, currentIndex: 0, dropPoint: { x: 1, y: 1 }, ...overrides } as any);
+			component.drop({
+				isPointerOverContainer: true,
+				currentIndex: 0,
+				dropPoint: { x: 1, y: 1 },
+				...overrides
+			} as any);
 
 		const ids = (column: { cards: { id: string }[] }) => column.cards.map((card) => card.id);
 
@@ -333,6 +408,32 @@ describe('ProjectBoardComponent', () => {
 			expect(ids(open)).toEqual([PARENT_ID, 'sub-1']);
 			expect(ids(done)).toEqual(['sub-2']);
 			expect(open.cards[1].saving).toBe(false);
+			expect(toastr.danger).toHaveBeenCalledWith(error);
+		});
+
+		it("puts the card back and says so when the save fails while the host's reload of the board is read", async () => {
+			const component = await board();
+			const [open, done] = component.board.value;
+			const error = new Error('refused');
+			let refuse: () => void;
+			put.mockReturnValue(new Observable((subscriber) => (refuse = () => subscriber.error(error))));
+			pointerOver('done');
+
+			const dropped = release(component, {
+				previousContainer: { data: open },
+				container: { data: open },
+				item: { data: open.cards[1] },
+				isPointerOverContainer: false
+			});
+			// The host reads the board again while the save is on its way: the card stays on screen
+			http.get.mockImplementation(() => NEVER);
+			component.reloadKey = 1;
+			component.ngOnChanges({ reloadKey: new SimpleChange(0, 1, false) });
+			refuse();
+			await dropped;
+
+			expect(ids(open)).toEqual([PARENT_ID, 'sub-1']);
+			expect(ids(done)).toEqual(['sub-2']);
 			expect(toastr.danger).toHaveBeenCalledWith(error);
 		});
 
