@@ -15,6 +15,7 @@ describe('boardInvitationsOf', () => {
 	type Member = {
 		employeeId: string;
 		isActive?: boolean;
+		isArchived?: boolean;
 		employee?: { isActive?: boolean; isArchived?: boolean } | null;
 	};
 
@@ -101,6 +102,33 @@ describe('boardInvitationsOf', () => {
 		expect(invitations.map((invitation) => invitation.receiverEmployeeId)).toEqual(['employee-1']);
 		// The employee of each membership is read with it
 		expect(find).toHaveBeenCalledWith(expect.objectContaining({ relations: { employee: true } }));
+	});
+
+	it('leaves out an archived membership, and refuses an inviter whose membership is archived', async () => {
+		const { dataSource } = dataSourceWith([
+			{ employeeId: 'employee-ana' },
+			{ employeeId: 'employee-1' },
+			{ employeeId: 'employee-archived', isArchived: true }
+		]);
+
+		const invitations = await boardInvitationsOf(
+			dataSource as never,
+			{ organizationTeamId: 'team-1', receiverEmployeeIds: ['employee-1', 'employee-archived'] },
+			inviter
+		);
+		expect(invitations.map((invitation) => invitation.receiverEmployeeId)).toEqual(['employee-1']);
+
+		const archivedInviter = dataSourceWith([
+			{ employeeId: 'employee-1' },
+			{ employeeId: 'employee-ana', isArchived: true }
+		]);
+		await expect(
+			boardInvitationsOf(
+				archivedInviter.dataSource as never,
+				{ organizationTeamId: 'team-1', receiverEmployeeIds: ['employee-1'] },
+				inviter
+			)
+		).rejects.toBeInstanceOf(ForbiddenException);
 	});
 
 	it('finds a picked teammate, and the inviter, whatever the case of their id', async () => {

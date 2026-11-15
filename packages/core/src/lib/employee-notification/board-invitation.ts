@@ -61,13 +61,14 @@ function idKeyOf(id: ID | null | undefined): string {
 }
 
 /**
- * Whether a membership counts for a Board invitation: the membership is active, and its employee still works. "End
- * Work" deactivates and archives the employee but keeps their team memberships (for a return), and a removed employee
- * is not read back at all.
+ * Whether a membership counts for a Board invitation: the membership is active and not archived (as the team service
+ * reads a membership), and its employee still works. "End Work" deactivates and archives the employee but keeps their
+ * team memberships (for a return), and a removed employee is not read back at all.
  */
 function isWorkingMember(member: OrganizationTeamEmployee): boolean {
+	const isActiveMembership = member.isActive !== false && member.isArchived !== true;
 	const employee = member.employee;
-	return member.isActive !== false && !!employee && employee.isActive !== false && employee.isArchived !== true;
+	return isActiveMembership && !!employee && employee.isActive !== false && employee.isArchived !== true;
 }
 
 /**
@@ -94,7 +95,12 @@ export async function boardInvitationsOf(
 		throw new NotFoundException('The team was not found.');
 	}
 	const members = await dataSource.getRepository(OrganizationTeamEmployee).find({
-		select: { employeeId: true, isActive: true, employee: { id: true, isActive: true, isArchived: true } },
+		select: {
+			employeeId: true,
+			isActive: true,
+			isArchived: true,
+			employee: { id: true, isActive: true, isArchived: true }
+		},
 		relations: { employee: true },
 		where: { organizationTeamId: team.id, tenantId: inviter.tenantId }
 	});
