@@ -133,11 +133,11 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 			)
 			.subscribe();
 
-		// Re-fetch screenshots on single slot deletion
+		// Re-fetch screenshots after a deletion: the grid stays on screen while the rest is read again (#12010)
 		this.screenshots$
 			.pipe(
 				filter(() => !!this.organization && !isEmpty(this.request)),
-				switchMap(() => this.fetchTimeSlotsScreenshots()),
+				switchMap(() => this.fetchTimeSlotsScreenshots(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -194,13 +194,18 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 	/**
 	 * Fetches time slot screenshots as an Observable.
 	 * Designed for use with switchMap to cancel in-flight requests on new emissions.
+	 *
+	 * @param keepsShown A read after a deletion: what is shown stays, without the page's loading state, until the
+	 * answer replaces it. A new day, employee or filter empties the page first.
 	 */
-	private fetchTimeSlotsScreenshots(): Observable<ITimeSlot[]> {
-		this.loading = true;
+	private fetchTimeSlotsScreenshots(keepsShown = false): Observable<ITimeSlot[]> {
+		if (!keepsShown) {
+			this.loading = true;
 
-		this.screenshotsUrls = [];
-		this.timeSlots = [];
-		this.originalTimeSlots = [];
+			this.screenshotsUrls = [];
+			this.timeSlots = [];
+			this.originalTimeSlots = [];
+		}
 
 		const payloads = this.payloads$.getValue();
 
@@ -216,7 +221,9 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 				return EMPTY;
 			}),
 			finalize(() => {
-				this.loading = false;
+				if (!keepsShown) {
+					this.loading = false;
+				}
 			})
 		);
 	}
@@ -283,6 +290,7 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 	deleteSlot(deletedIds: ID[]): void {
 		if (deletedIds?.length) {
 			this._deleteScreenshotGallery(deletedIds);
+			this._removeShownSlots(deletedIds);
 		}
 		this.screenshots$.next(true);
 	}
@@ -326,9 +334,19 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 	 */
 	private _handleDeletedSlots(ids: ID[]): void {
 		this._deleteScreenshotGallery(ids);
+		this._removeShownSlots(ids);
 		this.selectedIds = {};
 		this.selectedIdsCount = 0;
 		this.screenshots$.next(true);
+	}
+
+	/**
+	 * Takes the deleted slots off the grid at once; the read that follows a deletion brings the rest up to date.
+	 */
+	private _removeShownSlots(ids: ID[]): void {
+		const deleted = new Set(ids);
+		this.originalTimeSlots = this.originalTimeSlots.filter((slot: ITimeSlot) => !deleted.has(slot.id));
+		this.timeSlots = this.groupTimeSlots(this.originalTimeSlots);
 	}
 
 	/**
