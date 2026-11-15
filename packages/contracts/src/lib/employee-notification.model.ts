@@ -21,6 +21,35 @@ export interface IEmployeeNotification extends IBasePerEntityType {
 	 * record itself stays in `entity` / `entityId`, so a client that knows no comments still opens the record.
 	 */
 	commentId?: ID;
+	/**
+	 * What the notification says about a thing outside the platform, which no column holds: the Board of a
+	 * `BoardShare` or a `BoardMention`. Null for every other kind.
+	 */
+	metadata?: IEmployeeNotificationMetadata | null;
+}
+
+/**
+ * A Board of the Boards app a notification is about (`BoardShare`, `BoardMention`). A Board is no record of the
+ * platform, and its content is end-to-end encrypted in the Boards app, so the notification carries what its receiver
+ * is shown and can open, each as the sender's app sent it: one of `roomId` and `snapshotId`, the name, and the link.
+ */
+export interface IEmployeeNotificationBoard {
+	/** The Board's live room, when the Board is one. */
+	roomId?: string;
+	/** The Board's saved snapshot, when the Board is one. */
+	snapshotId?: string;
+	/** The Board's name, as the sender sees it, when their app sent one. */
+	name?: string | null;
+	/**
+	 * The address that opens the Board, as sent. Its `#` part holds the Board's encryption key: the Boards app sends the
+	 * link without it unless the sender chose to include it. The platform never logs it.
+	 */
+	link?: string | null;
+}
+
+/** What a notification says about a thing outside the platform (`IEmployeeNotification.metadata`). */
+export interface IEmployeeNotificationMetadata {
+	board?: IEmployeeNotificationBoard;
 }
 
 /**

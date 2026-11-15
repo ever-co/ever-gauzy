@@ -72,6 +72,26 @@ describe('notificationItemInput', () => {
 		]);
 	});
 
+	it('carries the Board a notification names into the metadata, where Ever Teams opens it from', () => {
+		const board = { roomId: 'r00m', name: 'Sprint plan', link: 'https://boards.example/' };
+		const input = notificationItemInput(
+			{ ...notification, type: EmployeeNotificationTypeEnum.BOARD_SHARE, entity: null, entityId: null, metadata: { board } } as never,
+			'u2'
+		);
+		expect(input).toMatchObject({ entity: null, entityId: null, taskId: null });
+		expect(input?.metadata).toEqual({
+			notificationId: 'n1',
+			notificationType: EmployeeNotificationTypeEnum.BOARD_SHARE,
+			sentByEmployeeId: 'e1',
+			receiverEmployeeId: 'e2',
+			board
+		});
+		// Metadata stored as its JSON (a raw read on SQLite) is read as well; anything but an object is left out
+		expect(notificationItemInput({ ...notification, metadata: JSON.stringify({ board }) } as never, 'u2')?.metadata).toMatchObject({ board });
+		expect(notificationItemInput({ ...notification, metadata: { board: 'r00m' } } as never, 'u2')?.metadata).not.toHaveProperty('board');
+		expect(notificationItemInput({ ...notification, metadata: { other: 1 } } as never, 'u2')?.metadata).not.toHaveProperty('other');
+	});
+
 	it('files nothing without an identity, a tenant or a user', () => {
 		expect(notificationItemInput({ ...notification, id: '' } as never, 'u2')).toBeNull();
 		expect(notificationItemInput({ ...notification, tenantId: undefined } as never, 'u2')).toBeNull();
