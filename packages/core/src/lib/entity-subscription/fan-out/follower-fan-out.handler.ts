@@ -1,5 +1,6 @@
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 import { CommentEvent } from '../../comment/events';
+import { OrganizationProjectChangedEvent } from '../../organization-project/events/organization-project-changed.event';
 import { FollowerFanOutService } from './follower-fan-out.service';
 
 /** A comment was created: the followers of its record are told (when fan-out is on). */
@@ -9,5 +10,15 @@ export class FollowerCommentFanOutHandler implements IEventHandler<CommentEvent>
 
 	async handle(event: CommentEvent): Promise<void> {
 		await this.fanOut.onCommentCreated(event);
+	}
+}
+
+/** A project's status, dates or archiving changed: its followers are told (when fan-out is on). */
+@EventsHandler(OrganizationProjectChangedEvent)
+export class FollowerProjectFanOutHandler implements IEventHandler<OrganizationProjectChangedEvent> {
+	constructor(private readonly fanOut: FollowerFanOutService) {}
+
+	async handle(event: OrganizationProjectChangedEvent): Promise<void> {
+		await this.fanOut.onProjectChanged(event);
 	}
 }

@@ -1,15 +1,23 @@
 import '../core/entities/internal';
 
-import { BaseEntityEnum, EmployeeNotificationTypeEnum, EntitySubscriptionTypeEnum } from '@gauzy/contracts';
+import {
+	BaseEntityEnum,
+	EmployeeNotificationTypeEnum,
+	EntitySubscriptionTypeEnum,
+	ProjectStatusEnum
+} from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
+import { TenantAwareCrudService } from '../core/crud';
 import { EmployeeCreateNotificationEvent } from '../employee-notification/events/employee-notification.event';
 import { CreateEntitySubscriptionEvent } from '../entity-subscription/events';
+import { OrganizationProjectChangedEvent } from './events/organization-project-changed.event';
 import { OrganizationProjectService } from './organization-project.service';
 
 /**
  * What a project's members are told (ever-co/ever-teams#5022): that they were added to it, from wherever they were
- * added (the project's form, the employee's projects). Before, an employee added to a project heard nothing, and one
- * added from their own page did not even follow it.
+ * added (the project's form, the employee's projects), and, through the project's followers, that its status, dates or
+ * archiving changed. Before, an employee added to a project heard nothing, and one added from their own page did not
+ * even follow it.
  */
 
 const TENANT = 'tenant-1';
@@ -114,9 +122,13 @@ describe('OrganizationProjectService.updateByEmployee — a member added from th
 				tenantId: TENANT
 			}
 		]);
-		expect(published(EmployeeCreateNotificationEvent).map(({ input }) => [input.entityId, input.receiverEmployeeId, input.title])).toEqual([
-			['project-new', 'employee-b', 'Ada Lovelace Assigned you to the Project "Website"']
-		]);
+		expect(
+			published(EmployeeCreateNotificationEvent).map(({ input }) => [
+				input.entityId,
+				input.receiverEmployeeId,
+				input.title
+			])
+		).toEqual([['project-new', 'employee-b', 'Ada Lovelace Assigned you to the Project "Website"']]);
 	});
 
 	it('no longer follows the projects they were taken off', async () => {
@@ -138,5 +150,73 @@ describe('OrganizationProjectService.updateByEmployee — a member added from th
 			tenantId: TENANT
 		});
 		expect(published(EmployeeCreateNotificationEvent)).toEqual([]);
+	});
+});
+
+describe('OrganizationProjectService — the members hear of the changes that matter to them', () => {
+	const before = {
+		id: 'project-1',
+		name: 'Website',
+		organizationId: ORGANIZATION,
+		tenantId: TENANT,
+		status: ProjectStatusEnum.IN_PROGRESS,
+		startDate: new Date('2026-11-01T00:00:00.000Z'),
+		endDate: null,
+		isArchived: false,
+		teams: []
+	};
+
+	function service() {
+		const service = Object.create(OrganizationProjectService.prototype);
+		Object.assign(service, {
+			findOneByIdString: jest.fn().mockResolvedValue({ ...before }),
+			prepareTaskKey: jest.fn(),
+			_activityLogService: { logActivity: jest.fn() },
+			_eventBus: { publish }
+		});
+		jest.spyOn(TenantAwareCrudService.prototype, 'findOneByIdString').mockResolvedValue({ ...before } as never);
+		jest.spyOn(TenantAwareCrudService.prototype, 'create').mockImplementation(
+			async (input) => ({ ...before, ...input }) as never
+		);
+		jest.spyOn(TenantAwareCrudService.prototype, 'update').mockResolvedValue({} as never);
+		return service as OrganizationProjectService;
+	}
+
+	it('publishes what an edit changed in the status or the dates', async () => {
+		await service().update('project-1', {
+			organizationId: ORGANIZATION,
+			status: ProjectStatusEnum.COMPLETED,
+			endDate: new Date('2026-12-15T00:00:00.000Z'),
+			name: 'Website'
+		} as never);
+
+		const [event] = published(OrganizationProjectChangedEvent);
+		expect(event.project).toEqual({
+			id: 'project-1',
+			name: 'Website',
+			organizationId: ORGANIZATION,
+			tenantId: TENANT
+		});
+		expect(event.changes).toEqual([
+			{ field: 'status', from: 'in progress', to: 'completed' },
+			{ field: 'endDate', from: null, to: '2026-12-15' }
+		]);
+	});
+
+	it('publishes nothing for an edit that changes neither', async () => {
+		await service().update('project-1', {
+			organizationId: ORGANIZATION,
+			name: 'Website 2',
+			description: 'More'
+		} as never);
+
+		expect(published(OrganizationProjectChangedEvent)).toEqual([]);
+	});
+
+	it('publishes that the project was archived', async () => {
+		await service().setArchived('project-1', true);
+
+		const [event] = published(OrganizationProjectChangedEvent);
+		expect(event.changes).toEqual([{ field: 'archived', from: 'false', to: 'true' }]);
 	});
 });

@@ -243,7 +243,8 @@ person's attention lands:
   never makes a second entry nor files a folded mention on its own. A recovered entry is dated as its notification.
   The worker hosts the Inbox whenever `GAUZY_INBOX_ENABLED=true` for this schedule.
 - **Followers are told.** With `GAUZY_NOTIFICATION_FANOUT_ENABLED=true` (off by default), a comment on a record
-  an employee follows, and a change of a followed task's status, priority, due date or members, create a
+  an employee follows, a change of a followed task's status, priority, due date or members, and a change of a
+  followed project's status, dates or archiving (a project's members follow it), create a
   notification for each follower except the actor (`packages/core/src/lib/entity-subscription/fan-out/`). The
   receiver's per-type switches apply; `TaskUpdate` is switched off per employee through the notification setting's
   `preferences.taskUpdate`. The follower records (`EntitySubscription`) already existed; this is what reads them.

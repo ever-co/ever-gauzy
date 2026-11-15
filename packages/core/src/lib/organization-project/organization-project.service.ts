@@ -39,7 +39,8 @@ import { ActivityLogService } from '../activity-log/activity-log.service';
 import { EmployeeService } from '../employee/employee.service';
 import { EmployeeRecentVisitService } from '../employee-recent-visit/employee-recent-visit.service';
 import { OrganizationProject } from './organization-project.entity';
-import { projectMemberAddedEvents } from './project-notifications';
+import { OrganizationProjectChangedEvent } from './events/organization-project-changed.event';
+import { IProjectChange, projectArchiveChangeOf, projectChangesOf, projectMemberAddedEvents } from './project-notifications';
 import { actorDisplayName } from '../entity-subscription/fan-out/follower-fan-out.service';
 import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
 import { TypeOrmOrganizationProjectRepository } from './repository/type-orm-organization-project.repository';
@@ -327,6 +328,12 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 				tenantId,
 				organizationProject,
 				loggedInput
+			);
+
+			// Tell the members when the project's state or dates changed
+			this.publishProjectChanges(
+				{ id: organizationProjectId, name: updatedProject.name ?? organizationProject.name, organizationId, tenantId },
+				projectChangesOf(organizationProject, entity as Record<string, unknown>)
 			);
 
 			return updatedProject;
@@ -700,6 +707,13 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			{ isArchived }
 		);
 
+		// Tell the members the project was archived, or brought back
+		const archiveChange = projectArchiveChangeOf(!!project.isArchived, isArchived);
+		this.publishProjectChanges(
+			{ id: project.id, name: project.name, organizationId, tenantId },
+			archiveChange ? [archiveChange] : []
+		);
+
 		return updated;
 	}
 
@@ -1061,6 +1075,27 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		} catch (error) {
 			console.log('Error while updating project by employee:', error);
 			throw new HttpException({ message: 'Error while updating project by employee' }, HttpStatus.BAD_REQUEST);
+		}
+	}
+
+	/**
+	 * Tells a project's members what changed in its state, its dates or its archiving, through its followers (when
+	 * follower notifications are on). Best effort, as above.
+	 *
+	 * @param project - The project, its organization and its tenant.
+	 * @param changes - What changed; nothing is published when nothing did.
+	 */
+	private publishProjectChanges(
+		project: { id: ID; name?: string | null; organizationId: ID; tenantId: ID },
+		changes: IProjectChange[]
+	): void {
+		if (!changes.length) {
+			return;
+		}
+		try {
+			this._eventBus.publish(new OrganizationProjectChangedEvent(project, changes));
+		} catch (error) {
+			console.error('Error publishing the changes of the project:', error);
 		}
 	}
 

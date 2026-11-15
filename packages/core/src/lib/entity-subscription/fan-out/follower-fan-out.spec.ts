@@ -81,3 +81,72 @@ describe('FollowerFanOutService.onCommentCreated', () => {
 		expect(notifications.publishNotificationEvent.mock.calls[0][0]).not.toHaveProperty('commentId');
 	});
 });
+
+describe('FollowerFanOutService.onProjectChanged', () => {
+	const { FollowerFanOutService } = jest.requireActual('./follower-fan-out.service');
+	const { RequestContext } = jest.requireActual('../../core/context/request-context');
+	const { OrganizationProjectChangedEvent } = jest.requireActual(
+		'../../organization-project/events/organization-project-changed.event'
+	);
+
+	const previous = process.env.GAUZY_NOTIFICATION_FANOUT_ENABLED;
+	afterEach(() => {
+		jest.restoreAllMocks();
+		process.env.GAUZY_NOTIFICATION_FANOUT_ENABLED = previous;
+	});
+
+	/** A fan-out over a project its editor and two members follow. */
+	function build() {
+		jest.spyOn(RequestContext, 'currentEmployeeId').mockReturnValue('employee-editor');
+		jest.spyOn(RequestContext, 'currentUser').mockReturnValue({ firstName: 'Ada', lastName: 'Lovelace', employeeId: 'employee-editor' });
+		const subscriptions = [{ employeeId: 'employee-editor' }, { employeeId: 'employee-1' }, { employeeId: 'employee-2' }];
+		const dataSource = {
+			getRepository: jest.fn(() => ({
+				find: jest.fn(async ({ select }: { select: Record<string, boolean> }) =>
+					select.employeeId ? subscriptions : subscriptions.map((row) => ({ id: row.employeeId }))
+				)
+			}))
+		};
+		const notifications = { publishNotificationEvent: jest.fn() };
+		return { service: new FollowerFanOutService(dataSource, notifications), notifications };
+	}
+
+	const event = () =>
+		new OrganizationProjectChangedEvent({ id: 'project-1', name: 'Website', organizationId: 'org-1', tenantId: 'tenant-1' }, [
+			{ field: 'status', from: 'in progress', to: 'completed' },
+			{ field: 'endDate', from: null, to: '2026-12-15' }
+		]);
+
+	it("tells the project's followers, not its editor, what changed", async () => {
+		process.env.GAUZY_NOTIFICATION_FANOUT_ENABLED = 'true';
+		const { service, notifications } = build();
+
+		await service.onProjectChanged(event());
+
+		expect(notifications.publishNotificationEvent.mock.calls.map(([input]: [{ receiverEmployeeId: string }]) => input.receiverEmployeeId)).toEqual([
+			'employee-1',
+			'employee-2'
+		]);
+		const [input, action, entityName, actorName] = notifications.publishNotificationEvent.mock.calls[0];
+		expect(input).toEqual({
+			entity: 'OrganizationProject',
+			entityId: 'project-1',
+			type: 'TaskUpdate',
+			receiverEmployeeId: 'employee-1',
+			sentByEmployeeId: 'employee-editor',
+			organizationId: 'org-1',
+			tenantId: 'tenant-1',
+			message: 'Status: in progress → completed. End date: none → 2026-12-15.'
+		});
+		expect([action, entityName, actorName]).toEqual(['Updated', 'Website', 'Ada Lovelace']);
+	});
+
+	it('tells nobody while follower notifications are off', async () => {
+		process.env.GAUZY_NOTIFICATION_FANOUT_ENABLED = 'false';
+		const { service, notifications } = build();
+
+		await service.onProjectChanged(event());
+
+		expect(notifications.publishNotificationEvent).not.toHaveBeenCalled();
+	});
+});

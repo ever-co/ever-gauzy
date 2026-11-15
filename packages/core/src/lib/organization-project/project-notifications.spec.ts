@@ -1,5 +1,11 @@
-import { BaseEntityEnum, EmployeeNotificationTypeEnum } from '@gauzy/contracts';
-import { projectMemberAddedEvents } from './project-notifications';
+import { BaseEntityEnum, EmployeeNotificationTypeEnum, ProjectStatusEnum } from '@gauzy/contracts';
+import {
+	IProjectChange,
+	projectArchiveChangeOf,
+	projectChangeMessageOf,
+	projectChangesOf,
+	projectMemberAddedEvents
+} from './project-notifications';
 
 describe('project notifications', () => {
 	describe('projectMemberAddedEvents', () => {
@@ -47,4 +53,59 @@ describe('project notifications', () => {
 		});
 	});
 
+	describe('projectChangesOf', () => {
+		const before = {
+			status: ProjectStatusEnum.IN_PROGRESS,
+			startDate: new Date('2026-11-01T00:00:00.000Z'),
+			endDate: null as Date | null
+		};
+
+		it('names each followed field the update changed, by day for a date', () => {
+			expect(
+				projectChangesOf(before, {
+					status: ProjectStatusEnum.COMPLETED,
+					startDate: '2026-11-01T00:00:00.000Z',
+					endDate: '2026-12-15T00:00:00.000Z',
+					name: 'Renamed'
+				})
+			).toEqual([
+				{ field: 'status', from: 'in progress', to: 'completed' },
+				{ field: 'endDate', from: null, to: '2026-12-15' }
+			]);
+		});
+
+		it('names nothing for an update that leaves the followed fields out, or states them as they were', () => {
+			expect(projectChangesOf(before, { name: 'Renamed', description: 'More' })).toEqual([]);
+			expect(
+				projectChangesOf(before, { status: ProjectStatusEnum.IN_PROGRESS, startDate: before.startDate })
+			).toEqual([]);
+		});
+
+		it('names a date taken away', () => {
+			expect(projectChangesOf(before, { startDate: null })).toEqual([
+				{ field: 'startDate', from: '2026-11-01', to: null }
+			]);
+		});
+	});
+
+	describe('projectArchiveChangeOf and projectChangeMessageOf', () => {
+		it('says the project was archived, or restored, and nothing when it stays as it was', () => {
+			expect(projectChangeMessageOf([projectArchiveChangeOf(false, true) as IProjectChange])).toBe(
+				'The project was archived.'
+			);
+			expect(projectChangeMessageOf([projectArchiveChangeOf(true, false) as IProjectChange])).toBe(
+				'The project was restored.'
+			);
+			expect(projectArchiveChangeOf(true, true)).toBeNull();
+		});
+
+		it('says every change in one message', () => {
+			expect(
+				projectChangeMessageOf([
+					{ field: 'status', from: 'open', to: 'in progress' },
+					{ field: 'startDate', from: null, to: '2026-11-20' }
+				])
+			).toBe('Status: open → in progress. Start date: none → 2026-11-20.');
+		});
+	});
 });
