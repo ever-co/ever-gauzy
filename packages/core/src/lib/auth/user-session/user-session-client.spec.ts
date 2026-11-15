@@ -1,6 +1,12 @@
-// cspell:ignore KHTML okhttp
+// cspell:ignore KHTML okhttp Équipe
 import { UserSessionAppEnum } from '@gauzy/contracts';
-import { describeSessionClient } from './user-session-client';
+import {
+	appNameInUserAgent,
+	appNameOf,
+	describeSessionClient,
+	originHostOf,
+	sessionSourceOf
+} from './user-session-client';
 
 describe('describeSessionClient', () => {
 	it.each([
@@ -54,5 +60,97 @@ describe('describeSessionClient', () => {
 	it('answers UNKNOWN for a session that recorded nothing', () => {
 		expect(describeSessionClient(null)).toEqual({ app: UserSessionAppEnum.UNKNOWN, browser: null, os: null });
 		expect(describeSessionClient(undefined)).toEqual({ app: UserSessionAppEnum.UNKNOWN, browser: null, os: null });
+	});
+});
+
+/**
+ * Which app a session was opened from (ever-co/ever-gauzy#11983): the same API serves the desktop timer, Ever Gauzy,
+ * Ever Teams, Cloc and Works, and two of them on one device look alike by their user agent alone.
+ */
+describe('the app of a session', () => {
+	const CHROME_UA =
+		'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
+	const electronUa = (name: string) =>
+		`Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) ${name}/0.1.0 Chrome/130.0.6723.170 Electron/33.2.1 Safari/537.36`;
+
+	describe('appNameOf, the name an app gives itself', () => {
+		it.each([
+			['Ever Teams', 'Ever Teams'],
+			['  Ever   Teams  ', 'Ever Teams'],
+			['gauzy-desktop-timer', 'gauzy-desktop-timer'],
+			["Ever Gauzy's Agent", "Ever Gauzy's Agent"],
+			['Équipe 2', 'Équipe 2']
+		])('keeps %j as %j', (given, kept) => {
+			expect(appNameOf(given)).toBe(kept);
+		});
+
+		it.each([
+			['nothing', undefined],
+			['an empty name', '   '],
+			['a header sent twice', ['Ever Teams', 'Ever Gauzy']],
+			['markup', '<img src=x onerror=alert(1)>'],
+			['a control character', 'Ever\u0007Teams'],
+			['more than 64 characters', 'x'.repeat(65)]
+		])('refuses %s', (_case, given) => {
+			expect(appNameOf(given)).toBeNull();
+		});
+	});
+
+	describe('appNameInUserAgent, the name a user agent carries', () => {
+		it.each([
+			['the desktop timer', electronUa('gauzy-desktop-timer'), 'gauzy-desktop-timer'],
+			['a desktop app named with spaces', electronUa('Ever Teams Desktop'), 'Ever Teams Desktop'],
+			['the iOS app', 'EverTeams/1 CFNetwork/1568.200.51 Darwin/24.1.0', 'EverTeams']
+		])('reads it in %s', (_case, userAgent, name) => {
+			expect(appNameInUserAgent(userAgent)).toBe(name);
+		});
+
+		it.each([
+			['a browser', CHROME_UA],
+			["an Electron app that kept Electron's own name", electronUa('Electron')],
+			['the Android app, whose agent names its HTTP library only', 'okhttp/4.12.0'],
+			['no user agent', null]
+		])('finds none in %s', (_case, userAgent) => {
+			expect(appNameInUserAgent(userAgent)).toBeNull();
+		});
+	});
+
+	describe('originHostOf, the web host a request comes from', () => {
+		it.each([
+			['https://app.ever.team', 'app.ever.team'],
+			['http://localhost:3030', 'localhost:3030']
+		])('reads %s as %s', (origin, host) => {
+			expect(originHostOf(origin)).toBe(host);
+		});
+
+		it.each([['null'], ['file://'], ['app://ever-teams'], ['not an address'], [undefined]])(
+			'reads no host in %j',
+			(origin) => {
+				expect(originHostOf(origin)).toBeNull();
+			}
+		);
+
+		it('reads no host longer than a DNS name can be, so a forged Origin never swells the tokens', () => {
+			const longest = `${'a'.repeat(63)}.${'b'.repeat(63)}.${'c'.repeat(63)}.${'d'.repeat(56)}.team`;
+
+			// CONTROL: a host of 253 characters, the most a DNS name has, is read
+			expect(originHostOf(`https://${longest}`)).toBe(longest);
+			expect(originHostOf(`https://x${longest}`)).toBeNull();
+			expect(sessionSourceOf({ origin: `https://${'a'.repeat(4000)}.team` })).toEqual({});
+		});
+	});
+
+	describe('sessionSourceOf, what a sign-in or a renewal records beside the user agent', () => {
+		it('records the name the app gives and the web host it was opened from', () => {
+			expect(sessionSourceOf({ 'x-client-app': 'Ever Teams', origin: 'https://app.ever.team' })).toEqual({
+				appName: 'Ever Teams',
+				appOrigin: 'app.ever.team'
+			});
+		});
+
+		it('records nothing a request does not tell', () => {
+			expect(sessionSourceOf({ 'user-agent': 'node' })).toEqual({});
+			expect(sessionSourceOf(undefined)).toEqual({});
+		});
 	});
 });

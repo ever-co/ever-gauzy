@@ -240,6 +240,9 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 			'X-APP-ID',
 			'X-API-KEY',
 			'X-Channel-Id',
+			// A first-party app names itself ("Ever Teams") so the sessions list can tell it from the other apps of
+			// the same API (ever-co/ever-gauzy#11983). Informational: nothing is decided on it.
+			'X-Client-App',
 			// Retry-safe writes and conditional updates.
 			'Idempotency-Key',
 			'If-Match',
