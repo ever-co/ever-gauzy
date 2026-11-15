@@ -1,6 +1,7 @@
 // cspell:ignore KHTML
 import { UserSessionAppEnum } from '@gauzy/contracts';
 import { IToken, TokenStatus } from '../../token/interfaces';
+import { sessionSourceOf } from './user-session-client';
 import { groupUserSessions, isFirstPartyAccessToken, listUserSessions } from './user-session-list';
 
 const NOW = new Date('2026-11-14T12:00:00.000Z');
@@ -162,6 +163,22 @@ describe('listUserSessions', () => {
 		expect(byId['timer']).not.toHaveProperty('appOrigin');
 		expect(byId['other']).not.toHaveProperty('appName');
 		expect(byId['other']).not.toHaveProperty('appOrigin');
+	});
+
+	it('keeps an IPv6 web host from the request it was recorded from to the answer (#11983)', () => {
+		const source = sessionSourceOf({ origin: 'http://[::1]:3030' });
+		const tokens = {
+			refreshTokens: [
+				token({
+					id: 'r-local',
+					metadata: session('local', '2026-11-14T08:00:00.000Z', { userAgent: LAPTOP_UA, ...source })
+				})
+			],
+			accessTokens: []
+		};
+
+		expect(source).toEqual({ appOrigin: '[::1]:3030' });
+		expect(listUserSessions(tokens, null, NOW)[0]).toMatchObject({ appOrigin: '[::1]:3030' });
 	});
 });
 
