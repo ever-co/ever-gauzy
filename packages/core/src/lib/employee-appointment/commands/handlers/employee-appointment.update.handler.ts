@@ -3,16 +3,27 @@ import { EmployeeAppointmentService } from '../../employee-appointment.service';
 import { EmployeeAppointmentUpdateCommand } from '../employee-appointment.update.command';
 import { EmployeeAppointment } from '../../employee-appointment.entity';
 import { UpdateResult } from 'typeorm';
+import { EmployeeAppointmentStatus, ID } from '@gauzy/contracts';
 import { EmployeeService } from '../../../employee/employee.service';
 import { OrganizationService } from '../../../organization/organization.service';
 import { isNotEmpty } from '@gauzy/utils';
+import { RequestContext } from '../../../core/context';
+import {
+	IMeetingSnapshot,
+	MeetingNotificationService
+} from '../../meeting-notifications/meeting-notification.service';
+import {
+	isMeetingChangeWorthTelling,
+	isMeetingScheduled
+} from '../../meeting-notifications/meeting-notification.rules';
 
 @CommandHandler(EmployeeAppointmentUpdateCommand)
 export class EmployeeAppointmentUpdateHandler implements ICommandHandler<EmployeeAppointmentUpdateCommand> {
 	constructor(
 		private employeeAppointmentService: EmployeeAppointmentService,
 		private employeeService: EmployeeService,
-		private organizationService: OrganizationService
+		private organizationService: OrganizationService,
+		private meetingNotifications: MeetingNotificationService
 	) {}
 
 	public async execute(command?: EmployeeAppointmentUpdateCommand): Promise<UpdateResult | EmployeeAppointment> {
@@ -47,8 +58,75 @@ export class EmployeeAppointmentUpdateHandler implements ICommandHandler<Employe
 			...(isNotEmpty(data.startDateTime) ? { startDateTime: data.startDateTime } : {}),
 			...(isNotEmpty(data.endDateTime) ? { endDateTime: data.endDateTime } : {})
 		};
+
+		// The meeting as it stood, read in the caller's scope (a meeting the caller may not read is not found), for what
+		// its invitees are told (ever-co/ever-teams#5022). Only read when the change can concern them.
+		const before = await this.meetingBefore(id);
+		const inviteeIds: ID[] | undefined =
+			data.inviteeEmployeeIds !== undefined && before
+				? await this.meetingNotifications.checkedInviteeIdsOf(
+						data.inviteeEmployeeIds,
+						{
+							organizationId: newAppointment.organizationId ?? before.organizationId,
+							tenantId: newAppointment.tenantId ?? before.tenantId
+						},
+						newAppointment.employeeId ?? before.employeeId
+				  )
+				: undefined;
+
 		const updatedAppointment = await this.employeeAppointmentService.update(id, newAppointment);
 
+		if (before) {
+			await this.tellInvitees(before, { ...before, ...newAppointment }, inviteeIds);
+		}
+
 		return updatedAppointment;
+	}
+
+	/** The meeting before the update, or null when the caller may not read it (the update then answers as before). */
+	private async meetingBefore(id: ID): Promise<IMeetingSnapshot | null> {
+		try {
+			const appointment = await this.employeeAppointmentService.findOneByIdString(id);
+			return {
+				id: appointment.id,
+				tenantId: appointment.tenantId,
+				organizationId: appointment.organizationId,
+				employeeId: appointment.employeeId ?? null,
+				agenda: appointment.agenda,
+				description: appointment.description ?? null,
+				location: appointment.location ?? null,
+				startDateTime: appointment.startDateTime,
+				endDateTime: appointment.endDateTime,
+				status: appointment.status ?? null
+			};
+		} catch {
+			return null;
+		}
+	}
+
+	/**
+	 * Writes the invitees the request named, then tells them what changed: a meeting cancelled now tells everyone who
+	 * was invited; otherwise those added are invited, those left out are told they no longer are, and those kept are
+	 * told when, where or what the meeting is changed. A meeting that was already cancelled tells nobody anything.
+	 */
+	private async tellInvitees(before: IMeetingSnapshot, after: IMeetingSnapshot, inviteeIds?: ID[]): Promise<void> {
+		const sentByEmployeeId = RequestContext.currentEmployeeId() ?? RequestContext.currentUser()?.employeeId ?? null;
+		const invitedBefore = await this.meetingNotifications.inviteeIdsOf(before.id, before.tenantId);
+		const change = inviteeIds
+			? await this.meetingNotifications.replaceInvitees(before, inviteeIds)
+			: { added: [], removed: [], kept: invitedBefore };
+
+		if (!isMeetingScheduled(before.status)) {
+			return;
+		}
+		if (after.status === EmployeeAppointmentStatus.CANCELLED) {
+			await this.meetingNotifications.notify('cancelled', before, invitedBefore, { sentByEmployeeId });
+			return;
+		}
+		await this.meetingNotifications.notify('invited', after, change.added, { sentByEmployeeId });
+		await this.meetingNotifications.notify('removed', before, change.removed, { sentByEmployeeId });
+		if (isMeetingChangeWorthTelling(before, after)) {
+			await this.meetingNotifications.notify('changed', after, change.kept, { sentByEmployeeId });
+		}
 	}
 }
