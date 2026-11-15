@@ -46,6 +46,9 @@ describe('teamNotificationDefaultsOf', () => {
 
 	it('drops a threshold out of range, and is null when nothing valid is left', () => {
 		expect(teamNotificationDefaultsOf({ timerReminderHours: 30, taskDueReminderHours: 500 })).toBeNull();
+		// A positive threshold that rounds to 0 is dropped, not kept as 0, which would mean "off"
+		expect(teamNotificationDefaultsOf({ timerReminderHours: 0.001, taskDueReminderHours: -2 })).toBeNull();
+		expect(teamNotificationDefaultsOf({ taskDueReminderHours: 0.006 })).toEqual({ taskDueReminderHours: 0.01 });
 		expect(teamNotificationDefaultsOf({ email: 'loud' })).toBeNull();
 		expect(teamNotificationDefaultsOf(null)).toBeNull();
 		expect(teamNotificationDefaultsOf('not json')).toBeNull();

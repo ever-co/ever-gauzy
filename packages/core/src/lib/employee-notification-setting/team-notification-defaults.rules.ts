@@ -37,12 +37,16 @@ const isEmailMode = (value: unknown): value is EmployeeNotificationEmailMode =>
 	EMAIL_MODES.includes(value as EmployeeNotificationEmailMode);
 const isBoolean = (value: unknown): value is boolean => typeof value === 'boolean';
 
-/** A reminder threshold as a team may set it: none (`null` or 0), or hours in (0, max]; undefined for anything else. */
+/**
+ * A reminder threshold as a team may set it: none (`null` or 0), or hours in (0, max] once kept to the hundredth, as
+ * the sweeps read it; undefined for anything else. A positive value that rounds to 0 (0.001) is dropped, not saved as
+ * 0, which would turn the members' reminders off.
+ */
 function hoursOf(value: unknown, max: number): number | null | undefined {
 	if (value === null || value === 0) return null;
-	return typeof value === 'number' && Number.isFinite(value) && value > 0 && value <= max
-		? Number(value.toFixed(2))
-		: undefined;
+	if (typeof value !== 'number' || !Number.isFinite(value)) return undefined;
+	const hours = Number(value.toFixed(2));
+	return hours > 0 && hours <= max ? hours : undefined;
 }
 
 /**
