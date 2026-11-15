@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { DataSource, In } from 'typeorm';
+import { DataSource, In, Not } from 'typeorm';
 import * as moment from 'moment';
 import 'moment-timezone';
 import { ID, IInvoiceScheduleRun, InvoiceScheduleGroupingEnum, InvoiceScheduleRunStatusEnum } from '@gauzy/contracts';
@@ -27,6 +27,14 @@ export const INVOICE_SCHEDULE_EXISTS =
 /** The refusal of a start day that does not exist. */
 export const INVOICE_SCHEDULE_START_DAY =
 	'INVOICE_SCHEDULE_START_DAY: the start day must be a day that exists, written YYYY-MM-DD.';
+
+/**
+ * The refusal of a new timeline (frequency or start day) that would bill again days a run already billed: it starts
+ * after the last period billed.
+ */
+export const INVOICE_SCHEDULE_START_AFTER_BILLED =
+	'INVOICE_SCHEDULE_START_AFTER_BILLED: a schedule that already billed periods can only change its timeline from a ' +
+	'start day after the last period billed.';
 
 /** The refusal of a client that is not one of the organization's. */
 export const INVOICE_SCHEDULE_CLIENT = 'INVOICE_SCHEDULE_CLIENT: no such client in this organization.';
@@ -144,8 +152,10 @@ export class InvoiceScheduleService extends TenantAwareCrudService<InvoiceSchedu
 				authorId: RequestContext.currentUserId()
 			});
 		} catch (error) {
-			// Two requests for the same client at once: the unique key lets one through
-			if (isUniqueViolation(error)) {
+			// Two requests for the same client at once: the unique key lets one through. The base service answers the
+			// losing insert with its own safe error, without the driver's, so the conflict is told by the row that won.
+			const wonElsewhere = await this.count({ where: { organizationContactId: input.organizationContactId } });
+			if (isUniqueViolation(error) || wonElsewhere > 0) {
 				throw new ConflictException(INVOICE_SCHEDULE_EXISTS);
 			}
 			throw error;
@@ -167,6 +177,7 @@ export class InvoiceScheduleService extends TenantAwareCrudService<InvoiceSchedu
 		if (input.startDay !== undefined) {
 			this.assertStartDay(input.startDay);
 		}
+		await this.assertTimelineKeepsBilledDays(stored, input);
 
 		const changes: Partial<InvoiceSchedule> = { authorId: RequestContext.currentUserId() };
 		if (input.frequency !== undefined) {
@@ -220,6 +231,34 @@ export class InvoiceScheduleService extends TenantAwareCrudService<InvoiceSchedu
 			throw new NotFoundException();
 		}
 		return schedule;
+	}
+
+	/**
+	 * Refuses a new timeline that would bill again days a run already billed: once a period is billed, a change of
+	 * frequency or start day must start after the last period billed. A run that failed billed nothing.
+	 */
+	private async assertTimelineKeepsBilledDays(
+		stored: InvoiceSchedule,
+		input: UpdateInvoiceScheduleDTO
+	): Promise<void> {
+		const frequency = input.frequency ?? stored.frequency;
+		const startDay = input.startDay ?? stored.startDay;
+		const changesTimeline = frequency !== stored.frequency || startDay !== stored.startDay;
+		if (!changesTimeline) {
+			return;
+		}
+		const lastBilled = await this.dataSource.getRepository(InvoiceScheduleRun).findOne({
+			where: {
+				invoiceScheduleId: stored.id,
+				tenantId: stored.tenantId,
+				status: Not(InvoiceScheduleRunStatusEnum.FAILED)
+			},
+			select: { id: true, periodEnd: true },
+			order: { periodEnd: 'DESC' }
+		});
+		if (lastBilled && startDay <= lastBilled.periodEnd) {
+			throw new BadRequestException(INVOICE_SCHEDULE_START_AFTER_BILLED);
+		}
 	}
 
 	private assertStartDay(startDay: string): void {
