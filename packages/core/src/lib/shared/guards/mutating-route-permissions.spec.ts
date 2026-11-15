@@ -363,6 +363,9 @@ const DELIBERATELY_OPEN: ReadonlyArray<string> = Object.freeze([
 	// findOneByIdString, and delete adds the receiver to its criteria, so a non-holder only reaches their own rows
 	'EmployeeNotificationController.create',
 	'EmployeeNotificationController.delete',
+	// inviteToBoard files Invitations as the caller, to members of a team the caller is an active member of, in the
+	// caller's tenant (board-invitation.ts boardInvitationsOf)
+	'EmployeeNotificationController.inviteToBoard',
 	'EmployeeNotificationController.markAllAsRead',
 	'EmployeeNotificationController.softRecover',
 	'EmployeeNotificationController.softRemove',
