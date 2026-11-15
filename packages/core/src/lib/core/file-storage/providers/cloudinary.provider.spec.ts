@@ -103,6 +103,14 @@ describe('CloudinaryProvider: URLs come from the settings of the request tenant 
 		expect(defaultPath).toBe('https://cdn.deployment.example.com/deployment-cloud/uploads/b.png');
 	});
 
+	it('reads a delivery URL saved without a scheme as https, as the refusal check does', async () => {
+		const schemeLess = { ...tenantWithAccount, cloudinary_delivery_url: '  cdn.tenant.example.com ' };
+
+		const url = await runWithTenantStorageSettings(schemeLess, () => cloudinaryProvider().url('uploads/a.png'));
+
+		expect(url).toBe('https://cdn.tenant.example.com/tenant-cloud/uploads/a.png');
+	});
+
 	it('keeps a key that is already a URL as it is', async () => {
 		const stored = 'https://res.example.com/other-cloud/uploads/c.png';
 

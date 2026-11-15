@@ -9,7 +9,7 @@ import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import { ICloudinaryConfig } from '@gauzy/common';
 import { environment } from '@gauzy/config';
 import { FileStorageOption, FileStorageProviderEnum, FileSystem, UploadedFile } from '@gauzy/contracts';
-import { isNotEmpty, trimIfNotEmpty } from '@gauzy/utils';
+import { ensureHttpPrefix, isNotEmpty, trimIfNotEmpty } from '@gauzy/utils';
 import { Logger } from '@nestjs/common';
 import { Provider } from './provider';
 import { RequestContext } from './../../../core/context';
@@ -133,7 +133,12 @@ export class CloudinaryProvider extends Provider<CloudinaryProvider> {
 								`setCloudinaryConfiguration: tenant cloudinary_delivery_url ignored. ${refusal}`
 							);
 						} else {
-							this.config.baseUrl = new URL(settings.cloudinary_delivery_url).toString();
+							// Read as the refusal check reads it (and as the Wasabi and DigitalOcean providers read their
+							// service URL): `https://` when no scheme is given. A scheme-less value used to throw here, and
+							// the tenant's URLs then used the deployment's delivery host.
+							this.config.baseUrl = new URL(
+								ensureHttpPrefix(String(settings.cloudinary_delivery_url).trim())
+							).toString();
 						}
 					}
 				}
