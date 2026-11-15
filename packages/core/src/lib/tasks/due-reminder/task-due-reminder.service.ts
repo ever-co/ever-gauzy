@@ -285,7 +285,9 @@ export class TaskDueReminderService {
 				new Brackets((upTo) =>
 					upTo
 						.where('task.dueDate < :untilDueDate', { untilDueDate: until.dueDate })
-						.orWhere('task.dueDate = :untilDueDate AND task.id < :untilTaskId', { untilTaskId: until.taskId })
+						.orWhere('task.dueDate = :untilDueDate AND task.id < :untilTaskId', {
+							untilTaskId: until.taskId
+						})
 						.orWhere(
 							'task.dueDate = :untilDueDate AND task.id = :untilTaskId AND employee.id <= :untilEmployeeId',
 							{ untilEmployeeId: until.employeeId }
