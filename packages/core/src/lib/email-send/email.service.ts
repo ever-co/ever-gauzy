@@ -166,6 +166,8 @@ export class EmailService {
 	 * @param token
 	 * @param originUrl
 	 * @param organization
+	 * @returns Whether the email was handed to the mail transport: false for an address of a domain the platform never
+	 * emails, which is not sent.
 	 */
 	async emailInvoice(
 		languageCode: LanguagesEnum,
@@ -177,7 +179,7 @@ export class EmailService {
 		token: any,
 		origin: string,
 		organization: IOrganization
-	) {
+	): Promise<boolean> {
 		const tenantId = RequestContext.currentTenantId();
 		const { id: organizationId } = organization;
 		const baseUrl = this.emailBaseUrl(origin);
@@ -225,6 +227,7 @@ export class EmailService {
 				await this.createEmailRecord(body);
 			}
 		}
+		return !isEmailBlocked;
 	}
 
 	/**

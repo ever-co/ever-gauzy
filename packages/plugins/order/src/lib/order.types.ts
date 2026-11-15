@@ -369,7 +369,8 @@ export interface IOrderEstimateDelivery {
 	/**
 	 * Why it was not sent: `NO_RECIPIENT` (the order carries no e-mail), `EMAIL_NOT_PREPARED`,
 	 * `DOCUMENT_NOT_GENERATED` or `EMAIL_NOT_SENT` (the mail transport refused it — typically an
-	 * installation with no mail server configured).
+	 * installation with no mail server configured — or the address is of a domain the platform never
+	 * emails, such as `@example.com`).
 	 */
 	readonly reason?: string;
 }
