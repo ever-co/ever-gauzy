@@ -975,7 +975,7 @@ export class ConversationViewComponent {
 	protected readonly person = computed(() => conversationPerson(this.conversation(), this.people().byEmployee, this.meEmployeeId()));
 	/** The first members for the member button (a channel comes without them in the list, so they are read). */
 	private readonly memberPreview = new ChatMemberPreview((id) => this.api.members(id));
-	/** Up to three members for the header's member button (those with a picture first), as Slack shows them. */
+	/** Up to three members for the header's member button (those with a picture first). */
 	protected readonly memberFaces = computed<ChatPerson[]>(() => {
 		const byEmployee = this.people().byEmployee;
 		const known = this.memberPreview
