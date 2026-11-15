@@ -6,9 +6,14 @@ import {
 	InboxDeliveryChannelEnum,
 	InboxDeliveryModeEnum,
 	InboxItemKindEnum,
-	InboxItemSourceEnum
+	InboxItemSourceEnum,
+	ITeamNotificationDefaults
 } from '@gauzy/contracts';
 import { teamNotificationDefaultsByEmployee, withTeamNotificationDefaults } from '@gauzy/core';
+
+/** How long the team defaults read for an employee are reused, and how many employees are kept at most. */
+const TEAM_DEFAULTS_READ_TTL_MS = 60_000;
+const TEAM_DEFAULTS_READ_MAX = 5000;
 import { InboxItem } from '../entities/inbox-item.entity';
 import { InboxItemRecipient } from '../entities/inbox-item-recipient.entity';
 import { InboxNamedLocks } from '../email/database/named-locks';
@@ -97,6 +102,9 @@ interface IDeliveryUser {
  */
 @Injectable()
 export class InboxDeliveryService {
+	/** The team defaults read for each employee lately (see `teamDefaultsOf`). */
+	private readonly teamDefaultsRead = new Map<string, { defaults: ITeamNotificationDefaults | null; at: number }>();
+
 	private readonly logger = new Logger(InboxDeliveryService.name);
 	/** One sweep at a time across the workers (a transaction-scoped advisory lock on PostgreSQL, `GET_LOCK` on MySQL). */
 	private readonly locks: InboxNamedLocks;
@@ -541,9 +549,24 @@ export class InboxDeliveryService {
 	private async settingOf(employeeId: ID, tenantId: ID): Promise<ObjectLiteral | null> {
 		const setting =
 			(await this.dataSource.getRepository<ObjectLiteral>('EmployeeNotificationSetting').findOne({ where: { employeeId, tenantId } } as never)) ?? null;
-		const defaults = (await teamNotificationDefaultsByEmployee(this.dataSource, [{ employeeId, tenantId }])).get(`${tenantId}:${employeeId}`);
+		const defaults = await this.teamDefaultsOf(employeeId, tenantId);
 		if (!defaults) return setting;
 		return { ...(setting ?? {}), preferences: withTeamNotificationDefaults(setting?.['preferences'], defaults) };
+	}
+
+	/**
+	 * The team defaults of an employee, read once a minute at most: a sweep decides many entries of the same people, on
+	 * two channels, and a team's defaults change seldom. A change reaches the decisions within the minute.
+	 */
+	private async teamDefaultsOf(employeeId: ID, tenantId: ID): Promise<ITeamNotificationDefaults | null> {
+		const key = `${tenantId}:${employeeId}`;
+		const now = Date.now();
+		const kept = this.teamDefaultsRead.get(key);
+		if (kept && now - kept.at < TEAM_DEFAULTS_READ_TTL_MS) return kept.defaults;
+		const defaults = (await teamNotificationDefaultsByEmployee(this.dataSource, [{ employeeId, tenantId }])).get(key) ?? null;
+		if (this.teamDefaultsRead.size >= TEAM_DEFAULTS_READ_MAX) this.teamDefaultsRead.clear();
+		this.teamDefaultsRead.set(key, { defaults, at: now });
+		return defaults;
 	}
 
 	private async markSent(rows: InboxDelivery[], now: Date): Promise<void> {
