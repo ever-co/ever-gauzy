@@ -67,6 +67,9 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 	// Declare a subject to trigger refresh
 	private refreshTrigger$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
 
+	// The payloads the rows on screen were read for: a refresh keeps them usable only while they are current.
+	private _shownPayloadsKey: string | null = null;
+
 	// Represents the selected log along with its selection status.
 	public selectedLog: {
 		data: ITimeLog;
@@ -215,11 +218,13 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 			return of([]); // No valid organization, return empty array
 		}
 
-		// Set loading to true, except for a refresh of the rows already shown
-		this.loading = !isRefresh;
-
 		// Get the current payloads value
 		const payloads = this.payloads$.getValue();
+		const payloadsKey = JSON.stringify(payloads);
+
+		// Set loading to true, except for a refresh of the rows already shown. A refresh that replaces the read of
+		// another day or filter still on its way keeps the loading state: the rows on screen are not its own.
+		this.loading = !(isRefresh && payloadsKey === this._shownPayloadsKey);
 
 		// Convert the promise-based API call to an observable
 		return from(
@@ -234,6 +239,7 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 			// Update component state with fetched issues
 			tap((logs: ITimeLog[]) => {
 				this.logs = logs;
+				this._shownPayloadsKey = payloadsKey;
 				// A re-query replaces every log OBJECT, so a selection captured from the previous array
 				// describes a row that no longer exists. Drop it with its data: otherwise `selectedLog.data`
 				// keeps `@if (selectedItem)` true, and a later checkbox tick — which opens the strip via
