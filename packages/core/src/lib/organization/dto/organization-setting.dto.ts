@@ -12,5 +12,15 @@ export class OrganizationSettingDTO extends PickType(Organization, [
 	'allowEmployeeToSeeTrackedData',
 	'allowScreenshotCapture',
 	'requireTeam',
-	'restrictTrackingSwitchToHigherRoles'
+	'restrictTrackingSwitchToHigherRoles',
+	'timeLogsKeepTheirRates',
+	'defaultBillRateValue',
+	'defaultBillRateCurrency',
+	'durationRoundingInterval',
+	'durationRoundingDirection',
+	'requireTwoFactor',
+	'allowDiscardTimer',
+	'discardTimerWithinMinutes',
+	'allowBreaks',
+	'invoiceRemindersEnabled'
 ] as const) {}

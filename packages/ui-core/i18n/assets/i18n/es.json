@@ -476,6 +476,8 @@
 			"DEFAULT_TERMS": "Términos por defecto para facturas y estimaciones.",
 			"CONVERT_ESTIMATES": "Convertir estimaciones.",
 			"ALLOW_CONVERTING": "Convertir automáticamente el presupuesto aceptado en factura.",
+			"INVOICE_REMINDERS": "Recordatorios de pago",
+			"SEND_INVOICE_REMINDERS": "Enviar un correo al cliente de una factura impagada 3 días antes de su vencimiento y luego 1, 7 y 14 días después",
 			"DEFAULT_DAYS": "Días predefinidos hasta el vencimiento de facturas y presupuestos.",
 			"TEMPLATE_NAME": "Nombre de la plantilla",
 			"TEMPLATE_BODY": "Cuerpo de plantilla.",
@@ -5659,6 +5661,47 @@
 			"COPY": "Copiar {{ name }}"
 		}
 	},
+	"DOWNLOADS_PAGE": {
+		"TITLE": "Descargas",
+		"HEADLINE": "Registra tu tiempo dondequiera que trabajes",
+		"DESKTOP": {
+			"TITLE": "Escritorio",
+			"DESCRIPTION": "Registra tiempo desde tu ordenador con el temporizador de escritorio y mantén tus hojas de horas sincronizadas con la aplicación web.",
+			"DOWNLOAD_FOR": "Descargar para {{platform}}",
+			"ALSO_FOR": "También disponible para"
+		},
+		"SETUP": {
+			"OPENED": "El enlace de descarga para {{platform}} se abrió en una pestaña nueva.",
+			"NOT_OPENED": "¿No pasó nada?",
+			"TRY_AGAIN": "Intentar de nuevo",
+			"TITLE": "Próximos pasos",
+			"INSTALL_WINDOWS": "Ejecuta el instalador que descargaste y sigue los pasos.",
+			"INSTALL_MACOS": "Abre el archivo descargado y arrastra la aplicación a Aplicaciones.",
+			"INSTALL_LINUX": "Instala el paquete descargado o ejecuta el AppImage.",
+			"CONNECT_CUSTOM": "Abre la aplicación, elige «{{option}}» y completa:",
+			"PORT_EMPTY": "Deja este campo vacío",
+			"CONNECT_LIVE": "Abre la aplicación y elige «{{option}}».",
+			"SIGN_IN": "Inicia sesión con el correo y la contraseña que usas aquí.",
+			"COPY_FIELD": "Copiar {{field}}"
+		},
+		"MOBILE": {
+			"TITLE": "Móvil",
+			"DESCRIPTION": "Inicia el temporizador, revisa tus tareas y consulta tus horas desde cualquier lugar.",
+			"PLATFORMS": "iOS y Android",
+			"DOWNLOAD": "Descargar"
+		},
+		"EXTENSION": {
+			"TITLE": "Extensión del navegador",
+			"DESCRIPTION": "Inicia y detén el temporizador desde cualquier pestaña, sin abrir la aplicación web.",
+			"INSTALL": "Instalar"
+		},
+		"ILLUSTRATION": {
+			"THIS_WEEK": "Esta semana",
+			"YOU": "Tú",
+			"TRY_IT": "Tu turno: haz clic en el temporizador"
+		},
+		"ALL_DOWNLOADS": "Ver todas las descargas"
+	},
 	"FOOTER": {
 		"BY": "por",
 		"RIGHTS_RESERVED": "Todos los derechos reservados.",
@@ -6792,6 +6835,7 @@
 			"email-reset": "Restablecimiento de correo electrónico.",
 			"organization-team-join-request": "Solicitud de unión al equipo de la organización",
 			"payment-receipt": "Recibo de pago",
+			"invoice-reminder": "Recordatorio de factura",
 			"reject-candidate": "Rechazar Candidato"
 		},
 		"HTML_EDITOR": "Editor HTML",

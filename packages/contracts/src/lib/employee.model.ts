@@ -123,6 +123,16 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel, ITa
 	isDeleted?: boolean;
 	/** `human` for a person (every row created through the employee routes), `agent` for an agent employee. */
 	kind?: EmployeeKindEnum;
+	/**
+	 * True for a member without an account (a placeholder): counted in reports, timesheets, budgets and invoices like
+	 * any member, but it never signs in and never runs a timer. False for every member with an account.
+	 */
+	isPlaceholder?: boolean;
+	/**
+	 * The email given when a member without an account was created, if any: shown in member lists and used to invite
+	 * the person to claim their time. Never a login. Null for every member with an account (their email is the user's).
+	 */
+	placeholderEmail?: string | null;
 	/**	Agent Settings */
 	allowAgentAppExit?: boolean;
 	allowLogoutFromAgentApp?: boolean;
@@ -196,6 +206,12 @@ export interface IEmployeeUpdateInput extends IBasePerTenantAndOrganizationEntit
 	billRateCurrency?: CurrenciesEnum;
 	payRateValue?: number | null;
 	payRateCurrency?: CurrenciesEnum | null;
+	/**
+	 * The day a billing or pay rate this update changes prices tracked time from: the time logs started on or after it
+	 * take the new rate, except time a live invoice bills. Without it all the time already tracked takes it, unless the
+	 * organization's time logs keep their rates (`timeLogsKeepTheirRates`): then only the time logs recorded from now on.
+	 */
+	ratesApplyFrom?: Date | string;
 	reWeeklyLimit?: number;
 	organizationDepartment?: IOrganizationDepartment;
 	organizationPosition?: IOrganizationPosition;

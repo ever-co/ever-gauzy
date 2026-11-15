@@ -325,8 +325,14 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 	 * Creates all invites. If an email Id already exists, this function will first delete
 	 * the existing invite and then create a new row with the email address.
 	 * @param emailInvites Emails Ids to send invite
+	 * @param placeholderEmployeeId The member without an account a claim hands over (ever-co/ever-gauzy#11913),
+	 * written with the invitations before their emails go. Never read from the request body.
 	 */
-	async createBulk(input: ICreateEmailInvitesInput, languageCode: LanguagesEnum): Promise<ICreateEmailInvitesOutput> {
+	async createBulk(
+		input: ICreateEmailInvitesInput,
+		languageCode: LanguagesEnum,
+		placeholderEmployeeId?: ID
+	): Promise<ICreateEmailInvitesOutput> {
 		// Issuing invitations stays with the user's own session: POST /invite/emails and `sendInvites` also admit
 		// ORG_TEAM_ADD, which a third-party app's write scope reaches, and an invitation to an address the app controls
 		// is an account it holds (owner decision Q12).
@@ -497,7 +503,8 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 					projects,
 					teams: teamsToInvite,
 					departments,
-					organizationContacts
+					organizationContacts,
+					...(placeholderEmployeeId ? { placeholderEmployeeId } : {})
 				})
 			);
 		}

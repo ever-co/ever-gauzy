@@ -3,6 +3,7 @@ import {
 	DatabaseModule,
 	EventOutboxDispatchScheduleModule,
 	IdempotencyMaintenanceModule,
+	InvoiceReminderScheduleModule,
 	isTimerRemindersEnabled,
 	JobExecutionModule,
 	MentionModule,
@@ -92,6 +93,12 @@ import { WORKER_DEFAULT_QUEUE, WORKER_QUEUE_ENABLED, WORKER_SCHEDULER_ENABLED } 
 		...(WORKER_QUEUE_ENABLED && isTimerRemindersEnabled(process.env, (message) => console.warn(message))
 			? [TimerReminderScheduleModule]
 			: []),
+		/**
+		 * The payment reminders' hourly schedule, and only the schedule: the sweep runs in the API, which consumes the
+		 * queue (`InvoiceReminderMaintenanceModule`) and hosts the mail settings and the invoice rendering it uses. Each
+		 * organization turns the reminders on, so a sweep sends nothing until one does.
+		 */
+		...(WORKER_QUEUE_ENABLED ? [InvoiceReminderScheduleModule] : []),
 		/**
 		 * The ledger a scheduled pass is recorded in.
 		 *

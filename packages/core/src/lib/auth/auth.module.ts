@@ -41,10 +41,14 @@ import { EventHandlers } from './events/handlers';
 import { EmailConfirmationService } from './email-confirmation.service';
 import { EmailVerificationController } from './email-verification.controller';
 import { LoginAttemptModule } from './login-attempt.module';
+import { TwoFactorController } from './two-factor/two-factor.controller';
+import { UserTwoFactorModule } from './two-factor/user-two-factor.module';
 import { SocialAccountModule } from './social-account/social-account.module';
 import { OAuthClientModule } from './oauth-client/oauth-client.module';
 import { TermsAcceptanceModule } from '../terms-acceptance/terms-acceptance.module';
 import { AuthenticatedUserCacheProvider, JwtRefreshTokenStrategy, JwtStrategy } from './strategies';
+import { UserSessionController } from './user-session/user-session.controller';
+import { UserSessionService } from './user-session/user-session.service';
 
 // Core service providers for handling authentication and related functionalities
 const providers = [
@@ -84,7 +88,8 @@ const strategies = [AuthenticatedUserCacheProvider, JwtStrategy, JwtRefreshToken
 				RefreshTokenModule,
 				OAuthClientModule,
 				TermsAcceptanceModule,
-				LoginAttemptModule
+				LoginAttemptModule,
+				UserTwoFactorModule
 			],
 			useClass: AuthService
 		}),
@@ -107,14 +112,18 @@ const strategies = [AuthenticatedUserCacheProvider, JwtStrategy, JwtRefreshToken
 		RefreshTokenModule,
 		OAuthClientModule,
 		TermsAcceptanceModule,
-		LoginAttemptModule
+		LoginAttemptModule,
+		UserTwoFactorModule
 	],
-	controllers: [AuthController, EmailVerificationController],
+	controllers: [AuthController, EmailVerificationController, UserSessionController, TwoFactorController],
 	providers: [
 		...providers,
 		...CommandHandlers,
 		...EventHandlers,
 		...strategies,
+		// The signed-in user's own sessions (ever-co/ever-gauzy#11921): it reads and revokes the access and refresh
+		// tokens this module mints, so it lives beside them.
+		UserSessionService,
 		TypeOrmTenantRepository,
 		MikroOrmTenantRepository,
 		// Also a provider, not only a guard of the register route: SelfRegistrationGuard asks it to verify an

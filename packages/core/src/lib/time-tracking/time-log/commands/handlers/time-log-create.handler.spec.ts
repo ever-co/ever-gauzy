@@ -1,7 +1,7 @@
 // Must stay first: loads the entity graph before any handler pulls an entity (see activity.controller.spec.ts).
 import '../../../../core/entities/internal';
 
-import { ITimeLog, TimeLogSourceEnum } from '@gauzy/contracts';
+import { ITimeLog, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
 import { RequestContext } from '../../../../core/context';
 import { IntegrationMapSyncTimeLogCommand } from '../../../../integration-map/commands/integration-map.sync-time-log.command';
 import { IntegrationMapSyncTimeLogHandler } from '../../../../integration-map/commands/handlers/integration-map.sync-time-log.handler';
@@ -9,10 +9,16 @@ import { TimesheetFirstOrCreateCommand } from '../../../timesheet/commands';
 import { generateTimeSlots } from '../../../time-slot/utils';
 import { TimeLog } from '../../time-log.entity';
 import { TimeLogCreateCommand } from '../time-log-create.command';
+import { recordTimeLogHistory } from '../../time-log-history.writer';
 import { isRunningTimeLogInput, TimeLogCreateHandler, withRunningLogStoppedAt } from './time-log-create.handler';
 
 // The tenant check on project / task / client / team has its own spec (time-log-references.spec.ts).
 jest.mock('../../time-log-references', () => ({ assertTimeLogReferencesOfTenant: jest.fn(async () => undefined) }));
+// The history rows themselves have their own spec (time-log-history.writer.spec.ts).
+jest.mock('../../time-log-history.writer', () => ({
+	...jest.requireActual('../../time-log-history.writer'),
+	recordTimeLogHistory: jest.fn(async () => undefined)
+}));
 
 /**
  * A running time log could be stored with a null `stoppedAt`: `TimeLogCreateHandler` gives a desktop-source log
@@ -29,7 +35,7 @@ const EMPLOYEE_ID = 'employee-1';
 const STARTED_AT = new Date('2026-10-24T09:00:00.000Z');
 const STOPPED_AT = new Date('2026-10-24T09:30:00.000Z');
 
-function createHandler() {
+function createHandler(dataSource?: unknown) {
 	const saved: TimeLog[] = [];
 	const typeOrmTimeLogRepository = {
 		save: jest.fn(async (timeLog: TimeLog) => {
@@ -55,7 +61,8 @@ function createHandler() {
 		{} as any,
 		commandBus as any,
 		timeSlotService as any,
-		timeLogService as any
+		timeLogService as any,
+		dataSource as never
 	);
 	return { handler, saved, timeSlotService };
 }
@@ -185,5 +192,92 @@ describe('TimeLogCreateHandler: a running log is written with stoppedAt = starte
 			expect(saved).toHaveLength(1);
 			expect(saved[0]).toMatchObject({ isRunning: true, stoppedAt: STARTED_AT });
 		});
+	});
+});
+
+describe('TimeLogCreateHandler: a break holds no time slots', () => {
+	beforeEach(() => {
+		jest.spyOn(console, 'log').mockImplementation(() => undefined);
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT_ID);
+	});
+	afterEach(() => jest.restoreAllMocks());
+
+	it('writes a break without the blank slots a manual entry of the same range gets', async () => {
+		const { handler, saved } = createHandler();
+
+		await handler.execute(new TimeLogCreateCommand(input({ stoppedAt: STOPPED_AT, logType: TimeLogType.MANUAL })));
+		await handler.execute(new TimeLogCreateCommand(input({ stoppedAt: STOPPED_AT, logType: TimeLogType.BREAK })));
+
+		expect(saved[0].timeSlots.length).toBe(3);
+		expect(saved[1]).toMatchObject({ logType: TimeLogType.BREAK, timeSlots: [] });
+	});
+
+	it('drops the slots a break is sent with', async () => {
+		const { handler, saved } = createHandler();
+		const sentSlot = { startedAt: STARTED_AT, duration: 600, keyboard: 5, mouse: 5, overall: 300 };
+
+		await handler.execute(
+			new TimeLogCreateCommand(
+				input({ stoppedAt: STOPPED_AT, logType: TimeLogType.BREAK, timeSlots: [sentSlot] as any })
+			)
+		);
+
+		expect(saved[0].timeSlots).toEqual([]);
+	});
+});
+
+/**
+ * Time added by a person is recorded in the entry's history (ever-co/ever-gauzy#11922), written in the same
+ * transaction as the entry. What the timer, a tracker or an integration writes records nothing.
+ */
+describe('TimeLogCreateHandler: history of time added by hand', () => {
+	beforeEach(() => {
+		jest.spyOn(console, 'log').mockImplementation(() => undefined);
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT_ID);
+	});
+	afterEach(() => jest.restoreAllMocks());
+
+	function createHandlerWithTransaction() {
+		const transactionRepository = { save: jest.fn(async (timeLog: TimeLog) => timeLog) };
+		const transactionManager = { getRepository: jest.fn(() => transactionRepository) };
+		const dataSource = {
+			transaction: jest.fn(async (work: (manager: unknown) => Promise<void>) => work(transactionManager))
+		};
+		const { handler } = createHandler(dataSource);
+		const repository = (handler as unknown as { typeOrmTimeLogRepository: { save: jest.Mock } })
+			.typeOrmTimeLogRepository;
+		const record = recordTimeLogHistory as jest.Mock;
+		record.mockClear();
+		return { handler, repository, dataSource, transactionManager, transactionRepository, record };
+	}
+
+	it('writes the entry and its "created" row in one transaction, with the reason given', async () => {
+		const { handler, repository, dataSource, transactionManager, transactionRepository, record } =
+			createHandlerWithTransaction();
+
+		await handler.execute(
+			new TimeLogCreateCommand(input({ stoppedAt: STOPPED_AT, reason: 'Forgot to start timer' }), {
+				reason: 'Forgot to start timer'
+			})
+		);
+
+		expect(dataSource.transaction).toHaveBeenCalledTimes(1);
+		expect(repository.save).not.toHaveBeenCalled();
+		expect(transactionRepository.save).toHaveBeenCalledTimes(1);
+		const [manager, [entry]] = record.mock.calls[0];
+		expect(manager).toBe(transactionManager);
+		expect(entry.reason).toBe('Forgot to start timer');
+		expect(entry.change.action).toBe('Created');
+		expect(entry.change.updatedValues).toContainEqual({ stoppedAt: STOPPED_AT.toISOString() });
+	});
+
+	it('records nothing, and opens no transaction, for a log written without a history option', async () => {
+		const { handler, repository, dataSource, record } = createHandlerWithTransaction();
+
+		await handler.execute(new TimeLogCreateCommand(input({ stoppedAt: STOPPED_AT })));
+
+		expect(dataSource.transaction).not.toHaveBeenCalled();
+		expect(repository.save).toHaveBeenCalledTimes(1);
+		expect(record).not.toHaveBeenCalled();
 	});
 });

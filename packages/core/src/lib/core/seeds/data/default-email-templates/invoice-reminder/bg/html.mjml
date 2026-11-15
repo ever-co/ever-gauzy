@@ -1,0 +1,105 @@
+<mjml lang="bg">
+	<mj-head>
+		<mj-title>Напомняне за плащане</mj-title>
+		<mj-preview>{{#if isOverdue}}Падежът на фактура {{invoiceNumber}} беше {{dueDate}} и тя все още не е платена изцяло.{{else}}Напомняне: падежът на фактура {{invoiceNumber}} е {{dueDate}}.{{/if}}</mj-preview>
+		<mj-attributes>
+			<mj-all font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" />
+			<mj-text align="left" color="#3F3F46" font-size="15px" line-height="24px" padding="0 10px 16px" />
+			<mj-button align="left" background-color="#4F46E5" border-radius="8px" color="#FFFFFF" font-size="15px" font-weight="600" inner-padding="12px 24px" line-height="20px" padding="8px 10px 24px" />
+			<mj-divider border-color="#E4E4E7" border-width="1px" padding="8px 10px 24px" />
+			<mj-class name="brand" color="#18181B" font-size="18px" font-weight="600" line-height="24px" padding="6px 10px 28px" />
+			<mj-class name="eyebrow" color="#71717A" font-size="13px" font-weight="600" line-height="20px" padding="0 10px 4px" />
+			<mj-class name="heading" color="#18181B" font-size="22px" font-weight="600" line-height="30px" padding="0 10px 12px" />
+			<mj-class name="note" color="#71717A" font-size="13px" line-height="20px" />
+			<mj-class name="footer" align="center" color="#66666F" font-size="12px" line-height="18px" padding="0" />
+			<mj-class name="danger" background-color="#DC2626" />
+			<mj-class name="secondary" background-color="#FFFFFF" border="1px solid #D4D4D8" color="#18181B" inner-padding="11px 24px" />
+		</mj-attributes>
+		<mj-style>
+			@media only screen and (max-width: 479px) {
+				.email-card > table > tbody > tr > td { padding: 22px 12px 14px !important; }
+			}
+		</mj-style>
+	</mj-head>
+	<mj-body background-color="#F4F4F5" width="600px">
+		<mj-section padding="32px 16px 0">
+			<mj-column css-class="email-card" background-color="#FFFFFF" border="1px solid #E4E4E7" border-radius="12px" padding="30px 30px 20px">
+				<mj-raw>{{#if appLogo}}</mj-raw>
+				<mj-text font-size="0" line-height="0" padding="0 0 22px">
+					<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse: separate">
+						<tr>
+							<td bgcolor="#FFFFFF" style="background-color: #FFFFFF; background-image: linear-gradient(#FFFFFF, #FFFFFF); border-radius: 8px; padding: 6px 10px">
+								<a href="{{appLink}}" target="_blank" style="text-decoration: none"><img src="{{appLogo}}" alt="{{appName}}" height="24" style="display: block; height: 24px; width: auto; border: 0; outline: none; color: #18181B; font-size: 18px; font-weight: 600; line-height: 24px; text-decoration: none" /></a>
+							</td>
+						</tr>
+					</table>
+				</mj-text>
+				<mj-raw>{{else}}</mj-raw>
+				<mj-text mj-class="brand">{{appName}}</mj-text>
+				<mj-raw>{{/if}}</mj-raw>
+				<mj-raw>{{#if isOverdue}}</mj-raw>
+				<mj-text mj-class="heading">Фактура {{invoiceNumber}} е просрочена</mj-text>
+				<mj-raw>{{else}}</mj-raw>
+				<mj-text mj-class="heading">Наближава падежът на фактура {{invoiceNumber}}</mj-text>
+				<mj-raw>{{/if}}</mj-raw>
+				<mj-text>
+					Здравейте{{#if contactName}}, {{contactName}}{{/if}}!
+				</mj-text>
+				<mj-raw>{{#if isOverdue}}</mj-raw>
+				<mj-text>
+					Падежът на фактура <strong dir="auto" style="color: #18181B; font-weight: 600">{{invoiceNumber}}</strong> от <strong dir="auto" style="color: #18181B; font-weight: 600">{{organizationName}}</strong> беше <strong dir="auto" style="color: #18181B; font-weight: 600">{{dueDate}}</strong> и тя все още не е платена изцяло.
+				</mj-text>
+				<mj-raw>{{else}}</mj-raw>
+				<mj-text>
+					Напомняме Ви, че падежът на фактура <strong dir="auto" style="color: #18181B; font-weight: 600">{{invoiceNumber}}</strong> от <strong dir="auto" style="color: #18181B; font-weight: 600">{{organizationName}}</strong> е <strong dir="auto" style="color: #18181B; font-weight: 600">{{dueDate}}</strong>.
+				</mj-text>
+				<mj-raw>{{/if}}</mj-raw>
+				<mj-text padding="4px 10px 20px">
+					<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#FAFAFA" style="border-collapse: separate; background-color: #FAFAFA; border: 1px solid #E4E4E7; border-radius: 10px">
+						<tr>
+							<td style="padding: 4px 16px">
+								<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+									<tr>
+										<td width="38%" align="left" valign="top" style="width: 38%; padding: 10px 0; font-size: 14px; line-height: 22px; color: #71717A; text-align: left"><div>Фактура</div></td>
+										<td align="left" valign="top" dir="auto" style="padding: 10px 0 10px 12px; font-size: 14px; font-weight: 500; line-height: 22px; color: #18181B; text-align: left; word-break: break-word"><div>{{invoiceNumber}}</div></td>
+									</tr>
+									<tr>
+										<td width="38%" align="left" valign="top" style="border-top: 1px solid #E4E4E7; width: 38%; padding: 10px 0; font-size: 14px; line-height: 22px; color: #71717A; text-align: left"><div>Дължима сума</div></td>
+										<td align="left" valign="top" dir="auto" style="border-top: 1px solid #E4E4E7; padding: 10px 0 10px 12px; font-size: 14px; font-weight: 500; line-height: 22px; color: #18181B; text-align: left; word-break: break-word"><div>{{amountDue}} {{currency}}</div></td>
+									</tr>
+									<tr>
+										<td width="38%" align="left" valign="top" style="border-top: 1px solid #E4E4E7; width: 38%; padding: 10px 0; font-size: 14px; line-height: 22px; color: #71717A; text-align: left"><div>Падеж</div></td>
+										<td align="left" valign="top" dir="auto" style="border-top: 1px solid #E4E4E7; padding: 10px 0 10px 12px; font-size: 14px; font-weight: 500; line-height: 22px; color: #18181B; text-align: left; word-break: break-word"><div>{{dueDate}}</div></td>
+									</tr>
+								</table>
+							</td>
+						</tr>
+					</table>
+				</mj-text>
+				<mj-raw>{{#if isPdfAttached}}</mj-raw>
+				<mj-text>
+					Фактурата е прикачена към този имейл като PDF файл.
+				</mj-text>
+				<mj-raw>{{/if}}</mj-raw>
+				<mj-raw>{{#if invoiceUrl}}</mj-raw>
+				<mj-button href="{{invoiceUrl}}" target="_blank">Преглед на фактурата</mj-button>
+				<mj-raw>{{/if}}</mj-raw>
+				<mj-text mj-class="note">
+					Ако вече сте я платили, благодарим Ви и моля, не обръщайте внимание на това напомняне.
+				</mj-text>
+				<mj-divider />
+				<mj-text mj-class="note" padding="0 10px 12px">
+					С уважение,<br />
+					<span style="color: #18181B; font-weight: 600">Екипът на {{organizationName}}</span>
+				</mj-text>
+			</mj-column>
+		</mj-section>
+		<mj-section padding="20px 16px 40px">
+			<mj-column>
+				<mj-text mj-class="footer">
+					&copy; 2019, <a href="{{appLink}}" target="_blank" style="color: #66666F; text-decoration: underline">{{appName}}</a>{{#if companyName}} от <a href="{{companyLink}}" target="_blank" style="color: #66666F; text-decoration: underline">{{companyName}}</a>{{/if}}. Всички права запазени.
+				</mj-text>
+			</mj-column>
+		</mj-section>
+	</mj-body>
+</mjml>

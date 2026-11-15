@@ -82,7 +82,9 @@ describe('InviteService.createBulk role (GHSA-x4mv-fhwj-g3rp)', () => {
 				findOneByIdString: jest.fn(async () => ({ id: 'inviter-1', role: ROLES[callerRoleId] }))
 			},
 			roleService,
-			organizationService: { findOneByIdString: jest.fn(async () => ({ id: ORGANIZATION, inviteExpiryPeriod: 7 })) },
+			organizationService: {
+				findOneByIdString: jest.fn(async () => ({ id: ORGANIZATION, inviteExpiryPeriod: 7 }))
+			},
 			findAll: jest.fn(async () => ({ items: [], total: 0 })),
 			typeOrmOrganizationTeamEmployeeRepository: { findBy: jest.fn(async () => []) },
 			saveMany: jest.fn(async (invites: any[]) => {
@@ -92,11 +94,16 @@ describe('InviteService.createBulk role (GHSA-x4mv-fhwj-g3rp)', () => {
 		return { service, roleService };
 	}
 
-	async function invitesOf(service: InviteService, body: Record<string, unknown>): Promise<any[]> {
+	async function invitesOf(
+		service: InviteService,
+		body: Record<string, unknown>,
+		placeholderEmployeeId?: string
+	): Promise<any[]> {
 		try {
 			await service.createBulk(
 				{ emailIds: ['new@example.com'], organizationId: ORGANIZATION, tenantId: TENANT, ...body } as any,
-				'en' as any
+				'en' as any,
+				placeholderEmployeeId
 			);
 		} catch (error) {
 			if (error instanceof Saved) {
@@ -116,6 +123,22 @@ describe('InviteService.createBulk role (GHSA-x4mv-fhwj-g3rp)', () => {
 		// swapped for EMPLOYEE without a word. Now the request is refused.
 		await expect(invitesOf(service, { roleId: 'role-super-admin' })).rejects.toBeInstanceOf(ForbiddenException);
 		expect(service.saveMany).not.toHaveBeenCalled();
+	});
+
+	it('writes the placeholder a claim hands over with the invitation itself, never one a request body names', async () => {
+		const { service } = build('role-admin');
+
+		const [claim] = await invitesOf(service, { roleId: 'role-employee' }, 'employee-amina');
+		const [ordinary] = await invitesOf(build('role-admin').service, { roleId: 'role-employee' });
+		// POST /invite/emails passes its body on as it came: a field the body names never makes an invitation a claim.
+		const [named] = await invitesOf(build('role-admin').service, {
+			roleId: 'role-employee',
+			placeholderEmployeeId: 'employee-amina'
+		});
+
+		expect(claim.placeholderEmployeeId).toBe('employee-amina');
+		expect(ordinary.placeholderEmployeeId).toBeUndefined();
+		expect(named.placeholderEmployeeId).toBeUndefined();
 	});
 
 	it('a manager still invites an employee with the role it asked for', async () => {

@@ -1,11 +1,12 @@
 import { Logger } from '@nestjs/common';
 import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
-import { In } from 'typeorm';
-import { omit } from 'underscore';
+import { FindOptionsSelect, In } from 'typeorm';
+import { omit, pick } from 'underscore';
 import { ID, ITimeLog, ITimeSlot } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/utils';
 import { moment } from '../../../../core/moment-extend';
 import { TimesheetRecalculateCommand } from '../../../timesheet/commands';
+import { TimeSlotBulkDeleteCommand } from '../../../time-slot/commands';
 import { TimeLog } from './../../time-log.entity';
 import { DeleteTimeSpanCommand } from '../delete-time-span.command';
 import { TimeLogUpdateCommand } from '../time-log-update.command';
@@ -15,6 +16,25 @@ import { generateTimeSlots } from './../../../time-slot/utils';
 import { TimeSlot } from '../../../time-slot/time-slot.entity';
 import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.repository';
 import { TypeOrmTimeSlotRepository } from '../../../time-slot/repository/type-orm-time-slot.repository';
+
+/** The rates a time log stores (see time-log-rates.ts), which the second part of a split keeps. */
+const STORED_RATE_FIELDS: Array<keyof TimeLog> = [
+	'billRateValue',
+	'billRateCurrency',
+	'payRateValue',
+	'payRateCurrency',
+	'projectBillRateValue',
+	'projectMemberBillRateValue',
+	'projectBillRateCurrency',
+	'projectMemberBillRateCurrency',
+	'ratesStored'
+];
+
+/** The read of those rates, by name. */
+const STORED_RATE_SELECT: FindOptionsSelect<TimeLog> = Object.fromEntries([
+	['id', true],
+	...STORED_RATE_FIELDS.map((field) => [field, true])
+]);
 
 @CommandHandler(DeleteTimeSpanCommand)
 export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanCommand> {
@@ -69,7 +89,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	 * @returns Whether the log was cut, split or deleted.
 	 */
 	private async cleanUp(command: DeleteTimeSpanCommand): Promise<boolean> {
-		const { newTime, timeLog, forceDelete } = command;
+		const { newTime, timeLog, timeSlot, forceDelete } = command;
 		const { id } = timeLog;
 		const { start, end } = newTime;
 
@@ -79,8 +99,8 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 			relations: { timeSlots: true }
 		});
 
-		// Callers send one command per slot of a conflicting log. When the new range covers that log, the
-		// command for its first slot deletes the whole log, so the next ones find nothing left to trim.
+		// Deleting several time slots sends one command per slot and log: once one of them has deleted the log (its
+		// last slot, or a span covering it), the next ones find nothing left to trim.
 		if (!log) {
 			return false;
 		}
@@ -93,17 +113,29 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 			return false;
 		}
 
+		// The TypeORM conflict lookup lists only logs holding time slots: time saved over a log holding none, which
+		// the MikroORM lookup lists too, leaves it as it is.
+		const savesTimeOverLog = !timeSlot;
+		const holdsNoTimeSlot = isEmpty(log.timeSlots);
+		if (savesTimeOverLog && holdsNoTimeSlot) {
+			return false;
+		}
+
 		const { startedAt, stoppedAt } = log;
 
 		const newTimeRange = moment.range(start, end); // Calculate the new time rang
 		const dbTimeRange = moment.range(startedAt, stoppedAt); // Calculate the database time range
 
-		// Nothing of the log is left in the new range: the command for an earlier slot of it already cut it back to the
-		// range's edge, or it only touches the range. It is left as it is, with every slot it holds; the cut below is
-		// decided from the log as it is stored now, never from the copy the command carries.
+		// Nothing of the log is left in the new range: an earlier command already cut it back to the range's edge, or it
+		// only touches the range. It is left as it is; the cut below is decided from the log as it is stored now, never
+		// from the copy the command carries. Only the slot the time-slot delete names goes.
 		if (!newTimeRange.overlaps(dbTimeRange, { adjacent: false })) {
 			this.debug(() => `Not Overlapping ${JSON.stringify({ newTimeRange, dbTimeRange })}`);
-			return false;
+			if (!timeSlot) {
+				return false;
+			}
+			await this.deleteTimeSlotOutsideLog(log, timeSlot, forceDelete);
+			return true;
 		}
 
 		if (moment(startedAt).isBetween(moment(start), moment(end), null, '[]')) {
@@ -367,9 +399,17 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 		const from = this.firstSlotStart(end, stoppedAt);
 		const timeSlots = (log.timeSlots ?? []).filter((slot) => !moment(slot.startedAt).isBefore(from));
 
+		// The same time, priced as the log was: the rates it stores, read by name since a generic read leaves the
+		// pay rate and the client rates out (see time-log-rates.ts).
+		const storedRates = await this.typeOrmTimeLogRepository.findOne({
+			where: { id: log.id },
+			select: STORED_RATE_SELECT
+		});
+
 		return await this.typeOrmTimeLogRepository.save(
 			new TimeLog({
 				...omit(log, ['id', 'createdAt', 'updatedAt', 'timeSlots', 'duration', 'isEdited']),
+				...pick(storedRates ?? {}, STORED_RATE_FIELDS),
 				startedAt: end,
 				stoppedAt,
 				timeSlots
@@ -516,6 +556,51 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 		if (log.employeeId) {
 			await this._commandBus.execute(new UpdateEmployeeTotalWorkedHoursCommand(log.employeeId));
 		}
+	}
+
+	/**
+	 * Deletes the slot the time-slot delete names when its log's time no longer reaches it, which leaves the log as it
+	 * is, and recalculates the log's timesheet without the slot. A slot a running log holds too stays with that log,
+	 * which the time-slot delete never cuts: this log only lets go of it.
+	 *
+	 * The logs holding the slot are read again here: the time-slot delete read them before the cleanups queued ahead of
+	 * this one ran, and a timer may have started on the slot, or a running log let go of it, since.
+	 *
+	 * @param log - The log holding the slot, as stored.
+	 * @param timeSlot - The slot to delete.
+	 * @param forceDelete - Whether to hard delete it (default: false).
+	 * @throws The error of the read, of the delete, of the unlink or of the recalculation.
+	 */
+	private async deleteTimeSlotOutsideLog(log: ITimeLog, timeSlot: ITimeSlot, forceDelete = false): Promise<void> {
+		const [current] = await this.typeOrmTimeSlotRepository.find({
+			where: { id: timeSlot.id },
+			relations: { timeLogs: true }
+		});
+		if (!current) {
+			// Another cleanup deleted it meanwhile: only the log's totals are left to count
+			await this._commandBus.execute(new TimesheetRecalculateCommand(log.timesheetId));
+			return;
+		}
+		const runningTimeLogs = (current.timeLogs ?? []).filter((timeLog) => timeLog.isRunning);
+		const heldByRunningLog = runningTimeLogs.length > 0;
+		if (heldByRunningLog) {
+			await this.typeOrmTimeSlotRepository
+				.createQueryBuilder()
+				.relation(TimeSlot, 'timeLogs')
+				.of(timeSlot.id)
+				.remove(log.id);
+		} else {
+			const { organizationId, employeeId } = log;
+			const timeSlotsIds = [timeSlot.id];
+			await this._commandBus.execute(
+				new TimeSlotBulkDeleteCommand(
+					{ organizationId, employeeId, timeLog: log, timeSlotsIds },
+					forceDelete,
+					true
+				)
+			);
+		}
+		await this._commandBus.execute(new TimesheetRecalculateCommand(log.timesheetId));
 	}
 
 	/**

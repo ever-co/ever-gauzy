@@ -63,6 +63,7 @@ import { withoutAssignedComments } from '../comment/assigned-comments';
 import { assertCurrentUserBelongsToOrganization } from '../user-organization/assert-organization-membership';
 import { callerEmployeeId, changesPayRate, findStoredPayRates, mayReadPayRateOf } from './pay-rate';
 import { isSameId } from './own-rates';
+import { keepsTimeLogRates, MemberRatesSent, repriceMemberTime } from '../time-tracking/time-log/time-log-repricing';
 
 /**
  * Columns the employees table can be sorted by. Any other `order` key from the query string is ignored.
@@ -280,6 +281,28 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	}
 
 	/**
+	 * Refuses to file a person for the account behind a member without an account (ever-co/ever-gauzy#11913). That
+	 * account is made for its member alone: it never signs in (the access-token guard reads only the member it finds),
+	 * and a claim or a merge retires it with the member. The person is reached by claiming or merging the member.
+	 *
+	 * @param userId The account to file a person for.
+	 * @param tenantId The tenant.
+	 * @throws ConflictException when the account stands behind a member without an account.
+	 */
+	public async assertNotPlaceholderAccount(userId: ID, tenantId: ID): Promise<void> {
+		const placeholders = await this.typeOrmRepository.count({
+			where: { userId, ...(tenantId ? { tenantId } : {}), isPlaceholder: true },
+			// A removed placeholder still stands on the account, and a recovery brings it back.
+			withDeleted: true
+		});
+		if (placeholders > 0) {
+			throw new ConflictException(
+				'This user stands behind a member without an account: claim or merge that member instead.'
+			);
+		}
+	}
+
+	/**
 	 * The tenant's `EMPLOYEE` role, which the account of an agent employee carries.
 	 *
 	 * @param manager The transaction manager.
@@ -327,7 +350,16 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 
 				const [mItems, mTotal] = await this.mikroOrmRepository.findAndCount(mWhere, {
 					populate: ['user'] as any[],
-					fields: ['id', 'isActive', 'isArchived', 'userId', 'isOnline', 'isAway'] as any[]
+					fields: [
+						'id',
+						'isActive',
+						'isArchived',
+						'userId',
+						'isOnline',
+						'isAway',
+						'isPlaceholder',
+						'placeholderEmail'
+					] as any[]
 				});
 				return { items: mItems.map((item) => this.serialize(item)), total: mTotal };
 
@@ -345,6 +377,8 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 						userId: true,
 						isOnline: true,
 						isAway: true,
+						isPlaceholder: true,
+						placeholderEmail: true,
 						user: {
 							id: true,
 							firstName: true,
@@ -671,6 +705,8 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 							userId: true,
 							isAway: true,
 							isOnline: true,
+							isPlaceholder: true,
+							placeholderEmail: true,
 							user: {
 								id: true,
 								firstName: true,
@@ -1002,7 +1038,9 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 							isArchived: true,
 							isAway: true,
 							isOnline: true,
-							kind: true
+							kind: true,
+							isPlaceholder: true,
+							placeholderEmail: true
 						},
 						...(options && options.relations
 							? { relations: parseFindOptionsRelations(options.relations) }
@@ -1253,6 +1291,82 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			);
 		}
 	}
+
+	/**
+	 * Refuses to re-price the time of an employee whose rates the caller may not change: one's own time needs
+	 * CHANGE_OWN_RATES, as changing one's own rates does, and anyone else's needs ORG_EMPLOYEES_EDIT. A member who keeps
+	 * their rate could otherwise give their past time the rate they have now.
+	 *
+	 * @throws ForbiddenException for any other caller.
+	 */
+	assertMayRepriceTimeOf(employeeId: ID): void {
+		const isOwnRecord = isSameId(callerEmployeeId(), employeeId);
+		let requiredPermission = PermissionsEnum.ORG_EMPLOYEES_EDIT;
+		if (isOwnRecord) {
+			requiredPermission = PermissionsEnum.CHANGE_OWN_RATES;
+		}
+		const mayReprice = RequestContext.hasPermission(requiredPermission);
+		if (!mayReprice) {
+			throw new ForbiddenException(
+				'You cannot apply a rate to time already tracked: only someone who may change these rates can.'
+			);
+		}
+	}
+
+	/**
+	 * Gives the employee's time logs the billing or pay rate the update sent (see time-log-repricing.ts): with a day,
+	 * the ones started on or after it. Without one, all of them, as before time logs stored their rates, when the update
+	 * sends a rate, unless the organization's time logs keep their rates: then past time keeps its price. Only the logs
+	 * whose stored rate differs are written, so the same update sent again completes a re-pricing that failed.
+	 *
+	 * @param employeeId - The employee the update changed.
+	 * @param changes - The update as it was written.
+	 * @param from - The day the new rates price time from, if the update named one.
+	 * @returns How many time logs took the new rates, or undefined when none was re-priced.
+	 */
+	async repriceTimeFrom(
+		employeeId: ID,
+		changes: IEmployeeUpdateInput,
+		from: Date | string | undefined
+	): Promise<number | undefined> {
+		const sent = ratesSentBy(changes);
+		if (!from && !sendsRates(sent)) {
+			return undefined;
+		}
+		const tenantId = RequestContext.currentTenantId();
+		const employee = await this.typeOrmRepository.findOne({
+			where: { id: employeeId, tenantId },
+			select: { id: true, organizationId: true }
+		});
+		if (!employee) {
+			throw new NotFoundException('Employee not found.');
+		}
+		const manager = this.typeOrmRepository.manager;
+		const organization = { tenantId, organizationId: employee.organizationId };
+		if (!from) {
+			const keepsTheirRates = await keepsTimeLogRates(manager, organization);
+			if (keepsTheirRates) {
+				return undefined;
+			}
+		}
+		const time = { ...organization, from: from ? new Date(from) : null };
+		return await repriceMemberTime(manager, time, employeeId, sent);
+	}
+}
+
+/** The rates an update sends: the billing and pay rates and their currencies it names, the others left out. */
+function ratesSentBy(changes: IEmployeeUpdateInput): MemberRatesSent {
+	return {
+		billRateValue: changes.billRateValue,
+		billRateCurrency: changes.billRateCurrency,
+		payRateValue: changes.payRateValue,
+		payRateCurrency: changes.payRateCurrency
+	};
+}
+
+/** Whether an update sends any rate or rate currency. */
+function sendsRates(sent: MemberRatesSent): boolean {
+	return Object.values(sent).some((value) => value !== undefined);
 }
 
 function toPayRateNumber(rate: number | string | null): number | null {

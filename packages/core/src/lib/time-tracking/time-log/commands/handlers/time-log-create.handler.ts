@@ -1,4 +1,6 @@
+import { Optional } from '@nestjs/common';
 import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
+import { DataSource } from 'typeorm';
 import * as moment from 'moment';
 import { TimeLogType, TimeLogSourceEnum, ID, ITimeSlot, ITimesheet } from '@gauzy/contracts';
 import { TimeSlotService } from '../../../time-slot/time-slot.service';
@@ -9,6 +11,9 @@ import { TimeLogService } from '../../time-log.service';
 import { TimeLog } from '../../time-log.entity';
 import { assertTimeLogReferencesOfTenant } from '../../time-log-references';
 import { TimeLogCreateCommand } from '../time-log-create.command';
+import { FindTimeLogRatesCommand } from '../find-time-log-rates.command';
+import { createdChange } from '../../time-log-history';
+import { historySubject, recordTimeLogHistory, TimeLogHistoryOptions } from '../../time-log-history.writer';
 import { MikroOrmTimeLogRepository } from '../../repository/mikro-orm-time-log.repository';
 import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.repository';
 
@@ -48,7 +53,9 @@ export class TimeLogCreateHandler implements ICommandHandler<TimeLogCreateComman
 		readonly mikroOrmTimeLogRepository: MikroOrmTimeLogRepository,
 		private readonly _commandBus: CommandBus,
 		private readonly _timeSlotService: TimeSlotService,
-		private readonly _timeLogService: TimeLogService
+		private readonly _timeLogService: TimeLogService,
+		// Records the history of a change a person makes; a handler built without it writes as before.
+		@Optional() private readonly dataSource?: DataSource
 	) {}
 
 	/**
@@ -72,16 +79,36 @@ export class TimeLogCreateHandler implements ICommandHandler<TimeLogCreateComman
 			new TimesheetFirstOrCreateCommand(startedAt, employeeId, organizationId)
 		);
 
+		// The rates of the moment price the log: a later rate change re-prices them as time-log-repricing.ts says (all
+		// past time, or from a day, or none when the organization's time logs keep their rates). Never taken from the
+		// input: a client names no price for its time.
+		const rates = await this._commandBus.execute(
+			new FindTimeLogRatesCommand({ tenantId, organizationId, employeeId, projectId: input.projectId ?? null })
+		);
+
 		// Create time log entity
 		const timeLog = this.createTimeLogEntity(input, tenantId, timesheet);
+		Object.assign(timeLog, rates ?? {});
+
+		// A break holds no time slots: a slot is worked time (activity, screenshots), which a break never is, and the
+		// totals that read slots leave it out that way
+		const isBreak = input.logType === TimeLogType.BREAK;
+		const takesBlankSlots = Boolean(stoppedAt) && !isBreak;
 
 		// Generate blank time slots if stoppedAt is provided
-		let generatedTimeSlots: ITimeSlot[] = stoppedAt ? this.generateBlankTimeSlots(input, tenantId) : [];
+		let generatedTimeSlots: ITimeSlot[] = [];
+		if (takesBlankSlots) {
+			generatedTimeSlots = this.generateBlankTimeSlots(input, tenantId);
+		}
+		let sentTimeSlots = inputTimeSlots;
+		if (isBreak) {
+			sentTimeSlots = [];
+		}
 
 		// Merge input time slots with generated blank slots
 		const mergeTimeSlots = this.mergeTimeSlots(
 			generatedTimeSlots,
-			inputTimeSlots,
+			sentTimeSlots,
 			employeeId,
 			organizationId,
 			tenantId
@@ -90,7 +117,7 @@ export class TimeLogCreateHandler implements ICommandHandler<TimeLogCreateComman
 		// Bulk create time slots
 		timeLog.timeSlots = await this._timeSlotService.bulkCreate(mergeTimeSlots, employeeId, organizationId);
 
-		await this.typeOrmTimeLogRepository.save(timeLog);
+		await this.saveTimeLog(timeLog, command.history);
 
 		// Recalculate timesheet activity
 		await this.recalculateTimesheet(timesheet);
@@ -110,6 +137,21 @@ export class TimeLogCreateHandler implements ICommandHandler<TimeLogCreateComman
 	 * @param timesheet ITimesheet
 	 * @returns TimeLog
 	 */
+	private async saveTimeLog(timeLog: TimeLog, history: TimeLogHistoryOptions | undefined): Promise<void> {
+		const recordsHistory = Boolean(history) && Boolean(this.dataSource);
+		if (!recordsHistory) {
+			await this.typeOrmTimeLogRepository.save(timeLog);
+			return;
+		}
+		// Added by a person: the entry and its history row are written together, or neither is.
+		await this.dataSource.transaction(async (manager) => {
+			await manager.getRepository(TimeLog).save(timeLog);
+			await recordTimeLogHistory(manager, [
+				{ subject: historySubject(timeLog), change: createdChange(timeLog), reason: history.reason }
+			]);
+		});
+	}
+
 	private createTimeLogEntity(input: Partial<TimeLog>, tenantId: ID, timesheet: ITimesheet): TimeLog {
 		const {
 			startedAt,

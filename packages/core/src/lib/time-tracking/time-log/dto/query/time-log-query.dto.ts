@@ -53,11 +53,22 @@ export class TimeLogQueryDTO
 		type: () => Boolean,
 		description:
 			'Leave out the time a live invoice bills: a time log whose invoice line is not removed and belongs to an ' +
-			'invoice that is neither removed nor void. Without it, every log is counted, invoiced or not.'
+			'invoice that is neither removed nor void, nor a rejected estimate. Without it, every log is counted, ' +
+			'invoiced or not.'
 	})
 	@IsOptional()
 	@Transform(({ value }: TransformFnParams) => parseToBoolean(value))
 	readonly notInvoiced: boolean;
+
+	@ApiPropertyOptional({
+		type: () => Boolean,
+		description:
+			'Keep breaks (time logs of type BREAK) in the entry list and the daily chart. Without it they are left out, ' +
+			'as before breaks existed; a total of worked time never counts them.'
+	})
+	@IsOptional()
+	@Transform(({ value }: TransformFnParams) => parseToBoolean(value))
+	readonly includeBreaks: boolean;
 }
 
 /**
@@ -67,7 +78,8 @@ export class TimeLogQueryDTO
 export class TimeLogBudgetQueryDTO extends OmitType(TimeLogQueryDTO, [
 	'billableOnly',
 	'includeTimeWithoutTeam',
-	'notInvoiced'
+	'notInvoiced',
+	'includeBreaks'
 ] as const) {}
 
 /**

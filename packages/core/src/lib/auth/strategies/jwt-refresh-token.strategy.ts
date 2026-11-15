@@ -10,6 +10,7 @@ import { RefreshTokenService } from '../../refresh-token/refresh-token.service';
 import { IRefreshTokenMetadata } from '../../refresh-token/type.token';
 import { UserService } from './../../user/user.service';
 import { JWT_ALGORITHMS } from '../purpose-token';
+import { readSessionClaims } from '../user-session/user-session-claims';
 
 const refreshLogger = new Logger('JwtRefreshTokenStrategy');
 
@@ -95,6 +96,12 @@ export class JwtRefreshTokenStrategy extends PassportStrategy(Strategy, 'jwt-ref
 			return new UnauthorizedException('Unauthorized');
 		}
 
+		// A session its user signed out never refreshes again, with a refresh token minted in it after the sign-out too
+		// (ever-co/ever-gauzy#11921): the marker the sign-out wrote is read by the session the verified token names.
+		if (await this.isSignedOutSession(verifiedUserId, token)) {
+			return new UnauthorizedException('Unauthorized');
+		}
+
 		// Fetch the user based on the payload ID
 		const user: IAuthenticatedUser = await this.userService.findOneByIdString(verifiedUserId);
 
@@ -114,5 +121,18 @@ export class JwtRefreshTokenStrategy extends PassportStrategy(Strategy, 'jwt-ref
 		user.refreshTokenOrganizationId = typeof organizationId === 'string' && organizationId ? organizationId : null;
 
 		return user; // Return user if validation is successful
+	}
+
+	/**
+	 * @param userId - The user the verified refresh token belongs to.
+	 * @param token - The verified refresh token's claims.
+	 * @returns Whether the session the token names was signed out by its user; false for a token naming no session.
+	 */
+	private async isSignedOutSession(userId: string, token: unknown): Promise<boolean> {
+		const session = readSessionClaims(token);
+		if (!session) {
+			return false;
+		}
+		return this.refreshTokenService.isSessionSignedOut(userId, session.sessionId);
 	}
 }

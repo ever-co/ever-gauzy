@@ -406,6 +406,8 @@
 			"DEFAULT_TERMS": "crwdns10084:0crwdne10084:0",
 			"CONVERT_ESTIMATES": "crwdns10092:0crwdne10092:0",
 			"ALLOW_CONVERTING": "crwdns10094:0crwdne10094:0",
+			"INVOICE_REMINDERS": "Payment reminders",
+			"SEND_INVOICE_REMINDERS": "Email the client of an unpaid invoice 3 days before its due date, then 1, 7 and 14 days after it",
 			"DEFAULT_DAYS": "crwdns10088:0crwdne10088:0",
 			"TEMPLATE_NAME": "crwdns10226:0crwdne10226:0",
 			"TEMPLATE_BODY": "crwdns10228:0crwdne10228:0",
@@ -5419,6 +5421,47 @@
 			"COPY": "Copy {{ name }}"
 		}
 	},
+	"DOWNLOADS_PAGE": {
+		"TITLE": "Gam",
+		"HEADLINE": "Lub kare ka mo keken ma itiyo iye",
+		"DESKTOP": {
+			"TITLE": "Kompiuta",
+			"DESCRIPTION": "Lub kare ki kompiuta ni ki timer me desktop, ci timesheet ni bedo marwate ki web app.",
+			"DOWNLOAD_FOR": "Gam pi {{platform}}",
+			"ALSO_FOR": "Tye bene pi"
+		},
+		"SETUP": {
+			"OPENED": "Kakube me gam pi {{platform}} oyabbe i tab manyen.",
+			"NOT_OPENED": "Pe gin mo otime?",
+			"TRY_AGAIN": "Tem doki",
+			"TITLE": "Gin ma lubo",
+			"INSTALL_WINDOWS": "Cak installer ma igamo ci ilub yo ne.",
+			"INSTALL_MACOS": "Yab pwail ma igamo ci iywa app i Applications.",
+			"INSTALL_LINUX": "Ket package ma igamo, onyo icak AppImage.",
+			"CONNECT_CUSTOM": "Yab app, yer “{{option}}” ci ipong:",
+			"PORT_EMPTY": "Wek kabedo man nono",
+			"CONNECT_LIVE": "Yab app ci iyer “{{option}}”.",
+			"SIGN_IN": "Donyo ki email ki mung me donyo ma itiyo kwedgi kany.",
+			"COPY_FIELD": "Kopi {{field}}"
+		},
+		"MOBILE": {
+			"TITLE": "Cim",
+			"DESCRIPTION": "Cak timer, nen tic ni ki cawa ni ka i tye ka wot.",
+			"PLATFORMS": "iOS ki Android",
+			"DOWNLOAD": "Gam"
+		},
+		"EXTENSION": {
+			"TITLE": "Lamed me browser",
+			"DESCRIPTION": "Cak dok juk timer ki i tab mo keken, labongo yabo web app.",
+			"INSTALL": "Ket"
+		},
+		"ILLUSTRATION": {
+			"THIS_WEEK": "Cabit man",
+			"YOU": "In",
+			"TRY_IT": "Kareni: dii timer"
+		},
+		"ALL_DOWNLOADS": "Nen gam weng"
+	},
 	"FOOTER": {
 		"BY": "crwdns292:0crwdne292:0",
 		"RIGHTS_RESERVED": "crwdns8420:0crwdne8420:0",
@@ -6150,6 +6193,7 @@
 			"invite-organization-client": "crwdns4542:0crwdne4542:0",
 			"email-estimate": "crwdns4544:0crwdne4544:0",
 			"email-invoice": "crwdns4546:0crwdne4546:0",
+			"invoice-reminder": "Invoice Reminder",
 			"invite-employee": "crwdns4548:0crwdne4548:0",
 			"invite-user": "crwdns4550:0crwdne4550:0",
 			"appointment-confirmation": "crwdns7812:0crwdne7812:0",

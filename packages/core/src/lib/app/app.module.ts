@@ -70,6 +70,7 @@ import { EmployeeSettingModule } from '../employee-setting/employee-setting.modu
 import { EmployeeStatisticsModule } from '../employee-statistics/employee-statistics.module';
 import { EmployeeModule } from '../employee/employee.module';
 import { EmployeeAgentProfileModule } from '../employee-agent-profile/employee-agent-profile.module';
+import { EmployeePlaceholderModule } from '../employee-placeholder/employee-placeholder.module';
 import { EntitySubscriptionModule } from '../entity-subscription/entity-subscription.module';
 import { EquipmentSharingPolicyModule } from '../equipment-sharing-policy/equipment-sharing-policy.module';
 import { EquipmentSharingModule } from '../equipment-sharing/equipment-sharing.module';
@@ -170,6 +171,8 @@ import { WebhookMaintenanceModule } from '../webhook/webhook-maintenance.module'
 import { TimerReminderMaintenanceModule } from '../time-tracking/timer-reminder/timer-reminder-maintenance.module';
 import { TimerReminderInlineModule } from '../time-tracking/timer-reminder/timer-reminder-inline';
 import { isTimerRemindersEnabled } from '../time-tracking/timer-reminder/timer-reminder-enabled';
+import { InvoiceReminderMaintenanceModule } from '../invoice/invoice-reminder/invoice-reminder-maintenance.module';
+import { InvoiceReminderInlineModule } from '../invoice/invoice-reminder/invoice-reminder-inline';
 import { OperationModule } from '../operation/operation.module';
 import { WebhookModule } from '../webhook/webhook.module';
 import { MeasurementModule } from '../measurement/measurement.module';
@@ -200,6 +203,7 @@ import { TaskViewModule } from '../tasks/views/view.module';
 import { TaxLineModule } from '../tax-line/tax-line.module';
 import { OAuthClientModule } from '../auth/oauth-client/oauth-client.module';
 import { UserApiTokenModule } from '../auth/user-api-token/user-api-token.module';
+import { SavedReportModule } from '../saved-report/saved-report.module';
 import { TenantApiKeyModule } from '../tenant-api-key/tenant-api-key.module';
 import { TenantSettingModule } from '../tenant/tenant-setting/tenant-setting.module';
 import { TenantModule } from '../tenant/tenant.module';
@@ -458,6 +462,7 @@ if (environment.EVER_TEAMS_CLIENT_IP_SECRET?.trim() && !clientIpSecretOf(environ
 		SocialAccountModule,
 		EmployeeModule,
 		EmployeeAgentProfileModule,
+		EmployeePlaceholderModule,
 		EmployeeRecurringExpenseModule,
 		EmployeeAwardModule,
 		CandidateModule,
@@ -638,6 +643,7 @@ if (environment.EVER_TEAMS_CLIENT_IP_SECRET?.trim() && !clientIpSecretOf(environ
 		TenantApiKeyModule,
 		OAuthClientModule,
 		UserApiTokenModule,
+		SavedReportModule,
 		EmployeeRecentVisitModule,
 		SharedEntityModule,
 		BroadcastModule,
@@ -712,6 +718,10 @@ if (environment.EVER_TEAMS_CLIENT_IP_SECRET?.trim() && !clientIpSecretOf(environ
 		...(isTimerRemindersEnabled(process.env, (message) => console.warn(message))
 			? [isSchedulerQueueRootEnabled() ? TimerReminderMaintenanceModule : TimerReminderInlineModule]
 			: []),
+		// The payment reminders to the clients of unpaid invoices, which each organization turns on (off by default).
+		// With a queue, this process consumes the sweep the worker application schedules every hour: the mail settings
+		// and the invoice rendering it uses live here. Without a queue, this process sweeps on its own, every hour.
+		isSchedulerQueueRootEnabled() ? InvoiceReminderMaintenanceModule : InvoiceReminderInlineModule,
 		//Token cleanup scheduler is disabled by default; enable when ready
 		TokenModule.forRoot({ enableScheduler: false }),
 		AccessTokenModule,
