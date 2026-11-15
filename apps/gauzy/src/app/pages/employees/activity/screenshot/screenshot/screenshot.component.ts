@@ -133,11 +133,11 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 			)
 			.subscribe();
 
-		// Re-fetch screenshots on single slot deletion
+		// Re-fetch screenshots after a deletion: the grid stays on screen while the rest is read again (#12010)
 		this.screenshots$
 			.pipe(
 				filter(() => !!this.organization && !isEmpty(this.request)),
-				switchMap(() => this.fetchTimeSlotsScreenshots()),
+				switchMap(() => this.fetchTimeSlotsScreenshots(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -194,20 +194,25 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 	/**
 	 * Fetches time slot screenshots as an Observable.
 	 * Designed for use with switchMap to cancel in-flight requests on new emissions.
+	 *
+	 * @param keepsShown A read after a deletion: what is shown stays, without the page's loading state, until the
+	 * answer replaces it. A new day, employee or filter empties the page first.
 	 */
-	private fetchTimeSlotsScreenshots(): Observable<ITimeSlot[]> {
-		this.loading = true;
+	private fetchTimeSlotsScreenshots(keepsShown = false): Observable<ITimeSlot[]> {
+		if (!keepsShown) {
+			this.loading = true;
 
-		this.screenshotsUrls = [];
-		this.timeSlots = [];
-		this.originalTimeSlots = [];
+			this.screenshotsUrls = [];
+			this.timeSlots = [];
+			this.originalTimeSlots = [];
+		}
 
 		const payloads = this.payloads$.getValue();
 
 		return from(this._timesheetService.getTimeSlots(payloads)).pipe(
 			tap((timeSlots: ITimeSlot[]) => {
 				this.originalTimeSlots = timeSlots;
-				this._syncGallery(timeSlots);
+				this._syncGallery(timeSlots, keepsShown);
 				this.timeSlots = this.groupTimeSlots(timeSlots);
 			}),
 			catchError((error) => {
@@ -216,7 +221,9 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 				return EMPTY;
 			}),
 			finalize(() => {
-				this.loading = false;
+				if (!keepsShown) {
+					this.loading = false;
+				}
 			})
 		);
 	}
@@ -283,6 +290,7 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 	deleteSlot(deletedIds: ID[]): void {
 		if (deletedIds?.length) {
 			this._deleteScreenshotGallery(deletedIds);
+			this._removeShownSlots(deletedIds);
 		}
 		this.screenshots$.next(true);
 	}
@@ -326,9 +334,19 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 	 */
 	private _handleDeletedSlots(ids: ID[]): void {
 		this._deleteScreenshotGallery(ids);
+		this._removeShownSlots(ids);
 		this.selectedIds = {};
 		this.selectedIdsCount = 0;
 		this.screenshots$.next(true);
+	}
+
+	/**
+	 * Takes the deleted slots off the grid at once; the read that follows a deletion brings the rest up to date.
+	 */
+	private _removeShownSlots(ids: ID[]): void {
+		const deleted = new Set(ids);
+		this.originalTimeSlots = this.originalTimeSlots.filter((slot: ITimeSlot) => !deleted.has(slot.id));
+		this.timeSlots = this.groupTimeSlots(this.originalTimeSlots);
 	}
 
 	/**
@@ -493,18 +511,24 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 	 * screenshot of a slot that is no longer its minute's primary card, and because
 	 * the store keeps the first item per id, it also kept the old copy over the new.
 	 *
+	 * A read after a deletion keeps the cards on screen instead, and a kept card's
+	 * `ngxGallery` does not append its screenshots again: only the screenshots the
+	 * answer no longer has leave the store (#12010).
+	 *
 	 * @param slots The time slots that were just fetched.
+	 * @param keepsShown The read kept the cards on screen (a read after a deletion).
 	 */
-	private _syncGallery(slots: ITimeSlot[]): void {
-		if (this._galleryItemIds.size) {
-			this._galleryService.removeGalleryItems(
-				[...this._galleryItemIds].map((id: ID) => ({ id } as GalleryItem))
-			);
-		}
-
-		this._galleryItemIds = new Set<ID>(
+	private _syncGallery(slots: ITimeSlot[], keepsShown = false): void {
+		const fetchedIds = new Set<ID>(
 			slots.flatMap((slot: ITimeSlot) => (slot.screenshots ?? []).map((screenshot: IScreenshot) => screenshot.id))
 		);
+		const staleIds = [...this._galleryItemIds].filter((id: ID) => !keepsShown || !fetchedIds.has(id));
+
+		if (staleIds.length) {
+			this._galleryService.removeGalleryItems(staleIds.map((id: ID) => ({ id } as GalleryItem)));
+		}
+
+		this._galleryItemIds = fetchedIds;
 	}
 
 	ngOnDestroy(): void {
