@@ -17,6 +17,8 @@ jest.mock('@gauzy/core', () => ({
 	IdempotencyMaintenanceModule: class IdempotencyMaintenanceModule {},
 	InvoiceReminderMaintenanceModule: class InvoiceReminderMaintenanceModule {},
 	InvoiceReminderScheduleModule: class InvoiceReminderScheduleModule {},
+	InvoiceScheduleMaintenanceModule: class InvoiceScheduleMaintenanceModule {},
+	InvoiceScheduleScheduleModule: class InvoiceScheduleScheduleModule {},
 	JobExecutionModule: class JobExecutionModule {},
 	MentionModule: class MentionModule {},
 	TaskDueReminderMaintenanceModule: class TaskDueReminderMaintenanceModule {},
@@ -241,6 +243,23 @@ describe('worker AppModule', () => {
 			expect(order).toContain(core.IdempotencyMaintenanceModule);
 			expect(order).toContain(core.InvoiceReminderScheduleModule);
 			expect(order).not.toContain(core.InvoiceReminderMaintenanceModule);
+		});
+	});
+
+	/**
+	 * The invoices of the clients billed on a schedule follow the payment reminders: this process fires the hourly
+	 * schedule, and the API, which saves, renders and sends the invoices, takes the sweep.
+	 */
+	it('fires the hourly sweep of the invoice schedules wherever a queue exists, and never hosts the sweep', async () => {
+		process.env.WORKER_QUEUE_ENABLED = 'true';
+
+		await jest.isolateModulesAsync(async () => {
+			const { AppModule: Isolated } = await import('./app.module');
+			const core = await import('@gauzy/core');
+			const order: any[] = Reflect.getMetadata(MODULE_METADATA.IMPORTS, Isolated) ?? [];
+
+			expect(order).toContain(core.InvoiceScheduleScheduleModule);
+			expect(order).not.toContain(core.InvoiceScheduleMaintenanceModule);
 		});
 	});
 });

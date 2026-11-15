@@ -327,6 +327,14 @@ export {
 	InvoiceReminderScheduleModule,
 	InvoiceReminderService
 } from './lib/invoice/invoice-reminder';
+// The invoices of the clients billed on a schedule. The worker application fires the sweep's schedule, so it imports
+// the schedule's module by name (the API consumes it).
+export {
+	InvoiceScheduleMaintenanceModule,
+	InvoiceScheduleRunModule,
+	InvoiceScheduleRunService,
+	InvoiceScheduleScheduleModule
+} from './lib/invoice-schedule';
 
 export * from './lib/database/database.module';
 // Export-archive opt-out for plugin entities holding DERIVED data (extracted text, embeddings,

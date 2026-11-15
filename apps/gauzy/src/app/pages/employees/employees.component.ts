@@ -570,18 +570,23 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 
 		try {
 			const { id: organizationId, tenantId } = this.organization;
-			const { isTrackingEnabled } = this.selectedEmployee;
+			// What the row showed when the person clicked; the button offers the other state
+			const isShownEnabled = this.selectedEmployee.isTrackingEnabled === true;
+			const turnsTrackingOn = !isShownEnabled;
 
 			// // Get the full name of the selected employee
 			const name = this.selectedEmployee.fullName.trim() || 'Unknown Employee';
 
-			// Update the employee's timeTrackingEnabled property
-			await this._employeesService.setEmployeeTimeTrackingStatus(this.selectedEmployee.id, !isTrackingEnabled, {
-				organizationId,
-				tenantId
-			});
+			// Turns tracking to the state the button offered. The save names what the row showed: when someone changed
+			// it since, the API refuses it and the list reloads below with the stored state.
+			await this._employeesService.setEmployeeTimeTrackingStatus(
+				this.selectedEmployee.id,
+				turnsTrackingOn,
+				{ organizationId, tenantId },
+				isShownEnabled
+			);
 
-			const toastMessageKey = isTrackingEnabled
+			const toastMessageKey = isShownEnabled
 				? 'TOASTR.MESSAGE.EMPLOYEE_TIME_TRACKING_DISABLED'
 				: 'TOASTR.MESSAGE.EMPLOYEE_TIME_TRACKING_ENABLED';
 
