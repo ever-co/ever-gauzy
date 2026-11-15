@@ -1,7 +1,7 @@
-import { Logger, NotFoundException, Optional } from '@nestjs/common';
+import { ConflictException, Logger, NotFoundException, Optional } from '@nestjs/common';
 import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
 import * as moment from 'moment';
-import { Brackets, DataSource, Repository } from 'typeorm';
+import { Brackets, DataSource, FindOptionsWhere, Repository } from 'typeorm';
 import { ID, ITimeLog, ITimeSlot, ITimesheet, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/utils';
 import { TimesheetFirstOrCreateCommand, TimesheetRecalculateCommand } from './../../../timesheet/commands';
@@ -105,6 +105,20 @@ function rangeSlotsBefore(timeLog: ITimeLog, slots: ITimeSlot[]): IRangeSlotsBef
 		heldIds: new Set(held.map((slot) => slot.id)),
 		heldMinutes: new Set(held.map(slotMinute))
 	};
+}
+
+/** The code of the refusal of a stop whose run another start or stop stopped since it was read. */
+export const TIME_LOG_NO_LONGER_RUNNING = 'TIME_LOG_NO_LONGER_RUNNING';
+
+/**
+ * Whether an update stops a run that was running when it was read: the stop the timer sends, and the end it gives a run
+ * another start replaces. Its write then lands only while the row still runs.
+ *
+ * @param stored - The log as first read.
+ * @param changes - The update.
+ */
+export function stopsRunAsRead(stored: Pick<ITimeLog, 'isRunning'>, changes: Partial<ITimeLog>): boolean {
+	return stored?.isRunning === true && changes?.isRunning === false;
 }
 
 /** Whether two stored instants are the same one, both missing included. */
@@ -249,6 +263,13 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 
 			// Update the time log in the repository
 			const logId = timeLog.id;
+			// A stop of a run read as running writes only while the row still runs (`stopsRunAsRead`): another start
+			// or stop may have stopped it since, one that took the employee's timer turn over once this one outlived
+			// it (ever-co/ever-gauzy#11826), and its end is the one that stands.
+			const stopsRun = stopsRunAsRead(stored, changes);
+			const where: FindOptionsWhere<TimeLog> = stopsRun
+				? { id: logId, tenantId, isRunning: true }
+				: { id: logId, tenantId };
 			// An entry deleted for good since it was first read stops the edit with a 404: the reads below would find
 			// no row to answer or to give slots to.
 			const writeUpdate = () =>
@@ -256,15 +277,22 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 					stored,
 					changes,
 					history,
-					(repository) =>
-						repository.update(
-							{ id: logId, tenantId },
-							{
-								...changes,
-								...(timesheet ? { timesheetId: timesheet.id } : {}),
-								...rates
-							}
-						),
+					async (repository) => {
+						const result = await repository.update(where, {
+							...changes,
+							...(timesheet ? { timesheetId: timesheet.id } : {}),
+							...rates
+						});
+						// Nothing written: the slots of the range are given back (`writeWithRangeSlots`), and the
+						// stop is refused
+						if (stopsRun && result?.affected === 0) {
+							throw new ConflictException({
+								message: 'This timer was already stopped by another start or stop.',
+								code: TIME_LOG_NO_LONGER_RUNNING
+							});
+						}
+						return result;
+					},
 					true
 				);
 
