@@ -60,7 +60,8 @@ describe('EmployeeNotificationService.create — in-app is always on', () => {
 		EmployeeNotificationTypeEnum.MESSAGE,
 		EmployeeNotificationTypeEnum.TASK_UPDATE,
 		EmployeeNotificationTypeEnum.TIMER_REMINDER,
-		EmployeeNotificationTypeEnum.INVOICE
+		EmployeeNotificationTypeEnum.INVOICE,
+		EmployeeNotificationTypeEnum.MEETING
 	])('saves a %s notification for a receiver who switched the kind off, and tells the listeners', async (type) => {
 		const { service, saved, eventBus } = serviceWith(ALL_OFF);
 
