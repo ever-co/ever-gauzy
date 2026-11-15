@@ -173,6 +173,8 @@ import { TimerReminderInlineModule } from '../time-tracking/timer-reminder/timer
 import { isTimerRemindersEnabled } from '../time-tracking/timer-reminder/timer-reminder-enabled';
 import { InvoiceReminderMaintenanceModule } from '../invoice/invoice-reminder/invoice-reminder-maintenance.module';
 import { InvoiceReminderInlineModule } from '../invoice/invoice-reminder/invoice-reminder-inline';
+import { InvoiceScheduleMaintenanceModule } from '../invoice-schedule/invoice-schedule-maintenance.module';
+import { InvoiceScheduleInlineModule } from '../invoice-schedule/invoice-schedule-inline';
 import { OperationModule } from '../operation/operation.module';
 import { WebhookModule } from '../webhook/webhook.module';
 import { MeasurementModule } from '../measurement/measurement.module';
@@ -724,6 +726,9 @@ if (environment.EVER_TEAMS_CLIENT_IP_SECRET?.trim() && !clientIpSecretOf(environ
 		// With a queue, this process consumes the sweep the worker application schedules every hour: the mail settings
 		// and the invoice rendering it uses live here. Without a queue, this process sweeps on its own, every hour.
 		isSchedulerQueueRootEnabled() ? InvoiceReminderMaintenanceModule : InvoiceReminderInlineModule,
+		// The invoices of the clients billed on a schedule (#11855): nothing runs for an organization without one. With a
+		// queue, this process consumes the hourly sweep the worker application schedules; without one, it sweeps itself.
+		isSchedulerQueueRootEnabled() ? InvoiceScheduleMaintenanceModule : InvoiceScheduleInlineModule,
 		//Token cleanup scheduler is disabled by default; enable when ready
 		TokenModule.forRoot({ enableScheduler: false }),
 		AccessTokenModule,
