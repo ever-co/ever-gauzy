@@ -224,4 +224,61 @@ describe('EmployeeNotificationService — notifyAboutBoard, organization and ove
 		expect(create).toHaveBeenCalledTimes(2);
 		expect(steps).not.toContain('SELECT RELEASE_LOCK(?)');
 	});
+
+	it('holds at most one pooled connection for these locks at a time, even for requests about different Boards', async () => {
+		let held = 0;
+		let mostHeld = 0;
+		const runnerOf = () => ({
+			connect: jest.fn(async () => {
+				held += 1;
+				mostHeld = Math.max(mostHeld, held);
+			}),
+			startTransaction: jest.fn(async () => undefined),
+			query: jest.fn<Promise<unknown>, [string, unknown[]?]>(async () => roundTrip()),
+			commitTransaction: jest.fn(async () => undefined),
+			rollbackTransaction: jest.fn(async () => undefined),
+			release: jest.fn(async () => {
+				held -= 1;
+			})
+		});
+		const service = serviceOn({ options: { type: 'postgres', poolSize: 2 }, createQueryRunner: runnerOf });
+		jest.spyOn(service, 'find').mockImplementation(async () => {
+			await roundTrip();
+			return [];
+		});
+		const create = jest.spyOn(service, 'create').mockImplementation(async (notification) => {
+			await roundTrip();
+			return notification as never;
+		});
+
+		await Promise.all(
+			['r00m', 'other-room', 'third-room'].map((roomId) =>
+				service.notifyAboutBoard(EmployeeNotificationTypeEnum.BOARD_SHARE, {
+					...input,
+					roomId,
+					organizationId: ORGANIZATION_B
+				})
+			)
+		);
+
+		// The work of a request needs a connection of the pool besides the one holding its lock: never more than one
+		// is set aside for the locks, so the work always finds one
+		expect(mostHeld).toBe(1);
+		expect(create).toHaveBeenCalledTimes(6);
+	});
+
+	it('takes no database lock with a pool of one connection, which the work needs, and still files', async () => {
+		const createQueryRunner = jest.fn();
+		const service = serviceOn({ options: { type: 'postgres', poolSize: 1 }, createQueryRunner });
+		jest.spyOn(service, 'find').mockResolvedValue([]);
+		const create = jest.spyOn(service, 'create').mockImplementation(async (notification) => notification as never);
+
+		await service.notifyAboutBoard(EmployeeNotificationTypeEnum.BOARD_SHARE, {
+			...input,
+			organizationId: ORGANIZATION_B
+		});
+
+		expect(createQueryRunner).not.toHaveBeenCalled();
+		expect(create).toHaveBeenCalledTimes(2);
+	});
 });

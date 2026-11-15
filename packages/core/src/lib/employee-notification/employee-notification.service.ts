@@ -49,8 +49,8 @@ const BOARD_NOTIFICATION_LOCK_WAIT_SECONDS = 5;
 export class EmployeeNotificationService extends TenantAwareCrudService<EmployeeNotification> {
 	readonly logger = new Logger(EmployeeNotificationService.name);
 
-	/** The Board notification requests of this process in progress, by lock name (see `inBoardNotificationTurn`). */
-	private static readonly boardNotificationTurns = new Map<string, Promise<unknown>>();
+	/** The Board notification requests of this process, one after the other (see `inBoardNotificationTurn`). */
+	private static boardNotificationQueue: Promise<unknown> = Promise.resolve();
 
 	constructor(
 		readonly typeOrmEmployeeNotificationRepository: TypeOrmEmployeeNotificationRepository,
@@ -362,15 +362,18 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 	/**
 	 * Runs `work` alone among the Board notification requests of the same sender, kind and Board at the same link:
 	 *
-	 * - in this process, they run one after the other;
+	 * - in this process, the Board notification requests run one after the other, whatever their Board: the lock
+	 *   below holds a pooled connection while `work` takes another one, so a process never sets more than one aside
+	 *   for these locks and `work` always finds the rest of the pool;
 	 * - PostgreSQL: a transaction-scoped advisory lock, which the other API processes wait for too, held on a
 	 *   connection of its own while `work` runs on the service's own;
 	 * - MySQL: a named lock (`GET_LOCK`) on a connection of its own, released after `work`;
-	 * - SQLite: the process's own order (a single API process).
+	 * - SQLite, or a pool of a single connection (which `work` needs): the process's own order only.
 	 *
 	 * The lock is named after a digest, never the link itself (its `#` part may hold the Board's encryption key). Best
 	 * effort: when the lock cannot be had within {@link BOARD_NOTIFICATION_LOCK_WAIT_SECONDS} or the database refuses
-	 * it, `work` runs anyway, as a request did before the lock.
+	 * it, `work` runs anyway, as a request did before the lock: a colleague may then be told twice, which is better
+	 * than not at all.
 	 */
 	private async inBoardNotificationTurn(
 		first: IEmployeeNotificationCreateInput,
@@ -384,25 +387,20 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 			.slice(0, 32);
 		const lockName = `board-notification:${digest}`;
 
-		const turns = EmployeeNotificationService.boardNotificationTurns;
-		const previous = turns.get(lockName) ?? Promise.resolve();
-		const run = previous.then(() => this.withBoardNotificationLock(lockName, work));
-		const settled = run.catch(() => undefined);
-		turns.set(lockName, settled);
-		try {
-			await run;
-		} finally {
-			if (turns.get(lockName) === settled) {
-				turns.delete(lockName);
-			}
-		}
+		const run = EmployeeNotificationService.boardNotificationQueue.then(() =>
+			this.withBoardNotificationLock(lockName, work)
+		);
+		EmployeeNotificationService.boardNotificationQueue = run.catch(() => undefined);
+		await run;
 	}
 
 	/** `work` while holding the database lock `lockName` where the database has one (see `inBoardNotificationTurn`). */
 	private async withBoardNotificationLock(lockName: string, work: () => Promise<void>): Promise<void> {
 		const dataSource = this.typeOrmRepository.manager.connection;
 		const type = dataSource?.options?.type;
-		if (type !== 'postgres' && type !== 'mysql') {
+		// The drivers' own pool size when none is set
+		const poolSize = Number((dataSource?.options as { poolSize?: number } | undefined)?.poolSize ?? 10);
+		if ((type !== 'postgres' && type !== 'mysql') || poolSize < 2) {
 			return await work();
 		}
 		let runner: QueryRunner | undefined;
