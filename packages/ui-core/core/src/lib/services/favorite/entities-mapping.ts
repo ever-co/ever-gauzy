@@ -8,6 +8,7 @@ export const ENTITY_ICONS: Record<BaseEntityEnum, string> = {
 	[BaseEntityEnum.OrganizationProject]: 'fas fa-book',
 	[BaseEntityEnum.Task]: 'fas fa-tasks',
 	[BaseEntityEnum.Employee]: 'fas fa-user-friends',
+	[BaseEntityEnum.EmployeeAppointment]: 'fas fa-calendar-alt',
 	[BaseEntityEnum.Candidate]: 'fas fa-user-tie',
 	[BaseEntityEnum.Contact]: 'fas fa-address-book',
 	[BaseEntityEnum.OrganizationTeam]: 'fas fa-users',
@@ -110,6 +111,8 @@ export const ENTITY_LINKS: Record<BaseEntityEnum, FavoriteLinkBuilder> = {
 	[BaseEntityEnum.OrganizationProject]: (id) => `/pages/organization/projects/${id}/edit`,
 	[BaseEntityEnum.Task]: (id) => `/pages/tasks/view/${id}`,
 	[BaseEntityEnum.Employee]: (id) => `/pages/employees/view/${id}`,
+	// An appointment is read in the appointments of the employees.
+	[BaseEntityEnum.EmployeeAppointment]: () => `/pages/employees/appointments`,
 	[BaseEntityEnum.Candidate]: (id) => `/pages/employees/candidates/edit/${id}`,
 	// The address/contact-details row has no page; the contacts hub is where contacts are read.
 	[BaseEntityEnum.Contact]: () => `/pages/contacts`,

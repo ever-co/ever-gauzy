@@ -200,7 +200,9 @@
 			"RateChangeRequest": "Rate change request",
 			"TaskUpdate": "Task update",
 			"TimerReminder": "Timer reminder",
-			"Invoice": "Invoice"
+			"Invoice": "Invoice",
+			"Meeting": "Meeting",
+			"TaskDueReminder": "Task due"
 		}
 	},
 	"SETTINGS": {

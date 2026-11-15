@@ -20,6 +20,7 @@ import { redactDatabaseError } from '../core/errors/database-error';
 import { RequestContext } from '../core/context/request-context';
 import { EmployeeNotificationSettingService } from '../employee-notification-setting/employee-notification-setting.service';
 import { timerReminderHoursOf } from '../time-tracking/timer-reminder/timer-reminder.rules';
+import { taskDueReminderHoursOf } from '../tasks/due-reminder/task-due-reminder.rules';
 import { EmployeeCreateNotificationEvent } from './events/employee-notification.event';
 import { EmployeeNotificationCreatedEvent } from './events/employee-notification-created.event';
 import { EmployeeNotificationUpdatedEvent } from './events/employee-notification-updated.event';
@@ -627,6 +628,14 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 			// change request; its email follows the per-kind email mode (`preferences.emailByType.Invoice`)
 			case EmployeeNotificationTypeEnum.INVOICE:
 				return true;
+			// A meeting the employee hosts or is invited to: no switch of its own, as for an invoice; its email and push follow
+			// the per-kind modes (`preferences.emailByType.Meeting`, `pushByType.Meeting`), and its reminder before the start
+			// follows `preferences.meetingReminderMinutes`
+			case EmployeeNotificationTypeEnum.MEETING:
+				return true;
+			// A task due soon: switched off through the `preferences` JSON (`taskDueReminderHours` null or 0).
+			case EmployeeNotificationTypeEnum.TASK_DUE_REMINDER:
+				return taskDueReminderHoursOf(employeeNotificationSetting.preferences) !== null;
 			default:
 				throw new Error(`Unsupported notification type: ${type}`);
 		}

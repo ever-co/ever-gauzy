@@ -8,7 +8,7 @@ import { EmployeeNotificationTypeTransformer } from './employee-notification-typ
 describe('EmployeeNotificationTypeTransformer', () => {
 	const transformer = new EmployeeNotificationTypeTransformer();
 
-	it('stores each kind as its own integer, the timer reminder as 9 and an invoice as 10', () => {
+	it('stores each kind as its own integer, the timer reminder as 9, an invoice as 10, a meeting as 11 and a task due soon as 12', () => {
 		expect(Object.values(EmployeeNotificationTypeEnum).map((type) => [type, transformer.to(type)])).toEqual([
 			[EmployeeNotificationTypeEnum.PAYMENT, 0],
 			[EmployeeNotificationTypeEnum.ASSIGNMENT, 1],
@@ -20,7 +20,9 @@ describe('EmployeeNotificationTypeTransformer', () => {
 			[EmployeeNotificationTypeEnum.RATE_CHANGE_REQUEST, 7],
 			[EmployeeNotificationTypeEnum.TASK_UPDATE, 8],
 			[EmployeeNotificationTypeEnum.TIMER_REMINDER, 9],
-			[EmployeeNotificationTypeEnum.INVOICE, 10]
+			[EmployeeNotificationTypeEnum.INVOICE, 10],
+			[EmployeeNotificationTypeEnum.MEETING, 11],
+			[EmployeeNotificationTypeEnum.TASK_DUE_REMINDER, 12]
 		]);
 	});
 
@@ -28,7 +30,7 @@ describe('EmployeeNotificationTypeTransformer', () => {
 		for (const type of Object.values(EmployeeNotificationTypeEnum)) {
 			expect(transformer.from(transformer.to(type))).toBe(type);
 		}
-		expect(() => transformer.from(11)).toThrow('Unknown notification type value: 11');
+		expect(() => transformer.from(99)).toThrow('Unknown notification type value: 99');
 		expect(() => transformer.to('NotAType' as EmployeeNotificationTypeEnum)).toThrow(
 			'Unsupported notification type'
 		);
