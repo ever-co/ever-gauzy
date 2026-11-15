@@ -14,7 +14,7 @@ export interface IOrganizationCounts {
 	projects: number;
 	/** Its members: member records that are not archived, the flag false or unset (an inactive member counts). */
 	members: number;
-	/** The time tracked in it, in seconds, over every time log (a running one up to now). */
+	/** The time tracked in it, in seconds, over every time log but breaks (a running one up to now). */
 	trackedSeconds: number;
 	/** Its invoices, estimates left out. */
 	invoices: number;
@@ -72,8 +72,8 @@ async function countRows(
 }
 
 /**
- * The seconds tracked in an organization: the length of every time log not deleted, a running one up to now (the
- * expression the overall statistic uses).
+ * The seconds tracked in an organization: the length of every time log not deleted, a running one up to now, a break
+ * counting for nothing (the expression the overall statistic uses).
  *
  * @param manager An entity manager.
  * @param organizationId The organization.

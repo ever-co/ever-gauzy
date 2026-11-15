@@ -107,6 +107,8 @@ const schemas = [
 		columns: {
 			id: { type: 'varchar', primary: true },
 			...ofOrganization,
+			// The tracked-time expression leaves breaks out by this column
+			logType: { type: 'varchar', default: 'TRACKED' },
 			startedAt: { type: 'datetime' },
 			stoppedAt: { type: 'datetime', nullable: true },
 			...softDeletable
@@ -275,6 +277,15 @@ describe('Soft deleting an organization (#11960)', () => {
 				organizationId: TRIAL,
 				startedAt: new Date('2026-11-11T09:00:00Z'),
 				stoppedAt: new Date('2026-11-11T09:30:00Z')
+			},
+			// A break is not tracked time: it is left out of the tracked seconds
+			{
+				id: 'log-break',
+				tenantId: TENANT,
+				organizationId: TRIAL,
+				logType: 'BREAK',
+				startedAt: new Date('2026-11-11T12:00:00Z'),
+				stoppedAt: new Date('2026-11-11T13:00:00Z')
 			},
 			{
 				id: 'log-deleted',
