@@ -28,7 +28,12 @@ import {
 	Tenant,
 	User
 } from '../core/entities/internal';
-import { INVOICE_SCHEDULE_CLIENT, INVOICE_SCHEDULE_EXISTS, InvoiceScheduleService } from './invoice-schedule.service';
+import {
+	INVOICE_SCHEDULE_CLIENT,
+	INVOICE_SCHEDULE_EXISTS,
+	INVOICE_SCHEDULE_START_AFTER_BILLED,
+	InvoiceScheduleService
+} from './invoice-schedule.service';
 
 /** Booting the whole entity graph on SQLite takes a while. */
 const TIMEOUT = 600_000;
@@ -358,6 +363,69 @@ describe('InvoiceScheduleService on SQLite', () => {
 				service.updateSchedule(acme.id, { organizationId: OTHER_ORGANIZATION, paused: true } as never)
 			).rejects.toThrow(NotFoundException);
 			await expect(service.deleteSchedule(acme.id, OTHER_ORGANIZATION)).rejects.toThrow(NotFoundException);
+		}),
+		TIMEOUT
+	);
+
+	it(
+		'answers 409 to the loser of two creates for one client, whose insert the base service reports as a 400',
+		inRequest(async () => {
+			actAs(ADMIN);
+			const create = service.create.bind(service);
+			jest.spyOn(service, 'create').mockImplementationOnce(async (entity) => {
+				// The other request wins between this one's check and its insert
+				await create(entity);
+				throw new BadRequestException('Bad request');
+			});
+
+			await expect(monthlyFor(ACME)).rejects.toThrow(new ConflictException(INVOICE_SCHEDULE_EXISTS));
+			expect(await dataSource.getRepository(InvoiceSchedule).count()).toBe(1);
+		}),
+		TIMEOUT
+	);
+
+	it(
+		'keeps a new timeline after the last period billed, which a failed run never was',
+		inRequest(async () => {
+			actAs(ADMIN);
+			const schedule = await monthlyFor(ACME);
+			const runs = dataSource.getRepository(InvoiceScheduleRun);
+			const runOf = (periodStart: string, periodEnd: string, status: InvoiceScheduleRunStatusEnum) =>
+				runs.insert({
+					tenantId: TENANT,
+					organizationId: ORGANIZATION,
+					invoiceScheduleId: schedule.id,
+					periodStart,
+					periodEnd,
+					status,
+					claimedAt: new Date()
+				} as never);
+			await runOf('2026-10-01', '2026-10-31', InvoiceScheduleRunStatusEnum.DRAFTED);
+			await runOf('2026-11-01', '2026-11-30', InvoiceScheduleRunStatusEnum.FAILED);
+
+			// Weekly from the same start day would bill October 29 to 31 again
+			await expect(
+				service.updateSchedule(schedule.id, {
+					organizationId: ORGANIZATION,
+					frequency: InvoiceScheduleFrequencyEnum.WEEKLY
+				} as never)
+			).rejects.toThrow(new BadRequestException(INVOICE_SCHEDULE_START_AFTER_BILLED));
+			await expect(
+				service.updateSchedule(schedule.id, { organizationId: ORGANIZATION, startDay: '2026-10-15' } as never)
+			).rejects.toThrow(BadRequestException);
+
+			// From the day after October, the last period billed: November failed, so it is billed again
+			const changed = await service.updateSchedule(schedule.id, {
+				organizationId: ORGANIZATION,
+				frequency: InvoiceScheduleFrequencyEnum.WEEKLY,
+				startDay: '2026-11-01'
+			} as never);
+			expect(changed).toMatchObject({ frequency: InvoiceScheduleFrequencyEnum.WEEKLY, startDay: '2026-11-01' });
+
+			// A change that keeps the timeline is never held to it
+			await expect(
+				service.updateSchedule(schedule.id, { organizationId: ORGANIZATION, sendInvoice: true } as never)
+			).resolves.toMatchObject({ sendInvoice: true });
 		}),
 		TIMEOUT
 	);
