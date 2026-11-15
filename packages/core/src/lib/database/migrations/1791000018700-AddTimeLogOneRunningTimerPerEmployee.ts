@@ -8,6 +8,50 @@ const INDEX = 'UQ_time_log_running_timer_employee';
 /** MySQL's stand-in for the predicate: the employee while the row is a running timer run, NULL otherwise. */
 const MYSQL_KEY = 'runningTimerKey';
 
+/** How a dialect writes the expressions the stop of the older runs needs. */
+interface Dialect {
+	/** The identifier quote. */
+	q: string;
+	/** A running row's `isRunning`. */
+	running: string;
+	/** A stopped row's `isRunning`. */
+	stopped: string;
+	/** The larger of two values. */
+	larger: string;
+	/** The smaller of two values. */
+	smaller: string;
+	/** Where a time slot ends: its start plus its duration, in seconds, as the dialect stores a timestamp. */
+	slotEnd: (slot: string) => string;
+}
+
+const POSTGRES: Dialect = {
+	q: '"',
+	running: 'true',
+	stopped: 'false',
+	larger: 'GREATEST',
+	smaller: 'LEAST',
+	slotEnd: (slot) => `${slot}."startedAt" + ${slot}."duration" * interval '1 second'`
+};
+
+const SQLITE: Dialect = {
+	q: '"',
+	running: 'true',
+	stopped: 'false',
+	larger: 'MAX',
+	smaller: 'MIN',
+	// The text TypeORM stores a date as on SQLite, with its milliseconds
+	slotEnd: (slot) => `strftime('%Y-%m-%d %H:%M:%f', ${slot}."startedAt", '+' || ${slot}."duration" || ' seconds')`
+};
+
+const MYSQL: Dialect = {
+	q: '`',
+	running: '1',
+	stopped: '0',
+	larger: 'GREATEST',
+	smaller: 'LEAST',
+	slotEnd: (slot) => `DATE_ADD(${slot}.\`startedAt\`, INTERVAL ${slot}.\`duration\` SECOND)`
+};
+
 /**
  * One running timer run per employee, in the database (ever-co/ever-gauzy#11826).
  *
@@ -34,11 +78,15 @@ const MYSQL_KEY = 'runningTimerKey';
  * next after it:
  *
  * - a break ends where the next run starts;
- * - a run that had a heartbeat (its `stoppedAt` past its start), or a run of a client that posts one each minute (Ever
- *   Teams, mobile), ends at its last heartbeat, never after the next run's start;
+ * - a run that had a heartbeat (its `stoppedAt` past its start, or time slots of its own), or a run of a client that
+ *   posts one each minute (Ever Teams, mobile), ends at its last heartbeat (the later of its `stoppedAt` and the end of
+ *   its last time slot), never after the next run's start;
  * - any other run (the web timer, the API clients, which send no heartbeat) ends where the next run starts, as an
  *   explicit stop then would;
  * - never before its own start.
+ *
+ * A running timer row without a start is no run a client can read, stop or report: it is stopped first, its `stoppedAt`
+ * left as stored. The rows with a start are then ranked as above.
  *
  * Nothing is deleted and no time counts twice. The rows stay as stored otherwise: the stop does not create the slots of
  * its range, which a stop through the API gives a web timer run, nor cut the logs it overlaps. A stop or start of the
@@ -105,7 +153,8 @@ export class AddTimeLogOneRunningTimerPerEmployee1791000018700 implements Migrat
 	 * @param queryRunner
 	 */
 	public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<void> {
-		await queryRunner.query(this.stopOlderRunsStatement('GREATEST', 'LEAST'));
+		await queryRunner.query(this.stopRunsWithoutStartStatement(POSTGRES));
+		await queryRunner.query(this.stopOlderRunsStatement(POSTGRES));
 		await queryRunner.query(
 			`CREATE UNIQUE INDEX IF NOT EXISTS "${INDEX}" ON "time_log" ("employeeId") WHERE "isRunning" = true AND "deletedAt" IS NULL AND "source" <> 'DESKTOP'`
 		);
@@ -126,7 +175,8 @@ export class AddTimeLogOneRunningTimerPerEmployee1791000018700 implements Migrat
 	 * @param queryRunner
 	 */
 	public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<void> {
-		await queryRunner.query(this.stopOlderRunsStatement('MAX', 'MIN'));
+		await queryRunner.query(this.stopRunsWithoutStartStatement(SQLITE));
+		await queryRunner.query(this.stopOlderRunsStatement(SQLITE));
 		await queryRunner.query(
 			`CREATE UNIQUE INDEX IF NOT EXISTS "${INDEX}" ON "time_log" ("employeeId") WHERE "isRunning" = true AND "deletedAt" IS NULL AND "source" <> 'DESKTOP'`
 		);
@@ -147,11 +197,12 @@ export class AddTimeLogOneRunningTimerPerEmployee1791000018700 implements Migrat
 	 * @param queryRunner
 	 */
 	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<void> {
-		// MySQL refuses a subquery on the table an UPDATE writes: the next starts are read into a derived table first
+		await queryRunner.query(this.stopRunsWithoutStartStatement(MYSQL));
+		// MySQL refuses a subquery on the table an UPDATE writes: the next starts are read into a derived table first.
 		// The end is set before the run stops: MySQL reads each assignment after those before it
-		const end = this.replacedRunEnd('`run`', '`next`.`startedAt`', 'GREATEST', 'LEAST', '`');
+		const end = this.replacedRunEnd('`run`', '`next`', MYSQL);
 		await queryRunner.query(
-			`UPDATE \`time_log\` AS \`run\` JOIN (${this.nextRunStarts('`', '1')}) AS \`next\` ON \`next\`.\`id\` = \`run\`.\`id\` SET \`run\`.\`stoppedAt\` = ${end}, \`run\`.\`isRunning\` = 0`
+			`UPDATE \`time_log\` AS \`run\` JOIN (${this.nextRunStarts(MYSQL)}) AS \`next\` ON \`next\`.\`id\` = \`run\`.\`id\` SET \`run\`.\`stoppedAt\` = ${end}, \`run\`.\`isRunning\` = 0`
 		);
 		if (!(await queryRunner.hasColumn('time_log', MYSQL_KEY))) {
 			await queryRunner.query(
@@ -178,44 +229,58 @@ export class AddTimeLogOneRunningTimerPerEmployee1791000018700 implements Migrat
 	}
 
 	/**
+	 * Stops every running timer row without a start: no client can read, stop or report it (see the class comment).
+	 *
+	 * @param dialect The dialect's expressions.
+	 */
+	private stopRunsWithoutStartStatement({ q, running, stopped }: Dialect): string {
+		return `UPDATE ${q}time_log${q} SET ${q}isRunning${q} = ${stopped} WHERE ${q}isRunning${q} = ${running} AND ${q}deletedAt${q} IS NULL AND ${q}source${q} <> 'DESKTOP' AND ${q}startedAt${q} IS NULL`;
+	}
+
+	/**
 	 * Stops every running timer run of an employee but their latest, where the start that should have replaced it would
 	 * have ended it (see the class comment), on Postgres and SQLite.
 	 *
-	 * @param larger The dialect's larger of two values: GREATEST on Postgres, MAX on SQLite.
-	 * @param smaller The dialect's smaller of two values: LEAST on Postgres, MIN on SQLite.
+	 * @param dialect The dialect's expressions.
 	 */
-	private stopOlderRunsStatement(larger: string, smaller: string): string {
-		return `UPDATE "time_log" SET "isRunning" = false, "stoppedAt" = ${this.replacedRunEnd('"time_log"', '"next"."startedAt"', larger, smaller, '"')} FROM (${this.nextRunStarts('"', 'true')}) AS "next" WHERE "time_log"."id" = "next"."id"`;
+	private stopOlderRunsStatement(dialect: Dialect): string {
+		const { q, stopped } = dialect;
+		const end = this.replacedRunEnd(`${q}time_log${q}`, `${q}next${q}`, dialect);
+		return `UPDATE ${q}time_log${q} SET ${q}isRunning${q} = ${stopped}, ${q}stoppedAt${q} = ${end} FROM (${this.nextRunStarts(dialect)}) AS ${q}next${q} WHERE ${q}time_log${q}.${q}id${q} = ${q}next${q}.${q}id${q}`;
 	}
 
 	/**
 	 * Each older running timer run of an employee, with the start of the run that started next after it among the
-	 * employee's running timer runs.
+	 * employee's running timer runs (`startedAt`), and the end of its last time slot (`lastSlotEnd`, none without).
 	 *
-	 * @param q The dialect's identifier quote.
-	 * @param running The dialect's literal for a running row.
+	 * @param dialect The dialect's expressions.
 	 */
-	private nextRunStarts(q: string, running: string): string {
-		const timerRun = (alias: string) =>
-			`${q}${alias}${q}.${q}isRunning${q} = ${running} AND ${q}${alias}${q}.${q}deletedAt${q} IS NULL AND ${q}${alias}${q}.${q}source${q} <> 'DESKTOP'`;
+	private nextRunStarts({ q, running, slotEnd }: Dialect): string {
 		const col = (alias: string, name: string) => `${q}${alias}${q}.${q}${name}${q}`;
-		return `SELECT ${col('older', 'id')} AS ${q}id${q}, MIN(${col('newer', 'startedAt')}) AS ${q}startedAt${q} FROM ${q}time_log${q} AS ${q}older${q} JOIN ${q}time_log${q} AS ${q}newer${q} ON ${col('newer', 'employeeId')} = ${col('older', 'employeeId')} AND ${timerRun('newer')} AND (${col('newer', 'startedAt')} > ${col('older', 'startedAt')} OR (${col('newer', 'startedAt')} = ${col('older', 'startedAt')} AND ${col('newer', 'id')} > ${col('older', 'id')})) WHERE ${timerRun('older')} GROUP BY ${col('older', 'id')}`;
+		const timerRun = (alias: string) =>
+			`${col(alias, 'isRunning')} = ${running} AND ${col(alias, 'deletedAt')} IS NULL AND ${col(alias, 'source')} <> 'DESKTOP' AND ${col(alias, 'startedAt')} IS NOT NULL`;
+		const startsAfter = `(${col('newer', 'startedAt')} > ${col('older', 'startedAt')} OR (${col('newer', 'startedAt')} = ${col('older', 'startedAt')} AND ${col('newer', 'id')} > ${col('older', 'id')}))`;
+		const lastSlotEnd = `(SELECT MAX(${slotEnd(`${q}slot${q}`)}) FROM ${q}time_slot_time_logs${q} AS ${q}link${q} JOIN ${q}time_slot${q} AS ${q}slot${q} ON ${col('slot', 'id')} = ${col('link', 'timeSlotId')} WHERE ${col('link', 'timeLogId')} = ${col('older', 'id')})`;
+		return `SELECT ${col('older', 'id')} AS ${q}id${q}, MIN(${col('newer', 'startedAt')}) AS ${q}startedAt${q}, ${lastSlotEnd} AS ${q}lastSlotEnd${q} FROM ${q}time_log${q} AS ${q}older${q} JOIN ${q}time_log${q} AS ${q}newer${q} ON ${col('newer', 'employeeId')} = ${col('older', 'employeeId')} AND ${timerRun('newer')} AND ${startsAfter} WHERE ${timerRun('older')} GROUP BY ${col('older', 'id')}`;
 	}
 
 	/**
-	 * Where a start replacing a run ends it (`TimerService.replacedRunEnd`), from its columns and the next run's start.
+	 * Where a start replacing a run ends it (`TimerService.replacedRunEnd`), from its columns, the next run's start and
+	 * the end of its last time slot.
 	 *
 	 * @param run The run's quoted table or alias.
-	 * @param nextStart The next run's start.
-	 * @param larger The dialect's larger of two values.
-	 * @param smaller The dialect's smaller of two values.
-	 * @param q The dialect's identifier quote.
+	 * @param next The quoted alias of `nextRunStarts`.
+	 * @param dialect The dialect's expressions.
 	 */
-	private replacedRunEnd(run: string, nextStart: string, larger: string, smaller: string, q: string): string {
-		const col = (name: string) => `${run}.${q}${name}${q}`;
-		const lastHeartbeat = `COALESCE(${col('stoppedAt')}, ${col('startedAt')})`;
-		const endsAtLastHeartbeat = `${lastHeartbeat} > ${col('startedAt')} OR ${col('source')} IN ('TEAMS', 'MOBILE')`;
-		return `${larger}(${col('startedAt')}, CASE WHEN ${col('logType')} = 'BREAK' THEN ${nextStart} WHEN ${endsAtLastHeartbeat} THEN ${smaller}(${lastHeartbeat}, ${nextStart}) ELSE ${nextStart} END)`;
+	private replacedRunEnd(run: string, next: string, { q, larger, smaller }: Dialect): string {
+		const col = (alias: string, name: string) => `${alias}.${q}${name}${q}`;
+		const nextStart = col(next, 'startedAt');
+		const lastSlotEnd = col(next, 'lastSlotEnd');
+		const stored = `COALESCE(${col(run, 'stoppedAt')}, ${col(run, 'startedAt')})`;
+		// The later of its stored end and its last slot's: MySQL's GREATEST and SQLite's MAX answer NULL beside a NULL
+		const lastHeartbeat = `${larger}(${stored}, COALESCE(${lastSlotEnd}, ${stored}))`;
+		const endsAtLastHeartbeat = `${lastHeartbeat} > ${col(run, 'startedAt')} OR ${lastSlotEnd} IS NOT NULL OR ${col(run, 'source')} IN ('TEAMS', 'MOBILE')`;
+		return `${larger}(${col(run, 'startedAt')}, CASE WHEN ${col(run, 'logType')} = 'BREAK' THEN ${nextStart} WHEN ${endsAtLastHeartbeat} THEN ${smaller}(${lastHeartbeat}, ${nextStart}) ELSE ${nextStart} END)`;
 	}
 
 	/** Whether MySQL holds the key on `time_log`. */
