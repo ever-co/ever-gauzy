@@ -51,10 +51,16 @@ describe('OrganizationProjectService.hiddenProjects', () => {
 
 	it('answers the private projects the caller is not on, with their names, and not the one they are on', async () => {
 		expect(await service.hiddenProjects()).toEqual(new Map([[CONFIDENTIAL, 'Client X redesign']]));
+	});
+
+	it('reads the withdrawn private projects too, whose names the history of their entries still holds', async () => {
+		await service.hiddenProjects();
+
 		expect(privateProjectsRead).toHaveBeenCalledWith({
 			select: { id: true, name: true, members: { id: true, employeeId: true } },
 			where: { tenantId: TENANT, public: false, organization: { enforcePrivateProjects: true } },
-			relations: { members: true }
+			relations: { members: true },
+			withDeleted: true
 		});
 	});
 

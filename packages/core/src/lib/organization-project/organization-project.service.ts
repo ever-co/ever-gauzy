@@ -822,13 +822,14 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	/**
 	 * The projects the caller may not see (see {@link hiddenProjectIds}), each with its name: the records that name
 	 * one of them answer it as its id and `projectHidden`, and the history of a time entry, which quotes the name of
-	 * its project, is read without it.
+	 * its project, is read without it. A withdrawn (soft-deleted) private project is among them: the history of its
+	 * entries still names it.
 	 *
 	 * @returns The hidden projects, by id, with their names; none where nothing is hidden.
 	 */
 	async hiddenProjects(): Promise<Map<ID, string>> {
 		const hidden = new Map<ID, string>();
-		const read = await this.readPrivateProjects({ withNames: true });
+		const read = await this.readPrivateProjects({ withDeleted: true, withNames: true });
 		if (!read) {
 			return hidden;
 		}
