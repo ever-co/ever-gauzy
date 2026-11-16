@@ -1,15 +1,35 @@
-import { Controller, UseGuards, Get, Query, HttpStatus, Post, Body, Param, ValidationPipe, Delete, HttpCode, Put, UsePipes } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+	Controller,
+	UseGuards,
+	Get,
+	Query,
+	HttpStatus,
+	Post,
+	Body,
+	Param,
+	ValidationPipe,
+	Delete,
+	HttpCode,
+	Put,
+	UsePipes
+} from '@nestjs/common';
+import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { IInvoiceItem, IPagination, PermissionsEnum, ID } from '@gauzy/contracts';
 import { BaseQueryDTO, CrudController } from './../core/crud';
 import { InvoiceItem } from './invoice-item.entity';
 import { InvoiceItemService } from './invoice-item.service';
 import { InvoiceItemBulkCreateCommand } from './commands';
-import { BulkBodyLoadTransformPipe, ParseJsonPipe, UUIDValidationPipe, AbstractValidationPipe } from './../shared/pipes';
+import {
+	BulkBodyLoadTransformPipe,
+	ParseJsonPipe,
+	UUIDValidationPipe,
+	AbstractValidationPipe
+} from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
 import { InvoiceItemBulkInputDTO } from './dto';
+import { expectedUpdatedAtOf } from '../invoice/invoice-precondition';
 import { TenantOrganizationBaseDTO } from '../core/dto';
 import { DeepPartial, FindOptionsWhere } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
@@ -31,7 +51,10 @@ import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity
 @UseGuards(TenantPermissionGuard)
 @Controller('/invoice-item')
 export class InvoiceItemController extends CrudController<InvoiceItem> {
-	constructor(private readonly invoiceItemService: InvoiceItemService, private readonly commandBus: CommandBus) {
+	constructor(
+		private readonly invoiceItemService: InvoiceItemService,
+		private readonly commandBus: CommandBus
+	) {
 		super(invoiceItemService);
 	}
 
@@ -110,6 +133,19 @@ export class InvoiceItemController extends CrudController<InvoiceItem> {
 		return await super.findById(id, ...options);
 	}
 
+	/**
+	 * Replaces every line of an invoice.
+	 *
+	 * The body is the list of lines, so a precondition travels in the query string: with `expectedUpdatedAt` (the
+	 * `updatedAt` the invoice was read with), the lines are replaced only while the invoice still holds it, in the
+	 * transaction that compares the two, and the invoice's `updatedAt` then moves; otherwise nothing is written and
+	 * the answer is 409 with the invoice as it is now. Without it, the lines are replaced as they always were.
+	 *
+	 * @param invoiceId The invoice.
+	 * @param input The new lines.
+	 * @param expectedUpdatedAt The `updatedAt` the invoice was read with, when the replacement is conditional.
+	 * @returns The new lines.
+	 */
 	@ApiOperation({ summary: 'Create invoice item in Bulk' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -119,14 +155,29 @@ export class InvoiceItemController extends CrudController<InvoiceItem> {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
+	@ApiResponse({
+		status: HttpStatus.CONFLICT,
+		description:
+			'The invoice changed since expectedUpdatedAt: nothing was saved. `details.invoice` is the invoice as it is now.'
+	})
+	@ApiQuery({
+		name: 'expectedUpdatedAt',
+		required: false,
+		type: String,
+		description:
+			'The updatedAt the invoice was read with (ISO 8601). When stated, the lines are replaced only if the ' +
+			'invoice still holds it; otherwise nothing is saved and the answer is 409 Conflict.'
+	})
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.INVOICES_EDIT)
 	@Post('/bulk/:invoiceId')
 	async createBulk(
 		@Param('invoiceId', UUIDValidationPipe) invoiceId: string,
-		@Body(BulkBodyLoadTransformPipe, new ValidationPipe({ transform: true })) input: InvoiceItemBulkInputDTO
+		@Body(BulkBodyLoadTransformPipe, new ValidationPipe({ transform: true })) input: InvoiceItemBulkInputDTO,
+		@Query('expectedUpdatedAt') expectedUpdatedAt?: unknown
 	): Promise<any> {
-		return this.commandBus.execute(new InvoiceItemBulkCreateCommand(invoiceId, input.list));
+		const expected = expectedUpdatedAtOf(expectedUpdatedAt);
+		return this.commandBus.execute(new InvoiceItemBulkCreateCommand(invoiceId, input.list, expected));
 	}
 
 	/**
@@ -150,7 +201,9 @@ export class InvoiceItemController extends CrudController<InvoiceItem> {
 	@Permissions(PermissionsEnum.INVOICES_EDIT)
 	@Post()
 	async create(@Body() entity: DeepPartial<InvoiceItem>, ...options: any[]): Promise<InvoiceItem> {
-		return await super.create(entity, ...options);
+		void options;
+		// The line's invoice moves its `updatedAt` with it, so a precondition read before sees the change (#5243)
+		return await this.invoiceItemService.createLine(entity);
 	}
 
 	/**
@@ -177,7 +230,21 @@ export class InvoiceItemController extends CrudController<InvoiceItem> {
 		@Body() entity: QueryDeepPartialEntity<InvoiceItem>,
 		...options: any[]
 	): Promise<any> {
-		return await super.update(id, entity, ...options);
+		void options;
+		// Members a body never writes, as the base route strips them: the row's identity, its tenant, `deletedAt`
+		const {
+			id: _id,
+			deletedAt: _deletedAt,
+			tenantId: _tenantId,
+			tenant: _tenant,
+			...patch
+		} = (entity ?? {}) as Record<string, unknown>;
+		void _id;
+		void _deletedAt;
+		void _tenantId;
+		void _tenant;
+		// The line's invoice moves its `updatedAt` with it, so a precondition read before sees the change (#5243)
+		return await this.invoiceItemService.updateLine(id, patch as QueryDeepPartialEntity<InvoiceItem>);
 	}
 
 	/**
@@ -198,7 +265,9 @@ export class InvoiceItemController extends CrudController<InvoiceItem> {
 	@Permissions(PermissionsEnum.INVOICES_EDIT)
 	@Delete(':id')
 	async delete(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<any> {
-		return await super.delete(id, ...options);
+		void options;
+		// The line's invoice moves its `updatedAt` with it, so a precondition read before sees the change (#5243)
+		return await this.invoiceItemService.deleteLine(id);
 	}
 
 	/**
@@ -222,7 +291,9 @@ export class InvoiceItemController extends CrudController<InvoiceItem> {
 	@Delete(':id/soft')
 	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
 	async softRemove(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<InvoiceItem> {
-		return await super.softRemove(id, ...options);
+		// The line's invoice moves its `updatedAt` with it, so a precondition read before sees the change (#5243).
+		// The options are handed over as the base route hands them.
+		return await this.invoiceItemService.softRemoveLine(id, options as never);
 	}
 
 	/**
@@ -246,6 +317,8 @@ export class InvoiceItemController extends CrudController<InvoiceItem> {
 	@Put(':id/recover')
 	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
 	async softRecover(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<InvoiceItem> {
-		return await super.softRecover(id, ...options);
+		// The line's invoice moves its `updatedAt` with it, so a precondition read before sees the change (#5243).
+		// The options are handed over as the base route hands them.
+		return await this.invoiceItemService.softRecoverLine(id, options as never);
 	}
 }

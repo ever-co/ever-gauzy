@@ -207,15 +207,67 @@ async function typeOrmMarkReleasedTimeBilled(
 	}
 	await typeOrmLockReleasingDocuments(manager, timeLogIds, lineIdsOf(lines), scope.tenantId, 'fail');
 	const { condition, parameters } = releasedBy(timeLogIds, lineIdsOf(lines));
+	// The documents the mark changes, as they stand: each `updatedAt` moves past what it holds (see `movesPast`). A
+	// locking read, where the database locks rows: it answers the latest committed version, where a plain read under
+	// MySQL's REPEATABLE READ would answer the transaction's first snapshot. The rows are locked already.
+	const markingQuery = manager
+		.createQueryBuilder(Invoice, 'invoice')
+		.withDeleted()
+		.select(['invoice.id', 'invoice.updatedAt'])
+		.where(p(`"invoice"."tenantId" = :tenantId`), { tenantId: scope.tenantId })
+		.andWhere(p(`"invoice"."releasedTimeBilledAt" IS NULL`))
+		.andWhere(p(`"invoice"."status" IN (:...releasingStatuses)`), { releasingStatuses: RELEASING_STATUSES })
+		.andWhere(releasedBy(timeLogIds, lineIdsOf(lines), 'invoice').condition, parameters);
+	if (locksRows()) {
+		markingQuery.setLock('pessimistic_write');
+	}
+	const marking: IStoredVersion[] = await markingQuery.getMany();
+	const markedAt = new Date();
 	await manager
 		.createQueryBuilder()
 		.update(Invoice)
-		.set({ releasedTimeBilledAt: new Date() })
+		// The mark is a change of the document: its `updatedAt` moves with it, so a precondition read before sees it
+		.set({ releasedTimeBilledAt: markedAt, updatedAt: markedAt })
 		.where(p(`"tenantId" = :tenantId`), { tenantId: scope.tenantId })
 		.andWhere(p(`"releasedTimeBilledAt" IS NULL`))
 		.andWhere(p(`"status" IN (:...releasingStatuses)`), { releasingStatuses: RELEASING_STATUSES })
 		.andWhere(condition, parameters)
 		.execute();
+	for (const document of movesPast(marking, markedAt)) {
+		await manager
+			.createQueryBuilder()
+			.update(Invoice)
+			.set({ updatedAt: document.updatedAt })
+			.where(p(`"id" = :id`), { id: document.id })
+			.andWhere(p(`"tenantId" = :tenantId`), { tenantId: scope.tenantId })
+			.callListeners(false)
+			.execute();
+	}
+}
+
+/** A document's id and the `updatedAt` it holds. */
+interface IStoredVersion {
+	id?: ID;
+	updatedAt?: Date | string | number | null;
+}
+
+/**
+ * The documents a write stamped `updatedAt = stampedAt` on whose stored value was not before it (a clock behind the
+ * stored value, or the same millisecond), each with the value it moves to instead: a millisecond past what it held, so
+ * it differs from what a caller read, as `updatedAt` is compared to the millisecond.
+ */
+function movesPast(documents: IStoredVersion[], stampedAt: Date): Array<{ id: ID; updatedAt: Date }> {
+	const moved: Array<{ id: ID; updatedAt: Date }> = [];
+	for (const document of documents) {
+		const held =
+			document.updatedAt === undefined || document.updatedAt === null
+				? Number.NaN
+				: new Date(document.updatedAt).getTime();
+		if (document.id && !Number.isNaN(held) && held >= stampedAt.getTime()) {
+			moved.push({ id: document.id, updatedAt: new Date(held + 1) });
+		}
+	}
+	return moved;
 }
 
 /** The MikroORM form of {@link typeOrmMarkReleasedTimeBilled}, on the transaction's entity manager. */
@@ -237,7 +289,40 @@ async function mikroOrmMarkReleasedTimeBilled(
 		status: { $in: RELEASING_STATUSES },
 		[releasedByKey]: []
 	} as FilterQuery<Invoice>;
-	await em.nativeUpdate(Invoice, where, { releasedTimeBilledAt: new Date() } as EntityData<Invoice>);
+	// The documents the mark changes, as they stand: each `updatedAt` moves past what it holds (see `movesPast`). A find
+	// names the table by an alias of its own, so the condition is built on it, with the same named parameters.
+	const findKey = raw((alias: string) => releasedBy(timeLogIds, lineIdsOf(lines), alias).condition, parameters);
+	const marking = (await em.find(
+		Invoice,
+		{
+			tenantId: scope.tenantId,
+			releasedTimeBilledAt: null,
+			status: { $in: RELEASING_STATUSES },
+			[findKey]: []
+		} as FilterQuery<Invoice>,
+		{
+			fields: ['id', 'updatedAt'] as never,
+			filters: false,
+			disableIdentityMap: true,
+			// A locking read answers the latest committed version (see `typeOrmMarkReleasedTimeBilled`)
+			lockMode: locksRows() ? LockMode.PESSIMISTIC_WRITE : undefined
+		}
+	)) as unknown as IStoredVersion[];
+	// A native update stamps no update date: the mark is a change of the document, so it moves `updatedAt` itself
+	const markedAt = new Date();
+	await em.nativeUpdate(Invoice, where, {
+		releasedTimeBilledAt: markedAt,
+		updatedAt: markedAt
+	} as EntityData<Invoice>);
+	for (const document of movesPast(marking, markedAt)) {
+		await em.nativeUpdate(
+			Invoice,
+			{ id: document.id, tenantId: scope.tenantId } as FilterQuery<Invoice>,
+			{
+				updatedAt: document.updatedAt
+			} as EntityData<Invoice>
+		);
+	}
 }
 
 /** The ids of the lines given, each once. */
@@ -561,10 +646,23 @@ export function typeOrmRowLock(): Pick<FindOneOptions, 'lock'> {
 	return { lock: { mode: 'pessimistic_write' } };
 }
 
-/** An invoice's status, and when its released time was billed again, as a locking read answers it. */
+/**
+ * An invoice's status, when its released time was billed again, when it was last written, and its organization, as a
+ * locking read answers it. `updatedAt` is what a conditional write compares the caller's precondition with (see
+ * `holdInvoiceUnchanged`).
+ */
 export interface ILockedInvoice {
 	status?: string;
 	releasedTimeBilledAt?: Date | null;
+	updatedAt?: Date | null;
+	/** Read on TypeORM; on MikroORM the organization is read through its relation (see `lockedOrganizationIdOf`). */
+	organizationId?: ID | null;
+	organization?: { id?: ID } | null;
+}
+
+/** The organization of an invoice a locking read answered, on either ORM. */
+export function lockedOrganizationIdOf(locked: ILockedInvoice): ID | null {
+	return locked.organizationId ?? locked.organization?.id ?? null;
 }
 
 /**
@@ -585,7 +683,8 @@ export async function lockInvoice(
 	if (transaction.mikroOrm) {
 		// Read apart from the identity map: the write that follows loads the whole invoice.
 		return await transaction.mikroOrm.findOne(Invoice, where as FilterQuery<Invoice>, {
-			fields: ['id', 'status', 'releasedTimeBilledAt'] as never,
+			// The organization through its relation: MikroORM maps `organizationId` as a mirror it does not load
+			fields: ['id', 'status', 'releasedTimeBilledAt', 'updatedAt', 'organization'] as never,
 			filters: false,
 			disableIdentityMap: true,
 			lockMode: mikroOrmRowLock()
@@ -593,7 +692,7 @@ export async function lockInvoice(
 	}
 	return await transaction.typeOrm.findOne(Invoice, {
 		where,
-		select: { id: true, status: true, releasedTimeBilledAt: true },
+		select: { id: true, status: true, releasedTimeBilledAt: true, updatedAt: true, organizationId: true },
 		withDeleted: true,
 		loadEagerRelations: false,
 		...typeOrmRowLock()
