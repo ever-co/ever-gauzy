@@ -39,6 +39,7 @@
 }
 
 .docs-tree-column {
+	position: relative;
 	flex: 0 0 var(--docs-tree-width, 15.5rem);
 	min-width: 0;
 	display: flex;
@@ -64,16 +65,15 @@
 		padding-inline-start: 0.375rem;
 	}
 
-	.docs-tree-column-title {
-		min-width: 0;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-		font-size: var(--docs-label-size, 0.6875rem);
-		font-weight: 600;
-		letter-spacing: 0.04em;
-		text-transform: uppercase;
-		color: var(--docs-text-muted, var(--text-hint-color));
+	// Expanded: the toggle floats over the end of the tree's first heading row
+	// (which reserves room for it) instead of taking a row of its own.
+	&:not(.collapsed) .docs-tree-column-header {
+		position: absolute;
+		top: 0.375rem;
+		inset-inline-end: 0.25rem;
+		z-index: 1;
+		min-height: 0;
+		padding: 0;
 	}
 
 	.docs-tree-column-toggle {
