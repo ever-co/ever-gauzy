@@ -3,19 +3,21 @@ import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
-import { BehaviorSubject, of, Subject } from 'rxjs';
-import { ComponentLayoutStyleEnum, ITask, TaskPriorityEnum } from '@gauzy/contracts';
+import { BehaviorSubject, of, Subject, throwError } from 'rxjs';
+import { ComponentLayoutStyleEnum, ITask, TaskListTypeEnum, TaskPriorityEnum } from '@gauzy/contracts';
 import {
 	ErrorHandlingService,
 	GenericFavoriteService,
 	Store,
 	TasksService,
+	TasksStoreService,
 	TaskTrashService
 } from '@gauzy/ui-core/core';
 import { HashNumberPipe } from '@gauzy/ui-core/shared';
 import { TaskComponent } from './task.component';
 
 const ORGANIZATION = { id: 'org-1', tenantId: 'tenant-1', name: 'Ever' };
+const OTHER_ORGANIZATION = { id: 'org-2', tenantId: 'tenant-1', name: 'Other' };
 
 /** The page size the list reads with (`PaginationFilterBaseComponent.minItemPerPage`). */
 const PAGE_SIZE = 10;
@@ -58,6 +60,9 @@ describe('TaskComponent', () => {
 	let dialogService: { open: jest.Mock };
 	let tasksService: { editTask: jest.Mock; createTask: jest.Mock; deleteTask: jest.Mock };
 	let layout: ComponentLayoutStyleEnum;
+	/** The project selected in the header: a sprint project opens the sprint view. */
+	let project: { id: string; taskListType: TaskListTypeEnum } | null;
+	let organization$: BehaviorSubject<typeof ORGANIZATION>;
 	/** Every value the page gave its loading flag, in order. */
 	let loadingSeen: boolean[];
 
@@ -85,8 +90,13 @@ describe('TaskComponent', () => {
 			get: jest.fn((_url: string, options: { params: HttpParams }) => {
 				const page = +options.params.get('skip');
 				const size = +options.params.get('take');
-				const items = server.slice((page - 1) * size, page * size).map((task) => ({ ...task }));
-				return of(new HttpResponse({ body: { items, total: server.length } }));
+				// The other organization holds tasks of its own.
+				const tasks =
+					options.params.get('where[organizationId]') === OTHER_ORGANIZATION.id
+						? [{ ...taskNumbered(901), organizationId: OTHER_ORGANIZATION.id } as ITask]
+						: server;
+				const items = tasks.slice((page - 1) * size, page * size).map((task) => ({ ...task }));
+				return of(new HttpResponse({ body: { items, total: tasks.length } }));
 			})
 		};
 		dialogResult = null;
@@ -108,6 +118,8 @@ describe('TaskComponent', () => {
 			})
 		};
 		layout = ComponentLayoutStyleEnum.CARDS_GRID;
+		project = null;
+		organization$ = new BehaviorSubject(ORGANIZATION);
 		loadingSeen = [];
 	});
 
@@ -135,9 +147,9 @@ describe('TaskComponent', () => {
 					useValue: {
 						user: { tenantId: ORGANIZATION.tenantId },
 						selectedOrganization: ORGANIZATION,
-						selectedOrganization$: new BehaviorSubject(ORGANIZATION).asObservable(),
+						selectedOrganization$: organization$.asObservable(),
 						selectedEmployee$: of(null),
-						selectedProject$: of(null),
+						selectedProject$: of(project),
 						selectedTeam$: of(null),
 						componentLayout$: () => of(layout),
 						hasAnyPermission: () => true,
@@ -163,7 +175,7 @@ describe('TaskComponent', () => {
 
 		component.ngOnInit();
 		await settle();
-		if (layout === ComponentLayoutStyleEnum.TABLE) {
+		if (layout === ComponentLayoutStyleEnum.TABLE && !project) {
 			// The table reads its own source once it has it.
 			await component.smartTableSource.getElements();
 		}
@@ -200,8 +212,8 @@ describe('TaskComponent', () => {
 			await settle();
 
 			expect(tasksService.editTask).toHaveBeenCalledWith(expect.objectContaining({ id: 'task-15' }));
-			// Both pages already scrolled through are read again, in one read, and none is dropped.
-			expect(lastRead()).toEqual({ page: 1, size: 2 * PAGE_SIZE });
+			// Both pages already scrolled through are read again, in one read of the API's largest page, and none is dropped.
+			expect(lastRead()).toEqual({ page: 1, size: 100 });
 			expect(shown()).toHaveLength(2 * PAGE_SIZE);
 			expect(shown().find(({ id }) => id === 'task-15').priority).toBe(TaskPriorityEnum.HIGH);
 			expect(component.pagination.activePage).toBe(2);
@@ -228,7 +240,7 @@ describe('TaskComponent', () => {
 			await settle();
 
 			expect(tasksService.createTask).toHaveBeenCalledWith(expect.objectContaining({ title: 'Task 15 (copy)' }));
-			expect(lastRead()).toEqual({ page: 1, size: 2 * PAGE_SIZE });
+			expect(lastRead()).toEqual({ page: 1, size: 100 });
 			expect(shown()).toHaveLength(2 * PAGE_SIZE);
 			expect(component.pagination.activePage).toBe(2);
 			expect(component.pagination.totalItems).toBe(26);
@@ -248,7 +260,7 @@ describe('TaskComponent', () => {
 			await settle();
 
 			expect(tasksService.deleteTask).toHaveBeenCalledWith('task-15');
-			expect(lastRead()).toEqual({ page: 1, size: 2 * PAGE_SIZE });
+			expect(lastRead()).toEqual({ page: 1, size: 100 });
 			// The task that moved up from the third page fills the gap, so the next scroll skips nothing.
 			expect(shown().map(({ id }) => id)).not.toContain('task-15');
 			expect(shown().map(({ id }) => id)).toContain('task-21');
@@ -276,26 +288,144 @@ describe('TaskComponent', () => {
 			expect(loadingSeen).toContain(true);
 		});
 
-		it('drops the result of a read in place that a page change overtook', async () => {
+		/** The answer of the next list read waits until the test sends it. */
+		const holdNextRead = () => {
+			const late = new Subject<HttpResponse<unknown>>();
+			http.get.mockImplementationOnce(() => late.asObservable());
+			return (items: ITask[], total = server.length) => {
+				late.next(new HttpResponse({ body: { items: items.map((task) => ({ ...task })), total } }));
+				late.complete();
+			};
+		};
+		const ids = () => shown().map(({ id }) => id);
+
+		it('keeps the next page after the pages read again when the read in place answers after it', async () => {
 			await open('dashboard');
 			await toSecondPage();
 			showTask(15);
 
-			// The edit's read answers only after the next page was read.
-			const late = new Subject<HttpResponse<unknown>>();
-			http.get.mockImplementationOnce(() => late.asObservable());
+			const answer = holdNextRead();
 			dialogResult = dialogValues();
 			await component.editTaskDialog();
+			const readAgain = server.slice(0, 2 * PAGE_SIZE);
 
 			component.onScroll();
 			await settle();
 			expect(shown()).toHaveLength(25);
-			late.next(new HttpResponse({ body: { items: server.slice(0, 2 * PAGE_SIZE), total: server.length } }));
-			late.complete();
+			answer(readAgain);
 			await settle(50);
 
 			expect(component.pagination.activePage).toBe(3);
-			expect(shown()).toHaveLength(25);
+			expect(ids()).toEqual(server.map(({ id }) => id));
+			expect(shown().find(({ id }) => id === 'task-15').priority).toBe(TaskPriorityEnum.HIGH);
+		});
+
+		it('does not show a page twice when a save is read again while that page is still loading', async () => {
+			await open('dashboard');
+
+			// The second page is asked for, and its answer is late. A task of the first page is then saved.
+			const answerPage = holdNextRead();
+			component.onScroll();
+			await settle();
+			expect(component.loading).toBe(true);
+			showTask(3);
+
+			dialogResult = dialogValues({ title: 'Task 3' });
+			await component.editTaskDialog();
+			await settle(50);
+			// The read in place covers both pages already.
+			expect(ids()).toEqual(server.slice(0, 2 * PAGE_SIZE).map(({ id }) => id));
+			expect(component.loading).toBe(false);
+
+			answerPage(server.slice(PAGE_SIZE, 2 * PAGE_SIZE));
+			await settle(50);
+			expect(ids()).toEqual(server.slice(0, 2 * PAGE_SIZE).map(({ id }) => id));
+		});
+
+		it("keeps a later save's values when an earlier save's read answers last", async () => {
+			await open('dashboard');
+			showTask(3);
+
+			const answerFirst = holdNextRead();
+			dialogResult = dialogValues({ title: 'First' });
+			await component.editTaskDialog();
+			const firstRead = server.slice(0, PAGE_SIZE).map((task) => ({ ...task }));
+
+			dialogResult = dialogValues({ title: 'Second' });
+			await component.editTaskDialog();
+			await settle(50);
+			expect(shown().find(({ id }) => id === 'task-3').title).toBe('Second');
+
+			answerFirst(firstRead);
+			await settle(50);
+			expect(shown().find(({ id }) => id === 'task-3').title).toBe('Second');
+			expect(component.viewedTask.title).toBe('Second');
+		});
+
+		it("does not bring an organization's tasks back after another organization is selected", async () => {
+			await open('dashboard');
+			showTask(3);
+
+			const answer = holdNextRead();
+			dialogResult = dialogValues({ title: 'Task 3' });
+			await component.editTaskDialog();
+
+			organization$.next(OTHER_ORGANIZATION);
+			answer(server.slice(0, PAGE_SIZE));
+			await settle();
+
+			expect(ids()).toEqual(['task-901']);
+		});
+
+		it('reads a long list again in reads of at most 100 tasks, the API\'s largest page', async () => {
+			server = Array.from({ length: 120 }, (_, index) => taskNumbered(index + 1));
+			await open('dashboard');
+			// Scrolled down to the eleventh page.
+			for (let page = 2; page <= 11; page++) {
+				component.onScroll();
+				await settle(600);
+			}
+			expect(component.pagination.activePage).toBe(11);
+			showTask(105);
+			const readsBefore = http.get.mock.calls.length;
+
+			dialogResult = dialogValues({ title: 'Task 105' });
+			await component.editTaskDialog();
+			await settle(50);
+
+			const reads = http.get.mock.calls.slice(readsBefore).map(pagingOf);
+			expect(reads).toEqual([
+				{ page: 1, size: 100 },
+				{ page: 2, size: 100 }
+			]);
+			expect(ids()).toEqual(server.slice(0, 11 * PAGE_SIZE).map(({ id }) => id));
+			expect(component.viewedTask?.id).toBe('task-105');
+		}, 30000);
+	});
+
+	describe('Tasks, sprint view in the table layout', () => {
+		beforeEach(() => {
+			layout = ComponentLayoutStyleEnum.TABLE;
+			project = { id: 'project-1', taskListType: TaskListTypeEnum.SPRINT };
+			server = server.slice(0, PAGE_SIZE);
+		});
+
+		it('reads its page again through the source its pager follows, so a new task shows a second page', async () => {
+			await open('dashboard');
+			const source = component.smartTableSource;
+			const changes: string[] = [];
+			source.onChanged().subscribe(({ action }) => changes.push(action));
+			expect(source.count()).toBe(PAGE_SIZE);
+
+			dialogResult = dialogValues({ title: 'Task 11' });
+			await component.createTaskDialog();
+			await settle(50);
+
+			expect(component.smartTableSource).toBe(source);
+			expect(source.count()).toBe(PAGE_SIZE + 1);
+			expect(component.pagination.totalItems).toBe(PAGE_SIZE + 1);
+			// The pager redraws on the source's change.
+			expect(changes).toContain('refresh');
 		});
 	});
 
@@ -321,6 +451,20 @@ describe('TaskComponent', () => {
 			expect(component.viewedTask?.id).toBe('task-15');
 			expect(component.viewedTask.priority).toBe(TaskPriorityEnum.HIGH);
 			expect(component.selectedTask?.id).toBe('task-15');
+		});
+
+		it('keeps what the list shows when a read fails, instead of the answer before it', async () => {
+			await open('dashboard');
+			showTask(3);
+			const store = TestBed.inject(TasksStoreService);
+			const loadAllTasks = jest.spyOn(store, 'loadAllTasks');
+
+			http.get.mockImplementationOnce(() => throwError(() => new Error('API unreachable')));
+			await component.smartTableSource.getElements().catch(() => undefined);
+
+			expect(loadAllTasks).not.toHaveBeenCalled();
+			expect(component.loading).toBe(false);
+			expect(component.viewedTask?.id).toBe('task-3');
 		});
 
 		it("keeps the selected task's row highlighted, whatever objects the table rebuilds its rows from", async () => {
