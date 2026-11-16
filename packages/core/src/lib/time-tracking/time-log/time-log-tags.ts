@@ -63,12 +63,13 @@ export async function timeLogTagsOf(manager: EntityManager, tagIds: ID[], scope:
 		select: { id: true, organizationId: true, name: true, color: true },
 		where: { id: In(tagIds), tenantId: scope.tenantId }
 	});
+	// Ids compared in their canonical form: PostgreSQL finds a tag sent in capitals and answers its id in lowercase
 	const usable = new Set(
 		found
 			.filter((tag) => isTagOfOrganization(tag.organizationId, scope.organizationId))
-			.map((tag) => String(tag.id))
+			.map((tag) => canonicalIdOf(tag.id))
 	);
-	const refused = tagIds.filter((id) => !usable.has(String(id)));
+	const refused = tagIds.filter((id) => !usable.has(canonicalIdOf(id)));
 	if (refused.length > 0) {
 		throw new BadRequestException({
 			message: 'A tag of another organization or tenant cannot be put on this time.',
@@ -76,9 +77,9 @@ export async function timeLogTagsOf(manager: EntityManager, tagIds: ID[], scope:
 			tagIds: refused
 		});
 	}
-	const foundById = new Map(found.map((tag) => [String(tag.id), tag]));
+	const foundById = new Map(found.map((tag) => [canonicalIdOf(tag.id), tag]));
 	return tagIds.map((id) => {
-		const tag = foundById.get(String(id));
+		const tag = foundById.get(canonicalIdOf(id));
 		return { id: tag.id, name: tag.name, color: tag.color } as ITag;
 	});
 }
@@ -94,6 +95,11 @@ export function tagsToLink(tags: ITag[]): ITag[] | undefined {
 		return undefined;
 	}
 	return tags;
+}
+
+/** A uuid as the database answers it, whatever case it was sent in. */
+function canonicalIdOf(id: ID): string {
+	return String(id).toLowerCase();
 }
 
 /** Whether a tag belongs to the organization: its own, or one of the whole tenant. */
@@ -140,6 +146,29 @@ export async function loadTimeLogTags(manager: EntityManager, logs: ITimeLog[]):
 }
 
 /**
+ * Locks the log's row for the rest of the transaction, so that two changes of its tags run one after the other: without
+ * it, both could take off the tags before either puts its own on, and the log would end under both lists. SQLite runs
+ * one write at a time and has no row lock.
+ *
+ * @param transaction The transaction the change runs in.
+ * @param timeLogId The log.
+ */
+async function lockTimeLog(transaction: EntityManager, timeLogId: ID): Promise<void> {
+	const type = transaction.connection.options.type;
+	const locksRows = type === 'postgres' || type === 'mysql';
+	if (!locksRows) {
+		return;
+	}
+	await transaction
+		.createQueryBuilder()
+		.select(p('"log"."id"'), 'id')
+		.from(p('time_log'), p('log'))
+		.where(p('"log"."id" = :timeLogId'), { timeLogId })
+		.setLock('pessimistic_write')
+		.getRawOne();
+}
+
+/**
  * Files a log under exactly these tags, in one transaction: the tags it no longer carries are taken off, the new ones
  * put on. Nothing else of the log changes, which is how a running log's tags change while it runs.
  *
@@ -149,6 +178,7 @@ export async function loadTimeLogTags(manager: EntityManager, logs: ITimeLog[]):
  */
 export async function replaceTimeLogTags(manager: EntityManager, timeLogId: ID, tagIds: ID[]): Promise<void> {
 	await manager.transaction(async (transaction) => {
+		await lockTimeLog(transaction, timeLogId);
 		await transaction
 			.createQueryBuilder()
 			.delete()

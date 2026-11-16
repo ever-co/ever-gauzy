@@ -2695,7 +2695,11 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			delete (changes as IManualTimeInput).tags;
 			await this.commandBus.execute(new TimeLogUpdateCommand(changes, timeLog, undefined, false, history));
 			if (changesTags) {
-				await replaceTimeLogTags(this.typeOrmRepository.manager, id, tagIds);
+				await replaceTimeLogTags(
+					this.typeOrmRepository.manager,
+					id,
+					checkedTags.map((tag) => tag.id)
+				);
 			}
 
 			// Retrieve the updated time log entry (a member's log, for a manager: same scope as the read above)
@@ -2736,8 +2740,12 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		await this.assertCanWriteTimeFor(timeLog.employeeId, timeLog.organizationId);
 
 		const tagIds = sentTagIds(input.tags) ?? [];
-		await timeLogTagsOf(manager, tagIds, { tenantId, organizationId: timeLog.organizationId });
-		await replaceTimeLogTags(manager, timeLog.id, tagIds);
+		const tags = await timeLogTagsOf(manager, tagIds, { tenantId, organizationId: timeLog.organizationId });
+		await replaceTimeLogTags(
+			manager,
+			timeLog.id,
+			tags.map((tag) => tag.id)
+		);
 
 		const updated = await this.withoutEmployeeFilter(() => this.findOneByIdString(id));
 		await loadTimeLogTags(manager, [updated]);

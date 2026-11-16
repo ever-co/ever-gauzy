@@ -55,6 +55,27 @@ describe('time log tags', () => {
 		});
 	});
 
+	describe('timeLogTagsOf, an id in capitals', () => {
+		it('takes a tag sent in capitals and answers its id as the database names it', async () => {
+			const find = jest.fn().mockResolvedValue([
+				{
+					id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+					organizationId: ORGANIZATION,
+					name: 'meeting',
+					color: null
+				}
+			]);
+			const manager = { getRepository: () => ({ find }) } as any;
+
+			await expect(
+				timeLogTagsOf(manager, ['A0EEBC99-9C0B-4EF8-BB6D-6BB9BD380A11'], {
+					tenantId: TENANT,
+					organizationId: ORGANIZATION
+				})
+			).resolves.toEqual([{ id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', name: 'meeting', color: null }]);
+		});
+	});
+
 	describe('timeLogTagsOf', () => {
 		const managerWith = (
 			tags: Array<{ id: string; organizationId: string | null; name?: string; color?: string | null }>
