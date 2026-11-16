@@ -1327,6 +1327,17 @@ nb-card-body {
   // between rows. Those rules live with the row paint further up this file
   // (search "Row paint"), unscoped, so the few tables that are not inside a
   // `.table-scroll-container` get them too.
+  //
+  // The one edge that stays is the LEADING one: a continuous rule down the
+  // table's start side, through the title row, the filter row and every body
+  // row. Logical (`inline-start`) so it stays on the leading side under
+  // `dir=rtl`. The extra class here is what lifts it past the `border: 0` resets
+  // in the "Row paint" block, which are (0,1,5) / (0,2,4).
+  angular2-smart-table table tr.angular2-smart-titles > th:first-child,
+  angular2-smart-table table tr.angular2-smart-filters > th:first-child,
+  angular2-smart-table table tbody tr > td:first-child {
+    border-inline-start: 1px solid var(--gauzy-border-table);
+  }
 }
 
 .grid-scroll-container {
