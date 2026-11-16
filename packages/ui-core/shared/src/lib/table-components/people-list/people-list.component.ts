@@ -145,10 +145,10 @@ export class PeopleListComponent {
 		const items = this._items;
 
 		if (!this._wrap && items.length > 1) {
-			const visible = this._maxAvatars + 1;
-			this.named = [];
-			this.stacked = items.slice(0, visible);
-			this.overflow = items.slice(visible);
+			const rest = items.slice(1);
+			this.named = items.slice(0, 1);
+			this.stacked = rest.slice(0, this._maxAvatars);
+			this.overflow = rest.slice(this._maxAvatars);
 			return;
 		}
 
