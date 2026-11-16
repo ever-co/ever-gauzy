@@ -63,7 +63,7 @@
 	gap: nb-theme(gauzy-people-gap);
 	min-width: 0;
 	max-width: 100%;
-	color: nb-theme(text-basic-color);
+	color: inherit;
 	font-size: nb-theme(gauzy-people-font-size);
 	text-decoration: none;
 
@@ -177,4 +177,26 @@
 	font-size: nb-theme(gauzy-people-initials-font-size);
 	font-weight: 600;
 	cursor: default;
+}
+
+.people:not(.is-wrapped) .people-stack {
+	gap: 0;
+
+	.is-stacked {
+		position: relative;
+		box-shadow: 0 0 0 var(--gauzy-people-stack-ring-width, 0.125rem)
+			var(--gauzy-card-1, var(--background-basic-color-1));
+
+		&:hover {
+			z-index: 1;
+		}
+	}
+
+	.is-stacked + .is-stacked {
+		margin-inline-start: calc(-1 * var(--gauzy-people-stack-overlap, 0.3125rem));
+	}
+
+	.is-more {
+		padding: 0 var(--gauzy-people-more-padding-x, 0.3125rem);
+	}
 }
