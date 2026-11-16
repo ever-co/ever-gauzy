@@ -109,15 +109,25 @@ const CHANGED_INVOICE_RELATIONS = ['invoiceItems'];
  * Refuses a change that moves the invoice to another organization in the save of its lines: the lines' time is checked
  * against the organization the invoice is stored in, and the edit screens never move an invoice.
  *
+ * Both members are read, each when it is sent: `organizationId` and the `organization` relation. On MikroORM the
+ * relation is what writes the foreign key (`organizationId` is its unpersisted mirror), so `organization: null` sent
+ * beside the stored `organizationId` would clear the organization while the id alone looks unchanged.
+ *
  * @param stored The invoice as the locking read answered it.
  * @param change The change.
- * @throws BadRequestException when the change states another organization than the stored one.
+ * @throws BadRequestException when either member states another organization than the stored one, or none.
  */
 function assertOrganizationKept(stored: ILockedInvoice, change: IInvoiceUpdateInput): void {
-	const stated = change.organizationId ?? change.organization?.id;
 	const storedOrganizationId = lockedOrganizationIdOf(stored);
-	const statesAnother = Boolean(stated) && Boolean(storedOrganizationId) && stated !== storedOrganizationId;
-	if (statesAnother) {
+	const stated: Array<ID | null> = [];
+	if (change.organizationId !== undefined) {
+		stated.push(change.organizationId ?? null);
+	}
+	if (change.organization !== undefined) {
+		stated.push(change.organization?.id ?? null);
+	}
+	const movesIt = stated.some((organizationId) => organizationId !== storedOrganizationId);
+	if (movesIt) {
 		throw new BadRequestException(INVOICE_ORGANIZATION_IS_KEPT);
 	}
 }

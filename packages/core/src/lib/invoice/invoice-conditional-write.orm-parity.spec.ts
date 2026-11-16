@@ -142,6 +142,16 @@ describe('Invoice edits under a precondition, on TypeORM and on MikroORM (#5243)
 		orm.em.clear();
 	};
 
+	/**
+	 * The invoice as last written in the database's current second, as a write the same second leaves it: SQLite keeps
+	 * TypeORM's update date to the second, so a second write that second leaves `updatedAt` as it was unless the
+	 * conditional save moves it itself (`touchInvoice`).
+	 */
+	const writtenThisSecond = async (invoiceId: string): Promise<void> => {
+		await dataSource.query(`UPDATE "invoice" SET "updatedAt" = datetime('now') WHERE "id" = ?`, [invoiceId]);
+		orm.em.clear();
+	};
+
 	const termsOf = async (invoiceId: string): Promise<string> => {
 		const [row] = await dataSource.query(`SELECT "terms" FROM "invoice" WHERE "id" = ?`, [invoiceId]);
 		return row.terms;
@@ -346,6 +356,21 @@ describe('Invoice edits under a precondition, on TypeORM and on MikroORM (#5243)
 				const second = handlers(ormType).update(fields(invoiceId, { expectedUpdatedAt, terms: 'second' }));
 
 				await expect(second).rejects.toMatchObject({ status: 409, code: 'CONCURRENT_MODIFICATION' });
+				expect(await termsOf(invoiceId)).toBe('edited');
+			});
+
+			it('refuses a second save made on the same read within the same second', async () => {
+				const invoiceId = await draftInvoice();
+				await writtenThisSecond(invoiceId);
+				const expectedUpdatedAt = await readVersion(ormType, invoiceId);
+				const saved = await handlers(ormType).update(fields(invoiceId, { expectedUpdatedAt }));
+
+				// Moved by the save itself, even where the update date of the same second would not move it. Should the
+				// clock cross into the next second during the save, the value moves either way and the case still holds.
+				expect(new Date(saved.updatedAt).toISOString()).not.toBe(expectedUpdatedAt);
+				const second = handlers(ormType).update(fields(invoiceId, { expectedUpdatedAt, terms: 'second' }));
+
+				await expect(second).rejects.toMatchObject({ status: 409 });
 				expect(await termsOf(invoiceId)).toBe('edited');
 			});
 
@@ -578,6 +603,22 @@ describe('Invoice edits under a precondition, on TypeORM and on MikroORM (#5243)
 
 				await expect(save).rejects.toMatchObject({ status: 400 });
 				expect(await termsOf(invoiceId)).toBe('as read');
+				expect(await linesOf(invoiceId)).toEqual(['held']);
+			});
+
+			it('refuses an organization relation stated as none beside the stored organization id, saving nothing', async () => {
+				const invoiceId = await draftInvoice();
+
+				const save = handlers(ormType).updateWithItems({
+					...fields(invoiceId, { organizationId: ORG, organization: null }),
+					invoiceItems: [line(invoiceId, 'first')]
+				});
+
+				await expect(save).rejects.toMatchObject({ status: 400 });
+				const [row] = await dataSource.query(`SELECT "organizationId" FROM "invoice" WHERE "id" = ?`, [
+					invoiceId
+				]);
+				expect(row.organizationId).toBe(ORG);
 				expect(await linesOf(invoiceId)).toEqual(['held']);
 			});
 
