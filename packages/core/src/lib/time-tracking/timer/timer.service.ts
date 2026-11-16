@@ -446,6 +446,8 @@ export class TimerService {
 
 		// Calculate last TimeLog duration
 		if (lastLog) {
+			// The tags the last log is filed under, which the timer shows beside its notes
+			await loadTimeLogTags(this.typeOrmTimeLogRepository.manager, [lastLog]);
 			status.lastLog = lastLog;
 			// A running break is not a running timer: `lastLog` shows the break, `running` stays false, so a client that
 			// does not know breaks shows the timer stopped and posts no heartbeat slots during it

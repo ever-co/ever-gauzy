@@ -208,7 +208,11 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		// `overall` over `duration`): load just those columns, as the weekly report does, instead
 		// of whole slots with their raw keyboard / mouse / location / custom activity. A request for
 		// relations below the slots (`timeSlots.screenshots`, …) keeps whole slots.
-		const relations = request.relations ?? [];
+		const askedRelations = request.relations ?? [];
+		// The tags are read apart, once the logs are (`loadTimeLogTags`): the live ones, as a chip shows them, the same
+		// through both ORMs (ever-co/ever-gauzy#12029)
+		const readsTags = askedRelations.includes('tags');
+		const relations = askedRelations.filter((relation) => relation !== 'tags');
 		const slotActivityOnly =
 			relations.includes('timeSlots') && !relations.some((relation) => relation.startsWith('timeSlots.'));
 
@@ -241,7 +245,11 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					orderBy: { startedAt: 'ASC' as any, ...(page ? { id: 'ASC' as const } : {}) },
 					...(page ? { limit: page.limit, offset: page.offset } : {})
 				});
-				return items.map((e) => this.serialize(e)) as ITimeLog[];
+				const logs = items.map((e) => this.serialize(e)) as ITimeLog[];
+				if (readsTags) {
+					await loadTimeLogTags(this.typeOrmRepository.manager, logs);
+				}
+				return logs;
 			}
 			case MultiORMEnum.TypeORM:
 			default: {
@@ -297,8 +305,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				await this.getFilterTimeLogQuery(query, request, { listsEntries: true });
 
 				const timeLogs = await query.getMany();
-
-				// Set up the where clause using the provided filter function
+				if (readsTags) {
+					await loadTimeLogTags(this.typeOrmRepository.manager, timeLogs);
+				}
 				return timeLogs;
 			}
 		}
@@ -408,6 +417,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 		// The days the report covers, and the zone its rows are grouped by
 		const { days, timeZone } = this.reportDateRange(request);
+
+		// Each log of the week states the tags it is filed under (ever-co/ever-gauzy#12029)
+		await loadTimeLogTags(this.typeOrmRepository.manager, logs);
 
 		// A rate that states no currency is in the organization's, as the report page shows it; read only when needed
 		const organizationCurrency = await this.findCurrencyForRatesWithoutOne(logs, request.organizationId);
@@ -866,6 +878,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				break;
 			}
 		}
+
+		// Each row states the tags its entry is filed under (ever-co/ever-gauzy#12029)
+		await loadTimeLogTags(this.typeOrmRepository.manager, logs);
 
 		// Group time logs based on the specified 'groupBy' filter
 		let dailyLogs: any;
@@ -1748,6 +1763,12 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			query.andWhere(p(`"${query.alias}"."logType" <> :breakType`), { breakType: TimeLogType.BREAK });
 		}
 
+		// The logs that carry one of the tags asked for, or, with `untagged`, none (ever-co/ever-gauzy#12029)
+		const tagCondition = timeLogTagsCondition(`"${query.alias}"."id"`, request);
+		if (tagCondition) {
+			query.andWhere(tagCondition.condition, tagCondition.parameters);
+		}
+
 		/**
 		 * Apply a condition to the TypeORM query based on the 'isEdited' property in the request.
 		 * If 'isEdited' is true, filter rows where the 'editedAt' column is not null.
@@ -2071,6 +2092,12 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 		if (request.notInvoiced === true) {
 			where[mikroOrmNotOnLiveInvoiceKey()] = [];
+		}
+
+		// The logs that carry one of the tags asked for, or, with `untagged`, none, as in getFilterTimeLogQuery
+		const tagsKey = mikroOrmTimeLogTagsKey(request);
+		if (tagsKey) {
+			where[tagsKey] = [];
 		}
 
 		if (isNotEmpty(request.activityLevel)) {
