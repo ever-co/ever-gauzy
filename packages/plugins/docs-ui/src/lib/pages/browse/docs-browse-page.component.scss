@@ -38,8 +38,17 @@
   flex-wrap: wrap;
   min-height: 2rem;
 
-  .docs-browse-title {
+  // Folder-drawer button + title, kept together as the header's left side.
+  .docs-browse-title-group {
     flex: 1 1 12rem;
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    min-width: 0;
+  }
+
+  .docs-browse-title {
+    flex: 1 1 auto;
     min-width: 0;
     margin: 0;
     font-size: 1.125rem;

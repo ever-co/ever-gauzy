@@ -26,7 +26,10 @@
 
 	<!-- Header -->
 	<div class="docs-browse-header">
-		<h4 class="docs-browse-title">{{ 'DOCS.TITLE' | translate }}</h4>
+		<div class="docs-browse-title-group">
+			<gz-docs-folders-button></gz-docs-folders-button>
+			<h4 class="docs-browse-title">{{ 'DOCS.TITLE' | translate }}</h4>
+		</div>
 		<div class="docs-browse-actions">
 			<ng-template [ngxPermissionsOnly]="docsPermissions.review">
 				<button nbButton size="small" appearance="ghost" (click)="goToReviewQueue()">
