@@ -594,18 +594,29 @@ describe('InvoiceScheduleRunService on SQLite', () => {
 		TIMEOUT
 	);
 
-	it(
-		'opens no MikroORM request context under TypeORM, nor without the MikroORM instance at hand',
-		async () => {
+	it.each([
+		['under TypeORM, the MikroORM instance at hand', undefined, { em: {} }],
+		['under DB_ORM=mikro-orm without the MikroORM instance at hand', 'mikro-orm', undefined]
+	])(
+		'opens no MikroORM request context %s',
+		async (_case, ormType, orm) => {
 			const create = jest.spyOn(MikroOrmRequestContext, 'create');
-			await schedule();
-			await track(MARIE, '2026-10-05', '09:00', 3);
+			const previousOrm = process.env.DB_ORM;
+			if (ormType === undefined) delete process.env.DB_ORM;
+			else process.env.DB_ORM = ormType;
+			try {
+				await schedule();
+				await track(MARIE, '2026-10-05', '09:00', 3);
 
-			const report = await serviceOn({ em: {} }).sweep(new Date('2026-11-01T06:00:00Z'));
+				const report = await serviceOn(orm).sweep(new Date('2026-11-01T06:00:00Z'));
 
-			expect(create).not.toHaveBeenCalled();
-			expect(report).toMatchObject({ invoiced: 1 });
-			create.mockRestore();
+				expect(create).not.toHaveBeenCalled();
+				expect(report).toMatchObject({ invoiced: 1 });
+			} finally {
+				if (previousOrm === undefined) delete process.env.DB_ORM;
+				else process.env.DB_ORM = previousOrm;
+				create.mockRestore();
+			}
 		},
 		TIMEOUT
 	);
