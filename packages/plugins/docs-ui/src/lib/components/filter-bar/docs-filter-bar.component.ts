@@ -96,9 +96,15 @@ export class DocsFilterBarComponent extends TranslationBaseComponent {
 		].filter(Boolean).length;
 	}
 
-	/** Clear all only shows when there is something to clear (search, preset or any filter). */
+	/**
+	 * Clear all only shows when there is something to clear (search, preset, any
+	 * filter — or content search, which Clear all resets to name search). The
+	 * shared predicate ignores `searchIn` on purpose (it drives the empty state),
+	 * so the scope is checked here.
+	 */
 	get hasActiveFilters(): boolean {
-		return !!this.value && filterStateHasActiveFilters(this.value);
+		if (!this.value) return false;
+		return filterStateHasActiveFilters(this.value) || this.value.searchIn === 'content';
 	}
 
 	// ─── Facet buckets (fall back to full enums when facets are unloaded) ───

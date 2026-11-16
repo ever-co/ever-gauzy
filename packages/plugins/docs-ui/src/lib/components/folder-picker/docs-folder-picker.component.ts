@@ -63,7 +63,7 @@ export interface IDocsFolderDestination {
 		`
 			.docs-folder-picker {
 				border: 1px solid var(--border-basic-color-4);
-				border-radius: 0.375rem;
+				border-radius: calc(var(--border-radius, 0.5rem) * 0.75);
 				overflow: hidden;
 			}
 			.docs-folder-picker-search {
@@ -116,7 +116,7 @@ export interface IDocsFolderDestination {
 				min-height: 2rem;
 				padding: 0 0.75rem;
 				border: none;
-				border-radius: 0.25rem;
+				border-radius: calc(var(--border-radius, 0.5rem) / 2);
 				background: transparent;
 				color: var(--text-basic-color);
 				font: inherit;

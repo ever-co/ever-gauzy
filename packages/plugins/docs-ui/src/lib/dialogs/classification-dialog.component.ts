@@ -229,7 +229,7 @@ export interface IDocsUploadDialogResult {
 				max-height: 10rem;
 				overflow-y: auto;
 				border: 1px solid var(--border-basic-color-4);
-				border-radius: 0.375rem;
+				border-radius: calc(var(--border-radius, 0.5rem) * 0.75);
 			}
 			.docs-upload-file {
 				display: grid;
@@ -292,7 +292,7 @@ export interface IDocsUploadDialogResult {
 			.docs-upload-tags ::ng-deep .ng-select .ng-select-container {
 				min-height: 2rem;
 				border: 1px solid var(--input-basic-border-color, var(--border-basic-color-4)) !important;
-				border-radius: 0.375rem !important;
+				border-radius: calc(var(--border-radius, 0.5rem) * 0.75) !important;
 				background-color: var(--input-basic-background-color, var(--background-basic-color-2)) !important;
 				color: var(--input-basic-text-color, var(--text-basic-color));
 				box-shadow: none !important;
@@ -304,7 +304,7 @@ export interface IDocsUploadDialogResult {
 			/* Options: the processing switches in one bordered group. */
 			.docs-upload-options {
 				border: 1px solid var(--border-basic-color-4);
-				border-radius: 0.375rem;
+				border-radius: calc(var(--border-radius, 0.5rem) * 0.75);
 			}
 			.docs-upload-option {
 				padding: 0.75rem;

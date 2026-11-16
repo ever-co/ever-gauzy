@@ -1,4 +1,12 @@
-import { Component, ElementRef, OnDestroy, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
+import {
+	Component,
+	ElementRef,
+	HostListener,
+	OnDestroy,
+	OnInit,
+	ViewChild,
+	ChangeDetectionStrategy
+} from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -13,6 +21,10 @@ import { DocumentsQuery } from '../../+state/documents.query';
 import { DocsPreviewModalComponent } from '../preview/docs-preview-modal.component';
 import { DOCS_PREVIEW_DIALOG_CONFIG } from '../../docs.constants';
 import { DocsTreeDrawerService } from '../../services/docs-tree-drawer.service';
+
+/** What Tab can land on inside the drawer. */
+const FOCUSABLE =
+	'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 /**
  * Shell for /pages/documents: the folder drawer (opened from the folder button in
@@ -32,8 +44,11 @@ export class DocsShellComponent extends TranslationBaseComponent implements OnIn
 	/** Folder drawer — closed on every visit, so the page always gets the full width. */
 	public treeOpen = false;
 	@ViewChild('treeDrawer') private readonly treeDrawer?: ElementRef<HTMLElement>;
+	@ViewChild('content') private readonly content?: ElementRef<HTMLElement>;
 	/** Whatever had focus when the drawer opened (the header's folder button) — focus returns there. */
 	private openedFrom: HTMLElement | null = null;
+	/** Set when the drawer closes on a pick: focus then moves into the content, where the user went. */
+	private focusContentOnClose = false;
 	public detailId$: Observable<ID | null> = this.documentsQuery.detailId$;
 
 	constructor(
@@ -79,12 +94,54 @@ export class DocsShellComponent extends TranslationBaseComponent implements OnIn
 
 	/**
 	 * @param restoreFocus `false` when the user picked a destination in the tree —
-	 * focus then belongs to where they went, not to the button that opened it.
+	 * focus then moves into the content they went to, not back to the opener.
 	 */
 	closeTree(restoreFocus = true): void {
 		if (!this.treeOpen) return;
-		if (!restoreFocus) this.openedFrom = null;
+		this.focusContentOnClose = !restoreFocus;
 		this.drawer.close();
+	}
+
+	/**
+	 * Escape closes the drawer wherever focus is — not only from inside it — so the
+	 * key keeps working even if focus was moved out programmatically.
+	 */
+	@HostListener('document:keydown.escape')
+	onEscape(): void {
+		if (!this.treeOpen) return;
+		// A dialog or menu opened from the drawer (rename, move…) owns this Escape —
+		// closing the drawer underneath it as well would lose the user's place.
+		if ((document.activeElement as HTMLElement | null)?.closest?.('.cdk-overlay-container')) return;
+		this.closeTree();
+	}
+
+	/**
+	 * Focus trap: while the drawer is open, Tab and Shift+Tab cycle through its own
+	 * controls. The backdrop already blocks the pointer from the page behind; this
+	 * stops the keyboard from reaching it too.
+	 */
+	onDrawerKeydown(event: KeyboardEvent): void {
+		if (event.key !== 'Tab' || !this.treeOpen) return;
+		const drawer = this.treeDrawer?.nativeElement;
+		if (!drawer) return;
+		const focusable = Array.from(drawer.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(
+			(element) => element.offsetParent !== null
+		);
+		if (!focusable.length) {
+			event.preventDefault();
+			drawer.focus();
+			return;
+		}
+		const first = focusable[0];
+		const last = focusable[focusable.length - 1];
+		const active = document.activeElement;
+		if (event.shiftKey && (active === first || active === drawer)) {
+			event.preventDefault();
+			last.focus();
+		} else if (!event.shiftKey && (active === last || active === drawer)) {
+			event.preventDefault();
+			first.focus();
+		}
 	}
 
 	private onDrawerOpened(): void {
@@ -98,8 +155,15 @@ export class DocsShellComponent extends TranslationBaseComponent implements OnIn
 	private onDrawerClosed(): void {
 		if (!this.treeOpen) return;
 		this.treeOpen = false;
-		this.openedFrom?.focus();
+		if (this.focusContentOnClose) {
+			// A pick: focus goes to the content area (the destination), never left on
+			// the now-hidden drawer. Deferred so a route change can render first.
+			setTimeout(() => this.content?.nativeElement.focus({ preventScroll: true }));
+		} else {
+			this.openedFrom?.focus();
+		}
 		this.openedFrom = null;
+		this.focusContentOnClose = false;
 	}
 
 	onDetailClosed(): void {

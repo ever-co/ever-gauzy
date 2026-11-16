@@ -13,7 +13,7 @@
 		tabindex="-1"
 		[class.open]="treeOpen"
 		[attr.aria-label]="'DOCS.A11Y.TREE_LABEL' | translate"
-		(keydown.escape)="closeTree()"
+		(keydown)="onDrawerKeydown($event)"
 	>
 		<!-- Only the close button: the tree's own first heading ("All documents", a
 		     button back to the root) already names the drawer. -->
@@ -33,7 +33,8 @@
 		<gz-docs-tree (navigated)="closeTree(false)"></gz-docs-tree>
 	</aside>
 
-	<main class="docs-content">
+	<!-- tabindex="-1": focusable from code only — focus lands here after a pick in the drawer. -->
+	<main #content class="docs-content" tabindex="-1">
 		<router-outlet></router-outlet>
 	</main>
 

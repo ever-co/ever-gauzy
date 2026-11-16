@@ -50,12 +50,18 @@
 	min-width: 0;
 }
 
+// Shrinkable: in a narrow toolbar slot the title truncates too (full text in
+// its tooltip) instead of overflowing the strip. It yields only once the hint,
+// which takes just the leftover space, is gone.
 .docs-drop-strip-title {
+	flex: 0 1 auto;
+	min-width: 0;
 	font-size: var(--docs-body-size, 0.8125rem);
-	flex: 0 0 auto;
 	font-weight: 500;
 	color: var(--docs-text, var(--text-basic-color));
 	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 .docs-drop-strip--active .docs-drop-strip-title {
@@ -63,7 +69,7 @@
 }
 
 .docs-drop-strip-hint {
-	flex: 1 1 auto;
+	flex: 1 1 0;
 	min-width: 0;
 	font-size: var(--docs-meta-size, 0.75rem);
 	overflow: hidden;

@@ -18,6 +18,9 @@ interface IPresetChip {
 		<div class="docs-presets" role="group">
 			@for (chip of chips; track chip) {
 				<button
+					nbButton
+					ghost
+					size="tiny"
 					type="button"
 					class="docs-preset"
 					[class.active]="isActive(chip)"
@@ -46,46 +49,38 @@ interface IPresetChip {
 				max-width: 100%;
 				padding: 0.125rem;
 				border: 1px solid var(--docs-hairline, rgba(126, 126, 143, 0.18));
-				border-radius: var(--docs-radius, 0.375rem);
+				border-radius: calc(var(--border-radius, 0.5rem) * 0.75);
 			}
-			.docs-preset {
+			/* Nebular ghost buttons, restyled as segments of the group. Scoped to
+			   .docs-preset and !important only where the ghost theme sets the value. */
+			.docs-presets button.docs-preset[nbButton] {
 				display: inline-flex;
 				align-items: center;
 				justify-content: center;
 				gap: 0.25rem;
-				height: 1.625rem;
+				height: 1.625rem !important;
+				min-height: 1.625rem !important;
 				max-width: 100%;
-				padding: 0 0.625rem;
-				border: 0;
-				border-radius: 0.25rem;
-				background: transparent;
-				color: var(--docs-text-muted, var(--text-hint-color));
-				font: inherit;
-				font-size: 0.75rem;
+				padding: 0 0.625rem !important;
+				border: 0 !important;
+				border-radius: calc(var(--border-radius, 0.5rem) / 2) !important;
+				background: transparent !important;
+				color: var(--docs-text-muted, var(--text-hint-color)) !important;
+				font-size: 0.75rem !important;
 				font-weight: 500;
 				line-height: 1;
+				text-transform: none;
 				white-space: nowrap;
 				overflow: hidden;
 				text-overflow: ellipsis;
-				cursor: pointer;
-				transition: background-color 0.12s ease, color 0.12s ease;
 			}
-			.docs-preset:hover {
-				background: var(--docs-hover, rgba(126, 126, 143, 0.12));
-				color: var(--docs-text, var(--text-basic-color));
+			.docs-presets button.docs-preset[nbButton]:hover {
+				background: var(--docs-hover, rgba(126, 126, 143, 0.12)) !important;
+				color: var(--docs-text, var(--text-basic-color)) !important;
 			}
-			.docs-preset.active {
-				background: var(--docs-active, rgba(126, 126, 143, 0.2));
-				color: var(--docs-text, var(--text-basic-color));
-			}
-			.docs-preset:focus-visible {
-				outline: 2px solid var(--color-primary-default);
-				outline-offset: -2px;
-			}
-			@media (prefers-reduced-motion: reduce) {
-				.docs-preset {
-					transition: none;
-				}
+			.docs-presets button.docs-preset[nbButton].active {
+				background: var(--docs-active, rgba(126, 126, 143, 0.2)) !important;
+				color: var(--docs-text, var(--text-basic-color)) !important;
 			}
 			.docs-preset-label {
 				overflow: hidden;

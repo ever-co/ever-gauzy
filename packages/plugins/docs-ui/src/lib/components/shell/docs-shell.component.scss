@@ -43,7 +43,7 @@
 	position: absolute;
 	inset: 0;
 	z-index: 29;
-	background: rgba(0, 0, 0, 0.25);
+	background: var(--overlay-backdrop-background-color, rgba(0, 0, 0, 0.25));
 }
 
 .docs-tree-drawer {
@@ -57,7 +57,7 @@
 	padding: 0.75rem 0.75rem 0.75rem 0.5rem;
 	background: var(--docs-surface, var(--background-basic-color-1));
 	border-right: 1px solid var(--docs-hairline, rgba(126, 126, 143, 0.18));
-	box-shadow: 0.25rem 0 1rem rgba(0, 0, 0, 0.2);
+	box-shadow: var(--shadow, 0.25rem 0 1rem rgba(0, 0, 0, 0.2));
 	overflow-y: auto;
 	overscroll-behavior: contain;
 	outline: none;
@@ -118,6 +118,8 @@
 	min-width: 0;
 	overflow-y: auto;
 	overscroll-behavior: contain;
+	// Focus arrives here from code (after a pick in the folder drawer); no ring.
+	outline: none;
 }
 
 .docs-detail-column {
