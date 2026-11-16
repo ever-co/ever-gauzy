@@ -16,7 +16,7 @@ export const PROJECT_ID_OF_ROW = Symbol('projectIdOfRow');
  */
 export function withProjectIdKept<T extends object>(fields: T, projectId: ID | null | undefined): T {
 	if (projectId) {
-		Object.defineProperty(fields, PROJECT_ID_OF_ROW, { value: projectId, enumerable: false });
+		Object.defineProperty(fields, PROJECT_ID_OF_ROW, { value: projectId, enumerable: false, configurable: true });
 	}
 	return fields;
 }
@@ -224,7 +224,12 @@ export function withHiddenProjectsWithheld<T>(
 
 		const isTimeEntryHistoryRow = record['entity'] === TIME_LOG_ENTITY && typeof record['description'] === 'string';
 		if (isTimeEntryHistoryRow) {
-			const description = withHiddenProjectNamesOut(record['description'] as string, hidden);
+			let description = record['description'] as string;
+			// The label quotes the name the entry's project had when the row was written: withheld whatever it was
+			if (isHidden(historyRowProjectIdOf(record, isHidden))) {
+				description = withLabelWithheld(description);
+			}
+			description = withHiddenProjectNamesOut(description, hidden);
 			if (description !== record['description']) {
 				set('description', description);
 			}
@@ -238,6 +243,45 @@ export function withHiddenProjectsWithheld<T>(
 		return visitArray(answer, true) as T;
 	}
 	return visit(answer);
+}
+
+/**
+ * The project a time entry's history row is about: the one its entry is on now, kept beside the row by the history
+ * read, else a hidden project the row's change names (an entry deleted for good keeps no project of its own).
+ */
+function historyRowProjectIdOf(
+	row: Record<string, unknown>,
+	isHidden: (id: ID | undefined) => boolean
+): ID | undefined {
+	const kept = (row as { [PROJECT_ID_OF_ROW]?: unknown })[PROJECT_ID_OF_ROW];
+	if (typeof kept === 'string') {
+		return kept;
+	}
+	for (const field of ['updatedValues', 'previousValues']) {
+		const values = row[field];
+		if (!Array.isArray(values)) {
+			continue;
+		}
+		for (const value of values) {
+			const projectId = (value as { projectId?: unknown } | null)?.projectId;
+			const namesHiddenProject = typeof projectId === 'string' && isHidden(projectId);
+			if (namesHiddenProject) {
+				return projectId;
+			}
+		}
+	}
+	return undefined;
+}
+
+/** A history row's description with its quoted label, the last quoted part, put back to "time entry". */
+function withLabelWithheld(description: string): string {
+	const end = description.lastIndexOf('"');
+	const start = description.lastIndexOf('"', end - 1);
+	const hasQuotedLabel = start >= 0 && end > start;
+	if (!hasQuotedLabel) {
+		return description;
+	}
+	return `${description.slice(0, start)}"${TIME_ENTRY_LABEL}"${description.slice(end + 1)}`;
 }
 
 /**

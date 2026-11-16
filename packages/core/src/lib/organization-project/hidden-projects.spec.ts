@@ -174,6 +174,35 @@ describe('withHiddenProjectsWithheld', () => {
 		});
 	});
 
+	it('withholds the label of a history row whose entry is on a hidden project, whatever name the project had', () => {
+		const row = withProjectIdKept(
+			{ id: 'history-1', entity: 'TimeLog', description: 'Created TimeLog "Client X (old name)"' },
+			CONFIDENTIAL
+		);
+
+		expect(withHiddenProjectsWithheld(row, HIDDEN).description).toBe('Created TimeLog "time entry"');
+	});
+
+	it('withholds the label of a history row whose change names a hidden project, for an entry deleted for good', () => {
+		const row = {
+			id: 'history-2',
+			entity: 'TimeLog',
+			description: 'Deleted TimeLog "Client X (old name)"',
+			previousValues: [{ projectId: CONFIDENTIAL }]
+		};
+
+		expect(withHiddenProjectsWithheld(row, HIDDEN).description).toBe('Deleted TimeLog "time entry"');
+	});
+
+	it('leaves the label of a history row whose entry is on a project the caller sees', () => {
+		const row = withProjectIdKept(
+			{ id: 'history-3', entity: 'TimeLog', description: 'Updated TimeLog "Homepage copy"' },
+			PUBLIC
+		);
+
+		expect(withHiddenProjectsWithheld(row, HIDDEN)).toBe(row);
+	});
+
 	it('leaves the description of a row about another record as it is', () => {
 		const row = { entity: 'Task', description: 'Updated Task "Client X redesign"' };
 

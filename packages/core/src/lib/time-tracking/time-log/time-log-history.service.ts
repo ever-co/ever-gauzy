@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Brackets, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, In, WhereExpressionBuilder } from 'typeorm';
 import {
 	ActionTypeEnum,
 	BaseEntityEnum,
@@ -14,6 +14,7 @@ import { RequestContext } from '../../core/context';
 import { prepareSQLQuery as p } from '../../database/database.helper';
 import { ManagedEmployeeService } from '../../employee/managed-employee.service';
 import { ActivityLog } from '../../activity-log/activity-log.entity';
+import { withProjectIdKept } from '../../organization-project/hidden-projects';
 import { TimeLog } from './time-log.entity';
 import { TIME_LOG_KIND_FIELDS } from './time-log-history';
 import { TimeLogService } from './time-log.service';
@@ -64,6 +65,7 @@ export class TimeLogHistoryService {
 			throw new NotFoundException('The time entry was not found');
 		}
 		await this.timeLogService.assertCanReadEmployeeTimeLogs(ownerId);
+		await this.keepProjectsOfEntries(rows);
 		return rows;
 	}
 
@@ -111,7 +113,31 @@ export class TimeLogHistoryService {
 			.take(take);
 
 		const [items, total] = await builder.getManyAndCount();
+		await this.keepProjectsOfEntries(items);
 		return { items, total };
+	}
+
+	/**
+	 * Keeps beside each history row the project its entry is on now, withdrawn entries included, out of the answer
+	 * itself (see {@link withProjectIdKept}): the description of a row quotes the name its entry's project had when the
+	 * row was written, so a project kept from the caller is withheld from it whatever its name was then.
+	 *
+	 * @param rows The history rows of time entries.
+	 */
+	private async keepProjectsOfEntries(rows: ActivityLog[]): Promise<void> {
+		const entryIds = [...new Set(rows.map((row) => row.entityId).filter(Boolean))];
+		if (entryIds.length === 0) {
+			return;
+		}
+		const entries = await this.typeOrmTimeLogRepository.manager.find(TimeLog, {
+			where: { id: In(entryIds), tenantId: RequestContext.currentTenantId() },
+			select: { id: true, projectId: true },
+			withDeleted: true
+		});
+		const projectOfEntry = new Map(entries.map((entry) => [entry.id, entry.projectId]));
+		for (const row of rows) {
+			withProjectIdKept(row, projectOfEntry.get(row.entityId));
+		}
 	}
 
 	/**
