@@ -15,14 +15,20 @@ const MANAGER = '44444444-4444-4444-8444-444444444442';
 const PORTAL = 'aaaaaaaa-5555-4555-8555-555555555551';
 const OTHER = 'bbbbbbbb-5555-4555-8555-555555555552';
 
-/** An entity manager whose project membership read answers the projects the caller manages. */
+/** The project ids a membership read names (`In([...])`). */
+type MembershipRead = { where?: { organizationProjectId?: { value?: string[] } } };
+
+/**
+ * An entity manager whose project membership read answers the projects the caller manages among those it names,
+ * compared as written, as SQLite compares a varchar.
+ */
 function managerOf(managedProjectIds: string[]) {
-	const find = jest.fn(async (entity: unknown) => {
+	const find = jest.fn(async (entity: unknown, options?: MembershipRead) => {
 		if (entity === OrganizationProjectEmployee) {
-			return managedProjectIds.map((organizationProjectId) => ({
-				id: organizationProjectId,
-				organizationProjectId
-			}));
+			const named = options?.where?.organizationProjectId?.value ?? [];
+			return managedProjectIds
+				.filter((organizationProjectId) => named.includes(organizationProjectId))
+				.map((organizationProjectId) => ({ id: organizationProjectId, organizationProjectId }));
 		}
 		return [];
 	});

@@ -50,7 +50,7 @@ export async function assertMayReadClientRates(manager: EntityManager, scope: Cl
 
 	const managed = await manager.find(OrganizationProjectEmployee, {
 		where: {
-			organizationProjectId: In(scope.projectIds),
+			organizationProjectId: In(projectKeys),
 			employeeId,
 			organizationId: scope.organizationId,
 			tenantId: RequestContext.currentTenantId(),
