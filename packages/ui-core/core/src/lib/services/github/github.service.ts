@@ -198,13 +198,15 @@ export class GithubService {
 	 * @returns An array of mapped issue payload data.
 	 */
 	private _mapIssuePayload(data: IGithubIssue[]): any[] {
-		return data.map(({ id, number, title, state, body, labels = [] }) => ({
+		return data.map(({ id, number, title, state, body, labels = [], pull_request }) => ({
 			id,
 			number,
 			title,
 			state,
 			body,
-			labels
+			labels,
+			// Kept so the server can tell a pull request of the issues list from an issue and not sync it as a task.
+			...(pull_request ? { pull_request } : {})
 		}));
 	}
 }
