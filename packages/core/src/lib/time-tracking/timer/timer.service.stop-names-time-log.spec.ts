@@ -179,6 +179,22 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 		});
 
 		describe('stop', () => {
+			it('answers the stopped log with the tags the loader read for it (ever-co/ever-gauzy#12029)', async () => {
+				const { loadTimeLogTags } = jest.requireMock('../time-log/time-log-tags');
+				loadTimeLogTags.mockImplementationOnce(async (_manager: unknown, logs: Array<{ tags?: unknown }>) => {
+					logs[0].tags = [{ id: 'meeting', name: 'meeting', color: '#2563eb' }];
+				});
+				const { service } = setup([runningLog()]);
+
+				const stopped = await service.stopTimer({ source: TimeLogSourceEnum.TEAMS });
+
+				expect(stopped).toMatchObject({
+					id: RUNNING_LOG_ID,
+					isRunning: false,
+					tags: [{ id: 'meeting', name: 'meeting', color: '#2563eb' }]
+				});
+			});
+
 			it('answers 409 to a stop naming a finished log, and leaves the running one as it is', async () => {
 				const rows = [finishedLog(), runningLog()];
 				const { service, execute, employeeService, stopPreviousRunningTimers } = setup(rows);

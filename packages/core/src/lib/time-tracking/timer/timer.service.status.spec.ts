@@ -198,6 +198,26 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])('TimerService.getTi
 		jest.restoreAllMocks();
 	});
 
+	it('answers the last log with the tags the loader read for it (ever-co/ever-gauzy#12029)', async () => {
+		const { loadTimeLogTags } = jest.requireMock('../time-log/time-log-tags');
+		loadTimeLogTags.mockImplementationOnce(async (_manager: unknown, logs: Array<{ tags?: unknown }>) => {
+			logs[0].tags = [{ id: 'meeting', name: 'meeting', color: '#2563eb' }];
+		});
+		const runningToday = timeLog({
+			id: 'running-today',
+			isRunning: true,
+			startedAt: new Date('2026-10-24T00:30:00.000Z'),
+			stoppedAt: new Date('2026-10-24T01:59:00.000Z')
+		});
+
+		const status = await getTimerStatus([runningToday]);
+
+		expect(status.lastLog).toMatchObject({
+			id: 'running-today',
+			tags: [{ id: 'meeting', name: 'meeting', color: '#2563eb' }]
+		});
+	});
+
 	it('keeps a timer started before todayStart running, and counts only its part since todayStart', async () => {
 		const runningSinceYesterday = timeLog({
 			id: 'running-since-yesterday',
