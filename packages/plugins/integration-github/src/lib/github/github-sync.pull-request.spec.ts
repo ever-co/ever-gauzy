@@ -73,11 +73,22 @@ describe('GithubSyncService — pull requests are not synced as tasks', () => {
 
 			await expect(service.syncingGithubIssues('integration-1', input as never, 0)).resolves.toHaveLength(2);
 		});
+
+		it('syncs an issue whose pull_request marker is null', async () => {
+			const { service } = setup();
+			const input = {
+				organizationId: 'org-1',
+				tenantId: 'tenant-1',
+				repository: { repositoryId: 1, private: false },
+				issues: [issue(1, { pull_request: null }), pullRequest(2)]
+			};
+
+			await expect(service.syncingGithubIssues('integration-1', input as never, 0)).resolves.toHaveLength(1);
+		});
 	});
 
 	describe('getRepositoryAllIssues', () => {
-		it('returns the issues of every page without the pull requests', async () => {
-			const pages = [Array.from({ length: 100 }, (_, i) => (i % 2 ? pullRequest(i + 1) : issue(i + 1))), [issue(500)]];
+		const serviceOver = (pages: unknown[][]) => {
 			const getRepositoryIssues = jest.fn(async (_installationId: number, { page }: { page: number }) => ({
 				data: pages[page - 1] ?? []
 			}));
@@ -89,6 +100,26 @@ describe('GithubSyncService — pull requests are not synced as tasks', () => {
 				{} as never,
 				{} as never
 			);
+			return { service, getRepositoryIssues };
+		};
+
+		it('keeps paging past a full page that holds only pull requests', async () => {
+			const { service, getRepositoryIssues } = serviceOver([
+				Array.from({ length: 100 }, (_, i) => pullRequest(i + 1)),
+				[issue(101), pullRequest(102)]
+			]);
+
+			const issues = await service.getRepositoryAllIssues(1, 'acme', 'site');
+
+			expect(getRepositoryIssues).toHaveBeenCalledTimes(2);
+			expect(issues.map(({ id }) => id)).toEqual([101]);
+		});
+
+		it('returns the issues of every page without the pull requests', async () => {
+			const { service, getRepositoryIssues } = serviceOver([
+				Array.from({ length: 100 }, (_, i) => (i % 2 ? pullRequest(i + 1) : issue(i + 1))),
+				[issue(500)]
+			]);
 
 			const issues = await service.getRepositoryAllIssues(1, 'acme', 'site');
 
