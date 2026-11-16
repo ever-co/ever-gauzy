@@ -1,5 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
+import { MikroORM, RequestContext as MikroOrmRequestContext } from '@mikro-orm/core';
 import { DataSource, In, IsNull, MoreThan } from 'typeorm';
 import * as moment from 'moment';
 import 'moment-timezone';
@@ -29,6 +30,7 @@ import {
 	UserOrganization
 } from '../core/entities/internal';
 import { isUniqueViolation } from '../core/errors/unique-violation';
+import { getORMType, MultiORMEnum } from '../core/utils';
 import { invoiceTimeZoneOf } from '../invoice/invoice-date.util';
 import { InvoiceService } from '../invoice/invoice.service';
 import { CURRENT_MEMBERSHIP } from '../organization-project/organization-project-rate.service';
@@ -179,7 +181,8 @@ export class InvoiceScheduleRunService {
 		private readonly userService: UserService,
 		private readonly roleAuthorizationService: RoleAuthorizationService,
 		private readonly timeLogService: TimeLogService,
-		private readonly invoiceService: InvoiceService
+		private readonly invoiceService: InvoiceService,
+		@Optional() private readonly orm?: MikroORM
 	) {}
 
 	/**
@@ -417,6 +420,9 @@ export class InvoiceScheduleRunService {
 	/**
 	 * Runs work with the access of the schedule's author, as their own request would: inside a request context of
 	 * theirs, read again now. An author who can no longer make invoices of the organization makes nothing.
+	 *
+	 * Under DB_ORM=mikro-orm the time is read through MikroORM, which refuses its global EntityManager outside a
+	 * request: the work then also runs in a MikroORM request context of its own, as the API's requests do.
 	 */
 	private async asAuthor(
 		schedule: InvoiceSchedule,
@@ -431,16 +437,22 @@ export class InvoiceScheduleRunService {
 			return refused;
 		}
 		const request = { user: author, headers: {}, query: {}, params: {}, body: {} };
-		return await RequestContext.runWithRequest(
-			request as never,
-			async () => {
-				if (!(await this.authorMayInvoice(schedule))) {
-					return refused;
-				}
-				return await work(author);
-			},
-			{ id: randomUUID() as ID }
-		);
+		const inAuthorsRequest = () =>
+			RequestContext.runWithRequest(
+				request as never,
+				async () => {
+					if (!(await this.authorMayInvoice(schedule))) {
+						return refused;
+					}
+					return await work(author);
+				},
+				{ id: randomUUID() as ID }
+			);
+		const runsOnMikroOrm = !!this.orm && getORMType() === MultiORMEnum.MikroORM;
+		if (runsOnMikroOrm) {
+			return await MikroOrmRequestContext.create(this.orm.em, inAuthorsRequest);
+		}
+		return await inAuthorsRequest();
 	}
 
 	/**

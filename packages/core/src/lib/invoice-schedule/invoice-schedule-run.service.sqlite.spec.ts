@@ -8,6 +8,7 @@ import '../core/entities/internal';
 
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { ClsService } from 'nestjs-cls';
+import { RequestContext as MikroOrmRequestContext } from '@mikro-orm/core';
 import { Brackets, DataSource, EntityTarget, ObjectLiteral } from 'typeorm';
 import {
 	ID,
@@ -97,6 +98,8 @@ describe('InvoiceScheduleRunService on SQLite', () => {
 	let logCount = 0;
 	/** What happens elsewhere while a run reads its time, when a case says. */
 	let duringTimeRead: (() => Promise<void>) | null = null;
+	/** The service as the API builds it with the MikroORM instance at hand. */
+	let serviceOn: (orm: unknown) => InvoiceScheduleRunService;
 
 	/** Inserts a row with the columns given and a placeholder in every other NOT NULL column without a default. */
 	async function insertRow(entity: EntityTarget<ObjectLiteral>, row: Record<string, unknown>): Promise<void> {
@@ -378,6 +381,15 @@ describe('InvoiceScheduleRunService on SQLite', () => {
 			timeLogs as never,
 			invoices
 		);
+		serviceOn = (orm) =>
+			new InvoiceScheduleRunService(
+				dataSource,
+				users as never,
+				roles as never,
+				timeLogs as never,
+				invoices,
+				orm as never
+			);
 	}, TIMEOUT);
 
 	afterAll(async () => {
@@ -525,6 +537,49 @@ describe('InvoiceScheduleRunService on SQLite', () => {
 			expect(invoice.invoiceItems.map(({ quantity, price }) => [Number(quantity), Number(price)])).toEqual([
 				[2, 70]
 			]);
+		},
+		TIMEOUT
+	);
+
+	it(
+		"under DB_ORM=mikro-orm, runs the author's work in a MikroORM request context of its own",
+		async () => {
+			const orm = { em: { name: 'global entity manager' } };
+			const create = jest
+				.spyOn(MikroOrmRequestContext, 'create')
+				.mockImplementation((_em: unknown, next: () => unknown) => next() as never);
+			const previousOrm = process.env.DB_ORM;
+			process.env.DB_ORM = 'mikro-orm';
+			try {
+				await schedule();
+				await track(MARIE, '2026-10-05', '09:00', 3);
+
+				const report = await serviceOn(orm).sweep(new Date('2026-11-01T06:00:00Z'));
+
+				// MikroORM refuses its global EntityManager outside a request: the run read nothing before
+				expect(create).toHaveBeenCalledWith(orm.em, expect.any(Function));
+				expect(report).toMatchObject({ invoiced: 1, failed: 0 });
+			} finally {
+				if (previousOrm === undefined) delete process.env.DB_ORM;
+				else process.env.DB_ORM = previousOrm;
+				create.mockRestore();
+			}
+		},
+		TIMEOUT
+	);
+
+	it(
+		'opens no MikroORM request context under TypeORM, nor without the MikroORM instance at hand',
+		async () => {
+			const create = jest.spyOn(MikroOrmRequestContext, 'create');
+			await schedule();
+			await track(MARIE, '2026-10-05', '09:00', 3);
+
+			const report = await serviceOn({ em: {} }).sweep(new Date('2026-11-01T06:00:00Z'));
+
+			expect(create).not.toHaveBeenCalled();
+			expect(report).toMatchObject({ invoiced: 1 });
+			create.mockRestore();
 		},
 		TIMEOUT
 	);
