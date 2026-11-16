@@ -1,7 +1,7 @@
 import { ApiPropertyOptional, IntersectionType, OmitType, PickType } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString, IsTimeZone, IsUUID } from 'class-validator';
+import { IsArray, IsEnum, IsOptional, IsString, IsTimeZone, IsUUID } from 'class-validator';
 import { Transform, TransformFnParams } from 'class-transformer';
-import { IGetTimeLogReportInput, ITimesheet, ReportGroupFilterEnum } from '@gauzy/contracts';
+import { ID, IGetTimeLogReportInput, ITimesheet, ReportGroupFilterEnum } from '@gauzy/contracts';
 import { parseToBoolean } from '@gauzy/utils';
 import { BaseQueryDTO } from '../../../../core/dto/base-query.dto';
 import { FiltersQueryDTO, RelationsQueryDTO, SelectorsQueryDTO } from '../../../../shared/dto';
@@ -69,17 +69,54 @@ export class TimeLogQueryDTO
 	@IsOptional()
 	@Transform(({ value }: TransformFnParams) => parseToBoolean(value))
 	readonly includeBreaks: boolean;
+
+	@ApiPropertyOptional({
+		type: () => String,
+		isArray: true,
+		description: "Keep the time logs that carry one of these tags (the log's own tags, not its task's)."
+	})
+	@IsOptional()
+	@Transform(({ value }: TransformFnParams) => toList(value))
+	@IsArray()
+	@IsUUID('all', { each: true })
+	readonly tagIds: ID[];
+
+	@ApiPropertyOptional({
+		type: () => Boolean,
+		description:
+			'Keep the time logs that carry no tag: alone, only those; with tagIds, those as well as the logs carrying one of the tags.'
+	})
+	@IsOptional()
+	@Transform(({ value }: TransformFnParams) => parseToBoolean(value))
+	readonly untagged: boolean;
+}
+
+/**
+ * A list sent in a query string: `tagIds[]=a&tagIds[]=b` arrives as a list, `tagIds=a` as one value.
+ *
+ * @param value The value the query string holds.
+ * @returns The value as a list.
+ */
+function toList(value: unknown): unknown {
+	const isListOrNothing = value === undefined || value === null || Array.isArray(value);
+	if (isListOrNothing) {
+		return value;
+	}
+	return [value];
 }
 
 /**
  * The budget limit routes count every log against the budget through their own queries: `billableOnly`,
- * `includeTimeWithoutTeam` and `notInvoiced` are not offered there, and the whitelist drops them if sent.
+ * `includeTimeWithoutTeam`, `notInvoiced` and the tag filters are not offered there, and the whitelist drops them if
+ * sent.
  */
 export class TimeLogBudgetQueryDTO extends OmitType(TimeLogQueryDTO, [
 	'billableOnly',
 	'includeTimeWithoutTeam',
 	'notInvoiced',
-	'includeBreaks'
+	'includeBreaks',
+	'tagIds',
+	'untagged'
 ] as const) {}
 
 /**
