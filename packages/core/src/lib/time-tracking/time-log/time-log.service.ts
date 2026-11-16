@@ -77,6 +77,14 @@ import { moment } from './../../core/moment-extend';
 import { addDecimalStrings } from '../../money/decimal';
 import { calculateAverage, calculateAverageActivity, calculateDuration } from './time-log.utils';
 import { prepareSQLQuery as p } from './../../database/database.helper';
+import {
+	loadTimeLogTags,
+	mikroOrmTimeLogTagsKey,
+	replaceTimeLogTags,
+	sentTagIds,
+	timeLogTagsCondition,
+	timeLogTagsOf
+} from './time-log-tags';
 import { TypeOrmTimeLogRepository } from './repository/type-orm-time-log.repository';
 import { isTrackerSource } from './tracker-source';
 import { MikroOrmTimeLogRepository } from './repository/mikro-orm-time-log.repository';
@@ -2441,6 +2449,12 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 			const entry = await this.withRequiredContext(request, employee, organizationId, tenantId);
 
+			// The tags the entry is filed under, checked before any overlapped entry is cut (ever-co/ever-gauzy#12029)
+			const tags = await timeLogTagsOf(this.typeOrmRepository.manager, sentTagIds(request.tags) ?? [], {
+				tenantId,
+				organizationId
+			});
+
 			// Check for conflicts with existing time logs
 			const conflicts = await this.commandBus.execute(
 				new IGetConflictTimeLogCommand({
@@ -2494,7 +2508,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			// Create the new time log entry. The handler reads it back through this service, whose employee
 			// filter would not find a log written for a member the caller manages. Time added by a person is
 			// recorded in the entry's history; the time a tracker uploads is not, as the time its timer records.
-			const written = { ...entry, organizationId };
+			const written = { ...entry, organizationId, tags };
 			// A break is never billable
 			if (addsBreak) {
 				written.isBillable = false;
@@ -2594,6 +2608,17 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				await this.assertMovableToAnotherEmployee(id);
 			}
 
+			// The tags the update files the entry under, checked before anything is cut or written: left out, the entry
+			// keeps its own (ever-co/ever-gauzy#12029)
+			const tagIds = sentTagIds(request.tags);
+			const changesTags = tagIds !== undefined;
+			if (changesTags) {
+				await timeLogTagsOf(this.typeOrmRepository.manager, tagIds, {
+					tenantId,
+					organizationId: timeLog.organizationId
+				});
+			}
+
 			// Check for conflicts with existing time logs — in the log's own organization, which is the employee's.
 			const conflicts = await this.commandBus.execute(
 				new IGetConflictTimeLogCommand({
@@ -2635,12 +2660,20 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			// Update the last edited date for the manual time log
 			request.editedAt = new Date();
 
-			// Execute the command to update the time log, recorded in the entry's history
+			// Execute the command to update the time log, recorded in the entry's history. The tags are no column: they
+			// are written apart, below
 			const history = { reason: request.reason ?? null };
-			await this.commandBus.execute(new TimeLogUpdateCommand(request, timeLog, undefined, false, history));
+			const changes: IManualTimeInput = { ...request };
+			delete changes.tags;
+			await this.commandBus.execute(new TimeLogUpdateCommand(changes, timeLog, undefined, false, history));
+			if (changesTags) {
+				await replaceTimeLogTags(this.typeOrmRepository.manager, id, tagIds);
+			}
 
 			// Retrieve the updated time log entry (a member's log, for a manager: same scope as the read above)
-			return await this.withoutEmployeeFilter(() => this.findOneByIdString(id));
+			const updated = await this.withoutEmployeeFilter(() => this.findOneByIdString(id));
+			await loadTimeLogTags(this.typeOrmRepository.manager, [updated]);
+			return updated;
 		} catch (error) {
 			// Never swallow the reason (same blanket catch as `addManualTime`).
 			if (error instanceof HttpException) {

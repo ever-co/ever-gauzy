@@ -13,6 +13,7 @@ import { Employee } from '../../../../core/entities/internal';
 import { isUniqueViolation } from '../../../../core/errors/unique-violation';
 import { TRACKER_SOURCES } from '../../tracker-source';
 import { assertTimeLogReferencesOfTenant } from '../../time-log-references';
+import { loadTimeLogTags } from '../../time-log-tags';
 import { TimeLogCreateCommand, TimeLogCreateOptions } from '../time-log-create.command';
 import { FindTimeLogRatesCommand } from '../find-time-log-rates.command';
 import { createdChange } from '../../time-log-history';
@@ -175,8 +176,10 @@ export class TimeLogCreateHandler implements ICommandHandler<TimeLogCreateComman
 		// Update total worked hours for the employee
 		await this.updateEmployeeTotalWorkedHours(employeeId);
 
-		// Return the newly created time log
-		return await this._timeLogService.findOneByIdString(timeLog.id);
+		// The newly created time log, with the tags it is filed under (checked by the caller before anything is written)
+		const created = await this._timeLogService.findOneByIdString(timeLog.id);
+		await loadTimeLogTags(this.typeOrmTimeLogRepository.manager, [created]);
+		return created;
 	}
 
 	/**
@@ -246,12 +249,13 @@ export class TimeLogCreateHandler implements ICommandHandler<TimeLogCreateComman
 			isBillable = false,
 			source = TimeLogSourceEnum.WEB_TIMER,
 			version = null,
-			isRunning = source === TimeLogSourceEnum.DESKTOP
+			isRunning = source === TimeLogSourceEnum.DESKTOP,
+			tags
 		} = input;
 
 		console.log('create new time log with', { input, tenantId, timesheet });
 
-		return new TimeLog({
+		const timeLog = new TimeLog({
 			startedAt: moment.utc(startedAt).toDate(),
 			stoppedAt: stoppedAt ? moment.utc(stoppedAt).toDate() : undefined,
 			timesheet,
@@ -270,6 +274,12 @@ export class TimeLogCreateHandler implements ICommandHandler<TimeLogCreateComman
 			version,
 			isRunning
 		});
+		// The tags the caller checked (`timeLogTagsOf`): the save links them in `tag_time_log`
+		const isFiledUnderTags = Array.isArray(tags) && tags.length > 0;
+		if (isFiledUnderTags) {
+			timeLog.tags = tags;
+		}
+		return timeLog;
 	}
 
 	/**
