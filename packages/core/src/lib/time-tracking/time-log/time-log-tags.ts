@@ -30,8 +30,9 @@ export interface ITimeLogTagCondition {
 }
 
 /**
- * The tags a write sends, each once, whatever case each copy is in (the first one sent is kept): `undefined` when it
- * sends none, so the log keeps the tags it has.
+ * The tags a write or a filter sends, each spelling once: `undefined` when it sends none, so the log keeps the tags it
+ * has. An id sent in two cases keeps both: a filter binds each one, as SQLite compares ids by case, and a write takes
+ * each tag once in `timeLogTagsOf`.
  *
  * @param tags The `tags` of a body.
  * @returns The tag ids, or `undefined`.
@@ -42,14 +43,7 @@ export function sentTagIds(tags: unknown): ID[] | undefined {
 	}
 	const sent = Array.isArray(tags) ? tags : [tags];
 	const ids = sent.map((tag) => String(tag ?? '').trim()).filter((id) => id.length > 0);
-	const byCanonicalId = new Map<string, ID>();
-	for (const id of ids) {
-		const canonicalId = canonicalIdOf(id);
-		if (!byCanonicalId.has(canonicalId)) {
-			byCanonicalId.set(canonicalId, id);
-		}
-	}
-	return [...byCanonicalId.values()];
+	return [...new Set(ids)];
 }
 
 /**

@@ -20,10 +20,10 @@ describe('time log tags', () => {
 			expect(sentTagIds('meeting')).toEqual(['meeting']);
 		});
 
-		it('answers a tag once when it is sent both in capitals and in lowercase, as the database finds them', () => {
+		it('keeps each spelling of an id sent in both cases: SQLite compares ids by case, so a filter binds both', () => {
 			expect(
 				sentTagIds(['A0EEBC99-9C0B-4EF8-BB6D-6BB9BD380A11', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'])
-			).toEqual(['A0EEBC99-9C0B-4EF8-BB6D-6BB9BD380A11']);
+			).toEqual(['A0EEBC99-9C0B-4EF8-BB6D-6BB9BD380A11', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11']);
 		});
 	});
 
@@ -43,6 +43,17 @@ describe('time log tags', () => {
 			expect(condition).toContain('"filter_link"."timeLogId" = "time_log"."id"');
 			expect(condition).toContain('"filter_link"."tagId" IN (:timeLogTag0, :timeLogTag1)');
 			expect(condition).not.toContain('NOT EXISTS');
+		});
+
+		it('binds every spelling of an id asked in both cases, so a log stored under either one is kept', () => {
+			const { parameters } = timeLogTagsCondition('"time_log"."id"', {
+				tagIds: ['A0EEBC99-9C0B-4EF8-BB6D-6BB9BD380A11', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11']
+			});
+
+			expect(parameters).toEqual({
+				timeLogTag0: 'A0EEBC99-9C0B-4EF8-BB6D-6BB9BD380A11',
+				timeLogTag1: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'
+			});
 		});
 
 		it('counts live tags only', () => {
