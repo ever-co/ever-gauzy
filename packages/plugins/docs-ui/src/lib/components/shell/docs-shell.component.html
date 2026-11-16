@@ -1,29 +1,10 @@
 <div class="docs-shell">
-	<!-- Folder rail: always present, so the tree is one click away on every Documents
-	     route without permanently taking a column of the page. -->
-	<div class="docs-tree-rail">
-		<button
-			#treeOpenButton
-			nbButton
-			ghost
-			size="small"
-			class="docs-tree-rail-button"
-			aria-controls="docs-tree-drawer"
-			[attr.aria-expanded]="treeOpen"
-			[nbTooltip]="'DOCS.TREE.SHOW_FOLDERS' | translate"
-			nbTooltipPlacement="right"
-			[attr.aria-label]="'DOCS.TREE.SHOW_FOLDERS' | translate"
-			(click)="toggleTree()"
-		>
-			<nb-icon icon="folder-outline"></nb-icon>
-		</button>
-	</div>
-
 	@if (treeOpen) {
 		<div class="docs-tree-backdrop" aria-hidden="true" (click)="closeTree()"></div>
 	}
 
-	<!-- Folder drawer: slides in over the page from the left. Kept rendered while
+	<!-- Folder drawer: slides in over the page from the left, opened by the folder
+	     button in each page's header (DocsTreeDrawerService). Kept rendered while
 	     closed (hidden with `visibility`) so the tree is loaded and opens instantly. -->
 	<aside
 		#treeDrawer

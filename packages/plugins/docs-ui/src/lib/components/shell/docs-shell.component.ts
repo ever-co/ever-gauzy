@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -12,12 +12,13 @@ import { DocumentsActions } from '../../+state/documents.actions';
 import { DocumentsQuery } from '../../+state/documents.query';
 import { DocsPreviewModalComponent } from '../preview/docs-preview-modal.component';
 import { DOCS_PREVIEW_DIALOG_CONFIG } from '../../docs.constants';
+import { DocsTreeDrawerService } from '../../services/docs-tree-drawer.service';
 
 /**
- * Shell for /pages/documents: a slim folder rail whose button opens the tree as a
- * drawer over the page from the left, the content router-outlet, and the detail
- * side panel host. The
- * detail panel is not a route — it is `?id=<documentId>` on the current URL.
+ * Shell for /pages/documents: the folder drawer (opened from the folder button in
+ * each page's header, through `DocsTreeDrawerService`), the content router-outlet,
+ * and the detail side panel host. The detail panel is not a route — it is
+ * `?id=<documentId>` on the current URL.
  */
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -27,11 +28,12 @@ import { DOCS_PREVIEW_DIALOG_CONFIG } from '../../docs.constants';
 	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
-export class DocsShellComponent extends TranslationBaseComponent implements OnInit {
-	/** Folder drawer — closed on every visit, so the list always gets the full width. */
+export class DocsShellComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
+	/** Folder drawer — closed on every visit, so the page always gets the full width. */
 	public treeOpen = false;
 	@ViewChild('treeDrawer') private readonly treeDrawer?: ElementRef<HTMLElement>;
-	@ViewChild('treeOpenButton', { read: ElementRef }) private readonly treeOpenButton?: ElementRef<HTMLElement>;
+	/** Whatever had focus when the drawer opened (the header's folder button) — focus returns there. */
+	private openedFrom: HTMLElement | null = null;
 	public detailId$: Observable<ID | null> = this.documentsQuery.detailId$;
 
 	constructor(
@@ -40,12 +42,20 @@ export class DocsShellComponent extends TranslationBaseComponent implements OnIn
 		private readonly router: Router,
 		private readonly actions: Actions,
 		private readonly documentsQuery: DocumentsQuery,
-		private readonly dialogService: NbDialogService
+		private readonly dialogService: NbDialogService,
+		private readonly drawer: DocsTreeDrawerService
 	) {
 		super(translateService);
 	}
 
 	ngOnInit(): void {
+		// Every page starts with the drawer closed, whatever an earlier visit left behind.
+		this.drawer.close();
+		this.drawer.open$.pipe(distinctUntilChanged(), untilDestroyed(this)).subscribe((open) => {
+			if (open) this.onDrawerOpened();
+			else this.onDrawerClosed();
+		});
+
 		// URL ?id= is the source of truth for the open detail panel.
 		this.route.queryParamMap
 			.pipe(
@@ -63,25 +73,33 @@ export class DocsShellComponent extends TranslationBaseComponent implements OnIn
 			});
 	}
 
-	toggleTree(): void {
-		if (this.treeOpen) {
-			this.closeTree();
-			return;
-		}
+	ngOnDestroy(): void {
+		this.drawer.close();
+	}
+
+	/**
+	 * @param restoreFocus `false` when the user picked a destination in the tree —
+	 * focus then belongs to where they went, not to the button that opened it.
+	 */
+	closeTree(restoreFocus = true): void {
+		if (!this.treeOpen) return;
+		if (!restoreFocus) this.openedFrom = null;
+		this.drawer.close();
+	}
+
+	private onDrawerOpened(): void {
+		this.openedFrom = document.activeElement instanceof HTMLElement ? document.activeElement : null;
 		this.treeOpen = true;
 		// Keyboard users land inside the drawer; Escape is handled on it. Deferred one
 		// task so the drawer is visible (no longer `visibility: hidden`) and focusable.
 		setTimeout(() => this.treeDrawer?.nativeElement.focus());
 	}
 
-	/**
-	 * @param restoreFocus `false` when the user picked a destination in the tree —
-	 * focus then belongs to what opened, not to the rail button.
-	 */
-	closeTree(restoreFocus = true): void {
+	private onDrawerClosed(): void {
 		if (!this.treeOpen) return;
 		this.treeOpen = false;
-		if (restoreFocus) this.treeOpenButton?.nativeElement.focus();
+		this.openedFrom?.focus();
+		this.openedFrom = null;
 	}
 
 	onDetailClosed(): void {
