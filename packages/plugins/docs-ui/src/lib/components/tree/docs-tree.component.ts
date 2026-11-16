@@ -94,7 +94,12 @@ export class DocsTreeComponent extends TranslationBaseComponent implements OnIni
 	public options: ITreeOptions = {
 		childrenField: 'children',
 		idField: 'id',
-		useVirtualScroll: true,
+		// 🛑 Off on purpose. Virtual scroll makes `tree-viewport` its own `height: 100%`
+		// scroller, which inside the sidebar resolved to a short clipped box with a second
+		// scrollbar, and it renders no node until an after-render measuring pass — the
+		// visible delay before the tree appeared. The sidebar column already scrolls, and
+		// the tree is lazy (children load on expand), so plain rendering is cheap.
+		useVirtualScroll: false,
 		getChildren: (node: { data: IDocsTreeNode }) => this.treeStore.loadChildren(node.data.id),
 		allowDrag: (node: { data: IDocsTreeNode }) => this.canUpdate && !node.data.isLocked,
 		allowDrop: (element: { data: IDocsTreeNode }, { parent }: { parent: { data?: IDocsTreeNode } }) =>
