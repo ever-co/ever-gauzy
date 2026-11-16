@@ -100,6 +100,12 @@ describe('InvoiceScheduleRunService on SQLite', () => {
 	let duringTimeRead: (() => Promise<void>) | null = null;
 	/** The service as the API builds it with the MikroORM instance at hand. */
 	let serviceOn: (orm: unknown) => InvoiceScheduleRunService;
+	/** What the service reads through other services: the author, their role, and the time to bill. */
+	let readers: {
+		users: { getIfExists: (id: ID) => Promise<unknown> };
+		roles: { attachAuthorizationState: (user: unknown) => Promise<unknown> };
+		timeLogs: { getTimeLogs: (request: never) => Promise<unknown> };
+	};
 
 	/** Inserts a row with the columns given and a placeholder in every other NOT NULL column without a default. */
 	async function insertRow(entity: EntityTarget<ObjectLiteral>, row: Record<string, unknown>): Promise<void> {
@@ -381,6 +387,7 @@ describe('InvoiceScheduleRunService on SQLite', () => {
 			timeLogs as never,
 			invoices
 		);
+		readers = { users, roles, timeLogs: timeLogs as never };
 		serviceOn = (orm) =>
 			new InvoiceScheduleRunService(
 				dataSource,
@@ -542,12 +549,29 @@ describe('InvoiceScheduleRunService on SQLite', () => {
 	);
 
 	it(
-		"under DB_ORM=mikro-orm, runs the author's work in a MikroORM request context of its own",
+		'under DB_ORM=mikro-orm, reads the author and runs their work in a MikroORM request context of its own',
 		async () => {
 			const orm = { em: { name: 'global entity manager' } };
+			const insideMikroOrmContext = new AsyncLocalStorage<boolean>();
 			const create = jest
 				.spyOn(MikroOrmRequestContext, 'create')
-				.mockImplementation((_em: unknown, next: () => unknown) => next() as never);
+				.mockImplementation(
+					(_em: unknown, next: () => unknown) => insideMikroOrmContext.run(true, next) as never
+				);
+			// Each read through another service goes through MikroORM there: it must happen inside the context
+			const readsOutside: string[] = [];
+			const watch = <T extends object>(reader: T, method: keyof T & string) => {
+				const read = reader[method] as unknown as (...args: unknown[]) => unknown;
+				return jest.spyOn(reader, method as never).mockImplementation(((...args: unknown[]) => {
+					if (!insideMikroOrmContext.getStore()) readsOutside.push(method);
+					return read.apply(reader, args);
+				}) as never);
+			};
+			const watched = [
+				watch(readers.users, 'getIfExists'),
+				watch(readers.roles, 'attachAuthorizationState'),
+				watch(readers.timeLogs, 'getTimeLogs')
+			];
 			const previousOrm = process.env.DB_ORM;
 			process.env.DB_ORM = 'mikro-orm';
 			try {
@@ -558,11 +582,13 @@ describe('InvoiceScheduleRunService on SQLite', () => {
 
 				// MikroORM refuses its global EntityManager outside a request: the run read nothing before
 				expect(create).toHaveBeenCalledWith(orm.em, expect.any(Function));
+				expect(readsOutside).toEqual([]);
 				expect(report).toMatchObject({ invoiced: 1, failed: 0 });
 			} finally {
 				if (previousOrm === undefined) delete process.env.DB_ORM;
 				else process.env.DB_ORM = previousOrm;
 				create.mockRestore();
+				watched.forEach((spy) => spy.mockRestore());
 			}
 		},
 		TIMEOUT

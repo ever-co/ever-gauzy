@@ -421,10 +421,23 @@ export class InvoiceScheduleRunService {
 	 * Runs work with the access of the schedule's author, as their own request would: inside a request context of
 	 * theirs, read again now. An author who can no longer make invoices of the organization makes nothing.
 	 *
-	 * Under DB_ORM=mikro-orm the time is read through MikroORM, which refuses its global EntityManager outside a
-	 * request: the work then also runs in a MikroORM request context of its own, as the API's requests do.
+	 * Under DB_ORM=mikro-orm the author and the time are read through MikroORM, which refuses its global EntityManager
+	 * outside a request: the author is then read, and the work done, in a MikroORM request context of its own, as the
+	 * API's requests do.
 	 */
 	private async asAuthor(
+		schedule: InvoiceSchedule,
+		work: (author: IAuthenticatedUser) => Promise<IRunEnd>
+	): Promise<IRunEnd> {
+		const runsOnMikroOrm = !!this.orm && getORMType() === MultiORMEnum.MikroORM;
+		if (runsOnMikroOrm) {
+			return await MikroOrmRequestContext.create(this.orm.em, () => this.asAuthorNow(schedule, work));
+		}
+		return await this.asAuthorNow(schedule, work);
+	}
+
+	/** `asAuthor`, once the ORM's own context is open. */
+	private async asAuthorNow(
 		schedule: InvoiceSchedule,
 		work: (author: IAuthenticatedUser) => Promise<IRunEnd>
 	): Promise<IRunEnd> {
@@ -437,22 +450,16 @@ export class InvoiceScheduleRunService {
 			return refused;
 		}
 		const request = { user: author, headers: {}, query: {}, params: {}, body: {} };
-		const inAuthorsRequest = () =>
-			RequestContext.runWithRequest(
-				request as never,
-				async () => {
-					if (!(await this.authorMayInvoice(schedule))) {
-						return refused;
-					}
-					return await work(author);
-				},
-				{ id: randomUUID() as ID }
-			);
-		const runsOnMikroOrm = !!this.orm && getORMType() === MultiORMEnum.MikroORM;
-		if (runsOnMikroOrm) {
-			return await MikroOrmRequestContext.create(this.orm.em, inAuthorsRequest);
-		}
-		return await inAuthorsRequest();
+		return await RequestContext.runWithRequest(
+			request as never,
+			async () => {
+				if (!(await this.authorMayInvoice(schedule))) {
+					return refused;
+				}
+				return await work(author);
+			},
+			{ id: randomUUID() as ID }
+		);
 	}
 
 	/**
