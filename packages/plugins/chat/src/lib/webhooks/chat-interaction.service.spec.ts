@@ -20,6 +20,7 @@ jest.mock('@gauzy/core', () => {
 		__esModule: true,
 		MultiORMColumn: decorator,
 		MultiORMEntity: decorator,
+		ExportRedacted: decorator,
 		TenantOrganizationBaseEntity: class {},
 		MikroOrmBaseEntityRepository: class {},
 		signWebhookPayload: signature.signWebhookPayload,
