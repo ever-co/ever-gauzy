@@ -35,6 +35,9 @@ const scope = { tenantId: TENANT, organizationId: ORG };
 /** A later `updatedAt` than any the cases read, in the form TypeORM writes on SQLite. */
 const MEANWHILE = '2030-01-01 12:00:00.000';
 
+/** An `updatedAt` the clock has not reached, in the form TypeORM writes on SQLite. */
+const FUTURE = '2099-01-01 00:00:00.000';
+
 describe('Invoice edits under a precondition, on TypeORM and on MikroORM (#5243)', () => {
 	const file = path.join(os.tmpdir(), `gauzy-invoice-conditional-${process.pid}-${Date.now()}.sqlite3`);
 
@@ -380,6 +383,25 @@ describe('Invoice edits under a precondition, on TypeORM and on MikroORM (#5243)
 				expect(await termsOf(invoiceId)).toBe('edited');
 			});
 
+			it('moves updatedAt past the value checked, even when the clock stands at it', async () => {
+				const invoiceId = await draftInvoice();
+				// A value the clock has not passed yet: a write of the same transaction can leave the row behind it
+				await dataSource.query(`UPDATE "invoice" SET "updatedAt" = ? WHERE "id" = ?`, [FUTURE, invoiceId]);
+				orm.em.clear();
+				const expectedUpdatedAt = await readVersion(ormType, invoiceId);
+				const clock = jest.spyOn(Date, 'now').mockReturnValue(new Date(expectedUpdatedAt).getTime());
+				try {
+					await handlers(ormType).update(fields(invoiceId, { expectedUpdatedAt }));
+				} finally {
+					clock.mockRestore();
+				}
+
+				const second = handlers(ormType).update(fields(invoiceId, { expectedUpdatedAt, terms: 'second' }));
+
+				await expect(second).rejects.toMatchObject({ status: 409 });
+				expect(await termsOf(invoiceId)).toBe('edited');
+			});
+
 			it('saves the fields as it always did when no precondition is stated', async () => {
 				const invoiceId = await draftInvoice();
 				await changedMeanwhile(invoiceId);
@@ -489,6 +511,27 @@ describe('Invoice edits under a precondition, on TypeORM and on MikroORM (#5243)
 				expect(await linesOf(invoiceId)).toEqual(['added', 'held']);
 			});
 
+			it("a line recorded on its own under the id of another invoice's line, which it moves", async () => {
+				const invoiceId = await draftInvoice();
+				const otherInvoiceId = await draftInvoice();
+				const [otherLineId] = await lineIdsOf(otherInvoiceId);
+				const lines = handlers(ormType).lines;
+				const leftReadAt = await readVersion(ormType, otherInvoiceId);
+
+				await refusesTheSaveAfter(invoiceId, () =>
+					lines.createLine({ ...line(invoiceId, 'taken'), id: otherLineId })
+				);
+
+				// The invoice the line left moved too: a save made on its earlier read is refused
+				orm.em.clear();
+				expect(await readVersion(ormType, otherInvoiceId)).not.toBe(leftReadAt);
+				const save = handlers(ormType).updateWithItems({
+					...fields(otherInvoiceId, { expectedUpdatedAt: leftReadAt }),
+					invoiceItems: [line(otherInvoiceId, 'stale')]
+				});
+				await expect(save).rejects.toMatchObject({ status: 409 });
+			});
+
 			it('a line changed on its own (PUT /invoice-item/:id, updateInvoiceItem)', async () => {
 				const invoiceId = await draftInvoice();
 				const [lineId] = await lineIdsOf(invoiceId);
@@ -548,6 +591,32 @@ describe('Invoice edits under a precondition, on TypeORM and on MikroORM (#5243)
 				await expect(save).rejects.toMatchObject({ status: 409 });
 			});
 
+			it('a line of no invoice removed on its own after another request attached it to an invoice', async () => {
+				const invoiceId = await draftInvoice();
+				const lineId = randomUUID();
+				await insert('invoice_item', {
+					id: lineId,
+					...scope,
+					invoiceId: null,
+					description: 'loose',
+					price: 1,
+					quantity: 1,
+					totalValue: 1
+				});
+				const lines = handlers(ormType).lines;
+				const readAt = await readVersion(ormType, invoiceId);
+				// Attached by another request between this one's read of the line and its lock
+				await dataSource.query(`UPDATE "invoice_item" SET "invoiceId" = ? WHERE "id" = ?`, [invoiceId, lineId]);
+				orm.em.clear();
+				jest.spyOn(lines as any, 'invoiceIdOfLine').mockResolvedValueOnce(null);
+
+				await lines.deleteLine(lineId);
+
+				expect(await lineIdsOf(invoiceId)).not.toContain(lineId);
+				orm.em.clear();
+				expect(await readVersion(ormType, invoiceId)).not.toBe(readAt);
+			});
+
 			it('a status change (PUT /invoices/:id/action, updateInvoiceAction)', async () => {
 				const invoiceId = await draftInvoice();
 
@@ -564,6 +633,24 @@ describe('Invoice edits under a precondition, on TypeORM and on MikroORM (#5243)
 				await refusesTheSaveAfter(invoiceId, () =>
 					handlers(ormType).update({ id: invoiceId, ...scope, invoiceItems: [line(invoiceId, 'cascaded')] })
 				);
+			});
+
+			it("refuses lines saved by cascade that name another invoice's line, saving nothing", async () => {
+				const invoiceId = await draftInvoice();
+				const otherInvoiceId = await draftInvoice();
+				const [otherLineId] = await lineIdsOf(otherInvoiceId);
+
+				const save = handlers(ormType).update({
+					id: invoiceId,
+					...scope,
+					terms: 'edited',
+					invoiceItems: [{ ...line(invoiceId, 'taken'), id: otherLineId }]
+				});
+
+				await expect(save).rejects.toMatchObject({ status: 400 });
+				expect(await termsOf(invoiceId)).toBe('as read');
+				expect(await lineIdsOf(otherInvoiceId)).toEqual([otherLineId]);
+				expect(await linesOf(otherInvoiceId)).toEqual(['held']);
 			});
 
 			it('an invoice saved before, saved again with its lines (POST /invoices)', async () => {
@@ -602,6 +689,9 @@ describe('Invoice edits under a precondition, on TypeORM and on MikroORM (#5243)
 					isBillable: 1,
 					invoiceItemId: (await lineIdsOf(voidInvoiceId))[0]
 				});
+				// A value the clock has not passed yet: the mark moves it past what it holds, not only to now
+				await dataSource.query(`UPDATE "invoice" SET "updatedAt" = ? WHERE "id" = ?`, [FUTURE, voidInvoiceId]);
+				orm.em.clear();
 				const expectedUpdatedAt = await readVersion(ormType, voidInvoiceId);
 				invoiceNumber += 1;
 				const billingInvoiceId = randomUUID();
@@ -625,7 +715,8 @@ describe('Invoice edits under a precondition, on TypeORM and on MikroORM (#5243)
 				]);
 				expect(row.releasedTimeBilledAt).not.toBeNull();
 				orm.em.clear();
-				expect(await readVersion(ormType, voidInvoiceId)).not.toBe(expectedUpdatedAt);
+				const markedVersion = await readVersion(ormType, voidInvoiceId);
+				expect(new Date(markedVersion).getTime()).toBeGreaterThan(new Date(expectedUpdatedAt).getTime());
 			});
 		});
 

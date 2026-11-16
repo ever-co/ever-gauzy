@@ -1,5 +1,5 @@
 import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { FilterQuery } from '@mikro-orm/core';
+import { FilterQuery, LockMode } from '@mikro-orm/core';
 import { DeleteResult, FindOptionsWhere, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ID, IInvoiceItem, IInvoiceItemCreateInput } from '@gauzy/contracts';
@@ -18,8 +18,10 @@ import {
 	ILinesTransaction,
 	inLinesTransaction,
 	lockInvoice,
+	locksRows,
 	saveBillingTime,
-	splitBilledTime
+	splitBilledTime,
+	typeOrmRowLock
 } from './invoice-item-billed-time';
 import { replaceLinesKeepingTime } from './invoice-item-kept-time';
 import { holdInvoiceUnchanged, INVOICE_LINE_OF_ANOTHER_INVOICE, touchInvoice } from '../invoice/invoice-precondition';
@@ -148,10 +150,13 @@ export class InvoiceItemService extends TenantAwareCrudService<InvoiceItem> {
 
 	/**
 	 * Records one line (`POST /invoice-item`, GraphQL `createInvoiceItem`), moving its invoice's `updatedAt` (see
-	 * {@link writeLinesOf}).
+	 * {@link writeLinesOf}). A body that names a stored line by its `id` saves over that line, which may move it from its
+	 * invoice to the one the body names: the invoice it belongs to is locked and moved too, as for an update.
 	 */
 	async createLine(entity: IPartialEntity<InvoiceItem>): Promise<InvoiceItem> {
-		return await this.writeLinesOf(null, [invoiceIdStatedBy(entity)], (service) => service.create(entity));
+		const namedLineId = (entity as { id?: unknown }).id;
+		const lineId = typeof namedLineId === 'string' && namedLineId ? namedLineId : null;
+		return await this.writeLinesOf(lineId, [invoiceIdStatedBy(entity)], (service) => service.create(entity));
 	}
 
 	/**
@@ -215,7 +220,9 @@ export class InvoiceItemService extends TenantAwareCrudService<InvoiceItem> {
 		for (let attempt = 1; ; attempt += 1) {
 			const owner = lineId ? await this.invoiceIdOfLine(lineId) : null;
 			const named = [...new Set([owner, ...statedInvoiceIds].filter((id): id is ID => Boolean(id)))].sort();
-			if (named.length === 0) {
+			// A new line of no invoice is written as it always was; a stored line always runs locked, whatever its
+			// invoice, so a request that attaches it to one meanwhile is waited for and seen
+			if (named.length === 0 && !lineId) {
 				return await write(this);
 			}
 			try {
@@ -363,8 +370,10 @@ class LineMovedError extends Error {
 }
 
 /**
- * The invoice a line belongs to, withdrawn or not, in the caller's tenant, read in the transaction given, after its
- * locks were taken: what a request that moved the line committed meanwhile is seen.
+ * The invoice a line belongs to, withdrawn or not, in the caller's tenant, read in the transaction given after the
+ * invoices' locks were taken, and with the line's own row locked until the transaction ends where the database locks
+ * rows: a request that moves or attaches the line meanwhile is waited for and seen, and one that comes after waits for
+ * this write. Every write of the line updates its row, so they all meet on that lock.
  */
 async function lineOwnerIn(transaction: ILinesTransaction, id: ID): Promise<ID | null> {
 	const tenantId = RequestContext.currentTenantId();
@@ -375,7 +384,8 @@ async function lineOwnerIn(transaction: ILinesTransaction, id: ID): Promise<ID |
 		const line = await transaction.mikroOrm.findOne(InvoiceItem, where as FilterQuery<InvoiceItem>, {
 			fields: ['id', 'invoice'] as never,
 			filters: false,
-			disableIdentityMap: true
+			disableIdentityMap: true,
+			lockMode: locksRows() ? LockMode.PESSIMISTIC_WRITE : undefined
 		});
 		const stored = line as unknown as { invoiceId?: ID | null; invoice?: { id?: ID } | null } | null;
 		return stored?.invoiceId ?? stored?.invoice?.id ?? null;
@@ -383,7 +393,8 @@ async function lineOwnerIn(transaction: ILinesTransaction, id: ID): Promise<ID |
 	const line = await transaction.typeOrm.findOne(InvoiceItem, {
 		where,
 		select: { id: true, invoiceId: true },
-		withDeleted: true
+		withDeleted: true,
+		...typeOrmRowLock()
 	});
 	return line?.invoiceId ?? null;
 }

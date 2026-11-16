@@ -207,6 +207,16 @@ async function typeOrmMarkReleasedTimeBilled(
 	}
 	await typeOrmLockReleasingDocuments(manager, timeLogIds, lineIdsOf(lines), scope.tenantId, 'fail');
 	const { condition, parameters } = releasedBy(timeLogIds, lineIdsOf(lines));
+	// The documents the mark changes, as they stand: each `updatedAt` moves past what it holds (see `movesPast`)
+	const marking: IStoredVersion[] = await manager
+		.createQueryBuilder(Invoice, 'invoice')
+		.withDeleted()
+		.select(['invoice.id', 'invoice.updatedAt'])
+		.where(p(`"invoice"."tenantId" = :tenantId`), { tenantId: scope.tenantId })
+		.andWhere(p(`"invoice"."releasedTimeBilledAt" IS NULL`))
+		.andWhere(p(`"invoice"."status" IN (:...releasingStatuses)`), { releasingStatuses: RELEASING_STATUSES })
+		.andWhere(releasedBy(timeLogIds, lineIdsOf(lines), 'invoice').condition, parameters)
+		.getMany();
 	const markedAt = new Date();
 	await manager
 		.createQueryBuilder()
@@ -218,6 +228,41 @@ async function typeOrmMarkReleasedTimeBilled(
 		.andWhere(p(`"status" IN (:...releasingStatuses)`), { releasingStatuses: RELEASING_STATUSES })
 		.andWhere(condition, parameters)
 		.execute();
+	for (const document of movesPast(marking, markedAt)) {
+		await manager
+			.createQueryBuilder()
+			.update(Invoice)
+			.set({ updatedAt: document.updatedAt })
+			.where(p(`"id" = :id`), { id: document.id })
+			.andWhere(p(`"tenantId" = :tenantId`), { tenantId: scope.tenantId })
+			.callListeners(false)
+			.execute();
+	}
+}
+
+/** A document's id and the `updatedAt` it holds. */
+interface IStoredVersion {
+	id?: ID;
+	updatedAt?: Date | string | number | null;
+}
+
+/**
+ * The documents a write stamped `updatedAt = stampedAt` on whose stored value was not before it (a clock behind the
+ * stored value, or the same millisecond), each with the value it moves to instead: a millisecond past what it held, so
+ * it differs from what a caller read, as `updatedAt` is compared to the millisecond.
+ */
+function movesPast(documents: IStoredVersion[], stampedAt: Date): Array<{ id: ID; updatedAt: Date }> {
+	const moved: Array<{ id: ID; updatedAt: Date }> = [];
+	for (const document of documents) {
+		const held =
+			document.updatedAt === undefined || document.updatedAt === null
+				? Number.NaN
+				: new Date(document.updatedAt).getTime();
+		if (document.id && !Number.isNaN(held) && held >= stampedAt.getTime()) {
+			moved.push({ id: document.id, updatedAt: new Date(held + 1) });
+		}
+	}
+	return moved;
 }
 
 /** The MikroORM form of {@link typeOrmMarkReleasedTimeBilled}, on the transaction's entity manager. */
@@ -239,12 +284,34 @@ async function mikroOrmMarkReleasedTimeBilled(
 		status: { $in: RELEASING_STATUSES },
 		[releasedByKey]: []
 	} as FilterQuery<Invoice>;
+	// The documents the mark changes, as they stand: each `updatedAt` moves past what it holds (see `movesPast`). A find
+	// names the table by an alias of its own, so the condition is built on it, with the same named parameters.
+	const findKey = raw((alias: string) => releasedBy(timeLogIds, lineIdsOf(lines), alias).condition, parameters);
+	const marking = (await em.find(
+		Invoice,
+		{
+			tenantId: scope.tenantId,
+			releasedTimeBilledAt: null,
+			status: { $in: RELEASING_STATUSES },
+			[findKey]: []
+		} as FilterQuery<Invoice>,
+		{ fields: ['id', 'updatedAt'] as never, filters: false, disableIdentityMap: true }
+	)) as unknown as IStoredVersion[];
 	// A native update stamps no update date: the mark is a change of the document, so it moves `updatedAt` itself
 	const markedAt = new Date();
 	await em.nativeUpdate(Invoice, where, {
 		releasedTimeBilledAt: markedAt,
 		updatedAt: markedAt
 	} as EntityData<Invoice>);
+	for (const document of movesPast(marking, markedAt)) {
+		await em.nativeUpdate(
+			Invoice,
+			{ id: document.id, tenantId: scope.tenantId } as FilterQuery<Invoice>,
+			{
+				updatedAt: document.updatedAt
+			} as EntityData<Invoice>
+		);
+	}
 }
 
 /** The ids of the lines given, each once. */

@@ -1,5 +1,7 @@
 import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
 import { Invoice } from './invoice.entity';
+import { FilterQuery } from '@mikro-orm/core';
+import { InvoiceItem } from '../core/entities/internal';
 import { Between, FindOperator, In, IsNull, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { EmailService } from './../email-send/email.service';
@@ -52,6 +54,7 @@ import {
 } from '../invoice-item/invoice-item-billed-time';
 import {
 	holdInvoiceUnchanged,
+	INVOICE_LINE_OF_ANOTHER_INVOICE,
 	INVOICE_ORGANIZATION_IS_KEPT,
 	InvoiceChangedError,
 	invoiceChangedException,
@@ -106,6 +109,52 @@ export interface IInvoiceLinesWriter {
 /** What the conflict of a conditional write carries: the invoice with its lines, as the caller may read it now. */
 const CHANGED_INVOICE_RELATIONS = ['invoiceItems'];
 
+/** The ids of the stored lines a write of an invoice names among its `invoiceItems`. */
+function namedLineIdsOf(change: { invoiceItems?: unknown }): ID[] {
+	const lines = Array.isArray(change.invoiceItems) ? (change.invoiceItems as Array<{ id?: unknown } | null>) : [];
+	return lines.map((line) => line?.id).filter((id): id is ID => typeof id === 'string' && id.length > 0);
+}
+
+/**
+ * Refuses lines, saved by cascade with an invoice, that name by `id` a line of another invoice: the save would move
+ * that line onto this invoice, and the invoice it left would lose it without its own `updatedAt` moving. A line named
+ * by an id no line holds is a new line, as before; one of this invoice is saved in place, as before.
+ *
+ * @throws BadRequestException (`INVOICE_LINE_OF_ANOTHER_INVOICE`) when one does, or when one is named twice.
+ */
+async function assertNamedLinesOwn(transaction: ILinesTransaction, change: { id?: ID; invoiceItems?: unknown }) {
+	const named = namedLineIdsOf(change);
+	if (named.length === 0) {
+		return;
+	}
+	if (new Set(named).size !== named.length) {
+		throw new BadRequestException(INVOICE_LINE_OF_ANOTHER_INVOICE);
+	}
+	const tenantId = RequestContext.currentTenantId();
+	let owners: Array<ID | null>;
+	if (transaction.mikroOrm) {
+		const where = (
+			tenantId ? { id: { $in: named }, tenantId } : { id: { $in: named } }
+		) as FilterQuery<InvoiceItem>;
+		const stored = (await transaction.mikroOrm.find(InvoiceItem, where, {
+			fields: ['id', 'invoice'] as never,
+			filters: false,
+			disableIdentityMap: true
+		})) as unknown as Array<{ invoiceId?: ID | null; invoice?: { id?: ID } | null }>;
+		owners = stored.map((line) => line.invoiceId ?? line.invoice?.id ?? null);
+	} else {
+		const stored = await transaction.typeOrm.find(InvoiceItem, {
+			where: tenantId ? { id: In(named), tenantId } : { id: In(named) },
+			select: { id: true, invoiceId: true },
+			withDeleted: true
+		});
+		owners = stored.map((line) => line.invoiceId ?? null);
+	}
+	if (owners.some((owner) => owner !== change.id)) {
+		throw new BadRequestException(INVOICE_LINE_OF_ANOTHER_INVOICE);
+	}
+}
+
 /** Whether a write names an invoice and states lines for it, which its save writes by cascade. */
 function statesLinesOfInvoice(change: { id?: ID; invoiceItems?: unknown }): boolean {
 	const statesLines = Array.isArray(change.invoiceItems) && change.invoiceItems.length > 0;
@@ -128,6 +177,7 @@ async function writingLinesOf(
 	change: { id?: ID; invoiceItems?: unknown },
 	write: () => Promise<IInvoice>
 ): Promise<IInvoice> {
+	await assertNamedLinesOwn(transaction, change);
 	const savedBefore = statesLinesOfInvoice(change)
 		? await lockInvoice(transaction, change.id, RequestContext.currentTenantId())
 		: null;
@@ -257,7 +307,7 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 		write: (service: InvoiceService) => Promise<IInvoice>
 	): Promise<IInvoice> {
 		const leavesFinalStatus = await this.mayLeaveFinalStatus(change);
-		const savesLines = statesLinesOfInvoice(change);
+		const savesLines = statesLinesOfInvoice(change) || namedLineIdsOf(change).length > 0;
 		if (!leavesFinalStatus && !savesLines) {
 			return await write(this);
 		}
@@ -291,8 +341,10 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 			inLinesTransaction(this, this.ownRepositories(), async (service, transaction) => {
 				const stored = await holdInvoiceUnchanged(transaction, change.id, expectedUpdatedAt);
 				assertFinalStatusKept(stored, change.status);
+				await assertNamedLinesOwn(transaction, change);
 				const written = await service.create(change);
-				const updatedAt = await touchInvoice(transaction, change.id);
+				// Past the value checked too: the write above can leave the row behind it (see `touchInvoice`)
+				const updatedAt = await touchInvoice(transaction, change.id, stored.updatedAt);
 				return { ...written, updatedAt: updatedAt ?? written.updatedAt } as IInvoice;
 			})
 		);
@@ -329,8 +381,9 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 				assertOrganizationKept(stored, change);
 				const written = await service.create(change);
 				const invoiceItems = await linesWriter.replaceLinesIn(transaction, change.id, lines);
-				// The replacement moved `updatedAt` already; this states the value the invoice ends the save with
-				const updatedAt = await touchInvoice(transaction, change.id);
+				// The replacement moved `updatedAt` already; this states the value the invoice ends the save with, past the
+				// value checked too (see `touchInvoice`)
+				const updatedAt = await touchInvoice(transaction, change.id, stored.updatedAt);
 				return { ...written, invoiceItems, updatedAt: updatedAt ?? written.updatedAt } as IInvoice;
 			})
 		);

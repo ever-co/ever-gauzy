@@ -141,26 +141,48 @@ export async function holdInvoiceUnchanged(
 }
 
 /**
+ * The `updatedAt` a write moves an invoice to: now, or a millisecond past every value given when one of them is not in
+ * the past yet, so the result differs from each of them, as `updatedAt` is compared to the millisecond.
+ *
+ * @param values The values the result must be later than: what the invoice holds, what a caller read. Missing or
+ * unreadable ones are left out.
+ */
+export function laterThan(values: Array<Date | string | number | null | undefined>): Date {
+	const times = values
+		.filter((value) => value !== undefined && value !== null)
+		.map((value) => new Date(value).getTime())
+		.filter((time) => !Number.isNaN(time));
+	return new Date(Math.max(Date.now(), ...times.map((time) => time + 1)));
+}
+
+/**
  * Moves the invoice's `updatedAt`, in the transaction that wrote its lines (or, for a conditional save, its fields): a
  * line is a row of its own, so writing a line leaves the invoice's row as it was, and the next precondition would not
  * see the change. The invoice is read again here, locked, in the same transaction, so the new value is later than the
  * one it holds by at least a millisecond, whatever this transaction wrote to it before: it differs from it even when
  * the clock has not moved since, as `updatedAt` is compared to the millisecond.
  *
+ * `after` is a value the result must also be later than: the `updatedAt` a conditional save checked. A write earlier
+ * in the transaction can leave the row behind it (TypeORM's update date is kept to the second on SQLite and MySQL),
+ * and the read alone would then allow the very value the caller read.
+ *
  * @param transaction The transaction the lines were written in.
  * @param invoiceId The invoice.
+ * @param after A value the new `updatedAt` must be later than, besides the stored one.
  * @returns The `updatedAt` the invoice holds now; null, and nothing written, when the caller's tenant has no such
  * invoice.
  */
-export async function touchInvoice(transaction: ILinesTransaction, invoiceId: ID): Promise<Date | null> {
+export async function touchInvoice(
+	transaction: ILinesTransaction,
+	invoiceId: ID,
+	after?: Date | string | null
+): Promise<Date | null> {
 	const tenantId = RequestContext.currentTenantId();
 	const stored = await lockInvoice(transaction, invoiceId, tenantId);
 	if (!stored) {
 		return null;
 	}
-	const storedTime = stored.updatedAt ? new Date(stored.updatedAt).getTime() : Number.NaN;
-	const later = Number.isNaN(storedTime) ? Date.now() : Math.max(Date.now(), storedTime + 1);
-	const updatedAt = new Date(later);
+	const updatedAt = laterThan([stored.updatedAt, after]);
 	if (transaction.mikroOrm) {
 		const where = (tenantId ? { id: invoiceId, tenantId } : { id: invoiceId }) as FilterQuery<Invoice>;
 		await transaction.mikroOrm.nativeUpdate(Invoice, where, { updatedAt } as EntityData<Invoice>);

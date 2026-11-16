@@ -8,6 +8,7 @@ import {
 	InvoiceChangedError,
 	invoiceChangedException,
 	isUnchangedSince,
+	laterThan,
 	touchInvoice
 } from './invoice-precondition';
 
@@ -146,6 +147,30 @@ describe('Invoice preconditions (#5243)', () => {
 				});
 			}
 		);
+	});
+
+	describe('laterThan', () => {
+		it('is now when every value is in the past', () => {
+			const before = Date.now();
+
+			const later = laterThan([new Date('2026-01-01T00:00:00Z'), '2026-02-01T00:00:00Z', null, undefined]);
+
+			expect(later.getTime()).toBeGreaterThanOrEqual(before);
+		});
+
+		it('is a millisecond past the latest value the clock has not passed yet', () => {
+			const ahead = Date.now() + 60_000;
+
+			expect(laterThan([new Date(ahead - 5), ahead, 'not a date']).getTime()).toBe(ahead + 1);
+		});
+
+		it('differs from a value equal to the clock', () => {
+			const now = Date.now();
+			const clock = jest.spyOn(Date, 'now').mockReturnValue(now);
+
+			expect(laterThan([new Date(now)]).getTime()).toBe(now + 1);
+			clock.mockRestore();
+		});
 	});
 
 	describe('touchInvoice', () => {
