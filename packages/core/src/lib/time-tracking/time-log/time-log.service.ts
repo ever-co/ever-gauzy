@@ -2767,15 +2767,18 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	}
 
 	/**
-	 * The second part an earlier split of the log made at `at`: the live log cut from it, starting there.
+	 * The second part an earlier split of the log made at `at`: the live log cut from it, starting there, and still the
+	 * time of the same member. A part moved to another member since is theirs: the caller was checked against the log
+	 * only, so it is not answered.
 	 *
 	 * @param timeLog - The time log.
 	 * @param at - The split moment.
 	 * @param tenantId - The tenant of the log.
 	 */
 	private async findSplitPartAt(timeLog: ITimeLog, at: Date, tenantId: ID): Promise<ITimeLog | null> {
+		const { employeeId, organizationId } = timeLog;
 		const part = await this.typeOrmTimeLogRepository.findOne({
-			where: { splitFromTimeLogId: timeLog.id, tenantId, startedAt: at }
+			where: { splitFromTimeLogId: timeLog.id, tenantId, organizationId, employeeId, startedAt: at }
 		});
 		return part ?? null;
 	}

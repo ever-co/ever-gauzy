@@ -15,6 +15,7 @@ import {
 	TIME_LOG_SPLIT_CHANGED,
 	TIME_LOG_SPLIT_INVOICED,
 	TIME_LOG_SPLIT_OFF_BOUNDARY,
+	TIME_LOG_SPLIT_OUTSIDE,
 	TIME_LOG_SPLIT_REASON_REQUIRED,
 	TIME_LOG_SPLIT_RUNNING
 } from './time-log-split-rule';
@@ -27,6 +28,7 @@ const EMPLOYEE_ID = '12030000-0000-4000-8000-0000000000cc';
 const TIMESHEET_ID = '12030000-0000-4000-8000-0000000000dd';
 const LOG_ID = '12030000-0000-4000-8000-000000000001';
 const CHECKOUT_TASK_ID = '12030000-0000-4000-8000-000000000002';
+const OTHER_EMPLOYEE_ID = '12030000-0000-4000-8000-0000000000ee';
 
 /** 2026-11-16 at `HH:mm`, UTC. */
 const at = (time: string) => new Date(`2026-11-16T${time}:00.000Z`);
@@ -107,13 +109,19 @@ function createService(changes: Partial<IStoreState> = {}) {
 	const timeLogRepository = {
 		manager,
 		createQueryBuilder: jest.fn(queryBuilder),
-		// The second part a split made, looked up by the log it was cut from and its start
-		findOne: jest.fn(async ({ where }: { where: { splitFromTimeLogId: string; startedAt: Date } }) => {
+		// The second part a split made, looked up by the log it was cut from and its start, and by the member and the
+		// organization the lookup names
+		findOne: jest.fn(async ({ where }: { where: Partial<ITimeLog> & { splitFromTimeLogId: string } }) => {
 			const part = state.part;
-			const isThePart =
-				Boolean(part) &&
-				where.splitFromTimeLogId === LOG_ID &&
-				new Date(part.startedAt).getTime() === new Date(where.startedAt).getTime();
+			if (!part) {
+				return null;
+			}
+			const isCutFromTheLog = where.splitFromTimeLogId === LOG_ID;
+			const startsThere = new Date(part.startedAt).getTime() === new Date(where.startedAt).getTime();
+			const ofTheMember = where.employeeId === undefined || where.employeeId === part.employeeId;
+			const ofTheOrganization =
+				where.organizationId === undefined || where.organizationId === part.organizationId;
+			const isThePart = isCutFromTheLog && startsThere && ofTheMember && ofTheOrganization;
 			if (!isThePart) {
 				return null;
 			}
@@ -203,6 +211,21 @@ describe('TimeLogService.splitTimeLog (CORE-26)', () => {
 		expect(execute).not.toHaveBeenCalled();
 		expect(again.first.stoppedAt).toEqual(at('11:00'));
 		expect(again.second.id).toBe('second-part');
+	});
+
+	it('never answers a part moved to another member since, when the request comes again', async () => {
+		const { service, execute, state } = createService();
+		await service.splitTimeLog(LOG_ID, { splitAt: at('11:00') });
+		// An administrator gives the second part to another member
+		state.part = { ...state.part, employeeId: OTHER_EMPLOYEE_ID, description: 'Their notes' };
+		execute.mockClear();
+
+		const refusal = await refusalOf(service.splitTimeLog(LOG_ID, { splitAt: at('11:00') }));
+
+		// The log now ends at 11:00: the moment is no longer inside it, and nothing of the other member is answered
+		expect(refusal).toMatchObject({ status: HttpStatus.BAD_REQUEST, body: { code: TIME_LOG_SPLIT_OUTSIDE } });
+		expect(JSON.stringify(refusal)).not.toContain('Their notes');
+		expect(execute).not.toHaveBeenCalled();
 	});
 
 	it('refuses a split off a slot boundary with the two nearest ones, and writes nothing', async () => {
