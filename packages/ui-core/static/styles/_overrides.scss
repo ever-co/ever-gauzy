@@ -986,17 +986,6 @@ $card-hairline: 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 
   }
 }
 
-// ── Row paint: the Documents table, everywhere ──────────────────────────────
-// Every smart table reads like the one on /pages/documents: rows sit straight on
-// the table surface (no tint of their own), the pointer row takes the neutral
-// hover tint, and a selected row the neutral active tint. These are the same
-// tokens the Documents shell maps its `--docs-hover` / `--docs-active` onto, and
-// the same ones `list-page()` in `gauzy/_gauzy-table-hub` uses, so a page that
-// includes that bundle and one that does not now paint identically.
-//
-// The selected row used to carry a 7px inset strip and rounded first/last
-// corners; the Documents table has neither, so both are gone. `:not(.selected)`
-// on the hover keeps a selected row from being repainted as merely hovered.
 angular2-smart-table tbody tr {
   background: transparent;
 
@@ -1014,18 +1003,6 @@ angular2-smart-table tbody tr {
   }
 }
 
-// Header and row rules, as the Documents table draws them: one hairline under
-// the title row (and under the filter row, where a table has one), one hairline
-// between body rows, none under the last row — the surface's own edge closes
-// the table. Headers stay on one line.
-//
-// On the CELLS rather than the rows: these tables are `border-collapse:
-// separate` (see the rule near the top of this file), and a separated table
-// does not paint row borders. With `border-spacing: 0` and only bottom edges
-// drawn, the result is pixel-identical to the Documents table's collapsed rows.
-//
-// `:root` for the same (0,1,x) reason as the density block above: the library's
-// emulated cell rules are `[_nghost-x] table tr td`.
 :root {
   angular2-smart-table table tr.angular2-smart-titles > th,
   angular2-smart-table table tr.angular2-smart-filters > th {
@@ -1049,19 +1026,6 @@ angular2-smart-table tbody tr {
     border-bottom: 0;
   }
 
-  // Text colour, as the Documents table sets it: the row's identifying value —
-  // the FIRST data column — in the full text colour at a medium weight, and
-  // every other column in the muted secondary colour the column titles use.
-  // Renderers that paint their own colour (status pills, chips, links, people
-  // chips) keep it, exactly as the Documents table's status and tag cells do.
-  //
-  // "First data column" is the first cell that is not a checkbox/action cell:
-  // the library marks those `angular2-smart-actions` and leaves data cells
-  // classless. Two selectors rather than `:nth-child(1 of …)` so it holds in
-  // every browser the app supports: the row's first cell when it is data, or the
-  // data cell straight after a leading checkbox/action cell. `[colspan]` cells
-  // (the empty-state message, the loading skeleton, an expanded detail row) are
-  // not a column and keep the muted colour.
   angular2-smart-table table tbody tr > td {
     color: var(--gauzy-text-color-2, var(--text-hint-color));
   }
@@ -1072,8 +1036,6 @@ angular2-smart-table tbody tr {
     font-weight: 500;
   }
 
-  // The multi-select column: a narrow, centred column with a small checkbox in
-  // the theme's primary colour, exactly as on the Documents table.
   angular2-smart-table table tr.angular2-smart-titles > th:not(.angular2-smart-th),
   angular2-smart-table table td.angular2-smart-action-multiple-select {
     width: 2.5rem;
@@ -1096,7 +1058,6 @@ angular2-smart-table tbody tr {
     outline: none !important;
     box-shadow: none !important;
 
-    // The reset above is `!important`, so the keyboard ring has to be as well.
     &:focus-visible {
       outline: 2px solid var(--color-primary-default) !important;
       outline-offset: 2px;
@@ -1323,8 +1284,10 @@ nb-card-body {
   // `nb-ltr(padding-right)` / `nb-rtl(padding-left)` — which was only ever
   // visible on the side the scrollbar is on, and left the table's box off-centre
   // in its container: flush with the container's edge on the leading side (there
-  // was no padding there) and inset 8px on the trailing one. The table sits
-  // against the scrollbar on both sides instead.
+  // was no padding there) and inset 8px on the trailing one. Now that the body
+  // draws its own left and right edge (see `table tbody tr` below), that gap put
+  // a second vertical line 8px inside the trailing edge on every page. The table
+  // sits against the scrollbar on both sides instead.
 
   @include respond(dsk) {
     max-height: calc(70vh - 132px);
@@ -1344,18 +1307,6 @@ nb-card-body {
     top: -1px;
   }
 
-  // The header box, the 4px spacer under it and the separately outlined body
-  // that used to be drawn here are gone: every smart table now reads like the
-  // Documents table — one surface, a hairline under the header, a hairline
-  // between rows. Those rules live with the row paint further up this file
-  // (search "Row paint"), unscoped, so the few tables that are not inside a
-  // `.table-scroll-container` get them too.
-  //
-  // The one edge that stays is the LEADING one: a continuous rule down the
-  // table's start side, through the title row, the filter row and every body
-  // row. Logical (`inline-start`) so it stays on the leading side under
-  // `dir=rtl`. The extra class here is what lifts it past the `border: 0` resets
-  // in the "Row paint" block, which are (0,1,5) / (0,2,4).
   angular2-smart-table table tr.angular2-smart-titles > th:first-child,
   angular2-smart-table table tr.angular2-smart-filters > th:first-child,
   angular2-smart-table table tbody tr > td:first-child {
@@ -1367,16 +1318,6 @@ nb-card-body {
   max-height: 100%;
 }
 
-// The table surface, as the Documents table draws it: the card colour, a 1px
-// hairline ring (inset, so it costs no layout box) and the theme radius. Most
-// list pages already get this from `list-page()` in `gauzy/_gauzy-table-hub`;
-// stating it here makes it true of EVERY smart table, including the pages that
-// never included that bundle.
-//
-// A table inside a scroll container is surfaced on the container — that is the
-// box that holds the rows and scrolls them. The few tables placed bare in a card
-// (and not inside the Documents table's own surfaced wrapper) are surfaced on
-// the table element itself.
 .table-scroll-container:has(angular2-smart-table),
 angular2-smart-table:not(.table-scroll-container angular2-smart-table):not(.docs-table angular2-smart-table) {
   background: var(--gauzy-card-1, var(--background-basic-color-1));

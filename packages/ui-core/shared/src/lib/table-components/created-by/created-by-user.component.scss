@@ -14,9 +14,6 @@
 		gap: nb-theme(gauzy-people-gap);
 		min-width: 0;
 		max-width: 100%;
-		// The cell's colour, not a fixed one: in a table only the first column
-		// is drawn in the full text colour and the rest are muted, so the name
-		// follows whichever column it sits in.
 		color: inherit;
 		font-size: nb-theme(gauzy-people-font-size);
 		line-height: nb-theme(gauzy-people-avatar-size);
