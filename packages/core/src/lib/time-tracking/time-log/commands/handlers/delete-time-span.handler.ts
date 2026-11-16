@@ -1,6 +1,6 @@
-import { Logger } from '@nestjs/common';
+import { Logger, Optional } from '@nestjs/common';
 import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
-import { FindOptionsSelect, In } from 'typeorm';
+import { DataSource, FindOptionsSelect, In } from 'typeorm';
 import { omit, pick } from 'underscore';
 import { ID, ITimeLog, ITimeSlot } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/utils';
@@ -8,7 +8,10 @@ import { moment } from '../../../../core/moment-extend';
 import { TimesheetRecalculateCommand } from '../../../timesheet/commands';
 import { TimeSlotBulkDeleteCommand } from '../../../time-slot/commands';
 import { TimeLog } from './../../time-log.entity';
-import { DeleteTimeSpanCommand } from '../delete-time-span.command';
+import { createdChange } from '../../time-log-history';
+import { historySubject, recordTimeLogHistory } from '../../time-log-history.writer';
+import { DeleteTimeSpanCommand, TimeLogSplitOptions, TimeLogSplitPartChanges } from '../delete-time-span.command';
+import { FindTimeLogRatesCommand } from '../find-time-log-rates.command';
 import { TimeLogUpdateCommand } from '../time-log-update.command';
 import { TimeLogDeleteCommand } from '../time-log-delete.command';
 import { UpdateEmployeeTotalWorkedHoursCommand } from '../update-employee-total-worked-hours.command';
@@ -36,6 +39,17 @@ const STORED_RATE_SELECT: FindOptionsSelect<TimeLog> = Object.fromEntries([
 	...STORED_RATE_FIELDS.map((field) => [field, true])
 ]);
 
+/**
+ * The changes a split's second part names, without the fields left undefined: those keep the log's value (a field
+ * spread as undefined would be saved as empty). A field named `null` clears it.
+ *
+ * @param changes - What the second part changes, if anything.
+ */
+function definedChanges(changes: TimeLogSplitPartChanges | undefined): TimeLogSplitPartChanges {
+	const entries = Object.entries(changes ?? {}).filter(([, value]) => value !== undefined);
+	return Object.fromEntries(entries) as TimeLogSplitPartChanges;
+}
+
 @CommandHandler(DeleteTimeSpanCommand)
 export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanCommand> {
 	private readonly logger = new Logger(DeleteTimeSpanHandler.name);
@@ -51,7 +65,9 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	constructor(
 		readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
 		readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository,
-		private readonly _commandBus: CommandBus
+		private readonly _commandBus: CommandBus,
+		// Records a split's second part in its history, with the part itself; a handler built without it writes as before.
+		@Optional() private readonly dataSource?: DataSource
 	) {}
 
 	/**
@@ -82,7 +98,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	 * @returns Whether the log was cut, split or deleted.
 	 */
 	private async cleanUp(command: DeleteTimeSpanCommand): Promise<boolean> {
-		const { newTime, timeLog, timeSlot, forceDelete } = command;
+		const { newTime, timeLog, timeSlot, forceDelete, split } = command;
 		const { id } = timeLog;
 		const { start, end } = newTime;
 
@@ -104,6 +120,11 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 		if (log.isRunning) {
 			this.debug(() => `Time log ${log.id} is running: left whole`);
 			return false;
+		}
+
+		// A split asked for at one moment, of any log, manual time without slots included
+		if (split) {
+			return await this.splitAtMoment(log, start, split, forceDelete);
 		}
 
 		// The TypeORM conflict lookup lists only logs holding time slots: time saved over a log holding none, which
@@ -324,16 +345,29 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	 * @param start - The start of the new range, the end of the first part.
 	 * @param end - The end of the new range, the start of the second part.
 	 * @param forceDelete - Whether to hard delete what goes (default: false).
+	 * @param split - Given by the split route: what the second part changes, and the history to record.
 	 * @throws The error of the write that failed.
 	 */
-	private async splitAround(log: TimeLog, start: Date, end: Date, forceDelete: boolean = false): Promise<void> {
+	private async splitAround(
+		log: TimeLog,
+		start: Date,
+		end: Date,
+		forceDelete = false,
+		split?: TimeLogSplitOptions
+	): Promise<void> {
 		await this.assertNoSecondPartLeft(log);
-		const secondPart = await this.createSecondPart(log, end, log.stoppedAt);
+		const secondPart = await this.createSecondPart(log, end, log.stoppedAt, split);
 
 		try {
 			// With its own start too: an update naming none files the log under the current week's timesheet
 			await this._commandBus.execute(
-				new TimeLogUpdateCommand({ startedAt: log.startedAt, stoppedAt: start }, log, true, forceDelete)
+				new TimeLogUpdateCommand(
+					{ startedAt: log.startedAt, stoppedAt: start },
+					log,
+					true,
+					forceDelete,
+					split?.history
+				)
 			);
 		} catch (error) {
 			this.logger.error(`Error while cutting back time log ${log.id}: ${error?.message ?? error}`, error?.stack);
@@ -388,12 +422,22 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	 * slots from the ten-minute slot of `end` on, and naming the log it was cut from (`splitFromTimeLogId`, see
 	 * `assertNoSecondPartLeft`). One save, so a failure writes neither the log, nor that link, nor its join rows.
 	 *
+	 * A split asked for by the route may give that part another task, project, notes or billable state; on another
+	 * project it takes that project's client rates, as an edit of the project does. With the route's history, the part
+	 * and its history row are written in one transaction.
+	 *
 	 * @param log - The time log as stored, with its slots.
 	 * @param end - The end of the new range, the second part's start.
 	 * @param stoppedAt - The log's original end, the second part's end.
+	 * @param split - Given by the split route: what the second part changes, and the history to record.
 	 * @returns The second part, with the slots it holds.
 	 */
-	private async createSecondPart(log: TimeLog, end: Date, stoppedAt: Date): Promise<TimeLog> {
+	private async createSecondPart(
+		log: TimeLog,
+		end: Date,
+		stoppedAt: Date,
+		split?: TimeLogSplitOptions
+	): Promise<TimeLog> {
 		const from = this.firstSlotStart(end, stoppedAt);
 		const timeSlots = (log.timeSlots ?? []).filter((slot) => !moment(slot.startedAt).isBefore(from));
 
@@ -404,16 +448,86 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 			select: STORED_RATE_SELECT
 		});
 
-		return await this.typeOrmTimeLogRepository.save(
-			new TimeLog({
-				...omit(log, ['id', 'createdAt', 'updatedAt', 'timeSlots', 'duration', 'isEdited']),
-				...pick(storedRates ?? {}, STORED_RATE_FIELDS),
-				startedAt: end,
-				stoppedAt,
-				splitFromTimeLogId: log.id,
-				timeSlots
-			})
-		);
+		const changes = definedChanges(split?.secondPart);
+		const projectRates = await this.clientRatesOfAnotherProject(log, changes);
+
+		const secondPart = new TimeLog({
+			...omit(log, ['id', 'createdAt', 'updatedAt', 'timeSlots', 'duration', 'isEdited']),
+			...pick(storedRates ?? {}, STORED_RATE_FIELDS),
+			...changes,
+			...projectRates,
+			startedAt: end,
+			stoppedAt,
+			splitFromTimeLogId: log.id,
+			timeSlots
+		});
+
+		const recordsHistory = Boolean(split?.history) && Boolean(this.dataSource);
+		if (!recordsHistory) {
+			return await this.typeOrmTimeLogRepository.save(secondPart);
+		}
+		return await this.dataSource.transaction(async (manager) => {
+			const saved = await manager.save(secondPart);
+			const record = {
+				subject: historySubject(saved),
+				change: createdChange(saved),
+				reason: split.history.reason
+			};
+			await recordTimeLogHistory(manager, [record]);
+			return saved;
+		});
+	}
+
+	/**
+	 * The client rates of the project a split's second part moves to, as `TimeLogUpdateHandler` gives them to a log an
+	 * edit moves to another project; none when the part stays on the log's project.
+	 *
+	 * @param log - The time log as stored.
+	 * @param changes - What the second part changes.
+	 */
+	private async clientRatesOfAnotherProject(
+		log: TimeLog,
+		changes: TimeLogSplitPartChanges
+	): Promise<Partial<TimeLog>> {
+		const namesProject = changes.projectId !== undefined;
+		const changesProject = namesProject && String(changes.projectId ?? '') !== String(log.projectId ?? '');
+		if (!changesProject) {
+			return {};
+		}
+		const { tenantId, organizationId, employeeId } = log;
+		const scope = { tenantId, organizationId, employeeId, projectId: changes.projectId ?? null };
+		const rates = await this._commandBus.execute(new FindTimeLogRatesCommand(scope, 'client'));
+		return rates ?? {};
+	}
+
+	/**
+	 * Splits a log at the moment the split route names: the log ends there, and the rest becomes its second part,
+	 * through the same split as time saved inside a log (`splitAround`). The route checked the moment against the log it
+	 * read; this runs on the log as it is stored once the cleanups before it settled, and leaves it whole when the moment
+	 * is no longer inside it (another split, an edit or a delete came first).
+	 *
+	 * @param log - The time log as stored, with its slots.
+	 * @param at - The moment to split at.
+	 * @param split - What the second part changes, and the history to record.
+	 * @param forceDelete - Whether to hard delete what goes (default: false).
+	 * @returns Whether the log was split.
+	 * @throws The error of the write that failed, as for any split.
+	 */
+	private async splitAtMoment(
+		log: TimeLog,
+		at: Date,
+		split: TimeLogSplitOptions,
+		forceDelete = false
+	): Promise<boolean> {
+		const isAfterStart = moment(at).isAfter(moment(log.startedAt));
+		const isBeforeEnd = moment(at).isBefore(moment(log.stoppedAt));
+		const isInsideLog = isAfterStart && isBeforeEnd;
+		if (!isInsideLog) {
+			this.debug(() => `Time log ${log.id} no longer holds ${at}: left whole`);
+			return false;
+		}
+		await this.splitAround(log, at, at, forceDelete, split);
+		return true;
 	}
 
 	/**

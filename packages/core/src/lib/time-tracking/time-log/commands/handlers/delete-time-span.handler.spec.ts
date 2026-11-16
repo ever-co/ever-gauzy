@@ -2,7 +2,7 @@
 import '../../../../core/entities/internal';
 
 import { BadRequestException } from '@nestjs/common';
-import { ITimeSlot, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
+import { ActionTypeEnum, ITimeSlot, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
 import { RequestContext } from '../../../../core/context';
 import { moment } from '../../../../core/moment-extend';
 import { MultiORMEnum } from '../../../../core/utils';
@@ -13,7 +13,8 @@ import { generateTimeSlots } from '../../../time-slot/utils';
 import { addQueryParameters, slotStartRanges } from '../../../testing/recording-query-builder';
 import { TimeLog } from '../../time-log.entity';
 import { TimeLogService } from '../../time-log.service';
-import { DeleteTimeSpanCommand } from '../delete-time-span.command';
+import { DeleteTimeSpanCommand, TimeLogSplitOptions } from '../delete-time-span.command';
+import { FindTimeLogRatesCommand } from '../find-time-log-rates.command';
 import { IGetConflictTimeLogCommand } from '../get-conflict-time-log.command';
 import { TimeLogCreateCommand } from '../time-log-create.command';
 import { TimeLogDeleteCommand } from '../time-log-delete.command';
@@ -212,6 +213,9 @@ const slotStarts = (start: string, stop: string) =>
 
 /** What an operation ended with: the message of the error it raised, or nothing when it raised none. */
 const raised = (outcome: unknown) => (outcome instanceof Error ? outcome.message : undefined);
+
+/** The client rate each project prices its time at, as `FindTimeLogRatesCommand` reads it (CORE-26). */
+const PROJECT_RATES: Record<string, number> = { 'checkout-project': 120 };
 
 /** The timesheet of a date's week, as `TimesheetFirstOrCreateCommand` finds it (no date: the current week's). */
 const timesheetOf = (date?: Date) => `timesheet-${moment.utc(date).startOf('week').format('YYYY-MM-DD')}`;
@@ -566,6 +570,10 @@ function createStore({ slotDeleteOrm = MultiORMEnum.TypeORM }: { slotDeleteOrm?:
 		if (command instanceof UpdateEmployeeTotalWorkedHoursCommand) {
 			return void recalculated.employees.push(String(command.employeeId));
 		}
+		// The client rates of a project a split's second part moves to (CORE-26)
+		if (command instanceof FindTimeLogRatesCommand) {
+			return { projectBillRateValue: PROJECT_RATES[String(command.scope.projectId)] ?? null };
+		}
 		throw new Error(`Unexpected command ${(command as object)?.constructor?.name}`);
 	});
 	const handler = new DeleteTimeSpanHandler(timeLogRepository as any, timeSlotRepository as any, commandBus as any);
@@ -638,6 +646,8 @@ function createStore({ slotDeleteOrm = MultiORMEnum.TypeORM }: { slotDeleteOrm?:
 
 	return {
 		executed,
+		/** The time log repository the handlers write through. */
+		timeLogRepository,
 		/** The totals recalculated so far. */
 		recalculated: () => ({ timesheets: [...recalculated.timesheets], employees: [...recalculated.employees] }),
 		/** Makes a write fail `times` times in a row, after `succeeding` calls of it have gone through. */
@@ -665,8 +675,8 @@ function createStore({ slotDeleteOrm = MultiORMEnum.TypeORM }: { slotDeleteOrm?:
 				startedAt: at(start),
 				stoppedAt: at(stop)
 			}),
-		/** A log of the employee over `start`–`stop`, with a slot for every ten minutes of it. */
-		addLog(id: string, start: string, stop: string, columns: Partial<IStoredLog> = {}) {
+		/** A log of the employee over `start`–`stop`, with a slot for every ten minutes of it unless `withSlots` is false. */
+		addLog(id: string, start: string, stop: string, columns: Partial<IStoredLog> = {}, withSlots = true) {
 			logs.push({
 				id,
 				tenantId: TENANT_ID,
@@ -680,6 +690,9 @@ function createStore({ slotDeleteOrm = MultiORMEnum.TypeORM }: { slotDeleteOrm?:
 				logType: TimeLogType.TRACKED,
 				...columns
 			});
+			if (!withSlots) {
+				return;
+			}
 			for (const slot of generateTimeSlots(at(start), at(stop))) {
 				const startedAt = new Date(slot.startedAt);
 				slots.push({
@@ -729,6 +742,19 @@ function createStore({ slotDeleteOrm = MultiORMEnum.TypeORM }: { slotDeleteOrm?:
 		 */
 		send: (start: string, stop: string, timeLog: TimeLog, timeSlot?: ITimeSlot) =>
 			handler.execute(new DeleteTimeSpanCommand({ start: at(start), end: at(stop) }, timeLog, timeSlot)),
+		/** The split route's command: the log as its caller read it, split at `time` (CORE-26). */
+		split: (time: string, timeLog: TimeLog, split: TimeLogSplitOptions, splitter = handler) =>
+			splitter.execute(
+				new DeleteTimeSpanCommand({ start: at(time), end: at(time) }, timeLog, undefined, false, split)
+			),
+		/** A handler over this store that records history through `dataSource`, as the API module builds it. */
+		handlerWithHistory: (dataSource: unknown) =>
+			new DeleteTimeSpanHandler(
+				timeLogRepository as any,
+				timeSlotRepository as any,
+				commandBus as any,
+				dataSource as any
+			),
 		/**
 		 * The cleanup for a new `start`–`stop` range, as its callers run it: the logs the conflict lookup reads (those the
 		 * range overlaps, with their slots: the TypeORM lookup joins them), then one command per log, naming no slot.
@@ -1440,5 +1466,182 @@ describe('DeleteTimeSpanHandler when a cut at one end or a delete fails (#11823)
 			{ range: '09:00-10:00', isRunning: false, slots: slotStarts('09:00', '10:00') }
 		]);
 		expect(outcome).toBe('The slotRemoval failed');
+	});
+});
+
+/**
+ * CORE-26 — the split route's command (`POST /timesheet/time-log/:id/split`): one moment, where the log ends and its
+ * second part starts, through the same split as time saved inside a log, over the scripted store above.
+ */
+describe('DeleteTimeSpanHandler splitting a log at one moment (CORE-26)', () => {
+	beforeEach(() => {
+		jest.spyOn(console, 'log').mockImplementation(() => undefined);
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT_ID);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it("splits Marie's tracked 09:00 to 13:00 at 11:00 into 12 slots each, the second on the other task", async () => {
+		const store = createStore();
+		store.addLog('tracked', '09:00', '13:00', { taskId: 'homepage-redesign' });
+
+		const split = await store.split('11:00', store.read('tracked'), { secondPart: { taskId: 'checkout-bug' } });
+
+		expect(split).toBe(true);
+		expect(store.timeline()).toEqual([
+			{ range: '09:00-11:00', isRunning: false, slots: slotStarts('09:00', '11:00') },
+			{ range: '11:00-13:00', isRunning: false, slots: slotStarts('11:00', '13:00') }
+		]);
+		// Every slot, with what it carries, is still there: none deleted, none shared
+		expect(store.slotCount()).toBe(24);
+		expect(store.deletedSlots()).toEqual({ soft: [], hard: [] });
+		const [first, second] = store.rows();
+		expect(first).toMatchObject({ id: 'tracked', taskId: 'homepage-redesign' });
+		expect(first.splitFromTimeLogId).toBeUndefined();
+		expect(second).toMatchObject({ taskId: 'checkout-bug', splitFromTimeLogId: 'tracked' });
+	});
+
+	it('copies every field the second part does not change, a field left undefined included', async () => {
+		const store = createStore();
+		const fields = { projectId: 'homepage-project', taskId: 'homepage-redesign', description: 'Hero section' };
+		store.addLog('tracked', '09:00', '13:00', fields);
+
+		await store.split('11:00', store.read('tracked'), {
+			secondPart: { taskId: undefined, description: 'Checkout bug' }
+		});
+
+		const [, second] = store.rows();
+		expect(second).toMatchObject({
+			tenantId: TENANT_ID,
+			organizationId: ORGANIZATION_ID,
+			employeeId: EMPLOYEE_ID,
+			timesheetId: timesheetOf(at('09:00')),
+			source: TimeLogSourceEnum.DESKTOP,
+			logType: TimeLogType.TRACKED,
+			projectId: 'homepage-project',
+			taskId: 'homepage-redesign',
+			description: 'Checkout bug'
+		});
+	});
+
+	it("gives a second part on another project that project's client rate, as an edit of the project does", async () => {
+		const store = createStore();
+		store.addLog('tracked', '09:00', '13:00', { projectId: 'homepage-project' });
+
+		await store.split('11:00', store.read('tracked'), { secondPart: { projectId: 'checkout-project' } });
+
+		const [first, second] = store.rows() as Array<Record<string, unknown>>;
+		expect(second).toMatchObject({ projectId: 'checkout-project', projectBillRateValue: 120 });
+		expect(first.projectBillRateValue).toBeUndefined();
+	});
+
+	it('splits a manual log holding no slot at any minute', async () => {
+		const store = createStore();
+		store.addLog('manual', '09:00', '13:00', { logType: TimeLogType.MANUAL }, false);
+
+		const split = await store.split('11:05', store.read('manual'), { secondPart: {} });
+
+		expect(split).toBe(true);
+		expect(store.timeline()).toEqual([
+			{ range: '09:00-11:05', isRunning: false, slots: [] },
+			{ range: '11:05-13:00', isRunning: false, slots: [] }
+		]);
+	});
+
+	it('leaves a running log whole', async () => {
+		const store = createStore();
+		store.addLog('running', '09:00', '13:00', { isRunning: true });
+
+		const split = await store.split('11:00', store.read('running'), { secondPart: {} });
+
+		expect(split).toBe(false);
+		expect(store.timeline()).toEqual([
+			{ range: '09:00-13:00', isRunning: true, slots: slotStarts('09:00', '13:00') }
+		]);
+	});
+
+	it('leaves the log whole when the moment is no longer inside it, as another split came first', async () => {
+		const store = createStore();
+		store.addLog('tracked', '09:00', '13:00');
+		const asRead = store.read('tracked');
+		await store.split('11:00', asRead, { secondPart: {} });
+		const afterFirst = store.timeline();
+
+		// The same request sent again, with the log as it was read before the first went through
+		const again = await store.split('11:00', asRead, { secondPart: {} });
+
+		expect(again).toBe(false);
+		expect(store.timeline()).toEqual(afterFirst);
+	});
+
+	it('leaves the log as it was and raises the error when the cut fails', async () => {
+		const store = createStore();
+		store.addLog('tracked', '09:00', '13:00');
+		store.fail('update');
+
+		const outcome = await store
+			.split('11:00', store.read('tracked'), { secondPart: { taskId: 'checkout-bug' } })
+			.then(raised, raised);
+
+		expect(store.timeline()).toEqual([
+			{ range: '09:00-13:00', isRunning: false, slots: slotStarts('09:00', '13:00') }
+		]);
+		expect(store.rows().map((row) => row.id)).toEqual(['tracked']);
+		expect(outcome).toBe('The update failed');
+	});
+
+	it('records the split in the history of both parts, with the reason given', async () => {
+		const store = createStore();
+		store.addLog('tracked', '09:00', '13:00', { taskId: 'homepage-redesign' });
+		jest.spyOn(RequestContext, 'currentEmployeeId').mockReturnValue(EMPLOYEE_ID);
+		const historyRows: Array<Record<string, unknown>> = [];
+		const repository = store.timeLogRepository;
+		const manager = {
+			// The part as the repository saves it; the history rows as an entity list
+			save: jest.fn(async (entity: unknown, rows?: unknown) => {
+				if (Array.isArray(rows)) {
+					historyRows.push(...(rows as Array<Record<string, unknown>>));
+					return rows;
+				}
+				return repository.save(entity as TimeLog);
+			}),
+			find: jest.fn(async () => []),
+			create: jest.fn((_entity: unknown, row: Record<string, unknown>) => row)
+		};
+		const dataSource = { transaction: jest.fn(async (work: (m: unknown) => unknown) => work(manager)) };
+
+		await store.split(
+			'11:00',
+			store.read('tracked'),
+			{ secondPart: { taskId: 'checkout-bug' }, history: { reason: 'Switched to the checkout bug' } },
+			store.handlerWithHistory(dataSource)
+		);
+
+		// The second part: its creation, in the transaction that saved it
+		expect(dataSource.transaction).toHaveBeenCalledTimes(1);
+		expect(historyRows).toEqual([
+			expect.objectContaining({ action: ActionTypeEnum.Created, entityId: store.rows()[1].id })
+		]);
+		// SQLite, the database these specs run with, stores the row's data as text
+		const [row] = historyRows;
+		let data = row.data;
+		if (typeof data === 'string') {
+			data = JSON.parse(data);
+		}
+		expect(data).toEqual({ employeeId: EMPLOYEE_ID, reason: 'Switched to the checkout bug' });
+		// The log: its new end, through the edit's own history
+		const cut = store.executed.find((command) => command instanceof TimeLogUpdateCommand) as TimeLogUpdateCommand;
+		expect(cut.input).toEqual({ startedAt: at('09:00'), stoppedAt: at('11:00') });
+		expect(cut.history).toEqual({ reason: 'Switched to the checkout bug' });
+	});
+
+	it('records no history for time saved inside a log, which splits it as before', async () => {
+		const store = createStore();
+		store.addLog('tracked', '08:00', '11:00');
+
+		await store.cleanUp('09:00', '10:00');
+
+		const cut = store.executed.find((command) => command instanceof TimeLogUpdateCommand) as TimeLogUpdateCommand;
+		expect(cut.history).toBeUndefined();
 	});
 });
