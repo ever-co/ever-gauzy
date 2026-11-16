@@ -155,7 +155,7 @@ describe('InvoiceScheduleRunService on SQLite', () => {
 						projectBillRateCurrency: 'USD',
 						projectMemberBillRateCurrency: 'USD',
 						...options.kept
-				  }
+					}
 				: {})
 		});
 		return id;
@@ -492,7 +492,13 @@ describe('InvoiceScheduleRunService on SQLite', () => {
 				}))
 				.sort((first, second) => first.price - second.price);
 			expect(lines).toEqual([
-				{ description: 'Website · Marie Studio', quantity: 3, price: 90, totalValue: 270, timeLogIds: [before] },
+				{
+					description: 'Website · Marie Studio',
+					quantity: 3,
+					price: 90,
+					totalValue: 270,
+					timeLogIds: [before]
+				},
 				{
 					description: 'Website · Marie Studio',
 					quantity: 3,

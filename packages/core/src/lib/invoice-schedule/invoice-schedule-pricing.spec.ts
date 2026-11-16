@@ -213,12 +213,12 @@ describe('scheduled invoice pricing', () => {
 		it("makes one entry per rate a member's time on a project kept", () => {
 			const entries = billableEntriesOf(logs, projects, null, priceOfLog);
 
-			expect(entries.map(({ seconds, timeLogIds, price }) => ({ seconds, timeLogIds, rate: price.rate }))).toEqual(
-				[
-					{ seconds: 3 * HOUR, timeLogIds: ['a', 'b'], rate: 90 },
-					{ seconds: 3 * HOUR, timeLogIds: ['c'], rate: 110 }
-				]
-			);
+			expect(
+				entries.map(({ seconds, timeLogIds, price }) => ({ seconds, timeLogIds, rate: price.rate }))
+			).toEqual([
+				{ seconds: 3 * HOUR, timeLogIds: ['a', 'b'], rate: 90 },
+				{ seconds: 3 * HOUR, timeLogIds: ['c'], rate: 110 }
+			]);
 		});
 
 		it('by member: one line per rate, each at its own rate, never at the price of today', () => {
@@ -258,7 +258,10 @@ describe('scheduled invoice pricing', () => {
 				)
 			).toEqual({ rate: 70, currency: 'EUR', source: 'member' });
 			expect(
-				keptLinePriceOf({ projectBillRateValue: 90, projectBillRateCurrency: 'GBP', billRateValue: 40 }, organization)
+				keptLinePriceOf(
+					{ projectBillRateValue: 90, projectBillRateCurrency: 'GBP', billRateValue: 40 },
+					organization
+				)
 			).toEqual({ rate: 90, currency: 'GBP', source: 'project' });
 			expect(keptLinePriceOf({ billRateValue: 40, billRateCurrency: null }, organization)).toEqual({
 				rate: 40,

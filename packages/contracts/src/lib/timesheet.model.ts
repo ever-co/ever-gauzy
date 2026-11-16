@@ -230,7 +230,10 @@ export interface ITimeLogStoredRates {
 export type ITimeLogClientRates = Required<
 	Pick<
 		ITimeLogStoredRates,
-		'projectBillRateValue' | 'projectMemberBillRateValue' | 'projectBillRateCurrency' | 'projectMemberBillRateCurrency'
+		| 'projectBillRateValue'
+		| 'projectMemberBillRateValue'
+		| 'projectBillRateCurrency'
+		| 'projectMemberBillRateCurrency'
 	>
 >;
 

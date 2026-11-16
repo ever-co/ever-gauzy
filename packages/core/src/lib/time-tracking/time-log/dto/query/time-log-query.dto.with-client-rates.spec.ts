@@ -20,10 +20,17 @@ describe('withClientRates on the time log queries', () => {
 		return dto;
 	};
 
-	it.each([TimeLogListQueryDTO, TimeLogDailyReportQueryDTO])('keeps the opt-in as a boolean on %p', async (metatype) => {
-		await expect(parsed(metatype, { withClientRates: 'true' })).resolves.toMatchObject({ withClientRates: true });
-		await expect(parsed(metatype, { withClientRates: 'false' })).resolves.toMatchObject({ withClientRates: false });
-	});
+	it.each([TimeLogListQueryDTO, TimeLogDailyReportQueryDTO])(
+		'keeps the opt-in as a boolean on %p',
+		async (metatype) => {
+			await expect(parsed(metatype, { withClientRates: 'true' })).resolves.toMatchObject({
+				withClientRates: true
+			});
+			await expect(parsed(metatype, { withClientRates: 'false' })).resolves.toMatchObject({
+				withClientRates: false
+			});
+		}
+	);
 
 	it('leaves the opt-in unset when the query does not send it', async () => {
 		const query = await parsed(TimeLogListQueryDTO, {});

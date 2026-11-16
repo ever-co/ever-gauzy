@@ -213,7 +213,9 @@ async function measure(): Promise<Record<'mikroOrm' | 'typeOrm', OrmReads>> {
 				const employeeList = await read(() => target().getTimeLogs(withRates));
 				const employeeDaily = await read(() => target().getDailyReport({ ...withRates, projectIds: [PORTAL] }));
 				actAs(PAUL, false);
-				const managerNamingPortal = await read(() => target().getTimeLogs({ ...withRates, projectIds: [PORTAL] }));
+				const managerNamingPortal = await read(() =>
+					target().getTimeLogs({ ...withRates, projectIds: [PORTAL] })
+				);
 				const managerNamingBoth = await read(() =>
 					target().getTimeLogs({ ...withRates, projectIds: [PORTAL, OTHER] })
 				);

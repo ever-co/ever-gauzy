@@ -19,7 +19,10 @@ const OTHER = 'bbbbbbbb-5555-4555-8555-555555555552';
 function managerOf(managedProjectIds: string[]) {
 	const find = jest.fn(async (entity: unknown) => {
 		if (entity === OrganizationProjectEmployee) {
-			return managedProjectIds.map((organizationProjectId) => ({ id: organizationProjectId, organizationProjectId }));
+			return managedProjectIds.map((organizationProjectId) => ({
+				id: organizationProjectId,
+				organizationProjectId
+			}));
 		}
 		return [];
 	});
