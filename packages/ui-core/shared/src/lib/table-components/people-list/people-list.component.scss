@@ -178,3 +178,24 @@
 	font-weight: 600;
 	cursor: default;
 }
+
+.people:not(.is-wrapped) .people-stack {
+	gap: 0;
+
+	.is-stacked {
+		position: relative;
+		box-shadow: 0 0 0 2px var(--gauzy-card-1, nb-theme(background-basic-color-1));
+
+		&:hover {
+			z-index: 1;
+		}
+	}
+
+	.is-stacked + .is-stacked {
+		margin-inline-start: -0.3125rem;
+	}
+
+	.is-more {
+		padding: 0 0.3125rem;
+	}
+}
