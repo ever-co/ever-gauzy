@@ -1,15 +1,25 @@
 :host {
 	display: block;
 	min-width: 0;
-	position: relative;
+	// Pinned to the bottom of the visible page while rows are selected.
+	// 🛑 The HOST is the sticky box, not `.docs-bulk`: a sticky element only moves
+	// within its parent, and the host was exactly the bar's own size, so the inner
+	// bar never stuck. The host's parent is the page column, so this one does.
+	// `margin-top: auto` drops it to the bottom of a short page too (the column is
+	// a min-height:100% flex column) instead of right under the table.
+	position: sticky;
+	bottom: 0.75rem;
+	margin-top: auto;
 	z-index: 20;
+	// The host spans the full width; only the bar itself may take clicks, so the
+	// rows on either side of it stay clickable underneath.
+	pointer-events: none;
 }
 
 .docs-bulk {
 	--docs-bulk-height: 2rem;
 
-	position: sticky;
-	bottom: 0.75rem;
+	position: relative;
 	z-index: 2;
 	display: flex;
 	flex-direction: column;
@@ -40,6 +50,26 @@
 	font-size: var(--docs-body-size, 0.75rem);
 	line-height: 1.4;
 	color: var(--docs-text, var(--text-basic-color));
+	// Opens with a short rise-and-fade. The bar only exists while rows are
+	// selected (`@if (count > 0)`), so this runs exactly when it opens.
+	animation: docs-bulk-enter 0.2s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes docs-bulk-enter {
+	from {
+		opacity: 0;
+		transform: translateY(0.75rem) scale(0.98);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.docs-bulk-bar {
+		animation: none;
+	}
 }
 
 .docs-bulk-count {
@@ -186,6 +216,7 @@
 	inset: 0;
 	z-index: 1;
 	background: transparent;
+	pointer-events: auto;
 }
 
 .docs-bulk-popover {
