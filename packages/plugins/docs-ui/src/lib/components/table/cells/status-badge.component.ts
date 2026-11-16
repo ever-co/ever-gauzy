@@ -33,17 +33,16 @@ import { DOCS_PERMISSIONS } from '../../../docs-permission-groups';
 			.docs-badge {
 				display: inline-flex;
 				align-items: center;
-				gap: 0.25rem;
+				gap: 0.375rem;
 				max-width: 100%;
 				height: var(--gauzy-table-badge-height, 1.25rem);
-				padding: 0 var(--gauzy-table-chip-padding-x, 0.375rem);
-				border-radius: var(--docs-radius, 0.375rem);
-				font-size: var(--gauzy-table-chip-font-size, 0.6875rem);
+				font-size: var(--docs-cell-font-size, 0.75rem);
 				line-height: 1;
 				white-space: nowrap;
 				overflow: hidden;
 				text-overflow: ellipsis;
-				background: var(--docs-surface-sunken, var(--background-basic-color-2));
+				/* Plain text with a status dot — no tinted chip. The dot carries the colour. */
+				color: var(--docs-text, var(--text-basic-color));
 			}
 			.docs-badge-dot {
 				flex: 0 0 auto;
@@ -52,14 +51,14 @@ import { DOCS_PERMISSIONS } from '../../../docs-permission-groups';
 				border-radius: 50%;
 				background: currentColor;
 			}
-			.docs-badge.ready {
-				color: var(--color-success-default);
+			.docs-badge.ready .docs-badge-dot {
+				background: var(--color-success-default);
 			}
 			.docs-badge.failed {
 				color: var(--color-danger-default);
 			}
 			.docs-badge.processing {
-				color: var(--color-info-default);
+				color: var(--docs-text-muted, var(--text-hint-color));
 			}
 			.docs-badge-spin {
 				animation: docs-spin 1s linear infinite;
