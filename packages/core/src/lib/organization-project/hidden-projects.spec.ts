@@ -1,4 +1,9 @@
-import { PROJECT_ID_OF_ROW, withHiddenProjectsWithheld, withProjectIdKept } from './hidden-projects';
+import {
+	PROJECT_ID_OF_ROW,
+	withEntryProjectsKept,
+	withHiddenProjectsWithheld,
+	withProjectIdKept
+} from './hidden-projects';
 
 /**
  * CORE-27 (ever-co/ever-gauzy#12031): where an organization keeps its private projects private, every record that
@@ -175,12 +180,42 @@ describe('withHiddenProjectsWithheld', () => {
 	});
 
 	it('withholds the label of a history row whose entry is on a hidden project, whatever name the project had', () => {
-		const row = withProjectIdKept(
+		const row = withEntryProjectsKept(
 			{ id: 'history-1', entity: 'TimeLog', description: 'Created TimeLog "Client X (old name)"' },
-			CONFIDENTIAL
+			[CONFIDENTIAL]
 		);
 
 		expect(withHiddenProjectsWithheld(row, HIDDEN).description).toBe('Created TimeLog "time entry"');
+	});
+
+	it('withholds the label of a row written while its entry was on a hidden project it has left since', () => {
+		const row = withEntryProjectsKept(
+			{
+				id: 'history-5',
+				entity: 'TimeLog',
+				description: 'Updated TimeLog "Client X (old name)"',
+				previousValues: [{ startedAt: '2026-11-10T08:00:00.000Z' }],
+				updatedValues: [{ startedAt: '2026-11-10T09:00:00.000Z' }]
+			},
+			[PUBLIC, CONFIDENTIAL]
+		);
+
+		expect(withHiddenProjectsWithheld(row, HIDDEN).description).toBe('Updated TimeLog "time entry"');
+	});
+
+	it('withholds the label of a row whose change names a hidden project, whatever project its entry is on now', () => {
+		const row = withProjectIdKept(
+			{
+				id: 'history-6',
+				entity: 'TimeLog',
+				description: 'Updated TimeLog "Client X (old name)"',
+				previousValues: [{ projectId: CONFIDENTIAL }],
+				updatedValues: [{ projectId: PUBLIC }]
+			},
+			PUBLIC
+		);
+
+		expect(withHiddenProjectsWithheld(row, HIDDEN).description).toBe('Updated TimeLog "time entry"');
 	});
 
 	it('withholds the label of a history row whose change names a hidden project, for an entry deleted for good', () => {
@@ -194,10 +229,10 @@ describe('withHiddenProjectsWithheld', () => {
 		expect(withHiddenProjectsWithheld(row, HIDDEN).description).toBe('Deleted TimeLog "time entry"');
 	});
 
-	it('leaves the label of a history row whose entry is on a project the caller sees', () => {
-		const row = withProjectIdKept(
+	it('leaves the label of a history row whose entry was only ever on projects the caller sees', () => {
+		const row = withEntryProjectsKept(
 			{ id: 'history-3', entity: 'TimeLog', description: 'Updated TimeLog "Homepage copy"' },
-			PUBLIC
+			[PUBLIC]
 		);
 
 		expect(withHiddenProjectsWithheld(row, HIDDEN)).toBe(row);

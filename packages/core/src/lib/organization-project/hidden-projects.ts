@@ -21,6 +21,25 @@ export function withProjectIdKept<T extends object>(fields: T, projectId: ID | n
 	return fields;
 }
 
+/**
+ * Every project a time entry has been on, kept beside each row of its history by the history read: the one it is on
+ * now and each one its recorded changes name. A symbol, so that no answer carries it.
+ */
+export const PROJECTS_OF_ENTRY = Symbol('projectsOfEntry');
+
+/**
+ * A time entry history row with every project its entry has been on kept beside it for
+ * {@link withHiddenProjectsWithheld}: a row quotes the name its entry's project had when it was written, so its label
+ * is withheld when any of them is hidden from the caller. Invisible to the answer.
+ *
+ * @param row - The history row.
+ * @param projectIds - The projects its entry has been on.
+ */
+export function withEntryProjectsKept<T extends object>(row: T, projectIds: Iterable<ID>): T {
+	Object.defineProperty(row, PROJECTS_OF_ENTRY, { value: [...projectIds], enumerable: false, configurable: true });
+	return row;
+}
+
 /** How the rows of one route's answer name their project, beyond the `project` relation every row may carry. */
 export interface HiddenProjectsOptions {
 	/**
@@ -225,8 +244,9 @@ export function withHiddenProjectsWithheld<T>(
 		const isTimeEntryHistoryRow = record['entity'] === TIME_LOG_ENTITY && typeof record['description'] === 'string';
 		if (isTimeEntryHistoryRow) {
 			let description = record['description'] as string;
-			// The label quotes the name the entry's project had when the row was written: withheld whatever it was
-			if (isHidden(historyRowProjectIdOf(record, isHidden))) {
+			// The label quotes the name the entry's project had when the row was written: withheld whatever it was,
+			// when any project the entry has been on is hidden
+			if (historyRowNamesHiddenProject(record, isHidden)) {
 				description = withLabelWithheld(description);
 			}
 			description = withHiddenProjectNamesOut(description, hidden);
@@ -246,16 +266,17 @@ export function withHiddenProjectsWithheld<T>(
 }
 
 /**
- * The project a time entry's history row is about: the one its entry is on now, kept beside the row by the history
- * read, else a hidden project the row's change names (an entry deleted for good keeps no project of its own).
+ * Whether a time entry's history row may quote the name of a project hidden from the caller: one of the projects its
+ * entry has been on (kept beside the row by the history read) is hidden, or the row's own change names one (an entry
+ * deleted for good keeps no project of its own).
  */
-function historyRowProjectIdOf(
+function historyRowNamesHiddenProject(
 	row: Record<string, unknown>,
 	isHidden: (id: ID | undefined) => boolean
-): ID | undefined {
-	const kept = (row as { [PROJECT_ID_OF_ROW]?: unknown })[PROJECT_ID_OF_ROW];
-	if (typeof kept === 'string') {
-		return kept;
+): boolean {
+	const kept = (row as { [PROJECTS_OF_ENTRY]?: unknown })[PROJECTS_OF_ENTRY];
+	if (Array.isArray(kept) && kept.some((projectId) => typeof projectId === 'string' && isHidden(projectId))) {
+		return true;
 	}
 	for (const field of ['updatedValues', 'previousValues']) {
 		const values = row[field];
@@ -264,13 +285,12 @@ function historyRowProjectIdOf(
 		}
 		for (const value of values) {
 			const projectId = (value as { projectId?: unknown } | null)?.projectId;
-			const namesHiddenProject = typeof projectId === 'string' && isHidden(projectId);
-			if (namesHiddenProject) {
-				return projectId;
+			if (typeof projectId === 'string' && isHidden(projectId)) {
+				return true;
 			}
 		}
 	}
-	return undefined;
+	return false;
 }
 
 /** A history row's description with its quoted label, the last quoted part, put back to "time entry". */

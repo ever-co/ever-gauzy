@@ -14,7 +14,7 @@ import { RequestContext } from '../../core/context';
 import { prepareSQLQuery as p } from '../../database/database.helper';
 import { ManagedEmployeeService } from '../../employee/managed-employee.service';
 import { ActivityLog } from '../../activity-log/activity-log.entity';
-import { withProjectIdKept } from '../../organization-project/hidden-projects';
+import { withEntryProjectsKept } from '../../organization-project/hidden-projects';
 import { TimeLog } from './time-log.entity';
 import { TIME_LOG_KIND_FIELDS } from './time-log-history';
 import { TimeLogService } from './time-log.service';
@@ -118,9 +118,10 @@ export class TimeLogHistoryService {
 	}
 
 	/**
-	 * Keeps beside each history row the project its entry is on now, withdrawn entries included, out of the answer
-	 * itself (see {@link withProjectIdKept}): the description of a row quotes the name its entry's project had when the
-	 * row was written, so a project kept from the caller is withheld from it whatever its name was then.
+	 * Keeps beside each history row every project its entry has been on, out of the answer itself (see
+	 * {@link withEntryProjectsKept}): the one it is on now, withdrawn entries included, and each one its recorded changes
+	 * name, over its whole history and not only the rows of this page. A row quotes the name its entry's project had
+	 * when it was written, so the label is withheld when any of them is kept from the caller, whatever its name was then.
 	 *
 	 * @param rows The history rows of time entries.
 	 */
@@ -129,14 +130,41 @@ export class TimeLogHistoryService {
 		if (entryIds.length === 0) {
 			return;
 		}
-		const entries = await this.typeOrmTimeLogRepository.manager.find(TimeLog, {
-			where: { id: In(entryIds), tenantId: RequestContext.currentTenantId() },
-			select: { id: true, projectId: true },
-			withDeleted: true
-		});
-		const projectOfEntry = new Map(entries.map((entry) => [entry.id, entry.projectId]));
+		const tenantId = RequestContext.currentTenantId();
+		const manager = this.typeOrmTimeLogRepository.manager;
+		const [entries, changes] = await Promise.all([
+			manager.find(TimeLog, {
+				where: { id: In(entryIds), tenantId },
+				select: { id: true, projectId: true },
+				withDeleted: true
+			}),
+			manager.find(ActivityLog, {
+				where: { entity: BaseEntityEnum.TimeLog, entityId: In(entryIds), tenantId },
+				select: { entityId: true, previousValues: true, updatedValues: true },
+				withDeleted: true
+			})
+		]);
+		const projectsOfEntry = new Map<ID, Set<ID>>();
+		const addProject = (entryId: ID | undefined, projectId: unknown) => {
+			if (!entryId || typeof projectId !== 'string' || !projectId) {
+				return;
+			}
+			const projects = projectsOfEntry.get(entryId) ?? new Set<ID>();
+			projects.add(projectId);
+			projectsOfEntry.set(entryId, projects);
+		};
+		for (const entry of entries) {
+			addProject(entry.id, entry.projectId);
+		}
+		for (const change of changes) {
+			for (const values of [change.previousValues, change.updatedValues]) {
+				for (const value of Array.isArray(values) ? values : []) {
+					addProject(change.entityId, (value as { projectId?: unknown } | null)?.projectId);
+				}
+			}
+		}
 		for (const row of rows) {
-			withProjectIdKept(row, projectOfEntry.get(row.entityId));
+			withEntryProjectsKept(row, projectsOfEntry.get(row.entityId) ?? []);
 		}
 	}
 
