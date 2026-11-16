@@ -86,6 +86,8 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 		[];
 	/** The reads in place of the card grid still under way. */
 	private readonly _pendingShownReads = new Set<number>();
+	/** The number taken by the latest read in place that wrote the list: the pages read before it are its own. */
+	private _appliedShownRead = 0;
 	settingsSmartTable: object;
 	loading: boolean = false;
 	disableButton: boolean = true;
@@ -508,8 +510,12 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 				if (source !== this.smartTableSource || read <= this._resetAt) {
 					return;
 				}
-				// In the card grid, a read in place that started after this page read covers its page: the page's answer
-				// (or its failure) waits, in case that read fails.
+				// In the card grid, a read in place that started after this page read and already wrote the list has shown
+				// its page: this answer has nothing to add.
+				if (read < this._appliedShownRead) {
+					return;
+				}
+				// One still under way covers the page: the page's answer (or its failure) waits, in case that read fails.
 				if (read < this._shownReadAt) {
 					const { page, perPage } = source.getPaging();
 					this._coveredPages.push(
@@ -697,6 +703,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 				return;
 			}
 			this._tasks = [...pages.flat().slice(0, covered), ...this._tasks.slice(covered)];
+			this._appliedShownRead = read;
 			this._coveredPages = [];
 			this.storeInstance.loadAllTasks(this._tasks);
 			this.setPagination({
@@ -719,12 +726,13 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 
 	/**
 	 * After the latest read in place failed, the pages it covered are as they were. An earlier read in place still under
-	 * way becomes the latest and keeps the pages it covers; every other covered page is released: a page read still
-	 * under way writes the list when it answers, one that already answered goes back in its place, and a covered page
-	 * read that failed lets go of the loading state it turned on.
+	 * way becomes the latest and keeps the pages it covers, and the pages a read in place already wrote stay its own;
+	 * every other covered page is released: a page read still under way writes the list when it answers, one that
+	 * already answered goes back in its place, and a covered page read that failed lets go of the loading state it
+	 * turned on.
 	 */
 	private _putBackCoveredPages(): void {
-		this._shownReadAt = Math.max(0, ...this._pendingShownReads);
+		this._shownReadAt = Math.max(this._appliedShownRead, ...this._pendingShownReads);
 		const pages = this._coveredPages.filter(({ read }) => read > this._shownReadAt && read > this._resetAt);
 		this._coveredPages = this._coveredPages.filter((page) => !pages.includes(page));
 		if (pages.some(({ read }) => read === this._loadingRead)) {
