@@ -101,6 +101,7 @@ import {
 	totalsByCurrencyOf
 } from './time-log-pricing';
 import { findStoredRatesOf } from './time-log-rates';
+import { assertMayReadClientRates, withKeptClientRates } from './time-log-client-rates';
 import type { TimeLogHistoryOptions } from './time-log-history.writer';
 import { DefaultBillRate, defaultBillRateOf } from './default-bill-rate';
 import {
@@ -185,10 +186,26 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	/**
 	 * Retrieves time logs based on the provided input.
 	 * @param request The input parameters for fetching time logs, with an optional page (`take`, and
-	 * `skip` as a 1-based page number). Without `take` every matching log is returned.
+	 * `skip` as a 1-based page number). Without `take` every matching log is returned. With `withClientRates`, each
+	 * log also states the client rates it keeps, for a caller who may read them (see time-log-client-rates.ts).
 	 * @returns A Promise that resolves to an array of time logs.
 	 */
 	async getTimeLogs(request: IGetTimeLogReportInput & Pick<IPaginationParam, 'take' | 'skip'>): Promise<ITimeLog[]> {
+		const statesClientRates = request.withClientRates === true;
+		if (statesClientRates) {
+			await assertMayReadClientRates(this.typeOrmRepository.manager, request);
+		}
+		const logs = await this.findTimeLogs(request);
+		if (!statesClientRates) {
+			return logs;
+		}
+		return await withKeptClientRates(this.typeOrmRepository.manager, logs, RequestContext.currentTenantId());
+	}
+
+	/** The time logs of a list read (see {@link getTimeLogs}). */
+	private async findTimeLogs(
+		request: IGetTimeLogReportInput & Pick<IPaginationParam, 'take' | 'skip'>
+	): Promise<ITimeLog[]> {
 		// Builds its own query, so the check in the CRUD read methods never runs: assert the
 		// sensitive-relation table on the client-supplied relations before anything is loaded.
 		this.assertRelationsPermitted(request);
@@ -753,6 +770,11 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		// Extract timezone from the request
 		const { timeZone } = request;
 		const statesTeam = request.includeTimeWithoutTeam === true;
+		// Each row then states the client rates its log keeps, for a caller who may read them
+		const statesClientRates = request.withClientRates === true;
+		if (statesClientRates) {
+			await assertMayReadClientRates(this.typeOrmRepository.manager, request);
+		}
 
 		let logs: ITimeLog[];
 
@@ -856,6 +878,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				await this.loadTimeSlotFigures(logs);
 				break;
 			}
+		}
+		if (statesClientRates) {
+			await withKeptClientRates(this.typeOrmRepository.manager, logs, RequestContext.currentTenantId());
 		}
 
 		// Group time logs based on the specified 'groupBy' filter
