@@ -35,6 +35,7 @@ import {
 } from '@gauzy/core';
 import { arrayToObject, isNotEmpty, sleep } from '@gauzy/utils';
 import { OctokitService } from '../probot/octokit.service';
+import { excludeGithubPullRequests } from './github-issue-filter';
 import { GithubRepositoryService } from './repository/github-repository.service';
 import { IntegrationSyncGithubRepositoryIssueCommand } from './repository/issue/commands';
 
@@ -227,7 +228,10 @@ export class GithubSyncService {
 			const { organizationId, repository } = input;
 
 			const tenantId = RequestContext.currentTenantId() || input.tenantId;
-			const issues: IGithubIssue[] = Array.isArray(input.issues) ? input.issues : [input.issues];
+			// The repository issues list also holds pull requests: they are not issues, so they are not synced as tasks.
+			const issues: IGithubIssue[] = excludeGithubPullRequests(
+				Array.isArray(input.issues) ? input.issues : [input.issues]
+			);
 
 			// Step 1: Retrieve integration settings tied to the specified organization
 			const { entitySettings } = await this._integrationTenantService.findOneByIdString(integrationId, {
@@ -741,7 +745,7 @@ export class GithubSyncService {
 				});
 				if (Array.isArray(response.data) && response.data.length > 0) {
 					// Append the retrieved issues to the result array
-					issues.push(...response.data);
+					issues.push(...excludeGithubPullRequests<IGithubIssue>(response.data)); // pull requests are listed with the issues
 					// Check if there are more issues on the next page
 					hasMoreIssues = response.data.length === per_page;
 				} else {
