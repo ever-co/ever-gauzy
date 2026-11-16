@@ -149,12 +149,15 @@ describe('Invoice preconditions (#5243)', () => {
 	});
 
 	describe('touchInvoice', () => {
-		it("moves updatedAt past the value read, in the caller's tenant, without the update listeners", async () => {
-			const stored = { updatedAt: new Date(Date.now() + 60_000) };
-			const { transaction, statements } = typeOrmTransaction(null);
+		it("moves updatedAt past the value it reads, in the caller's tenant, without the update listeners", async () => {
+			const stored = { id: INVOICE, updatedAt: new Date(Date.now() + 60_000) };
+			const { transaction, findOne, statements } = typeOrmTransaction(stored);
 
-			const touched = await touchInvoice(transaction, INVOICE, stored);
+			const touched = await touchInvoice(transaction, INVOICE);
 
+			// Read again, locked, in the transaction: what it holds now, whatever the transaction wrote to it before
+			const [, options] = findOne.mock.calls[0] as unknown as [unknown, any];
+			expect(options.where).toEqual({ id: INVOICE, tenantId: TENANT });
 			expect(touched.getTime()).toBe(stored.updatedAt.getTime() + 1);
 			expect(statements[0].set).toEqual({ updatedAt: touched });
 			expect(statements[0].where).toHaveLength(2);
@@ -163,18 +166,26 @@ describe('Invoice preconditions (#5243)', () => {
 
 		it('takes the current time once it is past the value read', async () => {
 			const before = Date.now();
-			const { transaction } = typeOrmTransaction(null);
+			const { transaction } = typeOrmTransaction({ id: INVOICE, updatedAt: new Date('2026-01-01T00:00:00Z') });
 
-			const touched = await touchInvoice(transaction, INVOICE, { updatedAt: new Date('2026-01-01T00:00:00Z') });
+			const touched = await touchInvoice(transaction, INVOICE);
 
 			expect(touched.getTime()).toBeGreaterThanOrEqual(before);
 		});
 
+		it("writes nothing for an invoice the caller's tenant does not have", async () => {
+			const { transaction, statements } = typeOrmTransaction(null);
+
+			await expect(touchInvoice(transaction, INVOICE)).resolves.toBeNull();
+			expect(statements).toHaveLength(0);
+		});
+
 		it("writes through MikroORM natively, in the caller's tenant", async () => {
 			const nativeUpdate = jest.fn(async () => 1);
-			const transaction = { mikroOrm: { nativeUpdate } as any };
+			const findOne = jest.fn(async () => ({ id: INVOICE, updatedAt: null }));
+			const transaction = { mikroOrm: { nativeUpdate, findOne } as any };
 
-			const touched = await touchInvoice(transaction, INVOICE, { updatedAt: null });
+			const touched = await touchInvoice(transaction, INVOICE);
 
 			expect(nativeUpdate).toHaveBeenCalledWith(
 				expect.anything(),

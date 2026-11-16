@@ -250,8 +250,8 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 				const stored = await holdInvoiceUnchanged(transaction, change.id, expectedUpdatedAt);
 				assertFinalStatusKept(stored, change.status);
 				const written = await service.create(change);
-				const updatedAt = await touchInvoice(transaction, change.id, stored);
-				return { ...written, updatedAt } as IInvoice;
+				const updatedAt = await touchInvoice(transaction, change.id);
+				return { ...written, updatedAt: updatedAt ?? written.updatedAt } as IInvoice;
 			})
 		);
 	}
@@ -287,8 +287,9 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 				assertOrganizationKept(stored, change);
 				const written = await service.create(change);
 				const invoiceItems = await linesWriter.replaceLinesIn(transaction, change.id, lines);
-				const updatedAt = await touchInvoice(transaction, change.id, stored);
-				return { ...written, invoiceItems, updatedAt } as IInvoice;
+				// The replacement moved `updatedAt` already; this states the value the invoice ends the save with
+				const updatedAt = await touchInvoice(transaction, change.id);
+				return { ...written, invoiceItems, updatedAt: updatedAt ?? written.updatedAt } as IInvoice;
 			})
 		);
 	}

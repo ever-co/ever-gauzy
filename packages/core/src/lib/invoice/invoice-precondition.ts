@@ -141,25 +141,26 @@ export async function holdInvoiceUnchanged(
 }
 
 /**
- * Moves the invoice's `updatedAt`, in the transaction that replaced its lines: a line is a row of its own, so replacing
- * the lines leaves the invoice's row as it was, and the next precondition would not see the change. The new value is
- * later than the one the locking read found by at least a millisecond, so it differs from it even when the clock has
- * not moved since, as `updatedAt` is compared to the millisecond.
+ * Moves the invoice's `updatedAt`, in the transaction that wrote its lines (or, for a conditional save, its fields): a
+ * line is a row of its own, so writing a line leaves the invoice's row as it was, and the next precondition would not
+ * see the change. The invoice is read again here, locked, in the same transaction, so the new value is later than the
+ * one it holds by at least a millisecond, whatever this transaction wrote to it before: it differs from it even when
+ * the clock has not moved since, as `updatedAt` is compared to the millisecond.
  *
- * @param transaction The transaction the lines were replaced in.
+ * @param transaction The transaction the lines were written in.
  * @param invoiceId The invoice.
- * @param stored The invoice as the locking read answered it.
- * @returns The `updatedAt` the invoice holds now.
+ * @returns The `updatedAt` the invoice holds now; null, and nothing written, when the caller's tenant has no such
+ * invoice.
  */
-export async function touchInvoice(
-	transaction: ILinesTransaction,
-	invoiceId: ID,
-	stored: ILockedInvoice
-): Promise<Date> {
+export async function touchInvoice(transaction: ILinesTransaction, invoiceId: ID): Promise<Date | null> {
+	const tenantId = RequestContext.currentTenantId();
+	const stored = await lockInvoice(transaction, invoiceId, tenantId);
+	if (!stored) {
+		return null;
+	}
 	const storedTime = stored.updatedAt ? new Date(stored.updatedAt).getTime() : Number.NaN;
 	const later = Number.isNaN(storedTime) ? Date.now() : Math.max(Date.now(), storedTime + 1);
 	const updatedAt = new Date(later);
-	const tenantId = RequestContext.currentTenantId();
 	if (transaction.mikroOrm) {
 		const where = (tenantId ? { id: invoiceId, tenantId } : { id: invoiceId }) as FilterQuery<Invoice>;
 		await transaction.mikroOrm.nativeUpdate(Invoice, where, { updatedAt } as EntityData<Invoice>);

@@ -201,7 +201,9 @@ export class InvoiceItemController extends CrudController<InvoiceItem> {
 	@Permissions(PermissionsEnum.INVOICES_EDIT)
 	@Post()
 	async create(@Body() entity: DeepPartial<InvoiceItem>, ...options: any[]): Promise<InvoiceItem> {
-		return await super.create(entity, ...options);
+		void options;
+		// The line's invoice moves its `updatedAt` with it, so a precondition read before sees the change (#5243)
+		return await this.invoiceItemService.createLine(entity);
 	}
 
 	/**
@@ -228,7 +230,21 @@ export class InvoiceItemController extends CrudController<InvoiceItem> {
 		@Body() entity: QueryDeepPartialEntity<InvoiceItem>,
 		...options: any[]
 	): Promise<any> {
-		return await super.update(id, entity, ...options);
+		void options;
+		// Members a body never writes, as the base route strips them: the row's identity, its tenant, `deletedAt`
+		const {
+			id: _id,
+			deletedAt: _deletedAt,
+			tenantId: _tenantId,
+			tenant: _tenant,
+			...patch
+		} = (entity ?? {}) as Record<string, unknown>;
+		void _id;
+		void _deletedAt;
+		void _tenantId;
+		void _tenant;
+		// The line's invoice moves its `updatedAt` with it, so a precondition read before sees the change (#5243)
+		return await this.invoiceItemService.updateLine(id, patch as QueryDeepPartialEntity<InvoiceItem>);
 	}
 
 	/**
@@ -249,7 +265,9 @@ export class InvoiceItemController extends CrudController<InvoiceItem> {
 	@Permissions(PermissionsEnum.INVOICES_EDIT)
 	@Delete(':id')
 	async delete(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<any> {
-		return await super.delete(id, ...options);
+		void options;
+		// The line's invoice moves its `updatedAt` with it, so a precondition read before sees the change (#5243)
+		return await this.invoiceItemService.deleteLine(id);
 	}
 
 	/**
@@ -273,7 +291,9 @@ export class InvoiceItemController extends CrudController<InvoiceItem> {
 	@Delete(':id/soft')
 	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
 	async softRemove(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<InvoiceItem> {
-		return await super.softRemove(id, ...options);
+		// The line's invoice moves its `updatedAt` with it, so a precondition read before sees the change (#5243).
+		// The options are handed over as the base route hands them.
+		return await this.invoiceItemService.softRemoveLine(id, options as never);
 	}
 
 	/**
@@ -297,6 +317,8 @@ export class InvoiceItemController extends CrudController<InvoiceItem> {
 	@Put(':id/recover')
 	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
 	async softRecover(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<InvoiceItem> {
-		return await super.softRecover(id, ...options);
+		// The line's invoice moves its `updatedAt` with it, so a precondition read before sees the change (#5243).
+		// The options are handed over as the base route hands them.
+		return await this.invoiceItemService.softRecoverLine(id, options as never);
 	}
 }

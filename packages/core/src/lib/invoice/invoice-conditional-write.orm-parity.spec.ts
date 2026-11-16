@@ -76,7 +76,11 @@ describe('Invoice edits under a precondition, on TypeORM and on MikroORM (#5243)
 			updateWithItems: (input: Row) =>
 				new loaded.InvoiceUpdateWithItemsHandler(invoiceService, moduleRef).execute(
 					new loaded.InvoiceUpdateWithItemsCommand(input)
-				)
+				),
+			create: (input: Row) =>
+				new loaded.InvoiceCreateHandler(invoiceService).execute(new loaded.InvoiceCreateCommand(input)),
+			/** The service the line routes (REST and GraphQL) write one line through. */
+			lines: invoiceItemService
 		};
 	};
 
@@ -238,7 +242,9 @@ describe('Invoice edits under a precondition, on TypeORM and on MikroORM (#5243)
 						require('../invoice-item/commands/handlers/invoice-item.bulk.create.handler')
 							.InvoiceItemBulkCreateHandler,
 					InvoiceItemBulkCreateCommand: require('../invoice-item/commands/invoice-item.bulk.create.command')
-						.InvoiceItemBulkCreateCommand
+						.InvoiceItemBulkCreateCommand,
+					InvoiceCreateHandler: require('./commands/handlers/invoice.create.handler').InvoiceCreateHandler,
+					InvoiceCreateCommand: require('./commands/invoice.create.command').InvoiceCreateCommand
 				};
 
 				dataSource = new DataSource({
@@ -436,14 +442,128 @@ describe('Invoice edits under a precondition, on TypeORM and on MikroORM (#5243)
 				expect(await linesOf(invoiceId)).toEqual(['held']);
 			});
 
-			it("replaces the lines as it always did when no precondition is stated, leaving the invoice's row alone", async () => {
+			it("replaces the lines when no precondition is stated, and moves the invoice's updatedAt all the same", async () => {
 				const invoiceId = await draftInvoice();
-				const before = await updatedAtOf(invoiceId);
+				const expectedUpdatedAt = await readVersion(ormType, invoiceId);
 
+				// An older client, which states no precondition
 				await handlers(ormType).replaceLines(invoiceId, [line(invoiceId, 'replacement')]);
 
 				expect(await linesOf(invoiceId)).toEqual(['replacement']);
-				expect(await updatedAtOf(invoiceId)).toEqual(before);
+				orm.em.clear();
+				expect(await readVersion(ormType, invoiceId)).not.toBe(expectedUpdatedAt);
+				// A save made on the read before that replacement no longer writes over it
+				const save = handlers(ormType).updateWithItems({
+					...fields(invoiceId, { expectedUpdatedAt }),
+					invoiceItems: [line(invoiceId, 'stale')]
+				});
+				await expect(save).rejects.toMatchObject({ status: 409 });
+				expect(await linesOf(invoiceId)).toEqual(['replacement']);
+			});
+		});
+
+		describe("every other write of an invoice's lines or of the invoice moves its updatedAt", () => {
+			/**
+			 * The write made between the caller's read and its save: the save made on that read is then refused, and
+			 * the invoice keeps what the write made of it.
+			 */
+			const refusesTheSaveAfter = async (invoiceId: string, write: () => Promise<unknown>): Promise<void> => {
+				const expectedUpdatedAt = await readVersion(ormType, invoiceId);
+				await write();
+				orm.em.clear();
+				expect(await readVersion(ormType, invoiceId)).not.toBe(expectedUpdatedAt);
+				const save = handlers(ormType).updateWithItems({
+					...fields(invoiceId, { expectedUpdatedAt }),
+					invoiceItems: [line(invoiceId, 'stale')]
+				});
+				await expect(save).rejects.toMatchObject({ status: 409 });
+			};
+
+			it('a line recorded on its own (POST /invoice-item, createInvoiceItem)', async () => {
+				const invoiceId = await draftInvoice();
+
+				await refusesTheSaveAfter(invoiceId, () =>
+					handlers(ormType).lines.createLine(line(invoiceId, 'added'))
+				);
+
+				expect(await linesOf(invoiceId)).toEqual(['added', 'held']);
+			});
+
+			it('a line changed on its own (PUT /invoice-item/:id, updateInvoiceItem)', async () => {
+				const invoiceId = await draftInvoice();
+				const [lineId] = await lineIdsOf(invoiceId);
+
+				await refusesTheSaveAfter(invoiceId, () =>
+					handlers(ormType).lines.updateLine(lineId, { description: 'changed' })
+				);
+
+				expect(await linesOf(invoiceId)).toEqual(['changed']);
+			});
+
+			it('a line removed on its own (DELETE /invoice-item/:id, deleteInvoiceItem)', async () => {
+				const invoiceId = await draftInvoice();
+				const [lineId] = await lineIdsOf(invoiceId);
+
+				await refusesTheSaveAfter(invoiceId, () => handlers(ormType).lines.deleteLine(lineId));
+
+				expect(await linesOf(invoiceId)).toEqual([]);
+			});
+
+			it('a line withdrawn, then restored (DELETE /invoice-item/:id/soft, PUT /invoice-item/:id/recover)', async () => {
+				const invoiceId = await draftInvoice();
+				const [lineId] = await lineIdsOf(invoiceId);
+
+				await refusesTheSaveAfter(invoiceId, () => handlers(ormType).lines.softRemoveLine(lineId));
+				await refusesTheSaveAfter(invoiceId, () => handlers(ormType).lines.softRecoverLine(lineId));
+			});
+
+			it('a status change (PUT /invoices/:id/action, updateInvoiceAction)', async () => {
+				const invoiceId = await draftInvoice();
+
+				// The ORM's own update date: to the second on SQLite and MySQL under TypeORM (CURRENT_TIMESTAMP), so
+				// two plain writes in the same second leave it as it was there; Postgres keeps it to the microsecond.
+				await refusesTheSaveAfter(invoiceId, () =>
+					handlers(ormType).update({ id: invoiceId, ...scope, status: 'SENT' })
+				);
+			});
+
+			it('the mark of a void invoice whose released time another invoice bills since', async () => {
+				const voidInvoiceId = await draftInvoice();
+				await dataSource.query(`UPDATE "invoice" SET "status" = 'VOID' WHERE "id" = ?`, [voidInvoiceId]);
+				const timeLogId = randomUUID();
+				await insert('time_log', {
+					id: timeLogId,
+					...scope,
+					employeeId: OWN,
+					startedAt: '2026-10-01 09:00:00',
+					stoppedAt: '2026-10-01 10:00:00',
+					isBillable: 1,
+					invoiceItemId: (await lineIdsOf(voidInvoiceId))[0]
+				});
+				const expectedUpdatedAt = await readVersion(ormType, voidInvoiceId);
+				invoiceNumber += 1;
+				const billingInvoiceId = randomUUID();
+
+				await handlers(ormType).create({
+					id: billingInvoiceId,
+					...scope,
+					fromOrganizationId: ORG,
+					invoiceNumber,
+					invoiceDate: new Date('2026-11-01T00:00:00.000Z'),
+					dueDate: new Date('2026-11-30T00:00:00.000Z'),
+					currency: 'EUR',
+					discountValue: 0,
+					terms: 'bills the released time',
+					status: 'DRAFT',
+					invoiceItems: [{ ...line(billingInvoiceId, 'billed again'), timeLogIds: [timeLogId] }]
+				});
+
+				const [row] = await dataSource.query(`SELECT "releasedTimeBilledAt" FROM "invoice" WHERE "id" = ?`, [
+					voidInvoiceId
+				]);
+				expect(row.releasedTimeBilledAt).not.toBeNull();
+				orm.em.clear();
+				expect(await readVersion(ormType, voidInvoiceId)).not.toBe(expectedUpdatedAt);
 			});
 		});
 

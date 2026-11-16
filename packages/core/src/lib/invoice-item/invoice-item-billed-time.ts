@@ -207,10 +207,12 @@ async function typeOrmMarkReleasedTimeBilled(
 	}
 	await typeOrmLockReleasingDocuments(manager, timeLogIds, lineIdsOf(lines), scope.tenantId, 'fail');
 	const { condition, parameters } = releasedBy(timeLogIds, lineIdsOf(lines));
+	const markedAt = new Date();
 	await manager
 		.createQueryBuilder()
 		.update(Invoice)
-		.set({ releasedTimeBilledAt: new Date() })
+		// The mark is a change of the document: its `updatedAt` moves with it, so a precondition read before sees it
+		.set({ releasedTimeBilledAt: markedAt, updatedAt: markedAt })
 		.where(p(`"tenantId" = :tenantId`), { tenantId: scope.tenantId })
 		.andWhere(p(`"releasedTimeBilledAt" IS NULL`))
 		.andWhere(p(`"status" IN (:...releasingStatuses)`), { releasingStatuses: RELEASING_STATUSES })
@@ -237,7 +239,12 @@ async function mikroOrmMarkReleasedTimeBilled(
 		status: { $in: RELEASING_STATUSES },
 		[releasedByKey]: []
 	} as FilterQuery<Invoice>;
-	await em.nativeUpdate(Invoice, where, { releasedTimeBilledAt: new Date() } as EntityData<Invoice>);
+	// A native update stamps no update date: the mark is a change of the document, so it moves `updatedAt` itself
+	const markedAt = new Date();
+	await em.nativeUpdate(Invoice, where, {
+		releasedTimeBilledAt: markedAt,
+		updatedAt: markedAt
+	} as EntityData<Invoice>);
 }
 
 /** The ids of the lines given, each once. */
