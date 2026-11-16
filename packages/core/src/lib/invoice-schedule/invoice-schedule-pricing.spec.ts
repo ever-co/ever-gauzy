@@ -4,6 +4,7 @@ import {
 	decimalHoursOf,
 	durationRoundingRuleOf,
 	invoiceTimeOf,
+	keptLinePriceOf,
 	lineAmountOf,
 	linePriceOf,
 	oneCurrencyInvoiceOf,
@@ -196,6 +197,81 @@ describe('scheduled invoice pricing', () => {
 
 			expect(time.lines).toMatchObject([{ hours: 3, rate: 100, amount: 300, timeLogIds: ['a', 'b'] }]);
 			expect(time.unpricedSeconds).toBe(HOUR);
+		});
+	});
+
+	describe('time priced at the rates each log keeps', () => {
+		const kept = { a: 90, b: 90, c: 110 } as Record<string, number>;
+		const priceOfLog = (entry: { id?: string | null }) => ({
+			rate: kept[entry.id] ?? null,
+			currency: 'USD',
+			source: 'project' as const
+		});
+		const todays = () => ({ rate: 110, currency: 'USD', source: 'project' as const });
+		const logs = [log('a', MARIE, WEBSITE, 2), log('b', MARIE, WEBSITE, 1), log('c', MARIE, WEBSITE, 3)];
+
+		it("makes one entry per rate a member's time on a project kept", () => {
+			const entries = billableEntriesOf(logs, projects, null, priceOfLog);
+
+			expect(entries.map(({ seconds, timeLogIds, price }) => ({ seconds, timeLogIds, rate: price.rate }))).toEqual(
+				[
+					{ seconds: 3 * HOUR, timeLogIds: ['a', 'b'], rate: 90 },
+					{ seconds: 3 * HOUR, timeLogIds: ['c'], rate: 110 }
+				]
+			);
+		});
+
+		it('by member: one line per rate, each at its own rate, never at the price of today', () => {
+			const entries = billableEntriesOf(logs, projects, null, priceOfLog);
+
+			const { lines } = invoiceTimeOf(entries, InvoiceScheduleGroupingEnum.MEMBER, todays);
+
+			expect(lines.map(({ hours, rate, amount, timeLogIds }) => ({ hours, rate, amount, timeLogIds }))).toEqual([
+				{ hours: 3, rate: 90, amount: 270, timeLogIds: ['a', 'b'] },
+				{ hours: 3, rate: 110, amount: 330, timeLogIds: ['c'] }
+			]);
+			expect(new Set(lines.map(({ key }) => key)).size).toBe(2);
+		});
+
+		it('by project: the hours at their kept rates make the average', () => {
+			const entries = billableEntriesOf(logs, projects, null, priceOfLog);
+
+			const { lines } = invoiceTimeOf(entries, InvoiceScheduleGroupingEnum.PROJECT, todays);
+
+			// 3 h at 90 and 3 h at 110: 600 for 6 h, 100 an hour
+			expect(lines).toMatchObject([{ hours: 6, rate: 100, amount: 600, timeLogIds: ['a', 'b', 'c'] }]);
+		});
+
+		it('reads the chain from the log: its member client rate, its project client rate, its billing rate', () => {
+			const organization = 'USD';
+
+			expect(
+				keptLinePriceOf(
+					{
+						projectMemberBillRateValue: '70.00',
+						projectMemberBillRateCurrency: 'EUR',
+						projectBillRateValue: 90,
+						projectBillRateCurrency: 'GBP',
+						billRateValue: 40
+					},
+					organization
+				)
+			).toEqual({ rate: 70, currency: 'EUR', source: 'member' });
+			expect(
+				keptLinePriceOf({ projectBillRateValue: 90, projectBillRateCurrency: 'GBP', billRateValue: 40 }, organization)
+			).toEqual({ rate: 90, currency: 'GBP', source: 'project' });
+			expect(keptLinePriceOf({ billRateValue: 40, billRateCurrency: null }, organization)).toEqual({
+				rate: 40,
+				currency: 'USD',
+				source: 'employee'
+			});
+			// A member whose own rate was cleared kept 0: the organization's default prices the time, as today
+			expect(keptLinePriceOf({ billRateValue: 0 }, organization, { value: 55, currency: null })).toEqual({
+				rate: 55,
+				currency: 'USD',
+				source: 'default'
+			});
+			expect(keptLinePriceOf({}, organization)).toEqual({ rate: null, currency: null, source: null });
 		});
 	});
 
