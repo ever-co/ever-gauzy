@@ -488,6 +488,34 @@ describe('TaskComponent', () => {
 			expect(component.loading).toBe(false);
 		});
 
+		it('does not put back a page that a successful read in place already showed when a later one fails', async () => {
+			await open('dashboard');
+
+			// Page 2 is under way when save A is read again; A answers first and shows page 2.
+			const page = holdNextRead();
+			component.onScroll();
+			await settle();
+			showTask(3);
+			const readAgainA = holdNextRead();
+			dialogResult = dialogValues({ title: 'First' });
+			await component.editTaskDialog();
+			readAgainA(server.slice(0, 2 * PAGE_SIZE));
+			await settle(50);
+			expect(ids()).toEqual(server.slice(0, 2 * PAGE_SIZE).map(({ id }) => id));
+
+			// The original page 2 answers late, then save B's read fails.
+			page(pageOf(2));
+			await settle(50);
+			const readAgainB = holdNextRead();
+			dialogResult = dialogValues({ title: 'Second' });
+			await component.editTaskDialog();
+			readAgainB.fail();
+			await settle(50);
+
+			expect(ids()).toEqual(server.slice(0, 2 * PAGE_SIZE).map(({ id }) => id));
+			expect(component.loading).toBe(false);
+		});
+
 		it('turns the loading state off when a covered page read and the read in place covering it both fail', async () => {
 			await open('dashboard');
 
