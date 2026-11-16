@@ -184,7 +184,8 @@
 
 	.is-stacked {
 		position: relative;
-		box-shadow: 0 0 0 2px var(--gauzy-card-1, nb-theme(background-basic-color-1));
+		box-shadow: 0 0 0 var(--gauzy-people-stack-ring-width, 0.125rem)
+			var(--gauzy-card-1, var(--background-basic-color-1));
 
 		&:hover {
 			z-index: 1;
@@ -192,10 +193,10 @@
 	}
 
 	.is-stacked + .is-stacked {
-		margin-inline-start: -0.3125rem;
+		margin-inline-start: calc(-1 * var(--gauzy-people-stack-overlap, 0.3125rem));
 	}
 
 	.is-more {
-		padding: 0 0.3125rem;
+		padding: 0 var(--gauzy-people-more-padding-x, 0.3125rem);
 	}
 }
