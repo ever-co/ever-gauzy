@@ -156,7 +156,8 @@
 		"SEARCH_CONTENT_DISABLED": "Type at least {{ min }} characters to search content",
 		"OPEN_CALENDAR": "Open calendar",
 		"CLEAR_RANGE": "Clear date range",
-		"CLEAR_ALL": "Clear all"
+		"CLEAR_ALL": "Clear all",
+		"MORE_FILTERS": "Filters"
 	},
 	"STATS": {
 		"ARIA": "Document statistics",
