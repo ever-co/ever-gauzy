@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
+import { Component, EventEmitter, OnInit, Output, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ITreeOptions, TreeComponent, TreeModel, TreeNode, TREE_ACTIONS } from '@ali-hm/angular-tree-component';
 import { NbDialogService, NbMenuItem, NbMenuService } from '@nebular/theme';
@@ -72,6 +72,13 @@ const TREE_KEY = {
 })
 export class DocsTreeComponent extends TranslationBaseComponent implements OnInit {
 	@ViewChild(TreeComponent) private readonly tree: TreeComponent;
+
+	/**
+	 * The user picked somewhere to go — a node, a recent, a favorite or the root.
+	 * The shell closes its folder drawer on it; expanding, dragging and the node
+	 * menus do not emit, so browsing the tree keeps the drawer open.
+	 */
+	@Output() navigated = new EventEmitter<void>();
 
 	public nodes: IDocsTreeNode[] = [];
 	public recents: IRecentEntry[] = [];
@@ -258,6 +265,7 @@ export class DocsTreeComponent extends TranslationBaseComponent implements OnIni
 				this.actions.dispatch(DocumentsActions.detailOpened(node.id));
 				break;
 		}
+		this.navigated.emit();
 	}
 
 	/** Section title / root crumb — clears the folder scope (and the space) back to "All documents". */
@@ -266,6 +274,7 @@ export class DocsTreeComponent extends TranslationBaseComponent implements OnIni
 			void this.treeStore.selectSpace(null).catch(() => undefined);
 		}
 		this.actions.dispatch(DocumentsActions.folderChanged(null));
+		this.navigated.emit();
 	}
 
 	// ─── Spaces (`GAUZY_DOCS_COLLAB_ENABLED`) ─────────────────────
@@ -574,6 +583,7 @@ export class DocsTreeComponent extends TranslationBaseComponent implements OnIni
 	openFavorite(favorite: { link?: string }): void {
 		if (favorite?.link) {
 			this.router.navigateByUrl(favorite.link);
+			this.navigated.emit();
 		}
 	}
 
