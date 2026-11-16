@@ -1,4 +1,5 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { FindOptionsWhere } from 'typeorm';
 import { ID, IInvoiceItem, IInvoiceItemCreateInput } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from './../core/crud';
@@ -15,7 +16,7 @@ import {
 	splitBilledTime
 } from './invoice-item-billed-time';
 import { replaceLinesKeepingTime } from './invoice-item-kept-time';
-import { holdInvoiceUnchanged, touchInvoice } from '../invoice/invoice-precondition';
+import { holdInvoiceUnchanged, INVOICE_LINE_OF_ANOTHER_INVOICE, touchInvoice } from '../invoice/invoice-precondition';
 import { MikroOrmInvoiceItemRepository } from './repository/mikro-orm-invoice-item.repository';
 import { TypeOrmInvoiceItemRepository } from './repository/type-orm-invoice-item.repository';
 
@@ -78,17 +79,44 @@ export class InvoiceItemService extends TenantAwareCrudService<InvoiceItem> {
 	 * `inLinesTransaction`): the invoice edit that saves its fields and its lines together, and the conditional
 	 * replacement below. The replacement runs nested in that transaction, so a failure of either rolls both back.
 	 *
+	 * Every line is saved as a line of this invoice, the one whose precondition was checked, whichever `invoiceId` it
+	 * states. A line that names an existing line by its `id` may name only a line of this invoice: a line of another
+	 * invoice would be moved onto this one, and that invoice changed without its own precondition.
+	 *
 	 * @param transaction The transaction opened by the caller.
 	 * @param invoiceId The invoice whose lines are replaced.
 	 * @param input The new lines.
 	 * @returns The new lines.
+	 * @throws BadRequestException when a line names a line this invoice does not hold, or names one twice; nothing is
+	 * saved.
 	 */
 	async replaceLinesIn(
 		transaction: ILinesTransaction,
 		invoiceId: ID,
 		input: IInvoiceItemCreateInput[]
 	): Promise<IInvoiceItem[]> {
-		return await this.onTransaction(transaction).createBulk(invoiceId, input);
+		const service = this.onTransaction(transaction);
+		const lines = await service.linesOfInvoice(invoiceId, input);
+		return await service.createBulk(invoiceId, lines);
+	}
+
+	/**
+	 * The lines, each bound to the invoice: stating it, and naming by `id`, when it names one, a line the invoice holds.
+	 *
+	 * @throws BadRequestException when a line names a line the invoice does not hold, or names one twice.
+	 */
+	private async linesOfInvoice(invoiceId: ID, input: IInvoiceItemCreateInput[]): Promise<IInvoiceItemCreateInput[]> {
+		const namedIds = input.map((line) => line.id).filter((id): id is ID => Boolean(id));
+		if (namedIds.length > 0) {
+			const held = await this.find({ where: { invoiceId } as FindOptionsWhere<InvoiceItem> });
+			const heldIds = new Set(held.map((line) => line.id));
+			const namesEachOnce = new Set(namedIds).size === namedIds.length;
+			const namesOnlyItsOwn = namedIds.every((id) => heldIds.has(id));
+			if (!namesEachOnce || !namesOnlyItsOwn) {
+				throw new BadRequestException(INVOICE_LINE_OF_ANOTHER_INVOICE);
+			}
+		}
+		return input.map((line) => ({ ...line, invoiceId }));
 	}
 
 	/**

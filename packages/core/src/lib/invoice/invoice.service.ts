@@ -43,12 +43,15 @@ import {
 	assertBillingInOrganization,
 	ILinesRepositories,
 	ILinesTransaction,
+	ILockedInvoice,
 	inLinesTransaction,
+	lockedOrganizationIdOf,
 	saveBillingTime,
 	splitBilledTime
 } from '../invoice-item/invoice-item-billed-time';
 import {
 	holdInvoiceUnchanged,
+	INVOICE_ORGANIZATION_IS_KEPT,
 	InvoiceChangedError,
 	invoiceChangedException,
 	touchInvoice
@@ -101,6 +104,23 @@ export interface IInvoiceLinesWriter {
 
 /** What the conflict of a conditional write carries: the invoice with its lines, as the caller may read it now. */
 const CHANGED_INVOICE_RELATIONS = ['invoiceItems'];
+
+/**
+ * Refuses a change that moves the invoice to another organization in the save of its lines: the lines' time is checked
+ * against the organization the invoice is stored in, and the edit screens never move an invoice.
+ *
+ * @param stored The invoice as the locking read answered it.
+ * @param change The change.
+ * @throws BadRequestException when the change states another organization than the stored one.
+ */
+function assertOrganizationKept(stored: ILockedInvoice, change: IInvoiceUpdateInput): void {
+	const stated = change.organizationId ?? change.organization?.id;
+	const storedOrganizationId = lockedOrganizationIdOf(stored);
+	const statesAnother = Boolean(stated) && Boolean(storedOrganizationId) && stated !== storedOrganizationId;
+	if (statesAnother) {
+		throw new BadRequestException(INVOICE_ORGANIZATION_IS_KEPT);
+	}
+}
 
 /** What an invoice is read with to be rendered as a PDF (`InvoiceService.renderInvoicePdf`). */
 export const INVOICE_PDF_RELATIONS: ReadonlyArray<string> = [
@@ -204,11 +224,13 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 	 * Writes a change to an invoice only while the invoice still holds the `updatedAt` the caller read
 	 * (`PUT /invoices/:id` with `expectedUpdatedAt`). The invoice is locked, compared and written in one transaction,
 	 * so nothing saved after the comparison is written over, and a final status is kept as
-	 * {@link writeKeepingFinalStatus} keeps it.
+	 * {@link writeKeepingFinalStatus} keeps it. Its `updatedAt` is then moved, in the same transaction, so the
+	 * `updatedAt` the caller read no longer matches: a database that keeps it to the second (SQLite) would otherwise
+	 * let a second save made on the same read through.
 	 *
 	 * @param change The change, naming the invoice.
 	 * @param expectedUpdatedAt The `updatedAt` the caller read.
-	 * @returns What the write answered.
+	 * @returns What the write answered, with the invoice's new `updatedAt`.
 	 * @throws ApiException 409 (`CONCURRENT_MODIFICATION`) with the invoice as it is now, when it was written since;
 	 * nothing is saved. 404 when the caller's tenant has no such invoice.
 	 */
@@ -217,7 +239,9 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 			inLinesTransaction(this, this.ownRepositories(), async (service, transaction) => {
 				const stored = await holdInvoiceUnchanged(transaction, change.id, expectedUpdatedAt);
 				assertFinalStatusKept(stored, change.status);
-				return await service.create(change);
+				const written = await service.create(change);
+				const updatedAt = await touchInvoice(transaction, change.id, stored);
+				return { ...written, updatedAt } as IInvoice;
 			})
 		);
 	}
@@ -228,7 +252,8 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 	 * written only while the invoice still holds it, as {@link updateUnchangedSince} writes the fields.
 	 *
 	 * The invoice's `updatedAt` is moved once the lines are replaced, so the next precondition sees a change of the
-	 * lines alone too.
+	 * lines alone too. The invoice keeps its organization: the lines' time is checked against the organization it is
+	 * stored in, which a change made in the same transaction would leave behind.
 	 *
 	 * @param change The fields, naming the invoice; no lines.
 	 * @param lines Every line of the invoice once saved, as `POST /invoice-item/bulk/:invoiceId` takes them.
@@ -237,6 +262,7 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 	 * @returns The invoice as written, with its new lines and its new `updatedAt`.
 	 * @throws ApiException 409 (`CONCURRENT_MODIFICATION`) with the invoice as it is now, when it was written since;
 	 * nothing is saved. 404 when the caller's tenant has no such invoice.
+	 * @throws BadRequestException when the change moves the invoice to another organization; nothing is saved.
 	 */
 	async updateWithItems(
 		change: IInvoiceUpdateInput,
@@ -248,6 +274,7 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 			inLinesTransaction(this, this.ownRepositories(), async (service, transaction) => {
 				const stored = await holdInvoiceUnchanged(transaction, change.id, expectedUpdatedAt);
 				assertFinalStatusKept(stored, change.status);
+				assertOrganizationKept(stored, change);
 				const written = await service.create(change);
 				const invoiceItems = await linesWriter.replaceLinesIn(transaction, change.id, lines);
 				const updatedAt = await touchInvoice(transaction, change.id, stored);

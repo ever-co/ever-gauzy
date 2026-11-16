@@ -562,14 +562,22 @@ export function typeOrmRowLock(): Pick<FindOneOptions, 'lock'> {
 }
 
 /**
- * An invoice's status, when its released time was billed again, and when it was last written, as a locking read
- * answers it. `updatedAt` is what a conditional write compares the caller's precondition with (see
+ * An invoice's status, when its released time was billed again, when it was last written, and its organization, as a
+ * locking read answers it. `updatedAt` is what a conditional write compares the caller's precondition with (see
  * `holdInvoiceUnchanged`).
  */
 export interface ILockedInvoice {
 	status?: string;
 	releasedTimeBilledAt?: Date | null;
 	updatedAt?: Date | null;
+	/** Read on TypeORM; on MikroORM the organization is read through its relation (see `lockedOrganizationIdOf`). */
+	organizationId?: ID | null;
+	organization?: { id?: ID } | null;
+}
+
+/** The organization of an invoice a locking read answered, on either ORM. */
+export function lockedOrganizationIdOf(locked: ILockedInvoice): ID | null {
+	return locked.organizationId ?? locked.organization?.id ?? null;
 }
 
 /**
@@ -590,7 +598,8 @@ export async function lockInvoice(
 	if (transaction.mikroOrm) {
 		// Read apart from the identity map: the write that follows loads the whole invoice.
 		return await transaction.mikroOrm.findOne(Invoice, where as FilterQuery<Invoice>, {
-			fields: ['id', 'status', 'releasedTimeBilledAt', 'updatedAt'] as never,
+			// The organization through its relation: MikroORM maps `organizationId` as a mirror it does not load
+			fields: ['id', 'status', 'releasedTimeBilledAt', 'updatedAt', 'organization'] as never,
 			filters: false,
 			disableIdentityMap: true,
 			lockMode: mikroOrmRowLock()
@@ -598,7 +607,7 @@ export async function lockInvoice(
 	}
 	return await transaction.typeOrm.findOne(Invoice, {
 		where,
-		select: { id: true, status: true, releasedTimeBilledAt: true, updatedAt: true },
+		select: { id: true, status: true, releasedTimeBilledAt: true, updatedAt: true, organizationId: true },
 		withDeleted: true,
 		loadEagerRelations: false,
 		...typeOrmRowLock()

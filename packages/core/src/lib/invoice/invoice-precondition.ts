@@ -30,6 +30,15 @@ export const INVOICE_CHANGED =
 	'INVOICE_CHANGED: the invoice changed since it was read (its updatedAt is no longer expectedUpdatedAt). Nothing ' +
 	'was saved: read it again, and make the change on what it holds now.';
 
+/** The refusal of a save of an invoice's fields and lines that would move the invoice to another organization. */
+export const INVOICE_ORGANIZATION_IS_KEPT =
+	'INVOICE_ORGANIZATION_IS_KEPT: an invoice saved with its lines stays in its organization. Nothing was saved.';
+
+/** The refusal of a line that names a line of another invoice. */
+export const INVOICE_LINE_OF_ANOTHER_INVOICE =
+	'INVOICE_LINE_OF_ANOTHER_INVOICE: a line names, by its id, a line this invoice does not hold (or names one twice). ' +
+	'Nothing was saved: leave out the id of a new line.';
+
 /** The refusal of a precondition that is no date and time. */
 export const INVOICE_PRECONDITION_MALFORMED =
 	'expectedUpdatedAt must be the updatedAt the invoice was read with, as an ISO 8601 date and time.';

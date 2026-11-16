@@ -152,6 +152,13 @@ describe('Invoice edits under a precondition, on TypeORM and on MikroORM (#5243)
 		return row.updatedAt;
 	};
 
+	const lineIdsOf = async (invoiceId: string): Promise<string[]> => {
+		const rows: Row[] = await dataSource.query(`SELECT "id" FROM "invoice_item" WHERE "invoiceId" = ?`, [
+			invoiceId
+		]);
+		return rows.map((row) => row.id);
+	};
+
 	const linesOf = async (invoiceId: string): Promise<string[]> => {
 		const rows: Row[] = await dataSource.query(
 			`SELECT "description" FROM "invoice_item" WHERE "invoiceId" = ? ORDER BY "description"`,
@@ -329,6 +336,19 @@ describe('Invoice edits under a precondition, on TypeORM and on MikroORM (#5243)
 				expect(await termsOf(invoiceId)).toBe('meanwhile');
 			});
 
+			it('refuses a second save made on the same read: the first one moved the updatedAt read', async () => {
+				const invoiceId = await draftInvoice();
+				const expectedUpdatedAt = await readVersion(ormType, invoiceId);
+				const saved = await handlers(ormType).update(fields(invoiceId, { expectedUpdatedAt }));
+				orm.em.clear();
+				expect(new Date(saved.updatedAt).toISOString()).toBe(await readVersion(ormType, invoiceId));
+
+				const second = handlers(ormType).update(fields(invoiceId, { expectedUpdatedAt, terms: 'second' }));
+
+				await expect(second).rejects.toMatchObject({ status: 409, code: 'CONCURRENT_MODIFICATION' });
+				expect(await termsOf(invoiceId)).toBe('edited');
+			});
+
 			it('saves the fields as it always did when no precondition is stated', async () => {
 				const invoiceId = await draftInvoice();
 				await changedMeanwhile(invoiceId);
@@ -402,6 +422,34 @@ describe('Invoice edits under a precondition, on TypeORM and on MikroORM (#5243)
 			});
 		});
 
+		describe('POST /invoice-item/bulk/:invoiceId, conditional', () => {
+			it('refuses a second replacement made on the same read', async () => {
+				const invoiceId = await draftInvoice();
+				const expectedUpdatedAt = new Date(await readVersion(ormType, invoiceId));
+				await handlers(ormType).replaceLines(invoiceId, [line(invoiceId, 'first')], expectedUpdatedAt);
+
+				const second = handlers(ormType).replaceLines(
+					invoiceId,
+					[line(invoiceId, 'second')],
+					expectedUpdatedAt
+				);
+
+				await expect(second).rejects.toMatchObject({ status: 409 });
+				expect(await linesOf(invoiceId)).toEqual(['first']);
+			});
+
+			it('saves every line on the invoice whose precondition it checked, whichever invoice a line states', async () => {
+				const invoiceId = await draftInvoice();
+				const otherInvoiceId = await draftInvoice();
+				const expectedUpdatedAt = new Date(await readVersion(ormType, invoiceId));
+
+				await handlers(ormType).replaceLines(invoiceId, [line(otherInvoiceId, 'bound')], expectedUpdatedAt);
+
+				expect(await linesOf(invoiceId)).toEqual(['bound']);
+				expect(await linesOf(otherInvoiceId)).toEqual(['held']);
+			});
+		});
+
 		describe('PUT /invoices/:id/with-items', () => {
 			it('saves the fields and the lines together while the invoice still holds the updatedAt read', async () => {
 				const invoiceId = await draftInvoice();
@@ -466,6 +514,66 @@ describe('Invoice edits under a precondition, on TypeORM and on MikroORM (#5243)
 				const save = handlers(ormType).updateWithItems({
 					...fields(invoiceId, { expectedUpdatedAt }),
 					invoiceItems: [line(invoiceId, 'billing', { timeLogIds: [foreignTime] })]
+				});
+
+				await expect(save).rejects.toMatchObject({ status: 400 });
+				expect(await termsOf(invoiceId)).toBe('as read');
+				expect(await linesOf(invoiceId)).toEqual(['held']);
+			});
+
+			it('refuses a second save made on the same read', async () => {
+				const invoiceId = await draftInvoice();
+				const expectedUpdatedAt = await readVersion(ormType, invoiceId);
+				await handlers(ormType).updateWithItems({
+					...fields(invoiceId, { expectedUpdatedAt }),
+					invoiceItems: [line(invoiceId, 'first')]
+				});
+
+				const second = handlers(ormType).updateWithItems({
+					...fields(invoiceId, { expectedUpdatedAt, terms: 'second' }),
+					invoiceItems: [line(invoiceId, 'second')]
+				});
+
+				await expect(second).rejects.toMatchObject({ status: 409 });
+				expect(await termsOf(invoiceId)).toBe('edited');
+				expect(await linesOf(invoiceId)).toEqual(['first']);
+			});
+
+			it("refuses a line that names another invoice's line, saving nothing on either invoice", async () => {
+				const invoiceId = await draftInvoice();
+				const otherInvoiceId = await draftInvoice();
+				const [otherLineId] = await lineIdsOf(otherInvoiceId);
+
+				const save = handlers(ormType).updateWithItems({
+					...fields(invoiceId),
+					invoiceItems: [line(invoiceId, 'taken', { id: otherLineId })]
+				});
+
+				await expect(save).rejects.toMatchObject({ status: 400 });
+				expect(await termsOf(invoiceId)).toBe('as read');
+				expect(await linesOf(invoiceId)).toEqual(['held']);
+				expect(await lineIdsOf(otherInvoiceId)).toEqual([otherLineId]);
+				expect(await linesOf(otherInvoiceId)).toEqual(['held']);
+			});
+
+			it('keeps a line that names, by its id, a line of the invoice itself', async () => {
+				const invoiceId = await draftInvoice();
+				const [lineId] = await lineIdsOf(invoiceId);
+
+				await handlers(ormType).updateWithItems({
+					...fields(invoiceId),
+					invoiceItems: [line(invoiceId, 'rewritten', { id: lineId })]
+				});
+
+				expect(await linesOf(invoiceId)).toEqual(['rewritten']);
+			});
+
+			it('refuses to move the invoice to another organization with its lines, saving nothing', async () => {
+				const invoiceId = await draftInvoice();
+
+				const save = handlers(ormType).updateWithItems({
+					...fields(invoiceId, { organizationId: OTHER_ORG }),
+					invoiceItems: [line(invoiceId, 'first')]
 				});
 
 				await expect(save).rejects.toMatchObject({ status: 400 });
