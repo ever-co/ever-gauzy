@@ -5,7 +5,7 @@ import * as path from 'path';
 /**
  * Tags on time logs (ever-co/ever-gauzy#12029) on one SQLite database with the tables TypeORM creates, read through
  * both ORMs: the list's `tags` relation, the `tagIds` and `untagged` filters on the list and the reports, each daily
- * report row and each weekly log with its tags, and the change of a log's tags.
+ * report row with its tags, the weekly report's filter, and the change of a log's tags.
  *
  * Marie's Tuesday: 2 h of "meeting", 3 h filed under "support" and "design", 3 h without a tag, whose only link is to a
  * deleted tag. The entities are imported under `DB_ORM=mikro-orm` in a registry kept open while both ORMs build their
@@ -40,6 +40,7 @@ type Reads = Record<
 	| 'dailyByMeeting'
 	| 'chartByMeeting'
 	| 'weekly'
+	| 'weeklyByMeeting'
 	| 'changed'
 	| 'refused'
 	| 'afterRefusal',
@@ -144,7 +145,9 @@ async function measure(): Promise<{ mikroOrm: Reads; typeOrm: Reads }> {
 					startedAt: `${TUESDAY} ${from}`,
 					stoppedAt: `${TUESDAY} ${until}`,
 					logType: 'MANUAL',
-					source: 'TEAMS'
+					source: 'TEAMS',
+					isActive: true,
+					isArchived: false
 				});
 				await insert('time_slot', { ...scope, id: slot, employeeId: MARIE, startedAt: `${TUESDAY} ${from}` });
 				await insert('time_slot_time_logs', { timeSlotId: slot, timeLogId: id });
@@ -163,16 +166,22 @@ async function measure(): Promise<{ mikroOrm: Reads; typeOrm: Reads }> {
 			jest.spyOn(RequestContext, 'hasPermission').mockReturnValue(true);
 
 			const groupByDate = new GetTimeLogGroupByDateHandler();
-			const service = (mikroOrmRepository: unknown) =>
-				new TimeLogService(
+			const service = (mikroOrmRepository: unknown) => {
+				const built = new TimeLogService(
 					dataSource.getRepository(TimeLog),
 					mikroOrmRepository,
-					{ execute: (command: any) => groupByDate.execute(command) } as any,
+					{} as any,
 					dataSource.getRepository(OrganizationProject),
 					dataSource.getRepository(OrganizationContact),
-					{} as any,
+					{ execute: (command: any) => groupByDate.execute(command) } as any,
 					{ canManageEmployees: async () => true, canManageEmployee: async () => true } as any
 				);
+				// A read by id is bounded by the caller's organizations, which this spec does not model: the change of
+				// tags reads its log as stored
+				built.findOneByIdString = (async (id: string) =>
+					dataSource.getRepository(TimeLog).findOneByOrFail({ id })) as any;
+				return built;
+			};
 
 			const request = {
 				organizationId: ORGANIZATION,
@@ -201,6 +210,7 @@ async function measure(): Promise<{ mikroOrm: Reads; typeOrm: Reads }> {
 					dailyByMeeting: await read(() => target().getDailyReport({ ...request, tagIds: [MEETING] })),
 					chartByMeeting: await read(() => target().getDailyReportCharts({ ...request, tagIds: [MEETING] })),
 					weekly: await read(() => target().getWeeklyReport(request)),
+					weeklyByMeeting: await read(() => target().getWeeklyReport({ ...request, tagIds: [MEETING] })),
 					changed: await read(() =>
 						target().updateTimeLogTags(MEETING_LOG, { organizationId: ORGANIZATION, tags: [SUPPORT] })
 					),
@@ -319,11 +329,11 @@ describe('TimeLogService tags, on one database through both ORMs', () => {
 			expect(chartByMeeting.find(({ date }: any) => date === TUESDAY).value.MANUAL).toBe(2);
 		});
 
-		it('answers each log of the week with its tags', () => {
-			const { weekly } = measured[orm];
+		it('counts in the week the logs of the tag asked for', () => {
+			const { weekly, weeklyByMeeting } = measured[orm];
 			expect(weekly.error).toBeUndefined();
-			const week = weekly[0].dates[TUESDAY];
-			expect(week.logs.map(tagNames)).toEqual([['meeting'], ['design', 'support'], []]);
+			expect(weekly[0].dates[TUESDAY].sum).toBe(8 * 3600);
+			expect(weeklyByMeeting[0].dates[TUESDAY].sum).toBe(2 * 3600);
 		});
 
 		it("changes a log's tags and nothing else, and refuses a tag of another organization", () => {

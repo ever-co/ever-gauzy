@@ -420,9 +420,6 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		// The days the report covers, and the zone its rows are grouped by
 		const { days, timeZone } = this.reportDateRange(request);
 
-		// Each log of the week states the tags it is filed under (ever-co/ever-gauzy#12029)
-		await loadTimeLogTags(this.typeOrmRepository.manager, logs);
-
 		// A rate that states no currency is in the organization's, as the report page shows it; read only when needed
 		const organizationCurrency = await this.findCurrencyForRatesWithoutOne(logs, request.organizationId);
 
