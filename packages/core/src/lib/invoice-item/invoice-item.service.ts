@@ -9,11 +9,13 @@ import {
 	assertBillingOnInvoice,
 	IBillingLine,
 	ILinesRepositories,
+	ILinesTransaction,
 	inLinesTransaction,
 	saveBillingTime,
 	splitBilledTime
 } from './invoice-item-billed-time';
 import { replaceLinesKeepingTime } from './invoice-item-kept-time';
+import { holdInvoiceUnchanged, touchInvoice } from '../invoice/invoice-precondition';
 import { MikroOrmInvoiceItemRepository } from './repository/mikro-orm-invoice-item.repository';
 import { TypeOrmInvoiceItemRepository } from './repository/type-orm-invoice-item.repository';
 
@@ -31,6 +33,8 @@ export class InvoiceItemService extends TenantAwareCrudService<InvoiceItem> {
 	 *
 	 * @param {ID} invoiceId - The unique identifier of the invoice.
 	 * @param {IInvoiceItemCreateInput[]} input - An array of invoice items to be created.
+	 * @param {Date | null} expectedUpdatedAt - The `updatedAt` the invoice was read with: the items are replaced only
+	 * while the invoice still holds it (see `replaceLinesUnchangedSince`). Null, they are replaced as they always were.
 	 * @returns {Promise<IInvoiceItem[]>} - A promise resolving to the newly created invoice items.
 	 *
 	 * @throws {HttpException} - Throws an error if the operation fails.
@@ -43,7 +47,15 @@ export class InvoiceItemService extends TenantAwareCrudService<InvoiceItem> {
 	 * time (`replaceLinesBillingTime`); an item that names none and says what an old item said
 	 * keeps the time the old one billed (`replaceLinesKeepingTime`).
 	 */
-	async createBulk(invoiceId: ID, input: IInvoiceItemCreateInput[]): Promise<IInvoiceItem[]> {
+	async createBulk(
+		invoiceId: ID,
+		input: IInvoiceItemCreateInput[],
+		expectedUpdatedAt: Date | null = null
+	): Promise<IInvoiceItem[]> {
+		if (expectedUpdatedAt) {
+			return await this.replaceLinesUnchangedSince(invoiceId, input, expectedUpdatedAt);
+		}
+
 		const { lines, billing } = splitBilledTime(input);
 		if (billing.length > 0) {
 			return await this.replaceLinesBillingTime(invoiceId, input, lines, billing);
@@ -59,6 +71,58 @@ export class InvoiceItemService extends TenantAwareCrudService<InvoiceItem> {
 				HttpStatus.INTERNAL_SERVER_ERROR
 			);
 		}
+	}
+
+	/**
+	 * Replaces the invoice's lines, as {@link createBulk} does, in a transaction another write opened (see
+	 * `inLinesTransaction`): the invoice edit that saves its fields and its lines together, and the conditional
+	 * replacement below. The replacement runs nested in that transaction, so a failure of either rolls both back.
+	 *
+	 * @param transaction The transaction opened by the caller.
+	 * @param invoiceId The invoice whose lines are replaced.
+	 * @param input The new lines.
+	 * @returns The new lines.
+	 */
+	async replaceLinesIn(
+		transaction: ILinesTransaction,
+		invoiceId: ID,
+		input: IInvoiceItemCreateInput[]
+	): Promise<IInvoiceItem[]> {
+		return await this.onTransaction(transaction).createBulk(invoiceId, input);
+	}
+
+	/**
+	 * Replaces the invoice's lines only while the invoice still holds the `updatedAt` the caller read: the invoice is
+	 * locked and compared, its lines replaced, and its `updatedAt` moved, in one transaction, so the next precondition
+	 * sees the change of its lines.
+	 *
+	 * @throws InvoiceChangedError (from `holdInvoiceUnchanged`) when the invoice was written since; nothing is saved, and
+	 * the route answers 409.
+	 */
+	private async replaceLinesUnchangedSince(
+		invoiceId: ID,
+		input: IInvoiceItemCreateInput[],
+		expectedUpdatedAt: Date
+	): Promise<IInvoiceItem[]> {
+		return await inLinesTransaction(this, this.ownRepositories(), async (service, transaction) => {
+			const stored = await holdInvoiceUnchanged(transaction, invoiceId, expectedUpdatedAt);
+			const saved = await service.replaceLinesIn(transaction, invoiceId, input);
+			await touchInvoice(transaction, invoiceId, stored);
+			return saved;
+		});
+	}
+
+	/**
+	 * This service on the transaction given: on TypeORM its repository is the transaction's, so the tenant-aware writes
+	 * of the CRUD base run in it (as `inLinesTransaction` gives its work); on MikroORM the repositories follow the
+	 * transaction on their own.
+	 */
+	private onTransaction(transaction: ILinesTransaction): InvoiceItemService {
+		if (!transaction.typeOrm) {
+			return this;
+		}
+		const repository = transaction.typeOrm.getRepository(this.typeOrmRepository.target);
+		return Object.create(this, { typeOrmRepository: { value: repository, configurable: true } });
 	}
 
 	/**

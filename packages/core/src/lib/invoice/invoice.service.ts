@@ -9,7 +9,9 @@ import {
 	ID,
 	IInvoice,
 	IInvoiceCreateInput,
+	IInvoiceItem,
 	IInvoiceItemCreateInput,
+	IInvoiceUpdateInput,
 	IOrganization,
 	InvoiceStats,
 	LanguagesEnum
@@ -31,6 +33,7 @@ import { TypeOrmInvoiceRepository } from './repository/type-orm-invoice.reposito
 import { MikroOrmInvoiceRepository } from './repository/mikro-orm-invoice.repository';
 import { FavoriteService } from '../core/decorators';
 import {
+	assertFinalStatusKept,
 	holdFinalStatus,
 	IInvoiceStatusChange,
 	statesStatusOtherThanVoid,
@@ -39,10 +42,17 @@ import {
 import {
 	assertBillingInOrganization,
 	ILinesRepositories,
+	ILinesTransaction,
 	inLinesTransaction,
 	saveBillingTime,
 	splitBilledTime
 } from '../invoice-item/invoice-item-billed-time';
+import {
+	holdInvoiceUnchanged,
+	InvoiceChangedError,
+	invoiceChangedException,
+	touchInvoice
+} from './invoice-precondition';
 
 /**
  * What sending a document by e-mail did.
@@ -76,6 +86,21 @@ export interface IInvoiceStatistics {
 	totals: IInvoiceCurrencyTotal[];
 	byStatus: IInvoiceStatusTotal[];
 }
+
+/**
+ * What replaces an invoice's lines in a transaction another write opened: `InvoiceItemService`, which the invoice edit
+ * that saves the fields and the lines together (`PUT /invoices/:id/with-items`) hands over.
+ */
+export interface IInvoiceLinesWriter {
+	replaceLinesIn(
+		transaction: ILinesTransaction,
+		invoiceId: ID,
+		input: IInvoiceItemCreateInput[]
+	): Promise<IInvoiceItem[]>;
+}
+
+/** What the conflict of a conditional write carries: the invoice with its lines, as the caller may read it now. */
+const CHANGED_INVOICE_RELATIONS = ['invoiceItems'];
 
 /** What an invoice is read with to be rendered as a PDF (`InvoiceService.renderInvoicePdf`). */
 export const INVOICE_PDF_RELATIONS: ReadonlyArray<string> = [
@@ -173,6 +198,87 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 			await holdFinalStatus(transaction, change);
 			return await write(service);
 		});
+	}
+
+	/**
+	 * Writes a change to an invoice only while the invoice still holds the `updatedAt` the caller read
+	 * (`PUT /invoices/:id` with `expectedUpdatedAt`). The invoice is locked, compared and written in one transaction,
+	 * so nothing saved after the comparison is written over, and a final status is kept as
+	 * {@link writeKeepingFinalStatus} keeps it.
+	 *
+	 * @param change The change, naming the invoice.
+	 * @param expectedUpdatedAt The `updatedAt` the caller read.
+	 * @returns What the write answered.
+	 * @throws ApiException 409 (`CONCURRENT_MODIFICATION`) with the invoice as it is now, when it was written since;
+	 * nothing is saved. 404 when the caller's tenant has no such invoice.
+	 */
+	async updateUnchangedSince(change: IInvoiceUpdateInput, expectedUpdatedAt: Date): Promise<IInvoice> {
+		return await this.answeringChange(() =>
+			inLinesTransaction(this, this.ownRepositories(), async (service, transaction) => {
+				const stored = await holdInvoiceUnchanged(transaction, change.id, expectedUpdatedAt);
+				assertFinalStatusKept(stored, change.status);
+				return await service.create(change);
+			})
+		);
+	}
+
+	/**
+	 * Writes an invoice's fields and replaces its lines in one transaction (`PUT /invoices/:id/with-items`): a save that
+	 * fails, or is refused, writes neither, so an edit is never left half saved. With `expectedUpdatedAt`, both are
+	 * written only while the invoice still holds it, as {@link updateUnchangedSince} writes the fields.
+	 *
+	 * The invoice's `updatedAt` is moved once the lines are replaced, so the next precondition sees a change of the
+	 * lines alone too.
+	 *
+	 * @param change The fields, naming the invoice; no lines.
+	 * @param lines Every line of the invoice once saved, as `POST /invoice-item/bulk/:invoiceId` takes them.
+	 * @param expectedUpdatedAt The `updatedAt` the caller read, or null to save without a precondition.
+	 * @param linesWriter What replaces the lines in this transaction.
+	 * @returns The invoice as written, with its new lines and its new `updatedAt`.
+	 * @throws ApiException 409 (`CONCURRENT_MODIFICATION`) with the invoice as it is now, when it was written since;
+	 * nothing is saved. 404 when the caller's tenant has no such invoice.
+	 */
+	async updateWithItems(
+		change: IInvoiceUpdateInput,
+		lines: IInvoiceItemCreateInput[],
+		expectedUpdatedAt: Date | null,
+		linesWriter: IInvoiceLinesWriter
+	): Promise<IInvoice> {
+		return await this.answeringChange(() =>
+			inLinesTransaction(this, this.ownRepositories(), async (service, transaction) => {
+				const stored = await holdInvoiceUnchanged(transaction, change.id, expectedUpdatedAt);
+				assertFinalStatusKept(stored, change.status);
+				const written = await service.create(change);
+				const invoiceItems = await linesWriter.replaceLinesIn(transaction, change.id, lines);
+				const updatedAt = await touchInvoice(transaction, change.id, stored);
+				return { ...written, invoiceItems, updatedAt } as IInvoice;
+			})
+		);
+	}
+
+	/**
+	 * The answer to a conditional write whose precondition no longer holds: 409 with the invoice as the caller may read
+	 * it now, read once the refused write's transaction is over.
+	 *
+	 * @param error What the transaction found.
+	 * @returns The exception to throw.
+	 */
+	async invoiceChangedAnswer(error: InvoiceChangedError) {
+		return await invoiceChangedException(error, (invoiceId) =>
+			this.findOneByIdString(invoiceId, { relations: CHANGED_INVOICE_RELATIONS })
+		);
+	}
+
+	/** Runs a conditional write, answering a precondition that no longer holds with {@link invoiceChangedAnswer}. */
+	private async answeringChange<R>(write: () => Promise<R>): Promise<R> {
+		try {
+			return await write();
+		} catch (error) {
+			if (error instanceof InvoiceChangedError) {
+				throw await this.invoiceChangedAnswer(error);
+			}
+			throw error;
+		}
 	}
 
 	/**

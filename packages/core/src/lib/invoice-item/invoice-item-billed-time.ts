@@ -561,10 +561,15 @@ export function typeOrmRowLock(): Pick<FindOneOptions, 'lock'> {
 	return { lock: { mode: 'pessimistic_write' } };
 }
 
-/** An invoice's status, and when its released time was billed again, as a locking read answers it. */
+/**
+ * An invoice's status, when its released time was billed again, and when it was last written, as a locking read
+ * answers it. `updatedAt` is what a conditional write compares the caller's precondition with (see
+ * `holdInvoiceUnchanged`).
+ */
 export interface ILockedInvoice {
 	status?: string;
 	releasedTimeBilledAt?: Date | null;
+	updatedAt?: Date | null;
 }
 
 /**
@@ -585,7 +590,7 @@ export async function lockInvoice(
 	if (transaction.mikroOrm) {
 		// Read apart from the identity map: the write that follows loads the whole invoice.
 		return await transaction.mikroOrm.findOne(Invoice, where as FilterQuery<Invoice>, {
-			fields: ['id', 'status', 'releasedTimeBilledAt'] as never,
+			fields: ['id', 'status', 'releasedTimeBilledAt', 'updatedAt'] as never,
 			filters: false,
 			disableIdentityMap: true,
 			lockMode: mikroOrmRowLock()
@@ -593,7 +598,7 @@ export async function lockInvoice(
 	}
 	return await transaction.typeOrm.findOne(Invoice, {
 		where,
-		select: { id: true, status: true, releasedTimeBilledAt: true },
+		select: { id: true, status: true, releasedTimeBilledAt: true, updatedAt: true },
 		withDeleted: true,
 		loadEagerRelations: false,
 		...typeOrmRowLock()
