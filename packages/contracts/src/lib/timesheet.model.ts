@@ -201,6 +201,11 @@ export interface ITimeLog
 	 * none and is priced at the current rates.
 	 */
 	ratesStored?: boolean | null;
+	/**
+	 * The client rates the log keeps. Answered only on a read that asks for them (`withClientRates`), to a caller who
+	 * may read the client rates of the log's project: an admin, or a manager of the project.
+	 */
+	clientRates?: ITimeLogClientRates;
 }
 
 /**
@@ -220,6 +225,14 @@ export interface ITimeLogStoredRates {
 	/** The currency of the member's client rate on the project. */
 	projectMemberBillRateCurrency?: string | null;
 }
+
+/** The client rates a time log keeps, as a read that asks for them (`withClientRates`) answers them. */
+export type ITimeLogClientRates = Required<
+	Pick<
+		ITimeLogStoredRates,
+		'projectBillRateValue' | 'projectMemberBillRateValue' | 'projectBillRateCurrency' | 'projectMemberBillRateCurrency'
+	>
+>;
 
 /**
  * A reminder the platform sent about a running time log (`TimerReminder`): level 1 once the timer ran for the
@@ -509,6 +522,12 @@ export interface IGetTimeLogReportInput extends IGetTimeLogInput {
 	notInvoiced?: boolean;
 	/** Keep breaks (time logs of type BREAK) in a read that lists entries. Totals never count breaks. */
 	includeBreaks?: boolean;
+	/**
+	 * Answer the client rates each log keeps (the entry list and the daily report only), for a caller who may read the
+	 * client rates of every project asked: an admin, or a manager of each project named in `projectIds`. Anyone else
+	 * is refused.
+	 */
+	withClientRates?: boolean;
 }
 
 export interface IGetTimeLogConflictInput extends IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel {
@@ -555,6 +574,10 @@ export interface IReportDayTaskRow {
 	 */
 	billRateValue?: number | null;
 	billRateCurrency?: string | null;
+	/** Whether the entry's log keeps the rates that price it. Stated with `clientRates` only. */
+	ratesStored?: boolean;
+	/** The client rates the entry's log keeps, on a report that asks for them (`withClientRates`). */
+	clientRates?: ITimeLogClientRates;
 }
 
 export interface IReportDayGroupByDate {
