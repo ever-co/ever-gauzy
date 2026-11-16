@@ -532,7 +532,8 @@ export class DocsTableComponent extends TranslationBaseComponent implements OnIn
 				type: 'text',
 				isSortable: true,
 				isFilterable: false,
-				valuePrepareFunction: (value: number) => this.humanizeSize(value)
+				// Pages and folders have no file size — a dash, not a blank cell.
+				valuePrepareFunction: (value: number) => this.humanizeSize(value) || '—'
 			},
 			updatedAt: {
 				title: this.getTranslation(DOCS_TABLE_COLUMN_TITLE_KEYS['updatedAt']),

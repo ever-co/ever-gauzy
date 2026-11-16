@@ -19,6 +19,7 @@ import {
     tablerAt,
     tablerAward,
     tablerBell,
+    tablerBellOff,
     tablerBolt,
     tablerBook,
     tablerBookmark,
@@ -61,6 +62,7 @@ import {
     tablerCompass,
     tablerCopy,
     tablerCornerDownRight,
+    tablerCornerUpRight,
     tablerCpu,
     tablerCreditCard,
     tablerCube,
@@ -92,6 +94,7 @@ import {
     tablerGlobe,
     tablerGridDots,
     tablerHash,
+    tablerHeadphones,
     tablerHeart,
     tablerHelp,
     tablerHome,
@@ -184,6 +187,7 @@ import {
     tablerVolume3,
     tablerVolumeOff,
     tablerWifi,
+    tablerWifiOff,
     tablerX
 } from '@ng-icons/tabler-icons';
 
@@ -315,6 +319,9 @@ export const evaToTablerIcons = {
     'bar-chart-outline': tablerChartBar,
     bell: tablerBellFill,
     'bell-outline': tablerBell,
+    // No filled bell-off in Tabler: both forms share the outline glyph.
+    'bell-off': tablerBellOff,
+    'bell-off-outline': tablerBellOff,
     book: tablerBookFill,
     'book-open': tablerBookFill,
     'book-open-outline': tablerBook,
@@ -378,6 +385,7 @@ export const evaToTablerIcons = {
     copy: tablerCopy,
     'copy-outline': tablerCopy,
     'corner-down-right-outline': tablerCornerDownRight,
+    'corner-up-right-outline': tablerCornerUpRight,
     'cpu-outline': tablerCpu,
     'credit-card': tablerCreditCardFill,
     'credit-card-outline': tablerCreditCard,
@@ -439,6 +447,7 @@ export const evaToTablerIcons = {
     'hard-drive-outline': tablerServer,
     'hardware-chip-outline': tablerCpu,
     'hash-outline': tablerHash,
+    'headphones-outline': tablerHeadphones,
     heart: tablerHeartFill,
     'heart-outline': tablerHeart,
     'help-circle-outline': tablerHelp,
@@ -623,5 +632,6 @@ export const evaToTablerIcons = {
     'volume-off-outline': tablerVolumeOff,
     'volume-up-outline': tablerVolume,
     'warning-outline': tablerAlertTriangle,
+    'wifi-off-outline': tablerWifiOff,
     'wifi-outline': tablerWifi
 };

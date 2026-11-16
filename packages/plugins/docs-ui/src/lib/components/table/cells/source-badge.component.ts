@@ -30,7 +30,7 @@ const SOURCE_ICONS: Record<DocumentSourceEnum, string> = {
 				gap: 0.25rem;
 				max-width: 100%;
 				height: var(--gauzy-table-badge-height, 1.25rem);
-				font-size: var(--docs-meta-size, 0.75rem);
+				font-size: var(--docs-cell-font-size, 0.75rem);
 				line-height: 1;
 				color: var(--docs-text-muted, var(--text-hint-color));
 				white-space: nowrap;

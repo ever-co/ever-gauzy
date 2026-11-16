@@ -91,6 +91,7 @@ import { DocumentShareDialogComponent } from './dialogs/share-dialog.component';
 import { createDocsRoutes } from './docs.routes';
 import { DocsBrowsePageComponent } from './pages/browse/docs-browse-page.component';
 import { DocumentFilePageComponent } from './pages/file-view/document-file-page.component';
+import { DocsFoldersButtonComponent } from './components/shell/docs-folders-button.component';
 import { ReviewPageComponent } from './pages/review/review-page.component';
 import { DocsExportService } from './services/docs-export.service';
 import { DocsSavedViewsService } from './services/docs-saved-views.service';
@@ -189,7 +190,9 @@ import { UploadQueueService } from './services/upload-queue.service';
 		// calls `NgxDaterangepickerMd.forRoot()`, which a lazily-loaded plugin module
 		// must not re-run, and its employee selectors cannot render on Documents
 		// routes (see `share-dialog.component.ts`).
-		TeamSelectModule
+		TeamSelectModule,
+		// Standalone: the page headers' trigger for the shell's folder drawer.
+		DocsFoldersButtonComponent
 	],
 	exports: [RouterModule],
 	providers: [

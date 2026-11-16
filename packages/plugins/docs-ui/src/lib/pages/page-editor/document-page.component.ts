@@ -39,6 +39,7 @@ import type { IDocumentCommentAnchorInput, IDocumentCommentAnchorPosition } from
 import { Store, ToastrService } from '@gauzy/ui-core/core';
 import { FavoriteToggleModule } from '@gauzy/ui-core/shared';
 import { DocumentsActions } from '../../+state/documents.actions';
+import { DocsFoldersButtonComponent } from '../../components/shell/docs-folders-button.component';
 import { BlockCommentThreadComponent } from '../../editor/comments/block-comment-thread.component';
 import type { ICommentRange } from '../../editor/comments/comment-anchor.model';
 import { DocumentEditorComponent, IEditorStats, ITocAnchor } from '../../editor/document-editor.component';
@@ -89,6 +90,7 @@ const BLOCK_ANCHOR_RETRY_MS = 150;
 		NbTooltipModule,
 		FavoriteToggleModule,
 		BlockCommentThreadComponent,
+		DocsFoldersButtonComponent,
 		DocumentEditorComponent,
 		DocumentStaticViewComponent,
 		VersionHistoryPanelComponent

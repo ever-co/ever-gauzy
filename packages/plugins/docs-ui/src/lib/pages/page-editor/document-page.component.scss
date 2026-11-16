@@ -25,6 +25,8 @@
 }
 
 .gz-breadcrumbs {
+	// Grows so the folder-drawer button stays at the start and the actions at the end.
+	flex: 1 1 auto;
 	display: flex;
 	align-items: center;
 	gap: 0.125rem;
