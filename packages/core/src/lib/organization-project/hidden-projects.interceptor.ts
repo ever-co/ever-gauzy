@@ -1,6 +1,6 @@
 import { CallHandler, ExecutionContext, Injectable, NestInterceptor, SetMetadata } from '@nestjs/common';
 import { ModuleRef, Reflector } from '@nestjs/core';
-import { Observable, mergeMap } from 'rxjs';
+import { Observable, from, map, mergeMap } from 'rxjs';
 import { isPassedThrough } from '../core/interceptors/transform.interceptor';
 import { HiddenProjectsOptions, withHiddenProjectsWithheld } from './hidden-projects';
 import { OrganizationProjectService } from './organization-project.service';
@@ -19,10 +19,11 @@ export const HiddenProjectRows = (options: HiddenProjectsOptions) => SetMetadata
  * on: the time entries, the reports and their charts, the slots, the activities, the statistics, the tasks, the daily
  * plans and the timer status (ever-co/ever-gauzy#12031). The time a hidden project holds stays in every total.
  *
- * The hidden projects are read once per request, after the route answers, by the rule the project routes keep
- * private projects with (see {@link OrganizationProjectService.hiddenProjects}). Where no organization of the tenant
- * keeps its private projects private, or the caller may see them all, nothing is hidden and the answer goes out as
- * the route gave it, untouched.
+ * The hidden projects are read once per request, before the route runs, by the rule the project routes keep private
+ * projects with (see {@link OrganizationProjectService.hiddenProjects}): a read that fails then fails the request
+ * before a route that writes (a timer start or stop) has changed anything, so sending it again is safe. Where no
+ * organization of the tenant keeps its private projects private, or the caller may see them all, nothing is hidden
+ * and the answer goes out as the route gave it, untouched.
  *
  * `OrganizationProjectService` is read from the application rather than injected, as `ReadableCommentsInterceptor`
  * reads `CommentService`, so that every module whose routes use it need not import the project module. Without one
@@ -43,15 +44,18 @@ export class HiddenProjectsInterceptor implements NestInterceptor {
 				context.getHandler(),
 				context.getClass()
 			]) ?? {};
-		return next.handle().pipe(
-			mergeMap(async (answer: unknown) => {
-				// Nothing to walk (no answer, a number, a file): the hidden projects are not even read
-				if (isPassedThrough(answer)) {
-					return answer;
-				}
-				const hidden = await this.projectService().hiddenProjects();
-				return withHiddenProjectsWithheld(answer, hidden, options);
-			})
+		return from(this.projectService().hiddenProjects()).pipe(
+			mergeMap((hidden) =>
+				next.handle().pipe(
+					map((answer: unknown) => {
+						// Nothing to walk: no answer, a number, a file
+						if (isPassedThrough(answer)) {
+							return answer;
+						}
+						return withHiddenProjectsWithheld(answer, hidden, options);
+					})
+				)
+			)
 		);
 	}
 

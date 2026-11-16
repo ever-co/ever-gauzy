@@ -52,10 +52,19 @@ describe('HiddenProjectsInterceptor', () => {
 		expect(await lastValueFrom(interceptor.intercept(context, answering(report)))).toBe(report);
 	});
 
-	it('reads nothing for an answer without anything to walk', async () => {
+	it('answers an answer without anything to walk as it is', async () => {
 		expect(await lastValueFrom(interceptor.intercept(context, answering(42)))).toBe(42);
 		expect(await lastValueFrom(interceptor.intercept(context, answering(null)))).toBeNull();
-		expect(hiddenProjects).not.toHaveBeenCalled();
+	});
+
+	it('reads the hidden projects before the route runs, so a failed read runs no write', async () => {
+		hiddenProjects.mockRejectedValue(new Error('database unavailable'));
+		const route = jest.fn(() => of({ id: 'log-1', isRunning: true }));
+
+		await expect(lastValueFrom(interceptor.intercept(context, { handle: route }))).rejects.toThrow(
+			'database unavailable'
+		);
+		expect(route).not.toHaveBeenCalled();
 	});
 
 	it('reads how the route names its projects from the route', async () => {
