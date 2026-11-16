@@ -77,6 +77,11 @@ describe('Invoice edits under a precondition, on TypeORM and on MikroORM (#5243)
 				new loaded.InvoiceUpdateHandler(invoiceService).execute(
 					new loaded.InvoiceUpdateCommand(input, { isAction: true })
 				),
+			/** `DELETE /invoices/:id` and GraphQL `deleteInvoice`, as they dispatch the command. */
+			remove: (invoiceId: string, expectedUpdatedAt: Date | null = null) =>
+				new loaded.InvoiceDeleteHandler(invoiceService).execute(
+					new loaded.InvoiceDeleteCommand(invoiceId, expectedUpdatedAt)
+				),
 			replaceLines: (invoiceId: string, lines: Row[], expectedUpdatedAt: Date | null = null) =>
 				new loaded.InvoiceItemBulkCreateHandler(invoiceItemService, moduleRef).execute(
 					new loaded.InvoiceItemBulkCreateCommand(invoiceId, lines, expectedUpdatedAt)
@@ -251,6 +256,8 @@ describe('Invoice edits under a precondition, on TypeORM and on MikroORM (#5243)
 							.InvoiceItemBulkCreateHandler,
 					InvoiceItemBulkCreateCommand: require('../invoice-item/commands/invoice-item.bulk.create.command')
 						.InvoiceItemBulkCreateCommand,
+					InvoiceDeleteHandler: require('./commands/handlers/invoice.delete.handler').InvoiceDeleteHandler,
+					InvoiceDeleteCommand: require('./commands/invoice.delete.command').InvoiceDeleteCommand,
 					InvoiceCreateHandler: require('./commands/handlers/invoice.create.handler').InvoiceCreateHandler,
 					InvoiceCreateCommand: require('./commands/invoice.create.command').InvoiceCreateCommand
 				};
@@ -555,6 +562,121 @@ describe('Invoice edits under a precondition, on TypeORM and on MikroORM (#5243)
 
 				await expect(action).rejects.toMatchObject({ status: 400 });
 				expect((await statusOf(invoiceId)).status).toBe('DRAFT');
+			});
+		});
+
+		describe('PUT /invoices/:id/estimate (#5382)', () => {
+			/** The estimate's answer, as the route and GraphQL `updateInvoiceEstimate` dispatch it: a status action. */
+			const answer = (input: Row) => handlers(ormType).action(input);
+
+			const estimate = async (): Promise<string> => {
+				const invoiceId = await draftInvoice();
+				await dataSource.query(`UPDATE "invoice" SET "isEstimate" = 1 WHERE "id" = ?`, [invoiceId]);
+				orm.em.clear();
+				return invoiceId;
+			};
+
+			const isAcceptedOf = async (invoiceId: string): Promise<boolean | null> => {
+				const [row] = await dataSource.query(`SELECT "isAccepted" FROM "invoice" WHERE "id" = ?`, [invoiceId]);
+				return row.isAccepted === null ? null : Boolean(row.isAccepted);
+			};
+
+			it('records the answer while the estimate still holds the updatedAt read, and moves it', async () => {
+				const invoiceId = await estimate();
+				const expectedUpdatedAt = await readVersion(ormType, invoiceId);
+
+				const written = await answer({ id: invoiceId, ...scope, isAccepted: true, expectedUpdatedAt });
+
+				expect(await isAcceptedOf(invoiceId)).toBe(true);
+				orm.em.clear();
+				const now = await readVersion(ormType, invoiceId);
+				expect(now).not.toBe(expectedUpdatedAt);
+				expect(new Date(written.updatedAt).toISOString()).toBe(now);
+			});
+
+			it('records nothing, and answers 409 with the estimate as it is now, once it changed meanwhile', async () => {
+				const invoiceId = await estimate();
+				const expectedUpdatedAt = await readVersion(ormType, invoiceId);
+				await changedMeanwhile(invoiceId);
+
+				const save = answer({ id: invoiceId, ...scope, isAccepted: true, expectedUpdatedAt });
+
+				await expectChangedMeanwhile(save, invoiceId, expectedUpdatedAt);
+				expect(await isAcceptedOf(invoiceId)).not.toBe(true);
+			});
+
+			it('records the answer as it always did when no precondition is stated, and moves updatedAt even in the same second', async () => {
+				const invoiceId = await estimate();
+				await writtenThisSecond(invoiceId);
+				const expectedUpdatedAt = await readVersion(ormType, invoiceId);
+
+				await answer({ id: invoiceId, ...scope, isAccepted: false });
+
+				expect(await isAcceptedOf(invoiceId)).toBe(false);
+				orm.em.clear();
+				expect(await readVersion(ormType, invoiceId)).not.toBe(expectedUpdatedAt);
+				// An action made on the read made before the answer no longer writes over it
+				const stale = handlers(ormType).action({ id: invoiceId, ...scope, status: 'VOID', expectedUpdatedAt });
+				await expect(stale).rejects.toMatchObject({ status: 409 });
+			});
+		});
+
+		describe('DELETE /invoices/:id (#5382)', () => {
+			const isStored = async (invoiceId: string): Promise<boolean> => {
+				const rows: Row[] = await dataSource.query(`SELECT "id" FROM "invoice" WHERE "id" = ?`, [invoiceId]);
+				return rows.length === 1;
+			};
+
+			it('deletes the invoice while it still holds the updatedAt read', async () => {
+				const invoiceId = await draftInvoice();
+				const expectedUpdatedAt = await readVersion(ormType, invoiceId);
+
+				await handlers(ormType).remove(invoiceId, new Date(expectedUpdatedAt));
+
+				expect(await isStored(invoiceId)).toBe(false);
+			});
+
+			it('deletes nothing, and answers 409 with the invoice as it is now, once it changed meanwhile', async () => {
+				const invoiceId = await draftInvoice();
+				const expectedUpdatedAt = await readVersion(ormType, invoiceId);
+				await changedMeanwhile(invoiceId);
+
+				const removal = handlers(ormType).remove(invoiceId, new Date(expectedUpdatedAt));
+
+				await expectChangedMeanwhile(removal, invoiceId, expectedUpdatedAt);
+				expect(await isStored(invoiceId)).toBe(true);
+				expect(await linesOf(invoiceId)).toEqual(['held']);
+			});
+
+			it('deletes nothing once an action moved the invoice since it was read', async () => {
+				const invoiceId = await draftInvoice();
+				await writtenThisSecond(invoiceId);
+				const expectedUpdatedAt = await readVersion(ormType, invoiceId);
+				await handlers(ormType).action({ id: invoiceId, ...scope, status: 'SENT' });
+
+				const removal = handlers(ormType).remove(invoiceId, new Date(expectedUpdatedAt));
+
+				await expect(removal).rejects.toMatchObject({ status: 409, code: 'CONCURRENT_MODIFICATION' });
+				expect(await isStored(invoiceId)).toBe(true);
+			});
+
+			it('deletes the invoice as it always did when no precondition is stated', async () => {
+				const invoiceId = await draftInvoice();
+				await changedMeanwhile(invoiceId);
+
+				await handlers(ormType).remove(invoiceId);
+
+				expect(await isStored(invoiceId)).toBe(false);
+			});
+
+			it('answers 404 to a conditional delete of an invoice deleted meanwhile', async () => {
+				const invoiceId = await draftInvoice();
+				const expectedUpdatedAt = await readVersion(ormType, invoiceId);
+				await handlers(ormType).remove(invoiceId);
+
+				const removal = handlers(ormType).remove(invoiceId, new Date(expectedUpdatedAt));
+
+				await expect(removal).rejects.toMatchObject({ status: 404 });
 			});
 		});
 

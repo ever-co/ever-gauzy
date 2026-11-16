@@ -531,11 +531,11 @@ describe('InvoiceResolver — the SDL declares the capabilities the REST routes 
 		const WRITE_ARGS: ReadonlyArray<[string, string[]]> = [
 			['createInvoice', ['input']],
 			['updateInvoice', ['input']],
-			['updateInvoiceEstimate', ['id', 'isAccepted']],
+			['updateInvoiceEstimate', ['id', 'isAccepted', 'expectedUpdatedAt']],
 			['updateInvoiceAction', ['id', 'input']],
 			['sendInvoiceEmail', ['input']],
 			['generateInvoiceLink', ['id']],
-			['deleteInvoice', ['id']],
+			['deleteInvoice', ['id', 'expectedUpdatedAt']],
 			['softDeleteInvoice', ['id']],
 			['recoverInvoice', ['id']]
 		];
@@ -960,6 +960,8 @@ describe('InvoiceResolver — one concept, two protocols, the same operations', 
 		expect(command).toBeInstanceOf(InvoiceUpdateCommand);
 		// The route's body is exactly this one member, added to the identifier the path names.
 		expect(command.input).toEqual({ id: ESTIMATE, isAccepted: true });
+		// A status action, as on the route: it moves the estimate's `updatedAt` (ever-co/ever-teams#5382)
+		expect(command.options).toEqual({ isAction: true });
 	});
 
 	it('moves a document along through the command the action route dispatches', async () => {
@@ -1044,6 +1046,8 @@ describe('InvoiceResolver — one concept, two protocols, the same operations', 
 		const command = commandBus.execute.mock.calls[0][0];
 		expect(command).toBeInstanceOf(InvoiceDeleteCommand);
 		expect(command.invoiceId).toBe(INVOICE);
+		// No precondition stated: removed as it always was
+		expect(command.expectedUpdatedAt).toBeNull();
 	});
 
 	it('withdraws and recovers a document through the service methods the inherited routes call', async () => {
@@ -1064,6 +1068,103 @@ describe('InvoiceResolver — one concept, two protocols, the same operations', 
 		invoiceService.softRemove.mockRejectedValueOnce(refusal);
 
 		await expect(resolver.softDeleteInvoice(INVOICE)).rejects.toBe(refusal);
+	});
+});
+
+describe('InvoiceResolver — writes under the updatedAt the caller read (ever-co/ever-teams#5382)', () => {
+	const READ_AT = '2026-11-16T10:20:30.456Z';
+
+	/** The type one argument of one mutation declares, as the schema prints it. */
+	function argumentType(field: string, argument: string): string | undefined {
+		const root = schema.getType('Mutation') as {
+			getFields(): Record<string, { args: readonly { name: string; type: { toString(): string } }[] }>;
+		};
+		return root
+			.getFields()
+			[field]?.args.find((declared) => declared.name === argument)
+			?.type.toString();
+	}
+
+	/** The type one member of one input declares, as the schema prints it. */
+	function inputMemberType(input: string, member: string): string | undefined {
+		const type = schema.getType(input) as { getFields(): Record<string, { type: { toString(): string } }> };
+		return type.getFields()[member]?.type.toString();
+	}
+
+	it('declares the precondition as an optional instant wherever its route takes one, and nowhere required', () => {
+		expect(inputMemberType('UpdateInvoiceInput', 'expectedUpdatedAt')).toBe('DateTime');
+		expect(inputMemberType('UpdateInvoiceActionInput', 'expectedUpdatedAt')).toBe('DateTime');
+		expect(argumentType('updateInvoiceEstimate', 'expectedUpdatedAt')).toBe('DateTime');
+		expect(argumentType('deleteInvoice', 'expectedUpdatedAt')).toBe('DateTime');
+		expect(argumentType('createInvoiceItemsInBulk', 'expectedUpdatedAt')).toBe('DateTime');
+	});
+
+	it('moves a document along only while it holds the updatedAt read', async () => {
+		const { resolver, commandBus } = surfaces();
+
+		await resolver.updateInvoiceAction(INVOICE, { status: 'VOID', expectedUpdatedAt: READ_AT });
+
+		const command = commandBus.execute.mock.calls[0][0];
+		expect(command).toBeInstanceOf(InvoiceUpdateCommand);
+		expect(command.options).toEqual({ isAction: true });
+		expect(command.input).toEqual({ id: INVOICE, status: 'VOID', expectedUpdatedAt: new Date(READ_AT) });
+	});
+
+	it('records the answer to an estimate only while it holds the updatedAt read', async () => {
+		const { resolver, commandBus } = surfaces();
+
+		await resolver.updateInvoiceEstimate(ESTIMATE, false, READ_AT);
+
+		const command = commandBus.execute.mock.calls[0][0];
+		expect(command.options).toEqual({ isAction: true });
+		expect(command.input).toEqual({ id: ESTIMATE, isAccepted: false, expectedUpdatedAt: new Date(READ_AT) });
+	});
+
+	it('edits a document only while it holds the updatedAt read, and never writes the precondition as a member', async () => {
+		const { resolver, commandBus } = surfaces();
+
+		await resolver.updateInvoice({
+			id: INVOICE,
+			invoiceNumber: '2',
+			invoiceDate: new Date('2026-03-05T00:00:00.000Z'),
+			dueDate: new Date('2026-04-04T00:00:00.000Z'),
+			status: 'DRAFT',
+			currency: 'USD',
+			expectedUpdatedAt: READ_AT
+		});
+
+		const command = commandBus.execute.mock.calls[0][0];
+		expect(command.input.expectedUpdatedAt).toEqual(new Date(READ_AT));
+		expect(command.input).toMatchObject({ id: INVOICE, status: 'DRAFT' });
+	});
+
+	it('removes a document only while it holds the updatedAt read', async () => {
+		const { resolver, commandBus } = surfaces();
+
+		expect(await resolver.deleteInvoice(INVOICE, READ_AT)).toBe(true);
+
+		const command = commandBus.execute.mock.calls[0][0];
+		expect(command).toBeInstanceOf(InvoiceDeleteCommand);
+		expect(command.expectedUpdatedAt).toEqual(new Date(READ_AT));
+	});
+
+	it('reads an instant sent as milliseconds since the epoch, which the DateTime scalar accepts, as that instant', async () => {
+		const { resolver, commandBus } = surfaces();
+
+		await resolver.deleteInvoice(INVOICE, new Date(READ_AT).getTime());
+
+		expect(commandBus.execute.mock.calls[0][0].expectedUpdatedAt).toEqual(new Date(READ_AT));
+	});
+
+	it.each([
+		['removal', (resolver: InvoiceResolver) => resolver.deleteInvoice(INVOICE, 'yesterday')],
+		['step', (resolver: InvoiceResolver) => resolver.updateInvoiceAction(INVOICE, { expectedUpdatedAt: 'yesterday' })],
+		['answer', (resolver: InvoiceResolver) => resolver.updateInvoiceEstimate(ESTIMATE, true, 'yesterday')]
+	])('refuses a %s whose precondition is no date and time, dispatching nothing', async (_label, write) => {
+		const { resolver, commandBus } = surfaces();
+
+		await expect(write(resolver)).rejects.toBeInstanceOf(BadRequestException);
+		expect(commandBus.execute).not.toHaveBeenCalled();
 	});
 });
 

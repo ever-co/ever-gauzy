@@ -3,6 +3,7 @@ import { RequestContext } from '../core/context';
 import { ApiException } from '../core/errors/api-exception';
 import {
 	expectedUpdatedAtOf,
+	graphqlPreconditionOf,
 	holdInvoiceUnchanged,
 	INVOICE_CHANGED,
 	InvoiceChangedError,
@@ -257,5 +258,23 @@ describe('Invoice preconditions (#5243)', () => {
 				actualUpdatedAt: '2026-11-16T10:21:00.000Z'
 			});
 		});
+	});
+});
+
+describe('graphqlPreconditionOf (ever-co/ever-teams#5382)', () => {
+	it('reads the RFC 3339 text the DateTime scalar passes on as the instant it names', () => {
+		expect(graphqlPreconditionOf(READ_AT)).toEqual(new Date(READ_AT));
+	});
+
+	it('reads milliseconds since the epoch, which the scalar also accepts, as the same instant', () => {
+		expect(graphqlPreconditionOf(new Date(READ_AT).getTime())).toEqual(new Date(READ_AT));
+	});
+
+	it.each([undefined, null, ''])('states no precondition for %p', (value) => {
+		expect(graphqlPreconditionOf(value)).toBeNull();
+	});
+
+	it.each(['yesterday', Number.NaN])('refuses %p rather than writing unconditionally', (value) => {
+		expect(() => graphqlPreconditionOf(value)).toThrow(BadRequestException);
 	});
 });

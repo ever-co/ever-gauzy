@@ -2,7 +2,7 @@ import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
 import { Invoice } from './invoice.entity';
 import { FilterQuery } from '@mikro-orm/core';
 import { InvoiceItem } from '../core/entities/internal';
-import { Between, FindOperator, In, IsNull, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
+import { Between, DeleteResult, FindOperator, In, IsNull, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { EmailService } from './../email-send/email.service';
 import {
@@ -375,6 +375,27 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 			const updatedAt = await touchInvoice(transaction, change.id, stored.updatedAt);
 			return { ...written, updatedAt: updatedAt ?? written.updatedAt } as IInvoice;
 		});
+	}
+
+	/**
+	 * Deletes an invoice only while it still holds the `updatedAt` the caller read (`DELETE /invoices/:id` with
+	 * `expectedUpdatedAt`, GraphQL `deleteInvoice` with the same argument). The invoice is locked, compared and deleted
+	 * in one transaction, so a change saved after the comparison is never deleted unseen. The delete itself is the one
+	 * the route always made ({@link delete}): tenant and organization scoped, its answer the same `DeleteResult`.
+	 *
+	 * @param invoiceId The invoice.
+	 * @param expectedUpdatedAt The `updatedAt` the caller read.
+	 * @returns What the delete answered.
+	 * @throws ApiException 409 (`CONCURRENT_MODIFICATION`) with the invoice as it is now, when it was written since;
+	 * nothing is deleted. 404 when the caller's tenant has no such invoice (one deleted meanwhile, for one).
+	 */
+	async deleteUnchangedSince(invoiceId: ID, expectedUpdatedAt: Date): Promise<DeleteResult> {
+		return await this.answeringChange(() =>
+			inLinesTransaction(this, this.ownRepositories(), async (service, transaction) => {
+				await holdInvoiceUnchanged(transaction, invoiceId, expectedUpdatedAt);
+				return await service.delete(invoiceId);
+			})
+		);
 	}
 
 	/**

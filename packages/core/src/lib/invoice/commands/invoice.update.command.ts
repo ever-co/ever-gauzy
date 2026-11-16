@@ -6,8 +6,8 @@ import { IInvoicePrecondition } from '../invoice-precondition';
 export interface IInvoiceUpdateOptions {
 	/**
 	 * A status action (`PUT /invoices/:id/action`, GraphQL `updateInvoiceAction`): void, paid, unpaid, sent and the
-	 * like. It moves the invoice's `updatedAt` whatever it writes, so a precondition read before it sees it
-	 * (ever-co/ever-teams#5382).
+	 * like; or the answer to an estimate (`PUT /invoices/:id/estimate`, GraphQL `updateInvoiceEstimate`). It moves the
+	 * invoice's `updatedAt` whatever it writes, so a precondition read before it sees it (ever-co/ever-teams#5382).
 	 */
 	isAction?: boolean;
 }
@@ -17,7 +17,8 @@ export class InvoiceUpdateCommand implements ICommand {
 
 	/**
 	 * @param input The change, and the invoice it names. `expectedUpdatedAt`, when stated, makes the update conditional
-	 * (see `IInvoicePrecondition`); `PUT /invoices/:id` and `PUT /invoices/:id/action` state it.
+	 * (see `IInvoicePrecondition`); `PUT /invoices/:id`, `PUT /invoices/:id/action`, `PUT /invoices/:id/estimate` and
+	 * their GraphQL twins state it.
 	 * @param options How the update is made (see `IInvoiceUpdateOptions`).
 	 */
 	constructor(

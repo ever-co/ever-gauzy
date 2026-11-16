@@ -1,6 +1,7 @@
 import { ArgumentMetadata, BadRequestException, ValidationPipe } from '@nestjs/common';
 import { UpdateInvoiceDTO } from './update-invoice.dto';
 import { UpdateInvoiceActionDTO } from './update-invoice-action.dto';
+import { UpdateEstimateInvoiceDTO } from './update-estimate-invoice.dto';
 import { UpdateInvoiceWithItemsDTO } from './update-invoice-with-items.dto';
 
 /**
@@ -75,6 +76,27 @@ describe('UpdateInvoiceActionDTO.expectedUpdatedAt (#5382)', () => {
 		await expect(validated(UpdateInvoiceActionDTO, { status: 'VOID', expectedUpdatedAt })).rejects.toBeInstanceOf(
 			BadRequestException
 		);
+	});
+});
+
+describe('UpdateEstimateInvoiceDTO.expectedUpdatedAt (#5382)', () => {
+	it('keeps the precondition through the whitelisting validation the estimate route runs', async () => {
+		const input = await validated(UpdateEstimateInvoiceDTO, { isAccepted: true, expectedUpdatedAt: READ_AT });
+
+		expect(input).toMatchObject({ isAccepted: true, expectedUpdatedAt: READ_AT });
+	});
+
+	it('leaves it out when none is stated: the answer is written as it always was', async () => {
+		const input = await validated(UpdateEstimateInvoiceDTO, { isAccepted: false, unknownMember: 'dropped' });
+
+		expect(input.expectedUpdatedAt).toBeUndefined();
+		expect(input).not.toHaveProperty('unknownMember');
+	});
+
+	it.each(['yesterday', 1763288430456])('refuses %p', async (expectedUpdatedAt) => {
+		await expect(
+			validated(UpdateEstimateInvoiceDTO, { isAccepted: true, expectedUpdatedAt })
+		).rejects.toBeInstanceOf(BadRequestException);
 	});
 });
 

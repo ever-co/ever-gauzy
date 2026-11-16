@@ -34,6 +34,18 @@ import {
 	InvoiceSendEmailCommand,
 	InvoiceUpdateCommand
 } from './commands';
+import { graphqlPreconditionOf } from './invoice-precondition';
+
+/**
+ * The precondition member of a command, for the `expectedUpdatedAt` a field states: none when it states none, so the
+ * command is the one the field dispatched before the member existed (ever-co/ever-teams#5382).
+ *
+ * @throws BadRequestException when the value is no strict ISO 8601 date and time.
+ */
+function preconditionOf(value: string | number | null | undefined): { expectedUpdatedAt?: Date } {
+	const expectedUpdatedAt = graphqlPreconditionOf(value);
+	return expectedUpdatedAt ? { expectedUpdatedAt } : {};
+}
 
 /** The members `CreateInvoiceInput` declares in the schema. */
 export interface ICreateInvoiceInput {
@@ -98,6 +110,8 @@ export interface IUpdateInvoiceInput {
 	isArchived?: boolean;
 	paymentTermId?: Id;
 	tagIds?: Id[];
+	/** The `updatedAt` the document was read with, as the `DateTime` scalar parsed it (ever-co/ever-teams#5382). */
+	expectedUpdatedAt?: string | number | null;
 }
 
 /** The members `UpdateInvoiceActionInput` declares in the schema. */
@@ -110,6 +124,8 @@ export interface IUpdateInvoiceActionInput {
 	alreadyPaid?: DecimalString;
 	amountDue?: DecimalString;
 	sentTo?: string;
+	/** The `updatedAt` the document was read with, as the `DateTime` scalar parsed it (ever-co/ever-teams#5382). */
+	expectedUpdatedAt?: string | number | null;
 }
 
 /** The members `SendInvoiceEmailInput` declares in the schema. */
@@ -413,16 +429,20 @@ export class InvoiceResolver {
 	 * and the body together, which is why the field states one identifier and leaves neither reading
 	 * undefined. Its handler passes the body straight to the write, so the members this field states
 	 * are the members that are written and a member the caller omits is left as it is.
+	 *
+	 * `expectedUpdatedAt` is the route's precondition, read as the route reads it: the change is saved only
+	 * while the document still holds it (ever-co/ever-teams#5382).
 	 */
 	@Mutation('updateInvoice')
 	@Permissions(PermissionsEnum.INVOICES_EDIT)
 	async updateInvoice(@Args('input') input: IUpdateInvoiceInput): Promise<Invoice> {
-		const { tagIds, ...values } = input;
+		const { tagIds, expectedUpdatedAt, ...values } = input;
 
 		return await this.commandBus.execute(
 			new InvoiceUpdateCommand({
 				...values,
-				...(tagIds ? { tags: tagIds.map((id) => ({ id })) } : {})
+				...(tagIds ? { tags: tagIds.map((id) => ({ id })) } : {}),
+				...preconditionOf(expectedUpdatedAt)
 			} as unknown as IInvoiceUpdateInput)
 		);
 	}
@@ -430,16 +450,23 @@ export class InvoiceResolver {
 	/**
 	 * Records the buyer's answer to an estimate.
 	 *
-	 * The same command the route dispatches, with the route's own body: the identifier and the answer,
-	 * and nothing else.
+	 * The same command the route dispatches, with the route's own body: the identifier, the answer, and
+	 * the precondition when the caller states one. Like the route, it is a status action: it moves the
+	 * estimate's `updatedAt` whatever it writes (ever-co/ever-teams#5382).
 	 */
 	@Mutation('updateInvoiceEstimate')
 	@Permissions(PermissionsEnum.INVOICES_EDIT)
 	async updateInvoiceEstimate(
 		@Args('id', { type: () => ID }) id: Id,
-		@Args('isAccepted', { type: () => Boolean }) isAccepted: boolean
+		@Args('isAccepted', { type: () => Boolean }) isAccepted: boolean,
+		@Args('expectedUpdatedAt') expectedUpdatedAt?: string | number | null
 	): Promise<Invoice> {
-		return await this.commandBus.execute(new InvoiceUpdateCommand({ id, isAccepted }));
+		return await this.commandBus.execute(
+			new InvoiceUpdateCommand(
+				{ id, isAccepted, ...preconditionOf(expectedUpdatedAt) },
+				{ isAction: true }
+			)
+		);
 	}
 
 	/**
@@ -458,9 +485,12 @@ export class InvoiceResolver {
 		// The two amount members are stated as the exact decimals the schema carries them as, while the
 		// contracts type the same columns as numbers; the cast states that difference rather than
 		// converting an amount on its way through — which is the one thing this surface never does.
-		// A status action, as on the route: it moves the invoice's `updatedAt` whatever it writes (ever-co/ever-teams#5382)
+		// A status action, as on the route: it moves the invoice's `updatedAt` whatever it writes, and with
+		// `expectedUpdatedAt` it is written only while the invoice still holds it (ever-co/ever-teams#5382)
+		const { expectedUpdatedAt, ...steps } = input;
+		const change = { ...steps, id, ...preconditionOf(expectedUpdatedAt) };
 		return await this.commandBus.execute(
-			new InvoiceUpdateCommand({ ...input, id } as unknown as IInvoiceUpdateInput, { isAction: true })
+			new InvoiceUpdateCommand(change as unknown as IInvoiceUpdateInput, { isAction: true })
 		);
 	}
 
@@ -514,11 +544,17 @@ export class InvoiceResolver {
 	 * result — a statement about the write, `{ affected }` — which is not a row and not what a field
 	 * named `deleteInvoice` may return; the field answers the one fact the command establishes, that
 	 * the removal ran.
+	 *
+	 * `expectedUpdatedAt` is the route's precondition, read as the route reads its query string: the
+	 * document is removed only while it still holds it (ever-co/ever-teams#5382).
 	 */
 	@Mutation('deleteInvoice')
 	@Permissions(PermissionsEnum.INVOICES_EDIT)
-	async deleteInvoice(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		await this.commandBus.execute(new InvoiceDeleteCommand(id));
+	async deleteInvoice(
+		@Args('id', { type: () => ID }) id: Id,
+		@Args('expectedUpdatedAt') expectedUpdatedAt?: string | number | null
+	): Promise<boolean> {
+		await this.commandBus.execute(new InvoiceDeleteCommand(id, graphqlPreconditionOf(expectedUpdatedAt)));
 
 		return true;
 	}
