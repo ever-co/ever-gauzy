@@ -23,7 +23,7 @@ import {
 	splitBilledTime,
 	typeOrmRowLock
 } from './invoice-item-billed-time';
-import { replaceLinesKeepingTime } from './invoice-item-kept-time';
+import { moveTimeOfLinesPast, replaceLinesKeepingTime } from './invoice-item-kept-time';
 import { holdInvoiceUnchanged, INVOICE_LINE_OF_ANOTHER_INVOICE, touchInvoice } from '../invoice/invoice-precondition';
 import { MikroOrmInvoiceItemRepository } from './repository/mikro-orm-invoice-item.repository';
 import { TypeOrmInvoiceItemRepository } from './repository/type-orm-invoice-item.repository';
@@ -170,10 +170,17 @@ export class InvoiceItemService extends TenantAwareCrudService<InvoiceItem> {
 
 	/**
 	 * Removes one line outright (`DELETE /invoice-item/:id`, GraphQL `deleteInvoiceItem`), moving its invoice's
-	 * `updatedAt` (see {@link writeLinesOf}).
+	 * `updatedAt` (see {@link writeLinesOf}), and the `updatedAt` of the time it billed, whose link the deletion clears
+	 * (see `moveTimeOfLinesPast`).
 	 */
 	async deleteLine(id: ID): Promise<DeleteResult> {
-		return await this.writeLinesOf(id, [], (service) => service.delete(id));
+		return await this.writeLinesOf(id, [], async (service, transaction) => {
+			// A stored line is always written in a transaction (see `writeLinesOf`)
+			if (transaction) {
+				await moveTimeOfLinesPast(transaction, [id]);
+			}
+			return await service.delete(id);
+		});
 	}
 
 	/**
@@ -207,7 +214,8 @@ export class InvoiceItemService extends TenantAwareCrudService<InvoiceItem> {
 	 * @param lineId The stored line the write changes, when it changes one.
 	 * @param statedInvoiceIds The invoices the write names besides: the one a new line is recorded on, or the one an
 	 * update moves a line to.
-	 * @param write The write, run on this service in the transaction.
+	 * @param write The write, run on this service in the transaction, which it is given; outside one (a new line of no
+	 * invoice), it is given none.
 	 * @returns What the write answered.
 	 * @throws ApiException 409 (`CONCURRENT_MODIFICATION`) when the line kept moving between invoices meanwhile; nothing
 	 * is written.
@@ -215,7 +223,7 @@ export class InvoiceItemService extends TenantAwareCrudService<InvoiceItem> {
 	private async writeLinesOf<R>(
 		lineId: ID | null,
 		statedInvoiceIds: Array<ID | null | undefined>,
-		write: (service: InvoiceItemService) => Promise<R>
+		write: (service: InvoiceItemService, transaction?: ILinesTransaction) => Promise<R>
 	): Promise<R> {
 		for (let attempt = 1; ; attempt += 1) {
 			const owner = lineId ? await this.invoiceIdOfLine(lineId) : null;
@@ -235,7 +243,7 @@ export class InvoiceItemService extends TenantAwareCrudService<InvoiceItem> {
 					if (lineId && (await lineOwnerIn(transaction, lineId)) !== owner) {
 						throw new LineMovedError();
 					}
-					const result = await write(service);
+					const result = await write(service, transaction);
 					for (const invoiceId of named) {
 						await touchInvoice(transaction, invoiceId);
 					}

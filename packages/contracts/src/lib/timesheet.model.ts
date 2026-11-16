@@ -488,6 +488,12 @@ export interface IManualTimeInput extends IBasePerTenantAndOrganizationEntityMod
 	startedAt?: Date;
 	stoppedAt?: Date;
 	editedAt?: Date;
+	/**
+	 * On an update, the `updatedAt` the entry was read with (ever-co/ever-teams#5382): stated, the update is saved only
+	 * while the entry still holds it, else nothing is saved and the answer is 409 `CONCURRENT_MODIFICATION`. Left out,
+	 * the update is saved as it always was. Never a column.
+	 */
+	expectedUpdatedAt?: Date | string | null;
 	tags?: string[];
 	isBillable?: boolean;
 }
