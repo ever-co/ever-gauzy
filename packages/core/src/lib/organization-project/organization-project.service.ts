@@ -11,6 +11,7 @@ import {
 import {
 	Brackets,
 	DeleteResult,
+	FindOptionsSelect,
 	FindOptionsWhere,
 	ILike,
 	In,
@@ -811,10 +812,48 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	 * @returns The ids of the projects to leave out of the caller's reads.
 	 */
 	async hiddenProjectIds(options: { withDeleted?: boolean } = {}): Promise<ID[]> {
+		const read = await this.readPrivateProjects({ withDeleted: options.withDeleted, withNames: false });
+		if (!read) {
+			return [];
+		}
+		return hiddenProjectIdsOf(read.privateProjects, read.employeeId);
+	}
+
+	/**
+	 * The projects the caller may not see (see {@link hiddenProjectIds}), each with its name: the records that name
+	 * one of them answer it as its id and `projectHidden`, and the history of a time entry, which quotes the name of
+	 * its project, is read without it.
+	 *
+	 * @returns The hidden projects, by id, with their names; none where nothing is hidden.
+	 */
+	async hiddenProjects(): Promise<Map<ID, string>> {
+		const hidden = new Map<ID, string>();
+		const read = await this.readPrivateProjects({ withNames: true });
+		if (!read) {
+			return hidden;
+		}
+		const hiddenIds = new Set(hiddenProjectIdsOf(read.privateProjects, read.employeeId));
+		for (const project of read.privateProjects) {
+			if (hiddenIds.has(project.id)) {
+				hidden.set(project.id, project.name ?? '');
+			}
+		}
+		return hidden;
+	}
+
+	/**
+	 * The private projects of the organizations that keep them private, with their memberships, and the caller's
+	 * employee: what the visibility rule reads. None where nothing can be hidden from the caller: no user (a job, a
+	 * public route), no tenant, or `ACCESS_PRIVATE_PROJECTS` held.
+	 */
+	private async readPrivateProjects(options: {
+		withDeleted?: boolean;
+		withNames: boolean;
+	}): Promise<{ privateProjects: Array<IProjectWithMemberships & { name?: string }>; employeeId: ID | null } | null> {
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId();
 		if (!user || !tenantId || RequestContext.hasPermission(PermissionsEnum.ACCESS_PRIVATE_PROJECTS)) {
-			return [];
+			return null;
 		}
 		// `currentEmployeeId()` answers null for a CHANGE_SELECTED_EMPLOYEE holder: their own employee is read off the
 		// user, so a manager who may act for others still sees the projects they belong to.
@@ -825,14 +864,18 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		// leaves `employeeId` unset (the column is mapped through `employee`), and `serialize()` drops the unloaded
 		// `employee` reference, so a MikroORM read could not name any member and hid every private project from its
 		// own members. TypeORM answers the `employeeId` column itself.
-		const privateProjects: IProjectWithMemberships[] = await this.typeOrmRepository.find({
-			select: { id: true, members: { id: true, employeeId: true } },
+		const select: FindOptionsSelect<OrganizationProject> = { id: true, members: { id: true, employeeId: true } };
+		if (options.withNames) {
+			select.name = true;
+		}
+		const privateProjects = await this.typeOrmRepository.find({
+			select,
 			where: where as FindOptionsWhere<OrganizationProject>,
 			relations: { members: true },
 			// A withdrawn (soft-deleted) project is read too where the caller is about to restore it
 			...(options.withDeleted ? { withDeleted: true } : {})
 		});
-		return hiddenProjectIdsOf(privateProjects, employeeId);
+		return { privateProjects, employeeId };
 	}
 
 	/**
