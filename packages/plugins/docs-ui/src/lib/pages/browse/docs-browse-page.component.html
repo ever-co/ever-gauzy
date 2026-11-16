@@ -129,39 +129,40 @@
 				[accept]="uploadAccept"
 				(browse)="openUploadFlow()"
 			></gz-docs-drop-strip>
+			<!-- View toggle — persisted via ComponentEnum.DOCUMENTS_HUB. Projected into the end
+			of the filter bar's toolbar row, with the other list controls. `<fieldset>` is the
+			semantic grouping element (implicit `group` role); the inline rules only neutralize
+			the user-agent fieldset chrome. -->
+			<fieldset
+				docsFilterBarEnd
+				class="docs-view-toggle"
+				style="border: 0; padding: 0; margin-inline: 0; min-inline-size: 0"
+				[attr.aria-label]="'DOCS.VIEWS.TOGGLE_LABEL' | translate"
+			>
+				<button
+					nbButton
+					ghost
+					size="small"
+					[class.active]="!isCardsView"
+					[attr.aria-pressed]="!isCardsView"
+					[nbTooltip]="'DOCS.VIEWS.TABLE' | translate"
+					(click)="setLayout(layoutStyles.TABLE)"
+				>
+					<nb-icon icon="list-outline"></nb-icon>
+				</button>
+				<button
+					nbButton
+					ghost
+					size="small"
+					[class.active]="isCardsView"
+					[attr.aria-pressed]="isCardsView"
+					[nbTooltip]="'DOCS.VIEWS.CARDS' | translate"
+					(click)="setLayout(layoutStyles.CARDS_GRID)"
+				>
+					<nb-icon icon="grid-outline"></nb-icon>
+				</button>
+			</fieldset>
 		</gz-docs-filter-bar>
-		<!-- View toggle — persisted via ComponentEnum.DOCUMENTS_HUB. A list control, so it
-    sits with search / Filters / Saved views rather than with the page actions.
-      `<fieldset>` is the semantic grouping element (implicit `group` role); the inline
-      rules only neutralize the user-agent fieldset chrome so the layout is unchanged. -->
-		<fieldset
-			class="docs-view-toggle"
-			style="border: 0; padding: 0; margin-inline: 0; min-inline-size: 0"
-			[attr.aria-label]="'DOCS.VIEWS.TOGGLE_LABEL' | translate"
-		>
-			<button
-				nbButton
-				ghost
-				size="small"
-				[class.active]="!isCardsView"
-				[attr.aria-pressed]="!isCardsView"
-				[nbTooltip]="'DOCS.VIEWS.TABLE' | translate"
-				(click)="setLayout(layoutStyles.TABLE)"
-			>
-				<nb-icon icon="list-outline"></nb-icon>
-			</button>
-			<button
-				nbButton
-				ghost
-				size="small"
-				[class.active]="isCardsView"
-				[attr.aria-pressed]="isCardsView"
-				[nbTooltip]="'DOCS.VIEWS.CARDS' | translate"
-				(click)="setLayout(layoutStyles.CARDS_GRID)"
-			>
-				<nb-icon icon="grid-outline"></nb-icon>
-			</button>
-		</fieldset>
 	</div>
 
 	<!-- Upload progress -->

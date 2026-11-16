@@ -18,10 +18,9 @@ interface IPresetChip {
 		<div class="docs-presets" role="group">
 			@for (chip of chips; track chip) {
 				<button
-					nbButton
-					size="tiny"
-					[status]="isActive(chip) ? 'primary' : 'basic'"
-					[appearance]="isActive(chip) ? 'filled' : 'outline'"
+					type="button"
+					class="docs-preset"
+					[class.active]="isActive(chip)"
 					(click)="toggle(chip)"
 					[attr.aria-pressed]="isActive(chip)"
 				>
@@ -39,27 +38,54 @@ interface IPresetChip {
 				display: block;
 				min-width: 0;
 			}
+			/* One segmented control: a bordered group, the active preset a quiet fill. */
 			.docs-presets {
-				display: flex;
-				gap: 0.375rem;
+				display: inline-flex;
 				flex-wrap: wrap;
+				gap: 0.125rem;
+				max-width: 100%;
+				padding: 0.125rem;
+				border: 1px solid var(--docs-hairline, rgba(126, 126, 143, 0.18));
+				border-radius: var(--docs-radius, 0.375rem);
 			}
-			.docs-presets button[nbButton] {
+			.docs-preset {
 				display: inline-flex;
 				align-items: center;
 				justify-content: center;
 				gap: 0.25rem;
-				height: 1.5rem !important;
-				min-height: 1.5rem !important;
-				padding-inline: 0.375rem !important;
-				border-radius: var(--docs-radius, 0.375rem);
-				font-size: 0.6875rem !important;
+				height: 1.625rem;
+				max-width: 100%;
+				padding: 0 0.625rem;
+				border: 0;
+				border-radius: 0.25rem;
+				background: transparent;
+				color: var(--docs-text-muted, var(--text-hint-color));
+				font: inherit;
+				font-size: 0.75rem;
 				font-weight: 500;
 				line-height: 1;
 				white-space: nowrap;
-				max-width: 100%;
 				overflow: hidden;
 				text-overflow: ellipsis;
+				cursor: pointer;
+				transition: background-color 0.12s ease, color 0.12s ease;
+			}
+			.docs-preset:hover {
+				background: var(--docs-hover, rgba(126, 126, 143, 0.12));
+				color: var(--docs-text, var(--text-basic-color));
+			}
+			.docs-preset.active {
+				background: var(--docs-active, rgba(126, 126, 143, 0.2));
+				color: var(--docs-text, var(--text-basic-color));
+			}
+			.docs-preset:focus-visible {
+				outline: 2px solid var(--color-primary-default);
+				outline-offset: -2px;
+			}
+			@media (prefers-reduced-motion: reduce) {
+				.docs-preset {
+					transition: none;
+				}
 			}
 			.docs-preset-label {
 				overflow: hidden;

@@ -190,21 +190,15 @@
   }
 }
 
-// Search / Filters / Saved views, then the view switch at the end of the same
-// row. Top-aligned so an opened filter panel grows below without moving it.
+// The filter bar spans the full width; the view switch is projected into the
+// end of its toolbar row, so the filter panel under it is full width too.
 .docs-browse-toolbar {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
+  display: block;
+  min-width: 0;
+}
 
-  > gz-docs-filter-bar {
-    flex: 1 1 auto;
-    min-width: 0;
-  }
-
-  > .docs-view-toggle {
-    flex: 0 0 auto;
-  }
+.docs-view-toggle {
+  flex: 0 0 auto;
 }
 
 .pagination-container {
@@ -234,10 +228,6 @@
 
   .docs-browse-actions button[nbButton] {
     flex: 0 1 auto;
-  }
-
-  .docs-browse-toolbar {
-    flex-wrap: wrap;
   }
 
   .pagination-container {

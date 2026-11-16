@@ -57,6 +57,11 @@
 				</button>
 			}
 		</div>
+
+		<!-- Host-provided control at the end of the row (the browse page's list/cards
+		     switch). Inside the bar, so the bar — and the filter panel under it — span
+		     the full width. -->
+		<ng-content select="[docsFilterBarEnd]"></ng-content>
 	</div>
 
 	<!-- Hidden with CSS rather than removed: the rangepickers own their inputs' text,
