@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -11,11 +11,12 @@ import { TranslateService } from '@ngx-translate/core';
 import { DocumentsActions } from '../../+state/documents.actions';
 import { DocumentsQuery } from '../../+state/documents.query';
 import { DocsPreviewModalComponent } from '../preview/docs-preview-modal.component';
-import { DOCS_PREVIEW_DIALOG_CONFIG, DOCS_TREE_COLLAPSED_KEY } from '../../docs.constants';
+import { DOCS_PREVIEW_DIALOG_CONFIG } from '../../docs.constants';
 
 /**
- * Shell for /pages/documents: in-page left tree column (collapsible, state in
- * localStorage), content router-outlet, and the detail side panel host. The
+ * Shell for /pages/documents: a slim folder rail whose button opens the tree as a
+ * drawer over the page from the left, the content router-outlet, and the detail
+ * side panel host. The
  * detail panel is not a route — it is `?id=<documentId>` on the current URL.
  */
 @UntilDestroy({ checkProperties: true })
@@ -27,7 +28,10 @@ import { DOCS_PREVIEW_DIALOG_CONFIG, DOCS_TREE_COLLAPSED_KEY } from '../../docs.
 	standalone: false
 })
 export class DocsShellComponent extends TranslationBaseComponent implements OnInit {
-	public treeCollapsed = false;
+	/** Folder drawer — closed on every visit, so the list always gets the full width. */
+	public treeOpen = false;
+	@ViewChild('treeDrawer') private readonly treeDrawer?: ElementRef<HTMLElement>;
+	@ViewChild('treeOpenButton', { read: ElementRef }) private readonly treeOpenButton?: ElementRef<HTMLElement>;
 	public detailId$: Observable<ID | null> = this.documentsQuery.detailId$;
 
 	constructor(
@@ -42,8 +46,6 @@ export class DocsShellComponent extends TranslationBaseComponent implements OnIn
 	}
 
 	ngOnInit(): void {
-		this.treeCollapsed = localStorage.getItem(DOCS_TREE_COLLAPSED_KEY) === 'true';
-
 		// URL ?id= is the source of truth for the open detail panel.
 		this.route.queryParamMap
 			.pipe(
@@ -62,8 +64,24 @@ export class DocsShellComponent extends TranslationBaseComponent implements OnIn
 	}
 
 	toggleTree(): void {
-		this.treeCollapsed = !this.treeCollapsed;
-		localStorage.setItem(DOCS_TREE_COLLAPSED_KEY, String(this.treeCollapsed));
+		if (this.treeOpen) {
+			this.closeTree();
+			return;
+		}
+		this.treeOpen = true;
+		// Keyboard users land inside the drawer; Escape is handled on it. Deferred one
+		// task so the drawer is visible (no longer `visibility: hidden`) and focusable.
+		setTimeout(() => this.treeDrawer?.nativeElement.focus());
+	}
+
+	/**
+	 * @param restoreFocus `false` when the user picked a destination in the tree —
+	 * focus then belongs to what opened, not to the rail button.
+	 */
+	closeTree(restoreFocus = true): void {
+		if (!this.treeOpen) return;
+		this.treeOpen = false;
+		if (restoreFocus) this.treeOpenButton?.nativeElement.focus();
 	}
 
 	onDetailClosed(): void {

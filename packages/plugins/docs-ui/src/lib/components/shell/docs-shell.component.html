@@ -1,29 +1,55 @@
 <div class="docs-shell">
+	<!-- Folder rail: always present, so the tree is one click away on every Documents
+	     route without permanently taking a column of the page. -->
+	<div class="docs-tree-rail">
+		<button
+			#treeOpenButton
+			nbButton
+			ghost
+			size="small"
+			class="docs-tree-rail-button"
+			aria-controls="docs-tree-drawer"
+			[attr.aria-expanded]="treeOpen"
+			[nbTooltip]="'DOCS.TREE.SHOW_FOLDERS' | translate"
+			nbTooltipPlacement="right"
+			[attr.aria-label]="'DOCS.TREE.SHOW_FOLDERS' | translate"
+			(click)="toggleTree()"
+		>
+			<nb-icon icon="folder-outline"></nb-icon>
+		</button>
+	</div>
+
+	@if (treeOpen) {
+		<div class="docs-tree-backdrop" aria-hidden="true" (click)="closeTree()"></div>
+	}
+
+	<!-- Folder drawer: slides in over the page from the left. Kept rendered while
+	     closed (hidden with `visibility`) so the tree is loaded and opens instantly. -->
 	<aside
-		class="docs-tree-column"
-		[class.collapsed]="treeCollapsed"
+		#treeDrawer
+		id="docs-tree-drawer"
+		class="docs-tree-drawer"
+		tabindex="-1"
+		[class.open]="treeOpen"
 		[attr.aria-label]="'DOCS.A11Y.TREE_LABEL' | translate"
+		(keydown.escape)="closeTree()"
 	>
-		<!-- Only the collapse toggle: the tree's own first heading ("All documents", a
-		     button back to the root) already names the column, so a title here repeated it. -->
-		<div class="docs-tree-column-header">
+		<!-- Only the close button: the tree's own first heading ("All documents", a
+		     button back to the root) already names the drawer. -->
+		<div class="docs-tree-drawer-header">
 			<button
 				nbButton
 				ghost
 				size="tiny"
-				class="docs-tree-column-toggle"
-				(click)="toggleTree()"
-				[nbTooltip]="(treeCollapsed ? 'DOCS.TREE.EXPAND_SIDEBAR' : 'DOCS.TREE.COLLAPSE_SIDEBAR') | translate"
-				[attr.aria-label]="
-					(treeCollapsed ? 'DOCS.TREE.EXPAND_SIDEBAR' : 'DOCS.TREE.COLLAPSE_SIDEBAR') | translate
-				"
+				class="docs-tree-drawer-close"
+				(click)="closeTree()"
+				[nbTooltip]="'DOCS.TREE.HIDE_FOLDERS' | translate"
+				[attr.aria-label]="'DOCS.TREE.HIDE_FOLDERS' | translate"
 			>
-				<nb-icon [icon]="treeCollapsed ? 'chevron-right-outline' : 'chevron-left-outline'"></nb-icon>
+				<nb-icon icon="chevron-left-outline"></nb-icon>
 			</button>
 		</div>
-		@if (!treeCollapsed) {
-			<gz-docs-tree></gz-docs-tree>
-		}
+		<gz-docs-tree (navigated)="closeTree(false)"></gz-docs-tree>
 	</aside>
 
 	<main class="docs-content">
