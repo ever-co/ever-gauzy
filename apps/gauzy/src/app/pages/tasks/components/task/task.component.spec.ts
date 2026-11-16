@@ -63,6 +63,7 @@ describe('TaskComponent', () => {
 	/** The project selected in the header: a sprint project opens the sprint view. */
 	let project: { id: string; taskListType: TaskListTypeEnum } | null;
 	let organization$: BehaviorSubject<typeof ORGANIZATION>;
+	let errors: { handleError: jest.Mock };
 	/** Every value the page gave its loading flag, in order. */
 	let loadingSeen: boolean[];
 
@@ -120,6 +121,7 @@ describe('TaskComponent', () => {
 		layout = ComponentLayoutStyleEnum.CARDS_GRID;
 		project = null;
 		organization$ = new BehaviorSubject(ORGANIZATION);
+		errors = { handleError: jest.fn() };
 		loadingSeen = [];
 	});
 
@@ -140,7 +142,7 @@ describe('TaskComponent', () => {
 				{ provide: TasksService, useValue: tasksService },
 				{ provide: TaskTrashService, useValue: { isEnabledOrFalse: jest.fn(async () => false) } },
 				{ provide: GenericFavoriteService, useValue: { loadFavorites: jest.fn(async () => []) } },
-				{ provide: ErrorHandlingService, useValue: { handleError: jest.fn() } },
+				{ provide: ErrorHandlingService, useValue: errors },
 				{ provide: HashNumberPipe, useValue: { transform: (value: string) => `#${value}` } },
 				{
 					provide: Store,
@@ -486,7 +488,59 @@ describe('TaskComponent', () => {
 			expect(component.loading).toBe(false);
 		});
 
-		it('reads a long list again in reads of at most 100 tasks, the API\'s largest page', async () => {
+		it('turns the loading state off when a covered page read and the read in place covering it both fail', async () => {
+			await open('dashboard');
+
+			const page = holdNextRead();
+			component.onScroll();
+			await settle();
+			showTask(3);
+			expect(component.loading).toBe(true);
+
+			const readAgain = holdNextRead();
+			dialogResult = dialogValues({ title: 'Task 3' });
+			await component.editTaskDialog();
+
+			page.fail();
+			await settle(50);
+			readAgain.fail();
+			await settle(50);
+
+			expect(component.loading).toBe(false);
+			expect(ids()).toEqual(pageOf(1).map(({ id }) => id));
+			// One report: the read in place answered for the page read it covered.
+			expect(errors.handleError).toHaveBeenCalledTimes(1);
+		});
+
+		it('puts back a covered page when the last read in place fails after an earlier one failed', async () => {
+			await open('dashboard');
+
+			// P: the second page, under way.
+			const page = holdNextRead();
+			component.onScroll();
+			await settle();
+			showTask(3);
+
+			// A, then B: two saves read again.
+			const readAgainA = holdNextRead();
+			dialogResult = dialogValues({ title: 'First' });
+			await component.editTaskDialog();
+			const readAgainB = holdNextRead();
+			dialogResult = dialogValues({ title: 'Second' });
+			await component.editTaskDialog();
+
+			page(pageOf(2));
+			await settle(50);
+			readAgainA.fail();
+			await settle(50);
+			readAgainB.fail();
+			await settle(50);
+
+			expect(ids()).toEqual(server.slice(0, 2 * PAGE_SIZE).map(({ id }) => id));
+			expect(component.loading).toBe(false);
+		});
+
+		it("reads a long list again in reads of at most 100 tasks, the API's largest page", async () => {
 			server = Array.from({ length: 120 }, (_, index) => taskNumbered(index + 1));
 			await open('dashboard');
 			// Scrolled down to the eleventh page.
@@ -560,6 +614,25 @@ describe('TaskComponent', () => {
 			expect(component.viewedTask?.id).toBe('task-15');
 			expect(component.viewedTask.priority).toBe(TaskPriorityEnum.HIGH);
 			expect(component.selectedTask?.id).toBe('task-15');
+		});
+
+		it('reports a failed read of the page once, and keeps the list, when one task is saved', async () => {
+			await open('dashboard');
+			await toSecondPage();
+			showTask(15);
+			const loadAllTasks = jest.spyOn(TestBed.inject(TasksStoreService), 'loadAllTasks');
+			loadAllTasks.mockClear();
+			errors.handleError.mockClear();
+
+			http.get.mockImplementationOnce(() => throwError(() => new Error('API unreachable')));
+			dialogResult = dialogValues();
+			await component.editTaskDialog();
+			await settle(50);
+
+			expect(errors.handleError).toHaveBeenCalledTimes(1);
+			expect(loadAllTasks).not.toHaveBeenCalled();
+			expect(component.loading).toBe(false);
+			expect(component.viewedTask?.id).toBe('task-15');
 		});
 
 		it('keeps what the list shows when a read fails, instead of the answer before it', async () => {
