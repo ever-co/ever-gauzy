@@ -40,7 +40,8 @@
 	}
 }
 
-/* One line: the hint truncates (full text in its tooltip) instead of wrapping under the title. */
+/* One line: the hint truncates instead of wrapping under the title. This box is
+   the hover tooltip target, so it stays as wide as the strip allows. */
 .docs-drop-strip-copy {
 	display: flex;
 	flex: 1 1 auto;
@@ -50,9 +51,10 @@
 	min-width: 0;
 }
 
-// Shrinkable: in a narrow toolbar slot the title truncates too (full text in
-// its tooltip) instead of overflowing the strip. It yields only once the hint,
-// which takes just the leftover space, is gone.
+// Shrinkable: in a narrow toolbar slot the title truncates too instead of
+// overflowing the strip. It yields only once the hint, which takes just the
+// leftover space, is gone. Neither needs its own tooltip target: the full text
+// is on the strip (focus) and on the whole copy area (hover).
 .docs-drop-strip-title {
 	flex: 0 1 auto;
 	min-width: 0;

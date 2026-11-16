@@ -1,12 +1,4 @@
-import {
-	Component,
-	ElementRef,
-	HostListener,
-	OnDestroy,
-	OnInit,
-	ViewChild,
-	ChangeDetectionStrategy
-} from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -38,7 +30,10 @@ const FOCUSABLE =
 	templateUrl: './docs-shell.component.html',
 	styleUrls: ['./docs-shell.component.scss'],
 	changeDetection: ChangeDetectionStrategy.Eager,
-	standalone: false
+	standalone: false,
+	host: {
+		'(document:keydown.escape)': 'onEscape()'
+	}
 })
 export class DocsShellComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	/** Folder drawer — closed on every visit, so the page always gets the full width. */
@@ -104,9 +99,9 @@ export class DocsShellComponent extends TranslationBaseComponent implements OnIn
 
 	/**
 	 * Escape closes the drawer wherever focus is — not only from inside it — so the
-	 * key keeps working even if focus was moved out programmatically.
+	 * key keeps working even if focus was moved out programmatically. Bound through
+	 * the component's `host` object.
 	 */
-	@HostListener('document:keydown.escape')
 	onEscape(): void {
 		if (!this.treeOpen) return;
 		// A dialog or menu opened from the drawer (rename, move…) owns this Escape —
