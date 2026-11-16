@@ -84,7 +84,14 @@ export class PeopleListComponent {
 	 * Allow the group to wrap onto several lines. Off inside data grids (a cell
 	 * must cost the row one line box), on inside cards, where there is room.
 	 */
-	@Input() wrap: boolean = false;
+	@Input() set wrap(value: boolean) {
+		this._wrap = !!value;
+		this.split();
+	}
+	get wrap(): boolean {
+		return this._wrap;
+	}
+	private _wrap = false;
 
 	/** Emitted when a person is activated. Empty for people without an id. */
 	@Output() readonly selectPerson = new EventEmitter<IPersonListItem>();
@@ -136,6 +143,14 @@ export class PeopleListComponent {
 	 */
 	private split(): void {
 		const items = this._items;
+
+		if (!this._wrap && items.length > 1) {
+			const visible = this._maxAvatars + 1;
+			this.named = [];
+			this.stacked = items.slice(0, visible);
+			this.overflow = items.slice(visible);
+			return;
+		}
 
 		if (items.length <= this._maxNames) {
 			this.named = items;
