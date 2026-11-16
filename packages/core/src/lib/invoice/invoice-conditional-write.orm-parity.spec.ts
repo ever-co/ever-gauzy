@@ -517,6 +517,37 @@ describe('Invoice edits under a precondition, on TypeORM and on MikroORM (#5243)
 				await refusesTheSaveAfter(invoiceId, () => handlers(ormType).lines.softRecoverLine(lineId));
 			});
 
+			it('a line removed on its own after another request moved it to another invoice', async () => {
+				const leftInvoiceId = await draftInvoice();
+				const joinedInvoiceId = await draftInvoice();
+				const [lineId] = await lineIdsOf(leftInvoiceId);
+				const lines = handlers(ormType).lines;
+				const joinedReadAt = await readVersion(ormType, joinedInvoiceId);
+				const leftReadAt = await readVersion(ormType, leftInvoiceId);
+				// The move another request commits between this one's read of the line's invoice and its locks
+				await dataSource.query(`UPDATE "invoice_item" SET "invoiceId" = ? WHERE "id" = ?`, [
+					joinedInvoiceId,
+					lineId
+				]);
+				orm.em.clear();
+				jest.spyOn(lines as any, 'invoiceIdOfLine').mockResolvedValueOnce(leftInvoiceId);
+
+				await lines.deleteLine(lineId);
+
+				// Started over under the lock of the invoice the line belongs to now, whose updatedAt moved with it; the
+				// invoice it left is as it was
+				expect(await lineIdsOf(joinedInvoiceId)).not.toContain(lineId);
+				expect(await linesOf(joinedInvoiceId)).toEqual(['held']);
+				orm.em.clear();
+				expect(await readVersion(ormType, joinedInvoiceId)).not.toBe(joinedReadAt);
+				expect(await readVersion(ormType, leftInvoiceId)).toBe(leftReadAt);
+				const save = handlers(ormType).updateWithItems({
+					...fields(joinedInvoiceId, { expectedUpdatedAt: joinedReadAt }),
+					invoiceItems: [line(joinedInvoiceId, 'stale')]
+				});
+				await expect(save).rejects.toMatchObject({ status: 409 });
+			});
+
 			it('a status change (PUT /invoices/:id/action, updateInvoiceAction)', async () => {
 				const invoiceId = await draftInvoice();
 
@@ -524,6 +555,37 @@ describe('Invoice edits under a precondition, on TypeORM and on MikroORM (#5243)
 				// two plain writes in the same second leave it as it was there; Postgres keeps it to the microsecond.
 				await refusesTheSaveAfter(invoiceId, () =>
 					handlers(ormType).update({ id: invoiceId, ...scope, status: 'SENT' })
+				);
+			});
+
+			it('lines saved by cascade with the invoice (PUT /invoices/:id with invoiceItems)', async () => {
+				const invoiceId = await draftInvoice();
+
+				await refusesTheSaveAfter(invoiceId, () =>
+					handlers(ormType).update({ id: invoiceId, ...scope, invoiceItems: [line(invoiceId, 'cascaded')] })
+				);
+			});
+
+			it('an invoice saved before, saved again with its lines (POST /invoices)', async () => {
+				const invoiceId = await draftInvoice();
+				const [stored] = await dataSource.query(`SELECT "invoiceNumber" FROM "invoice" WHERE "id" = ?`, [
+					invoiceId
+				]);
+
+				await refusesTheSaveAfter(invoiceId, () =>
+					handlers(ormType).create({
+						id: invoiceId,
+						...scope,
+						fromOrganizationId: ORG,
+						invoiceNumber: Number(stored.invoiceNumber),
+						invoiceDate: new Date('2026-11-01T00:00:00.000Z'),
+						dueDate: new Date('2026-11-30T00:00:00.000Z'),
+						currency: 'EUR',
+						discountValue: 0,
+						terms: 'as read',
+						status: 'DRAFT',
+						invoiceItems: [line(invoiceId, 'saved again')]
+					})
 				);
 			});
 

@@ -46,6 +46,7 @@ import {
 	ILockedInvoice,
 	inLinesTransaction,
 	lockedOrganizationIdOf,
+	lockInvoice,
 	saveBillingTime,
 	splitBilledTime
 } from '../invoice-item/invoice-item-billed-time';
@@ -104,6 +105,39 @@ export interface IInvoiceLinesWriter {
 
 /** What the conflict of a conditional write carries: the invoice with its lines, as the caller may read it now. */
 const CHANGED_INVOICE_RELATIONS = ['invoiceItems'];
+
+/** Whether a write names an invoice and states lines for it, which its save writes by cascade. */
+function statesLinesOfInvoice(change: { id?: ID; invoiceItems?: unknown }): boolean {
+	const statesLines = Array.isArray(change.invoiceItems) && change.invoiceItems.length > 0;
+	return Boolean(change.id) && statesLines;
+}
+
+/**
+ * Runs a write of an invoice and of the lines it states (`POST /invoices` for an invoice saved before, or
+ * `PUT /invoices/:id` with `invoiceItems`), and moves the invoice's `updatedAt` after, in the transaction given (#5243):
+ * the lines are rows of their own, saved by cascade, and the invoice's own row may be left as it was, so a
+ * precondition stated on it later would not see the change. A new invoice moves nothing more than its creation.
+ *
+ * @param transaction The transaction the write runs in.
+ * @param change The write, naming the invoice when it names one.
+ * @param write The write.
+ * @returns What the write answered, with the invoice's new `updatedAt` when it moved.
+ */
+async function writingLinesOf(
+	transaction: ILinesTransaction,
+	change: { id?: ID; invoiceItems?: unknown },
+	write: () => Promise<IInvoice>
+): Promise<IInvoice> {
+	const savedBefore = statesLinesOfInvoice(change)
+		? await lockInvoice(transaction, change.id, RequestContext.currentTenantId())
+		: null;
+	const written = await write();
+	if (!savedBefore) {
+		return written;
+	}
+	const updatedAt = await touchInvoice(transaction, change.id);
+	return updatedAt ? Object.assign(written, { updatedAt }) : written;
+}
 
 /**
  * Refuses a change that moves the invoice to another organization in the save of its lines: the lines' time is checked
@@ -198,7 +232,7 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 				if (leavesFinalStatus) {
 					await holdFinalStatus(transaction, input);
 				}
-				return await service.create(invoice);
+				return await writingLinesOf(transaction, input, () => service.create(invoice));
 			},
 			(created) => created.invoiceItems,
 			billing
@@ -209,7 +243,9 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 	 * Writes a change to an invoice, or a new invoice, keeping a final status: a void invoice or estimate, or a rejected
 	 * estimate, is not taken out of it (see `assertFinalStatusKept`). A change that may do so runs in a transaction that
 	 * first locks the invoice and reads its status, so a void or a rejection another request writes meanwhile is waited
-	 * for and refused against, not written over. Any other change is written as it was, reading nothing more.
+	 * for and refused against, not written over. A change that states lines of an invoice saved before runs in a
+	 * transaction too, which moves the invoice's `updatedAt` once its lines are saved (see `writingLinesOf`). Any other
+	 * change is written as it was, reading nothing more.
 	 *
 	 * @param change The change, or the new invoice, as the write states it.
 	 * @param write The write, run on the service it is given (the transaction's, when there is one).
@@ -217,16 +253,22 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 	 * @throws BadRequestException when the change states a status the invoice's final status refuses; nothing is saved.
 	 */
 	async writeKeepingFinalStatus(
-		change: IInvoiceStatusChange,
+		change: IInvoiceStatusChange & { invoiceItems?: unknown },
 		write: (service: InvoiceService) => Promise<IInvoice>
 	): Promise<IInvoice> {
 		const leavesFinalStatus = await this.mayLeaveFinalStatus(change);
-		if (!leavesFinalStatus) {
+		const savesLines = statesLinesOfInvoice(change);
+		if (!leavesFinalStatus && !savesLines) {
 			return await write(this);
 		}
 		return await inLinesTransaction(this, this.ownRepositories(), async (service, transaction) => {
-			await holdFinalStatus(transaction, change);
-			return await write(service);
+			if (leavesFinalStatus) {
+				await holdFinalStatus(transaction, change);
+			}
+			if (!savesLines) {
+				return await write(service);
+			}
+			return await writingLinesOf(transaction, change, () => write(service));
 		});
 	}
 

@@ -1,9 +1,12 @@
 import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { FilterQuery } from '@mikro-orm/core';
 import { DeleteResult, FindOptionsWhere, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ID, IInvoiceItem, IInvoiceItemCreateInput } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from './../core/crud';
+import { ApiErrorCode } from '../core/errors/api-error-codes';
+import { ApiException } from '../core/errors/api-exception';
 import { IFindOneOptions, IPartialEntity } from './../core/crud/icrud.service';
 import { Invoice } from '../core/entities/internal';
 import { InvoiceItem } from './invoice-item.entity';
@@ -148,7 +151,7 @@ export class InvoiceItemService extends TenantAwareCrudService<InvoiceItem> {
 	 * {@link writeLinesOf}).
 	 */
 	async createLine(entity: IPartialEntity<InvoiceItem>): Promise<InvoiceItem> {
-		return await this.writeLinesOf([invoiceIdStatedBy(entity)], (service) => service.create(entity));
+		return await this.writeLinesOf(null, [invoiceIdStatedBy(entity)], (service) => service.create(entity));
 	}
 
 	/**
@@ -156,9 +159,8 @@ export class InvoiceItemService extends TenantAwareCrudService<InvoiceItem> {
 	 * belongs to, and of the one it is moved to, if any (see {@link writeLinesOf}).
 	 */
 	async updateLine(id: ID, patch: QueryDeepPartialEntity<InvoiceItem>): Promise<UpdateResult | InvoiceItem> {
-		const invoiceId = await this.invoiceIdOfLine(id);
-		const invoiceIds = [invoiceId, invoiceIdStatedBy(patch as Record<string, unknown>)];
-		return await this.writeLinesOf(invoiceIds, (service) => service.update(id, patch));
+		const movedTo = invoiceIdStatedBy(patch);
+		return await this.writeLinesOf(id, [movedTo], (service) => service.update(id, patch));
 	}
 
 	/**
@@ -166,8 +168,7 @@ export class InvoiceItemService extends TenantAwareCrudService<InvoiceItem> {
 	 * `updatedAt` (see {@link writeLinesOf}).
 	 */
 	async deleteLine(id: ID): Promise<DeleteResult> {
-		const invoiceId = await this.invoiceIdOfLine(id);
-		return await this.writeLinesOf([invoiceId], (service) => service.delete(id));
+		return await this.writeLinesOf(id, [], (service) => service.delete(id));
 	}
 
 	/**
@@ -175,8 +176,7 @@ export class InvoiceItemService extends TenantAwareCrudService<InvoiceItem> {
 	 * `updatedAt` (see {@link writeLinesOf}).
 	 */
 	async softRemoveLine(id: ID, options?: IFindOneOptions<InvoiceItem>): Promise<InvoiceItem> {
-		const invoiceId = await this.invoiceIdOfLine(id);
-		return await this.writeLinesOf([invoiceId], (service) => service.softRemove(id, options));
+		return await this.writeLinesOf(id, [], (service) => service.softRemove(id, options));
 	}
 
 	/**
@@ -184,8 +184,7 @@ export class InvoiceItemService extends TenantAwareCrudService<InvoiceItem> {
 	 * `updatedAt` (see {@link writeLinesOf}).
 	 */
 	async softRecoverLine(id: ID, options?: IFindOneOptions<InvoiceItem>): Promise<InvoiceItem> {
-		const invoiceId = await this.invoiceIdOfLine(id);
-		return await this.writeLinesOf([invoiceId], (service) => service.softRecover(id, options));
+		return await this.writeLinesOf(id, [], (service) => service.softRecover(id, options));
 	}
 
 	/**
@@ -195,30 +194,55 @@ export class InvoiceItemService extends TenantAwareCrudService<InvoiceItem> {
 	 * replacement of the lines and a conditional write do, so the three run one after the other on an invoice. A write
 	 * that names no invoice of the caller's tenant is made as it always was, and moves nothing.
 	 *
-	 * @param invoiceIds The invoices the write changes a line of.
+	 * The invoice a stored line belongs to is read before the transaction, to know what to lock, and read again once the
+	 * locks are held: a line another request moved to another invoice in between would otherwise be written under the
+	 * lock of the invoice it left, and the invoice it joined keep its `updatedAt`. The write then starts over with the
+	 * invoice the line belongs to now, a few times at most.
+	 *
+	 * @param lineId The stored line the write changes, when it changes one.
+	 * @param statedInvoiceIds The invoices the write names besides: the one a new line is recorded on, or the one an
+	 * update moves a line to.
 	 * @param write The write, run on this service in the transaction.
 	 * @returns What the write answered.
+	 * @throws ApiException 409 (`CONCURRENT_MODIFICATION`) when the line kept moving between invoices meanwhile; nothing
+	 * is written.
 	 */
 	private async writeLinesOf<R>(
-		invoiceIds: Array<ID | null | undefined>,
+		lineId: ID | null,
+		statedInvoiceIds: Array<ID | null | undefined>,
 		write: (service: InvoiceItemService) => Promise<R>
 	): Promise<R> {
-		const named = [...new Set(invoiceIds.filter((invoiceId): invoiceId is ID => Boolean(invoiceId)))].sort();
-		if (named.length === 0) {
-			return await write(this);
+		for (let attempt = 1; ; attempt += 1) {
+			const owner = lineId ? await this.invoiceIdOfLine(lineId) : null;
+			const named = [...new Set([owner, ...statedInvoiceIds].filter((id): id is ID => Boolean(id)))].sort();
+			if (named.length === 0) {
+				return await write(this);
+			}
+			try {
+				return await inLinesTransaction(this, this.ownRepositories(), async (service, transaction) => {
+					const tenantId = RequestContext.currentTenantId();
+					// In one order whatever the request, so two writes to the same two invoices never wait on each other
+					for (const invoiceId of named) {
+						await lockInvoice(transaction, invoiceId, tenantId);
+					}
+					if (lineId && (await lineOwnerIn(transaction, lineId)) !== owner) {
+						throw new LineMovedError();
+					}
+					const result = await write(service);
+					for (const invoiceId of named) {
+						await touchInvoice(transaction, invoiceId);
+					}
+					return result;
+				});
+			} catch (error) {
+				if (!(error instanceof LineMovedError)) {
+					throw error;
+				}
+				if (attempt >= LINE_MOVED_ATTEMPTS) {
+					throw new ApiException(HttpStatus.CONFLICT, ApiErrorCode.CONCURRENT_MODIFICATION, LINE_MOVED);
+				}
+			}
 		}
-		return await inLinesTransaction(this, this.ownRepositories(), async (service, transaction) => {
-			const tenantId = RequestContext.currentTenantId();
-			// In one order whatever the request, so two writes to the same two invoices never wait on each other
-			for (const invoiceId of named) {
-				await lockInvoice(transaction, invoiceId, tenantId);
-			}
-			const result = await write(service);
-			for (const invoiceId of named) {
-				await touchInvoice(transaction, invoiceId);
-			}
-			return result;
-		});
 	}
 
 	/** The invoice a line belongs to, withdrawn or not, in the caller's tenant; null for a line it does not hold. */
@@ -321,4 +345,45 @@ function invoiceIdStatedBy(payload: unknown): ID | null {
 	const line = (payload ?? {}) as { invoiceId?: unknown; invoice?: { id?: unknown } | null };
 	const stated = line.invoiceId ?? line.invoice?.id;
 	return typeof stated === 'string' && stated ? stated : null;
+}
+
+/** How many times a write of one line starts over when the line moved to another invoice meanwhile. */
+const LINE_MOVED_ATTEMPTS = 3;
+
+/** The refusal of a write of one line that kept moving between invoices while it was written. */
+const LINE_MOVED =
+	'INVOICE_LINE_MOVED: the line kept moving to another invoice while it was written. Nothing was saved: try again.';
+
+/** Raised inside the transaction when the line no longer belongs to the invoice locked for it: the write starts over. */
+class LineMovedError extends Error {
+	constructor() {
+		super(LINE_MOVED);
+		this.name = 'LineMovedError';
+	}
+}
+
+/**
+ * The invoice a line belongs to, withdrawn or not, in the caller's tenant, read in the transaction given, after its
+ * locks were taken: what a request that moved the line committed meanwhile is seen.
+ */
+async function lineOwnerIn(transaction: ILinesTransaction, id: ID): Promise<ID | null> {
+	const tenantId = RequestContext.currentTenantId();
+	const where = tenantId ? { id, tenantId } : { id };
+	if (transaction.mikroOrm) {
+		// Read apart from the identity map, the withdrawn line included; the invoice through its relation, as MikroORM
+		// maps `invoiceId` as a mirror it does not load
+		const line = await transaction.mikroOrm.findOne(InvoiceItem, where as FilterQuery<InvoiceItem>, {
+			fields: ['id', 'invoice'] as never,
+			filters: false,
+			disableIdentityMap: true
+		});
+		const stored = line as unknown as { invoiceId?: ID | null; invoice?: { id?: ID } | null } | null;
+		return stored?.invoiceId ?? stored?.invoice?.id ?? null;
+	}
+	const line = await transaction.typeOrm.findOne(InvoiceItem, {
+		where,
+		select: { id: true, invoiceId: true },
+		withDeleted: true
+	});
+	return line?.invoiceId ?? null;
 }
