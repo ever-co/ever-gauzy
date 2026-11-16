@@ -499,6 +499,11 @@ export interface IManualTimeInput extends IBasePerTenantAndOrganizationEntityMod
 	isBillable?: boolean;
 }
 
+/** The tags a time log is filed under from now on, by id: an empty list takes them all off. */
+export interface ITimeLogTagsInput extends IBasePerTenantAndOrganizationEntityModel {
+	tags: ID[];
+}
+
 export interface IGetTimeLogInput extends ITimeLogFilters, IBaseRelationsEntityModel {
 	onlyMe?: boolean;
 	timesheetId?: ID;

@@ -22,6 +22,7 @@ import {
 import { chain, pluck } from 'underscore';
 import {
 	IManualTimeInput,
+	ITimeLogTagsInput,
 	PermissionsEnum,
 	IDateRange,
 	IGetTimeLogConflictInput,
@@ -2685,6 +2686,33 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			// Counted again after a failure too: the entries cut before it no longer hold that time.
 			await this.recalculateSharedTimeSlots(sharedTimeSlots);
 		}
+	}
+
+	/**
+	 * Files a time log under exactly these tags (ever-co/ever-gauzy#12029). Nothing else of the log changes: a running
+	 * log keeps running, and its range, slots and history stay as they are. The caller must be allowed to write the
+	 * log's employee's time, as for a manual edit; a tag of another organization or tenant refuses the change (400) and
+	 * nothing is written.
+	 *
+	 * @param id The time log.
+	 * @param input The tags it carries from now on.
+	 * @returns The log, with its tags.
+	 */
+	async updateTimeLogTags(id: ID, input: ITimeLogTagsInput): Promise<ITimeLog> {
+		const tenantId = RequestContext.currentTenantId();
+		const manager = this.typeOrmRepository.manager;
+
+		// Read past the own-employee filter, as a manual edit reads it: the check below decides who may change it
+		const timeLog = await this.withoutEmployeeFilter(() => this.findOneByIdString(id));
+		await this.assertCanWriteTimeFor(timeLog.employeeId, timeLog.organizationId);
+
+		const tagIds = sentTagIds(input.tags) ?? [];
+		await timeLogTagsOf(manager, tagIds, { tenantId, organizationId: timeLog.organizationId });
+		await replaceTimeLogTags(manager, timeLog.id, tagIds);
+
+		const updated = await this.withoutEmployeeFilter(() => this.findOneByIdString(id));
+		await loadTimeLogTags(manager, [updated]);
+		return updated;
 	}
 
 	/**
