@@ -1597,21 +1597,7 @@ describe('DeleteTimeSpanHandler splitting a log at one moment (CORE-26)', () => 
 		const store = createStore();
 		store.addLog('tracked', '09:00', '13:00', { taskId: 'homepage-redesign' });
 		jest.spyOn(RequestContext, 'currentEmployeeId').mockReturnValue(EMPLOYEE_ID);
-		const historyRows: Array<Record<string, unknown>> = [];
-		const repository = store.timeLogRepository;
-		const manager = {
-			// The part as the repository saves it; the history rows as an entity list
-			save: jest.fn(async (entity: unknown, rows?: unknown) => {
-				if (Array.isArray(rows)) {
-					historyRows.push(...(rows as Array<Record<string, unknown>>));
-					return rows;
-				}
-				return repository.save(entity as TimeLog);
-			}),
-			find: jest.fn(async () => []),
-			create: jest.fn((_entity: unknown, row: Record<string, unknown>) => row)
-		};
-		const dataSource = { transaction: jest.fn(async (work: (m: unknown) => unknown) => work(manager)) };
+		const { dataSource, rows: historyRows } = historyRecorder(store);
 
 		await store.split(
 			'11:00',
@@ -1661,6 +1647,71 @@ describe('DeleteTimeSpanHandler splitting a log at one moment (CORE-26)', () => 
 
 		expect(queued).toBe(false);
 		expect(store.timeline()).toEqual(afterFirst);
+	});
+
+	it('records in the history the undo of a split whose cut failed before writing', async () => {
+		const store = createStore();
+		store.addLog('tracked', '09:00', '13:00');
+		const { dataSource, rows } = historyRecorder(store);
+		store.fail('update');
+
+		const outcome = await store
+			.split(
+				'11:00',
+				store.read('tracked'),
+				{ secondPart: {}, history: { reason: null } },
+				store.handlerWith(dataSource)
+			)
+			.then(raised, raised);
+
+		expect(outcome).toBe('The update failed');
+		expect(store.rows().map((row) => row.id)).toEqual(['tracked']);
+		// The second part: saved with its creation, then deleted. The log: never cut, so nothing to take back.
+		const partId = rows[0].entityId;
+		expect(rows.map(({ action, entityId }) => ({ action, entityId }))).toEqual([
+			{ action: ActionTypeEnum.Created, entityId: partId },
+			{ action: ActionTypeEnum.Deleted, entityId: partId }
+		]);
+	});
+
+	it('records in the history the range the log takes back when its cut wrote, then failed', async () => {
+		const store = createStore();
+		store.addLog('tracked', '09:00', '13:00');
+		const { dataSource, rows } = historyRecorder(store);
+		// The cut writes the log's new end, then fails to take the log off the slots the second part now holds
+		store.fail('unlink');
+
+		const outcome = await store
+			.split(
+				'11:00',
+				store.read('tracked'),
+				{ secondPart: {}, history: { reason: null } },
+				store.handlerWith(dataSource)
+			)
+			.then(raised, raised);
+
+		expect(outcome).toBe('The unlink failed');
+		expect(store.timeline()).toEqual([
+			{ range: '09:00-13:00', isRunning: false, slots: slotStarts('09:00', '13:00') }
+		]);
+		const partId = rows[0].entityId;
+		expect(rows.map(({ action, entityId }) => ({ action, entityId }))).toEqual([
+			{ action: ActionTypeEnum.Created, entityId: partId },
+			{ action: ActionTypeEnum.Deleted, entityId: partId },
+			{ action: ActionTypeEnum.Updated, entityId: 'tracked' }
+		]);
+		// SQLite, the database these specs run with, stores the values as text
+		const valuesOf = (value: unknown) => (typeof value === 'string' ? JSON.parse(value) : value);
+		const rangeBack = rows[2];
+		expect({
+			updatedFields: valuesOf(rangeBack.updatedFields),
+			previousValues: valuesOf(rangeBack.previousValues),
+			updatedValues: valuesOf(rangeBack.updatedValues)
+		}).toEqual({
+			updatedFields: ['stoppedAt', 'duration'],
+			previousValues: [{ stoppedAt: at('11:00').toISOString() }, { duration: 2 * 3600 }],
+			updatedValues: [{ stoppedAt: at('13:00').toISOString() }, { duration: 4 * 3600 }]
+		});
 	});
 
 	it('splits a log once when two API processes split it at once, and leaves it whole for the later one', async () => {
@@ -1716,6 +1767,29 @@ describe('DeleteTimeSpanHandler splitting a log at one moment (CORE-26)', () => 
 		expect(locks.taken).toEqual([]);
 	});
 });
+
+/**
+ * A data source whose transactions record the history rows they write, as the API module gives it to the handler:
+ * the second part goes through the store's repository, the rows into `rows`.
+ */
+function historyRecorder(store: ReturnType<typeof createStore>) {
+	const rows: Array<Record<string, unknown>> = [];
+	const repository = store.timeLogRepository;
+	const manager = {
+		// The part as the repository saves it; the history rows as an entity list
+		save: jest.fn(async (entity: unknown, saved?: unknown) => {
+			if (Array.isArray(saved)) {
+				rows.push(...(saved as Array<Record<string, unknown>>));
+				return saved;
+			}
+			return repository.save(entity as TimeLog);
+		}),
+		find: jest.fn(async () => []),
+		create: jest.fn((_entity: unknown, row: Record<string, unknown>) => row)
+	};
+	const dataSource = { transaction: jest.fn(async (work: (m: unknown) => unknown) => work(manager)) };
+	return { dataSource, rows };
+}
 
 /**
  * The PostgreSQL advisory locks of one database, shared by every API process over it: a lock is held until the

@@ -8,8 +8,13 @@ import { moment } from '../../../../core/moment-extend';
 import { TimesheetRecalculateCommand } from '../../../timesheet/commands';
 import { TimeSlotBulkDeleteCommand } from '../../../time-slot/commands';
 import { TimeLog } from './../../time-log.entity';
-import { createdChange } from '../../time-log-history';
-import { historySubject, recordTimeLogHistory } from '../../time-log-history.writer';
+import { createdChange, deletedChange, updatedChange } from '../../time-log-history';
+import {
+	historySubject,
+	recordTimeLogHistory,
+	TimeLogHistoryOptions,
+	TimeLogHistoryRecord
+} from '../../time-log-history.writer';
 import { TimeLogSplitBusyError, withTimeLogSplitLock } from '../../time-log-split-lock';
 import { DeleteTimeSpanCommand, TimeLogSplitOptions, TimeLogSplitPartChanges } from '../delete-time-span.command';
 import { FindTimeLogRatesCommand } from '../find-time-log-rates.command';
@@ -397,7 +402,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 		} catch (error) {
 			this.logger.error(`Error while cutting back time log ${log.id}: ${error?.message ?? error}`, error?.stack);
 			try {
-				await this.recoverFailedSplit(log, start, secondPart, forceDelete);
+				await this.recoverFailedSplit(log, start, secondPart, forceDelete, split?.history);
 			} catch (recoveryError) {
 				// The part left behind still names this log (`splitFromTimeLogId`): the next split of it is refused
 				// until one of the two is deleted (see `assertNoSecondPartLeft`).
@@ -576,18 +581,20 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	 * totals the cut did not get to (see `finishRelease`). Otherwise nothing of the log was deleted, and the split is
 	 * undone: every slot the log held and lost goes back to it, the log gets its range and timesheet back, and the second
 	 * part is deleted with its join rows. In that order, so that a failure on the way leaves the time counted twice
-	 * rather than lost.
+	 * rather than lost. A split the route recorded in the history gets its undo recorded there too.
 	 *
 	 * @param log - The time log as it was read before the split, with its slots.
 	 * @param start - The start of the new range, the end the cut gives the log.
 	 * @param secondPart - The second part.
 	 * @param forceDelete - Whether the cut hard deletes what goes.
+	 * @param history - Given by the split route: the split was recorded in the history.
 	 */
 	private async recoverFailedSplit(
 		log: TimeLog,
 		start: Date,
 		secondPart: TimeLog,
-		forceDelete: boolean
+		forceDelete: boolean,
+		history?: TimeLogHistoryOptions
 	): Promise<void> {
 		const slots = await this.slotsAsTheyStand(log);
 		const heldBy = (slot: ITimeSlot) => (slot.timeLogs ?? []).map((held) => held.id);
@@ -616,6 +623,41 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 
 		await this.restoreRange(log);
 		await this.typeOrmTimeLogRepository.delete({ id: secondPart.id });
+		await this.recordUndoneSplit(log, stored, secondPart, history);
+	}
+
+	/**
+	 * Records in the history what the undo of a split recorded there put back, so the history ends as the logs do: the
+	 * second part, saved with its creation, is deleted, and the log takes back the range that a cut, written with its
+	 * own history row, had changed (nothing is recorded for the log when the cut never wrote). A split that recorded
+	 * nothing records nothing here either.
+	 *
+	 * @param log - The time log as it was read before the split.
+	 * @param stored - The time log as the failed cut left it, if it is still there.
+	 * @param secondPart - The second part, now deleted.
+	 * @param history - Given by the split route: the split was recorded in the history.
+	 */
+	private async recordUndoneSplit(
+		log: TimeLog,
+		stored: TimeLog | null,
+		secondPart: TimeLog,
+		history: TimeLogHistoryOptions | undefined
+	): Promise<void> {
+		const recordedSplit = Boolean(history) && Boolean(this.dataSource);
+		if (!recordedSplit) {
+			return;
+		}
+		const records: TimeLogHistoryRecord[] = [
+			{ subject: historySubject(secondPart), change: deletedChange(secondPart), reason: null }
+		];
+		if (stored) {
+			const restored = { ...stored, startedAt: log.startedAt, stoppedAt: log.stoppedAt };
+			const rangeBack = updatedChange(stored, restored);
+			if (rangeBack) {
+				records.push({ subject: historySubject(restored), change: rangeBack, reason: null });
+			}
+		}
+		await this.dataSource.transaction(async (manager) => recordTimeLogHistory(manager, records));
 	}
 
 	/**
