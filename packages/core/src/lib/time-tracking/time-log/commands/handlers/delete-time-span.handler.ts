@@ -10,6 +10,7 @@ import { TimeSlotBulkDeleteCommand } from '../../../time-slot/commands';
 import { TimeLog } from './../../time-log.entity';
 import { createdChange } from '../../time-log-history';
 import { historySubject, recordTimeLogHistory } from '../../time-log-history.writer';
+import { TimeLogSplitBusyError, withTimeLogSplitLock } from '../../time-log-split-lock';
 import { DeleteTimeSpanCommand, TimeLogSplitOptions, TimeLogSplitPartChanges } from '../delete-time-span.command';
 import { FindTimeLogRatesCommand } from '../find-time-log-rates.command';
 import { TimeLogUpdateCommand } from '../time-log-update.command';
@@ -58,7 +59,8 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	 * The cleanups running in this process, by time log: each waits for the one before it to settle, then reads the
 	 * log afresh. Two requests over the same log (an entry sent twice, a stop during a manual edit) otherwise both read
 	 * it before either wrote, and both split it. The API pods do not share this order; nothing here locks a log across
-	 * them, as nothing locks the timer start and stop either.
+	 * them, as nothing locks the timer start and stop either. The split route's splits alone also take the database's
+	 * lock on their log (see `withTimeLogSplitLock`), so they run one after the other on every pod.
 	 */
 	private readonly cleanups = new Map<ID, Promise<unknown>>();
 
@@ -79,7 +81,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	public async execute(command: DeleteTimeSpanCommand): Promise<boolean> {
 		const { id } = command.timeLog;
 		const previous = this.cleanups.get(id) ?? Promise.resolve();
-		const run = previous.then(() => this.cleanUp(command));
+		const run = previous.then(() => this.cleanUpInTurn(command));
 		const settled = run.catch(() => undefined);
 		this.cleanups.set(id, settled);
 		try {
@@ -88,6 +90,29 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 			if (this.cleanups.get(id) === settled) {
 				this.cleanups.delete(id);
 			}
+		}
+	}
+
+	/**
+	 * Runs the cleanup, once the split route's split holds the database's lock on its log: a split of the same log on
+	 * another API process runs before or after it, never beside it. A split still waiting once that other one ran
+	 * for the whole wait writes nothing, and answers that the log was not split, as a log that changed.
+	 *
+	 * @param command - The command containing newTime, timeLog, and timeSlot
+	 * @returns Whether the log was cut, split or deleted.
+	 */
+	private async cleanUpInTurn(command: DeleteTimeSpanCommand): Promise<boolean> {
+		if (!command.split) {
+			return await this.cleanUp(command);
+		}
+		try {
+			return await withTimeLogSplitLock(this.dataSource, command.timeLog.id, () => this.cleanUp(command));
+		} catch (error) {
+			if (error instanceof TimeLogSplitBusyError) {
+				this.logger.warn(`${error.message}: time log ${command.timeLog.id} left whole`);
+				return false;
+			}
+			throw error;
 		}
 	}
 

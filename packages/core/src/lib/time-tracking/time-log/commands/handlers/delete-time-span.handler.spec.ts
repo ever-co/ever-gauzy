@@ -747,8 +747,11 @@ function createStore({ slotDeleteOrm = MultiORMEnum.TypeORM }: { slotDeleteOrm?:
 			splitter.execute(
 				new DeleteTimeSpanCommand({ start: at(time), end: at(time) }, timeLog, undefined, false, split)
 			),
-		/** A handler over this store that records history through `dataSource`, as the API module builds it. */
-		handlerWithHistory: (dataSource: unknown) =>
+		/**
+		 * A handler over this store given the API's data source, as the API module builds it: it records the history and
+		 * takes the split's lock through it.
+		 */
+		handlerWith: (dataSource: unknown) =>
 			new DeleteTimeSpanHandler(
 				timeLogRepository as any,
 				timeSlotRepository as any,
@@ -1614,7 +1617,7 @@ describe('DeleteTimeSpanHandler splitting a log at one moment (CORE-26)', () => 
 			'11:00',
 			store.read('tracked'),
 			{ secondPart: { taskId: 'checkout-bug' }, history: { reason: 'Switched to the checkout bug' } },
-			store.handlerWithHistory(dataSource)
+			store.handlerWith(dataSource)
 		);
 
 		// The second part: its creation, in the transaction that saved it
@@ -1659,4 +1662,109 @@ describe('DeleteTimeSpanHandler splitting a log at one moment (CORE-26)', () => 
 		expect(queued).toBe(false);
 		expect(store.timeline()).toEqual(afterFirst);
 	});
+
+	it('splits a log once when two API processes split it at once, and leaves it whole for the later one', async () => {
+		const store = createStore();
+		store.addLog('manual', '09:00', '13:00', { logType: TimeLogType.MANUAL }, false);
+		const asRead = store.read('manual');
+		// One database, two processes: each has its own handler, so its own queue, and the database's locks in common
+		const locks = sharedDatabaseLocks();
+
+		const outcomes = await Promise.all([
+			store.split('11:00', asRead, { secondPart: {} }, store.handlerWith(locks.dataSource)),
+			store.split('10:00', asRead, { secondPart: {} }, store.handlerWith(locks.dataSource))
+		]);
+
+		expect(outcomes).toEqual([true, false]);
+		expect(store.timeline()).toEqual([
+			{ range: '09:00-11:00', isRunning: false, slots: [] },
+			{ range: '11:00-13:00', isRunning: false, slots: [] }
+		]);
+		expect(locks.taken).toEqual(['gauzy:time-log-split:manual', 'gauzy:time-log-split:manual']);
+	});
+
+	it('leaves the log whole when the split of another API process holds it for the whole wait', async () => {
+		const store = createStore();
+		store.addLog('tracked', '09:00', '13:00');
+		const locks = sharedDatabaseLocks({ busy: true });
+
+		const split = await store.split(
+			'11:00',
+			store.read('tracked'),
+			{ secondPart: {} },
+			store.handlerWith(locks.dataSource)
+		);
+
+		expect(split).toBe(false);
+		expect(store.timeline()).toEqual([
+			{ range: '09:00-13:00', isRunning: false, slots: slotStarts('09:00', '13:00') }
+		]);
+		expect(locks.released).toBe(1);
+	});
+
+	it('takes no lock for time saved inside a log, which does not come from the split route', async () => {
+		const store = createStore();
+		store.addLog('tracked', '08:00', '11:00');
+		const locks = sharedDatabaseLocks();
+		const handler = store.handlerWith(locks.dataSource);
+
+		await handler.execute(
+			new DeleteTimeSpanCommand({ start: at('09:00'), end: at('10:00') }, store.read('tracked'))
+		);
+
+		expect(store.timeline().map(({ range }) => range)).toEqual(['08:00-09:00', '10:00-11:00']);
+		expect(locks.taken).toEqual([]);
+	});
 });
+
+/**
+ * The PostgreSQL advisory locks of one database, shared by every API process over it: a lock is held until the
+ * transaction that took it ends, and the next one taking it waits until then. With `busy`, another process holds
+ * every lock past the wait, and taking one fails as PostgreSQL's `lock_timeout` does.
+ */
+function sharedDatabaseLocks({ busy = false }: { busy?: boolean } = {}) {
+	const held = new Map<string, Promise<void>>();
+	const taken: string[] = [];
+	let released = 0;
+	const createQueryRunner = () => {
+		let release = () => undefined as void;
+		return {
+			connect: async () => undefined,
+			startTransaction: async () => undefined,
+			query: async (sql: string, parameters: string[] = []) => {
+				if (!sql.includes('pg_advisory_xact_lock')) {
+					return [];
+				}
+				if (busy) {
+					throw Object.assign(new Error('canceling statement due to lock timeout'), { code: '55P03' });
+				}
+				const [name] = parameters;
+				const before = held.get(name) ?? Promise.resolve();
+				const mine = new Promise<void>((resolve) => {
+					release = resolve;
+				});
+				held.set(
+					name,
+					before.then(() => mine)
+				);
+				await before;
+				taken.push(name);
+				return [];
+			},
+			rollbackTransaction: async () => {
+				released++;
+				release();
+			},
+			release: async () => undefined
+		};
+	};
+	return {
+		dataSource: { options: { type: 'postgres' }, createQueryRunner },
+		/** The locks taken, in order. */
+		taken,
+		/** How many lock transactions ended. */
+		get released() {
+			return released;
+		}
+	};
+}
