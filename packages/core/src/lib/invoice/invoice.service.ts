@@ -351,6 +351,33 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 	}
 
 	/**
+	 * Writes a status action that states no precondition (`PUT /invoices/:id/action` without `expectedUpdatedAt`, and
+	 * GraphQL `updateInvoiceAction`), as it always was written, final status kept, and moves the invoice's `updatedAt`
+	 * in the same transaction (ever-co/ever-teams#5382). The ORM's own update date leaves it as it was when nothing
+	 * changed, and keeps it to the second on SQLite and MySQL; a precondition read before the action would then still
+	 * hold. The response is the one the action always answered, with the new `updatedAt`.
+	 *
+	 * @param change The action, naming the invoice.
+	 * @returns What the write answered, with the invoice's new `updatedAt`.
+	 * @throws BadRequestException when the action states a status the invoice's final status refuses; nothing is saved.
+	 */
+	async writeActionMovingUpdatedAt(change: IInvoiceUpdateInput): Promise<IInvoice> {
+		const leavesFinalStatus = await this.mayLeaveFinalStatus(change);
+		return await inLinesTransaction(this, this.ownRepositories(), async (service, transaction) => {
+			if (leavesFinalStatus) {
+				await holdFinalStatus(transaction, change);
+			}
+			const stored = await lockInvoice(transaction, change.id, RequestContext.currentTenantId());
+			const written = await service.create(change);
+			if (!stored) {
+				return written;
+			}
+			const updatedAt = await touchInvoice(transaction, change.id, stored.updatedAt);
+			return { ...written, updatedAt: updatedAt ?? written.updatedAt } as IInvoice;
+		});
+	}
+
+	/**
 	 * Writes an invoice's fields and replaces its lines in one transaction (`PUT /invoices/:id/with-items`): a save that
 	 * fails, or is refused, writes neither, so an edit is never left half saved. With `expectedUpdatedAt`, both are
 	 * written only while the invoice still holds it, as {@link updateUnchangedSince} writes the fields.

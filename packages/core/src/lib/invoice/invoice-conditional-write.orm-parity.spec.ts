@@ -72,6 +72,11 @@ describe('Invoice edits under a precondition, on TypeORM and on MikroORM (#5243)
 			read: (invoiceId: string) => invoiceService.findOneByIdString(invoiceId),
 			update: (input: Row) =>
 				new loaded.InvoiceUpdateHandler(invoiceService).execute(new loaded.InvoiceUpdateCommand(input)),
+			/** `PUT /invoices/:id/action` and GraphQL `updateInvoiceAction`, as they dispatch the command. */
+			action: (input: Row) =>
+				new loaded.InvoiceUpdateHandler(invoiceService).execute(
+					new loaded.InvoiceUpdateCommand(input, { isAction: true })
+				),
 			replaceLines: (invoiceId: string, lines: Row[], expectedUpdatedAt: Date | null = null) =>
 				new loaded.InvoiceItemBulkCreateHandler(invoiceItemService, moduleRef).execute(
 					new loaded.InvoiceItemBulkCreateCommand(invoiceId, lines, expectedUpdatedAt)
@@ -428,6 +433,128 @@ describe('Invoice edits under a precondition, on TypeORM and on MikroORM (#5243)
 				await expect(save).rejects.toMatchObject({ status: 404 });
 				const [row] = await dataSource.query(`SELECT COUNT(*) AS "n" FROM "invoice" WHERE "id" = ?`, [missing]);
 				expect(Number(row.n)).toBe(0);
+			});
+		});
+
+		describe('PUT /invoices/:id/action (#5382)', () => {
+			const statusOf = async (invoiceId: string): Promise<Row> => {
+				const [row] = await dataSource.query(
+					`SELECT "status", "paid", "alreadyPaid", "amountDue" FROM "invoice" WHERE "id" = ?`,
+					[invoiceId]
+				);
+				return row;
+			};
+
+			it.each<[string, Row, Row]>([
+				['voids', { status: 'VOID' }, { status: 'VOID' }],
+				['marks sent', { status: 'SENT' }, { status: 'SENT' }],
+				[
+					'marks paid',
+					{ status: 'FULLY_PAID', paid: true, alreadyPaid: 100, amountDue: 0 },
+					{ status: 'FULLY_PAID', alreadyPaid: 100, amountDue: 0 }
+				]
+			])('%s while the invoice still holds the updatedAt read, and moves it', async (_label, step, stored) => {
+				const invoiceId = await draftInvoice();
+				const expectedUpdatedAt = await readVersion(ormType, invoiceId);
+
+				const written = await handlers(ormType).action({ id: invoiceId, ...scope, ...step, expectedUpdatedAt });
+
+				expect(await statusOf(invoiceId)).toMatchObject(stored);
+				orm.em.clear();
+				const now = await readVersion(ormType, invoiceId);
+				expect(now).not.toBe(expectedUpdatedAt);
+				expect(new Date(written.updatedAt).toISOString()).toBe(now);
+			});
+
+			it('writes nothing, and answers 409 with the invoice as it is now, once it changed meanwhile', async () => {
+				const invoiceId = await draftInvoice();
+				const expectedUpdatedAt = await readVersion(ormType, invoiceId);
+				await changedMeanwhile(invoiceId);
+
+				const action = handlers(ormType).action({ id: invoiceId, ...scope, status: 'VOID', expectedUpdatedAt });
+
+				await expectChangedMeanwhile(action, invoiceId, expectedUpdatedAt);
+				expect((await statusOf(invoiceId)).status).toBe('DRAFT');
+			});
+
+			it('refuses a second action made on the same read', async () => {
+				const invoiceId = await draftInvoice();
+				const expectedUpdatedAt = await readVersion(ormType, invoiceId);
+				await handlers(ormType).action({ id: invoiceId, ...scope, status: 'SENT', expectedUpdatedAt });
+
+				const second = handlers(ormType).action({ id: invoiceId, ...scope, status: 'VOID', expectedUpdatedAt });
+
+				await expect(second).rejects.toMatchObject({ status: 409, code: 'CONCURRENT_MODIFICATION' });
+				expect((await statusOf(invoiceId)).status).toBe('SENT');
+			});
+
+			it('writes as it always did when no precondition is stated, and moves updatedAt even in the same second', async () => {
+				const invoiceId = await draftInvoice();
+				// The ORM's own update date keeps the second on SQLite: the action moves it itself
+				await writtenThisSecond(invoiceId);
+				const expectedUpdatedAt = await readVersion(ormType, invoiceId);
+
+				await handlers(ormType).action({ id: invoiceId, ...scope, status: 'SENT' });
+
+				expect((await statusOf(invoiceId)).status).toBe('SENT');
+				orm.em.clear();
+				expect(await readVersion(ormType, invoiceId)).not.toBe(expectedUpdatedAt);
+				// An edit saved on the read made before the action no longer writes over it
+				const save = handlers(ormType).updateWithItems({
+					...fields(invoiceId, { expectedUpdatedAt }),
+					invoiceItems: [line(invoiceId, 'stale')]
+				});
+				await expect(save).rejects.toMatchObject({ status: 409 });
+			});
+
+			it('moves updatedAt for an action that changes nothing', async () => {
+				const invoiceId = await draftInvoice();
+				const expectedUpdatedAt = await readVersion(ormType, invoiceId);
+
+				await handlers(ormType).action({ id: invoiceId, ...scope, status: 'DRAFT' });
+
+				orm.em.clear();
+				expect(await readVersion(ormType, invoiceId)).not.toBe(expectedUpdatedAt);
+			});
+
+			it.each([
+				['with', true],
+				['without', false]
+			])(
+				'keeps a void invoice whose released time is billed since void, %s a precondition',
+				async (_label, statesPrecondition) => {
+					const invoiceId = await draftInvoice();
+					await dataSource.query(
+						`UPDATE "invoice" SET "status" = 'VOID', "releasedTimeBilledAt" = ? WHERE "id" = ?`,
+						['2026-11-02 10:00:00.000', invoiceId]
+					);
+					orm.em.clear();
+					const expectedUpdatedAt = statesPrecondition ? await readVersion(ormType, invoiceId) : undefined;
+
+					const action = handlers(ormType).action({
+						id: invoiceId,
+						...scope,
+						status: 'SENT',
+						expectedUpdatedAt
+					});
+
+					await expect(action).rejects.toMatchObject({ status: 400 });
+					expect((await statusOf(invoiceId)).status).toBe('VOID');
+				}
+			);
+
+			it('refuses a precondition that is no date and time, writing nothing', async () => {
+				const invoiceId = await draftInvoice();
+
+				const action = handlers(ormType).action({
+					id: invoiceId,
+					...scope,
+					status: 'VOID',
+					expectedUpdatedAt: 'yesterday'
+				});
+
+				await expect(action).rejects.toMatchObject({ status: 400 });
+				expect((await statusOf(invoiceId)).status).toBe('DRAFT');
 			});
 		});
 

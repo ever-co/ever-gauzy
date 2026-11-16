@@ -279,7 +279,12 @@ export class InvoiceController extends CrudController<Invoice> {
 	}
 
 	/**
-	 * Update invoice/estimate action
+	 * Update invoice/estimate action: void, paid, unpaid, sent and the like.
+	 *
+	 * With `expectedUpdatedAt` (the `updatedAt` the invoice was read with), the action is written only while the
+	 * invoice still holds it, in the transaction that compares the two; otherwise nothing is written and the answer is
+	 * 409 with the invoice as it is now. Without it, the action is written as it always was. Either way it moves the
+	 * invoice's `updatedAt` (ever-co/ever-teams#5382).
 	 *
 	 * @param id
 	 * @param entity
@@ -298,11 +303,16 @@ export class InvoiceController extends CrudController<Invoice> {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
+	@ApiResponse({
+		status: HttpStatus.CONFLICT,
+		description:
+			'The invoice changed since expectedUpdatedAt: nothing was saved. `details.invoice` is the invoice as it is now.'
+	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put('/:id/action')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async updateAction(@Param('id', UUIDValidationPipe) id: IInvoice['id'], @Body() entity: UpdateInvoiceActionDTO) {
-		return await this.commandBus.execute(new InvoiceUpdateCommand({ ...entity, id }));
+		return await this.commandBus.execute(new InvoiceUpdateCommand({ ...entity, id }, { isAction: true }));
 	}
 
 	/**
