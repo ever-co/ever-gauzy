@@ -21,6 +21,11 @@
 	min-width: 0;
 }
 
+/* The shell's collapse toggle sits at the end of this first heading row. */
+.docs-tree > .docs-tree-section:first-child > .docs-tree-section-title {
+	padding-inline-end: 1.75rem;
+}
+
 .docs-tree-section-title {
 	font-size: var(--docs-label-size, 0.625rem);
 	font-weight: 600;
@@ -179,6 +184,14 @@
 }
 
 :host ::ng-deep {
+	/* The sidebar column is the only scroller — the tree grows to its content. */
+	tree-root,
+	tree-viewport {
+		display: block;
+		height: auto;
+		overflow: visible;
+	}
+
 	tree-node-content {
 		display: block;
 		min-width: 0;
