@@ -1649,6 +1649,24 @@ describe('DeleteTimeSpanHandler splitting a log at one moment (CORE-26)', () => 
 		expect(store.timeline()).toEqual(afterFirst);
 	});
 
+	it.each([
+		['member', { employeeId: '12030000-0000-4000-8000-0000000000ee' }],
+		['organization', { organizationId: '12030000-0000-4000-8000-0000000000ff' }]
+	])(
+		'leaves the log whole when it is no longer the time of the %s the route checked the caller against',
+		async (_owner, checkedOwner) => {
+			const store = createStore();
+			store.addLog('manual', '09:00', '13:00', { logType: TimeLogType.MANUAL }, false);
+			// The route authorized the caller for the log as it then was; another write gave it to someone else since
+			const checked = { ...store.read('manual'), ...checkedOwner } as TimeLog;
+
+			const split = await store.split('11:00', checked, { secondPart: {} });
+
+			expect(split).toBe(false);
+			expect(store.timeline()).toEqual([{ range: '09:00-13:00', isRunning: false, slots: [] }]);
+		}
+	);
+
 	it('records in the history the undo of a split whose cut failed before writing', async () => {
 		const store = createStore();
 		store.addLog('tracked', '09:00', '13:00');

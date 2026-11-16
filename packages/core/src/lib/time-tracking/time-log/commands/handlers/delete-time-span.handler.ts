@@ -536,6 +536,8 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	 * read; this runs on the log as it is stored once the splits before it settled, and leaves it whole when its range
 	 * is no longer the one the route checked (another split, an edit or a delete came first): a split at a moment still
 	 * inside it would otherwise cut a part the route never measured, or give the other split's time this one's changes.
+	 * It leaves it whole too when it is no longer the time of the member and organization the route checked the caller
+	 * against.
 	 *
 	 * @param log - The time log as stored, with its slots.
 	 * @param checked - The time log as the route read it, when it checked the split.
@@ -554,7 +556,9 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	): Promise<boolean> {
 		const keepsStart = moment(log.startedAt).isSame(moment(checked.startedAt));
 		const keepsEnd = moment(log.stoppedAt).isSame(moment(checked.stoppedAt));
-		const isAsChecked = keepsStart && keepsEnd;
+		const keepsMember = log.employeeId === checked.employeeId;
+		const keepsOrganization = log.organizationId === checked.organizationId;
+		const isAsChecked = keepsStart && keepsEnd && keepsMember && keepsOrganization;
 		if (!isAsChecked) {
 			this.debug(() => `Time log ${log.id} changed since the split was checked: left whole`);
 			return false;
