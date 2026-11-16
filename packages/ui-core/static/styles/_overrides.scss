@@ -1049,6 +1049,29 @@ angular2-smart-table tbody tr {
     border-bottom: 0;
   }
 
+  // Text colour, as the Documents table sets it: the row's identifying value —
+  // the FIRST data column — in the full text colour at a medium weight, and
+  // every other column in the muted secondary colour the column titles use.
+  // Renderers that paint their own colour (status pills, chips, links, people
+  // chips) keep it, exactly as the Documents table's status and tag cells do.
+  //
+  // "First data column" is the first cell that is not a checkbox/action cell:
+  // the library marks those `angular2-smart-actions` and leaves data cells
+  // classless. Two selectors rather than `:nth-child(1 of …)` so it holds in
+  // every browser the app supports: the row's first cell when it is data, or the
+  // data cell straight after a leading checkbox/action cell. `[colspan]` cells
+  // (the empty-state message, the loading skeleton, an expanded detail row) are
+  // not a column and keep the muted colour.
+  angular2-smart-table table tbody tr > td {
+    color: var(--gauzy-text-color-2, var(--text-hint-color));
+  }
+
+  angular2-smart-table table tbody tr > td:first-child:not(.angular2-smart-actions):not([colspan]),
+  angular2-smart-table table tbody tr > td.angular2-smart-actions + td:not(.angular2-smart-actions):not([colspan]) {
+    color: var(--text-basic-color);
+    font-weight: 500;
+  }
+
   // The multi-select column: a narrow, centred column with a small checkbox in
   // the theme's primary colour, exactly as on the Documents table.
   angular2-smart-table table tr.angular2-smart-titles > th:not(.angular2-smart-th),

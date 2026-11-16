@@ -16,7 +16,9 @@
 	align-items: baseline;
 	gap: 0.25rem;
 	min-width: 0;
-	color: nb-theme(text-basic-color);
+	// The cell's colour: only a table's first column is drawn in the full text
+	// colour, the rest are muted.
+	color: inherit;
 	font-size: nb-theme(gauzy-people-font-size);
 }
 
