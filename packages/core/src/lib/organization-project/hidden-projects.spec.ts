@@ -218,6 +218,15 @@ describe('withHiddenProjectsWithheld', () => {
 		expect(withHiddenProjectsWithheld(row, HIDDEN).description).toBe('Updated TimeLog "time entry"');
 	});
 
+	it('withholds the whole label of a history row, quotes in the name included', () => {
+		const row = withEntryProjectsKept(
+			{ id: 'history-4', entity: 'TimeLog', description: 'Created a new TimeLog called "Client "X" old"' },
+			[CONFIDENTIAL]
+		);
+
+		expect(withHiddenProjectsWithheld(row, HIDDEN).description).toBe('Created a new TimeLog called "time entry"');
+	});
+
 	it('withholds the label of a history row whose change names a hidden project, for an entry deleted for good', () => {
 		const row = {
 			id: 'history-2',

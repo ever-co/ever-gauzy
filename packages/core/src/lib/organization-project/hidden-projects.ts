@@ -293,10 +293,13 @@ function historyRowNamesHiddenProject(
 	return false;
 }
 
-/** A history row's description with its quoted label, the last quoted part, put back to "time entry". */
+/**
+ * A history row's description with its quoted label put back to "time entry". The label runs from the first quote to
+ * the last: the words before it hold none, and a name may hold some of its own.
+ */
 function withLabelWithheld(description: string): string {
+	const start = description.indexOf('"');
 	const end = description.lastIndexOf('"');
-	const start = description.lastIndexOf('"', end - 1);
 	const hasQuotedLabel = start >= 0 && end > start;
 	if (!hasQuotedLabel) {
 		return description;
