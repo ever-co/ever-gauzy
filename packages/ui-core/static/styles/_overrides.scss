@@ -1071,6 +1071,11 @@ angular2-smart-table tbody tr {
     background: transparent !important;
   }
 
+  angular2-smart-table nb-badge.position-center {
+    top: auto;
+    transform: none;
+  }
+
   nb-badge.color.ga-tag-chip {
     background: color-mix(in srgb, var(--chip-color, var(--gauzy-text-color-2)) 20%, transparent);
     color: var(--text-basic-color);
