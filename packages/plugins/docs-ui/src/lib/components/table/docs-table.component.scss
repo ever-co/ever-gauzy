@@ -72,8 +72,13 @@
 
 .docs-table ::ng-deep {
   // Quiet header: small, semi-bold, muted — the data is what should stand out.
+  // Exactly the header height: the column-picker button (`.docs-table-toolbar`)
+  // is centred in a box of this height over the row, so any vertical padding the
+  // app-wide table styles add would push the titles below the icon.
   tr.angular2-smart-titles > th {
+    box-sizing: border-box;
     height: var(--docs-header-height, 2.25rem);
+    padding-block: 0 !important;
     border-bottom: 1px solid var(--docs-hairline, rgba(126, 126, 143, 0.18));
     vertical-align: middle;
     white-space: nowrap;
