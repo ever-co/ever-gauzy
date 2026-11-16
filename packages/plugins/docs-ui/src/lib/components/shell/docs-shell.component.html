@@ -4,12 +4,9 @@
 		[class.collapsed]="treeCollapsed"
 		[attr.aria-label]="'DOCS.A11Y.TREE_LABEL' | translate"
 	>
+		<!-- Only the collapse toggle: the tree's own first heading ("All documents", a
+		     button back to the root) already names the column, so a title here repeated it. -->
 		<div class="docs-tree-column-header">
-			@if (!treeCollapsed) {
-				<span class="docs-tree-column-title" aria-hidden="true">
-					{{ 'DOCS.TREE.ALL_DOCUMENTS' | translate }}
-				</span>
-			}
 			<button
 				nbButton
 				ghost
