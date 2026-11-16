@@ -450,7 +450,9 @@ export class TimeLogController {
 	@ApiResponse({
 		status: HttpStatus.CONFLICT,
 		description:
-			'RUNNING_TIMER_OVERLAP: a timer is running over the range; `runningTimeLog` names it (id, startedAt, source)'
+			'RUNNING_TIMER_OVERLAP: a timer is running over the range; `runningTimeLog` names it (id, startedAt, source). ' +
+			'TIME_LOG_CHANGED (code CONCURRENT_MODIFICATION): the entry changed since `expectedUpdatedAt`; nothing was ' +
+			'saved, and `details.timeLog` is the entry as it is now.'
 	})
 	@Put(':id')
 	@UseGuards(OrganizationPermissionGuard)

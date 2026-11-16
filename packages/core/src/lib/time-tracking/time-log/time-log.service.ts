@@ -121,6 +121,7 @@ import {
 	assertWorkOverlapsNoBreak,
 	isBreak
 } from './break-rules';
+import { assertTimeLogUnchangedSince, timeLogExpectedUpdatedAtOf } from './time-log-precondition';
 
 /** The code of the refusal of manual time over a timer that is still running (409). */
 export const RUNNING_TIMER_OVERLAP = 'RUNNING_TIMER_OVERLAP';
@@ -2561,6 +2562,11 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			// has already checked that the caller may write `employeeId`'s time, and the owner check below refuses any
 			// other log, so the read reaches nothing the caller could not have edited.
 			const timeLog = await this.withoutEmployeeFilter(() => this.findOneByIdString(id));
+
+			// An edit made on a read the entry no longer holds (`expectedUpdatedAt`) is refused before anything is cut or
+			// written: the overlap cleanup below writes other entries. The write checks it again, under the entry's lock,
+			// in its own transaction (`TimeLogUpdateHandler`), which the precondition reaches with the request.
+			assertTimeLogUnchangedSince(timeLog, timeLogExpectedUpdatedAtOf(request.expectedUpdatedAt));
 
 			// A break stays a break and work stays work; editing a break needs the breaks switch
 			assertBreakTypeKept(timeLog, request.logType);
