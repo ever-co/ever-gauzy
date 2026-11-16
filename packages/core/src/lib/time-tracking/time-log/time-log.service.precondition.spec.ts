@@ -116,6 +116,36 @@ describe('TimeLogService: a manual edit under a precondition', () => {
 		expect(commands.some((command) => command instanceof TimeLogUpdateCommand)).toBe(false);
 	});
 
+	it("never answers a coworker's entry: an edit the caller may not make is refused as before, without it", async () => {
+		storeEntries();
+		const before = store.shapes();
+		// A caller who may record their own time only, naming themselves on a coworker's entry, with a stale version
+		const ownEmployeeId = '2e4f6a8c-0b1d-4e3f-9a5b-7c9d1e3f5a73';
+		mockRequestContext({
+			tenantId: SPAN_TENANT_ID,
+			user: { id: USER_ID, employeeId: ownEmployeeId },
+			canChangeSelectedEmployee: false
+		});
+
+		const error: any = await service
+			.updateManualTime('edited', {
+				employeeId: ownEmployeeId,
+				organizationId: SPAN_ORGANIZATION_ID,
+				startedAt: at('10:00'),
+				stoppedAt: at('11:00'),
+				expectedUpdatedAt: EARLIER_VERSION
+			} as IManualTimeInput)
+			.then(
+				() => null,
+				(refusal) => refusal
+			);
+
+		expect(error?.getStatus?.()).toBe(403);
+		expect(error).not.toBeInstanceOf(ApiException);
+		expect(JSON.stringify(error.getResponse())).not.toContain('edited');
+		expect(store.shapes()).toEqual(before);
+	});
+
 	it('refuses a precondition that is no date and time with 400, before anything is cut or written', async () => {
 		storeEntries();
 		const before = store.shapes();

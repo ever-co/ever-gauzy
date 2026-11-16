@@ -170,6 +170,17 @@ async function moveUpdatedAtPast(
 		.execute();
 }
 
+/**
+ * A log's time slot links alone, as a save writes them: the slots it holds become its join rows, and a column the
+ * object leaves out is left as stored (TypeORM's save skips an undefined property). Without `timeSlots`, the save
+ * writes nothing.
+ *
+ * @param timeLog - The log read back, with the slots it holds now when it takes the slots of its range.
+ */
+function slotLinksOf(timeLog: ITimeLog): ITimeLog {
+	return { id: timeLog.id, timeSlots: timeLog.timeSlots } as ITimeLog;
+}
+
 @CommandHandler(TimeLogUpdateCommand)
 export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateCommand> {
 	protected ormType: MultiORM = getORMType();
@@ -388,8 +399,11 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 				// nothing to save that the targeted update above did not write, and saving the row read back would
 				// write every column a concurrent call changed since (a timer stop's `isRunning` and `stoppedAt`
 				// included) back to what it read.
+				// An edit under a precondition (ever-co/ever-teams#5382) saves its slot links alone, for the same
+				// reason: its columns were written under the entry's lock, and this save runs after that lock is
+				// released, so an edit saved in between would otherwise be written over although both checked theirs.
 				if (!manualTimeSlot) {
-					await this.saveUpdatedTimeLog(timeLog);
+					await this.saveUpdatedTimeLog(expectedUpdatedAt ? slotLinksOf(timeLog) : timeLog);
 				}
 			}
 		}

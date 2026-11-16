@@ -47,15 +47,26 @@ describe('TimeLogUpdateHandler: history of an edit', () => {
 			save: jest.fn(async (log: unknown) => log)
 		};
 		// The update that moves the entry's `updatedAt` once the edit is written (ever-co/ever-teams#5382)
-		const movedUpdatedAt = { set: jest.fn(), execute: jest.fn(async () => ({ affected: 1 })) };
+		const movedUpdatedAt = {
+			set: jest.fn(),
+			/** Every condition the update names its row by, with its parameters. */
+			conditions: [] as Array<[string, Record<string, unknown>]>,
+			execute: jest.fn(async () => ({ affected: 1 }))
+		};
 		const updateBuilder = {
 			update: jest.fn(() => updateBuilder),
 			set: jest.fn((values: unknown) => {
 				movedUpdatedAt.set(values);
 				return updateBuilder;
 			}),
-			where: jest.fn(() => updateBuilder),
-			andWhere: jest.fn(() => updateBuilder),
+			where: jest.fn((condition: string, parameters: Record<string, unknown>) => {
+				movedUpdatedAt.conditions.push([condition, parameters]);
+				return updateBuilder;
+			}),
+			andWhere: jest.fn((condition: string, parameters: Record<string, unknown>) => {
+				movedUpdatedAt.conditions.push([condition, parameters]);
+				return updateBuilder;
+			}),
 			callListeners: jest.fn(() => updateBuilder),
 			execute: movedUpdatedAt.execute
 		};
@@ -96,6 +107,12 @@ describe('TimeLogUpdateHandler: history of an edit', () => {
 
 		expect(movedUpdatedAt.execute).toHaveBeenCalledTimes(1);
 		expect(movedUpdatedAt.set).toHaveBeenCalledWith({ updatedAt: new Date('2099-01-01T00:00:00.001Z') });
+		// The entry's own row, in its own tenant, and no other
+		const stored = storedLog();
+		expect(movedUpdatedAt.conditions.map(([, parameters]) => parameters)).toEqual([
+			{ id: stored.id },
+			{ tenantId: stored.tenantId }
+		]);
 	});
 
 	it('writes the edit and its row in one transaction, with what changed and the reason', async () => {

@@ -451,8 +451,10 @@ export class TimeLogController {
 		status: HttpStatus.CONFLICT,
 		description:
 			'RUNNING_TIMER_OVERLAP: a timer is running over the range; `runningTimeLog` names it (id, startedAt, source). ' +
-			'TIME_LOG_CHANGED (code CONCURRENT_MODIFICATION): the entry changed since `expectedUpdatedAt`; nothing was ' +
-			'saved, and `details.timeLog` is the entry as it is now.'
+			'TIME_LOG_CHANGED (code CONCURRENT_MODIFICATION): the entry changed since `expectedUpdatedAt`; the entry was ' +
+			'not saved, and `details.timeLog` is the entry as it is now. A read already stale is refused before the ' +
+			'other entries the new range overlaps are trimmed; an entry changed while they are being trimmed is refused ' +
+			'after, and the trims stand.'
 	})
 	@Put(':id')
 	@UseGuards(OrganizationPermissionGuard)

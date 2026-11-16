@@ -2563,11 +2563,6 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			// other log, so the read reaches nothing the caller could not have edited.
 			const timeLog = await this.withoutEmployeeFilter(() => this.findOneByIdString(id));
 
-			// An edit made on a read the entry no longer holds (`expectedUpdatedAt`) is refused before anything is cut or
-			// written: the overlap cleanup below writes other entries. The write checks it again, under the entry's lock,
-			// in its own transaction (`TimeLogUpdateHandler`), which the precondition reaches with the request.
-			assertTimeLogUnchangedSince(timeLog, timeLogExpectedUpdatedAtOf(request.expectedUpdatedAt));
-
 			// A break stays a break and work stays work; editing a break needs the breaks switch
 			assertBreakTypeKept(timeLog, request.logType);
 			const editsBreak = isBreak(timeLog);
@@ -2593,6 +2588,12 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			if (String(employee.organizationId ?? '') !== String(timeLog.organizationId ?? '')) {
 				throw new ForbiddenException('A time log cannot be moved to an employee of another organization');
 			}
+
+			// An edit made on a read the entry no longer holds (`expectedUpdatedAt`) is refused before anything is cut or
+			// written: the overlap cleanup below writes other entries. Only once the checks above let the caller edit the
+			// entry, as the refusal carries it. The write checks it again, under the entry's lock, in its own transaction
+			// (`TimeLogUpdateHandler`), which the precondition reaches with the request.
+			assertTimeLogUnchangedSince(timeLog, timeLogExpectedUpdatedAtOf(request.expectedUpdatedAt));
 
 			// A move within the organization takes the log's timesheet, time slots and hours with it
 			// (`TimeLogUpdateHandler`), but never what was captured while the previous employee was tracked.

@@ -58,6 +58,11 @@ describe('time-log-precondition', () => {
 	describe('updatedAtPast', () => {
 		afterEach(() => jest.restoreAllMocks());
 
+		it('answers now when no value is given (a write of no time log)', () => {
+			jest.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-11-16T12:00:00.000Z'));
+			expect(updatedAtPast([]).toISOString()).toBe('2026-11-16T12:00:00.000Z');
+		});
+
 		it('answers now when every value given is in the past', () => {
 			jest.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-11-16T12:00:00.000Z'));
 			expect(updatedAtPast(['2026-11-01T00:00:00.000Z', null, undefined]).toISOString()).toBe(
