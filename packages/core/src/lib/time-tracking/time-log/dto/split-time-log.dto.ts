@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, TransformFnParams } from 'class-transformer';
-import { IsBoolean, IsDate, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsBoolean, IsDate, IsNotEmpty, IsOptional, IsString, IsUUID, ValidateIf } from 'class-validator';
 import { ID, ITimeLogSplitInput } from '@gauzy/contracts';
 
 /** An instant in ISO 8601 with its offset (`Z` or `±hh:mm`): the date, the time to the minute or finer, the offset. */
@@ -64,8 +64,9 @@ export class SplitTimeLogDTO implements ITimeLogSplitInput {
 	@IsString()
 	readonly description?: string | null;
 
+	/** Left out, the second part keeps the log's billable state; it has one, so `null` is refused. */
 	@ApiPropertyOptional({ type: () => Boolean })
-	@IsOptional()
+	@ValidateIf((_body, value) => value !== undefined)
 	@IsBoolean()
 	readonly isBillable?: boolean;
 

@@ -38,3 +38,19 @@ describe('SplitTimeLogDTO splitAt (CORE-26)', () => {
 		expect(await refusedFields({ splitAt })).toEqual(['splitAt']);
 	});
 });
+
+describe('SplitTimeLogDTO isBillable (CORE-26)', () => {
+	const splitAt = '2026-11-16T11:00:00Z';
+
+	it('lets the second part keep the billable state of the log when it is left out', async () => {
+		expect(await refusedFields({ splitAt })).toEqual([]);
+	});
+
+	it.each([true, false])('takes %s', async (isBillable) => {
+		expect(await refusedFields({ splitAt, isBillable })).toEqual([]);
+	});
+
+	it('refuses null, as every log has a billable state', async () => {
+		expect(await refusedFields({ splitAt, isBillable: null })).toEqual(['isBillable']);
+	});
+});
