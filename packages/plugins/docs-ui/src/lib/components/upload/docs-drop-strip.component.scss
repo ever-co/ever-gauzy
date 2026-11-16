@@ -40,17 +40,20 @@
 	}
 }
 
+/* One line: the hint truncates (full text in its tooltip) instead of wrapping under the title. */
 .docs-drop-strip-copy {
 	display: flex;
+	flex: 1 1 auto;
 	align-items: baseline;
-	flex-wrap: wrap;
-	gap: 0.125rem 0.5rem;
+	flex-wrap: nowrap;
+	gap: 0.5rem;
 	min-width: 0;
 }
 
 .docs-drop-strip-title {
 	font-size: var(--docs-body-size, 0.8125rem);
-	font-weight: 600;
+	flex: 0 0 auto;
+	font-weight: 500;
 	color: var(--docs-text, var(--text-basic-color));
 	white-space: nowrap;
 }

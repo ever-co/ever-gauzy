@@ -34,37 +34,6 @@
 					{{ 'DOCS.REVIEW.QUEUE_TITLE' | translate }}
 				</button>
 			</ng-template>
-			<!-- View toggle — persisted via ComponentEnum.DOCUMENTS_HUB.
-      `<fieldset>` is the semantic grouping element (implicit `group` role); the inline
-      rules only neutralize the user-agent fieldset chrome so the layout is unchanged. -->
-			<fieldset
-				class="docs-view-toggle"
-				style="border: 0; padding: 0; margin-inline: 0; min-inline-size: 0"
-				[attr.aria-label]="'DOCS.VIEWS.TOGGLE_LABEL' | translate"
-			>
-				<button
-					nbButton
-					size="small"
-					[status]="isCardsView ? 'basic' : 'primary'"
-					[appearance]="isCardsView ? 'outline' : 'filled'"
-					[attr.aria-pressed]="!isCardsView"
-					[nbTooltip]="'DOCS.VIEWS.TABLE' | translate"
-					(click)="setLayout(layoutStyles.TABLE)"
-				>
-					<nb-icon icon="list-outline"></nb-icon>
-				</button>
-				<button
-					nbButton
-					size="small"
-					[status]="isCardsView ? 'primary' : 'basic'"
-					[appearance]="isCardsView ? 'filled' : 'outline'"
-					[attr.aria-pressed]="isCardsView"
-					[nbTooltip]="'DOCS.VIEWS.CARDS' | translate"
-					(click)="setLayout(layoutStyles.CARDS_GRID)"
-				>
-					<nb-icon icon="grid-outline"></nb-icon>
-				</button>
-			</fieldset>
 			<ng-template [ngxPermissionsOnly]="docsPermissions.create">
 				<!-- `New ▾` (`01-ux-spec.md` §2): Folder | Page. A folder was previously
         unreachable from here, so a brand-new organization — whose tree is empty and
@@ -147,6 +116,38 @@
 			(applyView)="onApplySavedView($event)"
 			(presetToggled)="onPresetToggled($event)"
 		></gz-docs-filter-bar>
+		<!-- View toggle — persisted via ComponentEnum.DOCUMENTS_HUB. A list control, so it
+    sits with search / Filters / Saved views rather than with the page actions.
+      `<fieldset>` is the semantic grouping element (implicit `group` role); the inline
+      rules only neutralize the user-agent fieldset chrome so the layout is unchanged. -->
+		<fieldset
+			class="docs-view-toggle"
+			style="border: 0; padding: 0; margin-inline: 0; min-inline-size: 0"
+			[attr.aria-label]="'DOCS.VIEWS.TOGGLE_LABEL' | translate"
+		>
+			<button
+				nbButton
+				ghost
+				size="small"
+				[class.active]="!isCardsView"
+				[attr.aria-pressed]="!isCardsView"
+				[nbTooltip]="'DOCS.VIEWS.TABLE' | translate"
+				(click)="setLayout(layoutStyles.TABLE)"
+			>
+				<nb-icon icon="list-outline"></nb-icon>
+			</button>
+			<button
+				nbButton
+				ghost
+				size="small"
+				[class.active]="isCardsView"
+				[attr.aria-pressed]="isCardsView"
+				[nbTooltip]="'DOCS.VIEWS.CARDS' | translate"
+				(click)="setLayout(layoutStyles.CARDS_GRID)"
+			>
+				<nb-icon icon="grid-outline"></nb-icon>
+			</button>
+		</fieldset>
 	</div>
 
 	<!-- Always-visible drop strip. VISUAL-ONLY: the page-root gzDocsUploadDropzone
