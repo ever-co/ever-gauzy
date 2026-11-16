@@ -207,16 +207,21 @@ async function typeOrmMarkReleasedTimeBilled(
 	}
 	await typeOrmLockReleasingDocuments(manager, timeLogIds, lineIdsOf(lines), scope.tenantId, 'fail');
 	const { condition, parameters } = releasedBy(timeLogIds, lineIdsOf(lines));
-	// The documents the mark changes, as they stand: each `updatedAt` moves past what it holds (see `movesPast`)
-	const marking: IStoredVersion[] = await manager
+	// The documents the mark changes, as they stand: each `updatedAt` moves past what it holds (see `movesPast`). A
+	// locking read, where the database locks rows: it answers the latest committed version, where a plain read under
+	// MySQL's REPEATABLE READ would answer the transaction's first snapshot. The rows are locked already.
+	const markingQuery = manager
 		.createQueryBuilder(Invoice, 'invoice')
 		.withDeleted()
 		.select(['invoice.id', 'invoice.updatedAt'])
 		.where(p(`"invoice"."tenantId" = :tenantId`), { tenantId: scope.tenantId })
 		.andWhere(p(`"invoice"."releasedTimeBilledAt" IS NULL`))
 		.andWhere(p(`"invoice"."status" IN (:...releasingStatuses)`), { releasingStatuses: RELEASING_STATUSES })
-		.andWhere(releasedBy(timeLogIds, lineIdsOf(lines), 'invoice').condition, parameters)
-		.getMany();
+		.andWhere(releasedBy(timeLogIds, lineIdsOf(lines), 'invoice').condition, parameters);
+	if (locksRows()) {
+		markingQuery.setLock('pessimistic_write');
+	}
+	const marking: IStoredVersion[] = await markingQuery.getMany();
 	const markedAt = new Date();
 	await manager
 		.createQueryBuilder()
@@ -295,7 +300,13 @@ async function mikroOrmMarkReleasedTimeBilled(
 			status: { $in: RELEASING_STATUSES },
 			[findKey]: []
 		} as FilterQuery<Invoice>,
-		{ fields: ['id', 'updatedAt'] as never, filters: false, disableIdentityMap: true }
+		{
+			fields: ['id', 'updatedAt'] as never,
+			filters: false,
+			disableIdentityMap: true,
+			// A locking read answers the latest committed version (see `typeOrmMarkReleasedTimeBilled`)
+			lockMode: locksRows() ? LockMode.PESSIMISTIC_WRITE : undefined
+		}
 	)) as unknown as IStoredVersion[];
 	// A native update stamps no update date: the mark is a change of the document, so it moves `updatedAt` itself
 	const markedAt = new Date();

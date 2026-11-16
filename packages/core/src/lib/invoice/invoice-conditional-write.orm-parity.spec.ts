@@ -532,6 +532,23 @@ describe('Invoice edits under a precondition, on TypeORM and on MikroORM (#5243)
 				await expect(save).rejects.toMatchObject({ status: 409 });
 			});
 
+			it('a line recorded on its own naming one invoice by id and another by relation: both move', async () => {
+				const byIdInvoiceId = await draftInvoice();
+				const byRelationInvoiceId = await draftInvoice();
+				const byIdReadAt = await readVersion(ormType, byIdInvoiceId);
+				const byRelationReadAt = await readVersion(ormType, byRelationInvoiceId);
+
+				await handlers(ormType).lines.createLine({
+					...line(byIdInvoiceId, 'named twice'),
+					invoice: { id: byRelationInvoiceId }
+				});
+
+				// Whichever the ORM writes, the invoice the line landed on moved
+				orm.em.clear();
+				expect(await readVersion(ormType, byIdInvoiceId)).not.toBe(byIdReadAt);
+				expect(await readVersion(ormType, byRelationInvoiceId)).not.toBe(byRelationReadAt);
+			});
+
 			it('a line changed on its own (PUT /invoice-item/:id, updateInvoiceItem)', async () => {
 				const invoiceId = await draftInvoice();
 				const [lineId] = await lineIdsOf(invoiceId);

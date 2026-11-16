@@ -156,7 +156,7 @@ export class InvoiceItemService extends TenantAwareCrudService<InvoiceItem> {
 	async createLine(entity: IPartialEntity<InvoiceItem>): Promise<InvoiceItem> {
 		const namedLineId = (entity as { id?: unknown }).id;
 		const lineId = typeof namedLineId === 'string' && namedLineId ? namedLineId : null;
-		return await this.writeLinesOf(lineId, [invoiceIdStatedBy(entity)], (service) => service.create(entity));
+		return await this.writeLinesOf(lineId, invoicesStatedBy(entity), (service) => service.create(entity));
 	}
 
 	/**
@@ -164,8 +164,8 @@ export class InvoiceItemService extends TenantAwareCrudService<InvoiceItem> {
 	 * belongs to, and of the one it is moved to, if any (see {@link writeLinesOf}).
 	 */
 	async updateLine(id: ID, patch: QueryDeepPartialEntity<InvoiceItem>): Promise<UpdateResult | InvoiceItem> {
-		const movedTo = invoiceIdStatedBy(patch);
-		return await this.writeLinesOf(id, [movedTo], (service) => service.update(id, patch));
+		const movedTo = invoicesStatedBy(patch);
+		return await this.writeLinesOf(id, movedTo, (service) => service.update(id, patch));
 	}
 
 	/**
@@ -347,11 +347,14 @@ async function replaceLinesMovingInvoice(
 	return saved;
 }
 
-/** The invoice a line's payload names: its `invoiceId`, or the id of its `invoice`. */
-function invoiceIdStatedBy(payload: unknown): ID | null {
+/**
+ * The invoices a line's payload names: its `invoiceId` and the id of its `invoice`, each when stated. Both are taken:
+ * the ORMs do not write the same one (MikroORM writes the relation, `invoiceId` being its mirror), so the invoice the
+ * line lands on is among them either way.
+ */
+function invoicesStatedBy(payload: unknown): ID[] {
 	const line = (payload ?? {}) as { invoiceId?: unknown; invoice?: { id?: unknown } | null };
-	const stated = line.invoiceId ?? line.invoice?.id;
-	return typeof stated === 'string' && stated ? stated : null;
+	return [line.invoiceId, line.invoice?.id].filter((id): id is ID => typeof id === 'string' && id.length > 0);
 }
 
 /** How many times a write of one line starts over when the line moved to another invoice meanwhile. */
