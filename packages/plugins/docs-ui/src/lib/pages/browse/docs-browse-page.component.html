@@ -115,7 +115,21 @@
 			(clearAll)="onClearAll()"
 			(applyView)="onApplySavedView($event)"
 			(presetToggled)="onPresetToggled($event)"
-		></gz-docs-filter-bar>
+		>
+			<!-- Always-visible drop strip, first on the toolbar row, before search.
+			VISUAL-ONLY: the page-root gzDocsUploadDropzone owns every drop (a second
+			directive instance would double-fire); the strip mirrors its drag state and
+			clicks through to the same upload flow. -->
+			<gz-docs-drop-strip
+				docsFilterBarExtra
+				*ngxPermissionsOnly="docsPermissions.create"
+				[active]="dropActive"
+				[maxFileSizeBytes]="uploadQueue.maxFileSizeBytes"
+				[maxFiles]="uploadQueue.maxFilesPerUpload"
+				[accept]="uploadAccept"
+				(browse)="openUploadFlow()"
+			></gz-docs-drop-strip>
+		</gz-docs-filter-bar>
 		<!-- View toggle — persisted via ComponentEnum.DOCUMENTS_HUB. A list control, so it
     sits with search / Filters / Saved views rather than with the page actions.
       `<fieldset>` is the semantic grouping element (implicit `group` role); the inline
@@ -149,19 +163,6 @@
 			</button>
 		</fieldset>
 	</div>
-
-	<!-- Always-visible drop strip. VISUAL-ONLY: the page-root gzDocsUploadDropzone
-  owns every drop (a second directive instance would double-fire); the strip
-  mirrors its drag state and clicks through to the same upload flow. -->
-	<ng-template [ngxPermissionsOnly]="docsPermissions.create">
-		<gz-docs-drop-strip
-			[active]="dropActive"
-			[maxFileSizeBytes]="uploadQueue.maxFileSizeBytes"
-			[maxFiles]="uploadQueue.maxFilesPerUpload"
-			[accept]="uploadAccept"
-			(browse)="openUploadFlow()"
-		></gz-docs-drop-strip>
-	</ng-template>
 
 	<!-- Upload progress -->
 	<gz-docs-upload-progress

@@ -93,6 +93,17 @@
   }
 }
 
+// Shares the row with search; hidden when the host projects nothing
+// (e.g. a user without upload permission), so it never leaves a gap.
+.docs-filter-extra {
+  flex: 1 1 16rem;
+  min-width: 12rem;
+
+  &:empty {
+    display: none;
+  }
+}
+
 .docs-filter-actions {
   flex: 0 0 auto;
   display: flex;
@@ -329,7 +340,8 @@
 }
 
 @media (max-width: 575px) {
-  .docs-filter-field--search {
+  .docs-filter-field--search,
+  .docs-filter-extra {
     flex: 1 1 100%;
     min-width: 0;
   }

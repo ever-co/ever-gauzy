@@ -3,6 +3,12 @@
 	     search scope, facets and dates live in the panel below, collapsed by default,
 	     so the list starts right under the toolbar. -->
 	<div class="docs-filter-row docs-filter-row--primary">
+		<!-- Host-provided control on the same row (the browse page puts the upload
+		     drop strip here, first on the row). Collapses when nothing is projected. -->
+		<div class="docs-filter-extra">
+			<ng-content select="[docsFilterBarExtra]"></ng-content>
+		</div>
+
 		<div class="docs-filter-field docs-filter-field--search">
 			<label class="docs-filter-label docs-filter-label--hidden" for="docs-filter-search">{{
 				'DOCS.FILTERS.SEARCH_LABEL' | translate
