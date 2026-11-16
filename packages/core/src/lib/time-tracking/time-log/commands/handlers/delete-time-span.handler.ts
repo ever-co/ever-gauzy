@@ -404,14 +404,22 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 			select: STORED_RATE_SELECT
 		});
 
+		// The same kind of work too: the tags the log is filed under (ever-co/ever-gauzy#12029), which its read leaves out
+		const tagged = await this.typeOrmTimeLogRepository.findOne({
+			where: { id: log.id },
+			relations: { tags: true },
+			select: { id: true, tags: { id: true } }
+		});
+
 		return await this.typeOrmTimeLogRepository.save(
 			new TimeLog({
-				...omit(log, ['id', 'createdAt', 'updatedAt', 'timeSlots', 'duration', 'isEdited']),
+				...omit(log, ['id', 'createdAt', 'updatedAt', 'timeSlots', 'duration', 'isEdited', 'tags']),
 				...pick(storedRates ?? {}, STORED_RATE_FIELDS),
 				startedAt: end,
 				stoppedAt,
 				splitFromTimeLogId: log.id,
-				timeSlots
+				timeSlots,
+				tags: tagged?.tags ?? []
 			})
 		);
 	}
