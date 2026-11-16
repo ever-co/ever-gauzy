@@ -19,6 +19,12 @@ describe('time log tags', () => {
 		it('reads one tag sent alone as a list of one, as a query string sends it', () => {
 			expect(sentTagIds('meeting')).toEqual(['meeting']);
 		});
+
+		it('answers a tag once when it is sent both in capitals and in lowercase, as the database finds them', () => {
+			expect(
+				sentTagIds(['A0EEBC99-9C0B-4EF8-BB6D-6BB9BD380A11', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'])
+			).toEqual(['A0EEBC99-9C0B-4EF8-BB6D-6BB9BD380A11']);
+		});
 	});
 
 	describe('timeLogTagsCondition', () => {
@@ -72,6 +78,26 @@ describe('time log tags', () => {
 					tenantId: TENANT,
 					organizationId: ORGANIZATION
 				})
+			).resolves.toEqual([{ id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', name: 'meeting', color: null }]);
+		});
+
+		it('answers a tag sent in both cases in one write once, so its link is written once', async () => {
+			const find = jest.fn().mockResolvedValue([
+				{
+					id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+					organizationId: ORGANIZATION,
+					name: 'meeting',
+					color: null
+				}
+			]);
+			const manager = { getRepository: () => ({ find }) } as any;
+
+			await expect(
+				timeLogTagsOf(
+					manager,
+					['A0EEBC99-9C0B-4EF8-BB6D-6BB9BD380A11', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'],
+					{ tenantId: TENANT, organizationId: ORGANIZATION }
+				)
 			).resolves.toEqual([{ id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', name: 'meeting', color: null }]);
 		});
 	});

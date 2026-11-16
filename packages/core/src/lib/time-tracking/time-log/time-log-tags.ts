@@ -30,7 +30,8 @@ export interface ITimeLogTagCondition {
 }
 
 /**
- * The tags a write sends, each once: `undefined` when it sends none, so the log keeps the tags it has.
+ * The tags a write sends, each once, whatever case each copy is in (the first one sent is kept): `undefined` when it
+ * sends none, so the log keeps the tags it has.
  *
  * @param tags The `tags` of a body.
  * @returns The tag ids, or `undefined`.
@@ -41,7 +42,14 @@ export function sentTagIds(tags: unknown): ID[] | undefined {
 	}
 	const sent = Array.isArray(tags) ? tags : [tags];
 	const ids = sent.map((tag) => String(tag ?? '').trim()).filter((id) => id.length > 0);
-	return [...new Set(ids)];
+	const byCanonicalId = new Map<string, ID>();
+	for (const id of ids) {
+		const canonicalId = canonicalIdOf(id);
+		if (!byCanonicalId.has(canonicalId)) {
+			byCanonicalId.set(canonicalId, id);
+		}
+	}
+	return [...byCanonicalId.values()];
 }
 
 /**
@@ -77,9 +85,11 @@ export async function timeLogTagsOf(manager: EntityManager, tagIds: ID[], scope:
 			tagIds: refused
 		});
 	}
+	// Each tag once, however many forms of its id were sent: the link table takes one row per tag and log
 	const foundById = new Map(found.map((tag) => [canonicalIdOf(tag.id), tag]));
-	return tagIds.map((id) => {
-		const tag = foundById.get(canonicalIdOf(id));
+	const canonicalIds = [...new Set(tagIds.map(canonicalIdOf))];
+	return canonicalIds.map((canonicalId) => {
+		const tag = foundById.get(canonicalId);
 		return { id: tag.id, name: tag.name, color: tag.color } as ITag;
 	});
 }
