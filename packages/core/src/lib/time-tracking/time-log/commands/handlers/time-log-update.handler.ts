@@ -171,14 +171,14 @@ async function moveUpdatedAtPast(
 }
 
 /**
- * A log's time slot links alone, as a save writes them: the slots it holds become its join rows, and a column the
- * object leaves out is left as stored (TypeORM's save skips an undefined property). Without `timeSlots`, the save
- * writes nothing.
+ * A log's time slot links alone, as a save writes them: the slots given become its join rows, and a column the object
+ * leaves out is left as stored (TypeORM's save skips an undefined property).
  *
- * @param timeLog - The log read back, with the slots it holds now when it takes the slots of its range.
+ * @param id - The log.
+ * @param timeSlots - The slots it holds from now on.
  */
-function slotLinksOf(timeLog: ITimeLog): ITimeLog {
-	return { id: timeLog.id, timeSlots: timeLog.timeSlots } as ITimeLog;
+function slotLinksOf(id: ID, timeSlots: ITimeSlot[]): ITimeLog {
+	return { id, timeSlots } as ITimeLog;
 }
 
 @CommandHandler(TimeLogUpdateCommand)
@@ -334,7 +334,8 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 			}
 			// An entry deleted for good since it was first read stops the edit with a 404: the reads below would find
 			// no row to answer or to give slots to.
-			const writeUpdate = () =>
+			// `slotsOfRange`: the slots of the new range, when the update gives the log those (see `writeWithRangeSlots`)
+			const writeUpdate = (slotsOfRange?: ITimeSlot[]) =>
 				this.writeWithHistory(
 					stored,
 					changes,
@@ -345,6 +346,12 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 							...(timesheet ? { timesheetId: timesheet.id } : {}),
 							...rates
 						});
+						// An edit under a precondition (ever-co/ever-teams#5382) also writes its slot links here, under
+						// the entry's lock: written after the lock is released, they would replace the links of an edit
+						// saved in between with this edit's range
+						if (expectedUpdatedAt && slotsOfRange) {
+							await this.saveUpdatedTimeLog(slotLinksOf(logId, slotsOfRange), repository);
+						}
 						const isFencedOut = stopsRun && result?.affected === 0;
 						if (!isFencedOut) {
 							return result;
@@ -399,11 +406,12 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 				// nothing to save that the targeted update above did not write, and saving the row read back would
 				// write every column a concurrent call changed since (a timer stop's `isRunning` and `stoppedAt`
 				// included) back to what it read.
-				// An edit under a precondition (ever-co/ever-teams#5382) saves its slot links alone, for the same
-				// reason: its columns were written under the entry's lock, and this save runs after that lock is
-				// released, so an edit saved in between would otherwise be written over although both checked theirs.
-				if (!manualTimeSlot) {
-					await this.saveUpdatedTimeLog(expectedUpdatedAt ? slotLinksOf(timeLog) : timeLog);
+				// An edit under a precondition (ever-co/ever-teams#5382) saves nothing here, for the same reason: its
+				// columns and its slot links were written under the entry's lock (`writeUpdate`), and this save runs
+				// after that lock is released, so an edit saved in between would otherwise be written over although
+				// both checked theirs.
+				if (!manualTimeSlot && !expectedUpdatedAt) {
+					await this.saveUpdatedTimeLog(timeLog);
 				}
 			}
 		}
@@ -816,7 +824,7 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 	 * @param employeeId - The log's employee.
 	 * @param organizationId - The log's organization.
 	 * @param tenantId - The log's tenant.
-	 * @param write - The write of the new range.
+	 * @param write - The write of the new range, given the slots of that range.
 	 * @returns Every slot of the employee at the range's starts, which become the log's slots.
 	 * @throws The error of the insert, of the link or of the write.
 	 */
@@ -826,7 +834,7 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 		employeeId: ID,
 		organizationId: ID,
 		tenantId: ID,
-		write: () => Promise<unknown>
+		write: (rangeSlots: ITimeSlot[]) => Promise<unknown>
 	): Promise<ITimeSlot[]> {
 		const starts = updateTimeSlots.map((slot) => moment(slot.startedAt).startOf('minute').toDate());
 		// Taken as plain values before any write: under MikroORM the slots read are the request's own instances, which
@@ -844,7 +852,7 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 				tenantId
 			);
 			await this.linkToRangeSlots(timeLog, rangeSlots, { tenantId, organizationId, employeeId, starts });
-			await write();
+			await write(rangeSlots);
 			return rangeSlots;
 		} catch (error) {
 			await this.giveRangeSlotsBack(timeLog, before, { tenantId, organizationId, employeeId, starts });

@@ -111,7 +111,7 @@ describe('Time entry edits under a precondition, on TypeORM and on MikroORM (#53
 	};
 
 	/** The edit's handler on the ORM named, with what the module graph would hand it, and the slots it gave out. */
-	const editHandler = (ormType: Orm, beforeSave?: () => Promise<void>) => {
+	const editHandler = (ormType: Orm, afterLockedWrite?: () => Promise<void>) => {
 		const timeSlotRepository = dataSource.getRepository(loaded.TimeSlot);
 		const typeOrmTimeSlotRepository = new loaded.TypeOrmTimeSlotRepository(timeSlotRepository);
 		const mikroOrmTimeSlotRepository = new loaded.MikroOrmTimeSlotRepository(orm.em.fork(), loaded.TimeSlot);
@@ -155,12 +155,17 @@ describe('Time entry edits under a precondition, on TypeORM and on MikroORM (#53
 			}
 		};
 		const timeLogRepository = new loaded.TypeOrmTimeLogRepository(dataSource.getRepository(loaded.TimeLog));
-		// Another request's write, landing right before the save the handler makes once its locked write is done
-		if (beforeSave) {
-			const save = timeLogRepository.save.bind(timeLogRepository);
-			timeLogRepository.save = async (...args: unknown[]) => {
-				await beforeSave();
-				return save(...args);
+		// Another request's edit, saved once this edit's locked write is done: right before the handler reads the
+		// entry back (its second read of it; the first is the read the edit starts from)
+		if (afterLockedWrite) {
+			const findOneBy = timeLogRepository.findOneBy.bind(timeLogRepository);
+			let reads = 0;
+			timeLogRepository.findOneBy = async (...args: unknown[]) => {
+				reads += 1;
+				if (reads === 2) {
+					await afterLockedWrite();
+				}
+				return findOneBy(...args);
 			};
 		}
 		const handler = new loaded.TimeLogUpdateHandler(
@@ -176,8 +181,8 @@ describe('Time entry edits under a precondition, on TypeORM and on MikroORM (#53
 	};
 
 	/** An edit as `PUT /timesheet/time-log/:id` makes it: the body, with the history of a change made by a person. */
-	const edit = (ormType: Orm, timeLogId: string, body: Row, beforeSave?: () => Promise<void>) =>
-		editHandler(ormType, beforeSave).execute(
+	const edit = (ormType: Orm, timeLogId: string, body: Row, afterLockedWrite?: () => Promise<void>) =>
+		editHandler(ormType, afterLockedWrite).execute(
 			new loaded.TimeLogUpdateCommand(
 				{
 					startedAt: STARTED_AT,
@@ -489,15 +494,24 @@ describe('Time entry edits under a precondition, on TypeORM and on MikroORM (#53
 				await expectChangedMeanwhile(second, timeLogId, version);
 			});
 
-			it('never writes what it read back over an edit saved after its locked write, once its slots are saved', async () => {
+			it('writes nothing after its locked write: an edit saved after it keeps its fields and its slot links', async () => {
 				const timeLogId = await entry({ source: 'BROWSER' });
 				const version = await readVersion(ormType, timeLogId);
-				// The second edit: it read the version the first one wrote, and saved its own under it
+				// The second edit: it read the version the first one wrote, saved its fields under it, and took a slot
+				const secondSlot = randomUUID();
 				const savedMeanwhile = async () => {
 					await dataSource.query(
 						`UPDATE "time_log" SET "description" = ?, "isBillable" = ?, "updatedAt" = ? WHERE "id" = ?`,
 						['second', 1, FUTURE, timeLogId]
 					);
+					await insert('time_slot', {
+						id: secondSlot,
+						...scope,
+						employeeId: EMPLOYEE,
+						startedAt: '2026-10-05 10:00:00.000',
+						duration: 600
+					});
+					await insert('time_slot_time_logs', { timeSlotId: secondSlot, timeLogId });
 				};
 
 				await edit(ormType, timeLogId, { description: 'first', expectedUpdatedAt: version }, savedMeanwhile);
@@ -505,7 +519,13 @@ describe('Time entry edits under a precondition, on TypeORM and on MikroORM (#53
 				const state = await stateOf(timeLogId);
 				expect(state).toMatchObject({ description: 'second', isBillable: true });
 				expect(state.updatedAt.getTime()).toBe(FUTURE_INSTANT.getTime());
-				expect(await slotCountOf(timeLogId)).toBeGreaterThan(0);
+				const [link] = await dataSource.query(
+					`SELECT COUNT(*) AS "count" FROM "time_slot_time_logs" WHERE "timeSlotId" = ? AND "timeLogId" = ?`,
+					[secondSlot, timeLogId]
+				);
+				expect(Number(link.count)).toBe(1);
+				// The first edit's own slots, linked in its locked write
+				expect(await slotCountOf(timeLogId)).toBeGreaterThan(1);
 			});
 
 			it.each(['DESKTOP', 'BROWSER'])(
