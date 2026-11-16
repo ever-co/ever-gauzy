@@ -1,4 +1,4 @@
-import { PROJECT_ID_OF_ROW, withHiddenProjectsWithheld } from './hidden-projects';
+import { PROJECT_ID_OF_ROW, withHiddenProjectsWithheld, withProjectIdKept } from './hidden-projects';
 
 /**
  * CORE-27 (ever-co/ever-gauzy#12031): where an organization keeps its private projects private, every record that
@@ -110,6 +110,19 @@ describe('withHiddenProjectsWithheld', () => {
 			id: CONFIDENTIAL,
 			projectHidden: true
 		});
+	});
+
+	it('keeps the id of a project answered as a few fields out of the answer, for the walk alone', () => {
+		const row = {
+			id: 'log-3',
+			project: withProjectIdKept({ name: 'Client X redesign', imageUrl: null }, CONFIDENTIAL)
+		};
+
+		expect(JSON.stringify(row)).toBe(
+			JSON.stringify({ id: 'log-3', project: { name: 'Client X redesign', imageUrl: null } })
+		);
+		expect(withHiddenProjectsWithheld(row, HIDDEN).project).toEqual({ id: CONFIDENTIAL, projectHidden: true });
+		expect(withProjectIdKept({ name: 'Website' }, null)).toEqual({ name: 'Website' });
 	});
 
 	it('withholds the fields of a row that tell about its hidden project, and keeps the time', () => {

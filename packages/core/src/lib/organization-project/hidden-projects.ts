@@ -7,6 +7,20 @@ import { ID } from '@gauzy/contracts';
  */
 export const PROJECT_ID_OF_ROW = Symbol('projectIdOfRow');
 
+/**
+ * A project answered as a few of its fields, with the id of the project kept beside them for
+ * {@link withHiddenProjectsWithheld}: invisible to the answer, which reads the same as before.
+ *
+ * @param fields - The fields the read answers the project as.
+ * @param projectId - The project, or none for a row without one.
+ */
+export function withProjectIdKept<T extends object>(fields: T, projectId: ID | null | undefined): T {
+	if (projectId) {
+		Object.defineProperty(fields, PROJECT_ID_OF_ROW, { value: projectId, enumerable: false });
+	}
+	return fields;
+}
+
 /** How the rows of one route's answer name their project, beyond the `project` relation every row may carry. */
 export interface HiddenProjectsOptions {
 	/**
