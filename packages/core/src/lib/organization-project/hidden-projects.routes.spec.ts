@@ -5,6 +5,7 @@ import { DailyPlanController } from '../tasks/daily-plan/daily-plan.controller';
 import { TaskController } from '../tasks/task.controller';
 import { ActivityController } from '../time-tracking/activity/activity.controller';
 import { StatisticController } from '../time-tracking/statistic/statistic.controller';
+import { StatisticResolver } from '../time-tracking/statistic/statistic.resolver';
 import { TimeLogController } from '../time-tracking/time-log/time-log.controller';
 import { TimeSlotController } from '../time-tracking/time-slot/time-slot.controller';
 import { TimerController } from '../time-tracking/timer/timer.controller';
@@ -30,6 +31,13 @@ describe('the routes that withhold hidden projects', () => {
 
 	it('reads the statistic of projects as a list of projects, keeping their tracked time', () => {
 		expect(Reflect.getMetadata(HIDDEN_PROJECT_ROWS, StatisticController.prototype.getProjectsStatistics)).toEqual({
+			rootRowsAreProjects: { keep: ['duration', 'durationPercentage'] }
+		});
+	});
+
+	it('withholds hidden projects from the statistics over GraphQL as over REST', () => {
+		expect(Reflect.getMetadata(INTERCEPTORS_METADATA, StatisticResolver)).toContain(HiddenProjectsInterceptor);
+		expect(Reflect.getMetadata(HIDDEN_PROJECT_ROWS, StatisticResolver.prototype.timeTrackingProjects)).toEqual({
 			rootRowsAreProjects: { keep: ['duration', 'durationPercentage'] }
 		});
 	});

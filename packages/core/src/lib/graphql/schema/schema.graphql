@@ -43329,9 +43329,14 @@ type TimeTrackingProjectStatistic {
   id: ID!
 
   """
-  The project's name, as the delivered read reads it beside the identifier.
+  The project's name, as the delivered read reads it beside the identifier. Null for a project the caller may not see, where the organization keeps its private projects private: `projectHidden` is then true.
   """
-  name: String!
+  name: String
+
+  """
+  True for a private project the caller may not see (neither on it nor holding `ACCESS_PRIVATE_PROJECTS`), where the organization keeps its private projects private: the answer then carries its identifier and its tracked time, and no name.
+  """
+  projectHidden: Boolean
 
   """The time tracked against the project over the range. Seconds."""
   duration: Float!
@@ -43376,12 +43381,24 @@ type TimeTrackingTaskStatistic {
 """The name and image of a project, as a manual time log carries them."""
 type TimeTrackingProjectSummary {
   """
-  The project's name, as the delivered read reads it from the project row beside the log.
+  The project's identifier. Answered only for a project the caller may not see, beside `projectHidden`; the delivered read names a project by its name and image alone.
+  """
+  id: ID
+
+  """
+  The project's name, as the delivered read reads it from the project row beside the log. Null for a project the caller may not see.
   """
   name: String
 
-  """The project's image, as that row carries it."""
+  """
+  The project's image, as that row carries it. Null for a project the caller may not see.
+  """
   imageUrl: String
+
+  """
+  True for a private project the caller may not see, where the organization keeps its private projects private: the summary then carries the project's identifier and nothing else of it.
+  """
+  projectHidden: Boolean
 }
 
 """One manual time log of an organization."""
