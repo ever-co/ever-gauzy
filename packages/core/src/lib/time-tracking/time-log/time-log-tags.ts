@@ -1,6 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { EntityManager, In } from 'typeorm';
-import { ID, ITimeLog, ITimeLogFilters, ITimeLogTag } from '@gauzy/contracts';
+import { raw } from '@mikro-orm/core';
+import { ID, ITag, ITimeLog, ITimeLogFilters, ITimeLogTag } from '@gauzy/contracts';
 import { prepareSQLQuery as p } from '../../database/database.helper';
 import { Tag } from '../../tags/tag.entity';
 
@@ -54,11 +55,7 @@ export function sentTagIds(tags: unknown): ID[] | undefined {
  * @returns The tags, as the relation is written.
  * @throws BadRequestException with the code TIME_LOG_TAG_NOT_FOUND.
  */
-export async function timeLogTagsOf(
-	manager: EntityManager,
-	tagIds: ID[],
-	scope: ITimeLogTagScope
-): Promise<Array<Pick<Tag, 'id'>>> {
+export async function timeLogTagsOf(manager: EntityManager, tagIds: ID[], scope: ITimeLogTagScope): Promise<ITag[]> {
 	if (tagIds.length === 0) {
 		return [];
 	}
@@ -79,7 +76,7 @@ export async function timeLogTagsOf(
 			tagIds: refused
 		});
 	}
-	return tagIds.map((id) => ({ id }));
+	return tagIds.map((id) => ({ id }) as ITag);
 }
 
 /** Whether a tag belongs to the organization: its own, or one of the whole tenant. */
@@ -189,4 +186,19 @@ export function timeLogTagsCondition(
 		alternatives.push(`NOT EXISTS (SELECT 1 ${liveTagLinks})`);
 	}
 	return { condition: p(`(${alternatives.join(' OR ')})`), parameters };
+}
+
+/**
+ * {@link timeLogTagsCondition} as a key of a MikroORM read's `where`, on the alias the read gives the time log, or null
+ * when the read narrows by no tag. A raw key is consumed by the statement that reads it: each read gets its own.
+ *
+ * @param filter The tags the read asks for.
+ * @returns The key, whose value is an empty list, or null.
+ */
+export function mikroOrmTimeLogTagsKey(filter: Pick<ITimeLogFilters, 'tagIds' | 'untagged'>): string | null {
+	const probe = timeLogTagsCondition('"time_log"."id"', filter);
+	if (!probe) {
+		return null;
+	}
+	return raw((alias: string) => timeLogTagsCondition(`${alias}."id"`, filter).condition, probe.parameters);
 }

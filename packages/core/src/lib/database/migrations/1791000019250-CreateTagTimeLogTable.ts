@@ -82,7 +82,9 @@ export class CreateTagTimeLogTable1791000019250 implements MigrationInterface {
 		await queryRunner.query(
 			'CREATE INDEX IF NOT EXISTS "IDX_c7f36c5683f65febab3d703727" ON "tag_time_log" ("timeLogId")'
 		);
-		await queryRunner.query('CREATE INDEX IF NOT EXISTS "IDX_a04c5b195f624cc71a37e49404" ON "tag_time_log" ("tagId")');
+		await queryRunner.query(
+			'CREATE INDEX IF NOT EXISTS "IDX_a04c5b195f624cc71a37e49404" ON "tag_time_log" ("tagId")'
+		);
 	}
 
 	/**
@@ -112,7 +114,9 @@ export class CreateTagTimeLogTable1791000019250 implements MigrationInterface {
 		await queryRunner.query(
 			'CREATE INDEX IF NOT EXISTS "IDX_c7f36c5683f65febab3d703727" ON "tag_time_log" ("timeLogId")'
 		);
-		await queryRunner.query('CREATE INDEX IF NOT EXISTS "IDX_a04c5b195f624cc71a37e49404" ON "tag_time_log" ("tagId")');
+		await queryRunner.query(
+			'CREATE INDEX IF NOT EXISTS "IDX_a04c5b195f624cc71a37e49404" ON "tag_time_log" ("tagId")'
+		);
 	}
 
 	/**

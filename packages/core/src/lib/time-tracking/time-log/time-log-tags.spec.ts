@@ -93,9 +93,9 @@ describe('time log tags', () => {
 		it('reads nothing for a write that clears the tags', async () => {
 			const { manager, find } = managerWith([]);
 
-			await expect(timeLogTagsOf(manager, [], { tenantId: TENANT, organizationId: ORGANIZATION })).resolves.toEqual(
-				[]
-			);
+			await expect(
+				timeLogTagsOf(manager, [], { tenantId: TENANT, organizationId: ORGANIZATION })
+			).resolves.toEqual([]);
 			expect(find).not.toHaveBeenCalled();
 		});
 	});

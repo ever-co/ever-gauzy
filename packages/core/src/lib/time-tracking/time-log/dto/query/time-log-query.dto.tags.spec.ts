@@ -22,12 +22,15 @@ describe('tag filters on the time log queries', () => {
 		return { dto, tagErrors };
 	};
 
-	it.each([TimeLogQueryDTO, TimeLogListQueryDTO, TimeLogLimitQueryDTO])('keeps the tags asked for on %p', async (metatype) => {
-		const { dto, tagErrors } = await parsed(metatype, { tagIds: [MEETING, SUPPORT], untagged: 'true' });
+	it.each([TimeLogQueryDTO, TimeLogListQueryDTO, TimeLogLimitQueryDTO])(
+		'keeps the tags asked for on %p',
+		async (metatype) => {
+			const { dto, tagErrors } = await parsed(metatype, { tagIds: [MEETING, SUPPORT], untagged: 'true' });
 
-		expect(tagErrors).toEqual([]);
-		expect(dto).toMatchObject({ tagIds: [MEETING, SUPPORT], untagged: true });
-	});
+			expect(tagErrors).toEqual([]);
+			expect(dto).toMatchObject({ tagIds: [MEETING, SUPPORT], untagged: true });
+		}
+	);
 
 	it('reads one tag sent alone in the query string as a list of one', async () => {
 		const { dto, tagErrors } = await parsed(TimeLogListQueryDTO, { tagIds: MEETING });
