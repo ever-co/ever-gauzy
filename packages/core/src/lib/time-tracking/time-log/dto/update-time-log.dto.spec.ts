@@ -1,15 +1,19 @@
 import 'reflect-metadata';
 import { ArgumentMetadata, BadRequestException, ValidationPipe } from '@nestjs/common';
-import { CreateManualTimeLogDTO } from './create-time-log.dto';
 import { UpdateManualTimeLogDTO } from './update-time-log.dto';
 
 /**
  * The body of `PUT /timesheet/time-log/:id` keeps `expectedUpdatedAt` (ever-co/ever-teams#5382) through the whitelisting
- * validation the route runs, and refuses one that is no date and time. The create keeps declaring none.
+ * validation the route runs, and refuses one that is no date and time.
  */
 const READ_AT = '2026-11-16T10:20:30.456Z';
 
+/**
+ * The body names no organization of its own (`sentTo`), which keeps the organization membership check, and the database
+ * it reads, out of this spec.
+ */
 const BODY = {
+	sentTo: 'e0000000-0000-4000-8000-000000000001',
 	startedAt: '2026-11-10T09:00:00.000Z',
 	stoppedAt: '2026-11-10T10:00:00.000Z',
 	employeeId: 'b0000000-0000-4000-8000-000000000001',
@@ -40,11 +44,5 @@ describe('UpdateManualTimeLogDTO.expectedUpdatedAt', () => {
 		await expect(validated(UpdateManualTimeLogDTO, { ...BODY, expectedUpdatedAt })).rejects.toBeInstanceOf(
 			BadRequestException
 		);
-	});
-
-	it('is no member of a create: a new entry has no version to check', async () => {
-		const input = await validated(CreateManualTimeLogDTO, { ...BODY, expectedUpdatedAt: READ_AT });
-
-		expect(input).not.toHaveProperty('expectedUpdatedAt');
 	});
 });

@@ -132,7 +132,9 @@ describe('TimeLogService: a manual edit under a precondition', () => {
 		const updates: TimeLogUpdateCommand[] = [];
 		const dispatch = store.execute.getMockImplementation();
 		store.execute.mockImplementation((command: unknown) => {
-			if (command instanceof TimeLogUpdateCommand) {
+			// The edit's own write; the cleanup's writes of the entry it overlaps run as they always do
+			const isTheEdit = command instanceof TimeLogUpdateCommand && 'expectedUpdatedAt' in command.input;
+			if (isTheEdit) {
 				updates.push(command);
 				return Promise.resolve(undefined);
 			}
