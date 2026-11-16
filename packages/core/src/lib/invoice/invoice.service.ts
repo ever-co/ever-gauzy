@@ -351,11 +351,11 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 	}
 
 	/**
-	 * Writes a status action that states no precondition (`PUT /invoices/:id/action` without `expectedUpdatedAt`, and
-	 * GraphQL `updateInvoiceAction`), as it always was written, final status kept, and moves the invoice's `updatedAt`
-	 * in the same transaction (ever-co/ever-teams#5382). The ORM's own update date leaves it as it was when nothing
-	 * changed, and keeps it to the second on SQLite and MySQL; a precondition read before the action would then still
-	 * hold. The response is the one the action always answered, with the new `updatedAt`.
+	 * Writes a status action that states no precondition (`PUT /invoices/:id/action` and `PUT /invoices/:id/estimate`
+	 * without `expectedUpdatedAt`, and their GraphQL twins), as it always was written, final status kept, and moves the
+	 * invoice's `updatedAt` in the same transaction (ever-co/ever-teams#5382). The ORM's own update date leaves it as it
+	 * was when nothing changed, and keeps it to the second on SQLite and MySQL; a precondition read before the action
+	 * would then still hold. The response is the one the action always answered, with the new `updatedAt`.
 	 *
 	 * @param change The action, naming the invoice.
 	 * @returns What the write answered, with the invoice's new `updatedAt`.

@@ -462,10 +462,7 @@ export class InvoiceResolver {
 		@Args('expectedUpdatedAt') expectedUpdatedAt?: string | number | null
 	): Promise<Invoice> {
 		return await this.commandBus.execute(
-			new InvoiceUpdateCommand(
-				{ id, isAccepted, ...preconditionOf(expectedUpdatedAt) },
-				{ isAction: true }
-			)
+			new InvoiceUpdateCommand({ id, isAccepted, ...preconditionOf(expectedUpdatedAt) }, { isAction: true })
 		);
 	}
 

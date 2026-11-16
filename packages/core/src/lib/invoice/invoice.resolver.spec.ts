@@ -1079,10 +1079,8 @@ describe('InvoiceResolver — writes under the updatedAt the caller read (ever-c
 		const root = schema.getType('Mutation') as {
 			getFields(): Record<string, { args: readonly { name: string; type: { toString(): string } }[] }>;
 		};
-		return root
-			.getFields()
-			[field]?.args.find((declared) => declared.name === argument)
-			?.type.toString();
+		const declaredArgs = root.getFields()[field]?.args ?? [];
+		return declaredArgs.find((declared) => declared.name === argument)?.type.toString();
 	}
 
 	/** The type one member of one input declares, as the schema prints it. */
@@ -1158,7 +1156,10 @@ describe('InvoiceResolver — writes under the updatedAt the caller read (ever-c
 
 	it.each([
 		['removal', (resolver: InvoiceResolver) => resolver.deleteInvoice(INVOICE, 'yesterday')],
-		['step', (resolver: InvoiceResolver) => resolver.updateInvoiceAction(INVOICE, { expectedUpdatedAt: 'yesterday' })],
+		[
+			'step',
+			(resolver: InvoiceResolver) => resolver.updateInvoiceAction(INVOICE, { expectedUpdatedAt: 'yesterday' })
+		],
 		['answer', (resolver: InvoiceResolver) => resolver.updateInvoiceEstimate(ESTIMATE, true, 'yesterday')]
 	])('refuses a %s whose precondition is no date and time, dispatching nothing', async (_label, write) => {
 		const { resolver, commandBus } = surfaces();
