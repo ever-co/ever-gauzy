@@ -78,7 +78,7 @@
 	gap: 0.375rem;
 	flex: 0 0 auto;
 	padding-inline-end: 0.125rem;
-	font-size: var(--docs-meta-size, 0.6875rem);
+	font-size: 0.75rem;
 	font-weight: 600;
 	white-space: nowrap;
 	color: var(--docs-text, var(--text-basic-color));
@@ -121,14 +121,14 @@
 	height: var(--docs-bulk-height, 2rem);
 	min-height: var(--docs-bulk-height, 2rem);
 	border-radius: var(--docs-radius, 0.375rem);
-	font-size: var(--docs-meta-size, 0.6875rem);
+	font-size: 0.75rem;
 	font-weight: 500;
 	line-height: 1;
 	white-space: nowrap;
 
 	nb-icon {
 		margin: 0;
-		font-size: 0.875rem;
+		font-size: 0.9375rem;
 	}
 }
 
@@ -187,8 +187,11 @@
 		padding-inline: 0.5rem;
 	}
 
-	.docs-bulk-close[nbButton].icon-start.icon-end,
-	.docs-bulk-anchor .docs-bulk-action[nbButton].icon-start.icon-end {
+	// Square, icon-only buttons (close, "more"). 🛑 Targeted by class, not by
+	// `.icon-start.icon-end`: the Tags button also has an icon at both ends (tag +
+	// caret), and that selector squeezed it to 2rem, hiding both of its icons.
+	.docs-bulk-close[nbButton],
+	.docs-bulk-action--icon[nbButton] {
 		padding: 0;
 		width: var(--docs-bulk-height, 2rem);
 	}
