@@ -55,6 +55,9 @@ import { MyTaskDialogComponent } from './../my-task-dialog/my-task-dialog.compon
 import { TeamTaskDialogComponent } from '../team-task-dialog/team-task-dialog.component';
 import { buildTaskViewSections, taskStatusOf } from '../task-view/task-view-sections';
 
+/** The largest page the API serves: its `take` is at most 100. */
+const MAX_PAGE_SIZE = 100;
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-tasks',
@@ -66,8 +69,12 @@ import { buildTaskViewSections, taskStatusOf } from '../task-view/task-view-sect
 export class TaskComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	private _refresh$: Subject<boolean> = new Subject();
 	private _tasks: ITask[] = [];
-	/** Counts the full reads of the list, so that a read in place one of them overtook is dropped. */
-	private _listRead = 0;
+	/** Numbers each read of the list as it starts, so that a read others have overtaken no longer writes the list. */
+	private _readSeq = 0;
+	/** The number taken by the last new list (another organization, project, team or layout). */
+	private _resetAt = 0;
+	/** The number taken by the latest read in place of the card grid. */
+	private _shownReadAt = 0;
 	settingsSmartTable: object;
 	loading: boolean = false;
 	disableButton: boolean = true;
@@ -429,6 +436,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 					this.selectedTeamIds = team?.id ? [team.id] : [];
 					this.viewMode = project?.taskListType || TaskListTypeEnum.GRID;
 				}),
+				tap(() => this._startNewList()),
 				tap(() => this._refresh$.next(true)),
 				tap(() => this.taskSubject$.next(true)),
 				tap(() => this.loadFavoriteTasks()),
@@ -460,6 +468,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 				distinctUntilChange(),
 				tap((componentLayout) => (this.dataLayoutStyle = componentLayout)),
 				tap(() => this.refreshPagination()),
+				tap(() => this._startNewList()),
 				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => (this._tasks = [])),
 				tap(() => this.taskSubject$.next(true)),
@@ -478,11 +487,19 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 
 		this.loading = true;
 
+		const read = ++this._readSeq;
 		const source: ServerDataSource = new ServerDataSource(this.httpClient, {
 			...this._taskSourceConf(),
-			finalize: () => {
-				// A source the page has replaced since (another page, filter or layout) no longer speaks for the list.
-				if (source !== this.smartTableSource) {
+			finalize: (error?: unknown) => {
+				// None of these lets the read write the list: a source the page has replaced since (another page, filter or
+				// layout), a new list (another organization, project, team or layout), or, in the card grid, a read in
+				// place that started after this page read and covers its page.
+				if (source !== this.smartTableSource || read <= this._resetAt || read < this._shownReadAt) {
+					return;
+				}
+				this.loading = false;
+				// A failed read keeps what the list shows: the source still holds its previous answer.
+				if (error) {
 					return;
 				}
 				// The card grid adds each page it reads to the ones shown; the table and the sprint view show one page.
@@ -497,10 +514,14 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 					totalItems: source.count()
 				});
 				this._followReadTasks();
-				this.loading = false;
 			}
 		});
 		this.smartTableSource = source;
+	}
+
+	/** Starts a new list (another organization, project, team or layout): reads still under way no longer write it. */
+	private _startNewList(): void {
+		this._resetAt = ++this._readSeq;
 	}
 
 	/**
@@ -577,7 +598,6 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 		if (!this.organization) {
 			return;
 		}
-		this._listRead++;
 		try {
 			this.setSmartTableSource();
 
@@ -608,35 +628,47 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 		if (!this.organization || !this.smartTableSource) {
 			return;
 		}
-		const cards = this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID;
 
-		// The table reads its page again through its own source: same source, same page, and its `finalize` puts the
-		// rows, the selection and the drawer in place.
-		if (!cards && this.viewMode !== TaskListTypeEnum.SPRINT) {
+		// The table and the sprint view read their page again through their own source: same page, its `finalize` puts
+		// the rows, the selection and the drawer in place, and the pager follows the source's new count.
+		if (this.dataLayoutStyle !== ComponentLayoutStyleEnum.CARDS_GRID) {
 			this.smartTableSource.refresh();
 			return;
 		}
 
-		// The card grid holds every page scrolled through so far, so they are all read again, in one read (a task that
-		// moved up after a delete fills the gap, and the next scroll skips nothing). The sprint view shows one page.
-		const read = this._listRead;
+		// The card grid holds every page scrolled through so far, so they are all read again: a task that moved up after
+		// a delete fills the gap, and the next scroll skips nothing. A page read still under way is covered by this read
+		// and dropped; one that starts after it is kept after the pages read again.
+		const read = ++this._readSeq;
+		this._shownReadAt = read;
 		const { activePage, itemsPerPage } = this.getPagination();
-		const source = new ServerDataSource(this.httpClient, this._taskSourceConf());
-		source.setPaging(cards ? 1 : activePage, cards ? activePage * itemsPerPage : itemsPerPage, false);
+		const covered = activePage * itemsPerPage;
+		// No read asks for more than the API's largest page: whole pages of the list, at most `MAX_PAGE_SIZE` tasks.
+		const size = Math.max(itemsPerPage, Math.floor(MAX_PAGE_SIZE / itemsPerPage) * itemsPerPage);
+		const sources = Array.from({ length: Math.ceil(covered / size) }, (_, index) => {
+			const source = new ServerDataSource(this.httpClient, this._taskSourceConf());
+			source.setPaging(index + 1, size, false);
+			return source;
+		});
 		try {
-			const tasks: ITask[] = await source.getElements();
-			// A page, filter or organization change read the list in the meantime: its answer stands.
-			if (read !== this._listRead) {
+			const pages: ITask[][] = await Promise.all(sources.map((source) => source.getElements()));
+			// A new list, or a newer read in place, has taken over since.
+			if (read <= this._resetAt || read !== this._shownReadAt) {
 				return;
 			}
-			this._tasks = tasks;
+			this._tasks = [...pages.flat().slice(0, covered), ...this._tasks.slice(covered)];
 			this.storeInstance.loadAllTasks(this._tasks);
 			this.setPagination({
 				...this.getPagination(),
-				totalItems: source.count()
+				totalItems: sources[0].count()
 			});
+			// It covers a page read it dropped, which had shown the loading state.
+			this.loading = false;
 			this._followReadTasks();
 		} catch (error) {
+			if (read === this._shownReadAt) {
+				this.loading = false;
+			}
 			this._errorHandlingService.handleError(error);
 		}
 	}
