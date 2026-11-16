@@ -986,25 +986,97 @@ $card-hairline: 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 
   }
 }
 
+// ── Row paint: the Documents table, everywhere ──────────────────────────────
+// Every smart table reads like the one on /pages/documents: rows sit straight on
+// the table surface (no tint of their own), the pointer row takes the neutral
+// hover tint, and a selected row the neutral active tint. These are the same
+// tokens the Documents shell maps its `--docs-hover` / `--docs-active` onto, and
+// the same ones `list-page()` in `gauzy/_gauzy-table-hub` uses, so a page that
+// includes that bundle and one that does not now paint identically.
+//
+// The selected row used to carry a 7px inset strip and rounded first/last
+// corners; the Documents table has neither, so both are gone. `:not(.selected)`
+// on the hover keeps a selected row from being repainted as merely hovered.
 angular2-smart-table tbody tr {
-  background: rgba(126, 126, 143, 0.05);
+  background: transparent;
 
-  &:hover {
-    background: var(--smart-table-bg-active) !important;
+  &:hover:not(.selected) {
+    background: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12)) !important;
   }
 
   &.selected {
-    box-shadow: 12.5px 0px 0px -5px var(--gauzy-card-2) inset !important;
-    background: var(--smart-table-bg-active) !important;
+    background: var(--gauzy-active-tint, rgba(126, 126, 143, 0.2)) !important;
+    box-shadow: none !important;
+  }
 
-    &:first-child {
-      border-top-left-radius: var(--border-radius);
-      border-top-right-radius: var(--border-radius);
-    }
+  > td {
+    vertical-align: middle;
+  }
+}
 
-    &:last-child {
-      border-bottom-left-radius: var(--border-radius);
-      border-bottom-right-radius: var(--border-radius);
+// Header and row rules, as the Documents table draws them: one hairline under
+// the title row (and under the filter row, where a table has one), one hairline
+// between body rows, none under the last row — the surface's own edge closes
+// the table. Headers stay on one line.
+//
+// On the CELLS rather than the rows: these tables are `border-collapse:
+// separate` (see the rule near the top of this file), and a separated table
+// does not paint row borders. With `border-spacing: 0` and only bottom edges
+// drawn, the result is pixel-identical to the Documents table's collapsed rows.
+//
+// `:root` for the same (0,1,x) reason as the density block above: the library's
+// emulated cell rules are `[_nghost-x] table tr td`.
+:root {
+  angular2-smart-table table tr.angular2-smart-titles > th,
+  angular2-smart-table table tr.angular2-smart-filters > th {
+    border: 0;
+    border-bottom: 1px solid var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+    border-radius: 0;
+    vertical-align: middle;
+  }
+
+  angular2-smart-table table tr.angular2-smart-titles > th {
+    white-space: nowrap;
+  }
+
+  angular2-smart-table table tbody tr > td {
+    border: 0;
+    border-bottom: 1px solid var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+    border-radius: 0;
+  }
+
+  angular2-smart-table table tbody tr:last-child > td {
+    border-bottom: 0;
+  }
+
+  // The multi-select column: a narrow, centred column with a small checkbox in
+  // the theme's primary colour, exactly as on the Documents table.
+  angular2-smart-table table tr.angular2-smart-titles > th:not(.angular2-smart-th),
+  angular2-smart-table table td.angular2-smart-action-multiple-select {
+    width: 2.5rem;
+    min-width: 2.5rem;
+    padding-inline: 0.5rem;
+    text-align: center;
+    vertical-align: middle;
+  }
+
+  angular2-smart-table table tr.angular2-smart-titles > th input[type='checkbox'],
+  angular2-smart-table table td.angular2-smart-action-multiple-select input[type='checkbox'] {
+    display: inline-block;
+    width: 0.875rem;
+    height: 0.875rem;
+    margin: 0;
+    vertical-align: middle;
+    accent-color: var(--color-primary-default);
+    cursor: pointer;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+
+    // The reset above is `!important`, so the keyboard ring has to be as well.
+    &:focus-visible {
+      outline: 2px solid var(--color-primary-default) !important;
+      outline-offset: 2px;
     }
   }
 }
@@ -1228,10 +1300,8 @@ nb-card-body {
   // `nb-ltr(padding-right)` / `nb-rtl(padding-left)` — which was only ever
   // visible on the side the scrollbar is on, and left the table's box off-centre
   // in its container: flush with the container's edge on the leading side (there
-  // was no padding there) and inset 8px on the trailing one. Now that the body
-  // draws its own left and right edge (see `table tbody tr` below), that gap put
-  // a second vertical line 8px inside the trailing edge on every page. The table
-  // sits against the scrollbar on both sides instead.
+  // was no padding there) and inset 8px on the trailing one. The table sits
+  // against the scrollbar on both sides instead.
 
   @include respond(dsk) {
     max-height: calc(70vh - 132px);
@@ -1251,118 +1321,12 @@ nb-card-body {
     top: -1px;
   }
 
-  angular2-smart-table table tr th {
-    border-top: 1px solid var(--gauzy-border-table);
-    border-bottom: 1px solid var(--gauzy-border-table);
-    // Vertical padding deliberately NOT set here any more. It used to be
-    // `1em` top and bottom, which — `em` being the cell's own 14px — is where
-    // the 14px header padding (and a ~45px header row) came from. Header
-    // padding now has one source of truth: the `gauzy-table-header-padding-*`
-    // tokens applied in the density block above.
-  }
-
-  table thead th {
-    border-left: none;
-    border-right: none;
-
-    &:first-child {
-      border-left: 1px solid var(--gauzy-border-table);
-      border-radius: var(--border-radius) 0 0 var(--border-radius);
-    }
-
-    &:last-child {
-      border-right: 1px solid var(--gauzy-border-table);
-      border-radius: 0 var(--border-radius) var(--border-radius) 0;
-    }
-  }
-
-  table tbody tr {
-    td {
-      border-left: none;
-      border-right: none;
-      border-top: none;
-      border-bottom: 1px solid var(--gauzy-border-table);
-    }
-
-    // The body is its OWN box, not a continuation of the header's: `tbody:before`
-    // below puts a 4px spacer between the two, and all four corner radii further
-    // down are written for a self-contained rectangle. Only ONE of its four edges
-    // was ever drawn, though — every row got a bottom hairline and nothing else,
-    // the last row had even that taken away, and the header kept its own left and
-    // right edge (`thead th:first-child` / `:last-child` above). So below the
-    // title row the table had no outline at all, and the only vertical edge
-    // anywhere in the body was the one the hover tint paints under the pointer.
-    //
-    // `first-child` / `last-child` rather than a border on every cell: this table
-    // is `border-collapse: separate` with the library's `border-spacing: 0` (see
-    // the `angular2-smart-table table` rule earlier in this file), so an inline
-    // border on every cell would draw each interior divider twice — which is what
-    // the two `none`s above are there to prevent. These two edges are the box's
-    // outside, and no cell is adjacent to them.
-    //
-    // Logical, not `border-left` / `border-right`: under `dir=rtl` the first cell
-    // renders at the table's RIGHT edge, so a physical pair puts both borders on
-    // the wrong side of the box. (The header's pair above is still physical and
-    // still has that bug; it is left alone here rather than half-fixed, since its
-    // corner radii are physical too.)
-    td:first-child {
-      border-inline-start: 1px solid var(--gauzy-border-table);
-    }
-
-    td:last-child {
-      border-inline-end: 1px solid var(--gauzy-border-table);
-    }
-
-    // The top edge. Only on the first row: `border-top` is `none` on every cell
-    // above for the same doubling reason as the sides — row N's bottom hairline
-    // and row N+1's top would stack into a 2px rule.
-    //
-    // The bottom edge needs no rule of its own; it is the last row's ordinary
-    // hairline. What it needed was the removal of the `&:last-child td {
-    // border-bottom: none }` that used to open this block, which is where the
-    // open bottom came from — with the sides drawn, taking that hairline away
-    // ends both of them in mid-air and leaves the two bottom corner radii below
-    // with no border to round.
-    &:first-child td {
-      border-top: 1px solid var(--gauzy-border-table);
-    }
-  }
-
-  // The body box's four corners, logical for the same reason its four edges are:
-  // `td:first-child` is the table's RIGHT edge under `dir=rtl`, so a physical
-  // `border-top-left-radius` there rounds the corner opposite the border it is
-  // meant to finish — a rounded corner with no edge on one side of the table and
-  // a square corner with two edges meeting on the other.
-  //
-  // The mapping is the one the edges already use: block-start/-end for the first
-  // and last row, inline-start/-end for the first and last cell. In LTR these
-  // resolve to exactly the four physical corners that were here before.
-  //
-  // (The header's radii above are a `border-radius` SHORTHAND, which has no
-  // logical form, and its edges are still physical — the pair is at least
-  // consistent with itself, and is left alone here rather than half-fixed.)
-  tr:first-child td:first-child {
-    border-start-start-radius: var(--border-radius);
-  }
-
-  tr:first-child td:last-child {
-    border-start-end-radius: var(--border-radius);
-  }
-
-  tr:last-child td:first-child {
-    border-end-start-radius: var(--border-radius);
-  }
-
-  tr:last-child td:last-child {
-    border-end-end-radius: var(--border-radius);
-  }
-
-  tbody:before {
-    content: '@';
-    display: block;
-    line-height: 4px;
-    text-indent: -99999px;
-  }
+  // The header box, the 4px spacer under it and the separately outlined body
+  // that used to be drawn here are gone: every smart table now reads like the
+  // Documents table — one surface, a hairline under the header, a hairline
+  // between rows. Those rules live with the row paint further up this file
+  // (search "Row paint"), unscoped, so the few tables that are not inside a
+  // `.table-scroll-container` get them too.
 }
 
 .grid-scroll-container {
