@@ -1036,6 +1036,41 @@ angular2-smart-table tbody tr {
     font-weight: 500;
   }
 
+  angular2-smart-table:not(.ga-table-settling):not(.ga-table-loading)
+    tbody
+    > tr
+    > td[colspan]:not(.angular2-smart-column-expandedDetail) {
+    height: 16rem;
+    padding: 2rem 1rem;
+    text-align: center;
+    vertical-align: middle;
+    font-size: 0.8125rem;
+    font-weight: 400;
+    line-height: 1.25rem;
+    color: var(--gauzy-text-color-2, var(--text-hint-color));
+    cursor: default;
+
+    &::before {
+      content: '';
+      display: block;
+      width: 2rem;
+      height: 2rem;
+      margin: 0 auto 0.75rem;
+      background-color: currentColor;
+      opacity: 0.55;
+      -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 12h-6l-2 3h-4l-2-3H2'/%3E%3Cpath d='M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z'/%3E%3C/svg%3E")
+        center / contain no-repeat;
+      mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 12h-6l-2 3h-4l-2-3H2'/%3E%3Cpath d='M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z'/%3E%3C/svg%3E")
+        center / contain no-repeat;
+    }
+  }
+
+  angular2-smart-table:not(.ga-table-settling):not(.ga-table-loading)
+    tbody
+    > tr:has(> td[colspan]:not(.angular2-smart-column-expandedDetail)):hover {
+    background: transparent !important;
+  }
+
   angular2-smart-table table tr.angular2-smart-titles > th:not(.angular2-smart-th),
   angular2-smart-table table td.angular2-smart-action-multiple-select {
     width: 2.5rem;
