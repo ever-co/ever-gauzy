@@ -288,15 +288,18 @@ describe('TaskComponent', () => {
 			expect(loadingSeen).toContain(true);
 		});
 
-		/** The answer of the next list read waits until the test sends it. */
+		/** The answer of the next list read waits until the test sends it, or fails it with `.fail()`. */
 		const holdNextRead = () => {
 			const late = new Subject<HttpResponse<unknown>>();
 			http.get.mockImplementationOnce(() => late.asObservable());
-			return (items: ITask[], total = server.length) => {
+			const answer = (items: ITask[], total = server.length) => {
 				late.next(new HttpResponse({ body: { items: items.map((task) => ({ ...task })), total } }));
 				late.complete();
 			};
+			return Object.assign(answer, { fail: () => late.error(new Error('API unreachable')) });
 		};
+		/** The page's read of `page` and the answer of size `PAGE_SIZE` it gets from the API. */
+		const pageOf = (page: number) => server.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 		const ids = () => shown().map(({ id }) => id);
 
 		it('keeps the next page after the pages read again when the read in place answers after it', async () => {
@@ -375,6 +378,112 @@ describe('TaskComponent', () => {
 			await settle();
 
 			expect(ids()).toEqual(['task-901']);
+		});
+
+		it('does not put rows back over a column filter applied while a read in place is under way', async () => {
+			await open('dashboard');
+			showTask(3);
+
+			const answer = holdNextRead();
+			dialogResult = dialogValues({ title: 'Task 3' });
+			await component.editTaskDialog();
+
+			internals().setFilter({ field: 'title', search: 'Task 1' });
+			answer(server.slice(0, PAGE_SIZE).map((task) => ({ ...task, title: 'Unfiltered' }) as ITask));
+			await settle();
+
+			expect(shown().some(({ title }) => title === 'Unfiltered')).toBe(false);
+		});
+
+		it('leaves the loading state on while a page read that started after the read in place is under way', async () => {
+			await open('dashboard');
+			showTask(3);
+
+			const answerReadAgain = holdNextRead();
+			dialogResult = dialogValues({ title: 'Task 3' });
+			await component.editTaskDialog();
+
+			const answerPage = holdNextRead();
+			component.onScroll();
+			await settle();
+			expect(component.loading).toBe(true);
+
+			answerReadAgain(pageOf(1));
+			await settle(50);
+			// The second page is still loading.
+			expect(component.loading).toBe(true);
+
+			answerPage(pageOf(2));
+			await settle(50);
+			expect(component.loading).toBe(false);
+			expect(ids()).toEqual(server.slice(0, 2 * PAGE_SIZE).map(({ id }) => id));
+		});
+
+		it("does not turn off another organization's loading state when an older read in place fails", async () => {
+			await open('dashboard');
+			showTask(3);
+
+			const failReadAgain = holdNextRead();
+			dialogResult = dialogValues({ title: 'Task 3' });
+			await component.editTaskDialog();
+
+			const answerOther = holdNextRead();
+			organization$.next(OTHER_ORGANIZATION);
+			await settle();
+			expect(component.loading).toBe(true);
+
+			failReadAgain.fail();
+			await settle(50);
+			expect(component.loading).toBe(true);
+
+			answerOther([{ ...taskNumbered(901), organizationId: OTHER_ORGANIZATION.id } as ITask], 1);
+			await settle(50);
+			expect(component.loading).toBe(false);
+			expect(ids()).toEqual(['task-901']);
+		});
+
+		it('puts back a page that answered while a read in place covered it, when that read fails', async () => {
+			await open('dashboard');
+
+			const answerPage = holdNextRead();
+			component.onScroll();
+			await settle();
+			showTask(3);
+
+			const failReadAgain = holdNextRead();
+			dialogResult = dialogValues({ title: 'Task 3' });
+			await component.editTaskDialog();
+
+			answerPage(pageOf(2));
+			await settle(50);
+			// Covered by the read in place, it waits.
+			expect(ids()).toEqual(pageOf(1).map(({ id }) => id));
+
+			failReadAgain.fail();
+			await settle(50);
+			expect(ids()).toEqual(server.slice(0, 2 * PAGE_SIZE).map(({ id }) => id));
+			expect(component.loading).toBe(false);
+		});
+
+		it('lets a page still loading write the list when the read in place covering it fails', async () => {
+			await open('dashboard');
+
+			const answerPage = holdNextRead();
+			component.onScroll();
+			await settle();
+			showTask(3);
+
+			const failReadAgain = holdNextRead();
+			dialogResult = dialogValues({ title: 'Task 3' });
+			await component.editTaskDialog();
+
+			failReadAgain.fail();
+			await settle(50);
+			answerPage(pageOf(2));
+			await settle(50);
+
+			expect(ids()).toEqual(server.slice(0, 2 * PAGE_SIZE).map(({ id }) => id));
+			expect(component.loading).toBe(false);
 		});
 
 		it('reads a long list again in reads of at most 100 tasks, the API\'s largest page', async () => {
