@@ -295,6 +295,13 @@ export interface ITimeLogFilters extends IBasePerTenantAndOrganizationEntityMode
 	projectIds?: ID[];
 	teamIds?: ID[];
 	taskIds?: ID[];
+	/** Keeps the time logs that carry at least one of these tags (the log's own tags, not its task's). */
+	tagIds?: ID[];
+	/**
+	 * Keeps the time logs that carry no tag: alone, only those; with `tagIds`, those as well as the logs carrying one of
+	 * the tags.
+	 */
+	untagged?: boolean;
 	logType?: TimeLogType[];
 	source?: TimeLogSourceEnum[];
 	activityLevel?: {
@@ -555,7 +562,12 @@ export interface IReportDayTaskRow {
 	 */
 	billRateValue?: number | null;
 	billRateCurrency?: string | null;
+	/** The tags the entry carries, each counted in its own group by a client that groups by tag. */
+	tags?: ITimeLogTag[];
 }
+
+/** A tag as a time log read answers it: what a chip shows. */
+export type ITimeLogTag = Pick<ITag, 'id' | 'name' | 'color'>;
 
 export interface IReportDayGroupByDate {
 	date: string;
