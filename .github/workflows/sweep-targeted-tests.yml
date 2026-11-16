@@ -102,9 +102,12 @@ jobs:
         # app. It goes through yarn, not Nx, so `.env.local` is not loaded here either.
         run: yarn config:dev
 
-      - name: Run the chat plugin suites with the ExportRedacted mock fix (#12025)
+      - name: Run the suites of #12026 (GitHub issue sync skips pull requests)
         env:
           NX_LOAD_DOT_ENV_FILES: 'false'
         run: |
+          status=0
           export NODE_OPTIONS='--experimental-vm-modules --max-old-space-size=24576'
-          node node_modules/jest/bin/jest.js -c packages/plugins/chat/jest.config.ts --runInBand --ci 'packages/plugins/chat/'
+          node node_modules/jest/bin/jest.js -c packages/plugins/integration-github/jest.config.ts --runInBand --ci 'packages/plugins/integration\-github/' || status=$?
+          node node_modules/jest/bin/jest.js -c packages/ui-core/jest.config.ts --runInBand --ci 'packages/ui\-core/core/src/lib/services/github/' || status=$?
+          exit "$status"
