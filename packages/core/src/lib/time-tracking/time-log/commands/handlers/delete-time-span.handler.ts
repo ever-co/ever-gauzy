@@ -124,7 +124,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 
 		// A split asked for at one moment, of any log, manual time without slots included
 		if (split) {
-			return await this.splitAtMoment(log, start, split, forceDelete);
+			return await this.splitAtMoment(log, timeLog, start, split, forceDelete);
 		}
 
 		// The TypeORM conflict lookup lists only logs holding time slots: time saved over a log holding none, which
@@ -503,10 +503,12 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	/**
 	 * Splits a log at the moment the split route names: the log ends there, and the rest becomes its second part,
 	 * through the same split as time saved inside a log (`splitAround`). The route checked the moment against the log it
-	 * read; this runs on the log as it is stored once the cleanups before it settled, and leaves it whole when the moment
-	 * is no longer inside it (another split, an edit or a delete came first).
+	 * read; this runs on the log as it is stored once the splits before it settled, and leaves it whole when its range
+	 * is no longer the one the route checked (another split, an edit or a delete came first): a split at a moment still
+	 * inside it would otherwise cut a part the route never measured, or give the other split's time this one's changes.
 	 *
 	 * @param log - The time log as stored, with its slots.
+	 * @param checked - The time log as the route read it, when it checked the split.
 	 * @param at - The moment to split at.
 	 * @param split - What the second part changes, and the history to record.
 	 * @param forceDelete - Whether to hard delete what goes (default: false).
@@ -515,10 +517,18 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	 */
 	private async splitAtMoment(
 		log: TimeLog,
+		checked: ITimeLog,
 		at: Date,
 		split: TimeLogSplitOptions,
 		forceDelete = false
 	): Promise<boolean> {
+		const keepsStart = moment(log.startedAt).isSame(moment(checked.startedAt));
+		const keepsEnd = moment(log.stoppedAt).isSame(moment(checked.stoppedAt));
+		const isAsChecked = keepsStart && keepsEnd;
+		if (!isAsChecked) {
+			this.debug(() => `Time log ${log.id} changed since the split was checked: left whole`);
+			return false;
+		}
 		const isAfterStart = moment(at).isAfter(moment(log.startedAt));
 		const isBeforeEnd = moment(at).isBefore(moment(log.stoppedAt));
 		const isInsideLog = isAfterStart && isBeforeEnd;

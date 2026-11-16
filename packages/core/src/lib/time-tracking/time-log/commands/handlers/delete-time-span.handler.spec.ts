@@ -1644,4 +1644,19 @@ describe('DeleteTimeSpanHandler splitting a log at one moment (CORE-26)', () => 
 		const cut = store.executed.find((command) => command instanceof TimeLogUpdateCommand) as TimeLogUpdateCommand;
 		expect(cut.history).toBeUndefined();
 	});
+
+	it('leaves the log whole when another split shortened it, at a moment still inside it', async () => {
+		const store = createStore();
+		store.addLog('manual', '09:00', '13:00', { logType: TimeLogType.MANUAL }, false);
+		const asRead = store.read('manual');
+		await store.split('11:00', asRead, { secondPart: {} });
+		const afterFirst = store.timeline();
+
+		// Checked against 09:00 to 13:00 too: run on 09:00 to 11:00, it would give the 10:00 to 11:00 the first split
+		// left the changes of this one, and leave the 11:00 to 13:00 with the others
+		const queued = await store.split('10:00', asRead, { secondPart: { taskId: 'checkout-bug' } });
+
+		expect(queued).toBe(false);
+		expect(store.timeline()).toEqual(afterFirst);
+	});
 });
