@@ -1,4 +1,16 @@
-import { Controller, UseGuards, HttpCode, HttpStatus, Post, Put, Body, Get, Query } from '@nestjs/common';
+import {
+	Controller,
+	UseGuards,
+	HttpCode,
+	HttpStatus,
+	Post,
+	Put,
+	Body,
+	Get,
+	Query,
+	UseInterceptors
+} from '@nestjs/common';
+import { HiddenProjectsInterceptor } from '../../organization-project/hidden-projects.interceptor';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ITimeLog, ITimerStatus, PermissionsEnum } from '@gauzy/contracts';
@@ -20,6 +32,7 @@ import { StartTimerCommand, StopTimerCommand } from './commands';
 @ApiTags('Timer Tracker')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.TIME_TRACKER)
+@UseInterceptors(HiddenProjectsInterceptor)
 @Controller('/timesheet/timer')
 export class TimerController {
 	constructor(

@@ -11,8 +11,10 @@ import {
 	Post,
 	Delete,
 	NotFoundException,
+	UseInterceptors,
 	UsePipes
 } from '@nestjs/common';
+import { HiddenProjectsInterceptor } from '../organization-project/hidden-projects.interceptor';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { DeleteResult } from 'typeorm';
@@ -70,6 +72,7 @@ import { isBuiltInView } from './built-in-views';
 @ApiTags('Tasks')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ALL_ORG_EDIT)
+@UseInterceptors(HiddenProjectsInterceptor)
 @Controller('/tasks')
 export class TaskController extends CrudController<Task> {
 	constructor(
