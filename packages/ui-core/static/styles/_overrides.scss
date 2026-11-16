@@ -1341,12 +1341,6 @@ nb-card-body {
     height: 100%;
     top: -1px;
   }
-
-  angular2-smart-table table tr.angular2-smart-titles > th:first-child,
-  angular2-smart-table table tr.angular2-smart-filters > th:first-child,
-  angular2-smart-table table tbody tr > td:first-child {
-    border-inline-start: 1px solid var(--gauzy-border-table);
-  }
 }
 
 .grid-scroll-container {
