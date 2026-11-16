@@ -66,6 +66,8 @@ import { buildTaskViewSections, taskStatusOf } from '../task-view/task-view-sect
 export class TaskComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	private _refresh$: Subject<boolean> = new Subject();
 	private _tasks: ITask[] = [];
+	/** Counts the full reads of the list, so that a read in place one of them overtook is dropped. */
+	private _listRead = 0;
 	settingsSmartTable: object;
 	loading: boolean = false;
 	disableButton: boolean = true;
@@ -180,6 +182,10 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 		this.settingsSmartTable = {
 			actions: false,
 			selectedRowIndex: -1,
+			// The table rebuilds its rows each time it reads its page, which drops its own highlight: the selected
+			// task keeps it by id, so a task read again in place stays highlighted.
+			rowClassFunction: (row: { getData: () => ITask }) =>
+				this.selectedTask && row.getData()?.id === this.selectedTask.id ? 'selected' : '',
 			pager: {
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
@@ -472,10 +478,39 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 
 		this.loading = true;
 
+		const source: ServerDataSource = new ServerDataSource(this.httpClient, {
+			...this._taskSourceConf(),
+			finalize: () => {
+				// A source the page has replaced since (another page, filter or layout) no longer speaks for the list.
+				if (source !== this.smartTableSource) {
+					return;
+				}
+				// The card grid adds each page it reads to the ones shown; the table and the sprint view show one page.
+				if (this.dataLayoutStyle === this.componentLayoutStyleEnum.CARDS_GRID) {
+					this._tasks.push(...source.getData());
+				} else {
+					this._tasks = source.getData();
+				}
+				this.storeInstance.loadAllTasks(this._tasks);
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: source.count()
+				});
+				this._followReadTasks();
+				this.loading = false;
+			}
+		});
+		this.smartTableSource = source;
+	}
+
+	/**
+	 * How the list reads its tasks: the page's endpoint, the relations it shows and the active filters.
+	 */
+	private _taskSourceConf() {
 		const { tenantId } = this._store.user;
 		const { id: organizationId } = this.organization;
 
-		this.smartTableSource = new ServerDataSource(this.httpClient, {
+		return {
 			...(this.viewComponentName === ComponentEnum.ALL_TASKS
 				? { endPoint: `${API_PREFIX}/tasks/pagination` }
 				: {}),
@@ -534,25 +569,15 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 					assignTo: this._teamTaskStore._getTeamNames(task),
 					employeesMergedTeams: [task.members, task.teams]
 				});
-			},
-			finalize: () => {
-				this.dataLayoutStyle === this.componentLayoutStyleEnum.CARDS_GRID
-					? this._tasks.push(...this.smartTableSource.getData())
-					: (this._tasks = this.smartTableSource.getData());
-				this.storeInstance.loadAllTasks(this._tasks);
-				this.setPagination({
-					...this.getPagination(),
-					totalItems: this.smartTableSource.count()
-				});
-				this.loading = false;
 			}
-		});
+		};
 	}
 
 	async getTasks() {
 		if (!this.organization) {
 			return;
 		}
+		this._listRead++;
 		try {
 			this.setSmartTableSource();
 
@@ -570,6 +595,68 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 			}
 		} catch (error) {
 			this._errorHandlingService.handleError(error);
+		}
+	}
+
+	/**
+	 * Reads the tasks on screen again after one of them was added, saved, duplicated or deleted, without the loading
+	 * state that covers the whole card. The table keeps its page, the card grid keeps the pages already scrolled
+	 * through, and the selection and the open drawer stay on their task with its new values. A first read, a page
+	 * change and a filter change still go through `getTasks()`, with the loading state.
+	 */
+	private async _reloadShownTasks(): Promise<void> {
+		if (!this.organization || !this.smartTableSource) {
+			return;
+		}
+		const cards = this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID;
+
+		// The table reads its page again through its own source: same source, same page, and its `finalize` puts the
+		// rows, the selection and the drawer in place.
+		if (!cards && this.viewMode !== TaskListTypeEnum.SPRINT) {
+			this.smartTableSource.refresh();
+			return;
+		}
+
+		// The card grid holds every page scrolled through so far, so they are all read again, in one read (a task that
+		// moved up after a delete fills the gap, and the next scroll skips nothing). The sprint view shows one page.
+		const read = this._listRead;
+		const { activePage, itemsPerPage } = this.getPagination();
+		const source = new ServerDataSource(this.httpClient, this._taskSourceConf());
+		source.setPaging(cards ? 1 : activePage, cards ? activePage * itemsPerPage : itemsPerPage, false);
+		try {
+			const tasks: ITask[] = await source.getElements();
+			// A page, filter or organization change read the list in the meantime: its answer stands.
+			if (read !== this._listRead) {
+				return;
+			}
+			this._tasks = tasks;
+			this.storeInstance.loadAllTasks(this._tasks);
+			this.setPagination({
+				...this.getPagination(),
+				totalItems: source.count()
+			});
+			this._followReadTasks();
+		} catch (error) {
+			this._errorHandlingService.handleError(error);
+		}
+	}
+
+	/**
+	 * After a read, the selection and the drawer follow their task to the object just read, so they show its new
+	 * values. A task the list no longer holds (deleted, or no longer matching the filters) lets go of both.
+	 */
+	private _followReadTasks(): void {
+		if (this.selectedTask) {
+			const selected = this._tasks.find(({ id }) => id === this.selectedTask.id);
+			this.selectTask({ isSelected: !!selected, data: selected ?? null });
+		}
+		if (this.viewedTask) {
+			const viewed = this._tasks.find(({ id }) => id === this.viewedTask.id);
+			if (viewed) {
+				this._showInView(viewed);
+			} else {
+				this.closeView();
+			}
 		}
 	}
 
@@ -605,8 +692,8 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 				this.storeInstance
 					.createTask(payload)
 					.pipe(
-						tap(() => this._refresh$.next(true)),
-						tap(() => this.taskSubject$.next(true)),
+						// Only the tasks on screen are read again: the page, the selection and the drawer stay.
+						tap(() => void this._reloadShownTasks()),
 						untilDestroyed(this)
 					)
 					.subscribe();
@@ -621,10 +708,13 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 				data: selectedItem
 			});
 		}
+		// A drawer showing another task than the one edited no longer matches the selection. One showing this task
+		// stays open and takes the saved values.
+		if (this.viewedTask && this.viewedTask.id !== this.selectedTask?.id) {
+			this.closeView();
+		}
 		let dialog;
 		if (this.isTasksPage()) {
-		// Whatever the drawer is showing no longer matches the selection.
-		this.closeView();
 			dialog = this.dialogService.open(AddTaskDialogComponent, {
 				context: {
 					selectedTask: this.selectedTask
@@ -663,8 +753,8 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 				this.storeInstance
 					.editTask({ ...payload, id: this.selectedTask.id })
 					.pipe(
-						tap(() => this._refresh$.next(true)),
-						tap(() => this.taskSubject$.next(true)),
+						// Only the tasks on screen are read again: the page, the selection and the drawer stay.
+						tap(() => void this._reloadShownTasks()),
 						untilDestroyed(this)
 					)
 					.subscribe();
@@ -721,8 +811,8 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 				this.storeInstance
 					.createTask(payload)
 					.pipe(
-						tap(() => this._refresh$.next(true)),
-						tap(() => this.taskSubject$.next(true)),
+						// Only the tasks on screen are read again: the page, the selection and the drawer stay.
+						tap(() => void this._reloadShownTasks()),
 						untilDestroyed(this)
 					)
 					.subscribe();
@@ -742,8 +832,8 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 			this.storeInstance
 				.delete(this.selectedTask.id)
 				.pipe(
-					tap(() => this._refresh$.next(true)),
-					tap(() => this.taskSubject$.next(true)),
+					// Only the tasks on screen are read again: the page, the selection and the drawer stay.
+					tap(() => void this._reloadShownTasks()),
 					untilDestroyed(this)
 				)
 				.subscribe();
@@ -781,6 +871,11 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 			return;
 		}
 
+		this._showInView(task);
+	}
+
+	/** Shows the task in the drawer: its header status and its sections. */
+	private _showInView(task: ITask): void {
 		this.viewStatus = taskStatusOf(task);
 		this.viewSections = buildTaskViewSections(task, {
 			translate: (key) => this.getTranslation(key),
