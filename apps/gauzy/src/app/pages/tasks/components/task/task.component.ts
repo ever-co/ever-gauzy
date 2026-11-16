@@ -75,6 +75,13 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 	private _resetAt = 0;
 	/** The number taken by the latest read in place of the card grid. */
 	private _shownReadAt = 0;
+	/** The read that turned the loading state on: it turns it off, or a read in place that covers it does. */
+	private _loadingRead = 0;
+	/**
+	 * Card grid pages that answered while a read in place covered them: kept until that read succeeds, and put back
+	 * in their place if it fails.
+	 */
+	private _coveredPages: { read: number; page: number; size: number; rows: ITask[]; count: number }[] = [];
 	settingsSmartTable: object;
 	loading: boolean = false;
 	disableButton: boolean = true;
@@ -488,16 +495,27 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 		this.loading = true;
 
 		const read = ++this._readSeq;
+		this._loadingRead = read;
 		const source: ServerDataSource = new ServerDataSource(this.httpClient, {
 			...this._taskSourceConf(),
 			finalize: (error?: unknown) => {
-				// None of these lets the read write the list: a source the page has replaced since (another page, filter or
-				// layout), a new list (another organization, project, team or layout), or, in the card grid, a read in
-				// place that started after this page read and covers its page.
-				if (source !== this.smartTableSource || read <= this._resetAt || read < this._shownReadAt) {
+				// Neither lets the read write the list: a source the page has replaced since (another page, filter or
+				// layout), or a new list (another organization, project, team, layout or filter).
+				if (source !== this.smartTableSource || read <= this._resetAt) {
 					return;
 				}
-				this.loading = false;
+				// In the card grid, a read in place that started after this page read covers its page: the page waits,
+				// in case that read fails.
+				if (read < this._shownReadAt) {
+					if (!error) {
+						const { page, perPage } = source.getPaging();
+						this._coveredPages.push({ read, page, size: perPage, rows: source.getData(), count: source.count() });
+					}
+					return;
+				}
+				if (read === this._loadingRead) {
+					this.loading = false;
+				}
 				// A failed read keeps what the list shows: the source still holds its previous answer.
 				if (error) {
 					return;
@@ -519,9 +537,19 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 		this.smartTableSource = source;
 	}
 
-	/** Starts a new list (another organization, project, team or layout): reads still under way no longer write it. */
+	/**
+	 * Starts a new list (another organization, employee, project, team, layout or filter): reads still under way no
+	 * longer write it.
+	 */
 	private _startNewList(): void {
 		this._resetAt = ++this._readSeq;
+		this._coveredPages = [];
+	}
+
+	/** A column filter starts a new list: a read in place still under way must not put unfiltered rows back. */
+	protected override setFilter(filter: { field: string; search: unknown }, doEmit = true): void {
+		this._startNewList();
+		super.setFilter(filter, doEmit);
 	}
 
 	/**
@@ -638,8 +666,9 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 
 		// The card grid holds every page scrolled through so far, so they are all read again: a task that moved up after
 		// a delete fills the gap, and the next scroll skips nothing. A page read still under way is covered by this read
-		// and dropped; one that starts after it is kept after the pages read again.
+		// (it waits, in case this read fails); one that starts after it is kept after the pages read again.
 		const read = ++this._readSeq;
+		const previous = this._shownReadAt;
 		this._shownReadAt = read;
 		const { activePage, itemsPerPage } = this.getPagination();
 		const covered = activePage * itemsPerPage;
@@ -657,20 +686,49 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 				return;
 			}
 			this._tasks = [...pages.flat().slice(0, covered), ...this._tasks.slice(covered)];
+			this._coveredPages = [];
 			this.storeInstance.loadAllTasks(this._tasks);
 			this.setPagination({
 				...this.getPagination(),
 				totalItems: sources[0].count()
 			});
-			// It covers a page read it dropped, which had shown the loading state.
-			this.loading = false;
+			// A page read it covers had turned the loading state on: this read answers for it.
+			if (this._loadingRead < read) {
+				this.loading = false;
+			}
 			this._followReadTasks();
 		} catch (error) {
-			if (read === this._shownReadAt) {
-				this.loading = false;
+			if (read > this._resetAt && read === this._shownReadAt) {
+				this._putBackCoveredPages(previous);
 			}
 			this._errorHandlingService.handleError(error);
 		}
+	}
+
+	/**
+	 * After a read in place failed, the pages it covered are as they were: a page read still under way writes the list
+	 * when it answers, and one that already answered goes back in its place.
+	 */
+	private _putBackCoveredPages(previous: number): void {
+		this._shownReadAt = previous;
+		// Pages read before an earlier read in place still under way stay with it: that read covers them.
+		const pages = this._coveredPages.filter(({ read }) => read > previous && read > this._resetAt);
+		this._coveredPages = this._coveredPages.filter((page) => !pages.includes(page));
+		if (!pages.length) {
+			return;
+		}
+		for (const { page, size, rows } of pages.sort((a, b) => a.page - b.page)) {
+			this._tasks.splice((page - 1) * size, 0, ...rows);
+		}
+		this.storeInstance.loadAllTasks(this._tasks);
+		this.setPagination({
+			...this.getPagination(),
+			totalItems: pages[pages.length - 1].count
+		});
+		if (pages.some(({ read }) => read === this._loadingRead)) {
+			this.loading = false;
+		}
+		this._followReadTasks();
 	}
 
 	/**
