@@ -123,7 +123,14 @@ describe('InvoiceScheduleRunService on SQLite', () => {
 		date: string,
 		time: string,
 		hours: number,
-		options: { projectId?: ID; taskId?: ID | null; isBillable?: boolean; running?: boolean } = {}
+		options: {
+			projectId?: ID;
+			taskId?: ID | null;
+			isBillable?: boolean;
+			running?: boolean;
+			/** The rates the log keeps, as the API records them with it. */
+			kept?: Partial<Pick<TimeLog, 'billRateValue' | 'billRateCurrency' | 'projectBillRateValue'>>;
+		} = {}
 	): Promise<ID> {
 		const startedAt = new Date(`${date}T${time}:00+01:00`);
 		const stoppedAt = options.running ? null : new Date(startedAt.getTime() + hours * HOUR * 1000);
@@ -140,7 +147,16 @@ describe('InvoiceScheduleRunService on SQLite', () => {
 			isBillable: options.isBillable ?? true,
 			logType: TimeLogType.TRACKED,
 			projectId: options.projectId ?? WEBSITE,
-			taskId: options.taskId ?? null
+			taskId: options.taskId ?? null,
+			...(options.kept
+				? {
+						ratesStored: true,
+						billRateCurrency: 'USD',
+						projectBillRateCurrency: 'USD',
+						projectMemberBillRateCurrency: 'USD',
+						...options.kept
+				  }
+				: {})
 		});
 		return id;
 	}
@@ -439,6 +455,70 @@ describe('InvoiceScheduleRunService on SQLite', () => {
 				invoiceId: invoice.id,
 				leftOutSeconds: null
 			});
+		},
+		TIMEOUT
+	);
+
+	it(
+		'bills each log at the client rate it keeps: a rate raised "from now on" leaves earlier time at its price',
+		async () => {
+			await schedule({ grouping: InvoiceScheduleGroupingEnum.MEMBER });
+			// The Website's client rate was 90 until it went to 100 "from now on" on 28 October
+			const before = await track(MARIE, '2026-10-05', '09:00', 3, {
+				kept: { projectBillRateValue: 90, billRateValue: 80 }
+			});
+			const after = await track(MARIE, '2026-10-28', '09:00', 2, {
+				kept: { projectBillRateValue: 100, billRateValue: 80 }
+			});
+			// Recorded around the API, it keeps no rate: today's client rate prices it, as before
+			const keepsNone = await track(MARIE, '2026-10-29', '09:00', 1);
+
+			await service.sweep(new Date('2026-11-01T06:00:00Z'));
+
+			const [invoice] = await madeInvoices();
+			const billedBy = await dataSource
+				.getRepository(TimeLog)
+				.find({ select: { id: true, invoiceItemId: true } as never });
+			const lines = invoice.invoiceItems
+				.map(({ id, description, quantity, price, totalValue }) => ({
+					description,
+					quantity: Number(quantity),
+					price: Number(price),
+					totalValue: Number(totalValue),
+					timeLogIds: billedBy
+						.filter((log) => log.invoiceItemId === id)
+						.map((log) => log.id)
+						.sort()
+				}))
+				.sort((first, second) => first.price - second.price);
+			expect(lines).toEqual([
+				{ description: 'Website · Marie Studio', quantity: 3, price: 90, totalValue: 270, timeLogIds: [before] },
+				{
+					description: 'Website · Marie Studio',
+					quantity: 3,
+					price: 100,
+					totalValue: 300,
+					timeLogIds: [after, keepsNone].sort()
+				}
+			]);
+			expect(Number(invoice.totalValue)).toBe(570);
+		},
+		TIMEOUT
+	);
+
+	it(
+		'bills a log that keeps no client rate at the billing rate it keeps, not at the member rate of today',
+		async () => {
+			await schedule();
+			// Marie's own rate is 80 today; her log on App, which has no client rate, kept 70
+			await track(MARIE, '2026-10-05', '09:00', 2, { projectId: APP, kept: { billRateValue: 70 } });
+
+			await service.sweep(new Date('2026-11-01T06:00:00Z'));
+
+			const [invoice] = await madeInvoices();
+			expect(invoice.invoiceItems.map(({ quantity, price }) => [Number(quantity), Number(price)])).toEqual([
+				[2, 70]
+			]);
 		},
 		TIMEOUT
 	);

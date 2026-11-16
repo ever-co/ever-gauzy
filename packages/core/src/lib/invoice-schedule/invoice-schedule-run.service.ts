@@ -35,6 +35,7 @@ import { CURRENT_MEMBERSHIP } from '../organization-project/organization-project
 import { RoleAuthorizationService } from '../role/role-authorization.service';
 import { canViewTrackedData } from '../shared/guards/employee-tracked-data.guard';
 import { defaultBillRateOf } from '../time-tracking/time-log/default-bill-rate';
+import { findStoredRatesOf, storesRates } from '../time-tracking/time-log/time-log-rates';
 import { TimeLogService } from '../time-tracking/time-log/time-log.service';
 import { UserService } from '../user/user.service';
 import { InvoiceScheduleRun } from './invoice-schedule-run.entity';
@@ -47,9 +48,13 @@ import {
 import {
 	billableEntriesOf,
 	durationRoundingRuleOf,
+	ILinePrice,
 	IScheduledInvoiceLine,
+	IScheduledTimeLog,
 	invoiceTimeOf,
+	keptLinePriceOf,
 	linePriceOf,
+	LogPriceOf,
 	oneCurrencyInvoiceOf,
 	totalOfLines
 } from './invoice-schedule-pricing';
@@ -548,15 +553,19 @@ export class InvoiceScheduleRunService {
 			billableOnly: true,
 			notInvoiced: true
 		} as never);
-		const entries = billableEntriesOf(logs, new Set(projectIds), durationRoundingRuleOf(organization));
-		if (entries.length === 0) {
+		const clientProjectIds = new Set(projectIds);
+		const roundingRule = durationRoundingRuleOf(organization);
+		const hasBillableTime = billableEntriesOf(logs, clientProjectIds, roundingRule).length > 0;
+		if (!hasBillableTime) {
 			return {
 				status: InvoiceScheduleRunStatusEnum.NO_TIME,
 				reason: InvoiceScheduleRunReasonEnum.NO_BILLABLE_TIME
 			};
 		}
 
-		const priceOf = await this.pricesOf(entries, projects, organization);
+		const priceOf = await this.pricesOf(logs, projects, organization);
+		const priceOfLog = await this.keptPricesOf(logs, organization, priceOf);
+		const entries = billableEntriesOf(logs, clientProjectIds, roundingRule, priceOfLog);
 		const time = invoiceTimeOf(entries, schedule.grouping, priceOf);
 		const invoice = oneCurrencyInvoiceOf(time.lines);
 		const leftOutSeconds = time.unpricedSeconds + invoice.otherCurrencySeconds;
@@ -589,13 +598,13 @@ export class InvoiceScheduleRunService {
 		return { ...drafted, ...(await this.send(saved, client, author, leftOut)) };
 	}
 
-	/** The price of each member's time on each project of the client. */
+	/** The price today of each member's time on each project of the client. */
 	private async pricesOf(
-		entries: ReturnType<typeof billableEntriesOf>,
+		logs: ReadonlyArray<IScheduledTimeLog>,
 		projects: OrganizationProject[],
 		organization: Organization
-	) {
-		const employeeIds = [...new Set(entries.map(({ employeeId }) => employeeId))];
+	): Promise<(projectId: ID, employeeId: ID) => ILinePrice> {
+		const employeeIds = [...new Set(logs.map(({ employeeId }) => employeeId).filter(Boolean))];
 		const employees = await this.dataSource.getRepository(Employee).find({
 			where: { id: In(employeeIds), tenantId: organization.tenantId },
 			select: { id: true, billRateValue: true, billRateCurrency: true }
@@ -627,6 +636,28 @@ export class InvoiceScheduleRunService {
 				organizationCurrency: organization.currency ?? null,
 				defaultRate
 			});
+		};
+	}
+
+	/**
+	 * The price of each log's time: at the rates it keeps (ever-co/ever-gauzy#11917), so an hour is billed at the price
+	 * it was worked at; a log that keeps none (recorded around the API) at today's, as all time was before.
+	 */
+	private async keptPricesOf(
+		logs: ReadonlyArray<IScheduledTimeLog>,
+		organization: Organization,
+		priceOf: (projectId: ID, employeeId: ID) => ILinePrice
+	): Promise<LogPriceOf> {
+		const logIds = logs.map(({ id }) => id).filter(Boolean);
+		const kept = await findStoredRatesOf(this.dataSource.manager, logIds, organization.tenantId);
+		const organizationCurrency = organization.currency ?? null;
+		const defaultRate = defaultBillRateOf(organization);
+		return (log) => {
+			const rates = kept.get(log.id);
+			if (!storesRates(rates)) {
+				return priceOf(log.projectId, log.employeeId);
+			}
+			return keptLinePriceOf(rates, organizationCurrency, defaultRate);
 		};
 	}
 
