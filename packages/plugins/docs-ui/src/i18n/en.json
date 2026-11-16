@@ -91,6 +91,7 @@
 		"DELETE": "Delete",
 		"EXPAND": "Expand",
 		"COLLAPSE": "Collapse",
+		"FOLDERS": "Folders",
 		"SHOW_FOLDERS": "Show folders",
 		"HIDE_FOLDERS": "Hide folders",
 		"SPACES": "Spaces"
