@@ -240,8 +240,7 @@ function rootFields(operation: 'Query' | 'Mutation'): string[] {
 /** The arguments one root field declares, in the order a client states them. */
 function fieldArgs(operation: 'Query' | 'Mutation', field: string): string[] {
 	const root = schema.getType(operation) as
-		| { getFields(): Record<string, { args: readonly { name: string }[] }> }
-		| undefined;
+		{ getFields(): Record<string, { args: readonly { name: string }[] }> } | undefined;
 
 	return (root?.getFields()?.[field]?.args ?? []).map((argument) => argument.name);
 }
@@ -279,7 +278,9 @@ function declaredRootFields(operation: 'Query' | 'Mutation'): string[] {
 function ownedRootFields(operation: 'Query' | 'Mutation'): string[] {
 	const declared = new Set(declaredRootFields(operation));
 
-	return rootFields(operation).filter((field) => declared.has(field)).sort();
+	return rootFields(operation)
+		.filter((field) => declared.has(field))
+		.sort();
 }
 
 /** The printed body of one object type, so a member it must not carry can be asserted absent. */
@@ -509,7 +510,7 @@ describe('InvoiceResolver — the SDL declares the capabilities the REST routes 
 			'before',
 			'limit',
 			'offset',
-			'withDeleted',
+			'withDeleted'
 		]);
 		expect(fieldArgs('Query', 'invoices')).not.toContain('relations');
 		// The count route binds its query string to the store's own `where`, which is a shape no schema
@@ -665,7 +666,18 @@ describe('InvoiceResolver — the connection contract', () => {
 		// answered only when the caller asks, and asking has to reach the read. An argument that was
 		// declared in the schema and never forwarded would pass every SDL assertion in this file while
 		// quietly refusing the caller the rows the delivered route hands them.
-		await resolver.invoices(undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, true);
+		await resolver.invoices(
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			true
+		);
 
 		expect(invoiceService.findAll).toHaveBeenCalledWith({ withDeleted: true });
 	});
@@ -962,6 +974,8 @@ describe('InvoiceResolver — one concept, two protocols, the same operations', 
 
 		const command = commandBus.execute.mock.calls[0][0];
 		expect(command).toBeInstanceOf(InvoiceUpdateCommand);
+		// A status action, as on the route: it moves the invoice's `updatedAt` (ever-co/ever-teams#5382)
+		expect(command.options).toEqual({ isAction: true });
 		// A step writes the members it names and leaves every other column as it is: nothing here fills
 		// in a member the caller did not state.
 		expect(command.input).toEqual({

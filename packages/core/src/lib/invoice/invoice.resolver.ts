@@ -252,7 +252,10 @@ const INVOICE_DEFAULT_SORT: readonly ConnectionSortKey[] = [
 @FeatureFlag(FEATURE_GRAPHQL)
 @Permissions(PermissionsEnum.INVOICES_EDIT)
 export class InvoiceResolver {
-	constructor(private readonly invoiceService: InvoiceService, private readonly commandBus: CommandBus) {}
+	constructor(
+		private readonly invoiceService: InvoiceService,
+		private readonly commandBus: CommandBus
+	) {}
 
 	/**
 	 * The invoices and estimates of the caller's tenant, newest first.
@@ -455,8 +458,9 @@ export class InvoiceResolver {
 		// The two amount members are stated as the exact decimals the schema carries them as, while the
 		// contracts type the same columns as numbers; the cast states that difference rather than
 		// converting an amount on its way through — which is the one thing this surface never does.
+		// A status action, as on the route: it moves the invoice's `updatedAt` whatever it writes (ever-co/ever-teams#5382)
 		return await this.commandBus.execute(
-			new InvoiceUpdateCommand({ ...input, id } as unknown as IInvoiceUpdateInput)
+			new InvoiceUpdateCommand({ ...input, id } as unknown as IInvoiceUpdateInput, { isAction: true })
 		);
 	}
 
