@@ -676,7 +676,12 @@ export class InvoiceScheduleRunService {
 			if (!storesRates(rates)) {
 				return priceOf(log.projectId, log.employeeId);
 			}
-			return keptLinePriceOf(rates, organizationCurrency, defaultRate);
+			const keptPrice = keptLinePriceOf(rates, organizationCurrency, defaultRate);
+			// Rates kept empty (none was set when the time was worked) price nothing: today's rates price the time
+			if (keptPrice.rate === null) {
+				return priceOf(log.projectId, log.employeeId);
+			}
+			return keptPrice;
 		};
 	}
 

@@ -532,6 +532,23 @@ describe('InvoiceScheduleRunService on SQLite', () => {
 	);
 
 	it(
+		"bills at today's rates a log whose kept rates price nothing: none was set when it was worked",
+		async () => {
+			await schedule();
+			// Marie's own rate is 80 today; her log on App, which has no client rate, kept no billing rate either
+			await track(MARIE, '2026-10-05', '09:00', 2, { projectId: APP, kept: { billRateValue: null } });
+
+			await service.sweep(new Date('2026-11-01T06:00:00Z'));
+
+			const [invoice] = await madeInvoices();
+			expect(invoice.invoiceItems.map(({ quantity, price }) => [Number(quantity), Number(price)])).toEqual([
+				[2, 80]
+			]);
+		},
+		TIMEOUT
+	);
+
+	it(
 		'bills a log that keeps no client rate at the billing rate it keeps, not at the member rate of today',
 		async () => {
 			await schedule();
