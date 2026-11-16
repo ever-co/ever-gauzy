@@ -405,10 +405,12 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 		});
 
 		// The same kind of work too: the tags the log is filed under (ever-co/ever-gauzy#12029), which its read leaves out
+		// With the soft deleted ones: the part keeps every link the log has, so a tag restored later is on both parts
 		const tagged = await this.typeOrmTimeLogRepository.findOne({
 			where: { id: log.id },
 			relations: { tags: true },
-			select: { id: true, tags: { id: true } }
+			select: { id: true, tags: { id: true } },
+			withDeleted: true
 		});
 
 		return await this.typeOrmTimeLogRepository.save(
