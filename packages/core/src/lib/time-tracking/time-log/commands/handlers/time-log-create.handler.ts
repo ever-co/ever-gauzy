@@ -13,7 +13,6 @@ import { Employee } from '../../../../core/entities/internal';
 import { isUniqueViolation } from '../../../../core/errors/unique-violation';
 import { TRACKER_SOURCES } from '../../tracker-source';
 import { assertTimeLogReferencesOfTenant } from '../../time-log-references';
-import { loadTimeLogTags } from '../../time-log-tags';
 import { TimeLogCreateCommand, TimeLogCreateOptions } from '../time-log-create.command';
 import { FindTimeLogRatesCommand } from '../find-time-log-rates.command';
 import { createdChange } from '../../time-log-history';
@@ -178,7 +177,10 @@ export class TimeLogCreateHandler implements ICommandHandler<TimeLogCreateComman
 
 		// The newly created time log, with the tags it is filed under (checked by the caller before anything is written)
 		const created = await this._timeLogService.findOneByIdString(timeLog.id);
-		await loadTimeLogTags(this.typeOrmTimeLogRepository.manager, [created]);
+		const isFiledUnderTags = Array.isArray(timeLog.tags) && timeLog.tags.length > 0;
+		if (created && isFiledUnderTags) {
+			created.tags = timeLog.tags;
+		}
 		return created;
 	}
 

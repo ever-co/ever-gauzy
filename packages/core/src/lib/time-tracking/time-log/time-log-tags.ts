@@ -60,7 +60,7 @@ export async function timeLogTagsOf(manager: EntityManager, tagIds: ID[], scope:
 		return [];
 	}
 	const found = await manager.getRepository(Tag).find({
-		select: { id: true, organizationId: true },
+		select: { id: true, organizationId: true, name: true, color: true },
 		where: { id: In(tagIds), tenantId: scope.tenantId }
 	});
 	const usable = new Set(
@@ -76,7 +76,24 @@ export async function timeLogTagsOf(manager: EntityManager, tagIds: ID[], scope:
 			tagIds: refused
 		});
 	}
-	return tagIds.map((id) => ({ id }) as ITag);
+	const foundById = new Map(found.map((tag) => [String(tag.id), tag]));
+	return tagIds.map((id) => {
+		const tag = foundById.get(String(id));
+		return { id: tag.id, name: tag.name, color: tag.color } as ITag;
+	});
+}
+
+/**
+ * The tags a write links, or nothing when it links none: a body without tags is written as before.
+ *
+ * @param tags The tags checked by `timeLogTagsOf`.
+ * @returns The tags, or undefined for none.
+ */
+export function tagsToLink(tags: ITag[]): ITag[] | undefined {
+	if (tags.length === 0) {
+		return undefined;
+	}
+	return tags;
 }
 
 /** Whether a tag belongs to the organization: its own, or one of the whole tenant. */

@@ -8,6 +8,12 @@ import { asTenantUser, createTenantFixture } from '../../core/testing/tenant-iso
 import { TimeLogUpdateCommand } from '../time-log/commands';
 import { TimerService } from './timer.service';
 
+// These logs carry no tags: the tags the timer reads and answers are proven in timer.service.tags.spec.ts
+jest.mock('../time-log/time-log-tags', () => ({
+	...jest.requireActual('../time-log/time-log-tags'),
+	loadTimeLogTags: jest.fn(async () => undefined)
+}));
+
 /**
  * A stop from a view still showing an earlier run (a start on another device or tab has replaced it since) carries
  * that run's dates, and Gauzy stopped the employee's running log whatever the stop said: the newer run was closed, at

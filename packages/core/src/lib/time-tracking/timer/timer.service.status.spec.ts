@@ -10,6 +10,12 @@ import { asTenantUser, createTenantFixture } from '../../core/testing/tenant-iso
 import { exclusiveWindowEnd, secondsWithinWindow } from './timer.helper';
 import { TimerService } from './timer.service';
 
+// These logs carry no tags: the tags the timer reads and answers are proven in timer.service.tags.spec.ts
+jest.mock('../time-log/time-log-tags', () => ({
+	...jest.requireActual('../time-log/time-log-tags'),
+	loadTimeLogTags: jest.fn(async () => undefined)
+}));
+
 /**
  * `getTimerStatus` looked up the last log (running or completed) with the same `startedAt` window as today's
  * completed logs, so a timer started before `todayStart` (one still running past midnight) was never found: the

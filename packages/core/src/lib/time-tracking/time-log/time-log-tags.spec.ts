@@ -56,20 +56,25 @@ describe('time log tags', () => {
 	});
 
 	describe('timeLogTagsOf', () => {
-		const managerWith = (tags: Array<{ id: string; organizationId: string | null }>) => {
+		const managerWith = (
+			tags: Array<{ id: string; organizationId: string | null; name?: string; color?: string | null }>
+		) => {
 			const find = jest.fn().mockResolvedValue(tags);
 			return { manager: { getRepository: () => ({ find }) } as any, find };
 		};
 
 		it('takes the tags of the organization and of the whole tenant', async () => {
 			const { manager, find } = managerWith([
-				{ id: 'meeting', organizationId: ORGANIZATION },
-				{ id: 'everywhere', organizationId: null }
+				{ id: 'everywhere', organizationId: null, name: 'everywhere', color: null },
+				{ id: 'meeting', organizationId: ORGANIZATION, name: 'meeting', color: '#2563eb' }
 			]);
 
 			await expect(
 				timeLogTagsOf(manager, ['meeting', 'everywhere'], { tenantId: TENANT, organizationId: ORGANIZATION })
-			).resolves.toEqual([{ id: 'meeting' }, { id: 'everywhere' }]);
+			).resolves.toEqual([
+				{ id: 'meeting', name: 'meeting', color: '#2563eb' },
+				{ id: 'everywhere', name: 'everywhere', color: null }
+			]);
 			expect(find.mock.calls[0][0].where.tenantId).toBe(TENANT);
 		});
 

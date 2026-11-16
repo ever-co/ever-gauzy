@@ -27,6 +27,7 @@ import {
 	IDateRange,
 	IGetTimeLogConflictInput,
 	IGetTimeLogReportInput,
+	ITag,
 	ITimeLog,
 	ITimeLogStoredRates,
 	ITimeSlot,
@@ -84,6 +85,7 @@ import {
 	replaceTimeLogTags,
 	sentTagIds,
 	timeLogTagsCondition,
+	tagsToLink,
 	timeLogTagsOf
 } from './time-log-tags';
 import { TypeOrmTimeLogRepository } from './repository/type-orm-time-log.repository';
@@ -2536,7 +2538,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			// Create the new time log entry. The handler reads it back through this service, whose employee
 			// filter would not find a log written for a member the caller manages. Time added by a person is
 			// recorded in the entry's history; the time a tracker uploads is not, as the time its timer records.
-			const written = { ...entry, organizationId, tags };
+			const written = { ...entry, organizationId, tags: tagsToLink(tags) };
 			// A break is never billable
 			if (addsBreak) {
 				written.isBillable = false;
@@ -2640,8 +2642,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			// keeps its own (ever-co/ever-gauzy#12029)
 			const tagIds = sentTagIds(request.tags);
 			const changesTags = tagIds !== undefined;
+			let checkedTags: ITag[] = [];
 			if (changesTags) {
-				await timeLogTagsOf(this.typeOrmRepository.manager, tagIds, {
+				checkedTags = await timeLogTagsOf(this.typeOrmRepository.manager, tagIds, {
 					tenantId,
 					organizationId: timeLog.organizationId
 				});
@@ -2691,8 +2694,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			// Execute the command to update the time log, recorded in the entry's history. The tags are no column: they
 			// are written apart, below
 			const history = { reason: request.reason ?? null };
-			const changes: IManualTimeInput = { ...request };
-			delete changes.tags;
+			const changes: Omit<IManualTimeInput, 'tags'> = { ...request };
+			delete (changes as IManualTimeInput).tags;
 			await this.commandBus.execute(new TimeLogUpdateCommand(changes, timeLog, undefined, false, history));
 			if (changesTags) {
 				await replaceTimeLogTags(this.typeOrmRepository.manager, id, tagIds);
@@ -2700,7 +2703,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 			// Retrieve the updated time log entry (a member's log, for a manager: same scope as the read above)
 			const updated = await this.withoutEmployeeFilter(() => this.findOneByIdString(id));
-			await loadTimeLogTags(this.typeOrmRepository.manager, [updated]);
+			if (updated && changesTags) {
+				updated.tags = checkedTags;
+			}
 			return updated;
 		} catch (error) {
 			// Never swallow the reason (same blanket catch as `addManualTime`).

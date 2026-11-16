@@ -7,6 +7,12 @@ import { asTenantUser, createTenantFixture } from '../../core/testing/tenant-iso
 import { IGetConflictTimeLogCommand, TimeLogCreateCommand, TimeLogUpdateCommand } from '../time-log/commands';
 import { TimerService } from './timer.service';
 
+// These logs carry no tags: the tags the timer reads and answers are proven in timer.service.tags.spec.ts
+jest.mock('../time-log/time-log-tags', () => ({
+	...jest.requireActual('../time-log/time-log-tags'),
+	loadTimeLogTags: jest.fn(async () => undefined)
+}));
+
 /**
  * Turning an employee's tracking off refused the stop as well as the start. A timer still running at that moment could
  * then be stopped by nobody: the clients hide the controls and a stop got the same 403, so the log kept counting time.
