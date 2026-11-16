@@ -253,10 +253,12 @@ describe('OrganizationPermissionGuard placement', () => {
 	it('gates exactly the manual time-log routes on the organization policy', () => {
 		// `bulk` is `POST /timesheet/time-log/bulk`: many `addManualTime` bodies in one request. It carries
 		// the single route's guard and grant, and asks the same guard about every item again.
+		// `splitTimeLog` is `POST /timesheet/time-log/:id/split`: an edit of the log, under the update's grant (CORE-26).
 		expect(organizationGuardedRoutes(TimeLogController)).toEqual({
 			addManualTime: [PermissionsEnum.ALLOW_MANUAL_TIME],
 			bulk: [PermissionsEnum.ALLOW_MANUAL_TIME],
 			updateManualTime: [PermissionsEnum.ALLOW_MODIFY_TIME],
+			splitTimeLog: [PermissionsEnum.ALLOW_MODIFY_TIME],
 			deleteTimeLog: [PermissionsEnum.ALLOW_DELETE_TIME]
 		});
 	});
@@ -273,6 +275,9 @@ describe('OrganizationPermissionGuard placement', () => {
 		// the body while the handler loads and rewrites a record of an organization whose policy is off.
 		expect(
 			Reflect.getMetadata(ORGANIZATION_POLICY_TARGET_METADATA, TimeLogController.prototype.updateManualTime)
+		).toEqual({ entity: TimeLog, param: 'id', source: 'params' });
+		expect(
+			Reflect.getMetadata(ORGANIZATION_POLICY_TARGET_METADATA, TimeLogController.prototype.splitTimeLog)
 		).toEqual({ entity: TimeLog, param: 'id', source: 'params' });
 		expect(Reflect.getMetadata(ORGANIZATION_POLICY_TARGET_METADATA, TimeSlotController.prototype.update)).toEqual({
 			entity: TimeSlot,
