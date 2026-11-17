@@ -134,6 +134,19 @@ export function rateOfReportRow(log: PricedLog): Pick<IReportDayTaskRow, 'billRa
 	return { billRateValue: rateOrNull(rate), billRateCurrency: currency };
 }
 
+/**
+ * The client rates a report row of the log states, on a report that asks for them (`withClientRates`), with whether
+ * the log keeps its rates; nothing otherwise, so a report that does not ask answers as before.
+ */
+export function clientRatesOfReportRow(
+	log: Pick<ITimeLog, 'ratesStored' | 'clientRates'>
+): Pick<IReportDayTaskRow, 'ratesStored' | 'clientRates'> {
+	if (!log.clientRates) {
+		return {};
+	}
+	return { ratesStored: storesRates(log), clientRates: log.clientRates };
+}
+
 /** The key two shares of time are priced together under: the same rate in the same currency. */
 function shareKeyOf({ rate, currency }: PricedRate): string {
 	const value = rateOrNull(rate);

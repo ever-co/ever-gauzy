@@ -8,6 +8,7 @@ import '../core/entities/internal';
 
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { ClsService } from 'nestjs-cls';
+import { RequestContext as MikroOrmRequestContext } from '@mikro-orm/core';
 import { Brackets, DataSource, EntityTarget, ObjectLiteral } from 'typeorm';
 import {
 	ID,
@@ -97,6 +98,14 @@ describe('InvoiceScheduleRunService on SQLite', () => {
 	let logCount = 0;
 	/** What happens elsewhere while a run reads its time, when a case says. */
 	let duringTimeRead: (() => Promise<void>) | null = null;
+	/** The service as the API builds it with the MikroORM instance at hand. */
+	let serviceOn: (orm: unknown) => InvoiceScheduleRunService;
+	/** What the service reads through other services: the author, their role, and the time to bill. */
+	let readers: {
+		users: { getIfExists: (id: ID) => Promise<unknown> };
+		roles: { attachAuthorizationState: (user: unknown) => Promise<unknown> };
+		timeLogs: { getTimeLogs: (request: never) => Promise<unknown> };
+	};
 
 	/** Inserts a row with the columns given and a placeholder in every other NOT NULL column without a default. */
 	async function insertRow(entity: EntityTarget<ObjectLiteral>, row: Record<string, unknown>): Promise<void> {
@@ -123,7 +132,14 @@ describe('InvoiceScheduleRunService on SQLite', () => {
 		date: string,
 		time: string,
 		hours: number,
-		options: { projectId?: ID; taskId?: ID | null; isBillable?: boolean; running?: boolean } = {}
+		options: {
+			projectId?: ID;
+			taskId?: ID | null;
+			isBillable?: boolean;
+			running?: boolean;
+			/** The rates the log keeps, as the API records them with it. */
+			kept?: Partial<Pick<TimeLog, 'billRateValue' | 'billRateCurrency' | 'projectBillRateValue'>>;
+		} = {}
 	): Promise<ID> {
 		const startedAt = new Date(`${date}T${time}:00+01:00`);
 		const stoppedAt = options.running ? null : new Date(startedAt.getTime() + hours * HOUR * 1000);
@@ -140,7 +156,16 @@ describe('InvoiceScheduleRunService on SQLite', () => {
 			isBillable: options.isBillable ?? true,
 			logType: TimeLogType.TRACKED,
 			projectId: options.projectId ?? WEBSITE,
-			taskId: options.taskId ?? null
+			taskId: options.taskId ?? null,
+			...(options.kept
+				? {
+						ratesStored: true,
+						billRateCurrency: 'USD',
+						projectBillRateCurrency: 'USD',
+						projectMemberBillRateCurrency: 'USD',
+						...options.kept
+					}
+				: {})
 		});
 		return id;
 	}
@@ -362,6 +387,16 @@ describe('InvoiceScheduleRunService on SQLite', () => {
 			timeLogs as never,
 			invoices
 		);
+		readers = { users, roles, timeLogs: timeLogs as never };
+		serviceOn = (orm) =>
+			new InvoiceScheduleRunService(
+				dataSource,
+				users as never,
+				roles as never,
+				timeLogs as never,
+				invoices,
+				orm as never
+			);
 	}, TIMEOUT);
 
 	afterAll(async () => {
@@ -439,6 +474,166 @@ describe('InvoiceScheduleRunService on SQLite', () => {
 				invoiceId: invoice.id,
 				leftOutSeconds: null
 			});
+		},
+		TIMEOUT
+	);
+
+	it(
+		'bills each log at the client rate it keeps: a rate raised "from now on" leaves earlier time at its price',
+		async () => {
+			await schedule({ grouping: InvoiceScheduleGroupingEnum.MEMBER });
+			// The Website's client rate was 90 until it went to 100 "from now on" on 28 October
+			const before = await track(MARIE, '2026-10-05', '09:00', 3, {
+				kept: { projectBillRateValue: 90, billRateValue: 80 }
+			});
+			const after = await track(MARIE, '2026-10-28', '09:00', 2, {
+				kept: { projectBillRateValue: 100, billRateValue: 80 }
+			});
+			// Recorded around the API, it keeps no rate: today's client rate prices it, as before
+			const keepsNone = await track(MARIE, '2026-10-29', '09:00', 1);
+
+			await service.sweep(new Date('2026-11-01T06:00:00Z'));
+
+			const [invoice] = await madeInvoices();
+			const billedBy = await dataSource
+				.getRepository(TimeLog)
+				.find({ select: { id: true, invoiceItemId: true } as never });
+			const lines = invoice.invoiceItems
+				.map(({ id, description, quantity, price, totalValue }) => ({
+					description,
+					quantity: Number(quantity),
+					price: Number(price),
+					totalValue: Number(totalValue),
+					timeLogIds: billedBy
+						.filter((log) => log.invoiceItemId === id)
+						.map((log) => log.id)
+						.sort()
+				}))
+				.sort((first, second) => first.price - second.price);
+			expect(lines).toEqual([
+				{
+					description: 'Website · Marie Studio',
+					quantity: 3,
+					price: 90,
+					totalValue: 270,
+					timeLogIds: [before]
+				},
+				{
+					description: 'Website · Marie Studio',
+					quantity: 3,
+					price: 100,
+					totalValue: 300,
+					timeLogIds: [after, keepsNone].sort()
+				}
+			]);
+			expect(Number(invoice.totalValue)).toBe(570);
+		},
+		TIMEOUT
+	);
+
+	it(
+		"bills at today's rates a log whose kept rates price nothing: none was set when it was worked",
+		async () => {
+			await schedule();
+			// Marie's own rate is 80 today; her log on App, which has no client rate, kept no billing rate either
+			await track(MARIE, '2026-10-05', '09:00', 2, { projectId: APP, kept: { billRateValue: null } });
+
+			await service.sweep(new Date('2026-11-01T06:00:00Z'));
+
+			const [invoice] = await madeInvoices();
+			expect(invoice.invoiceItems.map(({ quantity, price }) => [Number(quantity), Number(price)])).toEqual([
+				[2, 80]
+			]);
+		},
+		TIMEOUT
+	);
+
+	it(
+		'bills a log that keeps no client rate at the billing rate it keeps, not at the member rate of today',
+		async () => {
+			await schedule();
+			// Marie's own rate is 80 today; her log on App, which has no client rate, kept 70
+			await track(MARIE, '2026-10-05', '09:00', 2, { projectId: APP, kept: { billRateValue: 70 } });
+
+			await service.sweep(new Date('2026-11-01T06:00:00Z'));
+
+			const [invoice] = await madeInvoices();
+			expect(invoice.invoiceItems.map(({ quantity, price }) => [Number(quantity), Number(price)])).toEqual([
+				[2, 70]
+			]);
+		},
+		TIMEOUT
+	);
+
+	it(
+		'under DB_ORM=mikro-orm, reads the author and runs their work in a MikroORM request context of its own',
+		async () => {
+			const orm = { em: { name: 'global entity manager' } };
+			const insideMikroOrmContext = new AsyncLocalStorage<boolean>();
+			const create = jest
+				.spyOn(MikroOrmRequestContext, 'create')
+				.mockImplementation(
+					(_em: unknown, next: () => unknown) => insideMikroOrmContext.run(true, next) as never
+				);
+			// Each read through another service goes through MikroORM there: it must happen inside the context
+			const readsOutside: string[] = [];
+			const watch = <T extends object>(reader: T, method: keyof T & string) => {
+				const read = reader[method] as unknown as (...args: unknown[]) => unknown;
+				return jest.spyOn(reader, method as never).mockImplementation(((...args: unknown[]) => {
+					if (!insideMikroOrmContext.getStore()) readsOutside.push(method);
+					return read.apply(reader, args);
+				}) as never);
+			};
+			const watched = [
+				watch(readers.users, 'getIfExists'),
+				watch(readers.roles, 'attachAuthorizationState'),
+				watch(readers.timeLogs, 'getTimeLogs')
+			];
+			const previousOrm = process.env.DB_ORM;
+			process.env.DB_ORM = 'mikro-orm';
+			try {
+				await schedule();
+				await track(MARIE, '2026-10-05', '09:00', 3);
+
+				const report = await serviceOn(orm).sweep(new Date('2026-11-01T06:00:00Z'));
+
+				// MikroORM refuses its global EntityManager outside a request: the run read nothing before
+				expect(create).toHaveBeenCalledWith(orm.em, expect.any(Function));
+				expect(readsOutside).toEqual([]);
+				expect(report).toMatchObject({ invoiced: 1, failed: 0 });
+			} finally {
+				if (previousOrm === undefined) delete process.env.DB_ORM;
+				else process.env.DB_ORM = previousOrm;
+				create.mockRestore();
+				watched.forEach((spy) => spy.mockRestore());
+			}
+		},
+		TIMEOUT
+	);
+
+	it.each([
+		['under TypeORM, the MikroORM instance at hand', undefined, { em: {} }],
+		['under DB_ORM=mikro-orm without the MikroORM instance at hand', 'mikro-orm', undefined]
+	])(
+		'opens no MikroORM request context %s',
+		async (_case, ormType, orm) => {
+			const create = jest.spyOn(MikroOrmRequestContext, 'create');
+			const previousOrm = process.env.DB_ORM;
+			if (ormType === undefined) delete process.env.DB_ORM;
+			else process.env.DB_ORM = ormType;
+			try {
+				await schedule();
+				await track(MARIE, '2026-10-05', '09:00', 3);
+
+				const report = await serviceOn(orm).sweep(new Date('2026-11-01T06:00:00Z'));
+
+				expect(create).not.toHaveBeenCalled();
+				expect(report).toMatchObject({ invoiced: 1 });
+			} finally {
+				if (previousOrm === undefined) delete process.env.DB_ORM;
+				else process.env.DB_ORM = previousOrm;
+				create.mockRestore();
+			}
 		},
 		TIMEOUT
 	);

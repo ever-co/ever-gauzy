@@ -43,6 +43,7 @@ import {
 	TimeLogLimitQueryDTO,
 	TimeLogHistoryOrganizationQueryDTO,
 	TimeLogHistoryQueryDTO,
+	TimeLogDailyReportQueryDTO,
 	TimeLogListQueryDTO,
 	TimeLogQueryDTO
 } from './dto/query';
@@ -101,10 +102,14 @@ export class TimeLogController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'No records found for the provided options'
 	})
+	@ApiResponse({
+		status: HttpStatus.FORBIDDEN,
+		description: 'withClientRates asked by a caller who may not read the client rates of every project asked'
+	})
 	@UseGuards(EmployeeTrackedDataGuard)
 	@Get('report/daily')
 	@UseValidationPipe({ whitelist: true, transform: true })
-	async getDailyReport(@Query() options: TimeLogQueryDTO): Promise<any | null> {
+	async getDailyReport(@Query() options: TimeLogDailyReportQueryDTO): Promise<any | null> {
 		return await this._timeLogService.getDailyReport(options);
 	}
 
@@ -269,6 +274,10 @@ export class TimeLogController {
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input. The response body may contain clues as to what went wrong.'
+	})
+	@ApiResponse({
+		status: HttpStatus.FORBIDDEN,
+		description: 'withClientRates asked by a caller who may not read the client rates of every project asked'
 	})
 	@UseGuards(EmployeeTrackedDataGuard)
 	@Get()
