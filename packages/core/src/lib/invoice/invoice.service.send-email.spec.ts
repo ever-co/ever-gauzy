@@ -238,14 +238,23 @@ describe('InvoiceService.sendEmail — whether the email went', () => {
 	afterEach(() => jest.restoreAllMocks());
 
 	it("confirms the email's row once the transport took the email, and not before", async () => {
-		const { service, emailService, estimateEmailService } = sender();
+		let accept: (handed: boolean) => void = () => undefined;
+		const { service, emailService, estimateEmailService } = sender({
+			emailInvoice: jest.fn(() => new Promise<boolean>((resolve) => (accept = resolve)))
+		});
 
-		await expect(sendInvoice(service)).resolves.toEqual({ sent: true });
+		const sending = sendInvoice(service);
+		// The transport has the email and has not taken it yet: the row is still an attempt
+		for (let turn = 0; turn < 20 && emailService.emailInvoice.mock.calls.length === 0; turn++) {
+			await new Promise((resolve) => setImmediate(resolve));
+		}
+		expect(emailService.emailInvoice).toHaveBeenCalledTimes(1);
+		expect(estimateEmailService.confirmDelivery).not.toHaveBeenCalled();
 
+		accept(true);
+
+		await expect(sending).resolves.toEqual({ sent: true });
 		expect(estimateEmailService.confirmDelivery).toHaveBeenCalledWith('estimate-email-1');
-		expect(estimateEmailService.confirmDelivery.mock.invocationCallOrder[0]).toBeGreaterThan(
-			emailService.emailInvoice.mock.invocationCallOrder[0]
-		);
 	});
 
 	it('leaves the row an attempt when the process stops between writing it and the mail call', async () => {

@@ -68,7 +68,10 @@ export interface IInvoiceScheduleSweepReport {
 	sent: number;
 	/** The periods without billable time to bill. */
 	empty: number;
-	/** The runs that made no invoice, or could not send it; the next sweep tries a failure again while it is due. */
+	/**
+	 * The runs that made no invoice, or made one they could not send. The next sweep takes again a run that made no
+	 * invoice, while its period is due; an invoice that could not be sent stays a draft, and its run says why.
+	 */
 	failed: number;
 }
 
