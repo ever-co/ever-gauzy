@@ -123,7 +123,8 @@ export class MessageEmployeeButtonComponent {
 			employeeId,
 			userId: employee?.userId ? String(employee.userId) : null,
 			name: employee?.fullName?.trim() || this.translate.instant('CHAT.UNNAMED'),
-			imageUrl: employee?.user?.imageUrl ?? null
+			imageUrl: employee?.user?.imageUrl ?? null,
+			position: employee?.organizationPosition?.name?.trim() || null
 		};
 		void this.dock.open(person);
 	}
