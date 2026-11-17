@@ -8,6 +8,10 @@ import { ListFilterStateService } from '@gauzy/ui-core/core';
  * A filter reports what the user chose through `applyFilter`, which also remembers it. When the list was opened by a
  * history step the filter reads that choice back as `restored` (for the template to show) and filters the list by
  * it, through the same path as a choice the user makes.
+ *
+ * The table re-creates its filters when the page rebuilds its settings (some pages drop a column after the first
+ * render). The new filter reads the same choice back, or the one the user made since, so it shows what the list is
+ * filtered by rather than an empty box.
  */
 @Component({
 	template: '',
