@@ -102,12 +102,15 @@ jobs:
         # app. It goes through yarn, not Nx, so `.env.local` is not loaded here either.
         run: yarn config:dev
 
-      - name: Run the suites of #12026 (GitHub issue sync skips pull requests)
+      - name: Run the suites of PRs 12051-12057 (merged 2026-11-17)
         env:
           NX_LOAD_DOT_ENV_FILES: 'false'
         run: |
           status=0
+          J='node node_modules/jest/bin/jest.js'
           export NODE_OPTIONS='--experimental-vm-modules --max-old-space-size=24576'
-          node node_modules/jest/bin/jest.js -c packages/plugins/integration-github/jest.config.ts --runInBand --ci 'packages/plugins/integration\-github/' || status=$?
-          node node_modules/jest/bin/jest.js -c packages/ui-core/jest.config.ts --runInBand --ci 'packages/ui\-core/core/src/lib/services/github/' || status=$?
+          echo '::group::packages/core/jest.config.ts'; $J -c packages/core/jest.config.ts --runInBand --ci 'packages/core/src/lib/(placeholder\-image/|user/user\-avatar|user/user\.service\.|time\-tracking/custom\-tracking/)' || status=$?; echo '::endgroup::'
+          echo '::group::packages/plugins/promotion/jest.config.ts'; $J -c packages/plugins/promotion/jest.config.ts --runInBand --ci 'packages/plugins/promotion/' || status=$?; echo '::endgroup::'
+          echo '::group::packages/plugins/cart/jest.config.ts'; $J -c packages/plugins/cart/jest.config.ts --runInBand --ci 'packages/plugins/cart/src/lib/commerce\-cart/' || status=$?; echo '::endgroup::'
+          echo '::group::packages/ui-core/jest.config.ts'; $J -c packages/ui-core/jest.config.ts --runInBand --ci 'packages/ui\-core/(core/src/lib/services/list\-filter\-state/|shared/src/lib/table\-filters/)' || status=$?; echo '::endgroup::'
           exit "$status"
