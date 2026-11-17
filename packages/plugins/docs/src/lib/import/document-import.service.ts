@@ -4,8 +4,10 @@ import {
 	Injectable,
 	Logger,
 	NotFoundException,
+	Optional,
 	PayloadTooLargeException
 } from '@nestjs/common';
+import { MikroORM } from '@mikro-orm/core';
 import { In, LessThan } from 'typeorm';
 import {
 	DocumentImportStatusEnum,
@@ -18,7 +20,7 @@ import {
 	PermissionsEnum,
 	UploadedFile
 } from '@gauzy/contracts';
-import { FileStorage, readStorageFileAsBuffer, RequestContext } from '@gauzy/core';
+import { FileStorage, readStorageFileAsBuffer, RequestContext, runInMikroOrmContext } from '@gauzy/core';
 import { getDocsConfig } from '../docs.config';
 import {
 	DOCS_IMPORT_DISABLED,
@@ -81,7 +83,9 @@ export class DocumentImportService {
 		private readonly settings: DocumentSettingsService,
 		private readonly quota: DocumentQuotaService,
 		private readonly queue: DocsQueueService,
-		private readonly storage: ImportTenantStorage
+		private readonly storage: ImportTenantStorage,
+		/** Opens the MikroORM request context the sweep handles each import in under DB_ORM=mikro-orm. */
+		@Optional() private readonly orm?: MikroORM
 	) {}
 
 	/** 404 `DOCS_IMPORT_DISABLED` while `GAUZY_DOCS_IMPORT_ENABLED` is off. */
@@ -202,7 +206,12 @@ export class DocumentImportService {
 		this.sweepTimer = undefined;
 	}
 
-	/** Resumes (or fails) every stalled import — every tenant's: a sweep runs without a request context. */
+	/**
+	 * Resumes (or fails) every stalled import — every tenant's: a sweep runs without a request context. Under
+	 * DB_ORM=mikro-orm the tenant's storage settings (read to delete a failed import's zip) come through MikroORM,
+	 * which refuses its global EntityManager outside a request: each import is then handled in a MikroORM request
+	 * context of its own.
+	 */
 	async resumeStale(now: Date = new Date()): Promise<number> {
 		const before = new Date(now.getTime() - DOCS_IMPORT_STALE_MINUTES * 60_000);
 		const rows = (await this.imports.find({
@@ -211,7 +220,7 @@ export class DocumentImportService {
 		})) as unknown as IImportRow[];
 		let resumed = 0;
 		for (const row of rows) {
-			const after = await this.resumeIfStale(row, now);
+			const after = await runInMikroOrmContext(this.orm, () => this.resumeIfStale(row, now));
 			if (after.status === DocumentImportStatusEnum.QUEUED) resumed += 1;
 		}
 		if (rows.length) this.logger.log(`Import resume sweep: ${resumed} of ${rows.length} stalled import(s) re-enqueued`);

@@ -22,6 +22,11 @@ jest.mock('@gauzy/core', () => {
 				return provider;
 			}
 		},
+		// MikroORM's own request context under DB_ORM=mikro-orm, given the instance, as the platform's helper opens it.
+		runInMikroOrmContext: (orm: { em: unknown } | null | undefined, work: () => Promise<unknown>) =>
+			orm && process.env['DB_ORM'] === 'mikro-orm'
+				? jest.requireActual('@mikro-orm/core').RequestContext.create(orm.em, work)
+				: work(),
 		runWithTenantStorageSettings: async (settings: unknown, work: () => Promise<unknown>) => {
 			storage.settings.push(settings);
 			storage.inside = true;
@@ -40,6 +45,7 @@ jest.mock('@gauzy/core', () => {
 });
 
 import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { RequestContext as MikroOrmRequestContext } from '@mikro-orm/core';
 import { DataSource } from 'typeorm';
 import { DocumentKindEnum, DocumentSourceEnum, DocumentVisibilityEnum } from '@gauzy/contracts';
 import { ChatDraftUploadService } from './chat-draft-upload.service';
@@ -92,6 +98,8 @@ function over(
 		databaseType?: string;
 		/** What the tenant's settings read answers (a rejection: they cannot be read). */
 		tenantSettings?: () => Promise<Record<string, unknown>>;
+		/** The MikroORM instance the service is given. */
+		orm?: unknown;
 	} = {}
 ) {
 	const draft = { id: 'dr1', tenantId: 'ten', documentId: 'd1', userId: 'u1', createdAt: new Date('2026-11-01T00:00:00Z') };
@@ -150,7 +158,7 @@ function over(
 	} as unknown as DataSource;
 	const tenantSettings = { getSettings: jest.fn(options.tenantSettings ?? (async () => ({ fileStorageProvider: 'S3', aws_bucket: 'tenant-bucket' }))) };
 	return {
-		service: new ChatDraftUploadService(dataSource, tenantSettings as never),
+		service: new ChatDraftUploadService(dataSource, tenantSettings as never, options.orm as never),
 		repositories,
 		inserted,
 		subscribers,
@@ -220,6 +228,42 @@ describe('ChatDraftUploadService', () => {
 			{ provider: 'S3', inside: true }
 		]);
 		await expect(Promise.all(provider.deleteFile.mock.results.map((result) => result.value))).resolves.toEqual([{ inside: true }, { inside: true }]);
+	});
+
+	it("under DB_ORM=mikro-orm, reads the tenant's settings in a MikroORM request context: the sweep runs in no request", async () => {
+		// The settings are read through MikroORM there, which refuses its global EntityManager outside a request context:
+		// the bytes of a swept draft stayed behind.
+		const previousOrm = process.env['DB_ORM'];
+		process.env['DB_ORM'] = 'mikro-orm';
+		try {
+			const orm = { em: { name: 'default', fork: jest.fn(() => ({ name: 'default', fork: 1 })) } };
+			const readIn: unknown[] = [];
+			const { service } = over({
+				document: draftDocument({ storageProvider: 'S3' }),
+				orm,
+				tenantSettings: async () => {
+					const em = MikroOrmRequestContext.getEntityManager();
+					if (!em)
+						throw new Error(
+							'Using global EntityManager instance methods for context specific actions is disallowed.'
+						);
+					readIn.push(em);
+					return { fileStorageProvider: 'S3', aws_bucket: 'tenant-bucket' };
+				}
+			});
+
+			await expect(service.sweep(new Date('2026-11-03T00:00:00Z'))).resolves.toEqual({
+				purged: 1,
+				kept: 0,
+				gone: 0
+			});
+
+			expect(readIn).toEqual([{ name: 'default', fork: 1 }]);
+			expect(provider.deleteFile.mock.calls).toEqual([['docs/d1.png'], ['docs/d1.thumb.webp']]);
+		} finally {
+			if (previousOrm === undefined) delete process.env['DB_ORM'];
+			else process.env['DB_ORM'] = previousOrm;
+		}
 	});
 
 	it('still purges the draft when freeing its bytes fails, and says so', async () => {
