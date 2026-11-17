@@ -9,9 +9,16 @@ import { ChatAvailabilityService } from './chat-availability.service';
 /** How far the docked card stands from the bottom and the right edge of the screen. */
 export const CHAT_DOCK_EDGE = '1.5rem';
 
-/** A URL's page: its path, without the query, the fragment or matrix parameters (a tab switch stays on the page). */
+/**
+ * A URL's page: its path, without the query, the fragment, or each segment's matrix parameters — every segment kept,
+ * so a tab switch (a query or matrix change) stays on the page and another record (a later segment) does not.
+ */
 export function pageOf(url: string): string {
-	return url.split(/[?#;]/)[0];
+	return url
+		.split(/[?#]/)[0]
+		.split('/')
+		.map((segment) => segment.split(';')[0])
+		.join('/');
 }
 
 /**

@@ -16,6 +16,13 @@ describe('pageOf', () => {
 		expect(pageOf('/pages/employees/view/e1#top')).toBe('/pages/employees/view/e1');
 		expect(pageOf('/pages/employees/view/e1;mode=edit')).toBe('/pages/employees/view/e1');
 	});
+
+	it('keeps the segments after a matrix parameter', () => {
+		// A matrix-only change is the same page...
+		expect(pageOf('/pages/employees;mode=edit/view/e-anna')).toBe(pageOf('/pages/employees/view/e-anna'));
+		// ...and another record behind the same matrix parameter is another page.
+		expect(pageOf('/pages/employees;mode=edit/view/e-anna')).not.toBe(pageOf('/pages/employees;mode=edit/view/e-bob'));
+	});
 });
 
 describe('ChatDockService', () => {
@@ -59,6 +66,17 @@ describe('ChatDockService', () => {
 
 		expect(service.person()).toEqual(ANNA);
 		expect(dispose).not.toHaveBeenCalled();
+	});
+
+	it('stays open for a matrix-only change and closes for another record behind it', async () => {
+		router.url = '/pages/employees;mode=list/view/e-anna';
+		await service.open(ANNA);
+
+		navigate('/pages/employees;mode=edit/view/e-anna');
+		expect(service.person()).toEqual(ANNA);
+
+		navigate('/pages/employees;mode=edit/view/e-bob');
+		expect(service.person()).toBeNull();
 	});
 
 	it('stops watching the navigation once closed', async () => {
