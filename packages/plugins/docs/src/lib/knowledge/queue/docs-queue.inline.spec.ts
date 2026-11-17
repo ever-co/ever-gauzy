@@ -23,6 +23,7 @@ jest.mock('@gauzy/core', () => ({
 			: work()
 }));
 
+import { Logger } from '@nestjs/common';
 import { RequestContext as MikroOrmRequestContext } from '@mikro-orm/core';
 import { DOCS_JOB_ATTEMPTS, DOCS_JOB_BACKOFF_DELAY_MS } from '../../docs.constants';
 import { DOCS_JOB_CHUNK, DOCS_JOB_EXTRACT, DOCS_PROCESSING_QUEUE } from './constants';
@@ -48,7 +49,7 @@ const flush = (): Promise<void> => new Promise((resolve) => setImmediate(() => s
  * @param schedulerQueueService Pass a stub for queue mode, or omit for inline mode.
  * @param runStageSafely Optional custom runner implementation.
  */
-const buildService = (schedulerQueueService?: any, runStageSafely?: jest.Mock, orm?: any) => {
+const buildService = (schedulerQueueService?: any, runStageSafely?: jest.Mock, orm?: unknown) => {
 	const runner = { runStageSafely: runStageSafely ?? jest.fn().mockResolvedValue(undefined) };
 	const moduleRef: any = {
 		get: jest.fn((token: unknown) => {
@@ -58,7 +59,7 @@ const buildService = (schedulerQueueService?: any, runStageSafely?: jest.Mock, o
 			throw new Error(`Unknown token ${String(token)}`);
 		})
 	};
-	const service = new DocsQueueService(moduleRef, schedulerQueueService, orm);
+	const service = new DocsQueueService(moduleRef, schedulerQueueService, orm as never);
 	return { service, runner, moduleRef };
 };
 
@@ -288,8 +289,9 @@ describe('DocsQueueService — inline mode under DB_ORM=mikro-orm', () => {
 			ranIn.push(em);
 		});
 		const { service } = buildService(undefined, runStageSafely, orm);
-		jest.spyOn((service as any).logger, 'log').mockImplementation(() => undefined);
-		const errorSpy = jest.spyOn((service as any).logger, 'error').mockImplementation(() => undefined);
+		const { logger } = service as unknown as { logger: Logger };
+		jest.spyOn(logger, 'log').mockImplementation(() => undefined);
+		const errorSpy = jest.spyOn(logger, 'error').mockImplementation(() => undefined);
 
 		await service.enqueue(DOCS_JOB_EXTRACT, PAYLOAD);
 		await service.enqueue(DOCS_JOB_CHUNK, PAYLOAD);

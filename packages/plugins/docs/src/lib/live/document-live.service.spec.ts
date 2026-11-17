@@ -358,7 +358,7 @@ describe('DocumentLiveService', () => {
 			await ann.type(service, 'page-1', ', world');
 			await until(() => table.saves.length > 0);
 
-			expect(normaliseNode(table.rows.get('page-1')!.contentJson as never)).toEqual(
+			expect(normaliseNode(table.rows.get('page-1')?.contentJson as never)).toEqual(
 				normaliseNode({ type: 'doc', content: [paragraph('Hello, world')] } as never)
 			);
 			// Saved as the editor, each save on a fresh fork

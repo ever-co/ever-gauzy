@@ -3217,7 +3217,7 @@ describe('CommerceCartService sweeps under DB_ORM=mikro-orm', () => {
 	});
 
 	/** The service over a cart table whose every call needs a MikroORM request context, and the contexts it ran in. */
-	function sweepFixture(carts: any[]) {
+	function sweepFixture(carts: Array<Record<string, unknown>>) {
 		const tables: ITables = {
 			commerce_cart: carts,
 			commerce_cart_line: [],
@@ -3229,7 +3229,7 @@ describe('CommerceCartService sweeps under DB_ORM=mikro-orm', () => {
 		const contexts: Array<{ call: string; em: unknown }> = [];
 		const throughMikroOrm = new Proxy(table, {
 			get(target, property) {
-				const value = (target as any)[property];
+				const value = Reflect.get(target, property);
 				if (typeof value !== 'function' || ['rows', 'allRows', 'create'].includes(String(property)))
 					return value;
 				return (...args: unknown[]) => {
