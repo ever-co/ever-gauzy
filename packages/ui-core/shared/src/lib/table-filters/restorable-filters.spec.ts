@@ -3,7 +3,6 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NavigationEnd, NavigationStart, Router } from '@angular/router';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule } from '@ngx-translate/core';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { InviteStatusEnum } from '@gauzy/contracts';
 import { ListFilterStateService, Store } from '@gauzy/ui-core/core';
@@ -38,7 +37,7 @@ describe('column filters restored by Back', () => {
 		listFilterState.record.mockReset();
 		TestBed.configureTestingModule({
 			declarations: [InviteStatusFilterComponent, RangeFilterComponent, ToggleFilterComponent],
-			imports: [FormsModule, ReactiveFormsModule, NgSelectModule, TranslateModule.forRoot()],
+			imports: [FormsModule, ReactiveFormsModule, NgSelectModule],
 			providers: [{ provide: ListFilterStateService, useValue: listFilterState }],
 			schemas: [NO_ERRORS_SCHEMA]
 		});
@@ -209,7 +208,7 @@ describe('column filters the table re-creates on a list opened by Back', () => {
 		service = runInInjectionContext(injector, () => new ListFilterStateService());
 		TestBed.configureTestingModule({
 			declarations: [InviteStatusFilterComponent],
-			imports: [FormsModule, ReactiveFormsModule, NgSelectModule, TranslateModule.forRoot()],
+			imports: [FormsModule, ReactiveFormsModule, NgSelectModule],
 			providers: [{ provide: ListFilterStateService, useValue: service }],
 			schemas: [NO_ERRORS_SCHEMA]
 		});
