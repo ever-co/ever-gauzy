@@ -2,16 +2,18 @@ import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
-import { NbButtonModule, NbIconModule, NbInputModule } from '@nebular/theme';
+import { NbIconModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
-import { EMPTY, Observable, Subscription, timer } from 'rxjs';
-import { catchError, distinctUntilChanged, exhaustMap, map } from 'rxjs/operators';
-import { CHAT_MESSAGE_MAX_LENGTH, IChatConversationWithState, IChatMessageWithRelations, IUser } from '@gauzy/contracts';
+import { EMPTY, Observable, of, Subscription, timer } from 'rxjs';
+import { catchError, distinctUntilChanged, exhaustMap, map, switchMap } from 'rxjs/operators';
+import { IChatConversationWithState, IChatMessageWithRelations, IOrganization, IUser, PermissionsEnum } from '@gauzy/contracts';
 import { Store, ToastrService } from '@gauzy/ui-core/core';
 import { CHAT_LINK, CHAT_MESSAGES_POLL_MS } from '../../chat-ui.constants';
-import { ChatPerson, continuesGroup, isSameDay, mergeMessages, messagePreview, newNonce, userName } from '../../chat-ui.helpers';
+import { ChatPerson, continuesGroup, isSameDay, memberEmployeeIds, mergeMessages, messagePreview, newNonce, userName } from '../../chat-ui.helpers';
 import { ChatDockService } from '../../services/chat-dock.service';
+import { ChatPeopleService, EMPTY_PEOPLE } from '../../services/chat-people.service';
 import { ChatUiService } from '../../services/chat-ui.service';
+import { clearDraft, ComposerSubmission, MessageComposerComponent } from '../message-composer/message-composer.component';
 import { PersonAvatarComponent } from '../person-avatar/person-avatar.component';
 
 /**
@@ -57,15 +59,20 @@ interface DockRun {
 @Component({
 	selector: 'ngx-chat-dock',
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [DatePipe, NbButtonModule, NbIconModule, NbInputModule, TranslatePipe, PersonAvatarComponent],
+	imports: [DatePipe, NbIconModule, TranslatePipe, PersonAvatarComponent, MessageComposerComponent],
 	template: `
 		@if (person(); as who) {
-			<section class="panel" role="dialog" [attr.aria-label]="who.name" data-test="chat-dock" (keydown.escape)="close()">
+			<section class="panel" role="dialog" [attr.aria-label]="who.name" data-test="chat-dock" (keydown.escape)="onEscape($event)">
 				<header class="head">
 					<ngx-chat-person-avatar [person]="who" [round]="true"></ngx-chat-person-avatar>
-					<span class="name" [attr.title]="who.name">{{ who.name }}</span>
-					<button nbButton ghost size="small" status="basic" type="button" data-test="chat-dock-close" [attr.aria-label]="'CHAT.VIEW.CLOSE' | translate" (click)="close()">
-						<nb-icon icon="close-outline"></nb-icon>
+					<div class="identity">
+						<span class="name" [attr.title]="who.name">{{ who.name }}</span>
+						@if (who.position) {
+							<span class="position" [attr.title]="who.position">{{ who.position }}</span>
+						}
+					</div>
+					<button type="button" class="icon-button" data-test="chat-dock-close" [attr.aria-label]="'CHAT.VIEW.CLOSE' | translate" (click)="close()">
+						<nb-icon icon="close-outline" aria-hidden="true"></nb-icon>
 					</button>
 				</header>
 
@@ -95,49 +102,25 @@ interface DockRun {
 					</div>
 				}
 
-				<form class="write" (submit)="send($event)">
-					<input
-						#box
-						nbInput
-						fullWidth
-						fieldSize="small"
-						type="text"
-						class="box"
-						data-test="chat-dock-box"
-						autocomplete="off"
-						[attr.maxlength]="max"
-						[value]="draft()"
+				<!-- The chat's own composer, as in the conversation: formatting, mentions, emoji, files, and its draft. -->
+				<div class="write">
+					<ngx-chat-message-composer
+						data-test="chat-dock-composer"
+						[people]="people()"
 						[placeholder]="'CHAT.PROFILE.MESSAGE_PLACEHOLDER' | translate: { name: who.name }"
-						[attr.aria-label]="'CHAT.PROFILE.MESSAGE_PLACEHOLDER' | translate: { name: who.name }"
-						(input)="draft.set(box.value)"
-					/>
-					<button
-						nbButton
-						ghost
-						size="small"
-						status="basic"
-						type="submit"
-						data-test="chat-dock-send"
-						[disabled]="sending() || !conversation() || !draft().trim()"
-						[attr.aria-label]="'CHAT.COMPOSER.SEND' | translate"
-					>
-						<nb-icon icon="paper-plane-outline"></nb-icon>
-					</button>
-				</form>
+						[disabled]="sending() || !conversation()"
+						[memberIds]="memberIds()"
+						[meEmployeeId]="me()?.employeeId || null"
+						[draftKey]="draftKey()"
+						[resetToken]="resetToken()"
+						[canAttach]="canAttach()"
+						(submitted)="send($event)"
+						(typing)="onTyping()"
+					></ngx-chat-message-composer>
+				</div>
 
-				<button
-					nbButton
-					ghost
-					fullWidth
-					size="small"
-					status="basic"
-					type="button"
-					class="open"
-					data-test="chat-dock-open"
-					[disabled]="!conversation()"
-					(click)="openInChat()"
-				>
-					{{ 'CHAT.DIALOG.OPEN_DIRECT' | translate }}
+				<button type="button" class="open" data-test="chat-dock-open" [disabled]="!conversation()" (click)="openInChat()">
+					<span>{{ 'CHAT.DIALOG.OPEN_DIRECT' | translate }}</span>
 					<nb-icon icon="arrow-forward-outline" aria-hidden="true"></nb-icon>
 				</button>
 			</section>
@@ -148,57 +131,146 @@ interface DockRun {
 			:host {
 				display: block;
 			}
+			/*
+			 * Three bands one above the other, split by hairlines: who it is, the latest messages (once there are any)
+			 * with the box to write, and the way to the full conversation.
+			 */
 			.panel {
+				--dock-line: var(--gauzy-border-default-color, rgba(127, 127, 127, 0.25));
+				--dock-muted: var(--gauzy-text-color-2, rgba(127, 127, 127, 0.9));
+				--dock-hover: rgba(127, 127, 127, 0.12);
+				--dock-accent: var(--color-primary-default, #3366ff);
+				/* The chat page's colours, for the composer it shares with the conversation. */
+				--chat-bg: var(--gauzy-card-1, var(--card-background-color, #fff));
+				--chat-raised: var(--gauzy-card-1, var(--card-background-color, #fff));
+				--chat-border: var(--gauzy-border-default-color, rgba(127, 127, 127, 0.18));
+				--chat-border-strong: var(--border-basic-color-4, rgba(127, 127, 127, 0.35));
+				--chat-hover: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+				--chat-composer-bar: var(--gauzy-sidebar-background-4, rgba(126, 126, 143, 0.05));
+				--chat-text: var(--text-basic-color, inherit);
+				--chat-text-soft: var(--text-hint-color, rgba(127, 127, 127, 0.8));
+				--chat-muted: var(--text-hint-color, rgba(127, 127, 127, 0.9));
+				--chat-accent: var(--color-primary-default, #3366ff);
+				--chat-accent-soft: var(--color-primary-transparent-100, rgba(51, 102, 255, 0.08));
+				--chat-accent-soft-2: var(--color-primary-transparent-200, rgba(51, 102, 255, 0.16));
+				--chat-on-accent: var(--text-control-color, #fff);
+				--chat-send: var(--color-primary-default, #3366ff);
+				--chat-link: var(--text-primary-color, #3366ff);
+				--chat-mention-chip-bg: var(--color-primary-transparent-200, rgba(51, 102, 255, 0.16));
+				--chat-mention-chip-text: var(--text-primary-color, #3366ff);
+				--chat-danger: var(--color-danger-default, #e4493f);
 				display: flex;
 				flex-direction: column;
-				gap: 0.5rem;
-				width: 20rem;
+				/* The width of a docked chat window (room for the composer's emoji panel too). */
+				width: 25rem;
 				max-width: calc(100vw - 2rem);
-				padding: 0.75rem;
-				border: 1px solid var(--gauzy-border-default-color, rgba(127, 127, 127, 0.25));
-				border-radius: 0.75rem;
+				border: 1px solid var(--dock-line);
+				border-radius: 0.5rem;
 				background: var(--gauzy-card-1);
-				box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.28);
+				box-shadow: 0 0.25rem 1.5rem rgba(0, 0, 0, 0.2);
 				color: var(--gauzy-text-color-1, inherit);
 			}
 			.head {
 				display: flex;
 				align-items: center;
-				gap: 0.5rem;
+				gap: 0.625rem;
+				min-width: 0;
+				padding: 0.75rem 0.5rem 0.75rem 1rem;
+				border-bottom: 1px solid var(--dock-line);
+			}
+			.identity {
+				flex: 1 1 auto;
+				display: flex;
+				flex-direction: column;
 				min-width: 0;
 			}
-			.name {
-				flex: 1 1 auto;
-				min-width: 0;
+			.name,
+			.position {
 				overflow: hidden;
-				font-size: 0.8125rem;
-				font-weight: 600;
-				line-height: 1.25rem;
 				white-space: nowrap;
 				text-overflow: ellipsis;
 			}
-			/* "Open conversation" is a Nebular button laid out as a row: its words at the start, the arrow at the end. */
-			.panel .open {
-				justify-content: space-between;
-				font-weight: 400;
-				text-transform: none;
+			.name {
+				font-size: 0.875rem;
+				font-weight: 600;
+				line-height: 1.25rem;
 			}
-			.panel .open nb-icon {
-				color: var(--gauzy-text-color-2, inherit);
+			.position {
+				color: var(--dock-muted);
+				font-size: 0.75rem;
+				line-height: 1rem;
+			}
+			.icon-button {
+				display: inline-flex;
+				flex: 0 0 auto;
+				align-items: center;
+				justify-content: center;
+				width: 1.75rem;
+				height: 1.75rem;
+				padding: 0;
+				border: 0;
+				border-radius: 0.375rem;
+				background: transparent;
+				color: var(--dock-muted);
+				cursor: pointer;
+				transition: background-color 0.1s ease, color 0.1s ease;
+			}
+			.icon-button nb-icon {
+				font-size: 1.125rem;
+			}
+			.icon-button:hover,
+			.icon-button:focus-visible {
+				background: var(--dock-hover);
+				color: var(--gauzy-text-color-1, inherit);
+			}
+			/* The way to the full conversation: a quiet row along the bottom, its words at the start, the arrow at the end. */
+			.open {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: 0.5rem;
+				width: 100%;
+				padding: 0.625rem 1rem;
+				border: 0;
+				border-top: 1px solid var(--dock-line);
+				/* The card does not clip (the composer's lists open above it): the row rounds its own corners. */
+				border-radius: 0 0 0.5rem 0.5rem;
+				background: transparent;
+				color: var(--dock-muted);
+				font: inherit;
+				font-size: 0.8125rem;
+				line-height: 1.25rem;
+				text-align: left;
+				cursor: pointer;
+				transition: background-color 0.1s ease, color 0.1s ease;
+			}
+			.open nb-icon {
+				font-size: 1rem;
+			}
+			.open:hover:not(:disabled),
+			.open:focus-visible {
+				background: var(--dock-hover);
+				color: var(--gauzy-text-color-1, inherit);
+			}
+			.open:focus-visible,
+			.icon-button:focus-visible {
+				outline: 2px solid var(--dock-accent);
+				outline-offset: -2px;
+			}
+			.open:disabled {
+				cursor: default;
+				opacity: 0.5;
 			}
 			/*
-			 * The latest messages between two hairlines, grouped as the chat groups them: a picture, the name and the
-			 * time, then what they wrote under the name. The newest stays in sight.
+			 * The latest messages, grouped as the chat groups them: a picture, the name and the time, then what they
+			 * wrote under the name. The newest stays in sight.
 			 */
 			.messages {
 				display: flex;
 				flex-direction: column;
 				gap: 0.75rem;
 				max-height: min(15rem, calc(100vh - 16rem));
-				margin: 0 -0.75rem;
-				padding: 0.75rem;
-				border-top: 1px solid var(--gauzy-border-default-color, rgba(127, 127, 127, 0.25));
-				border-bottom: 1px solid var(--gauzy-border-default-color, rgba(127, 127, 127, 0.25));
+				padding: 0.75rem 1rem 0.25rem;
 				overflow-y: auto;
 			}
 			.day {
@@ -257,19 +329,13 @@ interface DockRun {
 			}
 			.note {
 				margin: 0;
-				padding: 0 0.5rem;
+				padding: 0.75rem 1rem 0;
 				font-size: 0.8125rem;
 				line-height: 1.25rem;
 			}
+			/* The composer's hint line under its frame gives the bottom its room. */
 			.write {
-				display: flex;
-				align-items: center;
-				gap: 0.375rem;
-				margin: 0;
-			}
-			.box {
-				flex: 1 1 auto;
-				min-width: 0;
+				padding: 0.75rem 1rem 0.25rem;
 			}
 		`
 	]
@@ -281,15 +347,17 @@ export class ChatDockComponent {
 	private readonly toastr = inject(ToastrService);
 	private readonly destroyRef = inject(DestroyRef);
 
-	private readonly scroller = viewChild<ElementRef<HTMLElement>>('scroller');
-	private readonly box = viewChild<ElementRef<HTMLInputElement>>('box');
+	private readonly store = inject(Store);
+	private readonly peopleService = inject(ChatPeopleService);
 
-	protected readonly max = CHAT_MESSAGE_MAX_LENGTH;
+	private readonly scroller = viewChild<ElementRef<HTMLElement>>('scroller');
+	private readonly composer = viewChild(MessageComposerComponent);
+
 	protected readonly person = this.dock.person;
 
 	/** Me, as my own messages show me: my name and picture. */
-	private readonly me = toSignal(
-		(inject(Store).user$ as Observable<IUser | null | undefined>).pipe(
+	protected readonly me = toSignal(
+		(this.store.user$ as Observable<IUser | null | undefined>).pipe(
 			map((user): ChatPerson | null =>
 				user?.id
 					? {
@@ -309,7 +377,32 @@ export class ChatDockComponent {
 	private readonly messages = signal<IChatMessageWithRelations[]>([]);
 	protected readonly failed = signal(false);
 	protected readonly sending = signal(false);
-	protected readonly draft = signal('');
+	/** Bumped after a send: the composer clears. */
+	protected readonly resetToken = signal(0);
+
+	/** The organization's people, for the composer's `@` suggestions and mention names. */
+	protected readonly people = toSignal(
+		(this.store.selectedOrganization$ as Observable<IOrganization | null | undefined>).pipe(
+			switchMap((organization) =>
+				organization?.id && organization.tenantId ? this.peopleService.people(organization.id, organization.tenantId).pipe(catchError(() => of(EMPTY_PEOPLE))) : of(EMPTY_PEOPLE)
+			)
+		),
+		{ initialValue: EMPTY_PEOPLE }
+	);
+	/** Files are stored as documents: attaching them needs `DOCS_CREATE`, as in the chat. */
+	protected readonly canAttach = toSignal(
+		(this.store.userRolePermissions$ as Observable<unknown>).pipe(
+			map(() => this.store.hasPermission(PermissionsEnum.DOCS_CREATE)),
+			distinctUntilChanged()
+		),
+		{ initialValue: this.store.hasPermission(PermissionsEnum.DOCS_CREATE) }
+	);
+	protected readonly memberIds = computed(() => memberEmployeeIds(this.conversation()));
+	/** The conversation's own draft key: what is typed here is the draft the chat finds, and back. */
+	protected readonly draftKey = computed(() => {
+		const conversation = this.conversation();
+		return conversation ? `conversation:${conversation.id}` : null;
+	});
 
 	/** The messages as runs of one author, oldest first. */
 	protected readonly runs = computed<DockRun[]>(() => {
@@ -360,11 +453,15 @@ export class ChatDockComponent {
 	private polling: Subscription | null = null;
 
 	constructor() {
-		// The card turns to whoever it is opened with, and gives the box the keyboard.
+		// The card turns to whoever it is opened with.
 		effect(() => {
 			const employeeId = this.person()?.employeeId ?? null;
 			untracked(() => this.load(employeeId));
-			setTimeout(() => this.box()?.nativeElement.focus());
+		});
+		// Once the conversation is found the composer can be written in: it gets the keyboard.
+		effect(() => {
+			if (!this.conversation()) return;
+			setTimeout(() => this.composer()?.focus());
 		});
 		// A new newest message is brought in sight; a refresh that changes nothing leaves the reader where they are.
 		effect(() => {
@@ -386,7 +483,6 @@ export class ChatDockComponent {
 		this.polling?.unsubscribe();
 		this.conversation.set(null);
 		this.messages.set([]);
-		this.draft.set('');
 		this.failed.set(false);
 		this.readThrough = null;
 		if (!employeeId) return;
@@ -461,6 +557,17 @@ export class ChatDockComponent {
 		this.dock.close();
 	}
 
+	/** Escape closes the card, unless the composer used it to close one of its own lists. */
+	protected onEscape(event: Event): void {
+		if (event.defaultPrevented) return;
+		this.close();
+	}
+
+	protected onTyping(): void {
+		const conversation = this.conversation();
+		if (conversation) this.api.signalTyping(String(conversation.id));
+	}
+
 	/** The full conversation in the chat; the card gives way to it. */
 	protected openInChat(): void {
 		const conversation = this.conversation();
@@ -469,24 +576,32 @@ export class ChatDockComponent {
 		void this.router.navigate([CHAT_LINK, conversation.id]);
 	}
 
-	protected send(event: Event): void {
-		event.preventDefault();
+	protected send(submission: ComposerSubmission): void {
 		const conversation = this.conversation();
-		const body = this.draft().trim();
-		if (!conversation || !body || this.sending()) return;
+		if (!conversation || this.sending()) return;
 		this.sending.set(true);
 		this.api
-			.send(conversation.id, { body, nonce: newNonce() })
+			.send(conversation.id, {
+				body: submission.body,
+				nonce: newNonce(),
+				mentionEmployeeIds: submission.mentionEmployeeIds,
+				...(submission.attachmentIds.length ? { attachmentIds: submission.attachmentIds } : {})
+			})
 			.pipe(takeUntilDestroyed(this.destroyRef))
 			.subscribe({
 				next: (result) => {
 					this.sending.set(false);
-					// Only when the card still shows the conversation the message went to.
-					if (String(this.conversation()?.id) !== String(conversation.id)) return;
-					// Text typed while the send was in flight stays in the box.
-					if (this.draft().trim() === body) this.draft.set('');
-					this.messages.set(mergeMessages(this.messages(), [result.message]));
 					this.api.notifyChanged();
+					// Only when the card still shows the conversation the message went to; otherwise the draft it came
+					// from is not to be sent again.
+					if (String(this.conversation()?.id) !== String(conversation.id)) {
+						clearDraft(`conversation:${conversation.id}`);
+						return;
+					}
+					this.messages.set(mergeMessages(this.messages(), [result.message]));
+					this.resetToken.update((value) => value + 1);
+					// The box was disabled while sending: the keyboard goes back to it.
+					setTimeout(() => this.composer()?.focus());
 				},
 				error: () => {
 					this.sending.set(false);
