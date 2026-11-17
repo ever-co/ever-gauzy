@@ -2172,8 +2172,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				res = await this.timeTrackerService.getTimeSlot({ timeSlotId: lastTimeSlot.timeSlotId });
 				if (!res) {
 					// The time slot of the last capture no longer exists (deleted on the server): there is nothing
-					// to show for it, and a refresh must not report that as an error.
-					this.clearLastScreenCapture();
+					// to show for it, and a refresh must not report that as an error. A capture that landed while
+					// the lookup was pending (its generation moved on) is newer than the deleted one and stays.
+					if (generation === this._captureGeneration) {
+						this.clearLastScreenCapture();
+					}
 					return;
 				}
 			} else {

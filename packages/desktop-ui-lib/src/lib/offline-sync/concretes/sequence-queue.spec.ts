@@ -19,11 +19,11 @@ describe('SequenceQueue, a timer whose time log was deleted', () => {
 	const auditLog = { timerAuditLogInfo: jest.fn() };
 	const interval = { id: 1, startedAt: new Date('2026-01-01T10:00:00Z'), screenshots: [] } as unknown as ITimeSlot;
 
-	const queue = () =>
+	const queue = (store: object = {}) =>
 		new SequenceQueue(
 			{ ipcRenderer: { invoke } } as never,
 			errorHandler as never,
-			{ organizationId: 'o', tenantId: 't' } as never,
+			{ organizationId: 'o', tenantId: 't', ...store } as never,
 			{ set viewQueueStateUpdater(_: unknown) {} } as never,
 			timeTracker as never,
 			{ status: jest.fn().mockResolvedValue({}) } as never,
@@ -32,7 +32,7 @@ describe('SequenceQueue, a timer whose time log was deleted', () => {
 
 	beforeEach(() => {
 		jest.clearAllMocks();
-		timeTracker.getTimeLogById.mockResolvedValue(null); // the server answered 404
+		timeTracker.getTimeLogById.mockResolvedValue(null); // the API answered 404
 	});
 
 	const calls = (channel: string) => invoke.mock.calls.filter(([name]) => name === channel);
@@ -55,13 +55,34 @@ describe('SequenceQueue, a timer whose time log was deleted', () => {
 		expect(auditLog.timerAuditLogInfo).toHaveBeenCalledWith(expect.stringContaining('no longer exists'));
 	});
 
-	it('asks the server for the time log once, however many things it would have done with it', async () => {
+	it('asks the server for a deleted time log once, however many things it would have done with it', async () => {
 		await queue().synchronize({
 			timer: { id: 7, timelogId: 'gone', isStoppedOffline: true },
 			intervals: [interval]
 		});
 
 		expect(timeTracker.getTimeLogById).toHaveBeenCalledTimes(1);
+	});
+
+	it('skips the timer of the signed-in employee', async () => {
+		await queue({ user: { employee: { id: 'employee-a' } } }).synchronize({
+			timer: { id: 7, timelogId: 'gone', employeeId: 'employee-a' },
+			intervals: [interval]
+		});
+
+		expect(calls('UPDATE_SYNCED')).toHaveLength(1);
+		expect(calls('UPDATE_SYNCED_TIMER')).toHaveLength(1);
+	});
+
+	it('keeps the pending work of another employee (organization switched), whose log is out of reach', async () => {
+		await queue({ user: { employee: { id: 'employee-b' } } }).synchronize({
+			timer: { id: 7, timelogId: 'out-of-reach', employeeId: 'employee-a' },
+			intervals: [interval]
+		});
+
+		expect(timeTracker.pushToTimeSlot).not.toHaveBeenCalled();
+		expect(calls('UPDATE_SYNCED')).toHaveLength(0);
+		expect(calls('UPDATE_SYNCED_TIMER')).toHaveLength(0);
 	});
 
 	it('syncs as before when the time log exists', async () => {

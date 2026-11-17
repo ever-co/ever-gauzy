@@ -1,4 +1,4 @@
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpHeaders, HttpStatusCode } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import {
 	IGetTasksStatistics,
@@ -28,6 +28,7 @@ import { firstValueFrom, throwError } from 'rxjs';
 import { catchError, map, shareReplay, tap } from 'rxjs/operators';
 import { API_PREFIX } from '../constants';
 import { LoggerService } from '../electron/services';
+import { SKIP_NOT_FOUND_NOTIFICATION } from '../interceptors/skip-not-found-notification.token';
 import {
 	ClientCacheService,
 	EmployeeCacheService,
@@ -57,10 +58,23 @@ export interface IImageCreatePayload {
 	fileName: string
 }
 
-/** The server answered that what was asked for does not exist (a 404). */
+/**
+ * The API answered that what was asked for does not exist: a 404 whose body is the API's own error. A 404 from
+ * something in between (a proxy or load balancer answering for a route it cannot reach) says nothing about the record,
+ * so it is not taken for a deletion and still fails.
+ */
 export function isNotFound(error: unknown): boolean {
-	return (error as { status?: number } | null)?.status === 404;
+	const response = error as { status?: number; error?: { statusCode?: number } | string | null } | null;
+	const body = response?.error;
+	return (
+		response?.status === HttpStatusCode.NotFound &&
+		typeof body === 'object' &&
+		body?.statusCode === HttpStatusCode.NotFound
+	);
 }
+
+/** For a lookup whose caller takes a 404 for "deleted": no generic error toast for it (other errors still show one). */
+const notFoundIsAnAnswer = (): HttpContext => new HttpContext().set(SKIP_NOT_FOUND_NOTIFICATION, true);
 
 @Injectable({
 	providedIn: 'root'
@@ -488,10 +502,12 @@ export class TimeTrackerService {
 	 * database): callers decide what a missing log means instead of every refresh and sync failing with a 404.
 	 */
 	async getTimeLogById(timeLogId: string): Promise<ITimeLog | null> {
-		const timeLog$ = this.http.get<ITimeLog>(`${API_PREFIX}/timesheet/time-log/${timeLogId}`).pipe(
-			map((response: any) => response),
-			shareReplay(1)
-		);
+		const timeLog$ = this.http
+			.get<ITimeLog>(`${API_PREFIX}/timesheet/time-log/${timeLogId}`, { context: notFoundIsAnAnswer() })
+			.pipe(
+				map((response: any) => response),
+				shareReplay(1)
+			);
 		try {
 			return await firstValueFrom(timeLog$);
 		} catch (error) {
@@ -503,7 +519,10 @@ export class TimeTrackerService {
 		}
 	}
 
-	async getTimeSlot(values: { timeSlotId: string }): Promise<ITimeSlot> {
+	/**
+	 * The time slot with its screenshots, or null when the server no longer has it (deleted since it was captured).
+	 */
+	async getTimeSlot(values: { timeSlotId: string }): Promise<ITimeSlot | null> {
 		const { timeSlotId } = values;
 		if (!timeSlotId) {
 			this._loggerService.log.warn('WARN: Time Slot ID should not be empty');
@@ -526,7 +545,8 @@ export class TimeTrackerService {
 		if (!timeSlots$) {
 			timeSlots$ = this.http
 				.get<ITimeSlot>(`${API_PREFIX}/timesheet/time-slot/${timeSlotId}`, {
-					params
+					params,
+					context: notFoundIsAnAnswer()
 				})
 				.pipe(
 					map((response: any) => response),

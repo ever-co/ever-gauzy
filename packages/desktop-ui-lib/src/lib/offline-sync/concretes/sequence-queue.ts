@@ -1,4 +1,4 @@
-import { ITimeLog, ITimeSlot, TimerSyncStateEnum, TimerActionTypeEnum } from '@gauzy/contracts';
+import { ITimeSlot, TimerSyncStateEnum, TimerActionTypeEnum } from '@gauzy/contracts';
 import { concatMap, defer, of, repeat, timer as synchronizer } from 'rxjs';
 import { BACKGROUND_SYNC_OFFLINE_INTERVAL } from '../../constants/app.constants';
 import { ElectronService } from '../../electron/services';
@@ -49,10 +49,6 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 
 			let latest = null;
 
-			// What the server holds for the timer's log, read once: null when the log was deleted (from another place,
-			// or straight from the database), which a sync can never complete.
-			let existingTimeLog: ITimeLog | null = null;
-
 			if (timer.isStartedOffline && timer.timelogId) {
 				latest = await this._timeTrackerService.getTimeLogById(timer.timelogId);
 				if (!latest) {
@@ -90,11 +86,15 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 				});
 			}
 
-			if (!latest && timer.timelogId && (intervals.length > 0 || timer.isStoppedOffline)) {
-				existingTimeLog = await this._timeTrackerService.getTimeLogById(timer.timelogId);
-				if (!existingTimeLog) {
-					return await this._discardForDeletedTimeLog(timer, intervals);
-				}
+			// Time slots pushed at a time log that was deleted (from another place, or straight from the database)
+			// would have no log to belong to: a null answer (the API's 404) means the log is gone.
+			if (
+				!latest &&
+				timer.timelogId &&
+				intervals.length > 0 &&
+				!(await this._timeTrackerService.getTimeLogById(timer.timelogId))
+			) {
+				return await this._discardForDeletedTimeLog(timer, intervals);
 			}
 
 			console.log('🛠 - Create queue');
@@ -122,7 +122,9 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 			if (timer.isStoppedOffline) {
 				console.log('⏱ - Silent stop');
 				if (!latest && timer.timelogId) {
-					const currentTimeLog = existingTimeLog ?? (await this._timeTrackerService.getTimeLogById(timer.timelogId));
+					// Read after the time slots were pushed, not before: another client may have stopped this log
+					// since, and the stop below (no time log id in its request) would then stop what runs now instead.
+					const currentTimeLog = await this._timeTrackerService.getTimeLogById(timer.timelogId);
 					if (!currentTimeLog) {
 						return await this._discardForDeletedTimeLog(timer, intervals);
 					}
@@ -229,8 +231,16 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 	 * The timer's time log no longer exists on the server, so nothing of this timer can be synced: its time slots
 	 * would have no log to belong to, and asking for the log again only fails again. Its pending work is marked
 	 * synced, so the queue moves on to the next timer instead of retrying this one on every cycle.
+	 *
+	 * The API answers 404 as well for a log of another employee than the one signed in (the organization was switched
+	 * while the queue ran): that log is out of reach, not deleted, so such a timer keeps its pending work for later.
 	 */
 	private async _discardForDeletedTimeLog(timer: ISequence['timer'], intervals: ITimeSlot[]): Promise<void> {
+		const employeeId = this._store.user?.employee?.id;
+		if (timer.employeeId && employeeId && timer.employeeId !== employeeId) {
+			console.warn(`⚠ - Time log ${timer.timelogId} of another employee is out of reach, keeping ${timer.id}`);
+			return;
+		}
 		console.warn(`⚠ - Time log ${timer.timelogId} no longer exists on the server, skipping timer ${timer.id}`);
 		this._auditLogService.timerAuditLogInfo(
 			`Time log ${timer.timelogId} of timer ${timer.id} no longer exists on the server: its pending data is skipped.`

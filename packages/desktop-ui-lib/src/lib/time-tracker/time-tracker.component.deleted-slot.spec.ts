@@ -40,6 +40,23 @@ describe('TimeTrackerComponent.getLastTimeSlotImage, last time slot deleted', ()
 		expect(component.lastTimeSlot).toBeNull();
 	});
 
+	it('keeps a capture that landed while the lookup of the deleted one was pending', async () => {
+		const newer = { recordedAt: '2026-01-01T00:10:00Z' };
+		getTimeSlot.mockImplementation(async () => {
+			// The next capture lands (`last_capture_local`) while the lookup of the deleted one is on its way.
+			component['_captureGeneration']++;
+			component.lastScreenCapture$.next(newer);
+			localStorage.setItem('lastScreenCapture', JSON.stringify(newer));
+			return null;
+		});
+
+		await component.getLastTimeSlotImage({});
+
+		expect(handleError).not.toHaveBeenCalled();
+		expect(component.lastScreenCapture).toBe(newer);
+		expect(localStorage.getItem('lastScreenCapture')).toBe(JSON.stringify(newer));
+	});
+
 	it('still reports any other failure, and keeps what is on screen', async () => {
 		const failure = Object.assign(new Error('Internal Server Error'), { status: 500 });
 		getTimeSlot.mockRejectedValue(failure);
