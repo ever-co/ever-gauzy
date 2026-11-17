@@ -46,7 +46,13 @@ import {
 	EmployeeTrackedDataGuard
 } from './../../shared/guards';
 import { UUIDValidationPipe, UseValidationPipe } from './../../shared/pipes';
-import { CreateManualTimeLogDTO, DeleteTimeLogDTO, SplitTimeLogDTO, UpdateManualTimeLogDTO } from './dto';
+import {
+	CreateManualTimeLogDTO,
+	DeleteTimeLogDTO,
+	SplitTimeLogDTO,
+	UpdateManualTimeLogDTO,
+	UpdateTimeLogTagsDTO
+} from './dto';
 import {
 	GetTimeLogConflictQueryDTO,
 	TimeLogBudgetQueryDTO,
@@ -521,6 +527,31 @@ export class TimeLogController {
 		@Body(new ValidationPipe({ transform: true, whitelist: true })) entity: SplitTimeLogDTO
 	): Promise<ITimeLogSplitResult> {
 		return await this._timeLogService.splitTimeLog(id, entity);
+	}
+
+	/**
+	 * Files a time log under exactly these tags. Nothing else of the log changes, so a running timer's tags change
+	 * while it runs.
+	 *
+	 * @param id The time log.
+	 * @param entity The tags it carries from now on.
+	 * @returns The log, with its tags.
+	 */
+	@ApiOperation({ summary: "Change a time log's tags" })
+	@ApiResponse({ status: HttpStatus.OK, description: 'The time log, with the tags it carries now.' })
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'TIME_LOG_TAG_NOT_FOUND: a tag of another organization or tenant; nothing was written.'
+	})
+	@Put(':id/tags')
+	@UseGuards(OrganizationPermissionGuard)
+	@Permissions(PermissionsEnum.ALLOW_MODIFY_TIME)
+	@OrganizationPolicyTarget(TimeLog)
+	async updateTimeLogTags(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Body(new ValidationPipe({ transform: true, whitelist: true })) entity: UpdateTimeLogTagsDTO
+	): Promise<ITimeLog> {
+		return await this._timeLogService.updateTimeLogTags(id, entity);
 	}
 
 	/**

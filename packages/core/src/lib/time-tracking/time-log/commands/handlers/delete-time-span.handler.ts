@@ -478,18 +478,28 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 			select: STORED_RATE_SELECT
 		});
 
+		// The same kind of work too: the tags the log is filed under (ever-co/ever-gauzy#12029), which its read leaves out
+		// With the soft deleted ones: the part keeps every link the log has, so a tag restored later is on both parts
+		const tagged = await this.typeOrmTimeLogRepository.findOne({
+			where: { id: log.id },
+			relations: { tags: true },
+			select: { id: true, tags: { id: true } },
+			withDeleted: true
+		});
+
 		const changes = definedChanges(split?.secondPart);
 		const projectRates = await this.clientRatesOfAnotherProject(log, changes);
 
 		const secondPart = new TimeLog({
-			...omit(log, ['id', 'createdAt', 'updatedAt', 'timeSlots', 'duration', 'isEdited']),
+			...omit(log, ['id', 'createdAt', 'updatedAt', 'timeSlots', 'duration', 'isEdited', 'tags']),
 			...pick(storedRates ?? {}, STORED_RATE_FIELDS),
 			...changes,
 			...projectRates,
 			startedAt: end,
 			stoppedAt,
 			splitFromTimeLogId: log.id,
-			timeSlots
+			timeSlots,
+			tags: tagged?.tags ?? []
 		});
 
 		const recordsHistory = Boolean(split?.history) && Boolean(this.dataSource);

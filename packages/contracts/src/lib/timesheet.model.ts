@@ -311,6 +311,13 @@ export interface ITimeLogFilters extends IBasePerTenantAndOrganizationEntityMode
 	projectIds?: ID[];
 	teamIds?: ID[];
 	taskIds?: ID[];
+	/** Keeps the time logs that carry at least one of these tags (the log's own tags, not its task's). */
+	tagIds?: ID[];
+	/**
+	 * Keeps the time logs that carry no tag: alone, only those; with `tagIds`, those as well as the logs carrying one of
+	 * the tags.
+	 */
+	untagged?: boolean;
 	logType?: TimeLogType[];
 	source?: TimeLogSourceEnum[];
 	activityLevel?: {
@@ -514,6 +521,11 @@ export interface IManualTimeInput extends IBasePerTenantAndOrganizationEntityMod
 	isBillable?: boolean;
 }
 
+/** The tags a time log is filed under from now on, by id: an empty list takes them all off. */
+export interface ITimeLogTagsInput extends IBasePerTenantAndOrganizationEntityModel {
+	tags: ID[];
+}
+
 /**
  * A split of one stopped time log at a moment of its range (`POST /timesheet/time-log/:id/split`): the log ends at
  * `splitAt`, and a second log runs from `splitAt` to its old end. The other fields name what the second part changes;
@@ -610,7 +622,12 @@ export interface IReportDayTaskRow {
 	ratesStored?: boolean;
 	/** The client rates the entry's log keeps, on a report that asks for them (`withClientRates`). */
 	clientRates?: ITimeLogClientRates;
+	/** The tags the entry carries, each counted in its own group by a client that groups by tag. */
+	tags?: ITimeLogTag[];
 }
+
+/** A tag as a time log read answers it: what a chip shows. */
+export type ITimeLogTag = Pick<ITag, 'id' | 'name' | 'color'>;
 
 export interface IReportDayGroupByDate {
 	date: string;

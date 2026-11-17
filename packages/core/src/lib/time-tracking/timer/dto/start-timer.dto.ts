@@ -1,6 +1,6 @@
 import { ApiPropertyOptional, IntersectionType, PickType } from '@nestjs/swagger';
-import { IsOptional, Matches } from 'class-validator';
-import { ITimerToggleInput } from '@gauzy/contracts';
+import { IsArray, IsOptional, IsUUID, Matches } from 'class-validator';
+import { ID, ITimerToggleInput } from '@gauzy/contracts';
 import { TenantOrganizationBaseDTO } from './../../../core/dto';
 import { TimeLog } from '../../time-log/time-log.entity';
 
@@ -27,4 +27,15 @@ export class StartTimerDTO extends IntersectionType(
 	@IsOptional()
 	@Matches(/^\d{4}-\d{2}-\d{2}$/)
 	readonly planDay?: string;
+
+	@ApiPropertyOptional({
+		type: () => String,
+		isArray: true,
+		description:
+			'The tags to file the run under: tags of the organization or of the whole tenant. A tag of another organization or tenant refuses the start (400), and nothing is written.'
+	})
+	@IsOptional()
+	@IsArray()
+	@IsUUID('all', { each: true })
+	readonly tags?: ID[];
 }

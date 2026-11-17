@@ -89,6 +89,7 @@ import {
 	teamIdForEntry
 } from '../time-log/organization-tracking-requirements';
 import { isTrackerSource, postsHeartbeatSlots } from '../time-log/tracker-source';
+import { loadTimeLogTags, sentTagIds, timeLogTagsOf } from '../time-log/time-log-tags';
 import { assertBreakOverlapsNothing, assertBreaksAllowedIn, breakEnd, isBreak } from '../time-log/break-rules';
 import { TimeSlotDurationRecalculateCommand } from '../time-slot/commands';
 import { timeSlotIdsReachedBy } from '../time-slot/utils';
@@ -445,6 +446,8 @@ export class TimerService {
 
 		// Calculate last TimeLog duration
 		if (lastLog) {
+			// The tags the last log is filed under, which the timer shows beside its notes
+			await loadTimeLogTags(this.typeOrmTimeLogRepository.manager, [lastLog]);
 			status.lastLog = lastLog;
 			// A running break is not a running timer: `lastLog` shows the break, `running` stays false, so a client that
 			// does not know breaks shows the timer stopped and posts no heartbeat slots during it
@@ -570,6 +573,10 @@ export class TimerService {
 			assertRequiredContext(requirements, { taskId, organizationTeamId: teamIdToLog, projectId: projectIdToLog });
 		}
 
+		// The tags the run is filed under, checked before anything is stopped or written: one of another organization or
+		// tenant refuses the start (ever-co/ever-gauzy#12029)
+		const tagsToLog = await timeLogTagsOf(manager, sentTagIds(request.tags) ?? [], { tenantId, organizationId });
+
 		// In this process, no other start or stop of the employee comes between closing the runs going and creating
 		// this one (inEmployeeTurn)
 		return await this.inEmployeeTurn(employeeId, async (turn) => {
@@ -608,7 +615,8 @@ export class TimerService {
 						// A break is never billable
 						isBillable: Boolean(isBillable) && !startsBreak,
 						version: version || null,
-						isRunning: true
+						isRunning: true,
+						tags: tagsToLog
 					},
 					undefined,
 					{ isOnlyRun: true }
@@ -792,9 +800,13 @@ export class TimerService {
 		const { id: employeeId, organizationId } = employee;
 
 		// With no other start or stop of the employee in between, in this process (inEmployeeTurn)
-		return await this.inEmployeeTurn(employeeId, (turn) =>
+		const stopped = await this.inEmployeeTurn(employeeId, (turn) =>
 			this.stopRunningLog(request, employeeId, organizationId, tenantId, turn, receivedAt)
 		);
+
+		// The stopped log answers the tags it is filed under, as it did while it ran
+		await loadTimeLogTags(this.typeOrmTimeLogRepository.manager, [stopped]);
+		return stopped;
 	}
 
 	/**

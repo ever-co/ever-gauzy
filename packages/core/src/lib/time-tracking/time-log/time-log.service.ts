@@ -22,10 +22,12 @@ import {
 import { chain, pluck } from 'underscore';
 import {
 	IManualTimeInput,
+	ITimeLogTagsInput,
 	PermissionsEnum,
 	IDateRange,
 	IGetTimeLogConflictInput,
 	IGetTimeLogReportInput,
+	ITag,
 	ITimeLog,
 	ITimeLogStoredRates,
 	ITimeSlot,
@@ -80,6 +82,15 @@ import { moment } from './../../core/moment-extend';
 import { addDecimalStrings } from '../../money/decimal';
 import { calculateAverage, calculateAverageActivity, calculateDuration } from './time-log.utils';
 import { prepareSQLQuery as p } from './../../database/database.helper';
+import {
+	loadTimeLogTags,
+	mikroOrmTimeLogTagsKey,
+	replaceTimeLogTags,
+	sentTagIds,
+	timeLogTagsCondition,
+	tagsToLink,
+	timeLogTagsOf
+} from './time-log-tags';
 import { TypeOrmTimeLogRepository } from './repository/type-orm-time-log.repository';
 import { isTrackerSource } from './tracker-source';
 import { MikroOrmTimeLogRepository } from './repository/mikro-orm-time-log.repository';
@@ -246,7 +257,11 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		// `overall` over `duration`): load just those columns, as the weekly report does, instead
 		// of whole slots with their raw keyboard / mouse / location / custom activity. A request for
 		// relations below the slots (`timeSlots.screenshots`, …) keeps whole slots.
-		const relations = request.relations ?? [];
+		const askedRelations = request.relations ?? [];
+		// The tags are read apart, once the logs are (`loadTimeLogTags`): the live ones, as a chip shows them, the same
+		// through both ORMs (ever-co/ever-gauzy#12029)
+		const readsTags = askedRelations.includes('tags');
+		const relations = askedRelations.filter((relation) => relation !== 'tags');
 		const slotActivityOnly =
 			relations.includes('timeSlots') && !relations.some((relation) => relation.startsWith('timeSlots.'));
 
@@ -279,7 +294,11 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					orderBy: { startedAt: 'ASC' as any, ...(page ? { id: 'ASC' as const } : {}) },
 					...(page ? { limit: page.limit, offset: page.offset } : {})
 				});
-				return items.map((e) => this.serialize(e)) as ITimeLog[];
+				const logs = items.map((e) => this.serialize(e)) as ITimeLog[];
+				if (readsTags) {
+					await loadTimeLogTags(this.typeOrmRepository.manager, logs);
+				}
+				return logs;
 			}
 			case MultiORMEnum.TypeORM:
 			default: {
@@ -335,8 +354,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				await this.getFilterTimeLogQuery(query, request, { listsEntries: true });
 
 				const timeLogs = await query.getMany();
-
-				// Set up the where clause using the provided filter function
+				if (readsTags) {
+					await loadTimeLogTags(this.typeOrmRepository.manager, timeLogs);
+				}
 				return timeLogs;
 			}
 		}
@@ -443,6 +463,10 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				break;
 			}
 		}
+
+		// Each log of the week states the tags its entry is filed under, as the daily report's rows do
+		// (ever-co/ever-gauzy#12029)
+		await loadTimeLogTags(this.typeOrmRepository.manager, logs);
 
 		// The days the report covers, and the zone its rows are grouped by
 		const { days, timeZone } = this.reportDateRange(request);
@@ -912,6 +936,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		if (statesClientRates) {
 			await withKeptClientRates(this.typeOrmRepository.manager, logs, RequestContext.currentTenantId());
 		}
+
+		// Each row states the tags its entry is filed under (ever-co/ever-gauzy#12029)
+		await loadTimeLogTags(this.typeOrmRepository.manager, logs);
 
 		// Group time logs based on the specified 'groupBy' filter
 		let dailyLogs: any;
@@ -1794,6 +1821,12 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			query.andWhere(p(`"${query.alias}"."logType" <> :breakType`), { breakType: TimeLogType.BREAK });
 		}
 
+		// The logs that carry one of the tags asked for, or, with `untagged`, none (ever-co/ever-gauzy#12029)
+		const tagCondition = timeLogTagsCondition(`"${query.alias}"."id"`, request);
+		if (tagCondition) {
+			query.andWhere(tagCondition.condition, tagCondition.parameters);
+		}
+
 		/**
 		 * Apply a condition to the TypeORM query based on the 'isEdited' property in the request.
 		 * If 'isEdited' is true, filter rows where the 'editedAt' column is not null.
@@ -2117,6 +2150,12 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 		if (request.notInvoiced === true) {
 			where[mikroOrmNotOnLiveInvoiceKey()] = [];
+		}
+
+		// The logs that carry one of the tags asked for, or, with `untagged`, none, as in getFilterTimeLogQuery
+		const tagsKey = mikroOrmTimeLogTagsKey(request);
+		if (tagsKey) {
+			where[tagsKey] = [];
 		}
 
 		if (isNotEmpty(request.activityLevel)) {
@@ -2496,6 +2535,12 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 			const entry = await this.withRequiredContext(request, employee, organizationId, tenantId);
 
+			// The tags the entry is filed under, checked before any overlapped entry is cut (ever-co/ever-gauzy#12029)
+			const tags = await timeLogTagsOf(this.typeOrmRepository.manager, sentTagIds(request.tags) ?? [], {
+				tenantId,
+				organizationId
+			});
+
 			// Check for conflicts with existing time logs
 			const conflicts = await this.commandBus.execute(
 				new IGetConflictTimeLogCommand({
@@ -2549,7 +2594,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			// Create the new time log entry. The handler reads it back through this service, whose employee
 			// filter would not find a log written for a member the caller manages. Time added by a person is
 			// recorded in the entry's history; the time a tracker uploads is not, as the time its timer records.
-			const written = { ...entry, organizationId };
+			const written = { ...entry, organizationId, tags: tagsToLink(tags) };
 			// A break is never billable
 			if (addsBreak) {
 				written.isBillable = false;
@@ -2655,6 +2700,18 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				await this.assertMovableToAnotherEmployee(id);
 			}
 
+			// The tags the update files the entry under, checked before anything is cut or written: left out, the entry
+			// keeps its own (ever-co/ever-gauzy#12029)
+			const tagIds = sentTagIds(request.tags);
+			const changesTags = tagIds !== undefined;
+			let checkedTags: ITag[] = [];
+			if (changesTags) {
+				checkedTags = await timeLogTagsOf(this.typeOrmRepository.manager, tagIds, {
+					tenantId,
+					organizationId: timeLog.organizationId
+				});
+			}
+
 			// Check for conflicts with existing time logs — in the log's own organization, which is the employee's.
 			const conflicts = await this.commandBus.execute(
 				new IGetConflictTimeLogCommand({
@@ -2696,12 +2753,26 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			// Update the last edited date for the manual time log
 			request.editedAt = new Date();
 
-			// Execute the command to update the time log, recorded in the entry's history
+			// Execute the command to update the time log, recorded in the entry's history. The tags are no column: they
+			// are written apart, below
 			const history = { reason: request.reason ?? null };
-			await this.commandBus.execute(new TimeLogUpdateCommand(request, timeLog, undefined, false, history));
+			const changes: Omit<IManualTimeInput, 'tags'> = { ...request };
+			delete (changes as IManualTimeInput).tags;
+			await this.commandBus.execute(new TimeLogUpdateCommand(changes, timeLog, undefined, false, history));
+			if (changesTags) {
+				await replaceTimeLogTags(
+					this.typeOrmRepository.manager,
+					id,
+					checkedTags.map((tag) => tag.id)
+				);
+			}
 
 			// Retrieve the updated time log entry (a member's log, for a manager: same scope as the read above)
-			return await this.withoutEmployeeFilter(() => this.findOneByIdString(id));
+			const updated = await this.withoutEmployeeFilter(() => this.findOneByIdString(id));
+			if (updated && changesTags) {
+				updated.tags = checkedTags;
+			}
+			return updated;
 		} catch (error) {
 			// Never swallow the reason (same blanket catch as `addManualTime`).
 			if (error instanceof HttpException) {
@@ -2870,6 +2941,37 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		query.andWhere(notOnLiveInvoice(`"${query.alias}"."invoiceItemId"`), NOT_ON_LIVE_INVOICE_PARAMETERS);
 		const notInvoiced = (await query.getCount()) > 0;
 		return !notInvoiced;
+	}
+
+	/**
+	 * Files a time log under exactly these tags (ever-co/ever-gauzy#12029). Nothing else of the log changes: a running
+	 * log keeps running, and its range, slots and history stay as they are. The caller must be allowed to write the
+	 * log's employee's time, as for a manual edit; a tag of another organization or tenant refuses the change (400) and
+	 * nothing is written.
+	 *
+	 * @param id The time log.
+	 * @param input The tags it carries from now on.
+	 * @returns The log, with its tags.
+	 */
+	async updateTimeLogTags(id: ID, input: ITimeLogTagsInput): Promise<ITimeLog> {
+		const tenantId = RequestContext.currentTenantId();
+		const manager = this.typeOrmRepository.manager;
+
+		// Read past the own-employee filter, as a manual edit reads it: the check below decides who may change it
+		const timeLog = await this.withoutEmployeeFilter(() => this.findOneByIdString(id));
+		await this.assertCanWriteTimeFor(timeLog.employeeId, timeLog.organizationId);
+
+		const tagIds = sentTagIds(input.tags) ?? [];
+		const tags = await timeLogTagsOf(manager, tagIds, { tenantId, organizationId: timeLog.organizationId });
+		await replaceTimeLogTags(
+			manager,
+			timeLog.id,
+			tags.map((tag) => tag.id)
+		);
+
+		const updated = await this.withoutEmployeeFilter(() => this.findOneByIdString(id));
+		await loadTimeLogTags(manager, [updated]);
+		return updated;
 	}
 
 	/**

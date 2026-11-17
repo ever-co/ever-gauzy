@@ -175,8 +175,13 @@ export class TimeLogCreateHandler implements ICommandHandler<TimeLogCreateComman
 		// Update total worked hours for the employee
 		await this.updateEmployeeTotalWorkedHours(employeeId);
 
-		// Return the newly created time log
-		return await this._timeLogService.findOneByIdString(timeLog.id);
+		// The newly created time log, with the tags it is filed under (checked by the caller before anything is written)
+		const created = await this._timeLogService.findOneByIdString(timeLog.id);
+		const isFiledUnderTags = Array.isArray(timeLog.tags) && timeLog.tags.length > 0;
+		if (created && isFiledUnderTags) {
+			created.tags = timeLog.tags;
+		}
+		return created;
 	}
 
 	/**
@@ -246,12 +251,13 @@ export class TimeLogCreateHandler implements ICommandHandler<TimeLogCreateComman
 			isBillable = false,
 			source = TimeLogSourceEnum.WEB_TIMER,
 			version = null,
-			isRunning = source === TimeLogSourceEnum.DESKTOP
+			isRunning = source === TimeLogSourceEnum.DESKTOP,
+			tags
 		} = input;
 
 		console.log('create new time log with', { input, tenantId, timesheet });
 
-		return new TimeLog({
+		const timeLog = new TimeLog({
 			startedAt: moment.utc(startedAt).toDate(),
 			stoppedAt: stoppedAt ? moment.utc(stoppedAt).toDate() : undefined,
 			timesheet,
@@ -270,6 +276,12 @@ export class TimeLogCreateHandler implements ICommandHandler<TimeLogCreateComman
 			version,
 			isRunning
 		});
+		// The tags the caller checked (`timeLogTagsOf`): the save links them in `tag_time_log`
+		const isFiledUnderTags = Array.isArray(tags) && tags.length > 0;
+		if (isFiledUnderTags) {
+			timeLog.tags = tags;
+		}
+		return timeLog;
 	}
 
 	/**

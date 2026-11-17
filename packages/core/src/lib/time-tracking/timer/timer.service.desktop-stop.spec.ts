@@ -6,6 +6,12 @@ import { asTenantUser, createTenantFixture } from '../../core/testing/tenant-iso
 import { TimeLogUpdateCommand } from '../time-log/commands';
 import { TimerService } from './timer.service';
 
+// These logs carry no tags: the tags the timer reads and answers are proven in timer.service.tags.spec.ts
+jest.mock('../time-log/time-log-tags', () => ({
+	...jest.requireActual('../time-log/time-log-tags'),
+	loadTimeLogTags: jest.fn(async () => undefined)
+}));
+
 /**
  * The desktop stops with its own source every run it shows, the ones it mirrors from other clients too, and a desktop
  * stop applied the desktop's rules to all of them: a run with no time slot started over ten minutes ago ended ten

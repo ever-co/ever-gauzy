@@ -3,7 +3,7 @@ import { chain, pluck } from 'underscore';
 import * as moment from 'moment';
 import { IOrganizationContact, IReportDayGroupByClient, ITimeLog } from '@gauzy/contracts';
 import { GetTimeLogGroupByClientCommand } from '../get-time-log-group-by-client.command';
-import { calculateAverage, calculateAverageActivity, teamOfReportRow } from './../../time-log.utils';
+import { calculateAverage, calculateAverageActivity, tagsOfReportRow, teamOfReportRow } from './../../time-log.utils';
 import { clientRatesOfReportRow, rateOfReportRow } from '../../time-log-pricing';
 
 @CommandHandler(GetTimeLogGroupByClientCommand)
@@ -92,7 +92,8 @@ export class GetTimeLogGroupByClientHandler implements ICommandHandler<GetTimeLo
 					duration: log.duration,
 					...teamOfReportRow(log, statesTeam),
 					...rateOfReportRow(log),
-					...clientRatesOfReportRow(log)
+					...clientRatesOfReportRow(log),
+					...tagsOfReportRow(log)
 				}));
 				return {
 					tasks,
