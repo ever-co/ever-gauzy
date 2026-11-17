@@ -1,65 +1,42 @@
-import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
+import { formatDate } from '@angular/common';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, LOCALE_ID, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { NbIconModule } from '@nebular/theme';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { EMPTY, Observable, of, Subscription, timer } from 'rxjs';
 import { catchError, distinctUntilChanged, exhaustMap, map, switchMap } from 'rxjs/operators';
 import { IChatConversationWithState, IChatMessageWithRelations, IOrganization, IUser, PermissionsEnum } from '@gauzy/contracts';
 import { Store, ToastrService } from '@gauzy/ui-core/core';
 import { CHAT_LINK, CHAT_MESSAGES_POLL_MS } from '../../chat-ui.constants';
-import { ChatPerson, continuesGroup, isSameDay, memberEmployeeIds, mergeMessages, messagePreview, newNonce, userName } from '../../chat-ui.helpers';
+import { ChatPerson, continuesGroup, isSameDay, memberEmployeeIds, mergeMessages, newNonce, userName } from '../../chat-ui.helpers';
 import { ChatDockService } from '../../services/chat-dock.service';
-import { ChatPeopleService, EMPTY_PEOPLE } from '../../services/chat-people.service';
+import { ChatFilesStore } from '../../services/chat-files.store';
+import { ChatPeople, ChatPeopleService, EMPTY_PEOPLE } from '../../services/chat-people.service';
+import { ChatTasksService } from '../../services/chat-tasks.service';
 import { ChatUiService } from '../../services/chat-ui.service';
 import { clearDraft, ComposerSubmission, MessageComposerComponent } from '../message-composer/message-composer.component';
+import { MessageItemComponent } from '../message-item/message-item.component';
 import { PersonAvatarComponent } from '../person-avatar/person-avatar.component';
 
-/**
- * The label of a day above its first run: "Today" is left out (a card opened to write someone needs no date for
- * what was just said), "Yesterday" is named, and an older day shows its date.
- */
-function dayOf(at: Date | string): DockRun['day'] {
-	const now = new Date();
-	if (isSameDay(at, now)) return null;
-	const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
-	return { key: isSameDay(at, yesterday) ? 'CHAT.VIEW.YESTERDAY' : null, at };
-}
-
-/** One message of a run: its text and when it was written. */
-interface DockLine {
-	id: string;
-	text: string;
-	deleted: boolean;
-	at: Date | string | undefined;
-}
-
-/**
- * Consecutive messages of one author written close together, shown under one heading (picture, name, time), as the
- * chat itself groups them.
- */
-interface DockRun {
-	id: string;
-	author: ChatPerson;
-	mine: boolean;
-	at: Date | string | undefined;
-	/** Set on the first run of a day that is not today: the day it was written on, as a quiet label above it. */
-	day: { key: string | null; at: Date | string | undefined } | null;
-	lines: DockLine[];
+/** A message of the card with its day divider and whether it continues the previous author's group, as in the chat. */
+interface DockRow {
+	message: IChatMessageWithRelations;
+	day: string | null;
+	continued: boolean;
 }
 
 /**
  * The docked message card (`ChatDockService`): a small card at the bottom right of the screen to write one person
  * directly. A box to write and a way to the full conversation, as a quick-message card; above them, who it is and,
- * once there is something to read, the latest messages of our conversation, grouped by author as the chat shows them. The
+ * once there is something to read, the latest messages of our conversation, shown as the chat shows them. The
  * conversation is found (or created) when the card opens; its newest page is read again every few seconds (so a
  * message written, edited or deleted elsewhere shows), and it is marked read up to the last message on screen.
  */
 @Component({
 	selector: 'ngx-chat-dock',
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [DatePipe, NbIconModule, TranslatePipe, PersonAvatarComponent, MessageComposerComponent],
+	imports: [NbIconModule, TranslatePipe, PersonAvatarComponent, MessageComposerComponent, MessageItemComponent],
 	template: `
 		@if (person(); as who) {
 			<section class="panel" role="dialog" [attr.aria-label]="who.name" data-test="chat-dock" (keydown.escape)="onEscape($event)">
@@ -78,26 +55,24 @@ interface DockRun {
 
 				@if (failed()) {
 					<p class="note">{{ 'CHAT.ERROR' | translate }}</p>
-				} @else if (runs().length > 0) {
+				} @else if (rows().length > 0) {
+					<!-- The messages as the conversation shows them (its own message component), to read: acting on one is done in the chat. -->
 					<div #scroller class="messages" data-test="chat-dock-messages">
-						@for (run of runs(); track run.id) {
-							@if (run.day; as day) {
-								<div class="day">{{ day.key ? (day.key | translate) : (day.at | date: 'mediumDate') }}</div>
+						@for (row of rows(); track row.message.id) {
+							@if (row.day) {
+								<div class="day-divider" role="separator"><span>{{ row.day }}</span></div>
 							}
-							<div class="run">
-								<ngx-chat-person-avatar [person]="run.author" size="small" [round]="true"></ngx-chat-person-avatar>
-								<div class="run-body">
-									<div class="run-head">
-										<span class="by">{{ run.mine ? ('CHAT.PROFILE.YOU' | translate) : run.author.name }}</span>
-										<time class="time" [attr.title]="run.at | date: 'medium'">{{ run.at | date: 'shortTime' }}</time>
-									</div>
-									@for (line of run.lines; track line.id) {
-										<p class="text" [class.deleted]="line.deleted" [attr.title]="line.at | date: 'medium'">
-											{{ line.deleted ? ('CHAT.MESSAGE.DELETED' | translate) : line.text }}
-										</p>
-									}
-								</div>
-							</div>
+							<ngx-chat-message-item
+								[message]="row.message"
+								[people]="dockPeople()"
+								[files]="files()"
+								[tasks]="tasks()"
+								[meEmployeeId]="me()?.employeeId || null"
+								[meUserId]="me()?.userId ?? null"
+								[continued]="row.continued"
+								[readOnly]="true"
+								[showThreadSummary]="false"
+							></ngx-chat-message-item>
 						}
 					</div>
 				}
@@ -106,7 +81,7 @@ interface DockRun {
 				<div class="write">
 					<ngx-chat-message-composer
 						data-test="chat-dock-composer"
-						[people]="people()"
+						[people]="dockPeople()"
 						[placeholder]="'CHAT.PROFILE.MESSAGE_PLACEHOLDER' | translate: { name: who.name }"
 						[disabled]="sending() || !conversation()"
 						[memberIds]="memberIds()"
@@ -140,13 +115,18 @@ interface DockRun {
 				--dock-muted: var(--gauzy-text-color-2, rgba(127, 127, 127, 0.9));
 				--dock-hover: rgba(127, 127, 127, 0.12);
 				--dock-accent: var(--color-primary-default, #3366ff);
-				/* The chat page's colours, for the composer it shares with the conversation. */
+				/* The chat page's colours, for the messages and the composer it shares with the conversation. */
 				--chat-bg: var(--gauzy-card-1, var(--card-background-color, #fff));
 				--chat-raised: var(--gauzy-card-1, var(--card-background-color, #fff));
 				--chat-border: var(--gauzy-border-default-color, rgba(127, 127, 127, 0.18));
 				--chat-border-strong: var(--border-basic-color-4, rgba(127, 127, 127, 0.35));
 				--chat-hover: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+				--chat-active-tint: var(--gauzy-active-tint, rgba(126, 126, 143, 0.2));
+				--chat-elevated: var(--gauzy-sidebar-background-3, rgba(126, 126, 143, 0.1));
+				--chat-message-hover: var(--gauzy-sidebar-background-4, rgba(126, 126, 143, 0.05));
 				--chat-composer-bar: var(--gauzy-sidebar-background-4, rgba(126, 126, 143, 0.05));
+				--chat-reaction-bg: var(--gauzy-sidebar-background-3, rgba(126, 126, 143, 0.1));
+				--chat-code-bg: var(--gauzy-sidebar-background-3, rgba(126, 126, 143, 0.1));
 				--chat-text: var(--text-basic-color, inherit);
 				--chat-text-soft: var(--text-hint-color, rgba(127, 127, 127, 0.8));
 				--chat-muted: var(--text-hint-color, rgba(127, 127, 127, 0.9));
@@ -175,7 +155,7 @@ interface DockRun {
 				align-items: center;
 				gap: 0.625rem;
 				min-width: 0;
-				padding: 0.75rem 0.5rem 0.75rem 1rem;
+				padding: 0.75rem 0.75rem 0.75rem 1.25rem;
 				border-bottom: 1px solid var(--dock-line);
 			}
 			.identity {
@@ -230,7 +210,7 @@ interface DockRun {
 				justify-content: space-between;
 				gap: 0.5rem;
 				width: 100%;
-				padding: 0.625rem 1rem;
+				padding: 0.625rem 1.25rem;
 				border: 0;
 				border-top: 1px solid var(--dock-line);
 				/* The card does not clip (the composer's lists open above it): the row rounds its own corners. */
@@ -262,80 +242,60 @@ interface DockRun {
 				opacity: 0.5;
 			}
 			/*
-			 * The latest messages, grouped as the chat groups them: a picture, the name and the time, then what they
-			 * wrote under the name. The newest stays in sight.
+			 * The latest messages, drawn by the conversation's own message component (it brings its own side padding,
+			 * which the card's other bands match). The newest stays in sight.
 			 */
 			.messages {
-				display: flex;
-				flex-direction: column;
-				gap: 0.75rem;
-				max-height: min(15rem, calc(100vh - 16rem));
-				padding: 0.75rem 1rem 0.25rem;
+				position: relative;
+				/* Room for a picture; the header, the composer and the footer stay in the window. */
+				max-height: min(20rem, calc(100vh - 20rem));
+				padding: 0 0 0.5rem;
 				overflow-y: auto;
+				overflow-x: hidden;
 			}
-			.day {
-				color: var(--gauzy-text-color-2, inherit);
+			/* The day a group of messages was sent: a rule with a pill that sticks to the top, as in the chat. */
+			.day-divider {
+				position: sticky;
+				top: 0.25rem;
+				z-index: 2;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				margin: 1rem 0 0.25rem;
+				pointer-events: none;
+			}
+			.day-divider:first-child {
+				margin-top: 0.75rem;
+			}
+			.day-divider::before {
+				content: '';
+				position: absolute;
+				left: 0;
+				right: 0;
+				top: 50%;
+				border-top: 1px solid var(--chat-border, rgba(127, 127, 127, 0.2));
+				z-index: -1;
+			}
+			.day-divider span {
+				padding: 0.1875rem 0.875rem;
+				border: 1px solid var(--chat-border, rgba(127, 127, 127, 0.25));
+				border-radius: 999px;
+				background: var(--chat-bg, #fff);
+				color: var(--chat-text, inherit);
 				font-size: 0.6875rem;
-				line-height: 1rem;
-				text-align: center;
-			}
-			.run {
-				display: flex;
-				align-items: flex-start;
-				gap: 0.5rem;
-				min-width: 0;
-			}
-			.run-body {
-				flex: 1 1 auto;
-				display: flex;
-				flex-direction: column;
-				gap: 0.125rem;
-				min-width: 0;
-			}
-			/* The name's line is as tall as the picture beside it. */
-			.run-head {
-				display: flex;
-				align-items: baseline;
-				gap: 0.375rem;
-				min-width: 0;
-				line-height: 1.5rem;
-			}
-			.by {
-				overflow: hidden;
-				font-size: 0.8125rem;
-				font-weight: 600;
-				white-space: nowrap;
-				text-overflow: ellipsis;
-			}
-			.time {
-				flex: 0 0 auto;
-				color: var(--gauzy-text-color-2, inherit);
-				font-size: 0.6875rem;
-				font-variant-numeric: tabular-nums;
-			}
-			.text {
-				margin: 0;
-				font-size: 0.8125rem;
-				line-height: 1.25rem;
-				overflow-wrap: anywhere;
-				white-space: pre-wrap;
-			}
-			.text.deleted,
-			.note {
-				color: var(--gauzy-text-color-2, inherit);
-			}
-			.text.deleted {
-				font-style: italic;
+				font-weight: 700;
+				box-shadow: 0 0.0625rem 0.25rem rgba(0, 0, 0, 0.06);
 			}
 			.note {
 				margin: 0;
-				padding: 0.75rem 1rem 0;
+				padding: 0.75rem 1.25rem 0;
+				color: var(--dock-muted);
 				font-size: 0.8125rem;
 				line-height: 1.25rem;
 			}
 			/* The composer's hint line under its frame gives the bottom its room. */
 			.write {
-				padding: 0.75rem 1rem 0.25rem;
+				padding: 0.75rem 1.25rem 0.25rem;
 			}
 		`
 	]
@@ -349,6 +309,13 @@ export class ChatDockComponent {
 
 	private readonly store = inject(Store);
 	private readonly peopleService = inject(ChatPeopleService);
+	private readonly filesStore = inject(ChatFilesStore);
+	private readonly taskStore = inject(ChatTasksService);
+	private readonly translate = inject(TranslateService);
+	private readonly locale = inject(LOCALE_ID);
+
+	/** The conversation's files read so far, for the pictures and files of the messages shown. */
+	protected readonly files = this.filesStore.byDocument;
 
 	private readonly scroller = viewChild<ElementRef<HTMLElement>>('scroller');
 	private readonly composer = viewChild(MessageComposerComponent);
@@ -404,46 +371,66 @@ export class ChatDockComponent {
 		return conversation ? `conversation:${conversation.id}` : null;
 	});
 
-	/** The messages as runs of one author, oldest first. */
-	protected readonly runs = computed<DockRun[]>(() => {
-		const me = this.me();
-		const who = this.person();
-		const people = new Map<string, ChatPerson>(who ? [[who.employeeId, who]] : []);
-		const unknown: ChatPerson = { employeeId: '', userId: null, name: '', imageUrl: null };
-		const runs: DockRun[] = [];
-		let previous: IChatMessageWithRelations | undefined;
-		for (const message of this.messages()) {
-			const line: DockLine = {
-				id: String(message.id),
-				// A message sent without text shows the names of its files, as the conversation list does
-				text: messagePreview(message, people, new Map()),
-				deleted: !!message.deletedAt,
-				at: message.createdAt
-			};
-			const newDay = !previous || !isSameDay(previous.createdAt as Date, message.createdAt as Date);
-			if (!newDay && continuesGroup(previous, message)) {
-				runs[runs.length - 1].lines.push(line);
-			} else {
-				const mine = !!me?.userId && String(message.authorUserId ?? '') === me.userId;
-				runs.push({
-					id: line.id,
-					author: mine && me ? me : (who ?? unknown),
-					mine,
-					at: message.createdAt,
-					day: newDay ? dayOf(message.createdAt as Date) : null,
-					lines: [line]
-				});
-			}
-			previous = message;
+	/** The task summaries read so far, for the task cards of the messages shown. */
+	protected readonly tasks = this.taskStore.summaries;
+
+	/**
+	 * The organization's people, with the person of the card and me added when they are not in it (yet): the authors'
+	 * names and pictures show before the people load, and for someone who is not an employee.
+	 */
+	protected readonly dockPeople = computed<ChatPeople>(() => {
+		const base = this.people();
+		const extra = [this.person(), this.me()].filter((person): person is ChatPerson => !!person);
+		const missing = extra.filter((person) => (person.employeeId && !base.byEmployee.has(person.employeeId)) || (person.userId && !base.byUser.has(person.userId)));
+		if (!missing.length) return base;
+		const byEmployee = new Map(base.byEmployee);
+		const byUser = new Map(base.byUser);
+		for (const person of missing) {
+			if (person.employeeId && !byEmployee.has(person.employeeId)) byEmployee.set(person.employeeId, person);
+			if (person.userId && !byUser.has(person.userId)) byUser.set(person.userId, person);
 		}
-		return runs;
+		return { byEmployee, byUser, list: base.list };
 	});
+
+	/** The messages with their day dividers and whether each continues the previous author's group, as in the chat. */
+	protected readonly rows = computed<DockRow[]>(() => {
+		const messages = this.messages();
+		const today = new Date();
+		const yesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
+		return messages.map((message, index) => {
+			const previous = messages[index - 1];
+			const at = new Date(message.createdAt as Date);
+			const newDay = !previous || !isSameDay(previous.createdAt as Date, at);
+			return {
+				message,
+				day: newDay ? this.dayLabel(at, today, yesterday) : null,
+				continued: !newDay && continuesGroup(previous, message)
+			};
+		});
+	});
+
+	/** The day divider's label, as the conversation words it. */
+	private dayLabel(at: Date, today: Date, yesterday: Date): string {
+		if (isSameDay(at, today)) return this.translate.instant('CHAT.VIEW.TODAY');
+		if (isSameDay(at, yesterday)) return this.translate.instant('CHAT.VIEW.YESTERDAY');
+		return formatDate(at, at.getFullYear() === today.getFullYear() ? 'EEEE, MMMM d' : 'EEEE, MMMM d, y', this.locale);
+	}
 
 	/** The newest message on screen. */
 	private readonly newestId = computed(() => {
 		const messages = this.messages();
 		return messages.length ? String(messages[messages.length - 1].id) : null;
 	});
+
+	/** Whether the list is scrolled to its end (it opens there). */
+	private atBottom = true;
+
+	private scrollToBottom(): void {
+		const element = this.scroller()?.nativeElement;
+		if (!element) return;
+		element.scrollTop = element.scrollHeight;
+		this.atBottom = true;
+	}
 
 	/** The newest message of the other person the conversation was already marked read for. */
 	private readThrough: string | null = null;
@@ -466,9 +453,32 @@ export class ChatDockComponent {
 		// A new newest message is brought in sight; a refresh that changes nothing leaves the reader where they are.
 		effect(() => {
 			this.newestId();
-			setTimeout(() => {
-				const element = this.scroller()?.nativeElement;
-				if (element) element.scrollTop = element.scrollHeight;
+			setTimeout(() => this.scrollToBottom());
+		});
+		// The files the messages carry are read through the conversation (members only), as the chat reads them.
+		effect(() => {
+			const conversation = this.conversation();
+			const messages = this.messages().filter((message) => !message.deletedAt);
+			if (!conversation) return;
+			untracked(() => {
+				this.filesStore.ensureFor(String(conversation.id), messages);
+				this.taskStore.ensure(messages.flatMap((message) => (message.taskReferences ?? []).map((reference) => String(reference.taskId))));
+			});
+		});
+		// A picture that loads after the list was scrolled grows it: a reader at the bottom stays at the bottom.
+		effect((onCleanup) => {
+			const element = this.scroller()?.nativeElement;
+			if (!element) return;
+			const onScroll = () => (this.atBottom = element.scrollHeight - element.scrollTop - element.clientHeight < 32);
+			const onLoad = () => {
+				if (this.atBottom) this.scrollToBottom();
+			};
+			element.addEventListener('scroll', onScroll, { passive: true });
+			// `load` does not bubble: it is caught on its way down.
+			element.addEventListener('load', onLoad, true);
+			onCleanup(() => {
+				element.removeEventListener('scroll', onScroll);
+				element.removeEventListener('load', onLoad, true);
 			});
 		});
 		this.destroyRef.onDestroy(() => {
