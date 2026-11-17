@@ -2,11 +2,13 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { CommandBus } from '@nestjs/cqrs';
 import { Between } from 'typeorm';
 import {
+	ID,
 	ICustomActivity,
 	ITrackingSession,
 	ITrackingPayload,
 	ITrackingSessionResponse,
-	ITimeLog
+	ITimeLog,
+	PermissionsEnum
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
 import { RequestContext } from '../../core/context';
@@ -178,7 +180,10 @@ export class CustomTrackingService extends TenantAwareCrudService<TimeSlot> {
 	}> {
 		const tenantId = RequestContext.currentTenantId();
 		const currentUser = RequestContext.currentUser();
-		const organizationId = currentUser?.employee?.organizationId;
+		// The organization the caller works in, as the JWT strategy validated it. The request's user carries no
+		// `employee` (the user entity has no such relation), so reading the organization from it alone answered every
+		// request with 400; it is kept as the fallback.
+		const organizationId = RequestContext.currentOrganizationId() || currentUser?.employee?.organizationId;
 
 		if (!tenantId || !organizationId) {
 			throw new BadRequestException('Tenant and organization contexts are required');
@@ -198,7 +203,8 @@ export class CustomTrackingService extends TenantAwareCrudService<TimeSlot> {
             }
 		});
 
-		if (!timeSlot) {
+		// A slot the caller may not read answers exactly as a missing one, so its existence does not leak.
+		if (!timeSlot || !(await this.canReadTimeSlotOf(timeSlot.employeeId, organizationId))) {
 			throw new NotFoundException('TimeSlot not found');
 		}
 
@@ -221,6 +227,37 @@ export class CustomTrackingService extends TenantAwareCrudService<TimeSlot> {
 			},
 			trackingSessions: customActivity.trackingSessions
 		};
+	}
+
+	/**
+	 * Whether the caller may read a slot of an employee, in the organization the slot was read in.
+	 *
+	 * As the time-slot reads decide it (`TimeSlotService`): a caller who may act for every employee
+	 * (CHANGE_SELECTED_EMPLOYEE, the default admins) reads every slot, and a caller who may not and has no employee
+	 * record of their own reads none, since time slots are personal (GHSA-6qvm-3wg4-26w4). Anyone else reads their own
+	 * slots and, as the tracking-session read lets a manager read their members' sessions, those of the members of a
+	 * team or project they manage in that organization. The slot's id alone used to be enough, so any TIME_TRACKER
+	 * holder (every default employee) could read a colleague's slot: its tracking sessions and its time entries.
+	 *
+	 * @param slotEmployeeId - The employee the slot belongs to
+	 * @param organizationId - The organization the slot was read in
+	 * @returns true if the caller may read the slot
+	 */
+	private async canReadTimeSlotOf(slotEmployeeId: ID, organizationId: ID): Promise<boolean> {
+		if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+			return true;
+		}
+
+		const currentEmployeeId = RequestContext.currentUser()?.employeeId;
+		if (!currentEmployeeId) {
+			return false;
+		}
+
+		if (slotEmployeeId && slotEmployeeId === currentEmployeeId) {
+			return true;
+		}
+
+		return await this.managedEmployeeService.managesEmployeeInOrganization(slotEmployeeId, organizationId);
 	}
 
 	/**
