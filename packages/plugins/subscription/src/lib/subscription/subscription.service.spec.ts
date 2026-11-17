@@ -7644,6 +7644,36 @@ describe('SubscriptionService — the metadata billing trusts is the service’s
 		expect(created.metadata).toEqual({ note: 'kept' });
 	});
 
+	it('reserves the record of waived prorations: a caller’s metadata neither forges nor erases it', async () => {
+		// `waivedProrations` is the audit trail of plan-change charges the customer was not billed. Unreserved, an
+		// edit could erase it (`{ waivedProrations: [] }`) or plant entries that never happened.
+		const waived = [{ amount: '4.50', currency: 'USD', at: '2026-04-10T00:00:00.000Z', description: 'Upgrade' }];
+		const fixture = subscriptionFixture({
+			subscriptions: [subscriptionRow(SUBSCRIPTION, { metadata: { waivedProrations: waived } })]
+		});
+
+		await fixture.service.applyChanges(SUBSCRIPTION, {
+			metadata: { waivedProrations: [{ amount: '999', currency: 'USD' }], note: 'kept' }
+		} as never);
+
+		expect(fixture.subscription(SUBSCRIPTION)?.metadata).toEqual({ waivedProrations: waived, note: 'kept' });
+
+		const created = await subscriptionFixture({
+			subscriptions: [],
+			items: [],
+			billings: []
+		}).service.createSubscription({
+			planId: PLAN,
+			customerId: CUSTOMER,
+			paymentAccountHolderId: HOLDER,
+			paymentMethodTokenId: TOKEN,
+			items: [{ variantId: VARIANT, quantity: '1', unitPrice: '120' }],
+			metadata: { waivedProrations: [{ amount: '999', currency: 'USD' }], note: 'kept' }
+		} as never);
+
+		expect(created.metadata).toEqual({ note: 'kept' });
+	});
+
 	it('refuses a creation discount one digit past 1, which rounds to 1 as a double (CodeRabbit)', async () => {
 		const fixture = subscriptionFixture({ subscriptions: [], items: [], billings: [] });
 
