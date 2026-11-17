@@ -1,4 +1,4 @@
-import { UseGuards } from '@nestjs/common';
+import { UseGuards, UseInterceptors } from '@nestjs/common';
 import { Args, ID, Int, Query, Resolver } from '@nestjs/graphql';
 import {
 	IActivitiesStatistics,
@@ -31,6 +31,7 @@ import {
 // refuses the decorator with `Invalid guard passed to @UseGuards()`, taking the whole suite down with it.
 import { EmployeeTrackedDataGuard } from '../../shared/guards/employee-tracked-data.guard';
 import { FEATURE_GRAPHQL } from '../../feature/graphql-feature.code';
+import { HiddenProjectRows, HiddenProjectsInterceptor } from '../../organization-project/hidden-projects.interceptor';
 import { StatisticService } from './statistic.service';
 
 /**
@@ -94,6 +95,8 @@ export interface ITimeTrackingActivityLevel {
  */
 @Resolver()
 @UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
+// A private project the caller may not see answers its id and `projectHidden`, as on the routes (ever-co/ever-gauzy#12031)
+@UseInterceptors(HiddenProjectsInterceptor)
 @FeatureFlag(FEATURE_GRAPHQL)
 @Permissions(
 	PermissionsEnum.ADMIN_DASHBOARD_VIEW,
@@ -219,6 +222,7 @@ export class StatisticResolver {
 		PermissionsEnum.ALL_ORG_VIEW
 	)
 	@UseGuards(EmployeeTrackedDataGuard)
+	@HiddenProjectRows({ rootRowsAreProjects: { keep: ['duration', 'durationPercentage'] } })
 	async timeTrackingProjects(
 		@Args('organizationId', { type: () => ID }) organizationId: Id,
 		@Args('startDate', { type: () => Date, nullable: true }) startDate?: Date,

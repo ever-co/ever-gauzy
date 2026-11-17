@@ -1,4 +1,5 @@
-import { Controller, UseGuards, HttpStatus, Get, Query, Post, Body } from '@nestjs/common';
+import { Controller, UseGuards, HttpStatus, Get, Query, Post, Body, UseInterceptors } from '@nestjs/common';
+import { HiddenProjectsInterceptor } from '../../organization-project/hidden-projects.interceptor';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { IGetActivitiesInput, ReportGroupFilterEnum, PermissionsEnum, IActivity } from '@gauzy/contracts';
 import { PermissionGuard, TenantPermissionGuard, EmployeeTrackedDataGuard } from './../../shared/guards';
@@ -13,6 +14,7 @@ import { ActivityQueryDTO } from './dto';
 @ApiTags('Activity')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.TIME_TRACKER, PermissionsEnum.TIMESHEET_EDIT_TIME)
+@UseInterceptors(HiddenProjectsInterceptor)
 @Controller('/timesheet/activity')
 export class ActivityController {
 	constructor(

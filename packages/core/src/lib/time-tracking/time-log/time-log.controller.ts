@@ -9,8 +9,10 @@ import {
 	Query,
 	UseGuards,
 	Delete,
+	UseInterceptors,
 	ValidationPipe
 } from '@nestjs/common';
+import { HiddenProjectRows, HiddenProjectsInterceptor } from '../../organization-project/hidden-projects.interceptor';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult, FindOneOptions, UpdateResult } from 'typeorm';
 import {
@@ -62,6 +64,7 @@ import { TimeLogHistoryService } from './time-log-history.service';
 @ApiTags('TimeLog')
 @UseGuards(TenantBaseGuard, PermissionGuard)
 @Permissions(PermissionsEnum.TIME_TRACKER, PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ALL_ORG_VIEW)
+@UseInterceptors(HiddenProjectsInterceptor)
 @Controller('/timesheet/time-log')
 export class TimeLogController {
 	constructor(
@@ -241,6 +244,8 @@ export class TimeLogController {
 		description: 'Project budget limit not found.'
 	})
 	@UseGuards(EmployeeTrackedDataGuard)
+	// A hidden project keeps the time spent on it; its budget and what is left of it go with its name
+	@HiddenProjectRows({ withheldWithProject: ['budgetType', 'budget', 'remainingBudget', 'spentPercentage'] })
 	@Get('project-budget-limit')
 	@UseValidationPipe({ whitelist: true, transform: true })
 	async getProjectBudgetLimit(@Query() options: TimeLogBudgetQueryDTO) {
