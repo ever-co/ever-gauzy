@@ -57,6 +57,11 @@ export interface IImageCreatePayload {
 	fileName: string
 }
 
+/** The server answered that what was asked for does not exist (a 404). */
+export function isNotFound(error: unknown): boolean {
+	return (error as { status?: number } | null)?.status === 404;
+}
+
 @Injectable({
 	providedIn: 'root'
 })
@@ -478,12 +483,24 @@ export class TimeTrackerService {
 		return firstValueFrom(timeLogs$);
 	}
 
-	async getTimeLogById(timeLogId: string) {
-		const timeLog$ = this.http.get(`${API_PREFIX}/timesheet/time-log/${timeLogId}`).pipe(
+	/**
+	 * The time log, or null when the server no longer has it (deleted from another place, or straight from the
+	 * database): callers decide what a missing log means instead of every refresh and sync failing with a 404.
+	 */
+	async getTimeLogById(timeLogId: string): Promise<ITimeLog | null> {
+		const timeLog$ = this.http.get<ITimeLog>(`${API_PREFIX}/timesheet/time-log/${timeLogId}`).pipe(
 			map((response: any) => response),
 			shareReplay(1)
 		);
-		return firstValueFrom(timeLog$);
+		try {
+			return await firstValueFrom(timeLog$);
+		} catch (error) {
+			if (isNotFound(error)) {
+				this._loggerService.log.warn(`WARN: Time log ${timeLogId} no longer exists on the server`);
+				return null;
+			}
+			throw error;
+		}
 	}
 
 	async getTimeSlot(values: { timeSlotId: string }): Promise<ITimeSlot> {
@@ -517,7 +534,16 @@ export class TimeTrackerService {
 				);
 			this._timeSlotCacheService.setValue(timeSlots$, timeSlotId);
 		}
-		return firstValueFrom(timeSlots$);
+		try {
+			return await firstValueFrom(timeSlots$);
+		} catch (error) {
+			// Deleted since it was captured: nothing to show or to attach screenshots to, which is not an error.
+			if (isNotFound(error)) {
+				this._loggerService.log.warn(`WARN: Time slot ${timeSlotId} no longer exists on the server`);
+				return null;
+			}
+			throw error;
+		}
 	}
 
 	/**

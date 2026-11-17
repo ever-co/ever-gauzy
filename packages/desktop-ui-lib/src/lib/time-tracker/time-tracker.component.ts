@@ -2170,6 +2170,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				fromServer && (generation !== this._captureGeneration || this.hasNewerLocalCapture(res));
 			if (!fromServer) {
 				res = await this.timeTrackerService.getTimeSlot({ timeSlotId: lastTimeSlot.timeSlotId });
+				if (!res) {
+					// The time slot of the last capture no longer exists (deleted on the server): there is nothing
+					// to show for it, and a refresh must not report that as an error.
+					this.clearLastScreenCapture();
+					return;
+				}
 			} else {
 				// A fresh install has no local capture yet, but the server may still hold this employee's
 				// screenshots (taken before the reinstall or on another machine): show the latest ones

@@ -1,4 +1,4 @@
-import { ITimeSlot, TimerSyncStateEnum, TimerActionTypeEnum } from '@gauzy/contracts';
+import { ITimeLog, ITimeSlot, TimerSyncStateEnum, TimerActionTypeEnum } from '@gauzy/contracts';
 import { concatMap, defer, of, repeat, timer as synchronizer } from 'rxjs';
 import { BACKGROUND_SYNC_OFFLINE_INTERVAL } from '../../constants/app.constants';
 import { ElectronService } from '../../electron/services';
@@ -49,8 +49,15 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 
 			let latest = null;
 
+			// What the server holds for the timer's log, read once: null when the log was deleted (from another place,
+			// or straight from the database), which a sync can never complete.
+			let existingTimeLog: ITimeLog | null = null;
+
 			if (timer.isStartedOffline && timer.timelogId) {
 				latest = await this._timeTrackerService.getTimeLogById(timer.timelogId);
+				if (!latest) {
+					return await this._discardForDeletedTimeLog(timer, intervals);
+				}
 			} else if (timer.isStartedOffline && !timer.stoppedAt) {
 				console.log('⏱ - Silent start');
 				this._auditLogService.timerAuditLogInfo(`Silent start for timer ${timer.id} initiated.`);
@@ -83,6 +90,13 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 				});
 			}
 
+			if (!latest && timer.timelogId && (intervals.length > 0 || timer.isStoppedOffline)) {
+				existingTimeLog = await this._timeTrackerService.getTimeLogById(timer.timelogId);
+				if (!existingTimeLog) {
+					return await this._discardForDeletedTimeLog(timer, intervals);
+				}
+			}
+
 			console.log('🛠 - Create queue');
 
 			// Create the queue
@@ -108,7 +122,10 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 			if (timer.isStoppedOffline) {
 				console.log('⏱ - Silent stop');
 				if (!latest && timer.timelogId) {
-					const currentTimeLog = await this._timeTrackerService.getTimeLogById(timer.timelogId);
+					const currentTimeLog = existingTimeLog ?? (await this._timeTrackerService.getTimeLogById(timer.timelogId));
+					if (!currentTimeLog) {
+						return await this._discardForDeletedTimeLog(timer, intervals);
+					}
 					if (currentTimeLog.id && currentTimeLog.isRunning) {
 						this._auditLogService.timerAuditLogInfo(`Silent stop for timer ${timer.id} initiated. Current time log is still running, toggling stop.`);
 						latest = await this._timeTrackerService.toggleApiStop({
@@ -205,6 +222,30 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 				size: this.queue.size,
 				inProgress: false
 			};
+		}
+	}
+
+	/**
+	 * The timer's time log no longer exists on the server, so nothing of this timer can be synced: its time slots
+	 * would have no log to belong to, and asking for the log again only fails again. Its pending work is marked
+	 * synced, so the queue moves on to the next timer instead of retrying this one on every cycle.
+	 */
+	private async _discardForDeletedTimeLog(timer: ISequence['timer'], intervals: ITimeSlot[]): Promise<void> {
+		console.warn(`⚠ - Time log ${timer.timelogId} no longer exists on the server, skipping timer ${timer.id}`);
+		this._auditLogService.timerAuditLogInfo(
+			`Time log ${timer.timelogId} of timer ${timer.id} no longer exists on the server: its pending data is skipped.`
+		);
+		try {
+			for (const interval of intervals) {
+				await this._electronService.ipcRenderer.invoke('UPDATE_SYNCED', { ...interval, remoteId: null });
+			}
+			await this._electronService.ipcRenderer.invoke('UPDATE_SYNCED_TIMER', {
+				lastTimer: { id: timer.timelogId },
+				...timer
+			});
+		} catch (error) {
+			console.error('🚨 - Error marking the timer of a deleted time log as synced', error);
+			this._errorHandlerService.handleError(error);
 		}
 	}
 
