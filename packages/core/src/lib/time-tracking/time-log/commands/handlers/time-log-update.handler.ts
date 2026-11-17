@@ -2,7 +2,7 @@ import { ConflictException, Logger, NotFoundException, Optional } from '@nestjs/
 import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
 import * as moment from 'moment';
 import { Brackets, DataSource, EntityManager, FindOptionsWhere, Repository } from 'typeorm';
-import { ID, ITimeLog, ITimeSlot, ITimesheet, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
+import { ID, ITimeLog, ITimeSlot, ITimesheet, TimeLogType } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/utils';
 import { TimesheetFirstOrCreateCommand, TimesheetRecalculateCommand } from './../../../timesheet/commands';
 import { TimeSlotBulkDeleteCommand } from '../../../time-slot/commands/time-slot-bulk-delete.command';
@@ -14,7 +14,7 @@ import { MultiORM, MultiORMEnum, getORMType } from './../../../../core/utils';
 import { prepareSQLQuery as p } from './../../../../database/database.helper';
 import { TimeLog } from './../../time-log.entity';
 import { assertTimeLogReferencesOfTenant } from '../../time-log-references';
-import { postsHeartbeatSlots } from '../../tracker-source';
+import { postsHeartbeatSlots, takesRangeSlotsOnStop } from '../../tracker-source';
 import { TimeSlot } from '../../../time-slot/time-slot.entity';
 import { TimeLogUpdateCommand } from '../time-log-update.command';
 import { FindTimeLogRatesCommand, TimeLogRatesPart } from '../find-time-log-rates.command';
@@ -459,7 +459,7 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 		if (timeLog.logType === TimeLogType.BREAK) {
 			return false;
 		}
-		if (timeLog.source === TimeLogSourceEnum.WEB_TIMER) {
+		if (takesRangeSlotsOnStop(timeLog.source)) {
 			return true;
 		}
 		if (!postsHeartbeatSlots(timeLog.source)) {
