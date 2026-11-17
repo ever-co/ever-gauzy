@@ -542,8 +542,8 @@ export class InvoiceResolver {
 	 * named `deleteInvoice` may return; the field answers the one fact the command establishes, that
 	 * the removal ran.
 	 *
-	 * `expectedUpdatedAt` is the route's precondition, read as the route reads its query string: the
-	 * document is removed only while it still holds it (ever-co/ever-teams#5382).
+	 * `expectedUpdatedAt` is the precondition the REST route takes in its query string, here an argument:
+	 * the document is removed only while it still holds it (ever-co/ever-teams#5382).
 	 */
 	@Mutation('deleteInvoice')
 	@Permissions(PermissionsEnum.INVOICES_EDIT)
