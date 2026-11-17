@@ -77,7 +77,8 @@ describe('embed helpers', () => {
 			credentialId: CREDENTIAL,
 			employeeId: EMPLOYEE,
 			organizationId: ORG,
-			tenantId: 'tenant'
+			tenantId: 'tenant',
+			origin: null
 		});
 		expect(readEmbedClaims(`Bearer ${sign({ id: 'user' }, 'test-secret')}`)).toBeNull();
 		expect(readEmbedClaims(undefined)).toBeNull();

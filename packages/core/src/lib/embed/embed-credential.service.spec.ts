@@ -12,6 +12,8 @@ const OTHER_TENANT = '7a000000-0000-4000-8000-00000000000b';
 const ORG = '7a000000-0000-4000-8000-0000000000f1';
 const EMPLOYEE = '7a000000-0000-4000-8000-0000000000e1';
 const USER = '7a000000-0000-4000-8000-000000000001';
+// The page origin the organization allows.
+const SITE = 'https://app.northwind.example';
 
 const matches = (row: Record<string, unknown>, where: Record<string, unknown>) =>
 	Object.entries(where).every(([key, value]) =>
@@ -41,7 +43,8 @@ function build() {
 		{} as any,
 		table(users) as any,
 		{} as any,
-		{ issueEmbedSession } as any
+		{ issueEmbedSession } as any,
+		{ isAllowed: jest.fn(async (organizationId: string, origin: string) => organizationId === ORG && origin === SITE) } as any
 	);
 	jest.spyOn(service, 'ormType', 'get').mockReturnValue('typeorm' as any);
 	jest.spyOn(service, 'create').mockImplementation(async (input: any) => {
@@ -91,14 +94,14 @@ describe('EmbedCredentialService', () => {
 		signIn(TENANT);
 		const { secret } = await service.createForOrganization({ name: 'Northwind product', organizationId: ORG });
 
-		const byId = await service.exchange({ credential: secret, employeeId: EMPLOYEE });
-		const byEmail = await service.exchange({ credential: secret, email: 'Lina@Northwind.example' });
+		const byId = await service.exchange({ credential: secret, employeeId: EMPLOYEE, origin: SITE });
+		const byEmail = await service.exchange({ credential: secret, email: 'Lina@Northwind.example', origin: SITE });
 
 		expect(byId.token).toBe('an-embed-token');
 		expect(new Date(byId.expiresAt).getTime() - Date.now()).toBeGreaterThan(14 * 60 * 1000);
 		expect(byEmail.token).toBe('an-embed-token');
 		expect(issueEmbedSession).toHaveBeenCalledWith(
-			expect.objectContaining({ userId: USER, tenantId: TENANT, organizationId: ORG, employeeId: EMPLOYEE })
+			expect.objectContaining({ userId: USER, tenantId: TENANT, organizationId: ORG, employeeId: EMPLOYEE, origin: SITE })
 		);
 	});
 
@@ -110,7 +113,7 @@ describe('EmbedCredentialService', () => {
 		await expect(service.exchange({ credential: 'not-a-credential', employeeId: EMPLOYEE })).rejects.toThrow(UnauthorizedException);
 		await expect(service.exchange({ credential: `gze_${'A'.repeat(43)}`, employeeId: EMPLOYEE })).rejects.toThrow(UnauthorizedException);
 		await service.revoke(id);
-		await expect(service.exchange({ credential: secret, employeeId: EMPLOYEE })).rejects.toThrow(UnauthorizedException);
+		await expect(service.exchange({ credential: secret, employeeId: EMPLOYEE, origin: SITE })).rejects.toThrow(UnauthorizedException);
 	});
 
 	it('answers 403 with a code for a member it cannot act for: unknown, without an account, or with tracking off', async () => {
@@ -118,14 +121,14 @@ describe('EmbedCredentialService', () => {
 		signIn(TENANT);
 		const { secret } = await service.createForOrganization({ name: 'Northwind product', organizationId: ORG });
 
-		await expect(service.exchange({ credential: secret, employeeId: '7a000000-0000-4000-8000-0000000000e9' })).rejects.toThrow(ForbiddenException);
+		await expect(service.exchange({ credential: secret, employeeId: '7a000000-0000-4000-8000-0000000000e9', origin: SITE })).rejects.toThrow(ForbiddenException);
 		employees[0].isTrackingEnabled = false;
-		await expect(service.exchange({ credential: secret, employeeId: EMPLOYEE })).rejects.toMatchObject({
+		await expect(service.exchange({ credential: secret, employeeId: EMPLOYEE, origin: SITE })).rejects.toMatchObject({
 			response: { code: 'EMBED_MEMBER_NOT_ALLOWED' }
 		});
 		employees[0].isTrackingEnabled = true;
 		employees[0].userId = null;
-		await expect(service.exchange({ credential: secret, employeeId: EMPLOYEE })).rejects.toThrow(ForbiddenException);
+		await expect(service.exchange({ credential: secret, employeeId: EMPLOYEE, origin: SITE })).rejects.toThrow(ForbiddenException);
 	});
 
 	it('revokes only a credential of the caller tenant, and the guard sees it at once', async () => {
@@ -141,5 +144,19 @@ describe('EmbedCredentialService', () => {
 
 		expect(await service.isRevoked(id)).toBe(true);
 		expect(await service.listForOrganization(ORG)).toHaveLength(0);
+	});
+
+	it('answers 403 with a code for a page origin the organization does not allow, or none', async () => {
+		const { service, issueEmbedSession } = build();
+		signIn(TENANT);
+		const { secret } = await service.createForOrganization({ name: 'Northwind product', organizationId: ORG });
+
+		for (const origin of ['https://evil.example', `${SITE}/timer`, undefined]) {
+			await expect(service.exchange({ credential: secret, employeeId: EMPLOYEE, origin })).rejects.toMatchObject({
+				response: { code: 'EMBED_ORIGIN_NOT_ALLOWED' }
+			});
+		}
+		expect(issueEmbedSession).not.toHaveBeenCalled();
+		await expect(service.exchange({ credential: secret, employeeId: EMPLOYEE, origin: 'https://APP.northwind.example:443' })).resolves.toHaveProperty('token');
 	});
 });

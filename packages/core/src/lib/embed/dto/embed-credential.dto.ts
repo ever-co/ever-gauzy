@@ -40,6 +40,13 @@ export class ExchangeEmbedCredentialDTO implements IEmbedTokenExchangeInput {
 
 	@ApiPropertyOptional({ type: () => String, description: 'Or the member, by the email of their account.' })
 	email?: string;
+
+	@ApiPropertyOptional({
+		type: () => String,
+		description: "The origin of the page the widget runs in, one of the organization's allowed origins.",
+		example: 'https://app.example.com'
+	})
+	origin?: string;
 }
 
 export class EmbedTokenExchangeResponseDTO implements IEmbedTokenExchangeResponse {

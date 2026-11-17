@@ -1,4 +1,7 @@
 import { decode } from 'jsonwebtoken';
+import { EMBED_ORIGIN_CLAIM } from './embed-origin';
+
+export { EMBED_ORIGIN_CLAIM };
 
 /**
  * The access-token claims that mark a token minted by the embed exchange: the credential behind it and the one member
@@ -12,6 +15,8 @@ export interface IEmbedClaims {
 	employeeId: string;
 	organizationId: string | null;
 	tenantId: string | null;
+	/** The page origin the token was exchanged for; null on a token minted before origins were bound. */
+	origin: string | null;
 }
 
 /**
@@ -55,7 +60,8 @@ export function readEmbedClaims(authorization: string | undefined): IEmbedClaims
 		credentialId,
 		employeeId: String(record[EMBED_EMPLOYEE_CLAIM] ?? ''),
 		organizationId: typeof record['organizationId'] === 'string' ? record['organizationId'] : null,
-		tenantId: typeof record['tenantId'] === 'string' ? record['tenantId'] : null
+		tenantId: typeof record['tenantId'] === 'string' ? record['tenantId'] : null,
+		origin: typeof record[EMBED_ORIGIN_CLAIM] === 'string' ? (record[EMBED_ORIGIN_CLAIM] as string) : null
 	};
 }
 

@@ -43,4 +43,6 @@ export interface IAccessTokenMetadata extends JwtPayload {
 	 */
 	embedCredentialId?: string;
 	embedEmployeeId?: string;
+	/** The page origin an embed token was exchanged for: it works only from there. */
+	embedOrigin?: string;
 }
