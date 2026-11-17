@@ -55,4 +55,48 @@ describe('DeleteTimeSpanHandler: the second part of a split keeps the rates of t
 			expect.objectContaining({ where: { id: 'log-1' }, select: expect.objectContaining({ payRateValue: true }) })
 		);
 	});
+
+	it('files the second part under the tags of the log, which its read of the log leaves out (ever-co/ever-gauzy#12029)', async () => {
+		const tags = [{ id: 'meeting' }, { id: 'design' }];
+		const timeLogRepository = {
+			findOne: jest.fn(async (options: { relations?: { tags?: boolean } }) =>
+				options.relations?.tags ? { id: 'log-1', tags } : { id: 'log-1', ...STORED_RATES }
+			),
+			save: jest.fn(async (timeLog: TimeLog) => timeLog)
+		};
+		const handler = new DeleteTimeSpanHandler(timeLogRepository as any, {} as any, { execute: jest.fn() } as any);
+
+		const secondPart: TimeLog = await (handler as any).createSecondPart(
+			{ ...LOG, tags: undefined },
+			new Date('2026-10-12T11:00:00.000Z'),
+			LOG.stoppedAt
+		);
+
+		expect(secondPart.tags).toEqual(tags);
+	});
+
+	it('keeps the link to a tag that is soft deleted, so a restored tag is on both parts (ever-co/ever-gauzy#12029)', async () => {
+		const live = { id: 'meeting' };
+		const archived = { id: 'retired' };
+		const timeLogRepository = {
+			findOne: jest.fn(async (options: { relations?: { tags?: boolean }; withDeleted?: boolean }) => {
+				if (!options.relations?.tags) {
+					return { id: 'log-1', ...STORED_RATES };
+				}
+				// A plain read leaves the soft deleted tag out of the relation, as the ORM does
+				const tags = options.withDeleted ? [live, archived] : [live];
+				return { id: 'log-1', tags };
+			}),
+			save: jest.fn(async (timeLog: TimeLog) => timeLog)
+		};
+		const handler = new DeleteTimeSpanHandler(timeLogRepository as any, {} as any, { execute: jest.fn() } as any);
+
+		const secondPart: TimeLog = await (handler as any).createSecondPart(
+			{ ...LOG, tags: undefined },
+			new Date('2026-10-12T11:00:00.000Z'),
+			LOG.stoppedAt
+		);
+
+		expect(secondPart.tags).toEqual([live, archived]);
+	});
 });

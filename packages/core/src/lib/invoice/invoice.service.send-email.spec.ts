@@ -20,6 +20,7 @@ function sender(
 		emailInvoice?: jest.Mock;
 		createEstimateEmail?: jest.Mock;
 		forgetInvoiceDelivery?: jest.Mock;
+		confirmDelivery?: jest.Mock;
 		findOrganization?: jest.Mock;
 		pdf?: Buffer | null;
 	} = {}
@@ -27,7 +28,8 @@ function sender(
 	const estimateEmailService = {
 		createEstimateEmail:
 			overrides.createEstimateEmail ?? jest.fn(async () => ({ id: 'estimate-email-1', token: 'estimate-token' })),
-		forgetInvoiceDelivery: overrides.forgetInvoiceDelivery ?? jest.fn(async () => undefined)
+		forgetInvoiceDelivery: overrides.forgetInvoiceDelivery ?? jest.fn(async () => undefined),
+		confirmDelivery: overrides.confirmDelivery ?? jest.fn(async () => undefined)
 	};
 	const organizationService = {
 		findOneByIdString: overrides.findOrganization ?? jest.fn(async () => ({ id: 'organization-1' }))
@@ -227,6 +229,91 @@ describe('InvoiceService.sendEmail — where an invoice went', () => {
 });
 
 /**
+ * The email's row is written before the PDF is rendered and the email handed over, so on its own it records an attempt:
+ * a process stopped in between leaves it behind with nothing sent. The row says the email went (`sentAt`) only once the
+ * transport took it, and whoever asks whether an invoice was emailed reads that (Greptile on ever-co/ever-gauzy#12039).
+ */
+describe('InvoiceService.sendEmail — whether the email went', () => {
+	beforeEach(() => jest.spyOn(console, 'log').mockImplementation(() => undefined));
+	afterEach(() => jest.restoreAllMocks());
+
+	it("confirms the email's row once the transport took the email, and not before", async () => {
+		let accept: (handed: boolean) => void = () => undefined;
+		const { service, emailService, estimateEmailService } = sender({
+			emailInvoice: jest.fn(() => new Promise<boolean>((resolve) => (accept = resolve)))
+		});
+
+		const sending = sendInvoice(service);
+		// The transport has the email and has not taken it yet: the row is still an attempt
+		for (let turn = 0; turn < 20 && emailService.emailInvoice.mock.calls.length === 0; turn++) {
+			await new Promise((resolve) => setImmediate(resolve));
+		}
+		expect(emailService.emailInvoice).toHaveBeenCalledTimes(1);
+		expect(estimateEmailService.confirmDelivery).not.toHaveBeenCalled();
+
+		accept(true);
+
+		await expect(sending).resolves.toEqual({ sent: true });
+		expect(estimateEmailService.confirmDelivery).toHaveBeenCalledWith('estimate-email-1');
+	});
+
+	it('leaves the row an attempt when the process stops between writing it and the mail call', async () => {
+		const { service, emailService, estimateEmailService } = sender();
+		// The process stops while the PDF renders: nothing after it runs
+		jest.spyOn(service, 'generateInvoicePdf').mockReturnValue(new Promise(() => undefined) as never);
+
+		void sendInvoice(service);
+		await new Promise((resolve) => setImmediate(resolve));
+
+		expect(estimateEmailService.createEstimateEmail).toHaveBeenCalledWith('invoice-43', 'billing@client.test', {
+			languageCode: LanguagesEnum.FRENCH
+		});
+		expect(emailService.emailInvoice).not.toHaveBeenCalled();
+		expect(estimateEmailService.confirmDelivery).not.toHaveBeenCalled();
+	});
+
+	it.each([
+		[
+			'the transport refused it',
+			() => ({
+				emailInvoice: jest.fn(async () => {
+					throw new Error('connect ECONNREFUSED smtp.internal.example:587');
+				})
+			})
+		],
+		['the address is of a domain the platform never emails', () => ({ emailInvoice: jest.fn(async () => false) })],
+		['no PDF could be attached', () => ({ pdf: null })]
+	])('confirms nothing when %s', async (_case, overrides) => {
+		const { service, estimateEmailService } = sender(overrides());
+
+		await expect(sendInvoice(service)).resolves.toMatchObject({ sent: false });
+
+		expect(estimateEmailService.confirmDelivery).not.toHaveBeenCalled();
+	});
+
+	it("confirms an estimate's email as well", async () => {
+		const { service, estimateEmailService } = sender();
+
+		await expect(send(service)).resolves.toEqual({ sent: true });
+
+		expect(estimateEmailService.confirmDelivery).toHaveBeenCalledWith('estimate-email-1');
+	});
+
+	it('still answers sent when the confirmation could not be written, and says a recovery may send it again', async () => {
+		const { service, estimateEmailService } = sender({
+			confirmDelivery: jest.fn(async () => {
+				throw new Error('update failed');
+			})
+		});
+
+		await expect(sendInvoice(service)).resolves.toEqual({ sent: true });
+
+		expect(estimateEmailService.forgetInvoiceDelivery).not.toHaveBeenCalled();
+		expect(console.log).toHaveBeenCalledWith(expect.stringContaining('a recovery may email it again'), 'update failed');
+	});
+});
+
+/**
  * An invoice's email links to its public page (ever-co/ever-gauzy#11856): the client opens the invoice there without an
  * account. The link is the invoice's own share token, kept as it is, so a link the client already holds still works.
  */
@@ -283,10 +370,31 @@ describe('InvoiceService — the public link of an invoice', () => {
 	 * `inDatabase`: the token the database holds after the write, read back through the repository that wrote it.
 	 */
 	function linker(read: string | null, inDatabase: string | null = null) {
-		const update = jest.fn(async () => ({ affected: 1 }));
+		const update = jest.fn(async (_where: unknown, _values: unknown) => ({ affected: 1 }));
 		const findOne = jest.fn(async () => ({ id: INVOICE.id, token: inDatabase }));
+		// The transaction the token is written in (ever-co/ever-gauzy#12039): it locks the invoice, writes the token
+		// (recorded by `update`, as the repository's own write was), and moves the invoice's `updatedAt` past HELD_AT
+		const touches: Array<{ updatedAt: Date }> = [];
+		const query: Record<string, unknown> = {};
+		Object.assign(query, {
+			update: () => query,
+			set: (values: { updatedAt: Date }) => {
+				touches.push(values);
+				return query;
+			},
+			where: () => query,
+			andWhere: () => query,
+			callListeners: () => query,
+			execute: async () => ({ affected: 1 })
+		});
+		const manager = {
+			findOne: jest.fn(async () => ({ id: INVOICE.id, updatedAt: HELD_AT })),
+			update: jest.fn(async (_entity: unknown, where: unknown, values: unknown) => update(where, values)),
+			createQueryBuilder: () => query
+		};
+		const transaction = jest.fn(async (work: (inTransaction: typeof manager) => Promise<unknown>) => work(manager));
 		const service = new InvoiceService(
-			{ update, findOne } as never,
+			{ update, findOne, manager: { transaction } } as never,
 			{} as never,
 			{} as never,
 			{} as never,
@@ -297,8 +405,11 @@ describe('InvoiceService — the public link of an invoice', () => {
 		const reads = jest
 			.spyOn(service, 'findOneByIdString')
 			.mockImplementation(async () => ({ ...INVOICE, token: read }) as never);
-		return { service, update, findOne, reads };
+		return { service, update, findOne, reads, touches, transaction };
 	}
+
+	/** The `updatedAt` the invoice holds when the token is written. */
+	const HELD_AT = new Date('2026-11-16T10:20:30.456Z');
 
 	/** The claims of the token a write stored. */
 	const claimsOfWrite = (update: jest.Mock, call: number) =>
@@ -376,6 +487,29 @@ describe('InvoiceService — the public link of an invoice', () => {
 
 		expect(reads).toHaveBeenCalledWith(INVOICE.id);
 		expect(update).toHaveBeenCalledWith({ id: INVOICE.id, tenantId: INVOICE.tenantId }, { token: null });
+	});
+
+	it("moves the invoice's updatedAt past the value it held, in the transaction that writes the token (#12039)", async () => {
+		const revoking = linker('created-token');
+		await revoking.service.revokeLink(INVOICE.id);
+
+		const sending = linker(null, 'written-token');
+		await sending.service.publicLinkTokenOf(INVOICE.id);
+
+		for (const { touches, transaction } of [revoking, sending]) {
+			expect(transaction).toHaveBeenCalledTimes(1);
+			expect(touches).toHaveLength(1);
+			expect(touches[0].updatedAt.getTime()).toBeGreaterThan(HELD_AT.getTime());
+		}
+	});
+
+	it('moves nothing when the token was not written: another send wrote its own first', async () => {
+		const { service, update, touches } = linker(null, 'token-of-the-other-send');
+		update.mockResolvedValue({ affected: 0 });
+
+		await service.publicLinkTokenOf(INVOICE.id);
+
+		expect(touches).toHaveLength(0);
 	});
 
 	it("revokes nothing for an invoice outside the caller's tenant", async () => {

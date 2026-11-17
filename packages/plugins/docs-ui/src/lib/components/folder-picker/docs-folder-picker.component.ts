@@ -10,6 +10,8 @@ export interface IDocsFolderDestination {
 	name: string;
 	depth: number;
 	disabled: boolean;
+	/** Drives the row icon — a page can hold children, but should not look like a folder. */
+	kind?: DocumentKindEnum;
 }
 
 /**
@@ -25,61 +27,134 @@ export interface IDocsFolderDestination {
 @Component({
 	selector: 'gz-docs-folder-picker',
 	template: `
-		<input
-			nbInput
-			fullWidth
-			size="small"
-			type="text"
-			[placeholder]="'DOCS.DIALOGS.MOVE_SEARCH' | translate"
-			[attr.aria-label]="'DOCS.DIALOGS.MOVE_SEARCH' | translate"
-			[(ngModel)]="search"
-		/>
-		<div class="docs-folder-picker-list">
-			@for (destination of filtered; track destination) {
-				<button
-					type="button"
-					class="docs-folder-picker-item"
-					[class.selected]="isSelected(destination)"
-					[disabled]="destination.disabled"
-					[style.padding-left.rem]="0.5 + destination.depth * 1"
-					(click)="select(destination)"
-				>
-					<nb-icon [icon]="destination.id ? 'folder-outline' : 'home-outline'" size="tiny"></nb-icon>
-					{{ destination.name }}
-				</button>
-			}
+		<!-- Search and list in one bordered box, so the picker reads as a single control. -->
+		<div class="docs-folder-picker">
+			<div class="docs-folder-picker-search">
+				<nb-icon icon="search-outline"></nb-icon>
+				<input
+					type="text"
+					[placeholder]="'DOCS.DIALOGS.MOVE_SEARCH' | translate"
+					[attr.aria-label]="'DOCS.DIALOGS.MOVE_SEARCH' | translate"
+					[(ngModel)]="search"
+				/>
+			</div>
+			<div class="docs-folder-picker-list">
+				@for (destination of filtered; track destination) {
+					<button
+						type="button"
+						class="docs-folder-picker-item"
+						[class.selected]="isSelected(destination)"
+						[attr.aria-pressed]="isSelected(destination)"
+						[disabled]="destination.disabled"
+						[style.padding-left.rem]="0.75 + destination.depth * 1"
+						(click)="select(destination)"
+					>
+						<nb-icon class="docs-folder-picker-icon" [icon]="iconFor(destination)"></nb-icon>
+						<span class="docs-folder-picker-name">{{ destination.name }}</span>
+						@if (isSelected(destination)) {
+							<nb-icon class="docs-folder-picker-check" icon="checkmark-outline"></nb-icon>
+						}
+					</button>
+				}
+			</div>
 		</div>
 	`,
 	styles: [
 		`
+			.docs-folder-picker {
+				border: 1px solid var(--border-basic-color-4);
+				border-radius: calc(var(--border-radius, 0.5rem) * 0.75);
+				overflow: hidden;
+			}
+			.docs-folder-picker-search {
+				display: flex;
+				align-items: center;
+				gap: 0.5rem;
+				padding: 0 0.75rem;
+				border-bottom: 1px solid var(--border-basic-color-4);
+				background: var(--input-basic-background-color, var(--background-basic-color-2));
+			}
+			.docs-folder-picker-search nb-icon {
+				flex: 0 0 auto;
+				font-size: 1rem;
+				color: var(--text-hint-color);
+			}
+			/* !important: the app-wide input rules otherwise draw a second bordered
+			   box inside this row, which is already the field's frame. */
+			.docs-folder-picker-search input {
+				flex: 1 1 auto;
+				min-width: 0;
+				height: 2.25rem !important;
+				margin: 0 !important;
+				padding: 0 !important;
+				border: 0 !important;
+				border-radius: 0 !important;
+				outline: none !important;
+				box-shadow: none !important;
+				background: transparent !important;
+				color: var(--text-basic-color);
+				font: inherit;
+				font-size: 0.8125rem;
+			}
+			.docs-folder-picker-search input::placeholder {
+				color: var(--text-hint-color);
+			}
+			.docs-folder-picker-search:focus-within {
+				box-shadow: inset 0 -1px 0 0 var(--color-primary-default);
+			}
 			.docs-folder-picker-list {
-				max-height: 40vh;
+				max-height: 14rem;
 				overflow-y: auto;
-				margin: 0.75rem 0;
+				padding: 0.25rem;
 				display: flex;
 				flex-direction: column;
 			}
 			.docs-folder-picker-item {
 				display: flex;
 				align-items: center;
-				gap: 0.375rem;
-				background: transparent;
+				gap: 0.5rem;
+				min-height: 2rem;
+				padding: 0 0.75rem;
 				border: none;
-				text-align: left;
-				padding: 0.375rem 0.5rem;
-				cursor: pointer;
+				border-radius: calc(var(--border-radius, 0.5rem) / 2);
+				background: transparent;
 				color: var(--text-basic-color);
-				border-radius: 0.25rem;
+				font: inherit;
+				font-size: 0.8125rem;
+				text-align: left;
+				cursor: pointer;
 			}
 			.docs-folder-picker-item:hover:not(:disabled) {
-				background: var(--background-basic-color-2);
+				background: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+			}
+			.docs-folder-picker-item:focus-visible {
+				outline: 2px solid var(--color-primary-default);
+				outline-offset: -2px;
 			}
 			.docs-folder-picker-item.selected {
-				background: var(--color-primary-transparent-200);
+				background: var(--gauzy-active-tint, rgba(126, 126, 143, 0.2));
+				font-weight: 500;
 			}
 			.docs-folder-picker-item:disabled {
 				opacity: 0.4;
 				cursor: not-allowed;
+			}
+			.docs-folder-picker-icon {
+				flex: 0 0 auto;
+				font-size: 1rem;
+				color: var(--text-hint-color);
+			}
+			.docs-folder-picker-name {
+				flex: 1 1 auto;
+				min-width: 0;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+			}
+			.docs-folder-picker-check {
+				flex: 0 0 auto;
+				font-size: 1rem;
+				color: var(--color-primary-default);
 			}
 		`
 	],
@@ -112,6 +187,11 @@ export class DocsFolderPickerComponent extends TranslationBaseComponent implemen
 		const query = this.search.trim().toLowerCase();
 		if (!query) return this.destinations;
 		return this.destinations.filter((destination) => destination.name.toLowerCase().includes(query));
+	}
+
+	iconFor(destination: IDocsFolderDestination): string {
+		if (!destination.id) return 'home-outline';
+		return destination.kind === DocumentKindEnum.PAGE ? 'file-text-outline' : 'folder-outline';
 	}
 
 	isSelected(destination: IDocsFolderDestination): boolean {
@@ -158,7 +238,8 @@ export class DocsFolderPickerComponent extends TranslationBaseComponent implemen
 				id: node.id,
 				name: node.name,
 				depth,
-				disabled: excluded.has(String(node.id)) || inExcludedSubtree
+				disabled: excluded.has(String(node.id)) || inExcludedSubtree,
+				kind: node.kind
 			});
 			if (node.children?.length) {
 				result.push(...this.flatten(node.children, depth + 1));

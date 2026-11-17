@@ -11,9 +11,22 @@ import {
 } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { DocsPresetCounts } from '../../+state/documents.store';
-import { DOCS_CONTENT_SEARCH_MIN_CHARS } from '../../docs.constants';
+import { DOCS_CONTENT_SEARCH_MIN_CHARS, DOCS_FILTER_PANEL_OPEN_KEY } from '../../docs.constants';
 import { IDocumentFacetBucket, IDocumentFacets } from '../../models/docs-api.model';
-import { DocsFilterState, DocsPresetId, foldStatusFacetBuckets } from '../../models/docs-filter.model';
+import {
+	DocsFilterState,
+	DocsPresetId,
+	foldStatusFacetBuckets,
+	hasActiveFilters as filterStateHasActiveFilters
+} from '../../models/docs-filter.model';
+
+function readPanelOpen(): boolean {
+	try {
+		return localStorage.getItem(DOCS_FILTER_PANEL_OPEN_KEY) === 'true';
+	} catch {
+		return false;
+	}
+}
 
 /**
  * Filter bar: multi-select facet dropdowns (with live counts), the create-capable
@@ -49,8 +62,49 @@ export class DocsFilterBarComponent extends TranslationBaseComponent {
 	/** Interpolated into `DOCS.FILTERS.SEARCH_CONTENT_DISABLED` so the hint can never quote a stale number. */
 	public readonly contentSearchMinChars = DOCS_CONTENT_SEARCH_MIN_CHARS;
 
+	/** Facet + date panel visibility — closed by default, remembered per browser. */
+	public panelOpen = readPanelOpen();
+
 	constructor(public readonly translateService: TranslateService) {
 		super(translateService);
+	}
+
+	togglePanel(): void {
+		this.panelOpen = !this.panelOpen;
+		try {
+			localStorage.setItem(DOCS_FILTER_PANEL_OPEN_KEY, String(this.panelOpen));
+		} catch {
+			// Storage unavailable (private mode, quota) — the toggle still works for this visit.
+		}
+	}
+
+	/** How many panel filters are set — shown on the collapsed panel's toggle so none is hidden silently. */
+	get activePanelFilterCount(): number {
+		const value = this.value;
+		if (!value) return 0;
+		return [
+			value.preset,
+			value.searchIn === 'content',
+			value.kind?.length,
+			value.status?.length,
+			value.knowledgeStatus?.length,
+			value.source?.length,
+			value.categoryIds?.length,
+			value.tagIds?.length,
+			value.createdFrom || value.createdTo,
+			value.updatedFrom || value.updatedTo
+		].filter(Boolean).length;
+	}
+
+	/**
+	 * Clear all only shows when there is something to clear (search, preset, any
+	 * filter — or content search, which Clear all resets to name search). The
+	 * shared predicate ignores `searchIn` on purpose (it drives the empty state),
+	 * so the scope is checked here.
+	 */
+	get hasActiveFilters(): boolean {
+		if (!this.value) return false;
+		return filterStateHasActiveFilters(this.value) || this.value.searchIn === 'content';
 	}
 
 	// ─── Facet buckets (fall back to full enums when facets are unloaded) ───

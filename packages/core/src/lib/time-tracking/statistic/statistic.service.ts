@@ -60,6 +60,7 @@ import { TypeOrmTimeLogRepository } from '../time-log/repository/type-orm-time-l
 import { ManagedEmployeeService } from '../../employee/managed-employee.service';
 import { debugInDevelopment } from '../../logger';
 import { moment as timezoneMoment } from '../../core/moment-extend';
+import { withProjectIdKept } from '../../organization-project/hidden-projects';
 import {
 	buildProfileActivityDayBuckets,
 	buildProfileActivityResponse,
@@ -2761,6 +2762,7 @@ export class StatisticService {
 						'time_log.startedAt as startedAt',
 						'time_log.stoppedAt as stoppedAt',
 						'time_log.employeeId as employeeId',
+						'time_log.projectId as projectId',
 						'user.firstName as user_firstName',
 						'user.lastName as user_lastName',
 						'user.imageUrl as user_imageUrl',
@@ -2800,7 +2802,10 @@ export class StatisticService {
 						name: `${row.user_firstName || ''} ${row.user_lastName || ''}`.trim(),
 						imageUrl: withoutDummyImageHost(row.user_imageUrl)
 					},
-					project: { name: row.project_name, imageUrl: withoutDummyImageHost(row.project_imageUrl) },
+					project: withProjectIdKept(
+						{ name: row.project_name, imageUrl: withoutDummyImageHost(row.project_imageUrl) },
+						row.projectId
+					),
 					employeeId: row.employee_id,
 					employee: { id: row.employee_id, kind: row.employee_kind }
 				}));
@@ -2877,7 +2882,7 @@ export class StatisticService {
 						startedAt: timeLog.startedAt,
 						duration: timeLog.duration,
 						user: { ...pick(timeLog.employee.user, ['name', 'imageUrl']) },
-						project: { ...pick(timeLog.project, ['name', 'imageUrl']) },
+						project: withProjectIdKept({ ...pick(timeLog.project, ['name', 'imageUrl']) }, timeLog.projectId),
 						employeeId: timeLog.employee.id,
 						employee: timeLog.employee
 					})

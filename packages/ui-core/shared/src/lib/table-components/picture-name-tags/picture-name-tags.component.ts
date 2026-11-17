@@ -14,10 +14,9 @@ import { NotesWithTagsComponent } from '../notes-with-tags/notes-with-tags.compo
 		></ngx-avatar>
 		@if (rowData?.isDefault) {
 		  <nb-badge
-		    class="color default-badge"
+		    class="color default-badge ga-tag-chip"
 		    position="centered"
-		    [style.background]="background($safeNavigationMigration(rowData?.color))"
-		    [style.color]="backgroundContrast($safeNavigationMigration(rowData?.brandColor))"
+		    [style.--chip-color]="background($safeNavigationMigration(rowData?.color))"
 		    text="Default"
 		  ></nb-badge>
 		}
@@ -25,10 +24,9 @@ import { NotesWithTagsComponent } from '../notes-with-tags/notes-with-tags.compo
 		  <div class="badges-block">
 		    @for (tag of (data | async)?.tags; track tag) {
 		      <nb-badge
-		        class="color"
+		        class="color ga-tag-chip"
 		        position="centered"
-		        [style.background]="background($safeNavigationMigration(tag?.color))"
-		        [style.color]="backgroundContrast($safeNavigationMigration(tag?.color))"
+		        [style.--chip-color]="background($safeNavigationMigration(tag?.color))"
 		        [text]="$safeNavigationMigration(tag?.name)"
 		      ></nb-badge>
 		    }

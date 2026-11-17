@@ -17,6 +17,7 @@ import {
 import { TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR } from '@gauzy/config';
 import { coreEntities } from '../../core/entities';
 import { RequestContext } from '../../core/context/request-context';
+import { mikroOrmOutsideRequest } from '../../core/testing/mikro-orm-outside-request';
 import { CreateTimeLogReminderTable1791000008500 } from '../../database/migrations/1791000008500-CreateTimeLogReminderTable';
 import {
 	TIMER_REMINDER_MAX_RUN_AGE_MS,
@@ -647,5 +648,37 @@ describe('TimerReminderService on SQLite', () => {
 
 		expect(report).toMatchObject({ checked: count, reminded: count });
 		expect(new Set(filed.map(({ input }) => input.entityId)).size).toBe(count);
+	});
+
+	it('under DB_ORM=mikro-orm, files each reminder in a MikroORM request context of its own', async () => {
+		// The notification is written through MikroORM there, which refuses its global EntityManager outside a request:
+		// a sweep is never one
+		const mikroOrm = await mikroOrmOutsideRequest();
+		const writtenThrough: unknown[] = [];
+		const throughMikroOrm = {
+			create: jest.fn(async (input: IEmployeeNotificationCreateInput & { id?: string }) => {
+				writtenThrough.push(await mikroOrm.write());
+				return notifications.create(input);
+			})
+		};
+		const previousOrm = process.env.DB_ORM;
+		process.env.DB_ORM = 'mikro-orm';
+		try {
+			await runningLog(await employee(), { ranFor: 9 * HOUR });
+			await runningLog(await employee(), { ranFor: 9 * HOUR });
+
+			const report = await new TimerReminderService(dataSource, throughMikroOrm as never, mikroOrm.orm).sweep(NOW);
+
+			expect(report).toEqual({ checked: 2, reminded: 2, recovered: 0, failed: 0 });
+			expect(filed.every(({ contextTenantId }) => contextTenantId === TENANT)).toBe(true);
+			// A fresh context for each reminder, never the global EntityManager
+			expect(writtenThrough).toHaveLength(2);
+			expect(writtenThrough[0]).not.toBe(writtenThrough[1]);
+			expect(writtenThrough).not.toContain(mikroOrm.orm.em);
+		} finally {
+			if (previousOrm === undefined) delete process.env.DB_ORM;
+			else process.env.DB_ORM = previousOrm;
+			await mikroOrm.close();
+		}
 	});
 });

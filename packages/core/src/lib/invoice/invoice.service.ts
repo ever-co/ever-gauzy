@@ -2,7 +2,16 @@ import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
 import { Invoice } from './invoice.entity';
 import { FilterQuery } from '@mikro-orm/core';
 import { InvoiceItem } from '../core/entities/internal';
-import { Between, FindOperator, In, IsNull, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
+import {
+	Between,
+	DeleteResult,
+	FindOperator,
+	FindOptionsWhere,
+	In,
+	IsNull,
+	LessThanOrEqual,
+	MoreThanOrEqual
+} from 'typeorm';
 import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { EmailService } from './../email-send/email.service';
 import {
@@ -162,30 +171,33 @@ function statesLinesOfInvoice(change: { id?: ID; invoiceItems?: unknown }): bool
 }
 
 /**
- * Runs a write of an invoice and of the lines it states (`POST /invoices` for an invoice saved before, or
- * `PUT /invoices/:id` with `invoiceItems`), and moves the invoice's `updatedAt` after, in the transaction given (#5243):
- * the lines are rows of their own, saved by cascade, and the invoice's own row may be left as it was, so a
- * precondition stated on it later would not see the change. A new invoice moves nothing more than its creation.
+ * Runs a write of an invoice saved before, and of the lines it states when it states some (`PUT /invoices/:id` and
+ * GraphQL `updateInvoice` without a precondition, `POST /invoices` naming an invoice saved before, a new share link),
+ * and moves the invoice's `updatedAt` after, in the transaction given, under the lock taken before the write
+ * (#5243, ever-co/ever-gauzy#12039). The lines are rows of their own, saved by cascade, and the invoice's own row may be
+ * left as it was; and where the row is written, the ORM's own update date keeps the second on SQLite and MySQL, so two
+ * writes in one second left `updatedAt` equal and a precondition read before the second still held. The new value is
+ * at least a millisecond past the one the invoice held before the write, whatever the write set it to. A new invoice
+ * moves nothing more than its creation.
  *
  * @param transaction The transaction the write runs in.
  * @param change The write, naming the invoice when it names one.
  * @param write The write.
  * @returns What the write answered, with the invoice's new `updatedAt` when it moved.
  */
-async function writingLinesOf(
+async function writingInvoiceOf(
 	transaction: ILinesTransaction,
 	change: { id?: ID; invoiceItems?: unknown },
 	write: () => Promise<IInvoice>
 ): Promise<IInvoice> {
 	await assertNamedLinesOwn(transaction, change);
-	const savedBefore = statesLinesOfInvoice(change)
-		? await lockInvoice(transaction, change.id, RequestContext.currentTenantId())
-		: null;
+	const savedBefore = change.id ? await lockInvoice(transaction, change.id, RequestContext.currentTenantId()) : null;
 	const written = await write();
 	if (!savedBefore) {
 		return written;
 	}
-	const updatedAt = await touchInvoice(transaction, change.id);
+	// Past the value held before the write too: the write can leave the row behind it (see `touchInvoice`)
+	const updatedAt = await touchInvoice(transaction, change.id, savedBefore.updatedAt);
 	return updatedAt ? Object.assign(written, { updatedAt }) : written;
 }
 
@@ -282,7 +294,7 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 				if (leavesFinalStatus) {
 					await holdFinalStatus(transaction, input);
 				}
-				return await writingLinesOf(transaction, input, () => service.create(invoice));
+				return await writingInvoiceOf(transaction, input, () => service.create(invoice));
 			},
 			(created) => created.invoiceItems,
 			billing
@@ -293,13 +305,14 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 	 * Writes a change to an invoice, or a new invoice, keeping a final status: a void invoice or estimate, or a rejected
 	 * estimate, is not taken out of it (see `assertFinalStatusKept`). A change that may do so runs in a transaction that
 	 * first locks the invoice and reads its status, so a void or a rejection another request writes meanwhile is waited
-	 * for and refused against, not written over. A change that states lines of an invoice saved before runs in a
-	 * transaction too, which moves the invoice's `updatedAt` once its lines are saved (see `writingLinesOf`). Any other
-	 * change is written as it was, reading nothing more.
+	 * for and refused against, not written over. A change that names an invoice runs in a transaction too, which locks
+	 * the invoice before the write and moves its `updatedAt` after it, at least a millisecond past the value it held,
+	 * so a precondition read before the change no longer holds even where the ORM's update date keeps the second (see
+	 * `writingInvoiceOf`). A new invoice, named by no id, is written as it was, reading nothing more.
 	 *
 	 * @param change The change, or the new invoice, as the write states it.
 	 * @param write The write, run on the service it is given (the transaction's, when there is one).
-	 * @returns What the write answered.
+	 * @returns What the write answered, with the invoice's new `updatedAt` when it moved.
 	 * @throws BadRequestException when the change states a status the invoice's final status refuses; nothing is saved.
 	 */
 	async writeKeepingFinalStatus(
@@ -308,17 +321,15 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 	): Promise<IInvoice> {
 		const leavesFinalStatus = await this.mayLeaveFinalStatus(change);
 		const savesLines = statesLinesOfInvoice(change) || namedLineIdsOf(change).length > 0;
-		if (!leavesFinalStatus && !savesLines) {
+		const namesInvoice = Boolean(change.id);
+		if (!leavesFinalStatus && !savesLines && !namesInvoice) {
 			return await write(this);
 		}
 		return await inLinesTransaction(this, this.ownRepositories(), async (service, transaction) => {
 			if (leavesFinalStatus) {
 				await holdFinalStatus(transaction, change);
 			}
-			if (!savesLines) {
-				return await write(service);
-			}
-			return await writingLinesOf(transaction, change, () => write(service));
+			return await writingInvoiceOf(transaction, change, () => write(service));
 		});
 	}
 
@@ -351,11 +362,11 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 	}
 
 	/**
-	 * Writes a status action that states no precondition (`PUT /invoices/:id/action` without `expectedUpdatedAt`, and
-	 * GraphQL `updateInvoiceAction`), as it always was written, final status kept, and moves the invoice's `updatedAt`
-	 * in the same transaction (ever-co/ever-teams#5382). The ORM's own update date leaves it as it was when nothing
-	 * changed, and keeps it to the second on SQLite and MySQL; a precondition read before the action would then still
-	 * hold. The response is the one the action always answered, with the new `updatedAt`.
+	 * Writes a status action that states no precondition (`PUT /invoices/:id/action` and `PUT /invoices/:id/estimate`
+	 * without `expectedUpdatedAt`, and their GraphQL twins), as it always was written, final status kept, and moves the
+	 * invoice's `updatedAt` in the same transaction (ever-co/ever-teams#5382). The ORM's own update date leaves it as it
+	 * was when nothing changed, and keeps it to the second on SQLite and MySQL; a precondition read before the action
+	 * would then still hold. The response is the one the action always answered, with the new `updatedAt`.
 	 *
 	 * @param change The action, naming the invoice.
 	 * @returns What the write answered, with the invoice's new `updatedAt`.
@@ -375,6 +386,27 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 			const updatedAt = await touchInvoice(transaction, change.id, stored.updatedAt);
 			return { ...written, updatedAt: updatedAt ?? written.updatedAt } as IInvoice;
 		});
+	}
+
+	/**
+	 * Deletes an invoice only while it still holds the `updatedAt` the caller read (`DELETE /invoices/:id` with
+	 * `expectedUpdatedAt`, GraphQL `deleteInvoice` with the same argument). The invoice is locked, compared and deleted
+	 * in one transaction, so a change saved after the comparison is never deleted unseen. The delete itself is the one
+	 * the route always made ({@link delete}): tenant and organization scoped, its answer the same `DeleteResult`.
+	 *
+	 * @param invoiceId The invoice.
+	 * @param expectedUpdatedAt The `updatedAt` the caller read.
+	 * @returns What the delete answered.
+	 * @throws ApiException 409 (`CONCURRENT_MODIFICATION`) with the invoice as it is now, when it was written since;
+	 * nothing is deleted. 404 when the caller's tenant has no such invoice (one deleted meanwhile, for one).
+	 */
+	async deleteUnchangedSince(invoiceId: ID, expectedUpdatedAt: Date): Promise<DeleteResult> {
+		return await this.answeringChange(() =>
+			inLinesTransaction(this, this.ownRepositories(), async (service, transaction) => {
+				await holdInvoiceUnchanged(transaction, invoiceId, expectedUpdatedAt);
+				return await service.delete(invoiceId);
+			})
+		);
 	}
 
 	/**
@@ -671,6 +703,7 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 				);
 				if (!handed) throw new Error('the address is of a domain the platform never emails');
 
+				await this.confirmDelivery(estimateEmail.id, invoiceNumber);
 				return { sent: true };
 			} catch (error) {
 				console.log(`Error while sending estimate email ${invoiceNumber}: %s`, error?.message);
@@ -704,6 +737,22 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 	}
 
 	/**
+	 * Records on the email's row that the mail transport took it: the row was written before the send, and records an
+	 * attempt until then (a scheduled invoice's recovery reads it, `InvoiceScheduleRunService`). The email went, so a
+	 * failure is logged: the row then stays an attempt, and a recovery may send that invoice once more.
+	 */
+	private async confirmDelivery(estimateEmailId: ID, invoiceNumber: number): Promise<void> {
+		try {
+			await this.estimateEmailService.confirmDelivery(estimateEmailId);
+		} catch (error) {
+			console.log(
+				`Invoice ${invoiceNumber} was emailed, and its email row does not say so, so a recovery may email it again: %s`,
+				error?.message
+			);
+		}
+	}
+
+	/**
 	 * The token of an invoice's public page, for the email that sends the invoice. Every invoice gets one when it is
 	 * created (`InvoiceSubscriber`), and that one is kept: a new token would revoke a link the client may already hold.
 	 * An invoice whose link was revoked gets a new one, because sending the invoice shares it again. The new token is
@@ -726,9 +775,10 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 				tenantId: invoice.tenantId,
 				jti: randomUUID()
 			});
-			await this.typeOrmInvoiceRepository.update(
+			await this.writeTokenMovingUpdatedAt(
+				invoice,
 				{ id: invoice.id, tenantId: invoice.tenantId, token: IsNull() },
-				{ token }
+				token
 			);
 			// Read back from the database through the repository that wrote it: a send at the same moment may have written
 			// its token first, and that is the one that holds. The entity read above may be cached (MikroORM's identity
@@ -753,7 +803,35 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 	 */
 	async revokeLink(invoiceId: ID): Promise<void> {
 		const invoice = await this.findOneByIdString(invoiceId);
-		await this.typeOrmInvoiceRepository.update({ id: invoice.id, tenantId: invoice.tenantId }, { token: null });
+		await this.writeTokenMovingUpdatedAt(invoice, { id: invoice.id, tenantId: invoice.tenantId }, null);
+	}
+
+	/**
+	 * Writes an invoice's share token where `where` still matches, and moves the invoice's `updatedAt` past the value it
+	 * held when it did, under the invoice's lock, in one transaction (ever-co/ever-gauzy#12039): a precondition read
+	 * before the write no longer holds, even where TypeORM's update date keeps the second. Written through TypeORM, the
+	 * repository the token was always written through, whichever ORM the installation runs.
+	 *
+	 * @param invoice The invoice, as the caller read it.
+	 * @param where The rows the token is written to: the invoice, and any condition the write is made under.
+	 * @param token The token, or null to revoke the link.
+	 * @returns Whether the token was written.
+	 */
+	private async writeTokenMovingUpdatedAt(
+		invoice: Pick<IInvoice, 'id' | 'tenantId'>,
+		where: FindOptionsWhere<Invoice>,
+		token: string | null
+	): Promise<boolean> {
+		return await this.typeOrmInvoiceRepository.manager.transaction(async (manager) => {
+			const transaction: ILinesTransaction = { typeOrm: manager };
+			const stored = await lockInvoice(transaction, invoice.id, invoice.tenantId);
+			const { affected } = await manager.update(Invoice, where, { token });
+			if (!stored || !affected) {
+				return false;
+			}
+			await touchInvoice(transaction, invoice.id, stored.updatedAt);
+			return true;
+		});
 	}
 
 	/**
@@ -772,10 +850,11 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 				tenantId: invoice.tenantId,
 				jti: randomUUID()
 			};
-			return await this.create({
-				id: invoiceId,
-				token: signPurposeToken(TokenPurposeEnum.INVOICE_SHARE, payload)
-			});
+			const change = { id: invoiceId, token: signPurposeToken(TokenPurposeEnum.INVOICE_SHARE, payload) };
+			// Under the invoice's lock, moving its `updatedAt` past the value it held, as every write of the row does
+			return await inLinesTransaction(this, this.ownRepositories(), async (service, transaction) =>
+				writingInvoiceOf(transaction, change, () => service.create(change))
+			);
 		} catch (error) {
 			throw new BadRequestException(error);
 		}

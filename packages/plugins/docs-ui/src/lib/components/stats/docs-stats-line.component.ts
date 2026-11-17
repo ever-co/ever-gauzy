@@ -82,23 +82,22 @@ export class DocsStatsLineComponent implements OnInit {
 		// "Processing" everywhere (badge, facet, URL), so the tile folds it too.
 		const processing =
 			(byStatus[DocumentStatusEnum.PROCESSING] ?? 0) + (byStatus[DocumentStatusEnum.UPLOADED] ?? 0);
+		const failed = byStatus[DocumentStatusEnum.FAILED] ?? 0;
+		const needsReview = stats.needsReview ?? 0;
+		// Neutral numbers; colour only flags something that needs attention.
 		const tiles: IDocsStatTile[] = [
 			{ labelKey: 'DOCS.STATS.TOTAL', value: String(stats.total ?? 0), color: '' },
-			{
-				labelKey: 'DOCS.STATS.READY',
-				value: String(byStatus[DocumentStatusEnum.READY] ?? 0),
-				color: 'var(--color-success-default)'
-			},
-			{ labelKey: 'DOCS.STATS.PROCESSING', value: String(processing), color: 'var(--color-info-default)' },
+			{ labelKey: 'DOCS.STATS.READY', value: String(byStatus[DocumentStatusEnum.READY] ?? 0), color: '' },
+			{ labelKey: 'DOCS.STATS.PROCESSING', value: String(processing), color: '' },
 			{
 				labelKey: 'DOCS.STATS.FAILED',
-				value: String(byStatus[DocumentStatusEnum.FAILED] ?? 0),
-				color: 'var(--color-danger-default)'
+				value: String(failed),
+				color: failed > 0 ? 'var(--color-danger-default)' : ''
 			},
 			{
 				labelKey: 'DOCS.STATS.NEEDS_REVIEW',
-				value: String(stats.needsReview ?? 0),
-				color: 'var(--color-warning-default)'
+				value: String(needsReview),
+				color: needsReview > 0 ? 'var(--color-warning-default)' : ''
 			}
 		];
 

@@ -49,29 +49,18 @@
 	}
 }
 
-// The tag's colour: a dot with a soft halo in the same colour, so saturated
-// and pale tags (white "Verified", grey "Urgent") read with equal weight on
-// either theme. `--tag-color` is set per row from the tag's own colour.
-.tag-dot {
-	flex: none;
-	width: 0.5rem;
-	height: 0.5rem;
-	margin: 0 0.125rem;
-	border-radius: 50%;
-	background-color: var(--tag-color);
-	box-shadow:
-		0 0 0 3px color-mix(in srgb, var(--tag-color) 22%, transparent),
-		inset 0 0 0 1px rgba(126, 126, 143, 0.35);
+.tag-chip {
+	display: inline-block;
+	padding: 0.125rem 0.3125rem;
+	border-radius: 0.25rem;
+	background-color: color-mix(in srgb, var(--tag-color) 20%, transparent);
+	color: nb-theme(text-basic-color);
+	font-size: 0.6875rem;
+	font-weight: 500;
+	line-height: 0.75rem;
+	white-space: nowrap;
 }
 
-// ── A selected tag, in the trigger ───────────────────────────────────────────
-// A tinted label rather than a solid fill. Tag colours are user-chosen and
-// fully saturated (pure red, yellow, black), so solid pills with white/black
-// text clashed with each other and with the dark surface. Every chip now has
-// the same weight: a light wash of the tag colour, a hairline ring in it, and
-// text mixed from the tag colour toward the theme's text colour — lighter on
-// dark themes, darker on light ones — so yellow and black stay readable on
-// either.
 .tag-label {
 	position: unset;
 	// `inline-block`, not flex: the name is a bare text node of `nb-badge`, and
@@ -79,24 +68,24 @@
 	display: inline-block;
 	max-width: 100%;
 	margin: 0;
-	padding: 0.125rem 0.5rem;
-	// Same `badge-border-radius` as the tag chips in smart-table rows.
-	font-size: nb-theme(text-caption-font-size);
+	padding: 0.125rem 0.3125rem;
+	border-radius: 0.25rem;
+	font-size: 0.6875rem;
 	font-weight: 500;
-	line-height: 1rem;
+	line-height: 0.75rem;
 	letter-spacing: 0em;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	vertical-align: middle;
-	color: color-mix(in srgb, var(--tag-color) 55%, nb-theme(text-basic-color)) !important;
-	background-color: color-mix(in srgb, var(--tag-color) 14%, transparent) !important;
-	box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tag-color) 40%, transparent);
+	color: nb-theme(text-basic-color) !important;
+	background-color: color-mix(in srgb, var(--tag-color) 20%, transparent) !important;
+	box-shadow: none;
 	// The chip removes the tag on click (`(click)="clear(item)"`).
 	cursor: pointer;
 
 	&:hover {
-		background-color: color-mix(in srgb, var(--tag-color) 24%, transparent) !important;
+		background-color: color-mix(in srgb, var(--tag-color) 28%, transparent) !important;
 	}
 }
 

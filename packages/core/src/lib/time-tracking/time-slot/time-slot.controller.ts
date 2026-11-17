@@ -1,4 +1,17 @@
-import { Controller, UseGuards, Get, Query, HttpStatus, Delete, Param, Post, Body, Put } from '@nestjs/common';
+import {
+	Controller,
+	UseGuards,
+	Get,
+	Query,
+	HttpStatus,
+	Delete,
+	Param,
+	Post,
+	Body,
+	Put,
+	UseInterceptors
+} from '@nestjs/common';
+import { HiddenProjectsInterceptor } from '../../organization-project/hidden-projects.interceptor';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { DeleteResult, FindOneOptions, UpdateResult } from 'typeorm';
@@ -19,6 +32,7 @@ import { DeleteTimeSlotDTO, TimeSlotQueryDTO, UpdateTimeSlotDTO } from './dto';
 @ApiTags('TimeSlot')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.TIME_TRACKER, PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ALL_ORG_VIEW)
+@UseInterceptors(HiddenProjectsInterceptor)
 @Controller('/timesheet/time-slot')
 export class TimeSlotController {
 	constructor(private readonly _timeSlotService: TimeSlotService, private readonly _commandBus: CommandBus) {}

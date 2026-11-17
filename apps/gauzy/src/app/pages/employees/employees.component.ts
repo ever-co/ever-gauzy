@@ -84,6 +84,15 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	private cardsRequest = 0;
 	public readonly employeeKindEnum = EmployeeKindEnum;
 	public loading: boolean = false;
+
+	/**
+	 * The card body's large spinner, for the table only. The card grid draws its own card-shaped placeholder while it
+	 * reads, and keeps its cards while the next page is read: a spinner over either said it twice, or hid the cards.
+	 */
+	public get showsBodySpinner(): boolean {
+		return this.loading && this.dataLayoutStyle !== ComponentLayoutStyleEnum.CARDS_GRID;
+	}
+
 	public organization: IOrganization;
 	public refresh$: Subject<any> = new Subject();
 	public employees$: Subject<any> = this.subject$;

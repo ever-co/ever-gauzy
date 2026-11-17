@@ -77,9 +77,14 @@ export class ManualTimeLogDTO extends TenantOrganizationBaseDTO implements IManu
     @IsBoolean()
     isBillable?: boolean;
 
-    @ApiPropertyOptional({ type: () => Array, isArray: true })
+    /**
+     * The tags to file the time under, by id: tags of the organization or of the whole tenant. Sent on an update, they
+     * replace the log's tags (an empty list takes them all off); left out, the log keeps its own.
+     */
+    @ApiPropertyOptional({ type: () => String, isArray: true })
     @IsOptional()
     @IsArray()
+    @IsUUID('all', { each: true })
     tags?: string[];
 
     @ApiPropertyOptional({ type: () => String })
