@@ -3,7 +3,7 @@
  * `custom-tracking.service.spec.ts`.
  */
 import '../../core/entities/internal';
-import { INestApplication } from '@nestjs/common';
+import { BadRequestException, INestApplication } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { Test } from '@nestjs/testing';
 import * as request from 'supertest';
@@ -588,5 +588,20 @@ describe('GET /timesheet/custom-tracking/session/:sessionId and /active — whos
 		expect(employeesIn(await service.getActiveSessions(undefined, 30, TENANT_ID, ORGANIZATION_ID))).toEqual(
 			[OWN_EMPLOYEE_ID, OWN_EMPLOYEE_ID, COLLEAGUE_EMPLOYEE_ID, COLLEAGUE_EMPLOYEE_ID].sort()
 		);
+	});
+
+	it('answers 400, never sessions, to a request that reached the routes or fields with no user', async () => {
+		// The routes and fields pass no tenant, and the tenant of a request is its user's: a request with no user (were
+		// the global `AuthGuard` ever bypassed, as the guards are in this spec) has none, so it is refused before any read.
+		caller = { user: null, permissions: [] };
+		const resolver = new CustomTrackingResolver(service);
+
+		await request(app.getHttpServer()).get(`/api/timesheet/custom-tracking/session/${SHARED_SESSION}`).expect(400);
+		await request(app.getHttpServer())
+			.get('/api/timesheet/custom-tracking/active')
+			.query({ employeeId: COLLEAGUE_EMPLOYEE_ID })
+			.expect(400);
+		await expect(resolver.trackingSessionsBySessionId(SHARED_SESSION)).rejects.toBeInstanceOf(BadRequestException);
+		await expect(resolver.activeTrackingSessions()).rejects.toBeInstanceOf(BadRequestException);
 	});
 });
