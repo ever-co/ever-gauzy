@@ -19,6 +19,7 @@ describe('EmployeeUpdateHandler — the tracking switch the screen showed', () =
 
 	let publish: jest.Mock;
 	let create: jest.Mock;
+	let writeUnderTrackingSwitchAsSeen: jest.Mock;
 	let stored: Record<string, unknown>;
 	let handler: EmployeeUpdateHandler;
 
@@ -41,8 +42,12 @@ describe('EmployeeUpdateHandler — the tracking switch the screen showed', () =
 		create = jest.fn(async (entity) => entity);
 		const employeeService = {
 			findOneByIdString: jest.fn(async () => stored),
-			create
+			create,
+			// The comparison made with the write has its own spec (tracking-switch-as-seen.orm-parity.spec.ts)
+			writeUnderTrackingSwitchAsSeen: jest.fn()
 		};
+		writeUnderTrackingSwitchAsSeen = employeeService.writeUnderTrackingSwitchAsSeen;
+		writeUnderTrackingSwitchAsSeen.mockImplementation(async (_id, _expected, write) => write(employeeService));
 		handler = new EmployeeUpdateHandler(employeeService as never, {} as never, { publish } as never);
 
 		jest.spyOn(RequestContext, 'currentUser').mockReturnValue({
@@ -82,6 +87,24 @@ describe('EmployeeUpdateHandler — the tracking switch the screen showed', () =
 		expect(publish).toHaveBeenCalledTimes(1);
 	});
 
+	it('makes the save under the switch the screen showed, compared again with the write', async () => {
+		await save({ isTrackingEnabled: false, expectedIsTrackingEnabled: true } as IEmployeeUpdateInput);
+
+		expect(writeUnderTrackingSwitchAsSeen).toHaveBeenCalledWith(ID, true, expect.any(Function));
+		expect(create).toHaveBeenCalledTimes(1);
+	});
+
+	it('answers the 409 of a switch saved after the check as the 409 it is', async () => {
+		writeUnderTrackingSwitchAsSeen.mockRejectedValue(
+			new ConflictException({ message: 'changed', code: TRACKING_SWITCH_CHANGED })
+		);
+
+		expect(
+			await refusalCodeOf({ isTrackingEnabled: false, expectedIsTrackingEnabled: true } as IEmployeeUpdateInput)
+		).toBe(TRACKING_SWITCH_CHANGED);
+		expect(publish).not.toHaveBeenCalled();
+	});
+
 	it('reads a stored switch that is not true as off, as the timer does', async () => {
 		stored.isTrackingEnabled = null;
 
@@ -94,6 +117,7 @@ describe('EmployeeUpdateHandler — the tracking switch the screen showed', () =
 		await save({ isTrackingEnabled: false } as IEmployeeUpdateInput);
 
 		expect(create.mock.calls[0][0].isTrackingEnabled).toBe(false);
+		expect(writeUnderTrackingSwitchAsSeen).not.toHaveBeenCalled();
 		expect(publish).toHaveBeenCalledTimes(1);
 	});
 });

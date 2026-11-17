@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException } from '@nestjs/common';
 import {
 	BaseEntityEnum,
 	checkAgentExitLogoutRestrictionChange,
@@ -273,14 +273,27 @@ export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateComm
 		// switch an admin made in between stays. This save then never turns the tracking on or off itself.
 		const keepsTracking = !mayTurnTrackingOfEmployee(employee);
 
+		// The check above answers a screen that was stale already. A switch another admin saves after it is caught by the
+		// write: under the switch the screen showed, the employee is compared again under lock in the save's
+		// transaction, and the save is made only when the switch is still that one.
+		const expected = input.expectedIsTrackingEnabled;
+		const saysWhatItSaw = expected !== undefined && expected !== null;
+
 		let saved: IEmployee;
 		try {
 			// Use `create` to save the entity, ensuring ManyToMany relations are persisted
-			const write = () => this._employeeService.create({ ...changes, id });
+			const save = (service: EmployeeService) => service.create({ ...changes, id });
+			const write = saysWhatItSaw
+				? () => this._employeeService.writeUnderTrackingSwitchAsSeen(id, expected, save)
+				: () => save(this._employeeService);
 			saved = keepsTracking ? await keepingTrackingAtWrite(id, write) : await write();
 		} catch (error) {
 			// Handle any errors during the update process
-			if (error instanceof BadRequestException || error instanceof ForbiddenException) {
+			if (
+				error instanceof BadRequestException ||
+				error instanceof ForbiddenException ||
+				error instanceof ConflictException
+			) {
 				throw error;
 			}
 			throw new BadRequestException(error.message || 'Failed to update employee profile.');

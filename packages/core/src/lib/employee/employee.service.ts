@@ -64,6 +64,7 @@ import { assertCurrentUserBelongsToOrganization } from '../user-organization/ass
 import { callerEmployeeId, changesPayRate, findStoredPayRates, mayReadPayRateOf } from './pay-rate';
 import { isSameId } from './own-rates';
 import { keepsTimeLogRates, MemberRatesSent, repriceMemberTime } from '../time-tracking/time-log/time-log-repricing';
+import { writeUnderTrackingSwitchAsSeen } from '../time-tracking/timer/tracking-switch-as-seen';
 
 /**
  * Columns the employees table can be sorted by. Any other `order` key from the query string is ignored.
@@ -99,6 +100,34 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			input.description = sanitizeRichHtml(input.description);
 		}
 		return await super.create(employee);
+	}
+
+	/**
+	 * Runs a write of the employee under the tracking switch the caller's screen showed (`expectedIsTrackingEnabled`,
+	 * ever-co/ever-gauzy#11830): the employee is read again under lock in the write's transaction, and the write is made
+	 * there only when their switch is still the one the screen showed, so another admin's switch saved after the
+	 * caller's check is never undone (see `writeUnderTrackingSwitchAsSeen`). A switch stored without a value reads as
+	 * off, as the timer reads it. Without an expectation, the write runs as before.
+	 *
+	 * @param id The employee.
+	 * @param expected The switch the caller's screen showed, if it says.
+	 * @param write The write, made on the service it is given: on TypeORM, a view of this one in the transaction.
+	 * @returns What the write answered.
+	 * @throws ConflictException With the code TRACKING_SWITCH_CHANGED when the stored switch differs; nothing is written.
+	 */
+	public async writeUnderTrackingSwitchAsSeen<R>(
+		id: ID,
+		expected: boolean | null | undefined,
+		write: (service: EmployeeService) => Promise<R>
+	): Promise<R> {
+		return await writeUnderTrackingSwitchAsSeen(
+			this,
+			{ typeOrm: this.typeOrmEmployeeRepository, mikroOrm: this.mikroOrmEmployeeRepository },
+			{ id, tenantId: RequestContext.currentTenantId() ?? undefined },
+			(isTrackingEnabled) => isTrackingEnabled === true,
+			expected,
+			write
+		);
 	}
 
 	/**
