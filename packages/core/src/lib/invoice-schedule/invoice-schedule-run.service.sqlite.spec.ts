@@ -38,6 +38,7 @@ import {
 	User,
 	UserOrganization
 } from '../core/entities/internal';
+import { mikroOrmOutsideRequest } from '../core/testing/mikro-orm-outside-request';
 import { NOT_ON_LIVE_INVOICE_PARAMETERS, notOnLiveInvoice } from '../invoice-item/invoice-item-billed-time';
 import { InvoiceService } from '../invoice/invoice.service';
 import { InvoiceScheduleRunService, scheduledInvoiceIdOf } from './invoice-schedule-run.service';
@@ -735,7 +736,79 @@ describe('InvoiceScheduleRunService on SQLite', () => {
 			sendSucceeds = false;
 			await service.sweep(new Date('2026-11-01T06:00:00Z'));
 			const [draft] = await madeInvoices();
-			// The email went and its delivery was recorded; the process stopped before marking the invoice Sent
+			// The email went and the transport's taking it was recorded; the process stopped before marking it Sent
+			await insertRow(EstimateEmail, {
+				tenantId: TENANT,
+				organizationId: ORGANIZATION,
+				invoiceId: draft.id,
+				email: 'billing@acme.test',
+				token: 'token',
+				expireDate: new Date('2026-11-08T00:00:00Z'),
+				sentAt: new Date('2026-11-01T06:00:05Z')
+			});
+			await dataSource
+				.getRepository(InvoiceScheduleRun)
+				.update(
+					{ invoiceScheduleId: SCHEDULE },
+					{ status: InvoiceScheduleRunStatusEnum.CLAIMED, invoiceId: null }
+				);
+			sentEmails = [];
+
+			await service.sweep(new Date('2026-11-01T07:30:00Z'));
+
+			expect(sentEmails).toEqual([]);
+			expect((await madeInvoices())[0].status).toBe('SENT');
+			expect(await runs()).toMatchObject([{ status: InvoiceScheduleRunStatusEnum.SENT, invoiceId: draft.id }]);
+		},
+		TIMEOUT
+	);
+
+	it(
+		'sends a draft whose email row was written but never sent: the process stopped before the mail call (Greptile on #12039)',
+		async () => {
+			await schedule({ sendInvoice: true });
+			await track(MARIE, '2026-10-05', '09:00', 3);
+			sendSucceeds = false;
+			await service.sweep(new Date('2026-11-01T06:00:00Z'));
+			const [draft] = await madeInvoices();
+			// The email's row names the invoice from its creation, before the PDF is rendered and the mail handed over:
+			// the process stopped in between, so the row is there and nothing went
+			await insertRow(EstimateEmail, {
+				tenantId: TENANT,
+				organizationId: ORGANIZATION,
+				invoiceId: draft.id,
+				email: 'billing@acme.test',
+				token: 'token',
+				expireDate: new Date('2026-11-08T00:00:00Z')
+			});
+			await dataSource
+				.getRepository(InvoiceScheduleRun)
+				.update(
+					{ invoiceScheduleId: SCHEDULE },
+					{ status: InvoiceScheduleRunStatusEnum.CLAIMED, invoiceId: null }
+				);
+			sentEmails = [];
+			sendSucceeds = true;
+
+			const report = await service.sweep(new Date('2026-11-01T07:30:00Z'));
+
+			// An attempted send is no delivery: the client gets the invoice now, and only then is it marked Sent
+			expect(sentEmails).toEqual([{ email: 'billing@acme.test', invoiceId: draft.id }]);
+			expect((await madeInvoices())[0].status).toBe('SENT');
+			expect(report).toMatchObject({ invoiced: 1, sent: 1, failed: 0 });
+			expect(await runs()).toMatchObject([{ status: InvoiceScheduleRunStatusEnum.SENT, invoiceId: draft.id }]);
+		},
+		TIMEOUT
+	);
+
+	it(
+		'keeps a draft whose email row was written but never sent a draft, and says so, when sending it again fails',
+		async () => {
+			await schedule({ sendInvoice: true });
+			await track(MARIE, '2026-10-05', '09:00', 3);
+			sendSucceeds = false;
+			await service.sweep(new Date('2026-11-01T06:00:00Z'));
+			const [draft] = await madeInvoices();
 			await insertRow(EstimateEmail, {
 				tenantId: TENANT,
 				organizationId: ORGANIZATION,
@@ -754,9 +827,15 @@ describe('InvoiceScheduleRunService on SQLite', () => {
 
 			await service.sweep(new Date('2026-11-01T07:30:00Z'));
 
-			expect(sentEmails).toEqual([]);
-			expect((await madeInvoices())[0].status).toBe('SENT');
-			expect(await runs()).toMatchObject([{ status: InvoiceScheduleRunStatusEnum.SENT, invoiceId: draft.id }]);
+			expect(sentEmails).toEqual([{ email: 'billing@acme.test', invoiceId: draft.id }]);
+			expect((await madeInvoices())[0].status).toBe('DRAFT');
+			expect(await runs()).toMatchObject([
+				{
+					status: InvoiceScheduleRunStatusEnum.NOT_SENT,
+					reason: InvoiceScheduleRunReasonEnum.EMAIL_NOT_SENT,
+					invoiceId: draft.id
+				}
+			]);
 		},
 		TIMEOUT
 	);
@@ -857,6 +936,57 @@ describe('InvoiceScheduleRunService on SQLite', () => {
 					invoiceId: invoice.id
 				}
 			]);
+		},
+		TIMEOUT
+	);
+
+	it(
+		'under DB_ORM=mikro-orm, reads the author, and makes and sends the invoice, in a MikroORM request context of its own (Greptile on #12039)',
+		async () => {
+			// The author is read, and the invoice's email row written, through MikroORM there, which refuses its global
+			// EntityManager outside a request: a sweep is never one
+			const mikroOrm = await mikroOrmOutsideRequest();
+			const writtenThrough: unknown[] = [];
+			const users = service['userService'] as unknown as { getIfExists: (id: ID) => Promise<unknown> };
+			const authorThroughMikroOrm = {
+				getIfExists: async (id: ID) => {
+					writtenThrough.push(await mikroOrm.write());
+					return users.getIfExists(id);
+				}
+			};
+			const sendingThroughMikroOrm = Object.create(invoices) as InvoiceService;
+			sendingThroughMikroOrm.sendEmail = async (...args: Parameters<InvoiceService['sendEmail']>) => {
+				writtenThrough.push(await mikroOrm.write());
+				return invoices.sendEmail(...args);
+			};
+			const onMikroOrm = new InvoiceScheduleRunService(
+				dataSource,
+				authorThroughMikroOrm as never,
+				service['roleAuthorizationService'],
+				service['timeLogService'],
+				sendingThroughMikroOrm,
+				mikroOrm.orm
+			);
+			const previousOrm = process.env.DB_ORM;
+			process.env.DB_ORM = 'mikro-orm';
+			try {
+				await schedule({ sendInvoice: true });
+				await track(MARIE, '2026-10-05', '09:00', 3);
+
+				const report = await onMikroOrm.sweep(new Date('2026-11-01T06:00:00Z'));
+
+				expect(report).toMatchObject({ invoiced: 1, sent: 1, failed: 0 });
+				const [invoice] = await madeInvoices();
+				expect(sentEmails).toEqual([{ email: 'billing@acme.test', invoiceId: invoice.id }]);
+				// One context of the run's own, opened before the author is read; never the global EntityManager
+				expect(writtenThrough).toHaveLength(2);
+				expect(writtenThrough[1]).toBe(writtenThrough[0]);
+				expect(writtenThrough).not.toContain(mikroOrm.orm.em);
+			} finally {
+				if (previousOrm === undefined) delete process.env.DB_ORM;
+				else process.env.DB_ORM = previousOrm;
+				await mikroOrm.close();
+			}
 		},
 		TIMEOUT
 	);

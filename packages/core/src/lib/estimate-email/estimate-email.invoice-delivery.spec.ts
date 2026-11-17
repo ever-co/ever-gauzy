@@ -64,4 +64,22 @@ describe('EstimateEmailService — where an invoice went', () => {
 			languageCode: null
 		});
 	});
+
+	it('writes no delivery on the row it creates: the email has not gone yet', async () => {
+		const { target, saved } = service();
+
+		await target.createEstimateEmail('invoice-43', 'billing@client.test', { languageCode: 'fr' });
+
+		expect(saved[0].sentAt).toBeUndefined();
+	});
+
+	it('records when the transport took the email, once it did', async () => {
+		const { target } = service();
+
+		await target.confirmDelivery('estimate-email-1');
+
+		expect((target as unknown as { update: jest.Mock }).update).toHaveBeenCalledWith('estimate-email-1', {
+			sentAt: expect.any(Date)
+		});
+	});
 });

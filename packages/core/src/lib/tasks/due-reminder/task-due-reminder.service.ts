@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
+import { MikroORM } from '@mikro-orm/core';
 import { Brackets, DataSource, In, IsNull, LessThanOrEqual } from 'typeorm';
 import {
 	BaseEntityEnum,
@@ -109,7 +110,9 @@ function claimTimeOf(now: Date): Date {
  *   unfiled for a while (its process stopped in between) is taken over by a later sweep, which files it under the same
  *   id unless a notification of that id exists. A due date moved since is a new row, so it is reminded of again.
  * - **Tenant by tenant.** Each notification is filed in a request context of the task's own tenant and organization,
- *   for the assignee, whose preferences are read in that tenant: nothing crosses a tenant.
+ *   for the assignee, whose preferences are read in that tenant: nothing crosses a tenant. Under DB_ORM=mikro-orm it
+ *   is also filed in a MikroORM request context of its own, since no request opened one (see
+ *   `runInTimerReminderContext`).
  */
 @Injectable()
 export class TaskDueReminderService {
@@ -125,7 +128,9 @@ export class TaskDueReminderService {
 
 	constructor(
 		private readonly dataSource: DataSource,
-		private readonly notifications: EmployeeNotificationService
+		private readonly notifications: EmployeeNotificationService,
+		/** Opens the MikroORM request context a notification is written in under DB_ORM=mikro-orm. */
+		@Optional() private readonly orm?: MikroORM
 	) {}
 
 	/**
@@ -400,7 +405,8 @@ export class TaskDueReminderService {
 			await runInTimerReminderContext(
 				{ tenantId: row.tenantId, organizationId: row.organizationId },
 				() => this.notifications.create(input),
-				'Task due reminder'
+				'Task due reminder',
+				this.orm
 			);
 		} catch (error) {
 			if (!(await this.isFiled(claim.employeeNotificationId, row.tenantId))) {

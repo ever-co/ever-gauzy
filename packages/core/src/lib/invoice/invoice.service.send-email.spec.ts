@@ -20,6 +20,7 @@ function sender(
 		emailInvoice?: jest.Mock;
 		createEstimateEmail?: jest.Mock;
 		forgetInvoiceDelivery?: jest.Mock;
+		confirmDelivery?: jest.Mock;
 		findOrganization?: jest.Mock;
 		pdf?: Buffer | null;
 	} = {}
@@ -27,7 +28,8 @@ function sender(
 	const estimateEmailService = {
 		createEstimateEmail:
 			overrides.createEstimateEmail ?? jest.fn(async () => ({ id: 'estimate-email-1', token: 'estimate-token' })),
-		forgetInvoiceDelivery: overrides.forgetInvoiceDelivery ?? jest.fn(async () => undefined)
+		forgetInvoiceDelivery: overrides.forgetInvoiceDelivery ?? jest.fn(async () => undefined),
+		confirmDelivery: overrides.confirmDelivery ?? jest.fn(async () => undefined)
 	};
 	const organizationService = {
 		findOneByIdString: overrides.findOrganization ?? jest.fn(async () => ({ id: 'organization-1' }))
@@ -223,6 +225,82 @@ describe('InvoiceService.sendEmail — where an invoice went', () => {
 
 		await expect(sendInvoice(service)).resolves.toEqual({ sent: false, reason: 'EMAIL_NOT_SENT' });
 		expect(console.log).toHaveBeenCalledWith(expect.stringContaining('may go to that address'), 'update failed');
+	});
+});
+
+/**
+ * The email's row is written before the PDF is rendered and the email handed over, so on its own it records an attempt:
+ * a process stopped in between leaves it behind with nothing sent. The row says the email went (`sentAt`) only once the
+ * transport took it, and whoever asks whether an invoice was emailed reads that (Greptile on ever-co/ever-gauzy#12039).
+ */
+describe('InvoiceService.sendEmail — whether the email went', () => {
+	beforeEach(() => jest.spyOn(console, 'log').mockImplementation(() => undefined));
+	afterEach(() => jest.restoreAllMocks());
+
+	it("confirms the email's row once the transport took the email, and not before", async () => {
+		const { service, emailService, estimateEmailService } = sender();
+
+		await expect(sendInvoice(service)).resolves.toEqual({ sent: true });
+
+		expect(estimateEmailService.confirmDelivery).toHaveBeenCalledWith('estimate-email-1');
+		expect(estimateEmailService.confirmDelivery.mock.invocationCallOrder[0]).toBeGreaterThan(
+			emailService.emailInvoice.mock.invocationCallOrder[0]
+		);
+	});
+
+	it('leaves the row an attempt when the process stops between writing it and the mail call', async () => {
+		const { service, emailService, estimateEmailService } = sender();
+		// The process stops while the PDF renders: nothing after it runs
+		jest.spyOn(service, 'generateInvoicePdf').mockReturnValue(new Promise(() => undefined) as never);
+
+		void sendInvoice(service);
+		await new Promise((resolve) => setImmediate(resolve));
+
+		expect(estimateEmailService.createEstimateEmail).toHaveBeenCalledWith('invoice-43', 'billing@client.test', {
+			languageCode: LanguagesEnum.FRENCH
+		});
+		expect(emailService.emailInvoice).not.toHaveBeenCalled();
+		expect(estimateEmailService.confirmDelivery).not.toHaveBeenCalled();
+	});
+
+	it.each([
+		[
+			'the transport refused it',
+			() => ({
+				emailInvoice: jest.fn(async () => {
+					throw new Error('connect ECONNREFUSED smtp.internal.example:587');
+				})
+			})
+		],
+		['the address is of a domain the platform never emails', () => ({ emailInvoice: jest.fn(async () => false) })],
+		['no PDF could be attached', () => ({ pdf: null })]
+	])('confirms nothing when %s', async (_case, overrides) => {
+		const { service, estimateEmailService } = sender(overrides());
+
+		await expect(sendInvoice(service)).resolves.toMatchObject({ sent: false });
+
+		expect(estimateEmailService.confirmDelivery).not.toHaveBeenCalled();
+	});
+
+	it("confirms an estimate's email as well", async () => {
+		const { service, estimateEmailService } = sender();
+
+		await expect(send(service)).resolves.toEqual({ sent: true });
+
+		expect(estimateEmailService.confirmDelivery).toHaveBeenCalledWith('estimate-email-1');
+	});
+
+	it('still answers sent when the confirmation could not be written, and says a recovery may send it again', async () => {
+		const { service, estimateEmailService } = sender({
+			confirmDelivery: jest.fn(async () => {
+				throw new Error('update failed');
+			})
+		});
+
+		await expect(sendInvoice(service)).resolves.toEqual({ sent: true });
+
+		expect(estimateEmailService.forgetInvoiceDelivery).not.toHaveBeenCalled();
+		expect(console.log).toHaveBeenCalledWith(expect.stringContaining('a recovery may email it again'), 'update failed');
 	});
 });
 

@@ -1,5 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
+import { MikroORM, RequestContext as MikroOrmRequestContext } from '@mikro-orm/core';
 import { DataSource, In, IsNull, MoreThan } from 'typeorm';
 import * as moment from 'moment';
 import 'moment-timezone';
@@ -29,6 +30,7 @@ import {
 	UserOrganization
 } from '../core/entities/internal';
 import { isUniqueViolation } from '../core/errors/unique-violation';
+import { getORMType, MultiORMEnum } from '../core/utils';
 import { invoiceTimeZoneOf } from '../invoice/invoice-date.util';
 import { InvoiceService } from '../invoice/invoice.service';
 import { CURRENT_MEMBERSHIP } from '../organization-project/organization-project-rate.service';
@@ -174,7 +176,8 @@ export class InvoiceScheduleRunService {
 		private readonly userService: UserService,
 		private readonly roleAuthorizationService: RoleAuthorizationService,
 		private readonly timeLogService: TimeLogService,
-		private readonly invoiceService: InvoiceService
+		private readonly invoiceService: InvoiceService,
+		@Optional() private readonly orm?: MikroORM
 	) {}
 
 	/**
@@ -412,8 +415,24 @@ export class InvoiceScheduleRunService {
 	/**
 	 * Runs work with the access of the schedule's author, as their own request would: inside a request context of
 	 * theirs, read again now. An author who can no longer make invoices of the organization makes nothing.
+	 *
+	 * Under DB_ORM=mikro-orm the author and the time are read through MikroORM, which refuses its global EntityManager
+	 * outside a request: the author is then read, and the work done, in a MikroORM request context of its own, as the
+	 * API's requests do.
 	 */
 	private async asAuthor(
+		schedule: InvoiceSchedule,
+		work: (author: IAuthenticatedUser) => Promise<IRunEnd>
+	): Promise<IRunEnd> {
+		const runsOnMikroOrm = !!this.orm && getORMType() === MultiORMEnum.MikroORM;
+		if (runsOnMikroOrm) {
+			return await MikroOrmRequestContext.create(this.orm.em, () => this.asAuthorNow(schedule, work));
+		}
+		return await this.asAuthorNow(schedule, work);
+	}
+
+	/** `asAuthor`, once the ORM's own context is open. */
+	private async asAuthorNow(
 		schedule: InvoiceSchedule,
 		work: (author: IAuthenticatedUser) => Promise<IRunEnd>
 	): Promise<IRunEnd> {
@@ -439,13 +458,23 @@ export class InvoiceScheduleRunService {
 	}
 
 	/**
-	 * Sends the draft a stopped process saved and did not send, unless the invoice's own email went already (its
-	 * delivery is recorded): then it is only marked Sent, and the client gets no second email.
+	 * Sends the draft a stopped process saved and did not send, unless the invoice's own email went already: then it is
+	 * only marked Sent, and the client gets no second email.
+	 *
+	 * The email went when one of the invoice's email rows says the mail transport took it (`sentAt`). A row that names
+	 * the invoice without saying so records an attempt, not a delivery: its row is written before the PDF is rendered
+	 * and the mail is handed over, so a process stopped in between leaves it behind with nothing sent, and the draft is
+	 * sent again. A process stopped after the transport took the email and before it wrote `sentAt` leaves the same
+	 * row, so its client may get the invoice twice: a second email is the lesser harm next to an invoice marked Sent
+	 * that never went.
 	 */
 	private async sendSaved(schedule: InvoiceSchedule, saved: Invoice, author: IAuthenticatedUser): Promise<IRunEnd> {
-		const delivered = await this.dataSource.getRepository(EstimateEmail).count({
-			where: { invoiceId: saved.id, tenantId: schedule.tenantId }
-		});
+		const delivered = await this.dataSource
+			.getRepository(EstimateEmail)
+			.createQueryBuilder('delivery')
+			.where({ invoiceId: saved.id, tenantId: schedule.tenantId })
+			.andWhere('delivery.sentAt IS NOT NULL')
+			.getCount();
 		if (delivered > 0) {
 			await this.markSent(saved);
 			return { status: InvoiceScheduleRunStatusEnum.SENT, invoiceId: saved.id };
