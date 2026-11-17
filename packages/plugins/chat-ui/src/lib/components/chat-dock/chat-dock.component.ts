@@ -4,14 +4,15 @@ import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { NbIconModule } from '@nebular/theme';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { EMPTY, Observable, of, Subscription, timer } from 'rxjs';
-import { catchError, distinctUntilChanged, exhaustMap, map, switchMap } from 'rxjs/operators';
+import { EMPTY, merge, Observable, of, Subscription } from 'rxjs';
+import { auditTime, catchError, distinctUntilChanged, filter, map, switchMap } from 'rxjs/operators';
 import { IChatConversationWithState, IChatMessageWithRelations, IOrganization, IUser, PermissionsEnum } from '@gauzy/contracts';
 import { Store, ToastrService } from '@gauzy/ui-core/core';
-import { CHAT_LINK, CHAT_MESSAGES_POLL_MS } from '../../chat-ui.constants';
-import { ChatPerson, continuesGroup, isSameDay, memberEmployeeIds, mergeMessages, newNonce, userName } from '../../chat-ui.helpers';
+import { CHAT_DOCK_PAGE_SIZE, CHAT_LINK, CHAT_LIVE_AUDIT_MS, CHAT_MESSAGES_POLL_MS } from '../../chat-ui.constants';
+import { ChatPerson, continuesGroup, isSameDay, memberEmployeeIds, mergeKeepingUnchanged, mergeMessages, newNonce, userName } from '../../chat-ui.helpers';
 import { ChatDockService } from '../../services/chat-dock.service';
 import { ChatFilesStore } from '../../services/chat-files.store';
+import { ChatLiveService, isTabVisible } from '../../services/chat-live.service';
 import { ChatPeople, ChatPeopleService, EMPTY_PEOPLE } from '../../services/chat-people.service';
 import { ChatTasksService } from '../../services/chat-tasks.service';
 import { ChatUiService } from '../../services/chat-ui.service';
@@ -302,6 +303,7 @@ interface DockRow {
 })
 export class ChatDockComponent {
 	private readonly api = inject(ChatUiService);
+	private readonly live = inject(ChatLiveService);
 	private readonly dock = inject(ChatDockService);
 	private readonly router = inject(Router);
 	private readonly toastr = inject(ToastrService);
@@ -341,7 +343,7 @@ export class ChatDockComponent {
 	);
 
 	protected readonly conversation = signal<IChatConversationWithState | null>(null);
-	private readonly messages = signal<IChatMessageWithRelations[]>([]);
+	private readonly messages = signal<readonly IChatMessageWithRelations[]>([]);
 	protected readonly failed = signal(false);
 	protected readonly sending = signal(false);
 	/** Bumped after a send: the composer clears. */
@@ -499,7 +501,7 @@ export class ChatDockComponent {
 		this.request = this.api.direct([employeeId]).subscribe({
 			next: ({ conversation }) => {
 				this.conversation.set(conversation);
-				this.request = this.api.messages(conversation.id).subscribe({
+				this.request = this.api.messages(conversation.id, { limit: CHAT_DOCK_PAGE_SIZE }).subscribe({
 					next: (page) => {
 						this.accept(page.messages);
 						this.poll(conversation);
@@ -516,17 +518,23 @@ export class ChatDockComponent {
 	}
 
 	/**
-	 * Reads the newest page again every few seconds while the tab is seen. The whole page, not only what follows the
-	 * last message on screen: a message of mine added by `send()` may be newer than one of theirs not fetched yet, and
-	 * a message already shown may have been edited or deleted since.
+	 * Reads the newest page again while the tab is seen, as the conversation follows itself: on each chat event of
+	 * this conversation (a few close together read once), when the stream resumes or the tab is shown again, and on
+	 * the chat's poll ticks — every few seconds where events do not stream, a rare safety net where they do. The whole
+	 * page, not only what follows the last message on screen: a message of mine added by `send()` may be newer than
+	 * one of theirs not fetched yet, and a message already shown may have been edited or deleted since.
 	 */
 	private poll(conversation: IChatConversationWithState): void {
-		this.polling = timer(CHAT_MESSAGES_POLL_MS, CHAT_MESSAGES_POLL_MS)
+		const id = String(conversation.id);
+		const events$ = this.live.hints$.pipe(
+			filter((hint) => hint.conversationId === id),
+			auditTime(CHAT_LIVE_AUDIT_MS)
+		);
+		this.polling = merge(this.live.ticks(CHAT_MESSAGES_POLL_MS), events$, this.live.catchUp$)
 			.pipe(
-				exhaustMap(() => {
-					if (typeof document !== 'undefined' && document.hidden) return EMPTY;
-					return this.api.messages(conversation.id).pipe(catchError(() => EMPTY));
-				})
+				filter(() => isTabVisible()),
+				// A newer reason to read wins: what an event announced is in the read that follows it.
+				switchMap(() => this.api.messages(id, { limit: CHAT_DOCK_PAGE_SIZE }).pipe(catchError(() => EMPTY)))
 			)
 			.subscribe((page) => {
 				this.failed.set(false);
@@ -535,20 +543,21 @@ export class ChatDockComponent {
 	}
 
 	/**
-	 * Puts a page into the card (a message already shown takes its new state), then marks the conversation read up
-	 * to the last message on screen when the other person wrote something new: never further, so what arrives
-	 * meanwhile stays unread, and not while the tab is hidden, when nothing was seen.
+	 * Puts a page into the card (a message already shown takes its new state; one the page did not change keeps its
+	 * object, so its view is not drawn again, and a page that changed nothing changes nothing), then marks the
+	 * conversation read up to the last message on screen when the other person wrote something new: never further,
+	 * so what arrives meanwhile stays unread, and not while the tab is hidden, when nothing was seen.
 	 */
 	private accept(incoming: readonly IChatMessageWithRelations[]): void {
 		if (incoming.length === 0) return;
-		const messages = mergeMessages(this.messages(), incoming);
+		const messages = mergeKeepingUnchanged(this.messages(), incoming);
 		this.messages.set(messages);
 		const conversation = this.conversation();
 		const me = this.me()?.userId ?? null;
 		const last = messages[messages.length - 1];
 		const theirs = [...messages].reverse().find((message) => String(message.authorUserId ?? '') !== me);
 		if (!conversation || !last || !theirs || String(theirs.id) === this.readThrough) return;
-		if (typeof document !== 'undefined' && document.hidden) return;
+		if (!isTabVisible()) return;
 		const through = String(theirs.id);
 		this.readThrough = through;
 		this.api
