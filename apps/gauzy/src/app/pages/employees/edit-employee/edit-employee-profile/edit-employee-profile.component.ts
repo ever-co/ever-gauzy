@@ -3,7 +3,16 @@ import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { debounceTime, filter, firstValueFrom, Subject, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { FeatureEnum, ID, IEmployee, IEmployeeUpdateInput, IUserUpdateInput, PermissionsEnum } from '@gauzy/contracts';
+import {
+	FeatureEnum,
+	ID,
+	IEmployee,
+	IEmployeeUpdateInput,
+	IImageAsset,
+	IUser,
+	IUserUpdateInput,
+	PermissionsEnum
+} from '@gauzy/contracts';
 import {
 	EmployeesService,
 	EmployeeStore,
@@ -16,6 +25,12 @@ import {
 	UsersService
 } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+
+/** The person's picture after a change: the uploaded photo, or none and the placeholder that replaced it. */
+export interface IUpdatedAvatar {
+	image: IImageAsset | null;
+	imageUrl: string | null;
+}
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -34,7 +49,7 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent imple
 	employeeName: string;
 	subject$: Subject<any> = new Subject();
 
-	@Output() updatedImage = new EventEmitter<any>();
+	@Output() updatedImage = new EventEmitter<IUpdatedAvatar>();
 
 	constructor(
 		public readonly translateService: TranslateService,
@@ -317,11 +332,18 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent imple
 		if (user) {
 			try {
 				// Update the user using userService
-				await this._userService.update(this.selectedEmployee.user.id, user);
+				const updated: IUser = await this._userService.update(this.selectedEmployee.user.id, user);
 
-				if (!!user.image) {
-					// Emit event for updated image (assuming this emits an event when the image is updated)
-					this.updatedImage.emit(user.image);
+				// A removed photo is `imageId: null` together with an emptied `imageUrl`: the server answers
+				// with the placeholder that replaces it.
+				const photoRemoved = user.imageId === null && 'imageUrl' in user && !user.imageUrl;
+
+				if (!!user.image || photoRemoved) {
+					// Tell the page header which picture to show now.
+					this.updatedImage.emit({
+						image: user.image ?? null,
+						imageUrl: user.image?.fullUrl || updated?.imageUrl || null
+					});
 				}
 
 				// Show success message based on whether email was updated or not
