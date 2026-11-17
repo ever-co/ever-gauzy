@@ -7657,8 +7657,11 @@ describe('SubscriptionService — the metadata billing trusts is the service’s
 		];
 
 		for (const metadata of stated) {
+			// A copy: an edit that changed the stored record in place must not move the expectation with it.
 			const fixture = subscriptionFixture({
-				subscriptions: [subscriptionRow(SUBSCRIPTION, { metadata: { waivedProrations: waived } })]
+				subscriptions: [
+					subscriptionRow(SUBSCRIPTION, { metadata: { waivedProrations: structuredClone(waived) } })
+				]
 			});
 
 			await fixture.service.applyChanges(SUBSCRIPTION, { metadata } as never);
