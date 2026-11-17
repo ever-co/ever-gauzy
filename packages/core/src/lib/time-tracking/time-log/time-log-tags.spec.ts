@@ -114,6 +114,11 @@ describe('time log tags', () => {
 	});
 
 	describe('timeLogTagsOf', () => {
+		const MEETING = '00000000-0000-4000-8000-0000000000a1';
+		const EVERYWHERE = '00000000-0000-4000-8000-0000000000a2';
+		const THEIRS = '00000000-0000-4000-8000-0000000000a3';
+		const UNKNOWN = '00000000-0000-4000-8000-0000000000a4';
+
 		const managerWith = (
 			tags: Array<{ id: string; organizationId: string | null; name?: string; color?: string | null }>
 		) => {
@@ -123,33 +128,62 @@ describe('time log tags', () => {
 
 		it('takes the tags of the organization and of the whole tenant', async () => {
 			const { manager, find } = managerWith([
-				{ id: 'everywhere', organizationId: null, name: 'everywhere', color: null },
-				{ id: 'meeting', organizationId: ORGANIZATION, name: 'meeting', color: '#2563eb' }
+				{ id: EVERYWHERE, organizationId: null, name: 'everywhere', color: null },
+				{ id: MEETING, organizationId: ORGANIZATION, name: 'meeting', color: '#2563eb' }
 			]);
 
 			await expect(
-				timeLogTagsOf(manager, ['meeting', 'everywhere'], { tenantId: TENANT, organizationId: ORGANIZATION })
+				timeLogTagsOf(manager, [MEETING, EVERYWHERE], { tenantId: TENANT, organizationId: ORGANIZATION })
 			).resolves.toEqual([
-				{ id: 'meeting', name: 'meeting', color: '#2563eb' },
-				{ id: 'everywhere', name: 'everywhere', color: null }
+				{ id: MEETING, name: 'meeting', color: '#2563eb' },
+				{ id: EVERYWHERE, name: 'everywhere', color: null }
 			]);
 			expect(find.mock.calls[0][0].where.tenantId).toBe(TENANT);
 		});
 
 		it('refuses a tag of another organization, or one the tenant does not have, and names it', async () => {
 			const { manager } = managerWith([
-				{ id: 'meeting', organizationId: ORGANIZATION },
-				{ id: 'theirs', organizationId: 'organization-2' }
+				{ id: MEETING, organizationId: ORGANIZATION },
+				{ id: THEIRS, organizationId: 'organization-2' }
 			]);
 
-			const refusal = await timeLogTagsOf(manager, ['meeting', 'theirs', 'unknown'], {
+			const refusal = await timeLogTagsOf(manager, [MEETING, THEIRS, UNKNOWN], {
 				tenantId: TENANT,
 				organizationId: ORGANIZATION
 			}).catch((error) => error);
 
 			expect(refusal).toBeInstanceOf(BadRequestException);
 			expect(refusal.getResponse()).toEqual(
-				expect.objectContaining({ code: TIME_LOG_TAG_NOT_FOUND, tagIds: ['theirs', 'unknown'] })
+				expect.objectContaining({ code: TIME_LOG_TAG_NOT_FOUND, tagIds: [THEIRS, UNKNOWN] })
+			);
+		});
+
+		it('refuses a value that is not a tag id with the 400, without sending it to the database', async () => {
+			const { manager, find } = managerWith([]);
+
+			const refusal = await timeLogTagsOf(manager, ['meeting'], {
+				tenantId: TENANT,
+				organizationId: ORGANIZATION
+			}).catch((error) => error);
+
+			expect(refusal).toBeInstanceOf(BadRequestException);
+			expect(refusal.getResponse()).toEqual(
+				expect.objectContaining({ code: TIME_LOG_TAG_NOT_FOUND, tagIds: ['meeting'] })
+			);
+			expect(find).not.toHaveBeenCalled();
+		});
+
+		it('reads only the tag ids among the values sent, and names the others in the refusal', async () => {
+			const { manager, find } = managerWith([{ id: MEETING, organizationId: ORGANIZATION }]);
+
+			const refusal = await timeLogTagsOf(manager, [MEETING, 'not a tag'], {
+				tenantId: TENANT,
+				organizationId: ORGANIZATION
+			}).catch((error) => error);
+
+			expect(find.mock.calls[0][0].where.id.value).toEqual([MEETING]);
+			expect(refusal.getResponse()).toEqual(
+				expect.objectContaining({ code: TIME_LOG_TAG_NOT_FOUND, tagIds: ['not a tag'] })
 			);
 		});
 

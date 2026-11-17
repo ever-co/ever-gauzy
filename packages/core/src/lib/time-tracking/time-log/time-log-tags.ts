@@ -17,6 +17,9 @@ export const TIME_LOG_TAG_NOT_FOUND = 'TIME_LOG_TAG_NOT_FOUND';
 /** Logs per tag read: keeps the IN list within every database's limits. */
 const TAG_READ_CHUNK = 1000;
 
+/** A tag id: the only form a `uuid` column takes. Any other value is refused before it reaches the database. */
+const TAG_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 /** Where a time log is written: the tags it may carry are of its tenant, and of its organization or of no one. */
 export interface ITimeLogTagScope {
 	tenantId: ID;
@@ -71,10 +74,16 @@ export async function timeLogTagsOf(manager: EntityManager, tagIds: ID[], scope:
 			tagIds
 		});
 	}
-	const found = await manager.getRepository(Tag).find({
-		select: { id: true, organizationId: true, name: true, color: true },
-		where: { id: In(tagIds), tenantId: scope.tenantId }
-	});
+	// Only tag ids are read: a GraphQL start sends its tags unvalidated, and PostgreSQL refuses any other value in a
+	// `uuid` column. The others stay out of `usable`, so the refusal below names them.
+	const wellFormedIds = tagIds.filter((id) => TAG_ID_PATTERN.test(String(id)));
+	let found: Tag[] = [];
+	if (wellFormedIds.length > 0) {
+		found = await manager.getRepository(Tag).find({
+			select: { id: true, organizationId: true, name: true, color: true },
+			where: { id: In(wellFormedIds), tenantId: scope.tenantId }
+		});
+	}
 	// Ids compared in their canonical form: PostgreSQL finds a tag sent in capitals and answers its id in lowercase
 	const usable = new Set(
 		found
