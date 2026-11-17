@@ -37,4 +37,10 @@ export interface IAccessTokenMetadata extends JwtPayload {
 	 * `auth/user-api-token/user-api-token-session.ts`).
 	 */
 	apiTokenId?: string;
+	/**
+	 * Set only on a token the embed exchange minted: the credential behind it and the one member it acts for (see
+	 * `embed/embed-session.ts`).
+	 */
+	embedCredentialId?: string;
+	embedEmployeeId?: string;
 }

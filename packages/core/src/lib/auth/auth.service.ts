@@ -765,6 +765,30 @@ export class AuthService extends SocialAuthService {
 	 * @returns The signed access token.
 	 * @throws UnauthorizedException when any of that does not hold.
 	 */
+	/**
+	 * Mints the token an embed credential is exchanged for (`embed/`): an ordinary access token, judged like every
+	 * sign-in's, for the member's user in the credential's organization, carrying the claims that hold it to the timer
+	 * (`EmbedSessionGuard`), living only until `expiresAt`, with no refresh token.
+	 *
+	 * @returns The signed access token.
+	 */
+	public async issueEmbedSession(input: {
+		userId: ID;
+		tenantId: ID;
+		organizationId: ID;
+		credentialId: ID;
+		employeeId: ID;
+		expiresAt: Date;
+	}): Promise<string> {
+		const { userId, tenantId, organizationId, credentialId, employeeId, expiresAt } = input;
+		return await this.getJwtAccessToken(
+			{ id: userId, tenantId },
+			organizationId,
+			{ embedCredentialId: credentialId, embedEmployeeId: employeeId },
+			expiresAt
+		);
+	}
+
 	public async issueUserApiTokenSession(input: {
 		userId: ID;
 		tenantId: ID;
@@ -2377,7 +2401,12 @@ export class AuthService extends SocialAuthService {
 				// Only the OAuth-app code exchange passes it: the client and scopes the user approved (oauth-app-scope.ts).
 				...(metadata?.oauthApp && { oauthApp: metadata.oauthApp }),
 				// Only the API token exchange passes it: the API token behind this session (user-api-token-session.ts).
-				...(metadata?.apiTokenId && { apiTokenId: metadata.apiTokenId })
+				...(metadata?.apiTokenId && { apiTokenId: metadata.apiTokenId }),
+				// Only the embed exchange passes them: the credential and the member (embed/embed-session.ts).
+				...(metadata?.embedCredentialId && {
+					embedCredentialId: metadata.embedCredentialId,
+					embedEmployeeId: metadata.embedEmployeeId
+				})
 			};
 
 			// Generate the JWT access token using the payload
@@ -2603,7 +2632,7 @@ export class AuthService extends SocialAuthService {
 		userId: ID,
 		metadata?: IAccessTokenMetadata
 	): Promise<Partial<IUserSessionClaims>> {
-		const isDelegated = !!metadata?.apiTokenId || !!metadata?.oauthApp;
+		const isDelegated = !!metadata?.apiTokenId || !!metadata?.oauthApp || !!metadata?.embedCredentialId;
 		if (isDelegated) {
 			return {};
 		}
