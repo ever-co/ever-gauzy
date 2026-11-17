@@ -74,6 +74,27 @@ describe('ListFilterStateService with the real router', () => {
 		expect(service.restore('status')).toEqual({ id: 's1', name: 'Open' });
 	});
 
+	it('keeps giving them back for the visit, and again after the next Back', async () => {
+		await leaveAndReturn(async () => {
+			location.back();
+			await new Promise((resolve) => setTimeout(resolve));
+		});
+
+		// The list rebuilt its table settings: the new filters ask again and get the same values.
+		expect(service.restore('title')).toBe('login bug');
+		expect(service.restore('title')).toBe('login bug');
+
+		// The user clears one, opens another row and comes Back.
+		service.record('status', null);
+		await router.navigateByUrl('/tasks/43');
+		location.back();
+		await new Promise((resolve) => setTimeout(resolve));
+
+		expect(router.url).toBe('/tasks');
+		expect(service.restore('title')).toBe('login bug');
+		expect(service.restore('status')).toBeUndefined();
+	});
+
 	it('restores the filters after Back even when the app rewrote the query meanwhile', async () => {
 		service.record('title', 'login bug');
 		await router.navigateByUrl('/tasks/42?organizationId=1');

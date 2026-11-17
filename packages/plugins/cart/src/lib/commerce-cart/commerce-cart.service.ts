@@ -2110,6 +2110,9 @@ export class CommerceCartService extends CartCrudService<CommerceCart> {
 			currency: cart.currency,
 			channelId: cart.channelId,
 			customerId: cart.customerId,
+			// The cart itself, so a promotion this cart already reserved is not refused for the buyer's own
+			// reservation of it (CodeRabbit on #12057).
+			cartId: cart.id,
 			codes,
 			lines: lines.map((line) => ({
 				id: line.id,

@@ -12,12 +12,6 @@ import { merge } from 'rxjs';
 import { distinctUntilChanged, map } from 'rxjs/operators';
 import { Store } from '../store/store.service';
 
-/** What the page a history step is opening may take back, once per column. */
-interface Restorable {
-	key: string;
-	values: Map<string, unknown>;
-}
-
 /** A navigation to another page that has started and not yet ended. */
 interface PendingNavigation {
 	id: number;
@@ -25,8 +19,8 @@ interface PendingNavigation {
 	fromKey: string;
 	/** Opened by Back or Forward. */
 	popstate: boolean;
-	/** What the page it leaves could still take back, for a navigation that does not happen. */
-	previousRestorable: Restorable | null;
+	/** The page whose filters took their values back before it started, for a navigation that does not happen. */
+	previousRestoredKey: string | null;
 }
 
 /**
@@ -43,6 +37,11 @@ interface PendingNavigation {
  * The router's trigger is known only while a navigation starts and the table renders its filters long after, so the
  * service watches the navigation events itself. It must be created at startup (see the app module) to see the first
  * navigation; one created later restores nothing until the next history step.
+ *
+ * A page may build its filters more than once in a visit: one that rebuilds its table settings after the first render
+ * (to drop a column the user may not see, to add one the organization turns on) gets new filters from the table. Each
+ * of them reads the same value back for as long as the user stays on the page, so a re-created filter shows what the
+ * list is still filtered by.
  */
 @Injectable({
 	providedIn: 'root'
@@ -53,7 +52,8 @@ export class ListFilterStateService {
 
 	/** Filter values per list page (its path, without query or fragment), then per column id. */
 	private readonly _saved = new Map<string, Map<string, unknown>>();
-	private _restorable: Restorable | null = null;
+	/** The page the last history step opened: its filters take back what they held, until the user leaves it. */
+	private _restoredKey: string | null = null;
 	private _pending: PendingNavigation | null = null;
 
 	constructor() {
@@ -78,17 +78,19 @@ export class ListFilterStateService {
 	}
 
 	/**
-	 * The value a column's filter takes back on this page, once: the page was opened by Back or Forward and the
-	 * column had a filter when the user left. Nothing otherwise.
+	 * The value a column's filter takes back on this page: the page was opened by Back or Forward and the column had
+	 * a filter when the user left. Nothing otherwise.
+	 *
+	 * The same value every time it is asked during the visit, so a filter the page re-creates shows what the list is
+	 * filtered by. A filter the user changes or clears since reads that instead: a cleared one stays cleared.
 	 */
 	restore(columnId: string): unknown {
-		const restorable = this._restorable;
-		if (!restorable || restorable.key !== this._currentKey()) {
+		const key = this._currentKey();
+		if (this._restoredKey !== key) {
 			return undefined;
 		}
-		const value = restorable.values.get(columnId);
-		restorable.values.delete(columnId);
-		return value;
+		// The page's own entry, which `record` keeps in step with the user's choices on this visit.
+		return this._saved.get(key)?.get(columnId);
 	}
 
 	/** A column's filter now holds `value` on the current page; an empty value clears it. */
@@ -115,9 +117,9 @@ export class ListFilterStateService {
 			return;
 		}
 		const popstate = event.navigationTrigger === 'popstate';
-		this._pending = { id: event.id, fromKey, popstate, previousRestorable: this._restorable };
+		this._pending = { id: event.id, fromKey, popstate, previousRestoredKey: this._restoredKey };
 		// Set before the page's filters are created, which happens before the navigation ends.
-		this._restorable = popstate ? { key, values: new Map(this._saved.get(key)) } : null;
+		this._restoredKey = popstate ? key : null;
 	}
 
 	private _onNavigationEnd(event: NavigationEnd): void {
@@ -141,12 +143,12 @@ export class ListFilterStateService {
 			return;
 		}
 		this._pending = null;
-		this._restorable = pending.previousRestorable;
+		this._restoredKey = pending.previousRestoredKey;
 	}
 
 	private _forgetAll(): void {
 		this._saved.clear();
-		this._restorable = null;
+		this._restoredKey = null;
 		this._pending = null;
 	}
 
