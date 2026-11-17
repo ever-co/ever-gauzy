@@ -1,6 +1,6 @@
 import { Logger, Optional } from '@nestjs/common';
 import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
-import { DataSource, EntityManager, FindOptionsSelect, In } from 'typeorm';
+import { DataSource, EntityManager, FindOptionsSelect, In, IsNull } from 'typeorm';
 import { omit, pick } from 'underscore';
 import { ID, ITimeLog, ITimeSlot, TimesheetStatus } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/utils';
@@ -768,6 +768,14 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	 * creation there. A recalculation that ran while the second part stood counted its time as well, so its timesheet
 	 * and its employee's worked hours are counted again without it.
 	 *
+	 * The second part is deleted only while no invoice line bills it, in the statement that deletes it: billing writes
+	 * `invoiceItemId` under the row's lock, so a part billed meanwhile is never deleted from under its invoice line. It
+	 * is kept then, as a failed undo leaves it, and blocks the next split of the log until one of the two is deleted
+	 * (see `assertNoSecondPartLeft`).
+	 *
+	 * Once the part is deleted, the history and each total are written apart: one that fails is logged, and never
+	 * stops the others.
+	 *
 	 * @param log - The time log as it was read before the split.
 	 * @param secondPart - The second part.
 	 * @param history - Given by the split route: the split was recorded in the history.
@@ -777,13 +785,37 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 		secondPart: TimeLog,
 		history: TimeLogHistoryOptions | undefined
 	): Promise<void> {
-		await this.typeOrmTimeLogRepository.delete({ id: secondPart.id });
-		await this.recordUndoneSplit(log, null, secondPart, history);
+		const taken = await this.typeOrmTimeLogRepository.delete({ id: secondPart.id, invoiceItemId: IsNull() });
+		if (taken?.affected === 0) {
+			this.logger.error(
+				`The second part ${secondPart.id} of time log ${log.id} was billed before its split was taken back: it is kept`
+			);
+			return;
+		}
+		const followUps: Array<[string, () => Promise<unknown>]> = [
+			['record the undone split', () => this.recordUndoneSplit(log, null, secondPart, history)]
+		];
 		if (secondPart.timesheetId) {
-			await this._commandBus.execute(new TimesheetRecalculateCommand(secondPart.timesheetId));
+			followUps.push([
+				'recalculate the timesheet',
+				() => this._commandBus.execute(new TimesheetRecalculateCommand(secondPart.timesheetId))
+			]);
 		}
 		if (secondPart.employeeId) {
-			await this._commandBus.execute(new UpdateEmployeeTotalWorkedHoursCommand(secondPart.employeeId));
+			followUps.push([
+				"recalculate the employee's worked hours",
+				() => this._commandBus.execute(new UpdateEmployeeTotalWorkedHoursCommand(secondPart.employeeId))
+			]);
+		}
+		for (const [what, followUp] of followUps) {
+			try {
+				await followUp();
+			} catch (error) {
+				this.logger.error(
+					`Could not ${what} after taking back the second part ${secondPart.id} of time log ${log.id}: ${error?.message ?? error}`,
+					error?.stack
+				);
+			}
 		}
 	}
 

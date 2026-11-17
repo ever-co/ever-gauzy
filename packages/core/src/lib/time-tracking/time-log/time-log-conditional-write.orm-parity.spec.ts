@@ -397,6 +397,12 @@ describe('Time entry edits under a precondition, on TypeORM and on MikroORM (#53
 		}));
 	};
 
+	/** The second part a split of the entry saved, by id. */
+	const secondPartIdOf = async (timeLogId: string): Promise<string> => {
+		const [row] = await dataSource.query(`SELECT "id" FROM "time_log" WHERE "splitFromTimeLogId" = ?`, [timeLogId]);
+		return row?.id;
+	};
+
 	/** A timesheet of the employee, pending until a test approves it. */
 	const pendingTimesheet = async (): Promise<string> => {
 		const id = randomUUID();
@@ -842,6 +848,27 @@ describe('Time entry edits under a precondition, on TypeORM and on MikroORM (#53
 				expect((await updatedAtOf(timeLogId)).getTime()).toBe(billed.getTime());
 				// The entry's own history records no cut
 				expect(await historyCountOf(timeLogId)).toBe(0);
+			});
+
+			it('keeps a second part an invoice billed before the split was taken back', async () => {
+				const timeLogId = await entry({ logType: 'MANUAL', isBillable: 1 });
+				const checked = await readForSplit(ormType, timeLogId);
+				const invoiceId = await draftInvoice();
+				let secondPartId = '';
+				// Right before the cut, an invoice line bills the entry and the second part the split just saved
+				const billedBeforeCut = async () => {
+					secondPartId = await secondPartIdOf(timeLogId);
+					await lines(ormType).createBulk(invoiceId, [line(invoiceId, 'design', [timeLogId, secondPartId])]);
+				};
+
+				expect(await split(ormType, checked, billedBeforeCut)).toBe(false);
+
+				// The cut is refused, and the billed second part is not deleted from under its invoice line
+				const lineId = await lineIdOf(invoiceId, 'design');
+				expect(await partsOf(timeLogId)).toEqual([
+					{ id: timeLogId, range: '09:00-10:00', invoiceItemId: lineId },
+					{ id: secondPartId, range: '09:30-10:00', invoiceItemId: lineId }
+				]);
 			});
 
 			it('takes the split back whole when the timesheet is approved right before its cut', async () => {
