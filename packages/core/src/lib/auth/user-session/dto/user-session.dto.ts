@@ -38,6 +38,21 @@ export class UserSessionResponseDTO implements IUserSession {
 	@ApiProperty({ enum: UserSessionAppEnum, enumName: 'UserSessionAppEnum' })
 	app: UserSessionAppEnum;
 
+	@ApiPropertyOptional({
+		type: () => String,
+		example: 'Ever Teams',
+		description:
+			'Which app the session was opened from: the name it gave in the X-Client-App header, else the one its user agent carries. Absent when neither tells.'
+	})
+	appName?: string;
+
+	@ApiPropertyOptional({
+		type: () => String,
+		example: 'app.example.com',
+		description: "The web host the session was opened from, when a browser's request said it."
+	})
+	appOrigin?: string;
+
 	@ApiProperty({ type: () => String, nullable: true, example: 'Chrome 131' })
 	browser: string | null;
 

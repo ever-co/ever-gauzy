@@ -4,6 +4,7 @@ import { JoinColumn, RelationId, Repository } from 'typeorm';
 import { ID, IIntegrationTenant, IOrganizationProject } from '@gauzy/contracts';
 import {
 	ColumnIndex,
+	ExportRedacted,
 	IntegrationTenant,
 	MikroOrmBaseEntityRepository,
 	MultiORMColumn,
@@ -73,10 +74,13 @@ export class AsanaProjectMapping extends TenantOrganizationBaseEntity {
 	@MultiORMColumn({ type: 'varchar', length: 64, nullable: true })
 	webhookGid?: string | null;
 
+	// the key Asana signs its deliveries with
+	@ExportRedacted()
 	@MultiORMColumn({ type: 'varchar', length: 255, nullable: true })
 	webhookSecret?: string | null;
 
 	/** A registration in flight: the single-use token its handshake must carry in the address, and when it started. */
+	@ExportRedacted()
 	@MultiORMColumn({ type: 'varchar', length: 64, nullable: true })
 	webhookHandshakeToken?: string | null;
 

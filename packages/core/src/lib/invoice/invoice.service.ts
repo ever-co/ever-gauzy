@@ -1,6 +1,8 @@
 import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
 import { Invoice } from './invoice.entity';
-import { Between, FindOperator, In, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
+import { FilterQuery } from '@mikro-orm/core';
+import { InvoiceItem } from '../core/entities/internal';
+import { Between, FindOperator, In, IsNull, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { EmailService } from './../email-send/email.service';
 import {
@@ -9,7 +11,9 @@ import {
 	ID,
 	IInvoice,
 	IInvoiceCreateInput,
+	IInvoiceItem,
 	IInvoiceItemCreateInput,
+	IInvoiceUpdateInput,
 	IOrganization,
 	InvoiceStats,
 	LanguagesEnum
@@ -23,6 +27,7 @@ import { I18nService } from 'nestjs-i18n';
 import * as moment from 'moment';
 import { EstimateEmailService } from '../estimate-email/estimate-email.service';
 import { Readable } from 'stream';
+import { randomUUID } from 'node:crypto';
 import { PdfmakerService } from './pdfmaker.service';
 import { generateInvoicePdfDefinition, generateInvoicePaymentPdfDefinition } from './index';
 import { OrganizationService } from './../organization';
@@ -30,6 +35,7 @@ import { TypeOrmInvoiceRepository } from './repository/type-orm-invoice.reposito
 import { MikroOrmInvoiceRepository } from './repository/mikro-orm-invoice.repository';
 import { FavoriteService } from '../core/decorators';
 import {
+	assertFinalStatusKept,
 	holdFinalStatus,
 	IInvoiceStatusChange,
 	statesStatusOtherThanVoid,
@@ -38,16 +44,29 @@ import {
 import {
 	assertBillingInOrganization,
 	ILinesRepositories,
+	ILinesTransaction,
+	ILockedInvoice,
 	inLinesTransaction,
+	lockedOrganizationIdOf,
+	lockInvoice,
 	saveBillingTime,
 	splitBilledTime
 } from '../invoice-item/invoice-item-billed-time';
+import {
+	holdInvoiceUnchanged,
+	INVOICE_LINE_OF_ANOTHER_INVOICE,
+	INVOICE_ORGANIZATION_IS_KEPT,
+	InvoiceChangedError,
+	invoiceChangedException,
+	touchInvoice
+} from './invoice-precondition';
 
 /**
  * What sending a document by e-mail did.
  *
  * `reason` names the step that failed when the message was not sent: the estimate e-mail record or the
- * organization could not be prepared, the PDF could not be generated, or the mail transport refused it.
+ * organization could not be prepared, the PDF could not be generated, or the message was not sent (the mail
+ * transport refused it, or the address is of a domain the platform never emails, such as `@example.com`).
  */
 export interface IInvoiceEmailOutcome {
 	/** Whether the message was handed to the mail transport. */
@@ -73,6 +92,128 @@ export interface IInvoiceStatistics {
 	count: number;
 	totals: IInvoiceCurrencyTotal[];
 	byStatus: IInvoiceStatusTotal[];
+}
+
+/**
+ * What replaces an invoice's lines in a transaction another write opened: `InvoiceItemService`, which the invoice edit
+ * that saves the fields and the lines together (`PUT /invoices/:id/with-items`) hands over.
+ */
+export interface IInvoiceLinesWriter {
+	replaceLinesIn(
+		transaction: ILinesTransaction,
+		invoiceId: ID,
+		input: IInvoiceItemCreateInput[]
+	): Promise<IInvoiceItem[]>;
+}
+
+/** What the conflict of a conditional write carries: the invoice with its lines, as the caller may read it now. */
+const CHANGED_INVOICE_RELATIONS = ['invoiceItems'];
+
+/** The ids of the stored lines a write of an invoice names among its `invoiceItems`. */
+function namedLineIdsOf(change: { invoiceItems?: unknown }): ID[] {
+	const lines = Array.isArray(change.invoiceItems) ? (change.invoiceItems as Array<{ id?: unknown } | null>) : [];
+	return lines.map((line) => line?.id).filter((id): id is ID => typeof id === 'string' && id.length > 0);
+}
+
+/**
+ * Refuses lines, saved by cascade with an invoice, that name by `id` a line of another invoice: the save would move
+ * that line onto this invoice, and the invoice it left would lose it without its own `updatedAt` moving. A line named
+ * by an id no line holds is a new line, as before; one of this invoice is saved in place, as before.
+ *
+ * @throws BadRequestException (`INVOICE_LINE_OF_ANOTHER_INVOICE`) when one does, or when one is named twice.
+ */
+async function assertNamedLinesOwn(transaction: ILinesTransaction, change: { id?: ID; invoiceItems?: unknown }) {
+	const named = namedLineIdsOf(change);
+	if (named.length === 0) {
+		return;
+	}
+	if (new Set(named).size !== named.length) {
+		throw new BadRequestException(INVOICE_LINE_OF_ANOTHER_INVOICE);
+	}
+	const tenantId = RequestContext.currentTenantId();
+	let owners: Array<ID | null>;
+	if (transaction.mikroOrm) {
+		const where = (
+			tenantId ? { id: { $in: named }, tenantId } : { id: { $in: named } }
+		) as FilterQuery<InvoiceItem>;
+		const stored = (await transaction.mikroOrm.find(InvoiceItem, where, {
+			fields: ['id', 'invoice'] as never,
+			filters: false,
+			disableIdentityMap: true
+		})) as unknown as Array<{ invoiceId?: ID | null; invoice?: { id?: ID } | null }>;
+		owners = stored.map((line) => line.invoiceId ?? line.invoice?.id ?? null);
+	} else {
+		const stored = await transaction.typeOrm.find(InvoiceItem, {
+			where: tenantId ? { id: In(named), tenantId } : { id: In(named) },
+			select: { id: true, invoiceId: true },
+			withDeleted: true
+		});
+		owners = stored.map((line) => line.invoiceId ?? null);
+	}
+	if (owners.some((owner) => owner !== change.id)) {
+		throw new BadRequestException(INVOICE_LINE_OF_ANOTHER_INVOICE);
+	}
+}
+
+/** Whether a write names an invoice and states lines for it, which its save writes by cascade. */
+function statesLinesOfInvoice(change: { id?: ID; invoiceItems?: unknown }): boolean {
+	const statesLines = Array.isArray(change.invoiceItems) && change.invoiceItems.length > 0;
+	return Boolean(change.id) && statesLines;
+}
+
+/**
+ * Runs a write of an invoice and of the lines it states (`POST /invoices` for an invoice saved before, or
+ * `PUT /invoices/:id` with `invoiceItems`), and moves the invoice's `updatedAt` after, in the transaction given (#5243):
+ * the lines are rows of their own, saved by cascade, and the invoice's own row may be left as it was, so a
+ * precondition stated on it later would not see the change. A new invoice moves nothing more than its creation.
+ *
+ * @param transaction The transaction the write runs in.
+ * @param change The write, naming the invoice when it names one.
+ * @param write The write.
+ * @returns What the write answered, with the invoice's new `updatedAt` when it moved.
+ */
+async function writingLinesOf(
+	transaction: ILinesTransaction,
+	change: { id?: ID; invoiceItems?: unknown },
+	write: () => Promise<IInvoice>
+): Promise<IInvoice> {
+	await assertNamedLinesOwn(transaction, change);
+	const savedBefore = statesLinesOfInvoice(change)
+		? await lockInvoice(transaction, change.id, RequestContext.currentTenantId())
+		: null;
+	const written = await write();
+	if (!savedBefore) {
+		return written;
+	}
+	const updatedAt = await touchInvoice(transaction, change.id);
+	return updatedAt ? Object.assign(written, { updatedAt }) : written;
+}
+
+/**
+ * Refuses a change that moves the invoice to another organization in the save of its lines: the lines' time is checked
+ * against the organization the invoice is stored in, and the edit screens never move an invoice.
+ *
+ * Both members are read, each when it is sent: `organizationId` and the `organization` relation. On MikroORM the
+ * relation is what writes the foreign key (`organizationId` is its unpersisted mirror), so `organization: null` sent
+ * beside the stored `organizationId` would clear the organization while the id alone looks unchanged.
+ *
+ * @param stored The invoice as the locking read answered it.
+ * @param change The change.
+ * @throws BadRequestException when either member states another organization than the stored one, or none.
+ */
+function assertOrganizationKept(stored: ILockedInvoice, change: IInvoiceUpdateInput): void {
+	const storedOrganizationId = lockedOrganizationIdOf(stored);
+	const stated: Array<ID | null> = [];
+	if (change.organizationId !== undefined) {
+		stated.push(change.organizationId ?? null);
+	}
+	if (change.organization !== undefined) {
+		stated.push(change.organization?.id ?? null);
+	}
+	const movesIt = stated.some((organizationId) => organizationId !== storedOrganizationId);
+	if (movesIt) {
+		throw new BadRequestException(INVOICE_ORGANIZATION_IS_KEPT);
+	}
 }
 
 /** What an invoice is read with to be rendered as a PDF (`InvoiceService.renderInvoicePdf`). */
@@ -141,7 +282,7 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 				if (leavesFinalStatus) {
 					await holdFinalStatus(transaction, input);
 				}
-				return await service.create(invoice);
+				return await writingLinesOf(transaction, input, () => service.create(invoice));
 			},
 			(created) => created.invoiceItems,
 			billing
@@ -152,7 +293,9 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 	 * Writes a change to an invoice, or a new invoice, keeping a final status: a void invoice or estimate, or a rejected
 	 * estimate, is not taken out of it (see `assertFinalStatusKept`). A change that may do so runs in a transaction that
 	 * first locks the invoice and reads its status, so a void or a rejection another request writes meanwhile is waited
-	 * for and refused against, not written over. Any other change is written as it was, reading nothing more.
+	 * for and refused against, not written over. A change that states lines of an invoice saved before runs in a
+	 * transaction too, which moves the invoice's `updatedAt` once its lines are saved (see `writingLinesOf`). Any other
+	 * change is written as it was, reading nothing more.
 	 *
 	 * @param change The change, or the new invoice, as the write states it.
 	 * @param write The write, run on the service it is given (the transaction's, when there is one).
@@ -160,17 +303,115 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 	 * @throws BadRequestException when the change states a status the invoice's final status refuses; nothing is saved.
 	 */
 	async writeKeepingFinalStatus(
-		change: IInvoiceStatusChange,
+		change: IInvoiceStatusChange & { invoiceItems?: unknown },
 		write: (service: InvoiceService) => Promise<IInvoice>
 	): Promise<IInvoice> {
 		const leavesFinalStatus = await this.mayLeaveFinalStatus(change);
-		if (!leavesFinalStatus) {
+		const savesLines = statesLinesOfInvoice(change) || namedLineIdsOf(change).length > 0;
+		if (!leavesFinalStatus && !savesLines) {
 			return await write(this);
 		}
 		return await inLinesTransaction(this, this.ownRepositories(), async (service, transaction) => {
-			await holdFinalStatus(transaction, change);
-			return await write(service);
+			if (leavesFinalStatus) {
+				await holdFinalStatus(transaction, change);
+			}
+			if (!savesLines) {
+				return await write(service);
+			}
+			return await writingLinesOf(transaction, change, () => write(service));
 		});
+	}
+
+	/**
+	 * Writes a change to an invoice only while the invoice still holds the `updatedAt` the caller read
+	 * (`PUT /invoices/:id` with `expectedUpdatedAt`). The invoice is locked, compared and written in one transaction,
+	 * so nothing saved after the comparison is written over, and a final status is kept as
+	 * {@link writeKeepingFinalStatus} keeps it. Its `updatedAt` is then moved, in the same transaction, so the
+	 * `updatedAt` the caller read no longer matches: a database that keeps it to the second (SQLite) would otherwise
+	 * let a second save made on the same read through.
+	 *
+	 * @param change The change, naming the invoice.
+	 * @param expectedUpdatedAt The `updatedAt` the caller read.
+	 * @returns What the write answered, with the invoice's new `updatedAt`.
+	 * @throws ApiException 409 (`CONCURRENT_MODIFICATION`) with the invoice as it is now, when it was written since;
+	 * nothing is saved. 404 when the caller's tenant has no such invoice.
+	 */
+	async updateUnchangedSince(change: IInvoiceUpdateInput, expectedUpdatedAt: Date): Promise<IInvoice> {
+		return await this.answeringChange(() =>
+			inLinesTransaction(this, this.ownRepositories(), async (service, transaction) => {
+				const stored = await holdInvoiceUnchanged(transaction, change.id, expectedUpdatedAt);
+				assertFinalStatusKept(stored, change.status);
+				await assertNamedLinesOwn(transaction, change);
+				const written = await service.create(change);
+				// Past the value checked too: the write above can leave the row behind it (see `touchInvoice`)
+				const updatedAt = await touchInvoice(transaction, change.id, stored.updatedAt);
+				return { ...written, updatedAt: updatedAt ?? written.updatedAt } as IInvoice;
+			})
+		);
+	}
+
+	/**
+	 * Writes an invoice's fields and replaces its lines in one transaction (`PUT /invoices/:id/with-items`): a save that
+	 * fails, or is refused, writes neither, so an edit is never left half saved. With `expectedUpdatedAt`, both are
+	 * written only while the invoice still holds it, as {@link updateUnchangedSince} writes the fields.
+	 *
+	 * The invoice's `updatedAt` is moved once the lines are replaced, so the next precondition sees a change of the
+	 * lines alone too. The invoice keeps its organization: the lines' time is checked against the organization it is
+	 * stored in, which a change made in the same transaction would leave behind.
+	 *
+	 * @param change The fields, naming the invoice; no lines.
+	 * @param lines Every line of the invoice once saved, as `POST /invoice-item/bulk/:invoiceId` takes them.
+	 * @param expectedUpdatedAt The `updatedAt` the caller read, or null to save without a precondition.
+	 * @param linesWriter What replaces the lines in this transaction.
+	 * @returns The invoice as written, with its new lines and its new `updatedAt`.
+	 * @throws ApiException 409 (`CONCURRENT_MODIFICATION`) with the invoice as it is now, when it was written since;
+	 * nothing is saved. 404 when the caller's tenant has no such invoice.
+	 * @throws BadRequestException when the change moves the invoice to another organization; nothing is saved.
+	 */
+	async updateWithItems(
+		change: IInvoiceUpdateInput,
+		lines: IInvoiceItemCreateInput[],
+		expectedUpdatedAt: Date | null,
+		linesWriter: IInvoiceLinesWriter
+	): Promise<IInvoice> {
+		return await this.answeringChange(() =>
+			inLinesTransaction(this, this.ownRepositories(), async (service, transaction) => {
+				const stored = await holdInvoiceUnchanged(transaction, change.id, expectedUpdatedAt);
+				assertFinalStatusKept(stored, change.status);
+				assertOrganizationKept(stored, change);
+				const written = await service.create(change);
+				const invoiceItems = await linesWriter.replaceLinesIn(transaction, change.id, lines);
+				// The replacement moved `updatedAt` already; this states the value the invoice ends the save with, past the
+				// value checked too (see `touchInvoice`)
+				const updatedAt = await touchInvoice(transaction, change.id, stored.updatedAt);
+				return { ...written, invoiceItems, updatedAt: updatedAt ?? written.updatedAt } as IInvoice;
+			})
+		);
+	}
+
+	/**
+	 * The answer to a conditional write whose precondition no longer holds: 409 with the invoice as the caller may read
+	 * it now, read once the refused write's transaction is over.
+	 *
+	 * @param error What the transaction found.
+	 * @returns The exception to throw.
+	 */
+	async invoiceChangedAnswer(error: InvoiceChangedError) {
+		return await invoiceChangedException(error, (invoiceId) =>
+			this.findOneByIdString(invoiceId, { relations: CHANGED_INVOICE_RELATIONS })
+		);
+	}
+
+	/** Runs a conditional write, answering a precondition that no longer holds with {@link invoiceChangedAnswer}. */
+	private async answeringChange<R>(write: () => Promise<R>): Promise<R> {
+		try {
+			return await write();
+		} catch (error) {
+			if (error instanceof InvoiceChangedError) {
+				throw await this.invoiceChangedAnswer(error);
+			}
+			throw error;
+		}
 	}
 
 	/**
@@ -369,18 +610,27 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 		organizationId: string
 	): Promise<IInvoiceEmailOutcome> {
 		try {
-			//create estimate email record
-			const estimateEmail = await this.estimateEmailService.createEstimateEmail(invoiceId, email);
-			const organization: IOrganization = await this.organizationService.findOneByIdString(organizationId);
-			let step: IInvoiceEmailOutcome['reason'] = 'DOCUMENT_NOT_GENERATED';
+			//create estimate email record: an invoice's names the invoice, and the language its reminders follow
+			const estimateEmail = await this.estimateEmailService.createEstimateEmail(
+				invoiceId,
+				email,
+				isEstimate ? undefined : { languageCode }
+			);
+			// Read inside the try: an invoice's row already names the invoice, so any failure from here on clears it
+			let step: IInvoiceEmailOutcome['reason'] = 'EMAIL_NOT_PREPARED';
 			try {
+				const organization: IOrganization = await this.organizationService.findOneByIdString(organizationId);
+				step = 'DOCUMENT_NOT_GENERATED';
 				//generate estimate/invoice pdf and attached in email
 				const buffer: Buffer = await this.generateInvoicePdf(invoiceId, languageCode);
 				if (!buffer) throw new Error('PDF generation failed');
 				const base64 = buffer?.toString('base64');
 
+				// An invoice's email links to its public page, where the client opens it without an account
+				const publicToken = isEstimate ? null : await this.publicLinkTokenOf(invoiceId);
+
 				step = 'EMAIL_NOT_SENT';
-				await this.emailService.emailInvoice(
+				const handed = await this.emailService.emailInvoice(
 					languageCode,
 					email,
 					base64,
@@ -389,15 +639,17 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 					isEstimate,
 					estimateEmail.token,
 					origin,
-					organization
+					organization,
+					...(publicToken ? [publicToken] : [])
 				);
+				if (!handed) throw new Error('the address is of a domain the platform never emails');
 
-				if (!isEstimate) {
-					await this.recordInvoiceDelivery(estimateEmail.id, invoiceId, invoiceNumber, languageCode);
-				}
 				return { sent: true };
 			} catch (error) {
 				console.log(`Error while sending estimate email ${invoiceNumber}: %s`, error?.message);
+				if (!isEstimate) {
+					await this.forgetInvoiceDelivery(estimateEmail.id, invoiceNumber);
+				}
 
 				return { sent: false, reason: step };
 			}
@@ -409,24 +661,72 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 	}
 
 	/**
-	 * Records which invoice an email delivered, and in which language, once the mail transport took it: the invoice's
-	 * payment reminders go to the same address, in the same language. The invoice went whatever this write does, so a
-	 * failure is logged and the send still reports `sent`; that invoice then gets no reminder.
+	 * Takes back the delivery an invoice's email row named from its creation, when the email did not go: the invoice's
+	 * payment reminders keep going where it last went. The send's outcome is already known, so a failure is logged:
+	 * the row then still names the invoice, and its reminders may go to this address, each with the invoice attached.
 	 */
-	private async recordInvoiceDelivery(
-		estimateEmailId: ID,
-		invoiceId: ID,
-		invoiceNumber: number,
-		languageCode: LanguagesEnum
-	): Promise<void> {
+	private async forgetInvoiceDelivery(estimateEmailId: ID, invoiceNumber: number): Promise<void> {
 		try {
-			await this.estimateEmailService.recordInvoiceDelivery(estimateEmailId, invoiceId, languageCode);
+			await this.estimateEmailService.forgetInvoiceDelivery(estimateEmailId);
 		} catch (error) {
 			console.log(
-				`Invoice ${invoiceNumber} was emailed, but where it went was not recorded, so it gets no payment reminder: %s`,
+				`Invoice ${invoiceNumber} was not emailed, and its email row still names it, so its payment reminders may go to that address: %s`,
 				error?.message
 			);
 		}
+	}
+
+	/**
+	 * The token of an invoice's public page, for the email that sends the invoice. Every invoice gets one when it is
+	 * created (`InvoiceSubscriber`), and that one is kept: a new token would revoke a link the client may already hold.
+	 * An invoice whose link was revoked gets a new one, because sending the invoice shares it again. The new token is
+	 * written only where the invoice still has none, so two sends at once mail the same link.
+	 *
+	 * A failure is logged and answers null: the email then goes without the link, as it did before links were mailed.
+	 *
+	 * @returns The token, or null when the invoice could not be given one.
+	 */
+	async publicLinkTokenOf(invoiceId: ID): Promise<string | null> {
+		try {
+			const invoice = await this.findOneByIdString(invoiceId);
+			if (invoice.token) {
+				return invoice.token;
+			}
+			// A claim of its own: a token signed in the same second as the revoked one would otherwise be that same token
+			const token = signPurposeToken(TokenPurposeEnum.INVOICE_SHARE, {
+				id: invoice.id,
+				organizationId: invoice.organizationId,
+				tenantId: invoice.tenantId,
+				jti: randomUUID()
+			});
+			await this.typeOrmInvoiceRepository.update(
+				{ id: invoice.id, tenantId: invoice.tenantId, token: IsNull() },
+				{ token }
+			);
+			// Read back from the database through the repository that wrote it: a send at the same moment may have written
+			// its token first, and that is the one that holds. The entity read above may be cached (MikroORM's identity
+			// map) with the token it had before the write.
+			const stored = await this.typeOrmInvoiceRepository.findOne({
+				where: { id: invoice.id, tenantId: invoice.tenantId },
+				select: { id: true, token: true }
+			});
+			return stored?.token ?? null;
+		} catch (error) {
+			console.log(`Invoice ${invoiceId} is emailed without a link to its public page: %s`, error?.message);
+			return null;
+		}
+	}
+
+	/**
+	 * Revokes the public link of an invoice or an estimate: the link stops opening it, wherever it was sent. Generating
+	 * a link again, or sending an invoice again, makes a new one.
+	 *
+	 * @param invoiceId An invoice of the caller's tenant.
+	 * @throws NotFoundException when the caller's tenant has no such invoice.
+	 */
+	async revokeLink(invoiceId: ID): Promise<void> {
+		const invoice = await this.findOneByIdString(invoiceId);
+		await this.typeOrmInvoiceRepository.update({ id: invoice.id, tenantId: invoice.tenantId }, { token: null });
 	}
 
 	/**
@@ -438,10 +738,12 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 	async generateLink(invoiceId: string): Promise<IInvoice> {
 		try {
 			const invoice = await this.findOneByIdString(invoiceId);
+			// A claim of its own, so a link generated again in the same second is never the one it replaces
 			const payload = {
 				id: invoice.id,
 				organizationId: invoice.organizationId,
-				tenantId: invoice.tenantId
+				tenantId: invoice.tenantId,
+				jti: randomUUID()
 			};
 			return await this.create({
 				id: invoiceId,

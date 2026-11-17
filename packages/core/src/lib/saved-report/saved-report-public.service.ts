@@ -160,8 +160,13 @@ export class SavedReportPublicService {
 		const projectClients = await this.projectClientsOf(pickedClients, days, report);
 		const kept = keepPickedClients(days, pickedClients, projectClients);
 
-		const rates = await this.ratesOf(report, kept, organization.currency, defaultBillRateOf(organization));
-		const publicDays = publicDaysOf(kept, rates);
+		// Each entry is priced at the rate its row states, completed as the report page and the budgets complete it
+		const pricing = {
+			organizationCurrency: organization.currency || null,
+			defaultRate: defaultBillRateOf(organization)
+		};
+		const rates = await this.ratesOf(report, kept, pricing.organizationCurrency, pricing.defaultRate);
+		const publicDays = publicDaysOf(kept, rates, pricing);
 		const includeAmounts = report.includeAmounts === true;
 
 		return {

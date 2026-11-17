@@ -1,7 +1,7 @@
 import { SimpleChange } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { NEVER, of, throwError } from 'rxjs';
 import { ActionTypeEnum, BaseEntityEnum, IActivityLog } from '@gauzy/contracts';
 import { CommentService } from '@gauzy/ui-core/core';
 import { ProjectActivityComponent } from './project-activity.component';
@@ -165,7 +165,7 @@ describe('ProjectActivityComponent', () => {
 		expect(entry.status.to).toEqual({ name: 'In Review', color: '#F3D8B0' });
 	});
 
-	it('leaves a move uncoloured when the statuses cannot be read', async () => {
+	it('leaves a move without colour when the statuses cannot be read', async () => {
 		http.get.mockImplementation((url: string, options: { params: HttpParams }) => {
 			if (url.endsWith('/task-statuses')) return throwError(() => new Error('403'));
 			return of({ items: logsByEntity[options.params.get('entityId')] || [] });
@@ -219,5 +219,34 @@ describe('ProjectActivityComponent', () => {
 		await new Promise((resolve) => setTimeout(resolve));
 
 		expect(http.get).toHaveBeenCalled();
+	});
+
+	it("keeps its entries on screen while the host's reload is read (#12009)", async () => {
+		logsByEntity[TASK_ID] = [log({ action: ActionTypeEnum.Created })];
+		const component = await taskFeed();
+		const shownDays = component.days;
+		expect(component.count).toBe(1);
+		// The reload's reads are still on their way
+		http.get.mockImplementation(() => NEVER);
+
+		component.reloadKey = 1;
+		component.ngOnChanges({ reloadKey: new SimpleChange(0, 1, false) });
+
+		expect(component.feed.loading).toBe(true);
+		expect(component.count).toBe(1);
+		expect(component.days).toBe(shownDays);
+	});
+
+	it('CONTROL: another task starts from an empty feed', async () => {
+		logsByEntity[TASK_ID] = [log({ action: ActionTypeEnum.Created })];
+		const component = await taskFeed();
+		http.get.mockImplementation(() => NEVER);
+
+		component.taskId = SUBTASK_ID;
+		component.ngOnChanges({ taskId: new SimpleChange(TASK_ID, SUBTASK_ID, false) });
+
+		expect(component.feed.loading).toBe(true);
+		expect(component.count).toBe(0);
+		expect(component.days).toEqual([]);
 	});
 });

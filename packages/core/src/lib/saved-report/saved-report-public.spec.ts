@@ -258,6 +258,123 @@ describe('amounts in currencies without two decimals', () => {
 	});
 });
 
+describe('a member whose rate changed after the time was logged', () => {
+	const USD_ORGANIZATION = { organizationCurrency: 'USD', defaultRate: null };
+
+	/** Marie bills 60 EUR today; Paul bills 50 USD. */
+	const todayRates = new Map<string, ISavedReportRate>([
+		[MARIE, { billRateValue: 60, billRateCurrency: 'EUR' }],
+		[PAUL, { billRateValue: 50, billRateCurrency: 'USD' }]
+	]);
+
+	/**
+	 * The day as the daily report answers it now: each row states the rate that prices its entry. Marie's 3 hours were
+	 * logged when she billed 40 EUR, the rate her log stores; Paul's log stores none, so his row states his rate of
+	 * today, in the organization's currency.
+	 */
+	function loggedAtStoredRates(): IReportDayGroupByDate {
+		const logged = day();
+		const [marieRow] = logged.logs[0].employeeLogs[0].tasks;
+		logged.logs[0].employeeLogs[0].tasks = [{ ...marieRow, billRateValue: 40, billRateCurrency: 'EUR' }];
+		const [paulRow] = logged.logs[1].employeeLogs[0].tasks;
+		logged.logs[1].employeeLogs[0].tasks = [{ ...paulRow, billRateValue: 50, billRateCurrency: null }];
+		return logged;
+	}
+
+	/** What the report page shows for the same rows: each row at the rate it states, the organization's currency when it states none. */
+	function reportPageAmountsOf(days: IReportDayGroupByDate[]) {
+		const byCurrency = new Map<string, number>();
+		for (const reportDay of days) {
+			for (const projectLog of reportDay.logs) {
+				for (const memberLog of projectLog.employeeLogs) {
+					for (const row of memberLog.tasks) {
+						const currency = row.billRateCurrency || 'USD';
+						const amount = ((row.duration ?? 0) / 3600) * Number(row.billRateValue);
+						byCurrency.set(currency, (byCurrency.get(currency) ?? 0) + amount);
+					}
+				}
+			}
+		}
+		return [...byCurrency.entries()].map(([currency, amount]) => ({ currency, amount }));
+	}
+
+	it('prices each entry at the rate its log stores, so the link shows the amount the report page shows', () => {
+		const logged = loggedAtStoredRates();
+
+		const days = publicDaysOf([logged], todayRates, USD_ORGANIZATION);
+
+		expect(days[0].logs[0].employeeLogs[0].tasks[0]).toMatchObject({ billRateValue: 40, billRateCurrency: 'EUR' });
+		expect(days[0].logs[1].employeeLogs[0].tasks[0]).toMatchObject({ billRateValue: 50, billRateCurrency: 'USD' });
+		expect(days[0].logs[0].employeeLogs[0].amount).toBe(120);
+		expect(publicTotalsOf(days, true).amounts).toEqual(reportPageAmountsOf([logged]));
+		expect(publicTotalsOf(days, true).amounts).toEqual([
+			{ currency: 'EUR', amount: 120 },
+			{ currency: 'USD', amount: 125 }
+		]);
+	});
+
+	it('prices a day that straddles the rate change entry by entry', () => {
+		const logged = loggedAtStoredRates();
+		const marie = logged.logs[0].employeeLogs[0];
+		const [row] = marie.tasks;
+		marie.tasks = [
+			{ ...row, duration: 3600, billRateValue: 40, billRateCurrency: 'EUR' },
+			{ ...row, duration: 2 * 3600, billRateValue: 60, billRateCurrency: 'EUR' }
+		];
+
+		const days = publicDaysOf([logged], todayRates, USD_ORGANIZATION);
+
+		expect(days[0].logs[0].employeeLogs[0].amount).toBe(160);
+		expect(publicTotalsOf(days, true).amounts).toEqual(reportPageAmountsOf([logged]));
+	});
+
+	it('states each currency of a member whose entries are priced in two, and never adds them', () => {
+		const logged = loggedAtStoredRates();
+		const marie = logged.logs[0].employeeLogs[0];
+		const [row] = marie.tasks;
+		marie.tasks = [
+			{ ...row, duration: 3600, billRateValue: 40, billRateCurrency: 'EUR' },
+			{ ...row, duration: 2 * 3600, billRateValue: 70, billRateCurrency: 'USD' }
+		];
+
+		const days = publicDaysOf([logged], todayRates, USD_ORGANIZATION);
+
+		expect(days[0].logs[0].employeeLogs[0].amounts).toEqual([
+			{ currency: 'EUR', amount: 40 },
+			{ currency: 'USD', amount: 140 }
+		]);
+		expect(days[0].logs[0].employeeLogs[0].amount).toBeNull();
+		expect(publicTotalsOf(days, true).amounts).toEqual([
+			{ currency: 'EUR', amount: 40 },
+			{ currency: 'USD', amount: 265 }
+		]);
+	});
+
+	it("prices an entry without a rate at the organization's default, as the report page and the budgets do", () => {
+		const logged = loggedAtStoredRates();
+		logged.logs[1].employeeLogs[0].tasks[0].billRateValue = 0;
+
+		const days = publicDaysOf([logged], todayRates, {
+			organizationCurrency: 'USD',
+			defaultRate: { value: 30, currency: 'USD' }
+		});
+
+		expect(days[0].logs[1].employeeLogs[0].tasks[0]).toMatchObject({ billRateValue: 30, billRateCurrency: 'USD' });
+		expect(publicTotalsOf(days, true).amounts).toEqual([
+			{ currency: 'EUR', amount: 120 },
+			{ currency: 'USD', amount: 75 }
+		]);
+	});
+
+	it('states no rate on any entry when amounts are left out', () => {
+		const keys = keysOf(publicDaysOf([loggedAtStoredRates()], null, USD_ORGANIZATION));
+
+		for (const key of ['billRateValue', 'billRateCurrency', 'amount', 'amounts']) {
+			expect(keys.has(key)).toBe(false);
+		}
+	});
+});
+
 describe('memberIdsOf and projectIdsOf', () => {
 	it('name each member and project of the report once', () => {
 		expect(memberIdsOf([day(), day()])).toEqual([MARIE, PAUL]);

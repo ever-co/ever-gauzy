@@ -1,4 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
+import { JobsOptions } from 'bullmq';
 import { SCHEDULER_MODULE_OPTIONS } from '../constants/scheduler.constants';
 import { DiscoveredScheduledJob } from '../interfaces/discovered-scheduled-job.interface';
 import {
@@ -173,7 +174,7 @@ export class SchedulerJobRunnerService {
 			queueName: job.options.queueName,
 			jobName: job.options.queueJobName ?? job.id,
 			data,
-			options: job.options.queueJobOptions
+			options: queuedScheduleJobOptions(job)
 		});
 	}
 
@@ -303,6 +304,30 @@ export class SchedulerJobRunnerService {
 	private nodeId(): string {
 		return `${process.env['HOSTNAME'] ?? process.env['COMPUTERNAME'] ?? 'unknown-host'}:${process.pid}`;
 	}
+}
+
+/**
+ * The options a queued schedule's tick is added with: the schedule's own, deduplicated by the schedule's id.
+ *
+ * A queued schedule's run is the enqueue alone, so `preventOverlap` never sees the job it added waiting or running
+ * in another process. While the consumers are down, every tick added one more job, and they all ran once the
+ * consumers came back. With BullMQ's deduplication in simple mode (an id and no `ttl`), a tick adds nothing while a
+ * job of the same schedule is waiting, delayed, retrying or active, and the id is released when that job completes
+ * or fails. A dropped tick loses nothing: a queued schedule's job carries only the time it was asked.
+ *
+ * No fixed `jobId`: BullMQ ignores an add whose id exists in any state, so a failed job kept by `removeOnFail`
+ * would block every later tick. A schedule that sets its own `deduplication` keeps it.
+ *
+ * @param job The queued schedule.
+ * @returns The options to add its job with.
+ */
+export function queuedScheduleJobOptions(job: DiscoveredScheduledJob): JobsOptions {
+	const ownOptions = job.options.queueJobOptions ?? {};
+
+	return {
+		...ownOptions,
+		deduplication: ownOptions.deduplication ?? { id: job.id }
+	};
 }
 
 /** The failure as one bounded line of text. */

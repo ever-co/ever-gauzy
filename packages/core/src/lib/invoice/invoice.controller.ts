@@ -32,6 +32,7 @@ import {
 	InvoiceGenerateLinkCommand,
 	InvoiceSendEmailCommand,
 	InvoiceUpdateCommand,
+	InvoiceUpdateWithItemsCommand,
 	InvoiceGeneratePdfCommand,
 	InvoicePaymentGeneratePdfCommand
 } from './commands';
@@ -40,7 +41,8 @@ import {
 	InvoiceStatisticsQueryDTO,
 	UpdateEstimateInvoiceDTO,
 	UpdateInvoiceActionDTO,
-	UpdateInvoiceDTO
+	UpdateInvoiceDTO,
+	UpdateInvoiceWithItemsDTO
 } from './dto';
 
 @ApiTags('Invoice')
@@ -48,7 +50,10 @@ import {
 @Permissions(PermissionsEnum.INVOICES_EDIT)
 @Controller('/invoices')
 export class InvoiceController extends CrudController<Invoice> {
-	constructor(private readonly invoiceService: InvoiceService, private readonly commandBus: CommandBus) {
+	constructor(
+		private readonly invoiceService: InvoiceService,
+		private readonly commandBus: CommandBus
+	) {
 		super(invoiceService);
 	}
 
@@ -172,6 +177,10 @@ export class InvoiceController extends CrudController<Invoice> {
 	/**
 	 * Update invoice
 	 *
+	 * With `expectedUpdatedAt` (the `updatedAt` the invoice was read with), the change is written only while the
+	 * invoice still holds it, in the transaction that compares the two; otherwise nothing is written and the answer is
+	 * 409 with the invoice as it is now. Without it, the change is written as it always was.
+	 *
 	 * @param id
 	 * @param entity
 	 * @returns
@@ -189,6 +198,11 @@ export class InvoiceController extends CrudController<Invoice> {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
+	@ApiResponse({
+		status: HttpStatus.CONFLICT,
+		description:
+			'The invoice changed since expectedUpdatedAt: nothing was saved. `details.invoice` is the invoice as it is now.'
+	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
 	@UseValidationPipe({ transform: true, whitelist: true })
@@ -197,6 +211,41 @@ export class InvoiceController extends CrudController<Invoice> {
 		@Body() entity: UpdateInvoiceDTO
 	): Promise<Invoice> {
 		return await this.commandBus.execute(new InvoiceUpdateCommand({ ...entity, id }));
+	}
+
+	/**
+	 * Saves an invoice's fields and all its lines together, in one transaction: a save that fails, or is refused,
+	 * writes neither, so an edit is never left half saved as `PUT /invoices/:id` followed by
+	 * `POST /invoice-item/bulk/:invoiceId` can leave it. The lines replace every line the invoice holds, and bill the
+	 * time they name, as the bulk route's do.
+	 *
+	 * With `expectedUpdatedAt`, both are written only while the invoice still holds it; otherwise nothing is written
+	 * and the answer is 409 with the invoice as it is now. The answer states the invoice's new `updatedAt`.
+	 *
+	 * @param id The invoice.
+	 * @param entity Its fields and its lines.
+	 * @returns The invoice as written, with its lines.
+	 */
+	@ApiOperation({ summary: "Save an invoice's fields and lines together, optionally only if unchanged since read" })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The invoice and its lines were saved.' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found' })
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@ApiResponse({
+		status: HttpStatus.CONFLICT,
+		description:
+			'The invoice changed since expectedUpdatedAt: nothing was saved. `details.invoice` is the invoice as it is now.'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Put('/:id/with-items')
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async updateWithItems(
+		@Param('id', UUIDValidationPipe) id: IInvoice['id'],
+		@Body() entity: UpdateInvoiceWithItemsDTO
+	): Promise<IInvoice> {
+		return await this.commandBus.execute(new InvoiceUpdateWithItemsCommand({ ...entity, id }));
 	}
 
 	/**
@@ -286,6 +335,19 @@ export class InvoiceController extends CrudController<Invoice> {
 	@Put('generate/:uuid')
 	async generateLink(@Param('uuid', UUIDValidationPipe) uuid: IInvoice['id']): Promise<IInvoice> {
 		return await this.commandBus.execute(new InvoiceGenerateLinkCommand(uuid));
+	}
+
+	/**
+	 * Revokes the public link of an invoice or an estimate: the link stops opening it, wherever it was sent. Generating
+	 * a link again, or sending the invoice again, makes a new one.
+	 */
+	@ApiOperation({ summary: 'Revoke the public link of an invoice or an estimate' })
+	@ApiResponse({ status: HttpStatus.NO_CONTENT, description: 'The link no longer opens the invoice' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found' })
+	@HttpCode(HttpStatus.NO_CONTENT)
+	@Delete(':id/link')
+	async revokeLink(@Param('id', UUIDValidationPipe) id: IInvoice['id']): Promise<void> {
+		await this.invoiceService.revokeLink(id);
 	}
 
 	@ApiOperation({ summary: 'Delete record' })

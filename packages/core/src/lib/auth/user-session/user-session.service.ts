@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { environment } from '@gauzy/config';
+import { DEFAULT_JWT_REFRESH_TOKEN_EXPIRATION_TIME, environment } from '@gauzy/config';
 import { ID, IUserSession, IUserSessionSignOutOthersInput, IUserSessionSignOutOthersResponse } from '@gauzy/contracts';
 import { AccessTokenService } from '../../access-token/access-token.service';
 import { RequestContext } from '../../core/context/request-context';
@@ -47,7 +47,7 @@ export const SIGN_OUT_PASSES = 5;
 const DEFAULT_ACCESS_TOKEN_LIFETIME_S = 24 * 60 * 60;
 
 /** The refresh token lifetime without `JWT_REFRESH_TOKEN_EXPIRATION_TIME`, in seconds (as `RefreshTokenModule`). */
-const DEFAULT_REFRESH_TOKEN_LIFETIME_S = 30 * 24 * 60 * 60;
+const DEFAULT_REFRESH_TOKEN_LIFETIME_S = DEFAULT_JWT_REFRESH_TOKEN_EXPIRATION_TIME;
 
 /** The access token lifetime, in milliseconds. */
 function accessTokenLifetimeMs(): number {

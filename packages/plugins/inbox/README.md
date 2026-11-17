@@ -243,7 +243,8 @@ person's attention lands:
   never makes a second entry nor files a folded mention on its own. A recovered entry is dated as its notification.
   The worker hosts the Inbox whenever `GAUZY_INBOX_ENABLED=true` for this schedule.
 - **Followers are told.** With `GAUZY_NOTIFICATION_FANOUT_ENABLED=true` (off by default), a comment on a record
-  an employee follows, and a change of a followed task's status, priority, due date or members, create a
+  an employee follows, a change of a followed task's status, priority, due date or members, and a change of a
+  followed project's status, dates or archiving (a project's members follow it), create a
   notification for each follower except the actor (`packages/core/src/lib/entity-subscription/fan-out/`). The
   receiver's per-type switches apply; `TaskUpdate` is switched off per employee through the notification setting's
   `preferences.taskUpdate`. The follower records (`EntitySubscription`) already existed; this is what reads them.
@@ -253,6 +254,16 @@ person's attention lands:
   (`packages/core/src/lib/time-tracking/timer-reminder/`), for a run started within the last week. It is filed unread.
   An open Ever Teams tab shows its own reminder and marks the notification read, and the email and push wait a few
   minutes for that mark (below), so the reminder does not reach the person twice.
+- **Tasks due soon.** With `GAUZY_TASK_DUE_REMINDERS_ENABLED=true` (off by default), each assignee of a task that is
+  due in less than their threshold (`preferences.taskDueReminderHours`, 24 by default, `null` or 0 for none) gets a
+  `TaskDueReminder` notification about the task, once per due date (`packages/core/src/lib/tasks/due-reminder/`),
+  unless the task is done, cancelled, archived or a draft. A due date saved as a day is due once that day is over in
+  the assignee's time zone.
+- **Added to a project.** An employee added to a project (from the project's form, or from their own projects) gets
+  an `Assignment` notification about the project, as a task's new assignees do, and follows the project. A project's
+  changes reach the followers who are its members now. Employees added from their own projects before this change
+  do not follow those projects (nothing is backfilled), so they hear of their changes once they are added again or
+  follow them.
 - **Done.** `PATCH /inbox/items/:id/state { isDone }` (and `markInboxItem`) marks an item done: it leaves the open
   tabs and is found in the `done` tab (`?tab=done`); `isDone: false` brings it back. Doing an item reads it. Column
   `inbox_item_recipient.doneAt` (migration `1791000005200`).

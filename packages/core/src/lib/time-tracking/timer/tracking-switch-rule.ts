@@ -1,4 +1,4 @@
-import { ForbiddenException } from '@nestjs/common';
+import { ConflictException, ForbiddenException } from '@nestjs/common';
 import { RolesEnum } from '@gauzy/contracts';
 import { narrowRolesToOAuthAppScopes } from '../../auth/oauth-app-scope';
 import { RequestContext } from '../../core/context';
@@ -18,6 +18,32 @@ const ADMIN_ROLES: RolesEnum[] = [RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN];
 /** The refusal of a tracking switch the caller's rank does not allow. */
 export const TRACKING_SWITCH_REFUSED =
 	"Only someone of a higher role can turn this person's time tracking on or off (an admin can also do it for another admin).";
+
+/** The code of the refusal of a save made from a screen whose tracking switch is no longer the stored one. */
+export const TRACKING_SWITCH_CHANGED = 'TRACKING_SWITCH_CHANGED';
+
+/**
+ * Refuses a save that says which tracking switch its screen showed (`expectedIsTrackingEnabled`) when the stored switch
+ * differs: someone changed it after that screen was read, and the save would act on a state that is gone, for example
+ * turn off a timer started meanwhile. A save that does not say goes through as before.
+ *
+ * @param isStoredOn The stored switch, as the timer reads it.
+ * @param expected The switch the caller's screen showed, or undefined when the caller does not say.
+ * @throws ConflictException With the code TRACKING_SWITCH_CHANGED when the two differ.
+ */
+export function assertTrackingSwitchAsSeen(isStoredOn: boolean, expected: boolean | undefined): void {
+	if (expected === undefined || expected === null) {
+		return;
+	}
+	if (expected === isStoredOn) {
+		return;
+	}
+	throw new ConflictException({
+		message:
+			'Time tracking was turned on or off by someone else since this screen was loaded. Reload it and try again.',
+		code: TRACKING_SWITCH_CHANGED
+	});
+}
 
 /**
  * The rank a tenant role gives.

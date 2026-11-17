@@ -9,6 +9,7 @@ dotenv.config({ quiet: true });
 
 import { FileStorageProviderEnum, isKnownDefaultSecret } from '@gauzy/contracts';
 import { IEnvironment, IGauzyFeatures } from './ienvironment';
+import { DEFAULT_JWT_REFRESH_TOKEN_EXPIRATION_TIME } from './token-lifetimes';
 import { isEnvFlagEnabled, isFeatureEnabled, parseNonNegativeInt, resolveAppLink } from './environment.helper';
 import { resolveSocialAuthClients } from './social-auth.helper';
 import { resolveAuthSwitches } from './auth-switches.helper';
@@ -85,7 +86,8 @@ export const environment: IEnvironment = {
 	get JWT_REFRESH_TOKEN_SECRET(): string {
 		return process.env.JWT_REFRESH_TOKEN_SECRET!; // Validated at startup — must be set in production
 	},
-	JWT_REFRESH_TOKEN_EXPIRATION_TIME: parseInt(process.env.JWT_REFRESH_TOKEN_EXPIRATION_TIME) || 86400 * 7, // default JWT refresh token expire time (7 days)
+	JWT_REFRESH_TOKEN_EXPIRATION_TIME:
+		parseInt(process.env.JWT_REFRESH_TOKEN_EXPIRATION_TIME) || DEFAULT_JWT_REFRESH_TOKEN_EXPIRATION_TIME, // default JWT refresh token expire time (7 days)
 
 	/**
 	 * Email verification options

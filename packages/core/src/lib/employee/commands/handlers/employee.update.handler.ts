@@ -18,7 +18,14 @@ import {
 } from './../../agent-exit-logout-restriction';
 import { assertOwnRatesMayChange, isSameId, removeOwnRateFields, withStoredOwnRates } from './../../own-rates';
 import { TrackingTurnedOffEvent } from './../../../time-tracking/timer/events/tracking-turned-off.event';
-import { callerRoleRank, keepsTrackingSwitch, rankOfRole } from './../../../time-tracking/timer/tracking-switch-rule';
+import {
+	assertTrackingSwitchAsSeen,
+	callerRoleRank,
+	keepsTrackingSwitch,
+	mayTurnTrackingOf,
+	rankOfRole
+} from './../../../time-tracking/timer/tracking-switch-rule';
+import { keepingTrackingAtWrite } from './../../tracking-kept-at-write';
 
 /** Whether the save turned the employee's time tracking off: it was on before, and the saved row has it off. */
 function turnsTrackingOff(before: IEmployee, saved: IEmployee): boolean {
@@ -140,6 +147,19 @@ function withWorkDatesAllowed(employee: IEmployee, input: EmployeeUpdateWithTrac
 	return changes;
 }
 
+/**
+ * Whether the caller may turn the employee's time tracking on or off: anyone who may edit the employee, unless their
+ * organization restricts the switch to higher roles (`restrictTrackingSwitchToHigherRoles`).
+ *
+ * @param employee The employee as stored, with their organization and their user's role.
+ */
+function mayTurnTrackingOfEmployee(employee: IEmployee): boolean {
+	if (employee?.organization?.restrictTrackingSwitchToHigherRoles !== true) {
+		return true;
+	}
+	return mayTurnTrackingOf(callerRoleRank(), rankOfRole(employee?.user?.role?.name));
+}
+
 @CommandHandler(EmployeeUpdateCommand)
 export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateCommand> {
 	constructor(
@@ -179,6 +199,10 @@ export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateComm
 			relations: { organization: { contact: true }, user: { role: true }, contact: true }
 		});
 
+		// A save from a screen whose tracking switch is no longer the stored one would act on a state that is gone,
+		// for example stop a timer started since: refused before anything is written (ever-co/ever-gauzy#11830)
+		assertTrackingSwitchAsSeen(employee?.isTrackingEnabled === true, input.expectedIsTrackingEnabled);
+
 		// Decided before anything is written: a refused switch stops the whole save
 		const allowedInput = withWorkDatesAllowed(employee, withTrackingSwitchAllowed(employee, input));
 
@@ -198,9 +222,10 @@ export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateComm
 			throw new BadRequestException(restrictionError);
 		}
 
-		// The acknowledgement is a request flag, not an employee column.
+		// The acknowledgement and the switch the screen showed are request flags, not employee columns.
 		const changes: IEmployeeUpdateInput = { ...allowedInput };
 		delete changes.acknowledgeAgentExitLogoutRestriction;
+		delete changes.expectedIsTrackingEnabled;
 
 		const keepsStoredRates = editsOwnRecord && !changesOwnRates;
 		if (keepsStoredRates) {
@@ -243,13 +268,16 @@ export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateComm
 			});
 		}
 
+		// The check above allowed this caller only dates that leave the tracking as it was read. The subscriber derives
+		// the switch when the row is written, later: for this caller it leaves the switch as the row holds it then, so a
+		// switch an admin made in between stays. This save then never turns the tracking on or off itself.
+		const keepsTracking = !mayTurnTrackingOfEmployee(employee);
+
 		let saved: IEmployee;
 		try {
 			// Use `create` to save the entity, ensuring ManyToMany relations are persisted
-			saved = await this._employeeService.create({
-				...changes,
-				id
-			});
+			const write = () => this._employeeService.create({ ...changes, id });
+			saved = keepsTracking ? await keepingTrackingAtWrite(id, write) : await write();
 		} catch (error) {
 			// Handle any errors during the update process
 			if (error instanceof BadRequestException || error instanceof ForbiddenException) {
@@ -263,7 +291,8 @@ export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateComm
 			saved = withStoredOwnRates(saved, persisted);
 		}
 
-		if (turnsTrackingOff(employee, saved)) {
+		// A saved "off" this save did not write is someone else's switch, whose own save published its stop
+		if (!keepsTracking && turnsTrackingOff(employee, saved)) {
 			// The read above loads the organization, whose id MikroORM leaves off the column
 			const organizationId = employee.organizationId ?? employee.organization?.id;
 			const tenantId = employee.tenantId ?? RequestContext.currentTenantId();

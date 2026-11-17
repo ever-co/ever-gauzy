@@ -425,6 +425,18 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	restrictTrackingSwitchToHigherRoles?: boolean;
 
 	/**
+	 * Whether the API keeps a private project (`public` is false) to its members and managers and to those who hold
+	 * `ACCESS_PRIVATE_PROJECTS`: no project read lists it or answers it to anyone else, and they cannot edit it. A
+	 * project whose `public` is unset counts as public. Off by default, as it was before the setting: every project of
+	 * the organization is listed to whoever may view projects.
+	 */
+	@ApiPropertyOptional({ type: () => Boolean, default: false })
+	@IsOptional()
+	@IsBoolean()
+	@MultiORMColumn({ default: false })
+	enforcePrivateProjects?: boolean;
+
+	/**
 	 * Whether the organization's time logs keep the rates they were recorded at. On, a rate change without a day
 	 * prices only the time recorded from then on, and a change with a day re-prices the time from that day. Off (empty)
 	 * by default, as before the setting: a rate change without a day prices all the time already tracked.

@@ -3,7 +3,7 @@ import '../../core/entities/internal';
 
 import { RequestTimeoutException } from '@nestjs/common';
 import { DatabaseTypeEnum, defineConfig } from '@gauzy/config';
-import { ITimeSlot, ITimerToggleInput, TimeLogSourceEnum } from '@gauzy/contracts';
+import { ITimeSlot, ITimerToggleInput, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
 import { MultiORMEnum } from '../../core/utils';
 import { asTenantUser, createTenantFixture } from '../../core/testing/tenant-isolation/tenant-isolation.fixtures';
 import {
@@ -34,6 +34,7 @@ interface TimeLogRow {
 	stoppedAt: Date | null;
 	createdAt: Date;
 	timeSlots?: Partial<ITimeSlot>[];
+	logType?: TimeLogType;
 }
 
 /** The employee's status, as the start and the stop write it. */
@@ -1011,6 +1012,43 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 			await startOnDesktop(service);
 
 			expect(rows[1]).toMatchObject({ id: 'replaced', isRunning: false, stoppedAt: startedAt });
+			expect(timeSpanDeletes).toEqual([]);
+		});
+
+		/** Ten minutes a desktop synced, with their time slot, over a break while it ran: work the break must not cut. */
+		const syncedOverBreak = (startedAt: Date) =>
+			timeLog('synced', TimeLogSourceEnum.DESKTOP, startedAt, {
+				isRunning: false,
+				stoppedAt: new Date(startedAt.getTime() + 10 * 60 * 1000),
+				timeSlots: [{ startedAt, duration: 600 }]
+			});
+
+		it('cuts nothing for a break a new start ends: a break never cuts other entries', async () => {
+			const rows = [
+				syncedOverBreak(new Date('2026-10-24T01:40:00.000Z')),
+				timeLog('break', TimeLogSourceEnum.WEB_TIMER, TWO_HOURS_AGO, { logType: TimeLogType.BREAK })
+			];
+			const { service, timeSpanDeletes } = setup(rows);
+
+			await startOnDesktop(service);
+
+			// The break ends where work starts again, and the ten synced minutes inside it stay worked time
+			expect(rows[1]).toMatchObject({ id: 'break', isRunning: false, stoppedAt: NOW });
+			expect(timeSpanDeletes).toEqual([]);
+		});
+
+		it('cuts nothing for a break left going beside the run a stop ends', async () => {
+			const rows = [
+				syncedOverBreak(HALF_PAST_MIDNIGHT),
+				timeLog('break', TimeLogSourceEnum.WEB_TIMER, TWO_HOURS_AGO, { logType: TimeLogType.BREAK }),
+				timeLog('stopped', TimeLogSourceEnum.TEAMS, ONE_HOUR_AGO)
+			];
+			const { service, timeSpanDeletes } = setup(rows);
+
+			await service.stopTimer({ stoppedAt: NOW } as ITimerToggleInput);
+
+			// The stopped run's own hour, from 01:00, overlaps nothing; the break now ends at 01:00, over the synced log
+			expect(rows[1]).toMatchObject({ id: 'break', isRunning: false, stoppedAt: ONE_HOUR_AGO });
 			expect(timeSpanDeletes).toEqual([]);
 		});
 

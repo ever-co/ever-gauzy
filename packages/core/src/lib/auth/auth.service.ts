@@ -160,6 +160,7 @@ import {
 	sessionForMint,
 	sessionOfRefreshToken
 } from './user-session/user-session-claims';
+import { sessionSourceOf } from './user-session/user-session-client';
 import {
 	TwoFactorChallengeClaims,
 	TwoFactorRequiredException,
@@ -2369,6 +2370,8 @@ export class AuthService extends SocialAuthService {
 					: {}),
 				ipAddress: RequestContext.currentIp(),
 				userAgent: RequestContext.currentUserAgent(),
+				// Which app the request came from, for the sessions list (ever-co/ever-gauzy#11983)
+				...sessionSourceOf(RequestContext.currentRequest()?.headers),
 				...sessionClaims,
 				...(metadata?.clientId && { clientId: metadata.clientId }),
 				// Only the OAuth-app code exchange passes it: the client and scopes the user approved (oauth-app-scope.ts).
@@ -2421,6 +2424,7 @@ export class AuthService extends SocialAuthService {
 				role: user.role ? user.role.name : null,
 				ipAddress: RequestContext.currentIp(),
 				userAgent: RequestContext.currentUserAgent(),
+				...sessionSourceOf(RequestContext.currentRequest()?.headers),
 				...sessionClaims,
 				...(metadata?.clientId && { clientId: metadata.clientId })
 			};
@@ -2469,6 +2473,7 @@ export class AuthService extends SocialAuthService {
 				role: user.role ? user.role.name : null,
 				ipAddress: RequestContext.currentIp(),
 				userAgent: RequestContext.currentUserAgent(),
+				...sessionSourceOf(RequestContext.currentRequest()?.headers),
 				...sessionClaims,
 				...(metadata?.clientId && { clientId: metadata.clientId })
 			};
@@ -3207,7 +3212,10 @@ export class AuthService extends SocialAuthService {
 					)
 					.where(`${alias}.tenantId`, tenantId)
 					.andWhere(`${alias}.isActive`, true)
-					.andWhere(`${alias}.isArchived`, false);
+					.andWhere(`${alias}.isArchived`, false)
+					// Raw knex skips MikroORM's soft-delete filter: a deleted team (one of a soft-deleted
+					// organization included) is left out here as the TypeORM query builder leaves it out.
+					.whereNull(`${alias}.deletedAt`);
 
 				// Sub Query: only assigned teams for specific organizations
 				const orgSubQuery = knex('user_organization')
@@ -3219,6 +3227,12 @@ export class AuthService extends SocialAuthService {
 					.distinct();
 
 				sq = sq.whereIn(`${alias}.organizationId`, orgSubQuery);
+
+				// Only teams of an organization that is not soft deleted, whatever the state of the team's own row
+				sq = sq.whereIn(
+					`${alias}.organizationId`,
+					knex('organization').select('organization.id').whereNull('organization.deletedAt')
+				);
 
 				// Sub Query: only assigned teams for a specific employee
 				const teamSubQuery = knex('organization_team_employee')
@@ -3275,6 +3289,16 @@ export class AuthService extends SocialAuthService {
 				// Sub Query to get only assigned teams for specific organizations
 				query.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => {
 					return p(`"${query.alias}"."organizationId" IN ` + orgSubQuery(cb));
+				});
+
+				// Only teams of an organization that is not soft deleted, whatever the state of the team's own row
+				query.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => {
+					const liveOrganizations = cb
+						.subQuery()
+						.select(p('"organization"."id"'))
+						.from('organization', 'organization')
+						.where(p('"organization"."deletedAt" IS NULL'));
+					return p(`"${query.alias}"."organizationId" IN ` + liveOrganizations.getQuery());
 				});
 
 				// Sub Query to get only assigned teams for a specific employee for specific tenant

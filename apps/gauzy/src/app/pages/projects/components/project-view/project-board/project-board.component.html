@@ -47,7 +47,7 @@
 					class="board-cards"
 					cdkDropList
 					[cdkDropListData]="column"
-					[cdkDropListDisabled]="!canMove"
+					[cdkDropListDisabled]="!canMove || board.loading"
 					[cdkDropListEnterPredicate]="acceptsDrop"
 					[cdkDropListSortingDisabled]="true"
 					[cdkDropListAutoScrollStep]="12"

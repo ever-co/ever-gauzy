@@ -50,6 +50,9 @@ export abstract class BaseTimeTrackListWidgetComponent<T> extends BaseDashboardW
 	 */
 	private readonly _loaded = signal<boolean>(false);
 
+	/** The scope of the rows on screen: a reload of that scope keeps them instead of the skeleton (#12022). */
+	private _shownScopeKey: string | null = null;
+
 	/** Day / week / arbitrary-period classification of the selected range. */
 	protected readonly rangePeriod: Signal<RangePeriod> = computed(() => resolveRangePeriod(this.widgetContext()));
 
@@ -155,7 +158,10 @@ export abstract class BaseTimeTrackListWidgetComponent<T> extends BaseDashboardW
 				filter((context): context is IDashboardWidgetContext => !!context?.organizationId),
 				tap((context: IDashboardWidgetContext) => {
 					this.widgetContext.set(context);
-					this.loading.set(true);
+					// A reload of the scope on screen (refresh, retry, a reload after a deletion) keeps its rows until the
+					// answer replaces them; a new scope, or no rows yet, shows the skeleton.
+					const reloadsShownScope = this._loaded() && timeTrackScopeKey(context) === this._shownScopeKey;
+					this.loading.set(!reloadsShownScope);
 					this.clearError();
 				}),
 				// switchMap, not mergeMap: a fast date-range change must abandon the
@@ -178,6 +184,7 @@ export abstract class BaseTimeTrackListWidgetComponent<T> extends BaseDashboardW
 					if (rows) {
 						this.rows.set(rows);
 						this._loaded.set(true);
+						this._shownScopeKey = timeTrackScopeKey(this.widgetContext());
 					}
 					this.loading.set(false);
 				}),

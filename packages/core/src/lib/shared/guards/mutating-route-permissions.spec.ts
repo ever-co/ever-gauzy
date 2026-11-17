@@ -336,6 +336,12 @@ const DELIBERATELY_OPEN: ReadonlyArray<string> = Object.freeze([
 	'AuthZitadelController.linkConfirm', // pending link must belong to the caller (pendingFor), plus the e-mail code for same-address accounts
 	'AuthZitadelController.linkPreview', // reads the caller's own pending link (pendingFor rejects another user's key)
 	'AuthZitadelController.unlink', // findOwnLink(id, caller): another user's link id is a 404; the last sign-in method is a 409
+	// BoardNotificationController: the Boards app tells colleagues about a Board, as the caller and in the caller's
+	// organization only: the sender is the caller's own working employee there, and each colleague told must work
+	// there too (board-notification.ts boardNotificationsOf); a third-party app's sign-in without a write scope is
+	// refused (employee-notification.service.ts notifyAboutBoard)
+	'BoardNotificationController.mention',
+	'BoardNotificationController.share',
 	// CommentController: user-owned: CommentService pins the author to the employee of the caller, and only a
 	// CHANGE_SELECTED_EMPLOYEE holder may edit or delete another employee comment
 	// (comment.service.ts:52, 125)
@@ -357,6 +363,9 @@ const DELIBERATELY_OPEN: ReadonlyArray<string> = Object.freeze([
 	// findOneByIdString, and delete adds the receiver to its criteria, so a non-holder only reaches their own rows
 	'EmployeeNotificationController.create',
 	'EmployeeNotificationController.delete',
+	// inviteToBoard files Invitations as the caller, to members of a team the caller is an active member of, in the
+	// caller's tenant (board-invitation.ts boardInvitationsOf)
+	'EmployeeNotificationController.inviteToBoard',
 	'EmployeeNotificationController.markAllAsRead',
 	'EmployeeNotificationController.softRecover',
 	'EmployeeNotificationController.softRemove',
@@ -471,6 +480,14 @@ const DELIBERATELY_OPEN: ReadonlyArray<string> = Object.freeze([
 	// TenantController: onboarding: a user without a tenant creates their own and becomes its SUPER_ADMIN
 	// (tenant.service.ts onboardTenant)
 	'TenantController.create',
+	// TwoFactorController: the caller's own two-factor authentication: each route reads RequestContext.currentUser() /
+	// currentUserId(), nothing in the body names a user, and a first-party session is required (assertFirstPartyRequest);
+	// turning it off and new recovery codes also need a current code (two-factor.controller.ts). Resetting another
+	// member's goes through resetForMember, behind ORG_USERS_EDIT
+	'TwoFactorController.confirm',
+	'TwoFactorController.disable',
+	'TwoFactorController.enroll',
+	'TwoFactorController.regenerateRecoveryCodes',
 	// UserApiTokenController: own personal API tokens: a token is exchanged for a session with exactly its user's
 	// role and permissions, so it grants nothing the caller does not hold already. Each write states the caller's
 	// own user id (another user's token id is a 404), only a first-party session may make or revoke one (a

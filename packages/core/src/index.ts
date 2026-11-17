@@ -304,6 +304,29 @@ export {
 	TimerReminderScheduleModule,
 	TimerReminderService
 } from './lib/time-tracking/timer-reminder';
+// The reminders of a meeting, on the same terms: the worker application fires their schedule.
+export {
+	isMeetingRemindersEnabled,
+	MeetingReminderMaintenanceModule,
+	MeetingReminderModule,
+	MeetingReminderScheduleModule,
+	MeetingReminderService
+} from './lib/employee-appointment/meeting-notifications';
+// The reminders of a task's due date to its assignees. The worker application fires their schedule, so it imports the
+// schedule's module by name (the API consumes it), behind the switch both processes read.
+export {
+	isTaskDueRemindersEnabled,
+	TaskDueReminderMaintenanceModule,
+	TaskDueReminderModule,
+	TaskDueReminderScheduleModule,
+	TaskDueReminderService
+} from './lib/tasks/due-reminder';
+// A team's defaults under its members' own notification preferences, which the Inbox delivery reads too.
+export {
+	teamNotificationDefaultsByEmployee,
+	teamNotificationDefaultsOf,
+	withTeamNotificationDefaults
+} from './lib/employee-notification-setting/team-notification-defaults';
 // The payment reminders to the clients of unpaid invoices. The worker application fires their schedule, so it imports
 // the schedule's module by name (the API consumes it).
 export {
@@ -312,6 +335,14 @@ export {
 	InvoiceReminderScheduleModule,
 	InvoiceReminderService
 } from './lib/invoice/invoice-reminder';
+// The invoices of the clients billed on a schedule. The worker application fires the sweep's schedule, so it imports
+// the schedule's module by name (the API consumes it).
+export {
+	InvoiceScheduleMaintenanceModule,
+	InvoiceScheduleRunModule,
+	InvoiceScheduleRunService,
+	InvoiceScheduleScheduleModule
+} from './lib/invoice-schedule';
 
 export * from './lib/database/database.module';
 // Export-archive opt-out for plugin entities holding DERIVED data (extracted text, embeddings,
@@ -472,6 +503,9 @@ export * from './lib/webhook';
 export * from './lib/job-execution';
 export * from './lib/job-dead-letter';
 export * from './lib/auth/purpose-token';
+// The front ends a link may lead to, for a package that sends a person back to one: the payment plugin's checkout,
+// whose provider returns the client to the invoice's public page.
+export { allowedEmailLinkOrigins, isAllowedEmailLink } from './lib/auth/email-link-origin';
 export {
 	getPlaceholderImageUrl,
 	isDummyImageUrl,

@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { EventBusModule, Payment, PaymentInstrumentModule, RolePermissionModule } from '@gauzy/core';
+import { EventBusModule, Invoice, Payment, PaymentInstrumentModule, RolePermissionModule } from '@gauzy/core';
 import { PaymentProvider } from './payment-provider/payment-provider.entity';
 import { PaymentCollection } from './payment-collection/payment-collection.entity';
 import { PaymentSession } from './payment-session/payment-session.entity';
@@ -18,6 +18,8 @@ import { RefundService } from './refund/refund.service';
 import { RefundLineService } from './refund-line/refund-line.service';
 import { RefundReasonService } from './refund-reason/refund-reason.service';
 import { PaymentWebhookEventService } from './payment-webhook-event/payment-webhook-event.service';
+import { InvoicePaymentService } from './invoice-payment/invoice-payment.service';
+import { InvoicePaymentController } from './invoice-payment/invoice-payment.controller';
 import { ReturnRefundService } from './return-refund/return-refund.service';
 import { PaymentProviderController } from './payment-provider/payment-provider.controller';
 import { PaymentCollectionController } from './payment-collection/payment-collection.controller';
@@ -100,7 +102,8 @@ export const ALL_PAYMENT_ENTITIES = [
 		RolePermissionModule,
 		// The remembered payer: `PaymentAccountHolderService` and `PaymentMethodTokenService`.
 		PaymentInstrumentModule,
-		TypeOrmModule.forFeature([...ALL_PAYMENT_ENTITIES, Payment]),
+		// `Invoice`: an invoice paid online from its public page is read and its payments recorded against it.
+		TypeOrmModule.forFeature([...ALL_PAYMENT_ENTITIES, Payment, Invoice]),
 		MikroOrmModule.forFeature(ALL_PAYMENT_ENTITIES),
 		EventBusModule
 	],
@@ -114,7 +117,9 @@ export const ALL_PAYMENT_ENTITIES = [
 		RefundReasonController,
 		PaymentWebhookEventController,
 		PaymentAccountHolderController,
-		PaymentMethodTokenController
+		PaymentMethodTokenController,
+		// An invoice paid online from its public page, and the organization's connection to its payment connector.
+		InvoicePaymentController
 	],
 	providers: [
 		PaymentProviderService,
@@ -125,6 +130,7 @@ export const ALL_PAYMENT_ENTITIES = [
 		RefundLineService,
 		RefundReasonService,
 		PaymentWebhookEventService,
+		InvoicePaymentService,
 		ReturnRefundService,
 		// The order's money ledger, told after every authorisation, capture, void and refund (Q7-W1b), and the
 		// hand-over of a cart's payments to the order it became — reached by the order through its

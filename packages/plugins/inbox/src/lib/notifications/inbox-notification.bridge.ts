@@ -92,11 +92,22 @@ export function notificationItemInput(notification: IEmployeeNotification, userI
 			notificationId: notification.id,
 			notificationType: notification.type ?? null,
 			sentByEmployeeId: notification.sentByEmployeeId ?? null,
-			receiverEmployeeId: notification.receiverEmployeeId ?? null
+			receiverEmployeeId: notification.receiverEmployeeId ?? null,
+			...boardOf(notification)
 		},
 		// A notification the recovery sweep files late may already be archived through the notification API.
 		recipients: [{ userId, isRead: !!notification.isRead, ...(notification.isArchived ? { isArchived: true } : {}) }]
 	};
+}
+
+/**
+ * The Board a notification names (`metadata.board`: a `BoardShare` or a `BoardMention`), as the entry's metadata
+ * carries it: a Board is no record of the platform, so the entry has no entity, and Ever Teams opens the Board from
+ * there. Nothing when the notification names none.
+ */
+function boardOf(notification: IEmployeeNotification): { board?: Record<string, unknown> } {
+	const board = metadataObject(notification.metadata)?.['board'];
+	return board && typeof board === 'object' && !Array.isArray(board) ? { board: board as Record<string, unknown> } : {};
 }
 
 /** What became of a notification the bridge was asked to file (`InboxNotificationBridge.settleNotification`). */
