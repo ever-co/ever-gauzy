@@ -85,6 +85,11 @@ export interface IPromotionEvaluationContext {
 	readonly lines: IPromotionEvaluationLine[];
 	readonly shipping?: IPromotionEvaluationShipping[];
 	readonly at?: Date;
+	/**
+	 * The cart being evaluated, when the caller evaluates one. A live reservation that cart already holds is
+	 * not counted against its own customer's per-customer limit; without it every reservation counts.
+	 */
+	readonly cartId?: ID;
 }
 
 /** One amount an evaluation decided to take off one owner. */
@@ -939,7 +944,18 @@ export class PromotionService extends TenantScopedCrudService<Promotion> {
 		}
 
 		if (promotion.perCustomerUsageLimit && context.customerId) {
-			const used = await this.promotionUsageService.countByCustomer(promotion.id, context.customerId);
+			// The reservation the evaluated cart already holds is one of the customer's live redemptions, and it
+			// is the use this cart would reuse rather than take again: counted against itself, it dropped the
+			// promotion from the cart that reserved it on every recalculation (CodeRabbit on #12057). It is left
+			// out as `PromotionOrderUsageAdapter.assertCustomerHasUseLeft` leaves it out; a reservation another
+			// cart of the customer holds still counts.
+			const held = context.cartId
+				? await this.promotionUsageService.hasLiveReservation(promotion.id, context.cartId)
+				: false;
+			const used = Math.max(
+				0,
+				(await this.promotionUsageService.countByCustomer(promotion.id, context.customerId)) - (held ? 1 : 0)
+			);
 
 			if (used >= promotion.perCustomerUsageLimit) {
 				notices.push(

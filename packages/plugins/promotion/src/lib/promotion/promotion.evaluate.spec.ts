@@ -250,7 +250,8 @@ function world(fixture: {
 		count: async (options?: { where?: Record<string, unknown> }) =>
 			usages.filter((row) => matches(row, options?.where)).length,
 		find: async (options?: { where?: Record<string, unknown> }) =>
-			usages.filter((row) => matches(row, options?.where))
+			usages.filter((row) => matches(row, options?.where)),
+		findOneBy: jest.fn(async (where?: Record<string, unknown>) => usages.filter((row) => matches(row, where))[0] ?? null)
 	};
 
 	const campaignRepository = {
@@ -285,7 +286,7 @@ function world(fixture: {
 		{ publish: async (event: unknown) => published.push(event) } as never
 	);
 
-	return { service, published, promotions, usages };
+	return { service, published, promotions, usages, usageRepository };
 }
 
 /**
@@ -477,6 +478,116 @@ describe('PromotionService.evaluate — what matches, and what is reported when 
 			PromotionNotice.PER_CUSTOMER_LIMIT_EXCEEDED
 		]);
 		expect(forB.result.applications).toHaveLength(1);
+	});
+
+	describe('a cart that already holds a reservation of a once-per-customer promotion (CodeRabbit on #12057)', () => {
+		// The checkout reserves the promotion against the cart before the order is written, and the reservation
+		// is one of the customer's live redemptions. Counted against the cart that holds it, it dropped the
+		// promotion from that cart on its next recalculation; the order-usage adapter already leaves it out.
+		const CART_1 = '00000000-0000-4000-8000-000000000071';
+		const CART_2 = '00000000-0000-4000-8000-000000000072';
+		const fixture = (extra: IUsageRow[] = []) => {
+			const limited = promotion({
+				id: 'promo-once',
+				code: 'ONCE-PER-CUSTOMER',
+				title: 'Once per customer',
+				perCustomerUsageLimit: 1
+			});
+			const reserved: IUsageRow = {
+				id: 'usage-reserved-cart-1',
+				tenantId: TENANT,
+				organizationId: ORG,
+				promotionId: limited.id,
+				customerId: CUSTOMER_A,
+				cartId: CART_1,
+				amount: '4.000000',
+				currency: 'USD',
+				status: PromotionUsageStatus.RESERVED
+			};
+
+			return {
+				limited,
+				...world({
+					promotions: [limited],
+					actions: [action({ id: 'act-once', promotionId: limited.id, value: '10' })],
+					usages: [reserved, ...extra]
+				})
+			};
+		};
+
+		it('keeps the discount on the cart that holds the reservation, looking it up in the caller’s scope', async () => {
+			const { service, limited, usageRepository } = fixture();
+
+			const evaluation = await service.evaluate(context({ customerId: CUSTOMER_A, cartId: CART_1 }));
+
+			expect(evaluation.result.applications.map((application) => application.promotionId)).toEqual([limited.id]);
+			expect(evaluation.result.notices).toEqual([]);
+			expect(usageRepository.findOneBy).toHaveBeenCalledWith({
+				promotionId: limited.id,
+				cartId: CART_1,
+				status: PromotionUsageStatus.RESERVED,
+				tenantId: TENANT,
+				organizationId: ORG
+			});
+		});
+
+		it('leaves out only the one reservation the cart holds, so another use of the customer still counts', async () => {
+			const { service } = fixture([
+				{
+					id: 'usage-registered-elsewhere',
+					tenantId: TENANT,
+					organizationId: ORG,
+					promotionId: 'promo-once',
+					customerId: CUSTOMER_A,
+					amount: '4.000000',
+					currency: 'USD',
+					status: PromotionUsageStatus.REGISTERED
+				}
+			]);
+
+			const evaluation = await service.evaluate(context({ customerId: CUSTOMER_A, cartId: CART_1 }));
+
+			expect(evaluation.result.applications).toEqual([]);
+			expect(evaluation.result.notices.map((notice) => notice.notice)).toEqual([
+				PromotionNotice.PER_CUSTOMER_LIMIT_EXCEEDED
+			]);
+		});
+
+		it('refuses a second cart of the same customer while the first holds the reservation', async () => {
+			const { service } = fixture();
+
+			const evaluation = await service.evaluate(context({ customerId: CUSTOMER_A, cartId: CART_2 }));
+
+			expect(evaluation.result.applications).toEqual([]);
+			expect(evaluation.result.notices.map((notice) => notice.notice)).toEqual([
+				PromotionNotice.PER_CUSTOMER_LIMIT_EXCEEDED
+			]);
+		});
+
+		it('counts every reservation, and looks none up, for a caller that names no cart', async () => {
+			const { service, usageRepository } = fixture();
+
+			const evaluation = await service.evaluate(context({ customerId: CUSTOMER_A }));
+
+			expect(evaluation.result.applications).toEqual([]);
+			expect(evaluation.result.notices.map((notice) => notice.notice)).toEqual([
+				PromotionNotice.PER_CUSTOMER_LIMIT_EXCEEDED
+			]);
+			expect(usageRepository.findOneBy).not.toHaveBeenCalled();
+		});
+
+		it('looks no reservation up for a promotion without a per-customer limit', async () => {
+			const unlimited = promotion({ id: 'promo-unlimited', code: 'ALWAYS', title: 'Always' });
+			const { service, usageRepository } = world({
+				promotions: [unlimited],
+				actions: [action({ id: 'act-unlimited', promotionId: unlimited.id, value: '10' })]
+			});
+
+			const evaluation = await service.evaluate(context({ customerId: CUSTOMER_A, cartId: CART_1 }));
+
+			expect(evaluation.result.applications).toHaveLength(1);
+			expect(usageRepository.findOneBy).not.toHaveBeenCalled();
+		});
 	});
 
 	it('applies each promotion once however many ways the caller presents it', async () => {
