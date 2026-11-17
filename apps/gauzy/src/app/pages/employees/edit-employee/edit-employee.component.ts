@@ -11,7 +11,6 @@ import {
 	IEmployee,
 	IEmployeeAgentProfile,
 	IFavorite,
-	IImageAsset,
 	IOrganization,
 	ISelectedEmployee,
 	IUser,
@@ -21,6 +20,7 @@ import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { ALL_EMPLOYEES_SELECTED } from '@gauzy/ui-core/shared';
 import { EmployeesService, ErrorHandlingService, Store } from '@gauzy/ui-core/core';
+import { IUpdatedAvatar } from './edit-employee-profile/edit-employee-profile.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -163,21 +163,28 @@ export class EditEmployeeComponent extends TranslationBaseComponent implements O
 	}
 
 	/**
-	 * Update the image asset for the selected employee
-	 * @param image The image asset to update
+	 * Shows the person's new picture in the header: the uploaded photo, or — once the photo is removed —
+	 * the placeholder the server replaced it with.
+	 *
+	 * @param avatar The picture after the change.
 	 */
-	updateImage(image: IImageAsset) {
+	updateImage(avatar: IUpdatedAvatar) {
 		try {
-			if (image) {
-				// Update the image for the selected employee
+			// A save that answers after the page moved on to another employee is not this one's picture.
+			if (avatar && this.selectedEmployee?.user && avatar.employeeId === this.selectedEmployee.id) {
+				const { image, imageUrl } = avatar;
 				this.selectedEmployee.user.image = image;
+				this.selectedEmployee.user.imageId = image?.id ?? null;
+				this.selectedEmployee.user.imageUrl = image?.fullUrl || imageUrl;
 				this.avatarFailed = false;
 
-				// Alternatively, update the selectedEmployee in the store with the new image URL
-				this.store.selectedEmployee = {
-					...this.store.selectedEmployee,
-					imageUrl: image?.fullUrl
-				};
+				// Update the selectedEmployee in the store with the new image URL, when it is this employee
+				if (this.store.selectedEmployee?.id === this.selectedEmployee.id) {
+					this.store.selectedEmployee = {
+						...this.store.selectedEmployee,
+						imageUrl: image?.fullUrl || imageUrl
+					};
+				}
 			}
 		} catch (error) {
 			console.error('Error while updating profile avatar:', error);

@@ -3,7 +3,16 @@ import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { debounceTime, filter, firstValueFrom, Subject, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { FeatureEnum, ID, IEmployee, IEmployeeUpdateInput, IUserUpdateInput, PermissionsEnum } from '@gauzy/contracts';
+import {
+	FeatureEnum,
+	ID,
+	IEmployee,
+	IEmployeeUpdateInput,
+	IImageAsset,
+	IUser,
+	IUserUpdateInput,
+	PermissionsEnum
+} from '@gauzy/contracts';
 import {
 	EmployeesService,
 	EmployeeStore,
@@ -16,6 +25,14 @@ import {
 	UsersService
 } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+
+/** The person's picture after a change: the uploaded photo, or none and the placeholder that replaced it. */
+export interface IUpdatedAvatar {
+	/** The employee the picture was saved for: the page may have moved on to another one meanwhile. */
+	employeeId: ID;
+	image: IImageAsset | null;
+	imageUrl: string | null;
+}
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -34,7 +51,13 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent imple
 	employeeName: string;
 	subject$: Subject<any> = new Subject();
 
-	@Output() updatedImage = new EventEmitter<any>();
+	/**
+	 * The user saves, one after another. A photo removed and then replaced must reach the server in that order: run
+	 * side by side, a slow removal could land last and clear the new photo.
+	 */
+	private _userSaves: Promise<void> = Promise.resolve();
+
+	@Output() updatedImage = new EventEmitter<IUpdatedAvatar>();
 
 	constructor(
 		public readonly translateService: TranslateService,
@@ -62,6 +85,12 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent imple
 			.pipe(
 				filter((params) => !!params && !!params.id),
 				tap((params) => {
+					// Another employee: what the forms gathered for the previous one (a photo set or removed among
+					// it) must not go with the next save of this one. A `null` form is not sent.
+					if (this.employeeId && this.employeeId !== params.id) {
+						this._employeeStore.userForm = null;
+						this._employeeStore.employeeForm = null;
+					}
 					// Update employeeId when route parameters change
 					this.employeeId = params.id;
 					this._registerPageTabs();
@@ -73,7 +102,16 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent imple
 		this._employeeStore.userForm$
 			.pipe(
 				tap((value: IUserUpdateInput) => {
-					this.submitUserForm(value);
+					// The employee the save is for, read now: by the time a queued save runs, the page may show
+					// another employee, whose account must not receive these fields.
+					const target = {
+						employeeId: this.selectedEmployee?.id,
+						userId: this.selectedEmployee?.user?.id
+					};
+					// submitUserForm reports its own failures; the catch keeps the queue moving whatever happens.
+					this._userSaves = this._userSaves
+						.then(() => this.submitUserForm(value, target))
+						.catch((error) => this._errorHandlingService.handleError(error));
 				}),
 				untilDestroyed(this)
 			)
@@ -312,16 +350,29 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent imple
 	 * Submit the user form with updated data
 	 *
 	 * @param user - The updated user data to submit.
+	 * @param target - The employee and user the save is for, as read when it was submitted.
 	 */
-	private async submitUserForm(user: IUserUpdateInput) {
+	private async submitUserForm(user: IUserUpdateInput, target: { employeeId: ID; userId: ID }) {
 		if (user) {
+			const { employeeId, userId } = target;
 			try {
+				if (!userId) {
+					throw new Error('No employee was loaded when the change was submitted.');
+				}
 				// Update the user using userService
-				await this._userService.update(this.selectedEmployee.user.id, user);
+				const updated: IUser = await this._userService.update(userId, user);
 
-				if (!!user.image) {
-					// Emit event for updated image (assuming this emits an event when the image is updated)
-					this.updatedImage.emit(user.image);
+				// A removed photo is `imageId: null` together with an emptied `imageUrl`: the server answers
+				// with the placeholder that replaces it.
+				const photoRemoved = user.imageId === null && 'imageUrl' in user && !user.imageUrl;
+
+				if (!!user.image || photoRemoved) {
+					// Tell the page header which picture to show now.
+					this.updatedImage.emit({
+						employeeId,
+						image: user.image ?? null,
+						imageUrl: user.image?.fullUrl || updated?.imageUrl || null
+					});
 				}
 
 				// Show success message based on whether email was updated or not

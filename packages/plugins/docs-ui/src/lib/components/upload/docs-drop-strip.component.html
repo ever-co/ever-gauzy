@@ -11,7 +11,7 @@
 	tabindex="0"
 	[class.docs-drop-strip--active]="active"
 	[nbTooltip]="title + ' — ' + hint"
-	nbTooltipTrigger="focus"
+	[nbTooltipTrigger]="tooltipTrigger"
 	nbTooltipStatus="basic"
 	(click)="browse.emit()"
 	(keydown.enter)="browse.emit()"

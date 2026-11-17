@@ -48,7 +48,7 @@ import { prepareSQLQuery as p } from './../database/database.helper';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { runOutsideOrganizationBoundary } from './../core/crud/organization-boundary';
-import { freshTimestamp, MultiORMEnum, parseFindOptionsRelations } from './../core/utils';
+import { freshTimestamp, getUserDummyImage, MultiORMEnum, parseFindOptionsRelations } from './../core/utils';
 import { EmployeeService } from '../employee/employee.service';
 import { liftEmployeeAgentRestrictions } from '../employee/agent-exit-logout-restriction';
 import { ActivityLogService } from '../activity-log/activity-log.service';
@@ -60,6 +60,8 @@ import { Employee } from '../core/entities/internal';
 import { validateUserDeletion } from './default-protected-users';
 import { assertUiPreferencesSize, mergeUiPreferences, sanitizeUiPreferencesPatch } from './ui-preferences.util';
 import { isEmailAddressChange, UNCONFIRMED_EMAIL_STATE } from './email-change.util';
+import { isAvatarRemoval } from './user-avatar';
+import { isPlaceholderImageUrl } from '../placeholder-image/placeholder-image-url';
 import { UserEmailChangedEvent } from './events/user-email-changed.event';
 import { PasswordHashService } from '../password-hash/password-hash.service';
 import {
@@ -706,6 +708,22 @@ export class UserService extends TenantAwareCrudService<User> {
 				for (const column of ['email', ...Object.keys(UNCONFIRMED_EMAIL_STATE)]) {
 					delete entity[column];
 				}
+			}
+
+			// A removed photo falls back to the placeholder a user created without one has (their initial).
+			// The initial comes from the stored user, since the update may carry neither name nor address.
+			// A user already showing the placeholder keeps it, so a repeated removal does not change its color.
+			if (isAvatarRemoval(entity)) {
+				entity.image = null;
+				entity.imageUrl =
+					!user.imageId && isPlaceholderImageUrl(user.imageUrl)
+						? user.imageUrl
+						: getUserDummyImage({
+								...user,
+								firstName: entity.firstName ?? user.firstName,
+								// A user without an address (an agent) gets a placeholder without a letter, not an error.
+								email: user.email ?? ''
+							});
 			}
 
 			// Save the updated user entity
