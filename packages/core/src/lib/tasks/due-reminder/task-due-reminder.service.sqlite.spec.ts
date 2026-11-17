@@ -12,6 +12,7 @@ import { BaseEntityEnum, EmployeeNotificationTypeEnum, IEmployeeNotificationCrea
 import { TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR } from '@gauzy/config';
 import { coreEntities } from '../../core/entities';
 import { RequestContext } from '../../core/context/request-context';
+import { mikroOrmOutsideRequest } from '../../core/testing/mikro-orm-outside-request';
 import { CreateTaskDueReminderTable1791000012600 } from '../../database/migrations/1791000012600-CreateTaskDueReminderTable';
 import { TASK_DUE_REMINDER_STALE_CLAIM_MS } from './task-due-reminder.constants';
 import { TaskDueReminder } from './task-due-reminder.entity';
@@ -487,5 +488,42 @@ describe('TaskDueReminderService on SQLite', () => {
 		const report = await service.sweep(NOW);
 
 		expect(report).toMatchObject({ checked: 205, reminded: 205 });
+	});
+
+	it('under DB_ORM=mikro-orm, files each reminder in a MikroORM request context of its own (Greptile on #12039)', async () => {
+		// The notification is written through MikroORM there, which refuses its global EntityManager outside a request:
+		// a sweep is never one
+		const mikroOrm = await mikroOrmOutsideRequest();
+		const writtenThrough: unknown[] = [];
+		const throughMikroOrm = {
+			create: jest.fn(async (input: IEmployeeNotificationCreateInput & { id?: string }) => {
+				writtenThrough.push(await mikroOrm.write());
+				return notifications.create(input);
+			})
+		};
+		const previousOrm = process.env.DB_ORM;
+		process.env.DB_ORM = 'mikro-orm';
+		try {
+			const ada = await employee();
+			const grace = await employee();
+			await task([ada, grace], { dueDate: inHours(6) });
+
+			const report = await new TaskDueReminderService(dataSource, throughMikroOrm as never, mikroOrm.orm).sweep(
+				NOW
+			);
+
+			expect(report).toEqual({ checked: 2, reminded: 2, recovered: 0, failed: 0 });
+			expect(filed.map(({ input }) => input.receiverEmployeeId).sort()).toEqual([ada, grace].sort());
+			expect(filed.every(({ contextTenantId }) => contextTenantId === TENANT)).toBe(true);
+			// A fresh context for each reminder, never the global EntityManager
+			expect(writtenThrough).toHaveLength(2);
+			expect(writtenThrough[0]).not.toBe(writtenThrough[1]);
+			expect(writtenThrough).not.toContain(mikroOrm.orm.em);
+			expect((await claims()).every(({ filedAt }) => !!filedAt)).toBe(true);
+		} finally {
+			if (previousOrm === undefined) delete process.env.DB_ORM;
+			else process.env.DB_ORM = previousOrm;
+			await mikroOrm.close();
+		}
 	});
 });

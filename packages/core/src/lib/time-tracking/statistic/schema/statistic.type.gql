@@ -119,8 +119,10 @@ One project of an organization that was worked on over a range.
 type TimeTrackingProjectStatistic {
 	"The project's identifier, which is also the identifier the delivered read groups the answer by. The project's own row is read from the project surface by this identifier."
 	id: ID!
-	"The project's name, as the delivered read reads it beside the identifier."
-	name: String!
+	"The project's name, as the delivered read reads it beside the identifier. Null for a project the caller may not see, where the organization keeps its private projects private: `projectHidden` is then true."
+	name: String
+	"True for a private project the caller may not see (neither on it nor holding `ACCESS_PRIVATE_PROJECTS`), where the organization keeps its private projects private: the answer then carries its identifier and its tracked time, and no name."
+	projectHidden: Boolean
 	"The time tracked against the project over the range. Seconds."
 	duration: Float!
 	"The share of the range's tracked time this project accounts for: a percentage of the time tracked against every project of the organization over the same range — not of the five answers returned beside it — rounded to two places by the delivered calculation."
@@ -149,10 +151,14 @@ type TimeTrackingTaskStatistic {
 The name and image of a project, as a manual time log carries them.
 """
 type TimeTrackingProjectSummary {
-	"The project's name, as the delivered read reads it from the project row beside the log."
+	"The project's identifier. Answered only for a project the caller may not see, beside `projectHidden`; the delivered read names a project by its name and image alone."
+	id: ID
+	"The project's name, as the delivered read reads it from the project row beside the log. Null for a project the caller may not see."
 	name: String
-	"The project's image, as that row carries it."
+	"The project's image, as that row carries it. Null for a project the caller may not see."
 	imageUrl: String
+	"True for a private project the caller may not see, where the organization keeps its private projects private: the summary then carries the project's identifier and nothing else of it."
+	projectHidden: Boolean
 }
 
 """

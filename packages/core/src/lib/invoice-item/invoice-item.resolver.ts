@@ -18,6 +18,7 @@ import { InvoiceItem } from './invoice-item.entity';
 import { InvoiceItemService } from './invoice-item.service';
 import { InvoiceItemBulkCreateCommand } from './commands';
 import { deleteRemovedRows } from '../graphql/delete-answer';
+import { graphqlPreconditionOf } from '../invoice/invoice-precondition';
 
 /** The members `CreateInvoiceItemInput` declares in the schema. */
 export interface ICreateInvoiceItemInput {
@@ -327,10 +328,16 @@ export class InvoiceItemResolver {
 	@Permissions(PermissionsEnum.INVOICES_EDIT)
 	async createInvoiceItemsInBulk(
 		@Args('invoiceId', { type: () => ID }) invoiceId: Id,
-		@Args('input') input: ICreateInvoiceItemInput[]
+		@Args('input') input: ICreateInvoiceItemInput[],
+		@Args('expectedUpdatedAt') expectedUpdatedAt?: string | number | null
 	): Promise<InvoiceItem[]> {
+		// The precondition the REST route takes in its query string, here a GraphQL argument (ever-co/ever-teams#5382)
 		return await this.commandBus.execute(
-			new InvoiceItemBulkCreateCommand(invoiceId, input as unknown as IInvoiceItemCreateInput[])
+			new InvoiceItemBulkCreateCommand(
+				invoiceId,
+				input as unknown as IInvoiceItemCreateInput[],
+				graphqlPreconditionOf(expectedUpdatedAt)
+			)
 		);
 	}
 }

@@ -46,6 +46,22 @@ export function teamOfReportRow(log: ITimeLog, statesTeam: boolean): Pick<IRepor
 	return { organizationTeamId: log.organizationTeamId ?? null };
 }
 
+/**
+ * The tags a report row states: the ones its log is filed under, as the report read them (ever-co/ever-gauzy#12029),
+ * an empty list for a log without any. A client that groups by tag counts a row in the group of each of them. A log
+ * whose tags were not read states none, so the row keeps its usual shape.
+ *
+ * @param log The log the row reports.
+ * @returns The row's tags, or nothing.
+ */
+export function tagsOfReportRow(log: ITimeLog): Pick<IReportDayTaskRow, 'tags'> {
+	if (!Array.isArray(log.tags)) {
+		return {};
+	}
+	const tags = log.tags.map(({ id, name, color }) => ({ id, name, color }));
+	return { tags };
+}
+
 /** An hour, in the seconds a duration is stored in. */
 const SECONDS_PER_HOUR = parseDecimalString(3600);
 

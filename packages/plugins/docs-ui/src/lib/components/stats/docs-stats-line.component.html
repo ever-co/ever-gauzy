@@ -1,19 +1,21 @@
+<!-- Overview strip — same pattern as the employee page's facts strip: a muted
+     label over each figure, the cells divided by hairlines. -->
 @if (visible) {
-	<div class="docs-stats-line" role="group" [attr.aria-label]="'DOCS.STATS.ARIA' | translate">
+	<dl class="docs-facts" [attr.aria-label]="'DOCS.STATS.ARIA' | translate">
 		@for (tile of tiles; track trackByLabel($index, tile)) {
-			<span class="docs-stat">
-				<span class="docs-stat-label">{{ tile.labelKey | translate }}</span>
-				<span
-					class="docs-stat-value"
+			<div class="docs-fact">
+				<dt>{{ tile.labelKey | translate }}</dt>
+				<dd
 					[style.color]="tile.color || null"
 					[nbTooltip]="(tile.labelKey | translate) + ': ' + tile.value"
 					nbTooltipStatus="basic"
-					>{{ tile.value }}</span
 				>
-			</span>
+					{{ tile.value }}
+				</dd>
+			</div>
 		}
 		@if (loading) {
 			<nb-icon icon="loader-outline" class="docs-stats-spinner"></nb-icon>
 		}
-	</div>
+	</dl>
 }

@@ -91,8 +91,9 @@
 		"DELETE": "Delete",
 		"EXPAND": "Expand",
 		"COLLAPSE": "Collapse",
-		"COLLAPSE_SIDEBAR": "Collapse sidebar",
-		"EXPAND_SIDEBAR": "Expand sidebar",
+		"FOLDERS": "Folders",
+		"SHOW_FOLDERS": "Show folders",
+		"HIDE_FOLDERS": "Hide folders",
 		"SPACES": "Spaces"
 	},
 	"VIEWS": {
@@ -156,7 +157,8 @@
 		"SEARCH_CONTENT_DISABLED": "Type at least {{ min }} characters to search content",
 		"OPEN_CALENDAR": "Open calendar",
 		"CLEAR_RANGE": "Clear date range",
-		"CLEAR_ALL": "Clear all"
+		"CLEAR_ALL": "Clear all",
+		"MORE_FILTERS": "Filters"
 	},
 	"STATS": {
 		"ARIA": "Document statistics",

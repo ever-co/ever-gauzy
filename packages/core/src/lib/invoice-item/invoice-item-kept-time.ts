@@ -5,7 +5,7 @@ import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from '../core/crud';
 import { InvoiceItem, TimeLog } from '../core/entities/internal';
 import { prepareSQLQuery as p } from '../database/database.helper';
-import { ILinesTransaction, lockInvoice, savedLineId } from './invoice-item-billed-time';
+import { ILinesTransaction, lockInvoice, lockTimeLogsForWrite, savedLineId } from './invoice-item-billed-time';
 
 /** A line an invoice holds, as stored, and the time logs that name it. */
 export interface IHeldLine {
@@ -66,6 +66,11 @@ export async function replaceLinesKeepingTime(
 ): Promise<InvoiceItem[]> {
 	await lockInvoice(transaction, invoiceId, RequestContext.currentTenantId());
 	const held = await heldTimeOf(service, transaction, invoiceId);
+	// Deleting the lines clears the link of the time they billed: a change of each of those time logs (see below)
+	await moveTimeLogsPast(
+		transaction,
+		held.flatMap((line) => line.timeLogIds)
+	);
 	await service.delete({ invoiceId } as FindOptionsWhere<InvoiceItem>);
 	const saved = await service.saveMany(lines);
 	await keepTimeOfUnchangedLines(transaction, requested, saved, held, named);
@@ -156,6 +161,54 @@ async function keepTimeOfUnchangedLines(
 	}
 }
 
+/**
+ * Moves the `updatedAt` of the time logs that lines bill, before the lines are deleted, in the transaction that deletes
+ * them (ever-co/ever-teams#5382). Deleting a line clears the link of the time it billed (the foreign key sets it to
+ * null), which changes each of those time logs without moving its `updatedAt`: a precondition read before would not see
+ * it.
+ *
+ * @param transaction The transaction that deletes the lines.
+ * @param lineIds The lines deleted.
+ */
+export async function moveTimeOfLinesPast(transaction: ILinesTransaction, lineIds: ID[]): Promise<void> {
+	const tenantId = RequestContext.currentTenantId();
+	if (!tenantId || lineIds.length === 0) {
+		return;
+	}
+	const links = await timeLogLinksOf(transaction, lineIds, tenantId);
+	await moveTimeLogsPast(
+		transaction,
+		links.map((link) => link.timeLogId)
+	);
+}
+
+/**
+ * Moves the `updatedAt` of time logs a millisecond past what each holds, in the transaction given, and changes nothing
+ * else of them (see `lockTimeLogsForWrite`).
+ */
+async function moveTimeLogsPast(transaction: ILinesTransaction, timeLogIds: ID[]): Promise<void> {
+	const tenantId = RequestContext.currentTenantId();
+	const ids = [...new Set(timeLogIds)];
+	if (!tenantId || ids.length === 0) {
+		return;
+	}
+	const updatedAt = await lockTimeLogsForWrite(transaction, ids, tenantId);
+	if (transaction.mikroOrm) {
+		const where = { id: { $in: ids }, tenantId } as FilterQuery<TimeLog>;
+		await transaction.mikroOrm.nativeUpdate(TimeLog, where, { updatedAt } as EntityData<TimeLog>);
+		return;
+	}
+	await transaction.typeOrm
+		.createQueryBuilder()
+		.update(TimeLog)
+		.set({ updatedAt })
+		.where(p(`"id" IN (:...timeLogIds)`), { timeLogIds: ids })
+		.andWhere(p(`"tenantId" = :tenantId`), { tenantId })
+		// Not a change of the time log's own: the subscribers of an update have nothing to do with it
+		.callListeners(false)
+		.execute();
+}
+
 async function timeLogLinksOf(transaction: ILinesTransaction, lineIds: ID[], tenantId: ID): Promise<ITimeLogLink[]> {
 	if (transaction.mikroOrm) {
 		const where = { invoiceItem: { $in: lineIds }, tenantId } as FilterQuery<TimeLog>;
@@ -175,17 +228,19 @@ async function linkReleasedTimeLogs(
 	timeLogIds: ID[],
 	tenantId: ID
 ): Promise<void> {
+	// The link is a change of the time log: its `updatedAt` moves past what it holds (see `lockTimeLogsForWrite`)
+	const linkedAt = await lockTimeLogsForWrite(transaction, timeLogIds, tenantId);
 	if (transaction.mikroOrm) {
 		const where = { id: { $in: timeLogIds }, tenantId, invoiceItem: null } as FilterQuery<TimeLog>;
 		// A native update does not stamp the update date.
-		const linked = { invoiceItem: lineId, updatedAt: new Date() } as EntityData<TimeLog>;
+		const linked = { invoiceItem: lineId, updatedAt: linkedAt } as EntityData<TimeLog>;
 		await transaction.mikroOrm.nativeUpdate(TimeLog, where, linked);
 		return;
 	}
 	await transaction.typeOrm
 		.createQueryBuilder()
 		.update(TimeLog)
-		.set({ invoiceItemId: lineId })
+		.set({ invoiceItemId: lineId, updatedAt: linkedAt })
 		.where(p(`"id" IN (:...timeLogIds)`), { timeLogIds })
 		.andWhere(p(`"tenantId" = :tenantId`), { tenantId })
 		.andWhere(p(`"invoiceItemId" IS NULL`))

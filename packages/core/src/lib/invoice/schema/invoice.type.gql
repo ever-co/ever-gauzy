@@ -476,6 +476,13 @@ input UpdateInvoiceInput {
 	paymentTermId: ID
 	"The facets attached to the document, by identifier. The pivot is written from these."
 	tagIds: [ID!]
+	"""
+	The `updatedAt` the document was read with. When stated, the change is saved only while the document still holds
+	it; otherwise nothing is saved and the error is `CONCURRENT_MODIFICATION` (status 409), with the document as it is
+	now in `extensions.details.invoice`. An identifier that names no document is then refused (status 404) rather
+	than stored as a new row. Left out, the change is saved as it always was.
+	"""
+	expectedUpdatedAt: DateTime
 }
 
 """
@@ -503,6 +510,12 @@ input UpdateInvoiceActionInput {
 	amountDue: Decimal
 	"The recipient the document has been sent to."
 	sentTo: String
+	"""
+	The `updatedAt` the document was read with. When stated, the step is saved only while the document still holds
+	it; otherwise nothing is saved and the error is `CONCURRENT_MODIFICATION` (status 409), with the document as it is
+	now in `extensions.details.invoice`. Left out, the step is saved as it always was.
+	"""
+	expectedUpdatedAt: DateTime
 }
 
 """

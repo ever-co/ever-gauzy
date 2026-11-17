@@ -12,10 +12,11 @@ import { ILinesTransaction, ILockedInvoice, lockInvoice } from '../invoice-item/
 /**
  * A conditional write of an invoice: the `updatedAt` the caller last read it at.
  *
- * Optional on every route that takes it (`PUT /invoices/:id`, `POST /invoice-item/bulk/:invoiceId` and
- * `PUT /invoices/:id/with-items`). Absent, the write is made exactly as it was before the precondition existed. Stated,
- * the invoice is locked, its `updatedAt` compared with it, and the write is made in the same transaction only when the
- * two are the same instant; otherwise nothing is written and the caller is answered 409 with the invoice as it is now.
+ * Optional on every route that takes it (`PUT /invoices/:id`, `POST /invoice-item/bulk/:invoiceId`,
+ * `PUT /invoices/:id/with-items`, `PUT /invoices/:id/action`, `PUT /invoices/:id/estimate`, `DELETE /invoices/:id`, and
+ * their GraphQL twins). Absent, the write is made exactly as it was before the precondition existed. Stated, the
+ * invoice is locked, its `updatedAt` compared with it, and the write is made in the same transaction only when the two
+ * are the same instant; otherwise nothing is written and the caller is answered 409 with the invoice as it is now.
  *
  * `updatedAt` rather than a version column: every write of an invoice moves it (a payment, a void, an edit, through
  * TypeORM's update date or MikroORM's `onUpdate`), so it tells a change made by any route, including the ones that
@@ -43,8 +44,25 @@ export const INVOICE_LINE_OF_ANOTHER_INVOICE =
 export const INVOICE_PRECONDITION_MALFORMED =
 	'expectedUpdatedAt must be the updatedAt the invoice was read with, as an ISO 8601 date and time.';
 
+/** A date and time in the extended format that states no offset: `2026-11-16T10:20:30.456`, or with a space. */
+const ZONELESS_DATE_TIME = /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?$/;
+
 /**
- * The precondition a request states, as an instant; null when it states none.
+ * The text of a precondition as it is read: the date and time separator in upper case (RFC 3339 allows `t`, which the
+ * `DateTime` scalar passes on), and a date and time that states no offset read as UTC, the zone the API serves every
+ * `updatedAt` in, rather than in the server's own zone, which `new Date` would otherwise apply to it.
+ */
+function utcTextOf(value: string): string {
+	const text = value.replace(/^(\d{4}-\d{2}-\d{2})t/, '$1T');
+	if (!ZONELESS_DATE_TIME.test(text)) {
+		return text;
+	}
+	return `${text.replace(' ', 'T')}Z`;
+}
+
+/**
+ * The precondition a request states, as an instant; null when it states none. A date and time stated without an
+ * offset is read as UTC.
  *
  * @param value The `expectedUpdatedAt` of the body or of the query string, as it arrived.
  * @returns The instant, or null when the request states no precondition.
@@ -61,14 +79,36 @@ export function expectedUpdatedAtOf(value: unknown): Date | null {
 		}
 		return value;
 	}
-	if (typeof value !== 'string' || !isISO8601(value, { strict: true })) {
+	if (typeof value !== 'string') {
 		throw new BadRequestException(INVOICE_PRECONDITION_MALFORMED);
 	}
-	const instant = new Date(value);
+	const text = utcTextOf(value);
+	if (!isISO8601(text, { strict: true })) {
+		throw new BadRequestException(INVOICE_PRECONDITION_MALFORMED);
+	}
+	const instant = new Date(text);
 	if (Number.isNaN(instant.getTime())) {
 		throw new BadRequestException(INVOICE_PRECONDITION_MALFORMED);
 	}
 	return instant;
+}
+
+/**
+ * The precondition a GraphQL field states, as an instant; null when it states none. The `DateTime` scalar hands the
+ * field what the caller sent once it checked that it names an instant: RFC 3339 text, or milliseconds since the epoch.
+ * Text is then read as {@link expectedUpdatedAtOf} reads a route's, so both surfaces take the same text. Milliseconds
+ * are taken here because the scalar takes them for every `DateTime`; the REST routes, whose DTOs and query strings
+ * carry text, take ISO 8601 text only.
+ *
+ * @param value The `expectedUpdatedAt` argument or input member, as the scalar parsed it.
+ * @returns The instant, or null when the field states no precondition.
+ * @throws BadRequestException when the text is no strict ISO 8601 date and time.
+ */
+export function graphqlPreconditionOf(value: string | number | null | undefined): Date | null {
+	if (typeof value === 'number') {
+		return expectedUpdatedAtOf(new Date(value));
+	}
+	return expectedUpdatedAtOf(value);
 }
 
 /**

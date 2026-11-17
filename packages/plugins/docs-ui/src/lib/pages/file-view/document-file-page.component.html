@@ -5,6 +5,8 @@
 	[state]="state"
 	(retry)="load()"
 >
+	<!-- Opens the Documents folder drawer, as in every other Documents page header. -->
+	<gz-docs-folders-button recordPageActions></gz-docs-folders-button>
 	@if (document) {
 		<ngx-favorite-toggle
 			recordPageActions

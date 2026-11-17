@@ -1,4 +1,4 @@
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
 	Controller,
 	UseGuards,
@@ -44,6 +44,7 @@ import {
 	UpdateInvoiceDTO,
 	UpdateInvoiceWithItemsDTO
 } from './dto';
+import { expectedUpdatedAtOf } from './invoice-precondition';
 
 @ApiTags('Invoice')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -249,7 +250,12 @@ export class InvoiceController extends CrudController<Invoice> {
 	}
 
 	/**
-	 * Update estimate status
+	 * Update estimate status: the estimate's answer, accepted or not.
+	 *
+	 * With `expectedUpdatedAt` (the `updatedAt` the estimate was read with), the answer is written only while the
+	 * estimate still holds it, in the transaction that compares the two; otherwise nothing is written and the answer is
+	 * 409 with the estimate as it is now. Without it, the answer is written as it always was. Either way it moves the
+	 * estimate's `updatedAt`, as a status action does (ever-co/ever-teams#5382).
 	 *
 	 * @param id
 	 * @param entity
@@ -268,6 +274,11 @@ export class InvoiceController extends CrudController<Invoice> {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
+	@ApiResponse({
+		status: HttpStatus.CONFLICT,
+		description:
+			'The estimate changed since expectedUpdatedAt: nothing was saved. `details.invoice` is the estimate as it is now.'
+	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put('/:id/estimate')
 	@UseValidationPipe({ transform: true, whitelist: true })
@@ -275,11 +286,16 @@ export class InvoiceController extends CrudController<Invoice> {
 		@Param('id', UUIDValidationPipe) id: IInvoice['id'],
 		@Body() entity: UpdateEstimateInvoiceDTO
 	) {
-		return await this.commandBus.execute(new InvoiceUpdateCommand({ ...entity, id }));
+		return await this.commandBus.execute(new InvoiceUpdateCommand({ ...entity, id }, { isAction: true }));
 	}
 
 	/**
-	 * Update invoice/estimate action
+	 * Update invoice/estimate action: void, paid, unpaid, sent and the like.
+	 *
+	 * With `expectedUpdatedAt` (the `updatedAt` the invoice was read with), the action is written only while the
+	 * invoice still holds it, in the transaction that compares the two; otherwise nothing is written and the answer is
+	 * 409 with the invoice as it is now. Without it, the action is written as it always was. Either way it moves the
+	 * invoice's `updatedAt` (ever-co/ever-teams#5382).
 	 *
 	 * @param id
 	 * @param entity
@@ -298,11 +314,16 @@ export class InvoiceController extends CrudController<Invoice> {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
+	@ApiResponse({
+		status: HttpStatus.CONFLICT,
+		description:
+			'The invoice changed since expectedUpdatedAt: nothing was saved. `details.invoice` is the invoice as it is now.'
+	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put('/:id/action')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async updateAction(@Param('id', UUIDValidationPipe) id: IInvoice['id'], @Body() entity: UpdateInvoiceActionDTO) {
-		return await this.commandBus.execute(new InvoiceUpdateCommand({ ...entity, id }));
+		return await this.commandBus.execute(new InvoiceUpdateCommand({ ...entity, id }, { isAction: true }));
 	}
 
 	/**
@@ -350,6 +371,19 @@ export class InvoiceController extends CrudController<Invoice> {
 		await this.invoiceService.revokeLink(id);
 	}
 
+	/**
+	 * Delete invoice
+	 *
+	 * With `expectedUpdatedAt` in the query string (the `updatedAt` the invoice was read with), the invoice is deleted
+	 * only while it still holds it, in the transaction that compares the two; otherwise nothing is deleted and the
+	 * answer is 409 with the invoice as it is now. Without it, the invoice is deleted as it always was. The precondition
+	 * travels in the query string, as every other parameter of a DELETE route here does: a DELETE body has no defined
+	 * meaning, and proxies may drop it.
+	 *
+	 * @param id
+	 * @param expectedUpdatedAt The `updatedAt` the invoice was read with, when the delete is conditional.
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Delete record' })
 	@ApiResponse({
 		status: HttpStatus.NO_CONTENT,
@@ -359,10 +393,31 @@ export class InvoiceController extends CrudController<Invoice> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'expectedUpdatedAt is no ISO 8601 date and time: nothing was deleted.'
+	})
+	@ApiResponse({
+		status: HttpStatus.CONFLICT,
+		description:
+			'The invoice changed since expectedUpdatedAt: nothing was deleted. `details.invoice` is the invoice as it is now.'
+	})
+	@ApiQuery({
+		name: 'expectedUpdatedAt',
+		required: false,
+		type: String,
+		description:
+			'The updatedAt the invoice was read with (ISO 8601). When stated, the invoice is deleted only if it still ' +
+			'holds it; otherwise nothing is deleted and the answer is 409 Conflict.'
+	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
-	async delete(@Param('id', UUIDValidationPipe) id: IInvoice['id']): Promise<DeleteResult> {
-		return await this.commandBus.execute(new InvoiceDeleteCommand(id));
+	async delete(
+		@Param('id', UUIDValidationPipe) id: IInvoice['id'],
+		@Query('expectedUpdatedAt') expectedUpdatedAt?: unknown
+	): Promise<DeleteResult> {
+		const expected = expectedUpdatedAtOf(expectedUpdatedAt);
+		return await this.commandBus.execute(new InvoiceDeleteCommand(id, expected));
 	}
 
 	/**

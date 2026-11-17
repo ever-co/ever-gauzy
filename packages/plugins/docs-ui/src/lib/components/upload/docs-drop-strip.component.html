@@ -1,24 +1,25 @@
+@let title = 'DOCS.UPLOAD.DROP_STRIP_TITLE' | translate;
+@let hint = 'DOCS.UPLOAD.DROP_STRIP_HINT' | translate: { formats: formats, max: maxFileSize, files: maxFiles };
 <!-- role=button + tabindex: the whole strip is one click/keyboard target whose
-     accessible name is its visible copy (no aria-label override needed). -->
+     accessible name is its visible copy (no aria-label override needed).
+     The full instruction and limits (both may be truncated in a narrow toolbar slot)
+     show in a tooltip two ways: on keyboard focus of the strip itself, and on hover
+     over the copy area, which spans the text whatever width the hint is left with. -->
 <div
 	class="docs-drop-strip"
 	role="button"
 	tabindex="0"
 	[class.docs-drop-strip--active]="active"
+	[nbTooltip]="title + ' — ' + hint"
+	[nbTooltipTrigger]="tooltipTrigger"
+	nbTooltipStatus="basic"
 	(click)="browse.emit()"
 	(keydown.enter)="browse.emit()"
 	(keydown.space)="onSpace($any($event))"
 >
 	<nb-icon icon="cloud-upload-outline"></nb-icon>
-	<div class="docs-drop-strip-copy">
-		<span class="docs-drop-strip-title">{{ 'DOCS.UPLOAD.DROP_STRIP_TITLE' | translate }}</span>
-		<span
-			class="docs-drop-strip-hint"
-			[nbTooltip]="'DOCS.UPLOAD.DROP_STRIP_HINT' | translate: { formats: formats, max: maxFileSize, files: maxFiles }"
-			nbTooltipStatus="basic"
-			>{{
-				'DOCS.UPLOAD.DROP_STRIP_HINT' | translate: { formats: formats, max: maxFileSize, files: maxFiles }
-			}}</span
-		>
+	<div class="docs-drop-strip-copy" [nbTooltip]="title + ' — ' + hint" nbTooltipStatus="basic">
+		<span class="docs-drop-strip-title">{{ title }}</span>
+		<span class="docs-drop-strip-hint">{{ hint }}</span>
 	</div>
 </div>

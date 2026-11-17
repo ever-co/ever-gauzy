@@ -2,7 +2,7 @@ import { ID, IEstimateEmail } from '@gauzy/contracts';
 import { isMySQL } from '@gauzy/config';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
-import { IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsDate, IsOptional, IsString, IsUUID } from 'class-validator';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmEstimateEmailRepository } from './repository/mikro-orm-estimate-email.repository';
@@ -11,7 +11,8 @@ import { ExportRedacted } from '../export-import/export-redact.decorator';
 /**
  * One email of an estimate or an invoice: where it went, and the token of its links. An invoice's email also names,
  * from its creation, which invoice it delivers and in which language (`invoiceId`, `languageCode`), and forgets both
- * when it does not go: the payment reminders of that invoice go to the same address, in the same language.
+ * when it does not go: the payment reminders of that invoice go to the same address, in the same language. The row is
+ * written before the email is sent; `sentAt` says once the mail transport took it.
  */
 @MultiORMEntity('estimate_email', { mikroOrmRepository: () => MikroOrmEstimateEmailRepository })
 @ColumnIndex('IDX_estimate_email_invoice', ['invoiceId'])
@@ -60,4 +61,15 @@ export class EstimateEmail extends TenantOrganizationBaseEntity implements IEsti
 	@IsString()
 	@MultiORMColumn({ nullable: true })
 	languageCode?: string;
+
+	/**
+	 * When the mail transport took this email; unset while it has not. The row is written before the document is
+	 * rendered and the email handed over, so a row without it records an attempt, never a delivery: a process stopped
+	 * in between leaves such a row behind with nothing sent. Unset on every row written before the column.
+	 */
+	@ApiPropertyOptional({ type: () => Date })
+	@IsOptional()
+	@IsDate()
+	@MultiORMColumn({ nullable: true })
+	sentAt?: Date;
 }
