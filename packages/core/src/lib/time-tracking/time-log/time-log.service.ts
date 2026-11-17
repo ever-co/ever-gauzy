@@ -2770,8 +2770,10 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 			// Retrieve the updated time log entry (a member's log, for a manager: same scope as the read above)
 			const updated = await this.withoutEmployeeFilter(() => this.findOneByIdString(id));
+			// Its tags as stored, read after the entry, so never older than the `updatedAt` it is answered with: an edit
+			// made on this answer cannot put back the tags a change saved since this edit replaced
 			if (updated && changesTags) {
-				updated.tags = checkedTags;
+				await loadTimeLogTags(this.typeOrmRepository.manager, [updated]);
 			}
 			return updated;
 		} catch (error) {

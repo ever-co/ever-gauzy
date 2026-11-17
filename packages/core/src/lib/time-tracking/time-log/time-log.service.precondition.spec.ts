@@ -39,16 +39,27 @@ const MEETING_TAG = {
 	name: 'meeting'
 };
 
+/** Another tag of the organization, as the tag links answer it. */
+const SUPPORT_TAG = { id: '7d1e3f5a-2e4f-4a8c-9b1d-0e3f9a5b7c22', name: 'support', color: '#f59e0b' };
+
 describe('TimeLogService: a manual edit under a precondition', () => {
 	let store: TimeSpanStore;
 	let service: TimeLogService;
 	let tagFind: jest.Mock;
 	let tagsTransaction: jest.Mock;
+	let storedTags: jest.Mock;
 
 	beforeEach(async () => {
 		store = new TimeSpanStore();
 		tagFind = jest.fn().mockResolvedValue([MEETING_TAG]);
 		tagsTransaction = jest.fn().mockResolvedValue(undefined);
+		// The tag links as stored, as `loadTimeLogTags` reads them (another user's "support" tag, saved since the edit)
+		storedTags = jest.fn().mockResolvedValue([{ timeLogId: 'edited', ...SUPPORT_TAG }]);
+		const tagLinkQuery: Record<string, unknown> = {};
+		for (const step of ['select', 'addSelect', 'from', 'innerJoin', 'where', 'orderBy', 'addOrderBy']) {
+			tagLinkQuery[step] = () => tagLinkQuery;
+		}
+		tagLinkQuery.getRawMany = storedTags;
 		const employee = {
 			id: SPAN_EMPLOYEE_ID,
 			organizationId: SPAN_ORGANIZATION_ID,
@@ -72,7 +83,11 @@ describe('TimeLogService: a manual edit under a precondition', () => {
 						find: jest.fn().mockResolvedValue([]),
 						// The tags a write names are read through its manager (`timeLogTagsOf`); a write of them outside
 						// the edit's command would open a transaction of its own (`replaceTimeLogTags`)
-						manager: { getRepository: () => ({ find: tagFind }), transaction: tagsTransaction }
+						manager: {
+							getRepository: () => ({ find: tagFind }),
+							transaction: tagsTransaction,
+							createQueryBuilder: () => tagLinkQuery
+						}
 					};
 				}
 				return {};
@@ -223,7 +238,11 @@ describe('TimeLogService: a manual edit under a precondition', () => {
 		expect(updates[0].input).not.toHaveProperty('tags');
 		// Written after the command, the tags would replace a change of them saved once the entry's lock is released
 		expect(tagsTransaction).not.toHaveBeenCalled();
-		expect(updated.tags).toEqual([{ id: MEETING_TAG.id, name: 'meeting', color: undefined }]);
+		// The answer carries the tags as stored, read after the entry it answers, so they are never older than the
+		// `updatedAt` it comes with: a change of them saved since the edit is answered, not this edit's tags
+		expect(updated.tags).toEqual([SUPPORT_TAG]);
+		const entryReads = (service.findOneByIdString as jest.Mock).mock.invocationCallOrder;
+		expect(storedTags.mock.invocationCallOrder[0]).toBeGreaterThan(entryReads[entryReads.length - 1]);
 	});
 
 	it('without a precondition, edits as before', async () => {
