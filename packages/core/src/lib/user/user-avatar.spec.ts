@@ -1,4 +1,4 @@
-import { getSeedAvatarFileName, isSelfResolvingImageUrl, shouldSeedAvatar } from './user-avatar';
+import { getSeedAvatarFileName, isAvatarRemoval, isSelfResolvingImageUrl, shouldSeedAvatar } from './user-avatar';
 
 /**
  * Seeded users and employees carry `imageUrl: 'assets/images/avatars/<file>'` — a path that only
@@ -132,5 +132,43 @@ describe('isSelfResolvingImageUrl', () => {
 		expect(isSelfResolvingImageUrl('   ')).toBe(false);
 		expect(isSelfResolvingImageUrl(null)).toBe(false);
 		expect(isSelfResolvingImageUrl(undefined)).toBe(false);
+	});
+});
+
+/**
+ * Removing a photo from the profile page sends `imageId: null`. The user then gets the placeholder a
+ * user created without a photo has, so no client is left rendering an empty `imageUrl`.
+ */
+describe('isAvatarRemoval', () => {
+	it('is a removal when the image is detached and the picture URL is cleared', () => {
+		expect(isAvatarRemoval({ imageId: null, imageUrl: null })).toBe(true);
+		expect(isAvatarRemoval({ imageId: null, image: null, imageUrl: null })).toBe(true);
+		expect(isAvatarRemoval({ imageId: null, imageUrl: '' })).toBe(true);
+		expect(isAvatarRemoval({ imageId: null, imageUrl: '   ' })).toBe(true);
+	});
+
+	// The account form sends the current `imageId` on every save, which is `null` for a user whose picture
+	// is only a URL (a social provider's, or the placeholder). That save must leave the picture alone.
+	it('is not a removal when only the image id is null', () => {
+		expect(isAvatarRemoval({ imageId: null })).toBe(false);
+		expect(isAvatarRemoval({ imageId: null, image: null })).toBe(false);
+	});
+
+	it('is not a removal when the update leaves the image alone', () => {
+		expect(isAvatarRemoval({})).toBe(false);
+		expect(isAvatarRemoval({ imageUrl: null })).toBe(false);
+		expect(isAvatarRemoval(undefined)).toBe(false);
+		expect(isAvatarRemoval(null)).toBe(false);
+	});
+
+	it('is not a removal when a new image is attached', () => {
+		expect(isAvatarRemoval({ imageId: '00000000-0000-4000-8000-000000000001' })).toBe(false);
+		expect(isAvatarRemoval({ imageId: null, image: { id: '00000000-0000-4000-8000-000000000001' } })).toBe(
+			false
+		);
+	});
+
+	it('is not a removal when the update brings its own picture URL', () => {
+		expect(isAvatarRemoval({ imageId: null, imageUrl: 'https://cdn.example.com/a.jpg' })).toBe(false);
 	});
 });

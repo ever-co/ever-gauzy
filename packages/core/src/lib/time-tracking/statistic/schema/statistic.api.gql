@@ -83,7 +83,7 @@ extend type Query {
 		activityLevel: TimeTrackingActivityLevelInput
 		"Narrows the read to these time-log types, by value: `TRACKED`, `MANUAL`, `IDLE` or `RESUMED`. Carried as a value rather than declared as an enum because the vocabulary belongs to the contracts package."
 		logType: [String!]
-		"Narrows the read to these time-log sources, by value: `DESKTOP`, `BROWSER`, `BROWSER_EXTENSION`, `MOBILE`, `HUBSTAFF`, `UPWORK`, `TEAMS` or `CLOC`."
+		"Narrows the read to these time-log sources, by value: `DESKTOP`, `BROWSER`, `BROWSER_EXTENSION`, `MOBILE`, `HUBSTAFF`, `UPWORK`, `TEAMS`, `CLOC` or `EMBED`."
 		source: [String!]
 		"Reads only the caller's own engagement. The delivered read applies it in addition to the caller's permissions, never instead of them."
 		onlyMe: Boolean

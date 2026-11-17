@@ -2314,6 +2314,37 @@
 				"CLEAR_SEARCH": "Wyczyść wyszukiwanie",
 				"EMPTY_TITLE": "Brak kontaktów",
 				"EMPTY_TEXT": "Przypisz tego pracownika do klienta, nabywcy lub potencjalnego klienta, aby pokazać, z kim pracuje."
+			},
+			"PHOTO": {
+				"MENU_LABEL": "Opcje zdjęcia profilowego",
+				"VIEW": "Wyświetl zdjęcie",
+				"UPLOAD": "Prześlij zdjęcie",
+				"REMOVE": "Usuń zdjęcie",
+				"EDIT_TITLE": "Edytuj zdjęcie",
+				"HINT": "Przeciągnij, aby zmienić położenie",
+				"ZOOM": "Powiększenie",
+				"ZOOM_IN": "Powiększ",
+				"ZOOM_OUT": "Pomniejsz",
+				"REMOVE_TITLE": "Usunąć zdjęcie profilowe?",
+				"REMOVE_MESSAGE": "Zdjęcie zostanie zastąpione pierwszą literą imienia.",
+				"UNSUPPORTED": "Tego pliku nie można użyć jako zdjęcia. Wybierz obraz PNG, JPEG, GIF, WebP lub BMP.",
+				"ALT": "Zdjęcie profilowe",
+				"CHOOSE_AVATAR": "Wybierz awatar",
+				"PRESETS": "Gotowe",
+				"SHUFFLE": "Losuj",
+				"SKIN": "Odcień skóry",
+				"HAIR": "Włosy",
+				"HAIR_COLOR": "Kolor włosów",
+				"FACIAL_HAIR": "Zarost",
+				"GLASSES": "Okulary",
+				"CLOTHES": "Ubranie",
+				"CLOTHES_COLOR": "Kolor ubrania",
+				"BACKGROUND": "Tło",
+				"DEVELOPERS": "Dla programistów",
+				"FUN": "Zabawne",
+				"EXPRESSION": "Mina",
+				"HEADWEAR": "Nakrycie głowy",
+				"PRINT": "Nadruk na koszulce"
 			}
 		},
 		"ADD_EMPLOYEES": {
@@ -6641,7 +6672,8 @@
 			"HUBSTAFF": "HubStaff",
 			"BROWSER_EXTENSION": "Rozszerzenie przeglądarki",
 			"TEAMS": "Zespoły",
-			"CLOC": "Cloc"
+			"CLOC": "Cloc",
+			"EMBED": "Osadzony timer"
 		},
 		"LAST_WORKED": "Ostatnia praca:",
 		"TIME_ZONE": "Time Zone",

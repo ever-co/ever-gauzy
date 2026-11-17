@@ -33,6 +33,7 @@
 		"@gauzy/plugin": "^0.1.0",
 		"@gauzy/plugin-ai-chat": "^0.1.0",
 		"@gauzy/scheduler": "^0.1.0",
+		"@mikro-orm/core": "^6.6.17",
 		"@nestjs/throttler": "^6.7.1",
 		"ai": "^7.0.138",
 		"bullmq": "^6.3.13",

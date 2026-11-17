@@ -2,7 +2,7 @@ import { ConflictException, Logger, NotFoundException, Optional } from '@nestjs/
 import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
 import * as moment from 'moment';
 import { Brackets, DataSource, EntityManager, FindOptionsWhere, Repository } from 'typeorm';
-import { ID, ITimeLog, ITimeSlot, ITimesheet, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
+import { ID, ITimeLog, ITimeSlot, ITimesheet, TimeLogType } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/utils';
 import { TimesheetFirstOrCreateCommand, TimesheetRecalculateCommand } from './../../../timesheet/commands';
 import { TimeSlotBulkDeleteCommand } from '../../../time-slot/commands/time-slot-bulk-delete.command';
@@ -14,9 +14,9 @@ import { MultiORM, MultiORMEnum, getORMType } from './../../../../core/utils';
 import { prepareSQLQuery as p } from './../../../../database/database.helper';
 import { TimeLog } from './../../time-log.entity';
 import { assertTimeLogReferencesOfTenant } from '../../time-log-references';
-import { postsHeartbeatSlots } from '../../tracker-source';
+import { postsHeartbeatSlots, takesRangeSlotsOnStop } from '../../tracker-source';
 import { TimeSlot } from '../../../time-slot/time-slot.entity';
-import { TimeLogUpdateCommand } from '../time-log-update.command';
+import { TimeLogUpdateCommand, TimeLogUpdateOptions } from '../time-log-update.command';
 import { FindTimeLogRatesCommand, TimeLogRatesPart } from '../find-time-log-rates.command';
 import { updatedChange } from '../../time-log-history';
 import {
@@ -28,10 +28,11 @@ import {
 import {
 	assertTimeLogUnchangedSince,
 	ITimeLogPrecondition,
+	moveUpdatedAtPast,
 	timeLogExpectedUpdatedAtOf,
-	updatedAtPast,
 	withoutPrecondition
 } from '../../time-log-precondition';
+import { writeTimeLogTags } from '../../time-log-tags';
 import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.repository';
 import { TypeOrmTimeSlotRepository } from '../../../time-slot/repository/type-orm-time-slot.repository';
 import { MikroOrmTimeSlotRepository } from '../../../time-slot/repository/mikro-orm-time-slot.repository';
@@ -144,33 +145,6 @@ function isSameInstant(a: Date | string | null | undefined, b: Date | string | n
 }
 
 /**
- * Moves an edited entry's `updatedAt` a millisecond past both what it held when it was locked and the value the edit
- * was checked against, in the edit's transaction (ever-co/ever-teams#5382). The write's own update date is the
- * database's clock, kept to the second on SQLite and MySQL and to the start of the transaction on PostgreSQL: a second
- * edit made on the same read could otherwise find the value it read.
- *
- * @param manager - The edit's transaction.
- * @param current - The entry as read under lock in it.
- * @param expectedUpdatedAt - The value the edit was checked against, if any.
- */
-async function moveUpdatedAtPast(
-	manager: EntityManager,
-	current: ITimeLog,
-	expectedUpdatedAt: Date | null
-): Promise<void> {
-	const updatedAt = updatedAtPast([current.updatedAt, expectedUpdatedAt]);
-	await manager
-		.createQueryBuilder()
-		.update(TimeLog)
-		.set({ updatedAt })
-		.where(p(`"id" = :id`), { id: current.id })
-		.andWhere(p(`"tenantId" = :tenantId`), { tenantId: current.tenantId })
-		// Not a change of the entry's own: the subscribers of an update have nothing to do with it
-		.callListeners(false)
-		.execute();
-}
-
-/**
  * A log's time slot links alone, as a save writes them: the slots given become its join rows, and a column the object
  * leaves out is left as stored (TypeORM's save skips an undefined property).
  *
@@ -208,7 +182,7 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 
 	public async execute(command: TimeLogUpdateCommand): Promise<ITimeLog> {
 		// Extract input parameters from the command
-		const { id, input, manualTimeSlot, forceDelete = false, history, stopsRun = false } = command;
+		const { id, input, manualTimeSlot, forceDelete = false, history, stopsRun = false, options = {} } = command;
 
 		let timeLog: ITimeLog = await this.getTimeLogByIdOrInstance(id);
 
@@ -302,7 +276,8 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 				history,
 				(repository) => this.saveUpdatedTimeLog(timeLog, repository),
 				true,
-				expectedUpdatedAt
+				expectedUpdatedAt,
+				options
 			);
 			timeLog = await this.typeOrmTimeLogRepository.findOneBy({ id: timeLog.id });
 			// (c) only then the previous employee's slots are released, below. If that fails, the log is fully
@@ -369,10 +344,11 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 						});
 					},
 					true,
-					expectedUpdatedAt
+					expectedUpdatedAt,
+					options
 				);
 
-			// The time slots of the new range, for Web Timer, and for a heartbeat-posting run that has none
+			// The time slots of the new range, for the web and embedded timers and a heartbeat-posting run with none
 			// (takesRangeSlots, above), are created and linked to the log BEFORE the update writes that range (see
 			// `writeWithRangeSlots`). The answer is every slot of the employee at those starts — the ones created and the
 			// ones they already had there (another of their logs may share a ten-minute slot) — and, as
@@ -447,10 +423,11 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 	}
 
 	/**
-	 * Whether an update gives the log the time slots of its range. The web timer posts none, so its runs always get
-	 * them. A run of a client that posts a slot on each heartbeat (`postsHeartbeatSlots`) gets them only when it has
-	 * none, one that never sent a heartbeat, which the day's worked time otherwise leaves out (#11843); one that has
-	 * slots keeps those it posted. Desktop and the other trackers post their own.
+	 * Whether an update gives the log the time slots of its range. The web timer and the embedded timers
+	 * (`takesRangeSlotsOnStop`) post none, so their runs always get them. A run of a client that posts a slot on each
+	 * heartbeat (`postsHeartbeatSlots`) gets them only when it has none, one that never sent a heartbeat, which the
+	 * day's worked time otherwise leaves out (#11843); one that has slots keeps those it posted. Desktop and the other
+	 * trackers post their own.
 	 *
 	 * @param timeLog - The log as the update will store it: the stored row with the update's changes on top.
 	 */
@@ -459,7 +436,7 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 		if (timeLog.logType === TimeLogType.BREAK) {
 			return false;
 		}
-		if (timeLog.source === TimeLogSourceEnum.WEB_TIMER) {
+		if (takesRangeSlotsOnStop(timeLog.source)) {
 			return true;
 		}
 		if (!postsHeartbeatSlots(timeLog.source)) {
@@ -993,9 +970,12 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 	 *
 	 * A write in that transaction (an edit by a person, or one under a precondition) also moves `updatedAt` a millisecond
 	 * past both what the entry held and the value checked (see `moveUpdatedAtPast`).
+	 * @param options - What the edit writes besides the entry's columns (its tags), and checks before writing, in the
+	 * same transaction (see `TimeLogUpdateOptions`). Either one runs the write in that transaction.
 	 *
 	 * @throws ApiException 409 `CONCURRENT_MODIFICATION` (`TIME_LOG_CHANGED`) when the entry was written since
 	 * `expectedUpdatedAt`; nothing is written, nor recorded.
+	 * @throws What `options.assertBeforeWrite` throws; nothing is written, nor recorded.
 	 */
 	private async writeWithHistory<T>(
 		stored: ITimeLog,
@@ -1003,11 +983,14 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 		history: TimeLogHistoryOptions | undefined,
 		write: (repository: Repository<TimeLog>) => Promise<T>,
 		refusesDeletedEntry = false,
-		expectedUpdatedAt: Date | null = null
+		expectedUpdatedAt: Date | null = null,
+		options: TimeLogUpdateOptions = {}
 	): Promise<T | undefined> {
 		const recordsHistory = Boolean(history) && Boolean(this.dataSource);
 		const isConditional = expectedUpdatedAt !== null;
-		if (!recordsHistory && !isConditional) {
+		const writesTags = Array.isArray(options.tagIds);
+		const checksBeforeWrite = typeof options.assertBeforeWrite === 'function';
+		if (!recordsHistory && !isConditional && !writesTags && !checksBeforeWrite) {
 			return write(this.typeOrmTimeLogRepository);
 		}
 		return this.inTransaction(async (manager) => {
@@ -1026,7 +1009,15 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 			}
 			// Compared under the lock: a write another request is making to the entry is waited for, and seen
 			assertTimeLogUnchangedSince(current, expectedUpdatedAt);
+			if (checksBeforeWrite) {
+				await options.assertBeforeWrite(manager, current);
+			}
 			const result = await write(manager.getRepository(TimeLog));
+			// The tags in the same transaction (ever-co/ever-gauzy#12029): written after it, a change of them saved in
+			// between would be replaced by this edit's, although both were checked
+			if (writesTags) {
+				await writeTimeLogTags(manager, current.id, options.tagIds);
+			}
 			await moveUpdatedAtPast(manager, current, expectedUpdatedAt);
 			if (!recordsHistory) {
 				return result;

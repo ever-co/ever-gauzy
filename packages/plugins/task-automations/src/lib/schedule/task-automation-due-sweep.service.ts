@@ -1,6 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
+import { MikroORM } from '@mikro-orm/core';
 import { DataSource } from 'typeorm';
 import { ID, ITaskAutomationRule, TaskAutomationTriggerEnum } from '@gauzy/contracts';
+import { runInMikroOrmContext } from '@gauzy/core';
 import { TaskAutomationRuleService } from '../services/task-automation-rule.service';
 import { TaskAutomationRunner } from '../services/task-automation-runner.service';
 import { TaskAutomationRunStore } from '../services/task-automation-run.store';
@@ -31,6 +33,8 @@ export function dueWindow(rule: Pick<ITaskAutomationRule, 'createdAt'>, now: Dat
  * stay open after their notice never hold back one due later: the read already leaves out the tasks the rule reported
  * and has not seen change since, and each page's keys are checked exactly. It runs a rule for at most
  * `TASK_AUTOMATION_DUE_BATCH` tasks a sweep; the rest wait for the next sweep, which starts from the oldest again.
+ * Under DB_ORM=mikro-orm a run writes the task through MikroORM, which refuses its global EntityManager outside a
+ * request: each run then runs in a MikroORM request context of its own, since a sweep runs in none.
  */
 @Injectable()
 export class TaskAutomationDueSweepService {
@@ -42,7 +46,9 @@ export class TaskAutomationDueSweepService {
 		private readonly rules: TaskAutomationRuleService,
 		private readonly reader: TaskAutomationTaskReader,
 		private readonly runner: TaskAutomationRunner,
-		private readonly runs: TaskAutomationRunStore
+		private readonly runs: TaskAutomationRunStore,
+		/** Opens the MikroORM request context a run writes in under DB_ORM=mikro-orm. */
+		@Optional() private readonly orm?: MikroORM
 	) {
 		this.lock = new TaskAutomationSweepLock(dataSource);
 	}
@@ -89,14 +95,16 @@ export class TaskAutomationDueSweepService {
 				if (runs >= TASK_AUTOMATION_DUE_BATCH) break;
 				if (done.has(dueEventKey(task.id, task.dueDate))) continue;
 				try {
-					const result = await this.runner.run(rule, task.id, {
-						eventKey: dueEventKey(task.id, task.dueDate),
-						triggerType: TaskAutomationTriggerEnum.DUE_DATE_PASSED,
-						depth: 0,
-						chain: [],
-						requiresOpenAndDue: task.dueDate.toISOString(),
-						now
-					});
+					const result = await runInMikroOrmContext(this.orm, () =>
+						this.runner.run(rule, task.id, {
+							eventKey: dueEventKey(task.id, task.dueDate),
+							triggerType: TaskAutomationTriggerEnum.DUE_DATE_PASSED,
+							depth: 0,
+							chain: [],
+							requiresOpenAndDue: task.dueDate.toISOString(),
+							now
+						})
+					);
 					if (result.outcome) runs += 1;
 				} catch (error) {
 					// The task is busy with another run, or this due date's run is still marked running: the next sweep

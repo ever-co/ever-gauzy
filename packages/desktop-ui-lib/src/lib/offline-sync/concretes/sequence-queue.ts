@@ -50,7 +50,11 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 			let latest = null;
 
 			if (timer.isStartedOffline && timer.timelogId) {
+				const askedAs = this._signedInEmployeeId;
 				latest = await this._timeTrackerService.getTimeLogById(timer.timelogId);
+				if (!latest) {
+					return await this._discardForDeletedTimeLog(timer, intervals, askedAs);
+				}
 			} else if (timer.isStartedOffline && !timer.stoppedAt) {
 				console.log('⏱ - Silent start');
 				this._auditLogService.timerAuditLogInfo(`Silent start for timer ${timer.id} initiated.`);
@@ -83,6 +87,15 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 				});
 			}
 
+			// Time slots pushed at a time log that was deleted (from another place, or straight from the database)
+			// would have no log to belong to: a null answer (the API's 404) means the log is gone.
+			if (!latest && timer.timelogId && intervals.length > 0) {
+				const askedAs = this._signedInEmployeeId;
+				if (!(await this._timeTrackerService.getTimeLogById(timer.timelogId))) {
+					return await this._discardForDeletedTimeLog(timer, intervals, askedAs);
+				}
+			}
+
 			console.log('🛠 - Create queue');
 
 			// Create the queue
@@ -108,7 +121,13 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 			if (timer.isStoppedOffline) {
 				console.log('⏱ - Silent stop');
 				if (!latest && timer.timelogId) {
+					// Read after the time slots were pushed, not before: another client may have stopped this log
+					// since, and the stop below (no time log id in its request) would then stop what runs now instead.
+					const askedAs = this._signedInEmployeeId;
 					const currentTimeLog = await this._timeTrackerService.getTimeLogById(timer.timelogId);
+					if (!currentTimeLog) {
+						return await this._discardForDeletedTimeLog(timer, intervals, askedAs);
+					}
 					if (currentTimeLog.id && currentTimeLog.isRunning) {
 						this._auditLogService.timerAuditLogInfo(`Silent stop for timer ${timer.id} initiated. Current time log is still running, toggling stop.`);
 						latest = await this._timeTrackerService.toggleApiStop({
@@ -205,6 +224,50 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 				size: this.queue.size,
 				inProgress: false
 			};
+		}
+	}
+
+	/** The employee the session is signed in as, whose time logs the API reaches. */
+	private get _signedInEmployeeId(): string | undefined {
+		return this._store.user?.employee?.id;
+	}
+
+	/**
+	 * The timer's time log no longer exists on the server, so nothing of this timer can be synced: its time slots
+	 * would have no log to belong to, and asking for the log again only fails again. Its pending work is marked
+	 * synced, so the queue moves on to the next timer instead of retrying this one on every cycle.
+	 *
+	 * The API answers 404 as well for a log of another employee than the one signed in (the organization was switched
+	 * while the queue ran): that log is out of reach, not deleted, so such a timer keeps its pending work for later.
+	 * The employee is checked as signed in when the log was asked for and as signed in now.
+	 *
+	 * @param askedAs The employee signed in when the time log was asked for.
+	 */
+	private async _discardForDeletedTimeLog(
+		timer: ISequence['timer'],
+		intervals: ITimeSlot[],
+		askedAs: string | undefined
+	): Promise<void> {
+		const signedIn = [askedAs, this._signedInEmployeeId].filter(Boolean);
+		if (timer.employeeId && signedIn.some((employeeId) => employeeId !== timer.employeeId)) {
+			console.warn(`⚠ - Time log ${timer.timelogId} of another employee is out of reach, keeping ${timer.id}`);
+			return;
+		}
+		console.warn(`⚠ - Time log ${timer.timelogId} no longer exists on the server, skipping timer ${timer.id}`);
+		this._auditLogService.timerAuditLogInfo(
+			`Time log ${timer.timelogId} of timer ${timer.id} no longer exists on the server: its pending data is skipped.`
+		);
+		try {
+			for (const interval of intervals) {
+				await this._electronService.ipcRenderer.invoke('UPDATE_SYNCED', { ...interval, remoteId: null });
+			}
+			await this._electronService.ipcRenderer.invoke('UPDATE_SYNCED_TIMER', {
+				lastTimer: { id: timer.timelogId },
+				...timer
+			});
+		} catch (error) {
+			console.error('🚨 - Error marking the timer of a deleted time log as synced', error);
+			this._errorHandlerService.handleError(error);
 		}
 	}
 

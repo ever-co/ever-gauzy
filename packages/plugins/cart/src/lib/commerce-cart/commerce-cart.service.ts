@@ -8,6 +8,7 @@ import {
 	ServiceUnavailableException
 } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
+import { MikroORM } from '@mikro-orm/core';
 import { DeepPartial, FindOptionsWhere, In, IsNull, LessThanOrEqual } from 'typeorm';
 import {
 	AdjustmentOwnerType,
@@ -31,7 +32,8 @@ import {
 	commitVersionedUpdate,
 	currencyPrecision,
 	normalizeDecimalString,
-	parseEntityVersion
+	parseEntityVersion,
+	runInMikroOrmContext
 } from '@gauzy/core';
 import { CommerceCart } from './commerce-cart.entity';
 import { digestCartToken, issueCartToken } from './cart-token';
@@ -195,7 +197,9 @@ export class CommerceCartService extends CartCrudService<CommerceCart> {
 		private readonly shippingRate?: ICartShippingRatePort,
 		@Optional()
 		@Inject(CART_TAX_CATEGORY)
-		private readonly taxCategories?: ICartTaxCategoryPort
+		private readonly taxCategories?: ICartTaxCategoryPort,
+		/** Opens the MikroORM request context the sweeps read and write in under DB_ORM=mikro-orm. */
+		@Optional() private readonly orm?: MikroORM
 	) {
 		super(typeOrmCommerceCartRepository, mikroOrmCommerceCartRepository);
 	}
@@ -1301,18 +1305,24 @@ export class CommerceCartService extends CartCrudService<CommerceCart> {
 	 * hundred. The bound is now the query's, and the loop's `break` is the safety net it was meant to be
 	 * rather than the only limit.
 	 *
+	 * The pass runs on a schedule, outside any request. Under DB_ORM=mikro-orm the carts are read and written
+	 * through MikroORM, which refuses its global EntityManager there: the scan, and each cart's write, then
+	 * run in a MikroORM request context of their own, so each write reads its cart afresh, as under TypeORM.
+	 *
 	 * @param limit The maximum number of carts to process in one run.
 	 * @returns The ids of the carts that were expired.
 	 */
 	public async expireDueCarts(limit = 500): Promise<ID[]> {
-		const due = (await this.findAll({
-			where: {
-				status: In([CommerceCartStatus.ACTIVE, CommerceCartStatus.ABANDONED]),
-				expiresAt: LessThanOrEqual(new Date())
-			},
-			order: { expiresAt: 'ASC' },
-			take: limit
-		} as never)) as IPagination<CommerceCart>;
+		const due = (await runInMikroOrmContext(this.orm, () =>
+			this.findAll({
+				where: {
+					status: In([CommerceCartStatus.ACTIVE, CommerceCartStatus.ABANDONED]),
+					expiresAt: LessThanOrEqual(new Date())
+				},
+				order: { expiresAt: 'ASC' },
+				take: limit
+			} as never)
+		)) as IPagination<CommerceCart>;
 		const now = Date.now();
 		const expired: ID[] = [];
 
@@ -1331,12 +1341,14 @@ export class CommerceCartService extends CartCrudService<CommerceCart> {
 				// The pass runs on a schedule and has no caller to condition its write, so the write is
 				// predicated on the version the row holds; a cart a buyer touched since the scan began is
 				// therefore refused rather than expired underneath them.
-				await commitVersionedUpdate<CommerceCart>(this, {
-					id: cart.id,
-					expectation: ANY_VERSION,
-					where: this.writeScope,
-					patch: { status: CommerceCartStatus.EXPIRED }
-				});
+				await runInMikroOrmContext(this.orm, () =>
+					commitVersionedUpdate<CommerceCart>(this, {
+						id: cart.id,
+						expectation: ANY_VERSION,
+						where: this.writeScope,
+						patch: { status: CommerceCartStatus.EXPIRED }
+					})
+				);
 				expired.push(cart.id);
 			}
 		}
@@ -1354,20 +1366,25 @@ export class CommerceCartService extends CartCrudService<CommerceCart> {
 	 * buyer come back to it, and an abandoned cart is still expired by the sweep above once its own TTL
 	 * runs out.
 	 *
+	 * Like {@link expireDueCarts}, the scan and each cart's write run in a MikroORM request context of their own
+	 * under DB_ORM=mikro-orm.
+	 *
 	 * @param hours How long a cart may sit untouched; the setting's documented default when omitted.
 	 * @param limit The maximum number of carts to process in one run.
 	 * @returns The ids of the carts that were abandoned.
 	 */
 	public async abandonDueCarts(hours = DEFAULT_ABANDON_AFTER_HOURS, limit = 500): Promise<ID[]> {
 		const cutoff = new Date(Date.now() - Math.max(1, hours) * 60 * 60 * 1000);
-		const due = (await this.findAll({
-			where: {
-				status: CommerceCartStatus.ACTIVE,
-				lastActivityAt: LessThanOrEqual(cutoff)
-			},
-			order: { lastActivityAt: 'ASC' },
-			take: limit
-		} as never)) as IPagination<CommerceCart>;
+		const due = (await runInMikroOrmContext(this.orm, () =>
+			this.findAll({
+				where: {
+					status: CommerceCartStatus.ACTIVE,
+					lastActivityAt: LessThanOrEqual(cutoff)
+				},
+				order: { lastActivityAt: 'ASC' },
+				take: limit
+			} as never)
+		)) as IPagination<CommerceCart>;
 		const abandoned: ID[] = [];
 
 		for (const cart of due.items) {
@@ -1375,12 +1392,14 @@ export class CommerceCartService extends CartCrudService<CommerceCart> {
 				break;
 			}
 
-			await commitVersionedUpdate<CommerceCart>(this, {
-				id: cart.id,
-				expectation: ANY_VERSION,
-				where: this.writeScope,
-				patch: { status: CommerceCartStatus.ABANDONED, abandonedAt: new Date() }
-			});
+			await runInMikroOrmContext(this.orm, () =>
+				commitVersionedUpdate<CommerceCart>(this, {
+					id: cart.id,
+					expectation: ANY_VERSION,
+					where: this.writeScope,
+					patch: { status: CommerceCartStatus.ABANDONED, abandonedAt: new Date() }
+				})
+			);
 			abandoned.push(cart.id);
 		}
 
@@ -2110,6 +2129,9 @@ export class CommerceCartService extends CartCrudService<CommerceCart> {
 			currency: cart.currency,
 			channelId: cart.channelId,
 			customerId: cart.customerId,
+			// The cart itself, so a promotion this cart already reserved is not refused for the buyer's own
+			// reservation of it (CodeRabbit on #12057).
+			cartId: cart.id,
 			codes,
 			lines: lines.map((line) => ({
 				id: line.id,

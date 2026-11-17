@@ -2317,6 +2317,37 @@
 				"CLEAR_SEARCH": "Borrar búsqueda",
 				"EMPTY_TITLE": "Aún no hay contactos",
 				"EMPTY_TEXT": "Asigna este empleado a un cliente, comprador o prospecto para mostrar con quién trabaja."
+			},
+			"PHOTO": {
+				"MENU_LABEL": "Opciones de la foto de perfil",
+				"VIEW": "Ver foto",
+				"UPLOAD": "Subir foto",
+				"REMOVE": "Quitar foto",
+				"EDIT_TITLE": "Editar foto",
+				"HINT": "Arrastra para recolocar",
+				"ZOOM": "Zoom",
+				"ZOOM_IN": "Acercar",
+				"ZOOM_OUT": "Alejar",
+				"REMOVE_TITLE": "¿Quitar la foto de perfil?",
+				"REMOVE_MESSAGE": "La foto se sustituirá por la inicial del nombre.",
+				"UNSUPPORTED": "Este archivo no se puede usar como foto. Elige una imagen PNG, JPEG, GIF, WebP o BMP.",
+				"ALT": "Foto de perfil",
+				"CHOOSE_AVATAR": "Elegir un avatar",
+				"PRESETS": "Predefinidos",
+				"SHUFFLE": "Aleatorio",
+				"SKIN": "Tono de piel",
+				"HAIR": "Pelo",
+				"HAIR_COLOR": "Color de pelo",
+				"FACIAL_HAIR": "Vello facial",
+				"GLASSES": "Gafas",
+				"CLOTHES": "Ropa",
+				"CLOTHES_COLOR": "Color de la ropa",
+				"BACKGROUND": "Fondo",
+				"DEVELOPERS": "Para desarrolladores",
+				"FUN": "Divertidos",
+				"EXPRESSION": "Expresión",
+				"HEADWEAR": "Sombrero",
+				"PRINT": "Estampado de la camiseta"
 			}
 		},
 		"ADD_EMPLOYEES": {
@@ -6644,7 +6675,8 @@
 			"HUBSTAFF": "HubStaff",
 			"BROWSER_EXTENSION": "Extensión del navegador",
 			"TEAMS": "Equipos",
-			"CLOC": "Cloc"
+			"CLOC": "Cloc",
+			"EMBED": "Temporizador integrado"
 		},
 		"LAST_WORKED": "Última vez trabajado:",
 		"TIME_ZONE": "Time Zone",

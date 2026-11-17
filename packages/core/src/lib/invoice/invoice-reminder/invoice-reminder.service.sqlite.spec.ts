@@ -9,6 +9,7 @@ import { DataSource } from 'typeorm';
 import { InvoiceStatusTypesEnum, LanguagesEnum } from '@gauzy/contracts';
 import { TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR } from '@gauzy/config';
 import { coreEntities } from '../../core/entities';
+import { mikroOrmOutsideRequest } from '../../core/testing/mikro-orm-outside-request';
 import { CreateInvoiceReminderTable1791000011920 } from '../../database/migrations/1791000011920-CreateInvoiceReminderTable';
 import { INVOICE_REMINDER_SWEEP_PAGE_SIZE } from './invoice-reminder.constants';
 import { InvoiceReminder } from './invoice-reminder.entity';
@@ -653,5 +654,45 @@ describe('InvoiceReminderService on SQLite', () => {
 		expect(report).toEqual({ checked: 0, reminded: 0, blocked: 0, failed: 0 });
 		expect(emails.sendInvoiceReminder).not.toHaveBeenCalled();
 		expect(Logger.prototype.warn).toHaveBeenCalledWith(expect.stringContaining('is not seeded'));
+	});
+
+	it('under DB_ORM=mikro-orm, sends each reminder in a MikroORM request context of its own', async () => {
+		// The organization's mail settings are read through MikroORM there, which refuses its global EntityManager
+		// outside a request: a sweep is never one
+		const mikroOrm = await mikroOrmOutsideRequest();
+		const sentThrough: unknown[] = [];
+		emails.sendInvoiceReminder.mockImplementation(async () => {
+			sentThrough.push(await mikroOrm.write());
+			return true;
+		});
+		const previousOrm = process.env.DB_ORM;
+		process.env.DB_ORM = 'mikro-orm';
+		try {
+			const first = await anInvoice({ dueIn: -DAY - HOUR });
+			const second = await anInvoice({ dueIn: -DAY - 2 * HOUR, email: 'ap@globex.test' });
+
+			const report = await new InvoiceReminderService(
+				dataSource,
+				emails as never,
+				invoices as never,
+				mikroOrm.orm
+			).sweep(NOW);
+
+			expect(report).toEqual({ checked: 2, reminded: 2, blocked: 0, failed: 0 });
+			expect(
+				sent()
+					.map(({ invoiceId }) => invoiceId)
+					.sort()
+			).toEqual([first, second].sort());
+			// A fresh context for each reminder, never the global EntityManager
+			expect(sentThrough).toHaveLength(2);
+			expect(sentThrough[0]).not.toBe(sentThrough[1]);
+			expect(sentThrough).not.toContain(mikroOrm.orm.em);
+			expect((await claims()).every(({ sentAt }) => !!sentAt)).toBe(true);
+		} finally {
+			if (previousOrm === undefined) delete process.env.DB_ORM;
+			else process.env.DB_ORM = previousOrm;
+			await mikroOrm.close();
+		}
 	});
 });

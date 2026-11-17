@@ -2315,6 +2315,37 @@
 				"CLEAR_SEARCH": "Zoekopdracht wissen",
 				"EMPTY_TITLE": "Nog geen contacten",
 				"EMPTY_TEXT": "Wijs deze medewerker toe aan een klant, afnemer of lead om te laten zien met wie hij werkt."
+			},
+			"PHOTO": {
+				"MENU_LABEL": "Opties voor profielfoto",
+				"VIEW": "Foto bekijken",
+				"UPLOAD": "Foto uploaden",
+				"REMOVE": "Foto verwijderen",
+				"EDIT_TITLE": "Foto bewerken",
+				"HINT": "Sleep om te verplaatsen",
+				"ZOOM": "Zoom",
+				"ZOOM_IN": "Inzoomen",
+				"ZOOM_OUT": "Uitzoomen",
+				"REMOVE_TITLE": "Profielfoto verwijderen?",
+				"REMOVE_MESSAGE": "De foto wordt vervangen door de eerste letter van de naam.",
+				"UNSUPPORTED": "Dit bestand kan niet als foto worden gebruikt. Kies een PNG-, JPEG-, GIF-, WebP- of BMP-afbeelding.",
+				"ALT": "Profielfoto",
+				"CHOOSE_AVATAR": "Kies een avatar",
+				"PRESETS": "Kant-en-klaar",
+				"SHUFFLE": "Willekeurig",
+				"SKIN": "Huidskleur",
+				"HAIR": "Haar",
+				"HAIR_COLOR": "Haarkleur",
+				"FACIAL_HAIR": "Gezichtshaar",
+				"GLASSES": "Bril",
+				"CLOTHES": "Kleding",
+				"CLOTHES_COLOR": "Kledingkleur",
+				"BACKGROUND": "Achtergrond",
+				"DEVELOPERS": "Voor ontwikkelaars",
+				"FUN": "Grappig",
+				"EXPRESSION": "Gezichtsuitdrukking",
+				"HEADWEAR": "Hoofddeksel",
+				"PRINT": "Shirtprint"
 			}
 		},
 		"ADD_EMPLOYEES": {
@@ -6642,7 +6673,8 @@
 			"HUBSTAFF": "HubStaff",
 			"BROWSER_EXTENSION": "Browser-extensie",
 			"TEAMS": "Teams",
-			"CLOC": "Cloc"
+			"CLOC": "Cloc",
+			"EMBED": "Ingesloten timer"
 		},
 		"LAST_WORKED": "Laatst gewerkt:",
 		"TIME_ZONE": "Time Zone",

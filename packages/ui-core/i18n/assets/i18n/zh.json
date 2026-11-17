@@ -2784,6 +2784,37 @@
 				"CLEAR_SEARCH": "清除搜索",
 				"EMPTY_TITLE": "暂无联系人",
 				"EMPTY_TEXT": "将该员工分配给客户、顾客或潜在客户，以显示其合作对象。"
+			},
+			"PHOTO": {
+				"MENU_LABEL": "头像选项",
+				"VIEW": "查看头像",
+				"UPLOAD": "上传头像",
+				"REMOVE": "移除头像",
+				"EDIT_TITLE": "编辑头像",
+				"HINT": "拖动以调整位置",
+				"ZOOM": "缩放",
+				"ZOOM_IN": "放大",
+				"ZOOM_OUT": "缩小",
+				"REMOVE_TITLE": "移除头像？",
+				"REMOVE_MESSAGE": "头像将替换为姓名的首字母。",
+				"UNSUPPORTED": "此文件无法用作头像。请选择 PNG、JPEG、GIF、WebP 或 BMP 图片。",
+				"ALT": "头像",
+				"CHOOSE_AVATAR": "选择头像",
+				"PRESETS": "现成头像",
+				"SHUFFLE": "随机",
+				"SKIN": "肤色",
+				"HAIR": "发型",
+				"HAIR_COLOR": "发色",
+				"FACIAL_HAIR": "胡须",
+				"GLASSES": "眼镜",
+				"CLOTHES": "服装",
+				"CLOTHES_COLOR": "服装颜色",
+				"BACKGROUND": "背景",
+				"DEVELOPERS": "开发者",
+				"FUN": "趣味",
+				"EXPRESSION": "表情",
+				"HEADWEAR": "头饰",
+				"PRINT": "衣服图案"
 			}
 		},
 		"ADD_EMPLOYEES": {
@@ -7257,7 +7288,8 @@
 			"HUBSTAFF": "HubStaff",
 			"BROWSER_EXTENSION": "浏览器插件",
 			"TEAMS": "团队",
-			"CLOC": "克洛克"
+			"CLOC": "克洛克",
+			"EMBED": "嵌入式计时器"
 		},
 		"LAST_WORKED": "上一次工作：",
 		"TIME_ZONE": "时区",
