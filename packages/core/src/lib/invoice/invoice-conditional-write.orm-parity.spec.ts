@@ -93,7 +93,9 @@ describe('Invoice edits under a precondition, on TypeORM and on MikroORM (#5243)
 			create: (input: Row) =>
 				new loaded.InvoiceCreateHandler(invoiceService).execute(new loaded.InvoiceCreateCommand(input)),
 			/** The service the line routes (REST and GraphQL) write one line through. */
-			lines: invoiceItemService
+			lines: invoiceItemService,
+			/** The service the invoice routes write the share link through. */
+			invoices: invoiceService
 		};
 	};
 
@@ -891,6 +893,83 @@ describe('Invoice edits under a precondition, on TypeORM and on MikroORM (#5243)
 				await refusesTheSaveAfter(invoiceId, () =>
 					handlers(ormType).update({ id: invoiceId, ...scope, status: 'SENT' })
 				);
+			});
+
+			it('a plain edit of the fields made in the same second as the read (PUT /invoices/:id, updateInvoice; #12039)', async () => {
+				const invoiceId = await draftInvoice();
+				// TypeORM's update date keeps the second on SQLite: the edit moves `updatedAt` itself, past the value held
+				await writtenThisSecond(invoiceId);
+
+				await refusesTheSaveAfter(invoiceId, () =>
+					handlers(ormType).update(fields(invoiceId, { terms: 'plain' }))
+				);
+
+				expect(await termsOf(invoiceId)).toBe('plain');
+			});
+
+			it('two plain edits in the same second: a save on the read made between them is refused (#12039)', async () => {
+				const invoiceId = await draftInvoice();
+				await writtenThisSecond(invoiceId);
+				await handlers(ormType).update(fields(invoiceId, { terms: 'first' }));
+				orm.em.clear();
+				const expectedUpdatedAt = await readVersion(ormType, invoiceId);
+				await handlers(ormType).update(fields(invoiceId, { terms: 'second' }));
+				orm.em.clear();
+
+				const stale = handlers(ormType).update(fields(invoiceId, { expectedUpdatedAt, terms: 'stale' }));
+
+				await expect(stale).rejects.toMatchObject({ status: 409, code: 'CONCURRENT_MODIFICATION' });
+				expect(await termsOf(invoiceId)).toBe('second');
+			});
+
+			it('a plain edit moves updatedAt at least a millisecond past the value held, even one ahead of the clock', async () => {
+				const invoiceId = await draftInvoice();
+				await dataSource.query(`UPDATE "invoice" SET "updatedAt" = ? WHERE "id" = ?`, [FUTURE, invoiceId]);
+				orm.em.clear();
+				const held = await readVersion(ormType, invoiceId);
+
+				const saved = await handlers(ormType).update(fields(invoiceId, { terms: 'plain' }));
+
+				orm.em.clear();
+				const now = await readVersion(ormType, invoiceId);
+				expect(new Date(now).getTime()).toBeGreaterThan(new Date(held).getTime());
+				expect(new Date(saved.updatedAt).toISOString()).toBe(now);
+			});
+
+			it('an invoice saved before, saved again without lines (POST /invoices), in the same second as the read', async () => {
+				const invoiceId = await draftInvoice();
+				await writtenThisSecond(invoiceId);
+				const [stored] = await dataSource.query(`SELECT "invoiceNumber" FROM "invoice" WHERE "id" = ?`, [
+					invoiceId
+				]);
+
+				await refusesTheSaveAfter(invoiceId, () =>
+					handlers(ormType).create({
+						id: invoiceId,
+						...scope,
+						fromOrganizationId: ORG,
+						invoiceNumber: Number(stored.invoiceNumber),
+						invoiceDate: new Date('2026-11-01T00:00:00.000Z'),
+						dueDate: new Date('2026-11-30T00:00:00.000Z'),
+						currency: 'EUR',
+						discountValue: 0,
+						terms: 'saved again',
+						status: 'DRAFT'
+					})
+				);
+
+				expect(await termsOf(invoiceId)).toBe('saved again');
+			});
+
+			it('the share link revoked (DELETE /invoices/:id/link), in the same second as the read', async () => {
+				const invoiceId = await draftInvoice();
+				await dataSource.query(`UPDATE "invoice" SET "token" = ? WHERE "id" = ?`, ['shared', invoiceId]);
+				await writtenThisSecond(invoiceId);
+
+				await refusesTheSaveAfter(invoiceId, () => handlers(ormType).invoices.revokeLink(invoiceId));
+
+				const [row] = await dataSource.query(`SELECT "token" FROM "invoice" WHERE "id" = ?`, [invoiceId]);
+				expect(row.token).toBeNull();
 			});
 
 			it('lines saved by cascade with the invoice (PUT /invoices/:id with invoiceItems)', async () => {

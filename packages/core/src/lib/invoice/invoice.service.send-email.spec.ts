@@ -283,10 +283,31 @@ describe('InvoiceService — the public link of an invoice', () => {
 	 * `inDatabase`: the token the database holds after the write, read back through the repository that wrote it.
 	 */
 	function linker(read: string | null, inDatabase: string | null = null) {
-		const update = jest.fn(async () => ({ affected: 1 }));
+		const update = jest.fn(async (_where: unknown, _values: unknown) => ({ affected: 1 }));
 		const findOne = jest.fn(async () => ({ id: INVOICE.id, token: inDatabase }));
+		// The transaction the token is written in (ever-co/ever-gauzy#12039): it locks the invoice, writes the token
+		// (recorded by `update`, as the repository's own write was), and moves the invoice's `updatedAt` past HELD_AT
+		const touches: Array<{ updatedAt: Date }> = [];
+		const query: Record<string, unknown> = {};
+		Object.assign(query, {
+			update: () => query,
+			set: (values: { updatedAt: Date }) => {
+				touches.push(values);
+				return query;
+			},
+			where: () => query,
+			andWhere: () => query,
+			callListeners: () => query,
+			execute: async () => ({ affected: 1 })
+		});
+		const manager = {
+			findOne: jest.fn(async () => ({ id: INVOICE.id, updatedAt: HELD_AT })),
+			update: jest.fn(async (_entity: unknown, where: unknown, values: unknown) => update(where, values)),
+			createQueryBuilder: () => query
+		};
+		const transaction = jest.fn(async (work: (inTransaction: typeof manager) => Promise<unknown>) => work(manager));
 		const service = new InvoiceService(
-			{ update, findOne } as never,
+			{ update, findOne, manager: { transaction } } as never,
 			{} as never,
 			{} as never,
 			{} as never,
@@ -297,8 +318,11 @@ describe('InvoiceService — the public link of an invoice', () => {
 		const reads = jest
 			.spyOn(service, 'findOneByIdString')
 			.mockImplementation(async () => ({ ...INVOICE, token: read }) as never);
-		return { service, update, findOne, reads };
+		return { service, update, findOne, reads, touches, transaction };
 	}
+
+	/** The `updatedAt` the invoice holds when the token is written. */
+	const HELD_AT = new Date('2026-11-16T10:20:30.456Z');
 
 	/** The claims of the token a write stored. */
 	const claimsOfWrite = (update: jest.Mock, call: number) =>
@@ -376,6 +400,29 @@ describe('InvoiceService — the public link of an invoice', () => {
 
 		expect(reads).toHaveBeenCalledWith(INVOICE.id);
 		expect(update).toHaveBeenCalledWith({ id: INVOICE.id, tenantId: INVOICE.tenantId }, { token: null });
+	});
+
+	it("moves the invoice's updatedAt past the value it held, in the transaction that writes the token (#12039)", async () => {
+		const revoking = linker('created-token');
+		await revoking.service.revokeLink(INVOICE.id);
+
+		const sending = linker(null, 'written-token');
+		await sending.service.publicLinkTokenOf(INVOICE.id);
+
+		for (const { touches, transaction } of [revoking, sending]) {
+			expect(transaction).toHaveBeenCalledTimes(1);
+			expect(touches).toHaveLength(1);
+			expect(touches[0].updatedAt.getTime()).toBeGreaterThan(HELD_AT.getTime());
+		}
+	});
+
+	it('moves nothing when the token was not written: another send wrote its own first', async () => {
+		const { service, update, touches } = linker(null, 'token-of-the-other-send');
+		update.mockResolvedValue({ affected: 0 });
+
+		await service.publicLinkTokenOf(INVOICE.id);
+
+		expect(touches).toHaveLength(0);
 	});
 
 	it("revokes nothing for an invoice outside the caller's tenant", async () => {
