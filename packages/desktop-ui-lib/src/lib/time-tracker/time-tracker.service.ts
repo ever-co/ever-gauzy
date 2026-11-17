@@ -1,4 +1,4 @@
-import { HttpClient, HttpContext, HttpHeaders, HttpStatusCode } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import {
 	IGetTasksStatistics,
@@ -28,7 +28,7 @@ import { firstValueFrom, throwError } from 'rxjs';
 import { catchError, map, shareReplay, tap } from 'rxjs/operators';
 import { API_PREFIX } from '../constants';
 import { LoggerService } from '../electron/services';
-import { SKIP_NOT_FOUND_NOTIFICATION } from '../interceptors/skip-not-found-notification.token';
+import { isApiNotFound, SKIP_NOT_FOUND_NOTIFICATION } from '../interceptors/skip-not-found-notification.token';
 import {
 	ClientCacheService,
 	EmployeeCacheService,
@@ -56,21 +56,6 @@ export interface IScreenshotUploadContext {
 export interface IImageCreatePayload {
 	b64Img: string,
 	fileName: string
-}
-
-/**
- * The API answered that what was asked for does not exist: a 404 whose body is the API's own error. A 404 from
- * something in between (a proxy or load balancer answering for a route it cannot reach) says nothing about the record,
- * so it is not taken for a deletion and still fails.
- */
-export function isNotFound(error: unknown): boolean {
-	const response = error as { status?: number; error?: { statusCode?: number } | string | null } | null;
-	const body = response?.error;
-	return (
-		response?.status === HttpStatusCode.NotFound &&
-		typeof body === 'object' &&
-		body?.statusCode === HttpStatusCode.NotFound
-	);
 }
 
 /** For a lookup whose caller takes a 404 for "deleted": no generic error toast for it (other errors still show one). */
@@ -511,7 +496,7 @@ export class TimeTrackerService {
 		try {
 			return await firstValueFrom(timeLog$);
 		} catch (error) {
-			if (isNotFound(error)) {
+			if (isApiNotFound(error)) {
 				this._loggerService.log.warn(`WARN: Time log ${timeLogId} no longer exists on the server`);
 				return null;
 			}
@@ -558,7 +543,7 @@ export class TimeTrackerService {
 			return await firstValueFrom(timeSlots$);
 		} catch (error) {
 			// Deleted since it was captured: nothing to show or to attach screenshots to, which is not an error.
-			if (isNotFound(error)) {
+			if (isApiNotFound(error)) {
 				this._loggerService.log.warn(`WARN: Time slot ${timeSlotId} no longer exists on the server`);
 				return null;
 			}

@@ -19,11 +19,11 @@ describe('SequenceQueue, a timer whose time log was deleted', () => {
 	const auditLog = { timerAuditLogInfo: jest.fn() };
 	const interval = { id: 1, startedAt: new Date('2026-01-01T10:00:00Z'), screenshots: [] } as unknown as ITimeSlot;
 
-	const queue = (store: object = {}) =>
+	const queue = (store: Record<string, unknown> = {}) =>
 		new SequenceQueue(
 			{ ipcRenderer: { invoke } } as never,
 			errorHandler as never,
-			{ organizationId: 'o', tenantId: 't', ...store } as never,
+			Object.assign(store, { organizationId: 'o', tenantId: 't' }) as never,
 			{ set viewQueueStateUpdater(_: unknown) {} } as never,
 			timeTracker as never,
 			{ status: jest.fn().mockResolvedValue({}) } as never,
@@ -81,6 +81,22 @@ describe('SequenceQueue, a timer whose time log was deleted', () => {
 		});
 
 		expect(timeTracker.pushToTimeSlot).not.toHaveBeenCalled();
+		expect(calls('UPDATE_SYNCED')).toHaveLength(0);
+		expect(calls('UPDATE_SYNCED_TIMER')).toHaveLength(0);
+	});
+
+	it('keeps the pending work when the lookup was made as another employee, switched back since', async () => {
+		const store: Record<string, unknown> = { user: { employee: { id: 'employee-b' } } };
+		timeTracker.getTimeLogById.mockImplementation(async () => {
+			store.user = { employee: { id: 'employee-a' } }; // switched back while the request was on its way
+			return null;
+		});
+
+		await queue(store).synchronize({
+			timer: { id: 7, timelogId: 'out-of-reach', employeeId: 'employee-a' },
+			intervals: [interval]
+		});
+
 		expect(calls('UPDATE_SYNCED')).toHaveLength(0);
 		expect(calls('UPDATE_SYNCED_TIMER')).toHaveLength(0);
 	});

@@ -18,8 +18,9 @@ describe('ServerErrorInterceptor', () => {
 		interceptor = new ServerErrorInterceptor(errorHandler as never, electron as never, store as never);
 	});
 
-	const failingWith = (status: number) => {
-		const error = new HttpErrorResponse({ status, statusText: String(status), error: { statusCode: status } });
+	/** The API's own error body by default; a proxy in front of the API answers with a page instead. */
+	const failingWith = (status: number, body: unknown = { statusCode: status }) => {
+		const error = new HttpErrorResponse({ status, statusText: String(status), error: body });
 		return { error, next: { handle: jest.fn(() => throwError(() => error)) } as unknown as HttpHandler };
 	};
 
@@ -38,6 +39,14 @@ describe('ServerErrorInterceptor', () => {
 
 	it('still shows any other error of a marked request', async () => {
 		const { error, next } = failingWith(403);
+
+		await expect(firstValueFrom(interceptor.intercept(lookup(true), next))).rejects.toBe(error);
+
+		expect(errorHandler.handleError).toHaveBeenCalledWith(error);
+	});
+
+	it('still shows a 404 of a marked request that is not the API answering (a proxy)', async () => {
+		const { error, next } = failingWith(404, '<html><body>404 Not Found</body></html>');
 
 		await expect(firstValueFrom(interceptor.intercept(lookup(true), next))).rejects.toBe(error);
 
