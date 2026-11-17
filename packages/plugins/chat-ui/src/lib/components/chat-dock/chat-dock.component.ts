@@ -669,7 +669,8 @@ export class ChatDockComponent {
 		const id = String(conversation.id);
 		switch (action.kind) {
 			case 'reply':
-				this.openInChat(String(message.id));
+				// A reply also sent to the conversation opens the thread it belongs to (a reply has no replies of its own).
+				this.openInChat(String(message.threadRootId ?? message.id));
 				return;
 			case 'edit':
 				this.editing.set(message);

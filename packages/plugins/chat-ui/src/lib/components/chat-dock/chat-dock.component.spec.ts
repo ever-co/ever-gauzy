@@ -128,6 +128,18 @@ describe('ChatDockComponent', () => {
 		expect(navigate).toHaveBeenCalledWith([CHAT_LINK, 'c1'], { queryParams: { thread: 'm1' } });
 	});
 
+	it('opens the thread a reply also sent to the conversation belongs to, not the reply itself', () => {
+		const reply = { ...message('r1', 'In the thread too'), threadRootId: 'root1', alsoInConversation: true } as IChatMessageWithRelations;
+		api['messages'].mockReturnValue(of({ messages: [reply] }));
+		jest.advanceTimersByTime(CHAT_MESSAGES_POLL_MS);
+		fixture.detectChanges();
+		const navigate = jest.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+		fixture.componentInstance['onAction'](reply, { kind: 'reply' });
+
+		expect(navigate).toHaveBeenCalledWith([CHAT_LINK, 'c1'], { queryParams: { thread: 'root1' } });
+	});
+
 	it('reads the latest page again on an event of its conversation, not on one of another', () => {
 		api['messages'].mockReturnValue(of({ messages: [message('m1', 'Hello')] }));
 		jest.advanceTimersByTime(CHAT_MESSAGES_POLL_MS);
