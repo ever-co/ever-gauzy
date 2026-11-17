@@ -1,5 +1,5 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { EntityManager } from 'typeorm';
+import { EntityManager, In } from 'typeorm';
 import { DatabaseTypeEnum } from '@gauzy/config';
 import { DecimalString, ID, IPagination } from '@gauzy/contracts';
 import {
@@ -429,7 +429,7 @@ export class PromotionUsageService extends TenantScopedCrudService<PromotionUsag
 			where: {
 				promotionId,
 				customerId,
-				status: [PromotionUsageStatus.RESERVED, PromotionUsageStatus.REGISTERED] as never,
+				status: In([PromotionUsageStatus.RESERVED, PromotionUsageStatus.REGISTERED]),
 				...this.scope
 			}
 		});
@@ -462,7 +462,7 @@ export class PromotionUsageService extends TenantScopedCrudService<PromotionUsag
 		return this.typeOrmPromotionUsageRepository.count({
 			where: {
 				promotionId,
-				status: [PromotionUsageStatus.RESERVED, PromotionUsageStatus.REGISTERED] as never,
+				status: In([PromotionUsageStatus.RESERVED, PromotionUsageStatus.REGISTERED]),
 				...this.scope
 			}
 		});
