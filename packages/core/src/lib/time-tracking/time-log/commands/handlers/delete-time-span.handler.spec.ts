@@ -236,6 +236,8 @@ interface IStoredLog {
 	description?: string;
 	/** The log a split cut this one from, when it is the part after the new range. */
 	splitFromTimeLogId?: string;
+	/** When the log was last written; the logs that leave it out are compared without it. */
+	updatedAt?: Date;
 	deletedAt?: Date;
 }
 

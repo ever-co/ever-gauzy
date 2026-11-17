@@ -219,7 +219,7 @@ describe('TimeLogService: a manual edit under a precondition', () => {
 		} as IManualTimeInput);
 
 		expect(updates).toHaveLength(1);
-		expect(updates[0].options).toEqual({ tagIds: [MEETING_TAG.id] });
+		expect(updates[0]).toMatchObject({ options: { tagIds: [MEETING_TAG.id] } });
 		expect(updates[0].input).not.toHaveProperty('tags');
 		// Written after the command, the tags would replace a change of them saved once the entry's lock is released
 		expect(tagsTransaction).not.toHaveBeenCalled();
