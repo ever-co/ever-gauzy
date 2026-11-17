@@ -4,7 +4,7 @@ import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NEVER, of, Subject, throwError, timer } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { IChatConversationWithState, IChatFile, IChatMessageWithRelations } from '@gauzy/contracts';
+import { CHAT_EVENT_NAMES, IChatConversationWithState, IChatFile, IChatMessageWithRelations } from '@gauzy/contracts';
 import { Store, ToastrService } from '@gauzy/ui-core/core';
 import { Router } from '@angular/router';
 import { CHAT_DOCK_PAGE_SIZE, CHAT_LINK, CHAT_LIVE_AUDIT_MS, CHAT_MESSAGES_POLL_MS } from '../../chat-ui.constants';
@@ -29,11 +29,15 @@ describe('ChatDockComponent', () => {
 	let api: Record<string, jest.Mock>;
 	let files: { byDocument: ReturnType<typeof signal<ReadonlyMap<string, IChatFile>>>; ensureFor: jest.Mock };
 	let hints$: Subject<Partial<ChatHint>>;
+	let catchUp$: Subject<void>;
+	let tasks: { summaries: ReturnType<typeof signal>; ensure: jest.Mock; refreshAll: jest.Mock; refreshShownBy: jest.Mock };
 	const element = () => fixture.nativeElement as HTMLElement;
 
 	beforeEach(async () => {
 		jest.useFakeTimers();
 		hints$ = new Subject();
+		catchUp$ = new Subject();
+		tasks = { summaries: signal(new Map()), ensure: jest.fn(), refreshAll: jest.fn(), refreshShownBy: jest.fn() };
 		files = { byDocument: signal<ReadonlyMap<string, IChatFile>>(new Map()), ensureFor: jest.fn() };
 		api = {
 			direct: jest.fn(() => of({ conversation: CONVERSATION, created: false })),
@@ -52,10 +56,10 @@ describe('ChatDockComponent', () => {
 				{ provide: Store, useValue: { user$: of(null), selectedOrganization$: of(null), userRolePermissions$: of([]), hasPermission: () => false } },
 				{ provide: ToastrService, useValue: { danger: jest.fn() } },
 				{ provide: ChatFilesStore, useValue: files },
-				{ provide: ChatTasksService, useValue: { summaries: signal(new Map()), ensure: jest.fn() } },
+				{ provide: ChatTasksService, useValue: tasks },
 				{ provide: ChatCreateTaskFlow, useValue: { open: jest.fn(() => NEVER) } },
 				// No live events here (the poll's fallback pace), unless a test sends one.
-				{ provide: ChatLiveService, useValue: { ticks: (ms: number) => timer(ms, ms).pipe(map(() => undefined)), hints$, catchUp$: NEVER } }
+				{ provide: ChatLiveService, useValue: { ticks: (ms: number) => timer(ms, ms).pipe(map(() => undefined)), hints$, catchUp$ } }
 			]
 		}).compileComponents();
 		fixture = TestBed.createComponent(ChatDockComponent);
@@ -129,16 +133,86 @@ describe('ChatDockComponent', () => {
 		jest.advanceTimersByTime(CHAT_MESSAGES_POLL_MS);
 		api['messages'].mockClear();
 
-		hints$.next({ conversationId: 'other', name: 'message.created' } as Partial<ChatHint>);
+		hints$.next({ conversationId: 'other', name: CHAT_EVENT_NAMES.MESSAGE_CREATED });
 		jest.advanceTimersByTime(CHAT_LIVE_AUDIT_MS);
 		expect(api['messages']).not.toHaveBeenCalled();
 
 		// Two events close together: one read.
-		hints$.next({ conversationId: 'c1', name: 'message.created' } as Partial<ChatHint>);
-		hints$.next({ conversationId: 'c1', name: 'message.updated' } as Partial<ChatHint>);
+		hints$.next({ conversationId: 'c1', name: CHAT_EVENT_NAMES.MESSAGE_CREATED });
+		hints$.next({ conversationId: 'c1', name: CHAT_EVENT_NAMES.MESSAGE_CREATED });
 		jest.advanceTimersByTime(CHAT_LIVE_AUDIT_MS);
 		expect(api['messages']).toHaveBeenCalledTimes(1);
 		expect(api['messages']).toHaveBeenCalledWith('c1', { limit: CHAT_DOCK_PAGE_SIZE });
+	});
+
+	it('lets a slow read finish, and reads once more after it for what came meanwhile', () => {
+		const slow = new Subject<{ messages: IChatMessageWithRelations[] }>();
+		api['messages'].mockReturnValue(slow);
+		jest.advanceTimersByTime(CHAT_MESSAGES_POLL_MS);
+		expect(api['messages']).toHaveBeenCalledTimes(2);
+
+		// Ticks and an event while it runs: none of them cancels it or starts another.
+		jest.advanceTimersByTime(CHAT_MESSAGES_POLL_MS * 3);
+		hints$.next({ conversationId: 'c1', name: CHAT_EVENT_NAMES.MESSAGE_CREATED });
+		jest.advanceTimersByTime(CHAT_LIVE_AUDIT_MS);
+		expect(api['messages']).toHaveBeenCalledTimes(2);
+		expect(slow.observed).toBe(true);
+
+		api['messages'].mockReturnValue(of({ messages: [message('m2', 'Later')] }));
+		slow.next({ messages: [message('m1', 'Hello')] });
+		slow.complete();
+		fixture.detectChanges();
+
+		// Its answer shows, and one more read follows for the triggers that came while it ran.
+		expect(api['messages']).toHaveBeenCalledTimes(3);
+		expect(element().querySelector('[data-test="chat-dock-messages"]')?.textContent).toContain('Later');
+	});
+
+	it('reads the task cards again on an update of a message and after a catch-up, not on a tick', () => {
+		api['messages'].mockReturnValue(of({ messages: [message('m1', 'Hello')] }));
+		jest.advanceTimersByTime(CHAT_MESSAGES_POLL_MS * 2);
+		expect(tasks.refreshAll).not.toHaveBeenCalled();
+		expect(tasks.refreshShownBy).not.toHaveBeenCalled();
+
+		hints$.next({ conversationId: 'c1', name: CHAT_EVENT_NAMES.MESSAGE_UPDATED, messageId: 'm1' });
+		expect(tasks.refreshShownBy).toHaveBeenCalledWith([expect.objectContaining({ id: 'm1' })], 'm1');
+
+		catchUp$.next();
+		expect(tasks.refreshAll).toHaveBeenCalledTimes(1);
+		jest.advanceTimersByTime(CHAT_MESSAGES_POLL_MS);
+		expect(tasks.refreshAll).toHaveBeenCalledTimes(1);
+	});
+
+	it('drops a message the newest page no longer holds', () => {
+		api['messages'].mockReturnValue(of({ messages: [message('m1', 'Hello'), message('m2', 'Deleted soon')] }));
+		jest.advanceTimersByTime(CHAT_MESSAGES_POLL_MS);
+		fixture.detectChanges();
+		expect(element().querySelectorAll('[data-test="chat-dock-messages"] ngx-chat-message-item').length).toBe(2);
+
+		api['messages'].mockReturnValue(of({ messages: [message('m1', 'Hello')] }));
+		jest.advanceTimersByTime(CHAT_MESSAGES_POLL_MS);
+		fixture.detectChanges();
+
+		expect(element().querySelectorAll('[data-test="chat-dock-messages"] ngx-chat-message-item').length).toBe(1);
+	});
+
+	it('ends only the edit that was saved: another message picked meanwhile stays in edit', () => {
+		const first = message('m1', 'First');
+		const second = message('m2', 'Second');
+		api['messages'].mockReturnValue(of({ messages: [first, second] }));
+		jest.advanceTimersByTime(CHAT_MESSAGES_POLL_MS);
+		fixture.detectChanges();
+		const saving = new Subject<{ message: IChatMessageWithRelations }>();
+		api['edit'] = jest.fn(() => saving);
+		const card = fixture.componentInstance;
+
+		card['onAction'](first, { kind: 'edit' });
+		card['send']({ body: 'First, edited', mentionEmployeeIds: [], attachmentIds: [] });
+		card['onAction'](second, { kind: 'edit' });
+		saving.next({ message: { ...first, body: 'First, edited' } });
+		saving.complete();
+
+		expect(card['editing']()?.id).toBe('m2');
 	});
 
 	it('does not render the messages again when a read again changes nothing', () => {

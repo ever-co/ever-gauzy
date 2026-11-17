@@ -5,16 +5,17 @@ import { Router } from '@angular/router';
 import { NbIconModule } from '@nebular/theme';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { EMPTY, merge, Observable, of, Subscription } from 'rxjs';
-import { auditTime, catchError, distinctUntilChanged, filter, map, switchMap } from 'rxjs/operators';
-import { IChatConversationWithState, IChatMessageWithRelations, IOrganization, IUser, PermissionsEnum } from '@gauzy/contracts';
+import { auditTime, catchError, distinctUntilChanged, filter, map, switchMap, tap } from 'rxjs/operators';
+import { CHAT_EVENT_NAMES, IChatConversationWithState, IChatMessageWithRelations, IOrganization, IUser, PermissionsEnum } from '@gauzy/contracts';
 import { Store, ToastrService } from '@gauzy/ui-core/core';
 import { CHAT_DOCK_PAGE_SIZE, CHAT_LINK, CHAT_LIVE_AUDIT_MS, CHAT_MESSAGES_POLL_MS } from '../../chat-ui.constants';
 import { canManageConversation } from '../../chat-categories';
 import { withTaskReference } from '../../chat-tasks';
-import { apiErrorMessage, ChatPerson, continuesGroup, isSameDay, memberEmployeeIds, mergeKeepingUnchanged, mergeMessages, newNonce, userName } from '../../chat-ui.helpers';
+import { apiErrorMessage, ChatPerson, continuesGroup, isSameDay, memberEmployeeIds, mergeMessages, newNonce, showNewestPage, userName } from '../../chat-ui.helpers';
 import { ChatCreateTaskFlow } from '../../dialogs/chat-task-dialogs.component';
 import { ChatDockService } from '../../services/chat-dock.service';
 import { ChatFilesStore } from '../../services/chat-files.store';
+import { coalesceReads } from '../../services/chat-live';
 import { ChatLiveService, isTabVisible } from '../../services/chat-live.service';
 import { ChatPeople, ChatPeopleService, EMPTY_PEOPLE } from '../../services/chat-people.service';
 import { ChatTasksService } from '../../services/chat-tasks.service';
@@ -34,8 +35,9 @@ interface DockRow {
  * The docked message card (`ChatDockService`): a small card at the bottom right of the screen to write one person
  * directly. A box to write and a way to the full conversation, as a quick-message card; above them, who it is and,
  * once there is something to read, the latest messages of our conversation, shown as the chat shows them. The
- * conversation is found (or created) when the card opens; its newest page is read again every few seconds (so a
- * message written, edited or deleted elsewhere shows), and it is marked read up to the last message on screen.
+ * conversation is found (or created) when the card opens; its newest page is read again as its chat events come (or
+ * on the chat's poll where they do not stream), so a message written, edited or deleted elsewhere shows, and it is
+ * marked read up to the last message on screen.
  */
 @Component({
 	selector: 'ngx-chat-dock',
@@ -122,44 +124,47 @@ interface DockRow {
 			}
 			/*
 			 * Three bands one above the other, split by hairlines: who it is, the latest messages (once there are any)
-			 * with the box to write, and the way to the full conversation.
+			 * with the box to write, and the way to the full conversation. Colours come from the theme's tokens only; the
+			 * chat's shared components (messages, composer) keep their own defaults behind each --chat-* variable they read,
+			 * for a theme that lacks one of these tokens.
 			 */
 			.panel {
-				--dock-line: var(--gauzy-border-default-color, rgba(127, 127, 127, 0.25));
-				--dock-muted: var(--gauzy-text-color-2, rgba(127, 127, 127, 0.9));
-				--dock-hover: rgba(127, 127, 127, 0.12);
-				--dock-accent: var(--color-primary-default, #3366ff);
+				--dock-line: var(--gauzy-border-default-color);
+				--dock-muted: var(--gauzy-text-color-2);
+				--dock-hover: var(--gauzy-hover-tint);
+				--dock-accent: var(--color-primary-default);
 				/* The chat page's colours, for the messages and the composer it shares with the conversation. */
-				--chat-bg: var(--gauzy-card-1, var(--card-background-color, #fff));
-				--chat-raised: var(--gauzy-card-1, var(--card-background-color, #fff));
-				--chat-border: var(--gauzy-border-default-color, rgba(127, 127, 127, 0.18));
-				--chat-border-strong: var(--border-basic-color-4, rgba(127, 127, 127, 0.35));
-				--chat-hover: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
-				--chat-active-tint: var(--gauzy-active-tint, rgba(126, 126, 143, 0.2));
-				--chat-elevated: var(--gauzy-sidebar-background-3, rgba(126, 126, 143, 0.1));
-				--chat-message-hover: var(--gauzy-sidebar-background-4, rgba(126, 126, 143, 0.05));
-				--chat-composer-bar: var(--gauzy-sidebar-background-4, rgba(126, 126, 143, 0.05));
-				--chat-reaction-bg: var(--gauzy-sidebar-background-3, rgba(126, 126, 143, 0.1));
-				--chat-code-bg: var(--gauzy-sidebar-background-3, rgba(126, 126, 143, 0.1));
-				--chat-text: var(--text-basic-color, inherit);
-				--chat-text-soft: var(--text-hint-color, rgba(127, 127, 127, 0.8));
-				--chat-muted: var(--text-hint-color, rgba(127, 127, 127, 0.9));
-				--chat-accent: var(--color-primary-default, #3366ff);
-				--chat-accent-soft: var(--color-primary-transparent-100, rgba(51, 102, 255, 0.08));
-				--chat-accent-soft-2: var(--color-primary-transparent-200, rgba(51, 102, 255, 0.16));
-				--chat-on-accent: var(--text-control-color, #fff);
-				--chat-send: var(--color-primary-default, #3366ff);
-				--chat-link: var(--text-primary-color, #3366ff);
-				--chat-mention-chip-bg: var(--color-primary-transparent-200, rgba(51, 102, 255, 0.16));
-				--chat-mention-chip-text: var(--text-primary-color, #3366ff);
-				--chat-danger: var(--color-danger-default, #e4493f);
+				--chat-bg: var(--gauzy-card-1, var(--card-background-color));
+				--chat-raised: var(--gauzy-card-1, var(--card-background-color));
+				--chat-border: var(--gauzy-border-default-color);
+				--chat-border-strong: var(--border-basic-color-4);
+				--chat-hover: var(--gauzy-hover-tint);
+				--chat-active-tint: var(--gauzy-active-tint);
+				--chat-elevated: var(--gauzy-sidebar-background-3);
+				--chat-message-hover: var(--gauzy-sidebar-background-4);
+				--chat-composer-bar: var(--gauzy-sidebar-background-4);
+				--chat-reaction-bg: var(--gauzy-sidebar-background-3);
+				--chat-code-bg: var(--gauzy-sidebar-background-3);
+				--chat-text: var(--text-basic-color);
+				--chat-text-soft: var(--text-hint-color);
+				--chat-muted: var(--text-hint-color);
+				--chat-accent: var(--color-primary-default);
+				--chat-accent-soft: var(--color-primary-transparent-100);
+				--chat-accent-soft-2: var(--color-primary-transparent-200);
+				--chat-on-accent: var(--text-control-color);
+				--chat-send: var(--color-primary-default);
+				--chat-link: var(--text-primary-color);
+				--chat-mention-chip-bg: var(--color-primary-transparent-200);
+				--chat-mention-chip-text: var(--text-primary-color);
+				--chat-danger: var(--color-danger-default);
 				display: flex;
 				flex-direction: column;
 				/* The width of a docked chat window (room for the composer's emoji panel too). */
 				width: 25rem;
 				max-width: calc(100vw - 2rem);
 				border: 1px solid var(--dock-line);
-				border-radius: 0.5rem;
+				/* A floating panel: the theme's radius, scaled as the chat page scales its panels. */
+				border-radius: calc(var(--border-radius) * 2);
 				background: var(--gauzy-card-1);
 				box-shadow: 0 0.25rem 1.5rem rgba(0, 0, 0, 0.2);
 				color: var(--gauzy-text-color-1, inherit);
@@ -203,7 +208,7 @@ interface DockRow {
 				height: 1.75rem;
 				padding: 0;
 				border: 0;
-				border-radius: 0.375rem;
+				border-radius: calc(var(--border-radius) * 1.25);
 				background: transparent;
 				color: var(--dock-muted);
 				cursor: pointer;
@@ -227,8 +232,8 @@ interface DockRow {
 				padding: 0.625rem 1.25rem;
 				border: 0;
 				border-top: 1px solid var(--dock-line);
-				/* The card does not clip (the composer's lists open above it): the row rounds its own corners. */
-				border-radius: 0 0 0.5rem 0.5rem;
+				/* The card does not clip (the composer's lists open above it): the row rounds its own corners, as the card's. */
+				border-radius: 0 0 calc(var(--border-radius) * 2) calc(var(--border-radius) * 2);
 				background: transparent;
 				color: var(--dock-muted);
 				font: inherit;
@@ -287,15 +292,16 @@ interface DockRow {
 				left: 0;
 				right: 0;
 				top: 50%;
-				border-top: 1px solid var(--chat-border, rgba(127, 127, 127, 0.2));
+				border-top: 1px solid var(--chat-border);
 				z-index: -1;
 			}
+			/* A pill, as the chat page draws its day dividers. */
 			.day-divider span {
 				padding: 0.1875rem 0.875rem;
-				border: 1px solid var(--chat-border, rgba(127, 127, 127, 0.25));
+				border: 1px solid var(--chat-border);
 				border-radius: 999px;
-				background: var(--chat-bg, #fff);
-				color: var(--chat-text, inherit);
+				background: var(--chat-bg);
+				color: var(--chat-text);
 				font-size: 0.6875rem;
 				font-weight: 700;
 				box-shadow: 0 0.0625rem 0.25rem rgba(0, 0, 0, 0.06);
@@ -457,6 +463,8 @@ export class ChatDockComponent {
 
 	/** The newest message of the other person the conversation was already marked read for. */
 	private readThrough: string | null = null;
+	/** A catch-up asked for the task cards to be read again with the next page. */
+	private tasksStale = false;
 
 	/** The request of the person the card shows; a change of person drops it. */
 	private request: Subscription | null = null;
@@ -519,6 +527,7 @@ export class ChatDockComponent {
 		this.editing.set(null);
 		this.failed.set(false);
 		this.readThrough = null;
+		this.tasksStale = false;
 		if (!employeeId) return;
 		this.request = this.api.direct([employeeId]).subscribe({
 			next: ({ conversation }) => {
@@ -542,37 +551,46 @@ export class ChatDockComponent {
 	/**
 	 * Reads the newest page again while the tab is seen, as the conversation follows itself: on each chat event of
 	 * this conversation (a few close together read once), when the stream resumes or the tab is shown again, and on
-	 * the chat's poll ticks — every few seconds where events do not stream, a rare safety net where they do. The whole
-	 * page, not only what follows the last message on screen: a message of mine added by `send()` may be newer than
-	 * one of theirs not fetched yet, and a message already shown may have been edited or deleted since.
+	 * the chat's poll ticks — every few seconds where events do not stream, a rare safety net where they do. A read
+	 * under way is never cancelled by the next trigger: triggers that come meanwhile ask for one more read after it
+	 * (which holds what they announced), so slow answers or a steady stream of events cannot keep the card from
+	 * updating. The task cards are read again on a message's update and after a catch-up, never on a mere tick.
 	 */
 	private poll(conversation: IChatConversationWithState): void {
 		const id = String(conversation.id);
-		const events$ = this.live.hints$.pipe(
-			filter((hint) => hint.conversationId === id),
-			auditTime(CHAT_LIVE_AUDIT_MS)
-		);
-		this.polling = merge(this.live.ticks(CHAT_MESSAGES_POLL_MS), events$, this.live.catchUp$)
+		const hints$ = this.live.hints$.pipe(filter((hint) => hint.conversationId === id));
+		const catchUp$ = this.live.catchUp$.pipe(tap(() => (this.tasksStale = true)));
+		const polling = merge(this.live.ticks(CHAT_MESSAGES_POLL_MS), hints$.pipe(auditTime(CHAT_LIVE_AUDIT_MS)), catchUp$)
 			.pipe(
 				filter(() => isTabVisible()),
-				// A newer reason to read wins: what an event announced is in the read that follows it.
-				switchMap(() => this.api.messages(id, { limit: CHAT_DOCK_PAGE_SIZE }).pipe(catchError(() => EMPTY)))
+				coalesceReads(() => this.api.messages(id, { limit: CHAT_DOCK_PAGE_SIZE }).pipe(catchError(() => EMPTY)))
 			)
 			.subscribe((page) => {
 				this.failed.set(false);
 				this.accept(page.messages);
+				// After a catch-up, the tasks the messages show may have changed meanwhile too.
+				if (this.tasksStale) {
+					this.tasksStale = false;
+					this.taskStore.refreshAll(this.messages());
+				}
 			});
+		// A task changed from a card is told to the messages that show it: their cards read the task again.
+		polling.add(
+			hints$
+				.pipe(filter((hint) => hint.name === CHAT_EVENT_NAMES.MESSAGE_UPDATED && !!hint.messageId && isTabVisible()))
+				.subscribe((hint) => this.taskStore.refreshShownBy(this.messages(), String(hint.messageId)))
+		);
+		this.polling = polling;
 	}
 
 	/**
-	 * Puts a page into the card (a message already shown takes its new state; one the page did not change keeps its
-	 * object, so its view is not drawn again, and a page that changed nothing changes nothing), then marks the
-	 * conversation read up to the last message on screen when the other person wrote something new: never further,
-	 * so what arrives meanwhile stays unread, and not while the tab is hidden, when nothing was seen.
+	 * Makes the card show the newest page (see `showNewestPage`: what it holds as it holds it, what it no longer holds
+	 * gone, an unchanged message keeping its object so its view is not drawn again), then marks the conversation read
+	 * up to the last message on screen when the other person wrote something new: never further, so what arrives
+	 * meanwhile stays unread, and not while the tab is hidden, when nothing was seen.
 	 */
-	private accept(incoming: readonly IChatMessageWithRelations[]): void {
-		if (incoming.length === 0) return;
-		const messages = mergeKeepingUnchanged(this.messages(), incoming);
+	private accept(page: readonly IChatMessageWithRelations[]): void {
+		const messages = showNewestPage(this.messages(), page);
 		this.messages.set(messages);
 		const conversation = this.conversation();
 		const me = this.me()?.userId ?? null;
@@ -702,7 +720,8 @@ export class ChatDockComponent {
 					.pipe(takeUntilDestroyed(this.destroyRef))
 					.subscribe({
 						next: () => {
-							if (this.isCurrent(id)) this.replace({ ...message, following: action.following });
+							// Only the field it changed: what a refresh brought meanwhile stays.
+							if (this.isCurrent(id)) this.replace({ id: message.id, following: action.following });
 						},
 						error: (error) => this.fail(error)
 					});
@@ -788,7 +807,10 @@ export class ChatDockComponent {
 			});
 	}
 
-	/** Saves the message being edited; the composer leaves edit mode and clears once it is saved. */
+	/**
+	 * Saves the message being edited. Once it is saved the composer leaves edit mode and clears, but only for that edit:
+	 * another message picked for editing while it saved keeps its edit session.
+	 */
 	private saveEdit(id: string, message: IChatMessageWithRelations, submission: ComposerSubmission): void {
 		this.sending.set(true);
 		this.api
@@ -799,6 +821,7 @@ export class ChatDockComponent {
 					this.sending.set(false);
 					if (!this.isCurrent(id)) return;
 					this.replace(result.message);
+					if (String(this.editing()?.id) !== String(message.id)) return;
 					this.editing.set(null);
 					this.resetToken.update((value) => value + 1);
 					setTimeout(() => this.composer()?.focus());
