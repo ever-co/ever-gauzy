@@ -159,7 +159,7 @@ describe('TimerService.startTimer when the team requires a daily plan', () => {
 		jest.useRealTimers();
 	});
 
-	it.each([TimeLogSourceEnum.TEAMS, TimeLogSourceEnum.MOBILE])(
+	it.each([TimeLogSourceEnum.TEAMS, TimeLogSourceEnum.MOBILE, TimeLogSourceEnum.EMBED])(
 		'refuses a %s start without a plan, and leaves the running timer alone',
 		async (source) => {
 			expect(await refusalCodeOf(start(source))).toBe(DAILY_PLAN_REQUIRED);
@@ -175,7 +175,7 @@ describe('TimerService.startTimer when the team requires a daily plan', () => {
 		expect(await refusalCodeOf(start(TimeLogSourceEnum.TEAMS))).toBe(DAILY_PLAN_REQUIRED);
 	});
 
-	it.each([TimeLogSourceEnum.TEAMS, TimeLogSourceEnum.MOBILE])(
+	it.each([TimeLogSourceEnum.TEAMS, TimeLogSourceEnum.MOBILE, TimeLogSourceEnum.EMBED])(
 		'refuses a %s start for a task that is in no plan around today',
 		async (source) => {
 			plans = [{ organizationTeamId: TEAM, date: utcDay(0), tasks: [{ id: 'task-2' }] }];
@@ -185,7 +185,7 @@ describe('TimerService.startTimer when the team requires a daily plan', () => {
 		}
 	);
 
-	it.each([TimeLogSourceEnum.TEAMS, TimeLogSourceEnum.MOBILE])(
+	it.each([TimeLogSourceEnum.TEAMS, TimeLogSourceEnum.MOBILE, TimeLogSourceEnum.EMBED])(
 		'starts a %s timer on a planned task',
 		async (source) => {
 			plans = [{ organizationTeamId: TEAM, date: utcDay(0), tasks: [{ id: 'task-1' }] }];

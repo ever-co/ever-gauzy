@@ -22,7 +22,7 @@
 # those reads does return, and each row behind them is complete in the domain that owns it.
 #
 # The two vocabularies a log carries — the log type (`TRACKED`, `MANUAL`, `IDLE`, `RESUMED`) and the
-# source (`BROWSER`, `DESKTOP`, `MOBILE`, `BROWSER_EXTENSION`, `HUBSTAFF`, `UPWORK`, `TEAMS`, `CLOC`)
+# source (`BROWSER`, `DESKTOP`, `MOBILE`, `BROWSER_EXTENSION`, `HUBSTAFF`, `UPWORK`, `TEAMS`, `CLOC`, `EMBED`)
 # — are carried as their values rather than declared as schema enums. The value sets belong to the
 # contracts package and are shared with the tracking routes, so declaring them here would claim a
 # vocabulary this domain does not own, and the next domain that needs the same values would collide
@@ -52,7 +52,7 @@ type TimeLog {
 	logType: String
 	"""
 	Where the time came from: `BROWSER`, `DESKTOP`, `MOBILE`, `BROWSER_EXTENSION`, `HUBSTAFF`,
-	`UPWORK`, `TEAMS` or `CLOC`, carried as its value for the same reason as `logType`.
+	`UPWORK`, `TEAMS`, `CLOC` or `EMBED`, carried as its value for the same reason as `logType`.
 	"""
 	source: String
 	"What was worked on, as the tracker or the person wrote it."

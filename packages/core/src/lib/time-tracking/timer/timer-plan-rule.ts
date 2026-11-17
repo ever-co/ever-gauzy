@@ -4,10 +4,14 @@ import { dayIfTodaySomewhere } from '../../tasks/daily-plan/daily-plan-caller-da
 import { storedDayStart } from '../../tasks/daily-plan/daily-plan-stored-day';
 
 /**
- * The Ever Teams clients, web and mobile. "Require a daily plan to track" is their team rule, so only their starts
- * are held to it: the desktop timer and the agent have no way to plan.
+ * The Ever Teams clients: web, mobile and the embedded timers. "Require a daily plan to track" is their team rule,
+ * so only their starts are held to it: the desktop timer and the agent have no way to plan.
  */
-export const PLAN_RULE_SOURCES: ReadonlyArray<string> = [TimeLogSourceEnum.TEAMS, TimeLogSourceEnum.MOBILE];
+export const PLAN_RULE_SOURCES: ReadonlyArray<string> = [
+	TimeLogSourceEnum.TEAMS,
+	TimeLogSourceEnum.MOBILE,
+	TimeLogSourceEnum.EMBED
+];
 
 type PlanTasks = { tasks?: { id?: ID }[] | null };
 

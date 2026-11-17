@@ -78,7 +78,7 @@ export class DocsTreeComponent extends TranslationBaseComponent implements OnIni
 	 * The shell closes its folder drawer on it; expanding, dragging and the node
 	 * menus do not emit, so browsing the tree keeps the drawer open.
 	 */
-	@Output() navigated = new EventEmitter<void>();
+	@Output() readonly navigated = new EventEmitter<void>();
 
 	public nodes: IDocsTreeNode[] = [];
 	public recents: IRecentEntry[] = [];

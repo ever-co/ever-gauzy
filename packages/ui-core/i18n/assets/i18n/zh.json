@@ -7288,7 +7288,8 @@
 			"HUBSTAFF": "HubStaff",
 			"BROWSER_EXTENSION": "浏览器插件",
 			"TEAMS": "团队",
-			"CLOC": "克洛克"
+			"CLOC": "克洛克",
+			"EMBED": "嵌入式计时器"
 		},
 		"LAST_WORKED": "上一次工作：",
 		"TIME_ZONE": "时区",

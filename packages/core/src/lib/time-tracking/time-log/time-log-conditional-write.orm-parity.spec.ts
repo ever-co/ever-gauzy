@@ -11,7 +11,12 @@ import * as path from 'path';
  * nothing written, the 409 carrying the entry as it is now. Without the precondition the edit is saved as before.
  *
  * Every write that changes an entry moves its `updatedAt` past what it held, so the precondition sees it: the edit
- * itself, and the invoice lines that bill the entry, keep its time, or let it go when they are deleted.
+ * itself, and the invoice lines that bill the entry, keep its time, or let it go when they are deleted, and a change of
+ * its tags (ever-co/ever-gauzy#12029). An edit that carries tags writes them in its own checked transaction.
+ *
+ * A split (`POST /timesheet/time-log/:id/split`, ever-co/ever-gauzy#12036) is checked by its route on the entry as read:
+ * its cut compares that read again, and the entry's timesheet, in its own transaction, so time billed or approved after
+ * the route's check is not split.
  *
  * The edit's write runs through TypeORM on both ORMs (`TimeLogUpdateHandler`); what differs per ORM is the read of the
  * version the caller sends back (the CRUD base's), the handler's reads of the time slots, and the invoice lines' writes.
@@ -47,6 +52,13 @@ const MEANWHILE = '2030-01-01 12:00:00.000';
 /** An `updatedAt` the clock has not reached, in the form TypeORM writes on SQLite, and as the API answers it. */
 const FUTURE = '2099-01-01 00:00:00.000';
 const FUTURE_INSTANT = new Date('2099-01-01T00:00:00.000Z');
+
+/** Where the split cases split the entry. */
+const SPLIT_AT = new Date('2026-10-05T09:30:00.000Z');
+
+/** Two tags of the organization (ever-co/ever-gauzy#12029). */
+const MEETING_TAG = '53820000-0000-4000-8000-00000000f001';
+const SUPPORT_TAG = '53820000-0000-4000-8000-00000000f002';
 
 describe('Time entry edits under a precondition, on TypeORM and on MikroORM (#5382)', () => {
 	const file = path.join(os.tmpdir(), `gauzy-time-log-conditional-${process.pid}-${Date.now()}.sqlite3`);
@@ -180,8 +192,17 @@ describe('Time entry edits under a precondition, on TypeORM and on MikroORM (#53
 		return handler;
 	};
 
-	/** An edit as `PUT /timesheet/time-log/:id` makes it: the body, with the history of a change made by a person. */
-	const edit = (ormType: Orm, timeLogId: string, body: Row, afterLockedWrite?: () => Promise<void>) =>
+	/**
+	 * An edit as `PUT /timesheet/time-log/:id` makes it: the body, with the history of a change made by a person. With
+	 * `tagIds`, the tags the edit files the entry under, as `TimeLogService.updateManualTime` hands them on.
+	 */
+	const edit = (
+		ormType: Orm,
+		timeLogId: string,
+		body: Row,
+		afterLockedWrite?: () => Promise<void>,
+		tagIds?: string[]
+	) =>
 		editHandler(ormType, afterLockedWrite).execute(
 			new loaded.TimeLogUpdateCommand(
 				{
@@ -195,7 +216,9 @@ describe('Time entry edits under a precondition, on TypeORM and on MikroORM (#53
 				timeLogId,
 				undefined,
 				false,
-				{ reason: null }
+				{ reason: null },
+				false,
+				tagIds ? { tagIds } : {}
 			)
 		);
 
@@ -306,6 +329,87 @@ describe('Time entry edits under a precondition, on TypeORM and on MikroORM (#53
 		return row?.id;
 	};
 
+	/** The tags an entry is filed under, by id. */
+	const tagsOf = async (timeLogId: string): Promise<string[]> => {
+		const rows: Row[] = await dataSource.query(
+			`SELECT "tagId" FROM "tag_time_log" WHERE "timeLogId" = ? ORDER BY "tagId"`,
+			[timeLogId]
+		);
+		return rows.map((row) => row.tagId);
+	};
+
+	/** A change of an entry's tags alone, as `PUT /timesheet/time-log/:id/tags` writes it (`replaceTimeLogTags`). */
+	const changeTags = (timeLogId: string, tagIds: string[]): Promise<void> =>
+		loaded.replaceTimeLogTags(dataSource.manager, timeLogId, tagIds);
+
+	/** The entry as the split route reads it before checking the split: through the CRUD base, on the ORM named. */
+	const readForSplit = async (ormType: Orm, timeLogId: string): Promise<Row> => {
+		const reader = new loaded.TimeLogReader(
+			new loaded.TypeOrmTimeLogRepository(dataSource.getRepository(loaded.TimeLog)),
+			new loaded.MikroOrmTimeLogRepository(orm.em.fork(), loaded.TimeLog)
+		);
+		Object.defineProperty(reader, 'ormType', { get: () => ormType });
+		return reader.findOneByIdString(timeLogId);
+	};
+
+	/**
+	 * The split route's command (`TimeLogService.splitTimeLog`): the entry as the route read it and checked it, split at
+	 * 09:30, its second part not billable, recorded in the history. `beforeCut` runs another request's write right
+	 * before the cut, once the second part is saved.
+	 */
+	const split = (ormType: Orm, checked: Row, beforeCut?: () => Promise<void>): Promise<boolean> => {
+		const cut = editHandler(ormType);
+		const commandBus = {
+			execute: async (command: unknown) => {
+				if (command instanceof loaded.TimeLogUpdateCommand) {
+					if (beforeCut) await beforeCut();
+					return cut.execute(command);
+				}
+				if (command instanceof loaded.FindTimeLogRatesCommand) return {};
+				return undefined;
+			}
+		};
+		const handler = new loaded.DeleteTimeSpanHandler(
+			new loaded.TypeOrmTimeLogRepository(dataSource.getRepository(loaded.TimeLog)),
+			new loaded.TypeOrmTimeSlotRepository(dataSource.getRepository(loaded.TimeSlot)),
+			commandBus,
+			dataSource
+		);
+		return handler.execute(
+			new loaded.DeleteTimeSpanCommand({ start: SPLIT_AT, end: SPLIT_AT }, checked, undefined, false, {
+				secondPart: { isBillable: false },
+				history: { reason: null }
+			})
+		);
+	};
+
+	/** The entry and the parts cut from it, by start: their range, and the line that bills each. */
+	const partsOf = async (timeLogId: string): Promise<Row[]> => {
+		const rows: Row[] = await dataSource.query(
+			`SELECT "id", "startedAt", "stoppedAt", "invoiceItemId" FROM "time_log" ` +
+				`WHERE "id" = ? OR "splitFromTimeLogId" = ? ORDER BY "startedAt"`,
+			[timeLogId, timeLogId]
+		);
+		return rows.map((row) => ({
+			id: row.id,
+			range: `${clockOf(row.startedAt)}-${clockOf(row.stoppedAt)}`,
+			invoiceItemId: row.invoiceItemId ?? null
+		}));
+	};
+
+	/** The second part a split of the entry saved, by id. */
+	const secondPartIdOf = async (timeLogId: string): Promise<string> => {
+		const [row] = await dataSource.query(`SELECT "id" FROM "time_log" WHERE "splitFromTimeLogId" = ?`, [timeLogId]);
+		return row?.id;
+	};
+
+	/** A timesheet of the employee, pending until a test approves it. */
+	const pendingTimesheet = async (): Promise<string> => {
+		const id = randomUUID();
+		await insert('timesheet', { id, ...scope, employeeId: EMPLOYEE, status: 'PENDING' });
+		return id;
+	};
+
 	beforeAll(async () => {
 		const previous = { DB_ORM: process.env.DB_ORM, DB_TYPE: process.env.DB_TYPE };
 		process.env.DB_ORM = 'mikro-orm';
@@ -351,6 +455,11 @@ describe('Time entry edits under a precondition, on TypeORM and on MikroORM (#53
 						.MikroOrmTimeLogRepository,
 					TimeLogUpdateCommand: require('./commands/time-log-update.command').TimeLogUpdateCommand,
 					TimeLogUpdateHandler: require('./commands/handlers/time-log-update.handler').TimeLogUpdateHandler,
+					DeleteTimeSpanCommand: require('./commands/delete-time-span.command').DeleteTimeSpanCommand,
+					DeleteTimeSpanHandler: require('./commands/handlers/delete-time-span.handler')
+						.DeleteTimeSpanHandler,
+					FindTimeLogRatesCommand: require('./commands/find-time-log-rates.command').FindTimeLogRatesCommand,
+					replaceTimeLogTags: require('./time-log-tags').replaceTimeLogTags,
 					InvoiceItemService: require('../../invoice-item/invoice-item.service').InvoiceItemService,
 					TypeOrmInvoiceItemRepository:
 						require('../../invoice-item/repository/type-orm-invoice-item.repository')
@@ -395,6 +504,12 @@ describe('Time entry edits under a precondition, on TypeORM and on MikroORM (#53
 		await insert('user', { id: USER, tenantId: TENANT, firstName: 'Ada', lastName: 'Lovelace' });
 		await insert('employee', { id: EMPLOYEE, ...scope, userId: USER });
 		await insert('timesheet', { id: TIMESHEET, ...scope, employeeId: EMPLOYEE, status: 'PENDING' });
+		for (const [id, name] of [
+			[MEETING_TAG, 'meeting'],
+			[SUPPORT_TAG, 'support']
+		]) {
+			await insert('tag', { id, name, color: '#f59e0b', ...scope, isSystem: 0 });
+		}
 		await dataSource.query('PRAGMA foreign_keys = ON');
 	}, TIMEOUT);
 
@@ -610,6 +725,170 @@ describe('Time entry edits under a precondition, on TypeORM and on MikroORM (#53
 				await expectChangedMeanwhile(save, timeLogId, version);
 			});
 		});
+
+		describe('tags (ever-co/ever-gauzy#12029)', () => {
+			it('a change of the tags moves updatedAt past what the entry held, so an edit made on an earlier read is refused and the tags stay', async () => {
+				const timeLogId = await entry({ updatedAt: FUTURE });
+				const version = await readVersion(ormType, timeLogId);
+
+				// Another user files the entry under "support"
+				await changeTags(timeLogId, [SUPPORT_TAG]);
+
+				expect(await tagsOf(timeLogId)).toEqual([SUPPORT_TAG]);
+				expect((await updatedAtOf(timeLogId)).getTime()).toBe(FUTURE_INSTANT.getTime() + 1);
+				// The edit made on the read from before that change, putting back the tags it read
+				const save = edit(ormType, timeLogId, { description: 'stale', expectedUpdatedAt: version }, undefined, [
+					MEETING_TAG
+				]);
+				await expectChangedMeanwhile(save, timeLogId, version);
+				expect(await tagsOf(timeLogId)).toEqual([SUPPORT_TAG]);
+				expect((await stateOf(timeLogId)).description).toBe('as read');
+			});
+
+			it('an edit that carries tags files the entry under them in its checked write, and moves updatedAt once', async () => {
+				const timeLogId = await entry();
+				const version = await readVersion(ormType, timeLogId);
+
+				await edit(ormType, timeLogId, { description: 'edited', expectedUpdatedAt: version }, undefined, [
+					MEETING_TAG,
+					SUPPORT_TAG
+				]);
+
+				expect(await tagsOf(timeLogId)).toEqual([MEETING_TAG, SUPPORT_TAG]);
+				const saved = await stateOf(timeLogId);
+				expect(saved.description).toBe('edited');
+				expect(saved.updatedAt.getTime()).toBeGreaterThan(new Date(version).getTime());
+				expect(await readVersion(ormType, timeLogId)).toBe(saved.updatedAt.toISOString());
+				// A second edit on the same read changes neither the entry nor its tags
+				const second = edit(
+					ormType,
+					timeLogId,
+					{ description: 'second', expectedUpdatedAt: version },
+					undefined,
+					[]
+				);
+				await expectChangedMeanwhile(second, timeLogId, version);
+				expect(await tagsOf(timeLogId)).toEqual([MEETING_TAG, SUPPORT_TAG]);
+			});
+
+			it('a stale edit that carries tags writes none of them', async () => {
+				const timeLogId = await entry();
+				await changeTags(timeLogId, [SUPPORT_TAG]);
+				const version = await readVersion(ormType, timeLogId);
+				await changedMeanwhile(timeLogId);
+
+				const save = edit(ormType, timeLogId, { description: 'stale', expectedUpdatedAt: version }, undefined, [
+					MEETING_TAG
+				]);
+
+				await expectChangedMeanwhile(save, timeLogId, version);
+				expect(await tagsOf(timeLogId)).toEqual([SUPPORT_TAG]);
+			});
+
+			it('writes the tags of an edit before its lock is released: a change of them saved right after is kept', async () => {
+				const timeLogId = await entry();
+				const version = await readVersion(ormType, timeLogId);
+				// Another user's change of the tags, saved once the edit's locked write is done
+				const changedAfter = () => changeTags(timeLogId, [SUPPORT_TAG]);
+
+				await edit(ormType, timeLogId, { description: 'edited', expectedUpdatedAt: version }, changedAfter, [
+					MEETING_TAG
+				]);
+
+				expect(await tagsOf(timeLogId)).toEqual([SUPPORT_TAG]);
+			});
+		});
+
+		describe('POST /timesheet/time-log/:id/split (ever-co/ever-gauzy#12036)', () => {
+			it('splits an entry nothing changed since the route checked it, on the version the route read', async () => {
+				const timeLogId = await entry({ logType: 'MANUAL', isBillable: 1 });
+				const checked = await readForSplit(ormType, timeLogId);
+
+				expect(await split(ormType, checked)).toBe(true);
+
+				expect((await partsOf(timeLogId)).map(({ range }) => range)).toEqual(['09:00-09:30', '09:30-10:00']);
+				expect((await updatedAtOf(timeLogId)).getTime()).toBeGreaterThan(new Date(checked.updatedAt).getTime());
+			});
+
+			it('leaves whole, and billed, an entry an invoice billed after the route checked the split', async () => {
+				const timeLogId = await entry({ logType: 'MANUAL', isBillable: 1 });
+				const checked = await readForSplit(ormType, timeLogId);
+				// The route found it on no invoice; an invoice line bills it before the split's turn comes
+				const invoiceId = await draftInvoice();
+				await lines(ormType).createBulk(invoiceId, [line(invoiceId, 'design', [timeLogId])]);
+				const billed = await updatedAtOf(timeLogId);
+
+				expect(await split(ormType, checked)).toBe(false);
+
+				const lineId = await lineIdOf(invoiceId, 'design');
+				expect(await partsOf(timeLogId)).toEqual([
+					{ id: timeLogId, range: '09:00-10:00', invoiceItemId: lineId }
+				]);
+				expect((await updatedAtOf(timeLogId)).getTime()).toBe(billed.getTime());
+				expect(await historyCountOf(timeLogId)).toBe(0);
+			});
+
+			it('takes the split back whole when an invoice bills the entry right before its cut', async () => {
+				const timeLogId = await entry({ logType: 'MANUAL', isBillable: 1 });
+				const checked = await readForSplit(ormType, timeLogId);
+				const invoiceId = await draftInvoice();
+				let billed = new Date(0);
+				const billedBeforeCut = async () => {
+					await lines(ormType).createBulk(invoiceId, [line(invoiceId, 'design', [timeLogId])]);
+					billed = await updatedAtOf(timeLogId);
+				};
+
+				expect(await split(ormType, checked, billedBeforeCut)).toBe(false);
+
+				// The invoice bills the whole hour, as it read it: no part of it went to the second part
+				const lineId = await lineIdOf(invoiceId, 'design');
+				expect(await partsOf(timeLogId)).toEqual([
+					{ id: timeLogId, range: '09:00-10:00', invoiceItemId: lineId }
+				]);
+				expect((await updatedAtOf(timeLogId)).getTime()).toBe(billed.getTime());
+				// The entry's own history records no cut
+				expect(await historyCountOf(timeLogId)).toBe(0);
+			});
+
+			it('keeps a second part an invoice billed before the split was taken back', async () => {
+				const timeLogId = await entry({ logType: 'MANUAL', isBillable: 1 });
+				const checked = await readForSplit(ormType, timeLogId);
+				const invoiceId = await draftInvoice();
+				let secondPartId = '';
+				// Right before the cut, an invoice line bills the entry and the second part the split just saved
+				const billedBeforeCut = async () => {
+					secondPartId = await secondPartIdOf(timeLogId);
+					await lines(ormType).createBulk(invoiceId, [line(invoiceId, 'design', [timeLogId, secondPartId])]);
+				};
+
+				expect(await split(ormType, checked, billedBeforeCut)).toBe(false);
+
+				// The cut is refused, and the billed second part is not deleted from under its invoice line
+				const lineId = await lineIdOf(invoiceId, 'design');
+				expect(await partsOf(timeLogId)).toEqual([
+					{ id: timeLogId, range: '09:00-10:00', invoiceItemId: lineId },
+					{ id: secondPartId, range: '09:30-10:00', invoiceItemId: lineId }
+				]);
+			});
+
+			it('takes the split back whole when the timesheet is approved right before its cut', async () => {
+				const timesheetId = await pendingTimesheet();
+				const timeLogId = await entry({ logType: 'MANUAL', timesheetId });
+				const checked = await readForSplit(ormType, timeLogId);
+				const approvedBeforeCut = async () => {
+					await dataSource.query(`UPDATE "timesheet" SET "status" = 'APPROVED' WHERE "id" = ?`, [
+						timesheetId
+					]);
+				};
+
+				expect(await split(ormType, checked, approvedBeforeCut)).toBe(false);
+
+				expect(await partsOf(timeLogId)).toEqual([
+					{ id: timeLogId, range: '09:00-10:00', invoiceItemId: null }
+				]);
+				expect(await historyCountOf(timeLogId)).toBe(0);
+			});
+		});
 	});
 });
 
@@ -624,6 +903,11 @@ function storedInstant(value: unknown): Date {
 	const text = String(value);
 	const hasZone = /(Z|[+-]\d\d:?\d\d)$/.test(text);
 	return new Date(hasZone ? text : `${text.replace(' ', 'T')}Z`);
+}
+
+/** The `HH:mm` of an instant as SQLite holds it, in UTC. */
+function clockOf(value: unknown): string {
+	return storedInstant(value).toISOString().slice(11, 16);
 }
 
 function placeholderFor(type: string): unknown {
