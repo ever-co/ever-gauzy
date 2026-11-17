@@ -161,5 +161,17 @@ describe('time log tags', () => {
 			).resolves.toEqual([]);
 			expect(find).not.toHaveBeenCalled();
 		});
+
+		it('refuses the tags, reading nothing, when the write has no tenant', async () => {
+			const { manager, find } = managerWith([{ id: 'everywhere', organizationId: null }]);
+
+			const refusal = await timeLogTagsOf(manager, ['everywhere'], {
+				tenantId: undefined as unknown as string,
+				organizationId: ORGANIZATION
+			}).catch((error) => error);
+
+			expect(refusal).toBeInstanceOf(BadRequestException);
+			expect(find).not.toHaveBeenCalled();
+		});
 	});
 });

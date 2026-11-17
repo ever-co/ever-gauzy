@@ -479,7 +479,9 @@ export class TimeLogController {
 		description: 'TIME_LOG_TAG_NOT_FOUND: a tag of another organization or tenant; nothing was written.'
 	})
 	@Put(':id/tags')
-	@Permissions(PermissionsEnum.TIME_TRACKER, PermissionsEnum.ALL_ORG_EDIT)
+	@UseGuards(OrganizationPermissionGuard)
+	@Permissions(PermissionsEnum.ALLOW_MODIFY_TIME)
+	@OrganizationPolicyTarget(TimeLog)
 	async updateTimeLogTags(
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Body(new ValidationPipe({ transform: true, whitelist: true })) entity: UpdateTimeLogTagsDTO

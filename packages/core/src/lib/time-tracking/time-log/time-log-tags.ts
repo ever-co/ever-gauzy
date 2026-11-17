@@ -61,6 +61,16 @@ export async function timeLogTagsOf(manager: EntityManager, tagIds: ID[], scope:
 	if (tagIds.length === 0) {
 		return [];
 	}
+	// Fail closed: TypeORM drops an undefined tenant from the where, so the lookup would reach every tenant's tags.
+	// Every write runs in a request, which always has one.
+	const hasTenant = Boolean(scope?.tenantId);
+	if (!hasTenant) {
+		throw new BadRequestException({
+			message: 'A tag of another organization or tenant cannot be put on this time.',
+			code: TIME_LOG_TAG_NOT_FOUND,
+			tagIds
+		});
+	}
 	const found = await manager.getRepository(Tag).find({
 		select: { id: true, organizationId: true, name: true, color: true },
 		where: { id: In(tagIds), tenantId: scope.tenantId }

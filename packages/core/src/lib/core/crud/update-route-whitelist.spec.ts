@@ -150,11 +150,15 @@ describe('whitelisted update routes', () => {
 		it('keeps the timer config fields (tags, version) of the web timer', async () => {
 			const result = await run({ transform: true, whitelist: true }, CreateManualTimeLogDTO, {
 				...uiPayload(),
-				tags: ['tag-1'],
+				tags: ['a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'],
 				version: '1.0.0'
 			});
 
-			expect(result).toMatchObject({ tags: ['tag-1'], version: '1.0.0' });
+			expect(result).toMatchObject({ tags: ['a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'], version: '1.0.0' });
+			// Tags are tag ids since ever-co/ever-gauzy#12029: a tag name is refused rather than silently dropped
+			await expect(
+				run({ transform: true, whitelist: true }, CreateManualTimeLogDTO, { ...uiPayload(), tags: ['tag-1'] })
+			).rejects.toThrow();
 		});
 
 		it('CONTROL: the pre-fix pipe keeps the smuggled fields', async () => {
