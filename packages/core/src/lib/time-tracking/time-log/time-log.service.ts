@@ -464,6 +464,10 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			}
 		}
 
+		// Each log of the week states the tags its entry is filed under, as the daily report's rows do
+		// (ever-co/ever-gauzy#12029)
+		await loadTimeLogTags(this.typeOrmRepository.manager, logs);
+
 		// The days the report covers, and the zone its rows are grouped by
 		const { days, timeZone } = this.reportDateRange(request);
 

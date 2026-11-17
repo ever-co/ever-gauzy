@@ -336,6 +336,15 @@ describe('TimeLogService tags, on one database through both ORMs', () => {
 			expect(weeklyByMeeting[0].dates[TUESDAY].sum).toBe(2 * 3600);
 		});
 
+		it("answers the week's logs with their tags, as the daily report does", () => {
+			const { weekly } = measured[orm];
+			const tagsOfWeek = weekly[0].dates[TUESDAY].logs.map((log: any) =>
+				(log.tags ?? []).map((tag: any) => tag.name)
+			);
+			expect(tagsOfWeek).toHaveLength(3);
+			expect(tagsOfWeek).toEqual(expect.arrayContaining([['meeting'], ['design', 'support'], []]));
+		});
+
 		it("changes a log's tags and nothing else, and refuses a tag of another organization", () => {
 			const { changed, refused, afterRefusal } = measured[orm];
 			expect(changed.error).toBeUndefined();
