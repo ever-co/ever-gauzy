@@ -1,5 +1,5 @@
 import { Component, OnChanges, OnInit, type SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
-import { DefaultFilter } from 'angular2-smart-table';
+import { RestorableFilterComponent } from './restorable-filter.component';
 import { combineLatest, Subject } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -9,36 +9,42 @@ import { OrganizationTeamsService, Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-organization-team-select-filter',
-    template: `
+	selector: 'ga-organization-team-select-filter',
+	template: `
 		<ng-select
-		  appendTo="body"
-		  [clearable]="true"
-		  [closeOnSelect]="true"
-		  [placeholder]="'TASKS_PAGE.SELECT' | translate"
-		  (change)="onChange($event)"
-		  >
-		  @for (team of teams; track team) {
-		    <ng-option [value]="team">
-		      {{ team.name }}
-		    </ng-option>
-		  }
+			[ngModel]="restored"
+			[compareWith]="sameTeam"
+			appendTo="body"
+			[clearable]="true"
+			[closeOnSelect]="true"
+			[placeholder]="'TASKS_PAGE.SELECT' | translate"
+			(change)="onChange($event)"
+		>
+			@for (team of teams; track team) {
+				<ng-option [value]="team">
+					{{ team.name }}
+				</ng-option>
+			}
 		</ng-select>
-		`,
-    changeDetection: ChangeDetectionStrategy.Eager,
-    standalone: false
+	`,
+	changeDetection: ChangeDetectionStrategy.Eager,
+	standalone: false
 })
-export class OrganizationTeamFilterComponent extends DefaultFilter implements OnInit, OnChanges {
+export class OrganizationTeamFilterComponent extends RestorableFilterComponent implements OnInit, OnChanges {
 	public teams: IOrganizationTeam[] = [];
 	public organization: IOrganization;
 	public selectedEmployeeId: ISelectedEmployee['id'];
 	public subject$: Subject<any> = new Subject();
 
-	constructor(private readonly store: Store, private readonly organizationTeamsService: OrganizationTeamsService) {
+	constructor(
+		private readonly store: Store,
+		private readonly organizationTeamsService: OrganizationTeamsService
+	) {
 		super();
 	}
 
 	ngOnInit() {
+		super.ngOnInit();
 		this.subject$
 			.pipe(
 				// Tap operator: Perform actions when a notification is received
@@ -73,12 +79,15 @@ export class OrganizationTeamFilterComponent extends DefaultFilter implements On
 
 	ngOnChanges(changes: SimpleChanges) {}
 
+	/** The restored team is a copy of the one the list offers: they are the same team when their ids are. */
+	sameTeam = (a: IOrganizationTeam, b: IOrganizationTeam): boolean => a?.id === b?.id;
+
 	/**
 	 *
 	 * @param value
 	 */
 	onChange(value: IOrganizationTeam) {
-		this.column.filterFunction(value, this.column.id);
+		this.applyFilter(value);
 	}
 
 	/**
@@ -103,7 +112,7 @@ export class OrganizationTeamFilterComponent extends DefaultFilter implements On
 							members: {
 								employeeId: this.selectedEmployeeId
 							}
-					  }
+						}
 					: {})
 			});
 

@@ -1,5 +1,6 @@
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, inject } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
+import { ListFilterStateService } from '@gauzy/ui-core/core';
 import { DefaultFilter } from 'angular2-smart-table';
 import { debounceTime, distinctUntilChanged, filter, Subscription, tap } from 'rxjs';
 
@@ -34,6 +35,7 @@ export class RangeFilterComponent extends DefaultFilter implements OnInit, OnDes
 		max: new FormControl()
 	});
 	private subscription: Subscription;
+	private readonly _listFilterState = inject(ListFilterStateService);
 
 	constructor() {
 		super();
@@ -46,9 +48,20 @@ export class RangeFilterComponent extends DefaultFilter implements OnInit, OnDes
 				debounceTime(this.debounceTime), // Reduce unnecessary requests
 				distinctUntilChanged((prev, curr) => prev.min === curr.min && prev.max === curr.max), // Compare min and max values
 				filter(({ min, max }) => min !== null || max !== null), // Only process when at least one value is provided
-				tap(({ min, max }) => this.column.filterFunction({ min, max }, this.column.id))
+				tap(({ min, max }) => {
+					this._listFilterState.record(this.column.id, { min, max });
+					this.column.filterFunction({ min, max }, this.column.id);
+				})
 			)
 			.subscribe();
+
+		// The list was opened by Back or Forward: the range the user left comes back, through the same path as a typed one.
+		const restored = this._listFilterState.restore(this.column.id) as
+			| { min: number | null; max: number | null }
+			| undefined;
+		if (restored) {
+			this.rangeControl.setValue({ min: restored.min ?? null, max: restored.max ?? null });
+		}
 	}
 
 	ngOnDestroy() {

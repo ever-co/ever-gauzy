@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { NavigationStart, Router } from '@angular/router';
 
 /**
- * Keeps the text-column filters of a list page for as long as the user stays in the app, so a browser Back (or
+ * Keeps the column filters of a list page for as long as the user stays in the app, so a browser Back (or
  * Forward) into the list brings the filters back.
  *
  * A list page holds its filters in the component, so leaving it (a row opens its detail page) destroys them and the
@@ -18,9 +18,9 @@ import { NavigationStart, Router } from '@angular/router';
 })
 export class ListFilterStateService {
 	/** Filter values per list page (its path, without query or fragment), then per column id. */
-	private readonly _saved = new Map<string, Map<string, string>>();
+	private readonly _saved = new Map<string, Map<string, unknown>>();
 	/** What the page a history step is opening may take back, once per column. */
-	private _restorable: { key: string; values: Map<string, string> } | null = null;
+	private _restorable: { key: string; values: Map<string, unknown> } | null = null;
 
 	constructor(private readonly _router: Router) {
 		this._router.events.subscribe((event) => {
@@ -34,7 +34,7 @@ export class ListFilterStateService {
 	 * The value a column's filter takes back on this page, once: the page was opened by Back or Forward and the
 	 * column had a filter when the user left. Nothing otherwise.
 	 */
-	restore(columnId: string): string | undefined {
+	restore(columnId: string): unknown {
 		const restorable = this._restorable;
 		if (!restorable || restorable.key !== this._currentKey()) {
 			return undefined;
@@ -45,10 +45,10 @@ export class ListFilterStateService {
 	}
 
 	/** A column's filter now holds `value` on the current page; an empty value clears it. */
-	record(columnId: string, value: string | null | undefined): void {
+	record(columnId: string, value: unknown): void {
 		const key = this._currentKey();
-		const columns = this._saved.get(key) ?? new Map<string, string>();
-		if (value) {
+		const columns = this._saved.get(key) ?? new Map<string, unknown>();
+		if (!this._isEmpty(value)) {
 			columns.set(columnId, value);
 			this._saved.set(key, columns);
 		} else {
@@ -73,6 +73,11 @@ export class ListFilterStateService {
 			this._restorable = null;
 			this._saved.delete(key);
 		}
+	}
+
+	/** Nothing chosen: no value, no text, no items. `false` is a choice (a toggle set to "no"). */
+	private _isEmpty(value: unknown): boolean {
+		return value === null || value === undefined || value === '' || (Array.isArray(value) && value.length === 0);
 	}
 
 	private _currentKey(): string {

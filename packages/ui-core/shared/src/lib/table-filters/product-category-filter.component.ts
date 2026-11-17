@@ -1,11 +1,12 @@
 import { Component, OnChanges, type SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
-import { DefaultFilter } from 'angular2-smart-table';
+import { RestorableFilterComponent } from './restorable-filter.component';
 import { IProductCategoryTranslated } from '@gauzy/contracts';
 
 @Component({
 	selector: 'ga-product-category-select-filter',
 	template: `
 		<ngx-product-category-selector
+			[ngModel]="restored?.id"
 			[placeholder]="'INVENTORY_PAGE.PRODUCT_CATEGORY' | translate"
 			[addTag]="false"
 			[label]="''"
@@ -15,7 +16,7 @@ import { IProductCategoryTranslated } from '@gauzy/contracts';
 	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
-export class ProductCategoryFilterComponent extends DefaultFilter implements OnChanges {
+export class ProductCategoryFilterComponent extends RestorableFilterComponent implements OnChanges {
 	constructor() {
 		super();
 	}
@@ -31,6 +32,6 @@ export class ProductCategoryFilterComponent extends DefaultFilter implements OnC
 	 * @param value
 	 */
 	selectedProductCategoryEvent(value: IProductCategoryTranslated) {
-		this.column.filterFunction(value, this.column.id);
+		this.applyFilter(value);
 	}
 }

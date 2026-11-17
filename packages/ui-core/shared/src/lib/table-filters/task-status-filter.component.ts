@@ -1,21 +1,22 @@
 import { Component, OnChanges, type SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
-import { DefaultFilter } from 'angular2-smart-table';
+import { RestorableFilterComponent } from './restorable-filter.component';
 import { ITaskStatus } from '@gauzy/contracts';
 
 @Component({
-    selector: 'ga-task-status-select-filter',
-    template: `
+	selector: 'ga-task-status-select-filter',
+	template: `
 		<ga-task-status-select
+			[ngModel]="restored"
 			[defaultSelected]="false"
 			[addTag]="false"
 			[placeholder]="'TASKS_PAGE.TASKS_STATUS' | translate"
 			(onChanged)="onChange($event)"
 		></ga-task-status-select>
 	`,
-    changeDetection: ChangeDetectionStrategy.Eager,
-    standalone: false
+	changeDetection: ChangeDetectionStrategy.Eager,
+	standalone: false
 })
-export class TaskStatusFilterComponent extends DefaultFilter implements OnChanges {
+export class TaskStatusFilterComponent extends RestorableFilterComponent implements OnChanges {
 	constructor() {
 		super();
 	}
@@ -31,6 +32,6 @@ export class TaskStatusFilterComponent extends DefaultFilter implements OnChange
 	 * @param value
 	 */
 	onChange(value: ITaskStatus | null) {
-		this.column.filterFunction(value, this.column.id);
+		this.applyFilter(value);
 	}
 }

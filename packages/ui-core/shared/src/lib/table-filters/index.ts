@@ -12,3 +12,4 @@ export * from './toggle-filter/toggle-filter.component';
 export * from './vendor-filter.component';
 export * from './product-category-filter.component';
 export * from './product-type-filter.component';
+export * from './restorable-filter.component';

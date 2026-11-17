@@ -1,20 +1,21 @@
 import { Component, OnChanges, type SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
-import { DefaultFilter } from 'angular2-smart-table';
+import { RestorableFilterComponent } from './restorable-filter.component';
 import { IOrganizationContact } from '@gauzy/contracts';
 
 @Component({
-    selector: 'ga-contact-select-filter',
-    template: `
+	selector: 'ga-contact-select-filter',
+	template: `
 		<ga-contact-select
+			[ngModel]="restored"
 			[clearable]="true"
 			[placeholder]="'PAYMENTS_PAGE.CONTACT' | translate"
 			(onChanged)="onChange($event)"
 		></ga-contact-select>
 	`,
-    changeDetection: ChangeDetectionStrategy.Eager,
-    standalone: false
+	changeDetection: ChangeDetectionStrategy.Eager,
+	standalone: false
 })
-export class OrganizationContactFilterComponent extends DefaultFilter implements OnChanges {
+export class OrganizationContactFilterComponent extends RestorableFilterComponent implements OnChanges {
 	constructor() {
 		super();
 	}
@@ -30,6 +31,6 @@ export class OrganizationContactFilterComponent extends DefaultFilter implements
 	 * @param value
 	 */
 	onChange(value: IOrganizationContact) {
-		this.column.filterFunction(value, this.column.id);
+		this.applyFilter(value);
 	}
 }

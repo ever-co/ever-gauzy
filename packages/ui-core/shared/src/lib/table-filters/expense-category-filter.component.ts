@@ -1,11 +1,12 @@
 import { Component, OnChanges, type SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
-import { DefaultFilter } from 'angular2-smart-table';
+import { RestorableFilterComponent } from './restorable-filter.component';
 import { IExpenseCategory } from '@gauzy/contracts';
 
 @Component({
-    selector: 'ga-expense-category-select-filter',
-    template: `
+	selector: 'ga-expense-category-select-filter',
+	template: `
 		<ga-expense-category-select
+			[ngModel]="restored"
 			[clearable]="true"
 			[searchable]="false"
 			[addTag]="false"
@@ -13,10 +14,10 @@ import { IExpenseCategory } from '@gauzy/contracts';
 			(onChanged)="selectedExpenseCategoryEvent($event)"
 		></ga-expense-category-select>
 	`,
-    changeDetection: ChangeDetectionStrategy.Eager,
-    standalone: false
+	changeDetection: ChangeDetectionStrategy.Eager,
+	standalone: false
 })
-export class ExpenseCategoryFilterComponent extends DefaultFilter implements OnChanges {
+export class ExpenseCategoryFilterComponent extends RestorableFilterComponent implements OnChanges {
 	constructor() {
 		super();
 	}
@@ -32,6 +33,6 @@ export class ExpenseCategoryFilterComponent extends DefaultFilter implements OnC
 	 * @param value
 	 */
 	selectedExpenseCategoryEvent(value: IExpenseCategory) {
-		this.column.filterFunction(value, this.column.id);
+		this.applyFilter(value);
 	}
 }

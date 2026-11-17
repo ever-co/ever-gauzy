@@ -47,7 +47,7 @@ export class InputFilterComponent extends DefaultFilter implements OnInit, OnDes
 
 		// The list was opened by Back or Forward: the filter the user left comes back, through the same path as a
 		// typed one, so the input and the list's query agree.
-		const restored = this._listFilterState.restore(this.column.id);
+		const restored = this._listFilterState.restore(this.column.id) as string | undefined;
 		if (restored) {
 			this.inputControl.setValue(restored);
 		}
