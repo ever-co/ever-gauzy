@@ -35,6 +35,20 @@ const guardWith = (revoked = false) => {
 	return { guard: new EmbedSessionGuard({ isRevoked } as any), isRevoked };
 };
 
+// The switch as a server without it: a developer's .env (loaded with the config) may turn it on.
+let savedSwitch: string | undefined;
+beforeAll(() => {
+	savedSwitch = process.env[EMBED_TOKENS_ENV];
+});
+beforeEach(() => {
+	delete process.env[EMBED_TOKENS_ENV];
+});
+afterAll(() => {
+	if (savedSwitch !== undefined) {
+		process.env[EMBED_TOKENS_ENV] = savedSwitch;
+	}
+});
+
 describe('embed helpers', () => {
 	it('turns on only for true, 1, yes or on', () => {
 		expect(['true', '1', 'yes', 'on', ' ON '].every((v) => isEmbedEnabled(v))).toBe(true);
