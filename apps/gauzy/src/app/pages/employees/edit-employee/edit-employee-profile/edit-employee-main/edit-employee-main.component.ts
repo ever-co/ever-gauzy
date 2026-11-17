@@ -26,8 +26,8 @@ const PHOTO_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'imag
 /** The folder uploaded profile photos are stored in. */
 const PHOTO_FOLDER = 'profile_pictures';
 
-/** The path of a placeholder picture (the initial on a color) the API draws. */
-const PLACEHOLDER_PATH = '/api/placeholder/';
+/** The route of a placeholder picture (the initial on a color) the API draws, at the end of a URL's path. */
+const PLACEHOLDER_ROUTE = /\/api\/placeholder\/\d{1,4}x\d{1,4}\/(?:[0-9a-f]{3}|[0-9a-f]{6})$/i;
 
 /** The host of the generator the API's placeholder replaced, still named by some stored URLs. */
 const DUMMY_IMAGE_HOST = /^(?:www\.)?dummyimage\.com$/i;
@@ -39,7 +39,7 @@ const DUMMY_IMAGE_HOST = /^(?:www\.)?dummyimage\.com$/i;
 function isPlaceholderUrl(url: string): boolean {
 	try {
 		const { hostname, pathname } = new URL(url, document.baseURI);
-		return pathname.includes(PLACEHOLDER_PATH) || DUMMY_IMAGE_HOST.test(hostname);
+		return PLACEHOLDER_ROUTE.test(pathname) || DUMMY_IMAGE_HOST.test(hostname);
 	} catch {
 		return false;
 	}
