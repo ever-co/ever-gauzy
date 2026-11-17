@@ -8,7 +8,7 @@ jest.mock('@gauzy/core', () => {
 	const { RequestContext } = jest.requireActual('@mikro-orm/core');
 	return {
 		runInMikroOrmContext: (orm: { em: unknown } | null | undefined, work: () => Promise<unknown>) =>
-			orm && process.env.DB_ORM === 'mikro-orm' ? RequestContext.create(orm.em, work) : work()
+			orm && process.env['DB_ORM'] === 'mikro-orm' ? RequestContext.create(orm.em, work) : work()
 	};
 });
 jest.mock('../services/task-automation-rule.service', () => ({ TaskAutomationRuleService: class {} }));
@@ -109,8 +109,8 @@ describe('TaskAutomationDueSweepService', () => {
 	it('under DB_ORM=mikro-orm, runs each task in a MikroORM request context of its own', async () => {
 		// A run writes the task through the platform's CRUD services, which MikroORM refuses outside a request
 		// context: a sweep is never one.
-		const previousOrm = process.env.DB_ORM;
-		process.env.DB_ORM = 'mikro-orm';
+		const previousOrm = process.env['DB_ORM'];
+		process.env['DB_ORM'] = 'mikro-orm';
 		try {
 			let forks = 0;
 			const orm = { em: { name: 'default', fork: jest.fn(() => ({ name: 'default', fork: ++forks })) } };
@@ -134,8 +134,8 @@ describe('TaskAutomationDueSweepService', () => {
 			]);
 			expect(MikroOrmRequestContext.getEntityManager()).toBeUndefined();
 		} finally {
-			if (previousOrm === undefined) delete process.env.DB_ORM;
-			else process.env.DB_ORM = previousOrm;
+			if (previousOrm === undefined) delete process.env['DB_ORM'];
+			else process.env['DB_ORM'] = previousOrm;
 		}
 	});
 });

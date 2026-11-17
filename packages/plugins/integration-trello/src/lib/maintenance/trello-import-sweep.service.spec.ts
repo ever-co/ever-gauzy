@@ -171,8 +171,8 @@ describe('TrelloImportSweepService', () => {
 	it('under DB_ORM=mikro-orm, runs each notice and each import in a MikroORM request context of its own', async () => {
 		// The sync writes through MikroORM there (the connection's settings, the task maps), which refuses its global
 		// EntityManager outside a request context: a sweep is never one.
-		const previousOrm = process.env.DB_ORM;
-		process.env.DB_ORM = 'mikro-orm';
+		const previousOrm = process.env['DB_ORM'];
+		process.env['DB_ORM'] = 'mikro-orm';
 		try {
 			let forks = 0;
 			const orm = { em: { name: 'default', fork: jest.fn(() => ({ name: 'default', fork: ++forks })) } };
@@ -202,8 +202,8 @@ describe('TrelloImportSweepService', () => {
 			]);
 			expect(MikroOrmRequestContext.getEntityManager()).toBeUndefined();
 		} finally {
-			if (previousOrm === undefined) delete process.env.DB_ORM;
-			else process.env.DB_ORM = previousOrm;
+			if (previousOrm === undefined) delete process.env['DB_ORM'];
+			else process.env['DB_ORM'] = previousOrm;
 		}
 	});
 });

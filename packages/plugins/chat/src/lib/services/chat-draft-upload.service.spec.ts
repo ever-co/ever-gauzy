@@ -24,7 +24,7 @@ jest.mock('@gauzy/core', () => {
 		},
 		// MikroORM's own request context under DB_ORM=mikro-orm, given the instance, as the platform's helper opens it.
 		runInMikroOrmContext: (orm: { em: unknown } | null | undefined, work: () => Promise<unknown>) =>
-			orm && process.env.DB_ORM === 'mikro-orm'
+			orm && process.env['DB_ORM'] === 'mikro-orm'
 				? jest.requireActual('@mikro-orm/core').RequestContext.create(orm.em, work)
 				: work(),
 		runWithTenantStorageSettings: async (settings: unknown, work: () => Promise<unknown>) => {
@@ -233,8 +233,8 @@ describe('ChatDraftUploadService', () => {
 	it("under DB_ORM=mikro-orm, reads the tenant's settings in a MikroORM request context: the sweep runs in no request", async () => {
 		// The settings are read through MikroORM there, which refuses its global EntityManager outside a request context:
 		// the bytes of a swept draft stayed behind.
-		const previousOrm = process.env.DB_ORM;
-		process.env.DB_ORM = 'mikro-orm';
+		const previousOrm = process.env['DB_ORM'];
+		process.env['DB_ORM'] = 'mikro-orm';
 		try {
 			const orm = { em: { name: 'default', fork: jest.fn(() => ({ name: 'default', fork: 1 })) } };
 			const readIn: unknown[] = [];
@@ -261,8 +261,8 @@ describe('ChatDraftUploadService', () => {
 			expect(readIn).toEqual([{ name: 'default', fork: 1 }]);
 			expect(provider.deleteFile.mock.calls).toEqual([['docs/d1.png'], ['docs/d1.thumb.webp']]);
 		} finally {
-			if (previousOrm === undefined) delete process.env.DB_ORM;
-			else process.env.DB_ORM = previousOrm;
+			if (previousOrm === undefined) delete process.env['DB_ORM'];
+			else process.env['DB_ORM'] = previousOrm;
 		}
 	});
 

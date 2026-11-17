@@ -19,7 +19,7 @@ jest.mock('@gauzy/core', () => {
 			setClsService: () => undefined
 		},
 		runInMikroOrmContext: (orm: { em: unknown } | null | undefined, work: () => Promise<unknown>) =>
-			orm && process.env.DB_ORM === 'mikro-orm'
+			orm && process.env['DB_ORM'] === 'mikro-orm'
 				? jest.requireActual('@mikro-orm/core').RequestContext.create(orm.em, work)
 				: work()
 	};
@@ -31,12 +31,12 @@ import { RequestContext } from '@gauzy/core';
 import { deliveryUserOf, runInDeliveryContext } from './inbox-delivery-context';
 
 describe('runInDeliveryContext', () => {
-	const originalOrm = process.env.DB_ORM;
+	const originalOrm = process.env['DB_ORM'];
 	const user = deliveryUserOf({ tenantId: 'ten' as ID, organizationId: 'org' as ID }, 'u1' as ID);
 
 	afterEach(() => {
-		if (originalOrm === undefined) delete process.env.DB_ORM;
-		else process.env.DB_ORM = originalOrm;
+		if (originalOrm === undefined) delete process.env['DB_ORM'];
+		else process.env['DB_ORM'] = originalOrm;
 	});
 
 	/** What a send meets under DB_ORM=mikro-orm: refused outside a MikroORM request context. */
@@ -48,7 +48,7 @@ describe('runInDeliveryContext', () => {
 	};
 
 	it("under DB_ORM=mikro-orm, sends in the recipient's tenant and in a MikroORM request context of its own", async () => {
-		process.env.DB_ORM = 'mikro-orm';
+		process.env['DB_ORM'] = 'mikro-orm';
 		let forks = 0;
 		const orm = { em: { name: 'default', fork: jest.fn(() => ({ name: 'default', fork: ++forks })) } };
 
@@ -67,9 +67,9 @@ describe('runInDeliveryContext', () => {
 			tenantId: RequestContext.currentTenantId()
 		});
 
-		process.env.DB_ORM = 'typeorm';
+		process.env['DB_ORM'] = 'typeorm';
 		expect(await runInDeliveryContext(user, seen, orm as never)).toEqual({ em: undefined, tenantId: 'ten' });
-		process.env.DB_ORM = 'mikro-orm';
+		process.env['DB_ORM'] = 'mikro-orm';
 		expect(await runInDeliveryContext(user, seen)).toEqual({ em: undefined, tenantId: 'ten' });
 		expect(orm.em.fork).not.toHaveBeenCalled();
 	});

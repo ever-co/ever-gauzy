@@ -26,7 +26,7 @@ jest.mock('@gauzy/core', () => {
 		MikroOrmBaseEntityRepository: class {},
 		// MikroORM's own request context under DB_ORM=mikro-orm, given the instance, as the platform's helper opens it.
 		runInMikroOrmContext: (orm: { em: unknown } | null | undefined, work: () => Promise<unknown>) =>
-			orm && process.env.DB_ORM === 'mikro-orm'
+			orm && process.env['DB_ORM'] === 'mikro-orm'
 				? jest.requireActual('@mikro-orm/core').RequestContext.create(orm.em, work)
 				: work(),
 		createSsrfSafeHttpsAgent: () => undefined,
@@ -473,7 +473,7 @@ describe('Ever Works sync engine on SQLite', () => {
 	 * event, change and sweep failed there. Each unit now runs in a MikroORM request context of its own.
 	 */
 	describe('under DB_ORM=mikro-orm', () => {
-		const originalOrm = process.env.DB_ORM;
+		const originalOrm = process.env['DB_ORM'];
 		let forks: number;
 		let orm: { em: { name: string; fork: jest.Mock } };
 		let ranIn: Array<{ unit: string; em: unknown }>;
@@ -488,14 +488,14 @@ describe('Ever Works sync engine on SQLite', () => {
 		};
 
 		beforeEach(() => {
-			process.env.DB_ORM = 'mikro-orm';
+			process.env['DB_ORM'] = 'mikro-orm';
 			forks = 0;
 			orm = { em: { name: 'default', fork: jest.fn(() => ({ name: 'default', fork: ++forks })) } };
 			ranIn = [];
 		});
 		afterEach(() => {
-			if (originalOrm === undefined) delete process.env.DB_ORM;
-			else process.env.DB_ORM = originalOrm;
+			if (originalOrm === undefined) delete process.env['DB_ORM'];
+			else process.env['DB_ORM'] = originalOrm;
 		});
 
 		it('applies each inbound event in a MikroORM request context of its own', async () => {
