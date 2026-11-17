@@ -37,7 +37,7 @@ describe('ChatDockComponent', () => {
 				{ provide: ChatUiService, useValue: api },
 				{ provide: ChatPresenceService, useValue: { presenceOf: () => 'offline', lastSeenOf: () => null, watch: () => NEVER, apply: () => undefined, applyList: () => undefined } },
 				{ provide: ChatDockService, useValue: { person: signal(ANNA), close: jest.fn() } },
-				{ provide: Store, useValue: { user$: of(null) } },
+				{ provide: Store, useValue: { user$: of(null), selectedOrganization$: of(null), userRolePermissions$: of([]), hasPermission: () => false } },
 				{ provide: ToastrService, useValue: { danger: jest.fn() } }
 			]
 		}).compileComponents();
