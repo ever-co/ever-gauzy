@@ -501,6 +501,11 @@ export class CustomTrackingService extends TenantAwareCrudService<TimeSlot> {
 
 	/**
 	 * Get tracking sessions by sessionId
+	 *
+	 * A session identifier is chosen by the tracker that reports it, so it names no employee: the sessions the caller
+	 * may not read are left out, and an identifier whose sessions are all someone else's answers exactly as one that
+	 * does not exist. Which employees' sessions the caller reads is decided as for their time slots, which hold the
+	 * sessions ({@link canReadTimeSlotOf}).
 	 */
 	async getSessionsBySessionId(
 		sessionId: string,
@@ -510,7 +515,12 @@ export class CustomTrackingService extends TenantAwareCrudService<TimeSlot> {
 		endDate?: Date
 	): Promise<ITrackingSessionResponse[]> {
 		const contextTenantId = tenantId || RequestContext.currentTenantId();
-		const contextOrgId = organizationId || RequestContext.currentUser()?.employee?.organizationId;
+		// The organization the caller works in, as the JWT strategy validated it; the request's user carries no
+		// `employee`, so reading it alone answered every request with 400 (see `getTimeSlotTrackingData`).
+		const contextOrgId =
+			organizationId ||
+			RequestContext.currentOrganizationId() ||
+			RequestContext.currentUser()?.employee?.organizationId;
 
 		if (!contextTenantId || !contextOrgId) {
 			throw new BadRequestException('Tenant and Organization contexts are required');
@@ -534,12 +544,43 @@ export class CustomTrackingService extends TenantAwareCrudService<TimeSlot> {
 			order: { createdAt: 'ASC' }
 		});
 
-		return this.extractTrackingSessionsFromTimeSlotSessions(timeSlotSessions, false);
+		const readableSessions = await this.keepSessionsTheCallerMayRead(timeSlotSessions, contextOrgId);
+
+		return this.extractTrackingSessionsFromTimeSlotSessions(readableSessions, false);
+	}
+
+	/**
+	 * The time-slot sessions whose employee the caller may read, in the organization they were read in.
+	 *
+	 * Each employee is decided once, as for their time slots ({@link canReadTimeSlotOf}): every one for a caller who
+	 * may act for every employee, none for a caller who may not and has no employee record, and otherwise the
+	 * caller's own and the members of a team or project they manage there.
+	 *
+	 * @param timeSlotSessions - The sessions read in the organization
+	 * @param organizationId - The organization they were read in
+	 * @returns The sessions the caller may read, in their order
+	 */
+	private async keepSessionsTheCallerMayRead(
+		timeSlotSessions: TimeSlotSession[],
+		organizationId: ID
+	): Promise<TimeSlotSession[]> {
+		const employeeIds = [...new Set(timeSlotSessions.map((timeSlotSession) => timeSlotSession.employeeId))];
+		const readable = await Promise.all(
+			employeeIds.map((employeeId) => this.canReadTimeSlotOf(employeeId, organizationId))
+		);
+		const readableEmployeeIds = new Set(employeeIds.filter((_, index) => readable[index]));
+
+		return timeSlotSessions.filter((timeSlotSession) => readableEmployeeIds.has(timeSlotSession.employeeId));
 	}
 
 	/**
 	 * Get active sessions for an employee
 	 * Sessions with activity in the last N minutes
+	 *
+	 * The employee is the one named or, when none is named, the caller (every employee of the organization for a
+	 * caller who may act for every employee, as before). A named employee whose sessions the caller may not read
+	 * answers an empty list, exactly as an employee who is not tracking: the id from the query used to be taken as
+	 * given, and a caller with no employee record who named none read every employee's sessions.
 	 */
 	async getActiveSessions(
 		employeeId?: string,
@@ -548,11 +589,23 @@ export class CustomTrackingService extends TenantAwareCrudService<TimeSlot> {
 		organizationId?: string
 	): Promise<ITrackingSessionResponse[]> {
 		const contextTenantId = tenantId || RequestContext.currentTenantId();
-		const contextOrgId = organizationId || RequestContext.currentUser()?.employee?.organizationId;
+		// The organization the caller works in, as the JWT strategy validated it; the request's user carries no
+		// `employee`, so reading it alone answered every request with 400 (see `getTimeSlotTrackingData`).
+		const contextOrgId =
+			organizationId ||
+			RequestContext.currentOrganizationId() ||
+			RequestContext.currentUser()?.employee?.organizationId;
 		const contextEmployeeId = employeeId || RequestContext.currentEmployeeId();
 
 		if (!contextTenantId || !contextOrgId) {
 			throw new BadRequestException('Tenant and Organization context is required');
+		}
+
+		// Decided as for the employee's time slots ({@link canReadTimeSlotOf}). No employee is left only for a caller who
+		// may act for every employee (`currentEmployeeId` is null for them), who reads the whole organization; anyone
+		// else without an employee of their own reads nothing.
+		if (!(await this.canReadTimeSlotOf(contextEmployeeId, contextOrgId))) {
+			return [];
 		}
 
 		const thresholdDate = new Date(Date.now() - activityThresholdMinutes * 60 * 1000);
