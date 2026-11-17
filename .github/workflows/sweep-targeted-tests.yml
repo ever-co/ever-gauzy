@@ -102,12 +102,13 @@ jobs:
         # app. It goes through yarn, not Nx, so `.env.local` is not loaded here either.
         run: yarn config:dev
 
-      - name: Run the desktop-ui-lib suites of #12061 on develop 68b92ceda1
+      - name: Run the time-tracking suites of #12050 #12064 on develop 869a3c261c
         env:
           NX_LOAD_DOT_ENV_FILES: 'false'
         run: |
           status=0
           J='node node_modules/jest/bin/jest.js'
           export NODE_OPTIONS='--experimental-vm-modules --max-old-space-size=24576'
-          echo '::group::packages/desktop-ui-lib/jest.config.ts'; $J -c packages/desktop-ui-lib/jest.config.ts --runInBand --ci 'packages/desktop\-ui\-lib/src/lib/(interceptors/|time\-tracker/time\-tracker\.(service|component)|offline\-sync/)' || status=$?; echo '::endgroup::'
+          echo '::group::graphql composition'; node tools/scripts/check-graphql-composition.js || status=$?; echo '::endgroup::'
+          echo '::group::packages/core/jest.config.ts'; $J -c packages/core/jest.config.ts --runInBand --ci 'packages/core/src/lib/time\-tracking/(time\-log|timer)/|packages/core/src/lib/time\-tracking/statistic/statistic\.hidden\-projects' || status=$?; echo '::endgroup::'
           exit "$status"
