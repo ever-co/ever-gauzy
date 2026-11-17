@@ -230,6 +230,24 @@ describe('ChatDockComponent', () => {
 		expect(card['messages']().map((item) => item.id)).toEqual(['m1', 'm3']);
 	});
 
+	it('keeps a message sent here when a read of the empty conversation answers after it', () => {
+		const empty = new Subject<{ messages: IChatMessageWithRelations[] }>();
+		api['messages'].mockReturnValue(empty);
+		jest.advanceTimersByTime(CHAT_MESSAGES_POLL_MS);
+		expect(api['messages']).toHaveBeenCalledTimes(2);
+		const card = fixture.componentInstance;
+
+		// The first message is sent while that read is under way, and lands first.
+		api['send'].mockReturnValue(of({ message: message('m1', 'First') }));
+		card['send']({ body: 'First', mentionEmployeeIds: [], attachmentIds: [] });
+		expect(card['messages']().map((item) => item.id)).toEqual(['m1']);
+
+		// The read answers the conversation as it was when it began: empty. The message sent stays.
+		empty.next({ messages: [] });
+		empty.complete();
+		expect(card['messages']().map((item) => item.id)).toEqual(['m1']);
+	});
+
 	it('applies only the fields a follow or a deletion changed, over a refresh that came meanwhile', () => {
 		api['messages'].mockReturnValue(of({ messages: [message('m1', 'Hello')] }));
 		jest.advanceTimersByTime(CHAT_MESSAGES_POLL_MS);

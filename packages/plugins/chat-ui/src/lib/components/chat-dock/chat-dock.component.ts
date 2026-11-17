@@ -601,7 +601,9 @@ export class ChatDockComponent {
 		const inPage = new Set(page.map((message) => String(message.id)));
 		const current = this.messages();
 		const live = current.filter((message) => inPage.has(String(message.id)) || !this.held.has(String(message.id)));
-		const messages = showNewestPage(live.length === current.length ? current : live, page);
+		const shown = live.length === current.length ? current : live;
+		// An empty page (nothing was written when it was read) keeps what was sent here meanwhile, which no page holds yet.
+		const messages = page.length ? showNewestPage(shown, page) : shown;
 		for (const id of inPage) this.held.add(id);
 		this.messages.set(messages);
 		const conversation = this.conversation();
