@@ -504,8 +504,7 @@ export class CustomTrackingService extends TenantAwareCrudService<TimeSlot> {
 	 *
 	 * A session identifier is chosen by the tracker that reports it, so it names no employee: the sessions the caller
 	 * may not read are left out, and an identifier whose sessions are all someone else's answers exactly as one that
-	 * does not exist. Which employees' sessions the caller reads is decided as for their time slots, which hold the
-	 * sessions ({@link canReadTimeSlotOf}).
+	 * does not exist. Which employees' sessions the caller reads is decided by {@link mayReadSessionsOf}.
 	 */
 	async getSessionsBySessionId(
 		sessionId: string,
@@ -552,9 +551,7 @@ export class CustomTrackingService extends TenantAwareCrudService<TimeSlot> {
 	/**
 	 * The time-slot sessions whose employee the caller may read, in the organization they were read in.
 	 *
-	 * Each employee is decided once, as for their time slots ({@link canReadTimeSlotOf}): every one for a caller who
-	 * may act for every employee, none for a caller who may not and has no employee record, and otherwise the
-	 * caller's own and the members of a team or project they manage there.
+	 * Each employee is decided once ({@link mayReadSessionsOf}).
 	 *
 	 * @param timeSlotSessions - The sessions read in the organization
 	 * @param organizationId - The organization they were read in
@@ -566,11 +563,33 @@ export class CustomTrackingService extends TenantAwareCrudService<TimeSlot> {
 	): Promise<TimeSlotSession[]> {
 		const employeeIds = [...new Set(timeSlotSessions.map((timeSlotSession) => timeSlotSession.employeeId))];
 		const readable = await Promise.all(
-			employeeIds.map((employeeId) => this.canReadTimeSlotOf(employeeId, organizationId))
+			employeeIds.map((employeeId) => this.mayReadSessionsOf(employeeId, organizationId))
 		);
 		const readableEmployeeIds = new Set(employeeIds.filter((_, index) => readable[index]));
 
 		return timeSlotSessions.filter((timeSlotSession) => readableEmployeeIds.has(timeSlotSession.employeeId));
+	}
+
+	/**
+	 * Whether the tracking sessions of an employee may be read, in the organization they were read in.
+	 *
+	 * For a request, decided as for the employee's time slots, which hold the sessions ({@link canReadTimeSlotOf}):
+	 * every employee for a caller who may act for every employee, none for a caller who may not and has no employee
+	 * record, and otherwise the caller's own and the members of a team or project they manage there. Every REST and
+	 * GraphQL request has a user (the global `AuthGuard`). A call with none at all, such as a plugin or a job that
+	 * states the tenant and organization itself, is scoped by that caller, as before and as
+	 * `ManagedEmployeeService.filterAccessibleEmployeeIds` leaves it.
+	 *
+	 * @param employeeId - The employee whose sessions are read
+	 * @param organizationId - The organization they are read in
+	 * @returns true if the sessions may be read
+	 */
+	private async mayReadSessionsOf(employeeId: ID, organizationId: ID): Promise<boolean> {
+		if (!RequestContext.currentUser()) {
+			return true;
+		}
+
+		return await this.canReadTimeSlotOf(employeeId, organizationId);
 	}
 
 	/**
@@ -601,10 +620,10 @@ export class CustomTrackingService extends TenantAwareCrudService<TimeSlot> {
 			throw new BadRequestException('Tenant and Organization context is required');
 		}
 
-		// Decided as for the employee's time slots ({@link canReadTimeSlotOf}). No employee is left only for a caller who
-		// may act for every employee (`currentEmployeeId` is null for them), who reads the whole organization; anyone
-		// else without an employee of their own reads nothing.
-		if (!(await this.canReadTimeSlotOf(contextEmployeeId, contextOrgId))) {
+		// Decided by `mayReadSessionsOf`. No employee is left only for a caller who may act for every employee
+		// (`currentEmployeeId` is null for them), who reads the whole organization; anyone else without an employee of
+		// their own reads nothing.
+		if (!(await this.mayReadSessionsOf(contextEmployeeId, contextOrgId))) {
 			return [];
 		}
 

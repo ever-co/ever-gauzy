@@ -153,13 +153,15 @@ const ADMIN_PERMISSIONS = [
 	PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 ];
 
-type Caller = { user: Record<string, unknown>; permissions: PermissionsEnum[] };
+type SignedInCaller = { user: Record<string, unknown>; permissions: PermissionsEnum[] };
+/** `user: null` is a call outside any request: a plugin or job that states the tenant and organization itself. */
+type Caller = SignedInCaller | { user: null; permissions: PermissionsEnum[] };
 
-const asEmployee = (employeeId: string): Caller => ({
+const asEmployee = (employeeId: string): SignedInCaller => ({
 	user: { id: `user-of-${employeeId}`, tenantId: TENANT_ID, employeeId, lastOrganizationId: ORGANIZATION_ID },
 	permissions: EMPLOYEE_PERMISSIONS
 });
-const ADMIN: Caller = {
+const ADMIN: SignedInCaller = {
 	user: { id: 'admin-user', tenantId: TENANT_ID, employeeId: null, lastOrganizationId: ORGANIZATION_ID },
 	permissions: ADMIN_PERMISSIONS
 };
@@ -535,5 +537,21 @@ describe('GET /timesheet/custom-tracking/session/:sessionId and /active — whos
 				COLLEAGUE_EMPLOYEE_ID
 			]);
 		});
+	});
+
+	it('leaves a call with no request user (a plugin or job that states the tenant and organization) scoped by its caller, as before', async () => {
+		// `CustomTrackingService` is exported from `@gauzy/core`, and both methods take the tenant and the organization
+		// for such callers. Every REST and GraphQL request has a user (the global `AuthGuard`), so this is never a request.
+		caller = { user: null, permissions: [] };
+
+		expect(employeesIn(await service.getSessionsBySessionId(SHARED_SESSION, TENANT_ID, ORGANIZATION_ID))).toEqual(
+			[OWN_EMPLOYEE_ID, COLLEAGUE_EMPLOYEE_ID].sort()
+		);
+		expect(
+			employeesIn(await service.getActiveSessions(COLLEAGUE_EMPLOYEE_ID, 30, TENANT_ID, ORGANIZATION_ID))
+		).toEqual([COLLEAGUE_EMPLOYEE_ID, COLLEAGUE_EMPLOYEE_ID]);
+		expect(employeesIn(await service.getActiveSessions(undefined, 30, TENANT_ID, ORGANIZATION_ID))).toEqual(
+			[OWN_EMPLOYEE_ID, OWN_EMPLOYEE_ID, COLLEAGUE_EMPLOYEE_ID, COLLEAGUE_EMPLOYEE_ID].sort()
+		);
 	});
 });
