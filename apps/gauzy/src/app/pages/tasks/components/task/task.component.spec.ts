@@ -653,6 +653,42 @@ describe('TaskComponent', () => {
 			expect(component.pagination.activePage).toBe(3);
 			expect(ids()).toEqual(server.map(({ id }) => id));
 		});
+
+		it("does not write a table read of the previous organization while the next organization's read waits", async () => {
+			layout = ComponentLayoutStyleEnum.TABLE;
+			await open('dashboard');
+			expect(ids()).toEqual(pageOf(1).map(({ id }) => id));
+
+			// The table reads its source again (a sort, say), and that read is late.
+			const answer = holdNextRead();
+			const reading = component.smartTableSource.getElements();
+			organization$.next(OTHER_ORGANIZATION);
+			// It answers inside the 400 ms before the next organization's read starts.
+			answer(pageOf(2));
+			await reading.catch(() => undefined);
+			await settle(50);
+			expect(ids()).toEqual(pageOf(1).map(({ id }) => id));
+
+			await settle();
+			await component.smartTableSource.getElements();
+			expect(ids()).toEqual(['task-901']);
+		});
+
+		it('keeps the total when the next card page fails', async () => {
+			await open('dashboard');
+			expect(component.pagination.totalItems).toBe(server.length);
+
+			const answer = holdNextRead();
+			component.onScroll();
+			await settle();
+			answer.fail();
+			await settle(50);
+
+			expect(component.pagination.totalItems).toBe(server.length);
+			expect(ids()).toEqual(pageOf(1).map(({ id }) => id));
+			expect(component.loading).toBe(false);
+			expect(errors.handleError).toHaveBeenCalledTimes(1);
+		});
 	});
 
 	describe('Tasks, sprint view in the table layout', () => {

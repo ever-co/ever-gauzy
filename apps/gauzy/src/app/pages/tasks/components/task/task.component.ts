@@ -74,6 +74,8 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 	private _readSeq = 0;
 	/** The number taken by the last new list (another organization, project, team or layout). */
 	private _resetAt = 0;
+	/** The read number at the last new list of another organization, employee, project, team or filter (not a layout). */
+	private _contextResetAt = 0;
 	/** The number taken by the latest read in place of the card grid. */
 	private _shownReadAt = 0;
 	/** The read that turned the loading state on: it turns it off, or a read in place that covers it does. */
@@ -481,7 +483,8 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 				distinctUntilChange(),
 				tap((componentLayout) => (this.dataLayoutStyle = componentLayout)),
 				tap(() => this.refreshPagination()),
-				tap(() => this._startNewList()),
+				// The same organization, employee, project, team and filters: the table may read the card grid's source
+				tap(() => this._startNewList(false)),
 				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => (this._tasks = [])),
 				tap(() => this.taskSubject$.next(true)),
@@ -507,6 +510,11 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 			finalize: (error?: unknown) => {
 				// A source the page has replaced since (another page, filter or layout) no longer writes the list.
 				if (source !== this.smartTableSource) {
+					return;
+				}
+				// Another organization, employee, project, team or filter has started a new list since: in every layout, a
+				// read of the list before it no longer writes it. Its own read follows once the selection settles.
+				if (read <= this._contextResetAt) {
 					return;
 				}
 				// The card grid adds each page it reads to the ones shown, so its page reads give way to a new list and to
@@ -563,9 +571,15 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 	/**
 	 * Starts a new list (another organization, employee, project, team, layout or filter): reads still under way no
 	 * longer write it.
+	 *
+	 * @param newContext - false for a layout switch alone: the table may then read the source the card grid read with,
+	 * so only the card grid's own reads give way.
 	 */
-	private _startNewList(): void {
+	private _startNewList(newContext = true): void {
 		this._resetAt = ++this._readSeq;
+		if (newContext) {
+			this._contextResetAt = this._resetAt;
+		}
 		this._coveredPages = [];
 		this._pendingShownReads.clear();
 	}
@@ -659,12 +673,9 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 				this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID ||
 				this.viewMode === TaskListTypeEnum.SPRINT
 			) {
-				// A failed read is reported once, by the source's `finalize`.
+				// A failed read is reported once, by the source's `finalize`, which also sets the total of a read that
+				// writes the list: a failed or replaced read keeps the total shown (a new source counts 0 until it reads).
 				await this.smartTableSource.getElements().catch(() => undefined);
-				this.setPagination({
-					...this.getPagination(),
-					totalItems: this.smartTableSource.count()
-				});
 			}
 		} catch (error) {
 			this._errorHandlingService.handleError(error);
