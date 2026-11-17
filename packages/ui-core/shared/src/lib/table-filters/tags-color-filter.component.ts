@@ -16,7 +16,7 @@ import { ITag } from '@gauzy/contracts';
 	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
-export class TagsColorFilterComponent extends RestorableFilterComponent implements OnChanges {
+export class TagsColorFilterComponent extends RestorableFilterComponent<ITag[]> implements OnChanges {
 	constructor() {
 		super();
 	}

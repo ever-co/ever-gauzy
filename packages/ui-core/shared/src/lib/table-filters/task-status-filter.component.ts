@@ -16,7 +16,7 @@ import { ITaskStatus } from '@gauzy/contracts';
 	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
-export class TaskStatusFilterComponent extends RestorableFilterComponent implements OnChanges {
+export class TaskStatusFilterComponent extends RestorableFilterComponent<ITaskStatus> implements OnChanges {
 	constructor() {
 		super();
 	}

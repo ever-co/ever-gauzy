@@ -1,8 +1,13 @@
+/** `Store` is injected by token only: an empty class keeps the Akita store out of the spec (see the service spec). */
+jest.mock('../store/store.service', () => ({ Store: class Store {} }));
+
 import { Component } from '@angular/core';
 import { Location } from '@angular/common';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { provideLocationMocks } from '@angular/common/testing';
+import { BehaviorSubject } from 'rxjs';
+import { Store } from '../store/store.service';
 import { ListFilterStateService } from './list-filter-state.service';
 
 @Component({ template: '', standalone: true })
@@ -17,15 +22,30 @@ describe('ListFilterStateService with the real router', () => {
 	let location: Location;
 	let service: ListFilterStateService;
 
+	/** Whether the list's guard lets the user in. */
+	let listAllowed: boolean;
+
 	beforeEach(async () => {
+		listAllowed = true;
+		const user$ = new BehaviorSubject({ id: 'user-1', tenantId: 'tenant-1' });
+		const organization$ = new BehaviorSubject({ id: 'org-1' });
 		TestBed.configureTestingModule({
 			providers: [
 				provideRouter([
-					{ path: 'tasks', component: PageComponent },
+					{ path: 'tasks', component: PageComponent, canActivate: [() => listAllowed] },
 					{ path: 'tasks/:id', component: PageComponent },
 					{ path: 'employees', component: PageComponent }
 				]),
-				provideLocationMocks()
+				provideLocationMocks(),
+				{
+					provide: Store,
+					useValue: {
+						user$,
+						selectedOrganization$: organization$,
+						user: user$.getValue(),
+						selectedOrganization: organization$.getValue()
+					}
+				}
 			]
 		});
 		router = TestBed.inject(Router);
@@ -75,5 +95,21 @@ describe('ListFilterStateService with the real router', () => {
 		await leaveAndReturn(() => router.navigateByUrl('/tasks', { replaceUrl: true }));
 
 		expect(service.restore('title')).toBeUndefined();
+	});
+
+	it('keeps the filters when a guard refuses a visit to the list, for a later Back', async () => {
+		service.record('title', 'login bug');
+		await router.navigateByUrl('/tasks/42');
+
+		listAllowed = false;
+		expect(await router.navigateByUrl('/tasks')).toBe(false);
+		expect(router.url).toBe('/tasks/42');
+
+		listAllowed = true;
+		location.back();
+		await new Promise((resolve) => setTimeout(resolve));
+
+		expect(router.url).toBe('/tasks');
+		expect(service.restore('title')).toBe('login bug');
 	});
 });

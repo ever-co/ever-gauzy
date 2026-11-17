@@ -16,7 +16,7 @@ import { IProductTypeTranslated } from '@gauzy/contracts';
 	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
-export class ProductTypeFilterComponent extends RestorableFilterComponent implements OnChanges {
+export class ProductTypeFilterComponent extends RestorableFilterComponent<IProductTypeTranslated> implements OnChanges {
 	constructor() {
 		super();
 	}

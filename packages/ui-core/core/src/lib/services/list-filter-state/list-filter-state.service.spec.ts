@@ -1,23 +1,61 @@
-import { Subject } from 'rxjs';
-import { NavigationStart, Router } from '@angular/router';
+/**
+ * The service injects `Store` by token only. Its module is replaced with an empty class so the spec never loads the
+ * Akita store (which reaches into the `@gauzy/ui-core/common` barrel); the token is satisfied by a double below.
+ */
+jest.mock('../store/store.service', () => ({ Store: class Store {} }));
+
+import { Injector, runInInjectionContext } from '@angular/core';
+import { BehaviorSubject, Subject } from 'rxjs';
+import { NavigationCancel, NavigationEnd, NavigationStart, Router } from '@angular/router';
+import { IOrganization, IUser } from '@gauzy/contracts';
+import { Store } from '../store/store.service';
 import { ListFilterStateService } from './list-filter-state.service';
 
+type Trigger = 'imperative' | 'popstate';
+
 /**
- * Constructed directly, like the navigation service's spec. The router double holds the current URL and replays
- * `NavigationStart` the way the router does: the URL changes only once the navigation has started.
+ * Created in a bare injector, like the chat sidebar service's spec. The router double holds the current URL and
+ * replays the navigation events the way the router does: the URL changes only once a navigation has started, and
+ * a refused one leaves it as it was. The store double holds the signed-in user and the selected organization.
  */
 function createHarness(initialUrl = '/pages/tasks/dashboard') {
 	const events$ = new Subject<unknown>();
-	const router = { events: events$.asObservable(), url: initialUrl } as unknown as Router & { url: string };
-	const service = new ListFilterStateService(router);
+	const router = { events: events$.asObservable(), url: initialUrl };
+	const user$ = new BehaviorSubject<IUser | null>({ id: 'user-1', tenantId: 'tenant-1' } as IUser);
+	const organization$ = new BehaviorSubject<IOrganization | null>({ id: 'org-1' } as IOrganization);
+	const store = {
+		user$,
+		selectedOrganization$: organization$,
+		get user() {
+			return user$.getValue();
+		},
+		get selectedOrganization() {
+			return organization$.getValue();
+		}
+	};
+	const injector = Injector.create({
+		providers: [
+			{ provide: Router, useValue: router },
+			{ provide: Store, useValue: store }
+		]
+	});
+	const service = runInInjectionContext(injector, () => new ListFilterStateService());
 	let id = 0;
 
 	return {
 		service,
-		/** Starts a navigation to `url` and lands on it. */
-		go(url: string, trigger: 'imperative' | 'popstate' = 'imperative') {
+		user$,
+		organization$,
+		/** Starts a navigation to `url` and lands on it, or on `landsOn` when the route redirects. */
+		go(url: string, trigger: Trigger = 'imperative', landsOn = url) {
 			events$.next(new NavigationStart(++id, url, trigger));
-			(router as { url: string }).url = url;
+			router.url = landsOn;
+			events$.next(new NavigationEnd(id, url, landsOn));
+		},
+		/** Starts a navigation to `url` that a guard refuses: the user stays where they are. */
+		refuse(url: string, trigger: Trigger = 'imperative') {
+			events$.next(new NavigationStart(++id, url, trigger));
+			events$.next(new NavigationCancel(id, url, 'refused by a guard'));
 		}
 	};
 }
@@ -115,5 +153,77 @@ describe('ListFilterStateService', () => {
 		go('/pages/employees');
 
 		expect(service.restore('title')).toBeUndefined();
+	});
+
+	it('starts clean when a link reaches the list through a redirect', () => {
+		const { service, go } = createHarness(LIST);
+		service.record('title', 'login bug');
+		go(DETAIL);
+
+		go('/pages/tasks', 'imperative', LIST); // a menu entry whose route redirects to the list
+		expect(service.restore('title')).toBeUndefined();
+
+		go(DETAIL);
+		go(LIST, 'popstate');
+		expect(service.restore('title')).toBeUndefined();
+	});
+
+	it('keeps the filters when a guard refuses a visit to the list', () => {
+		const { service, go, refuse } = createHarness(LIST);
+		service.record('title', 'login bug');
+		go(DETAIL);
+
+		refuse(LIST);
+		go(LIST, 'popstate');
+
+		expect(service.restore('title')).toBe('login bug');
+	});
+
+	it('keeps what a restored list can still take back when a guard refuses leaving it', () => {
+		const { service, go, refuse } = createHarness(LIST);
+		service.record('title', 'login bug');
+		service.record('status', 'open');
+		go(DETAIL);
+		go(LIST, 'popstate');
+		expect(service.restore('title')).toBe('login bug');
+
+		refuse(DETAIL);
+
+		expect(service.restore('status')).toBe('open');
+	});
+
+	it('forgets every filter when the user signs out', () => {
+		const { service, go, user$ } = createHarness(LIST);
+		service.record('title', 'login bug');
+		go(DETAIL);
+
+		user$.next(null);
+		user$.next({ id: 'user-2', tenantId: 'tenant-2' } as IUser);
+		go(LIST, 'popstate');
+
+		expect(service.restore('title')).toBeUndefined();
+	});
+
+	it('forgets every filter when the organization changes', () => {
+		const { service, go, organization$ } = createHarness(LIST);
+		service.record('title', 'login bug');
+		go(DETAIL);
+
+		organization$.next({ id: 'org-2' } as IOrganization);
+		go(LIST, 'popstate');
+
+		expect(service.restore('title')).toBeUndefined();
+	});
+
+	it('keeps the filters when the same user and organization are set again', () => {
+		const { service, go, user$, organization$ } = createHarness(LIST);
+		service.record('title', 'login bug');
+		go(DETAIL);
+
+		user$.next({ id: 'user-1', tenantId: 'tenant-1' } as IUser);
+		organization$.next({ id: 'org-1' } as IOrganization);
+		go(LIST, 'popstate');
+
+		expect(service.restore('title')).toBe('login bug');
 	});
 });

@@ -15,7 +15,10 @@ import { IOrganizationContact } from '@gauzy/contracts';
 	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
-export class OrganizationContactFilterComponent extends RestorableFilterComponent implements OnChanges {
+export class OrganizationContactFilterComponent
+	extends RestorableFilterComponent<IOrganizationContact>
+	implements OnChanges
+{
 	constructor() {
 		super();
 	}

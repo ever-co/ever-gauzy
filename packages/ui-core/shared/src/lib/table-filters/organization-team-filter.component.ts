@@ -30,7 +30,10 @@ import { OrganizationTeamsService, Store } from '@gauzy/ui-core/core';
 	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
-export class OrganizationTeamFilterComponent extends RestorableFilterComponent implements OnInit, OnChanges {
+export class OrganizationTeamFilterComponent
+	extends RestorableFilterComponent<IOrganizationTeam>
+	implements OnInit, OnChanges
+{
 	public teams: IOrganizationTeam[] = [];
 	public organization: IOrganization;
 	public selectedEmployeeId: ISelectedEmployee['id'];

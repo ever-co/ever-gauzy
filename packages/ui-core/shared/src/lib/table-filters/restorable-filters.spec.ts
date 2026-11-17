@@ -97,6 +97,20 @@ describe('column filters restored by Back', () => {
 			expect(listFilterState.record).toHaveBeenCalledWith('col', { min: 1, max: 3 });
 			fixture.destroy();
 		}));
+
+		it('forgets a range cleared of both bounds, so Back does not bring it back', fakeAsync(() => {
+			const fixture = mount(RangeFilterComponent);
+
+			fixture.componentInstance.rangeControl.setValue({ min: 5, max: 20 });
+			tick(10);
+			fixture.componentInstance.rangeControl.setValue({ min: null, max: null });
+			tick(10);
+
+			expect(listFilterState.record).toHaveBeenLastCalledWith('col', null);
+			// As before, a cleared range does not call the column's filter.
+			expect(filterFunction).toHaveBeenCalledTimes(1);
+			fixture.destroy();
+		}));
 	});
 
 	describe('toggle', () => {

@@ -17,7 +17,7 @@ import { IExpenseCategory } from '@gauzy/contracts';
 	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
-export class ExpenseCategoryFilterComponent extends RestorableFilterComponent implements OnChanges {
+export class ExpenseCategoryFilterComponent extends RestorableFilterComponent<IExpenseCategory> implements OnChanges {
 	constructor() {
 		super();
 	}

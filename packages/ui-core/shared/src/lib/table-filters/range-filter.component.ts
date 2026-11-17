@@ -47,11 +47,13 @@ export class RangeFilterComponent extends DefaultFilter implements OnInit, OnDes
 			.pipe(
 				debounceTime(this.debounceTime), // Reduce unnecessary requests
 				distinctUntilChanged((prev, curr) => prev.min === curr.min && prev.max === curr.max), // Compare min and max values
-				filter(({ min, max }) => min !== null || max !== null), // Only process when at least one value is provided
-				tap(({ min, max }) => {
-					this._listFilterState.record(this.column.id, { min, max });
-					this.column.filterFunction({ min, max }, this.column.id);
-				})
+				// Remember the range for a later Back; one cleared of both bounds is forgotten, so Back does not
+				// bring the old bounds back.
+				tap(({ min, max }) =>
+					this._listFilterState.record(this.column.id, this._isEmptyRange(min, max) ? null : { min, max })
+				),
+				filter(({ min, max }) => !this._isEmptyRange(min, max)), // Only filter when at least one bound is set
+				tap(({ min, max }) => this.column.filterFunction({ min, max }, this.column.id))
 			)
 			.subscribe();
 
@@ -69,5 +71,10 @@ export class RangeFilterComponent extends DefaultFilter implements OnInit, OnDes
 		if (this.subscription) {
 			this.subscription.unsubscribe();
 		}
+	}
+
+	/** Neither bound is set (a cleared number input reports null). */
+	private _isEmptyRange(min: number | null | undefined, max: number | null | undefined): boolean {
+		return (min === null || min === undefined) && (max === null || max === undefined);
 	}
 }

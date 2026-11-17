@@ -23,7 +23,7 @@ import { PaymentMethodEnum } from '@gauzy/contracts';
 	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
-export class PaymentMethodFilterComponent extends RestorableFilterComponent implements OnChanges {
+export class PaymentMethodFilterComponent extends RestorableFilterComponent<PaymentMethodEnum> implements OnChanges {
 	public paymentMethods = Object.values(PaymentMethodEnum);
 
 	constructor() {

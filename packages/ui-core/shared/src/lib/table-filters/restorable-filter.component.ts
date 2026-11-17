@@ -14,11 +14,11 @@ import { ListFilterStateService } from '@gauzy/ui-core/core';
 	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
-export abstract class RestorableFilterComponent<T = any> extends DefaultFilter implements OnInit {
+export abstract class RestorableFilterComponent<T = unknown> extends DefaultFilter implements OnInit {
 	private readonly _listFilterState = inject(ListFilterStateService);
 
-	/** What the user had chosen when they left this list; null when the list is not being restored. */
-	public restored: T | null = null;
+	/** What the user had chosen when they left the list, for the template; null when the list is not restored. */
+	protected restored: T | null = null;
 
 	override ngOnInit(): void {
 		super.ngOnInit();
@@ -30,7 +30,7 @@ export abstract class RestorableFilterComponent<T = any> extends DefaultFilter i
 	}
 
 	/** The user chose `value` (null or empty clears the filter). */
-	protected applyFilter(value: unknown): void {
+	protected applyFilter(value: T | null): void {
 		this._listFilterState.record(this.column.id, value);
 		this.column.filterFunction(value, this.column.id);
 	}

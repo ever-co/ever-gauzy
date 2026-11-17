@@ -17,7 +17,7 @@ import { IOrganizationVendor } from '@gauzy/contracts';
 	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
-export class VendorFilterComponent extends RestorableFilterComponent implements OnChanges {
+export class VendorFilterComponent extends RestorableFilterComponent<IOrganizationVendor> implements OnChanges {
 	constructor() {
 		super();
 	}

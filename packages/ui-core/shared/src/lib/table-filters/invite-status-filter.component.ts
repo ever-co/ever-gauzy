@@ -23,7 +23,7 @@ import { InviteStatusEnum } from '@gauzy/contracts';
 	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
-export class InviteStatusFilterComponent extends RestorableFilterComponent {
+export class InviteStatusFilterComponent extends RestorableFilterComponent<InviteStatusEnum> {
 	protected inviteStatuses = Object.values(InviteStatusEnum);
 
 	/**

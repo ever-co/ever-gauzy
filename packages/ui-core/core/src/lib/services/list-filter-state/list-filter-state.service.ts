@@ -1,5 +1,33 @@
-import { Injectable } from '@angular/core';
-import { NavigationStart, Router } from '@angular/router';
+import { Injectable, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import {
+	NavigationCancel,
+	NavigationEnd,
+	NavigationError,
+	NavigationSkipped,
+	NavigationStart,
+	Router
+} from '@angular/router';
+import { merge } from 'rxjs';
+import { distinctUntilChanged, map } from 'rxjs/operators';
+import { Store } from '../store/store.service';
+
+/** What the page a history step is opening may take back, once per column. */
+interface Restorable {
+	key: string;
+	values: Map<string, unknown>;
+}
+
+/** A navigation to another page that has started and not yet ended. */
+interface PendingNavigation {
+	id: number;
+	/** The page it leaves. */
+	fromKey: string;
+	/** Opened by Back or Forward. */
+	popstate: boolean;
+	/** What the page it leaves could still take back, for a navigation that does not happen. */
+	previousRestorable: Restorable | null;
+}
 
 /**
  * Keeps the column filters of a list page for as long as the user stays in the app, so a browser Back (or
@@ -9,25 +37,44 @@ import { NavigationStart, Router } from '@angular/router';
  * way Back lands on an unfiltered list. Only a history step restores them: a click in the menu, a link or a
  * redirect is a new visit and starts clean, as before.
  *
+ * The filters live in memory only, and belong to the signed-in user, tenant and selected organization: signing out,
+ * signing in as someone else or switching the organization forgets all of them.
+ *
  * The router's trigger is known only while a navigation starts and the table renders its filters long after, so the
- * service watches `NavigationStart` itself. It must be created at startup (see the app module) to see the first
+ * service watches the navigation events itself. It must be created at startup (see the app module) to see the first
  * navigation; one created later restores nothing until the next history step.
  */
 @Injectable({
 	providedIn: 'root'
 })
 export class ListFilterStateService {
+	private readonly _router = inject(Router);
+	private readonly _store = inject(Store);
+
 	/** Filter values per list page (its path, without query or fragment), then per column id. */
 	private readonly _saved = new Map<string, Map<string, unknown>>();
-	/** What the page a history step is opening may take back, once per column. */
-	private _restorable: { key: string; values: Map<string, unknown> } | null = null;
+	private _restorable: Restorable | null = null;
+	private _pending: PendingNavigation | null = null;
 
-	constructor(private readonly _router: Router) {
-		this._router.events.subscribe((event) => {
+	constructor() {
+		this._router.events.pipe(takeUntilDestroyed()).subscribe((event) => {
 			if (event instanceof NavigationStart) {
 				this._onNavigationStart(event);
+			} else if (event instanceof NavigationEnd) {
+				this._onNavigationEnd(event);
+			} else if (
+				event instanceof NavigationCancel ||
+				event instanceof NavigationError ||
+				event instanceof NavigationSkipped
+			) {
+				this._onNavigationFailed(event.id);
 			}
 		});
+
+		// Another user, tenant or organization: none of the filters kept so far are theirs.
+		merge(this._store.user$, this._store.selectedOrganization$)
+			.pipe(map(() => this._scope()), distinctUntilChanged(), takeUntilDestroyed())
+			.subscribe(() => this._forgetAll());
 	}
 
 	/**
@@ -60,19 +107,53 @@ export class ListFilterStateService {
 	}
 
 	private _onNavigationStart(event: NavigationStart): void {
+		const fromKey = this._currentKey();
 		const key = this._keyOf(event.url);
 		// Only another page is a visit: a change of the query alone (the organization and date range the app writes
 		// into the URL) leaves the page, and its filters, where they are.
-		if (key === this._currentKey()) {
+		if (key === fromKey) {
 			return;
 		}
-		if (event.navigationTrigger === 'popstate') {
-			this._restorable = { key, values: new Map(this._saved.get(key)) };
-		} else {
-			// A new visit: whatever the page held on the last visit is gone, as it always was.
-			this._restorable = null;
+		const popstate = event.navigationTrigger === 'popstate';
+		this._pending = { id: event.id, fromKey, popstate, previousRestorable: this._restorable };
+		// Set before the page's filters are created, which happens before the navigation ends.
+		this._restorable = popstate ? { key, values: new Map(this._saved.get(key)) } : null;
+	}
+
+	private _onNavigationEnd(event: NavigationEnd): void {
+		const pending = this._pending;
+		if (!pending || pending.id !== event.id) {
+			return;
+		}
+		this._pending = null;
+		// A new visit (not a history step): whatever the page it landed on held on the last visit is gone, as it
+		// always was. Done once the navigation succeeds, on the page it lands on after any redirect.
+		const key = this._keyOf(event.urlAfterRedirects);
+		if (!pending.popstate && key !== pending.fromKey) {
 			this._saved.delete(key);
 		}
+	}
+
+	/** A navigation that did not happen (a guard refused it, it failed or a newer one replaced it) changes nothing. */
+	private _onNavigationFailed(id: number): void {
+		const pending = this._pending;
+		if (!pending || pending.id !== id) {
+			return;
+		}
+		this._pending = null;
+		this._restorable = pending.previousRestorable;
+	}
+
+	private _forgetAll(): void {
+		this._saved.clear();
+		this._restorable = null;
+		this._pending = null;
+	}
+
+	/** Whose filters these are: the signed-in user and their tenant, and the selected organization. */
+	private _scope(): string {
+		const user = this._store.user;
+		return [user?.tenantId, user?.id, this._store.selectedOrganization?.id].map((id) => id ?? '').join('|');
 	}
 
 	/** Nothing chosen: no value, no text, no items. `false` is a choice (a toggle set to "no"). */
