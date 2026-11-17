@@ -53,7 +53,7 @@ describe('TimerService.startTimer filing the log under the task project', () => 
 		jest.restoreAllMocks();
 	});
 
-	it.each([TimeLogSourceEnum.TEAMS, TimeLogSourceEnum.MOBILE])(
+	it.each([TimeLogSourceEnum.TEAMS, TimeLogSourceEnum.MOBILE, TimeLogSourceEnum.EMBED])(
 		"files a %s start without a project under the task's project",
 		async (source) => {
 			await service.startTimer({ source, taskId: 'task-1' });
