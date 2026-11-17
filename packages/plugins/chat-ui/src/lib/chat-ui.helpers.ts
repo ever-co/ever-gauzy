@@ -519,6 +519,21 @@ export function mergeMessages<T extends IChatMessage>(existing: readonly T[], in
 	);
 }
 
+/**
+ * Merges a page read again into a list, as {@link mergeMessages} does, keeping the object already shown for each
+ * message the page did not change, and the list itself when nothing changed: a view keyed on the objects (a signal,
+ * a message component's inputs) is then not drawn again for a refresh that brought nothing new.
+ */
+export function mergeKeepingUnchanged<T extends IChatMessage>(existing: readonly T[], incoming: readonly T[]): readonly T[] {
+	const shown = new Map<string, T>(existing.map((message) => [String(message.id), message]));
+	const kept = incoming.map((message) => {
+		const old = shown.get(String(message.id));
+		return old && JSON.stringify(old) === JSON.stringify(message) ? old : message;
+	});
+	const merged = mergeMessages(existing, kept);
+	return merged.length === existing.length && merged.every((message, index) => message === existing[index]) ? existing : merged;
+}
+
 /** The text of the header badge: nothing at zero, `99+` past ninety-nine. */
 export function badgeText(count: number): string {
 	if (!Number.isFinite(count) || count <= 0) return '';
