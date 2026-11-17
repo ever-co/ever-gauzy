@@ -465,6 +465,11 @@ export class ChatDockComponent {
 	private readThrough: string | null = null;
 	/** A catch-up asked for the task cards to be read again with the next page. */
 	private tasksStale = false;
+	/**
+	 * The messages a page has held since the card turned to this person. The pages are read one after another, so one
+	 * of them that a later page does not hold was deleted since, even when it is newer than all of that page.
+	 */
+	private held = new Set<string>();
 
 	/** The request of the person the card shows; a change of person drops it. */
 	private request: Subscription | null = null;
@@ -528,6 +533,7 @@ export class ChatDockComponent {
 		this.failed.set(false);
 		this.readThrough = null;
 		this.tasksStale = false;
+		this.held = new Set();
 		if (!employeeId) return;
 		this.request = this.api.direct([employeeId]).subscribe({
 			next: ({ conversation }) => {
@@ -587,10 +593,16 @@ export class ChatDockComponent {
 	 * Makes the card show the newest page (see `showNewestPage`: what it holds as it holds it, what it no longer holds
 	 * gone, an unchanged message keeping its object so its view is not drawn again), then marks the conversation read
 	 * up to the last message on screen when the other person wrote something new: never further, so what arrives
-	 * meanwhile stays unread, and not while the tab is hidden, when nothing was seen.
+	 * meanwhile stays unread, and not while the tab is hidden, when nothing was seen. A message newer than the whole
+	 * page stays only when no page has held it yet (one sent here while the page was read): one a page held before was
+	 * deleted since (a plain message deleted leaves the list), and leaves even as the newest.
 	 */
 	private accept(page: readonly IChatMessageWithRelations[]): void {
-		const messages = showNewestPage(this.messages(), page);
+		const inPage = new Set(page.map((message) => String(message.id)));
+		const current = this.messages();
+		const live = current.filter((message) => inPage.has(String(message.id)) || !this.held.has(String(message.id)));
+		const messages = showNewestPage(live.length === current.length ? current : live, page);
+		for (const id of inPage) this.held.add(id);
 		this.messages.set(messages);
 		const conversation = this.conversation();
 		const me = this.me()?.userId ?? null;
@@ -669,7 +681,8 @@ export class ChatDockComponent {
 					.pipe(takeUntilDestroyed(this.destroyRef))
 					.subscribe({
 						next: () => {
-							if (this.isCurrent(id)) this.replace({ ...message, body: '', deletedAt: new Date() });
+							// Only the fields the deletion changed: what a refresh brought meanwhile stays.
+							if (this.isCurrent(id)) this.replace({ id: message.id, body: '', deletedAt: new Date() });
 							this.api.notifyChanged();
 						},
 						error: (error) => this.fail(error)

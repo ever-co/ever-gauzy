@@ -196,6 +196,53 @@ describe('ChatDockComponent', () => {
 		expect(element().querySelectorAll('[data-test="chat-dock-messages"] ngx-chat-message-item').length).toBe(1);
 	});
 
+	it('drops a deleted message even when it was the newest, and keeps one sent here that no page held yet', () => {
+		const at = (seconds: number) => new Date(Date.now() + seconds * 1000);
+		const first = { ...message('m1', 'Hello'), createdAt: at(1) } as IChatMessageWithRelations;
+		const newest = { ...message('m2', 'Deleted soon'), createdAt: at(2) } as IChatMessageWithRelations;
+		api['messages'].mockReturnValue(of({ messages: [first, newest] }));
+		jest.advanceTimersByTime(CHAT_MESSAGES_POLL_MS);
+		const card = fixture.componentInstance;
+		expect(card['messages']().map((item) => item.id)).toEqual(['m1', 'm2']);
+
+		// The newest one was deleted: the page no longer holds it, though it is newer than all of the page.
+		api['messages'].mockReturnValue(of({ messages: [{ ...first }] }));
+		jest.advanceTimersByTime(CHAT_MESSAGES_POLL_MS);
+		expect(card['messages']().map((item) => item.id)).toEqual(['m1']);
+
+		// One sent here that the page read meanwhile does not hold yet stays.
+		const sent = { ...message('m3', 'Sent'), createdAt: at(3) } as IChatMessageWithRelations;
+		api['send'].mockReturnValue(of({ message: sent }));
+		card['send']({ body: 'Sent', mentionEmployeeIds: [], attachmentIds: [] });
+		jest.advanceTimersByTime(CHAT_MESSAGES_POLL_MS);
+		expect(card['messages']().map((item) => item.id)).toEqual(['m1', 'm3']);
+	});
+
+	it('applies only the fields a follow or a deletion changed, over a refresh that came meanwhile', () => {
+		api['messages'].mockReturnValue(of({ messages: [message('m1', 'Hello')] }));
+		jest.advanceTimersByTime(CHAT_MESSAGES_POLL_MS);
+		const card = fixture.componentInstance;
+		const followed = new Subject<unknown>();
+		const removed = new Subject<unknown>();
+		api['setFollowing'] = jest.fn(() => followed);
+		api['remove'] = jest.fn(() => removed);
+		const confirm = jest.spyOn(window, 'confirm').mockReturnValue(true);
+
+		card['onAction'](card['messages']()[0], { kind: 'follow', following: true });
+		card['onAction'](card['messages']()[0], { kind: 'delete' });
+		// A refresh lands while both are under way: the message was edited and reacted to.
+		const refreshed = { ...message('m1', 'Edited'), reactions: [{ emoji: '👍', count: 1, mine: false }] } as unknown as IChatMessageWithRelations;
+		api['messages'].mockReturnValue(of({ messages: [refreshed] }));
+		jest.advanceTimersByTime(CHAT_MESSAGES_POLL_MS);
+
+		followed.next({});
+		expect(card['messages']()[0]).toMatchObject({ body: 'Edited', following: true });
+		removed.next({});
+		expect(card['messages']()[0]).toMatchObject({ body: '', following: true, reactions: [{ emoji: '👍', count: 1, mine: false }] });
+		expect(card['messages']()[0].deletedAt).toBeTruthy();
+		confirm.mockRestore();
+	});
+
 	it('ends only the edit that was saved: another message picked meanwhile stays in edit', () => {
 		const first = message('m1', 'First');
 		const second = message('m2', 'Second');
