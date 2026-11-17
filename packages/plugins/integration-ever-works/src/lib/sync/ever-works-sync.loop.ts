@@ -1,8 +1,10 @@
 import { Inject, Injectable, Logger, OnApplicationBootstrap, OnApplicationShutdown, Optional } from '@nestjs/common';
 import { hostname } from 'node:os';
 import { randomBytes } from 'node:crypto';
+import { MikroORM } from '@mikro-orm/core';
 import { DataSource, IsNull, LessThan } from 'typeorm';
 import { ID } from '@gauzy/contracts';
+import { runInMikroOrmContext } from '@gauzy/core';
 import { EverWorksConnection, EverWorksConnectionStatus } from '../connection/ever-works-connection.entity';
 import { isEverWorksEnabled } from '../ever-works-enabled';
 import { EVER_WORKS_ENV } from '../ever-works.tokens';
@@ -62,6 +64,10 @@ export const SYNC_RENEW_MS = 30_000;
  * **Lease fence** (`ever-works-lease-fence.ts`): every handler, push and sweep runs fenced on the lease, so
  * each of its Gauzy writes checks in its own transaction that this process still holds it — a unit that
  * outlived the lease writes nothing once another process has claimed it.
+ *
+ * **MikroORM context**: the loop runs in no request, and under DB_ORM=mikro-orm the Gauzy writes go through
+ * MikroORM, which refuses its global EntityManager outside a request context: every handler, push and sweep
+ * runs in a MikroORM request context of its own, so each unit reads afresh.
  */
 @Injectable()
 export class EverWorksSyncLoop implements OnApplicationBootstrap, OnApplicationShutdown {
@@ -81,7 +87,9 @@ export class EverWorksSyncLoop implements OnApplicationBootstrap, OnApplicationS
 		private readonly pusher: EverWorksOutboundPusher,
 		private readonly log: EverWorksSyncLogService,
 		@Optional() @Inject(EVER_WORKS_ENV) env?: Record<string, string | undefined>,
-		@Optional() private readonly capability?: EverWorksProcessCapability
+		@Optional() private readonly capability?: EverWorksProcessCapability,
+		/** Opens the MikroORM request context a sweep runs in under DB_ORM=mikro-orm. */
+		@Optional() private readonly orm?: MikroORM
 	) {
 		this.env = env ?? process.env;
 	}
@@ -199,7 +207,11 @@ export class EverWorksSyncLoop implements OnApplicationBootstrap, OnApplicationS
 			if (!(await stillOwner())) return;
 			this.lastSweep.set(key, Date.now());
 			const lease = everWorksLease(this.dataSource, id, this.owner, this.timeFor(tickNow));
-			const lost = await withLeaseFence(lease, () => sweeper.sweep(current, stillOwner)).then(
+			// The loop runs in no request: under DB_ORM=mikro-orm the sweep's Gauzy writes, through MikroORM, run in a
+			// MikroORM request context of its own, as each event a handler applies and each change it pushes do.
+			const lost = await withLeaseFence(lease, () =>
+				runInMikroOrmContext(this.orm, () => sweeper.sweep(current, stillOwner))
+			).then(
 				() => false,
 				(error) => {
 					if (error instanceof EverWorksLeaseLostError) return true;

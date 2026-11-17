@@ -1,8 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import { Logger } from '@nestjs/common';
+import { MikroORM } from '@mikro-orm/core';
 import { ClsServiceManager } from 'nestjs-cls';
 import { ID } from '@gauzy/contracts';
-import { RequestContext } from '@gauzy/core';
+import { RequestContext, runInMikroOrmContext } from '@gauzy/core';
 
 /** The user a delivery runs as: the recipient, in their tenant and organization, with no employee and no permission. */
 export interface InboxDeliveryRequestUser {
@@ -69,18 +70,33 @@ export class InboxDeliveryContextUnavailableError extends Error {
 	}
 }
 
-/** Runs `fn` inside a request context of its own, signed in as `user`, on a fresh store. */
-export async function runInDeliveryContext<T>(user: InboxDeliveryRequestUser, fn: () => Promise<T>): Promise<T> {
+/**
+ * Runs `fn` inside a request context of its own, signed in as `user`, on a fresh store.
+ *
+ * Under DB_ORM=mikro-orm the send reads the tenant's mail settings through MikroORM, which refuses its global
+ * EntityManager outside a request: `fn` then also runs in a MikroORM request context of its own, on a fresh fork.
+ *
+ * @param user The recipient the send runs as.
+ * @param fn What sends.
+ * @param orm The MikroORM instance of this process, when it has one.
+ */
+export async function runInDeliveryContext<T>(
+	user: InboxDeliveryRequestUser,
+	fn: () => Promise<T>,
+	orm?: MikroORM | null
+): Promise<T> {
 	ensureRequestContextStore();
 	const request = { user, headers: {}, query: {}, params: {}, body: {} };
-	return RequestContext.runWithRequest(
-		request as never,
-		async () => {
-			if (RequestContext.currentTenantId() !== user.tenantId) {
-				throw new InboxDeliveryContextUnavailableError();
-			}
-			return fn();
-		},
-		{ id: randomUUID() as ID }
+	return runInMikroOrmContext(orm, () =>
+		RequestContext.runWithRequest(
+			request as never,
+			async () => {
+				if (RequestContext.currentTenantId() !== user.tenantId) {
+					throw new InboxDeliveryContextUnavailableError();
+				}
+				return fn();
+			},
+			{ id: randomUUID() as ID }
+		)
 	);
 }

@@ -1,4 +1,5 @@
 import { ConflictException, Injectable, Logger, Optional } from '@nestjs/common';
+import { MikroORM } from '@mikro-orm/core';
 import { DataSource, In, IsNull, LessThanOrEqual, ObjectLiteral } from 'typeorm';
 import {
 	ID,
@@ -118,7 +119,9 @@ export class InboxDeliveryService {
 		private readonly mailer: InboxDeliveryMailer,
 		/** The web push sender and the devices (FR-13); absent in bare test wiring, when nothing is pushed. */
 		@Optional() private readonly pusher?: InboxDeliveryPusher,
-		@Optional() private readonly subscriptions?: InboxPushSubscriptionService
+		@Optional() private readonly subscriptions?: InboxPushSubscriptionService,
+		/** Opens the MikroORM request context an email is sent in under DB_ORM=mikro-orm. */
+		@Optional() private readonly orm?: MikroORM
 	) {
 		this.locks = new InboxNamedLocks(dataSource);
 	}
@@ -353,7 +356,11 @@ export class InboxDeliveryService {
 				continue;
 			}
 			try {
-				await runInDeliveryContext(deliveryUserOf(this.scopeOf(row), row.userId), () => this.mailer.sendNotification(recipient, this.lineOf(item)));
+				await runInDeliveryContext(
+					deliveryUserOf(this.scopeOf(row), row.userId),
+					() => this.mailer.sendNotification(recipient, this.lineOf(item)),
+					this.orm
+				);
 				await this.markSent([row], now);
 				sent += 1;
 			} catch (error) {
@@ -410,7 +417,11 @@ export class InboxDeliveryService {
 				.slice(0, INBOX_DELIVERY_DIGEST_MAX_ITEMS)
 				.map((item) => this.lineOf(item));
 			try {
-				await runInDeliveryContext(deliveryUserOf(this.scopeOf(first), first.userId), () => this.mailer.sendDigest(recipient, lines, present.length));
+				await runInDeliveryContext(
+					deliveryUserOf(this.scopeOf(first), first.userId),
+					() => this.mailer.sendDigest(recipient, lines, present.length),
+					this.orm
+				);
 				await this.markSent(present, now);
 				sent += 1;
 			} catch (error) {

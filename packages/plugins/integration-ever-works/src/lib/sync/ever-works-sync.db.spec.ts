@@ -24,6 +24,11 @@ jest.mock('@gauzy/core', () => {
 		TenantOrganizationBaseEntity: class {},
 		TenantBaseEntity: class {},
 		MikroOrmBaseEntityRepository: class {},
+		// MikroORM's own request context under DB_ORM=mikro-orm, given the instance, as the platform's helper opens it.
+		runInMikroOrmContext: (orm: { em: unknown } | null | undefined, work: () => Promise<unknown>) =>
+			orm && process.env['DB_ORM'] === 'mikro-orm'
+				? jest.requireActual('@mikro-orm/core').RequestContext.create(orm.em, work)
+				: work(),
 		createSsrfSafeHttpsAgent: () => undefined,
 		verifyWebhookSignature: jest.requireActual('../../../../../core/src/lib/webhook/webhook-signature').verifyWebhookSignature,
 		...Object.fromEntries(
@@ -47,6 +52,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { BadRequestException, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { RequestContext as MikroOrmRequestContext } from '@mikro-orm/core';
 import { DataSource, EntitySchema } from 'typeorm';
 import { IntegrationSetting, IntegrationTenant, Organization, Tenant, UserOrganization, Employee, EmployeeNotification } from '@gauzy/core';
 import { TestEverWorksClientFactory } from '../client/ever-works-client.factory';
@@ -458,6 +464,120 @@ describe('Ever Works sync engine on SQLite', () => {
 			await pusher.drain(connection, 100, t);
 			expect(await repo.findOneByOrFail({ id: failing.id })).toMatchObject({ status: EverWorksOutboundStatus.DEAD, attempts: 8 });
 			expect(failures).toBe(2);
+		});
+	});
+
+	/**
+	 * The loop runs in no request. Under DB_ORM=mikro-orm the Gauzy writes of a handler, a push or a sweep go through
+	 * MikroORM (the platform's task services), which refuses its global EntityManager outside a request context: every
+	 * event, change and sweep failed there. Each unit now runs in a MikroORM request context of its own.
+	 */
+	describe('under DB_ORM=mikro-orm', () => {
+		const originalOrm = process.env['DB_ORM'];
+		let forks: number;
+		let orm: { em: { name: string; fork: jest.Mock } };
+		let ranIn: Array<{ unit: string; em: unknown }>;
+		/** What a Gauzy write meets there: refused outside a MikroORM request context. */
+		const throughMikroOrm = (unit: string) => {
+			const em = MikroOrmRequestContext.getEntityManager();
+			if (!em)
+				throw new Error(
+					'Using global EntityManager instance methods for context specific actions is disallowed.'
+				);
+			ranIn.push({ unit, em });
+		};
+
+		beforeEach(() => {
+			process.env['DB_ORM'] = 'mikro-orm';
+			forks = 0;
+			orm = { em: { name: 'default', fork: jest.fn(() => ({ name: 'default', fork: ++forks })) } };
+			ranIn = [];
+		});
+		afterEach(() => {
+			if (originalOrm === undefined) delete process.env['DB_ORM'];
+			else process.env['DB_ORM'] = originalOrm;
+		});
+
+		it('applies each inbound event in a MikroORM request context of its own', async () => {
+			const applier = new EverWorksInboundApplier(dataSource, log, undefined, orm as never);
+			applier.register({
+				aggregateTypes: ['task'],
+				apply: async (env) => {
+					throughMikroOrm(`event ${env.seq}`);
+					return { status: 'applied' };
+				}
+			});
+			await store.record(connection, envelope({ seq: '1' }) as never, 'webhook');
+			await store.record(connection, envelope({ seq: '2' }) as never, 'webhook');
+
+			await applier.drain(connection);
+
+			expect(ranIn).toEqual([
+				{ unit: 'event 1', em: { name: 'default', fork: 1 } },
+				{ unit: 'event 2', em: { name: 'default', fork: 2 } }
+			]);
+			expect((await events().find()).map((event) => event.status)).toEqual([
+				EverWorksInboundStatus.APPLIED,
+				EverWorksInboundStatus.APPLIED
+			]);
+		});
+
+		it('pushes each outbound change in a MikroORM request context of its own', async () => {
+			const queue = new EverWorksOutboundQueue(dataSource);
+			const pusher = new EverWorksOutboundPusher(dataSource, log, undefined, undefined, orm as never);
+			pusher.register({
+				entityTypes: [EverWorksLinkType.TASK],
+				push: async (change) => {
+					throughMikroOrm(`change ${change.gauzyId}`);
+					return { status: 'pushed' };
+				}
+			});
+			await queue.enqueue({
+				tenantId: A.tenantId,
+				organizationId: A.organizationId,
+				entityType: EverWorksLinkType.TASK,
+				gauzyId: 'one'
+			});
+			await queue.enqueue({
+				tenantId: A.tenantId,
+				organizationId: A.organizationId,
+				entityType: EverWorksLinkType.TASK,
+				gauzyId: 'two'
+			});
+
+			await pusher.drain(connection, 100, new Date(Date.now() + 10_000));
+
+			expect(ranIn.map(({ unit }) => unit).sort()).toEqual(['change one', 'change two']);
+			expect(new Set(ranIn.map(({ em }) => (em as { fork: number }).fork)).size).toBe(2);
+			expect(
+				(await dataSource.getRepository(EverWorksOutboundChange).find()).every(
+					(row) => row.status === EverWorksOutboundStatus.PUSHED
+				)
+			).toBe(true);
+		});
+
+		it('runs each periodic sweep in a MikroORM request context of its own', async () => {
+			const applier = new EverWorksInboundApplier(dataSource, log, undefined, orm as never);
+			const pusher = new EverWorksOutboundPusher(dataSource, log, undefined, undefined, orm as never);
+			const poller = new EverWorksFeedPoller(dataSource, connections, store);
+			const loop = new EverWorksSyncLoop(
+				dataSource,
+				poller,
+				applier,
+				pusher,
+				log,
+				{ EVER_WORKS_ENABLED: 'true' },
+				undefined,
+				orm as never
+			);
+			loop.registerSweeper({
+				sweepIntervalMs: 0,
+				sweep: async () => throughMikroOrm('sweep')
+			});
+
+			expect(await loop.tick()).toEqual([connection.id]);
+
+			expect(ranIn).toEqual([{ unit: 'sweep', em: { name: 'default', fork: 1 } }]);
 		});
 	});
 

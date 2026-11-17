@@ -1,6 +1,8 @@
 import { Injectable, Logger, Optional, OnModuleInit } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
+import { MikroORM } from '@mikro-orm/core';
 import { JobsOptions } from 'bullmq';
+import { runInMikroOrmContext } from '@gauzy/core';
 import { SchedulerQueueService } from '@gauzy/scheduler';
 import {
 	DOCS_BULK_IMPORT_JOB_PRIORITY,
@@ -85,7 +87,9 @@ export class DocsQueueService implements OnModuleInit {
 		// was imported, which today is `apps/worker` alone. A required dependency here makes the
 		// whole API fail to bootstrap with an `UnknownDependenciesException` the moment the
 		// Documents plugin is registered.
-		@Optional() private readonly schedulerQueueService?: SchedulerQueueService
+		@Optional() private readonly schedulerQueueService?: SchedulerQueueService,
+		/** Opens the MikroORM request context an inline stage runs in under DB_ORM=mikro-orm. */
+		@Optional() private readonly orm?: MikroORM
 	) {}
 
 	/**
@@ -248,6 +252,10 @@ export class DocsQueueService implements OnModuleInit {
 
 	/**
 	 * Runs one inline stage to completion and clears the in-flight guard. Never rejects.
+	 *
+	 * An inline stage runs after the request that asked for it, or from a timer (the recovery scan, the import
+	 * sweep). Under DB_ORM=mikro-orm it then runs in a MikroORM request context of its own, as a queued one does
+	 * (see `DocsProcessingWorker.process`): MikroORM refuses its global EntityManager outside one.
 	 */
 	private async runInline<T extends IDocsJobBase>(
 		jobName: string,
@@ -265,7 +273,7 @@ export class DocsQueueService implements OnModuleInit {
 				return;
 			}
 			// `runStageSafely` owns the failure path (dead-letter onto the document row).
-			await runner.runStageSafely(jobName, inlineStageJob(jobId, payload));
+			await runInMikroOrmContext(this.orm, () => runner.runStageSafely(jobName, inlineStageJob(jobId, payload)));
 		} catch (error) {
 			// Belt and braces — `runStageSafely` swallows stage errors, so this can only be a
 			// resolution failure. An unhandled rejection here would take the process down.

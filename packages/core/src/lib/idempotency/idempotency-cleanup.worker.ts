@@ -1,6 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
+import { MikroORM } from '@mikro-orm/core';
 import { QueueJobHandler, QueueWorker, QueueWorkerHost } from '@gauzy/scheduler';
 import { Job } from 'bullmq';
+import { runInMikroOrmContext } from '../core/context/mikro-orm-context';
 import {
 	IDEMPOTENCY_CLEANUP_BATCH_SIZE,
 	IDEMPOTENCY_CLEANUP_JOB,
@@ -27,13 +29,21 @@ export interface IIdempotencyCleanupJob {
  *
  * A failed sweep is raised rather than swallowed, so the queue's own retry and dead-letter handling
  * sees it. A sweep that could not run is not a sweep that ran and found nothing.
+ *
+ * Under DB_ORM=mikro-orm the keys are read and deleted through MikroORM, which refuses its global
+ * EntityManager outside a request: each batch then runs in a MikroORM request context of its own,
+ * since a queued job runs in none.
  */
 @Injectable()
 @QueueWorker(IDEMPOTENCY_QUEUE_NAME)
 export class IdempotencyCleanupWorker extends QueueWorkerHost {
 	private readonly logger = new Logger(IdempotencyCleanupWorker.name);
 
-	constructor(private readonly idempotencyService: IdempotencyService) {
+	constructor(
+		private readonly idempotencyService: IdempotencyService,
+		/** Opens the MikroORM request context a batch runs in under DB_ORM=mikro-orm. */
+		@Optional() private readonly orm?: MikroORM
+	) {
 		super();
 	}
 
@@ -57,7 +67,9 @@ export class IdempotencyCleanupWorker extends QueueWorkerHost {
 			let deleted = 0;
 
 			for (let batch = 0; batch < IDEMPOTENCY_CLEANUP_MAX_BATCHES; batch++) {
-				const removed = await this.idempotencyService.purgeExpired(IDEMPOTENCY_CLEANUP_BATCH_SIZE);
+				const removed = await runInMikroOrmContext(this.orm, () =>
+					this.idempotencyService.purgeExpired(IDEMPOTENCY_CLEANUP_BATCH_SIZE)
+				);
 
 				deleted += removed;
 

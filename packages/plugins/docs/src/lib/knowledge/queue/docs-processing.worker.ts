@@ -1,5 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
+import { MikroORM } from '@mikro-orm/core';
 import { DelayedError, Job } from 'bullmq';
+import { runInMikroOrmContext } from '@gauzy/core';
 import { QueueJobHandler, QueueWorker, QueueWorkerHost } from '@gauzy/scheduler';
 import { getDocsConfig } from '../../docs.config';
 import { DOCS_TENANT_AI_CONCURRENCY, DOCS_TENANT_BUSY_DEFER_DELAY_MS } from '../../docs.constants';
@@ -64,8 +66,25 @@ export class DocsProcessingWorker extends QueueWorkerHost {
 	 */
 	private readonly aiInFlightByTenant = new Map<string, number>();
 
-	constructor(private readonly pipeline: DocsPipelineService) {
+	constructor(
+		private readonly pipeline: DocsPipelineService,
+		/** Opens the MikroORM request context a job runs in under DB_ORM=mikro-orm. */
+		@Optional() private readonly orm?: MikroORM
+	) {
 		super();
+	}
+
+	/**
+	 * Hands a job to its handler. Under DB_ORM=mikro-orm the stages read and write through MikroORM (the
+	 * tenant's storage settings and AI credentials, the activity log), which refuses its global
+	 * EntityManager outside a request: each job then runs in a MikroORM request context of its own, since a
+	 * queued job runs in none.
+	 *
+	 * @param job The job the queue handed over.
+	 * @param token The BullMQ lock token.
+	 */
+	override process(job: Job, token?: string): Promise<unknown> {
+		return runInMikroOrmContext(this.orm, () => super.process(job, token));
 	}
 
 	/** `docs.extract` → {@link DocsPipelineService.handleExtract}. */

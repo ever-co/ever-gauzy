@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
+import { MikroORM } from '@mikro-orm/core';
 import {
 	EventConsumerKind,
 	EventConsumerOrdering,
@@ -8,6 +9,7 @@ import {
 	IEventConsumerContext,
 	IEventEnvelope
 } from '@gauzy/contracts';
+import { runInMikroOrmContext } from '../core/context/mikro-orm-context';
 import { EventDelivery } from './event-delivery.entity';
 import { describeFailure, EventOutboxService } from './event-outbox.service';
 
@@ -68,7 +70,11 @@ export class EventOrderGapError extends Error {
 export class EventConsumerRegistry {
 	private readonly consumers = new Map<string, IEventConsumer>();
 
-	constructor(private readonly outbox: EventOutboxService) {}
+	constructor(
+		private readonly outbox: EventOutboxService,
+		/** Opens the MikroORM request context a consumer runs in under DB_ORM=mikro-orm. */
+		@Optional() private readonly orm?: MikroORM
+	) {}
 
 	/**
 	 * Registers a consumer.
@@ -151,6 +157,10 @@ export class EventConsumerRegistry {
 	 * failed record for the retry scan, and a crash in between leaves a pending one. A consumer needs
 	 * no idempotency bookkeeping of its own to get these three properties.
 	 *
+	 * The dispatcher runs outside any request (a queue's worker, an in-process sweep, after a commit). Under
+	 * DB_ORM=mikro-orm a consumer that reads or writes through MikroORM, which refuses its global
+	 * EntityManager there, therefore runs in a MikroORM request context of its own, one per run.
+	 *
 	 * @param consumer The consumer to run.
 	 * @param event The event to hand it.
 	 * @returns What the run did.
@@ -181,7 +191,8 @@ export class EventConsumerRegistry {
 		}
 
 		try {
-			await consumer.handle(event, this.createContext(consumer, claim.delivery));
+			const context = this.createContext(consumer, claim.delivery);
+			await runInMikroOrmContext(this.orm, () => consumer.handle(event, context));
 		} catch (error) {
 			const message = describeFailure(error);
 			const delivery = await this.outbox.completeDelivery(claim.delivery.id as ID, {
