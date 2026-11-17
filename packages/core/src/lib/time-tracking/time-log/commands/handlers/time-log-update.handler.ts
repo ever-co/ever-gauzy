@@ -2,7 +2,7 @@ import { ConflictException, Logger, NotFoundException, Optional } from '@nestjs/
 import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
 import * as moment from 'moment';
 import { Brackets, DataSource, EntityManager, FindOptionsWhere, Repository } from 'typeorm';
-import { ID, ITimeLog, ITimeSlot, ITimesheet, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
+import { ID, ITimeLog, ITimeSlot, ITimesheet, TimeLogType } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/utils';
 import { TimesheetFirstOrCreateCommand, TimesheetRecalculateCommand } from './../../../timesheet/commands';
 import { TimeSlotBulkDeleteCommand } from '../../../time-slot/commands/time-slot-bulk-delete.command';
@@ -14,7 +14,7 @@ import { MultiORM, MultiORMEnum, getORMType } from './../../../../core/utils';
 import { prepareSQLQuery as p } from './../../../../database/database.helper';
 import { TimeLog } from './../../time-log.entity';
 import { assertTimeLogReferencesOfTenant } from '../../time-log-references';
-import { postsHeartbeatSlots } from '../../tracker-source';
+import { postsHeartbeatSlots, takesRangeSlotsOnStop } from '../../tracker-source';
 import { TimeSlot } from '../../../time-slot/time-slot.entity';
 import { TimeLogUpdateCommand } from '../time-log-update.command';
 import { FindTimeLogRatesCommand, TimeLogRatesPart } from '../find-time-log-rates.command';
@@ -372,7 +372,7 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 					expectedUpdatedAt
 				);
 
-			// The time slots of the new range, for Web Timer, and for a heartbeat-posting run that has none
+			// The time slots of the new range, for the web and embedded timers and a heartbeat-posting run with none
 			// (takesRangeSlots, above), are created and linked to the log BEFORE the update writes that range (see
 			// `writeWithRangeSlots`). The answer is every slot of the employee at those starts — the ones created and the
 			// ones they already had there (another of their logs may share a ten-minute slot) — and, as
@@ -447,10 +447,11 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 	}
 
 	/**
-	 * Whether an update gives the log the time slots of its range. The web timer posts none, so its runs always get
-	 * them. A run of a client that posts a slot on each heartbeat (`postsHeartbeatSlots`) gets them only when it has
-	 * none, one that never sent a heartbeat, which the day's worked time otherwise leaves out (#11843); one that has
-	 * slots keeps those it posted. Desktop and the other trackers post their own.
+	 * Whether an update gives the log the time slots of its range. The web timer and the embedded timers
+	 * (`takesRangeSlotsOnStop`) post none, so their runs always get them. A run of a client that posts a slot on each
+	 * heartbeat (`postsHeartbeatSlots`) gets them only when it has none, one that never sent a heartbeat, which the
+	 * day's worked time otherwise leaves out (#11843); one that has slots keeps those it posted. Desktop and the other
+	 * trackers post their own.
 	 *
 	 * @param timeLog - The log as the update will store it: the stored row with the update's changes on top.
 	 */
@@ -459,7 +460,7 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 		if (timeLog.logType === TimeLogType.BREAK) {
 			return false;
 		}
-		if (timeLog.source === TimeLogSourceEnum.WEB_TIMER) {
+		if (takesRangeSlotsOnStop(timeLog.source)) {
 			return true;
 		}
 		if (!postsHeartbeatSlots(timeLog.source)) {

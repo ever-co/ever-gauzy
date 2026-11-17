@@ -6686,7 +6686,8 @@
 			"HUBSTAFF": "HubStaff",
 			"BROWSER_EXTENSION": "הרחבת דפדפן",
 			"TEAMS": "קבוצות",
-			"CLOC": "קלוק"
+			"CLOC": "קלוק",
+			"EMBED": "טיימר מוטמע"
 		},
 		"LAST_WORKED": "עבד לאחרונה:",
 		"TIME_ZONE": "אזור זמן",
