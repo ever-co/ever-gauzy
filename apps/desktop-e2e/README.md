@@ -24,7 +24,11 @@ real Gauzy API.
 ## `desktop-apps-start.spec.ts` — every packaged app starts
 
 Each packaged desktop app (timer, desktop, server, server-api, agent, server-mcp) starts on a fresh profile and opens
-its first window without a main-process load error. An app that is not packaged is skipped.
+its first window without a main-process load error. An app that is not packaged is skipped. desktop, server,
+server-api and server-mcp all package into `dist/apps/desktop-packages`, so only the one packaged last is there:
+package and check them one at a time (`--grep "<app>:"`, e.g. `--grep "server:"`). Keep the colon: the pattern is
+matched against the spec's file name and the test title, so a bare `desktop` selects every check in
+`desktop-apps-start.spec.ts`, and a bare `server` also selects `server-api` and `server-mcp`.
 
 ## Run it
 
@@ -86,6 +90,9 @@ window never came up. Attaching later leaves those renderers alone, and lets the
   the end. (A closed port is not enough on Windows: a refused connection takes seconds there, and the startup window
   then took minutes.)
 - **`--mute-audio`**: the timer plays a camera-shutter sound for every screenshot.
+- **No elevation**: server, server-api and server-mcp ask for administrator rights (`requireAdministrator`), which
+  Windows refuses to grant a process started by an unelevated test run. On Windows the apps are started with
+  `__COMPAT_LAYER=RunAsInvoker`, i.e. with the test run's own rights.
 - **Windows registry**: on its first start an app registers itself as a login item (`HKCU\…\CurrentVersion\Run`,
   `…\Explorer\StartupApproved\Run`, a value named after its app id — the same value an installed release uses) and
   as its protocol handler (`HKCU\Software\Classes\gauzy-timer` and the other apps' protocols). The suite exports

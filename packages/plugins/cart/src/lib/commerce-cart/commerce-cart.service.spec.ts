@@ -2405,6 +2405,20 @@ describe('CommerceCartService — the discount is the promotion engine’s (R3-0
 		expect(JSON.stringify(promotionPort!.evaluate.mock.calls)).not.toContain('999');
 	});
 
+	it('names the cart it evaluates, so the engine does not count the cart’s own reservation against its buyer', async () => {
+		// A checkout reserves each promotion against the cart; re-evaluating that cart with a once-per-customer
+		// promotion must not see the reservation as a second use (CodeRabbit on #12057). The engine can only
+		// tell the cart's own reservation from another cart's when the query names the cart.
+		const { service, promotionPort } = cartFixture({ promotions: { TENOFF: 4 } });
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD', customerId: 'customer-1' });
+		await service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 1, unitPrice: 20 });
+
+		await service.applyPromotion(cart.id, { code: 'TENOFF' } as any);
+
+		expect(promotionPort!.evaluate).toHaveBeenCalledTimes(1);
+		expect(promotionPort!.evaluate.mock.calls[0][0]).toMatchObject({ cartId: cart.id, customerId: 'customer-1' });
+	});
+
 	it('refuses a promotion the engine grants nothing, with the engine’s notice, and writes nothing', async () => {
 		const { service, tables } = cartFixture({ promotions: {} });
 		const cart = await service.create({ channelId: 'channel-1', currency: 'USD' });
