@@ -718,7 +718,12 @@ export class UserService extends TenantAwareCrudService<User> {
 				entity.imageUrl =
 					!user.imageId && isPlaceholderImageUrl(user.imageUrl)
 						? user.imageUrl
-						: getUserDummyImage({ ...user, firstName: entity.firstName ?? user.firstName });
+						: getUserDummyImage({
+								...user,
+								firstName: entity.firstName ?? user.firstName,
+								// A user without an address (an agent) gets a placeholder without a letter, not an error.
+								email: user.email ?? ''
+							});
 			}
 
 			// Save the updated user entity

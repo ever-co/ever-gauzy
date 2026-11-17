@@ -85,6 +85,12 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent imple
 			.pipe(
 				filter((params) => !!params && !!params.id),
 				tap((params) => {
+					// Another employee: what the forms gathered for the previous one (a photo set or removed among
+					// it) must not go with the next save of this one. A `null` form is not sent.
+					if (this.employeeId && this.employeeId !== params.id) {
+						this._employeeStore.userForm = null;
+						this._employeeStore.employeeForm = null;
+					}
 					// Update employeeId when route parameters change
 					this.employeeId = params.id;
 					this._registerPageTabs();

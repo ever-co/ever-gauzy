@@ -26,8 +26,24 @@ const PHOTO_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'imag
 /** The folder uploaded profile photos are stored in. */
 const PHOTO_FOLDER = 'profile_pictures';
 
-/** A placeholder picture (the initial on a color) drawn by the API, or by the generator it replaced. */
-const PLACEHOLDER_URL = /\/api\/placeholder\/|\/\/dummyimage\.com\//i;
+/** The path of a placeholder picture (the initial on a color) the API draws. */
+const PLACEHOLDER_PATH = '/api/placeholder/';
+
+/** The host of the generator the API's placeholder replaced, still named by some stored URLs. */
+const DUMMY_IMAGE_HOST = /^(?:www\.)?dummyimage\.com$/i;
+
+/**
+ * Whether `url` is a placeholder picture. Only its host and path are read, as the API does: a photo URL whose
+ * query happens to carry the placeholder path is still a photo.
+ */
+function isPlaceholderUrl(url: string): boolean {
+	try {
+		const { hostname, pathname } = new URL(url, document.baseURI);
+		return pathname.includes(PLACEHOLDER_PATH) || DUMMY_IMAGE_HOST.test(hostname);
+	} catch {
+		return false;
+	}
+}
 
 /** What the crop and avatar dialogs close with: the picture, an error to show, or nothing when cancelled. */
 type CropResult = { file?: File; error?: string } | undefined;
@@ -98,7 +114,7 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 	get hasPhoto(): boolean {
 		if (this.form.get('imageId').value) return true;
 		const url = this.avatarUrl;
-		return !!url && !PLACEHOLDER_URL.test(url);
+		return !!url && !isPlaceholderUrl(url);
 	}
 
 	/*
@@ -274,10 +290,13 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 					imageId: image.id,
 					imageUrl: image.fullUrl || image.url
 				});
-				// Update user form data in store (assuming updateUserForm is async)
+				// Update user form data in store (assuming updateUserForm is async). `imageUrl` is left out
+				// (`undefined` is not sent): the store merges every change, so an `imageUrl: null` left by an
+				// earlier photo removal would otherwise go with the new photo and empty the stored picture URL.
 				await this._employeeStore.updateUserForm({
 					imageId: image.id,
-					image
+					image,
+					imageUrl: undefined
 				});
 			}
 		} catch (error) {

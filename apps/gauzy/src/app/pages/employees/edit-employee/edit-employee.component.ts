@@ -178,11 +178,13 @@ export class EditEmployeeComponent extends TranslationBaseComponent implements O
 				this.selectedEmployee.user.imageUrl = image?.fullUrl || imageUrl;
 				this.avatarFailed = false;
 
-				// Update the selectedEmployee in the store with the new image URL
-				this.store.selectedEmployee = {
-					...this.store.selectedEmployee,
-					imageUrl: image?.fullUrl || imageUrl
-				};
+				// Update the selectedEmployee in the store with the new image URL, when it is this employee
+				if (this.store.selectedEmployee?.id === this.selectedEmployee.id) {
+					this.store.selectedEmployee = {
+						...this.store.selectedEmployee,
+						imageUrl: image?.fullUrl || imageUrl
+					};
+				}
 			}
 		} catch (error) {
 			console.error('Error while updating profile avatar:', error);
