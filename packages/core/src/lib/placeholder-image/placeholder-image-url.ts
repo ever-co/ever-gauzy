@@ -44,6 +44,9 @@ const HEX_COLOR = /^(?:[0-9a-f]{3}|[0-9a-f]{6})$/i;
 /** The size segment of a placeholder route: `<width>x<height>`. */
 const PLACEHOLDER_SIZE = /^(\d{1,4})x(\d{1,4})$/;
 
+/** The placeholder route at the end of a URL's path: `.../api/placeholder/<size>/<background>`. */
+const PLACEHOLDER_ROUTE = /\/api\/placeholder\/([^/]+)\/([^/]+)$/;
+
 /** The host of the former generator, at the start of a URL (`https://`, `http://` or protocol-relative). */
 const DUMMY_IMAGE_HOST = /^(?:https?:)?\/\/(?:www\.)?dummyimage\.com(?=[/?#&]|$)/i;
 
@@ -148,6 +151,34 @@ export function parsePlaceholderImage(size: string, background: string, text?: u
  */
 export function isDummyImageUrl(value: unknown): value is string {
 	return typeof value === 'string' && DUMMY_IMAGE_HOST.test(value.trim());
+}
+
+/**
+ * Whether `value` is a placeholder URL, drawn by the API ({@link getPlaceholderImageUrl}) or by the former generator.
+ *
+ * The API's route is looked for at the end of the URL's path, with a size and a background it draws: a real picture
+ * whose query mentions it, or whose own path merely contains `/api/placeholder/`, is not one.
+ *
+ * @param value - Any value.
+ */
+export function isPlaceholderImageUrl(value: unknown): value is string {
+	if (typeof value !== 'string') {
+		return false;
+	}
+	const url = value.trim();
+	// The test `isDummyImageUrl` makes, without its type guard: the guard would leave `url` as `never` past a false answer.
+	if (DUMMY_IMAGE_HOST.test(url)) {
+		return true;
+	}
+	let pathname: string;
+	try {
+		// A base, so a URL stored without the API's host (an empty API_BASE_URL) parses as well.
+		pathname = new URL(url, 'http://localhost').pathname;
+	} catch {
+		return false;
+	}
+	const route = PLACEHOLDER_ROUTE.exec(pathname);
+	return !!route && parsePlaceholderImage(route[1], route[2]) !== undefined;
 }
 
 /**

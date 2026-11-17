@@ -1,0 +1,97 @@
+<nb-card class="maker">
+	<nb-card-header class="maker__header">
+		<h6 class="maker__title">{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.PHOTO.CHOOSE_AVATAR' | translate }}</h6>
+		<button
+			type="button"
+			class="maker__close"
+			[attr.aria-label]="'BUTTONS.CLOSE' | translate"
+			(click)="cancel()"
+		>
+			<nb-icon icon="close-outline"></nb-icon>
+		</button>
+	</nb-card-header>
+
+	<nb-card-body class="maker__body">
+		<aside class="maker__preview">
+			<img
+				class="maker__preview-image"
+				[src]="preview"
+				[alt]="'EMPLOYEES_PAGE.EDIT_EMPLOYEE.PHOTO.ALT' | translate"
+			/>
+			<button type="button" class="maker__shuffle" (click)="shuffle()">
+				<nb-icon icon="shuffle-2-outline"></nb-icon>
+				<span>{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.PHOTO.SHUFFLE' | translate }}</span>
+			</button>
+		</aside>
+
+		<div class="maker__options custom-scroll">
+			@for (group of presetGroups; track group.key) {
+				<section class="maker__part">
+					<h6 class="maker__part-title">{{ group.label | translate }}</h6>
+					<div
+						class="maker__choices maker__choices--presets"
+						role="radiogroup"
+						[attr.aria-label]="group.label | translate"
+					>
+						@for (preset of group.presets; track preset.id; let i = $index) {
+							<button
+								type="button"
+								class="maker__choice maker__choice--avatar"
+								role="radio"
+								[attr.aria-checked]="selectedPreset === preset.id"
+								[attr.aria-label]="(group.label | translate) + ' ' + (i + 1)"
+								[class.maker__choice--chosen]="selectedPreset === preset.id"
+								(click)="choosePreset(preset)"
+							>
+								<img [src]="preset.url" alt="" />
+							</button>
+						}
+					</div>
+				</section>
+			}
+
+			@for (part of parts; track part.key) {
+				<section class="maker__part">
+					<h6 class="maker__part-title">{{ part.label | translate }}</h6>
+					<div class="maker__choices" role="radiogroup" [attr.aria-label]="part.label | translate">
+						@for (choice of choices[part.key]; track choice.value; let i = $index) {
+							@if (part.kind === 'color') {
+								<button
+									type="button"
+									class="maker__choice maker__choice--color"
+									role="radio"
+									[attr.aria-checked]="isChosen(part, choice.value)"
+									[attr.aria-label]="(part.label | translate) + ' ' + (i + 1)"
+									[class.maker__choice--chosen]="isChosen(part, choice.value)"
+									[style.background-color]="choice.value"
+									(click)="choose(part, choice.value)"
+								></button>
+							} @else {
+								<button
+									type="button"
+									class="maker__choice maker__choice--avatar"
+									role="radio"
+									[attr.aria-checked]="isChosen(part, choice.value)"
+									[attr.aria-label]="(part.label | translate) + ' ' + (i + 1)"
+									[class.maker__choice--chosen]="isChosen(part, choice.value)"
+									(click)="choose(part, choice.value)"
+								>
+									<img [src]="choice.preview" alt="" />
+								</button>
+							}
+						}
+					</div>
+				</section>
+			}
+		</div>
+	</nb-card-body>
+
+	<nb-card-footer class="maker__footer">
+		<button type="button" nbButton size="small" outline status="basic" (click)="cancel()">
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button type="button" nbButton size="small" status="primary" [disabled]="saving" (click)="save()">
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

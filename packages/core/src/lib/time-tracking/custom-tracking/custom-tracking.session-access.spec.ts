@@ -23,6 +23,7 @@ import { CustomTrackingResolver } from './custom-tracking.resolver';
 import { CustomTrackingService } from './custom-tracking.service';
 
 const TENANT_ID = '6a1f0c2e-3b4d-4e5f-8a6b-7c8d9e0f1a41';
+const OTHER_TENANT_ID = '7b2a1d3f-4c5e-4f60-8b7c-8d9e0f1a2b52';
 const ORGANIZATION_ID = '1b2c3d4e-5f60-4718-9a2b-3c4d5e6f7a42';
 const OTHER_ORGANIZATION_ID = '2c3d4e5f-6071-4829-8b3c-4d5e6f7a8b43';
 const TEAM_ID = '3d4e5f60-7182-4930-9c4d-5e6f7a8b9c44';
@@ -163,6 +164,19 @@ const asEmployee = (employeeId: string): SignedInCaller => ({
 });
 const ADMIN: SignedInCaller = {
 	user: { id: 'admin-user', tenantId: TENANT_ID, employeeId: null, lastOrganizationId: ORGANIZATION_ID },
+	permissions: ADMIN_PERMISSIONS
+};
+/**
+ * An admin of another tenant, with this tenant's organization in their token (the JWT strategy would not leave it
+ * there; the reads must not rely on that): the tenant is read from the caller, so no row of this tenant answers.
+ */
+const OTHER_TENANT_ADMIN: Caller = {
+	user: {
+		id: 'other-tenant-admin',
+		tenantId: OTHER_TENANT_ID,
+		employeeId: null,
+		lastOrganizationId: ORGANIZATION_ID
+	},
 	permissions: ADMIN_PERMISSIONS
 };
 
@@ -349,6 +363,13 @@ describe('GET /timesheet/custom-tracking/session/:sessionId and /active — whos
 			expect(response.body[0].timeSlots[0].timeSlotId).toBe('slot-of-row-colleague');
 		});
 
+		it('answers an admin of another tenant nothing, even with this organization in their token', async () => {
+			caller = OTHER_TENANT_ADMIN;
+
+			expect((await read(SHARED_SESSION).expect(200)).body).toEqual([]);
+			expect((await read(COLLEAGUE_SESSION).expect(200)).body).toEqual([]);
+		});
+
 		it('answers nothing to a caller who may not act for other employees and has no employee record', async () => {
 			// As the time-slot reads decide it: tracked data is personal (GHSA-6qvm-3wg4-26w4), ALL_ORG_VIEW or not.
 			for (const permissions of [
@@ -448,6 +469,13 @@ describe('GET /timesheet/custom-tracking/session/:sessionId and /active — whos
 			]);
 		});
 
+		it('answers an admin of another tenant an empty list, even with this organization in their token', async () => {
+			caller = OTHER_TENANT_ADMIN;
+
+			expect((await read(COLLEAGUE_EMPLOYEE_ID).expect(200)).body).toEqual([]);
+			expect((await read(OWN_EMPLOYEE_ID).expect(200)).body).toEqual([]);
+		});
+
 		it('answers nothing to a caller who may not act for other employees and has no employee record', async () => {
 			for (const permissions of [
 				[PermissionsEnum.TIME_TRACKER],
@@ -517,6 +545,13 @@ describe('GET /timesheet/custom-tracking/session/:sessionId and /active — whos
 
 				await expect(resolver.activeTrackingSessions()).resolves.toEqual([]);
 			}
+		});
+
+		it('answers an admin of another tenant nothing, naming no employee or a session id', async () => {
+			caller = OTHER_TENANT_ADMIN;
+
+			await expect(resolver.activeTrackingSessions()).resolves.toEqual([]);
+			await expect(resolver.trackingSessionsBySessionId(SHARED_SESSION)).resolves.toEqual([]);
 		});
 
 		it('scopes both fields as the routes do', async () => {

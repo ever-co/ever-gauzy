@@ -1811,7 +1811,10 @@
 		"cros",
 		"slotless",
 		"enrolments",
-		"unstored"
+		"unstored",
+		"headwear",
+		"ffaf",
+		"aabbcc"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
