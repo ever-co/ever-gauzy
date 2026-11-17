@@ -44,8 +44,25 @@ export const INVOICE_LINE_OF_ANOTHER_INVOICE =
 export const INVOICE_PRECONDITION_MALFORMED =
 	'expectedUpdatedAt must be the updatedAt the invoice was read with, as an ISO 8601 date and time.';
 
+/** A date and time in the extended format that states no offset: `2026-11-16T10:20:30.456`, or with a space. */
+const ZONELESS_DATE_TIME = /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?$/;
+
 /**
- * The precondition a request states, as an instant; null when it states none.
+ * The text of a precondition as it is read: the date and time separator in upper case (RFC 3339 allows `t`, which the
+ * `DateTime` scalar passes on), and a date and time that states no offset read as UTC, the zone the API serves every
+ * `updatedAt` in, rather than in the server's own zone, which `new Date` would otherwise apply to it.
+ */
+function utcTextOf(value: string): string {
+	const text = value.replace(/^(\d{4}-\d{2}-\d{2})t/, '$1T');
+	if (!ZONELESS_DATE_TIME.test(text)) {
+		return text;
+	}
+	return `${text.replace(' ', 'T')}Z`;
+}
+
+/**
+ * The precondition a request states, as an instant; null when it states none. A date and time stated without an
+ * offset is read as UTC.
  *
  * @param value The `expectedUpdatedAt` of the body or of the query string, as it arrived.
  * @returns The instant, or null when the request states no precondition.
@@ -62,10 +79,14 @@ export function expectedUpdatedAtOf(value: unknown): Date | null {
 		}
 		return value;
 	}
-	if (typeof value !== 'string' || !isISO8601(value, { strict: true })) {
+	if (typeof value !== 'string') {
 		throw new BadRequestException(INVOICE_PRECONDITION_MALFORMED);
 	}
-	const instant = new Date(value);
+	const text = utcTextOf(value);
+	if (!isISO8601(text, { strict: true })) {
+		throw new BadRequestException(INVOICE_PRECONDITION_MALFORMED);
+	}
+	const instant = new Date(text);
 	if (Number.isNaN(instant.getTime())) {
 		throw new BadRequestException(INVOICE_PRECONDITION_MALFORMED);
 	}

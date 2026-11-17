@@ -65,6 +65,15 @@ describe('Invoice preconditions (#5243)', () => {
 			expect(expectedUpdatedAtOf(READ_AT)?.toISOString()).toBe(READ_AT);
 		});
 
+		it.each([
+			['no offset', '2026-11-16T10:20:30.456'],
+			['no offset, a space for the T', '2026-11-16 10:20:30.456'],
+			['a lower-case t, which RFC 3339 allows', '2026-11-16t10:20:30.456Z'],
+			['an offset of its own', '2026-11-16T12:20:30.456+02:00']
+		])('reads a date and time with %s as the UTC instant it names, whatever the server zone', (_label, value) => {
+			expect(expectedUpdatedAtOf(value)?.toISOString()).toBe(READ_AT);
+		});
+
 		it('takes a date as it is', () => {
 			const date = new Date(READ_AT);
 			expect(expectedUpdatedAtOf(date)).toBe(date);
@@ -264,6 +273,10 @@ describe('Invoice preconditions (#5243)', () => {
 describe('graphqlPreconditionOf (ever-co/ever-teams#5382)', () => {
 	it('reads the RFC 3339 text the DateTime scalar passes on as the instant it names', () => {
 		expect(graphqlPreconditionOf(READ_AT)).toEqual(new Date(READ_AT));
+	});
+
+	it('reads RFC 3339 text with a lower-case t, which the scalar passes on, as the same instant', () => {
+		expect(graphqlPreconditionOf('2026-11-16t10:20:30.456z')).toEqual(new Date(READ_AT));
 	});
 
 	it('reads milliseconds since the epoch, which the scalar also accepts, as the same instant', () => {
