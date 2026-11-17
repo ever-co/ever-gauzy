@@ -26,6 +26,7 @@ import {
 	rankOfRole
 } from './../../../time-tracking/timer/tracking-switch-rule';
 import { keepingTrackingAtWrite } from './../../tracking-kept-at-write';
+import type { JoinTrackingSwitchWrite } from './../../../time-tracking/timer/tracking-switch-as-seen';
 
 /** Whether the save turned the employee's time tracking off: it was on before, and the saved row has it off. */
 function turnsTrackingOff(before: IEmployee, saved: IEmployee): boolean {
@@ -257,8 +258,9 @@ export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateComm
 		}
 
 		// Written and awaited before the save: no restriction without its recorded acknowledgement.
-		if (newRestrictions.length > 0) {
-			await recordAgentRestrictionAcknowledgement(this._activityLogService, {
+		const recordsAcknowledgement = newRestrictions.length > 0;
+		const recordAcknowledgement = async (activityLogService: ActivityLogService) => {
+			await recordAgentRestrictionAcknowledgement(activityLogService, {
 				entity: BaseEntityEnum.Employee,
 				entityId: id,
 				entityName: employee?.user?.name || employee?.fullName || id,
@@ -266,12 +268,7 @@ export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateComm
 				tenantId: employee?.tenantId,
 				restricted: newRestrictions
 			});
-		}
-
-		// The check above allowed this caller only dates that leave the tracking as it was read. The subscriber derives
-		// the switch when the row is written, later: for this caller it leaves the switch as the row holds it then, so a
-		// switch an admin made in between stays. This save then never turns the tracking on or off itself.
-		const keepsTracking = !mayTurnTrackingOfEmployee(employee);
+		};
 
 		// The check above answers a screen that was stale already. A switch another admin saves after it is caught by the
 		// write: under the switch the screen showed, the employee is compared again under lock in the save's
@@ -279,12 +276,30 @@ export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateComm
 		const expected = input.expectedIsTrackingEnabled;
 		const saysWhatItSaw = expected !== undefined && expected !== null;
 
+		// Under the switch the screen showed, the acknowledgement is written in the save's transaction instead (below).
+		if (recordsAcknowledgement && !saysWhatItSaw) {
+			await recordAcknowledgement(this._activityLogService);
+		}
+
+		// The check above allowed this caller only dates that leave the tracking as it was read. The subscriber derives
+		// the switch when the row is written, later: for this caller it leaves the switch as the row holds it then, so a
+		// switch an admin made in between stays. This save then never turns the tracking on or off itself.
+		const keepsTracking = !mayTurnTrackingOfEmployee(employee);
+
 		let saved: IEmployee;
 		try {
 			// Use `create` to save the entity, ensuring ManyToMany relations are persisted
 			const save = (service: EmployeeService) => service.create({ ...changes, id });
+			// The acknowledgement goes after the comparison, in the save's transaction: a save refused there records none,
+			// and it is still written before the save.
+			const saveAsSeen = async (service: EmployeeService, join: JoinTrackingSwitchWrite) => {
+				if (recordsAcknowledgement) {
+					await recordAcknowledgement(join(this._activityLogService));
+				}
+				return await save(service);
+			};
 			const write = saysWhatItSaw
-				? () => this._employeeService.writeUnderTrackingSwitchAsSeen(id, expected, save)
+				? () => this._employeeService.writeUnderTrackingSwitchAsSeen(id, expected, saveAsSeen)
 				: () => save(this._employeeService);
 			saved = keepsTracking ? await keepingTrackingAtWrite(id, write) : await write();
 		} catch (error) {

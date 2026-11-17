@@ -20,6 +20,8 @@ describe('EmployeeUpdateHandler — the tracking switch the screen showed', () =
 	let publish: jest.Mock;
 	let create: jest.Mock;
 	let writeUnderTrackingSwitchAsSeen: jest.Mock;
+	let join: jest.Mock;
+	let activityLog: { create: jest.Mock };
 	let stored: Record<string, unknown>;
 	let handler: EmployeeUpdateHandler;
 
@@ -47,8 +49,13 @@ describe('EmployeeUpdateHandler — the tracking switch the screen showed', () =
 			writeUnderTrackingSwitchAsSeen: jest.fn()
 		};
 		writeUnderTrackingSwitchAsSeen = employeeService.writeUnderTrackingSwitchAsSeen;
-		writeUnderTrackingSwitchAsSeen.mockImplementation(async (_id, _expected, write) => write(employeeService));
-		handler = new EmployeeUpdateHandler(employeeService as never, {} as never, { publish } as never);
+		// The transaction's join: the services it is handed write in the save's transaction
+		join = jest.fn((other) => other);
+		writeUnderTrackingSwitchAsSeen.mockImplementation(async (_id, _expected, write) =>
+			write(employeeService, join)
+		);
+		activityLog = { create: jest.fn(async (entry) => entry) };
+		handler = new EmployeeUpdateHandler(employeeService as never, activityLog as never, { publish } as never);
 
 		jest.spyOn(RequestContext, 'currentUser').mockReturnValue({
 			id: 'admin',
@@ -111,6 +118,38 @@ describe('EmployeeUpdateHandler — the tracking switch the screen showed', () =
 		await save({ isTrackingEnabled: true, expectedIsTrackingEnabled: false } as IEmployeeUpdateInput);
 
 		expect(create).toHaveBeenCalledTimes(1);
+	});
+
+	describe('the acknowledgement of a new exit restriction', () => {
+		const restricting = { allowAgentAppExit: false, acknowledgeAgentExitLogoutRestriction: true };
+
+		it("is written in the save's transaction, after the comparison and before the save", async () => {
+			await save({ ...restricting, expectedIsTrackingEnabled: true } as IEmployeeUpdateInput);
+
+			expect(join).toHaveBeenCalledWith(activityLog);
+			expect(activityLog.create).toHaveBeenCalledTimes(1);
+			expect(activityLog.create.mock.invocationCallOrder[0]).toBeLessThan(create.mock.invocationCallOrder[0]);
+		});
+
+		it('is not written when the save is refused under the switch its screen showed', async () => {
+			writeUnderTrackingSwitchAsSeen.mockRejectedValue(
+				new ConflictException({ message: 'changed', code: TRACKING_SWITCH_CHANGED })
+			);
+
+			expect(
+				await refusalCodeOf({ ...restricting, expectedIsTrackingEnabled: true } as IEmployeeUpdateInput)
+			).toBe(TRACKING_SWITCH_CHANGED);
+			expect(activityLog.create).not.toHaveBeenCalled();
+			expect(create).not.toHaveBeenCalled();
+		});
+
+		it('is written before the save, as before, by a save that does not say what its screen showed', async () => {
+			await save(restricting as IEmployeeUpdateInput);
+
+			expect(writeUnderTrackingSwitchAsSeen).not.toHaveBeenCalled();
+			expect(activityLog.create).toHaveBeenCalledTimes(1);
+			expect(activityLog.create.mock.invocationCallOrder[0]).toBeLessThan(create.mock.invocationCallOrder[0]);
+		});
 	});
 
 	it('leaves a save that does not say what its screen showed as it was', async () => {

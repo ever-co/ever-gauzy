@@ -133,17 +133,52 @@ describe('A save under the tracking switch its screen showed, on TypeORM and on 
 		return { isTrackingEnabled: asBoolean(row.isTrackingEnabled), order: row.order };
 	};
 
-	/** `PUT /employee/:id` through its handler and the real employee service, on the ORM named. */
-	const updateEmployee = (ormType: Orm, body: Row, meanwhile?: () => Promise<void>) => {
+	/** The employee service, on the ORM named. */
+	const employeeService = (ormType: Orm) => {
 		const service = new loaded.EmployeeService(
 			new loaded.TypeOrmEmployeeRepository(dataSource.getRepository(loaded.Employee)),
 			new loaded.MikroOrmEmployeeRepository(orm.em, loaded.Employee)
 		);
 		Object.defineProperty(service, 'ormType', { get: () => ormType });
+		return service;
+	};
+
+	/** The activity log service, on the ORM named. */
+	const activityLogService = (ormType: Orm) => {
+		const service = new loaded.ActivityLogService(
+			new loaded.TypeOrmActivityLogRepository(dataSource.getRepository(loaded.ActivityLog)),
+			new loaded.MikroOrmActivityLogRepository(orm.em, loaded.ActivityLog),
+			{ publish: jest.fn() }
+		);
+		Object.defineProperty(service, 'ormType', { get: () => ormType });
+		return service;
+	};
+
+	/** `PUT /employee/:id` through its handler and the real employee service, on the ORM named. */
+	const updateEmployee = (ormType: Orm, body: Row, meanwhile?: () => Promise<void>) => {
+		const service = employeeService(ormType);
 		afterFirstRead(service, 'findOneByIdString', meanwhile);
-		const handler = new loaded.EmployeeUpdateHandler(service, {}, { publish });
+		const handler = new loaded.EmployeeUpdateHandler(service, activityLogService(ormType), { publish });
 		return handler.execute(new loaded.EmployeeUpdateCommand(EMPLOYEE, { ...scope, ...body }));
 	};
+
+	const activityCountOf = async (entityId: string): Promise<number> => {
+		const [row] = await dataSource.query(`SELECT COUNT(*) AS "count" FROM "activity_log" WHERE "entityId" = ?`, [
+			entityId
+		]);
+		return Number(row.count);
+	};
+
+	/** The error a write throws after it has written, to see what its transaction keeps. */
+	class RolledBack extends Error {}
+
+	/**
+	 * Whether a service a write is handed writes in the guard's transaction, read while the write runs. On TypeORM its
+	 * repository must be the transaction's: better-sqlite3 runs every TypeORM statement on one connection, so a rollback
+	 * alone would not tell. On MikroORM the rollback tells: a write outside the transaction would be committed.
+	 */
+	const writesInTransaction = (ormType: Orm, service: Row): boolean =>
+		ormType === 'mikro-orm' || service.typeOrmRepository?.queryRunner?.isTransactionActive === true;
 
 	const employeeRow = async (): Promise<{ isTrackingEnabled: boolean | null; short_description: string | null }> => {
 		const [row] = await dataSource.query(
@@ -192,6 +227,15 @@ describe('A save under the tracking switch its screen showed, on TypeORM and on 
 						.MikroOrmEmployeeRepository,
 					EmployeeUpdateCommand: require('../../employee/commands/employee.update.command')
 						.EmployeeUpdateCommand,
+					ActivityLog: entities.ActivityLog,
+					ActivityLogService: require('../../activity-log/activity-log.service').ActivityLogService,
+					TypeOrmActivityLogRepository:
+						require('../../activity-log/repository/type-orm-activity-log.repository')
+							.TypeOrmActivityLogRepository,
+					MikroOrmActivityLogRepository:
+						require('../../activity-log/repository/mikro-orm-activity-log.repository')
+							.MikroOrmActivityLogRepository,
+					writeUnderTrackingSwitchAsSeen: require('./tracking-switch-as-seen').writeUnderTrackingSwitchAsSeen,
 					EmployeeUpdateHandler: require('../../employee/commands/handlers/employee.update.handler')
 						.EmployeeUpdateHandler
 				};
@@ -338,6 +382,34 @@ describe('A save under the tracking switch its screen showed, on TypeORM and on 
 
 				expect(await membershipRow()).toEqual({ isTrackingEnabled: true, order: 3 });
 			});
+
+			it("makes the write in the guard's transaction: a write that fails after it has written leaves nothing", async () => {
+				await storeMembership(true);
+				const service = teamService(ormType);
+				let inTransactionWhenWritten = false;
+
+				const refusal = await refusalOf(
+					loaded.writeUnderTrackingSwitchAsSeen(
+						service,
+						{
+							typeOrm: service.typeOrmOrganizationTeamEmployeeRepository,
+							mikroOrm: service.mikroOrmOrganizationTeamEmployeeRepository
+						},
+						{ id: MEMBERSHIP, ...scope, organizationTeamId: TEAM },
+						(isTrackingEnabled: boolean | null) => isTrackingEnabled !== false,
+						true,
+						async (inTransaction: Row) => {
+							inTransactionWhenWritten = writesInTransaction(ormType, inTransaction);
+							await inTransaction.update(MEMBERSHIP, { ...scope, organizationTeamId: TEAM, order: 7 });
+							throw new RolledBack();
+						}
+					)
+				);
+
+				expect(refusal).toBeInstanceOf(RolledBack);
+				expect(inTransactionWhenWritten).toBe(true);
+				expect(await membershipRow()).toEqual({ isTrackingEnabled: true, order: 1 });
+			});
 		});
 
 		describe('PUT /employee/:id', () => {
@@ -402,6 +474,60 @@ describe('A save under the tracking switch its screen showed, on TypeORM and on 
 				);
 
 				expect(await employeeRow()).toEqual({ isTrackingEnabled: true, short_description: 'edited' });
+			});
+
+			it('records no exit restriction acknowledgement for a save refused under the switch its screen showed', async () => {
+				await storeEmployee(true);
+				const before = await activityCountOf(EMPLOYEE);
+
+				const refusal = await refusalOf(
+					updateEmployee(
+						ormType,
+						{
+							allowAgentAppExit: false,
+							acknowledgeAgentExitLogoutRestriction: true,
+							expectedIsTrackingEnabled: true
+						},
+						switchedMeanwhile('employee', EMPLOYEE, false)
+					)
+				);
+
+				expectTrackingSwitchChanged(refusal);
+				expect(await activityCountOf(EMPLOYEE)).toBe(before);
+			});
+
+			it("makes the save and the acknowledgement in the guard's transaction: a write that fails after them leaves neither", async () => {
+				await storeEmployee(true);
+				const before = await activityCountOf(EMPLOYEE);
+				const service = employeeService(ormType);
+				let inTransactionWhenWritten = false;
+
+				const refusal = await refusalOf(
+					service.writeUnderTrackingSwitchAsSeen(
+						EMPLOYEE,
+						true,
+						async (inTransaction: Row, join: (other: object) => Row) => {
+							const joined = join(activityLogService(ormType));
+							inTransactionWhenWritten =
+								writesInTransaction(ormType, inTransaction) && writesInTransaction(ormType, joined);
+							await joined.create({
+								entity: 'Employee',
+								entityId: EMPLOYEE,
+								action: 'Updated',
+								actorType: 'User',
+								description: 'rolled back',
+								...scope
+							});
+							await inTransaction.create({ id: EMPLOYEE, ...scope, short_description: 'written' });
+							throw new RolledBack();
+						}
+					)
+				);
+
+				expect(refusal).toBeInstanceOf(RolledBack);
+				expect(inTransactionWhenWritten).toBe(true);
+				expect(await employeeRow()).toEqual({ isTrackingEnabled: true, short_description: 'as stored' });
+				expect(await activityCountOf(EMPLOYEE)).toBe(before);
 			});
 		});
 	});

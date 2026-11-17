@@ -64,7 +64,10 @@ import { assertCurrentUserBelongsToOrganization } from '../user-organization/ass
 import { callerEmployeeId, changesPayRate, findStoredPayRates, mayReadPayRateOf } from './pay-rate';
 import { isSameId } from './own-rates';
 import { keepsTimeLogRates, MemberRatesSent, repriceMemberTime } from '../time-tracking/time-log/time-log-repricing';
-import { writeUnderTrackingSwitchAsSeen } from '../time-tracking/timer/tracking-switch-as-seen';
+import {
+	JoinTrackingSwitchWrite,
+	writeUnderTrackingSwitchAsSeen
+} from '../time-tracking/timer/tracking-switch-as-seen';
 
 /**
  * Columns the employees table can be sorted by. Any other `order` key from the query string is ignored.
@@ -112,13 +115,14 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	 * @param id The employee.
 	 * @param expected The switch the caller's screen showed, if it says.
 	 * @param write The write, made on the service it is given: on TypeORM, a view of this one in the transaction.
+	 * `join` puts another service's writes in the same transaction.
 	 * @returns What the write answered.
 	 * @throws ConflictException With the code TRACKING_SWITCH_CHANGED when the stored switch differs; nothing is written.
 	 */
 	public async writeUnderTrackingSwitchAsSeen<R>(
 		id: ID,
 		expected: boolean | null | undefined,
-		write: (service: EmployeeService) => Promise<R>
+		write: (service: EmployeeService, join: JoinTrackingSwitchWrite) => Promise<R>
 	): Promise<R> {
 		return await writeUnderTrackingSwitchAsSeen(
 			this,

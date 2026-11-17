@@ -32,6 +32,7 @@ describe('writeUnderTrackingSwitchAsSeen', () => {
 	let typeOrmFindOne: jest.Mock;
 	let typeOrmTransaction: jest.Mock;
 	let transactionRepository: object;
+	let getRepository: jest.Mock;
 	let mikroOrmFindOne: jest.Mock;
 	let mikroOrmTransactional: jest.Mock;
 
@@ -40,7 +41,8 @@ describe('writeUnderTrackingSwitchAsSeen', () => {
 	const repositories = () => {
 		transactionRepository = { inTransaction: true };
 		typeOrmFindOne = jest.fn(async () => stored);
-		const manager = { findOne: typeOrmFindOne, getRepository: jest.fn(() => transactionRepository) };
+		getRepository = jest.fn(() => transactionRepository);
+		const manager = { findOne: typeOrmFindOne, getRepository };
 		typeOrmTransaction = jest.fn(async (work: (manager: unknown) => unknown) => work(manager));
 		mikroOrmFindOne = jest.fn(async () => stored);
 		mikroOrmTransactional = jest.fn(async (work: (em: unknown) => unknown) => work({ findOne: mikroOrmFindOne }));
@@ -83,6 +85,21 @@ describe('writeUnderTrackingSwitchAsSeen', () => {
 		expect(mikroOrmTransactional).not.toHaveBeenCalled();
 	});
 
+	it('joins another service as it is when there is no transaction', async () => {
+		const other = { name: 'activity log' };
+
+		const joined = await writeUnderTrackingSwitchAsSeen(
+			serviceOn('typeorm'),
+			repositories(),
+			row,
+			isStoredOn,
+			undefined,
+			async (_service, join) => join(other)
+		);
+
+		expect(joined).toBe(other);
+	});
+
 	describe('on TypeORM', () => {
 		it('reads the row for update in the transaction, in the scope stated, and writes on its repository', async () => {
 			const service = serviceOn('typeorm');
@@ -106,6 +123,38 @@ describe('writeUnderTrackingSwitchAsSeen', () => {
 			expect(inTransaction).not.toBe(service);
 			expect(inTransaction.typeOrmRepository).toBe(transactionRepository);
 			expect(inTransaction.name).toBe('service');
+		});
+
+		it("joins another service to the transaction: a view of it on the transaction's repository for its entity", async () => {
+			class ActivityLog {}
+			const other = { name: 'activity log', typeOrmRepository: { target: ActivityLog } };
+
+			const joined = await writeUnderTrackingSwitchAsSeen(
+				serviceOn('typeorm'),
+				repositories(),
+				row,
+				isStoredOn,
+				true,
+				async (_service, join) => join(other)
+			);
+
+			expect(getRepository).toHaveBeenLastCalledWith(ActivityLog);
+			expect(joined).not.toBe(other);
+			expect(joined.typeOrmRepository).toBe(transactionRepository);
+			expect(joined.name).toBe('activity log');
+		});
+
+		it('refuses to join a service without a TypeORM repository, whose writes could not be in the transaction', async () => {
+			const refusal = await writeUnderTrackingSwitchAsSeen(
+				serviceOn('typeorm'),
+				repositories(),
+				row,
+				isStoredOn,
+				true,
+				async (_service, join) => join({ name: 'no repository' })
+			).catch((error: Error) => error);
+
+			expect(refusal).toBeInstanceOf(Error);
 		});
 
 		it('locks on MySQL as well, and takes no lock on SQLite, which TypeORM refuses there', async () => {
@@ -179,6 +228,21 @@ describe('writeUnderTrackingSwitchAsSeen', () => {
 			expect(options).toMatchObject({ lockMode: LockMode.PESSIMISTIC_WRITE, disableIdentityMap: true });
 			// The service's repositories follow the transaction on their own
 			expect(writtenOn).toBe(service);
+		});
+
+		it('joins another service as it is: its repositories follow the transaction on their own', async () => {
+			const other = { name: 'activity log' };
+
+			const joined = await writeUnderTrackingSwitchAsSeen(
+				serviceOn('mikro-orm'),
+				repositories(),
+				row,
+				isStoredOn,
+				true,
+				async (_service, join) => join(other)
+			);
+
+			expect(joined).toBe(other);
 		});
 
 		it('takes no lock on SQLite', async () => {
