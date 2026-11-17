@@ -7254,7 +7254,8 @@
 			"HUBSTAFF": "HubStaff",
 			"BROWSER_EXTENSION": "Browser Extension",
 			"TEAMS": "Teams",
-			"CLOC": "Cloc"
+			"CLOC": "Cloc",
+			"EMBED": "Embedded Timer"
 		},
 		"LAST_WORKED": "Last worked:",
 		"TIME_ZONE": "Time Zone",
