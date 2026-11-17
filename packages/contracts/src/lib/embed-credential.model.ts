@@ -27,12 +27,27 @@ export interface IEmbedTokenExchangeInput {
 	credential: string;
 	employeeId?: ID;
 	email?: string;
+	/**
+	 * The origin of the page the widget runs in (`https://app.example.com`): one of the organization's allowed origins.
+	 * The token is bound to it.
+	 */
+	origin?: string;
 }
 
 export interface IEmbedTokenExchangeResponse {
 	token: string;
 	/** ISO date; the token answers 401 after it, and the host asks for a new one. */
 	expiresAt: string;
+}
+
+/** A site allowed to embed the organization's timer: scheme, host and port, normalized (`https://app.example.com`). */
+export interface IEmbedAllowedOrigin extends IBasePerTenantAndOrganizationEntityModel {
+	origin: string;
+}
+
+export interface IEmbedAllowedOriginCreateInput {
+	origin: string;
+	organizationId: ID;
 }
 
 /** What an embed token may do, besides reading the signed-in user. */
