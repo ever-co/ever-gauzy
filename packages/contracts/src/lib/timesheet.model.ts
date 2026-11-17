@@ -514,6 +514,29 @@ export interface IManualTimeInput extends IBasePerTenantAndOrganizationEntityMod
 	isBillable?: boolean;
 }
 
+/**
+ * A split of one stopped time log at a moment of its range (`POST /timesheet/time-log/:id/split`): the log ends at
+ * `splitAt`, and a second log runs from `splitAt` to its old end. The other fields name what the second part changes;
+ * every field left out is copied from the log.
+ */
+export interface ITimeLogSplitInput {
+	/** Where the log is split. On a log of tracked time, a slot boundary (every ten minutes). */
+	splitAt: Date;
+	/** The second part's task, project and notes, when they differ from the log's. */
+	taskId?: ID | null;
+	projectId?: ID | null;
+	description?: string | null;
+	isBillable?: boolean;
+	/** Why the time changes, kept in both parts' history; required where the organization asks for one. */
+	reason?: string | null;
+}
+
+/** The two time logs a split leaves: the log, now ending at the split, and the part after it. */
+export interface ITimeLogSplitResult {
+	first: ITimeLog;
+	second: ITimeLog;
+}
+
 export interface IGetTimeLogInput extends ITimeLogFilters, IBaseRelationsEntityModel {
 	onlyMe?: boolean;
 	timesheetId?: ID;

@@ -13,7 +13,15 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult, FindOneOptions, UpdateResult } from 'typeorm';
-import { IActivityLog, ITimeLog, PermissionsEnum, ID, IManualTimeInput, IPagination } from '@gauzy/contracts';
+import {
+	IActivityLog,
+	ITimeLog,
+	ITimeLogSplitResult,
+	PermissionsEnum,
+	ID,
+	IManualTimeInput,
+	IPagination
+} from '@gauzy/contracts';
 import {
 	BulkExecutor,
 	BulkOperation,
@@ -36,7 +44,7 @@ import {
 	EmployeeTrackedDataGuard
 } from './../../shared/guards';
 import { UUIDValidationPipe, UseValidationPipe } from './../../shared/pipes';
-import { CreateManualTimeLogDTO, DeleteTimeLogDTO, UpdateManualTimeLogDTO } from './dto';
+import { CreateManualTimeLogDTO, DeleteTimeLogDTO, SplitTimeLogDTO, UpdateManualTimeLogDTO } from './dto';
 import {
 	GetTimeLogConflictQueryDTO,
 	TimeLogBudgetQueryDTO,
@@ -475,6 +483,39 @@ export class TimeLogController {
 		entity: UpdateManualTimeLogDTO
 	): Promise<ITimeLog> {
 		return await this._timeLogService.updateManualTime(id, entity);
+	}
+
+	/**
+	 * Splits a stopped time log in two at a moment of its range: the log ends there, and the rest becomes a second log
+	 * that may take another task, project, notes or billable state. Each time slot goes, with its screenshots and
+	 * activity, to the part holding its time. Under the update's permission and organization policy.
+	 *
+	 * @param id The time log to split.
+	 * @param entity Where to split it, and what its second part changes.
+	 * @returns Both parts.
+	 */
+	@ApiOperation({ summary: 'Split a time log in two at a moment of its range' })
+	@ApiResponse({ status: HttpStatus.CREATED, description: 'Both parts: the log, ending at the split, and the rest' })
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'TIME_LOG_SPLIT_OUTSIDE, TIME_LOG_SPLIT_TOO_SHORT, TIME_LOG_SPLIT_OFF_BOUNDARY (with the nearest boundaries `before` and `after`), TIME_LOG_SPLIT_REASON_REQUIRED, TIME_LOG_SPLIT_REASON_TOO_LONG, TIME_LOG_SPLIT_BREAK_FIELDS'
+	})
+	@ApiResponse({
+		status: HttpStatus.FORBIDDEN,
+		description:
+			'An edit the caller may not make, or TIME_LOG_SPLIT_RUNNING, TIME_LOG_SPLIT_APPROVED, TIME_LOG_SPLIT_INVOICED'
+	})
+	@ApiResponse({ status: HttpStatus.CONFLICT, description: 'TIME_LOG_SPLIT_CHANGED: the entry changed meanwhile' })
+	@Post(':id/split')
+	@UseGuards(OrganizationPermissionGuard)
+	@Permissions(PermissionsEnum.ALLOW_MODIFY_TIME)
+	@OrganizationPolicyTarget(TimeLog)
+	async splitTimeLog(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Body(new ValidationPipe({ transform: true, whitelist: true })) entity: SplitTimeLogDTO
+	): Promise<ITimeLogSplitResult> {
+		return await this._timeLogService.splitTimeLog(id, entity);
 	}
 
 	/**
