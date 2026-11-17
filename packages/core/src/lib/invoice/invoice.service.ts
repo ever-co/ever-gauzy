@@ -703,6 +703,7 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 				);
 				if (!handed) throw new Error('the address is of a domain the platform never emails');
 
+				await this.confirmDelivery(estimateEmail.id, invoiceNumber);
 				return { sent: true };
 			} catch (error) {
 				console.log(`Error while sending estimate email ${invoiceNumber}: %s`, error?.message);
@@ -730,6 +731,22 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 		} catch (error) {
 			console.log(
 				`Invoice ${invoiceNumber} was not emailed, and its email row still names it, so its payment reminders may go to that address: %s`,
+				error?.message
+			);
+		}
+	}
+
+	/**
+	 * Records on the email's row that the mail transport took it: the row was written before the send, and records an
+	 * attempt until then (a scheduled invoice's recovery reads it, `InvoiceScheduleRunService`). The email went, so a
+	 * failure is logged: the row then stays an attempt, and a recovery may send that invoice once more.
+	 */
+	private async confirmDelivery(estimateEmailId: ID, invoiceNumber: number): Promise<void> {
+		try {
+			await this.estimateEmailService.confirmDelivery(estimateEmailId);
+		} catch (error) {
+			console.log(
+				`Invoice ${invoiceNumber} was emailed, and its email row does not say so, so a recovery may email it again: %s`,
 				error?.message
 			);
 		}

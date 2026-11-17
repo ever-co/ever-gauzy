@@ -96,6 +96,16 @@ export class EstimateEmailService extends TenantAwareCrudService<EstimateEmail> 
 	}
 
 	/**
+	 * Records that the mail transport took the email of this row: until then the row, written before the email was
+	 * sent, records only an attempt. Whoever asks whether an invoice's email went reads this, never the row alone.
+	 *
+	 * @param id - The email's row, as `createEstimateEmail` answered it.
+	 */
+	async confirmDelivery(id: ID): Promise<void> {
+		await this.update(id, { sentAt: new Date() });
+	}
+
+	/**
 	 * Validate estimate email
 	 *
 	 * @param params

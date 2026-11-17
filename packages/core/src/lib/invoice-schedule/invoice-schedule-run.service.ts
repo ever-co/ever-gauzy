@@ -73,7 +73,10 @@ export interface IInvoiceScheduleSweepReport {
 	sent: number;
 	/** The periods without billable time to bill. */
 	empty: number;
-	/** The runs that made no invoice, or could not send it; the next sweep tries a failure again while it is due. */
+	/**
+	 * The runs that made no invoice, or made one they could not send. The next sweep takes again a run that made no
+	 * invoice, while its period is due; an invoice that could not be sent stays a draft, and its run says why.
+	 */
 	failed: number;
 }
 
@@ -463,13 +466,23 @@ export class InvoiceScheduleRunService {
 	}
 
 	/**
-	 * Sends the draft a stopped process saved and did not send, unless the invoice's own email went already (its
-	 * delivery is recorded): then it is only marked Sent, and the client gets no second email.
+	 * Sends the draft a stopped process saved and did not send, unless the invoice's own email went already: then it is
+	 * only marked Sent, and the client gets no second email.
+	 *
+	 * The email went when one of the invoice's email rows says the mail transport took it (`sentAt`). A row that names
+	 * the invoice without saying so records an attempt, not a delivery: its row is written before the PDF is rendered
+	 * and the mail is handed over, so a process stopped in between leaves it behind with nothing sent, and the draft is
+	 * sent again. A process stopped after the transport took the email and before it wrote `sentAt` leaves the same
+	 * row, so its client may get the invoice twice: a second email is the lesser harm next to an invoice marked Sent
+	 * that never went.
 	 */
 	private async sendSaved(schedule: InvoiceSchedule, saved: Invoice, author: IAuthenticatedUser): Promise<IRunEnd> {
-		const delivered = await this.dataSource.getRepository(EstimateEmail).count({
-			where: { invoiceId: saved.id, tenantId: schedule.tenantId }
-		});
+		const delivered = await this.dataSource
+			.getRepository(EstimateEmail)
+			.createQueryBuilder('delivery')
+			.where({ invoiceId: saved.id, tenantId: schedule.tenantId })
+			.andWhere('delivery.sentAt IS NOT NULL')
+			.getCount();
 		if (delivered > 0) {
 			await this.markSent(saved);
 			return { status: InvoiceScheduleRunStatusEnum.SENT, invoiceId: saved.id };

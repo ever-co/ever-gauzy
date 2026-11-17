@@ -13,6 +13,11 @@ export interface IEstimateEmail
 	invoiceId?: ID;
 	/** The language the invoice was emailed in, named with `invoiceId`: its reminders are written in it. */
 	languageCode?: string;
+	/**
+	 * When the mail transport took this email; unset while it has not. The row is written before the email is sent,
+	 * so a row without it records an attempt, not a delivery.
+	 */
+	sentAt?: Date;
 }
 
 export interface IEstimateEmailFindInput
