@@ -20,7 +20,6 @@ import {
 	mentionedEmployeeIds,
 	mentionsMe,
 	mentionQueryAt,
-	mergeKeepingUnchanged,
 	mergeMessages,
 	nameHue,
 	namesToTokens,
@@ -31,6 +30,7 @@ import {
 	plainBody,
 	rankMentions,
 	renderBodyHtml,
+	showNewestPage,
 	sortConversations,
 	splitMentions,
 	suggestMentions,
@@ -399,26 +399,37 @@ describe('messages', () => {
 		expect(merged.map((item) => `${item.id}:${item.body}`)).toEqual(['a:a', 'b:edited']);
 	});
 
-	it('keeps the objects a page read again did not change, and the list when nothing changed', () => {
+	describe('showNewestPage', () => {
 		const a = message('a');
 		const b = message('b', { createdAt: new Date('2026-11-07T10:01:00Z') });
-		const shown = [a, b];
-
-		// The same page again, as new objects: the list shown stays as it is.
-		expect(mergeKeepingUnchanged(shown, [{ ...a }, { ...b }])).toBe(shown);
-
-		// One edited: only that one is new.
-		const edited = { ...b, body: 'edited' };
-		const merged = mergeKeepingUnchanged(shown, [{ ...a }, edited]);
-		expect(merged).not.toBe(shown);
-		expect(merged[0]).toBe(a);
-		expect(merged[1]).toBe(edited);
-
-		// A new one appended: the shown ones keep their objects.
 		const c = message('c', { createdAt: new Date('2026-11-07T10:02:00Z') });
-		const grown = mergeKeepingUnchanged(shown, [{ ...b }, c]);
-		expect(grown).toEqual([a, b, c]);
-		expect(grown[1]).toBe(b);
+
+		it('keeps the list and its objects when the page read again changed nothing', () => {
+			const shown = [a, b];
+			expect(showNewestPage(shown, [{ ...a }, { ...b }])).toBe(shown);
+		});
+
+		it('takes the state of a message the page changed, keeping the objects of the others', () => {
+			const edited = { ...b, body: 'edited' };
+			const next = showNewestPage([a, b], [{ ...a }, edited]);
+			expect(next[0]).toBe(a);
+			expect(next[1]).toBe(edited);
+		});
+
+		it('drops what the page no longer holds: a message deleted, or one older than the page now reaches', () => {
+			// `a` fell out of the newest page as `c` came; the shown `b` keeps its object.
+			const next = showNewestPage([a, b], [{ ...b }, c]);
+			expect(next).toEqual([b, c]);
+			expect(next[0]).toBe(b);
+			// `b` was deleted (the page holds `a` and `c` around it).
+			expect(showNewestPage([a, b, c], [{ ...a }, { ...c }])).toEqual([a, c]);
+			// Nothing left in the conversation.
+			expect(showNewestPage([a, b], [])).toEqual([]);
+		});
+
+		it('keeps a message newer than the whole page (one sent while it was being read)', () => {
+			expect(showNewestPage([a, b, c], [{ ...a }, { ...b }])).toEqual([a, b, c]);
+		});
 	});
 });
 
