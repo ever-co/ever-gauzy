@@ -161,13 +161,15 @@ export function isPlaceholderImageUrl(value: unknown): value is string {
 	if (typeof value !== 'string') {
 		return false;
 	}
-	if (isDummyImageUrl(value)) {
+	const url = value.trim();
+	// The test `isDummyImageUrl` makes, without its type guard: the guard would leave `url` as `never` past a false answer.
+	if (DUMMY_IMAGE_HOST.test(url)) {
 		return true;
 	}
 	let pathname: string;
 	try {
 		// A base, so a URL stored without the API's host (an empty API_BASE_URL) parses as well.
-		pathname = new URL(value.trim(), 'http://localhost').pathname;
+		pathname = new URL(url, 'http://localhost').pathname;
 	} catch {
 		return false;
 	}
