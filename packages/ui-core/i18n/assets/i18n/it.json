@@ -6642,7 +6642,8 @@
 			"HUBSTAFF": "HubStaff",
 			"BROWSER_EXTENSION": "Estensione del browser",
 			"TEAMS": "Squadre",
-			"CLOC": "Cloc"
+			"CLOC": "Cloc",
+			"EMBED": "Timer incorporato"
 		},
 		"LAST_WORKED": "Ultimo lavoro:",
 		"TIME_ZONE": "Time Zone",

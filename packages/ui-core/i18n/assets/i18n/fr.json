@@ -6640,7 +6640,8 @@
 			"HUBSTAFF": "HubStaff",
 			"BROWSER_EXTENSION": "Extension de navigateur",
 			"TEAMS": "Équipes",
-			"CLOC": "Cloc"
+			"CLOC": "Cloc",
+			"EMBED": "Minuteur intégré"
 		},
 		"LAST_WORKED": "Dernière fois travaillé :",
 		"TIME_ZONE": "Time Zone",

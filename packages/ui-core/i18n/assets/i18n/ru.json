@@ -6663,7 +6663,8 @@
 			"HUBSTAFF": "HubStaff",
 			"BROWSER_EXTENSION": "Browser Extension",
 			"TEAMS": "Команды",
-			"CLOC": "Клок"
+			"CLOC": "Клок",
+			"EMBED": "Встроенный таймер"
 		},
 		"LAST_WORKED": "Последнее сработало:",
 		"TIME_ZONE": "Часовой пояс",
