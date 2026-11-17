@@ -94,12 +94,15 @@ function checkedVersionOf(checked: ITimeLog): Date | null {
  * - the log is still at that version: every write of a log moves its `updatedAt`, an invoice line that bills it
  *   included (ever-co/ever-teams#5382), and that write locks the same row, so a billing either landed before this read
  *   and is seen, or waits until the split is whole;
- * - its timesheet is neither approved nor billed: read under a lock its status change takes too, so an approval either
- *   landed before and is seen, or waits until the split is whole.
+ * - its timesheet is neither approved nor billed: read under a shared lock, which the approval's own locking read waits
+ *   for, so an approval that landed before is seen, and one that comes after waits until the split is whole. The read
+ *   never waits for that row (`SKIP LOCKED`): the cut already holds the log's lock, and a move of a task's time to
+ *   another project locks the timesheets before the logs (`TaskService`), so a wait here could close a lock cycle with
+ *   it. A timesheet another transaction holds for a change (an approval in flight) refuses the cut instead.
  *
  * @param version - The `updatedAt` the route read the log at.
  * @returns The check.
- * @throws TimeLogChangedSinceSplitCheckError when either no longer holds.
+ * @throws TimeLogChangedSinceSplitCheckError when either no longer holds, or the timesheet is being changed.
  */
 function splitStillAsChecked(version: Date): TimeLogUpdateOptions['assertBeforeWrite'] {
 	return async (manager: EntityManager, current: ITimeLog): Promise<void> => {
@@ -109,13 +112,17 @@ function splitStillAsChecked(version: Date): TimeLogUpdateOptions['assertBeforeW
 		if (!current.timesheetId) {
 			return;
 		}
+		const locksRows = locksRowsForChange();
 		const timesheet = await manager.findOne(Timesheet, {
 			where: { id: current.timesheetId, tenantId: current.tenantId },
 			select: { id: true, status: true, isBilled: true },
 			loadEagerRelations: false,
-			// A shared lock: the approval's own read locks the row for its change, and waits for this one
-			...(locksRowsForChange() ? { lock: { mode: 'pessimistic_read' as const } } : {})
+			...(locksRows ? { lock: { mode: 'pessimistic_read' as const, onLocked: 'skip_locked' as const } } : {})
 		});
+		// The log's key keeps its timesheet while the log is locked: a row the read skipped is held for a change
+		if (locksRows && !timesheet) {
+			throw new TimeLogChangedSinceSplitCheckError(current.id, 'its timesheet is being changed');
+		}
 		if (timesheet?.status === TimesheetStatus.APPROVED) {
 			throw new TimeLogChangedSinceSplitCheckError(current.id, 'its timesheet was approved');
 		}
@@ -758,7 +765,8 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	 * Takes back a split whose cut was refused under the log's lock (see `splitStillAsChecked`): the cut wrote nothing,
 	 * so the log is as the write that came first left it, and stays so (its range, its slots, its timesheet). Only the
 	 * second part is deleted, with its join rows, and that is recorded in the history when the split recorded its
-	 * creation there.
+	 * creation there. A recalculation that ran while the second part stood counted its time as well, so its timesheet
+	 * and its employee's worked hours are counted again without it.
 	 *
 	 * @param log - The time log as it was read before the split.
 	 * @param secondPart - The second part.
@@ -771,6 +779,12 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	): Promise<void> {
 		await this.typeOrmTimeLogRepository.delete({ id: secondPart.id });
 		await this.recordUndoneSplit(log, null, secondPart, history);
+		if (secondPart.timesheetId) {
+			await this._commandBus.execute(new TimesheetRecalculateCommand(secondPart.timesheetId));
+		}
+		if (secondPart.employeeId) {
+			await this._commandBus.execute(new UpdateEmployeeTotalWorkedHoursCommand(secondPart.employeeId));
+		}
 	}
 
 	/**
