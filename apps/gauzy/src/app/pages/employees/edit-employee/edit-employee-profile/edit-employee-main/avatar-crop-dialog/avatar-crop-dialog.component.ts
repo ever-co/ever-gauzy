@@ -3,6 +3,7 @@ import {
 	ChangeDetectorRef,
 	Component,
 	ElementRef,
+	inject,
 	Input,
 	OnDestroy,
 	OnInit,
@@ -35,10 +36,13 @@ const KEY_STEP = 10;
 	selector: 'ga-avatar-crop-dialog',
 	templateUrl: './avatar-crop-dialog.component.html',
 	styleUrls: ['./avatar-crop-dialog.component.scss'],
-	changeDetection: ChangeDetectionStrategy.Eager,
+	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [NbCardModule, NbButtonModule, NbIconModule, TranslatePipe]
 })
 export class AvatarCropDialogComponent implements OnInit, OnDestroy {
+	private readonly dialogRef = inject<NbDialogRef<AvatarCropDialogComponent>>(NbDialogRef);
+	private readonly cdr = inject(ChangeDetectorRef);
+
 	/** The picked image file. */
 	@Input() file: File;
 
@@ -62,11 +66,6 @@ export class AvatarCropDialogComponent implements OnInit, OnDestroy {
 	private baseScale = 1;
 	/** The pointer moving the photo, while one is. */
 	drag: { pointerId: number; startX: number; startY: number; originX: number; originY: number } | null = null;
-
-	constructor(
-		private readonly dialogRef: NbDialogRef<AvatarCropDialogComponent>,
-		private readonly cdr: ChangeDetectorRef
-	) {}
 
 	get scale(): number {
 		return this.baseScale * this.zoom;
@@ -184,7 +183,8 @@ export class AvatarCropDialogComponent implements OnInit, OnDestroy {
 
 	/**
 	 * Draws the square around the circle into a {@link AVATAR_OUTPUT_SIZE} canvas and closes with it as a JPEG.
-	 * A transparent photo is laid on white, since JPEG has no transparency.
+	 * A transparent photo is laid on white, since JPEG has no transparency. Closes with an error when the photo
+	 * cannot be drawn, so the page waiting on the dialog always hears back.
 	 */
 	async save(): Promise<void> {
 		if (!this.ready || this.saving) return;
@@ -193,6 +193,9 @@ export class AvatarCropDialogComponent implements OnInit, OnDestroy {
 			const canvas = document.createElement('canvas');
 			canvas.width = canvas.height = AVATAR_OUTPUT_SIZE;
 			const context = canvas.getContext('2d');
+			if (!context) {
+				throw new Error('The photo could not be drawn.');
+			}
 			context.fillStyle = '#ffffff';
 			context.fillRect(0, 0, AVATAR_OUTPUT_SIZE, AVATAR_OUTPUT_SIZE);
 			context.imageSmoothingQuality = 'high';
@@ -219,6 +222,8 @@ export class AvatarCropDialogComponent implements OnInit, OnDestroy {
 			}
 			const name = (this.file.name.replace(/\.[^.]+$/, '') || 'avatar') + '.jpg';
 			this.dialogRef.close({ file: new File([blob], name, { type: 'image/jpeg' }) });
+		} catch {
+			this.dialogRef.close({ error: 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.PHOTO.UNSUPPORTED' });
 		} finally {
 			this.saving = false;
 		}

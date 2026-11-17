@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { NbButtonModule, NbCardModule, NbDialogRef, NbIconModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import {
@@ -86,10 +86,12 @@ interface AvatarChoice {
 	selector: 'ga-avatar-maker-dialog',
 	templateUrl: './avatar-maker-dialog.component.html',
 	styleUrls: ['./avatar-maker-dialog.component.scss'],
-	changeDetection: ChangeDetectionStrategy.Eager,
+	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [NbCardModule, NbButtonModule, NbIconModule, TranslatePipe]
 })
 export class AvatarMakerDialogComponent {
+	private readonly dialogRef = inject<NbDialogRef<AvatarMakerDialogComponent>>(NbDialogRef);
+
 	readonly parts = PARTS;
 
 	options: AvatarOptions = { ...AVATAR_PRESET_GROUPS[0].presets[0] };
@@ -111,7 +113,7 @@ export class AvatarMakerDialogComponent {
 	/** The choices of each part, keyed by the part; a style's small avatars follow the rest of the options. */
 	choices: Record<string, AvatarChoice[]> = {};
 
-	constructor(private readonly dialogRef: NbDialogRef<AvatarMakerDialogComponent>) {
+	constructor() {
 		this.refresh();
 	}
 
@@ -148,8 +150,10 @@ export class AvatarMakerDialogComponent {
 	async save(): Promise<void> {
 		if (this.saving) return;
 		this.saving = true;
-		const url = URL.createObjectURL(new Blob([renderAvatarSvg(this.options)], { type: 'image/svg+xml' }));
+		// Made inside the `try`, so a failure to draw still closes the dialog and re-enables Save.
+		let url: string | undefined;
 		try {
+			url = URL.createObjectURL(new Blob([renderAvatarSvg(this.options)], { type: 'image/svg+xml' }));
 			const image = new Image();
 			await new Promise<void>((resolve, reject) => {
 				image.onload = () => resolve();
@@ -158,7 +162,11 @@ export class AvatarMakerDialogComponent {
 			});
 			const canvas = document.createElement('canvas');
 			canvas.width = canvas.height = AVATAR_PNG_SIZE;
-			canvas.getContext('2d').drawImage(image, 0, 0, AVATAR_PNG_SIZE, AVATAR_PNG_SIZE);
+			const context = canvas.getContext('2d');
+			if (!context) {
+				throw new Error('The avatar could not be drawn.');
+			}
+			context.drawImage(image, 0, 0, AVATAR_PNG_SIZE, AVATAR_PNG_SIZE);
 			const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
 			if (!blob) {
 				throw new Error('The avatar could not be drawn.');
@@ -167,7 +175,9 @@ export class AvatarMakerDialogComponent {
 		} catch {
 			this.dialogRef.close({ error: 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.PHOTO.UNSUPPORTED' });
 		} finally {
-			URL.revokeObjectURL(url);
+			if (url) {
+				URL.revokeObjectURL(url);
+			}
 			this.saving = false;
 		}
 	}
