@@ -284,9 +284,14 @@ export type MessageAction =
 			.pinned-label nb-icon {
 				font-size: 0.75rem;
 			}
+			/*
+			 * The avatar keeps its own size at the top: stretched to the message's height, its presence dot (pinned to
+			 * its bottom corner) would sit at the bottom of a tall message, under a picture.
+			 */
 			.gutter {
 				grid-column: 1;
 				display: flex;
+				align-items: flex-start;
 				justify-content: center;
 				padding-top: 0.125rem;
 			}
