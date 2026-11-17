@@ -170,7 +170,8 @@ export class EditEmployeeComponent extends TranslationBaseComponent implements O
 	 */
 	updateImage(avatar: IUpdatedAvatar) {
 		try {
-			if (avatar && this.selectedEmployee?.user) {
+			// A save that answers after the page moved on to another employee is not this one's picture.
+			if (avatar && this.selectedEmployee?.user && avatar.employeeId === this.selectedEmployee.id) {
 				const { image, imageUrl } = avatar;
 				this.selectedEmployee.user.image = image;
 				this.selectedEmployee.user.imageId = image?.id ?? null;

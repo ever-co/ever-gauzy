@@ -28,6 +28,8 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 /** The person's picture after a change: the uploaded photo, or none and the placeholder that replaced it. */
 export interface IUpdatedAvatar {
+	/** The employee the picture was saved for: the page may have moved on to another one meanwhile. */
+	employeeId: ID;
 	image: IImageAsset | null;
 	imageUrl: string | null;
 }
@@ -48,6 +50,12 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent imple
 	selectedEmployee: IEmployee;
 	employeeName: string;
 	subject$: Subject<any> = new Subject();
+
+	/**
+	 * The user saves, one after another. A photo removed and then replaced must reach the server in that order: run
+	 * side by side, a slow removal could land last and clear the new photo.
+	 */
+	private _userSaves: Promise<void> = Promise.resolve();
 
 	@Output() updatedImage = new EventEmitter<IUpdatedAvatar>();
 
@@ -88,7 +96,10 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent imple
 		this._employeeStore.userForm$
 			.pipe(
 				tap((value: IUserUpdateInput) => {
-					this.submitUserForm(value);
+					// submitUserForm reports its own failures; the catch keeps the queue moving whatever happens.
+					this._userSaves = this._userSaves
+						.then(() => this.submitUserForm(value))
+						.catch((error) => this._errorHandlingService.handleError(error));
 				}),
 				untilDestroyed(this)
 			)
@@ -330,6 +341,8 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent imple
 	 */
 	private async submitUserForm(user: IUserUpdateInput) {
 		if (user) {
+			// The employee this save is for, read before the request: the page may show another one when it answers.
+			const employeeId = this.selectedEmployee?.id;
 			try {
 				// Update the user using userService
 				const updated: IUser = await this._userService.update(this.selectedEmployee.user.id, user);
@@ -341,6 +354,7 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent imple
 				if (!!user.image || photoRemoved) {
 					// Tell the page header which picture to show now.
 					this.updatedImage.emit({
+						employeeId,
 						image: user.image ?? null,
 						imageUrl: user.image?.fullUrl || updated?.imageUrl || null
 					});
