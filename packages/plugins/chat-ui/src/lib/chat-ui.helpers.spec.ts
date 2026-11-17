@@ -20,6 +20,7 @@ import {
 	mentionedEmployeeIds,
 	mentionsMe,
 	mentionQueryAt,
+	mergeKeepingUnchanged,
 	mergeMessages,
 	nameHue,
 	namesToTokens,
@@ -396,6 +397,28 @@ describe('messages', () => {
 	it('merges pages by id in time order', () => {
 		const merged = mergeMessages([message('b', { createdAt: new Date('2026-11-07T10:01:00Z') })], [message('a'), message('b', { body: 'edited', createdAt: new Date('2026-11-07T10:01:00Z') })]);
 		expect(merged.map((item) => `${item.id}:${item.body}`)).toEqual(['a:a', 'b:edited']);
+	});
+
+	it('keeps the objects a page read again did not change, and the list when nothing changed', () => {
+		const a = message('a');
+		const b = message('b', { createdAt: new Date('2026-11-07T10:01:00Z') });
+		const shown = [a, b];
+
+		// The same page again, as new objects: the list shown stays as it is.
+		expect(mergeKeepingUnchanged(shown, [{ ...a }, { ...b }])).toBe(shown);
+
+		// One edited: only that one is new.
+		const edited = { ...b, body: 'edited' };
+		const merged = mergeKeepingUnchanged(shown, [{ ...a }, edited]);
+		expect(merged).not.toBe(shown);
+		expect(merged[0]).toBe(a);
+		expect(merged[1]).toBe(edited);
+
+		// A new one appended: the shown ones keep their objects.
+		const c = message('c', { createdAt: new Date('2026-11-07T10:02:00Z') });
+		const grown = mergeKeepingUnchanged(shown, [{ ...b }, c]);
+		expect(grown).toEqual([a, b, c]);
+		expect(grown[1]).toBe(b);
 	});
 });
 
