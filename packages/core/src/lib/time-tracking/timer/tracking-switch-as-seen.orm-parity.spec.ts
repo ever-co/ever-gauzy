@@ -176,8 +176,9 @@ describe('A save under the tracking switch its screen showed, on TypeORM and on 
 					PermissionsEnum: require('@gauzy/contracts').PermissionsEnum,
 					RolesEnum: require('@gauzy/contracts').RolesEnum,
 					RequestContext: require('../../core/context/request-context').RequestContext,
-					OrganizationTeamEmployeeService: require('../../organization-team-employee/organization-team-employee.service')
-						.OrganizationTeamEmployeeService,
+					OrganizationTeamEmployeeService:
+						require('../../organization-team-employee/organization-team-employee.service')
+							.OrganizationTeamEmployeeService,
 					TypeOrmOrganizationTeamEmployeeRepository:
 						require('../../organization-team-employee/repository/type-orm-organization-team-employee.repository')
 							.TypeOrmOrganizationTeamEmployeeRepository,
@@ -189,7 +190,8 @@ describe('A save under the tracking switch its screen showed, on TypeORM and on 
 						.TypeOrmEmployeeRepository,
 					MikroOrmEmployeeRepository: require('../../employee/repository/mikro-orm-employee.repository')
 						.MikroOrmEmployeeRepository,
-					EmployeeUpdateCommand: require('../../employee/commands/employee.update.command').EmployeeUpdateCommand,
+					EmployeeUpdateCommand: require('../../employee/commands/employee.update.command')
+						.EmployeeUpdateCommand,
 					EmployeeUpdateHandler: require('../../employee/commands/handlers/employee.update.handler')
 						.EmployeeUpdateHandler
 				};
@@ -285,7 +287,7 @@ describe('A save under the tracking switch its screen showed, on TypeORM and on 
 				);
 			};
 
-			it("refuses a save that would turn tracking back on after another admin turned it off, and writes nothing", async () => {
+			it('refuses a save that would turn tracking back on after another admin turned it off, and writes nothing', async () => {
 				await storeMembership(true);
 
 				const refusal = await refusalOf(
@@ -300,7 +302,7 @@ describe('A save under the tracking switch its screen showed, on TypeORM and on 
 				expect(await membershipRow()).toEqual({ isTrackingEnabled: false, order: 1 });
 			});
 
-			it("refuses a save that would turn tracking off after another admin turned it on, and announces no stop", async () => {
+			it('refuses a save that would turn tracking off after another admin turned it on, and announces no stop', async () => {
 				await storeMembership(false);
 
 				const refusal = await refusalOf(
@@ -346,7 +348,7 @@ describe('A save under the tracking switch its screen showed, on TypeORM and on 
 				);
 			};
 
-			it("refuses a save that would turn tracking back on after another admin turned it off, and writes nothing", async () => {
+			it('refuses a save that would turn tracking back on after another admin turned it off, and writes nothing', async () => {
 				await storeEmployee(true);
 
 				const refusal = await refusalOf(
@@ -361,7 +363,7 @@ describe('A save under the tracking switch its screen showed, on TypeORM and on 
 				expect(await employeeRow()).toEqual({ isTrackingEnabled: false, short_description: 'as stored' });
 			});
 
-			it("refuses a save that would turn tracking off after another admin turned it on, and announces no stop", async () => {
+			it('refuses a save that would turn tracking off after another admin turned it on, and announces no stop', async () => {
 				await storeEmployee(false);
 
 				const refusal = await refusalOf(
