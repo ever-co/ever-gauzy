@@ -3,6 +3,7 @@ import { getDummyImage, getOrganizationDummyImage, getTenantLogo, getUserDummyIm
 import {
 	getPlaceholderImageUrl,
 	isDummyImageUrl,
+	isPlaceholderImageUrl,
 	parsePlaceholderImage,
 	replaceDummyImageUrl,
 	withoutDummyImageHost
@@ -196,6 +197,20 @@ describe('placeholder image URLs', () => {
 			expect(Object.keys(partial)).toEqual(['name']);
 
 			expect(() => replaceDummyImageUrl(undefined as unknown as { logo?: string }, 'logo')).not.toThrow();
+		});
+	});
+
+	describe('isPlaceholderImageUrl', () => {
+		it('recognizes a placeholder the API draws and one of the former generator', () => {
+			expect(isPlaceholderImageUrl(getUserDummyImage({ firstName: 'Ann' } as any))).toBe(true);
+			expect(isPlaceholderImageUrl('https://dummyimage.com/330x300/269aff/ffffff.jpg&text=A')).toBe(true);
+		});
+
+		it('does not take an uploaded or a provider picture for a placeholder', () => {
+			expect(isPlaceholderImageUrl('https://cdn.example.com/avatars/ann.jpg')).toBe(false);
+			expect(isPlaceholderImageUrl('')).toBe(false);
+			expect(isPlaceholderImageUrl(null)).toBe(false);
+			expect(isPlaceholderImageUrl(undefined)).toBe(false);
 		});
 	});
 });
