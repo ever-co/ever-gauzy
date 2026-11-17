@@ -768,16 +768,17 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	 * creation there. A recalculation that ran while the second part stood counted its time as well, so its timesheet
 	 * and its employee's worked hours are counted again without it.
 	 *
-	 * The second part is deleted only while no invoice line bills it, in the statement that deletes it: billing writes
-	 * `invoiceItemId` under the row's lock, so a part billed meanwhile is never deleted from under its invoice line. It
-	 * is kept then, as a failed undo leaves it, and blocks the next split of the log until one of the two is deleted
-	 * (see `assertNoSecondPartLeft`).
+	 * The second part is deleted only while no invoice line bills it and it is still the time of the employee and the
+	 * timesheet it was saved for, checked in the statement that deletes it: billing and a move write those columns under
+	 * the row's lock, so a part billed meanwhile is never deleted from under its invoice line, and a part moved meanwhile
+	 * never leaves its new owner's totals counting time it no longer holds. It is kept then, as a failed undo leaves it,
+	 * and blocks the next split of the log until one of the two is deleted (see `assertNoSecondPartLeft`).
 	 *
 	 * Once the part is deleted, the history and each total are written apart: one that fails is logged, and never
 	 * stops the others.
 	 *
 	 * @param log - The time log as it was read before the split.
-	 * @param secondPart - The second part.
+	 * @param secondPart - The second part, as it was saved.
 	 * @param history - Given by the split route: the split was recorded in the history.
 	 */
 	private async takeBackSecondPart(
@@ -785,10 +786,15 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 		secondPart: TimeLog,
 		history: TimeLogHistoryOptions | undefined
 	): Promise<void> {
-		const taken = await this.typeOrmTimeLogRepository.delete({ id: secondPart.id, invoiceItemId: IsNull() });
+		const taken = await this.typeOrmTimeLogRepository.delete({
+			id: secondPart.id,
+			invoiceItemId: IsNull(),
+			employeeId: secondPart.employeeId,
+			timesheetId: secondPart.timesheetId ?? IsNull()
+		});
 		if (taken?.affected === 0) {
 			this.logger.error(
-				`The second part ${secondPart.id} of time log ${log.id} was billed before its split was taken back: it is kept`
+				`The second part ${secondPart.id} of time log ${log.id} was billed or moved before its split was taken back: it is kept`
 			);
 			return;
 		}
