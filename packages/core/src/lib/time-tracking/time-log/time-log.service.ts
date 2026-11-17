@@ -2723,14 +2723,20 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		const timesheet = await this.readTimesheetStatus(timeLog.timesheetId, tenantId);
 		const organization = await manager.findOne(Organization, {
 			where: { id: timeLog.organizationId, tenantId },
-			select: { id: true, requireReason: true }
+			select: { id: true, requireReason: true, allowBreaks: true }
 		});
+		// A break is edited only where breaks are on, as `updateManualTime` edits one: its second part is a new break
+		if (isBreak(timeLog)) {
+			assertBreaksAllowedIn(organization);
+		}
 		const refusal = splitRefusal({
 			log: timeLog,
 			splitAt,
 			holdsTimeSlots: await this.holdsTimeSlots(timeLog.id, tenantId),
 			timesheetStatus: timesheet?.status ?? null,
-			isInvoiced: await this.isOnLiveInvoice(timeLog, tenantId),
+			// A billed timesheet is closed as an approved one is (`isLockedTimeLog`, task.service.ts): the client was
+			// charged for its time, which the second part could move to another project or billable state
+			isInvoiced: timesheet?.isBilled === true || (await this.isOnLiveInvoice(timeLog, tenantId)),
 			organization,
 			reason: input.reason,
 			secondPart
@@ -2784,7 +2790,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	}
 
 	/**
-	 * The status of the timesheet a log is on, if it is on one.
+	 * The status of the timesheet a log is on, and whether it is billed, if it is on one.
 	 *
 	 * @param timesheetId - The log's timesheet.
 	 * @param tenantId - The tenant of the log.
@@ -2792,13 +2798,13 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	private async readTimesheetStatus(
 		timesheetId: ID | undefined,
 		tenantId: ID
-	): Promise<Pick<Timesheet, 'status'> | null> {
+	): Promise<Pick<Timesheet, 'status' | 'isBilled'> | null> {
 		if (!timesheetId) {
 			return null;
 		}
 		return await this.typeOrmRepository.manager.findOne(Timesheet, {
 			where: { id: timesheetId, tenantId },
-			select: { id: true, status: true }
+			select: { id: true, status: true, isBilled: true }
 		});
 	}
 

@@ -10,6 +10,7 @@ import { Organization } from '../../organization/organization.entity';
 import { Timesheet } from '../timesheet/timesheet.entity';
 import { DeleteTimeSpanCommand } from './commands';
 import { TimeLogService } from './time-log.service';
+import { BREAKS_NOT_ALLOWED } from './break-rules';
 import {
 	TIME_LOG_SPLIT_APPROVED,
 	TIME_LOG_SPLIT_CHANGED,
@@ -38,7 +39,11 @@ interface IStoreState {
 	log: ITimeLog;
 	part?: ITimeLog;
 	timesheetStatus: TimesheetStatus;
+	/** Whether the log's timesheet is billed. */
+	timesheetBilled: boolean;
 	requireReason: boolean;
+	/** The organization's breaks switch. */
+	allowBreaks: boolean;
 	slotCount: number;
 	/** Whether the read of the log not billed by a live invoice finds it. */
 	notInvoicedCount: number;
@@ -68,7 +73,9 @@ function createService(changes: Partial<IStoreState> = {}) {
 	const state: IStoreState = {
 		log: marieLog(),
 		timesheetStatus: TimesheetStatus.DRAFT,
+		timesheetBilled: false,
 		requireReason: false,
+		allowBreaks: false,
 		slotCount: 24,
 		notInvoicedCount: 1,
 		canManage: true,
@@ -98,10 +105,10 @@ function createService(changes: Partial<IStoreState> = {}) {
 	const manager = {
 		findOne: jest.fn(async (entity: unknown) => {
 			if (entity === Timesheet) {
-				return { id: TIMESHEET_ID, status: state.timesheetStatus };
+				return { id: TIMESHEET_ID, status: state.timesheetStatus, isBilled: state.timesheetBilled };
 			}
 			if (entity === Organization) {
-				return { id: ORGANIZATION_ID, requireReason: state.requireReason };
+				return { id: ORGANIZATION_ID, requireReason: state.requireReason, allowBreaks: state.allowBreaks };
 			}
 			return null;
 		})
@@ -249,6 +256,7 @@ describe('TimeLogService.splitTimeLog (CORE-26)', () => {
 	it.each([
 		['a running log', { log: marieLog({ isRunning: true }) }, TIME_LOG_SPLIT_RUNNING],
 		['a log on an approved timesheet', { timesheetStatus: TimesheetStatus.APPROVED }, TIME_LOG_SPLIT_APPROVED],
+		['a log on a billed timesheet', { timesheetBilled: true }, TIME_LOG_SPLIT_INVOICED],
 		[
 			'a log a live invoice bills',
 			{ log: marieLog({ invoiceItemId: 'line' }), notInvoicedCount: 0 },
@@ -270,6 +278,24 @@ describe('TimeLogService.splitTimeLog (CORE-26)', () => {
 		const { service, execute } = createService({ log: marieLog({ invoiceItemId: 'line' }), notInvoicedCount: 1 });
 
 		await service.splitTimeLog(LOG_ID, { splitAt: at('11:00') });
+
+		expect(execute).toHaveBeenCalledTimes(1);
+	});
+
+	it('refuses to split a break where breaks are turned off, as an edit of the break is', async () => {
+		const { service, execute } = createService({ log: marieLog({ logType: TimeLogType.BREAK }), slotCount: 0 });
+
+		const refusal = await refusalOf(service.splitTimeLog(LOG_ID, { splitAt: at('11:00') }));
+
+		expect(refusal).toMatchObject({ status: HttpStatus.FORBIDDEN, body: { code: BREAKS_NOT_ALLOWED } });
+		expect(execute).not.toHaveBeenCalled();
+	});
+
+	it('splits a break where breaks are on', async () => {
+		const log = marieLog({ logType: TimeLogType.BREAK, isBillable: false });
+		const { service, execute } = createService({ log, slotCount: 0, allowBreaks: true });
+
+		await service.splitTimeLog(LOG_ID, { splitAt: at('11:05') });
 
 		expect(execute).toHaveBeenCalledTimes(1);
 	});
