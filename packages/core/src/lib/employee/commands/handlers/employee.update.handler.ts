@@ -276,7 +276,10 @@ export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateComm
 		const expected = input.expectedIsTrackingEnabled;
 		const saysWhatItSaw = expected !== undefined && expected !== null;
 
-		// Under the switch the screen showed, the acknowledgement is written in the save's transaction instead (below).
+		// Where it is written differs on purpose. A save that says what its screen showed runs in a transaction, and writes
+		// the acknowledgement there (below): a 409 from the comparison then records none, and a failed save rolls it back.
+		// Any other save runs in no transaction, as before: it writes the acknowledgement first, on its own, so a failed
+		// save leaves it. Moving it into the save's write here would change that path, which this guard leaves alone.
 		if (recordsAcknowledgement && !saysWhatItSaw) {
 			await recordAcknowledgement(this._activityLogService);
 		}

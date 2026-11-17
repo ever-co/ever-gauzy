@@ -49,7 +49,9 @@ describe('EmployeeUpdateHandler — the tracking switch the screen showed', () =
 			writeUnderTrackingSwitchAsSeen: jest.fn()
 		};
 		writeUnderTrackingSwitchAsSeen = employeeService.writeUnderTrackingSwitchAsSeen;
-		// The transaction's join: the services it is handed write in the save's transaction
+		// The transaction's join: the services it is handed write in the save's transaction. Here it only records what
+		// it is handed; that the joined service writes on the transaction's repository, and rolls back with it, is
+		// covered by tracking-switch-as-seen.spec.ts and the rollback controls of tracking-switch-as-seen.orm-parity.spec.ts.
 		join = jest.fn((other) => other);
 		writeUnderTrackingSwitchAsSeen.mockImplementation(async (_id, _expected, write) =>
 			write(employeeService, join)
