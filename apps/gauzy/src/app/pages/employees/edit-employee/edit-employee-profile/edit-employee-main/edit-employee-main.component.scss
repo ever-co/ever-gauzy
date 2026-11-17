@@ -14,6 +14,11 @@ $hairline: 1px solid var(--gauzy-border-default-color);
   background-color: var(--gauzy-card-2);
   @include nb-ltr(border-radius, 0 $radius $radius $radius);
   @include nb-rtl(border-radius, $radius 0 $radius $radius);
+
+  // The photo's own colors, named once here from the theme: the veil over the photo on hover, and the camera drawn
+  // on it. (The viewer opens in an overlay outside this element, so its backdrop is named on .photo-viewer.)
+  --account-photo-scrim: var(--overlay-backdrop-background-color);
+  --account-photo-scrim-icon: var(--text-control-color);
 }
 
 .account {
@@ -66,7 +71,7 @@ $hairline: 1px solid var(--gauzy-border-default-color);
   cursor: pointer;
 
   &:focus-visible {
-    outline: 2px solid nb-theme(color-primary-500);
+    outline: 2px solid var(--color-primary-500);
     outline-offset: 2px;
   }
 
@@ -92,7 +97,7 @@ $hairline: 1px solid var(--gauzy-border-default-color);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: nb-theme(text-hint-color);
+  color: var(--text-hint-color);
 
   nb-icon {
     font-size: 1.75rem;
@@ -109,8 +114,8 @@ $hairline: 1px solid var(--gauzy-border-default-color);
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background-color: rgba(0, 0, 0, 0.4);
-  color: #fff;
+  background-color: var(--account-photo-scrim);
+  color: var(--account-photo-scrim-icon);
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.15s ease-in-out;
@@ -133,8 +138,8 @@ $hairline: 1px solid var(--gauzy-border-default-color);
   height: 24px;
   border-radius: 50%;
   border: 2px solid var(--gauzy-card-3);
-  background-color: nb-theme(color-primary-500);
-  color: nb-theme(text-control-color);
+  background-color: var(--color-primary-500);
+  color: var(--text-control-color);
   pointer-events: none;
 
   nb-icon {
@@ -188,15 +193,15 @@ $hairline: 1px solid var(--gauzy-border-default-color);
     font-size: 1rem;
     width: 1rem;
     height: 1rem;
-    color: nb-theme(text-hint-color);
+    color: var(--text-hint-color);
   }
 
   &:hover:not(:disabled) {
-    background-color: nb-theme(color-basic-transparent-hover);
+    background-color: var(--color-basic-transparent-hover);
   }
 
   &:focus-visible {
-    outline: 2px solid nb-theme(color-primary-500);
+    outline: 2px solid var(--color-primary-500);
     outline-offset: 1px;
   }
 
@@ -221,7 +226,7 @@ $hairline: 1px solid var(--gauzy-border-default-color);
   padding: 0.5rem 0.875rem;
   border: 0;
   background: transparent;
-  color: nb-theme(text-basic-color);
+  color: var(--text-basic-color);
   font-size: 0.8125rem;
   text-align: start;
   cursor: pointer;
@@ -230,22 +235,24 @@ $hairline: 1px solid var(--gauzy-border-default-color);
     font-size: 1rem;
     width: 1rem;
     height: 1rem;
-    color: nb-theme(text-hint-color);
+    color: var(--text-hint-color);
   }
 
   &:hover,
   &:focus-visible {
-    background-color: nb-theme(color-basic-transparent-hover);
+    background-color: var(--color-basic-transparent-hover);
     outline: none;
   }
 }
 
 .photo-menu__item--danger,
 .photo-menu__item--danger nb-icon {
-  color: nb-theme(text-danger-color);
+  color: var(--text-danger-color);
 }
 
 .photo-viewer {
+  --account-photo-viewer-background: var(--gauzy-card-1);
+
   width: min(32rem, calc(100vw - 2rem));
   margin: 0;
 }
@@ -276,11 +283,11 @@ $hairline: 1px solid var(--gauzy-border-default-color);
   border: 0;
   border-radius: 50%;
   background: transparent;
-  color: nb-theme(text-hint-color);
+  color: var(--text-hint-color);
   cursor: pointer;
 
   &:hover {
-    background-color: nb-theme(color-basic-transparent-hover);
+    background-color: var(--color-basic-transparent-hover);
   }
 
   nb-icon {
@@ -292,7 +299,7 @@ $hairline: 1px solid var(--gauzy-border-default-color);
   display: flex;
   justify-content: center;
   padding: 0;
-  background-color: #111;
+  background-color: var(--account-photo-viewer-background);
 }
 
 .photo-viewer__image {

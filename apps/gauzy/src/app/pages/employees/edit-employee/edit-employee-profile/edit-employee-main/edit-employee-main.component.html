@@ -11,7 +11,6 @@
 					[nbPopover]="photoMenuTpl"
 					[nbPopoverTrigger]="photoBusy ? 'noop' : 'click'"
 					nbPopoverPlacement="bottom"
-					aria-haspopup="menu"
 					[attr.aria-label]="'EMPLOYEES_PAGE.EDIT_EMPLOYEE.PHOTO.MENU_LABEL' | translate"
 				>
 					@if (avatarUrl) {
@@ -46,33 +45,32 @@
 			</div>
 
 			<ng-template #photoMenuTpl>
-				<ul class="photo-menu" role="menu">
+				<ul class="photo-menu">
 					@if (hasPhoto) {
-						<li role="none">
-							<button type="button" class="photo-menu__item" role="menuitem" (click)="viewPhoto()">
+						<li>
+							<button type="button" class="photo-menu__item" (click)="viewPhoto()">
 								<nb-icon icon="eye-outline"></nb-icon>
 								{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.PHOTO.VIEW' | translate }}
 							</button>
 						</li>
 					}
-					<li role="none">
-						<button type="button" class="photo-menu__item" role="menuitem" (click)="chooseAvatar()">
+					<li>
+						<button type="button" class="photo-menu__item" (click)="chooseAvatar()">
 							<nb-icon icon="smiling-face-outline"></nb-icon>
 							{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.PHOTO.CHOOSE_AVATAR' | translate }}
 						</button>
 					</li>
-					<li role="none">
-						<button type="button" class="photo-menu__item" role="menuitem" (click)="choosePhoto()">
+					<li>
+						<button type="button" class="photo-menu__item" (click)="choosePhoto()">
 							<nb-icon icon="camera-outline"></nb-icon>
 							{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.PHOTO.UPLOAD' | translate }}
 						</button>
 					</li>
 					@if (hasPhoto) {
-						<li role="none">
+						<li>
 							<button
 								type="button"
 								class="photo-menu__item photo-menu__item--danger"
-								role="menuitem"
 								(click)="removePhoto()"
 							>
 								<nb-icon icon="trash-2-outline"></nb-icon>
