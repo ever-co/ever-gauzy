@@ -168,6 +168,7 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 	async chooseAvatar(): Promise<void> {
 		this.photoMenu?.hide();
 		if (this.photoBusy) return;
+		const employeeId = this.selectedEmployee?.id;
 
 		const dialog = this._dialogService.open(AvatarMakerDialogComponent, {
 			closeOnBackdropClick: false,
@@ -178,8 +179,8 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 			this._toastrService.danger(result.error);
 			return;
 		}
-		if (result?.file) {
-			await this._uploadPhoto(result.file);
+		if (result?.file && this._isShowing(employeeId)) {
+			await this._uploadPhoto(result.file, employeeId);
 		}
 	}
 
@@ -211,6 +212,7 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 			this._toastrService.danger('EMPLOYEES_PAGE.EDIT_EMPLOYEE.PHOTO.UNSUPPORTED');
 			return;
 		}
+		const employeeId = this.selectedEmployee?.id;
 
 		const dialog = this._dialogService.open(AvatarCropDialogComponent, {
 			context: { file },
@@ -222,8 +224,8 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 			this._toastrService.danger(result.error);
 			return;
 		}
-		if (result?.file) {
-			await this._uploadPhoto(result.file);
+		if (result?.file && this._isShowing(employeeId)) {
+			await this._uploadPhoto(result.file, employeeId);
 		}
 	}
 
@@ -233,6 +235,7 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 	async removePhoto(): Promise<void> {
 		this.photoMenu?.hide();
 		if (this.photoBusy) return;
+		const employeeId = this.selectedEmployee?.id;
 
 		const dialog = this._dialogService.open(ConfirmComponent, {
 			context: {
@@ -244,6 +247,8 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 			}
 		});
 		if (!(await firstValueFrom(dialog.onClose))) return;
+		// The page may show another employee by now: the removal was asked for this one only.
+		if (!this._isShowing(employeeId)) return;
 
 		this.photoBusy = true;
 		try {
@@ -328,21 +333,32 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 	}
 
 	/**
-	 * Uploads the framed photo and makes it the person's avatar.
+	 * Uploads the framed photo and makes it the avatar of the employee it was chosen for.
+	 *
+	 * @param file - The framed photo.
+	 * @param employeeId - The employee shown when the photo was chosen.
 	 */
-	private async _uploadPhoto(file: File): Promise<void> {
+	private async _uploadPhoto(file: File, employeeId: IEmployee['id']): Promise<void> {
 		this.photoBusy = true;
 		try {
 			const image = await this._imageAssetService.upload(file, PHOTO_FOLDER, {
 				tenantId: this.organization?.tenantId,
 				organizationId: this.organization?.id
 			});
-			await this.updateImageAsset(image);
+			// Attached only if the page still shows that employee: otherwise the next one's form would get it.
+			if (this._isShowing(employeeId)) {
+				await this.updateImageAsset(image);
+			}
 		} catch (error) {
 			this.handleImageUploadError(error);
 		} finally {
 			this.photoBusy = false;
 		}
+	}
+
+	/** Whether the page still shows the employee `employeeId`, after waiting on a dialog or a request. */
+	private _isShowing(employeeId: IEmployee['id']): boolean {
+		return !!employeeId && this.selectedEmployee?.id === employeeId;
 	}
 
 	private _translate(key: string): string {
