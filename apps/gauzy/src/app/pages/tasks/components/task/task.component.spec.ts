@@ -60,6 +60,8 @@ describe('TaskComponent', () => {
 	let dialogService: { open: jest.Mock };
 	let tasksService: { editTask: jest.Mock; createTask: jest.Mock; deleteTask: jest.Mock };
 	let layout: ComponentLayoutStyleEnum;
+	/** The layout the page is shown in, which a spec can switch once the page is open. */
+	let layout$: BehaviorSubject<ComponentLayoutStyleEnum>;
 	/** The project selected in the header: a sprint project opens the sprint view. */
 	let project: { id: string; taskListType: TaskListTypeEnum } | null;
 	let organization$: BehaviorSubject<typeof ORGANIZATION>;
@@ -129,6 +131,7 @@ describe('TaskComponent', () => {
 
 	/** The page at `/pages/tasks/<path>`, with its subscriptions started and its first page read. */
 	const open = async (path: 'dashboard' | 'me' | 'team') => {
+		layout$ = new BehaviorSubject(layout);
 		await TestBed.configureTestingModule({
 			declarations: [TaskComponent],
 			providers: [
@@ -153,7 +156,7 @@ describe('TaskComponent', () => {
 						selectedEmployee$: of(null),
 						selectedProject$: of(project),
 						selectedTeam$: of(null),
-						componentLayout$: () => of(layout),
+						componentLayout$: () => layout$.asObservable(),
 						hasAnyPermission: () => true,
 						hasPermission: () => true
 					}
@@ -592,6 +595,64 @@ describe('TaskComponent', () => {
 			expect(ids()).toEqual(server.slice(0, 11 * PAGE_SIZE).map(({ id }) => id));
 			expect(component.viewedTask?.id).toBe('task-105');
 		}, 30000);
+
+		it('lets go of a deleted task in the table it switched to from its first page', async () => {
+			await open('dashboard');
+			// On the first page the switch reads nothing new: the table reads the source the card grid read with.
+			layout$.next(ComponentLayoutStyleEnum.TABLE);
+			await settle();
+			await component.smartTableSource.getElements();
+			showTask(3);
+
+			dialogResult = true;
+			await component.deleteTask();
+			await settle(50);
+
+			expect(tasksService.deleteTask).toHaveBeenCalledWith('task-3');
+			expect(ids()).not.toContain('task-3');
+			expect(component.selectedTask).toBeFalsy();
+			expect(component.viewedTask).toBeFalsy();
+			expect(component.disableButton).toBe(true);
+		});
+
+		it('turns the loading state off in the table it switched to while its first page loaded', async () => {
+			const answerFirstPage = holdNextRead();
+			await open('dashboard');
+			expect(component.loading).toBe(true);
+
+			layout$.next(ComponentLayoutStyleEnum.TABLE);
+			await settle();
+			await component.smartTableSource.getElements();
+			answerFirstPage(pageOf(1));
+			await settle(50);
+
+			expect(component.loading).toBe(false);
+			expect(ids()).toEqual(pageOf(1).map(({ id }) => id));
+		});
+
+		it('keeps a page asked for after the read in place when the page before it is still loading', async () => {
+			await open('dashboard');
+
+			// Page 2 is under way when a save is read again.
+			const answerPage2 = holdNextRead();
+			component.onScroll();
+			await settle();
+			showTask(3);
+			const answerReadAgain = holdNextRead();
+			dialogResult = dialogValues({ title: 'Task 3' });
+			await component.editTaskDialog();
+
+			// Page 3 is asked for after it, and answers first.
+			component.onScroll();
+			await settle();
+			answerReadAgain(server.slice(0, 2 * PAGE_SIZE));
+			await settle(50);
+			answerPage2(pageOf(2));
+			await settle(50);
+
+			expect(component.pagination.activePage).toBe(3);
+			expect(ids()).toEqual(server.map(({ id }) => id));
+		});
 	});
 
 	describe('Tasks, sprint view in the table layout', () => {

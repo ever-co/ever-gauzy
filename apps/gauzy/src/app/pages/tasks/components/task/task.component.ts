@@ -505,25 +505,34 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 		const source: ServerDataSource = new TaskListSource(this.httpClient, {
 			...this._taskSourceConf(),
 			finalize: (error?: unknown) => {
-				// Neither lets the read write the list: a source the page has replaced since (another page, filter or
-				// layout), or a new list (another organization, project, team, layout or filter).
-				if (source !== this.smartTableSource || read <= this._resetAt) {
+				// A source the page has replaced since (another page, filter or layout) no longer writes the list.
+				if (source !== this.smartTableSource) {
 					return;
 				}
-				// In the card grid, a read in place that started after this page read and already wrote the list has shown
-				// its page: this answer has nothing to add.
-				if (read < this._appliedShownRead) {
-					return;
-				}
-				// One still under way covers the page: the page's answer (or its failure) waits, in case that read fails.
-				if (read < this._shownReadAt) {
-					const { page, perPage } = source.getPaging();
-					this._coveredPages.push(
-						error
-							? { read, page, size: perPage, rows: [], count: null, failed: true }
-							: { read, page, size: perPage, rows: source.getData(), count: source.count() }
-					);
-					return;
+				// The card grid adds each page it reads to the ones shown, so its page reads give way to a new list and to
+				// the reads in place. Every other layout shows the one page its source has just read, whenever the source
+				// was made: a switch from the card grid on its first page makes no new source, and the table then reads
+				// the card grid's.
+				if (this.dataLayoutStyle === this.componentLayoutStyleEnum.CARDS_GRID) {
+					// A new list (another organization, project, team, layout or filter) has started since.
+					if (read <= this._resetAt) {
+						return;
+					}
+					// A read in place that started after this page read and already wrote the list has shown its page: this
+					// answer has nothing to add.
+					if (read < this._appliedShownRead) {
+						return;
+					}
+					// One still under way covers the page: the page's answer (or its failure) waits, in case that read fails.
+					if (read < this._shownReadAt) {
+						const { page, perPage } = source.getPaging();
+						this._coveredPages.push(
+							error
+								? { read, page, size: perPage, rows: [], count: null, failed: true }
+								: { read, page, size: perPage, rows: source.getData(), count: source.count() }
+						);
+						return;
+					}
 				}
 				if (read === this._loadingRead) {
 					this.loading = false;
@@ -688,6 +697,9 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 		this._pendingShownReads.add(read);
 		const { activePage, itemsPerPage } = this.getPagination();
 		const covered = activePage * itemsPerPage;
+		// The rows a page read adds from now on come after the ones shown now, even when a page before them is still
+		// under way and was never added: they are kept after the pages read again.
+		const shownNow = Math.min(this._tasks.length, covered);
 		// No read asks for more than the API's largest page: whole pages of the list, at most `MAX_PAGE_SIZE` tasks.
 		const size = Math.max(itemsPerPage, Math.floor(MAX_PAGE_SIZE / itemsPerPage) * itemsPerPage);
 		const sources = Array.from({ length: Math.ceil(covered / size) }, (_, index) => {
@@ -702,7 +714,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 			if (read <= this._resetAt || read !== this._shownReadAt) {
 				return;
 			}
-			this._tasks = [...pages.flat().slice(0, covered), ...this._tasks.slice(covered)];
+			this._tasks = [...pages.flat().slice(0, covered), ...this._tasks.slice(shownNow)];
 			this._appliedShownRead = read;
 			this._coveredPages = [];
 			this.storeInstance.loadAllTasks(this._tasks);
