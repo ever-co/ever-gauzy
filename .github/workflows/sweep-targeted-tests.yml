@@ -102,24 +102,12 @@ jobs:
         # app. It goes through yarn, not Nx, so `.env.local` is not loaded here either.
         run: yarn config:dev
 
-      - name: Run the suites of #12059 #12060 #12062 #12063 on develop 280356df1d
+      - name: Run the desktop-ui-lib suites of #12061 on develop 68b92ceda1
         env:
           NX_LOAD_DOT_ENV_FILES: 'false'
         run: |
           status=0
           J='node node_modules/jest/bin/jest.js'
           export NODE_OPTIONS='--experimental-vm-modules --max-old-space-size=24576'
-          echo '::group::packages/core/jest.config.ts'; $J -c packages/core/jest.config.ts --runInBand --ci 'packages/core/src/lib/(core/context/mikro\-orm\-context|event\-outbox/event\-consumer\.registry|idempotency/idempotency\-cleanup\.worker|invoice/invoice\-reminder/|time\-tracking/custom\-tracking/)' || status=$?; echo '::endgroup::'
-          echo '::group::packages/plugins/subscription/jest.config.ts'; $J -c packages/plugins/subscription/jest.config.ts --runInBand --ci 'packages/plugins/subscription/src/lib/subscription/subscription\.service\.spec' || status=$?; echo '::endgroup::'
-          echo '::group::packages/plugins/cart/jest.config.ts'; $J -c packages/plugins/cart/jest.config.ts --runInBand --ci 'packages/plugins/cart/src/lib/commerce\-cart/' || status=$?; echo '::endgroup::'
-          echo '::group::packages/plugins/chat/jest.config.ts'; $J -c packages/plugins/chat/jest.config.ts --runInBand --ci 'packages/plugins/chat/src/lib/services/chat\-draft\-upload' || status=$?; echo '::endgroup::'
-          echo '::group::packages/plugins/docs/jest.config.ts'; $J -c packages/plugins/docs/jest.config.ts --runInBand --ci 'packages/plugins/docs/src/lib/(import/document\-import|knowledge/queue/|live/document\-live)' || status=$?; echo '::endgroup::'
-          echo '::group::packages/plugins/inbox/jest.config.ts'; $J -c packages/plugins/inbox/jest.config.ts --runInBand --ci 'packages/plugins/inbox/src/lib/delivery/' || status=$?; echo '::endgroup::'
-          echo '::group::packages/plugins/integration-asana/jest.config.ts'; $J -c packages/plugins/integration-asana/jest.config.ts --runInBand --ci 'packages/plugins/integration\-asana/src/lib/maintenance/' || status=$?; echo '::endgroup::'
-          echo '::group::packages/plugins/integration-jira/jest.config.ts'; $J -c packages/plugins/integration-jira/jest.config.ts --runInBand --ci 'packages/plugins/integration\-jira/src/lib/maintenance/' || status=$?; echo '::endgroup::'
-          echo '::group::packages/plugins/integration-linear/jest.config.ts'; $J -c packages/plugins/integration-linear/jest.config.ts --runInBand --ci 'packages/plugins/integration\-linear/src/lib/maintenance/' || status=$?; echo '::endgroup::'
-          echo '::group::packages/plugins/integration-trello/jest.config.ts'; $J -c packages/plugins/integration-trello/jest.config.ts --runInBand --ci 'packages/plugins/integration\-trello/src/lib/maintenance/' || status=$?; echo '::endgroup::'
-          echo '::group::packages/plugins/integration-ever-works/jest.config.ts'; $J -c packages/plugins/integration-ever-works/jest.config.ts --runInBand --ci 'packages/plugins/integration\-ever\-works/src/lib/sync/' || status=$?; echo '::endgroup::'
-          echo '::group::packages/plugins/task-automations/jest.config.ts'; $J -c packages/plugins/task-automations/jest.config.ts --runInBand --ci 'packages/plugins/task\-automations/src/lib/(schedule/|task\-automations\.db)' || status=$?; echo '::endgroup::'
-          echo '::group::packages/ui-core/jest.config.ts'; $J -c packages/ui-core/jest.config.ts --runInBand --ci 'packages/ui\-core/(core/src/lib/services/list\-filter\-state/|shared/src/lib/table\-filters/)' || status=$?; echo '::endgroup::'
+          echo '::group::packages/desktop-ui-lib/jest.config.ts'; $J -c packages/desktop-ui-lib/jest.config.ts --runInBand --ci 'packages/desktop\-ui\-lib/src/lib/(interceptors/|time\-tracker/time\-tracker\.(service|component)|offline\-sync/)' || status=$?; echo '::endgroup::'
           exit "$status"
