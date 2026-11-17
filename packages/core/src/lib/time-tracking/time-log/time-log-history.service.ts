@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Brackets, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, In, WhereExpressionBuilder } from 'typeorm';
 import {
 	ActionTypeEnum,
 	BaseEntityEnum,
@@ -14,6 +14,7 @@ import { RequestContext } from '../../core/context';
 import { prepareSQLQuery as p } from '../../database/database.helper';
 import { ManagedEmployeeService } from '../../employee/managed-employee.service';
 import { ActivityLog } from '../../activity-log/activity-log.entity';
+import { withEntryProjectsKept } from '../../organization-project/hidden-projects';
 import { TimeLog } from './time-log.entity';
 import { TIME_LOG_KIND_FIELDS } from './time-log-history';
 import { TimeLogService } from './time-log.service';
@@ -64,6 +65,7 @@ export class TimeLogHistoryService {
 			throw new NotFoundException('The time entry was not found');
 		}
 		await this.timeLogService.assertCanReadEmployeeTimeLogs(ownerId);
+		await this.keepProjectsOfEntries(rows);
 		return rows;
 	}
 
@@ -111,7 +113,59 @@ export class TimeLogHistoryService {
 			.take(take);
 
 		const [items, total] = await builder.getManyAndCount();
+		await this.keepProjectsOfEntries(items);
 		return { items, total };
+	}
+
+	/**
+	 * Keeps beside each history row every project its entry has been on, out of the answer itself (see
+	 * {@link withEntryProjectsKept}): the one it is on now, withdrawn entries included, and each one its recorded changes
+	 * name, over its whole history and not only the rows of this page. A row quotes the name its entry's project had
+	 * when it was written, so the label is withheld when any of them is kept from the caller, whatever its name was then.
+	 *
+	 * @param rows The history rows of time entries.
+	 */
+	private async keepProjectsOfEntries(rows: ActivityLog[]): Promise<void> {
+		const entryIds = [...new Set(rows.map((row) => row.entityId).filter(Boolean))];
+		if (entryIds.length === 0) {
+			return;
+		}
+		const tenantId = RequestContext.currentTenantId();
+		const manager = this.typeOrmTimeLogRepository.manager;
+		const [entries, changes] = await Promise.all([
+			manager.find(TimeLog, {
+				where: { id: In(entryIds), tenantId },
+				select: { id: true, projectId: true },
+				withDeleted: true
+			}),
+			manager.find(ActivityLog, {
+				where: { entity: BaseEntityEnum.TimeLog, entityId: In(entryIds), tenantId },
+				select: { entityId: true, previousValues: true, updatedValues: true },
+				withDeleted: true
+			})
+		]);
+		const projectsOfEntry = new Map<ID, Set<ID>>();
+		const addProject = (entryId: ID | undefined, projectId: unknown) => {
+			if (!entryId || typeof projectId !== 'string' || !projectId) {
+				return;
+			}
+			const projects = projectsOfEntry.get(entryId) ?? new Set<ID>();
+			projects.add(projectId);
+			projectsOfEntry.set(entryId, projects);
+		};
+		for (const entry of entries) {
+			addProject(entry.id, entry.projectId);
+		}
+		for (const change of changes) {
+			for (const values of [change.previousValues, change.updatedValues]) {
+				for (const value of Array.isArray(values) ? values : []) {
+					addProject(change.entityId, (value as { projectId?: unknown } | null)?.projectId);
+				}
+			}
+		}
+		for (const row of rows) {
+			withEntryProjectsKept(row, projectsOfEntry.get(row.entityId) ?? []);
+		}
 	}
 
 	/**

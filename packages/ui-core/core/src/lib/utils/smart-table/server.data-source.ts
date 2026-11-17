@@ -8,6 +8,8 @@ import { ServerSourceConf } from './server-source.conf';
 export class ServerDataSource extends LocalDataSource {
 	protected conf: ServerSourceConf;
 	protected lastRequestCount: number = 0;
+	/** Numbers each request as it is sent, so that an answer arriving after a newer one does not replace it. */
+	private _lastRequest = 0;
 
 	constructor(protected http: HttpClient, conf: ServerSourceConf | {} = {}) {
 		super();
@@ -25,24 +27,33 @@ export class ServerDataSource extends LocalDataSource {
 		return this.data;
 	}
 
+	/**
+	 * Reads the elements from the server. When two reads overlap, only the one sent last writes the data and calls
+	 * `finalize`: an older answer arriving after it no longer replaces it. `finalize` receives the error of a failed
+	 * read, so that it can tell one from a read that succeeded (the data then still holds the previous answer).
+	 */
 	override getElements(): Promise<any> {
+		const request = ++this._lastRequest;
+		const isLatest = () => request === this._lastRequest;
 		return firstValueFrom(
 			this.requestElements().pipe(
 				map((res) => {
-					this.lastRequestCount = this.extractTotalFromResponse(res);
-					this.data = this.extractDataFromResponse(res);
+					if (isLatest()) {
+						this.lastRequestCount = this.extractTotalFromResponse(res);
+						this.data = this.extractDataFromResponse(res);
+					}
 					return this.data;
 				}),
 				tap(() => {
-					if (this.conf.finalize) {
+					if (isLatest() && this.conf.finalize) {
 						this.conf.finalize();
 					}
 				}),
 				catchError((error) => {
-					if (this.conf.finalize) {
-						this.conf.finalize();
-					}
 					// failed from server then call finalize method
+					if (isLatest() && this.conf.finalize) {
+						this.conf.finalize(error);
+					}
 					throw new Error(error);
 				})
 			)

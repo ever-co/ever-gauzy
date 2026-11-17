@@ -109,11 +109,12 @@ function surfaces() {
 		findAll: jest.fn().mockResolvedValue({ items: ROWS, total: ROWS.length }),
 		findOneByIdString: jest.fn().mockResolvedValue(ROWS[0]),
 		countBy: jest.fn().mockResolvedValue(ROWS.length),
-		create: jest.fn().mockResolvedValue(ROWS[0]),
-		update: jest.fn().mockResolvedValue({ affected: 1 }),
-		delete: jest.fn().mockResolvedValue({ affected: 1 }),
-		softRemove: jest.fn().mockResolvedValue({ ...ROWS[0], deletedAt: new Date('2026-05-01T10:00:00.000Z') }),
-		softRecover: jest.fn().mockResolvedValue(ROWS[0])
+		// The line writes the REST routes make too, each moving its invoice's `updatedAt` (#5243)
+		createLine: jest.fn().mockResolvedValue(ROWS[0]),
+		updateLine: jest.fn().mockResolvedValue({ affected: 1 }),
+		deleteLine: jest.fn().mockResolvedValue({ affected: 1 }),
+		softRemoveLine: jest.fn().mockResolvedValue({ ...ROWS[0], deletedAt: new Date('2026-05-01T10:00:00.000Z') }),
+		softRecoverLine: jest.fn().mockResolvedValue(ROWS[0])
 	};
 	const commandBus = { execute: jest.fn().mockResolvedValue(ROWS) };
 
@@ -176,8 +177,7 @@ function rootFields(operation: 'Query' | 'Mutation'): string[] {
 /** The arguments one root field declares, in the order a client states them. */
 function fieldArgs(operation: 'Query' | 'Mutation', field: string): string[] {
 	const root = schema.getType(operation) as
-		| { getFields(): Record<string, { args: readonly { name: string }[] }> }
-		| undefined;
+		{ getFields(): Record<string, { args: readonly { name: string }[] }> } | undefined;
 
 	return (root?.getFields()?.[field]?.args ?? []).map((argument) => argument.name);
 }
@@ -368,7 +368,7 @@ describe('InvoiceItemResolver — the SDL declares the capabilities the REST rou
 			'before',
 			'limit',
 			'offset',
-			'withDeleted',
+			'withDeleted'
 		]);
 		// The count route binds its query string to the store's own `where`, which is a shape no schema
 		// can state, so the field states no narrowing of its own.
@@ -419,7 +419,18 @@ describe('InvoiceItemResolver — the connection contract', () => {
 		// answered only when the caller asks, and asking has to reach the read. An argument that was
 		// declared in the schema and never forwarded would pass every SDL assertion in this file while
 		// quietly refusing the caller the rows the delivered route hands them.
-		await resolver.invoiceItems(undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, true);
+		await resolver.invoiceItems(
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			true
+		);
 
 		expect(invoiceItemService.findAll).toHaveBeenCalledWith({ relations: [], withDeleted: true });
 	});
@@ -566,7 +577,7 @@ describe('InvoiceItemResolver — one concept, two protocols, the same operation
 
 		// The delivered create takes the body as it is stated and stamps the caller's own tenant onto
 		// the row, which is why the tenant is not a member of the input.
-		expect(invoiceItemService.create).toHaveBeenCalledWith({
+		expect(invoiceItemService.createLine).toHaveBeenCalledWith({
 			description: 'Two days of work',
 			price: '250.5',
 			quantity: '2',
@@ -584,7 +595,7 @@ describe('InvoiceItemResolver — one concept, two protocols, the same operation
 
 		// The identifier is the criterion and is not among the columns the statement writes, which is the
 		// shape the route has: `:id` names the row and the body carries what changes.
-		expect(invoiceItemService.update).toHaveBeenCalledWith(LINE, { quantity: '3', totalValue: '751.5' });
+		expect(invoiceItemService.updateLine).toHaveBeenCalledWith(LINE, { quantity: '3', totalValue: '751.5' });
 		// The delivered route answers the store's own update result, which is not a row; the field reads
 		// the row back through the same service, which is the shape the SDL declares.
 		expect(invoiceItemService.findOneByIdString).toHaveBeenCalledWith(LINE);
@@ -595,7 +606,7 @@ describe('InvoiceItemResolver — one concept, two protocols, the same operation
 		const { resolver, invoiceItemService } = surfaces();
 
 		expect(await resolver.deleteInvoiceItem(LINE)).toBe(true);
-		expect(invoiceItemService.delete).toHaveBeenCalledWith(LINE);
+		expect(invoiceItemService.deleteLine).toHaveBeenCalledWith(LINE);
 	});
 
 	it('withdraws and recovers a line through the same service methods the inherited routes call', async () => {
@@ -603,10 +614,10 @@ describe('InvoiceItemResolver — one concept, two protocols, the same operation
 
 		const withdrawn = await resolver.softDeleteInvoiceItem(LINE);
 		expect(withdrawn.deletedAt).toBeInstanceOf(Date);
-		expect(invoiceItemService.softRemove).toHaveBeenCalledWith(LINE);
+		expect(invoiceItemService.softRemoveLine).toHaveBeenCalledWith(LINE);
 
 		expect(await resolver.recoverInvoiceItem(LINE)).toBe(ROWS[0]);
-		expect(invoiceItemService.softRecover).toHaveBeenCalledWith(LINE);
+		expect(invoiceItemService.softRecoverLine).toHaveBeenCalledWith(LINE);
 	});
 
 	it('stores a document’s whole line set through the command the bulk route dispatches', async () => {
@@ -632,7 +643,7 @@ describe('InvoiceItemResolver — one concept, two protocols, the same operation
 		const { resolver, invoiceItemService } = surfaces();
 		const refusal = new Error('INVOICE_ITEM_NOT_EDITABLE: the document of this line is settled.');
 
-		invoiceItemService.update.mockRejectedValueOnce(refusal);
+		invoiceItemService.updateLine.mockRejectedValueOnce(refusal);
 
 		await expect(resolver.updateInvoiceItem({ id: LINE, quantity: '3' })).rejects.toBe(refusal);
 	});

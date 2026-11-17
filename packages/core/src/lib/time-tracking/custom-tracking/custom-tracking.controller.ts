@@ -9,8 +9,10 @@ import {
 	UseGuards,
 	DefaultValuePipe,
 	ParseIntPipe,
+	UseInterceptors,
 	ValidationPipe
 } from '@nestjs/common';
+import { HiddenProjectsInterceptor } from '../../organization-project/hidden-projects.interceptor';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { TenantPermissionGuard, PermissionGuard, EmployeeTrackedDataGuard } from '../../shared/guards';
 import { PermissionsEnum, ITrackingSession, ITimeLog, ITrackingSessionResponse } from '@gauzy/contracts';
@@ -142,6 +144,9 @@ export class CustomTrackingController {
 		description: 'TimeSlot not found'
 	})
 	@UseGuards(EmployeeTrackedDataGuard)
+	// The slot's time entries are read with their project: a private one the caller may not see answers its id and
+	// `projectHidden`, as on the time-slot routes (ever-co/ever-gauzy#12031)
+	@UseInterceptors(HiddenProjectsInterceptor)
 	@Get('/time-slot/:id')
 	async getTimeSlotTrackingData(@Param('id', UUIDValidationPipe) timeSlotId: string): Promise<{
 		timeSlotId: string;

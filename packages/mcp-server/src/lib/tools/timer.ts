@@ -68,7 +68,10 @@ export const registerTimerTools = (server: McpServer) => {
 				.optional()
 				.describe('Source of the timer'),
 			isBillable: z.boolean().optional().describe('Whether the time is billable'),
-			tags: z.array(z.string()).optional().describe('Tags for the time entry'),
+			tags: z
+				.array(z.string().uuid())
+				.optional()
+				.describe('IDs of the tags to file the time entry under (organization or tenant-wide tags)'),
 			manualTimeSlot: z.boolean().optional().describe('Whether to use manual time slot')
 		},
 		async ({

@@ -190,7 +190,14 @@ describe('TimeLogService and the organization default billing rate', () => {
 			const self = Object.create(TimeLogService.prototype, {
 				ormType: { value: MultiORMEnum.MikroORM },
 				mikroOrmRepository: { value: { find, getEntityManager: () => ({ findOne: jest.fn() }) } },
-				typeOrmRepository: { value: { manager: { find: jest.fn().mockResolvedValue([]) } } },
+				typeOrmRepository: {
+					value: {
+						manager: {
+							find: jest.fn().mockResolvedValue([]),
+							createQueryBuilder: () => slotFiguresQueryBuilder(() => [])
+						}
+					}
+				},
 				buildMikroOrmTimeLogWhere: { value: jest.fn().mockResolvedValue({}) },
 				serialize: { value: (entity: unknown) => entity }
 			});
@@ -234,7 +241,14 @@ describe('TimeLogService and the organization default billing rate', () => {
 			const self = Object.create(TimeLogService.prototype, {
 				ormType: { value: MultiORMEnum.MikroORM },
 				mikroOrmRepository: { value: { find, getEntityManager: () => ({ findOne: jest.fn() }) } },
-				typeOrmRepository: { value: { manager: { find: jest.fn().mockResolvedValue([]) } } },
+				typeOrmRepository: {
+					value: {
+						manager: {
+							find: jest.fn().mockResolvedValue([]),
+							createQueryBuilder: () => slotFiguresQueryBuilder(() => [])
+						}
+					}
+				},
 				buildMikroOrmTimeLogWhere: { value: jest.fn().mockResolvedValue({}) },
 				serialize: { value: (entity: unknown) => entity }
 			});

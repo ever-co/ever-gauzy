@@ -9,8 +9,10 @@ import {
 	Post,
 	Put,
 	Query,
-	UseGuards
+	UseGuards,
+	UseInterceptors
 } from '@nestjs/common';
+import { HiddenProjectsInterceptor } from '../../organization-project/hidden-projects.interceptor';
 import { DeleteResult, UpdateResult } from 'typeorm';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ID, IDailyPlan, IDailyPlanTasksUpdateInput, IPagination, PermissionsEnum } from '@gauzy/contracts';
@@ -31,6 +33,7 @@ function shaped(params: DailyPlanQueryDTO, page: IPagination<IDailyPlan>): IPagi
 @ApiTags('Daily Plan')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.DAILY_PLAN_UPDATE)
+@UseInterceptors(HiddenProjectsInterceptor)
 @Controller('/daily-plan')
 export class DailyPlanController extends CrudController<DailyPlan> {
 	constructor(private readonly dailyPlanService: DailyPlanService) {

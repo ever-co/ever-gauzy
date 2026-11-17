@@ -1,0 +1,122 @@
+@use 'themes' as *;
+
+$inset: 16px;
+
+.crop {
+  width: min(26rem, calc(100vw - 2rem));
+  margin: 0;
+}
+
+.crop__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.crop__title {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.crop__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: nb-theme(text-hint-color);
+  cursor: pointer;
+
+  &:hover {
+    background-color: nb-theme(color-basic-transparent-hover);
+  }
+
+  nb-icon {
+    font-size: 1.25rem;
+  }
+}
+
+.crop__body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.crop__stage {
+  position: relative;
+  width: min(20rem, calc(100vw - 6rem));
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: nb-theme(border-radius);
+  background-color: #1a1a1a;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+
+  &:focus-visible {
+    outline: 2px solid nb-theme(color-primary-500);
+    outline-offset: 2px;
+  }
+}
+
+.crop__stage--dragging {
+  cursor: grabbing;
+}
+
+.crop__image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  max-width: none;
+  max-height: none;
+  transform-origin: 0 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.crop__image--ready {
+  opacity: 1;
+}
+
+// The circle is a hole in a dark veil: what is outside it is shown dimmed, so the frame reads at a glance.
+.crop__mask {
+  position: absolute;
+  inset: $inset;
+  border-radius: 50%;
+  box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.55);
+  outline: 1px solid rgba(255, 255, 255, 0.7);
+  pointer-events: none;
+}
+
+.crop__hint {
+  margin: 0;
+  font-size: 0.75rem;
+  color: nb-theme(text-hint-color);
+}
+
+.crop__zoom {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: min(20rem, calc(100vw - 6rem));
+}
+
+.crop__slider {
+  flex: 1 1 auto;
+  min-width: 0;
+  accent-color: nb-theme(color-primary-500);
+  cursor: pointer;
+}
+
+.crop__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}

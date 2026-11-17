@@ -1,11 +1,11 @@
 @mixin density-tokens() {
   --gauzy-table-font-size: 0.6875rem;
   --gauzy-table-line-height: 1rem;
-  --gauzy-table-cell-padding-y: 0.1875rem;
+  --gauzy-table-cell-padding-y: 0.4375rem;
   --gauzy-table-cell-padding-x: 0.4375rem;
   --gauzy-table-header-font-size: 0.75rem;
   --gauzy-table-header-line-height: 0.8125rem;
-  --gauzy-table-header-padding-y: 0.3125rem;
+  --gauzy-table-header-padding-y: 0.5625rem;
   --gauzy-table-header-padding-x: 0.4375rem;
   --gauzy-table-filter-padding-y: 0.1875rem;
   --gauzy-table-control-height: 1.5rem;
@@ -27,9 +27,9 @@
   --gauzy-table-badge-padding-y: 0.1875rem;
   --gauzy-table-chip-font-size: 0.625rem;
   --gauzy-table-chip-line-height: 0.75rem;
-  --gauzy-table-chip-padding-y: 0;
+  --gauzy-table-chip-padding-y: 0.125rem;
   --gauzy-table-chip-padding-x: 0.3125rem;
-  --gauzy-table-chip-gap: 0.125rem;
+  --gauzy-table-chip-gap: 0.25rem;
   --gauzy-table-chip-block-gap: 0.5rem;
   // ── People cells, at the Invoices scale ───────────────────────────────────
   // These two used to be pinned DOWN here (1rem avatar, 0.6875rem name) so a
@@ -72,7 +72,8 @@
 
 @mixin surface() {
   background: var(--gauzy-card-1, var(--background-basic-color-1));
-  box-shadow: inset 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+  border: 1px solid var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+  box-shadow: none;
   border-radius: var(--border-radius, 0.5rem);
 }
 

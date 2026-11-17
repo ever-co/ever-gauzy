@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { OnLoad } from '@mikro-orm/core';
-import { RelationId, JoinColumn, AfterLoad } from 'typeorm';
+import { RelationId, JoinColumn, JoinTable, AfterLoad } from 'typeorm';
 import { Exclude } from 'class-transformer';
 import { IsBoolean, IsDateString, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import * as moment from 'moment';
@@ -17,6 +17,7 @@ import {
 	ITimeSlot,
 	IOrganizationTeam,
 	IInvoiceItem,
+	ITag,
 	ID
 } from '@gauzy/contracts';
 import { isBetterSqlite3, isMySQL } from '@gauzy/config';
@@ -26,6 +27,7 @@ import {
 	OrganizationContact,
 	OrganizationProject,
 	OrganizationTeam,
+	Tag,
 	Task,
 	TenantOrganizationBaseEntity,
 	Timesheet,
@@ -374,6 +376,29 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog, I
 		onDelete: 'CASCADE'
 	})
 	timeSlots?: ITimeSlot[];
+
+	/**
+	 * The tags the time is filed under: the kind of work, whatever the task (ever-co/ever-gauzy#12029). Tags of the
+	 * log's organization, or of its whole tenant; the writes check each one (see time-log-tags.ts). One-sided: the core
+	 * `Tag` entity gets no inverse property, so its own reads and counters are unchanged. Deleting a tag removes it from
+	 * every log; the logs stay.
+	 */
+	@MultiORMManyToMany(() => Tag, {
+		/** Database cascade action on update. */
+		onUpdate: 'CASCADE',
+		/** Database cascade action on delete. */
+		onDelete: 'CASCADE',
+		/** The time log owns the relation. */
+		owner: true,
+		/** Pivot table for many-to-many relationship. */
+		pivotTable: 'tag_time_log',
+		/** Column in pivot table referencing 'time_log' primary key. */
+		joinColumn: 'timeLogId',
+		/** Column in pivot table referencing 'tag' primary key. */
+		inverseJoinColumn: 'tagId'
+	})
+	@JoinTable({ name: 'tag_time_log' })
+	tags?: ITag[];
 
 	/*
 	|--------------------------------------------------------------------------

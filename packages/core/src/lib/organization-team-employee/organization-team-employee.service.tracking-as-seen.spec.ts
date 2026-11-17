@@ -4,7 +4,9 @@ import '../core/entities/internal';
 import { ConflictException } from '@nestjs/common';
 import { IOrganizationTeamEmployeeUpdateInput, RolesEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
+import { MultiORMEnum } from '../core/utils';
 import { TRACKING_SWITCH_CHANGED } from '../time-tracking/timer/tracking-switch-rule';
+import { OrganizationTeamEmployee } from './organization-team-employee.entity';
 import { OrganizationTeamEmployeeService } from './organization-team-employee.service';
 
 /**
@@ -20,6 +22,9 @@ describe('OrganizationTeamEmployeeService.updateMember — the tracking switch t
 	let publish: jest.Mock;
 	let update: jest.Mock;
 	let stored: { isTrackingEnabled: boolean | null };
+	/** The switch the write's locked read finds: another admin may have saved one since the check. */
+	let atWrite: { isTrackingEnabled: boolean | null } | null;
+	let lockedRead: jest.Mock;
 
 	const updateMember = (changes: IOrganizationTeamEmployeeUpdateInput) =>
 		service.updateMember('member-1', { ...scope, ...changes });
@@ -49,15 +54,22 @@ describe('OrganizationTeamEmployeeService.updateMember — the tracking switch t
 			isManager: false,
 			employee: { user: { role: { name: RolesEnum.EMPLOYEE } } }
 		}));
+		atWrite = null;
+		// The write's transaction: its locked read answers the switch as stored then (see tracking-switch-as-seen.ts)
+		lockedRead = jest.fn(async () => ({ id: membership.id, ...(atWrite ?? stored) }));
+		const transaction = { findOne: lockedRead, getRepository: jest.fn(() => ({})) };
 		service = Object.create(OrganizationTeamEmployeeService.prototype);
+		Object.defineProperty(service, 'ormType', { get: () => MultiORMEnum.TypeORM });
 		Object.assign(service, {
 			_eventBus: { publish },
 			update,
 			findOneByWhereOptions: readMembership,
 			withoutEmployeeFilter: (work: () => Promise<unknown>) => work(),
 			typeOrmOrganizationTeamEmployeeRepository: {
+				target: OrganizationTeamEmployee,
 				findOne: readMembership,
-				exists: jest.fn(async () => true)
+				exists: jest.fn(async () => true),
+				manager: { transaction: jest.fn(async (work: (manager: unknown) => unknown) => work(transaction)) }
 			}
 		});
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue('tenant-1');
@@ -101,6 +113,26 @@ describe('OrganizationTeamEmployeeService.updateMember — the tracking switch t
 		await updateMember({ isTrackingEnabled: false });
 
 		expect(update).toHaveBeenCalledWith('member-1', { ...scope, isTrackingEnabled: false });
+		expect(lockedRead).not.toHaveBeenCalled();
 		expect(publish).toHaveBeenCalledTimes(1);
+	});
+
+	it('compares the switch again with the write, reading the membership in the scope the update names', async () => {
+		await updateMember({ isTrackingEnabled: false, expectedIsTrackingEnabled: true });
+
+		expect(lockedRead).toHaveBeenCalledTimes(1);
+		expect(lockedRead.mock.calls[0][1].where).toEqual({ id: 'member-1', tenantId: 'tenant-1', ...scope });
+		expect(update).toHaveBeenCalledTimes(1);
+	});
+
+	it('refuses an update when another admin saved the switch after the check, and writes and announces nothing', async () => {
+		// The screen and the check both read tracking on; another admin turned it off before the write
+		atWrite = { isTrackingEnabled: false };
+
+		expect(await refusalCodeOf({ isTrackingEnabled: true, expectedIsTrackingEnabled: true })).toBe(
+			TRACKING_SWITCH_CHANGED
+		);
+		expect(update).not.toHaveBeenCalled();
+		expect(publish).not.toHaveBeenCalled();
 	});
 });

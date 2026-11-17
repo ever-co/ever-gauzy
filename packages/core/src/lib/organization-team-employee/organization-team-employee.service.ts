@@ -34,6 +34,7 @@ import {
 	rankOfRole,
 	TrackingSwitchRank
 } from '../time-tracking/timer/tracking-switch-rule';
+import { writeUnderTrackingSwitchAsSeen } from '../time-tracking/timer/tracking-switch-as-seen';
 
 @Injectable()
 export class OrganizationTeamEmployeeService extends TenantAwareCrudService<OrganizationTeamEmployee> {
@@ -542,7 +543,7 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 		const asSeen = await this.withTrackingSwitchAsSeen(memberId, entity);
 		const changes = await this.withTrackingSwitchAllowed(memberId, asSeen);
 		const membershipTurnedOff = await this.membershipTrackingTurnsOff(memberId, changes);
-		const result = await this.update(memberId, changes);
+		const result = await this.updateUnderTrackingSwitchAsSeen(memberId, entity, changes);
 		if (membershipTurnedOff) {
 			const { employeeId, organizationId, tenantId, organizationTeamId } = membershipTurnedOff;
 			this._eventBus.publish(
@@ -556,7 +557,9 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 	 * The update without `expectedIsTrackingEnabled`, the switch the caller's screen showed: a request flag, never
 	 * written. When it is sent and the stored switch differs (no value reads as on, as the timer reads it), someone
 	 * changed it since that screen was read, and the update is refused before anything is written: it would act on a
-	 * state that is gone, for example stop a timer started since (ever-co/ever-gauzy#11830).
+	 * state that is gone, for example stop a timer started since (ever-co/ever-gauzy#11830). A switch saved after this
+	 * check is caught by the write itself, which compares it again under lock (see
+	 * {@link updateUnderTrackingSwitchAsSeen}).
 	 *
 	 * Read past the employee filter: a team manager changes another member's row. An update that names no membership
 	 * of the team is left to `update`, which changes no row then.
@@ -590,6 +593,44 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 		}
 		assertTrackingSwitchAsSeen(membership.isTrackingEnabled !== false, expectedIsTrackingEnabled);
 		return changes;
+	}
+
+	/**
+	 * Makes the update, as {@link update} does. When the caller says which switch its screen showed
+	 * (`expectedIsTrackingEnabled`), the switch is compared again with the write, as one: the membership is read under
+	 * lock in the update's transaction, and the update is made there only when its switch is still the one the screen
+	 * showed (see `writeUnderTrackingSwitchAsSeen`). The check before ({@link withTrackingSwitchAsSeen}) answers a
+	 * screen that was stale already; this one, a switch another admin saved after that check.
+	 *
+	 * @param memberId The membership to update.
+	 * @param entity The update as the caller sent it, with the switch its screen showed.
+	 * @param changes The changes to write.
+	 * @returns The update result.
+	 * @throws ConflictException With the code TRACKING_SWITCH_CHANGED when the stored switch differs; nothing is written.
+	 */
+	private async updateUnderTrackingSwitchAsSeen(
+		memberId: ID,
+		entity: IOrganizationTeamEmployeeUpdateInput,
+		changes: IOrganizationTeamEmployeeUpdateInput
+	): Promise<OrganizationTeamEmployee | UpdateResult> {
+		const { expectedIsTrackingEnabled, organizationId, organizationTeamId } = entity;
+		const saysWhatItSaw = expectedIsTrackingEnabled !== undefined && expectedIsTrackingEnabled !== null;
+		if (!saysWhatItSaw) {
+			return await this.update(memberId, changes);
+		}
+		const tenantId = RequestContext.currentTenantId() || entity.tenantId;
+		return await writeUnderTrackingSwitchAsSeen(
+			this,
+			{
+				typeOrm: this.typeOrmOrganizationTeamEmployeeRepository,
+				mikroOrm: this.mikroOrmOrganizationTeamEmployeeRepository
+			},
+			{ id: memberId, tenantId, organizationId, organizationTeamId },
+			// No value reads as on, as the timer reads it
+			(isTrackingEnabled) => isTrackingEnabled !== false,
+			expectedIsTrackingEnabled,
+			(service) => service.update(memberId, changes)
+		);
 	}
 
 	/**

@@ -84,23 +84,33 @@ import { UploadQueueItem } from '../../services/upload-queue.service';
 				justify-content: space-between;
 				align-items: center;
 				gap: 0.5rem;
-				padding: 0.5rem 0.75rem;
-				font-size: var(--docs-label-size, 0.6875rem);
+				min-height: 2.5rem;
+				padding: 0.25rem 0.5rem 0.25rem 0.75rem !important;
+				border-bottom: 1px solid var(--docs-hairline, rgba(126, 126, 143, 0.18)) !important;
+				font-size: var(--docs-meta-size, 0.75rem);
 				font-weight: 600;
-				letter-spacing: 0.02em;
-				text-transform: uppercase;
-				color: var(--docs-text-muted, var(--text-hint-color));
+				line-height: 1rem;
+				color: var(--docs-text, var(--text-basic-color));
 			}
 			.docs-upload-progress nb-card-body {
-				padding: 0.25rem 0.75rem 0.5rem;
+				padding: 0 !important;
 			}
+			/* name + size | state (or progress bar) | actions — the state sits right
+			   beside its dismiss button rather than in a fixed column mid-row. */
 			.docs-upload-row {
 				display: grid;
-				grid-template-columns: minmax(0, 1fr) minmax(6rem, 12rem) auto;
+				grid-template-columns: minmax(0, 1fr) auto auto;
 				align-items: center;
 				gap: 0.75rem;
-				padding: 0.25rem 0;
+				min-height: 2.5rem;
+				padding: 0.25rem 0.5rem 0.25rem 0.75rem;
 				font-size: var(--docs-body-size, 0.8125rem);
+			}
+			.docs-upload-row + .docs-upload-row {
+				border-top: 1px solid var(--docs-hairline, rgba(126, 126, 143, 0.18));
+			}
+			.docs-upload-row nb-progress-bar {
+				width: 10rem;
 			}
 			.docs-upload-meta {
 				display: flex;
@@ -134,9 +144,13 @@ import { UploadQueueItem } from '../../services/upload-queue.service';
 			.docs-upload-state {
 				display: inline-flex;
 				align-items: center;
+				justify-self: end;
 				gap: 0.25rem;
 				font-size: var(--docs-meta-size, 0.75rem);
 				white-space: nowrap;
+			}
+			.docs-upload-state nb-icon {
+				font-size: 0.875rem;
 			}
 			.docs-upload-state.done {
 				color: var(--color-success-default);
@@ -179,6 +193,10 @@ import { UploadQueueItem } from '../../services/upload-queue.service';
 				.docs-upload-row .docs-upload-state {
 					grid-column: 1 / -1;
 					grid-row: 2;
+					justify-self: start;
+				}
+				.docs-upload-row nb-progress-bar {
+					width: 100%;
 				}
 			}
 		`

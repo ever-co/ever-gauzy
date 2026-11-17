@@ -1,5 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
+import { MikroORM, RequestContext as MikroOrmRequestContext } from '@mikro-orm/core';
 import { DataSource, In, IsNull, MoreThan } from 'typeorm';
 import * as moment from 'moment';
 import 'moment-timezone';
@@ -29,12 +30,14 @@ import {
 	UserOrganization
 } from '../core/entities/internal';
 import { isUniqueViolation } from '../core/errors/unique-violation';
+import { getORMType, MultiORMEnum } from '../core/utils';
 import { invoiceTimeZoneOf } from '../invoice/invoice-date.util';
 import { InvoiceService } from '../invoice/invoice.service';
 import { CURRENT_MEMBERSHIP } from '../organization-project/organization-project-rate.service';
 import { RoleAuthorizationService } from '../role/role-authorization.service';
 import { canViewTrackedData } from '../shared/guards/employee-tracked-data.guard';
 import { defaultBillRateOf } from '../time-tracking/time-log/default-bill-rate';
+import { findStoredRatesOf, storesRates } from '../time-tracking/time-log/time-log-rates';
 import { TimeLogService } from '../time-tracking/time-log/time-log.service';
 import { UserService } from '../user/user.service';
 import { InvoiceScheduleRun } from './invoice-schedule-run.entity';
@@ -47,9 +50,13 @@ import {
 import {
 	billableEntriesOf,
 	durationRoundingRuleOf,
+	ILinePrice,
 	IScheduledInvoiceLine,
+	IScheduledTimeLog,
 	invoiceTimeOf,
+	keptLinePriceOf,
 	linePriceOf,
+	LogPriceOf,
 	oneCurrencyInvoiceOf,
 	totalOfLines
 } from './invoice-schedule-pricing';
@@ -66,7 +73,10 @@ export interface IInvoiceScheduleSweepReport {
 	sent: number;
 	/** The periods without billable time to bill. */
 	empty: number;
-	/** The runs that made no invoice, or could not send it; the next sweep tries a failure again while it is due. */
+	/**
+	 * The runs that made no invoice, or made one they could not send. The next sweep takes again a run that made no
+	 * invoice, while its period is due; an invoice that could not be sent stays a draft, and its run says why.
+	 */
 	failed: number;
 }
 
@@ -174,7 +184,8 @@ export class InvoiceScheduleRunService {
 		private readonly userService: UserService,
 		private readonly roleAuthorizationService: RoleAuthorizationService,
 		private readonly timeLogService: TimeLogService,
-		private readonly invoiceService: InvoiceService
+		private readonly invoiceService: InvoiceService,
+		@Optional() private readonly orm?: MikroORM
 	) {}
 
 	/**
@@ -412,8 +423,24 @@ export class InvoiceScheduleRunService {
 	/**
 	 * Runs work with the access of the schedule's author, as their own request would: inside a request context of
 	 * theirs, read again now. An author who can no longer make invoices of the organization makes nothing.
+	 *
+	 * Under DB_ORM=mikro-orm the author and the time are read through MikroORM, which refuses its global EntityManager
+	 * outside a request: the author is then read, and the work done, in a MikroORM request context of its own, as the
+	 * API's requests do.
 	 */
 	private async asAuthor(
+		schedule: InvoiceSchedule,
+		work: (author: IAuthenticatedUser) => Promise<IRunEnd>
+	): Promise<IRunEnd> {
+		const runsOnMikroOrm = !!this.orm && getORMType() === MultiORMEnum.MikroORM;
+		if (runsOnMikroOrm) {
+			return await MikroOrmRequestContext.create(this.orm.em, () => this.asAuthorNow(schedule, work));
+		}
+		return await this.asAuthorNow(schedule, work);
+	}
+
+	/** `asAuthor`, once the ORM's own context is open. */
+	private async asAuthorNow(
 		schedule: InvoiceSchedule,
 		work: (author: IAuthenticatedUser) => Promise<IRunEnd>
 	): Promise<IRunEnd> {
@@ -439,13 +466,23 @@ export class InvoiceScheduleRunService {
 	}
 
 	/**
-	 * Sends the draft a stopped process saved and did not send, unless the invoice's own email went already (its
-	 * delivery is recorded): then it is only marked Sent, and the client gets no second email.
+	 * Sends the draft a stopped process saved and did not send, unless the invoice's own email went already: then it is
+	 * only marked Sent, and the client gets no second email.
+	 *
+	 * The email went when one of the invoice's email rows says the mail transport took it (`sentAt`). A row that names
+	 * the invoice without saying so records an attempt, not a delivery: its row is written before the PDF is rendered
+	 * and the mail is handed over, so a process stopped in between leaves it behind with nothing sent, and the draft is
+	 * sent again. A process stopped after the transport took the email and before it wrote `sentAt` leaves the same
+	 * row, so its client may get the invoice twice: a second email is the lesser harm next to an invoice marked Sent
+	 * that never went.
 	 */
 	private async sendSaved(schedule: InvoiceSchedule, saved: Invoice, author: IAuthenticatedUser): Promise<IRunEnd> {
-		const delivered = await this.dataSource.getRepository(EstimateEmail).count({
-			where: { invoiceId: saved.id, tenantId: schedule.tenantId }
-		});
+		const delivered = await this.dataSource
+			.getRepository(EstimateEmail)
+			.createQueryBuilder('delivery')
+			.where({ invoiceId: saved.id, tenantId: schedule.tenantId })
+			.andWhere('delivery.sentAt IS NOT NULL')
+			.getCount();
 		if (delivered > 0) {
 			await this.markSent(saved);
 			return { status: InvoiceScheduleRunStatusEnum.SENT, invoiceId: saved.id };
@@ -548,15 +585,19 @@ export class InvoiceScheduleRunService {
 			billableOnly: true,
 			notInvoiced: true
 		} as never);
-		const entries = billableEntriesOf(logs, new Set(projectIds), durationRoundingRuleOf(organization));
-		if (entries.length === 0) {
+		const clientProjectIds = new Set(projectIds);
+		const roundingRule = durationRoundingRuleOf(organization);
+		const hasBillableTime = billableEntriesOf(logs, clientProjectIds, roundingRule).length > 0;
+		if (!hasBillableTime) {
 			return {
 				status: InvoiceScheduleRunStatusEnum.NO_TIME,
 				reason: InvoiceScheduleRunReasonEnum.NO_BILLABLE_TIME
 			};
 		}
 
-		const priceOf = await this.pricesOf(entries, projects, organization);
+		const priceOf = await this.pricesOf(logs, projects, organization);
+		const priceOfLog = await this.keptPricesOf(logs, organization, priceOf);
+		const entries = billableEntriesOf(logs, clientProjectIds, roundingRule, priceOfLog);
 		const time = invoiceTimeOf(entries, schedule.grouping, priceOf);
 		const invoice = oneCurrencyInvoiceOf(time.lines);
 		const leftOutSeconds = time.unpricedSeconds + invoice.otherCurrencySeconds;
@@ -589,13 +630,13 @@ export class InvoiceScheduleRunService {
 		return { ...drafted, ...(await this.send(saved, client, author, leftOut)) };
 	}
 
-	/** The price of each member's time on each project of the client. */
+	/** The price today of each member's time on each project of the client. */
 	private async pricesOf(
-		entries: ReturnType<typeof billableEntriesOf>,
+		logs: ReadonlyArray<IScheduledTimeLog>,
 		projects: OrganizationProject[],
 		organization: Organization
-	) {
-		const employeeIds = [...new Set(entries.map(({ employeeId }) => employeeId))];
+	): Promise<(projectId: ID, employeeId: ID) => ILinePrice> {
+		const employeeIds = [...new Set(logs.map(({ employeeId }) => employeeId).filter(Boolean))];
 		const employees = await this.dataSource.getRepository(Employee).find({
 			where: { id: In(employeeIds), tenantId: organization.tenantId },
 			select: { id: true, billRateValue: true, billRateCurrency: true }
@@ -627,6 +668,33 @@ export class InvoiceScheduleRunService {
 				organizationCurrency: organization.currency ?? null,
 				defaultRate
 			});
+		};
+	}
+
+	/**
+	 * The price of each log's time: at the rates it keeps (ever-co/ever-gauzy#11917), so an hour is billed at the price
+	 * it was worked at; a log that keeps none (recorded around the API) at today's, as all time was before.
+	 */
+	private async keptPricesOf(
+		logs: ReadonlyArray<IScheduledTimeLog>,
+		organization: Organization,
+		priceOf: (projectId: ID, employeeId: ID) => ILinePrice
+	): Promise<LogPriceOf> {
+		const logIds = logs.map(({ id }) => id).filter(Boolean);
+		const kept = await findStoredRatesOf(this.dataSource.manager, logIds, organization.tenantId);
+		const organizationCurrency = organization.currency ?? null;
+		const defaultRate = defaultBillRateOf(organization);
+		return (log) => {
+			const rates = kept.get(log.id);
+			if (!storesRates(rates)) {
+				return priceOf(log.projectId, log.employeeId);
+			}
+			const keptPrice = keptLinePriceOf(rates, organizationCurrency, defaultRate);
+			// Rates kept empty (none was set when the time was worked) price nothing: today's rates price the time
+			if (keptPrice.rate === null) {
+				return priceOf(log.projectId, log.employeeId);
+			}
+			return keptPrice;
 		};
 	}
 

@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
+import { MikroORM } from '@mikro-orm/core';
 import { Brackets, DataSource, In, IsNull, LessThanOrEqual } from 'typeorm';
 import { BaseEntityEnum, EmployeeNotificationTypeEnum, ID, IEmployeeNotificationCreateInput } from '@gauzy/contracts';
 import {
@@ -111,7 +112,9 @@ export class TimerReminderService {
 
 	constructor(
 		private readonly dataSource: DataSource,
-		private readonly notifications: EmployeeNotificationService
+		private readonly notifications: EmployeeNotificationService,
+		/** Opens the MikroORM request context a notification is written in under DB_ORM=mikro-orm. */
+		@Optional() private readonly orm?: MikroORM
 	) {}
 
 	/**
@@ -315,8 +318,11 @@ export class TimerReminderService {
 			tenantId: log.tenantId
 		};
 		try {
-			await runInTimerReminderContext({ tenantId: log.tenantId, organizationId: log.organizationId }, () =>
-				this.notifications.create(input)
+			await runInTimerReminderContext(
+				{ tenantId: log.tenantId, organizationId: log.organizationId },
+				() => this.notifications.create(input),
+				undefined,
+				this.orm
 			);
 		} catch (error) {
 			if (!(await this.isFiled(claim.employeeNotificationId, log.tenantId))) {

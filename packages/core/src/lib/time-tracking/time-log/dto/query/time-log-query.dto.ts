@@ -1,7 +1,7 @@
 import { ApiPropertyOptional, IntersectionType, OmitType, PickType } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString, IsTimeZone, IsUUID } from 'class-validator';
+import { IsArray, IsEnum, IsOptional, IsString, IsTimeZone, IsUUID } from 'class-validator';
 import { Transform, TransformFnParams } from 'class-transformer';
-import { IGetTimeLogReportInput, ITimesheet, ReportGroupFilterEnum } from '@gauzy/contracts';
+import { ID, IGetTimeLogReportInput, ITimesheet, ReportGroupFilterEnum } from '@gauzy/contracts';
 import { parseToBoolean } from '@gauzy/utils';
 import { BaseQueryDTO } from '../../../../core/dto/base-query.dto';
 import { FiltersQueryDTO, RelationsQueryDTO, SelectorsQueryDTO } from '../../../../shared/dto';
@@ -69,22 +69,82 @@ export class TimeLogQueryDTO
 	@IsOptional()
 	@Transform(({ value }: TransformFnParams) => parseToBoolean(value))
 	readonly includeBreaks: boolean;
+
+	@ApiPropertyOptional({
+		type: () => String,
+		isArray: true,
+		description: "Keep the time logs that carry one of these tags (the log's own tags, not its task's)."
+	})
+	@IsOptional()
+	@Transform(({ value }: TransformFnParams) => toList(value))
+	@IsArray()
+	@IsUUID('all', { each: true })
+	readonly tagIds: ID[];
+
+	@ApiPropertyOptional({
+		type: () => Boolean,
+		description:
+			'Keep the time logs that carry no tag: alone, only those; with tagIds, those as well as the logs carrying one of the tags.'
+	})
+	@IsOptional()
+	@Transform(({ value }: TransformFnParams) => parseToBoolean(value))
+	readonly untagged: boolean;
+}
+
+/**
+ * A list sent in a query string: `tagIds[]=a&tagIds[]=b` arrives as a list, `tagIds=a` as one value.
+ *
+ * @param value The value the query string holds.
+ * @returns The value as a list.
+ */
+function toList(value: unknown): unknown {
+	const isListOrNothing = value === undefined || value === null || Array.isArray(value);
+	if (isListOrNothing) {
+		return value;
+	}
+	return [value];
 }
 
 /**
  * The budget limit routes count every log against the budget through their own queries: `billableOnly`,
- * `includeTimeWithoutTeam` and `notInvoiced` are not offered there, and the whitelist drops them if sent.
+ * `includeTimeWithoutTeam`, `notInvoiced` and the tag filters are not offered there, and the whitelist drops them if
+ * sent.
  */
 export class TimeLogBudgetQueryDTO extends OmitType(TimeLogQueryDTO, [
 	'billableOnly',
 	'includeTimeWithoutTeam',
 	'notInvoiced',
-	'includeBreaks'
+	'includeBreaks',
+	'tagIds',
+	'untagged'
 ] as const) {}
 
 /**
- * Get time log list request DTO validation: the filters above plus an optional page (`take`, and
- * `skip` as a 1-based page number). Without `take` the whole list is returned, as the timesheet and
- * dashboard clients that sum it expect.
+ * Asks the client rates each time log keeps. Offered on the entry list and the daily report only; every other time
+ * log read drops it.
  */
-export class TimeLogListQueryDTO extends IntersectionType(TimeLogQueryDTO, PickType(BaseQueryDTO, ['take', 'skip'])) {}
+export class ClientRatesQueryDTO {
+	@ApiPropertyOptional({
+		type: () => Boolean,
+		description:
+			'State the client rates each log keeps (clientRates) and whether it keeps its rates (ratesStored). Answered ' +
+			'to an admin, or to a manager of every project named in projectIds; anyone else gets 403. Without it, the ' +
+			'answer is unchanged.'
+	})
+	@IsOptional()
+	@Transform(({ value }: TransformFnParams) => parseToBoolean(value))
+	readonly withClientRates?: boolean;
+}
+
+/** The daily report's query: the filters above, and the client rates on request. */
+export class TimeLogDailyReportQueryDTO extends IntersectionType(TimeLogQueryDTO, ClientRatesQueryDTO) {}
+
+/**
+ * Get time log list request DTO validation: the filters above plus an optional page (`take`, and
+ * `skip` as a 1-based page number), and the client rates on request. Without `take` the whole list is returned, as
+ * the timesheet and dashboard clients that sum it expect.
+ */
+export class TimeLogListQueryDTO extends IntersectionType(
+	TimeLogQueryDTO,
+	IntersectionType(PickType(BaseQueryDTO, ['take', 'skip']), ClientRatesQueryDTO)
+) {}

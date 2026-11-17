@@ -9,7 +9,8 @@ import { DurationRoundingDirectionEnum, ID, InvoiceScheduleGroupingEnum } from '
  *   is not billed: its time is not over.
  * - **The rate.** An hour of a member's time on a project is billed at their client rate on the project, else the
  *   project's, else their own billing rate, else the organization's default. Client rates are in the project's
- *   currency, a member's own rate in theirs, the default in its own; each falls back on the organization's.
+ *   currency, a member's own rate in theirs, the default in its own; each falls back on the organization's. A log
+ *   that keeps the rates it was worked at is billed at those, by the same chain; the default is never kept.
  * - **The lines.** By task (one line per project, member and task), by member (per project and member), or by project
  *   (per project and currency, each member's time priced at their own rate first, then stated at the average rate
  *   weighted by time, so the arithmetic on the document holds).
@@ -47,15 +48,6 @@ export interface IDurationRoundingRule {
 	direction: DurationRoundingDirectionEnum;
 }
 
-/** A member's time on a task of a project, and the logs it adds up. */
-export interface IBillableEntry {
-	projectId: ID;
-	employeeId: ID;
-	taskId: ID | null;
-	seconds: number;
-	timeLogIds: ID[];
-}
-
 /** Which rate priced the time. */
 export type InvoiceRateSource = 'member' | 'project' | 'employee' | 'default';
 
@@ -65,6 +57,20 @@ export interface ILinePrice {
 	currency: string | null;
 	source: InvoiceRateSource | null;
 }
+
+/** A member's time on a task of a project, and the logs it adds up. */
+export interface IBillableEntry {
+	projectId: ID;
+	employeeId: ID;
+	taskId: ID | null;
+	seconds: number;
+	timeLogIds: ID[];
+	/** The price of each hour, when each log was priced on its own: the logs of one entry share it. */
+	price?: ILinePrice;
+}
+
+/** The price of one log's time, when each log is priced at the rates it keeps. */
+export type LogPriceOf = (log: IScheduledTimeLog) => ILinePrice;
 
 /** A line of the invoice. */
 export interface IScheduledInvoiceLine {
@@ -153,18 +159,33 @@ function memberKeyOf(projectId: ID, employeeId: ID): string {
 	return [projectId, employeeId].join('|');
 }
 
+/** The key time priced the same goes under: the same rate in the same currency. */
+function priceKeyOf(price: ILinePrice): string {
+	return [price.rate ?? 'none', price.currency ?? ''].join('|');
+}
+
+/** A key, followed by the entry's own price when each log was priced on its own, so two rates make two lines. */
+function withPriceKey(key: string, entry: Pick<IBillableEntry, 'price'>): string {
+	if (!entry.price) {
+		return key;
+	}
+	return [key, priceKeyOf(entry.price)].join('|');
+}
+
 /**
- * The billable time of the given projects, per project, member and task. A log counts only when it is billable, has a
- * project and a member, and makes time once rounded.
+ * The billable time of the given projects, per project, member and task, and per price when each log is priced on
+ * its own. A log counts only when it is billable, has a project and a member, and makes time once rounded.
  *
  * @param logs The period's time logs.
  * @param projectIds The client's projects.
  * @param rule The organization's rounding rule, or null.
+ * @param priceOfLog The price of each log's time, when each log is priced at the rates it keeps.
  */
 export function billableEntriesOf(
 	logs: ReadonlyArray<IScheduledTimeLog>,
 	projectIds: ReadonlySet<ID>,
-	rule: IDurationRoundingRule | null
+	rule: IDurationRoundingRule | null,
+	priceOfLog?: LogPriceOf
 ): IBillableEntry[] {
 	const byKey = new Map<string, IBillableEntry>();
 	for (const log of logs) {
@@ -179,8 +200,12 @@ export function billableEntriesOf(
 			continue;
 		}
 		const taskId = log.taskId ?? null;
-		const key = entryKeyOf(projectId, employeeId, taskId);
-		const entry = byKey.get(key) ?? { projectId, employeeId, taskId, seconds: 0, timeLogIds: [] };
+		const priced: Pick<IBillableEntry, 'price'> = {};
+		if (priceOfLog) {
+			priced.price = priceOfLog(log);
+		}
+		const key = withPriceKey(entryKeyOf(projectId, employeeId, taskId), priced);
+		const entry = byKey.get(key) ?? { projectId, employeeId, taskId, seconds: 0, timeLogIds: [], ...priced };
 		entry.seconds += seconds;
 		if (log.id) {
 			entry.timeLogIds.push(log.id);
@@ -275,6 +300,42 @@ export function linePriceOf(input: ILinePriceInput): ILinePrice {
 	return { rate: null, currency: null, source: null };
 }
 
+/** The rates a time log keeps, as the pricing reads them: each client rate in the currency it kept. */
+export interface IKeptLogRates {
+	projectMemberBillRateValue?: unknown;
+	projectMemberBillRateCurrency?: string | null;
+	projectBillRateValue?: unknown;
+	projectBillRateCurrency?: string | null;
+	billRateValue?: unknown;
+	billRateCurrency?: string | null;
+}
+
+/**
+ * What an hour of a log's time is billed at the rates it keeps, by the same chain as {@link linePriceOf}: the member's
+ * client rate on the project it kept, else the project's, else the billing rate it kept, else the organization's
+ * default, which no log keeps.
+ */
+export function keptLinePriceOf(
+	kept: IKeptLogRates,
+	organizationCurrency: string | null,
+	defaultRate: ILinePriceInput['defaultRate'] = null
+): ILinePrice {
+	const keepsMemberRate = rateValueOf(kept.projectMemberBillRateValue) !== null;
+	let clientCurrency = kept.projectBillRateCurrency ?? null;
+	if (keepsMemberRate) {
+		clientCurrency = kept.projectMemberBillRateCurrency ?? null;
+	}
+	return linePriceOf({
+		memberRate: kept.projectMemberBillRateValue,
+		projectRate: kept.projectBillRateValue,
+		projectCurrency: clientCurrency,
+		employeeRate: kept.billRateValue,
+		employeeCurrency: kept.billRateCurrency ?? null,
+		organizationCurrency,
+		defaultRate
+	});
+}
+
 /**
  * Hours to the hundredth, half up. The seconds are divided by the seconds of a hundredth of an hour (36) in one step:
  * a tie such as 3618 s (1.005 h) is then exactly a half, where hours times a hundred came out at 100.49999999999999
@@ -305,7 +366,7 @@ function groupedEntriesOf(
 	}
 	const byMember = new Map<string, IBillableEntry>();
 	for (const entry of entries) {
-		const key = memberKeyOf(entry.projectId, entry.employeeId);
+		const key = withPriceKey(memberKeyOf(entry.projectId, entry.employeeId), entry);
 		const current = byMember.get(key) ?? { ...entry, taskId: null, seconds: 0, timeLogIds: [] };
 		current.seconds += entry.seconds;
 		current.timeLogIds.push(...entry.timeLogIds);
@@ -315,6 +376,14 @@ function groupedEntriesOf(
 }
 
 type PriceOf = (projectId: ID, employeeId: ID) => ILinePrice;
+
+/** An entry's price: its own when each log was priced on its own, else the member's on the project. */
+function entryPriceOf(entry: IBillableEntry, priceOf: PriceOf): ILinePrice {
+	if (entry.price) {
+		return entry.price;
+	}
+	return priceOf(entry.projectId, entry.employeeId);
+}
 
 /** One project's time in one currency, each member's priced at their own rate. */
 interface IProjectWorth {
@@ -331,7 +400,7 @@ function projectLinesOf(entries: ReadonlyArray<IBillableEntry>, priceOf: PriceOf
 	const byProject = new Map<string, IProjectWorth>();
 	let unpricedSeconds = 0;
 	for (const entry of groupedEntriesOf(entries, InvoiceScheduleGroupingEnum.MEMBER)) {
-		const { rate, currency } = priceOf(entry.projectId, entry.employeeId);
+		const { rate, currency } = entryPriceOf(entry, priceOf);
 		if (rate === null) {
 			unpricedSeconds += entry.seconds;
 			continue;
@@ -391,7 +460,7 @@ export function invoiceTimeOf(
 	const lines: IScheduledInvoiceLine[] = [];
 	let unpricedSeconds = 0;
 	for (const entry of groupedEntriesOf(entries, grouping)) {
-		const { rate, currency } = priceOf(entry.projectId, entry.employeeId);
+		const { rate, currency } = entryPriceOf(entry, priceOf);
 		if (rate === null) {
 			unpricedSeconds += entry.seconds;
 			continue;
@@ -400,10 +469,11 @@ export function invoiceTimeOf(
 		if (hours <= 0) {
 			continue;
 		}
-		const key =
-			grouping === InvoiceScheduleGroupingEnum.TASK
-				? entryKeyOf(entry.projectId, entry.employeeId, entry.taskId)
-				: memberKeyOf(entry.projectId, entry.employeeId);
+		let groupKey = memberKeyOf(entry.projectId, entry.employeeId);
+		if (grouping === InvoiceScheduleGroupingEnum.TASK) {
+			groupKey = entryKeyOf(entry.projectId, entry.employeeId, entry.taskId);
+		}
+		const key = withPriceKey(groupKey, entry);
 		lines.push({
 			key,
 			projectId: entry.projectId,

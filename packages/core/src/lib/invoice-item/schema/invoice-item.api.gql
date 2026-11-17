@@ -118,6 +118,16 @@ extend type Mutation {
 	A document that does not exist is not refused by this field: nothing here reads the document, and
 	the lines are stored as they are stated. The document's own surface is where its existence is
 	established.
+
+	`expectedUpdatedAt` is the `updatedAt` the document was read with, as the REST route takes it in its
+	query string: stated, the lines are replaced only while the document still holds it (a document that
+	does not exist is then refused, status 404), and otherwise nothing is stored and the error is
+	`CONCURRENT_MODIFICATION` (status 409), with the document as it is now in
+	`extensions.details.invoice`. Left out, the lines are replaced as they always were.
 	"""
-	createInvoiceItemsInBulk(invoiceId: ID!, input: [CreateInvoiceItemInput!]!): [InvoiceItem!]!
+	createInvoiceItemsInBulk(
+		invoiceId: ID!
+		input: [CreateInvoiceItemInput!]!
+		expectedUpdatedAt: DateTime
+	): [InvoiceItem!]!
 }

@@ -27,31 +27,25 @@ import { DocumentKnowledgeStatusEnum, DocumentReviewStatusEnum, IDocument } from
 				gap: 0.25rem;
 				max-width: 100%;
 				height: var(--gauzy-table-badge-height, 1.25rem);
-				padding: 0 var(--gauzy-table-chip-padding-x, 0.375rem);
-				border-radius: var(--docs-radius, 0.375rem);
-				font-size: var(--gauzy-table-chip-font-size, 0.6875rem);
+				font-size: var(--docs-cell-font-size, 0.75rem);
 				line-height: 1;
 				white-space: nowrap;
 				overflow: hidden;
 				text-overflow: ellipsis;
-				background: var(--docs-surface-sunken, var(--background-basic-color-2));
 			}
+			/* Plain text, no chip: indexed reads as normal text, everything else is muted. */
 			.docs-badge {
 				color: var(--docs-text-muted, var(--text-hint-color));
 			}
 			.docs-badge.indexed {
-				color: var(--color-primary-default);
+				color: var(--docs-text, var(--text-basic-color));
 			}
 			.docs-badge.failed {
 				color: var(--color-danger-default);
 			}
-			.docs-badge.excluded {
-				box-shadow: inset 0 0 0 1px var(--border-basic-color-4);
-				background: transparent;
-			}
 			.docs-badge.review-pill {
 				color: var(--color-warning-default);
-				margin-left: 0.25rem;
+				margin-left: 0.5rem;
 			}
 			.docs-badge nb-icon {
 				font-size: 0.75rem;

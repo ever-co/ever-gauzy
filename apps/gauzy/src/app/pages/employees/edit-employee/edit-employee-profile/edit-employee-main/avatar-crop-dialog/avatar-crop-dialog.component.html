@@ -1,0 +1,89 @@
+<nb-card class="crop">
+	<nb-card-header class="crop__header">
+		<h6 class="crop__title">{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.PHOTO.EDIT_TITLE' | translate }}</h6>
+		<button
+			type="button"
+			class="crop__close"
+			[attr.aria-label]="'BUTTONS.CLOSE' | translate"
+			(click)="cancel()"
+		>
+			<nb-icon icon="close-outline"></nb-icon>
+		</button>
+	</nb-card-header>
+
+	<nb-card-body class="crop__body">
+		<div
+			#stage
+			class="crop__stage"
+			[class.crop__stage--dragging]="!!drag"
+			tabindex="0"
+			role="img"
+			[attr.aria-label]="'EMPLOYEES_PAGE.EDIT_EMPLOYEE.PHOTO.HINT' | translate"
+			(pointerdown)="onPointerDown($event)"
+			(pointermove)="onPointerMove($event)"
+			(pointerup)="onPointerUp($event)"
+			(pointercancel)="onPointerUp($event)"
+			(wheel)="onWheel($event)"
+			(keydown)="onKeydown($event)"
+		>
+			<img
+				class="crop__image"
+				[class.crop__image--ready]="ready"
+				[src]="objectUrl"
+				[style.transform]="imageTransform"
+				alt=""
+				draggable="false"
+				(load)="onImageLoad($event)"
+				(error)="onImageError()"
+			/>
+			<span class="crop__mask" aria-hidden="true"></span>
+		</div>
+
+		<p class="crop__hint">{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.PHOTO.HINT' | translate }}</p>
+
+		<div class="crop__zoom">
+			<button
+				type="button"
+				nbButton
+				ghost
+				size="small"
+				[disabled]="!ready || zoom <= minZoom"
+				[attr.aria-label]="'EMPLOYEES_PAGE.EDIT_EMPLOYEE.PHOTO.ZOOM_OUT' | translate"
+				(click)="zoomBy(-0.25)"
+			>
+				<nb-icon icon="minus-outline"></nb-icon>
+			</button>
+			<input
+				class="crop__slider"
+				type="range"
+				step="0.01"
+				[min]="minZoom"
+				[max]="maxZoom"
+				[value]="zoom"
+				[disabled]="!ready"
+				[attr.aria-label]="'EMPLOYEES_PAGE.EDIT_EMPLOYEE.PHOTO.ZOOM' | translate"
+				(input)="onZoomInput($event)"
+			/>
+			<button
+				type="button"
+				nbButton
+				ghost
+				size="small"
+				[disabled]="!ready || zoom >= maxZoom"
+				[attr.aria-label]="'EMPLOYEES_PAGE.EDIT_EMPLOYEE.PHOTO.ZOOM_IN' | translate"
+				(click)="zoomBy(0.25)"
+			>
+				<nb-icon icon="plus-outline"></nb-icon>
+			</button>
+		</div>
+	</nb-card-body>
+
+	<nb-card-footer class="crop__footer">
+		<button type="button" nbButton outline status="basic" (click)="cancel()">
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button type="button" nbButton status="primary" [disabled]="!ready || saving" (click)="save()">
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

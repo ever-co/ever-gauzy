@@ -160,6 +160,9 @@ $gauzy-density: (
   // overlapped avatars need a ring to stay legible, and a ring is exactly the
   // per-person border this treatment exists to get rid of.
   gauzy-people-stack-gap: 0.125rem,
+  gauzy-people-stack-overlap: 0.3125rem,
+  gauzy-people-stack-ring-width: 0.125rem,
+  gauzy-people-more-padding-x: 0.3125rem,
   // Names truncate on WIDTH, never on a character count: anything shorter
   // than this renders in full, only genuinely long names get an ellipsis.
   gauzy-people-name-max-width: 8rem,

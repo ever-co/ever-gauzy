@@ -17,6 +17,12 @@ import { ScheduleTimeLogEntriesHandler } from '../time-log/commands/handlers/sch
 import { TimeSlotDurationRecalculateCommand } from '../time-slot/commands';
 import { EMPLOYEE_TURN_FAILSAFE_MS, TimerService } from './timer.service';
 
+// These logs carry no tags: the tags the timer reads and answers are proven in timer.service.tags.spec.ts
+jest.mock('../time-log/time-log-tags', () => ({
+	...jest.requireActual('../time-log/time-log-tags'),
+	loadTimeLogTags: jest.fn(async () => undefined)
+}));
+
 const EMPLOYEE_ID = 'employee-1';
 const NOW = new Date('2026-10-24T02:00:00.000Z');
 const ONE_HOUR_AGO = new Date('2026-10-24T01:00:00.000Z');

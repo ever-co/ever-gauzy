@@ -132,10 +132,13 @@ extend type Mutation {
 	"""
 	Records the buyer's answer to an estimate.
 
-	The delivered route's body is exactly the one member, and it is required: an estimate is answered
-	accepted or rejected, and a body that states neither has answered nothing.
+	The delivered route's body is the answer, and it is required: an estimate is answered accepted or
+	rejected, and a body that states neither has answered nothing. `expectedUpdatedAt` is the `updatedAt`
+	the estimate was read with: stated, the answer is saved only while the estimate still holds it, and
+	otherwise nothing is saved and the error is `CONCURRENT_MODIFICATION` (status 409), with the estimate
+	as it is now in `extensions.details.invoice`. Left out, the answer is saved as it always was.
 	"""
-	updateInvoiceEstimate(id: ID!, isAccepted: Boolean!): Invoice!
+	updateInvoiceEstimate(id: ID!, isAccepted: Boolean!, expectedUpdatedAt: DateTime): Invoice!
 
 	"""
 	Moves a document along: its status, its settlement, its note, the recipient it was sent to.
@@ -172,8 +175,13 @@ extend type Mutation {
 	This is the hard removal, and it is the one to reach for only for a document that was raised in
 	error: the payments applied against a document and the lines that explain it are the store's own
 	rows to refuse or to cascade, and a document a buyer holds is withdrawn instead.
+
+	`expectedUpdatedAt` is the `updatedAt` the document was read with: stated, the document is removed
+	only while it still holds it, and otherwise nothing is removed and the error is
+	`CONCURRENT_MODIFICATION` (status 409), with the document as it is now in
+	`extensions.details.invoice`. Left out, the document is removed as it always was.
 	"""
-	deleteInvoice(id: ID!): Boolean!
+	deleteInvoice(id: ID!, expectedUpdatedAt: DateTime): Boolean!
 
 	"""
 	Withdraws a document without removing the row.
