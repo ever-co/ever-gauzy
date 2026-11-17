@@ -151,6 +151,15 @@ export function isDummyImageUrl(value: unknown): value is string {
 }
 
 /**
+ * Whether `value` is a placeholder URL, drawn by the API ({@link getPlaceholderImageUrl}) or by the former generator.
+ *
+ * @param value - Any value.
+ */
+export function isPlaceholderImageUrl(value: unknown): value is string {
+	return typeof value === 'string' && (value.includes(`${PLACEHOLDER_IMAGE_PATH}/`) || isDummyImageUrl(value));
+}
+
+/**
  * Replaces a placeholder URL of the former generator (`https://dummyimage.com/330x300/269aff/ffffff.jpg&text=A`,
  * stored in many existing rows) by the same placeholder drawn by the API, so that showing a record never calls that
  * third party. Any other value is returned as it is.
