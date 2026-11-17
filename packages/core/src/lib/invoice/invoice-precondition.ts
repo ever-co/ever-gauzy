@@ -75,13 +75,15 @@ export function expectedUpdatedAtOf(value: unknown): Date | null {
 /**
  * The precondition a GraphQL field states, as an instant; null when it states none. The `DateTime` scalar hands the
  * field what the caller sent once it checked that it names an instant: RFC 3339 text, or milliseconds since the epoch.
- * Text is then read as {@link expectedUpdatedAtOf} reads a route's, so both surfaces take the same values.
+ * Text is then read as {@link expectedUpdatedAtOf} reads a route's, so both surfaces take the same text. Milliseconds
+ * are taken here because the scalar takes them for every `DateTime`; the REST routes, whose DTOs and query strings
+ * carry text, take ISO 8601 text only.
  *
  * @param value The `expectedUpdatedAt` argument or input member, as the scalar parsed it.
  * @returns The instant, or null when the field states no precondition.
  * @throws BadRequestException when the text is no strict ISO 8601 date and time.
  */
-export function graphqlPreconditionOf(value: string | number | Date | null | undefined): Date | null {
+export function graphqlPreconditionOf(value: string | number | null | undefined): Date | null {
 	if (typeof value === 'number') {
 		return expectedUpdatedAtOf(new Date(value));
 	}
