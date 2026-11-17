@@ -30,6 +30,11 @@ jest.mock('@gauzy/core', () => {
 		TenantOrganizationBaseEntity: class {},
 		TenantBaseEntity: class {},
 		MikroOrmBaseEntityRepository: class {},
+		// MikroORM's own request context under DB_ORM=mikro-orm, given the instance, as the platform's helper opens it.
+		runInMikroOrmContext: (orm: { em: unknown } | null | undefined, work: () => Promise<unknown>) =>
+			orm && process.env.DB_ORM === 'mikro-orm'
+				? jest.requireActual('@mikro-orm/core').RequestContext.create(orm.em, work)
+				: work(),
 		createSsrfSafeHttpsAgent: () => undefined,
 		verifyWebhookSignature: () => true,
 		TaskUpdateCommand,

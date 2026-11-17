@@ -2,13 +2,21 @@
  * The due-date sweep's paging: due dates already reported do not hold back a task due later, a task busy with another
  * run is left to the next sweep, and one sweep runs a rule for at most a batch of tasks.
  */
-// The services the sweep is given are doubled below; their modules (and the platform's barrel) are not loaded.
-jest.mock('@gauzy/core', () => ({}));
+// The services the sweep is given are doubled below; their modules (and the platform's barrel) are not loaded. The one
+// helper the sweep takes from the barrel opens MikroORM's own request context, as the platform's does.
+jest.mock('@gauzy/core', () => {
+	const { RequestContext } = jest.requireActual('@mikro-orm/core');
+	return {
+		runInMikroOrmContext: (orm: { em: unknown } | null | undefined, work: () => Promise<unknown>) =>
+			orm && process.env.DB_ORM === 'mikro-orm' ? RequestContext.create(orm.em, work) : work()
+	};
+});
 jest.mock('../services/task-automation-rule.service', () => ({ TaskAutomationRuleService: class {} }));
 jest.mock('../services/task-automation-runner.service', () => ({ TaskAutomationRunner: class {} }));
 jest.mock('../services/task-automation-run.store', () => ({ TaskAutomationRunStore: class {} }));
 jest.mock('../services/task-automation-task-reader.service', () => ({ TaskAutomationTaskReader: class {} }));
 
+import { RequestContext as MikroOrmRequestContext } from '@mikro-orm/core';
 import { TaskAutomationRunOutcomeEnum, TaskAutomationTriggerEnum } from '@gauzy/contracts';
 import { DataSource } from 'typeorm';
 import { TaskAutomationRetryLaterError } from '../services/task-automation-task-lock';
@@ -31,7 +39,7 @@ const dueTasks = (count: number, from = 0) =>
 		dueDate: new Date(NOW.getTime() - 60 * 60_000 + (from + index) * 1_000)
 	}));
 
-function sweepOver(all: Array<{ id: string; dueDate: Date }>, finished: Set<string>, run = jest.fn()) {
+function sweepOver(all: Array<{ id: string; dueDate: Date }>, finished: Set<string>, run = jest.fn(), orm?: unknown) {
 	const reader = {
 		dueTasks: jest.fn(async (_scope: unknown, _window: unknown, limit: number, after: { id: string } | null) => {
 			const start = after ? all.findIndex((task) => task.id === after.id) + 1 : 0;
@@ -43,7 +51,14 @@ function sweepOver(all: Array<{ id: string; dueDate: Date }>, finished: Set<stri
 	};
 	const rules = { enabledRulesOfTrigger: jest.fn(async () => [RULE]) };
 	const dataSource = { options: { type: 'better-sqlite3' } } as unknown as DataSource;
-	const service = new TaskAutomationDueSweepService(dataSource, rules as never, reader as never, { run } as never, runs as never);
+	const service = new TaskAutomationDueSweepService(
+		dataSource,
+		rules as never,
+		reader as never,
+		{ run } as never,
+		runs as never,
+		orm as never
+	);
 	return { service, reader, run };
 }
 
@@ -89,5 +104,38 @@ describe('TaskAutomationDueSweepService', () => {
 
 		expect(await service.sweep(NOW)).toEqual({ rules: 1, runs: 2 });
 		expect(run).toHaveBeenCalledTimes(3);
+	});
+
+	it('under DB_ORM=mikro-orm, runs each task in a MikroORM request context of its own', async () => {
+		// A run writes the task through the platform's CRUD services, which MikroORM refuses outside a request
+		// context: a sweep is never one.
+		const previousOrm = process.env.DB_ORM;
+		process.env.DB_ORM = 'mikro-orm';
+		try {
+			let forks = 0;
+			const orm = { em: { name: 'default', fork: jest.fn(() => ({ name: 'default', fork: ++forks })) } };
+			const writtenIn: unknown[] = [];
+			const run = jest.fn(async () => {
+				const em = MikroOrmRequestContext.getEntityManager();
+				if (!em)
+					throw new Error(
+						'Using global EntityManager instance methods for context specific actions is disallowed.'
+					);
+				writtenIn.push(em);
+				return { outcome: TaskAutomationRunOutcomeEnum.APPLIED };
+			});
+			const { service } = sweepOver(dueTasks(2), new Set(), run, orm);
+
+			expect(await service.sweep(NOW)).toEqual({ rules: 1, runs: 2 });
+			// A fresh fork for each run
+			expect(writtenIn).toEqual([
+				{ name: 'default', fork: 1 },
+				{ name: 'default', fork: 2 }
+			]);
+			expect(MikroOrmRequestContext.getEntityManager()).toBeUndefined();
+		} finally {
+			if (previousOrm === undefined) delete process.env.DB_ORM;
+			else process.env.DB_ORM = previousOrm;
+		}
 	});
 });

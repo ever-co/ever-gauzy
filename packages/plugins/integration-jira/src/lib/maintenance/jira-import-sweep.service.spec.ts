@@ -1,4 +1,5 @@
 import { ConflictException, Logger } from '@nestjs/common';
+import { RequestContext as MikroOrmRequestContext } from '@mikro-orm/core';
 import { FindOperator, IsNull, LessThan, Not } from 'typeorm';
 import { RequestContext } from '@gauzy/core';
 import { JIRA_IMPORT_SWEEP_BATCH, JIRA_IMPORT_SWEEP_SLACK_MS, JIRA_IMPORT_WEBHOOK_STRIDE } from '../jira.constants';
@@ -18,7 +19,7 @@ function mappingOf(id: string, tenantId = 'tenant-1', organizationId = 'org-1'):
 }
 
 /** The sweep over doubles: a scripted repository, connection lookup, claim and import. */
-function sweep(config: Partial<JiraCloudConfig> = {}) {
+function sweep(config: Partial<JiraCloudConfig> = {}, orm?: unknown) {
 	const find = jest.fn().mockResolvedValue([]);
 	let lastListed: JiraProjectMapping[] = [];
 	const tenantsSeen: Array<string | null | undefined> = [];
@@ -48,7 +49,8 @@ function sweep(config: Partial<JiraCloudConfig> = {}) {
 		{ claimImport } as unknown as JiraSyncRunService,
 		{ importMapping } as unknown as JiraSyncService,
 		{ importIntervalMinutes: 15, clientId: 'id', clientSecret: 's', redirectUrl: 'https://api.example.com/cb', webhookBaseUrl: null, ...config } as JiraCloudConfig,
-		{ ensure } as unknown as JiraWebhookService
+		{ ensure } as unknown as JiraWebhookService,
+		orm as never
 	);
 	const list = (mappings: JiraProjectMapping[]) => {
 		lastListed = mappings;
@@ -217,5 +219,58 @@ describe('JiraImportSweepService', () => {
 		expect(await service.run(now)).toEqual({ attention: 0, webhooks: 0, due: 2, imported: 1, skipped: 0, failed: 1 });
 		expect(importMapping).toHaveBeenCalledTimes(1);
 		expect(importMapping.mock.calls[0][1].id).toBe('fine');
+	});
+
+	it('under DB_ORM=mikro-orm, runs each notice, each webhook and each import in a MikroORM request context of its own', async () => {
+		// The sync writes through MikroORM there (the connection's settings, the task maps), which refuses its global
+		// EntityManager outside a request context: a sweep is never one.
+		const previousOrm = process.env.DB_ORM;
+		process.env.DB_ORM = 'mikro-orm';
+		try {
+			let forks = 0;
+			const orm = { em: { name: 'default', fork: jest.fn(() => ({ name: 'default', fork: ++forks })) } };
+			const { service, list, findRefusedUnfiled, ensureAttentionFiled, importMapping, findAllConnected, ensure } =
+				sweep({ webhookBaseUrl: 'https://api.example.com/api/integration/jira/webhook' }, orm);
+			const ranIn: unknown[] = [];
+			const throughMikroOrm = async (): Promise<undefined> => {
+				const em = MikroOrmRequestContext.getEntityManager();
+				if (!em)
+					throw new Error(
+						'Using global EntityManager instance methods for context specific actions is disallowed.'
+					);
+				ranIn.push(em);
+				return undefined;
+			};
+			ensureAttentionFiled.mockImplementation(throughMikroOrm);
+			importMapping.mockImplementation(throughMikroOrm);
+			ensure.mockImplementation(async () => {
+				await throughMikroOrm();
+				return 'refreshed';
+			});
+			findAllConnected.mockResolvedValue([{ id: 'int-tenant-3', tenantId: 'tenant-3', organizationId: 'org-1' }]);
+			findRefusedUnfiled.mockResolvedValue([{ id: 'int-tenant-9' }]);
+			list([mappingOf('first'), mappingOf('second', 'tenant-2')]);
+
+			expect(await service.run(now)).toEqual({
+				attention: 1,
+				webhooks: 1,
+				due: 2,
+				imported: 2,
+				skipped: 0,
+				failed: 0
+			});
+
+			// A fresh fork for each
+			expect(ranIn).toEqual([
+				{ name: 'default', fork: 1 },
+				{ name: 'default', fork: 2 },
+				{ name: 'default', fork: 3 },
+				{ name: 'default', fork: 4 }
+			]);
+			expect(MikroOrmRequestContext.getEntityManager()).toBeUndefined();
+		} finally {
+			if (previousOrm === undefined) delete process.env.DB_ORM;
+			else process.env.DB_ORM = previousOrm;
+		}
 	});
 });

@@ -63,6 +63,8 @@ jest.mock('@gauzy/core', () => {
 		},
 		MultiORMEnum: { TypeORM: 'typeorm', MikroORM: 'mikro-orm' },
 		getORMType: () => mockOrm.current,
+		// No MikroORM instance is wired here: the work runs as it is, as the platform's helper runs it without one.
+		runInMikroOrmContext: (_orm: unknown, work: () => Promise<unknown>) => work(),
 		RequestContext: {
 			currentTenantId: () => mockCaller.tenantId,
 			currentUserId: () => mockCaller.userId,

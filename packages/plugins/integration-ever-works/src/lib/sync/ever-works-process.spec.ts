@@ -53,6 +53,11 @@ jest.mock('@gauzy/core', () => {
 		...Object.fromEntries(
 			['Tenant', 'Employee', 'EmployeeNotification', 'IntegrationTenant', 'IntegrationSetting', 'UserOrganization'].map((name) => [name, { [name]: class {} }[name]])
 		),
+		// MikroORM's own request context under DB_ORM=mikro-orm, given the instance, as the platform's helper opens it.
+		runInMikroOrmContext: (orm: { em: unknown } | null | undefined, work: () => Promise<unknown>) =>
+			orm && process.env.DB_ORM === 'mikro-orm'
+				? jest.requireActual('@mikro-orm/core').RequestContext.create(orm.em, work)
+				: work(),
 		createSsrfSafeHttpsAgent: () => undefined,
 		TaskService: class TaskService {},
 		OrganizationProjectService: class OrganizationProjectService {},

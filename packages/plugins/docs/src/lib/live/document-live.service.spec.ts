@@ -1,5 +1,6 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { NotFoundException } from '@nestjs/common';
+import { RequestContext as MikroOrmRequestContext } from '@mikro-orm/core';
 import { Subject } from 'rxjs';
 import { applyAwarenessUpdate, Awareness, encodeAwarenessUpdate } from 'y-protocols/awareness';
 import * as Y from 'yjs';
@@ -58,6 +59,13 @@ class Table {
 	readonly saves: Array<{ userId: string | undefined; revision: number; json: unknown }> = [];
 	/** How many saves fail before they work again. */
 	failSaves = 0;
+	/**
+	 * Whether a save goes through MikroORM, as under DB_ORM=mikro-orm: refused outside a MikroORM request context, as
+	 * MikroORM refuses its global EntityManager there.
+	 */
+	savesThroughMikroOrm = false;
+	/** The MikroORM contexts the saves ran in. */
+	readonly savedIn: unknown[] = [];
 
 	add(id: string, content: unknown[], access: { readers: string[]; writers: string[] }): IRow {
 		const row: IRow = {
@@ -105,6 +113,15 @@ class Table {
 				if (table.failSaves > 0) {
 					table.failSaves -= 1;
 					throw new Error('the database is away');
+				}
+				if (table.savesThroughMikroOrm) {
+					const em = MikroOrmRequestContext.getEntityManager();
+					if (!em) {
+						throw new Error(
+							'Using global EntityManager instance methods for context specific actions is disallowed.'
+						);
+					}
+					table.savedIn.push(em);
 				}
 				const stored = table.rows.get(row.id)!;
 				stored.contentJson = input.contentJson;
@@ -253,11 +270,18 @@ describe('DocumentLiveService', () => {
 
 	function process_(
 		pubSub: GraphqlPubSub = new GraphqlPubSub(),
-		bridge = new DocumentLiveBridge()
+		bridge = new DocumentLiveBridge(),
+		orm?: unknown
 	): DocumentLiveService {
-		const service = new DocumentLiveService(table.service(), bridge, pubSub, {
-			ofType: () => events.asObservable()
-		} as never);
+		const service = new DocumentLiveService(
+			table.service(),
+			bridge,
+			pubSub,
+			{
+				ofType: () => events.asObservable()
+			} as never,
+			orm as never
+		);
 		service.onModuleInit();
 		services.push(service);
 		return service;
@@ -317,6 +341,36 @@ describe('DocumentLiveService', () => {
 
 		await ann.close();
 		await bob.close();
+	});
+
+	it('under DB_ORM=mikro-orm, saves in a MikroORM request context of its own: a save runs in no request', async () => {
+		const previousOrm = process.env.DB_ORM;
+		process.env.DB_ORM = 'mikro-orm';
+		try {
+			table.add('page-1', [paragraph('Hello')], { readers: ['ann'], writers: ['ann'] });
+			table.savesThroughMikroOrm = true;
+			let forks = 0;
+			const orm = { em: { name: 'default', fork: jest.fn(() => ({ name: 'default', fork: ++forks })) } };
+			const service = process_(undefined, undefined, orm);
+			const ann = new Editor('ann', 'tab-ann-0001');
+			await ann.open(service, 'page-1');
+
+			await ann.type(service, 'page-1', ', world');
+			await until(() => table.saves.length > 0);
+
+			expect(normaliseNode(table.rows.get('page-1')!.contentJson as never)).toEqual(
+				normaliseNode({ type: 'doc', content: [paragraph('Hello, world')] } as never)
+			);
+			// Saved as the editor, each save on a fresh fork
+			expect(table.saves[0].userId).toBe('ann');
+			expect(table.savedIn.length).toBeGreaterThan(0);
+			expect(new Set(table.savedIn.map((em) => (em as { fork: number }).fork)).size).toBe(table.savedIn.length);
+
+			await ann.close();
+		} finally {
+			if (previousOrm === undefined) delete process.env.DB_ORM;
+			else process.env.DB_ORM = previousOrm;
+		}
 	});
 
 	it('merges what an editor wrote while it was offline when it reconnects', async () => {
