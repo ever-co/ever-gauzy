@@ -525,10 +525,36 @@ describe('PromotionService.evaluate — what matches, and what is reported when 
 			expect(usageRepository.findOneBy).toHaveBeenCalledWith({
 				promotionId: limited.id,
 				cartId: CART_1,
+				customerId: CUSTOMER_A,
 				status: PromotionUsageStatus.RESERVED,
 				tenantId: TENANT,
 				organizationId: ORG
 			});
+		});
+
+		it('does not leave out a reservation the cart holds for nobody, which the customer’s count never held', async () => {
+			// A reservation taken while the cart had no buyer is not one of this customer's redemptions, so
+			// leaving it out would take a real use of theirs off the count instead: here, the reservation the
+			// customer's first cart holds.
+			const { service } = fixture([
+				{
+					id: 'usage-reserved-anonymous',
+					tenantId: TENANT,
+					organizationId: ORG,
+					promotionId: 'promo-once',
+					cartId: CART_2,
+					amount: '4.000000',
+					currency: 'USD',
+					status: PromotionUsageStatus.RESERVED
+				}
+			]);
+
+			const evaluation = await service.evaluate(context({ customerId: CUSTOMER_A, cartId: CART_2 }));
+
+			expect(evaluation.result.applications).toEqual([]);
+			expect(evaluation.result.notices.map((notice) => notice.notice)).toEqual([
+				PromotionNotice.PER_CUSTOMER_LIMIT_EXCEEDED
+			]);
 		});
 
 		it('leaves out only the one reservation the cart holds, so another use of the customer still counts', async () => {

@@ -278,6 +278,10 @@ describe('PromotionUsageService — the redemption lifecycle (doc 08 §14.1–§
 		await service.countByCustomer(PROMOTION, CUSTOMER);
 		await service.countLive(PROMOTION);
 
+		expect(count.mock.calls[0][0]).toMatchObject({ where: { promotionId: PROMOTION, customerId: CUSTOMER } });
+		expect(count.mock.calls[1][0]).toMatchObject({ where: { promotionId: PROMOTION } });
+		expect((count.mock.calls[1][0] as { where: Record<string, unknown> }).where).not.toHaveProperty('customerId');
+
 		for (const [options] of count.mock.calls) {
 			const status = (options as { where: Record<string, unknown> }).where.status;
 

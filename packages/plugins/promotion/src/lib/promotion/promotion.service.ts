@@ -947,10 +947,11 @@ export class PromotionService extends TenantScopedCrudService<Promotion> {
 			// The reservation the evaluated cart already holds is one of the customer's live redemptions, and it
 			// is the use this cart would reuse rather than take again: counted against itself, it dropped the
 			// promotion from the cart that reserved it on every recalculation (CodeRabbit on #12057). It is left
-			// out as `PromotionOrderUsageAdapter.assertCustomerHasUseLeft` leaves it out; a reservation another
-			// cart of the customer holds still counts.
+			// out as `PromotionOrderUsageAdapter.assertCustomerHasUseLeft` leaves it out, and only when it is held
+			// for this customer, so it is one of the rows `countByCustomer` counted; a reservation another cart of
+			// the customer holds still counts.
 			const held = context.cartId
-				? await this.promotionUsageService.hasLiveReservation(promotion.id, context.cartId)
+				? await this.promotionUsageService.hasLiveReservation(promotion.id, context.cartId, context.customerId)
 				: false;
 			const used = Math.max(
 				0,
