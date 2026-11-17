@@ -1,24 +1,27 @@
 import { Logger, Optional } from '@nestjs/common';
 import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
-import { DataSource, FindOptionsSelect, In } from 'typeorm';
+import { DataSource, EntityManager, FindOptionsSelect, In } from 'typeorm';
 import { omit, pick } from 'underscore';
-import { ID, ITimeLog, ITimeSlot } from '@gauzy/contracts';
+import { ID, ITimeLog, ITimeSlot, TimesheetStatus } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/utils';
 import { moment } from '../../../../core/moment-extend';
 import { TimesheetRecalculateCommand } from '../../../timesheet/commands';
+import { Timesheet } from '../../../timesheet/timesheet.entity';
 import { TimeSlotBulkDeleteCommand } from '../../../time-slot/commands';
 import { TimeLog } from './../../time-log.entity';
 import { createdChange, deletedChange, updatedChange } from '../../time-log-history';
 import {
 	historySubject,
+	locksRowsForChange,
 	recordTimeLogHistory,
 	TimeLogHistoryOptions,
 	TimeLogHistoryRecord
 } from '../../time-log-history.writer';
+import { isTimeLogUnchangedSince } from '../../time-log-precondition';
 import { TimeLogSplitBusyError, withTimeLogSplitLock } from '../../time-log-split-lock';
 import { DeleteTimeSpanCommand, TimeLogSplitOptions, TimeLogSplitPartChanges } from '../delete-time-span.command';
 import { FindTimeLogRatesCommand } from '../find-time-log-rates.command';
-import { TimeLogUpdateCommand } from '../time-log-update.command';
+import { TimeLogUpdateCommand, TimeLogUpdateOptions } from '../time-log-update.command';
 import { TimeLogDeleteCommand } from '../time-log-delete.command';
 import { UpdateEmployeeTotalWorkedHoursCommand } from '../update-employee-total-worked-hours.command';
 import { generateTimeSlots } from './../../../time-slot/utils';
@@ -54,6 +57,72 @@ const STORED_RATE_SELECT: FindOptionsSelect<TimeLog> = Object.fromEntries([
 function definedChanges(changes: TimeLogSplitPartChanges | undefined): TimeLogSplitPartChanges {
 	const entries = Object.entries(changes ?? {}).filter(([, value]) => value !== undefined);
 	return Object.fromEntries(entries) as TimeLogSplitPartChanges;
+}
+
+/**
+ * Raised under the log's lock, in the transaction of a split's cut, when what the split route checked no longer holds:
+ * the log was written since the route read it (an invoice line billed it, an edit changed it), or its timesheet was
+ * approved or billed. The cut writes nothing, the second part is taken back, and the split answers that the log changed.
+ */
+class TimeLogChangedSinceSplitCheckError extends Error {
+	constructor(timeLogId: ID, what: string) {
+		super(`Time log ${timeLogId} changed since its split was checked: ${what}`);
+		this.name = 'TimeLogChangedSinceSplitCheckError';
+	}
+}
+
+/**
+ * The `updatedAt` the split route read the log at, as an instant: what the split compares the stored log with. Null
+ * when the log it was given carries none (the route's read always does).
+ *
+ * @param checked - The time log as the route read it.
+ */
+function checkedVersionOf(checked: ITimeLog): Date | null {
+	if (checked?.updatedAt === undefined || checked?.updatedAt === null) {
+		return null;
+	}
+	const version = new Date(checked.updatedAt);
+	if (Number.isNaN(version.getTime())) {
+		return null;
+	}
+	return version;
+}
+
+/**
+ * The check a split's cut makes in its own transaction, under the log's lock, before it writes (see
+ * `TimeLogUpdateOptions.assertBeforeWrite`), against the log as the split route read it at `version`:
+ * - the log is still at that version: every write of a log moves its `updatedAt`, an invoice line that bills it
+ *   included (ever-co/ever-teams#5382), and that write locks the same row, so a billing either landed before this read
+ *   and is seen, or waits until the split is whole;
+ * - its timesheet is neither approved nor billed: read under a lock its status change takes too, so an approval either
+ *   landed before and is seen, or waits until the split is whole.
+ *
+ * @param version - The `updatedAt` the route read the log at.
+ * @returns The check.
+ * @throws TimeLogChangedSinceSplitCheckError when either no longer holds.
+ */
+function splitStillAsChecked(version: Date): TimeLogUpdateOptions['assertBeforeWrite'] {
+	return async (manager: EntityManager, current: ITimeLog): Promise<void> => {
+		if (!isTimeLogUnchangedSince(current.updatedAt, version)) {
+			throw new TimeLogChangedSinceSplitCheckError(current.id, 'it was written since');
+		}
+		if (!current.timesheetId) {
+			return;
+		}
+		const timesheet = await manager.findOne(Timesheet, {
+			where: { id: current.timesheetId, tenantId: current.tenantId },
+			select: { id: true, status: true, isBilled: true },
+			loadEagerRelations: false,
+			// A shared lock: the approval's own read locks the row for its change, and waits for this one
+			...(locksRowsForChange() ? { lock: { mode: 'pessimistic_read' as const } } : {})
+		});
+		if (timesheet?.status === TimesheetStatus.APPROVED) {
+			throw new TimeLogChangedSinceSplitCheckError(current.id, 'its timesheet was approved');
+		}
+		if (timesheet?.isBilled === true) {
+			throw new TimeLogChangedSinceSplitCheckError(current.id, 'its timesheet was billed');
+		}
+	};
 }
 
 @CommandHandler(DeleteTimeSpanCommand)
@@ -376,6 +445,9 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	 * @param end - The end of the new range, the start of the second part.
 	 * @param forceDelete - Whether to hard delete what goes (default: false).
 	 * @param split - Given by the split route: what the second part changes, and the history to record.
+	 * @param assertBeforeCut - Given by the split route: what the cut checks under the log's lock, in its own
+	 * transaction, before it writes (see `splitStillAsChecked`). A cut it refuses wrote nothing: only the second part is
+	 * taken back, and its error is raised.
 	 * @throws The error of the write that failed.
 	 */
 	private async splitAround(
@@ -383,11 +455,16 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 		start: Date,
 		end: Date,
 		forceDelete = false,
-		split?: TimeLogSplitOptions
+		split?: TimeLogSplitOptions,
+		assertBeforeCut?: TimeLogUpdateOptions['assertBeforeWrite']
 	): Promise<void> {
 		await this.assertNoSecondPartLeft(log);
 		const secondPart = await this.createSecondPart(log, end, log.stoppedAt, split);
 
+		let options: TimeLogUpdateOptions = {};
+		if (assertBeforeCut) {
+			options = { assertBeforeWrite: assertBeforeCut };
+		}
 		try {
 			// With its own start too: an update naming none files the log under the current week's timesheet
 			await this._commandBus.execute(
@@ -396,10 +473,25 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 					log,
 					true,
 					forceDelete,
-					split?.history
+					split?.history,
+					false,
+					options
 				)
 			);
 		} catch (error) {
+			if (error instanceof TimeLogChangedSinceSplitCheckError) {
+				this.logger.warn(`${error.message}: the split of time log ${log.id} is taken back`);
+				try {
+					await this.takeBackSecondPart(log, secondPart, split?.history);
+				} catch (takeBackError) {
+					// As for a failed recovery: the part left behind blocks the next split of the log until it is deleted
+					this.logger.error(
+						`Error while taking back the second part ${secondPart.id} of time log ${log.id}: ${takeBackError?.message ?? takeBackError}`,
+						takeBackError?.stack
+					);
+				}
+				throw error;
+			}
 			this.logger.error(`Error while cutting back time log ${log.id}: ${error?.message ?? error}`, error?.stack);
 			try {
 				await this.recoverFailedSplit(log, start, secondPart, forceDelete, split?.history);
@@ -549,6 +641,13 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	 * It leaves it whole too when it is no longer the time of the member and organization the route checked the caller
 	 * against.
 	 *
+	 * It leaves it whole as well when the log was written in any other way since the route read it: its `updatedAt` is
+	 * no longer the one read (an invoice line that bills it moves it, ever-co/ever-teams#5382). The route refuses billed
+	 * or approved time, and its check is only as good as the read it made: the cut compares that `updatedAt` again, and
+	 * reads the timesheet, under the locks a billing and an approval take, in the transaction it writes in (see
+	 * `splitStillAsChecked`). A billing or an approval that lands between the route's check and the cut refuses the cut,
+	 * and the split is taken back whole; one that comes after waits for it.
+	 *
 	 * @param log - The time log as stored, with its slots.
 	 * @param checked - The time log as the route read it, when it checked the split.
 	 * @param at - The moment to split at.
@@ -568,7 +667,10 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 		const keepsEnd = moment(log.stoppedAt).isSame(moment(checked.stoppedAt));
 		const keepsMember = log.employeeId === checked.employeeId;
 		const keepsOrganization = log.organizationId === checked.organizationId;
-		const isAsChecked = keepsStart && keepsEnd && keepsMember && keepsOrganization;
+		// The route's read always carries the version; a log given without one is compared on the fields above alone
+		const version = checkedVersionOf(checked);
+		const keepsVersion = version === null || isTimeLogUnchangedSince(log.updatedAt, version);
+		const isAsChecked = keepsStart && keepsEnd && keepsMember && keepsOrganization && keepsVersion;
 		if (!isAsChecked) {
 			this.debug(() => `Time log ${log.id} changed since the split was checked: left whole`);
 			return false;
@@ -580,7 +682,19 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 			this.debug(() => `Time log ${log.id} no longer holds ${at}: left whole`);
 			return false;
 		}
-		await this.splitAround(log, at, at, forceDelete, split);
+		let assertBeforeCut: TimeLogUpdateOptions['assertBeforeWrite'] | undefined;
+		if (version !== null) {
+			assertBeforeCut = splitStillAsChecked(version);
+		}
+		try {
+			await this.splitAround(log, at, at, forceDelete, split, assertBeforeCut);
+		} catch (error) {
+			// Refused under the lock: nothing of the log was written, and the second part was taken back
+			if (error instanceof TimeLogChangedSinceSplitCheckError) {
+				return false;
+			}
+			throw error;
+		}
 		return true;
 	}
 
@@ -638,6 +752,25 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 		await this.restoreRange(log);
 		await this.typeOrmTimeLogRepository.delete({ id: secondPart.id });
 		await this.recordUndoneSplit(log, stored, secondPart, history);
+	}
+
+	/**
+	 * Takes back a split whose cut was refused under the log's lock (see `splitStillAsChecked`): the cut wrote nothing,
+	 * so the log is as the write that came first left it, and stays so (its range, its slots, its timesheet). Only the
+	 * second part is deleted, with its join rows, and that is recorded in the history when the split recorded its
+	 * creation there.
+	 *
+	 * @param log - The time log as it was read before the split.
+	 * @param secondPart - The second part.
+	 * @param history - Given by the split route: the split was recorded in the history.
+	 */
+	private async takeBackSecondPart(
+		log: TimeLog,
+		secondPart: TimeLog,
+		history: TimeLogHistoryOptions | undefined
+	): Promise<void> {
+		await this.typeOrmTimeLogRepository.delete({ id: secondPart.id });
+		await this.recordUndoneSplit(log, null, secondPart, history);
 	}
 
 	/**

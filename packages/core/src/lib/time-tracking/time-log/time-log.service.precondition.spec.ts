@@ -32,12 +32,23 @@ const MANUAL_ENTRY = { logType: TimeLogType.MANUAL, source: TimeLogSourceEnum.WE
 const STORED_VERSION = new Date('2026-11-02T08:00:00.123Z');
 const EARLIER_VERSION = '2026-11-01T08:00:00.000Z';
 
+/** A tag of the organization (ever-co/ever-gauzy#12029), as the tag read of a write answers it. */
+const MEETING_TAG = {
+	id: '7d1e3f5a-2e4f-4a8c-9b1d-0e3f9a5b7c21',
+	organizationId: SPAN_ORGANIZATION_ID,
+	name: 'meeting'
+};
+
 describe('TimeLogService: a manual edit under a precondition', () => {
 	let store: TimeSpanStore;
 	let service: TimeLogService;
+	let tagFind: jest.Mock;
+	let tagsTransaction: jest.Mock;
 
 	beforeEach(async () => {
 		store = new TimeSpanStore();
+		tagFind = jest.fn().mockResolvedValue([MEETING_TAG]);
+		tagsTransaction = jest.fn().mockResolvedValue(undefined);
 		const employee = {
 			id: SPAN_EMPLOYEE_ID,
 			organizationId: SPAN_ORGANIZATION_ID,
@@ -56,7 +67,13 @@ describe('TimeLogService: a manual edit under a precondition', () => {
 					return { canManageEmployee: jest.fn().mockResolvedValue(true) };
 				}
 				if (token === TypeOrmTimeLogRepository) {
-					return { metadata: { tableName: 'time_log' }, find: jest.fn().mockResolvedValue([]) };
+					return {
+						metadata: { tableName: 'time_log' },
+						find: jest.fn().mockResolvedValue([]),
+						// The tags a write names are read through its manager (`timeLogTagsOf`); a write of them outside
+						// the edit's command would open a transaction of its own (`replaceTimeLogTags`)
+						manager: { getRepository: () => ({ find: tagFind }), transaction: tagsTransaction }
+					};
 				}
 				return {};
 			})
@@ -177,6 +194,36 @@ describe('TimeLogService: a manual edit under a precondition', () => {
 		expect(updates[0].input).toMatchObject({ expectedUpdatedAt: STORED_VERSION.toISOString() });
 		// The overlap cleanup ran, as for any edit the precondition lets through
 		expect(commandsRun().some((command) => command instanceof DeleteTimeSpanCommand)).toBe(true);
+	});
+
+	it('hands the tags to the write, which files the entry under them in its checked transaction: none is written after it', async () => {
+		storeEntries();
+		const updates: TimeLogUpdateCommand[] = [];
+		const dispatch = store.execute.getMockImplementation();
+		store.execute.mockImplementation((command: unknown) => {
+			const isTheEdit = command instanceof TimeLogUpdateCommand && 'expectedUpdatedAt' in command.input;
+			if (isTheEdit) {
+				updates.push(command);
+				return Promise.resolve(undefined);
+			}
+			return dispatch(command);
+		});
+
+		const updated = await service.updateManualTime('edited', {
+			employeeId: SPAN_EMPLOYEE_ID,
+			organizationId: SPAN_ORGANIZATION_ID,
+			startedAt: at('10:00'),
+			stoppedAt: at('11:00'),
+			expectedUpdatedAt: STORED_VERSION.toISOString(),
+			tags: [MEETING_TAG.id]
+		} as IManualTimeInput);
+
+		expect(updates).toHaveLength(1);
+		expect(updates[0].options).toEqual({ tagIds: [MEETING_TAG.id] });
+		expect(updates[0].input).not.toHaveProperty('tags');
+		// Written after the command, the tags would replace a change of them saved once the entry's lock is released
+		expect(tagsTransaction).not.toHaveBeenCalled();
+		expect(updated.tags).toEqual([{ id: MEETING_TAG.id, name: 'meeting', color: undefined }]);
 	});
 
 	it('without a precondition, edits as before', async () => {

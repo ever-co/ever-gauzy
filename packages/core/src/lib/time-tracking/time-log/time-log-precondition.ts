@@ -1,9 +1,12 @@
 import { BadRequestException, HttpStatus } from '@nestjs/common';
 import { instanceToPlain } from 'class-transformer';
 import { isISO8601 } from 'class-validator';
+import { EntityManager } from 'typeorm';
 import { ITimeLog } from '@gauzy/contracts';
+import { TimeLog } from '../../core/entities/internal';
 import { ApiErrorCode } from '../../core/errors/api-error-codes';
 import { ApiException } from '../../core/errors/api-exception';
+import { prepareSQLQuery as p } from '../../database/database.helper';
 
 /**
  * A conditional edit of a time entry (`PUT /timesheet/time-log/:id`, ever-co/ever-teams#5382): the `updatedAt` the
@@ -86,6 +89,34 @@ export function updatedAtPast(values: ReadonlyArray<Date | string | number | nul
 		.map((value) => new Date(value).getTime())
 		.filter((time) => !Number.isNaN(time));
 	return new Date(Math.max(Date.now(), ...times.map((time) => time + 1)));
+}
+
+/**
+ * Moves a changed entry's `updatedAt` a millisecond past both what it held when it was locked and the value the change
+ * was checked against, in the change's transaction (ever-co/ever-teams#5382): an edit, and a change of its tags
+ * (ever-co/ever-gauzy#12029). The write's own update date is the database's clock, kept to the second on SQLite and
+ * MySQL and to the start of the transaction on PostgreSQL, and a change of the tags alone writes no column: a second
+ * edit made on the same read could otherwise find the value it read.
+ *
+ * @param manager - The change's transaction.
+ * @param current - The entry as read under lock in it.
+ * @param expectedUpdatedAt - The value the change was checked against, if any.
+ */
+export async function moveUpdatedAtPast(
+	manager: EntityManager,
+	current: Pick<ITimeLog, 'id' | 'tenantId' | 'updatedAt'>,
+	expectedUpdatedAt: Date | null
+): Promise<void> {
+	const updatedAt = updatedAtPast([current.updatedAt, expectedUpdatedAt]);
+	await manager
+		.createQueryBuilder()
+		.update(TimeLog)
+		.set({ updatedAt })
+		.where(p(`"id" = :id`), { id: current.id })
+		.andWhere(p(`"tenantId" = :tenantId`), { tenantId: current.tenantId })
+		// Not a change of the entry's own: the subscribers of an update have nothing to do with it
+		.callListeners(false)
+		.execute();
 }
 
 /**
