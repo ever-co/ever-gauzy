@@ -11,14 +11,23 @@ import {
 	NotFoundException,
 	OnModuleDestroy,
 	OnModuleInit,
+	Optional,
 	UnauthorizedException
 } from '@nestjs/common';
+import { MikroORM } from '@mikro-orm/core';
 import * as decoding from 'lib0/decoding';
 import { Subscription } from 'rxjs';
 import { Awareness, applyAwarenessUpdate, encodeAwarenessUpdate, removeAwarenessStates } from 'y-protocols/awareness';
 import * as Y from 'yjs';
 import { DocumentKindEnum, ID } from '@gauzy/contracts';
-import { currentSubscriberScope, currentSubscriberUserId, EventBus, GraphqlPubSub, RequestContext } from '@gauzy/core';
+import {
+	currentSubscriberScope,
+	currentSubscriberUserId,
+	EventBus,
+	GraphqlPubSub,
+	RequestContext,
+	runInMikroOrmContext
+} from '@gauzy/core';
 import { getDocsConfig } from '../docs.config';
 import { DOCS_NOT_A_PAGE } from '../docs.constants';
 import { Document } from '../entities/document.entity';
@@ -223,7 +232,9 @@ export class DocumentLiveService implements OnModuleInit, OnModuleDestroy, IDocu
 		private readonly documents: DocumentService,
 		private readonly bridge: DocumentLiveBridge,
 		private readonly pubSub: GraphqlPubSub,
-		private readonly eventBus: EventBus
+		private readonly eventBus: EventBus,
+		/** Opens the MikroORM request context a save runs in under DB_ORM=mikro-orm. */
+		@Optional() private readonly orm?: MikroORM
 	) {}
 
 	onModuleInit(): void {
@@ -922,6 +933,11 @@ export class DocumentLiveService implements OnModuleInit, OnModuleDestroy, IDocu
 	/**
 	 * Saves the page's edits, in the request context of the editor whose edit came last.
 	 *
+	 * A save runs from a timer (the debounce, a retry), as the last session leaves, or as the process stops: never in
+	 * a request. Under DB_ORM=mikro-orm the content is saved through MikroORM, which refuses its global EntityManager
+	 * outside a request context: each save then runs in a MikroORM request context of its own, opened inside the
+	 * editor's context (restoring that one would drop a context opened around it).
+	 *
 	 * @returns Whether nothing is left to save.
 	 */
 	private async persist(live: ILiveDocument): Promise<boolean> {
@@ -934,7 +950,7 @@ export class DocumentLiveService implements OnModuleInit, OnModuleDestroy, IDocu
 			live.dirtyRemote = false;
 			return true;
 		}
-		return writer.context.runInAsyncScope(() => this.persistNow(live));
+		return writer.context.runInAsyncScope(() => runInMikroOrmContext(this.orm, () => this.persistNow(live)));
 	}
 
 	private async persistNow(live: ILiveDocument): Promise<boolean> {

@@ -3,7 +3,7 @@ import { INBOX_NOTIFICATION_EXTERNAL_SOURCE, InboxDeliveryChannelEnum, InboxDeli
 import { InboxItem } from '../entities/inbox-item.entity';
 import { InboxItemRecipient } from '../entities/inbox-item-recipient.entity';
 import { InboxDelivery } from './inbox-delivery.entity';
-import { InboxDeliveryContextUnavailableError } from './inbox-delivery-context';
+import { InboxDeliveryContextUnavailableError, runInDeliveryContext } from './inbox-delivery-context';
 import { INBOX_DELIVERY_SKIPPED_READ, INBOX_DELIVERY_TIMER_REMINDER_GRACE_MS } from './inbox-delivery.constants';
 import { InboxDeliveryMailer } from './inbox-delivery-mailer';
 import { InboxDeliveryService } from './inbox-delivery.service';
@@ -68,6 +68,8 @@ function fixture(
 		readEntries?: string[];
 		/** The notifications marked read through the notification API (the notification row's `isRead`). */
 		readNotifications?: string[];
+		/** The MikroORM instance the service is given. */
+		orm?: unknown;
 	} = {}
 ) {
 	// Named keys, not `Record<string, …>`: the plugin compiles with `noPropertyAccessFromIndexSignature` (TS4111).
@@ -158,8 +160,20 @@ function fixture(
 		recordFailure: jest.fn(async (_device: unknown) => false)
 	};
 	const service = options.push
-		? new InboxDeliveryService(dataSource, mailer as unknown as InboxDeliveryMailer, pusher as never, subscriptions as never)
-		: new InboxDeliveryService(dataSource, mailer as unknown as InboxDeliveryMailer);
+		? new InboxDeliveryService(
+				dataSource,
+				mailer as unknown as InboxDeliveryMailer,
+				pusher as never,
+				subscriptions as never,
+				options.orm as never
+			)
+		: new InboxDeliveryService(
+				dataSource,
+				mailer as unknown as InboxDeliveryMailer,
+				undefined,
+				undefined,
+				options.orm as never
+			);
 	return {
 		service,
 		query,
@@ -557,6 +571,42 @@ describe('InboxDeliveryService.sendImmediate', () => {
 		const last = fixture({ due: [dueRow('d1', InboxDeliveryModeEnum.IMMEDIATE, { attempts: 4 })], items: [item('i-d1', '2026-11-07T12:00:00.000Z')], users: { u1: user('u1') }, sendFails: true });
 		await last.service.sendImmediate(NOW, 200);
 		expect(last.delivery.update.mock.calls[0][1]).toMatchObject({ attempts: 5, failedAt: NOW });
+	});
+});
+
+describe('InboxDeliveryService under DB_ORM=mikro-orm', () => {
+	// The send reads the tenant's mail settings through MikroORM there, which refuses its global EntityManager outside a
+	// request: the sweep hands its MikroORM instance to the send's context, which opens one of its own on it (see
+	// `inbox-delivery-context.spec.ts`).
+	it('hands each email, immediate or digest, the MikroORM instance its context opens a MikroORM context on', async () => {
+		const orm = { em: { name: 'default' } };
+		const sending = runInDeliveryContext as jest.Mock;
+		sending.mockClear();
+		const immediate = fixture({
+			orm,
+			due: [dueRow('d1', InboxDeliveryModeEnum.IMMEDIATE)],
+			items: [item('i-d1', '2026-11-07T12:00:00.000Z')],
+			users: { u1: user('u1') }
+		});
+		const digest = fixture({
+			orm,
+			due: [
+				dueRow('a', InboxDeliveryModeEnum.DIGEST),
+				dueRow('b', InboxDeliveryModeEnum.DIGEST),
+				dueRow('c', InboxDeliveryModeEnum.DIGEST, { userId: 'u2' })
+			],
+			items: [
+				item('i-a', '2026-11-07T08:00:00.000Z'),
+				item('i-b', '2026-11-07T11:00:00.000Z'),
+				item('i-c', '2026-11-07T09:00:00.000Z')
+			],
+			users: { u1: user('u1'), u2: user('u2') }
+		});
+
+		expect(await immediate.service.sendImmediate(NOW, 200)).toEqual({ sent: 1, failed: 0, read: 0 });
+		expect(await digest.service.sendDigests(NOW, 200)).toEqual({ sent: 2, failed: 0, read: 0 });
+
+		expect(sending.mock.calls.map((call) => call[2])).toEqual([orm, orm, orm]);
 	});
 });
 

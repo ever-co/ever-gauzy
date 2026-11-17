@@ -34,6 +34,7 @@ import '../core/entities/internal';
 import { Logger } from '@nestjs/common';
 import { CronExpression } from '@nestjs/schedule';
 import type { Job } from 'bullmq';
+import { mikroOrmOutsideRequest } from '../core/testing/mikro-orm-outside-request';
 import {
 	IDEMPOTENCY_CLEANUP_BATCH_SIZE,
 	IDEMPOTENCY_CLEANUP_JOB,
@@ -161,6 +162,48 @@ describe('IdempotencyCleanupWorker — a sweep drains the backlog in bounded bat
 		await worker.handleCleanup(queued());
 
 		expect(purgeExpired).toHaveBeenCalledTimes(3);
+	});
+});
+
+/**
+ * Under DB_ORM=mikro-orm the keys are read and deleted through MikroORM, which refuses its global
+ * EntityManager outside a request — and a queued job is never one: the sweep deleted nothing there. The
+ * MikroORM instance is a real one, over SQLite, that refuses as the API's does.
+ */
+describe('IdempotencyCleanupWorker — under DB_ORM=mikro-orm', () => {
+	const originalOrm = process.env.DB_ORM;
+
+	afterEach(() => {
+		if (originalOrm === undefined) delete process.env.DB_ORM;
+		else process.env.DB_ORM = originalOrm;
+	});
+
+	it('runs each batch in a MikroORM request context of its own', async () => {
+		const mikroOrm = await mikroOrmOutsideRequest();
+		try {
+			process.env.DB_ORM = 'mikro-orm';
+			const deletedThrough: unknown[] = [];
+			// What `purgeExpired` does there: reads the expired keys through the MikroORM repository
+			const purgeExpired = jest.fn(async () => {
+				deletedThrough.push(await mikroOrm.write());
+				return deletedThrough.length === 1 ? IDEMPOTENCY_CLEANUP_BATCH_SIZE : 3;
+			});
+			const worker = new IdempotencyCleanupWorker(
+				{ purgeExpired } as unknown as IdempotencyService,
+				mikroOrm.orm
+			);
+
+			await worker.handleCleanup(queued());
+
+			expect(purgeExpired).toHaveBeenCalledTimes(2);
+			expect(failure).not.toHaveBeenCalled();
+			expect(logged()).toContain(`Deleted ${IDEMPOTENCY_CLEANUP_BATCH_SIZE + 3} expired idempotency key(s)`);
+			// A fresh context for each batch, never the global EntityManager
+			expect(deletedThrough[0]).not.toBe(deletedThrough[1]);
+			expect(deletedThrough).not.toContain(mikroOrm.orm.em);
+		} finally {
+			await mikroOrm.close();
+		}
 	});
 });
 
