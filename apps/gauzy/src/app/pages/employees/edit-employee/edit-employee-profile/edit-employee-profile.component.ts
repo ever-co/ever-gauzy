@@ -96,9 +96,15 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent imple
 		this._employeeStore.userForm$
 			.pipe(
 				tap((value: IUserUpdateInput) => {
+					// The employee the save is for, read now: by the time a queued save runs, the page may show
+					// another employee, whose account must not receive these fields.
+					const target = {
+						employeeId: this.selectedEmployee?.id,
+						userId: this.selectedEmployee?.user?.id
+					};
 					// submitUserForm reports its own failures; the catch keeps the queue moving whatever happens.
 					this._userSaves = this._userSaves
-						.then(() => this.submitUserForm(value))
+						.then(() => this.submitUserForm(value, target))
 						.catch((error) => this._errorHandlingService.handleError(error));
 				}),
 				untilDestroyed(this)
@@ -338,14 +344,17 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent imple
 	 * Submit the user form with updated data
 	 *
 	 * @param user - The updated user data to submit.
+	 * @param target - The employee and user the save is for, as read when it was submitted.
 	 */
-	private async submitUserForm(user: IUserUpdateInput) {
+	private async submitUserForm(user: IUserUpdateInput, target: { employeeId: ID; userId: ID }) {
 		if (user) {
-			// The employee this save is for, read before the request: the page may show another one when it answers.
-			const employeeId = this.selectedEmployee?.id;
+			const { employeeId, userId } = target;
 			try {
+				if (!userId) {
+					throw new Error('No employee was loaded when the change was submitted.');
+				}
 				// Update the user using userService
-				const updated: IUser = await this._userService.update(this.selectedEmployee.user.id, user);
+				const updated: IUser = await this._userService.update(userId, user);
 
 				// A removed photo is `imageId: null` together with an emptied `imageUrl`: the server answers
 				// with the placeholder that replaces it.
