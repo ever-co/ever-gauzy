@@ -8,7 +8,8 @@ import { assertTrackingSwitchAsSeen } from './tracking-switch-rule';
 /** A service's own repositories, one per ORM: the row they serve holds an `isTrackingEnabled` switch. */
 export interface ITrackingSwitchRepositories<E extends ObjectLiteral> {
 	typeOrm: Repository<E>;
-	mikroOrm: MikroOrmBaseEntityRepository<E>;
+	/** Its entity manager, which the service's writes follow into a transaction, and the entity it serves. */
+	mikroOrm: Pick<MikroOrmBaseEntityRepository<object>, 'getEntityManager' | 'getEntityName'>;
 }
 
 /** The switch as a locked read answers it. */
