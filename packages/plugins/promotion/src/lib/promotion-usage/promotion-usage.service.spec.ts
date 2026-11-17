@@ -230,7 +230,7 @@ function serviceUnderTest(rows: IUsageRow[], dialect: 'postgres' | 'sqlite' = 'p
 		}
 	};
 
-	return { rows, service: new PromotionUsageService(repository as never, {} as never) };
+	return { rows, repository, service: new PromotionUsageService(repository as never, {} as never) };
 }
 
 describe('PromotionUsageService — the redemption lifecycle (doc 08 §14.1–§14.3)', () => {
@@ -266,6 +266,33 @@ describe('PromotionUsageService — the redemption lifecycle (doc 08 §14.1–§
 
 		expect(await service.countByCustomer(PROMOTION, CUSTOMER)).toBe(2);
 		expect(await service.countRegistered(PROMOTION)).toBe(2);
+	});
+
+	it('asks the database for the live statuses with In(), not a plain array', async () => {
+		// TypeORM binds a plain array in a `where` as ONE parameter (`status = $1`), which matches no row on a
+		// real database, so the per-customer limit and the live count were always 0. The in-memory double
+		// above reads a plain array as IN, so only the shape of the query catches it.
+		const { service, repository } = serviceUnderTest([]);
+		const count = jest.spyOn(repository, 'count');
+
+		await service.countByCustomer(PROMOTION, CUSTOMER);
+		await service.countLive(PROMOTION);
+
+		expect(count.mock.calls[0][0]).toMatchObject({ where: { promotionId: PROMOTION, customerId: CUSTOMER } });
+		expect(count.mock.calls[1][0]).toMatchObject({ where: { promotionId: PROMOTION } });
+		expect((count.mock.calls[1][0] as { where: Record<string, unknown> }).where).not.toHaveProperty('customerId');
+
+		for (const [options] of count.mock.calls) {
+			const status = (options as { where: Record<string, unknown> }).where.status;
+
+			expect(status).toBeInstanceOf(FindOperator);
+			expect((status as FindOperator<unknown>).type).toBe('in');
+			expect((status as FindOperator<unknown[]>).value).toEqual([
+				PromotionUsageStatus.RESERVED,
+				PromotionUsageStatus.REGISTERED
+			]);
+		}
+		expect(count).toHaveBeenCalledTimes(2);
 	});
 
 	it('reverts the whole redemption under ALWAYS and writes nothing on a second reversal', async () => {
