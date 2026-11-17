@@ -49,6 +49,7 @@ interface ICouponRow {
 interface IUsageRow {
 	id: string;
 	tenantId?: string;
+	organizationId?: string;
 	couponId: string;
 	customerId?: string;
 	status: PromotionUsageStatus;
@@ -106,6 +107,8 @@ function serviceUnderTest(
 	promotions: Record<string, unknown>[] = []
 ) {
 	const published: unknown[] = [];
+	// The `where` of every `promotion_usage` count, as the service handed it to TypeORM.
+	const counted: Record<string, unknown>[] = [];
 
 	const repository = {
 		find: async (options?: { where?: Record<string, unknown> }) =>
@@ -132,8 +135,11 @@ function serviceUnderTest(
 		},
 		manager: {
 			getRepository: () => ({
-				count: async (options?: { where?: Record<string, unknown> }) =>
-					usages.filter((row) => matches(row, options?.where)).length
+				count: async (options?: { where?: Record<string, unknown> }) => {
+					counted.push(options?.where ?? {});
+
+					return usages.filter((row) => matches(row, options?.where)).length;
+				}
 			}),
 			// The promotions a coupon may name: read by id in the caller's tenant and organization.
 			findOneBy: async (_entity: unknown, where: Record<string, unknown>) =>
@@ -166,6 +172,7 @@ function serviceUnderTest(
 	return {
 		coupons,
 		published,
+		counted,
 		service: new CouponService(repository as never, {} as never, {
 			publish: async (event: unknown) => published.push(event)
 		} as never)
@@ -222,8 +229,8 @@ describe('CouponService.validate — whether a code may be used, and why not (do
 		// cancelled is not blocked by their own history.
 		const rows = [coupon({ id: 'c-1', code: 'WELCOME', perCustomerLimit: 1 })];
 		const usages: IUsageRow[] = [
-			{ id: 'u-1', tenantId: TENANT, couponId: 'c-1', customerId: CUSTOMER_A, status: PromotionUsageStatus.REGISTERED },
-			{ id: 'u-2', tenantId: TENANT, couponId: 'c-1', customerId: CUSTOMER_B, status: PromotionUsageStatus.REVERTED }
+			{ id: 'u-1', tenantId: TENANT, organizationId: ORG, couponId: 'c-1', customerId: CUSTOMER_A, status: PromotionUsageStatus.REGISTERED },
+			{ id: 'u-2', tenantId: TENANT, organizationId: ORG, couponId: 'c-1', customerId: CUSTOMER_B, status: PromotionUsageStatus.REVERTED }
 		];
 		const { service } = serviceUnderTest(rows, usages);
 
@@ -240,13 +247,44 @@ describe('CouponService.validate — whether a code may be used, and why not (do
 		// validation then answered COUPON_CUSTOMER_LIMIT_EXCEEDED for a customer who never redeemed it.
 		const rows = [coupon({ id: 'c-1', code: 'WELCOME', perCustomerLimit: 1 })];
 		const usages: IUsageRow[] = [
-			{ id: 'planted-1', tenantId: 'another-tenant', couponId: 'c-1', customerId: CUSTOMER_A, status: PromotionUsageStatus.REGISTERED },
-			{ id: 'planted-2', tenantId: 'another-tenant', couponId: 'c-1', customerId: CUSTOMER_A, status: PromotionUsageStatus.RESERVED }
+			// The same organization identifier on purpose: only the tenant filter tells these rows apart.
+			{ id: 'planted-1', tenantId: 'another-tenant', organizationId: ORG, couponId: 'c-1', customerId: CUSTOMER_A, status: PromotionUsageStatus.REGISTERED },
+			{ id: 'planted-2', tenantId: 'another-tenant', organizationId: ORG, couponId: 'c-1', customerId: CUSTOMER_A, status: PromotionUsageStatus.RESERVED }
 		];
 		const { service } = serviceUnderTest(rows, usages);
 
 		expect(await service.countCustomerRedemptions('c-1', CUSTOMER_A)).toBe(0);
 		expect((await service.validate('WELCOME', { customerId: CUSTOMER_A, at: AT })).valid).toBe(true);
+	});
+
+	it('counts only the caller’s organization’s redemptions, so another organization of the tenant cannot exhaust it either', async () => {
+		// A coupon belongs to one organization (it is read in the caller's tenant and organization), and so does every
+		// usage row a checkout writes for it; a row filed under another organization of the tenant is not one of its
+		// redemptions.
+		const rows = [coupon({ id: 'c-1', code: 'WELCOME', perCustomerLimit: 1 })];
+		const usages: IUsageRow[] = [
+			{ id: 'planted-1', tenantId: TENANT, organizationId: 'another-org', couponId: 'c-1', customerId: CUSTOMER_A, status: PromotionUsageStatus.REGISTERED }
+		];
+		const { service } = serviceUnderTest(rows, usages);
+
+		expect(await service.countCustomerRedemptions('c-1', CUSTOMER_A)).toBe(0);
+		expect((await service.validate('WELCOME', { customerId: CUSTOMER_A, at: AT })).valid).toBe(true);
+	});
+
+	it('names the live statuses with In(), because TypeORM binds a plain array as one parameter rather than as IN', async () => {
+		// The double above reads a plain array as IN as well, so only the shape of the `where` shows the difference.
+		const { service, counted } = serviceUnderTest([coupon({ id: 'c-1', code: 'WELCOME', perCustomerLimit: 1 })]);
+
+		await service.countCustomerRedemptions('c-1', CUSTOMER_A);
+
+		expect(counted).toHaveLength(1);
+		const [where] = counted;
+		expect(where.status).toBeInstanceOf(FindOperator);
+		expect((where.status as FindOperator<unknown>).type).toBe('in');
+		expect([...((where.status as FindOperator<unknown>).value as unknown as PromotionUsageStatus[])].sort()).toEqual(
+			[PromotionUsageStatus.REGISTERED, PromotionUsageStatus.RESERVED].sort()
+		);
+		expect(where).toMatchObject({ couponId: 'c-1', customerId: CUSTOMER_A, tenantId: TENANT, organizationId: ORG });
 	});
 });
 

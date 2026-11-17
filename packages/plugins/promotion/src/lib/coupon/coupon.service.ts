@@ -1,7 +1,7 @@
 // cspell:ignore ABCDEFGHJKMNPQRSTVWXYZ
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { randomBytes } from 'crypto';
-import { FindOptionsWhere, UpdateResult } from 'typeorm';
+import { FindOptionsWhere, In, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { DecimalString, ID, IPagination } from '@gauzy/contracts';
 import {
@@ -374,11 +374,16 @@ export class CouponService extends TenantScopedCrudService<Coupon> {
 	async countCustomerRedemptions(couponId: ID, customerId: ID): Promise<number> {
 		const live = [PromotionUsageStatus.RESERVED, PromotionUsageStatus.REGISTERED];
 
-		// Only the caller's tenant's ledger counts (SEC-D-14): counted across tenants, usage rows another tenant posted
-		// against this coupon and customer exhausted the customer's limit here.
+		// Only the caller's ledger counts (SEC-D-14): the coupon's own tenant and organization, the scope `findUsage` and
+		// `PromotionUsageService.findByCoupon` read it in. Counted across tenants, usage rows another tenant posted
+		// against this coupon and customer exhausted the customer's limit here; another organization of the same
+		// tenant could do the same.
+		// The statuses go in as `In()`: TypeORM binds a plain array in a `where` as ONE parameter (`status = $1`, not
+		// `IN`), so the count never matched a live row (or failed outright, depending on the driver) and the limit never
+		// applied.
 		return this.typeOrmCouponRepository.manager
 			.getRepository('promotion_usage')
-			.count({ where: { couponId, customerId, status: live as never, tenantId: this.scope.tenantId } });
+			.count({ where: { couponId, customerId, status: In(live), ...this.scope } });
 	}
 
 	/**
