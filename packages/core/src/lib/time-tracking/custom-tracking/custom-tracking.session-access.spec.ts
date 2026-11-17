@@ -590,6 +590,23 @@ describe('GET /timesheet/custom-tracking/session/:sessionId and /active — whos
 		);
 	});
 
+	it('keeps the employee scope of a signed-in caller that states the tenant and organization itself', async () => {
+		// The case above turns on the absence of a request user, never on the arguments: code running in a request
+		// that passes the tenant and organization explicitly reads only what that request's caller may read.
+		caller = asEmployee(OWN_EMPLOYEE_ID);
+
+		expect(employeesIn(await service.getSessionsBySessionId(SHARED_SESSION, TENANT_ID, ORGANIZATION_ID))).toEqual([
+			OWN_EMPLOYEE_ID
+		]);
+		await expect(service.getActiveSessions(COLLEAGUE_EMPLOYEE_ID, 30, TENANT_ID, ORGANIZATION_ID)).resolves.toEqual(
+			[]
+		);
+
+		caller = { user: { ...ADMIN.user }, permissions: [PermissionsEnum.TIME_TRACKER] };
+		await expect(service.getActiveSessions(undefined, 30, TENANT_ID, ORGANIZATION_ID)).resolves.toEqual([]);
+		await expect(service.getSessionsBySessionId(SHARED_SESSION, TENANT_ID, ORGANIZATION_ID)).resolves.toEqual([]);
+	});
+
 	it('answers 400, never sessions, to a request that reached the routes or fields with no user', async () => {
 		// The routes and fields pass no tenant, and the tenant of a request is its user's: a request with no user (were
 		// the global `AuthGuard` ever bypassed, as the guards are in this spec) has none, so it is refused before any read.
