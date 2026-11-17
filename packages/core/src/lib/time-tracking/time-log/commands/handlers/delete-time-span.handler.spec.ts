@@ -2,7 +2,7 @@
 import '../../../../core/entities/internal';
 
 import { BadRequestException } from '@nestjs/common';
-import { ITimeSlot, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
+import { ActionTypeEnum, ITimeSlot, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
 import { RequestContext } from '../../../../core/context';
 import { moment } from '../../../../core/moment-extend';
 import { MultiORMEnum } from '../../../../core/utils';
@@ -13,7 +13,8 @@ import { generateTimeSlots } from '../../../time-slot/utils';
 import { addQueryParameters, slotStartRanges } from '../../../testing/recording-query-builder';
 import { TimeLog } from '../../time-log.entity';
 import { TimeLogService } from '../../time-log.service';
-import { DeleteTimeSpanCommand } from '../delete-time-span.command';
+import { DeleteTimeSpanCommand, TimeLogSplitOptions } from '../delete-time-span.command';
+import { FindTimeLogRatesCommand } from '../find-time-log-rates.command';
 import { IGetConflictTimeLogCommand } from '../get-conflict-time-log.command';
 import { TimeLogCreateCommand } from '../time-log-create.command';
 import { TimeLogDeleteCommand } from '../time-log-delete.command';
@@ -212,6 +213,9 @@ const slotStarts = (start: string, stop: string) =>
 
 /** What an operation ended with: the message of the error it raised, or nothing when it raised none. */
 const raised = (outcome: unknown) => (outcome instanceof Error ? outcome.message : undefined);
+
+/** The client rate each project prices its time at, as `FindTimeLogRatesCommand` reads it (CORE-26). */
+const PROJECT_RATES: Record<string, number> = { 'checkout-project': 120 };
 
 /** The timesheet of a date's week, as `TimesheetFirstOrCreateCommand` finds it (no date: the current week's). */
 const timesheetOf = (date?: Date) => `timesheet-${moment.utc(date).startOf('week').format('YYYY-MM-DD')}`;
@@ -566,6 +570,10 @@ function createStore({ slotDeleteOrm = MultiORMEnum.TypeORM }: { slotDeleteOrm?:
 		if (command instanceof UpdateEmployeeTotalWorkedHoursCommand) {
 			return void recalculated.employees.push(String(command.employeeId));
 		}
+		// The client rates of a project a split's second part moves to (CORE-26)
+		if (command instanceof FindTimeLogRatesCommand) {
+			return { projectBillRateValue: PROJECT_RATES[String(command.scope.projectId)] ?? null };
+		}
 		throw new Error(`Unexpected command ${(command as object)?.constructor?.name}`);
 	});
 	const handler = new DeleteTimeSpanHandler(timeLogRepository as any, timeSlotRepository as any, commandBus as any);
@@ -638,6 +646,8 @@ function createStore({ slotDeleteOrm = MultiORMEnum.TypeORM }: { slotDeleteOrm?:
 
 	return {
 		executed,
+		/** The time log repository the handlers write through. */
+		timeLogRepository,
 		/** The totals recalculated so far. */
 		recalculated: () => ({ timesheets: [...recalculated.timesheets], employees: [...recalculated.employees] }),
 		/** Makes a write fail `times` times in a row, after `succeeding` calls of it have gone through. */
@@ -665,8 +675,8 @@ function createStore({ slotDeleteOrm = MultiORMEnum.TypeORM }: { slotDeleteOrm?:
 				startedAt: at(start),
 				stoppedAt: at(stop)
 			}),
-		/** A log of the employee over `start`–`stop`, with a slot for every ten minutes of it. */
-		addLog(id: string, start: string, stop: string, columns: Partial<IStoredLog> = {}) {
+		/** A log of the employee over `start`–`stop`, with a slot for every ten minutes of it unless `withSlots` is false. */
+		addLog(id: string, start: string, stop: string, columns: Partial<IStoredLog> = {}, withSlots = true) {
 			logs.push({
 				id,
 				tenantId: TENANT_ID,
@@ -680,6 +690,9 @@ function createStore({ slotDeleteOrm = MultiORMEnum.TypeORM }: { slotDeleteOrm?:
 				logType: TimeLogType.TRACKED,
 				...columns
 			});
+			if (!withSlots) {
+				return;
+			}
 			for (const slot of generateTimeSlots(at(start), at(stop))) {
 				const startedAt = new Date(slot.startedAt);
 				slots.push({
@@ -729,6 +742,22 @@ function createStore({ slotDeleteOrm = MultiORMEnum.TypeORM }: { slotDeleteOrm?:
 		 */
 		send: (start: string, stop: string, timeLog: TimeLog, timeSlot?: ITimeSlot) =>
 			handler.execute(new DeleteTimeSpanCommand({ start: at(start), end: at(stop) }, timeLog, timeSlot)),
+		/** The split route's command: the log as its caller read it, split at `time` (CORE-26). */
+		split: (time: string, timeLog: TimeLog, split: TimeLogSplitOptions, splitter = handler) =>
+			splitter.execute(
+				new DeleteTimeSpanCommand({ start: at(time), end: at(time) }, timeLog, undefined, false, split)
+			),
+		/**
+		 * A handler over this store given the API's data source, as the API module builds it: it records the history and
+		 * takes the split's lock through it.
+		 */
+		handlerWith: (dataSource: unknown) =>
+			new DeleteTimeSpanHandler(
+				timeLogRepository as any,
+				timeSlotRepository as any,
+				commandBus as any,
+				dataSource as any
+			),
 		/**
 		 * The cleanup for a new `start`–`stop` range, as its callers run it: the logs the conflict lookup reads (those the
 		 * range overlaps, with their slots: the TypeORM lookup joins them), then one command per log, naming no slot.
@@ -1442,3 +1471,392 @@ describe('DeleteTimeSpanHandler when a cut at one end or a delete fails (#11823)
 		expect(outcome).toBe('The slotRemoval failed');
 	});
 });
+
+/**
+ * CORE-26 — the split route's command (`POST /timesheet/time-log/:id/split`): one moment, where the log ends and its
+ * second part starts, through the same split as time saved inside a log, over the scripted store above.
+ */
+describe('DeleteTimeSpanHandler splitting a log at one moment (CORE-26)', () => {
+	beforeEach(() => {
+		jest.spyOn(console, 'log').mockImplementation(() => undefined);
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT_ID);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it("splits Marie's tracked 09:00 to 13:00 at 11:00 into 12 slots each, the second on the other task", async () => {
+		const store = createStore();
+		store.addLog('tracked', '09:00', '13:00', { taskId: 'homepage-redesign' });
+
+		const split = await store.split('11:00', store.read('tracked'), { secondPart: { taskId: 'checkout-bug' } });
+
+		expect(split).toBe(true);
+		expect(store.timeline()).toEqual([
+			{ range: '09:00-11:00', isRunning: false, slots: slotStarts('09:00', '11:00') },
+			{ range: '11:00-13:00', isRunning: false, slots: slotStarts('11:00', '13:00') }
+		]);
+		// Every slot, with what it carries, is still there: none deleted, none shared
+		expect(store.slotCount()).toBe(24);
+		expect(store.deletedSlots()).toEqual({ soft: [], hard: [] });
+		const [first, second] = store.rows();
+		expect(first).toMatchObject({ id: 'tracked', taskId: 'homepage-redesign' });
+		expect(first.splitFromTimeLogId).toBeUndefined();
+		expect(second).toMatchObject({ taskId: 'checkout-bug', splitFromTimeLogId: 'tracked' });
+	});
+
+	it('copies every field the second part does not change, a field left undefined included', async () => {
+		const store = createStore();
+		const fields = { projectId: 'homepage-project', taskId: 'homepage-redesign', description: 'Hero section' };
+		store.addLog('tracked', '09:00', '13:00', fields);
+
+		await store.split('11:00', store.read('tracked'), {
+			secondPart: { taskId: undefined, description: 'Checkout bug' }
+		});
+
+		const [, second] = store.rows();
+		expect(second).toMatchObject({
+			tenantId: TENANT_ID,
+			organizationId: ORGANIZATION_ID,
+			employeeId: EMPLOYEE_ID,
+			timesheetId: timesheetOf(at('09:00')),
+			source: TimeLogSourceEnum.DESKTOP,
+			logType: TimeLogType.TRACKED,
+			projectId: 'homepage-project',
+			taskId: 'homepage-redesign',
+			description: 'Checkout bug'
+		});
+	});
+
+	it("gives a second part on another project that project's client rate, as an edit of the project does", async () => {
+		const store = createStore();
+		store.addLog('tracked', '09:00', '13:00', { projectId: 'homepage-project' });
+
+		await store.split('11:00', store.read('tracked'), { secondPart: { projectId: 'checkout-project' } });
+
+		const [first, second] = store.rows() as Array<Record<string, unknown>>;
+		expect(second).toMatchObject({ projectId: 'checkout-project', projectBillRateValue: 120 });
+		expect(first.projectBillRateValue).toBeUndefined();
+	});
+
+	it('splits a manual log holding no slot at any minute', async () => {
+		const store = createStore();
+		store.addLog('manual', '09:00', '13:00', { logType: TimeLogType.MANUAL }, false);
+
+		const split = await store.split('11:05', store.read('manual'), { secondPart: {} });
+
+		expect(split).toBe(true);
+		expect(store.timeline()).toEqual([
+			{ range: '09:00-11:05', isRunning: false, slots: [] },
+			{ range: '11:05-13:00', isRunning: false, slots: [] }
+		]);
+	});
+
+	it('leaves a running log whole', async () => {
+		const store = createStore();
+		store.addLog('running', '09:00', '13:00', { isRunning: true });
+
+		const split = await store.split('11:00', store.read('running'), { secondPart: {} });
+
+		expect(split).toBe(false);
+		expect(store.timeline()).toEqual([
+			{ range: '09:00-13:00', isRunning: true, slots: slotStarts('09:00', '13:00') }
+		]);
+	});
+
+	it('leaves the log whole when the moment is no longer inside it, as another split came first', async () => {
+		const store = createStore();
+		store.addLog('tracked', '09:00', '13:00');
+		const asRead = store.read('tracked');
+		await store.split('11:00', asRead, { secondPart: {} });
+		const afterFirst = store.timeline();
+
+		// The same request sent again, with the log as it was read before the first went through
+		const again = await store.split('11:00', asRead, { secondPart: {} });
+
+		expect(again).toBe(false);
+		expect(store.timeline()).toEqual(afterFirst);
+	});
+
+	it('leaves the log as it was and raises the error when the cut fails', async () => {
+		const store = createStore();
+		store.addLog('tracked', '09:00', '13:00');
+		store.fail('update');
+
+		const outcome = await store
+			.split('11:00', store.read('tracked'), { secondPart: { taskId: 'checkout-bug' } })
+			.then(raised, raised);
+
+		expect(store.timeline()).toEqual([
+			{ range: '09:00-13:00', isRunning: false, slots: slotStarts('09:00', '13:00') }
+		]);
+		expect(store.rows().map((row) => row.id)).toEqual(['tracked']);
+		expect(outcome).toBe('The update failed');
+	});
+
+	it('records the split in the history of both parts, with the reason given', async () => {
+		const store = createStore();
+		store.addLog('tracked', '09:00', '13:00', { taskId: 'homepage-redesign' });
+		jest.spyOn(RequestContext, 'currentEmployeeId').mockReturnValue(EMPLOYEE_ID);
+		const { dataSource, rows: historyRows } = historyRecorder(store);
+
+		await store.split(
+			'11:00',
+			store.read('tracked'),
+			{ secondPart: { taskId: 'checkout-bug' }, history: { reason: 'Switched to the checkout bug' } },
+			store.handlerWith(dataSource)
+		);
+
+		// The second part: its creation, in the transaction that saved it
+		expect(dataSource.transaction).toHaveBeenCalledTimes(1);
+		expect(historyRows).toEqual([
+			expect.objectContaining({ action: ActionTypeEnum.Created, entityId: store.rows()[1].id })
+		]);
+		// SQLite, the database these specs run with, stores the row's data as text
+		const [row] = historyRows;
+		let data = row.data;
+		if (typeof data === 'string') {
+			data = JSON.parse(data);
+		}
+		expect(data).toEqual({ employeeId: EMPLOYEE_ID, reason: 'Switched to the checkout bug' });
+		// The log: its new end, through the edit's own history
+		const cut = store.executed.find((command) => command instanceof TimeLogUpdateCommand) as TimeLogUpdateCommand;
+		expect(cut.input).toEqual({ startedAt: at('09:00'), stoppedAt: at('11:00') });
+		expect(cut.history).toEqual({ reason: 'Switched to the checkout bug' });
+	});
+
+	it('records no history for time saved inside a log, which splits it as before', async () => {
+		const store = createStore();
+		store.addLog('tracked', '08:00', '11:00');
+
+		await store.cleanUp('09:00', '10:00');
+
+		const cut = store.executed.find((command) => command instanceof TimeLogUpdateCommand) as TimeLogUpdateCommand;
+		expect(cut.history).toBeUndefined();
+	});
+
+	it('leaves the log whole when another split shortened it, at a moment still inside it', async () => {
+		const store = createStore();
+		store.addLog('manual', '09:00', '13:00', { logType: TimeLogType.MANUAL }, false);
+		const asRead = store.read('manual');
+		await store.split('11:00', asRead, { secondPart: {} });
+		const afterFirst = store.timeline();
+
+		// Checked against 09:00 to 13:00 too: run on 09:00 to 11:00, it would give the 10:00 to 11:00 the first split
+		// left the changes of this one, and leave the 11:00 to 13:00 with the others
+		const queued = await store.split('10:00', asRead, { secondPart: { taskId: 'checkout-bug' } });
+
+		expect(queued).toBe(false);
+		expect(store.timeline()).toEqual(afterFirst);
+	});
+
+	it.each([
+		['member', { employeeId: '12030000-0000-4000-8000-0000000000ee' }],
+		['organization', { organizationId: '12030000-0000-4000-8000-0000000000ff' }]
+	])(
+		'leaves the log whole when it is no longer the time of the %s the route checked the caller against',
+		async (_owner, checkedOwner) => {
+			const store = createStore();
+			store.addLog('manual', '09:00', '13:00', { logType: TimeLogType.MANUAL }, false);
+			// The route authorized the caller for the log as it then was; another write gave it to someone else since
+			const checked = { ...store.read('manual'), ...checkedOwner } as TimeLog;
+
+			const split = await store.split('11:00', checked, { secondPart: {} });
+
+			expect(split).toBe(false);
+			expect(store.timeline()).toEqual([{ range: '09:00-13:00', isRunning: false, slots: [] }]);
+		}
+	);
+
+	it('records in the history the undo of a split whose cut failed before writing', async () => {
+		const store = createStore();
+		store.addLog('tracked', '09:00', '13:00');
+		const { dataSource, rows } = historyRecorder(store);
+		store.fail('update');
+
+		const outcome = await store
+			.split(
+				'11:00',
+				store.read('tracked'),
+				{ secondPart: {}, history: { reason: null } },
+				store.handlerWith(dataSource)
+			)
+			.then(raised, raised);
+
+		expect(outcome).toBe('The update failed');
+		expect(store.rows().map((row) => row.id)).toEqual(['tracked']);
+		// The second part: saved with its creation, then deleted. The log: never cut, so nothing to take back.
+		const partId = rows[0].entityId;
+		expect(rows.map(({ action, entityId }) => ({ action, entityId }))).toEqual([
+			{ action: ActionTypeEnum.Created, entityId: partId },
+			{ action: ActionTypeEnum.Deleted, entityId: partId }
+		]);
+	});
+
+	it('records in the history the range the log takes back when its cut wrote, then failed', async () => {
+		const store = createStore();
+		store.addLog('tracked', '09:00', '13:00');
+		const { dataSource, rows } = historyRecorder(store);
+		// The cut writes the log's new end, then fails to take the log off the slots the second part now holds
+		store.fail('unlink');
+
+		const outcome = await store
+			.split(
+				'11:00',
+				store.read('tracked'),
+				{ secondPart: {}, history: { reason: null } },
+				store.handlerWith(dataSource)
+			)
+			.then(raised, raised);
+
+		expect(outcome).toBe('The unlink failed');
+		expect(store.timeline()).toEqual([
+			{ range: '09:00-13:00', isRunning: false, slots: slotStarts('09:00', '13:00') }
+		]);
+		const partId = rows[0].entityId;
+		expect(rows.map(({ action, entityId }) => ({ action, entityId }))).toEqual([
+			{ action: ActionTypeEnum.Created, entityId: partId },
+			{ action: ActionTypeEnum.Deleted, entityId: partId },
+			{ action: ActionTypeEnum.Updated, entityId: 'tracked' }
+		]);
+		// SQLite, the database these specs run with, stores the values as text
+		const valuesOf = (value: unknown) => (typeof value === 'string' ? JSON.parse(value) : value);
+		const rangeBack = rows[2];
+		expect({
+			updatedFields: valuesOf(rangeBack.updatedFields),
+			previousValues: valuesOf(rangeBack.previousValues),
+			updatedValues: valuesOf(rangeBack.updatedValues)
+		}).toEqual({
+			updatedFields: ['stoppedAt', 'duration'],
+			previousValues: [{ stoppedAt: at('11:00').toISOString() }, { duration: 2 * 3600 }],
+			updatedValues: [{ stoppedAt: at('13:00').toISOString() }, { duration: 4 * 3600 }]
+		});
+	});
+
+	it('splits a log once when two API processes split it at once, and leaves it whole for the later one', async () => {
+		const store = createStore();
+		store.addLog('manual', '09:00', '13:00', { logType: TimeLogType.MANUAL }, false);
+		const asRead = store.read('manual');
+		// One database, two processes: each has its own handler, so its own queue, and the database's locks in common
+		const locks = sharedDatabaseLocks();
+
+		const outcomes = await Promise.all([
+			store.split('11:00', asRead, { secondPart: {} }, store.handlerWith(locks.dataSource)),
+			store.split('10:00', asRead, { secondPart: {} }, store.handlerWith(locks.dataSource))
+		]);
+
+		expect(outcomes).toEqual([true, false]);
+		expect(store.timeline()).toEqual([
+			{ range: '09:00-11:00', isRunning: false, slots: [] },
+			{ range: '11:00-13:00', isRunning: false, slots: [] }
+		]);
+		expect(locks.taken).toEqual(['gauzy:time-log-split:manual', 'gauzy:time-log-split:manual']);
+	});
+
+	it('leaves the log whole when the split of another API process holds it for the whole wait', async () => {
+		const store = createStore();
+		store.addLog('tracked', '09:00', '13:00');
+		const locks = sharedDatabaseLocks({ busy: true });
+
+		const split = await store.split(
+			'11:00',
+			store.read('tracked'),
+			{ secondPart: {} },
+			store.handlerWith(locks.dataSource)
+		);
+
+		expect(split).toBe(false);
+		expect(store.timeline()).toEqual([
+			{ range: '09:00-13:00', isRunning: false, slots: slotStarts('09:00', '13:00') }
+		]);
+		expect(locks.released).toBe(1);
+	});
+
+	it('takes no lock for time saved inside a log, which does not come from the split route', async () => {
+		const store = createStore();
+		store.addLog('tracked', '08:00', '11:00');
+		const locks = sharedDatabaseLocks();
+		const handler = store.handlerWith(locks.dataSource);
+
+		await handler.execute(
+			new DeleteTimeSpanCommand({ start: at('09:00'), end: at('10:00') }, store.read('tracked'))
+		);
+
+		expect(store.timeline().map(({ range }) => range)).toEqual(['08:00-09:00', '10:00-11:00']);
+		expect(locks.taken).toEqual([]);
+	});
+});
+
+/**
+ * A data source whose transactions record the history rows they write, as the API module gives it to the handler:
+ * the second part goes through the store's repository, the rows into `rows`.
+ */
+function historyRecorder(store: ReturnType<typeof createStore>) {
+	const rows: Array<Record<string, unknown>> = [];
+	const repository = store.timeLogRepository;
+	const manager = {
+		// The part as the repository saves it; the history rows as an entity list
+		save: jest.fn(async (entity: unknown, saved?: unknown) => {
+			if (Array.isArray(saved)) {
+				rows.push(...(saved as Array<Record<string, unknown>>));
+				return saved;
+			}
+			return repository.save(entity as TimeLog);
+		}),
+		find: jest.fn(async () => []),
+		create: jest.fn((_entity: unknown, row: Record<string, unknown>) => row)
+	};
+	const dataSource = { transaction: jest.fn(async (work: (m: unknown) => unknown) => work(manager)) };
+	return { dataSource, rows };
+}
+
+/**
+ * The PostgreSQL advisory locks of one database, shared by every API process over it: a lock is held until the
+ * transaction that took it ends, and the next one taking it waits until then. With `busy`, another process holds
+ * every lock past the wait, and taking one fails as PostgreSQL's `lock_timeout` does.
+ */
+function sharedDatabaseLocks({ busy = false }: { busy?: boolean } = {}) {
+	const held = new Map<string, Promise<void>>();
+	const taken: string[] = [];
+	let released = 0;
+	const createQueryRunner = () => {
+		let release = () => undefined as void;
+		return {
+			connect: async () => undefined,
+			startTransaction: async () => undefined,
+			query: async (sql: string, parameters: string[] = []) => {
+				if (!sql.includes('pg_advisory_xact_lock')) {
+					return [];
+				}
+				if (busy) {
+					throw Object.assign(new Error('canceling statement due to lock timeout'), { code: '55P03' });
+				}
+				const [name] = parameters;
+				const before = held.get(name) ?? Promise.resolve();
+				const mine = new Promise<void>((resolve) => {
+					release = resolve;
+				});
+				held.set(
+					name,
+					before.then(() => mine)
+				);
+				await before;
+				taken.push(name);
+				return [];
+			},
+			rollbackTransaction: async () => {
+				released++;
+				release();
+			},
+			release: async () => undefined
+		};
+	};
+	return {
+		dataSource: { options: { type: 'postgres' }, createQueryRunner },
+		/** The locks taken, in order. */
+		taken,
+		/** How many lock transactions ended. */
+		get released() {
+			return released;
+		}
+	};
+}

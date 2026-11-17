@@ -46,9 +46,34 @@ describe('TimeLogUpdateHandler: history of an edit', () => {
 			update: jest.fn(async () => ({ affected: 1 })),
 			save: jest.fn(async (log: unknown) => log)
 		};
+		// The update that moves the entry's `updatedAt` once the edit is written (ever-co/ever-teams#5382)
+		const movedUpdatedAt = {
+			set: jest.fn(),
+			/** Every condition the update names its row by, with its parameters. */
+			conditions: [] as Array<[string, Record<string, unknown>]>,
+			execute: jest.fn(async () => ({ affected: 1 }))
+		};
+		const updateBuilder = {
+			update: jest.fn(() => updateBuilder),
+			set: jest.fn((values: unknown) => {
+				movedUpdatedAt.set(values);
+				return updateBuilder;
+			}),
+			where: jest.fn((condition: string, parameters: Record<string, unknown>) => {
+				movedUpdatedAt.conditions.push([condition, parameters]);
+				return updateBuilder;
+			}),
+			andWhere: jest.fn((condition: string, parameters: Record<string, unknown>) => {
+				movedUpdatedAt.conditions.push([condition, parameters]);
+				return updateBuilder;
+			}),
+			callListeners: jest.fn(() => updateBuilder),
+			execute: movedUpdatedAt.execute
+		};
 		const transactionManager = {
 			getRepository: jest.fn(() => transactionRepository),
-			findOne: jest.fn(async () => storedLog())
+			findOne: jest.fn(async () => storedLog()),
+			createQueryBuilder: jest.fn(() => updateBuilder)
 		};
 		const repository = {
 			update: jest.fn(async () => ({ affected: 1 })),
@@ -67,8 +92,28 @@ describe('TimeLogUpdateHandler: history of an edit', () => {
 		);
 		const record = recordTimeLogHistory as jest.Mock;
 		record.mockClear();
-		return { handler, repository, dataSource, transactionManager, transactionRepository, record };
+		return { handler, repository, dataSource, transactionManager, transactionRepository, record, movedUpdatedAt };
 	}
+
+	it("moves the edited entry's updatedAt a millisecond past what it held under lock, in the edit's transaction", async () => {
+		const { handler, transactionManager, movedUpdatedAt } = setup();
+		// A value the clock has not reached: the move must still be past it
+		const held = new Date('2099-01-01T00:00:00.000Z');
+		transactionManager.findOne.mockResolvedValue(new TimeLog({ ...storedLog(), updatedAt: held }));
+
+		await handler.execute(
+			new TimeLogUpdateCommand({ description: 'Alpha' }, storedLog(), undefined, false, { reason: null })
+		);
+
+		expect(movedUpdatedAt.execute).toHaveBeenCalledTimes(1);
+		expect(movedUpdatedAt.set).toHaveBeenCalledWith({ updatedAt: new Date('2099-01-01T00:00:00.001Z') });
+		// The entry's own row, in its own tenant, and no other
+		const stored = storedLog();
+		expect(movedUpdatedAt.conditions.map(([, parameters]) => parameters)).toEqual([
+			{ id: stored.id },
+			{ tenantId: stored.tenantId }
+		]);
+	});
 
 	it('writes the edit and its row in one transaction, with what changed and the reason', async () => {
 		const { handler, repository, dataSource, transactionManager, transactionRepository, record } = setup();
@@ -156,7 +201,9 @@ describe('TimeLogUpdateHandler: history of an edit', () => {
 		// The entry is gone for the reads after the write too
 		repository.findOneBy.mockResolvedValue(null);
 
-		const refusal = handler.execute(new TimeLogUpdateCommand({ description: 'Beta' }, storedLog(), null, false, {}));
+		const refusal = handler.execute(
+			new TimeLogUpdateCommand({ description: 'Beta' }, storedLog(), null, false, {})
+		);
 
 		await expect(refusal).rejects.toThrow(NotFoundException);
 		expect(transactionRepository.update).not.toHaveBeenCalled();

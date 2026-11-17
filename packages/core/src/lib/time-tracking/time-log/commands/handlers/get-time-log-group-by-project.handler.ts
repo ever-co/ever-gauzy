@@ -4,7 +4,7 @@ import * as moment from 'moment';
 import { IReportDayGroupByProject, ITimeLog } from '@gauzy/contracts';
 import { GetTimeLogGroupByProjectCommand } from '../get-time-log-group-by-project.command';
 import { calculateAverage, calculateAverageActivity, tagsOfReportRow, teamOfReportRow } from './../../time-log.utils';
-import { rateOfReportRow } from '../../time-log-pricing';
+import { clientRatesOfReportRow, rateOfReportRow } from '../../time-log-pricing';
 
 @CommandHandler(GetTimeLogGroupByProjectCommand)
 export class GetTimeLogGroupByProjectHandler implements ICommandHandler<GetTimeLogGroupByProjectCommand> {
@@ -79,6 +79,7 @@ export class GetTimeLogGroupByProjectHandler implements ICommandHandler<GetTimeL
 					client: log.organizationContact ? log.organizationContact : null,
 					...teamOfReportRow(log, statesTeam),
 					...rateOfReportRow(log),
+					...clientRatesOfReportRow(log),
 					...tagsOfReportRow(log)
 				}));
 				return {

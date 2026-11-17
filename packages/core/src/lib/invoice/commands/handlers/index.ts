@@ -5,3 +5,4 @@ export * from './invoice.generate.pdf.handler';
 export * from './invoice-payment.generate.pdf.handler';
 export * from './invoice.send.email.handler';
 export * from './invoice.update.handler';
+export * from './invoice.update-with-items.handler';

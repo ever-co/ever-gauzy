@@ -13,18 +13,16 @@
 <div class="tags mt-2" [class.tags-right]="layout === 'CARDS_GRID'">
 	@if ((data | async)?.labels?.length > 0) { @for (tag of (data | async)?.labels; track tag) {
 	<nb-badge
-		class="color"
+		class="color ga-tag-chip"
 		position="centered"
-		[style.background]="background($safeNavigationMigration(tag?.color))"
-		[style.color]="backgroundContrast(tag.color)"
+		[style.--chip-color]="background($safeNavigationMigration(tag?.color))"
 		[text]="tag.name"
 	></nb-badge>
 	} } @if ((data | async)?.tags?.length > 0) { @for (tag of (data | async)?.tags; track tag) {
 	<nb-badge
-		class="color"
+		class="color ga-tag-chip"
 		position="centered"
-		[style.background]="background($safeNavigationMigration(tag?.color))"
-		[style.color]="backgroundContrast(tag.color)"
+		[style.--chip-color]="background($safeNavigationMigration(tag?.color))"
 		[text]="tag.name"
 	></nb-badge>
 	} }

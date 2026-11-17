@@ -48,6 +48,8 @@ import {
 	IOrganization,
 	IPaginationParam,
 	ID,
+	ITimeLogSplitInput,
+	ITimeLogSplitResult,
 	RolesEnum
 } from '@gauzy/contracts';
 import { environment as env } from '@gauzy/config';
@@ -62,6 +64,7 @@ import {
 	IGetConflictTimeLogCommand,
 	TimeLogCreateCommand,
 	TimeLogDeleteCommand,
+	TimeLogSplitPartChanges,
 	TimeLogUpdateCommand
 } from './commands';
 import { ITimeSlotDurationRecalculateInput, TimeSlotDurationRecalculateCommand } from '../time-slot/commands';
@@ -96,6 +99,9 @@ import { TypeOrmOrganizationProjectRepository } from '../../organization-project
 import { TypeOrmOrganizationContactRepository } from '../../organization-contact/repository/type-orm-organization-contact.repository';
 import { ManagedEmployeeService } from '../../employee/managed-employee.service';
 import { Organization } from '../../organization/organization.entity';
+import { Timesheet } from '../timesheet/timesheet.entity';
+import { assertTimeLogReferencesOfTenant } from './time-log-references';
+import { splitRefusal, TIME_LOG_SPLIT_CHANGED } from './time-log-split-rule';
 import { findStoredPayRates, isPayRateSet, mayReadPayRateOf, StoredPayRate } from '../../employee/pay-rate';
 import { TimeLog } from './time-log.entity';
 import {
@@ -112,6 +118,7 @@ import {
 	totalsByCurrencyOf
 } from './time-log-pricing';
 import { findStoredRatesOf } from './time-log-rates';
+import { assertMayReadClientRates, withKeptClientRates } from './time-log-client-rates';
 import type { TimeLogHistoryOptions } from './time-log-history.writer';
 import { DefaultBillRate, defaultBillRateOf } from './default-bill-rate';
 import {
@@ -132,6 +139,7 @@ import {
 	assertWorkOverlapsNoBreak,
 	isBreak
 } from './break-rules';
+import { assertTimeLogUnchangedSince, timeLogExpectedUpdatedAtOf } from './time-log-precondition';
 
 /** The code of the refusal of manual time over a timer that is still running (409). */
 export const RUNNING_TIMER_OVERLAP = 'RUNNING_TIMER_OVERLAP';
@@ -168,6 +176,29 @@ function startTimeOf(log: ITimeLog): number {
 	return Number.isNaN(time) ? Number.POSITIVE_INFINITY : time;
 }
 
+/**
+ * What a split's second part changes, from the route's body: only the fields the body names, so every field left out
+ * keeps the log's value. `null` clears the task or the project.
+ *
+ * @param input - The body of the split route.
+ */
+function splitPartChanges(input: ITimeLogSplitInput): TimeLogSplitPartChanges {
+	const changes: TimeLogSplitPartChanges = {};
+	if (input.taskId !== undefined) {
+		changes.taskId = input.taskId;
+	}
+	if (input.projectId !== undefined) {
+		changes.projectId = input.projectId;
+	}
+	if (input.description !== undefined) {
+		changes.description = input.description;
+	}
+	if (input.isBillable !== undefined) {
+		changes.isBillable = input.isBillable;
+	}
+	return changes;
+}
+
 @Injectable()
 export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	private readonly logger = new Logger(TimeLogService.name);
@@ -196,10 +227,26 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	/**
 	 * Retrieves time logs based on the provided input.
 	 * @param request The input parameters for fetching time logs, with an optional page (`take`, and
-	 * `skip` as a 1-based page number). Without `take` every matching log is returned.
+	 * `skip` as a 1-based page number). Without `take` every matching log is returned. With `withClientRates`, each
+	 * log also states the client rates it keeps, for a caller who may read them (see time-log-client-rates.ts).
 	 * @returns A Promise that resolves to an array of time logs.
 	 */
 	async getTimeLogs(request: IGetTimeLogReportInput & Pick<IPaginationParam, 'take' | 'skip'>): Promise<ITimeLog[]> {
+		const statesClientRates = request.withClientRates === true;
+		if (statesClientRates) {
+			await assertMayReadClientRates(this.typeOrmRepository.manager, request);
+		}
+		const logs = await this.findTimeLogs(request);
+		if (!statesClientRates) {
+			return logs;
+		}
+		return await withKeptClientRates(this.typeOrmRepository.manager, logs, RequestContext.currentTenantId());
+	}
+
+	/** The time logs of a list read (see {@link getTimeLogs}). */
+	private async findTimeLogs(
+		request: IGetTimeLogReportInput & Pick<IPaginationParam, 'take' | 'skip'>
+	): Promise<ITimeLog[]> {
 		// Builds its own query, so the check in the CRUD read methods never runs: assert the
 		// sensitive-relation table on the client-supplied relations before anything is loaded.
 		this.assertRelationsPermitted(request);
@@ -773,6 +820,11 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		// Extract timezone from the request
 		const { timeZone } = request;
 		const statesTeam = request.includeTimeWithoutTeam === true;
+		// Each row then states the client rates its log keeps, for a caller who may read them
+		const statesClientRates = request.withClientRates === true;
+		if (statesClientRates) {
+			await assertMayReadClientRates(this.typeOrmRepository.manager, request);
+		}
 
 		let logs: ITimeLog[];
 
@@ -876,6 +928,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				await this.loadTimeSlotFigures(logs);
 				break;
 			}
+		}
+		if (statesClientRates) {
+			await withKeptClientRates(this.typeOrmRepository.manager, logs, RequestContext.currentTenantId());
 		}
 
 		// Each row states the tags its entry is filed under (ever-co/ever-gauzy#12029)
@@ -2629,6 +2684,12 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				throw new ForbiddenException('A time log cannot be moved to an employee of another organization');
 			}
 
+			// An edit made on a read the entry no longer holds (`expectedUpdatedAt`) is refused before anything is cut or
+			// written: the overlap cleanup below writes other entries. Only once the checks above let the caller edit the
+			// entry, as the refusal carries it. The write checks it again, under the entry's lock, in its own transaction
+			// (`TimeLogUpdateHandler`), which the precondition reaches with the request.
+			assertTimeLogUnchangedSince(timeLog, timeLogExpectedUpdatedAtOf(request.expectedUpdatedAt));
+
 			// A move within the organization takes the log's timesheet, time slots and hours with it
 			// (`TimeLogUpdateHandler`), but never what was captured while the previous employee was tracked.
 			if (String(timeLog.employeeId) !== String(employeeId)) {
@@ -2719,6 +2780,163 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			// Counted again after a failure too: the entries cut before it no longer hold that time.
 			await this.recalculateSharedTimeSlots(sharedTimeSlots);
 		}
+	}
+
+	/**
+	 * Splits one stopped time log at a moment of its range (`POST /timesheet/time-log/:id/split`): the log ends there,
+	 * and the rest becomes its second part, which may take another task, project, notes or billable state. Each time
+	 * slot goes, with its screenshots and activity, to the part holding its time, so tracked time splits on a slot
+	 * boundary. The split is the one time saved inside a log already makes (`DeleteTimeSpanCommand`): second part
+	 * first, then the cut, with its recovery, so it is whole or not at all, and both parts record it in their history.
+	 *
+	 * It follows the rules of an edit of the log: the route's `ALLOW_MODIFY_TIME` and the organization's policy, the
+	 * caller's own log or a member's they manage, no approved day, a reason where the organization asks for one. The
+	 * second part is the same time, so the organization's manual time switch does not apply. A request sent again once
+	 * the split went through answers the two parts it made.
+	 *
+	 * @param id - The time log to split.
+	 * @param input - Where to split it, and what its second part changes.
+	 * @returns The log, now ending at the split, and its second part.
+	 * @throws HttpException With the code of the rule a refused split breaks (see time-log-split-rule.ts).
+	 */
+	async splitTimeLog(id: ID, input: ITimeLogSplitInput): Promise<ITimeLogSplitResult> {
+		const tenantId = RequestContext.currentTenantId();
+		const splitAt = new Date(input.splitAt);
+
+		// Read past this service's own-employee filter, as an edit is: a team manager splits a member's log, and the
+		// check right after refuses any log the caller may not change.
+		const timeLog = await this.withoutEmployeeFilter(() => this.findOneByIdString(id));
+		await this.assertCanWriteTimeFor(timeLog.employeeId, timeLog.organizationId);
+
+		// The same request, sent again after it went through: its two parts, nothing written
+		const madeBefore = await this.findSplitPartAt(timeLog, splitAt, tenantId);
+		const endsAtSplit = moment(timeLog.stoppedAt).isSame(moment(splitAt));
+		if (madeBefore && endsAtSplit) {
+			return { first: timeLog, second: madeBefore };
+		}
+
+		const secondPart = splitPartChanges(input);
+		await assertTimeLogReferencesOfTenant(this.typeOrmTimeLogRepository, secondPart, tenantId);
+
+		const manager = this.typeOrmRepository.manager;
+		const timesheet = await this.readTimesheetStatus(timeLog.timesheetId, tenantId);
+		const organization = await manager.findOne(Organization, {
+			where: { id: timeLog.organizationId, tenantId },
+			select: { id: true, requireReason: true, allowBreaks: true }
+		});
+		// A break is edited only where breaks are on, as `updateManualTime` edits one: its second part is a new break
+		if (isBreak(timeLog)) {
+			assertBreaksAllowedIn(organization);
+		}
+		const refusal = splitRefusal({
+			log: timeLog,
+			splitAt,
+			holdsTimeSlots: await this.holdsTimeSlots(timeLog.id, tenantId),
+			timesheetStatus: timesheet?.status ?? null,
+			// A billed timesheet is closed as an approved one is (`isLockedTimeLog`, task.service.ts): the client was
+			// charged for its time, which the second part could move to another project or billable state
+			isInvoiced: timesheet?.isBilled === true || (await this.isOnLiveInvoice(timeLog, tenantId)),
+			organization,
+			reason: input.reason,
+			secondPart
+		});
+		if (refusal) {
+			const { status, ...body } = refusal;
+			throw new HttpException({ statusCode: status, ...body }, status);
+		}
+
+		const reason = (input.reason ?? '').trim();
+		let historyReason: string | null = null;
+		if (reason.length > 0) {
+			historyReason = reason;
+		}
+		const split = await this.commandBus.execute(
+			new DeleteTimeSpanCommand({ start: splitAt, end: splitAt }, timeLog as TimeLog, undefined, false, {
+				secondPart,
+				history: { reason: historyReason }
+			})
+		);
+
+		// The log no longer held the moment once the requests before this one settled: another split, an edit or a
+		// delete came first, and nothing was written
+		if (!split) {
+			throw new ConflictException({
+				code: TIME_LOG_SPLIT_CHANGED,
+				message: 'This entry changed while it was being split. Reload it and split it again.'
+			});
+		}
+
+		const first = await this.withoutEmployeeFilter(() => this.findOneByIdString(id));
+		const second = await this.findSplitPartAt(first, splitAt, tenantId);
+		return { first, second };
+	}
+
+	/**
+	 * The second part an earlier split of the log made at `at`: the live log cut from it, starting there, and still the
+	 * time of the same member. A part moved to another member since is theirs: the caller was checked against the log
+	 * only, so it is not answered.
+	 *
+	 * @param timeLog - The time log.
+	 * @param at - The split moment.
+	 * @param tenantId - The tenant of the log.
+	 */
+	private async findSplitPartAt(timeLog: ITimeLog, at: Date, tenantId: ID): Promise<ITimeLog | null> {
+		const { employeeId, organizationId } = timeLog;
+		const part = await this.typeOrmTimeLogRepository.findOne({
+			where: { splitFromTimeLogId: timeLog.id, tenantId, organizationId, employeeId, startedAt: at }
+		});
+		return part ?? null;
+	}
+
+	/**
+	 * The status of the timesheet a log is on, and whether it is billed, if it is on one.
+	 *
+	 * @param timesheetId - The log's timesheet.
+	 * @param tenantId - The tenant of the log.
+	 */
+	private async readTimesheetStatus(
+		timesheetId: ID | undefined,
+		tenantId: ID
+	): Promise<Pick<Timesheet, 'status' | 'isBilled'> | null> {
+		if (!timesheetId) {
+			return null;
+		}
+		return await this.typeOrmRepository.manager.findOne(Timesheet, {
+			where: { id: timesheetId, tenantId },
+			select: { id: true, status: true, isBilled: true }
+		});
+	}
+
+	/**
+	 * Whether any time slot is linked to the log.
+	 *
+	 * @param timeLogId - The log.
+	 * @param tenantId - The tenant of the log.
+	 */
+	private async holdsTimeSlots(timeLogId: ID, tenantId: ID): Promise<boolean> {
+		const query = this.typeOrmRepository.createQueryBuilder('time_log');
+		query.innerJoin(`${query.alias}.timeSlots`, 'time_slot');
+		query.where(p(`"${query.alias}"."id" = :timeLogId`), { timeLogId });
+		query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+		return (await query.getCount()) > 0;
+	}
+
+	/**
+	 * Whether a live invoice bills the log: one of its lines names it, and it is neither void nor a rejected estimate.
+	 *
+	 * @param timeLog - The log.
+	 * @param tenantId - The tenant of the log.
+	 */
+	private async isOnLiveInvoice(timeLog: ITimeLog, tenantId: ID): Promise<boolean> {
+		if (!timeLog.invoiceItemId) {
+			return false;
+		}
+		const query = this.typeOrmRepository.createQueryBuilder('time_log');
+		query.where(p(`"${query.alias}"."id" = :timeLogId`), { timeLogId: timeLog.id });
+		query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+		query.andWhere(notOnLiveInvoice(`"${query.alias}"."invoiceItemId"`), NOT_ON_LIVE_INVOICE_PARAMETERS);
+		const notInvoiced = (await query.getCount()) > 0;
+		return !notInvoiced;
 	}
 
 	/**

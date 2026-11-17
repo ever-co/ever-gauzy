@@ -2,13 +2,7 @@ import { NotFoundException, UseGuards } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { FeatureFlag } from '@gauzy/common';
-import {
-	DecimalString,
-	ID as Id,
-	IInvoiceItemCreateInput,
-	IPagination,
-	PermissionsEnum
-} from '@gauzy/contracts';
+import { DecimalString, ID as Id, IInvoiceItemCreateInput, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import {
 	ConnectionFilter,
@@ -150,7 +144,10 @@ const INVOICE_ITEM_DEFAULT_SORT: readonly ConnectionSortKey[] = [
 @UseGuards(TenantPermissionGuard, FeatureFlagGuard)
 @FeatureFlag(FEATURE_GRAPHQL)
 export class InvoiceItemResolver {
-	constructor(private readonly invoiceItemService: InvoiceItemService, private readonly commandBus: CommandBus) {}
+	constructor(
+		private readonly invoiceItemService: InvoiceItemService,
+		private readonly commandBus: CommandBus
+	) {}
 
 	/**
 	 * The billed lines of the caller's tenant, newest first.
@@ -176,7 +173,10 @@ export class InvoiceItemResolver {
 		@Args('offset', { type: () => Int, nullable: true }) offset?: number,
 		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<InvoiceItem>> {
-		const { items }: IPagination<InvoiceItem> = await this.invoiceItemService.findAll({ relations: [], ...(withDeleted ? { withDeleted: true } : {}) });
+		const { items }: IPagination<InvoiceItem> = await this.invoiceItemService.findAll({
+			relations: [],
+			...(withDeleted ? { withDeleted: true } : {})
+		});
 
 		return buildConnection<InvoiceItem>({
 			rows: items ?? [],
@@ -235,7 +235,7 @@ export class InvoiceItemResolver {
 	@Permissions(PermissionsEnum.INVOICES_EDIT)
 	@Mutation('createInvoiceItem')
 	async createInvoiceItem(@Args('input') input: ICreateInvoiceItemInput): Promise<InvoiceItem> {
-		return await this.invoiceItemService.create(input as unknown as InvoiceItem);
+		return await this.invoiceItemService.createLine(input as unknown as InvoiceItem);
 	}
 
 	/**
@@ -256,7 +256,7 @@ export class InvoiceItemResolver {
 	async updateInvoiceItem(@Args('input') input: IUpdateInvoiceItemInput): Promise<InvoiceItem> {
 		const { id, ...values } = input;
 
-		await this.invoiceItemService.update(id, values as unknown as QueryDeepPartialEntity<InvoiceItem>);
+		await this.invoiceItemService.updateLine(id, values as unknown as QueryDeepPartialEntity<InvoiceItem>);
 
 		return await this.invoiceItemService.findOneByIdString(id);
 	}
@@ -273,7 +273,7 @@ export class InvoiceItemResolver {
 	@Permissions(PermissionsEnum.INVOICES_EDIT)
 	@Mutation('deleteInvoiceItem')
 	async deleteInvoiceItem(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
-		return deleteRemovedRows(await this.invoiceItemService.delete(id));
+		return deleteRemovedRows(await this.invoiceItemService.deleteLine(id));
 	}
 
 	/**
@@ -288,7 +288,7 @@ export class InvoiceItemResolver {
 	@Permissions(PermissionsEnum.INVOICES_EDIT)
 	@Mutation('softDeleteInvoiceItem')
 	async softDeleteInvoiceItem(@Args('id', { type: () => ID }) id: Id): Promise<InvoiceItem> {
-		return await this.invoiceItemService.softRemove(id);
+		return await this.invoiceItemService.softRemoveLine(id);
 	}
 
 	/**
@@ -303,7 +303,7 @@ export class InvoiceItemResolver {
 	@Permissions(PermissionsEnum.INVOICES_EDIT)
 	@Mutation('recoverInvoiceItem')
 	async recoverInvoiceItem(@Args('id', { type: () => ID }) id: Id): Promise<InvoiceItem> {
-		return await this.invoiceItemService.softRecover(id);
+		return await this.invoiceItemService.softRecoverLine(id);
 	}
 
 	/**

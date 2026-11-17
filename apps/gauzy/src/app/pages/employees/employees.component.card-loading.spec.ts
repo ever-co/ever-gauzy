@@ -78,3 +78,21 @@ describe('EmployeesComponent card grid loading state', () => {
 		expect(component.updatePagination).toHaveBeenCalledWith(0);
 	});
 });
+
+describe('EmployeesComponent card body spinner', () => {
+	const componentIn = (layout: ComponentLayoutStyleEnum, loading: boolean) => {
+		const component = Object.create(EmployeesComponent.prototype) as EmployeesComponent;
+		component.dataLayoutStyle = layout;
+		component.loading = loading;
+		return component;
+	};
+
+	it('stays off over the card grid, which draws its own placeholder while it reads', () => {
+		expect(componentIn(ComponentLayoutStyleEnum.CARDS_GRID, true).showsBodySpinner).toBe(false);
+	});
+
+	it('CONTROL: still shows over the table while it reads, and over nothing once read', () => {
+		expect(componentIn(ComponentLayoutStyleEnum.TABLE, true).showsBodySpinner).toBe(true);
+		expect(componentIn(ComponentLayoutStyleEnum.TABLE, false).showsBodySpinner).toBe(false);
+	});
+});

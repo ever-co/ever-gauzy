@@ -201,6 +201,11 @@ export interface ITimeLog
 	 * none and is priced at the current rates.
 	 */
 	ratesStored?: boolean | null;
+	/**
+	 * The client rates the log keeps. Answered only on a read that asks for them (`withClientRates`), to a caller who
+	 * may read the client rates of the log's project: an admin, or a manager of the project.
+	 */
+	clientRates?: ITimeLogClientRates;
 }
 
 /**
@@ -220,6 +225,17 @@ export interface ITimeLogStoredRates {
 	/** The currency of the member's client rate on the project. */
 	projectMemberBillRateCurrency?: string | null;
 }
+
+/** The client rates a time log keeps, as a read that asks for them (`withClientRates`) answers them. */
+export type ITimeLogClientRates = Required<
+	Pick<
+		ITimeLogStoredRates,
+		| 'projectBillRateValue'
+		| 'projectMemberBillRateValue'
+		| 'projectBillRateCurrency'
+		| 'projectMemberBillRateCurrency'
+	>
+>;
 
 /**
  * A reminder the platform sent about a running time log (`TimerReminder`): level 1 once the timer ran for the
@@ -495,6 +511,12 @@ export interface IManualTimeInput extends IBasePerTenantAndOrganizationEntityMod
 	startedAt?: Date;
 	stoppedAt?: Date;
 	editedAt?: Date;
+	/**
+	 * On an update, the `updatedAt` the entry was read with (ever-co/ever-teams#5382): stated, the update is saved only
+	 * while the entry still holds it, else nothing is saved and the answer is 409 `CONCURRENT_MODIFICATION`. Left out,
+	 * the update is saved as it always was. Never a column.
+	 */
+	expectedUpdatedAt?: Date | string | null;
 	tags?: string[];
 	isBillable?: boolean;
 }
@@ -502,6 +524,29 @@ export interface IManualTimeInput extends IBasePerTenantAndOrganizationEntityMod
 /** The tags a time log is filed under from now on, by id: an empty list takes them all off. */
 export interface ITimeLogTagsInput extends IBasePerTenantAndOrganizationEntityModel {
 	tags: ID[];
+}
+
+/**
+ * A split of one stopped time log at a moment of its range (`POST /timesheet/time-log/:id/split`): the log ends at
+ * `splitAt`, and a second log runs from `splitAt` to its old end. The other fields name what the second part changes;
+ * every field left out is copied from the log.
+ */
+export interface ITimeLogSplitInput {
+	/** Where the log is split. On a log of tracked time, a slot boundary (every ten minutes). */
+	splitAt: Date;
+	/** The second part's task, project and notes, when they differ from the log's. */
+	taskId?: ID | null;
+	projectId?: ID | null;
+	description?: string | null;
+	isBillable?: boolean;
+	/** Why the time changes, kept in both parts' history; required where the organization asks for one. */
+	reason?: string | null;
+}
+
+/** The two time logs a split leaves: the log, now ending at the split, and the part after it. */
+export interface ITimeLogSplitResult {
+	first: ITimeLog;
+	second: ITimeLog;
 }
 
 export interface IGetTimeLogInput extends ITimeLogFilters, IBaseRelationsEntityModel {
@@ -521,6 +566,12 @@ export interface IGetTimeLogReportInput extends IGetTimeLogInput {
 	notInvoiced?: boolean;
 	/** Keep breaks (time logs of type BREAK) in a read that lists entries. Totals never count breaks. */
 	includeBreaks?: boolean;
+	/**
+	 * Answer the client rates each log keeps (the entry list and the daily report only), for a caller who may read the
+	 * client rates of every project asked: an admin, or a manager of each project named in `projectIds`. Anyone else
+	 * is refused.
+	 */
+	withClientRates?: boolean;
 }
 
 export interface IGetTimeLogConflictInput extends IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel {
@@ -567,6 +618,10 @@ export interface IReportDayTaskRow {
 	 */
 	billRateValue?: number | null;
 	billRateCurrency?: string | null;
+	/** Whether the entry's log keeps the rates that price it. Stated with `clientRates` only. */
+	ratesStored?: boolean;
+	/** The client rates the entry's log keeps, on a report that asks for them (`withClientRates`). */
+	clientRates?: ITimeLogClientRates;
 	/** The tags the entry carries, each counted in its own group by a client that groups by tag. */
 	tags?: ITimeLogTag[];
 }

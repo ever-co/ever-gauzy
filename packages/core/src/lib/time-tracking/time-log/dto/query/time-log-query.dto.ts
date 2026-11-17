@@ -120,8 +120,31 @@ export class TimeLogBudgetQueryDTO extends OmitType(TimeLogQueryDTO, [
 ] as const) {}
 
 /**
- * Get time log list request DTO validation: the filters above plus an optional page (`take`, and
- * `skip` as a 1-based page number). Without `take` the whole list is returned, as the timesheet and
- * dashboard clients that sum it expect.
+ * Asks the client rates each time log keeps. Offered on the entry list and the daily report only; every other time
+ * log read drops it.
  */
-export class TimeLogListQueryDTO extends IntersectionType(TimeLogQueryDTO, PickType(BaseQueryDTO, ['take', 'skip'])) {}
+export class ClientRatesQueryDTO {
+	@ApiPropertyOptional({
+		type: () => Boolean,
+		description:
+			'State the client rates each log keeps (clientRates) and whether it keeps its rates (ratesStored). Answered ' +
+			'to an admin, or to a manager of every project named in projectIds; anyone else gets 403. Without it, the ' +
+			'answer is unchanged.'
+	})
+	@IsOptional()
+	@Transform(({ value }: TransformFnParams) => parseToBoolean(value))
+	readonly withClientRates?: boolean;
+}
+
+/** The daily report's query: the filters above, and the client rates on request. */
+export class TimeLogDailyReportQueryDTO extends IntersectionType(TimeLogQueryDTO, ClientRatesQueryDTO) {}
+
+/**
+ * Get time log list request DTO validation: the filters above plus an optional page (`take`, and
+ * `skip` as a 1-based page number), and the client rates on request. Without `take` the whole list is returned, as
+ * the timesheet and dashboard clients that sum it expect.
+ */
+export class TimeLogListQueryDTO extends IntersectionType(
+	TimeLogQueryDTO,
+	IntersectionType(PickType(BaseQueryDTO, ['take', 'skip']), ClientRatesQueryDTO)
+) {}

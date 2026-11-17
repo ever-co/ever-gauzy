@@ -20,19 +20,34 @@ button, fa-icon {
 	justify-content: center;
 }
 
-fa-icon, .check, .na, .deny {
-	height: 20px;
-	width: 20px;
-}
-
 .btn-grp {
 	position: relative;
-	display: flex;
-	gap: 6px;
+	display: inline-flex;
+	align-items: center;
+	box-sizing: border-box;
+	height: var(--gauzy-table-control-height, 1.75rem);
+	gap: 2px;
 	background-color: var(--gauzy-sidebar-background-3);
 	border-radius: var(--button-rectangle-border-radius);
-	padding: 6px;
+	padding: 2px;
 	box-shadow: var(--gauzy-shadow) inset;
+}
+
+:host .btn-grp button[nbButton] {
+	box-sizing: border-box;
+	height: 100%;
+	width: calc(var(--gauzy-table-control-height, 1.75rem) - 4px);
+	min-width: 0;
+	min-height: 0;
+	padding: 0;
+	line-height: 1;
+	font-size: 0.6875rem;
+}
+
+:host .btn-grp fa-icon {
+	width: auto;
+	height: auto;
+	font-size: 0.6875rem;
 }
 
 .check {
