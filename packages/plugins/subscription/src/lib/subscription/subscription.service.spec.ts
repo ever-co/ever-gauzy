@@ -7648,15 +7648,23 @@ describe('SubscriptionService — the metadata billing trusts is the service’s
 		// `waivedProrations` is the audit trail of plan-change charges the customer was not billed. Unreserved, an
 		// edit could erase it (`{ waivedProrations: [] }`) or plant entries that never happened.
 		const waived = [{ amount: '4.50', currency: 'USD', at: '2026-04-10T00:00:00.000Z', description: 'Upgrade' }];
-		const fixture = subscriptionFixture({
-			subscriptions: [subscriptionRow(SUBSCRIPTION, { metadata: { waivedProrations: waived } })]
-		});
+		// Planted, emptied, nulled, or left out of an edit that writes other keys: the stored record stands every time.
+		const stated: Record<string, unknown>[] = [
+			{ waivedProrations: [{ amount: '999', currency: 'USD' }], note: 'kept' },
+			{ waivedProrations: [], note: 'kept' },
+			{ waivedProrations: null, note: 'kept' },
+			{ note: 'kept' }
+		];
 
-		await fixture.service.applyChanges(SUBSCRIPTION, {
-			metadata: { waivedProrations: [{ amount: '999', currency: 'USD' }], note: 'kept' }
-		} as never);
+		for (const metadata of stated) {
+			const fixture = subscriptionFixture({
+				subscriptions: [subscriptionRow(SUBSCRIPTION, { metadata: { waivedProrations: waived } })]
+			});
 
-		expect(fixture.subscription(SUBSCRIPTION)?.metadata).toEqual({ waivedProrations: waived, note: 'kept' });
+			await fixture.service.applyChanges(SUBSCRIPTION, { metadata } as never);
+
+			expect(fixture.subscription(SUBSCRIPTION)?.metadata).toEqual({ waivedProrations: waived, note: 'kept' });
+		}
 
 		const created = await subscriptionFixture({
 			subscriptions: [],
