@@ -74,14 +74,59 @@ describe('ListFilterStateService', () => {
 		expect(service.restore('title')).toBe('login bug');
 	});
 
-	it('gives each filter back once', () => {
+	it('gives a filter back for the whole visit, however often the page asks', () => {
 		const { service, go } = createHarness(LIST);
 		service.record('title', 'login bug');
 		go(DETAIL);
 		go(LIST, 'popstate');
 
+		// A page that rebuilds its table settings gets new filters from the table, and each asks again: the second
+		// must show what the first filtered the list by, not an empty box.
 		expect(service.restore('title')).toBe('login bug');
+		expect(service.restore('title')).toBe('login bug');
+	});
+
+	it('gives back what the user chose since on the restored list', () => {
+		const { service, go } = createHarness(LIST);
+		service.record('title', 'login bug');
+		go(DETAIL);
+		go(LIST, 'popstate');
+		expect(service.restore('title')).toBe('login bug');
+
+		service.record('title', 'crash');
+
+		expect(service.restore('title')).toBe('crash');
+	});
+
+	it('does not give back a filter the user cleared on the restored list', () => {
+		const { service, go } = createHarness(LIST);
+		service.record('title', 'login bug');
+		service.record('status', 'open');
+		go(DETAIL);
+		go(LIST, 'popstate');
+		expect(service.restore('title')).toBe('login bug');
+
+		service.record('title', '');
+
+		// A filter the table re-creates now stays empty, like the list.
 		expect(service.restore('title')).toBeUndefined();
+		expect(service.restore('status')).toBe('open');
+	});
+
+	it('gives the filters back again when the user leaves the restored list and comes Back', () => {
+		const { service, go } = createHarness(LIST);
+		service.record('title', 'login bug');
+		go(DETAIL);
+		go(LIST, 'popstate');
+		expect(service.restore('title')).toBe('login bug');
+		service.record('status', 'open');
+
+		go('/pages/tasks/view/2');
+		expect(service.restore('title')).toBeUndefined();
+		go(LIST, 'popstate');
+
+		expect(service.restore('title')).toBe('login bug');
+		expect(service.restore('status')).toBe('open');
 	});
 
 	it('restores several columns of the same list', () => {
@@ -102,6 +147,8 @@ describe('ListFilterStateService', () => {
 		go(DETAIL);
 		go(LIST); // a menu click or a link
 
+		// However often the page asks (a page that rebuilds its table settings asks again).
+		expect(service.restore('title')).toBeUndefined();
 		expect(service.restore('title')).toBeUndefined();
 
 		// ...and the next Back finds nothing from the visit before.
@@ -190,6 +237,7 @@ describe('ListFilterStateService', () => {
 		refuse(DETAIL);
 
 		expect(service.restore('status')).toBe('open');
+		expect(service.restore('title')).toBe('login bug');
 	});
 
 	it('forgets every filter when the user signs out', () => {
