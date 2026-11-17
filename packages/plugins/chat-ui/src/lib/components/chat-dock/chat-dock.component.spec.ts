@@ -208,7 +208,7 @@ describe('ChatDockComponent', () => {
 		expect(element().querySelectorAll('[data-test="chat-dock-messages"] ngx-chat-message-item').length).toBe(1);
 	});
 
-	it('drops a deleted message even when it was the newest, and keeps one sent here that no page held yet', () => {
+	it('drops a deleted message even when it was the newest, and keeps one sent here only for a read already under way', () => {
 		const at = (seconds: number) => new Date(Date.now() + seconds * 1000);
 		const first = { ...message('m1', 'Hello'), createdAt: at(1) } as IChatMessageWithRelations;
 		const newest = { ...message('m2', 'Deleted soon'), createdAt: at(2) } as IChatMessageWithRelations;
@@ -222,12 +222,21 @@ describe('ChatDockComponent', () => {
 		jest.advanceTimersByTime(CHAT_MESSAGES_POLL_MS);
 		expect(card['messages']().map((item) => item.id)).toEqual(['m1']);
 
-		// One sent here that the page read meanwhile does not hold yet stays.
+		// One sent here while a read was under way stays when that read's page does not hold it yet.
+		const pending = new Subject<{ messages: IChatMessageWithRelations[] }>();
+		api['messages'].mockReturnValue(pending);
+		jest.advanceTimersByTime(CHAT_MESSAGES_POLL_MS);
 		const sent = { ...message('m3', 'Sent'), createdAt: at(3) } as IChatMessageWithRelations;
 		api['send'].mockReturnValue(of({ message: sent }));
 		card['send']({ body: 'Sent', mentionEmployeeIds: [], attachmentIds: [] });
-		jest.advanceTimersByTime(CHAT_MESSAGES_POLL_MS);
+		pending.next({ messages: [{ ...first }] });
+		pending.complete();
 		expect(card['messages']().map((item) => item.id)).toEqual(['m1', 'm3']);
+
+		// A read started after it landed that does not hold it: it was deleted (elsewhere) before any page held it.
+		api['messages'].mockReturnValue(of({ messages: [{ ...first }] }));
+		jest.advanceTimersByTime(CHAT_MESSAGES_POLL_MS);
+		expect(card['messages']().map((item) => item.id)).toEqual(['m1']);
 	});
 
 	it('keeps a message sent here when a read of the empty conversation answers after it', () => {
@@ -246,6 +255,11 @@ describe('ChatDockComponent', () => {
 		empty.next({ messages: [] });
 		empty.complete();
 		expect(card['messages']().map((item) => item.id)).toEqual(['m1']);
+
+		// A read started after the send that is still empty: the message was deleted since, and leaves.
+		api['messages'].mockReturnValue(of({ messages: [] }));
+		jest.advanceTimersByTime(CHAT_MESSAGES_POLL_MS);
+		expect(card['messages']()).toEqual([]);
 	});
 
 	it('applies only the fields a follow or a deletion changed, over a refresh that came meanwhile', () => {

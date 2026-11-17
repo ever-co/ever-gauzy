@@ -465,11 +465,16 @@ export class ChatDockComponent {
 	private readThrough: string | null = null;
 	/** A catch-up asked for the task cards to be read again with the next page. */
 	private tasksStale = false;
+	/** The reads of the newest page started so far: each page comes with the number of its read. */
+	private reads = 0;
 	/**
-	 * The messages a page has held since the card turned to this person. The pages are read one after another, so one
-	 * of them that a later page does not hold was deleted since, even when it is newer than all of that page.
+	 * For each message known to exist since the card turned to this person, the number of the read it was known by: the
+	 * read whose page held it, or the latest read started when my send of it landed. The pages are read one after
+	 * another, so a read started later holds it while it exists: when its page does not, the message was deleted since
+	 * (a plain message deleted leaves the list), even when it is newer than all of that page. A read already under way
+	 * when it became known may not hold it yet.
 	 */
-	private held = new Set<string>();
+	private known = new Map<string, number>();
 
 	/** The request of the person the card shows; a change of person drops it. */
 	private request: Subscription | null = null;
@@ -533,14 +538,14 @@ export class ChatDockComponent {
 		this.failed.set(false);
 		this.readThrough = null;
 		this.tasksStale = false;
-		this.held = new Set();
+		this.known = new Map();
 		if (!employeeId) return;
 		this.request = this.api.direct([employeeId]).subscribe({
 			next: ({ conversation }) => {
 				this.conversation.set(conversation);
-				this.request = this.api.messages(conversation.id, { limit: CHAT_DOCK_PAGE_SIZE }).subscribe({
+				this.request = this.readNewest(String(conversation.id)).subscribe({
 					next: (page) => {
-						this.accept(page.messages);
+						this.accept(page.messages, page.read);
 						this.poll(conversation);
 					},
 					// The card says so, and the poll keeps trying: the first page it reads takes the note away.
@@ -569,11 +574,11 @@ export class ChatDockComponent {
 		const polling = merge(this.live.ticks(CHAT_MESSAGES_POLL_MS), hints$.pipe(auditTime(CHAT_LIVE_AUDIT_MS)), catchUp$)
 			.pipe(
 				filter(() => isTabVisible()),
-				coalesceReads(() => this.api.messages(id, { limit: CHAT_DOCK_PAGE_SIZE }).pipe(catchError(() => EMPTY)))
+				coalesceReads(() => this.readNewest(id).pipe(catchError(() => EMPTY)))
 			)
 			.subscribe((page) => {
 				this.failed.set(false);
-				this.accept(page.messages);
+				this.accept(page.messages, page.read);
 				// After a catch-up, the tasks the messages show may have changed meanwhile too.
 				if (this.tasksStale) {
 					this.tasksStale = false;
@@ -593,18 +598,21 @@ export class ChatDockComponent {
 	 * Makes the card show the newest page (see `showNewestPage`: what it holds as it holds it, what it no longer holds
 	 * gone, an unchanged message keeping its object so its view is not drawn again), then marks the conversation read
 	 * up to the last message on screen when the other person wrote something new: never further, so what arrives
-	 * meanwhile stays unread, and not while the tab is hidden, when nothing was seen. A message newer than the whole
-	 * page stays only when no page has held it yet (one sent here while the page was read): one a page held before was
-	 * deleted since (a plain message deleted leaves the list), and leaves even as the newest.
+	 * meanwhile stays unread, and not while the tab is hidden, when nothing was seen. A message known before this read
+	 * began that its page does not hold was deleted, and leaves even as the newest (see `known`); one sent here while the
+	 * read was under way stays, even when the page is empty.
 	 */
-	private accept(page: readonly IChatMessageWithRelations[]): void {
+	private accept(page: readonly IChatMessageWithRelations[], read: number): void {
 		const inPage = new Set(page.map((message) => String(message.id)));
 		const current = this.messages();
-		const live = current.filter((message) => inPage.has(String(message.id)) || !this.held.has(String(message.id)));
+		const deleted = (message: IChatMessageWithRelations) => {
+			const since = this.known.get(String(message.id));
+			return !inPage.has(String(message.id)) && since !== undefined && since < read;
+		};
+		const live = current.filter((message) => !deleted(message));
 		const shown = live.length === current.length ? current : live;
-		// An empty page (nothing was written when it was read) keeps what was sent here meanwhile, which no page holds yet.
 		const messages = page.length ? showNewestPage(shown, page) : shown;
-		for (const id of inPage) this.held.add(id);
+		for (const id of inPage) if (!this.known.has(id)) this.known.set(id, read);
 		this.messages.set(messages);
 		const conversation = this.conversation();
 		const me = this.me()?.userId ?? null;
@@ -624,6 +632,12 @@ export class ChatDockComponent {
 					if (this.readThrough === through) this.readThrough = null;
 				}
 			});
+	}
+
+	/** Reads the newest page, with the number of its read (see `known`). */
+	private readNewest(conversationId: string): Observable<{ read: number; messages: readonly IChatMessageWithRelations[] }> {
+		const read = (this.reads += 1);
+		return this.api.messages(conversationId, { limit: CHAT_DOCK_PAGE_SIZE }).pipe(map((page) => ({ read, messages: page.messages })));
 	}
 
 	protected close(): void {
@@ -811,6 +825,8 @@ export class ChatDockComponent {
 						clearDraft(`conversation:${conversation.id}`);
 						return;
 					}
+					// Known from the latest read started: that read may not hold it yet, the next one does while it exists.
+					if (!this.known.has(String(result.message.id))) this.known.set(String(result.message.id), this.reads);
 					this.messages.set(mergeMessages(this.messages(), [result.message]));
 					this.resetToken.update((value) => value + 1);
 					// The box was disabled while sending: the keyboard goes back to it.
