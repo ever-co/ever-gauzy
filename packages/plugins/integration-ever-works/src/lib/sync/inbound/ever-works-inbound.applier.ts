@@ -1,6 +1,8 @@
 import { Injectable, Logger, Optional } from '@nestjs/common';
+import { MikroORM } from '@mikro-orm/core';
 import { DataSource, In, LessThanOrEqual, MoreThan } from 'typeorm';
 import { ID } from '@gauzy/contracts';
+import { runInMikroOrmContext } from '@gauzy/core';
 import type { EverWorksEventEnvelope } from '../../client/ever-works-client.types';
 import { EverWorksConnection } from '../../connection/ever-works-connection.entity';
 import { EverWorksNotifier } from '../../connection/ever-works-notifier.service';
@@ -73,7 +75,9 @@ export class EverWorksInboundApplier {
 		private readonly dataSource: DataSource,
 		private readonly log: EverWorksSyncLogService,
 		/** Tells the admin about a dead letter (an Inbox notice, G-P3-5); absent in bare test wiring. */
-		@Optional() private readonly notifier?: EverWorksNotifier
+		@Optional() private readonly notifier?: EverWorksNotifier,
+		/** Opens the MikroORM request context a handler applies an event in under DB_ORM=mikro-orm. */
+		@Optional() private readonly orm?: MikroORM
 	) {}
 
 	/** Registers a handler for its aggregate types (the later registration wins). */
@@ -239,10 +243,13 @@ export class EverWorksInboundApplier {
 		}
 		try {
 			// Fenced: a write of this handler made after the lease moved is refused (and ends it with
-			// EverWorksLeaseLostError, whatever the handler made of the refusal).
+			// EverWorksLeaseLostError, whatever the handler made of the refusal). The sync loop runs in no request: under
+			// DB_ORM=mikro-orm the handler's Gauzy writes, through MikroORM, run in a MikroORM request context of its own.
 			const outcome = await withLeaseFence(lease, () =>
-				EverWorksSyncContext.run({ connectionId: connection.id as ID, eventId: event.eventId }, () =>
-					handler.apply(envelope, { connection, event, organizationId: event.organizationId as ID })
+				runInMikroOrmContext(this.orm, () =>
+					EverWorksSyncContext.run({ connectionId: connection.id as ID, eventId: event.eventId }, () =>
+						handler.apply(envelope, { connection, event, organizationId: event.organizationId as ID })
+					)
 				)
 			);
 			if (outcome.status === 'deferred') {

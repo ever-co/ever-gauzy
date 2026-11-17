@@ -1,7 +1,8 @@
 import { Injectable, Logger, Optional } from '@nestjs/common';
+import { MikroORM } from '@mikro-orm/core';
 import { DataSource, In, LessThanOrEqual } from 'typeorm';
 import { ID } from '@gauzy/contracts';
-import { IntegrationTenant } from '@gauzy/core';
+import { IntegrationTenant, runInMikroOrmContext } from '@gauzy/core';
 import { EverWorksApiError, EverWorksNetworkError } from '../../client/ever-works-client';
 import { EverWorksConnection } from '../../connection/ever-works-connection.entity';
 import { EverWorksConnectionService } from '../../connection/ever-works-connection.service';
@@ -77,7 +78,9 @@ export class EverWorksOutboundPusher {
 		/** Tells the admin about a change that stopped (an Inbox notice, G-P3-5); absent in bare test wiring. */
 		@Optional() private readonly notifier?: EverWorksNotifier,
 		/** Checks the connection once when Ever Works answers 401 (needs_reauth); absent in bare test wiring. */
-		@Optional() private readonly connections?: EverWorksConnectionService
+		@Optional() private readonly connections?: EverWorksConnectionService,
+		/** Opens the MikroORM request context a handler pushes a change in under DB_ORM=mikro-orm. */
+		@Optional() private readonly orm?: MikroORM
 	) {}
 
 	register(handler: EverWorksOutboundHandler): void {
@@ -178,11 +181,15 @@ export class EverWorksOutboundPusher {
 		};
 		try {
 			// Fenced: a Gauzy write of this push made after the lease moved is refused. The lease is also checked
-			// before the handler starts, since its Ever Works request goes out before its first Gauzy write.
-			const outcome = await withLeaseFence(lease, async () => {
-				await assertLeaseFence();
-				return handler.push(change, { connection, mapping });
-			});
+			// before the handler starts, since its Ever Works request goes out before its first Gauzy write. The sync
+			// loop runs in no request: under DB_ORM=mikro-orm the push's Gauzy writes, through MikroORM, run in a
+			// MikroORM request context of its own.
+			const outcome = await withLeaseFence(lease, () =>
+				runInMikroOrmContext(this.orm, async () => {
+					await assertLeaseFence();
+					return handler.push(change, { connection, mapping });
+				})
+			);
 			if (outcome.status === 'deferred') {
 				await settle({
 					status: EverWorksOutboundStatus.DEFERRED,

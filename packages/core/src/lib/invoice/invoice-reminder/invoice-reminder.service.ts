@@ -1,7 +1,9 @@
 import { randomUUID } from 'node:crypto';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
+import { MikroORM } from '@mikro-orm/core';
 import { Brackets, DataSource, In, IsNull, SelectQueryBuilder } from 'typeorm';
 import { EmailTemplateEnum, ID, IOrganization, LanguagesEnum } from '@gauzy/contracts';
+import { runInMikroOrmContext } from '../../core/context/mikro-orm-context';
 import { EmailTemplate, EstimateEmail, Invoice, Organization, OrganizationContact } from '../../core/entities/internal';
 import { isUniqueViolation } from '../../core/errors/unique-violation';
 import { EmailService } from '../../email-send/email.service';
@@ -91,7 +93,9 @@ function claimTimeOf(now: Date): Date {
  *   due date or emailed again while the sweep sent the ones before it, or whose organization turned the reminders off
  *   meanwhile, gets nothing, and a payment made meanwhile shows in the amount.
  * - **Tenant by tenant.** Every read names the invoice's tenant, and each email goes through its organization's mail
- *   settings and is filed in its email history, which is where the organization sees the reminders it sent.
+ *   settings and is filed in its email history, which is where the organization sees the reminders it sent. Under
+ *   DB_ORM=mikro-orm the mail settings are read through MikroORM, which refuses its global EntityManager outside a
+ *   request: each reminder is then sent in a MikroORM request context of its own, since no request opened one.
  * - **Never an empty email.** The renderer answers an empty email for a template it cannot find, so while the
  *   `invoice-reminder` template is not seeded (its migration failed), the sweep sends nothing and says so.
  */
@@ -112,7 +116,9 @@ export class InvoiceReminderService {
 	constructor(
 		private readonly dataSource: DataSource,
 		private readonly emails: EmailService,
-		private readonly invoices: InvoiceService
+		private readonly invoices: InvoiceService,
+		/** Opens the MikroORM request context a reminder is sent in under DB_ORM=mikro-orm. */
+		@Optional() private readonly orm?: MikroORM
 	) {}
 
 	/**
@@ -314,7 +320,9 @@ export class InvoiceReminderService {
 			try {
 				const claim = await this.claim(invoice, due, delivery.email, now);
 				if (claim) {
-					await this.send(invoice, due, delivery, organization, contactNames, claim, now, report);
+					await runInMikroOrmContext(this.orm, () =>
+						this.send(invoice, due, delivery, organization, contactNames, claim, now, report)
+					);
 				}
 			} catch (error) {
 				report.failed += 1;

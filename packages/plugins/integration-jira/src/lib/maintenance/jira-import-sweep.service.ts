@@ -1,6 +1,8 @@
-import { ConflictException, Inject, Injectable, Logger } from '@nestjs/common';
+import { ConflictException, Inject, Injectable, Logger, Optional } from '@nestjs/common';
+import { MikroORM } from '@mikro-orm/core';
 import { IsNull, LessThan, Not } from 'typeorm';
 import { ID, IIntegrationTenant } from '@gauzy/contracts';
+import { runInMikroOrmContext } from '@gauzy/core';
 import { JiraCloudConfig, jiraWebhooksEnabled } from '../jira-config';
 import { jiraSyncUser, runInJiraContext } from '../jira-process';
 import { JiraSyncRunService } from '../jira-sync-run.service';
@@ -32,6 +34,9 @@ export interface JiraImportSweepOutcome {
  * same incremental read "import now" makes — so a connection without a public address for webhooks still follows
  * Jira; every fourth interval (`JIRA_IMPORT_WEBHOOK_STRIDE`) when the connections take webhooks (an HTTPS `JIRA_WEBHOOK_URL` or `API_BASE_URL`), a reconcile against deliveries that were missed. A mapping never imported is due at once.
  *
+ * **A sweep runs in no MikroORM request context.** Under DB_ORM=mikro-orm the sync writes through MikroORM,
+ * which refuses its global EntityManager outside one: each import, each notice filed again and each webhook kept runs in one of its own.
+ *
  * **A sweep has no caller and therefore no tenant in context.** The due mappings are read across tenants with the
  * plain repository, their connections with the tenant-less lookup, and each import opens the request context of its
  * own tenant and organization (signed in as the sync's user) before anything that reads the context runs — the
@@ -59,7 +64,9 @@ export class JiraImportSweepService {
 		private readonly runs: JiraSyncRunService,
 		private readonly sync: JiraSyncService,
 		@Inject(JIRA_CONFIG) private readonly config: JiraCloudConfig,
-		private readonly webhooks: JiraWebhookService
+		private readonly webhooks: JiraWebhookService,
+		/** Opens the MikroORM request context each import and each notice runs in under DB_ORM=mikro-orm. */
+		@Optional() private readonly orm?: MikroORM
 	) {}
 
 	/** Imports every mapping that is due, the longest waiting first, and says what happened. */
@@ -75,7 +82,7 @@ export class JiraImportSweepService {
 		outcome.due = batch.length;
 		for (const { tenant, mapping } of batch) {
 			try {
-				if (await this.importOne(tenant, mapping)) outcome.imported += 1;
+				if (await runInMikroOrmContext(this.orm, () => this.importOne(tenant, mapping))) outcome.imported += 1;
 				else outcome.skipped += 1;
 			} catch (error) {
 				outcome.failed += 1;
@@ -131,7 +138,7 @@ export class JiraImportSweepService {
 		let filed = 0;
 		for (const tenant of await this.tenants.findRefusedUnfiled()) {
 			try {
-				await this.tenants.ensureAttentionFiled(tenant);
+				await runInMikroOrmContext(this.orm, () => this.tenants.ensureAttentionFiled(tenant));
 				filed += 1;
 			} catch (error) {
 				this.logger.warn(`The attention of connection ${tenant.id} could not be filed from the sweep: ${error instanceof Error ? error.message : String(error)}`);
@@ -153,7 +160,9 @@ export class JiraImportSweepService {
 			if (summary.siteRequired || summary.attentionReason) continue;
 			try {
 				const scope = { tenantId: tenant.tenantId as ID, organizationId: tenant.organizationId as ID };
-				const outcome = await runInJiraContext(jiraSyncUser(scope, null), () => this.webhooks.ensure(tenant, now.getTime()));
+				const outcome = await runInMikroOrmContext(this.orm, () =>
+					runInJiraContext(jiraSyncUser(scope, null), () => this.webhooks.ensure(tenant, now.getTime()))
+				);
 				if (outcome === 'registered' || outcome === 'refreshed' || outcome === 'removed') kept += 1;
 			} catch (error) {
 				this.logger.warn(`The webhook of connection ${tenant.id} could not be kept from the sweep: ${error instanceof Error ? error.message : String(error)}`);

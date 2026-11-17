@@ -18,6 +18,14 @@
  * `handleExtract` — deliberately NOT serialized — is driven through the same harness as a
  * known-dirty control: it reproduces the starvation the cap removes.
  */
+// The one helper taken from the platform's barrel (which boots the whole application graph) opens MikroORM's own request
+// context under DB_ORM=mikro-orm, given the instance, as the platform's does; the work as it is otherwise.
+jest.mock('@gauzy/core', () => ({
+	runInMikroOrmContext: (orm: { em: unknown } | null | undefined, work: () => Promise<unknown>) =>
+		orm && process.env.DB_ORM === 'mikro-orm'
+			? jest.requireActual('@mikro-orm/core').RequestContext.create(orm.em, work)
+			: work()
+}));
 jest.mock('@gauzy/scheduler', () => ({
 	QueueWorker: () => () => undefined,
 	QueueJobHandler: () => () => undefined,

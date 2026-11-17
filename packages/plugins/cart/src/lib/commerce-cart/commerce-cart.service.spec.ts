@@ -202,6 +202,12 @@ jest.mock('@gauzy/core', () => {
 		// the three-decimal case below pass for the wrong reason.
 		currencyPrecision: jest.requireActual('@gauzy/core/src/lib/money/currency-precision').currencyPrecision,
 		normalizeDecimalString: jest.requireActual('@gauzy/core/src/lib/money/decimal').normalizeDecimalString,
+		// The sweeps' context opener, as the platform's: MikroORM's own request context under DB_ORM=mikro-orm, given
+		// the instance; the work as it is otherwise.
+		runInMikroOrmContext: (orm: { em: unknown } | null | undefined, work: () => Promise<unknown>) =>
+			orm && process.env.DB_ORM === 'mikro-orm'
+				? jest.requireActual('@mikro-orm/core').RequestContext.create(orm.em, work)
+				: work(),
 		// The child services' cross-tenant reference check reads a real database; it is exercised in
 		// `cart-references.db.spec.ts`, and the order the cart's verbs run it in is asserted below.
 		assertPlainReferencesNotForeign: (...args: unknown[]) => mockAssertReferences(...args),
@@ -221,6 +227,7 @@ jest.mock('@gauzy/core', () => {
 
 import { createHash } from 'node:crypto';
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import { RequestContext as MikroOrmRequestContext } from '@mikro-orm/core';
 import { AdjustmentOwnerType, CommerceCartStatus, CommerceCheckoutSessionStatus, TaxLineOwnerType } from '@gauzy/contracts';
 import { RequestContext } from '@gauzy/core';
 import { CommerceCartService } from './commerce-cart.service';
@@ -3207,5 +3214,99 @@ describe('CommerceCartService — the ids a cart names (CART_REFERENCES)', () =>
 			customerId: 'organization_contact',
 			userId: 'user'
 		});
+	});
+});
+
+/**
+ * The expiry and abandonment sweeps run on a schedule, outside any request. Under DB_ORM=mikro-orm the cart's CRUD
+ * service reads and writes through MikroORM, which refuses its global EntityManager there: both sweeps did nothing.
+ * The repository below stands in for MikroORM's, refusing every call made outside a MikroORM request context.
+ */
+describe('CommerceCartService sweeps under DB_ORM=mikro-orm', () => {
+	const originalOrm = process.env.DB_ORM;
+
+	afterEach(() => {
+		if (originalOrm === undefined) delete process.env.DB_ORM;
+		else process.env.DB_ORM = originalOrm;
+	});
+
+	/** The service over a cart table whose every call needs a MikroORM request context, and the contexts it ran in. */
+	function sweepFixture(carts: Array<Record<string, unknown>>) {
+		const tables: ITables = {
+			commerce_cart: carts,
+			commerce_cart_line: [],
+			commerce_cart_shipping_method: [],
+			commerce_cart_promotion: [],
+			commerce_checkout_session: []
+		};
+		const table = repository(tables, 'commerce_cart');
+		const contexts: Array<{ call: string; em: unknown }> = [];
+		const throughMikroOrm = new Proxy(table, {
+			get(target, property) {
+				const value = Reflect.get(target, property);
+				if (typeof value !== 'function' || ['rows', 'allRows', 'create'].includes(String(property)))
+					return value;
+				return (...args: unknown[]) => {
+					const em = MikroOrmRequestContext.getEntityManager();
+					if (!em) {
+						throw new Error(
+							'Using global EntityManager instance methods for context specific actions is disallowed.'
+						);
+					}
+					contexts.push({ call: String(property), em });
+					return value(...args);
+				};
+			}
+		});
+		let forks = 0;
+		const orm = { em: { name: 'default', fork: jest.fn(() => ({ name: 'default', fork: ++forks })) } };
+		const service = new CommerceCartService(
+			throughMikroOrm as never,
+			{} as never,
+			{} as never,
+			{} as never,
+			{} as never,
+			{} as never,
+			{} as never,
+			{} as never,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			orm as never
+		);
+		return { service, contexts, rows: () => table.allRows() };
+	}
+
+	it('expires the due carts: the scan, then each cart, in a MikroORM request context of its own', async () => {
+		process.env.DB_ORM = 'mikro-orm';
+		const past = new Date(Date.now() - 60_000);
+		const { service, contexts, rows } = sweepFixture([
+			{ id: 'cart-1', status: CommerceCartStatus.ACTIVE, expiresAt: past, version: 1 },
+			{ id: 'cart-2', status: CommerceCartStatus.ABANDONED, expiresAt: past, version: 3 }
+		]);
+
+		expect((await service.expireDueCarts()).sort()).toEqual(['cart-1', 'cart-2']);
+		expect(rows().map((row) => row.status)).toEqual([CommerceCartStatus.EXPIRED, CommerceCartStatus.EXPIRED]);
+		// One context for the scan, one for each cart's write (its read and its update)
+		const forks = new Set(contexts.map(({ em }) => (em as { fork: number }).fork));
+		expect(forks.size).toBe(3);
+		expect(contexts[0]).toEqual({ call: 'findAndCount', em: { name: 'default', fork: 1 } });
+		expect(MikroOrmRequestContext.getEntityManager()).toBeUndefined();
+	});
+
+	it('abandons the idle carts: the scan, then each cart, in a MikroORM request context of its own', async () => {
+		process.env.DB_ORM = 'mikro-orm';
+		const idle = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+		const { service, contexts, rows } = sweepFixture([
+			{ id: 'cart-1', status: CommerceCartStatus.ACTIVE, lastActivityAt: idle, version: 1 },
+			{ id: 'cart-2', status: CommerceCartStatus.ACTIVE, lastActivityAt: idle, version: 2 }
+		]);
+
+		expect((await service.abandonDueCarts()).sort()).toEqual(['cart-1', 'cart-2']);
+		expect(rows().map((row) => row.status)).toEqual([CommerceCartStatus.ABANDONED, CommerceCartStatus.ABANDONED]);
+		expect(new Set(contexts.map(({ em }) => (em as { fork: number }).fork)).size).toBe(3);
 	});
 });
