@@ -486,10 +486,12 @@ export class ManagedEmployeeService {
 	 * Checks whether the current employee manages the target employee in an organization: the target is an active
 	 * member of a team or a project, in effect in that organization, that the current employee manages.
 	 *
-	 * A team is managed through the `isManager` flag or the membership's `MANAGER` role ({@link isTeamManagerMembership}):
-	 * the team flows write the role and leave the flag unset, so the flag alone would miss most team managers. A project
-	 * is managed through the flag, as everywhere else. The organization is read through the team or project, whose
-	 * `organizationId` is authoritative, and a deleted, archived or inactive team or project manages no one.
+	 * A team or project is managed through the `isManager` flag alone, as in {@link canManageEmployee} and
+	 * {@link filterAccessibleEmployeeIds}: the flag is the right to act for the members, and only a caller who may act
+	 * for every employee hands it on (`OrganizationTeamService.create`, `OrganizationProjectService`). The `MANAGER`
+	 * role is not enough: an employee who creates a team picks its members and gets that role on it. The organization
+	 * is read through the team or project, whose `organizationId` is authoritative, and a deleted, archived or inactive
+	 * team or project manages no one.
 	 *
 	 * Unlike {@link canManageEmployee}, it grants nothing by permission and nothing for the employee's own record: the
 	 * caller decides those first.
@@ -512,10 +514,11 @@ export class ManagedEmployeeService {
 				where: {
 					employeeId: currentEmployeeId,
 					tenantId,
+					isManager: true,
 					...activeMembershipWhere(),
 					organizationTeam: { ...activeGroupWhere(), organizationId }
 				},
-				relations: { role: true }
+				select: { organizationTeamId: true }
 			}),
 			this.typeOrmProjectEmployeeRepository.find({
 				where: {
@@ -529,9 +532,7 @@ export class ManagedEmployeeService {
 			})
 		]);
 
-		const managedTeamIds = teamMemberships
-			.filter(isTeamManagerMembership)
-			.map((membership) => membership.organizationTeamId);
+		const managedTeamIds = teamMemberships.map((membership) => membership.organizationTeamId);
 		if (
 			isNotEmpty(managedTeamIds) &&
 			(await this.typeOrmTeamEmployeeRepository.existsBy({

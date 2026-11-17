@@ -32,6 +32,8 @@ const OWN_EMPLOYEE_ID = '5f607182-93a4-4b52-9e6f-7a8b9c0d1e26';
 const COLLEAGUE_EMPLOYEE_ID = '60718293-a4b5-4c63-8f70-8b9c0d1e2f27';
 const MANAGER_EMPLOYEE_ID = '718293a4-b5c6-4d74-9081-9c0d1e2f3a28';
 const PROJECT_MANAGER_EMPLOYEE_ID = '8293a4b5-c6d7-4e85-8192-0d1e2f3a4b29';
+const TEAM_CREATOR_EMPLOYEE_ID = '93a4b5c6-d7e8-4f96-8a2b-1e2f3a4b5c34';
+const CREATED_TEAM_ID = 'a4b5c6d7-e8f9-4a07-9b3c-2f3a4b5c6d35';
 
 const OWN_SLOT_ID = '93a4b5c6-d7e8-4f96-92a3-1e2f3a4b5c30';
 const COLLEAGUE_SLOT_ID = 'a4b5c6d7-e8f9-4a07-83b4-2f3a4b5c6d31';
@@ -59,19 +61,27 @@ const SLOTS = [
 ];
 
 /**
- * Team and project memberships. The manager manages the team by its MANAGER role with the flag unset, as the team
- * flows write it; the project manager manages the project by the flag. Which predicates the reads apply (active,
+ * Team and project memberships. The manager and the project manager hold the `isManager` flag, which an admin hands on;
+ * the team creator made a team of their own with the colleague in it, and holds its MANAGER role without the flag, as
+ * `OrganizationTeamService.create` leaves an employee who creates a team. Which predicates the reads apply (active,
  * organization) is asserted in `managed-employee.service.manages-in-organization.spec.ts`.
  */
 const TEAM_MEMBERS = [
 	{
 		employeeId: MANAGER_EMPLOYEE_ID,
 		organizationTeamId: TEAM_ID,
-		isManager: false,
+		isManager: true,
 		role: { name: RolesEnum.MANAGER }
 	},
 	{ employeeId: COLLEAGUE_EMPLOYEE_ID, organizationTeamId: TEAM_ID, isManager: false, role: null },
-	{ employeeId: OWN_EMPLOYEE_ID, organizationTeamId: TEAM_ID, isManager: false, role: null }
+	{ employeeId: OWN_EMPLOYEE_ID, organizationTeamId: TEAM_ID, isManager: false, role: null },
+	{
+		employeeId: TEAM_CREATOR_EMPLOYEE_ID,
+		organizationTeamId: CREATED_TEAM_ID,
+		isManager: false,
+		role: { name: RolesEnum.MANAGER }
+	},
+	{ employeeId: COLLEAGUE_EMPLOYEE_ID, organizationTeamId: CREATED_TEAM_ID, isManager: false, role: null }
 ];
 const PROJECT_MEMBERS = [
 	{ employeeId: PROJECT_MANAGER_EMPLOYEE_ID, organizationProjectId: PROJECT_ID, isManager: true },
@@ -133,7 +143,13 @@ describe('GET /timesheet/custom-tracking/time-slot/:id — whose slot a caller m
 			})
 		};
 		const teamEmployeeRepository = {
-			find: jest.fn(async ({ where }) => TEAM_MEMBERS.filter((row) => row.employeeId === where.employeeId)),
+			find: jest.fn(async ({ where }) =>
+				TEAM_MEMBERS.filter(
+					(row) =>
+						row.employeeId === where.employeeId &&
+						(where.isManager === undefined || row.isManager === where.isManager)
+				)
+			),
 			existsBy: jest.fn(async (where) =>
 				TEAM_MEMBERS.some(
 					(row) =>
@@ -233,12 +249,19 @@ describe('GET /timesheet/custom-tracking/time-slot/:id — whose slot a caller m
 		expect(JSON.stringify(refused.body)).not.toContain('session-1');
 	});
 
-	it("answers a team manager a member's slot, the team managed by its MANAGER role", async () => {
+	it("answers a team manager (the `isManager` flag an admin handed on) a member's slot", async () => {
 		caller = asEmployee(MANAGER_EMPLOYEE_ID);
 
 		const response = await read(COLLEAGUE_SLOT_ID).expect(200);
 
 		expect(response.body.trackingSessions).toEqual(TRACKING_SESSIONS);
+	});
+
+	it('answers 404 to an employee who made a team of their own with the colleague in it (MANAGER role, no flag)', async () => {
+		// An employee may create a team, pick its members and get its MANAGER role; that must not open their slots.
+		caller = asEmployee(TEAM_CREATOR_EMPLOYEE_ID);
+
+		await read(COLLEAGUE_SLOT_ID).expect(404);
 	});
 
 	it("answers a project manager a member's slot", async () => {

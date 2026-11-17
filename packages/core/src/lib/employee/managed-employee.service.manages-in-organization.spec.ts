@@ -1,7 +1,7 @@
 import '../core/entities/internal';
 
 import { Equal, In, IsNull, Or } from 'typeorm';
-import { PermissionsEnum, RolesEnum } from '@gauzy/contracts';
+import { PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { ManagedEmployeeService } from './managed-employee.service';
 
@@ -18,8 +18,9 @@ const ACTIVE_GROUP_IN_ORGANIZATION = { ...ACTIVE_MEMBERSHIP, deletedAt: IsNull()
 
 /**
  * Who manages an employee in an organization, for the reads that answer a record by its id (the custom-tracking
- * slot route). A team counts by its `isManager` flag or its MANAGER role, a project by its flag, and either one only
- * when it is in effect in that organization.
+ * slot route). A team or project counts by its `isManager` flag alone, the right to act for the members that only a
+ * caller who may act for every employee hands on, and only when it is in effect in that organization. The MANAGER
+ * role does not count: an employee who creates a team picks its members and gets that role on it.
  */
 describe('ManagedEmployeeService.managesEmployeeInOrganization', () => {
 	let service: ManagedEmployeeService;
@@ -51,10 +52,11 @@ describe('ManagedEmployeeService.managesEmployeeInOrganization', () => {
 			where: {
 				employeeId: ACTOR_ID,
 				tenantId: TENANT_ID,
+				isManager: true,
 				...ACTIVE_MEMBERSHIP,
 				organizationTeam: ACTIVE_GROUP_IN_ORGANIZATION
 			},
-			relations: { role: true }
+			select: { organizationTeamId: true }
 		});
 		expect(projectEmployeeRepository.find).toHaveBeenCalledWith({
 			where: {
@@ -82,25 +84,24 @@ describe('ManagedEmployeeService.managesEmployeeInOrganization', () => {
 		});
 	});
 
-	it('is true for a team manager by the MANAGER role, the flag unset', async () => {
-		teamEmployeeRepository.find.mockResolvedValue([
-			{ organizationTeamId: TEAM_ID, isManager: false, role: { name: RolesEnum.MANAGER } }
-		]);
-		teamEmployeeRepository.existsBy.mockResolvedValue(true);
+	it('does not count the MANAGER role: the team read asks for the flag and loads no role', async () => {
+		await manages();
 
-		await expect(manages()).resolves.toBe(true);
+		const [{ where, relations }] = teamEmployeeRepository.find.mock.calls[0];
+		expect(where.isManager).toBe(true);
+		expect(where).not.toHaveProperty('role');
+		expect(relations).toBeUndefined();
 	});
 
-	it('is false for a plain member of the team: only the teams the caller manages are searched', async () => {
-		teamEmployeeRepository.find.mockResolvedValue([
-			{ organizationTeamId: TEAM_ID, isManager: false, role: { name: RolesEnum.EMPLOYEE } },
-			{ organizationTeamId: OTHER_TEAM_ID, isManager: null, role: null }
-		]);
-		teamEmployeeRepository.existsBy.mockResolvedValue(true);
+	it('is false, with no member lookup, when the caller manages no team or project there', async () => {
+		// What the flag predicate leaves of a team the caller created themselves: they hold its MANAGER role only.
+		teamEmployeeRepository.find.mockResolvedValue([]);
+		projectEmployeeRepository.find.mockResolvedValue([]);
 
 		await expect(manages()).resolves.toBe(false);
 
 		expect(teamEmployeeRepository.existsBy).not.toHaveBeenCalled();
+		expect(projectEmployeeRepository.existsBy).not.toHaveBeenCalled();
 	});
 
 	it('is false when the target belongs to none of the teams the caller manages', async () => {
