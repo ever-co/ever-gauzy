@@ -153,10 +153,25 @@ export function isDummyImageUrl(value: unknown): value is string {
 /**
  * Whether `value` is a placeholder URL, drawn by the API ({@link getPlaceholderImageUrl}) or by the former generator.
  *
+ * The API's path is looked for in the URL's path only: a real picture whose query merely mentions it is not one.
+ *
  * @param value - Any value.
  */
 export function isPlaceholderImageUrl(value: unknown): value is string {
-	return typeof value === 'string' && (value.includes(`${PLACEHOLDER_IMAGE_PATH}/`) || isDummyImageUrl(value));
+	if (typeof value !== 'string') {
+		return false;
+	}
+	if (isDummyImageUrl(value)) {
+		return true;
+	}
+	let pathname: string;
+	try {
+		// A base, so a URL stored without the API's host (an empty API_BASE_URL) parses as well.
+		pathname = new URL(value.trim(), 'http://localhost').pathname;
+	} catch {
+		return false;
+	}
+	return pathname.includes(`${PLACEHOLDER_IMAGE_PATH}/`);
 }
 
 /**

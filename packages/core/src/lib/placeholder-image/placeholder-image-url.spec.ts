@@ -206,6 +206,16 @@ describe('placeholder image URLs', () => {
 			expect(isPlaceholderImageUrl('https://dummyimage.com/330x300/269aff/ffffff.jpg&text=A')).toBe(true);
 		});
 
+		it('recognizes a placeholder stored without the API host', () => {
+			expect(isPlaceholderImageUrl('/api/placeholder/330x300/269aff?text=A')).toBe(true);
+		});
+
+		it('does not take a picture whose query mentions the placeholder path for a placeholder', () => {
+			expect(isPlaceholderImageUrl('https://cdn.example.com/ann.jpg?next=/api/placeholder/330x300/269aff')).toBe(
+				false
+			);
+		});
+
 		it('does not take an uploaded or a provider picture for a placeholder', () => {
 			expect(isPlaceholderImageUrl('https://cdn.example.com/avatars/ann.jpg')).toBe(false);
 			expect(isPlaceholderImageUrl('')).toBe(false);
