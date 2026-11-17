@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
+import { NbTrigger } from '@nebular/theme';
 import { humanizeBytes } from '../../models/docs-format.util';
 
 /**
@@ -44,6 +45,12 @@ export class DocsDropStripComponent {
 	@Output() browse = new EventEmitter<void>();
 
 	public formats = '';
+
+	/**
+	 * The strip's hint opens on keyboard focus: a pointer user reads the same text on the strip itself. Bound as the
+	 * enum, which the strict template check requires (a plain `"focus"` does not compile).
+	 */
+	readonly tooltipTrigger = NbTrigger.FOCUS;
 
 	get maxFileSize(): string {
 		return humanizeBytes(this.maxFileSizeBytes);

@@ -104,3 +104,28 @@ export function shouldSeedAvatar(existingUser?: IExistingUserAvatar | null): boo
 
 	return true;
 }
+
+/** The avatar fields of a profile update; kept structural so the helper stays pure. */
+interface IAvatarUpdate {
+	imageId?: string | null;
+	image?: unknown;
+	imageUrl?: string | null;
+}
+
+/**
+ * Whether a profile update removes the user's photo: it detaches the image (`imageId: null`, and no
+ * `image` in its place) AND explicitly clears the picture URL (`imageUrl` present and empty). Such a
+ * user is given the same placeholder as a user created without a photo, rather than an empty
+ * `imageUrl` that every client would have to guard against.
+ *
+ * Both are required. A profile form that merely carries the current `imageId` sends `imageId: null`
+ * for every user without an uploaded photo — including one whose picture is a social provider's URL —
+ * and that save must not replace their picture.
+ */
+export function isAvatarRemoval(update?: IAvatarUpdate | null): boolean {
+	if (!update) return false;
+	if (update.imageId !== null) return false;
+	if (update.image) return false;
+	if (!Object.prototype.hasOwnProperty.call(update, 'imageUrl')) return false;
+	return !update.imageUrl?.trim();
+}

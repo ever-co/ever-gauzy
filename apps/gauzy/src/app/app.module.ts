@@ -45,6 +45,7 @@ import {
 	GoogleMapsLoaderService,
 	HubstaffTokenInterceptor,
 	LanguageInterceptor,
+	ListFilterStateService,
 	SentryErrorHandler,
 	serverConnectionFactory,
 	ServerConnectionService,
@@ -225,6 +226,11 @@ const FEATURE_MODULES = [
 		WorkspaceSyncService,
 		provideAppInitializer(() => {
 			inject(WorkspaceSyncService).isSupported();
+		}),
+
+		// Starts watching navigations so a list reopened by the browser's Back button gets its filters back.
+		provideAppInitializer(() => {
+			inject(ListFilterStateService);
 		}),
 
 		// ─── Services ─────────────────────────────────────────────────────────────────

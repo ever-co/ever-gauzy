@@ -2,11 +2,13 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { CommandBus } from '@nestjs/cqrs';
 import { Between } from 'typeorm';
 import {
+	ID,
 	ICustomActivity,
 	ITrackingSession,
 	ITrackingPayload,
 	ITrackingSessionResponse,
-	ITimeLog
+	ITimeLog,
+	PermissionsEnum
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
 import { RequestContext } from '../../core/context';
@@ -178,7 +180,10 @@ export class CustomTrackingService extends TenantAwareCrudService<TimeSlot> {
 	}> {
 		const tenantId = RequestContext.currentTenantId();
 		const currentUser = RequestContext.currentUser();
-		const organizationId = currentUser?.employee?.organizationId;
+		// The organization the caller works in, as the JWT strategy validated it. The request's user carries no
+		// `employee` (the user entity has no such relation), so reading the organization from it alone answered every
+		// request with 400; it is kept as the fallback.
+		const organizationId = RequestContext.currentOrganizationId() || currentUser?.employee?.organizationId;
 
 		if (!tenantId || !organizationId) {
 			throw new BadRequestException('Tenant and organization contexts are required');
@@ -198,7 +203,8 @@ export class CustomTrackingService extends TenantAwareCrudService<TimeSlot> {
             }
 		});
 
-		if (!timeSlot) {
+		// A slot the caller may not read answers exactly as a missing one, so its existence does not leak.
+		if (!timeSlot || !(await this.canReadTimeSlotOf(timeSlot.employeeId, organizationId))) {
 			throw new NotFoundException('TimeSlot not found');
 		}
 
@@ -221,6 +227,37 @@ export class CustomTrackingService extends TenantAwareCrudService<TimeSlot> {
 			},
 			trackingSessions: customActivity.trackingSessions
 		};
+	}
+
+	/**
+	 * Whether the caller may read a slot of an employee, in the organization the slot was read in.
+	 *
+	 * As the time-slot reads decide it (`TimeSlotService`): a caller who may act for every employee
+	 * (CHANGE_SELECTED_EMPLOYEE, the default admins) reads every slot, and a caller who may not and has no employee
+	 * record of their own reads none, since time slots are personal (GHSA-6qvm-3wg4-26w4). Anyone else reads their own
+	 * slots and, as the tracking-session read lets a manager read their members' sessions, those of the members of a
+	 * team or project they manage in that organization. The slot's id alone used to be enough, so any TIME_TRACKER
+	 * holder (every default employee) could read a colleague's slot: its tracking sessions and its time entries.
+	 *
+	 * @param slotEmployeeId - The employee the slot belongs to
+	 * @param organizationId - The organization the slot was read in
+	 * @returns true if the caller may read the slot
+	 */
+	private async canReadTimeSlotOf(slotEmployeeId: ID, organizationId: ID): Promise<boolean> {
+		if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+			return true;
+		}
+
+		const currentEmployeeId = RequestContext.currentUser()?.employeeId;
+		if (!currentEmployeeId) {
+			return false;
+		}
+
+		if (slotEmployeeId && slotEmployeeId === currentEmployeeId) {
+			return true;
+		}
+
+		return await this.managedEmployeeService.managesEmployeeInOrganization(slotEmployeeId, organizationId);
 	}
 
 	/**
@@ -464,6 +501,11 @@ export class CustomTrackingService extends TenantAwareCrudService<TimeSlot> {
 
 	/**
 	 * Get tracking sessions by sessionId
+	 *
+	 * A session identifier is chosen by the tracker that reports it, so it names no employee: the sessions the caller
+	 * may not read are left out, and an identifier whose sessions are all someone else's answers exactly as one that
+	 * does not exist. Which employees' sessions the caller reads is decided as for their time slots, which hold the
+	 * sessions ({@link canReadTimeSlotOf}).
 	 */
 	async getSessionsBySessionId(
 		sessionId: string,
@@ -473,7 +515,12 @@ export class CustomTrackingService extends TenantAwareCrudService<TimeSlot> {
 		endDate?: Date
 	): Promise<ITrackingSessionResponse[]> {
 		const contextTenantId = tenantId || RequestContext.currentTenantId();
-		const contextOrgId = organizationId || RequestContext.currentUser()?.employee?.organizationId;
+		// The organization the caller works in, as the JWT strategy validated it; the request's user carries no
+		// `employee`, so reading it alone answered every request with 400 (see `getTimeSlotTrackingData`).
+		const contextOrgId =
+			organizationId ||
+			RequestContext.currentOrganizationId() ||
+			RequestContext.currentUser()?.employee?.organizationId;
 
 		if (!contextTenantId || !contextOrgId) {
 			throw new BadRequestException('Tenant and Organization contexts are required');
@@ -497,12 +544,43 @@ export class CustomTrackingService extends TenantAwareCrudService<TimeSlot> {
 			order: { createdAt: 'ASC' }
 		});
 
-		return this.extractTrackingSessionsFromTimeSlotSessions(timeSlotSessions, false);
+		const readableSessions = await this.keepSessionsTheCallerMayRead(timeSlotSessions, contextOrgId);
+
+		return this.extractTrackingSessionsFromTimeSlotSessions(readableSessions, false);
+	}
+
+	/**
+	 * The time-slot sessions whose employee the caller may read, in the organization they were read in.
+	 *
+	 * Each employee is decided once, as for their time slots ({@link canReadTimeSlotOf}): every one for a caller who
+	 * may act for every employee, none for a caller who may not and has no employee record, and otherwise the
+	 * caller's own and the members of a team or project they manage there.
+	 *
+	 * @param timeSlotSessions - The sessions read in the organization
+	 * @param organizationId - The organization they were read in
+	 * @returns The sessions the caller may read, in their order
+	 */
+	private async keepSessionsTheCallerMayRead(
+		timeSlotSessions: TimeSlotSession[],
+		organizationId: ID
+	): Promise<TimeSlotSession[]> {
+		const employeeIds = [...new Set(timeSlotSessions.map((timeSlotSession) => timeSlotSession.employeeId))];
+		const readable = await Promise.all(
+			employeeIds.map((employeeId) => this.canReadTimeSlotOf(employeeId, organizationId))
+		);
+		const readableEmployeeIds = new Set(employeeIds.filter((_, index) => readable[index]));
+
+		return timeSlotSessions.filter((timeSlotSession) => readableEmployeeIds.has(timeSlotSession.employeeId));
 	}
 
 	/**
 	 * Get active sessions for an employee
 	 * Sessions with activity in the last N minutes
+	 *
+	 * The employee is the one named or, when none is named, the caller (every employee of the organization for a
+	 * caller who may act for every employee, as before). A named employee whose sessions the caller may not read
+	 * answers an empty list, exactly as an employee who is not tracking: the id from the query used to be taken as
+	 * given, and a caller with no employee record who named none read every employee's sessions.
 	 */
 	async getActiveSessions(
 		employeeId?: string,
@@ -511,11 +589,23 @@ export class CustomTrackingService extends TenantAwareCrudService<TimeSlot> {
 		organizationId?: string
 	): Promise<ITrackingSessionResponse[]> {
 		const contextTenantId = tenantId || RequestContext.currentTenantId();
-		const contextOrgId = organizationId || RequestContext.currentUser()?.employee?.organizationId;
+		// The organization the caller works in, as the JWT strategy validated it; the request's user carries no
+		// `employee`, so reading it alone answered every request with 400 (see `getTimeSlotTrackingData`).
+		const contextOrgId =
+			organizationId ||
+			RequestContext.currentOrganizationId() ||
+			RequestContext.currentUser()?.employee?.organizationId;
 		const contextEmployeeId = employeeId || RequestContext.currentEmployeeId();
 
 		if (!contextTenantId || !contextOrgId) {
 			throw new BadRequestException('Tenant and Organization context is required');
+		}
+
+		// Decided as for the employee's time slots ({@link canReadTimeSlotOf}). No employee is left only for a caller who
+		// may act for every employee (`currentEmployeeId` is null for them), who reads the whole organization; anyone
+		// else without an employee of their own reads nothing.
+		if (!(await this.canReadTimeSlotOf(contextEmployeeId, contextOrgId))) {
+			return [];
 		}
 
 		const thresholdDate = new Date(Date.now() - activityThresholdMinutes * 60 * 1000);

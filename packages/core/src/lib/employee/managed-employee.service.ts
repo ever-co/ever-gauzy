@@ -483,6 +483,82 @@ export class ManagedEmployeeService {
 	}
 
 	/**
+	 * Checks whether the current employee manages the target employee in an organization: the target is an active
+	 * member of a team or a project, in effect in that organization, that the current employee manages.
+	 *
+	 * A team or project is managed through the `isManager` flag alone, as in {@link canManageEmployee} and
+	 * {@link filterAccessibleEmployeeIds}: the flag is the right to act for the members, and only a caller who may act
+	 * for every employee hands it on (`OrganizationTeamService.create`, `OrganizationProjectService`). The `MANAGER`
+	 * role is not enough: an employee who creates a team picks its members and gets that role on it. The organization
+	 * is read through the team or project, whose `organizationId` is authoritative, and a deleted, archived or inactive
+	 * team or project manages no one.
+	 *
+	 * Unlike {@link canManageEmployee}, it grants nothing by permission and nothing for the employee's own record: the
+	 * caller decides those first.
+	 *
+	 * @param targetEmployeeId - The employee whose data is read
+	 * @param organizationId - The organization the data belongs to
+	 * @returns true if the current employee manages the target employee in that organization
+	 */
+	async managesEmployeeInOrganization(targetEmployeeId: ID, organizationId: ID): Promise<boolean> {
+		const currentEmployeeId = RequestContext.currentUser()?.employeeId;
+		const tenantId = RequestContext.currentTenantId();
+
+		// Fail closed: an undefined key is dropped from the queries below, which would then match any membership.
+		if (!currentEmployeeId || !targetEmployeeId || !organizationId || !tenantId) {
+			return false;
+		}
+
+		const [teamMemberships, projectMemberships] = await Promise.all([
+			this.typeOrmTeamEmployeeRepository.find({
+				where: {
+					employeeId: currentEmployeeId,
+					tenantId,
+					isManager: true,
+					...activeMembershipWhere(),
+					organizationTeam: { ...activeGroupWhere(), organizationId }
+				},
+				select: { organizationTeamId: true }
+			}),
+			this.typeOrmProjectEmployeeRepository.find({
+				where: {
+					employeeId: currentEmployeeId,
+					tenantId,
+					isManager: true,
+					...activeMembershipWhere(),
+					organizationProject: { ...activeGroupWhere(), organizationId }
+				},
+				select: { organizationProjectId: true }
+			})
+		]);
+
+		const managedTeamIds = teamMemberships.map((membership) => membership.organizationTeamId);
+		if (
+			isNotEmpty(managedTeamIds) &&
+			(await this.typeOrmTeamEmployeeRepository.existsBy({
+				employeeId: targetEmployeeId,
+				organizationTeamId: In(managedTeamIds),
+				tenantId,
+				...activeMembershipWhere()
+			}))
+		) {
+			return true;
+		}
+
+		const managedProjectIds = projectMemberships.map((membership) => membership.organizationProjectId);
+		if (isNotEmpty(managedProjectIds)) {
+			return await this.typeOrmProjectEmployeeRepository.existsBy({
+				employeeId: targetEmployeeId,
+				organizationProjectId: In(managedProjectIds),
+				tenantId,
+				...activeMembershipWhere()
+			});
+		}
+
+		return false;
+	}
+
+	/**
 	 * Checks whether the current employee may view another employee's profile activity.
 	 *
 	 * Team-based access requires both employees to be active members of the same active team.

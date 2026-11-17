@@ -1,5 +1,5 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { EntityManager } from 'typeorm';
+import { EntityManager, In } from 'typeorm';
 import { DatabaseTypeEnum } from '@gauzy/config';
 import { DecimalString, ID, IPagination } from '@gauzy/contracts';
 import {
@@ -429,7 +429,7 @@ export class PromotionUsageService extends TenantScopedCrudService<PromotionUsag
 			where: {
 				promotionId,
 				customerId,
-				status: [PromotionUsageStatus.RESERVED, PromotionUsageStatus.REGISTERED] as never,
+				status: In([PromotionUsageStatus.RESERVED, PromotionUsageStatus.REGISTERED]),
 				...this.scope
 			}
 		});
@@ -462,7 +462,7 @@ export class PromotionUsageService extends TenantScopedCrudService<PromotionUsag
 		return this.typeOrmPromotionUsageRepository.count({
 			where: {
 				promotionId,
-				status: [PromotionUsageStatus.RESERVED, PromotionUsageStatus.REGISTERED] as never,
+				status: In([PromotionUsageStatus.RESERVED, PromotionUsageStatus.REGISTERED]),
 				...this.scope
 			}
 		});
@@ -477,10 +477,13 @@ export class PromotionUsageService extends TenantScopedCrudService<PromotionUsag
 	 *
 	 * @param promotionId The promotion.
 	 * @param cartId The cart, when the caller has one.
+	 * @param customerId Narrows the answer to a reservation held for this customer, for a caller that leaves
+	 * the reservation out of that customer's count: a reservation the cart holds for nobody, or for someone
+	 * else, is not one of their redemptions.
 	 * @returns True when a reservation is already held.
 	 */
-	async hasLiveReservation(promotionId: ID, cartId?: ID): Promise<boolean> {
-		return Boolean(await this.findLiveReservation(promotionId, cartId));
+	async hasLiveReservation(promotionId: ID, cartId?: ID, customerId?: ID): Promise<boolean> {
+		return Boolean(await this.findLiveReservation(promotionId, cartId, customerId));
 	}
 
 	/**
@@ -507,9 +510,10 @@ export class PromotionUsageService extends TenantScopedCrudService<PromotionUsag
 	 *
 	 * @param promotionId The promotion.
 	 * @param cartId The cart, when the caller has one.
+	 * @param customerId The customer the reservation is held for, when the caller narrows to one.
 	 * @returns The reservation, or null.
 	 */
-	private async findLiveReservation(promotionId: ID, cartId?: ID): Promise<IPromotionUsage | null> {
+	private async findLiveReservation(promotionId: ID, cartId?: ID, customerId?: ID): Promise<IPromotionUsage | null> {
 		if (!cartId) {
 			return null;
 		}
@@ -519,6 +523,7 @@ export class PromotionUsageService extends TenantScopedCrudService<PromotionUsag
 		const row = await this.typeOrmPromotionUsageRepository.findOneBy({
 			promotionId,
 			cartId,
+			...(customerId ? { customerId } : {}),
 			status: PromotionUsageStatus.RESERVED,
 			...this.scope
 		});
