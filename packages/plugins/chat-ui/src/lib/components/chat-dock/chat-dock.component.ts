@@ -1,6 +1,6 @@
 import { formatDate } from '@angular/common';
-import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, LOCALE_ID, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, LOCALE_ID, type Signal, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
+import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { NbIconModule } from '@nebular/theme';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -9,15 +9,18 @@ import { auditTime, catchError, distinctUntilChanged, filter, map, switchMap } f
 import { IChatConversationWithState, IChatMessageWithRelations, IOrganization, IUser, PermissionsEnum } from '@gauzy/contracts';
 import { Store, ToastrService } from '@gauzy/ui-core/core';
 import { CHAT_DOCK_PAGE_SIZE, CHAT_LINK, CHAT_LIVE_AUDIT_MS, CHAT_MESSAGES_POLL_MS } from '../../chat-ui.constants';
-import { ChatPerson, continuesGroup, isSameDay, memberEmployeeIds, mergeKeepingUnchanged, mergeMessages, newNonce, userName } from '../../chat-ui.helpers';
+import { canManageConversation } from '../../chat-categories';
+import { withTaskReference } from '../../chat-tasks';
+import { apiErrorMessage, ChatPerson, continuesGroup, isSameDay, memberEmployeeIds, mergeKeepingUnchanged, mergeMessages, newNonce, userName } from '../../chat-ui.helpers';
+import { ChatCreateTaskFlow } from '../../dialogs/chat-task-dialogs.component';
 import { ChatDockService } from '../../services/chat-dock.service';
 import { ChatFilesStore } from '../../services/chat-files.store';
 import { ChatLiveService, isTabVisible } from '../../services/chat-live.service';
 import { ChatPeople, ChatPeopleService, EMPTY_PEOPLE } from '../../services/chat-people.service';
 import { ChatTasksService } from '../../services/chat-tasks.service';
-import { ChatUiService } from '../../services/chat-ui.service';
+import { ChatMessagePatch, ChatUiService } from '../../services/chat-ui.service';
 import { clearDraft, ComposerSubmission, MessageComposerComponent } from '../message-composer/message-composer.component';
-import { MessageItemComponent } from '../message-item/message-item.component';
+import { MessageAction, MessageItemComponent } from '../message-item/message-item.component';
 import { PersonAvatarComponent } from '../person-avatar/person-avatar.component';
 
 /** A message of the card with its day divider and whether it continues the previous author's group, as in the chat. */
@@ -57,7 +60,10 @@ interface DockRow {
 				@if (failed()) {
 					<p class="note">{{ 'CHAT.ERROR' | translate }}</p>
 				} @else if (rows().length > 0) {
-					<!-- The messages as the conversation shows them (its own message component), to read: acting on one is done in the chat. -->
+					<!--
+						The messages as the conversation shows them (its own message component) with its toolbar: react, create a
+						task, pin, edit, mark unread, delete here; a thread opens in the chat.
+					-->
 					<div #scroller class="messages" data-test="chat-dock-messages">
 						@for (row of rows(); track row.message.id) {
 							@if (row.day) {
@@ -68,11 +74,14 @@ interface DockRow {
 								[people]="dockPeople()"
 								[files]="files()"
 								[tasks]="tasks()"
+								[canCreateTask]="canCreateTask() && !readOnly()"
 								[meEmployeeId]="me()?.employeeId || null"
 								[meUserId]="me()?.userId ?? null"
 								[continued]="row.continued"
-								[readOnly]="true"
-								[showThreadSummary]="false"
+								[canManage]="canManage()"
+								[readOnly]="readOnly()"
+								[highlighted]="row.message.id === editing()?.id"
+								(action)="onAction(row.message, $event)"
 							></ngx-chat-message-item>
 						}
 					</div>
@@ -84,14 +93,18 @@ interface DockRow {
 						data-test="chat-dock-composer"
 						[people]="dockPeople()"
 						[placeholder]="'CHAT.PROFILE.MESSAGE_PLACEHOLDER' | translate: { name: who.name }"
-						[disabled]="sending() || !conversation()"
+						[disabled]="sending() || !conversation() || readOnly()"
 						[memberIds]="memberIds()"
 						[meEmployeeId]="me()?.employeeId || null"
+						[editing]="editing() !== null"
+						[initialBody]="editing()?.body ?? null"
+						[keepsFiles]="!!editing()?.attachmentIds?.length"
 						[draftKey]="draftKey()"
 						[resetToken]="resetToken()"
 						[canAttach]="canAttach()"
 						(submitted)="send($event)"
 						(typing)="onTyping()"
+						(editCancelled)="editing.set(null)"
 					></ngx-chat-message-composer>
 				</div>
 
@@ -313,6 +326,7 @@ export class ChatDockComponent {
 	private readonly peopleService = inject(ChatPeopleService);
 	private readonly filesStore = inject(ChatFilesStore);
 	private readonly taskStore = inject(ChatTasksService);
+	private readonly createTaskFlow = inject(ChatCreateTaskFlow);
 	private readonly translate = inject(TranslateService);
 	private readonly locale = inject(LOCALE_ID);
 
@@ -348,10 +362,13 @@ export class ChatDockComponent {
 	protected readonly sending = signal(false);
 	/** Bumped after a send: the composer clears. */
 	protected readonly resetToken = signal(0);
+	/** The message of mine being edited in the composer, if any. */
+	protected readonly editing = signal<IChatMessageWithRelations | null>(null);
 
+	private readonly organization = toSignal(this.store.selectedOrganization$ as Observable<IOrganization | null | undefined>, { initialValue: null });
 	/** The organization's people, for the composer's `@` suggestions and mention names. */
 	protected readonly people = toSignal(
-		(this.store.selectedOrganization$ as Observable<IOrganization | null | undefined>).pipe(
+		toObservable(this.organization).pipe(
 			switchMap((organization) =>
 				organization?.id && organization.tenantId ? this.peopleService.people(organization.id, organization.tenantId).pipe(catchError(() => of(EMPTY_PEOPLE))) : of(EMPTY_PEOPLE)
 			)
@@ -359,13 +376,17 @@ export class ChatDockComponent {
 		{ initialValue: EMPTY_PEOPLE }
 	);
 	/** Files are stored as documents: attaching them needs `DOCS_CREATE`, as in the chat. */
-	protected readonly canAttach = toSignal(
-		(this.store.userRolePermissions$ as Observable<unknown>).pipe(
-			map(() => this.store.hasPermission(PermissionsEnum.DOCS_CREATE)),
-			distinctUntilChanged()
-		),
-		{ initialValue: this.store.hasPermission(PermissionsEnum.DOCS_CREATE) }
-	);
+	protected readonly canAttach = this.permission(PermissionsEnum.DOCS_CREATE);
+	/** A task is created from a message with `ORG_TASK_ADD` (the API checks it too). */
+	protected readonly canCreateTask = this.permission(PermissionsEnum.ORG_TASK_ADD);
+	private readonly isAdmin = this.permission(PermissionsEnum.CHAT_MANAGE);
+	/** Whether I manage the conversation (any message may then be deleted), as the chat decides it. */
+	protected readonly canManage = computed(() => {
+		const conversation = this.conversation();
+		return !!conversation && canManageConversation(conversation, this.me()?.employeeId || null, this.isAdmin());
+	});
+	/** An archived conversation is read only, as in the chat (the card's direct conversation always has me in it). */
+	protected readonly readOnly = computed(() => !!this.conversation()?.archivedAt);
 	protected readonly memberIds = computed(() => memberEmployeeIds(this.conversation()));
 	/** The conversation's own draft key: what is typed here is the draft the chat finds, and back. */
 	protected readonly draftKey = computed(() => {
@@ -495,6 +516,7 @@ export class ChatDockComponent {
 		this.polling?.unsubscribe();
 		this.conversation.set(null);
 		this.messages.set([]);
+		this.editing.set(null);
 		this.failed.set(false);
 		this.readThrough = null;
 		if (!employeeId) return;
@@ -576,10 +598,25 @@ export class ChatDockComponent {
 		this.dock.close();
 	}
 
-	/** Escape closes the card, unless the composer used it to close one of its own lists. */
+	/** Escape leaves edit mode, else closes the card, unless the composer used it to close one of its own lists. */
 	protected onEscape(event: Event): void {
 		if (event.defaultPrevented) return;
+		if (this.editing()) {
+			this.editing.set(null);
+			return;
+		}
 		this.close();
+	}
+
+	/** Whether I have a permission, kept up to date with my role's permissions. */
+	private permission(permission: PermissionsEnum): Signal<boolean> {
+		return toSignal(
+			(this.store.userRolePermissions$ as Observable<unknown>).pipe(
+				map(() => this.store.hasPermission(permission)),
+				distinctUntilChanged()
+			),
+			{ initialValue: this.store.hasPermission(permission) }
+		);
 	}
 
 	protected onTyping(): void {
@@ -587,17 +624,139 @@ export class ChatDockComponent {
 		if (conversation) this.api.signalTyping(String(conversation.id));
 	}
 
-	/** The full conversation in the chat; the card gives way to it. */
-	protected openInChat(): void {
+	/** The full conversation in the chat (with a message's thread open); the card gives way to it. */
+	protected openInChat(threadRootId: string | null = null): void {
 		const conversation = this.conversation();
 		if (!conversation) return;
 		this.dock.close();
-		void this.router.navigate([CHAT_LINK, conversation.id]);
+		void this.router.navigate([CHAT_LINK, conversation.id], threadRootId ? { queryParams: { thread: threadRootId } } : {});
+	}
+
+	/** What a message's toolbar asks, done as the conversation does it; a thread has no room here and opens in the chat. */
+	protected onAction(message: IChatMessageWithRelations, action: MessageAction): void {
+		const conversation = this.conversation();
+		if (!conversation) return;
+		const id = String(conversation.id);
+		switch (action.kind) {
+			case 'reply':
+				this.openInChat(String(message.id));
+				return;
+			case 'edit':
+				this.editing.set(message);
+				return;
+			case 'delete':
+				if (typeof window !== 'undefined' && !window.confirm(this.translate.instant('CHAT.MESSAGE.DELETE_CONFIRM'))) return;
+				this.api
+					.remove(message.id)
+					.pipe(takeUntilDestroyed(this.destroyRef))
+					.subscribe({
+						next: () => {
+							if (this.isCurrent(id)) this.replace({ ...message, body: '', deletedAt: new Date() });
+							this.api.notifyChanged();
+						},
+						error: (error) => this.fail(error)
+					});
+				return;
+			case 'replaced':
+				// An app's reply to a click on one of its buttons: the message as the reply left it.
+				if (this.isCurrent(id)) this.replace(action.message);
+				return;
+			case 'pin':
+				this.api
+					.setPinned(message.id, action.pinned)
+					.pipe(takeUntilDestroyed(this.destroyRef))
+					.subscribe({
+						next: (result) => {
+							if (this.isCurrent(id)) this.replace(result.message);
+						},
+						error: (error) => this.fail(error)
+					});
+				return;
+			case 'react':
+				this.api
+					.react(message.id, action.emoji, action.on)
+					.pipe(takeUntilDestroyed(this.destroyRef))
+					.subscribe({
+						next: (result) => {
+							if (this.isCurrent(id)) this.replace(result.message);
+						},
+						error: (error) => this.fail(error)
+					});
+				return;
+			case 'unread':
+				// The read mark stays where it is (`readThrough`): only a newer message of theirs marks it read again.
+				this.api
+					.unreadFrom(message.id)
+					.pipe(takeUntilDestroyed(this.destroyRef))
+					.subscribe({
+						next: () => this.api.notifyChanged(),
+						error: (error) => this.fail(error)
+					});
+				return;
+			case 'createTask':
+				this.openCreateTask(message);
+				return;
+			case 'follow':
+				this.api
+					.setFollowing(message.id, action.following)
+					.pipe(takeUntilDestroyed(this.destroyRef))
+					.subscribe({
+						next: () => {
+							if (this.isCurrent(id)) this.replace({ ...message, following: action.following });
+						},
+						error: (error) => this.fail(error)
+					});
+				return;
+			default:
+				return;
+		}
+	}
+
+	/** "Create task from message": the dialog, then the message shows the task's card. */
+	private openCreateTask(message: IChatMessageWithRelations): void {
+		const conversation = this.conversation();
+		if (!conversation) return;
+		const id = String(conversation.id);
+		const organization = this.organization();
+		this.createTaskFlow
+			.open({
+				message,
+				people: this.dockPeople(),
+				conversationNames: new Map(),
+				organizationId: organization?.id ? String(organization.id) : conversation.organizationId ? String(conversation.organizationId) : null,
+				tenantId: organization?.tenantId ? String(organization.tenantId) : null
+			})
+			.pipe(takeUntilDestroyed(this.destroyRef))
+			.subscribe((reference) => {
+				if (!reference || !this.isCurrent(id)) return;
+				// Added to the message as shown now (another reference may have come meanwhile).
+				const current = this.messages().find((item) => item.id === message.id) ?? message;
+				this.replace({ id: message.id, taskReferences: withTaskReference(current, reference).taskReferences });
+			});
+	}
+
+	/** Whether the card still shows the conversation a request was made for. */
+	private isCurrent(id: string): boolean {
+		return String(this.conversation()?.id) === id;
+	}
+
+	/** Puts the API's version of a message (or the fields of it that changed) in place of ours. */
+	private replace(patch: ChatMessagePatch): void {
+		this.messages.set(this.messages().map((item) => (item.id === patch.id ? { ...item, ...patch } : item)));
+	}
+
+	private fail(error: unknown, fallbackKey = 'CHAT.DIALOG.FAILED'): void {
+		this.toastr.danger(apiErrorMessage(error) ?? this.translate.instant(fallbackKey));
 	}
 
 	protected send(submission: ComposerSubmission): void {
 		const conversation = this.conversation();
 		if (!conversation || this.sending()) return;
+		const editing = this.editing();
+		if (editing) {
+			this.saveEdit(String(conversation.id), editing, submission);
+			return;
+		}
 		this.sending.set(true);
 		this.api
 			.send(conversation.id, {
@@ -625,6 +784,28 @@ export class ChatDockComponent {
 				error: () => {
 					this.sending.set(false);
 					this.toastr.danger('CHAT.COMPOSER.SEND_FAILED');
+				}
+			});
+	}
+
+	/** Saves the message being edited; the composer leaves edit mode and clears once it is saved. */
+	private saveEdit(id: string, message: IChatMessageWithRelations, submission: ComposerSubmission): void {
+		this.sending.set(true);
+		this.api
+			.edit(message.id, { body: submission.body, mentionEmployeeIds: submission.mentionEmployeeIds })
+			.pipe(takeUntilDestroyed(this.destroyRef))
+			.subscribe({
+				next: (result) => {
+					this.sending.set(false);
+					if (!this.isCurrent(id)) return;
+					this.replace(result.message);
+					this.editing.set(null);
+					this.resetToken.update((value) => value + 1);
+					setTimeout(() => this.composer()?.focus());
+				},
+				error: (error) => {
+					this.sending.set(false);
+					this.fail(error, 'CHAT.COMPOSER.SEND_FAILED');
 				}
 			});
 	}
