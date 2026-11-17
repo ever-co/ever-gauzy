@@ -4,6 +4,7 @@ import { INTERCEPTORS_METADATA } from '@nestjs/common/constants';
 import { DailyPlanController } from '../tasks/daily-plan/daily-plan.controller';
 import { TaskController } from '../tasks/task.controller';
 import { ActivityController } from '../time-tracking/activity/activity.controller';
+import { CustomTrackingController } from '../time-tracking/custom-tracking/custom-tracking.controller';
 import { StatisticController } from '../time-tracking/statistic/statistic.controller';
 import { StatisticResolver } from '../time-tracking/statistic/statistic.resolver';
 import { TimeLogController } from '../time-tracking/time-log/time-log.controller';
@@ -40,6 +41,12 @@ describe('the routes that withhold hidden projects', () => {
 		expect(Reflect.getMetadata(HIDDEN_PROJECT_ROWS, StatisticResolver.prototype.timeTrackingProjects)).toEqual({
 			rootRowsAreProjects: { keep: ['duration', 'durationPercentage'] }
 		});
+	});
+
+	it('withholds hidden projects from the time entries of a time slot read with its custom tracking', () => {
+		expect(
+			Reflect.getMetadata(INTERCEPTORS_METADATA, CustomTrackingController.prototype.getTimeSlotTrackingData)
+		).toContain(HiddenProjectsInterceptor);
 	});
 
 	it('withholds the budget of a hidden project from the budget report, keeping the time spent', () => {

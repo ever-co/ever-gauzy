@@ -73,6 +73,21 @@ describe('withHiddenProjectsWithheld', () => {
 		expect(withheld.project).toEqual({ id: CONFIDENTIAL, projectHidden: true });
 	});
 
+	it("answers a hidden project in a list of projects read as a relation (a task member's projects)", () => {
+		const task = {
+			id: 'task-1',
+			members: [{ id: 'marie', projects: [confidentialProject, publicProject] }]
+		};
+
+		const withheld = withHiddenProjectsWithheld(task, HIDDEN);
+
+		expect(withheld.members[0].projects).toEqual([{ id: CONFIDENTIAL, projectHidden: true }, publicProject]);
+		expect(withheld.members[0].projects[1]).toBe(publicProject);
+		expect(task.members[0].projects[0]).toBe(confidentialProject);
+		const visible = { id: 'task-2', members: [{ id: 'paul', projects: [publicProject] }] };
+		expect(withHiddenProjectsWithheld(visible, HIDDEN)).toBe(visible);
+	});
+
 	it('reaches the projects of a grouped report, of tasks and of nested time entries', () => {
 		const report = [
 			{

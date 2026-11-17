@@ -153,13 +153,13 @@ export function withHiddenProjectsWithheld<T>(
 	const withheldWithProject = options.withheldWithProject ?? [];
 	const visiting = new Set<object>();
 
-	const visitProjectRow = (row: object): object => {
+	const visitProjectRow = (row: object, keep: readonly string[]): object => {
 		const id = projectIdOf(row);
 		if (!isHidden(id)) {
 			return visit(row);
 		}
 		const kept: Record<string, unknown> = { ...hiddenProjectReference(id) };
-		for (const field of options.rootRowsAreProjects?.keep ?? []) {
+		for (const field of keep) {
 			if (field in row) {
 				kept[field] = (row as Record<string, unknown>)[field];
 			}
@@ -167,12 +167,13 @@ export function withHiddenProjectsWithheld<T>(
 		return kept;
 	};
 
-	const visitArray = (rows: unknown[], areProjects: boolean): unknown[] => {
+	/** A list; where its rows are projects, the figures `projectRowsKeep` names stay beside each hidden one. */
+	const visitArray = (rows: unknown[], projectRowsKeep?: readonly string[]): unknown[] => {
 		let changed = false;
 		const visited = rows.map((row) => {
 			let next: unknown;
-			if (areProjects && isWalkable(row)) {
-				next = visitProjectRow(row);
+			if (projectRowsKeep && isWalkable(row)) {
+				next = visitProjectRow(row, projectRowsKeep);
 			} else {
 				next = visit(row);
 			}
@@ -192,7 +193,7 @@ export function withHiddenProjectsWithheld<T>(
 			return value;
 		}
 		if (Array.isArray(value)) {
-			return visitArray(value, false) as V;
+			return visitArray(value) as V;
 		}
 		visiting.add(value);
 		const record = value as Record<string, unknown>;
@@ -235,6 +236,15 @@ export function withHiddenProjectsWithheld<T>(
 					continue;
 				}
 			}
+			// A list of projects read as a relation (a member's, a team's or a client's `projects`): each hidden one
+			// answers its id and the marker
+			if (key === 'projects' && Array.isArray(child)) {
+				const projects = visitArray(child, []);
+				if (projects !== child) {
+					set(key, projects);
+				}
+				continue;
+			}
 			const next = visit(child);
 			if (next !== child) {
 				set(key, next);
@@ -260,7 +270,7 @@ export function withHiddenProjectsWithheld<T>(
 	};
 
 	if (Array.isArray(answer) && options.rootRowsAreProjects) {
-		return visitArray(answer, true) as T;
+		return visitArray(answer, options.rootRowsAreProjects.keep) as T;
 	}
 	return visit(answer);
 }
