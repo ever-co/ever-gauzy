@@ -1,31 +1,110 @@
 <div class="account">
 	<section class="account__panel account__panel--identity">
 		<header class="account__head">
-			<div class="account__avatar" [class.account__avatar--hover]="hoverState">
-				<ngx-image-uploader
-					(changeHoverState)="hoverState = $event"
-					(uploadedImageAsset)="updateImageAsset($event)"
-					(uploadImageAssetError)="handleImageUploadError($event)"
-				></ngx-image-uploader>
-
-				@if (form?.get('imageUrl')?.value && !avatarFailed) {
-					<img
-						class="account__avatar-image"
-						[src]="form.get('imageUrl').value"
-						alt="Profile Photo"
-						(error)="avatarFailed = true"
-					/>
-				} @else {
-					<div class="account__avatar-image account__avatar-image--empty">
-						<nb-icon icon="person-outline"></nb-icon>
-					</div>
-				}
-
-				<span class="account__avatar-scrim" aria-hidden="true"></span>
+			<div class="account__avatar-wrap">
+				<button
+					type="button"
+					class="account__avatar"
+					[class.account__avatar--busy]="photoBusy"
+					[nbSpinner]="photoBusy"
+					nbSpinnerSize="small"
+					[nbPopover]="photoMenuTpl"
+					[nbPopoverTrigger]="photoBusy ? 'noop' : 'click'"
+					nbPopoverPlacement="bottom"
+					aria-haspopup="menu"
+					[attr.aria-label]="'EMPLOYEES_PAGE.EDIT_EMPLOYEE.PHOTO.MENU_LABEL' | translate"
+				>
+					@if (avatarUrl) {
+						<img
+							class="account__avatar-image"
+							[src]="avatarUrl"
+							[alt]="'EMPLOYEES_PAGE.EDIT_EMPLOYEE.PHOTO.ALT' | translate"
+							(error)="avatarFailed = true"
+						/>
+					} @else {
+						<span class="account__avatar-image account__avatar-image--empty">
+							<nb-icon icon="person-outline"></nb-icon>
+						</span>
+					}
+					<span class="account__avatar-scrim" aria-hidden="true">
+						<nb-icon icon="camera-outline"></nb-icon>
+					</span>
+				</button>
 				<span class="account__avatar-badge" aria-hidden="true">
 					<nb-icon icon="camera-outline"></nb-icon>
 				</span>
+
+				<input
+					#photoInput
+					type="file"
+					class="account__photo-input"
+					tabindex="-1"
+					aria-hidden="true"
+					[accept]="photoAccept"
+					(change)="onPhotoPicked($event)"
+				/>
 			</div>
+
+			<ng-template #photoMenuTpl>
+				<ul class="photo-menu" role="menu">
+					@if (hasPhoto) {
+						<li role="none">
+							<button type="button" class="photo-menu__item" role="menuitem" (click)="viewPhoto()">
+								<nb-icon icon="eye-outline"></nb-icon>
+								{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.PHOTO.VIEW' | translate }}
+							</button>
+						</li>
+					}
+					<li role="none">
+						<button type="button" class="photo-menu__item" role="menuitem" (click)="chooseAvatar()">
+							<nb-icon icon="smiling-face-outline"></nb-icon>
+							{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.PHOTO.CHOOSE_AVATAR' | translate }}
+						</button>
+					</li>
+					<li role="none">
+						<button type="button" class="photo-menu__item" role="menuitem" (click)="choosePhoto()">
+							<nb-icon icon="camera-outline"></nb-icon>
+							{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.PHOTO.UPLOAD' | translate }}
+						</button>
+					</li>
+					@if (hasPhoto) {
+						<li role="none">
+							<button
+								type="button"
+								class="photo-menu__item photo-menu__item--danger"
+								role="menuitem"
+								(click)="removePhoto()"
+							>
+								<nb-icon icon="trash-2-outline"></nb-icon>
+								{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.PHOTO.REMOVE' | translate }}
+							</button>
+						</li>
+					}
+				</ul>
+			</ng-template>
+
+			<ng-template #photoViewer let-ref="dialogRef">
+				<nb-card class="photo-viewer">
+					<nb-card-header class="photo-viewer__header">
+						<span class="photo-viewer__name">{{ selectedEmployee?.user?.name }}</span>
+						<button
+							type="button"
+							class="photo-viewer__close"
+							[attr.aria-label]="'BUTTONS.CLOSE' | translate"
+							(click)="ref.close()"
+						>
+							<nb-icon icon="close-outline"></nb-icon>
+						</button>
+					</nb-card-header>
+					<nb-card-body class="photo-viewer__body">
+						<img
+							class="photo-viewer__image"
+							[src]="avatarUrl"
+							[alt]="'EMPLOYEES_PAGE.EDIT_EMPLOYEE.PHOTO.ALT' | translate"
+						/>
+					</nb-card-body>
+				</nb-card>
+			</ng-template>
 
 			<div class="account__identity">
 				<div class="account__name-row">
@@ -71,6 +150,27 @@
 				</div>
 			</div>
 		</header>
+
+		<div class="account__photo-actions">
+			<button
+				type="button"
+				class="account__photo-button"
+				[disabled]="photoBusy"
+				(click)="chooseAvatar()"
+			>
+				<nb-icon icon="smiling-face-outline"></nb-icon>
+				<span>{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.PHOTO.CHOOSE_AVATAR' | translate }}</span>
+			</button>
+			<button
+				type="button"
+				class="account__photo-button"
+				[disabled]="photoBusy"
+				(click)="choosePhoto()"
+			>
+				<nb-icon icon="camera-outline"></nb-icon>
+				<span>{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.PHOTO.UPLOAD' | translate }}</span>
+			</button>
+		</div>
 
 		@if (selectedEmployee) {
 			<div class="account__facts">

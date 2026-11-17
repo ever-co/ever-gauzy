@@ -1,11 +1,36 @@
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import {
+	Component,
+	OnDestroy,
+	OnInit,
+	ChangeDetectionStrategy,
+	ElementRef,
+	TemplateRef,
+	ViewChild
+} from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { NbDialogService, NbPopoverDirective } from '@nebular/theme';
+import { TranslateService } from '@ngx-translate/core';
 import { IEmployee, IImageAsset, IOrganization } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { combineLatest } from 'rxjs';
+import { combineLatest, firstValueFrom } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
-import { Store } from '@gauzy/ui-core/core';
+import { ImageAssetService, Store, ToastrService } from '@gauzy/ui-core/core';
 import { EmployeeStore, ErrorHandlingService } from '@gauzy/ui-core/core';
+import { ConfirmComponent } from '@gauzy/ui-core/shared';
+import { AvatarCropDialogComponent } from './avatar-crop-dialog/avatar-crop-dialog.component';
+import { AvatarMakerDialogComponent } from './avatar-maker/avatar-maker-dialog.component';
+
+/** The image types the server stores as a photo, offered by the file picker. */
+const PHOTO_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/bmp'];
+
+/** The folder uploaded profile photos are stored in. */
+const PHOTO_FOLDER = 'profile_pictures';
+
+/** A placeholder picture (the initial on a color) drawn by the API, or by the generator it replaced. */
+const PLACEHOLDER_URL = /\/api\/placeholder\/|\/\/dummyimage\.com\//i;
+
+/** What the crop and avatar dialogs close with: the picture, an error to show, or nothing when cancelled. */
+type CropResult = { file?: File; error?: string } | undefined;
 
 /**
  * This component contains the properties stored within the User Entity of an Employee.
@@ -13,18 +38,26 @@ import { EmployeeStore, ErrorHandlingService } from '@gauzy/ui-core/core';
  */
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-edit-employee-main',
-    templateUrl: './edit-employee-main.component.html',
-    styleUrls: ['./edit-employee-main.component.scss'],
-    changeDetection: ChangeDetectionStrategy.Eager,
-    standalone: false
+	selector: 'ga-edit-employee-main',
+	templateUrl: './edit-employee-main.component.html',
+	styleUrls: ['./edit-employee-main.component.scss'],
+	providers: [ImageAssetService],
+	changeDetection: ChangeDetectionStrategy.Eager,
+	standalone: false
 })
 export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 	organization: IOrganization;
-	hoverState: boolean;
 	selectedEmployee: IEmployee;
 
 	avatarFailed = false;
+	/** A photo is being uploaded or removed. */
+	photoBusy = false;
+
+	readonly photoAccept = PHOTO_TYPES.join(',');
+
+	@ViewChild('photoInput') photoInput: ElementRef<HTMLInputElement>;
+	@ViewChild('photoViewer') photoViewer: TemplateRef<unknown>;
+	@ViewChild(NbPopoverDirective) photoMenu: NbPopoverDirective;
 
 	get workState(): 'active' | 'ended' | 'not-started' | null {
 		const employee = this.selectedEmployee;
@@ -52,6 +85,22 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 		return employee?.jobSuccess != null || employee?.totalJobs != null;
 	}
 
+	/** The picture shown in the circle: the photo, the placeholder, or nothing when it cannot load. */
+	get avatarUrl(): string | null {
+		const url = this.form.get('imageUrl').value;
+		return url && !this.avatarFailed ? url : null;
+	}
+
+	/**
+	 * Whether the person has a real photo — uploaded, or from a sign-in provider — as opposed to the
+	 * placeholder. Only a real photo can be viewed or removed; otherwise the avatar opens the file picker.
+	 */
+	get hasPhoto(): boolean {
+		if (this.form.get('imageId').value) return true;
+		const url = this.avatarUrl;
+		return !!url && !PLACEHOLDER_URL.test(url);
+	}
+
 	/*
 	 * Employee Main Mutation Form
 	 */
@@ -73,7 +122,11 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 		private readonly _fb: UntypedFormBuilder,
 		private readonly _store: Store,
 		private readonly _employeeStore: EmployeeStore,
-		private readonly _errorHandlingService: ErrorHandlingService
+		private readonly _errorHandlingService: ErrorHandlingService,
+		private readonly _imageAssetService: ImageAssetService,
+		private readonly _dialogService: NbDialogService,
+		private readonly _toastrService: ToastrService,
+		private readonly _translateService: TranslateService
 	) {}
 
 	ngOnInit() {
@@ -90,6 +143,105 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	/**
+	 * Opens the avatar maker; the illustrated avatar it closes with becomes the person's picture, uploaded
+	 * like a photo.
+	 */
+	async chooseAvatar(): Promise<void> {
+		this.photoMenu?.hide();
+		if (this.photoBusy) return;
+
+		const dialog = this._dialogService.open(AvatarMakerDialogComponent, {
+			closeOnBackdropClick: false,
+			autoFocus: false
+		});
+		const result: CropResult = await firstValueFrom(dialog.onClose);
+		if (result?.error) {
+			this._toastrService.danger(result.error);
+			return;
+		}
+		if (result?.file) {
+			await this._uploadPhoto(result.file);
+		}
+	}
+
+	/** Opens the file picker. */
+	choosePhoto(): void {
+		this.photoMenu?.hide();
+		if (this.photoBusy) return;
+		this.photoInput?.nativeElement.click();
+	}
+
+	/** Shows the photo large. */
+	viewPhoto(): void {
+		this.photoMenu?.hide();
+		if (!this.avatarUrl) return;
+		this._dialogService.open(this.photoViewer, { closeOnBackdropClick: true, autoFocus: false });
+	}
+
+	/**
+	 * A file was picked: frame it in the crop dialog, then upload the framed photo.
+	 */
+	async onPhotoPicked(event: Event): Promise<void> {
+		const input = event.target as HTMLInputElement;
+		const file = input.files?.[0];
+		// Cleared so picking the same file again still reports a change.
+		input.value = '';
+		if (!file) return;
+
+		if (!PHOTO_TYPES.includes(file.type)) {
+			this._toastrService.danger('EMPLOYEES_PAGE.EDIT_EMPLOYEE.PHOTO.UNSUPPORTED');
+			return;
+		}
+
+		const dialog = this._dialogService.open(AvatarCropDialogComponent, {
+			context: { file },
+			closeOnBackdropClick: false,
+			autoFocus: false
+		});
+		const result: CropResult = await firstValueFrom(dialog.onClose);
+		if (result?.error) {
+			this._toastrService.danger(result.error);
+			return;
+		}
+		if (result?.file) {
+			await this._uploadPhoto(result.file);
+		}
+	}
+
+	/**
+	 * Removes the photo, after asking. The server replaces it with the placeholder (the initial of the name).
+	 */
+	async removePhoto(): Promise<void> {
+		this.photoMenu?.hide();
+		if (this.photoBusy) return;
+
+		const dialog = this._dialogService.open(ConfirmComponent, {
+			context: {
+				data: {
+					title: this._translate('EMPLOYEES_PAGE.EDIT_EMPLOYEE.PHOTO.REMOVE_TITLE'),
+					message: this._translate('EMPLOYEES_PAGE.EDIT_EMPLOYEE.PHOTO.REMOVE_MESSAGE'),
+					yesText: this._translate('EMPLOYEES_PAGE.EDIT_EMPLOYEE.PHOTO.REMOVE')
+				}
+			}
+		});
+		if (!(await firstValueFrom(dialog.onClose))) return;
+
+		this.photoBusy = true;
+		try {
+			this.avatarFailed = false;
+			// Cleared here at once, like an upload, so the circle does not keep the old photo until the reload.
+			this.form.patchValue({ imageId: null, imageUrl: null });
+			// `imageUrl: null` alongside `imageId: null` is what tells the server the photo is removed, rather
+			// than a form save that merely carries an empty `imageId`.
+			await this._employeeStore.updateUserForm({ imageId: null, image: null, imageUrl: null });
+		} catch (error) {
+			this._errorHandlingService.handleError(error);
+		} finally {
+			this.photoBusy = false;
+		}
 	}
 
 	/**
@@ -154,6 +306,28 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 		// Update user form data in store (assuming updateUserForm is async)
 		await this._employeeStore.updateUserForm(values);
 		await this._employeeStore.updateEmployeeForm(values);
+	}
+
+	/**
+	 * Uploads the framed photo and makes it the person's avatar.
+	 */
+	private async _uploadPhoto(file: File): Promise<void> {
+		this.photoBusy = true;
+		try {
+			const image = await this._imageAssetService.upload(file, PHOTO_FOLDER, {
+				tenantId: this.organization?.tenantId,
+				organizationId: this.organization?.id
+			});
+			await this.updateImageAsset(image);
+		} catch (error) {
+			this.handleImageUploadError(error);
+		} finally {
+			this.photoBusy = false;
+		}
+	}
+
+	private _translate(key: string): string {
+		return this._translateService.instant(key);
 	}
 
 	/**

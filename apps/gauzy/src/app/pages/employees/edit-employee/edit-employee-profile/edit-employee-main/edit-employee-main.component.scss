@@ -46,16 +46,38 @@ $hairline: 1px solid var(--gauzy-border-default-color);
   flex: 1 1 auto;
 }
 
+.account__avatar-wrap {
+  position: relative;
+  flex: 0 0 auto;
+  width: 80px;
+  height: 80px;
+}
+
 .account__avatar {
   position: relative;
-  width: 72px;
-  height: 72px;
-  flex: 0 0 auto;
-  border-radius: $radius;
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border-radius: 50%;
   overflow: hidden;
   border: 1px solid var(--gauzy-border-default-color);
   background-color: var(--gauzy-sidebar-background-3);
   cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid nb-theme(color-primary-500);
+    outline-offset: 2px;
+  }
+
+  &:hover .account__avatar-scrim,
+  &:focus-visible .account__avatar-scrim {
+    opacity: 1;
+  }
+}
+
+.account__avatar--busy {
+  cursor: progress;
 }
 
 .account__avatar-image {
@@ -79,46 +101,205 @@ $hairline: 1px solid var(--gauzy-border-default-color);
   }
 }
 
+// Darkens the photo on hover with a camera in the middle, so the circle reads as the way to change it.
 .account__avatar-scrim {
   position: absolute;
   inset: 0;
-  background-color: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.4);
+  color: #fff;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.2s ease-in-out;
+  transition: opacity 0.15s ease-in-out;
+
+  nb-icon {
+    font-size: 1.375rem;
+    width: 1.375rem;
+    height: 1.375rem;
+  }
 }
 
 .account__avatar-badge {
   position: absolute;
-  bottom: 6px;
-  inset-inline-end: 6px;
+  bottom: 0;
+  inset-inline-end: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
+  border: 2px solid var(--gauzy-card-3);
   background-color: nb-theme(color-primary-500);
   color: nb-theme(text-control-color);
-  opacity: 0.85;
   pointer-events: none;
-  transition: opacity 0.2s ease-in-out;
 
   nb-icon {
-    font-size: 0.8125rem;
-    width: 0.8125rem;
-    height: 0.8125rem;
+    font-size: 0.75rem;
+    width: 0.75rem;
+    height: 0.75rem;
   }
 }
 
-.account__avatar--hover {
-  .account__avatar-scrim {
-    opacity: 0.25;
+.account__photo-input {
+  display: none;
+}
+
+// Two equal buttons under the identity block: one calm style, neither louder than the other.
+.account__photo-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.account__photo-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  min-width: 0;
+  height: 2rem;
+  padding: 0 0.75rem;
+  border: $hairline;
+  border-radius: $radius;
+  background-color: var(--gauzy-card-2);
+  color: var(--gauzy-text-color-1);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease-in-out,
+    border-color 0.15s ease-in-out;
+
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
-  .account__avatar-badge {
-    opacity: 1;
+  nb-icon {
+    flex: 0 0 auto;
+    font-size: 1rem;
+    width: 1rem;
+    height: 1rem;
+    color: nb-theme(text-hint-color);
   }
+
+  &:hover:not(:disabled) {
+    background-color: nb-theme(color-basic-transparent-hover);
+  }
+
+  &:focus-visible {
+    outline: 2px solid nb-theme(color-primary-500);
+    outline-offset: 1px;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+}
+
+.photo-menu {
+  margin: 0;
+  padding: 0.25rem 0;
+  min-width: 11rem;
+  list-style: none;
+}
+
+.photo-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  width: 100%;
+  padding: 0.5rem 0.875rem;
+  border: 0;
+  background: transparent;
+  color: nb-theme(text-basic-color);
+  font-size: 0.8125rem;
+  text-align: start;
+  cursor: pointer;
+
+  nb-icon {
+    font-size: 1rem;
+    width: 1rem;
+    height: 1rem;
+    color: nb-theme(text-hint-color);
+  }
+
+  &:hover,
+  &:focus-visible {
+    background-color: nb-theme(color-basic-transparent-hover);
+    outline: none;
+  }
+}
+
+.photo-menu__item--danger,
+.photo-menu__item--danger nb-icon {
+  color: nb-theme(text-danger-color);
+}
+
+.photo-viewer {
+  width: min(32rem, calc(100vw - 2rem));
+  margin: 0;
+}
+
+.photo-viewer__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.photo-viewer__name {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.photo-viewer__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: nb-theme(text-hint-color);
+  cursor: pointer;
+
+  &:hover {
+    background-color: nb-theme(color-basic-transparent-hover);
+  }
+
+  nb-icon {
+    font-size: 1.25rem;
+  }
+}
+
+.photo-viewer__body {
+  display: flex;
+  justify-content: center;
+  padding: 0;
+  background-color: #111;
+}
+
+.photo-viewer__image {
+  display: block;
+  max-width: 100%;
+  max-height: 75vh;
+  object-fit: contain;
 }
 
 .account__head {
