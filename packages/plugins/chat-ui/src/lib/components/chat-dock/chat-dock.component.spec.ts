@@ -6,7 +6,9 @@ import { NEVER, of, Subject, throwError, timer } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { IChatConversationWithState, IChatFile, IChatMessageWithRelations } from '@gauzy/contracts';
 import { Store, ToastrService } from '@gauzy/ui-core/core';
-import { CHAT_DOCK_PAGE_SIZE, CHAT_LIVE_AUDIT_MS, CHAT_MESSAGES_POLL_MS } from '../../chat-ui.constants';
+import { Router } from '@angular/router';
+import { CHAT_DOCK_PAGE_SIZE, CHAT_LINK, CHAT_LIVE_AUDIT_MS, CHAT_MESSAGES_POLL_MS } from '../../chat-ui.constants';
+import { ChatCreateTaskFlow } from '../../dialogs/chat-task-dialogs.component';
 import * as helpers from '../../chat-ui.helpers';
 import { ChatDockService } from '../../services/chat-dock.service';
 import { ChatFilesStore } from '../../services/chat-files.store';
@@ -51,6 +53,7 @@ describe('ChatDockComponent', () => {
 				{ provide: ToastrService, useValue: { danger: jest.fn() } },
 				{ provide: ChatFilesStore, useValue: files },
 				{ provide: ChatTasksService, useValue: { summaries: signal(new Map()), ensure: jest.fn() } },
+				{ provide: ChatCreateTaskFlow, useValue: { open: jest.fn(() => NEVER) } },
 				// No live events here (the poll's fallback pace), unless a test sends one.
 				{ provide: ChatLiveService, useValue: { ticks: (ms: number) => timer(ms, ms).pipe(map(() => undefined)), hints$, catchUp$: NEVER } }
 			]
@@ -78,7 +81,7 @@ describe('ChatDockComponent', () => {
 		expect(element().querySelector('[data-test="chat-dock-messages"]')?.textContent).toContain('Hello');
 	});
 
-	it('draws the messages as the conversation does: its message component, grouped, under a day divider, read only', () => {
+	it('draws the messages as the conversation does: its message component, grouped, under a day divider, with its toolbar', () => {
 		const later = { ...message('m2', 'Still there?'), createdAt: new Date(Date.now() + 1000) } as IChatMessageWithRelations;
 		api['messages'].mockReturnValue(of({ messages: [message('m1', 'Hello'), later] }));
 		jest.advanceTimersByTime(CHAT_MESSAGES_POLL_MS);
@@ -89,8 +92,36 @@ describe('ChatDockComponent', () => {
 		// The second continues the first one's group: no second heading.
 		expect(items[1].querySelector('.message.continued')).not.toBeNull();
 		expect(element().querySelectorAll('[data-test="chat-dock-messages"] .day-divider').length).toBe(1);
-		// Read only: no toolbar to react, pin, edit or delete from the card.
-		expect(element().querySelector('[data-test="chat-dock-messages"] .toolbar')).toBeNull();
+		// The toolbar of each message, as in the chat: react, reply, pin...
+		expect(items[0].querySelector('.toolbar [data-test="react"]')).not.toBeNull();
+		expect(items[0].querySelector('.toolbar [data-test="reply"]')).not.toBeNull();
+		expect(items[0].querySelector('.toolbar [data-test="pin"]')).not.toBeNull();
+	});
+
+	it('reacts to a message from its toolbar and shows the reaction', () => {
+		api['messages'].mockReturnValue(of({ messages: [message('m1', 'Hello')] }));
+		jest.advanceTimersByTime(CHAT_MESSAGES_POLL_MS);
+		fixture.detectChanges();
+		const reacted = { ...message('m1', 'Hello'), reactions: [{ emoji: '👍', count: 1, mine: true }] } as unknown as IChatMessageWithRelations;
+		api['react'] = jest.fn(() => of({ message: reacted }));
+
+		element().querySelector<HTMLButtonElement>('[data-test="chat-dock-messages"] .toolbar .tool.emoji')?.click();
+		fixture.detectChanges();
+
+		expect(api['react']).toHaveBeenCalledWith('m1', expect.any(String), true);
+		expect(element().querySelector('[data-test="chat-dock-messages"] [data-test="reactions"]')?.textContent).toContain('👍');
+	});
+
+	it('opens the thread of a message in the chat, the card giving way', () => {
+		api['messages'].mockReturnValue(of({ messages: [message('m1', 'Hello')] }));
+		jest.advanceTimersByTime(CHAT_MESSAGES_POLL_MS);
+		fixture.detectChanges();
+		const navigate = jest.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+		element().querySelector<HTMLButtonElement>('[data-test="chat-dock-messages"] [data-test="reply"]')?.click();
+
+		expect(TestBed.inject(ChatDockService).close).toHaveBeenCalled();
+		expect(navigate).toHaveBeenCalledWith([CHAT_LINK, 'c1'], { queryParams: { thread: 'm1' } });
 	});
 
 	it('reads the latest page again on an event of its conversation, not on one of another', () => {
