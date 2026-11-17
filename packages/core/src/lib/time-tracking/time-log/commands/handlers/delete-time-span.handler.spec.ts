@@ -236,6 +236,8 @@ interface IStoredLog {
 	description?: string;
 	/** The log a split cut this one from, when it is the part after the new range. */
 	splitFromTimeLogId?: string;
+	/** When the log was last written; the logs that leave it out are compared without it. */
+	updatedAt?: Date;
 	deletedAt?: Date;
 }
 
@@ -1666,6 +1668,20 @@ describe('DeleteTimeSpanHandler splitting a log at one moment (CORE-26)', () => 
 			expect(store.timeline()).toEqual([{ range: '09:00-13:00', isRunning: false, slots: [] }]);
 		}
 	);
+
+	it('leaves the log whole when it was written since the route read it, as by an invoice line that bills it', async () => {
+		const store = createStore();
+		const billedAt = new Date('2026-11-02T08:00:00.124Z');
+		store.addLog('manual', '09:00', '13:00', { logType: TimeLogType.MANUAL, updatedAt: billedAt }, false);
+		// The route checked the log a millisecond before the billing moved its updatedAt (ever-co/ever-teams#5382)
+		const checked = { ...store.read('manual'), updatedAt: new Date(billedAt.getTime() - 1) } as TimeLog;
+
+		const split = await store.split('11:00', checked, { secondPart: { isBillable: false } });
+
+		expect(split).toBe(false);
+		expect(store.timeline()).toEqual([{ range: '09:00-13:00', isRunning: false, slots: [] }]);
+		expect(store.rows().map((row) => row.id)).toEqual(['manual']);
+	});
 
 	it('records in the history the undo of a split whose cut failed before writing', async () => {
 		const store = createStore();

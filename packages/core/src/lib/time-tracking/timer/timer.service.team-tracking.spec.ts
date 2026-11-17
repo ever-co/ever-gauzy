@@ -102,7 +102,7 @@ describe('TimerService.startTimer with tracking turned off in the team', () => {
 		jest.restoreAllMocks();
 	});
 
-	it.each([TimeLogSourceEnum.TEAMS, TimeLogSourceEnum.MOBILE])(
+	it.each([TimeLogSourceEnum.TEAMS, TimeLogSourceEnum.MOBILE, TimeLogSourceEnum.EMBED])(
 		'refuses a %s start for a team where the tracking is off',
 		async (source) => {
 			await expect(startFrom(source)).rejects.toThrow(

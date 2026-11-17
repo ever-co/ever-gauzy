@@ -134,6 +134,15 @@ describe('TimeLogUpdateHandler, the stop of a run that sent no heartbeat (#11843
 		expect(slotCount).not.toHaveBeenCalled();
 	});
 
+	it('gives an embedded timer run the slots of its 30 minutes, as a web timer run, so the day counts it', async () => {
+		const { bulkCreate, slotCount, savedRun } = await stopRun(TimeLogSourceEnum.EMBED);
+
+		expect(bulkCreate).toHaveBeenCalledTimes(1);
+		expect(slotCount).not.toHaveBeenCalled();
+		const seconds = savedRun.timeSlots?.reduce((sum, slot) => sum + slot.duration, 0);
+		expect(seconds).toBe(30 * 60);
+	});
+
 	it('still leaves a desktop run to the slots its tracker posts', async () => {
 		const { bulkCreate, slotCount } = await stopRun(TimeLogSourceEnum.DESKTOP);
 

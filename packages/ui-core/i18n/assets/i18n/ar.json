@@ -6671,7 +6671,8 @@
 			"HUBSTAFF": "هب ستاف",
 			"BROWSER_EXTENSION": "امتداد المتصفح",
 			"TEAMS": "الفِرَق",
-			"CLOC": "Cloc"
+			"CLOC": "Cloc",
+			"EMBED": "مؤقت مضمّن"
 		},
 		"LAST_WORKED": "آخر عملت:",
 		"TIME_ZONE": "Time Zone",

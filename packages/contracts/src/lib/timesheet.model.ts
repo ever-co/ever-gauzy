@@ -299,7 +299,9 @@ export enum TimeLogSourceEnum {
 	HUBSTAFF = 'HUBSTAFF',
 	UPWORK = 'UPWORK',
 	TEAMS = 'TEAMS',
-	CLOC = 'CLOC'
+	CLOC = 'CLOC',
+	/** A timer embedded in another product through the Ever Teams kit (widget, script tag or iframe). */
+	EMBED = 'EMBED'
 }
 
 export interface ITimeLogFilters extends IBasePerTenantAndOrganizationEntityModel {

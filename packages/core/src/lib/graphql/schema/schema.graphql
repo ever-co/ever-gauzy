@@ -3557,7 +3557,7 @@ type Query {
     logType: [String!]
 
     """
-    Narrows the read to these time-log sources, by value: `DESKTOP`, `BROWSER`, `BROWSER_EXTENSION`, `MOBILE`, `HUBSTAFF`, `UPWORK`, `TEAMS` or `CLOC`.
+    Narrows the read to these time-log sources, by value: `DESKTOP`, `BROWSER`, `BROWSER_EXTENSION`, `MOBILE`, `HUBSTAFF`, `UPWORK`, `TEAMS`, `CLOC` or `EMBED`.
     """
     source: [String!]
 
@@ -43606,7 +43606,7 @@ type TimeLog {
 
   """
   Where the time came from: `BROWSER`, `DESKTOP`, `MOBILE`, `BROWSER_EXTENSION`, `HUBSTAFF`,
-  `UPWORK`, `TEAMS` or `CLOC`, carried as its value for the same reason as `logType`.
+  `UPWORK`, `TEAMS`, `CLOC` or `EMBED`, carried as its value for the same reason as `logType`.
   """
   source: String
 
