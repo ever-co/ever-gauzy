@@ -41,7 +41,11 @@ export class ExchangeEmbedCredentialDTO implements IEmbedTokenExchangeInput {
 	@ApiPropertyOptional({ type: () => String, description: 'Or the member, by the email of their account.' })
 	email?: string;
 
-	@ApiPropertyOptional({
+	/**
+	 * Required: an exchange without it is refused (403 EMBED_ORIGIN_NOT_ALLOWED). Optional in the type only, as the other
+	 * fields of this body are checked by the service rather than by validation.
+	 */
+	@ApiProperty({
 		type: () => String,
 		description: "The origin of the page the widget runs in, one of the organization's allowed origins.",
 		example: 'https://app.example.com'

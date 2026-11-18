@@ -29,7 +29,7 @@ export interface IEmbedTokenExchangeInput {
 	email?: string;
 	/**
 	 * The origin of the page the widget runs in (`https://app.example.com`): one of the organization's allowed origins.
-	 * The token is bound to it.
+	 * The token is bound to it. Required: an exchange without it is refused (403 `EMBED_ORIGIN_NOT_ALLOWED`).
 	 */
 	origin?: string;
 }

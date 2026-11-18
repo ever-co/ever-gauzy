@@ -43,6 +43,11 @@ export interface IAccessTokenMetadata extends JwtPayload {
 	 */
 	embedCredentialId?: string;
 	embedEmployeeId?: string;
-	/** The page origin an embed token was exchanged for: it works only from there. */
+	/**
+	 * The page origin an embed token was exchanged for. `EmbedSessionGuard` refuses a request whose `Origin` header names
+	 * another one; a request without the header is not checked. A browser names the page's origin on every cross-site
+	 * call that carries the token, so the claim keeps another site's page from using it. It does not authenticate where
+	 * a request comes from: any other client writes the header it likes, or none.
+	 */
 	embedOrigin?: string;
 }
