@@ -26,6 +26,8 @@ export class EmbedAllowedOriginService extends TenantAwareCrudService<EmbedAllow
 	private everyOrigin: { origins: Set<string>; readAt: number } | null = null;
 	// Counts the adds and removals on this server, so a read of every origin that one of them overtook is not kept.
 	private originsGeneration = 0;
+	// The read of every origin in flight, shared by the CORS answers that wait for it, for the generation it began in.
+	private everyOriginRead: { generation: number; read: Promise<Set<string>> } | null = null;
 
 	constructor(
 		readonly typeOrmEmbedAllowedOriginRepository: TypeOrmEmbedAllowedOriginRepository,
@@ -123,20 +125,39 @@ export class EmbedAllowedOriginService extends TenantAwareCrudService<EmbedAllow
 	 * of its own (the global EntityManager refuses it).
 	 */
 	async isAllowedAnywhere(origin: string): Promise<boolean> {
-		const now = Date.now();
-		const fresh = this.everyOrigin && now - this.everyOrigin.readAt < EMBED_ORIGINS_CACHE_MS;
-		if (!fresh) {
-			const generation = this.originsGeneration;
-			const rows = await runInMikroOrmContext(this.orm, () => this.readAll({}));
-			const origins = new Set(rows.map((row) => row.origin));
-			// An add or a removal on this server while the read ran: the list may predate it. It answers this request
-			// and is not kept, so the next request reads again.
-			if (generation !== this.originsGeneration) {
-				return origins.has(origin);
-			}
-			this.everyOrigin = { origins, readAt: now };
+		const fresh = this.everyOrigin && Date.now() - this.everyOrigin.readAt < EMBED_ORIGINS_CACHE_MS;
+		if (fresh) {
+			return this.everyOrigin.origins.has(origin);
 		}
-		return this.everyOrigin.origins.has(origin);
+		return (await this.readEveryOrigin()).has(origin);
+	}
+
+	/**
+	 * Every origin, read once for all the CORS answers that ask while the read runs. A read that an add or a removal on
+	 * this server overtook answers those who waited for it, and is neither kept nor shared any more: the list may
+	 * predate the change, so the next request reads again. A failed read is forgotten, so the next request retries.
+	 */
+	private readEveryOrigin(): Promise<Set<string>> {
+		const generation = this.originsGeneration;
+		if (this.everyOriginRead?.generation === generation) {
+			return this.everyOriginRead.read;
+		}
+		const startedAt = Date.now();
+		const read = runInMikroOrmContext(this.orm, () => this.readAll({}))
+			.then((rows) => {
+				const origins = new Set(rows.map((row) => row.origin));
+				if (generation === this.originsGeneration) {
+					this.everyOrigin = { origins, readAt: startedAt };
+				}
+				return origins;
+			})
+			.finally(() => {
+				if (this.everyOriginRead?.read === read) {
+					this.everyOriginRead = null;
+				}
+			});
+		this.everyOriginRead = { generation, read };
+		return read;
 	}
 
 	/** After an add or a removal on this server: the next CORS answer reads every origin again. */

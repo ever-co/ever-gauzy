@@ -252,6 +252,37 @@ describe('EmbedAllowedOriginService', () => {
 		expect(await service.isAllowedAnywhere('https://app.example.com')).toBe(true);
 		expect(reads).toHaveBeenCalledTimes(2);
 	});
+
+	it('shares one read of every origin among the CORS answers that ask while it runs', async () => {
+		const { service, rows, reads } = build();
+		rows.push({ id: 'a', tenantId: TENANT, organizationId: ORG, origin: 'https://app.example.com' });
+		let release: () => void = () => undefined;
+		const gate = new Promise<void>((resolve) => (release = resolve));
+		reads.mockImplementationOnce(async () => {
+			await gate;
+			return [...rows];
+		});
+
+		const answers = Promise.all([
+			service.isAllowedAnywhere('https://app.example.com'),
+			service.isAllowedAnywhere('https://other.example.com'),
+			service.isAllowedAnywhere('https://app.example.com')
+		]);
+		release();
+
+		expect(await answers).toEqual([true, false, true]);
+		expect(reads).toHaveBeenCalledTimes(1);
+	});
+
+	it('forgets a failed read of every origin, so the next CORS answer reads again', async () => {
+		const { service, rows, reads } = build();
+		rows.push({ id: 'a', tenantId: TENANT, organizationId: ORG, origin: 'https://app.example.com' });
+		reads.mockRejectedValueOnce(new Error('connection lost'));
+
+		await expect(service.isAllowedAnywhere('https://app.example.com')).rejects.toThrow('connection lost');
+		expect(await service.isAllowedAnywhere('https://app.example.com')).toBe(true);
+		expect(reads).toHaveBeenCalledTimes(2);
+	});
 });
 
 describe('EmbedAllowedOriginService under DB_ORM=mikro-orm', () => {
