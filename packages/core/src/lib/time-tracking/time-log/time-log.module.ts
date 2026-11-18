@@ -21,6 +21,9 @@ import { TimeLogResolver } from './time-log.resolver';
 import { TimeSlotModule } from './../time-slot/time-slot.module';
 import { TypeOrmTimeLogRepository } from './repository/type-orm-time-log.repository';
 import { MikroOrmTimeLogRepository } from './repository/mikro-orm-time-log.repository';
+import { EventOutboxModule } from '../../event-outbox/event-outbox.module';
+import { GraphqlSubscriptionModule } from '../../graphql/subscriptions/graphql-subscription.module';
+import { TimeLogFactsService } from './time-log-facts.service';
 
 @Module({
 	controllers: [TimeLogController],
@@ -34,7 +37,11 @@ import { MikroOrmTimeLogRepository } from './repository/mikro-orm-time-log.repos
 		forwardRef(() => OrganizationProjectModule),
 		forwardRef(() => OrganizationContactModule),
 		forwardRef(() => TimeSlotModule),
-		CqrsModule
+		CqrsModule,
+		// The time entry facts (`time_log.*`) the signed webhooks deliver: the outbox they are appended to, and the
+		// subscription catalogue that declares their names (TimeLogFactsService).
+		EventOutboxModule,
+		GraphqlSubscriptionModule
 	],
 	providers: [
 		TimeLogService,
@@ -53,6 +60,7 @@ import { MikroOrmTimeLogRepository } from './repository/mikro-orm-time-log.repos
 		MikroOrmTimeLogRepository,
 		TypeOrmOrganizationRepository,
 		MikroOrmOrganizationRepository,
+		TimeLogFactsService,
 		...CommandHandlers
 	],
 	exports: [TimeLogService, TypeOrmTimeLogRepository, MikroOrmTimeLogRepository, BulkExecutor]
