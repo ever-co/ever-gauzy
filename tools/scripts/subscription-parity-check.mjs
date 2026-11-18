@@ -196,6 +196,12 @@ const REFUSED = new Map([
 /** Durable aggregates a plugin streams that deliberately get no typed field, with the reason. */
 const AGGREGATES_WITHOUT_A_FIELD = new Map([
 	[
+		'time_log',
+		'`time_log.*` (ever-co/ever-gauzy#12071) is written for the signed webhooks, which deliver it to a subscription to ' +
+			'`time_log.*`, and `events(names:)` already streams the envelope; a typed field for a person’s timer changes is a ' +
+			'separate decision.'
+	],
+	[
 		'inbox_item',
 		'`inbox_item.created` (@gauzy/plugin-inbox, G-P3-6) is addressed to the item’s recipients and streamed through ' +
 			'`events(names:)`; a typed field waits until this gate reads the SDL of a flag-gated plugin, as the field-binding ' +
