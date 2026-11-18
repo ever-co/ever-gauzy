@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { ID, ITag, ITagType } from '@gauzy/contracts';
-import { TagsService } from '@gauzy/ui-core/core';
+import { Store, TagTypesService, TagsService } from '@gauzy/ui-core/core';
 
 /**
  * A row of the tags list: the tag, the type name the list joins in (`tagTypeName`), and one `<relation>_counter`
@@ -86,10 +86,16 @@ const COUNTER_SUFFIX = '_counter';
 export class TagDetailsComponent implements OnInit {
 	private readonly dialogRef = inject<NbDialogRef<TagDetailsComponent>>(NbDialogRef);
 	private readonly tagsService = inject(TagsService);
+	private readonly tagTypesService = inject(TagTypesService);
+	private readonly store = inject(Store);
 
 	/** The row of the tags list: the tag, its type name and its usage counters. */
 	@Input() row: ITagListRow;
-	/** The organization's tag types, as the Tags page loaded them, to name a type the row did not have. */
+	/**
+	 * The organization's tag types as the Tags page held them when the dialog opened: the first place a changed
+	 * type is looked up. It is a snapshot (the page may still have been loading them), so a type it does not hold
+	 * is read fresh instead (see {@link refreshTypeName}).
+	 */
 	@Input() tagTypes: ITagType[] = [];
 
 	/** The tag as shown: the list row at first, then the row with the refreshed fields over it. */
@@ -129,7 +135,7 @@ export class TagDetailsComponent implements OnInit {
 		try {
 			const fresh = await this.tagsService.getTagById(this.row.id);
 			this.tag.set({ ...this.row, ...fresh });
-			this.refreshTypeName(fresh.tagTypeId ?? null);
+			await this.refreshTypeName(fresh.tagTypeId ?? null);
 		} catch (error) {
 			// Keep showing the row: it is what the list showed a moment ago.
 			console.error('Error while retrieving the tag', error);
@@ -152,12 +158,16 @@ export class TagDetailsComponent implements OnInit {
 	}
 
 	/**
-	 * The type's name for the refreshed `tagTypeId`, which is the source of truth: no type when it is empty, the
-	 * list's name while the id is still the one the list joined it for, and the name from the organization's tag
-	 * types when the type has changed since (the single read carries the id only). A type the dialog cannot name
-	 * is shown as none rather than as the list's stale one.
+	 * The type's name for the refreshed `tagTypeId`, which is the source of truth (the single read carries the id
+	 * only):
+	 * - no id: no type;
+	 * - the id the list joined its name for: the list's name;
+	 * - another id: its name from the tag types the page passed in, or, when that snapshot does not hold it (the
+	 *   page may still have been loading them), from the organization's tag types read now.
+	 *
+	 * A type the dialog cannot name is shown as none rather than as the list's stale one.
 	 */
-	private refreshTypeName(tagTypeId: ID | null): void {
+	private async refreshTypeName(tagTypeId: ID | null): Promise<void> {
 		if (!tagTypeId) {
 			this.typeName.set(null);
 			return;
@@ -167,7 +177,20 @@ export class TagDetailsComponent implements OnInit {
 			this.typeName.set(listName);
 			return;
 		}
-		this.typeName.set(this.tagTypes?.find(({ id }) => id === tagTypeId)?.type ?? null);
+		const known = this.tagTypes?.find(({ id }) => id === tagTypeId);
+		if (known) {
+			this.typeName.set(known.type ?? null);
+			return;
+		}
+		try {
+			const { tenantId } = this.store.user;
+			const organizationId = this.row.organizationId ?? this.store.selectedOrganization?.id;
+			const { items } = await this.tagTypesService.getTagTypes({ tenantId, organizationId });
+			this.typeName.set(items.find(({ id }) => id === tagTypeId)?.type ?? null);
+		} catch (error) {
+			console.error('Error while retrieving tag types', error);
+			this.typeName.set(null);
+		}
 	}
 
 	private usagesOf(row: ITagListRow): ITagUsage[] {
