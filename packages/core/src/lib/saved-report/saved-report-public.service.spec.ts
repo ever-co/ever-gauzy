@@ -608,6 +608,30 @@ describe('SavedReportPublicService', () => {
 			expect((repositories.Tag as { find: jest.Mock }).find).not.toHaveBeenCalled();
 		});
 
+		it('states no label, and reads none, for a report without an organization that reaches the labels', async () => {
+			const state = stateWith(token, { labels: STORED_LABELS });
+			state.report.filters = {};
+			state.report.grouping = SavedReportGroupingEnum.LABEL;
+			state.report.organizationId = undefined;
+			const { service, timeLogService, repositories } = serviceFor(state);
+			// TypeORM drops an undefined key from the where: the membership is then found by user and tenant alone
+			repositories.UserOrganization = {
+				findOne: async ({ where }: FindArgs) =>
+					state.memberships.find(
+						(m) =>
+							m.userId === where.userId &&
+							(where.organizationId === undefined || m.organizationId === where.organizationId)
+					) ?? null
+			};
+			timeLogService.getDailyReport.mockResolvedValueOnce(labelledDailyReport());
+
+			const answer = await service.read(token);
+
+			expect(answer.days[0].logs[0].employeeLogs[0].tasks[0].tags).toEqual([]);
+			expect(JSON.stringify(answer)).not.toContain('Design');
+			expect((repositories.Tag as { find: jest.Mock }).find).not.toHaveBeenCalled();
+		});
+
 		it('keeps the 404 of a link whose author lost access, labels or not', async () => {
 			const state = stateWith(token, { permissions: [], labels: STORED_LABELS });
 			state.report.filters = { tagIds: [DESIGN] };
