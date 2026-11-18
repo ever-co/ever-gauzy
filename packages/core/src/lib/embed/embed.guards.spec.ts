@@ -1,5 +1,6 @@
 import { ForbiddenException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { sign } from 'jsonwebtoken';
+import { ExtractJwt } from 'passport-jwt';
 import { EmbedEnabledGuard, EmbedSessionGuard } from './embed.guards';
 import { EMBED_CREDENTIAL_CLAIM, EMBED_EMPLOYEE_CLAIM, isEmbedRoute, readEmbedClaims } from './embed-session';
 import {
@@ -175,6 +176,76 @@ describe('EmbedSessionGuard', () => {
 
 		delete process.env[EMBED_TOKENS_ENV];
 		await expect(guardWith().guard.canActivate(contextOf(request))).rejects.toThrow(UnauthorizedException);
+	});
+
+	it('reads the token passport reads, so a suffixed Authorization header is held to the timer too', async () => {
+		const { guard } = guardWith();
+		const token = embedToken();
+		for (const authorization of [`Bearer ${token} ignored`, `Bearer\t${token}\textra words`]) {
+			// What JwtStrategy authenticates with, and what the guard must judge.
+			expect(ExtractJwt.fromAuthHeaderAsBearerToken()({ headers: { authorization } } as any)).toBe(token);
+			expect(readEmbedClaims(authorization)).toMatchObject({ credentialId: CREDENTIAL, employeeId: EMPLOYEE });
+
+			const request = { method: 'GET', path: '/api/timesheet/time-log', headers: { authorization } };
+			await expect(guard.canActivate(contextOf(request))).rejects.toMatchObject({ response: { code: 'EMBED_SCOPE' } });
+		}
+	});
+
+	it('refuses relations and every query parameter the route does not take', async () => {
+		const { guard } = guardWith();
+		const headers = { authorization: `Bearer ${embedToken()}` };
+		const refused = [
+			{ path: '/api/user/me', query: { relations: ['organizations.organization.employees.timeLogs'] } },
+			{ path: '/api/user/me', query: { includeEmployee: 'true', select: { email: true } } },
+			{ path: '/api/role-permissions/me', query: { relations: ['role'] } },
+			{ path: '/api/timesheet/timer/status', query: { organizationId: ORG, relations: ['employee.user'] } },
+			{ path: '/api/timesheet/timer/status', query: { organizationId: ORG, employeeIds: [EMPLOYEE] } }
+		];
+		for (const { path, query } of refused) {
+			await expect(guard.canActivate(contextOf({ method: 'GET', path, query, headers }))).rejects.toMatchObject({
+				response: { code: 'EMBED_SCOPE' }
+			});
+		}
+
+		const me = { method: 'GET', path: '/api/user/me', query: { includeEmployee: 'true', includeOrganization: 'true' }, headers };
+		await expect(guard.canActivate(contextOf(me))).resolves.toBe(true);
+	});
+
+	it('reads the teams of its own organization only, named in where', async () => {
+		const { guard } = guardWith();
+		const headers = { authorization: `Bearer ${embedToken()}` };
+		const teams = (query: Record<string, unknown>) => contextOf({ method: 'GET', path: '/api/organization-team/me', query, headers });
+
+		await expect(guard.canActivate(teams({}))).rejects.toThrow(ForbiddenException);
+		await expect(guard.canActivate(teams({ where: { organizationId: OTHER_ORG } }))).rejects.toThrow(ForbiddenException);
+		await expect(
+			guard.canActivate(teams({ where: { organizationId: ORG, members: { employeeId: '7a000000-0000-4000-8000-0000000000e2' } } }))
+		).rejects.toThrow(ForbiddenException);
+		await expect(guard.canActivate(teams({ where: { organizationId: ORG }, relations: ['members'] }))).rejects.toThrow(ForbiddenException);
+		await expect(guard.canActivate(teams({ where: { organizationId: ORG, tenantId: 'tenant' } }))).resolves.toBe(true);
+	});
+
+	it('checks every place a request names an organization, a tenant or a member, each on its own', async () => {
+		const { guard } = guardWith();
+		const authorization = `Bearer ${embedToken()}`;
+		const status = (query: Record<string, unknown>, extraHeaders: Record<string, string> = {}) =>
+			contextOf({ method: 'GET', path: '/api/timesheet/timer/status', query, headers: { authorization, ...extraHeaders } });
+		const start = (body: Record<string, unknown>) =>
+			contextOf({ method: 'POST', path: '/api/timesheet/timer/start', body, headers: { authorization } });
+
+		await expect(guard.canActivate(status({ organizationId: ORG }, { 'organization-id': OTHER_ORG }))).rejects.toThrow(ForbiddenException);
+		await expect(guard.canActivate(status({ organizationId: ORG }, { 'tenant-id': 'another-tenant' }))).rejects.toThrow(ForbiddenException);
+		await expect(guard.canActivate(start({ organizationId: OTHER_ORG }))).rejects.toThrow(ForbiddenException);
+		await expect(guard.canActivate(start({ organizationId: ORG, tenantId: 'another-tenant' }))).rejects.toThrow(ForbiddenException);
+		await expect(
+			guard.canActivate(start({ organizationId: ORG, employeeId: '7a000000-0000-4000-8000-0000000000e2' }))
+		).rejects.toThrow(ForbiddenException);
+		await expect(
+			guard.canActivate(contextOf({ method: 'POST', path: '/api/timesheet/timer/start', query: { organizationId: ORG }, body: {}, headers: { authorization } }))
+		).rejects.toThrow(ForbiddenException);
+
+		await expect(guard.canActivate(status({ organizationId: ORG }, { 'organization-id': ORG, 'tenant-id': 'tenant' }))).resolves.toBe(true);
+		await expect(guard.canActivate(start({ organizationId: ORG, tenantId: 'tenant', employeeId: EMPLOYEE }))).resolves.toBe(true);
 	});
 
 	it('refuses an embed token on GraphQL', async () => {

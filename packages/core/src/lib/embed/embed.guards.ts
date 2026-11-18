@@ -7,7 +7,7 @@ import {
 	UnauthorizedException
 } from '@nestjs/common';
 import { EmbedCredentialService } from './embed-credential.service';
-import { EMBED_FORBIDDEN_TIMER_FIELDS, isEmbedRoute, readEmbedClaims } from './embed-session';
+import { EMBED_FORBIDDEN_TIMER_FIELDS, embedRouteOf, isWithinEmbedScope, readEmbedClaims } from './embed-session';
 import { isEmbedEnabled } from './embed.utils';
 
 /** Makes the embed routes answer 404 while `GAUZY_EMBED_TOKENS_ENABLED` is off. */
@@ -52,16 +52,8 @@ export class EmbedSessionGuard implements CanActivate {
 		}
 
 		const path = String(request.path ?? request.url ?? '').split('?')[0];
-		if (!isEmbedRoute(request.method, path)) {
-			throw outOfScope();
-		}
-
-		const askedOrganization = request.query?.organizationId ?? request.body?.organizationId ?? request.headers?.['organization-id'];
-		if (askedOrganization && claims.organizationId && askedOrganization !== claims.organizationId) {
-			throw outOfScope();
-		}
-		const askedEmployee = request.query?.employeeId ?? request.body?.employeeId;
-		if (askedEmployee && askedEmployee !== claims.employeeId) {
+		const route = embedRouteOf(request.method, path);
+		if (!route || !isWithinEmbedScope(route, request, claims)) {
 			throw outOfScope();
 		}
 		// A start or a stop takes the server's time: an embed cannot backdate.
