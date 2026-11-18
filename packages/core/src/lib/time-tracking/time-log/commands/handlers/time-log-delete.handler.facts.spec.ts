@@ -122,16 +122,15 @@ describe('TimeLogDeleteHandler: the facts of a deletion', () => {
 		expect(facts.recordWithin).not.toHaveBeenCalled();
 	});
 
-	it('still deletes in its transaction when the entries cannot be read for their facts alone', async () => {
+	it('fails with nothing deleted when the locked read of its transaction fails, as its delete would', async () => {
 		const { handler, transactionRepository, facts } = setup(true);
-		transactionRepository.find.mockRejectedValueOnce(new Error('The read failed'));
-		const warn = jest.spyOn((handler as any).logger, 'warn').mockImplementation(() => undefined);
+		transactionRepository.find.mockRejectedValueOnce(new Error('Deadlock found when trying to get lock'));
 
-		await expect(handler.execute(new TimeLogDeleteCommand(handed, false))).resolves.toEqual({ affected: 1 });
+		await expect(handler.execute(new TimeLogDeleteCommand(handed, false))).rejects.toThrow('Deadlock found');
 
-		expect(transactionRepository.softDelete).toHaveBeenCalledTimes(1);
+		expect(transactionRepository.softDelete).not.toHaveBeenCalled();
 		expect(facts.recordWithin).not.toHaveBeenCalled();
-		expect(warn).toHaveBeenCalledTimes(1);
+		expect(facts.record).not.toHaveBeenCalled();
 	});
 
 	it('still deletes when the entries cannot be read for their facts', async () => {
