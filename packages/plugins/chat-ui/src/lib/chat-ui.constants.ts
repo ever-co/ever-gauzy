@@ -46,8 +46,8 @@ export const CHAT_LIVE_LIST_AUDIT_MS = 1_000;
 export const CHAT_PAGE_SIZE = 50;
 /** The newest page the docked card reads: the latest of a conversation; the rest is a click away in the chat. */
 export const CHAT_DOCK_PAGE_SIZE = 20;
-/** How many of a team's members the docked card shows as faces at its top, before their count. */
-export const CHAT_DOCK_TEAM_FACES = 5;
+/** How many of a team's members the docked card shows as faces at its top (the rest as "+N"), before their count. */
+export const CHAT_DOCK_TEAM_FACES = 4;
 
 /** Where a task card leads. */
 export const CHAT_TASK_LINK = '/pages/tasks/view';

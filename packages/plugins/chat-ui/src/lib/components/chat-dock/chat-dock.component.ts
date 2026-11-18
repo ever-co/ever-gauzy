@@ -10,7 +10,7 @@ import { CHAT_EVENT_NAMES, ChatVisibilityEnum, IChatConversationWithState, IChat
 import { Store, ToastrService } from '@gauzy/ui-core/core';
 import { CHAT_DOCK_PAGE_SIZE, CHAT_DOCK_TEAM_FACES, CHAT_LINK, CHAT_LIVE_AUDIT_MS, CHAT_MESSAGES_POLL_MS } from '../../chat-ui.constants';
 import { canManageConversation } from '../../chat-categories';
-import { facesOf } from '../../chat-member-preview';
+import { facesOf, peopleOf } from '../../chat-member-preview';
 import { teamChannelOf } from '../../chat-team-suggestions';
 import { withTaskReference } from '../../chat-tasks';
 import { apiErrorMessage, ChatMemberIds, ChatPerson, continuesGroup, isSameDay, memberEmployeeIds, mergeMessages, newNonce, showNewestPage, userName } from '../../chat-ui.helpers';
@@ -68,23 +68,59 @@ interface DockRow {
 						@if (who.position) {
 							<span class="position" [attr.title]="who.position">{{ who.position }}</span>
 						} @else if (who.memberCount !== null) {
-							<!-- The team's members at the top: a few faces, overlapping, before their count. -->
-							<span class="members-line" data-test="chat-dock-members">
+							<!-- The team's members at the top: a few faces, overlapping, before their count; a click lists them all. -->
+							<button
+								type="button"
+								class="members-line"
+								data-test="chat-dock-members"
+								[attr.aria-expanded]="showMembers()"
+								aria-controls="chat-dock-member-list"
+								[attr.title]="'CHAT.PROFILE.TEAM_MEMBERS' | translate"
+								(click)="toggleMembers()"
+							>
 								@if (teamFaces().length) {
 									<span class="faces">
 										@for (face of teamFaces(); track face.employeeId) {
-											<ngx-chat-person-avatar [person]="face" size="tiny" [presence]="false" [attr.title]="face.name"></ngx-chat-person-avatar>
+											<ngx-chat-person-avatar
+												[person]="face"
+												size="small"
+												[round]="true"
+												[presence]="false"
+												[attr.title]="face.name"
+											></ngx-chat-person-avatar>
+										}
+										<!-- The members beyond the faces shown, as one more disc. -->
+										@if ((who.memberCount ?? 0) > teamFaces().length) {
+											<span class="faces-more" aria-hidden="true">+{{ (who.memberCount ?? 0) - teamFaces().length }}</span>
 										}
 									</span>
 								}
 								<span class="position">{{ 'CHAT.LIST.MEMBERS' | translate: { count: who.memberCount } }}</span>
-							</span>
+								<nb-icon class="chevron" [icon]="showMembers() ? 'chevron-up-outline' : 'chevron-down-outline'" aria-hidden="true"></nb-icon>
+							</button>
 						}
 					</div>
 					<button type="button" class="icon-button" data-test="chat-dock-close" [attr.aria-label]="'CHAT.VIEW.CLOSE' | translate" (click)="close()">
 						<nb-icon icon="close-outline" aria-hidden="true"></nb-icon>
 					</button>
 				</header>
+
+				@if (showMembers()) {
+					<!-- Every member of the team the chat knows: face (with presence), name and position. -->
+					<ul class="member-list" id="chat-dock-member-list" data-test="chat-dock-member-list" [attr.aria-label]="'CHAT.PROFILE.TEAM_MEMBERS' | translate">
+						@for (member of teamMembers(); track member.employeeId) {
+							<li class="member">
+								<ngx-chat-person-avatar [person]="member" size="small" [round]="true"></ngx-chat-person-avatar>
+								<span class="member-text">
+									<span class="member-name" [attr.title]="member.name">{{ member.name }}</span>
+									@if (member.position) {
+										<span class="member-position" [attr.title]="member.position">{{ member.position }}</span>
+									}
+								</span>
+							</li>
+						}
+					</ul>
+				}
 
 				@if (failed()) {
 					<p class="note">{{ 'CHAT.ERROR' | translate }}</p>
@@ -234,23 +270,108 @@ interface DockRow {
 			}
 			/* A team's members under its name: a few faces, overlapping, then their count. */
 			.members-line {
-				display: flex;
+				display: inline-flex;
 				align-items: center;
-				gap: 0.375rem;
+				align-self: flex-start;
+				gap: 0.5rem;
 				min-width: 0;
-				margin-top: 0.125rem;
+				margin-top: 0.25rem;
 			}
+			/*
+			 * Round faces, each ringed in the card's colour so the one before it stays readable where they overlap: a
+			 * quarter of a face under the next, its initials clear.
+			 */
 			.faces {
 				display: inline-flex;
 				flex: 0 0 auto;
 				align-items: center;
+				padding-left: 2px;
 			}
-			.faces ngx-chat-person-avatar {
-				border-radius: calc(var(--border-radius) * 0.625);
+			.faces ngx-chat-person-avatar,
+			.faces-more {
+				border-radius: 50%;
 				box-shadow: 0 0 0 2px var(--gauzy-card-1);
 			}
-			.faces ngx-chat-person-avatar + ngx-chat-person-avatar {
+			.faces > * + * {
 				margin-left: -0.375rem;
+			}
+			.faces-more {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				min-width: 1.5rem;
+				height: 1.5rem;
+				padding: 0 0.3125rem;
+				box-sizing: border-box;
+				border-radius: 999px;
+				background: var(--gauzy-sidebar-background-3, var(--dock-hover));
+				color: var(--gauzy-text-color-1, inherit);
+				font-size: 0.625rem;
+				font-weight: 600;
+				line-height: 1;
+			}
+			/* The members row is a quiet button: no frame, the muted text, a tint on hover only. */
+			.members-line {
+				max-width: 100%;
+				padding: 0.1875rem 0.5rem 0.1875rem 0.25rem;
+				margin-left: -0.25rem;
+				border: 0;
+				border-radius: calc(var(--border-radius) * 1.25);
+				background: transparent;
+				color: inherit;
+				font: inherit;
+				text-align: left;
+				cursor: pointer;
+				transition: background-color 0.1s ease;
+			}
+			.members-line:hover,
+			.members-line:focus-visible {
+				background: var(--dock-hover);
+			}
+			.members-line:focus-visible {
+				outline: 2px solid var(--dock-accent);
+				outline-offset: -2px;
+			}
+			.chevron {
+				flex: 0 0 auto;
+				font-size: 0.875rem;
+				color: var(--dock-muted);
+			}
+			/* The team's member list, under the header: one row per member, scrolling past a few. */
+			.member-list {
+				max-height: 12rem;
+				margin: 0;
+				padding: 0.375rem 0;
+				overflow-y: auto;
+				list-style: none;
+				border-bottom: 1px solid var(--dock-line);
+			}
+			.member {
+				display: flex;
+				align-items: center;
+				gap: 0.625rem;
+				min-width: 0;
+				padding: 0.375rem 1.25rem;
+			}
+			.member-text {
+				display: flex;
+				flex-direction: column;
+				min-width: 0;
+			}
+			.member-name,
+			.member-position {
+				overflow: hidden;
+				white-space: nowrap;
+				text-overflow: ellipsis;
+			}
+			.member-name {
+				font-size: 0.8125rem;
+				line-height: 1.125rem;
+			}
+			.member-position {
+				color: var(--dock-muted);
+				font-size: 0.75rem;
+				line-height: 1rem;
 			}
 			.icon-button {
 				display: inline-flex;
@@ -518,6 +639,18 @@ export class ChatDockComponent {
 		return team ? facesOf(team.memberEmployeeIds, this.dockPeople().byEmployee, CHAT_DOCK_TEAM_FACES) : [];
 	});
 
+	/** Whether the team's member list is open under the header. */
+	protected readonly showMembers = signal(false);
+	/** Every member of the team the chat knows, by name, for that list. */
+	protected readonly teamMembers = computed<ChatPerson[]>(() => {
+		const team = this.team();
+		return team ? peopleOf(team.memberEmployeeIds, this.dockPeople().byEmployee) : [];
+	});
+
+	protected toggleMembers(): void {
+		this.showMembers.update((open) => !open);
+	}
+
 	/** The messages with their day dividers and whether each continues the previous author's group, as in the chat. */
 	protected readonly rows = computed<DockRow[]>(() => {
 		const messages = this.messages();
@@ -634,6 +767,7 @@ export class ChatDockComponent {
 		this.polling?.unsubscribe();
 		this.conversation.set(null);
 		this.newChannelFor.set(null);
+		this.showMembers.set(false);
 		this.messages.set([]);
 		this.editing.set(null);
 		this.failed.set(false);
@@ -816,11 +950,15 @@ export class ChatDockComponent {
 		this.dock.close();
 	}
 
-	/** Escape leaves edit mode, else closes the card, unless the composer used it to close one of its own lists. */
+	/** Escape leaves edit mode, else closes the member list, else closes the card, unless the composer used it to close one of its own lists. */
 	protected onEscape(event: Event): void {
 		if (event.defaultPrevented) return;
 		if (this.editing()) {
 			this.editing.set(null);
+			return;
+		}
+		if (this.showMembers()) {
+			this.showMembers.set(false);
 			return;
 		}
 		this.close();
