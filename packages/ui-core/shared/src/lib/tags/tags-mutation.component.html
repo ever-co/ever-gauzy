@@ -52,6 +52,7 @@
 							cpWidth="248px"
 							[cpExtraTemplate]="presetTemplate"
 							(colorPickerChange)="onChangeColor($event)"
+							(input)="rememberTypedColor($any($event.target).value)"
 							(blur)="restoreColorIfInvalid()"
 						/>
 					</div>

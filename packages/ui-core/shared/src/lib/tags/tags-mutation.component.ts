@@ -235,8 +235,19 @@ export class TagsMutationComponent extends NotesWithTagsComponent implements OnI
 	}
 
 	/**
-	 * When the colour field loses focus holding text the picker cannot read, put back the last colour it accepted
-	 * (or empty the field when there was none), so the value saved is always one the picker understands.
+	 * Remembers a readable colour typed into the field. The picker emits no change for a colour equal to the one it
+	 * already holds (its fallback is white, so typing `#ffffff` in a new tag emits nothing), so typed text is tracked
+	 * here as well, for {@link restoreColorIfInvalid} to put back.
+	 */
+	protected rememberTypedColor(value: string): void {
+		if (isPickerColor(value)) {
+			this.lastValidColor = value;
+		}
+	}
+
+	/**
+	 * When the colour field loses focus holding text the picker cannot read, put back the last readable colour it
+	 * held, loaded, picked or typed (or empty the field when there was none), so the value saved is always one the picker understands.
 	 */
 	protected restoreColorIfInvalid(): void {
 		const control = this.form.get('color');
