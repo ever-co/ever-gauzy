@@ -118,11 +118,10 @@ describe('ExtendedMcpServer.listTools — the input schemas of the HTTP and WebS
 		expect(getTask?.inputSchema).toMatchObject({ $schema: DRAFT_07, type: 'object', required: ['id'] });
 		expect(Object.keys(getTask?.inputSchema.properties ?? {})).toEqual(['id', 'relations']);
 		expect(stopTimer?.inputSchema).toMatchObject({ $schema: DRAFT_07, type: 'object' });
-		expect(Object.keys(stopTimer?.inputSchema.properties ?? {})).toEqual([
-			'description',
-			'source',
-			'manualTimeSlot'
-		]);
+		// Contains, not equals: a parameter stop_timer gains later (the run it stops, #12087) is listed with these.
+		expect(Object.keys(stopTimer?.inputSchema.properties ?? {})).toEqual(
+			expect.arrayContaining(['description', 'source', 'manualTimeSlot'])
+		);
 	});
 
 	it('gives a schema z.toJSONSchema cannot represent the empty schema, for its tool only', async () => {
