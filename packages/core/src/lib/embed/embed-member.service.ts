@@ -16,9 +16,6 @@ export const EMBED_MEMBER_NAME_MAX_LENGTH = 100;
 /** The longest address a member is added for. */
 const EMAIL_MAX_LENGTH = 254;
 
-/** The roles whose accounts an embed never touches. */
-const ADMINISTRATOR_ROLES: readonly string[] = [RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN];
-
 /** The tenant and organization of the credential that adds a member. */
 export interface IEmbedMemberScope {
 	tenantId: ID;
@@ -76,13 +73,12 @@ function firstNameOf(person: IEmbedNewMember, email: string): string {
 	return extractNameFromEmail(email);
 }
 
-/** Whether the account holds a role an embed never touches. */
-function isAdministrator(account: User): boolean {
-	const roleName = account.role?.name;
-	if (!roleName) {
-		return false;
-	}
-	return ADMINISTRATOR_ROLES.includes(roleName);
+/**
+ * Whether the account holds the employee role, the only one an embed adds: a portal never gives a person more than an
+ * employee's reach in an organization an administrator did not add them to.
+ */
+function hasEmployeeRole(account: User): boolean {
+	return account.role?.name === RolesEnum.EMPLOYEE;
 }
 
 /**
@@ -165,11 +161,12 @@ export class EmbedMemberService {
 	) {}
 
 	/**
-	 * Adds the person as an employee of the credential's organization, unless the address belongs to an administrator,
-	 * to an account that is inactive, archived or deleted, to an account stored in another case than the exchange finds,
-	 * or to someone the organization archived, deactivated or removed (an employee or a membership of theirs left
-	 * there): an exchange never brings such a person back. The caller looked for an active member of the address first,
-	 * in its turn ({@link inTurn}).
+	 * Adds the person as an employee of the credential's organization: a new account, or an existing account of the
+	 * tenant with the employee role. Never an account with any other role (an administrator, a manager, a viewer, a
+	 * custom role), one that is inactive, archived or deleted, one stored in another case than the exchange finds, or
+	 * someone the organization archived, deactivated or removed (an employee or a membership of theirs left there): an
+	 * exchange never brings such a person back. The caller looked for an active member of the address first, in its
+	 * turn ({@link inTurn}).
 	 *
 	 * A refusal the platform's commands answer (a 4xx: the account stands behind an agent or a member without an
 	 * account, the tenant has no employee role) is a refusal too. Any other failure is thrown.
@@ -222,8 +219,8 @@ export class EmbedMemberService {
 		if (!accounts.every(isFound)) {
 			return 'the address has an account in another case';
 		}
-		if (accounts.some(isAdministrator)) {
-			return 'the address belongs to an administrator';
+		if (!accounts.every(hasEmployeeRole)) {
+			return 'the account has a role other than employee';
 		}
 		const isOff = accounts.some((account) => !isLive(account));
 		if (isOff) {

@@ -10,8 +10,9 @@ import type { EmbedMemberService, IEmbedMemberScope } from './embed-member.servi
  * The person an embed exchange adds, through the platform's own creation commands (`UserCreateCommand`,
  * `EmployeeCreateCommand`) and services, on one SQLite database with the tables TypeORM creates for every entity and
  * the employee subscriber the application registers: a new account with the employee role and no password, or the
- * tenant's existing account, filed in the credential's organization with tracking on and nothing sent to the person;
- * never an administrator, an account that is off, or someone the organization archived, deactivated or removed.
+ * tenant's existing account with that role, filed in the credential's organization with tracking on and nothing sent
+ * to the person; never an account with any other role, one that is off, or someone the organization archived,
+ * deactivated or removed.
  */
 const TIMEOUT = 10 * 60 * 1000;
 
@@ -24,6 +25,9 @@ const ROLELESS_ORGANIZATION = '7d000000-0000-4000-8000-0000000000f3';
 const EMPLOYEE_ROLE = '7d000000-0000-4000-8000-0000000000b1';
 const ADMIN_ROLE = '7d000000-0000-4000-8000-0000000000b2';
 const SUPER_ADMIN_ROLE = '7d000000-0000-4000-8000-0000000000b3';
+const MANAGER_ROLE = '7d000000-0000-4000-8000-0000000000b4';
+const VIEWER_ROLE = '7d000000-0000-4000-8000-0000000000b5';
+const CUSTOM_ROLE = '7d000000-0000-4000-8000-0000000000b6';
 
 const SCOPE: IEmbedMemberScope = { tenantId: TENANT, organizationId: ORGANIZATION };
 
@@ -37,6 +41,9 @@ const ACCOUNTS: Record<string, { id: string; roleId: string; values?: Record<str
 	'lina@northwind.example': { id: '7d000000-0000-4000-8000-000000000001', roleId: EMPLOYEE_ROLE },
 	'ada@northwind.example': { id: '7d000000-0000-4000-8000-000000000002', roleId: ADMIN_ROLE },
 	'sam@northwind.example': { id: '7d000000-0000-4000-8000-000000000003', roleId: SUPER_ADMIN_ROLE },
+	'max@northwind.example': { id: '7d000000-0000-4000-8000-00000000000e', roleId: MANAGER_ROLE },
+	'val@northwind.example': { id: '7d000000-0000-4000-8000-00000000000f', roleId: VIEWER_ROLE },
+	'cleo@northwind.example': { id: '7d000000-0000-4000-8000-000000000010', roleId: CUSTOM_ROLE },
 	'omar@northwind.example': { id: '7d000000-0000-4000-8000-000000000004', roleId: EMPLOYEE_ROLE },
 	'ines@northwind.example': { id: '7d000000-0000-4000-8000-000000000005', roleId: EMPLOYEE_ROLE },
 	'ravi@northwind.example': { id: '7d000000-0000-4000-8000-000000000006', roleId: EMPLOYEE_ROLE },
@@ -139,7 +146,10 @@ async function seed(dataSource: DataSource): Promise<void> {
 	for (const [id, name] of [
 		[EMPLOYEE_ROLE, 'EMPLOYEE'],
 		[ADMIN_ROLE, 'ADMIN'],
-		[SUPER_ADMIN_ROLE, 'SUPER_ADMIN']
+		[SUPER_ADMIN_ROLE, 'SUPER_ADMIN'],
+		[MANAGER_ROLE, 'MANAGER'],
+		[VIEWER_ROLE, 'VIEWER'],
+		[CUSTOM_ROLE, 'PORTAL_REVIEWER']
 	]) {
 		await insert(dataSource, 'role', { id, tenantId: TENANT, name });
 	}
@@ -415,12 +425,18 @@ describe('EmbedMemberService on SQLite, through the platform commands', () => {
 		expect(welcomeUser).not.toHaveBeenCalled();
 	});
 
-	it("refuses an administrator's and a super administrator's account, and writes nothing", async () => {
+	it('refuses an account with any role but employee, administrators included, and writes nothing', async () => {
 		const before = await counts();
 
-		for (const email of ['ada@northwind.example', 'sam@northwind.example']) {
+		for (const email of [
+			'ada@northwind.example',
+			'sam@northwind.example',
+			'max@northwind.example',
+			'val@northwind.example',
+			'cleo@northwind.example'
+		]) {
 			await expect(service.add(SCOPE, { email })).resolves.toEqual({
-				refused: 'the address belongs to an administrator'
+				refused: 'the account has a role other than employee'
 			});
 		}
 		expect(await counts()).toEqual(before);

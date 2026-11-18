@@ -767,14 +767,14 @@ describe('EmbedCredentialService: the members a credential adds', () => {
 		const { service, addMember, issueEmbedSession } = build();
 		const { id, secret } = await credentialOf(service, true);
 		const lines = logsOf(service);
-		addMember.mockResolvedValueOnce({ refused: 'the address belongs to an administrator' });
+		addMember.mockResolvedValueOnce({ refused: 'the account has a role other than employee' });
 
 		await expect(
 			service.exchange({ credential: secret, email: 'ada@northwind.example', origin: SITE }, PORTAL)
 		).rejects.toMatchObject(MEMBER_REFUSED);
 
 		expect(issueEmbedSession).not.toHaveBeenCalled();
-		expect(lines).toContain(`Embed exchange refused: the address belongs to an administrator credential=${id}`);
+		expect(lines).toContain(`Embed exchange refused: the account has a role other than employee credential=${id}`);
 	});
 
 	it('answers 500 when the addition fails, and 503 when the database is out of reach, never a 401', async () => {
