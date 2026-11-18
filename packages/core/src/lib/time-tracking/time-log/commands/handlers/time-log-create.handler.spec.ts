@@ -482,44 +482,60 @@ describe('TimeLogCreateHandler: the fact of a new entry', () => {
 	afterEach(() => jest.restoreAllMocks());
 
 	function createHandlerWithFacts(appendsWithinWrites: boolean) {
-		const transactionRepository = { save: jest.fn(async (timeLog: TimeLog) => timeLog) };
+		// The transaction's save gives the entry its id, as the database does
+		const transactionRepository = {
+			save: jest.fn(async (timeLog: TimeLog) => {
+				timeLog.id = timeLog.id ?? 'log-in-transaction';
+				return timeLog;
+			})
+		};
 		const transactionManager = { getRepository: jest.fn(() => transactionRepository) };
 		const dataSource = {
 			transaction: jest.fn(async (work: (manager: unknown) => Promise<void>) => work(transactionManager))
 		};
+		// The id each fact was written with, read when it was written: a fact written before the save has none
+		const idsWhenWritten: unknown[] = [];
 		const facts = {
 			appendsWithinWrites: () => appendsWithinWrites,
-			record: jest.fn(async () => undefined),
-			recordWithin: jest.fn(async () => undefined)
+			record: jest.fn(async (_name: string, timeLog: TimeLog) => {
+				idsWhenWritten.push(timeLog.id);
+			}),
+			recordWithin: jest.fn(async (_manager: unknown, _name: string, timeLog: TimeLog) => {
+				idsWhenWritten.push(timeLog.id);
+			})
 		};
 		const { handler } = createHandler(dataSource, facts);
-		return { handler, dataSource, transactionManager, facts };
+		return { handler, dataSource, transactionManager, facts, idsWhenWritten };
 	}
 
-	it('writes time_log.created in the transaction of the entry', async () => {
-		const { handler, dataSource, transactionManager, facts } = createHandlerWithFacts(true);
+	it('writes time_log.created in the transaction of the entry, once it is saved', async () => {
+		const { handler, dataSource, transactionManager, facts, idsWhenWritten } = createHandlerWithFacts(true);
 
 		await handler.execute(new TimeLogCreateCommand(input({ stoppedAt: STOPPED_AT })));
 
 		expect(dataSource.transaction).toHaveBeenCalledTimes(1);
+		expect(facts.recordWithin).toHaveBeenCalledTimes(1);
 		expect(facts.recordWithin).toHaveBeenCalledWith(
 			transactionManager,
 			'time_log.created',
-			expect.objectContaining({ employeeId: EMPLOYEE_ID })
+			expect.objectContaining({ id: 'log-in-transaction', employeeId: EMPLOYEE_ID })
 		);
+		expect(idsWhenWritten).toEqual(['log-in-transaction']);
 		expect(facts.record).not.toHaveBeenCalled();
 	});
 
 	it('writes it right after the entry, opening no transaction, where the outbox cannot share one', async () => {
-		const { handler, dataSource, facts } = createHandlerWithFacts(false);
+		const { handler, dataSource, facts, idsWhenWritten } = createHandlerWithFacts(false);
 
 		await handler.execute(new TimeLogCreateCommand(input({ stoppedAt: STOPPED_AT })));
 
 		expect(dataSource.transaction).not.toHaveBeenCalled();
+		expect(facts.record).toHaveBeenCalledTimes(1);
 		expect(facts.record).toHaveBeenCalledWith(
 			'time_log.created',
-			expect.objectContaining({ employeeId: EMPLOYEE_ID })
+			expect.objectContaining({ id: 'log-1', employeeId: EMPLOYEE_ID })
 		);
+		expect(idsWhenWritten).toEqual(['log-1']);
 		expect(facts.recordWithin).not.toHaveBeenCalled();
 	});
 });
