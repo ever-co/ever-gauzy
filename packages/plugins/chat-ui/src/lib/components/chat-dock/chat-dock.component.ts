@@ -12,7 +12,7 @@ import { CHAT_DOCK_PAGE_SIZE, CHAT_LINK, CHAT_LIVE_AUDIT_MS, CHAT_MESSAGES_POLL_
 import { canManageConversation } from '../../chat-categories';
 import { teamChannelOf } from '../../chat-team-suggestions';
 import { withTaskReference } from '../../chat-tasks';
-import { apiErrorMessage, ChatPerson, continuesGroup, isSameDay, memberEmployeeIds, mergeMessages, newNonce, showNewestPage, userName } from '../../chat-ui.helpers';
+import { apiErrorMessage, ChatMemberIds, ChatPerson, continuesGroup, isSameDay, memberEmployeeIds, mergeMessages, newNonce, showNewestPage, userName } from '../../chat-ui.helpers';
 import { ChatCreateTaskFlow } from '../../dialogs/chat-task-dialogs.component';
 import { ChatDockService } from '../../services/chat-dock.service';
 import { ChatFilesStore } from '../../services/chat-files.store';
@@ -45,7 +45,8 @@ interface DockRow {
 
 /**
  * The docked message card (`ChatDockService`): a small card at the bottom right of the screen to write one person
- * directly, or a team in its channel (the channel named as the team, joined or created on opening). A box to write and a way to the full conversation, as a quick-message card; above them, who it is and,
+ * directly, or a team in its channel (the channel named as the team: joined on opening, created with the first
+ * message when there is none). A box to write and a way to the full conversation, as a quick-message card; above them, who it is and,
  * once there is something to read, the latest messages of our conversation, shown as the chat shows them. The
  * conversation is found (or created) when the card opens; its newest page is read again as its chat events come (or
  * on the chat's poll where they do not stream), so a message written, edited or deleted elsewhere shows, and it is
@@ -76,6 +77,8 @@ interface DockRow {
 
 				@if (failed()) {
 					<p class="note">{{ 'CHAT.ERROR' | translate }}</p>
+				} @else if (newChannelFor(); as team) {
+					<p class="note" data-test="chat-dock-new-channel">{{ 'CHAT.PROFILE.TEAM_CHANNEL_NEW' | translate: { name: team.name } }}</p>
 				} @else if (rows().length > 0) {
 					<!--
 						The messages as the conversation shows them (its own message component) with its toolbar: react, create a
@@ -114,7 +117,7 @@ interface DockRow {
 								? ('CHAT.PROFILE.MESSAGE_PLACEHOLDER' | translate: { name: who.name })
 								: ('CHAT.COMPOSER.PLACEHOLDER' | translate: { name: '#' + (conversation()?.name || who.name) })
 						"
-						[disabled]="sending() || !conversation() || readOnly()"
+						[disabled]="sending() || (!conversation() && !newChannelFor()) || readOnly()"
 						[memberIds]="memberIds()"
 						[meEmployeeId]="me()?.employeeId || null"
 						[editing]="editing() !== null"
@@ -409,6 +412,11 @@ export class ChatDockComponent {
 	);
 
 	protected readonly conversation = signal<IChatConversationWithState | null>(null);
+	/**
+	 * The team the card is open with while it has no channel yet: the box can be written in, and the first message
+	 * sent creates the channel (named as the team, with its members) and goes to it.
+	 */
+	protected readonly newChannelFor = signal<ChatTeamDetails | null>(null);
 	private readonly messages = signal<readonly IChatMessageWithRelations[]>([]);
 	protected readonly failed = signal(false);
 	protected readonly sending = signal(false);
@@ -439,7 +447,13 @@ export class ChatDockComponent {
 	});
 	/** An archived conversation is read only, as in the chat (the card's conversation has me in it: found, joined or created). */
 	protected readonly readOnly = computed(() => !!this.conversation()?.archivedAt);
-	protected readonly memberIds = computed(() => memberEmployeeIds(this.conversation()));
+	/** The conversation's members; before a team's channel exists, the team's members it will be created with. */
+	protected readonly memberIds = computed<ChatMemberIds | null>(() => {
+		const conversation = this.conversation();
+		if (conversation) return memberEmployeeIds(conversation);
+		const team = this.newChannelFor();
+		return team ? { ids: new Set(team.memberEmployeeIds), complete: true } : null;
+	});
 	/** The conversation's own draft key: what is typed here is the draft the chat finds, and back. */
 	protected readonly draftKey = computed(() => {
 		const conversation = this.conversation();
@@ -534,7 +548,7 @@ export class ChatDockComponent {
 		});
 		// Once the conversation is found the composer can be written in: it gets the keyboard.
 		effect(() => {
-			if (!this.conversation()) return;
+			if (!this.conversation() && !this.newChannelFor()) return;
 			setTimeout(() => this.composer()?.focus());
 		});
 		// A new newest message is brought in sight; a refresh that changes nothing leaves the reader where they are.
@@ -575,13 +589,14 @@ export class ChatDockComponent {
 	}
 
 	/**
-	 * Finds (or creates) our direct conversation, or the team's channel, and reads its latest messages, then keeps
-	 * reading the newer ones.
+	 * Finds (or creates) our direct conversation, or finds the team's channel, and reads its latest messages, then keeps
+	 * reading the newer ones. A team without its channel yet gets one with the first message sent (`newChannelFor`).
 	 */
 	private load(target: DockTarget | null): void {
 		this.request?.unsubscribe();
 		this.polling?.unsubscribe();
 		this.conversation.set(null);
+		this.newChannelFor.set(null);
 		this.messages.set([]);
 		this.editing.set(null);
 		this.failed.set(false);
@@ -593,52 +608,85 @@ export class ChatDockComponent {
 			target.kind === 'person' ? this.api.direct([target.employeeId]).pipe(map(({ conversation }) => conversation)) : this.teamChannel(target.team);
 		this.request = conversation$.subscribe({
 			next: (conversation) => {
-				this.conversation.set(conversation);
-				this.request = this.readNewest(String(conversation.id)).subscribe({
-					next: (page) => {
-						this.accept(page.messages, page.read);
-						this.poll(conversation);
-					},
-					// The card says so, and the poll keeps trying: the first page it reads takes the note away.
-					error: () => {
-						this.failed.set(true);
-						this.poll(conversation);
-					}
-				});
+				if (conversation) this.start(conversation);
+				else if (target.kind === 'team') this.newChannelFor.set(target.team);
 			},
 			error: () => this.failed.set(true)
 		});
 	}
 
+	/** Shows this conversation: reads its latest messages, then keeps reading the newer ones. */
+	private start(conversation: IChatConversationWithState): void {
+		this.conversation.set(conversation);
+		this.request = this.readNewest(String(conversation.id)).subscribe({
+			next: (page) => {
+				this.accept(page.messages, page.read);
+				this.poll(conversation);
+			},
+			// The card says so, and the poll keeps trying: the first page it reads takes the note away.
+			error: () => {
+				this.failed.set(true);
+				this.poll(conversation);
+			}
+		});
+	}
+
 	/**
 	 * The team's channel: the one of my conversations named as the team; else a public one of that name, which I join;
-	 * else a new one of the team's name with its members — public for a public team, private for a private one.
+	 * else null — none is created on opening, only with the first message sent (`createAndSend`).
 	 */
-	private teamChannel(team: ChatTeamDetails): Observable<IChatConversationWithState> {
+	private teamChannel(team: ChatTeamDetails): Observable<IChatConversationWithState | null> {
 		return this.api.listMine().pipe(
 			switchMap(({ conversations }) => {
 				const mine = teamChannelOf(conversations ?? [], team.name);
 				if (mine) return of(mine);
 				return this.api.browse().pipe(
-					// Without the public channels to look through, the channel is created.
+					// Without the public channels to look through, the first message creates the channel.
 					catchError(() => of([] as IChatConversationWithState[])),
 					switchMap((open) => {
 						const found = teamChannelOf((open ?? []).filter((conversation) => !conversation.archivedAt), team.name);
-						if (found) return this.api.join(found.id).pipe(map(({ conversation }) => conversation));
-						const me = this.me()?.employeeId || null;
-						return this.api
-							.createChannel({
-								name: team.name,
-								visibility: team.public ? ChatVisibilityEnum.PUBLIC : ChatVisibilityEnum.PRIVATE,
-								memberEmployeeIds: team.memberEmployeeIds.filter((employeeId) => employeeId !== me)
-							})
-							.pipe(map(({ conversation }) => conversation));
-					}),
-					// Joined or created: the chat's lists and badge learn of it.
-					tap(() => this.api.notifyChanged())
+						if (!found) return of(null);
+						return this.api.join(found.id).pipe(
+							map(({ conversation }) => conversation),
+							// Joined: the chat's lists and badge learn of it.
+							tap(() => this.api.notifyChanged())
+						);
+					})
 				);
 			})
 		);
+	}
+
+	/**
+	 * The first message to a team without its channel: creates the channel, named as the team, with its members —
+	 * public for a public team, private for a private one — so it is listed in the chat, then sends the message to it.
+	 */
+	private createAndSend(team: ChatTeamDetails, submission: ComposerSubmission): void {
+		this.sending.set(true);
+		const me = this.me()?.employeeId || null;
+		this.api
+			.createChannel({
+				name: team.name,
+				visibility: team.public ? ChatVisibilityEnum.PUBLIC : ChatVisibilityEnum.PRIVATE,
+				memberEmployeeIds: team.memberEmployeeIds.filter((employeeId) => employeeId !== me)
+			})
+			.pipe(takeUntilDestroyed(this.destroyRef))
+			.subscribe({
+				next: ({ conversation }) => {
+					this.sending.set(false);
+					// Created: the chat's lists and badge learn of it.
+					this.api.notifyChanged();
+					// Only while the card still waits for this team's channel: else the message is not sent anywhere else.
+					if (this.newChannelFor() !== team) return;
+					this.newChannelFor.set(null);
+					this.start(conversation);
+					this.send(submission);
+				},
+				error: (error) => {
+					this.sending.set(false);
+					this.fail(error, 'CHAT.COMPOSER.SEND_FAILED');
+				}
+			});
 	}
 
 	/**
@@ -886,8 +934,14 @@ export class ChatDockComponent {
 	}
 
 	protected send(submission: ComposerSubmission): void {
+		if (this.sending()) return;
 		const conversation = this.conversation();
-		if (!conversation || this.sending()) return;
+		if (!conversation) {
+			// A team without its channel yet: the first message creates it.
+			const team = this.newChannelFor();
+			if (team && !this.editing()) this.createAndSend(team, submission);
+			return;
+		}
 		const editing = this.editing();
 		if (editing) {
 			this.saveEdit(String(conversation.id), editing, submission);
