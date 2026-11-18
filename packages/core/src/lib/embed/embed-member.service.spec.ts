@@ -37,6 +37,9 @@ describe('newMemberOf: the person an exchange body names, to add', () => {
 			'noor@',
 			'@fabrikam.example',
 			'noor haddad@x.example',
+			'"noor haddad"@fabrikam.example',
+			'"noor\u0001"@fabrikam.example',
+			'"<b>noor</b>"@fabrikam.example',
 			tooLong
 		]) {
 			expect(newMemberOf({ email, firstName: 'Noor' })).toBeNull();

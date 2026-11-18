@@ -24,6 +24,13 @@ export const EMBED_MEMBER_NAME_MAX_LENGTH = 100;
 /** The longest address a member is added for. */
 const EMAIL_MAX_LENGTH = 254;
 
+/**
+ * What an address a member is added for never holds: a control character, a space or a double quote. `isEmail` takes
+ * them in a quoted local part (`"<b>noor</b>"@example.com`), which would become the account's address and, without a
+ * first name, its name.
+ */
+const NOT_IN_ADDRESS = /[\p{Cc}\s"]/u;
+
 /** The tenant and organization of the credential that adds a member. */
 export interface IEmbedMemberScope {
 	tenantId: ID;
@@ -57,9 +64,9 @@ function nameOf(value: unknown): string | undefined {
 }
 
 /**
- * The person an exchange body names, to add as a member: null without a valid address. A name loses its control
- * characters, then is trimmed and cut at {@link EMBED_MEMBER_NAME_MAX_LENGTH} characters; a blank one, or one that is
- * not a string, is none.
+ * The person an exchange body names, to add as a member: null without a valid address, or with one that holds a
+ * control character, a space or a double quote. A name loses its control characters, then is trimmed and cut at
+ * {@link EMBED_MEMBER_NAME_MAX_LENGTH} characters; a blank one, or one that is not a string, is none.
  */
 export function newMemberOf(body: {
 	email?: unknown;
@@ -71,7 +78,7 @@ export function newMemberOf(body: {
 	}
 	const email = body.email.trim();
 	const isShortEnough = email.length <= EMAIL_MAX_LENGTH;
-	if (!isShortEnough || !isEmail(email)) {
+	if (!isShortEnough || NOT_IN_ADDRESS.test(email) || !isEmail(email)) {
 		return null;
 	}
 	return { email, firstName: nameOf(body.firstName), lastName: nameOf(body.lastName) };
