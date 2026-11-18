@@ -107,6 +107,15 @@ function nameOf(error: unknown): string {
 	return typeof error;
 }
 
+/** ` code=<code>` of what was thrown, when it carries a driver's code (`ECONNREFUSED`, `57P01`): it quotes no value. */
+function codeOf(error: unknown): string {
+	const code = (error as { code?: unknown } | null)?.code;
+	if (typeof code !== 'string') {
+		return '';
+	}
+	return ` code=${code}`;
+}
+
 /** ` id=<id>` of the credential a log line is about; nothing before the credential is found. */
 function idOf(row: EmbedCredential | undefined): string {
 	if (!row) {
@@ -354,7 +363,8 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 			return error;
 		}
 		if (isDatabaseUnavailableError(error)) {
-			this.logger.error(`Embed ${route} could not reach the database: ${messageOf(error)}`);
+			// The error's name and code only: a query builder writes the values it binds, an address too, in messages.
+			this.logger.error(`Embed ${route} could not reach the database: ${nameOf(error)}${codeOf(error)}`);
 			return new ServiceUnavailableException(DATABASE_UNAVAILABLE_MESSAGE, { cause: error });
 		}
 		if (error instanceof OriginRefused) {
