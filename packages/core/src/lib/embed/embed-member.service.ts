@@ -142,6 +142,24 @@ function turnNameOf(tenantId: ID, email: string): string {
 }
 
 /**
+ * The turn, in this process, of the connection that holds a database lock: one addition at a time holds one, so that
+ * additions never hold every connection of the pool while their work waits for another. No address turn is named so.
+ */
+const DATABASE_LOCK_TURN = 'gauzy:embed-member:database-lock';
+
+/**
+ * Whether the pool can spare a connection for a lock while the work runs on another: not a pool of one connection
+ * (`DB_POOL_SIZE=1`), whose work would wait for the connection the lock holds. The size the driver is given wins over
+ * TypeORM's `poolSize`, as TypeORM passes it on.
+ */
+function canSpareLockConnection(dataSource: DataSource): boolean {
+	const options = dataSource.options as { poolSize?: unknown; extra?: { max?: unknown; connectionLimit?: unknown } };
+	const sizes = [options.extra?.max, options.extra?.connectionLimit, options.poolSize];
+	const size = sizes.find((value) => typeof value === 'number');
+	return size !== 1;
+}
+
+/**
  * Adds the people embed exchanges name as employees of a credential's organization, for a credential that may add
  * members (`canAddMembers`): the tenant's account of the address when it has one, else a new account with the employee
  * role and no password, through the platform's own creation commands. Nothing is sent to the person: the portal that
@@ -308,40 +326,55 @@ export class EmbedMemberService {
 	 *   {@link MYSQL_TURN_WAIT_SECONDS} gets a 503;
 	 * - SQLite: the process's own order (it runs a single API process).
 	 *
+	 * The work runs on other connections of the pool than the one that holds the lock, so a process holds one such
+	 * lock at a time (additions of other addresses wait for it in this process), and none with a pool of a single
+	 * connection, where the work could never get one: there, additions take turns in this process only.
+	 *
 	 * @param tenantId The credential's tenant.
 	 * @param email The address, as the exchange names it.
 	 * @param work What runs alone.
 	 */
 	async inTurn<T>(tenantId: ID, email: string, work: () => Promise<T>): Promise<T> {
 		const name = turnNameOf(tenantId, email);
-		const previous = this.turns.get(name) ?? Promise.resolve();
+		return await this.takeTurn(name, () => this.underDatabaseLock(name, work));
+	}
+
+	/** Runs `work` once the turns of the key asked for before it in this process have ended. */
+	private async takeTurn<T>(key: string, work: () => Promise<T>): Promise<T> {
+		const previous = this.turns.get(key) ?? Promise.resolve();
 		let end: () => void = () => undefined;
 		const ended = new Promise<void>((resolve) => {
 			end = resolve;
 		});
 		const last = previous.then(() => ended);
-		this.turns.set(name, last);
+		this.turns.set(key, last);
 		try {
 			await previous;
-			return await this.underDatabaseLock(name, work);
+			return await work();
 		} finally {
 			end();
-			if (this.turns.get(name) === last) {
-				this.turns.delete(name);
+			if (this.turns.get(key) === last) {
+				this.turns.delete(key);
 			}
 		}
 	}
 
-	/** `work` under the database's lock of the name, where the database has one. */
+	/**
+	 * `work` under the database's lock of the name, where the database has one and the pool can spare the connection
+	 * that holds it; one such connection at a time in this process ({@link DATABASE_LOCK_TURN}).
+	 */
 	private async underDatabaseLock<T>(name: string, work: () => Promise<T>): Promise<T> {
 		const type = this.dataSource.options.type;
-		if (type === 'postgres') {
-			return await this.underPostgresLock(name, work);
+		const hasLock = type === 'postgres' || type === 'mysql';
+		if (!hasLock || !canSpareLockConnection(this.dataSource)) {
+			return await work();
 		}
-		if (type === 'mysql') {
+		return await this.takeTurn(DATABASE_LOCK_TURN, async () => {
+			if (type === 'postgres') {
+				return await this.underPostgresLock(name, work);
+			}
 			return await this.underMysqlLock(name, work);
-		}
-		return await work();
+		});
 	}
 
 	/**

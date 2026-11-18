@@ -70,7 +70,7 @@ function gate() {
 const settle = () => new Promise((resolve) => setImmediate(resolve));
 
 /** A data source of the type given whose query runners record what they are asked, in one list with the work. */
-function dataSourceOf(type: string, options: { acquired?: number } = {}) {
+function dataSourceOf(type: string, options: { acquired?: number; poolSize?: number } = {}) {
 	const steps: string[] = [];
 	const parameters: unknown[][] = [];
 	let isTransactionActive = false;
@@ -106,7 +106,10 @@ function dataSourceOf(type: string, options: { acquired?: number } = {}) {
 			steps.push('release');
 		})
 	};
-	const dataSource = { options: { type }, createQueryRunner: jest.fn(() => runner) } as unknown as DataSource;
+	const dataSource = {
+		options: { type, poolSize: options.poolSize },
+		createQueryRunner: jest.fn(() => runner)
+	} as unknown as DataSource;
 	return { dataSource, runner, steps, parameters };
 }
 
@@ -254,6 +257,45 @@ describe('EmbedMemberService: the database lock of an addition', () => {
 		expect(seconds).toBe(10);
 		expect(parameters[1]).toEqual([name]);
 	});
+
+	it.each(['postgres', 'mysql'])(
+		'holds one database lock at a time in a process on %s: another address waits, so the pool keeps a connection for the work',
+		async (type) => {
+			const { dataSource } = dataSourceOf(type);
+			const service = serviceOn(dataSource);
+			const held = gate();
+			const started: string[] = [];
+
+			const holding = service.inTurn(TENANT, ADDRESS, async () => {
+				started.push('first');
+				await held.opened;
+			});
+			const otherAddress = service.inTurn(TENANT, 'lina@northwind.example', async () => {
+				started.push('other address');
+			});
+			await settle();
+
+			expect(started).toEqual(['first']);
+			expect(dataSource.createQueryRunner).toHaveBeenCalledTimes(1);
+
+			held.open();
+			await Promise.all([holding, otherAddress]);
+			expect(started).toEqual(['first', 'other address']);
+			expect(dataSource.createQueryRunner).toHaveBeenCalledTimes(2);
+		}
+	);
+
+	it.each(['postgres', 'mysql'])(
+		'takes no database lock on %s with a pool of one connection, which the work needs',
+		async (type) => {
+			const { dataSource } = dataSourceOf(type, { poolSize: 1 });
+			const service = serviceOn(dataSource);
+
+			await expect(service.inTurn(TENANT, ADDRESS, async () => 'added')).resolves.toBe('added');
+
+			expect(dataSource.createQueryRunner).not.toHaveBeenCalled();
+		}
+	);
 
 	it('answers 503 without running the work when MySQL does not give the lock in time', async () => {
 		const { dataSource, steps } = dataSourceOf('mysql', { acquired: 0 });
