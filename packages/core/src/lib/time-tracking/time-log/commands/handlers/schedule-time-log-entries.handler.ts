@@ -233,8 +233,8 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 		await this.typeOrmTimeLogRepository.manager.transaction(async (manager) => {
 			const repository = manager.getRepository(TimeLog);
 			const before = await repository.findOne({ where, ...lockedForChange() });
-			const closed = await this.stopTimeLog(before ?? timeLog, stoppedAt, repository);
-			const stopped = before ? { ...before, ...closed } : null;
+			const written = await this.stopTimeLog(before ?? timeLog, stoppedAt, repository);
+			const stopped = before ? { ...before, ...written } : null;
 			await this.facts.recordWithin(manager, factOfUpdatedLog(Boolean(before?.isRunning)), stopped);
 		});
 	}
@@ -408,25 +408,20 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 	 * @param log - The time log entry to stop
 	 * @param stoppedAt - The end worked out for the entry, if any; written only when the log has no `stoppedAt`.
 	 * @param repository - The TypeORM repository to save through: a transaction's, when the stop writes its fact in it.
+	 * @returns The columns the stop wrote. Not the save's answer: TypeORM sets every nullable column a save was not
+	 * given to null on the object it saves, and laid over the row for its fact, that would erase its times and ids.
 	 */
 	private async stopTimeLog(
 		log: ITimeLog,
 		stoppedAt?: Date,
 		repository: Repository<TimeLog> = this.typeOrmTimeLogRepository
-	): Promise<ITimeLog> {
-		if (!log.stoppedAt) {
-			return await this.saveTimeLog(
-				{
-					id: log.id,
-					isRunning: false,
-					stoppedAt: stoppedAt ?? moment.utc(log.startedAt).toDate()
-				},
-				repository
-			);
-		}
-
-		// Update the isRunning field to false in the database for the given time log
-		return await this.saveTimeLog({ id: log.id, isRunning: false }, repository);
+	): Promise<Partial<ITimeLog>> {
+		const stop: Partial<ITimeLog> & { id: ID } = log.stoppedAt
+			? // Update the isRunning field to false in the database for the given time log
+			  { id: log.id, isRunning: false }
+			: { id: log.id, isRunning: false, stoppedAt: stoppedAt ?? moment.utc(log.startedAt).toDate() };
+		await this.saveTimeLog({ ...stop }, repository);
+		return stop;
 	}
 
 	/**

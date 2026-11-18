@@ -298,11 +298,17 @@ describe('ScheduleTimeLogEntriesHandler: the fact of a run it closes', () => {
 			const row = table.find((candidate) => candidate.id === where.id);
 			return row ? { ...row } : null;
 		};
-		/** A save of a partial entity, which answers what it was given, as TypeORM's does. */
+		/**
+		 * A save of a partial entity. As TypeORM's does, it sets every nullable column it was not given to null on the
+		 * object it saves, and answers that object: laid over the row, it would erase the row's end.
+		 */
 		const saveOf = () =>
 			jest.fn(async (partial: Partial<TimeLogRow> & { id: string }) => {
 				write(table, partial);
-				return { ...partial };
+				if (partial.stoppedAt === undefined) {
+					partial.stoppedAt = null;
+				}
+				return partial;
 			});
 		const repository = Object.assign(typeOrmRepository(table), { save: saveOf(), findOneBy: jest.fn(stored) });
 		// The transaction's own repository, over the same rows, with spies of its own
@@ -377,7 +383,9 @@ describe('ScheduleTimeLogEntriesHandler: the fact of a run it closes', () => {
 
 		expect(table[0]).toMatchObject({ id: 'log-1', isRunning: false, stoppedAt: WORKED_OUT_END });
 		// The stop goes through the transaction's repository, the end worked out before it through the handler's own
-		expect(transactionRepository.save).toHaveBeenCalledWith({ id: 'log-1', isRunning: false });
+		expect(transactionRepository.save).toHaveBeenCalledWith(
+			expect.objectContaining({ id: 'log-1', isRunning: false })
+		);
 		expect(repository.save).toHaveBeenCalledWith({ id: 'log-1', stoppedAt: WORKED_OUT_END });
 		expect(repository.save).not.toHaveBeenCalledWith(expect.objectContaining({ isRunning: false }));
 		expect(recorded).toEqual([{ name: 'time_log.stopped', within: true, entry: stoppedRun() }]);
@@ -423,7 +431,12 @@ describe('ScheduleTimeLogEntriesHandler: the fact of a run it closes', () => {
 		await handler.execute(command());
 
 		// Decided from the locked row, the stop writes no end over the other stop's
-		expect(transactionRepository.save).toHaveBeenCalledWith({ id: 'log-1', isRunning: false });
+		expect(transactionRepository.save).toHaveBeenCalledWith(
+			expect.objectContaining({ id: 'log-1', isRunning: false })
+		);
+		expect(transactionRepository.save).not.toHaveBeenCalledWith(
+			expect.objectContaining({ stoppedAt: expect.any(Date) })
+		);
 		expect(table[0].stoppedAt).toEqual(otherStopsEnd);
 		expect(recorded).toEqual([{ name: 'time_log.updated', within: true, entry: stoppedRun(otherStopsEnd) }]);
 	});
