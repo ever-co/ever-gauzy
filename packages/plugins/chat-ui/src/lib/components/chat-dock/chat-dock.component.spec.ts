@@ -117,6 +117,32 @@ describe('ChatDockComponent', () => {
 			expect(placeholder()).not.toBeNull();
 		});
 
+		it('lists the members on a click on the members row, and hides them again on a second click or Escape', () => {
+			api['listMine'].mockReturnValue(of({ conversations: [channel('c-web', 'Web Team')], categories: [] }));
+			const card = fixture.componentInstance as unknown as Record<string, unknown>;
+			openTeam();
+			const row = () => element().querySelector('[data-test="chat-dock-members"]') as HTMLButtonElement;
+			const list = () => element().querySelector('[data-test="chat-dock-member-list"]');
+			expect(list()).toBeNull();
+			expect(row().getAttribute('aria-expanded')).toBe('false');
+
+			row().click();
+			fixture.detectChanges();
+			expect(row().getAttribute('aria-expanded')).toBe('true');
+			expect(list()).not.toBeNull();
+
+			row().click();
+			fixture.detectChanges();
+			expect(list()).toBeNull();
+
+			row().click();
+			fixture.detectChanges();
+			(card['onEscape'] as (event: Event) => void)(new KeyboardEvent('keydown', { key: 'Escape' }));
+			fixture.detectChanges();
+			expect(list()).toBeNull();
+			expect(dock.close).not.toHaveBeenCalled();
+		});
+
 		it('joins a public channel of the team name I am not in', () => {
 			api['browse'].mockReturnValue(of([channel('c-pub', 'Web Team')]));
 			openTeam();
