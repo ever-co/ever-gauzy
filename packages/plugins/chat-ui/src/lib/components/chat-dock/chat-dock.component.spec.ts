@@ -59,7 +59,7 @@ describe('ChatDockComponent', () => {
 			listMine: jest.fn(() => of({ conversations: [], categories: [] })),
 			browse: jest.fn(() => of([])),
 			join: jest.fn((id: string) => of({ conversation: { id }, events: [] })),
-			createChannel: jest.fn(() => of({ conversation: { id: 'c-new' }, events: [] })),
+			createChannel: jest.fn((input: { visibility: string }) => of({ conversation: { id: 'c-new', visibility: input.visibility }, events: [] })),
 			addMembers: jest.fn(() => of({ members: [], events: [] })),
 			setArchived: jest.fn((id: string) => of({ conversation: { id }, events: [] }))
 		};
@@ -381,6 +381,41 @@ describe('ChatDockComponent', () => {
 			expect(api['setArchived']).toHaveBeenLastCalledWith('c-new', true);
 			expect(api['messages']).toHaveBeenLastCalledWith('c-mate', { limit: CHAT_DOCK_PAGE_SIZE });
 			expect(dock.teamSetups.size).toBe(0);
+		});
+
+		it("never reuses an unfinished set-up's channel once the team's visibility changed: a private team looks for a private one", () => {
+			api['send'].mockReturnValue(of({ message: message('m1', 'Hello') }));
+			api['setArchived'].mockReturnValueOnce(throwError(() => ({ status: 500 })));
+			const publicTeam = { ...TEAM, public: true };
+			openTeam(publicTeam);
+			// A public team settles on a teammate's older public channel; the archive of ours fails and stays to do.
+			api['listMine']
+				.mockReturnValueOnce(of({ conversations: [], categories: [] }))
+				.mockReturnValueOnce(
+					of({
+						conversations: [
+							channel('c-new', 'Web Team', null, '2026-11-18T10:00:01Z', 'public'),
+							channel('c-pub', 'Web Team', null, '2026-11-18T10:00:00Z', 'public')
+						],
+						categories: []
+					})
+				);
+			submit('Hello');
+			expect(api['send']).toHaveBeenCalledWith('c-pub', expect.objectContaining({ body: 'Hello' }));
+			expect(dock.teamSetups.size).toBe(1);
+
+			// The team is made private, then opened again: the public channel is not reused.
+			api['listMine'].mockReturnValue(of({ conversations: [channel('c-pub', 'Web Team', null, null, 'public')], categories: [] }));
+			api['messages'].mockClear();
+			dock.team.set(null);
+			dock.person.set(ANNA);
+			fixture.detectChanges();
+			openTeam({ ...TEAM, public: false });
+
+			expect(dock.teamSetups.size).toBe(0);
+			expect(api['setArchived']).toHaveBeenLastCalledWith('c-new', true);
+			expect(api['messages']).not.toHaveBeenCalledWith('c-pub', expect.anything());
+			expect(element().querySelector('[data-test="chat-dock-new-channel"]')).not.toBeNull();
 		});
 
 		it('sends nothing when the channel cannot be created, and says so', () => {
