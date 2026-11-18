@@ -1,4 +1,17 @@
-import { Body, Controller, Delete, Get, Header, HttpCode, HttpStatus, Param, Post, Query, UseGuards } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Delete,
+	Get,
+	Header,
+	HttpCode,
+	HttpStatus,
+	Param,
+	Post,
+	Query,
+	Req,
+	UseGuards
+} from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Public } from '@gauzy/common';
@@ -14,7 +27,7 @@ import {
 	ExchangeEmbedCredentialDTO
 } from './dto/embed-credential.dto';
 import { EmbedCredentialService } from './embed-credential.service';
-import { EMBED_EXCHANGE_THROTTLE } from './embed-exchange-throttle';
+import { EMBED_EXCHANGE_THROTTLE, embedExchangeAddress } from './embed-exchange-throttle';
 import { EmbedEnabledGuard } from './embed.guards';
 import { isEmbedEnabled } from './embed.utils';
 
@@ -64,7 +77,8 @@ export class EmbedCredentialController {
  * Exchanges an embed credential for a token limited to one member and to the timer. Public, because the credential
  * is the proof; no validation pipe, so a malformed body gets the same 401 as a revoked credential. The limit is per
  * credential (`embed-exchange-throttle.ts`), since a host's backend exchanges one credential for all its members from
- * one address; a body without a well-formed credential is limited per client address, like the sign-in routes'.
+ * one address; a body without a well-formed credential is limited per client address, like the sign-in routes'. The
+ * service also caps, per address, the credentials it refuses, before any lookup (`embed-exchange-failures.ts`).
  */
 @ApiTags('Embed')
 @Controller('/embed')
@@ -76,6 +90,10 @@ export class EmbedTokenController {
 	@ApiResponse({ status: HttpStatus.OK, type: EmbedTokenExchangeResponseDTO })
 	@ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'The credential does not earn a token' })
 	@ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'The member cannot track time through an embed' })
+	@ApiResponse({
+		status: HttpStatus.TOO_MANY_REQUESTS,
+		description: 'Too many exchanges, or too many refused credentials from this address'
+	})
 	@Public()
 	@UseGuards(EmbedEnabledGuard)
 	@Throttle(EMBED_EXCHANGE_THROTTLE)
@@ -83,7 +101,11 @@ export class EmbedTokenController {
 	@HttpCode(HttpStatus.OK)
 	@Header('Cache-Control', 'no-store')
 	@Header('Pragma', 'no-cache')
-	async exchange(@Body() input: ExchangeEmbedCredentialDTO): Promise<EmbedTokenExchangeResponseDTO> {
-		return await this.embedCredentialService.exchange(input);
+	async exchange(
+		@Body() input: ExchangeEmbedCredentialDTO,
+		@Req() request: Record<string, any>
+	): Promise<EmbedTokenExchangeResponseDTO> {
+		const address = embedExchangeAddress(request);
+		return await this.embedCredentialService.exchange(input, address);
 	}
 }

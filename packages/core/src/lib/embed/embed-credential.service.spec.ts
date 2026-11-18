@@ -5,7 +5,7 @@ import { ForbiddenException, NotFoundException, ServiceUnavailableException, Una
 import { RequestContext } from '../core/context';
 import { EmbedCredentialResponseDTO, EmbedCredentialWithSecretResponseDTO } from './dto/embed-credential.dto';
 import { EmbedCredentialService } from './embed-credential.service';
-import { hashEmbedCredential } from './embed.utils';
+import { generateEmbedCredential, hashEmbedCredential } from './embed.utils';
 
 const TENANT = '7a000000-0000-4000-8000-00000000000a';
 const OTHER_TENANT = '7a000000-0000-4000-8000-00000000000b';
@@ -229,5 +229,66 @@ describe('EmbedCredentialService', () => {
 
 		expect(await service.isRevoked(id)).toBe(true);
 		expect(await service.listForOrganization(ORG)).toHaveLength(0);
+	});
+});
+
+describe('EmbedCredentialService: credentials refused per address', () => {
+	const HOST = '203.0.113.7';
+	const OTHER_ADDRESS = '198.51.100.9';
+	const NOW = 1_800_000_000_000;
+	const LIMITED = { response: { statusCode: 429, code: 'EMBED_EXCHANGE_LIMITED' } };
+
+	const unknownCredential = () => ({ credential: generateEmbedCredential().secret, employeeId: EMPLOYEE });
+
+	/** Sends `times` made-up credentials from `address`: each is looked up and refused. */
+	async function refuse(service: EmbedCredentialService, address: string, times: number): Promise<void> {
+		for (let sent = 0; sent < times; sent++) {
+			await expect(service.exchange(unknownCredential(), address)).rejects.toThrow(UnauthorizedException);
+		}
+	}
+
+	/** The credential lookups the service made. */
+	const lookupsOf = (service: EmbedCredentialService): jest.Mock =>
+		(service as any).typeOrmEmbedCredentialRepository.findOne;
+
+	it('answers 429 without a lookup once an address had 60 credentials refused, and no other address', async () => {
+		const { service } = build();
+		signIn(TENANT);
+		await refuse(service, HOST, 60);
+		lookupsOf(service).mockClear();
+
+		await expect(service.exchange(unknownCredential(), HOST)).rejects.toMatchObject(LIMITED);
+		expect(lookupsOf(service)).not.toHaveBeenCalled();
+
+		await refuse(service, OTHER_ADDRESS, 1);
+		expect(lookupsOf(service)).toHaveBeenCalledTimes(1);
+	});
+
+	it('counts the address afresh once the window has passed', async () => {
+		const { service } = build();
+		signIn(TENANT);
+		const clock = jest.spyOn(Date, 'now').mockReturnValue(NOW);
+		await refuse(service, HOST, 60);
+		await expect(service.exchange(unknownCredential(), HOST)).rejects.toMatchObject(LIMITED);
+
+		clock.mockReturnValue(NOW + 60_000);
+		await refuse(service, HOST, 60);
+
+		await expect(service.exchange(unknownCredential(), HOST)).rejects.toMatchObject(LIMITED);
+	});
+
+	it('keeps exchanging a credential it accepted from an address that reached the cap', async () => {
+		const { service } = build();
+		signIn(TENANT);
+		const { secret } = await service.createForOrganization({ name: 'Northwind product', organizationId: ORG });
+		await expect(service.exchange({ credential: secret, employeeId: EMPLOYEE }, HOST)).resolves.toMatchObject({
+			token: 'an-embed-token'
+		});
+		await refuse(service, HOST, 60);
+
+		await expect(service.exchange({ credential: secret, employeeId: EMPLOYEE }, HOST)).resolves.toMatchObject({
+			token: 'an-embed-token'
+		});
+		await expect(service.exchange(unknownCredential(), HOST)).rejects.toMatchObject(LIMITED);
 	});
 });

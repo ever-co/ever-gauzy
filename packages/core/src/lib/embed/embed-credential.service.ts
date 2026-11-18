@@ -1,5 +1,7 @@
 import {
 	ForbiddenException,
+	HttpException,
+	HttpStatus,
 	Injectable,
 	Logger,
 	NotFoundException,
@@ -19,6 +21,7 @@ import { MikroOrmEmployeeRepository } from '../employee/repository/mikro-orm-emp
 import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
 import { MikroOrmUserRepository } from '../user/repository/mikro-orm-user.repository';
 import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
+import { UNRESOLVED_THROTTLER_TRACKER } from '../throttler/tracker';
 import { MikroOrmUserOrganizationRepository } from '../user-organization/repository/mikro-orm-user-organization.repository';
 import { TypeOrmUserOrganizationRepository } from '../user-organization/repository/type-orm-user-organization.repository';
 import {
@@ -29,6 +32,7 @@ import {
 	ExchangeEmbedCredentialDTO
 } from './dto/embed-credential.dto';
 import { EmbedCredential } from './embed-credential.entity';
+import { EMBED_EXCHANGE_FAILURES_PER_ADDRESS, EmbedExchangeFailures } from './embed-exchange-failures';
 import {
 	embedCredentialHashesMatch,
 	embedTokenTtlSeconds,
@@ -44,6 +48,9 @@ class CredentialRefused extends Error {}
 
 /** A valid credential asked for a member it cannot act for, already logged with its reason. */
 class MemberRefused extends Error {}
+
+/** An address that had too many credentials refused, answered before any lookup (`EmbedExchangeFailures`). */
+class AddressLimited extends Error {}
 
 /** How long a credential's revocation may stay unseen by a running server: its tokens stop within that time. */
 export const EMBED_REVOCATION_CACHE_MS = 30_000;
@@ -62,6 +69,7 @@ const REVOCATION_CACHE_MAX_ENTRIES = 10_000;
 export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredential> {
 	private readonly logger = new Logger(EmbedCredentialService.name);
 	private readonly revoked = new Map<ID, { revoked: boolean; readAt: number }>();
+	private readonly exchangeFailures = new EmbedExchangeFailures();
 
 	constructor(
 		readonly typeOrmEmbedCredentialRepository: TypeOrmEmbedCredentialRepository,
@@ -160,11 +168,18 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 	 *
 	 * A credential that does not earn a token gets one 401, whatever the reason (malformed, unknown, revoked). A good
 	 * credential that names a member it cannot act for gets a 403 with a code: only a host's backend holds a
-	 * credential, and it needs to know why. A database that cannot be reached answers 503.
+	 * credential, and it needs to know why. A database that cannot be reached answers 503. An address that had too many
+	 * credentials refused within a minute gets a 429 with a code, before any lookup (`EmbedExchangeFailures`).
+	 *
+	 * @param input The credential and the member.
+	 * @param address The client address, as the rate limiter resolves it; without one, the shared unresolved bucket.
 	 */
-	async exchange(input: ExchangeEmbedCredentialDTO): Promise<EmbedTokenExchangeResponseDTO> {
+	async exchange(
+		input: ExchangeEmbedCredentialDTO,
+		address: string = UNRESOLVED_THROTTLER_TRACKER
+	): Promise<EmbedTokenExchangeResponseDTO> {
 		try {
-			return await this.judgeAndMint(input ?? ({} as ExchangeEmbedCredentialDTO));
+			return await this.judgeAndMint(input ?? ({} as ExchangeEmbedCredentialDTO), address);
 		} catch (error) {
 			// Already a 503 (the mint could not reach the database): never answered as a refused credential.
 			if (error instanceof ServiceUnavailableException) {
@@ -181,6 +196,16 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 					message: 'This member cannot track time through an embed.'
 				});
 			}
+			if (error instanceof AddressLimited) {
+				throw new HttpException(
+					{
+						statusCode: HttpStatus.TOO_MANY_REQUESTS,
+						code: 'EMBED_EXCHANGE_LIMITED',
+						message: 'Too many refused credentials from this address. Try again in a minute.'
+					},
+					HttpStatus.TOO_MANY_REQUESTS
+				);
+			}
 			if (!(error instanceof CredentialRefused)) {
 				this.logger.warn(`Embed exchange refused: ${error?.message}`);
 			}
@@ -188,9 +213,10 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 		}
 	}
 
-	private async judgeAndMint({ credential, employeeId, email }: ExchangeEmbedCredentialDTO) {
+	private async judgeAndMint({ credential, employeeId, email }: ExchangeEmbedCredentialDTO, address: string) {
 		const refuseCredential = (reason: string, row?: EmbedCredential): never => {
 			this.logger.warn(`Embed exchange refused: ${reason}${row ? ` id=${row.id}` : ''}`);
+			this.countRefusal(address);
 			throw new CredentialRefused(reason);
 		};
 		const refuseMember = (reason: string, row: EmbedCredential): never => {
@@ -202,6 +228,9 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 			refuseCredential('malformed credential');
 		}
 		const presented = hashEmbedCredential(credential);
+		if (!this.exchangeFailures.allows(address, presented)) {
+			throw new AddressLimited();
+		}
 		const row = await this.findByHash(presented);
 		if (!row || !embedCredentialHashesMatch(row.keyHash, presented)) {
 			refuseCredential('unknown credential');
@@ -212,6 +241,7 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 		if (!row.tenantId || !row.organizationId) {
 			refuseCredential('no organization', row);
 		}
+		this.exchangeFailures.recordAccepted(presented);
 
 		const employee = await this.findMember(row, { employeeId, email });
 		if (!employee) {
@@ -245,6 +275,16 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 		answer.token = token;
 		answer.expiresAt = expiresAt.toISOString();
 		return answer;
+	}
+
+	/** Counts a refused credential against the address it came from, and says so once the address reaches the cap. */
+	private countRefusal(address: string): void {
+		const reachesCap = this.exchangeFailures.recordFailure(address);
+		if (reachesCap) {
+			this.logger.warn(
+				`Embed exchange: an address had ${EMBED_EXCHANGE_FAILURES_PER_ADDRESS} credentials refused within a minute; until the minute ends, it gets 429 for any credential this server has not accepted recently`
+			);
+		}
 	}
 
 	/** An active, unarchived employee of the credential's organization, by id or by their account's email. */

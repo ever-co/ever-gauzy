@@ -21,6 +21,15 @@ export const EMBED_EXCHANGE_LIMIT_PER_ADDRESS = 60;
  */
 export const EMBED_CREDENTIAL_THROTTLER_TRACKER_PREFIX = 'embed-credential:';
 
+/**
+ * The client address an exchange comes from, resolved as for every anonymous route.
+ *
+ * @param req The request.
+ */
+export function embedExchangeAddress(req: Record<string, any>): string {
+	return resolveThrottlerTracker(req, throttlerTrackerOptions());
+}
+
 /** The credential an exchange presents, when it has the shape of one. */
 function wellFormedCredentialOf(req: Record<string, any> | undefined): string | null {
 	const credential: unknown = req?.body?.credential;
@@ -40,7 +49,7 @@ function wellFormedCredentialOf(req: Record<string, any> | undefined): string | 
 export function embedExchangeTracker(req: Record<string, any>): string {
 	const credential = wellFormedCredentialOf(req);
 	if (credential === null) {
-		return resolveThrottlerTracker(req, throttlerTrackerOptions());
+		return embedExchangeAddress(req);
 	}
 	return `${EMBED_CREDENTIAL_THROTTLER_TRACKER_PREFIX}${hashEmbedCredential(credential)}`;
 }
