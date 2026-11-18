@@ -5,10 +5,11 @@ export const EMBED_ORIGIN_CLAIM = 'embedOrigin';
 export const EMBED_ORIGINS_CACHE_MS = 60_000;
 
 /**
- * A scheme and an authority, with at most one trailing slash. Checked on the value as written, before `URL` reduces
- * it: `URL` turns `/timer/..` into `/` and an empty `?` or `#` into nothing, which would pass for an origin.
+ * A scheme and an authority without userinfo, with at most one trailing slash. Checked on the value as written, before
+ * `URL` reduces it: `URL` turns `/timer/..` into `/`, and an empty `?`, `#` or userinfo (`https://@host`) into
+ * nothing, which would pass for an origin.
  */
-const ORIGIN_SHAPE = /^[a-z][a-z\d+.-]*:\/\/[^/?#\\]+\/?$/i;
+const ORIGIN_SHAPE = /^[a-z][a-z\d+.-]*:\/\/[^/?#\\@]+\/?$/i;
 
 /**
  * An origin as the browser sends it in the `Origin` header: scheme, host and port, lower case, default port dropped

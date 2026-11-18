@@ -83,6 +83,9 @@ describe('normalizeOrigin', () => {
 			'https://app.example.com//',
 			'null',
 			'https://user:secret@app.example.com',
+			// Empty userinfo, which URL drops.
+			'https://@app.example.com',
+			'https://:@app.example.com',
 			'ftp://app.example.com',
 			'javascript:alert(1)',
 			'app.example.com',
