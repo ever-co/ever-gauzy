@@ -51,9 +51,6 @@ export class TimeLogDeleteHandler implements ICommandHandler<TimeLogDeleteComman
 
 		// Step 3: Perform soft delete or hard delete based on the `forceDelete` flag
 		const updateResult = await this.deleteTimeLogsWithHistory(timeLogs, forceDelete, history);
-		for (const timeLog of timeLogs) {
-			await this.facts?.record(TIME_LOG_DELETED, timeLog);
-		}
 
 		// Step 4: Recalculate timesheet and employee worked hours after deletion
 		await this.recalculateTimesheetAndEmployeeHours(timeLogs);
@@ -148,7 +145,9 @@ export class TimeLogDeleteHandler implements ICommandHandler<TimeLogDeleteComman
 
 	/**
 	 * Deletes the time logs. Deleted by a person (`history` given), the entries and the history rows that keep what
-	 * each one held are written in one transaction, or neither is. Otherwise the deletion runs alone, as before.
+	 * each one held are written in one transaction, or neither is. Each entry's fact (for the webhooks) commits with
+	 * the deletion where the outbox can share its transaction, and is written right after it otherwise. Without
+	 * either, the deletion runs alone, as before.
 	 *
 	 * @param timeLogs - The time logs, as they were before the deletion.
 	 * @param forceDelete - Hard delete instead of soft delete.
@@ -160,24 +159,58 @@ export class TimeLogDeleteHandler implements ICommandHandler<TimeLogDeleteComman
 		history: TimeLogHistoryOptions | undefined
 	): Promise<DeleteResult | UpdateResult> {
 		const recordsHistory = Boolean(history) && Boolean(this.dataSource);
-		if (!recordsHistory) {
-			return this.deleteTimeLogs(timeLogs, forceDelete);
+		const appendsFactsWithin = Boolean(this.dataSource) && (this.facts?.appendsWithinWrites() ?? false);
+		const writesInTransaction = recordsHistory || appendsFactsWithin;
+		if (!writesInTransaction) {
+			return this.deleteThenRecordFacts(timeLogs, forceDelete);
 		}
 		return this.dataSource.transaction(async (manager) => {
 			const repository = manager.getRepository(TimeLog);
-			// What each entry holds, read as stored: a log read through MikroORM arrives without its scalar ids
-			// (tenant, employee, project), which the history keeps.
-			const logIds = timeLogs.map((timeLog) => timeLog.id);
-			const stored = await repository.find({ where: { id: In(logIds) } });
+			const stored = await this.readStored(repository, timeLogs);
 			const result = await this.deleteTimeLogs(timeLogs, forceDelete, repository);
-			const records = stored.map((timeLog) => ({
-				subject: historySubject(timeLog),
-				change: deletedChange(timeLog),
-				reason: history.reason
-			}));
-			await recordTimeLogHistory(manager, records);
+			if (recordsHistory) {
+				const records = stored.map((timeLog) => ({
+					subject: historySubject(timeLog),
+					change: deletedChange(timeLog),
+					reason: history.reason
+				}));
+				await recordTimeLogHistory(manager, records);
+			}
+			if (appendsFactsWithin) {
+				for (const timeLog of stored) {
+					await this.facts.recordWithin(manager, TIME_LOG_DELETED, timeLog);
+				}
+			}
 			return result;
 		});
+	}
+
+	/**
+	 * Deletes the time logs alone, and writes each entry's fact right after, where the outbox cannot share the
+	 * deletion's transaction. A handler built without the facts deletes as before.
+	 */
+	private async deleteThenRecordFacts(
+		timeLogs: TimeLog[],
+		forceDelete: boolean
+	): Promise<DeleteResult | UpdateResult> {
+		if (!this.facts) {
+			return this.deleteTimeLogs(timeLogs, forceDelete);
+		}
+		const deletedEntries = await this.readStored(this.typeOrmTimeLogRepository, timeLogs);
+		const result = await this.deleteTimeLogs(timeLogs, forceDelete);
+		for (const timeLog of deletedEntries) {
+			await this.facts.record(TIME_LOG_DELETED, timeLog);
+		}
+		return result;
+	}
+
+	/**
+	 * What each entry holds, read as stored through TypeORM: a log read through MikroORM arrives without its scalar ids
+	 * (tenant, employee, project), which the history and the facts keep.
+	 */
+	private async readStored(repository: Repository<TimeLog>, timeLogs: TimeLog[]): Promise<TimeLog[]> {
+		const logIds = timeLogs.map((timeLog) => timeLog.id);
+		return repository.find({ where: { id: In(logIds) } });
 	}
 
 	/**
