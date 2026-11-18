@@ -99,7 +99,10 @@ export class EmbedAllowedOriginController {
 		return await this.embedAllowedOriginService.addForOrganization(input);
 	}
 
-	@ApiOperation({ summary: 'Remove an allowed origin: new tokens refuse it at once, CORS within a minute' })
+	@ApiOperation({
+		summary:
+			"Remove an allowed origin: the organization's new tokens refuse it at once; CORS stops answering it within a minute, unless another organization or ALLOWED_ORIGINS still allows it"
+	})
 	@Delete('/:id')
 	@HttpCode(HttpStatus.NO_CONTENT)
 	async remove(@Param('id', UUIDValidationPipe) id: ID): Promise<void> {

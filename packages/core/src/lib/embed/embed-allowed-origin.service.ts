@@ -86,7 +86,8 @@ export class EmbedAllowedOriginService extends TenantAwareCrudService<EmbedAllow
 	}
 
 	/**
-	 * Removes an origin of the caller's tenant. CORS stops answering it within {@link EMBED_ORIGINS_CACHE_MS}. Only a
+	 * Removes an origin of the caller's tenant. The organization's next exchange refuses it at once; CORS stops answering
+	 * it within {@link EMBED_ORIGINS_CACHE_MS}, unless another organization or ALLOWED_ORIGINS still allows it. Only a
 	 * miss answers 404: a lookup that failed is thrown as it is, so the caller knows nothing was removed.
 	 */
 	async remove(id: ID): Promise<void> {
