@@ -6,10 +6,11 @@ import { NbIconModule } from '@nebular/theme';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { EMPTY, merge, Observable, of, Subscription } from 'rxjs';
 import { auditTime, catchError, distinctUntilChanged, filter, map, switchMap, tap } from 'rxjs/operators';
-import { CHAT_EVENT_NAMES, IChatConversationWithState, IChatMessageWithRelations, IOrganization, IUser, PermissionsEnum } from '@gauzy/contracts';
+import { CHAT_EVENT_NAMES, ChatVisibilityEnum, IChatConversationWithState, IChatMessageWithRelations, IOrganization, IUser, PermissionsEnum } from '@gauzy/contracts';
 import { Store, ToastrService } from '@gauzy/ui-core/core';
 import { CHAT_DOCK_PAGE_SIZE, CHAT_LINK, CHAT_LIVE_AUDIT_MS, CHAT_MESSAGES_POLL_MS } from '../../chat-ui.constants';
 import { canManageConversation } from '../../chat-categories';
+import { teamChannelOf } from '../../chat-team-suggestions';
 import { withTaskReference } from '../../chat-tasks';
 import { apiErrorMessage, ChatPerson, continuesGroup, isSameDay, memberEmployeeIds, mergeMessages, newNonce, showNewestPage, userName } from '../../chat-ui.helpers';
 import { ChatCreateTaskFlow } from '../../dialogs/chat-task-dialogs.component';
@@ -19,10 +20,21 @@ import { coalesceReads } from '../../services/chat-live';
 import { ChatLiveService, isTabVisible } from '../../services/chat-live.service';
 import { ChatPeople, ChatPeopleService, EMPTY_PEOPLE } from '../../services/chat-people.service';
 import { ChatTasksService } from '../../services/chat-tasks.service';
-import { ChatMessagePatch, ChatUiService } from '../../services/chat-ui.service';
+import { ChatMessagePatch, ChatTeamDetails, ChatUiService } from '../../services/chat-ui.service';
 import { clearDraft, ComposerSubmission, MessageComposerComponent } from '../message-composer/message-composer.component';
 import { MessageAction, MessageItemComponent } from '../message-item/message-item.component';
 import { PersonAvatarComponent } from '../person-avatar/person-avatar.component';
+
+/** What the card is open with: a person (our direct conversation) or a team (its channel). */
+type DockTarget = { kind: 'person'; key: string; employeeId: string } | { kind: 'team'; key: string; team: ChatTeamDetails };
+
+/** The card's header: who or which team it is. `memberCount` is null for a person. */
+interface DockHeader {
+	avatar: ChatPerson;
+	name: string;
+	position: string | null;
+	memberCount: number | null;
+}
 
 /** A message of the card with its day divider and whether it continues the previous author's group, as in the chat. */
 interface DockRow {
@@ -33,7 +45,7 @@ interface DockRow {
 
 /**
  * The docked message card (`ChatDockService`): a small card at the bottom right of the screen to write one person
- * directly. A box to write and a way to the full conversation, as a quick-message card; above them, who it is and,
+ * directly, or a team in its channel (the channel named as the team, joined or created on opening). A box to write and a way to the full conversation, as a quick-message card; above them, who it is and,
  * once there is something to read, the latest messages of our conversation, shown as the chat shows them. The
  * conversation is found (or created) when the card opens; its newest page is read again as its chat events come (or
  * on the chat's poll where they do not stream), so a message written, edited or deleted elsewhere shows, and it is
@@ -44,14 +56,17 @@ interface DockRow {
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [NbIconModule, TranslatePipe, PersonAvatarComponent, MessageComposerComponent, MessageItemComponent],
 	template: `
-		@if (person(); as who) {
+		@if (header(); as who) {
 			<section class="panel" role="dialog" [attr.aria-label]="who.name" data-test="chat-dock" (keydown.escape)="onEscape($event)">
 				<header class="head">
-					<ngx-chat-person-avatar [person]="who" [round]="true"></ngx-chat-person-avatar>
+					<!-- A team has no presence of its own: its picture (or initials) goes without the dot. -->
+					<ngx-chat-person-avatar [person]="who.avatar" [round]="true" [presence]="who.memberCount === null"></ngx-chat-person-avatar>
 					<div class="identity">
 						<span class="name" [attr.title]="who.name">{{ who.name }}</span>
 						@if (who.position) {
 							<span class="position" [attr.title]="who.position">{{ who.position }}</span>
+						} @else if (who.memberCount !== null) {
+							<span class="position">{{ 'CHAT.LIST.MEMBERS' | translate: { count: who.memberCount } }}</span>
 						}
 					</div>
 					<button type="button" class="icon-button" data-test="chat-dock-close" [attr.aria-label]="'CHAT.VIEW.CLOSE' | translate" (click)="close()">
@@ -94,7 +109,11 @@ interface DockRow {
 					<ngx-chat-message-composer
 						data-test="chat-dock-composer"
 						[people]="dockPeople()"
-						[placeholder]="'CHAT.PROFILE.MESSAGE_PLACEHOLDER' | translate: { name: who.name }"
+						[placeholder]="
+							who.memberCount === null
+								? ('CHAT.PROFILE.MESSAGE_PLACEHOLDER' | translate: { name: who.name })
+								: ('CHAT.COMPOSER.PLACEHOLDER' | translate: { name: '#' + (conversation()?.name || who.name) })
+						"
 						[disabled]="sending() || !conversation() || readOnly()"
 						[memberIds]="memberIds()"
 						[meEmployeeId]="me()?.employeeId || null"
@@ -343,6 +362,33 @@ export class ChatDockComponent {
 	private readonly composer = viewChild(MessageComposerComponent);
 
 	protected readonly person = this.dock.person;
+	protected readonly team = this.dock.team;
+
+	/** What the card is open with; the same person or team again (a fresh object) is no change. */
+	private readonly target = computed<DockTarget | null>(
+		() => {
+			const person = this.person();
+			if (person?.employeeId) return { kind: 'person', key: `person:${person.employeeId}`, employeeId: person.employeeId };
+			const team = this.team();
+			if (team?.id) return { kind: 'team', key: `team:${team.id}`, team };
+			return null;
+		},
+		{ equal: (a, b) => a?.key === b?.key }
+	);
+
+	/** The card's header, for a person or for a team (its picture, or its initials, as an avatar). */
+	protected readonly header = computed<DockHeader | null>(() => {
+		const person = this.person();
+		if (person) return { avatar: person, name: person.name, position: person.position ?? null, memberCount: null };
+		const team = this.team();
+		if (!team) return null;
+		return {
+			avatar: { employeeId: '', userId: null, name: team.name, imageUrl: team.imageUrl },
+			name: team.name,
+			position: null,
+			memberCount: team.memberEmployeeIds.length
+		};
+	});
 
 	/** Me, as my own messages show me: my name and picture. */
 	protected readonly me = toSignal(
@@ -391,7 +437,7 @@ export class ChatDockComponent {
 		const conversation = this.conversation();
 		return !!conversation && canManageConversation(conversation, this.me()?.employeeId || null, this.isAdmin());
 	});
-	/** An archived conversation is read only, as in the chat (the card's direct conversation always has me in it). */
+	/** An archived conversation is read only, as in the chat (the card's conversation has me in it: found, joined or created). */
 	protected readonly readOnly = computed(() => !!this.conversation()?.archivedAt);
 	protected readonly memberIds = computed(() => memberEmployeeIds(this.conversation()));
 	/** The conversation's own draft key: what is typed here is the draft the chat finds, and back. */
@@ -481,10 +527,10 @@ export class ChatDockComponent {
 	private polling: Subscription | null = null;
 
 	constructor() {
-		// The card turns to whoever it is opened with.
+		// The card turns to whoever (or whichever team) it is opened with.
 		effect(() => {
-			const employeeId = this.person()?.employeeId ?? null;
-			untracked(() => this.load(employeeId));
+			const target = this.target();
+			untracked(() => this.load(target));
 		});
 		// Once the conversation is found the composer can be written in: it gets the keyboard.
 		effect(() => {
@@ -528,8 +574,11 @@ export class ChatDockComponent {
 		});
 	}
 
-	/** Finds (or creates) our direct conversation and reads its latest messages, then keeps reading the newer ones. */
-	private load(employeeId: string | null): void {
+	/**
+	 * Finds (or creates) our direct conversation, or the team's channel, and reads its latest messages, then keeps
+	 * reading the newer ones.
+	 */
+	private load(target: DockTarget | null): void {
 		this.request?.unsubscribe();
 		this.polling?.unsubscribe();
 		this.conversation.set(null);
@@ -539,9 +588,11 @@ export class ChatDockComponent {
 		this.readThrough = null;
 		this.tasksStale = false;
 		this.known = new Map();
-		if (!employeeId) return;
-		this.request = this.api.direct([employeeId]).subscribe({
-			next: ({ conversation }) => {
+		if (!target) return;
+		const conversation$ =
+			target.kind === 'person' ? this.api.direct([target.employeeId]).pipe(map(({ conversation }) => conversation)) : this.teamChannel(target.team);
+		this.request = conversation$.subscribe({
+			next: (conversation) => {
 				this.conversation.set(conversation);
 				this.request = this.readNewest(String(conversation.id)).subscribe({
 					next: (page) => {
@@ -557,6 +608,37 @@ export class ChatDockComponent {
 			},
 			error: () => this.failed.set(true)
 		});
+	}
+
+	/**
+	 * The team's channel: the one of my conversations named as the team; else a public one of that name, which I join;
+	 * else a new one of the team's name with its members — public for a public team, private for a private one.
+	 */
+	private teamChannel(team: ChatTeamDetails): Observable<IChatConversationWithState> {
+		return this.api.listMine().pipe(
+			switchMap(({ conversations }) => {
+				const mine = teamChannelOf(conversations ?? [], team.name);
+				if (mine) return of(mine);
+				return this.api.browse().pipe(
+					// Without the public channels to look through, the channel is created.
+					catchError(() => of([] as IChatConversationWithState[])),
+					switchMap((open) => {
+						const found = teamChannelOf((open ?? []).filter((conversation) => !conversation.archivedAt), team.name);
+						if (found) return this.api.join(found.id).pipe(map(({ conversation }) => conversation));
+						const me = this.me()?.employeeId || null;
+						return this.api
+							.createChannel({
+								name: team.name,
+								visibility: team.public ? ChatVisibilityEnum.PUBLIC : ChatVisibilityEnum.PRIVATE,
+								memberEmployeeIds: team.memberEmployeeIds.filter((employeeId) => employeeId !== me)
+							})
+							.pipe(map(({ conversation }) => conversation));
+					}),
+					// Joined or created: the chat's lists and badge learn of it.
+					tap(() => this.api.notifyChanged())
+				);
+			})
+		);
 	}
 
 	/**
