@@ -50,6 +50,14 @@ export interface IEmbedTokenExchangeInput {
 	 * The token is bound to it. Required: an exchange without it is refused (403 `EMBED_ORIGIN_NOT_ALLOWED`).
 	 */
 	origin?: string;
+	/**
+	 * The first name of the person `email` names, for an account a credential that may add members creates (at most 100
+	 * characters, a longer one is cut). Without it, the account is named after the part of the address before the @.
+	 * An existing account keeps its name.
+	 */
+	firstName?: string;
+	/** The last name of that person, for an account a credential that may add members creates (at most 100 characters). */
+	lastName?: string;
 }
 
 export interface IEmbedTokenExchangeResponse {
