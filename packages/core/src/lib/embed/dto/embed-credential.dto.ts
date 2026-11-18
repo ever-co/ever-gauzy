@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsNotEmpty, IsString, IsUUID, MaxLength } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 import {
 	ID,
 	IEmbedCredential,
@@ -26,6 +26,12 @@ export class CreateEmbedCredentialDTO implements IEmbedCredentialCreateInput {
 	@IsUUID()
 	@IsOrganizationBelongsToUser()
 	organizationId: ID;
+
+	/** Checked by the service to be a contact of that organization, in the caller's tenant, not deleted. */
+	@ApiPropertyOptional({ type: () => String, description: 'A client (organization contact) to limit it to.' })
+	@IsOptional()
+	@IsUUID()
+	organizationContactId?: ID;
 }
 
 /**
@@ -67,6 +73,9 @@ export class EmbedCredentialResponseDTO implements IEmbedCredential {
 	@ApiPropertyOptional({ type: () => String })
 	organizationId?: ID;
 
+	@ApiPropertyOptional({ type: () => String, nullable: true })
+	organizationContactId: ID | null;
+
 	@ApiPropertyOptional({ type: () => String })
 	createdByUserId?: ID;
 
@@ -85,6 +94,7 @@ export class EmbedCredentialResponseDTO implements IEmbedCredential {
 		dto.name = row.name;
 		dto.prefix = row.prefix;
 		dto.organizationId = row.organizationId;
+		dto.organizationContactId = row.organizationContactId ?? null;
 		dto.createdByUserId = row.createdByUserId;
 		dto.createdAt = row.createdAt;
 		dto.lastUsedAt = row.lastUsedAt ?? null;

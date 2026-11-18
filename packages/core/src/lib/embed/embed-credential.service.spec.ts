@@ -1,7 +1,13 @@
 // Must stay first: loads the entity graph before the services pull an entity (see user.create.handler.spec.ts).
 import '../core/entities/internal';
 
-import { ForbiddenException, NotFoundException, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
+import {
+	BadRequestException,
+	ForbiddenException,
+	NotFoundException,
+	ServiceUnavailableException,
+	UnauthorizedException
+} from '@nestjs/common';
 import { RequestContext } from '../core/context';
 import { EmbedCredentialResponseDTO, EmbedCredentialWithSecretResponseDTO } from './dto/embed-credential.dto';
 import { EmbedCredentialService } from './embed-credential.service';
@@ -12,6 +18,9 @@ const OTHER_TENANT = '7a000000-0000-4000-8000-00000000000b';
 const ORG = '7a000000-0000-4000-8000-0000000000f1';
 const EMPLOYEE = '7a000000-0000-4000-8000-0000000000e1';
 const USER = '7a000000-0000-4000-8000-000000000001';
+const CONTACT = '7a000000-0000-4000-8000-0000000000d1';
+const OTHER_ORG_CONTACT = '7a000000-0000-4000-8000-0000000000d2';
+const UNKNOWN_CONTACT = '7a000000-0000-4000-8000-0000000000d9';
 
 const matches = (row: Record<string, unknown>, where: Record<string, unknown>) =>
 	Object.entries(where).every(([key, value]) =>
@@ -27,6 +36,16 @@ function build() {
 	const users: any[] = [{ id: USER, tenantId: TENANT, email: 'lina@northwind.example' }];
 	const memberships: any[] = [{ userId: USER, tenantId: TENANT, organizationId: ORG, isActive: true, isArchived: false }];
 	const issueEmbedSession = jest.fn(async (_input: any) => 'an-embed-token');
+	const contacts = [{ id: CONTACT, name: 'Northwind', tenantId: TENANT, organizationId: ORG }];
+	// The contacts of a tenant and organization, as `EmbedClientService` reads them (its own spec runs it on SQLite).
+	const findClient = jest.fn(async (id: string, scope: { tenantId: string; organizationId: string }) => {
+		const found = contacts.find((contact) => {
+			const isAsked = contact.id === id;
+			const isInScope = contact.tenantId === scope.tenantId && contact.organizationId === scope.organizationId;
+			return isAsked && isInScope;
+		});
+		return found ?? null;
+	});
 	const table = (rows: any[]) => ({
 		metadata: { hasColumnWithPropertyPath: () => true, tableName: 'x' },
 		findOne: jest.fn(async ({ where }) => rows.find((row) => matches(row, where)) ?? null),
@@ -44,7 +63,8 @@ function build() {
 		{} as any,
 		table(memberships) as any,
 		{} as any,
-		{ issueEmbedSession } as any
+		{ issueEmbedSession } as any,
+		{ findClient } as any
 	);
 	jest.spyOn(service, 'ormType', 'get').mockReturnValue('typeorm' as any);
 	jest.spyOn(service, 'create').mockImplementation(async (input: any) => {
@@ -64,7 +84,7 @@ function build() {
 		credentials.filter((row) => row.id === id).forEach((row) => Object.assign(row, patch));
 		return { affected: 1 } as any;
 	});
-	return { service, credentials, employees, users, memberships, issueEmbedSession };
+	return { service, credentials, employees, users, memberships, issueEmbedSession, contacts, findClient };
 }
 
 const signIn = (tenantId: string) => jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(tenantId);
@@ -102,6 +122,55 @@ describe('EmbedCredentialService', () => {
 		expect(listed[0]).toBeInstanceOf(EmbedCredentialResponseDTO);
 		expect(listed[0]).not.toHaveProperty('secret');
 		expect(listed[0]).not.toHaveProperty('keyHash');
+	});
+
+	it('keeps a credential without a client one of the whole organization', async () => {
+		const { service, credentials, findClient } = build();
+		signIn(TENANT);
+
+		const created = await service.createForOrganization({ name: 'Northwind product', organizationId: ORG });
+		const [listed] = await service.listForOrganization(ORG);
+
+		expect(findClient).not.toHaveBeenCalled();
+		expect(credentials[0].organizationContactId).toBeNull();
+		expect(created.organizationContactId).toBeNull();
+		expect(listed.organizationContactId).toBeNull();
+	});
+
+	it('limits a credential to a client of its organization, and lists it with that client', async () => {
+		const { service, credentials, findClient } = build();
+		signIn(TENANT);
+
+		const created = await service.createForOrganization({
+			name: 'Northwind portal',
+			organizationId: ORG,
+			organizationContactId: CONTACT
+		});
+		const [listed] = await service.listForOrganization(ORG);
+
+		expect(findClient).toHaveBeenCalledWith(CONTACT, { tenantId: TENANT, organizationId: ORG });
+		expect(credentials[0].organizationContactId).toBe(CONTACT);
+		expect(created.organizationContactId).toBe(CONTACT);
+		expect(listed.organizationContactId).toBe(CONTACT);
+	});
+
+	it('refuses with a 400 a client that is no contact of the organization, and creates nothing', async () => {
+		const { service, credentials, contacts } = build();
+		const otherOrganization = '7a000000-0000-4000-8000-0000000000f2';
+		contacts.push({ id: OTHER_ORG_CONTACT, name: 'Contoso', tenantId: TENANT, organizationId: otherOrganization });
+		signIn(TENANT);
+
+		for (const organizationContactId of [OTHER_ORG_CONTACT, UNKNOWN_CONTACT]) {
+			await expect(
+				service.createForOrganization({ name: 'Portal', organizationId: ORG, organizationContactId })
+			).rejects.toThrow(BadRequestException);
+		}
+		signIn(OTHER_TENANT);
+		await expect(
+			service.createForOrganization({ name: 'Portal', organizationId: ORG, organizationContactId: CONTACT })
+		).rejects.toThrow(BadRequestException);
+
+		expect(credentials).toHaveLength(0);
 	});
 
 	it('exchanges a credential for a token for one member, by employee id or by email', async () => {

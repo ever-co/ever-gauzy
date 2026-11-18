@@ -1,4 +1,5 @@
 import {
+	BadRequestException,
 	ForbiddenException,
 	HttpException,
 	HttpStatus,
@@ -31,6 +32,7 @@ import {
 	EmbedTokenExchangeResponseDTO,
 	ExchangeEmbedCredentialDTO
 } from './dto/embed-credential.dto';
+import { EmbedClientService } from './embed-client.service';
 import { EmbedCredential } from './embed-credential.entity';
 import {
 	EMBED_EXCHANGE_FAILURES_PER_ADDRESS,
@@ -101,7 +103,8 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 		private readonly mikroOrmUserRepository: MikroOrmUserRepository,
 		private readonly typeOrmUserOrganizationRepository: TypeOrmUserOrganizationRepository,
 		private readonly mikroOrmUserOrganizationRepository: MikroOrmUserOrganizationRepository,
-		private readonly authService: AuthService
+		private readonly authService: AuthService,
+		private readonly embedClientService: EmbedClientService
 	) {
 		super(typeOrmEmbedCredentialRepository, mikroOrmEmbedCredentialRepository);
 	}
@@ -117,10 +120,12 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 
 	/** A new credential for the organization; the answer is the only one that holds its secret. */
 	async createForOrganization(input: CreateEmbedCredentialDTO): Promise<EmbedCredentialWithSecretResponseDTO> {
+		const organizationContactId = await this.clientOfNewCredential(input);
 		const { secret, keyHash, prefix } = generateEmbedCredential();
 		const row = await this.create({
 			name: input.name,
 			organizationId: input.organizationId,
+			organizationContactId,
 			tenantId: RequestContext.currentTenantId(),
 			keyHash,
 			prefix,
@@ -131,6 +136,27 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 		const answer = Object.assign(new EmbedCredentialWithSecretResponseDTO(), EmbedCredentialResponseDTO.from(row));
 		answer.secret = secret;
 		return answer;
+	}
+
+	/**
+	 * The client a new credential is limited to: none when the input names none, else a contact of the credential's
+	 * organization, in the caller's tenant, that is not deleted.
+	 *
+	 * @throws BadRequestException for any other contact.
+	 */
+	private async clientOfNewCredential(input: CreateEmbedCredentialDTO): Promise<ID | null> {
+		const contactId = input.organizationContactId;
+		if (!contactId) {
+			return null;
+		}
+		const client = await this.embedClientService.findClient(contactId, {
+			tenantId: RequestContext.currentTenantId(),
+			organizationId: input.organizationId
+		});
+		if (!client) {
+			throw new BadRequestException('The client must be a contact of the organization the credential is for.');
+		}
+		return client.id;
 	}
 
 	/** Revokes a credential of the caller's tenant: its tokens are refused within {@link EMBED_REVOCATION_CACHE_MS}. */
