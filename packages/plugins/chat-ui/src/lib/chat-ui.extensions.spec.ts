@@ -12,14 +12,17 @@ import {
 	CHAT_EMPLOYEE_ACTIONS_SLOT,
 	CHAT_MESSAGE_EMPLOYEE_EXTENSION_ID,
 	CHAT_SEND_TASK_EXTENSION_ID,
-	CHAT_TASK_ACTIONS_SLOT
+	CHAT_TASK_ACTIONS_SLOT,
+	CHAT_TEAM_ACTIONS_SLOT,
+	CHAT_TEAM_CHAT_EXTENSION_ID
 } from './chat-ui.constants';
-import { CHAT_MESSAGE_EMPLOYEE_EXTENSION, CHAT_SEND_TASK_EXTENSION, ChatUiPlugin } from './chat-ui.plugin';
+import { CHAT_MESSAGE_EMPLOYEE_EXTENSION, CHAT_SEND_TASK_EXTENSION, CHAT_TEAM_CHAT_EXTENSION, ChatUiPlugin } from './chat-ui.plugin';
 import {
 	EMPLOYEE_VIEW_ID_PARAM,
 	MessageEmployeeButtonComponent
 } from './components/message-employee-button/message-employee-button.component';
 import { SendTaskButtonComponent, TASK_VIEW_ID_PARAM } from './components/send-task-button/send-task-button.component';
+import { TEAM_VIEW_ID_PARAM, TeamChatButtonComponent } from './components/team-chat-button/team-chat-button.component';
 
 describe('ChatUiPlugin extensions', () => {
 	it('puts "Send to chat" in the actions of a task page, for senders where the chat is on', () => {
@@ -30,7 +33,7 @@ describe('ChatUiPlugin extensions', () => {
 			permissions: [PermissionsEnum.CHAT_SEND],
 			featureKey: FeatureEnum.FEATURE_CHAT
 		});
-		expect(ChatUiPlugin.extensions).toEqual([CHAT_SEND_TASK_EXTENSION, CHAT_MESSAGE_EMPLOYEE_EXTENSION]);
+		expect(ChatUiPlugin.extensions).toEqual([CHAT_SEND_TASK_EXTENSION, CHAT_MESSAGE_EMPLOYEE_EXTENSION, CHAT_TEAM_CHAT_EXTENSION]);
 	});
 
 	it('puts "Message" in the actions of an employee page, for senders where the chat is on', async () => {
@@ -43,6 +46,19 @@ describe('ChatUiPlugin extensions', () => {
 		});
 		await expect(CHAT_MESSAGE_EMPLOYEE_EXTENSION.loadComponent?.()).resolves.toBe(MessageEmployeeButtonComponent);
 		expect(EMPLOYEE_VIEW_ID_PARAM).toBe('id');
+	});
+
+	it('puts "Team chat" in the actions of a team page, for senders where the chat is on', async () => {
+		expect(CHAT_TEAM_ACTIONS_SLOT).toBe(PAGE_EXTENSION_SLOTS.TEAM_VIEW_ACTIONS);
+		expect(CHAT_TEAM_CHAT_EXTENSION).toMatchObject({
+			id: CHAT_TEAM_CHAT_EXTENSION_ID,
+			slotId: PAGE_EXTENSION_SLOTS.TEAM_VIEW_ACTIONS,
+			permissions: [PermissionsEnum.CHAT_VIEW, PermissionsEnum.CHAT_SEND],
+			featureKey: FeatureEnum.FEATURE_CHAT
+		});
+		expect(CHAT_TEAM_CHAT_EXTENSION.component).toBeUndefined();
+		await expect(CHAT_TEAM_CHAT_EXTENSION.loadComponent?.()).resolves.toBe(TeamChatButtonComponent);
+		expect(TEAM_VIEW_ID_PARAM).toBe('id');
 	});
 
 	it('loads the button on first use, which reads the task of the page route', async () => {
