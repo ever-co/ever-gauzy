@@ -72,5 +72,9 @@ describe('teamChannelOf', () => {
 		expect(teamChannelOf(across, 'Web Team', 'org-1')?.id).toBe('c-ours');
 		expect(teamChannelOf(across.slice(0, 1), 'Web Team', 'org-1')).toBeNull();
 		expect(teamChannelOf(across, 'Web Team')?.id).toBe('c-other');
+		// A tenant-wide channel (no organization) is not the team's either, however old.
+		const tenantWide = { id: 'c-tenant', kind: 'channel', name: 'Web Team', organizationId: null, createdAt: '2025-01-01T00:00:00Z' };
+		expect(teamChannelOf([tenantWide, ...across], 'Web Team', 'org-1')?.id).toBe('c-ours');
+		expect(teamChannelOf([tenantWide], 'Web Team', 'org-1')).toBeNull();
 	});
 });
