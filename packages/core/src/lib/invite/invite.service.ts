@@ -1011,8 +1011,12 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 				? { email: Raw((alias) => `${alias} ${LIKE_OPERATOR} :email`, { email: `%${email}%` }) }
 				: {};
 
-			// Build role filter with array support (converts single value to array)
-			const roleFilter = isNotEmpty(role) ? { role: { name: In(Array.isArray(role) ? role : [role]) } } : {};
+			// Build role filter with array support (converts single value to array). The role names also come as
+			// where[role][name], which the Ever Teams apps have sent since before the filter took arrays
+			const roleNames = role?.name ?? role;
+			const roleFilter = isNotEmpty(roleNames)
+				? { role: { name: In(Array.isArray(roleNames) ? roleNames : [roleNames]) } }
+				: {};
 
 			// Build projects filter with defensive array handling
 			const projectIds = projects?.id ?? projects;

@@ -376,7 +376,7 @@ describe('EmbedSessionGuard and the bound origin', () => {
 		},
 		environment.JWT_SECRET
 	);
-	const guard = new EmbedSessionGuard({ isRevoked: async () => false } as any);
+	const guard = new EmbedSessionGuard({ isRevoked: async () => false } as any, {} as any);
 	const context = (origin?: string) =>
 		({
 			getType: () => 'http',

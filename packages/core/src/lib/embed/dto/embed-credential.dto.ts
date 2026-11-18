@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsNotEmpty, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 import {
 	ID,
 	IEmbedCredential,
@@ -31,11 +31,21 @@ export class CreateEmbedCredentialDTO implements IEmbedCredentialCreateInput {
 	@ApiPropertyOptional({
 		type: () => String,
 		description:
-			'A client (organization contact) whose spent time it reads at POST /embed/client-report. Tokens it exchanges still act for any member of the organization.'
+			"A client (organization contact) whose spent time it reads at POST /embed/client-report. Tokens it exchanges start the timer only on that client's projects, for any member of the organization."
 	})
 	@IsOptional()
 	@IsUUID()
 	organizationContactId?: ID;
+
+	@ApiPropertyOptional({
+		type: () => Boolean,
+		default: false,
+		description:
+			'Lets an exchange add the person it names as an employee of the organization when the address has no active member there.'
+	})
+	@IsOptional()
+	@IsBoolean()
+	canAddMembers?: boolean;
 }
 
 /**
@@ -64,6 +74,21 @@ export class ExchangeEmbedCredentialDTO implements IEmbedTokenExchangeInput {
 		example: 'https://app.example.com'
 	})
 	origin?: string;
+
+	@ApiPropertyOptional({
+		type: () => String,
+		maxLength: 100,
+		description:
+			'For a credential that may add members: the first name of a new account for `email` (a longer one is cut). Without it, the part of the address before the @.'
+	})
+	firstName?: string;
+
+	@ApiPropertyOptional({
+		type: () => String,
+		maxLength: 100,
+		description: 'For a credential that may add members: the last name of a new account for `email`.'
+	})
+	lastName?: string;
 }
 
 export class EmbedTokenExchangeResponseDTO implements IEmbedTokenExchangeResponse {
@@ -91,6 +116,9 @@ export class EmbedCredentialResponseDTO implements IEmbedCredential {
 	@ApiPropertyOptional({ type: () => String, nullable: true })
 	organizationContactId: ID | null;
 
+	@ApiProperty({ type: () => Boolean })
+	canAddMembers: boolean;
+
 	@ApiPropertyOptional({ type: () => String })
 	createdByUserId?: ID;
 
@@ -110,6 +138,7 @@ export class EmbedCredentialResponseDTO implements IEmbedCredential {
 		dto.prefix = row.prefix;
 		dto.organizationId = row.organizationId;
 		dto.organizationContactId = row.organizationContactId ?? null;
+		dto.canAddMembers = row.canAddMembers === true;
 		dto.createdByUserId = row.createdByUserId;
 		dto.createdAt = row.createdAt;
 		dto.lastUsedAt = row.lastUsedAt ?? null;

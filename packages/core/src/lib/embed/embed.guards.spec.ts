@@ -3,7 +3,16 @@ import { sign } from 'jsonwebtoken';
 import { ExtractJwt } from 'passport-jwt';
 import { environment } from '@gauzy/config';
 import { EmbedEnabledGuard, EmbedSessionGuard } from './embed.guards';
-import { EMBED_CREDENTIAL_CLAIM, EMBED_EMPLOYEE_CLAIM, isEmbedRoute, readEmbedClaims } from './embed-session';
+import {
+	EMBED_CLIENT_CLAIM,
+	EMBED_CREDENTIAL_CLAIM,
+	EMBED_EMPLOYEE_CLAIM,
+	embedRouteOf,
+	IEmbedClientStart,
+	isEmbedRoute,
+	isWithinEmbedScope,
+	readEmbedClaims
+} from './embed-session';
 import {
 	EMBED_TOKENS_ENV,
 	embedCredentialHashesMatch,
@@ -18,6 +27,7 @@ const ORG = '7a000000-0000-4000-8000-0000000000f1';
 const OTHER_ORG = '7a000000-0000-4000-8000-0000000000f2';
 const EMPLOYEE = '7a000000-0000-4000-8000-0000000000e1';
 const CREDENTIAL = '7a000000-0000-4000-8000-0000000000c1';
+const CLIENT = '7a000000-0000-4000-8000-0000000000d1';
 
 const embedToken = (claims: Record<string, unknown> = {}) =>
 	sign(
@@ -32,9 +42,25 @@ const contextOf = (request: Record<string, unknown>) =>
 		switchToHttp: () => ({ getRequest: () => request })
 	}) as any;
 
+/** The client's projects and their tasks, in the token's tenant and organization. */
+const WEBSITE = '7a000000-0000-4000-8000-0000000000a1';
+const HOMEPAGE = '7a000000-0000-4000-8000-0000000000b1';
+const OTHER_CLIENT_PROJECT = '7a000000-0000-4000-8000-0000000000a2';
+const OTHER_PROJECT_TASK = '7a000000-0000-4000-8000-0000000000b2';
+
 const guardWith = (revoked = false) => {
 	const isRevoked = jest.fn(async () => revoked);
-	return { guard: new EmbedSessionGuard({ isRevoked } as any), isRevoked };
+	// As `EmbedClientService` reads them (its own spec runs it on SQLite): the website and its homepage task.
+	const isStartForClient = jest.fn(
+		async (clientId: string, scope: { tenantId: string; organizationId: string }, start: IEmbedClientStart) => {
+			const isClientsScope = clientId === CLIENT && scope.tenantId === 'tenant' && scope.organizationId === ORG;
+			const isWebsite = start.projectId === WEBSITE;
+			const isTaskOfWebsite = start.taskId === null || start.taskId === HOMEPAGE;
+			return isClientsScope && isWebsite && isTaskOfWebsite;
+		}
+	);
+	const guard = new EmbedSessionGuard({ isRevoked } as any, { isStartForClient } as any);
+	return { guard, isRevoked, isStartForClient };
 };
 
 // The switch and the token lifetime as a server without them: a developer's .env (loaded with the config) may set them.
@@ -87,10 +113,21 @@ describe('embed helpers', () => {
 			employeeId: EMPLOYEE,
 			organizationId: ORG,
 			tenantId: 'tenant',
-			origin: null
+			origin: null,
+			clientId: null
 		});
 		expect(readEmbedClaims(`Bearer ${sign({ id: 'user' }, 'test-secret')}`)).toBeNull();
 		expect(readEmbedClaims(undefined)).toBeNull();
+	});
+
+	it('reads the client of a token exchanged with a credential limited to one, and none that is not a string', () => {
+		const withClient = readEmbedClaims(`Bearer ${embedToken({ [EMBED_CLIENT_CLAIM]: CLIENT })}`);
+		expect(withClient).toMatchObject({ credentialId: CREDENTIAL, clientId: CLIENT });
+
+		for (const odd of [42, { toString: 1 }, [CLIENT], '']) {
+			const claims = readEmbedClaims(`Bearer ${embedToken({ [EMBED_CLIENT_CLAIM]: odd })}`);
+			expect(claims).toMatchObject({ credentialId: CREDENTIAL, clientId: null });
+		}
 	});
 
 	it('opens the user, the permissions, the teams and the timer, and nothing else', () => {
@@ -105,6 +142,29 @@ describe('embed helpers', () => {
 		expect(isEmbedRoute('POST', '/api/timesheet/timer/toggle')).toBe(false);
 		expect(isEmbedRoute('GET', '/api/employee')).toBe(false);
 		expect(isEmbedRoute('DELETE', '/api/user/me')).toBe(false);
+	});
+
+	it('opens the projects to a GET without query parameters, in the organization and tenant of the token', () => {
+		const route = embedRouteOf('GET', '/api/embed/projects');
+		const claims = readEmbedClaims(`Bearer ${embedToken()}`);
+		const headers = { 'organization-id': ORG, 'tenant-id': 'tenant' };
+
+		expect(route).not.toBeNull();
+		expect(isEmbedRoute('GET', '/api/embed/projects/')).toBe(true);
+		expect(isEmbedRoute('POST', '/api/embed/projects')).toBe(false);
+		expect(isEmbedRoute('GET', '/api/embed/projects/7a000000-0000-4000-8000-0000000000a1')).toBe(false);
+		expect(isWithinEmbedScope(route, { query: {}, headers }, claims)).toBe(true);
+
+		const refused = [
+			{ query: { organizationId: ORG } },
+			{ query: { relations: ['members'] } },
+			{ query: { where: { organizationContactId: CLIENT } } },
+			{ query: {}, headers: { 'organization-id': OTHER_ORG } },
+			{ query: {}, headers: { 'tenant-id': 'another-tenant' } }
+		];
+		for (const request of refused) {
+			expect(isWithinEmbedScope(route, request, claims)).toBe(false);
+		}
 	});
 });
 
@@ -332,5 +392,132 @@ describe('EmbedSessionGuard', () => {
 		} as any;
 
 		await expect(guard.canActivate(context)).rejects.toThrow(UnauthorizedException);
+	});
+
+	describe('a token limited to a client', () => {
+		const ofClient = () => `Bearer ${embedToken({ [EMBED_CLIENT_CLAIM]: CLIENT })}`;
+		const start = (body: unknown, authorization = ofClient()) =>
+			contextOf({ method: 'POST', path: '/api/timesheet/timer/start', body, headers: { authorization } });
+
+		it('starts the timer on a project of its client, with a task of that project or none', async () => {
+			const { guard, isStartForClient } = guardWith();
+			const scope = { tenantId: 'tenant', organizationId: ORG };
+
+			await expect(guard.canActivate(start({ organizationId: ORG, projectId: WEBSITE }))).resolves.toBe(true);
+			const withTask = { projectId: WEBSITE, taskId: HOMEPAGE, organizationContactId: CLIENT };
+			await expect(guard.canActivate(start(withTask))).resolves.toBe(true);
+
+			const website = { projectId: WEBSITE, taskId: null };
+			const homepage = { projectId: WEBSITE, taskId: HOMEPAGE };
+			expect(isStartForClient).toHaveBeenNthCalledWith(1, CLIENT, scope, website);
+			expect(isStartForClient).toHaveBeenNthCalledWith(2, CLIENT, scope, homepage);
+		});
+
+		it('refuses with EMBED_CLIENT_PROJECT a start on no project, another project or a task of another one', async () => {
+			const { guard } = guardWith();
+			const refused = [
+				undefined,
+				{},
+				{ taskId: HOMEPAGE },
+				{ projectId: '' },
+				{ projectId: [WEBSITE] },
+				{ projectId: OTHER_CLIENT_PROJECT },
+				{ projectId: WEBSITE, taskId: OTHER_PROJECT_TASK },
+				{ projectId: WEBSITE, taskId: { id: HOMEPAGE } }
+			];
+			for (const body of refused) {
+				await expect(guard.canActivate(start(body))).rejects.toMatchObject({
+					response: { statusCode: 403, code: 'EMBED_CLIENT_PROJECT' }
+				});
+			}
+		});
+
+		it('refuses with EMBED_CLIENT_PROJECT a start that names another client, before any lookup', async () => {
+			const { guard, isStartForClient } = guardWith();
+			const otherClient = '7a000000-0000-4000-8000-0000000000d2';
+
+			for (const organizationContactId of [otherClient, [CLIENT], 42]) {
+				await expect(
+					guard.canActivate(start({ projectId: WEBSITE, organizationContactId }))
+				).rejects.toMatchObject({ response: { code: 'EMBED_CLIENT_PROJECT' } });
+			}
+			expect(isStartForClient).not.toHaveBeenCalled();
+		});
+
+		it('takes its client named in capitals, and still refuses another client named so', async () => {
+			const { guard, isStartForClient } = guardWith();
+			const otherClient = '7A000000-0000-4000-8000-0000000000D2';
+			const inCapitals = { projectId: WEBSITE, organizationContactId: CLIENT.toUpperCase() };
+			const anotherInCapitals = { projectId: WEBSITE, organizationContactId: otherClient };
+
+			await expect(guard.canActivate(start(inCapitals))).resolves.toBe(true);
+			await expect(guard.canActivate(start(anotherInCapitals))).rejects.toMatchObject({
+				response: { code: 'EMBED_CLIENT_PROJECT' }
+			});
+			expect(isStartForClient).toHaveBeenCalledTimes(1);
+		});
+
+		it('looks a start up only for a token this server signed and that is not revoked', async () => {
+			const { guard, isStartForClient } = guardWith();
+			const forged = sign(
+				{
+					id: 'user',
+					tenantId: 'tenant',
+					organizationId: ORG,
+					[EMBED_CREDENTIAL_CLAIM]: CREDENTIAL,
+					[EMBED_EMPLOYEE_CLAIM]: EMPLOYEE,
+					[EMBED_CLIENT_CLAIM]: CLIENT
+				},
+				'not-the-secret'
+			);
+			await expect(guard.canActivate(start({ projectId: WEBSITE }, `Bearer ${forged}`))).rejects.toThrow(
+				UnauthorizedException
+			);
+
+			const revoked = guardWith(true);
+			const onWebsite = start({ projectId: WEBSITE });
+			await expect(revoked.guard.canActivate(onWebsite)).rejects.toThrow(UnauthorizedException);
+
+			expect(isStartForClient).not.toHaveBeenCalled();
+			expect(revoked.isStartForClient).not.toHaveBeenCalled();
+		});
+
+		it('stops the timer and reaches the other routes as before, without a lookup', async () => {
+			const { guard, isStartForClient } = guardWith();
+			const authorization = ofClient();
+			const stop = { method: 'POST', path: '/api/timesheet/timer/stop', body: {}, headers: { authorization } };
+			const status = {
+				method: 'GET',
+				path: '/api/timesheet/timer/status',
+				query: { organizationId: ORG },
+				headers: { authorization }
+			};
+
+			await expect(guard.canActivate(contextOf(stop))).resolves.toBe(true);
+			await expect(guard.canActivate(contextOf(status))).resolves.toBe(true);
+			expect(isStartForClient).not.toHaveBeenCalled();
+		});
+
+		it('reads the projects it may track time on, as a token without a client does, with no query', async () => {
+			const { guard } = guardWith();
+			const projects = (authorization: string, query: Record<string, unknown> = {}) =>
+				contextOf({ method: 'GET', path: '/api/embed/projects', query, headers: { authorization } });
+
+			await expect(guard.canActivate(projects(ofClient()))).resolves.toBe(true);
+			await expect(guard.canActivate(projects(`Bearer ${embedToken()}`))).resolves.toBe(true);
+			await expect(guard.canActivate(projects(ofClient(), { organizationId: ORG }))).rejects.toMatchObject({
+				response: { code: 'EMBED_SCOPE' }
+			});
+		});
+
+		it('leaves the start of a token without a client as it was, without a lookup', async () => {
+			const { guard, isStartForClient } = guardWith();
+			const authorization = `Bearer ${embedToken()}`;
+
+			await expect(guard.canActivate(start({}, authorization))).resolves.toBe(true);
+			const onAnyProject = start({ projectId: OTHER_CLIENT_PROJECT }, authorization);
+			await expect(guard.canActivate(onAnyProject)).resolves.toBe(true);
+			expect(isStartForClient).not.toHaveBeenCalled();
+		});
 	});
 });
