@@ -50,6 +50,7 @@ import {
 } from './embed.utils';
 import { MikroOrmEmbedCredentialRepository } from './repository/mikro-orm-embed-credential.repository';
 import { EmbedAllowedOriginService } from './embed-allowed-origin.service';
+import { EmbedMemberAddition, EmbedMemberService, IEmbedNewMember, newMemberOf } from './embed-member.service';
 import { normalizeOrigin } from './embed-origin';
 import { TypeOrmEmbedCredentialRepository } from './repository/type-orm-embed-credential.repository';
 
@@ -84,12 +85,26 @@ class ClientRefused extends Error {
 /** A client report that could not be read once its credential was accepted, already logged: a 500, never a 401. */
 class ReportUnread extends Error {}
 
+/** A member that could not be added once the credential was accepted, already logged: a 500, never a 401. */
+class MemberNotAdded extends Error {}
+
+/** The member an exchange body names: by employee id, or by address with the names of a person to add. */
+type NamedMember = Pick<ExchangeEmbedCredentialDTO, 'employeeId' | 'email' | 'firstName' | 'lastName'>;
+
 /** The message of what was thrown, for a log line. */
 function messageOf(error: unknown): string {
 	if (error instanceof Error) {
 		return error.message;
 	}
 	return String(error);
+}
+
+/** The name of what was thrown, for a log line that must not quote its message. */
+function nameOf(error: unknown): string {
+	if (error instanceof Error) {
+		return error.name;
+	}
+	return typeof error;
 }
 
 /** ` id=<id>` of the credential a log line is about; nothing before the credential is found. */
@@ -131,7 +146,8 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 		private readonly mikroOrmUserOrganizationRepository: MikroOrmUserOrganizationRepository,
 		private readonly authService: AuthService,
 		private readonly embedAllowedOriginService: EmbedAllowedOriginService,
-		private readonly embedClientService: EmbedClientService
+		private readonly embedClientService: EmbedClientService,
+		private readonly embedMemberService: EmbedMemberService
 	) {
 		super(typeOrmEmbedCredentialRepository, mikroOrmEmbedCredentialRepository);
 	}
@@ -247,6 +263,9 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 	 * credential, and it needs to know why. A database that cannot be reached answers 503. An address that had too many
 	 * credentials refused within a minute gets a 429 with a code, before any lookup (`EmbedExchangeFailures`).
 	 *
+	 * A credential that may add members (`canAddMembers`) adds the person an exchange names by address when the address
+	 * has no active member in its organization, then answers the token as for any member (see {@link memberOf}).
+	 *
 	 * @param input The credential and the member.
 	 * @param address The client address, as the rate limiter resolves it; without one, the shared unresolved bucket.
 	 */
@@ -323,8 +342,8 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 	 * What a request whose credential did not get it through is answered: a 503 when the database is out of reach, a
 	 * 403 with a code for a page origin the organization does not allow, a member the credential cannot act for or a
 	 * client report it cannot read (the report is asked server to server, with no origin), a 500 for a client
-	 * report that failed after its credential was accepted, a 429 with a code for a capped address, and one 401 for
-	 * every refused credential.
+	 * report or a member addition that failed after its credential was accepted, a 429 with a code for a capped
+	 * address, and one 401 for every refused credential.
 	 *
 	 * @param error What stopped the request.
 	 * @param route The route, as its log lines name it.
@@ -355,7 +374,9 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 		if (error instanceof ClientRefused) {
 			return new ForbiddenException({ statusCode: 403, code: error.code, message: error.message });
 		}
-		if (error instanceof ReportUnread) {
+		const isUnreadReport = error instanceof ReportUnread;
+		const isMemberNotAdded = error instanceof MemberNotAdded;
+		if (isUnreadReport || isMemberNotAdded) {
 			return new InternalServerErrorException();
 		}
 		if (error instanceof AddressLimited) {
@@ -431,7 +452,8 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 		return row;
 	}
 
-	private async judgeAndMint({ credential, employeeId, email, origin }: ExchangeEmbedCredentialDTO, address: string) {
+	private async judgeAndMint(input: ExchangeEmbedCredentialDTO, address: string) {
+		const { credential, origin } = input;
 		const row = await this.acceptCredential(credential, address, 'exchange');
 
 		// The page the widget runs in must be one of the organization's allowed origins; the token is bound to it.
@@ -443,7 +465,7 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 			throw new OriginRefused('origin not allowed');
 		}
 
-		const employee = await this.findMember(row, { employeeId, email });
+		const employee = await this.memberOf(row, input);
 		if (!employee) {
 			this.refuseMember('not an active member of the organization', row);
 		}
@@ -482,6 +504,59 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 	private refuseMember(reason: string, row: EmbedCredential): never {
 		this.logger.warn(`Embed exchange refused: ${reason} credential=${row.id}`);
 		throw new MemberRefused(reason);
+	}
+
+	/**
+	 * The member an exchange is for: the active member of the organization it names, or else, for a credential that may
+	 * add members and an exchange that names a valid address and no employee id, the person of that address, added
+	 * (`EmbedMemberService.add`). Two exchanges that would add the same person take turns, and the second finds the
+	 * member the first added.
+	 */
+	private async memberOf(row: EmbedCredential, named: NamedMember): Promise<Employee | null> {
+		const found = await this.findMember(row, named);
+		if (found) {
+			return found;
+		}
+		const person = this.personToAdd(row, named);
+		if (!person) {
+			return null;
+		}
+		return await this.embedMemberService.inTurn(row.tenantId, person.email, () => this.addMember(row, person));
+	}
+
+	/** The person to add: none unless the credential may add members and the exchange names an address alone. */
+	private personToAdd(row: EmbedCredential, named: NamedMember): IEmbedNewMember | null {
+		const addsMembers = row.canAddMembers === true;
+		const namesEmployee = Boolean(named.employeeId);
+		if (!addsMembers || namesEmployee) {
+			return null;
+		}
+		return newMemberOf(named);
+	}
+
+	/** Adds the person, unless the exchange that held the turn before added them already. */
+	private async addMember(row: EmbedCredential, person: IEmbedNewMember): Promise<Employee | null> {
+		const meanwhile = await this.findMember(row, { email: person.email });
+		if (meanwhile) {
+			return meanwhile;
+		}
+		const scope = { tenantId: row.tenantId, organizationId: row.organizationId };
+		let addition: EmbedMemberAddition;
+		try {
+			addition = await this.embedMemberService.add(scope, person);
+		} catch (error) {
+			if (isDatabaseUnavailableError(error)) {
+				throw error;
+			}
+			// The error's name only: a database's message may quote the address.
+			this.logger.error(`Embed member could not be added: credential=${row.id} ${nameOf(error)}`);
+			throw new MemberNotAdded();
+		}
+		if ('refused' in addition) {
+			this.refuseMember(addition.refused, row);
+		}
+		this.logger.log(`Embed member added: credential=${row.id} employee=${addition.employeeId}`);
+		return await this.findMember(row, { employeeId: addition.employeeId });
 	}
 
 	/** Counts a refused credential against the address it came from, and says so once the address reaches the cap. */

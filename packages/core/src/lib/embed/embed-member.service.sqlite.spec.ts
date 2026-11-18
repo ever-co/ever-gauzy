@@ -3,6 +3,7 @@ import * as os from 'os';
 import * as path from 'path';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import type { DataSource } from 'typeorm';
+import type { EmbedCredentialService } from './embed-credential.service';
 import type { EmbedMemberService, IEmbedMemberScope } from './embed-member.service';
 
 /**
@@ -25,6 +26,11 @@ const ADMIN_ROLE = '7d000000-0000-4000-8000-0000000000b2';
 const SUPER_ADMIN_ROLE = '7d000000-0000-4000-8000-0000000000b3';
 
 const SCOPE: IEmbedMemberScope = { tenantId: TENANT, organizationId: ORGANIZATION };
+
+/** The secrets of two credentials of the organization: one that may add members, one that may not. */
+const ADDING_SECRET = `gze_${'A'.repeat(43)}`;
+const PLAIN_SECRET = `gze_${'B'.repeat(43)}`;
+const PORTAL = { origin: 'https://portal.fabrikam.example' };
 
 /** The tenant's accounts, by address: each case below reads one of them. */
 const ACCOUNTS: Record<string, { id: string; roleId: string; values?: Record<string, unknown> }> = {
@@ -170,8 +176,10 @@ describe('EmbedMemberService on SQLite, through the platform commands', () => {
 	let dataSource: DataSource;
 	let service: EmbedMemberService;
 	let currentTenantId: () => string | null;
+	let credentialService: EmbedCredentialService;
 	const welcomeUser = jest.fn();
 	const getPasswordHash = jest.fn();
+	const issueEmbedSession = jest.fn(async (_input: { employeeId: string }) => 'an-embed-token');
 
 	beforeAll(async () => {
 		process.env.DB_ORM = 'typeorm';
@@ -264,6 +272,38 @@ describe('EmbedMemberService on SQLite, through the platform commands', () => {
 				)
 			);
 			service = new members.EmbedMemberService(dataSource, commandBus as never);
+
+			const credentials = require('./embed-credential.service') as typeof import('./embed-credential.service');
+			const { TypeOrmEmbedCredentialRepository } =
+				require('./repository/type-orm-embed-credential.repository') as typeof import('./repository/type-orm-embed-credential.repository');
+			const utils = require('./embed.utils') as typeof import('./embed.utils');
+			credentialService = new credentials.EmbedCredentialService(
+				new TypeOrmEmbedCredentialRepository(dataSource.getRepository(entities.EmbedCredential)),
+				{} as never,
+				new TypeOrmEmployeeRepository(dataSource.getRepository(entities.Employee)),
+				{} as never,
+				new TypeOrmUserRepository(dataSource.getRepository(entities.User)),
+				{} as never,
+				new TypeOrmUserOrganizationRepository(dataSource.getRepository(entities.UserOrganization)),
+				{} as never,
+				{ issueEmbedSession } as never,
+				{ isAllowed: async () => true } as never,
+				{} as never,
+				service
+			);
+			for (const [secret, canAddMembers] of [
+				[ADDING_SECRET, 1],
+				[PLAIN_SECRET, 0]
+			] as const) {
+				await insert(dataSource, 'embed_credential', {
+					id: `7d000000-0000-4000-8000-0000000c000${canAddMembers}`,
+					...SCOPE,
+					name: 'Fabrikam portal',
+					keyHash: utils.hashEmbedCredential(secret),
+					prefix: secret.slice(0, 12),
+					canAddMembers
+				});
+			}
 		});
 	}, TIMEOUT);
 
@@ -279,6 +319,7 @@ describe('EmbedMemberService on SQLite, through the platform commands', () => {
 	beforeEach(() => {
 		welcomeUser.mockClear();
 		getPasswordHash.mockClear();
+		issueEmbedSession.mockClear();
 	});
 
 	/** How many accounts, employees and memberships the database holds. */
@@ -439,6 +480,38 @@ describe('EmbedMemberService on SQLite, through the platform commands', () => {
 				{ email: 'pat@contoso.example' }
 			)
 		).resolves.toEqual({ refused: 'the platform refused to add the account (404)' });
+		expect(await counts()).toEqual(before);
+	});
+
+	it('answers two exchanges of the same new address at once with the token of one new member', async () => {
+		const before = await counts();
+
+		const answers = await Promise.all([
+			credentialService.exchange({ credential: ADDING_SECRET, email: 'Zoe@Fabrikam.example', ...PORTAL }),
+			credentialService.exchange({ credential: ADDING_SECRET, email: 'zoe@fabrikam.example', ...PORTAL })
+		]);
+
+		expect(answers.map((answer) => answer.token)).toEqual(['an-embed-token', 'an-embed-token']);
+		expect(await counts()).toEqual({
+			users: before.users + 1,
+			employees: before.employees + 1,
+			memberships: before.memberships + 1
+		});
+		const account = await userByEmail('zoe@fabrikam.example');
+		const [employee] = await dataSource.query(`SELECT "id" FROM "employee" WHERE "userId" = ?`, [account.id]);
+		const minted = issueEmbedSession.mock.calls.map(([input]) => input.employeeId);
+		expect(minted).toEqual([employee.id, employee.id]);
+		expect(welcomeUser).not.toHaveBeenCalled();
+	});
+
+	it("answers today's 403 for a new address to a credential that does not add members, and writes nothing", async () => {
+		const before = await counts();
+
+		await expect(
+			credentialService.exchange({ credential: PLAIN_SECRET, email: 'uma@fabrikam.example', ...PORTAL })
+		).rejects.toMatchObject({ status: 403, response: { code: 'EMBED_MEMBER_NOT_ALLOWED' } });
+
+		expect(issueEmbedSession).not.toHaveBeenCalled();
 		expect(await counts()).toEqual(before);
 	});
 });

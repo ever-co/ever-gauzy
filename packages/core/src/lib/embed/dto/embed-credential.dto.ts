@@ -74,6 +74,21 @@ export class ExchangeEmbedCredentialDTO implements IEmbedTokenExchangeInput {
 		example: 'https://app.example.com'
 	})
 	origin?: string;
+
+	@ApiPropertyOptional({
+		type: () => String,
+		maxLength: 100,
+		description:
+			'For a credential that may add members: the first name of a new account for `email` (a longer one is cut). Without it, the part of the address before the @.'
+	})
+	firstName?: string;
+
+	@ApiPropertyOptional({
+		type: () => String,
+		maxLength: 100,
+		description: 'For a credential that may add members: the last name of a new account for `email`.'
+	})
+	lastName?: string;
 }
 
 export class EmbedTokenExchangeResponseDTO implements IEmbedTokenExchangeResponse {
