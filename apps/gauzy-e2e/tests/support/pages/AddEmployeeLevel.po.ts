@@ -66,7 +66,7 @@ export const clickAddNewLevelButton = async () => {
 		// Cancel button (status="basic" outline) and the X icon both call closeDialog(); dispatch the
 		// click so a fading backdrop can't intercept it. Fall back to Escape.
 		await dispatchClick('ngx-tags-mutation nb-card-footer button[status="basic"]').catch(() => undefined);
-		await dispatchClick('ngx-tags-mutation .cancel i').catch(() => undefined);
+		await dispatchClick('ngx-tags-mutation .mutation__close').catch(() => undefined);
 		await page.keyboard.press('Escape').catch(() => undefined);
 		await tagsDialog.waitFor({ state: 'detached', timeout: 3000 }).catch(() => undefined);
 	}

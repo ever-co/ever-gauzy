@@ -21,7 +21,7 @@ export function durationFormat(seconds: number | null | undefined): string {
 
 /** Locale/format inputs the `dateFormat` pipe reads from the store. */
 export interface DateFormatOptions {
-	/** Organization `dateFormat`; the pipe's default is `'d MMMM, y'`. */
+	/** Organization `dateFormat`; the pipe's default is `'LL'` (the locale's long date). */
 	dateFormat?: string | null;
 	/** Preferred language, falling back to the organization `regionCode`, then `en`. */
 	locale?: string | null;
@@ -40,7 +40,8 @@ export function dateFormat(value: Date | string | number | null | undefined, opt
 	if (!date.isValid()) date = moment.utc(value);
 	if (!date.isValid()) return '';
 	const locale = options.locale || 'en';
-	const format = options.dateFormat || 'd MMMM, y';
+	// Same fallback as the Angular `dateFormat` pipe. The old `d MMMM, y` used moment's `d`, the day of the WEEK.
+	const format = options.dateFormat || 'LL';
 	return date.locale(locale).format(format);
 }
 
