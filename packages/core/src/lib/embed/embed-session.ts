@@ -1,5 +1,6 @@
-import { decode } from 'jsonwebtoken';
+import { decode, verify } from 'jsonwebtoken';
 import { ExtractJwt } from 'passport-jwt';
+import { JWT_ALGORITHMS } from '../auth/purpose-token';
 
 /**
  * The access-token claims that mark a token minted by the embed exchange: the credential behind it and the one member
@@ -26,8 +27,9 @@ export interface IEmbedRoute {
 	 */
 	readonly query: ReadonlyArray<string>;
 	/**
-	 * The keys of a `where` the route takes. A route that takes one must name the token's organization in it: a tenant
-	 * admin's "my teams" are every team of the tenant.
+	 * The keys of a `where` the route takes. A route that takes one must name the token's organization and member in it
+	 * (`where[organizationId]`, `where[members][employeeId]`): for a member who may act for every employee, "my teams"
+	 * are every team of the tenant.
 	 */
 	readonly where?: ReadonlyArray<string>;
 }
@@ -44,7 +46,7 @@ export const EMBED_ROUTES: ReadonlyArray<IEmbedRoute> = [
 		method: 'GET',
 		path: /^\/api\/organization-team\/me\/?$/,
 		query: ['where'],
-		where: ['organizationId', 'tenantId']
+		where: ['organizationId', 'tenantId', 'members']
 	},
 	{
 		method: 'GET',
@@ -64,22 +66,34 @@ export const EMBED_FORBIDDEN_TIMER_FIELDS = ['startedAt', 'stoppedAt', 'manualTi
  */
 const extractBearerToken = ExtractJwt.fromAuthHeaderAsBearerToken();
 
+/** The bearer token of an `Authorization` header, read where `JwtStrategy` reads it; null without one. */
+export function bearerTokenOf(authorization: unknown): string | null {
+	if (typeof authorization !== 'string' || !authorization) {
+		return null;
+	}
+	return extractBearerToken({ headers: { authorization } } as any) || null;
+}
+
 /**
- * Reads the embed claims of a bearer token, without checking its signature: on an authenticated route the JWT guard
- * does that, and a forged claim can only restrict what its sender could do without it.
+ * Reads the embed claims of a bearer token, without checking its signature: a forged claim can only restrict what its
+ * sender could do without it. Nothing is looked up with them before {@link isSignedBearerToken} holds.
  *
  * @param authorization The request's `Authorization` header.
  * @returns The claims, or null for a token without them.
  */
 export function readEmbedClaims(authorization: string | undefined): IEmbedClaims | null {
-	if (typeof authorization !== 'string' || !authorization) {
-		return null;
-	}
-	const token = extractBearerToken({ headers: { authorization } } as any);
+	const token = bearerTokenOf(authorization);
 	if (!token) {
 		return null;
 	}
-	const payload = decode(token);
+	let payload: unknown;
+	try {
+		payload = decode(token);
+	} catch {
+		// `jws` throws on a header typed JWT over a payload that is not JSON: not an embed token, and not this
+		// guard's to refuse (the JWT guard judges the routes that need a token).
+		return null;
+	}
 	if (!payload || typeof payload !== 'object') {
 		return null;
 	}
@@ -94,6 +108,27 @@ export function readEmbedClaims(authorization: string | undefined): IEmbedClaims
 		organizationId: typeof record['organizationId'] === 'string' ? record['organizationId'] : null,
 		tenantId: typeof record['tenantId'] === 'string' ? record['tenantId'] : null
 	};
+}
+
+/**
+ * Whether the bearer token carries a valid signature of this server and has not expired. The embed guard is global and
+ * runs before the JWT guard, so it checks this before it looks the token's credential up: a forged token must not
+ * cost a query or a place in the revocation cache.
+ *
+ * @param authorization The request's `Authorization` header.
+ * @param secret The secret access tokens are signed with.
+ */
+export function isSignedBearerToken(authorization: unknown, secret: string | undefined): boolean {
+	const token = bearerTokenOf(authorization);
+	if (!token || !secret) {
+		return false;
+	}
+	try {
+		verify(token, secret, { algorithms: JWT_ALGORITHMS });
+		return true;
+	} catch {
+		return false;
+	}
 }
 
 /** The embed route a request reaches, or null. The path is without its query string. */
@@ -147,8 +182,16 @@ export function isWithinEmbedScope(
 			return false;
 		}
 	}
-	if (route.where && where['organizationId'] !== claims.organizationId) {
-		return false;
+	if (route.where) {
+		if (where['organizationId'] !== claims.organizationId) {
+			return false;
+		}
+		const members = where['members'];
+		const namesOnlyItsMember =
+			isRecord(members) && Object.keys(members).length === 1 && members['employeeId'] === claims.employeeId;
+		if (!namesOnlyItsMember) {
+			return false;
+		}
 	}
 
 	const organizations = [query['organizationId'], where['organizationId'], body['organizationId'], headers['organization-id']];

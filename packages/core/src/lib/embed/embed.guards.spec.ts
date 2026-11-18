@@ -1,6 +1,7 @@
 import { ForbiddenException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { sign } from 'jsonwebtoken';
 import { ExtractJwt } from 'passport-jwt';
+import { environment } from '@gauzy/config';
 import { EmbedEnabledGuard, EmbedSessionGuard } from './embed.guards';
 import { EMBED_CREDENTIAL_CLAIM, EMBED_EMPLOYEE_CLAIM, isEmbedRoute, readEmbedClaims } from './embed-session';
 import {
@@ -21,7 +22,7 @@ const CREDENTIAL = '7a000000-0000-4000-8000-0000000000c1';
 const embedToken = (claims: Record<string, unknown> = {}) =>
 	sign(
 		{ id: 'user', tenantId: 'tenant', organizationId: ORG, [EMBED_CREDENTIAL_CLAIM]: CREDENTIAL, [EMBED_EMPLOYEE_CLAIM]: EMPLOYEE, ...claims },
-		'test-secret'
+		environment.JWT_SECRET
 	);
 
 /** An HTTP execution context around a request. */
@@ -36,17 +37,24 @@ const guardWith = (revoked = false) => {
 	return { guard: new EmbedSessionGuard({ isRevoked } as any), isRevoked };
 };
 
-// The switch as a server without it: a developer's .env (loaded with the config) may turn it on.
+// The switch and the token lifetime as a server without them: a developer's .env (loaded with the config) may set them.
+const TTL_ENV = 'GAUZY_EMBED_TOKEN_TTL_SECONDS';
 let savedSwitch: string | undefined;
+let savedTtl: string | undefined;
 beforeAll(() => {
 	savedSwitch = process.env[EMBED_TOKENS_ENV];
+	savedTtl = process.env[TTL_ENV];
 });
 beforeEach(() => {
 	delete process.env[EMBED_TOKENS_ENV];
+	delete process.env[TTL_ENV];
 });
 afterAll(() => {
 	if (savedSwitch !== undefined) {
 		process.env[EMBED_TOKENS_ENV] = savedSwitch;
+	}
+	if (savedTtl !== undefined) {
+		process.env[TTL_ENV] = savedTtl;
 	}
 });
 
@@ -211,18 +219,48 @@ describe('EmbedSessionGuard', () => {
 		await expect(guard.canActivate(contextOf(me))).resolves.toBe(true);
 	});
 
-	it('reads the teams of its own organization only, named in where', async () => {
+	it('reads only the teams of its member in its organization, both named in where', async () => {
 		const { guard } = guardWith();
 		const headers = { authorization: `Bearer ${embedToken()}` };
 		const teams = (query: Record<string, unknown>) => contextOf({ method: 'GET', path: '/api/organization-team/me', query, headers });
+		const own = { organizationId: ORG, members: { employeeId: EMPLOYEE } };
 
 		await expect(guard.canActivate(teams({}))).rejects.toThrow(ForbiddenException);
-		await expect(guard.canActivate(teams({ where: { organizationId: OTHER_ORG } }))).rejects.toThrow(ForbiddenException);
+		await expect(guard.canActivate(teams({ where: { organizationId: ORG } }))).rejects.toThrow(ForbiddenException);
+		await expect(guard.canActivate(teams({ where: { ...own, organizationId: OTHER_ORG } }))).rejects.toThrow(ForbiddenException);
 		await expect(
-			guard.canActivate(teams({ where: { organizationId: ORG, members: { employeeId: '7a000000-0000-4000-8000-0000000000e2' } } }))
+			guard.canActivate(teams({ where: { ...own, members: { employeeId: '7a000000-0000-4000-8000-0000000000e2' } } }))
 		).rejects.toThrow(ForbiddenException);
-		await expect(guard.canActivate(teams({ where: { organizationId: ORG }, relations: ['members'] }))).rejects.toThrow(ForbiddenException);
-		await expect(guard.canActivate(teams({ where: { organizationId: ORG, tenantId: 'tenant' } }))).resolves.toBe(true);
+		await expect(guard.canActivate(teams({ where: { ...own, members: { employeeId: EMPLOYEE, role: 'x' } } }))).rejects.toThrow(
+			ForbiddenException
+		);
+		await expect(guard.canActivate(teams({ where: own, relations: ['members'] }))).rejects.toThrow(ForbiddenException);
+		await expect(guard.canActivate(teams({ where: { ...own, tenantId: 'tenant' } }))).resolves.toBe(true);
+	});
+
+	it('looks up the credential of a token this server signed only', async () => {
+		const { guard, isRevoked } = guardWith();
+		const forged = sign({ id: 'user', tenantId: 'tenant', organizationId: ORG, [EMBED_CREDENTIAL_CLAIM]: 'any', [EMBED_EMPLOYEE_CLAIM]: EMPLOYEE }, 'not-the-secret');
+		const expired = sign(
+			{ id: 'user', tenantId: 'tenant', organizationId: ORG, [EMBED_CREDENTIAL_CLAIM]: CREDENTIAL, [EMBED_EMPLOYEE_CLAIM]: EMPLOYEE, exp: Math.floor(Date.now() / 1000) - 60 },
+			environment.JWT_SECRET
+		);
+		for (const token of [forged, expired]) {
+			const request = { method: 'GET', path: '/api/user/me', headers: { authorization: `Bearer ${token}` } };
+			await expect(guard.canActivate(contextOf(request))).rejects.toThrow(UnauthorizedException);
+		}
+		expect(isRevoked).not.toHaveBeenCalled();
+	});
+
+	it('lets a bearer it cannot decode through to the JWT guard instead of failing the request', async () => {
+		const { guard } = guardWith();
+		const part = (value: string) => Buffer.from(value).toString('base64url');
+		// A header typed JWT over a payload that is not JSON: `jws` throws on it.
+		const undecodable = `${part('{"alg":"HS256","typ":"JWT"}')}.${part('not json')}.c2ln`;
+
+		expect(readEmbedClaims(`Bearer ${undecodable}`)).toBeNull();
+		const request = { method: 'GET', path: '/api/public/thing', headers: { authorization: `Bearer ${undecodable}` } };
+		await expect(guard.canActivate(contextOf(request))).resolves.toBe(true);
 	});
 
 	it('checks every place a request names an organization, a tenant or a member, each on its own', async () => {

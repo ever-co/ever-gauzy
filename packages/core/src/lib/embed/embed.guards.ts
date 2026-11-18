@@ -6,8 +6,15 @@ import {
 	NotFoundException,
 	UnauthorizedException
 } from '@nestjs/common';
+import { environment as env } from '@gauzy/config';
 import { EmbedCredentialService } from './embed-credential.service';
-import { EMBED_FORBIDDEN_TIMER_FIELDS, embedRouteOf, isWithinEmbedScope, readEmbedClaims } from './embed-session';
+import {
+	EMBED_FORBIDDEN_TIMER_FIELDS,
+	embedRouteOf,
+	isSignedBearerToken,
+	isWithinEmbedScope,
+	readEmbedClaims
+} from './embed-session';
 import { isEmbedEnabled } from './embed.utils';
 
 /** Makes the embed routes answer 404 while `GAUZY_EMBED_TOKENS_ENABLED` is off. */
@@ -63,6 +70,10 @@ export class EmbedSessionGuard implements CanActivate {
 			}
 		}
 
+		// This guard runs before the JWT guard: only a token this server signed has its credential looked up.
+		if (!isSignedBearerToken(request.headers?.authorization, env.JWT_SECRET)) {
+			throw new UnauthorizedException();
+		}
 		if (await this.embedCredentialService.isRevoked(claims.credentialId)) {
 			throw new UnauthorizedException();
 		}
