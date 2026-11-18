@@ -1,4 +1,4 @@
-import { Optional } from '@nestjs/common';
+import { Logger, Optional } from '@nestjs/common';
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import { Brackets, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
@@ -16,6 +16,7 @@ import { factOfUpdatedLog, TimeLogFactsService } from '../../time-log-facts.serv
 
 @CommandHandler(ScheduleTimeLogEntriesCommand)
 export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTimeLogEntriesCommand> {
+	private readonly logger = new Logger(ScheduleTimeLogEntriesHandler.name);
 	protected ormType: MultiORM = getORMType();
 
 	constructor(
@@ -207,9 +208,10 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 	 * The fact is built from the row as stored, read through TypeORM, and not from the entry as the pending read found
 	 * it: an end worked out before the stop is written apart from it (`updateStoppedAtUsing*`), and a log read through
 	 * MikroORM arrives without its scalar ids (tenant, organization, employee, project). It names a stop
-	 * (`time_log.stopped`) only when the row still ran when the stop wrote: in the transaction, it is read under the
-	 * row's lock, so a stop that closed the run since the pending read keeps the one stop fact, and this one is an
-	 * update.
+	 * (`time_log.stopped`) only when the row still ran when the stop wrote. In the transaction, the row is read under
+	 * its lock, and the stop is decided from that row: a stop that closed the run since the pending read keeps its end
+	 * and the one stop fact, and this one is an update. A read that only feeds the fact never stops the close: it is
+	 * made inside the fact's savepoint, or logged and passed over after the stop.
 	 *
 	 * @param timeLog - The time log entry to stop
 	 * @param stoppedAt - The end worked out for the entry, if any
@@ -221,19 +223,32 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 		}
 		const where = { id: timeLog.id };
 		if (!this.facts.appendsWithinWrites()) {
-			const before = await this.typeOrmTimeLogRepository.findOneBy(where);
-			await this.stopTimeLog(timeLog, stoppedAt);
-			const stopped = await this.typeOrmTimeLogRepository.findOneBy(where);
-			await this.facts.record(factOfUpdatedLog(Boolean(before?.isRunning)), stopped);
+			const before = await this.readForFact(where);
+			await this.stopTimeLog(before ?? timeLog, stoppedAt);
+			const stopped = await this.readForFact(where);
+			await this.facts.record(factOfUpdatedLog(Boolean((before ?? timeLog).isRunning)), stopped);
 			return;
 		}
 		await this.typeOrmTimeLogRepository.manager.transaction(async (manager) => {
 			const repository = manager.getRepository(TimeLog);
 			const before = await repository.findOne({ where, ...lockedForChange() });
-			await this.stopTimeLog(timeLog, stoppedAt, repository);
-			const stopped = await repository.findOneBy(where);
-			await this.facts.recordWithin(manager, factOfUpdatedLog(Boolean(before?.isRunning)), stopped);
+			await this.stopTimeLog(before ?? timeLog, stoppedAt, repository);
+			const fact = factOfUpdatedLog(Boolean((before ?? timeLog).isRunning));
+			await this.facts.recordWithin(manager, fact, (savepoint) => savepoint.findOne(TimeLog, { where }));
 		});
+	}
+
+	/**
+	 * The entry as stored, read through TypeORM for its fact where the fact follows the stop; null, logged, when it
+	 * cannot be read: the close goes on without it.
+	 */
+	private async readForFact(where: { id: ID }): Promise<TimeLog | null> {
+		try {
+			return await this.typeOrmTimeLogRepository.findOneBy(where);
+		} catch (error) {
+			this.logger.warn(`Time log ${where.id} could not be read for its fact: ${error?.message}`);
+			return null;
+		}
 	}
 
 	/**

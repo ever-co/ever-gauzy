@@ -285,7 +285,7 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])('ScheduleTimeLogEnt
  * ever-co/ever-gauzy#12071: the stop of a run left going, for the webhooks, commits with the stop where the outbox can
  * share its transaction (TypeORM), and is written right after it otherwise. The fact is built from the row as stored,
  * read through TypeORM: the end worked out before the stop is written apart from it, and a MikroORM read leaves the
- * scalar ids out.
+ * scalar ids out. A read that only feeds the fact never stops the close.
  */
 describe('ScheduleTimeLogEntriesHandler: the fact of a run it closes', () => {
 	/** The end the handler works out for a run of no slot started at 11:00: ten seconds after its start. */
@@ -311,11 +311,22 @@ describe('ScheduleTimeLogEntriesHandler: the fact of a run it closes', () => {
 			findOne: jest.fn(async ({ where }: { where: { id: string } }) => stored(where)),
 			findOneBy: jest.fn(stored)
 		};
-		const transactionManager = { getRepository: jest.fn(() => transactionRepository) };
+		const transactionManager = {
+			getRepository: jest.fn(() => transactionRepository),
+			findOne: jest.fn(async (_entity: unknown, { where }: { where: { id: string } }) => stored(where))
+		};
+		// The facts written: by name, whether in the stop's transaction, and the entry each carries (read back in the
+		// fact's savepoint when the handler hands a read)
+		const recorded: Array<{ name: string; within: boolean; entry: unknown }> = [];
 		const facts = {
 			appendsWithinWrites: () => appendsWithinWrites,
-			record: jest.fn(async () => undefined),
-			recordWithin: jest.fn(async () => undefined)
+			record: jest.fn(async (name: string, entry: unknown) => {
+				recorded.push({ name, within: false, entry });
+			}),
+			recordWithin: jest.fn(async (manager: unknown, name: string, entry: unknown) => {
+				const read = typeof entry === 'function' ? await entry(manager) : entry;
+				recorded.push({ name, within: manager === transactionManager, entry: read });
+			})
 		};
 		// A MikroORM read hands the log without its scalar ids (tenant, organization, employee)
 		const mikroOrm = Object.assign(mikroOrmRepository(table), {
@@ -330,10 +341,12 @@ describe('ScheduleTimeLogEntriesHandler: the fact of a run it closes', () => {
 						timeSlots: []
 					}))
 		});
+		const logger = { warn: jest.fn() };
 		const handler: ScheduleTimeLogEntriesHandler = Object.assign(
 			Object.create(ScheduleTimeLogEntriesHandler.prototype),
 			{
 				ormType,
+				logger,
 				typeOrmTimeLogRepository: Object.assign(repository, {
 					manager: { transaction: jest.fn(async (work: (m: unknown) => unknown) => work(transactionManager)) }
 				}),
@@ -341,18 +354,18 @@ describe('ScheduleTimeLogEntriesHandler: the fact of a run it closes', () => {
 				facts
 			}
 		);
-		return { handler, table, facts, repository, transactionManager, transactionRepository };
+		return { handler, table, recorded, logger, repository, transactionRepository };
 	};
 	const command = () => new ScheduleTimeLogEntriesCommand('employee-1', 'organization-1', 'tenant-1');
 	/** The run as stored once stopped, as its fact must carry it. */
-	const stoppedRun = () =>
+	const stoppedRun = (stoppedAt: Date = WORKED_OUT_END) =>
 		expect.objectContaining({
 			id: 'log-1',
 			tenantId: 'tenant-1',
 			organizationId: 'organization-1',
 			employeeId: 'employee-1',
 			isRunning: false,
-			stoppedAt: WORKED_OUT_END
+			stoppedAt
 		});
 
 	beforeEach(() => {
@@ -362,10 +375,7 @@ describe('ScheduleTimeLogEntriesHandler: the fact of a run it closes', () => {
 	afterEach(() => jest.restoreAllMocks());
 
 	it('writes time_log.stopped in the transaction of the stop under TypeORM, with the row as stored', async () => {
-		const { handler, table, facts, repository, transactionManager, transactionRepository } = setup(
-			MultiORMEnum.TypeORM,
-			true
-		);
+		const { handler, table, recorded, repository, transactionRepository } = setup(MultiORMEnum.TypeORM, true);
 
 		await handler.execute(command());
 
@@ -374,24 +384,20 @@ describe('ScheduleTimeLogEntriesHandler: the fact of a run it closes', () => {
 		expect(transactionRepository.save).toHaveBeenCalledWith({ id: 'log-1', isRunning: false });
 		expect(repository.save).toHaveBeenCalledWith({ id: 'log-1', stoppedAt: WORKED_OUT_END });
 		expect(repository.save).not.toHaveBeenCalledWith(expect.objectContaining({ isRunning: false }));
-		expect(facts.recordWithin).toHaveBeenCalledTimes(1);
-		expect(facts.recordWithin).toHaveBeenCalledWith(transactionManager, 'time_log.stopped', stoppedRun());
-		expect(facts.record).not.toHaveBeenCalled();
+		expect(recorded).toEqual([{ name: 'time_log.stopped', within: true, entry: stoppedRun() }]);
 	});
 
 	it('writes it right after the stop under MikroORM, with the ids and the end the row stores', async () => {
-		const { handler, table, facts } = setup(MultiORMEnum.MikroORM, false);
+		const { handler, table, recorded } = setup(MultiORMEnum.MikroORM, false);
 
 		await handler.execute(command());
 
 		expect(table[0]).toMatchObject({ id: 'log-1', isRunning: false });
-		expect(facts.record).toHaveBeenCalledTimes(1);
-		expect(facts.record).toHaveBeenCalledWith('time_log.stopped', stoppedRun());
-		expect(facts.recordWithin).not.toHaveBeenCalled();
+		expect(recorded).toEqual([{ name: 'time_log.stopped', within: false, entry: stoppedRun() }]);
 	});
 
 	it('tells of an update, not a second stop, when another stop closed the run since the pending read', async () => {
-		const { handler, table, facts, transactionManager, transactionRepository } = setup(MultiORMEnum.TypeORM, true);
+		const { handler, table, recorded, transactionRepository } = setup(MultiORMEnum.TypeORM, true);
 		// The other stop commits before this one takes the row's lock
 		transactionRepository.findOne.mockImplementationOnce(async ({ where }: { where: { id: string } }) => {
 			write(table, { id: where.id, isRunning: false });
@@ -400,11 +406,36 @@ describe('ScheduleTimeLogEntriesHandler: the fact of a run it closes', () => {
 
 		await handler.execute(command());
 
-		expect(facts.recordWithin).toHaveBeenCalledTimes(1);
-		expect(facts.recordWithin).toHaveBeenCalledWith(
-			transactionManager,
-			'time_log.updated',
-			expect.objectContaining({ id: 'log-1', isRunning: false })
-		);
+		expect(recorded).toEqual([
+			{ name: 'time_log.updated', within: true, entry: expect.objectContaining({ id: 'log-1', isRunning: false }) }
+		]);
+	});
+
+	it('keeps the end of a stop that closed the run before the lock, as the locked row holds it', async () => {
+		const { handler, table, recorded, transactionRepository } = setup(MultiORMEnum.TypeORM, true);
+		// A run read with no end, started five minutes ago: the close works out no end of its own
+		Object.assign(table[0], { startedAt: new Date('2026-11-12T11:25:00.000Z'), stoppedAt: null });
+		const otherStopsEnd = new Date('2026-11-12T11:28:00.000Z');
+		transactionRepository.findOne.mockImplementationOnce(async ({ where }: { where: { id: string } }) => {
+			write(table, { id: where.id, isRunning: false, stoppedAt: otherStopsEnd });
+			return { ...table.find((row) => row.id === where.id) };
+		});
+
+		await handler.execute(command());
+
+		// Decided from the locked row, the stop writes no end over the other stop's
+		expect(transactionRepository.save).toHaveBeenCalledWith({ id: 'log-1', isRunning: false });
+		expect(table[0].stoppedAt).toEqual(otherStopsEnd);
+		expect(recorded).toEqual([{ name: 'time_log.updated', within: true, entry: stoppedRun(otherStopsEnd) }]);
+	});
+
+	it('still closes the run when the row cannot be read for its fact', async () => {
+		const { handler, table, logger, repository } = setup(MultiORMEnum.MikroORM, false);
+		repository.findOneBy.mockRejectedValue(new Error('The read failed'));
+
+		await expect(handler.execute(command())).resolves.toBeUndefined();
+
+		expect(table[0]).toMatchObject({ id: 'log-1', isRunning: false });
+		expect(logger.warn).toHaveBeenCalled();
 	});
 });
