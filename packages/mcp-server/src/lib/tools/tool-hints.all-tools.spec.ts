@@ -26,13 +26,19 @@ const DESTRUCTIVE_WORDS = new Set([
 ]);
 const READ_PREFIX = /^(get|list|count|search)_/;
 const SENDS_OUTSIDE = ['invite_organization_contact', 'send_invoice_email'];
+/** A start or a stop of the timer ends the run going and cuts the entries that run overlaps. */
+const ENDS_THE_RUN_GOING = ['start_timer', 'stop_timer'];
 
 const wordsOf = (name: string) => name.split('_');
 const saysDestructive = (name: string) => wordsOf(name).some((word) => DESTRUCTIVE_WORDS.has(word));
+const isDestructive = (tool: Tool) => tool.annotations?.destructiveHint === true;
 
 /** The names of the tools whose hints fail `check`. */
 const failing = (tools: Tool[], check: (tool: Tool) => boolean) =>
 	tools.filter((tool) => !check(tool)).map((tool) => tool.name);
+
+/** The tools of these names. */
+const named = (tools: Tool[], names: string[]) => tools.filter((tool) => names.includes(tool.name));
 
 /** Whether each hint a client reads for the tool is stated, the write hints wherever the tool writes. */
 function declaresItsHints({ annotations }: Tool): boolean {
@@ -94,6 +100,13 @@ describe('the hints every registered tool declares', () => {
 		expect(destructiveByName.length).toBeGreaterThan(30);
 		expect(failing(destructiveByName, (tool) => tool.annotations?.destructiveHint === true)).toEqual([]);
 		expect(failing(destructiveByName, (tool) => tool.annotations?.readOnlyHint === false)).toEqual([]);
+	});
+
+	it('marks destructive the start and the stop of the timer, which end the run going', () => {
+		const timer = named(tools, ENDS_THE_RUN_GOING);
+
+		expect(timer).toHaveLength(ENDS_THE_RUN_GOING.length);
+		expect(failing(timer, isDestructive)).toEqual([]);
 	});
 
 	it('marks read-only every get, list, count and search tool', () => {

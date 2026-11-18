@@ -128,7 +128,7 @@ export const registerTimerTools = (server: McpServer) => {
 				throw new Error(`Failed to start timer: ${error instanceof Error ? error.message : 'Unknown error'}`);
 			}
 		},
-		TOOL_HINTS.write
+		TOOL_HINTS.destructive
 	);
 
 	// Stop timer tool
@@ -186,6 +186,6 @@ export const registerTimerTools = (server: McpServer) => {
 				throw new Error(`Failed to stop timer: ${error instanceof Error ? error.message : 'Unknown error'}`);
 			}
 		},
-		TOOL_HINTS.write
+		TOOL_HINTS.destructive
 	);
 };

@@ -10,7 +10,7 @@ import { ToolAnnotations } from '@modelcontextprotocol/sdk/types.js';
 export const TOOL_HINTS = Object.freeze({
 	/** Reads: the workspace is left as it was. */
 	readOnly: Object.freeze<ToolAnnotations>({ readOnlyHint: true, openWorldHint: false }),
-	/** Writes that keep what exists: a creation, an addition to a list, a timer started or stopped. */
+	/** Writes that keep what exists: a creation, an addition to a list. */
 	write: Object.freeze<ToolAnnotations>({
 		readOnlyHint: false,
 		destructiveHint: false,
@@ -24,7 +24,10 @@ export const TOOL_HINTS = Object.freeze({
 		idempotentHint: true,
 		openWorldHint: false
 	}),
-	/** Writes that replace or settle what exists: an update, an approval, a payment processed or refunded. */
+	/**
+	 * Writes that replace, end or settle what exists: an update, a timer started or stopped (either ends the run going
+	 * and cuts the entries it overlaps), an approval, a payment processed or refunded.
+	 */
 	destructive: Object.freeze<ToolAnnotations>({
 		readOnlyHint: false,
 		destructiveHint: true,
