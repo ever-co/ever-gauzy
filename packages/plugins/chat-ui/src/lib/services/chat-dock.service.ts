@@ -1,7 +1,8 @@
 import { Injectable, inject, signal } from '@angular/core';
+import { NavigationEnd, Router } from '@angular/router';
 import { NbComponentPortal, NbOverlayRef, NbOverlayService, NbPositionBuilderService } from '@nebular/theme';
 import { Subscription } from 'rxjs';
-import { skip } from 'rxjs/operators';
+import { filter, skip } from 'rxjs/operators';
 import { ChatPerson } from '../chat-ui.helpers';
 import { ChatAvailabilityService } from './chat-availability.service';
 
@@ -9,21 +10,36 @@ import { ChatAvailabilityService } from './chat-availability.service';
 export const CHAT_DOCK_EDGE = '1.5rem';
 
 /**
+ * A URL's page: its path, without the query, the fragment, or each segment's matrix parameters — every segment kept,
+ * so a tab switch (a query or matrix change) stays on the page and another record (a later segment) does not.
+ */
+export function pageOf(url: string): string {
+	return url
+		.split(/[?#]/)[0]
+		.split('/')
+		.map((segment) => segment.split(';')[0])
+		.join('/');
+}
+
+/**
  * The docked chat window: one direct conversation in a small window at the bottom right of the screen, opened from
- * a person's page. It lives in an overlay of the app, not in the page that opened it, so it stays while the user
- * moves through the app, until they close it — or until the chat's scope changes (another user, another
- * organization): a conversation belongs to the scope it was opened in, as on the chat page, so the window closes
- * then and its requests end with it.
+ * a person's page. It lives in an overlay of the app and belongs to the page it was opened on: leaving that page
+ * closes it, as the user closing it does. It also closes when the chat's scope changes (another user, another
+ * organization): a conversation belongs to the scope it was opened in, as on the chat page, so its requests end
+ * with it.
  */
 @Injectable({ providedIn: 'root' })
 export class ChatDockService {
 	private readonly overlay = inject(NbOverlayService);
 	private readonly positions = inject(NbPositionBuilderService);
+	private readonly router = inject(Router);
 	private readonly scope$ = inject(ChatAvailabilityService).scope$;
 
 	private ref: NbOverlayRef | null = null;
 	/** Watches the scope while the window is open. */
 	private scopeWatch: Subscription | null = null;
+	/** Watches the navigation while the window is open: another page closes it. */
+	private pageWatch: Subscription | null = null;
 	/** Counts up at every open and close, so an open that was waiting for the window's code is dropped by a later close. */
 	private token = 0;
 
@@ -33,6 +49,14 @@ export class ChatDockService {
 	/** Opens the window with this person; when it is already open, it turns to them. */
 	async open(person: ChatPerson): Promise<void> {
 		this.person.set(person);
+		// The page it is opened (or turned to someone else) on is the one it belongs to.
+		const page = pageOf(this.router.url);
+		this.pageWatch?.unsubscribe();
+		this.pageWatch = this.router.events
+			.pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
+			.subscribe((event) => {
+				if (pageOf(event.urlAfterRedirects) !== page) this.close();
+			});
 		if (this.ref) return;
 		const token = (this.token += 1);
 		// The scope the window is opened in is the current one (replayed): every later one closes it.
@@ -53,6 +77,8 @@ export class ChatDockService {
 		this.token += 1;
 		this.scopeWatch?.unsubscribe();
 		this.scopeWatch = null;
+		this.pageWatch?.unsubscribe();
+		this.pageWatch = null;
 		this.person.set(null);
 		this.ref?.dispose();
 		this.ref = null;
