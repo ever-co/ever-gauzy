@@ -11,6 +11,7 @@ import { ScheduleTimeLogEntriesCommand } from '../schedule-time-log-entries.comm
 import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.repository';
 import { MikroOrmTimeLogRepository } from '../../repository/mikro-orm-time-log.repository';
 import { breakEnd } from '../../break-rules';
+import { lockedForChange } from '../../time-log-history.writer';
 import { factOfUpdatedLog, TimeLogFactsService } from '../../time-log-facts.service';
 
 @CommandHandler(ScheduleTimeLogEntriesCommand)
@@ -203,20 +204,35 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 	 * Stops a pending time log entry with its fact (for the webhooks): in one transaction where the outbox can share
 	 * it, the fact right after the stop otherwise, and the stop alone for a handler built without the facts.
 	 *
+	 * The fact is built from the row as stored, read through TypeORM, and not from the entry as the pending read found
+	 * it: an end worked out before the stop is written apart from it (`updateStoppedAtUsing*`), and a log read through
+	 * MikroORM arrives without its scalar ids (tenant, organization, employee, project). It names a stop
+	 * (`time_log.stopped`) only when the row still ran when the stop wrote: in the transaction, it is read under the
+	 * row's lock, so a stop that closed the run since the pending read keeps the one stop fact, and this one is an
+	 * update.
+	 *
 	 * @param timeLog - The time log entry to stop
 	 * @param stoppedAt - The end worked out for the entry, if any
 	 */
 	private async stopTimeLogWithFact(timeLog: ITimeLog, stoppedAt?: Date): Promise<void> {
-		const fact = factOfUpdatedLog(Boolean(timeLog.isRunning));
-		const appendsFactWithin = this.facts?.appendsWithinWrites() ?? false;
-		if (!appendsFactWithin) {
-			const closed = await this.stopTimeLog(timeLog, stoppedAt);
-			await this.facts?.record(fact, { ...timeLog, ...closed });
+		if (!this.facts) {
+			await this.stopTimeLog(timeLog, stoppedAt);
+			return;
+		}
+		const where = { id: timeLog.id };
+		if (!this.facts.appendsWithinWrites()) {
+			const before = await this.typeOrmTimeLogRepository.findOneBy(where);
+			await this.stopTimeLog(timeLog, stoppedAt);
+			const stopped = await this.typeOrmTimeLogRepository.findOneBy(where);
+			await this.facts.record(factOfUpdatedLog(Boolean(before?.isRunning)), stopped);
 			return;
 		}
 		await this.typeOrmTimeLogRepository.manager.transaction(async (manager) => {
-			const closed = await this.stopTimeLog(timeLog, stoppedAt, manager.getRepository(TimeLog));
-			await this.facts.recordWithin(manager, fact, { ...timeLog, ...closed });
+			const repository = manager.getRepository(TimeLog);
+			const before = await repository.findOne({ where, ...lockedForChange() });
+			await this.stopTimeLog(timeLog, stoppedAt, repository);
+			const stopped = await repository.findOneBy(where);
+			await this.facts.recordWithin(manager, factOfUpdatedLog(Boolean(before?.isRunning)), stopped);
 		});
 	}
 

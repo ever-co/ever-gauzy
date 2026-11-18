@@ -283,18 +283,53 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])('ScheduleTimeLogEnt
 
 /**
  * ever-co/ever-gauzy#12071: the stop of a run left going, for the webhooks, commits with the stop where the outbox can
- * share its transaction (TypeORM), and is written right after it otherwise.
+ * share its transaction (TypeORM), and is written right after it otherwise. The fact is built from the row as stored,
+ * read through TypeORM: the end worked out before the stop is written apart from it, and a MikroORM read leaves the
+ * scalar ids out.
  */
 describe('ScheduleTimeLogEntriesHandler: the fact of a run it closes', () => {
+	/** The end the handler works out for a run of no slot started at 11:00: ten seconds after its start. */
+	const WORKED_OUT_END = new Date('2026-11-12T11:00:10.000Z');
+
 	const setup = (ormType: MultiORMEnum, appendsWithinWrites: boolean) => {
 		const table = runningLogs();
-		const repository = typeOrmRepository(table);
-		const transactionManager = { getRepository: () => repository };
+		/** The row as a TypeORM read by id answers it. */
+		const stored = async (where: { id: string }) => {
+			const row = table.find((candidate) => candidate.id === where.id);
+			return row ? { ...row } : null;
+		};
+		/** A save of a partial entity, which answers what it was given, as TypeORM's does. */
+		const saveOf = () =>
+			jest.fn(async (partial: Partial<TimeLogRow> & { id: string }) => {
+				write(table, partial);
+				return { ...partial };
+			});
+		const repository = Object.assign(typeOrmRepository(table), { save: saveOf(), findOneBy: jest.fn(stored) });
+		// The transaction's own repository, over the same rows, with spies of its own
+		const transactionRepository = {
+			save: saveOf(),
+			findOne: jest.fn(async ({ where }: { where: { id: string } }) => stored(where)),
+			findOneBy: jest.fn(stored)
+		};
+		const transactionManager = { getRepository: jest.fn(() => transactionRepository) };
 		const facts = {
 			appendsWithinWrites: () => appendsWithinWrites,
 			record: jest.fn(async () => undefined),
 			recordWithin: jest.fn(async () => undefined)
 		};
+		// A MikroORM read hands the log without its scalar ids (tenant, organization, employee)
+		const mikroOrm = Object.assign(mikroOrmRepository(table), {
+			find: async ({ id }: { id: { $in: string[] } }) =>
+				table
+					.filter((row) => id.$in.includes(row.id))
+					.map((row) => ({
+						id: row.id,
+						isRunning: row.isRunning,
+						startedAt: row.startedAt,
+						stoppedAt: row.stoppedAt,
+						timeSlots: []
+					}))
+		});
 		const handler: ScheduleTimeLogEntriesHandler = Object.assign(
 			Object.create(ScheduleTimeLogEntriesHandler.prototype),
 			{
@@ -302,13 +337,23 @@ describe('ScheduleTimeLogEntriesHandler: the fact of a run it closes', () => {
 				typeOrmTimeLogRepository: Object.assign(repository, {
 					manager: { transaction: jest.fn(async (work: (m: unknown) => unknown) => work(transactionManager)) }
 				}),
-				mikroOrmTimeLogRepository: mikroOrmRepository(table),
+				mikroOrmTimeLogRepository: mikroOrm,
 				facts
 			}
 		);
-		return { handler, table, facts, transactionManager };
+		return { handler, table, facts, repository, transactionManager, transactionRepository };
 	};
 	const command = () => new ScheduleTimeLogEntriesCommand('employee-1', 'organization-1', 'tenant-1');
+	/** The run as stored once stopped, as its fact must carry it. */
+	const stoppedRun = () =>
+		expect.objectContaining({
+			id: 'log-1',
+			tenantId: 'tenant-1',
+			organizationId: 'organization-1',
+			employeeId: 'employee-1',
+			isRunning: false,
+			stoppedAt: WORKED_OUT_END
+		});
 
 	beforeEach(() => {
 		jest.spyOn(Date, 'now').mockReturnValue(NOW.getTime());
@@ -316,30 +361,50 @@ describe('ScheduleTimeLogEntriesHandler: the fact of a run it closes', () => {
 	});
 	afterEach(() => jest.restoreAllMocks());
 
-	it('writes time_log.stopped in the transaction of the stop under TypeORM', async () => {
-		const { handler, table, facts, transactionManager } = setup(MultiORMEnum.TypeORM, true);
+	it('writes time_log.stopped in the transaction of the stop under TypeORM, with the row as stored', async () => {
+		const { handler, table, facts, repository, transactionManager, transactionRepository } = setup(
+			MultiORMEnum.TypeORM,
+			true
+		);
 
 		await handler.execute(command());
 
-		expect(table[0]).toMatchObject({ id: 'log-1', isRunning: false });
-		expect(facts.recordWithin).toHaveBeenCalledWith(
-			transactionManager,
-			'time_log.stopped',
-			expect.objectContaining({ id: 'log-1', isRunning: false })
-		);
+		expect(table[0]).toMatchObject({ id: 'log-1', isRunning: false, stoppedAt: WORKED_OUT_END });
+		// The stop goes through the transaction's repository, the end worked out before it through the handler's own
+		expect(transactionRepository.save).toHaveBeenCalledWith({ id: 'log-1', isRunning: false });
+		expect(repository.save).toHaveBeenCalledWith({ id: 'log-1', stoppedAt: WORKED_OUT_END });
+		expect(repository.save).not.toHaveBeenCalledWith(expect.objectContaining({ isRunning: false }));
+		expect(facts.recordWithin).toHaveBeenCalledTimes(1);
+		expect(facts.recordWithin).toHaveBeenCalledWith(transactionManager, 'time_log.stopped', stoppedRun());
 		expect(facts.record).not.toHaveBeenCalled();
 	});
 
-	it('writes it right after the stop where the outbox cannot share its transaction', async () => {
+	it('writes it right after the stop under MikroORM, with the ids and the end the row stores', async () => {
 		const { handler, table, facts } = setup(MultiORMEnum.MikroORM, false);
 
 		await handler.execute(command());
 
 		expect(table[0]).toMatchObject({ id: 'log-1', isRunning: false });
-		expect(facts.record).toHaveBeenCalledWith(
-			'time_log.stopped',
+		expect(facts.record).toHaveBeenCalledTimes(1);
+		expect(facts.record).toHaveBeenCalledWith('time_log.stopped', stoppedRun());
+		expect(facts.recordWithin).not.toHaveBeenCalled();
+	});
+
+	it('tells of an update, not a second stop, when another stop closed the run since the pending read', async () => {
+		const { handler, table, facts, transactionManager, transactionRepository } = setup(MultiORMEnum.TypeORM, true);
+		// The other stop commits before this one takes the row's lock
+		transactionRepository.findOne.mockImplementationOnce(async ({ where }: { where: { id: string } }) => {
+			write(table, { id: where.id, isRunning: false });
+			return { ...table.find((row) => row.id === where.id) };
+		});
+
+		await handler.execute(command());
+
+		expect(facts.recordWithin).toHaveBeenCalledTimes(1);
+		expect(facts.recordWithin).toHaveBeenCalledWith(
+			transactionManager,
+			'time_log.updated',
 			expect.objectContaining({ id: 'log-1', isRunning: false })
 		);
-		expect(facts.recordWithin).not.toHaveBeenCalled();
 	});
 });
