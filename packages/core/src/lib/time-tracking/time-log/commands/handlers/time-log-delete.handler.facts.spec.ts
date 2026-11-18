@@ -28,7 +28,9 @@ describe('TimeLogDeleteHandler: the facts of a deletion', () => {
 			softDelete: jest.fn(async () => ({ affected: 1 })),
 			find: jest.fn(async () => [stored])
 		};
-		const transactionManager = { getRepository: jest.fn(() => transactionRepository) };
+		const transactionManager: Record<string, jest.Mock> = { getRepository: jest.fn(() => transactionRepository) };
+		// A savepoint of it, on the same rows
+		transactionManager.transaction = jest.fn(async (work: (manager: unknown) => unknown) => work(transactionManager));
 		// The deletion's transaction: its work, then its commit
 		const repository = {
 			softDelete: jest.fn(async () => ({ affected: 1 })),
@@ -118,6 +120,18 @@ describe('TimeLogDeleteHandler: the facts of a deletion', () => {
 
 		expect(facts.record).not.toHaveBeenCalled();
 		expect(facts.recordWithin).not.toHaveBeenCalled();
+	});
+
+	it('still deletes in its transaction when the entries cannot be read for their facts alone', async () => {
+		const { handler, transactionRepository, facts } = setup(true);
+		transactionRepository.find.mockRejectedValueOnce(new Error('The read failed'));
+		const warn = jest.spyOn((handler as any).logger, 'warn').mockImplementation(() => undefined);
+
+		await expect(handler.execute(new TimeLogDeleteCommand(handed, false))).resolves.toEqual({ affected: 1 });
+
+		expect(transactionRepository.softDelete).toHaveBeenCalledTimes(1);
+		expect(facts.recordWithin).not.toHaveBeenCalled();
+		expect(warn).toHaveBeenCalledTimes(1);
 	});
 
 	it('still deletes when the entries cannot be read for their facts', async () => {

@@ -36,7 +36,7 @@ import { writeTimeLogTags } from '../../time-log-tags';
 import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.repository';
 import { TypeOrmTimeSlotRepository } from '../../../time-slot/repository/type-orm-time-slot.repository';
 import { MikroOrmTimeSlotRepository } from '../../../time-slot/repository/mikro-orm-time-slot.repository';
-import { factOfUpdatedLog, TimeLogFactsService } from '../../time-log-facts.service';
+import { factOfUpdatedLog, TimeLogFactEntryReader, TimeLogFactsService } from '../../time-log-facts.service';
 
 /**
  * Input keys that decide WHERE a time log lives. They are never taken from the input.
@@ -1020,10 +1020,12 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 			}
 			return this.inTransaction(async (manager) => {
 				const result = await write(manager.getRepository(TimeLog));
-				// The entry as this write leaves it, read back in its transaction: the first read was taken under no
-				// lock, and an edit written since it would otherwise be told of as it was before
-				await this.recordFactOfWrite(manager, fact, result, () =>
-					manager.findOne(TimeLog, { where: { id: stored.id, tenantId: stored.tenantId }, withDeleted: true })
+				// The entry as this write leaves it, read back in its transaction, inside the fact's savepoint so that
+				// a read that fails never fails the edit: the first read was taken under no lock, and an edit written
+				// since it would otherwise be told of as it was before
+				const where = { id: stored.id, tenantId: stored.tenantId };
+				await this.recordFactOfWrite(manager, fact, result, (savepoint) =>
+					savepoint.findOne(TimeLog, { where, withDeleted: true })
 				);
 				return result;
 			});
@@ -1057,7 +1059,7 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 			const edited = { ...current, ...definedFieldsOf(written) } as ITimeLog;
 			if (appendsFact) {
 				// Read under the entry's lock, `current` with what the write stored is the row as it leaves it
-				await this.recordFactOfWrite(manager, fact, result, async () => edited);
+				await this.recordFactOfWrite(manager, fact, result, edited);
 			}
 			if (!recordsHistory) {
 				return result;
@@ -1081,19 +1083,19 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 	 * Appends an edit's fact in its write's transaction, unless the write changed no row: the stop an earlier try of
 	 * the same stop already wrote, with its fact.
 	 *
-	 * @param entryAfterWrite - The entry as the write leaves it, asked for only when the write changed a row.
+	 * @param entry - The entry as the write leaves it, or how to read it back (see `TimeLogFactsService.recordWithin`).
 	 */
 	private async recordFactOfWrite(
 		manager: EntityManager,
 		fact: string,
 		result: unknown,
-		entryAfterWrite: () => Promise<ITimeLog | null>
+		entry: ITimeLog | TimeLogFactEntryReader
 	): Promise<void> {
 		const changedNoRow = (result as UpdateResult | undefined)?.affected === 0;
 		if (changedNoRow) {
 			return;
 		}
-		await this.facts.recordWithin(manager, fact, await entryAfterWrite());
+		await this.facts.recordWithin(manager, fact, entry);
 	}
 
 	/**

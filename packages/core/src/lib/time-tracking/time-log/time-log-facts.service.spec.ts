@@ -147,6 +147,29 @@ describe('TimeLogFactsService (#12071)', () => {
 		expect(dataSource.manager.transaction).not.toHaveBeenCalled();
 	});
 
+	it('reads the entry inside the savepoint when handed a read, and a read that fails never fails the write', async () => {
+		const { service, appended } = createService();
+		const warn = jest.spyOn((service as any).logger, 'warn').mockImplementation(() => undefined);
+		const savepoint = { name: 'savepoint' };
+		const writeTransaction = { transaction: jest.fn(async (work: (m: unknown) => unknown) => work(savepoint)) };
+		const read = jest.fn(async (manager: unknown) => (manager === savepoint ? ENTRY : null));
+
+		await service.recordWithin(writeTransaction as any, 'time_log.updated', read as any);
+
+		expect(read).toHaveBeenCalledWith(savepoint);
+		expect(appended).toHaveLength(1);
+		expect(appended[0].input).toMatchObject({ name: 'time_log.updated', aggregateId: 'log-1' });
+
+		const failing = jest.fn(async () => {
+			throw new Error('The read failed');
+		});
+		await expect(
+			service.recordWithin(writeTransaction as any, 'time_log.updated', failing as any)
+		).resolves.toBeUndefined();
+		expect(appended).toHaveLength(1);
+		expect(warn).toHaveBeenCalledTimes(1);
+	});
+
 	it('never fails the write when the outbox refuses the fact inside its transaction', async () => {
 		const { service } = createService({ failing: true });
 		const warn = jest.spyOn((service as any).logger, 'warn').mockImplementation(() => undefined);

@@ -246,10 +246,15 @@ function createRun(source: TimeLogSourceEnum, { factsWithinWrites = false } = {}
 			factsInWrite.push(false);
 			factEntries.push(entryOf(entry));
 		},
-		recordWithin: async (manager: unknown, name: string, entry: typeof run) => {
+		// Handed the entry, or how to read it back in the fact's savepoint (here, the write's transaction)
+		recordWithin: async (
+			manager: typeof writeTransaction,
+			name: string,
+			entry: typeof run | ((savepoint: typeof writeTransaction) => Promise<typeof run>)
+		) => {
 			facts.push(name);
 			factsInWrite.push(manager === writeTransaction);
-			factEntries.push(entryOf(entry));
+			factEntries.push(entryOf(typeof entry === 'function' ? await entry(manager) : entry));
 		}
 	};
 	const handler = new TimeLogUpdateHandler(

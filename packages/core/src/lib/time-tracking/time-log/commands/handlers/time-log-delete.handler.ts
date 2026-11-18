@@ -1,6 +1,6 @@
 import { Logger, Optional } from '@nestjs/common';
 import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
-import { DataSource, In, DeleteResult, Repository, UpdateResult } from 'typeorm';
+import { DataSource, DeleteResult, EntityManager, In, Repository, UpdateResult } from 'typeorm';
 import { pluck } from 'underscore';
 import { ID } from '@gauzy/contracts';
 import { TimesheetRecalculateCommand } from './../../../timesheet/commands/timesheet-recalculate.command';
@@ -158,7 +158,9 @@ export class TimeLogDeleteHandler implements ICommandHandler<TimeLogDeleteComman
 	 * either, the deletion runs alone, as before.
 	 *
 	 * In a transaction, the entries are read under their rows' locks: a deletion of the same entries that went through
-	 * meanwhile is waited for, and what it took is neither recorded in the history nor told of a second time.
+	 * meanwhile is waited for, and what it took is neither recorded in the history nor told of a second time. The
+	 * history needs that read; without history it only feeds the facts, so it is made in a savepoint, and a read that
+	 * fails is logged and the entries are deleted without their facts.
 	 *
 	 * @param timeLogs - The time logs, as they were before the deletion.
 	 * @param forceDelete - Hard delete instead of soft delete.
@@ -177,7 +179,9 @@ export class TimeLogDeleteHandler implements ICommandHandler<TimeLogDeleteComman
 		}
 		const { result, deleted } = await this.dataSource.transaction(async (manager) => {
 			const repository = manager.getRepository(TimeLog);
-			const stored = await this.readStored(repository, timeLogs, true);
+			const stored = recordsHistory
+				? await this.readStored(repository, timeLogs, true)
+				: await this.readStoredForFacts(manager, timeLogs);
 			const result = await this.deleteTimeLogs(timeLogs, forceDelete, repository);
 			if (recordsHistory) {
 				const records = stored.map((timeLog) => ({
@@ -224,6 +228,23 @@ export class TimeLogDeleteHandler implements ICommandHandler<TimeLogDeleteComman
 		const result = await this.deleteTimeLogs(timeLogs, forceDelete);
 		await this.recordFacts(deletedEntries);
 		return result;
+	}
+
+	/**
+	 * The entries read under their rows' locks for their facts alone, in a savepoint of the deletion's transaction: a
+	 * read that fails is undone alone and logged, and the deletion goes on without the facts.
+	 */
+	private async readStoredForFacts(manager: EntityManager, timeLogs: TimeLog[]): Promise<TimeLog[]> {
+		try {
+			return await manager.transaction((savepoint) =>
+				this.readStored(savepoint.getRepository(TimeLog), timeLogs, true)
+			);
+		} catch (error) {
+			this.logger.warn(
+				`The time_log.deleted facts were not written, as the entries could not be read: ${error?.message}`
+			);
+			return [];
+		}
 	}
 
 	/** Writes each deleted entry's fact right after its deletion (see `TimeLogFactsService.record`). */

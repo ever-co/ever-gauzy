@@ -34,6 +34,9 @@ export const TIME_LOG_STREAMED_EVENTS: readonly string[] = [
 /** The aggregate every `time_log.*` outbox row is written under. */
 export const TIME_LOG_AGGREGATE_TYPE = 'TIME_LOG';
 
+/** Reads a time entry as its write left it, through the manager it is handed (see `recordWithin`). */
+export type TimeLogFactEntryReader = (manager: EntityManager) => Promise<Partial<ITimeLog> | null | undefined>;
+
 /**
  * What a `time_log.*` fact carries: the entry's ids and times, never its description or the reason given for an edit.
  */
@@ -96,20 +99,32 @@ export class TimeLogFactsService implements OnModuleInit {
 	 *
 	 * @param manager The manager of the write's open TypeORM transaction.
 	 * @param name One of the `time_log.*` names above.
-	 * @param timeLog The entry as the write left it, with its tenant and organization.
+	 * @param timeLog The entry as the write left it, with its tenant and organization; or how to read it, which is
+	 * read inside the savepoint, so that a read that fails is undone and logged with the fact, and never fails the
+	 * write either.
 	 */
 	async recordWithin(
 		manager: EntityManager,
 		name: string,
-		timeLog: Partial<ITimeLog> | null | undefined
+		timeLog: Partial<ITimeLog> | null | undefined | TimeLogFactEntryReader
 	): Promise<void> {
-		if (!this.isScoped(name, timeLog)) {
+		const read: TimeLogFactEntryReader | undefined = typeof timeLog === 'function' ? timeLog : undefined;
+		let entry = typeof timeLog === 'function' ? undefined : timeLog;
+		if (!read && !this.isScoped(name, entry)) {
 			return;
 		}
 		try {
-			await manager.transaction((savepoint) => this.outbox.append(savepoint, factInput(name, timeLog)));
+			await manager.transaction(async (savepoint) => {
+				if (read) {
+					entry = await read(savepoint);
+					if (!this.isScoped(name, entry)) {
+						return;
+					}
+				}
+				await this.outbox.append(savepoint, factInput(name, entry));
+			});
 		} catch (error) {
-			this.warnNotWritten(name, timeLog, error);
+			this.warnNotWritten(name, entry, error);
 		}
 	}
 
@@ -150,8 +165,9 @@ export class TimeLogFactsService implements OnModuleInit {
 		return true;
 	}
 
-	private warnNotWritten(name: string, timeLog: Partial<ITimeLog>, error: unknown): void {
-		this.logger.warn(`The ${name} fact of time entry ${timeLog.id} was not written: ${(error as Error)?.message}`);
+	private warnNotWritten(name: string, timeLog: Partial<ITimeLog> | null | undefined, error: unknown): void {
+		const entry = timeLog?.id ?? '(not read)';
+		this.logger.warn(`The ${name} fact of time entry ${entry} was not written: ${(error as Error)?.message}`);
 	}
 
 	/**
