@@ -128,6 +128,12 @@ const core = {
 	},
 	OrganizationProjectCreateCommand: class {},
 	createSsrfSafeHttpsAgent: () => undefined,
+	/**
+	 * The sync loop, the inbound applier and the outbound pusher run each piece of work in MikroORM's own request
+	 * context (`runInMikroOrmContext`, which runs the work as it is when no MikroORM instance is injected). This suite
+	 * runs on TypeORM only, so the work runs as it is.
+	 */
+	runInMikroOrmContext: (_orm, work) => work(),
 	RequestContext: {
 		currentTenantId: () => caller.tenantId,
 		currentUserId: () => caller.userId,
