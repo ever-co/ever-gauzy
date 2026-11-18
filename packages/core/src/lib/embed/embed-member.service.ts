@@ -1,5 +1,11 @@
 import { createHash } from 'node:crypto';
-import { HttpException, Injectable, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
+import {
+	BadRequestException,
+	HttpException,
+	Injectable,
+	NotFoundException,
+	ServiceUnavailableException
+} from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { isEmail } from 'class-validator';
 import { DataSource, In, Raw } from 'typeorm';
@@ -14,6 +20,7 @@ import {
 } from '@gauzy/contracts';
 import { extractNameFromEmail } from '@gauzy/utils';
 import { RequestContext } from '../core/context/request-context';
+import { isDatabaseUnavailableError } from '../core/errors/database-unavailable';
 import { Employee, Role, User, UserOrganization } from '../core/entities/internal';
 import { EmployeeCreateCommand } from '../employee/commands/employee.create.command';
 import { UserCreateCommand } from '../user/commands/user.create.command';
@@ -207,7 +214,8 @@ export class EmbedMemberService {
 	 *
 	 * The account behind an agent or a member without an account is refused before anything is written, as the
 	 * platform's commands refuse it. A refusal those commands answer (a 4xx: the tenant has no employee role) is a
-	 * refusal too. Any other failure is thrown.
+	 * refusal too. Any other failure is thrown: the 400 in which `CrudService.create` wraps any write that failed as
+	 * well, decided about no one, or what it wraps when that is a database out of reach.
 	 *
 	 * @param scope The credential's tenant and organization.
 	 * @param person The address and the names the exchange gives.
@@ -223,6 +231,10 @@ export class EmbedMemberService {
 			const employee = await asCredential(scope, () => this.file(scope, person, accounts[0]));
 			return { employeeId: employee.id };
 		} catch (error) {
+			if (error instanceof BadRequestException) {
+				const failure = error.getResponse();
+				throw isDatabaseUnavailableError(failure) ? failure : error;
+			}
 			const status = refusalStatusOf(error);
 			if (status === null) {
 				throw error;

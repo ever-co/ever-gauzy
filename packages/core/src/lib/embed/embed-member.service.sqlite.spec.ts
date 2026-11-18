@@ -191,6 +191,8 @@ describe('EmbedMemberService on SQLite, through the platform commands', () => {
 	/** The service on another command bus, to cut an addition short. */
 	let serviceOnBus: (bus: { execute: (command: object) => Promise<unknown> }) => EmbedMemberService;
 	let commandBus: { execute: (command: object) => Promise<unknown> };
+	/** `BadRequestException`, as the modules under test load it. */
+	let BadRequest: typeof import('@nestjs/common').BadRequestException;
 	let currentTenantId: () => string | null;
 	let credentialService: EmbedCredentialService;
 	const welcomeUser = jest.fn();
@@ -231,6 +233,7 @@ describe('EmbedMemberService on SQLite, through the platform commands', () => {
 			const { EmployeeCreateHandler } =
 				require('../employee/commands/handlers/employee.create.handler') as typeof import('../employee/commands/handlers/employee.create.handler');
 			const members = require('./embed-member.service') as typeof import('./embed-member.service');
+			BadRequest = (require('@nestjs/common') as typeof import('@nestjs/common')).BadRequestException;
 
 			RequestContext.setClsService(new ClsService(new AsyncLocalStorage()));
 			currentTenantId = () => RequestContext.currentTenantId();
@@ -526,6 +529,27 @@ describe('EmbedMemberService on SQLite, through the platform commands', () => {
 			employees: before.employees + 1,
 			memberships: before.memberships + 1
 		});
+	});
+
+	it('throws a failed write the platform wraps in a 400, never a refusal of the person', async () => {
+		const failingWith = (failure: Error) =>
+			serviceOnBus({
+				execute: async (command: object) => {
+					if (command.constructor.name === 'EmployeeCreateCommand') {
+						throw new BadRequest(failure);
+					}
+					return await commandBus.execute(command);
+				}
+			});
+		const lost = new Error('Connection terminated unexpectedly');
+
+		const constraint = new Error('NOT NULL constraint failed: employee.organizationId');
+
+		// A database out of reach is thrown as itself (the exchange answers 503), any other failed write as the 400.
+		await expect(failingWith(lost).add(SCOPE, { email: 'una@fabrikam.example' })).rejects.toBe(lost);
+		await expect(failingWith(constraint).add(SCOPE, { email: 'una@fabrikam.example' })).rejects.toBeInstanceOf(
+			BadRequest
+		);
 	});
 
 	it('adds the employee of an account whose membership has none, and keeps the membership', async () => {
