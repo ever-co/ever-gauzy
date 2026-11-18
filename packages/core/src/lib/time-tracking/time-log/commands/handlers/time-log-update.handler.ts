@@ -1020,7 +1020,11 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 			}
 			return this.inTransaction(async (manager) => {
 				const result = await write(manager.getRepository(TimeLog));
-				await this.recordFactOfWrite(manager, fact, result, { ...stored, ...definedFieldsOf(written) });
+				// The entry as this write leaves it, read back in its transaction: the first read was taken under no
+				// lock, and an edit written since it would otherwise be told of as it was before
+				await this.recordFactOfWrite(manager, fact, result, () =>
+					manager.findOne(TimeLog, { where: { id: stored.id, tenantId: stored.tenantId }, withDeleted: true })
+				);
 				return result;
 			});
 		}
@@ -1052,7 +1056,8 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 			await moveUpdatedAtPast(manager, current, expectedUpdatedAt);
 			const edited = { ...current, ...definedFieldsOf(written) } as ITimeLog;
 			if (appendsFact) {
-				await this.recordFactOfWrite(manager, fact, result, edited);
+				// Read under the entry's lock, `current` with what the write stored is the row as it leaves it
+				await this.recordFactOfWrite(manager, fact, result, async () => edited);
 			}
 			if (!recordsHistory) {
 				return result;
@@ -1075,18 +1080,20 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 	/**
 	 * Appends an edit's fact in its write's transaction, unless the write changed no row: the stop an earlier try of
 	 * the same stop already wrote, with its fact.
+	 *
+	 * @param entryAfterWrite - The entry as the write leaves it, asked for only when the write changed a row.
 	 */
 	private async recordFactOfWrite(
 		manager: EntityManager,
 		fact: string,
 		result: unknown,
-		entry: ITimeLog
+		entryAfterWrite: () => Promise<ITimeLog | null>
 	): Promise<void> {
 		const changedNoRow = (result as UpdateResult | undefined)?.affected === 0;
 		if (changedNoRow) {
 			return;
 		}
-		await this.facts.recordWithin(manager, fact, entry);
+		await this.facts.recordWithin(manager, fact, await entryAfterWrite());
 	}
 
 	/**

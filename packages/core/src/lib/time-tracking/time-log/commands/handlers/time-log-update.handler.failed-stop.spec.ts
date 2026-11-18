@@ -143,8 +143,8 @@ function createRun(source: TimeLogSourceEnum, { factsWithinWrites = false } = {}
 		})
 	};
 
-	// The transaction a write runs in when its fact goes in it, on the same rows
-	const writeTransaction = { getRepository: () => timeLogRepository };
+	// The transaction a write runs in when its fact goes in it, on the same rows; it reads the entry back as stored
+	const writeTransaction = { getRepository: () => timeLogRepository, findOne: jest.fn(async () => ({ ...run })) };
 	if (factsWithinWrites) {
 		Object.assign(timeLogRepository, {
 			manager: { transaction: async (work: (manager: unknown) => unknown) => work(writeTransaction) }
@@ -233,18 +233,23 @@ function createRun(source: TimeLogSourceEnum, { factsWithinWrites = false } = {}
 		})
 	};
 
-	// The time entry facts the handler writes for the webhooks, by name, and whether each went in its write's transaction
+	// The time entry facts the handler writes for the webhooks, by name, whether each went in its write's transaction,
+	// and the entry each one carries, as it was when written
 	const facts: string[] = [];
 	const factsInWrite: boolean[] = [];
+	const factEntries: Array<{ isRunning: boolean; stoppedAt: string }> = [];
+	const entryOf = (entry: typeof run) => ({ isRunning: entry.isRunning, stoppedAt: hhmm(entry.stoppedAt) });
 	const factsService = {
 		appendsWithinWrites: () => factsWithinWrites,
-		record: async (name: string) => {
+		record: async (name: string, entry: typeof run) => {
 			facts.push(name);
 			factsInWrite.push(false);
+			factEntries.push(entryOf(entry));
 		},
-		recordWithin: async (manager: unknown, name: string) => {
+		recordWithin: async (manager: unknown, name: string, entry: typeof run) => {
 			facts.push(name);
 			factsInWrite.push(manager === writeTransaction);
+			factEntries.push(entryOf(entry));
 		}
 	};
 	const handler = new TimeLogUpdateHandler(
@@ -384,6 +389,8 @@ function createRun(source: TimeLogSourceEnum, { factsWithinWrites = false } = {}
 		facts: () => [...facts],
 		/** Whether each fact went in the transaction of its write. */
 		factsInWrite: () => [...factsInWrite],
+		/** The entry each fact carries, as it was when written. */
+		factEntries: () => [...factEntries],
 		hardDeleted: () => [...hardDeleted]
 	};
 }
@@ -666,16 +673,17 @@ describe('TimeLogUpdateHandler, the time entry facts of a stop, after it on SQLi
 	it('writes one time_log.stopped for a stop that goes through', async () => {
 		const store = createRun(TimeLogSourceEnum.WEB_TIMER);
 
-		await store.stop('09:30');
+		expect(await store.stop('09:30')).toBeUndefined();
 
 		expect(store.facts()).toEqual(['time_log.stopped']);
+		expect(store.factEntries()).toEqual([{ isRunning: false, stoppedAt: '09:30' }]);
 	});
 
 	it('writes none for a stop refused because another one stopped the run', async () => {
 		const store = createRun(TimeLogSourceEnum.WEB_TIMER);
 		store.stopElsewhereBeforeWrite('09:20');
 
-		await store.stop('09:30');
+		expect(await store.stop('09:30')).toBe('This timer was already stopped by another start or stop.');
 
 		expect(store.facts()).toEqual([]);
 	});
@@ -683,10 +691,10 @@ describe('TimeLogUpdateHandler, the time entry facts of a stop, after it on SQLi
 	it('writes none for a try that fails, and one for the try that completes the stop', async () => {
 		const store = createRun(TimeLogSourceEnum.WEB_TIMER);
 		store.fail('save');
-		await store.stop('09:30');
+		expect(await store.stop('09:30')).toBe('The save failed');
 		expect(store.facts()).toEqual([]);
 
-		await store.stopAsFirstRead('09:30');
+		expect(await store.stopAsFirstRead('09:30')).toBeUndefined();
 
 		expect(store.facts()).toEqual(['time_log.stopped']);
 	});
@@ -713,17 +721,19 @@ describe('TimeLogUpdateHandler, the time entry facts of a stop, in its transacti
 	it('writes time_log.stopped in the transaction of the stop', async () => {
 		const store = createRunWithFactsInWrites();
 
-		await store.stop('09:30');
+		expect(await store.stop('09:30')).toBeUndefined();
 
 		expect(store.facts()).toEqual(['time_log.stopped']);
 		expect(store.factsInWrite()).toEqual([true]);
+		// The entry read back in the stop's transaction, as the stop left it
+		expect(store.factEntries()).toEqual([{ isRunning: false, stoppedAt: '09:30' }]);
 	});
 
 	it('writes none for a stop refused because another one stopped the run', async () => {
 		const store = createRunWithFactsInWrites();
 		store.stopElsewhereBeforeWrite('09:20');
 
-		await store.stop('09:30');
+		expect(await store.stop('09:30')).toBe('This timer was already stopped by another start or stop.');
 
 		expect(store.facts()).toEqual([]);
 	});
@@ -731,10 +741,10 @@ describe('TimeLogUpdateHandler, the time entry facts of a stop, in its transacti
 	it('writes none when the stop itself cannot be written, and one with the try that completes it', async () => {
 		const store = createRunWithFactsInWrites();
 		store.fail('stopWrite');
-		await store.stop('09:30');
+		expect(await store.stop('09:30')).toBe('The stopWrite failed');
 		expect(store.facts()).toEqual([]);
 
-		await store.stopAsFirstRead('09:30');
+		expect(await store.stopAsFirstRead('09:30')).toBeUndefined();
 
 		expect(store.facts()).toEqual(['time_log.stopped']);
 		expect(store.factsInWrite()).toEqual([true]);
@@ -743,11 +753,11 @@ describe('TimeLogUpdateHandler, the time entry facts of a stop, in its transacti
 	it('keeps the fact a try wrote with its stop when a later step fails, and the try that completes adds none', async () => {
 		const store = createRunWithFactsInWrites();
 		store.fail('save');
-		await store.stop('09:30');
+		expect(await store.stop('09:30')).toBe('The save failed');
 		expect(store.state().isRunning).toBe(false);
 		expect(store.facts()).toEqual(['time_log.stopped']);
 
-		await store.stopAsFirstRead('09:30');
+		expect(await store.stopAsFirstRead('09:30')).toBeUndefined();
 
 		expect(store.facts()).toEqual(['time_log.stopped']);
 	});
