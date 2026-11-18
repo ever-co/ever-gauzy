@@ -2,6 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { apiClient } from '../../common/api-client';
 import { answer, query, registerCollaborationTool, scope } from './collaboration-tool';
+import { TOOL_HINTS } from '../tool-hints';
 
 const CHAT = '/api/chat';
 
@@ -118,7 +119,8 @@ export function registerChatTools(server: McpServer, access: { read: boolean; wr
 				.map(conversationSummary)
 				.filter((conversation: ReturnType<typeof conversationSummary>) => args.includeArchived || !conversation.isArchived);
 			return answer({ conversations, categories: list?.['categories'] ?? [] });
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	registerCollaborationTool<{ conversationId: string; before?: string; after?: string; around?: string; limit?: number }>(
@@ -137,7 +139,8 @@ export function registerChatTools(server: McpServer, access: { read: boolean; wr
 				params: query({ ...scope(), before: args.before, after: args.after, around: args.around, limit: args.limit })
 			});
 			return answer(page(answerOf));
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	registerCollaborationTool<{ messageId: string; before?: string; after?: string; limit?: number }>(
@@ -164,7 +167,8 @@ export function registerChatTools(server: McpServer, access: { read: boolean; wr
 			if (hasCursor || rootId !== args.messageId) thread = await read(rootId, true);
 			const root = thread?.['root'] ?? null;
 			return answer({ root: root ? messageSummary(root) : null, ...page(thread), following: root?.['following'] ?? null });
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	registerCollaborationTool<{ q: string; conversationId?: string; limit?: number; skip?: number }>(
@@ -182,7 +186,8 @@ export function registerChatTools(server: McpServer, access: { read: boolean; wr
 				params: query({ ...scope(), q: args.q, conversationId: args.conversationId, limit: args.limit, skip: args.skip })
 			});
 			return answer({ messages: (result?.['messages'] ?? []).map(messageSummary), total: result?.['total'] ?? null, hasMore: !!result?.['hasMore'] });
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	if (!access.write) return;
@@ -213,7 +218,8 @@ export function registerChatTools(server: McpServer, access: { read: boolean; wr
 				...(args.idempotencyKey ? { nonce: args.idempotencyKey } : {})
 			});
 			return answer({ posted: true, approvedByPerson: approval.asked, message: messageSummary(sent?.['message'] ?? sent ?? {}) });
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	registerCollaborationTool<{ conversationId: string; messageId?: string }>(
@@ -230,6 +236,7 @@ export function registerChatTools(server: McpServer, access: { read: boolean; wr
 				...(args.messageId ? { messageId: args.messageId } : {})
 			});
 			return answer({ state: state ?? null });
-		}
+		},
+		TOOL_HINTS.idempotentWrite
 	);
 }
