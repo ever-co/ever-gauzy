@@ -1,4 +1,4 @@
-import { Optional } from '@nestjs/common';
+import { Logger, Optional } from '@nestjs/common';
 import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
 import { DataSource, In, DeleteResult, Repository, UpdateResult } from 'typeorm';
 import { pluck } from 'underscore';
@@ -8,7 +8,12 @@ import { UpdateEmployeeTotalWorkedHoursCommand } from '../update-employee-total-
 import { TimeSlotBulkDeleteCommand } from './../../../time-slot/commands';
 import { TimeLogDeleteCommand } from '../time-log-delete.command';
 import { deletedChange } from '../../time-log-history';
-import { historySubject, recordTimeLogHistory, TimeLogHistoryOptions } from '../../time-log-history.writer';
+import {
+	historySubject,
+	lockedForChange,
+	recordTimeLogHistory,
+	TimeLogHistoryOptions
+} from '../../time-log-history.writer';
 import { TimeLog } from './../../time-log.entity';
 import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.repository';
 import { MikroOrmTimeLogRepository } from '../..//repository/mikro-orm-time-log.repository';
@@ -16,6 +21,8 @@ import { TIME_LOG_DELETED, TimeLogFactsService } from '../../time-log-facts.serv
 
 @CommandHandler(TimeLogDeleteCommand)
 export class TimeLogDeleteHandler implements ICommandHandler<TimeLogDeleteCommand> {
+	private readonly logger = new Logger(TimeLogDeleteHandler.name);
+
 	constructor(
 		readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
 		readonly mikroOrmTimeLogRepository: MikroOrmTimeLogRepository,
@@ -146,8 +153,12 @@ export class TimeLogDeleteHandler implements ICommandHandler<TimeLogDeleteComman
 	/**
 	 * Deletes the time logs. Deleted by a person (`history` given), the entries and the history rows that keep what
 	 * each one held are written in one transaction, or neither is. Each entry's fact (for the webhooks) commits with
-	 * the deletion where the outbox can share its transaction, and is written right after it otherwise. Without
+	 * the deletion where the outbox can share its transaction, and is written right after it otherwise: after the
+	 * commit of the history's transaction, when there is one, so a deletion rolled back tells of nothing. Without
 	 * either, the deletion runs alone, as before.
+	 *
+	 * In a transaction, the entries are read under their rows' locks: a deletion of the same entries that went through
+	 * meanwhile is waited for, and what it took is neither recorded in the history nor told of a second time.
 	 *
 	 * @param timeLogs - The time logs, as they were before the deletion.
 	 * @param forceDelete - Hard delete instead of soft delete.
@@ -164,9 +175,9 @@ export class TimeLogDeleteHandler implements ICommandHandler<TimeLogDeleteComman
 		if (!writesInTransaction) {
 			return this.deleteThenRecordFacts(timeLogs, forceDelete);
 		}
-		return this.dataSource.transaction(async (manager) => {
+		const { result, deleted } = await this.dataSource.transaction(async (manager) => {
 			const repository = manager.getRepository(TimeLog);
-			const stored = await this.readStored(repository, timeLogs);
+			const stored = await this.readStored(repository, timeLogs, true);
 			const result = await this.deleteTimeLogs(timeLogs, forceDelete, repository);
 			if (recordsHistory) {
 				const records = stored.map((timeLog) => ({
@@ -181,13 +192,19 @@ export class TimeLogDeleteHandler implements ICommandHandler<TimeLogDeleteComman
 					await this.facts.recordWithin(manager, TIME_LOG_DELETED, timeLog);
 				}
 			}
-			return result;
+			return { result, deleted: stored };
 		});
+		// The outbox could not share the history's transaction (SQLite, MikroORM): the facts follow its commit
+		if (!appendsFactsWithin) {
+			await this.recordFacts(deleted);
+		}
+		return result;
 	}
 
 	/**
 	 * Deletes the time logs alone, and writes each entry's fact right after, where the outbox cannot share the
-	 * deletion's transaction. A handler built without the facts deletes as before.
+	 * deletion's transaction. A handler built without the facts deletes as before, and so does one that cannot read
+	 * the entries for their facts: the read only feeds the facts, which never fail a deletion.
 	 */
 	private async deleteThenRecordFacts(
 		timeLogs: TimeLog[],
@@ -196,21 +213,42 @@ export class TimeLogDeleteHandler implements ICommandHandler<TimeLogDeleteComman
 		if (!this.facts) {
 			return this.deleteTimeLogs(timeLogs, forceDelete);
 		}
-		const deletedEntries = await this.readStored(this.typeOrmTimeLogRepository, timeLogs);
+		let deletedEntries: TimeLog[] = [];
+		try {
+			deletedEntries = await this.readStored(this.typeOrmTimeLogRepository, timeLogs);
+		} catch (error) {
+			this.logger.warn(
+				`The time_log.deleted facts were not written, as the entries could not be read: ${error?.message}`
+			);
+		}
 		const result = await this.deleteTimeLogs(timeLogs, forceDelete);
-		for (const timeLog of deletedEntries) {
+		await this.recordFacts(deletedEntries);
+		return result;
+	}
+
+	/** Writes each deleted entry's fact right after its deletion (see `TimeLogFactsService.record`). */
+	private async recordFacts(deleted: TimeLog[]): Promise<void> {
+		if (!this.facts) {
+			return;
+		}
+		for (const timeLog of deleted) {
 			await this.facts.record(TIME_LOG_DELETED, timeLog);
 		}
-		return result;
 	}
 
 	/**
 	 * What each entry holds, read as stored through TypeORM: a log read through MikroORM arrives without its scalar ids
 	 * (tenant, employee, project), which the history and the facts keep.
+	 *
+	 * @param locked - Read under the rows' locks, in the deletion's transaction (where the database locks rows).
 	 */
-	private async readStored(repository: Repository<TimeLog>, timeLogs: TimeLog[]): Promise<TimeLog[]> {
+	private async readStored(repository: Repository<TimeLog>, timeLogs: TimeLog[], locked = false): Promise<TimeLog[]> {
 		const logIds = timeLogs.map((timeLog) => timeLog.id);
-		return repository.find({ where: { id: In(logIds) } });
+		if (!locked) {
+			return repository.find({ where: { id: In(logIds) } });
+		}
+		// In one order, so that two deletions of overlapping entries take their locks alike
+		return repository.find({ where: { id: In(logIds) }, order: { id: 'ASC' }, ...lockedForChange() });
 	}
 
 	/**
