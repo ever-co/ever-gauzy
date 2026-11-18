@@ -103,8 +103,9 @@ export const CHAT_MESSAGE_EMPLOYEE_EXTENSION: PageExtensionDefinition = {
 
 /**
  * "Team chat" on a team's page, for users who see the chat and may send (`CHAT_VIEW` and `CHAT_SEND`) where the
- * tenant has the chat on: opens the team's channel (the one named as the team), joining or creating it for senders
- * (`POST /chat/conversations`). The button itself shows only once the API serves the chat to the user.
+ * tenant has the chat on: opens the team's channel (the one named as the team), joining it, or creating it with the
+ * first message sent when there is none (`POST /chat/conversations`, for senders). The button itself shows only once
+ * the API serves the chat to the user.
  */
 export const CHAT_TEAM_CHAT_EXTENSION: PageExtensionDefinition = {
 	id: CHAT_TEAM_CHAT_EXTENSION_ID,
