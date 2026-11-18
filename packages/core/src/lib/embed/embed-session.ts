@@ -14,6 +14,12 @@ export { EMBED_ORIGIN_CLAIM };
 export const EMBED_CREDENTIAL_CLAIM = 'embedCredentialId';
 export const EMBED_EMPLOYEE_CLAIM = 'embedEmployeeId';
 
+/**
+ * The access-token claim that names the client (an organization contact) the token's credential is limited to. The
+ * exchange writes it only for such a credential: the tokens of a credential of the whole organization do not carry it.
+ */
+export const EMBED_CLIENT_CLAIM = 'embedClientId';
+
 export interface IEmbedClaims {
 	credentialId: string;
 	employeeId: string;
@@ -21,6 +27,8 @@ export interface IEmbedClaims {
 	tenantId: string | null;
 	/** The page origin the token was exchanged for; null on a token minted before origins were bound. */
 	origin: string | null;
+	/** The client the token's credential is limited to; null for a credential of the whole organization. */
+	clientId: string | null;
 }
 
 /** A route an embed token may reach, and what it may ask of it. */
@@ -138,6 +146,15 @@ export function embedCredentialIdOf(payload: unknown): string | null {
 	return credentialId;
 }
 
+/** A claim that is a string that is not empty; any other value is none. */
+function textClaimOf(record: Record<string, unknown>, claim: string): string | null {
+	const value = record[claim];
+	if (typeof value !== 'string' || !value) {
+		return null;
+	}
+	return value;
+}
+
 /**
  * Reads the embed claims of a bearer token, without checking its signature: a forged claim can only restrict what its
  * sender could do without it. Nothing is looked up with them before {@link isSignedBearerToken} holds.
@@ -169,7 +186,8 @@ export function readEmbedClaims(authorization: string | undefined): IEmbedClaims
 		employeeId: typeof record[EMBED_EMPLOYEE_CLAIM] === 'string' ? (record[EMBED_EMPLOYEE_CLAIM] as string) : '',
 		organizationId: typeof record['organizationId'] === 'string' ? record['organizationId'] : null,
 		tenantId: typeof record['tenantId'] === 'string' ? record['tenantId'] : null,
-		origin: typeof record[EMBED_ORIGIN_CLAIM] === 'string' ? (record[EMBED_ORIGIN_CLAIM] as string) : null
+		origin: typeof record[EMBED_ORIGIN_CLAIM] === 'string' ? (record[EMBED_ORIGIN_CLAIM] as string) : null,
+		clientId: textClaimOf(record, EMBED_CLIENT_CLAIM)
 	};
 }
 

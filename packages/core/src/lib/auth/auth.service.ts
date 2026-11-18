@@ -763,13 +763,19 @@ export class AuthService extends SocialAuthService {
 		credentialId: ID;
 		employeeId: ID;
 		origin?: string;
+		clientId?: ID | null;
 		expiresAt: Date;
 	}): Promise<string> {
-		const { userId, tenantId, organizationId, credentialId, employeeId, origin, expiresAt } = input;
+		const { userId, tenantId, organizationId, credentialId, employeeId, origin, clientId, expiresAt } = input;
 		return await this.getJwtAccessToken(
 			{ id: userId, tenantId },
 			organizationId,
-			{ embedCredentialId: credentialId, embedEmployeeId: employeeId, embedOrigin: origin },
+			{
+				embedCredentialId: credentialId,
+				embedEmployeeId: employeeId,
+				embedOrigin: origin,
+				embedClientId: clientId ?? undefined
+			},
 			expiresAt
 		);
 	}
@@ -2414,7 +2420,8 @@ export class AuthService extends SocialAuthService {
 				...(metadata?.embedCredentialId && {
 					embedCredentialId: metadata.embedCredentialId,
 					embedEmployeeId: metadata.embedEmployeeId,
-					...(metadata.embedOrigin && { embedOrigin: metadata.embedOrigin })
+					...(metadata.embedOrigin && { embedOrigin: metadata.embedOrigin }),
+					...(metadata.embedClientId && { embedClientId: metadata.embedClientId })
 				})
 			};
 

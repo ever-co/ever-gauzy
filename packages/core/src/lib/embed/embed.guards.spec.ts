@@ -3,7 +3,13 @@ import { sign } from 'jsonwebtoken';
 import { ExtractJwt } from 'passport-jwt';
 import { environment } from '@gauzy/config';
 import { EmbedEnabledGuard, EmbedSessionGuard } from './embed.guards';
-import { EMBED_CREDENTIAL_CLAIM, EMBED_EMPLOYEE_CLAIM, isEmbedRoute, readEmbedClaims } from './embed-session';
+import {
+	EMBED_CLIENT_CLAIM,
+	EMBED_CREDENTIAL_CLAIM,
+	EMBED_EMPLOYEE_CLAIM,
+	isEmbedRoute,
+	readEmbedClaims
+} from './embed-session';
 import {
 	EMBED_TOKENS_ENV,
 	embedCredentialHashesMatch,
@@ -18,6 +24,7 @@ const ORG = '7a000000-0000-4000-8000-0000000000f1';
 const OTHER_ORG = '7a000000-0000-4000-8000-0000000000f2';
 const EMPLOYEE = '7a000000-0000-4000-8000-0000000000e1';
 const CREDENTIAL = '7a000000-0000-4000-8000-0000000000c1';
+const CLIENT = '7a000000-0000-4000-8000-0000000000d1';
 
 const embedToken = (claims: Record<string, unknown> = {}) =>
 	sign(
@@ -87,10 +94,21 @@ describe('embed helpers', () => {
 			employeeId: EMPLOYEE,
 			organizationId: ORG,
 			tenantId: 'tenant',
-			origin: null
+			origin: null,
+			clientId: null
 		});
 		expect(readEmbedClaims(`Bearer ${sign({ id: 'user' }, 'test-secret')}`)).toBeNull();
 		expect(readEmbedClaims(undefined)).toBeNull();
+	});
+
+	it('reads the client of a token exchanged with a credential limited to one, and none that is not a string', () => {
+		const withClient = readEmbedClaims(`Bearer ${embedToken({ [EMBED_CLIENT_CLAIM]: CLIENT })}`);
+		expect(withClient).toMatchObject({ credentialId: CREDENTIAL, clientId: CLIENT });
+
+		for (const odd of [42, { toString: 1 }, [CLIENT], '']) {
+			const claims = readEmbedClaims(`Bearer ${embedToken({ [EMBED_CLIENT_CLAIM]: odd })}`);
+			expect(claims).toMatchObject({ credentialId: CREDENTIAL, clientId: null });
+		}
 	});
 
 	it('opens the user, the permissions, the teams and the timer, and nothing else', () => {

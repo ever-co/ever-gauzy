@@ -352,6 +352,25 @@ describe('EmbedCredentialService', () => {
 		expect(issueEmbedSession).not.toHaveBeenCalled();
 		await expect(service.exchange({ credential: secret, employeeId: EMPLOYEE, origin: 'https://APP.northwind.example:443' })).resolves.toHaveProperty('token');
 	});
+
+	it("writes the credential's client into the token it mints, and none for a credential of the whole organization", async () => {
+		const { service, issueEmbedSession } = build();
+		signIn(TENANT);
+		const portal = await service.createForOrganization({
+			name: 'Northwind portal',
+			organizationId: ORG,
+			organizationContactId: CONTACT
+		});
+		const product = await service.createForOrganization({ name: 'Northwind product', organizationId: ORG });
+
+		await service.exchange({ credential: portal.secret, employeeId: EMPLOYEE, origin: SITE });
+		await service.exchange({ credential: product.secret, employeeId: EMPLOYEE, origin: SITE });
+
+		const [ofPortal, ofProduct] = issueEmbedSession.mock.calls.map(([input]) => input);
+		expect(ofPortal).toMatchObject({ credentialId: portal.id, employeeId: EMPLOYEE, clientId: CONTACT });
+		expect(ofProduct).toMatchObject({ credentialId: product.id, employeeId: EMPLOYEE });
+		expect(ofProduct.clientId ?? null).toBeNull();
+	});
 });
 
 describe('EmbedCredentialService: credentials refused per address', () => {
