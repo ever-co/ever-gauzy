@@ -1,0 +1,66 @@
+<nb-card class="main">
+	<nb-card-header class="d-flex flex-column">
+		<span class="cancel">
+			<i class="fas fa-times" (click)="close()"></i>
+		</span>
+		<h5 class="title tag-title">
+			<span class="swatch" [style.background]="tag?.color"></span>
+			{{ tag?.name }}
+		</h5>
+	</nb-card-header>
+	<nb-card-body class="body" [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="small">
+		<p class="description" [class.empty]="!tag?.description">
+			{{ tag?.description || ('TAGS_PAGE.NO_DESCRIPTION' | translate) }}
+		</p>
+
+		<dl class="details">
+			<dt>{{ 'TAGS_PAGE.TAGS_TYPE' | translate }}</dt>
+			<dd>{{ typeName || '—' }}</dd>
+
+			<dt>{{ 'TAGS_PAGE.LEVEL' | translate }}</dt>
+			<dd>{{ levelKey | translate }}</dd>
+
+			<dt>{{ 'TAGS_PAGE.TAGS_COLOR' | translate }}</dt>
+			<dd>
+				<span class="swatch" [style.background]="tag?.color"></span>
+				{{ tag?.color }}
+			</dd>
+
+			<dt>{{ 'TAGS_PAGE.CREATED' | translate }}</dt>
+			<dd>{{ tag?.createdAt ? (tag.createdAt | dateTimeFormat) : '—' }}</dd>
+
+			<dt>{{ 'TAGS_PAGE.LAST_UPDATED' | translate }}</dt>
+			<dd>{{ tag?.updatedAt ? (tag.updatedAt | dateTimeFormat) : '—' }}</dd>
+		</dl>
+
+		<h6 class="section-title">
+			{{ 'TAGS_PAGE.USED_IN_TITLE' | translate }}
+			@if (totalUsage) {
+				<span class="total">{{ totalUsage.toLocaleString() }}</span>
+			}
+		</h6>
+		@if (usages.length) {
+			<ul class="usages">
+				@for (usage of usages; track usage.label) {
+					<li>
+						<span>{{ usage.translate ? (usage.label | translate) : usage.label }}</span>
+						<span class="count">{{ usage.count.toLocaleString() }}</span>
+					</li>
+				}
+			</ul>
+		} @else {
+			<p class="empty">{{ 'TAGS_PAGE.NOT_USED' | translate }}</p>
+		}
+	</nb-card-body>
+	<nb-card-footer class="text-left">
+		<button (click)="close()" status="basic" class="mr-3" outline nbButton>
+			{{ 'BUTTONS.CLOSE' | translate }}
+		</button>
+		<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_TAGS_EDIT']">
+			<button (click)="edit()" status="basic" nbButton>
+				<nb-icon icon="edit-outline"></nb-icon>
+				{{ 'BUTTONS.EDIT' | translate }}
+			</button>
+		</ng-template>
+	</nb-card-footer>
+</nb-card>
