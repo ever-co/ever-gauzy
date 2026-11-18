@@ -8,6 +8,7 @@ import { applyInTurn, containsText, pageOf, validateOrganizationContext } from '
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
+import { TOOL_HINTS } from './tool-hints';
 const logger = new Logger('SkillTools');
 
 type DefaultParams = { tenantId?: string; organizationId?: string };
@@ -78,7 +79,8 @@ export const registerSkillTools = (server: McpServer) => {
 				logger.error('Error fetching skills:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch skills: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get skill by ID tool
@@ -120,7 +122,8 @@ export const registerSkillTools = (server: McpServer) => {
 				logger.error('Error fetching skill:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch skill: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Create skill tool
@@ -160,7 +163,8 @@ export const registerSkillTools = (server: McpServer) => {
 				logger.error('Error creating skill:', sanitizeForLogging(error));
 				throw new Error(`Failed to create skill: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Update skill tool
@@ -207,7 +211,8 @@ export const registerSkillTools = (server: McpServer) => {
 				logger.error('Error updating skill:', sanitizeForLogging(error));
 				throw new Error(`Failed to update skill: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Delete skill tool
@@ -251,7 +256,8 @@ export const registerSkillTools = (server: McpServer) => {
 				logger.error('Error deleting skill:', sanitizeForLogging(error));
 				throw new Error(`Failed to delete skill: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.idempotentDestructive
 	);
 
 	// Assign skill to employee tool
@@ -296,7 +302,8 @@ export const registerSkillTools = (server: McpServer) => {
 				logger.error('Error assigning skill to employee:', sanitizeForLogging(error));
 				throw new Error(`Failed to assign skill to employee: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Remove skill from employee tool
@@ -351,7 +358,8 @@ export const registerSkillTools = (server: McpServer) => {
 				logger.error('Error removing skill from employee:', sanitizeForLogging(error));
 				throw new Error(`Failed to remove skill from employee: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.idempotentDestructive
 	);
 
 	// Get skills by employee tool
@@ -385,7 +393,8 @@ export const registerSkillTools = (server: McpServer) => {
 				logger.error('Error fetching skills by employee:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch skills by employee: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Search skills tool
@@ -422,7 +431,8 @@ export const registerSkillTools = (server: McpServer) => {
 				logger.error('Error searching skills:', sanitizeForLogging(error));
 				throw new Error(`Failed to search skills: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Bulk create skills tool
@@ -466,6 +476,7 @@ export const registerSkillTools = (server: McpServer) => {
 				logger.error('Error bulk creating skills:', sanitizeForLogging(error));
 				throw new Error(`Failed to bulk create skills: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 };

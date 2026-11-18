@@ -8,6 +8,7 @@ import { EmployeeAwardInputSchema } from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
+import { TOOL_HINTS } from './tool-hints';
 const logger = new Logger('EmployeeAwardTools');
 
 export const registerEmployeeAwardTools = (server: McpServer) => {
@@ -57,7 +58,8 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 				logger.error('Error fetching employee awards:', sanitizeForLogging(error));
 				throw new Error(sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get employee award by ID tool
@@ -89,7 +91,8 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 				logger.error('Error fetching employee award:', sanitizeForLogging(error));
 				throw new Error(sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Create employee award tool
@@ -131,7 +134,8 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 				logger.error('Error creating employee award:', sanitizeForLogging(error));
 				throw new Error(sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Update employee award tool
@@ -159,7 +163,8 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 				logger.error('Error updating employee award:', sanitizeForLogging(error));
 				throw new Error(sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Delete employee award tool
@@ -190,7 +195,8 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 				logger.error('Error deleting employee award:', sanitizeForLogging(error));
 				throw new Error(sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.idempotentDestructive
 	);
 
 	// Get employee awards by employee tool
@@ -235,7 +241,8 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 				logger.error('Error fetching employee awards by employee:', sanitizeForLogging(error));
 				throw new Error(sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get awards by year tool
@@ -286,7 +293,8 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 				logger.error('Error fetching employee awards by year:', sanitizeForLogging(error));
 				throw new Error(sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get employee awards count tool
@@ -325,7 +333,8 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 				logger.error('Error fetching employee awards count:', sanitizeForLogging(error));
 				throw new Error(sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get employee awards statistics tool
@@ -368,7 +377,8 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 				logger.error('Error fetching employee awards statistics:', sanitizeForLogging(error));
 				throw new Error(sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Bulk create employee awards tool
@@ -417,7 +427,8 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 				logger.error('Error bulk creating employee awards:', sanitizeForLogging(error));
 				throw new Error(sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Bulk update employee awards tool
@@ -453,7 +464,8 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 				logger.error('Error bulk updating employee awards:', sanitizeForLogging(error));
 				throw new Error(sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Bulk delete employee awards tool
@@ -490,6 +502,7 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 				logger.error('Error bulk deleting employee awards:', sanitizeForLogging(error));
 				throw new Error(sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.idempotentDestructive
 	);
 };

@@ -15,6 +15,7 @@ import { TimeOffStatusEnum, TimeOffTypeEnum } from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
+import { TOOL_HINTS } from './tool-hints';
 const logger = new Logger('TimeOffTools');
 
 /**
@@ -208,7 +209,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 				logger.error('Error fetching time-off requests:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch time-off requests: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get time-off request count tool
@@ -247,7 +249,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 				logger.error('Error fetching time-off request count:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch time-off request count: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get time-off request by ID tool
@@ -282,7 +285,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 				logger.error('Error fetching time-off request:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch time-off request: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Create time-off request tool
@@ -331,7 +335,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 				logger.error('Error creating time-off request:', sanitizeForLogging(error));
 				throw new Error(`Failed to create time-off request: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Update time-off request tool
@@ -367,7 +372,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 				logger.error('Error updating time-off request:', sanitizeForLogging(error));
 				throw new Error(`Failed to update time-off request: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Delete time-off request tool
@@ -398,7 +404,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 				logger.error('Error deleting time-off request:', sanitizeForLogging(error));
 				throw new Error(`Failed to delete time-off request: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.idempotentDestructive
 	);
 
 	// Approve time-off request tool
@@ -425,7 +432,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 				logger.error('Error approving time-off request:', sanitizeForLogging(error));
 				throw new Error(`Failed to approve time-off request: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Deny time-off request tool
@@ -454,7 +462,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 				logger.error('Error denying time-off request:', sanitizeForLogging(error));
 				throw new Error(`Failed to deny time-off request: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Cancel time-off request tool
@@ -474,7 +483,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 				logger.error('Error cancelling time-off request:', sanitizeForLogging(error));
 				throw new Error(`Failed to cancel time-off request: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Get my time-off requests tool
@@ -518,7 +528,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 				logger.error('Error fetching my time-off requests:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch my time-off requests: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get pending time-off requests tool
@@ -557,7 +568,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 				logger.error('Error fetching pending time-off requests:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch pending time-off requests: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// TIME-OFF POLICIES
@@ -607,7 +619,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 				logger.error('Error fetching time-off policies:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch time-off policies: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get time-off policy by ID tool
@@ -639,7 +652,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 				logger.error('Error fetching time-off policy:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch time-off policy: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Create time-off policy tool
@@ -683,7 +697,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 				logger.error('Error creating time-off policy:', sanitizeForLogging(error));
 				throw new Error(`Failed to create time-off policy: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Update time-off policy tool
@@ -714,7 +729,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 				logger.error('Error updating time-off policy:', sanitizeForLogging(error));
 				throw new Error(`Failed to update time-off policy: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Delete time-off policy tool
@@ -745,7 +761,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 				logger.error('Error deleting time-off policy:', sanitizeForLogging(error));
 				throw new Error(`Failed to delete time-off policy: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.idempotentDestructive
 	);
 
 	// Assign employees to time-off policy tool
@@ -776,7 +793,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 				logger.error('Error assigning employees to time-off policy:', sanitizeForLogging(error));
 				throw new Error(`Failed to assign employees to time-off policy: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Get time-off balance tool
@@ -815,7 +833,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 				logger.error('Error fetching time-off balance:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch time-off balance: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get my time-off balance tool
@@ -852,7 +871,8 @@ export const registerTimeOffTools = (server: McpServer) => {
 				logger.error('Error fetching my time-off balance:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch my time-off balance: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get time-off statistics tool
@@ -909,6 +929,7 @@ export const registerTimeOffTools = (server: McpServer) => {
 				logger.error('Error fetching time-off statistics:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch time-off statistics: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 };
