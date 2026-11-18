@@ -4293,6 +4293,7 @@
 		"TENANT_LEVEL": "Уровень владельца",
 		"TAGS_TYPE": "Тип тегов",
 		"TAGS_SELECT_TYPE": "Тип тега",
+		"TAGS_FETCH_FAILED": "Не удалось получить типы тегов",
 		"NO_DESCRIPTION": "Нет описания",
 		"LEVEL": "Уровень",
 		"LEVEL_TENANT": "Арендатор",

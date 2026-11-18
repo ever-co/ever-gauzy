@@ -4088,6 +4088,7 @@
 		"TENANT_LEVEL": "crwdns4726:0crwdne4726:0",
 		"TAGS_TYPE": "crwdns10274:0crwdne10274:0",
 		"TAGS_SELECT_TYPE": "Yeny tags kikome",
+		"TAGS_FETCH_FAILED": "Failed to fetch tag types",
 		"NO_DESCRIPTION": "No description",
 		"LEVEL": "Level",
 		"LEVEL_TENANT": "Tenant",

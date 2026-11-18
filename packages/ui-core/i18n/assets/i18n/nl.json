@@ -4260,6 +4260,7 @@
 		"TENANT_LEVEL": "Huurdersniveau",
 		"TAGS_TYPE": "Tagstype",
 		"TAGS_SELECT_TYPE": "Tagtype",
+		"TAGS_FETCH_FAILED": "Ophalen van tagtypen mislukt",
 		"NO_DESCRIPTION": "Geen beschrijving",
 		"LEVEL": "Niveau",
 		"LEVEL_TENANT": "Tenant",

@@ -4260,6 +4260,7 @@
 		"TENANT_LEVEL": "Nível do inquilino",
 		"TAGS_TYPE": "Tipo de etiquetas",
 		"TAGS_SELECT_TYPE": "Tipo de tag",
+		"TAGS_FETCH_FAILED": "Falha ao obter os tipos de tag",
 		"NO_DESCRIPTION": "Sem descrição",
 		"LEVEL": "Nível",
 		"LEVEL_TENANT": "Locatário",

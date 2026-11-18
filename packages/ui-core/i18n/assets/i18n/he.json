@@ -4286,6 +4286,7 @@
 		"TENANT_LEVEL": "Tenant level",
 		"TAGS_TYPE": "Tags type",
 		"TAGS_SELECT_TYPE": "סוג תג",
+		"TAGS_FETCH_FAILED": "טעינת סוגי התגים נכשלה",
 		"NO_DESCRIPTION": "אין תיאור",
 		"LEVEL": "רמה",
 		"LEVEL_TENANT": "דייר",

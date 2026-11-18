@@ -4258,6 +4258,7 @@
 		"TENANT_LEVEL": "مستوى المستأجر",
 		"TAGS_TYPE": "نوع العلامات",
 		"TAGS_SELECT_TYPE": "نوع العلامات",
+		"TAGS_FETCH_FAILED": "فشل في جلب أنواع العلامات",
 		"NO_DESCRIPTION": "لا يوجد وصف",
 		"LEVEL": "المستوى",
 		"LEVEL_TENANT": "المستأجر",

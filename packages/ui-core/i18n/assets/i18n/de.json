@@ -4256,6 +4256,7 @@
 		"TENANT_LEVEL": "Mieterstufe",
 		"TAGS_TYPE": "Tags-Typ",
 		"TAGS_SELECT_TYPE": "Tag-Typ",
+		"TAGS_FETCH_FAILED": "Tag-Typen konnten nicht abgerufen werden",
 		"NO_DESCRIPTION": "Keine Beschreibung",
 		"LEVEL": "Ebene",
 		"LEVEL_TENANT": "Mandant",

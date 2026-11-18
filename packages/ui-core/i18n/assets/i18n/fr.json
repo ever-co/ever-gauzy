@@ -4261,6 +4261,7 @@
 		"TENANT_LEVEL": "Niveau du locataire",
 		"TAGS_TYPE": "Catégories de balises",
 		"TAGS_SELECT_TYPE": "Type de balise",
+		"TAGS_FETCH_FAILED": "Impossible de récupérer les types de balise",
 		"NO_DESCRIPTION": "Aucune description",
 		"LEVEL": "Niveau",
 		"LEVEL_TENANT": "Locataire",

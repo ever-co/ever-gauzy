@@ -4259,6 +4259,7 @@
 		"TENANT_LEVEL": "Poziom najemcy",
 		"TAGS_TYPE": "Typy tagów",
 		"TAGS_SELECT_TYPE": "Typ tagu",
+		"TAGS_FETCH_FAILED": "Nie udało się pobrać typów tagów",
 		"NO_DESCRIPTION": "Brak opisu",
 		"LEVEL": "Poziom",
 		"LEVEL_TENANT": "Najemca",

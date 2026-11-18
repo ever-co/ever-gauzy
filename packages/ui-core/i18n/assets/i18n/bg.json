@@ -4318,6 +4318,7 @@
 		"TENANT_LEVEL": "Tenant level",
 		"TAGS_TYPE": "Tags type",
 		"TAGS_SELECT_TYPE": "Тип на етикетите",
+		"TAGS_FETCH_FAILED": "Неуспешно извличане на типовете етикети",
 		"NO_DESCRIPTION": "Няма описание",
 		"LEVEL": "Ниво",
 		"LEVEL_TENANT": "Наемател",
