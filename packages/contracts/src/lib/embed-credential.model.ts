@@ -88,6 +88,15 @@ export interface IEmbedClientReport {
 	projects: IEmbedClientReportProject[];
 }
 
+/**
+ * A project an embed token may track time on (`GET /embed/projects`): one of its client's for a token of a credential
+ * limited to a client, else one of its member's. Its id and its name, nothing else.
+ */
+export interface IEmbedProject {
+	id: ID;
+	name: string;
+}
+
 /** What an embed token may do, besides reading the signed-in user. */
 export enum EmbedScopeEnum {
 	TIMER = 'timer'
