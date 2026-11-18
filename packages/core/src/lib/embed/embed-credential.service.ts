@@ -522,7 +522,30 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 		if (!person) {
 			return null;
 		}
-		return await this.embedMemberService.inTurn(row.tenantId, person.email, () => this.addMember(row, person));
+		try {
+			return await this.embedMemberService.inTurn(row.tenantId, person.email, () => this.addMember(row, person));
+		} catch (error) {
+			throw this.additionFailureOf(error, row);
+		}
+	}
+
+	/**
+	 * What an addition that did not end with a member is answered, its credential accepted: a refusal (of the member,
+	 * or of a credential revoked while the exchange waited for its turn) and a database out of reach stay as they
+	 * are. Any other failure, of the addition, of the reads around it or of its turn, is logged by its name (a
+	 * database's message may quote the address) and answered 500, never the 401 of a refused credential.
+	 */
+	private additionFailureOf(error: unknown, row: EmbedCredential): unknown {
+		const isAnswered =
+			error instanceof MemberRefused ||
+			error instanceof CredentialRefused ||
+			error instanceof MemberNotAdded ||
+			error instanceof ServiceUnavailableException;
+		if (isAnswered || isDatabaseUnavailableError(error)) {
+			return error;
+		}
+		this.logger.error(`Embed member could not be added: credential=${row.id} ${nameOf(error)}`);
+		return new MemberNotAdded();
 	}
 
 	/** The person to add: none unless the credential may add members and the exchange names an address alone. */

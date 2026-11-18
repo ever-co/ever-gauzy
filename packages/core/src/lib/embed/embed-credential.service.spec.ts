@@ -833,6 +833,22 @@ describe('EmbedCredentialService: the members a credential adds', () => {
 		expect(lines.join('\n').toLowerCase()).not.toContain('noor');
 	});
 
+	it('answers 500, never 401, when a read around the addition fails, and logs no address', async () => {
+		const { service } = build();
+		const { secret } = await credentialOf(service, true);
+		const lines = logsOf(service);
+		// The read of the member just added fails, with a message that quotes the address.
+		jest.spyOn((service as any).typeOrmEmployeeRepository, 'findOne').mockRejectedValueOnce(
+			new Error(`select from "employee" where "email" = '${NOOR}'`)
+		);
+
+		await expect(service.exchange({ credential: secret, email: NOOR, origin: SITE }, PORTAL)).rejects.toThrow(
+			InternalServerErrorException
+		);
+
+		expect(lines.join('\n').toLowerCase()).not.toContain('noor');
+	});
+
 	it('adds one member for two exchanges of the same new address at once, and answers both with its token', async () => {
 		const { service, addMember, issueEmbedSession, employees } = build();
 		const { secret } = await credentialOf(service, true);
