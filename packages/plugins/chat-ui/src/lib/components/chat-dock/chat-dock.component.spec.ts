@@ -34,7 +34,12 @@ describe('ChatDockComponent', () => {
 	let hints$: Subject<Partial<ChatHint>>;
 	let catchUp$: Subject<void>;
 	let tasks: { summaries: ReturnType<typeof signal>; ensure: jest.Mock; refreshAll: jest.Mock; refreshShownBy: jest.Mock };
-	let dock: { person: ReturnType<typeof signal<typeof ANNA | null>>; team: ReturnType<typeof signal<typeof TEAM | null>>; close: jest.Mock };
+	let dock: {
+		person: ReturnType<typeof signal<typeof ANNA | null>>;
+		team: ReturnType<typeof signal<typeof TEAM | null>>;
+		teamSetups: Map<string, unknown>;
+		close: jest.Mock;
+	};
 	const element = () => fixture.nativeElement as HTMLElement;
 
 	beforeEach(async () => {
@@ -43,7 +48,7 @@ describe('ChatDockComponent', () => {
 		catchUp$ = new Subject();
 		tasks = { summaries: signal(new Map()), ensure: jest.fn(), refreshAll: jest.fn(), refreshShownBy: jest.fn() };
 		files = { byDocument: signal<ReadonlyMap<string, IChatFile>>(new Map()), ensureFor: jest.fn() };
-		dock = { person: signal<typeof ANNA | null>(ANNA), team: signal<typeof TEAM | null>(null), close: jest.fn() };
+		dock = { person: signal<typeof ANNA | null>(ANNA), team: signal<typeof TEAM | null>(null), teamSetups: new Map(), close: jest.fn() };
 		api = {
 			direct: jest.fn(() => of({ conversation: CONVERSATION, created: false })),
 			// The first read of the messages fails.
@@ -324,6 +329,58 @@ describe('ChatDockComponent', () => {
 			expect(api['createChannel']).toHaveBeenCalledTimes(1);
 			expect(api['send']).toHaveBeenLastCalledWith('c-new', expect.objectContaining({ body: 'Hello' }));
 			expect(reset()).toBe(before + 1);
+		});
+
+		it('adds the members a failed batch left out before the next try sends, and only those', () => {
+			api['send'].mockReturnValue(of({ message: message('m1', 'Hello') }));
+			api['addMembers'].mockReturnValueOnce(of({ members: [], events: [] })).mockReturnValueOnce(throwError(() => ({ status: 500 })));
+			const memberEmployeeIds = Array.from({ length: 1201 }, (_, index) => `e-${index}`);
+			openTeam({ ...TEAM, memberEmployeeIds });
+			submit('Hello');
+
+			// Created, the first added batch done, the last one failed: nothing is sent.
+			expect(api['createChannel']).toHaveBeenCalledTimes(1);
+			expect(api['addMembers']).toHaveBeenCalledTimes(2);
+			expect(api['send']).not.toHaveBeenCalled();
+
+			// The next try (the channel is listed now) adds the batch left, and only then sends.
+			api['listMine'].mockReturnValue(of({ conversations: [channel('c-new', 'Web Team')], categories: [] }));
+			submit('Hello');
+			expect(api['createChannel']).toHaveBeenCalledTimes(1);
+			expect(api['addMembers']).toHaveBeenCalledTimes(3);
+			expect(api['addMembers']).toHaveBeenLastCalledWith('c-new', memberEmployeeIds.slice(1000));
+			expect(api['send']).toHaveBeenCalledWith('c-new', expect.objectContaining({ body: 'Hello' }));
+			expect(dock.teamSetups.size).toBe(0);
+		});
+
+		it('keeps a failed archive of the duplicate for later: tried again when the team is opened again, until it succeeds', () => {
+			api['send'].mockReturnValue(of({ message: message('m1', 'Hello') }));
+			api['setArchived'].mockReturnValueOnce(throwError(() => ({ status: 500 })));
+			openTeam();
+			api['listMine']
+				.mockReturnValueOnce(of({ conversations: [], categories: [] }))
+				.mockReturnValueOnce(
+					of({
+						conversations: [channel('c-new', 'Web Team', null, '2026-11-18T10:00:01Z'), channel('c-mate', 'Web Team', null, '2026-11-18T10:00:00Z')],
+						categories: []
+					})
+				);
+			submit('Hello');
+
+			// The message is not held back by the failed archive; the archive is still to do.
+			expect(api['send']).toHaveBeenCalledWith('c-mate', expect.objectContaining({ body: 'Hello' }));
+			expect(api['setArchived']).toHaveBeenCalledTimes(1);
+			expect(dock.teamSetups.size).toBe(1);
+
+			// Opened again (after another conversation): the archive is tried again, and the set-up then forgotten.
+			dock.team.set(null);
+			dock.person.set(ANNA);
+			fixture.detectChanges();
+			openTeam();
+			expect(api['setArchived']).toHaveBeenCalledTimes(2);
+			expect(api['setArchived']).toHaveBeenLastCalledWith('c-new', true);
+			expect(api['messages']).toHaveBeenLastCalledWith('c-mate', { limit: CHAT_DOCK_PAGE_SIZE });
+			expect(dock.teamSetups.size).toBe(0);
 		});
 
 		it('sends nothing when the channel cannot be created, and says so', () => {
