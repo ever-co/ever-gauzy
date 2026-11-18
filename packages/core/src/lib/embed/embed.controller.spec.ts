@@ -20,6 +20,10 @@ let savedSwitch: string | undefined;
 beforeAll(() => {
 	savedSwitch = process.env[EMBED_TOKENS_ENV];
 });
+// Each case starts with embeds off, whatever the developer's environment says, even when it runs alone.
+beforeEach(() => {
+	delete process.env[EMBED_TOKENS_ENV];
+});
 afterEach(() => {
 	delete process.env[EMBED_TOKENS_ENV];
 });
