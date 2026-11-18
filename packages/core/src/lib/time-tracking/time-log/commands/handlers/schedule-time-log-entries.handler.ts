@@ -210,8 +210,9 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 	 * MikroORM arrives without its scalar ids (tenant, organization, employee, project). It names a stop
 	 * (`time_log.stopped`) only when the row still ran when the stop wrote. In the transaction, the row is read under
 	 * its lock, and the stop is decided from that row: a stop that closed the run since the pending read keeps its end
-	 * and the one stop fact, and this one is an update. A read that only feeds the fact never stops the close: it is
-	 * made inside the fact's savepoint, or logged and passed over after the stop.
+	 * and the one stop fact, and this one is an update; the fact is that locked row with what the stop wrote, which is
+	 * the row as the stop leaves it, with no read after it. Where the fact follows the stop, a read that only feeds it
+	 * never stops the close: it is logged and passed over.
 	 *
 	 * @param timeLog - The time log entry to stop
 	 * @param stoppedAt - The end worked out for the entry, if any
@@ -232,9 +233,9 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 		await this.typeOrmTimeLogRepository.manager.transaction(async (manager) => {
 			const repository = manager.getRepository(TimeLog);
 			const before = await repository.findOne({ where, ...lockedForChange() });
-			await this.stopTimeLog(before ?? timeLog, stoppedAt, repository);
-			const fact = factOfUpdatedLog(Boolean((before ?? timeLog).isRunning));
-			await this.facts.recordWithin(manager, fact, (savepoint) => savepoint.findOne(TimeLog, { where }));
+			const closed = await this.stopTimeLog(before ?? timeLog, stoppedAt, repository);
+			const stopped = before ? { ...before, ...closed } : null;
+			await this.facts.recordWithin(manager, factOfUpdatedLog(Boolean(before?.isRunning)), stopped);
 		});
 	}
 

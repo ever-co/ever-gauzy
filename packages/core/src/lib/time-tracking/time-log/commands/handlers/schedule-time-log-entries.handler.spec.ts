@@ -311,12 +311,9 @@ describe('ScheduleTimeLogEntriesHandler: the fact of a run it closes', () => {
 			findOne: jest.fn(async ({ where }: { where: { id: string } }) => stored(where)),
 			findOneBy: jest.fn(stored)
 		};
-		const transactionManager = {
-			getRepository: jest.fn(() => transactionRepository),
-			findOne: jest.fn(async (_entity: unknown, { where }: { where: { id: string } }) => stored(where))
-		};
-		// The facts written: by name, whether in the stop's transaction, and the entry each carries (read back in the
-		// fact's savepoint when the handler hands a read)
+		// The stop's transaction: it reads nothing back for the fact, which is the locked row with what the stop wrote
+		const transactionManager = { getRepository: jest.fn(() => transactionRepository) };
+		// The facts written: by name, whether in the stop's transaction, and the entry each carries
 		const recorded: Array<{ name: string; within: boolean; entry: unknown }> = [];
 		const facts = {
 			appendsWithinWrites: () => appendsWithinWrites,
@@ -324,8 +321,7 @@ describe('ScheduleTimeLogEntriesHandler: the fact of a run it closes', () => {
 				recorded.push({ name, within: false, entry });
 			}),
 			recordWithin: jest.fn(async (manager: unknown, name: string, entry: unknown) => {
-				const read = typeof entry === 'function' ? await entry(manager) : entry;
-				recorded.push({ name, within: manager === transactionManager, entry: read });
+				recorded.push({ name, within: manager === transactionManager, entry });
 			})
 		};
 		// A MikroORM read hands the log without its scalar ids (tenant, organization, employee)
@@ -385,6 +381,9 @@ describe('ScheduleTimeLogEntriesHandler: the fact of a run it closes', () => {
 		expect(repository.save).toHaveBeenCalledWith({ id: 'log-1', stoppedAt: WORKED_OUT_END });
 		expect(repository.save).not.toHaveBeenCalledWith(expect.objectContaining({ isRunning: false }));
 		expect(recorded).toEqual([{ name: 'time_log.stopped', within: true, entry: stoppedRun() }]);
+		// Read once, under the row's lock, before the stop: nothing is read after it
+		expect(transactionRepository.findOne).toHaveBeenCalledTimes(1);
+		expect(transactionRepository.findOneBy).not.toHaveBeenCalled();
 	});
 
 	it('writes it right after the stop under MikroORM, with the ids and the end the row stores', async () => {
