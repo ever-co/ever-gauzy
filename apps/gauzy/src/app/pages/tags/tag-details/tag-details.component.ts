@@ -122,9 +122,19 @@ export class TagDetailsComponent implements OnInit {
 			usages.push(
 				key
 					? { label: key, translate: true, count }
-					: { label: property.slice(0, -COUNTER_SUFFIX.length), translate: false, count }
+					: { label: this.readableName(property.slice(0, -COUNTER_SUFFIX.length)), translate: false, count }
 			);
 		}
 		return usages.sort((a, b) => b.count - a.count);
+	}
+
+	/** A custom field's name as a label: `proposals` → `Proposals`, `clientProjects` → `Client projects`. */
+	private readableName(field: string): string {
+		const words = field
+			.replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+			.replace(/[_-]+/g, ' ')
+			.trim()
+			.toLowerCase();
+		return words.charAt(0).toUpperCase() + words.slice(1);
 	}
 }
