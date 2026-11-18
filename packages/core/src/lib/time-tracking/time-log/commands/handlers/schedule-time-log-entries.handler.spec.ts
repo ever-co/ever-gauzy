@@ -280,3 +280,66 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])('ScheduleTimeLogEnt
 		});
 	});
 });
+
+/**
+ * ever-co/ever-gauzy#12071: the stop of a run left going, for the webhooks, commits with the stop where the outbox can
+ * share its transaction (TypeORM), and is written right after it otherwise.
+ */
+describe('ScheduleTimeLogEntriesHandler: the fact of a run it closes', () => {
+	const setup = (ormType: MultiORMEnum, appendsWithinWrites: boolean) => {
+		const table = runningLogs();
+		const repository = typeOrmRepository(table);
+		const transactionManager = { getRepository: () => repository };
+		const facts = {
+			appendsWithinWrites: () => appendsWithinWrites,
+			record: jest.fn(async () => undefined),
+			recordWithin: jest.fn(async () => undefined)
+		};
+		const handler: ScheduleTimeLogEntriesHandler = Object.assign(
+			Object.create(ScheduleTimeLogEntriesHandler.prototype),
+			{
+				ormType,
+				typeOrmTimeLogRepository: Object.assign(repository, {
+					manager: { transaction: jest.fn(async (work: (m: unknown) => unknown) => work(transactionManager)) }
+				}),
+				mikroOrmTimeLogRepository: mikroOrmRepository(table),
+				facts
+			}
+		);
+		return { handler, table, facts, transactionManager };
+	};
+	const command = () => new ScheduleTimeLogEntriesCommand('employee-1', 'organization-1', 'tenant-1');
+
+	beforeEach(() => {
+		jest.spyOn(Date, 'now').mockReturnValue(NOW.getTime());
+		jest.spyOn(console, 'log').mockImplementation(() => undefined);
+	});
+	afterEach(() => jest.restoreAllMocks());
+
+	it('writes time_log.stopped in the transaction of the stop under TypeORM', async () => {
+		const { handler, table, facts, transactionManager } = setup(MultiORMEnum.TypeORM, true);
+
+		await handler.execute(command());
+
+		expect(table[0]).toMatchObject({ id: 'log-1', isRunning: false });
+		expect(facts.recordWithin).toHaveBeenCalledWith(
+			transactionManager,
+			'time_log.stopped',
+			expect.objectContaining({ id: 'log-1', isRunning: false })
+		);
+		expect(facts.record).not.toHaveBeenCalled();
+	});
+
+	it('writes it right after the stop where the outbox cannot share its transaction', async () => {
+		const { handler, table, facts } = setup(MultiORMEnum.MikroORM, false);
+
+		await handler.execute(command());
+
+		expect(table[0]).toMatchObject({ id: 'log-1', isRunning: false });
+		expect(facts.record).toHaveBeenCalledWith(
+			'time_log.stopped',
+			expect.objectContaining({ id: 'log-1', isRunning: false })
+		);
+		expect(facts.recordWithin).not.toHaveBeenCalled();
+	});
+});
