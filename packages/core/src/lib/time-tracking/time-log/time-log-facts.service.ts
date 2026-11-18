@@ -1,0 +1,248 @@
+import { Injectable, Logger, OnModuleInit, Optional } from '@nestjs/common';
+import { DataSource, EntityManager } from 'typeorm';
+import { IOutboxWriteInput, ITimeLog } from '@gauzy/contracts';
+import { MultiORMEnum, getORMType } from '../../core/utils';
+import { locksRowsForChange } from './time-log-history.writer';
+import { EventOutboxService } from '../../event-outbox/event-outbox.service';
+import { declareStreamedEvents } from '../../graphql/subscriptions/plugin-subscription';
+import { SubscriptionCatalogue } from '../../graphql/subscriptions/subscription-catalogue';
+import { GraphqlSubscriptionConsumer } from '../../graphql/subscriptions/subscription-consumer';
+
+/** A time entry that starts running: a timer start. */
+export const TIME_LOG_STARTED = 'time_log.started';
+/** A running time entry that stops: a timer stop, a stop another start makes, a stale run closed. */
+export const TIME_LOG_STOPPED = 'time_log.stopped';
+/** A time entry created already finished: time added by hand, by a tracker or by an integration. */
+export const TIME_LOG_CREATED = 'time_log.created';
+/** A time entry changed in any other way: its range, its project, its task, its employee. */
+export const TIME_LOG_UPDATED = 'time_log.updated';
+/** A time entry deleted, a discarded timer included. */
+export const TIME_LOG_DELETED = 'time_log.deleted';
+
+/**
+ * The time entry facts, as a catalogue the subscription gate (`tools/scripts/subscription-parity-check.mjs`) reads, so
+ * that a webhook subscribed to `time_log.*` receives them.
+ */
+export const TIME_LOG_STREAMED_EVENTS: readonly string[] = [
+	'time_log.started',
+	'time_log.stopped',
+	'time_log.created',
+	'time_log.updated',
+	'time_log.deleted'
+];
+
+/** The aggregate every `time_log.*` outbox row is written under. */
+export const TIME_LOG_AGGREGATE_TYPE = 'TIME_LOG';
+
+/** Reads a time entry as its write left it, through the manager it is handed (see `recordWithin`). */
+export type TimeLogFactEntryReader = (manager: EntityManager) => Promise<Partial<ITimeLog> | null | undefined>;
+
+/**
+ * What a `time_log.*` fact carries: the entry's ids and times, never its description or the reason given for an edit.
+ */
+export function timeLogFactData(timeLog: Partial<ITimeLog>): Record<string, unknown> {
+	return {
+		timeLogId: timeLog.id,
+		employeeId: timeLog.employeeId ?? null,
+		projectId: timeLog.projectId ?? null,
+		taskId: timeLog.taskId ?? null,
+		organizationContactId: timeLog.organizationContactId ?? null,
+		organizationTeamId: timeLog.organizationTeamId ?? null,
+		startedAt: timeLog.startedAt ?? null,
+		stoppedAt: timeLog.stoppedAt ?? null,
+		isRunning: timeLog.isRunning ?? null,
+		isBillable: timeLog.isBillable ?? null,
+		source: timeLog.source ?? null,
+		logType: timeLog.logType ?? null
+	};
+}
+
+/**
+ * Writes the time entry facts to the event outbox, so that the signed webhooks deliver them.
+ *
+ * A fact commits with the write it tells of, as the outbox asks (`EventOutboxService.append`): it is appended in the
+ * transaction of that write, through a savepoint ({@link recordWithin}). Two cases have no such transaction, and
+ * there the fact is appended right after the write, in a transaction of its own ({@link record}): under MikroORM,
+ * where the entries are written through TypeORM while the outbox writes through MikroORM, and on SQLite, where a
+ * transaction begun beside another request's nests into it (see `locksRowsForChange`). A fact that cannot be written
+ * is logged and never fails the write of a person's time.
+ */
+@Injectable()
+export class TimeLogFactsService implements OnModuleInit {
+	private readonly logger = new Logger(TimeLogFactsService.name);
+
+	constructor(
+		private readonly outbox: EventOutboxService,
+		private readonly catalogue: SubscriptionCatalogue,
+		@Optional() private readonly consumer?: GraphqlSubscriptionConsumer,
+		@Optional() private readonly dataSource?: DataSource
+	) {}
+
+	/**
+	 * Declares {@link TIME_LOG_STREAMED_EVENTS}, and has the outbox consumer listen for them.
+	 */
+	onModuleInit(): void {
+		declareStreamedEvents(this.catalogue, this.consumer, ...TIME_LOG_STREAMED_EVENTS);
+	}
+
+	/**
+	 * Whether the facts are appended in the transaction of their write ({@link recordWithin}): the entries and the
+	 * outbox are written through TypeORM, on a database that locks rows. Otherwise {@link record} appends them after.
+	 */
+	appendsWithinWrites(): boolean {
+		return getORMType() === MultiORMEnum.TypeORM && locksRowsForChange();
+	}
+
+	/**
+	 * Appends one fact about a time entry in the transaction of its write, through a savepoint: it commits with the
+	 * write, and a fact that cannot be written is undone alone and logged. Throws only an error that ended the write's
+	 * whole transaction, not the savepoint alone (see {@link endsTransaction}): that write is gone, and must fail.
+	 *
+	 * @param manager The manager of the write's open TypeORM transaction.
+	 * @param name One of the `time_log.*` names above.
+	 * @param timeLog The entry as the write left it, with its tenant and organization; or how to read it, which is
+	 * read inside the savepoint, so that a read that fails is undone and logged with the fact, and never fails the
+	 * write either.
+	 * @param fallback With a read: the entry as the write states it, told of in a savepoint of its own when the read
+	 * fails, so that the write's fact is not lost (a stop whose retry changes no row writes none of its own).
+	 */
+	async recordWithin(
+		manager: EntityManager,
+		name: string,
+		timeLog: Partial<ITimeLog> | null | undefined | TimeLogFactEntryReader,
+		fallback?: Partial<ITimeLog> | null
+	): Promise<void> {
+		const read: TimeLogFactEntryReader | undefined = typeof timeLog === 'function' ? timeLog : undefined;
+		let entry = typeof timeLog === 'function' ? undefined : timeLog;
+		if (!read && !this.isScoped(name, entry)) {
+			return;
+		}
+		let isRead = !read;
+		try {
+			await manager.transaction(async (savepoint) => {
+				if (read) {
+					entry = await read(savepoint);
+					isRead = true;
+					if (!this.isScoped(name, entry)) {
+						return;
+					}
+				}
+				await this.outbox.append(savepoint, factInput(name, entry));
+			});
+		} catch (error) {
+			if (endsTransaction(error)) {
+				throw error;
+			}
+			if (!isRead && fallback) {
+				this.logger.warn(
+					`The ${name} fact of time entry ${fallback.id} is written as its write states it, as the entry ` +
+						`could not be read back: ${(error as Error)?.message}`
+				);
+				await this.recordWithin(manager, name, fallback);
+				return;
+			}
+			this.warnNotWritten(name, entry, error);
+		}
+	}
+
+	/**
+	 * Appends one fact about a time entry right after its write, in a transaction of its own: for a write that runs in
+	 * no transaction the outbox can share (see {@link appendsWithinWrites}). Never throws.
+	 *
+	 * @param name One of the `time_log.*` names above.
+	 * @param timeLog The entry as the write left it, with its tenant and organization.
+	 */
+	async record(name: string, timeLog: Partial<ITimeLog> | null | undefined): Promise<void> {
+		if (!this.isScoped(name, timeLog)) {
+			return;
+		}
+		try {
+			await this.append(factInput(name, timeLog));
+		} catch (error) {
+			this.warnNotWritten(name, timeLog, error);
+		}
+	}
+
+	/**
+	 * Whether a fact can be written for the entry: it has an id, and states its own tenant and organization. Without
+	 * them the outbox takes the request's, and a fact stored with no organization is fanned out to the webhooks of
+	 * every organization of the tenant (`WebhookSubscriptionService.findMatchingInScope`): such a fact is logged, not
+	 * written.
+	 */
+	private isScoped(name: string, timeLog: Partial<ITimeLog> | null | undefined): timeLog is Partial<ITimeLog> {
+		if (!timeLog?.id) {
+			return false;
+		}
+		if (!timeLog.tenantId || !timeLog.organizationId) {
+			this.logger.warn(
+				`The ${name} fact of time entry ${timeLog.id} was not written: it states no tenant or organization`
+			);
+			return false;
+		}
+		return true;
+	}
+
+	private warnNotWritten(name: string, timeLog: Partial<ITimeLog> | null | undefined, error: unknown): void {
+		const entry = timeLog?.id ?? '(not read)';
+		this.logger.warn(`The ${name} fact of time entry ${entry} was not written: ${(error as Error)?.message}`);
+	}
+
+	/**
+	 * Appends through the ORM `DB_ORM` configures (under MikroORM the outbox's TypeORM entity maps its base columns
+	 * only, so the row is written through MikroORM), in a transaction of its own.
+	 */
+	private async append(input: IOutboxWriteInput): Promise<void> {
+		if (getORMType() === MultiORMEnum.MikroORM) {
+			const em = this.outbox.mikroOrmEventOutboxRepository?.getEntityManager?.();
+			if (em) {
+				await em.fork().transactional((transaction) => this.outbox.append(transaction as never, input));
+				return;
+			}
+		}
+		if (!this.dataSource) {
+			return;
+		}
+		await this.dataSource.manager.transaction((manager) => this.outbox.append(manager, input));
+	}
+}
+
+/**
+ * Whether an error ended the whole transaction a savepoint was opened in, and not the savepoint alone: a MySQL
+ * deadlock, on which InnoDB rolls the transaction back. Its write is then gone, and a statement after it would run, and commit,
+ * outside any transaction: a fact appended there would tell of a write that never happened. On PostgreSQL a failed
+ * statement, a deadlock included, rolls back to the savepoint, and the write's transaction goes on.
+ */
+export function endsTransaction(error: unknown): boolean {
+	const failure = error as { code?: unknown; errno?: unknown; driverError?: { code?: unknown; errno?: unknown } };
+	const code = failure?.code ?? failure?.driverError?.code;
+	const errno = failure?.errno ?? failure?.driverError?.errno;
+	return code === 'ER_LOCK_DEADLOCK' || errno === 1213;
+}
+
+/** The outbox row of one fact about a time entry. */
+function factInput(name: string, timeLog: Partial<ITimeLog>): IOutboxWriteInput {
+	return {
+		name,
+		aggregateType: TIME_LOG_AGGREGATE_TYPE,
+		aggregateId: timeLog.id,
+		data: timeLogFactData(timeLog),
+		tenantId: timeLog.tenantId,
+		organizationId: timeLog.organizationId
+	} as IOutboxWriteInput;
+}
+
+/** The fact of an entry just created: a running one starts, a finished one is created. */
+export function factOfCreatedLog(timeLog: Partial<ITimeLog>): string {
+	if (timeLog.isRunning) {
+		return TIME_LOG_STARTED;
+	}
+	return TIME_LOG_CREATED;
+}
+
+/** The fact of an entry just updated: a stop of a run, or another change. */
+export function factOfUpdatedLog(stopsRun: boolean): string {
+	if (stopsRun) {
+		return TIME_LOG_STOPPED;
+	}
+	return TIME_LOG_UPDATED;
+}

@@ -44,6 +44,8 @@ export const CHAT_LIVE_LIST_AUDIT_MS = 1_000;
 
 /** The newest page a conversation opens with (the API's default is 50, its maximum 200). */
 export const CHAT_PAGE_SIZE = 50;
+/** The newest page the docked card reads: the latest of a conversation; the rest is a click away in the chat. */
+export const CHAT_DOCK_PAGE_SIZE = 20;
 
 /** Where a task card leads. */
 export const CHAT_TASK_LINK = '/pages/tasks/view';

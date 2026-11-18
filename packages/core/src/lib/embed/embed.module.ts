@@ -13,8 +13,12 @@ import { MikroOrmUserOrganizationRepository } from '../user-organization/reposit
 import { TypeOrmUserOrganizationRepository } from '../user-organization/repository/type-orm-user-organization.repository';
 import { EmbedClientService } from './embed-client.service';
 import { EmbedCredential } from './embed-credential.entity';
+import { EmbedAllowedOrigin } from './embed-allowed-origin.entity';
+import { EmbedAllowedOriginService } from './embed-allowed-origin.service';
+import { MikroOrmEmbedAllowedOriginRepository } from './repository/mikro-orm-embed-allowed-origin.repository';
+import { TypeOrmEmbedAllowedOriginRepository } from './repository/type-orm-embed-allowed-origin.repository';
 import { EmbedCredentialService } from './embed-credential.service';
-import { EmbedCredentialController, EmbedTokenController } from './embed.controller';
+import { EmbedAllowedOriginController, EmbedCredentialController, EmbedTokenController } from './embed.controller';
 import { EmbedEnabledGuard, EmbedSessionGuard } from './embed.guards';
 import { MikroOrmEmbedCredentialRepository } from './repository/mikro-orm-embed-credential.repository';
 import { TypeOrmEmbedCredentialRepository } from './repository/type-orm-embed-credential.repository';
@@ -26,16 +30,19 @@ import { TypeOrmEmbedCredentialRepository } from './repository/type-orm-embed-cr
  */
 @Module({
 	imports: [
-		TypeOrmModule.forFeature([EmbedCredential, Employee, User, UserOrganization]),
-		MikroOrmModule.forFeature([EmbedCredential, Employee, User, UserOrganization]),
+		TypeOrmModule.forFeature([EmbedCredential, EmbedAllowedOrigin, Employee, User, UserOrganization]),
+		MikroOrmModule.forFeature([EmbedCredential, EmbedAllowedOrigin, Employee, User, UserOrganization]),
 		RolePermissionModule,
 		AuthModule
 	],
-	controllers: [EmbedCredentialController, EmbedTokenController],
+	controllers: [EmbedCredentialController, EmbedAllowedOriginController, EmbedTokenController],
 	providers: [
 		EmbedCredentialService,
 		EmbedClientService,
+		EmbedAllowedOriginService,
 		EmbedEnabledGuard,
+		TypeOrmEmbedAllowedOriginRepository,
+		MikroOrmEmbedAllowedOriginRepository,
 		TypeOrmEmbedCredentialRepository,
 		MikroOrmEmbedCredentialRepository,
 		TypeOrmEmployeeRepository,
@@ -46,6 +53,6 @@ import { TypeOrmEmbedCredentialRepository } from './repository/type-orm-embed-cr
 		MikroOrmUserOrganizationRepository,
 		{ provide: APP_GUARD, useClass: EmbedSessionGuard }
 	],
-	exports: [EmbedCredentialService]
+	exports: [EmbedCredentialService, EmbedAllowedOriginService]
 })
 export class EmbedModule {}

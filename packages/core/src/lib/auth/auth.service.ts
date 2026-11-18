@@ -762,13 +762,14 @@ export class AuthService extends SocialAuthService {
 		organizationId: ID;
 		credentialId: ID;
 		employeeId: ID;
+		origin?: string;
 		expiresAt: Date;
 	}): Promise<string> {
-		const { userId, tenantId, organizationId, credentialId, employeeId, expiresAt } = input;
+		const { userId, tenantId, organizationId, credentialId, employeeId, origin, expiresAt } = input;
 		return await this.getJwtAccessToken(
 			{ id: userId, tenantId },
 			organizationId,
-			{ embedCredentialId: credentialId, embedEmployeeId: employeeId },
+			{ embedCredentialId: credentialId, embedEmployeeId: employeeId, embedOrigin: origin },
 			expiresAt
 		);
 	}
@@ -2412,7 +2413,8 @@ export class AuthService extends SocialAuthService {
 				// Only the embed exchange passes them: the credential and the member (embed/embed-session.ts).
 				...(metadata?.embedCredentialId && {
 					embedCredentialId: metadata.embedCredentialId,
-					embedEmployeeId: metadata.embedEmployeeId
+					embedEmployeeId: metadata.embedEmployeeId,
+					...(metadata.embedOrigin && { embedOrigin: metadata.embedOrigin })
 				})
 			};
 

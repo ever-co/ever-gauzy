@@ -49,6 +49,8 @@ import {
 	isWellFormedEmbedCredential
 } from './embed.utils';
 import { MikroOrmEmbedCredentialRepository } from './repository/mikro-orm-embed-credential.repository';
+import { EmbedAllowedOriginService } from './embed-allowed-origin.service';
+import { normalizeOrigin } from './embed-origin';
 import { TypeOrmEmbedCredentialRepository } from './repository/type-orm-embed-credential.repository';
 
 /** A credential that does not earn a token, already logged with its reason. */
@@ -56,6 +58,9 @@ class CredentialRefused extends Error {}
 
 /** A valid credential asked for a member it cannot act for, already logged with its reason. */
 class MemberRefused extends Error {}
+
+/** A valid credential asked for a page origin its organization does not allow, already logged. */
+class OriginRefused extends Error {}
 
 /** An address that had too many credentials refused, answered before any lookup (`EmbedExchangeFailures`). */
 class AddressLimited extends Error {}
@@ -125,6 +130,7 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 		private readonly typeOrmUserOrganizationRepository: TypeOrmUserOrganizationRepository,
 		private readonly mikroOrmUserOrganizationRepository: MikroOrmUserOrganizationRepository,
 		private readonly authService: AuthService,
+		private readonly embedAllowedOriginService: EmbedAllowedOriginService,
 		private readonly embedClientService: EmbedClientService
 	) {
 		super(typeOrmEmbedCredentialRepository, mikroOrmEmbedCredentialRepository);
@@ -314,7 +320,8 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 
 	/**
 	 * What a request whose credential did not get it through is answered: a 503 when the database is out of reach, a
-	 * 403 with a code for a member the credential cannot act for or a client report it cannot read, a 500 for a client
+	 * 403 with a code for a page origin the organization does not allow, a member the credential cannot act for or a
+	 * client report it cannot read (the report is asked server to server, with no origin), a 500 for a client
 	 * report that failed after its credential was accepted, a 429 with a code for a capped address, and one 401 for
 	 * every refused credential.
 	 *
@@ -329,6 +336,13 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 		if (isDatabaseUnavailableError(error)) {
 			this.logger.error(`Embed ${route} could not reach the database: ${messageOf(error)}`);
 			return new ServiceUnavailableException(DATABASE_UNAVAILABLE_MESSAGE, { cause: error });
+		}
+		if (error instanceof OriginRefused) {
+			return new ForbiddenException({
+				statusCode: 403,
+				code: 'EMBED_ORIGIN_NOT_ALLOWED',
+				message: "This site is not allowed to embed the organization's timer."
+			});
 		}
 		if (error instanceof MemberRefused) {
 			return new ForbiddenException({
@@ -416,12 +430,21 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 		return row;
 	}
 
-	private async judgeAndMint({ credential, employeeId, email }: ExchangeEmbedCredentialDTO, address: string) {
+	private async judgeAndMint({ credential, employeeId, email, origin }: ExchangeEmbedCredentialDTO, address: string) {
 		const row = await this.acceptCredential(credential, address, 'exchange');
 		const refuseMember = (reason: string, row: EmbedCredential): never => {
 			this.logger.warn(`Embed exchange refused: ${reason} credential=${row.id}`);
 			throw new MemberRefused(reason);
 		};
+
+		// The page the widget runs in must be one of the organization's allowed origins; the token is bound to it.
+		const pageOrigin = normalizeOrigin(origin);
+		const allowed =
+			!!pageOrigin && (await this.embedAllowedOriginService.isAllowed(row.tenantId, row.organizationId, pageOrigin));
+		if (!allowed) {
+			this.logger.warn(`Embed exchange refused: origin not allowed credential=${row.id}`);
+			throw new OriginRefused('origin not allowed');
+		}
 
 		const employee = await this.findMember(row, { employeeId, email });
 		if (!employee) {
@@ -446,6 +469,7 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 			organizationId: row.organizationId,
 			credentialId: row.id,
 			employeeId: employee.id,
+			origin: pageOrigin,
 			expiresAt
 		});
 		await this.recordUse(row, now);

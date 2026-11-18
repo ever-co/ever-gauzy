@@ -3,6 +3,9 @@ import { ExtractJwt } from 'passport-jwt';
 import * as moment from 'moment';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { JWT_ALGORITHMS } from '../auth/purpose-token';
+import { EMBED_ORIGIN_CLAIM } from './embed-origin';
+
+export { EMBED_ORIGIN_CLAIM };
 
 /**
  * The access-token claims that mark a token minted by the embed exchange: the credential behind it and the one member
@@ -16,6 +19,8 @@ export interface IEmbedClaims {
 	employeeId: string;
 	organizationId: string | null;
 	tenantId: string | null;
+	/** The page origin the token was exchanged for; null on a token minted before origins were bound. */
+	origin: string | null;
 }
 
 /** A route an embed token may reach, and what it may ask of it. */
@@ -163,7 +168,8 @@ export function readEmbedClaims(authorization: string | undefined): IEmbedClaims
 		// Unverified: a claim that is not a string (an object without a usable `toString` throws on String()) is none.
 		employeeId: typeof record[EMBED_EMPLOYEE_CLAIM] === 'string' ? (record[EMBED_EMPLOYEE_CLAIM] as string) : '',
 		organizationId: typeof record['organizationId'] === 'string' ? record['organizationId'] : null,
-		tenantId: typeof record['tenantId'] === 'string' ? record['tenantId'] : null
+		tenantId: typeof record['tenantId'] === 'string' ? record['tenantId'] : null,
+		origin: typeof record[EMBED_ORIGIN_CLAIM] === 'string' ? (record[EMBED_ORIGIN_CLAIM] as string) : null
 	};
 }
 

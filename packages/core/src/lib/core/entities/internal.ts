@@ -177,6 +177,7 @@ export * from '../../tenant-api-key/tenant-api-key.entity';
 export * from '../../auth/oauth-client/oauth-client.entity';
 export * from '../../auth/user-api-token/user-api-token.entity';
 export * from '../../embed/embed-credential.entity';
+export * from '../../embed/embed-allowed-origin.entity';
 export * from '../../auth/two-factor/user-two-factor.entity';
 export * from '../../token/entities/token.entity';
 export * from '../../tenant/tenant-setting/tenant-setting.entity';

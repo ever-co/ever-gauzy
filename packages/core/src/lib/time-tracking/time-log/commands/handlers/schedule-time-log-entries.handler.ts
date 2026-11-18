@@ -1,5 +1,6 @@
+import { Logger, Optional } from '@nestjs/common';
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
-import { Brackets, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
 import { ID, ITimeLog, ITimeSlot, TimeLogType } from '@gauzy/contracts';
@@ -10,14 +11,19 @@ import { ScheduleTimeLogEntriesCommand } from '../schedule-time-log-entries.comm
 import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.repository';
 import { MikroOrmTimeLogRepository } from '../../repository/mikro-orm-time-log.repository';
 import { breakEnd } from '../../break-rules';
+import { lockedForChange } from '../../time-log-history.writer';
+import { factOfUpdatedLog, TimeLogFactsService } from '../../time-log-facts.service';
 
 @CommandHandler(ScheduleTimeLogEntriesCommand)
 export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTimeLogEntriesCommand> {
+	private readonly logger = new Logger(ScheduleTimeLogEntriesHandler.name);
 	protected ormType: MultiORM = getORMType();
 
 	constructor(
 		readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
-		readonly mikroOrmTimeLogRepository: MikroOrmTimeLogRepository
+		readonly mikroOrmTimeLogRepository: MikroOrmTimeLogRepository,
+		// Writes the fact of each entry it closes for the webhooks; a handler built without it closes as before.
+		@Optional() private readonly facts?: TimeLogFactsService
 	) {}
 
 	/**
@@ -192,7 +198,62 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 		}
 
 		// Stop the pending time log entry
-		await this.stopTimeLog(timeLog, stoppedAt);
+		await this.stopTimeLogWithFact(timeLog, stoppedAt);
+	}
+
+	/**
+	 * Stops a pending time log entry with its fact (for the webhooks): in one transaction where the outbox can share
+	 * it, the fact right after the stop otherwise, and the stop alone for a handler built without the facts.
+	 *
+	 * The fact is built from the row as stored, read through TypeORM, and not from the entry as the pending read found
+	 * it: an end worked out before the stop is written apart from it (`updateStoppedAtUsing*`), and a log read through
+	 * MikroORM arrives without its scalar ids (tenant, organization, employee, project). It names a stop
+	 * (`time_log.stopped`) only when the row still ran when the stop wrote. In the transaction, the row is read under
+	 * its lock, and the stop is decided from that row: a stop that closed the run since the pending read keeps its end
+	 * and the one stop fact, and this one is an update; the fact is that locked row with what the stop wrote, which is
+	 * the row as the stop leaves it, with no read after it. Where the fact follows the stop, a read that only feeds it
+	 * never stops the close: it is logged and passed over.
+	 *
+	 * @param timeLog - The time log entry to stop
+	 * @param stoppedAt - The end worked out for the entry, if any
+	 */
+	private async stopTimeLogWithFact(timeLog: ITimeLog, stoppedAt?: Date): Promise<void> {
+		if (!this.facts) {
+			await this.stopTimeLog(timeLog, stoppedAt);
+			return;
+		}
+		const where = { id: timeLog.id };
+		if (!this.facts.appendsWithinWrites()) {
+			const before = await this.readForFact(where);
+			await this.stopTimeLog(before ?? timeLog, stoppedAt);
+			const stopped = await this.readForFact(where);
+			await this.facts.record(factOfUpdatedLog(Boolean((before ?? timeLog).isRunning)), stopped);
+			return;
+		}
+		await this.typeOrmTimeLogRepository.manager.transaction(async (manager) => {
+			const repository = manager.getRepository(TimeLog);
+			const before = await repository.findOne({ where, ...lockedForChange() });
+			// Deleted since the pending read: nothing to stop (a save of its id would insert it again)
+			if (!before) {
+				return;
+			}
+			const written = await this.stopTimeLog(before, stoppedAt, repository);
+			const stopped = { ...before, ...written };
+			await this.facts.recordWithin(manager, factOfUpdatedLog(Boolean(before.isRunning)), stopped);
+		});
+	}
+
+	/**
+	 * The entry as stored, read through TypeORM for its fact where the fact follows the stop; null, logged, when it
+	 * cannot be read: the close goes on without it.
+	 */
+	private async readForFact(where: { id: ID }): Promise<TimeLog | null> {
+		try {
+			return await this.typeOrmTimeLogRepository.findOneBy(where);
+		} catch (error) {
+			this.logger.warn(`Time log ${where.id} could not be read for its fact: ${error?.message}`);
+			return null;
+		}
 	}
 
 	/**
@@ -350,27 +411,34 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 	 *
 	 * @param log - The time log entry to stop
 	 * @param stoppedAt - The end worked out for the entry, if any; written only when the log has no `stoppedAt`.
+	 * @param repository - The TypeORM repository to save through: a transaction's, when the stop writes its fact in it.
+	 * @returns The columns the stop wrote. Not the save's answer: TypeORM sets every nullable column a save was not
+	 * given to null on the object it saves, and laid over the row for its fact, that would erase its times and ids.
 	 */
-	private async stopTimeLog(log: ITimeLog, stoppedAt?: Date): Promise<ITimeLog> {
-		if (!log.stoppedAt) {
-			return await this.saveTimeLog({
-				id: log.id,
-				isRunning: false,
-				stoppedAt: stoppedAt ?? moment.utc(log.startedAt).toDate()
-			});
-		}
-
-		// Update the isRunning field to false in the database for the given time log
-		return await this.saveTimeLog({ id: log.id, isRunning: false });
+	private async stopTimeLog(
+		log: ITimeLog,
+		stoppedAt?: Date,
+		repository: Repository<TimeLog> = this.typeOrmTimeLogRepository
+	): Promise<Partial<ITimeLog>> {
+		const stop: Partial<ITimeLog> & { id: ID } = log.stoppedAt
+			? // Update the isRunning field to false in the database for the given time log
+			  { id: log.id, isRunning: false }
+			: { id: log.id, isRunning: false, stoppedAt: stoppedAt ?? moment.utc(log.startedAt).toDate() };
+		await this.saveTimeLog({ ...stop }, repository);
+		return stop;
 	}
 
 	/**
 	 * Saves a partial time log entity using the active ORM.
 	 *
 	 * @param partial - A partial time log entity with at least an id
+	 * @param repository - The TypeORM repository to save through under TypeORM
 	 * @returns The saved time log entity
 	 */
-	private async saveTimeLog(partial: Partial<ITimeLog> & { id: ID }): Promise<any> {
+	private async saveTimeLog(
+		partial: Partial<ITimeLog> & { id: ID },
+		repository: Repository<TimeLog> = this.typeOrmTimeLogRepository
+	): Promise<any> {
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
 				const em = this.mikroOrmTimeLogRepository.getEntityManager();
@@ -381,7 +449,7 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 			}
 			case MultiORMEnum.TypeORM:
 			default:
-				return await this.typeOrmTimeLogRepository.save(partial);
+				return await repository.save(partial);
 		}
 	}
 }
