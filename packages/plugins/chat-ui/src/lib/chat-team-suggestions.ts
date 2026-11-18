@@ -48,19 +48,34 @@ export function teamSuggestions(
 
 /** What `teamChannelOf` reads of a conversation. */
 export interface ChatChannelLike {
+	id?: unknown;
 	kind: string;
 	name?: string | null;
 	archivedAt?: Date | string | null;
+	createdAt?: Date | string | null;
+	organizationId?: unknown;
+}
+
+/** When a channel was created, for the order of `teamChannelOf` (unknown last). */
+function createdTime(conversation: ChatChannelLike): number {
+	const time = conversation.createdAt ? new Date(conversation.createdAt).getTime() : NaN;
+	return Number.isNaN(time) ? Number.POSITIVE_INFINITY : time;
 }
 
 /**
  * A team's channel among these conversations: the channel named as the team, compared as the new-channel dialog
- * compares a team name with the channels (trimmed, without a leading `#`, case-insensitive). An open one before an
- * archived one; null when none is named so (or the team has no name).
+ * compares a team name with the channels (trimmed, without a leading `#`, case-insensitive), of the given
+ * organization only when one is given (my conversations span the tenant: another organization's channel of that name
+ * is not this team's). An open one before an archived one, and among them the oldest (then the lowest id): two people
+ * who each created one at the same moment both settle on the same. Null when none is named so (or the team has no
+ * name).
  */
-export function teamChannelOf<T extends ChatChannelLike>(conversations: readonly T[], teamName: string): T | null {
+export function teamChannelOf<T extends ChatChannelLike>(conversations: readonly T[], teamName: string, organizationId: string | null = null): T | null {
 	const key = comparable(teamName ?? '');
 	if (!key) return null;
-	const named = conversations.filter((conversation) => conversation?.kind === 'channel' && comparable(conversation.name ?? '') === key);
+	const named = conversations
+		.filter((conversation) => conversation?.kind === 'channel' && comparable(conversation.name ?? '') === key)
+		.filter((conversation) => !organizationId || conversation.organizationId == null || String(conversation.organizationId) === organizationId)
+		.sort((a, b) => createdTime(a) - createdTime(b) || String(a.id ?? '').localeCompare(String(b.id ?? '')));
 	return named.find((conversation) => !conversation.archivedAt) ?? named[0] ?? null;
 }
