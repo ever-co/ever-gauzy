@@ -1,10 +1,61 @@
+// Must stay first: loads the entity graph before the service pulls an entity (see user.create.handler.spec.ts).
+import '../core/entities/internal';
+
 import { ServiceUnavailableException } from '@nestjs/common';
+import { CommandBus } from '@nestjs/cqrs';
 import { DataSource } from 'typeorm';
-import { EmbedMemberService } from './embed-member.service';
+import { EMBED_MEMBER_NAME_MAX_LENGTH, EmbedMemberService, newMemberOf } from './embed-member.service';
 
 const TENANT = '7c000000-0000-4000-8000-00000000000a';
 const OTHER_TENANT = '7c000000-0000-4000-8000-00000000000b';
 const ADDRESS = 'noor.haddad@fabrikam.example';
+
+/** The service on a data source; its additions have their own spec on SQLite (`embed-member.service.sqlite.spec.ts`). */
+const serviceOn = (dataSource: DataSource) => new EmbedMemberService(dataSource, {} as CommandBus);
+
+describe('newMemberOf: the person an exchange body names, to add', () => {
+	it('takes a valid address, trimmed and in the case it was sent, with the names of the body trimmed', () => {
+		expect(
+			newMemberOf({ email: ' Noor.Haddad@Fabrikam.example ', firstName: ' Noor ', lastName: ' Haddad ' })
+		).toEqual({
+			email: 'Noor.Haddad@Fabrikam.example',
+			firstName: 'Noor',
+			lastName: 'Haddad'
+		});
+	});
+
+	it('names no one without a valid address', () => {
+		const tooLong = `${'n'.repeat(64)}@${'f'.repeat(63)}.${'g'.repeat(63)}.${'h'.repeat(63)}.example`;
+		for (const email of [
+			undefined,
+			null,
+			42,
+			{},
+			'',
+			'   ',
+			'noor',
+			'noor@',
+			'@fabrikam.example',
+			'noor haddad@x.example',
+			tooLong
+		]) {
+			expect(newMemberOf({ email, firstName: 'Noor' })).toBeNull();
+		}
+	});
+
+	it('takes no name that is blank or not a string, and cuts a long one', () => {
+		const long = `${'N'.repeat(EMBED_MEMBER_NAME_MAX_LENGTH)}oor`;
+
+		expect(newMemberOf({ email: ADDRESS, firstName: '   ', lastName: 7 })).toEqual({
+			email: ADDRESS,
+			firstName: undefined,
+			lastName: undefined
+		});
+		expect(newMemberOf({ email: ADDRESS, firstName: long }).firstName).toBe(
+			'N'.repeat(EMBED_MEMBER_NAME_MAX_LENGTH)
+		);
+	});
+});
 
 /** A promise and the function that settles it, to hold a work until the case lets it end. */
 function gate() {
@@ -61,7 +112,7 @@ function dataSourceOf(type: string, options: { acquired?: number } = {}) {
 
 describe('EmbedMemberService: one addition of an address at a time', () => {
 	it('runs a second turn of the same address of a tenant only once the first has ended, whatever its case', async () => {
-		const service = new EmbedMemberService(dataSourceOf('better-sqlite3').dataSource);
+		const service = serviceOn(dataSourceOf('better-sqlite3').dataSource);
 		const steps: string[] = [];
 		const first = gate();
 
@@ -85,7 +136,7 @@ describe('EmbedMemberService: one addition of an address at a time', () => {
 	});
 
 	it('runs the turns of another address, or of the same address in another tenant, at the same time', async () => {
-		const service = new EmbedMemberService(dataSourceOf('better-sqlite3').dataSource);
+		const service = serviceOn(dataSourceOf('better-sqlite3').dataSource);
 		const held = gate();
 		const started: string[] = [];
 
@@ -106,7 +157,7 @@ describe('EmbedMemberService: one addition of an address at a time', () => {
 	});
 
 	it('gives the turn to the next one when a turn fails', async () => {
-		const service = new EmbedMemberService(dataSourceOf('better-sqlite3').dataSource);
+		const service = serviceOn(dataSourceOf('better-sqlite3').dataSource);
 
 		const failing = service.inTurn(TENANT, ADDRESS, async () => {
 			throw new Error('the database went away');
@@ -119,7 +170,7 @@ describe('EmbedMemberService: one addition of an address at a time', () => {
 
 	it('opens no connection of its own on SQLite, which runs one API process', async () => {
 		const { dataSource } = dataSourceOf('better-sqlite3');
-		const service = new EmbedMemberService(dataSource);
+		const service = serviceOn(dataSource);
 
 		await service.inTurn(TENANT, ADDRESS, async () => undefined);
 
@@ -132,7 +183,7 @@ describe('EmbedMemberService: the database lock of an addition', () => {
 
 	it('holds a transaction-scoped advisory lock on Postgres while the work runs, then ends the transaction', async () => {
 		const { dataSource, steps, parameters } = dataSourceOf('postgres');
-		const service = new EmbedMemberService(dataSource);
+		const service = serviceOn(dataSource);
 
 		const answer = await service.inTurn(TENANT, ADDRESS, async () => {
 			steps.push('work');
@@ -161,7 +212,7 @@ describe('EmbedMemberService: the database lock of an addition', () => {
 			[OTHER_TENANT, ADDRESS]
 		]) {
 			const { dataSource, parameters } = dataSourceOf('postgres');
-			await new EmbedMemberService(dataSource).inTurn(tenantId, email, async () => undefined);
+			await serviceOn(dataSource).inTurn(tenantId, email, async () => undefined);
 			names.push(parameters[0][0]);
 		}
 
@@ -171,7 +222,7 @@ describe('EmbedMemberService: the database lock of an addition', () => {
 
 	it('ends the transaction, and so the lock, when the work fails on Postgres', async () => {
 		const { dataSource, steps } = dataSourceOf('postgres');
-		const service = new EmbedMemberService(dataSource);
+		const service = serviceOn(dataSource);
 
 		await expect(
 			service.inTurn(TENANT, ADDRESS, async () => {
@@ -184,7 +235,7 @@ describe('EmbedMemberService: the database lock of an addition', () => {
 
 	it('holds a named lock MySQL accepts while the work runs, then releases it', async () => {
 		const { dataSource, steps, parameters } = dataSourceOf('mysql');
-		const service = new EmbedMemberService(dataSource);
+		const service = serviceOn(dataSource);
 
 		await service.inTurn(TENANT, ADDRESS, async () => {
 			steps.push('work');
@@ -206,7 +257,7 @@ describe('EmbedMemberService: the database lock of an addition', () => {
 
 	it('answers 503 without running the work when MySQL does not give the lock in time', async () => {
 		const { dataSource, steps } = dataSourceOf('mysql', { acquired: 0 });
-		const service = new EmbedMemberService(dataSource);
+		const service = serviceOn(dataSource);
 		const work = jest.fn(async () => undefined);
 
 		await expect(service.inTurn(TENANT, ADDRESS, work)).rejects.toThrow(ServiceUnavailableException);
