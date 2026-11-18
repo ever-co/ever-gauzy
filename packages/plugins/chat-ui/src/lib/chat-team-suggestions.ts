@@ -65,8 +65,8 @@ function createdTime(conversation: ChatChannelLike): number {
 /**
  * A team's channel among these conversations: the channel named as the team, compared as the new-channel dialog
  * compares a team name with the channels (trimmed, without a leading `#`, case-insensitive), of the given
- * organization only when one is given (my conversations span the tenant: another organization's channel of that name
- * is not this team's). An open one before an archived one, and among them the oldest (then the lowest id): two people
+ * organization only when one is given (my conversations span the tenant: another organization's channel of that name,
+ * or a tenant-wide one without an organization, is not this team's). An open one before an archived one, and among them the oldest (then the lowest id): two people
  * who each created one at the same moment both settle on the same. Null when none is named so (or the team has no
  * name).
  */
@@ -75,7 +75,7 @@ export function teamChannelOf<T extends ChatChannelLike>(conversations: readonly
 	if (!key) return null;
 	const named = conversations
 		.filter((conversation) => conversation?.kind === 'channel' && comparable(conversation.name ?? '') === key)
-		.filter((conversation) => !organizationId || conversation.organizationId == null || String(conversation.organizationId) === organizationId)
+		.filter((conversation) => !organizationId || (conversation.organizationId != null && String(conversation.organizationId) === organizationId))
 		.sort((a, b) => createdTime(a) - createdTime(b) || String(a.id ?? '').localeCompare(String(b.id ?? '')));
 	return named.find((conversation) => !conversation.archivedAt) ?? named[0] ?? null;
 }
