@@ -44,7 +44,7 @@ interface IStoredSlot {
 }
 
 /** A run of `source` started at 09:00, still running, over a store of the employee's slots. */
-function createRun(source: TimeLogSourceEnum) {
+function createRun(source: TimeLogSourceEnum, { factsWithinWrites = false } = {}) {
 	const run = {
 		id: RUN,
 		tenantId: TENANT,
@@ -143,6 +143,14 @@ function createRun(source: TimeLogSourceEnum) {
 		})
 	};
 
+	// The transaction a write runs in when its fact goes in it, on the same rows
+	const writeTransaction = { getRepository: () => timeLogRepository };
+	if (factsWithinWrites) {
+		Object.assign(timeLogRepository, {
+			manager: { transaction: async (work: (manager: unknown) => unknown) => work(writeTransaction) }
+		});
+	}
+
 	// The count of a log's slots (`hasTimeSlots`), and the join-row writes of `relation(TimeSlot, 'timeLogs')`
 	const timeSlotRepository = {
 		createQueryBuilder: jest.fn(() => {
@@ -225,9 +233,20 @@ function createRun(source: TimeLogSourceEnum) {
 		})
 	};
 
-	// The time entry facts the handler writes for the webhooks, by name
+	// The time entry facts the handler writes for the webhooks, by name, and whether each went in its write's transaction
 	const facts: string[] = [];
-	const factsService = { record: async (name: string) => void facts.push(name) };
+	const factsInWrite: boolean[] = [];
+	const factsService = {
+		appendsWithinWrites: () => factsWithinWrites,
+		record: async (name: string) => {
+			facts.push(name);
+			factsInWrite.push(false);
+		},
+		recordWithin: async (manager: unknown, name: string) => {
+			facts.push(name);
+			factsInWrite.push(manager === writeTransaction);
+		}
+	};
 	const handler = new TimeLogUpdateHandler(
 		commandBus as any,
 		timeLogRepository as any,
@@ -363,6 +382,8 @@ function createRun(source: TimeLogSourceEnum) {
 		slotCount: () => slots.length,
 		/** The time entry facts written, in order. */
 		facts: () => [...facts],
+		/** Whether each fact went in the transaction of its write. */
+		factsInWrite: () => [...factsInWrite],
 		hardDeleted: () => [...hardDeleted]
 	};
 }
@@ -635,7 +656,7 @@ describe.each([
 	});
 });
 
-describe('TimeLogUpdateHandler, the time entry facts of a stop (ever-co/ever-gauzy#12071)', () => {
+describe('TimeLogUpdateHandler, the time entry facts of a stop, after it on SQLite and MikroORM (ever-co/ever-gauzy#12071)', () => {
 	beforeEach(() => {
 		jest.spyOn(console, 'log').mockImplementation(() => undefined);
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
@@ -677,5 +698,67 @@ describe('TimeLogUpdateHandler, the time entry facts of a stop (ever-co/ever-gau
 		await store.editEnd('09:40');
 
 		expect(store.facts()).toEqual(['time_log.stopped', 'time_log.updated']);
+	});
+});
+
+describe('TimeLogUpdateHandler, the time entry facts of a stop, in its transaction (ever-co/ever-gauzy#12071)', () => {
+	beforeEach(() => {
+		jest.spyOn(console, 'log').mockImplementation(() => undefined);
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+	});
+	afterEach(() => jest.restoreAllMocks());
+
+	const createRunWithFactsInWrites = () => createRun(TimeLogSourceEnum.WEB_TIMER, { factsWithinWrites: true });
+
+	it('writes time_log.stopped in the transaction of the stop', async () => {
+		const store = createRunWithFactsInWrites();
+
+		await store.stop('09:30');
+
+		expect(store.facts()).toEqual(['time_log.stopped']);
+		expect(store.factsInWrite()).toEqual([true]);
+	});
+
+	it('writes none for a stop refused because another one stopped the run', async () => {
+		const store = createRunWithFactsInWrites();
+		store.stopElsewhereBeforeWrite('09:20');
+
+		await store.stop('09:30');
+
+		expect(store.facts()).toEqual([]);
+	});
+
+	it('writes none when the stop itself cannot be written, and one with the try that completes it', async () => {
+		const store = createRunWithFactsInWrites();
+		store.fail('stopWrite');
+		await store.stop('09:30');
+		expect(store.facts()).toEqual([]);
+
+		await store.stopAsFirstRead('09:30');
+
+		expect(store.facts()).toEqual(['time_log.stopped']);
+		expect(store.factsInWrite()).toEqual([true]);
+	});
+
+	it('keeps the fact a try wrote with its stop when a later step fails, and the try that completes adds none', async () => {
+		const store = createRunWithFactsInWrites();
+		store.fail('save');
+		await store.stop('09:30');
+		expect(store.state().isRunning).toBe(false);
+		expect(store.facts()).toEqual(['time_log.stopped']);
+
+		await store.stopAsFirstRead('09:30');
+
+		expect(store.facts()).toEqual(['time_log.stopped']);
+	});
+
+	it('writes time_log.updated for an edit of a stopped log, in its transaction', async () => {
+		const store = createRunWithFactsInWrites();
+		await store.stop('09:30');
+
+		await store.editEnd('09:40');
+
+		expect(store.facts()).toEqual(['time_log.stopped', 'time_log.updated']);
+		expect(store.factsInWrite()).toEqual([true, true]);
 	});
 });
