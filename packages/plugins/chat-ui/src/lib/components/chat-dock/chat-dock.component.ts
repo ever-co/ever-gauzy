@@ -4,11 +4,11 @@ import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-i
 import { Router } from '@angular/router';
 import { NbIconModule } from '@nebular/theme';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { EMPTY, merge, Observable, of, Subscription } from 'rxjs';
-import { auditTime, catchError, distinctUntilChanged, filter, map, switchMap, tap } from 'rxjs/operators';
+import { EMPTY, forkJoin, from, merge, Observable, of, Subscription } from 'rxjs';
+import { auditTime, catchError, concatMap, distinctUntilChanged, filter, map, switchMap, tap, toArray } from 'rxjs/operators';
 import { CHAT_EVENT_NAMES, ChatVisibilityEnum, IChatConversationWithState, IChatMessageWithRelations, IOrganization, IUser, PermissionsEnum } from '@gauzy/contracts';
 import { Store, ToastrService } from '@gauzy/ui-core/core';
-import { CHAT_DOCK_PAGE_SIZE, CHAT_DOCK_TEAM_FACES, CHAT_LINK, CHAT_LIVE_AUDIT_MS, CHAT_MESSAGES_POLL_MS } from '../../chat-ui.constants';
+import { CHAT_CHANNEL_MEMBERS_BATCH, CHAT_DOCK_PAGE_SIZE, CHAT_DOCK_TEAM_FACES, CHAT_LINK, CHAT_LIVE_AUDIT_MS, CHAT_MESSAGES_POLL_MS } from '../../chat-ui.constants';
 import { canManageConversation } from '../../chat-categories';
 import { facesOf, peopleOf } from '../../chat-member-preview';
 import { teamChannelOf } from '../../chat-team-suggestions';
@@ -596,6 +596,8 @@ export class ChatDockComponent {
 	 * sent creates the channel (named as the team, with its members) and goes to it.
 	 */
 	protected readonly newChannelFor = signal<ChatTeamDetails | null>(null);
+	/** The channel found or created for a first message to a team whose send failed: the next try goes to it. */
+	private pendingChannel: { teamId: string; conversation: IChatConversationWithState } | null = null;
 	private readonly messages = signal<readonly IChatMessageWithRelations[]>([]);
 	protected readonly failed = signal(false);
 	protected readonly sending = signal(false);
@@ -755,6 +757,16 @@ export class ChatDockComponent {
 			const target = this.target();
 			untracked(() => this.load(target));
 		});
+		// The same team opened again with fresh details (its visibility, its members): the card keeps waiting for its
+		// first message (the composer and what is typed in it stay), and the channel is created with the details as they
+		// are now.
+		effect(() => {
+			const team = this.team();
+			untracked(() => {
+				const waiting = this.newChannelFor();
+				if (team && waiting && waiting.id === team.id && waiting !== team) this.newChannelFor.set(team);
+			});
+		});
 		// Once the conversation is found the composer can be written in: it gets the keyboard.
 		effect(() => {
 			if (!this.conversation() && !this.newChannelFor()) return;
@@ -806,6 +818,7 @@ export class ChatDockComponent {
 		this.polling?.unsubscribe();
 		this.conversation.set(null);
 		this.newChannelFor.set(null);
+		this.pendingChannel = null;
 		this.showMembers.set(false);
 		this.messages.set([]);
 		this.editing.set(null);
@@ -841,56 +854,137 @@ export class ChatDockComponent {
 		});
 	}
 
+	/** The selected organization's id: a team's channel is looked for among that organization's channels only. */
+	private organizationId(): string | null {
+		const organization = this.organization();
+		return organization?.id ? String(organization.id) : null;
+	}
+
 	/**
-	 * The team's channel: the one of my conversations named as the team; else a public one of that name, which I join;
-	 * else null — none is created on opening, only with the first message sent (`createAndSend`).
+	 * The team's channel as the API lists it now: of the selected organization and of the team's visibility (a private
+	 * team chats in a private channel only, a public one in a public channel), the oldest open one named as the team
+	 * (`teamChannelOf`), with whether I am in it. Looked for among my conversations, and for a public team among the
+	 * public channels I may join too. A list that cannot be read fails the lookup: no channel is created on a guess.
+	 */
+	private findTeamChannel(team: ChatTeamDetails): Observable<{ found: IChatConversationWithState | null; member: boolean }> {
+		const visibility = team.public ? ChatVisibilityEnum.PUBLIC : ChatVisibilityEnum.PRIVATE;
+		return forkJoin([
+			this.api.listMine().pipe(map(({ conversations }) => conversations ?? [])),
+			team.public ? this.api.browse() : of([] as IChatConversationWithState[])
+		]).pipe(
+			map(([mine, open]) => {
+				const mineIds = new Set(mine.map((conversation) => String(conversation.id)));
+				const joinable = (open ?? []).filter((conversation) => !mineIds.has(String(conversation.id)) && !conversation.archivedAt);
+				const candidates = [...mine, ...joinable].filter((conversation) => conversation.visibility === visibility);
+				const found = teamChannelOf(candidates, team.name, this.organizationId());
+				return { found, member: !!found && mineIds.has(String(found.id)) };
+			})
+		);
+	}
+
+	/** The team's channel I am in: the found one, joined first when I am not in it yet. */
+	private enter(found: IChatConversationWithState, member: boolean): Observable<IChatConversationWithState> {
+		if (member) return of(found);
+		return this.api.join(found.id).pipe(
+			map(({ conversation }) => conversation),
+			// Joined: the chat's lists and badge learn of it.
+			tap(() => this.api.notifyChanged())
+		);
+	}
+
+	/**
+	 * The team's channel on opening the card: the one found, joined when I am not in it; else null — none is created on
+	 * opening, only with the first message sent (`createAndSend`).
 	 */
 	private teamChannel(team: ChatTeamDetails): Observable<IChatConversationWithState | null> {
-		return this.api.listMine().pipe(
-			switchMap(({ conversations }) => {
-				const mine = teamChannelOf(conversations ?? [], team.name);
-				if (mine) return of(mine);
-				return this.api.browse().pipe(
-					// Without the public channels to look through, the first message creates the channel.
-					catchError(() => of([] as IChatConversationWithState[])),
-					switchMap((open) => {
-						const found = teamChannelOf((open ?? []).filter((conversation) => !conversation.archivedAt), team.name);
-						if (!found) return of(null);
-						return this.api.join(found.id).pipe(
-							map(({ conversation }) => conversation),
-							// Joined: the chat's lists and badge learn of it.
-							tap(() => this.api.notifyChanged())
-						);
+		return this.findTeamChannel(team).pipe(switchMap(({ found, member }) => (found ? this.enter(found, member) : of(null))));
+	}
+
+	/**
+	 * The channel the card's first message to a team goes to. Looked for again first (a teammate may have created it
+	 * since the card opened); else created, named as the team — public for a public team, private for a private one —
+	 * with as many of its members as one request may add. The API does not create a channel once per name: when a
+	 * teammate created one at the same moment, both look again and settle on the same one (the oldest, see
+	 * `teamChannelOf`); the one just created here and left empty is archived. The members beyond the first request's
+	 * are then added to the channel kept, in batches the API takes.
+	 */
+	private teamChannelForFirstMessage(team: ChatTeamDetails): Observable<IChatConversationWithState> {
+		return this.findTeamChannel(team).pipe(
+			switchMap(({ found, member }) => {
+				if (found) return this.enter(found, member);
+				const me = this.me()?.employeeId || null;
+				const others = team.memberEmployeeIds.filter((employeeId) => employeeId !== me);
+				const batches: string[][] = [];
+				for (let index = 0; index < others.length; index += CHAT_CHANNEL_MEMBERS_BATCH) {
+					batches.push(others.slice(index, index + CHAT_CHANNEL_MEMBERS_BATCH));
+				}
+				const [first = [], ...rest] = batches;
+				return this.api
+					.createChannel({
+						name: team.name,
+						visibility: team.public ? ChatVisibilityEnum.PUBLIC : ChatVisibilityEnum.PRIVATE,
+						memberEmployeeIds: first
 					})
+					.pipe(
+						map(({ conversation }) => conversation),
+						// Created: the chat's lists and badge learn of it.
+						tap(() => this.api.notifyChanged()),
+						switchMap((created) => this.settle(team, created, rest))
+					);
+			})
+		);
+	}
+
+	/**
+	 * After creating a team's channel: keeps it when it is the team's channel the API lists (the oldest), adding the
+	 * remaining members; else archives it (still empty) and goes to the older one a teammate created meanwhile. When the
+	 * channels cannot be listed again, the one created is kept.
+	 */
+	private settle(team: ChatTeamDetails, created: IChatConversationWithState, rest: string[][]): Observable<IChatConversationWithState> {
+		return this.findTeamChannel(team).pipe(
+			catchError(() => of({ found: null, member: false })),
+			switchMap(({ found, member }) => {
+				if (found && String(found.id) !== String(created.id)) {
+					return this.api.setArchived(created.id, true).pipe(
+						catchError(() => of(null)),
+						switchMap(() => this.enter(found, member))
+					);
+				}
+				return from(rest).pipe(
+					concatMap((batch) => this.api.addMembers(created.id, batch)),
+					toArray(),
+					map(() => created)
 				);
 			})
 		);
 	}
 
 	/**
-	 * The first message to a team without its channel: creates the channel, named as the team, with its members —
-	 * public for a public team, private for a private one — so it is listed in the chat, then sends the message to it.
+	 * The first message to a team without its channel: goes to the team's channel (found, joined, or created — see
+	 * `teamChannelForFirstMessage`), and only once it is sent does the card turn to the channel. A failed send leaves
+	 * the box as it was, the text in it; the channel already found or created is kept for the next try.
 	 */
 	private createAndSend(team: ChatTeamDetails, submission: ComposerSubmission): void {
 		this.sending.set(true);
-		const me = this.me()?.employeeId || null;
-		this.api
-			.createChannel({
-				name: team.name,
-				visibility: team.public ? ChatVisibilityEnum.PUBLIC : ChatVisibilityEnum.PRIVATE,
-				memberEmployeeIds: team.memberEmployeeIds.filter((employeeId) => employeeId !== me)
-			})
-			.pipe(takeUntilDestroyed(this.destroyRef))
+		const pending = this.pendingChannel?.teamId === team.id ? this.pendingChannel.conversation : null;
+		const channel$ = pending
+			? of(pending)
+			: this.teamChannelForFirstMessage(team).pipe(tap((conversation) => (this.pendingChannel = { teamId: team.id, conversation })));
+		channel$
+			.pipe(
+				switchMap((conversation) => this.api.send(conversation.id, this.messageInput(submission)).pipe(map((result) => ({ conversation, result })))),
+				takeUntilDestroyed(this.destroyRef)
+			)
 			.subscribe({
-				next: ({ conversation }) => {
+				next: ({ conversation, result }) => {
 					this.sending.set(false);
-					// Created: the chat's lists and badge learn of it.
 					this.api.notifyChanged();
-					// Only while the card still waits for this team's channel: else the message is not sent anywhere else.
-					if (this.newChannelFor() !== team) return;
+					// Only while the card still waits for this team's channel: it shows that channel, with the message.
+					if (this.newChannelFor()?.id !== team.id) return;
+					this.pendingChannel = null;
 					this.newChannelFor.set(null);
 					this.start(conversation);
-					this.send(submission);
+					this.showSent(result.message);
 				},
 				error: (error) => {
 					this.sending.set(false);
@@ -1147,6 +1241,26 @@ export class ChatDockComponent {
 		this.toastr.danger(apiErrorMessage(error) ?? this.translate.instant(fallbackKey));
 	}
 
+	/** What the composer submitted, as a message to send. */
+	private messageInput(submission: ComposerSubmission) {
+		return {
+			body: submission.body,
+			nonce: newNonce(),
+			mentionEmployeeIds: submission.mentionEmployeeIds,
+			...(submission.attachmentIds.length ? { attachmentIds: submission.attachmentIds } : {})
+		};
+	}
+
+	/** A message of mine just sent to the conversation shown: in the list, the box cleared, the keyboard back in it. */
+	private showSent(message: IChatMessageWithRelations): void {
+		// Known from the latest read started: that read may not hold it yet, the next one does while it exists.
+		if (!this.known.has(String(message.id))) this.known.set(String(message.id), this.reads);
+		this.messages.set(mergeMessages(this.messages(), [message]));
+		this.resetToken.update((value) => value + 1);
+		// The box was disabled while sending: the keyboard goes back to it.
+		setTimeout(() => this.composer()?.focus());
+	}
+
 	protected send(submission: ComposerSubmission): void {
 		if (this.sending()) return;
 		const conversation = this.conversation();
@@ -1163,12 +1277,7 @@ export class ChatDockComponent {
 		}
 		this.sending.set(true);
 		this.api
-			.send(conversation.id, {
-				body: submission.body,
-				nonce: newNonce(),
-				mentionEmployeeIds: submission.mentionEmployeeIds,
-				...(submission.attachmentIds.length ? { attachmentIds: submission.attachmentIds } : {})
-			})
+			.send(conversation.id, this.messageInput(submission))
 			.pipe(takeUntilDestroyed(this.destroyRef))
 			.subscribe({
 				next: (result) => {
@@ -1180,12 +1289,7 @@ export class ChatDockComponent {
 						clearDraft(`conversation:${conversation.id}`);
 						return;
 					}
-					// Known from the latest read started: that read may not hold it yet, the next one does while it exists.
-					if (!this.known.has(String(result.message.id))) this.known.set(String(result.message.id), this.reads);
-					this.messages.set(mergeMessages(this.messages(), [result.message]));
-					this.resetToken.update((value) => value + 1);
-					// The box was disabled while sending: the keyboard goes back to it.
-					setTimeout(() => this.composer()?.focus());
+					this.showSent(result.message);
 				},
 				error: () => {
 					this.sending.set(false);
