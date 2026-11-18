@@ -16,6 +16,7 @@ jest.mock('../../role/role-authorization.service', () => ({
 jest.mock('../../role-permission/role-permission.service', () => ({ RolePermissionService: class {} }));
 
 import { RequestContext } from '../../core/context';
+import { currentOrganizationBoundary } from '../../core/crud/organization-boundary';
 import { IAuthenticatedUser } from '../../core/context/types';
 import { EMBED_CREDENTIAL_CLAIM, EMBED_EMPLOYEE_CLAIM, EMBED_TOKEN_PERMISSIONS } from '../../embed/embed-session';
 import { DEFAULT_ROLE_PERMISSIONS } from '../../role-permission/default-role-permissions';
@@ -246,6 +247,30 @@ describe('JwtStrategy: an embed token acts with the timer and team permissions o
 		expect(RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)).toBe(true);
 		expect(RequestContext.currentEmployeeId()).toBeNull();
 		await expect(permissionGuard.canActivate(routeDeclaring([PermissionsEnum.ALL_ORG_VIEW]))).resolves.toBe(true);
+	});
+
+	it("never gives a super admin's or an admin's embed token their role exemptions", async () => {
+		const superAdmin = strategyFor(RolesEnum.SUPER_ADMIN, defaultPermissionsOf(RolesEnum.SUPER_ADMIN)).strategy;
+		const { tenantPermissionGuard } = guards();
+
+		actAs(await superAdmin.validate(embedPayload));
+		expect(RequestContext.hasRoles([RolesEnum.SUPER_ADMIN])).toBe(false);
+		// TenantPermissionGuard's SUPER_ADMIN shortcut would have let this through before the embed narrowing.
+		await expect(tenantPermissionGuard.canActivate(routeDeclaring([PermissionsEnum.ALL_ORG_VIEW]))).resolves.toBe(
+			false
+		);
+
+		actAs(await strategyFor(RolesEnum.ADMIN, ADMIN_PERMISSIONS).strategy.validate(embedPayload));
+		expect(RequestContext.hasRoles([RolesEnum.ADMIN, RolesEnum.SUPER_ADMIN])).toBe(false);
+		// A tenant admin reaches every organization; the embed token stays in its own.
+		expect(currentOrganizationBoundary()).toEqual({ organizationId: ORG });
+
+		// CONTROL: the same super admin without the embed claims keeps the shortcut.
+		actAs(await superAdmin.validate(firstPartyPayload));
+		expect(RequestContext.hasRoles([RolesEnum.SUPER_ADMIN])).toBe(true);
+		await expect(tenantPermissionGuard.canActivate(routeDeclaring([PermissionsEnum.ALL_ORG_VIEW]))).resolves.toBe(
+			true
+		);
 	});
 
 	it('never gives an embed token a permission its role does not hold', async () => {
