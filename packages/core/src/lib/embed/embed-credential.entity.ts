@@ -1,8 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { JoinColumn, RelationId } from 'typeorm';
 import { Exclude } from 'class-transformer';
-import { IEmbedCredential } from '@gauzy/contracts';
-import { TenantOrganizationBaseEntity } from '../core/entities/internal';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity } from '../core/decorators/entity';
+import { ID, IEmbedCredential, IOrganizationContact } from '@gauzy/contracts';
+import { OrganizationContact, TenantOrganizationBaseEntity } from '../core/entities/internal';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '../core/decorators/entity';
 import { ExportRedacted } from '../export-import/export-redact.decorator';
 import { SkipExport } from '../export-import/skip-export.decorator';
 import { MikroOrmEmbedCredentialRepository } from './repository/mikro-orm-embed-credential.repository';
@@ -27,6 +28,23 @@ export class EmbedCredential extends TenantOrganizationBaseEntity implements IEm
 	@ApiProperty({ type: () => String, maxLength: 20 })
 	@MultiORMColumn({ length: 20 })
 	prefix: string;
+
+	/**
+	 * Deleting the client deletes the credential: a credential limited to a client never outlives it as one of the
+	 * whole organization.
+	 */
+	@MultiORMManyToOne(() => OrganizationContact, {
+		nullable: true,
+		onDelete: 'CASCADE'
+	})
+	@JoinColumn()
+	organizationContact?: IOrganizationContact;
+
+	@ApiPropertyOptional({ type: () => String, nullable: true })
+	@RelationId((it: EmbedCredential) => it.organizationContact)
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true, relationId: true })
+	organizationContactId?: ID | null;
 
 	@ApiPropertyOptional({ type: () => Date })
 	@MultiORMColumn({ nullable: true })

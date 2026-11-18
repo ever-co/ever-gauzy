@@ -1,8 +1,16 @@
 // Must stay first: loads the entity graph before the services pull an entity (see user.create.handler.spec.ts).
 import '../core/entities/internal';
 
-import { ForbiddenException, NotFoundException, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
+import {
+	BadRequestException,
+	ForbiddenException,
+	InternalServerErrorException,
+	NotFoundException,
+	ServiceUnavailableException,
+	UnauthorizedException
+} from '@nestjs/common';
 import { RequestContext } from '../core/context';
+import { IEmbedClientReport } from '@gauzy/contracts';
 import { EmbedCredentialResponseDTO, EmbedCredentialWithSecretResponseDTO } from './dto/embed-credential.dto';
 import { EmbedCredentialService } from './embed-credential.service';
 import { generateEmbedCredential, hashEmbedCredential } from './embed.utils';
@@ -12,6 +20,9 @@ const OTHER_TENANT = '7a000000-0000-4000-8000-00000000000b';
 const ORG = '7a000000-0000-4000-8000-0000000000f1';
 const EMPLOYEE = '7a000000-0000-4000-8000-0000000000e1';
 const USER = '7a000000-0000-4000-8000-000000000001';
+const CONTACT = '7a000000-0000-4000-8000-0000000000d1';
+const OTHER_ORG_CONTACT = '7a000000-0000-4000-8000-0000000000d2';
+const UNKNOWN_CONTACT = '7a000000-0000-4000-8000-0000000000d9';
 // The page origin the organization allows.
 const SITE = 'https://app.northwind.example';
 
@@ -29,6 +40,24 @@ function build() {
 	const users: any[] = [{ id: USER, tenantId: TENANT, email: 'lina@northwind.example' }];
 	const memberships: any[] = [{ userId: USER, tenantId: TENANT, organizationId: ORG, isActive: true, isArchived: false }];
 	const issueEmbedSession = jest.fn(async (_input: any) => 'an-embed-token');
+	const contacts = [{ id: CONTACT, name: 'Northwind', tenantId: TENANT, organizationId: ORG }];
+	// The contacts of a tenant and organization, as `EmbedClientService` reads them (its own spec runs it on SQLite).
+	const findClient = jest.fn(async (id: string, scope: { tenantId: string; organizationId: string }) => {
+		const found = contacts.find((contact) => {
+			const isAsked = contact.id === id;
+			const isInScope = contact.tenantId === scope.tenantId && contact.organizationId === scope.organizationId;
+			return isAsked && isInScope;
+		});
+		return found ?? null;
+	});
+	// The report of a client found as above; its counting has its own specs (SQLite and pure).
+	const reportOf = jest.fn(async (id: string, scope: { tenantId: string; organizationId: string }, _now: Date) => {
+		const client = await findClient(id, scope);
+		if (!client) {
+			return null;
+		}
+		return { ...NORTHWIND_REPORT, client: { id: client.id, name: client.name } };
+	});
 	const table = (rows: any[]) => ({
 		metadata: { hasColumnWithPropertyPath: () => true, tableName: 'x' },
 		findOne: jest.fn(async ({ where }) => rows.find((row) => matches(row, where)) ?? null),
@@ -52,7 +81,8 @@ function build() {
 				async (tenantId: string, organizationId: string, origin: string) =>
 					tenantId === TENANT && organizationId === ORG && origin === SITE
 			)
-		} as any
+		} as any,
+		{ findClient, reportOf } as any
 	);
 	jest.spyOn(service, 'ormType', 'get').mockReturnValue('typeorm' as any);
 	jest.spyOn(service, 'create').mockImplementation(async (input: any) => {
@@ -72,8 +102,16 @@ function build() {
 		credentials.filter((row) => row.id === id).forEach((row) => Object.assign(row, patch));
 		return { affected: 1 } as any;
 	});
-	return { service, credentials, employees, users, memberships, issueEmbedSession };
+	return { service, credentials, employees, users, memberships, issueEmbedSession, contacts, findClient, reportOf };
 }
+
+const NORTHWIND_REPORT: IEmbedClientReport = {
+	client: { id: CONTACT, name: 'Northwind' },
+	timeZone: 'Europe/Paris',
+	today: { date: '2026-11-19', seconds: 7200 },
+	week: { start: '2026-11-16', end: '2026-11-22', seconds: 23400 },
+	projects: [{ id: '7a000000-0000-4000-8000-0000000000a1', name: 'Website', seconds: 23400 }]
+};
 
 const signIn = (tenantId: string) => jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(tenantId);
 
@@ -110,6 +148,55 @@ describe('EmbedCredentialService', () => {
 		expect(listed[0]).toBeInstanceOf(EmbedCredentialResponseDTO);
 		expect(listed[0]).not.toHaveProperty('secret');
 		expect(listed[0]).not.toHaveProperty('keyHash');
+	});
+
+	it('keeps a credential without a client one of the whole organization', async () => {
+		const { service, credentials, findClient } = build();
+		signIn(TENANT);
+
+		const created = await service.createForOrganization({ name: 'Northwind product', organizationId: ORG });
+		const [listed] = await service.listForOrganization(ORG);
+
+		expect(findClient).not.toHaveBeenCalled();
+		expect(credentials[0].organizationContactId).toBeNull();
+		expect(created.organizationContactId).toBeNull();
+		expect(listed.organizationContactId).toBeNull();
+	});
+
+	it('limits a credential to a client of its organization, and lists it with that client', async () => {
+		const { service, credentials, findClient } = build();
+		signIn(TENANT);
+
+		const created = await service.createForOrganization({
+			name: 'Northwind portal',
+			organizationId: ORG,
+			organizationContactId: CONTACT
+		});
+		const [listed] = await service.listForOrganization(ORG);
+
+		expect(findClient).toHaveBeenCalledWith(CONTACT, { tenantId: TENANT, organizationId: ORG });
+		expect(credentials[0].organizationContactId).toBe(CONTACT);
+		expect(created.organizationContactId).toBe(CONTACT);
+		expect(listed.organizationContactId).toBe(CONTACT);
+	});
+
+	it('refuses with a 400 a client that is no contact of the organization, and creates nothing', async () => {
+		const { service, credentials, contacts } = build();
+		const otherOrganization = '7a000000-0000-4000-8000-0000000000f2';
+		contacts.push({ id: OTHER_ORG_CONTACT, name: 'Contoso', tenantId: TENANT, organizationId: otherOrganization });
+		signIn(TENANT);
+
+		for (const organizationContactId of [OTHER_ORG_CONTACT, UNKNOWN_CONTACT]) {
+			await expect(
+				service.createForOrganization({ name: 'Portal', organizationId: ORG, organizationContactId })
+			).rejects.toThrow(BadRequestException);
+		}
+		signIn(OTHER_TENANT);
+		await expect(
+			service.createForOrganization({ name: 'Portal', organizationId: ORG, organizationContactId: CONTACT })
+		).rejects.toThrow(BadRequestException);
+
+		expect(credentials).toHaveLength(0);
 	});
 
 	it('exchanges a credential for a token for one member, by employee id or by email', async () => {
@@ -389,5 +476,126 @@ describe('EmbedCredentialService: credentials refused per address', () => {
 			token: 'an-embed-token'
 		});
 		await expect(service.exchange(unknownCredential(), HOST)).rejects.toMatchObject(LIMITED);
+	});
+});
+
+describe('EmbedCredentialService: client report', () => {
+	const PORTAL = '203.0.113.20';
+
+	/** A credential limited to Northwind, as an administrator creates it. */
+	async function northwindCredential(service: EmbedCredentialService) {
+		signIn(TENANT);
+		return await service.createForOrganization({
+			name: 'Northwind portal',
+			organizationId: ORG,
+			organizationContactId: CONTACT
+		});
+	}
+
+	it("answers the report of the credential's client, read in its tenant and organization, and records the use", async () => {
+		const { service, credentials, reportOf } = build();
+		const { secret } = await northwindCredential(service);
+
+		const report = await service.clientReport({ credential: secret }, PORTAL);
+
+		expect(report).toEqual(NORTHWIND_REPORT);
+		expect(reportOf).toHaveBeenCalledWith(CONTACT, { tenantId: TENANT, organizationId: ORG }, expect.any(Date));
+		expect(credentials[0].lastUsedAt).toBeInstanceOf(Date);
+	});
+
+	it('answers 401 for a malformed, unknown or revoked credential, and reads no report', async () => {
+		const { service, reportOf } = build();
+		const { id, secret } = await northwindCredential(service);
+
+		const malformed = { credential: 'not-a-credential' };
+		await expect(service.clientReport(malformed, PORTAL)).rejects.toThrow(UnauthorizedException);
+		await expect(service.clientReport({ credential: generateEmbedCredential().secret }, PORTAL)).rejects.toThrow(
+			UnauthorizedException
+		);
+		await expect(service.clientReport(undefined, PORTAL)).rejects.toThrow(UnauthorizedException);
+		await service.revoke(id);
+		await expect(service.clientReport({ credential: secret }, PORTAL)).rejects.toThrow(UnauthorizedException);
+
+		expect(reportOf).not.toHaveBeenCalled();
+	});
+
+	it('answers 403 EMBED_CLIENT_REQUIRED for a credential of the whole organization', async () => {
+		const { service, reportOf } = build();
+		signIn(TENANT);
+		const { secret } = await service.createForOrganization({ name: 'Northwind product', organizationId: ORG });
+
+		await expect(service.clientReport({ credential: secret }, PORTAL)).rejects.toMatchObject({
+			status: 403,
+			response: { code: 'EMBED_CLIENT_REQUIRED' }
+		});
+		expect(reportOf).not.toHaveBeenCalled();
+	});
+
+	it('answers 403 EMBED_CLIENT_GONE once the client is deleted, never a report of the whole organization', async () => {
+		const { service, contacts } = build();
+		const { secret } = await northwindCredential(service);
+		// Deleted softly: the contact is no longer found, as `EmbedClientService` reads it.
+		contacts.splice(0, 1);
+
+		await expect(service.clientReport({ credential: secret }, PORTAL)).rejects.toMatchObject({
+			status: 403,
+			response: { code: 'EMBED_CLIENT_GONE' }
+		});
+	});
+
+	it('answers a report it could not read with a 500, or a 503 for a database out of reach, never a 401', async () => {
+		const { service, reportOf } = build();
+		const { secret } = await northwindCredential(service);
+
+		reportOf.mockRejectedValueOnce(new Error('SQLITE_BUSY: database is locked'));
+		await expect(service.clientReport({ credential: secret }, PORTAL)).rejects.toThrow(InternalServerErrorException);
+		reportOf.mockRejectedValueOnce(new Error('Connection terminated unexpectedly'));
+		await expect(service.clientReport({ credential: secret }, PORTAL)).rejects.toThrow(ServiceUnavailableException);
+
+		await expect(service.clientReport({ credential: secret }, PORTAL)).resolves.toEqual(NORTHWIND_REPORT);
+	});
+
+	it('counts its refused credentials against the address, with the exchange, up to the same cap', async () => {
+		const { service } = build();
+		const { secret } = await northwindCredential(service);
+		for (let sent = 0; sent < 30; sent++) {
+			await expect(
+				service.clientReport({ credential: generateEmbedCredential().secret }, PORTAL)
+			).rejects.toThrow(UnauthorizedException);
+			await expect(
+				service.exchange({ credential: generateEmbedCredential().secret, employeeId: EMPLOYEE }, PORTAL)
+			).rejects.toThrow(UnauthorizedException);
+		}
+
+		await expect(
+			service.clientReport({ credential: generateEmbedCredential().secret }, PORTAL)
+		).rejects.toMatchObject({ response: { statusCode: 429, code: 'EMBED_EXCHANGE_LIMITED' } });
+		// A credential this server did not accept before is capped too; another address is not.
+		await expect(service.clientReport({ credential: secret }, PORTAL)).rejects.toMatchObject({ status: 429 });
+		await expect(service.clientReport({ credential: secret }, '198.51.100.30')).resolves.toEqual(NORTHWIND_REPORT);
+	});
+
+	it('caps the exchange of an address whose client reports alone reached the cap, but not a credential it accepted', async () => {
+		const { service } = build();
+		signIn(TENANT);
+		const accepted = await service.createForOrganization({ name: 'Northwind product', organizationId: ORG });
+		const fresh = await service.createForOrganization({ name: 'Northwind product 2', organizationId: ORG });
+		await expect(service.exchange({ credential: accepted.secret, employeeId: EMPLOYEE, origin: SITE }, PORTAL)).resolves.toMatchObject({
+			token: 'an-embed-token'
+		});
+		for (let sent = 0; sent < 60; sent++) {
+			await expect(
+				service.clientReport({ credential: generateEmbedCredential().secret }, PORTAL)
+			).rejects.toThrow(UnauthorizedException);
+		}
+
+		// One count of refused credentials per address, whichever route refused them: a valid credential this server
+		// has not accepted yet waits for the window to end, one it accepted goes on.
+		await expect(service.exchange({ credential: fresh.secret, employeeId: EMPLOYEE, origin: SITE }, PORTAL)).rejects.toMatchObject({
+			response: { statusCode: 429, code: 'EMBED_EXCHANGE_LIMITED' }
+		});
+		await expect(service.exchange({ credential: accepted.secret, employeeId: EMPLOYEE, origin: SITE }, PORTAL)).resolves.toMatchObject({
+			token: 'an-embed-token'
+		});
 	});
 });

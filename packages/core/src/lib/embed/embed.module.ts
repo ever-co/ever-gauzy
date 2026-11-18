@@ -11,6 +11,7 @@ import { MikroOrmUserRepository } from '../user/repository/mikro-orm-user.reposi
 import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
 import { MikroOrmUserOrganizationRepository } from '../user-organization/repository/mikro-orm-user-organization.repository';
 import { TypeOrmUserOrganizationRepository } from '../user-organization/repository/type-orm-user-organization.repository';
+import { EmbedClientService } from './embed-client.service';
 import { EmbedCredential } from './embed-credential.entity';
 import { EmbedAllowedOrigin } from './embed-allowed-origin.entity';
 import { EmbedAllowedOriginService } from './embed-allowed-origin.service';
@@ -37,6 +38,7 @@ import { TypeOrmEmbedCredentialRepository } from './repository/type-orm-embed-cr
 	controllers: [EmbedCredentialController, EmbedAllowedOriginController, EmbedTokenController],
 	providers: [
 		EmbedCredentialService,
+		EmbedClientService,
 		EmbedAllowedOriginService,
 		EmbedEnabledGuard,
 		TypeOrmEmbedAllowedOriginRepository,

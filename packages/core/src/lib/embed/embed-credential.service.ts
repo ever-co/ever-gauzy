@@ -1,8 +1,10 @@
 import {
+	BadRequestException,
 	ForbiddenException,
 	HttpException,
 	HttpStatus,
 	Injectable,
+	InternalServerErrorException,
 	Logger,
 	NotFoundException,
 	ServiceUnavailableException,
@@ -10,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { isUUID } from 'class-validator';
 import { IsNull } from 'typeorm';
-import { ID } from '@gauzy/contracts';
+import { ID, IEmbedClientReport } from '@gauzy/contracts';
 import { RequestContext } from '../core/context/request-context';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
 import { DATABASE_UNAVAILABLE_MESSAGE, isDatabaseUnavailableError } from '../core/errors/database-unavailable';
@@ -24,6 +26,7 @@ import { TypeOrmUserRepository } from '../user/repository/type-orm-user.reposito
 import { UNRESOLVED_THROTTLER_TRACKER } from '../throttler/tracker';
 import { MikroOrmUserOrganizationRepository } from '../user-organization/repository/mikro-orm-user-organization.repository';
 import { TypeOrmUserOrganizationRepository } from '../user-organization/repository/type-orm-user-organization.repository';
+import { EmbedClientReportDTO } from './dto/embed-client-report.dto';
 import {
 	CreateEmbedCredentialDTO,
 	EmbedCredentialResponseDTO,
@@ -31,6 +34,7 @@ import {
 	EmbedTokenExchangeResponseDTO,
 	ExchangeEmbedCredentialDTO
 } from './dto/embed-credential.dto';
+import { EmbedClientService } from './embed-client.service';
 import { EmbedCredential } from './embed-credential.entity';
 import {
 	EMBED_EXCHANGE_FAILURES_PER_ADDRESS,
@@ -60,6 +64,41 @@ class OriginRefused extends Error {}
 
 /** An address that had too many credentials refused, answered before any lookup (`EmbedExchangeFailures`). */
 class AddressLimited extends Error {}
+
+/** The code of the refusal of a client report to a credential of the whole organization. */
+export const EMBED_CLIENT_REQUIRED = 'EMBED_CLIENT_REQUIRED';
+
+/** The code of the refusal of a client report to a credential whose client was deleted. */
+export const EMBED_CLIENT_GONE = 'EMBED_CLIENT_GONE';
+
+/** A valid credential that reaches no client report, already logged with its reason. */
+class ClientRefused extends Error {
+	constructor(
+		readonly code: string,
+		message: string
+	) {
+		super(message);
+	}
+}
+
+/** A client report that could not be read once its credential was accepted, already logged: a 500, never a 401. */
+class ReportUnread extends Error {}
+
+/** The message of what was thrown, for a log line. */
+function messageOf(error: unknown): string {
+	if (error instanceof Error) {
+		return error.message;
+	}
+	return String(error);
+}
+
+/** ` id=<id>` of the credential a log line is about; nothing before the credential is found. */
+function idOf(row: EmbedCredential | undefined): string {
+	if (!row) {
+		return '';
+	}
+	return ` id=${row.id}`;
+}
 
 /** How long a credential's revocation may stay unseen by a running server: its tokens stop within that time. */
 export const EMBED_REVOCATION_CACHE_MS = 30_000;
@@ -91,7 +130,8 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 		private readonly typeOrmUserOrganizationRepository: TypeOrmUserOrganizationRepository,
 		private readonly mikroOrmUserOrganizationRepository: MikroOrmUserOrganizationRepository,
 		private readonly authService: AuthService,
-		private readonly embedAllowedOriginService: EmbedAllowedOriginService
+		private readonly embedAllowedOriginService: EmbedAllowedOriginService,
+		private readonly embedClientService: EmbedClientService
 	) {
 		super(typeOrmEmbedCredentialRepository, mikroOrmEmbedCredentialRepository);
 	}
@@ -107,10 +147,12 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 
 	/** A new credential for the organization; the answer is the only one that holds its secret. */
 	async createForOrganization(input: CreateEmbedCredentialDTO): Promise<EmbedCredentialWithSecretResponseDTO> {
+		const organizationContactId = await this.clientOfNewCredential(input);
 		const { secret, keyHash, prefix } = generateEmbedCredential();
 		const row = await this.create({
 			name: input.name,
 			organizationId: input.organizationId,
+			organizationContactId,
 			tenantId: RequestContext.currentTenantId(),
 			keyHash,
 			prefix,
@@ -121,6 +163,27 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 		const answer = Object.assign(new EmbedCredentialWithSecretResponseDTO(), EmbedCredentialResponseDTO.from(row));
 		answer.secret = secret;
 		return answer;
+	}
+
+	/**
+	 * The client a new credential is limited to: none when the input names none, else a contact of the credential's
+	 * organization, in the caller's tenant, that is not deleted.
+	 *
+	 * @throws BadRequestException for any other contact.
+	 */
+	private async clientOfNewCredential(input: CreateEmbedCredentialDTO): Promise<ID | null> {
+		const contactId = input.organizationContactId;
+		if (!contactId) {
+			return null;
+		}
+		const client = await this.embedClientService.findClient(contactId, {
+			tenantId: RequestContext.currentTenantId(),
+			organizationId: input.organizationId
+		});
+		if (!client) {
+			throw new BadRequestException('The client must be a contact of the organization the credential is for.');
+		}
+		return client.id;
 	}
 
 	/** Revokes a credential of the caller's tenant: its tokens are refused within {@link EMBED_REVOCATION_CACHE_MS}. */
@@ -193,58 +256,141 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 		try {
 			return await this.judgeAndMint(input ?? ({} as ExchangeEmbedCredentialDTO), address);
 		} catch (error) {
-			// Already a 503 (the mint could not reach the database): never answered as a refused credential.
-			if (error instanceof ServiceUnavailableException) {
-				throw error;
-			}
-			if (isDatabaseUnavailableError(error)) {
-				this.logger.error(`Embed exchange could not reach the database: ${error?.message}`);
-				throw new ServiceUnavailableException(DATABASE_UNAVAILABLE_MESSAGE, { cause: error });
-			}
-			if (error instanceof OriginRefused) {
-				throw new ForbiddenException({
-					statusCode: 403,
-					code: 'EMBED_ORIGIN_NOT_ALLOWED',
-					message: "This site is not allowed to embed the organization's timer."
-				});
-			}
-			if (error instanceof MemberRefused) {
-				throw new ForbiddenException({
-					statusCode: 403,
-					code: 'EMBED_MEMBER_NOT_ALLOWED',
-					message: 'This member cannot track time through an embed.'
-				});
-			}
-			if (error instanceof AddressLimited) {
-				throw new HttpException(
-					{
-						statusCode: HttpStatus.TOO_MANY_REQUESTS,
-						code: 'EMBED_EXCHANGE_LIMITED',
-						message: 'Too many refused credentials from this address. Try again in a minute.'
-					},
-					HttpStatus.TOO_MANY_REQUESTS
-				);
-			}
-			if (!(error instanceof CredentialRefused)) {
-				this.logger.warn(`Embed exchange refused: ${error?.message}`);
-			}
-			throw new UnauthorizedException();
+			throw this.refusalOf(error, 'exchange');
 		}
 	}
 
-	private async judgeAndMint({ credential, employeeId, email, origin }: ExchangeEmbedCredentialDTO, address: string) {
+	/**
+	 * The spent time of the client a credential is limited to, for its portal's server: today, this week, and this week
+	 * by project (`EmbedClientService.reportOf`).
+	 *
+	 * The credential is judged as the exchange judges it, with the same answers (401, 429, 503) and the same count of
+	 * refused credentials per address. A credential of the whole organization gets a 403 `EMBED_CLIENT_REQUIRED`, and
+	 * one whose client was deleted a 403 `EMBED_CLIENT_GONE` (a client deleted for good takes its credentials with it,
+	 * which then get the 401 of an unknown credential). A report that could not be read once the credential was
+	 * accepted gets a 500, or the 503 of a database out of reach, never a 401.
+	 *
+	 * @param input The credential.
+	 * @param address The client address, as the rate limiter resolves it; without one, the shared unresolved bucket.
+	 */
+	async clientReport(
+		input: EmbedClientReportDTO,
+		address: string = UNRESOLVED_THROTTLER_TRACKER
+	): Promise<IEmbedClientReport> {
+		try {
+			const row = await this.acceptCredential(input?.credential, address, 'client report');
+			return await this.reportOfClient(row);
+		} catch (error) {
+			throw this.refusalOf(error, 'client report');
+		}
+	}
+
+	/** The report of the credential's client; refused when the credential has no client, or its client is gone. */
+	private async reportOfClient(row: EmbedCredential): Promise<IEmbedClientReport> {
+		if (!row.organizationContactId) {
+			this.logger.warn(`Embed client report refused: no client credential=${row.id}`);
+			throw new ClientRefused(
+				EMBED_CLIENT_REQUIRED,
+				'This credential is not limited to a client. Create one for the client whose time it reports.'
+			);
+		}
+		const now = new Date();
+		const scope = { tenantId: row.tenantId, organizationId: row.organizationId };
+		let report: IEmbedClientReport | null;
+		try {
+			report = await this.embedClientService.reportOf(row.organizationContactId, scope, now);
+		} catch (error) {
+			// The credential was accepted: a failure of the read is the server's, never a refused credential.
+			if (isDatabaseUnavailableError(error)) {
+				throw error;
+			}
+			this.logger.error(`Embed client report could not be read: credential=${row.id} ${messageOf(error)}`);
+			throw new ReportUnread();
+		}
+		if (!report) {
+			this.logger.warn(`Embed client report refused: the client is gone credential=${row.id}`);
+			throw new ClientRefused(
+				EMBED_CLIENT_GONE,
+				"This credential's client was deleted. Restore the client, or create a credential for another one."
+			);
+		}
+		await this.recordUse(row, now);
+		return report;
+	}
+
+	/**
+	 * What a request whose credential did not get it through is answered: a 503 when the database is out of reach, a
+	 * 403 with a code for a page origin the organization does not allow, a member the credential cannot act for or a
+	 * client report it cannot read (the report is asked server to server, with no origin), a 500 for a client
+	 * report that failed after its credential was accepted, a 429 with a code for a capped address, and one 401 for
+	 * every refused credential.
+	 *
+	 * @param error What stopped the request.
+	 * @param route The route, as its log lines name it.
+	 */
+	private refusalOf(error: unknown, route: string): HttpException {
+		// Already a 503 (the mint could not reach the database): never answered as a refused credential.
+		if (error instanceof ServiceUnavailableException) {
+			return error;
+		}
+		if (isDatabaseUnavailableError(error)) {
+			this.logger.error(`Embed ${route} could not reach the database: ${messageOf(error)}`);
+			return new ServiceUnavailableException(DATABASE_UNAVAILABLE_MESSAGE, { cause: error });
+		}
+		if (error instanceof OriginRefused) {
+			return new ForbiddenException({
+				statusCode: 403,
+				code: 'EMBED_ORIGIN_NOT_ALLOWED',
+				message: "This site is not allowed to embed the organization's timer."
+			});
+		}
+		if (error instanceof MemberRefused) {
+			return new ForbiddenException({
+				statusCode: 403,
+				code: 'EMBED_MEMBER_NOT_ALLOWED',
+				message: 'This member cannot track time through an embed.'
+			});
+		}
+		if (error instanceof ClientRefused) {
+			return new ForbiddenException({ statusCode: 403, code: error.code, message: error.message });
+		}
+		if (error instanceof ReportUnread) {
+			return new InternalServerErrorException();
+		}
+		if (error instanceof AddressLimited) {
+			return new HttpException(
+				{
+					statusCode: HttpStatus.TOO_MANY_REQUESTS,
+					code: 'EMBED_EXCHANGE_LIMITED',
+					message: 'Too many refused credentials from this address. Try again in a minute.'
+				},
+				HttpStatus.TOO_MANY_REQUESTS
+			);
+		}
+		if (!(error instanceof CredentialRefused)) {
+			this.logger.warn(`Embed ${route} refused: ${messageOf(error)}`);
+		}
+		return new UnauthorizedException();
+	}
+
+	/**
+	 * The working credential a request presents. A malformed, unknown or revoked one is refused (`CredentialRefused`)
+	 * and counted against the address it came from; an address at the cap is refused before any lookup
+	 * (`AddressLimited`, `EmbedExchangeFailures`).
+	 *
+	 * @param credential The credential, as the body holds it.
+	 * @param address The client address, as the rate limiter resolves it.
+	 * @param route The route, as its log lines name it.
+	 */
+	private async acceptCredential(credential: string, address: string, route: string): Promise<EmbedCredential> {
 		// Whether the lookup below was counted against the address up front (`EmbedExchangeFailures.admit`).
 		let counted = false;
 		const refuseCredential = (reason: string, row?: EmbedCredential): never => {
-			this.logger.warn(`Embed exchange refused: ${reason}${row ? ` id=${row.id}` : ''}`);
+			this.logger.warn(`Embed ${route} refused: ${reason}${idOf(row)}`);
 			if (!counted) {
 				this.countRefusal(address);
 			}
 			throw new CredentialRefused(reason);
-		};
-		const refuseMember = (reason: string, row: EmbedCredential): never => {
-			this.logger.warn(`Embed exchange refused: ${reason} credential=${row.id}`);
-			throw new MemberRefused(reason);
 		};
 
 		if (!isWellFormedEmbedCredential(credential)) {
@@ -281,6 +427,15 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 		}
 		this.exchangeFailures.release(address, admission);
 		this.exchangeFailures.recordAccepted(presented);
+		return row;
+	}
+
+	private async judgeAndMint({ credential, employeeId, email, origin }: ExchangeEmbedCredentialDTO, address: string) {
+		const row = await this.acceptCredential(credential, address, 'exchange');
+		const refuseMember = (reason: string, row: EmbedCredential): never => {
+			this.logger.warn(`Embed exchange refused: ${reason} credential=${row.id}`);
+			throw new MemberRefused(reason);
+		};
 
 		// The page the widget runs in must be one of the organization's allowed origins; the token is bound to it.
 		const pageOrigin = normalizeOrigin(origin);

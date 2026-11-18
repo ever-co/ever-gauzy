@@ -8,6 +8,12 @@ export interface IEmbedCredential extends IBasePerTenantAndOrganizationEntityMod
 	name: string;
 	/** The first characters of the secret (`gze_` and 8 more), to recognize it in the list. */
 	prefix: string;
+	/**
+	 * The client (an organization contact) whose spent time the credential reads (`POST /embed/client-report`); null
+	 * for a credential that reads no client report. It does not narrow the exchange yet: a token exchanged with the
+	 * credential acts for any member of the organization, as with any other credential.
+	 */
+	organizationContactId?: ID | null;
 	lastUsedAt?: Date | null;
 	revokedAt?: Date | null;
 }
@@ -15,6 +21,11 @@ export interface IEmbedCredential extends IBasePerTenantAndOrganizationEntityMod
 export interface IEmbedCredentialCreateInput {
 	name: string;
 	organizationId: ID;
+	/**
+	 * A client of the organization whose spent time the credential is to read (`POST /embed/client-report`). It does not
+	 * narrow the exchange yet: the credential still exchanges tokens for any member of the organization.
+	 */
+	organizationContactId?: ID;
 }
 
 /** The answer to a creation: the only time the secret is readable. */
@@ -48,6 +59,33 @@ export interface IEmbedAllowedOrigin extends IBasePerTenantAndOrganizationEntity
 export interface IEmbedAllowedOriginCreateInput {
 	origin: string;
 	organizationId: ID;
+}
+
+/** A client's spent time, asked by its portal's server with a credential limited to that client. */
+export interface IEmbedClientReportInput {
+	credential: string;
+}
+
+/** A project of the client, and the seconds spent on it this week. */
+export interface IEmbedClientReportProject {
+	id: ID;
+	name: string;
+	seconds: number;
+}
+
+/**
+ * The time spent on the projects of one client: today, this week, and this week by project. Days are `YYYY-MM-DD` in
+ * `timeZone`, and a running timer counts up to the time of the request. No member, task or description is named.
+ */
+export interface IEmbedClientReport {
+	client: { id: ID; name: string };
+	/** The organization's time zone, or UTC when it has none. */
+	timeZone: string;
+	today: { date: string; seconds: number };
+	/** From the organization's first day of the week (Monday unless it says otherwise), seven days. */
+	week: { start: string; end: string; seconds: number };
+	/** The projects with time this week, the most first. */
+	projects: IEmbedClientReportProject[];
 }
 
 /** What an embed token may do, besides reading the signed-in user. */
