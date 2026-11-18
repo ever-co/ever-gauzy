@@ -8,6 +8,7 @@ import { MerchantInputSchema } from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
+import { TOOL_HINTS } from './tool-hints';
 const logger = new Logger('MerchantTools');
 
 export const registerMerchantTools = (server: McpServer) => {
@@ -57,7 +58,8 @@ export const registerMerchantTools = (server: McpServer) => {
 				logger.error('Error fetching merchants:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch merchants: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get merchant count tool
@@ -98,7 +100,8 @@ export const registerMerchantTools = (server: McpServer) => {
 				logger.error('Error fetching merchant count:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch merchant count: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get merchant by ID tool
@@ -130,7 +133,8 @@ export const registerMerchantTools = (server: McpServer) => {
 				logger.error('Error fetching merchant:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch merchant: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Create merchant tool
@@ -166,7 +170,8 @@ export const registerMerchantTools = (server: McpServer) => {
 				logger.error('Error creating merchant:', sanitizeForLogging(error));
 				throw new Error(`Failed to create merchant: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Update merchant tool
@@ -194,7 +199,8 @@ export const registerMerchantTools = (server: McpServer) => {
 				logger.error('Error updating merchant:', sanitizeForLogging(error));
 				throw new Error(`Failed to update merchant: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Delete merchant tool
@@ -225,7 +231,8 @@ export const registerMerchantTools = (server: McpServer) => {
 				logger.error('Error deleting merchant:', sanitizeForLogging(error));
 				throw new Error(`Failed to delete merchant: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.idempotentDestructive
 	);
 
 	// Archive merchant tool
@@ -252,7 +259,8 @@ export const registerMerchantTools = (server: McpServer) => {
 				logger.error('Error archiving merchant:', sanitizeForLogging(error));
 				throw new Error(`Failed to archive merchant: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.idempotentDestructive
 	);
 
 	// Restore merchant tool
@@ -279,7 +287,8 @@ export const registerMerchantTools = (server: McpServer) => {
 				logger.error('Error restoring merchant:', sanitizeForLogging(error));
 				throw new Error(`Failed to restore merchant: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.idempotentWrite
 	);
 
 	// Get merchant by code tool
@@ -316,7 +325,8 @@ export const registerMerchantTools = (server: McpServer) => {
 				logger.error('Error fetching merchant by code:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch merchant by code: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Search merchants tool
@@ -355,7 +365,8 @@ export const registerMerchantTools = (server: McpServer) => {
 				logger.error('Error searching merchants:', sanitizeForLogging(error));
 				throw new Error(`Failed to search merchants: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get merchant statistics tool
@@ -392,7 +403,8 @@ export const registerMerchantTools = (server: McpServer) => {
 				logger.error('Error fetching merchant statistics:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch merchant statistics: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Bulk create merchants tool
@@ -433,7 +445,8 @@ export const registerMerchantTools = (server: McpServer) => {
 				logger.error('Error bulk creating merchants:', sanitizeForLogging(error));
 				throw new Error(`Failed to bulk create merchants: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Get active merchants tool
@@ -475,7 +488,8 @@ export const registerMerchantTools = (server: McpServer) => {
 				logger.error('Error fetching active merchants:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch active merchants: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get archived merchants tool
@@ -517,6 +531,7 @@ export const registerMerchantTools = (server: McpServer) => {
 				logger.error('Error fetching archived merchants:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch archived merchants: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 };

@@ -8,6 +8,7 @@ import { WarehouseInputSchema } from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
+import { TOOL_HINTS } from './tool-hints';
 const logger = new Logger('WarehouseTools');
 
 export const registerWarehouseTools = (server: McpServer) => {
@@ -51,7 +52,8 @@ export const registerWarehouseTools = (server: McpServer) => {
 				logger.error('Error fetching warehouses:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch warehouses: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get warehouse by ID tool
@@ -91,7 +93,8 @@ export const registerWarehouseTools = (server: McpServer) => {
 				logger.error('Error fetching warehouse:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch warehouse: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Create warehouse tool
@@ -132,7 +135,8 @@ export const registerWarehouseTools = (server: McpServer) => {
 				logger.error('Error creating warehouse:', sanitizeForLogging(error));
 				throw new Error(`Failed to create warehouse: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Update warehouse tool
@@ -168,7 +172,8 @@ export const registerWarehouseTools = (server: McpServer) => {
 				logger.error('Error updating warehouse:', sanitizeForLogging(error));
 				throw new Error(`Failed to update warehouse: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Delete warehouse tool
@@ -207,6 +212,7 @@ export const registerWarehouseTools = (server: McpServer) => {
 				logger.error('Error deleting warehouse:', sanitizeForLogging(error));
 				throw new Error(`Failed to delete warehouse: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.idempotentDestructive
 	);
 };

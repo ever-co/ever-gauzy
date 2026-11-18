@@ -9,6 +9,7 @@ import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils'
 import { ImageAssetRefSchema } from '../schema';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
+import { TOOL_HINTS } from './tool-hints';
 const logger = new Logger('ProductTools');
 
 /**
@@ -117,7 +118,8 @@ export const registerProductTools = (server: McpServer) => {
 				logger.error('Error fetching products:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch products: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get products with translations tool
@@ -165,7 +167,8 @@ export const registerProductTools = (server: McpServer) => {
 				logger.error('Error fetching translated products:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch translated products: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get product count tool
@@ -209,7 +212,8 @@ export const registerProductTools = (server: McpServer) => {
 				logger.error('Error fetching product count:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch product count: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get products by pagination tool
@@ -256,7 +260,8 @@ export const registerProductTools = (server: McpServer) => {
 				logger.error('Error fetching products pagination:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch products pagination: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get product by ID tool
@@ -297,7 +302,8 @@ export const registerProductTools = (server: McpServer) => {
 				logger.error('Error fetching product:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch product: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get product translated by ID tool
@@ -335,7 +341,8 @@ export const registerProductTools = (server: McpServer) => {
 				logger.error('Error fetching translated product:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch translated product: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Create product tool
@@ -371,7 +378,8 @@ export const registerProductTools = (server: McpServer) => {
 				logger.error('Error creating product:', sanitizeForLogging(error));
 				throw new Error(`Failed to create product: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Update product tool
@@ -406,7 +414,8 @@ export const registerProductTools = (server: McpServer) => {
 				logger.error('Error updating product:', sanitizeForLogging(error));
 				throw new Error(`Failed to update product: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Delete product tool
@@ -437,7 +446,8 @@ export const registerProductTools = (server: McpServer) => {
 				logger.error('Error deleting product:', sanitizeForLogging(error));
 				throw new Error(`Failed to delete product: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.idempotentDestructive
 	);
 
 	// Add gallery images tool
@@ -465,7 +475,8 @@ export const registerProductTools = (server: McpServer) => {
 				logger.error('Error adding gallery images:', sanitizeForLogging(error));
 				throw new Error(`Failed to add gallery images: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Set featured image tool
@@ -493,7 +504,8 @@ export const registerProductTools = (server: McpServer) => {
 				logger.error('Error setting featured image:', sanitizeForLogging(error));
 				throw new Error(`Failed to set featured image: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Delete gallery image tool
@@ -521,7 +533,8 @@ export const registerProductTools = (server: McpServer) => {
 				logger.error('Error deleting gallery image:', sanitizeForLogging(error));
 				throw new Error(`Failed to delete gallery image: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.idempotentDestructive
 	);
 
 	// Delete featured image tool
@@ -548,6 +561,7 @@ export const registerProductTools = (server: McpServer) => {
 				logger.error('Error deleting featured image:', sanitizeForLogging(error));
 				throw new Error(`Failed to delete featured image: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.idempotentDestructive
 	);
 };

@@ -6,6 +6,7 @@ import { apiClient } from '../common/api-client';
 import { authManager } from '../common/auth-manager';
 import { TaskStatusEnum, TaskPriorityEnum, TaskSizeEnum, TaskTypeEnum } from '../input-schemas';
 import { registerTool } from './tool-helper';
+import { TOOL_HINTS } from './tool-hints';
 import { applyInTurn, buildListQuery, countByGroup, isWithinDates, readAllPages } from './utils';
 
 const logger = new Logger('TaskTools');
@@ -148,7 +149,8 @@ export const registerTaskTools = (server: McpServer) => {
 				const message = error instanceof Error ? error.message : 'Unknown error';
 				throw new Error(`Failed to fetch tasks: ${message}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get task count tool
@@ -160,6 +162,7 @@ export const registerTaskTools = (server: McpServer) => {
 			employeeId: z.string().uuid().optional().describe('Filter by employee ID'),
 			status: TaskStatusEnum.optional().describe('Filter by task status')
 		},
+		TOOL_HINTS.readOnly,
 		async ({ projectId, employeeId, status }) => {
 			try {
 				// Get default parameters from authenticated user
@@ -209,6 +212,7 @@ export const registerTaskTools = (server: McpServer) => {
 			limit: z.number().optional().default(10).describe('Items per page'),
 			relations: z.array(z.string()).optional().describe('Relations to include')
 		},
+		TOOL_HINTS.readOnly,
 		async ({ projectId, employeeId, status, page = 1, limit = 10, relations }) => {
 			try {
 				// Get default parameters from authenticated user
@@ -260,6 +264,7 @@ export const registerTaskTools = (server: McpServer) => {
 			page: z.number().optional().default(1).describe('Page number'),
 			limit: z.number().optional().default(10).describe('Items per page')
 		},
+		TOOL_HINTS.readOnly,
 		async ({ employeeId, status, priority, page = 1, limit = 10 }) => {
 			try {
 				// Get default parameters from authenticated user
@@ -308,6 +313,7 @@ export const registerTaskTools = (server: McpServer) => {
 			page: z.number().optional().default(1).describe('Page number'),
 			limit: z.number().optional().default(10).describe('Items per page')
 		},
+		TOOL_HINTS.readOnly,
 		async ({ status, priority, page = 1, limit = 10 }) => {
 			try {
 				// Get default parameters from authenticated user
@@ -356,6 +362,7 @@ export const registerTaskTools = (server: McpServer) => {
 			page: z.number().optional().default(1).describe('Page number'),
 			limit: z.number().optional().default(10).describe('Items per page')
 		},
+		TOOL_HINTS.readOnly,
 		async ({ teamId, status, page = 1, limit = 10 }) => {
 			try {
 				// Get default parameters from authenticated user
@@ -399,6 +406,7 @@ export const registerTaskTools = (server: McpServer) => {
 			task_data: z.object({ title: z.string().describe('The title (required)') }).passthrough()
 				.describe('The data for creating the task')
 		},
+		TOOL_HINTS.write,
 		async ({ task_data }) => {
 			try {
 				// Get default parameters from authenticated user
@@ -445,6 +453,7 @@ export const registerTaskTools = (server: McpServer) => {
 				.optional()
 				.describe('Relations to include (e.g., ["members", "tags", "project"])')
 		},
+		TOOL_HINTS.readOnly,
 		async ({ id, relations }) => {
 			try {
 				const params = {
@@ -477,6 +486,7 @@ export const registerTaskTools = (server: McpServer) => {
 			id: z.string().uuid().describe('The task ID'),
 			task_data: z.record(z.string(), z.any()).describe('The data for updating the task')
 		},
+		TOOL_HINTS.destructive,
 		async ({ id, task_data }) => {
 			try {
 				const updateData = convertDateFields(task_data);
@@ -506,6 +516,7 @@ export const registerTaskTools = (server: McpServer) => {
 		{
 			id: z.string().uuid().describe('The task ID')
 		},
+		TOOL_HINTS.idempotentDestructive,
 		async ({ id }) => {
 			try {
 				await apiClient.delete(`/api/tasks/${id}`);
@@ -538,6 +549,7 @@ export const registerTaskTools = (server: McpServer) => {
 				)
 				.describe('Array of task data to create')
 		},
+		TOOL_HINTS.write,
 		async ({ tasks }) => {
 			try {
 				// Get default parameters from authenticated user
@@ -590,6 +602,7 @@ export const registerTaskTools = (server: McpServer) => {
 				)
 				.describe('Array of task updates')
 		},
+		TOOL_HINTS.destructive,
 		async ({ updates }) => {
 			try {
 				// Process date conversions for each update
@@ -625,6 +638,7 @@ export const registerTaskTools = (server: McpServer) => {
 		{
 			ids: z.array(z.string().uuid()).describe('Array of task IDs to delete')
 		},
+		TOOL_HINTS.idempotentDestructive,
 		async ({ ids }) => {
 			try {
 				await applyInTurn(ids, (id) => apiClient.delete(`/api/tasks/${id}`));
@@ -659,6 +673,7 @@ export const registerTaskTools = (server: McpServer) => {
 			startDate: z.string().optional().describe('Start date for statistics (ISO format)'),
 			endDate: z.string().optional().describe('End date for statistics (ISO format)')
 		},
+		TOOL_HINTS.readOnly,
 		async ({ projectId, employeeId, startDate, endDate }) => {
 			try {
 				// Get default parameters from authenticated user
@@ -711,6 +726,7 @@ export const registerTaskTools = (server: McpServer) => {
 			taskId: z.string().uuid().describe('The task ID'),
 			employeeId: z.string().uuid().describe('The employee ID')
 		},
+		TOOL_HINTS.destructive,
 		async ({ taskId, employeeId }) => {
 			try {
 				// Get default parameters from authenticated user
@@ -750,6 +766,7 @@ export const registerTaskTools = (server: McpServer) => {
 			taskId: z.string().uuid().describe('The task ID'),
 			employeeId: z.string().uuid().describe('The employee ID')
 		},
+		TOOL_HINTS.idempotentDestructive,
 		async ({ taskId, employeeId }) => {
 			try {
 				// Get default parameters from authenticated user

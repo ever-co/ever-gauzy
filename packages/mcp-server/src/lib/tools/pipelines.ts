@@ -8,6 +8,7 @@ import { PipelineInputSchema } from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
+import { TOOL_HINTS } from './tool-hints';
 const logger = new Logger('PipelineTools');
 
 export const registerPipelineTools = (server: McpServer) => {
@@ -49,7 +50,8 @@ export const registerPipelineTools = (server: McpServer) => {
 				logger.error('Error fetching pipelines:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch pipelines: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get pipeline by ID tool
@@ -81,7 +83,8 @@ export const registerPipelineTools = (server: McpServer) => {
 				logger.error('Error fetching pipeline:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch pipeline: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Create pipeline tool
@@ -117,7 +120,8 @@ export const registerPipelineTools = (server: McpServer) => {
 				logger.error('Error creating pipeline:', sanitizeForLogging(error));
 				throw new Error(`Failed to create pipeline: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Update pipeline tool
@@ -145,7 +149,8 @@ export const registerPipelineTools = (server: McpServer) => {
 				logger.error('Error updating pipeline:', sanitizeForLogging(error));
 				throw new Error(`Failed to update pipeline: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Delete pipeline tool
@@ -176,7 +181,8 @@ export const registerPipelineTools = (server: McpServer) => {
 				logger.error('Error deleting pipeline:', sanitizeForLogging(error));
 				throw new Error(`Failed to delete pipeline: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.idempotentDestructive
 	);
 
 	// Add stage to pipeline tool
@@ -210,7 +216,8 @@ export const registerPipelineTools = (server: McpServer) => {
 				logger.error('Error adding pipeline stage:', sanitizeForLogging(error));
 				throw new Error(`Failed to add pipeline stage: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Update pipeline stage tool
@@ -245,7 +252,8 @@ export const registerPipelineTools = (server: McpServer) => {
 				logger.error('Error updating pipeline stage:', sanitizeForLogging(error));
 				throw new Error(`Failed to update pipeline stage: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Remove stage from pipeline tool
@@ -277,6 +285,7 @@ export const registerPipelineTools = (server: McpServer) => {
 				logger.error('Error removing pipeline stage:', sanitizeForLogging(error));
 				throw new Error(`Failed to remove pipeline stage: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.idempotentDestructive
 	);
 };

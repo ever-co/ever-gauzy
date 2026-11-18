@@ -8,6 +8,7 @@ import { ProductCategoryInputSchema } from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
+import { TOOL_HINTS } from './tool-hints';
 const logger = new Logger('ProductCategoryTools');
 
 export const registerProductCategoryTools = (server: McpServer) => {
@@ -51,7 +52,8 @@ export const registerProductCategoryTools = (server: McpServer) => {
 				logger.error('Error fetching product categories:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch product categories: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get product category count tool
@@ -83,7 +85,8 @@ export const registerProductCategoryTools = (server: McpServer) => {
 				logger.error('Error fetching product category count:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch product category count: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Create product category tool
@@ -133,7 +136,8 @@ export const registerProductCategoryTools = (server: McpServer) => {
 				logger.error('Error creating product category:', sanitizeForLogging(error));
 				throw new Error(`Failed to create product category: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Update product category tool
@@ -175,7 +179,8 @@ export const registerProductCategoryTools = (server: McpServer) => {
 				logger.error('Error updating product category:', sanitizeForLogging(error));
 				throw new Error(`Failed to update product category: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Get products by category tool
@@ -220,6 +225,7 @@ export const registerProductCategoryTools = (server: McpServer) => {
 				logger.error('Error fetching products by category:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch products by category: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 };

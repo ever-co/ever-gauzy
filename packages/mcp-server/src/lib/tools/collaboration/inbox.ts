@@ -2,6 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { apiClient } from '../../common/api-client';
 import { answer, query, registerCollaborationTool, scope } from './collaboration-tool';
+import { TOOL_HINTS } from '../tool-hints';
 
 const INBOX = '/api/inbox/items';
 
@@ -62,7 +63,8 @@ export function registerInboxTools(server: McpServer, access: { read: boolean; w
 				params: query({ ...scope(), tab: args.tab, kind: args.kind, source: args.source, unread: args.unread, q: args.q, cursor: args.cursor, limit: args.limit })
 			});
 			return answer({ items: (page?.['items'] ?? []).map(entrySummary), nextCursor: page?.['nextCursor'] ?? null });
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	registerCollaborationTool<Record<string, never>>(
@@ -70,7 +72,8 @@ export function registerInboxTools(server: McpServer, access: { read: boolean; w
 		'get_inbox_counts',
 		"The signed-in user's unread count, open decisions and unread email. Reads GET /inbox/items/counts.",
 		{},
-		async () => answer({ counts: await apiClient.get<unknown>(`${INBOX}/counts`, { params: scope() }) })
+		async () => answer({ counts: await apiClient.get<unknown>(`${INBOX}/counts`, { params: scope() }) }),
+		TOOL_HINTS.readOnly
 	);
 
 	if (!access.write) return;
@@ -92,6 +95,7 @@ export function registerInboxTools(server: McpServer, access: { read: boolean; w
 			if (!Object.keys(change).length) throw new Error('State a change: isRead, isArchived, snoozedUntil or isDone.');
 			const item = await apiClient.patch<Row>(`${INBOX}/${args.itemId}/state`, { ...scope(), ...change });
 			return answer({ item: entrySummary(item ?? {}) });
-		}
+		},
+		TOOL_HINTS.idempotentWrite
 	);
 }

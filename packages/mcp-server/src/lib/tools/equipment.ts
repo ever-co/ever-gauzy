@@ -8,6 +8,7 @@ import { EquipmentTypeEnum, EquipmentStatusEnum } from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
+import { TOOL_HINTS } from './tool-hints';
 const logger = new Logger('EquipmentTools');
 
 /**
@@ -341,7 +342,8 @@ export const registerEquipmentTools = (server: McpServer) => {
 				logger.error('Error fetching equipment:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch equipment: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get equipment count tool
@@ -382,7 +384,8 @@ export const registerEquipmentTools = (server: McpServer) => {
 				logger.error('Error fetching equipment count:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch equipment count: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get equipment by ID tool
@@ -425,7 +428,8 @@ export const registerEquipmentTools = (server: McpServer) => {
 				logger.error('Error fetching equipment by ID:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch equipment: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Create equipment tool
@@ -461,7 +465,8 @@ export const registerEquipmentTools = (server: McpServer) => {
 				logger.error('Error creating equipment:', sanitizeForLogging(error));
 				throw new Error(`Failed to create equipment: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Update equipment tool
@@ -491,7 +496,8 @@ export const registerEquipmentTools = (server: McpServer) => {
 				logger.error('Error updating equipment:', sanitizeForLogging(error));
 				throw new Error(`Failed to update equipment: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Update equipment status tool
@@ -519,7 +525,8 @@ export const registerEquipmentTools = (server: McpServer) => {
 				logger.error('Error updating equipment status:', sanitizeForLogging(error));
 				throw new Error(`Failed to update equipment status: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Assign equipment tool
@@ -550,7 +557,8 @@ export const registerEquipmentTools = (server: McpServer) => {
 				logger.error('Error assigning equipment:', sanitizeForLogging(error));
 				throw new Error(`Failed to assign equipment: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Unassign equipment tool
@@ -580,7 +588,8 @@ export const registerEquipmentTools = (server: McpServer) => {
 				logger.error('Error unassigning equipment:', sanitizeForLogging(error));
 				throw new Error(`Failed to unassign equipment: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.idempotentDestructive
 	);
 
 	// Delete equipment tool
@@ -611,7 +620,8 @@ export const registerEquipmentTools = (server: McpServer) => {
 				logger.error('Error deleting equipment:', sanitizeForLogging(error));
 				throw new Error(`Failed to delete equipment: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.idempotentDestructive
 	);
 
 	// Get equipment by employee tool
@@ -656,7 +666,8 @@ export const registerEquipmentTools = (server: McpServer) => {
 				logger.error('Error fetching equipment by employee:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch equipment by employee: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get my equipment tool
@@ -699,7 +710,8 @@ export const registerEquipmentTools = (server: McpServer) => {
 				logger.error('Error fetching my equipment:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch my equipment: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get available equipment tool
@@ -743,7 +755,8 @@ export const registerEquipmentTools = (server: McpServer) => {
 				logger.error('Error fetching available equipment:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch available equipment: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get equipment statistics tool
@@ -782,7 +795,8 @@ export const registerEquipmentTools = (server: McpServer) => {
 				logger.error('Error fetching equipment statistics:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch equipment statistics: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Request equipment sharing tool
@@ -835,7 +849,8 @@ export const registerEquipmentTools = (server: McpServer) => {
 				logger.error('Error requesting equipment sharing:', sanitizeForLogging(error));
 				throw new Error(`Failed to request equipment sharing: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Get equipment sharing requests tool
@@ -877,7 +892,8 @@ export const registerEquipmentTools = (server: McpServer) => {
 				logger.error('Error fetching equipment sharing requests:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch equipment sharing requests: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Search equipment tool
@@ -920,6 +936,7 @@ export const registerEquipmentTools = (server: McpServer) => {
 				logger.error('Error searching equipment:', sanitizeForLogging(error));
 				throw new Error(`Failed to search equipment: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 };

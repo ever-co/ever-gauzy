@@ -24,6 +24,7 @@ import {
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
+import { TOOL_HINTS } from './tool-hints';
 const ActivityLogGroupBy = z.enum(['entity', 'action', 'user', 'date', 'hour']);
 
 const logger = new Logger('ActivityLogTools');
@@ -276,7 +277,8 @@ export const registerActivityLogTools = (server: McpServer) => {
 				logger.error('Error fetching activity logs:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch activity logs: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get activity log count tool
@@ -327,7 +329,8 @@ export const registerActivityLogTools = (server: McpServer) => {
 				logger.error('Error fetching activity log count:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch activity log count: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get activity log by ID tool
@@ -348,7 +351,8 @@ export const registerActivityLogTools = (server: McpServer) => {
 				logger.error('Error fetching activity log:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch activity log: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Create activity log tool
@@ -382,7 +386,8 @@ export const registerActivityLogTools = (server: McpServer) => {
 				logger.error('Error creating activity log:', sanitizeForLogging(error));
 				throw new Error(`Failed to create activity log: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Get activity logs by entity tool
@@ -451,7 +456,8 @@ export const registerActivityLogTools = (server: McpServer) => {
 				logger.error('Error fetching activity logs by entity:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch activity logs by entity: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get activity logs by user tool
@@ -495,7 +501,8 @@ export const registerActivityLogTools = (server: McpServer) => {
 				logger.error('Error fetching activity logs by user:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch activity logs by user: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get my activity logs tool
@@ -542,7 +549,8 @@ export const registerActivityLogTools = (server: McpServer) => {
 				logger.error('Error fetching my activity logs:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch my activity logs: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get recent activity logs tool
@@ -589,7 +597,8 @@ export const registerActivityLogTools = (server: McpServer) => {
 				logger.error('Error fetching recent activity logs:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch recent activity logs: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get activity log statistics tool
@@ -639,7 +648,8 @@ export const registerActivityLogTools = (server: McpServer) => {
 				logger.error('Error fetching activity log statistics:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch activity log statistics: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Delete activity logs tool
@@ -665,7 +675,8 @@ export const registerActivityLogTools = (server: McpServer) => {
 				logger.error('Error deleting activity logs:', sanitizeForLogging(error));
 				throw new Error(`Failed to delete activity logs: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Search activity logs tool
@@ -709,7 +720,8 @@ export const registerActivityLogTools = (server: McpServer) => {
 				logger.error('Error searching activity logs:', sanitizeForLogging(error));
 				throw new Error(`Failed to search activity logs: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get activity timeline tool
@@ -753,6 +765,7 @@ export const registerActivityLogTools = (server: McpServer) => {
 				logger.error('Error fetching activity timeline:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch activity timeline: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 };

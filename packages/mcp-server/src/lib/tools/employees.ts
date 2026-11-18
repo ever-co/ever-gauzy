@@ -8,6 +8,7 @@ import { EmployeeInputSchema } from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
+import { TOOL_HINTS } from './tool-hints';
 const logger = new Logger('EmployeeTools');
 
 const workingEmployeesForRangeSchema = z
@@ -97,7 +98,8 @@ export const registerEmployeeTools = (server: McpServer) => {
 				logger.error('Error fetching employees:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch employees: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get employee count tool
@@ -138,7 +140,8 @@ export const registerEmployeeTools = (server: McpServer) => {
 				logger.error('Error fetching employee count:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch employee count: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get employees pagination tool
@@ -187,7 +190,8 @@ export const registerEmployeeTools = (server: McpServer) => {
 				logger.error('Error fetching employees pagination:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch employees pagination: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get working employees tool
@@ -214,7 +218,8 @@ export const registerEmployeeTools = (server: McpServer) => {
 				logger.error('Error fetching working employees:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch working employees: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get working employees count tool
@@ -241,7 +246,8 @@ export const registerEmployeeTools = (server: McpServer) => {
 				logger.error('Error fetching working employees count:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch working employees count: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get organization members tool
@@ -282,7 +288,8 @@ export const registerEmployeeTools = (server: McpServer) => {
 				logger.error('Error fetching organization members:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch organization members: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get employee by ID tool
@@ -317,7 +324,8 @@ export const registerEmployeeTools = (server: McpServer) => {
 				logger.error('Error fetching employee:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch employee: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get employee statistics tool
@@ -356,7 +364,8 @@ export const registerEmployeeTools = (server: McpServer) => {
 				logger.error('Error fetching employee statistics:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch employee statistics: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get current employee tool
@@ -390,7 +399,8 @@ export const registerEmployeeTools = (server: McpServer) => {
 				logger.error('Error fetching current employee:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch current employee: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Create employee tool
@@ -426,7 +436,8 @@ export const registerEmployeeTools = (server: McpServer) => {
 				logger.error('Error creating employee:', sanitizeForLogging(error));
 				throw new Error(`Failed to create employee: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Update employee tool
@@ -456,7 +467,8 @@ export const registerEmployeeTools = (server: McpServer) => {
 				logger.error('Error updating employee:', sanitizeForLogging(error));
 				throw new Error(`Failed to update employee: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Update employee profile tool
@@ -485,7 +497,8 @@ export const registerEmployeeTools = (server: McpServer) => {
 				logger.error('Error updating employee profile:', sanitizeForLogging(error));
 				throw new Error(`Failed to update employee profile: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Soft delete employee tool
@@ -516,7 +529,8 @@ export const registerEmployeeTools = (server: McpServer) => {
 				logger.error('Error soft deleting employee:', sanitizeForLogging(error));
 				throw new Error(`Failed to soft delete employee: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.idempotentDestructive
 	);
 
 	// Restore employee tool
@@ -547,7 +561,8 @@ export const registerEmployeeTools = (server: McpServer) => {
 				logger.error('Error restoring employee:', sanitizeForLogging(error));
 				throw new Error(`Failed to restore employee: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.idempotentWrite
 	);
 
 	// Bulk create employees tool
@@ -590,6 +605,7 @@ export const registerEmployeeTools = (server: McpServer) => {
 				logger.error('Error bulk creating employees:', sanitizeForLogging(error));
 				throw new Error(`Failed to bulk create employees: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 };

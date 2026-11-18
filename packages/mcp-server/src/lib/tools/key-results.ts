@@ -8,6 +8,7 @@ import { KeyResultInputSchema } from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
+import { TOOL_HINTS } from './tool-hints';
 const logger = new Logger('KeyResultTools');
 
 /**
@@ -77,7 +78,8 @@ export const registerKeyResultTools = (server: McpServer) => {
 				logger.error('Error fetching key results:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch key results: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get key result count tool
@@ -116,7 +118,8 @@ export const registerKeyResultTools = (server: McpServer) => {
 				logger.error('Error fetching key result count:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch key result count: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get key result by ID tool
@@ -148,7 +151,8 @@ export const registerKeyResultTools = (server: McpServer) => {
 				logger.error('Error fetching key result:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch key result: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Create key result tool
@@ -190,7 +194,8 @@ export const registerKeyResultTools = (server: McpServer) => {
 				logger.error('Error creating key result:', sanitizeForLogging(error));
 				throw new Error(`Failed to create key result: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Update key result tool
@@ -220,7 +225,8 @@ export const registerKeyResultTools = (server: McpServer) => {
 				logger.error('Error updating key result:', sanitizeForLogging(error));
 				throw new Error(`Failed to update key result: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Update key result progress tool
@@ -254,7 +260,8 @@ export const registerKeyResultTools = (server: McpServer) => {
 				logger.error('Error updating key result progress:', sanitizeForLogging(error));
 				throw new Error(`Failed to update key result progress: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Delete key result tool
@@ -285,7 +292,8 @@ export const registerKeyResultTools = (server: McpServer) => {
 				logger.error('Error deleting key result:', sanitizeForLogging(error));
 				throw new Error(`Failed to delete key result: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.idempotentDestructive
 	);
 
 	// Get key results by goal tool
@@ -328,7 +336,8 @@ export const registerKeyResultTools = (server: McpServer) => {
 				logger.error('Error fetching key results by goal:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch key results by goal: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get my key results tool
@@ -369,7 +378,8 @@ export const registerKeyResultTools = (server: McpServer) => {
 				logger.error('Error fetching my key results:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch my key results: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Create key result update tool
@@ -429,7 +439,8 @@ export const registerKeyResultTools = (server: McpServer) => {
 				logger.error('Error creating key result update:', sanitizeForLogging(error));
 				throw new Error(`Failed to create key result update: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Get key result updates tool
@@ -462,7 +473,8 @@ export const registerKeyResultTools = (server: McpServer) => {
 				logger.error('Error fetching key result updates:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch key result updates: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get key result statistics tool
@@ -503,6 +515,7 @@ export const registerKeyResultTools = (server: McpServer) => {
 				logger.error('Error fetching key result statistics:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch key result statistics: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 };
