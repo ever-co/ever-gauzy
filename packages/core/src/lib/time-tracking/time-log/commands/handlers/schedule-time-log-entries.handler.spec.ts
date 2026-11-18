@@ -441,6 +441,17 @@ describe('ScheduleTimeLogEntriesHandler: the fact of a run it closes', () => {
 		expect(recorded).toEqual([{ name: 'time_log.updated', within: true, entry: stoppedRun(otherStopsEnd) }]);
 	});
 
+	it('stops nothing, and tells of nothing, for a run deleted since the pending read', async () => {
+		const { handler, recorded, transactionRepository } = setup(MultiORMEnum.TypeORM, true);
+		transactionRepository.findOne.mockResolvedValueOnce(null);
+
+		await handler.execute(command());
+
+		// A save of its id would insert it again
+		expect(transactionRepository.save).not.toHaveBeenCalled();
+		expect(recorded).toEqual([]);
+	});
+
 	it('still closes the run when the row cannot be read for its fact', async () => {
 		const { handler, table, logger, repository } = setup(MultiORMEnum.MikroORM, false);
 		repository.findOneBy.mockRejectedValue(new Error('The read failed'));

@@ -233,9 +233,13 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 		await this.typeOrmTimeLogRepository.manager.transaction(async (manager) => {
 			const repository = manager.getRepository(TimeLog);
 			const before = await repository.findOne({ where, ...lockedForChange() });
-			const written = await this.stopTimeLog(before ?? timeLog, stoppedAt, repository);
-			const stopped = before ? { ...before, ...written } : null;
-			await this.facts.recordWithin(manager, factOfUpdatedLog(Boolean(before?.isRunning)), stopped);
+			// Deleted since the pending read: nothing to stop (a save of its id would insert it again)
+			if (!before) {
+				return;
+			}
+			const written = await this.stopTimeLog(before, stoppedAt, repository);
+			const stopped = { ...before, ...written };
+			await this.facts.recordWithin(manager, factOfUpdatedLog(Boolean(before.isRunning)), stopped);
 		});
 	}
 
