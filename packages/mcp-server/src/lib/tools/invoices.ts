@@ -8,6 +8,7 @@ import { InvoiceStatusEnum, InvoiceTypeEnum } from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
+import { TOOL_HINTS } from './tool-hints';
 const logger = new Logger('InvoiceTools');
 
 /**
@@ -84,7 +85,8 @@ export const registerInvoiceTools = (server: McpServer) => {
 				logger.error('Error fetching invoices:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch invoices: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get invoice count tool
@@ -125,7 +127,8 @@ export const registerInvoiceTools = (server: McpServer) => {
 				logger.error('Error fetching invoice count:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch invoice count: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get invoice by ID tool
@@ -163,7 +166,8 @@ export const registerInvoiceTools = (server: McpServer) => {
 				logger.error('Error fetching invoice:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch invoice: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Create invoice tool
@@ -206,7 +210,8 @@ export const registerInvoiceTools = (server: McpServer) => {
 				logger.error('Error creating invoice:', sanitizeForLogging(error));
 				throw new Error(`Failed to create invoice: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Update invoice tool
@@ -236,7 +241,8 @@ export const registerInvoiceTools = (server: McpServer) => {
 				logger.error('Error updating invoice:', sanitizeForLogging(error));
 				throw new Error(`Failed to update invoice: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Update invoice action (status/estimate) tool
@@ -270,7 +276,8 @@ export const registerInvoiceTools = (server: McpServer) => {
 				logger.error('Error updating invoice action:', sanitizeForLogging(error));
 				throw new Error(`Failed to update invoice action: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Update estimate status tool
@@ -304,7 +311,8 @@ export const registerInvoiceTools = (server: McpServer) => {
 				logger.error('Error updating estimate status:', sanitizeForLogging(error));
 				throw new Error(`Failed to update estimate status: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Delete invoice tool
@@ -335,7 +343,8 @@ export const registerInvoiceTools = (server: McpServer) => {
 				logger.error('Error deleting invoice:', sanitizeForLogging(error));
 				throw new Error(`Failed to delete invoice: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.idempotentDestructive
 	);
 
 	// Get invoice items tool
@@ -373,7 +382,8 @@ export const registerInvoiceTools = (server: McpServer) => {
 				logger.error('Error fetching invoice items:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch invoice items: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Send invoice via email tool
@@ -417,7 +427,8 @@ export const registerInvoiceTools = (server: McpServer) => {
 				logger.error('Error sending invoice email:', sanitizeForLogging(error));
 				throw new Error(`Failed to send invoice email: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.openWorldDestructive
 	);
 
 	// Generate invoice PDF tool
@@ -460,7 +471,8 @@ export const registerInvoiceTools = (server: McpServer) => {
 				logger.error('Error downloading invoice PDF:', sanitizeForLogging(error));
 				throw new Error(`Failed to download invoice PDF: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get highest invoice number tool
@@ -485,7 +497,8 @@ export const registerInvoiceTools = (server: McpServer) => {
 				logger.error('Error fetching highest invoice number:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch highest invoice number: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Generate public link for invoice tool
@@ -512,7 +525,8 @@ export const registerInvoiceTools = (server: McpServer) => {
 				logger.error('Error generating invoice link:', sanitizeForLogging(error));
 				throw new Error(`Failed to generate invoice link: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Download invoice payment PDF tool
@@ -557,6 +571,7 @@ export const registerInvoiceTools = (server: McpServer) => {
 				logger.error('Error downloading invoice payment PDF:', sanitizeForLogging(error));
 				throw new Error(`Failed to download invoice payment PDF: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 };

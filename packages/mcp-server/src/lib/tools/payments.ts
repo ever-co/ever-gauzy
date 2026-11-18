@@ -8,6 +8,7 @@ import { PaymentStatusEnum, PaymentMethodEnum, CurrenciesEnum } from '../input-s
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
+import { TOOL_HINTS } from './tool-hints';
 const logger = new Logger('PaymentTools');
 
 /**
@@ -103,7 +104,8 @@ export const registerPaymentTools = (server: McpServer) => {
 				logger.error('Error fetching payments:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch payments: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get payment count tool
@@ -148,7 +150,8 @@ export const registerPaymentTools = (server: McpServer) => {
 				logger.error('Error fetching payment count:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch payment count: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get payment by ID tool
@@ -191,7 +194,8 @@ export const registerPaymentTools = (server: McpServer) => {
 				logger.error('Error fetching payment:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch payment: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Create payment tool
@@ -232,7 +236,8 @@ export const registerPaymentTools = (server: McpServer) => {
 				logger.error('Error creating payment:', sanitizeForLogging(error));
 				throw new Error(`Failed to create payment: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Update payment tool
@@ -273,7 +278,8 @@ export const registerPaymentTools = (server: McpServer) => {
 				logger.error('Error updating payment:', sanitizeForLogging(error));
 				throw new Error(`Failed to update payment: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Update payment status tool
@@ -312,7 +318,8 @@ export const registerPaymentTools = (server: McpServer) => {
 				logger.error('Error updating payment status:', sanitizeForLogging(error));
 				throw new Error(`Failed to update payment status: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Delete payment tool
@@ -351,7 +358,8 @@ export const registerPaymentTools = (server: McpServer) => {
 				logger.error('Error deleting payment:', sanitizeForLogging(error));
 				throw new Error(`Failed to delete payment: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.idempotentDestructive
 	);
 
 	// Get payments by invoice tool
@@ -394,7 +402,8 @@ export const registerPaymentTools = (server: McpServer) => {
 				logger.error('Error fetching payments by invoice:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch payments by invoice: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get payments by client tool
@@ -439,7 +448,8 @@ export const registerPaymentTools = (server: McpServer) => {
 				logger.error('Error fetching payments by client:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch payments by client: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get payment statistics tool
@@ -482,7 +492,8 @@ export const registerPaymentTools = (server: McpServer) => {
 				logger.error('Error fetching payment statistics:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch payment statistics: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Process payment tool
@@ -523,7 +534,8 @@ export const registerPaymentTools = (server: McpServer) => {
 				logger.error('Error processing payment:', sanitizeForLogging(error));
 				throw new Error(`Failed to process payment: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Refund payment tool
@@ -566,7 +578,8 @@ export const registerPaymentTools = (server: McpServer) => {
 				logger.error('Error refunding payment:', sanitizeForLogging(error));
 				throw new Error(`Failed to refund payment: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Get overdue payments tool
@@ -608,7 +621,8 @@ export const registerPaymentTools = (server: McpServer) => {
 				logger.error('Error fetching overdue payments:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch overdue payments: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Search payments tool
@@ -651,6 +665,7 @@ export const registerPaymentTools = (server: McpServer) => {
 				logger.error('Error searching payments:', sanitizeForLogging(error));
 				throw new Error(`Failed to search payments: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 };
