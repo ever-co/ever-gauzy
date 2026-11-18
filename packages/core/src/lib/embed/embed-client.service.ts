@@ -1,8 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { isUUID } from 'class-validator';
 import { DataSource, FindOptionsWhere, In, LessThan, MoreThan, Not } from 'typeorm';
-import { ID, IEmbedClientReport, IEmbedClientReportProject, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
-import { Organization, OrganizationContact, OrganizationProject, TimeLog } from '../core/entities/internal';
+import {
+	ID,
+	IEmbedClientReport,
+	IEmbedClientReportProject,
+	IEmbedProject,
+	TimeLogSourceEnum,
+	TimeLogType
+} from '@gauzy/contracts';
+import { Organization, OrganizationContact, OrganizationProject, Task, TimeLog } from '../core/entities/internal';
+import { hiddenProjectIdsOf } from '../organization-project/organization-project-visibility';
 import { TRACKER_SOURCES } from '../time-tracking/time-log/tracker-source';
 import {
 	clientReportOf,
@@ -10,6 +18,7 @@ import {
 	IEmbedClientReportEntry,
 	IEmbedClientReportSpan
 } from './embed-client-report';
+import { IEmbedClientStart } from './embed-session';
 
 /** The tenant and organization a credential belongs to. */
 export interface IEmbedClientScope {
@@ -17,11 +26,34 @@ export interface IEmbedClientScope {
 	organizationId: ID;
 }
 
+/** What an embed token lists the projects of: its tenant and organization, its member, and its client if it has one. */
+export interface IEmbedProjectsScope extends IEmbedClientScope {
+	employeeId: ID;
+	clientId: ID | null;
+}
+
 /** A client as an embed answer names it: its id and its name, nothing else. */
 export type EmbedClient = IEmbedClientReport['client'];
 
 /** A project as a client report names it. */
 type EmbedClientProject = Pick<IEmbedClientReportProject, 'id' | 'name'>;
+
+/** By name, then by id: the same order whatever the database's collation. */
+function byName(a: IEmbedProject, b: IEmbedProject): number {
+	const byNames = a.name.localeCompare(b.name, 'en');
+	if (byNames !== 0) {
+		return byNames;
+	}
+	return a.id.localeCompare(b.id);
+}
+
+/**
+ * The projects of a client that is still there. Read through the project's contact, which a read leaves out once
+ * deleted: a client withdrawn (soft-deleted) has no project to track time on, as it has no report.
+ */
+function ofLiveClient(clientId: ID): FindOptionsWhere<OrganizationProject> {
+	return { organizationContact: { id: clientId } };
+}
 
 /**
  * The client (an organization contact) an embed credential is limited to. Read through TypeORM whichever ORM the
@@ -80,6 +112,124 @@ export class EmbedClientService {
 		const projects = await this.projectsOf(client, scope);
 		const entries = await this.entriesOf(projects, scope, periods.week);
 		return clientReportOf({ client, periods, projects, entries, now });
+	}
+
+	/**
+	 * Whether a timer start keeps to the client: its project is one of the client's, and its task, if it names one, a
+	 * task of that project. Both in the tenant and organization, and not deleted.
+	 *
+	 * @param clientId The client the token's credential is limited to.
+	 * @param scope The token's tenant and organization.
+	 * @param start The project and the task the start names.
+	 */
+	async isStartForClient(clientId: ID, scope: IEmbedClientScope, start: IEmbedClientStart): Promise<boolean> {
+		const isClientProject = await this.isProjectOfClient(start.projectId, clientId, scope);
+		if (!isClientProject) {
+			return false;
+		}
+		if (!start.taskId) {
+			return true;
+		}
+		return await this.isTaskOfProject(start.taskId, start.projectId, scope);
+	}
+
+	/** Whether a project is one of the client's in the tenant and organization, neither of them deleted. */
+	private async isProjectOfClient(projectId: ID, clientId: ID, scope: IEmbedClientScope): Promise<boolean> {
+		// TypeORM drops a condition whose value is undefined: without these, the read would match any project.
+		const namesProject = isUUID(projectId);
+		const namesClient = isUUID(clientId);
+		const isScoped = Boolean(scope.tenantId) && Boolean(scope.organizationId);
+		if (!namesProject || !namesClient || !isScoped) {
+			return false;
+		}
+		return await this.dataSource.getRepository(OrganizationProject).exists({
+			where: {
+				...ofLiveClient(clientId),
+				id: projectId,
+				tenantId: scope.tenantId,
+				organizationId: scope.organizationId
+			}
+		});
+	}
+
+	/** Whether a task is one of the project's in the tenant and organization, not deleted. */
+	private async isTaskOfProject(taskId: ID, projectId: ID, scope: IEmbedClientScope): Promise<boolean> {
+		if (!isUUID(taskId)) {
+			return false;
+		}
+		return await this.dataSource.getRepository(Task).exists({
+			where: { id: taskId, projectId, tenantId: scope.tenantId, organizationId: scope.organizationId }
+		});
+	}
+
+	/**
+	 * The projects an embed token may track time on, by name: its client's for a token limited to one (none once the
+	 * client is withdrawn), else the ones its member belongs to, as a member or a manager (the rule of
+	 * `GET /organization-projects/employee/:id`). Only those of the tenant and organization, neither archived nor
+	 * deleted, as the project pickers offer them. A private project is never hidden from its own members, so the private
+	 * projects rule leaves none of the member's out; it leaves out the client's private projects the member is kept from
+	 * ({@link hiddenClientProjectIdsOf}).
+	 *
+	 * @param token The token's tenant and organization, member and client.
+	 */
+	async trackableProjectsOf(token: IEmbedProjectsScope): Promise<IEmbedProject[]> {
+		const trackable = this.trackableCondition(token);
+		const isScoped = Boolean(token.tenantId) && Boolean(token.organizationId);
+		if (!trackable || !isScoped) {
+			return [];
+		}
+		const projects = await this.dataSource.getRepository(OrganizationProject).find({
+			where: { ...trackable, tenantId: token.tenantId, organizationId: token.organizationId, isArchived: false },
+			select: { id: true, name: true }
+		});
+		const hidden = await this.hiddenClientProjectIdsOf(token);
+		const visible = projects.filter((project) => !hidden.has(project.id));
+		const answer = visible.map((project) => ({ id: project.id, name: project.name }));
+		return answer.sort(byName);
+	}
+
+	/**
+	 * The client's private projects the token's member may not see, by the rule the project routes keep them with
+	 * (`OrganizationProjectService.hiddenProjectIds`): where the organization keeps its private projects private, those
+	 * the member neither belongs to nor manages. An embed token never holds `ACCESS_PRIVATE_PROJECTS`
+	 * (`EMBED_TOKEN_PERMISSIONS`), which would show them all. None for a token without a client: it lists only its
+	 * member's projects.
+	 *
+	 * @param token A token whose client, tenant and organization {@link trackableProjectsOf} has checked.
+	 */
+	private async hiddenClientProjectIdsOf(token: IEmbedProjectsScope): Promise<Set<ID>> {
+		if (!token.clientId) {
+			return new Set();
+		}
+		const privateProjects = await this.dataSource.getRepository(OrganizationProject).find({
+			where: {
+				...ofLiveClient(token.clientId),
+				tenantId: token.tenantId,
+				organizationId: token.organizationId,
+				public: false,
+				organization: { enforcePrivateProjects: true }
+			},
+			select: { id: true, members: { id: true, employeeId: true } },
+			relations: { members: true }
+		});
+		return new Set(hiddenProjectIdsOf(privateProjects, token.employeeId));
+	}
+
+	/**
+	 * The condition that names the token's projects: its client's, else its member's; none for an id that is not one,
+	 * which TypeORM would drop from the read.
+	 */
+	private trackableCondition(token: IEmbedProjectsScope): FindOptionsWhere<OrganizationProject> | null {
+		if (token.clientId) {
+			if (!isUUID(token.clientId)) {
+				return null;
+			}
+			return ofLiveClient(token.clientId);
+		}
+		if (!isUUID(token.employeeId)) {
+			return null;
+		}
+		return { members: { employeeId: token.employeeId } };
 	}
 
 	/** The client's projects in the tenant and organization, not deleted. */

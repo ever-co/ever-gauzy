@@ -20,7 +20,12 @@ import { MikroOrmEmbedAllowedOriginRepository } from './repository/mikro-orm-emb
 import { TypeOrmEmbedAllowedOriginRepository } from './repository/type-orm-embed-allowed-origin.repository';
 import { EmbedCredentialService } from './embed-credential.service';
 import { EmbedMemberService } from './embed-member.service';
-import { EmbedAllowedOriginController, EmbedCredentialController, EmbedTokenController } from './embed.controller';
+import {
+	EmbedAllowedOriginController,
+	EmbedCredentialController,
+	EmbedProjectController,
+	EmbedTokenController
+} from './embed.controller';
 import { EmbedEnabledGuard, EmbedSessionGuard } from './embed.guards';
 import { MikroOrmEmbedCredentialRepository } from './repository/mikro-orm-embed-credential.repository';
 import { TypeOrmEmbedCredentialRepository } from './repository/type-orm-embed-credential.repository';
@@ -38,7 +43,12 @@ import { TypeOrmEmbedCredentialRepository } from './repository/type-orm-embed-cr
 		AuthModule,
 		CqrsModule
 	],
-	controllers: [EmbedCredentialController, EmbedAllowedOriginController, EmbedTokenController],
+	controllers: [
+		EmbedCredentialController,
+		EmbedAllowedOriginController,
+		EmbedTokenController,
+		EmbedProjectController
+	],
 	providers: [
 		EmbedCredentialService,
 		EmbedClientService,

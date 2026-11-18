@@ -1,3 +1,4 @@
+import { isUUID } from 'class-validator';
 import { decode, verify } from 'jsonwebtoken';
 import { ExtractJwt } from 'passport-jwt';
 import * as moment from 'moment';
@@ -14,6 +15,12 @@ export { EMBED_ORIGIN_CLAIM };
 export const EMBED_CREDENTIAL_CLAIM = 'embedCredentialId';
 export const EMBED_EMPLOYEE_CLAIM = 'embedEmployeeId';
 
+/**
+ * The access-token claim that names the client (an organization contact) the token's credential is limited to. The
+ * exchange writes it only for such a credential: the tokens of a credential of the whole organization do not carry it.
+ */
+export const EMBED_CLIENT_CLAIM = 'embedClientId';
+
 export interface IEmbedClaims {
 	credentialId: string;
 	employeeId: string;
@@ -21,6 +28,14 @@ export interface IEmbedClaims {
 	tenantId: string | null;
 	/** The page origin the token was exchanged for; null on a token minted before origins were bound. */
 	origin: string | null;
+	/** The client the token's credential is limited to; null for a credential of the whole organization. */
+	clientId: string | null;
+}
+
+/** The project and the task a timer start names; null for a start without a task. */
+export interface IEmbedClientStart {
+	projectId: string;
+	taskId: string | null;
 }
 
 /** A route an embed token may reach, and what it may ask of it. */
@@ -44,12 +59,18 @@ export interface IEmbedRoute {
 	 * window, which would read the member's past time logs one window at a time.
 	 */
 	readonly today?: boolean;
+	/**
+	 * Whether the route starts the timer: a token limited to a client starts it only on a project of that client
+	 * ({@link clientStartOf}, `EmbedClientService.isStartForClient`).
+	 */
+	readonly startsTimer?: boolean;
 }
 
 /**
  * The routes a timer widget needs, and nothing else: the signed-in user and their permissions and teams (to draw the
- * widget), the timer's status, start and stop. Time-log reads, statistics, time slots and every write besides start and
- * stop stay closed, so a leaked embed token can neither read the workspace nor backdate time.
+ * widget), the projects it may track time on, the timer's status, start and stop. Time-log reads, statistics, time
+ * slots and every write besides start and stop stay closed, so a leaked embed token can neither read the workspace nor
+ * backdate time.
  */
 export const EMBED_ROUTES: ReadonlyArray<IEmbedRoute> = [
 	{ method: 'GET', path: /^\/api\/user\/me\/?$/, query: ['includeEmployee', 'includeOrganization'] },
@@ -60,13 +81,15 @@ export const EMBED_ROUTES: ReadonlyArray<IEmbedRoute> = [
 		query: ['where'],
 		where: ['organizationId', 'tenantId', 'members']
 	},
+	{ method: 'GET', path: /^\/api\/embed\/projects\/?$/, query: [] },
 	{
 		method: 'GET',
 		path: /^\/api\/timesheet\/timer\/status\/?$/,
 		query: ['organizationId', 'tenantId', 'employeeId', 'source', 'todayStart', 'todayEnd'],
 		today: true
 	},
-	{ method: 'POST', path: /^\/api\/timesheet\/timer\/(start|stop)\/?$/, query: [] }
+	{ method: 'POST', path: /^\/api\/timesheet\/timer\/start\/?$/, query: [], startsTimer: true },
+	{ method: 'POST', path: /^\/api\/timesheet\/timer\/stop\/?$/, query: [] }
 ];
 
 /** The body fields of a start or a stop that an embed may not set: they would let it backdate time. */
@@ -138,6 +161,15 @@ export function embedCredentialIdOf(payload: unknown): string | null {
 	return credentialId;
 }
 
+/** A claim that is a string that is not empty; any other value is none. */
+function textClaimOf(record: Record<string, unknown>, claim: string): string | null {
+	const value = record[claim];
+	if (typeof value !== 'string' || !value) {
+		return null;
+	}
+	return value;
+}
+
 /**
  * Reads the embed claims of a bearer token, without checking its signature: a forged claim can only restrict what its
  * sender could do without it. Nothing is looked up with them before {@link isSignedBearerToken} holds.
@@ -169,8 +201,33 @@ export function readEmbedClaims(authorization: string | undefined): IEmbedClaims
 		employeeId: typeof record[EMBED_EMPLOYEE_CLAIM] === 'string' ? (record[EMBED_EMPLOYEE_CLAIM] as string) : '',
 		organizationId: typeof record['organizationId'] === 'string' ? record['organizationId'] : null,
 		tenantId: typeof record['tenantId'] === 'string' ? record['tenantId'] : null,
-		origin: typeof record[EMBED_ORIGIN_CLAIM] === 'string' ? (record[EMBED_ORIGIN_CLAIM] as string) : null
+		origin: typeof record[EMBED_ORIGIN_CLAIM] === 'string' ? (record[EMBED_ORIGIN_CLAIM] as string) : null,
+		clientId: textClaimOf(record, EMBED_CLIENT_CLAIM)
 	};
+}
+
+/**
+ * The embed claims of the token a request was authenticated with: read from the bearer `JwtStrategy` verified, and
+ * only when it authenticated the request's user as that token's credential (`embedCredentialId`, set by
+ * `JwtStrategy` for an embed token only).
+ *
+ * @param authorization The request's `Authorization` header.
+ * @param user The request's user.
+ * @returns The claims, or null for a request no embed token authenticated.
+ */
+export function authenticatedEmbedClaims(
+	authorization: string | undefined,
+	user: { embedCredentialId?: string | null } | null | undefined
+): IEmbedClaims | null {
+	const claims = readEmbedClaims(authorization);
+	if (!claims) {
+		return null;
+	}
+	const isTokenOfUser = claims.credentialId === user?.embedCredentialId;
+	if (!isTokenOfUser) {
+		return null;
+	}
+	return claims;
 }
 
 /**
@@ -246,6 +303,14 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 const isNamed = (value: unknown) => value !== undefined && value !== null && value !== '';
 
+/** Whether a client a request names is the token's client: the same UUID, whatever its letter case. */
+function isSameClient(named: unknown, clientId: string): boolean {
+	if (typeof named !== 'string' || !isUUID(named)) {
+		return false;
+	}
+	return named.toLowerCase() === clientId.toLowerCase();
+}
+
 /**
  * Whether a request to an embed route stays inside the token's scope: only the query parameters the route takes, and
  * no organization, tenant or member but the token's, wherever the request names one (query, `where`, body, header).
@@ -309,4 +374,35 @@ export function isWithinEmbedScope(
 		return false;
 	}
 	return true;
+}
+
+/**
+ * The project and the task a timer start names, for a token limited to a client, before they are looked up. None when
+ * the start names no project, names another client (`organizationContactId`, compared in any letter case), or names a
+ * project or a task that is not a string: such a start never keeps to the client.
+ *
+ * @param body The start's body.
+ * @param clientId The client the token's credential is limited to.
+ */
+export function clientStartOf(body: unknown, clientId: string): IEmbedClientStart | null {
+	if (!isRecord(body)) {
+		return null;
+	}
+	const client = body['organizationContactId'];
+	const namesAnotherClient = isNamed(client) && !isSameClient(client, clientId);
+	if (namesAnotherClient) {
+		return null;
+	}
+	const projectId = body['projectId'];
+	if (typeof projectId !== 'string' || !projectId) {
+		return null;
+	}
+	const taskId = body['taskId'];
+	if (!isNamed(taskId)) {
+		return { projectId, taskId: null };
+	}
+	if (typeof taskId !== 'string') {
+		return null;
+	}
+	return { projectId, taskId };
 }

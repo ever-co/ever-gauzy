@@ -10,8 +10,8 @@ export interface IEmbedCredential extends IBasePerTenantAndOrganizationEntityMod
 	prefix: string;
 	/**
 	 * The client (an organization contact) whose spent time the credential reads (`POST /embed/client-report`); null
-	 * for a credential that reads no client report. It does not narrow the exchange yet: a token exchanged with the
-	 * credential acts for any member of the organization, as with any other credential.
+	 * for a credential that reads no client report. A token exchanged with the credential starts the timer only on that
+	 * client's projects (403 `EMBED_CLIENT_PROJECT` otherwise); it still acts for any member of the organization.
 	 */
 	organizationContactId?: ID | null;
 	/**
@@ -27,8 +27,8 @@ export interface IEmbedCredentialCreateInput {
 	name: string;
 	organizationId: ID;
 	/**
-	 * A client of the organization whose spent time the credential is to read (`POST /embed/client-report`). It does not
-	 * narrow the exchange yet: the credential still exchanges tokens for any member of the organization.
+	 * A client of the organization whose spent time the credential is to read (`POST /embed/client-report`). The tokens
+	 * the credential exchanges start the timer only on that client's projects, for any member of the organization.
 	 */
 	organizationContactId?: ID;
 	/** Lets the credential's exchanges add the people they name as employees of the organization. Off by default. */
@@ -101,6 +101,15 @@ export interface IEmbedClientReport {
 	week: { start: string; end: string; seconds: number };
 	/** The projects with time this week, the most first. */
 	projects: IEmbedClientReportProject[];
+}
+
+/**
+ * A project an embed token may track time on (`GET /embed/projects`): one of its client's for a token of a credential
+ * limited to a client, else one of its member's. Its id and its name, nothing else.
+ */
+export interface IEmbedProject {
+	id: ID;
+	name: string;
 }
 
 /** What an embed token may do, besides reading the signed-in user. */

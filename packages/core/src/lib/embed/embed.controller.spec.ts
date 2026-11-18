@@ -1,11 +1,21 @@
 import { NotFoundException, RequestMethod } from '@nestjs/common';
 import { GUARDS_METADATA, HTTP_CODE_METADATA, METHOD_METADATA, PATH_METADATA } from '@nestjs/common/constants';
 import { Request } from 'express';
-import { PUBLIC_METHOD_METADATA } from '@gauzy/constants';
-import { IEmbedClientReport } from '@gauzy/contracts';
+import { sign } from 'jsonwebtoken';
+import { PERMISSIONS_METADATA, PUBLIC_METHOD_METADATA } from '@gauzy/constants';
+import { IEmbedClientReport, PermissionsEnum } from '@gauzy/contracts';
+import { RequestContext } from '../core/context';
+import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { EmbedClientService } from './embed-client.service';
 import { EmbedCredentialService } from './embed-credential.service';
-import { EmbedCredentialController, EmbedTokenController } from './embed.controller';
+import { EmbedCredentialController, EmbedProjectController, EmbedTokenController } from './embed.controller';
 import { EmbedEnabledGuard } from './embed.guards';
+import {
+	EMBED_CLIENT_CLAIM,
+	EMBED_CREDENTIAL_CLAIM,
+	EMBED_EMPLOYEE_CLAIM,
+	reachableByEmbedToken
+} from './embed-session';
 import { EMBED_TOKENS_ENV } from './embed.utils';
 
 /**
@@ -71,5 +81,103 @@ describe('GET /embed-credentials/config', () => {
 		expect(controller.config()).toEqual({ enabled: false, clientLimits: true, addMembers: true });
 		process.env[EMBED_TOKENS_ENV] = 'true';
 		expect(controller.config()).toEqual({ enabled: true, clientLimits: true, addMembers: true });
+	});
+});
+
+/**
+ * `GET /api/embed/projects`, as the controller declares it: behind the switch, for a caller authenticated with a
+ * permission an embed token keeps, and answered only to an embed token, with the projects of its client or member.
+ */
+describe('GET /embed/projects', () => {
+	const TENANT = '7a000000-0000-4000-8000-00000000000a';
+	const ORG = '7a000000-0000-4000-8000-0000000000f1';
+	const EMPLOYEE = '7a000000-0000-4000-8000-0000000000e1';
+	const CREDENTIAL = '7a000000-0000-4000-8000-0000000000c1';
+	const CLIENT = '7a000000-0000-4000-8000-0000000000d1';
+	const WEBSITE = { id: '7a000000-0000-4000-8000-0000000000a1', name: 'Website' };
+
+	const projectsHandler = EmbedProjectController.prototype.projects;
+	const embedClaims = { [EMBED_CREDENTIAL_CLAIM]: CREDENTIAL, [EMBED_EMPLOYEE_CLAIM]: EMPLOYEE };
+	const bearer = (claims: Record<string, unknown>) =>
+		`Bearer ${sign({ id: 'user', tenantId: TENANT, organizationId: ORG, ...claims }, 'any-secret')}`;
+	const requestWith = (authorization: string) => ({ headers: { authorization } }) as unknown as Request;
+	const authenticatedAs = (user: Record<string, unknown> | null) =>
+		jest.spyOn(RequestContext, 'currentUser').mockReturnValue(user as any);
+
+	const build = () => {
+		const trackableProjectsOf = jest.fn(async () => [WEBSITE]);
+		const controller = new EmbedProjectController({ trackableProjectsOf } as unknown as EmbedClientService);
+		return { controller, trackableProjectsOf };
+	};
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('is a GET under /embed, behind the switch and the permission guards, never public', () => {
+		expect(Reflect.getMetadata(PATH_METADATA, EmbedProjectController)).toBe('/embed');
+		expect(Reflect.getMetadata(PATH_METADATA, projectsHandler)).toBe('/projects');
+		expect(Reflect.getMetadata(METHOD_METADATA, projectsHandler)).toBe(RequestMethod.GET);
+		expect(Reflect.getMetadata(GUARDS_METADATA, EmbedProjectController)).toEqual([
+			EmbedEnabledGuard,
+			TenantPermissionGuard,
+			PermissionGuard
+		]);
+		expect(Reflect.getMetadata(PUBLIC_METHOD_METADATA, projectsHandler)).toBeUndefined();
+		expect(Reflect.getMetadata(PUBLIC_METHOD_METADATA, EmbedProjectController)).toBeUndefined();
+
+		expect(() => new EmbedEnabledGuard().canActivate()).toThrow(NotFoundException);
+		process.env[EMBED_TOKENS_ENV] = 'true';
+		expect(new EmbedEnabledGuard().canActivate()).toBe(true);
+	});
+
+	it('declares only a permission an embed token keeps', () => {
+		const declared = Reflect.getMetadata(PERMISSIONS_METADATA, EmbedProjectController);
+
+		expect(declared).toEqual([PermissionsEnum.TIME_TRACKER]);
+		expect(reachableByEmbedToken({ embedCredentialId: CREDENTIAL }, declared)).toEqual(declared);
+	});
+
+	it("answers the client's projects to a token limited to a client", async () => {
+		const { controller, trackableProjectsOf } = build();
+		authenticatedAs({ id: 'user', embedCredentialId: CREDENTIAL });
+
+		const answer = await controller.projects(requestWith(bearer({ ...embedClaims, [EMBED_CLIENT_CLAIM]: CLIENT })));
+
+		expect(answer).toEqual([WEBSITE]);
+		expect(trackableProjectsOf).toHaveBeenCalledWith({
+			tenantId: TENANT,
+			organizationId: ORG,
+			employeeId: EMPLOYEE,
+			clientId: CLIENT
+		});
+	});
+
+	it("answers the member's projects to a token without a client", async () => {
+		const { controller, trackableProjectsOf } = build();
+		authenticatedAs({ id: 'user', embedCredentialId: CREDENTIAL });
+
+		await expect(controller.projects(requestWith(bearer(embedClaims)))).resolves.toEqual([WEBSITE]);
+
+		expect(trackableProjectsOf).toHaveBeenCalledWith({
+			tenantId: TENANT,
+			organizationId: ORG,
+			employeeId: EMPLOYEE,
+			clientId: null
+		});
+	});
+
+	it('refuses with 403 EMBED_TOKEN_REQUIRED a request no embed token authenticated', async () => {
+		const { controller, trackableProjectsOf } = build();
+		const refused = { response: { statusCode: 403, code: 'EMBED_TOKEN_REQUIRED' } };
+
+		authenticatedAs({ id: 'user' });
+		await expect(controller.projects(requestWith(bearer({})))).rejects.toMatchObject(refused);
+		// The embed claims, on a request its user was not authenticated with as that credential.
+		await expect(controller.projects(requestWith(bearer(embedClaims)))).rejects.toMatchObject(refused);
+		authenticatedAs({ id: 'user', embedCredentialId: '7a000000-0000-4000-8000-0000000000c2' });
+		await expect(controller.projects(requestWith(bearer(embedClaims)))).rejects.toMatchObject(refused);
+		authenticatedAs(null);
+		await expect(controller.projects(requestWith(''))).rejects.toMatchObject(refused);
+
+		expect(trackableProjectsOf).not.toHaveBeenCalled();
 	});
 });
