@@ -1,5 +1,6 @@
 import { decode, verify } from 'jsonwebtoken';
 import { ExtractJwt } from 'passport-jwt';
+import { PermissionsEnum } from '@gauzy/contracts';
 import { JWT_ALGORITHMS } from '../auth/purpose-token';
 
 /**
@@ -60,6 +61,40 @@ export const EMBED_ROUTES: ReadonlyArray<IEmbedRoute> = [
 export const EMBED_FORBIDDEN_TIMER_FIELDS = ['startedAt', 'stoppedAt', 'manualTimeSlot'] as const;
 
 /**
+ * The permissions an embed token acts with, whatever its member's role holds: `TIME_TRACKER` for the timer's start,
+ * stop and status, `ORG_TEAM_VIEW` for the member's teams; the user and their role's permissions need none. The token
+ * gets its role's permissions intersected with these at every check (`JwtStrategy`, `PermissionGuard`,
+ * `TenantPermissionGuard`): an administrator's token is answered as a member's, without `ALL_ORG_VIEW` or
+ * `CHANGE_SELECTED_EMPLOYEE`, and a role without one of these never gains it.
+ */
+export const EMBED_TOKEN_PERMISSIONS: ReadonlyArray<PermissionsEnum> = [
+	PermissionsEnum.TIME_TRACKER,
+	PermissionsEnum.ORG_TEAM_VIEW
+];
+
+/** Narrows permissions (a role's, or the ones a route declares) to {@link EMBED_TOKEN_PERMISSIONS}. */
+export function narrowPermissionsToEmbedToken(permissions: readonly PermissionsEnum[]): PermissionsEnum[] {
+	return (permissions ?? []).filter((permission) => EMBED_TOKEN_PERMISSIONS.includes(permission));
+}
+
+/**
+ * The permissions among `permissions` a request user may be granted: every one of them, but only those of
+ * {@link EMBED_TOKEN_PERMISSIONS} for a user `JwtStrategy` authenticated with an embed token.
+ *
+ * @param user The request user.
+ * @param permissions The permissions a route declares.
+ */
+export function reachableByEmbedToken(
+	user: { embedCredentialId?: string | null } | null | undefined,
+	permissions: PermissionsEnum[]
+): PermissionsEnum[] {
+	if (!user?.embedCredentialId) {
+		return permissions;
+	}
+	return narrowPermissionsToEmbedToken(permissions);
+}
+
+/**
  * Reads the token exactly where `JwtStrategy` reads it. Passport takes the second word of the header when the first
  * is `Bearer`, so `Bearer <token> extra` authenticates: a pattern of our own that took the rest of the line found no
  * token in it, and the request went on with every right of its member (same lesson as `subscription-session.ts`).
@@ -72,6 +107,23 @@ export function bearerTokenOf(authorization: unknown): string | null {
 		return null;
 	}
 	return extractBearerToken({ headers: { authorization } } as any) || null;
+}
+
+/**
+ * The credential a token payload was minted for by the embed exchange.
+ *
+ * @param payload A token's payload.
+ * @returns The credential's id, or null for a token without the embed claims.
+ */
+export function embedCredentialIdOf(payload: unknown): string | null {
+	if (!payload || typeof payload !== 'object') {
+		return null;
+	}
+	const credentialId = (payload as Record<string, unknown>)[EMBED_CREDENTIAL_CLAIM];
+	if (typeof credentialId !== 'string' || !credentialId) {
+		return null;
+	}
+	return credentialId;
 }
 
 /**
@@ -94,14 +146,11 @@ export function readEmbedClaims(authorization: string | undefined): IEmbedClaims
 		// guard's to refuse (the JWT guard judges the routes that need a token).
 		return null;
 	}
-	if (!payload || typeof payload !== 'object') {
+	const credentialId = embedCredentialIdOf(payload);
+	if (!credentialId) {
 		return null;
 	}
 	const record = payload as Record<string, unknown>;
-	const credentialId = record[EMBED_CREDENTIAL_CLAIM];
-	if (typeof credentialId !== 'string' || !credentialId) {
-		return null;
-	}
 	return {
 		credentialId,
 		employeeId: String(record[EMBED_EMPLOYEE_CLAIM] ?? ''),
