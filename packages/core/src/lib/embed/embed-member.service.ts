@@ -40,12 +40,15 @@ export interface IEmbedNewMember {
 /** What an addition came to: the new employee, or why the person was not added, for the exchange's log line. */
 export type EmbedMemberAddition = { employeeId: ID } | { refused: string };
 
-/** A name of the body, trimmed and cut; none for a blank one or one that is not a string. */
+/** The control characters (a NUL, a line break, an escape) a name never holds. */
+const CONTROL_CHARACTERS = /\p{Cc}/gu;
+
+/** A name of the body, without control characters, trimmed and cut; none for a blank one or one that is not a string. */
 function nameOf(value: unknown): string | undefined {
 	if (typeof value !== 'string') {
 		return undefined;
 	}
-	const cut = value.trim().slice(0, EMBED_MEMBER_NAME_MAX_LENGTH);
+	const cut = value.replace(CONTROL_CHARACTERS, '').trim().slice(0, EMBED_MEMBER_NAME_MAX_LENGTH);
 	const name = cut.trim();
 	if (!name) {
 		return undefined;
@@ -54,8 +57,9 @@ function nameOf(value: unknown): string | undefined {
 }
 
 /**
- * The person an exchange body names, to add as a member: null without a valid address. A name is trimmed and cut at
- * {@link EMBED_MEMBER_NAME_MAX_LENGTH} characters; a blank one, or one that is not a string, is none.
+ * The person an exchange body names, to add as a member: null without a valid address. A name loses its control
+ * characters, then is trimmed and cut at {@link EMBED_MEMBER_NAME_MAX_LENGTH} characters; a blank one, or one that is
+ * not a string, is none.
  */
 export function newMemberOf(body: {
 	email?: unknown;

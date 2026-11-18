@@ -55,6 +55,14 @@ describe('newMemberOf: the person an exchange body names, to add', () => {
 			'N'.repeat(EMBED_MEMBER_NAME_MAX_LENGTH)
 		);
 	});
+
+	it('takes a name without its control characters, and none that holds nothing else', () => {
+		expect(newMemberOf({ email: ADDRESS, firstName: 'No\u0000or\n', lastName: '\r\n\t\u001b\u007f' })).toEqual({
+			email: ADDRESS,
+			firstName: 'Noor',
+			lastName: undefined
+		});
+	});
 });
 
 /** A promise and the function that settles it, to hold a work until the case lets it end. */
