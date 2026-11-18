@@ -1,5 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
+import type { ToolAnnotations } from '@modelcontextprotocol/sdk/types.js';
 import { Logger } from '@nestjs/common';
 import { version } from './common/version';
 import { sanitizeErrorMessage } from './common/error-utils';
@@ -26,6 +27,8 @@ export interface ToolDescriptor {
 		definitions?: Record<string, unknown>;
 		[key: string]: unknown;
 	};
+	/** The hints the tool declares (read-only, destructive, idempotent, open world), when it declares them. */
+	annotations?: ToolAnnotations;
 }
 
 /**
@@ -148,7 +151,8 @@ export class ExtendedMcpServer extends McpServer {
 					toolsList.push({
 						name,
 						description: toolData.description || `Tool: ${name}`,
-						inputSchema
+						inputSchema,
+						...(toolData.annotations && { annotations: toolData.annotations })
 					});
 
 					logger.debug(`Added tool to list: ${name}`);
