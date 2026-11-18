@@ -1,0 +1,111 @@
+/**
+ * Every tool the server registers declares its hints, and a client reading them is never told that a deletion, a
+ * refund or a send is harmless, nor asked about a read. The collaboration groups are enabled so their tools are walked
+ * too.
+ *
+ * Env for mcp-server module load is set in `src/test-setup.ts`.
+ */
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
+import { Tool } from '@modelcontextprotocol/sdk/types.js';
+import { createMcpServer } from '../mcp-server';
+import { COLLABORATION_TOOLS } from './collaboration/scopes';
+
+/** A word of the name (between underscores) that says the call removes, settles or sends something. */
+const DESTRUCTIVE_WORDS = new Set([
+	'delete',
+	'refund',
+	'send',
+	'approve',
+	'deny',
+	'archive',
+	'remove',
+	'unassign',
+	'invite',
+	'process'
+]);
+const READ_PREFIX = /^(get|list|count|search)_/;
+const SENDS_OUTSIDE = ['invite_organization_contact', 'send_invoice_email'];
+
+const wordsOf = (name: string) => name.split('_');
+const saysDestructive = (name: string) => wordsOf(name).some((word) => DESTRUCTIVE_WORDS.has(word));
+
+/** The names of the tools whose hints fail `check`. */
+const failing = (tools: Tool[], check: (tool: Tool) => boolean) =>
+	tools.filter((tool) => !check(tool)).map((tool) => tool.name);
+
+/** Whether each hint a client reads for the tool is stated, the write hints wherever the tool writes. */
+function declaresItsHints({ annotations }: Tool): boolean {
+	if (!annotations) {
+		return false;
+	}
+	const readHintsStated =
+		typeof annotations.readOnlyHint === 'boolean' && typeof annotations.openWorldHint === 'boolean';
+	if (!readHintsStated) {
+		return false;
+	}
+	if (annotations.readOnlyHint) {
+		return true;
+	}
+	return typeof annotations.destructiveHint === 'boolean' && typeof annotations.idempotentHint === 'boolean';
+}
+
+describe('the hints every registered tool declares', () => {
+	const saved = { ...process.env };
+	let tools: Tool[] = [];
+
+	beforeAll(async () => {
+		Object.assign(process.env, {
+			GAUZY_MCP_TOOLS_CHAT: 'true',
+			GAUZY_MCP_TOOLS_DOCS: 'true',
+			GAUZY_MCP_TOOLS_INBOX: 'true'
+		});
+		delete process.env['GAUZY_MCP_TOOLS_SCOPES'];
+		const { server } = createMcpServer();
+		const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+		const client = new Client({ name: 'tool-hints-spec', version: '0.0.0' });
+		await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
+		try {
+			tools = (await client.listTools()).tools;
+		} finally {
+			await client.close();
+			await server.close();
+		}
+	});
+
+	afterAll(() => {
+		process.env = { ...saved };
+	});
+
+	it('walks every tool, the collaboration ones included', () => {
+		const names = tools.map((tool) => tool.name);
+
+		expect(names.length).toBeGreaterThanOrEqual(330);
+		expect(names).toEqual(expect.arrayContaining(Object.keys(COLLABORATION_TOOLS)));
+	});
+
+	it('finds the hints of every tool stated', () => {
+		expect(failing(tools, declaresItsHints)).toEqual([]);
+	});
+
+	it('marks destructive every tool whose name says it deletes, refunds, sends, approves, denies or archives', () => {
+		const destructiveByName = tools.filter((tool) => saysDestructive(tool.name));
+
+		expect(destructiveByName.length).toBeGreaterThan(30);
+		expect(failing(destructiveByName, (tool) => tool.annotations?.destructiveHint === true)).toEqual([]);
+		expect(failing(destructiveByName, (tool) => tool.annotations?.readOnlyHint === false)).toEqual([]);
+	});
+
+	it('marks read-only every get, list, count and search tool', () => {
+		const reads = tools.filter((tool) => READ_PREFIX.test(tool.name));
+
+		expect(reads.length).toBeGreaterThan(150);
+		expect(failing(reads, (tool) => tool.annotations?.readOnlyHint === true)).toEqual([]);
+	});
+
+	it('marks open world only the tools that send to an address outside the workspace', () => {
+		const openWorld = tools.filter((tool) => tool.annotations?.openWorldHint === true).map((tool) => tool.name);
+
+		expect(openWorld.sort()).toEqual(SENDS_OUTSIDE);
+	});
+});
