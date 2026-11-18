@@ -141,6 +141,16 @@ describe('ChatDockComponent', () => {
 			fixture.detectChanges();
 			expect(list()).toBeNull();
 			expect(dock.close).not.toHaveBeenCalled();
+
+			// A dropdown: a click in it keeps it open, a click elsewhere closes it.
+			row().click();
+			fixture.detectChanges();
+			(list() as HTMLElement).click();
+			fixture.detectChanges();
+			expect(list()).not.toBeNull();
+			document.body.click();
+			fixture.detectChanges();
+			expect(list()).toBeNull();
 		});
 
 		it('joins a public channel of the team name I am not in', () => {
