@@ -54,12 +54,13 @@ export class EmbedCredentialController {
 	/**
 	 * Whether this server has embeds on: the settings page asks, whatever the switch says. `clientLimits` tells it that
 	 * a credential can be limited to one client: an older server would drop `organizationContactId` and create a
-	 * credential for the whole organization, so the page offers the choice only when this is true.
+	 * credential for the whole organization, so the page offers the choice only when this is true. `addMembers` tells it,
+	 * for the same reason, that a credential can add the people its exchanges name (`canAddMembers`).
 	 */
-	@ApiOperation({ summary: 'Whether this server has embed credentials on, and what they can be limited to' })
+	@ApiOperation({ summary: 'Whether this server has embed credentials on, and what they can be limited to or do' })
 	@Get('/config')
-	config(): { enabled: boolean; clientLimits: boolean } {
-		return { enabled: isEmbedEnabled(), clientLimits: true };
+	config(): { enabled: boolean; clientLimits: boolean; addMembers: boolean } {
+		return { enabled: isEmbedEnabled(), clientLimits: true, addMembers: true };
 	}
 
 	@ApiOperation({ summary: "The organization's working embed credentials, without secrets" })

@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
+import { CqrsModule } from '@nestjs/cqrs';
 import { Employee, User, UserOrganization } from '../core/entities/internal';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { AuthModule } from '../auth/auth.module';
@@ -18,6 +19,7 @@ import { EmbedAllowedOriginService } from './embed-allowed-origin.service';
 import { MikroOrmEmbedAllowedOriginRepository } from './repository/mikro-orm-embed-allowed-origin.repository';
 import { TypeOrmEmbedAllowedOriginRepository } from './repository/type-orm-embed-allowed-origin.repository';
 import { EmbedCredentialService } from './embed-credential.service';
+import { EmbedMemberService } from './embed-member.service';
 import {
 	EmbedAllowedOriginController,
 	EmbedCredentialController,
@@ -38,7 +40,8 @@ import { TypeOrmEmbedCredentialRepository } from './repository/type-orm-embed-cr
 		TypeOrmModule.forFeature([EmbedCredential, EmbedAllowedOrigin, Employee, User, UserOrganization]),
 		MikroOrmModule.forFeature([EmbedCredential, EmbedAllowedOrigin, Employee, User, UserOrganization]),
 		RolePermissionModule,
-		AuthModule
+		AuthModule,
+		CqrsModule
 	],
 	controllers: [
 		EmbedCredentialController,
@@ -49,6 +52,7 @@ import { TypeOrmEmbedCredentialRepository } from './repository/type-orm-embed-cr
 	providers: [
 		EmbedCredentialService,
 		EmbedClientService,
+		EmbedMemberService,
 		EmbedAllowedOriginService,
 		EmbedEnabledGuard,
 		TypeOrmEmbedAllowedOriginRepository,

@@ -9,10 +9,13 @@ import {
 	ServiceUnavailableException,
 	UnauthorizedException
 } from '@nestjs/common';
+import { CommandBus } from '@nestjs/cqrs';
+import { DataSource } from 'typeorm';
 import { RequestContext } from '../core/context';
 import { IEmbedClientReport } from '@gauzy/contracts';
 import { EmbedCredentialResponseDTO, EmbedCredentialWithSecretResponseDTO } from './dto/embed-credential.dto';
 import { EmbedCredentialService } from './embed-credential.service';
+import { EmbedMemberService } from './embed-member.service';
 import { generateEmbedCredential, hashEmbedCredential } from './embed.utils';
 
 const TENANT = '7a000000-0000-4000-8000-00000000000a';
@@ -58,6 +61,24 @@ function build() {
 		}
 		return { ...NORTHWIND_REPORT, client: { id: client.id, name: client.name } };
 	});
+	// The turns are the service's own; an addition files the person as the platform's commands file them (their own
+	// spec runs them on SQLite, `embed-member.service.sqlite.spec.ts`).
+	const memberService = new EmbedMemberService(
+		{ options: { type: 'better-sqlite3' } } as unknown as DataSource,
+		{} as CommandBus
+	);
+	const addMember = jest.spyOn(memberService, 'add').mockImplementation(async (scope, person) => {
+		const count = String(users.length).padStart(2, '0');
+		const userId = `7a000000-0000-4000-8000-0000000001${count}`;
+		const employeeId = `7a000000-0000-4000-8000-0000000002${count}`;
+		// Another exchange may run while this one is on its way to the database.
+		await new Promise((resolve) => setImmediate(resolve));
+		users.push({ id: userId, tenantId: scope.tenantId, email: person.email.toLowerCase() });
+		const membership = { userId, ...scope, isActive: true, isArchived: false };
+		employees.push({ ...membership, id: employeeId, isTrackingEnabled: true });
+		memberships.push(membership);
+		return { employeeId };
+	});
 	const table = (rows: any[]) => ({
 		metadata: { hasColumnWithPropertyPath: () => true, tableName: 'x' },
 		findOne: jest.fn(async ({ where }) => rows.find((row) => matches(row, where)) ?? null),
@@ -82,7 +103,8 @@ function build() {
 					tenantId === TENANT && organizationId === ORG && origin === SITE
 			)
 		} as any,
-		{ findClient, reportOf } as any
+		{ findClient, reportOf } as any,
+		memberService
 	);
 	jest.spyOn(service, 'ormType', 'get').mockReturnValue('typeorm' as any);
 	jest.spyOn(service, 'create').mockImplementation(async (input: any) => {
@@ -102,7 +124,18 @@ function build() {
 		credentials.filter((row) => row.id === id).forEach((row) => Object.assign(row, patch));
 		return { affected: 1 } as any;
 	});
-	return { service, credentials, employees, users, memberships, issueEmbedSession, contacts, findClient, reportOf };
+	return {
+		service,
+		credentials,
+		employees,
+		users,
+		memberships,
+		issueEmbedSession,
+		contacts,
+		findClient,
+		reportOf,
+		addMember
+	};
 }
 
 const NORTHWIND_REPORT: IEmbedClientReport = {
@@ -178,6 +211,39 @@ describe('EmbedCredentialService', () => {
 		expect(credentials[0].organizationContactId).toBe(CONTACT);
 		expect(created.organizationContactId).toBe(CONTACT);
 		expect(listed.organizationContactId).toBe(CONTACT);
+	});
+
+	it('creates a credential that adds no member unless asked, and lists the option', async () => {
+		const { service, credentials } = build();
+		signIn(TENANT);
+
+		const plain = await service.createForOrganization({ name: 'Northwind product', organizationId: ORG });
+		const adding = await service.createForOrganization({
+			name: 'Fabrikam portal',
+			organizationId: ORG,
+			canAddMembers: true
+		});
+		const listed = await service.listForOrganization(ORG);
+
+		expect(credentials.map((row) => row.canAddMembers)).toEqual([false, true]);
+		expect(plain.canAddMembers).toBe(false);
+		expect(adding.canAddMembers).toBe(true);
+		expect(listed.map((row) => row.canAddMembers).sort()).toEqual([false, true]);
+	});
+
+	it('lists a credential stored before the option as one that adds no member', async () => {
+		const { service, credentials } = build();
+		signIn(TENANT);
+		credentials.push({
+			id: '7a000000-0000-4000-8000-00000000c0a1',
+			name: 'Older',
+			organizationId: ORG,
+			tenantId: TENANT
+		});
+
+		const [listed] = await service.listForOrganization(ORG);
+
+		expect(listed.canAddMembers).toBe(false);
 	});
 
 	it('refuses with a 400 a client that is no contact of the organization, and creates nothing', async () => {
@@ -616,5 +682,212 @@ describe('EmbedCredentialService: client report', () => {
 		await expect(service.exchange({ credential: accepted.secret, employeeId: EMPLOYEE, origin: SITE }, PORTAL)).resolves.toMatchObject({
 			token: 'an-embed-token'
 		});
+	});
+});
+
+describe('EmbedCredentialService: the members a credential adds', () => {
+	const PORTAL = '203.0.113.40';
+	const NOOR = 'Noor.Haddad@Fabrikam.example';
+	const MEMBER_REFUSED = { status: 403, response: { code: 'EMBED_MEMBER_NOT_ALLOWED' } };
+
+	/** A credential of the organization, with the option or without it. */
+	async function credentialOf(service: EmbedCredentialService, canAddMembers: boolean) {
+		signIn(TENANT);
+		return await service.createForOrganization({ name: 'Fabrikam portal', organizationId: ORG, canAddMembers });
+	}
+
+	/** The lines the service logged, at every level. */
+	function logsOf(service: EmbedCredentialService): string[] {
+		const logger = (service as any).logger;
+		const lines: string[] = [];
+		for (const level of ['log', 'warn', 'error']) {
+			jest.spyOn(logger, level).mockImplementation((line: string) => {
+				lines.push(line);
+			});
+		}
+		return lines;
+	}
+
+	it("answers today's 403 for an address without a member when the credential does not add members", async () => {
+		const { service, addMember, issueEmbedSession, employees } = build();
+		const { secret } = await credentialOf(service, false);
+
+		await expect(service.exchange({ credential: secret, email: NOOR, origin: SITE }, PORTAL)).rejects.toMatchObject(
+			MEMBER_REFUSED
+		);
+
+		expect(addMember).not.toHaveBeenCalled();
+		expect(issueEmbedSession).not.toHaveBeenCalled();
+		expect(employees).toHaveLength(1);
+	});
+
+	it('adds a new address as a member of its organization, with the names sent, and answers its token', async () => {
+		const { service, addMember, issueEmbedSession, employees } = build();
+		const { id, secret } = await credentialOf(service, true);
+		const lines = logsOf(service);
+
+		const answer = await service.exchange(
+			{ credential: secret, email: ` ${NOOR} `, firstName: ' Noor ', lastName: 'Haddad', origin: SITE },
+			PORTAL
+		);
+
+		expect(answer.token).toBe('an-embed-token');
+		expect(addMember).toHaveBeenCalledTimes(1);
+		expect(addMember).toHaveBeenCalledWith(
+			{ tenantId: TENANT, organizationId: ORG },
+			{ email: NOOR, firstName: 'Noor', lastName: 'Haddad' }
+		);
+		const added = employees[1];
+		expect(issueEmbedSession).toHaveBeenCalledWith(
+			expect.objectContaining({
+				userId: added.userId,
+				employeeId: added.id,
+				tenantId: TENANT,
+				organizationId: ORG
+			})
+		);
+		expect(lines).toContain(`Embed member added: credential=${id} employee=${added.id}`);
+		expect(lines.join('\n').toLowerCase()).not.toContain('noor');
+	});
+
+	it("writes the credential's client into the token of a member it adds, as into a member's it finds", async () => {
+		const { service, addMember, issueEmbedSession, employees } = build();
+		signIn(TENANT);
+		const portal = await service.createForOrganization({
+			name: 'Fabrikam portal',
+			organizationId: ORG,
+			organizationContactId: CONTACT,
+			canAddMembers: true
+		});
+
+		await service.exchange({ credential: portal.secret, email: NOOR, origin: SITE }, PORTAL);
+		await service.exchange({ credential: portal.secret, email: 'lina@northwind.example', origin: SITE }, PORTAL);
+
+		expect(addMember).toHaveBeenCalledTimes(1);
+		const [ofAdded, ofFound] = issueEmbedSession.mock.calls.map(([input]) => input);
+		expect(ofAdded).toMatchObject({ credentialId: portal.id, employeeId: employees[1].id, clientId: CONTACT });
+		expect(ofFound).toMatchObject({ credentialId: portal.id, employeeId: EMPLOYEE, clientId: CONTACT });
+	});
+
+	it('finds an existing member as before, without adding anyone', async () => {
+		const { service, addMember, issueEmbedSession } = build();
+		const { secret } = await credentialOf(service, true);
+
+		await expect(
+			service.exchange({ credential: secret, email: 'lina@northwind.example', origin: SITE }, PORTAL)
+		).resolves.toHaveProperty('token');
+
+		expect(addMember).not.toHaveBeenCalled();
+		expect(issueEmbedSession).toHaveBeenCalledWith(expect.objectContaining({ userId: USER, employeeId: EMPLOYEE }));
+	});
+
+	it("adds no one for an exchange by employee id or without a valid address: today's 403", async () => {
+		const { service, addMember } = build();
+		const { secret } = await credentialOf(service, true);
+		const unknownEmployee = '7a000000-0000-4000-8000-0000000000e9';
+
+		for (const named of [
+			{ employeeId: unknownEmployee },
+			{ employeeId: unknownEmployee, email: NOOR },
+			{ email: 'noor@' },
+			{ email: 'noor.haddad' },
+			{ email: 42 as unknown as string },
+			{}
+		]) {
+			await expect(
+				service.exchange({ credential: secret, origin: SITE, ...named }, PORTAL)
+			).rejects.toMatchObject(MEMBER_REFUSED);
+		}
+		expect(addMember).not.toHaveBeenCalled();
+	});
+
+	it('answers 403 with the code, and the reason in the log, when the person may not be added', async () => {
+		const { service, addMember, issueEmbedSession } = build();
+		const { id, secret } = await credentialOf(service, true);
+		const lines = logsOf(service);
+		addMember.mockResolvedValueOnce({ refused: 'the account has a role other than employee' });
+
+		await expect(
+			service.exchange({ credential: secret, email: 'ada@northwind.example', origin: SITE }, PORTAL)
+		).rejects.toMatchObject(MEMBER_REFUSED);
+
+		expect(issueEmbedSession).not.toHaveBeenCalled();
+		expect(lines).toContain(`Embed exchange refused: the account has a role other than employee credential=${id}`);
+	});
+
+	it('answers 500 when the addition fails, and 503 when the database is out of reach, never a 401', async () => {
+		const { service, addMember } = build();
+		const { secret } = await credentialOf(service, true);
+		const lines = logsOf(service);
+
+		addMember.mockRejectedValueOnce(new Error(`Duplicate entry '${NOOR}' for key 'email'`));
+		await expect(service.exchange({ credential: secret, email: NOOR, origin: SITE }, PORTAL)).rejects.toThrow(
+			InternalServerErrorException
+		);
+		addMember.mockRejectedValueOnce(new Error('Connection terminated unexpectedly'));
+		await expect(service.exchange({ credential: secret, email: NOOR, origin: SITE }, PORTAL)).rejects.toThrow(
+			ServiceUnavailableException
+		);
+
+		// The log names the failure, never the address a database message may quote.
+		expect(lines.join('\n').toLowerCase()).not.toContain('noor');
+	});
+
+	it('answers 500, never 401, when a read around the addition fails, and logs no address', async () => {
+		const { service } = build();
+		const { secret } = await credentialOf(service, true);
+		const lines = logsOf(service);
+		// The read of the member just added fails, with a message that quotes the address.
+		jest.spyOn((service as any).typeOrmEmployeeRepository, 'findOne').mockRejectedValueOnce(
+			new Error(`select from "employee" where "email" = '${NOOR}'`)
+		);
+
+		await expect(service.exchange({ credential: secret, email: NOOR, origin: SITE }, PORTAL)).rejects.toThrow(
+			InternalServerErrorException
+		);
+
+		expect(lines.join('\n').toLowerCase()).not.toContain('noor');
+	});
+
+	it('adds no one, and answers 401, for a credential revoked while the exchange waited for its turn', async () => {
+		const { service, addMember, employees } = build();
+		const { id, secret } = await credentialOf(service, true);
+		let open: () => void = () => undefined;
+		const opened = new Promise<void>((resolve) => {
+			open = resolve;
+		});
+		const add = addMember.getMockImplementation();
+		addMember.mockImplementationOnce(async (scope, person) => {
+			await opened;
+			return await add(scope, person);
+		});
+
+		const first = service.exchange({ credential: secret, email: NOOR, origin: SITE }, PORTAL);
+		const second = service.exchange({ credential: secret, email: NOOR.toLowerCase(), origin: SITE }, PORTAL);
+		await new Promise((resolve) => setImmediate(resolve));
+		await service.revoke(id);
+		open();
+
+		// The first was past its check when the credential was revoked; the guard refuses its token.
+		await expect(first).resolves.toHaveProperty('token');
+		await expect(second).rejects.toThrow(UnauthorizedException);
+		expect(addMember).toHaveBeenCalledTimes(1);
+		expect(employees).toHaveLength(2);
+	});
+
+	it('adds one member for two exchanges of the same new address at once, and answers both with its token', async () => {
+		const { service, addMember, issueEmbedSession, employees } = build();
+		const { secret } = await credentialOf(service, true);
+
+		const answers = await Promise.all([
+			service.exchange({ credential: secret, email: NOOR, origin: SITE }, PORTAL),
+			service.exchange({ credential: secret, email: NOOR.toLowerCase(), origin: SITE }, PORTAL)
+		]);
+
+		expect(answers.map((answer) => answer.token)).toEqual(['an-embed-token', 'an-embed-token']);
+		expect(addMember).toHaveBeenCalledTimes(1);
+		expect(employees).toHaveLength(2);
+		const minted = issueEmbedSession.mock.calls.map(([input]) => input.employeeId);
+		expect(minted).toEqual([employees[1].id, employees[1].id]);
 	});
 });

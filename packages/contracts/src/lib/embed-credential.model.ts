@@ -14,6 +14,11 @@ export interface IEmbedCredential extends IBasePerTenantAndOrganizationEntityMod
 	 * client's projects (403 `EMBED_CLIENT_PROJECT` otherwise); it still acts for any member of the organization.
 	 */
 	organizationContactId?: ID | null;
+	/**
+	 * Whether an exchange may add the person it names as an employee of the organization when the address has no active
+	 * member there (`POST /embed/token`). False for every credential created without it.
+	 */
+	canAddMembers?: boolean;
 	lastUsedAt?: Date | null;
 	revokedAt?: Date | null;
 }
@@ -26,6 +31,8 @@ export interface IEmbedCredentialCreateInput {
 	 * the credential exchanges start the timer only on that client's projects, for any member of the organization.
 	 */
 	organizationContactId?: ID;
+	/** Lets the credential's exchanges add the people they name as employees of the organization. Off by default. */
+	canAddMembers?: boolean;
 }
 
 /** The answer to a creation: the only time the secret is readable. */
@@ -43,6 +50,14 @@ export interface IEmbedTokenExchangeInput {
 	 * The token is bound to it. Required: an exchange without it is refused (403 `EMBED_ORIGIN_NOT_ALLOWED`).
 	 */
 	origin?: string;
+	/**
+	 * The first name of the person `email` names, for an account a credential that may add members creates (at most 100
+	 * characters, a longer one is cut). Without it, the account is named after the part of the address before the @.
+	 * An existing account keeps its name.
+	 */
+	firstName?: string;
+	/** The last name of that person, for an account a credential that may add members creates (at most 100 characters). */
+	lastName?: string;
 }
 
 export interface IEmbedTokenExchangeResponse {
