@@ -7,8 +7,10 @@ import {
 	EMBED_CLIENT_CLAIM,
 	EMBED_CREDENTIAL_CLAIM,
 	EMBED_EMPLOYEE_CLAIM,
+	embedRouteOf,
 	IEmbedClientStart,
 	isEmbedRoute,
+	isWithinEmbedScope,
 	readEmbedClaims
 } from './embed-session';
 import {
@@ -140,6 +142,29 @@ describe('embed helpers', () => {
 		expect(isEmbedRoute('POST', '/api/timesheet/timer/toggle')).toBe(false);
 		expect(isEmbedRoute('GET', '/api/employee')).toBe(false);
 		expect(isEmbedRoute('DELETE', '/api/user/me')).toBe(false);
+	});
+
+	it('opens the projects to a GET without query parameters, in the organization and tenant of the token', () => {
+		const route = embedRouteOf('GET', '/api/embed/projects');
+		const claims = readEmbedClaims(`Bearer ${embedToken()}`);
+		const headers = { 'organization-id': ORG, 'tenant-id': 'tenant' };
+
+		expect(route).not.toBeNull();
+		expect(isEmbedRoute('GET', '/api/embed/projects/')).toBe(true);
+		expect(isEmbedRoute('POST', '/api/embed/projects')).toBe(false);
+		expect(isEmbedRoute('GET', '/api/embed/projects/7a000000-0000-4000-8000-0000000000a1')).toBe(false);
+		expect(isWithinEmbedScope(route, { query: {}, headers }, claims)).toBe(true);
+
+		const refused = [
+			{ query: { organizationId: ORG } },
+			{ query: { relations: ['members'] } },
+			{ query: { where: { organizationContactId: CLIENT } } },
+			{ query: {}, headers: { 'organization-id': OTHER_ORG } },
+			{ query: {}, headers: { 'tenant-id': 'another-tenant' } }
+		];
+		for (const request of refused) {
+			expect(isWithinEmbedScope(route, request, claims)).toBe(false);
+		}
 	});
 });
 
@@ -458,6 +483,18 @@ describe('EmbedSessionGuard', () => {
 			await expect(guard.canActivate(contextOf(stop))).resolves.toBe(true);
 			await expect(guard.canActivate(contextOf(status))).resolves.toBe(true);
 			expect(isStartForClient).not.toHaveBeenCalled();
+		});
+
+		it('reads the projects it may track time on, as a token without a client does, with no query', async () => {
+			const { guard } = guardWith();
+			const projects = (authorization: string, query: Record<string, unknown> = {}) =>
+				contextOf({ method: 'GET', path: '/api/embed/projects', query, headers: { authorization } });
+
+			await expect(guard.canActivate(projects(ofClient()))).resolves.toBe(true);
+			await expect(guard.canActivate(projects(`Bearer ${embedToken()}`))).resolves.toBe(true);
+			await expect(guard.canActivate(projects(ofClient(), { organizationId: ORG }))).rejects.toMatchObject({
+				response: { code: 'EMBED_SCOPE' }
+			});
 		});
 
 		it('leaves the start of a token without a client as it was, without a lookup', async () => {

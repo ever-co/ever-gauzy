@@ -2,6 +2,7 @@ import {
 	Body,
 	Controller,
 	Delete,
+	ForbiddenException,
 	Get,
 	Header,
 	HttpCode,
@@ -16,7 +17,8 @@ import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Request } from 'express';
 import { Public } from '@gauzy/common';
-import { ID, IEmbedClientReport, PermissionsEnum } from '@gauzy/contracts';
+import { ID, IEmbedClientReport, IEmbedProject, PermissionsEnum } from '@gauzy/contracts';
+import { RequestContext } from '../core/context';
 import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { Permissions } from '../shared/decorators';
 import { UUIDValidationPipe, UseValidationPipe } from '../shared/pipes';
@@ -28,12 +30,18 @@ import {
 	EmbedTokenExchangeResponseDTO,
 	ExchangeEmbedCredentialDTO
 } from './dto/embed-credential.dto';
+import { EmbedProjectResponseDTO } from './dto/embed-project.dto';
+import { EmbedClientService } from './embed-client.service';
 import { EmbedCredentialService } from './embed-credential.service';
 import { EMBED_EXCHANGE_THROTTLE, embedExchangeAddress } from './embed-exchange-throttle';
 import { CreateEmbedAllowedOriginDTO, EmbedAllowedOriginResponseDTO } from './dto/embed-allowed-origin.dto';
 import { EmbedAllowedOriginService } from './embed-allowed-origin.service';
 import { EmbedEnabledGuard } from './embed.guards';
+import { authenticatedEmbedClaims } from './embed-session';
 import { isEmbedEnabled } from './embed.utils';
+
+/** The code of the refusal of an embed route to a request no embed token authenticated. */
+export const EMBED_TOKEN_REQUIRED = 'EMBED_TOKEN_REQUIRED';
 
 /** An organization's embed credentials, for its administrators. */
 @ApiTags('Embed')
@@ -174,5 +182,43 @@ export class EmbedTokenController {
 	async clientReport(@Body() input: EmbedClientReportDTO, @Req() request: Request): Promise<IEmbedClientReport> {
 		const address = embedExchangeAddress(request);
 		return await this.embedCredentialService.clientReport(input, address);
+	}
+}
+
+/**
+ * What a timer widget reads besides the timer, for an embed token only: the projects it may track time on. The token
+ * reaches it with a permission it keeps (`TIME_TRACKER`, `EMBED_TOKEN_PERMISSIONS`), and `EmbedSessionGuard` holds
+ * the request to the route as it holds the timer's. A request another token authenticated is refused 403
+ * `EMBED_TOKEN_REQUIRED`; one without a token gets the 401 of every route that needs one.
+ */
+@ApiTags('Embed')
+@UseGuards(EmbedEnabledGuard, TenantPermissionGuard, PermissionGuard)
+@Permissions(PermissionsEnum.TIME_TRACKER)
+@Controller('/embed')
+export class EmbedProjectController {
+	constructor(private readonly embedClientService: EmbedClientService) {}
+
+	@ApiOperation({
+		summary: "The projects an embed token may track time on: its client's, else its member's, by name"
+	})
+	@ApiResponse({ status: HttpStatus.OK, type: EmbedProjectResponseDTO, isArray: true })
+	@ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Not an embed token (code EMBED_TOKEN_REQUIRED)' })
+	@Get('/projects')
+	async projects(@Req() request: Request): Promise<IEmbedProject[]> {
+		const claims = authenticatedEmbedClaims(request.headers.authorization, RequestContext.currentUser());
+		if (!claims) {
+			throw new ForbiddenException({
+				statusCode: 403,
+				code: EMBED_TOKEN_REQUIRED,
+				message:
+					'This route answers an embed token only. Exchange an embed credential at POST /api/embed/token.'
+			});
+		}
+		return await this.embedClientService.trackableProjectsOf({
+			tenantId: claims.tenantId,
+			organizationId: claims.organizationId,
+			employeeId: claims.employeeId,
+			clientId: claims.clientId
+		});
 	}
 }

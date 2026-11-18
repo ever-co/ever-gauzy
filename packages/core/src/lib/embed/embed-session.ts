@@ -67,8 +67,9 @@ export interface IEmbedRoute {
 
 /**
  * The routes a timer widget needs, and nothing else: the signed-in user and their permissions and teams (to draw the
- * widget), the timer's status, start and stop. Time-log reads, statistics, time slots and every write besides start and
- * stop stay closed, so a leaked embed token can neither read the workspace nor backdate time.
+ * widget), the projects it may track time on, the timer's status, start and stop. Time-log reads, statistics, time
+ * slots and every write besides start and stop stay closed, so a leaked embed token can neither read the workspace nor
+ * backdate time.
  */
 export const EMBED_ROUTES: ReadonlyArray<IEmbedRoute> = [
 	{ method: 'GET', path: /^\/api\/user\/me\/?$/, query: ['includeEmployee', 'includeOrganization'] },
@@ -79,6 +80,7 @@ export const EMBED_ROUTES: ReadonlyArray<IEmbedRoute> = [
 		query: ['where'],
 		where: ['organizationId', 'tenantId', 'members']
 	},
+	{ method: 'GET', path: /^\/api\/embed\/projects\/?$/, query: [] },
 	{
 		method: 'GET',
 		path: /^\/api\/timesheet\/timer\/status\/?$/,
@@ -201,6 +203,30 @@ export function readEmbedClaims(authorization: string | undefined): IEmbedClaims
 		origin: typeof record[EMBED_ORIGIN_CLAIM] === 'string' ? (record[EMBED_ORIGIN_CLAIM] as string) : null,
 		clientId: textClaimOf(record, EMBED_CLIENT_CLAIM)
 	};
+}
+
+/**
+ * The embed claims of the token a request was authenticated with: read from the bearer `JwtStrategy` verified, and
+ * only when it authenticated the request's user as that token's credential (`embedCredentialId`, set by
+ * `JwtStrategy` for an embed token only).
+ *
+ * @param authorization The request's `Authorization` header.
+ * @param user The request's user.
+ * @returns The claims, or null for a request no embed token authenticated.
+ */
+export function authenticatedEmbedClaims(
+	authorization: string | undefined,
+	user: { embedCredentialId?: string | null } | null | undefined
+): IEmbedClaims | null {
+	const claims = readEmbedClaims(authorization);
+	if (!claims) {
+		return null;
+	}
+	const isTokenOfUser = claims.credentialId === user?.embedCredentialId;
+	if (!isTokenOfUser) {
+		return null;
+	}
+	return claims;
 }
 
 /**
