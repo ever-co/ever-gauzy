@@ -1,7 +1,7 @@
 // Must stay first: loads the entity graph before the services pull an entity (see user.create.handler.spec.ts).
 import '../core/entities/internal';
 
-import { ForbiddenException, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
 import { RequestContext } from '../core/context';
 import { EmbedCredentialResponseDTO, EmbedCredentialWithSecretResponseDTO } from './dto/embed-credential.dto';
 import { EmbedCredentialService } from './embed-credential.service';
@@ -25,6 +25,7 @@ function build() {
 		{ id: EMPLOYEE, userId: USER, tenantId: TENANT, organizationId: ORG, isActive: true, isArchived: false, isTrackingEnabled: true }
 	];
 	const users: any[] = [{ id: USER, tenantId: TENANT, email: 'lina@northwind.example' }];
+	const memberships: any[] = [{ userId: USER, tenantId: TENANT, organizationId: ORG, isActive: true, isArchived: false }];
 	const issueEmbedSession = jest.fn(async (_input: any) => 'an-embed-token');
 	const table = (rows: any[]) => ({
 		metadata: { hasColumnWithPropertyPath: () => true, tableName: 'x' },
@@ -40,6 +41,8 @@ function build() {
 		table(employees) as any,
 		{} as any,
 		table(users) as any,
+		{} as any,
+		table(memberships) as any,
 		{} as any,
 		{ issueEmbedSession } as any
 	);
@@ -61,10 +64,25 @@ function build() {
 		credentials.filter((row) => row.id === id).forEach((row) => Object.assign(row, patch));
 		return { affected: 1 } as any;
 	});
-	return { service, credentials, employees, issueEmbedSession };
+	return { service, credentials, employees, users, memberships, issueEmbedSession };
 }
 
 const signIn = (tenantId: string) => jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(tenantId);
+
+// The token lifetime as a server without the setting: a developer's .env (loaded with the config) may set it.
+const TTL_ENV = 'GAUZY_EMBED_TOKEN_TTL_SECONDS';
+let savedTtl: string | undefined;
+beforeAll(() => {
+	savedTtl = process.env[TTL_ENV];
+});
+beforeEach(() => {
+	delete process.env[TTL_ENV];
+});
+afterAll(() => {
+	if (savedTtl !== undefined) {
+		process.env[TTL_ENV] = savedTtl;
+	}
+});
 
 afterEach(() => jest.restoreAllMocks());
 
@@ -91,11 +109,15 @@ describe('EmbedCredentialService', () => {
 		signIn(TENANT);
 		const { secret } = await service.createForOrganization({ name: 'Northwind product', organizationId: ORG });
 
+		process.env[TTL_ENV] = '600';
+		const before = Date.now();
 		const byId = await service.exchange({ credential: secret, employeeId: EMPLOYEE });
+		const after = Date.now();
 		const byEmail = await service.exchange({ credential: secret, email: 'Lina@Northwind.example' });
 
 		expect(byId.token).toBe('an-embed-token');
-		expect(new Date(byId.expiresAt).getTime() - Date.now()).toBeGreaterThan(14 * 60 * 1000);
+		expect(new Date(byId.expiresAt).getTime()).toBeGreaterThanOrEqual(before + 600_000);
+		expect(new Date(byId.expiresAt).getTime()).toBeLessThanOrEqual(after + 600_000);
 		expect(byEmail.token).toBe('an-embed-token');
 		expect(issueEmbedSession).toHaveBeenCalledWith(
 			expect.objectContaining({ userId: USER, tenantId: TENANT, organizationId: ORG, employeeId: EMPLOYEE })
@@ -126,6 +148,72 @@ describe('EmbedCredentialService', () => {
 		employees[0].isTrackingEnabled = true;
 		employees[0].userId = null;
 		await expect(service.exchange({ credential: secret, employeeId: EMPLOYEE })).rejects.toThrow(ForbiddenException);
+	});
+
+	it('finds a member whose address is stored in another case than lowercase, as it was typed', async () => {
+		const { service, users, issueEmbedSession } = build();
+		signIn(TENANT);
+		users[0].email = 'Lina@Northwind.example';
+		const { secret } = await service.createForOrganization({ name: 'Northwind product', organizationId: ORG });
+
+		await expect(service.exchange({ credential: secret, email: ' Lina@Northwind.example ' })).resolves.toMatchObject({
+			token: 'an-embed-token'
+		});
+		expect(issueEmbedSession).toHaveBeenCalledWith(expect.objectContaining({ userId: USER }));
+	});
+
+	it('answers 403 for a placeholder member and for a member no longer active in the organization', async () => {
+		const { service, employees, memberships } = build();
+		signIn(TENANT);
+		const { secret } = await service.createForOrganization({ name: 'Northwind product', organizationId: ORG });
+
+		employees[0].isPlaceholder = true;
+		await expect(service.exchange({ credential: secret, employeeId: EMPLOYEE })).rejects.toMatchObject({
+			response: { code: 'EMBED_MEMBER_NOT_ALLOWED' }
+		});
+		employees[0].isPlaceholder = false;
+		memberships[0].isActive = false;
+		await expect(service.exchange({ credential: secret, employeeId: EMPLOYEE })).rejects.toMatchObject({
+			response: { code: 'EMBED_MEMBER_NOT_ALLOWED' }
+		});
+	});
+
+	it('keeps a 503 of the mint a 503, never a refused credential', async () => {
+		const { service, issueEmbedSession } = build();
+		signIn(TENANT);
+		const { secret } = await service.createForOrganization({ name: 'Northwind product', organizationId: ORG });
+		issueEmbedSession.mockRejectedValueOnce(new ServiceUnavailableException());
+
+		await expect(service.exchange({ credential: secret, employeeId: EMPLOYEE })).rejects.toThrow(ServiceUnavailableException);
+	});
+
+	it('answers a revocation whose lookup failed with the failure, not a 404', async () => {
+		const { service } = build();
+		signIn(TENANT);
+		const { id } = await service.createForOrganization({ name: 'Northwind product', organizationId: ORG });
+		jest.spyOn(service, 'findOneByOptions').mockRejectedValueOnce(new Error('connection terminated'));
+
+		await expect(service.revoke(id)).rejects.toThrow('connection terminated');
+	});
+
+	it('keeps a revocation recorded while a read of the credential was on its way', async () => {
+		const { service, credentials } = build();
+		signIn(TENANT);
+		const { id } = await service.createForOrganization({ name: 'Northwind product', organizationId: ORG });
+		const live = { ...credentials[0] };
+		let release: () => void = () => undefined;
+		const gate = new Promise<void>((resolve) => (release = resolve));
+		(service as any).typeOrmEmbedCredentialRepository.findOne.mockImplementationOnce(async () => {
+			await gate;
+			return live;
+		});
+
+		const pending = service.isRevoked(id);
+		await service.revoke(id);
+		release();
+
+		expect(await pending).toBe(true);
+		expect(await service.isRevoked(id)).toBe(true);
 	});
 
 	it('revokes only a credential of the caller tenant, and the guard sees it at once', async () => {

@@ -14,11 +14,13 @@ import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
 import { DATABASE_UNAVAILABLE_MESSAGE, isDatabaseUnavailableError } from '../core/errors/database-unavailable';
 import { MultiORMEnum, parseTypeORMFindToMikroOrm } from '../core/utils';
 import { AuthService } from '../auth/auth.service';
-import { Employee, User } from '../core/entities/internal';
+import { Employee, User, UserOrganization } from '../core/entities/internal';
 import { MikroOrmEmployeeRepository } from '../employee/repository/mikro-orm-employee.repository';
 import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
 import { MikroOrmUserRepository } from '../user/repository/mikro-orm-user.repository';
 import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
+import { MikroOrmUserOrganizationRepository } from '../user-organization/repository/mikro-orm-user-organization.repository';
+import { TypeOrmUserOrganizationRepository } from '../user-organization/repository/type-orm-user-organization.repository';
 import {
 	CreateEmbedCredentialDTO,
 	EmbedCredentialResponseDTO,
@@ -49,6 +51,9 @@ export const EMBED_REVOCATION_CACHE_MS = 30_000;
 /** How often the last use of a credential is written: at most once a minute. */
 const LAST_USED_RESOLUTION_MS = 60_000;
 
+/** How many credentials a server remembers the revocation of; the least recently read is forgotten first. */
+const REVOCATION_CACHE_MAX_ENTRIES = 10_000;
+
 /**
  * Embed credentials: an organization's administrators create them for a host's backend, which exchanges one for a
  * short-lived token limited to one member and to the timer (`EmbedSessionGuard` holds such a token to its routes).
@@ -65,6 +70,8 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 		private readonly mikroOrmEmployeeRepository: MikroOrmEmployeeRepository,
 		private readonly typeOrmUserRepository: TypeOrmUserRepository,
 		private readonly mikroOrmUserRepository: MikroOrmUserRepository,
+		private readonly typeOrmUserOrganizationRepository: TypeOrmUserOrganizationRepository,
+		private readonly mikroOrmUserOrganizationRepository: MikroOrmUserOrganizationRepository,
 		private readonly authService: AuthService
 	) {
 		super(typeOrmEmbedCredentialRepository, mikroOrmEmbedCredentialRepository);
@@ -99,8 +106,14 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 
 	/** Revokes a credential of the caller's tenant: its tokens are refused within {@link EMBED_REVOCATION_CACHE_MS}. */
 	async revoke(id: ID): Promise<void> {
+		// A miss is a 404; a lookup that failed (the database out of reach) is not, and nothing was revoked.
 		const row = await this.findOneByOptions({ where: { id, tenantId: RequestContext.currentTenantId() } }).catch(
-			() => null
+			(error: unknown) => {
+				if (error instanceof NotFoundException) {
+					return null;
+				}
+				throw error;
+			}
 		);
 		if (!row) {
 			throw new NotFoundException();
@@ -108,7 +121,7 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 		if (!row.revokedAt) {
 			await this.update(id, { revokedAt: new Date() });
 		}
-		this.revoked.set(id, { revoked: true, readAt: Date.now() });
+		this.remember(id, true, Date.now());
 		this.logger.log(`Embed credential revoked: id=${id}`);
 	}
 
@@ -123,9 +136,23 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 			return known.revoked;
 		}
 		const row = await this.findById(id);
+		// A revocation this server recorded while the read was on its way wins over what the read found.
+		const meanwhile = this.revoked.get(id);
+		if (meanwhile?.revoked && meanwhile.readAt >= now) {
+			return true;
+		}
 		const revoked = !row || !!row.revokedAt;
-		this.revoked.set(id, { revoked, readAt: now });
+		this.remember(id, revoked, now);
 		return revoked;
+	}
+
+	/** Records what a read found, within {@link REVOCATION_CACHE_MAX_ENTRIES}: the map keeps the order of the reads. */
+	private remember(id: ID, revoked: boolean, readAt: number): void {
+		this.revoked.delete(id);
+		if (this.revoked.size >= REVOCATION_CACHE_MAX_ENTRIES) {
+			this.revoked.delete(this.revoked.keys().next().value);
+		}
+		this.revoked.set(id, { revoked, readAt });
 	}
 
 	/**
@@ -139,6 +166,10 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 		try {
 			return await this.judgeAndMint(input ?? ({} as ExchangeEmbedCredentialDTO));
 		} catch (error) {
+			// Already a 503 (the mint could not reach the database): never answered as a refused credential.
+			if (error instanceof ServiceUnavailableException) {
+				throw error;
+			}
 			if (isDatabaseUnavailableError(error)) {
 				this.logger.error(`Embed exchange could not reach the database: ${error?.message}`);
 				throw new ServiceUnavailableException(DATABASE_UNAVAILABLE_MESSAGE, { cause: error });
@@ -186,11 +217,15 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 		if (!employee) {
 			refuseMember('not an active member of the organization', row);
 		}
-		if (!employee.userId) {
+		if (!employee.userId || employee.isPlaceholder) {
 			refuseMember('a member without an account', row);
 		}
 		if (!employee.isTrackingEnabled) {
 			refuseMember('time tracking is off for this member', row);
+		}
+		// The token names the organization, and JwtStrategy refuses it without an active membership there.
+		if (!(await this.isActiveMember(employee.userId, row))) {
+			refuseMember('no active membership of the organization', row);
 		}
 
 		const now = new Date();
@@ -227,11 +262,39 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 		if (typeof email !== 'string' || !email.trim()) {
 			return null;
 		}
-		const user = await this.findOneUser({ tenantId: row.tenantId, email: email.trim().toLowerCase() });
+		// Addresses are stored as registered, and every sign-in matches them exactly: the address as sent first, then
+		// in lower case.
+		const typed = email.trim();
+		const user =
+			(await this.findOneUser({ tenantId: row.tenantId, email: typed })) ??
+			(typed !== typed.toLowerCase()
+				? await this.findOneUser({ tenantId: row.tenantId, email: typed.toLowerCase() })
+				: null);
 		if (!user) {
 			return null;
 		}
 		return await this.findOneEmployee({ ...scope, userId: user.id });
+	}
+
+	/** Whether the user is an active, unarchived member of the credential's organization. */
+	private async isActiveMember(userId: ID, row: EmbedCredential): Promise<boolean> {
+		const where = {
+			userId,
+			tenantId: row.tenantId,
+			organizationId: row.organizationId,
+			isActive: true,
+			isArchived: false
+		};
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const parsed = parseTypeORMFindToMikroOrm<UserOrganization>({ where } as any);
+				return !!(await this.mikroOrmUserOrganizationRepository.findOne(parsed.where, parsed.mikroOptions));
+			}
+			case MultiORMEnum.TypeORM:
+				return !!(await this.typeOrmUserOrganizationRepository.findOne({ where }));
+			default:
+				throw new Error(`ORM type not implemented: ${this.ormType}`);
+		}
 	}
 
 	private async findOneEmployee(where: Record<string, unknown>): Promise<Employee | null> {
