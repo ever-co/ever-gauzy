@@ -9,6 +9,7 @@ import {
 	IEmbedTokenExchangeInput,
 	IEmbedTokenExchangeResponse
 } from '@gauzy/contracts';
+import { IsOrganizationBelongsToUser } from '../../shared/validators';
 import { EmbedCredential } from '../embed-credential.entity';
 
 /** `POST /api/embed-credentials` */
@@ -20,8 +21,10 @@ export class CreateEmbedCredentialDTO implements IEmbedCredentialCreateInput {
 	@MaxLength(100)
 	name: string;
 
+	/** An organization of the caller's tenant they may act in: a credential is never filed under another tenant's. */
 	@ApiProperty({ type: () => String })
 	@IsUUID()
+	@IsOrganizationBelongsToUser()
 	organizationId: ID;
 }
 
