@@ -57,6 +57,7 @@ interface DockRow {
 	selector: 'ngx-chat-dock',
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [NbIconModule, TranslatePipe, PersonAvatarComponent, MessageComposerComponent, MessageItemComponent],
+	host: { '(document:click)': 'onDocumentClick($event)' },
 	template: `
 		@if (header(); as who) {
 			<section class="panel" role="dialog" [attr.aria-label]="who.name" data-test="chat-dock" (keydown.escape)="onEscape($event)">
@@ -70,6 +71,7 @@ interface DockRow {
 						} @else if (who.memberCount !== null) {
 							<!-- The team's members at the top: a few faces, overlapping, before their count; a click lists them all. -->
 							<button
+								#membersButton
 								type="button"
 								class="members-line"
 								data-test="chat-dock-members"
@@ -103,24 +105,32 @@ interface DockRow {
 					<button type="button" class="icon-button" data-test="chat-dock-close" [attr.aria-label]="'CHAT.VIEW.CLOSE' | translate" (click)="close()">
 						<nb-icon icon="close-outline" aria-hidden="true"></nb-icon>
 					</button>
+					@if (showMembers()) {
+						<!--
+							Every member of the team the chat knows (face with presence, name, position), in a dropdown under the
+							members row that lies over the messages: the card keeps its height.
+						-->
+						<ul
+							#memberList
+							class="member-list"
+							id="chat-dock-member-list"
+							data-test="chat-dock-member-list"
+							[attr.aria-label]="'CHAT.PROFILE.TEAM_MEMBERS' | translate"
+						>
+							@for (member of teamMembers(); track member.employeeId) {
+								<li class="member">
+									<ngx-chat-person-avatar [person]="member" size="small" [round]="true"></ngx-chat-person-avatar>
+									<span class="member-text">
+										<span class="member-name" [attr.title]="member.name">{{ member.name }}</span>
+										@if (member.position) {
+											<span class="member-position" [attr.title]="member.position">{{ member.position }}</span>
+										}
+									</span>
+								</li>
+							}
+						</ul>
+					}
 				</header>
-
-				@if (showMembers()) {
-					<!-- Every member of the team the chat knows: face (with presence), name and position. -->
-					<ul class="member-list" id="chat-dock-member-list" data-test="chat-dock-member-list" [attr.aria-label]="'CHAT.PROFILE.TEAM_MEMBERS' | translate">
-						@for (member of teamMembers(); track member.employeeId) {
-							<li class="member">
-								<ngx-chat-person-avatar [person]="member" size="small" [round]="true"></ngx-chat-person-avatar>
-								<span class="member-text">
-									<span class="member-name" [attr.title]="member.name">{{ member.name }}</span>
-									@if (member.position) {
-										<span class="member-position" [attr.title]="member.position">{{ member.position }}</span>
-									}
-								</span>
-							</li>
-						}
-					</ul>
-				}
 
 				@if (failed()) {
 					<p class="note">{{ 'CHAT.ERROR' | translate }}</p>
@@ -239,6 +249,8 @@ interface DockRow {
 				color: var(--gauzy-text-color-1, inherit);
 			}
 			.head {
+				/* The anchor of the member dropdown. */
+				position: relative;
 				display: flex;
 				align-items: center;
 				gap: 0.625rem;
@@ -337,21 +349,36 @@ interface DockRow {
 				font-size: 0.875rem;
 				color: var(--dock-muted);
 			}
-			/* The team's member list, under the header: one row per member, scrolling past a few. */
+			/*
+			 * The team's member list: a dropdown under the header, over the messages (above their sticky day dividers),
+			 * a floating panel as the card is: its border, radius and shadow. It scrolls past a few members.
+			 */
 			.member-list {
-				max-height: 12rem;
+				position: absolute;
+				top: calc(100% - 0.375rem);
+				left: 3.75rem;
+				right: 0.75rem;
+				z-index: 10;
+				max-height: min(15rem, calc(100vh - 12rem));
 				margin: 0;
-				padding: 0.375rem 0;
+				padding: 0.25rem;
 				overflow-y: auto;
 				list-style: none;
-				border-bottom: 1px solid var(--dock-line);
+				border: 1px solid var(--dock-line);
+				border-radius: calc(var(--border-radius) * 1.5);
+				background: var(--gauzy-card-1);
+				box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.25);
 			}
 			.member {
 				display: flex;
 				align-items: center;
 				gap: 0.625rem;
 				min-width: 0;
-				padding: 0.375rem 1.25rem;
+				padding: 0.375rem 0.5rem;
+				border-radius: calc(var(--border-radius) * 1.25);
+			}
+			.member:hover {
+				background: var(--dock-hover);
 			}
 			.member-text {
 				display: flex;
@@ -649,6 +676,18 @@ export class ChatDockComponent {
 
 	protected toggleMembers(): void {
 		this.showMembers.update((open) => !open);
+	}
+
+	private readonly membersButton = viewChild<ElementRef<HTMLElement>>('membersButton');
+	private readonly memberList = viewChild<ElementRef<HTMLElement>>('memberList');
+
+	/** A click anywhere but on the members row or in the dropdown closes the dropdown. */
+	protected onDocumentClick(event: Event): void {
+		if (!this.showMembers()) return;
+		const target = event.target as Node | null;
+		if (!target) return;
+		if (this.membersButton()?.nativeElement.contains(target) || this.memberList()?.nativeElement.contains(target)) return;
+		this.showMembers.set(false);
 	}
 
 	/** The messages with their day dividers and whether each continues the previous author's group, as in the chat. */
