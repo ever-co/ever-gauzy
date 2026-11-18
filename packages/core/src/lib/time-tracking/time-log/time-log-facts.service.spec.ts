@@ -148,15 +148,37 @@ describe('TimeLogFactsService (#12071)', () => {
 	});
 
 	it('reads the entry inside the savepoint when handed a read, and a read that fails never fails the write', async () => {
-		const { service, appended } = createService();
+		const { service, appended, outbox } = createService();
 		const warn = jest.spyOn((service as any).logger, 'warn').mockImplementation(() => undefined);
 		const savepoint = { name: 'savepoint' };
-		const writeTransaction = { transaction: jest.fn(async (work: (m: unknown) => unknown) => work(savepoint)) };
-		const read = jest.fn(async (manager: unknown) => (manager === savepoint ? ENTRY : null));
+		// Which savepoint invocation is open, so that the read and the append are seen to run inside the same one
+		let invocation = 0;
+		let open: number | null = null;
+		const writeTransaction = {
+			transaction: jest.fn(async (work: (m: unknown) => unknown) => {
+				open = ++invocation;
+				try {
+					return await work(savepoint);
+				} finally {
+					open = null;
+				}
+			})
+		};
+		const during: string[] = [];
+		const read = jest.fn(async (manager: unknown) => {
+			during.push(`read in ${open}`);
+			return manager === savepoint ? ENTRY : null;
+		});
+		const append = outbox.append.getMockImplementation();
+		outbox.append.mockImplementationOnce(async (usedManager: unknown, input: unknown) => {
+			during.push(`append in ${open}`);
+			return append(usedManager, input);
+		});
 
 		await service.recordWithin(writeTransaction as any, 'time_log.updated', read as any);
 
 		expect(read).toHaveBeenCalledWith(savepoint);
+		expect(during).toEqual(['read in 1', 'append in 1']);
 		expect(appended).toHaveLength(1);
 		expect(appended[0].input).toMatchObject({ name: 'time_log.updated', aggregateId: 'log-1' });
 
@@ -168,6 +190,21 @@ describe('TimeLogFactsService (#12071)', () => {
 		).resolves.toBeUndefined();
 		expect(appended).toHaveLength(1);
 		expect(warn).toHaveBeenCalledTimes(1);
+	});
+
+	it('tells of the entry as its write states it when the read fails, in a savepoint of its own', async () => {
+		const { service, appended } = createService();
+		jest.spyOn((service as any).logger, 'warn').mockImplementation(() => undefined);
+		const writeTransaction = { transaction: jest.fn(async (work: (m: unknown) => unknown) => work({})) };
+		const failing = jest.fn(async () => {
+			throw new Error('The read failed');
+		});
+
+		await service.recordWithin(writeTransaction as any, 'time_log.stopped', failing as any, ENTRY as any);
+
+		expect(writeTransaction.transaction).toHaveBeenCalledTimes(2);
+		expect(appended).toHaveLength(1);
+		expect(appended[0].input).toMatchObject({ name: 'time_log.stopped', aggregateId: 'log-1' });
 	});
 
 	it('never fails the write when the outbox refuses the fact inside its transaction', async () => {

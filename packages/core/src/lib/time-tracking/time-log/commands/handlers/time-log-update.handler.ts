@@ -1023,9 +1023,16 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 				// The entry as this write leaves it, read back in its transaction, inside the fact's savepoint so that
 				// a read that fails never fails the edit: the first read was taken under no lock, and an edit written
 				// since it would otherwise be told of as it was before
+				// (should the read fail, the entry as first read with what the write stored: a stop's fact is never
+				// lost)
 				const where = { id: stored.id, tenantId: stored.tenantId };
-				await this.recordFactOfWrite(manager, fact, result, (savepoint) =>
-					savepoint.findOne(TimeLog, { where, withDeleted: true })
+				const asWritten = { ...stored, ...definedFieldsOf(written) } as ITimeLog;
+				await this.recordFactOfWrite(
+					manager,
+					fact,
+					result,
+					(savepoint) => savepoint.findOne(TimeLog, { where, withDeleted: true }),
+					asWritten
 				);
 				return result;
 			});
@@ -1084,18 +1091,20 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 	 * the same stop already wrote, with its fact.
 	 *
 	 * @param entry - The entry as the write leaves it, or how to read it back (see `TimeLogFactsService.recordWithin`).
+	 * @param fallback - With a read: the entry as the write states it, told of when the read fails.
 	 */
 	private async recordFactOfWrite(
 		manager: EntityManager,
 		fact: string,
 		result: unknown,
-		entry: ITimeLog | TimeLogFactEntryReader
+		entry: ITimeLog | TimeLogFactEntryReader,
+		fallback?: ITimeLog
 	): Promise<void> {
 		const changedNoRow = (result as UpdateResult | undefined)?.affected === 0;
 		if (changedNoRow) {
 			return;
 		}
-		await this.facts.recordWithin(manager, fact, entry);
+		await this.facts.recordWithin(manager, fact, entry, fallback);
 	}
 
 	/**

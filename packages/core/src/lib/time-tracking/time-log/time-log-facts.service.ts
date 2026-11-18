@@ -102,21 +102,26 @@ export class TimeLogFactsService implements OnModuleInit {
 	 * @param timeLog The entry as the write left it, with its tenant and organization; or how to read it, which is
 	 * read inside the savepoint, so that a read that fails is undone and logged with the fact, and never fails the
 	 * write either.
+	 * @param fallback With a read: the entry as the write states it, told of in a savepoint of its own when the read
+	 * fails, so that the write's fact is not lost (a stop whose retry changes no row writes none of its own).
 	 */
 	async recordWithin(
 		manager: EntityManager,
 		name: string,
-		timeLog: Partial<ITimeLog> | null | undefined | TimeLogFactEntryReader
+		timeLog: Partial<ITimeLog> | null | undefined | TimeLogFactEntryReader,
+		fallback?: Partial<ITimeLog> | null
 	): Promise<void> {
 		const read: TimeLogFactEntryReader | undefined = typeof timeLog === 'function' ? timeLog : undefined;
 		let entry = typeof timeLog === 'function' ? undefined : timeLog;
 		if (!read && !this.isScoped(name, entry)) {
 			return;
 		}
+		let isRead = !read;
 		try {
 			await manager.transaction(async (savepoint) => {
 				if (read) {
 					entry = await read(savepoint);
+					isRead = true;
 					if (!this.isScoped(name, entry)) {
 						return;
 					}
@@ -124,6 +129,14 @@ export class TimeLogFactsService implements OnModuleInit {
 				await this.outbox.append(savepoint, factInput(name, entry));
 			});
 		} catch (error) {
+			if (!isRead && fallback) {
+				this.logger.warn(
+					`The ${name} fact of time entry ${fallback.id} is written as its write states it, as the entry ` +
+						`could not be read back: ${(error as Error)?.message}`
+				);
+				await this.recordWithin(manager, name, fallback);
+				return;
+			}
 			this.warnNotWritten(name, entry, error);
 		}
 	}
