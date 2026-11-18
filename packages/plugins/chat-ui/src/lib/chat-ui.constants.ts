@@ -60,6 +60,11 @@ export const CHAT_EMPLOYEE_ACTIONS_SLOT = 'employee-view-actions';
 /** Id of that extension. */
 export const CHAT_MESSAGE_EMPLOYEE_EXTENSION_ID = 'chat-message-employee';
 
+/** The extension slot of a team's page the "Team chat" button goes in (`PAGE_EXTENSION_SLOTS.TEAM_VIEW_ACTIONS`). */
+export const CHAT_TEAM_ACTIONS_SLOT = 'team-view-actions';
+/** Id of that extension. */
+export const CHAT_TEAM_CHAT_EXTENSION_ID = 'chat-team-chat';
+
 /** The most people the `@` suggestions show. */
 export const CHAT_MENTION_SUGGESTIONS = 8;
 
