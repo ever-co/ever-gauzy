@@ -16,7 +16,7 @@ import {
 	TagsMutationComponent
 } from '@gauzy/ui-core/shared';
 import { TagsColorComponent } from './tags-color/tags-color.component';
-import { TagDetailsComponent } from './tag-details/tag-details.component';
+import { ITagDetailsResult, ITagListRow, TagDetailsComponent } from './tag-details/tag-details.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -219,14 +219,16 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 			return;
 		}
 
-		// Closes with the tag as the dialog showed it (refreshed by its own read) when Edit was chosen there.
-		const tagToEdit: ITag | undefined = await firstValueFrom(
+		const result: ITagDetailsResult | undefined = await firstValueFrom(
 			this.dialogService.open(TagDetailsComponent, {
-				context: { row: this.selectedTag, tagTypes: this.tagTypes }
+				// The list row carries the type name and the usage counters next to the tag's own fields.
+				// ...and the organization's tag types, to name a type the tag was moved to since the list loaded.
+				context: { row: this.selectedTag as ITagListRow, tagTypes: this.tagTypes }
 			}).onClose
 		);
-		if (tagToEdit) {
-			await this.edit(tagToEdit);
+		// The tag as the details dialog showed it (refreshed), not the list row it was opened from.
+		if (result?.action === 'edit') {
+			await this.edit(result.tag);
 		}
 	}
 
