@@ -28,6 +28,16 @@ const READ_PREFIX = /^(get|list|count|search)_/;
 const SENDS_OUTSIDE = ['invite_organization_contact', 'send_invoice_email'];
 /** A start or a stop of the timer ends the run going and cuts the entries that run overlaps. */
 const ENDS_THE_RUN_GOING = ['start_timer', 'stop_timer'];
+/** Tools that read a record and write it back whole: what changed in between is written over. */
+const READ_THEN_REPLACE = [
+	'assign_employees_to_time_off_policy',
+	'assign_skill_to_employee',
+	'assign_task_to_employee',
+	'bulk_update_tasks',
+	'remove_skill_from_employee',
+	'unassign_task_from_employee',
+	'update_time_off_policy'
+];
 
 const wordsOf = (name: string) => name.split('_');
 const saysDestructive = (name: string) => wordsOf(name).some((word) => DESTRUCTIVE_WORDS.has(word));
@@ -107,6 +117,13 @@ describe('the hints every registered tool declares', () => {
 
 		expect(timer).toHaveLength(ENDS_THE_RUN_GOING.length);
 		expect(failing(timer, isDestructive)).toEqual([]);
+	});
+
+	it('marks destructive every tool that reads a record and writes it back whole', () => {
+		const replacing = named(tools, READ_THEN_REPLACE);
+
+		expect(replacing).toHaveLength(READ_THEN_REPLACE.length);
+		expect(failing(replacing, isDestructive)).toEqual([]);
 	});
 
 	it('does not hint idempotent the chat read, which reads up to the newest message when it names none', () => {

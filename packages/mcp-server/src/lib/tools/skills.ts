@@ -303,7 +303,7 @@ export const registerSkillTools = (server: McpServer) => {
 				throw new Error(`Failed to assign skill to employee: ${sanitizeErrorMessage(error)}`);
 			}
 		},
-		TOOL_HINTS.write
+		TOOL_HINTS.destructive
 	);
 
 	// Remove skill from employee tool

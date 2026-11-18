@@ -726,7 +726,7 @@ export const registerTaskTools = (server: McpServer) => {
 			taskId: z.string().uuid().describe('The task ID'),
 			employeeId: z.string().uuid().describe('The employee ID')
 		},
-		TOOL_HINTS.write,
+		TOOL_HINTS.destructive,
 		async ({ taskId, employeeId }) => {
 			try {
 				// Get default parameters from authenticated user

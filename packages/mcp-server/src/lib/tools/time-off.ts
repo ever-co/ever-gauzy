@@ -794,7 +794,7 @@ export const registerTimeOffTools = (server: McpServer) => {
 				throw new Error(`Failed to assign employees to time-off policy: ${sanitizeErrorMessage(error)}`);
 			}
 		},
-		TOOL_HINTS.write
+		TOOL_HINTS.destructive
 	);
 
 	// Get time-off balance tool
