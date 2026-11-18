@@ -470,6 +470,7 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 			credentialId: row.id,
 			employeeId: employee.id,
 			origin: pageOrigin,
+			clientId: row.organizationContactId,
 			expiresAt
 		});
 		await this.recordUse(row, now);

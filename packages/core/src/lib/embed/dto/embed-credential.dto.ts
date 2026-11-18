@@ -31,7 +31,7 @@ export class CreateEmbedCredentialDTO implements IEmbedCredentialCreateInput {
 	@ApiPropertyOptional({
 		type: () => String,
 		description:
-			'A client (organization contact) whose spent time it reads at POST /embed/client-report. Tokens it exchanges still act for any member of the organization.'
+			"A client (organization contact) whose spent time it reads at POST /embed/client-report. Tokens it exchanges start the timer only on that client's projects, for any member of the organization."
 	})
 	@IsOptional()
 	@IsUUID()

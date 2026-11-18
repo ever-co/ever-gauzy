@@ -7,7 +7,10 @@ import type { EmbedClientService } from './embed-client.service';
 /**
  * The client of an embed credential and its spent time, read through TypeORM on one SQLite database with the tables
  * TypeORM creates for every entity: a contact counts only in its own tenant and organization, and only while it is not
- * deleted; its report counts only the entries of its own projects there, not deleted and not breaks.
+ * deleted; its report counts only the entries of its own projects there, not deleted and not breaks. A timer start keeps
+ * to it only on one of those projects, with a task of that project or none. A token lists its client's projects, or
+ * its member's without a client, neither archived nor deleted; where the organization keeps its private projects
+ * private, a client's private project only to its own members and managers.
  */
 const TIMEOUT = 10 * 60 * 1000;
 
@@ -27,6 +30,28 @@ const ARCHIVE = '7b000000-0000-4000-8000-0000000000a3';
 const INTRANET = '7b000000-0000-4000-8000-0000000000a4';
 const REMOVED = '7b000000-0000-4000-8000-0000000000a5';
 const ABROAD = '7b000000-0000-4000-8000-0000000000a6';
+
+const HOMEPAGE = '7b000000-0000-4000-8000-0000000000b1';
+const SIGN_UP = '7b000000-0000-4000-8000-0000000000b2';
+const DROPPED = '7b000000-0000-4000-8000-0000000000b3';
+const MISFILED = '7b000000-0000-4000-8000-0000000000b4';
+const UNKNOWN = '7b000000-0000-4000-8000-0000000000ff';
+
+const BRAND = '7b000000-0000-4000-8000-0000000000a7';
+const RETIRED = '7b000000-0000-4000-8000-0000000000a8';
+const PARTNERSHIP = '7b000000-0000-4000-8000-0000000000a9';
+const KICKOFF = '7b000000-0000-4000-8000-0000000000b5';
+
+const ADVENTURE_WORKS = '7b000000-0000-4000-8000-0000000000d6';
+const PORTAL = '7b000000-0000-4000-8000-0000000000aa';
+const LEDGER = '7b000000-0000-4000-8000-0000000000ab';
+const PAYROLL = '7b000000-0000-4000-8000-0000000000ac';
+const VAULT = '7b000000-0000-4000-8000-0000000000ad';
+const LAB = '7b000000-0000-4000-8000-0000000000ae';
+const NOVA = '7b000000-0000-4000-8000-0000000000e3';
+const RUBEN = '7b000000-0000-4000-8000-0000000000e4';
+const LINA = '7b000000-0000-4000-8000-0000000000e1';
+const MARCO = '7b000000-0000-4000-8000-0000000000e2';
 
 /** Thursday 19 November 2026, 15:00 in Paris (UTC+1), the organization's zone. */
 const NOW = new Date('2026-11-19T14:00:00.000Z');
@@ -209,6 +234,101 @@ async function seedTime(dataSource: DataSource): Promise<void> {
 	});
 }
 
+/** Tasks of the website and of another client's project, with a deleted one and one filed under another organization. */
+async function seedTasks(dataSource: DataSource): Promise<void> {
+	await insert(dataSource, 'task', { ...SCOPE, id: HOMEPAGE, title: 'Homepage', number: 1, projectId: WEBSITE });
+	await insert(dataSource, 'task', { ...SCOPE, id: SIGN_UP, title: 'Sign-up', number: 1, projectId: INTRANET });
+	await insert(dataSource, 'task', {
+		...SCOPE,
+		id: DROPPED,
+		title: 'Dropped',
+		number: 2,
+		projectId: WEBSITE,
+		deletedAt: '2026-11-17 08:00:00.000'
+	});
+	await insert(dataSource, 'task', {
+		...SCOPE,
+		id: MISFILED,
+		title: 'Misfiled',
+		number: 3,
+		projectId: WEBSITE,
+		organizationId: OTHER_ORGANIZATION
+	});
+}
+
+/** A project and a task of the client withdrawn: the contact is deleted, its project and its task are not. */
+async function seedWithdrawnClient(dataSource: DataSource): Promise<void> {
+	await insertProject(dataSource, { id: PARTNERSHIP, name: 'Partnership', organizationContactId: WITHDRAWN });
+	await insert(dataSource, 'task', { ...SCOPE, id: KICKOFF, title: 'Kickoff', number: 4, projectId: PARTNERSHIP });
+}
+
+let membershipCount = 0;
+
+/** A member of a project, in the agency's organization unless it says otherwise. */
+async function insertMembership(dataSource: DataSource, row: Record<string, unknown>): Promise<void> {
+	membershipCount += 1;
+	const id = `7b000000-0000-4000-8000-1000000000${String(membershipCount).padStart(2, '0')}`;
+	await insert(dataSource, 'organization_project_employee', { ...SCOPE, id, ...row });
+}
+
+/**
+ * A project of Northwind named in lower case and an archived one, and Lina's memberships: a project of each client, an
+ * archived one, a deleted one, one of the other organization, and a membership that was deleted.
+ */
+async function seedProjectsToTrack(dataSource: DataSource): Promise<void> {
+	await insertProject(dataSource, { id: BRAND, name: 'brand refresh', organizationContactId: NORTHWIND });
+	await insertProject(dataSource, { id: RETIRED, name: 'Retired', organizationContactId: NORTHWIND, isArchived: 1 });
+
+	await insertMembership(dataSource, { employeeId: LINA, organizationProjectId: WEBSITE });
+	await insertMembership(dataSource, { employeeId: LINA, organizationProjectId: INTRANET, isManager: 1 });
+	await insertMembership(dataSource, { employeeId: LINA, organizationProjectId: RETIRED });
+	await insertMembership(dataSource, { employeeId: LINA, organizationProjectId: REMOVED });
+	await insertMembership(dataSource, {
+		employeeId: LINA,
+		organizationProjectId: ABROAD,
+		organizationId: OTHER_ORGANIZATION
+	});
+	await insertMembership(dataSource, {
+		employeeId: LINA,
+		organizationProjectId: MOBILE_APP,
+		deletedAt: '2026-11-17 08:00:00.000'
+	});
+	await insertMembership(dataSource, { employeeId: MARCO, organizationProjectId: ARCHIVE });
+}
+
+/**
+ * The agency keeps its private projects private; its projects stated neither public nor private stay public. Adventure
+ * Works has a public project and three private ones: Nova belongs to the ledger and manages the payroll, Ruben belongs
+ * to the vault, where Nova's membership was deleted. Contoso has a private project in the organization abroad, which
+ * does not keep them private.
+ */
+async function seedPrivateProjects(dataSource: DataSource): Promise<void> {
+	await dataSource.query('UPDATE "organization" SET "enforcePrivateProjects" = 1 WHERE "id" = ?', [ORGANIZATION]);
+	await insert(dataSource, 'organization_contact', { ...SCOPE, id: ADVENTURE_WORKS, name: 'Adventure Works' });
+
+	const ofAdventureWorks = { organizationContactId: ADVENTURE_WORKS };
+	await insertProject(dataSource, { ...ofAdventureWorks, id: PORTAL, name: 'Portal', public: 1 });
+	await insertProject(dataSource, { ...ofAdventureWorks, id: LEDGER, name: 'Ledger', public: 0 });
+	await insertProject(dataSource, { ...ofAdventureWorks, id: PAYROLL, name: 'Payroll', public: 0 });
+	await insertProject(dataSource, { ...ofAdventureWorks, id: VAULT, name: 'Vault', public: 0 });
+	await insertProject(dataSource, {
+		id: LAB,
+		name: 'Lab',
+		public: 0,
+		organizationContactId: CONTOSO,
+		organizationId: OTHER_ORGANIZATION
+	});
+
+	await insertMembership(dataSource, { employeeId: NOVA, organizationProjectId: LEDGER });
+	await insertMembership(dataSource, { employeeId: NOVA, organizationProjectId: PAYROLL, isManager: 1 });
+	await insertMembership(dataSource, { employeeId: RUBEN, organizationProjectId: VAULT });
+	await insertMembership(dataSource, {
+		employeeId: NOVA,
+		organizationProjectId: VAULT,
+		deletedAt: '2026-11-17 08:00:00.000'
+	});
+}
+
 describe('EmbedClientService on SQLite', () => {
 	const previous = { DB_ORM: process.env.DB_ORM, DB_TYPE: process.env.DB_TYPE };
 	const file = path.join(os.tmpdir(), `gauzy-embed-client-${process.pid}-${Date.now()}.sqlite3`);
@@ -231,6 +351,10 @@ describe('EmbedClientService on SQLite', () => {
 			await dataSource.initialize();
 			await seedClients(dataSource);
 			await seedTime(dataSource);
+			await seedTasks(dataSource);
+			await seedProjectsToTrack(dataSource);
+			await seedWithdrawnClient(dataSource);
+			await seedPrivateProjects(dataSource);
 			service = new clients.EmbedClientService(dataSource);
 		});
 	}, TIMEOUT);
@@ -311,5 +435,123 @@ describe('EmbedClientService on SQLite', () => {
 		expect(await service.reportOf(WITHDRAWN, SCOPE, NOW)).toBeNull();
 		expect(await service.reportOf(CONTOSO, SCOPE, NOW)).toBeNull();
 		expect(await service.reportOf(FABRIKAM, SCOPE, NOW)).toBeNull();
+	});
+
+	it('lets a start on a project of the client through, with a task of that project or none', async () => {
+		expect(await service.isStartForClient(NORTHWIND, SCOPE, { projectId: WEBSITE, taskId: null })).toBe(true);
+		expect(await service.isStartForClient(NORTHWIND, SCOPE, { projectId: ARCHIVE, taskId: null })).toBe(true);
+		expect(await service.isStartForClient(NORTHWIND, SCOPE, { projectId: WEBSITE, taskId: HOMEPAGE })).toBe(true);
+	});
+
+	it('refuses a project of another client, deleted, of another organization or unknown', async () => {
+		for (const projectId of [INTRANET, REMOVED, ABROAD, UNKNOWN, 'not-a-project']) {
+			expect(await service.isStartForClient(NORTHWIND, SCOPE, { projectId, taskId: null })).toBe(false);
+		}
+		const abroad = { tenantId: TENANT, organizationId: OTHER_ORGANIZATION };
+		expect(await service.isStartForClient(NORTHWIND, abroad, { projectId: ABROAD, taskId: null })).toBe(true);
+		expect(await service.isStartForClient(LITWARE, SCOPE, { projectId: INTRANET, taskId: null })).toBe(true);
+	});
+
+	it('refuses a task of another project, deleted, of another organization or unknown', async () => {
+		for (const taskId of [SIGN_UP, DROPPED, MISFILED, UNKNOWN, 'not-a-task']) {
+			expect(await service.isStartForClient(NORTHWIND, SCOPE, { projectId: WEBSITE, taskId })).toBe(false);
+		}
+		const homepageOnMobileApp = { projectId: MOBILE_APP, taskId: HOMEPAGE };
+		expect(await service.isStartForClient(NORTHWIND, SCOPE, homepageOnMobileApp)).toBe(false);
+	});
+
+	it('refuses every start on a project of a client withdrawn, with a task of it or none', async () => {
+		const partnership = { projectId: PARTNERSHIP, taskId: null };
+		const kickoff = { projectId: PARTNERSHIP, taskId: KICKOFF };
+
+		expect(await service.isStartForClient(WITHDRAWN, SCOPE, partnership)).toBe(false);
+		expect(await service.isStartForClient(WITHDRAWN, SCOPE, kickoff)).toBe(false);
+	});
+
+	it('refuses every start without a client, a tenant or an organization, instead of matching any project', async () => {
+		const website = { projectId: WEBSITE, taskId: null };
+
+		const withoutTenant = { tenantId: undefined, organizationId: ORGANIZATION };
+		const withoutOrganization = { tenantId: TENANT, organizationId: undefined };
+
+		expect(await service.isStartForClient(undefined, SCOPE, website)).toBe(false);
+		expect(await service.isStartForClient(NORTHWIND, withoutTenant, website)).toBe(false);
+		expect(await service.isStartForClient(NORTHWIND, withoutOrganization, website)).toBe(false);
+		expect(await service.isStartForClient(NORTHWIND, SCOPE, { projectId: undefined, taskId: null })).toBe(false);
+	});
+
+	it("lists a client's projects by name, without the archived, deleted or other organization's ones", async () => {
+		const projects = await service.trackableProjectsOf({ ...SCOPE, employeeId: LINA, clientId: NORTHWIND });
+
+		expect(projects).toStrictEqual([
+			{ id: ARCHIVE, name: 'Archive' },
+			{ id: BRAND, name: 'brand refresh' },
+			{ id: MOBILE_APP, name: 'Mobile app' },
+			{ id: WEBSITE, name: 'Website' }
+		]);
+	});
+
+	it("lists a member's projects by name, as a member or a manager, for a token without a client", async () => {
+		const projects = await service.trackableProjectsOf({ ...SCOPE, employeeId: LINA, clientId: null });
+
+		expect(projects).toStrictEqual([
+			{ id: INTRANET, name: 'Intranet' },
+			{ id: WEBSITE, name: 'Website' }
+		]);
+		const abroad = { tenantId: TENANT, organizationId: OTHER_ORGANIZATION, employeeId: LINA, clientId: null };
+		expect(await service.trackableProjectsOf(abroad)).toStrictEqual([{ id: ABROAD, name: 'Abroad' }]);
+		const marco = await service.trackableProjectsOf({ ...SCOPE, employeeId: MARCO, clientId: null });
+		expect(marco).toStrictEqual([{ id: ARCHIVE, name: 'Archive' }]);
+	});
+
+	it("leaves out the client's private projects its member neither belongs to nor manages", async () => {
+		const nova = await service.trackableProjectsOf({ ...SCOPE, employeeId: NOVA, clientId: ADVENTURE_WORKS });
+		const ruben = await service.trackableProjectsOf({ ...SCOPE, employeeId: RUBEN, clientId: ADVENTURE_WORKS });
+		const outsider = await service.trackableProjectsOf({ ...SCOPE, employeeId: MARCO, clientId: ADVENTURE_WORKS });
+
+		expect(nova).toStrictEqual([
+			{ id: LEDGER, name: 'Ledger' },
+			{ id: PAYROLL, name: 'Payroll' },
+			{ id: PORTAL, name: 'Portal' }
+		]);
+		expect(ruben).toStrictEqual([
+			{ id: PORTAL, name: 'Portal' },
+			{ id: VAULT, name: 'Vault' }
+		]);
+		expect(outsider).toStrictEqual([{ id: PORTAL, name: 'Portal' }]);
+	});
+
+	it('keeps the private projects a member belongs to or manages, for a token without a client', async () => {
+		const nova = await service.trackableProjectsOf({ ...SCOPE, employeeId: NOVA, clientId: null });
+
+		expect(nova).toStrictEqual([
+			{ id: LEDGER, name: 'Ledger' },
+			{ id: PAYROLL, name: 'Payroll' }
+		]);
+	});
+
+	it('lists every project of a client where the organization does not keep private projects private', async () => {
+		const abroad = { tenantId: TENANT, organizationId: OTHER_ORGANIZATION, employeeId: NOVA, clientId: CONTOSO };
+
+		expect(await service.trackableProjectsOf(abroad)).toStrictEqual([{ id: LAB, name: 'Lab' }]);
+	});
+
+	it('lists no project of a client withdrawn', async () => {
+		const projects = await service.trackableProjectsOf({ ...SCOPE, employeeId: LINA, clientId: WITHDRAWN });
+
+		expect(projects).toEqual([]);
+	});
+
+	it('lists nothing for a client, a member, a tenant or an organization it cannot name', async () => {
+		const unnamed = [
+			{ ...SCOPE, employeeId: LINA, clientId: 'not-a-client' },
+			{ ...SCOPE, employeeId: '', clientId: null },
+			{ ...SCOPE, employeeId: UNKNOWN, clientId: null },
+			{ tenantId: undefined, organizationId: ORGANIZATION, employeeId: LINA, clientId: NORTHWIND },
+			{ tenantId: TENANT, organizationId: undefined, employeeId: LINA, clientId: null }
+		];
+		for (const token of unnamed) {
+			expect(await service.trackableProjectsOf(token)).toEqual([]);
+		}
 	});
 });

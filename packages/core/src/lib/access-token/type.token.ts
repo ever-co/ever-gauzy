@@ -50,4 +50,10 @@ export interface IAccessTokenMetadata extends JwtPayload {
 	 * a request comes from: any other client writes the header it likes, or none.
 	 */
 	embedOrigin?: string;
+	/**
+	 * Set only on a token exchanged with a credential limited to a client: that client (an organization contact), as
+	 * `embed/embed-session.ts` reads it. A token of a credential of the whole organization does not carry it.
+	 * `EmbedSessionGuard` lets such a token start the timer only on a project of that client.
+	 */
+	embedClientId?: string;
 }

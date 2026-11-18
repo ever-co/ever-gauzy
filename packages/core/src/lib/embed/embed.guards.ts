@@ -7,10 +7,13 @@ import {
 	UnauthorizedException
 } from '@nestjs/common';
 import { environment as env } from '@gauzy/config';
+import { EmbedClientService } from './embed-client.service';
 import { EmbedCredentialService } from './embed-credential.service';
 import {
+	clientStartOf,
 	EMBED_FORBIDDEN_TIMER_FIELDS,
 	embedRouteOf,
+	IEmbedClaims,
 	isSignedBearerToken,
 	isWithinEmbedScope,
 	readEmbedClaims
@@ -39,6 +42,17 @@ const fromAnotherSite = () =>
 		message: 'This embed token works only from the site it was issued for.'
 	});
 
+/** The code of the refusal of a start a token limited to a client makes outside that client's projects. */
+export const EMBED_CLIENT_PROJECT = 'EMBED_CLIENT_PROJECT';
+
+const outsideClientProjects = () =>
+	new ForbiddenException({
+		statusCode: 403,
+		code: EMBED_CLIENT_PROJECT,
+		message:
+			"This embed token tracks time only on its client's projects. Start the timer on one of them (projectId), with a task of that project or none."
+	});
+
 /** The request of an HTTP call, or of a GraphQL one (its context carries `req`). */
 function requestOf(context: ExecutionContext): any {
 	if (context.getType() === 'http') {
@@ -50,11 +64,15 @@ function requestOf(context: ExecutionContext): any {
 /**
  * Holds a token minted by the embed exchange to what a timer widget needs (`EMBED_ROUTES`), for its one member in its
  * one organization; every other request carries on untouched. Registered globally, so no route has to know about
- * embeds. A credential revoked or a switch turned off refuses its tokens at once (401): the widget asks again.
+ * embeds. A credential revoked or a switch turned off refuses its tokens at once (401): the widget asks again. A token
+ * of a credential limited to a client starts the timer only on that client's projects (403 `EMBED_CLIENT_PROJECT`).
  */
 @Injectable()
 export class EmbedSessionGuard implements CanActivate {
-	constructor(private readonly embedCredentialService: EmbedCredentialService) {}
+	constructor(
+		private readonly embedCredentialService: EmbedCredentialService,
+		private readonly embedClientService: EmbedClientService
+	) {}
 
 	async canActivate(context: ExecutionContext): Promise<boolean> {
 		const request = requestOf(context);
@@ -90,6 +108,23 @@ export class EmbedSessionGuard implements CanActivate {
 		if (await this.embedCredentialService.isRevoked(claims.credentialId)) {
 			throw new UnauthorizedException();
 		}
+		const startsForClient = Boolean(route.startsTimer) && Boolean(claims.clientId);
+		if (startsForClient) {
+			await this.assertStartForClient(request.body, claims);
+		}
 		return true;
+	}
+
+	/** Refuses a start of a token limited to a client unless it names one of that client's projects. */
+	private async assertStartForClient(body: unknown, claims: IEmbedClaims): Promise<void> {
+		const start = clientStartOf(body, claims.clientId);
+		if (!start) {
+			throw outsideClientProjects();
+		}
+		const scope = { tenantId: claims.tenantId, organizationId: claims.organizationId };
+		const keepsToClient = await this.embedClientService.isStartForClient(claims.clientId, scope, start);
+		if (!keepsToClient) {
+			throw outsideClientProjects();
+		}
 	}
 }
