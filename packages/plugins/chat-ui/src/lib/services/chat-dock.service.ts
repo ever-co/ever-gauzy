@@ -5,7 +5,21 @@ import { Subscription } from 'rxjs';
 import { filter, skip } from 'rxjs/operators';
 import { ChatPerson } from '../chat-ui.helpers';
 import { ChatAvailabilityService } from './chat-availability.service';
+import type { IChatConversationWithState } from '@gauzy/contracts';
 import type { ChatTeamDetails } from './chat-ui.service';
+
+/**
+ * The work left on a team's channel after a first message created it, kept until it is done: the channel the team
+ * chats in (joined first when `mustJoin`), the empty duplicates made here to archive, and the members still to add,
+ * in batches the API takes. A step that failed stays, and is tried again before the next message and when the team's
+ * card opens again.
+ */
+export interface ChatTeamChannelSetup {
+	channel: IChatConversationWithState;
+	mustJoin: boolean;
+	archiveIds: string[];
+	batches: string[][];
+}
 
 /** How far the docked card stands from the bottom and the right edge of the screen. */
 export const CHAT_DOCK_EDGE = '1.5rem';
@@ -48,6 +62,11 @@ export class ChatDockService {
 	readonly person = signal<ChatPerson | null>(null);
 	/** The team whose channel the window is open with, or null while it is closed or open with a person. */
 	readonly team = signal<ChatTeamDetails | null>(null);
+	/**
+	 * The unfinished set-ups of team channels, by user, organization and team (see `ChatTeamChannelSetup`): they
+	 * outlive the window, so closing it and opening the team again finishes them.
+	 */
+	readonly teamSetups = new Map<string, ChatTeamChannelSetup>();
 
 	/** Opens the window with this person; when it is already open, it turns to them. */
 	async open(person: ChatPerson): Promise<void> {
