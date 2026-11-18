@@ -2357,6 +2357,13 @@ export class AuthService extends SocialAuthService {
 				throw new UnauthorizedException();
 			}
 
+			// An embed token acts for the one member the exchange resolved, active in the credential's organization.
+			// Should that member have been ended since, it is refused rather than minted for no member at all.
+			if (metadata?.embedEmployeeId && employee?.id !== metadata.embedEmployeeId) {
+				this.logger.warn(`Access token refused: embed member ${metadata.embedEmployeeId} is not active here`);
+				throw new UnauthorizedException();
+			}
+
 			// A deactivated employee (every employee record inactive or archived) gets no access token,
 			// whichever path asks for one: password login, workspace sign-in, token refresh, workspace or
 			// organization switch, provider sign-in, OAuth app code exchange. This is the one place they all
