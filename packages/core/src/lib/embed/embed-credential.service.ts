@@ -56,6 +56,22 @@ class MemberRefused extends Error {}
 /** An address that had too many credentials refused, answered before any lookup (`EmbedExchangeFailures`). */
 class AddressLimited extends Error {}
 
+/** The message of what was thrown, for a log line. */
+function messageOf(error: unknown): string {
+	if (error instanceof Error) {
+		return error.message;
+	}
+	return String(error);
+}
+
+/** ` id=<id>` of the credential a log line is about; nothing before the credential is found. */
+function idOf(row: EmbedCredential | undefined): string {
+	if (!row) {
+		return '';
+	}
+	return ` id=${row.id}`;
+}
+
 /** How long a credential's revocation may stay unseen by a running server: its tokens stop within that time. */
 export const EMBED_REVOCATION_CACHE_MS = 30_000;
 
@@ -187,51 +203,68 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 		try {
 			return await this.judgeAndMint(input ?? ({} as ExchangeEmbedCredentialDTO), address);
 		} catch (error) {
-			// Already a 503 (the mint could not reach the database): never answered as a refused credential.
-			if (error instanceof ServiceUnavailableException) {
-				throw error;
-			}
-			if (isDatabaseUnavailableError(error)) {
-				this.logger.error(`Embed exchange could not reach the database: ${error?.message}`);
-				throw new ServiceUnavailableException(DATABASE_UNAVAILABLE_MESSAGE, { cause: error });
-			}
-			if (error instanceof MemberRefused) {
-				throw new ForbiddenException({
-					statusCode: 403,
-					code: 'EMBED_MEMBER_NOT_ALLOWED',
-					message: 'This member cannot track time through an embed.'
-				});
-			}
-			if (error instanceof AddressLimited) {
-				throw new HttpException(
-					{
-						statusCode: HttpStatus.TOO_MANY_REQUESTS,
-						code: 'EMBED_EXCHANGE_LIMITED',
-						message: 'Too many refused credentials from this address. Try again in a minute.'
-					},
-					HttpStatus.TOO_MANY_REQUESTS
-				);
-			}
-			if (!(error instanceof CredentialRefused)) {
-				this.logger.warn(`Embed exchange refused: ${error?.message}`);
-			}
-			throw new UnauthorizedException();
+			throw this.refusalOf(error, 'exchange');
 		}
 	}
 
-	private async judgeAndMint({ credential, employeeId, email }: ExchangeEmbedCredentialDTO, address: string) {
+	/**
+	 * What a request whose credential did not get it through is answered: a 503 when the database is out of reach, a
+	 * 403 with a code for a member the credential cannot act for, a 429 with a code for a capped address, and one 401
+	 * for every refused credential.
+	 *
+	 * @param error What stopped the request.
+	 * @param route The route, as its log lines name it.
+	 */
+	private refusalOf(error: unknown, route: string): HttpException {
+		// Already a 503 (the mint could not reach the database): never answered as a refused credential.
+		if (error instanceof ServiceUnavailableException) {
+			return error;
+		}
+		if (isDatabaseUnavailableError(error)) {
+			this.logger.error(`Embed ${route} could not reach the database: ${messageOf(error)}`);
+			return new ServiceUnavailableException(DATABASE_UNAVAILABLE_MESSAGE, { cause: error });
+		}
+		if (error instanceof MemberRefused) {
+			return new ForbiddenException({
+				statusCode: 403,
+				code: 'EMBED_MEMBER_NOT_ALLOWED',
+				message: 'This member cannot track time through an embed.'
+			});
+		}
+		if (error instanceof AddressLimited) {
+			return new HttpException(
+				{
+					statusCode: HttpStatus.TOO_MANY_REQUESTS,
+					code: 'EMBED_EXCHANGE_LIMITED',
+					message: 'Too many refused credentials from this address. Try again in a minute.'
+				},
+				HttpStatus.TOO_MANY_REQUESTS
+			);
+		}
+		if (!(error instanceof CredentialRefused)) {
+			this.logger.warn(`Embed ${route} refused: ${messageOf(error)}`);
+		}
+		return new UnauthorizedException();
+	}
+
+	/**
+	 * The working credential a request presents. A malformed, unknown or revoked one is refused (`CredentialRefused`)
+	 * and counted against the address it came from; an address at the cap is refused before any lookup
+	 * (`AddressLimited`, `EmbedExchangeFailures`).
+	 *
+	 * @param credential The credential, as the body holds it.
+	 * @param address The client address, as the rate limiter resolves it.
+	 * @param route The route, as its log lines name it.
+	 */
+	private async acceptCredential(credential: string, address: string, route: string): Promise<EmbedCredential> {
 		// Whether the lookup below was counted against the address up front (`EmbedExchangeFailures.admit`).
 		let counted = false;
 		const refuseCredential = (reason: string, row?: EmbedCredential): never => {
-			this.logger.warn(`Embed exchange refused: ${reason}${row ? ` id=${row.id}` : ''}`);
+			this.logger.warn(`Embed ${route} refused: ${reason}${idOf(row)}`);
 			if (!counted) {
 				this.countRefusal(address);
 			}
 			throw new CredentialRefused(reason);
-		};
-		const refuseMember = (reason: string, row: EmbedCredential): never => {
-			this.logger.warn(`Embed exchange refused: ${reason} credential=${row.id}`);
-			throw new MemberRefused(reason);
 		};
 
 		if (!isWellFormedEmbedCredential(credential)) {
@@ -268,6 +301,15 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 		}
 		this.exchangeFailures.release(address, admission);
 		this.exchangeFailures.recordAccepted(presented);
+		return row;
+	}
+
+	private async judgeAndMint({ credential, employeeId, email }: ExchangeEmbedCredentialDTO, address: string) {
+		const row = await this.acceptCredential(credential, address, 'exchange');
+		const refuseMember = (reason: string, row: EmbedCredential): never => {
+			this.logger.warn(`Embed exchange refused: ${reason} credential=${row.id}`);
+			throw new MemberRefused(reason);
+		};
 
 		const employee = await this.findMember(row, { employeeId, email });
 		if (!employee) {
