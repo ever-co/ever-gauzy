@@ -11,6 +11,7 @@ import {
 	IPublicSavedReportTask,
 	IReportDayGroupByDate,
 	IReportDayTaskRow,
+	ITimeLogTag,
 	SAVED_REPORT_NO_CLIENT
 } from '@gauzy/contracts';
 import { currencyPrecision } from '../money/currency-precision';
@@ -37,6 +38,12 @@ const NO_ENTRY_PRICING: SavedReportEntryPricing = { organizationCurrency: null, 
 
 /** The client of each project of the report, as the project states it now; null for a project without a client. */
 export type ProjectClients = ReadonlyMap<ID, ID | null>;
+
+/**
+ * The labels the entries of a report grouped by label may state, by their id in lowercase (see `savedReportLabelKeyOf`):
+ * null when the report does not group by label, so its entries state none.
+ */
+export type ShownLabels = ReadonlySet<string> | null;
 
 /** A day of the daily report grouped by date, with the total time the handler states beside its logs. */
 export type SavedReportDay = IReportDayGroupByDate & { sum?: number };
@@ -163,8 +170,29 @@ function taskNameOf(task: IReportDayTaskRow['task']): IPublicSavedReportTask['ta
 	return { id: task.id, title: task.title ?? '', number: task.number ?? null, prefix: task.prefix ?? null };
 }
 
-/** One entry as the public answer states it: its task's name, its client's name and its time. Never its notes. */
-function taskOf(row: IReportDayTaskRow): IPublicSavedReportTask {
+/**
+ * A label's id as {@link ShownLabels} holds it: in lowercase, as PostgreSQL answers a uuid whatever case it was written
+ * in.
+ *
+ * @param id The label's id.
+ */
+export function savedReportLabelKeyOf(id: ID): string {
+	return String(id).toLowerCase();
+}
+
+/** An entry's labels as the public answer states them: what a chip shows, of the labels the report may show only. */
+function labelsOfRow(row: IReportDayTaskRow, shownLabels: ReadonlySet<string>): ITimeLogTag[] {
+	const tags = Array.isArray(row.tags) ? row.tags : [];
+	return tags
+		.filter((tag) => !!tag?.id && shownLabels.has(savedReportLabelKeyOf(tag.id)))
+		.map(({ id, name, color }) => ({ id, name, color }));
+}
+
+/**
+ * One entry as the public answer states it: its task's name, its client's name and its time, and its labels when the
+ * report groups by label. Never its notes.
+ */
+function taskOf(row: IReportDayTaskRow, shownLabels: ShownLabels): IPublicSavedReportTask {
 	const entry: IPublicSavedReportTask = {
 		task: taskNameOf(row.task),
 		duration: secondsOf(row.duration),
@@ -172,6 +200,9 @@ function taskOf(row: IReportDayTaskRow): IPublicSavedReportTask {
 	};
 	if ('organizationTeamId' in row) {
 		entry.organizationTeamId = row.organizationTeamId ?? null;
+	}
+	if (shownLabels) {
+		entry.tags = labelsOfRow(row, shownLabels);
 	}
 	return entry;
 }
@@ -271,14 +302,15 @@ function pricedMemberLogOf(
 function memberLogOf(
 	memberLog: MemberLog,
 	rates: ReadonlyMap<ID, ISavedReportRate> | null,
-	pricing: SavedReportEntryPricing
+	pricing: SavedReportEntryPricing,
+	shownLabels: ShownLabels
 ): IPublicSavedReportMemberLog {
 	const rate = sharedRateOf(rates, memberLog.employee?.id);
 	const rows = memberLog.tasks ?? [];
 	const publicLog: IPublicSavedReportMemberLog = {
 		employee: memberOf(memberLog.employee, rate),
 		sum: secondsOf(memberLog.sum),
-		tasks: rows.map(taskOf)
+		tasks: rows.map((row) => taskOf(row, shownLabels))
 	};
 	if (!rate) {
 		return publicLog;
@@ -288,8 +320,8 @@ function memberLogOf(
 
 /**
  * The daily report as a link shows it: dates, durations and the names of members, projects, clients and tasks. Rates
- * and amounts appear only when `rates` is given, that is when the author included amounts. Activity, notes, e-mails and
- * pictures never do.
+ * and amounts appear only when `rates` is given, that is when the author included amounts; the labels of entries only
+ * when `shownLabels` is given, that is when the report groups by label. Activity, notes, e-mails and pictures never do.
  *
  * Each entry is then priced at the rate that prices its row on the report page (see `entryRateOf`), so a member whose
  * rate changed since shows the amount the report page shows.
@@ -297,18 +329,22 @@ function memberLogOf(
  * @param days The daily report, grouped by date.
  * @param rates Each member's rate, when the author included amounts; null otherwise.
  * @param pricing The organization's currency and default billing rate, which complete an entry's rate.
+ * @param shownLabels The labels the entries may state, when the report groups by label; null otherwise.
  */
 export function publicDaysOf(
 	days: ReadonlyArray<IReportDayGroupByDate>,
 	rates: ReadonlyMap<ID, ISavedReportRate> | null,
-	pricing: SavedReportEntryPricing = NO_ENTRY_PRICING
+	pricing: SavedReportEntryPricing = NO_ENTRY_PRICING,
+	shownLabels: ShownLabels = null
 ): IPublicSavedReportDay[] {
 	return days.map((day) => ({
 		date: day.date,
 		sum: daySecondsOf(day.logs ?? []),
 		logs: (day.logs ?? []).map((projectLog) => ({
 			project: projectOf(projectLog.project),
-			employeeLogs: (projectLog.employeeLogs ?? []).map((memberLog) => memberLogOf(memberLog, rates, pricing))
+			employeeLogs: (projectLog.employeeLogs ?? []).map((memberLog) =>
+				memberLogOf(memberLog, rates, pricing, shownLabels)
+			)
 		}))
 	}));
 }
@@ -381,4 +417,30 @@ export function projectIdsOf(days: ReadonlyArray<IReportDayGroupByDate>): ID[] {
 		}
 	}
 	return [...ids];
+}
+
+/** Every entry of the daily report, whatever its day, project and member. */
+function entryRowsOf(days: ReadonlyArray<IReportDayGroupByDate>): IReportDayTaskRow[] {
+	return days.flatMap((day) =>
+		(day.logs ?? []).flatMap((projectLog) =>
+			(projectLog.employeeLogs ?? []).flatMap((memberLog) => memberLog.tasks ?? [])
+		)
+	);
+}
+
+/**
+ * The labels the entries of the report carry, each once: the labels a report grouped by label checks before it shows
+ * them.
+ *
+ * @param days The daily report, grouped by date.
+ */
+export function labelIdsOf(days: ReadonlyArray<IReportDayGroupByDate>): ID[] {
+	const ids = new Map<string, ID>();
+	for (const row of entryRowsOf(days)) {
+		const tags = Array.isArray(row.tags) ? row.tags : [];
+		for (const tag of tags.filter((candidate) => !!candidate?.id)) {
+			ids.set(savedReportLabelKeyOf(tag.id), tag.id);
+		}
+	}
+	return [...ids.values()];
 }

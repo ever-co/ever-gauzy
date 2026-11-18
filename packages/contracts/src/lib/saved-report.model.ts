@@ -5,6 +5,7 @@
  */
 
 import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
+import { ITimeLogTag } from './timesheet.model';
 import { IUser } from './user.model';
 
 /** The reports a saved report can describe. */
@@ -34,7 +35,12 @@ export enum SavedReportGroupingEnum {
 	PROJECT = 'project',
 	CLIENT = 'client',
 	TASK = 'task',
-	WEEK = 'week'
+	WEEK = 'week',
+	/**
+	 * By the labels of the entries (their time logs' own tags, ever-co/ever-gauzy#12029): an entry with two labels counts
+	 * under each, and the time without a label in a group of its own. The public answer then states each entry's labels.
+	 */
+	LABEL = 'label'
 }
 
 /** The value of the clients filter that keeps the time without a client. */
@@ -51,6 +57,16 @@ export interface ISavedReportFilters {
 	taskIds?: ID[];
 	/** Count billable time only. */
 	billableOnly?: boolean;
+	/**
+	 * Labels, by tag id: keeps the time logs that carry at least one of these tags (the log's own tags, not its task's),
+	 * as `tagIds` of the daily report (`ITimeLogFilters`).
+	 */
+	tagIds?: ID[];
+	/**
+	 * Keeps the time logs that carry no tag: alone, only those; with `tagIds`, those as well as the logs carrying one of
+	 * the tags, as `untagged` of the daily report.
+	 */
+	untagged?: boolean;
 }
 
 /** A saved report as its author reads it. The link's token, and its hash, never leave the server. */
@@ -139,6 +155,11 @@ export interface IPublicSavedReportTask {
 	billRateValue?: number | null;
 	/** The currency of `billRateValue` (the organization's when the rate states none). */
 	billRateCurrency?: string | null;
+	/**
+	 * The entry's own labels (its time log's live tags, by name), what a label chip shows; an empty list for an entry
+	 * without a label. Only when the report groups by label ({@link SavedReportGroupingEnum.LABEL}).
+	 */
+	tags?: ITimeLogTag[];
 }
 
 /** One member's time on one project on one day. */

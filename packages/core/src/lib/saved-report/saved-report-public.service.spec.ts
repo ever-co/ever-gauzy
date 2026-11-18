@@ -23,6 +23,13 @@ const TEAM = 'a0000000-0000-4000-8000-0000000000f1';
 const CLIENT_A = 'a0000000-0000-4000-8000-0000000000c1';
 const WEBSITE = 'a0000000-0000-4000-8000-0000000000b1';
 const MEETINGS = 'a0000000-0000-4000-8000-0000000000b2';
+const OTHER_ORGANIZATION = 'a0000000-0000-4000-8000-000000000004';
+const OTHER_TENANT = 'a0000000-0000-4000-8000-000000000005';
+/** Labels: one of the organization, one of the whole tenant, one of another organization, one of another tenant. */
+const DESIGN = 'a0000000-0000-4000-8000-0000000000d1';
+const URGENT = 'a0000000-0000-4000-8000-0000000000d2';
+const FOREIGN = 'a0000000-0000-4000-8000-0000000000d3';
+const STRANGER = 'a0000000-0000-4000-8000-0000000000d4';
 
 const ADMIN_PERMISSIONS = [
 	PermissionsEnum.ALL_ORG_VIEW,
@@ -112,6 +119,8 @@ interface State {
 	teamMembers: string[];
 	/** The organization's default billing rate, when it sets one. */
 	defaultBillRate?: { defaultBillRateValue: number | null; defaultBillRateCurrency: string | null };
+	/** The labels (tags) stored, with their tenant and organization (null for a label of the whole tenant). */
+	labels?: { id: string; tenantId: string; organizationId: string | null }[];
 }
 
 /** A link of Marie's "Client A, last month", and Marie an admin with an employee record in the organization. */
@@ -215,6 +224,13 @@ function serviceFor(state: State) {
 				{ id: MEETINGS, organizationContactId: null }
 			]
 		},
+		Tag: {
+			find: jest.fn(async ({ where }: FindArgs) =>
+				(state.labels ?? []).filter(
+					(label) => idsOf(where.id).includes(label.id) && label.tenantId === where.tenantId
+				)
+			)
+		},
 		OrganizationTeamEmployee: { existsBy: async () => false },
 		OrganizationProjectEmployee: { existsBy: async () => false }
 	};
@@ -267,8 +283,32 @@ function serviceFor(state: State) {
 		timeLogService as never,
 		managedEmployeeService as never
 	);
-	return { service, seen, typeOrmRepository, timeLogService };
+	return { service, seen, typeOrmRepository, timeLogService, repositories };
 }
+
+/** The daily report with Marie's entry filed under every label of the test, and Paul's under none. */
+function labelledDailyReport() {
+	const days = dailyReport();
+	const [website, meetings] = days[0].logs;
+	website.employeeLogs[0].tasks = website.employeeLogs[0].tasks.map((row) => ({
+		...row,
+		tags: [
+			{ id: DESIGN, name: 'Design', color: '#ff0000' },
+			{ id: FOREIGN, name: 'Their secret project', color: '#00ff00' },
+			{ id: STRANGER, name: 'Another tenant', color: '#0000ff' },
+			{ id: URGENT, name: 'Urgent', color: '#ffff00' }
+		]
+	}));
+	meetings.employeeLogs[0].tasks = meetings.employeeLogs[0].tasks.map((row) => ({ ...row, tags: [] }));
+	return days;
+}
+
+const STORED_LABELS: State['labels'] = [
+	{ id: DESIGN, tenantId: TENANT, organizationId: ORGANIZATION },
+	{ id: URGENT, tenantId: TENANT, organizationId: null },
+	{ id: FOREIGN, tenantId: TENANT, organizationId: OTHER_ORGANIZATION },
+	{ id: STRANGER, tenantId: OTHER_TENANT, organizationId: null }
+];
 
 describe('SavedReportPublicService', () => {
 	const originalClsService = RequestContext['clsService'];
@@ -482,5 +522,75 @@ describe('SavedReportPublicService', () => {
 			refused(
 				stateWith(token, { permissions: [PermissionsEnum.TIME_TRACKER], allowEmployeeToSeeTrackedData: false })
 			));
+	});
+
+	describe('the labels of entries (ever-co/ever-gauzy#12029)', () => {
+		it('runs the report page query with the labels filter the report saved, the time without a label included', async () => {
+			const state = stateWith(token);
+			state.report.filters = { tagIds: [DESIGN, URGENT], untagged: true };
+			const { service, seen } = serviceFor(state);
+
+			await service.read(token);
+
+			expect(seen.request).toMatchObject({ tagIds: [DESIGN, URGENT], untagged: true });
+		});
+
+		it('reads a report saved before labels as before: no label narrows it, and its entries state no labels', async () => {
+			const state = stateWith(token, { labels: STORED_LABELS });
+			state.report.filters = { clientIds: [CLIENT_A] };
+			const { service, timeLogService, repositories } = serviceFor(state);
+			timeLogService.getDailyReport.mockResolvedValueOnce(labelledDailyReport());
+
+			const answer = await service.read(token);
+
+			expect(timeLogService.getDailyReport.mock.calls[0][0]).toMatchObject({ tagIds: [], untagged: false });
+			expect(answer.grouping).toBe(SavedReportGroupingEnum.PROJECT);
+			expect(answer.days[0].logs[0].employeeLogs[0].tasks[0]).not.toHaveProperty('tags');
+			expect(JSON.stringify(answer)).not.toContain('Design');
+			expect((repositories.Tag as { find: jest.Mock }).find).not.toHaveBeenCalled();
+		});
+
+		it("states each entry's labels when the report groups by label, only those of the report's organization or of the whole tenant", async () => {
+			const state = stateWith(token, { labels: STORED_LABELS });
+			state.report.filters = {};
+			state.report.grouping = SavedReportGroupingEnum.LABEL;
+			const { service, timeLogService } = serviceFor(state);
+			timeLogService.getDailyReport.mockResolvedValueOnce(labelledDailyReport());
+
+			const answer = await service.read(token);
+			const [website, meetings] = answer.days[0].logs;
+
+			expect(answer.grouping).toBe(SavedReportGroupingEnum.LABEL);
+			expect(website.employeeLogs[0].tasks[0].tags).toEqual([
+				{ id: DESIGN, name: 'Design', color: '#ff0000' },
+				{ id: URGENT, name: 'Urgent', color: '#ffff00' }
+			]);
+			expect(meetings.employeeLogs[0].tasks[0].tags).toEqual([]);
+			const text = JSON.stringify(answer);
+			expect(text).not.toContain('Their secret project');
+			expect(text).not.toContain('Another tenant');
+		});
+
+		it('states no label at all when none of the labels of the entries can be read in the report tenant', async () => {
+			const state = stateWith(token, { labels: [] });
+			state.report.filters = {};
+			state.report.grouping = SavedReportGroupingEnum.LABEL;
+			const { service, timeLogService } = serviceFor(state);
+			timeLogService.getDailyReport.mockResolvedValueOnce(labelledDailyReport());
+
+			const answer = await service.read(token);
+
+			expect(answer.days[0].logs[0].employeeLogs[0].tasks[0].tags).toEqual([]);
+		});
+
+		it('keeps the 404 of a link whose author lost access, labels or not', async () => {
+			const state = stateWith(token, { permissions: [], labels: STORED_LABELS });
+			state.report.filters = { tagIds: [DESIGN] };
+			state.report.grouping = SavedReportGroupingEnum.LABEL;
+			const { service, timeLogService } = serviceFor(state);
+
+			await expect(service.read(token)).rejects.toThrow(NotFoundException);
+			expect(timeLogService.getDailyReport).not.toHaveBeenCalled();
+		});
 	});
 });
