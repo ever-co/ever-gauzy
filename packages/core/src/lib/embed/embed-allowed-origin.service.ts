@@ -1,7 +1,9 @@
-import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
+import { MikroORM } from '@mikro-orm/core';
 import { isUUID } from 'class-validator';
 import { ID } from '@gauzy/contracts';
 import { RequestContext } from '../core/context/request-context';
+import { runInMikroOrmContext } from '../core/context/mikro-orm-context';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
 import { MultiORMEnum, parseTypeORMFindToMikroOrm } from '../core/utils';
 import { CreateEmbedAllowedOriginDTO, EmbedAllowedOriginResponseDTO } from './dto/embed-allowed-origin.dto';
@@ -22,7 +24,8 @@ export class EmbedAllowedOriginService extends TenantAwareCrudService<EmbedAllow
 
 	constructor(
 		readonly typeOrmEmbedAllowedOriginRepository: TypeOrmEmbedAllowedOriginRepository,
-		readonly mikroOrmEmbedAllowedOriginRepository: MikroOrmEmbedAllowedOriginRepository
+		readonly mikroOrmEmbedAllowedOriginRepository: MikroOrmEmbedAllowedOriginRepository,
+		@Optional() private readonly orm?: MikroORM
 	) {
 		super(typeOrmEmbedAllowedOriginRepository, mikroOrmEmbedAllowedOriginRepository);
 	}
@@ -78,12 +81,16 @@ export class EmbedAllowedOriginService extends TenantAwareCrudService<EmbedAllow
 		return rows.length > 0;
 	}
 
-	/** Whether any organization allows this origin, for CORS: the list is read at most once a minute. */
+	/**
+	 * Whether any organization allows this origin, for CORS: the list is read at most once a minute. CORS answers
+	 * before Nest's middleware gives the request a MikroORM context, so under DB_ORM=mikro-orm the read opens one
+	 * of its own (the global EntityManager refuses it).
+	 */
 	async isAllowedAnywhere(origin: string): Promise<boolean> {
 		const now = Date.now();
 		const fresh = this.everyOrigin && now - this.everyOrigin.readAt < EMBED_ORIGINS_CACHE_MS;
 		if (!fresh) {
-			const rows = await this.readAll({});
+			const rows = await runInMikroOrmContext(this.orm, () => this.readAll({}));
 			this.everyOrigin = { origins: new Set(rows.map((row) => row.origin)), readAt: now };
 		}
 		return this.everyOrigin.origins.has(origin);

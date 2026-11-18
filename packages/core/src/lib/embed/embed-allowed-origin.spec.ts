@@ -2,6 +2,7 @@
 import '../core/entities/internal';
 
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { RequestContext as MikroOrmRequestContext } from '@mikro-orm/core';
 import { sign } from 'jsonwebtoken';
 import { RequestContext } from '../core/context';
 import { EmbedAllowedOriginService } from './embed-allowed-origin.service';
@@ -145,6 +146,35 @@ describe('EmbedAllowedOriginService', () => {
 
 		await service.remove(id);
 		expect(await service.isAllowedAnywhere('https://app.example.com')).toBe(false);
+	});
+});
+
+describe('EmbedAllowedOriginService under DB_ORM=mikro-orm', () => {
+	const originalOrm = process.env.DB_ORM;
+
+	afterEach(() => {
+		if (originalOrm === undefined) delete process.env.DB_ORM;
+		else process.env.DB_ORM = originalOrm;
+	});
+
+	it('reads every origin for CORS in a MikroORM context of its own: CORS answers before the request has one', async () => {
+		process.env.DB_ORM = 'mikro-orm';
+		const fork = { name: 'default' };
+		const orm = { em: { name: 'default', fork: jest.fn(() => fork) } };
+		const find = jest.fn(async () => {
+			// As the API runs MikroORM: its global EntityManager refuses a read outside a context.
+			if (MikroOrmRequestContext.getEntityManager() !== fork) {
+				throw new Error('Using global EntityManager instance methods for context specific actions is disallowed.');
+			}
+			return [{ origin: 'https://app.example.com' }];
+		});
+		const service = new EmbedAllowedOriginService({} as any, { find } as any, orm as any);
+		jest.spyOn(service, 'ormType', 'get').mockReturnValue('mikro-orm' as any);
+
+		expect(await service.isAllowedAnywhere('https://app.example.com')).toBe(true);
+		expect(await service.isAllowedAnywhere('https://other.example.com')).toBe(false);
+		expect(find).toHaveBeenCalledTimes(1);
+		expect(orm.em.fork).toHaveBeenCalledTimes(1);
 	});
 });
 
