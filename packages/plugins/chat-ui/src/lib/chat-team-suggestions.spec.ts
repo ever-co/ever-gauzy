@@ -52,4 +52,25 @@ describe('teamChannelOf', () => {
 		expect(teamChannelOf(conversations, '  ')).toBeNull();
 		expect(teamChannelOf(conversations, 'Design')).toBeNull();
 	});
+
+	it('takes the oldest open channel of that name, then the lowest id: two made at once settle on the same', () => {
+		const twins = [
+			{ id: 'c9', kind: 'channel', name: 'Web Team', createdAt: '2026-11-18T10:00:01Z' },
+			{ id: 'c8', kind: 'channel', name: 'Web Team', createdAt: '2026-11-18T10:00:00Z' },
+			{ id: 'c7', kind: 'channel', name: 'Web Team', createdAt: '2026-11-18T10:00:00Z' },
+			{ id: 'c1', kind: 'channel', name: 'Web Team', createdAt: '2026-01-01T00:00:00Z', archivedAt: '2026-02-01' }
+		];
+		expect(teamChannelOf(twins, 'Web Team')?.id).toBe('c7');
+		expect(teamChannelOf([...twins].reverse(), 'Web Team')?.id).toBe('c7');
+	});
+
+	it("keeps to the given organization: another organization's channel of that name is not the team's", () => {
+		const across = [
+			{ id: 'c-other', kind: 'channel', name: 'Web Team', organizationId: 'org-2', createdAt: '2026-01-01T00:00:00Z' },
+			{ id: 'c-ours', kind: 'channel', name: 'Web Team', organizationId: 'org-1', createdAt: '2026-06-01T00:00:00Z' }
+		];
+		expect(teamChannelOf(across, 'Web Team', 'org-1')?.id).toBe('c-ours');
+		expect(teamChannelOf(across.slice(0, 1), 'Web Team', 'org-1')).toBeNull();
+		expect(teamChannelOf(across, 'Web Team')?.id).toBe('c-other');
+	});
 });
