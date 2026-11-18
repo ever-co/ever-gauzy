@@ -38,6 +38,8 @@ const UNKNOWN = '7b000000-0000-4000-8000-0000000000ff';
 
 const BRAND = '7b000000-0000-4000-8000-0000000000a7';
 const RETIRED = '7b000000-0000-4000-8000-0000000000a8';
+const PARTNERSHIP = '7b000000-0000-4000-8000-0000000000a9';
+const KICKOFF = '7b000000-0000-4000-8000-0000000000b5';
 const LINA = '7b000000-0000-4000-8000-0000000000e1';
 const MARCO = '7b000000-0000-4000-8000-0000000000e2';
 
@@ -244,6 +246,12 @@ async function seedTasks(dataSource: DataSource): Promise<void> {
 	});
 }
 
+/** A project and a task of the client withdrawn: the contact is deleted, its project and its task are not. */
+async function seedWithdrawnClient(dataSource: DataSource): Promise<void> {
+	await insertProject(dataSource, { id: PARTNERSHIP, name: 'Partnership', organizationContactId: WITHDRAWN });
+	await insert(dataSource, 'task', { ...SCOPE, id: KICKOFF, title: 'Kickoff', number: 4, projectId: PARTNERSHIP });
+}
+
 let membershipCount = 0;
 
 /** A member of a project, in the agency's organization unless it says otherwise. */
@@ -302,6 +310,7 @@ describe('EmbedClientService on SQLite', () => {
 			await seedTime(dataSource);
 			await seedTasks(dataSource);
 			await seedProjectsToTrack(dataSource);
+			await seedWithdrawnClient(dataSource);
 			service = new clients.EmbedClientService(dataSource);
 		});
 	}, TIMEOUT);
@@ -407,6 +416,14 @@ describe('EmbedClientService on SQLite', () => {
 		expect(await service.isStartForClient(NORTHWIND, SCOPE, homepageOnMobileApp)).toBe(false);
 	});
 
+	it('refuses every start on a project of a client withdrawn, with a task of it or none', async () => {
+		const partnership = { projectId: PARTNERSHIP, taskId: null };
+		const kickoff = { projectId: PARTNERSHIP, taskId: KICKOFF };
+
+		expect(await service.isStartForClient(WITHDRAWN, SCOPE, partnership)).toBe(false);
+		expect(await service.isStartForClient(WITHDRAWN, SCOPE, kickoff)).toBe(false);
+	});
+
 	it('refuses every start without a client, a tenant or an organization, instead of matching any project', async () => {
 		const website = { projectId: WEBSITE, taskId: null };
 
@@ -441,6 +458,12 @@ describe('EmbedClientService on SQLite', () => {
 		expect(await service.trackableProjectsOf(abroad)).toStrictEqual([{ id: ABROAD, name: 'Abroad' }]);
 		const marco = await service.trackableProjectsOf({ ...SCOPE, employeeId: MARCO, clientId: null });
 		expect(marco).toStrictEqual([{ id: ARCHIVE, name: 'Archive' }]);
+	});
+
+	it('lists no project of a client withdrawn', async () => {
+		const projects = await service.trackableProjectsOf({ ...SCOPE, employeeId: LINA, clientId: WITHDRAWN });
+
+		expect(projects).toEqual([]);
 	});
 
 	it('lists nothing for a client, a member, a tenant or an organization it cannot name', async () => {

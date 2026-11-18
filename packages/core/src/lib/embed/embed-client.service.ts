@@ -47,6 +47,14 @@ function byName(a: IEmbedProject, b: IEmbedProject): number {
 }
 
 /**
+ * The projects of a client that is still there. Read through the project's contact, which a read leaves out once
+ * deleted: a client withdrawn (soft-deleted) has no project to track time on, as it has no report.
+ */
+function ofLiveClient(clientId: ID): FindOptionsWhere<OrganizationProject> {
+	return { organizationContact: { id: clientId } };
+}
+
+/**
  * The client (an organization contact) an embed credential is limited to. Read through TypeORM whichever ORM the
  * server runs, so both answer the same; a contact deleted (for good or softly) is no client.
  */
@@ -124,7 +132,7 @@ export class EmbedClientService {
 		return await this.isTaskOfProject(start.taskId, start.projectId, scope);
 	}
 
-	/** Whether a project is one of the client's in the tenant and organization, not deleted. */
+	/** Whether a project is one of the client's in the tenant and organization, neither of them deleted. */
 	private async isProjectOfClient(projectId: ID, clientId: ID, scope: IEmbedClientScope): Promise<boolean> {
 		// TypeORM drops a condition whose value is undefined: without these, the read would match any project.
 		const namesProject = isUUID(projectId);
@@ -135,8 +143,8 @@ export class EmbedClientService {
 		}
 		return await this.dataSource.getRepository(OrganizationProject).exists({
 			where: {
+				...ofLiveClient(clientId),
 				id: projectId,
-				organizationContactId: clientId,
 				tenantId: scope.tenantId,
 				organizationId: scope.organizationId
 			}
@@ -154,10 +162,11 @@ export class EmbedClientService {
 	}
 
 	/**
-	 * The projects an embed token may track time on, by name: its client's for a token limited to one, else the ones its
-	 * member belongs to, as a member or a manager (the rule of `GET /organization-projects/employee/:id`). Only those of
-	 * the tenant and organization, neither archived nor deleted, as the project pickers offer them. A private project is
-	 * never hidden from its own members, so the private projects rule leaves none of the member's out.
+	 * The projects an embed token may track time on, by name: its client's for a token limited to one (none once the
+	 * client is withdrawn), else the ones its member belongs to, as a member or a manager (the rule of
+	 * `GET /organization-projects/employee/:id`). Only those of the tenant and organization, neither archived nor
+	 * deleted, as the project pickers offer them. A private project is never hidden from its own members, so the private
+	 * projects rule leaves none of the member's out.
 	 *
 	 * @param token The token's tenant and organization, member and client.
 	 */
@@ -184,7 +193,7 @@ export class EmbedClientService {
 			if (!isUUID(token.clientId)) {
 				return null;
 			}
-			return { organizationContactId: token.clientId };
+			return ofLiveClient(token.clientId);
 		}
 		if (!isUUID(token.employeeId)) {
 			return null;
