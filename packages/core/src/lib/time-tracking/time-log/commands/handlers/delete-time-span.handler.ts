@@ -784,8 +784,12 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 		}
 
 		await this.restoreRange(log);
-		await this.typeOrmTimeLogRepository.delete({ id: secondPart.id });
-		await this.facts?.record(TIME_LOG_DELETED, secondPart);
+		const partAsStored = await this.storedForFact(secondPart);
+		const taken = await this.typeOrmTimeLogRepository.delete({ id: secondPart.id });
+		// Told of only when this undo removed it: a part deleted meanwhile was told of by its own deletion
+		if (taken?.affected !== 0) {
+			await this.facts?.record(TIME_LOG_DELETED, partAsStored);
+		}
 		await this.recordUndoneSplit(log, stored, secondPart, history);
 	}
 
@@ -814,6 +818,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 		secondPart: TimeLog,
 		history: TimeLogHistoryOptions | undefined
 	): Promise<void> {
+		const partAsStored = await this.storedForFact(secondPart);
 		const taken = await this.typeOrmTimeLogRepository.delete({
 			id: secondPart.id,
 			invoiceItemId: IsNull(),
@@ -827,7 +832,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 			return;
 		}
 		// Its creation was told of (`createSecondPart`), so its deletion is too; never throws
-		await this.facts?.record(TIME_LOG_DELETED, secondPart);
+		await this.facts?.record(TIME_LOG_DELETED, partAsStored);
 		const followUps: Array<[string, () => Promise<unknown>]> = [
 			['record the undone split', () => this.recordUndoneSplit(log, null, secondPart, history)]
 		];
@@ -954,12 +959,29 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 			{ id: log.id, tenantId: log.tenantId },
 			{ startedAt, stoppedAt, timesheetId }
 		);
-		// The cut's own edit was told of (`time_log.updated`), so the range it gets back is too, as stored
+		// The cut's own edit was told of (`time_log.updated`), so the range it gets back is too, as stored. A read that
+		// fails is logged and never stops the recovery that called this
 		if (this.facts) {
-			const restored = await this.typeOrmTimeLogRepository.findOne({
-				where: { id: log.id, tenantId: log.tenantId }
-			});
-			await this.facts.record(TIME_LOG_UPDATED, restored);
+			await this.facts.record(TIME_LOG_UPDATED, await this.storedForFact(log));
+		}
+	}
+
+	/**
+	 * A time log as stored, for its fact (see `TimeLogFactsService`): read just before a compensation deletes it, or
+	 * just after it restores it, through TypeORM. Nothing when there is no such row, or when the read fails, which is
+	 * logged: a fact never stops the compensation that tells of it.
+	 *
+	 * @param log - The time log, as the handler holds it.
+	 */
+	private async storedForFact(log: ITimeLog): Promise<ITimeLog | null> {
+		if (!this.facts) {
+			return null;
+		}
+		try {
+			return await this.typeOrmTimeLogRepository.findOne({ where: { id: log.id, tenantId: log.tenantId } });
+		} catch (error) {
+			this.logger.warn(`Time log ${log.id} could not be read for its fact: ${error?.message ?? error}`);
+			return null;
 		}
 	}
 

@@ -1,6 +1,7 @@
 // Must stay first: loads the entity graph before any handler pulls an entity (see activity.controller.spec.ts).
 import '../../../../core/entities/internal';
 
+import { IsNull } from 'typeorm';
 import { TimeLog } from '../../time-log.entity';
 import { DeleteTimeSpanHandler } from './delete-time-span.handler';
 
@@ -28,9 +29,12 @@ describe('DeleteTimeSpanHandler: the facts of a split second part', () => {
 		const saveOf = () =>
 			jest.fn(async (timeLog: TimeLog) => Object.assign(timeLog, { id: timeLog.id ?? 'second-part' }));
 		const transactionManager = { save: saveOf() };
+		// The rows as stored, by id: the second part once saved, as a later edit may have changed it
+		const rows = new Map<string, Partial<TimeLog>>();
 		const timeLogRepository = {
-			findOne: jest.fn(async () => ({ id: LOG.id })),
+			findOne: jest.fn(async ({ where }: { where: { id: string } }) => rows.get(where.id) ?? { id: LOG.id }),
 			save: saveOf(),
+			update: jest.fn(async () => ({ affected: 1 })),
 			delete: jest.fn(async () => ({ affected: 1 })),
 			manager: { transaction: jest.fn(async (work: (manager: unknown) => unknown) => work(transactionManager)) }
 		};
@@ -53,7 +57,7 @@ describe('DeleteTimeSpanHandler: the facts of a split second part', () => {
 			facts as any
 		);
 		const split = (): Promise<TimeLog> => (handler as any).createSecondPart(LOG, SPLIT_AT, LOG.stoppedAt);
-		return { handler, timeLogRepository, transactionManager, facts, idsWhenWritten, split };
+		return { handler, timeLogRepository, transactionManager, facts, idsWhenWritten, split, rows };
 	}
 
 	afterEach(() => jest.restoreAllMocks());
@@ -101,16 +105,25 @@ describe('DeleteTimeSpanHandler: the facts of a split second part', () => {
 		expect(facts.recordWithin).not.toHaveBeenCalled();
 	});
 
-	it('writes time_log.deleted when a split refused under the lock takes its second part back', async () => {
-		const { handler, timeLogRepository, facts, split } = setup(false);
+	it('writes time_log.deleted, with the part as stored, when a split refused under the lock takes it back', async () => {
+		const { handler, timeLogRepository, facts, split, rows } = setup(false);
 		const secondPart = await split();
 		facts.record.mockClear();
+		// An edit gave the part another task after its save
+		const asStored = { ...secondPart, taskId: 'task-b' };
+		rows.set('second-part', asStored);
 
 		await (handler as any).takeBackSecondPart(LOG, secondPart, undefined);
 
-		expect(timeLogRepository.delete).toHaveBeenCalledTimes(1);
+		// Only a part neither billed nor moved since its save is deleted
+		expect(timeLogRepository.delete).toHaveBeenCalledWith({
+			id: 'second-part',
+			invoiceItemId: IsNull(),
+			employeeId: 'marie',
+			timesheetId: 'timesheet-1'
+		});
 		expect(facts.record).toHaveBeenCalledTimes(1);
-		expect(facts.record).toHaveBeenCalledWith('time_log.deleted', secondPart);
+		expect(facts.record).toHaveBeenCalledWith('time_log.deleted', asStored);
 	});
 
 	it('writes no deletion for a second part billed or moved meanwhile, which is kept', async () => {
@@ -122,6 +135,22 @@ describe('DeleteTimeSpanHandler: the facts of a split second part', () => {
 
 		await (handler as any).takeBackSecondPart(LOG, secondPart, undefined);
 
+		expect(timeLogRepository.delete).toHaveBeenCalledWith(
+			expect.objectContaining({ id: 'second-part', invoiceItemId: IsNull(), employeeId: 'marie' })
+		);
 		expect(facts.record).not.toHaveBeenCalled();
+	});
+
+	it('gives a log its range back when the log cannot be read for its fact', async () => {
+		const { handler, timeLogRepository, facts } = setup(false);
+		timeLogRepository.findOne.mockRejectedValueOnce(new Error('The read failed'));
+		const warn = jest.spyOn((handler as any).logger, 'warn').mockImplementation(() => undefined);
+
+		await expect((handler as any).restoreRange(LOG)).resolves.toBeUndefined();
+
+		expect(timeLogRepository.update).toHaveBeenCalledTimes(1);
+		expect(warn).toHaveBeenCalledTimes(1);
+		// Nothing read, nothing to tell of (the facts service writes no fact for no entry)
+		expect(facts.record).toHaveBeenCalledWith('time_log.updated', null);
 	});
 });
