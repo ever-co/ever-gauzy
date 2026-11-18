@@ -750,6 +750,25 @@ describe('EmbedCredentialService: the members a credential adds', () => {
 		expect(lines.join('\n').toLowerCase()).not.toContain('noor');
 	});
 
+	it("writes the credential's client into the token of a member it adds, as into a member's it finds", async () => {
+		const { service, addMember, issueEmbedSession, employees } = build();
+		signIn(TENANT);
+		const portal = await service.createForOrganization({
+			name: 'Fabrikam portal',
+			organizationId: ORG,
+			organizationContactId: CONTACT,
+			canAddMembers: true
+		});
+
+		await service.exchange({ credential: portal.secret, email: NOOR, origin: SITE }, PORTAL);
+		await service.exchange({ credential: portal.secret, email: 'lina@northwind.example', origin: SITE }, PORTAL);
+
+		expect(addMember).toHaveBeenCalledTimes(1);
+		const [ofAdded, ofFound] = issueEmbedSession.mock.calls.map(([input]) => input);
+		expect(ofAdded).toMatchObject({ credentialId: portal.id, employeeId: employees[1].id, clientId: CONTACT });
+		expect(ofFound).toMatchObject({ credentialId: portal.id, employeeId: EMPLOYEE, clientId: CONTACT });
+	});
+
 	it('finds an existing member as before, without adding anyone', async () => {
 		const { service, addMember, issueEmbedSession } = build();
 		const { secret } = await credentialOf(service, true);
