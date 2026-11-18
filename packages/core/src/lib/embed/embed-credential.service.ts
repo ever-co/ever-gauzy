@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { isUUID } from 'class-validator';
 import { IsNull } from 'typeorm';
-import { ID } from '@gauzy/contracts';
+import { ID, IEmbedClientReport } from '@gauzy/contracts';
 import { RequestContext } from '../core/context/request-context';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
 import { DATABASE_UNAVAILABLE_MESSAGE, isDatabaseUnavailableError } from '../core/errors/database-unavailable';
@@ -25,6 +25,7 @@ import { TypeOrmUserRepository } from '../user/repository/type-orm-user.reposito
 import { UNRESOLVED_THROTTLER_TRACKER } from '../throttler/tracker';
 import { MikroOrmUserOrganizationRepository } from '../user-organization/repository/mikro-orm-user-organization.repository';
 import { TypeOrmUserOrganizationRepository } from '../user-organization/repository/type-orm-user-organization.repository';
+import { EmbedClientReportDTO } from './dto/embed-client-report.dto';
 import {
 	CreateEmbedCredentialDTO,
 	EmbedCredentialResponseDTO,
@@ -57,6 +58,22 @@ class MemberRefused extends Error {}
 
 /** An address that had too many credentials refused, answered before any lookup (`EmbedExchangeFailures`). */
 class AddressLimited extends Error {}
+
+/** The code of the refusal of a client report to a credential of the whole organization. */
+export const EMBED_CLIENT_REQUIRED = 'EMBED_CLIENT_REQUIRED';
+
+/** The code of the refusal of a client report to a credential whose client was deleted. */
+export const EMBED_CLIENT_GONE = 'EMBED_CLIENT_GONE';
+
+/** A valid credential that reaches no client report, already logged with its reason. */
+class ClientRefused extends Error {
+	constructor(
+		readonly code: string,
+		message: string
+	) {
+		super(message);
+	}
+}
 
 /** The message of what was thrown, for a log line. */
 function messageOf(error: unknown): string {
@@ -234,9 +251,56 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 	}
 
 	/**
+	 * The spent time of the client a credential is limited to, for its portal's server: today, this week, and this week
+	 * by project (`EmbedClientService.reportOf`).
+	 *
+	 * The credential is judged as the exchange judges it, with the same answers (401, 429, 503) and the same count of
+	 * refused credentials per address. A credential of the whole organization gets a 403 `EMBED_CLIENT_REQUIRED`, and
+	 * one whose client was deleted a 403 `EMBED_CLIENT_GONE` (a client deleted for good takes its credentials with it,
+	 * which then get the 401 of an unknown credential).
+	 *
+	 * @param input The credential.
+	 * @param address The client address, as the rate limiter resolves it; without one, the shared unresolved bucket.
+	 */
+	async clientReport(
+		input: EmbedClientReportDTO,
+		address: string = UNRESOLVED_THROTTLER_TRACKER
+	): Promise<IEmbedClientReport> {
+		try {
+			const row = await this.acceptCredential(input?.credential, address, 'client report');
+			return await this.reportOfClient(row);
+		} catch (error) {
+			throw this.refusalOf(error, 'client report');
+		}
+	}
+
+	/** The report of the credential's client; refused when the credential has no client, or its client is gone. */
+	private async reportOfClient(row: EmbedCredential): Promise<IEmbedClientReport> {
+		if (!row.organizationContactId) {
+			this.logger.warn(`Embed client report refused: no client credential=${row.id}`);
+			throw new ClientRefused(
+				EMBED_CLIENT_REQUIRED,
+				'This credential is not limited to a client. Create one for the client whose time it reports.'
+			);
+		}
+		const now = new Date();
+		const scope = { tenantId: row.tenantId, organizationId: row.organizationId };
+		const report = await this.embedClientService.reportOf(row.organizationContactId, scope, now);
+		if (!report) {
+			this.logger.warn(`Embed client report refused: the client is gone credential=${row.id}`);
+			throw new ClientRefused(
+				EMBED_CLIENT_GONE,
+				"This credential's client was deleted. Restore the client, or create a credential for another one."
+			);
+		}
+		await this.recordUse(row, now);
+		return report;
+	}
+
+	/**
 	 * What a request whose credential did not get it through is answered: a 503 when the database is out of reach, a
-	 * 403 with a code for a member the credential cannot act for, a 429 with a code for a capped address, and one 401
-	 * for every refused credential.
+	 * 403 with a code for a member the credential cannot act for or a client report it cannot read, a 429 with a code
+	 * for a capped address, and one 401 for every refused credential.
 	 *
 	 * @param error What stopped the request.
 	 * @param route The route, as its log lines name it.
@@ -256,6 +320,9 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 				code: 'EMBED_MEMBER_NOT_ALLOWED',
 				message: 'This member cannot track time through an embed.'
 			});
+		}
+		if (error instanceof ClientRefused) {
+			return new ForbiddenException({ statusCode: 403, code: error.code, message: error.message });
 		}
 		if (error instanceof AddressLimited) {
 			return new HttpException(

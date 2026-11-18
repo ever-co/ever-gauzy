@@ -39,6 +39,12 @@ function exchangeFrom(address: string, body: unknown): ExecutionContext {
 	} as unknown as ExecutionContext;
 }
 
+/** The context the global throttler sees for a client report (`POST /embed/client-report`) from `address`. */
+function clientReportFrom(address: string, body: unknown): ExecutionContext {
+	const context = exchangeFrom(address, body);
+	return { ...context, getHandler: () => EmbedTokenController.prototype.clientReport } as ExecutionContext;
+}
+
 /** The global throttler, with a store of its own. */
 async function throttler(): Promise<ThrottlerBehindProxyGuard> {
 	const guard = new ThrottlerBehindProxyGuard(
@@ -174,5 +180,29 @@ describe('embed exchange rate limit', () => {
 
 		expect(await accepted(guard, second, 1)).toBe(1);
 		expect(await accepted(guard, exchangeFrom(HOST_ADDRESS, {}), 1)).toBe(1);
+	});
+});
+
+describe('embed client report rate limit', () => {
+	it('counts credentials this instance has not accepted by their address, 60 a minute, apart from the exchange', async () => {
+		const guard = await throttler();
+
+		let sent = 0;
+		for (let attempt = 0; attempt < EMBED_EXCHANGE_LIMIT_PER_ADDRESS + 5; attempt++) {
+			sent += await accepted(guard, clientReportFrom(HOST_ADDRESS, credentialOf()), 1);
+		}
+
+		expect(sent).toBe(EMBED_EXCHANGE_LIMIT_PER_ADDRESS);
+		// The exchange of the same address keeps its own budget: a portal reading reports never stops the timers.
+		expect(await accepted(guard, exchangeFrom(HOST_ADDRESS, credentialOf()), 1)).toBe(1);
+	});
+
+	it('lets an accepted credential ask 600 reports a minute, and throttles the 601st', async () => {
+		const guard = await throttler();
+		const portal = clientReportFrom(HOST_ADDRESS, acceptedCredentialOf());
+		const limit = EMBED_EXCHANGE_LIMIT_PER_CREDENTIAL;
+
+		expect(await accepted(guard, portal, limit)).toBe(limit);
+		expect(await accepted(guard, portal, 1)).toBe(0);
 	});
 });

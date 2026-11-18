@@ -14,11 +14,13 @@ import {
 } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
+import { Request } from 'express';
 import { Public } from '@gauzy/common';
-import { ID, PermissionsEnum } from '@gauzy/contracts';
+import { ID, IEmbedClientReport, PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { Permissions } from '../shared/decorators';
 import { UUIDValidationPipe, UseValidationPipe } from '../shared/pipes';
+import { EmbedClientReportDTO, EmbedClientReportResponseDTO } from './dto/embed-client-report.dto';
 import {
 	CreateEmbedCredentialDTO,
 	EmbedCredentialResponseDTO,
@@ -74,11 +76,12 @@ export class EmbedCredentialController {
 }
 
 /**
- * Exchanges an embed credential for a token limited to one member and to the timer. Public, because the credential
- * is the proof; no validation pipe, so a malformed body gets the same 401 as a revoked credential. The limit is per
- * credential (`embed-exchange-throttle.ts`), since a host's backend exchanges one credential for all its members from
- * one address; a body without a well-formed credential is limited per client address, like the sign-in routes'. The
- * service also caps, per address, the credentials it refuses, before any lookup (`embed-exchange-failures.ts`).
+ * Exchanges an embed credential for a token limited to one member and to the timer, and answers the spent time of the
+ * client a credential is limited to. Public, because the credential is the proof; no validation pipe, so a malformed
+ * body gets the same 401 as a revoked credential. The limit is per credential (`embed-exchange-throttle.ts`), since a
+ * host's backend exchanges one credential for all its members from one address; a body without a well-formed
+ * credential is limited per client address, like the sign-in routes'. The service also caps, per address, the
+ * credentials it refuses, before any lookup (`embed-exchange-failures.ts`).
  */
 @ApiTags('Embed')
 @Controller('/embed')
@@ -107,5 +110,26 @@ export class EmbedTokenController {
 	): Promise<EmbedTokenExchangeResponseDTO> {
 		const address = embedExchangeAddress(request);
 		return await this.embedCredentialService.exchange(input, address);
+	}
+
+	@ApiOperation({ summary: "The spent time of a credential's client: today, this week, by project" })
+	@ApiBody({ type: EmbedClientReportDTO })
+	@ApiResponse({ status: HttpStatus.OK, type: EmbedClientReportResponseDTO })
+	@ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'The credential is unknown, malformed or revoked' })
+	@ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'The credential has no client, or a deleted one' })
+	@ApiResponse({
+		status: HttpStatus.TOO_MANY_REQUESTS,
+		description: 'Too many reports, or too many refused credentials from this address'
+	})
+	@Public()
+	@UseGuards(EmbedEnabledGuard)
+	@Throttle(EMBED_EXCHANGE_THROTTLE)
+	@Post('/client-report')
+	@HttpCode(HttpStatus.OK)
+	@Header('Cache-Control', 'no-store')
+	@Header('Pragma', 'no-cache')
+	async clientReport(@Body() input: EmbedClientReportDTO, @Req() request: Request): Promise<IEmbedClientReport> {
+		const address = embedExchangeAddress(request);
+		return await this.embedCredentialService.clientReport(input, address);
 	}
 }
