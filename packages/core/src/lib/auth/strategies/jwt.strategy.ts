@@ -19,6 +19,7 @@ import {
 	readOAuthAppTokenGrant
 } from '../oauth-app-scope';
 import { isAccessTokenPayload, JWT_ALGORITHMS } from '../purpose-token';
+import { embedCredentialIdOf, narrowPermissionsToEmbedToken } from '../../embed/embed-session';
 import { EmployeeService } from '../../employee/employee.service';
 import { RoleAuthorizationService } from '../../role/role-authorization.service';
 import { UserOrganizationService } from '../../user-organization/user-organization.services';
@@ -139,9 +140,10 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 		);
 
 		// Applied to this request's own user, after the shared context is resolved: the cache is keyed by the claims
-		// above, which an OAuth-app token and a first-party token of the same user can share, so the context it keeps
-		// is never the narrowed one (each caller gets a copy).
-		return this.applyOAuthAppGrant(outcome, payload);
+		// above, which an OAuth-app or embed token and a first-party token of the same user can share, so the context
+		// it keeps is never the narrowed one (each caller gets a copy).
+		const granted = this.applyOAuthAppGrant(outcome, payload);
+		return this.applyEmbedGrant(granted, payload);
 	}
 
 	/**
@@ -261,6 +263,39 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 		if (this.loggingEnabled) {
 			this.logger.debug(`OAuth-app token of client ${grant.clientId} held to scopes: ${grant.scopes.join(' ')}`);
 		}
+		return outcome;
+	}
+
+	/**
+	 * Holds a request authenticated by an embed token to `EMBED_TOKEN_PERMISSIONS` (`embed/embed-session.ts`), whatever
+	 * its member's role: the permissions pinned onto the user become the role's INTERSECTED with them, and the
+	 * credential is recorded on the user, so the permission guards narrow the permissions a route declares too. A token
+	 * without the embed claims is left exactly as it was.
+	 *
+	 * @param outcome The authenticated user (this request's own copy), or the refusal.
+	 * @param payload The verified access-token payload.
+	 * @returns The same outcome, narrowed for an embed token.
+	 */
+	private applyEmbedGrant(
+		outcome: IAuthenticatedUser | UnauthorizedException,
+		payload: JwtPayload
+	): IAuthenticatedUser | UnauthorizedException {
+		if (!outcome || outcome instanceof UnauthorizedException) {
+			return outcome;
+		}
+
+		const credentialId = embedCredentialIdOf(payload);
+		if (!credentialId) {
+			// Never inherited: a user object handed out again must not keep the credential of an earlier request.
+			if (outcome.embedCredentialId !== undefined) {
+				delete outcome.embedCredentialId;
+			}
+			return outcome;
+		}
+
+		outcome.embedCredentialId = credentialId;
+		// A new array: the role's permission list may be shared with the cached context and the role state cache.
+		outcome.permissions = narrowPermissionsToEmbedToken(outcome.permissions ?? []);
 		return outcome;
 	}
 

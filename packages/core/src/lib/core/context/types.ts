@@ -33,6 +33,12 @@ export interface IAuthenticatedUser extends IUser {
      */
     oauthApp?: IOAuthAppTokenGrant;
     /**
+     * Set by `JwtStrategy` only when the request is authenticated by a token of the embed exchange: the credential it
+     * was minted for. Its presence holds the request's permissions to `EMBED_TOKEN_PERMISSIONS`, in `permissions` and
+     * in the permission guards (`embed/embed-session.ts`).
+     */
+    embedCredentialId?: ID;
+    /**
      * Set by `JwtRefreshTokenStrategy` only (`POST /auth/refresh-token`): the organization the refresh token was minted
      * for, read from that token once it is verified (its signature and its stored, unrevoked record), or null when it
      * names none. The refresh keeps the new tokens in it while the user is still an active member of it, so a switch

@@ -26,6 +26,7 @@ import { RolePermission } from './role-permission.entity';
 import { Role } from '../role/role.entity';
 import { RoleService } from './../role/role.service';
 import { DEFAULT_ROLE_PERMISSIONS } from './default-role-permissions';
+import { EMBED_TOKEN_PERMISSIONS } from '../embed/embed-session';
 import { MikroOrmRolePermissionRepository } from './repository/mikro-orm-role-permission.repository';
 import { TypeOrmRolePermissionRepository } from './repository/type-orm-role-permission.repository';
 
@@ -48,6 +49,8 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 	async findMePermissions(): Promise<IRolePermissions> {
 		const tenantId = RequestContext.currentTenantId();
 		const roleId = RequestContext.currentRoleId();
+		// An embed token acts with these of its role only (JwtStrategy): it is told those, not the role's whole list.
+		const isEmbedToken = !!RequestContext.currentUser()?.embedCredentialId;
 
 		return await this.find({
 			where: {
@@ -55,7 +58,8 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 				tenant: { id: tenantId },
 				enabled: true,
 				isActive: true,
-				isArchived: false
+				isArchived: false,
+				...(isEmbedToken ? { permission: In([...EMBED_TOKEN_PERMISSIONS]) } : {})
 			}
 		});
 	}

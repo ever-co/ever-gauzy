@@ -750,6 +750,30 @@ export class AuthService extends SocialAuthService {
 	}
 
 	/**
+	 * Mints the token an embed credential is exchanged for (`embed/`): an ordinary access token, judged like every
+	 * sign-in's, for the member's user in the credential's organization, carrying the claims that hold it to the timer
+	 * (`EmbedSessionGuard`), living only until `expiresAt`, with no refresh token.
+	 *
+	 * @returns The signed access token.
+	 */
+	public async issueEmbedSession(input: {
+		userId: ID;
+		tenantId: ID;
+		organizationId: ID;
+		credentialId: ID;
+		employeeId: ID;
+		expiresAt: Date;
+	}): Promise<string> {
+		const { userId, tenantId, organizationId, credentialId, employeeId, expiresAt } = input;
+		return await this.getJwtAccessToken(
+			{ id: userId, tenantId },
+			organizationId,
+			{ embedCredentialId: credentialId, embedEmployeeId: employeeId },
+			expiresAt
+		);
+	}
+
+	/**
 	 * Mints the access token a personal API token is exchanged for (`auth/user-api-token`).
 	 *
 	 * It goes through `getJwtAccessToken` like every sign-in, so the token is an ordinary one, and it holds the API
@@ -2333,6 +2357,13 @@ export class AuthService extends SocialAuthService {
 				throw new UnauthorizedException();
 			}
 
+			// An embed token acts for the one member the exchange resolved, active in the credential's organization.
+			// Should that member have been ended since, it is refused rather than minted for no member at all.
+			if (metadata?.embedEmployeeId && employee?.id !== metadata.embedEmployeeId) {
+				this.logger.warn(`Access token refused: embed member ${metadata.embedEmployeeId} is not active here`);
+				throw new UnauthorizedException();
+			}
+
 			// A deactivated employee (every employee record inactive or archived) gets no access token,
 			// whichever path asks for one: password login, workspace sign-in, token refresh, workspace or
 			// organization switch, provider sign-in, OAuth app code exchange. This is the one place they all
@@ -2377,7 +2408,12 @@ export class AuthService extends SocialAuthService {
 				// Only the OAuth-app code exchange passes it: the client and scopes the user approved (oauth-app-scope.ts).
 				...(metadata?.oauthApp && { oauthApp: metadata.oauthApp }),
 				// Only the API token exchange passes it: the API token behind this session (user-api-token-session.ts).
-				...(metadata?.apiTokenId && { apiTokenId: metadata.apiTokenId })
+				...(metadata?.apiTokenId && { apiTokenId: metadata.apiTokenId }),
+				// Only the embed exchange passes them: the credential and the member (embed/embed-session.ts).
+				...(metadata?.embedCredentialId && {
+					embedCredentialId: metadata.embedCredentialId,
+					embedEmployeeId: metadata.embedEmployeeId
+				})
 			};
 
 			// Generate the JWT access token using the payload
@@ -2603,7 +2639,7 @@ export class AuthService extends SocialAuthService {
 		userId: ID,
 		metadata?: IAccessTokenMetadata
 	): Promise<Partial<IUserSessionClaims>> {
-		const isDelegated = !!metadata?.apiTokenId || !!metadata?.oauthApp;
+		const isDelegated = !!metadata?.apiTokenId || !!metadata?.oauthApp || !!metadata?.embedCredentialId;
 		if (isDelegated) {
 			return {};
 		}
