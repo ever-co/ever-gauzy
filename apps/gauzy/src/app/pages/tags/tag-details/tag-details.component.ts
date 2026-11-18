@@ -184,7 +184,8 @@ export class TagDetailsComponent implements OnInit {
 		}
 		try {
 			const { tenantId } = this.store.user;
-			const organizationId = this.row.organizationId ?? this.store.selectedOrganization?.id;
+			// The refreshed tag's organization (it may have moved since the list loaded); the page's for a tenant tag.
+			const organizationId = this.tag()?.organizationId ?? this.store.selectedOrganization?.id;
 			const { items } = await this.tagTypesService.getTagTypes({ tenantId, organizationId });
 			this.typeName.set(items.find(({ id }) => id === tagTypeId)?.type ?? null);
 		} catch (error) {

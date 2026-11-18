@@ -9,11 +9,14 @@ import { TagsService } from '@gauzy/ui-core/core';
 import { NotesWithTagsComponent } from '../table-components';
 
 /**
- * The colour strings the picker's own parser reads: hex with 3, 4, 6 or 8 digits, and rgb(a), hsl(a) or hsv(a)
- * notation. Anything else the picker ignores, so it must not reach the form's value either.
+ * The colour strings the picker's own parser reads with the alpha channel disabled (ngx-color-picker 20,
+ * `ColorPickerService.stringToHsva`) that CSS can also paint: hex with 3 or 6 digits, `rgb(r, g, b[, a])` and
+ * `hsl(h, s%, l%[, a])`. The picker reads no 4- or 8-digit hex here and no `hsv()`, and CSS has no `hsv()`, so
+ * those would be saved as text no swatch can show. Anything else the picker ignores, so it must not reach the
+ * form's value either.
  */
 const PICKER_COLOR =
-	/^(#([0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})|(rgba?|hsla?|hsva?)\(\s*\d+(\.\d+)?%?\s*(,\s*\d+(\.\d+)?%?\s*){2,3}\))$/i;
+	/^(#([0-9a-f]{3}|[0-9a-f]{6})|rgba?\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*(,\s*\d+(\.\d+)?\s*)?\)|hsla?\(\s*\d{1,3}\s*,\s*\d{1,3}%\s*,\s*\d{1,3}%\s*(,\s*\d+(\.\d+)?\s*)?\))$/i;
 
 /** Whether a value is a colour the picker accepts. */
 function isPickerColor(value: unknown): value is string {

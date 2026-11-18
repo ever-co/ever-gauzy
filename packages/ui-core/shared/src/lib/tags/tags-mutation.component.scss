@@ -145,13 +145,14 @@
 		transform: scale(1.1);
 	}
 
-	&:focus-visible {
-		outline: 2px solid var(--color-primary-default);
+	&[aria-pressed='true'] {
+		outline: 2px solid var(--gauzy-text-color-1);
 		outline-offset: 2px;
 	}
 
-	&[aria-pressed='true'] {
-		outline: 2px solid var(--gauzy-text-color-1);
+	// After the pressed rule (same specificity), so keyboard focus on the selected preset still changes its ring.
+	&:focus-visible {
+		outline: 2px solid var(--color-primary-default);
 		outline-offset: 2px;
 	}
 }
