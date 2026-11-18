@@ -81,7 +81,9 @@ export class EmbedCredentialController {
  * body gets the same 401 as a revoked credential. The limit is per credential (`embed-exchange-throttle.ts`), since a
  * host's backend exchanges one credential for all its members from one address; a body without a well-formed
  * credential is limited per client address, like the sign-in routes'. The service also caps, per address, the
- * credentials it refuses, before any lookup (`embed-exchange-failures.ts`).
+ * credentials it refuses, before any lookup (`embed-exchange-failures.ts`). The two routes have one such count per
+ * address, on purpose: a guessed credential costs the same lookup whichever route it is sent to. Once an address is
+ * capped, both routes answer it 429 for any credential this server has not accepted recently, until the minute ends.
  */
 @ApiTags('Embed')
 @Controller('/embed')

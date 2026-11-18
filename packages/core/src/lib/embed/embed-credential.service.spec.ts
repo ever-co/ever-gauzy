@@ -552,4 +552,28 @@ describe('EmbedCredentialService: client report', () => {
 		await expect(service.clientReport({ credential: secret }, PORTAL)).rejects.toMatchObject({ status: 429 });
 		await expect(service.clientReport({ credential: secret }, '198.51.100.30')).resolves.toEqual(NORTHWIND_REPORT);
 	});
+
+	it('caps the exchange of an address whose client reports alone reached the cap, but not a credential it accepted', async () => {
+		const { service } = build();
+		signIn(TENANT);
+		const accepted = await service.createForOrganization({ name: 'Northwind product', organizationId: ORG });
+		const fresh = await service.createForOrganization({ name: 'Northwind product 2', organizationId: ORG });
+		await expect(service.exchange({ credential: accepted.secret, employeeId: EMPLOYEE }, PORTAL)).resolves.toMatchObject({
+			token: 'an-embed-token'
+		});
+		for (let sent = 0; sent < 60; sent++) {
+			await expect(
+				service.clientReport({ credential: generateEmbedCredential().secret }, PORTAL)
+			).rejects.toThrow(UnauthorizedException);
+		}
+
+		// One count of refused credentials per address, whichever route refused them: a valid credential this server
+		// has not accepted yet waits for the window to end, one it accepted goes on.
+		await expect(service.exchange({ credential: fresh.secret, employeeId: EMPLOYEE }, PORTAL)).rejects.toMatchObject({
+			response: { statusCode: 429, code: 'EMBED_EXCHANGE_LIMITED' }
+		});
+		await expect(service.exchange({ credential: accepted.secret, employeeId: EMPLOYEE }, PORTAL)).resolves.toMatchObject({
+			token: 'an-embed-token'
+		});
+	});
 });
