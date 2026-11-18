@@ -1,7 +1,8 @@
 import { Injectable, Logger, OnModuleInit, Optional } from '@nestjs/common';
-import { DataSource } from 'typeorm';
+import { DataSource, EntityManager } from 'typeorm';
 import { IOutboxWriteInput, ITimeLog } from '@gauzy/contracts';
 import { MultiORMEnum, getORMType } from '../../core/utils';
+import { locksRowsForChange } from './time-log-history.writer';
 import { EventOutboxService } from '../../event-outbox/event-outbox.service';
 import { declareStreamedEvents } from '../../graphql/subscriptions/plugin-subscription';
 import { SubscriptionCatalogue } from '../../graphql/subscriptions/subscription-catalogue';
@@ -56,9 +57,12 @@ export function timeLogFactData(timeLog: Partial<ITimeLog>): Record<string, unkn
 /**
  * Writes the time entry facts to the event outbox, so that the signed webhooks deliver them.
  *
- * Most time entry writes run as one repository call, outside any transaction, and through TypeORM under both ORMs:
- * a fact is appended right after its write succeeded, in a transaction of its own, as the real-time hints and the task
- * automations do. A fact that cannot be written is logged and never fails the time entry's write.
+ * A fact commits with the write it tells of, as the outbox asks (`EventOutboxService.append`): it is appended in the
+ * transaction of that write, through a savepoint ({@link recordWithin}). Two cases have no such transaction, and
+ * there the fact is appended right after the write, in a transaction of its own ({@link record}): under MikroORM,
+ * where the entries are written through TypeORM while the outbox writes through MikroORM, and on SQLite, where a
+ * transaction begun beside another request's nests into it (see `locksRowsForChange`). A fact that cannot be written
+ * is logged and never fails the write of a person's time.
  */
 @Injectable()
 export class TimeLogFactsService implements OnModuleInit {
@@ -79,7 +83,39 @@ export class TimeLogFactsService implements OnModuleInit {
 	}
 
 	/**
-	 * Appends one fact about a time entry. Never throws.
+	 * Whether the facts are appended in the transaction of their write ({@link recordWithin}): the entries and the
+	 * outbox are written through TypeORM, on a database that locks rows. Otherwise {@link record} appends them after.
+	 */
+	appendsWithinWrites(): boolean {
+		return getORMType() === MultiORMEnum.TypeORM && locksRowsForChange();
+	}
+
+	/**
+	 * Appends one fact about a time entry in the transaction of its write, through a savepoint: it commits with the
+	 * write, and a fact that cannot be written is undone alone and logged. Never throws.
+	 *
+	 * @param manager The manager of the write's open TypeORM transaction.
+	 * @param name One of the `time_log.*` names above.
+	 * @param timeLog The entry as the write left it, with its tenant and organization.
+	 */
+	async recordWithin(
+		manager: EntityManager,
+		name: string,
+		timeLog: Partial<ITimeLog> | null | undefined
+	): Promise<void> {
+		if (!timeLog?.id) {
+			return;
+		}
+		try {
+			await manager.transaction((savepoint) => this.outbox.append(savepoint, factInput(name, timeLog)));
+		} catch (error) {
+			this.warnNotWritten(name, timeLog, error);
+		}
+	}
+
+	/**
+	 * Appends one fact about a time entry right after its write, in a transaction of its own: for a write that runs in
+	 * no transaction the outbox can share (see {@link appendsWithinWrites}). Never throws.
 	 *
 	 * @param name One of the `time_log.*` names above.
 	 * @param timeLog The entry as the write left it, with its tenant and organization.
@@ -89,19 +125,14 @@ export class TimeLogFactsService implements OnModuleInit {
 			return;
 		}
 		try {
-			await this.append({
-				name,
-				aggregateType: TIME_LOG_AGGREGATE_TYPE,
-				aggregateId: timeLog.id,
-				data: timeLogFactData(timeLog),
-				tenantId: timeLog.tenantId,
-				organizationId: timeLog.organizationId
-			} as IOutboxWriteInput);
+			await this.append(factInput(name, timeLog));
 		} catch (error) {
-			this.logger.warn(
-				`The ${name} fact of time entry ${timeLog.id} was not written: ${(error as Error)?.message}`
-			);
+			this.warnNotWritten(name, timeLog, error);
 		}
+	}
+
+	private warnNotWritten(name: string, timeLog: Partial<ITimeLog>, error: unknown): void {
+		this.logger.warn(`The ${name} fact of time entry ${timeLog.id} was not written: ${(error as Error)?.message}`);
 	}
 
 	/**
@@ -121,6 +152,18 @@ export class TimeLogFactsService implements OnModuleInit {
 		}
 		await this.dataSource.manager.transaction((manager) => this.outbox.append(manager, input));
 	}
+}
+
+/** The outbox row of one fact about a time entry. */
+function factInput(name: string, timeLog: Partial<ITimeLog>): IOutboxWriteInput {
+	return {
+		name,
+		aggregateType: TIME_LOG_AGGREGATE_TYPE,
+		aggregateId: timeLog.id,
+		data: timeLogFactData(timeLog),
+		tenantId: timeLog.tenantId,
+		organizationId: timeLog.organizationId
+	} as IOutboxWriteInput;
 }
 
 /** The fact of an entry just created: a running one starts, a finished one is created. */

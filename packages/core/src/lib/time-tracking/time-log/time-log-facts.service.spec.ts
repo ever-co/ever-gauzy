@@ -1,4 +1,5 @@
 import * as utils from '../../core/utils';
+import * as historyWriter from './time-log-history.writer';
 import {
 	factOfCreatedLog,
 	factOfUpdatedLog,
@@ -8,8 +9,9 @@ import {
 } from './time-log-facts.service';
 
 /**
- * ever-co/ever-gauzy#12071: time entries write their facts to the event outbox, which the signed webhooks deliver. The
- * facts are appended right after the entry's write, in a transaction of their own, and never fail that write.
+ * ever-co/ever-gauzy#12071: time entries write their facts to the event outbox, which the signed webhooks deliver. A
+ * fact commits with its write, in that write's transaction, where the outbox can share it; otherwise it is appended right
+ * after the write, in a transaction of its own. It never fails the write.
  */
 
 const ENTRY = {
@@ -110,6 +112,49 @@ describe('TimeLogFactsService (#12071)', () => {
 		expect(fork.transactional).toHaveBeenCalledTimes(1);
 		expect(outbox.append.mock.calls[0][0]).toBe(transactionManager);
 		expect(dataSource.manager.transaction).not.toHaveBeenCalled();
+	});
+
+	it('appends the fact in the transaction of its write, through a savepoint', async () => {
+		const { service, appended, dataSource } = createService();
+		const savepoint = { name: 'savepoint' };
+		const writeTransaction = { transaction: jest.fn(async (work: (m: unknown) => unknown) => work(savepoint)) };
+
+		await service.recordWithin(writeTransaction as any, 'time_log.started', ENTRY as any);
+
+		expect(writeTransaction.transaction).toHaveBeenCalledTimes(1);
+		expect(appended).toHaveLength(1);
+		expect(appended[0].manager).toBe(savepoint);
+		expect(appended[0].input).toMatchObject({
+			name: 'time_log.started',
+			aggregateId: 'log-1',
+			tenantId: 'tenant-a'
+		});
+		expect(dataSource.manager.transaction).not.toHaveBeenCalled();
+	});
+
+	it('never fails the write when the outbox refuses the fact inside its transaction', async () => {
+		const { service } = createService({ failing: true });
+		const warn = jest.spyOn((service as any).logger, 'warn').mockImplementation(() => undefined);
+		const writeTransaction = { transaction: jest.fn(async (work: (m: unknown) => unknown) => work({})) };
+
+		await expect(
+			service.recordWithin(writeTransaction as any, 'time_log.stopped', ENTRY as any)
+		).resolves.toBeUndefined();
+		expect(warn).toHaveBeenCalledTimes(1);
+	});
+
+	it('appends in the transaction of the write under TypeORM on a database that locks rows, after it otherwise', () => {
+		const { service } = createService();
+		const orm = jest.spyOn(utils, 'getORMType').mockReturnValue(utils.MultiORMEnum.TypeORM);
+		const locks = jest.spyOn(historyWriter, 'locksRowsForChange').mockReturnValue(true);
+		expect(service.appendsWithinWrites()).toBe(true);
+
+		locks.mockReturnValue(false);
+		expect(service.appendsWithinWrites()).toBe(false);
+
+		locks.mockReturnValue(true);
+		orm.mockReturnValue(utils.MultiORMEnum.MikroORM);
+		expect(service.appendsWithinWrites()).toBe(false);
 	});
 
 	it('declares the five names so that a webhook subscribed to time_log.* receives them', () => {
