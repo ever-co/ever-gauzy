@@ -47,6 +47,9 @@ const REPORT_READ_PERMISSIONS = [
 	PermissionsEnum.ALL_ORG_VIEW
 ];
 
+/** Labels per read of their scope: keeps the IN list within every database's bind limit, however many labels. */
+const LABEL_READ_CHUNK = 500;
+
 /** Every activity level, as the report page asks: the same logs as with no activity filter. */
 const EVERY_ACTIVITY_LEVEL = { start: 0, end: 100 };
 
@@ -325,7 +328,8 @@ export class SavedReportPublicService {
 	 * the report's tenant, and of its organization or of the whole tenant, as a time log of it may carry them (see
 	 * `timeLogTagsOf`). Null for any other grouping: its entries state no labels. A report without a tenant or an
 	 * organization states none: TypeORM drops an undefined value from the where, which would read the labels of every
-	 * tenant. The ids are read as the daily report answered them, so a database that compares ids by case finds them.
+	 * tenant. The ids are read as the daily report answered them, so a database that compares ids by case finds them,
+	 * {@link LABEL_READ_CHUNK} at a time.
 	 */
 	private async shownLabelsOf(report: SavedReport, days: IReportDayGroupByDate[]): Promise<ShownLabels> {
 		if (report.grouping !== SavedReportGroupingEnum.LABEL) {
@@ -336,10 +340,15 @@ export class SavedReportPublicService {
 		if (labelIds.length === 0 || !hasScope) {
 			return new Set();
 		}
-		const labels = await this.dataSource.getRepository(Tag).find({
-			where: { id: In(labelIds), tenantId: report.tenantId },
-			select: { id: true, organizationId: true }
-		});
+		const labels: Pick<Tag, 'id' | 'organizationId'>[] = [];
+		for (let offset = 0; offset < labelIds.length; offset += LABEL_READ_CHUNK) {
+			const chunk = labelIds.slice(offset, offset + LABEL_READ_CHUNK);
+			const found = await this.dataSource.getRepository(Tag).find({
+				where: { id: In(chunk), tenantId: report.tenantId },
+				select: { id: true, organizationId: true }
+			});
+			labels.push(...found);
+		}
 		const ofReportOrganization = labels.filter(
 			(label) => !label.organizationId || String(label.organizationId) === String(report.organizationId)
 		);

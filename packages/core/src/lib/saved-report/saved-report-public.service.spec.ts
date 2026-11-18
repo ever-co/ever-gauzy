@@ -571,6 +571,32 @@ describe('SavedReportPublicService', () => {
 			expect(text).not.toContain('Another tenant');
 		});
 
+		it('reads the labels of a report with very many of them a bounded number at a time, and states them all', async () => {
+			const many = Array.from(
+				{ length: 501 },
+				(_, index) => `d1000000-0000-4000-8000-${String(index).padStart(12, '0')}`
+			);
+			const state = stateWith(token, {
+				labels: many.map((id) => ({ id, tenantId: TENANT, organizationId: ORGANIZATION }))
+			});
+			state.report.filters = {};
+			state.report.grouping = SavedReportGroupingEnum.LABEL;
+			const { service, timeLogService, repositories } = serviceFor(state);
+			const days = dailyReport();
+			days[0].logs[0].employeeLogs[0].tasks = days[0].logs[0].employeeLogs[0].tasks.map((row) => ({
+				...row,
+				tags: many.map((id) => ({ id, name: `Label ${id}`, color: null }))
+			}));
+			timeLogService.getDailyReport.mockResolvedValueOnce(days);
+
+			const answer = await service.read(token);
+
+			const find = (repositories.Tag as { find: jest.Mock }).find;
+			expect(find).toHaveBeenCalledTimes(2);
+			expect(find.mock.calls.map(([{ where }]) => idsOf(where.id).length)).toEqual([500, 1]);
+			expect(answer.days[0].logs[0].employeeLogs[0].tasks[0].tags).toHaveLength(501);
+		});
+
 		it('states no label at all when none of the labels of the entries can be read in the report tenant', async () => {
 			const state = stateWith(token, { labels: [] });
 			state.report.filters = {};
