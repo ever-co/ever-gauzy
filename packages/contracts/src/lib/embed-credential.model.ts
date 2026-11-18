@@ -14,6 +14,11 @@ export interface IEmbedCredential extends IBasePerTenantAndOrganizationEntityMod
 	 * credential acts for any member of the organization, as with any other credential.
 	 */
 	organizationContactId?: ID | null;
+	/**
+	 * Whether an exchange may add the person it names as an employee of the organization when the address has no active
+	 * member there (`POST /embed/token`). False for every credential created without it.
+	 */
+	canAddMembers?: boolean;
 	lastUsedAt?: Date | null;
 	revokedAt?: Date | null;
 }
@@ -26,6 +31,8 @@ export interface IEmbedCredentialCreateInput {
 	 * narrow the exchange yet: the credential still exchanges tokens for any member of the organization.
 	 */
 	organizationContactId?: ID;
+	/** Lets the credential's exchanges add the people they name as employees of the organization. Off by default. */
+	canAddMembers?: boolean;
 }
 
 /** The answer to a creation: the only time the secret is readable. */
