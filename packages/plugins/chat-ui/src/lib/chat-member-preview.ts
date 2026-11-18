@@ -104,3 +104,11 @@ export function facesOf(employeeIds: readonly string[], byEmployee: ReadonlyMap<
 	const without = known.filter((person) => !ownPicture(person.imageUrl));
 	return [...withPicture, ...without].slice(0, Math.max(0, limit));
 }
+
+/** The people the chat knows among these employees, each once, by name: a team's member list. */
+export function peopleOf(employeeIds: readonly string[], byEmployee: ReadonlyMap<string, ChatPerson>): ChatPerson[] {
+	return [...new Set(employeeIds.map(String))]
+		.map((id) => byEmployee.get(id))
+		.filter((person): person is ChatPerson => !!person)
+		.sort((a, b) => a.name.localeCompare(b.name));
+}

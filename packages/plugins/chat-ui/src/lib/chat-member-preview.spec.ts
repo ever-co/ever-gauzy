@@ -1,6 +1,6 @@
 import { of, Subject, throwError } from 'rxjs';
 import { ChatMemberRoleEnum, IChatMemberSummary } from '@gauzy/contracts';
-import { ChatMemberPreview, ChatMemberPreviewSource, facesOf, membersKey } from './chat-member-preview';
+import { ChatMemberPreview, ChatMemberPreviewSource, facesOf, membersKey, peopleOf } from './chat-member-preview';
 
 const member = (employeeId: string): IChatMemberSummary => ({ employeeId, userId: `u-${employeeId}`, role: ChatMemberRoleEnum.MEMBER });
 const ids = (members: readonly IChatMemberSummary[]) => members.map((item) => String(item.employeeId));
@@ -176,5 +176,19 @@ describe('facesOf', () => {
 		expect(facesOf(['a', 'b', 'x', 'c', 'b', 'd'], byEmployee, 10).map((face) => face.employeeId)).toEqual(['b', 'd', 'a', 'c']);
 		expect(facesOf(['a', 'b', 'c', 'd'], byEmployee, 3).map((face) => face.employeeId)).toEqual(['b', 'd', 'a']);
 		expect(facesOf(['a'], byEmployee, 0)).toEqual([]);
+	});
+});
+
+describe('peopleOf', () => {
+	const person = (employeeId: string, name: string) => ({ employeeId, userId: null, name, imageUrl: null });
+	const byEmployee = new Map([
+		['a', person('a', 'Zoe')],
+		['b', person('b', 'Anna')],
+		['c', person('c', 'Marc')]
+	]);
+
+	it('lists the known members once, by name', () => {
+		expect(peopleOf(['a', 'x', 'b', 'a', 'c'], byEmployee).map((member) => member.name)).toEqual(['Anna', 'Marc', 'Zoe']);
+		expect(peopleOf([], byEmployee)).toEqual([]);
 	});
 });
