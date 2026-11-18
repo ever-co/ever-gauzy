@@ -45,3 +45,22 @@ export function teamSuggestions(
 		.sort((a, b) => starts(b) - starts(a) || Number(a.taken) - Number(b.taken) || a.name.localeCompare(b.name))
 		.slice(0, limit);
 }
+
+/** What `teamChannelOf` reads of a conversation. */
+export interface ChatChannelLike {
+	kind: string;
+	name?: string | null;
+	archivedAt?: Date | string | null;
+}
+
+/**
+ * A team's channel among these conversations: the channel named as the team, compared as the new-channel dialog
+ * compares a team name with the channels (trimmed, without a leading `#`, case-insensitive). An open one before an
+ * archived one; null when none is named so (or the team has no name).
+ */
+export function teamChannelOf<T extends ChatChannelLike>(conversations: readonly T[], teamName: string): T | null {
+	const key = comparable(teamName ?? '');
+	if (!key) return null;
+	const named = conversations.filter((conversation) => conversation?.kind === 'channel' && comparable(conversation.name ?? '') === key);
+	return named.find((conversation) => !conversation.archivedAt) ?? named[0] ?? null;
+}
