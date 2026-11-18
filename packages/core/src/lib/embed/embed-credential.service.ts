@@ -433,10 +433,6 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 
 	private async judgeAndMint({ credential, employeeId, email, origin }: ExchangeEmbedCredentialDTO, address: string) {
 		const row = await this.acceptCredential(credential, address, 'exchange');
-		const refuseMember = (reason: string, row: EmbedCredential): never => {
-			this.logger.warn(`Embed exchange refused: ${reason} credential=${row.id}`);
-			throw new MemberRefused(reason);
-		};
 
 		// The page the widget runs in must be one of the organization's allowed origins; the token is bound to it.
 		const pageOrigin = normalizeOrigin(origin);
@@ -449,17 +445,17 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 
 		const employee = await this.findMember(row, { employeeId, email });
 		if (!employee) {
-			refuseMember('not an active member of the organization', row);
+			this.refuseMember('not an active member of the organization', row);
 		}
 		if (!employee.userId || employee.isPlaceholder) {
-			refuseMember('a member without an account', row);
+			this.refuseMember('a member without an account', row);
 		}
 		if (!employee.isTrackingEnabled) {
-			refuseMember('time tracking is off for this member', row);
+			this.refuseMember('time tracking is off for this member', row);
 		}
 		// The token names the organization, and JwtStrategy refuses it without an active membership there.
 		if (!(await this.isActiveMember(employee.userId, row))) {
-			refuseMember('no active membership of the organization', row);
+			this.refuseMember('no active membership of the organization', row);
 		}
 
 		const now = new Date();
@@ -480,6 +476,12 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 		answer.token = token;
 		answer.expiresAt = expiresAt.toISOString();
 		return answer;
+	}
+
+	/** Refuses the member an exchange names (`MemberRefused`, a 403 with a code), with the reason in the log. */
+	private refuseMember(reason: string, row: EmbedCredential): never {
+		this.logger.warn(`Embed exchange refused: ${reason} credential=${row.id}`);
+		throw new MemberRefused(reason);
 	}
 
 	/** Counts a refused credential against the address it came from, and says so once the address reaches the cap. */
