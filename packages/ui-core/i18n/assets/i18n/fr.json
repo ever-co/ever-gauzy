@@ -4271,6 +4271,7 @@
 		"LAST_UPDATED": "Dernière modification",
 		"USED_IN_TITLE": "Utilisée dans",
 		"NOT_USED": "Cette balise n'est pas encore utilisée.",
+		"USAGE_UNAVAILABLE": "Le nombre d'utilisations n'est pas disponible pour cette balise.",
 		"USED_IN": {
 			"CANDIDATES": "Candidats",
 			"EMPLOYEES": "Employés",

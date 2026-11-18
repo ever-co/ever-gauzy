@@ -4272,6 +4272,7 @@
 		"LAST_UPDATED": "Última actualización",
 		"USED_IN_TITLE": "Usada en",
 		"NOT_USED": "Esta etiqueta aún no se usa.",
+		"USAGE_UNAVAILABLE": "Los recuentos de uso no están disponibles para esta etiqueta.",
 		"USED_IN": {
 			"CANDIDATES": "Candidatos",
 			"EMPLOYEES": "Empleados",

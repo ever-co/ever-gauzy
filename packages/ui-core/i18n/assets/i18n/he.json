@@ -4296,6 +4296,7 @@
 		"LAST_UPDATED": "עודכנה לאחרונה",
 		"USED_IN_TITLE": "בשימוש ב",
 		"NOT_USED": "תגית זו עדיין לא בשימוש.",
+		"USAGE_UNAVAILABLE": "נתוני השימוש אינם זמינים עבור תגית זו.",
 		"USED_IN": {
 			"CANDIDATES": "מועמדים",
 			"EMPLOYEES": "עובדים",

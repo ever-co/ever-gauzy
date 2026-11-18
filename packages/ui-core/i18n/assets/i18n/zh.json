@@ -4797,6 +4797,7 @@
 		"LAST_UPDATED": "最后更新",
 		"USED_IN_TITLE": "使用于",
 		"NOT_USED": "此标签尚未使用。",
+		"USAGE_UNAVAILABLE": "此标签的使用次数不可用。",
 		"USED_IN": {
 			"CANDIDATES": "候选人",
 			"EMPLOYEES": "员工",

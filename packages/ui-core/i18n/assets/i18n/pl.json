@@ -4269,6 +4269,7 @@
 		"LAST_UPDATED": "Ostatnia aktualizacja",
 		"USED_IN_TITLE": "Używany w",
 		"NOT_USED": "Ten tag nie jest jeszcze używany.",
+		"USAGE_UNAVAILABLE": "Liczba użyć nie jest dostępna dla tego tagu.",
 		"USED_IN": {
 			"CANDIDATES": "Kandydaci",
 			"EMPLOYEES": "Pracownicy",

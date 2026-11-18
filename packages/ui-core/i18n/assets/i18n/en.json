@@ -4794,6 +4794,7 @@
 		"LAST_UPDATED": "Last updated",
 		"USED_IN_TITLE": "Used in",
 		"NOT_USED": "This tag isn't used yet.",
+		"USAGE_UNAVAILABLE": "Usage counts aren't available for this tag.",
 		"USED_IN": {
 			"CANDIDATES": "Candidates",
 			"EMPLOYEES": "Employees",

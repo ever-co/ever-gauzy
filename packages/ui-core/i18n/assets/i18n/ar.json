@@ -4268,6 +4268,7 @@
 		"LAST_UPDATED": "آخر تحديث",
 		"USED_IN_TITLE": "مستخدمة في",
 		"NOT_USED": "هذه العلامة غير مستخدمة بعد.",
+		"USAGE_UNAVAILABLE": "أعداد الاستخدام غير متاحة لهذه العلامة.",
 		"USED_IN": {
 			"CANDIDATES": "المرشحون",
 			"EMPLOYEES": "الموظفون",

@@ -4266,6 +4266,7 @@
 		"LAST_UPDATED": "Zuletzt aktualisiert",
 		"USED_IN_TITLE": "Verwendet in",
 		"NOT_USED": "Dieses Tag wird noch nicht verwendet.",
+		"USAGE_UNAVAILABLE": "Für dieses Tag sind keine Nutzungszahlen verfügbar.",
 		"USED_IN": {
 			"CANDIDATES": "Kandidaten",
 			"EMPLOYEES": "Mitarbeiter",
