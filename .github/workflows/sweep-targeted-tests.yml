@@ -102,13 +102,12 @@ jobs:
         # app. It goes through yarn, not Nx, so `.env.local` is not loaded here either.
         run: yarn config:dev
 
-      - name: Run the time-log suites of #12072 on develop 10dee99e6a
+      - name: Run the embed, auth and guard suites of #12069 on develop 4bd79d7a76
         env:
           NX_LOAD_DOT_ENV_FILES: 'false'
         run: |
           status=0
           J='node node_modules/jest/bin/jest.js'
           export NODE_OPTIONS='--experimental-vm-modules --max-old-space-size=24576'
-          ls packages/core/src/lib/time-tracking/time-log/**/*orm-parity* packages/core/src/lib/time-tracking/time-log/*orm-parity* 2>/dev/null || true
-          $J -c packages/core/jest.config.ts --runInBand --ci packages/core/src/lib/time-tracking/time-log/time-log-facts.service.spec.ts packages/core/src/lib/time-tracking/time-log/commands/handlers/schedule-time-log-entries.handler.spec.ts packages/core/src/lib/time-tracking/time-log/commands/handlers/time-log-create.handler.spec.ts packages/core/src/lib/time-tracking/time-log/commands/handlers/time-log-delete.handler.facts.spec.ts packages/core/src/lib/time-tracking/time-log/commands/handlers/time-log-update.handler.failed-stop.spec.ts packages/core/src/lib/time-tracking/time-log/commands/handlers/delete-time-span.handler.facts.spec.ts packages/core/src/lib/time-tracking/time-log/commands/handlers/time-log-delete.handler.spec.ts packages/core/src/lib/time-tracking/time-log/commands/handlers/time-log-delete.handler.history.spec.ts packages/core/src/lib/time-tracking/time-log/commands/handlers/delete-time-span.handler.spec.ts packages/core/src/lib/time-tracking/time-log/commands/handlers/delete-time-span.handler.rates.spec.ts packages/core/src/lib/time-tracking/time-log/commands/handlers/time-log-update.handler.failed-stop.dual-orm.spec.ts time-log-conditional-write.orm-parity || status=$?
+          $J -c packages/core/jest.config.ts --runInBand --ci packages/core/src/lib/embed/ packages/core/src/lib/auth/ packages/core/src/lib/shared/guards/ packages/core/src/lib/core/context/ packages/core/src/lib/role-permission/ packages/core/src/lib/database/embed-credential-migration || status=$?
           exit "$status"
