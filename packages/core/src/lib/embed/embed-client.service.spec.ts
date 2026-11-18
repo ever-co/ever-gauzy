@@ -183,6 +183,14 @@ async function seedTime(dataSource: DataSource): Promise<void> {
 		startedAt: '2026-11-10 10:00:00.000',
 		stoppedAt: '2026-11-10 12:00:00.000'
 	});
+	// A desktop upload of last week, stored as running: not even read.
+	await insertEntry(dataSource, {
+		projectId: WEBSITE,
+		startedAt: '2026-11-09 08:00:00.000',
+		stoppedAt: '2026-11-09 09:00:00.000',
+		isRunning: 1,
+		source: 'DESKTOP'
+	});
 
 	// Left out: another client's project, a deleted entry, a break, a deleted project, another organization's project,
 	// an entry filed under another organization or another tenant, and one after the week.
@@ -266,6 +274,25 @@ describe('EmbedClientService on SQLite', () => {
 				{ id: MOBILE_APP, name: 'Mobile app', seconds: 2.5 * HOUR }
 			]
 		});
+	});
+
+	it('reads a desktop upload stored as running only when its stored end reaches into the week', async () => {
+		// This week in Paris: Monday 16 November 00:00 up to Monday 23 November 00:00.
+		const from = new Date('2026-11-15T23:00:00.000Z');
+		const until = new Date('2026-11-22T23:00:00.000Z');
+		const entries: Array<{ startedAt: Date; source: string }> = await (service as any).entriesOf(
+			[{ id: WEBSITE, name: 'Website' }],
+			SCOPE,
+			{ from: { toDate: () => from }, until: { toDate: () => until } }
+		);
+
+		const read = entries.map((entry) => `${entry.source} ${entry.startedAt.toISOString()}`).sort();
+		// The web timer's run and its running timer; the desktop upload of this week, not the one of last week.
+		expect(read).toEqual([
+			'BROWSER 2026-11-18T22:00:00.000Z',
+			'BROWSER 2026-11-19T13:00:00.000Z',
+			'DESKTOP 2026-11-18T08:00:00.000Z'
+		]);
 	});
 
 	it('counts in UTC for an organization without a zone, with zeros for a client without projects', async () => {

@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { isUUID } from 'class-validator';
 import { DataSource, FindOptionsWhere, In, LessThan, MoreThan, Not } from 'typeorm';
-import { ID, IEmbedClientReport, IEmbedClientReportProject, TimeLogType } from '@gauzy/contracts';
+import { ID, IEmbedClientReport, IEmbedClientReportProject, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
 import { Organization, OrganizationContact, OrganizationProject, TimeLog } from '../core/entities/internal';
+import { TRACKER_SOURCES } from '../time-tracking/time-log/tracker-source';
 import {
 	clientReportOf,
 	clientReportPeriodsOf,
@@ -92,7 +93,9 @@ export class EmbedClientService {
 
 	/**
 	 * The time entries of the projects that reach into the week: started before it ends, and stopped after it starts or
-	 * still running (a running timer stores its start as its end). Deleted entries and breaks are left out.
+	 * a timer still running (a running timer stores its start as its end). Deleted entries and breaks are left out. A
+	 * tracker's uploads stay stored as running and count up to their stored end (`countedEndOf`), so only the first
+	 * condition reads them: the running ones of past weeks are not read on every report.
 	 */
 	private async entriesOf(
 		projects: EmbedClientProject[],
@@ -112,7 +115,7 @@ export class EmbedClientService {
 		const logs = await this.dataSource.getRepository(TimeLog).find({
 			where: [
 				{ ...ofProjects, stoppedAt: MoreThan(week.from.toDate()) },
-				{ ...ofProjects, isRunning: true }
+				{ ...ofProjects, isRunning: true, source: Not(In([...TRACKER_SOURCES] as TimeLogSourceEnum[])) }
 			],
 			select: { id: true, projectId: true, startedAt: true, stoppedAt: true, isRunning: true, source: true }
 		});
