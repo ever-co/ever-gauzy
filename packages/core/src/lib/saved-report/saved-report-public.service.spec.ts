@@ -598,6 +598,16 @@ describe('SavedReportPublicService', () => {
 			expect((repositories.Tag as { find: jest.Mock }).find).not.toHaveBeenCalled();
 		});
 
+		it('opens no report without an organization, so no label is read', async () => {
+			const state = stateWith(token, { labels: STORED_LABELS });
+			state.report.grouping = SavedReportGroupingEnum.LABEL;
+			state.report.organizationId = undefined;
+			const { service, repositories } = serviceFor(state);
+
+			await expect(service.read(token)).rejects.toThrow(NotFoundException);
+			expect((repositories.Tag as { find: jest.Mock }).find).not.toHaveBeenCalled();
+		});
+
 		it('keeps the 404 of a link whose author lost access, labels or not', async () => {
 			const state = stateWith(token, { permissions: [], labels: STORED_LABELS });
 			state.report.filters = { tagIds: [DESIGN] };
