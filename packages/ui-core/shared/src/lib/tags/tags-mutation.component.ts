@@ -35,6 +35,25 @@ export class TagsMutationComponent extends NotesWithTagsComponent implements OnI
 	 */
 	public tagTypes: ITagType[] = [];
 
+	/**
+	 * The colours offered in one click under the picker: twelve hues of even weight, each legible as the soft
+	 * wash the Tags table draws a chip with, in the light and the dark theme alike.
+	 */
+	public readonly presetColors: string[] = [
+		'#E5484D',
+		'#F76B15',
+		'#FFB224',
+		'#46A758',
+		'#12A594',
+		'#00A2C7',
+		'#0090FF',
+		'#3E63DD',
+		'#8E4EC6',
+		'#D6409F',
+		'#AD7F58',
+		'#8B8D98'
+	];
+
 	/*
 	 * Getter & Setter for tag to edit
 	 */
