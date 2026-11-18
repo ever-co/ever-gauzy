@@ -7,6 +7,7 @@ import { ContactTypeEnum } from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
+import { TOOL_HINTS } from './tool-hints';
 const logger = new Logger('OrganizationContactTools');
 
 export const registerOrganizationContactTools = (server: McpServer) => {
@@ -70,7 +71,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 				logger.error('Error fetching organization contacts:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch organization contacts: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get organization contact count tool
@@ -107,7 +109,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 				logger.error('Error fetching organization contact count:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch organization contact count: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get organization contacts by pagination tool
@@ -167,7 +170,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 				logger.error('Error fetching organization contacts pagination:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch organization contacts pagination: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get organization contacts by employee tool
@@ -203,7 +207,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 				logger.error('Error fetching organization contacts by employee:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch organization contacts by employee: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get organization contact by ID tool
@@ -238,7 +243,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 				logger.error('Error fetching organization contact:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch organization contact: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Create organization contact tool
@@ -271,7 +277,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 				logger.error('Error creating organization contact:', sanitizeForLogging(error));
 				throw new Error(`Failed to create organization contact: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Update organization contact tool
@@ -299,7 +306,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 				logger.error('Error updating organization contact:', sanitizeForLogging(error));
 				throw new Error(`Failed to update organization contact: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Update organization contact by employee tool
@@ -335,7 +343,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 				logger.error('Error updating organization contact by employee:', sanitizeForLogging(error));
 				throw new Error(`Failed to update organization contact by employee: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Delete organization contact tool
@@ -366,7 +375,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 				logger.error('Error deleting organization contact:', sanitizeForLogging(error));
 				throw new Error(`Failed to delete organization contact: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.idempotentDestructive
 	);
 
 	// Bulk create organization contacts tool
@@ -402,7 +412,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 				logger.error('Error bulk creating organization contacts:', sanitizeForLogging(error));
 				throw new Error(`Failed to bulk create organization contacts: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Bulk update organization contacts tool
@@ -440,7 +451,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 				logger.error('Error bulk updating organization contacts:', sanitizeForLogging(error));
 				throw new Error(`Failed to bulk update organization contacts: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Bulk delete organization contacts tool
@@ -475,7 +487,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 				logger.error('Error bulk deleting organization contacts:', sanitizeForLogging(error));
 				throw new Error(`Failed to bulk delete organization contacts: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.idempotentDestructive
 	);
 
 	// Get organization contact statistics tool
@@ -516,7 +529,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 				logger.error('Error fetching organization contact statistics:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch organization contact statistics: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Assign contact to employee tool
@@ -550,7 +564,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 				logger.error('Error assigning contact to employee:', sanitizeForLogging(error));
 				throw new Error(sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Unassign contact from employee tool
@@ -586,7 +601,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 				logger.error('Error unassigning contact from employee:', sanitizeForLogging(error));
 				throw new Error(sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.idempotentDestructive
 	);
 
 	// Get contact projects tool
@@ -624,7 +640,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 				logger.error('Error fetching contact projects:', sanitizeForLogging(error));
 				throw new Error(sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Invite organization contact tool
@@ -660,6 +677,7 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 				logger.error('Error inviting organization contact:', sanitizeForLogging(error));
 				throw new Error(`Failed to invite organization contact: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.openWorldDestructive
 	);
 };
