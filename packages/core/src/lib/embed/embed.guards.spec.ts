@@ -1,5 +1,7 @@
 import { ForbiddenException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { sign } from 'jsonwebtoken';
+import { ExtractJwt } from 'passport-jwt';
+import { environment } from '@gauzy/config';
 import { EmbedEnabledGuard, EmbedSessionGuard } from './embed.guards';
 import { EMBED_CREDENTIAL_CLAIM, EMBED_EMPLOYEE_CLAIM, isEmbedRoute, readEmbedClaims } from './embed-session';
 import {
@@ -20,7 +22,7 @@ const CREDENTIAL = '7a000000-0000-4000-8000-0000000000c1';
 const embedToken = (claims: Record<string, unknown> = {}) =>
 	sign(
 		{ id: 'user', tenantId: 'tenant', organizationId: ORG, [EMBED_CREDENTIAL_CLAIM]: CREDENTIAL, [EMBED_EMPLOYEE_CLAIM]: EMPLOYEE, ...claims },
-		'test-secret'
+		environment.JWT_SECRET
 	);
 
 /** An HTTP execution context around a request. */
@@ -35,17 +37,24 @@ const guardWith = (revoked = false) => {
 	return { guard: new EmbedSessionGuard({ isRevoked } as any), isRevoked };
 };
 
-// The switch as a server without it: a developer's .env (loaded with the config) may turn it on.
+// The switch and the token lifetime as a server without them: a developer's .env (loaded with the config) may set them.
+const TTL_ENV = 'GAUZY_EMBED_TOKEN_TTL_SECONDS';
 let savedSwitch: string | undefined;
+let savedTtl: string | undefined;
 beforeAll(() => {
 	savedSwitch = process.env[EMBED_TOKENS_ENV];
+	savedTtl = process.env[TTL_ENV];
 });
 beforeEach(() => {
 	delete process.env[EMBED_TOKENS_ENV];
+	delete process.env[TTL_ENV];
 });
 afterAll(() => {
 	if (savedSwitch !== undefined) {
 		process.env[EMBED_TOKENS_ENV] = savedSwitch;
+	}
+	if (savedTtl !== undefined) {
+		process.env[TTL_ENV] = savedTtl;
 	}
 });
 
@@ -176,6 +185,143 @@ describe('EmbedSessionGuard', () => {
 
 		delete process.env[EMBED_TOKENS_ENV];
 		await expect(guardWith().guard.canActivate(contextOf(request))).rejects.toThrow(UnauthorizedException);
+	});
+
+	it('reads the token passport reads, so a suffixed Authorization header is held to the timer too', async () => {
+		const { guard } = guardWith();
+		const token = embedToken();
+		for (const authorization of [`Bearer ${token} ignored`, `Bearer\t${token}\textra words`]) {
+			// What JwtStrategy authenticates with, and what the guard must judge.
+			expect(ExtractJwt.fromAuthHeaderAsBearerToken()({ headers: { authorization } } as any)).toBe(token);
+			expect(readEmbedClaims(authorization)).toMatchObject({ credentialId: CREDENTIAL, employeeId: EMPLOYEE });
+
+			const request = { method: 'GET', path: '/api/timesheet/time-log', headers: { authorization } };
+			await expect(guard.canActivate(contextOf(request))).rejects.toMatchObject({ response: { code: 'EMBED_SCOPE' } });
+		}
+	});
+
+	it('refuses relations and every query parameter the route does not take', async () => {
+		const { guard } = guardWith();
+		const headers = { authorization: `Bearer ${embedToken()}` };
+		const refused = [
+			{ path: '/api/user/me', query: { relations: ['organizations.organization.employees.timeLogs'] } },
+			{ path: '/api/user/me', query: { includeEmployee: 'true', select: { email: true } } },
+			{ path: '/api/role-permissions/me', query: { relations: ['role'] } },
+			{ path: '/api/timesheet/timer/status', query: { organizationId: ORG, relations: ['employee.user'] } },
+			{ path: '/api/timesheet/timer/status', query: { organizationId: ORG, employeeIds: [EMPLOYEE] } }
+		];
+		for (const { path, query } of refused) {
+			await expect(guard.canActivate(contextOf({ method: 'GET', path, query, headers }))).rejects.toMatchObject({
+				response: { code: 'EMBED_SCOPE' }
+			});
+		}
+
+		const me = { method: 'GET', path: '/api/user/me', query: { includeEmployee: 'true', includeOrganization: 'true' }, headers };
+		await expect(guard.canActivate(contextOf(me))).resolves.toBe(true);
+	});
+
+	it('reads only the teams of its member in its organization, both named in where', async () => {
+		const { guard } = guardWith();
+		const headers = { authorization: `Bearer ${embedToken()}` };
+		const teams = (query: Record<string, unknown>) => contextOf({ method: 'GET', path: '/api/organization-team/me', query, headers });
+		const own = { organizationId: ORG, members: { employeeId: EMPLOYEE } };
+
+		await expect(guard.canActivate(teams({}))).rejects.toThrow(ForbiddenException);
+		await expect(guard.canActivate(teams({ where: { organizationId: ORG } }))).rejects.toThrow(ForbiddenException);
+		await expect(guard.canActivate(teams({ where: { ...own, organizationId: OTHER_ORG } }))).rejects.toThrow(ForbiddenException);
+		await expect(
+			guard.canActivate(teams({ where: { ...own, members: { employeeId: '7a000000-0000-4000-8000-0000000000e2' } } }))
+		).rejects.toThrow(ForbiddenException);
+		await expect(guard.canActivate(teams({ where: { ...own, members: { employeeId: EMPLOYEE, role: 'x' } } }))).rejects.toThrow(
+			ForbiddenException
+		);
+		await expect(guard.canActivate(teams({ where: own, relations: ['members'] }))).rejects.toThrow(ForbiddenException);
+		await expect(guard.canActivate(teams({ where: { ...own, tenantId: 'tenant' } }))).resolves.toBe(true);
+	});
+
+	it('looks up the credential of a token this server signed only', async () => {
+		const { guard, isRevoked } = guardWith();
+		const forged = sign({ id: 'user', tenantId: 'tenant', organizationId: ORG, [EMBED_CREDENTIAL_CLAIM]: 'any', [EMBED_EMPLOYEE_CLAIM]: EMPLOYEE }, 'not-the-secret');
+		const expired = sign(
+			{ id: 'user', tenantId: 'tenant', organizationId: ORG, [EMBED_CREDENTIAL_CLAIM]: CREDENTIAL, [EMBED_EMPLOYEE_CLAIM]: EMPLOYEE, exp: Math.floor(Date.now() / 1000) - 60 },
+			environment.JWT_SECRET
+		);
+		for (const token of [forged, expired]) {
+			const request = { method: 'GET', path: '/api/user/me', headers: { authorization: `Bearer ${token}` } };
+			await expect(guard.canActivate(contextOf(request))).rejects.toThrow(UnauthorizedException);
+		}
+		expect(isRevoked).not.toHaveBeenCalled();
+	});
+
+	it('reads an employee claim that is not a string as none, without failing the request', async () => {
+		const { guard } = guardWith();
+		// An object without a usable toString: String() would throw on it.
+		const odd = sign(
+			{ id: 'user', tenantId: 'tenant', organizationId: ORG, [EMBED_CREDENTIAL_CLAIM]: CREDENTIAL, [EMBED_EMPLOYEE_CLAIM]: { toString: 1 } },
+			'not-the-secret'
+		);
+
+		expect(() => readEmbedClaims(`Bearer ${odd}`)).not.toThrow();
+		expect(readEmbedClaims(`Bearer ${odd}`)).toMatchObject({ credentialId: CREDENTIAL, employeeId: '' });
+		const request = { method: 'GET', path: '/api/user/me', headers: { authorization: `Bearer ${odd}` } };
+		await expect(guard.canActivate(contextOf(request))).rejects.toThrow(UnauthorizedException);
+	});
+
+	it("reads the timer status of the widget's own day only", async () => {
+		const { guard } = guardWith();
+		const headers = { authorization: `Bearer ${embedToken()}` };
+		const status = (query: Record<string, unknown>) =>
+			contextOf({ method: 'GET', path: '/api/timesheet/timer/status', query: { organizationId: ORG, ...query }, headers });
+		const at = (offsetMs: number) => new Date(Date.now() + offsetMs).toISOString();
+		const HOUR = 60 * 60 * 1000;
+
+		await expect(guard.canActivate(status({}))).resolves.toBe(true);
+		await expect(guard.canActivate(status({ todayStart: at(-10 * HOUR), todayEnd: at(14 * HOUR - 1) }))).resolves.toBe(true);
+
+		const refused = [
+			{ todayStart: at(-30 * 24 * HOUR), todayEnd: at(-29 * 24 * HOUR) },
+			{ todayStart: at(-48 * HOUR), todayEnd: at(HOUR) },
+			{ todayStart: at(-10 * HOUR) },
+			{ todayStart: 'yesterday', todayEnd: at(HOUR) },
+			{ todayStart: [at(-HOUR)], todayEnd: at(HOUR) }
+		];
+		for (const query of refused) {
+			await expect(guard.canActivate(status(query))).rejects.toMatchObject({ response: { code: 'EMBED_SCOPE' } });
+		}
+	});
+
+	it('lets a bearer it cannot decode through to the JWT guard instead of failing the request', async () => {
+		const { guard } = guardWith();
+		const part = (value: string) => Buffer.from(value).toString('base64url');
+		// A header typed JWT over a payload that is not JSON: `jws` throws on it.
+		const undecodable = `${part('{"alg":"HS256","typ":"JWT"}')}.${part('not json')}.c2ln`;
+
+		expect(readEmbedClaims(`Bearer ${undecodable}`)).toBeNull();
+		const request = { method: 'GET', path: '/api/public/thing', headers: { authorization: `Bearer ${undecodable}` } };
+		await expect(guard.canActivate(contextOf(request))).resolves.toBe(true);
+	});
+
+	it('checks every place a request names an organization, a tenant or a member, each on its own', async () => {
+		const { guard } = guardWith();
+		const authorization = `Bearer ${embedToken()}`;
+		const status = (query: Record<string, unknown>, extraHeaders: Record<string, string> = {}) =>
+			contextOf({ method: 'GET', path: '/api/timesheet/timer/status', query, headers: { authorization, ...extraHeaders } });
+		const start = (body: Record<string, unknown>) =>
+			contextOf({ method: 'POST', path: '/api/timesheet/timer/start', body, headers: { authorization } });
+
+		await expect(guard.canActivate(status({ organizationId: ORG }, { 'organization-id': OTHER_ORG }))).rejects.toThrow(ForbiddenException);
+		await expect(guard.canActivate(status({ organizationId: ORG }, { 'tenant-id': 'another-tenant' }))).rejects.toThrow(ForbiddenException);
+		await expect(guard.canActivate(start({ organizationId: OTHER_ORG }))).rejects.toThrow(ForbiddenException);
+		await expect(guard.canActivate(start({ organizationId: ORG, tenantId: 'another-tenant' }))).rejects.toThrow(ForbiddenException);
+		await expect(
+			guard.canActivate(start({ organizationId: ORG, employeeId: '7a000000-0000-4000-8000-0000000000e2' }))
+		).rejects.toThrow(ForbiddenException);
+		await expect(
+			guard.canActivate(contextOf({ method: 'POST', path: '/api/timesheet/timer/start', query: { organizationId: ORG }, body: {}, headers: { authorization } }))
+		).rejects.toThrow(ForbiddenException);
+
+		await expect(guard.canActivate(status({ organizationId: ORG }, { 'organization-id': ORG, 'tenant-id': 'tenant' }))).resolves.toBe(true);
+		await expect(guard.canActivate(start({ organizationId: ORG, tenantId: 'tenant', employeeId: EMPLOYEE }))).resolves.toBe(true);
 	});
 
 	it('refuses an embed token on GraphQL', async () => {

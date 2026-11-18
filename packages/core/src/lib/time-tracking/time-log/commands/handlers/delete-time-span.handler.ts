@@ -28,6 +28,12 @@ import { generateTimeSlots } from './../../../time-slot/utils';
 import { TimeSlot } from '../../../time-slot/time-slot.entity';
 import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.repository';
 import { TypeOrmTimeSlotRepository } from '../../../time-slot/repository/type-orm-time-slot.repository';
+import {
+	TIME_LOG_CREATED,
+	TIME_LOG_DELETED,
+	TIME_LOG_UPDATED,
+	TimeLogFactsService
+} from '../../time-log-facts.service';
 
 /** The rates a time log stores (see time-log-rates.ts), which the second part of a split keeps. */
 const STORED_RATE_FIELDS: Array<keyof TimeLog> = [
@@ -150,7 +156,10 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 		readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository,
 		private readonly _commandBus: CommandBus,
 		// Records a split's second part in its history, with the part itself; a handler built without it writes as before.
-		@Optional() private readonly dataSource?: DataSource
+		@Optional() private readonly dataSource?: DataSource,
+		// Writes the facts of a split's second part for the webhooks: its creation, and its deletion when the split is
+		// taken back; a handler built without it writes as before.
+		@Optional() private readonly facts?: TimeLogFactsService
 	) {}
 
 	/**
@@ -555,6 +564,9 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	 * project it takes that project's client rates, as an edit of the project does. With the route's history, the part
 	 * and its history row are written in one transaction.
 	 *
+	 * The part is a new time entry: its `time_log.created` fact (for the webhooks) commits with it where the outbox can
+	 * share its transaction, and is written right after it otherwise (see `TimeLogFactsService`).
+	 *
 	 * @param log - The time log as stored, with its slots.
 	 * @param end - The end of the new range, the second part's start.
 	 * @param stoppedAt - The log's original end, the second part's end.
@@ -602,19 +614,34 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 		});
 
 		const recordsHistory = Boolean(split?.history) && Boolean(this.dataSource);
-		if (!recordsHistory) {
-			return await this.typeOrmTimeLogRepository.save(secondPart);
-		}
-		return await this.dataSource.transaction(async (manager) => {
-			const saved = await manager.save(secondPart);
-			const record = {
-				subject: historySubject(saved),
-				change: createdChange(saved),
-				reason: split.history.reason
-			};
-			await recordTimeLogHistory(manager, [record]);
+		const appendsFactWithin = this.facts?.appendsWithinWrites() ?? false;
+		if (!recordsHistory && !appendsFactWithin) {
+			const saved = await this.typeOrmTimeLogRepository.save(secondPart);
+			await this.facts?.record(TIME_LOG_CREATED, saved);
 			return saved;
-		});
+		}
+		const writeInTransaction = async (manager: EntityManager): Promise<TimeLog> => {
+			const saved = await manager.save(secondPart);
+			if (recordsHistory) {
+				const record = {
+					subject: historySubject(saved),
+					change: createdChange(saved),
+					reason: split.history.reason
+				};
+				await recordTimeLogHistory(manager, [record]);
+			}
+			if (appendsFactWithin) {
+				await this.facts.recordWithin(manager, TIME_LOG_CREATED, saved);
+			}
+			return saved;
+		};
+		const saved = this.dataSource
+			? await this.dataSource.transaction(writeInTransaction)
+			: await this.typeOrmTimeLogRepository.manager.transaction(writeInTransaction);
+		if (!appendsFactWithin) {
+			await this.facts?.record(TIME_LOG_CREATED, saved);
+		}
+		return saved;
 	}
 
 	/**
@@ -757,7 +784,12 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 		}
 
 		await this.restoreRange(log);
-		await this.typeOrmTimeLogRepository.delete({ id: secondPart.id });
+		const partAsStored = await this.storedForFact(secondPart);
+		const taken = await this.typeOrmTimeLogRepository.delete({ id: secondPart.id });
+		// Told of only when this undo removed it: a part deleted meanwhile was told of by its own deletion
+		if (taken?.affected !== 0) {
+			await this.facts?.record(TIME_LOG_DELETED, partAsStored);
+		}
 		await this.recordUndoneSplit(log, stored, secondPart, history);
 	}
 
@@ -786,6 +818,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 		secondPart: TimeLog,
 		history: TimeLogHistoryOptions | undefined
 	): Promise<void> {
+		const partAsStored = await this.storedForFact(secondPart);
 		const taken = await this.typeOrmTimeLogRepository.delete({
 			id: secondPart.id,
 			invoiceItemId: IsNull(),
@@ -798,6 +831,8 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 			);
 			return;
 		}
+		// Its creation was told of (`createSecondPart`), so its deletion is too; never throws
+		await this.facts?.record(TIME_LOG_DELETED, partAsStored);
 		const followUps: Array<[string, () => Promise<unknown>]> = [
 			['record the undone split', () => this.recordUndoneSplit(log, null, secondPart, history)]
 		];
@@ -924,6 +959,30 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 			{ id: log.id, tenantId: log.tenantId },
 			{ startedAt, stoppedAt, timesheetId }
 		);
+		// The cut's own edit was told of (`time_log.updated`), so the range it gets back is too, as stored. A read that
+		// fails is logged and never stops the recovery that called this
+		if (this.facts) {
+			await this.facts.record(TIME_LOG_UPDATED, await this.storedForFact(log));
+		}
+	}
+
+	/**
+	 * A time log as stored, for its fact (see `TimeLogFactsService`): read just before a compensation deletes it, or
+	 * just after it restores it, through TypeORM. Nothing when there is no such row, or when the read fails, which is
+	 * logged: a fact never stops the compensation that tells of it.
+	 *
+	 * @param log - The time log, as the handler holds it.
+	 */
+	private async storedForFact(log: ITimeLog): Promise<ITimeLog | null> {
+		if (!this.facts) {
+			return null;
+		}
+		try {
+			return await this.typeOrmTimeLogRepository.findOne({ where: { id: log.id, tenantId: log.tenantId } });
+		} catch (error) {
+			this.logger.warn(`Time log ${log.id} could not be read for its fact: ${error?.message ?? error}`);
+			return null;
+		}
 	}
 
 	/**

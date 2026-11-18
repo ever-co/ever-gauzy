@@ -4,6 +4,7 @@ import '../core/entities/internal';
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { RequestContext as MikroOrmRequestContext } from '@mikro-orm/core';
 import { sign } from 'jsonwebtoken';
+import { environment } from '@gauzy/config';
 import { RequestContext } from '../core/context';
 import { EmbedAllowedOriginService } from './embed-allowed-origin.service';
 import { createEmbedCorsDelegate } from './embed-cors';
@@ -370,7 +371,7 @@ describe('EmbedSessionGuard and the bound origin', () => {
 			[EMBED_EMPLOYEE_CLAIM]: '7a000000-0000-4000-8000-0000000000e1',
 			[EMBED_ORIGIN_CLAIM]: 'https://app.example.com'
 		},
-		'test-secret'
+		environment.JWT_SECRET
 	);
 	const guard = new EmbedSessionGuard({ isRevoked: async () => false } as any);
 	const context = (origin?: string) =>

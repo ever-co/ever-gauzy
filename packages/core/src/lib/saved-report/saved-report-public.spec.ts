@@ -2,10 +2,12 @@ import { IReportDayGroupByDate, SAVED_REPORT_NO_CLIENT } from '@gauzy/contracts'
 import {
 	ISavedReportRate,
 	keepPickedClients,
+	labelIdsOf,
 	memberIdsOf,
 	projectIdsOf,
 	publicDaysOf,
-	publicTotalsOf
+	publicTotalsOf,
+	savedReportLabelKeyOf
 } from './saved-report-public';
 
 const CLIENT_A = 'c1000000-0000-4000-8000-00000000000a';
@@ -379,5 +381,50 @@ describe('memberIdsOf and projectIdsOf', () => {
 	it('name each member and project of the report once', () => {
 		expect(memberIdsOf([day(), day()])).toEqual([MARIE, PAUL]);
 		expect(projectIdsOf([day(), day()])).toEqual([WEBSITE, MEETINGS]);
+	});
+});
+
+describe('the labels of entries (ever-co/ever-gauzy#12029)', () => {
+	const DESIGN = 'd1000000-0000-4000-8000-00000000000a';
+	const URGENT = 'd1000000-0000-4000-8000-00000000000b';
+	const FOREIGN = 'd1000000-0000-4000-8000-00000000000c';
+
+	/** The day, with Marie's entry filed under three labels (one the report may not show) and Paul's under none. */
+	function labelledDay(): IReportDayGroupByDate {
+		const labelled = day();
+		labelled.logs[0].employeeLogs[0].tasks[0].tags = [
+			{ id: DESIGN, name: 'Design', color: '#ff0000' },
+			{ id: FOREIGN, name: 'Their secret project', color: '#00ff00' },
+			{ id: URGENT.toUpperCase(), name: 'Urgent', color: '#ffff00' }
+		];
+		labelled.logs[1].employeeLogs[0].tasks[0].tags = [];
+		return labelled;
+	}
+
+	it("states each entry's labels the report may show, as a chip shows them, when the report groups by label", () => {
+		const shown = new Set([DESIGN, URGENT].map(savedReportLabelKeyOf));
+
+		const [publicDay] = publicDaysOf([labelledDay()], null, undefined, shown);
+
+		expect(publicDay.logs[0].employeeLogs[0].tasks[0].tags).toEqual([
+			{ id: DESIGN, name: 'Design', color: '#ff0000' },
+			{ id: URGENT.toUpperCase(), name: 'Urgent', color: '#ffff00' }
+		]);
+		expect(publicDay.logs[1].employeeLogs[0].tasks[0].tags).toEqual([]);
+	});
+
+	it('states no labels for any other grouping, as before', () => {
+		const [publicDay] = publicDaysOf([labelledDay()], null);
+
+		expect(keysOf(publicDay).has('tags')).toBe(false);
+		expect(JSON.stringify(publicDay)).not.toContain('Design');
+	});
+
+	it('names each label of the entries once, whatever the case of its id', () => {
+		const twice = labelledDay();
+		twice.logs[1].employeeLogs[0].tasks[0].tags = [{ id: DESIGN.toUpperCase(), name: 'Design', color: '#ff0000' }];
+
+		expect(labelIdsOf([twice, labelledDay()])).toEqual([DESIGN, FOREIGN, URGENT.toUpperCase()]);
+		expect(labelIdsOf([day()])).toEqual([]);
 	});
 });

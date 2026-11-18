@@ -6,8 +6,15 @@ import {
 	NotFoundException,
 	UnauthorizedException
 } from '@nestjs/common';
+import { environment as env } from '@gauzy/config';
 import { EmbedCredentialService } from './embed-credential.service';
-import { EMBED_FORBIDDEN_TIMER_FIELDS, isEmbedRoute, readEmbedClaims } from './embed-session';
+import {
+	EMBED_FORBIDDEN_TIMER_FIELDS,
+	embedRouteOf,
+	isSignedBearerToken,
+	isWithinEmbedScope,
+	readEmbedClaims
+} from './embed-session';
 import { isEmbedEnabled } from './embed.utils';
 import { normalizeOrigin } from './embed-origin';
 
@@ -60,23 +67,14 @@ export class EmbedSessionGuard implements CanActivate {
 		}
 
 		const path = String(request.path ?? request.url ?? '').split('?')[0];
-		if (!isEmbedRoute(request.method, path)) {
+		const route = embedRouteOf(request.method, path);
+		if (!route || !isWithinEmbedScope(route, request, claims)) {
 			throw outOfScope();
 		}
-
 		// A browser names the page's origin; the token works only from the one it was exchanged for.
 		const requestOrigin = request.headers?.origin;
 		if (claims.origin && requestOrigin && normalizeOrigin(requestOrigin) !== claims.origin) {
 			throw fromAnotherSite();
-		}
-
-		const askedOrganization = request.query?.organizationId ?? request.body?.organizationId ?? request.headers?.['organization-id'];
-		if (askedOrganization && claims.organizationId && askedOrganization !== claims.organizationId) {
-			throw outOfScope();
-		}
-		const askedEmployee = request.query?.employeeId ?? request.body?.employeeId;
-		if (askedEmployee && askedEmployee !== claims.employeeId) {
-			throw outOfScope();
 		}
 		// A start or a stop takes the server's time: an embed cannot backdate.
 		if (request.method === 'POST' && request.body && typeof request.body === 'object') {
@@ -85,6 +83,10 @@ export class EmbedSessionGuard implements CanActivate {
 			}
 		}
 
+		// This guard runs before the JWT guard: only a token this server signed has its credential looked up.
+		if (!isSignedBearerToken(request.headers?.authorization, env.JWT_SECRET)) {
+			throw new UnauthorizedException();
+		}
 		if (await this.embedCredentialService.isRevoked(claims.credentialId)) {
 			throw new UnauthorizedException();
 		}

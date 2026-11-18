@@ -562,7 +562,13 @@ export class RequestContext {
 		// A third-party OAuth-app token acts with the user's role only where an approved scope explicitly allows that
 		// role (none does today): it never reaches a `@Roles(...)` route, a SUPER_ADMIN or tenant-admin exemption.
 		const oauthAppScopes = RequestContext.currentOAuthAppScopes();
-		const accepted = oauthAppScopes === null ? roles : narrowRolesToOAuthAppScopes(roles, oauthAppScopes);
+		const scoped = oauthAppScopes === null ? roles : narrowRolesToOAuthAppScopes(roles, oauthAppScopes);
+		// An embed token (`embed/embed-session.ts`) acts as its member: never with a SUPER_ADMIN or tenant-admin
+		// exemption (TenantPermissionGuard's SUPER_ADMIN shortcut, the organization boundary), which would skip the
+		// permissions JwtStrategy narrowed it to.
+		const accepted = RequestContext.currentUser()?.embedCredentialId
+			? scoped.filter((name) => name !== RolesEnum.SUPER_ADMIN && name !== RolesEnum.ADMIN)
+			: scoped;
 
 		if (role && accepted.includes(role)) {
 			return true;

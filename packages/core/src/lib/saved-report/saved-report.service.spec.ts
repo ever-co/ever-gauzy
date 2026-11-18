@@ -1,8 +1,10 @@
-import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
-import { SavedReportKindEnum, SavedReportPeriodRuleEnum } from '@gauzy/contracts';
+import { BadRequestException, ForbiddenException, NotFoundException, ValidationPipe } from '@nestjs/common';
+import { SavedReportGroupingEnum, SavedReportKindEnum, SavedReportPeriodRuleEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context/request-context';
 import { sign } from 'jsonwebtoken';
 import { USER_API_TOKEN_CLAIM } from '../auth/user-api-token/user-api-token-session';
+import { OmitType } from '@nestjs/swagger';
+import { CreateSavedReportDTO, UpdateSavedReportDTO } from './dto/saved-report.dto';
 import { SavedReportService, savedReportView } from './saved-report.service';
 import { hashSavedReportToken, isWellFormedSavedReportToken } from './saved-report-token';
 
@@ -11,6 +13,8 @@ const ORGANIZATION = 'b0000000-0000-4000-8000-000000000002';
 const MARIE = 'b0000000-0000-4000-8000-0000000000a1';
 const PAUL = 'b0000000-0000-4000-8000-0000000000a2';
 const REPORT = 'b0000000-0000-4000-8000-000000000003';
+const DESIGN = 'b0000000-0000-4000-8000-0000000000d1';
+const REVIEW = 'b0000000-0000-4000-8000-0000000000d2';
 
 type Row = Record<string, unknown>;
 
@@ -214,6 +218,68 @@ describe('SavedReportService', () => {
 		await service.updateOwn(REPORT, { periodRule: null, startDate: '2026-10-01', endDate: '2026-10-31' } as never);
 
 		expect(rows[0]).toMatchObject({ periodRule: null, startDate: '2026-10-01', endDate: '2026-10-31' });
+	});
+});
+
+/** The body of a save without its organization, whose membership check reads the database. */
+class SaveBodyDTO extends OmitType(CreateSavedReportDTO, ['tenantId', 'organizationId'] as const) {}
+
+/** A body as the saved reports routes take it, through their validation pipe (`{ whitelist: true, transform: true }`). */
+async function bodyOf<T>(metatype: new () => T, body: Record<string, unknown>): Promise<T> {
+	const pipe = new ValidationPipe({ whitelist: true, transform: true });
+	return (await pipe.transform(body, { type: 'body', metatype })) as T;
+}
+
+describe('SavedReportService and the labels of entries', () => {
+	afterEach(() => jest.restoreAllMocks());
+
+	it('saves a view narrowed by labels and grouped by label, and reads it back with them', async () => {
+		const { service } = serviceFor(MARIE);
+		const body = await bodyOf(SaveBodyDTO, {
+			name: 'Design work, by label',
+			periodRule: SavedReportPeriodRuleEnum.LAST_MONTH,
+			filters: { tagIds: [DESIGN, REVIEW], untagged: true },
+			grouping: 'label'
+		});
+
+		const saved = await service.createOwn({ ...body, tenantId: TENANT, organizationId: ORGANIZATION } as never);
+		const read = await service.findOwn(saved.id);
+
+		expect(read.filters).toEqual({ tagIds: [DESIGN, REVIEW], untagged: true });
+		expect(read.grouping).toBe(SavedReportGroupingEnum.LABEL);
+		const listed = (await service.listOwn(ORGANIZATION)).items.find((item) => item.id === saved.id);
+		expect(listed).toMatchObject({
+			filters: { tagIds: [DESIGN, REVIEW], untagged: true },
+			grouping: 'label'
+		});
+	});
+
+	it('updates a report with the labels of the view shown, and takes them off again', async () => {
+		const { service } = serviceFor(MARIE);
+
+		await service.updateOwn(
+			REPORT,
+			await bodyOf(UpdateSavedReportDTO, { filters: { tagIds: [DESIGN] }, grouping: 'label' })
+		);
+		const labelled = await service.findOwn(REPORT);
+		expect(labelled.filters).toEqual({ tagIds: [DESIGN] });
+		expect(labelled.grouping).toBe(SavedReportGroupingEnum.LABEL);
+
+		await service.updateOwn(REPORT, await bodyOf(UpdateSavedReportDTO, { filters: {}, grouping: 'project' }));
+		const unlabelled = await service.findOwn(REPORT);
+		expect(unlabelled.filters).toEqual({});
+		expect(unlabelled.grouping).toBe(SavedReportGroupingEnum.PROJECT);
+	});
+
+	it('reads a report saved before labels as it was saved: no labels, no grouping', async () => {
+		const { service, rows } = serviceFor(MARIE);
+		const before = { ...rows[0] };
+
+		const read = await service.findOwn(REPORT);
+
+		expect(read.filters).toBeNull();
+		expect(read.grouping).toBeNull();
+		expect(rows[0]).toEqual(before);
 	});
 });
 

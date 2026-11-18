@@ -750,22 +750,6 @@ export class AuthService extends SocialAuthService {
 	}
 
 	/**
-	 * Mints the access token a personal API token is exchanged for (`auth/user-api-token`).
-	 *
-	 * It goes through `getJwtAccessToken` like every sign-in, so the token is an ordinary one, and it holds the API
-	 * token's owner to what a sign-in holds them to, every time: an account that is no longer active, archived or deleted
-	 * gets nothing, and neither does a deactivated employee. It carries the claim that marks an API token session, lives
-	 * only until `expiresAt`, and comes with no refresh token, so nothing about the user's own sessions changes.
-	 *
-	 * The organization is the one asked for when the user is an active member of it and was not ended there, else the
-	 * one the user works in (the rule a token refresh applies), else an organization where they are an active employee,
-	 * else their first active membership.
-	 *
-	 * @param input The owner of the API token, the API token's id, the organization asked for, and the expiry.
-	 * @returns The signed access token.
-	 * @throws UnauthorizedException when any of that does not hold.
-	 */
-	/**
 	 * Mints the token an embed credential is exchanged for (`embed/`): an ordinary access token, judged like every
 	 * sign-in's, for the member's user in the credential's organization, carrying the claims that hold it to the timer
 	 * (`EmbedSessionGuard`), living only until `expiresAt`, with no refresh token.
@@ -790,6 +774,22 @@ export class AuthService extends SocialAuthService {
 		);
 	}
 
+	/**
+	 * Mints the access token a personal API token is exchanged for (`auth/user-api-token`).
+	 *
+	 * It goes through `getJwtAccessToken` like every sign-in, so the token is an ordinary one, and it holds the API
+	 * token's owner to what a sign-in holds them to, every time: an account that is no longer active, archived or deleted
+	 * gets nothing, and neither does a deactivated employee. It carries the claim that marks an API token session, lives
+	 * only until `expiresAt`, and comes with no refresh token, so nothing about the user's own sessions changes.
+	 *
+	 * The organization is the one asked for when the user is an active member of it and was not ended there, else the
+	 * one the user works in (the rule a token refresh applies), else an organization where they are an active employee,
+	 * else their first active membership.
+	 *
+	 * @param input The owner of the API token, the API token's id, the organization asked for, and the expiry.
+	 * @returns The signed access token.
+	 * @throws UnauthorizedException when any of that does not hold.
+	 */
 	public async issueUserApiTokenSession(input: {
 		userId: ID;
 		tenantId: ID;
@@ -2355,6 +2355,13 @@ export class AuthService extends SocialAuthService {
 			// user (EmployeeService.assertNotPlaceholderAccount).
 			if (employee?.isPlaceholder) {
 				this.logger.warn(`Access token refused: user ${user.id} stands behind a member without an account`);
+				throw new UnauthorizedException();
+			}
+
+			// An embed token acts for the one member the exchange resolved, active in the credential's organization.
+			// Should that member have been ended since, it is refused rather than minted for no member at all.
+			if (metadata?.embedEmployeeId && employee?.id !== metadata.embedEmployeeId) {
+				this.logger.warn(`Access token refused: embed member ${metadata.embedEmployeeId} is not active here`);
 				throw new UnauthorizedException();
 			}
 
