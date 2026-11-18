@@ -136,6 +136,8 @@ interface DockRow {
 					<p class="note">{{ 'CHAT.ERROR' | translate }}</p>
 				} @else if (newChannelFor(); as team) {
 					<p class="note" data-test="chat-dock-new-channel">{{ 'CHAT.PROFILE.TEAM_CHANNEL_NEW' | translate: { name: team.name } }}</p>
+				} @else if (membersOnly(); as team) {
+					<p class="note" data-test="chat-dock-members-only">{{ 'CHAT.PROFILE.TEAM_CHANNEL_MEMBERS_ONLY' | translate: { name: team.name } }}</p>
 				} @else if (rows().length > 0) {
 					<!--
 						The messages as the conversation shows them (its own message component) with its toolbar: react, create a
@@ -596,6 +598,11 @@ export class ChatDockComponent {
 	 * sent creates the channel (named as the team, with its members) and goes to it.
 	 */
 	protected readonly newChannelFor = signal<ChatTeamDetails | null>(null);
+	/**
+	 * The private team the card is open with while I am not one of its members and none of my channels is named as it:
+	 * only its members start its channel (see `mayStartChannel`), so the box stays closed.
+	 */
+	protected readonly membersOnly = signal<ChatTeamDetails | null>(null);
 	/** The channel found or created for a first message to a team whose send failed: the next try goes to it. */
 	private pendingChannel: { teamId: string; conversation: IChatConversationWithState } | null = null;
 	private readonly messages = signal<readonly IChatMessageWithRelations[]>([]);
@@ -759,12 +766,12 @@ export class ChatDockComponent {
 		});
 		// The same team opened again with fresh details (its visibility, its members): the card keeps waiting for its
 		// first message (the composer and what is typed in it stay), and the channel is created with the details as they
-		// are now.
+		// are now (a team turned private keeps who is not in it from starting its channel).
 		effect(() => {
 			const team = this.team();
 			untracked(() => {
-				const waiting = this.newChannelFor();
-				if (team && waiting && waiting.id === team.id && waiting !== team) this.newChannelFor.set(team);
+				const waiting = this.newChannelFor() ?? this.membersOnly();
+				if (team && waiting && waiting.id === team.id && waiting !== team) this.awaitChannel(team);
 			});
 		});
 		// Once the conversation is found the composer can be written in: it gets the keyboard.
@@ -818,6 +825,7 @@ export class ChatDockComponent {
 		this.polling?.unsubscribe();
 		this.conversation.set(null);
 		this.newChannelFor.set(null);
+		this.membersOnly.set(null);
 		this.pendingChannel = null;
 		this.showMembers.set(false);
 		this.messages.set([]);
@@ -832,10 +840,28 @@ export class ChatDockComponent {
 		this.request = conversation$.subscribe({
 			next: (conversation) => {
 				if (conversation) this.start(conversation);
-				else if (target.kind === 'team') this.newChannelFor.set(target.team);
+				else if (target.kind === 'team') this.awaitChannel(target.team);
 			},
 			error: () => this.failed.set(true)
 		});
+	}
+
+	/** A team without its channel (of mine): the first message creates it, when I may start it (`mayStartChannel`). */
+	private awaitChannel(team: ChatTeamDetails): void {
+		const may = this.mayStartChannel(team);
+		this.newChannelFor.set(may ? team : null);
+		this.membersOnly.set(may ? null : team);
+	}
+
+	/**
+	 * Whether I may start the team's channel: anyone for a public team, only one of its members for a private one. The
+	 * API lists me no private channel I am not in, so for someone outside the team "none found" does not mean there is
+	 * none, and the channel they started would be another one, with them in it. When I am not known as an employee the
+	 * API decides (it starts channels for employees only).
+	 */
+	private mayStartChannel(team: ChatTeamDetails): boolean {
+		const mine = this.me()?.employeeId;
+		return team.public || !mine || team.memberEmployeeIds.includes(mine);
 	}
 
 	/** Shows this conversation: reads its latest messages, then keeps reading the newer ones. */
@@ -1041,9 +1067,11 @@ export class ChatDockComponent {
 	private createAndSend(team: ChatTeamDetails, submission: ComposerSubmission): void {
 		this.sending.set(true);
 		// An unfinished set-up goes first (`teamChannelForFirstMessage` finishes it, or drops it when the team's visibility
-		// changed); else the channel of a failed send.
+		// changed); else the channel of a failed send, while it still has the team's visibility (the team opened again
+		// as private does not send to the public channel of the try before).
 		const unfinished = this.dock.teamSetups.has(this.setupKey(team));
-		const pending = !unfinished && this.pendingChannel?.teamId === team.id ? this.pendingChannel.conversation : null;
+		const kept = this.pendingChannel?.teamId === team.id ? this.pendingChannel.conversation : null;
+		const pending = !unfinished && kept?.visibility === this.visibilityOf(team) ? kept : null;
 		const channel$ = pending
 			? of(pending)
 			: this.teamChannelForFirstMessage(team).pipe(tap((conversation) => (this.pendingChannel = { teamId: team.id, conversation })));

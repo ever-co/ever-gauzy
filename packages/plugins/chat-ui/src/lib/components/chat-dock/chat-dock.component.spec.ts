@@ -2,7 +2,7 @@
 jest.mock('@gauzy/ui-core/core', () => ({ Store: class Store {}, ToastrService: class ToastrService {} }));
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NEVER, of, Subject, throwError, timer } from 'rxjs';
+import { BehaviorSubject, NEVER, of, Subject, throwError, timer } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { CHAT_EVENT_NAMES, IChatConversationWithState, IChatFile, IChatMessageWithRelations } from '@gauzy/contracts';
 import { Store, ToastrService } from '@gauzy/ui-core/core';
@@ -40,10 +40,13 @@ describe('ChatDockComponent', () => {
 		teamSetups: Map<string, unknown>;
 		close: jest.Mock;
 	};
+	/** The signed-in user: nobody known unless a test signs one in. */
+	let user$: BehaviorSubject<{ id: string; employeeId?: string; firstName?: string } | null>;
 	const element = () => fixture.nativeElement as HTMLElement;
 
 	beforeEach(async () => {
 		jest.useFakeTimers();
+		user$ = new BehaviorSubject<{ id: string; employeeId?: string; firstName?: string } | null>(null);
 		hints$ = new Subject();
 		catchUp$ = new Subject();
 		tasks = { summaries: signal(new Map()), ensure: jest.fn(), refreshAll: jest.fn(), refreshShownBy: jest.fn() };
@@ -69,7 +72,7 @@ describe('ChatDockComponent', () => {
 				{ provide: ChatUiService, useValue: api },
 				{ provide: ChatPresenceService, useValue: { presenceOf: () => 'offline', lastSeenOf: () => null, watch: () => NEVER, apply: () => undefined, applyList: () => undefined } },
 				{ provide: ChatDockService, useValue: dock },
-				{ provide: Store, useValue: { user$: of(null), selectedOrganization$: of(null), userRolePermissions$: of([]), hasPermission: () => false } },
+				{ provide: Store, useValue: { user$, selectedOrganization$: of(null), userRolePermissions$: of([]), hasPermission: () => false } },
 				{ provide: ToastrService, useValue: { danger: jest.fn() } },
 				{ provide: ChatFilesStore, useValue: files },
 				{ provide: ChatTasksService, useValue: tasks },
@@ -416,6 +419,42 @@ describe('ChatDockComponent', () => {
 			expect(api['setArchived']).toHaveBeenLastCalledWith('c-new', true);
 			expect(api['messages']).not.toHaveBeenCalledWith('c-pub', expect.anything());
 			expect(element().querySelector('[data-test="chat-dock-new-channel"]')).not.toBeNull();
+		});
+
+		it("sends the next try of a failed first message to a channel of the team's visibility now, not the one of the try before", () => {
+			api['send'].mockReturnValueOnce(throwError(() => ({ status: 500 })));
+			openTeam({ ...TEAM, public: true });
+			submit('Hello');
+			expect(api['createChannel']).toHaveBeenLastCalledWith(expect.objectContaining({ visibility: 'public' }));
+
+			// Made private meanwhile and opened again (the card keeps waiting): the public channel is not the team's now.
+			dock.team.set({ ...TEAM, public: false });
+			fixture.detectChanges();
+			api['send'].mockReturnValue(of({ message: message('m1', 'Hello') }));
+			submit('Hello');
+			expect(api['createChannel']).toHaveBeenCalledTimes(2);
+			expect(api['createChannel']).toHaveBeenLastCalledWith(expect.objectContaining({ visibility: 'private' }));
+		});
+
+		it('starts no channel for a private team I am not in: only its members can, and a channel of mine named so still opens', () => {
+			user$.next({ id: 'u-out', employeeId: 'e-out', firstName: 'Olga' });
+			openTeam();
+			expect(element().querySelector('[data-test="chat-dock-new-channel"]')).toBeNull();
+			expect(element().querySelector('[data-test="chat-dock-members-only"]')).not.toBeNull();
+			submit('Hello');
+			expect(api['createChannel']).not.toHaveBeenCalled();
+			expect(api['send']).not.toHaveBeenCalled();
+
+			// A public team is anyone's to start.
+			openTeam({ ...TEAM, id: 't-open', public: true });
+			expect(element().querySelector('[data-test="chat-dock-new-channel"]')).not.toBeNull();
+			expect(element().querySelector('[data-test="chat-dock-members-only"]')).toBeNull();
+
+			// A private channel of the team's name I was added to opens, member of the team or not.
+			api['listMine'].mockReturnValue(of({ conversations: [channel('c-web', 'Web Team')], categories: [] }));
+			openTeam({ ...TEAM, id: 't-other' });
+			expect(api['messages']).toHaveBeenLastCalledWith('c-web', { limit: CHAT_DOCK_PAGE_SIZE });
+			expect(element().querySelector('[data-test="chat-dock-members-only"]')).toBeNull();
 		});
 
 		it('sends nothing when the channel cannot be created, and says so', () => {
