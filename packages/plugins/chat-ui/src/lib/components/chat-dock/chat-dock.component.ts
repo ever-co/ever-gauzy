@@ -867,7 +867,7 @@ export class ChatDockComponent {
 	 * public channels I may join too. A list that cannot be read fails the lookup: no channel is created on a guess.
 	 */
 	private findTeamChannel(team: ChatTeamDetails): Observable<{ found: IChatConversationWithState | null; member: boolean }> {
-		const visibility = team.public ? ChatVisibilityEnum.PUBLIC : ChatVisibilityEnum.PRIVATE;
+		const visibility = this.visibilityOf(team);
 		return forkJoin([
 			this.api.listMine().pipe(map(({ conversations }) => conversations ?? [])),
 			team.public ? this.api.browse() : of([] as IChatConversationWithState[])
@@ -898,9 +898,35 @@ export class ChatDockComponent {
 	 * message sent (`createAndSend`).
 	 */
 	private teamChannel(team: ChatTeamDetails): Observable<IChatConversationWithState | null> {
-		const setup = this.dock.teamSetups.get(this.setupKey(team));
+		const setup = this.retainedSetup(team);
 		if (setup) return this.finishSetup(team, setup);
 		return this.findTeamChannel(team).pipe(switchMap(({ found, member }) => (found ? this.enter(found, member) : of(null))));
+	}
+
+	/** The visibility of a team's channel: private for a private team, public for a public one. */
+	private visibilityOf(team: ChatTeamDetails): ChatVisibilityEnum {
+		return team.public ? ChatVisibilityEnum.PUBLIC : ChatVisibilityEnum.PRIVATE;
+	}
+
+	/**
+	 * The unfinished set-up of the team's channel, while its channel still has the team's visibility. When the team's
+	 * visibility changed since (a public team made private), that channel is no longer the team's: the set-up is
+	 * dropped — the archive of an empty duplicate tried once more on the way — and the team's channel is looked for
+	 * again, by its visibility now.
+	 */
+	private retainedSetup(team: ChatTeamDetails): ChatTeamChannelSetup | null {
+		const key = this.setupKey(team);
+		const setup = this.dock.teamSetups.get(key);
+		if (!setup) return null;
+		if (setup.channel.visibility === this.visibilityOf(team)) return setup;
+		this.dock.teamSetups.delete(key);
+		for (const id of setup.archiveIds) {
+			this.api
+				.setArchived(id, true)
+				.pipe(takeUntilDestroyed(this.destroyRef))
+				.subscribe({ error: () => undefined });
+		}
+		return null;
 	}
 
 	/** Where the set-up of a team's channel is kept: per user, organization and team. */
@@ -956,7 +982,7 @@ export class ChatDockComponent {
 	 * public team, private for a private one — with as many of its members as one request may add (see `settle`).
 	 */
 	private teamChannelForFirstMessage(team: ChatTeamDetails): Observable<IChatConversationWithState> {
-		const setup = this.dock.teamSetups.get(this.setupKey(team));
+		const setup = this.retainedSetup(team);
 		if (setup) return this.finishSetup(team, setup);
 		return this.findTeamChannel(team).pipe(
 			switchMap(({ found, member }) => {
@@ -1014,7 +1040,8 @@ export class ChatDockComponent {
 	 */
 	private createAndSend(team: ChatTeamDetails, submission: ComposerSubmission): void {
 		this.sending.set(true);
-		// An unfinished set-up goes first (`teamChannelForFirstMessage` finishes it); else the channel of a failed send.
+		// An unfinished set-up goes first (`teamChannelForFirstMessage` finishes it, or drops it when the team's visibility
+		// changed); else the channel of a failed send.
 		const unfinished = this.dock.teamSetups.has(this.setupKey(team));
 		const pending = !unfinished && this.pendingChannel?.teamId === team.id ? this.pendingChannel.conversation : null;
 		const channel$ = pending
