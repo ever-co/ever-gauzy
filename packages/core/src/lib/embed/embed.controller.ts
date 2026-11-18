@@ -14,6 +14,7 @@ import {
 	ExchangeEmbedCredentialDTO
 } from './dto/embed-credential.dto';
 import { EmbedCredentialService } from './embed-credential.service';
+import { EMBED_EXCHANGE_THROTTLE } from './embed-exchange-throttle';
 import { EmbedEnabledGuard } from './embed.guards';
 import { isEmbedEnabled } from './embed.utils';
 
@@ -62,7 +63,8 @@ export class EmbedCredentialController {
 /**
  * Exchanges an embed credential for a token limited to one member and to the timer. Public, because the credential
  * is the proof; no validation pipe, so a malformed body gets the same 401 as a revoked credential. The limit is per
- * client address, like the sign-in routes'.
+ * credential (`embed-exchange-throttle.ts`), since a host's backend exchanges one credential for all its members from
+ * one address; a body without a well-formed credential is limited per client address, like the sign-in routes'.
  */
 @ApiTags('Embed')
 @Controller('/embed')
@@ -76,7 +78,7 @@ export class EmbedTokenController {
 	@ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'The member cannot track time through an embed' })
 	@Public()
 	@UseGuards(EmbedEnabledGuard)
-	@Throttle({ default: { limit: 60, ttl: 60000 } })
+	@Throttle(EMBED_EXCHANGE_THROTTLE)
 	@Post('/token')
 	@HttpCode(HttpStatus.OK)
 	@Header('Cache-Control', 'no-store')
