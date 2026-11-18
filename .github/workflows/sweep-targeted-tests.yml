@@ -102,12 +102,7 @@ jobs:
         # app. It goes through yarn, not Nx, so `.env.local` is not loaded here either.
         run: yarn config:dev
 
-      - name: Run the chat-ui suites of #12068 on develop a926f7e660
+      - name: Run the Ever Works boundary suite of #12075 on develop a926f7e660
         env:
           NX_LOAD_DOT_ENV_FILES: 'false'
-        run: |
-          status=0
-          J='node node_modules/jest/bin/jest.js'
-          export NODE_OPTIONS='--experimental-vm-modules --max-old-space-size=24576'
-          echo '::group::packages/plugins/chat-ui/jest.config.ts'; $J -c packages/plugins/chat-ui/jest.config.ts --runInBand --ci || status=$?; echo '::endgroup::'
-          exit "$status"
+        run: node --test .scripts/ever-works-integration.test.cjs
