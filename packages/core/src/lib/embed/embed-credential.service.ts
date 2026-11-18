@@ -558,8 +558,15 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 		return newMemberOf(named);
 	}
 
-	/** Adds the person, unless the exchange that held the turn before added them already. */
+	/**
+	 * Adds the person, unless the exchange that held the turn before added them already. The credential was accepted
+	 * before the turn: one revoked meanwhile adds no one, and gets the 401 of a revoked credential.
+	 */
 	private async addMember(row: EmbedCredential, person: IEmbedNewMember): Promise<Employee | null> {
+		if (!(await this.stillAddsMembers(row))) {
+			this.logger.warn(`Embed exchange refused: revoked before the member was added credential=${row.id}`);
+			throw new CredentialRefused('revoked');
+		}
 		const meanwhile = await this.findMember(row, { email: person.email });
 		if (meanwhile) {
 			return meanwhile;
@@ -581,6 +588,18 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 		}
 		this.logger.log(`Embed member added: credential=${row.id} employee=${addition.employeeId}`);
 		return await this.findMember(row, { employeeId: addition.employeeId });
+	}
+
+	/** Whether the credential, read again, still may add members: not revoked or deleted since it was accepted. */
+	private async stillAddsMembers(row: EmbedCredential): Promise<boolean> {
+		if (this.revoked.get(row.id)?.revoked) {
+			return false;
+		}
+		const current = await this.findById(row.id);
+		if (!current || current.revokedAt) {
+			return false;
+		}
+		return current.canAddMembers === true;
 	}
 
 	/** Counts a refused credential against the address it came from, and says so once the address reaches the cap. */

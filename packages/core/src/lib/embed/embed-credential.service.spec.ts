@@ -849,6 +849,32 @@ describe('EmbedCredentialService: the members a credential adds', () => {
 		expect(lines.join('\n').toLowerCase()).not.toContain('noor');
 	});
 
+	it('adds no one, and answers 401, for a credential revoked while the exchange waited for its turn', async () => {
+		const { service, addMember, employees } = build();
+		const { id, secret } = await credentialOf(service, true);
+		let open: () => void = () => undefined;
+		const opened = new Promise<void>((resolve) => {
+			open = resolve;
+		});
+		const add = addMember.getMockImplementation();
+		addMember.mockImplementationOnce(async (scope, person) => {
+			await opened;
+			return await add(scope, person);
+		});
+
+		const first = service.exchange({ credential: secret, email: NOOR, origin: SITE }, PORTAL);
+		const second = service.exchange({ credential: secret, email: NOOR.toLowerCase(), origin: SITE }, PORTAL);
+		await new Promise((resolve) => setImmediate(resolve));
+		await service.revoke(id);
+		open();
+
+		// The first was past its check when the credential was revoked; the guard refuses its token.
+		await expect(first).resolves.toHaveProperty('token');
+		await expect(second).rejects.toThrow(UnauthorizedException);
+		expect(addMember).toHaveBeenCalledTimes(1);
+		expect(employees).toHaveLength(2);
+	});
+
 	it('adds one member for two exchanges of the same new address at once, and answers both with its token', async () => {
 		const { service, addMember, issueEmbedSession, employees } = build();
 		const { secret } = await credentialOf(service, true);
