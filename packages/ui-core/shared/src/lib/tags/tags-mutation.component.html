@@ -31,8 +31,12 @@
 					<label for="inputColor" class="label">{{ 'TAGS_PAGE.TAGS_SELECT_COLOR' | translate }}</label>
 					<!-- The colour shows as a swatch inside the field, the way the Tags table shows it, rather than
 					     as the whole field's background. -->
-					<div class="mutation__color">
+					<div class="mutation__color ga-color-picker-field">
+						<!-- background-color, not the shorthand: the field is free text, and the shorthand would also
+						     accept an image such as url(...). -->
 						<span class="mutation__swatch" [style.background-color]="color || null" aria-hidden="true"></span>
+						<!-- `auto` lets the picker open above or below the field so it stays in the viewport;
+						     `bottom-left` placed it to the LEFT of the field, off-screen on a narrow one. -->
 						<input
 							class="mutation__color-input"
 							nbInput
@@ -44,14 +48,32 @@
 							[value]="color"
 							cpOutputFormat="hex"
 							cpAlphaChannel="disabled"
-							cpPosition="bottom"
-							cpPositionOffset="4px"
+							cpPosition="auto"
 							cpWidth="248px"
-							cpPresetLabel=""
-							[cpPresetColors]="presetColors"
+							[cpExtraTemplate]="presetTemplate"
 							(colorPickerChange)="onChangeColor($event)"
+							(blur)="restoreColorIfInvalid()"
 						/>
 					</div>
+
+					<!-- The presets, rendered by the picker at the foot of its popup. Real buttons, named by their
+					     colour, so they can be reached with Tab and chosen with Enter or Space; each goes through
+					     the same `onChangeColor()` as a colour picked with the mouse. -->
+					<ng-template #presetTemplate>
+						<div class="mutation__presets" role="group" [attr.aria-label]="'TAGS_PAGE.TAGS_SELECT_COLOR' | translate">
+							@for (preset of presetColors; track preset) {
+								<button
+									type="button"
+									class="mutation__preset"
+									[style.background-color]="preset"
+									[attr.aria-label]="preset"
+									[attr.title]="preset"
+									[attr.aria-pressed]="isCurrentColor(preset)"
+									(click)="onChangeColor(preset)"
+								></button>
+							}
+						</div>
+					</ng-template>
 				</div>
 			</div>
 
