@@ -261,10 +261,14 @@ describe('SavedReportService and the labels of entries', () => {
 			REPORT,
 			await bodyOf(UpdateSavedReportDTO, { filters: { tagIds: [DESIGN] }, grouping: 'label' })
 		);
-		expect(await service.findOwn(REPORT)).toMatchObject({ filters: { tagIds: [DESIGN] }, grouping: 'label' });
+		const labelled = await service.findOwn(REPORT);
+		expect(labelled.filters).toEqual({ tagIds: [DESIGN] });
+		expect(labelled.grouping).toBe(SavedReportGroupingEnum.LABEL);
 
 		await service.updateOwn(REPORT, await bodyOf(UpdateSavedReportDTO, { filters: {}, grouping: 'project' }));
-		expect(await service.findOwn(REPORT)).toMatchObject({ filters: {}, grouping: 'project' });
+		const unlabelled = await service.findOwn(REPORT);
+		expect(unlabelled.filters).toEqual({});
+		expect(unlabelled.grouping).toBe(SavedReportGroupingEnum.PROJECT);
 	});
 
 	it('reads a report saved before labels as it was saved: no labels, no grouping', async () => {

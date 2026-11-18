@@ -180,11 +180,17 @@ export function savedReportLabelKeyOf(id: ID): string {
 	return String(id).toLowerCase();
 }
 
+/** A label of a row that has an id. */
+function hasLabelId(tag: ITimeLogTag | null | undefined): tag is ITimeLogTag {
+	return !!tag?.id;
+}
+
 /** An entry's labels as the public answer states them: what a chip shows, of the labels the report may show only. */
 function labelsOfRow(row: IReportDayTaskRow, shownLabels: ReadonlySet<string>): ITimeLogTag[] {
 	const tags = Array.isArray(row.tags) ? row.tags : [];
 	return tags
-		.filter((tag) => !!tag?.id && shownLabels.has(savedReportLabelKeyOf(tag.id)))
+		.filter(hasLabelId)
+		.filter((tag) => shownLabels.has(savedReportLabelKeyOf(tag.id)))
 		.map(({ id, name, color }) => ({ id, name, color }));
 }
 
@@ -430,7 +436,8 @@ function entryRowsOf(days: ReadonlyArray<IReportDayGroupByDate>): IReportDayTask
 
 /**
  * The labels the entries of the report carry, each once: the labels a report grouped by label checks before it shows
- * them.
+ * them. Two spellings of one id (its case) are one label, keyed by `savedReportLabelKeyOf` as {@link ShownLabels} is;
+ * the spelling met last is the one asked for. Every id here is one the database answered (`loadTimeLogTags`).
  *
  * @param days The daily report, grouped by date.
  */
@@ -438,7 +445,7 @@ export function labelIdsOf(days: ReadonlyArray<IReportDayGroupByDate>): ID[] {
 	const ids = new Map<string, ID>();
 	for (const row of entryRowsOf(days)) {
 		const tags = Array.isArray(row.tags) ? row.tags : [];
-		for (const tag of tags.filter((candidate) => !!candidate?.id)) {
+		for (const tag of tags.filter(hasLabelId)) {
 			ids.set(savedReportLabelKeyOf(tag.id), tag.id);
 		}
 	}
