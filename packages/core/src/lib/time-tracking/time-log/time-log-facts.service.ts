@@ -95,7 +95,8 @@ export class TimeLogFactsService implements OnModuleInit {
 
 	/**
 	 * Appends one fact about a time entry in the transaction of its write, through a savepoint: it commits with the
-	 * write, and a fact that cannot be written is undone alone and logged. Never throws.
+	 * write, and a fact that cannot be written is undone alone and logged. Throws only an error that ended the write's
+	 * whole transaction, not the savepoint alone (see {@link endsTransaction}): that write is gone, and must fail.
 	 *
 	 * @param manager The manager of the write's open TypeORM transaction.
 	 * @param name One of the `time_log.*` names above.
@@ -129,6 +130,9 @@ export class TimeLogFactsService implements OnModuleInit {
 				await this.outbox.append(savepoint, factInput(name, entry));
 			});
 		} catch (error) {
+			if (endsTransaction(error)) {
+				throw error;
+			}
 			if (!isRead && fallback) {
 				this.logger.warn(
 					`The ${name} fact of time entry ${fallback.id} is written as its write states it, as the entry ` +
@@ -200,6 +204,19 @@ export class TimeLogFactsService implements OnModuleInit {
 		}
 		await this.dataSource.manager.transaction((manager) => this.outbox.append(manager, input));
 	}
+}
+
+/**
+ * Whether an error ended the whole transaction a savepoint was opened in, and not the savepoint alone: a MySQL
+ * deadlock, on which InnoDB rolls the transaction back. Its write is then gone, and a statement after it would run, and commit,
+ * outside any transaction: a fact appended there would tell of a write that never happened. On PostgreSQL a failed
+ * statement, a deadlock included, rolls back to the savepoint, and the write's transaction goes on.
+ */
+export function endsTransaction(error: unknown): boolean {
+	const failure = error as { code?: unknown; errno?: unknown; driverError?: { code?: unknown; errno?: unknown } };
+	const code = failure?.code ?? failure?.driverError?.code;
+	const errno = failure?.errno ?? failure?.driverError?.errno;
+	return code === 'ER_LOCK_DEADLOCK' || errno === 1213;
 }
 
 /** The outbox row of one fact about a time entry. */

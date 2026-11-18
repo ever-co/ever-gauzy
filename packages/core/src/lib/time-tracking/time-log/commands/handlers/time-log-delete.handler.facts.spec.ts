@@ -95,6 +95,16 @@ describe('TimeLogDeleteHandler: the facts of a deletion', () => {
 		expect(facts.recordWithin).not.toHaveBeenCalled();
 	});
 
+	it('fails when the append of a fact ended its transaction (a MySQL deadlock)', async () => {
+		const { handler, facts } = setup(true);
+		const deadlock = Object.assign(new Error('Deadlock found when trying to get lock'), { errno: 1213 });
+		facts.recordWithin.mockRejectedValueOnce(deadlock);
+
+		await expect(handler.execute(new TimeLogDeleteCommand(handed, false))).rejects.toBe(deadlock);
+
+		expect(facts.record).not.toHaveBeenCalled();
+	});
+
 	it('writes it after the commit of the history, for a deletion by a person where the outbox cannot share it', async () => {
 		const record = jest.spyOn(historyWriter, 'recordTimeLogHistory').mockResolvedValue(undefined);
 		const { handler, dataSource, transactionRepository, facts, committed } = setup(false);
@@ -123,12 +133,13 @@ describe('TimeLogDeleteHandler: the facts of a deletion', () => {
 	});
 
 	it('fails with nothing deleted when the locked read of its transaction fails, as its delete would', async () => {
-		const { handler, transactionRepository, facts } = setup(true);
+		const { handler, repository, transactionRepository, facts } = setup(true);
 		transactionRepository.find.mockRejectedValueOnce(new Error('Deadlock found when trying to get lock'));
 
 		await expect(handler.execute(new TimeLogDeleteCommand(handed, false))).rejects.toThrow('Deadlock found');
 
 		expect(transactionRepository.softDelete).not.toHaveBeenCalled();
+		expect(repository.softDelete).not.toHaveBeenCalled();
 		expect(facts.recordWithin).not.toHaveBeenCalled();
 		expect(facts.record).not.toHaveBeenCalled();
 	});

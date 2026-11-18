@@ -1,6 +1,7 @@
 import * as utils from '../../core/utils';
 import * as historyWriter from './time-log-history.writer';
 import {
+	endsTransaction,
 	factOfCreatedLog,
 	factOfUpdatedLog,
 	TIME_LOG_AGGREGATE_TYPE,
@@ -227,6 +228,30 @@ describe('TimeLogFactsService (#12071)', () => {
 		expect(steps).toEqual(['open 1', 'close 1', 'open 2', 'append in 2', 'close 2']);
 		expect(appended).toHaveLength(1);
 		expect(appended[0].input).toMatchObject({ name: 'time_log.stopped', aggregateId: 'log-1' });
+	});
+
+	it('throws an error that ended the write transaction itself, a MySQL deadlock, and no fallback is written', async () => {
+		const { service, appended } = createService();
+		const deadlock = Object.assign(new Error('Deadlock found when trying to get lock'), {
+			driverError: { code: 'ER_LOCK_DEADLOCK', errno: 1213 }
+		});
+		const writeTransaction = {
+			transaction: jest.fn(async () => {
+				throw deadlock;
+			})
+		};
+
+		await expect(service.recordWithin(writeTransaction as any, 'time_log.deleted', ENTRY as any)).rejects.toBe(
+			deadlock
+		);
+		const read = jest.fn(async () => ENTRY);
+		await expect(
+			service.recordWithin(writeTransaction as any, 'time_log.deleted', read as any, ENTRY as any)
+		).rejects.toBe(deadlock);
+		expect(writeTransaction.transaction).toHaveBeenCalledTimes(2);
+		expect(appended).toHaveLength(0);
+		expect(endsTransaction(new Error('duplicate key value violates unique constraint'))).toBe(false);
+		expect(endsTransaction({ code: '40P01' })).toBe(false);
 	});
 
 	it('never fails the write when the outbox refuses the fact inside its transaction', async () => {
