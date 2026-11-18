@@ -7,12 +7,13 @@ import {
 	IReportDayGroupByDate,
 	ISavedReportFilters,
 	PermissionsEnum,
-	ReportGroupFilterEnum
+	ReportGroupFilterEnum,
+	SavedReportGroupingEnum
 } from '@gauzy/contracts';
 import { IAuthenticatedUser } from '../core/context/types';
 import { RequestContext } from '../core/context/request-context';
 import { MultiORMEnum, getORMType } from '../core/utils';
-import { Employee, Organization, OrganizationProject, UserOrganization } from '../core/entities/internal';
+import { Employee, Organization, OrganizationProject, Tag, UserOrganization } from '../core/entities/internal';
 import { isDeactivatedEmployee } from '../auth/deactivated-employee';
 import { ManagedEmployeeService } from '../employee/managed-employee.service';
 import { RoleAuthorizationService } from '../role/role-authorization.service';
@@ -27,11 +28,14 @@ import { resolveSavedReportPeriod, weekStartDayOf } from './saved-report-period'
 import {
 	ISavedReportRate,
 	keepPickedClients,
+	labelIdsOf,
 	memberIdsOf,
 	projectIdsOf,
 	ProjectClients,
 	publicDaysOf,
-	publicTotalsOf
+	publicTotalsOf,
+	savedReportLabelKeyOf,
+	ShownLabels
 } from './saved-report-public';
 import { isSavedReportLinkLive } from './saved-report.rules';
 import { hashSavedReportToken, isWellFormedSavedReportToken, savedReportTokenHashesMatch } from './saved-report-token';
@@ -42,6 +46,9 @@ const REPORT_READ_PERMISSIONS = [
 	PermissionsEnum.ALL_ORG_EDIT,
 	PermissionsEnum.ALL_ORG_VIEW
 ];
+
+/** Labels per read of their scope: keeps the IN list within every database's bind limit, however many labels. */
+const LABEL_READ_CHUNK = 500;
 
 /** Every activity level, as the report page asks: the same logs as with no activity filter. */
 const EVERY_ACTIVITY_LEVEL = { start: 0, end: 100 };
@@ -152,7 +159,10 @@ export class SavedReportPublicService {
 			taskIds: filters.taskIds ?? [],
 			activityLevel: EVERY_ACTIVITY_LEVEL,
 			includeTimeWithoutTeam: teamIds.length > 0,
-			billableOnly: filters.billableOnly === true
+			billableOnly: filters.billableOnly === true,
+			// The labels filter of the report page (ever-co/ever-gauzy#12029); none on a report saved before it
+			tagIds: filters.tagIds ?? [],
+			untagged: filters.untagged === true
 		};
 		const days = ((await this.timeLogService.getDailyReport(request)) ?? []) as IReportDayGroupByDate[];
 
@@ -166,7 +176,8 @@ export class SavedReportPublicService {
 			defaultRate: defaultBillRateOf(organization)
 		};
 		const rates = await this.ratesOf(report, kept, pricing.organizationCurrency, pricing.defaultRate);
-		const publicDays = publicDaysOf(kept, rates, pricing);
+		const shownLabels = await this.shownLabelsOf(report, kept);
+		const publicDays = publicDaysOf(kept, rates, pricing, shownLabels);
 		const includeAmounts = report.includeAmounts === true;
 
 		return {
@@ -310,6 +321,38 @@ export class SavedReportPublicService {
 			rates.set(employee.id, { billRateValue: rate ?? null, billRateCurrency: currency || null });
 		}
 		return rates;
+	}
+
+	/**
+	 * The labels the entries of a report grouped by label state, read now: of the labels its entries carry, only those of
+	 * the report's tenant, and of its organization or of the whole tenant, as a time log of it may carry them (see
+	 * `timeLogTagsOf`). Null for any other grouping: its entries state no labels. A report without a tenant or an
+	 * organization states none: TypeORM drops an undefined value from the where, which would read the labels of every
+	 * tenant. The ids are read as the daily report answered them, so a database that compares ids by case finds them,
+	 * {@link LABEL_READ_CHUNK} at a time.
+	 */
+	private async shownLabelsOf(report: SavedReport, days: IReportDayGroupByDate[]): Promise<ShownLabels> {
+		if (report.grouping !== SavedReportGroupingEnum.LABEL) {
+			return null;
+		}
+		const labelIds = labelIdsOf(days);
+		const hasScope = Boolean(report.tenantId) && Boolean(report.organizationId);
+		if (labelIds.length === 0 || !hasScope) {
+			return new Set();
+		}
+		const labels: Pick<Tag, 'id' | 'organizationId'>[] = [];
+		for (let offset = 0; offset < labelIds.length; offset += LABEL_READ_CHUNK) {
+			const chunk = labelIds.slice(offset, offset + LABEL_READ_CHUNK);
+			const found = await this.dataSource.getRepository(Tag).find({
+				where: { id: In(chunk), tenantId: report.tenantId },
+				select: { id: true, organizationId: true }
+			});
+			labels.push(...found);
+		}
+		const ofReportOrganization = labels.filter(
+			(label) => !label.organizationId || String(label.organizationId) === String(report.organizationId)
+		);
+		return new Set(ofReportOrganization.map((label) => savedReportLabelKeyOf(label.id)));
 	}
 
 	/** Reads a report by its link's digest. Straight from the repository: the route has no session, the row its tenant. */
