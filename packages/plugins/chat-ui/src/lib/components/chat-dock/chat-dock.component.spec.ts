@@ -22,7 +22,8 @@ import { ChatPresenceService } from '../../services/chat-presence.service';
 const ANNA = { employeeId: 'e-anna', userId: 'u-anna', name: 'Anna', imageUrl: null };
 const CONVERSATION = { id: 'c1' } as IChatConversationWithState;
 const TEAM = { id: 't-web', name: 'Web Team', public: false, imageUrl: null, memberEmployeeIds: ['e-anna', 'e-ben'] };
-const channel = (id: string, name: string, archivedAt: Date | null = null) => ({ id, kind: 'channel', name, archivedAt }) as unknown as IChatConversationWithState;
+const channel = (id: string, name: string, archivedAt: Date | null = null, createdAt: string | null = null, visibility: 'private' | 'public' = 'private') =>
+	({ id, kind: 'channel', name, archivedAt, createdAt, visibility }) as unknown as IChatConversationWithState;
 const message = (id: string, body: string) =>
 	({ id, body, authorUserId: ANNA.userId, createdAt: new Date(), deletedAt: null }) as unknown as IChatMessageWithRelations;
 
@@ -53,7 +54,9 @@ describe('ChatDockComponent', () => {
 			listMine: jest.fn(() => of({ conversations: [], categories: [] })),
 			browse: jest.fn(() => of([])),
 			join: jest.fn((id: string) => of({ conversation: { id }, events: [] })),
-			createChannel: jest.fn(() => of({ conversation: { id: 'c-new' }, events: [] }))
+			createChannel: jest.fn(() => of({ conversation: { id: 'c-new' }, events: [] })),
+			addMembers: jest.fn(() => of({ members: [], events: [] })),
+			setArchived: jest.fn((id: string) => of({ conversation: { id }, events: [] }))
 		};
 		await TestBed.configureTestingModule({
 			imports: [ChatDockComponent],
@@ -153,9 +156,9 @@ describe('ChatDockComponent', () => {
 			expect(list()).toBeNull();
 		});
 
-		it('joins a public channel of the team name I am not in', () => {
-			api['browse'].mockReturnValue(of([channel('c-pub', 'Web Team')]));
-			openTeam();
+		it('joins, for a public team, a public channel of the team name I am not in', () => {
+			api['browse'].mockReturnValue(of([channel('c-pub', 'Web Team', null, null, 'public')]));
+			openTeam({ ...TEAM, public: true });
 
 			expect(api['join']).toHaveBeenCalledWith('c-pub');
 			expect(api['createChannel']).not.toHaveBeenCalled();
@@ -187,12 +190,140 @@ describe('ChatDockComponent', () => {
 			expect(element().querySelector('[data-test="chat-dock-messages"]')?.textContent).toContain('Hello team');
 		});
 
-		it('creates a public channel for a public team, also when the public channels cannot be read', () => {
-			api['browse'].mockReturnValue(throwError(() => ({ status: 503 })));
+		it('creates a public channel for a public team', () => {
 			api['send'].mockReturnValue(of({ message: message('m1', 'Hi') }));
 			openTeam({ ...TEAM, public: true });
 			submit('Hi');
 			expect(api['createChannel']).toHaveBeenCalledWith({ name: 'Web Team', visibility: 'public', memberEmployeeIds: ['e-anna', 'e-ben'] });
+		});
+
+		it('keeps a private team to a private channel: no public one is browsed, joined or taken, even one I am in', () => {
+			api['listMine'].mockReturnValue(of({ conversations: [channel('c-pub', 'Web Team', null, null, 'public')], categories: [] }));
+			api['browse'].mockReturnValue(of([channel('c-pub-2', 'Web Team', null, null, 'public')]));
+			openTeam();
+
+			expect(api['browse']).not.toHaveBeenCalled();
+			expect(api['join']).not.toHaveBeenCalled();
+			expect(element().querySelector('[data-test="chat-dock-new-channel"]')).not.toBeNull();
+		});
+
+		it('creates nothing when the public channels of a public team cannot be read: the card says so', () => {
+			api['browse'].mockReturnValue(throwError(() => ({ status: 503 })));
+			openTeam({ ...TEAM, public: true });
+			expect(element().querySelector('.note')).not.toBeNull();
+			expect(element().querySelector('[data-test="chat-dock-new-channel"]')).toBeNull();
+
+			// Nor on a first message whose look again fails.
+			api['browse'].mockReturnValue(of([]));
+			openTeam({ ...TEAM, id: 't-other', public: true });
+			api['browse'].mockReturnValue(throwError(() => ({ status: 503 })));
+			submit('Hello');
+			expect(api['createChannel']).not.toHaveBeenCalled();
+			expect(api['send']).not.toHaveBeenCalled();
+		});
+
+		it('creates the channel with the details of the same team opened again: its visibility and members now, the box kept', () => {
+			api['send'].mockReturnValue(of({ message: message('m1', 'Hello') }));
+			openTeam();
+			const reads = api['listMine'].mock.calls.length;
+			dock.team.set({ ...TEAM, public: true, memberEmployeeIds: ['e-anna'] });
+			fixture.detectChanges();
+			// Not looked for again on opening: the card still waits for the first message.
+			expect(api['listMine'].mock.calls.length).toBe(reads);
+			expect(element().querySelector('[data-test="chat-dock-new-channel"]')).not.toBeNull();
+
+			submit('Hello');
+			expect(api['createChannel']).toHaveBeenCalledWith({ name: 'Web Team', visibility: 'public', memberEmployeeIds: ['e-anna'] });
+			expect(api['send']).toHaveBeenCalledWith('c-new', expect.objectContaining({ body: 'Hello' }));
+		});
+
+		it('leaves the typed text in the composer when the channel is created and the message then fails, for the next try', () => {
+			const answer = new Subject<never>();
+			api['send'].mockReturnValue(answer);
+			openTeam();
+			const box = element().querySelector('[data-test="chat-dock-composer"] textarea') as HTMLTextAreaElement;
+			box.value = 'Hello team';
+			box.setSelectionRange(box.value.length, box.value.length);
+			box.dispatchEvent(new Event('input'));
+			fixture.detectChanges();
+			box.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+			fixture.detectChanges();
+
+			expect(api['createChannel']).toHaveBeenCalledTimes(1);
+			expect(api['send']).toHaveBeenCalledWith('c-new', expect.objectContaining({ body: 'Hello team' }));
+			// The channel exists; the message fails later.
+			answer.error({ status: 500 });
+			fixture.detectChanges();
+			jest.runOnlyPendingTimers();
+			fixture.detectChanges();
+
+			expect(box.value).toBe('Hello team');
+			expect(element().querySelector('[data-test="chat-dock-new-channel"]')).not.toBeNull();
+		});
+
+		it('looks again before creating: a channel a teammate created since the card opened gets the first message', () => {
+			api['send'].mockReturnValue(of({ message: message('m1', 'Hello') }));
+			openTeam();
+			api['listMine'].mockReturnValue(of({ conversations: [channel('c-mate', 'Web Team')], categories: [] }));
+			submit('Hello');
+
+			expect(api['createChannel']).not.toHaveBeenCalled();
+			expect(api['send']).toHaveBeenCalledWith('c-mate', expect.objectContaining({ body: 'Hello' }));
+		});
+
+		it('settles on the older channel when a teammate created one at the same moment, archiving the empty one made here', () => {
+			api['send'].mockReturnValue(of({ message: message('m1', 'Hello') }));
+			openTeam();
+			// Looked for before creating: none yet. Listed again after: the teammate's (older) and ours.
+			api['listMine']
+				.mockReturnValueOnce(of({ conversations: [], categories: [] }))
+				.mockReturnValueOnce(
+					of({
+						conversations: [channel('c-new', 'Web Team', null, '2026-11-18T10:00:01Z'), channel('c-mate', 'Web Team', null, '2026-11-18T10:00:00Z')],
+						categories: []
+					})
+				);
+			submit('Hello');
+
+			expect(api['createChannel']).toHaveBeenCalledTimes(1);
+			expect(api['setArchived']).toHaveBeenCalledWith('c-new', true);
+			expect(api['addMembers']).not.toHaveBeenCalled();
+			expect(api['send']).toHaveBeenCalledWith('c-mate', expect.objectContaining({ body: 'Hello' }));
+			expect(api['messages']).toHaveBeenLastCalledWith('c-mate', { limit: CHAT_DOCK_PAGE_SIZE });
+		});
+
+		it('creates the channel of a large team with as many members as one request takes, then adds the rest in batches', () => {
+			api['send'].mockReturnValue(of({ message: message('m1', 'Hello') }));
+			const memberEmployeeIds = Array.from({ length: 1201 }, (_, index) => `e-${index}`);
+			openTeam({ ...TEAM, memberEmployeeIds });
+			submit('Hello');
+
+			expect(api['createChannel']).toHaveBeenCalledWith(expect.objectContaining({ memberEmployeeIds: memberEmployeeIds.slice(0, 500) }));
+			expect(api['addMembers'].mock.calls).toEqual([
+				['c-new', memberEmployeeIds.slice(500, 1000)],
+				['c-new', memberEmployeeIds.slice(1000)]
+			]);
+			expect(api['send']).toHaveBeenCalledWith('c-new', expect.objectContaining({ body: 'Hello' }));
+		});
+
+		it('keeps the text when the first message fails, and sends the next try to the channel already created', () => {
+			api['send'].mockReturnValueOnce(throwError(() => ({ status: 500 })));
+			openTeam();
+			const reset = card()['resetToken'] as unknown as () => number;
+			const before = reset();
+			submit('Hello');
+
+			expect(api['createChannel']).toHaveBeenCalledTimes(1);
+			// The box was neither cleared nor turned to the channel's (empty) draft: the text stays.
+			expect(reset()).toBe(before);
+			expect((card()['conversation'] as unknown as () => unknown)()).toBeNull();
+			expect(TestBed.inject(ToastrService).danger).toHaveBeenCalled();
+
+			api['send'].mockReturnValue(of({ message: message('m1', 'Hello') }));
+			submit('Hello');
+			expect(api['createChannel']).toHaveBeenCalledTimes(1);
+			expect(api['send']).toHaveBeenLastCalledWith('c-new', expect.objectContaining({ body: 'Hello' }));
+			expect(reset()).toBe(before + 1);
 		});
 
 		it('sends nothing when the channel cannot be created, and says so', () => {
