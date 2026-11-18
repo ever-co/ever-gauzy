@@ -126,6 +126,13 @@ describe('the hints every registered tool declares', () => {
 		expect(failing(replacing, isDestructive)).toEqual([]);
 	});
 
+	it('marks destructive a key result update, which moves its key result and goal to the value it reports', () => {
+		const reports = named(tools, ['create_key_result_update']);
+
+		expect(reports).toHaveLength(1);
+		expect(failing(reports, isDestructive)).toEqual([]);
+	});
+
 	it('does not hint idempotent the chat read, which reads up to the newest message when it names none', () => {
 		const [markRead] = named(tools, ['mark_chat_conversation_read']);
 

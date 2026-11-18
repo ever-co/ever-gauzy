@@ -440,7 +440,7 @@ export const registerKeyResultTools = (server: McpServer) => {
 				throw new Error(`Failed to create key result update: ${sanitizeErrorMessage(error)}`);
 			}
 		},
-		TOOL_HINTS.write
+		TOOL_HINTS.destructive
 	);
 
 	// Get key result updates tool
