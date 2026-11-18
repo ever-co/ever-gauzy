@@ -44,7 +44,12 @@ function build() {
 		table(users) as any,
 		{} as any,
 		{ issueEmbedSession } as any,
-		{ isAllowed: jest.fn(async (organizationId: string, origin: string) => organizationId === ORG && origin === SITE) } as any
+		{
+			isAllowed: jest.fn(
+				async (tenantId: string, organizationId: string, origin: string) =>
+					tenantId === TENANT && organizationId === ORG && origin === SITE
+			)
+		} as any
 	);
 	jest.spyOn(service, 'ormType', 'get').mockReturnValue('typeorm' as any);
 	jest.spyOn(service, 'create').mockImplementation(async (input: any) => {

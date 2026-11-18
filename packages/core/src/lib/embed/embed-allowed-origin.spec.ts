@@ -125,9 +125,18 @@ describe('EmbedAllowedOriginService', () => {
 		signIn(TENANT);
 		await service.addForOrganization({ origin: 'https://app.example.com', organizationId: ORG });
 
-		expect(await service.isAllowed(ORG, 'https://app.example.com')).toBe(true);
-		expect(await service.isAllowed(OTHER_ORG, 'https://app.example.com')).toBe(false);
-		expect(await service.isAllowed(ORG, 'https://other.example.com')).toBe(false);
+		expect(await service.isAllowed(TENANT, ORG, 'https://app.example.com')).toBe(true);
+		expect(await service.isAllowed(TENANT, OTHER_ORG, 'https://app.example.com')).toBe(false);
+		expect(await service.isAllowed(TENANT, ORG, 'https://other.example.com')).toBe(false);
+	});
+
+	it("counts only a row of the credential's tenant: another tenant naming the organization does not widen its list", async () => {
+		const { service, rows } = build();
+		rows.push({ id: 'foreign', tenantId: OTHER_TENANT, organizationId: ORG, origin: 'https://evil.example' });
+
+		expect(await service.isAllowed(TENANT, ORG, 'https://evil.example')).toBe(false);
+		expect(await service.isAllowed(OTHER_TENANT, ORG, 'https://evil.example')).toBe(true);
+		expect(await service.isAllowed(null as any, ORG, 'https://evil.example')).toBe(false);
 	});
 
 	it('answers the saved row when another request added the same origin between the read and the insert', async () => {

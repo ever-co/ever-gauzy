@@ -197,7 +197,8 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 
 		// The page the widget runs in must be one of the organization's allowed origins; the token is bound to it.
 		const pageOrigin = normalizeOrigin(origin);
-		const allowed = !!pageOrigin && (await this.embedAllowedOriginService.isAllowed(row.organizationId, pageOrigin));
+		const allowed =
+			!!pageOrigin && (await this.embedAllowedOriginService.isAllowed(row.tenantId, row.organizationId, pageOrigin));
 		if (!allowed) {
 			this.logger.warn(`Embed exchange refused: origin not allowed credential=${row.id}`);
 			throw new OriginRefused('origin not allowed');

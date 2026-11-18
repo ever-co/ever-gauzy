@@ -83,12 +83,16 @@ export class EmbedAllowedOriginService extends TenantAwareCrudService<EmbedAllow
 		this.logger.log(`Embed origin removed: ${row.origin} organizationId=${row.organizationId}`);
 	}
 
-	/** Whether the organization allows this origin, read now: the exchange runs before any tenant is known. */
-	async isAllowed(organizationId: ID, origin: string): Promise<boolean> {
-		if (!isUUID(organizationId)) {
+	/**
+	 * Whether the organization allows this origin, read now: the exchange runs before any tenant is known, so the
+	 * credential's tenant is passed. Only a row of that tenant counts: an organization id is not a secret, and a row
+	 * another tenant wrote naming it must not widen the organization's list.
+	 */
+	async isAllowed(tenantId: ID, organizationId: ID, origin: string): Promise<boolean> {
+		if (!isUUID(tenantId) || !isUUID(organizationId)) {
 			return false;
 		}
-		const rows = await this.readAll({ organizationId, origin });
+		const rows = await this.readAll({ tenantId, organizationId, origin });
 		return rows.length > 0;
 	}
 
