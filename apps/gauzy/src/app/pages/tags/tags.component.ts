@@ -16,6 +16,7 @@ import {
 	TagsMutationComponent
 } from '@gauzy/ui-core/shared';
 import { TagsColorComponent } from './tags-color/tags-color.component';
+import { TagDetailsComponent } from './tag-details/tag-details.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -200,6 +201,31 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 						this.tags$.next(true);
 					});
 			}
+		}
+	}
+
+	/**
+	 * Opens the selected tag's details (`TagDetailsComponent`), from which it can be edited.
+	 */
+	async view(selectedItem?: ITag) {
+		if (selectedItem) {
+			this.selectTag({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
+
+		if (!this.selectedTag) {
+			return;
+		}
+
+		const result = await firstValueFrom(
+			this.dialogService.open(TagDetailsComponent, {
+				context: { row: this.selectedTag }
+			}).onClose
+		);
+		if (result === 'edit') {
+			await this.edit();
 		}
 	}
 
