@@ -509,14 +509,36 @@ export function newNonce(): string {
 	return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
+/** How the API orders messages: by creation time, then by id. */
+function byTime(a: Pick<IChatMessage, 'createdAt' | 'id'>, b: Pick<IChatMessage, 'createdAt' | 'id'>): number {
+	return new Date(a.createdAt as Date).getTime() - new Date(b.createdAt as Date).getTime() || String(a.id).localeCompare(String(b.id));
+}
+
 /** Inserts the messages of a page into a list (by id, newest last), keeping the list ordered by time. */
 export function mergeMessages<T extends IChatMessage>(existing: readonly T[], incoming: readonly T[]): T[] {
 	const byId = new Map<ID, T>(existing.map((message) => [message.id, message]));
 	for (const message of incoming) byId.set(message.id, message);
-	return [...byId.values()].sort(
-		(a, b) =>
-			new Date(a.createdAt as Date).getTime() - new Date(b.createdAt as Date).getTime() || String(a.id).localeCompare(String(b.id))
-	);
+	return [...byId.values()].sort(byTime);
+}
+
+/**
+ * The messages shown, made the newest page read again: the page is the truth — a message it holds takes its state,
+ * and one shown that it does not hold (deleted, or older than the page now reaches) leaves — except for messages newer
+ * than all of it (one I sent while it was being read). The object already shown is kept for each message the page did
+ * not change, and the list itself when nothing changed: a view keyed on the objects (a signal, a message component's
+ * inputs) is then not drawn again for a read that brought nothing new.
+ */
+export function showNewestPage<T extends IChatMessage>(shown: readonly T[], page: readonly T[]): readonly T[] {
+	const byId = new Map<string, T>(shown.map((message) => [String(message.id), message]));
+	const kept = page.map((message) => {
+		const old = byId.get(String(message.id));
+		return old && JSON.stringify(old) === JSON.stringify(message) ? old : message;
+	});
+	const newest = kept.reduce<T | undefined>((latest, message) => (!latest || byTime(message, latest) > 0 ? message : latest), undefined);
+	const inPage = new Set(kept.map((message) => String(message.id)));
+	const newer = newest ? shown.filter((message) => !inPage.has(String(message.id)) && byTime(message, newest) > 0) : [];
+	const next = mergeMessages(kept, newer);
+	return next.length === shown.length && next.every((message, index) => message === shown[index]) ? shown : next;
 }
 
 /** The text of the header badge: nothing at zero, `99+` past ninety-nine. */
