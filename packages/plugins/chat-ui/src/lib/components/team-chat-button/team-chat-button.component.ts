@@ -17,9 +17,9 @@ export const TEAM_VIEW_ID_PARAM = 'id';
 /**
  * "Team chat" on a team's page (the `team-view-actions` extension slot), an icon button beside the favorite toggle as
  * "Message" is on an employee's page: opens the team's channel in the docked chat window at the bottom right of the
- * screen (`ChatDockService`), so the page stays. The channel is the one named as the team; the window joins it, or
- * creates it with the team's members, when I am not in one yet. Shown only where the API serves the chat to the
- * signed-in user; the team is the one of the page's route, read in the selected organization.
+ * screen (`ChatDockService`), so the page stays. The channel is the one named as the team; the window joins it, or,
+ * when there is none, creates it with the team's members on the first message sent. Shown only where the API serves
+ * the chat to the signed-in user; the team is the one of the page's route, read in the selected organization.
  */
 @Component({
 	selector: 'ngx-chat-team-chat-button',
