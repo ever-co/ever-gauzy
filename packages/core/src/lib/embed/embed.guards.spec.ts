@@ -444,6 +444,19 @@ describe('EmbedSessionGuard', () => {
 			expect(isStartForClient).not.toHaveBeenCalled();
 		});
 
+		it('takes its client named in capitals, and still refuses another client named so', async () => {
+			const { guard, isStartForClient } = guardWith();
+			const otherClient = '7A000000-0000-4000-8000-0000000000D2';
+			const inCapitals = { projectId: WEBSITE, organizationContactId: CLIENT.toUpperCase() };
+			const anotherInCapitals = { projectId: WEBSITE, organizationContactId: otherClient };
+
+			await expect(guard.canActivate(start(inCapitals))).resolves.toBe(true);
+			await expect(guard.canActivate(start(anotherInCapitals))).rejects.toMatchObject({
+				response: { code: 'EMBED_CLIENT_PROJECT' }
+			});
+			expect(isStartForClient).toHaveBeenCalledTimes(1);
+		});
+
 		it('looks a start up only for a token this server signed and that is not revoked', async () => {
 			const { guard, isStartForClient } = guardWith();
 			const forged = sign(

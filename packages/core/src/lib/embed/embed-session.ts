@@ -1,3 +1,4 @@
+import { isUUID } from 'class-validator';
 import { decode, verify } from 'jsonwebtoken';
 import { ExtractJwt } from 'passport-jwt';
 import * as moment from 'moment';
@@ -302,6 +303,14 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 const isNamed = (value: unknown) => value !== undefined && value !== null && value !== '';
 
+/** Whether a client a request names is the token's client: the same UUID, whatever its letter case. */
+function isSameClient(named: unknown, clientId: string): boolean {
+	if (typeof named !== 'string' || !isUUID(named)) {
+		return false;
+	}
+	return named.toLowerCase() === clientId.toLowerCase();
+}
+
 /**
  * Whether a request to an embed route stays inside the token's scope: only the query parameters the route takes, and
  * no organization, tenant or member but the token's, wherever the request names one (query, `where`, body, header).
@@ -369,8 +378,8 @@ export function isWithinEmbedScope(
 
 /**
  * The project and the task a timer start names, for a token limited to a client, before they are looked up. None when
- * the start names no project, names another client (`organizationContactId`), or names a project or a task that is not
- * a string: such a start never keeps to the client.
+ * the start names no project, names another client (`organizationContactId`, compared in any letter case), or names a
+ * project or a task that is not a string: such a start never keeps to the client.
  *
  * @param body The start's body.
  * @param clientId The client the token's credential is limited to.
@@ -380,7 +389,7 @@ export function clientStartOf(body: unknown, clientId: string): IEmbedClientStar
 		return null;
 	}
 	const client = body['organizationContactId'];
-	const namesAnotherClient = isNamed(client) && client !== clientId;
+	const namesAnotherClient = isNamed(client) && !isSameClient(client, clientId);
 	if (namesAnotherClient) {
 		return null;
 	}
