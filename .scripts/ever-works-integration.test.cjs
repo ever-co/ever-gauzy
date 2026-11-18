@@ -128,6 +128,11 @@ const core = {
 	},
 	OrganizationProjectCreateCommand: class {},
 	createSsrfSafeHttpsAgent: () => undefined,
+	/**
+	 * The platform's MikroORM request context for a background unit of work (ever-co/ever-gauzy#12060). The services here are
+	 * built without a MikroORM instance (its `@Optional()` injection is absent), so the platform's helper runs the work as it is.
+	 */
+	runInMikroOrmContext: (_orm, work) => work(),
 	RequestContext: {
 		currentTenantId: () => caller.tenantId,
 		currentUserId: () => caller.userId,
