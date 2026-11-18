@@ -232,7 +232,10 @@ export class TimeLogDeleteHandler implements ICommandHandler<TimeLogDeleteComman
 
 	/**
 	 * The entries read under their rows' locks for their facts alone, in a savepoint of the deletion's transaction: a
-	 * read that fails is undone alone and logged, and the deletion goes on without the facts.
+	 * read that fails is undone and logged, and the deletion goes on without the facts. On PostgreSQL that undoes the
+	 * savepoint alone. On MySQL a deadlock on this read rolls back the whole transaction (InnoDB): the entries are then
+	 * deleted outside it, as they were before the facts, and their `time_log.deleted` facts are lost, with the warning
+	 * as their only trace.
 	 */
 	private async readStoredForFacts(manager: EntityManager, timeLogs: TimeLog[]): Promise<TimeLog[]> {
 		try {
