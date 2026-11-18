@@ -1,0 +1,95 @@
+/*
+ * Begin
+ * Colour picker field — the ngx-color-picker popup, in the app's theme.
+ *
+ * The picker renders its popup with unencapsulated styles, next to the field it opens from, so a component
+ * stylesheet cannot reach it without `::ng-deep`. It is styled here instead, globally but scoped to a
+ * `.ga-color-picker-field` wrapper: only a field that opts in by wearing that class gets this look, and every
+ * other picker in the app keeps the library's.
+ *
+ * Used by the tag dialog (`TagsMutationComponent`), which also configures the picker for hex only (no alpha,
+ * no hex / rgba / hsla switch) and renders its own preset buttons through `cpExtraTemplate`.
+ *
+ * Included from the `gauzy-overrides()` aggregate mixin in `_gauzy-overrides.scss`. Colours are Gauzy and
+ * Nebular CSS custom properties and radii scale from `--border-radius`, so themes need nothing of their own.
+ */
+@mixin color-picker-field() {
+  .ga-color-picker-field .color-picker {
+    border: 1px solid var(--gauzy-border-default-color);
+    border-radius: var(--border-radius);
+    background-color: var(--gauzy-card-1);
+    box-shadow: var(--gauzy-shadow);
+    overflow: hidden;
+
+    // The pointer arrow and the hex / rgba / hsla switch: the field takes hex only.
+    .arrow,
+    .type-policy {
+      display: none;
+    }
+
+    .saturation-lightness {
+      border-radius: calc(var(--border-radius) * 0.75) calc(var(--border-radius) * 0.75) 0 0;
+    }
+
+    .hue-alpha {
+      align-items: center;
+      margin-bottom: 0;
+      padding: 0.75rem 0.75rem 0.25rem;
+    }
+
+    // The preview circle: the field shows the colour as a swatch of its own.
+    .hue-alpha .left {
+      display: none;
+    }
+
+    .hue-alpha .right {
+      padding: 0;
+    }
+
+    .hue {
+      height: 0.625rem;
+      margin-bottom: 0;
+      border-radius: calc(var(--border-radius) * 0.625);
+    }
+
+    .hue .cursor,
+    .saturation-lightness .cursor {
+      box-shadow: 0 0 0 1px var(--gauzy-border-default-color);
+    }
+
+    .hex-text {
+      padding: 0.5rem 0.75rem 0.75rem;
+      font-size: 0.75rem;
+    }
+
+    .hex-text .box {
+      padding: 0;
+    }
+
+    .hex-text .box input {
+      height: 2rem;
+      padding: 0 0.5rem;
+      border: 1px solid var(--gauzy-border-default-color);
+      border-radius: calc(var(--border-radius) * 0.75);
+      background-color: var(--gauzy-card-2);
+      color: var(--gauzy-text-color-1);
+      font-size: 0.8125rem;
+      text-transform: uppercase;
+      text-align: start;
+
+      &:focus {
+        outline: none;
+        border-color: var(--color-primary-default);
+      }
+    }
+
+    // The "Hex" caption, a box of its own under the input.
+    .hex-text .box + .box {
+      display: none;
+    }
+  }
+}
+/*
+ * End
+ * Colour picker field
+ */
