@@ -1,7 +1,7 @@
 import { ConflictException, Logger, NotFoundException, Optional } from '@nestjs/common';
 import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
 import * as moment from 'moment';
-import { Brackets, DataSource, EntityManager, FindOptionsWhere, Repository } from 'typeorm';
+import { Brackets, DataSource, EntityManager, FindOptionsWhere, Repository, UpdateResult } from 'typeorm';
 import { ID, ITimeLog, ITimeSlot, ITimesheet, TimeLogType } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/utils';
 import { TimesheetFirstOrCreateCommand, TimesheetRecalculateCommand } from './../../../timesheet/commands';
@@ -36,6 +36,7 @@ import { writeTimeLogTags } from '../../time-log-tags';
 import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.repository';
 import { TypeOrmTimeSlotRepository } from '../../../time-slot/repository/type-orm-time-slot.repository';
 import { MikroOrmTimeSlotRepository } from '../../../time-slot/repository/mikro-orm-time-slot.repository';
+import { factOfUpdatedLog, TimeLogFactEntryReader, TimeLogFactsService } from '../../time-log-facts.service';
 
 /**
  * Input keys that decide WHERE a time log lives. They are never taken from the input.
@@ -155,6 +156,11 @@ function slotLinksOf(id: ID, timeSlots: ITimeSlot[]): ITimeLog {
 	return { id, timeSlots } as ITimeLog;
 }
 
+/** The fields a write stores: one written as undefined is left as stored (TypeORM skips it), so it changes nothing. */
+function definedFieldsOf(written: Partial<ITimeLog>): Partial<ITimeLog> {
+	return Object.fromEntries(Object.entries(written).filter(([, value]) => value !== undefined)) as Partial<ITimeLog>;
+}
+
 @CommandHandler(TimeLogUpdateCommand)
 export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateCommand> {
 	protected ormType: MultiORM = getORMType();
@@ -167,7 +173,9 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 		private readonly mikroOrmTimeSlotRepository: MikroOrmTimeSlotRepository,
 		private readonly timeSlotService: TimeSlotService,
 		// Records the history of a change a person makes; a handler built without it writes as before.
-		@Optional() private readonly dataSource?: DataSource
+		@Optional() private readonly dataSource?: DataSource,
+		// Writes the entry's fact for the webhooks; a handler built without it writes as before.
+		@Optional() private readonly facts?: TimeLogFactsService
 	) {}
 
 	/**
@@ -183,6 +191,8 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 	public async execute(command: TimeLogUpdateCommand): Promise<ITimeLog> {
 		// Extract input parameters from the command
 		const { id, input, manualTimeSlot, forceDelete = false, history, stopsRun = false, options = {} } = command;
+		// The edit's fact, for the webhooks
+		const fact = factOfUpdatedLog(stopsRun);
 
 		let timeLog: ITimeLog = await this.getTimeLogByIdOrInstance(id);
 
@@ -277,7 +287,8 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 				(repository) => this.saveUpdatedTimeLog(timeLog, repository),
 				true,
 				expectedUpdatedAt,
-				options
+				options,
+				fact
 			);
 			timeLog = await this.typeOrmTimeLogRepository.findOneBy({ id: timeLog.id });
 			// (c) only then the previous employee's slots are released, below. If that fails, the log is fully
@@ -345,7 +356,8 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 					},
 					true,
 					expectedUpdatedAt,
-					options
+					options,
+					fact
 				);
 
 			// The time slots of the new range, for the web and embedded timers and a heartbeat-posting run with none
@@ -418,6 +430,11 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 
 		// Return the updated time log
 		const updatedTimeLog = await this.typeOrmTimeLogRepository.findOneBy({ id: timeLog.id });
+		// Where the outbox cannot share the write's transaction, the fact comes last, once every write went through:
+		// a try that fails writes no fact, and the try that completes a stop writes its one fact.
+		if (!this.appendsFactsWithinWrites()) {
+			await this.facts?.record(fact, updatedTimeLog);
+		}
 
 		return updatedTimeLog;
 	}
@@ -973,6 +990,10 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 	 * @param options - What the edit writes besides the entry's columns (its tags), and checks before writing, in the
 	 * same transaction (see `TimeLogUpdateOptions`). Either one runs the write in that transaction.
 	 *
+	 * @param fact - The edit's fact (for the webhooks). Where the outbox can share the write's transaction, it is
+	 * appended in it (see `recordFactOfWrite`); a write that runs alone otherwise runs in a transaction with it, and
+	 * nothing else of it changes.
+	 *
 	 * @throws ApiException 409 `CONCURRENT_MODIFICATION` (`TIME_LOG_CHANGED`) when the entry was written since
 	 * `expectedUpdatedAt`; nothing is written, nor recorded.
 	 * @throws What `options.assertBeforeWrite` throws; nothing is written, nor recorded.
@@ -984,14 +1005,37 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 		write: (repository: Repository<TimeLog>) => Promise<T>,
 		refusesDeletedEntry = false,
 		expectedUpdatedAt: Date | null = null,
-		options: TimeLogUpdateOptions = {}
+		options: TimeLogUpdateOptions = {},
+		fact?: string
 	): Promise<T | undefined> {
 		const recordsHistory = Boolean(history) && Boolean(this.dataSource);
 		const isConditional = expectedUpdatedAt !== null;
 		const writesTags = Array.isArray(options.tagIds);
 		const checksBeforeWrite = typeof options.assertBeforeWrite === 'function';
-		if (!recordsHistory && !isConditional && !writesTags && !checksBeforeWrite) {
-			return write(this.typeOrmTimeLogRepository);
+		const appendsFact = Boolean(fact) && this.appendsFactsWithinWrites();
+		const locksEntry = recordsHistory || isConditional || writesTags || checksBeforeWrite;
+		if (!locksEntry) {
+			if (!appendsFact) {
+				return write(this.typeOrmTimeLogRepository);
+			}
+			return this.inTransaction(async (manager) => {
+				const result = await write(manager.getRepository(TimeLog));
+				// The entry as this write leaves it, read back in its transaction, inside the fact's savepoint so that
+				// a read that fails never fails the edit: the first read was taken under no lock, and an edit written
+				// since it would otherwise be told of as it was before
+				// (should the read fail, the entry as first read with what the write stored: a stop's fact is never
+				// lost)
+				const where = { id: stored.id, tenantId: stored.tenantId };
+				const asWritten = { ...stored, ...definedFieldsOf(written) } as ITimeLog;
+				await this.recordFactOfWrite(
+					manager,
+					fact,
+					result,
+					(savepoint) => savepoint.findOne(TimeLog, { where, withDeleted: true }),
+					asWritten
+				);
+				return result;
+			});
 		}
 		return this.inTransaction(async (manager) => {
 			const current = await manager.findOne(TimeLog, {
@@ -1019,14 +1063,14 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 				await writeTimeLogTags(manager, current.id, options.tagIds);
 			}
 			await moveUpdatedAtPast(manager, current, expectedUpdatedAt);
+			const edited = { ...current, ...definedFieldsOf(written) } as ITimeLog;
+			if (appendsFact) {
+				// Read under the entry's lock, `current` with what the write stored is the row as it leaves it
+				await this.recordFactOfWrite(manager, fact, result, edited);
+			}
 			if (!recordsHistory) {
 				return result;
 			}
-			// A field written as undefined is left as stored (TypeORM skips it), so it is no change of the history
-			const definedWritten = Object.fromEntries(
-				Object.entries(written).filter(([, value]) => value !== undefined)
-			) as Partial<ITimeLog>;
-			const edited = { ...current, ...definedWritten } as ITimeLog;
 			const change = updatedChange(current, edited);
 			if (change) {
 				await recordTimeLogHistory(manager, [
@@ -1035,6 +1079,32 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 			}
 			return result;
 		});
+	}
+
+	/** Whether the facts are appended in their write's transaction (see `TimeLogFactsService.appendsWithinWrites`). */
+	private appendsFactsWithinWrites(): boolean {
+		return this.facts?.appendsWithinWrites() ?? false;
+	}
+
+	/**
+	 * Appends an edit's fact in its write's transaction, unless the write changed no row: the stop an earlier try of
+	 * the same stop already wrote, with its fact.
+	 *
+	 * @param entry - The entry as the write leaves it, or how to read it back (see `TimeLogFactsService.recordWithin`).
+	 * @param fallback - With a read: the entry as the write states it, told of when the read fails.
+	 */
+	private async recordFactOfWrite(
+		manager: EntityManager,
+		fact: string,
+		result: unknown,
+		entry: ITimeLog | TimeLogFactEntryReader,
+		fallback?: ITimeLog
+	): Promise<void> {
+		const changedNoRow = (result as UpdateResult | undefined)?.affected === 0;
+		if (changedNoRow) {
+			return;
+		}
+		await this.facts.recordWithin(manager, fact, entry, fallback);
 	}
 
 	/**
