@@ -4,7 +4,7 @@ import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-i
 import { Router } from '@angular/router';
 import { NbIconModule } from '@nebular/theme';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { EMPTY, forkJoin, from, merge, Observable, of, Subscription } from 'rxjs';
+import { concat, defer, EMPTY, forkJoin, from, merge, Observable, of, Subscription } from 'rxjs';
 import { auditTime, catchError, concatMap, distinctUntilChanged, filter, map, switchMap, tap, toArray } from 'rxjs/operators';
 import { CHAT_EVENT_NAMES, ChatVisibilityEnum, IChatConversationWithState, IChatMessageWithRelations, IOrganization, IUser, PermissionsEnum } from '@gauzy/contracts';
 import { Store, ToastrService } from '@gauzy/ui-core/core';
@@ -15,7 +15,7 @@ import { teamChannelOf } from '../../chat-team-suggestions';
 import { withTaskReference } from '../../chat-tasks';
 import { apiErrorMessage, ChatMemberIds, ChatPerson, continuesGroup, isSameDay, memberEmployeeIds, mergeMessages, newNonce, showNewestPage, userName } from '../../chat-ui.helpers';
 import { ChatCreateTaskFlow } from '../../dialogs/chat-task-dialogs.component';
-import { ChatDockService } from '../../services/chat-dock.service';
+import { ChatDockService, ChatTeamChannelSetup } from '../../services/chat-dock.service';
 import { ChatFilesStore } from '../../services/chat-files.store';
 import { coalesceReads } from '../../services/chat-live';
 import { ChatLiveService, isTabVisible } from '../../services/chat-live.service';
@@ -893,22 +893,71 @@ export class ChatDockComponent {
 	}
 
 	/**
-	 * The team's channel on opening the card: the one found, joined when I am not in it; else null — none is created on
-	 * opening, only with the first message sent (`createAndSend`).
+	 * The team's channel on opening the card: the one whose set-up is unfinished, finished first (see `finishSetup`);
+	 * else the one found, joined when I am not in it; else null — none is created on opening, only with the first
+	 * message sent (`createAndSend`).
 	 */
 	private teamChannel(team: ChatTeamDetails): Observable<IChatConversationWithState | null> {
+		const setup = this.dock.teamSetups.get(this.setupKey(team));
+		if (setup) return this.finishSetup(team, setup);
 		return this.findTeamChannel(team).pipe(switchMap(({ found, member }) => (found ? this.enter(found, member) : of(null))));
 	}
 
+	/** Where the set-up of a team's channel is kept: per user, organization and team. */
+	private setupKey(team: ChatTeamDetails): string {
+		return `${this.me()?.userId ?? ''}|${this.organizationId() ?? ''}|${team.id}`;
+	}
+
 	/**
-	 * The channel the card's first message to a team goes to. Looked for again first (a teammate may have created it
-	 * since the card opened); else created, named as the team — public for a public team, private for a private one —
-	 * with as many of its members as one request may add. The API does not create a channel once per name: when a
-	 * teammate created one at the same moment, both look again and settle on the same one (the oldest, see
-	 * `teamChannelOf`); the one just created here and left empty is archived. The members beyond the first request's
-	 * are then added to the channel kept, in batches the API takes.
+	 * Finishes what is left of a team channel's set-up, in order: joins the channel when I must, archives the empty
+	 * duplicates made here, adds the members still to add (each batch within the API's limit). Each step done is struck
+	 * off as it succeeds. A failed archive does not hold the message back: it stays, to be tried again next time. A
+	 * failed join or batch fails the whole (the message waits for every member), and what is left stays for the next
+	 * try. The set-up is forgotten once nothing is left.
+	 */
+	private finishSetup(team: ChatTeamDetails, setup: ChatTeamChannelSetup): Observable<IChatConversationWithState> {
+		const key = this.setupKey(team);
+		const join$ = defer(() =>
+			setup.mustJoin
+				? this.api.join(setup.channel.id).pipe(
+						tap(({ conversation }) => {
+							setup.channel = conversation;
+							setup.mustJoin = false;
+							this.api.notifyChanged();
+						})
+					)
+				: of(null)
+		);
+		const archive$ = defer(() => from([...setup.archiveIds])).pipe(
+			concatMap((id) =>
+				this.api.setArchived(id, true).pipe(
+					tap(() => (setup.archiveIds = setup.archiveIds.filter((pending) => pending !== id))),
+					catchError(() => of(null))
+				)
+			)
+		);
+		const members$ = defer(() => from([...setup.batches])).pipe(
+			concatMap((batch) => this.api.addMembers(setup.channel.id, batch).pipe(tap(() => (setup.batches = setup.batches.filter((pending) => pending !== batch)))))
+		);
+		return concat(join$, archive$, members$).pipe(
+			toArray(),
+			map(() => {
+				if (!setup.mustJoin && !setup.archiveIds.length && !setup.batches.length && this.dock.teamSetups.get(key) === setup) {
+					this.dock.teamSetups.delete(key);
+				}
+				return setup.channel;
+			})
+		);
+	}
+
+	/**
+	 * The channel the card's first message to a team goes to. An unfinished set-up is finished first. Else looked for
+	 * again (a teammate may have created it since the card opened); else created, named as the team — public for a
+	 * public team, private for a private one — with as many of its members as one request may add (see `settle`).
 	 */
 	private teamChannelForFirstMessage(team: ChatTeamDetails): Observable<IChatConversationWithState> {
+		const setup = this.dock.teamSetups.get(this.setupKey(team));
+		if (setup) return this.finishSetup(team, setup);
 		return this.findTeamChannel(team).pipe(
 			switchMap(({ found, member }) => {
 				if (found) return this.enter(found, member);
@@ -936,26 +985,25 @@ export class ChatDockComponent {
 	}
 
 	/**
-	 * After creating a team's channel: keeps it when it is the team's channel the API lists (the oldest), adding the
-	 * remaining members; else archives it (still empty) and goes to the older one a teammate created meanwhile. When the
+	 * Right after creating a team's channel, its set-up is kept (the members still to add) before anything else can
+	 * fail. The API does not create a channel once per name: when a teammate created one at the same moment, both look
+	 * again and settle on the same one (the oldest, see `teamChannelOf`) — the one made here, still empty, is then to be
+	 * archived, and the members are the other one's to add. The set-up is then finished (`finishSetup`). When the
 	 * channels cannot be listed again, the one created is kept.
 	 */
 	private settle(team: ChatTeamDetails, created: IChatConversationWithState, rest: string[][]): Observable<IChatConversationWithState> {
+		const setup: ChatTeamChannelSetup = { channel: created, mustJoin: false, archiveIds: [], batches: rest };
+		this.dock.teamSetups.set(this.setupKey(team), setup);
 		return this.findTeamChannel(team).pipe(
 			catchError(() => of({ found: null, member: false })),
-			switchMap(({ found, member }) => {
-				if (found && String(found.id) !== String(created.id)) {
-					return this.api.setArchived(created.id, true).pipe(
-						catchError(() => of(null)),
-						switchMap(() => this.enter(found, member))
-					);
-				}
-				return from(rest).pipe(
-					concatMap((batch) => this.api.addMembers(created.id, batch)),
-					toArray(),
-					map(() => created)
-				);
-			})
+			tap(({ found, member }) => {
+				if (!found || String(found.id) === String(created.id)) return;
+				setup.channel = found;
+				setup.mustJoin = !member;
+				setup.archiveIds = [String(created.id)];
+				setup.batches = [];
+			}),
+			switchMap(() => this.finishSetup(team, setup))
 		);
 	}
 
@@ -966,7 +1014,9 @@ export class ChatDockComponent {
 	 */
 	private createAndSend(team: ChatTeamDetails, submission: ComposerSubmission): void {
 		this.sending.set(true);
-		const pending = this.pendingChannel?.teamId === team.id ? this.pendingChannel.conversation : null;
+		// An unfinished set-up goes first (`teamChannelForFirstMessage` finishes it); else the channel of a failed send.
+		const unfinished = this.dock.teamSetups.has(this.setupKey(team));
+		const pending = !unfinished && this.pendingChannel?.teamId === team.id ? this.pendingChannel.conversation : null;
 		const channel$ = pending
 			? of(pending)
 			: this.teamChannelForFirstMessage(team).pipe(tap((conversation) => (this.pendingChannel = { teamId: team.id, conversation })));
