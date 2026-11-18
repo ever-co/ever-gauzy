@@ -53,7 +53,18 @@ export class EmbedAllowedOriginService extends TenantAwareCrudService<EmbedAllow
 		if (existing.length > 0) {
 			return EmbedAllowedOriginResponseDTO.from(existing[0]);
 		}
-		const row = await this.create(scope);
+		let row: EmbedAllowedOrigin;
+		try {
+			row = await this.create(scope);
+		} catch (error) {
+			// Two requests adding the same origin at once: the unique index refuses the second insert, and the row
+			// the first one saved is the answer.
+			const saved = await this.find({ where: scope }).catch(() => []);
+			if (saved.length > 0) {
+				return EmbedAllowedOriginResponseDTO.from(saved[0]);
+			}
+			throw error;
+		}
 		this.everyOrigin = null;
 		this.logger.log(`Embed origin allowed: ${origin} organizationId=${input.organizationId}`);
 		return EmbedAllowedOriginResponseDTO.from(row);

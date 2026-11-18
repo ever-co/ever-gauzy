@@ -130,6 +130,32 @@ describe('EmbedAllowedOriginService', () => {
 		expect(await service.isAllowed(ORG, 'https://other.example.com')).toBe(false);
 	});
 
+	it('answers the saved row when another request added the same origin between the read and the insert', async () => {
+		const { service, rows } = build();
+		signIn(TENANT);
+		const saved = { id: 'first', tenantId: TENANT, organizationId: ORG, origin: 'https://app.example.com', createdAt: new Date() };
+		jest.spyOn(service, 'create').mockImplementation(async () => {
+			// The other request's insert lands first, and the unique index refuses this one.
+			rows.push(saved);
+			throw new BadRequestException('duplicate key value violates unique constraint');
+		});
+
+		const added = await service.addForOrganization({ origin: 'https://app.example.com', organizationId: ORG });
+
+		expect(added.id).toBe('first');
+		expect(rows).toHaveLength(1);
+	});
+
+	it('still refuses an insert that fails for another reason', async () => {
+		const { service } = build();
+		signIn(TENANT);
+		jest.spyOn(service, 'create').mockRejectedValue(new BadRequestException('the database refused it'));
+
+		await expect(service.addForOrganization({ origin: 'https://app.example.com', organizationId: ORG })).rejects.toThrow(
+			'the database refused it'
+		);
+	});
+
 	it('reads every origin for CORS at most once a minute, and again at once after a change', async () => {
 		jest.useFakeTimers({ now: new Date('2026-11-17T12:00:00Z') });
 		const { service, reads } = build();
