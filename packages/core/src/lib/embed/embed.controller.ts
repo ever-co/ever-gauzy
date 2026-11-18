@@ -28,6 +28,8 @@ import {
 } from './dto/embed-credential.dto';
 import { EmbedCredentialService } from './embed-credential.service';
 import { EMBED_EXCHANGE_THROTTLE, embedExchangeAddress } from './embed-exchange-throttle';
+import { CreateEmbedAllowedOriginDTO, EmbedAllowedOriginResponseDTO } from './dto/embed-allowed-origin.dto';
+import { EmbedAllowedOriginService } from './embed-allowed-origin.service';
 import { EmbedEnabledGuard } from './embed.guards';
 import { isEmbedEnabled } from './embed.utils';
 
@@ -70,6 +72,41 @@ export class EmbedCredentialController {
 	@HttpCode(HttpStatus.NO_CONTENT)
 	async revoke(@Param('id', UUIDValidationPipe) id: ID): Promise<void> {
 		await this.embedCredentialService.revoke(id);
+	}
+}
+
+/** The sites allowed to embed an organization's timer, for its administrators. */
+@ApiTags('Embed')
+@UseGuards(TenantPermissionGuard, PermissionGuard, EmbedEnabledGuard)
+@Permissions(PermissionsEnum.ALL_ORG_EDIT)
+@Controller('/embed-allowed-origins')
+export class EmbedAllowedOriginController {
+	constructor(private readonly embedAllowedOriginService: EmbedAllowedOriginService) {}
+
+	@ApiOperation({ summary: "The organization's allowed origins, with who added each and when" })
+	@ApiResponse({ status: HttpStatus.OK, type: EmbedAllowedOriginResponseDTO, isArray: true })
+	@Get('/')
+	async list(@Query('organizationId', UUIDValidationPipe) organizationId: ID): Promise<EmbedAllowedOriginResponseDTO[]> {
+		return await this.embedAllowedOriginService.listForOrganization(organizationId);
+	}
+
+	@ApiOperation({ summary: 'Allow a site (scheme, host and port) to embed the timer' })
+	@ApiResponse({ status: HttpStatus.CREATED, type: EmbedAllowedOriginResponseDTO })
+	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Not an origin: a path, a wildcard or another scheme' })
+	@Post('/')
+	@UseValidationPipe({ whitelist: true })
+	async add(@Body() input: CreateEmbedAllowedOriginDTO): Promise<EmbedAllowedOriginResponseDTO> {
+		return await this.embedAllowedOriginService.addForOrganization(input);
+	}
+
+	@ApiOperation({
+		summary:
+			"Remove an allowed origin: the organization's new tokens refuse it at once; CORS stops answering it within a minute, unless another organization or ALLOWED_ORIGINS still allows it"
+	})
+	@Delete('/:id')
+	@HttpCode(HttpStatus.NO_CONTENT)
+	async remove(@Param('id', UUIDValidationPipe) id: ID): Promise<void> {
+		await this.embedAllowedOriginService.remove(id);
 	}
 }
 

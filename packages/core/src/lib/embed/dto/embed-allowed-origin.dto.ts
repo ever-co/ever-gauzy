@@ -1,0 +1,51 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsNotEmpty, IsString, IsUUID, MaxLength } from 'class-validator';
+import { ID, IEmbedAllowedOrigin, IEmbedAllowedOriginCreateInput } from '@gauzy/contracts';
+import { IsOrganizationBelongsToUser } from '../../shared/validators';
+import { EmbedAllowedOrigin } from '../embed-allowed-origin.entity';
+
+/** `POST /api/embed-allowed-origins`: the origin is normalized by the service, which refuses anything else. */
+export class CreateEmbedAllowedOriginDTO implements IEmbedAllowedOriginCreateInput {
+	@ApiProperty({ type: () => String, maxLength: 255, example: 'https://app.example.com' })
+	@IsString()
+	@IsNotEmpty()
+	@MaxLength(255)
+	origin: string;
+
+	/**
+	 * An organization of the caller's own tenant that they may reach. The CRUD base confines no tenant admin to one
+	 * organization, so without the check an admin could name another tenant's organization.
+	 */
+	@ApiProperty({ type: () => String })
+	@IsUUID()
+	@IsOrganizationBelongsToUser()
+	organizationId: ID;
+}
+
+/** An allowed origin as the list answers it: who added it and when. */
+export class EmbedAllowedOriginResponseDTO implements IEmbedAllowedOrigin {
+	@ApiProperty({ type: () => String })
+	id: ID;
+
+	@ApiProperty({ type: () => String })
+	origin: string;
+
+	@ApiPropertyOptional({ type: () => String })
+	organizationId?: ID;
+
+	@ApiPropertyOptional({ type: () => String })
+	createdByUserId?: ID;
+
+	@ApiPropertyOptional({ type: () => Date })
+	createdAt?: Date;
+
+	static from(row: EmbedAllowedOrigin): EmbedAllowedOriginResponseDTO {
+		const answer = new EmbedAllowedOriginResponseDTO();
+		answer.id = row.id;
+		answer.origin = row.origin;
+		answer.organizationId = row.organizationId;
+		answer.createdByUserId = row.createdByUserId;
+		answer.createdAt = row.createdAt;
+		return answer;
+	}
+}

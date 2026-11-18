@@ -45,6 +45,8 @@ import {
 	isWellFormedEmbedCredential
 } from './embed.utils';
 import { MikroOrmEmbedCredentialRepository } from './repository/mikro-orm-embed-credential.repository';
+import { EmbedAllowedOriginService } from './embed-allowed-origin.service';
+import { normalizeOrigin } from './embed-origin';
 import { TypeOrmEmbedCredentialRepository } from './repository/type-orm-embed-credential.repository';
 
 /** A credential that does not earn a token, already logged with its reason. */
@@ -52,6 +54,9 @@ class CredentialRefused extends Error {}
 
 /** A valid credential asked for a member it cannot act for, already logged with its reason. */
 class MemberRefused extends Error {}
+
+/** A valid credential asked for a page origin its organization does not allow, already logged. */
+class OriginRefused extends Error {}
 
 /** An address that had too many credentials refused, answered before any lookup (`EmbedExchangeFailures`). */
 class AddressLimited extends Error {}
@@ -85,7 +90,8 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 		private readonly mikroOrmUserRepository: MikroOrmUserRepository,
 		private readonly typeOrmUserOrganizationRepository: TypeOrmUserOrganizationRepository,
 		private readonly mikroOrmUserOrganizationRepository: MikroOrmUserOrganizationRepository,
-		private readonly authService: AuthService
+		private readonly authService: AuthService,
+		private readonly embedAllowedOriginService: EmbedAllowedOriginService
 	) {
 		super(typeOrmEmbedCredentialRepository, mikroOrmEmbedCredentialRepository);
 	}
@@ -195,6 +201,13 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 				this.logger.error(`Embed exchange could not reach the database: ${error?.message}`);
 				throw new ServiceUnavailableException(DATABASE_UNAVAILABLE_MESSAGE, { cause: error });
 			}
+			if (error instanceof OriginRefused) {
+				throw new ForbiddenException({
+					statusCode: 403,
+					code: 'EMBED_ORIGIN_NOT_ALLOWED',
+					message: "This site is not allowed to embed the organization's timer."
+				});
+			}
 			if (error instanceof MemberRefused) {
 				throw new ForbiddenException({
 					statusCode: 403,
@@ -219,7 +232,7 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 		}
 	}
 
-	private async judgeAndMint({ credential, employeeId, email }: ExchangeEmbedCredentialDTO, address: string) {
+	private async judgeAndMint({ credential, employeeId, email, origin }: ExchangeEmbedCredentialDTO, address: string) {
 		// Whether the lookup below was counted against the address up front (`EmbedExchangeFailures.admit`).
 		let counted = false;
 		const refuseCredential = (reason: string, row?: EmbedCredential): never => {
@@ -269,6 +282,15 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 		this.exchangeFailures.release(address, admission);
 		this.exchangeFailures.recordAccepted(presented);
 
+		// The page the widget runs in must be one of the organization's allowed origins; the token is bound to it.
+		const pageOrigin = normalizeOrigin(origin);
+		const allowed =
+			!!pageOrigin && (await this.embedAllowedOriginService.isAllowed(row.tenantId, row.organizationId, pageOrigin));
+		if (!allowed) {
+			this.logger.warn(`Embed exchange refused: origin not allowed credential=${row.id}`);
+			throw new OriginRefused('origin not allowed');
+		}
+
 		const employee = await this.findMember(row, { employeeId, email });
 		if (!employee) {
 			refuseMember('not an active member of the organization', row);
@@ -292,6 +314,7 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 			organizationId: row.organizationId,
 			credentialId: row.id,
 			employeeId: employee.id,
+			origin: pageOrigin,
 			expiresAt
 		});
 		await this.recordUse(row, now);
