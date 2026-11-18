@@ -118,6 +118,28 @@ describe('EmbedAllowedOriginService', () => {
 		);
 	});
 
+	it('refuses an origin longer than its column once normalized, before any insert', async () => {
+		const { service, rows } = build();
+		signIn(TENANT);
+		// 254 characters as written; punycode makes `bücher` `xn--bcher-kva`, 261 as stored.
+		const long = `https://${['a'.repeat(63), 'b'.repeat(63), 'c'.repeat(63), 'd'.repeat(47), 'bücher'].join('.')}`;
+		expect(long.length).toBeLessThanOrEqual(255);
+		expect(normalizeOrigin(long)?.length).toBeGreaterThan(255);
+
+		await expect(service.addForOrganization({ origin: long, organizationId: ORG })).rejects.toThrow(BadRequestException);
+		expect(service.create).not.toHaveBeenCalled();
+		expect(rows).toHaveLength(0);
+	});
+
+	it('answers 404 only for a miss: a lookup that failed is thrown as it is, and nothing is removed', async () => {
+		const { service } = build();
+		signIn(TENANT);
+		jest.spyOn(service, 'findOneByOptions').mockRejectedValue(new Error('connection lost'));
+
+		await expect(service.remove('7a000000-0000-4000-8000-00000000d001')).rejects.toThrow('connection lost');
+		expect(service.delete).not.toHaveBeenCalled();
+	});
+
 	it('removes only an origin of the caller tenant', async () => {
 		const { service, rows } = build();
 		signIn(TENANT);
@@ -192,6 +214,26 @@ describe('EmbedAllowedOriginService', () => {
 
 		await service.remove(id);
 		expect(await service.isAllowedAnywhere('https://app.example.com')).toBe(false);
+	});
+
+	it('keeps no list of every origin that an add on this server overtook while it was read', async () => {
+		const { service, rows, reads } = build();
+		signIn(TENANT);
+		let release: () => void = () => undefined;
+		const gate = new Promise<void>((resolve) => (release = resolve));
+		reads.mockImplementationOnce(async () => {
+			const before = [...rows];
+			await gate;
+			return before;
+		});
+
+		const pending = service.isAllowedAnywhere('https://app.example.com');
+		await service.addForOrganization({ origin: 'https://app.example.com', organizationId: ORG });
+		release();
+
+		expect(await pending).toBe(false);
+		expect(await service.isAllowedAnywhere('https://app.example.com')).toBe(true);
+		expect(reads).toHaveBeenCalledTimes(2);
 	});
 });
 

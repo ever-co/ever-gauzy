@@ -12,6 +12,9 @@ import { EMBED_ORIGINS_CACHE_MS, normalizeOrigin } from './embed-origin';
 import { MikroOrmEmbedAllowedOriginRepository } from './repository/mikro-orm-embed-allowed-origin.repository';
 import { TypeOrmEmbedAllowedOriginRepository } from './repository/type-orm-embed-allowed-origin.repository';
 
+/** The length of `embed_allowed_origin.origin`. Normalizing can lengthen a value: a domain name is stored in punycode. */
+const ORIGIN_MAX_LENGTH = 255;
+
 /**
  * The sites allowed to embed an organization's timer. An administrator manages the list; the embed exchange accepts
  * only an origin of it and binds the token to that origin; CORS answers these origins for the timer routes.
@@ -21,6 +24,8 @@ export class EmbedAllowedOriginService extends TenantAwareCrudService<EmbedAllow
 	private readonly logger = new Logger(EmbedAllowedOriginService.name);
 	// Every organization's origins, for CORS, which runs before any tenant is known.
 	private everyOrigin: { origins: Set<string>; readAt: number } | null = null;
+	// Counts the adds and removals on this server, so a read of every origin that one of them overtook is not kept.
+	private originsGeneration = 0;
 
 	constructor(
 		readonly typeOrmEmbedAllowedOriginRepository: TypeOrmEmbedAllowedOriginRepository,
@@ -47,6 +52,11 @@ export class EmbedAllowedOriginService extends TenantAwareCrudService<EmbedAllow
 				'An origin is a scheme, a host and an optional port, such as https://app.example.com: no path, no wildcard.'
 			);
 		}
+		if (origin.length > ORIGIN_MAX_LENGTH) {
+			throw new BadRequestException(
+				`An origin is at most ${ORIGIN_MAX_LENGTH} characters as stored (an international domain name in punycode).`
+			);
+		}
 		const tenantId = RequestContext.currentTenantId();
 		const scope = { tenantId, organizationId: input.organizationId, origin };
 		const existing = await this.find({ where: scope });
@@ -65,21 +75,29 @@ export class EmbedAllowedOriginService extends TenantAwareCrudService<EmbedAllow
 			}
 			throw error;
 		}
-		this.everyOrigin = null;
+		this.forgetEveryOrigin();
 		this.logger.log(`Embed origin allowed: ${origin} organizationId=${input.organizationId}`);
 		return EmbedAllowedOriginResponseDTO.from(row);
 	}
 
-	/** Removes an origin of the caller's tenant. CORS stops answering it within {@link EMBED_ORIGINS_CACHE_MS}. */
+	/**
+	 * Removes an origin of the caller's tenant. CORS stops answering it within {@link EMBED_ORIGINS_CACHE_MS}. Only a
+	 * miss answers 404: a lookup that failed is thrown as it is, so the caller knows nothing was removed.
+	 */
 	async remove(id: ID): Promise<void> {
 		const row = await this.findOneByOptions({ where: { id, tenantId: RequestContext.currentTenantId() } }).catch(
-			() => null
+			(error) => {
+				if (error instanceof NotFoundException) {
+					return null;
+				}
+				throw error;
+			}
 		);
 		if (!row) {
 			throw new NotFoundException();
 		}
 		await this.delete(id);
-		this.everyOrigin = null;
+		this.forgetEveryOrigin();
 		this.logger.log(`Embed origin removed: ${row.origin} organizationId=${row.organizationId}`);
 	}
 
@@ -105,10 +123,23 @@ export class EmbedAllowedOriginService extends TenantAwareCrudService<EmbedAllow
 		const now = Date.now();
 		const fresh = this.everyOrigin && now - this.everyOrigin.readAt < EMBED_ORIGINS_CACHE_MS;
 		if (!fresh) {
+			const generation = this.originsGeneration;
 			const rows = await runInMikroOrmContext(this.orm, () => this.readAll({}));
-			this.everyOrigin = { origins: new Set(rows.map((row) => row.origin)), readAt: now };
+			const origins = new Set(rows.map((row) => row.origin));
+			// An add or a removal on this server while the read ran: the list may predate it. It answers this request
+			// and is not kept, so the next request reads again.
+			if (generation !== this.originsGeneration) {
+				return origins.has(origin);
+			}
+			this.everyOrigin = { origins, readAt: now };
 		}
 		return this.everyOrigin.origins.has(origin);
+	}
+
+	/** After an add or a removal on this server: the next CORS answer reads every origin again. */
+	private forgetEveryOrigin(): void {
+		this.everyOrigin = null;
+		this.originsGeneration++;
 	}
 
 	/** Straight from the repository, with no tenant scope: neither the exchange nor CORS has one. */
