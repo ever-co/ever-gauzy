@@ -58,6 +58,11 @@ export interface IEmbedRoute {
 	 * window, which would read the member's past time logs one window at a time.
 	 */
 	readonly today?: boolean;
+	/**
+	 * Whether the route starts the timer: a token limited to a client starts it only on a project of that client
+	 * ({@link clientStartOf}, `EmbedClientService.isStartForClient`).
+	 */
+	readonly startsTimer?: boolean;
 }
 
 /**
@@ -80,7 +85,8 @@ export const EMBED_ROUTES: ReadonlyArray<IEmbedRoute> = [
 		query: ['organizationId', 'tenantId', 'employeeId', 'source', 'todayStart', 'todayEnd'],
 		today: true
 	},
-	{ method: 'POST', path: /^\/api\/timesheet\/timer\/(start|stop)\/?$/, query: [] }
+	{ method: 'POST', path: /^\/api\/timesheet\/timer\/start\/?$/, query: [], startsTimer: true },
+	{ method: 'POST', path: /^\/api\/timesheet\/timer\/stop\/?$/, query: [] }
 ];
 
 /** The body fields of a start or a stop that an embed may not set: they would let it backdate time. */
@@ -333,4 +339,35 @@ export function isWithinEmbedScope(
 		return false;
 	}
 	return true;
+}
+
+/**
+ * The project and the task a timer start names, for a token limited to a client, before they are looked up. None when
+ * the start names no project, names another client (`organizationContactId`), or names a project or a task that is not
+ * a string: such a start never keeps to the client.
+ *
+ * @param body The start's body.
+ * @param clientId The client the token's credential is limited to.
+ */
+export function clientStartOf(body: unknown, clientId: string): IEmbedClientStart | null {
+	if (!isRecord(body)) {
+		return null;
+	}
+	const client = body['organizationContactId'];
+	const namesAnotherClient = isNamed(client) && client !== clientId;
+	if (namesAnotherClient) {
+		return null;
+	}
+	const projectId = body['projectId'];
+	if (typeof projectId !== 'string' || !projectId) {
+		return null;
+	}
+	const taskId = body['taskId'];
+	if (!isNamed(taskId)) {
+		return { projectId, taskId: null };
+	}
+	if (typeof taskId !== 'string') {
+		return null;
+	}
+	return { projectId, taskId };
 }
