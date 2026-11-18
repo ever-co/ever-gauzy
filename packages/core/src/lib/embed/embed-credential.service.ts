@@ -153,6 +153,7 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 			name: input.name,
 			organizationId: input.organizationId,
 			organizationContactId,
+			canAddMembers: input.canAddMembers === true,
 			tenantId: RequestContext.currentTenantId(),
 			keyHash,
 			prefix,

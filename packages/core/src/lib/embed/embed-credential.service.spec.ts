@@ -180,6 +180,39 @@ describe('EmbedCredentialService', () => {
 		expect(listed.organizationContactId).toBe(CONTACT);
 	});
 
+	it('creates a credential that adds no member unless asked, and lists the option', async () => {
+		const { service, credentials } = build();
+		signIn(TENANT);
+
+		const plain = await service.createForOrganization({ name: 'Northwind product', organizationId: ORG });
+		const adding = await service.createForOrganization({
+			name: 'Fabrikam portal',
+			organizationId: ORG,
+			canAddMembers: true
+		});
+		const listed = await service.listForOrganization(ORG);
+
+		expect(credentials.map((row) => row.canAddMembers)).toEqual([false, true]);
+		expect(plain.canAddMembers).toBe(false);
+		expect(adding.canAddMembers).toBe(true);
+		expect(listed.map((row) => row.canAddMembers).sort()).toEqual([false, true]);
+	});
+
+	it('lists a credential stored before the option as one that adds no member', async () => {
+		const { service, credentials } = build();
+		signIn(TENANT);
+		credentials.push({
+			id: '7a000000-0000-4000-8000-00000000c0a1',
+			name: 'Older',
+			organizationId: ORG,
+			tenantId: TENANT
+		});
+
+		const [listed] = await service.listForOrganization(ORG);
+
+		expect(listed.canAddMembers).toBe(false);
+	});
+
 	it('refuses with a 400 a client that is no contact of the organization, and creates nothing', async () => {
 		const { service, credentials, contacts } = build();
 		const otherOrganization = '7a000000-0000-4000-8000-0000000000f2';
