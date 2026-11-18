@@ -8,6 +8,8 @@ export interface IEmbedCredential extends IBasePerTenantAndOrganizationEntityMod
 	name: string;
 	/** The first characters of the secret (`gze_` and 8 more), to recognize it in the list. */
 	prefix: string;
+	/** The client (an organization contact) the credential is limited to; null for one of the whole organization. */
+	organizationContactId?: ID | null;
 	lastUsedAt?: Date | null;
 	revokedAt?: Date | null;
 }
@@ -15,6 +17,8 @@ export interface IEmbedCredential extends IBasePerTenantAndOrganizationEntityMod
 export interface IEmbedCredentialCreateInput {
 	name: string;
 	organizationId: ID;
+	/** A client of the organization to limit the credential to; without one, it serves the whole organization. */
+	organizationContactId?: ID;
 }
 
 /** The answer to a creation: the only time the secret is readable. */
