@@ -1,5 +1,5 @@
 import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
-import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
+import { AbstractControl, UntypedFormGroup, UntypedFormBuilder, ValidationErrors, Validators } from '@angular/forms';
 import { NbDialogRef, NbThemeService } from '@nebular/theme';
 import { firstValueFrom } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
@@ -23,11 +23,25 @@ export class TagsMutationComponent extends NotesWithTagsComponent implements OnI
 	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			name: [null, Validators.required],
-			color: [null, Validators.required],
+			color: [null, [Validators.required, TagsMutationComponent.typedColorValidator]],
 			isTenantLevel: [false],
 			description: [],
 			tagTypeId: []
 		});
+	}
+
+	/**
+	 * Refuses a colour typed into the Color field that the browser cannot paint (`not-a-color`), so Save stays
+	 * disabled until the field holds a colour again. Typed text reaches the control directly, and the picker
+	 * ignores what it cannot parse, so nothing else corrects it. A colour loaded with the tag (pristine) is left
+	 * alone: older and seeded tags may hold names the picker does not know, and their other fields stay editable.
+	 */
+	static typedColorValidator(control: AbstractControl): ValidationErrors | null {
+		const value = control.value;
+		if (control.pristine || !value || typeof CSS === 'undefined' || typeof CSS.supports !== 'function') {
+			return null;
+		}
+		return CSS.supports('color', String(value)) ? null : { color: true };
 	}
 
 	/**

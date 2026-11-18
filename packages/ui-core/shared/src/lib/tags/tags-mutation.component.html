@@ -32,7 +32,7 @@
 					<!-- The colour shows as a swatch inside the field, the way the Tags table shows it, rather than
 					     as the whole field's background. -->
 					<div class="mutation__color">
-						<span class="mutation__swatch" [style.background]="color || null" aria-hidden="true"></span>
+						<span class="mutation__swatch" [style.background-color]="color || null" aria-hidden="true"></span>
 						<input
 							class="mutation__color-input"
 							nbInput
@@ -44,7 +44,7 @@
 							[value]="color"
 							cpOutputFormat="hex"
 							cpAlphaChannel="disabled"
-							cpPosition="bottom-left"
+							cpPosition="bottom"
 							cpPositionOffset="4px"
 							cpWidth="248px"
 							cpPresetLabel=""

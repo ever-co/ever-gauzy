@@ -99,7 +99,7 @@
 .mutation__swatch {
 	position: absolute;
 	top: 50%;
-	left: 0.75rem;
+	inset-inline-start: 0.75rem;
 	width: 0.875rem;
 	height: 0.875rem;
 	border-radius: 0.1875rem;
@@ -110,7 +110,7 @@
 }
 
 :host ::ng-deep .mutation__color-input {
-	padding-left: 2.25rem;
+	padding-inline-start: 2.25rem;
 	text-transform: uppercase;
 
 	&::placeholder {
