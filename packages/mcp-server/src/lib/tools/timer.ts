@@ -142,9 +142,16 @@ export const registerTimerTools = (server: McpServer) => {
 				.enum(['BROWSER', 'DESKTOP', 'MOBILE', 'UPWORK', 'HUBSTAFF', 'TEAMS', 'BROWSER_EXTENSION', 'CLOC'])
 				.optional()
 				.describe('Source of the timer'),
-			manualTimeSlot: z.boolean().optional().describe('Whether to use manual time slot')
+			manualTimeSlot: z.boolean().optional().describe('Whether to use manual time slot'),
+			timeLogId: z
+				.string()
+				.uuid()
+				.optional()
+				.describe(
+					'The run to stop: the ID of the running time log (timer_status answers it as lastLog). When another run is the running one, the stop is refused and that run goes on.'
+				)
 		},
-		async ({ description, source, manualTimeSlot }) => {
+		async ({ description, source, manualTimeSlot, timeLogId }) => {
 			try {
 				// Get default parameters from authenticated user
 				const defaultParams = authManager.getDefaultParams();
@@ -160,7 +167,8 @@ export const registerTimerTools = (server: McpServer) => {
 					organizationId: defaultParams.organizationId,
 					...(description && { description }),
 					source: source || 'BROWSER',
-					...(manualTimeSlot !== undefined && { manualTimeSlot })
+					...(manualTimeSlot !== undefined && { manualTimeSlot }),
+					...(timeLogId && { timeLogId })
 				};
 
 				const response = await apiClient.post('/api/timesheet/timer/stop', stopData);
