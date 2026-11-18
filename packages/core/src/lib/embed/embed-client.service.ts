@@ -10,6 +10,7 @@ import {
 	TimeLogType
 } from '@gauzy/contracts';
 import { Organization, OrganizationContact, OrganizationProject, Task, TimeLog } from '../core/entities/internal';
+import { hiddenProjectIdsOf } from '../organization-project/organization-project-visibility';
 import { TRACKER_SOURCES } from '../time-tracking/time-log/tracker-source';
 import {
 	clientReportOf,
@@ -166,7 +167,8 @@ export class EmbedClientService {
 	 * client is withdrawn), else the ones its member belongs to, as a member or a manager (the rule of
 	 * `GET /organization-projects/employee/:id`). Only those of the tenant and organization, neither archived nor
 	 * deleted, as the project pickers offer them. A private project is never hidden from its own members, so the private
-	 * projects rule leaves none of the member's out.
+	 * projects rule leaves none of the member's out; it leaves out the client's private projects the member is kept from
+	 * ({@link hiddenClientProjectIdsOf}).
 	 *
 	 * @param token The token's tenant and organization, member and client.
 	 */
@@ -180,8 +182,37 @@ export class EmbedClientService {
 			where: { ...trackable, tenantId: token.tenantId, organizationId: token.organizationId, isArchived: false },
 			select: { id: true, name: true }
 		});
-		const answer = projects.map((project) => ({ id: project.id, name: project.name }));
+		const hidden = await this.hiddenClientProjectIdsOf(token);
+		const visible = projects.filter((project) => !hidden.has(project.id));
+		const answer = visible.map((project) => ({ id: project.id, name: project.name }));
 		return answer.sort(byName);
+	}
+
+	/**
+	 * The client's private projects the token's member may not see, by the rule the project routes keep them with
+	 * (`OrganizationProjectService.hiddenProjectIds`): where the organization keeps its private projects private, those
+	 * the member neither belongs to nor manages. An embed token never holds `ACCESS_PRIVATE_PROJECTS`
+	 * (`EMBED_TOKEN_PERMISSIONS`), which would show them all. None for a token without a client: it lists only its
+	 * member's projects.
+	 *
+	 * @param token A token whose client, tenant and organization {@link trackableProjectsOf} has checked.
+	 */
+	private async hiddenClientProjectIdsOf(token: IEmbedProjectsScope): Promise<Set<ID>> {
+		if (!token.clientId) {
+			return new Set();
+		}
+		const privateProjects = await this.dataSource.getRepository(OrganizationProject).find({
+			where: {
+				...ofLiveClient(token.clientId),
+				tenantId: token.tenantId,
+				organizationId: token.organizationId,
+				public: false,
+				organization: { enforcePrivateProjects: true }
+			},
+			select: { id: true, members: { id: true, employeeId: true } },
+			relations: { members: true }
+		});
+		return new Set(hiddenProjectIdsOf(privateProjects, token.employeeId));
 	}
 
 	/**

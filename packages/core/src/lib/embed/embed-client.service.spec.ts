@@ -9,7 +9,8 @@ import type { EmbedClientService } from './embed-client.service';
  * TypeORM creates for every entity: a contact counts only in its own tenant and organization, and only while it is not
  * deleted; its report counts only the entries of its own projects there, not deleted and not breaks. A timer start keeps
  * to it only on one of those projects, with a task of that project or none. A token lists its client's projects, or
- * its member's without a client, neither archived nor deleted.
+ * its member's without a client, neither archived nor deleted; where the organization keeps its private projects
+ * private, a client's private project only to its own members and managers.
  */
 const TIMEOUT = 10 * 60 * 1000;
 
@@ -40,6 +41,15 @@ const BRAND = '7b000000-0000-4000-8000-0000000000a7';
 const RETIRED = '7b000000-0000-4000-8000-0000000000a8';
 const PARTNERSHIP = '7b000000-0000-4000-8000-0000000000a9';
 const KICKOFF = '7b000000-0000-4000-8000-0000000000b5';
+
+const ADVENTURE_WORKS = '7b000000-0000-4000-8000-0000000000d6';
+const PORTAL = '7b000000-0000-4000-8000-0000000000aa';
+const LEDGER = '7b000000-0000-4000-8000-0000000000ab';
+const PAYROLL = '7b000000-0000-4000-8000-0000000000ac';
+const VAULT = '7b000000-0000-4000-8000-0000000000ad';
+const LAB = '7b000000-0000-4000-8000-0000000000ae';
+const NOVA = '7b000000-0000-4000-8000-0000000000e3';
+const RUBEN = '7b000000-0000-4000-8000-0000000000e4';
 const LINA = '7b000000-0000-4000-8000-0000000000e1';
 const MARCO = '7b000000-0000-4000-8000-0000000000e2';
 
@@ -286,6 +296,39 @@ async function seedProjectsToTrack(dataSource: DataSource): Promise<void> {
 	await insertMembership(dataSource, { employeeId: MARCO, organizationProjectId: ARCHIVE });
 }
 
+/**
+ * The agency keeps its private projects private; its projects stated neither public nor private stay public. Adventure
+ * Works has a public project and three private ones: Nova belongs to the ledger and manages the payroll, Ruben belongs
+ * to the vault, where Nova's membership was deleted. Contoso has a private project in the organization abroad, which
+ * does not keep them private.
+ */
+async function seedPrivateProjects(dataSource: DataSource): Promise<void> {
+	await dataSource.query('UPDATE "organization" SET "enforcePrivateProjects" = 1 WHERE "id" = ?', [ORGANIZATION]);
+	await insert(dataSource, 'organization_contact', { ...SCOPE, id: ADVENTURE_WORKS, name: 'Adventure Works' });
+
+	const ofAdventureWorks = { organizationContactId: ADVENTURE_WORKS };
+	await insertProject(dataSource, { ...ofAdventureWorks, id: PORTAL, name: 'Portal', public: 1 });
+	await insertProject(dataSource, { ...ofAdventureWorks, id: LEDGER, name: 'Ledger', public: 0 });
+	await insertProject(dataSource, { ...ofAdventureWorks, id: PAYROLL, name: 'Payroll', public: 0 });
+	await insertProject(dataSource, { ...ofAdventureWorks, id: VAULT, name: 'Vault', public: 0 });
+	await insertProject(dataSource, {
+		id: LAB,
+		name: 'Lab',
+		public: 0,
+		organizationContactId: CONTOSO,
+		organizationId: OTHER_ORGANIZATION
+	});
+
+	await insertMembership(dataSource, { employeeId: NOVA, organizationProjectId: LEDGER });
+	await insertMembership(dataSource, { employeeId: NOVA, organizationProjectId: PAYROLL, isManager: 1 });
+	await insertMembership(dataSource, { employeeId: RUBEN, organizationProjectId: VAULT });
+	await insertMembership(dataSource, {
+		employeeId: NOVA,
+		organizationProjectId: VAULT,
+		deletedAt: '2026-11-17 08:00:00.000'
+	});
+}
+
 describe('EmbedClientService on SQLite', () => {
 	const previous = { DB_ORM: process.env.DB_ORM, DB_TYPE: process.env.DB_TYPE };
 	const file = path.join(os.tmpdir(), `gauzy-embed-client-${process.pid}-${Date.now()}.sqlite3`);
@@ -311,6 +354,7 @@ describe('EmbedClientService on SQLite', () => {
 			await seedTasks(dataSource);
 			await seedProjectsToTrack(dataSource);
 			await seedWithdrawnClient(dataSource);
+			await seedPrivateProjects(dataSource);
 			service = new clients.EmbedClientService(dataSource);
 		});
 	}, TIMEOUT);
@@ -458,6 +502,38 @@ describe('EmbedClientService on SQLite', () => {
 		expect(await service.trackableProjectsOf(abroad)).toStrictEqual([{ id: ABROAD, name: 'Abroad' }]);
 		const marco = await service.trackableProjectsOf({ ...SCOPE, employeeId: MARCO, clientId: null });
 		expect(marco).toStrictEqual([{ id: ARCHIVE, name: 'Archive' }]);
+	});
+
+	it("leaves out the client's private projects its member neither belongs to nor manages", async () => {
+		const nova = await service.trackableProjectsOf({ ...SCOPE, employeeId: NOVA, clientId: ADVENTURE_WORKS });
+		const ruben = await service.trackableProjectsOf({ ...SCOPE, employeeId: RUBEN, clientId: ADVENTURE_WORKS });
+		const outsider = await service.trackableProjectsOf({ ...SCOPE, employeeId: MARCO, clientId: ADVENTURE_WORKS });
+
+		expect(nova).toStrictEqual([
+			{ id: LEDGER, name: 'Ledger' },
+			{ id: PAYROLL, name: 'Payroll' },
+			{ id: PORTAL, name: 'Portal' }
+		]);
+		expect(ruben).toStrictEqual([
+			{ id: PORTAL, name: 'Portal' },
+			{ id: VAULT, name: 'Vault' }
+		]);
+		expect(outsider).toStrictEqual([{ id: PORTAL, name: 'Portal' }]);
+	});
+
+	it('keeps the private projects a member belongs to or manages, for a token without a client', async () => {
+		const nova = await service.trackableProjectsOf({ ...SCOPE, employeeId: NOVA, clientId: null });
+
+		expect(nova).toStrictEqual([
+			{ id: LEDGER, name: 'Ledger' },
+			{ id: PAYROLL, name: 'Payroll' }
+		]);
+	});
+
+	it('lists every project of a client where the organization does not keep private projects private', async () => {
+		const abroad = { tenantId: TENANT, organizationId: OTHER_ORGANIZATION, employeeId: NOVA, clientId: CONTOSO };
+
+		expect(await service.trackableProjectsOf(abroad)).toStrictEqual([{ id: LAB, name: 'Lab' }]);
 	});
 
 	it('lists no project of a client withdrawn', async () => {
