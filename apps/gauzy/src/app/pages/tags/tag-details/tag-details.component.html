@@ -1,64 +1,95 @@
-<nb-card class="main">
-	<nb-card-header class="d-flex flex-column">
-		<span class="cancel">
-			<i class="fas fa-times" (click)="close()"></i>
-		</span>
-		<h5 class="title tag-title">
-			<span class="swatch" [style.background]="tag?.color"></span>
-			{{ tag?.name }}
-		</h5>
-	</nb-card-header>
-	<nb-card-body class="body" [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="small">
-		<p class="description" [class.empty]="!tag?.description">
-			{{ tag?.description || ('TAGS_PAGE.NO_DESCRIPTION' | translate) }}
-		</p>
-
-		<dl class="details">
-			<dt>{{ 'TAGS_PAGE.TAGS_TYPE' | translate }}</dt>
-			<dd>{{ typeName || '—' }}</dd>
-
-			<dt>{{ 'TAGS_PAGE.LEVEL' | translate }}</dt>
-			<dd>{{ levelKey | translate }}</dd>
-
-			<dt>{{ 'TAGS_PAGE.TAGS_COLOR' | translate }}</dt>
-			<dd>
-				<span class="swatch" [style.background]="tag?.color"></span>
-				{{ tag?.color }}
-			</dd>
-
-			<dt>{{ 'TAGS_PAGE.CREATED' | translate }}</dt>
-			<dd>{{ tag?.createdAt ? (tag.createdAt | dateTimeFormat) : '—' }}</dd>
-
-			<dt>{{ 'TAGS_PAGE.LAST_UPDATED' | translate }}</dt>
-			<dd>{{ tag?.updatedAt ? (tag.updatedAt | dateTimeFormat) : '—' }}</dd>
-		</dl>
-
-		<h6 class="section-title">
-			{{ 'TAGS_PAGE.USED_IN_TITLE' | translate }}
-			@if (totalUsage) {
-				<span class="total">{{ totalUsage.toLocaleString() }}</span>
+<nb-card class="details">
+	<!-- Header: the tag itself, drawn as the Tags table draws it (same chip component). -->
+	<nb-card-header class="details__header">
+		<h2 class="details__title">
+			@if (tag) {
+				<ngx-tags-color [rowData]="tag" [value]="tag.name"></ngx-tags-color>
 			}
-		</h6>
-		@if (usages.length) {
-			<ul class="usages">
-				@for (usage of usages; track usage.label) {
-					<li>
-						<span>{{ usage.translate ? (usage.label | translate) : usage.label }}</span>
-						<span class="count">{{ usage.count.toLocaleString() }}</span>
-					</li>
+		</h2>
+		<button
+			type="button"
+			class="details__close"
+			[attr.aria-label]="'BUTTONS.CLOSE' | translate"
+			(click)="close()"
+		>
+			<nb-icon icon="close-outline"></nb-icon>
+		</button>
+	</nb-card-header>
+
+	<nb-card-body class="details__body" [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="small">
+		<!-- Description -->
+		<section class="details__section">
+			<h3 class="details__heading">{{ 'TAGS_PAGE.TAGS_DESCRIPTION' | translate }}</h3>
+			<!-- On one line: the paragraph keeps whitespace (a description's own line breaks), so the template's
+			     indentation would show as a gap before the text. -->
+			<p class="details__text" [class.details__text--empty]="!tag?.description">{{ tag?.description || ('TAGS_PAGE.NO_DESCRIPTION' | translate) }}</p>
+		</section>
+
+		<!-- Details: label above value, three to a row -->
+		<section class="details__section">
+			<h3 class="details__heading">{{ 'BUTTONS.DETAILS' | translate }}</h3>
+			<dl class="details__grid">
+				<div class="details__field">
+					<dt>{{ 'TAGS_PAGE.TAGS_SELECT_TYPE' | translate }}</dt>
+					<dd [class.details__empty]="!typeName">{{ typeName || '—' }}</dd>
+				</div>
+				<div class="details__field">
+					<dt>{{ 'TAGS_PAGE.LEVEL' | translate }}</dt>
+					<dd>{{ levelKey | translate }}</dd>
+				</div>
+				<div class="details__field">
+					<dt>{{ 'TAGS_PAGE.TAGS_COLOR' | translate }}</dt>
+					<dd>
+						<span class="details__swatch" [style.background]="tag?.color" aria-hidden="true"></span>
+						<span class="details__hex">{{ tag?.color }}</span>
+					</dd>
+				</div>
+				<div class="details__field">
+					<dt>{{ 'TAGS_PAGE.CREATED' | translate }}</dt>
+					<dd [attr.title]="tag?.createdAt ? (tag.createdAt | dateTimeFormat) : null">
+						{{ tag?.createdAt ? (tag.createdAt | dateFormat) : '—' }}
+					</dd>
+				</div>
+				<div class="details__field">
+					<dt>{{ 'TAGS_PAGE.LAST_UPDATED' | translate }}</dt>
+					<dd [attr.title]="tag?.updatedAt ? (tag.updatedAt | dateTimeFormat) : null">
+						{{ tag?.updatedAt ? (tag.updatedAt | dateFormat) : '—' }}
+					</dd>
+				</div>
+			</dl>
+		</section>
+
+		<!-- Used in: table rows, like the Tags table -->
+		<section class="details__section">
+			<h3 class="details__heading details__heading--split">
+				<span>{{ 'TAGS_PAGE.USED_IN_TITLE' | translate }}</span>
+				@if (totalUsage) {
+					<span class="details__total">{{ totalUsage.toLocaleString() }}</span>
 				}
-			</ul>
-		} @else {
-			<p class="empty">{{ 'TAGS_PAGE.NOT_USED' | translate }}</p>
-		}
+			</h3>
+			@if (usages.length) {
+				<ul class="details__rows">
+					@for (usage of usages; track usage.label) {
+						<li class="details__row">
+							<span class="details__row-label">
+								{{ usage.translate ? (usage.label | translate) : usage.label }}
+							</span>
+							<span class="details__row-count">{{ usage.count.toLocaleString() }}</span>
+						</li>
+					}
+				</ul>
+			} @else {
+				<p class="details__text details__text--empty details__text--small">{{ 'TAGS_PAGE.NOT_USED' | translate }}</p>
+			}
+		</section>
 	</nb-card-body>
-	<nb-card-footer class="text-left">
-		<button (click)="close()" status="basic" class="mr-3" outline nbButton>
+
+	<nb-card-footer class="details__footer">
+		<button type="button" nbButton outline status="basic" size="small" (click)="close()">
 			{{ 'BUTTONS.CLOSE' | translate }}
 		</button>
 		<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_TAGS_EDIT']">
-			<button (click)="edit()" status="basic" nbButton>
-				<nb-icon icon="edit-outline"></nb-icon>
+			<button type="button" nbButton status="primary" size="small" (click)="edit()">
 				{{ 'BUTTONS.EDIT' | translate }}
 			</button>
 		</ng-template>
