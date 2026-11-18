@@ -20,7 +20,8 @@ const PICKER_COLOR =
 
 /** Whether a value is a colour the picker accepts. */
 function isPickerColor(value: unknown): value is string {
-	return typeof value === 'string' && PICKER_COLOR.test(value.trim());
+	// Not trimmed: the value is saved as typed, and the picker does not read a padded colour either.
+	return typeof value === 'string' && PICKER_COLOR.test(value);
 }
 
 /**
