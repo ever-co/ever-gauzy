@@ -8,8 +8,9 @@ import { EMPTY, merge, Observable, of, Subscription } from 'rxjs';
 import { auditTime, catchError, distinctUntilChanged, filter, map, switchMap, tap } from 'rxjs/operators';
 import { CHAT_EVENT_NAMES, ChatVisibilityEnum, IChatConversationWithState, IChatMessageWithRelations, IOrganization, IUser, PermissionsEnum } from '@gauzy/contracts';
 import { Store, ToastrService } from '@gauzy/ui-core/core';
-import { CHAT_DOCK_PAGE_SIZE, CHAT_LINK, CHAT_LIVE_AUDIT_MS, CHAT_MESSAGES_POLL_MS } from '../../chat-ui.constants';
+import { CHAT_DOCK_PAGE_SIZE, CHAT_DOCK_TEAM_FACES, CHAT_LINK, CHAT_LIVE_AUDIT_MS, CHAT_MESSAGES_POLL_MS } from '../../chat-ui.constants';
 import { canManageConversation } from '../../chat-categories';
+import { facesOf } from '../../chat-member-preview';
 import { teamChannelOf } from '../../chat-team-suggestions';
 import { withTaskReference } from '../../chat-tasks';
 import { apiErrorMessage, ChatMemberIds, ChatPerson, continuesGroup, isSameDay, memberEmployeeIds, mergeMessages, newNonce, showNewestPage, userName } from '../../chat-ui.helpers';
@@ -67,7 +68,17 @@ interface DockRow {
 						@if (who.position) {
 							<span class="position" [attr.title]="who.position">{{ who.position }}</span>
 						} @else if (who.memberCount !== null) {
-							<span class="position">{{ 'CHAT.LIST.MEMBERS' | translate: { count: who.memberCount } }}</span>
+							<!-- The team's members at the top: a few faces, overlapping, before their count. -->
+							<span class="members-line" data-test="chat-dock-members">
+								@if (teamFaces().length) {
+									<span class="faces">
+										@for (face of teamFaces(); track face.employeeId) {
+											<ngx-chat-person-avatar [person]="face" size="tiny" [presence]="false" [attr.title]="face.name"></ngx-chat-person-avatar>
+										}
+									</span>
+								}
+								<span class="position">{{ 'CHAT.LIST.MEMBERS' | translate: { count: who.memberCount } }}</span>
+							</span>
 						}
 					</div>
 					<button type="button" class="icon-button" data-test="chat-dock-close" [attr.aria-label]="'CHAT.VIEW.CLOSE' | translate" (click)="close()">
@@ -220,6 +231,26 @@ interface DockRow {
 				color: var(--dock-muted);
 				font-size: 0.75rem;
 				line-height: 1rem;
+			}
+			/* A team's members under its name: a few faces, overlapping, then their count. */
+			.members-line {
+				display: flex;
+				align-items: center;
+				gap: 0.375rem;
+				min-width: 0;
+				margin-top: 0.125rem;
+			}
+			.faces {
+				display: inline-flex;
+				flex: 0 0 auto;
+				align-items: center;
+			}
+			.faces ngx-chat-person-avatar {
+				border-radius: calc(var(--border-radius) * 0.625);
+				box-shadow: 0 0 0 2px var(--gauzy-card-1);
+			}
+			.faces ngx-chat-person-avatar + ngx-chat-person-avatar {
+				margin-left: -0.375rem;
 			}
 			.icon-button {
 				display: inline-flex;
@@ -479,6 +510,12 @@ export class ChatDockComponent {
 			if (person.userId && !byUser.has(person.userId)) byUser.set(person.userId, person);
 		}
 		return { byEmployee, byUser, list: base.list };
+	});
+
+	/** A few of the team's members, as faces at the top of the card (the people the chat knows). */
+	protected readonly teamFaces = computed<ChatPerson[]>(() => {
+		const team = this.team();
+		return team ? facesOf(team.memberEmployeeIds, this.dockPeople().byEmployee, CHAT_DOCK_TEAM_FACES) : [];
 	});
 
 	/** The messages with their day dividers and whether each continues the previous author's group, as in the chat. */
