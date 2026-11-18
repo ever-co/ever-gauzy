@@ -252,6 +252,43 @@ describe('EmbedSessionGuard', () => {
 		expect(isRevoked).not.toHaveBeenCalled();
 	});
 
+	it('reads an employee claim that is not a string as none, without failing the request', async () => {
+		const { guard } = guardWith();
+		// An object without a usable toString: String() would throw on it.
+		const odd = sign(
+			{ id: 'user', tenantId: 'tenant', organizationId: ORG, [EMBED_CREDENTIAL_CLAIM]: CREDENTIAL, [EMBED_EMPLOYEE_CLAIM]: { toString: 1 } },
+			'not-the-secret'
+		);
+
+		expect(() => readEmbedClaims(`Bearer ${odd}`)).not.toThrow();
+		expect(readEmbedClaims(`Bearer ${odd}`)).toMatchObject({ credentialId: CREDENTIAL, employeeId: '' });
+		const request = { method: 'GET', path: '/api/user/me', headers: { authorization: `Bearer ${odd}` } };
+		await expect(guard.canActivate(contextOf(request))).rejects.toThrow(UnauthorizedException);
+	});
+
+	it("reads the timer status of the widget's own day only", async () => {
+		const { guard } = guardWith();
+		const headers = { authorization: `Bearer ${embedToken()}` };
+		const status = (query: Record<string, unknown>) =>
+			contextOf({ method: 'GET', path: '/api/timesheet/timer/status', query: { organizationId: ORG, ...query }, headers });
+		const at = (offsetMs: number) => new Date(Date.now() + offsetMs).toISOString();
+		const HOUR = 60 * 60 * 1000;
+
+		await expect(guard.canActivate(status({}))).resolves.toBe(true);
+		await expect(guard.canActivate(status({ todayStart: at(-10 * HOUR), todayEnd: at(14 * HOUR - 1) }))).resolves.toBe(true);
+
+		const refused = [
+			{ todayStart: at(-30 * 24 * HOUR), todayEnd: at(-29 * 24 * HOUR) },
+			{ todayStart: at(-48 * HOUR), todayEnd: at(HOUR) },
+			{ todayStart: at(-10 * HOUR) },
+			{ todayStart: 'yesterday', todayEnd: at(HOUR) },
+			{ todayStart: [at(-HOUR)], todayEnd: at(HOUR) }
+		];
+		for (const query of refused) {
+			await expect(guard.canActivate(status(query))).rejects.toMatchObject({ response: { code: 'EMBED_SCOPE' } });
+		}
+	});
+
 	it('lets a bearer it cannot decode through to the JWT guard instead of failing the request', async () => {
 		const { guard } = guardWith();
 		const part = (value: string) => Buffer.from(value).toString('base64url');

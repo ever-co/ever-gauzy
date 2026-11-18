@@ -1,5 +1,6 @@
 import { decode, verify } from 'jsonwebtoken';
 import { ExtractJwt } from 'passport-jwt';
+import * as moment from 'moment';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { JWT_ALGORITHMS } from '../auth/purpose-token';
 
@@ -33,6 +34,11 @@ export interface IEmbedRoute {
 	 * are every team of the tenant.
 	 */
 	readonly where?: ReadonlyArray<string>;
+	/**
+	 * Whether the route reads "today" (`todayStart`, `todayEnd`): an embed may name the widget's own day, never another
+	 * window, which would read the member's past time logs one window at a time.
+	 */
+	readonly today?: boolean;
 }
 
 /**
@@ -52,7 +58,8 @@ export const EMBED_ROUTES: ReadonlyArray<IEmbedRoute> = [
 	{
 		method: 'GET',
 		path: /^\/api\/timesheet\/timer\/status\/?$/,
-		query: ['organizationId', 'tenantId', 'employeeId', 'source', 'todayStart', 'todayEnd']
+		query: ['organizationId', 'tenantId', 'employeeId', 'source', 'todayStart', 'todayEnd'],
+		today: true
 	},
 	{ method: 'POST', path: /^\/api\/timesheet\/timer\/(start|stop)\/?$/, query: [] }
 ];
@@ -153,7 +160,8 @@ export function readEmbedClaims(authorization: string | undefined): IEmbedClaims
 	const record = payload as Record<string, unknown>;
 	return {
 		credentialId,
-		employeeId: String(record[EMBED_EMPLOYEE_CLAIM] ?? ''),
+		// Unverified: a claim that is not a string (an object without a usable `toString` throws on String()) is none.
+		employeeId: typeof record[EMBED_EMPLOYEE_CLAIM] === 'string' ? (record[EMBED_EMPLOYEE_CLAIM] as string) : '',
 		organizationId: typeof record['organizationId'] === 'string' ? record['organizationId'] : null,
 		tenantId: typeof record['tenantId'] === 'string' ? record['tenantId'] : null
 	};
@@ -189,6 +197,42 @@ export function embedRouteOf(method: string, path: string): IEmbedRoute | null {
 /** Whether an embed token may reach this route. The path is without its query string. */
 export function isEmbedRoute(method: string, path: string): boolean {
 	return !!embedRouteOf(method, path);
+}
+
+/** The longest day a widget's time zone has (the clocks go back), with a second for an inclusive end. */
+const LONGEST_DAY_MS = 25 * 60 * 60_000 + 1_000;
+
+/** How far the widget's clock may run from the server's at the edges of its day. */
+const TODAY_CLOCK_SKEW_MS = 5 * 60_000;
+
+/**
+ * Whether `todayStart` and `todayEnd` name the widget's current day: both or neither (the server's day), at most
+ * {@link LONGEST_DAY_MS} long, and around now. Parsed as `TimerService.getTimerStatus` parses them.
+ *
+ * @param start The `todayStart` asked for.
+ * @param end The `todayEnd` asked for.
+ * @param now The server's time.
+ */
+export function isEmbedTodayWindow(start: unknown, end: unknown, now: number = Date.now()): boolean {
+	if (start === undefined && end === undefined) {
+		return true;
+	}
+	if (typeof start !== 'string' || typeof end !== 'string') {
+		return false;
+	}
+	const from = moment.utc(start, moment.ISO_8601);
+	const to = moment.utc(end, moment.ISO_8601);
+	if (!from.isValid() || !to.isValid()) {
+		return false;
+	}
+	const fromMs = from.valueOf();
+	const toMs = to.valueOf();
+	return (
+		fromMs <= toMs &&
+		toMs - fromMs <= LONGEST_DAY_MS &&
+		fromMs <= now + TODAY_CLOCK_SKEW_MS &&
+		toMs >= now - TODAY_CLOCK_SKEW_MS
+	);
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -253,6 +297,9 @@ export function isWithinEmbedScope(
 	}
 	const employees = [query['employeeId'], body['employeeId']];
 	if (employees.some((value) => isNamed(value) && value !== claims.employeeId)) {
+		return false;
+	}
+	if (route.today && !isEmbedTodayWindow(query['todayStart'], query['todayEnd'])) {
 		return false;
 	}
 	return true;
