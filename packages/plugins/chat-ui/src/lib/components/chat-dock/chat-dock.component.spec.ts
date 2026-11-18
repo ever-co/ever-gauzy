@@ -21,6 +21,8 @@ import { ChatPresenceService } from '../../services/chat-presence.service';
 
 const ANNA = { employeeId: 'e-anna', userId: 'u-anna', name: 'Anna', imageUrl: null };
 const CONVERSATION = { id: 'c1' } as IChatConversationWithState;
+const TEAM = { id: 't-web', name: 'Web Team', public: false, imageUrl: null, memberEmployeeIds: ['e-anna', 'e-ben'] };
+const channel = (id: string, name: string, archivedAt: Date | null = null) => ({ id, kind: 'channel', name, archivedAt }) as unknown as IChatConversationWithState;
 const message = (id: string, body: string) =>
 	({ id, body, authorUserId: ANNA.userId, createdAt: new Date(), deletedAt: null }) as unknown as IChatMessageWithRelations;
 
@@ -31,6 +33,7 @@ describe('ChatDockComponent', () => {
 	let hints$: Subject<Partial<ChatHint>>;
 	let catchUp$: Subject<void>;
 	let tasks: { summaries: ReturnType<typeof signal>; ensure: jest.Mock; refreshAll: jest.Mock; refreshShownBy: jest.Mock };
+	let dock: { person: ReturnType<typeof signal<typeof ANNA | null>>; team: ReturnType<typeof signal<typeof TEAM | null>>; close: jest.Mock };
 	const element = () => fixture.nativeElement as HTMLElement;
 
 	beforeEach(async () => {
@@ -39,20 +42,25 @@ describe('ChatDockComponent', () => {
 		catchUp$ = new Subject();
 		tasks = { summaries: signal(new Map()), ensure: jest.fn(), refreshAll: jest.fn(), refreshShownBy: jest.fn() };
 		files = { byDocument: signal<ReadonlyMap<string, IChatFile>>(new Map()), ensureFor: jest.fn() };
+		dock = { person: signal<typeof ANNA | null>(ANNA), team: signal<typeof TEAM | null>(null), close: jest.fn() };
 		api = {
 			direct: jest.fn(() => of({ conversation: CONVERSATION, created: false })),
 			// The first read of the messages fails.
 			messages: jest.fn(() => throwError(() => ({ status: 503 }))),
 			read: jest.fn(() => of({})),
 			send: jest.fn(),
-			notifyChanged: jest.fn()
+			notifyChanged: jest.fn(),
+			listMine: jest.fn(() => of({ conversations: [], categories: [] })),
+			browse: jest.fn(() => of([])),
+			join: jest.fn((id: string) => of({ conversation: { id }, events: [] })),
+			createChannel: jest.fn(() => of({ conversation: { id: 'c-new' }, events: [] }))
 		};
 		await TestBed.configureTestingModule({
 			imports: [ChatDockComponent],
 			providers: [
 				{ provide: ChatUiService, useValue: api },
 				{ provide: ChatPresenceService, useValue: { presenceOf: () => 'offline', lastSeenOf: () => null, watch: () => NEVER, apply: () => undefined, applyList: () => undefined } },
-				{ provide: ChatDockService, useValue: { person: signal(ANNA), close: jest.fn() } },
+				{ provide: ChatDockService, useValue: dock },
 				{ provide: Store, useValue: { user$: of(null), selectedOrganization$: of(null), userRolePermissions$: of([]), hasPermission: () => false } },
 				{ provide: ToastrService, useValue: { danger: jest.fn() } },
 				{ provide: ChatFilesStore, useValue: files },
@@ -83,6 +91,60 @@ describe('ChatDockComponent', () => {
 		expect(api['messages']).toHaveBeenCalledTimes(2);
 		expect(element().querySelector('.note')).toBeNull();
 		expect(element().querySelector('[data-test="chat-dock-messages"]')?.textContent).toContain('Hello');
+	});
+
+	describe('with a team', () => {
+		/** Turns the open card from Anna to the team. */
+		const openTeam = (team = TEAM) => {
+			api['messages'].mockReturnValue(of({ messages: [] }));
+			dock.person.set(null);
+			dock.team.set(team);
+			fixture.detectChanges();
+		};
+		const placeholder = () => element().querySelector('ngx-chat-message-composer');
+
+		it('opens the channel of mine named as the team, an open one before an archived one, creating nothing', () => {
+			api['listMine'].mockReturnValue(of({ conversations: [channel('c-old', '#web team', new Date()), channel('c-web', 'web team')], categories: [] }));
+			openTeam();
+
+			expect(api['createChannel']).not.toHaveBeenCalled();
+			expect(api['join']).not.toHaveBeenCalled();
+			expect(api['messages']).toHaveBeenLastCalledWith('c-web', { limit: CHAT_DOCK_PAGE_SIZE });
+			expect(element().querySelector('.name')?.textContent).toContain('Web Team');
+			expect(placeholder()).not.toBeNull();
+		});
+
+		it('joins a public channel of the team name I am not in', () => {
+			api['browse'].mockReturnValue(of([channel('c-pub', 'Web Team')]));
+			openTeam();
+
+			expect(api['join']).toHaveBeenCalledWith('c-pub');
+			expect(api['createChannel']).not.toHaveBeenCalled();
+			expect(api['notifyChanged']).toHaveBeenCalled();
+			expect(api['messages']).toHaveBeenLastCalledWith('c-pub', { limit: CHAT_DOCK_PAGE_SIZE });
+		});
+
+		it("creates the channel with the team's members when none is named so: private for a private team, public for a public one", () => {
+			openTeam();
+			expect(api['createChannel']).toHaveBeenLastCalledWith({ name: 'Web Team', visibility: 'private', memberEmployeeIds: ['e-anna', 'e-ben'] });
+			expect(api['messages']).toHaveBeenLastCalledWith('c-new', { limit: CHAT_DOCK_PAGE_SIZE });
+
+			openTeam({ ...TEAM, id: 't-open', public: true });
+			expect(api['createChannel']).toHaveBeenLastCalledWith({ name: 'Web Team', visibility: 'public', memberEmployeeIds: ['e-anna', 'e-ben'] });
+		});
+
+		it('creates the channel when the public channels cannot be read', () => {
+			api['browse'].mockReturnValue(throwError(() => ({ status: 503 })));
+			openTeam();
+			expect(api['createChannel']).toHaveBeenCalledTimes(1);
+		});
+
+		it('says so when the channel cannot be found or created', () => {
+			api['listMine'].mockReturnValue(throwError(() => ({ status: 503 })));
+			openTeam();
+			expect(element().querySelector('.note')).not.toBeNull();
+			expect(api['createChannel']).not.toHaveBeenCalled();
+		});
 	});
 
 	it('draws the messages as the conversation does: its message component, grouped, under a day divider, with its toolbar', () => {
