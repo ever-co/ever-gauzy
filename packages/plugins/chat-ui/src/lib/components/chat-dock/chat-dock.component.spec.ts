@@ -457,6 +457,32 @@ describe('ChatDockComponent', () => {
 			expect(element().querySelector('[data-test="chat-dock-members-only"]')).toBeNull();
 		});
 
+		it('looks again when a private team I was kept out of is opened again: a channel I was added to since opens', () => {
+			user$.next({ id: 'u-out', employeeId: 'e-out', firstName: 'Olga' });
+			openTeam();
+			expect(element().querySelector('[data-test="chat-dock-members-only"]')).not.toBeNull();
+
+			api['listMine'].mockReturnValue(of({ conversations: [channel('c-web', 'Web Team')], categories: [] }));
+			dock.team.set({ ...TEAM });
+			fixture.detectChanges();
+			expect(api['messages']).toHaveBeenLastCalledWith('c-web', { limit: CHAT_DOCK_PAGE_SIZE });
+			expect(element().querySelector('[data-test="chat-dock-members-only"]')).toBeNull();
+		});
+
+		it("checks who I am when a first message would create a private team's channel, not only when the card opened", () => {
+			// Nobody known yet when the card opens: the API decides then.
+			openTeam();
+			expect(element().querySelector('[data-test="chat-dock-new-channel"]')).not.toBeNull();
+
+			// Known as someone outside the team by the time the message goes: no channel is created.
+			user$.next({ id: 'u-out', employeeId: 'e-out', firstName: 'Olga' });
+			submit('Hello');
+			expect(api['createChannel']).not.toHaveBeenCalled();
+			expect(api['send']).not.toHaveBeenCalled();
+			fixture.detectChanges();
+			expect(element().querySelector('[data-test="chat-dock-members-only"]')).not.toBeNull();
+		});
+
 		it('sends nothing when the channel cannot be created, and says so', () => {
 			api['createChannel'].mockReturnValue(throwError(() => ({ status: 500 })));
 			openTeam();

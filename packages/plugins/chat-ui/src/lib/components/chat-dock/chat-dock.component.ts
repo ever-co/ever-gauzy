@@ -4,7 +4,7 @@ import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-i
 import { Router } from '@angular/router';
 import { NbIconModule } from '@nebular/theme';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { concat, defer, EMPTY, forkJoin, from, merge, Observable, of, Subscription } from 'rxjs';
+import { concat, defer, EMPTY, forkJoin, from, merge, Observable, of, Subscription, throwError } from 'rxjs';
 import { auditTime, catchError, concatMap, distinctUntilChanged, filter, map, switchMap, tap, toArray } from 'rxjs/operators';
 import { CHAT_EVENT_NAMES, ChatVisibilityEnum, IChatConversationWithState, IChatMessageWithRelations, IOrganization, IUser, PermissionsEnum } from '@gauzy/contracts';
 import { Store, ToastrService } from '@gauzy/ui-core/core';
@@ -766,12 +766,16 @@ export class ChatDockComponent {
 		});
 		// The same team opened again with fresh details (its visibility, its members): the card keeps waiting for its
 		// first message (the composer and what is typed in it stay), and the channel is created with the details as they
-		// are now (a team turned private keeps who is not in it from starting its channel).
+		// are now, and as I am now (who is not in a private team does not start its channel). A private team I was kept
+		// out of is looked for again when opened again: I may have been added to its channel since.
 		effect(() => {
 			const team = this.team();
+			this.me();
 			untracked(() => {
-				const waiting = this.newChannelFor() ?? this.membersOnly();
-				if (team && waiting && waiting.id === team.id && waiting !== team) this.awaitChannel(team);
+				if (!team) return;
+				const blocked = this.membersOnly();
+				if (this.newChannelFor()?.id === team.id) this.awaitChannel(team);
+				else if (blocked?.id === team.id && blocked !== team) this.load({ kind: 'team', key: `team:${team.id}`, team });
 			});
 		});
 		// Once the conversation is found the composer can be written in: it gets the keyboard.
@@ -1013,6 +1017,8 @@ export class ChatDockComponent {
 		return this.findTeamChannel(team).pipe(
 			switchMap(({ found, member }) => {
 				if (found) return this.enter(found, member);
+				// Checked again with who I am now, not when the card opened: someone outside a private team starts no channel of it.
+				if (!this.mayStartChannel(team)) return throwError(() => new Error("Only a private team's members start its channel."));
 				const me = this.me()?.employeeId || null;
 				const others = team.memberEmployeeIds.filter((employeeId) => employeeId !== me);
 				const batches: string[][] = [];
@@ -1094,6 +1100,8 @@ export class ChatDockComponent {
 				error: (error) => {
 					this.sending.set(false);
 					this.fail(error, 'CHAT.COMPOSER.SEND_FAILED');
+					// Not mine to start after all (who I am is known now): the card says why and the box closes.
+					if (this.newChannelFor()?.id === team.id && !this.mayStartChannel(team)) this.awaitChannel(team);
 				}
 			});
 	}
