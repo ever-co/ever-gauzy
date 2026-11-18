@@ -103,7 +103,7 @@ export class TimeLogFactsService implements OnModuleInit {
 		name: string,
 		timeLog: Partial<ITimeLog> | null | undefined
 	): Promise<void> {
-		if (!timeLog?.id) {
+		if (!this.isScoped(name, timeLog)) {
 			return;
 		}
 		try {
@@ -121,7 +121,7 @@ export class TimeLogFactsService implements OnModuleInit {
 	 * @param timeLog The entry as the write left it, with its tenant and organization.
 	 */
 	async record(name: string, timeLog: Partial<ITimeLog> | null | undefined): Promise<void> {
-		if (!timeLog?.id) {
+		if (!this.isScoped(name, timeLog)) {
 			return;
 		}
 		try {
@@ -129,6 +129,25 @@ export class TimeLogFactsService implements OnModuleInit {
 		} catch (error) {
 			this.warnNotWritten(name, timeLog, error);
 		}
+	}
+
+	/**
+	 * Whether a fact can be written for the entry: it has an id, and states its own tenant and organization. Without
+	 * them the outbox takes the request's, and a fact stored with no organization is fanned out to the webhooks of
+	 * every organization of the tenant (`WebhookSubscriptionService.findMatchingInScope`): such a fact is logged, not
+	 * written.
+	 */
+	private isScoped(name: string, timeLog: Partial<ITimeLog> | null | undefined): timeLog is Partial<ITimeLog> {
+		if (!timeLog?.id) {
+			return false;
+		}
+		if (!timeLog.tenantId || !timeLog.organizationId) {
+			this.logger.warn(
+				`The ${name} fact of time entry ${timeLog.id} was not written: it states no tenant or organization`
+			);
+			return false;
+		}
+		return true;
 	}
 
 	private warnNotWritten(name: string, timeLog: Partial<ITimeLog>, error: unknown): void {

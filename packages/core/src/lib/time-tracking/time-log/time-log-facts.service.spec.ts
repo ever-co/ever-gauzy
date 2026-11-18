@@ -100,6 +100,21 @@ describe('TimeLogFactsService (#12071)', () => {
 		expect(outbox.append).not.toHaveBeenCalled();
 	});
 
+	it('writes nothing for an entry that states no tenant or organization, which the outbox would take from the request', async () => {
+		const { service, outbox } = createService();
+		const warn = jest.spyOn((service as any).logger, 'warn').mockImplementation(() => undefined);
+		const writeTransaction = { transaction: jest.fn(async (work: (m: unknown) => unknown) => work({})) };
+
+		await service.record('time_log.stopped', { ...ENTRY, organizationId: undefined } as any);
+		await service.record('time_log.stopped', { ...ENTRY, tenantId: undefined } as any);
+		const orphan = { ...ENTRY, organizationId: null } as any;
+		await service.recordWithin(writeTransaction as any, 'time_log.stopped', orphan);
+
+		expect(outbox.append).not.toHaveBeenCalled();
+		expect(writeTransaction.transaction).not.toHaveBeenCalled();
+		expect(warn).toHaveBeenCalledTimes(3);
+	});
+
 	it('appends through MikroORM under MikroORM', async () => {
 		const { service, outbox, dataSource } = createService();
 		const transactionManager = { name: 'mikro-orm transaction' };
