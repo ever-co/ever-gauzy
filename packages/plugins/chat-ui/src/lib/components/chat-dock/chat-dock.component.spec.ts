@@ -111,6 +111,9 @@ describe('ChatDockComponent', () => {
 			expect(api['join']).not.toHaveBeenCalled();
 			expect(api['messages']).toHaveBeenLastCalledWith('c-web', { limit: CHAT_DOCK_PAGE_SIZE });
 			expect(element().querySelector('.name')?.textContent).toContain('Web Team');
+			// The team's members at the top, under its name (no faces while the chat knows none of them).
+			expect(element().querySelector('[data-test="chat-dock-members"]')).not.toBeNull();
+			expect(element().querySelector('[data-test="chat-dock-members"] .faces')).toBeNull();
 			expect(placeholder()).not.toBeNull();
 		});
 
