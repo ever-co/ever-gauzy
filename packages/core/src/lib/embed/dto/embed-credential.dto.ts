@@ -28,7 +28,11 @@ export class CreateEmbedCredentialDTO implements IEmbedCredentialCreateInput {
 	organizationId: ID;
 
 	/** Checked by the service to be a contact of that organization, in the caller's tenant, not deleted. */
-	@ApiPropertyOptional({ type: () => String, description: 'A client (organization contact) to limit it to.' })
+	@ApiPropertyOptional({
+		type: () => String,
+		description:
+			'A client (organization contact) whose spent time it reads at POST /embed/client-report. Tokens it exchanges still act for any member of the organization.'
+	})
 	@IsOptional()
 	@IsUUID()
 	organizationContactId?: ID;

@@ -8,7 +8,11 @@ export interface IEmbedCredential extends IBasePerTenantAndOrganizationEntityMod
 	name: string;
 	/** The first characters of the secret (`gze_` and 8 more), to recognize it in the list. */
 	prefix: string;
-	/** The client (an organization contact) the credential is limited to; null for one of the whole organization. */
+	/**
+	 * The client (an organization contact) whose spent time the credential reads (`POST /embed/client-report`); null
+	 * for a credential that reads no client report. It does not narrow the exchange yet: a token exchanged with the
+	 * credential acts for any member of the organization, as with any other credential.
+	 */
 	organizationContactId?: ID | null;
 	lastUsedAt?: Date | null;
 	revokedAt?: Date | null;
@@ -17,7 +21,10 @@ export interface IEmbedCredential extends IBasePerTenantAndOrganizationEntityMod
 export interface IEmbedCredentialCreateInput {
 	name: string;
 	organizationId: ID;
-	/** A client of the organization to limit the credential to; without one, it serves the whole organization. */
+	/**
+	 * A client of the organization whose spent time the credential is to read (`POST /embed/client-report`). It does not
+	 * narrow the exchange yet: the credential still exchanges tokens for any member of the organization.
+	 */
 	organizationContactId?: ID;
 }
 
