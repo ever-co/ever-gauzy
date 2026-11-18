@@ -73,10 +73,10 @@ export class EmbedCredentialResponseDTO implements IEmbedCredential {
 	@ApiPropertyOptional({ type: () => Date })
 	createdAt?: Date;
 
-	@ApiPropertyOptional({ type: () => Date })
+	@ApiPropertyOptional({ type: () => Date, nullable: true })
 	lastUsedAt: Date | null;
 
-	@ApiPropertyOptional({ type: () => Date })
+	@ApiPropertyOptional({ type: () => Date, nullable: true })
 	revokedAt: Date | null;
 
 	static from(row: EmbedCredential): EmbedCredentialResponseDTO {
