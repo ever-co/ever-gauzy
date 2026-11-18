@@ -4,6 +4,7 @@ import '../core/entities/internal';
 import {
 	BadRequestException,
 	ForbiddenException,
+	InternalServerErrorException,
 	NotFoundException,
 	ServiceUnavailableException,
 	UnauthorizedException
@@ -518,6 +519,18 @@ describe('EmbedCredentialService: client report', () => {
 			status: 403,
 			response: { code: 'EMBED_CLIENT_GONE' }
 		});
+	});
+
+	it('answers a report it could not read with a 500, or a 503 for a database out of reach, never a 401', async () => {
+		const { service, reportOf } = build();
+		const { secret } = await northwindCredential(service);
+
+		reportOf.mockRejectedValueOnce(new Error('SQLITE_BUSY: database is locked'));
+		await expect(service.clientReport({ credential: secret }, PORTAL)).rejects.toThrow(InternalServerErrorException);
+		reportOf.mockRejectedValueOnce(new Error('Connection terminated unexpectedly'));
+		await expect(service.clientReport({ credential: secret }, PORTAL)).rejects.toThrow(ServiceUnavailableException);
+
+		await expect(service.clientReport({ credential: secret }, PORTAL)).resolves.toEqual(NORTHWIND_REPORT);
 	});
 
 	it('counts its refused credentials against the address, with the exchange, up to the same cap', async () => {

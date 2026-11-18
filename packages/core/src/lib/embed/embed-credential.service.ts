@@ -4,6 +4,7 @@ import {
 	HttpException,
 	HttpStatus,
 	Injectable,
+	InternalServerErrorException,
 	Logger,
 	NotFoundException,
 	ServiceUnavailableException,
@@ -74,6 +75,9 @@ class ClientRefused extends Error {
 		super(message);
 	}
 }
+
+/** A client report that could not be read once its credential was accepted, already logged: a 500, never a 401. */
+class ReportUnread extends Error {}
 
 /** The message of what was thrown, for a log line. */
 function messageOf(error: unknown): string {
@@ -257,7 +261,8 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 	 * The credential is judged as the exchange judges it, with the same answers (401, 429, 503) and the same count of
 	 * refused credentials per address. A credential of the whole organization gets a 403 `EMBED_CLIENT_REQUIRED`, and
 	 * one whose client was deleted a 403 `EMBED_CLIENT_GONE` (a client deleted for good takes its credentials with it,
-	 * which then get the 401 of an unknown credential).
+	 * which then get the 401 of an unknown credential). A report that could not be read once the credential was
+	 * accepted gets a 500, or the 503 of a database out of reach, never a 401.
 	 *
 	 * @param input The credential.
 	 * @param address The client address, as the rate limiter resolves it; without one, the shared unresolved bucket.
@@ -285,7 +290,17 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 		}
 		const now = new Date();
 		const scope = { tenantId: row.tenantId, organizationId: row.organizationId };
-		const report = await this.embedClientService.reportOf(row.organizationContactId, scope, now);
+		let report: IEmbedClientReport | null;
+		try {
+			report = await this.embedClientService.reportOf(row.organizationContactId, scope, now);
+		} catch (error) {
+			// The credential was accepted: a failure of the read is the server's, never a refused credential.
+			if (isDatabaseUnavailableError(error)) {
+				throw error;
+			}
+			this.logger.error(`Embed client report could not be read: credential=${row.id} ${messageOf(error)}`);
+			throw new ReportUnread();
+		}
 		if (!report) {
 			this.logger.warn(`Embed client report refused: the client is gone credential=${row.id}`);
 			throw new ClientRefused(
@@ -299,8 +314,9 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 
 	/**
 	 * What a request whose credential did not get it through is answered: a 503 when the database is out of reach, a
-	 * 403 with a code for a member the credential cannot act for or a client report it cannot read, a 429 with a code
-	 * for a capped address, and one 401 for every refused credential.
+	 * 403 with a code for a member the credential cannot act for or a client report it cannot read, a 500 for a client
+	 * report that failed after its credential was accepted, a 429 with a code for a capped address, and one 401 for
+	 * every refused credential.
 	 *
 	 * @param error What stopped the request.
 	 * @param route The route, as its log lines name it.
@@ -323,6 +339,9 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 		}
 		if (error instanceof ClientRefused) {
 			return new ForbiddenException({ statusCode: 403, code: error.code, message: error.message });
+		}
+		if (error instanceof ReportUnread) {
+			return new InternalServerErrorException();
 		}
 		if (error instanceof AddressLimited) {
 			return new HttpException(
