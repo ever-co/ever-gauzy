@@ -12,6 +12,7 @@
 @use 'sass:list';
 @use 'sass:map';
 @use 'rich-text-editor' as *;
+@use 'color-picker-field' as *;
 
 // ── Control edge ───────────────────────────────────────────────────────────
 // Every control in the app (input, textarea, nb-select trigger, ng-select
@@ -391,6 +392,7 @@ $default-box-shadow: $control-hairline;
   @include full-calendar();
   @include rich-text-editor();
   @include rich-text-content();
+  @include color-picker-field();
   @include input-appearance($default-height, var(--gauzy-card-1));
   @include nb-tabset-overrides;
   @include ng-select-text-alignment();

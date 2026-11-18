@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
-import { IPagination, ITag, ITagFindInput } from '@gauzy/contracts';
+import { ID, IPagination, ITag, ITagFindInput } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
 import { CrudService } from '../crud/crud.service';
 
@@ -26,6 +26,16 @@ export class TagsService extends CrudService<ITag> {
 				params: toParams({ where, relations })
 			})
 		);
+	}
+
+	/**
+	 * Get one tag by its id.
+	 *
+	 * @param id The tag.
+	 * @returns The tag, without its relations or usage counters.
+	 */
+	getTagById(id: ID): Promise<ITag> {
+		return firstValueFrom(this.http.get<ITag>(`${API_PREFIX}/tags/${id}`));
 	}
 
 	/**

@@ -16,6 +16,7 @@ import {
 	readEmbedClaims
 } from './embed-session';
 import { isEmbedEnabled } from './embed.utils';
+import { normalizeOrigin } from './embed-origin';
 
 /** Makes the embed routes answer 404 while `GAUZY_EMBED_TOKENS_ENABLED` is off. */
 @Injectable()
@@ -30,6 +31,13 @@ export class EmbedEnabledGuard implements CanActivate {
 
 const outOfScope = () =>
 	new ForbiddenException({ statusCode: 403, code: 'EMBED_SCOPE', message: 'An embed token reaches only the timer.' });
+
+const fromAnotherSite = () =>
+	new ForbiddenException({
+		statusCode: 403,
+		code: 'EMBED_ORIGIN',
+		message: 'This embed token works only from the site it was issued for.'
+	});
 
 /** The request of an HTTP call, or of a GraphQL one (its context carries `req`). */
 function requestOf(context: ExecutionContext): any {
@@ -62,6 +70,11 @@ export class EmbedSessionGuard implements CanActivate {
 		const route = embedRouteOf(request.method, path);
 		if (!route || !isWithinEmbedScope(route, request, claims)) {
 			throw outOfScope();
+		}
+		// A browser names the page's origin; the token works only from the one it was exchanged for.
+		const requestOrigin = request.headers?.origin;
+		if (claims.origin && requestOrigin && normalizeOrigin(requestOrigin) !== claims.origin) {
+			throw fromAnotherSite();
 		}
 		// A start or a stop takes the server's time: an embed cannot backdate.
 		if (request.method === 'POST' && request.body && typeof request.body === 'object') {

@@ -48,6 +48,11 @@ describe('format.utils — pipe parity', () => {
 		expect(dateFormat('not a date')).toBe('');
 	});
 
+	it('dateFormat falls back to the locale long date, with the day of the month', () => {
+		// Same fallback as the Angular pipe (`LL`); `d MMMM, y` gave the day of the WEEK ("3 August, 2026").
+		expect(dateFormat('2026-08-12T00:00:00', { locale: 'en' })).toBe('August 12, 2026');
+	});
+
 	it('durationMinutesLabel is the "mm" of a slot duration', () => {
 		expect(durationMinutesLabel(600)).toBe('10');
 		expect(durationMinutesLabel(0)).toBe('00');

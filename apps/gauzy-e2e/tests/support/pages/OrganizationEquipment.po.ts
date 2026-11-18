@@ -29,7 +29,7 @@ const dismissLeftoverDialogs = async () => {
 	const tagDialog = page.locator(OrganizationEquipmentPage.tagsMutationCss).first();
 	if (await tagDialog.isVisible().catch(() => false)) {
 		await page.keyboard.press('Escape').catch(() => undefined);
-		await tagDialog.locator('.cancel i').first().dispatchEvent('click').catch(() => undefined);
+		await tagDialog.locator('.mutation__close').first().dispatchEvent('click').catch(() => undefined);
 		await tagDialog.waitFor({ state: 'detached', timeout: 8000 }).catch(() => undefined);
 	}
 	// Absorb a fading cdk-overlay backdrop left behind by any just-closed dialog.

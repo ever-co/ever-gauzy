@@ -16,7 +16,12 @@ export class DateTimeFormatPipe implements PipeTransform {
 	private readonly store = inject(Store);
 
 	timeFormat: number = TimeFormatEnum.FORMAT_12_HOURS;
-	dateFormat: string = 'd MMMM, y H:mm';
+	/**
+	 * The date part used when the organization sets no format; `transform()` appends the time itself. `LL` is the
+	 * locale's long date. The previous fallback, `d MMMM, y H:mm`, used moment's `d` (day of the WEEK, so a 15th
+	 * read "1 January") and carried a time of its own, which `transform()` then followed with a second one.
+	 */
+	dateFormat: string = 'LL';
 	regionCode: string = RegionsEnum.EN;
 
 	constructor() {
