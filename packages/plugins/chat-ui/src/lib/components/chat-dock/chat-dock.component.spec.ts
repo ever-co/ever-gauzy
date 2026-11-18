@@ -262,6 +262,27 @@ describe('ChatDockComponent', () => {
 		expect(card['messages']()).toEqual([]);
 	});
 
+	it('keeps a message sent during a read whatever its place in the page order, until a later read', () => {
+		const at = new Date(Date.now() + 1000);
+		const pending = new Subject<{ messages: IChatMessageWithRelations[] }>();
+		api['messages'].mockReturnValue(pending);
+		jest.advanceTimersByTime(CHAT_MESSAGES_POLL_MS);
+		const card = fixture.componentInstance;
+		api['send'].mockReturnValue(of({ message: { ...message('a1', 'Mine'), createdAt: at } }));
+		card['send']({ body: 'Mine', mentionEmployeeIds: [], attachmentIds: [] });
+
+		// The read under way answers a message of theirs written at the same moment, which sorts after mine.
+		const theirs = { ...message('z9', 'Theirs'), createdAt: at } as IChatMessageWithRelations;
+		pending.next({ messages: [theirs] });
+		pending.complete();
+		expect(card['messages']().map((item) => item.id)).toEqual(['a1', 'z9']);
+
+		// A read started after the send that does not hold it: it was deleted since.
+		api['messages'].mockReturnValue(of({ messages: [{ ...theirs }] }));
+		jest.advanceTimersByTime(CHAT_MESSAGES_POLL_MS);
+		expect(card['messages']().map((item) => item.id)).toEqual(['z9']);
+	});
+
 	it('applies only the fields a follow or a deletion changed, over a refresh that came meanwhile', () => {
 		api['messages'].mockReturnValue(of({ messages: [message('m1', 'Hello')] }));
 		jest.advanceTimersByTime(CHAT_MESSAGES_POLL_MS);

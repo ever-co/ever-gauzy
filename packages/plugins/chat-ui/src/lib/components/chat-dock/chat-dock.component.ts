@@ -605,13 +605,18 @@ export class ChatDockComponent {
 	private accept(page: readonly IChatMessageWithRelations[], read: number): void {
 		const inPage = new Set(page.map((message) => String(message.id)));
 		const current = this.messages();
-		const deleted = (message: IChatMessageWithRelations) => {
+		// Known before this read began and not in its page: it left the newest page (deleted, or older than it reaches).
+		const left = (message: IChatMessageWithRelations) => {
 			const since = this.known.get(String(message.id));
 			return !inPage.has(String(message.id)) && since !== undefined && since < read;
 		};
-		const live = current.filter((message) => !deleted(message));
+		const live = current.filter((message) => !left(message));
 		const shown = live.length === current.length ? current : live;
-		const messages = page.length ? showNewestPage(shown, page) : shown;
+		const next = showNewestPage(shown, page);
+		// What this read may not hold yet (sent here while it was under way) stays, whatever its place in the page's
+		// order (a message of theirs written at the same moment may sort after it), and an empty page keeps it too.
+		const pending = shown.filter((message) => !inPage.has(String(message.id)) && !next.includes(message));
+		const messages = pending.length ? mergeMessages(next, pending) : next;
 		for (const id of inPage) if (!this.known.has(id)) this.known.set(id, read);
 		this.messages.set(messages);
 		const conversation = this.conversation();
