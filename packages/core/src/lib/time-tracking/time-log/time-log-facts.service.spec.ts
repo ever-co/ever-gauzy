@@ -193,16 +193,38 @@ describe('TimeLogFactsService (#12071)', () => {
 	});
 
 	it('tells of the entry as its write states it when the read fails, in a savepoint of its own', async () => {
-		const { service, appended } = createService();
+		const { service, appended, outbox } = createService();
 		jest.spyOn((service as any).logger, 'warn').mockImplementation(() => undefined);
-		const writeTransaction = { transaction: jest.fn(async (work: (m: unknown) => unknown) => work({})) };
+		// Each savepoint invocation, as it opens and closes, and the append within them
+		const steps: string[] = [];
+		let invocation = 0;
+		let open: number | null = null;
+		const writeTransaction = {
+			transaction: jest.fn(async (work: (m: unknown) => unknown) => {
+				const current = ++invocation;
+				open = current;
+				steps.push(`open ${current}`);
+				try {
+					return await work({});
+				} finally {
+					steps.push(`close ${current}`);
+					open = null;
+				}
+			})
+		};
+		const append = outbox.append.getMockImplementation();
+		outbox.append.mockImplementation(async (usedManager: unknown, input: unknown) => {
+			steps.push(`append in ${open}`);
+			return append(usedManager, input);
+		});
 		const failing = jest.fn(async () => {
 			throw new Error('The read failed');
 		});
 
 		await service.recordWithin(writeTransaction as any, 'time_log.stopped', failing as any, ENTRY as any);
 
-		expect(writeTransaction.transaction).toHaveBeenCalledTimes(2);
+		// The failed read's savepoint closes before the fallback's opens, and the fallback appends in its own
+		expect(steps).toEqual(['open 1', 'close 1', 'open 2', 'append in 2', 'close 2']);
 		expect(appended).toHaveLength(1);
 		expect(appended[0].input).toMatchObject({ name: 'time_log.stopped', aggregateId: 'log-1' });
 	});
