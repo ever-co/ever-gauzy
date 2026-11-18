@@ -107,7 +107,7 @@ describe('EmbedExchangeFailures', () => {
 		}
 
 		expect(admitted.filter(Boolean)).toHaveLength(EMBED_EXCHANGE_FAILURES_PER_ADDRESS);
-		expect(failures.admit(OTHER_ADDRESS, UNKNOWN)).toEqual({ allowed: true, counted: true, reachesCap: false });
+		expect(failures.admit(OTHER_ADDRESS, UNKNOWN)).toMatchObject({ allowed: true, counted: true, reachesCap: false });
 	});
 
 	it('gives back a lookup that earned a token, and neither counts nor caps an accepted credential', () => {
@@ -116,14 +116,28 @@ describe('EmbedExchangeFailures', () => {
 			failures.admit(HOST, UNKNOWN);
 		}
 		const lastPlace = failures.admit(HOST, GOOD);
-		expect(lastPlace).toEqual({ allowed: true, counted: true, reachesCap: true });
+		expect(lastPlace).toMatchObject({ allowed: true, counted: true, reachesCap: true });
 		expect(failures.allows(HOST, UNKNOWN)).toBe(false);
 
-		failures.release(HOST);
+		failures.release(HOST, lastPlace);
 		failures.recordAccepted(GOOD);
 
 		expect(failures.allows(HOST, UNKNOWN)).toBe(true);
-		expect(failures.admit(HOST, GOOD)).toEqual({ allowed: true, counted: false, reachesCap: false });
+		expect(failures.admit(HOST, GOOD)).toEqual({ allowed: true, counted: false, reachesCap: false, window: null });
+	});
+
+	it('gives a place back only to the window that counted it, never to the next one', () => {
+		const { failures, advance } = counter();
+		const early = failures.admit(HOST, UNKNOWN);
+
+		advance(EMBED_EXCHANGE_FAILURE_WINDOW_MS);
+		refuse(failures, HOST, EMBED_EXCHANGE_FAILURES_PER_ADDRESS);
+		expect(failures.allows(HOST, UNKNOWN)).toBe(false);
+
+		// The lookup admitted in the window that ended finishes now.
+		failures.release(HOST, early);
+
+		expect(failures.allows(HOST, UNKNOWN)).toBe(false);
 	});
 
 	it('forgets a revoked credential: it no longer passes a capped address', () => {

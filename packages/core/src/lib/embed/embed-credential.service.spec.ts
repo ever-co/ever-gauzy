@@ -316,6 +316,29 @@ describe('EmbedCredentialService: credentials refused per address', () => {
 		await expect(service.exchange(unknownCredential(), HOST)).rejects.toMatchObject(LIMITED);
 	});
 
+	it('refuses a credential revoked while its lookup was on its way, and does not accept it again', async () => {
+		const { service, credentials, issueEmbedSession } = build();
+		signIn(TENANT);
+		const { id, secret } = await service.createForOrganization({ name: 'Northwind product', organizationId: ORG });
+		const live = { ...credentials[0] };
+		let release: () => void = () => undefined;
+		const gate = new Promise<void>((resolve) => (release = resolve));
+		lookupsOf(service).mockImplementationOnce(async () => {
+			await gate;
+			return live;
+		});
+
+		const pending = service.exchange({ credential: secret, employeeId: EMPLOYEE }, HOST);
+		await service.revoke(id);
+		release();
+
+		await expect(pending).rejects.toThrow(UnauthorizedException);
+		expect(issueEmbedSession).not.toHaveBeenCalled();
+		// The refused exchange took one place of the 60.
+		await refuse(service, HOST, 59);
+		await expect(service.exchange({ credential: secret, employeeId: EMPLOYEE }, HOST)).rejects.toMatchObject(LIMITED);
+	});
+
 	it('stops letting a credential through the cap once it is revoked', async () => {
 		const { service } = build();
 		signIn(TENANT);

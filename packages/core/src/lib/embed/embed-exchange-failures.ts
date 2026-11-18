@@ -90,6 +90,8 @@ export interface IEmbedExchangeAdmission {
 	readonly counted: boolean;
 	/** Whether this lookup brought the address to the cap. */
 	readonly reachesCap: boolean;
+	/** The window the lookup was counted in: {@link EmbedExchangeFailures.release} gives the place back to it only. */
+	readonly window: object | null;
 }
 
 /**
@@ -134,23 +136,27 @@ export class EmbedExchangeFailures {
 	 */
 	admit(address: string, keyHash: string): IEmbedExchangeAdmission {
 		if (this.accepted.has(keyHash)) {
-			return { allowed: true, counted: false, reachesCap: false };
+			return { allowed: true, counted: false, reachesCap: false, window: null };
 		}
 		if (this.isCapped(address)) {
-			return { allowed: false, counted: false, reachesCap: false };
+			return { allowed: false, counted: false, reachesCap: false, window: null };
 		}
-		const reachesCap = this.recordFailure(address);
-		return { allowed: true, counted: true, reachesCap };
+		dropEnded(this.windows, (window) => this.hasEnded(window));
+		const window = this.liveWindowOf(address) ?? this.openWindow(address);
+		window.count += 1;
+		return { allowed: true, counted: true, reachesCap: window.count === EMBED_EXCHANGE_FAILURES_PER_ADDRESS, window };
 	}
 
 	/**
-	 * Gives back a lookup {@link admit} counted, once it earned a token or could not be judged.
+	 * Gives back a lookup {@link admit} counted, once it earned a token or could not be judged: to the window that
+	 * counted it, and only while that window lasts. A lookup that outlives its window never lowers the next one.
 	 *
 	 * @param address The client address, as the rate limiter resolves it.
+	 * @param admission What {@link admit} answered for the lookup.
 	 */
-	release(address: string): void {
+	release(address: string, admission: IEmbedExchangeAdmission): void {
 		const window = this.liveWindowOf(address);
-		if (window && window.count > 0) {
+		if (admission.counted && window && window === admission.window && window.count > 0) {
 			window.count -= 1;
 		}
 	}

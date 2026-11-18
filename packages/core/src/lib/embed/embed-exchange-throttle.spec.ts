@@ -10,7 +10,7 @@ import {
 	embedExchangeLimit,
 	embedExchangeTracker
 } from './embed-exchange-throttle';
-import { recentlyAcceptedEmbedCredentials } from './embed-exchange-failures';
+import { EMBED_ACCEPTED_CREDENTIAL_TTL_MS, recentlyAcceptedEmbedCredentials } from './embed-exchange-failures';
 import { EmbedTokenController } from './embed.controller';
 import { generateEmbedCredential, hashEmbedCredential } from './embed.utils';
 
@@ -119,6 +119,28 @@ describe('embed exchange rate limit', () => {
 		expect(sent).toBe(EMBED_EXCHANGE_LIMIT_PER_ADDRESS);
 		// An accepted credential from the same address keeps its own budget.
 		expect(await accepted(guard, exchangeFrom(HOST_ADDRESS, acceptedCredentialOf()), 1)).toBe(1);
+	});
+
+	it('decides the limit and the bucket of a request once, even if the acceptance expires in between', () => {
+		const now = 1_800_000_000_000;
+		const clock = jest.spyOn(Date, 'now').mockReturnValue(now);
+		try {
+			const { credential } = acceptedCredentialOf();
+			const request = { ip: HOST_ADDRESS, headers: {}, body: { credential } };
+			const context = {
+				switchToHttp: () => ({ getRequest: () => request })
+			} as unknown as ExecutionContext;
+
+			clock.mockReturnValue(now + EMBED_ACCEPTED_CREDENTIAL_TTL_MS - 1);
+			expect(embedExchangeLimit(context)).toBe(EMBED_EXCHANGE_LIMIT_PER_CREDENTIAL);
+			clock.mockReturnValue(now + EMBED_ACCEPTED_CREDENTIAL_TTL_MS);
+			expect(embedExchangeTracker(request)).toMatch(new RegExp(`^${EMBED_CREDENTIAL_THROTTLER_TRACKER_PREFIX}`));
+
+			// A new request after the expiry is counted by its address.
+			expect(embedExchangeTracker({ ...request })).toBe(HOST_ADDRESS);
+		} finally {
+			clock.mockRestore();
+		}
 	});
 
 	it('lets one credential exchange 600 times a minute from one address, and throttles the 601st', async () => {

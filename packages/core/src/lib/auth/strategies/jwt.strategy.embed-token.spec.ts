@@ -1,6 +1,7 @@
 import { ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { PERMISSIONS_METADATA } from '@gauzy/constants';
+import { environment } from '@gauzy/config';
 import { IRole, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 
 // The strategy and the guards only need these for DI metadata; loading the real modules drags in the whole core
@@ -251,26 +252,35 @@ describe('JwtStrategy: an embed token acts with the timer and team permissions o
 
 	it("never gives a super admin's or an admin's embed token their role exemptions", async () => {
 		const superAdmin = strategyFor(RolesEnum.SUPER_ADMIN, defaultPermissionsOf(RolesEnum.SUPER_ADMIN)).strategy;
-		const { tenantPermissionGuard } = guards();
+		const { tenantPermissionGuard, rolePermissionService } = guards();
+		// The role query refuses: only the SUPER_ADMIN shortcut can let the control below through.
+		rolePermissionService.checkRolePermission.mockResolvedValue(false);
+		const allowSuperAdminRole = environment.allowSuperAdminRole;
+		(environment as any).allowSuperAdminRole = true;
+		try {
+			actAs(await superAdmin.validate(embedPayload));
+			expect(RequestContext.hasRoles([RolesEnum.SUPER_ADMIN])).toBe(false);
+			// TenantPermissionGuard's SUPER_ADMIN shortcut would have let this through before the embed narrowing.
+			await expect(
+				tenantPermissionGuard.canActivate(routeDeclaring([PermissionsEnum.ALL_ORG_VIEW]))
+			).resolves.toBe(false);
 
-		actAs(await superAdmin.validate(embedPayload));
-		expect(RequestContext.hasRoles([RolesEnum.SUPER_ADMIN])).toBe(false);
-		// TenantPermissionGuard's SUPER_ADMIN shortcut would have let this through before the embed narrowing.
-		await expect(tenantPermissionGuard.canActivate(routeDeclaring([PermissionsEnum.ALL_ORG_VIEW]))).resolves.toBe(
-			false
-		);
+			actAs(await strategyFor(RolesEnum.ADMIN, ADMIN_PERMISSIONS).strategy.validate(embedPayload));
+			expect(RequestContext.hasRoles([RolesEnum.ADMIN, RolesEnum.SUPER_ADMIN])).toBe(false);
+			// A tenant admin reaches every organization; the embed token stays in its own.
+			expect(currentOrganizationBoundary()).toEqual({ organizationId: ORG });
 
-		actAs(await strategyFor(RolesEnum.ADMIN, ADMIN_PERMISSIONS).strategy.validate(embedPayload));
-		expect(RequestContext.hasRoles([RolesEnum.ADMIN, RolesEnum.SUPER_ADMIN])).toBe(false);
-		// A tenant admin reaches every organization; the embed token stays in its own.
-		expect(currentOrganizationBoundary()).toEqual({ organizationId: ORG });
-
-		// CONTROL: the same super admin without the embed claims keeps the shortcut.
-		actAs(await superAdmin.validate(firstPartyPayload));
-		expect(RequestContext.hasRoles([RolesEnum.SUPER_ADMIN])).toBe(true);
-		await expect(tenantPermissionGuard.canActivate(routeDeclaring([PermissionsEnum.ALL_ORG_VIEW]))).resolves.toBe(
-			true
-		);
+			// CONTROL: the same super admin without the embed claims keeps the shortcut, without the role query.
+			rolePermissionService.checkRolePermission.mockClear();
+			actAs(await superAdmin.validate(firstPartyPayload));
+			expect(RequestContext.hasRoles([RolesEnum.SUPER_ADMIN])).toBe(true);
+			await expect(
+				tenantPermissionGuard.canActivate(routeDeclaring([PermissionsEnum.ALL_ORG_VIEW]))
+			).resolves.toBe(true);
+			expect(rolePermissionService.checkRolePermission).not.toHaveBeenCalled();
+		} finally {
+			(environment as any).allowSuperAdminRole = allowSuperAdminRole;
+		}
 	});
 
 	it('never gives an embed token a permission its role does not hold', async () => {

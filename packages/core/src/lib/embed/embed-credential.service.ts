@@ -252,24 +252,21 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 			row = await this.findByHash(presented);
 		} catch (error) {
 			// Not judged (the database out of reach): the lookup is given back.
-			if (counted) {
-				this.exchangeFailures.release(address);
-			}
+			this.exchangeFailures.release(address, admission);
 			throw error;
 		}
 		if (!row || !embedCredentialHashesMatch(row.keyHash, presented)) {
 			refuseCredential('unknown credential');
 		}
-		if (row.revokedAt) {
+		// A revocation this server recorded while the lookup was on its way wins over what the lookup found.
+		if (row.revokedAt || this.revoked.get(row.id)?.revoked) {
 			this.exchangeFailures.forgetAccepted(presented);
 			refuseCredential('revoked', row);
 		}
 		if (!row.tenantId || !row.organizationId) {
 			refuseCredential('no organization', row);
 		}
-		if (counted) {
-			this.exchangeFailures.release(address);
-		}
+		this.exchangeFailures.release(address, admission);
 		this.exchangeFailures.recordAccepted(presented);
 
 		const employee = await this.findMember(row, { employeeId, email });

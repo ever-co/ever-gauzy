@@ -34,18 +34,30 @@ export function embedExchangeAddress(req: Record<string, any>): string {
 	return resolveThrottlerTracker(req, throttlerTrackerOptions());
 }
 
+/** The decision of {@link acceptedCredentialDigestOf}, by request. */
+const CLASSIFIED = new WeakMap<object, string | null>();
+
 /**
  * The digest of the credential an exchange presents, when it has the shape of one and this instance accepted it
  * recently (`recentlyAcceptedEmbedCredentials`). Only those get a bucket of their own: a bucket per made-up credential
  * would give each request a fresh budget and a storage entry, without bound.
  */
 function acceptedCredentialDigestOf(req: Record<string, any> | undefined): string | null {
-	const credential: unknown = req?.body?.credential;
-	if (!isWellFormedEmbedCredential(credential)) {
-		return null;
+	// Decided once per request: the throttler asks for the limit, then for the bucket, and an acceptance that expired
+	// between the two would give the address bucket the credential's limit.
+	if (req && typeof req === 'object' && CLASSIFIED.has(req)) {
+		return CLASSIFIED.get(req) ?? null;
 	}
-	const digest = hashEmbedCredential(credential);
-	return recentlyAcceptedEmbedCredentials.has(digest) ? digest : null;
+	const credential: unknown = req?.body?.credential;
+	let digest: string | null = null;
+	if (isWellFormedEmbedCredential(credential)) {
+		const candidate = hashEmbedCredential(credential);
+		digest = recentlyAcceptedEmbedCredentials.has(candidate) ? candidate : null;
+	}
+	if (req && typeof req === 'object') {
+		CLASSIFIED.set(req, digest);
+	}
+	return digest;
 }
 
 /**
