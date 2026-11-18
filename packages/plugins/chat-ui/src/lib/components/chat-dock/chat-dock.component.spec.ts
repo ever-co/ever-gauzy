@@ -124,19 +124,44 @@ describe('ChatDockComponent', () => {
 			expect(api['messages']).toHaveBeenLastCalledWith('c-pub', { limit: CHAT_DOCK_PAGE_SIZE });
 		});
 
-		it("creates the channel with the team's members when none is named so: private for a private team, public for a public one", () => {
-			openTeam();
-			expect(api['createChannel']).toHaveBeenLastCalledWith({ name: 'Web Team', visibility: 'private', memberEmployeeIds: ['e-anna', 'e-ben'] });
-			expect(api['messages']).toHaveBeenLastCalledWith('c-new', { limit: CHAT_DOCK_PAGE_SIZE });
+		const card = () => fixture.componentInstance as unknown as Record<string, (...args: unknown[]) => void>;
+		const submit = (body: string) => card()['send']({ body, mentionEmployeeIds: [], attachmentIds: [] });
 
-			openTeam({ ...TEAM, id: 't-open', public: true });
-			expect(api['createChannel']).toHaveBeenLastCalledWith({ name: 'Web Team', visibility: 'public', memberEmployeeIds: ['e-anna', 'e-ben'] });
+		it('creates no channel on opening when none is named as the team: the box is open and says the first message creates it', () => {
+			openTeam();
+			expect(api['createChannel']).not.toHaveBeenCalled();
+			expect(element().querySelector('[data-test="chat-dock-new-channel"]')).not.toBeNull();
+			expect(element().querySelector('[data-test="chat-dock-open"]')?.hasAttribute('disabled')).toBe(true);
 		});
 
-		it('creates the channel when the public channels cannot be read', () => {
-			api['browse'].mockReturnValue(throwError(() => ({ status: 503 })));
+		it("creates the channel with the team's members on the first message, then sends it there: private for a private team", () => {
+			api['send'].mockReturnValue(of({ message: message('m1', 'Hello team') }));
 			openTeam();
-			expect(api['createChannel']).toHaveBeenCalledTimes(1);
+			submit('Hello team');
+
+			expect(api['createChannel']).toHaveBeenCalledWith({ name: 'Web Team', visibility: 'private', memberEmployeeIds: ['e-anna', 'e-ben'] });
+			expect(api['send']).toHaveBeenCalledWith('c-new', expect.objectContaining({ body: 'Hello team' }));
+			expect(api['notifyChanged']).toHaveBeenCalled();
+			expect(api['messages']).toHaveBeenLastCalledWith('c-new', { limit: CHAT_DOCK_PAGE_SIZE });
+			fixture.detectChanges();
+			expect(element().querySelector('[data-test="chat-dock-new-channel"]')).toBeNull();
+			expect(element().querySelector('[data-test="chat-dock-messages"]')?.textContent).toContain('Hello team');
+		});
+
+		it('creates a public channel for a public team, also when the public channels cannot be read', () => {
+			api['browse'].mockReturnValue(throwError(() => ({ status: 503 })));
+			api['send'].mockReturnValue(of({ message: message('m1', 'Hi') }));
+			openTeam({ ...TEAM, public: true });
+			submit('Hi');
+			expect(api['createChannel']).toHaveBeenCalledWith({ name: 'Web Team', visibility: 'public', memberEmployeeIds: ['e-anna', 'e-ben'] });
+		});
+
+		it('sends nothing when the channel cannot be created, and says so', () => {
+			api['createChannel'].mockReturnValue(throwError(() => ({ status: 500 })));
+			openTeam();
+			submit('Hello');
+			expect(api['send']).not.toHaveBeenCalled();
+			expect(TestBed.inject(ToastrService).danger).toHaveBeenCalled();
 		});
 
 		it('says so when the channel cannot be found or created', () => {
