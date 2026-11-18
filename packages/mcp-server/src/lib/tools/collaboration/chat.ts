@@ -237,6 +237,6 @@ export function registerChatTools(server: McpServer, access: { read: boolean; wr
 			});
 			return answer({ state: state ?? null });
 		},
-		TOOL_HINTS.idempotentWrite
+		TOOL_HINTS.write
 	);
 }

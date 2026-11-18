@@ -109,6 +109,12 @@ describe('the hints every registered tool declares', () => {
 		expect(failing(timer, isDestructive)).toEqual([]);
 	});
 
+	it('does not hint idempotent the chat read, which reads up to the newest message when it names none', () => {
+		const [markRead] = named(tools, ['mark_chat_conversation_read']);
+
+		expect(markRead?.annotations).toEqual(expect.objectContaining({ idempotentHint: false, readOnlyHint: false }));
+	});
+
 	it('marks read-only every get, list, count and search tool', () => {
 		const reads = tools.filter((tool) => READ_PREFIX.test(tool.name));
 
