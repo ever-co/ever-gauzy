@@ -1,11 +1,11 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { NbButtonModule, NbIconModule, NbTooltipModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
-import { firstValueFrom, Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { distinctUntilChanged, map } from 'rxjs/operators';
-import { IOrganization } from '@gauzy/contracts';
+import { IOrganization, IUser } from '@gauzy/contracts';
 import { Store, ToastrService } from '@gauzy/ui-core/core';
 import { ChatAvailabilityService } from '../../services/chat-availability.service';
 import { ChatDockService } from '../../services/chat-dock.service';
@@ -63,24 +63,50 @@ export class TeamChatButtonComponent {
 	private readonly organization = toSignal(this.store.selectedOrganization$ as Observable<IOrganization | null | undefined>, {
 		initialValue: null
 	});
+	private readonly userId = toSignal(
+		(this.store.user$ as Observable<IUser | null | undefined>).pipe(
+			map((user) => (user?.id ? String(user.id) : null)),
+			distinctUntilChanged()
+		),
+		{ initialValue: null }
+	);
 	/** While the team is read: a second click waits for it. */
 	protected readonly opening = signal(false);
+	/** The read of the team under way; it ends with the button (the page left), so its answer opens nothing. */
+	private request: Subscription | null = null;
+
+	constructor() {
+		inject(DestroyRef).onDestroy(() => this.request?.unsubscribe());
+	}
+
+	/**
+	 * Who asks, where: an answer is used only while the user, the organization (and its tenant) and the page's team are
+	 * the same.
+	 */
+	private scope(): string {
+		const organization = this.organization();
+		return `${this.userId() ?? ''}|${organization?.tenantId ?? ''}|${organization?.id ?? ''}|${this.teamId() ?? ''}`;
+	}
 
 	/** Reads the team (its name and members, for its channel) and opens the docked window with its channel. */
-	protected async open(): Promise<void> {
+	protected open(): void {
 		const teamId = this.teamId();
 		const organization = this.organization();
 		if (!teamId || !organization?.id || !organization.tenantId || this.opening()) return;
+		const scope = this.scope();
 		this.opening.set(true);
-		try {
-			const team = await firstValueFrom(this.api.team(teamId, organization.id, organization.tenantId));
-			// The page left meanwhile for another team: that one is not opened for this click.
-			if (!team || this.teamId() !== teamId) return;
-			await this.dock.openTeam(team);
-		} catch {
-			this.toastr.danger('CHAT.DIALOG.FAILED');
-		} finally {
-			this.opening.set(false);
-		}
+		this.request?.unsubscribe();
+		this.request = this.api.team(teamId, organization.id, organization.tenantId).subscribe({
+			next: (team) => {
+				this.opening.set(false);
+				// Another user, tenant, organization or team meanwhile: this click's team is not opened under it.
+				if (!team || this.scope() !== scope) return;
+				void this.dock.openTeam(team);
+			},
+			error: () => {
+				this.opening.set(false);
+				if (this.scope() === scope) this.toastr.danger('CHAT.DIALOG.FAILED');
+			}
+		});
 	}
 }
