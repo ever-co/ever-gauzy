@@ -1,7 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { isUUID } from 'class-validator';
 import { DataSource, FindOptionsWhere, In, LessThan, MoreThan, Not } from 'typeorm';
-import { ID, IEmbedClientReport, IEmbedClientReportProject, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
+import {
+	ID,
+	IEmbedClientReport,
+	IEmbedClientReportProject,
+	IEmbedProject,
+	TimeLogSourceEnum,
+	TimeLogType
+} from '@gauzy/contracts';
 import { Organization, OrganizationContact, OrganizationProject, Task, TimeLog } from '../core/entities/internal';
 import { TRACKER_SOURCES } from '../time-tracking/time-log/tracker-source';
 import {
@@ -18,11 +25,26 @@ export interface IEmbedClientScope {
 	organizationId: ID;
 }
 
+/** What an embed token lists the projects of: its tenant and organization, its member, and its client if it has one. */
+export interface IEmbedProjectsScope extends IEmbedClientScope {
+	employeeId: ID;
+	clientId: ID | null;
+}
+
 /** A client as an embed answer names it: its id and its name, nothing else. */
 export type EmbedClient = IEmbedClientReport['client'];
 
 /** A project as a client report names it. */
 type EmbedClientProject = Pick<IEmbedClientReportProject, 'id' | 'name'>;
+
+/** By name, then by id: the same order whatever the database's collation. */
+function byName(a: IEmbedProject, b: IEmbedProject): number {
+	const byNames = a.name.localeCompare(b.name, 'en');
+	if (byNames !== 0) {
+		return byNames;
+	}
+	return a.id.localeCompare(b.id);
+}
 
 /**
  * The client (an organization contact) an embed credential is limited to. Read through TypeORM whichever ORM the
@@ -129,6 +151,45 @@ export class EmbedClientService {
 		return await this.dataSource.getRepository(Task).exists({
 			where: { id: taskId, projectId, tenantId: scope.tenantId, organizationId: scope.organizationId }
 		});
+	}
+
+	/**
+	 * The projects an embed token may track time on, by name: its client's for a token limited to one, else the ones its
+	 * member belongs to, as a member or a manager (the rule of `GET /organization-projects/employee/:id`). Only those of
+	 * the tenant and organization, neither archived nor deleted, as the project pickers offer them. A private project is
+	 * never hidden from its own members, so the private projects rule leaves none of the member's out.
+	 *
+	 * @param token The token's tenant and organization, member and client.
+	 */
+	async trackableProjectsOf(token: IEmbedProjectsScope): Promise<IEmbedProject[]> {
+		const trackable = this.trackableCondition(token);
+		const isScoped = Boolean(token.tenantId) && Boolean(token.organizationId);
+		if (!trackable || !isScoped) {
+			return [];
+		}
+		const projects = await this.dataSource.getRepository(OrganizationProject).find({
+			where: { ...trackable, tenantId: token.tenantId, organizationId: token.organizationId, isArchived: false },
+			select: { id: true, name: true }
+		});
+		const answer = projects.map((project) => ({ id: project.id, name: project.name }));
+		return answer.sort(byName);
+	}
+
+	/**
+	 * The condition that names the token's projects: its client's, else its member's; none for an id that is not one,
+	 * which TypeORM would drop from the read.
+	 */
+	private trackableCondition(token: IEmbedProjectsScope): FindOptionsWhere<OrganizationProject> | null {
+		if (token.clientId) {
+			if (!isUUID(token.clientId)) {
+				return null;
+			}
+			return { organizationContactId: token.clientId };
+		}
+		if (!isUUID(token.employeeId)) {
+			return null;
+		}
+		return { members: { employeeId: token.employeeId } };
 	}
 
 	/** The client's projects in the tenant and organization, not deleted. */
