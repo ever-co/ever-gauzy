@@ -43,11 +43,15 @@ import { isEmbedEnabled } from './embed.utils';
 export class EmbedCredentialController {
 	constructor(private readonly embedCredentialService: EmbedCredentialService) {}
 
-	/** Whether this server has embeds on: the settings page asks, whatever the switch says. */
-	@ApiOperation({ summary: 'Whether this server has embed credentials on' })
+	/**
+	 * Whether this server has embeds on: the settings page asks, whatever the switch says. `clientLimits` tells it that
+	 * a credential can be limited to one client: an older server would drop `organizationContactId` and create a
+	 * credential for the whole organization, so the page offers the choice only when this is true.
+	 */
+	@ApiOperation({ summary: 'Whether this server has embed credentials on, and what they can be limited to' })
 	@Get('/config')
-	config(): { enabled: boolean } {
-		return { enabled: isEmbedEnabled() };
+	config(): { enabled: boolean; clientLimits: boolean } {
+		return { enabled: isEmbedEnabled(), clientLimits: true };
 	}
 
 	@ApiOperation({ summary: "The organization's working embed credentials, without secrets" })

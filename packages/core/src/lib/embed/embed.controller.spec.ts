@@ -4,7 +4,7 @@ import { Request } from 'express';
 import { PUBLIC_METHOD_METADATA } from '@gauzy/constants';
 import { IEmbedClientReport } from '@gauzy/contracts';
 import { EmbedCredentialService } from './embed-credential.service';
-import { EmbedTokenController } from './embed.controller';
+import { EmbedCredentialController, EmbedTokenController } from './embed.controller';
 import { EmbedEnabledGuard } from './embed.guards';
 import { EMBED_TOKENS_ENV } from './embed.utils';
 
@@ -60,5 +60,16 @@ describe('POST /embed/client-report', () => {
 		await expect(controller.clientReport(body, request)).resolves.toBe(report);
 
 		expect(clientReport).toHaveBeenCalledWith(body, '203.0.113.7');
+	});
+});
+
+describe('GET /embed-credentials/config', () => {
+	it('tells the settings page that a credential can be limited to a client, with embeds on or off', () => {
+		const controller = new EmbedCredentialController({} as EmbedCredentialService);
+
+		process.env[EMBED_TOKENS_ENV] = 'false';
+		expect(controller.config()).toEqual({ enabled: false, clientLimits: true });
+		process.env[EMBED_TOKENS_ENV] = 'true';
+		expect(controller.config()).toEqual({ enabled: true, clientLimits: true });
 	});
 });
