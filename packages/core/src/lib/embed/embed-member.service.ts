@@ -3,7 +3,15 @@ import { HttpException, Injectable, NotFoundException, ServiceUnavailableExcepti
 import { CommandBus } from '@nestjs/cqrs';
 import { isEmail } from 'class-validator';
 import { DataSource, In, Raw } from 'typeorm';
-import { ID, IEmployee, IEmployeeCreateInput, IUser, IUserCreateInput, RolesEnum } from '@gauzy/contracts';
+import {
+	EmployeeKindEnum,
+	ID,
+	IEmployee,
+	IEmployeeCreateInput,
+	IUser,
+	IUserCreateInput,
+	RolesEnum
+} from '@gauzy/contracts';
 import { extractNameFromEmail } from '@gauzy/utils';
 import { RequestContext } from '../core/context/request-context';
 import { Employee, Role, User, UserOrganization } from '../core/entities/internal';
@@ -186,8 +194,9 @@ export class EmbedMemberService {
 	 * exchange never brings such a person back. The caller looked for an active member of the address first, in its
 	 * turn ({@link inTurn}).
 	 *
-	 * A refusal the platform's commands answer (a 4xx: the account stands behind an agent or a member without an
-	 * account, the tenant has no employee role) is a refusal too. Any other failure is thrown.
+	 * The account behind an agent or a member without an account is refused before anything is written, as the
+	 * platform's commands refuse it. A refusal those commands answer (a 4xx: the tenant has no employee role) is a
+	 * refusal too. Any other failure is thrown.
 	 *
 	 * @param scope The credential's tenant and organization.
 	 * @param person The address and the names the exchange gives.
@@ -244,10 +253,34 @@ export class EmbedMemberService {
 		if (isOff) {
 			return 'the account is inactive, archived or deleted';
 		}
+		if (await this.standsBehindNoPerson(scope, accounts)) {
+			return 'the account stands behind an agent or a member without an account';
+		}
 		if (await this.wasInOrganization(scope, accounts)) {
 			return 'archived, deactivated or removed in the organization';
 		}
 		return null;
+	}
+
+	/**
+	 * Whether one of the accounts stands behind an agent or a member without an account, in any organization of the
+	 * tenant, deleted ones included. The platform never files a person on such an account
+	 * (`EmployeeService.assertNotAgentAccount`, `assertNotPlaceholderAccount`), and it is refused here, before the
+	 * membership an addition writes first ({@link file}).
+	 */
+	private async standsBehindNoPerson(scope: IEmbedMemberScope, accounts: User[]): Promise<boolean> {
+		if (accounts.length === 0) {
+			return false;
+		}
+		const userId = In(accounts.map((account) => account.id));
+		const others = await this.dataSource.getRepository(Employee).count({
+			where: [
+				{ tenantId: scope.tenantId, userId, kind: EmployeeKindEnum.AGENT },
+				{ tenantId: scope.tenantId, userId, isPlaceholder: true }
+			],
+			withDeleted: true
+		});
+		return others > 0;
 	}
 
 	/**
@@ -273,16 +306,23 @@ export class EmbedMemberService {
 	}
 
 	/**
-	 * Files the person in the organization: the account given, or a new one, then its employee and its membership. The
-	 * employee starts work today, which turns their time tracking on, as accepting an invitation does.
+	 * Files the person in the organization: the account given, or a new one, then its membership, then its employee.
+	 * The employee starts work today, which turns their time tracking on, as accepting an invitation does.
+	 *
+	 * The writes share no transaction (the platform's commands make their own), so the membership comes first. The
+	 * command writes the employee before the membership: an addition cut between those two would leave an employee
+	 * without a membership, which every later exchange finds and refuses. Cut after the membership, an addition leaves
+	 * an account with a live membership and no employee there, which the next exchange of the address completes, as it
+	 * adds anyone in that state; the command then keeps the membership.
 	 */
 	private async file(scope: IEmbedMemberScope, person: IEmbedNewMember, account?: User): Promise<IEmployee> {
 		let holder: IUser | undefined = account;
 		if (!holder) {
 			holder = await this.createAccount(scope.tenantId, person);
 		}
+		await this.joinOrganization(scope, holder.id);
 		// By the address, never by the account's id: the command then takes its branch for an existing account, which
-		// refuses the account of an agent or of a member without an account, adds the membership and sends no email.
+		// refuses the account of an agent or of a member without an account, keeps the membership and sends no email.
 		// Its branch for a new account requires a password and sends a welcome email.
 		const input: IEmployeeCreateInput = {
 			organizationId: scope.organizationId,
@@ -290,6 +330,21 @@ export class EmbedMemberService {
 			startedWorkOn: new Date()
 		};
 		return await this.commandBus.execute(new EmployeeCreateCommand(input));
+	}
+
+	/**
+	 * Writes a membership of the account in the organization unless it has an active one, as
+	 * `UserOrganizationService.addUserToOrganization` writes it for an account that is not a super admin, which the
+	 * employee command then finds and keeps. A membership that is not live was refused before ({@link refusalOf}).
+	 */
+	private async joinOrganization(scope: IEmbedMemberScope, userId: ID): Promise<void> {
+		const memberships = this.dataSource.getRepository(UserOrganization);
+		const membership = { tenantId: scope.tenantId, organizationId: scope.organizationId, userId };
+		const active = await memberships.findOne({ where: { ...membership, isActive: true } });
+		if (active) {
+			return;
+		}
+		await memberships.save(new UserOrganization(membership));
 	}
 
 	/**

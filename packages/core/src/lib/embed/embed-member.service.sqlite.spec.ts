@@ -59,6 +59,7 @@ const ACCOUNTS: Record<string, { id: string; roleId: string; values?: Record<str
 		values: { deletedAt: '2026-10-01 09:00:00' }
 	},
 	'agent-7@northwind.example': { id: '7d000000-0000-4000-8000-00000000000c', roleId: EMPLOYEE_ROLE },
+	'nia@northwind.example': { id: '7d000000-0000-4000-8000-000000000011', roleId: EMPLOYEE_ROLE },
 	'Mara@Northwind.example': { id: '7d000000-0000-4000-8000-00000000000d', roleId: EMPLOYEE_ROLE }
 };
 
@@ -173,6 +174,8 @@ async function seed(dataSource: DataSource): Promise<void> {
 	await insertEmployee(dataSource, 'ines@northwind.example', { isActive: 0 });
 	await insertEmployee(dataSource, 'ravi@northwind.example', { deletedAt: '2026-10-01 09:00:00' });
 	await insertMembership(dataSource, 'yuki@northwind.example', { isActive: 0 });
+	// Nia's addition was cut after her membership was written, before her employee.
+	await insertMembership(dataSource, 'nia@northwind.example');
 	// The account behind an agent of the sister organization.
 	await insertEmployee(dataSource, 'agent-7@northwind.example', {
 		organizationId: SISTER_ORGANIZATION,
@@ -185,6 +188,9 @@ describe('EmbedMemberService on SQLite, through the platform commands', () => {
 	const file = path.join(os.tmpdir(), `gauzy-embed-member-${process.pid}-${Date.now()}.sqlite3`);
 	let dataSource: DataSource;
 	let service: EmbedMemberService;
+	/** The service on another command bus, to cut an addition short. */
+	let serviceOnBus: (bus: { execute: (command: object) => Promise<unknown> }) => EmbedMemberService;
+	let commandBus: { execute: (command: object) => Promise<unknown> };
 	let currentTenantId: () => string | null;
 	let credentialService: EmbedCredentialService;
 	const welcomeUser = jest.fn();
@@ -259,7 +265,7 @@ describe('EmbedMemberService on SQLite, through the platform commands', () => {
 			);
 			// The command bus, with the two handlers the additions run; any other command fails the case.
 			const handlers = new Map<unknown, { execute: (command: never) => Promise<unknown> }>();
-			const commandBus = {
+			commandBus = {
 				execute: async (command: object) => {
 					const handler = handlers.get(command.constructor);
 					if (!handler) {
@@ -282,6 +288,7 @@ describe('EmbedMemberService on SQLite, through the platform commands', () => {
 				)
 			);
 			service = new members.EmbedMemberService(dataSource, commandBus as never);
+			serviceOnBus = (bus) => new members.EmbedMemberService(dataSource, bus as never);
 
 			const credentials = require('./embed-credential.service') as typeof import('./embed-credential.service');
 			const { TypeOrmEmbedCredentialRepository } =
@@ -478,13 +485,62 @@ describe('EmbedMemberService on SQLite, through the platform commands', () => {
 		expect(await counts()).toEqual(before);
 	});
 
-	it('refuses what the platform refuses: the account behind an agent', async () => {
+	it('refuses what the platform refuses, the account behind an agent, before it writes anything', async () => {
 		const before = await counts();
 
 		await expect(service.add(SCOPE, { email: 'agent-7@northwind.example' })).resolves.toEqual({
-			refused: 'the platform refused to add the account (409)'
+			refused: 'the account stands behind an agent or a member without an account'
 		});
 		expect(await counts()).toEqual(before);
+	});
+
+	it('writes the membership before the employee: an addition cut between them is completed by the next one', async () => {
+		const before = await counts();
+		const cut = serviceOnBus({
+			execute: async (command: object) => {
+				if (command.constructor.name === 'EmployeeCreateCommand') {
+					throw new Error('the connection was lost');
+				}
+				return await commandBus.execute(command);
+			}
+		});
+
+		await expect(cut.add(SCOPE, { email: 'tara@fabrikam.example' })).rejects.toThrow('the connection was lost');
+
+		const account = await userByEmail('tara@fabrikam.example');
+		expect(await membershipsOf(account.id)).toEqual([
+			expect.objectContaining({ organizationId: ORGANIZATION, isActive: 1 })
+		]);
+		expect(await counts()).toEqual({
+			users: before.users + 1,
+			employees: before.employees,
+			memberships: before.memberships + 1
+		});
+
+		const addition = await service.add(SCOPE, { email: 'tara@fabrikam.example' });
+
+		const employeeId = (addition as { employeeId: string }).employeeId;
+		expect(await employeeById(employeeId)).toMatchObject({ userId: account.id, organizationId: ORGANIZATION });
+		expect(await counts()).toEqual({
+			users: before.users + 1,
+			employees: before.employees + 1,
+			memberships: before.memberships + 1
+		});
+	});
+
+	it('adds the employee of an account whose membership has none, and keeps the membership', async () => {
+		const before = await counts();
+
+		const addition = await service.add(SCOPE, { email: 'nia@northwind.example' });
+
+		const employeeId = (addition as { employeeId: string }).employeeId;
+		expect(await employeeById(employeeId)).toMatchObject({
+			userId: idOf('nia@northwind.example'),
+			organizationId: ORGANIZATION,
+			isTrackingEnabled: 1
+		});
+		expect(await membershipsOf(idOf('nia@northwind.example'))).toHaveLength(1);
+		expect(await counts()).toEqual({ ...before, employees: before.employees + 1 });
 	});
 
 	it('refuses a new address in a tenant without an employee role, and creates nothing', async () => {
