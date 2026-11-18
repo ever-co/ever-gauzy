@@ -27,26 +27,45 @@ describe('InviteService.findAllInvites role filter', () => {
 		jest.restoreAllMocks();
 	});
 
-	async function roleFilterFor(role: unknown) {
+	/** The conditions the register is read with: one per branch the caller's reach builds. */
+	async function conditionsFor(where: Record<string, unknown>): Promise<Record<string, unknown>[]> {
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		await service.findAllInvites({ where: { role } } as any);
+		await service.findAllInvites({ where } as any);
 		const [filter] = findAll.mock.calls[0];
-		return filter.where[0].role;
+		return filter.where;
+	}
+
+	async function expectEveryBranchFiltersBy(role: unknown, names: string[]) {
+		const conditions = await conditionsFor({ role });
+
+		expect(conditions.length).toBeGreaterThan(0);
+		for (const condition of conditions) {
+			expect(condition.role).toEqual({ name: In(names) });
+		}
 	}
 
 	it('reads the role name sent as where[role][name], as the Ever Teams apps send it', async () => {
-		expect(await roleFilterFor({ name: 'EMPLOYEE' })).toEqual({ name: In(['EMPLOYEE']) });
+		await expectEveryBranchFiltersBy({ name: 'EMPLOYEE' }, ['EMPLOYEE']);
 	});
 
 	it('reads the role names sent as where[role][name][0] and where[role][name][1]', async () => {
-		expect(await roleFilterFor({ name: ['EMPLOYEE', 'MANAGER'] })).toEqual({ name: In(['EMPLOYEE', 'MANAGER']) });
+		await expectEveryBranchFiltersBy({ name: ['EMPLOYEE', 'MANAGER'] }, ['EMPLOYEE', 'MANAGER']);
 	});
 
 	it('keeps reading a role name sent as where[role]', async () => {
-		expect(await roleFilterFor('MANAGER')).toEqual({ name: In(['MANAGER']) });
+		await expectEveryBranchFiltersBy('MANAGER', ['MANAGER']);
 	});
 
 	it('keeps reading the role names sent as where[role][0] and where[role][1]', async () => {
-		expect(await roleFilterFor(['EMPLOYEE', 'MANAGER'])).toEqual({ name: In(['EMPLOYEE', 'MANAGER']) });
+		await expectEveryBranchFiltersBy(['EMPLOYEE', 'MANAGER'], ['EMPLOYEE', 'MANAGER']);
+	});
+
+	it('filters no role when none is sent', async () => {
+		const conditions = await conditionsFor({});
+
+		expect(conditions.length).toBeGreaterThan(0);
+		for (const condition of conditions) {
+			expect(condition).not.toHaveProperty('role');
+		}
 	});
 });
