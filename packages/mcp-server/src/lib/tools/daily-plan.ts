@@ -7,6 +7,7 @@ import { authManager } from '../common/auth-manager';
 import { DailyPlanStatusEnum } from '../input-schemas';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
+import { TOOL_HINTS } from './tool-hints';
 const logger = new Logger('DailyPlanTools');
 
 export const registerDailyPlanTools = (server: McpServer) => {
@@ -65,7 +66,8 @@ export const registerDailyPlanTools = (server: McpServer) => {
 				logger.error('Error fetching daily plans:', errorMsg);
 				throw new Error(`Failed to fetch daily plans: ${errorMsg}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get my daily plans tool
@@ -118,7 +120,8 @@ export const registerDailyPlanTools = (server: McpServer) => {
 				logger.error('Error fetching my daily plans:', errorMsg);
 				throw new Error(`Failed to fetch my daily plans: ${errorMsg}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get team daily plans tool
@@ -168,7 +171,8 @@ export const registerDailyPlanTools = (server: McpServer) => {
 				logger.error('Error fetching team daily plans:', errorMsg);
 				throw new Error(`Failed to fetch team daily plans: ${errorMsg}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get employee daily plans tool
@@ -217,7 +221,8 @@ export const registerDailyPlanTools = (server: McpServer) => {
 				logger.error('Error fetching employee daily plans:', errorMsg);
 				throw new Error(`Failed to fetch employee daily plans: ${errorMsg}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get daily plans for task tool
@@ -266,7 +271,8 @@ export const registerDailyPlanTools = (server: McpServer) => {
 				logger.error('Error fetching daily plans for task:', errorMsg);
 				throw new Error(`Failed to fetch daily plans for task: ${errorMsg}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get daily plan by ID tool
@@ -310,7 +316,8 @@ export const registerDailyPlanTools = (server: McpServer) => {
 				logger.error('Error fetching daily plan:', errorMsg);
 				throw new Error(`Failed to fetch daily plan: ${errorMsg}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Create daily plan tool
@@ -361,7 +368,8 @@ export const registerDailyPlanTools = (server: McpServer) => {
 				logger.error('Error creating daily plan:', errorMsg);
 				throw new Error(`Failed to create daily plan: ${errorMsg}`);
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Update daily plan tool
@@ -401,7 +409,8 @@ export const registerDailyPlanTools = (server: McpServer) => {
 				logger.error('Error updating daily plan:', errorMsg);
 				throw new Error(`Failed to update daily plan: ${errorMsg}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Delete daily plan tool
@@ -439,7 +448,8 @@ export const registerDailyPlanTools = (server: McpServer) => {
 				logger.error('Error deleting daily plan:', errorMsg);
 				throw new Error(`Failed to delete daily plan: ${errorMsg}`);
 			}
-		}
+		},
+		TOOL_HINTS.idempotentDestructive
 	);
 
 	// Add task to daily plan tool
@@ -481,7 +491,8 @@ export const registerDailyPlanTools = (server: McpServer) => {
 				logger.error('Error adding task to daily plan:', errorMsg);
 				throw new Error(`Failed to add task to daily plan: ${errorMsg}`);
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Remove task from daily plan tool
@@ -523,7 +534,8 @@ export const registerDailyPlanTools = (server: McpServer) => {
 				logger.error('Error removing task from daily plan:', errorMsg);
 				throw new Error(`Failed to remove task from daily plan: ${errorMsg}`);
 			}
-		}
+		},
+		TOOL_HINTS.idempotentDestructive
 	);
 
 	// Remove task from many daily plans tool
@@ -563,7 +575,8 @@ export const registerDailyPlanTools = (server: McpServer) => {
 				logger.error('Error removing task from many daily plans:', errorMsg);
 				throw new Error(`Failed to remove task from many daily plans: ${errorMsg}`);
 			}
-		}
+		},
+		TOOL_HINTS.idempotentDestructive
 	);
 
 	// Get daily plan count tool
@@ -610,7 +623,8 @@ export const registerDailyPlanTools = (server: McpServer) => {
 				logger.error('Error fetching daily plan count:', errorMsg);
 				throw new Error(`Failed to fetch daily plan count: ${errorMsg}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get daily plan statistics tool
@@ -657,7 +671,8 @@ export const registerDailyPlanTools = (server: McpServer) => {
 				logger.error('Error fetching daily plan statistics:', errorMsg);
 				throw new Error(`Failed to fetch daily plan statistics: ${errorMsg}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Bulk create daily plans tool
@@ -707,7 +722,8 @@ export const registerDailyPlanTools = (server: McpServer) => {
 				logger.error('Error bulk creating daily plans:', errorMsg);
 				throw new Error(`Failed to bulk create daily plans: ${errorMsg}`);
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Bulk update daily plans tool
@@ -757,7 +773,8 @@ export const registerDailyPlanTools = (server: McpServer) => {
 				logger.error('Error bulk updating daily plans:', errorMsg);
 				throw new Error(`Failed to bulk update daily plans: ${errorMsg}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Bulk delete daily plans tool
@@ -799,6 +816,7 @@ export const registerDailyPlanTools = (server: McpServer) => {
 				logger.error('Error bulk deleting daily plans:', errorMsg);
 				throw new Error(`Failed to bulk delete daily plans: ${errorMsg}`);
 			}
-		}
+		},
+		TOOL_HINTS.idempotentDestructive
 	);
 };

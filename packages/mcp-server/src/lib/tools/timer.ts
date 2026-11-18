@@ -6,6 +6,7 @@ import { apiClient } from '../common/api-client';
 import { authManager } from '../common/auth-manager';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
+import { TOOL_HINTS } from './tool-hints';
 const logger = new Logger('TimerTools');
 
 export const registerTimerTools = (server: McpServer) => {
@@ -45,7 +46,8 @@ export const registerTimerTools = (server: McpServer) => {
 				logger.error('Error fetching timer status:', error instanceof Error ? error.stack : undefined);
 				throw new Error(`Failed to fetch timer status: ${error instanceof Error ? error.message : 'Unknown error'}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Start timer tool
@@ -125,7 +127,8 @@ export const registerTimerTools = (server: McpServer) => {
 				logger.error('Error starting timer:', error);
 				throw new Error(`Failed to start timer: ${error instanceof Error ? error.message : 'Unknown error'}`);
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Stop timer tool
@@ -174,6 +177,7 @@ export const registerTimerTools = (server: McpServer) => {
 				logger.error('Error stopping timer:', error);
 				throw new Error(`Failed to stop timer: ${error instanceof Error ? error.message : 'Unknown error'}`);
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 };
