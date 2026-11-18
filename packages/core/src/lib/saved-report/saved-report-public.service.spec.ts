@@ -583,6 +583,21 @@ describe('SavedReportPublicService', () => {
 			expect(answer.days[0].logs[0].employeeLogs[0].tasks[0].tags).toEqual([]);
 		});
 
+		it('states no label, and reads none, for a report without a tenant: the read fails closed', async () => {
+			const state = stateWith(token, { labels: STORED_LABELS });
+			state.report.filters = {};
+			state.report.grouping = SavedReportGroupingEnum.LABEL;
+			state.report.tenantId = undefined;
+			state.user = { ...state.user, tenantId: undefined };
+			const { service, timeLogService, repositories } = serviceFor(state);
+			timeLogService.getDailyReport.mockResolvedValueOnce(labelledDailyReport());
+
+			const answer = await service.read(token);
+
+			expect(answer.days[0].logs[0].employeeLogs[0].tasks[0].tags).toEqual([]);
+			expect((repositories.Tag as { find: jest.Mock }).find).not.toHaveBeenCalled();
+		});
+
 		it('keeps the 404 of a link whose author lost access, labels or not', async () => {
 			const state = stateWith(token, { permissions: [], labels: STORED_LABELS });
 			state.report.filters = { tagIds: [DESIGN] };

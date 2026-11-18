@@ -323,14 +323,16 @@ export class SavedReportPublicService {
 	/**
 	 * The labels the entries of a report grouped by label state, read now: of the labels its entries carry, only those of
 	 * the report's tenant, and of its organization or of the whole tenant, as a time log of it may carry them (see
-	 * `timeLogTagsOf`). Null for any other grouping: its entries state no labels.
+	 * `timeLogTagsOf`). Null for any other grouping: its entries state no labels. A report without a tenant states none:
+	 * TypeORM drops an undefined tenant from the where, which would read the labels of every tenant.
 	 */
 	private async shownLabelsOf(report: SavedReport, days: IReportDayGroupByDate[]): Promise<ShownLabels> {
 		if (report.grouping !== SavedReportGroupingEnum.LABEL) {
 			return null;
 		}
 		const labelIds = labelIdsOf(days);
-		if (labelIds.length === 0) {
+		const hasTenant = Boolean(report.tenantId);
+		if (labelIds.length === 0 || !hasTenant) {
 			return new Set();
 		}
 		const labels = await this.dataSource.getRepository(Tag).find({
