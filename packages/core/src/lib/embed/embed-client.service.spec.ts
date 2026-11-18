@@ -7,7 +7,8 @@ import type { EmbedClientService } from './embed-client.service';
 /**
  * The client of an embed credential and its spent time, read through TypeORM on one SQLite database with the tables
  * TypeORM creates for every entity: a contact counts only in its own tenant and organization, and only while it is not
- * deleted; its report counts only the entries of its own projects there, not deleted and not breaks.
+ * deleted; its report counts only the entries of its own projects there, not deleted and not breaks. A timer start keeps
+ * to it only on one of those projects, with a task of that project or none.
  */
 const TIMEOUT = 10 * 60 * 1000;
 
@@ -27,6 +28,12 @@ const ARCHIVE = '7b000000-0000-4000-8000-0000000000a3';
 const INTRANET = '7b000000-0000-4000-8000-0000000000a4';
 const REMOVED = '7b000000-0000-4000-8000-0000000000a5';
 const ABROAD = '7b000000-0000-4000-8000-0000000000a6';
+
+const HOMEPAGE = '7b000000-0000-4000-8000-0000000000b1';
+const SIGN_UP = '7b000000-0000-4000-8000-0000000000b2';
+const DROPPED = '7b000000-0000-4000-8000-0000000000b3';
+const MISFILED = '7b000000-0000-4000-8000-0000000000b4';
+const UNKNOWN = '7b000000-0000-4000-8000-0000000000ff';
 
 /** Thursday 19 November 2026, 15:00 in Paris (UTC+1), the organization's zone. */
 const NOW = new Date('2026-11-19T14:00:00.000Z');
@@ -209,6 +216,28 @@ async function seedTime(dataSource: DataSource): Promise<void> {
 	});
 }
 
+/** Tasks of the website and of another client's project, with a deleted one and one filed under another organization. */
+async function seedTasks(dataSource: DataSource): Promise<void> {
+	await insert(dataSource, 'task', { ...SCOPE, id: HOMEPAGE, title: 'Homepage', number: 1, projectId: WEBSITE });
+	await insert(dataSource, 'task', { ...SCOPE, id: SIGN_UP, title: 'Sign-up', number: 1, projectId: INTRANET });
+	await insert(dataSource, 'task', {
+		...SCOPE,
+		id: DROPPED,
+		title: 'Dropped',
+		number: 2,
+		projectId: WEBSITE,
+		deletedAt: '2026-11-17 08:00:00.000'
+	});
+	await insert(dataSource, 'task', {
+		...SCOPE,
+		id: MISFILED,
+		title: 'Misfiled',
+		number: 3,
+		projectId: WEBSITE,
+		organizationId: OTHER_ORGANIZATION
+	});
+}
+
 describe('EmbedClientService on SQLite', () => {
 	const previous = { DB_ORM: process.env.DB_ORM, DB_TYPE: process.env.DB_TYPE };
 	const file = path.join(os.tmpdir(), `gauzy-embed-client-${process.pid}-${Date.now()}.sqlite3`);
@@ -231,6 +260,7 @@ describe('EmbedClientService on SQLite', () => {
 			await dataSource.initialize();
 			await seedClients(dataSource);
 			await seedTime(dataSource);
+			await seedTasks(dataSource);
 			service = new clients.EmbedClientService(dataSource);
 		});
 	}, TIMEOUT);
@@ -311,5 +341,40 @@ describe('EmbedClientService on SQLite', () => {
 		expect(await service.reportOf(WITHDRAWN, SCOPE, NOW)).toBeNull();
 		expect(await service.reportOf(CONTOSO, SCOPE, NOW)).toBeNull();
 		expect(await service.reportOf(FABRIKAM, SCOPE, NOW)).toBeNull();
+	});
+
+	it('lets a start on a project of the client through, with a task of that project or none', async () => {
+		expect(await service.isStartForClient(NORTHWIND, SCOPE, { projectId: WEBSITE, taskId: null })).toBe(true);
+		expect(await service.isStartForClient(NORTHWIND, SCOPE, { projectId: ARCHIVE, taskId: null })).toBe(true);
+		expect(await service.isStartForClient(NORTHWIND, SCOPE, { projectId: WEBSITE, taskId: HOMEPAGE })).toBe(true);
+	});
+
+	it('refuses a project of another client, deleted, of another organization or unknown', async () => {
+		for (const projectId of [INTRANET, REMOVED, ABROAD, UNKNOWN, 'not-a-project']) {
+			expect(await service.isStartForClient(NORTHWIND, SCOPE, { projectId, taskId: null })).toBe(false);
+		}
+		const abroad = { tenantId: TENANT, organizationId: OTHER_ORGANIZATION };
+		expect(await service.isStartForClient(NORTHWIND, abroad, { projectId: ABROAD, taskId: null })).toBe(true);
+		expect(await service.isStartForClient(LITWARE, SCOPE, { projectId: INTRANET, taskId: null })).toBe(true);
+	});
+
+	it('refuses a task of another project, deleted, of another organization or unknown', async () => {
+		for (const taskId of [SIGN_UP, DROPPED, MISFILED, UNKNOWN, 'not-a-task']) {
+			expect(await service.isStartForClient(NORTHWIND, SCOPE, { projectId: WEBSITE, taskId })).toBe(false);
+		}
+		const homepageOnMobileApp = { projectId: MOBILE_APP, taskId: HOMEPAGE };
+		expect(await service.isStartForClient(NORTHWIND, SCOPE, homepageOnMobileApp)).toBe(false);
+	});
+
+	it('refuses every start without a client, a tenant or an organization, instead of matching any project', async () => {
+		const website = { projectId: WEBSITE, taskId: null };
+
+		const withoutTenant = { tenantId: undefined, organizationId: ORGANIZATION };
+		const withoutOrganization = { tenantId: TENANT, organizationId: undefined };
+
+		expect(await service.isStartForClient(undefined, SCOPE, website)).toBe(false);
+		expect(await service.isStartForClient(NORTHWIND, withoutTenant, website)).toBe(false);
+		expect(await service.isStartForClient(NORTHWIND, withoutOrganization, website)).toBe(false);
+		expect(await service.isStartForClient(NORTHWIND, SCOPE, { projectId: undefined, taskId: null })).toBe(false);
 	});
 });

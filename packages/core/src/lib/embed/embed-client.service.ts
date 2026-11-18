@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { isUUID } from 'class-validator';
 import { DataSource, FindOptionsWhere, In, LessThan, MoreThan, Not } from 'typeorm';
 import { ID, IEmbedClientReport, IEmbedClientReportProject, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
-import { Organization, OrganizationContact, OrganizationProject, TimeLog } from '../core/entities/internal';
+import { Organization, OrganizationContact, OrganizationProject, Task, TimeLog } from '../core/entities/internal';
 import { TRACKER_SOURCES } from '../time-tracking/time-log/tracker-source';
 import {
 	clientReportOf,
@@ -10,6 +10,7 @@ import {
 	IEmbedClientReportEntry,
 	IEmbedClientReportSpan
 } from './embed-client-report';
+import { IEmbedClientStart } from './embed-session';
 
 /** The tenant and organization a credential belongs to. */
 export interface IEmbedClientScope {
@@ -80,6 +81,54 @@ export class EmbedClientService {
 		const projects = await this.projectsOf(client, scope);
 		const entries = await this.entriesOf(projects, scope, periods.week);
 		return clientReportOf({ client, periods, projects, entries, now });
+	}
+
+	/**
+	 * Whether a timer start keeps to the client: its project is one of the client's, and its task, if it names one, a
+	 * task of that project. Both in the tenant and organization, and not deleted.
+	 *
+	 * @param clientId The client the token's credential is limited to.
+	 * @param scope The token's tenant and organization.
+	 * @param start The project and the task the start names.
+	 */
+	async isStartForClient(clientId: ID, scope: IEmbedClientScope, start: IEmbedClientStart): Promise<boolean> {
+		const isClientProject = await this.isProjectOfClient(start.projectId, clientId, scope);
+		if (!isClientProject) {
+			return false;
+		}
+		if (!start.taskId) {
+			return true;
+		}
+		return await this.isTaskOfProject(start.taskId, start.projectId, scope);
+	}
+
+	/** Whether a project is one of the client's in the tenant and organization, not deleted. */
+	private async isProjectOfClient(projectId: ID, clientId: ID, scope: IEmbedClientScope): Promise<boolean> {
+		// TypeORM drops a condition whose value is undefined: without these, the read would match any project.
+		const namesProject = isUUID(projectId);
+		const namesClient = isUUID(clientId);
+		const isScoped = Boolean(scope.tenantId) && Boolean(scope.organizationId);
+		if (!namesProject || !namesClient || !isScoped) {
+			return false;
+		}
+		return await this.dataSource.getRepository(OrganizationProject).exists({
+			where: {
+				id: projectId,
+				organizationContactId: clientId,
+				tenantId: scope.tenantId,
+				organizationId: scope.organizationId
+			}
+		});
+	}
+
+	/** Whether a task is one of the project's in the tenant and organization, not deleted. */
+	private async isTaskOfProject(taskId: ID, projectId: ID, scope: IEmbedClientScope): Promise<boolean> {
+		if (!isUUID(taskId)) {
+			return false;
+		}
+		return await this.dataSource.getRepository(Task).exists({
+			where: { id: taskId, projectId, tenantId: scope.tenantId, organizationId: scope.organizationId }
+		});
 	}
 
 	/** The client's projects in the tenant and organization, not deleted. */

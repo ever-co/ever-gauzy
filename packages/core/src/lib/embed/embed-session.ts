@@ -31,6 +31,12 @@ export interface IEmbedClaims {
 	clientId: string | null;
 }
 
+/** The project and the task a timer start names; null for a start without a task. */
+export interface IEmbedClientStart {
+	projectId: string;
+	taskId: string | null;
+}
+
 /** A route an embed token may reach, and what it may ask of it. */
 export interface IEmbedRoute {
 	readonly method: string;
