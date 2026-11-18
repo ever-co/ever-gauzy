@@ -286,6 +286,7 @@
 		"IN_COMMON_ONE": "1 conversation in common",
 		"MESSAGE_PLACEHOLDER": "Message @{{name}}",
 		"MESSAGE": "Message",
+		"TEAM_CHAT": "Team chat",
 		"VIEW_PROFILE": "View profile",
 		"SENT": "Sent to {{name}}"
 	},
