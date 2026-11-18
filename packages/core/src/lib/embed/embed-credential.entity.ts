@@ -46,6 +46,10 @@ export class EmbedCredential extends TenantOrganizationBaseEntity implements IEm
 	@MultiORMColumn({ nullable: true, relationId: true })
 	organizationContactId?: ID | null;
 
+	@ApiPropertyOptional({ type: () => Boolean, default: false })
+	@MultiORMColumn({ default: false })
+	canAddMembers?: boolean;
+
 	@ApiPropertyOptional({ type: () => Date })
 	@MultiORMColumn({ nullable: true })
 	lastUsedAt: Date | null;
