@@ -65,7 +65,10 @@ export class EmbedAllowedOriginService extends TenantAwareCrudService<EmbedAllow
 		}
 		let row: EmbedAllowedOrigin;
 		try {
-			row = await this.create(scope);
+			// Who added it, stated: under MikroORM `createdByUserId` is a mirror that is not persisted, and the base
+			// subscriber sets only the mirror; the create states the creator relation from it. TypeORM writes the same
+			// value either way.
+			row = await this.create({ ...scope, createdByUserId: RequestContext.currentUserId() });
 		} catch (error) {
 			// Two requests adding the same origin at once: the unique index refuses the second insert, and the row
 			// the first one saved is the answer.

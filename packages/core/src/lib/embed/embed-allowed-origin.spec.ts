@@ -118,6 +118,23 @@ describe('EmbedAllowedOriginService', () => {
 		);
 	});
 
+	it('states who adds an origin, so MikroORM stores the creator too: its createdByUserId mirror is not persisted', async () => {
+		const ADMIN = '7a000000-0000-4000-8000-0000000000a1';
+		const { service } = build();
+		signIn(TENANT);
+		jest.spyOn(RequestContext, 'currentUserId').mockReturnValue(ADMIN);
+
+		await service.addForOrganization({ origin: 'https://app.example.com', organizationId: ORG });
+
+		expect(service.create).toHaveBeenCalledWith({
+			tenantId: TENANT,
+			organizationId: ORG,
+			origin: 'https://app.example.com',
+			createdByUserId: ADMIN
+		});
+		expect((await service.listForOrganization(ORG))[0].createdByUserId).toBe(ADMIN);
+	});
+
 	it('refuses an origin longer than its column once normalized, before any insert', async () => {
 		const { service, rows } = build();
 		signIn(TENANT);
