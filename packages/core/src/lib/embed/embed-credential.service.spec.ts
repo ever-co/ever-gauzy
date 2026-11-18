@@ -852,19 +852,35 @@ describe('EmbedCredentialService: the members a credential adds', () => {
 	it('adds no one, and answers 401, for a credential revoked while the exchange waited for its turn', async () => {
 		const { service, addMember, employees } = build();
 		const { id, secret } = await credentialOf(service, true);
+		const inTurn = jest.spyOn((service as any).embedMemberService as EmbedMemberService, 'inTurn');
 		let open: () => void = () => undefined;
 		const opened = new Promise<void>((resolve) => {
 			open = resolve;
 		});
+		let enter: () => void = () => undefined;
+		const entered = new Promise<void>((resolve) => {
+			enter = resolve;
+		});
 		const add = addMember.getMockImplementation();
 		addMember.mockImplementationOnce(async (scope, person) => {
+			enter();
 			await opened;
 			return await add(scope, person);
 		});
+		// Which exchange takes the turn first is the test's to say, not the event loop's: the second is asked only once
+		// the first holds the turn, inside its addition.
+		const waitUntil = async (isDone: () => boolean) => {
+			for (let tick = 0; tick < 1000 && !isDone(); tick++) {
+				await new Promise((resolve) => setImmediate(resolve));
+			}
+			expect(isDone()).toBe(true);
+		};
 
 		const first = service.exchange({ credential: secret, email: NOOR, origin: SITE }, PORTAL);
+		await entered;
 		const second = service.exchange({ credential: secret, email: NOOR.toLowerCase(), origin: SITE }, PORTAL);
-		await new Promise((resolve) => setImmediate(resolve));
+		// The second was accepted, and waits for the turn the first holds.
+		await waitUntil(() => inTurn.mock.calls.length === 2);
 		await service.revoke(id);
 		open();
 
