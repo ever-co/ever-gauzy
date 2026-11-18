@@ -14,6 +14,28 @@ export const validateOrganizationContext = () => {
 	return defaultParams;
 };
 
+/**
+ * The organization and tenant a tool acts for: the ones the caller names, else the signed-in user's. A tool given an
+ * organization needs none signed in; a tenant neither named nor signed in is left out, as when a tool names none.
+ */
+export const resolveOrganizationScope = (
+	organizationId?: string,
+	tenantId?: string
+): { organizationId: string; tenantId?: string } => {
+	const defaultParams = authManager.getDefaultParams();
+	const resolvedOrganizationId = organizationId || defaultParams.organizationId;
+	const resolvedTenantId = tenantId || defaultParams.tenantId;
+
+	if (!resolvedOrganizationId) {
+		throw new Error('Organization ID not available. Please ensure you are logged in and have an organization.');
+	}
+
+	return {
+		organizationId: resolvedOrganizationId,
+		...(resolvedTenantId && { tenantId: resolvedTenantId })
+	};
+};
+
 export interface ListQueryOptions {
 	page?: number;
 	limit?: number;
