@@ -162,6 +162,19 @@ describe('EmbedCredentialService', () => {
 		expect(issueEmbedSession).toHaveBeenCalledWith(expect.objectContaining({ userId: USER }));
 	});
 
+	it('finds the member among the accounts of the address as sent and in lower case, in its organization', async () => {
+		const { service, users, issueEmbedSession } = build();
+		signIn(TENANT);
+		// An account of the exact address that is no member here, and the member's own, stored in lower case.
+		users.push({ id: '7a000000-0000-4000-8000-000000000002', tenantId: TENANT, email: 'Lina@Northwind.example' });
+		const { secret } = await service.createForOrganization({ name: 'Northwind product', organizationId: ORG });
+
+		await expect(service.exchange({ credential: secret, email: 'Lina@Northwind.example' })).resolves.toMatchObject({
+			token: 'an-embed-token'
+		});
+		expect(issueEmbedSession).toHaveBeenCalledWith(expect.objectContaining({ userId: USER, employeeId: EMPLOYEE }));
+	});
+
 	it('answers 403 for a placeholder member and for a member no longer active in the organization', async () => {
 		const { service, employees, memberships } = build();
 		signIn(TENANT);
@@ -275,6 +288,47 @@ describe('EmbedCredentialService: credentials refused per address', () => {
 		await refuse(service, HOST, 60);
 
 		await expect(service.exchange(unknownCredential(), HOST)).rejects.toMatchObject(LIMITED);
+	});
+
+	it('counts lookups running at the same time before any of them is refused', async () => {
+		const { service } = build();
+		signIn(TENANT);
+
+		const answers = await Promise.allSettled(
+			Array.from({ length: 70 }, () => service.exchange(unknownCredential(), HOST))
+		);
+
+		expect(lookupsOf(service)).toHaveBeenCalledTimes(60);
+		expect(answers.filter((answer) => answer.status === 'rejected' && answer.reason?.getStatus?.() === 429)).toHaveLength(10);
+	});
+
+	it('gives back the place of a lookup that earned a token', async () => {
+		const { service } = build();
+		signIn(TENANT);
+		const { secret } = await service.createForOrganization({ name: 'Northwind product', organizationId: ORG });
+		await expect(service.exchange({ credential: secret, employeeId: EMPLOYEE }, HOST)).resolves.toMatchObject({
+			token: 'an-embed-token'
+		});
+
+		await refuse(service, HOST, 59);
+		// The 60th refusal is still looked up: the accepted exchange took no place.
+		await refuse(service, HOST, 1);
+		await expect(service.exchange(unknownCredential(), HOST)).rejects.toMatchObject(LIMITED);
+	});
+
+	it('stops letting a credential through the cap once it is revoked', async () => {
+		const { service } = build();
+		signIn(TENANT);
+		const { id, secret } = await service.createForOrganization({ name: 'Northwind product', organizationId: ORG });
+		await expect(service.exchange({ credential: secret, employeeId: EMPLOYEE }, HOST)).resolves.toMatchObject({
+			token: 'an-embed-token'
+		});
+		await service.revoke(id);
+		await refuse(service, HOST, 60);
+		lookupsOf(service).mockClear();
+
+		await expect(service.exchange({ credential: secret, employeeId: EMPLOYEE }, HOST)).rejects.toMatchObject(LIMITED);
+		expect(lookupsOf(service)).not.toHaveBeenCalled();
 	});
 
 	it('keeps exchanging a credential it accepted from an address that reached the cap', async () => {

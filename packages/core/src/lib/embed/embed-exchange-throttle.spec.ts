@@ -10,13 +10,16 @@ import {
 	embedExchangeLimit,
 	embedExchangeTracker
 } from './embed-exchange-throttle';
+import { recentlyAcceptedEmbedCredentials } from './embed-exchange-failures';
 import { EmbedTokenController } from './embed.controller';
-import { generateEmbedCredential } from './embed.utils';
+import { generateEmbedCredential, hashEmbedCredential } from './embed.utils';
 
 /**
- * `POST /embed/token` is limited per credential, 600 exchanges a minute: a host's backend exchanges one credential for
- * every member it serves, all from its own address. A request without a well-formed credential is limited per address,
- * 60 a minute, as before. Counted through the global guard as `AppModule` registers it, on the controller's own route.
+ * `POST /embed/token` is limited per credential, 600 exchanges a minute, once this instance accepted the credential: a
+ * host's backend exchanges one credential for every member it serves, all from its own address. Anything else (no
+ * well-formed credential, or one this instance has not accepted: made-up ones) is limited per address, 60 a minute, so
+ * made-up credentials neither get a fresh budget each nor a storage entry each. Counted through the global guard as
+ * `AppModule` registers it, on the controller's own route.
  */
 
 const HOST_ADDRESS = '203.0.113.7';
@@ -63,6 +66,13 @@ async function accepted(guard: ThrottlerBehindProxyGuard, context: ExecutionCont
 
 const credentialOf = () => ({ credential: generateEmbedCredential().secret });
 
+/** A credential this instance accepted, as a successful exchange records it. */
+const acceptedCredentialOf = () => {
+	const body = credentialOf();
+	recentlyAcceptedEmbedCredentials.record(hashEmbedCredential(body.credential));
+	return body;
+};
+
 /** Bodies without a well-formed credential: none, a missing field, a wrong prefix, a wrong length, not a string. */
 const MALFORMED_BODIES: unknown[] = [
 	undefined,
@@ -74,8 +84,8 @@ const MALFORMED_BODIES: unknown[] = [
 ];
 
 describe('embed exchange rate limit', () => {
-	it('counts a well-formed credential in a bucket named by its SHA-256, never by the credential', () => {
-		const { credential } = credentialOf();
+	it('counts an accepted credential in a bucket named by its SHA-256, never by the credential', () => {
+		const { credential } = acceptedCredentialOf();
 		const context = exchangeFrom(HOST_ADDRESS, { credential });
 
 		const tracker = embedExchangeTracker({ ip: HOST_ADDRESS, headers: {}, body: { credential } });
@@ -95,9 +105,25 @@ describe('embed exchange rate limit', () => {
 		}
 	});
 
+	it('counts a well-formed credential this instance has not accepted by its address, 60 a minute', async () => {
+		const guard = await throttler();
+		const madeUp = () => exchangeFrom(HOST_ADDRESS, credentialOf());
+
+		expect(embedExchangeTracker({ ip: HOST_ADDRESS, headers: {}, body: credentialOf() })).toBe(HOST_ADDRESS);
+		expect(embedExchangeLimit(madeUp())).toBe(EMBED_EXCHANGE_LIMIT_PER_ADDRESS);
+
+		let sent = 0;
+		for (let attempt = 0; attempt < EMBED_EXCHANGE_LIMIT_PER_ADDRESS + 5; attempt++) {
+			sent += await accepted(guard, madeUp(), 1);
+		}
+		expect(sent).toBe(EMBED_EXCHANGE_LIMIT_PER_ADDRESS);
+		// An accepted credential from the same address keeps its own budget.
+		expect(await accepted(guard, exchangeFrom(HOST_ADDRESS, acceptedCredentialOf()), 1)).toBe(1);
+	});
+
 	it('lets one credential exchange 600 times a minute from one address, and throttles the 601st', async () => {
 		const guard = await throttler();
-		const host = exchangeFrom(HOST_ADDRESS, credentialOf());
+		const host = exchangeFrom(HOST_ADDRESS, acceptedCredentialOf());
 
 		expect(await accepted(guard, host, 61)).toBe(61);
 		expect(await accepted(guard, host, 539)).toBe(539);
@@ -119,8 +145,8 @@ describe('embed exchange rate limit', () => {
 
 	it('gives two credentials from one address separate budgets, apart from the address', async () => {
 		const guard = await throttler();
-		const first = exchangeFrom(HOST_ADDRESS, credentialOf());
-		const second = exchangeFrom(HOST_ADDRESS, credentialOf());
+		const first = exchangeFrom(HOST_ADDRESS, acceptedCredentialOf());
+		const second = exchangeFrom(HOST_ADDRESS, acceptedCredentialOf());
 
 		expect(await accepted(guard, first, 601)).toBe(EMBED_EXCHANGE_LIMIT_PER_CREDENTIAL);
 

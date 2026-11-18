@@ -32,7 +32,11 @@ import {
 	ExchangeEmbedCredentialDTO
 } from './dto/embed-credential.dto';
 import { EmbedCredential } from './embed-credential.entity';
-import { EMBED_EXCHANGE_FAILURES_PER_ADDRESS, EmbedExchangeFailures } from './embed-exchange-failures';
+import {
+	EMBED_EXCHANGE_FAILURES_PER_ADDRESS,
+	EmbedExchangeFailures,
+	recentlyAcceptedEmbedCredentials
+} from './embed-exchange-failures';
 import {
 	embedCredentialHashesMatch,
 	embedTokenTtlSeconds,
@@ -69,7 +73,8 @@ const REVOCATION_CACHE_MAX_ENTRIES = 10_000;
 export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredential> {
 	private readonly logger = new Logger(EmbedCredentialService.name);
 	private readonly revoked = new Map<ID, { revoked: boolean; readAt: number }>();
-	private readonly exchangeFailures = new EmbedExchangeFailures();
+	/** Shares its memory of accepted credentials with the route's rate limiter (`embed-exchange-throttle.ts`). */
+	private readonly exchangeFailures = new EmbedExchangeFailures(undefined, recentlyAcceptedEmbedCredentials);
 
 	constructor(
 		readonly typeOrmEmbedCredentialRepository: TypeOrmEmbedCredentialRepository,
@@ -130,6 +135,7 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 			await this.update(id, { revokedAt: new Date() });
 		}
 		this.remember(id, true, Date.now());
+		this.exchangeFailures.forgetAccepted(row.keyHash);
 		this.logger.log(`Embed credential revoked: id=${id}`);
 	}
 
@@ -214,9 +220,13 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 	}
 
 	private async judgeAndMint({ credential, employeeId, email }: ExchangeEmbedCredentialDTO, address: string) {
+		// Whether the lookup below was counted against the address up front (`EmbedExchangeFailures.admit`).
+		let counted = false;
 		const refuseCredential = (reason: string, row?: EmbedCredential): never => {
 			this.logger.warn(`Embed exchange refused: ${reason}${row ? ` id=${row.id}` : ''}`);
-			this.countRefusal(address);
+			if (!counted) {
+				this.countRefusal(address);
+			}
 			throw new CredentialRefused(reason);
 		};
 		const refuseMember = (reason: string, row: EmbedCredential): never => {
@@ -228,18 +238,37 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 			refuseCredential('malformed credential');
 		}
 		const presented = hashEmbedCredential(credential);
-		if (!this.exchangeFailures.allows(address, presented)) {
+		// Counted before the lookup, so lookups running at the same time cannot all pass the cap.
+		const admission = this.exchangeFailures.admit(address, presented);
+		if (!admission.allowed) {
 			throw new AddressLimited();
 		}
-		const row = await this.findByHash(presented);
+		counted = admission.counted;
+		if (admission.reachesCap) {
+			this.logCap();
+		}
+		let row: EmbedCredential | null;
+		try {
+			row = await this.findByHash(presented);
+		} catch (error) {
+			// Not judged (the database out of reach): the lookup is given back.
+			if (counted) {
+				this.exchangeFailures.release(address);
+			}
+			throw error;
+		}
 		if (!row || !embedCredentialHashesMatch(row.keyHash, presented)) {
 			refuseCredential('unknown credential');
 		}
 		if (row.revokedAt) {
+			this.exchangeFailures.forgetAccepted(presented);
 			refuseCredential('revoked', row);
 		}
 		if (!row.tenantId || !row.organizationId) {
 			refuseCredential('no organization', row);
+		}
+		if (counted) {
+			this.exchangeFailures.release(address);
 		}
 		this.exchangeFailures.recordAccepted(presented);
 
@@ -279,12 +308,15 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 
 	/** Counts a refused credential against the address it came from, and says so once the address reaches the cap. */
 	private countRefusal(address: string): void {
-		const reachesCap = this.exchangeFailures.recordFailure(address);
-		if (reachesCap) {
-			this.logger.warn(
-				`Embed exchange: an address had ${EMBED_EXCHANGE_FAILURES_PER_ADDRESS} credentials refused within a minute; until the minute ends, it gets 429 for any credential this server has not accepted recently`
-			);
+		if (this.exchangeFailures.recordFailure(address)) {
+			this.logCap();
 		}
+	}
+
+	private logCap(): void {
+		this.logger.warn(
+			`Embed exchange: an address had ${EMBED_EXCHANGE_FAILURES_PER_ADDRESS} credentials refused or pending within a minute; until the minute ends, it gets 429 for any credential this server has not accepted recently`
+		);
 	}
 
 	/** An active, unarchived employee of the credential's organization, by id or by their account's email. */
@@ -302,18 +334,18 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 		if (typeof email !== 'string' || !email.trim()) {
 			return null;
 		}
-		// Addresses are stored as registered, and every sign-in matches them exactly: the address as sent first, then
-		// in lower case.
+		// Addresses are stored as registered, and every sign-in matches them exactly: the account of the address as sent
+		// first, then of the address in lower case; the first one that is a member of the credential's organization.
 		const typed = email.trim();
-		const user =
-			(await this.findOneUser({ tenantId: row.tenantId, email: typed })) ??
-			(typed !== typed.toLowerCase()
-				? await this.findOneUser({ tenantId: row.tenantId, email: typed.toLowerCase() })
-				: null);
-		if (!user) {
-			return null;
+		const addresses = typed === typed.toLowerCase() ? [typed] : [typed, typed.toLowerCase()];
+		for (const address of addresses) {
+			const user = await this.findOneUser({ tenantId: row.tenantId, email: address });
+			const employee = user ? await this.findOneEmployee({ ...scope, userId: user.id }) : null;
+			if (employee) {
+				return employee;
+			}
 		}
-		return await this.findOneEmployee({ ...scope, userId: user.id });
+		return null;
 	}
 
 	/** Whether the user is an active, unarchived member of the credential's organization. */

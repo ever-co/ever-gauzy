@@ -1,18 +1,22 @@
 import { ExecutionContext } from '@nestjs/common';
 import { resolveThrottlerTracker, throttlerTrackerOptions } from '../throttler/tracker';
+import { recentlyAcceptedEmbedCredentials } from './embed-exchange-failures';
 import { hashEmbedCredential, isWellFormedEmbedCredential } from './embed.utils';
 
 /** The window an exchange is counted in, in milliseconds. */
 export const EMBED_EXCHANGE_THROTTLE_TTL_MS = 60_000;
 
 /**
- * How many exchanges one credential makes in a window, from any address. A host's backend exchanges its credential for
- * every member it serves, all from its own address: the budget follows the credential, so a large host is not held to
- * what one address may ask.
+ * How many exchanges one credential makes in a window, from any address, once this instance accepted it. A host's
+ * backend exchanges its credential for every member it serves, all from its own address: the budget follows the
+ * credential, so a large host is not held to what one address may ask.
  */
 export const EMBED_EXCHANGE_LIMIT_PER_CREDENTIAL = 600;
 
-/** How many exchanges without a well-formed credential one address makes in a window, against guessing. */
+/**
+ * How many exchanges one address makes in a window with anything else: no well-formed credential, or one this instance
+ * has not accepted recently (made-up ones, or a host's first exchange here), against guessing.
+ */
 export const EMBED_EXCHANGE_LIMIT_PER_ADDRESS = 60;
 
 /**
@@ -30,28 +34,34 @@ export function embedExchangeAddress(req: Record<string, any>): string {
 	return resolveThrottlerTracker(req, throttlerTrackerOptions());
 }
 
-/** The credential an exchange presents, when it has the shape of one. */
-function wellFormedCredentialOf(req: Record<string, any> | undefined): string | null {
+/**
+ * The digest of the credential an exchange presents, when it has the shape of one and this instance accepted it
+ * recently (`recentlyAcceptedEmbedCredentials`). Only those get a bucket of their own: a bucket per made-up credential
+ * would give each request a fresh budget and a storage entry, without bound.
+ */
+function acceptedCredentialDigestOf(req: Record<string, any> | undefined): string | null {
 	const credential: unknown = req?.body?.credential;
 	if (!isWellFormedEmbedCredential(credential)) {
 		return null;
 	}
-	return credential;
+	const digest = hashEmbedCredential(credential);
+	return recentlyAcceptedEmbedCredentials.has(digest) ? digest : null;
 }
 
 /**
  * The bucket an exchange is counted in: its credential's, named by the credential's SHA-256 so the secret is never a
- * storage key, or the client address, resolved as for every anonymous route, when the body holds no well-formed one.
+ * storage key, when this instance accepted that credential recently; otherwise the client address, resolved as for
+ * every anonymous route.
  *
  * @param req The request; its body is parsed before the guards run.
  * @returns The bucket key.
  */
 export function embedExchangeTracker(req: Record<string, any>): string {
-	const credential = wellFormedCredentialOf(req);
-	if (credential === null) {
+	const digest = acceptedCredentialDigestOf(req);
+	if (digest === null) {
 		return embedExchangeAddress(req);
 	}
-	return `${EMBED_CREDENTIAL_THROTTLER_TRACKER_PREFIX}${hashEmbedCredential(credential)}`;
+	return `${EMBED_CREDENTIAL_THROTTLER_TRACKER_PREFIX}${digest}`;
 }
 
 /**
@@ -62,7 +72,7 @@ export function embedExchangeTracker(req: Record<string, any>): string {
  */
 export function embedExchangeLimit(context: ExecutionContext): number {
 	const req = context.switchToHttp().getRequest<Record<string, any>>();
-	if (wellFormedCredentialOf(req) === null) {
+	if (acceptedCredentialDigestOf(req) === null) {
 		return EMBED_EXCHANGE_LIMIT_PER_ADDRESS;
 	}
 	return EMBED_EXCHANGE_LIMIT_PER_CREDENTIAL;

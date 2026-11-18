@@ -98,6 +98,45 @@ describe('EmbedExchangeFailures', () => {
 		expect(failures['windows'].size).toBe(1);
 	});
 
+	it('counts each lookup it admits before it starts, so lookups at the same time cannot all pass the cap', () => {
+		const { failures } = counter();
+		const admitted: boolean[] = [];
+		// None of them has been refused yet: each takes its place as it is admitted.
+		for (let sent = 0; sent < EMBED_EXCHANGE_FAILURES_PER_ADDRESS + 10; sent++) {
+			admitted.push(failures.admit(HOST, UNKNOWN).allowed);
+		}
+
+		expect(admitted.filter(Boolean)).toHaveLength(EMBED_EXCHANGE_FAILURES_PER_ADDRESS);
+		expect(failures.admit(OTHER_ADDRESS, UNKNOWN)).toEqual({ allowed: true, counted: true, reachesCap: false });
+	});
+
+	it('gives back a lookup that earned a token, and neither counts nor caps an accepted credential', () => {
+		const { failures } = counter();
+		for (let sent = 0; sent < EMBED_EXCHANGE_FAILURES_PER_ADDRESS - 1; sent++) {
+			failures.admit(HOST, UNKNOWN);
+		}
+		const lastPlace = failures.admit(HOST, GOOD);
+		expect(lastPlace).toEqual({ allowed: true, counted: true, reachesCap: true });
+		expect(failures.allows(HOST, UNKNOWN)).toBe(false);
+
+		failures.release(HOST);
+		failures.recordAccepted(GOOD);
+
+		expect(failures.allows(HOST, UNKNOWN)).toBe(true);
+		expect(failures.admit(HOST, GOOD)).toEqual({ allowed: true, counted: false, reachesCap: false });
+	});
+
+	it('forgets a revoked credential: it no longer passes a capped address', () => {
+		const { failures } = counter();
+		failures.recordAccepted(GOOD);
+		refuse(failures, HOST, EMBED_EXCHANGE_FAILURES_PER_ADDRESS);
+		expect(failures.allows(HOST, GOOD)).toBe(true);
+
+		failures.forgetAccepted(GOOD);
+
+		expect(failures.allows(HOST, GOOD)).toBe(false);
+	});
+
 	it('remembers no more accepted credentials than its bound, forgetting the oldest first', () => {
 		const { failures } = counter();
 		failures.recordAccepted(GOOD);
@@ -107,7 +146,7 @@ describe('EmbedExchangeFailures', () => {
 		}
 		refuse(failures, HOST, EMBED_EXCHANGE_FAILURES_PER_ADDRESS);
 
-		expect(failures['accepted'].size).toBe(EMBED_EXCHANGE_MEMORY_MAX_ENTRIES);
+		expect(failures['accepted']['entries'].size).toBe(EMBED_EXCHANGE_MEMORY_MAX_ENTRIES);
 		expect(failures.allows(HOST, GOOD)).toBe(false);
 	});
 });
