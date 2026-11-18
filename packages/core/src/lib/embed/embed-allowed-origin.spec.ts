@@ -63,6 +63,8 @@ describe('normalizeOrigin', () => {
 		expect(normalizeOrigin('https://app.example.com:443/')).toBe('https://app.example.com');
 		expect(normalizeOrigin('http://localhost:4108')).toBe('http://localhost:4108');
 		expect(normalizeOrigin('  https://app.example.com  ')).toBe('https://app.example.com');
+		expect(normalizeOrigin('http://[::1]:4200')).toBe('http://[::1]:4200');
+		expect(normalizeOrigin('https://bücher.example')).toBe('https://xn--bcher-kva.example');
 	});
 
 	it('refuses a path, a query, a wildcard, credentials and any other scheme', () => {
@@ -70,6 +72,15 @@ describe('normalizeOrigin', () => {
 			'https://app.example.com/timer',
 			'https://app.example.com?x=1',
 			'https://*.example.com',
+			// What URL would reduce to an origin: a decoded wildcard, a path that resolves to `/`, an empty query or
+			// fragment, and a backslash that a special scheme reads as a slash.
+			'https://%2A.example.com',
+			'https://app.example.com/timer/..',
+			'https://app.example.com?',
+			'https://app.example.com#',
+			'https://app.example.com\\@evil.example',
+			'https://app.example.com//',
+			'null',
 			'https://user:secret@app.example.com',
 			'ftp://app.example.com',
 			'javascript:alert(1)',
