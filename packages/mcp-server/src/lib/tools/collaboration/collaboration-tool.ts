@@ -1,4 +1,5 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { ToolAnnotations } from '@modelcontextprotocol/sdk/types.js';
 import { Logger } from '@nestjs/common';
 import { authManager } from '../../common/auth-manager';
 import { registerTool, ToolResult } from '../tool-helper';
@@ -48,11 +49,12 @@ export function registerCollaborationTool<A extends Record<string, unknown>>(
 	name: string,
 	description: string,
 	schema: Record<string, unknown>,
-	callback: (args: A) => Promise<ToolResult>
+	callback: (args: A) => Promise<ToolResult>,
+	annotations?: ToolAnnotations
 ): void {
 	const entry = COLLABORATION_TOOLS[name];
 	if (!entry) throw new Error(`${name} is not a collaboration tool`);
-	registerTool(server, name, description, schema, async (args: A) => {
+	const run = async (args: A): Promise<ToolResult> => {
 		const scopes = currentCollaborationScopes() ?? collaborationScopesOf(undefined);
 		if (!allows(scopes, entry.group, entry.access)) {
 			throw new Error(`Tool '${name}' not found`);
@@ -74,7 +76,8 @@ export function registerCollaborationTool<A extends Record<string, unknown>>(
 			}
 			throw new Error(`${name} failed${message ? `: ${message}` : '.'}`);
 		}
-	});
+	};
+	registerTool(server, name, description, schema, run, annotations);
 }
 
 /** The tenant and organization the routes are called for: the signed-in user's. */
