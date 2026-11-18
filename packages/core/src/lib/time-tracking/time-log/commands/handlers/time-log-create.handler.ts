@@ -25,6 +25,7 @@ import {
 } from '../../time-log-history.writer';
 import { MikroOrmTimeLogRepository } from '../../repository/mikro-orm-time-log.repository';
 import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.repository';
+import { factOfCreatedLog, TimeLogFactsService } from '../../time-log-facts.service';
 
 /**
  * Whether the time log being created is stored as running: as the input says, or, when it says nothing, a log
@@ -105,7 +106,9 @@ export class TimeLogCreateHandler implements ICommandHandler<TimeLogCreateComman
 		private readonly _timeSlotService: TimeSlotService,
 		private readonly _timeLogService: TimeLogService,
 		// Records the history of a change a person makes; a handler built without it writes as before.
-		@Optional() private readonly dataSource?: DataSource
+		@Optional() private readonly dataSource?: DataSource,
+		// Writes the entry's fact for the webhooks; a handler built without it writes as before.
+		@Optional() private readonly facts?: TimeLogFactsService
 	) {}
 
 	/**
@@ -168,6 +171,7 @@ export class TimeLogCreateHandler implements ICommandHandler<TimeLogCreateComman
 		timeLog.timeSlots = await this._timeSlotService.bulkCreate(mergeTimeSlots, employeeId, organizationId);
 
 		await this.saveTimeLog(timeLog, command.history, command.options);
+		await this.facts?.record(factOfCreatedLog(timeLog), timeLog);
 
 		// Recalculate timesheet activity
 		await this.recalculateTimesheet(timesheet);

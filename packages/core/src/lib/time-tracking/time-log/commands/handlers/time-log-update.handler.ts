@@ -36,6 +36,7 @@ import { writeTimeLogTags } from '../../time-log-tags';
 import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.repository';
 import { TypeOrmTimeSlotRepository } from '../../../time-slot/repository/type-orm-time-slot.repository';
 import { MikroOrmTimeSlotRepository } from '../../../time-slot/repository/mikro-orm-time-slot.repository';
+import { factOfUpdatedLog, TimeLogFactsService } from '../../time-log-facts.service';
 
 /**
  * Input keys that decide WHERE a time log lives. They are never taken from the input.
@@ -167,7 +168,9 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 		private readonly mikroOrmTimeSlotRepository: MikroOrmTimeSlotRepository,
 		private readonly timeSlotService: TimeSlotService,
 		// Records the history of a change a person makes; a handler built without it writes as before.
-		@Optional() private readonly dataSource?: DataSource
+		@Optional() private readonly dataSource?: DataSource,
+		// Writes the entry's fact for the webhooks; a handler built without it writes as before.
+		@Optional() private readonly facts?: TimeLogFactsService
 	) {}
 
 	/**
@@ -418,6 +421,9 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 
 		// Return the updated time log
 		const updatedTimeLog = await this.typeOrmTimeLogRepository.findOneBy({ id: timeLog.id });
+		// Last, once every write went through: a try that fails writes no fact, and the try that completes a stop writes
+		// its one fact.
+		await this.facts?.record(factOfUpdatedLog(stopsRun), updatedTimeLog);
 
 		return updatedTimeLog;
 	}

@@ -1,3 +1,4 @@
+import { Optional } from '@nestjs/common';
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import { Brackets, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
@@ -10,6 +11,7 @@ import { ScheduleTimeLogEntriesCommand } from '../schedule-time-log-entries.comm
 import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.repository';
 import { MikroOrmTimeLogRepository } from '../../repository/mikro-orm-time-log.repository';
 import { breakEnd } from '../../break-rules';
+import { factOfUpdatedLog, TimeLogFactsService } from '../../time-log-facts.service';
 
 @CommandHandler(ScheduleTimeLogEntriesCommand)
 export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTimeLogEntriesCommand> {
@@ -17,7 +19,9 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 
 	constructor(
 		readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
-		readonly mikroOrmTimeLogRepository: MikroOrmTimeLogRepository
+		readonly mikroOrmTimeLogRepository: MikroOrmTimeLogRepository,
+		// Writes the fact of each entry it closes for the webhooks; a handler built without it closes as before.
+		@Optional() private readonly facts?: TimeLogFactsService
 	) {}
 
 	/**
@@ -192,7 +196,8 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 		}
 
 		// Stop the pending time log entry
-		await this.stopTimeLog(timeLog, stoppedAt);
+		const closed = await this.stopTimeLog(timeLog, stoppedAt);
+		await this.facts?.record(factOfUpdatedLog(Boolean(timeLog.isRunning)), { ...timeLog, ...closed });
 	}
 
 	/**

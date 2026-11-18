@@ -12,6 +12,7 @@ import { historySubject, recordTimeLogHistory, TimeLogHistoryOptions } from '../
 import { TimeLog } from './../../time-log.entity';
 import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.repository';
 import { MikroOrmTimeLogRepository } from '../..//repository/mikro-orm-time-log.repository';
+import { TIME_LOG_DELETED, TimeLogFactsService } from '../../time-log-facts.service';
 
 @CommandHandler(TimeLogDeleteCommand)
 export class TimeLogDeleteHandler implements ICommandHandler<TimeLogDeleteCommand> {
@@ -20,7 +21,9 @@ export class TimeLogDeleteHandler implements ICommandHandler<TimeLogDeleteComman
 		readonly mikroOrmTimeLogRepository: MikroOrmTimeLogRepository,
 		private readonly _commandBus: CommandBus,
 		// Records the history of a change a person makes; a handler built without it writes as before.
-		@Optional() private readonly dataSource?: DataSource
+		@Optional() private readonly dataSource?: DataSource,
+		// Writes each entry's fact for the webhooks; a handler built without it deletes as before.
+		@Optional() private readonly facts?: TimeLogFactsService
 	) {}
 
 	/**
@@ -48,6 +51,9 @@ export class TimeLogDeleteHandler implements ICommandHandler<TimeLogDeleteComman
 
 		// Step 3: Perform soft delete or hard delete based on the `forceDelete` flag
 		const updateResult = await this.deleteTimeLogsWithHistory(timeLogs, forceDelete, history);
+		for (const timeLog of timeLogs) {
+			await this.facts?.record(TIME_LOG_DELETED, timeLog);
+		}
 
 		// Step 4: Recalculate timesheet and employee worked hours after deletion
 		await this.recalculateTimesheetAndEmployeeHours(timeLogs);

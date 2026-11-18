@@ -225,12 +225,17 @@ function createRun(source: TimeLogSourceEnum) {
 		})
 	};
 
+	// The time entry facts the handler writes for the webhooks, by name
+	const facts: string[] = [];
+	const factsService = { record: async (name: string) => void facts.push(name) };
 	const handler = new TimeLogUpdateHandler(
 		commandBus as any,
 		timeLogRepository as any,
 		timeSlotRepository as any,
 		{} as any,
-		timeSlotService as any
+		timeSlotService as any,
+		undefined,
+		factsService as any
 	);
 	Object.defineProperty(handler, 'ormType', { value: MultiORMEnum.TypeORM });
 	// The slots of the employee at the given starts, with their logs (the lookup is read on both ORMs elsewhere)
@@ -356,6 +361,8 @@ function createRun(source: TimeLogSourceEnum) {
 		}),
 		slotsOf: (logId: string) => heldBy(logId).map((slot) => hhmm(slot.startedAt)),
 		slotCount: () => slots.length,
+		/** The time entry facts written, in order. */
+		facts: () => [...facts],
 		hardDeleted: () => [...hardDeleted]
 	};
 }
@@ -625,5 +632,50 @@ describe.each([
 
 		expect(outcome).toBeUndefined();
 		expect(store.state()).toMatchObject({ isRunning: false, stoppedAt: '09:40' });
+	});
+});
+
+describe('TimeLogUpdateHandler, the time entry facts of a stop (ever-co/ever-gauzy#12071)', () => {
+	beforeEach(() => {
+		jest.spyOn(console, 'log').mockImplementation(() => undefined);
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+	});
+	afterEach(() => jest.restoreAllMocks());
+
+	it('writes one time_log.stopped for a stop that goes through', async () => {
+		const store = createRun(TimeLogSourceEnum.WEB_TIMER);
+
+		await store.stop('09:30');
+
+		expect(store.facts()).toEqual(['time_log.stopped']);
+	});
+
+	it('writes none for a stop refused because another one stopped the run', async () => {
+		const store = createRun(TimeLogSourceEnum.WEB_TIMER);
+		store.stopElsewhereBeforeWrite('09:20');
+
+		await store.stop('09:30');
+
+		expect(store.facts()).toEqual([]);
+	});
+
+	it('writes none for a try that fails, and one for the try that completes the stop', async () => {
+		const store = createRun(TimeLogSourceEnum.WEB_TIMER);
+		store.fail('save');
+		await store.stop('09:30');
+		expect(store.facts()).toEqual([]);
+
+		await store.stopAsFirstRead('09:30');
+
+		expect(store.facts()).toEqual(['time_log.stopped']);
+	});
+
+	it('writes time_log.updated for an edit of a stopped log', async () => {
+		const store = createRun(TimeLogSourceEnum.WEB_TIMER);
+		await store.stop('09:30');
+
+		await store.editEnd('09:40');
+
+		expect(store.facts()).toEqual(['time_log.stopped', 'time_log.updated']);
 	});
 });
