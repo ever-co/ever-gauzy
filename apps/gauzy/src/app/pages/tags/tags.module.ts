@@ -28,6 +28,7 @@ import {
 import { TagsComponent } from './tags.component';
 import { TagsRoutingModule } from './tags-routing.module';
 import { TagsColorComponent } from './tags-color/tags-color.component';
+import { TagDetailsComponent } from './tag-details/tag-details.component';
 
 @NgModule({
 	imports: [
@@ -56,6 +57,6 @@ import { TagsColorComponent } from './tags-color/tags-color.component';
 		CardGridModule,
 		SmartDataViewLayoutModule
 	],
-	declarations: [TagsComponent, TagsColorComponent]
+	declarations: [TagsComponent, TagsColorComponent, TagDetailsComponent]
 })
 export class TagsModule {}
