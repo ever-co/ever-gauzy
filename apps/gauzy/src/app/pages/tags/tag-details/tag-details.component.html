@@ -1,7 +1,7 @@
-<nb-card class="details">
+<nb-card class="details" role="dialog" aria-modal="true" aria-labelledby="tag-details-title">
 	<!-- Header: the tag itself, drawn as the Tags table draws it (same chip component). -->
 	<nb-card-header class="details__header">
-		<h2 class="details__title">
+		<h2 class="details__title" id="tag-details-title">
 			@if (tag) {
 				<ngx-tags-color [rowData]="tag" [value]="tag.name"></ngx-tags-color>
 			}
@@ -40,7 +40,7 @@
 				<div class="details__field">
 					<dt>{{ 'TAGS_PAGE.TAGS_COLOR' | translate }}</dt>
 					<dd>
-						<span class="details__swatch" [style.background]="tag?.color" aria-hidden="true"></span>
+						<span class="details__swatch" [style.background-color]="tag?.color" aria-hidden="true"></span>
 						<span class="details__hex">{{ tag?.color }}</span>
 					</dd>
 				</div>
@@ -78,8 +78,11 @@
 						</li>
 					}
 				</ul>
-			} @else {
+			} @else if (usageKnown) {
 				<p class="details__text details__text--empty details__text--small">{{ 'TAGS_PAGE.NOT_USED' | translate }}</p>
+			} @else {
+				<!-- The list returned no usage counters (the MikroORM query has none): unknown, not unused. -->
+				<p class="details__text details__text--empty details__text--small">—</p>
 			}
 		</section>
 	</nb-card-body>
@@ -89,7 +92,7 @@
 			{{ 'BUTTONS.CLOSE' | translate }}
 		</button>
 		<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_TAGS_EDIT']">
-			<button type="button" nbButton status="primary" size="small" (click)="edit()">
+			<button type="button" nbButton status="primary" size="small" [disabled]="loading" (click)="edit()">
 				{{ 'BUTTONS.EDIT' | translate }}
 			</button>
 		</ng-template>

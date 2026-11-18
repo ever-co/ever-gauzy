@@ -1,6 +1,6 @@
 import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
-import { ITag } from '@gauzy/contracts';
+import { ITag, ITagType } from '@gauzy/contracts';
 import { TagsService } from '@gauzy/ui-core/core';
 
 /** One kind of record the tag is attached to, and how many of them. */
@@ -49,7 +49,8 @@ const COUNTER_SUFFIX = '_counter';
  * A tag's details: its name, colour, description, type, level and dates, read fresh with `GET /tags/:id`, and
  * where it is used, from the counters the tags list row already carries (the single read has none).
  *
- * Closes with `'edit'` when the viewer asks to edit the tag from here.
+ * Closes with the tag as shown (the row, refreshed by the single read) when the viewer asks to edit it from here,
+ * so the editor starts from what the viewer just read rather than from the list row.
  */
 @Component({
 	selector: 'ngx-tag-details',
@@ -61,16 +62,24 @@ const COUNTER_SUFFIX = '_counter';
 export class TagDetailsComponent implements OnInit {
 	/** The row of the tags list: the tag, its type name and its usage counters. */
 	@Input() row: ITag & Record<string, any>;
+	/** The organization's tag types, to name a type the single read reports and the row did not have. */
+	@Input() tagTypes: ITagType[] = [];
 
 	tag: ITag & Record<string, any>;
 	usages: ITagUsage[] = [];
 	totalUsage = 0;
+	/**
+	 * Whether the row carries usage counters at all. Only the TypeORM list query returns them; without them the
+	 * usage is unknown, which is not the same as unused.
+	 */
+	usageKnown = false;
 	loading = false;
 
 	constructor(private readonly dialogRef: NbDialogRef<TagDetailsComponent>, private readonly tagsService: TagsService) {}
 
 	async ngOnInit(): Promise<void> {
 		this.tag = this.row;
+		this.usageKnown = Object.keys(this.row ?? {}).some((property) => property.endsWith(COUNTER_SUFFIX));
 		this.usages = this.usagesOf(this.row);
 		this.totalUsage = this.usages.reduce((sum, usage) => sum + usage.count, 0);
 
@@ -95,13 +104,24 @@ export class TagDetailsComponent implements OnInit {
 		return this.tag?.organizationId ? 'TAGS_PAGE.LEVEL_ORGANIZATION' : 'TAGS_PAGE.LEVEL_TENANT';
 	}
 
-	/** The type's name: the list row carries it as `tagTypeName`, a read with the relation as `tagType`. */
+	/**
+	 * The type's name. The list row carries it (as `tagTypeName`, or as the `tagType` relation); the single read
+	 * carries only `tagTypeId`, so the row's name is used only while the id is still the row's, and a type changed
+	 * since is named from the organization's tag types.
+	 */
 	get typeName(): string | null {
-		return this.tag?.tagType?.type || this.tag?.tagTypeName || null;
+		const tagTypeId = this.tag?.tagTypeId;
+		if (!tagTypeId) {
+			return null;
+		}
+		if (tagTypeId === this.row?.tagTypeId) {
+			return this.row?.tagType?.type || this.row?.tagTypeName || null;
+		}
+		return this.tagTypes?.find((tagType) => tagType.id === tagTypeId)?.type || null;
 	}
 
 	edit(): void {
-		this.dialogRef.close('edit');
+		this.dialogRef.close(this.tag);
 	}
 
 	close(): void {

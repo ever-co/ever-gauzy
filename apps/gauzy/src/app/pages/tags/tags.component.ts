@@ -219,13 +219,14 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 			return;
 		}
 
-		const result = await firstValueFrom(
+		// Closes with the tag as the dialog showed it (refreshed by its own read) when Edit was chosen there.
+		const tagToEdit: ITag | undefined = await firstValueFrom(
 			this.dialogService.open(TagDetailsComponent, {
-				context: { row: this.selectedTag }
+				context: { row: this.selectedTag, tagTypes: this.tagTypes }
 			}).onClose
 		);
-		if (result === 'edit') {
-			await this.edit();
+		if (tagToEdit) {
+			await this.edit(tagToEdit);
 		}
 	}
 
