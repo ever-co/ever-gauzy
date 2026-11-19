@@ -8164,5 +8164,10 @@
 		"YOU": "Jij",
 		"OTHERS": "{{ count }} meer",
 		"FAILED": "De emoji is niet opgeslagen."
+	},
+	"FAVORITES": {
+		"SUBTITLE": "Alles wat je met een ster hebt gemarkeerd, nieuwste eerst.",
+		"EMPTY": "Nog geen favorieten. Gebruik de ster bij een item om het hier toe te voegen.",
+		"VIEW_ALL": "Alles bekijken"
 	}
 }

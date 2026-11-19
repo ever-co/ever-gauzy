@@ -8163,5 +8163,10 @@
 		"YOU": "Ty",
 		"OTHERS": "jeszcze {{ count }}",
 		"FAILED": "Reakcja nie została zapisana."
+	},
+	"FAVORITES": {
+		"SUBTITLE": "Wszystko, co oznaczono gwiazdką, od najnowszych.",
+		"EMPTY": "Brak ulubionych. Użyj gwiazdki przy rekordzie, aby dodać go tutaj.",
+		"VIEW_ALL": "Pokaż wszystkie"
 	}
 }

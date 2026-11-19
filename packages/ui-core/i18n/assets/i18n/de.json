@@ -8160,5 +8160,10 @@
 		"YOU": "Sie",
 		"OTHERS": "{{ count }} weitere",
 		"FAILED": "Die Reaktion wurde nicht gespeichert."
+	},
+	"FAVORITES": {
+		"SUBTITLE": "Alles, was Sie markiert haben, neueste zuerst.",
+		"EMPTY": "Noch keine Favoriten. Markieren Sie einen Eintrag mit dem Stern, um ihn hier hinzuzufügen.",
+		"VIEW_ALL": "Alle anzeigen"
 	}
 }

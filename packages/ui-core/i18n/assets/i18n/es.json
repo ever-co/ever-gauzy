@@ -8166,5 +8166,10 @@
 		"YOU": "Tú",
 		"OTHERS": "{{ count }} más",
 		"FAILED": "No se guardó la reacción."
+	},
+	"FAVORITES": {
+		"SUBTITLE": "Todo lo que marcaste con una estrella, lo más reciente primero.",
+		"EMPTY": "Aún no hay favoritos. Usa la estrella de un registro para añadirlo aquí.",
+		"VIEW_ALL": "Ver todo"
 	}
 }

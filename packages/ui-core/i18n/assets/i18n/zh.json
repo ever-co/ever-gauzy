@@ -9156,6 +9156,9 @@
 		"WORDS": "{{count}} 个词"
 	},
 	"FAVORITES": {
+		"SUBTITLE": "您收藏的所有内容，最新的在前。",
+		"EMPTY": "还没有收藏。点击记录上的星标即可将其添加到这里。",
+		"VIEW_ALL": "查看全部",
 		"ERROR": {
 			"LOAD_FAILED": "加载收藏夹失败"
 		}

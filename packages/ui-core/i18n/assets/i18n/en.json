@@ -9160,6 +9160,9 @@
 		"WORDS": "{{count}} words"
 	},
 	"FAVORITES": {
+		"SUBTITLE": "Everything you starred, newest first.",
+		"EMPTY": "No favorites yet. Use the star on a record to add it here.",
+		"VIEW_ALL": "View all",
 		"ERROR": {
 			"LOAD_FAILED": "Failed to load favorites"
 		}

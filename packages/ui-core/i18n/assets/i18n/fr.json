@@ -8161,5 +8161,10 @@
 		"YOU": "Vous",
 		"OTHERS": "{{ count }} de plus",
 		"FAILED": "La réaction n’a pas été enregistrée."
+	},
+	"FAVORITES": {
+		"SUBTITLE": "Tout ce que vous avez mis en favori, du plus récent au plus ancien.",
+		"EMPTY": "Aucun favori pour le moment. Utilisez l’étoile d’un élément pour l’ajouter ici.",
+		"VIEW_ALL": "Tout afficher"
 	}
 }

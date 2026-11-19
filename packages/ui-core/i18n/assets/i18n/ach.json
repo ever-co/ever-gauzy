@@ -7160,5 +7160,10 @@
 		"YOU": "You",
 		"OTHERS": "{{ count }} more",
 		"FAILED": "The reaction was not saved."
+	},
+	"FAVORITES": {
+		"SUBTITLE": "Everything you starred, newest first.",
+		"EMPTY": "No favorites yet. Use the star on a record to add it here.",
+		"VIEW_ALL": "View all"
 	}
 }
