@@ -125,11 +125,18 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 				})
 			);
 
+			// Only an edit that states `stages` replaces them. One that leaves the key out (a rename, an archive)
+			// keeps every stage: a removed stage takes the deals filed in it.
+			const replacesStages = partialEntity.stages !== undefined;
+
 			// Fetch existing pipeline stages
-			const existingStages: IPipelineStage[] = await queryRunner.manager.findBy(PipelineStage, {
-				pipelineId: id,
-				tenantId
-			});
+			let existingStages: IPipelineStage[] = [];
+			if (replacesStages) {
+				existingStages = await queryRunner.manager.findBy(PipelineStage, {
+					pipelineId: id,
+					tenantId
+				});
+			}
 
 			// Get the updated and existing stages
 			const updatedStages: IPipelineStage[] = pipeline.stages?.filter((stage: IPipelineStage) => stage.id) || [];

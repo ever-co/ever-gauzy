@@ -8518,8 +8518,8 @@ type Mutation {
   createPipeline(input: CreatePipelineInput!): Pipeline!
 
   """
-  Replaces a pipeline's facts and its whole stage set. A stage the body does not name is removed —
-  see `UpdatePipelineInput`.
+  Changes a pipeline's facts, and replaces its whole stage set when the input states `stages`: a stage
+  the list does not name is removed. See `UpdatePipelineInput`.
   """
   updatePipeline(input: UpdatePipelineInput!): Pipeline!
 
@@ -35579,12 +35579,12 @@ input CreatePipelineInput {
 """
 What a caller states when it changes a pipeline that exists.
 
-**A member the caller leaves out is left as it is on the pipeline row, and `stages` is the exception
-that makes this input worth reading twice.** The delivered writer keeps the stages the body names,
-saves them, creates the ones that state no identifier, and **removes every existing stage the body
-does not name**. A body that omits `stages` altogether therefore empties the pipeline: the stage rows
-are diffed against an absent array and every one of them is removed. Stating this here is what keeps
-a client from reading "absent" as "unchanged".
+**A member the caller leaves out is left as it is on the pipeline row, `stages` included.** A body
+that states `stages` replaces the stage set: the delivered writer keeps the stages the list names,
+saves them, creates the ones that state no identifier, and **removes every existing stage the list
+does not name**, with the deals filed in it. `stages: []` therefore empties the pipeline, and
+`stages: null` does the same. A body that omits `stages` leaves the stages, and the deals filed in
+them, as they are.
 
 The edit runs in one transaction and hands the stages their `pipelineId` and their `index` itself, in
 the order the array states.
