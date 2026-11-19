@@ -260,7 +260,11 @@ describe('GauzyApiClient: signed in with GAUZY_API_TOKEN', () => {
 	});
 
 	it('never puts the token in a log or an answer', async () => {
-		serve(() => ({ status: 401, data: { statusCode: 401, message: 'Unauthorized' } }));
+		// An API that quotes the token it refuses
+		serve(() => ({
+			status: 401,
+			data: { statusCode: 401, message: `Unauthorized: ${API_TOKEN}`, token: API_TOKEN }
+		}));
 		const { apiClient } = await startServer();
 
 		const answers = [await apiClient.login(), apiClient.getAuthStatus()];
