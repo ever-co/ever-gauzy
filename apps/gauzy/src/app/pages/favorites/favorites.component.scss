@@ -315,14 +315,20 @@
   font-weight: 600;
 }
 
-.favorites-card-badges {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.25rem;
-  min-height: 1.25rem;
+// The record's own description, two lines at most. Shown only when there is one.
+.favorites-card-desc {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  font-size: var(--fav-meta-size);
+  line-height: 1rem;
+  color: var(--fav-text-muted);
+  overflow-wrap: anywhere;
 }
 
+// Date on the left, the kind of record on the right (a Documents card's date and size).
 .favorites-card-footer {
   display: flex;
   align-items: center;
@@ -338,6 +344,11 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .favorites-card-type {
+    flex: 0 1 auto;
+    text-align: right;
   }
 }
 
@@ -403,7 +414,28 @@
   }
 
   .name-col {
+    width: 30%;
     padding-inline-start: 1.25rem;
+  }
+
+  .type-col {
+    width: 10rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  // Takes the room the other columns leave; one line, the full text in the tooltip.
+  .desc-col {
+    color: var(--fav-text-muted);
+  }
+
+  .favorites-desc-text {
+    display: block;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .added-col {
@@ -518,7 +550,7 @@
 
   .favorites-table {
     table {
-      min-width: 30rem;
+      min-width: 46rem;
     }
 
     .added-col {
