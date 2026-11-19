@@ -502,9 +502,12 @@ export const registerCandidateTools = (server: McpServer) => {
 					throw new Error('Unauthorized: Cannot add skills to candidates from other organizations');
 				}
 
+				// The skill list reads the organization: a skill created without one would not be listed
 				const response = await apiClient.post('/api/candidate-skills', {
 					candidateId,
-					...skill
+					...skill,
+					organizationId: defaultParams.organizationId,
+					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
 				});
 
 				return {
@@ -587,9 +590,12 @@ export const registerCandidateTools = (server: McpServer) => {
 					throw new Error('Unauthorized: Cannot add experience to candidates from other organizations');
 				}
 
+				// The experience list reads the organization: a row created without one would not be listed
 				const response = await apiClient.post('/api/candidate-experience', {
 					candidateId,
-					...experience
+					...experience,
+					organizationId: defaultParams.organizationId,
+					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
 				});
 
 				return {
@@ -673,10 +679,13 @@ export const registerCandidateTools = (server: McpServer) => {
 					throw new Error('Unauthorized: Cannot add education to candidates from other organizations');
 				}
 
+				// The education list reads the organization: a row created without one would not be listed
 				const educationData = {
 					...education,
 					candidateId,
-					...(education.completionDate && { completionDate: new Date(education.completionDate) })
+					...(education.completionDate && { completionDate: new Date(education.completionDate) }),
+					organizationId: defaultParams.organizationId,
+					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
 				};
 
 				const response = await apiClient.post('/api/candidate-educations', educationData);
