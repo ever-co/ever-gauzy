@@ -18,7 +18,18 @@ export const EMBED_CREDENTIAL_PREFIX = 'gze_';
 /** 256 bits from the CSPRNG, in base64url without padding. */
 const SECRET_BYTES = 32;
 const SECRET_LENGTH = 43;
-const CREDENTIAL_SHAPE = new RegExp(`^${EMBED_CREDENTIAL_PREFIX}[A-Za-z0-9_-]{${SECRET_LENGTH}}$`);
+
+/** The whole shape of a secret that starts with `prefix`. */
+function secretShapeOf(prefix: string): RegExp {
+	return new RegExp(`^${prefix}[A-Za-z0-9_-]{${SECRET_LENGTH}}$`);
+}
+
+/** A new secret that starts with `prefix`. */
+function newSecret(prefix: string): string {
+	return `${prefix}${randomBytes(SECRET_BYTES).toString('base64url')}`;
+}
+
+const CREDENTIAL_SHAPE = secretShapeOf(EMBED_CREDENTIAL_PREFIX);
 
 /** How many characters of a credential the list shows: 48 of its 256 bits, which leaves no guess possible. */
 const DISPLAY_PREFIX_LENGTH = EMBED_CREDENTIAL_PREFIX.length + 8;
@@ -48,7 +59,7 @@ export function embedTokenTtlSeconds(value: string | undefined = process.env['GA
 
 /** A new credential: the secret to show once, its digest to store and the prefix to list. */
 export function generateEmbedCredential(): { secret: string; keyHash: string; prefix: string } {
-	const secret = `${EMBED_CREDENTIAL_PREFIX}${randomBytes(SECRET_BYTES).toString('base64url')}`;
+	const secret = newSecret(EMBED_CREDENTIAL_PREFIX);
 	return { secret, keyHash: hashEmbedCredential(secret), prefix: secret.slice(0, DISPLAY_PREFIX_LENGTH) };
 }
 
