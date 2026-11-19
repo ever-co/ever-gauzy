@@ -52,7 +52,8 @@ interface KeptHere {
 
 /**
  * One page of a daily plan list route. The routes compare `date` to the instant they store in the API's local time, so a
- * day matched no plan: a day, and a status on a route that applies none, are kept here, on the whole list.
+ * day matched no plan: a day is kept here, on the whole list. So is a status: the team and task routes apply none, and
+ * the list, own and employee routes apply it under TypeORM only.
  */
 const readPlans = (
 	path: string,
@@ -108,10 +109,12 @@ export const registerDailyPlanTools = (server: McpServer) => {
 					);
 				}
 
-				const where = { employeeId, organizationTeamId, status: toApiValue(DAILY_PLAN_STATUS_VALUES, status) };
+				const storedStatus = toApiValue(DAILY_PLAN_STATUS_VALUES, status);
+				const where = { employeeId, organizationTeamId, status: storedStatus };
 				const path = dailyPlansPath(organizationTeamId, employeeId);
+				const kept = { date, status: storedStatus };
 
-				const response = await readPlans(path, defaultParams, where, { page, limit, relations }, { date });
+				const response = await readPlans(path, defaultParams, where, { page, limit, relations }, kept);
 
 				return {
 					content: [
@@ -154,10 +157,12 @@ export const registerDailyPlanTools = (server: McpServer) => {
 					);
 				}
 
-				const where = { organizationTeamId, status: toApiValue(DAILY_PLAN_STATUS_VALUES, status) };
+				const storedStatus = toApiValue(DAILY_PLAN_STATUS_VALUES, status);
+				const where = { organizationTeamId, status: storedStatus };
 				const options = { page, limit, relations };
+				const kept = { date, status: storedStatus };
 
-				const response = await readPlans('/api/daily-plan/me', defaultParams, where, options, { date });
+				const response = await readPlans('/api/daily-plan/me', defaultParams, where, options, kept);
 
 				return {
 					content: [
@@ -247,15 +252,15 @@ export const registerDailyPlanTools = (server: McpServer) => {
 						'Organization ID not available. Please ensure you are logged in and have an organization.'
 					);
 				}
-				const where = { status: toApiValue(DAILY_PLAN_STATUS_VALUES, status) };
+				const storedStatus = toApiValue(DAILY_PLAN_STATUS_VALUES, status);
 				const options = { page, limit, relations };
 
 				const response = await readPlans(
 					`/api/daily-plan/employee/${employeeId}`,
 					{ organizationId, tenantId },
-					where,
+					{ status: storedStatus },
 					options,
-					{ date }
+					{ date, status: storedStatus }
 				);
 
 				return {

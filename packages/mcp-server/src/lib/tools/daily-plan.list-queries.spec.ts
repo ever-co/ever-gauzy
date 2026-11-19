@@ -53,7 +53,7 @@ describe('daily plan list tools — the route and query each one reads', () => {
 		await call('get_daily_plans', { status: 'OPEN' });
 
 		expect(get).toHaveBeenCalledWith('/api/daily-plan/me', {
-			params: { where: { ...SCOPE, status: 'open' }, take: 10, skip: 1 }
+			params: { where: { ...SCOPE, status: 'open' }, take: 100, skip: 1 }
 		});
 	});
 
@@ -85,7 +85,7 @@ describe('daily plan list tools — the route and query each one reads', () => {
 		await call('get_my_daily_plans', { organizationTeamId: TEAM, status: 'COMPLETED', page: 3, limit: 4 });
 
 		expect(get).toHaveBeenCalledWith('/api/daily-plan/me', {
-			params: { where: { ...SCOPE, organizationTeamId: TEAM, status: 'completed' }, take: 4, skip: 3 }
+			params: { where: { ...SCOPE, organizationTeamId: TEAM, status: 'completed' }, take: 100, skip: 1 }
 		});
 	});
 
@@ -101,7 +101,7 @@ describe('daily plan list tools — the route and query each one reads', () => {
 		await call('get_employee_daily_plans', { employeeId: EMPLOYEE, status: 'IN_PROGRESS' });
 
 		expect(get).toHaveBeenCalledWith(`/api/daily-plan/employee/${EMPLOYEE}`, {
-			params: { where: { ...SCOPE, status: 'in-progress' }, take: 10, skip: 1 }
+			params: { where: { ...SCOPE, status: 'in-progress' }, take: 100, skip: 1 }
 		});
 	});
 
@@ -117,7 +117,7 @@ describe('daily plan list tools — the route and query each one reads', () => {
 		await call('get_my_daily_plans', { status: 'in-progress' });
 
 		expect(get).toHaveBeenCalledWith('/api/daily-plan/me', {
-			params: { where: { ...SCOPE, status: 'in-progress' }, take: 10, skip: 1 }
+			params: { where: { ...SCOPE, status: 'in-progress' }, take: 100, skip: 1 }
 		});
 	});
 
@@ -164,6 +164,23 @@ describe('daily plan list tools — the day, and the status a route ignores, kep
 		expect(await answered('get_daily_plans', { date: '2026-11-20T00:00:00.000Z' })).toEqual({
 			ids: ['p4'],
 			total: 1
+		});
+	});
+
+	it.each([
+		['get_my_daily_plans', {}, '/api/daily-plan/me'],
+		['get_daily_plans', {}, '/api/daily-plan/me'],
+		['get_daily_plans', { employeeId: EMPLOYEE }, `/api/daily-plan/employee/${EMPLOYEE}`],
+		['get_daily_plans', { organizationTeamId: TEAM }, '/api/daily-plan'],
+		['get_employee_daily_plans', { employeeId: EMPLOYEE }, `/api/daily-plan/employee/${EMPLOYEE}`]
+	])('%s %p keeps the status itself, since its route applies one under TypeORM only', async (name, args, path) => {
+		expect(await answered(name, { ...args, status: 'COMPLETED', page: 2, limit: 1 })).toEqual({
+			ids: ['p4'],
+			total: 2
+		});
+
+		expect(get).toHaveBeenCalledWith(path, {
+			params: expect.objectContaining({ where: expect.objectContaining({ status: 'completed' }), take: 100 })
 		});
 	});
 
