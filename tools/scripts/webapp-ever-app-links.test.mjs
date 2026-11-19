@@ -3,7 +3,8 @@
  * start: `envsubst` writes the value into `replacements.sed` as it is, then `sed -f` replaces the
  * `DOCKER_EVER_APP_LINKS` placeholder inside a JS string. Each entrypoint escapes the value for both first
  * (`EVER_APP_LINKS_SED`); this holds that escaping to its promise: whatever the value, sed accepts the script and the
- * app reads back exactly the value that was set, from a single-quoted and from a double-quoted string.
+ * app reads back exactly the value that was set, from a single-quoted and from a double-quoted string. Line breaks
+ * (which no link holds) are the one exception: they are dropped.
  *
  * Needs `sh` and `sed` (as the image has). Run from the repository root:
  * `node --test tools/scripts/webapp-ever-app-links.test.mjs`
@@ -75,4 +76,10 @@ for (const entrypoint of ENTRYPOINTS) {
 			assert.deepEqual(substituted(entrypoint, value), [value, value]);
 		});
 	}
+
+	test(`${entrypoint}: line breaks are dropped (they would end the sed script)`, () => {
+		const read = 'platform=https://platform.example.com/a,works=https://works.example.com/b';
+		const set = 'platform=https://platform.example.com/a,\r\nworks=https://works.example.com/b\n';
+		assert.deepEqual(substituted(entrypoint, set), [read, read]);
+	});
 }
