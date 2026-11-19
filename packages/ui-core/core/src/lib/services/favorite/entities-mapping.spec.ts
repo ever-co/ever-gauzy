@@ -1,5 +1,5 @@
 import { BaseEntityEnum, DocumentKindEnum } from '@gauzy/contracts';
-import { ENTITY_ICONS, ENTITY_LINKS, ENTITY_TITLES, favoriteIcon } from './entities-mapping';
+import { ENTITY_ICONS, ENTITY_LINKS, ENTITY_TITLES, favoriteDescription, favoriteIcon } from './entities-mapping';
 
 const ID = 'aaaaaaaa-1111-4111-8111-111111111111';
 
@@ -135,5 +135,45 @@ describe('favorites of the newly favoritable record types', () => {
 			jobPostContent: '<img src=x onerror="alert(1)"><script>alert(2)</script>Job'
 		});
 		expect(title).not.toContain('<');
+	});
+});
+
+describe('favorite descriptions (the Favorites page)', () => {
+	it.each([
+		[BaseEntityEnum.Task, { description: '<p>Fix the <b>login</b> form</p>' }, 'Fix the login form'],
+		[BaseEntityEnum.OrganizationProject, { description: 'Website redesign' }, 'Website redesign'],
+		[BaseEntityEnum.Goal, { description: 'Grow revenue' }, 'Grow revenue'],
+		[BaseEntityEnum.Document, { summary: 'Quarterly plan', description: 'Plan' }, 'Quarterly plan'],
+		[BaseEntityEnum.Document, { description: 'Plan' }, 'Plan'],
+		[BaseEntityEnum.Employee, { shortDescription: 'Frontend lead', description: 'Long bio' }, 'Frontend lead'],
+		[BaseEntityEnum.OrganizationSprint, { goal: 'Ship the beta' }, 'Ship the beta']
+	])('reads a %s favorite its own description (%j)', (entity, record, description) => {
+		expect(favoriteDescription(entity, { id: ID, ...record }, 'Some name')).toBe(description);
+	});
+
+	it('never uses contact details, amounts or keys as a description', () => {
+		expect(favoriteDescription(BaseEntityEnum.Employee, { id: ID, user: { email: 'r@example.com' } })).toBeUndefined();
+		expect(favoriteDescription(BaseEntityEnum.Task, { id: ID, prefix: 'PROJ', number: 12 })).toBeUndefined();
+		expect(favoriteDescription(BaseEntityEnum.Invoice, { id: ID, totalValue: 120, currency: 'USD' })).toBeUndefined();
+		expect(favoriteDescription(BaseEntityEnum.OrganizationContact, { id: ID, primaryEmail: 'a@acme.test' })).toBeUndefined();
+	});
+
+	it('gives none when the description only repeats the name', () => {
+		expect(favoriteDescription(BaseEntityEnum.Goal, { id: ID, description: 'Team A' }, 'Team A')).toBeUndefined();
+	});
+
+	it('shortens a long description', () => {
+		const description = favoriteDescription(BaseEntityEnum.Goal, { id: ID, description: 'x'.repeat(500) }, 'Goal');
+		expect(description).toHaveLength(200);
+		expect(description?.endsWith('…')).toBe(true);
+	});
+
+	it('never keeps markup from a rich-text description', () => {
+		const description = favoriteDescription(
+			BaseEntityEnum.OrganizationProject,
+			{ id: ID, description: '<img src=x onerror="alert(1)">Plan' },
+			'Project'
+		);
+		expect(description).not.toContain('<');
 	});
 });
