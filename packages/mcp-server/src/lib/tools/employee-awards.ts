@@ -3,7 +3,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { validateOrganizationContext } from './utils';
+import { buildListQuery, validateOrganizationContext } from './utils';
 import { EmployeeAwardInputSchema } from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
@@ -31,15 +31,10 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
+				// `where` matches a column exactly: the search and the sort stay outside it, as before
 				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					page,
-					limit,
+					...buildListQuery(defaultParams, { employeeId, year }, { page, limit, relations }),
 					...(search && { search }),
-					...(relations && { relations }),
-					...(employeeId && { employeeId }),
-					...(year && { year }),
 					...(sortBy && { sortBy }),
 					sortOrder
 				};
@@ -217,12 +212,7 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 				const defaultParams = validateOrganizationContext();
 
 				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					employeeId,
-					page,
-					limit,
-					...(year && { year }),
+					...buildListQuery(defaultParams, { employeeId, year }, { page, limit }),
 					sortBy,
 					sortOrder
 				};
@@ -268,13 +258,7 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 				const defaultParams = validateOrganizationContext();
 
 				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					year,
-					page,
-					limit,
-					...(employeeId && { employeeId }),
-					...(relations && { relations }),
+					...buildListQuery(defaultParams, { year, employeeId }, { page, limit, relations }),
 					sortBy,
 					sortOrder
 				};
