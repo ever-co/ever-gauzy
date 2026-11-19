@@ -56,4 +56,10 @@ export interface IAccessTokenMetadata extends JwtPayload {
 	 * `EmbedSessionGuard` lets such a token start the timer only on a project of that client.
 	 */
 	embedClientId?: string;
+	/**
+	 * Set only on a token a person's sign-in from an allowed site minted (`POST /embed/authorize`, `POST /embed/renew`):
+	 * the site grant behind it, which `embedCredentialId` names too. `EmbedSessionGuard` looks no credential up for
+	 * such a token; its grant is judged at each renewal.
+	 */
+	embedGrantId?: string;
 }

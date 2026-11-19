@@ -2,7 +2,7 @@ import '../core/entities/internal';
 
 import { sign } from 'jsonwebtoken';
 import { RequestContext } from '../core/context';
-import { EMBED_CLIENT_CLAIM, readEmbedClaims } from '../embed/embed-session';
+import { EMBED_CLIENT_CLAIM, EMBED_GRANT_CLAIM, readEmbedClaims } from '../embed/embed-session';
 import { AuthService } from './auth.service';
 
 /**
@@ -87,6 +87,7 @@ describe('AuthService.issueEmbedSession, the client of the credential', () => {
 		await service.issueEmbedSession({ ...MINT, clientId: null });
 
 		expect(payloads[0]).not.toHaveProperty(EMBED_CLIENT_CLAIM);
+		expect(payloads[0]).not.toHaveProperty(EMBED_GRANT_CLAIM);
 		expect(payloads[1]).toEqual(payloads[0]);
 		expect(payloads[0]).toMatchObject({
 			embedCredentialId: CREDENTIAL,
@@ -95,5 +96,25 @@ describe('AuthService.issueEmbedSession, the client of the credential', () => {
 		});
 		const claims = readEmbedClaims(`Bearer ${sign(payloads[0], 'any-secret')}`);
 		expect(claims).toMatchObject({ credentialId: CREDENTIAL, clientId: null });
+	});
+});
+
+describe('AuthService.issueEmbedSession, the site grant of a person', () => {
+	const GRANT = '7d000000-0000-4000-8000-0000000000a9';
+
+	it('names the grant as the credential too, so the token is held to the timer as an exchanged one is', async () => {
+		const { service, payloads } = buildAuthService();
+
+		await service.issueEmbedSession({ ...MINT, credentialId: GRANT, grantId: GRANT });
+
+		expect(payloads[0]).toMatchObject({
+			embedCredentialId: GRANT,
+			embedEmployeeId: EMPLOYEE,
+			embedOrigin: SITE,
+			[EMBED_GRANT_CLAIM]: GRANT
+		});
+		expect(payloads[0]).not.toHaveProperty(EMBED_CLIENT_CLAIM);
+		const claims = readEmbedClaims(`Bearer ${sign(payloads[0], 'any-secret')}`);
+		expect(claims).toMatchObject({ credentialId: GRANT, grantId: GRANT, origin: SITE });
 	});
 });

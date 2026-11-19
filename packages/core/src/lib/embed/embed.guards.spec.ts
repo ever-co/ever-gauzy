@@ -7,6 +7,7 @@ import {
 	EMBED_CLIENT_CLAIM,
 	EMBED_CREDENTIAL_CLAIM,
 	EMBED_EMPLOYEE_CLAIM,
+	EMBED_GRANT_CLAIM,
 	embedRouteOf,
 	IEmbedClientStart,
 	isEmbedRoute,
@@ -114,7 +115,8 @@ describe('embed helpers', () => {
 			organizationId: ORG,
 			tenantId: 'tenant',
 			origin: null,
-			clientId: null
+			clientId: null,
+			grantId: null
 		});
 		expect(readEmbedClaims(`Bearer ${sign({ id: 'user' }, 'test-secret')}`)).toBeNull();
 		expect(readEmbedClaims(undefined)).toBeNull();
@@ -245,6 +247,22 @@ describe('EmbedSessionGuard', () => {
 
 		delete process.env[EMBED_TOKENS_ENV];
 		await expect(guardWith().guard.canActivate(contextOf(request))).rejects.toThrow(UnauthorizedException);
+	});
+
+	it('looks no credential up for the token of a site grant, which reaches the timer as an exchanged one does', async () => {
+		const { guard, isRevoked } = guardWith(true);
+		const GRANT = '7a000000-0000-4000-8000-0000000000a9';
+		const authorization = `Bearer ${embedToken({ [EMBED_CREDENTIAL_CLAIM]: GRANT, [EMBED_GRANT_CLAIM]: GRANT })}`;
+		const status = { method: 'GET', path: '/api/timesheet/timer/status', headers: { authorization } };
+		const logs = { method: 'GET', path: '/api/timesheet/time-log', headers: { authorization } };
+
+		expect(readEmbedClaims(authorization)).toMatchObject({ credentialId: GRANT, grantId: GRANT });
+		await expect(guard.canActivate(contextOf(status))).resolves.toBe(true);
+		await expect(guard.canActivate(contextOf(logs))).rejects.toMatchObject({ response: { code: 'EMBED_SCOPE' } });
+		expect(isRevoked).not.toHaveBeenCalled();
+
+		delete process.env[EMBED_TOKENS_ENV];
+		await expect(guard.canActivate(contextOf(status))).rejects.toThrow(UnauthorizedException);
 	});
 
 	it('reads the token passport reads, so a suffixed Authorization header is held to the timer too', async () => {

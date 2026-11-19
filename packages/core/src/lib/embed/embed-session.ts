@@ -21,6 +21,13 @@ export const EMBED_EMPLOYEE_CLAIM = 'embedEmployeeId';
  */
 export const EMBED_CLIENT_CLAIM = 'embedClientId';
 
+/**
+ * The access-token claim that names the site grant behind a token a person's sign-in from an allowed site minted
+ * (`POST /embed/authorize`, `POST /embed/renew`). Such a token names the grant as its credential too
+ * (`EMBED_CREDENTIAL_CLAIM`), so it is held to the timer as an exchanged one is; a credential's token never carries it.
+ */
+export const EMBED_GRANT_CLAIM = 'embedGrantId';
+
 export interface IEmbedClaims {
 	credentialId: string;
 	employeeId: string;
@@ -30,6 +37,8 @@ export interface IEmbedClaims {
 	origin: string | null;
 	/** The client the token's credential is limited to; null for a credential of the whole organization. */
 	clientId: string | null;
+	/** The site grant of a person's sign-in that minted the token; null for a credential's token. */
+	grantId: string | null;
 }
 
 /** The project and the task a timer start names; null for a start without a task. */
@@ -202,7 +211,8 @@ export function readEmbedClaims(authorization: string | undefined): IEmbedClaims
 		organizationId: typeof record['organizationId'] === 'string' ? record['organizationId'] : null,
 		tenantId: typeof record['tenantId'] === 'string' ? record['tenantId'] : null,
 		origin: typeof record[EMBED_ORIGIN_CLAIM] === 'string' ? (record[EMBED_ORIGIN_CLAIM] as string) : null,
-		clientId: textClaimOf(record, EMBED_CLIENT_CLAIM)
+		clientId: textClaimOf(record, EMBED_CLIENT_CLAIM),
+		grantId: textClaimOf(record, EMBED_GRANT_CLAIM)
 	};
 }
 
