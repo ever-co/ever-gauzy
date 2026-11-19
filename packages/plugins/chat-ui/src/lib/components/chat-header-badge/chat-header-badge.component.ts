@@ -6,7 +6,7 @@ import { RouterLink } from '@angular/router';
 import { NbBadgeModule, NbIconModule, NbPopoverDirective, NbPopoverModule } from '@nebular/theme';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { EMPTY, forkJoin, merge, Observable, of, Subject, timer } from 'rxjs';
-import { auditTime, catchError, filter, map, switchMap, take, takeUntil } from 'rxjs/operators';
+import { auditTime, catchError, filter, map, startWith, switchMap, take, takeUntil } from 'rxjs/operators';
 import { CHAT_EVENT_NAMES, ChatConversationKindEnum, IChatConversationWithState, IChatStates, IOrganization, IUser } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-core/core';
 import { CHAT_BADGE_POLL_MS, CHAT_LINK, CHAT_LIVE_LIST_AUDIT_MS } from '../../chat-ui.constants';
@@ -56,7 +56,7 @@ export interface ChatMenuRow {
 
 /**
  * The dropdown's rows: the conversations that hold messages and are not archived, newest activity first, at most
- * `limit` of them.
+ * `limit` of them. A channel's row draws its own `#` mark, so its title is the bare name (not `#name`).
  */
 export function menuRows(
 	conversations: readonly IChatConversationWithState[],
@@ -70,15 +70,18 @@ export function menuRows(
 		.filter((conversation) => !conversation.archivedAt && hasMessages(conversation))
 		.sort((a, b) => time(b.lastMessageAt) - time(a.lastMessageAt))
 		.slice(0, limit)
-		.map((conversation) => ({
-			id: String(conversation.id),
-			title: conversationTitle(conversation, people.byEmployee, meEmployeeId, fallback),
-			person: conversationPerson(conversation, people.byEmployee, meEmployeeId),
-			channel: conversation.kind === ChatConversationKindEnum.CHANNEL,
-			unread: isUnread(conversation),
-			count: badgeText(conversation.state?.unreadCount ?? 0),
-			at: conversation.lastMessageAt ?? null
-		}));
+		.map((conversation) => {
+			const channel = conversation.kind === ChatConversationKindEnum.CHANNEL;
+			return {
+				id: String(conversation.id),
+				title: channel ? conversation.name?.trim() || fallback : conversationTitle(conversation, people.byEmployee, meEmployeeId, fallback),
+				person: conversationPerson(conversation, people.byEmployee, meEmployeeId),
+				channel,
+				unread: isUnread(conversation),
+				count: badgeText(conversation.state?.unreadCount ?? 0),
+				at: conversation.lastMessageAt ?? null
+			};
+		});
 }
 
 /** The `DatePipe` format of a row's time: the time for today, the day and month for this year, the date before. */
@@ -188,7 +191,7 @@ type MenuState = 'loading' | 'ready' | 'error';
 				padding: 12px 16px 8px;
 				font-size: 13px;
 				font-weight: 600;
-				color: var(--text-basic-color);
+				color: var(--gauzy-text-color-1);
 			}
 			.menu-body {
 				max-height: 320px;
@@ -200,7 +203,7 @@ type MenuState = 'loading' | 'ready' | 'error';
 				margin: 0;
 				padding: 12px 16px;
 				font-size: 12px;
-				color: var(--text-hint-color);
+				color: var(--gauzy-text-color-2);
 			}
 			.menu .row {
 				display: flex;
@@ -209,17 +212,17 @@ type MenuState = 'loading' | 'ready' | 'error';
 				min-width: 0;
 				margin: 0 8px;
 				padding: 8px;
-				border-radius: 6px;
-				color: var(--text-basic-color);
+				border-radius: calc(var(--border-radius) * 0.75);
+				color: var(--gauzy-text-color-1);
 				text-decoration: none;
 				font-size: 12px;
 				line-height: 16px;
 			}
 			.menu .row:hover,
 			.menu .row:focus-visible {
-				background: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+				background: var(--gauzy-hover-tint);
 				text-decoration: none;
-				color: var(--text-basic-color);
+				color: var(--gauzy-text-color-1);
 			}
 			.channel-mark {
 				display: inline-flex;
@@ -228,9 +231,9 @@ type MenuState = 'loading' | 'ready' | 'error';
 				justify-content: center;
 				width: 24px;
 				height: 24px;
-				border-radius: 6px;
+				border-radius: calc(var(--border-radius) * 0.75);
 				background: var(--background-basic-color-3);
-				color: var(--text-hint-color);
+				color: var(--gauzy-text-color-2);
 				font-size: 11px;
 				font-weight: 600;
 			}
@@ -252,14 +255,14 @@ type MenuState = 'loading' | 'ready' | 'error';
 			}
 			.row-time {
 				font-size: 11px;
-				color: var(--text-hint-color);
+				color: var(--gauzy-text-color-2);
 			}
 			.row-count {
 				min-width: 16px;
 				padding: 0 5px;
-				border-radius: 8px;
+				border-radius: calc(var(--border-radius) * 2);
 				background: var(--color-danger-default);
-				color: #fff;
+				color: var(--text-control-color);
 				font-size: 10px;
 				font-weight: 600;
 				line-height: 16px;
@@ -284,23 +287,11 @@ type MenuState = 'loading' | 'ready' | 'error';
 			}
 			.menu-all:hover,
 			.menu-all:focus-visible {
-				background: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+				background: var(--gauzy-hover-tint);
 				text-decoration: none;
 			}
-			/* The dropdown is a list hanging under the icon, not a speech bubble: no arrow, and the frame adds no padding
-			   of its own (the panel draws its own spacing). */
-			::ng-deep .cdk-overlay-container .chat-header-menu-popover nb-popover {
-				padding: 0;
-				overflow: hidden;
-				/* Hang a little past the icon's right edge rather than flush with it. */
-				transform: translateX(48px);
-			}
-			::ng-deep .cdk-overlay-container .chat-header-menu-popover nb-popover .arrow {
-				display: none;
-			}
-			::ng-deep .cdk-overlay-container .chat-header-menu-popover nb-popover .primitive-overlay {
-				padding: 0;
-			}
+			/* The popover frame around the panel (no arrow, no padding, its offset) is styled with the other overlays:
+			   .chat-header-menu-popover in ui-core's _overlays.scss. */
 		`
 	]
 })
@@ -327,22 +318,15 @@ export class ChatHeaderBadgeComponent implements OnInit {
 
 	ngOnInit(): void {
 		this.startPolling();
-		this.loadMenu$
-			.pipe(
-				switchMap(() => this.readMenu()),
-				takeUntilDestroyed(this.destroyRef)
-			)
-			.subscribe((rows) => {
-				if (rows) this.rows.set(rows);
-				this.state.set(rows ? 'ready' : 'error');
-			});
+		this.followMenu();
 	}
 
 	protected onShowChange(isShown: boolean): void {
 		this.open.set(isShown);
 		if (!isShown) return;
-		// Rows already shown stay while they are read again; only a first opening says "Loading…".
-		if (!this.rows().length) this.state.set('loading');
+		// Rows already shown stay while they are read again (an earlier failure no longer shows over them); only an
+		// opening without rows says "Loading…".
+		this.state.set(this.rows().length ? 'ready' : 'loading');
 		this.loadMenu$.next();
 	}
 
@@ -352,6 +336,29 @@ export class ChatHeaderBadgeComponent implements OnInit {
 
 	protected dateFormat(value: Date | string | null): string {
 		return menuDateFormat(value);
+	}
+
+	/**
+	 * Reads the dropdown's conversations at each opening, anew for every scope the chat is served in: a change of user
+	 * or organization clears the rows of the scope before and cancels its read still on the way, so they never show
+	 * under the new one. An open dropdown reads the new scope's at once.
+	 */
+	private followMenu(): void {
+		this.availability.scope$
+			.pipe(
+				switchMap((scope) => {
+					this.rows.set([]);
+					this.state.set('loading');
+					if (!scope) return EMPTY;
+					const asks$ = this.open() ? this.loadMenu$.pipe(startWith(undefined)) : this.loadMenu$;
+					return asks$.pipe(switchMap(() => this.readMenu()));
+				}),
+				takeUntilDestroyed(this.destroyRef)
+			)
+			.subscribe((rows) => {
+				if (rows) this.rows.set(rows);
+				this.state.set(rows ? 'ready' : 'error');
+			});
 	}
 
 	/** My conversations with the people's names and faces, as rows; `null` when they could not be read. */

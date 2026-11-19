@@ -1,8 +1,14 @@
 // The ui-core barrel boots half the app (and needs packages this spec does not): what the chat names from it is doubled.
 jest.mock('@gauzy/ui-core/core', () => ({ RealtimeSocketService: class RealtimeSocketService {}, Store: class Store {} }));
-import { CHAT_EVENT_NAMES, ChatConversationKindEnum, ChatEventName } from '@gauzy/contracts';
-import { toPeople } from '../../services/chat-people.service';
-import { menuDateFormat, menuRows, movesBadge, unreadOf } from './chat-header-badge.component';
+import { TestBed } from '@angular/core/testing';
+import { BehaviorSubject, NEVER, of, Subject, throwError } from 'rxjs';
+import { CHAT_EVENT_NAMES, ChatConversationKindEnum, ChatEventName, IChatConversationList } from '@gauzy/contracts';
+import { Store } from '@gauzy/ui-core/core';
+import { ChatAvailabilityService, ChatScope } from '../../services/chat-availability.service';
+import { ChatLiveService } from '../../services/chat-live.service';
+import { ChatPeopleService, EMPTY_PEOPLE, toPeople } from '../../services/chat-people.service';
+import { ChatUiService } from '../../services/chat-ui.service';
+import { ChatHeaderBadgeComponent, menuDateFormat, menuRows, movesBadge, unreadOf } from './chat-header-badge.component';
 
 describe('chat header badge', () => {
 	it('reads the states again for the events that can move its count', () => {
@@ -59,9 +65,9 @@ describe('chat header badge', () => {
 		expect(rows.map((row) => row.id)).toEqual(['c2', 'c5', 'c1']);
 		expect(rows[0]).toMatchObject({ title: 'Ada Lovelace', channel: false, unread: true, count: '3' });
 		expect(rows[0].person?.employeeId).toBe('e2');
-		// A mention alone marks it unread without a count.
-		expect(rows[1]).toMatchObject({ title: '#news', channel: true, unread: true, count: '' });
-		expect(rows[2]).toMatchObject({ title: '#general', unread: false });
+		// A mention alone marks it unread without a count. A channel row draws its own "#": the title is the bare name.
+		expect(rows[1]).toMatchObject({ title: 'news', channel: true, unread: true, count: '' });
+		expect(rows[2]).toMatchObject({ title: 'general', unread: false });
 		expect(menuRows(conversations, people, 'me', 'Conversation', 1)).toHaveLength(1);
 	});
 
@@ -70,5 +76,84 @@ describe('chat header badge', () => {
 		expect(menuDateFormat(new Date(2026, 10, 19, 9, 30), now)).toBe('shortTime');
 		expect(menuDateFormat(new Date(2026, 2, 1), now)).toBe('MMM d');
 		expect(menuDateFormat(new Date(2025, 2, 1), now)).toBe('mediumDate');
+	});
+
+	describe('the dropdown', () => {
+		const channel = (id: string, name: string) => ({
+			id,
+			kind: ChatConversationKindEnum.CHANNEL,
+			name,
+			messageCount: 1,
+			lastMessageAt: '2026-11-01T10:00:00Z',
+			state: null
+		});
+		const list = (...conversations: object[]) => ({ conversations, categories: [] }) as unknown as IChatConversationList;
+
+		let scope$: BehaviorSubject<ChatScope | null>;
+		const api = { states: jest.fn(), listMine: jest.fn(), changed$: NEVER };
+
+		function render() {
+			scope$ = new BehaviorSubject<ChatScope | null>({ userId: 'u1', organizationId: 'o1' });
+			api.states.mockReturnValue(of({ states: [], threads: [] }));
+			TestBed.configureTestingModule({
+				imports: [ChatHeaderBadgeComponent],
+				providers: [
+					{ provide: ChatUiService, useValue: api },
+					{ provide: ChatAvailabilityService, useValue: { scope$ } },
+					{ provide: ChatLiveService, useValue: { hints$: NEVER, catchUp$: NEVER, ticks: () => NEVER } },
+					{ provide: ChatPeopleService, useValue: { people: () => of(EMPTY_PEOPLE) } },
+					{ provide: Store, useValue: { selectedOrganization: { id: 'o1', tenantId: 't1' }, user: { id: 'u1', employee: { id: 'me' } } } }
+				]
+			});
+			const fixture = TestBed.createComponent(ChatHeaderBadgeComponent);
+			fixture.detectChanges();
+			// The dropdown's state is the component's own (protected): read here as the template reads it.
+			return fixture.componentInstance as unknown as {
+				onShowChange(isShown: boolean): void;
+				rows(): { id: string }[];
+				state(): string;
+			};
+		}
+
+		beforeEach(() => jest.resetAllMocks());
+
+		it('clears the rows of the scope before and drops its late answer when the user or organization changes', () => {
+			const badge = render();
+			api.listMine.mockReturnValueOnce(of(list(channel('c1', 'general'))));
+			badge.onShowChange(true);
+			expect(badge.rows().map((row) => row.id)).toEqual(['c1']);
+			badge.onShowChange(false);
+
+			// Opened again: its read is still on the way when the organization changes.
+			const late = new Subject<IChatConversationList>();
+			api.listMine.mockReturnValueOnce(late);
+			badge.onShowChange(true);
+			api.listMine.mockReturnValueOnce(of(list(channel('c2', 'design'))));
+			scope$.next({ userId: 'u1', organizationId: 'o2' });
+			// The open dropdown reads the new scope's at once; the answer for the scope before is never shown.
+			expect(badge.rows().map((row) => row.id)).toEqual(['c2']);
+			late.next(list(channel('c1', 'general')));
+			expect(badge.rows().map((row) => row.id)).toEqual(['c2']);
+
+			// Closed during a change: nothing of the scope before is left for the next opening.
+			badge.onShowChange(false);
+			scope$.next({ userId: 'u2', organizationId: 'o2' });
+			expect(badge.rows()).toEqual([]);
+			expect(badge.state()).toBe('loading');
+		});
+
+		it('shows the rows it has, not an earlier failure, while it reads them again', () => {
+			const badge = render();
+			api.listMine.mockReturnValueOnce(of(list(channel('c1', 'general'))));
+			badge.onShowChange(true);
+			api.listMine.mockReturnValueOnce(throwError(() => ({ status: 502 })));
+			badge.onShowChange(true);
+			expect(badge.state()).toBe('error');
+
+			api.listMine.mockReturnValueOnce(NEVER);
+			badge.onShowChange(true);
+			expect(badge.state()).toBe('ready');
+			expect(badge.rows().map((row) => row.id)).toEqual(['c1']);
+		});
 	});
 });
