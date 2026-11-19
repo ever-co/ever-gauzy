@@ -9,7 +9,7 @@ import {
 	ServiceUnavailableException,
 	UnauthorizedException
 } from '@nestjs/common';
-import { IsNull, MoreThan } from 'typeorm';
+import { In, IsNull, MoreThan, Not, Repository } from 'typeorm';
 import { ID, IEmbedAuthorizeInput, IEmbedRenewalInput, PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context/request-context';
 import { DATABASE_UNAVAILABLE_MESSAGE, isDatabaseUnavailableError } from '../core/errors/database-unavailable';
@@ -88,6 +88,12 @@ interface IEmbedSiteGrantLink extends IEmbedMemberScope {
 	userId: ID;
 	origin: string;
 	familyId: ID;
+}
+
+/** Whether any token of a sign-in is revoked: a revocation ends the whole sign-in, whatever token it did not reach. */
+async function isFamilyRevoked(grants: Repository<EmbedSiteGrant>, familyId: ID): Promise<boolean> {
+	const revoked = await grants.findOne({ where: { familyId, revokedAt: Not(IsNull()) }, select: { id: true } });
+	return revoked !== null;
 }
 
 /** The name and the driver's code of what was thrown, for a log line: a database's message may quote a value. */
@@ -174,8 +180,9 @@ export class EmbedSiteGrantService {
 	 * request's `Origin` header, as a browser sends it), until it expires, while the organization still allows the site
 	 * with sign-in on and the person is still an active member who may track time: each of those is refused with its
 	 * own code, and the token keeps working once the refusal is lifted. A token unknown, revoked, expired or already
-	 * used gets one 401 `EMBED_GRANT_ENDED`; a token already used, presented again, also revokes every token of its
-	 * sign-in, since one of the two holders is not the site.
+	 * used gets one 401 `EMBED_GRANT_ENDED`. Revocation belongs to the whole sign-in: a token already used or revoked,
+	 * presented again, revokes every token of its sign-in, and a token of a sign-in any token of which is revoked is
+	 * refused, so a revocation that missed a token a concurrent renewal stored still ends the sign-in there.
 	 *
 	 * @param input The renewal token, as the body holds it.
 	 * @param requestOrigin The request's `Origin` header.
@@ -236,9 +243,11 @@ export class EmbedSiteGrantService {
 		const { row, answer } = await this.issue(grant, employee, now);
 		const isRotated = await this.rotate(spent, row, now);
 		if (!isRotated) {
-			// Another renewal or a revocation took the token between the read and the write.
+			// Another renewal took the token, or a revocation reached the sign-in, between the checks and the write.
 			await this.revokeFamily(spent.familyId, now);
-			this.logger.warn(`Embed site grant revoked: its renewal token was used twice at once ${subject}`);
+			this.logger.warn(
+				`Embed site grant revoked: its token was taken or its sign-in revoked meanwhile ${subject}`
+			);
 			throw grantEnded();
 		}
 		this.logger.log(`Embed site grant renewed: ${subject}`);
@@ -246,22 +255,28 @@ export class EmbedSiteGrantService {
 	}
 
 	/**
-	 * Refuses a renewal token that no longer works: revoked, already used (which revokes its whole sign-in), or
-	 * expired.
+	 * Refuses a renewal token that no longer works. One already used or revoked, presented again, revokes every token of
+	 * its sign-in first: either one of its holders is not the site, or the revocation that reached it missed a token
+	 * stored since. One of a sign-in any token of which is revoked revokes the rest of it too. An expired one is refused
+	 * alone.
 	 */
 	private async assertLive(row: EmbedSiteGrant, now: Date): Promise<void> {
 		const subject = `family=${row.familyId}`;
-		if (row.revokedAt) {
-			this.logger.warn(`Embed site renewal refused: revoked ${subject}`);
-			throw grantEnded();
-		}
-		if (row.usedAt) {
+		const isSpent = Boolean(row.usedAt) || Boolean(row.revokedAt);
+		if (isSpent) {
 			await this.revokeFamily(row.familyId, now);
-			this.logger.warn(`Embed site grant revoked: a used renewal token was presented again ${subject}`);
+			this.logger.warn(
+				`Embed site grant revoked: a used or revoked renewal token was presented again ${subject}`
+			);
 			throw grantEnded();
 		}
 		if (new Date(row.expiresAt).getTime() <= now.getTime()) {
 			this.logger.warn(`Embed site renewal refused: expired ${subject}`);
+			throw grantEnded();
+		}
+		if (await isFamilyRevoked(this.typeOrmEmbedSiteGrantRepository, row.familyId)) {
+			await this.revokeFamily(row.familyId, now);
+			this.logger.warn(`Embed site grant revoked: a revocation had reached another of its tokens ${subject}`);
 			throw grantEnded();
 		}
 	}
@@ -269,7 +284,8 @@ export class EmbedSiteGrantService {
 	/**
 	 * The signed-in person's site grants that still work, newest first; with an organization, every member's grants
 	 * there, for an administrator of the organization's embeds (`ALL_ORG_EDIT`, as the allowed sites take). A grant is
-	 * listed once, under the same id through its renewals, until it is revoked or expires. No token is ever listed.
+	 * listed once, under the same id through its renewals, until it is revoked or expires: a grant any token of which is
+	 * revoked is not listed, whatever token a revocation missed. No token is ever listed.
 	 *
 	 * @param organizationId The organization whose grants an administrator lists; none for the person's own.
 	 */
@@ -284,7 +300,22 @@ export class EmbedSiteGrantService {
 			where: { tenantId, ...owner, usedAt: IsNull(), revokedAt: IsNull(), expiresAt: MoreThan(new Date()) },
 			order: { createdAt: 'DESC' }
 		});
-		return rows.map((row) => EmbedSiteGrantResponseDTO.from(row));
+		const revoked = await this.revokedFamiliesOf(rows);
+		const live = rows.filter((row) => !revoked.has(row.familyId));
+		return live.map((row) => EmbedSiteGrantResponseDTO.from(row));
+	}
+
+	/** The sign-ins among the rows' that have a revoked token. */
+	private async revokedFamiliesOf(rows: EmbedSiteGrant[]): Promise<Set<ID>> {
+		if (rows.length === 0) {
+			return new Set();
+		}
+		const familyIds = rows.map((row) => row.familyId);
+		const revoked = await this.typeOrmEmbedSiteGrantRepository.find({
+			where: { familyId: In(familyIds), revokedAt: Not(IsNull()) },
+			select: { familyId: true }
+		});
+		return new Set(revoked.map((row) => row.familyId));
 	}
 
 	/**
@@ -400,7 +431,8 @@ export class EmbedSiteGrantService {
 
 	/**
 	 * Spends the token and stores the next one, together: the token is spent only if no renewal or revocation took it
-	 * first, and the next one is stored only with it. False, with nothing written, when the token was taken.
+	 * first, and the next one is stored only with it, while no token of its sign-in is revoked. False when the token was
+	 * taken or the sign-in revoked: no next token is stored.
 	 */
 	private async rotate(spent: EmbedSiteGrant, next: Partial<EmbedSiteGrant>, now: Date): Promise<boolean> {
 		return await this.typeOrmEmbedSiteGrantRepository.manager.transaction(async (manager) => {
@@ -410,27 +442,29 @@ export class EmbedSiteGrantService {
 			if (!affected) {
 				return false;
 			}
+			// Read under the spent token's row lock: a revocation that committed after the checks, from a snapshot taken
+			// before this token was stored, revoked an earlier token of the sign-in and not this one.
+			if (await isFamilyRevoked(grants, spent.familyId)) {
+				return false;
+			}
 			await grants.insert(next);
 			return true;
 		});
 	}
 
 	/**
-	 * Revokes every token of a sign-in. Twice: a renewal that held the spent token's row while the first pass waited for
-	 * it stores its next token in a transaction the first pass began before, which only the second pass sees.
+	 * Revokes the tokens of a sign-in the statement sees. A token a concurrent renewal stores after the statement's
+	 * snapshot is not among them; it is refused at its own renewal, which finds the sign-in revoked (`assertLive`,
+	 * `rotate`), and that renewal revokes it.
 	 *
 	 * @returns How many tokens it revoked.
 	 */
 	private async revokeFamily(familyId: ID, now: Date): Promise<number> {
-		let revoked = 0;
-		for (let pass = 0; pass < 2; pass++) {
-			const { affected } = await this.typeOrmEmbedSiteGrantRepository.update(
-				{ familyId, revokedAt: IsNull() },
-				{ revokedAt: now }
-			);
-			revoked += affected ?? 0;
-		}
-		return revoked;
+		const { affected } = await this.typeOrmEmbedSiteGrantRepository.update(
+			{ familyId, revokedAt: IsNull() },
+			{ revokedAt: now }
+		);
+		return affected ?? 0;
 	}
 
 	/**

@@ -749,4 +749,86 @@ describe('EmbedSiteGrantService on SQLite', () => {
 			expect(await revokedStatesOf(familyId)).toEqual([false]);
 		});
 	});
+
+	/**
+	 * A revocation beside renewals. On PostgreSQL under READ COMMITTED, a revocation's update sees the tokens stored when
+	 * it began: a successor a renewal stores after that is left live, beside a revoked token of the same sign-in. SQLite
+	 * runs one transaction at a time, so these cases cannot make a statement wait for a row lock or take a snapshot
+	 * early; they leave the database in the state such an interleaving leaves (a revoked token beside a live successor),
+	 * or revoke at the exact point between a renewal's checks and its write, and check what the service does with it.
+	 */
+	describe('a revocation that misses a token a renewal stored', () => {
+		const hashOf = (token: string) => createHash('sha256').update(token).digest('hex');
+		const familyOf = async (renewalToken: string) => {
+			const [row] = await dataSource.query('SELECT "familyId" FROM "embed_site_grant" WHERE "keyHash" = ?', [
+				hashOf(renewalToken)
+			]);
+			return row.familyId as string;
+		};
+		const rowsOf = async (familyId: string) =>
+			(await dataSource.query('SELECT * FROM "embed_site_grant" WHERE "familyId" = ?', [familyId])) as Array<
+				Record<string, unknown>
+			>;
+		/** What a revocation whose snapshot predates the token's successor writes: the token alone is revoked. */
+		const revokeOnly = (renewalToken: string) =>
+			dataSource.query('UPDATE "embed_site_grant" SET "revokedAt" = ? WHERE "keyHash" = ?', [
+				'2026-11-19 09:00:00.000',
+				hashOf(renewalToken)
+			]);
+		const ended = { status: 401, response: { code: 'EMBED_GRANT_ENDED' } };
+
+		it('still ends the sign-in at the renewal of the successor it missed, which is never listed', async () => {
+			const first = await authorizeAs('lina', TEAM_PAGE);
+			const familyId = await familyOf(first.renewalToken);
+			const successor = await service.renew({ renewalToken: first.renewalToken }, TEAM_PAGE);
+			await revokeOnly(first.renewalToken);
+			issueEmbedSession.mockClear();
+
+			signedInAs('lina');
+			expect((await service.listGrants()).map((grant) => grant.id)).not.toContain(familyId);
+			await expect(service.renew({ renewalToken: successor.renewalToken }, TEAM_PAGE)).rejects.toMatchObject(
+				ended
+			);
+
+			expect(issueEmbedSession).not.toHaveBeenCalled();
+			const rows = await rowsOf(familyId);
+			expect(rows).toHaveLength(2);
+			expect(rows.every((row) => row.revokedAt !== null)).toBe(true);
+		});
+
+		it('refuses the second of two chained renewals once the revocation lands between its checks and its write', async () => {
+			const first = await authorizeAs('lina', TEAM_PAGE);
+			const familyId = await familyOf(first.renewalToken);
+			// The first renewal got through before the revocation took its token's row.
+			const successor = await service.renew({ renewalToken: first.renewalToken }, TEAM_PAGE);
+			// The revocation commits while the second renewal mints, after its checks: it reached the first token only.
+			issueEmbedSession.mockImplementationOnce(async (input: { employeeId: string }) => {
+				await revokeOnly(first.renewalToken);
+				return `timer-token-${input.employeeId}`;
+			});
+
+			await expect(service.renew({ renewalToken: successor.renewalToken }, TEAM_PAGE)).rejects.toMatchObject(
+				ended
+			);
+
+			const rows = await rowsOf(familyId);
+			expect(rows).toHaveLength(2);
+			expect(rows.every((row) => row.revokedAt !== null)).toBe(true);
+		});
+
+		it('ends the whole sign-in when a revoked token is retried, the successor the revocation missed included', async () => {
+			const first = await authorizeAs('lina', TEAM_PAGE);
+			const familyId = await familyOf(first.renewalToken);
+			const successor = await service.renew({ renewalToken: first.renewalToken }, TEAM_PAGE);
+			await revokeOnly(first.renewalToken);
+
+			await expect(service.renew({ renewalToken: first.renewalToken }, TEAM_PAGE)).rejects.toMatchObject(ended);
+
+			const live = (await rowsOf(familyId)).find((row) => row.keyHash === hashOf(successor.renewalToken));
+			expect(live.revokedAt).not.toBeNull();
+			await expect(service.renew({ renewalToken: successor.renewalToken }, TEAM_PAGE)).rejects.toMatchObject(
+				ended
+			);
+		});
+	});
 });
