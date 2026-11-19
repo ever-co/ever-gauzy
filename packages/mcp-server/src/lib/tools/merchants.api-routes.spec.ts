@@ -16,6 +16,8 @@ const ORGANIZATION = '00000000-0000-4000-8000-000000000002';
 const TENANT = '00000000-0000-4000-8000-000000000001';
 const MERCHANT = '00000000-0000-4000-8000-000000000131';
 const SCOPE = { organizationId: ORGANIZATION, tenantId: TENANT };
+const HARBOR = { name: 'Harbor Supplies', code: 'HARBOR', email: 'ops@example.com', currency: 'USD' };
+const RIDGE = { name: 'Blue Ridge', code: 'RIDGE', email: 'hello@example.com', currency: 'EUR' };
 
 type ToolCallback = (args: Record<string, unknown>) => Promise<{ content: Array<{ type: string; text: string }> }>;
 type RegisteredTool = { inputSchema: z.ZodType<Record<string, unknown>>; callback: ToolCallback };
@@ -63,17 +65,29 @@ describe('merchant tools: the routes they call', () => {
 		const post = jest.spyOn(apiClient, 'post').mockResolvedValue({ id: MERCHANT } as never);
 
 		await call('bulk_create_merchants', {
-			merchants: [
-				{ name: 'Harbor Supplies', code: 'HARBOR', email: 'ops@example.com' },
-				{ name: 'Blue Ridge', code: 'RIDGE', email: 'hello@example.com' }
-			]
+			merchants: [{ ...HARBOR }, { ...RIDGE }]
 		});
 
 		expect(post.mock.calls).toEqual([
-			['/api/merchants', { name: 'Harbor Supplies', code: 'HARBOR', email: 'ops@example.com', ...SCOPE }],
-			['/api/merchants', { name: 'Blue Ridge', code: 'RIDGE', email: 'hello@example.com', ...SCOPE }]
+			['/api/merchants', { ...HARBOR, ...SCOPE }],
+			['/api/merchants', { ...RIDGE, ...SCOPE }]
 		]);
 	});
+
+	it.each([
+		['code', { ...RIDGE, code: undefined }],
+		['email', { ...RIDGE, email: undefined }],
+		['email', { ...RIDGE, email: 'not an address' }],
+		['currency', { ...RIDGE, currency: undefined }]
+	])(
+		'creates no merchant of a batch where one misses a valid %s, which the create route requires',
+		async (field, invalid) => {
+			const post = jest.spyOn(apiClient, 'post').mockResolvedValue({ id: MERCHANT } as never);
+
+			await expect(call('bulk_create_merchants', { merchants: [{ ...HARBOR }, invalid] })).rejects.toThrow(field);
+			expect(post).not.toHaveBeenCalled();
+		}
+	);
 
 	it.each([
 		['archive_merchant', { id: MERCHANT }, 'archiving a merchant'],

@@ -365,8 +365,15 @@ export const registerMerchantTools = (server: McpServer) => {
 		{
 			merchants: z
 				.array(
-					z.object({ name: z.string().describe('The name (required)') }).passthrough()
-						.describe('Merchant data')
+					z
+						.object({
+							name: z.string().describe('The name (required)'),
+							code: z.string().describe('The merchant code (required)'),
+							email: z.string().email().describe('The email address (required)'),
+							currency: z.string().describe('The currency code, such as USD (required)')
+						})
+						.passthrough()
+						.describe('Merchant data: the fields the create route requires')
 				)
 				.describe('Array of merchant data to create')
 		},
