@@ -278,6 +278,29 @@ export class MembershipSyncHandler {
 				},
 				tx
 			);
+			if (step.voids) {
+				// The end of a grant is the tenant's, not the organization's: kept in a row of the tenant (no
+				// organization), which deleting the organization (and its audit rows) does not remove.
+				await this.audit.record(
+					{
+						at: at + 1,
+						action: MEMBERSHIP_AUDIT_ACTION,
+						actorLabel: 'platform',
+						tenantId: link.tenantId,
+						organizationId: null,
+						details: {
+							event_id: position.eventId,
+							occurred_at: position.occurredAt,
+							seq: seq + 1,
+							user_id: person,
+							result: step.outcome,
+							held: false,
+							voids: step.voids
+						}
+					},
+					tx
+				);
+			}
 			return step.outcome;
 		});
 		return this.done(outcome);
