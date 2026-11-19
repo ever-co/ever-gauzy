@@ -53,7 +53,7 @@ describe('daily plan list tools — the route and query each one reads', () => {
 		await call('get_daily_plans', { date: DATE, status: 'OPEN' });
 
 		expect(get).toHaveBeenCalledWith('/api/daily-plan/me', {
-			params: { where: { ...SCOPE, date: DATE, status: 'OPEN' }, take: 10, skip: 1 }
+			params: { where: { ...SCOPE, date: DATE, status: 'open' }, take: 10, skip: 1 }
 		});
 	});
 
@@ -77,7 +77,7 @@ describe('daily plan list tools — the route and query each one reads', () => {
 		await call('get_my_daily_plans', { organizationTeamId: TEAM, status: 'COMPLETED', page: 3, limit: 4 });
 
 		expect(get).toHaveBeenCalledWith('/api/daily-plan/me', {
-			params: { where: { ...SCOPE, organizationTeamId: TEAM, status: 'COMPLETED' }, take: 4, skip: 3 }
+			params: { where: { ...SCOPE, organizationTeamId: TEAM, status: 'completed' }, take: 4, skip: 3 }
 		});
 	});
 
@@ -93,7 +93,7 @@ describe('daily plan list tools — the route and query each one reads', () => {
 		await call('get_employee_daily_plans', { employeeId: EMPLOYEE, status: 'IN_PROGRESS' });
 
 		expect(get).toHaveBeenCalledWith(`/api/daily-plan/employee/${EMPLOYEE}`, {
-			params: { where: { ...SCOPE, status: 'IN_PROGRESS' }, take: 10, skip: 1 }
+			params: { where: { ...SCOPE, status: 'in-progress' }, take: 10, skip: 1 }
 		});
 	});
 
@@ -103,5 +103,21 @@ describe('daily plan list tools — the route and query each one reads', () => {
 		expect(get).toHaveBeenCalledWith(`/api/daily-plan/task/${TASK}`, {
 			params: { where: SCOPE, take: 10, skip: 1, relations: ['employee'] }
 		});
+	});
+
+	it('takes a stored status as it is', async () => {
+		await call('get_my_daily_plans', { status: 'in-progress' });
+
+		expect(get).toHaveBeenCalledWith('/api/daily-plan/me', {
+			params: { where: { ...SCOPE, status: 'in-progress' }, take: 10, skip: 1 }
+		});
+	});
+
+	it('get_daily_plan_count counts the stored status', async () => {
+		get.mockResolvedValue(2 as never);
+
+		await call('get_daily_plan_count', { status: 'IN_PROGRESS' });
+
+		expect(get).toHaveBeenCalledWith('/api/daily-plan/count', { params: { ...SCOPE, status: 'in-progress' } });
 	});
 });

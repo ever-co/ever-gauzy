@@ -72,10 +72,10 @@ describe('task list tools — the query each route validates', () => {
 				where: {
 					...SCOPE,
 					projectId: PROJECT,
-					status: 'OPEN',
-					priority: 'HIGH',
-					size: 'SMALL',
-					issueType: 'BUG',
+					status: 'open',
+					priority: 'high',
+					size: 'small',
+					issueType: 'bug',
 					members: { id: EMPLOYEE }
 				},
 				take: 5,
@@ -104,10 +104,10 @@ describe('task list tools — the query each route validates', () => {
 
 		expect(get).toHaveBeenCalledWith('/api/tasks/me', {
 			params: {
-				where: { ...SCOPE, status: 'IN_PROGRESS' },
+				where: { ...SCOPE, status: 'in-progress' },
 				take: 20,
 				skip: 2,
-				filters: { priorities: ['LOW'] }
+				filters: { priorities: ['low'] }
 			}
 		});
 	});
@@ -124,7 +124,7 @@ describe('task list tools — the query each route validates', () => {
 
 		expect(get).toHaveBeenCalledWith('/api/tasks/pagination', {
 			params: {
-				where: { ...SCOPE, projectId: PROJECT, status: 'BLOCKED', members: { id: EMPLOYEE } },
+				where: { ...SCOPE, projectId: PROJECT, status: 'blocked', members: { id: EMPLOYEE } },
 				take: 25,
 				skip: 4,
 				relations: ['project']
@@ -136,7 +136,68 @@ describe('task list tools — the query each route validates', () => {
 		await call('get_tasks_by_employee', { employeeId: EMPLOYEE, status: 'COMPLETED', priority: 'HIGH' });
 
 		expect(get).toHaveBeenCalledWith(`/api/tasks/employee/${EMPLOYEE}`, {
-			params: { where: { ...SCOPE, status: 'COMPLETED', priority: 'HIGH' }, take: 10, skip: 0 }
+			params: { where: { ...SCOPE, status: 'completed', priority: 'high' }, take: 10, skip: 0 }
+		});
+	});
+});
+
+describe('task list tools — the enum values a filter is sent as', () => {
+	let get: jest.SpyInstance;
+
+	beforeEach(() => {
+		jest.spyOn(authManager, 'getDefaultParams').mockReturnValue(SCOPE);
+		get = jest.spyOn(apiClient, 'get').mockResolvedValue({ items: [], total: 0 } as never);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('sends each key as the value the API stores', async () => {
+		await call('get_tasks', {
+			status: 'READY_FOR_REVIEW',
+			priority: 'HIGHEST',
+			size: 'X_SMALL',
+			issueType: 'FEATURE'
+		});
+
+		expect(get).toHaveBeenCalledWith('/api/tasks', {
+			params: {
+				where: { ...SCOPE, status: 'ready-for-review', priority: 'urgent', size: 'tiny', issueType: 'feature' },
+				take: 10,
+				skip: 0
+			}
+		});
+	});
+
+	it('takes the stored values themselves, those with no key included', async () => {
+		await call('get_tasks', { status: 'backlog', priority: 'urgent', size: 'x-large', issueType: 'memo' });
+
+		expect(get).toHaveBeenCalledWith('/api/tasks', {
+			params: {
+				where: { ...SCOPE, status: 'backlog', priority: 'urgent', size: 'x-large', issueType: 'memo' },
+				take: 10,
+				skip: 0
+			}
+		});
+	});
+
+	it('refuses a value the API does not store', () => {
+		const tool = taskTools().get('get_tasks') as RegisteredTool;
+
+		expect(tool.inputSchema.safeParse({ status: 'archived' }).success).toBe(false);
+	});
+
+	it('get_task_count counts the stored status', async () => {
+		await call('get_task_count', { status: 'IN_REVIEW' });
+
+		expect(get).toHaveBeenCalledWith('/api/tasks/count', { params: { ...SCOPE, status: 'in-review' } });
+	});
+
+	it('get_team_tasks filters the team’s tasks by the stored status', async () => {
+		const team = '00000000-0000-4000-8000-000000000020';
+		await call('get_team_tasks', { teamId: team, status: 'IN_PROGRESS' });
+
+		expect(get).toHaveBeenCalledWith('/api/tasks/team', {
+			params: { where: { ...SCOPE, teams: [team], status: 'in-progress' }, take: 10, skip: 1 }
 		});
 	});
 });

@@ -26,6 +26,56 @@ export const TaskTypeEnum = z.enum(['BUG', 'FEATURE', 'STORY', 'TASK', 'EPIC']);
 export const PayPeriodEnum = z.enum(['NONE', 'WEEKLY', 'BI_WEEKLY', 'MONTHLY']);
 export const CurrenciesEnum = z.enum(['USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'CHF', 'CNY']);
 export const DailyPlanStatusEnum = z.enum(['OPEN', 'IN_PROGRESS', 'COMPLETED']);
+
+// ===== FILTER VALUES =====
+// The task and daily plan enums above name the API's values by key, and the API stores `in-progress` or `urgent`:
+// a filter sent as the key matches no row. A filter takes the key or the stored value, and is sent as the value.
+
+export const TASK_STATUS_VALUES: Record<string, string> = {
+	OPEN: 'open',
+	IN_PROGRESS: 'in-progress',
+	READY_FOR_REVIEW: 'ready-for-review',
+	IN_REVIEW: 'in-review',
+	BLOCKED: 'blocked',
+	COMPLETED: 'completed'
+};
+// The API has no lowest or highest priority: they are its low and urgent ones.
+export const TASK_PRIORITY_VALUES: Record<string, string> = {
+	LOWEST: 'low',
+	LOW: 'low',
+	MEDIUM: 'medium',
+	HIGH: 'high',
+	HIGHEST: 'urgent'
+};
+export const TASK_SIZE_VALUES: Record<string, string> = {
+	X_SMALL: 'tiny',
+	SMALL: 'small',
+	MEDIUM: 'medium',
+	LARGE: 'large',
+	X_LARGE: 'x-large'
+};
+export const TASK_TYPE_VALUES: Record<string, string> = {
+	BUG: 'bug',
+	FEATURE: 'feature',
+	STORY: 'story',
+	TASK: 'task',
+	EPIC: 'epic'
+};
+export const DAILY_PLAN_STATUS_VALUES: Record<string, string> = {
+	OPEN: 'open',
+	IN_PROGRESS: 'in-progress',
+	COMPLETED: 'completed'
+};
+
+/** A filter on an enum named by key: the key, the value the API stores for it, or another value the API stores. */
+const filterEnum = (values: Record<string, string>, otherValues: string[] = []) =>
+	z.enum([...new Set([...Object.keys(values), ...Object.values(values), ...otherValues])] as [string, ...string[]]);
+
+export const TaskStatusFilter = filterEnum(TASK_STATUS_VALUES, ['backlog', 'done']);
+export const TaskPriorityFilter = filterEnum(TASK_PRIORITY_VALUES);
+export const TaskSizeFilter = filterEnum(TASK_SIZE_VALUES);
+export const TaskTypeFilter = filterEnum(TASK_TYPE_VALUES, ['memo']);
+export const DailyPlanStatusFilter = filterEnum(DAILY_PLAN_STATUS_VALUES);
 export const ContactTypeEnum = z.enum(['CLIENT', 'CUSTOMER', 'LEAD']);
 export const BonusTypeEnum = z.enum(['PROFIT_BASED_BONUS', 'REVENUE_BASED_BONUS']);
 export const DefaultValueDateTypeEnum = z.enum(['TODAY', 'END_OF_MONTH', 'START_OF_MONTH']);

@@ -4,10 +4,27 @@ import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { authManager } from '../common/auth-manager';
-import { TaskStatusEnum, TaskPriorityEnum, TaskSizeEnum, TaskTypeEnum } from '../input-schemas';
+import {
+	TASK_PRIORITY_VALUES,
+	TASK_SIZE_VALUES,
+	TASK_STATUS_VALUES,
+	TASK_TYPE_VALUES,
+	TaskPriorityFilter,
+	TaskSizeFilter,
+	TaskStatusFilter,
+	TaskTypeFilter
+} from '../input-schemas';
 import { registerTool } from './tool-helper';
 import { TOOL_HINTS } from './tool-hints';
-import { applyInTurn, buildListQuery, countByGroup, isWithinDates, ListQueryOptions, readAllPages } from './utils';
+import {
+	applyInTurn,
+	buildListQuery,
+	countByGroup,
+	isWithinDates,
+	ListQueryOptions,
+	readAllPages,
+	toApiValue
+} from './utils';
 
 const logger = new Logger('TaskTools');
 
@@ -93,10 +110,12 @@ export const registerTaskTools = (server: McpServer) => {
 		{
 			projectId: z.string().uuid().optional().describe('Filter by project ID'),
 			employeeId: z.string().uuid().optional().describe('Filter by employee ID'),
-			status: TaskStatusEnum.optional().describe('Filter by task status'),
-			priority: TaskPriorityEnum.optional().describe('Filter by task priority'),
-			size: TaskSizeEnum.optional().describe('Filter by task size'),
-			issueType: TaskTypeEnum.optional().describe('Filter by task issue type'),
+			status: TaskStatusFilter.optional().describe('Filter by task status'),
+			priority: TaskPriorityFilter.optional().describe(
+				'Filter by task priority (HIGHEST matches urgent, LOWEST matches low)'
+			),
+			size: TaskSizeFilter.optional().describe('Filter by task size'),
+			issueType: TaskTypeFilter.optional().describe('Filter by task issue type'),
 			page: z.number().optional().default(1).describe('Page number for pagination'),
 			limit: z.number().optional().default(10).describe('Number of items per page'),
 			search: z.string().optional().describe('Search term for the task title (partial match)'),
@@ -142,10 +161,10 @@ export const registerTaskTools = (server: McpServer) => {
 				// A task has no `employeeId`: it is matched on the employees it is assigned to
 				const where = {
 					projectId,
-					status,
-					priority,
-					size,
-					issueType,
+					status: toApiValue(TASK_STATUS_VALUES, status),
+					priority: toApiValue(TASK_PRIORITY_VALUES, priority),
+					size: toApiValue(TASK_SIZE_VALUES, size),
+					issueType: toApiValue(TASK_TYPE_VALUES, issueType),
 					...(employeeId && { members: { id: employeeId } })
 				};
 				const { path, params } = taskListQuery(defaultParams, where, search, { page, limit, relations });
@@ -176,7 +195,7 @@ export const registerTaskTools = (server: McpServer) => {
 		{
 			projectId: z.string().uuid().optional().describe('Filter by project ID'),
 			employeeId: z.string().uuid().optional().describe('Filter by employee ID'),
-			status: TaskStatusEnum.optional().describe('Filter by task status')
+			status: TaskStatusFilter.optional().describe('Filter by task status')
 		},
 		TOOL_HINTS.readOnly,
 		async ({ projectId, employeeId, status }) => {
@@ -195,7 +214,7 @@ export const registerTaskTools = (server: McpServer) => {
 					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
 					...(projectId && { projectId }),
 					...(employeeId && { employeeId }),
-					...(status && { status })
+					...(status && { status: toApiValue(TASK_STATUS_VALUES, status) })
 				};
 
 				const response = await apiClient.get('/api/tasks/count', { params });
@@ -223,7 +242,7 @@ export const registerTaskTools = (server: McpServer) => {
 		{
 			projectId: z.string().uuid().optional().describe('Filter by project ID'),
 			employeeId: z.string().uuid().optional().describe('Filter by employee ID'),
-			status: TaskStatusEnum.optional().describe('Filter by task status'),
+			status: TaskStatusFilter.optional().describe('Filter by task status'),
 			page: z.number().optional().default(1).describe('Page number'),
 			limit: z.number().optional().default(10).describe('Items per page'),
 			relations: z.array(z.string()).optional().describe('Relations to include')
@@ -241,7 +260,11 @@ export const registerTaskTools = (server: McpServer) => {
 				}
 
 				// A task has no `employeeId`: it is matched on the employees it is assigned to
-				const where = { projectId, status, ...(employeeId && { members: { id: employeeId } }) };
+				const where = {
+					projectId,
+					status: toApiValue(TASK_STATUS_VALUES, status),
+					...(employeeId && { members: { id: employeeId } })
+				};
 				const params = buildListQuery(defaultParams, where, { page, limit, relations, skipIsPage: true });
 
 				const response = await apiClient.get('/api/tasks/pagination', { params });
@@ -268,8 +291,10 @@ export const registerTaskTools = (server: McpServer) => {
 		'Get tasks assigned to a specific employee',
 		{
 			employeeId: z.string().uuid().describe('The employee ID'),
-			status: TaskStatusEnum.optional().describe('Filter by task status'),
-			priority: TaskPriorityEnum.optional().describe('Filter by task priority'),
+			status: TaskStatusFilter.optional().describe('Filter by task status'),
+			priority: TaskPriorityFilter.optional().describe(
+				'Filter by task priority (HIGHEST matches urgent, LOWEST matches low)'
+			),
 			page: z.number().optional().default(1).describe('Page number'),
 			limit: z.number().optional().default(10).describe('Items per page')
 		},
@@ -285,7 +310,11 @@ export const registerTaskTools = (server: McpServer) => {
 					);
 				}
 
-				const params = buildListQuery(defaultParams, { status, priority }, { page, limit });
+				const where = {
+					status: toApiValue(TASK_STATUS_VALUES, status),
+					priority: toApiValue(TASK_PRIORITY_VALUES, priority)
+				};
+				const params = buildListQuery(defaultParams, where, { page, limit });
 
 				const response = await apiClient.get(`/api/tasks/employee/${employeeId}`, { params });
 
@@ -310,8 +339,10 @@ export const registerTaskTools = (server: McpServer) => {
 		'get_my_tasks',
 		'Get tasks assigned to the current authenticated user',
 		{
-			status: TaskStatusEnum.optional().describe('Filter by task status'),
-			priority: TaskPriorityEnum.optional().describe('Filter by task priority'),
+			status: TaskStatusFilter.optional().describe('Filter by task status'),
+			priority: TaskPriorityFilter.optional().describe(
+				'Filter by task priority (HIGHEST matches urgent, LOWEST matches low)'
+			),
 			page: z.number().optional().default(1).describe('Page number'),
 			limit: z.number().optional().default(10).describe('Items per page')
 		},
@@ -328,9 +359,13 @@ export const registerTaskTools = (server: McpServer) => {
 				}
 
 				const params = {
-					...buildListQuery(defaultParams, { status }, { page, limit, skipIsPage: true }),
+					...buildListQuery(
+						defaultParams,
+						{ status: toApiValue(TASK_STATUS_VALUES, status) },
+						{ page, limit, skipIsPage: true }
+					),
 					// The route reads no priority in `where`: its advanced filters carry it
-					...(priority && { filters: { priorities: [priority] } })
+					...(priority && { filters: { priorities: [toApiValue(TASK_PRIORITY_VALUES, priority)] } })
 				};
 
 				const response = await apiClient.get('/api/tasks/me', { params });
@@ -357,7 +392,7 @@ export const registerTaskTools = (server: McpServer) => {
 		'Get tasks assigned to a specific team',
 		{
 			teamId: z.string().uuid().describe('The team ID'),
-			status: TaskStatusEnum.optional().describe('Filter by task status'),
+			status: TaskStatusFilter.optional().describe('Filter by task status'),
 			page: z.number().optional().default(1).describe('Page number'),
 			limit: z.number().optional().default(10).describe('Items per page')
 		},
@@ -375,7 +410,7 @@ export const registerTaskTools = (server: McpServer) => {
 
 				const params = buildListQuery(
 					defaultParams,
-					{ teams: [teamId], status },
+					{ teams: [teamId], status: toApiValue(TASK_STATUS_VALUES, status) },
 					{ page, limit, skipIsPage: true }
 				);
 

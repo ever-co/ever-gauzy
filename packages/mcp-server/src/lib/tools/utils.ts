@@ -152,6 +152,15 @@ const API_ENTITY_NAMES: Record<string, string> = {
  */
 export const toApiEntity = (entity?: string): string | undefined => (entity && API_ENTITY_NAMES[entity]) || entity;
 
+/** The value the API stores for an enum filter given as a key of `values` or as the value itself. */
+export const toApiValue = (values: Record<string, string>, filter?: string): string | undefined => {
+	const isKey = filter !== undefined && Object.prototype.hasOwnProperty.call(values, filter);
+	if (isKey) {
+		return values[filter];
+	}
+	return filter;
+};
+
 /** Whether `text` contains `query`, ignoring case; no query matches everything. */
 export const containsText = (text: unknown, query?: string): boolean => {
 	const needle = query?.toLowerCase();
