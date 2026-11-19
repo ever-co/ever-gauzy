@@ -192,7 +192,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 14rem;
+  min-height: 16rem;
   padding: 2rem 1rem;
   border-radius: var(--fav-radius-lg);
   background: var(--fav-surface);
@@ -202,8 +202,24 @@
 .favorites-empty {
   margin: 0;
   font-size: var(--fav-body-size);
+  font-weight: 400;
+  line-height: 1.25rem;
   text-align: center;
-  color: var(--fav-text-muted);
+  color: var(--gauzy-text-color-2, var(--text-hint-color));
+
+  &::before {
+    content: '';
+    display: block;
+    width: 2rem;
+    height: 2rem;
+    margin: 0 auto 0.75rem;
+    background-color: currentColor;
+    opacity: 0.55;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 12h-6l-2 3h-4l-2-3H2'/%3E%3Cpath d='M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z'/%3E%3C/svg%3E")
+      center / contain no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 12h-6l-2 3h-4l-2-3H2'/%3E%3Cpath d='M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z'/%3E%3C/svg%3E")
+      center / contain no-repeat;
+  }
 }
 
 .favorites-cards-grid {
