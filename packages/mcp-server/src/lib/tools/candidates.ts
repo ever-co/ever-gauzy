@@ -4,12 +4,64 @@ import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { CandidateStatusEnum } from '../input-schemas';
-import { notOfferedByApi, resolveOrganizationScope, validateOrganizationContext } from './utils';
+import {
+	buildListQuery,
+	containsAnyText,
+	ListQueryOptions,
+	notOfferedByApi,
+	pageOfKept,
+	personTexts,
+	PersonUser,
+	resolveOrganizationScope,
+	validateOrganizationContext,
+	withRelation
+} from './utils';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
 import { TOOL_HINTS } from './tool-hints';
 const logger = new Logger('CandidateTools');
+
+/**
+ * Query of a candidate's skills, experience or education: their list routes require `where`. The tools have no paging,
+ * so no `take` is sent and every record is answered.
+ */
+const candidateRecordsQuery = (defaultParams: { tenantId?: string; organizationId?: string }, candidateId: string) => ({
+	where: buildListQuery(defaultParams, { candidateId }).where
+});
+
+/** The filters of a candidate list the route does not apply. */
+interface CandidateSearch {
+	search?: string;
+	rating?: number;
+}
+
+/**
+ * A page of candidates. The route has no search and matches a rating only exactly: a search of the name or email, and a
+ * minimum rating, are kept here, on the whole list.
+ */
+const readCandidates = (
+	defaultParams: { tenantId?: string; organizationId?: string },
+	where: Record<string, unknown>,
+	{ search, rating }: CandidateSearch,
+	{ page, limit, relations }: Pick<ListQueryOptions, 'page' | 'limit' | 'relations'>
+) => {
+	const keepsHere = Boolean(search) || rating !== undefined;
+	if (!keepsHere) {
+		return apiClient.get('/api/candidate', {
+			params: buildListQuery(defaultParams, where, { page, limit, relations })
+		});
+	}
+
+	const isKept = (candidate: { rating?: number; user?: PersonUser }) => {
+		const ratedEnough = rating === undefined || (candidate.rating ?? 0) >= rating;
+		return ratedEnough && containsAnyText(search, ...personTexts(candidate));
+	};
+	const readRelations = withRelation(relations, 'user');
+	const pageQuery = (pageNumber: number, take: number) =>
+		buildListQuery(defaultParams, where, { page: pageNumber, limit: take, relations: readRelations });
+	return pageOfKept('/api/candidate', pageQuery, isKept, page, limit);
+};
 
 /**
  * Helper function to convert date fields in candidate data to Date objects
@@ -55,20 +107,10 @@ export const registerCandidateTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					page,
-					limit,
-					...(search && { search }),
-					...(relations && { relations }),
-					...(status && { status }),
-					...(organizationPositionId && { organizationPositionId }),
-					...(sourceId && { sourceId }),
-					...(rating !== undefined && { rating })
-				};
+				const where = { status, organizationPositionId, sourceId };
+				const kept = { search, rating };
 
-				const response = await apiClient.get('/api/candidate', { params });
+				const response = await readCandidates(defaultParams, where, kept, { page, limit, relations });
 
 				return {
 					content: [
@@ -374,15 +416,8 @@ export const registerCandidateTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					organizationPositionId: positionId,
-					page,
-					limit,
-					...(status && { status }),
-					...(relations && { relations })
-				};
+				const where = { organizationPositionId: positionId, status };
+				const params = buildListQuery(defaultParams, where, { page, limit, relations });
 
 				const response = await apiClient.get('/api/candidate', { params });
 
@@ -421,7 +456,7 @@ export const registerCandidateTools = (server: McpServer) => {
 				}
 
 				const response = await apiClient.get(`/api/candidate-skills`, {
-					params: { candidateId }
+					params: candidateRecordsQuery(defaultParams, candidateId)
 				});
 
 				return {
@@ -467,9 +502,12 @@ export const registerCandidateTools = (server: McpServer) => {
 					throw new Error('Unauthorized: Cannot add skills to candidates from other organizations');
 				}
 
+				// The skill list reads the organization: a skill created without one would not be listed
 				const response = await apiClient.post('/api/candidate-skills', {
 					candidateId,
-					...skill
+					...skill,
+					organizationId: defaultParams.organizationId,
+					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
 				});
 
 				return {
@@ -507,7 +545,7 @@ export const registerCandidateTools = (server: McpServer) => {
 				}
 
 				const response = await apiClient.get(`/api/candidate-experience`, {
-					params: { candidateId }
+					params: candidateRecordsQuery(defaultParams, candidateId)
 				});
 
 				return {
@@ -552,9 +590,12 @@ export const registerCandidateTools = (server: McpServer) => {
 					throw new Error('Unauthorized: Cannot add experience to candidates from other organizations');
 				}
 
+				// The experience list reads the organization: a row created without one would not be listed
 				const response = await apiClient.post('/api/candidate-experience', {
 					candidateId,
-					...experience
+					...experience,
+					organizationId: defaultParams.organizationId,
+					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
 				});
 
 				return {
@@ -592,7 +633,7 @@ export const registerCandidateTools = (server: McpServer) => {
 				}
 
 				const response = await apiClient.get(`/api/candidate-educations`, {
-					params: { candidateId }
+					params: candidateRecordsQuery(defaultParams, candidateId)
 				});
 
 				return {
@@ -638,10 +679,13 @@ export const registerCandidateTools = (server: McpServer) => {
 					throw new Error('Unauthorized: Cannot add education to candidates from other organizations');
 				}
 
+				// The education list reads the organization: a row created without one would not be listed
 				const educationData = {
 					...education,
 					candidateId,
-					...(education.completionDate && { completionDate: new Date(education.completionDate) })
+					...(education.completionDate && { completionDate: new Date(education.completionDate) }),
+					organizationId: defaultParams.organizationId,
+					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
 				};
 
 				const response = await apiClient.post('/api/candidate-educations', educationData);

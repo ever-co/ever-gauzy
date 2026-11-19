@@ -6,6 +6,24 @@ import { sanitizeErrorMessage } from './error-utils';
 
 const logger = new Logger('ApiClient');
 
+/** The header the API's tenant guard reads first, in the casing it accepts. */
+const TENANT_HEADER = 'Tenant-Id';
+
+/**
+ * Sends the tenant of the login whose token the request carries, as the web app does on every call: without it the
+ * tenant guard looks for a top-level `tenantId` in the query, which a list query keeps inside `where`. A tenant the
+ * caller set is kept.
+ */
+const setSessionTenant = (config: InternalAxiosRequestConfig): void => {
+	if (config.headers.has(TENANT_HEADER)) {
+		return;
+	}
+	const { tenantId } = authManager.getDefaultParams();
+	if (tenantId) {
+		config.headers.set(TENANT_HEADER, tenantId);
+	}
+};
+
 /** A request sent again after its 401 had GAUZY_API_TOKEN exchanged again */
 interface IApiTokenRetryConfig extends InternalAxiosRequestConfig {
 	isRetryAfterApiTokenExchange?: boolean;
@@ -52,6 +70,7 @@ export class GauzyApiClient {
 						const token = authManager.getAccessToken();
 						if (token) {
 							config.headers.Authorization = `Bearer ${token}`;
+							setSessionTenant(config);
 						}
 					}
 				} else {
@@ -59,6 +78,7 @@ export class GauzyApiClient {
 					const token = authManager.getAccessToken();
 					if (token) {
 						config.headers.Authorization = `Bearer ${token}`;
+						setSessionTenant(config);
 					}
 				}
 			}

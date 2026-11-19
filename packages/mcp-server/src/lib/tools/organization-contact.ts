@@ -172,17 +172,13 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 			relations
 		}) => {
 			try {
-				const params = {
-					...resolveOrganizationScope(organizationId, tenantId),
-					...(contactType && { contactType }),
-					...(name && { name }),
-					...(primaryEmail && { primaryEmail }),
-					...(primaryPhone && { primaryPhone }),
-					...(members && { members }),
+				const where = { contactType, name, primaryEmail, primaryPhone, members };
+				const params = buildListQuery(resolveOrganizationScope(organizationId, tenantId), where, {
 					page,
 					limit,
-					...(relations && { relations })
-				};
+					relations,
+					skipIsPage: true
+				});
 
 				const response = await apiClient.get('/api/organization-contact/pagination', { params });
 

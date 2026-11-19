@@ -4,12 +4,87 @@ import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { authManager } from '../common/auth-manager';
-import { DailyPlanStatusEnum } from '../input-schemas';
+import { DAILY_PLAN_STATUS_VALUES, DailyPlanStatusFilter } from '../input-schemas';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
 import { TOOL_HINTS } from './tool-hints';
-import { applyInTurn, getCurrentEmployeeId, notOfferedByApi } from './utils';
+import {
+	applyInTurn,
+	buildListQuery,
+	getCurrentEmployeeId,
+	ListQueryOptions,
+	notOfferedByApi,
+	pageOfKept,
+	toApiValue
+} from './utils';
 const logger = new Logger('DailyPlanTools');
+
+/** Query of a daily plan list route: the filters inside `where`, and `skip` read as a page number. */
+const planListQuery = (
+	defaultParams: { tenantId?: string; organizationId?: string },
+	where: Record<string, unknown>,
+	{ page, limit, relations }: Pick<ListQueryOptions, 'page' | 'limit' | 'relations'>
+) => buildListQuery(defaultParams, where, { page, limit, relations, skipIsPage: true });
+
+/**
+ * The route `get_daily_plans` reads: the list route for a team, the employee route for an employee alone, the person's
+ * own plans otherwise. The list route refuses an employee who names no team they belong to.
+ */
+const dailyPlansPath = (organizationTeamId?: string, employeeId?: string) => {
+	if (organizationTeamId) {
+		return '/api/daily-plan';
+	}
+	if (employeeId) {
+		return `/api/daily-plan/employee/${employeeId}`;
+	}
+	return '/api/daily-plan/me';
+};
+
+/** The `YYYY-MM-DD` day of an instant read in UTC, the way the API answers a plan's date; none for no date. */
+const utcDayOf = (date?: string): string | undefined => {
+	if (!date) {
+		return undefined;
+	}
+	const time = new Date(date);
+	if (Number.isNaN(time.getTime())) {
+		throw new Error(`Not a date: ${date}`);
+	}
+	return time.toISOString().slice(0, 10);
+};
+
+/** What a plan list keeps itself rather than sending to its route. */
+interface KeptHere {
+	date?: string;
+	status?: string;
+}
+
+/**
+ * One page of a daily plan list route. The routes compare `date` to the instant they store in the API's local time, so a
+ * day matched no plan: a day is kept here, on the whole list. So is a status: the team and task routes apply none, and
+ * the list, own and employee routes apply it under TypeORM only.
+ */
+const readPlans = (
+	path: string,
+	defaultParams: { tenantId?: string; organizationId?: string },
+	where: Record<string, unknown>,
+	{ page, limit, relations }: Pick<ListQueryOptions, 'page' | 'limit' | 'relations'>,
+	{ date, status }: KeptHere = {}
+) => {
+	const keepsHere = Boolean(date || status);
+	if (!keepsHere) {
+		return apiClient.get(path, { params: planListQuery(defaultParams, where, { page, limit, relations }) });
+	}
+
+	const day = utcDayOf(date);
+	const isKept = (plan: { date: string; status?: string }) => {
+		const onTheDay = !day || utcDayOf(plan.date) === day;
+		const withTheStatus = !status || plan.status === status;
+		return onTheDay && withTheStatus;
+	};
+	const pageQuery = (pageNumber: number, take: number) =>
+		planListQuery(defaultParams, where, { page: pageNumber, limit: take, relations });
+	return pageOfKept(path, pageQuery, isKept, page, limit);
+};
 
 /** A daily plan to create, as the create route requires it: for one employee, in one team. */
 const dailyPlanToCreateSchema = z
@@ -56,12 +131,14 @@ export const registerDailyPlanTools = (server: McpServer) => {
 	registerTool(
 		server,
 		'get_daily_plans',
-		"Get all daily plans for the authenticated user's organization",
+		"Get daily plans in the authenticated user's organization. With no team and no employee, reads the signed-in " +
+			"person's own plans; with a team, that team's plans, where an employee reads only the teams they belong to; " +
+			"with an employee and no team, that employee's plans, where an employee reads only their own",
 		{
 			employeeId: z.string().uuid().optional().describe('Filter by employee ID'),
 			organizationTeamId: z.string().uuid().optional().describe('Filter by team ID'),
-			date: z.string().optional().describe('Filter by specific date (ISO format)'),
-			status: DailyPlanStatusEnum.optional().describe('Filter by status'),
+			date: z.string().optional().describe('Filter by the day of the plan (ISO date, read in UTC)'),
+			status: DailyPlanStatusFilter.optional().describe('Filter by status'),
 			page: z.number().optional().default(1).describe('Page number for pagination'),
 			limit: z.number().optional().default(10).describe('Number of items per page'),
 			relations: z
@@ -80,19 +157,12 @@ export const registerDailyPlanTools = (server: McpServer) => {
 					);
 				}
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					...(employeeId && { employeeId }),
-					...(organizationTeamId && { organizationTeamId }),
-					...(date && { date }),
-					...(status && { status }),
-					page,
-					limit,
-					...(relations && { relations })
-				};
+				const storedStatus = toApiValue(DAILY_PLAN_STATUS_VALUES, status);
+				const where = { employeeId, organizationTeamId, status: storedStatus };
+				const path = dailyPlansPath(organizationTeamId, employeeId);
+				const kept = { date, status: storedStatus };
 
-				const response = await apiClient.get('/api/daily-plan', { params });
+				const response = await readPlans(path, defaultParams, where, { page, limit, relations }, kept);
 
 				return {
 					content: [
@@ -118,8 +188,8 @@ export const registerDailyPlanTools = (server: McpServer) => {
 		'Get daily plans for the current authenticated user',
 		{
 			organizationTeamId: z.string().uuid().optional().describe('Filter by team ID'),
-			date: z.string().optional().describe('Filter by specific date (ISO format)'),
-			status: DailyPlanStatusEnum.optional().describe('Filter by status'),
+			date: z.string().optional().describe('Filter by the day of the plan (ISO date, read in UTC)'),
+			status: DailyPlanStatusFilter.optional().describe('Filter by status'),
 			page: z.number().optional().default(1).describe('Page number for pagination'),
 			limit: z.number().optional().default(10).describe('Number of items per page'),
 			relations: z.array(z.string()).optional().describe('Relations to include')
@@ -135,18 +205,12 @@ export const registerDailyPlanTools = (server: McpServer) => {
 					);
 				}
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					...(organizationTeamId && { organizationTeamId }),
-					...(date && { date }),
-					...(status && { status }),
-					page,
-					limit,
-					...(relations && { relations })
-				};
+				const storedStatus = toApiValue(DAILY_PLAN_STATUS_VALUES, status);
+				const where = { organizationTeamId, status: storedStatus };
+				const options = { page, limit, relations };
+				const kept = { date, status: storedStatus };
 
-				const response = await apiClient.get('/api/daily-plan/me', { params });
+				const response = await readPlans('/api/daily-plan/me', defaultParams, where, options, kept);
 
 				return {
 					content: [
@@ -172,8 +236,8 @@ export const registerDailyPlanTools = (server: McpServer) => {
 		'Get daily plans for team members',
 		{
 			organizationTeamId: z.string().uuid().optional().describe('Filter by team ID'),
-			date: z.string().optional().describe('Filter by specific date (ISO format)'),
-			status: DailyPlanStatusEnum.optional().describe('Filter by status'),
+			date: z.string().optional().describe('Filter by the day of the plan (ISO date, read in UTC)'),
+			status: DailyPlanStatusFilter.optional().describe('Filter by status'),
 			page: z.number().optional().default(1).describe('Page number for pagination'),
 			limit: z.number().optional().default(10).describe('Number of items per page'),
 			relations: z.array(z.string()).optional().describe('Relations to include')
@@ -186,18 +250,17 @@ export const registerDailyPlanTools = (server: McpServer) => {
 						'Organization ID not available. Please ensure you are logged in and have an organization.'
 					);
 				}
-				const params = {
-					organizationId,
-					...(tenantId && { tenantId }),
-					...(organizationTeamId && { organizationTeamId }),
-					...(date && { date }),
-					...(status && { status }),
-					page,
-					limit,
-					...(relations && { relations })
-				};
+				// The team route applies no status: it is kept here
+				const kept = { date, status: toApiValue(DAILY_PLAN_STATUS_VALUES, status) };
+				const options = { page, limit, relations };
 
-				const response = await apiClient.get('/api/daily-plan/team', { params });
+				const response = await readPlans(
+					'/api/daily-plan/team',
+					{ organizationId, tenantId },
+					{ organizationTeamId },
+					options,
+					kept
+				);
 
 				return {
 					content: [
@@ -223,8 +286,8 @@ export const registerDailyPlanTools = (server: McpServer) => {
 		'Get daily plans for a specific employee',
 		{
 			employeeId: z.string().uuid().describe('The employee ID'),
-			date: z.string().optional().describe('Filter by specific date (ISO format)'),
-			status: DailyPlanStatusEnum.optional().describe('Filter by status'),
+			date: z.string().optional().describe('Filter by the day of the plan (ISO date, read in UTC)'),
+			status: DailyPlanStatusFilter.optional().describe('Filter by status'),
 			page: z.number().optional().default(1).describe('Page number for pagination'),
 			limit: z.number().optional().default(10).describe('Number of items per page'),
 			relations: z.array(z.string()).optional().describe('Relations to include')
@@ -237,17 +300,16 @@ export const registerDailyPlanTools = (server: McpServer) => {
 						'Organization ID not available. Please ensure you are logged in and have an organization.'
 					);
 				}
-				const params = {
-					organizationId,
-					...(tenantId && { tenantId }),
-					...(date && { date }),
-					...(status && { status }),
-					page,
-					limit,
-					...(relations && { relations })
-				};
+				const storedStatus = toApiValue(DAILY_PLAN_STATUS_VALUES, status);
+				const options = { page, limit, relations };
 
-				const response = await apiClient.get(`/api/daily-plan/employee/${employeeId}`, { params });
+				const response = await readPlans(
+					`/api/daily-plan/employee/${employeeId}`,
+					{ organizationId, tenantId },
+					{ status: storedStatus },
+					options,
+					{ date, status: storedStatus }
+				);
 
 				return {
 					content: [
@@ -273,8 +335,8 @@ export const registerDailyPlanTools = (server: McpServer) => {
 		'Get daily plans associated with a specific task',
 		{
 			taskId: z.string().uuid().describe('The task ID'),
-			date: z.string().optional().describe('Filter by specific date (ISO format)'),
-			status: DailyPlanStatusEnum.optional().describe('Filter by status'),
+			date: z.string().optional().describe('Filter by the day of the plan (ISO date, read in UTC)'),
+			status: DailyPlanStatusFilter.optional().describe('Filter by status'),
 			page: z.number().optional().default(1).describe('Page number for pagination'),
 			limit: z.number().optional().default(10).describe('Number of items per page'),
 			relations: z.array(z.string()).optional().describe('Relations to include')
@@ -287,17 +349,17 @@ export const registerDailyPlanTools = (server: McpServer) => {
 						'Organization ID not available. Please ensure you are logged in and have an organization.'
 					);
 				}
-				const params = {
-					organizationId,
-					...(tenantId && { tenantId }),
-					...(date && { date }),
-					...(status && { status }),
-					page,
-					limit,
-					...(relations && { relations })
-				};
+				// The task route applies no status: it is kept here
+				const kept = { date, status: toApiValue(DAILY_PLAN_STATUS_VALUES, status) };
+				const options = { page, limit, relations };
 
-				const response = await apiClient.get(`/api/daily-plan/task/${taskId}`, { params });
+				const response = await readPlans(
+					`/api/daily-plan/task/${taskId}`,
+					{ organizationId, tenantId },
+					{},
+					options,
+					kept
+				);
 
 				return {
 					content: [
@@ -617,7 +679,7 @@ export const registerDailyPlanTools = (server: McpServer) => {
 			employeeId: z.string().uuid().optional().describe('Filter by employee ID'),
 			organizationTeamId: z.string().uuid().optional().describe('Filter by team ID'),
 			date: z.string().optional().describe('Filter by specific date (ISO format)'),
-			status: DailyPlanStatusEnum.optional().describe('Filter by status')
+			status: DailyPlanStatusFilter.optional().describe('Filter by status')
 		},
 		async ({ employeeId, organizationTeamId, date, status }) => {
 			try {
@@ -634,7 +696,7 @@ export const registerDailyPlanTools = (server: McpServer) => {
 					...(employeeId && { employeeId }),
 					...(organizationTeamId && { organizationTeamId }),
 					...(date && { date }),
-					...(status && { status })
+					...(status && { status: toApiValue(DAILY_PLAN_STATUS_VALUES, status) })
 				};
 
 				const response = await apiClient.get('/api/daily-plan/count', { params });

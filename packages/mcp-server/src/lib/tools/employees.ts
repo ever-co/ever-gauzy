@@ -3,7 +3,15 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { getCurrentEmployeeId, resolveOrganizationScope, validateOrganizationContext } from './utils';
+import {
+	buildListQuery,
+	getCurrentEmployeeId,
+	personTexts,
+	readSearchedList,
+	relationsForSearch,
+	resolveOrganizationScope,
+	validateOrganizationContext
+} from './utils';
 import { EmployeeInputSchema } from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
@@ -74,17 +82,12 @@ export const registerEmployeeTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					page,
-					limit,
-					...(search && { search }),
-					...(relations && { relations }),
-					...(where && { where })
-				};
-
-				const response = await apiClient.get('/api/employee', { params });
+				// The list route has no search: one of the name or email is kept here, on the whole list
+				const listOptions = { page, limit, relations: relationsForSearch(search, relations, 'user') };
+				const response = await readSearchedList('/api/employee', defaultParams, { ...where }, listOptions, {
+					search,
+					textsOf: personTexts
+				});
 
 				return {
 					content: [
@@ -166,15 +169,13 @@ export const registerEmployeeTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					page,
-					limit,
-					...(search && { search }),
-					...(relations && { relations }),
-					...(where && { where })
-				};
+				// The pagination route matches the search against the name or the email of the employee's user
+				const userSearch = { ...(search && { user: { name: search, email: search } }) };
+				const params = buildListQuery(
+					defaultParams,
+					{ ...where, ...userSearch },
+					{ page, limit, relations, skipIsPage: true }
+				);
 
 				const response = await apiClient.get('/api/employee/pagination', { params });
 
