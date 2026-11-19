@@ -6,7 +6,7 @@ import { BaseEntityEnum, IFavorite, PermissionsEnum } from '@gauzy/contracts';
 import { FavoriteService } from './favorite.service';
 import { Store } from '../store/store.service';
 import { NavMenuSectionItem } from '../nav-builder/nav-builder-types';
-import { ENTITY_LINKS, ENTITY_TITLES, favoriteIcon, IFavoriteRecord } from './entities-mapping';
+import { ENTITY_LINKS, ENTITY_TITLES, favoriteDescription, favoriteIcon, IFavoriteRecord } from './entities-mapping';
 
 /** One favorited record, as the Favorites page lists it. */
 export interface IFavoriteEntry {
@@ -27,6 +27,8 @@ export interface IFavoriteEntry {
 	link: string;
 	/** When the favorite was saved, if the API returned it. */
 	addedAt?: Date;
+	/** The record's own description, as plain text, when it has one. */
+	description?: string;
 }
 
 @UntilDestroy()
@@ -201,13 +203,19 @@ export class FavoriteStoreService {
 								return null;
 							}
 
+							const title = this._getFavoriteTitle(item, entityType as BaseEntityEnum) || 'Untitled';
 							return {
 								favoriteId: stub.id,
 								own: !!stub.employeeId && stub.employeeId === employeeId,
 								pinnedForOrganization: pinnedRecords.has(key),
 								entity: entityType as BaseEntityEnum,
 								entityId: item.id,
-								title: this._getFavoriteTitle(item, entityType as BaseEntityEnum) || 'Untitled',
+								title,
+								description: favoriteDescription(
+									entityType as BaseEntityEnum,
+									item as unknown as IFavoriteRecord,
+									title
+								),
 								icon: this._getFavoriteIcon(entityType as BaseEntityEnum, item),
 								link: this._getFavoriteLink(entityType as BaseEntityEnum, item.id, item),
 								addedAt: this._validDate(stub.createdAt)
