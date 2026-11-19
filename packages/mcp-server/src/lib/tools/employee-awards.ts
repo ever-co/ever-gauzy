@@ -3,7 +3,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { validateOrganizationContext } from './utils';
+import { applyInTurn, notOfferedByApi, resolveOrganizationScope, validateOrganizationContext } from './utils';
 import { EmployeeAwardInputSchema } from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
@@ -349,30 +349,9 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 			endDate: z.string().optional().describe('End date for statistics (ISO format)'),
 			groupBy: z.enum(['employee', 'year', 'month']).optional().describe('Group statistics by field')
 		},
-		async ({ employeeId, year, startDate, endDate, groupBy }) => {
+		async () => {
 			try {
-				const defaultParams = validateOrganizationContext();
-
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					...(employeeId && { employeeId }),
-					...(year && { year }),
-					...(startDate && { startDate }),
-					...(endDate && { endDate }),
-					...(groupBy && { groupBy })
-				};
-
-				const response = await apiClient.get('/api/employee-award/statistics', { params });
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
+				throw notOfferedByApi('employee award statistics');
 			} catch (error) {
 				logger.error('Error fetching employee awards statistics:', sanitizeForLogging(error));
 				throw new Error(sanitizeErrorMessage(error));
@@ -411,9 +390,9 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
 				}));
 
-				const response = await apiClient.post('/api/employee-award/bulk', {
-					awards: awardsWithDefaults
-				});
+				const response = await applyInTurn(awardsWithDefaults, (award) =>
+					apiClient.post('/api/employee-award', award)
+				);
 
 				return {
 					content: [
@@ -448,9 +427,11 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 		},
 		async ({ awards }) => {
 			try {
-				const response = await apiClient.put('/api/employee-award/bulk', {
-					awards
-				});
+				// The update DTO requires the organization, and the route reads the tenant from the body
+				const scope = resolveOrganizationScope();
+				const response = await applyInTurn(awards, ({ id, data }) =>
+					apiClient.put(`/api/employee-award/${id}`, { ...data, ...scope })
+				);
 
 				return {
 					content: [
@@ -478,9 +459,8 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 		},
 		async ({ ids }) => {
 			try {
-				await apiClient.delete('/api/employee-award/bulk', {
-					data: { ids }
-				});
+				const params = resolveOrganizationScope();
+				await applyInTurn(ids, (id) => apiClient.delete(`/api/employee-award/${id}`, { params }));
 
 				return {
 					content: [
