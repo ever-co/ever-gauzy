@@ -83,7 +83,8 @@ export function sanitizeForLogging(data: unknown): string {
 		return JSON.stringify({
 			name: data.name,
 			message: sanitizeString(data.message),
-			stack: data.stack?.split('\n').slice(0, 5).join('\n')
+			// The stack opens with the message: it is sanitized the same way
+			stack: sanitizeStack(data.stack)
 		});
 	}
 
@@ -101,6 +102,17 @@ export function sanitizeForLogging(data: unknown): string {
 }
 
 /**
+ * The first lines of a stack, sanitized
+ */
+function sanitizeStack(stack: string | undefined): string | undefined {
+	if (!stack) {
+		return stack;
+	}
+	const firstLines = stack.split('\n').slice(0, 5).join('\n');
+	return sanitizeString(firstLines);
+}
+
+/**
  * Sanitize a string by removing potentially sensitive patterns
  */
 function sanitizeString(str: string): string {
@@ -110,6 +122,9 @@ function sanitizeString(str: string): string {
 
 	// Remove potential JWT tokens
 	result = result.replace(/eyJ[a-zA-Z0-9_-]+\.eyJ[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+/g, '[JWT_TOKEN]');
+
+	// Remove personal API tokens (GAUZY_API_TOKEN), whole or cut short
+	result = result.replace(/gzp_[A-Za-z0-9_-]+/g, '[API_TOKEN]');
 
 	// Remove potential passwords in URLs
 	result = result.replace(/:\/\/[^:]+:[^@]+@/g, '://[CREDENTIALS]@');
