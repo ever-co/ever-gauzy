@@ -75,7 +75,7 @@ export class GauzyApiClient {
 						url: error.config?.url,
 						method: error.config?.method?.toUpperCase(),
 						status: error.response?.status,
-						message: error.message,
+						message: sanitizeErrorMessage(error),
 						response: error.response?.data ? sanitizeErrorMessage(error.response.data) : undefined
 					};
 					logger.debug('🔴 API Client Error Details:\n' + JSON.stringify(errorDetails, null, 2));
@@ -139,7 +139,10 @@ export class GauzyApiClient {
 			await authManager.initialize();
 		} catch (error) {
 			if (this.isDebug()) {
-				logger.error('❌ Auto-login failed:', error instanceof Error ? error.message : 'Unknown error');
+				logger.error(
+					'❌ Auto-login failed:',
+					error instanceof Error ? sanitizeErrorMessage(error) : 'Unknown error'
+				);
 			}
 		}
 	}
@@ -281,7 +284,7 @@ export class GauzyApiClient {
 		if (this.isDebug()) {
 			logger.error(
 				`🔴 ${method} ${path} failed`,
-				error instanceof Error ? error.stack : sanitizeErrorMessage(error)
+				error instanceof Error ? sanitizeErrorMessage(error.stack) : sanitizeErrorMessage(error)
 			);
 		}
 	}
@@ -348,7 +351,7 @@ export class GauzyApiClient {
 					if (this.isDebug()) {
 						logger.warn(
 							'Authenticated endpoint test failed:',
-							error instanceof Error ? error.message : 'Unknown error'
+							error instanceof Error ? sanitizeErrorMessage(error) : 'Unknown error'
 						);
 					}
 				}

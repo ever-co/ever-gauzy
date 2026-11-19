@@ -38,6 +38,8 @@ interface IFakeRequest {
 interface IFakeReply {
 	status: number;
 	data?: unknown;
+	/** The request fails before any answer, with this message, as a dropped connection does */
+	networkError?: string;
 }
 
 /** The API the client talks to in a test: each test answers its requests */
@@ -55,6 +57,9 @@ async function mockAdapter(config: any) {
 	};
 	mockRequests.push(request);
 	const reply = mockServer(request);
+	if (reply.networkError) {
+		throw new AxiosError(reply.networkError, 'ECONNRESET', config, {});
+	}
 	const response = { data: reply.data, status: reply.status, statusText: '', headers: {}, config, request: {} };
 	if (reply.status >= 400) {
 		throw new AxiosError(`Request failed with status code ${reply.status}`, 'ERR_BAD_REQUEST', config, {}, response);
@@ -263,5 +268,32 @@ describe('GauzyApiClient: signed in with GAUZY_API_TOKEN', () => {
 		expect(mockPrinted.length).toBeGreaterThan(0);
 		expect(JSON.stringify(mockPrinted)).not.toContain(API_TOKEN);
 		expect(JSON.stringify(answers)).not.toContain(API_TOKEN);
+	});
+
+	it('never prints the token an error message or stack carries, from any request', async () => {
+		const dropped: IFakeReply = { status: 0, networkError: `socket hang up after ${API_TOKEN}` };
+		let signIns = 0;
+		mockServer = (request) => {
+			if (isExchange(request)) {
+				return { status: 200, data: { token: accessToken('exchanged') } };
+			}
+			if (request.url === '/api/health') {
+				return { status: 200 };
+			}
+			// The sign-in reads the user; the connection test's read of it fails
+			if (request.url === '/api/user/me' && signIns++ === 0) {
+				return { status: 200, data: USER };
+			}
+			return dropped;
+		};
+		const { apiClient } = await startServer();
+
+		const failure = await apiClient.get<never>(TIMER_STATUS).catch((error: AxiosError) => error);
+		await apiClient.testConnection();
+
+		expect(failure.code).toBe('ECONNRESET');
+		expect(callsTo('/api/user/me')).toHaveLength(2);
+		expect(mockPrinted.length).toBeGreaterThan(0);
+		expect(JSON.stringify(mockPrinted)).not.toContain(API_TOKEN);
 	});
 });
