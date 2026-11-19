@@ -1,3 +1,4 @@
+import type { AxiosError } from 'axios';
 import type { GauzyApiClient } from './api-client';
 import type { AuthManager } from './auth-manager';
 
@@ -151,6 +152,106 @@ describe('GauzyApiClient: signed in with GAUZY_API_TOKEN', () => {
 		const result = await apiClient.login('caller@example.com', 'wrong-password');
 
 		expect(result).toEqual({ success: false });
+	});
+
+	describe('once the session ends', () => {
+		/** Answers in turn, the last answer for good */
+		const inTurn = (...replies: IFakeReply[]) => {
+			let next = 0;
+			return () => replies[Math.min(next++, replies.length - 1)];
+		};
+		const REFUSED: IFakeReply = { status: 401, data: { statusCode: 401, message: 'Unauthorized' } };
+		const first = accessToken('first');
+		const renewed = accessToken('renewed');
+
+		it('exchanges the token again when the access token expired, and sends the request with the new one', async () => {
+			// Inside the ten seconds the client keeps in hand, so expired already
+			const expiring = accessToken('expiring', 5);
+			serve(inTurn({ status: 200, data: { token: expiring } }, { status: 200, data: { token: renewed } }));
+			const { apiClient } = await startServer();
+
+			await apiClient.get(TIMER_STATUS);
+
+			expect(exchanges()).toHaveLength(2);
+			expect(callsTo(TIMER_STATUS).map((request) => request.authorization)).toEqual([`Bearer ${renewed}`]);
+		});
+
+		it('exchanges the token again once for a 401, and sends the request again with the new one', async () => {
+			serve(
+				inTurn({ status: 200, data: { token: first } }, { status: 200, data: { token: renewed } }),
+				inTurn(REFUSED, { status: 200, data: { running: false } })
+			);
+			const { apiClient } = await startServer();
+
+			await expect(apiClient.get(TIMER_STATUS)).resolves.toEqual({ running: false });
+
+			expect(exchanges()).toHaveLength(2);
+			expect(callsTo(TIMER_STATUS).map((request) => request.authorization)).toEqual([
+				`Bearer ${first}`,
+				`Bearer ${renewed}`
+			]);
+		});
+
+		it('ends with the message to create a new token when the exchange is refused, and sends it no more', async () => {
+			serve(inTurn({ status: 200, data: { token: first } }, REFUSED), () => REFUSED);
+			const { apiClient, authManager } = await startServer();
+
+			const failure = await apiClient.get<never>(TIMER_STATUS).catch((error: AxiosError) => error);
+			const next = await apiClient.get<never>(TIMER_STATUS).catch((error: AxiosError) => error);
+
+			expect(failure.message).toContain('Create a new token in Settings > API Tokens');
+			expect(failure.response.status).toBe(401);
+			expect(next.message).toContain('Create a new token in Settings > API Tokens');
+			expect(exchanges()).toHaveLength(2);
+			expect(authManager.isAuthenticated()).toBe(false);
+		});
+
+		it('does not loop when the API keeps answering 401 to a new access token', async () => {
+			let issued = 0;
+			serve(
+				() => ({ status: 200, data: { token: accessToken(`issued-${++issued}`) } }),
+				() => REFUSED
+			);
+			const { apiClient } = await startServer();
+
+			await expect(apiClient.get(TIMER_STATUS)).rejects.toMatchObject({ response: { status: 401 } });
+
+			expect(exchanges()).toHaveLength(2);
+			expect(callsTo(TIMER_STATUS)).toHaveLength(2);
+		});
+
+		it('CONTROL: without a token, a 401 still renews the password sign-in with its refresh token', async () => {
+			mockEnvironment.auth = {
+				autoLogin: true,
+				email: 'operator@example.com',
+				password: 'operator-password',
+				apiToken: ''
+			};
+			const refreshed = accessToken('refreshed');
+			const timer = inTurn(REFUSED, { status: 200, data: { running: true } });
+			serve(
+				() => REFUSED,
+				(request) => {
+					if (request.url === '/api/auth/login') {
+						return { status: 200, data: { token: first, refresh_token: 'refresh-1', user: { id: 'u' } } };
+					}
+					if (request.url === '/api/auth/refresh-token') {
+						return { status: 200, data: { token: refreshed, refresh_token: 'refresh-2' } };
+					}
+					return timer();
+				}
+			);
+			const { apiClient } = await startServer();
+
+			await expect(apiClient.get(TIMER_STATUS)).resolves.toEqual({ running: true });
+
+			expect(exchanges()).toHaveLength(0);
+			expect(callsTo('/api/auth/refresh-token')[0].body).toEqual({ refresh_token: 'refresh-1' });
+			expect(callsTo(TIMER_STATUS).map((request) => request.authorization)).toEqual([
+				`Bearer ${first}`,
+				`Bearer ${refreshed}`
+			]);
+		});
 	});
 
 	it('never puts the token in a log or an answer', async () => {

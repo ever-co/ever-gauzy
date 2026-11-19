@@ -25,11 +25,11 @@ jest.mock('@nestjs/common', () => {
 	return { ...jest.requireActual('@nestjs/common'), Logger: RecordingLogger };
 });
 
-/** An access token the manager reads an expiry from, an hour ahead */
-const accessToken = (name: string) =>
+/** An access token the manager reads an expiry from, `seconds` ahead */
+const accessToken = (name: string, seconds = 3600) =>
 	[
 		Buffer.from(JSON.stringify({ alg: 'none' })).toString('base64url'),
-		Buffer.from(JSON.stringify({ sub: name, exp: Math.floor(Date.now() / 1000) + 3600 })).toString('base64url'),
+		Buffer.from(JSON.stringify({ sub: name, exp: Math.floor(Date.now() / 1000) + seconds })).toString('base64url'),
 		'signature'
 	].join('.');
 
@@ -212,6 +212,101 @@ describe('AuthManager: signing in with GAUZY_API_TOKEN', () => {
 			});
 
 			expect(told).toBeNull();
+		});
+	});
+
+	describe('once the access token expires or the API answers 401', () => {
+		/** Answers the exchanges in turn, the last one for good */
+		const inTurn = (...answers: Array<() => unknown>) => {
+			let next = 0;
+			return () => answers[Math.min(next++, answers.length - 1)]();
+		};
+		// Inside the ten seconds the manager keeps in hand, so expired already
+		const EXPIRING = accessToken('expiring', 5);
+		const RENEWED = accessToken('renewed');
+
+		it('exchanges the token again when the access token expires, without a restart', async () => {
+			const api = fakeApi(inTurn(() => ({ token: EXPIRING }), () => ({ token: RENEWED })));
+			const { authManager } = startServer(api);
+			await authManager.initialize();
+
+			expect(authManager.isAuthenticated()).toBe(false);
+			expect(await authManager.ensureValidToken()).toBe(true);
+
+			expect(urls(api)).toEqual(['/api/auth/api-token/exchange', '/api/user/me', '/api/auth/api-token/exchange']);
+			expect(authManager.getAccessToken()).toBe(RENEWED);
+			expect(authManager.getUserId()).toBe('token-user');
+		});
+
+		it('exchanges the token again for a 401, which renews the session through refreshToken', async () => {
+			const api = fakeApi(inTurn(() => ({ token: EXCHANGED }), () => ({ token: RENEWED })));
+			const { authManager } = startServer(api);
+			await authManager.initialize();
+
+			expect(await authManager.refreshToken()).toBe(true);
+
+			expect(urls(api)).not.toContain('/api/auth/refresh-token');
+			expect(authManager.getAccessToken()).toBe(RENEWED);
+		});
+
+		it('ends the sign-in when the API refuses the token, and sends it no more', async () => {
+			const api = fakeApi(
+				inTurn(
+					() => ({ token: EXCHANGED }),
+					() => {
+						throw httpError(401);
+					}
+				)
+			);
+			const { authManager } = startServer(api);
+			await authManager.initialize();
+
+			expect(await authManager.refreshToken()).toBe(false);
+			expect(await authManager.ensureValidToken()).toBe(false);
+			expect(await authManager.refreshToken()).toBe(false);
+
+			expect(urls(api).filter((url) => url === '/api/auth/api-token/exchange')).toHaveLength(2);
+			expect(authManager.getAuthStatus()).toMatchObject({ isAuthenticated: false, hasToken: false });
+			expect(authManager.getAccessToken()).toBeNull();
+			expect(authManager.getApiTokenError()).toContain('Create a new token in Settings > API Tokens');
+		});
+
+		it('keeps the session when an exchange fails without a refusal, and tries again when asked', async () => {
+			const api = fakeApi(
+				inTurn(
+					() => ({ token: EXPIRING }),
+					() => {
+						throw new Error('connect ECONNREFUSED 127.0.0.1:3000');
+					},
+					() => ({ token: RENEWED })
+				)
+			);
+			const { authManager } = startServer(api);
+			await authManager.initialize();
+
+			expect(await authManager.ensureValidToken()).toBe(false);
+			expect(await authManager.ensureValidToken()).toBe(true);
+
+			expect(authManager.getAccessToken()).toBe(RENEWED);
+			expect(authManager.getApiTokenError()).toBeNull();
+		});
+
+		it('renews the account a caller on this machine shares, and not for a caller from elsewhere', async () => {
+			const api = fakeApi(inTurn(() => ({ token: EXPIRING }), () => ({ token: RENEWED })));
+			const { authManager, runWithAuthKey } = startServer(api);
+			await authManager.initialize();
+
+			const remote = await runWithAuthKey('session-remote', () => authManager.refreshToken(), {
+				sharesAutoLogin: false
+			});
+			const local = await runWithAuthKey('session-local', () => authManager.ensureValidToken(), {
+				sharesAutoLogin: true
+			});
+
+			expect(remote).toBe(false);
+			expect(local).toBe(true);
+			expect(urls(api).filter((url) => url === '/api/auth/api-token/exchange')).toHaveLength(2);
+			expect(authManager.getAccessToken()).toBe(RENEWED);
 		});
 	});
 

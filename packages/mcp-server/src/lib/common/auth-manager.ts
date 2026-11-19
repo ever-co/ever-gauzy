@@ -418,6 +418,11 @@ export class AuthManager {
 	 * Call the refresh endpoint and store the rotated token pair on the given login state
 	 */
 	private async performRefresh(state: IAuthState): Promise<boolean> {
+		// A login from GAUZY_API_TOKEN has no refresh token: the API token is exchanged again
+		if (state.tokenData?.fromApiToken) {
+			return await this.exchangeApiTokenAgain(state);
+		}
+
 		try {
 			if (!state.tokenData?.refreshToken) {
 				if (environment.debug) {
@@ -464,6 +469,35 @@ export class AuthManager {
 	}
 
 	/**
+	 * Renew a login from GAUZY_API_TOKEN, once its access token expired or the API answered 401, by exchanging the
+	 * token again. When the API refuses it, the login ends: it keeps no access token and is not renewed again.
+	 */
+	private async exchangeApiTokenAgain(state: IAuthState): Promise<boolean> {
+		if (!this.mayUseConfiguredLogin()) {
+			return false;
+		}
+
+		const accessToken = await this.exchangeApiToken();
+		if (!state.tokenData) {
+			return false;
+		}
+		if (!accessToken) {
+			if (this.isApiTokenRefused) {
+				state.tokenData.accessToken = '';
+				state.tokenData.expiresAt = new Date(0);
+			}
+			return false;
+		}
+
+		state.tokenData.accessToken = accessToken;
+		state.tokenData.expiresAt = this.calculateTokenExpiry(accessToken);
+		if (environment.debug) {
+			logger.log('API token exchanged again');
+		}
+		return true;
+	}
+
+	/**
 	 * Auto-login if enabled in environment
 	 */
 	public async autoLogin(): Promise<boolean> {
@@ -507,9 +541,9 @@ export class AuthManager {
 			return true;
 		}
 
-		// If we have a refresh token, try to refresh
+		// If we have a refresh token, or an API token to exchange again, try to refresh
 		const state = this.resolveState();
-		if (state?.tokenData?.refreshToken && !state.isRefreshInProgress) {
+		if (state && this.isRenewable(state) && !state.isRefreshInProgress) {
 			const refreshed = await this.refreshToken();
 			if (refreshed) {
 				return true;
@@ -519,6 +553,24 @@ export class AuthManager {
 		// Don't attempt auto-login in ensureValidToken to prevent loops
 		// Auto-login should only happen during initialization
 		return false;
+	}
+
+	/**
+	 * Whether a login can get a new access token: with its refresh token, or by exchanging GAUZY_API_TOKEN again
+	 * while the API has not refused it
+	 */
+	private isRenewable(state: IAuthState): boolean {
+		if (state.tokenData?.refreshToken) {
+			return true;
+		}
+		return !!state.tokenData?.fromApiToken && !this.isApiTokenRefused;
+	}
+
+	/**
+	 * Whether the current caller acts with a login from GAUZY_API_TOKEN
+	 */
+	public isApiTokenLogin(): boolean {
+		return !!this.currentTokenData()?.fromApiToken;
 	}
 
 	/**

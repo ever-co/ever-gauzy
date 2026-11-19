@@ -1,10 +1,15 @@
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosError } from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { Logger } from '@nestjs/common';
 import { environment } from '../environments/environment';
 import { authManager } from './auth-manager';
 import { sanitizeErrorMessage } from './error-utils';
 
 const logger = new Logger('ApiClient');
+
+/** A request sent again after its 401 had GAUZY_API_TOKEN exchanged again */
+interface IApiTokenRetryConfig extends InternalAxiosRequestConfig {
+	isRetryAfterApiTokenExchange?: boolean;
+}
 
 export class GauzyApiClient {
 	private static instance: GauzyApiClient;
@@ -82,6 +87,12 @@ export class GauzyApiClient {
 					!error.config?.url?.includes('/api/auth/') &&
 					!error.config?.url?.includes('/auth/')
 				) {
+					const config = error.config as IApiTokenRetryConfig | undefined;
+					// A login from GAUZY_API_TOKEN is exchanged again once per request: the answer to the retry stands
+					if (config?.isRetryAfterApiTokenExchange) {
+						return Promise.reject(error);
+					}
+
 					if (environment.debug) {
 						logger.warn('🔄 Received 401, attempting token refresh...');
 					}
@@ -92,9 +103,14 @@ export class GauzyApiClient {
 						const token = authManager.getAccessToken();
 						if (token) {
 							error.config.headers.Authorization = `Bearer ${token}`;
+							if (authManager.isApiTokenLogin()) {
+								config.isRetryAfterApiTokenExchange = true;
+							}
 							return this.client.request(error.config);
 						}
 					}
+
+					this.explainApiTokenFailure(error);
 				}
 
 				return Promise.reject(error);
@@ -125,6 +141,17 @@ export class GauzyApiClient {
 			if (this.isDebug()) {
 				logger.error('❌ Auto-login failed:', error instanceof Error ? error.message : 'Unknown error');
 			}
+		}
+	}
+
+	/**
+	 * A request refused because GAUZY_API_TOKEN gives no session says why, in place of a bare 401: the tool that made
+	 * it answers with that message
+	 */
+	private explainApiTokenFailure(error: AxiosError): void {
+		const apiTokenError = authManager.getApiTokenError();
+		if (apiTokenError) {
+			error.message = apiTokenError;
 		}
 	}
 
