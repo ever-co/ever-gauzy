@@ -1,8 +1,8 @@
 /**
- * Three key result tools called routes the API never served: `/key-results/me` and `/key-results/statistics` were
- * read as a key result id, and `/key-results/:id/progress` answered 404. The progress now goes through the key
- * result's update, the person's key results through the key result list, and the statistics, which no route offers,
- * are answered so without any request.
+ * Four key result tools called routes the API never served: `/key-results/me`, `/key-results/statistics` and
+ * `/key-results/count` were read as a key result id, and `/key-results/:id/progress` answered 404. The progress now
+ * goes through the key result's update, the person's key results and the count through the key result list, and the
+ * statistics, which no route offers, are answered so without any request.
  *
  * Env for mcp-server module load is set in `src/test-setup.ts`.
  */
@@ -73,6 +73,28 @@ describe('key result tools: the routes they call', () => {
 			params: { organizationId: ORGANIZATION, tenantId: TENANT }
 		});
 		expect(JSON.parse(result.content[0].text)).toEqual({ items: [keyResults[0]], total: 1 });
+	});
+
+	it("counts the organization's key results from the key result list, with the goal and owner asked", async () => {
+		const keyResults = [
+			{ id: 'first', ownerId: OWN_EMPLOYEE, organizationId: ORGANIZATION, goalId: GOAL },
+			{ id: 'second', ownerId: OTHER_EMPLOYEE, organizationId: ORGANIZATION, goalId: GOAL },
+			{ id: 'other goal', ownerId: OTHER_EMPLOYEE, organizationId: ORGANIZATION },
+			{ id: 'elsewhere', ownerId: OTHER_EMPLOYEE, organizationId: OTHER_ORGANIZATION, goalId: GOAL }
+		];
+		const get = jest
+			.spyOn(apiClient, 'get')
+			.mockResolvedValue({ items: keyResults, total: keyResults.length } as never);
+
+		const inGoal = await call('get_key_result_count', { goalId: GOAL });
+		const theirs = await call('get_key_result_count', { goalId: GOAL, ownerId: OTHER_EMPLOYEE });
+
+		expect(get).toHaveBeenCalledWith('/api/key-results', {
+			params: { organizationId: ORGANIZATION, tenantId: TENANT }
+		});
+		expect(get).not.toHaveBeenCalledWith('/api/key-results/count', expect.anything());
+		expect(JSON.parse(inGoal.content[0].text)).toEqual({ count: 2 });
+		expect(JSON.parse(theirs.content[0].text)).toEqual({ count: 1 });
 	});
 
 	it('answers that key result statistics are not offered, without any request', async () => {

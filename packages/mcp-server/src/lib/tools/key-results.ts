@@ -44,9 +44,9 @@ interface KeyResultRow {
 	status?: string;
 }
 
-/** Whether the key result has the owner and organization wanted, and the goal and status when they are asked. */
+/** Whether the key result is in the organization wanted, with the owner, goal and status when they are asked. */
 const matchesKeyResult = (keyResult: KeyResultRow, wanted: KeyResultRow): boolean => {
-	const sameOwner = keyResult.ownerId === wanted.ownerId;
+	const sameOwner = !wanted.ownerId || keyResult.ownerId === wanted.ownerId;
 	const sameOrganization = keyResult.organizationId === wanted.organizationId;
 	const inGoal = !wanted.goalId || keyResult.goalId === wanted.goalId;
 	const withStatus = !wanted.status || keyResult.status === wanted.status;
@@ -117,23 +117,21 @@ export const registerKeyResultTools = (server: McpServer) => {
 		},
 		async ({ goalId, ownerId, status }) => {
 			try {
-				const defaultParams = validateOrganizationContext();
+				const scope = resolveOrganizationScope();
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					...(goalId && { goalId }),
-					...(ownerId && { ownerId }),
-					...(status && { status })
-				};
-
-				const response = await apiClient.get('/api/key-results/count', { params });
+				// `/key-results/count` reaches the `:id` route first, and the list route reads no filter (its guard reads
+				// the tenant) and answers every key result of the tenant: count them here
+				const { items = [] } = await apiClient.get<{ items?: KeyResultRow[] }>('/api/key-results', {
+					params: scope
+				});
+				const wanted = { organizationId: scope.organizationId, goalId, ownerId, status };
+				const count = items.filter((keyResult) => matchesKeyResult(keyResult, wanted)).length;
 
 				return {
 					content: [
 						{
 							type: 'text',
-							text: JSON.stringify({ count: response }, null, 2)
+							text: JSON.stringify({ count }, null, 2)
 						}
 					]
 				};
