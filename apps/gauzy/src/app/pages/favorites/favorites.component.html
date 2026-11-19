@@ -124,17 +124,19 @@
 							<span class="favorites-card-head">
 								<span class="favorites-card-name" [title]="row.title">{{ row.title }}</span>
 							</span>
-							<span class="favorites-card-badges">
-								@if (row.pinnedForOrganization) {
-									<span class="favorites-pinned">
-										{{ 'FAVORITES.PINNED_FOR_ORGANIZATION' | translate }}
-									</span>
-								}
-							</span>
+							<!-- Only what the record has: no space is held for a missing description or note. -->
+							@if (row.description) {
+								<span class="favorites-card-desc" [title]="row.description">{{ row.description }}</span>
+							}
+							@if (row.pinnedForOrganization) {
+								<span class="favorites-pinned">
+									{{ 'FAVORITES.PINNED_FOR_ORGANIZATION' | translate }}
+								</span>
+							}
+							<!-- Date and type, where a Documents card has its date and size. -->
 							<span class="favorites-card-footer">
-								@if (row.addedAt) {
-									<span>{{ row.addedAt | date: 'mediumDate' }}</span>
-								}
+								<span>{{ row.addedAt ? (row.addedAt | date: 'mediumDate') : '' }}</span>
+								<span class="favorites-card-type">{{ row.typeKey | translate }}</span>
 							</span>
 						</a>
 						<ng-container *ngTemplateOutlet="star; context: { $implicit: row }"></ng-container>
@@ -148,6 +150,8 @@
 					<thead>
 						<tr>
 							<th scope="col" class="name-col">{{ 'SM_TABLE.NAME' | translate }}</th>
+							<th scope="col" class="type-col">{{ 'FAVORITES.TYPE' | translate }}</th>
+							<th scope="col" class="desc-col">{{ 'SM_TABLE.DESCRIPTION' | translate }}</th>
 							<th scope="col" class="added-col">{{ 'FAVORITES.ADDED' | translate }}</th>
 							<th scope="col" class="actions-col">{{ 'SM_TABLE.ACTIONS' | translate }}</th>
 						</tr>
@@ -167,6 +171,16 @@
 											</span>
 										}
 									</a>
+								</td>
+								<td class="type-col">{{ row.typeKey | translate }}</td>
+								<td class="desc-col">
+									@if (row.description) {
+										<span class="favorites-desc-text" [title]="row.description">{{
+											row.description
+										}}</span>
+									} @else {
+										<span class="favorites-desc-none" aria-hidden="true">—</span>
+									}
 								</td>
 								<td class="added-col">
 									@if (row.addedAt) {

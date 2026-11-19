@@ -18,6 +18,8 @@ import { FavoriteService, FavoriteStoreService, IFavoriteEntry, Store, ToastrSer
 /** A favorite as a row of the page, with its link parsed so query parameters (`?view=full`) survive. */
 interface IFavoriteRow extends IFavoriteEntry {
 	url: UrlTree;
+	/** The singular name of the record's type ("Task", "Project"), as a translation key. */
+	typeKey: string;
 }
 
 /** One tab of the type strip: a kind of record the user has favorites of. */
@@ -27,11 +29,17 @@ interface IFavoriteTypeTab {
 	count: number;
 }
 
-/** `OrganizationProject` → `FAVORITES.TYPES.ORGANIZATION_PROJECT`. */
-const typeLabelKey = (entity: BaseEntityEnum): string =>
-	`FAVORITES.TYPES.${String(entity)
+/** `OrganizationProject` → `ORGANIZATION_PROJECT`, the key of a type's names in `FAVORITES`. */
+const typeKeyOf = (entity: BaseEntityEnum): string =>
+	String(entity)
 		.replace(/([a-z0-9])([A-Z])/g, '$1_$2')
-		.toUpperCase()}`;
+		.toUpperCase();
+
+/** The plural name, for a tab: "Tasks". */
+const typeLabelKey = (entity: BaseEntityEnum): string => `FAVORITES.TYPES.${typeKeyOf(entity)}`;
+
+/** The singular name, for one favorite: "Task". */
+const itemTypeKey = (entity: BaseEntityEnum): string => `FAVORITES.ITEM_TYPES.${typeKeyOf(entity)}`;
 
 /**
  * Every favorite of the signed-in user, newest first. The sidebar lists only the newest few and links here
@@ -82,10 +90,14 @@ export class FavoritesComponent {
 	private readonly _entries = toSignal(this._favoriteStoreService.favorites$, { initialValue: [] });
 
 	protected readonly rows = computed<IFavoriteRow[]>(() =>
-		this._entries().map((entry) => ({ ...entry, url: this._router.parseUrl(entry.link) }))
+		this._entries().map((entry) => ({
+			...entry,
+			url: this._router.parseUrl(entry.link),
+			typeKey: itemTypeKey(entry.entity)
+		}))
 	);
 
-	/** The search text, matched against the favorites' names. */
+	/** The search text, matched against the favorites' names and descriptions. */
 	protected readonly search = signal('');
 	/** The type tab picked; `null` is "All". */
 	private readonly _selectedType = signal<BaseEntityEnum | null>(null);
@@ -93,7 +105,13 @@ export class FavoritesComponent {
 	private readonly _searched = computed<IFavoriteRow[]>(() => {
 		const term = this.search().trim().toLocaleLowerCase();
 		const rows = this.rows();
-		return term ? rows.filter((row) => row.title.toLocaleLowerCase().includes(term)) : rows;
+		return term
+			? rows.filter(
+					(row) =>
+						row.title.toLocaleLowerCase().includes(term) ||
+						!!row.description?.toLocaleLowerCase().includes(term)
+			  )
+			: rows;
 	});
 
 	/** The count on the "All" tab. */
