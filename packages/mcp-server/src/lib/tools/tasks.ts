@@ -7,7 +7,7 @@ import { authManager } from '../common/auth-manager';
 import { TaskStatusEnum, TaskPriorityEnum, TaskSizeEnum, TaskTypeEnum } from '../input-schemas';
 import { registerTool } from './tool-helper';
 import { TOOL_HINTS } from './tool-hints';
-import { applyInTurn, buildListQuery, countByGroup, isWithinDates, readAllPages } from './utils';
+import { applyInTurn, buildListQuery, countByGroup, isWithinDates, ListQueryOptions, readAllPages } from './utils';
 
 const logger = new Logger('TaskTools');
 
@@ -64,6 +64,26 @@ const withRequiredTaskFields = async (id: string, data: Record<string, unknown>)
 	return { ...data, title: data.title ?? task.title, status: data.status ?? task.status };
 };
 
+/**
+ * The route and query of a task list. `/api/tasks` matches a title only exactly: a search reads the pagination
+ * route, which matches part of the title and reads `skip` as a page number.
+ */
+const taskListQuery = (
+	defaultParams: { tenantId?: string; organizationId?: string },
+	where: Record<string, unknown>,
+	search: string | undefined,
+	options: ListQueryOptions
+) => {
+	if (!search) {
+		return { path: '/api/tasks', params: buildListQuery(defaultParams, where, options) };
+	}
+
+	return {
+		path: '/api/tasks/pagination',
+		params: buildListQuery(defaultParams, { ...where, title: search }, { ...options, skipIsPage: true })
+	};
+};
+
 export const registerTaskTools = (server: McpServer) => {
 	// Get tasks tool
 	registerTool(
@@ -79,7 +99,7 @@ export const registerTaskTools = (server: McpServer) => {
 			issueType: TaskTypeEnum.optional().describe('Filter by task issue type'),
 			page: z.number().optional().default(1).describe('Page number for pagination'),
 			limit: z.number().optional().default(10).describe('Number of items per page'),
-			search: z.string().optional().describe('Search term for task title or description'),
+			search: z.string().optional().describe('Search term for the task title (partial match)'),
 			relations: z
 				.array(z.string())
 				.optional()
@@ -119,22 +139,18 @@ export const registerTaskTools = (server: McpServer) => {
 					);
 				}
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					...(projectId && { projectId }),
-					...(employeeId && { employeeId }),
-					...(status && { status }),
-					...(priority && { priority }),
-					...(size && { size }),
-					...(issueType && { issueType }),
-					page,
-					limit,
-					...(search && { search }),
-					...(relations && { relations })
+				// A task has no `employeeId`: it is matched on the employees it is assigned to
+				const where = {
+					projectId,
+					status,
+					priority,
+					size,
+					issueType,
+					...(employeeId && { members: { id: employeeId } })
 				};
+				const { path, params } = taskListQuery(defaultParams, where, search, { page, limit, relations });
 
-				const response = await apiClient.get('/api/tasks', { params });
+				const response = await apiClient.get(path, { params });
 
 				return {
 					content: [
@@ -224,16 +240,9 @@ export const registerTaskTools = (server: McpServer) => {
 					);
 				}
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					...(projectId && { projectId }),
-					...(employeeId && { employeeId }),
-					...(status && { status }),
-					page,
-					limit,
-					...(relations && { relations })
-				};
+				// A task has no `employeeId`: it is matched on the employees it is assigned to
+				const where = { projectId, status, ...(employeeId && { members: { id: employeeId } }) };
+				const params = buildListQuery(defaultParams, where, { page, limit, relations, skipIsPage: true });
 
 				const response = await apiClient.get('/api/tasks/pagination', { params });
 
@@ -276,14 +285,7 @@ export const registerTaskTools = (server: McpServer) => {
 					);
 				}
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					...(status && { status }),
-					...(priority && { priority }),
-					page,
-					limit
-				};
+				const params = buildListQuery(defaultParams, { status, priority }, { page, limit });
 
 				const response = await apiClient.get(`/api/tasks/employee/${employeeId}`, { params });
 
@@ -326,12 +328,9 @@ export const registerTaskTools = (server: McpServer) => {
 				}
 
 				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					...(status && { status }),
-					...(priority && { priority }),
-					page,
-					limit
+					...buildListQuery(defaultParams, { status }, { page, limit, skipIsPage: true }),
+					// The route reads no priority in `where`: its advanced filters carry it
+					...(priority && { filters: { priorities: [priority] } })
 				};
 
 				const response = await apiClient.get('/api/tasks/me', { params });
