@@ -7,7 +7,14 @@ import { ContactTypeEnum } from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
+import { TOOL_HINTS } from './tool-hints';
+import { resolveOrganizationScope } from './utils';
 const logger = new Logger('OrganizationContactTools');
+
+const ORGANIZATION_ID_DESCRIPTION = "The organization ID (defaults to the signed-in user's organization)";
+const TENANT_ID_DESCRIPTION = "The tenant ID (defaults to the signed-in user's tenant)";
+const organizationIdParam = z.string().uuid().optional().describe(ORGANIZATION_ID_DESCRIPTION);
+const tenantIdParam = z.string().uuid().optional().describe(TENANT_ID_DESCRIPTION);
 
 export const registerOrganizationContactTools = (server: McpServer) => {
 	// Get organization contacts tool
@@ -16,8 +23,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 		'get_organization_contacts',
 		'Get all organization contacts with filters',
 		{
-			organizationId: z.string().uuid().describe('The organization ID'),
-			tenantId: z.string().uuid().optional().describe('The tenant ID'),
+			organizationId: organizationIdParam,
+			tenantId: tenantIdParam,
 			contactType: ContactTypeEnum.optional().describe('Filter by contact type'),
 			employeeId: z.string().uuid().optional().describe('Filter by employee ID'),
 			name: z.string().optional().describe('Filter by name (partial match)'),
@@ -45,8 +52,7 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 			try {
 				const response = await apiClient.get('/api/organization-contact', {
 					params: {
-						organizationId,
-						...(tenantId && { tenantId }),
+						...resolveOrganizationScope(organizationId, tenantId),
 						...(contactType && { contactType }),
 						...(employeeId && { employeeId }),
 						...(name && { name }),
@@ -70,7 +76,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 				logger.error('Error fetching organization contacts:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch organization contacts: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get organization contact count tool
@@ -79,16 +86,15 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 		'get_organization_contact_count',
 		'Get organization contact count in the same tenant',
 		{
-			organizationId: z.string().uuid().describe('The organization ID'),
-			tenantId: z.string().uuid().optional().describe('The tenant ID'),
+			organizationId: organizationIdParam,
+			tenantId: tenantIdParam,
 			contactType: ContactTypeEnum.optional().describe('Filter by contact type'),
 			employeeId: z.string().uuid().optional().describe('Filter by employee ID')
 		},
 		async ({ organizationId, tenantId, contactType, employeeId }) => {
 			try {
 				const params = {
-					organizationId,
-					...(tenantId && { tenantId }),
+					...resolveOrganizationScope(organizationId, tenantId),
 					...(contactType && { contactType }),
 					...(employeeId && { employeeId })
 				};
@@ -107,7 +113,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 				logger.error('Error fetching organization contact count:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch organization contact count: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get organization contacts by pagination tool
@@ -116,8 +123,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 		'get_organization_contacts_pagination',
 		'Get organization contacts by pagination in the same tenant',
 		{
-			organizationId: z.string().uuid().describe('The organization ID'),
-			tenantId: z.string().uuid().optional().describe('The tenant ID'),
+			organizationId: organizationIdParam,
+			tenantId: tenantIdParam,
 			contactType: ContactTypeEnum.optional().describe('Filter by contact type'),
 			name: z.string().optional().describe('Filter by name (partial match)'),
 			primaryEmail: z.string().optional().describe('Filter by primary email (partial match)'),
@@ -141,8 +148,7 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 		}) => {
 			try {
 				const params = {
-					organizationId,
-					...(tenantId && { tenantId }),
+					...resolveOrganizationScope(organizationId, tenantId),
 					...(contactType && { contactType }),
 					...(name && { name }),
 					...(primaryEmail && { primaryEmail }),
@@ -167,7 +173,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 				logger.error('Error fetching organization contacts pagination:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch organization contacts pagination: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get organization contacts by employee tool
@@ -177,15 +184,14 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 		'Get organization contacts assigned to a specific employee',
 		{
 			employeeId: z.string().uuid().describe('The employee ID'),
-			organizationId: z.string().uuid().describe('The organization ID'),
-			tenantId: z.string().uuid().optional().describe('The tenant ID'),
+			organizationId: organizationIdParam,
+			tenantId: tenantIdParam,
 			contactType: ContactTypeEnum.optional().describe('Filter by contact type')
 		},
 		async ({ employeeId, organizationId, tenantId, contactType }) => {
 			try {
 				const params = {
-					organizationId,
-					...(tenantId && { tenantId }),
+					...resolveOrganizationScope(organizationId, tenantId),
 					...(contactType && { contactType })
 				};
 
@@ -203,7 +209,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 				logger.error('Error fetching organization contacts by employee:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch organization contacts by employee: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get organization contact by ID tool
@@ -238,7 +245,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 				logger.error('Error fetching organization contact:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch organization contact: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Create organization contact tool
@@ -250,14 +258,18 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 			contact_data: z
 				.object({
 					name: z.string().describe('The name (required)'),
-					organizationId: z.string().describe('The organization ID (required)')
+					organizationId: z.string().optional().describe(ORGANIZATION_ID_DESCRIPTION)
 				})
 				.passthrough()
 				.describe('The data for creating the organization contact')
 		},
 		async ({ contact_data }) => {
 			try {
-				const response = await apiClient.post('/api/organization-contact', contact_data);
+				const createData = {
+					...contact_data,
+					...resolveOrganizationScope(contact_data.organizationId, contact_data.tenantId)
+				};
+				const response = await apiClient.post('/api/organization-contact', createData);
 
 				return {
 					content: [
@@ -271,7 +283,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 				logger.error('Error creating organization contact:', sanitizeForLogging(error));
 				throw new Error(`Failed to create organization contact: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Update organization contact tool
@@ -299,7 +312,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 				logger.error('Error updating organization contact:', sanitizeForLogging(error));
 				throw new Error(`Failed to update organization contact: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Update organization contact by employee tool
@@ -309,16 +323,15 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 		'Update organization contact by employee',
 		{
 			id: z.string().uuid().describe('The organization contact ID'),
-			organizationId: z.string().uuid().describe('The organization ID'),
-			tenantId: z.string().uuid().optional().describe('The tenant ID'),
+			organizationId: organizationIdParam,
+			tenantId: tenantIdParam,
 			contact_data: z.record(z.string(), z.any()).describe('The fields to update on the organization contact')
 		},
 		async ({ id, organizationId, tenantId, contact_data }) => {
 			try {
 				const updateData = {
 					...contact_data,
-					organizationId,
-					...(tenantId && { tenantId })
+					...resolveOrganizationScope(organizationId, tenantId)
 				};
 
 				const response = await apiClient.put(`/api/organization-contact/${id}/employee`, updateData);
@@ -335,7 +348,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 				logger.error('Error updating organization contact by employee:', sanitizeForLogging(error));
 				throw new Error(`Failed to update organization contact by employee: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Delete organization contact tool
@@ -366,7 +380,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 				logger.error('Error deleting organization contact:', sanitizeForLogging(error));
 				throw new Error(`Failed to delete organization contact: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.idempotentDestructive
 	);
 
 	// Bulk create organization contacts tool
@@ -380,7 +395,7 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 					z
 						.object({
 							name: z.string().describe('The name (required)'),
-							organizationId: z.string().describe('The organization ID (required)')
+							organizationId: z.string().optional().describe(ORGANIZATION_ID_DESCRIPTION)
 						})
 						.passthrough()
 				)
@@ -388,7 +403,11 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 		},
 		async ({ contacts }) => {
 			try {
-				const response = await apiClient.post('/api/organization-contact/bulk', { contacts });
+				const contactsInScope = contacts.map((contact) => ({
+					...contact,
+					...resolveOrganizationScope(contact.organizationId, contact.tenantId)
+				}));
+				const response = await apiClient.post('/api/organization-contact/bulk', { contacts: contactsInScope });
 
 				return {
 					content: [
@@ -402,7 +421,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 				logger.error('Error bulk creating organization contacts:', sanitizeForLogging(error));
 				throw new Error(`Failed to bulk create organization contacts: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Bulk update organization contacts tool
@@ -417,8 +437,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 						.object({
 							id: z.string().describe('The ID (required)'),
 							name: z.string().describe('The name (required)'),
-							organizationId: z.string().describe('The organization ID (required)'),
-							tenantId: z.string().describe('The tenant ID (required)')
+							organizationId: z.string().optional().describe(ORGANIZATION_ID_DESCRIPTION),
+							tenantId: z.string().optional().describe(TENANT_ID_DESCRIPTION)
 						})
 						.passthrough()
 				)
@@ -426,7 +446,11 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 		},
 		async ({ contacts }) => {
 			try {
-				const response = await apiClient.put('/api/organization-contact/bulk', { contacts });
+				const contactsInScope = contacts.map((contact) => ({
+					...contact,
+					...resolveOrganizationScope(contact.organizationId, contact.tenantId)
+				}));
+				const response = await apiClient.put('/api/organization-contact/bulk', { contacts: contactsInScope });
 
 				return {
 					content: [
@@ -440,7 +464,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 				logger.error('Error bulk updating organization contacts:', sanitizeForLogging(error));
 				throw new Error(`Failed to bulk update organization contacts: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Bulk delete organization contacts tool
@@ -475,7 +500,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 				logger.error('Error bulk deleting organization contacts:', sanitizeForLogging(error));
 				throw new Error(`Failed to bulk delete organization contacts: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.idempotentDestructive
 	);
 
 	// Get organization contact statistics tool
@@ -484,8 +510,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 		'get_organization_contact_statistics',
 		'Get organization contact statistics',
 		{
-			organizationId: z.string().uuid().describe('The organization ID'),
-			tenantId: z.string().uuid().optional().describe('The tenant ID'),
+			organizationId: organizationIdParam,
+			tenantId: tenantIdParam,
 			contactType: ContactTypeEnum.optional().describe('Filter by contact type'),
 			employeeId: z.string().uuid().optional().describe('Filter by employee ID'),
 			startDate: z.string().optional().describe('Start date for statistics (ISO format)'),
@@ -494,8 +520,7 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 		async ({ organizationId, tenantId, contactType, employeeId, startDate, endDate }) => {
 			try {
 				const params = {
-					organizationId,
-					...(tenantId && { tenantId }),
+					...resolveOrganizationScope(organizationId, tenantId),
 					...(contactType && { contactType }),
 					...(employeeId && { employeeId }),
 					...(startDate && { startDate }),
@@ -516,7 +541,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 				logger.error('Error fetching organization contact statistics:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch organization contact statistics: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Assign contact to employee tool
@@ -527,15 +553,14 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 		{
 			contactId: z.string().uuid().describe('The organization contact ID'),
 			employeeId: z.string().uuid().describe('The employee ID'),
-			organizationId: z.string().uuid().describe('The organization ID'),
-			tenantId: z.string().uuid().optional().describe('The tenant ID')
+			organizationId: organizationIdParam,
+			tenantId: tenantIdParam
 		},
 		async ({ contactId, employeeId, organizationId, tenantId }) => {
 			try {
 				const response = await apiClient.post(`/api/organization-contact/${contactId}/assign`, {
 					employeeId,
-					organizationId,
-					...(tenantId && { tenantId })
+					...resolveOrganizationScope(organizationId, tenantId)
 				});
 
 				return {
@@ -550,7 +575,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 				logger.error('Error assigning contact to employee:', sanitizeForLogging(error));
 				throw new Error(sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Unassign contact from employee tool
@@ -561,16 +587,15 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 		{
 			contactId: z.string().uuid().describe('The organization contact ID'),
 			employeeId: z.string().uuid().describe('The employee ID'),
-			organizationId: z.string().uuid().describe('The organization ID'),
-			tenantId: z.string().uuid().optional().describe('The tenant ID')
+			organizationId: organizationIdParam,
+			tenantId: tenantIdParam
 		},
 		async ({ contactId, employeeId, organizationId, tenantId }) => {
 			try {
 				const response = await apiClient.delete(`/api/organization-contact/${contactId}/assign`, {
 					data: {
 						employeeId,
-						organizationId,
-						...(tenantId && { tenantId })
+						...resolveOrganizationScope(organizationId, tenantId)
 					}
 				});
 
@@ -586,7 +611,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 				logger.error('Error unassigning contact from employee:', sanitizeForLogging(error));
 				throw new Error(sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.idempotentDestructive
 	);
 
 	// Get contact projects tool
@@ -596,16 +622,15 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 		'Get projects associated with an organization contact',
 		{
 			contactId: z.string().uuid().describe('The organization contact ID'),
-			organizationId: z.string().uuid().describe('The organization ID'),
-			tenantId: z.string().uuid().optional().describe('The tenant ID'),
+			organizationId: organizationIdParam,
+			tenantId: tenantIdParam,
 			page: z.number().optional().default(1).describe('Page number'),
 			limit: z.number().optional().default(10).describe('Items per page')
 		},
 		async ({ contactId, organizationId, tenantId, page = 1, limit = 10 }) => {
 			try {
 				const params = {
-					organizationId,
-					...(tenantId && { tenantId }),
+					...resolveOrganizationScope(organizationId, tenantId),
 					page,
 					limit
 				};
@@ -624,7 +649,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 				logger.error('Error fetching contact projects:', sanitizeForLogging(error));
 				throw new Error(sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Invite organization contact tool
@@ -634,16 +660,15 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 		'Send invitation to an organization contact',
 		{
 			contactId: z.string().uuid().describe('The organization contact ID'),
-			organizationId: z.string().uuid().describe('The organization ID'),
-			tenantId: z.string().uuid().optional().describe('The tenant ID'),
+			organizationId: organizationIdParam,
+			tenantId: tenantIdParam,
 			inviteType: z.enum(['EMAIL', 'SMS']).optional().default('EMAIL').describe('Invitation type'),
 			customMessage: z.string().optional().describe('Custom message for the invitation')
 		},
 		async ({ contactId, organizationId, tenantId, inviteType = 'EMAIL', customMessage }) => {
 			try {
 				const response = await apiClient.post(`/api/organization-contact/${contactId}/invite`, {
-					organizationId,
-					...(tenantId && { tenantId }),
+					...resolveOrganizationScope(organizationId, tenantId),
 					inviteType,
 					...(customMessage && { customMessage })
 				});
@@ -660,6 +685,7 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 				logger.error('Error inviting organization contact:', sanitizeForLogging(error));
 				throw new Error(`Failed to invite organization contact: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.openWorldDestructive
 	);
 };

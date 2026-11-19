@@ -286,6 +286,10 @@
 		"IN_COMMON_ONE": "1 conversation in common",
 		"MESSAGE_PLACEHOLDER": "Message @{{name}}",
 		"MESSAGE": "Message",
+		"TEAM_CHAT": "Team chat",
+		"TEAM_MEMBERS": "Team members",
+		"TEAM_CHANNEL_NEW": "No #{{name}} channel yet. Your first message creates it with the team's members.",
+		"TEAM_CHANNEL_MEMBERS_ONLY": "You are not in a #{{name}} channel. Only the team's members can start its private channel.",
 		"VIEW_PROFILE": "View profile",
 		"SENT": "Sent to {{name}}"
 	},

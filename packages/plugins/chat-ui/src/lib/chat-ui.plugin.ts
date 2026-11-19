@@ -15,6 +15,8 @@ import {
 	CHAT_SECTIONS_LOCATION,
 	CHAT_SEND_TASK_EXTENSION_ID,
 	CHAT_TASK_ACTIONS_SLOT,
+	CHAT_TEAM_ACTIONS_SLOT,
+	CHAT_TEAM_CHAT_EXTENSION_ID,
 	CHAT_THREADS_PATH,
 	CHAT_UNREADS_PATH
 } from './chat-ui.constants';
@@ -99,6 +101,22 @@ export const CHAT_MESSAGE_EMPLOYEE_EXTENSION: PageExtensionDefinition = {
 	metadata: { title: 'Message', icon: 'message-circle-outline' }
 };
 
+/**
+ * "Team chat" on a team's page, for users who see the chat and may send (`CHAT_VIEW` and `CHAT_SEND`) where the
+ * tenant has the chat on: opens the team's channel (the one named as the team), joining it, or creating it with the
+ * first message sent when there is none (`POST /chat/conversations`, for senders). The button itself shows only once
+ * the API serves the chat to the user.
+ */
+export const CHAT_TEAM_CHAT_EXTENSION: PageExtensionDefinition = {
+	id: CHAT_TEAM_CHAT_EXTENSION_ID,
+	slotId: CHAT_TEAM_ACTIONS_SLOT,
+	loadComponent: () => import('./components/team-chat-button/team-chat-button.component').then((m) => m.TeamChatButtonComponent),
+	permissions: [PermissionsEnum.CHAT_VIEW, PermissionsEnum.CHAT_SEND],
+	featureKey: FeatureEnum.FEATURE_CHAT,
+	order: 50,
+	metadata: { title: 'Team chat', icon: 'message-circle-outline' }
+};
+
 /** The nav-menu entry, added once the API confirmed it serves the chat (`ChatAvailabilityService`). */
 export const CHAT_NAV_SECTION = {
 	id: CHAT_NAV_ID,
@@ -160,7 +178,7 @@ const declarative = defineDeclarativePlugin('chat', {
 	version: '0.1.0',
 	location: CHAT_SECTIONS_LOCATION,
 	routes: [CHAT_PAGE_ROUTE],
-	extensions: [CHAT_SEND_TASK_EXTENSION, CHAT_MESSAGE_EMPLOYEE_EXTENSION],
+	extensions: [CHAT_SEND_TASK_EXTENSION, CHAT_MESSAGE_EMPLOYEE_EXTENSION, CHAT_TEAM_CHAT_EXTENSION],
 	featureKey: FeatureEnum.FEATURE_CHAT,
 	permissionKeys: [PermissionsEnum.CHAT_VIEW],
 	translationNamespace: 'CHAT',
@@ -170,7 +188,7 @@ const declarative = defineDeclarativePlugin('chat', {
 /**
  * Chat UI plugin (`@gauzy/plugin-chat-ui`): `/pages/chat` (the conversations of the organization: channels in
  * their categories, direct and group messages, threads, reactions, pins and mentions, with my unread state, live
- * through the realtime events, with who is online), the header badge, the nav entry, "Send to chat" on a task's page and "Message" on an employee's page. Registered in `apps/gauzy/src/plugin-ui.config.ts`;
+ * through the realtime events, with who is online), the header badge, the nav entry, "Send to chat" on a task's page, "Message" on an employee's page and "Team chat" on a team's page. Registered in `apps/gauzy/src/plugin-ui.config.ts`;
  * shows nothing but the route unless the API serves the chat.
  */
 export const ChatUiPlugin: PluginUiDefinition = {

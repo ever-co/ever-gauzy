@@ -8,6 +8,7 @@ import { GoalLevelEnum } from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
+import { TOOL_HINTS } from './tool-hints';
 const logger = new Logger('GoalTools');
 
 /**
@@ -79,7 +80,8 @@ export const registerGoalTools = (server: McpServer) => {
 				logger.error('Error fetching goals:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch goals: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get goal count tool
@@ -120,7 +122,8 @@ export const registerGoalTools = (server: McpServer) => {
 				logger.error('Error fetching goal count:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch goal count: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get goal by ID tool
@@ -155,7 +158,8 @@ export const registerGoalTools = (server: McpServer) => {
 				logger.error('Error fetching goal:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch goal: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Create goal tool
@@ -197,7 +201,8 @@ export const registerGoalTools = (server: McpServer) => {
 				logger.error('Error creating goal:', sanitizeForLogging(error));
 				throw new Error(`Failed to create goal: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Update goal tool
@@ -227,7 +232,8 @@ export const registerGoalTools = (server: McpServer) => {
 				logger.error('Error updating goal:', sanitizeForLogging(error));
 				throw new Error(`Failed to update goal: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Update goal progress tool
@@ -255,7 +261,8 @@ export const registerGoalTools = (server: McpServer) => {
 				logger.error('Error updating goal progress:', sanitizeForLogging(error));
 				throw new Error(`Failed to update goal progress: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Delete goal tool
@@ -282,7 +289,8 @@ export const registerGoalTools = (server: McpServer) => {
 				logger.error('Error deleting goal:', sanitizeForLogging(error));
 				throw new Error(`Failed to delete goal: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.idempotentDestructive
 	);
 
 	// Get my goals tool
@@ -323,7 +331,8 @@ export const registerGoalTools = (server: McpServer) => {
 				logger.error('Error fetching my goals:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch my goals: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get team goals tool
@@ -364,7 +373,8 @@ export const registerGoalTools = (server: McpServer) => {
 				logger.error('Error fetching team goals:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch team goals: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get goal statistics tool
@@ -407,7 +417,8 @@ export const registerGoalTools = (server: McpServer) => {
 				logger.error('Error fetching goal statistics:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch goal statistics: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Align goals tool
@@ -435,7 +446,8 @@ export const registerGoalTools = (server: McpServer) => {
 				logger.error('Error aligning goals:', sanitizeForLogging(error));
 				throw new Error(`Failed to align goals: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Get goal templates tool
@@ -476,6 +488,7 @@ export const registerGoalTools = (server: McpServer) => {
 				logger.error('Error fetching goal templates:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch goal templates: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 };

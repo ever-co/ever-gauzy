@@ -2,6 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { apiClient } from '../../common/api-client';
 import { answer, describeError, query, registerCollaborationTool, scope } from './collaboration-tool';
+import { TOOL_HINTS } from '../tool-hints';
 
 const DOCS = '/api/plugins/docs';
 
@@ -82,7 +83,8 @@ export function registerDocsTools(server: McpServer, access: { read: boolean; wr
 			});
 			const items: Row[] = Array.isArray(list) ? list : (list?.['items'] ?? []);
 			return answer({ pages: items.map(pageSummary), total: Array.isArray(list) ? items.length : (list?.['total'] ?? items.length), page: pageNumber, limit });
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	registerCollaborationTool<{ pageId: string; offset?: number; limit?: number }>(
@@ -113,7 +115,8 @@ export function registerDocsTools(server: McpServer, access: { read: boolean; wr
 					? { revisionChanged: true, warning: 'The page was saved while it was read: read it again from offset 0 before joining slices or updating it.' }
 					: {})
 			});
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	registerCollaborationTool<{ query: string; topK?: number; documentIds?: string[] }>(
@@ -134,7 +137,8 @@ export function registerDocsTools(server: McpServer, access: { read: boolean; wr
 				kinds: ['PAGE']
 			});
 			return answer({ results: result ?? [] });
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	if (!access.write) return;
@@ -188,7 +192,8 @@ export function registerDocsTools(server: McpServer, access: { read: boolean; wr
 				}
 			}
 			return answer({ page: { ...pageSummary(created ?? {}), revision }, markdownWritten: !!args.markdown });
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	registerCollaborationTool<{ pageId: string; markdown: string; expectedRevision: number }>(
@@ -227,6 +232,7 @@ export function registerDocsTools(server: McpServer, access: { read: boolean; wr
 				}
 				throw error;
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 }

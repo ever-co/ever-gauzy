@@ -8,6 +8,7 @@ import { DealStatusEnum } from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
+import { TOOL_HINTS } from './tool-hints';
 const logger = new Logger('DealTools');
 
 export const registerDealTools = (server: McpServer) => {
@@ -58,7 +59,8 @@ export const registerDealTools = (server: McpServer) => {
 				logger.error('Error fetching deals:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch deals: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get deal count tool
@@ -97,7 +99,8 @@ export const registerDealTools = (server: McpServer) => {
 				logger.error('Error fetching deal count:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch deal count: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get deal by ID tool
@@ -132,7 +135,8 @@ export const registerDealTools = (server: McpServer) => {
 				logger.error('Error fetching deal:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch deal: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Create deal tool
@@ -168,7 +172,8 @@ export const registerDealTools = (server: McpServer) => {
 				logger.error('Error creating deal:', sanitizeForLogging(error));
 				throw new Error(`Failed to create deal: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Update deal tool
@@ -196,7 +201,8 @@ export const registerDealTools = (server: McpServer) => {
 				logger.error('Error updating deal:', sanitizeForLogging(error));
 				throw new Error(`Failed to update deal: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Update deal stage tool
@@ -224,7 +230,8 @@ export const registerDealTools = (server: McpServer) => {
 				logger.error('Error updating deal stage:', sanitizeForLogging(error));
 				throw new Error(`Failed to update deal stage: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Delete deal tool
@@ -251,7 +258,8 @@ export const registerDealTools = (server: McpServer) => {
 				logger.error('Error deleting deal:', sanitizeForLogging(error));
 				throw new Error(`Failed to delete deal: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.idempotentDestructive
 	);
 
 	// Get deals by client tool
@@ -294,7 +302,8 @@ export const registerDealTools = (server: McpServer) => {
 				logger.error('Error fetching deals by client:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch deals by client: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get my deals tool
@@ -335,7 +344,8 @@ export const registerDealTools = (server: McpServer) => {
 				logger.error('Error fetching my deals:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch my deals: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get deal statistics tool
@@ -376,7 +386,8 @@ export const registerDealTools = (server: McpServer) => {
 				logger.error('Error fetching deal statistics:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch deal statistics: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Add deal property tool
@@ -409,7 +420,8 @@ export const registerDealTools = (server: McpServer) => {
 				logger.error('Error adding deal property:', sanitizeForLogging(error));
 				throw new Error(`Failed to add deal property: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Update deal property tool
@@ -438,7 +450,8 @@ export const registerDealTools = (server: McpServer) => {
 				logger.error('Error updating deal property:', sanitizeForLogging(error));
 				throw new Error(`Failed to update deal property: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Remove deal property tool
@@ -470,7 +483,8 @@ export const registerDealTools = (server: McpServer) => {
 				logger.error('Error removing deal property:', sanitizeForLogging(error));
 				throw new Error(`Failed to remove deal property: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.idempotentDestructive
 	);
 
 	// Get deals pipeline tool
@@ -507,7 +521,8 @@ export const registerDealTools = (server: McpServer) => {
 				logger.error('Error fetching deals pipeline:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch deals pipeline: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Search deals tool
@@ -548,6 +563,7 @@ export const registerDealTools = (server: McpServer) => {
 				logger.error('Error searching deals:', sanitizeForLogging(error));
 				throw new Error(`Failed to search deals: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 };

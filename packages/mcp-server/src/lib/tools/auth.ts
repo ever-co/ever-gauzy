@@ -9,6 +9,7 @@ import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils'
 import type { SessionData } from '../session/session-store';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
+import { TOOL_HINTS } from './tool-hints';
 const logger = new Logger('AuthTools');
 
 /**
@@ -102,7 +103,8 @@ Authentication status: ${authStatus.isAuthenticated ? 'Authenticated' : 'Not aut
 					]
 				};
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Logout with session cleanup
@@ -178,7 +180,8 @@ Authentication status: ${authStatus.isAuthenticated ? 'Authenticated' : 'Not aut
 					]
 				};
 			}
-		}
+		},
+		TOOL_HINTS.idempotentDestructive
 	);
 
 	// Get authentication and session status
@@ -272,7 +275,8 @@ ${
 					]
 				};
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Refresh authentication token with session context
@@ -345,7 +349,8 @@ Authentication status: ${authStatus.isAuthenticated ? 'Authenticated' : 'Not aut
 					]
 				};
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Session management tools
@@ -442,18 +447,22 @@ Current Session: ${sessionId ? 'Present' : 'Not in session context'}`;
 					]
 				};
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Session cleanup tool
 	registerTool(
 		server,
-		'cleanup_sessions', 'Cleanup expired sessions and get session statistics', {}, async () => {
-		try {
-			const cleanupResult = sessionManager.cleanup();
-			const stats = sessionManager.getStats();
+		'cleanup_sessions',
+		'Cleanup expired sessions and get session statistics',
+		{},
+		async () => {
+			try {
+				const cleanupResult = sessionManager.cleanup();
+				const stats = sessionManager.getStats();
 
-			const statusText = `🧹 Session Cleanup Completed:
+				const statusText = `🧹 Session Cleanup Completed:
 
 Sessions Removed: ${cleanupResult.sessionsRemoved}
 Connections Removed: ${cleanupResult.connectionsRemoved}
@@ -465,26 +474,28 @@ Expired Sessions: ${stats.expiredSessions}
 Total Connections: ${stats.totalConnections}
 Active Connections: ${stats.activeConnections}`;
 
-			return {
-				content: [
-					{
-						type: 'text',
-						text: statusText
-					}
-				]
-			};
-		} catch (error) {
-			logger.error('Session cleanup tool error:', sanitizeForLogging(error));
-			return {
-				content: [
-					{
-						type: 'text',
-						text: `❌ Failed to cleanup sessions: ${sanitizeErrorMessage(error)}`
-					}
-				]
-			};
-		}
-	});
+				return {
+					content: [
+						{
+							type: 'text',
+							text: statusText
+						}
+					]
+				};
+			} catch (error) {
+				logger.error('Session cleanup tool error:', sanitizeForLogging(error));
+				return {
+					content: [
+						{
+							type: 'text',
+							text: `❌ Failed to cleanup sessions: ${sanitizeErrorMessage(error)}`
+						}
+					]
+				};
+			}
+		},
+		TOOL_HINTS.idempotentDestructive
+	);
 
 	logger.log('Session-aware authentication tools registered successfully');
 };

@@ -8,6 +8,7 @@ import { validateOrganizationContext } from './utils';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
+import { TOOL_HINTS } from './tool-hints';
 const logger = new Logger('CandidateTools');
 
 /**
@@ -75,7 +76,8 @@ export const registerCandidateTools = (server: McpServer) => {
 				logger.error('Error fetching candidates:', sanitizeForLogging(error));
 				throw new Error('Failed to fetch candidates: ' + sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get candidate count tool
@@ -114,7 +116,8 @@ export const registerCandidateTools = (server: McpServer) => {
 				logger.error('Error fetching candidate count:', sanitizeForLogging(error));
 				throw new Error('Failed to fetch candidate count: ' + sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get candidate by ID tool
@@ -159,7 +162,8 @@ export const registerCandidateTools = (server: McpServer) => {
 				logger.error('Error fetching candidate:', sanitizeForLogging(error));
 				throw new Error('Failed to fetch candidate by ID: ' + sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Create candidate tool
@@ -195,7 +199,8 @@ export const registerCandidateTools = (server: McpServer) => {
 				logger.error('Error creating candidate:', sanitizeForLogging(error));
 				throw new Error('Failed to create candidate: ' + sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Update candidate tool
@@ -233,7 +238,8 @@ export const registerCandidateTools = (server: McpServer) => {
 				logger.error('Error updating candidate:', sanitizeForLogging(error));
 				throw new Error('Failed to update candidate: ' + sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Update candidate status tool
@@ -269,7 +275,8 @@ export const registerCandidateTools = (server: McpServer) => {
 				logger.error('Error updating candidate status:', sanitizeForLogging(error));
 				throw new Error('Failed to update candidate status: ' + sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Rate candidate tool
@@ -305,7 +312,8 @@ export const registerCandidateTools = (server: McpServer) => {
 				logger.error('Error rating candidate:', sanitizeForLogging(error));
 				throw new Error('Failed to rate candidate: ' + sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Delete candidate tool
@@ -344,7 +352,8 @@ export const registerCandidateTools = (server: McpServer) => {
 				logger.error('Error deleting candidate:', sanitizeForLogging(error));
 				throw new Error('Failed to delete candidate: ' + sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.idempotentDestructive
 	);
 
 	// Get candidates by position tool
@@ -387,7 +396,8 @@ export const registerCandidateTools = (server: McpServer) => {
 				logger.error('Error fetching candidates by position:', sanitizeForLogging(error));
 				throw new Error('Failed to fetch candidates by position: ' + sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get candidate skills tool
@@ -424,7 +434,8 @@ export const registerCandidateTools = (server: McpServer) => {
 				logger.error('Error fetching candidate skills:', sanitizeForLogging(error));
 				throw new Error('Failed to fetch candidate skills: ' + sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Add candidate skill tool
@@ -471,7 +482,8 @@ export const registerCandidateTools = (server: McpServer) => {
 				logger.error('Error adding candidate skill:', sanitizeForLogging(error));
 				throw new Error('Failed to add candidate skill: ' + sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Get candidate experience tool
@@ -508,7 +520,8 @@ export const registerCandidateTools = (server: McpServer) => {
 				logger.error('Error fetching candidate experience:', sanitizeForLogging(error));
 				throw new Error('Failed to fetch candidate experience: ' + sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Add candidate experience tool
@@ -554,7 +567,8 @@ export const registerCandidateTools = (server: McpServer) => {
 				logger.error('Error adding candidate experience:', sanitizeForLogging(error));
 				throw new Error('Failed to add candidate experience: ' + sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Get candidate education tool
@@ -591,7 +605,8 @@ export const registerCandidateTools = (server: McpServer) => {
 				logger.error('Error fetching candidate education:', sanitizeForLogging(error));
 				throw new Error('Failed to fetch candidate education: ' + sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Add candidate education tool
@@ -641,6 +656,7 @@ export const registerCandidateTools = (server: McpServer) => {
 				logger.error('Error adding candidate education:', sanitizeForLogging(error));
 				throw new Error('Failed to add candidate education: ' + sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 };

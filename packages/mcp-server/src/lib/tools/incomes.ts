@@ -8,6 +8,7 @@ import { CurrenciesEnum } from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
+import { TOOL_HINTS } from './tool-hints';
 const logger = new Logger('IncomeTools');
 
 /**
@@ -67,7 +68,8 @@ export const registerIncomeTools = (server: McpServer) => {
 				logger.error('Error fetching my incomes:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch my incomes: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get income count tool
@@ -108,7 +110,8 @@ export const registerIncomeTools = (server: McpServer) => {
 				logger.error('Error fetching income count:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch income count: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get paginated incomes tool
@@ -145,7 +148,8 @@ export const registerIncomeTools = (server: McpServer) => {
 				logger.error('Error fetching paginated incomes:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch paginated incomes: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get all incomes tool
@@ -185,7 +189,8 @@ export const registerIncomeTools = (server: McpServer) => {
 				logger.error('Error fetching incomes:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch incomes: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get income by ID tool
@@ -212,7 +217,8 @@ export const registerIncomeTools = (server: McpServer) => {
 				logger.error('Error fetching income:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch income: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Create income tool
@@ -260,7 +266,8 @@ export const registerIncomeTools = (server: McpServer) => {
 				logger.error('Error creating income:', sanitizeForLogging(error));
 				throw new Error(`Failed to create income: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Update income tool
@@ -303,7 +310,8 @@ export const registerIncomeTools = (server: McpServer) => {
 				logger.error('Error updating income:', sanitizeForLogging(error));
 				throw new Error(`Failed to update income: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Delete income tool
@@ -332,6 +340,7 @@ export const registerIncomeTools = (server: McpServer) => {
 				logger.error('Error deleting income:', sanitizeForLogging(error));
 				throw new Error(`Failed to delete income: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.idempotentDestructive
 	);
 };

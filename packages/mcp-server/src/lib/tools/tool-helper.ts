@@ -10,6 +10,7 @@
  * schema at compile time. By using explicit callback types and casting, we avoid this.
  */
 import { McpServer, ToolCallback } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { ToolAnnotations } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 
 /**
@@ -46,6 +47,8 @@ export type SchemaShape = Record<string, z.ZodTypeAny>;
  * @param description - Tool description
  * @param schema - Zod schema shape object (will be wrapped in z.object)
  * @param callback - Tool callback function
+ * @param annotations - The tool's hints (read-only, destructive, idempotent, open world), listed with it: a client
+ *   reads them to decide whether to ask the person before a call
  *
  * @example
  * registerTool(server, 'get_tasks', 'Get tasks', {
@@ -54,14 +57,15 @@ export type SchemaShape = Record<string, z.ZodTypeAny>;
  * }, async (args) => {
  *   const { projectId, page } = args as { projectId?: string; page: number };
  *   // ... implementation
- * });
+ * }, { readOnlyHint: true, openWorldHint: false });
  */
 export function registerTool(
 	server: McpServer,
 	name: string,
 	description: string,
 	schema: any,
-	callback: (args: any) => Promise<ToolResult>
+	callback: (args: any) => Promise<ToolResult>,
+	annotations?: ToolAnnotations
 ): void {
 	// Use registerTool with explicit inputSchema
 	// The 'as any' cast is intentional to bypass complex generic inference
@@ -70,7 +74,8 @@ export function registerTool(
 		name,
 		{
 			description,
-			inputSchema: z.object(schema)
+			inputSchema: z.object(schema),
+			annotations
 		},
 		callback
 	);
@@ -83,12 +88,14 @@ export function registerTool(
  * @param name - Tool name
  * @param description - Tool description
  * @param callback - Tool callback function
+ * @param annotations - The tool's hints, listed with it (see {@link registerTool})
  */
 export function registerNoArgsTool(
 	server: McpServer,
 	name: string,
 	description: string,
-	callback: () => Promise<ToolResult>
+	callback: () => Promise<ToolResult>,
+	annotations?: ToolAnnotations
 ): void {
-	(server.registerTool as any)(name, { description }, callback);
+	(server.registerTool as any)(name, { description, annotations }, callback);
 }

@@ -1,6 +1,8 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
+import type { ToolAnnotations } from '@modelcontextprotocol/sdk/types.js';
 import { Logger } from '@nestjs/common';
+import { z } from 'zod';
 import { version } from './common/version';
 import { sanitizeErrorMessage } from './common/error-utils';
 import { TransportFactory, TransportResult } from './transports';
@@ -26,6 +28,8 @@ export interface ToolDescriptor {
 		definitions?: Record<string, unknown>;
 		[key: string]: unknown;
 	};
+	/** The hints the tool declares (read-only, destructive, idempotent, open world), when it declares them. */
+	annotations?: ToolAnnotations;
 }
 
 /**
@@ -54,6 +58,17 @@ export class ExtendedMcpServer extends McpServer {
 			typeof obj.parse === 'function' &&
 			typeof obj.safeParse === 'function'
 		);
+	}
+
+	/**
+	 * Zod 4 schemas carry `_zod`: the classic objects of `registerTool`, and the mini objects the SDK builds from the
+	 * shape given to `tool()`, which have no `_def`.
+	 */
+	private isZod4Schema(obj: unknown): obj is z.core.$ZodType {
+		if (typeof obj !== 'object' || obj === null) {
+			return false;
+		}
+		return '_zod' in obj;
 	}
 
 	/**
@@ -99,8 +114,17 @@ export class ExtendedMcpServer extends McpServer {
 
 					if (toolData.inputSchema) {
 						try {
-							// If it's a Zod schema, try to convert it to JSON schema using toJSON if available
-							if (this.isZodSchema(toolData.inputSchema)) {
+							if (this.isZod4Schema(toolData.inputSchema)) {
+								// The conversion the SDK's tools/list makes over stdio (draft-07, input side), so a tool
+								// lists the same parameters on every transport. zod-to-json-schema only reads Zod 3: it
+								// answers a Zod 4 object with an empty definition.
+								inputSchema = z.toJSONSchema(toolData.inputSchema, {
+									target: 'draft-7',
+									io: 'input'
+								}) as typeof inputSchema;
+								logger.debug(`Converted Zod 4 schema to JSON schema for tool: ${name}`);
+							} else if (this.isZodSchema(toolData.inputSchema)) {
+								// If it's a Zod schema, try to convert it to JSON schema using toJSON if available
 								let zodSchema = toolData.inputSchema;
 								// Try to use toJSON (Zod >=3.20.0) or zod-to-json-schema if available
 								if (typeof zodSchema.toJSON === 'function') {
@@ -148,7 +172,8 @@ export class ExtendedMcpServer extends McpServer {
 					toolsList.push({
 						name,
 						description: toolData.description || `Tool: ${name}`,
-						inputSchema
+						inputSchema,
+						...(toolData.annotations && { annotations: toolData.annotations })
 					});
 
 					logger.debug(`Added tool to list: ${name}`);
