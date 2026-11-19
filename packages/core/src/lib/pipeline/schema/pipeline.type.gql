@@ -150,8 +150,9 @@ What a caller states when it changes a pipeline that exists.
 **A member the caller leaves out is left as it is on the pipeline row, `stages` included.** A body
 that states `stages` replaces the stage set: the delivered writer keeps the stages the list names,
 saves them, creates the ones that state no identifier, and **removes every existing stage the list
-does not name**, with the deals filed in it. `stages: []` therefore empties the pipeline. A body that
-omits `stages` leaves the stages, and the deals filed in them, as they are.
+does not name**, with the deals filed in it. `stages: []` therefore empties the pipeline, and
+`stages: null` does the same. A body that omits `stages` leaves the stages, and the deals filed in
+them, as they are.
 
 The edit runs in one transaction and hands the stages their `pipelineId` and their `index` itself, in
 the order the array states.

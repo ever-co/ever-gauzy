@@ -187,4 +187,12 @@ describe('PipelineService.update: the stages an edit leaves out', () => {
 		expect(savedStages()).toEqual([]);
 		expect(queryRunner.commitTransaction).toHaveBeenCalledTimes(1);
 	});
+
+	it('removes every stage when the edit states null, as it does for an empty list', async () => {
+		await service.update(PIPELINE_ID, { name: 'Trail partnerships', stages: null });
+
+		expect(queryRunner.manager.remove).toHaveBeenCalledTimes(2);
+		expect(savedStages()).toEqual([]);
+		expect(queryRunner.commitTransaction).toHaveBeenCalledTimes(1);
+	});
 });
