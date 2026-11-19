@@ -184,6 +184,28 @@ describe('daily plan list tools — the day, and the status a route ignores, kep
 		});
 	});
 
+	it('reads past the first API page to keep a status, the next page asked by its number', async () => {
+		const firstPage = Array.from({ length: 100 }, (_, index) => ({
+			id: `open-${index}`,
+			date: '2026-11-19T00:00:00.000Z',
+			status: 'open'
+		}));
+		const late = { id: 'late', date: '2026-11-19T00:00:00.000Z', status: 'completed' };
+		get.mockImplementation(async (_path: string, { params }: { params: { skip: number } }) => {
+			if (params.skip === 1) {
+				return { items: firstPage, total: 101 } as never;
+			}
+			return { items: [late], total: 101 } as never;
+		});
+
+		expect(await answered('get_my_daily_plans', { status: 'COMPLETED' })).toEqual({ ids: ['late'], total: 1 });
+
+		expect(get).toHaveBeenCalledTimes(2);
+		expect(get).toHaveBeenLastCalledWith('/api/daily-plan/me', {
+			params: { where: { ...SCOPE, status: 'completed' }, take: 100, skip: 2 }
+		});
+	});
+
 	it('pages the plans kept, not the plans read', async () => {
 		expect(
 			await answered('get_employee_daily_plans', { employeeId: EMPLOYEE, date: DATE, page: 2, limit: 1 })
