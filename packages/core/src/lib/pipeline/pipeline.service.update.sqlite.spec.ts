@@ -1,8 +1,10 @@
-import { rmSync } from 'node:fs';
+import { readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { BetterSqliteDriver } from '@mikro-orm/better-sqlite';
 import type { MikroORM } from '@mikro-orm/core';
+import { PIPES_METADATA } from '@nestjs/common/constants';
+import { buildSchema, graphql } from 'graphql';
 import type { DataSource } from 'typeorm';
 import type { RequestContext as RequestContextType } from '../core/context/request-context';
 import type { PipelineService } from './pipeline.service';
@@ -15,6 +17,11 @@ import type { PipelineService } from './pipeline.service';
  * enforced: the deals of a removed stage go through their `ON DELETE CASCADE`, and nothing in this file removes them.
  * The real `PipelineService` over its repositories and the TypeORM connection, with the nested ownership check it runs
  * before its transaction. Only the caller's tenant is stood in for.
+ *
+ * **Both transports.** The same database is also reached the way a client reaches it: a body run through the
+ * validation pipe of `PUT /pipelines/:id` and `PipelineController.update`, and an `updatePipeline` mutation run
+ * through the served schema into `PipelineResolver`. There the membership lookup behind the organization validator is
+ * stood in for as well: it reads the caller's account, which this database does not hold.
  *
  * **Both ORM settings.** The cases run with the modules loaded under `DB_ORM=typeorm`, then under `DB_ORM=mikro-orm`.
  * Under MikroORM the service also holds a MikroORM repository on the same database, as the API wires it, and each
@@ -31,6 +38,11 @@ const OTHER_PIPELINE = '7e000000-0000-4000-8000-0000000000a2';
 const QUALIFIED = '7e000000-0000-4000-8000-0000000000b3';
 
 const SCOPE = { tenantId: TENANT, organizationId: ORGANIZATION };
+
+/** The schema the API serves: the committed snapshot, which CI keeps equal to the server's composition. */
+const SCHEMA = buildSchema(readFileSync(join(__dirname, '..', 'graphql', 'schema', 'schema.graphql'), 'utf8'));
+
+const UPDATE_PIPELINE = 'mutation Update($input: UpdatePipelineInput!) { updatePipeline(input: $input) { id name } }';
 
 /** A row with the columns given, and a placeholder in every other NOT NULL column without a default. */
 async function insert(dataSource: DataSource, table: string, row: Record<string, unknown>): Promise<void> {
@@ -162,6 +174,15 @@ describe.each(['typeorm', 'mikro-orm'])('PipelineService.update on SQLite, with 
 	let mikroOrm: MikroORM<BetterSqliteDriver> | undefined;
 	let service: PipelineService;
 	let RequestContext: typeof RequestContextType;
+	let createService: () => PipelineService;
+	/** The classes a request meets on its way to the service, as the modules loaded under this setting define them. */
+	let transports: {
+		PipelineController: typeof import('./pipeline.controller').PipelineController;
+		PipelineResolver: typeof import('./pipeline.resolver').PipelineResolver;
+		UpdatePipelineDTO: typeof import('./dto').UpdatePipelineDTO;
+		ValidationPipe: typeof import('@nestjs/common').ValidationPipe;
+		OrganizationBelongsToUserConstraint: typeof import('../shared/validators/constraints/organization-belongs-to-user.constraint').OrganizationBelongsToUserConstraint;
+	};
 	/** The transactions committed through TypeORM since the case began. */
 	let typeOrmCommits = 0;
 
@@ -214,7 +235,6 @@ describe.each(['typeorm', 'mikro-orm'])('PipelineService.update on SQLite, with 
 
 			// Under DB_ORM=typeorm the API configures MikroORM without a connection, so no MikroORM repository is
 			// reachable; under DB_ORM=mikro-orm it connects to the same database, and so does this one.
-			let mikroOrmRepository: InstanceType<typeof MikroOrmPipelineRepository> | undefined;
 			if (ormSetting === 'mikro-orm') {
 				const { EntityCaseNamingStrategy } = require('@mikro-orm/core') as typeof import('@mikro-orm/core');
 				const { MikroORM, BetterSqliteDriver } =
@@ -234,16 +254,34 @@ describe.each(['typeorm', 'mikro-orm'])('PipelineService.update on SQLite, with 
 					allowGlobalContext: true,
 					discovery: { warnWhenNoEntities: false }
 				});
-				mikroOrmRepository = new MikroOrmPipelineRepository(mikroOrm.em.fork(), entities.Pipeline);
 			}
 
-			service = new pipelines.PipelineService(
-				new TypeOrmPipelineRepository(dataSource.getRepository(entities.Pipeline)),
-				mikroOrmRepository,
-				new TypeOrmDealRepository(dataSource.getRepository(entities.Deal)),
-				new TypeOrmUserRepository(dataSource.getRepository(entities.User)),
-				new ConnectionEntityManager(dataSource.manager)
-			);
+			// The service of one request: under MikroORM each request reads through a context of its own.
+			createService = () => {
+				let mikroOrmRepository: InstanceType<typeof MikroOrmPipelineRepository> | undefined;
+				if (mikroOrm) {
+					mikroOrmRepository = new MikroOrmPipelineRepository(mikroOrm.em.fork(), entities.Pipeline);
+				}
+				return new pipelines.PipelineService(
+					new TypeOrmPipelineRepository(dataSource.getRepository(entities.Pipeline)),
+					mikroOrmRepository,
+					new TypeOrmDealRepository(dataSource.getRepository(entities.Deal)),
+					new TypeOrmUserRepository(dataSource.getRepository(entities.User)),
+					new ConnectionEntityManager(dataSource.manager)
+				);
+			};
+			service = createService();
+			transports = {
+				PipelineController: (require('./pipeline.controller') as typeof import('./pipeline.controller'))
+					.PipelineController,
+				PipelineResolver: (require('./pipeline.resolver') as typeof import('./pipeline.resolver'))
+					.PipelineResolver,
+				UpdatePipelineDTO: (require('./dto') as typeof import('./dto')).UpdatePipelineDTO,
+				ValidationPipe: (require('@nestjs/common') as typeof import('@nestjs/common')).ValidationPipe,
+				OrganizationBelongsToUserConstraint: (
+					require('../shared/validators/constraints/organization-belongs-to-user.constraint') as typeof import('../shared/validators/constraints/organization-belongs-to-user.constraint')
+				).OrganizationBelongsToUserConstraint
+			};
 		});
 	}, TIMEOUT);
 
@@ -320,5 +358,95 @@ describe.each(['typeorm', 'mikro-orm'])('PipelineService.update on SQLite, with 
 		expect(await stored(dataSource)).toEqual({ pipeline: 'Trail partnerships', stages: [], deals: [] });
 		await expectUntouched(dataSource, otherPipeline);
 		expect(typeOrmCommits).toBe(1);
+	});
+
+	describe('through PUT /pipelines/:id', () => {
+		let checkOrganization: jest.SpyInstance;
+
+		beforeEach(() => {
+			const { OrganizationBelongsToUserConstraint } = transports;
+			checkOrganization = jest
+				.spyOn(OrganizationBelongsToUserConstraint.prototype, 'checkOrganizationExistence')
+				.mockResolvedValue(true);
+		});
+
+		/** Runs one body through the route's own validation pipe and its handler, as Nest calls them. */
+		async function putPipeline(body: object): Promise<void> {
+			const { PipelineController, UpdatePipelineDTO, ValidationPipe } = transports;
+			const pipes: unknown[] = Reflect.getMetadata(PIPES_METADATA, PipelineController.prototype.update) ?? [];
+			const pipe = pipes.find((it) => it instanceof ValidationPipe) as InstanceType<typeof ValidationPipe>;
+			const validated = await pipe.transform(body, {
+				type: 'body',
+				metatype: UpdatePipelineDTO,
+				data: undefined
+			});
+
+			await new PipelineController(createService()).update(PIPELINE, validated);
+		}
+
+		it('keeps both stages and their deals when the body leaves stages out', async () => {
+			await putPipeline({ organizationId: ORGANIZATION, name: 'Trail partnerships 2026' });
+
+			expect(checkOrganization).toHaveBeenCalledWith(ORGANIZATION);
+			expect(await stored(dataSource)).toEqual({
+				pipeline: 'Trail partnerships 2026',
+				stages: ['Contacted', 'Proposal'],
+				deals: ['Cedar Ridge intro', 'Larchmont Trails renewal']
+			});
+			expect(typeOrmCommits).toBe(1);
+		});
+
+		it('removes every stage and every deal in them when the body states an empty list', async () => {
+			const otherPipeline = await otherPipelineRows(dataSource);
+
+			await putPipeline({ organizationId: ORGANIZATION, name: 'Trail partnerships', stages: [] });
+
+			expect(checkOrganization).toHaveBeenCalledWith(ORGANIZATION);
+			expect(await stored(dataSource)).toEqual({ pipeline: 'Trail partnerships', stages: [], deals: [] });
+			await expectUntouched(dataSource, otherPipeline);
+			expect(typeOrmCommits).toBe(1);
+		});
+	});
+
+	describe('through the updatePipeline mutation', () => {
+		/** Runs one mutation through the served schema, into the resolver of one request. */
+		async function mutatePipeline(input: object): Promise<unknown> {
+			const { PipelineResolver } = transports;
+			const resolver = new PipelineResolver(createService());
+			const result = await graphql({
+				schema: SCHEMA,
+				source: UPDATE_PIPELINE,
+				variableValues: { input },
+				rootValue: {
+					updatePipeline: (args: { input: { id: string } }) => resolver.updatePipeline(args.input)
+				}
+			});
+
+			expect(result.errors).toBeUndefined();
+			return result.data;
+		}
+
+		it('keeps both stages and their deals when the input leaves stages out', async () => {
+			const answer = await mutatePipeline({ id: PIPELINE, name: 'Trail partnerships 2026' });
+
+			expect(answer).toEqual({ updatePipeline: { id: PIPELINE, name: 'Trail partnerships 2026' } });
+			expect(await stored(dataSource)).toEqual({
+				pipeline: 'Trail partnerships 2026',
+				stages: ['Contacted', 'Proposal'],
+				deals: ['Cedar Ridge intro', 'Larchmont Trails renewal']
+			});
+			expect(typeOrmCommits).toBe(1);
+		});
+
+		it('removes every stage and every deal in them when the input states an empty list', async () => {
+			const otherPipeline = await otherPipelineRows(dataSource);
+
+			const answer = await mutatePipeline({ id: PIPELINE, name: 'Trail partnerships', stages: [] });
+
+			expect(answer).toEqual({ updatePipeline: { id: PIPELINE, name: 'Trail partnerships' } });
+			expect(await stored(dataSource)).toEqual({ pipeline: 'Trail partnerships', stages: [], deals: [] });
+			await expectUntouched(dataSource, otherPipeline);
+			expect(typeOrmCommits).toBe(1);
+		});
 	});
 });
