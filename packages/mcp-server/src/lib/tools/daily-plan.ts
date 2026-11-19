@@ -8,14 +8,35 @@ import { DailyPlanStatusEnum } from '../input-schemas';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
 import { TOOL_HINTS } from './tool-hints';
+import { buildListQuery, ListQueryOptions } from './utils';
 const logger = new Logger('DailyPlanTools');
+
+/** Query of a daily plan list route: the filters inside `where`, and `skip` read as a page number. */
+const planListQuery = (
+	defaultParams: { tenantId?: string; organizationId?: string },
+	where: Record<string, unknown>,
+	{ page, limit, relations }: Pick<ListQueryOptions, 'page' | 'limit' | 'relations'>
+) => buildListQuery(defaultParams, where, { page, limit, relations, skipIsPage: true });
+
+/**
+ * The route `get_daily_plans` reads. The list route refuses an employee who names no team they belong to, and the
+ * person's own plans have their own route: the list route is read only for a team or an employee.
+ */
+const dailyPlansPath = (organizationTeamId?: string, employeeId?: string) => {
+	if (organizationTeamId || employeeId) {
+		return '/api/daily-plan';
+	}
+	return '/api/daily-plan/me';
+};
 
 export const registerDailyPlanTools = (server: McpServer) => {
 	// Get all daily plans tool
 	registerTool(
 		server,
 		'get_daily_plans',
-		"Get all daily plans for the authenticated user's organization",
+		"Get daily plans in the authenticated user's organization. With no team and no employee, reads the signed-in " +
+			"person's own plans; with a team or an employee, the plans of that team or employee, where an employee " +
+			'reads only the teams they belong to',
 		{
 			employeeId: z.string().uuid().optional().describe('Filter by employee ID'),
 			organizationTeamId: z.string().uuid().optional().describe('Filter by team ID'),
@@ -39,19 +60,10 @@ export const registerDailyPlanTools = (server: McpServer) => {
 					);
 				}
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					...(employeeId && { employeeId }),
-					...(organizationTeamId && { organizationTeamId }),
-					...(date && { date }),
-					...(status && { status }),
-					page,
-					limit,
-					...(relations && { relations })
-				};
+				const where = { employeeId, organizationTeamId, date, status };
+				const params = planListQuery(defaultParams, where, { page, limit, relations });
 
-				const response = await apiClient.get('/api/daily-plan', { params });
+				const response = await apiClient.get(dailyPlansPath(organizationTeamId, employeeId), { params });
 
 				return {
 					content: [
@@ -94,16 +106,8 @@ export const registerDailyPlanTools = (server: McpServer) => {
 					);
 				}
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					...(organizationTeamId && { organizationTeamId }),
-					...(date && { date }),
-					...(status && { status }),
-					page,
-					limit,
-					...(relations && { relations })
-				};
+				const where = { organizationTeamId, date, status };
+				const params = planListQuery(defaultParams, where, { page, limit, relations });
 
 				const response = await apiClient.get('/api/daily-plan/me', { params });
 
@@ -145,16 +149,8 @@ export const registerDailyPlanTools = (server: McpServer) => {
 						'Organization ID not available. Please ensure you are logged in and have an organization.'
 					);
 				}
-				const params = {
-					organizationId,
-					...(tenantId && { tenantId }),
-					...(organizationTeamId && { organizationTeamId }),
-					...(date && { date }),
-					...(status && { status }),
-					page,
-					limit,
-					...(relations && { relations })
-				};
+				const where = { organizationTeamId, date, status };
+				const params = planListQuery({ organizationId, tenantId }, where, { page, limit, relations });
 
 				const response = await apiClient.get('/api/daily-plan/team', { params });
 
@@ -196,15 +192,11 @@ export const registerDailyPlanTools = (server: McpServer) => {
 						'Organization ID not available. Please ensure you are logged in and have an organization.'
 					);
 				}
-				const params = {
-					organizationId,
-					...(tenantId && { tenantId }),
-					...(date && { date }),
-					...(status && { status }),
-					page,
-					limit,
-					...(relations && { relations })
-				};
+				const params = planListQuery(
+					{ organizationId, tenantId },
+					{ date, status },
+					{ page, limit, relations }
+				);
 
 				const response = await apiClient.get(`/api/daily-plan/employee/${employeeId}`, { params });
 
@@ -246,15 +238,11 @@ export const registerDailyPlanTools = (server: McpServer) => {
 						'Organization ID not available. Please ensure you are logged in and have an organization.'
 					);
 				}
-				const params = {
-					organizationId,
-					...(tenantId && { tenantId }),
-					...(date && { date }),
-					...(status && { status }),
-					page,
-					limit,
-					...(relations && { relations })
-				};
+				const params = planListQuery(
+					{ organizationId, tenantId },
+					{ date, status },
+					{ page, limit, relations }
+				);
 
 				const response = await apiClient.get(`/api/daily-plan/task/${taskId}`, { params });
 
