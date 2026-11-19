@@ -1,7 +1,3 @@
-// The Documents page's look (docs-ui `docs-shell` tokens, `docs-browse`, `docs-cards`, `docs-table`,
-// `preset-chips`), with the same values, so the two pages read as one. Every custom property carries a
-// fallback: `--gauzy-*` is undefined in material-light / -dark.
-
 :host {
   display: block;
   min-height: 100%;
@@ -30,8 +26,6 @@
   padding: var(--fav-page-padding);
   color: var(--fav-text);
 }
-
-// ─── Header ──────────────────────────────────────────────────────
 
 .favorites-header {
   display: flex;
@@ -65,8 +59,6 @@
   line-height: 1.125rem;
   color: var(--fav-text-muted);
 }
-
-// ─── Toolbar: search + list / cards switch ───────────────────────
 
 .favorites-toolbar {
   display: flex;
@@ -115,7 +107,6 @@
   border: 0;
 }
 
-// List / cards: one bordered segmented control; the current view is a quiet fill.
 .favorites-view-toggle {
   flex: 0 0 auto;
   display: inline-flex;
@@ -149,58 +140,36 @@
   }
 }
 
-// ─── Type tabs: the Documents preset group ───────────────────────
-
-.favorites-tabs {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-self: flex-start;
-  gap: 0.125rem;
+.favorites-type-filter {
+  flex: 0 0 auto;
+  width: 13rem;
   max-width: 100%;
-  padding: 0.125rem;
-  border: 1px solid var(--fav-hairline);
-  border-radius: calc(var(--border-radius, 0.5rem) * 0.75);
-}
 
-.favorites-tabs button.favorites-tab[nbButton] {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.25rem;
-  height: 1.625rem !important;
-  min-height: 1.625rem !important;
-  max-width: 100%;
-  padding: 0 0.625rem !important;
-  border: 0 !important;
-  border-radius: calc(var(--border-radius, 0.5rem) / 2) !important;
-  background: transparent !important;
-  color: var(--fav-text-muted) !important;
-  font-size: 0.75rem !important;
-  font-weight: 500;
-  line-height: 1;
-  text-transform: none;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-
-  &:hover {
-    background: var(--fav-hover) !important;
-    color: var(--fav-text) !important;
+  ::ng-deep .select-button {
+    min-width: 0;
+    height: var(--fav-control-height);
+    min-height: var(--fav-control-height);
+    padding-block: 0;
+    padding-inline-end: 2rem;
+    overflow: hidden;
+    border-radius: var(--fav-radius);
+    font-size: var(--fav-meta-size);
+    font-weight: 500;
+    line-height: 1;
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
 
-  &.active {
-    background: var(--fav-active) !important;
-    color: var(--fav-text) !important;
+  ::ng-deep .select-button span {
+    overflow: hidden;
+    line-height: 1.25rem;
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
 }
 
-.favorites-tab-label {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.favorites-tab-count {
+.favorites-option-count {
+  margin-inline-start: 0.25rem;
   font-variant-numeric: tabular-nums;
   opacity: 0.7;
 }
@@ -219,8 +188,6 @@
   }
 }
 
-// ─── Empty / loading ─────────────────────────────────────────────
-
 .favorites-empty-host {
   display: flex;
   align-items: center;
@@ -238,8 +205,6 @@
   text-align: center;
   color: var(--fav-text-muted);
 }
-
-// ─── Cards view (docs `docs-cards`) ──────────────────────────────
 
 .favorites-cards-grid {
   display: grid;
@@ -283,7 +248,6 @@
   }
 }
 
-// Fixed height so every card lines up, whatever icon it holds.
 .favorites-card-thumb {
   display: flex;
   align-items: center;
@@ -301,7 +265,6 @@
   align-items: center;
   min-width: 0;
   min-height: 1.5rem;
-  // Keeps a long name clear of the star laid over this row.
   padding-inline-end: 1.75rem;
 }
 
@@ -315,7 +278,6 @@
   font-weight: 600;
 }
 
-// The record's own description, two lines at most. Shown only when there is one.
 .favorites-card-desc {
   display: -webkit-box;
   -webkit-box-orient: vertical;
@@ -328,7 +290,6 @@
   overflow-wrap: anywhere;
 }
 
-// Date on the left, the kind of record on the right (a Documents card's date and size).
 .favorites-card-footer {
   display: flex;
   align-items: center;
@@ -352,15 +313,12 @@
   }
 }
 
-// Plain muted text, no chip.
 .favorites-pinned {
   font-size: var(--fav-meta-size);
   line-height: 1rem;
   font-weight: 400;
   color: var(--fav-text-muted);
 }
-
-// ─── Table view (docs `docs-table`) ──────────────────────────────
 
 .favorites-table {
   position: relative;
@@ -376,7 +334,6 @@
     table-layout: fixed;
   }
 
-  // Quiet header: small, semi-bold, muted — the data is what should stand out.
   th {
     box-sizing: border-box;
     height: 2.25rem;
@@ -425,7 +382,6 @@
     white-space: nowrap;
   }
 
-  // Takes the room the other columns leave; one line, the full text in the tooltip.
   .desc-col {
     color: var(--fav-text-muted);
   }
@@ -497,8 +453,6 @@
   white-space: nowrap;
 }
 
-// ─── The star, in both views. Always visible: it shows the record is a favorite. ──
-
 .favorites-star {
   display: inline-flex;
   align-items: center;
@@ -515,14 +469,11 @@
   }
 }
 
-// On a card it sits at the end of the name row: card padding + thumb + gap.
 .favorites-card-wrap .favorites-star {
   position: absolute;
   top: calc(0.75rem + 6.25rem + 0.5rem);
   right: 0.75rem;
 }
-
-// ─── Narrow screens ──────────────────────────────────────────────
 
 @media (max-width: 767px) {
   .favorites-search {
