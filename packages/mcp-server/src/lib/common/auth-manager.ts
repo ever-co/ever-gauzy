@@ -477,20 +477,22 @@ export class AuthManager {
 			return false;
 		}
 
+		const renewing = state.tokenData;
 		const accessToken = await this.exchangeApiToken();
-		if (!state.tokenData) {
+		// A login that took this one's place during the exchange (the `login` tool, a logout) keeps its own tokens
+		if (!renewing || state.tokenData !== renewing) {
 			return false;
 		}
 		if (!accessToken) {
 			if (this.isApiTokenRefused) {
-				state.tokenData.accessToken = '';
-				state.tokenData.expiresAt = new Date(0);
+				renewing.accessToken = '';
+				renewing.expiresAt = new Date(0);
 			}
 			return false;
 		}
 
-		state.tokenData.accessToken = accessToken;
-		state.tokenData.expiresAt = this.calculateTokenExpiry(accessToken);
+		renewing.accessToken = accessToken;
+		renewing.expiresAt = this.calculateTokenExpiry(accessToken);
 		if (environment.debug) {
 			logger.log('API token exchanged again');
 		}

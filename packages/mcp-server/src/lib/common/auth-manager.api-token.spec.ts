@@ -308,6 +308,51 @@ describe('AuthManager: signing in with GAUZY_API_TOKEN', () => {
 			expect(urls(api).filter((url) => url === '/api/auth/api-token/exchange')).toHaveLength(2);
 			expect(authManager.getAccessToken()).toBe(RENEWED);
 		});
+
+		describe('when the login tool signs in while the token is exchanged again', () => {
+			/** Starts a renewal whose exchange answers only once the login tool has signed in */
+			async function renewDuringPasswordLogin(answer: () => unknown) {
+				let answerExchange: () => void;
+				const exchangeAnswered = new Promise<void>((resolve) => {
+					answerExchange = resolve;
+				});
+				const api = fakeApi(
+					inTurn(
+						() => ({ token: EXPIRING }),
+						async () => {
+							await exchangeAnswered;
+							return answer();
+						}
+					)
+				);
+				const { authManager } = startServer(api);
+				await authManager.initialize();
+
+				const renewal = authManager.refreshToken();
+				expect(await authManager.login('caller@example.com', 'caller-password')).toBe(true);
+				answerExchange();
+				return { authManager, renewed: await renewal };
+			}
+
+			it('keeps the password login when the exchange succeeds', async () => {
+				const { authManager, renewed } = await renewDuringPasswordLogin(() => ({ token: RENEWED }));
+
+				expect(renewed).toBe(false);
+				expect(authManager.getAccessToken()).toBe(SIGNED_IN);
+				expect(authManager.getRefreshToken()).toBe('refresh');
+				expect(authManager.isApiTokenLogin()).toBe(false);
+			});
+
+			it('keeps the password login when the API refuses the token', async () => {
+				const { authManager, renewed } = await renewDuringPasswordLogin(() => {
+					throw httpError(401);
+				});
+
+				expect(renewed).toBe(false);
+				expect(authManager.isAuthenticated()).toBe(true);
+				expect(authManager.getAccessToken()).toBe(SIGNED_IN);
+			});
+		});
 	});
 
 	it('never puts the token in a log, an error or the auth status', async () => {
