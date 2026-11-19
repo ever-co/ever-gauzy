@@ -3,7 +3,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { validateOrganizationContext } from './utils';
+import { buildListQuery, validateOrganizationContext } from './utils';
 import { ProductCategoryInputSchema } from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
@@ -29,12 +29,8 @@ export const registerProductCategoryTools = (server: McpServer) => {
 				const defaultParams = validateOrganizationContext();
 
 				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					page,
-					limit,
+					...buildListQuery(defaultParams, {}, { page, limit, relations }),
 					...(search && { search }),
-					...(relations && { relations }),
 					...(langCode && { langCode })
 				};
 
