@@ -16,12 +16,14 @@ import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { EmbedClientService } from './embed-client.service';
 import { EmbedCredentialService } from './embed-credential.service';
 import {
+	EmbedAllowedOriginController,
 	EmbedCredentialController,
 	EmbedProjectController,
 	EmbedSiteGrantController,
 	EmbedTokenController
 } from './embed.controller';
 import { EmbedSiteGrantService } from './embed-site-grant.service';
+import { EmbedAllowedOriginService } from './embed-allowed-origin.service';
 import { EmbedEnabledGuard } from './embed.guards';
 import {
 	EMBED_CLIENT_CLAIM,
@@ -334,5 +336,41 @@ describe('DELETE /embed/grants/:id', () => {
 		await expect(controller.revokeGrant(id)).resolves.toBeUndefined();
 
 		expect(revokeGrant).toHaveBeenCalledWith(id);
+	});
+});
+
+/** `PATCH /api/embed-allowed-origins/:id`: the sign-in setting of an allowed site, with the permission of add and remove. */
+describe('PATCH /embed-allowed-origins/:id', () => {
+	const setHandler = EmbedAllowedOriginController.prototype.setPersonSignIn;
+
+	it('is a PATCH of an allowed origin, behind the guards and the permission of add and remove', () => {
+		expect(Reflect.getMetadata(PATH_METADATA, EmbedAllowedOriginController)).toBe('/embed-allowed-origins');
+		expect(Reflect.getMetadata(PATH_METADATA, setHandler)).toBe('/:id');
+		expect(Reflect.getMetadata(METHOD_METADATA, setHandler)).toBe(RequestMethod.PATCH);
+		expect(Reflect.getMetadata(GUARDS_METADATA, EmbedAllowedOriginController)).toEqual([
+			TenantPermissionGuard,
+			PermissionGuard,
+			EmbedEnabledGuard
+		]);
+		expect(Reflect.getMetadata(PERMISSIONS_METADATA, EmbedAllowedOriginController)).toEqual([
+			PermissionsEnum.ALL_ORG_EDIT
+		]);
+		expect(Reflect.getMetadata(PUBLIC_METHOD_METADATA, setHandler)).toBeUndefined();
+	});
+
+	it('hands the origin and the setting to the service, and answers the origin', async () => {
+		const origin = {
+			id: '7a000000-0000-4000-8000-00000000d001',
+			origin: 'https://team.example.com',
+			allowPersonSignIn: true
+		};
+		const setPersonSignIn = jest.fn(async () => origin);
+		const controller = new EmbedAllowedOriginController({
+			setPersonSignIn
+		} as unknown as EmbedAllowedOriginService);
+
+		await expect(controller.setPersonSignIn(origin.id, { allowPersonSignIn: true })).resolves.toBe(origin);
+
+		expect(setPersonSignIn).toHaveBeenCalledWith(origin.id, true);
 	});
 });

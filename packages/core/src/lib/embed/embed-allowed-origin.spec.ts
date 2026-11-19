@@ -42,6 +42,10 @@ function build() {
 		if (!row) throw new NotFoundException();
 		return row;
 	});
+	jest.spyOn(service, 'update').mockImplementation(async (id: any, patch: any) => {
+		rows.filter((row) => row.id === id).forEach((row) => Object.assign(row, patch));
+		return { affected: 1 } as any;
+	});
 	jest.spyOn(service, 'delete').mockImplementation(async (id: any) => {
 		rows.splice(
 			rows.findIndex((row) => row.id === id),
@@ -194,6 +198,41 @@ describe('EmbedAllowedOriginService', () => {
 
 		await expect(service.remove('7a000000-0000-4000-8000-00000000d001')).rejects.toThrow('connection lost');
 		expect(service.delete).not.toHaveBeenCalled();
+	});
+
+	it('turns sign-in from an allowed origin on and off, and answers the origin with its setting', async () => {
+		const { service, rows } = build();
+		signIn(TENANT);
+		const { id } = await service.addForOrganization({ origin: 'https://team.example.com', organizationId: ORG });
+
+		const on = await service.setPersonSignIn(id, true);
+		expect(on).toMatchObject({ id, origin: 'https://team.example.com', allowPersonSignIn: true });
+		expect(rows[0].allowPersonSignIn).toBe(true);
+		expect(await service.findAllowed(TENANT, ORG, 'https://team.example.com')).toMatchObject({
+			allowPersonSignIn: true
+		});
+
+		const off = await service.setPersonSignIn(id, false);
+		expect(off.allowPersonSignIn).toBe(false);
+		expect(rows[0].allowPersonSignIn).toBe(false);
+	});
+
+	it("sets sign-in only on an origin of the caller's tenant: 404 for any other, and a failed read is thrown as it is", async () => {
+		const { service, rows } = build();
+		signIn(TENANT);
+		const { id } = await service.addForOrganization({ origin: 'https://team.example.com', organizationId: ORG });
+
+		signIn(OTHER_TENANT);
+		await expect(service.setPersonSignIn(id, true)).rejects.toThrow(NotFoundException);
+		signIn(TENANT);
+		await expect(service.setPersonSignIn('7a000000-0000-4000-8000-00000000d0ff', true)).rejects.toThrow(
+			NotFoundException
+		);
+		jest.spyOn(service, 'findOneByOptions').mockRejectedValueOnce(new Error('connection lost'));
+		await expect(service.setPersonSignIn(id, true)).rejects.toThrow('connection lost');
+
+		expect(service.update).not.toHaveBeenCalled();
+		expect(rows[0].allowPersonSignIn).toBe(false);
 	});
 
 	it('removes only an origin of the caller tenant', async () => {

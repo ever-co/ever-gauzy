@@ -104,6 +104,21 @@ export class EmbedAllowedOriginService extends TenantAwareCrudService<EmbedAllow
 		this.logger.log(`Embed origin removed: ${row.origin} organizationId=${row.organizationId}`);
 	}
 
+	/**
+	 * Turns sign-in by the organization's people from an allowed origin of the caller's tenant on or off. Turned off, the
+	 * site's next renewals are refused, and the timer tokens it holds live out their few minutes; turned back on, its
+	 * people's sign-ins that have not expired renew again.
+	 */
+	async setPersonSignIn(id: ID, allowPersonSignIn: boolean): Promise<EmbedAllowedOriginResponseDTO> {
+		const row = await this.findOwn(id);
+		await this.update(id, { allowPersonSignIn });
+		row.allowPersonSignIn = allowPersonSignIn;
+		this.logger.log(
+			`Embed origin sign-in set: ${row.origin} allowPersonSignIn=${allowPersonSignIn} organizationId=${row.organizationId}`
+		);
+		return EmbedAllowedOriginResponseDTO.from(row);
+	}
+
 	/** An origin of the caller's tenant, by id. Only a miss answers 404: a lookup that failed is thrown as it is. */
 	private async findOwn(id: ID): Promise<EmbedAllowedOrigin> {
 		const row = await this.findOneByOptions({ where: { id, tenantId: RequestContext.currentTenantId() } }).catch(

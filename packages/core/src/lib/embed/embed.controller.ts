@@ -8,6 +8,7 @@ import {
 	HttpCode,
 	HttpStatus,
 	Param,
+	Patch,
 	Post,
 	Query,
 	Req,
@@ -41,7 +42,11 @@ import {
 import { EmbedClientService } from './embed-client.service';
 import { EmbedCredentialService } from './embed-credential.service';
 import { EMBED_EXCHANGE_THROTTLE, EMBED_SITE_THROTTLE, embedExchangeAddress } from './embed-exchange-throttle';
-import { CreateEmbedAllowedOriginDTO, EmbedAllowedOriginResponseDTO } from './dto/embed-allowed-origin.dto';
+import {
+	CreateEmbedAllowedOriginDTO,
+	EmbedAllowedOriginResponseDTO,
+	UpdateEmbedAllowedOriginDTO
+} from './dto/embed-allowed-origin.dto';
 import { EmbedAllowedOriginService } from './embed-allowed-origin.service';
 import { EmbedSiteGrantService } from './embed-site-grant.service';
 import { EmbedEnabledGuard } from './embed.guards';
@@ -120,6 +125,21 @@ export class EmbedAllowedOriginController {
 	@UseValidationPipe({ whitelist: true })
 	async add(@Body() input: CreateEmbedAllowedOriginDTO): Promise<EmbedAllowedOriginResponseDTO> {
 		return await this.embedAllowedOriginService.addForOrganization(input);
+	}
+
+	@ApiOperation({
+		summary:
+			"Turn on or off whether the organization's people can sign in from an allowed site themselves; off, its renewals stop at once"
+	})
+	@ApiResponse({ status: HttpStatus.OK, type: EmbedAllowedOriginResponseDTO })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: "Not an allowed origin of the caller's tenant" })
+	@Patch('/:id')
+	@UseValidationPipe({ whitelist: true })
+	async setPersonSignIn(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Body() input: UpdateEmbedAllowedOriginDTO
+	): Promise<EmbedAllowedOriginResponseDTO> {
+		return await this.embedAllowedOriginService.setPersonSignIn(id, input.allowPersonSignIn);
 	}
 
 	@ApiOperation({

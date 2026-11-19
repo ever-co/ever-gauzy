@@ -1,6 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsNotEmpty, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
-import { ID, IEmbedAllowedOrigin, IEmbedAllowedOriginCreateInput } from '@gauzy/contracts';
+import {
+	ID,
+	IEmbedAllowedOrigin,
+	IEmbedAllowedOriginCreateInput,
+	IEmbedAllowedOriginUpdateInput
+} from '@gauzy/contracts';
 import { IsOrganizationBelongsToUser } from '../../shared/validators';
 import { EmbedAllowedOrigin } from '../embed-allowed-origin.entity';
 
@@ -30,6 +35,16 @@ export class CreateEmbedAllowedOriginDTO implements IEmbedAllowedOriginCreateInp
 	@IsOptional()
 	@IsBoolean()
 	allowPersonSignIn?: boolean;
+}
+
+/** `PATCH /api/embed-allowed-origins/:id`: the one setting of an allowed site that changes. */
+export class UpdateEmbedAllowedOriginDTO implements IEmbedAllowedOriginUpdateInput {
+	@ApiProperty({
+		type: () => Boolean,
+		description: "Whether the organization's people can sign in from this site themselves (POST /embed/authorize)."
+	})
+	@IsBoolean()
+	allowPersonSignIn: boolean;
 }
 
 /** An allowed origin as the list answers it: who added it and when, and whether people can sign in from it. */
