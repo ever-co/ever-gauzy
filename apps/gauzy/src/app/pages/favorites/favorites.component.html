@@ -1,63 +1,213 @@
-<nb-card class="favorites card-scroll">
-	<nb-card-header class="header">
-		<h4 class="page-title">{{ 'MENU.FAVORITES' | translate }}</h4>
-		<p class="subtitle">{{ 'FAVORITES.SUBTITLE' | translate }}</p>
-	</nb-card-header>
+<!-- Laid out like the Documents page (docs-ui `docs-browse`): header, toolbar, then the list. -->
+<div class="favorites">
+	<!-- Header -->
+	<div class="favorites-header">
+		<div class="favorites-title-group">
+			<h4 class="favorites-title">{{ 'MENU.FAVORITES' | translate }}</h4>
+			<p class="favorites-subtitle">{{ 'FAVORITES.SUBTITLE' | translate }}</p>
+		</div>
+	</div>
 
-	<nb-card-body>
-		@if (view$ | async; as view) {
-			@if (view.loading && !view.rows.length) {
-				<div class="loading">
-					<nb-spinner status="primary" size="medium"></nb-spinner>
-				</div>
-			} @else {
-				@if (view.loadFailed) {
-					<div class="load-failed" role="alert">
-						<span>{{ 'FAVORITES.ERROR.LOAD_FAILED' | translate }}</span>
-						<button type="button" nbButton size="small" status="basic" (click)="retry()">
-							<nb-icon icon="refresh-outline"></nb-icon>
-							{{ 'BUTTONS.RETRY' | translate }}
-						</button>
-					</div>
-				}
+	<!-- Toolbar: search, then the list / cards switch at the end of the row. -->
+	<div class="favorites-toolbar">
+		<div class="favorites-search">
+			<label class="sr-only-label" for="favorites-search">{{ 'FAVORITES.SEARCH_PLACEHOLDER' | translate }}</label>
+			<nb-icon icon="search-outline"></nb-icon>
+			<input
+				nbInput
+				fullWidth
+				type="text"
+				id="favorites-search"
+				autocomplete="off"
+				[placeholder]="'FAVORITES.SEARCH_PLACEHOLDER' | translate"
+				[value]="search()"
+				(input)="onSearch($any($event.target).value)"
+			/>
+		</div>
 
-				@if (view.rows.length) {
-					<ul class="list">
-						@for (row of view.rows; track row.favoriteId) {
-							<li class="row">
-								<a class="link" [routerLink]="row.url">
-									<i class="icon" [class]="row.icon" aria-hidden="true"></i>
-									<span class="title" [title]="row.title">{{ row.title }}</span>
-									@if (row.pinnedForOrganization) {
-										<span class="pinned">{{ 'FAVORITES.PINNED_FOR_ORGANIZATION' | translate }}</span>
-									}
-								</a>
-								<button
-									type="button"
-									nbButton
-									ghost
-									size="small"
-									class="remove"
-									[disabled]="!row.own || !!removingId()"
-									[nbTooltip]="
-										(row.own ? 'BUTTONS.REMOVE_FROM_FAVORITES' : 'FAVORITES.PINNED_FOR_ORGANIZATION')
-											| translate
-									"
-									[attr.aria-label]="
-										(row.own ? 'BUTTONS.REMOVE_FROM_FAVORITES' : 'FAVORITES.PINNED_FOR_ORGANIZATION')
-											| translate
-									"
-									(click)="remove(row)"
-								>
-									<nb-icon icon="star" status="warning"></nb-icon>
-								</button>
-							</li>
-						}
-					</ul>
-				} @else if (!view.loadFailed) {
-					<p class="empty">{{ 'FAVORITES.EMPTY' | translate }}</p>
-				}
+		<!-- `<fieldset>` groups the two buttons; the inline rules only undo the user-agent fieldset chrome. -->
+		<fieldset
+			class="favorites-view-toggle"
+			style="border: 0; padding: 0; margin-inline: 0; min-inline-size: 0"
+		>
+			<button
+				type="button"
+				nbButton
+				ghost
+				size="small"
+				[class.active]="!cardsView()"
+				[attr.aria-pressed]="!cardsView()"
+				[nbTooltip]="'SETTINGS_MENU.TABLE' | translate"
+				[attr.aria-label]="'SETTINGS_MENU.TABLE' | translate"
+				(click)="setLayout(layoutStyles.TABLE)"
+			>
+				<nb-icon icon="list-outline"></nb-icon>
+			</button>
+			<button
+				type="button"
+				nbButton
+				ghost
+				size="small"
+				[class.active]="cardsView()"
+				[attr.aria-pressed]="cardsView()"
+				[nbTooltip]="'SETTINGS_MENU.CARDS_GRID' | translate"
+				[attr.aria-label]="'SETTINGS_MENU.CARDS_GRID' | translate"
+				(click)="setLayout(layoutStyles.CARDS_GRID)"
+			>
+				<nb-icon icon="grid-outline"></nb-icon>
+			</button>
+		</fieldset>
+	</div>
+
+	<!-- Type tabs: All, then one per kind of record the user has favorites of. -->
+	@if (typeTabs().length) {
+		<div class="favorites-tabs" role="tablist">
+			<button
+				type="button"
+				nbButton
+				ghost
+				size="tiny"
+				role="tab"
+				class="favorites-tab"
+				[class.active]="!activeType()"
+				[attr.aria-selected]="!activeType()"
+				(click)="selectType(null)"
+			>
+				<span class="favorites-tab-label">{{ 'FAVORITES.ALL' | translate }}</span>
+				<span class="favorites-tab-count">({{ searchedCount() }})</span>
+			</button>
+			@for (tab of typeTabs(); track tab.entity) {
+				<button
+					type="button"
+					nbButton
+					ghost
+					size="tiny"
+					role="tab"
+					class="favorites-tab"
+					[class.active]="activeType() === tab.entity"
+					[attr.aria-selected]="activeType() === tab.entity"
+					(click)="selectType(tab.entity)"
+				>
+					<span class="favorites-tab-label">{{ tab.labelKey | translate }}</span>
+					<span class="favorites-tab-count">({{ tab.count }})</span>
+				</button>
 			}
+		</div>
+	}
+
+	@if (loadFailed()) {
+		<div class="load-failed" role="alert">
+			<span>{{ 'FAVORITES.ERROR.LOAD_FAILED' | translate }}</span>
+			<button type="button" nbButton size="small" status="basic" (click)="retry()">
+				<nb-icon icon="refresh-outline"></nb-icon>
+				{{ 'BUTTONS.RETRY' | translate }}
+			</button>
+		</div>
+	}
+
+	<!-- Content -->
+	@if (loading() && !rows().length) {
+		<div class="favorites-empty-host">
+			<nb-spinner status="primary" size="medium"></nb-spinner>
+		</div>
+	} @else if (visibleRows().length) {
+		@if (cardsView()) {
+			<!-- Cards view. The card is a link and the star a sibling laid over its name row: a link may not
+			contain a button. -->
+			<ul class="favorites-cards-grid">
+				@for (row of visibleRows(); track row.favoriteId) {
+					<li class="favorites-card-wrap">
+						<a class="favorites-card" [routerLink]="row.url">
+							<span class="favorites-card-thumb" aria-hidden="true">
+								<i [class]="row.icon"></i>
+							</span>
+							<span class="favorites-card-head">
+								<span class="favorites-card-name" [title]="row.title">{{ row.title }}</span>
+							</span>
+							<span class="favorites-card-badges">
+								@if (row.pinnedForOrganization) {
+									<span class="favorites-pinned">
+										{{ 'FAVORITES.PINNED_FOR_ORGANIZATION' | translate }}
+									</span>
+								}
+							</span>
+							<span class="favorites-card-footer">
+								@if (row.addedAt) {
+									<span>{{ row.addedAt | date: 'mediumDate' }}</span>
+								}
+							</span>
+						</a>
+						<ng-container *ngTemplateOutlet="star; context: { $implicit: row }"></ng-container>
+					</li>
+				}
+			</ul>
+		} @else {
+			<!-- Table view -->
+			<div class="favorites-table">
+				<table>
+					<thead>
+						<tr>
+							<th scope="col" class="name-col">{{ 'SM_TABLE.NAME' | translate }}</th>
+							<th scope="col" class="added-col">{{ 'FAVORITES.ADDED' | translate }}</th>
+							<th scope="col" class="actions-col">{{ 'SM_TABLE.ACTIONS' | translate }}</th>
+						</tr>
+					</thead>
+					<tbody>
+						@for (row of visibleRows(); track row.favoriteId) {
+							<tr>
+								<td class="name-col">
+									<a class="favorites-name" [routerLink]="row.url">
+										<span class="favorites-name-lead" aria-hidden="true">
+											<i [class]="row.icon"></i>
+										</span>
+										<span class="favorites-name-text" [title]="row.title">{{ row.title }}</span>
+										@if (row.pinnedForOrganization) {
+											<span class="favorites-pinned">
+												{{ 'FAVORITES.PINNED_FOR_ORGANIZATION' | translate }}
+											</span>
+										}
+									</a>
+								</td>
+								<td class="added-col">
+									@if (row.addedAt) {
+										<span [title]="row.addedAt | date: 'medium'">
+											{{ row.addedAt | date: 'MMM d, y, h:mm a' }}
+										</span>
+									}
+								</td>
+								<td class="actions-col">
+									<ng-container *ngTemplateOutlet="star; context: { $implicit: row }"></ng-container>
+								</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+			</div>
 		}
-	</nb-card-body>
-</nb-card>
+	} @else if (rows().length) {
+		<div class="favorites-empty-host">
+			<p class="favorites-empty">{{ 'FAVORITES.NO_MATCH' | translate }}</p>
+		</div>
+	} @else if (!loadFailed()) {
+		<div class="favorites-empty-host">
+			<p class="favorites-empty">{{ 'FAVORITES.EMPTY' | translate }}</p>
+		</div>
+	}
+</div>
+
+<!-- The star of a favorite, the same in both views: removes the user's own favorite. -->
+<ng-template #star let-row>
+	<button
+		type="button"
+		nbButton
+		ghost
+		size="tiny"
+		class="favorites-star"
+		[disabled]="!row.own || !!removingId()"
+		[nbTooltip]="(row.own ? 'BUTTONS.REMOVE_FROM_FAVORITES' : 'FAVORITES.PINNED_FOR_ORGANIZATION') | translate"
+		[attr.aria-label]="(row.own ? 'BUTTONS.REMOVE_FROM_FAVORITES' : 'FAVORITES.PINNED_FOR_ORGANIZATION') | translate"
+		(click)="remove(row)"
+	>
+		<nb-icon icon="star" status="warning"></nb-icon>
+	</button>
+</ng-template>
