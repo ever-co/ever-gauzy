@@ -26,6 +26,25 @@ export function sessionIdForLog(sessionId: string | null | undefined): string {
 }
 
 /**
+ * The reason the API gave for refusing a request, from the answer the HTTP client keeps on its error: the validation
+ * sends a list, a guard one sentence. None for an answer without one (a proxy's page, a bare status).
+ */
+function apiReasonOf(error: unknown): string | undefined {
+	const data = (error as { response?: { data?: unknown } } | undefined)?.response?.data;
+	if (typeof data !== 'object' || data === null) {
+		return undefined;
+	}
+	const message = (data as { message?: unknown }).message;
+	if (Array.isArray(message)) {
+		return message.map(String).join('; ');
+	}
+	if (typeof message === 'string' && message.length > 0) {
+		return message;
+	}
+	return undefined;
+}
+
+/**
  * Sanitize an error message for safe logging/display
  * Removes sensitive information and normalizes error format
  */
@@ -39,6 +58,10 @@ export function sanitizeErrorMessage(error: unknown): string {
 	}
 
 	if (error instanceof Error) {
+		const reason = apiReasonOf(error);
+		if (reason) {
+			return sanitizeString(`${error.message}: ${reason}`);
+		}
 		return sanitizeString(error.message);
 	}
 
