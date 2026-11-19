@@ -2,7 +2,7 @@
 import '../core/entities/internal';
 
 import { randomUUID } from 'node:crypto';
-import { DataSource } from 'typeorm';
+import { DataSource, QueryRunner } from 'typeorm';
 import { isPostgres } from '@gauzy/config';
 import { coreEntities } from '../core/entities';
 import {
@@ -159,20 +159,25 @@ const postgresUrl = process.env.GAUZY_MIGRATION_TEST_POSTGRES_URL;
 			return call;
 		};
 
-		/** Resolves once a statement on the sign-in table waits for a lock another transaction holds. */
-		const untilWaiting = async (): Promise<void> => {
+		/** The server process of a connection of the spec. */
+		const backendOf = async (runner: QueryRunner): Promise<number> => {
+			const [row] = await runner.query(`SELECT pg_backend_pid() AS "pid"`);
+			return row.pid;
+		};
+
+		/** Resolves once a statement waits for a lock the given connection's transaction holds. */
+		const untilBlockedBy = async (blocker: number): Promise<void> => {
 			const deadline = Date.now() + WAIT_TIMEOUT;
 			for (;;) {
 				const [row] = await dataSource.query(
-					`SELECT COUNT(*)::int AS "count" FROM "pg_stat_activity" WHERE "datname" = current_database() ` +
-						`AND "wait_event_type" = 'Lock' AND "query" ILIKE $1`,
-					['%embed_site_grant%']
+					`SELECT COUNT(*)::int AS "count" FROM pg_stat_activity WHERE $1 = ANY(pg_blocking_pids(pid))`,
+					[blocker]
 				);
 				if (row.count > 0) {
 					return;
 				}
 				if (Date.now() > deadline) {
-					throw new Error('No statement waited for a lock on embed_site_grant');
+					throw new Error('No statement waited for a lock of the spec transaction');
 				}
 				await new Promise((resolve) => setTimeout(resolve, WAIT_STEP));
 			}
@@ -196,7 +201,7 @@ const postgresUrl = process.env.GAUZY_MIGRATION_TEST_POSTGRES_URL;
 					);
 					const revocation = track(service.revoke({ renewalToken: token }));
 
-					await untilWaiting();
+					await untilBlockedBy(await backendOf(rotation));
 					await pause();
 					expect(revocation.settled).toBe(false);
 
@@ -238,7 +243,7 @@ const postgresUrl = process.env.GAUZY_MIGRATION_TEST_POSTGRES_URL;
 					);
 					const renewal = track(service.renew({ renewalToken: token }, SITE));
 
-					await untilWaiting();
+					await untilBlockedBy(await backendOf(revocation));
 					await pause();
 					expect(renewal.settled).toBe(false);
 
