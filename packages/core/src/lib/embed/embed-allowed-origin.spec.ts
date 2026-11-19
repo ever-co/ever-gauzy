@@ -6,6 +6,7 @@ import { RequestContext as MikroOrmRequestContext } from '@mikro-orm/core';
 import { sign } from 'jsonwebtoken';
 import { environment } from '@gauzy/config';
 import { RequestContext } from '../core/context';
+import { EmbedAllowedOriginResponseDTO } from './dto/embed-allowed-origin.dto';
 import { EmbedAllowedOriginService } from './embed-allowed-origin.service';
 import { createEmbedCorsDelegate } from './embed-cors';
 import { EmbedSessionGuard } from './embed.guards';
@@ -113,6 +114,39 @@ describe('EmbedAllowedOriginService', () => {
 		expect(listed[0]).toHaveProperty('createdAt');
 	});
 
+	it('adds an origin with sign-in by people off unless the input turns it on, and lists the setting', async () => {
+		const { service } = build();
+		signIn(TENANT);
+
+		const plain = await service.addForOrganization({ origin: 'https://docs.example.com', organizationId: ORG });
+		const signIns = await service.addForOrganization({
+			origin: 'https://team.example.com',
+			organizationId: ORG,
+			allowPersonSignIn: true
+		});
+		// Adding it again keeps the setting it has.
+		const again = await service.addForOrganization({
+			origin: 'https://docs.example.com',
+			organizationId: ORG,
+			allowPersonSignIn: true
+		});
+		const listed = await service.listForOrganization(ORG);
+
+		expect(plain.allowPersonSignIn).toBe(false);
+		expect(signIns.allowPersonSignIn).toBe(true);
+		expect(again).toMatchObject({ id: plain.id, allowPersonSignIn: false });
+		expect(Object.fromEntries(listed.map((row) => [row.origin, row.allowPersonSignIn]))).toEqual({
+			'https://docs.example.com': false,
+			'https://team.example.com': true
+		});
+	});
+
+	it('lists a site stored before the setting existed with sign-in off', () => {
+		const answer = EmbedAllowedOriginResponseDTO.from({ id: 'a', origin: 'https://app.example.com' } as never);
+
+		expect(answer.allowPersonSignIn).toBe(false);
+	});
+
 	it('refuses what is not an origin', async () => {
 		const { service } = build();
 		signIn(TENANT);
@@ -134,6 +168,7 @@ describe('EmbedAllowedOriginService', () => {
 			tenantId: TENANT,
 			organizationId: ORG,
 			origin: 'https://app.example.com',
+			allowPersonSignIn: false,
 			createdByUserId: ADMIN
 		});
 		expect((await service.listForOrganization(ORG))[0].createdByUserId).toBe(ADMIN);

@@ -46,7 +46,10 @@ export class EmbedAllowedOriginService extends TenantAwareCrudService<EmbedAllow
 		return rows.map((row) => EmbedAllowedOriginResponseDTO.from(row));
 	}
 
-	/** Adds an origin, normalized; adding one that is already there answers the existing row. */
+	/**
+	 * Adds an origin, normalized, with sign-in by the organization's people off unless the input turns it on. Adding one
+	 * that is already there answers the existing row, its setting unchanged.
+	 */
 	async addForOrganization(input: CreateEmbedAllowedOriginDTO): Promise<EmbedAllowedOriginResponseDTO> {
 		const origin = normalizeOrigin(input.origin);
 		if (!origin) {
@@ -70,7 +73,11 @@ export class EmbedAllowedOriginService extends TenantAwareCrudService<EmbedAllow
 			// Who added it, stated: under MikroORM `createdByUserId` is a mirror that is not persisted, and the base
 			// subscriber sets only the mirror; the create states the creator relation from it. TypeORM writes the same
 			// value either way.
-			row = await this.create({ ...scope, createdByUserId: RequestContext.currentUserId() });
+			row = await this.create({
+				...scope,
+				allowPersonSignIn: input.allowPersonSignIn === true,
+				createdByUserId: RequestContext.currentUserId()
+			});
 		} catch (error) {
 			// Two requests adding the same origin at once: the unique index refuses the second insert, and the row
 			// the first one saved is the answer.
