@@ -8,7 +8,7 @@ import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils'
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
 import { TOOL_HINTS } from './tool-hints';
-import { resolveOrganizationScope } from './utils';
+import { buildListQuery, resolveOrganizationScope } from './utils';
 const logger = new Logger('OrganizationContactTools');
 
 const ORGANIZATION_ID_DESCRIPTION = "The organization ID (defaults to the signed-in user's organization)";
@@ -147,17 +147,13 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 			relations
 		}) => {
 			try {
-				const params = {
-					...resolveOrganizationScope(organizationId, tenantId),
-					...(contactType && { contactType }),
-					...(name && { name }),
-					...(primaryEmail && { primaryEmail }),
-					...(primaryPhone && { primaryPhone }),
-					...(members && { members }),
+				const where = { contactType, name, primaryEmail, primaryPhone, members };
+				const params = buildListQuery(resolveOrganizationScope(organizationId, tenantId), where, {
 					page,
 					limit,
-					...(relations && { relations })
-				};
+					relations,
+					skipIsPage: true
+				});
 
 				const response = await apiClient.get('/api/organization-contact/pagination', { params });
 
