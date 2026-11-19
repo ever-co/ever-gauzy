@@ -291,8 +291,9 @@ export class FavoritesComponent {
 	private _readQuery(params: ParamMap): void {
 		const incoming = parseQuery(params);
 		const incomingKey = queryKey(incoming);
-		if (incomingKey === this._lastWrittenKey) {
-			this._lastWrittenKey = null;
+		const ownWriteKey = this._lastWrittenKey;
+		this._lastWrittenKey = null;
+		if (incomingKey === ownWriteKey) {
 			return;
 		}
 		if (incomingKey === queryKey(this._query())) {
