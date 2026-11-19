@@ -517,6 +517,24 @@ describe.each(TEST_TARGETS)('Ever Platform membership sync ($name)', (target) =>
 		).toBe('role_granted');
 	});
 
+	it('a link unlinked while the change waited is read again under the lock', async () => {
+		await linkEverId(seeded.employeeId, 'sub-bob');
+		// The link is read live before the transaction, and unlinked before the transaction reads it again.
+		const racing = Object.create(store) as EverConnectStore;
+		racing.linkById = async (linkId: string) => {
+			const live = await store.linkById(linkId);
+			await store.updateLink(LINK, { status: 'unlinked' });
+			return live;
+		};
+		expect(
+			await new MembershipSyncHandler(dataSource, racing, audit, ON).apply(
+				envelope('01JD0000000000000000000001', 'created')
+			)
+		).toBe('link_unknown');
+		expect(await roleOf(seeded.employeeId)).toBe(roles.employee);
+		expect(await syncRows()).toEqual([]);
+	});
+
 	it('an unknown role, a malformed event, or a link that is not live change nothing', async () => {
 		await linkEverId(seeded.employeeId, 'sub-bob');
 		const sync = handler();

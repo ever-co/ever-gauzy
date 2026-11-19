@@ -198,10 +198,20 @@ export class MembershipSyncHandler {
 		}
 
 		const position: MembershipPosition = { eventId, occurredAt };
-		const others = (await this.store.liveLinks()).filter(
-			(other) => other.tenantId === link.tenantId && other.organizationId !== link.organizationId
-		);
 		const outcome = await this.sql.inTransaction(LOCK, async (tx) => {
+			// Read again under the lock: a link unlinked while this change waited for it changes nothing, and an
+			// organization unlinked meanwhile no longer keeps the ADMIN of its grant.
+			const links = (await tx.select('ever_connect_link', { tenantId: link.tenantId })).map((row) => ({
+				linkId: String(row['linkId']),
+				organizationId: String(row['organizationId']),
+				status: String(row['status'])
+			}));
+			if (!links.some((row) => row.linkId === link.linkId && row.status === 'linked')) {
+				return 'link_unknown' as const;
+			}
+			const others = links
+				.filter((row) => row.status !== 'unlinked' && row.organizationId !== link.organizationId)
+				.map((row) => row.organizationId);
 			const last = await this.stateIn(tx, link.tenantId, link.organizationId, person);
 			if (last && last.eventId === position.eventId) {
 				return 'duplicate' as const;
@@ -314,11 +324,11 @@ export class MembershipSyncHandler {
 	private async heldElsewhere(
 		tx: EverConnectSql,
 		tenantId: string,
-		others: ReadonlyArray<LinkRecord>,
+		others: ReadonlyArray<string>,
 		userId: string,
 		grant: Grant
 	): Promise<boolean> {
-		for (const organizationId of new Set(others.map((other) => other.organizationId))) {
+		for (const organizationId of new Set(others)) {
 			const state = await this.stateIn(tx, tenantId, organizationId, userId);
 			if (state?.held && state.grant === grant.grant) {
 				return true;
