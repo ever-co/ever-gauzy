@@ -75,7 +75,7 @@ type MenuState = 'loading' | 'ready' | 'error';
 									[routerLink]="link"
 									[queryParams]="{ item: item.id }"
 									[attr.data-test]="'inbox-menu-' + item.id"
-									(click)="close()"
+									(click)="choose(item.id)"
 								>
 									<span class="kind" aria-hidden="true"><nb-icon [icon]="kindIcon(item.kind)"></nb-icon></span>
 									<span class="row-main">
@@ -125,7 +125,7 @@ type MenuState = 'loading' | 'ready' | 'error';
 				padding: 12px 16px 8px;
 				font-size: 13px;
 				font-weight: 600;
-				color: var(--text-basic-color);
+				color: var(--gauzy-text-color-1);
 			}
 			.menu-body {
 				max-height: 360px;
@@ -137,7 +137,7 @@ type MenuState = 'loading' | 'ready' | 'error';
 				margin: 0;
 				padding: 12px 16px;
 				font-size: 12px;
-				color: var(--text-hint-color);
+				color: var(--gauzy-text-color-2);
 			}
 			.menu .row {
 				display: flex;
@@ -146,17 +146,17 @@ type MenuState = 'loading' | 'ready' | 'error';
 				min-width: 0;
 				margin: 0 8px;
 				padding: 8px;
-				border-radius: 6px;
-				color: var(--text-basic-color);
+				border-radius: calc(var(--border-radius) * 0.75);
+				color: var(--gauzy-text-color-1);
 				text-decoration: none;
 				font-size: 12px;
 				line-height: 16px;
 			}
 			.menu .row:hover,
 			.menu .row:focus-visible {
-				background: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+				background: var(--gauzy-hover-tint);
 				text-decoration: none;
-				color: var(--text-basic-color);
+				color: var(--gauzy-text-color-1);
 			}
 			.kind {
 				display: inline-flex;
@@ -165,9 +165,9 @@ type MenuState = 'loading' | 'ready' | 'error';
 				justify-content: center;
 				width: 24px;
 				height: 24px;
-				border-radius: 6px;
+				border-radius: calc(var(--border-radius) * 0.75);
 				background: var(--background-basic-color-3);
-				color: var(--text-hint-color);
+				color: var(--gauzy-text-color-2);
 			}
 			.kind nb-icon {
 				font-size: 14px;
@@ -197,14 +197,14 @@ type MenuState = 'loading' | 'ready' | 'error';
 			.row-time {
 				flex: 0 0 auto;
 				font-size: 11px;
-				color: var(--text-hint-color);
+				color: var(--gauzy-text-color-2);
 			}
 			.row-preview {
 				overflow: hidden;
 				text-overflow: ellipsis;
 				white-space: nowrap;
 				font-size: 11px;
-				color: var(--text-hint-color);
+				color: var(--gauzy-text-color-2);
 			}
 			.row-dot {
 				flex: 0 0 auto;
@@ -227,23 +227,11 @@ type MenuState = 'loading' | 'ready' | 'error';
 			}
 			.menu-all:hover,
 			.menu-all:focus-visible {
-				background: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+				background: var(--gauzy-hover-tint);
 				text-decoration: none;
 			}
-			/* The dropdown is a list hanging under the icon, not a speech bubble: no arrow, and the frame adds no padding
-			   of its own (the panel draws its own spacing). */
-			::ng-deep .cdk-overlay-container .inbox-header-menu-popover nb-popover {
-				padding: 0;
-				overflow: hidden;
-				/* Hang a little past the icon's right edge rather than flush with it. */
-				transform: translateX(48px);
-			}
-			::ng-deep .cdk-overlay-container .inbox-header-menu-popover nb-popover .arrow {
-				display: none;
-			}
-			::ng-deep .cdk-overlay-container .inbox-header-menu-popover nb-popover .primitive-overlay {
-				padding: 0;
-			}
+			/* The popover frame around the panel (no arrow, no padding, its offset) is styled with the other overlays:
+			   .inbox-header-menu-popover in ui-core's _overlays.scss. */
 		`
 	]
 })
@@ -302,13 +290,23 @@ export class InboxHeaderBadgeComponent implements OnInit {
 	onShowChange(isShown: boolean): void {
 		this.open.set(isShown);
 		if (!isShown) return;
-		// Rows already shown stay while they are read again; only a first opening says "Loading…".
-		if (!this.items().length) this.state.set('loading');
+		// Rows already shown stay while they are read again (an earlier failure no longer shows over them); only an
+		// opening without rows says "Loading…".
+		this.state.set(this.items().length ? 'ready' : 'loading');
 		this.loadMenu$.next();
 	}
 
 	protected close(): void {
 		this.popover()?.hide();
+	}
+
+	/**
+	 * A row chosen: its link (`?item=`) opens the item on a page that starts, and an Inbox page already shown is told
+	 * directly, since the link may already be its URL or its Notifications tab may be chosen.
+	 */
+	protected choose(id: string): void {
+		this.api.requestItem(id);
+		this.close();
 	}
 
 	protected kindIcon(kind: string): string {

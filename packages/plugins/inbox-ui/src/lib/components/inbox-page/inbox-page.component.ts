@@ -1912,6 +1912,7 @@ export class InboxPageComponent implements OnInit {
 		this.setUpListStream();
 		this.setUpSearch();
 		this.followItemLinks();
+		this.followHeaderItems();
 		this.followCounts();
 		this.lookForNewItems();
 		this.checkAvailability();
@@ -2010,15 +2011,31 @@ export class InboxPageComponent implements OnInit {
 				skip(1),
 				takeUntilDestroyed(this.destroyRef)
 			)
-			.subscribe((id) => {
-				// Every change of the link ends the read of the one before; a link removed (another tab chosen) opens nothing.
-				this.linkRead?.unsubscribe();
-				this.linkRead = null;
-				this.requestedItemId = id;
-				this.selectedAtLink = this.selectedId();
-				// Before the Inbox is served, or while its list is being read, the list's answer opens it.
-				if (id && this.view() === 'ready' && !this.loading()) this.openRequestedItem();
-			});
+			.subscribe((id) => this.followLink(id));
+	}
+
+	/**
+	 * An item chosen in the header's dropdown while this page is shown. Its `?item=` link alone would not open it when
+	 * that link is already the URL (the same item chosen again after another was opened from the list), nor while the
+	 * Notifications tab is chosen (it shows no item, and `?tab=` is read only when the page starts): the page moves to
+	 * the All tab, and the item opens as a link does.
+	 */
+	private followHeaderItems(): void {
+		this.api.itemRequested$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((id) => {
+			// The header's own navigation sets the URL to the item's link: the tab is changed here without one.
+			if (this.tab() === 'notifications') this.showTab('all');
+			this.followLink(id);
+		});
+	}
+
+	private followLink(id: string | null): void {
+		// Every change of the link ends the read of the one before; a link removed (another tab chosen) opens nothing.
+		this.linkRead?.unsubscribe();
+		this.linkRead = null;
+		this.requestedItemId = id;
+		this.selectedAtLink = this.selectedId();
+		// Before the Inbox is served, or while its list is being read, the list's answer opens it.
+		if (id && this.view() === 'ready' && !this.loading()) this.openRequestedItem();
 	}
 
 	/** `?tab=` of the URL, when it names one of the tabs. */
@@ -2165,12 +2182,17 @@ export class InboxPageComponent implements OnInit {
 
 	selectTab(tab: InboxUiTab): void {
 		if (tab === this.tab()) return;
+		this.showTab(tab);
+		void this.router.navigate([], { relativeTo: this.route, queryParams: { tab }, replaceUrl: true });
+	}
+
+	/** Shows a tab's first page, without touching the URL. */
+	private showTab(tab: InboxUiTab): void {
 		this.listChanged();
 		this.tab.set(tab);
 		this.items.set([]);
 		this.nextCursor.set(null);
 		this.selectedId.set(null);
-		void this.router.navigate([], { relativeTo: this.route, queryParams: { tab }, replaceUrl: true });
 		this.reload();
 	}
 

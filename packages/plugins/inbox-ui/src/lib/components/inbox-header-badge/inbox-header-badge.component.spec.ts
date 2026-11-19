@@ -1,5 +1,5 @@
 import { discardPeriodicTasks, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { of, Subject, throwError } from 'rxjs';
+import { NEVER, of, Subject, throwError } from 'rxjs';
 import { InboxTabEnum } from '@gauzy/contracts';
 import { INBOX_BADGE_POLL_MS } from '../../inbox-ui.constants';
 import { InboxUiService } from '../../services/inbox-ui.service';
@@ -8,7 +8,7 @@ import { badgeText, INBOX_HEADER_MENU_SIZE, InboxHeaderBadgeComponent } from './
 /** The header badge: my unread count, read every 60 s and at once after a change on the page. */
 describe('InboxHeaderBadgeComponent', () => {
 	const changed$ = new Subject<void>();
-	const api = { counts: jest.fn(), list: jest.fn(), changed$ };
+	const api = { counts: jest.fn(), list: jest.fn(), requestItem: jest.fn(), changed$ };
 
 	function render() {
 		TestBed.configureTestingModule({
@@ -96,6 +96,34 @@ describe('InboxHeaderBadgeComponent', () => {
 		tick(0);
 		fixture.componentInstance.onShowChange(true);
 		expect(fixture.componentInstance.state()).toBe('error');
+		discardPeriodicTasks();
+		fixture.destroy();
+	}));
+
+	it('shows the items it has, not an earlier failure, while it reads them again', fakeAsync(() => {
+		api.counts.mockReturnValue(of({ unread: 1, decisionsOpen: 0, byMailbox: [] }));
+		const items = [{ id: 'i1', title: 'Approve the budget', kind: 'approval', recipient: { isRead: false } }];
+		api.list.mockReturnValueOnce(of({ items, nextCursor: null })).mockReturnValueOnce(throwError(() => ({ status: 502 })));
+		const fixture = render();
+		tick(0);
+		fixture.componentInstance.onShowChange(true);
+		fixture.componentInstance.onShowChange(true);
+		expect(fixture.componentInstance.state()).toBe('error');
+
+		api.list.mockReturnValue(NEVER);
+		fixture.componentInstance.onShowChange(true);
+		expect(fixture.componentInstance.state()).toBe('ready');
+		expect(fixture.componentInstance.items()).toEqual(items);
+		discardPeriodicTasks();
+		fixture.destroy();
+	}));
+
+	it('tells an Inbox page already shown which item was chosen', fakeAsync(() => {
+		api.counts.mockReturnValue(of({ unread: 0, decisionsOpen: 0, byMailbox: [] }));
+		const fixture = render();
+		tick(0);
+		(fixture.componentInstance as unknown as { choose(id: string): void }).choose('i1');
+		expect(api.requestItem).toHaveBeenCalledWith('i1');
 		discardPeriodicTasks();
 		fixture.destroy();
 	}));
