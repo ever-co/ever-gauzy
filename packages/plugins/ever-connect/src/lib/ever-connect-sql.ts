@@ -190,9 +190,9 @@ export class EverConnectSql {
 	 */
 	async inTransaction<T>(lockName: string | null, work: (sql: EverConnectSql) => Promise<T>): Promise<T> {
 		const runner = this.dataSource.createQueryRunner();
-		await runner.connect();
 		let mysqlLock = false;
 		try {
+			await runner.connect();
 			if (lockName && this.dialect === 'mysql') {
 				const [row] = (await runner.query('SELECT GET_LOCK(?, 30) AS `locked`', [lockName])) as Row[];
 				if (toNumber(row?.['locked']) !== 1) {
