@@ -25,11 +25,13 @@ import { EverConnectPlatformService, errorCode, isCredentialRevoked } from './ev
 import { EverConnectSignals } from './ever-connect-signals';
 import { EverConnectStore } from './ever-connect.store';
 import { personRequestKind, PersonRequestsHandler } from './handlers/person-requests.handler';
+import { membershipChangeOf } from './membership/membership-sync.config';
+import { MembershipSyncHandler } from './membership/membership-sync.handler';
 import { EverConnectProvisionCompletion } from './services/ever-connect-provision-completion.service';
 import { EventEnvelope, ProblemError } from './sdk';
 
 /** What the dispatcher did with one event. */
-export type DispatchOutcome = 'states' | 'entitlements' | 'link' | 'connection' | 'person' | 'ignored';
+export type DispatchOutcome = 'states' | 'entitlements' | 'link' | 'connection' | 'person' | 'membership' | 'ignored';
 
 /**
  * The heartbeat and the event feed, run by one API process at a time (a lease on the connection
@@ -43,9 +45,11 @@ export type DispatchOutcome = 'states' | 'entitlements' | 'link' | 'connection' 
  *   `EVER_CONNECT_FEED_MODE=interval`). Each event is dispatched by its catalog type, then the
  *   cursor is kept and acknowledged (in that order); handlers are idempotent (they re-read state),
  *   so an event read twice changes nothing more. A person's deletion or export request is recorded
- *   by its event id and answered once. Types this release has no handler for are acknowledged and
- *   ignored, and so are connection events (and a person's requests) of another installation or of
- *   before this connection (a cursor read again from the start replays them).
+ *   by its event id and answered once. A membership change of a linked Ever organization is applied
+ *   to its Gauzy organization when the membership sync is on (`EVER_CONNECT_MEMBERSHIP_SYNC_ENABLED`),
+ *   and acknowledged and ignored otherwise. Types this release has no handler for are acknowledged and
+ *   ignored, and so are connection events (and a person's requests and membership changes) of another
+ *   installation or of before this connection (a cursor read again from the start replays them).
  */
 /** How far Ever Platform's clock may be ahead of this one when an event's time is compared. */
 const CLOCK_SKEW_MS = 300_000;
@@ -79,7 +83,9 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 		@Optional() @Inject(EVER_CONNECT_CLOCK) clock?: { now: () => number },
 		@Optional() private readonly personRequests?: PersonRequestsHandler,
 		@Optional() lease?: EverConnectLease,
-		@Optional() private readonly provisions?: EverConnectProvisionCompletion
+		@Optional() private readonly provisions?: EverConnectProvisionCompletion,
+		// Registered only with EVER_CONNECT_MEMBERSHIP_SYNC_ENABLED=true (see `membershipSyncProviders`).
+		@Optional() private readonly membership?: MembershipSyncHandler
 	) {
 		this.now = clock?.now ?? (() => Date.now());
 		this.holder = lease?.holder ?? randomUUID();
@@ -292,18 +298,26 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 		const data = (event.data ?? {}) as Record<string, unknown>;
 		const linkId = typeof data['tenant_link_id'] === 'string' ? data['tenant_link_id'] : event.subject?.id;
 		const personRequest = personRequestKind(event.type) !== null;
+		const membershipChange = membershipChangeOf(event.type) !== null;
 		if (
-			(event.type.startsWith('ever.registry.instance.') || personRequest) &&
+			(event.type.startsWith('ever.registry.instance.') || personRequest || membershipChange) &&
 			connection &&
 			!this.forThisConnection(event, connection)
 		) {
-			// A connection event (or a person's request) of another installation, or of before this
-			// connection: ignored.
+			// A connection event (or a person's request, or a membership change) of another installation, or
+			// of before this connection: ignored.
 			return 'ignored';
 		}
 		if (personRequest) {
 			// Deletion and export requests: recorded by event id, answered once (`POST /v1/instances/me/ack`).
 			return this.personRequests && (await this.personRequests.handle(event)) ? 'person' : 'ignored';
+		}
+		if (membershipChange) {
+			// Applied to the linked Gauzy organization only with the membership sync on; its handler is
+			// idempotent (the last change applied per user and organization is kept in the audit).
+			if (!this.membership) return 'ignored';
+			await this.membership.apply(event);
+			return 'membership';
 		}
 		switch (event.type) {
 			case 'ever.consent.consent.granted':
@@ -342,8 +356,7 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 				await this.connection.approved();
 				return 'connection';
 			default:
-				// Memberships, managed operations and every other type: acknowledged and ignored by this
-				// release.
+				// Managed operations and every other type: acknowledged and ignored by this release.
 				return 'ignored';
 		}
 	}

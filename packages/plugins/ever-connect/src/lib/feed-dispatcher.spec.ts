@@ -10,7 +10,7 @@ import { CONSTANTS, EventEnvelope, ProblemError } from './sdk';
  * kept before it is acknowledged, and one that cannot be kept is never acknowledged.
  */
 describe('Ever Platform feed dispatcher', () => {
-	function scheduler() {
+	function scheduler(membership?: { apply: jest.Mock }) {
 		const states = { sync: jest.fn().mockResolvedValue(undefined) };
 		const entitlements = { refreshAll: jest.fn().mockResolvedValue(undefined) };
 		const links = {
@@ -57,7 +57,12 @@ describe('Ever Platform feed dispatcher', () => {
 			entitlements as never,
 			cleanup as never,
 			signals,
-			{ feedMode: 'interval' } as never
+			{ feedMode: 'interval' } as never,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			membership as never
 		);
 		return { instance, states, entitlements, links, connection, revoked, client, order, cleanup };
 	}
@@ -128,6 +133,63 @@ describe('Ever Platform feed dispatcher', () => {
 		]) {
 			expect(spy).not.toHaveBeenCalled();
 		}
+	});
+
+	describe('membership changes', () => {
+		const TYPES = [
+			'ever.registry.membership.created',
+			'ever.registry.membership.role_changed',
+			'ever.registry.membership.removed'
+		];
+
+		it('without the membership sync (the default): acknowledged and ignored, nothing else runs', async () => {
+			const { instance, states, entitlements, links, connection } = scheduler();
+			for (const type of TYPES) {
+				expect(await instance.dispatch(event(type, undefined, { tenant_link_id: 'L1' }))).toBe('ignored');
+			}
+			for (const spy of [states.sync, entitlements.refreshAll, links.unlinkLocally, connection.stopLocally]) {
+				expect(spy).not.toHaveBeenCalled();
+			}
+		});
+
+		it('with it: each one goes to the membership handler', async () => {
+			const membership = { apply: jest.fn().mockResolvedValue('role_granted') };
+			const { instance } = scheduler(membership);
+			for (const type of TYPES) {
+				expect(await instance.dispatch(event(type))).toBe('membership');
+			}
+			expect(membership.apply).toHaveBeenCalledTimes(3);
+			// Not a membership change: never handed to it.
+			expect(await instance.dispatch(event('ever.registry.membership.listing_changed'))).toBe('ignored');
+			expect(membership.apply).toHaveBeenCalledTimes(3);
+		});
+
+		it('of another installation, or of before this connection: ignored', async () => {
+			const membership = { apply: jest.fn().mockResolvedValue('role_granted') };
+			const { instance } = scheduler(membership);
+			const ours = {
+				platformInstanceId: '01JD00000000000000000INST01',
+				connectedAt: Date.parse('2026-10-03T09:00:00.000Z')
+			};
+			const other = { ...event(TYPES[0]), instance_id: '01JD00000000000000000OTHER1' } as never;
+			const old = { ...event(TYPES[1]), occurred_at: '2026-10-01T09:00:00.000Z' } as never;
+			expect(await instance.dispatch(other, ours)).toBe('ignored');
+			expect(await instance.dispatch(old, ours)).toBe('ignored');
+			expect(membership.apply).not.toHaveBeenCalled();
+			const mine = { ...event(TYPES[2]), instance_id: ours.platformInstanceId } as never;
+			expect(await instance.dispatch(mine, ours)).toBe('membership');
+			expect(membership.apply).toHaveBeenCalledTimes(1);
+		});
+
+		it('a failure of the handler fails the page, so the feed reads it again', async () => {
+			const membership = { apply: jest.fn().mockRejectedValue(new Error('database unavailable')) };
+			const { instance } = scheduler(membership);
+			const page = [event(TYPES[0], '01JD0000000000000000000071')];
+			await expect(instance.dispatchPage(page)).rejects.toThrow('database unavailable');
+			// Not remembered as handled: the same event is handed over again.
+			membership.apply.mockResolvedValueOnce('role_granted');
+			expect(await instance.dispatchPage(page)).toEqual(['membership']);
+		});
 	});
 
 	it('a page: follow-ups once per page, an event read twice handled once', async () => {

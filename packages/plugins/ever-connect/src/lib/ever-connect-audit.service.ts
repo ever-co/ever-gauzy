@@ -24,7 +24,8 @@ export const AUDIT_ACTIONS = Object.freeze([
 	'sign_in_client.change',
 	'person_link.report',
 	'person_request.answer',
-	'provision.accept'
+	'provision.accept',
+	'membership.sync'
 ] as const);
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 
@@ -56,7 +57,12 @@ export const AUDIT_DETAIL_KEYS = Object.freeze([
 	'attempts',
 	'step_seq',
 	'product_tenant_id',
-	'product_org_id'
+	'product_org_id',
+	'user_id',
+	'role',
+	'occurred_at',
+	'held',
+	'restore'
 ] as const);
 
 /** Who acted, without personal data. */
