@@ -130,4 +130,25 @@ describe('get_candidates — the search and the minimum rating the route does no
 	it('pages the candidates kept', async () => {
 		expect(await answered({ search: 'example.com', page: 2, limit: 3 })).toEqual({ ids: ['c4'], total: 4 });
 	});
+
+	it('reads past a first page of 100 with no match, and answers the match of the next one', async () => {
+		const others = Array.from({ length: 100 }, (_, index) => ({
+			id: `other-${index}`,
+			user: { firstName: 'Sam', lastName: `Rivera ${index}`, email: `sam${index}@example.com` }
+		}));
+		const match = { id: 'c-101', user: { firstName: 'Ada', lastName: 'Lovelace', email: 'ada@example.com' } };
+		get.mockImplementation(async (_path: string, { params }: { params: { skip: number } }) => {
+			if (params.skip === 0) {
+				return { items: others, total: 101 };
+			}
+			return { items: [match], total: 101 };
+		});
+
+		expect(await answered({ search: 'lovelace' })).toEqual({ ids: ['c-101'], total: 1 });
+
+		expect(get).toHaveBeenCalledTimes(2);
+		expect(get).toHaveBeenLastCalledWith('/api/candidate', {
+			params: { where: SCOPE, take: 100, skip: 100, relations: ['user'] }
+		});
+	});
 });
