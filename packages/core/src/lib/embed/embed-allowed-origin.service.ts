@@ -113,11 +113,21 @@ export class EmbedAllowedOriginService extends TenantAwareCrudService<EmbedAllow
 	 * another tenant wrote naming it must not widen the organization's list.
 	 */
 	async isAllowed(tenantId: ID, organizationId: ID, origin: string): Promise<boolean> {
-		if (!isUUID(tenantId) || !isUUID(organizationId)) {
-			return false;
+		return !!(await this.findAllowed(tenantId, organizationId, origin));
+	}
+
+	/**
+	 * The organization's allowed origin, read now, with its settings (whether people can sign in from it), or null:
+	 * scoped to the tenant as {@link isAllowed} is.
+	 */
+	async findAllowed(tenantId: ID, organizationId: ID, origin: string): Promise<EmbedAllowedOrigin | null> {
+		// TypeORM drops a condition whose value is undefined: without an origin, the read would match any of them.
+		const namesOrigin = typeof origin === 'string' && origin.length > 0;
+		if (!isUUID(tenantId) || !isUUID(organizationId) || !namesOrigin) {
+			return null;
 		}
 		const rows = await this.readAll({ tenantId, organizationId, origin });
-		return rows.length > 0;
+		return rows[0] ?? null;
 	}
 
 	/**

@@ -184,6 +184,41 @@ describe('EmbedAllowedOriginService', () => {
 		expect(await service.isAllowed(TENANT, ORG, 'https://other.example.com')).toBe(false);
 	});
 
+	it('finds an allowed origin with its sign-in setting, in its tenant only, and none without an origin', async () => {
+		const { service, rows, reads } = build();
+		rows.push({
+			id: 'a',
+			tenantId: TENANT,
+			organizationId: ORG,
+			origin: 'https://app.example.com',
+			allowPersonSignIn: true
+		});
+		rows.push({
+			id: 'b',
+			tenantId: TENANT,
+			organizationId: ORG,
+			origin: 'https://docs.example.com',
+			allowPersonSignIn: false
+		});
+
+		expect(await service.findAllowed(TENANT, ORG, 'https://app.example.com')).toMatchObject({
+			id: 'a',
+			allowPersonSignIn: true
+		});
+		expect(await service.findAllowed(TENANT, ORG, 'https://docs.example.com')).toMatchObject({
+			allowPersonSignIn: false
+		});
+		expect(await service.findAllowed(OTHER_TENANT, ORG, 'https://app.example.com')).toBeNull();
+		expect(await service.findAllowed(TENANT, ORG, 'https://other.example.com')).toBeNull();
+		// TypeORM drops a condition whose value is undefined: a read without an origin would find any of them.
+		reads.mockClear();
+		for (const none of [undefined, null, '']) {
+			expect(await service.findAllowed(TENANT, ORG, none as any)).toBeNull();
+			expect(await service.isAllowed(TENANT, ORG, none as any)).toBe(false);
+		}
+		expect(reads).not.toHaveBeenCalled();
+	});
+
 	it("counts only a row of the credential's tenant: another tenant naming the organization does not widen its list", async () => {
 		const { service, rows } = build();
 		rows.push({ id: 'foreign', tenantId: OTHER_TENANT, organizationId: ORG, origin: 'https://evil.example' });
