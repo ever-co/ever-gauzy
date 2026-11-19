@@ -517,6 +517,28 @@ describe.each(TEST_TARGETS)('Ever Platform membership sync ($name)', (target) =>
 		).toBe('role_granted');
 	});
 
+	it('an organization unlinked and linked again does not keep the hold of its earlier link', async () => {
+		const LINK_C = '01JC5M2R4T6V8X0Z2B4D6F8H0N';
+		const second = await addOrganization();
+		await addLink(second, LINK_B);
+		await linkEverId(seeded.employeeId, 'sub-bob');
+		const sync = handler();
+		expect(await sync.apply(envelope('01JD0000000000000000000001', 'created'))).toBe('role_granted');
+		expect(await sync.apply(envelope('01JD0000000000000000000002', 'created', { tenant_link_id: LINK_B }))).toBe(
+			'added'
+		);
+		// The first organization is unlinked and linked again (a new link), with no membership event since.
+		await store.updateLink(LINK, { status: 'unlinked' });
+		await addLink(seeded.organizationId, LINK_C);
+		// Leaving the second organization: no live link holds the grant any more, so the role goes back.
+		expect(
+			await sync.apply(
+				envelope('01JD0000000000000000000003', 'removed', { tenant_link_id: LINK_B }, '2026-11-03T10:00:00Z')
+			)
+		).toBe('removed');
+		expect(await roleOf(seeded.employeeId)).toBe(roles.employee);
+	});
+
 	it('a link unlinked while the change waited is read again under the lock', async () => {
 		await linkEverId(seeded.employeeId, 'sub-bob');
 		// The link is read live before the transaction, and unlinked before the transaction reads it again.

@@ -70,6 +70,8 @@ interface SyncState extends MembershipPosition {
 	restore: string | null;
 	/** The grant it holds: the id of the event that made the user `ADMIN` (see {@link Grant}). */
 	grant: string | null;
+	/** The tenant link the change came through: a hold counts only while that very link is live. */
+	linkId: string | null;
 }
 
 /**
@@ -217,9 +219,9 @@ export class MembershipSyncHandler {
 			if (!links.some((row) => row.linkId === link.linkId && row.status === 'linked')) {
 				return 'link_unknown' as const;
 			}
-			const others = links
-				.filter((row) => row.status !== 'unlinked' && row.organizationId !== link.organizationId)
-				.map((row) => row.organizationId);
+			const others = links.filter(
+				(row) => row.status !== 'unlinked' && row.organizationId !== link.organizationId
+			);
 			const last = await this.stateIn(tx, link.tenantId, link.organizationId, person);
 			if (last && last.eventId === position.eventId) {
 				return 'duplicate' as const;
@@ -332,13 +334,15 @@ export class MembershipSyncHandler {
 	private async heldElsewhere(
 		tx: EverConnectSql,
 		tenantId: string,
-		others: ReadonlyArray<string>,
+		others: ReadonlyArray<{ organizationId: string; linkId: string }>,
 		userId: string,
 		grant: Grant
 	): Promise<boolean> {
-		for (const organizationId of new Set(others)) {
-			const state = await this.stateIn(tx, tenantId, organizationId, userId);
-			if (state?.held && state.grant === grant.grant) {
+		for (const other of others) {
+			const state = await this.stateIn(tx, tenantId, other.organizationId, userId);
+			// Recorded through that live link: a hold of an earlier link of the same organization (unlinked, then
+			// linked again) is void, as unlinking voids it.
+			if (state?.held && state.grant === grant.grant && state.linkId === other.linkId) {
 				return true;
 			}
 		}
@@ -357,8 +361,8 @@ export class MembershipSyncHandler {
 		grant: Grant | null,
 		other: boolean
 	): Promise<RoleStep> {
-		// The hold this organization has now: only one on the latest grant counts.
-		const holds = !!(last?.held && grant && last.grant === grant.grant);
+		// The hold this organization has now: only one on the latest grant, recorded through this same link, counts.
+		const holds = !!(last?.held && grant && last.grant === grant.grant && last.linkId === link.linkId);
 		const kept = {
 			held: holds,
 			restore: holds ? (grant?.restore ?? null) : null,
@@ -576,12 +580,14 @@ function stateOf(row: Row, userId: string): SyncState | null {
 	const occurredAt = details['occurred_at'];
 	const restore = details['restore'];
 	const grant = details['grant'];
+	const linkId = details['link_id'];
 	return {
 		eventId: String(details['event_id']).toUpperCase(),
 		occurredAt: typeof occurredAt === 'number' && Number.isFinite(occurredAt) ? occurredAt : null,
 		held: details['held'] === true,
 		restore: typeof restore === 'string' && restore ? restore : null,
-		grant: typeof grant === 'string' && grant ? grant : null
+		grant: typeof grant === 'string' && grant ? grant : null,
+		linkId: typeof linkId === 'string' && linkId ? linkId : null
 	};
 }
 
