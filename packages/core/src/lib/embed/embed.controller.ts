@@ -31,7 +31,13 @@ import {
 	ExchangeEmbedCredentialDTO
 } from './dto/embed-credential.dto';
 import { EmbedProjectResponseDTO } from './dto/embed-project.dto';
-import { AuthorizeEmbedSiteDTO, EmbedSiteTokensResponseDTO, RenewEmbedSiteDTO } from './dto/embed-site-grant.dto';
+import {
+	AuthorizeEmbedSiteDTO,
+	EmbedSiteGrantResponseDTO,
+	EmbedSiteGrantsQueryDTO,
+	EmbedSiteTokensResponseDTO,
+	RenewEmbedSiteDTO
+} from './dto/embed-site-grant.dto';
 import { EmbedClientService } from './embed-client.service';
 import { EmbedCredentialService } from './embed-credential.service';
 import { EMBED_EXCHANGE_THROTTLE, EMBED_SITE_THROTTLE, embedExchangeAddress } from './embed-exchange-throttle';
@@ -301,5 +307,18 @@ export class EmbedSiteGrantController {
 	@HttpCode(HttpStatus.NO_CONTENT)
 	async revoke(@Body() input: RenewEmbedSiteDTO): Promise<void> {
 		await this.embedSiteGrantService.revoke(input);
+	}
+
+	@ApiOperation({
+		summary:
+			"The sites the signed-in person allowed that still work; with organizationId, every member's, for an administrator"
+	})
+	@ApiResponse({ status: HttpStatus.OK, type: EmbedSiteGrantResponseDTO, isArray: true })
+	@ApiResponse({ status: HttpStatus.FORBIDDEN, description: "Another person's grants without ALL_ORG_EDIT" })
+	@UseGuards(TenantPermissionGuard)
+	@Get('/grants')
+	@UseValidationPipe({ whitelist: true })
+	async grants(@Query() query: EmbedSiteGrantsQueryDTO): Promise<EmbedSiteGrantResponseDTO[]> {
+		return await this.embedSiteGrantService.listGrants(query.organizationId);
 	}
 }

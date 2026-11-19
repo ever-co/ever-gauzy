@@ -8,8 +8,8 @@ import {
 	ServiceUnavailableException,
 	UnauthorizedException
 } from '@nestjs/common';
-import { IsNull } from 'typeorm';
-import { ID, IEmbedAuthorizeInput, IEmbedRenewalInput } from '@gauzy/contracts';
+import { IsNull, MoreThan } from 'typeorm';
+import { ID, IEmbedAuthorizeInput, IEmbedRenewalInput, PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context/request-context';
 import { DATABASE_UNAVAILABLE_MESSAGE, isDatabaseUnavailableError } from '../core/errors/database-unavailable';
 import { getORMType } from '../core/utils';
@@ -20,7 +20,7 @@ import { MikroOrmEmployeeRepository } from '../employee/repository/mikro-orm-emp
 import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
 import { MikroOrmUserOrganizationRepository } from '../user-organization/repository/mikro-orm-user-organization.repository';
 import { TypeOrmUserOrganizationRepository } from '../user-organization/repository/type-orm-user-organization.repository';
-import { EmbedSiteTokensResponseDTO } from './dto/embed-site-grant.dto';
+import { EmbedSiteGrantResponseDTO, EmbedSiteTokensResponseDTO } from './dto/embed-site-grant.dto';
 import { EmbedAllowedOriginService } from './embed-allowed-origin.service';
 import { IEmbedMemberScope } from './embed-member.service';
 import { EmbedMemberTokens } from './embed-member-token';
@@ -144,12 +144,7 @@ export class EmbedSiteGrantService {
 	 */
 	async authorize(input: IEmbedAuthorizeInput): Promise<EmbedSiteTokensResponseDTO> {
 		assertFirstPartyRequest('Allowing a site to start your timer');
-		const userId = RequestContext.currentUserId();
-		const tenantId = RequestContext.currentTenantId();
-		// TypeORM drops a condition whose value is undefined: without them, the reads would match anyone.
-		if (!userId || !tenantId) {
-			throw new UnauthorizedException();
-		}
+		const { tenantId, userId } = this.signedIn();
 		const scope = { tenantId, organizationId: input.organizationId };
 		try {
 			const employee = await this.memberTokens.findEmployee({
@@ -267,6 +262,47 @@ export class EmbedSiteGrantService {
 		if (new Date(row.expiresAt).getTime() <= now.getTime()) {
 			this.logger.warn(`Embed site renewal refused: expired ${subject}`);
 			throw grantEnded();
+		}
+	}
+
+	/**
+	 * The signed-in person's site grants that still work, newest first; with an organization, every member's grants
+	 * there, for an administrator of the organization's embeds (`ALL_ORG_EDIT`, as the allowed sites take). A grant is
+	 * listed once, under the same id through its renewals, until it is revoked or expires. No token is ever listed.
+	 *
+	 * @param organizationId The organization whose grants an administrator lists; none for the person's own.
+	 */
+	async listGrants(organizationId?: ID): Promise<EmbedSiteGrantResponseDTO[]> {
+		const { tenantId, userId } = this.signedIn();
+		let owner: Record<string, ID> = { userId };
+		if (organizationId) {
+			this.assertGrantAdministrator();
+			owner = { organizationId };
+		}
+		const rows = await this.typeOrmEmbedSiteGrantRepository.find({
+			where: { tenantId, ...owner, usedAt: IsNull(), revokedAt: IsNull(), expiresAt: MoreThan(new Date()) },
+			order: { createdAt: 'DESC' }
+		});
+		return rows.map((row) => EmbedSiteGrantResponseDTO.from(row));
+	}
+
+	/** The signed-in person's tenant and account; a request without them is refused. */
+	private signedIn(): { tenantId: ID; userId: ID } {
+		const userId = RequestContext.currentUserId();
+		const tenantId = RequestContext.currentTenantId();
+		// TypeORM drops a condition whose value is undefined: without them, the reads would match anyone.
+		if (!userId || !tenantId) {
+			throw new UnauthorizedException();
+		}
+		return { tenantId, userId };
+	}
+
+	/** Refuses anyone but an administrator of the organization's embeds the grants of other people. */
+	private assertGrantAdministrator(): void {
+		if (!RequestContext.hasPermission(PermissionsEnum.ALL_ORG_EDIT)) {
+			throw new ForbiddenException(
+				"Only an administrator of the organization's embeds sees everyone's site grants. Leave out organizationId to see your own."
+			);
 		}
 	}
 

@@ -290,3 +290,26 @@ describe('POST /embed/revoke', () => {
 		expect(revoke).toHaveBeenCalledWith(body);
 	});
 });
+
+/** `GET /api/embed/grants`: behind the switch, for a signed-in person, who names an organization to list everyone's. */
+describe('GET /embed/grants', () => {
+	const grantsHandler = EmbedSiteGrantController.prototype.grants;
+
+	it('is a GET under /embed for a signed-in person, never public', () => {
+		expect(Reflect.getMetadata(PATH_METADATA, grantsHandler)).toBe('/grants');
+		expect(Reflect.getMetadata(METHOD_METADATA, grantsHandler)).toBe(RequestMethod.GET);
+		expect(Reflect.getMetadata(GUARDS_METADATA, grantsHandler)).toEqual([TenantPermissionGuard]);
+		expect(Reflect.getMetadata(PUBLIC_METHOD_METADATA, grantsHandler)).toBeUndefined();
+	});
+
+	it("asks the service for the person's own grants, or the organization's it names", async () => {
+		const listGrants = jest.fn(async () => []);
+		const controller = new EmbedSiteGrantController({ listGrants } as unknown as EmbedSiteGrantService);
+		const organizationId = '7a000000-0000-4000-8000-0000000000f1';
+
+		await controller.grants({});
+		await controller.grants({ organizationId });
+
+		expect(listGrants.mock.calls).toEqual([[undefined], [organizationId]]);
+	});
+});

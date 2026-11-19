@@ -4,6 +4,7 @@ import * as path from 'path';
 import { createHash } from 'node:crypto';
 import { sign } from 'jsonwebtoken';
 import type { DataSource } from 'typeorm';
+import { PermissionsEnum } from '@gauzy/contracts';
 import type { EmbedSiteGrantService } from './embed-site-grant.service';
 
 /**
@@ -31,6 +32,7 @@ const PEOPLE: Record<
 	{ userId: string; employeeId: string; employee?: Record<string, unknown>; membership?: Record<string, unknown> }
 > = {
 	lina: { userId: '7e000000-0000-4000-8000-000000000001', employeeId: '7e000000-0000-4000-8000-0000000000e1' },
+	mara: { userId: '7e000000-0000-4000-8000-000000000006', employeeId: '7e000000-0000-4000-8000-0000000000e6' },
 	omar: {
 		userId: '7e000000-0000-4000-8000-000000000002',
 		employeeId: '7e000000-0000-4000-8000-0000000000e2',
@@ -229,6 +231,15 @@ describe('EmbedSiteGrantService on SQLite', () => {
 		jest.spyOn(requestContext, 'currentTenantId').mockReturnValue(TENANT);
 		jest.spyOn(requestContext, 'currentOAuthAppScopes').mockReturnValue(null);
 		jest.spyOn(requestContext, 'currentToken').mockReturnValue(token);
+		jest.spyOn(requestContext, 'hasPermission').mockReturnValue(false);
+	};
+
+	/** The request of an administrator of the organization's embeds, who is a member too. */
+	const signedInAsAdministrator = (name: keyof typeof PEOPLE) => {
+		signedInAs(name);
+		jest.spyOn(requestContext, 'hasPermission').mockImplementation(
+			(permission: PermissionsEnum) => permission === PermissionsEnum.ALL_ORG_EDIT
+		);
 	};
 
 	const grantRows = async () =>
@@ -612,6 +623,71 @@ describe('EmbedSiteGrantService on SQLite', () => {
 			const rows = await grantRows();
 			expect(rows).toHaveLength(1);
 			expect(rows[0].revokedAt).toBeNull();
+		});
+	});
+
+	describe('GET /embed/grants', () => {
+		const familyOf = async (renewalToken: string) => {
+			const keyHash = createHash('sha256').update(renewalToken).digest('hex');
+			const [row] = await dataSource.query('SELECT "familyId" FROM "embed_site_grant" WHERE "keyHash" = ?', [
+				keyHash
+			]);
+			return row.familyId as string;
+		};
+
+		it("lists the person's own grants that still work, once each under the same id through renewals, and no token", async () => {
+			await dataSource.query('DELETE FROM "embed_site_grant"');
+			const laptop = await authorizeAs('lina', TEAM_PAGE);
+			const laptopFamily = await familyOf(laptop.renewalToken);
+			const renewed = await service.renew({ renewalToken: laptop.renewalToken }, TEAM_PAGE);
+			const phone = await authorizeAs('lina', TEAM_PAGE);
+			const phoneFamily = await familyOf(phone.renewalToken);
+			const signedOut = await authorizeAs('lina', TEAM_PAGE);
+			await service.revoke({ renewalToken: signedOut.renewalToken });
+			const expired = await authorizeAs('lina', TEAM_PAGE);
+			await dataSource.query('UPDATE "embed_site_grant" SET "expiresAt" = ? WHERE "familyId" = ?', [
+				'2026-01-01 00:00:00.000',
+				await familyOf(expired.renewalToken)
+			]);
+			await authorizeAs('mara', TEAM_PAGE);
+
+			signedInAs('lina');
+			const grants = await service.listGrants();
+
+			expect(grants.map((grant) => grant.id).sort()).toEqual([laptopFamily, phoneFamily].sort());
+			for (const grant of grants) {
+				expect(grant).toEqual({
+					id: expect.any(String),
+					origin: TEAM_PAGE,
+					organizationId: ORGANIZATION,
+					userId: PEOPLE.lina.userId,
+					employeeId: PEOPLE.lina.employeeId,
+					renewedAt: expect.any(Date),
+					expiresAt: expect.any(Date)
+				});
+			}
+			const text = JSON.stringify(grants);
+			for (const token of [laptop.renewalToken, renewed.renewalToken, phone.renewalToken]) {
+				expect(text).not.toContain(token.slice(4));
+				expect(text).not.toContain(createHash('sha256').update(token).digest('hex'));
+			}
+		});
+
+		it("lists every member's grants of the organization for an administrator, and refuses them to anyone else", async () => {
+			await dataSource.query('DELETE FROM "embed_site_grant"');
+			const lina = await authorizeAs('lina', TEAM_PAGE);
+			const mara = await authorizeAs('mara', TEAM_PAGE);
+			const linaFamily = await familyOf(lina.renewalToken);
+			const maraFamily = await familyOf(mara.renewalToken);
+
+			signedInAsAdministrator('lina');
+			const grants = await service.listGrants(ORGANIZATION);
+			expect(grants.map((grant) => grant.id).sort()).toEqual([linaFamily, maraFamily].sort());
+			expect(await service.listGrants(SISTER_ORGANIZATION)).toEqual([]);
+
+			signedInAs('mara');
+			await expect(service.listGrants(ORGANIZATION)).rejects.toMatchObject({ status: 403 });
+			expect((await service.listGrants()).map((grant) => grant.id)).toEqual([maraFamily]);
 		});
 	});
 });
