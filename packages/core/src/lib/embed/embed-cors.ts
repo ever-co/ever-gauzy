@@ -8,9 +8,22 @@ export interface EmbedOriginLookup {
 }
 
 /**
- * CORS for ALLOWED_ORIGINS, plus the origins organizations allow to embed their timer, for the routes an embed token
- * reaches only (a preflight is judged by the method it announces). Such an origin gets no credentials: the widget
- * sends its token in the Authorization header. Any other request is answered as before.
+ * The public routes a site's page calls itself with the renewal token a person's sign-in gave it: the renewal and the
+ * sign-out. The renewal answers only the site the token was issued for (`EmbedSiteGrantService.renew`).
+ */
+const EMBED_SITE_ROUTES: ReadonlyArray<RegExp> = [/^\/api\/embed\/renew\/?$/, /^\/api\/embed\/revoke\/?$/];
+
+/** Whether a request reaches a route a site's page calls with a renewal token. The path is without its query string. */
+function isEmbedSiteRoute(method: string, path: string): boolean {
+	const isPost = String(method ?? '').toUpperCase() === 'POST';
+	return isPost && EMBED_SITE_ROUTES.some((route) => route.test(path));
+}
+
+/**
+ * CORS for ALLOWED_ORIGINS, plus the origins organizations allow to embed their timer, on two kinds of routes only: those
+ * an embed token reaches, and those a site's page renews or ends a person's sign-in with (a preflight is judged by the
+ * method it announces). Such an origin gets no credentials: the widget sends its tokens in a header or in the body. Any
+ * other request is answered as before.
  */
 export function createEmbedCorsDelegate(
 	corsOptions: CorsOptions,
@@ -29,7 +42,8 @@ export function createEmbedCorsDelegate(
 		}
 		const path = String(request.path ?? request.url ?? '').split('?')[0];
 		const normalized = normalizeOrigin(origin);
-		if (!normalized || !isEmbedRoute(method, path)) {
+		const isEmbedPageRoute = isEmbedRoute(method, path) || isEmbedSiteRoute(method, path);
+		if (!normalized || !isEmbedPageRoute) {
 			callback(null, corsOptions);
 			return;
 		}

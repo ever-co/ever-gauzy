@@ -752,7 +752,8 @@ export class AuthService extends SocialAuthService {
 	/**
 	 * Mints the token an embed credential is exchanged for (`embed/`): an ordinary access token, judged like every
 	 * sign-in's, for the member's user in the credential's organization, carrying the claims that hold it to the timer
-	 * (`EmbedSessionGuard`), living only until `expiresAt`, with no refresh token.
+	 * (`EmbedSessionGuard`), living only until `expiresAt`, with no refresh token. A person's sign-in from an allowed
+	 * site mints the same token, with its site grant (`grantId`) in place of a credential.
 	 *
 	 * @returns The signed access token.
 	 */
@@ -764,9 +765,11 @@ export class AuthService extends SocialAuthService {
 		employeeId: ID;
 		origin?: string;
 		clientId?: ID | null;
+		grantId?: ID;
 		expiresAt: Date;
 	}): Promise<string> {
-		const { userId, tenantId, organizationId, credentialId, employeeId, origin, clientId, expiresAt } = input;
+		const { userId, tenantId, organizationId, credentialId, employeeId, origin, clientId, grantId, expiresAt } =
+			input;
 		return await this.getJwtAccessToken(
 			{ id: userId, tenantId },
 			organizationId,
@@ -774,7 +777,8 @@ export class AuthService extends SocialAuthService {
 				embedCredentialId: credentialId,
 				embedEmployeeId: employeeId,
 				embedOrigin: origin,
-				embedClientId: clientId ?? undefined
+				embedClientId: clientId ?? undefined,
+				embedGrantId: grantId
 			},
 			expiresAt
 		);
@@ -2421,7 +2425,8 @@ export class AuthService extends SocialAuthService {
 					embedCredentialId: metadata.embedCredentialId,
 					embedEmployeeId: metadata.embedEmployeeId,
 					...(metadata.embedOrigin && { embedOrigin: metadata.embedOrigin }),
-					...(metadata.embedClientId && { embedClientId: metadata.embedClientId })
+					...(metadata.embedClientId && { embedClientId: metadata.embedClientId }),
+					...(metadata.embedGrantId && { embedGrantId: metadata.embedGrantId })
 				})
 			};
 

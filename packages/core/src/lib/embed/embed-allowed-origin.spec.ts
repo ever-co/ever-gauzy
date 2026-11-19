@@ -6,6 +6,7 @@ import { RequestContext as MikroOrmRequestContext } from '@mikro-orm/core';
 import { sign } from 'jsonwebtoken';
 import { environment } from '@gauzy/config';
 import { RequestContext } from '../core/context';
+import { EmbedAllowedOriginResponseDTO } from './dto/embed-allowed-origin.dto';
 import { EmbedAllowedOriginService } from './embed-allowed-origin.service';
 import { createEmbedCorsDelegate } from './embed-cors';
 import { EmbedSessionGuard } from './embed.guards';
@@ -40,6 +41,10 @@ function build() {
 		const row = rows.find((r) => matches(r, options.where));
 		if (!row) throw new NotFoundException();
 		return row;
+	});
+	jest.spyOn(service, 'update').mockImplementation(async (id: any, patch: any) => {
+		rows.filter((row) => row.id === id).forEach((row) => Object.assign(row, patch));
+		return { affected: 1 } as any;
 	});
 	jest.spyOn(service, 'delete').mockImplementation(async (id: any) => {
 		rows.splice(
@@ -113,6 +118,39 @@ describe('EmbedAllowedOriginService', () => {
 		expect(listed[0]).toHaveProperty('createdAt');
 	});
 
+	it('adds an origin with sign-in by people off unless the input turns it on, and lists the setting', async () => {
+		const { service } = build();
+		signIn(TENANT);
+
+		const plain = await service.addForOrganization({ origin: 'https://docs.example.com', organizationId: ORG });
+		const signIns = await service.addForOrganization({
+			origin: 'https://team.example.com',
+			organizationId: ORG,
+			allowPersonSignIn: true
+		});
+		// Adding it again keeps the setting it has.
+		const again = await service.addForOrganization({
+			origin: 'https://docs.example.com',
+			organizationId: ORG,
+			allowPersonSignIn: true
+		});
+		const listed = await service.listForOrganization(ORG);
+
+		expect(plain.allowPersonSignIn).toBe(false);
+		expect(signIns.allowPersonSignIn).toBe(true);
+		expect(again).toMatchObject({ id: plain.id, allowPersonSignIn: false });
+		expect(Object.fromEntries(listed.map((row) => [row.origin, row.allowPersonSignIn]))).toEqual({
+			'https://docs.example.com': false,
+			'https://team.example.com': true
+		});
+	});
+
+	it('lists a site stored before the setting existed with sign-in off', () => {
+		const answer = EmbedAllowedOriginResponseDTO.from({ id: 'a', origin: 'https://app.example.com' } as never);
+
+		expect(answer.allowPersonSignIn).toBe(false);
+	});
+
 	it('refuses what is not an origin', async () => {
 		const { service } = build();
 		signIn(TENANT);
@@ -134,6 +172,7 @@ describe('EmbedAllowedOriginService', () => {
 			tenantId: TENANT,
 			organizationId: ORG,
 			origin: 'https://app.example.com',
+			allowPersonSignIn: false,
 			createdByUserId: ADMIN
 		});
 		expect((await service.listForOrganization(ORG))[0].createdByUserId).toBe(ADMIN);
@@ -161,6 +200,41 @@ describe('EmbedAllowedOriginService', () => {
 		expect(service.delete).not.toHaveBeenCalled();
 	});
 
+	it('turns sign-in from an allowed origin on and off, and answers the origin with its setting', async () => {
+		const { service, rows } = build();
+		signIn(TENANT);
+		const { id } = await service.addForOrganization({ origin: 'https://team.example.com', organizationId: ORG });
+
+		const on = await service.setPersonSignIn(id, true);
+		expect(on).toMatchObject({ id, origin: 'https://team.example.com', allowPersonSignIn: true });
+		expect(rows[0].allowPersonSignIn).toBe(true);
+		expect(await service.findAllowed(TENANT, ORG, 'https://team.example.com')).toMatchObject({
+			allowPersonSignIn: true
+		});
+
+		const off = await service.setPersonSignIn(id, false);
+		expect(off.allowPersonSignIn).toBe(false);
+		expect(rows[0].allowPersonSignIn).toBe(false);
+	});
+
+	it("sets sign-in only on an origin of the caller's tenant: 404 for any other, and a failed read is thrown as it is", async () => {
+		const { service, rows } = build();
+		signIn(TENANT);
+		const { id } = await service.addForOrganization({ origin: 'https://team.example.com', organizationId: ORG });
+
+		signIn(OTHER_TENANT);
+		await expect(service.setPersonSignIn(id, true)).rejects.toThrow(NotFoundException);
+		signIn(TENANT);
+		await expect(service.setPersonSignIn('7a000000-0000-4000-8000-00000000d0ff', true)).rejects.toThrow(
+			NotFoundException
+		);
+		jest.spyOn(service, 'findOneByOptions').mockRejectedValueOnce(new Error('connection lost'));
+		await expect(service.setPersonSignIn(id, true)).rejects.toThrow('connection lost');
+
+		expect(service.update).not.toHaveBeenCalled();
+		expect(rows[0].allowPersonSignIn).toBe(false);
+	});
+
 	it('removes only an origin of the caller tenant', async () => {
 		const { service, rows } = build();
 		signIn(TENANT);
@@ -182,6 +256,41 @@ describe('EmbedAllowedOriginService', () => {
 		expect(await service.isAllowed(TENANT, ORG, 'https://app.example.com')).toBe(true);
 		expect(await service.isAllowed(TENANT, OTHER_ORG, 'https://app.example.com')).toBe(false);
 		expect(await service.isAllowed(TENANT, ORG, 'https://other.example.com')).toBe(false);
+	});
+
+	it('finds an allowed origin with its sign-in setting, in its tenant only, and none without an origin', async () => {
+		const { service, rows, reads } = build();
+		rows.push({
+			id: 'a',
+			tenantId: TENANT,
+			organizationId: ORG,
+			origin: 'https://app.example.com',
+			allowPersonSignIn: true
+		});
+		rows.push({
+			id: 'b',
+			tenantId: TENANT,
+			organizationId: ORG,
+			origin: 'https://docs.example.com',
+			allowPersonSignIn: false
+		});
+
+		expect(await service.findAllowed(TENANT, ORG, 'https://app.example.com')).toMatchObject({
+			id: 'a',
+			allowPersonSignIn: true
+		});
+		expect(await service.findAllowed(TENANT, ORG, 'https://docs.example.com')).toMatchObject({
+			allowPersonSignIn: false
+		});
+		expect(await service.findAllowed(OTHER_TENANT, ORG, 'https://app.example.com')).toBeNull();
+		expect(await service.findAllowed(TENANT, ORG, 'https://other.example.com')).toBeNull();
+		// TypeORM drops a condition whose value is undefined: a read without an origin would find any of them.
+		reads.mockClear();
+		for (const none of [undefined, null, '']) {
+			expect(await service.findAllowed(TENANT, ORG, none as any)).toBeNull();
+			expect(await service.isAllowed(TENANT, ORG, none as any)).toBe(false);
+		}
+		expect(reads).not.toHaveBeenCalled();
 	});
 
 	it("counts only a row of the credential's tenant: another tenant naming the organization does not widen its list", async () => {
@@ -349,6 +458,28 @@ describe('createEmbedCorsDelegate', () => {
 
 		expect(start.origin).toBe(true);
 		expect(logs).toBe(base);
+	});
+
+	it("answers an allowed embed origin on a site's renewal and sign-out, preflight included, POST only", async () => {
+		for (const path of ['/api/embed/renew', '/api/embed/revoke']) {
+			const post = await answer({ method: 'POST', path, headers: { origin: 'https://app.example.com' } });
+			const preflight = await answer({
+				method: 'OPTIONS',
+				path,
+				headers: { origin: 'https://app.example.com', 'access-control-request-method': 'POST' }
+			});
+			const get = await answer({ method: 'GET', path, headers: { origin: 'https://app.example.com' } });
+			const other = await answer({ method: 'POST', path, headers: { origin: 'https://evil.example.com' } });
+
+			expect(post).toEqual({ ...base, origin: true, credentials: false });
+			expect(preflight.origin).toBe(true);
+			expect(get).toBe(base);
+			expect(other).toBe(base);
+		}
+		// The authorization is the person's own, from the web app: never answered to an embed origin.
+		for (const path of ['/api/embed/authorize', '/api/embed/token', '/api/embed/grants']) {
+			expect(await answer({ method: 'POST', path, headers: { origin: 'https://app.example.com' } })).toBe(base);
+		}
 	});
 
 	it('leaves every other request to ALLOWED_ORIGINS: other routes, other origins, the server list itself', async () => {

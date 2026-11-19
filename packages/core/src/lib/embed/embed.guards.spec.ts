@@ -7,6 +7,7 @@ import {
 	EMBED_CLIENT_CLAIM,
 	EMBED_CREDENTIAL_CLAIM,
 	EMBED_EMPLOYEE_CLAIM,
+	EMBED_GRANT_CLAIM,
 	embedRouteOf,
 	IEmbedClientStart,
 	isEmbedRoute,
@@ -18,9 +19,11 @@ import {
 	embedCredentialHashesMatch,
 	embedTokenTtlSeconds,
 	generateEmbedCredential,
+	generateEmbedRenewalToken,
 	hashEmbedCredential,
 	isEmbedEnabled,
-	isWellFormedEmbedCredential
+	isWellFormedEmbedCredential,
+	isWellFormedEmbedRenewalToken
 } from './embed.utils';
 
 const ORG = '7a000000-0000-4000-8000-0000000000f1';
@@ -107,6 +110,22 @@ describe('embed helpers', () => {
 		expect(isWellFormedEmbedCredential('gzp_' + secret.slice(4))).toBe(false);
 	});
 
+	it('makes a renewal token with its own prefix and stores its digest, never taken for a credential', () => {
+		const { token, keyHash } = generateEmbedRenewalToken();
+		const other = generateEmbedRenewalToken();
+
+		expect(token).toMatch(/^gzr_[A-Za-z0-9_-]{43}$/);
+		expect(isWellFormedEmbedRenewalToken(token)).toBe(true);
+		expect(keyHash).toBe(hashEmbedCredential(token));
+		expect(keyHash).not.toContain(token.slice(4));
+		expect(other.token).not.toBe(token);
+		expect(isWellFormedEmbedCredential(token)).toBe(false);
+		expect(isWellFormedEmbedRenewalToken(generateEmbedCredential().secret)).toBe(false);
+		for (const odd of [`${token}x`, token.slice(0, -1), `gzr_${'*'.repeat(43)}`, 42, null, undefined]) {
+			expect(isWellFormedEmbedRenewalToken(odd)).toBe(false);
+		}
+	});
+
 	it('reads the embed claims of a bearer token, and none of an ordinary one', () => {
 		expect(readEmbedClaims(`Bearer ${embedToken()}`)).toEqual({
 			credentialId: CREDENTIAL,
@@ -114,7 +133,8 @@ describe('embed helpers', () => {
 			organizationId: ORG,
 			tenantId: 'tenant',
 			origin: null,
-			clientId: null
+			clientId: null,
+			grantId: null
 		});
 		expect(readEmbedClaims(`Bearer ${sign({ id: 'user' }, 'test-secret')}`)).toBeNull();
 		expect(readEmbedClaims(undefined)).toBeNull();
@@ -245,6 +265,46 @@ describe('EmbedSessionGuard', () => {
 
 		delete process.env[EMBED_TOKENS_ENV];
 		await expect(guardWith().guard.canActivate(contextOf(request))).rejects.toThrow(UnauthorizedException);
+	});
+
+	it("keeps every embed token, a site grant's too, from the routes that allow a site or list and revoke grants", async () => {
+		const { guard } = guardWith();
+		const GRANT = '7a000000-0000-4000-8000-0000000000a9';
+		const tokens = [embedToken(), embedToken({ [EMBED_CREDENTIAL_CLAIM]: GRANT, [EMBED_GRANT_CLAIM]: GRANT })];
+		const routes = [
+			{
+				method: 'POST',
+				path: '/api/embed/authorize',
+				body: { organizationId: ORG, origin: 'https://team.example.com' }
+			},
+			{ method: 'GET', path: '/api/embed/grants' },
+			{ method: 'DELETE', path: `/api/embed/grants/${GRANT}` }
+		];
+
+		for (const token of tokens) {
+			for (const route of routes) {
+				const request = { ...route, headers: { authorization: `Bearer ${token}` } };
+				await expect(guard.canActivate(contextOf(request))).rejects.toMatchObject({
+					response: { code: 'EMBED_SCOPE' }
+				});
+			}
+		}
+	});
+
+	it('looks no credential up for the token of a site grant, which reaches the timer as an exchanged one does', async () => {
+		const { guard, isRevoked } = guardWith(true);
+		const GRANT = '7a000000-0000-4000-8000-0000000000a9';
+		const authorization = `Bearer ${embedToken({ [EMBED_CREDENTIAL_CLAIM]: GRANT, [EMBED_GRANT_CLAIM]: GRANT })}`;
+		const status = { method: 'GET', path: '/api/timesheet/timer/status', headers: { authorization } };
+		const logs = { method: 'GET', path: '/api/timesheet/time-log', headers: { authorization } };
+
+		expect(readEmbedClaims(authorization)).toMatchObject({ credentialId: GRANT, grantId: GRANT });
+		await expect(guard.canActivate(contextOf(status))).resolves.toBe(true);
+		await expect(guard.canActivate(contextOf(logs))).rejects.toMatchObject({ response: { code: 'EMBED_SCOPE' } });
+		expect(isRevoked).not.toHaveBeenCalled();
+
+		delete process.env[EMBED_TOKENS_ENV];
+		await expect(guard.canActivate(contextOf(status))).rejects.toThrow(UnauthorizedException);
 	});
 
 	it('reads the token passport reads, so a suffixed Authorization header is held to the timer too', async () => {

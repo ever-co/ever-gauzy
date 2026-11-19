@@ -69,11 +69,66 @@ export interface IEmbedTokenExchangeResponse {
 /** A site allowed to embed the organization's timer: scheme, host and port, normalized (`https://app.example.com`). */
 export interface IEmbedAllowedOrigin extends IBasePerTenantAndOrganizationEntityModel {
 	origin: string;
+	/**
+	 * Whether the organization's people can sign in from this site themselves: they allow it once from the web app,
+	 * and the site gets their timer token without a server of its own (`POST /embed/authorize`). False for every site
+	 * added without it.
+	 */
+	allowPersonSignIn?: boolean;
 }
 
 export interface IEmbedAllowedOriginCreateInput {
 	origin: string;
 	organizationId: ID;
+	/** Lets the organization's people sign in from this site themselves. Off by default. */
+	allowPersonSignIn?: boolean;
+}
+
+/** What an administrator changes on an allowed site. */
+export interface IEmbedAllowedOriginUpdateInput {
+	allowPersonSignIn: boolean;
+}
+
+/**
+ * A person allows a site to start and stop their timer, with their own session (`POST /embed/authorize`). The site must
+ * be one of the organization's allowed origins with sign-in on, and the person an active member who may track time.
+ */
+export interface IEmbedAuthorizeInput {
+	organizationId: ID;
+	/** The site's origin (`https://app.example.com`), as its page's `Origin` header names it. */
+	origin: string;
+}
+
+/** A renewal token, as the site's page holds it (`POST /embed/renew`, `POST /embed/revoke`). */
+export interface IEmbedRenewalInput {
+	renewalToken: string;
+}
+
+/**
+ * What a site gets when a person allows it, and at each renewal: a timer token like the exchange's, and a renewal token
+ * that gets the next pair from the same site only. A renewal token works once: the renewal answers a new one.
+ */
+export interface IEmbedSiteTokens extends IEmbedTokenExchangeResponse {
+	/** Shown in this answer only; the server keeps its SHA-256. */
+	renewalToken: string;
+	/** ISO date; the renewal token is refused after it, and the person allows the site again. */
+	renewalExpiresAt: string;
+}
+
+/**
+ * A site a person allowed to start and stop their timer, as the person and the organization's administrators list it.
+ * The same through its renewals; revoking it ends the site's renewals.
+ */
+export interface IEmbedSiteGrant {
+	id: ID;
+	origin: string;
+	organizationId: ID;
+	userId: ID;
+	employeeId: ID;
+	/** When the site last got a renewal token: when the person allowed it, or its last renewal since. */
+	renewedAt: Date;
+	/** When it ends, unless the site renews it before. */
+	expiresAt: Date;
 }
 
 /** A client's spent time, asked by its portal's server with a credential limited to that client. */
