@@ -42,7 +42,7 @@ const TIMEOUT = 15 * 60 * 1000;
 const WAIT_TIMEOUT = 30 * 1000;
 const WAIT_STEP = 50;
 
-/** The rows of one run: a run again on the same database writes its own. */
+/** The rows of the run. */
 const TENANT = randomUUID();
 const ORGANIZATION = randomUUID();
 const USER = randomUUID();
@@ -61,20 +61,23 @@ const postgresUrl = process.env.GAUZY_MIGRATION_TEST_POSTGRES_URL;
 		let service: EmbedSiteGrantService;
 
 		beforeAll(async () => {
-			const { parse } = require('pg-connection-string');
-			if (parse(postgresUrl).database === 'gauzy') {
-				throw new Error('The spec builds a schema and writes rows: name a throwaway database, not `gauzy`.');
-			}
 			dataSource = new DataSource({
 				type: 'postgres',
 				url: postgresUrl,
 				entities: coreEntities,
-				synchronize: true,
 				logging: false,
 				// Every statement of the spec at READ COMMITTED, PostgreSQL's default, whatever the database's own default.
 				extra: { options: '-c default_transaction_isolation=read\\ committed' }
 			});
 			await dataSource.initialize();
+			// The schema is built and the rows written only in a database that has no table yet.
+			const [schema] = await dataSource.query(
+				`SELECT COUNT(*)::int AS "tables" FROM information_schema.tables WHERE table_schema = current_schema()`
+			);
+			if (schema.tables > 0) {
+				throw new Error('The spec builds a schema and writes rows: name an empty, throwaway database.');
+			}
+			await dataSource.synchronize();
 
 			const scope = { tenantId: TENANT, organizationId: ORGANIZATION };
 			await insertRow(dataSource, Tenant, { id: TENANT, name: 'Northwind Studio' });
