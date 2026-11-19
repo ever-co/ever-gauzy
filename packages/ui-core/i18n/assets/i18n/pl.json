@@ -8167,6 +8167,11 @@
 	"FAVORITES": {
 		"SUBTITLE": "Wszystko, co oznaczono gwiazdką, od najnowszych.",
 		"EMPTY": "Brak ulubionych. Użyj gwiazdki przy rekordzie, aby dodać go tutaj.",
-		"VIEW_ALL": "Pokaż wszystkie"
+		"VIEW_ALL": "Pokaż wszystkie",
+		"PINNED_FOR_ORGANIZATION": "Przypięte dla organizacji",
+		"REMOVED_STILL_PINNED": "Usunięto {{ name }} z ulubionych. Pozostaje na liście, ponieważ jest przypięte dla organizacji.",
+		"ERROR": {
+			"LOAD_FAILED": "Nie udało się wczytać ulubionych"
+		}
 	}
 }

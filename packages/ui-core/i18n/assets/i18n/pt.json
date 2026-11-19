@@ -8168,6 +8168,11 @@
 	"FAVORITES": {
 		"SUBTITLE": "Tudo o que você marcou com estrela, do mais recente ao mais antigo.",
 		"EMPTY": "Ainda não há favoritos. Use a estrela em um registro para adicioná-lo aqui.",
-		"VIEW_ALL": "Ver todos"
+		"VIEW_ALL": "Ver todos",
+		"PINNED_FOR_ORGANIZATION": "Fixado para a organização",
+		"REMOVED_STILL_PINNED": "{{ name }} foi removido dos seus favoritos. Continua na lista porque está fixado para a organização.",
+		"ERROR": {
+			"LOAD_FAILED": "Não foi possível carregar os favoritos"
+		}
 	}
 }
