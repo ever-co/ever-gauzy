@@ -3,7 +3,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { buildListQuery, validateOrganizationContext } from './utils';
+import { buildListQuery, nameTexts, readSearchedList, validateOrganizationContext } from './utils';
 import { EmployeeAwardInputSchema } from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
@@ -46,17 +46,12 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				// `where` matches a column exactly: the search stays outside it, as before
-				const params = {
-					...buildListQuery(
-						defaultParams,
-						{ employeeId, year },
-						{ page, limit, relations, order: awardOrder(sortBy, sortOrder), skipIsPage: true }
-					),
-					...(search && { search })
-				};
-
-				const response = await apiClient.get(AWARDS_PATH, { params });
+				// The route has no search: one of the award name is kept here, on the whole list
+				const listOptions = { page, limit, relations, order: awardOrder(sortBy, sortOrder), skipIsPage: true };
+				const response = await readSearchedList(AWARDS_PATH, defaultParams, { employeeId, year }, listOptions, {
+					search,
+					textsOf: nameTexts
+				});
 
 				return {
 					content: [

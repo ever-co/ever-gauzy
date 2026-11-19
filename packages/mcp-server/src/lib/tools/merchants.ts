@@ -3,13 +3,25 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { buildListQuery, validateOrganizationContext } from './utils';
+import { ListQueryOptions, nameCodeEmailTexts, readSearchedList, validateOrganizationContext } from './utils';
 import { MerchantInputSchema } from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
 import { TOOL_HINTS } from './tool-hints';
 const logger = new Logger('MerchantTools');
+
+/** A page of merchants. The route has no search: one of the name, code or email is kept here, on the whole list. */
+const readMerchants = (
+	defaultParams: { tenantId?: string; organizationId?: string },
+	where: Record<string, unknown>,
+	search: string | undefined,
+	listOptions: ListQueryOptions
+) =>
+	readSearchedList('/api/merchants', defaultParams, where, listOptions, {
+		search,
+		textsOf: nameCodeEmailTexts
+	});
 
 export const registerMerchantTools = (server: McpServer) => {
 	// Get merchants tool
@@ -34,12 +46,7 @@ export const registerMerchantTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = {
-					...buildListQuery(defaultParams, { ...where }, { page, limit, relations }),
-					...(search && { search })
-				};
-
-				const response = await apiClient.get('/api/merchants', { params });
+				const response = await readMerchants(defaultParams, { ...where }, search, { page, limit, relations });
 
 				return {
 					content: [
@@ -459,12 +466,9 @@ export const registerMerchantTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = {
-					...buildListQuery(defaultParams, { isActive: true, isArchived: false }, { page, limit, relations }),
-					...(search && { search })
-				};
-
-				const response = await apiClient.get('/api/merchants', { params });
+				const listOptions = { page, limit, relations };
+				const activeWhere = { isActive: true, isArchived: false };
+				const response = await readMerchants(defaultParams, activeWhere, search, listOptions);
 
 				return {
 					content: [
@@ -497,12 +501,8 @@ export const registerMerchantTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = {
-					...buildListQuery(defaultParams, { isArchived: true }, { page, limit, relations }),
-					...(search && { search })
-				};
-
-				const response = await apiClient.get('/api/merchants', { params });
+				const listOptions = { page, limit, relations };
+				const response = await readMerchants(defaultParams, { isArchived: true }, search, listOptions);
 
 				return {
 					content: [

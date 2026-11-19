@@ -3,7 +3,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { buildListQuery, validateOrganizationContext } from './utils';
+import { nameTexts, readSearchedList, validateOrganizationContext } from './utils';
 import { ProductCategoryInputSchema } from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
@@ -29,14 +29,16 @@ export const registerProductCategoryTools = (server: McpServer) => {
 				const defaultParams = validateOrganizationContext();
 
 				// The list route drops paging: the pagination route reads it, `skip` as a page number. The API reads the
-				// language of the translations from the `language` header.
-				const params = {
-					...buildListQuery(defaultParams, {}, { page, limit, relations, skipIsPage: true }),
-					...(search && { search })
-				};
+				// language of the translations from the `language` header. It has no search: one of the name is kept here.
 				const headers = { ...(langCode && { language: langCode }) };
+				const listOptions = { page, limit, relations, skipIsPage: true };
+				const path = '/api/product-categories/pagination';
 
-				const response = await apiClient.get('/api/product-categories/pagination', { params, headers });
+				const response = await readSearchedList(path, defaultParams, {}, listOptions, {
+					search,
+					textsOf: nameTexts,
+					headers
+				});
 
 				return {
 					content: [

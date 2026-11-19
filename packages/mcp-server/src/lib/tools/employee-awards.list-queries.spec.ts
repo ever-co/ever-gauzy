@@ -48,7 +48,6 @@ describe('employee award list tools — the query the route validates', () => {
 		await call('get_employee_awards', {
 			employeeId: EMPLOYEE,
 			year: '2026',
-			search: 'best',
 			sortBy: 'name',
 			page: 2,
 			limit: 5,
@@ -61,8 +60,7 @@ describe('employee award list tools — the query the route validates', () => {
 				take: 5,
 				skip: 2,
 				relations: ['employee'],
-				order: { name: 'DESC' },
-				search: 'best'
+				order: { name: 'DESC' }
 			}
 		});
 	});
@@ -101,6 +99,31 @@ describe('employee award list tools — the query the route validates', () => {
 
 		expect(get).toHaveBeenCalledWith('/api/employee-award/pagination', {
 			params: { where: SCOPE, take: 10, skip: 1 }
+		});
+	});
+});
+
+describe('get_employee_awards — the search the route does not apply', () => {
+	const AWARDS = [
+		{ id: 'a1', name: 'Best Mentor' },
+		{ id: 'a2', name: 'Fastest Fixer' },
+		{ id: 'a3', name: 'best newcomer' }
+	];
+	let get: jest.SpyInstance;
+
+	beforeEach(() => {
+		jest.spyOn(authManager, 'getDefaultParams').mockReturnValue(SCOPE);
+		get = jest.spyOn(apiClient, 'get').mockResolvedValue({ items: AWARDS, total: AWARDS.length } as never);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('keeps the awards whose name contains the search, read whole from the pagination route', async () => {
+		const result = await call('get_employee_awards', { search: 'BEST', sortBy: 'year' });
+
+		expect(JSON.parse(result.content[0].text)).toEqual({ items: [AWARDS[0], AWARDS[2]], total: 2 });
+		expect(get).toHaveBeenCalledWith('/api/employee-award/pagination', {
+			params: { where: SCOPE, take: 100, skip: 1, order: { year: 'DESC' } }
 		});
 	});
 });

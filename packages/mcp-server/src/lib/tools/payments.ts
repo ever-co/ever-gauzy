@@ -3,7 +3,14 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { buildListQuery, toApiValue, validateOrganizationContext } from './utils';
+import {
+	buildListQuery,
+	containsText,
+	isWithinDates,
+	readListPage,
+	toApiValue,
+	validateOrganizationContext
+} from './utils';
 import {
 	CurrenciesEnum,
 	PAYMENT_METHOD_VALUES,
@@ -18,6 +25,20 @@ import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils'
 import { registerTool, registerNoArgsTool } from './tool-helper';
 import { TOOL_HINTS } from './tool-hints';
 const logger = new Logger('PaymentTools');
+
+/** The payments a search of the note and a range of the payment date keep; none without either. */
+const keptPayments = (search?: string, startDate?: string, endDate?: string) => {
+	const hasDates = Boolean(startDate || endDate);
+	const keepsHere = Boolean(search) || hasDates;
+	if (!keepsHere) {
+		return undefined;
+	}
+	return ({ note, paymentDate }: { note?: string; paymentDate?: string }) => {
+		const matchesSearch = containsText(note, search);
+		const inRange = isWithinDates(paymentDate, startDate, endDate);
+		return matchesSearch && inRange;
+	};
+};
 
 /**
  * Helper function to convert date fields in payment data to Date objects
@@ -80,7 +101,6 @@ export const registerPaymentTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				// `where` matches a column exactly: the search and the date range stay outside it, as before
 				const where = {
 					status: toApiValue(PAYMENT_STATUS_VALUES, status),
 					paymentMethod: toApiValue(PAYMENT_METHOD_VALUES, paymentMethod),
@@ -90,14 +110,12 @@ export const registerPaymentTools = (server: McpServer) => {
 					currency,
 					overdue
 				};
-				const params = {
-					...buildListQuery(defaultParams, where, { page, limit, relations }),
-					...(search && { search }),
-					...(startDate && { startDate }),
-					...(endDate && { endDate })
-				};
+				// The route applies neither a search of the note nor a date range: they are kept here, on the whole list
+				const query = (pageNumber: number, take: number) =>
+					buildListQuery(defaultParams, where, { page: pageNumber, limit: take, relations });
+				const keep = keptPayments(search, startDate, endDate);
 
-				const response = await apiClient.get('/api/payments', { params });
+				const response = await readListPage('/api/payments', query, { page, limit, keep });
 
 				return {
 					content: [

@@ -50,11 +50,10 @@ describe('product list tools — the query the route validates', () => {
 		expect(get).toHaveBeenCalledWith('/api/products/pagination', { params: { where: SCOPE, take: 10, skip: 1 } });
 	});
 
-	it("get_products_pagination adds the caller's filters to `where`, the search outside it as before", async () => {
+	it("get_products_pagination adds the caller's filters to `where`", async () => {
 		const category = '00000000-0000-4000-8000-000000000070';
 		await call('get_products_pagination', {
 			where: { enabled: true, productCategoryId: category },
-			search: 'desk',
 			page: 2,
 			limit: 5,
 			relations: ['productCategory']
@@ -65,9 +64,33 @@ describe('product list tools — the query the route validates', () => {
 				where: { ...SCOPE, enabled: true, productCategoryId: category },
 				take: 5,
 				skip: 2,
-				relations: ['productCategory'],
-				search: 'desk'
+				relations: ['productCategory']
 			}
+		});
+	});
+});
+
+describe('get_products_pagination — the search the route does not apply', () => {
+	const PRODUCTS = [
+		{ id: 'r1', name: 'Standing desk' },
+		{ id: 'r2', name: 'Desk lamp' },
+		{ id: 'r3', name: 'Office chair' }
+	];
+	let get: jest.SpyInstance;
+
+	beforeEach(() => {
+		jest.spyOn(authManager, 'getDefaultParams').mockReturnValue(SCOPE);
+		get = jest.spyOn(apiClient, 'get').mockResolvedValue({ items: PRODUCTS, total: PRODUCTS.length } as never);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('keeps the products whose name contains the search, read whole', async () => {
+		const result = await call('get_products_pagination', { search: 'DESK', where: { enabled: true } });
+
+		expect(JSON.parse(result.content[0].text)).toEqual({ items: [PRODUCTS[0], PRODUCTS[1]], total: 2 });
+		expect(get).toHaveBeenCalledWith('/api/products/pagination', {
+			params: { where: { ...SCOPE, enabled: true }, take: 100, skip: 1 }
 		});
 	});
 });

@@ -67,18 +67,22 @@ export const buildListQuery = (
 
 /**
  * Reads a list route page by page, for the tools that search or count rows the API only lists.
- * `query` builds the query of one page; `stop` ends the read before the rows run out.
+ * `query` builds the query of one page; `stop` ends the read before the rows run out; `headers` go with every page.
  */
 export const readAllPages = async <T>(
 	path: string,
 	query: (page: number, take: number) => Record<string, unknown>,
-	stop?: (items: T[]) => boolean
+	stop?: (items: T[]) => boolean,
+	headers?: Record<string, string>
 ): Promise<T[]> => {
 	const take = 100;
 	const items: T[] = [];
 
 	for (let page = 1; ; page++) {
-		const response = await apiClient.get<{ items?: T[]; total?: number }>(path, { params: query(page, take) });
+		const response = await apiClient.get<{ items?: T[]; total?: number }>(path, {
+			params: query(page, take),
+			...(headers && { headers })
+		});
 		const batch = response?.items ?? [];
 		items.push(...batch);
 
@@ -104,8 +108,9 @@ export const pageOfKept = async <T>(
 	query: (page: number, take: number) => Record<string, unknown>,
 	keep: (item: T) => boolean,
 	page = 1,
-	limit = 10
-) => pageOf((await readAllPages<T>(path, query)).filter(keep), page, limit);
+	limit = 10,
+	headers?: Record<string, string>
+) => pageOf((await readAllPages<T>(path, query, undefined, headers)).filter(keep), page, limit);
 
 /**
  * Applies `apply` to each item in turn, for the bulk tools of resources that only have single-item routes.
@@ -180,6 +185,15 @@ export const containsText = (text: unknown, query?: string): boolean => {
 	return !needle || haystack.includes(needle);
 };
 
+/** Whether one of `texts` contains `query`, ignoring case; no query matches everything. */
+export const containsAnyText = (query: string | undefined, ...texts: unknown[]): boolean =>
+	texts.some((text) => containsText(text, query));
+
+/** The relations a tool asks for, with the one a search reads from. */
+export const withRelation = (relations: string[] | undefined, relation: string): string[] => [
+	...new Set([...(relations ?? []), relation])
+];
+
 /** Whether `value` falls in the optional `[startDate, endDate]` range. */
 export const isWithinDates = (value: string | Date | undefined, startDate?: string, endDate?: string): boolean => {
 	if (!startDate && !endDate) {
@@ -206,3 +220,92 @@ export const getCurrentEmployeeId = async (): Promise<string> => {
 
 	return employeeId;
 };
+
+/** A person's user, as the API joins it to an employee or a candidate. */
+export interface PersonUser {
+	firstName?: string;
+	lastName?: string;
+	email?: string;
+}
+
+/** The texts a search of a person's name or email reads. */
+export const personTexts = ({ user }: { user?: PersonUser }): unknown[] => [
+	`${user?.firstName ?? ''} ${user?.lastName ?? ''}`,
+	user?.email
+];
+
+/** The relations a tool asks for, with the one its search reads from when it searches. */
+export const relationsForSearch = (search: string | undefined, relations: string[] | undefined, relation: string) => {
+	if (!search) {
+		return relations;
+	}
+	return withRelation(relations, relation);
+};
+
+/** How a list page is read: the page, the rows kept here when the route does not apply a filter, the headers. */
+export interface ListPageOptions<T> {
+	page?: number;
+	limit?: number;
+	keep?: (item: T) => boolean;
+	headers?: Record<string, string>;
+}
+
+/**
+ * A page of a list route. With `keep`, for a filter the route does not apply, the whole list is read, filtered here,
+ * then paged; without it, the route pages the list itself.
+ */
+export const readListPage = <T>(
+	path: string,
+	query: (page: number, take: number) => Record<string, unknown>,
+	{ page = 1, limit = 10, keep, headers }: ListPageOptions<T>
+) => {
+	if (!keep) {
+		return apiClient.get(path, { params: query(page, limit), ...(headers && { headers }) });
+	}
+	return pageOfKept(path, query, keep, page, limit, headers);
+};
+
+/** A filter keeping the rows one of whose texts contains `search`, ignoring case; none without a search. */
+export const searchingIn = <T>(search: string | undefined, textsOf: (item: T) => unknown[]) => {
+	if (!search) {
+		return undefined;
+	}
+	return (item: T) => containsAnyText(search, ...textsOf(item));
+};
+
+/** A search a list route does not apply: the term, the texts of a row it reads, the headers of the read. */
+export interface ListSearch<T> {
+	search?: string;
+	textsOf: (item: T) => unknown[];
+	headers?: Record<string, string>;
+}
+
+/**
+ * A page of a `BaseQueryDTO` list route that has no search for what a tool searches: with a search, the rows whose
+ * texts contain it are kept here, on the whole list.
+ */
+export const readSearchedList = <T>(
+	path: string,
+	defaultParams: { tenantId?: string; organizationId?: string },
+	where: Record<string, unknown>,
+	listOptions: ListQueryOptions,
+	{ search, textsOf, headers }: ListSearch<T>
+) => {
+	const query = (pageNumber: number, take: number) =>
+		buildListQuery(defaultParams, where, { ...listOptions, page: pageNumber, limit: take });
+	const keep = searchingIn(search, textsOf);
+	return readListPage(path, query, { page: listOptions.page, limit: listOptions.limit, keep, headers });
+};
+
+/** The text a search of a row's name reads. */
+export const nameTexts = ({ name }: { name?: string }): unknown[] => [name];
+
+/** A row with a name, a code and an email, as far as a search reads it. */
+interface NamedRow {
+	name?: string;
+	code?: string;
+	email?: string;
+}
+
+/** The texts a search of a row's name, code or email reads. */
+export const nameCodeEmailTexts = ({ name, code, email }: NamedRow): unknown[] => [name, code, email];

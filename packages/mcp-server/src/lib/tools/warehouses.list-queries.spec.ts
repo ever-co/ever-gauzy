@@ -49,11 +49,39 @@ describe('warehouse list tools — the query the route validates', () => {
 		expect(get).toHaveBeenCalledWith('/api/warehouses', { params: { where: SCOPE, take: 10, skip: 0 } });
 	});
 
-	it('get_warehouses filters the active state inside `where`, the search outside it as before', async () => {
-		await call('get_warehouses', { active: false, search: 'north', page: 2, limit: 5, relations: ['contact'] });
+	it('get_warehouses filters the active state inside `where`', async () => {
+		await call('get_warehouses', { active: false, page: 2, limit: 5, relations: ['contact'] });
 
 		expect(get).toHaveBeenCalledWith('/api/warehouses', {
-			params: { where: { ...SCOPE, active: false }, take: 5, skip: 5, relations: ['contact'], search: 'north' }
+			params: { where: { ...SCOPE, active: false }, take: 5, skip: 5, relations: ['contact'] }
+		});
+	});
+});
+
+describe('get_warehouses — the search the route does not apply', () => {
+	const WAREHOUSES = [
+		{ id: 'w1', name: 'North depot', code: 'ND', email: 'depot@example.com' },
+		{ id: 'w2', name: 'Harbor', code: 'HB', email: 'north@example.com' },
+		{ id: 'w3', name: 'South yard', code: 'SY', email: 'yard@example.com' }
+	];
+	let get: jest.SpyInstance;
+
+	beforeEach(() => {
+		jest.spyOn(authManager, 'getDefaultParams').mockReturnValue(SCOPE);
+		get = jest.spyOn(apiClient, 'get').mockResolvedValue({ items: WAREHOUSES, total: WAREHOUSES.length } as never);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('keeps the warehouses whose name, code or email contains the search, read whole', async () => {
+		const result = await call('get_warehouses', { search: 'NORTH', active: true });
+		expect(JSON.parse(result.content[0].text)).toEqual({ items: [WAREHOUSES[0], WAREHOUSES[1]], total: 2 });
+
+		const byCode = await call('get_warehouses', { search: 'sy' });
+		expect(JSON.parse(byCode.content[0].text)).toEqual({ items: [WAREHOUSES[2]], total: 1 });
+
+		expect(get).toHaveBeenCalledWith('/api/warehouses', {
+			params: { where: { ...SCOPE, active: true }, take: 100, skip: 0 }
 		});
 	});
 });

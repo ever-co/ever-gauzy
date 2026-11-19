@@ -52,13 +52,11 @@ describe('candidate list tools — the query each route validates', () => {
 
 	afterEach(() => jest.restoreAllMocks());
 
-	it('get_candidates filters inside `where`, the search and the minimum rating outside it as before', async () => {
+	it('get_candidates filters inside `where`', async () => {
 		await call('get_candidates', {
 			status: 'HIRED',
 			organizationPositionId: POSITION,
 			sourceId: SOURCE,
-			search: 'ada',
-			rating: 3,
 			page: 2,
 			limit: 5,
 			relations: ['user']
@@ -69,9 +67,7 @@ describe('candidate list tools — the query each route validates', () => {
 				where: { ...SCOPE, status: 'HIRED', organizationPositionId: POSITION, sourceId: SOURCE },
 				take: 5,
 				skip: 5,
-				relations: ['user'],
-				search: 'ada',
-				rating: 3
+				relations: ['user']
 			}
 		});
 	});
@@ -92,5 +88,46 @@ describe('candidate list tools — the query each route validates', () => {
 		await call(name, { candidateId: CANDIDATE });
 
 		expect(get).toHaveBeenCalledWith(path, { params: { where: { ...SCOPE, candidateId: CANDIDATE } } });
+	});
+});
+
+describe('get_candidates — the search and the minimum rating the route does not apply', () => {
+	const CANDIDATES = [
+		{ id: 'c1', rating: 4, user: { firstName: 'Ada', lastName: 'Lovelace', email: 'ada@example.com' } },
+		{ id: 'c2', rating: 2, user: { firstName: 'Ada', lastName: 'Byron', email: 'byron@example.com' } },
+		{ id: 'c3', rating: 5, user: { firstName: 'Grace', lastName: 'Hopper', email: 'grace@example.com' } },
+		{ id: 'c4', user: { firstName: 'Alan', lastName: 'Turing', email: 'alan@example.com' } }
+	];
+	let get: jest.SpyInstance;
+
+	beforeEach(() => {
+		jest.spyOn(authManager, 'getDefaultParams').mockReturnValue(SCOPE);
+		get = jest.spyOn(apiClient, 'get').mockResolvedValue({ items: CANDIDATES, total: CANDIDATES.length } as never);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	/** The ids of the candidates the tool answered, and its total. */
+	async function answered(args: Record<string, unknown>) {
+		const { items, total } = JSON.parse((await call('get_candidates', args)).content[0].text);
+		return { ids: items.map(({ id }: { id: string }) => id), total };
+	}
+
+	it('keeps the candidates whose full name or email contains the search, reading their users', async () => {
+		expect(await answered({ search: 'ada lovelace' })).toEqual({ ids: ['c1'], total: 1 });
+		expect(await answered({ search: 'GRACE@' })).toEqual({ ids: ['c3'], total: 1 });
+
+		expect(get).toHaveBeenCalledWith('/api/candidate', {
+			params: { where: SCOPE, take: 100, skip: 0, relations: ['user'] }
+		});
+	});
+
+	it('keeps the candidates rated at least the minimum, an unrated one counting as 0', async () => {
+		expect(await answered({ rating: 4 })).toEqual({ ids: ['c1', 'c3'], total: 2 });
+		expect(await answered({ rating: 0 })).toEqual({ ids: ['c1', 'c2', 'c3', 'c4'], total: 4 });
+	});
+
+	it('pages the candidates kept', async () => {
+		expect(await answered({ search: 'example.com', page: 2, limit: 3 })).toEqual({ ids: ['c4'], total: 4 });
 	});
 });

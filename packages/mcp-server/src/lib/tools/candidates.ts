@@ -4,7 +4,16 @@ import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { CandidateStatusEnum } from '../input-schemas';
-import { buildListQuery, validateOrganizationContext } from './utils';
+import {
+	buildListQuery,
+	containsAnyText,
+	ListQueryOptions,
+	pageOfKept,
+	PersonUser,
+	personTexts,
+	validateOrganizationContext,
+	withRelation
+} from './utils';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
@@ -18,6 +27,39 @@ const logger = new Logger('CandidateTools');
 const candidateRecordsQuery = (defaultParams: { tenantId?: string; organizationId?: string }, candidateId: string) => ({
 	where: buildListQuery(defaultParams, { candidateId }).where
 });
+
+/** The filters of a candidate list the route does not apply. */
+interface CandidateSearch {
+	search?: string;
+	rating?: number;
+}
+
+/**
+ * A page of candidates. The route has no search and matches a rating only exactly: a search of the name or email, and a
+ * minimum rating, are kept here, on the whole list.
+ */
+const readCandidates = (
+	defaultParams: { tenantId?: string; organizationId?: string },
+	where: Record<string, unknown>,
+	{ search, rating }: CandidateSearch,
+	{ page, limit, relations }: Pick<ListQueryOptions, 'page' | 'limit' | 'relations'>
+) => {
+	const keepsHere = Boolean(search) || rating !== undefined;
+	if (!keepsHere) {
+		return apiClient.get('/api/candidate', {
+			params: buildListQuery(defaultParams, where, { page, limit, relations })
+		});
+	}
+
+	const isKept = (candidate: { rating?: number; user?: PersonUser }) => {
+		const ratedEnough = rating === undefined || (candidate.rating ?? 0) >= rating;
+		return ratedEnough && containsAnyText(search, ...personTexts(candidate));
+	};
+	const readRelations = withRelation(relations, 'user');
+	const pageQuery = (pageNumber: number, take: number) =>
+		buildListQuery(defaultParams, where, { page: pageNumber, limit: take, relations: readRelations });
+	return pageOfKept('/api/candidate', pageQuery, isKept, page, limit);
+};
 
 /**
  * Helper function to convert date fields in candidate data to Date objects
@@ -57,15 +99,10 @@ export const registerCandidateTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				// `where` matches a column exactly: the search and the minimum rating stay outside it, as before
 				const where = { status, organizationPositionId, sourceId };
-				const params = {
-					...buildListQuery(defaultParams, where, { page, limit, relations }),
-					...(search && { search }),
-					...(rating !== undefined && { rating })
-				};
+				const kept = { search, rating };
 
-				const response = await apiClient.get('/api/candidate', { params });
+				const response = await readCandidates(defaultParams, where, kept, { page, limit, relations });
 
 				return {
 					content: [

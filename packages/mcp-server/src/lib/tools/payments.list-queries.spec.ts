@@ -46,7 +46,7 @@ describe('payment list tools — the query the route validates', () => {
 
 	afterEach(() => jest.restoreAllMocks());
 
-	it('get_payments filters inside `where`, the search and the date range outside it as before', async () => {
+	it('get_payments filters inside `where`', async () => {
 		await call('get_payments', {
 			status: 'COMPLETED',
 			paymentMethod: 'BANK_TRANSFER',
@@ -55,9 +55,6 @@ describe('payment list tools — the query the route validates', () => {
 			projectId: PROJECT,
 			currency: 'EUR',
 			overdue: false,
-			search: 'deposit',
-			startDate: '2026-11-01',
-			endDate: '2026-11-30',
 			page: 2,
 			limit: 5,
 			relations: ['invoice']
@@ -77,10 +74,7 @@ describe('payment list tools — the query the route validates', () => {
 				},
 				take: 5,
 				skip: 5,
-				relations: ['invoice'],
-				search: 'deposit',
-				startDate: '2026-11-01',
-				endDate: '2026-11-30'
+				relations: ['invoice']
 			}
 		});
 	});
@@ -160,6 +154,49 @@ describe('payment list tools — the stored status and method a filter is sent a
 
 		expect(get).toHaveBeenCalledWith('/api/payments/count', {
 			params: { ...SCOPE, status: 'CANCELED', paymentMethod: 'CHEQUE' }
+		});
+	});
+});
+
+describe('get_payments — the search of the note and the date range the route does not apply', () => {
+	const PAYMENTS = [
+		{ id: 'y1', note: 'Deposit for the kickoff', paymentDate: '2026-10-28T09:00:00.000Z' },
+		{ id: 'y2', note: 'Second deposit', paymentDate: '2026-11-12T09:00:00.000Z' },
+		{ id: 'y3', note: 'Final balance', paymentDate: '2026-11-20T09:00:00.000Z' },
+		{ id: 'y4', paymentDate: '2026-12-02T09:00:00.000Z' }
+	];
+	let get: jest.SpyInstance;
+
+	beforeEach(() => {
+		jest.spyOn(authManager, 'getDefaultParams').mockReturnValue(SCOPE);
+		get = jest.spyOn(apiClient, 'get').mockResolvedValue({ items: PAYMENTS, total: PAYMENTS.length } as never);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	/** The ids of the payments the tool answered, and its total. */
+	async function answered(args: Record<string, unknown>) {
+		const { items, total } = JSON.parse((await call('get_payments', args)).content[0].text);
+		return { ids: items.map(({ id }: { id: string }) => id), total };
+	}
+
+	it('keeps the payments whose note contains the search', async () => {
+		expect(await answered({ search: 'DEPOSIT' })).toEqual({ ids: ['y1', 'y2'], total: 2 });
+
+		expect(get).toHaveBeenCalledWith('/api/payments', { params: { where: SCOPE, take: 100, skip: 0 } });
+	});
+
+	it('keeps the payments made in the range, either end open', async () => {
+		const november = { startDate: '2026-11-01T00:00:00.000Z', endDate: '2026-11-30T23:59:59.999Z' };
+		expect(await answered(november)).toEqual({ ids: ['y2', 'y3'], total: 2 });
+		expect(await answered({ startDate: '2026-11-15T00:00:00.000Z' })).toEqual({ ids: ['y3', 'y4'], total: 2 });
+		expect(await answered({ endDate: '2026-11-15T00:00:00.000Z' })).toEqual({ ids: ['y1', 'y2'], total: 2 });
+	});
+
+	it('applies the search with the range', async () => {
+		expect(await answered({ search: 'deposit', startDate: '2026-11-01T00:00:00.000Z' })).toEqual({
+			ids: ['y2'],
+			total: 1
 		});
 	});
 });

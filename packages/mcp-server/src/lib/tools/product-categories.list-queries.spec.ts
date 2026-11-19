@@ -45,7 +45,6 @@ describe('product category list tools — the query the route validates', () => 
 
 	it('get_product_categories reads the pagination route, with the language in the header the API reads', async () => {
 		await call('get_product_categories', {
-			search: 'office',
 			langCode: 'fr',
 			page: 2,
 			limit: 5,
@@ -53,7 +52,7 @@ describe('product category list tools — the query the route validates', () => 
 		});
 
 		expect(get).toHaveBeenCalledWith('/api/product-categories/pagination', {
-			params: { where: SCOPE, take: 5, skip: 2, relations: ['products'], search: 'office' },
+			params: { where: SCOPE, take: 5, skip: 2, relations: ['products'] },
 			headers: { language: 'fr' }
 		});
 	});
@@ -64,6 +63,32 @@ describe('product category list tools — the query the route validates', () => 
 		expect(get).toHaveBeenCalledWith('/api/product-categories/pagination', {
 			params: { where: SCOPE, take: 10, skip: 1 },
 			headers: {}
+		});
+	});
+});
+
+describe('get_product_categories — the search the route does not apply', () => {
+	const CATEGORIES = [
+		{ id: 'g1', name: 'Fournitures de bureau' },
+		{ id: 'g2', name: 'Mobilier de bureau' },
+		{ id: 'g3', name: 'Informatique' }
+	];
+	let get: jest.SpyInstance;
+
+	beforeEach(() => {
+		jest.spyOn(authManager, 'getDefaultParams').mockReturnValue(SCOPE);
+		get = jest.spyOn(apiClient, 'get').mockResolvedValue({ items: CATEGORIES, total: CATEGORIES.length } as never);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('keeps the categories whose translated name contains the search, reading every page in that language', async () => {
+		const result = await call('get_product_categories', { search: 'BUREAU', langCode: 'fr', limit: 1, page: 2 });
+
+		expect(JSON.parse(result.content[0].text)).toEqual({ items: [CATEGORIES[1]], total: 2 });
+		expect(get).toHaveBeenCalledWith('/api/product-categories/pagination', {
+			params: { where: SCOPE, take: 100, skip: 1 },
+			headers: { language: 'fr' }
 		});
 	});
 });

@@ -44,17 +44,16 @@ describe('merchant list tools — the query the route validates', () => {
 
 	afterEach(() => jest.restoreAllMocks());
 
-	it('get_merchants adds the caller’s filters to `where`, the search outside it as before', async () => {
+	it('get_merchants adds the caller’s filters to `where`', async () => {
 		await call('get_merchants', {
 			where: { isActive: true },
-			search: 'north',
 			page: 3,
 			limit: 5,
 			relations: ['tags']
 		});
 
 		expect(get).toHaveBeenCalledWith('/api/merchants', {
-			params: { where: { ...SCOPE, isActive: true }, take: 5, skip: 10, relations: ['tags'], search: 'north' }
+			params: { where: { ...SCOPE, isActive: true }, take: 5, skip: 10, relations: ['tags'] }
 		});
 	});
 
@@ -71,6 +70,41 @@ describe('merchant list tools — the query the route validates', () => {
 
 		expect(get).toHaveBeenCalledWith('/api/merchants', {
 			params: { where: { ...SCOPE, isArchived: true }, take: 10, skip: 0 }
+		});
+	});
+});
+
+describe('merchant list tools — the search the route does not apply', () => {
+	const MERCHANTS = [
+		{ id: 'm1', name: 'Northwind Supply', code: 'NW-1', email: 'orders@example.com' },
+		{ id: 'm2', name: 'Harbor Goods', code: 'HB-2', email: 'north.desk@example.com' },
+		{ id: 'm3', name: 'Tally Parts', code: 'TP-3', email: 'tally@example.com' }
+	];
+	let get: jest.SpyInstance;
+
+	beforeEach(() => {
+		jest.spyOn(authManager, 'getDefaultParams').mockReturnValue(SCOPE);
+		get = jest.spyOn(apiClient, 'get').mockResolvedValue({ items: MERCHANTS, total: MERCHANTS.length } as never);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it.each(['get_merchants', 'get_active_merchants', 'get_archived_merchants'])(
+		'%s keeps the merchants whose name, code or email contains the search',
+		async (name) => {
+			const result = await call(name, { search: 'NORTH' });
+			expect(JSON.parse(result.content[0].text)).toEqual({ items: [MERCHANTS[0], MERCHANTS[1]], total: 2 });
+
+			const byCode = await call(name, { search: 'tp-3' });
+			expect(JSON.parse(byCode.content[0].text)).toEqual({ items: [MERCHANTS[2]], total: 1 });
+		}
+	);
+
+	it('reads the whole list for a search, with the filters of the tool', async () => {
+		await call('get_archived_merchants', { search: 'north' });
+
+		expect(get).toHaveBeenCalledWith('/api/merchants', {
+			params: { where: { ...SCOPE, isArchived: true }, take: 100, skip: 0 }
 		});
 	});
 });

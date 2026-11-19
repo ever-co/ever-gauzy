@@ -3,7 +3,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { buildListQuery, validateOrganizationContext } from './utils';
+import { nameCodeEmailTexts, readSearchedList, validateOrganizationContext } from './utils';
 import { WarehouseInputSchema } from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
@@ -28,12 +28,12 @@ export const registerWarehouseTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = {
-					...buildListQuery(defaultParams, { active }, { page, limit, relations }),
-					...(search && { search })
-				};
-
-				const response = await apiClient.get('/api/warehouses', { params });
+				// The route has no search: one of the name, code or email is kept here, on the whole list
+				const listOptions = { page, limit, relations };
+				const response = await readSearchedList('/api/warehouses', defaultParams, { active }, listOptions, {
+					search,
+					textsOf: nameCodeEmailTexts
+				});
 
 				return {
 					content: [

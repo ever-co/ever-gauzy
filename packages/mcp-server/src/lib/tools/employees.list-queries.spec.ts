@@ -51,17 +51,16 @@ describe('employee list tools — the query each route validates', () => {
 		expect(get).toHaveBeenCalledWith('/api/employee', { params: { where: SCOPE, take: 10, skip: 0 } });
 	});
 
-	it('get_employees adds the caller’s filters to `where`, the search outside it as before', async () => {
+	it('get_employees adds the caller’s filters to `where`', async () => {
 		await call('get_employees', {
 			where: { isActive: true },
-			search: 'lina',
 			page: 3,
 			limit: 5,
 			relations: ['user']
 		});
 
 		expect(get).toHaveBeenCalledWith('/api/employee', {
-			params: { where: { ...SCOPE, isActive: true }, take: 5, skip: 10, relations: ['user'], search: 'lina' }
+			params: { where: { ...SCOPE, isActive: true }, take: 5, skip: 10, relations: ['user'] }
 		});
 	});
 
@@ -70,6 +69,39 @@ describe('employee list tools — the query each route validates', () => {
 
 		expect(get).toHaveBeenCalledWith('/api/employee/pagination', {
 			params: { where: { ...SCOPE, isArchived: false }, take: 5, skip: 3 }
+		});
+	});
+});
+
+describe('employee list tools — a search of the name or email', () => {
+	const EMPLOYEES = [
+		{ id: 'e1', user: { firstName: 'Lina', lastName: 'Marsh', email: 'lina@example.com' } },
+		{ id: 'e2', user: { firstName: 'Sam', lastName: 'Rivera', email: 'sam@example.com' } },
+		{ id: 'e3', user: { firstName: 'Nadia', lastName: 'Okafor', email: 'nadia@example.com' } }
+	];
+	let get: jest.SpyInstance;
+
+	beforeEach(() => {
+		jest.spyOn(authManager, 'getDefaultParams').mockReturnValue(SCOPE);
+		get = jest.spyOn(apiClient, 'get').mockResolvedValue({ items: EMPLOYEES, total: EMPLOYEES.length } as never);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('get_employees keeps the employees whose full name or email matches, reading their users', async () => {
+		const result = await call('get_employees', { search: 'lina marsh', relations: ['contact'] });
+
+		expect(JSON.parse(result.content[0].text)).toEqual({ items: [EMPLOYEES[0]], total: 1 });
+		expect(get).toHaveBeenCalledWith('/api/employee', {
+			params: { where: SCOPE, take: 100, skip: 0, relations: ['contact', 'user'] }
+		});
+	});
+
+	it('get_employees_pagination sends the search to the name and email its route matches', async () => {
+		await call('get_employees_pagination', { search: 'nadia', page: 2, limit: 5 });
+
+		expect(get).toHaveBeenCalledWith('/api/employee/pagination', {
+			params: { where: { ...SCOPE, user: { name: 'nadia', email: 'nadia' } }, take: 5, skip: 2 }
 		});
 	});
 });
