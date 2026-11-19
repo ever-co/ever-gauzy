@@ -1,9 +1,9 @@
 /**
- * Eight deal tools called routes the API never served: `/deals/me`, `/deals/statistics`, `/deals/pipeline` and
- * `/deals/search` were read as a deal id, and the stage and property routes answered 404. The person's deals now come
- * from the deal list, filtered on who created them; the API has no fixed deal stages, no deal properties, no deal
- * statistics, no organization-wide grouping by stage and no deal search, and those tools answer so without any
- * request.
+ * Nine deal tools called routes the API never served: `/deals/me`, `/deals/statistics`, `/deals/pipeline`,
+ * `/deals/search` and `/deals/count` were read as a deal id, and the stage and property routes answered 404. The
+ * person's deals now come from the deal list, filtered on who created them, and the count from the list's total; the
+ * API has no fixed deal stages, no deal properties, no deal statistics, no organization-wide grouping by stage and no
+ * deal search, and those tools answer so without any request.
  *
  * Env for mcp-server module load is set in `src/test-setup.ts`.
  */
@@ -16,6 +16,7 @@ const ORGANIZATION = '00000000-0000-4000-8000-000000000002';
 const TENANT = '00000000-0000-4000-8000-000000000001';
 const USER = '00000000-0000-4000-8000-000000000021';
 const DEAL = '00000000-0000-4000-8000-000000000101';
+const CLIENT = '00000000-0000-4000-8000-000000000111';
 
 type ToolCallback = (args: Record<string, unknown>) => Promise<{ content: Array<{ type: string; text: string }> }>;
 type RegisteredTool = { inputSchema: z.ZodType<Record<string, unknown>>; callback: ToolCallback };
@@ -63,12 +64,31 @@ describe('deal tools: the routes they call', () => {
 		});
 	});
 
-	it('refuses a filter on fixed deal stages, without any request', async () => {
+	it("counts the organization's deals from the total of the deal list, with the client asked", async () => {
+		const get = jest.spyOn(apiClient, 'get').mockResolvedValue({ items: [{ id: DEAL }], total: 7 } as never);
+
+		const result = await call('get_deal_count', { clientId: CLIENT });
+
+		expect(get).toHaveBeenCalledTimes(1);
+		expect(get).toHaveBeenCalledWith('/api/deals', {
+			params: {
+				organizationId: ORGANIZATION,
+				tenantId: TENANT,
+				where: { organizationId: ORGANIZATION, tenantId: TENANT, clientId: CLIENT },
+				take: 1,
+				skip: 0
+			}
+		});
+		expect(JSON.parse(result.content[0].text)).toEqual({ count: 7 });
+	});
+
+	it.each([
+		['get_my_deals', { stage: 'NEGOTIATION' }],
+		['get_deal_count', { stage: 'NEGOTIATION' }]
+	])('refuses a filter on fixed deal stages in %s, without any request', async (name, args) => {
 		const requests = spyOnRequests();
 
-		await expect(call('get_my_deals', { stage: 'NEGOTIATION' })).rejects.toThrow(
-			'This server does not offer a filter on fixed deal stages'
-		);
+		await expect(call(name, args)).rejects.toThrow('This server does not offer a filter on fixed deal stages');
 		for (const request of requests) {
 			expect(request).not.toHaveBeenCalled();
 		}

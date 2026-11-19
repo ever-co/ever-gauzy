@@ -70,29 +70,28 @@ export const registerDealTools = (server: McpServer) => {
 		'get_deal_count',
 		"Get deal count in the authenticated user's organization",
 		{
-			stage: DealStatusEnum.optional().describe('Filter by deal stage'),
+			stage: DealStatusEnum.optional().describe('Not offered: a deal is in a stage of its own pipeline'),
 			clientId: z.string().uuid().optional().describe('Filter by client ID'),
 			createdByUserId: z.string().uuid().optional().describe('Filter by creator user ID')
 		},
 		async ({ stage, clientId, createdByUserId }) => {
 			try {
-				const defaultParams = validateOrganizationContext();
+				if (stage) {
+					throw notOfferedByApi('a filter on fixed deal stages');
+				}
+				const scope = resolveOrganizationScope();
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					...(stage && { stage }),
-					...(clientId && { clientId }),
-					...(createdByUserId && { createdByUserId })
-				};
-
-				const response = await apiClient.get('/api/deals/count', { params });
+				// `/deals/count` reaches the deal controller's own `:id` route first: the list route's total counts
+				const query = buildListQuery(scope, { clientId, createdByUserId }, { limit: 1 });
+				const { total = 0 } = await apiClient.get<{ total?: number }>('/api/deals', {
+					params: { ...scope, ...query }
+				});
 
 				return {
 					content: [
 						{
 							type: 'text',
-							text: JSON.stringify({ count: response }, null, 2)
+							text: JSON.stringify({ count: total }, null, 2)
 						}
 					]
 				};
@@ -146,7 +145,9 @@ export const registerDealTools = (server: McpServer) => {
 		'create_deal',
 		"Create a new deal in the authenticated user's organization",
 		{
-			deal_data: z.object({ title: z.string().describe('The title (required)') }).passthrough()
+			deal_data: z
+				.object({ title: z.string().describe('The title (required)') })
+				.passthrough()
 				.describe('The data for creating the deal')
 		},
 		async ({ deal_data }) => {
