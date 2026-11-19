@@ -27,6 +27,8 @@ const ORGANIZATION = '7e000000-0000-4000-8000-0000000000f1';
 const PIPELINE = '7e000000-0000-4000-8000-0000000000a1';
 const CONTACTED = '7e000000-0000-4000-8000-0000000000b1';
 const PROPOSAL = '7e000000-0000-4000-8000-0000000000b2';
+const OTHER_PIPELINE = '7e000000-0000-4000-8000-0000000000a2';
+const QUALIFIED = '7e000000-0000-4000-8000-0000000000b3';
 
 const SCOPE = { tenantId: TENANT, organizationId: ORGANIZATION };
 
@@ -68,8 +70,11 @@ function placeholderOf(type: string): unknown {
 	return 'x';
 }
 
-/** The pipeline "Trail partnerships", its stages Contacted and Proposal, and one deal in each stage. */
-async function seedPipeline(dataSource: DataSource): Promise<void> {
+/**
+ * The pipeline "Trail partnerships", its stages Contacted and Proposal, and one deal in each stage; and a second
+ * pipeline, "Retail partners", with its own stage and deal, which no update of the first may reach.
+ */
+async function seedPipelines(dataSource: DataSource): Promise<void> {
 	await insert(dataSource, 'pipeline', { id: PIPELINE, ...SCOPE, name: 'Trail partnerships' });
 	await insert(dataSource, 'pipeline_stage', {
 		id: CONTACTED,
@@ -99,22 +104,55 @@ async function seedPipeline(dataSource: DataSource): Promise<void> {
 		title: 'Larchmont Trails renewal',
 		probability: 4
 	});
+	await insert(dataSource, 'pipeline', { id: OTHER_PIPELINE, ...SCOPE, name: 'Retail partners' });
+	await insert(dataSource, 'pipeline_stage', {
+		id: QUALIFIED,
+		...SCOPE,
+		pipelineId: OTHER_PIPELINE,
+		name: 'Qualified',
+		index: 1
+	});
+	await insert(dataSource, 'deal', {
+		id: '7e000000-0000-4000-8000-0000000000c3',
+		...SCOPE,
+		stageId: QUALIFIED,
+		title: 'Harbor Mills pilot',
+		probability: 3
+	});
 }
 
-/** What the database holds once an update returned: the pipeline's name, its stages and the deals left. */
+/** What the database holds once an update returned: the pipeline's name, its stages and the deals left in them. */
 async function stored(dataSource: DataSource) {
 	const [pipeline] = await dataSource.query('SELECT "name" FROM "pipeline" WHERE "id" = ?', [PIPELINE]);
 	const stages = await dataSource.query(
 		'SELECT "name" FROM "pipeline_stage" WHERE "pipelineId" = ? ORDER BY "index"',
 		[PIPELINE]
 	);
-	const deals = await dataSource.query('SELECT "title" FROM "deal" ORDER BY "title"');
+	const deals = await dataSource.query('SELECT "title" FROM "deal" WHERE "stageId" IN (?, ?) ORDER BY "title"', [
+		CONTACTED,
+		PROPOSAL
+	]);
 
 	return {
 		pipeline: pipeline?.name,
 		stages: stages.map((stage: { name: string }) => stage.name),
 		deals: deals.map((deal: { title: string }) => deal.title)
 	};
+}
+
+/** The second pipeline's stage and deal rows, whole, to be compared before and after an update of the first. */
+async function otherPipelineRows(dataSource: DataSource) {
+	const stages = await dataSource.query('SELECT * FROM "pipeline_stage" WHERE "pipelineId" = ?', [OTHER_PIPELINE]);
+	const deals = await dataSource.query('SELECT * FROM "deal" WHERE "stageId" = ?', [QUALIFIED]);
+
+	return { stages, deals };
+}
+
+/** Checks that the second pipeline's stage and deal rows are the ones read before the update. */
+async function expectUntouched(dataSource: DataSource, before: Awaited<ReturnType<typeof otherPipelineRows>>) {
+	expect(before.stages).toHaveLength(1);
+	expect(before.deals).toHaveLength(1);
+	expect(await otherPipelineRows(dataSource)).toEqual(before);
 }
 
 describe.each(['typeorm', 'mikro-orm'])('PipelineService.update on SQLite, with DB_ORM=%s', (ormSetting) => {
@@ -223,7 +261,7 @@ describe.each(['typeorm', 'mikro-orm'])('PipelineService.update on SQLite, with 
 		await dataSource.query('DELETE FROM "deal"');
 		await dataSource.query('DELETE FROM "pipeline_stage"');
 		await dataSource.query('DELETE FROM "pipeline"');
-		await seedPipeline(dataSource);
+		await seedPipelines(dataSource);
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
 		typeOrmCommits = 0;
 	});
@@ -257,6 +295,8 @@ describe.each(['typeorm', 'mikro-orm'])('PipelineService.update on SQLite, with 
 	});
 
 	it('removes the stage the list leaves out, with its deal, and keeps the other', async () => {
+		const otherPipeline = await otherPipelineRows(dataSource);
+
 		await service.update(PIPELINE, {
 			name: 'Trail partnerships',
 			organizationId: ORGANIZATION,
@@ -268,13 +308,17 @@ describe.each(['typeorm', 'mikro-orm'])('PipelineService.update on SQLite, with 
 			stages: ['Contacted'],
 			deals: ['Cedar Ridge intro']
 		});
+		await expectUntouched(dataSource, otherPipeline);
 		expect(typeOrmCommits).toBe(1);
 	});
 
 	it('removes every stage, and every deal in them, when the update states an empty list', async () => {
+		const otherPipeline = await otherPipelineRows(dataSource);
+
 		await service.update(PIPELINE, { name: 'Trail partnerships', organizationId: ORGANIZATION, stages: [] });
 
 		expect(await stored(dataSource)).toEqual({ pipeline: 'Trail partnerships', stages: [], deals: [] });
+		await expectUntouched(dataSource, otherPipeline);
 		expect(typeOrmCommits).toBe(1);
 	});
 });
