@@ -70,6 +70,14 @@ describe('EVER_APP_LINKS', () => {
 		expect(withEverAppLinks(CATALOG, raw)).toEqual(CATALOG);
 	});
 
+	it('never changes an app it is told to keep (the current app shows its own address)', () => {
+		const raw = 'gauzy=https://other-gauzy.example.com,works=https://works.example.com';
+		const apps = withEverAppLinks(CATALOG, raw, ['gauzy']);
+		expect(apps[2]).toBe(CATALOG[2]);
+		expect(apps[1].url).toBe('https://works.example.com/');
+		expect(withEverAppLinks(CATALOG, 'gauzy=https://other-gauzy.example.com', ['gauzy'])).toBe(CATALOG);
+	});
+
 	it('the last pair of an id wins; a bad pair does not hide a good one', () => {
 		expect(
 			parseEverAppLinks('platform=https://one.example.com,platform=https://two.example.com').get('platform')?.host

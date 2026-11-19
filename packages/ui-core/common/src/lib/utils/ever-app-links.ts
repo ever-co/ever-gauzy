@@ -14,7 +14,7 @@ import type { IEverApp } from '../constants/ever-apps.constants';
  * @param raw - The setting, as the environment carries it (empty or unset: no links).
  * @returns The links by app id.
  */
-export function parseEverAppLinks(raw: string | null | undefined): ReadonlyMap<string, URL> {
+export function parseEverAppLinks(raw: string | null | undefined): Map<string, URL> {
 	const links = new Map<string, URL>();
 	for (const entry of String(raw ?? '').split(',')) {
 		const separator = entry.indexOf('=');
@@ -36,13 +36,18 @@ export function parseEverAppLinks(raw: string | null | undefined): ReadonlyMap<s
  *
  * @param apps - The Ever apps the switcher lists (the catalog).
  * @param raw - The `EVER_APP_LINKS` setting.
+ * @param keep - Ids the setting never changes: the current app, whose row shows this deployment's own address.
  * @returns The apps, each with this deployment's address when the setting gives one.
  */
 export function withEverAppLinks(
 	apps: ReadonlyArray<IEverApp>,
-	raw: string | null | undefined
+	raw: string | null | undefined,
+	keep: ReadonlyArray<string> = []
 ): ReadonlyArray<IEverApp> {
 	const links = parseEverAppLinks(raw);
+	for (const id of keep) {
+		links.delete(id);
+	}
 	if (links.size === 0) {
 		return apps;
 	}

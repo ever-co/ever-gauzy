@@ -242,6 +242,12 @@ jobs:
         if: always()
         run: node --test tools/scripts/decorator-runs.test.mjs
 
+      # The webapp image's entrypoints hand EVER_APP_LINKS to sed and into a JS string in the bundles: whatever the
+      # value holds (`&`, `|`, quotes, backslashes), the app reads back exactly what was set.
+      - name: The webapp entrypoints substitute EVER_APP_LINKS as it was set
+        if: always()
+        run: node --test tools/scripts/webapp-ever-app-links.test.mjs
+
       # The feature gate's second reading: a `@FeatureFlag` with no `FeatureFlagGuard` in the operation's chain gates
       # nothing and fails the gate.
       - name: The feature gate reads every shape it must
