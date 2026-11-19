@@ -557,7 +557,7 @@ export const registerEmployeeTools = (server: McpServer) => {
 					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
 				};
 
-				const response = await apiClient.put(`/api/employee/${id}/recover`, scope);
+				await apiClient.put(`/api/employee/${id}/recover`, scope);
 
 				return {
 					content: [
