@@ -243,7 +243,8 @@ describe.each(TEST_TARGETS)('Ever Platform membership sync ($name)', (target) =>
 				from: 'EMPLOYEE',
 				to: 'ADMIN',
 				held: true,
-				restore: roles.employee
+				restore: roles.employee,
+				grant: '01JD0000000000000000000001'
 			}
 		});
 		expect(rows[1]).toMatchObject({
@@ -401,6 +402,50 @@ describe.each(TEST_TARGETS)('Ever Platform membership sync ($name)', (target) =>
 			)
 		).toBe('role_revoked');
 		expect(await roleOf(seeded.employeeId)).toBe(roles.employee);
+	});
+
+	it("the role given back is the one the current ADMIN replaced, not an earlier grant's", async () => {
+		const second = await addOrganization();
+		await addLink(second, LINK_B);
+		await linkEverId(seeded.employeeId, 'sub-bob');
+		const sync = handler();
+		const setRole = (roleId: string) =>
+			dataSource.query(
+				`UPDATE ${q(d, 'user')} SET ${q(d, 'roleId')} = ${d === 'postgres' ? '$1' : '?'} WHERE ${q(d, 'id')} = ${d === 'postgres' ? '$2' : '?'}`,
+				[roleId, seeded.employeeId]
+			);
+		// The first organization grants ADMIN over EMPLOYEE; in Gauzy the user is then made MANAGER.
+		expect(await sync.apply(envelope('01JD0000000000000000000001', 'created'))).toBe('role_granted');
+		await setRole(roles.manager);
+		// The second organization grants ADMIN again, over MANAGER: the first one's grant is void.
+		expect(await sync.apply(envelope('01JD0000000000000000000002', 'created', { tenant_link_id: LINK_B }))).toBe(
+			'added'
+		);
+		expect(await roleOf(seeded.employeeId)).toBe(roles.admin);
+		// Leaving the second organization gives MANAGER back (not the EMPLOYEE of the void grant).
+		expect(
+			await sync.apply(
+				envelope('01JD0000000000000000000003', 'removed', { tenant_link_id: LINK_B }, '2026-11-03T10:00:00Z')
+			)
+		).toBe('removed');
+		expect(await roleOf(seeded.employeeId)).toBe(roles.manager);
+		// The first organization's void grant takes nothing away later.
+		expect(
+			await sync.apply(
+				envelope('01JD0000000000000000000004', 'role_changed', { role: 'member' }, '2026-11-04T10:00:00Z')
+			)
+		).toBe('unchanged');
+		expect(await roleOf(seeded.employeeId)).toBe(roles.manager);
+	});
+
+	it('an event without its time is not applied (it could not be ordered)', async () => {
+		await linkEverId(seeded.employeeId, 'sub-bob');
+		const untimed = { ...(envelope('01JD0000000000000000000001', 'created') as object), occurred_at: undefined };
+		expect(await handler().apply(untimed as never)).toBe('malformed');
+		const badTime = { ...(envelope('01JD0000000000000000000002', 'created') as object), occurred_at: 'yesterday' };
+		expect(await handler().apply(badTime as never)).toBe('malformed');
+		expect(await roleOf(seeded.employeeId)).toBe(roles.employee);
+		expect(await syncRows()).toEqual([]);
 	});
 
 	it('all or nothing: when the audit row cannot be written, the change is rolled back and applied on the retry', async () => {

@@ -274,19 +274,24 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 		const outcomes: DispatchOutcome[] = [];
 		let states = false;
 		let entitlements = false;
-		for (const event of events) {
-			if (this.seen.has(event.id)) {
-				outcomes.push('ignored');
-				continue;
+		try {
+			for (const event of events) {
+				if (this.seen.has(event.id)) {
+					outcomes.push('ignored');
+					continue;
+				}
+				const outcome = await this.dispatch(event, connection);
+				outcomes.push(outcome);
+				states ||= outcome === 'states';
+				entitlements ||= outcome === 'entitlements';
+				this.remember(event.id);
 			}
-			const outcome = await this.dispatch(event, connection);
-			outcomes.push(outcome);
-			states ||= outcome === 'states';
-			entitlements ||= outcome === 'entitlements';
-			this.remember(event.id);
+		} finally {
+			// Also when a later event of the page failed: the events before it are remembered as handled, so the
+			// page read again would not ask for their follow-ups.
+			if (states) await this.states.sync({ force: true });
+			if (entitlements) await this.entitlements.refreshAll();
 		}
-		if (states) await this.states.sync({ force: true });
-		if (entitlements) await this.entitlements.refreshAll();
 		return outcomes;
 	}
 

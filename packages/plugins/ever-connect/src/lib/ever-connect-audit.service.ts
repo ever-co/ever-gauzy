@@ -62,7 +62,8 @@ export const AUDIT_DETAIL_KEYS = Object.freeze([
 	'role',
 	'occurred_at',
 	'held',
-	'restore'
+	'restore',
+	'grant'
 ] as const);
 
 /** Who acted, without personal data. */

@@ -68,6 +68,18 @@ interface SyncState extends MembershipPosition {
 	held: boolean;
 	/** The role id the user had before the sync made them `ADMIN` (`null`: none), given back on a demotion. */
 	restore: string | null;
+	/** The grant it holds: the id of the event that made the user `ADMIN` (see {@link Grant}). */
+	grant: string | null;
+}
+
+/**
+ * The sync's latest grant of `ADMIN` to a user in a tenant (the event that made them `ADMIN` while they were not one),
+ * and the role it replaced. Only the organizations holding THIS grant keep the `ADMIN`: a hold on an older grant is
+ * void, since the user stopped being `ADMIN` in between (a role changed in Gauzy) and was granted it again.
+ */
+interface Grant {
+	grant: string;
+	restore: string | null;
 }
 
 /** What the role step did. */
@@ -75,6 +87,7 @@ interface RoleStep {
 	outcome: MembershipSyncOutcome;
 	held: boolean;
 	restore: string | null;
+	grant: string | null;
 	from: string | null;
 	to: string | null;
 }
@@ -94,6 +107,9 @@ interface Account {
  * written in the same millisecond.
  */
 const STATE_ROWS = 20;
+
+/** No hold on a grant. */
+const NO_HOLD = Object.freeze({ held: false, restore: null, grant: null });
 
 /** The advisory lock (Postgres) that runs one change at a time across API processes. */
 const LOCK = 'ever-connect:membership-sync';
@@ -119,6 +135,8 @@ const LOCK = 'ever-connect:membership-sync';
  * - **What the sync never touches:** a `SUPER_ADMIN` (the tenant owner), and an `ADMIN` given in Gauzy: a demotion
  *   or removal takes away only an `ADMIN` the sync itself granted, and only while the user still has it. When
  *   another linked organization of the same tenant still says the person is an owner or admin, the `ADMIN` stays.
+ *   Each grant is remembered with the role it replaced; an organization holds the latest grant only, so the role
+ *   given back is always the one the current `ADMIN` replaced.
  * - **Order and repeats.** Each applied change is one `membership.sync` audit row (ids, roles and the outcome
  *   only), which is also the sync's memory: the same event again does nothing (`duplicate`), and an event older
  *   than the last one applied for the user in that organization (by `occurred_at`, then by its id, a ULID) is
@@ -161,7 +179,9 @@ export class MembershipSyncHandler {
 		}
 		const data = parseMembershipData(event.data);
 		const eventId = typeof event.id === 'string' ? event.id.toUpperCase() : '';
-		if (!data || !ULID_SHAPE.test(eventId)) {
+		const occurredAt = occurredAtOf(event);
+		// Every envelope carries its time; one without it could not be ordered against the changes already applied.
+		if (!data || !ULID_SHAPE.test(eventId) || occurredAt === null) {
 			return this.done('malformed');
 		}
 		const everRole = data.role;
@@ -177,7 +197,7 @@ export class MembershipSyncHandler {
 			return this.done(person);
 		}
 
-		const position: MembershipPosition = { eventId, occurredAt: occurredAtOf(event) };
+		const position: MembershipPosition = { eventId, occurredAt };
 		const others = (await this.store.liveLinks()).filter(
 			(other) => other.tenantId === link.tenantId && other.organizationId !== link.organizationId
 		);
@@ -189,8 +209,9 @@ export class MembershipSyncHandler {
 			if (last && !isAfter(position, last)) {
 				return 'stale' as const;
 			}
-			const other = await this.heldElsewhere(tx, link.tenantId, others, person);
-			const step = await this.change(tx, change, everRole, link, person, last, other);
+			const grant = await this.latestGrant(tx, link.tenantId, person);
+			const other = grant ? await this.heldElsewhere(tx, link.tenantId, others, person, grant) : false;
+			const step = await this.change(tx, change, everRole, link, person, position, last, grant, other);
 			await this.audit.record(
 				{
 					action: MEMBERSHIP_AUDIT_ACTION,
@@ -208,7 +229,8 @@ export class MembershipSyncHandler {
 						from: auditable(step.from),
 						to: auditable(step.to),
 						held: step.held,
-						restore: step.restore
+						restore: step.restore,
+						grant: step.grant
 					}
 				},
 				tx
@@ -270,22 +292,39 @@ export class MembershipSyncHandler {
 	}
 
 	/**
-	 * Another live link of the same tenant whose last change made (or keeps) the user an `ADMIN`: its restore role,
-	 * or `null` when there is none. Each organization's own last change is read, however long ago it was made.
+	 * The sync's latest grant of `ADMIN` to the user in the tenant (any organization), or `null`. Every row that holds a
+	 * grant names the latest one (a new grant voids the older ones), so the newest holding row tells it.
+	 */
+	private async latestGrant(tx: EverConnectSql, tenantId: string, userId: string): Promise<Grant | null> {
+		const q = (name: string) => tx.q(name);
+		const { rows } = await tx.run(
+			`SELECT ${q('details')} FROM ${q('ever_connect_audit')} WHERE ${q('tenantId')} = ${tx.ph(1)} ` +
+				`AND ${q('action')} = ${tx.ph(2)} AND ${q('details')} LIKE ${tx.ph(3)} AND ${q('details')} LIKE ${tx.ph(4)} ` +
+				`ORDER BY ${q('at')} DESC, ${q('id')} DESC LIMIT 1`,
+			[tenantId, MEMBERSHIP_AUDIT_ACTION, `%"user_id":${JSON.stringify(userId)}%`, '%"held":true%']
+		);
+		const state = rows[0] ? stateOf(rows[0], userId) : null;
+		return state?.held && state.grant ? { grant: state.grant, restore: state.restore } : null;
+	}
+
+	/**
+	 * Whether another live link of the same tenant holds `grant`: its organization's own last change (read however
+	 * long ago it was made) keeps the user `ADMIN` under that grant.
 	 */
 	private async heldElsewhere(
 		tx: EverConnectSql,
 		tenantId: string,
 		others: ReadonlyArray<LinkRecord>,
-		userId: string
-	): Promise<{ restore: string | null } | null> {
+		userId: string,
+		grant: Grant
+	): Promise<boolean> {
 		for (const organizationId of new Set(others.map((other) => other.organizationId))) {
 			const state = await this.stateIn(tx, tenantId, organizationId, userId);
-			if (state?.held) {
-				return { restore: state.restore };
+			if (state?.held && state.grant === grant.grant) {
+				return true;
 			}
 		}
-		return null;
+		return false;
 	}
 
 	/** Applies the change to the user and the organization. */
@@ -295,22 +334,25 @@ export class MembershipSyncHandler {
 		everRole: EverRole,
 		link: LinkRecord,
 		userId: string,
+		position: MembershipPosition,
 		last: SyncState | null,
-		other: { restore: string | null } | null
+		grant: Grant | null,
+		other: boolean
 	): Promise<RoleStep> {
+		// The hold this organization has now: only one on the latest grant counts.
+		const holds = !!(last?.held && grant && last.grant === grant.grant);
+		const kept = {
+			held: holds,
+			restore: holds ? (grant?.restore ?? null) : null,
+			grant: holds ? last!.grant : null
+		};
 		const account = await this.accountOf(tx, link.tenantId, userId);
 		if (!account) {
-			return {
-				outcome: 'account_missing',
-				held: last?.held ?? false,
-				restore: last?.restore ?? null,
-				from: null,
-				to: null
-			};
+			return { outcome: 'account_missing', ...kept, from: null, to: null };
 		}
 		if (account.role === GAUZY_SUPER_ADMIN) {
 			// The tenant owner: never changed, never removed.
-			return { outcome: 'super_admin_kept', held: false, restore: null, from: account.role, to: account.role };
+			return { ...NO_HOLD, outcome: 'super_admin_kept', from: account.role, to: account.role };
 		}
 		const target = EVER_ROLE_TO_GAUZY_ROLE[everRole];
 		const membership = await this.membershipOf(tx, link, userId);
@@ -321,23 +363,17 @@ export class MembershipSyncHandler {
 					await this.join(tx, link, userId, membership.inactiveId);
 					added = true;
 				}
-				const step = await this.role(tx, target, account, last, other);
+				const step = await this.role(tx, target, account, position, holds, grant, other);
 				return added ? { ...step, outcome: 'added' } : step;
 			}
 			case 'role_changed': {
 				if (!membership.active) {
-					return {
-						outcome: 'not_a_member',
-						held: last?.held ?? false,
-						restore: last?.restore ?? null,
-						from: account.role,
-						to: account.role
-					};
+					return { outcome: 'not_a_member', ...kept, from: account.role, to: account.role };
 				}
-				return this.role(tx, target, account, last, other);
+				return this.role(tx, target, account, position, holds, grant, other);
 			}
 			default: {
-				const step = await this.role(tx, null, account, last, other);
+				const step = await this.role(tx, null, account, position, holds, grant, other);
 				if (membership.active) {
 					await this.leave(tx, link, userId);
 					return { ...step, outcome: 'removed' };
@@ -350,60 +386,68 @@ export class MembershipSyncHandler {
 	/**
 	 * The role step: `ADMIN` granted (when the user is not one), or an `ADMIN` the sync granted given back. Every write
 	 * is a compare-and-set on the role the user has now, so a role changed in Gauzy meanwhile is never overwritten.
+	 *
+	 * @param holds - This organization holds the latest grant.
+	 * @param grant - The sync's latest grant of `ADMIN` to the user in the tenant.
+	 * @param other - Another live linked organization of the tenant holds that grant.
 	 */
 	private async role(
 		tx: EverConnectSql,
 		target: typeof GAUZY_ADMIN | null,
 		account: Account,
-		last: SyncState | null,
-		other: { restore: string | null } | null
+		position: MembershipPosition,
+		holds: boolean,
+		grant: Grant | null,
+		other: boolean
 	): Promise<RoleStep> {
 		const same = { from: account.role, to: account.role };
 		if (target === GAUZY_ADMIN) {
 			if (account.role === GAUZY_ADMIN) {
-				if (last?.held) return { outcome: 'unchanged', held: true, restore: last.restore, ...same };
-				// Granted for another linked organization: this one holds it too, with the same role to give back.
-				if (other) return { outcome: 'unchanged', held: true, restore: other.restore, ...same };
+				// Granted by the sync (for this organization or another one still holding it): this one holds it too.
+				if (grant && (holds || other)) {
+					return { outcome: 'unchanged', held: true, restore: grant.restore, grant: grant.grant, ...same };
+				}
 				// An ADMIN given in Gauzy: not the sync's to take away later.
-				return { outcome: 'unchanged', held: false, restore: null, ...same };
+				return { ...NO_HOLD, outcome: 'unchanged', ...same };
 			}
 			const adminId = roleIdOf(account.roles, GAUZY_ADMIN);
 			if (!adminId) {
-				return { outcome: 'role_missing', held: false, restore: null, ...same };
+				return { ...NO_HOLD, outcome: 'role_missing', ...same };
 			}
 			if (!(await this.setRole(tx, account, adminId))) {
-				return { outcome: 'changed_here', held: false, restore: null, ...same };
+				return { ...NO_HOLD, outcome: 'changed_here', ...same };
 			}
+			// A new grant: holds on any earlier one are void from now on.
 			return {
 				outcome: 'role_granted',
 				held: true,
 				restore: account.roleId,
+				grant: position.eventId,
 				from: account.role,
 				to: GAUZY_ADMIN
 			};
 		}
 		// No role from Ever: take back an ADMIN the sync granted, and nothing else.
-		if (!last?.held) {
-			return { outcome: 'unchanged', held: false, restore: null, ...same };
+		if (!holds || !grant) {
+			return { ...NO_HOLD, outcome: 'unchanged', ...same };
 		}
 		if (other) {
-			return { outcome: 'kept_for_other_link', held: false, restore: null, ...same };
+			return { ...NO_HOLD, outcome: 'kept_for_other_link', ...same };
 		}
 		if (account.role !== GAUZY_ADMIN) {
-			return { outcome: 'changed_here', held: false, restore: null, ...same };
+			return { ...NO_HOLD, outcome: 'changed_here', ...same };
 		}
-		const restore = last.restore;
+		const restore = grant.restore;
 		if (restore !== null && !account.roles.has(restore)) {
 			// The role to give back no longer exists: left as it is, and tried again on the next change.
-			return { outcome: 'role_missing', held: true, restore, ...same };
+			return { outcome: 'role_missing', held: true, restore, grant: grant.grant, ...same };
 		}
 		if (!(await this.setRole(tx, account, restore))) {
-			return { outcome: 'changed_here', held: false, restore: null, ...same };
+			return { ...NO_HOLD, outcome: 'changed_here', ...same };
 		}
 		return {
+			...NO_HOLD,
 			outcome: 'role_revoked',
-			held: false,
-			restore: null,
 			from: account.role,
 			to: restore === null ? null : (account.roles.get(restore) ?? null)
 		};
@@ -513,11 +557,13 @@ function stateOf(row: Row, userId: string): SyncState | null {
 	}
 	const occurredAt = details['occurred_at'];
 	const restore = details['restore'];
+	const grant = details['grant'];
 	return {
 		eventId: String(details['event_id']).toUpperCase(),
 		occurredAt: typeof occurredAt === 'number' && Number.isFinite(occurredAt) ? occurredAt : null,
 		held: details['held'] === true,
-		restore: typeof restore === 'string' && restore ? restore : null
+		restore: typeof restore === 'string' && restore ? restore : null,
+		grant: typeof grant === 'string' && grant ? grant : null
 	};
 }
 

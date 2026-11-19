@@ -149,10 +149,15 @@ export interface MembershipPosition {
 	occurredAt: number | null;
 }
 
-/** Whether `next` comes after `last`: by time when both have one and they differ, otherwise by id. */
+/**
+ * Whether `next` comes after `last`: by time, then by id. A total order (an event without a time sorts before every
+ * timed one), so no two events can each come after the other; the handler admits only events with a time.
+ */
 export function isAfter(next: MembershipPosition, last: MembershipPosition): boolean {
-	if (next.occurredAt !== null && last.occurredAt !== null && next.occurredAt !== last.occurredAt) {
-		return next.occurredAt > last.occurredAt;
+	const nextAt = next.occurredAt ?? Number.NEGATIVE_INFINITY;
+	const lastAt = last.occurredAt ?? Number.NEGATIVE_INFINITY;
+	if (nextAt !== lastAt) {
+		return nextAt > lastAt;
 	}
 	// ULIDs are Crockford base32, case-insensitive: compared in one case, their order is their time order.
 	return next.eventId.toUpperCase() > last.eventId.toUpperCase();

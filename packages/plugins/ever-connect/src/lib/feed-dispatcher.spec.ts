@@ -190,6 +190,24 @@ describe('Ever Platform feed dispatcher', () => {
 			membership.apply.mockResolvedValueOnce('role_granted');
 			expect(await instance.dispatchPage(page)).toEqual(['membership']);
 		});
+
+		it('a failure after other events of the page: their follow-ups still run, once', async () => {
+			const membership = { apply: jest.fn().mockRejectedValueOnce(new Error('database unavailable')) };
+			const { instance, states, entitlements } = scheduler(membership);
+			const page = [
+				event('ever.consent.integration.enabled', '01JD0000000000000000000081'),
+				event('ever.entitlements.entitlement.issued', '01JD0000000000000000000082'),
+				event(TYPES[0], '01JD0000000000000000000083')
+			];
+			await expect(instance.dispatchPage(page)).rejects.toThrow('database unavailable');
+			expect(states.sync).toHaveBeenCalledTimes(1);
+			expect(entitlements.refreshAll).toHaveBeenCalledTimes(1);
+			// Read again: the handled events are skipped, the failed one is applied, nothing runs twice.
+			membership.apply.mockResolvedValueOnce('role_granted');
+			expect(await instance.dispatchPage(page)).toEqual(['ignored', 'ignored', 'membership']);
+			expect(states.sync).toHaveBeenCalledTimes(1);
+			expect(entitlements.refreshAll).toHaveBeenCalledTimes(1);
+		});
 	});
 
 	it('a page: follow-ups once per page, an event read twice handled once', async () => {

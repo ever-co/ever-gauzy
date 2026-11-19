@@ -149,6 +149,17 @@ describe('Ever Platform membership sync: switch, mapping, shape', () => {
 		expect(sameIssuer('https://auth.ever.co//')).toBe('https://auth.ever.co');
 	});
 
+	it('the order of changes is total: an untimed event never comes after a timed one, nor a timed one before it', () => {
+		const x = { eventId: '01JD0000000000000000000001', occurredAt: Date.parse('2026-11-03T00:00:00Z') };
+		const b = { eventId: '01JD0000000000000000000005', occurredAt: null };
+		const c = { eventId: '01JD0000000000000000000009', occurredAt: Date.parse('2026-11-02T00:00:00Z') };
+		expect(isAfter(b, x)).toBe(false);
+		expect(isAfter(x, b)).toBe(true);
+		expect(isAfter(c, b)).toBe(true);
+		expect(isAfter(x, c)).toBe(true);
+		expect(isAfter(c, x)).toBe(false);
+	});
+
 	it('the order of changes: by time, then by id', () => {
 		const at = (iso: string) => Date.parse(iso);
 		expect(

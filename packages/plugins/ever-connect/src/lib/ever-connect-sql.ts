@@ -184,14 +184,23 @@ export class EverConnectSql {
 
 	/**
 	 * Runs `work` in one transaction, with an `EverConnectSql` whose every statement runs in it: committed when `work`
-	 * resolves, rolled back when it throws. On Postgres it first takes the transaction-scoped advisory lock named
-	 * `lockName`, so concurrent API processes run it one after the other.
+	 * resolves, rolled back when it throws. With `lockName`, concurrent API processes run it one after the other: on
+	 * Postgres under the transaction-scoped advisory lock of that name, on MySQL under the named lock of that name
+	 * (taken before the transaction reads anything, released after it ends); SQLite has one writer at a time.
 	 */
 	async inTransaction<T>(lockName: string | null, work: (sql: EverConnectSql) => Promise<T>): Promise<T> {
 		const runner = this.dataSource.createQueryRunner();
 		await runner.connect();
-		await runner.startTransaction();
+		let mysqlLock = false;
 		try {
+			if (lockName && this.dialect === 'mysql') {
+				const [row] = (await runner.query('SELECT GET_LOCK(?, 30) AS `locked`', [lockName])) as Row[];
+				if (toNumber(row?.['locked']) !== 1) {
+					throw new Error('The lock of this change could not be taken; it is tried again.');
+				}
+				mysqlLock = true;
+			}
+			await runner.startTransaction();
 			if (lockName && this.dialect === 'postgres') {
 				await runner.query('SELECT pg_advisory_xact_lock(hashtext($1))', [lockName]);
 			}
@@ -212,6 +221,9 @@ export class EverConnectSql {
 			}
 			throw error;
 		} finally {
+			if (mysqlLock) {
+				await runner.query('SELECT RELEASE_LOCK(?)', [lockName]).catch(() => undefined);
+			}
 			await runner.release();
 		}
 	}
