@@ -3,13 +3,39 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { applyInTurn, notOfferedByApi, resolveOrganizationScope, validateOrganizationContext } from './utils';
+import {
+	applyInTurn,
+	buildListQuery,
+	nameTexts,
+	notOfferedByApi,
+	readSearchedList,
+	resolveOrganizationScope,
+	validateOrganizationContext
+} from './utils';
 import { EmployeeAwardInputSchema } from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
 import { TOOL_HINTS } from './tool-hints';
 const logger = new Logger('EmployeeAwardTools');
+
+/** The award list route drops paging, relations and order: the pagination route reads them, `skip` as a page number. */
+const AWARDS_PATH = '/api/employee-award/pagination';
+
+// Awards sort by employee on the column that names it.
+const AWARD_SORT_COLUMNS: Record<string, string> = { employee: 'employeeId' };
+
+/**
+ * The `order` of an award list, or none when no field is named. Awards that share the value keep one order by their id,
+ * so a page never repeats or skips one of them.
+ */
+const awardOrder = (sortBy?: string, sortOrder?: 'ASC' | 'DESC') => {
+	if (!sortBy) {
+		return undefined;
+	}
+	const column = AWARD_SORT_COLUMNS[sortBy] ?? sortBy;
+	return { [column]: sortOrder, id: 'ASC' };
+};
 
 /** The fields the award update route requires, besides the organization. */
 const AWARD_REQUIRED_FIELDS = ['name', 'year'];
@@ -53,20 +79,12 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					page,
-					limit,
-					...(search && { search }),
-					...(relations && { relations }),
-					...(employeeId && { employeeId }),
-					...(year && { year }),
-					...(sortBy && { sortBy }),
-					sortOrder
-				};
-
-				const response = await apiClient.get('/api/employee-award', { params });
+				// The route has no search: one of the award name is kept here, on the whole list
+				const listOptions = { page, limit, relations, order: awardOrder(sortBy, sortOrder), skipIsPage: true };
+				const response = await readSearchedList(AWARDS_PATH, defaultParams, { employeeId, year }, listOptions, {
+					search,
+					textsOf: nameTexts
+				});
 
 				return {
 					content: [
@@ -238,18 +256,13 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					employeeId,
-					page,
-					limit,
-					...(year && { year }),
-					sortBy,
-					sortOrder
-				};
+				const params = buildListQuery(
+					defaultParams,
+					{ employeeId, year },
+					{ page, limit, order: awardOrder(sortBy, sortOrder), skipIsPage: true }
+				);
 
-				const response = await apiClient.get('/api/employee-award', { params });
+				const response = await apiClient.get(AWARDS_PATH, { params });
 
 				return {
 					content: [
@@ -289,19 +302,13 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					year,
-					page,
-					limit,
-					...(employeeId && { employeeId }),
-					...(relations && { relations }),
-					sortBy,
-					sortOrder
-				};
+				const params = buildListQuery(
+					defaultParams,
+					{ year, employeeId },
+					{ page, limit, relations, order: awardOrder(sortBy, sortOrder), skipIsPage: true }
+				);
 
-				const response = await apiClient.get('/api/employee-award', { params });
+				const response = await apiClient.get(AWARDS_PATH, { params });
 
 				return {
 					content: [

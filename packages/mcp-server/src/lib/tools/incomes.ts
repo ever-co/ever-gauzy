@@ -9,6 +9,7 @@ import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils'
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
 import { TOOL_HINTS } from './tool-hints';
+import { buildListQuery, validateOrganizationContext } from './utils';
 const logger = new Logger('IncomeTools');
 
 /**
@@ -127,12 +128,12 @@ export const registerIncomeTools = (server: McpServer) => {
 		},
 		async ({ page = 1, limit = 10, relations, where }) => {
 			try {
-				const params = {
-					page,
-					limit,
-					...(relations && { relations }),
-					...(where && { where })
-				};
+				const defaultParams = validateOrganizationContext();
+				const params = buildListQuery(
+					defaultParams,
+					{ ...where },
+					{ page, limit, relations, skipIsPage: true }
+				);
 
 				const response = await apiClient.get('/api/income/pagination', { params });
 

@@ -3,13 +3,29 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { validateOrganizationContext } from './utils';
+import { endOfDayBound, readSearchedList, relationsForSearch, validateOrganizationContext } from './utils';
 import { InvoiceStatusEnum, InvoiceTypeEnum } from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
 import { TOOL_HINTS } from './tool-hints';
 const logger = new Logger('InvoiceTools');
+
+/** An invoice row, as far as a search reads it. */
+type InvoiceRow = { invoiceNumber?: number; toContact?: { name?: string } };
+
+// The ends of an open date range: the route reads a range only with both, and falls back to the current month.
+const EARLIEST = '1970-01-01T00:00:00.000Z';
+const LATEST = '9999-12-31T23:59:59.999Z';
+
+/** The invoice date range as the pagination route reads it, an open end sent as the earliest or latest date. */
+const invoiceDateRange = (startDate?: string, endDate?: string) => {
+	const hasRange = Boolean(startDate || endDate);
+	if (!hasRange) {
+		return {};
+	}
+	return { invoiceDate: { startDate: startDate ?? EARLIEST, endDate: endOfDayBound(endDate) ?? LATEST } };
+};
 
 /**
  * Helper function to convert date fields in invoice data to Date objects
@@ -57,21 +73,19 @@ export const registerInvoiceTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
+				// The route reads a date range from `where.invoiceDate`. It has no search: one of the number or the client's
+				// name is kept here, on the whole list.
+				const where = { status, invoiceType, paid, ...invoiceDateRange(startDate, endDate) };
+				const listOptions = {
 					page,
 					limit,
-					...(search && { search }),
-					...(relations && { relations }),
-					...(status && { status }),
-					...(invoiceType && { invoiceType }),
-					...(paid !== undefined && { paid }),
-					...(startDate && { startDate }),
-					...(endDate && { endDate })
+					relations: relationsForSearch(search, relations, 'toContact'),
+					skipIsPage: true
 				};
-
-				const response = await apiClient.get('/api/invoices/pagination', { params });
+				const response = await readSearchedList('/api/invoices/pagination', defaultParams, where, listOptions, {
+					search,
+					textsOf: ({ invoiceNumber, toContact }: InvoiceRow) => [invoiceNumber, toContact?.name]
+				});
 
 				return {
 					content: [
