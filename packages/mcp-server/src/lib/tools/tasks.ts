@@ -22,6 +22,7 @@ import {
 	countByGroup,
 	isWithinDates,
 	ListQueryOptions,
+	pageOf,
 	readAllPages,
 	toApiValue
 } from './utils';
@@ -314,9 +315,10 @@ export const registerTaskTools = (server: McpServer) => {
 					status: toApiValue(TASK_STATUS_VALUES, status),
 					priority: toApiValue(TASK_PRIORITY_VALUES, priority)
 				};
-				const params = buildListQuery(defaultParams, where, { page, limit });
-
-				const response = await apiClient.get(`/api/tasks/employee/${employeeId}`, { params });
+				// The route answers every task of the employee, whatever page is asked: the page is cut here
+				const params = { where: buildListQuery(defaultParams, where).where };
+				const tasks = await apiClient.get<unknown[]>(`/api/tasks/employee/${employeeId}`, { params });
+				const response = pageOf(tasks, page, limit);
 
 				return {
 					content: [

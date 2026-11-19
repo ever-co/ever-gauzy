@@ -43,7 +43,7 @@ describe('product category list tools — the query the route validates', () => 
 
 	afterEach(() => jest.restoreAllMocks());
 
-	it('get_product_categories sends the scope inside `where`, the search and the language outside it as before', async () => {
+	it('get_product_categories reads the pagination route, with the language in the header the API reads', async () => {
 		await call('get_product_categories', {
 			search: 'office',
 			langCode: 'fr',
@@ -52,8 +52,18 @@ describe('product category list tools — the query the route validates', () => 
 			relations: ['products']
 		});
 
-		expect(get).toHaveBeenCalledWith('/api/product-categories', {
-			params: { where: SCOPE, take: 5, skip: 5, relations: ['products'], search: 'office', langCode: 'fr' }
+		expect(get).toHaveBeenCalledWith('/api/product-categories/pagination', {
+			params: { where: SCOPE, take: 5, skip: 2, relations: ['products'], search: 'office' },
+			headers: { language: 'fr' }
+		});
+	});
+
+	it('get_product_categories sends no language header when none is named', async () => {
+		await call('get_product_categories');
+
+		expect(get).toHaveBeenCalledWith('/api/product-categories/pagination', {
+			params: { where: SCOPE, take: 10, skip: 1 },
+			headers: {}
 		});
 	});
 });

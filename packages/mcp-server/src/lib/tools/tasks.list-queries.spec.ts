@@ -133,11 +133,21 @@ describe('task list tools — the query each route validates', () => {
 	});
 
 	it('get_tasks_by_employee filters the employee’s tasks inside `where`', async () => {
+		get.mockResolvedValue([] as never);
+
 		await call('get_tasks_by_employee', { employeeId: EMPLOYEE, status: 'COMPLETED', priority: 'HIGH' });
 
 		expect(get).toHaveBeenCalledWith(`/api/tasks/employee/${EMPLOYEE}`, {
-			params: { where: { ...SCOPE, status: 'completed', priority: 'high' }, take: 10, skip: 0 }
+			params: { where: { ...SCOPE, status: 'completed', priority: 'high' } }
 		});
+	});
+
+	it('get_tasks_by_employee cuts the page itself, since the route answers every task', async () => {
+		get.mockResolvedValue([{ id: 't1' }, { id: 't2' }, { id: 't3' }] as never);
+
+		const result = await call('get_tasks_by_employee', { employeeId: EMPLOYEE, page: 2, limit: 2 });
+
+		expect(JSON.parse(result.content[0].text)).toEqual({ items: [{ id: 't3' }], total: 3 });
 	});
 });
 

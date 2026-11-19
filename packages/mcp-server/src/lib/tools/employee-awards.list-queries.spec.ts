@@ -44,7 +44,7 @@ describe('employee award list tools — the query the route validates', () => {
 
 	afterEach(() => jest.restoreAllMocks());
 
-	it('get_employee_awards filters inside `where`, the search and the sort outside it as before', async () => {
+	it('get_employee_awards reads the pagination route, which pages, joins the relations and sorts', async () => {
 		await call('get_employee_awards', {
 			employeeId: EMPLOYEE,
 			year: '2026',
@@ -55,15 +55,14 @@ describe('employee award list tools — the query the route validates', () => {
 			relations: ['employee']
 		});
 
-		expect(get).toHaveBeenCalledWith('/api/employee-award', {
+		expect(get).toHaveBeenCalledWith('/api/employee-award/pagination', {
 			params: {
 				where: { ...SCOPE, employeeId: EMPLOYEE, year: '2026' },
 				take: 5,
-				skip: 5,
+				skip: 2,
 				relations: ['employee'],
-				search: 'best',
-				sortBy: 'name',
-				sortOrder: 'DESC'
+				order: { name: 'DESC' },
+				search: 'best'
 			}
 		});
 	});
@@ -71,22 +70,37 @@ describe('employee award list tools — the query the route validates', () => {
 	it('get_employee_awards_by_employee names the employee inside `where`', async () => {
 		await call('get_employee_awards_by_employee', { employeeId: EMPLOYEE });
 
-		expect(get).toHaveBeenCalledWith('/api/employee-award', {
-			params: { where: { ...SCOPE, employeeId: EMPLOYEE }, take: 10, skip: 0, sortBy: 'year', sortOrder: 'DESC' }
+		expect(get).toHaveBeenCalledWith('/api/employee-award/pagination', {
+			params: { where: { ...SCOPE, employeeId: EMPLOYEE }, take: 10, skip: 1, order: { year: 'DESC' } }
 		});
 	});
 
 	it('get_employee_awards_by_year names the year inside `where`', async () => {
 		await call('get_employee_awards_by_year', { year: '2025', employeeId: EMPLOYEE });
 
-		expect(get).toHaveBeenCalledWith('/api/employee-award', {
+		expect(get).toHaveBeenCalledWith('/api/employee-award/pagination', {
 			params: {
 				where: { ...SCOPE, year: '2025', employeeId: EMPLOYEE },
 				take: 10,
-				skip: 0,
-				sortBy: 'name',
-				sortOrder: 'ASC'
+				skip: 1,
+				order: { name: 'ASC' }
 			}
+		});
+	});
+
+	it('sorts the awards by employee on the column that names it', async () => {
+		await call('get_employee_awards_by_year', { year: '2025', sortBy: 'employee', sortOrder: 'DESC' });
+
+		expect(get).toHaveBeenCalledWith('/api/employee-award/pagination', {
+			params: { where: { ...SCOPE, year: '2025' }, take: 10, skip: 1, order: { employeeId: 'DESC' } }
+		});
+	});
+
+	it('get_employee_awards sends no order when no field is named', async () => {
+		await call('get_employee_awards');
+
+		expect(get).toHaveBeenCalledWith('/api/employee-award/pagination', {
+			params: { where: SCOPE, take: 10, skip: 1 }
 		});
 	});
 });

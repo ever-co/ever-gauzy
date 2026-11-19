@@ -11,6 +11,21 @@ import { registerTool, registerNoArgsTool } from './tool-helper';
 import { TOOL_HINTS } from './tool-hints';
 const logger = new Logger('EmployeeAwardTools');
 
+/** The award list route drops paging, relations and order: the pagination route reads them, `skip` as a page number. */
+const AWARDS_PATH = '/api/employee-award/pagination';
+
+// Awards sort by employee on the column that names it.
+const AWARD_SORT_COLUMNS: Record<string, string> = { employee: 'employeeId' };
+
+/** The `order` of an award list, or none when no field is named. */
+const awardOrder = (sortBy?: string, sortOrder?: 'ASC' | 'DESC') => {
+	if (!sortBy) {
+		return undefined;
+	}
+	const column = AWARD_SORT_COLUMNS[sortBy] ?? sortBy;
+	return { [column]: sortOrder };
+};
+
 export const registerEmployeeAwardTools = (server: McpServer) => {
 	// Get employee awards tool
 	registerTool(
@@ -31,15 +46,17 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				// `where` matches a column exactly: the search and the sort stay outside it, as before
+				// `where` matches a column exactly: the search stays outside it, as before
 				const params = {
-					...buildListQuery(defaultParams, { employeeId, year }, { page, limit, relations }),
-					...(search && { search }),
-					...(sortBy && { sortBy }),
-					sortOrder
+					...buildListQuery(
+						defaultParams,
+						{ employeeId, year },
+						{ page, limit, relations, order: awardOrder(sortBy, sortOrder), skipIsPage: true }
+					),
+					...(search && { search })
 				};
 
-				const response = await apiClient.get('/api/employee-award', { params });
+				const response = await apiClient.get(AWARDS_PATH, { params });
 
 				return {
 					content: [
@@ -211,13 +228,13 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = {
-					...buildListQuery(defaultParams, { employeeId, year }, { page, limit }),
-					sortBy,
-					sortOrder
-				};
+				const params = buildListQuery(
+					defaultParams,
+					{ employeeId, year },
+					{ page, limit, order: awardOrder(sortBy, sortOrder), skipIsPage: true }
+				);
 
-				const response = await apiClient.get('/api/employee-award', { params });
+				const response = await apiClient.get(AWARDS_PATH, { params });
 
 				return {
 					content: [
@@ -257,13 +274,13 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = {
-					...buildListQuery(defaultParams, { year, employeeId }, { page, limit, relations }),
-					sortBy,
-					sortOrder
-				};
+				const params = buildListQuery(
+					defaultParams,
+					{ year, employeeId },
+					{ page, limit, relations, order: awardOrder(sortBy, sortOrder), skipIsPage: true }
+				);
 
-				const response = await apiClient.get('/api/employee-award', { params });
+				const response = await apiClient.get(AWARDS_PATH, { params });
 
 				return {
 					content: [

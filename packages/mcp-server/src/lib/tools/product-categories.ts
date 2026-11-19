@@ -28,13 +28,15 @@ export const registerProductCategoryTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
+				// The list route drops paging: the pagination route reads it, `skip` as a page number. The API reads the
+				// language of the translations from the `language` header.
 				const params = {
-					...buildListQuery(defaultParams, {}, { page, limit, relations }),
-					...(search && { search }),
-					...(langCode && { langCode })
+					...buildListQuery(defaultParams, {}, { page, limit, relations, skipIsPage: true }),
+					...(search && { search })
 				};
+				const headers = { ...(langCode && { language: langCode }) };
 
-				const response = await apiClient.get('/api/product-categories', { params });
+				const response = await apiClient.get('/api/product-categories/pagination', { params, headers });
 
 				return {
 					content: [
