@@ -1,0 +1,93 @@
+// Same vocabulary as the Settings pages: 12px body, hairline dividers, no shadows. Every custom property
+// carries a fallback: `--gauzy-*` is undefined in material-light / -dark.
+$divider: 1px solid var(--gauzy-border-default-color, var(--border-basic-color-3));
+$muted: var(--text-hint-color);
+
+:host {
+  // `.card-scroll` pins the card to the page frame; the body is the one scroll area.
+  nb-card.card-scroll > nb-card-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto;
+    overflow: auto;
+  }
+}
+
+.header {
+  .page-title {
+    margin: 0;
+  }
+
+  .subtitle {
+    max-width: 48rem;
+    margin: 0.25rem 0 0;
+    font-size: 0.75rem;
+    font-weight: 400;
+    line-height: 1.125rem;
+    color: $muted;
+  }
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  padding: 3rem 1rem;
+}
+
+.empty {
+  margin: 0;
+  padding: 3rem 1rem;
+  font-size: 0.8125rem;
+  text-align: center;
+  color: $muted;
+}
+
+.list {
+  max-width: 48rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.5rem;
+
+  & + & {
+    border-top: $divider;
+  }
+}
+
+.link {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 0.5rem 0.25rem;
+  font-size: 0.8125rem;
+  color: var(--text-basic-color);
+  text-decoration: none;
+
+  &:hover .title {
+    text-decoration: underline;
+  }
+}
+
+.icon {
+  flex: 0 0 1rem;
+  text-align: center;
+  color: $muted;
+}
+
+.title {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.remove {
+  flex: 0 0 auto;
+}
