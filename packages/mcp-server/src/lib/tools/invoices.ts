@@ -3,7 +3,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { validateOrganizationContext } from './utils';
+import { buildListQuery, validateOrganizationContext } from './utils';
 import { InvoiceStatusEnum, InvoiceTypeEnum } from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
@@ -57,16 +57,11 @@ export const registerInvoiceTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
+				// `where` matches a column exactly: the search and the date range stay outside it, as before
+				const where = { status, invoiceType, paid };
 				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					page,
-					limit,
+					...buildListQuery(defaultParams, where, { page, limit, relations, skipIsPage: true }),
 					...(search && { search }),
-					...(relations && { relations }),
-					...(status && { status }),
-					...(invoiceType && { invoiceType }),
-					...(paid !== undefined && { paid }),
 					...(startDate && { startDate }),
 					...(endDate && { endDate })
 				};
