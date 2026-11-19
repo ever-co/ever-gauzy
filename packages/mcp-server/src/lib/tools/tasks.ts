@@ -4,6 +4,7 @@ import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { authManager } from '../common/auth-manager';
+import { sanitizeErrorMessage } from '../common/error-utils';
 import {
 	TASK_PRIORITY_VALUES,
 	TASK_SIZE_VALUES,
@@ -182,7 +183,7 @@ export const registerTaskTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				logger.error('Error fetching tasks:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
+				const message = sanitizeErrorMessage(error);
 				throw new Error(`Failed to fetch tasks: ${message}`);
 			}
 		},
@@ -230,7 +231,7 @@ export const registerTaskTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				logger.error('Error fetching task count:', error);
-				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to fetch task count: ${errorMsg}`);
 			}
 		}
@@ -280,7 +281,7 @@ export const registerTaskTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				logger.error('Error fetching tasks pagination:', error);
-				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to fetch tasks pagination: ${errorMsg}`);
 			}
 		}
@@ -330,7 +331,7 @@ export const registerTaskTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				logger.error('Error fetching tasks by employee:', error);
-				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to fetch tasks by employee: ${errorMsg}`);
 			}
 		}
@@ -382,7 +383,7 @@ export const registerTaskTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				logger.error('Error fetching my tasks:', error);
-				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to fetch my tasks: ${errorMsg}`);
 			}
 		}
@@ -428,7 +429,7 @@ export const registerTaskTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				logger.error('Error fetching team tasks:', error);
-				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to fetch team tasks: ${errorMsg}`);
 			}
 		}
@@ -472,7 +473,7 @@ export const registerTaskTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				logger.error('Error creating task:', error);
-				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to create task: ${errorMsg}`);
 			}
 		}
@@ -508,7 +509,7 @@ export const registerTaskTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				logger.error('Error fetching task:', error);
-				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to fetch task: ${errorMsg}`);
 			}
 		}
@@ -539,7 +540,7 @@ export const registerTaskTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				logger.error('Error updating task:', error);
-				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to update task: ${errorMsg}`);
 			}
 		}
@@ -567,7 +568,7 @@ export const registerTaskTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				logger.error('Error deleting task:', error);
-				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to delete task: ${errorMsg}`);
 			}
 		}
@@ -618,7 +619,7 @@ export const registerTaskTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				logger.error('Error bulk creating tasks:', error);
-				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to bulk create tasks: ${errorMsg}`);
 			}
 		}
@@ -661,7 +662,7 @@ export const registerTaskTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				logger.error('Error bulk updating tasks:', error);
-				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to bulk update tasks: ${errorMsg}`);
 			}
 		}
@@ -693,7 +694,7 @@ export const registerTaskTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				logger.error('Error bulk deleting tasks:', error);
-				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to bulk delete tasks: ${errorMsg}`);
 			}
 		}
@@ -748,7 +749,7 @@ export const registerTaskTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				logger.error('Error fetching task statistics:', error);
-				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to fetch task statistics: ${errorMsg}`);
 			}
 		}
@@ -788,7 +789,7 @@ export const registerTaskTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				logger.error('Error assigning task to employee:', error);
-				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to assign task to employee: ${errorMsg}`);
 			}
 		}
@@ -828,7 +829,7 @@ export const registerTaskTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				logger.error('Error unassigning task from employee:', error);
-				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to unassign task from employee: ${errorMsg}`);
 			}
 		}
