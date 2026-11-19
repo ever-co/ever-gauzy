@@ -160,6 +160,22 @@ describe('Ever Platform membership sync: switch, mapping, shape', () => {
 		expect(isAfter(c, x)).toBe(false);
 	});
 
+	it('at the same time, ids compare in one case (ULIDs are case-insensitive)', () => {
+		const at = Date.parse('2026-11-02T00:00:00Z');
+		expect(
+			isAfter(
+				{ eventId: '01JD000000000000000000000B', occurredAt: at },
+				{ eventId: '01jd000000000000000000000a', occurredAt: at }
+			)
+		).toBe(true);
+		expect(
+			isAfter(
+				{ eventId: '01jd000000000000000000000a', occurredAt: at },
+				{ eventId: '01JD000000000000000000000B', occurredAt: at }
+			)
+		).toBe(false);
+	});
+
 	it('the order of changes: by time, then by id', () => {
 		const at = (iso: string) => Date.parse(iso);
 		expect(

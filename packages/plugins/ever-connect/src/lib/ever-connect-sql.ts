@@ -189,6 +189,39 @@ export class EverConnectSql {
 	 * (taken before the transaction reads anything, released after it ends); SQLite has one writer at a time.
 	 */
 	async inTransaction<T>(lockName: string | null, work: (sql: EverConnectSql) => Promise<T>): Promise<T> {
+		if (this.dialect !== 'sqlite') {
+			return this.runInTransaction(lockName, work);
+		}
+		// SQLite: the data source has one query runner, shared by every caller. One of these transactions runs at a
+		// time, and only once no other transaction is open on that runner, so it never becomes a savepoint inside
+		// someone else's transaction (whose rollback would take these writes, or this rollback theirs).
+		const previous = sqliteQueue.get(this.dataSource) ?? Promise.resolve();
+		const mine = previous
+			.catch(() => undefined)
+			.then(async () => {
+				await this.untilNoOpenTransaction();
+				return this.runInTransaction(lockName, work);
+			});
+		sqliteQueue.set(
+			this.dataSource,
+			mine.catch(() => undefined)
+		);
+		return mine;
+	}
+
+	/** Waits (up to 30 s) until no transaction is open on SQLite's shared query runner. */
+	private async untilNoOpenTransaction(): Promise<void> {
+		const runner = this.dataSource.createQueryRunner();
+		const until = Date.now() + 30_000;
+		while (runner.isTransactionActive) {
+			if (Date.now() > until) {
+				throw new Error('Another transaction is still open; this change is tried again.');
+			}
+			await new Promise((resolve) => setTimeout(resolve, 10));
+		}
+	}
+
+	private async runInTransaction<T>(lockName: string | null, work: (sql: EverConnectSql) => Promise<T>): Promise<T> {
 		const runner = this.dataSource.createQueryRunner();
 		let mysqlLock = false;
 		try {
@@ -228,6 +261,9 @@ export class EverConnectSql {
 		}
 	}
 }
+
+/** The SQLite transactions of `inTransaction`, one after the other, per data source. */
+const sqliteQueue = new WeakMap<DataSource, Promise<unknown>>();
 
 /** A number read back from any driver, or `null`. */
 export const num = (value: unknown): number | null => toNumber(value);

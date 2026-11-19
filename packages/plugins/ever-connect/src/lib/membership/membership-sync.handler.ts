@@ -2,15 +2,17 @@ import { Inject, Injectable, Logger, Optional, Type } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { DataSource } from 'typeorm';
 import { EverConnectAuditService } from '../ever-connect-audit.service';
-import { EverConnectSql, Row, str } from '../ever-connect-sql';
-import { EVER_CONNECT_ENV, ULID_SHAPE } from '../ever-connect.constants';
+import { EverConnectSql, num, Row, str } from '../ever-connect-sql';
+import { EVER_CONNECT_CLOCK, EVER_CONNECT_ENV, ULID_SHAPE } from '../ever-connect.constants';
 import { EverConnectStore, LinkRecord } from '../ever-connect.store';
 import type { EventEnvelope } from '../sdk';
 import {
 	EVER_ROLE_TO_GAUZY_ROLE,
 	EverRole,
 	GAUZY_ADMIN,
+	GAUZY_EMPLOYEE,
 	GAUZY_SUPER_ADMIN,
+	GAUZY_VIEWER,
 	isAfter,
 	isEverRole,
 	isMembershipSyncEnabled,
@@ -159,15 +161,18 @@ export class MembershipSyncHandler {
 	private readonly logger = new Logger('EverConnect');
 	private readonly sql: EverConnectSql;
 	private readonly env: Env;
+	private readonly now: () => number;
 
 	constructor(
 		dataSource: DataSource,
 		private readonly store: EverConnectStore,
 		private readonly audit: EverConnectAuditService,
-		@Optional() @Inject(EVER_CONNECT_ENV) env?: Env
+		@Optional() @Inject(EVER_CONNECT_ENV) env?: Env,
+		@Optional() @Inject(EVER_CONNECT_CLOCK) clock?: { now: () => number }
 	) {
 		this.sql = new EverConnectSql(dataSource);
 		this.env = env ?? process.env;
+		this.now = clock?.now ?? (() => Date.now());
 	}
 
 	/** Whether the feed event type is a membership change. */
@@ -199,11 +204,6 @@ export class MembershipSyncHandler {
 		if (!link || link.status !== 'linked') {
 			return this.done('link_unknown');
 		}
-		const person = await this.personOf(link.tenantId, data);
-		if (person === 'person_unknown' || person === 'person_mismatch') {
-			return this.done(person);
-		}
-
 		const position: MembershipPosition = { eventId, occurredAt };
 		const outcome = await this.sql.inTransaction(LOCK, async (tx) => {
 			// Read again under the lock: a link unlinked while this change waited for it changes nothing, and an
@@ -227,6 +227,12 @@ export class MembershipSyncHandler {
 			const others = links.filter(
 				(row) => row.status !== 'unlinked' && row.organizationId !== link.organizationId
 			);
+			// The person, read (and on Postgres and MySQL locked) in the same transaction: an Ever ID link removed
+			// meanwhile in Gauzy is seen here, or waits for this change.
+			const person = await this.personOf(tx, link.tenantId, data);
+			if (person === 'person_unknown' || person === 'person_mismatch') {
+				return person;
+			}
 			const last = await this.stateIn(tx, link.tenantId, link.organizationId, person);
 			if (last && last.eventId === position.eventId) {
 				return 'duplicate' as const;
@@ -234,13 +240,17 @@ export class MembershipSyncHandler {
 			if (last && !isAfter(position, last)) {
 				return 'stale' as const;
 			}
-			const recent = await this.recentStates(tx, link.tenantId, person);
-			const seq = recent.reduce((max, state) => Math.max(max, state.seq), 0) + 1;
+			// The sync's rows of the user in the tenant are written in a strictly increasing `at` (never before the last
+			// one, whatever the clock does), so "newest by time" is always "last written".
+			const newest = await this.newestRow(tx, link.tenantId, person);
+			const at = Math.max(this.now(), (newest?.at ?? 0) + 1);
+			const seq = (newest?.seq ?? 0) + 1;
 			const grant = await this.latestGrant(tx, link.tenantId, person);
 			const other = grant ? await this.heldElsewhere(tx, link.tenantId, others, person, grant) : false;
 			const step = await this.change(tx, change, everRole, link, person, position, last, grant, other);
 			await this.audit.record(
 				{
+					at,
 					action: MEMBERSHIP_AUDIT_ACTION,
 					actorLabel: 'platform',
 					tenantId: link.tenantId,
@@ -273,20 +283,27 @@ export class MembershipSyncHandler {
 	 * `person_mismatch` when the event names another user.
 	 */
 	private async personOf(
+		tx: EverConnectSql,
 		tenantId: string,
 		data: MembershipEventData
 	): Promise<string | 'person_unknown' | 'person_mismatch'> {
-		const q = (name: string) => this.sql.q(name);
-		const { rows } = await this.sql.run(
-			`SELECT a.${q('userId')} AS ${q('userId')}, a.${q('issuer')} AS ${q('issuer')} FROM ${q('zitadel_account')} a ` +
-				`INNER JOIN ${q('user')} u ON u.${q('id')} = a.${q('userId')} ` +
-				`WHERE a.${q('subject')} = ${this.sql.ph(1)} AND u.${q('tenantId')} = ${this.sql.ph(2)} ` +
-				`AND a.${q('deletedAt')} IS NULL AND u.${q('deletedAt')} IS NULL`,
+		const q = (name: string) => tx.q(name);
+		// Locked on Postgres and MySQL until this change commits (the Ever ID link rows; Postgres only those).
+		const lock = tx.dialect === 'postgres' ? ' FOR UPDATE OF a' : tx.dialect === 'mysql' ? ' FOR UPDATE' : '';
+		const { rows } = await tx.run(
+			`SELECT a.${q('userId')} AS ${q('userId')}, a.${q('issuer')} AS ${q('issuer')}, a.${q('subject')} AS ${q('subject')} ` +
+				`FROM ${q('zitadel_account')} a INNER JOIN ${q('user')} u ON u.${q('id')} = a.${q('userId')} ` +
+				`WHERE a.${q('subject')} = ${tx.ph(1)} AND u.${q('tenantId')} = ${tx.ph(2)} ` +
+				`AND a.${q('deletedAt')} IS NULL AND u.${q('deletedAt')} IS NULL${lock}`,
 			[data.subject, tenantId]
 		);
 		const wanted = sameIssuer(data.issuer);
 		const users = new Set(
-			rows.filter((row) => sameIssuer(String(row['issuer'] ?? '')) === wanted).map((row) => String(row['userId']))
+			rows
+				// A subject is case-sensitive: compared here exactly, whatever the database's collation matched.
+				.filter((row) => String(row['subject'] ?? '') === data.subject)
+				.filter((row) => sameIssuer(String(row['issuer'] ?? '')) === wanted)
+				.map((row) => String(row['userId']))
 		);
 		if (users.size !== 1) {
 			return 'person_unknown';
@@ -319,39 +336,46 @@ export class MembershipSyncHandler {
 		return last;
 	}
 
-	/** The sync's newest rows for the user in the tenant (any organization), newest first by time. */
-	private async recentStates(tx: EverConnectSql, tenantId: string, userId: string): Promise<SyncState[]> {
+	/** The sync's last-written row of the user in the tenant (any organization), with its `at`; `null`: none. */
+	private async newestRow(
+		tx: EverConnectSql,
+		tenantId: string,
+		userId: string
+	): Promise<{ at: number; seq: number } | null> {
 		const q = (name: string) => tx.q(name);
 		const { rows } = await tx.run(
-			`SELECT ${q('details')} FROM ${q('ever_connect_audit')} WHERE ${q('tenantId')} = ${tx.ph(1)} ` +
+			`SELECT ${q('at')}, ${q('details')} FROM ${q('ever_connect_audit')} WHERE ${q('tenantId')} = ${tx.ph(1)} ` +
 				`AND ${q('action')} = ${tx.ph(2)} AND ${q('details')} LIKE ${tx.ph(3)} ` +
-				`ORDER BY ${q('at')} DESC, ${q('id')} DESC LIMIT ${STATE_ROWS}`,
+				`ORDER BY ${q('at')} DESC, ${q('id')} DESC LIMIT 1`,
 			[tenantId, MEMBERSHIP_AUDIT_ACTION, `%"user_id":${JSON.stringify(userId)}%`]
 		);
-		return rows.map((row) => stateOf(row, userId)).filter((state): state is SyncState => state !== null);
+		const state = rows[0] ? stateOf(rows[0], userId) : null;
+		return rows[0] ? { at: num(rows[0]['at']) ?? 0, seq: state?.seq ?? 0 } : null;
 	}
 
 	/**
 	 * The sync's latest grant of `ADMIN` to the user in the tenant (any organization), or `null`. Every row that holds a
-	 * grant names the latest one (a new grant voids the older ones), so the last-written holding row tells it: the
-	 * newest by time, and among rows written in the same millisecond the one with the highest `seq`.
+	 * grant names the latest one (a new grant voids the older ones), so the last-written holding row tells it, unless a
+	 * later row voided it: one that found the user no longer `ADMIN` while the grant was held (`changed_here`), i.e.
+	 * the role was changed in Gauzy, which ends the grant for every organization that held it.
 	 */
 	private async latestGrant(tx: EverConnectSql, tenantId: string, userId: string): Promise<Grant | null> {
 		const q = (name: string) => tx.q(name);
 		const { rows } = await tx.run(
 			`SELECT ${q('details')} FROM ${q('ever_connect_audit')} WHERE ${q('tenantId')} = ${tx.ph(1)} ` +
-				`AND ${q('action')} = ${tx.ph(2)} AND ${q('details')} LIKE ${tx.ph(3)} AND ${q('details')} LIKE ${tx.ph(4)} ` +
-				`ORDER BY ${q('at')} DESC, ${q('id')} DESC LIMIT ${STATE_ROWS}`,
-			[tenantId, MEMBERSHIP_AUDIT_ACTION, `%"user_id":${JSON.stringify(userId)}%`, '%"held":true%']
+				`AND ${q('action')} = ${tx.ph(2)} AND ${q('details')} LIKE ${tx.ph(3)} ` +
+				`AND (${q('details')} LIKE ${tx.ph(4)} OR ${q('details')} LIKE ${tx.ph(5)}) ` +
+				`ORDER BY ${q('at')} DESC, ${q('id')} DESC LIMIT 1`,
+			[
+				tenantId,
+				MEMBERSHIP_AUDIT_ACTION,
+				`%"user_id":${JSON.stringify(userId)}%`,
+				'%"held":true%',
+				`%"result":${JSON.stringify('changed_here')}%`
+			]
 		);
-		let newest: SyncState | null = null;
-		for (const row of rows) {
-			const state = stateOf(row, userId);
-			if (state?.held && state.grant && (!newest || state.seq > newest.seq)) {
-				newest = state;
-			}
-		}
-		return newest?.grant ? { grant: newest.grant, restore: newest.restore } : null;
+		const state = rows[0] ? stateOf(rows[0], userId) : null;
+		return state?.held && state.grant ? { grant: state.grant, restore: state.restore } : null;
 	}
 
 	/**
@@ -464,7 +488,7 @@ export class MembershipSyncHandler {
 				return { ...NO_HOLD, outcome: 'role_missing', ...same };
 			}
 			if (!(await this.setRole(tx, account, adminId))) {
-				return { ...NO_HOLD, outcome: 'changed_here', ...same };
+				return { ...NO_HOLD, grant: grant?.grant ?? null, outcome: 'changed_here', ...same };
 			}
 			// A new grant: holds on any earlier one are void from now on.
 			return {
@@ -480,19 +504,26 @@ export class MembershipSyncHandler {
 		if (!holds || !grant) {
 			return { ...NO_HOLD, outcome: 'unchanged', ...same };
 		}
+		if (account.role !== GAUZY_ADMIN) {
+			// The role was changed in Gauzy since the grant: left as it is, and this row voids the grant for every
+			// organization that held it (see `latestGrant`), so none takes a later ADMIN given in Gauzy for its own.
+			return { ...NO_HOLD, grant: grant.grant, outcome: 'changed_here', ...same };
+		}
 		if (other) {
 			return { ...NO_HOLD, outcome: 'kept_for_other_link', ...same };
 		}
-		if (account.role !== GAUZY_ADMIN) {
-			return { ...NO_HOLD, outcome: 'changed_here', ...same };
-		}
-		const restore = grant.restore;
+		// The role the grant replaced; when it no longer exists, the tenant's least-privileged role (VIEWER, else
+		// EMPLOYEE), never leaving the sync's ADMIN with someone Ever no longer makes an administrator.
+		let restore = grant.restore;
 		if (restore !== null && !account.roles.has(restore)) {
-			// The role to give back no longer exists: left as it is, and tried again on the next change.
-			return { outcome: 'role_missing', held: true, restore, grant: grant.grant, ...same };
+			restore = roleIdOf(account.roles, GAUZY_VIEWER) ?? roleIdOf(account.roles, GAUZY_EMPLOYEE);
+			if (!restore) {
+				// Nothing to give back: left as it is, and tried again on the next change.
+				return { outcome: 'role_missing', held: true, restore: grant.restore, grant: grant.grant, ...same };
+			}
 		}
 		if (!(await this.setRole(tx, account, restore))) {
-			return { ...NO_HOLD, outcome: 'changed_here', ...same };
+			return { ...NO_HOLD, grant: grant.grant, outcome: 'changed_here', ...same };
 		}
 		return {
 			...NO_HOLD,
@@ -526,7 +557,10 @@ export class MembershipSyncHandler {
 		return changed > 0;
 	}
 
-	/** The user's memberships of the organization that are not deleted: whether one is active, else an inactive one. */
+	/**
+	 * The user's memberships of the organization that are not deleted: whether one is usable (active and not archived,
+	 * as Gauzy requires to switch into the organization), else one that is not.
+	 */
 	private async membershipOf(
 		tx: EverConnectSql,
 		link: LinkRecord,
@@ -539,14 +573,20 @@ export class MembershipSyncHandler {
 				userId
 			})
 		).filter((row) => !row['deletedAt']);
-		const active = rows.some((row) => isActiveRow(row));
-		const inactive = rows.find((row) => !isActiveRow(row));
+		const active = rows.some((row) => isUsableRow(row));
+		const inactive = rows.find((row) => !isUsableRow(row));
 		return { active, inactiveId: inactive ? String(inactive['id']) : null };
 	}
 
-	/** Makes the user a member of the organization: an inactive membership active again, else a new one. */
+	/**
+	 * Makes the user a member of the organization: a membership that is inactive or archived is made usable again
+	 * (Ever says the person is a member), else one is added.
+	 */
 	private async join(tx: EverConnectSql, link: LinkRecord, userId: string, inactiveId: string | null): Promise<void> {
-		if (inactiveId && (await tx.update('user_organization', { isActive: true }, { id: inactiveId })) > 0) {
+		if (
+			inactiveId &&
+			(await tx.update('user_organization', { isActive: true, isArchived: false }, { id: inactiveId })) > 0
+		) {
 			return;
 		}
 		await tx.insert('user_organization', {
@@ -628,10 +668,12 @@ function roleIdOf(roles: Map<string, string>, name: string): string | null {
 	return null;
 }
 
-/** A `user_organization` row that is active (`isActive` true, or not set). */
-function isActiveRow(row: Row): boolean {
-	const value = row['isActive'];
-	return value === null || value === undefined || value === true || value === 1 || value === '1' || value === 't';
+/** A `user_organization` row Gauzy lets the user switch into: active (`isActive` true, or not set) and not archived. */
+function isUsableRow(row: Row): boolean {
+	const active = row['isActive'];
+	const archived = row['isArchived'];
+	const isTrue = (value: unknown) => value === true || value === 1 || value === '1' || value === 't';
+	return (active === null || active === undefined || isTrue(active)) && !isTrue(archived);
 }
 
 /** A role name as the audit takes it (ids, states and names only), else `null`. */

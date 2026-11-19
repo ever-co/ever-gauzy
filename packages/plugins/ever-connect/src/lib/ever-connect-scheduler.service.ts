@@ -272,8 +272,8 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 		connection?: { platformInstanceId: string | null; connectedAt: number | null }
 	): Promise<DispatchOutcome[]> {
 		const outcomes: DispatchOutcome[] = [];
-		let states = false;
-		let entitlements = false;
+		const handled: Array<{ id: string; outcome: DispatchOutcome }> = [];
+		let failure: unknown = null;
 		try {
 			for (const event of events) {
 				if (this.seen.has(event.id)) {
@@ -282,15 +282,32 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 				}
 				const outcome = await this.dispatch(event, connection);
 				outcomes.push(outcome);
-				states ||= outcome === 'states';
-				entitlements ||= outcome === 'entitlements';
+				handled.push({ id: event.id, outcome });
 				this.remember(event.id);
 			}
-		} finally {
-			// Also when a later event of the page failed: the events before it are remembered as handled, so the
-			// page read again would not ask for their follow-ups.
-			if (states) await this.states.sync({ force: true });
-			if (entitlements) await this.entitlements.refreshAll();
+		} catch (error) {
+			failure = error;
+		}
+		// The follow-ups of the events handled, also when a later event of the page failed; each one runs whatever the
+		// other did. An event whose follow-up failed is no longer remembered as handled, so the page read again (it is
+		// not acknowledged) hands it over again; the first error is the one thrown.
+		const followUps: Array<[DispatchOutcome, () => Promise<unknown>]> = [
+			['states', () => this.states.sync({ force: true })],
+			['entitlements', () => this.entitlements.refreshAll()]
+		];
+		for (const [kind, run] of followUps) {
+			if (!handled.some((event) => event.outcome === kind)) continue;
+			try {
+				await run();
+			} catch (error) {
+				failure ??= error;
+				for (const event of handled) {
+					if (event.outcome === kind) this.seen.delete(event.id);
+				}
+			}
+		}
+		if (failure !== null) {
+			throw failure;
 		}
 		return outcomes;
 	}

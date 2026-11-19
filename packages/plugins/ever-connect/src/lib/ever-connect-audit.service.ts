@@ -70,6 +70,8 @@ export const AUDIT_DETAIL_KEYS = Object.freeze([
 export type ActorLabel = 'user' | 'operator' | 'platform' | 'env:EVER_CONNECT_CODE' | 'system';
 
 export interface AuditEntry {
+	/** When it happened (epoch ms); by default now. */
+	at?: number;
 	action: AuditAction;
 	actorUserId?: string | null;
 	actorLabel: ActorLabel;
@@ -143,7 +145,7 @@ export class EverConnectAuditService {
 		EverConnectAuditService.check(entry);
 		await sql.insert('ever_connect_audit', {
 			id: randomUUID(),
-			at: this.now(),
+			at: entry.at ?? this.now(),
 			tenantId: entry.tenantId ?? null,
 			organizationId: entry.organizationId ?? null,
 			actorUserId: entry.actorUserId ?? null,

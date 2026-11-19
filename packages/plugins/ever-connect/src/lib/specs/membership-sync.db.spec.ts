@@ -404,46 +404,190 @@ describe.each(TEST_TARGETS)('Ever Platform membership sync ($name)', (target) =>
 		expect(await roleOf(seeded.employeeId)).toBe(roles.employee);
 	});
 
-	// Run with the suite's clock (each row a second apart), and with every audit row written in the same millisecond
-	// (several times: the rows' random ids then sort in any order, and only the rows' own order may decide).
+	// Run with the real clock, with a clock that never moves, and with one that goes back a minute at each read: the
+	// rows' order is the order they were written in, whatever the clock says.
 	it.each([
-		['rows a second apart', false],
-		...[1, 2, 3, 4, 5, 6].map((n) => [`all rows in one millisecond (#${n})`, true] as [string, boolean])
-	])("the role given back is the one the current ADMIN replaced, not an earlier grant's (%s)", async (_, frozen) => {
+		['the real clock', null],
+		['a clock that never moves', () => Date.parse('2026-11-19T12:00:00Z')],
+		[
+			'a clock going backwards',
+			(
+				(at) => () =>
+					(at -= 60_000)
+			)(Date.parse('2026-11-19T12:00:00Z'))
+		]
+	] as Array<[string, (() => number) | null]>)(
+		"the role given back is the one the current ADMIN replaced, not an earlier grant's (%s)",
+		async (_, now) => {
+			const second = await addOrganization();
+			await addLink(second, LINK_B);
+			await linkEverId(seeded.employeeId, 'sub-bob');
+			const sync = now ? new MembershipSyncHandler(dataSource, store, audit, ON, { now }) : handler();
+			const setRole = (roleId: string) =>
+				dataSource.query(
+					`UPDATE ${q(d, 'user')} SET ${q(d, 'roleId')} = ${d === 'postgres' ? '$1' : '?'} WHERE ${q(d, 'id')} = ${d === 'postgres' ? '$2' : '?'}`,
+					[roleId, seeded.employeeId]
+				);
+			// The first organization grants ADMIN over EMPLOYEE; in Gauzy the user is then made MANAGER.
+			expect(await sync.apply(envelope('01JD0000000000000000000001', 'created'))).toBe('role_granted');
+			await setRole(roles.manager);
+			// The second organization grants ADMIN again, over MANAGER: the first one's grant is void.
+			expect(
+				await sync.apply(envelope('01JD0000000000000000000002', 'created', { tenant_link_id: LINK_B }))
+			).toBe('added');
+			expect(await roleOf(seeded.employeeId)).toBe(roles.admin);
+			// Leaving the second organization gives MANAGER back (not the EMPLOYEE of the void grant).
+			expect(
+				await sync.apply(
+					envelope(
+						'01JD0000000000000000000003',
+						'removed',
+						{ tenant_link_id: LINK_B },
+						'2026-11-03T10:00:00Z'
+					)
+				)
+			).toBe('removed');
+			expect(await roleOf(seeded.employeeId)).toBe(roles.manager);
+			// The first organization's void grant takes nothing away later.
+			expect(
+				await sync.apply(
+					envelope('01JD0000000000000000000004', 'role_changed', { role: 'member' }, '2026-11-04T10:00:00Z')
+				)
+			).toBe('unchanged');
+			expect(await roleOf(seeded.employeeId)).toBe(roles.manager);
+		}
+	);
+
+	it('more than twenty held rows written while the clock went backwards: the latest grant is still found', async () => {
 		const second = await addOrganization();
 		await addLink(second, LINK_B);
 		await linkEverId(seeded.employeeId, 'sub-bob');
-		const sameMillisecond = new EverConnectAuditService(dataSource, {
-			now: () => Date.parse('2026-11-19T12:00:00Z')
-		});
-		const sync = frozen ? new MembershipSyncHandler(dataSource, store, sameMillisecond, ON) : handler();
+		let clock = Date.parse('2026-11-19T12:00:00Z');
+		const sync = new MembershipSyncHandler(dataSource, store, audit, ON, { now: () => (clock -= 60_000) });
 		const setRole = (roleId: string) =>
 			dataSource.query(
 				`UPDATE ${q(d, 'user')} SET ${q(d, 'roleId')} = ${d === 'postgres' ? '$1' : '?'} WHERE ${q(d, 'id')} = ${d === 'postgres' ? '$2' : '?'}`,
 				[roleId, seeded.employeeId]
 			);
-		// The first organization grants ADMIN over EMPLOYEE; in Gauzy the user is then made MANAGER.
 		expect(await sync.apply(envelope('01JD0000000000000000000001', 'created'))).toBe('role_granted');
 		await setRole(roles.manager);
-		// The second organization grants ADMIN again, over MANAGER: the first one's grant is void.
 		expect(await sync.apply(envelope('01JD0000000000000000000002', 'created', { tenant_link_id: LINK_B }))).toBe(
 			'added'
 		);
-		expect(await roleOf(seeded.employeeId)).toBe(roles.admin);
-		// Leaving the second organization gives MANAGER back (not the EMPLOYEE of the void grant).
+		for (let n = 0; n < 25; n++) {
+			const id = `01JD00000000000000000002${String(n).padStart(2, '0')}`;
+			const at = new Date(Date.parse('2026-11-03T00:00:00Z') + n * 60_000).toISOString();
+			expect(await sync.apply(envelope(id, 'role_changed', { tenant_link_id: LINK_B }, at))).toBe('unchanged');
+		}
 		expect(
 			await sync.apply(
-				envelope('01JD0000000000000000000003', 'removed', { tenant_link_id: LINK_B }, '2026-11-03T10:00:00Z')
+				envelope('01JD0000000000000000000300', 'removed', { tenant_link_id: LINK_B }, '2026-11-04T10:00:00Z')
 			)
 		).toBe('removed');
 		expect(await roleOf(seeded.employeeId)).toBe(roles.manager);
-		// The first organization's void grant takes nothing away later.
+	});
+
+	it('a role changed in Gauzy, seen by one organization, ends the grant for all of them', async () => {
+		const second = await addOrganization();
+		await addLink(second, LINK_B);
+		await linkEverId(seeded.employeeId, 'sub-bob');
+		const sync = handler();
+		const setRole = (roleId: string) =>
+			dataSource.query(
+				`UPDATE ${q(d, 'user')} SET ${q(d, 'roleId')} = ${d === 'postgres' ? '$1' : '?'} WHERE ${q(d, 'id')} = ${d === 'postgres' ? '$2' : '?'}`,
+				[roleId, seeded.employeeId]
+			);
+		expect(await sync.apply(envelope('01JD0000000000000000000001', 'created'))).toBe('role_granted');
+		expect(await sync.apply(envelope('01JD0000000000000000000002', 'created', { tenant_link_id: LINK_B }))).toBe(
+			'added'
+		);
+		// In Gauzy the user is made MANAGER; the first organization's demotion sees it.
+		await setRole(roles.manager);
 		expect(
 			await sync.apply(
-				envelope('01JD0000000000000000000004', 'role_changed', { role: 'member' }, '2026-11-04T10:00:00Z')
+				envelope('01JD0000000000000000000003', 'role_changed', { role: 'member' }, '2026-11-03T10:00:00Z')
 			)
-		).toBe('unchanged');
-		expect(await roleOf(seeded.employeeId)).toBe(roles.manager);
+		).toBe('changed_here');
+		// Later an ADMIN is given in Gauzy: the second organization's removal does not take it for the sync's.
+		await setRole(roles.admin);
+		expect(
+			await sync.apply(
+				envelope('01JD0000000000000000000004', 'removed', { tenant_link_id: LINK_B }, '2026-11-04T10:00:00Z')
+			)
+		).toBe('removed');
+		expect(await roleOf(seeded.employeeId)).toBe(roles.admin);
+	});
+
+	it('the role the grant replaced was deleted: the least-privileged role is given, never the ADMIN kept', async () => {
+		const custom = randomUUID();
+		const viewer = randomUUID();
+		await insert(dataSource, d, 'role', { id: custom, name: 'CUSTOM_ROLE', tenantId: seeded.tenantId });
+		await insert(dataSource, d, 'role', { id: viewer, name: 'VIEWER', tenantId: seeded.tenantId });
+		const carol = await addUser(custom, seeded.organizationId);
+		await linkEverId(carol, 'sub-carol');
+		const sync = handler();
+		expect(
+			await sync.apply(envelope('01JD0000000000000000000001', 'created', { identity_subject: 'sub-carol' }))
+		).toBe('role_granted');
+		await dataSource.query(`DELETE FROM ${q(d, 'role')} WHERE ${q(d, 'id')} = ${d === 'postgres' ? '$1' : '?'}`, [
+			custom
+		]);
+		expect(
+			await sync.apply(
+				envelope(
+					'01JD0000000000000000000002',
+					'removed',
+					{ identity_subject: 'sub-carol' },
+					'2026-11-03T10:00:00Z'
+				)
+			)
+		).toBe('removed');
+		expect(await roleOf(carol)).toBe(viewer);
+	});
+
+	it('an archived membership is not a usable one: created makes it usable, role_changed does not count it', async () => {
+		const dave = await addUser(roles.employee, null);
+		await insert(dataSource, d, 'user_organization', {
+			id: randomUUID(),
+			tenantId: seeded.tenantId,
+			organizationId: seeded.organizationId,
+			userId: dave,
+			isActive: true,
+			isArchived: true
+		});
+		await linkEverId(dave, 'sub-dave');
+		const sync = handler();
+		expect(
+			await sync.apply(envelope('01JD0000000000000000000001', 'role_changed', { identity_subject: 'sub-dave' }))
+		).toBe('not_a_member');
+		expect(await roleOf(dave)).toBe(roles.employee);
+		expect(
+			await sync.apply(
+				envelope(
+					'01JD0000000000000000000002',
+					'created',
+					{ identity_subject: 'sub-dave' },
+					'2026-11-03T10:00:00Z'
+				)
+			)
+		).toBe('added');
+		const rows: Array<Record<string, unknown>> = await dataSource.query(
+			`SELECT ${q(d, 'isActive')} AS ${q(d, 'isActive')}, ${q(d, 'isArchived')} AS ${q(d, 'isArchived')} FROM ${q(d, 'user_organization')} WHERE ${q(d, 'userId')} = ${d === 'postgres' ? '$1' : '?'}`,
+			[dave]
+		);
+		expect(rows.map((row) => [Boolean(Number(row['isActive'])), Boolean(Number(row['isArchived']))])).toEqual([
+			[true, false]
+		]);
+		expect(await roleOf(dave)).toBe(roles.admin);
+	});
+
+	it('the subject is compared exactly, whatever the database collation', async () => {
+		const erin = await addUser(roles.employee, seeded.organizationId);
+		await linkEverId(seeded.employeeId, 'sub-bob');
+		await linkEverId(erin, 'SUB-BOB');
+		expect(await handler().apply(envelope('01JD0000000000000000000001', 'created'))).toBe('role_granted');
+		expect(await roleOf(seeded.employeeId)).toBe(roles.admin);
+		expect(await roleOf(erin)).toBe(roles.employee);
 	});
 
 	it('an event without its time is not applied (it could not be ordered)', async () => {
@@ -571,10 +715,22 @@ describe.each(TEST_TARGETS)('Ever Platform membership sync ($name)', (target) =>
 			const unlinking = store.updateLink(LINK, { status: 'unlinked' }).then(() => {
 				unlinked = true;
 			});
-			let waited: boolean;
+			let waited = false;
 			try {
-				await new Promise((resolve) => setTimeout(resolve, 500));
-				waited = !unlinked;
+				// Until the database shows the unlink's UPDATE waiting on a lock (at most 10 s), then a little longer.
+				const waitingSql =
+					d === 'postgres'
+						? `SELECT COUNT(*) AS n FROM pg_stat_activity WHERE wait_event_type = 'Lock' AND query LIKE 'UPDATE%ever_connect_link%'`
+						: `SELECT COUNT(*) AS n FROM information_schema.INNODB_TRX WHERE trx_state = 'LOCK WAIT'`;
+				for (let tries = 0; tries < 100 && !unlinked; tries++) {
+					const [row] = (await dataSource.query(waitingSql)) as Array<Record<string, unknown>>;
+					if (Number(row?.['n'] ?? row?.['N'] ?? 0) > 0) {
+						await new Promise((resolve) => setTimeout(resolve, 200));
+						waited = !unlinked;
+						break;
+					}
+					await new Promise((resolve) => setTimeout(resolve, 100));
+				}
 			} finally {
 				// Never leave the change's transaction open, whatever happened above.
 				release();

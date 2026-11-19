@@ -58,6 +58,9 @@ export type EverRole = 'owner' | 'admin' | 'member';
 /** The Gauzy role names the sync works with (`RolesEnum` values). */
 export const GAUZY_SUPER_ADMIN = 'SUPER_ADMIN';
 export const GAUZY_ADMIN = 'ADMIN';
+/** The roles given when the role an `ADMIN` grant replaced no longer exists: the least privileged first. */
+export const GAUZY_VIEWER = 'VIEWER';
+export const GAUZY_EMPLOYEE = 'EMPLOYEE';
 
 /**
  * Ever roles, as the Gauzy role the sync grants (`null`: none). Gauzy roles are the tenant's: the user of the
