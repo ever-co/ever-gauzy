@@ -215,7 +215,7 @@ $guide-mark-width: 2px;
   flex: 0 0 auto;
   min-width: $plus-size;
   margin-inline-end: $plus-inset;
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   font-variant-numeric: tabular-nums;
   line-height: 1;
   text-align: center;
@@ -233,7 +233,7 @@ $guide-mark-width: 2px;
 // current-page state are the ordinary row's.
 // ─────────────────────────────────────────────────────────────────────────────
 :host .sub-item.view-all:not(.custom) {
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   color: var(--text-hint-color);
 
   &:hover,
