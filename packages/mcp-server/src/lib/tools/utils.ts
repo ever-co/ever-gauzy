@@ -96,6 +96,18 @@ export const pageOf = <T>(items: T[], page = 1, limit = 10) => ({
 });
 
 /**
+ * One page of the rows of a list route that `keep` accepts, for a filter the route does not apply: the whole list is
+ * read, filtered here, then paged, so the page and the total count only the rows kept.
+ */
+export const pageOfKept = async <T>(
+	path: string,
+	query: (page: number, take: number) => Record<string, unknown>,
+	keep: (item: T) => boolean,
+	page = 1,
+	limit = 10
+) => pageOf((await readAllPages<T>(path, query)).filter(keep), page, limit);
+
+/**
  * Applies `apply` to each item in turn, for the bulk tools of resources that only have single-item routes.
  * Stops at the first failure and says how many items were applied before it, since those stay applied.
  */
