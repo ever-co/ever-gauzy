@@ -53,6 +53,19 @@ const DAY = 24 * 60 * 60 * 1000;
 
 const ended = { status: 401, response: { code: 'EMBED_GRANT_ENDED' } };
 
+/** A rotation's own update: it holds the spent token's row until it commits. */
+const SPEND_TOKEN = `UPDATE "embed_site_grant" SET "usedAt" = now() WHERE "id" = $1 AND "usedAt" IS NULL AND "revokedAt" IS NULL`;
+/** A revocation's own update: it holds the row of every token of the sign-in it sees until it commits. */
+const REVOKE_SIGN_IN = `UPDATE "embed_site_grant" SET "revokedAt" = now() WHERE "familyId" = $1 AND "revokedAt" IS NULL`;
+
+/** Rolls back what a raw transaction left open, and gives its connection back. */
+const close = async (runner: QueryRunner): Promise<void> => {
+	if (runner.isTransactionActive) {
+		await runner.rollbackTransaction();
+	}
+	await runner.release();
+};
+
 const postgresUrl = process.env.GAUZY_MIGRATION_TEST_POSTGRES_URL;
 
 (isPostgres() && postgresUrl ? describe : describe.skip)(
@@ -195,11 +208,7 @@ const postgresUrl = process.env.GAUZY_MIGRATION_TEST_POSTGRES_URL;
 				await rotation.connect();
 				await rotation.startTransaction();
 				try {
-					// The rotation's own update: it holds the spent token's row until it commits.
-					await rotation.query(
-						`UPDATE "embed_site_grant" SET "usedAt" = now() WHERE "id" = $1 AND "usedAt" IS NULL AND "revokedAt" IS NULL`,
-						[row.id]
-					);
+					await rotation.query(SPEND_TOKEN, [row.id]);
 					const revocation = track(service.revoke({ renewalToken: token }));
 
 					await untilBlockedBy(await backendOf(rotation));
@@ -210,10 +219,7 @@ const postgresUrl = process.env.GAUZY_MIGRATION_TEST_POSTGRES_URL;
 					await rotation.commitTransaction();
 					await revocation.promise;
 				} finally {
-					if (rotation.isTransactionActive) {
-						await rotation.rollbackTransaction();
-					}
-					await rotation.release();
+					await close(rotation);
 				}
 
 				// The revocation's update ran from a snapshot taken before the successor was stored.
@@ -237,11 +243,7 @@ const postgresUrl = process.env.GAUZY_MIGRATION_TEST_POSTGRES_URL;
 				await revocation.connect();
 				await revocation.startTransaction();
 				try {
-					// The revocation's own update: it holds the row of every token of the sign-in until it commits.
-					await revocation.query(
-						`UPDATE "embed_site_grant" SET "revokedAt" = now() WHERE "familyId" = $1 AND "revokedAt" IS NULL`,
-						[row.familyId]
-					);
+					await revocation.query(REVOKE_SIGN_IN, [row.familyId]);
 					const renewal = track(service.renew({ renewalToken: token }, SITE));
 
 					await untilBlockedBy(await backendOf(revocation));
@@ -251,10 +253,7 @@ const postgresUrl = process.env.GAUZY_MIGRATION_TEST_POSTGRES_URL;
 					await revocation.commitTransaction();
 					await expect(renewal.promise).rejects.toMatchObject(ended);
 				} finally {
-					if (revocation.isTransactionActive) {
-						await revocation.rollbackTransaction();
-					}
-					await revocation.release();
+					await close(revocation);
 				}
 
 				const rows = await rowsOf(row.familyId);
