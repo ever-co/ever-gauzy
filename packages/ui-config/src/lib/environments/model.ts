@@ -19,6 +19,12 @@ export interface Environment {
 	EXTENSION_DOWNLOAD_LINK?: string;
 	PLATFORM_LOGO?: string;
 
+	/**
+	 * The app switcher's address of each Ever app, `id=url` pairs separated by commas (`EVER_APP_LINKS`). Empty (the
+	 * default): the catalog's addresses.
+	 */
+	EVER_APP_LINKS?: string;
+
 	COMPANY_NAME: string;
 	COMPANY_LINK: string;
 	COMPANY_SITE_NAME: string;
