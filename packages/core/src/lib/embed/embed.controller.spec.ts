@@ -313,3 +313,26 @@ describe('GET /embed/grants', () => {
 		expect(listGrants.mock.calls).toEqual([[undefined], [organizationId]]);
 	});
 });
+
+/** `DELETE /api/embed/grants/:id`: behind the switch, for a signed-in person, answered 204. */
+describe('DELETE /embed/grants/:id', () => {
+	const revokeGrantHandler = EmbedSiteGrantController.prototype.revokeGrant;
+
+	it('is a DELETE under /embed for a signed-in person, never public, answered 204', () => {
+		expect(Reflect.getMetadata(PATH_METADATA, revokeGrantHandler)).toBe('/grants/:id');
+		expect(Reflect.getMetadata(METHOD_METADATA, revokeGrantHandler)).toBe(RequestMethod.DELETE);
+		expect(Reflect.getMetadata(HTTP_CODE_METADATA, revokeGrantHandler)).toBe(204);
+		expect(Reflect.getMetadata(GUARDS_METADATA, revokeGrantHandler)).toEqual([TenantPermissionGuard]);
+		expect(Reflect.getMetadata(PUBLIC_METHOD_METADATA, revokeGrantHandler)).toBeUndefined();
+	});
+
+	it('hands the grant to the service', async () => {
+		const revokeGrant = jest.fn(async () => undefined);
+		const controller = new EmbedSiteGrantController({ revokeGrant } as unknown as EmbedSiteGrantService);
+		const id = '7a000000-0000-4000-8000-0000000000c9';
+
+		await expect(controller.revokeGrant(id)).resolves.toBeUndefined();
+
+		expect(revokeGrant).toHaveBeenCalledWith(id);
+	});
+});

@@ -321,4 +321,17 @@ export class EmbedSiteGrantController {
 	async grants(@Query() query: EmbedSiteGrantsQueryDTO): Promise<EmbedSiteGrantResponseDTO[]> {
 		return await this.embedSiteGrantService.listGrants(query.organizationId);
 	}
+
+	@ApiOperation({
+		summary:
+			"Revoke a site grant, the person's own or, for an administrator, anyone's: the site's next renewal is refused"
+	})
+	@ApiResponse({ status: HttpStatus.NO_CONTENT })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'No such grant, or not one the caller may revoke' })
+	@UseGuards(TenantPermissionGuard)
+	@Delete('/grants/:id')
+	@HttpCode(HttpStatus.NO_CONTENT)
+	async revokeGrant(@Param('id', UUIDValidationPipe) id: ID): Promise<void> {
+		await this.embedSiteGrantService.revokeGrant(id);
+	}
 }

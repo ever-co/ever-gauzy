@@ -5,6 +5,7 @@ import {
 	Injectable,
 	InternalServerErrorException,
 	Logger,
+	NotFoundException,
 	ServiceUnavailableException,
 	UnauthorizedException
 } from '@nestjs/common';
@@ -284,6 +285,29 @@ export class EmbedSiteGrantService {
 			order: { createdAt: 'DESC' }
 		});
 		return rows.map((row) => EmbedSiteGrantResponseDTO.from(row));
+	}
+
+	/**
+	 * Revokes a site grant: the signed-in person's own, or any of their tenant for an administrator of the embeds
+	 * (`ALL_ORG_EDIT`). Its next renewal is refused; the timer token the site holds lives out its few minutes. Anyone
+	 * else gets the 404 of a grant that does not exist.
+	 *
+	 * @param id The grant, as the list names it.
+	 */
+	async revokeGrant(id: ID): Promise<void> {
+		const { tenantId, userId } = this.signedIn();
+		const row = await this.typeOrmEmbedSiteGrantRepository.findOne({ where: { tenantId, familyId: id } });
+		const isOwn = row?.userId === userId;
+		const mayRevoke = isOwn || RequestContext.hasPermission(PermissionsEnum.ALL_ORG_EDIT);
+		if (!row || !mayRevoke) {
+			throw new NotFoundException();
+		}
+		await this.revokeFamily(id, new Date());
+		let revokedBy = 'an administrator';
+		if (isOwn) {
+			revokedBy = 'its person';
+		}
+		this.logger.log(`Embed site grant revoked by ${revokedBy}: family=${id}`);
 	}
 
 	/** The signed-in person's tenant and account; a request without them is refused. */

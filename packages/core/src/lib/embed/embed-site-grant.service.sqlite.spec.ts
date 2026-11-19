@@ -690,4 +690,63 @@ describe('EmbedSiteGrantService on SQLite', () => {
 			expect((await service.listGrants()).map((grant) => grant.id)).toEqual([maraFamily]);
 		});
 	});
+
+	describe('DELETE /embed/grants/:id', () => {
+		const familyOf = async (renewalToken: string) => {
+			const keyHash = createHash('sha256').update(renewalToken).digest('hex');
+			const [row] = await dataSource.query('SELECT "familyId" FROM "embed_site_grant" WHERE "keyHash" = ?', [
+				keyHash
+			]);
+			return row.familyId as string;
+		};
+		const revokedStatesOf = async (familyId: string) =>
+			(
+				(await dataSource.query('SELECT "revokedAt" FROM "embed_site_grant" WHERE "familyId" = ?', [
+					familyId
+				])) as Array<{
+					revokedAt: string | null;
+				}>
+			).map((row) => row.revokedAt !== null);
+		const ended = { status: 401, response: { code: 'EMBED_GRANT_ENDED' } };
+
+		it("revokes the person's own grant through its renewals, so the site's next renewal is refused", async () => {
+			const first = await authorizeAs('lina', TEAM_PAGE);
+			const familyId = await familyOf(first.renewalToken);
+			const current = await service.renew({ renewalToken: first.renewalToken }, TEAM_PAGE);
+
+			signedInAs('lina');
+			await expect(service.revokeGrant(familyId)).resolves.toBeUndefined();
+
+			expect(await revokedStatesOf(familyId)).toEqual([true, true]);
+			await expect(service.renew({ renewalToken: current.renewalToken }, TEAM_PAGE)).rejects.toMatchObject(ended);
+		});
+
+		it("answers 404 for another person's grant, without revoking it, and lets an administrator revoke it", async () => {
+			const mara = await authorizeAs('mara', TEAM_PAGE);
+			const familyId = await familyOf(mara.renewalToken);
+
+			signedInAs('lina');
+			await expect(service.revokeGrant(familyId)).rejects.toMatchObject({ status: 404 });
+			expect(await revokedStatesOf(familyId)).toEqual([false]);
+
+			signedInAsAdministrator('lina');
+			await service.revokeGrant(familyId);
+			expect(await revokedStatesOf(familyId)).toEqual([true]);
+			await expect(service.renew({ renewalToken: mara.renewalToken }, TEAM_PAGE)).rejects.toMatchObject(ended);
+		});
+
+		it('answers 404 for a grant it does not know, or of another tenant, even to an administrator', async () => {
+			const lina = await authorizeAs('lina', TEAM_PAGE);
+			const familyId = await familyOf(lina.renewalToken);
+
+			signedInAsAdministrator('lina');
+			await expect(service.revokeGrant('7e000000-0000-4000-8000-0000000000c9')).rejects.toMatchObject({
+				status: 404
+			});
+			jest.spyOn(requestContext, 'currentTenantId').mockReturnValue('7e000000-0000-4000-8000-00000000000b');
+			await expect(service.revokeGrant(familyId)).rejects.toMatchObject({ status: 404 });
+
+			expect(await revokedStatesOf(familyId)).toEqual([false]);
+		});
+	});
 });

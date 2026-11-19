@@ -267,6 +267,30 @@ describe('EmbedSessionGuard', () => {
 		await expect(guardWith().guard.canActivate(contextOf(request))).rejects.toThrow(UnauthorizedException);
 	});
 
+	it("keeps every embed token, a site grant's too, from the routes that allow a site or list and revoke grants", async () => {
+		const { guard } = guardWith();
+		const GRANT = '7a000000-0000-4000-8000-0000000000a9';
+		const tokens = [embedToken(), embedToken({ [EMBED_CREDENTIAL_CLAIM]: GRANT, [EMBED_GRANT_CLAIM]: GRANT })];
+		const routes = [
+			{
+				method: 'POST',
+				path: '/api/embed/authorize',
+				body: { organizationId: ORG, origin: 'https://team.example.com' }
+			},
+			{ method: 'GET', path: '/api/embed/grants' },
+			{ method: 'DELETE', path: `/api/embed/grants/${GRANT}` }
+		];
+
+		for (const token of tokens) {
+			for (const route of routes) {
+				const request = { ...route, headers: { authorization: `Bearer ${token}` } };
+				await expect(guard.canActivate(contextOf(request))).rejects.toMatchObject({
+					response: { code: 'EMBED_SCOPE' }
+				});
+			}
+		}
+	});
+
 	it('looks no credential up for the token of a site grant, which reaches the timer as an exchanged one does', async () => {
 		const { guard, isRevoked } = guardWith(true);
 		const GRANT = '7a000000-0000-4000-8000-0000000000a9';
