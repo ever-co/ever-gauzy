@@ -194,6 +194,21 @@ export const withRelation = (relations: string[] | undefined, relation: string):
 	...new Set([...(relations ?? []), relation])
 ];
 
+/** A day with no time, as `YYYY-MM-DD`. */
+const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * An end bound as the instant it means: a day with no time ends at the last instant of that day in UTC, as the API reads
+ * an end bound; an instant stays as it is.
+ */
+export const endOfDayBound = (endDate?: string): string | undefined => {
+	const isDateOnly = endDate !== undefined && DATE_ONLY.test(endDate);
+	if (!isDateOnly) {
+		return endDate;
+	}
+	return `${endDate}T23:59:59.999Z`;
+};
+
 /** Whether `value` falls in the optional `[startDate, endDate]` range. */
 export const isWithinDates = (value: string | Date | undefined, startDate?: string, endDate?: string): boolean => {
 	if (!startDate && !endDate) {

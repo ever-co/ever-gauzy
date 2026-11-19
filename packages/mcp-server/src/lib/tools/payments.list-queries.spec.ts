@@ -193,6 +193,14 @@ describe('get_payments — the search of the note and the date range the route d
 		expect(await answered({ endDate: '2026-11-15T00:00:00.000Z' })).toEqual({ ids: ['y1', 'y2'], total: 2 });
 	});
 
+	it('keeps the whole last day of a range that ends on a day with no time', async () => {
+		expect(await answered({ startDate: '2026-11-01', endDate: '2026-11-20' })).toEqual({
+			ids: ['y2', 'y3'],
+			total: 2
+		});
+		expect(await answered({ endDate: '2026-11-20T08:59:59.999Z' })).toEqual({ ids: ['y1', 'y2'], total: 2 });
+	});
+
 	it('applies the search with the range', async () => {
 		expect(await answered({ search: 'deposit', startDate: '2026-11-01T00:00:00.000Z' })).toEqual({
 			ids: ['y2'],

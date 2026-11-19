@@ -6,6 +6,7 @@ import { apiClient } from '../common/api-client';
 import {
 	buildListQuery,
 	containsText,
+	endOfDayBound,
 	isWithinDates,
 	readListPage,
 	toApiValue,
@@ -35,7 +36,7 @@ const keptPayments = (search?: string, startDate?: string, endDate?: string) => 
 	}
 	return ({ note, paymentDate }: { note?: string; paymentDate?: string }) => {
 		const matchesSearch = containsText(note, search);
-		const inRange = isWithinDates(paymentDate, startDate, endDate);
+		const inRange = isWithinDates(paymentDate, startDate, endOfDayBound(endDate));
 		return matchesSearch && inRange;
 	};
 };

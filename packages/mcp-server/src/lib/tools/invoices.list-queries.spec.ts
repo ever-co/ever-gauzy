@@ -63,7 +63,7 @@ describe('invoice list tools — the query the route validates', () => {
 					status: 'SENT',
 					invoiceType: 'BY_EMPLOYEE_HOURS',
 					paid: false,
-					invoiceDate: { startDate: '2026-11-01', endDate: '2026-11-30' }
+					invoiceDate: { startDate: '2026-11-01', endDate: '2026-11-30T23:59:59.999Z' }
 				},
 				take: 5,
 				skip: 2,
@@ -90,12 +90,24 @@ describe('get_invoices — an open date range, and the search the route does not
 
 	it.each([
 		[{ startDate: '2026-11-01' }, { startDate: '2026-11-01', endDate: '9999-12-31T23:59:59.999Z' }],
-		[{ endDate: '2026-11-30' }, { startDate: '1970-01-01T00:00:00.000Z', endDate: '2026-11-30' }]
+		[{ endDate: '2026-11-30' }, { startDate: '1970-01-01T00:00:00.000Z', endDate: '2026-11-30T23:59:59.999Z' }]
 	])('sends an open range %p with its open end as the earliest or latest date', async (range, invoiceDate) => {
 		await call('get_invoices', range);
 
 		expect(get).toHaveBeenCalledWith('/api/invoices/pagination', {
 			params: { where: { ...SCOPE, invoiceDate }, take: 10, skip: 1 }
+		});
+	});
+
+	it.each([
+		['2026-11-30', '2026-11-30T23:59:59.999Z'],
+		['2026-11-30T12:00:00.000Z', '2026-11-30T12:00:00.000Z'],
+		['2026-11-30T08:00:00+02:00', '2026-11-30T08:00:00+02:00']
+	])('sends the end %s as %s: a day with no time covers that whole day in UTC', async (endDate, sent) => {
+		await call('get_invoices', { startDate: '2026-11-01', endDate });
+
+		expect(get).toHaveBeenCalledWith('/api/invoices/pagination', {
+			params: { where: { ...SCOPE, invoiceDate: { startDate: '2026-11-01', endDate: sent } }, take: 10, skip: 1 }
 		});
 	});
 

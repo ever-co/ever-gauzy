@@ -3,7 +3,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { readSearchedList, relationsForSearch, validateOrganizationContext } from './utils';
+import { endOfDayBound, readSearchedList, relationsForSearch, validateOrganizationContext } from './utils';
 import { InvoiceStatusEnum, InvoiceTypeEnum } from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
@@ -24,7 +24,7 @@ const invoiceDateRange = (startDate?: string, endDate?: string) => {
 	if (!hasRange) {
 		return {};
 	}
-	return { invoiceDate: { startDate: startDate ?? EARLIEST, endDate: endDate ?? LATEST } };
+	return { invoiceDate: { startDate: startDate ?? EARLIEST, endDate: endOfDayBound(endDate) ?? LATEST } };
 };
 
 /**
