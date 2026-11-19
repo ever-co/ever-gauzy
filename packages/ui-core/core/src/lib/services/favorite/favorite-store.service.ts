@@ -25,6 +25,8 @@ export interface IFavoriteEntry {
 	title: string;
 	icon: string;
 	link: string;
+	/** When the favorite was saved, if the API returned it. */
+	addedAt?: Date;
 }
 
 @UntilDestroy()
@@ -80,6 +82,15 @@ export class FavoriteStoreService {
 				this._loadFailed$.next(failed);
 				this._loading$.next(false);
 			});
+	}
+
+	/** The date, or undefined when it is missing or unparsable (a date pipe throws on an invalid one). */
+	private _validDate(value: Date | string | undefined): Date | undefined {
+		if (!value) {
+			return undefined;
+		}
+		const date = new Date(value);
+		return isNaN(date.getTime()) ? undefined : date;
 	}
 
 	private _toMenuItem(entry: IFavoriteEntry): NavMenuSectionItem {
@@ -198,7 +209,8 @@ export class FavoriteStoreService {
 								entityId: item.id,
 								title: this._getFavoriteTitle(item, entityType as BaseEntityEnum) || 'Untitled',
 								icon: this._getFavoriteIcon(entityType as BaseEntityEnum, item),
-								link: this._getFavoriteLink(entityType as BaseEntityEnum, item.id, item)
+								link: this._getFavoriteLink(entityType as BaseEntityEnum, item.id, item),
+								addedAt: this._validDate(stub.createdAt)
 							};
 						})
 						.filter((entry): entry is IFavoriteEntry => !!entry);
@@ -211,10 +223,7 @@ export class FavoriteStoreService {
 			favoritePromises.push(promise);
 		}
 
-		const addedAt = (entry: IFavoriteEntry): number => {
-			const createdAt = stubByRecord.get(`${entry.entity}:${entry.entityId}`)?.createdAt;
-			return createdAt ? new Date(createdAt).getTime() || 0 : 0;
-		};
+		const addedAt = (entry: IFavoriteEntry): number => entry.addedAt?.getTime() || 0;
 
 		// Newest first: the sidebar shows only the first few, so a record just starred is always among them.
 		const allFavoriteItems = await Promise.all(favoritePromises);
