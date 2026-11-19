@@ -31,7 +31,8 @@ describe('InboxPageComponent', () => {
 		setState: jest.fn(),
 		markAllRead: jest.fn(),
 		notifyChanged: jest.fn(),
-		changed$: new Subject<void>()
+		changed$: new Subject<void>(),
+		itemRequested$: new Subject<string>()
 	};
 
 	const email$ = new BehaviorSubject<boolean>(false);
@@ -350,6 +351,34 @@ describe('InboxPageComponent', () => {
 			});
 			return params$;
 		}
+
+		it('opens an item chosen in the header: from the Notifications tab, and the same link chosen again', () => {
+			api.counts.mockReturnValue(of({ unread: 2, decisionsOpen: 0, byMailbox: [] }));
+			api.list.mockReturnValue(of({ items: [item('a'), item('b')], nextCursor: null }));
+			api.get.mockImplementation((id: string) => of(item(id)));
+			api.setState.mockImplementation((id: string) =>
+				of(item(id, { recipient: { isRead: true, isArchived: false, snoozedUntil: null } }))
+			);
+			withItemLink('a');
+			const { component, fixture } = render();
+			fixture.detectChanges();
+			expect(component.selected()).toMatchObject({ id: 'a' });
+
+			// Another item opened from the list, then "a" chosen again in the header: its link is already the URL.
+			component.open(item('b'));
+			expect(component.selected()).toMatchObject({ id: 'b' });
+			api.itemRequested$.next('a');
+			fixture.detectChanges();
+			expect(component.selected()).toMatchObject({ id: 'a' });
+
+			// The Notifications tab shows no item: the page moves to All and opens it.
+			component.selectTab('notifications');
+			fixture.detectChanges();
+			api.itemRequested$.next('b');
+			fixture.detectChanges();
+			expect(component.tab()).toBe('all');
+			expect(component.selected()).toMatchObject({ id: 'b' });
+		});
 
 		it('opens a later ?item= too (the router reuses the page for another link)', () => {
 			api.counts.mockReturnValue(of({ unread: 2, decisionsOpen: 0, byMailbox: [] }));
