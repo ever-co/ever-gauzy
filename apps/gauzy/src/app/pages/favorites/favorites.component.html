@@ -10,32 +10,47 @@
 				<div class="loading">
 					<nb-spinner status="primary" size="medium"></nb-spinner>
 				</div>
-			} @else if (!view.rows.length) {
-				<p class="empty">{{ 'FAVORITES.EMPTY' | translate }}</p>
 			} @else {
-				<ul class="list">
-					@for (row of view.rows; track row.favoriteId) {
-						<li class="row">
-							<a class="link" [routerLink]="row.url">
-								<i class="icon" [class]="row.icon" aria-hidden="true"></i>
-								<span class="title" [title]="row.title">{{ row.title }}</span>
-							</a>
-							<button
-								type="button"
-								nbButton
-								ghost
-								size="small"
-								class="remove"
-								[disabled]="removingId === row.favoriteId"
-								[nbTooltip]="'BUTTONS.REMOVE_FROM_FAVORITES' | translate"
-								[attr.aria-label]="'BUTTONS.REMOVE_FROM_FAVORITES' | translate"
-								(click)="remove(row)"
-							>
-								<nb-icon icon="star" status="warning"></nb-icon>
-							</button>
-						</li>
-					}
-				</ul>
+				@if (view.loadFailed) {
+					<div class="load-failed" role="alert">
+						<span>{{ 'FAVORITES.ERROR.LOAD_FAILED' | translate }}</span>
+						<button type="button" nbButton size="small" status="basic" (click)="retry()">
+							<nb-icon icon="refresh-outline"></nb-icon>
+							{{ 'BUTTONS.RETRY' | translate }}
+						</button>
+					</div>
+				}
+
+				@if (view.rows.length) {
+					<ul class="list">
+						@for (row of view.rows; track row.favoriteId) {
+							<li class="row">
+								<a class="link" [routerLink]="row.url">
+									<i class="icon" [class]="row.icon" aria-hidden="true"></i>
+									<span class="title" [title]="row.title">{{ row.title }}</span>
+									@if (row.pinnedForOrganization) {
+										<span class="pinned">{{ 'FAVORITES.PINNED_FOR_ORGANIZATION' | translate }}</span>
+									}
+								</a>
+								<button
+									type="button"
+									nbButton
+									ghost
+									size="small"
+									class="remove"
+									[disabled]="!!removingId()"
+									[nbTooltip]="'BUTTONS.REMOVE_FROM_FAVORITES' | translate"
+									[attr.aria-label]="'BUTTONS.REMOVE_FROM_FAVORITES' | translate"
+									(click)="remove(row)"
+								>
+									<nb-icon icon="star" status="warning"></nb-icon>
+								</button>
+							</li>
+						}
+					</ul>
+				} @else if (!view.loadFailed) {
+					<p class="empty">{{ 'FAVORITES.EMPTY' | translate }}</p>
+				}
 			}
 		}
 	</nb-card-body>

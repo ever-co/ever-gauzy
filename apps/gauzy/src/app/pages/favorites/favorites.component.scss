@@ -1,7 +1,8 @@
 // Same vocabulary as the Settings pages: 12px body, hairline dividers, no shadows. Every custom property
 // carries a fallback: `--gauzy-*` is undefined in material-light / -dark.
 $divider: 1px solid var(--gauzy-border-default-color, var(--border-basic-color-3));
-$muted: var(--text-hint-color);
+$text: var(--gauzy-text-color-1, var(--text-basic-color));
+$muted: var(--gauzy-text-color-2, var(--text-hint-color));
 
 :host {
   // `.card-scroll` pins the card to the page frame; the body is the one scroll area.
@@ -42,6 +43,22 @@ $muted: var(--text-hint-color);
   color: $muted;
 }
 
+// A failed read, above whatever did load: plain text and a retry, no banner fill.
+.load-failed {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  max-width: 48rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.8125rem;
+  color: $text;
+
+  button[nbButton] {
+    text-transform: none;
+  }
+}
+
 .list {
   max-width: 48rem;
   margin: 0;
@@ -68,7 +85,7 @@ $muted: var(--text-hint-color);
   min-width: 0;
   padding: 0.5rem 0.25rem;
   font-size: 0.8125rem;
-  color: var(--text-basic-color);
+  color: $text;
   text-decoration: none;
 
   &:hover .title {
@@ -83,9 +100,19 @@ $muted: var(--text-hint-color);
 }
 
 .title {
+  // Lets a long name shrink and ellipsize before the "pinned" note does.
+  min-width: 0;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+
+// Plain muted text after the name, no chip.
+.pinned {
+  flex: 0 0 auto;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  color: $muted;
 }
 
 .remove {

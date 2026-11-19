@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { Router, RouterLink, UrlTree } from '@angular/router';
 import { combineLatest, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -14,6 +14,8 @@ interface IFavoriteRow extends IFavoriteEntry {
 
 interface IFavoritesView {
 	loading: boolean;
+	/** The last read failed, in full or for some kinds of record: the list may be short. */
+	loadFailed: boolean;
 	rows: IFavoriteRow[];
 }
 
@@ -39,42 +41,50 @@ interface IFavoritesView {
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FavoritesComponent {
-	readonly view$: Observable<IFavoritesView>;
+	private readonly _favoriteStoreService = inject(FavoriteStoreService);
+	private readonly _favoriteService = inject(FavoriteService);
+	private readonly _toastrService = inject(ToastrService);
+	private readonly _router = inject(Router);
 
-	/** The favorite a removal is under way for. */
-	removingId: string | null = null;
+	protected readonly view$: Observable<IFavoritesView> = combineLatest([
+		this._favoriteStoreService.favorites$,
+		this._favoriteStoreService.loading$,
+		this._favoriteStoreService.loadFailed$
+	]).pipe(
+		map(([entries, loading, loadFailed]) => ({
+			loading,
+			loadFailed,
+			rows: entries.map((entry) => ({ ...entry, url: this._router.parseUrl(entry.link) }))
+		}))
+	);
 
-	constructor(
-		private readonly _favoriteStoreService: FavoriteStoreService,
-		private readonly _favoriteService: FavoriteService,
-		private readonly _toastrService: ToastrService,
-		private readonly _router: Router,
-		private readonly _cdr: ChangeDetectorRef
-	) {
-		this.view$ = combineLatest([this._favoriteStoreService.favorites$, this._favoriteStoreService.loading$]).pipe(
-			map(([entries, loading]) => ({
-				loading,
-				rows: entries.map((entry) => ({ ...entry, url: this._router.parseUrl(entry.link) }))
-			}))
-		);
+	/** The favorite a removal is under way for. Removals run one at a time. */
+	protected readonly removingId = signal<string | null>(null);
+
+	protected retry(): void {
+		this._favoriteStoreService.refreshFavorites();
 	}
 
-	async remove(row: IFavoriteRow): Promise<void> {
-		if (this.removingId) {
+	protected async remove(row: IFavoriteRow): Promise<void> {
+		if (this.removingId()) {
 			return;
 		}
 
-		this.removingId = row.favoriteId;
+		this.removingId.set(row.favoriteId);
 		try {
 			await this._favoriteService.delete(row.favoriteId);
 			this._favoriteStoreService.refreshFavorites();
-			this._toastrService.success('TOASTR.MESSAGE.FAVORITE_REMOVED', { name: row.title });
+			// Only the user's own favorite went: an organization pin of the record keeps it listed, so say so.
+			const keptByPin = row.own && row.pinnedForOrganization;
+			this._toastrService.success(
+				keptByPin ? 'FAVORITES.REMOVED_STILL_PINNED' : 'TOASTR.MESSAGE.FAVORITE_REMOVED',
+				{ name: row.title }
+			);
 		} catch (error) {
 			console.error('Error removing favorite:', error);
 			this._toastrService.danger('TOASTR.MESSAGE.FAVORITE_ERROR');
 		} finally {
-			this.removingId = null;
-			this._cdr.markForCheck();
+			this.removingId.set(null);
 		}
 	}
 }
