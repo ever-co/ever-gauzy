@@ -1,10 +1,28 @@
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosError } from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { Logger } from '@nestjs/common';
 import { environment } from '../environments/environment';
 import { authManager } from './auth-manager';
 import { sanitizeErrorMessage } from './error-utils';
 
 const logger = new Logger('ApiClient');
+
+/** The header the API's tenant guard reads first, in the casing it accepts. */
+const TENANT_HEADER = 'Tenant-Id';
+
+/**
+ * Sends the tenant of the login whose token the request carries, as the web app does on every call: without it the
+ * tenant guard looks for a top-level `tenantId` in the query, which a list query keeps inside `where`. A tenant the
+ * caller set is kept.
+ */
+const setSessionTenant = (config: InternalAxiosRequestConfig): void => {
+	if (config.headers.has(TENANT_HEADER)) {
+		return;
+	}
+	const { tenantId } = authManager.getDefaultParams();
+	if (tenantId) {
+		config.headers.set(TENANT_HEADER, tenantId);
+	}
+};
 
 export class GauzyApiClient {
 	private static instance: GauzyApiClient;
@@ -47,6 +65,7 @@ export class GauzyApiClient {
 						const token = authManager.getAccessToken();
 						if (token) {
 							config.headers.Authorization = `Bearer ${token}`;
+							setSessionTenant(config);
 						}
 					}
 				} else {
@@ -54,6 +73,7 @@ export class GauzyApiClient {
 					const token = authManager.getAccessToken();
 					if (token) {
 						config.headers.Authorization = `Bearer ${token}`;
+						setSessionTenant(config);
 					}
 				}
 			}
