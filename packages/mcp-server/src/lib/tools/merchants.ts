@@ -367,8 +367,8 @@ export const registerMerchantTools = (server: McpServer) => {
 				.array(
 					z
 						.object({
-							name: z.string().describe('The name (required)'),
-							code: z.string().describe('The merchant code (required)'),
+							name: z.string().min(1).describe('The name (required)'),
+							code: z.string().min(1).describe('The merchant code (required)'),
 							email: z.string().email().describe('The email address (required)'),
 							currency: z.string().describe('The currency code, such as USD (required)')
 						})

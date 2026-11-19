@@ -75,6 +75,8 @@ describe('merchant tools: the routes they call', () => {
 	});
 
 	it.each([
+		['name', { ...RIDGE, name: '' }],
+		['code', { ...RIDGE, code: '' }],
 		['code', { ...RIDGE, code: undefined }],
 		['email', { ...RIDGE, email: undefined }],
 		['email', { ...RIDGE, email: 'not an address' }],
