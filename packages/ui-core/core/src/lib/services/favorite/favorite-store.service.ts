@@ -75,6 +75,8 @@ export class FavoriteStoreService {
 			title,
 			icon: entry.icon,
 			link: entry.link,
+			// A row that stands for a record keeps its type icon in the sidebar.
+			class: 'record',
 			data: {
 				translationKey: title
 			}

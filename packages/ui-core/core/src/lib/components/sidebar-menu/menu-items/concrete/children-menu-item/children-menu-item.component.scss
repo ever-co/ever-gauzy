@@ -142,6 +142,71 @@ $plus-glyph-size: 0.625rem;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Sub-rows in the expanded sidebar hang off the section's guide line (drawn in
+// menu-item.component.scss): the row's tint starts just past the line, and the
+// label starts where the section header's label does. A page link drops its
+// glyph, since the header above already says where it is; a row that stands for
+// a record (a favorite) keeps its type icon, and "View all" its "…".
+//
+// The icon rail (`.custom`) and the rail flyout are left as they were: there a
+// row is a glyph, or a panel row with no line beside it.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// KEEP IN SYNC with `$menu-guide-x` in ../menu-item/menu-item.component.scss.
+$guide-x: 1.125rem;
+// The row's tint starts this far in: the line plus a 0.5rem gap.
+$sub-row-start: 1.625rem;
+// ...and its label this far into the row, which lands it at 2.125rem, the
+// header label's x (0.625rem padding + 1rem icon column + 0.5rem gap).
+$sub-label-start: 0.5rem;
+// The current page's mark on the guide line.
+$guide-mark-width: 2px;
+
+:host .sub-item:not(.custom) {
+  margin-inline-start: $sub-row-start;
+
+  .info {
+    padding-inline-start: $sub-label-start;
+  }
+
+  &:not(.record):not(.view-all) .info > i {
+    display: none;
+  }
+
+  &.selected::before {
+    content: '';
+    position: absolute;
+    inset-inline-start: calc(#{$guide-x} - #{$guide-mark-width} / 2);
+    top: 0.25rem;
+    bottom: 0.25rem;
+    width: $guide-mark-width;
+    border-radius: $guide-mark-width;
+    background-color: nb-theme(color-primary-default);
+    pointer-events: none;
+  }
+}
+
+// The flyout is a panel of its own: no guide line, so no indent and no mark,
+// and every row keeps its glyph.
+:host(.rail-flyout-row) .sub-item:not(.custom) {
+  margin-inline-start: 0;
+
+  .info {
+    // The row's own inline padding (`$menu-row-inline-padding` in the parent file).
+    padding-inline-start: 0.625rem;
+  }
+
+  // Repeats the hiding rule's :not()s so it outranks it.
+  &:not(.record):not(.view-all) .info > i {
+    display: inline-block;
+  }
+
+  &.selected::before {
+    content: none;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Trailing count. Plain muted figures in the same 1.5rem box and inset as the
 // add control above, so a number lines up with the chevrons and "+" buttons of
 // the rows around it. No chip, no fill.

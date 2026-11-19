@@ -83,6 +83,11 @@ $menu-row-inline-padding: 0.625rem;
 // 0.625rem (row padding) + 0.625rem (step).
 $menu-child-indent: 1.25rem;
 
+// Where the open sub-list's guide line runs: the centre of a header's icon
+// column, 0.625rem (row padding) + 0.5rem (half the 1rem column).
+// KEEP IN SYNC with `$guide-x` in children-menu-item.component.scss.
+$menu-guide-x: 1.125rem;
+
 :host {
   position: relative;
   display: block;
@@ -237,6 +242,41 @@ $menu-child-indent: 1.25rem;
 
     &:hover {
       background-color: $menu-row-hover-background;
+    }
+  }
+
+  // ── Open section ──────────────────────────────────────────────────────────
+  // An expanded section's header carries the hover tint and the label's full
+  // colour, so the header and its sub-list read as one group. The current page
+  // inside it still has the stronger active tint (see .sub-item.selected), and
+  // this rule outranks the transparent one above. Not in the icon rail, where
+  // a section is a lone glyph.
+  nb-accordion:not(.closed) nb-accordion-item.expanded:has(nb-accordion-item-body) > nb-accordion-item-header {
+    background-color: $menu-row-hover-background;
+    color: nb-theme(text-basic-color);
+    font-weight: $menu-row-active-weight;
+
+    > i {
+      opacity: 1;
+    }
+  }
+
+  // ── Guide line ────────────────────────────────────────────────────────────
+  // A hairline down the open sub-list, under the centre of the header's icon,
+  // that the sub-rows hang off. The current page marks its stretch of it (see
+  // children-menu-item.component.scss).
+  nb-accordion-item-body:not(.item-collapsed) ::ng-deep .item-body {
+    position: relative;
+
+    &::before {
+      content: '';
+      position: absolute;
+      inset-inline-start: calc(#{$menu-guide-x} - 0.5px);
+      top: 0.125rem;
+      bottom: 0.25rem;
+      width: 1px;
+      background-color: var(--gauzy-border-default-color, var(--border-basic-color-3));
+      pointer-events: none;
     }
   }
 
