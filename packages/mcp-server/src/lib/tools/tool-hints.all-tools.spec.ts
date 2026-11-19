@@ -31,12 +31,15 @@ const SENDS_OUTSIDE = ['invite_organization_contact', 'send_invoice_email', 'upd
 const ENDS_THE_RUN_GOING = ['start_timer', 'stop_timer'];
 /** Tools that read a record and write it back whole: what changed in between is written over. */
 const READ_THEN_REPLACE = [
+	'add_pipeline_stage',
 	'assign_employees_to_time_off_policy',
 	'assign_skill_to_employee',
 	'assign_task_to_employee',
 	'bulk_update_tasks',
+	'remove_pipeline_stage',
 	'remove_skill_from_employee',
 	'unassign_task_from_employee',
+	'update_pipeline_stage',
 	'update_time_off_policy'
 ];
 

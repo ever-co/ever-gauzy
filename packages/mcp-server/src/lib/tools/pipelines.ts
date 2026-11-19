@@ -9,7 +9,65 @@ import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils'
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
 import { TOOL_HINTS } from './tool-hints';
+import { notOfferedByApi, resolveOrganizationScope } from './utils';
 const logger = new Logger('PipelineTools');
+
+/** A pipeline stage as the pipeline update writes it back. */
+interface PipelineStageInput {
+	id?: string;
+	name: string;
+	description?: string;
+}
+
+interface PipelineWithStages {
+	name: string;
+	organizationId?: string;
+	stages?: Array<PipelineStageInput & { index?: number }>;
+}
+
+/**
+ * Writes the stages of a pipeline through `PUT /pipelines/:id`, the only route that changes them. It replaces the
+ * whole list: a stage the body leaves out is removed, and the deals in it with it. So the stages are read first, in
+ * their order, `change` returns the list to write back, and a pipeline read without its stages is never written. The
+ * update DTO requires the organization: the pipeline's own is sent back, so the update never moves it to another.
+ */
+const replacePipelineStages = async (
+	pipelineId: string,
+	change: (stages: PipelineStageInput[]) => PipelineStageInput[]
+) => {
+	const scope = resolveOrganizationScope();
+	const pipeline = await apiClient.get<PipelineWithStages>(`/api/pipelines/${pipelineId}`, {
+		params: { ...scope, relations: ['stages'] }
+	});
+	if (!Array.isArray(pipeline?.stages)) {
+		throw new Error(`Pipeline ${pipelineId} was read without its stages, so none was written.`);
+	}
+
+	const ordered = [...pipeline.stages].sort((first, second) => (first.index ?? 0) - (second.index ?? 0));
+	const current = ordered.map(({ id, name, description }) => ({ id, name, description }));
+	return apiClient.put(`/api/pipelines/${pipelineId}`, {
+		name: pipeline.name,
+		organizationId: pipeline.organizationId ?? scope.organizationId,
+		tenantId: scope.tenantId,
+		stages: change(current)
+	});
+};
+
+/** The position of the stage in the pipeline's stages; refuses a stage the pipeline does not have. */
+const indexOfStage = (stages: PipelineStageInput[], stageId: string, pipelineId: string): number => {
+	const index = stages.findIndex((stage) => stage.id === stageId);
+	if (index < 0) {
+		throw new Error(`Stage ${stageId} is not a stage of pipeline ${pipelineId}.`);
+	}
+	return index;
+};
+
+/** Refuses a win probability on a stage: the API keeps one on each deal, none on its stage. */
+const refuseStageProbability = (probability?: number) => {
+	if (probability !== undefined) {
+		throw notOfferedByApi('a win probability on pipeline stages', 'A deal carries its own: update_deal sets it.');
+	}
+};
 
 export const registerPipelineTools = (server: McpServer) => {
 	// Get pipelines tool
@@ -189,20 +247,28 @@ export const registerPipelineTools = (server: McpServer) => {
 	registerTool(
 		server,
 		'add_pipeline_stage',
-		'Add a stage to a pipeline',
+		'Add a stage at the end of a pipeline',
 		{
 			pipelineId: z.string().uuid().describe('The pipeline ID'),
 			stage_data: z
 				.object({
 					name: z.string().describe('Stage name'),
-					probability: z.number().min(0).max(100).optional().describe('Win probability percentage'),
+					probability: z
+						.number()
+						.min(0)
+						.max(100)
+						.optional()
+						.describe('Not offered: a win probability belongs to each deal'),
 					description: z.string().optional().describe('Stage description')
 				})
 				.describe('The stage data')
 		},
 		async ({ pipelineId, stage_data }) => {
 			try {
-				const response = await apiClient.post(`/api/pipelines/${pipelineId}/stages`, stage_data);
+				const { probability, ...stage } = stage_data;
+				refuseStageProbability(probability);
+
+				const response = await replacePipelineStages(pipelineId, (stages) => [...stages, stage]);
 
 				return {
 					content: [
@@ -217,7 +283,7 @@ export const registerPipelineTools = (server: McpServer) => {
 				throw new Error(`Failed to add pipeline stage: ${sanitizeErrorMessage(error)}`);
 			}
 		},
-		TOOL_HINTS.write
+		TOOL_HINTS.destructive
 	);
 
 	// Update pipeline stage tool
@@ -231,14 +297,27 @@ export const registerPipelineTools = (server: McpServer) => {
 			stage_data: z
 				.object({
 					name: z.string().optional().describe('Stage name'),
-					probability: z.number().min(0).max(100).optional().describe('Win probability percentage'),
+					probability: z
+						.number()
+						.min(0)
+						.max(100)
+						.optional()
+						.describe('Not offered: a win probability belongs to each deal'),
 					description: z.string().optional().describe('Stage description')
 				})
 				.describe('The stage data to update')
 		},
 		async ({ pipelineId, stageId, stage_data }) => {
 			try {
-				const response = await apiClient.put(`/api/pipelines/${pipelineId}/stages/${stageId}`, stage_data);
+				const { probability, ...changes } = stage_data;
+				refuseStageProbability(probability);
+
+				const response = await replacePipelineStages(pipelineId, (stages) => {
+					const index = indexOfStage(stages, stageId, pipelineId);
+					const updated = [...stages];
+					updated[index] = { ...stages[index], ...changes };
+					return updated;
+				});
 
 				return {
 					content: [
@@ -260,14 +339,17 @@ export const registerPipelineTools = (server: McpServer) => {
 	registerTool(
 		server,
 		'remove_pipeline_stage',
-		'Remove a stage from a pipeline',
+		'Remove a stage from a pipeline: the deals in that stage are deleted with it',
 		{
 			pipelineId: z.string().uuid().describe('The pipeline ID'),
 			stageId: z.string().uuid().describe('The stage ID')
 		},
 		async ({ pipelineId, stageId }) => {
 			try {
-				await apiClient.delete(`/api/pipelines/${pipelineId}/stages/${stageId}`);
+				await replacePipelineStages(pipelineId, (stages) => {
+					const index = indexOfStage(stages, stageId, pipelineId);
+					return stages.filter((_stage, position) => position !== index);
+				});
 
 				return {
 					content: [
