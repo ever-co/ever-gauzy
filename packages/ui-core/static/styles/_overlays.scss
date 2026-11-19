@@ -368,6 +368,26 @@ $overlay-item-padding-x: 0.625rem; // 10px
     }
   }
 
+  // The header's chat and Inbox dropdowns (`nbPopoverClass` on the header icons of
+  // the chat-ui and inbox-ui plugins; the class is on the overlay PANE). A list
+  // hanging under the icon, not a speech bubble: no arrow, and the frame adds no
+  // padding of its own (the panel draws its own spacing). It hangs a little past
+  // the icon's right edge rather than flush with it.
+  .cdk-overlay-container .chat-header-menu-popover nb-popover,
+  .cdk-overlay-container .inbox-header-menu-popover nb-popover {
+    padding: 0;
+    overflow: hidden;
+    transform: translateX(48px);
+
+    .arrow {
+      display: none;
+    }
+
+    .primitive-overlay {
+      padding: 0;
+    }
+  }
+
   // ── Separators ──────────────────────────────────────────────────────────
   // 1px hairlines at low alpha, never a thick divider. Bootstrap's reboot
   // gives every `hr` a 1px `currentColor` border at 25% opacity, which reads
