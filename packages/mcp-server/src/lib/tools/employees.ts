@@ -3,7 +3,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { validateOrganizationContext } from './utils';
+import { getCurrentEmployeeId, resolveOrganizationScope, validateOrganizationContext } from './utils';
 import { EmployeeInputSchema } from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
@@ -332,7 +332,7 @@ export const registerEmployeeTools = (server: McpServer) => {
 	registerTool(
 		server,
 		'get_employee_statistics',
-		"Get statistics for an employee in the authenticated user's organization",
+		"Get an employee's income, expenses, bonus and profit per month over a date range (the current month by default)",
 		{
 			employeeId: z.string().uuid().describe('The employee ID'),
 			startDate: z.string().optional().describe('Start date for statistics (ISO format)'),
@@ -350,7 +350,7 @@ export const registerEmployeeTools = (server: McpServer) => {
 					...(endDate && { endDate })
 				};
 
-				const response = await apiClient.get('/api/employee/statistics', { params });
+				const response = await apiClient.get('/api/employee-statistics/months', { params });
 
 				return {
 					content: [
@@ -381,11 +381,14 @@ export const registerEmployeeTools = (server: McpServer) => {
 		},
 		async ({ relations }) => {
 			try {
+				// The employee routes read the tenant from the query: without it they refuse the read
 				const params = {
+					...resolveOrganizationScope(),
 					...(relations && { relations })
 				};
 
-				const response = await apiClient.get('/api/employee/me', { params });
+				const employeeId = await getCurrentEmployeeId();
+				const response = await apiClient.get(`/api/employee/${employeeId}`, { params });
 
 				return {
 					content: [
@@ -481,9 +484,14 @@ export const registerEmployeeTools = (server: McpServer) => {
 		},
 		async ({ employee_data }) => {
 			try {
-				const updateData = convertEmployeeDateFields(employee_data);
+				// The profile DTO requires the organization, and the route reads the tenant from the body
+				const updateData = {
+					...convertEmployeeDateFields(employee_data),
+					...resolveOrganizationScope()
+				};
 
-				const response = await apiClient.put('/api/employee/me', updateData);
+				const employeeId = await getCurrentEmployeeId();
+				const response = await apiClient.put(`/api/employee/${employeeId}/profile`, updateData);
 
 				return {
 					content: [
@@ -543,7 +551,13 @@ export const registerEmployeeTools = (server: McpServer) => {
 		},
 		async ({ id }) => {
 			try {
-				const response = await apiClient.post(`/api/employee/${id}/restore`);
+				const defaultParams = validateOrganizationContext();
+				const scope = {
+					organizationId: defaultParams.organizationId,
+					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
+				};
+
+				const response = await apiClient.put(`/api/employee/${id}/recover`, scope);
 
 				return {
 					content: [
