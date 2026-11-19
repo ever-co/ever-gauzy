@@ -46,11 +46,14 @@
 					[entityType]="BaseEntityEnum.OrganizationTeam"
 					[entityId]="team.id"
 					[entityName]="team.name"
-					size="small"
+					size="tiny"
 					status="basic"
+					appearance="ghost"
 					spacing="list"
 					[showLabel]="false"
 				></ngx-favorite-toggle>
+				<!-- What plugins add on this team (the chat's "Team chat" icon); empty without them. -->
+				<ga-page-extension-slot [slotId]="teamActionsSlot"></ga-page-extension-slot>
 			</div>
 		</div>
 

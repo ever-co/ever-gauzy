@@ -32,6 +32,12 @@ export const PAGE_EXTENSION_SLOTS = {
 	 */
 	EMPLOYEE_VIEW_ACTIONS: 'employee-view-actions',
 
+	/**
+	 * Actions on a team's own page (`/pages/organization/teams/view/:id`), beside the favorite toggle: small buttons.
+	 * The team is the one of the page's route (`ActivatedRoute` param `id`), which an extension component injects.
+	 */
+	TEAM_VIEW_ACTIONS: 'team-view-actions',
+
 	/** Top-level page sections (alternative to page-sections routes). */
 	PAGE_SECTIONS: 'page-sections',
 

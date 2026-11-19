@@ -4,25 +4,38 @@ import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-i
 import { Router } from '@angular/router';
 import { NbIconModule } from '@nebular/theme';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { EMPTY, merge, Observable, of, Subscription } from 'rxjs';
-import { auditTime, catchError, distinctUntilChanged, filter, map, switchMap, tap } from 'rxjs/operators';
-import { CHAT_EVENT_NAMES, IChatConversationWithState, IChatMessageWithRelations, IOrganization, IUser, PermissionsEnum } from '@gauzy/contracts';
+import { concat, defer, EMPTY, forkJoin, from, merge, Observable, of, Subscription, throwError } from 'rxjs';
+import { auditTime, catchError, concatMap, distinctUntilChanged, filter, map, switchMap, tap, toArray } from 'rxjs/operators';
+import { CHAT_EVENT_NAMES, ChatVisibilityEnum, IChatConversationWithState, IChatMessageWithRelations, IOrganization, IUser, PermissionsEnum } from '@gauzy/contracts';
 import { Store, ToastrService } from '@gauzy/ui-core/core';
-import { CHAT_DOCK_PAGE_SIZE, CHAT_LINK, CHAT_LIVE_AUDIT_MS, CHAT_MESSAGES_POLL_MS } from '../../chat-ui.constants';
+import { CHAT_CHANNEL_MEMBERS_BATCH, CHAT_DOCK_PAGE_SIZE, CHAT_DOCK_TEAM_FACES, CHAT_LINK, CHAT_LIVE_AUDIT_MS, CHAT_MESSAGES_POLL_MS } from '../../chat-ui.constants';
 import { canManageConversation } from '../../chat-categories';
+import { facesOf, peopleOf } from '../../chat-member-preview';
+import { teamChannelOf } from '../../chat-team-suggestions';
 import { withTaskReference } from '../../chat-tasks';
-import { apiErrorMessage, ChatPerson, continuesGroup, isSameDay, memberEmployeeIds, mergeMessages, newNonce, showNewestPage, userName } from '../../chat-ui.helpers';
+import { apiErrorMessage, ChatMemberIds, ChatPerson, continuesGroup, isSameDay, memberEmployeeIds, mergeMessages, newNonce, showNewestPage, userName } from '../../chat-ui.helpers';
 import { ChatCreateTaskFlow } from '../../dialogs/chat-task-dialogs.component';
-import { ChatDockService } from '../../services/chat-dock.service';
+import { ChatDockService, ChatTeamChannelSetup } from '../../services/chat-dock.service';
 import { ChatFilesStore } from '../../services/chat-files.store';
 import { coalesceReads } from '../../services/chat-live';
 import { ChatLiveService, isTabVisible } from '../../services/chat-live.service';
 import { ChatPeople, ChatPeopleService, EMPTY_PEOPLE } from '../../services/chat-people.service';
 import { ChatTasksService } from '../../services/chat-tasks.service';
-import { ChatMessagePatch, ChatUiService } from '../../services/chat-ui.service';
+import { ChatMessagePatch, ChatTeamDetails, ChatUiService } from '../../services/chat-ui.service';
 import { clearDraft, ComposerSubmission, MessageComposerComponent } from '../message-composer/message-composer.component';
 import { MessageAction, MessageItemComponent } from '../message-item/message-item.component';
 import { PersonAvatarComponent } from '../person-avatar/person-avatar.component';
+
+/** What the card is open with: a person (our direct conversation) or a team (its channel). */
+type DockTarget = { kind: 'person'; key: string; employeeId: string } | { kind: 'team'; key: string; team: ChatTeamDetails };
+
+/** The card's header: who or which team it is. `memberCount` is null for a person. */
+interface DockHeader {
+	avatar: ChatPerson;
+	name: string;
+	position: string | null;
+	memberCount: number | null;
+}
 
 /** A message of the card with its day divider and whether it continues the previous author's group, as in the chat. */
 interface DockRow {
@@ -33,7 +46,8 @@ interface DockRow {
 
 /**
  * The docked message card (`ChatDockService`): a small card at the bottom right of the screen to write one person
- * directly. A box to write and a way to the full conversation, as a quick-message card; above them, who it is and,
+ * directly, or a team in its channel (the channel named as the team: joined on opening, created with the first
+ * message when there is none). A box to write and a way to the full conversation, as a quick-message card; above them, who it is and,
  * once there is something to read, the latest messages of our conversation, shown as the chat shows them. The
  * conversation is found (or created) when the card opens; its newest page is read again as its chat events come (or
  * on the chat's poll where they do not stream), so a message written, edited or deleted elsewhere shows, and it is
@@ -43,24 +57,87 @@ interface DockRow {
 	selector: 'ngx-chat-dock',
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [NbIconModule, TranslatePipe, PersonAvatarComponent, MessageComposerComponent, MessageItemComponent],
+	host: { '(document:click)': 'onDocumentClick($event)' },
 	template: `
-		@if (person(); as who) {
+		@if (header(); as who) {
 			<section class="panel" role="dialog" [attr.aria-label]="who.name" data-test="chat-dock" (keydown.escape)="onEscape($event)">
 				<header class="head">
-					<ngx-chat-person-avatar [person]="who" [round]="true"></ngx-chat-person-avatar>
+					<!-- A team has no presence of its own: its picture (or initials) goes without the dot. -->
+					<ngx-chat-person-avatar [person]="who.avatar" [round]="true" [presence]="who.memberCount === null"></ngx-chat-person-avatar>
 					<div class="identity">
 						<span class="name" [attr.title]="who.name">{{ who.name }}</span>
 						@if (who.position) {
 							<span class="position" [attr.title]="who.position">{{ who.position }}</span>
+						} @else if (who.memberCount !== null) {
+							<!-- The team's members at the top: a few faces, overlapping, before their count; a click lists them all. -->
+							<button
+								#membersButton
+								type="button"
+								class="members-line"
+								data-test="chat-dock-members"
+								[attr.aria-expanded]="showMembers()"
+								aria-controls="chat-dock-member-list"
+								[attr.title]="'CHAT.PROFILE.TEAM_MEMBERS' | translate"
+								(click)="toggleMembers()"
+							>
+								@if (teamFaces().length) {
+									<span class="faces">
+										@for (face of teamFaces(); track face.employeeId) {
+											<ngx-chat-person-avatar
+												[person]="face"
+												size="small"
+												[round]="true"
+												[presence]="false"
+												[attr.title]="face.name"
+											></ngx-chat-person-avatar>
+										}
+										<!-- The members beyond the faces shown, as one more disc. -->
+										@if ((who.memberCount ?? 0) > teamFaces().length) {
+											<span class="faces-more" aria-hidden="true">+{{ (who.memberCount ?? 0) - teamFaces().length }}</span>
+										}
+									</span>
+								}
+								<span class="position">{{ 'CHAT.LIST.MEMBERS' | translate: { count: who.memberCount } }}</span>
+								<nb-icon class="chevron" [icon]="showMembers() ? 'chevron-up-outline' : 'chevron-down-outline'" aria-hidden="true"></nb-icon>
+							</button>
 						}
 					</div>
 					<button type="button" class="icon-button" data-test="chat-dock-close" [attr.aria-label]="'CHAT.VIEW.CLOSE' | translate" (click)="close()">
 						<nb-icon icon="close-outline" aria-hidden="true"></nb-icon>
 					</button>
+					@if (showMembers()) {
+						<!--
+							Every member of the team the chat knows (face with presence, name, position), in a dropdown under the
+							members row that lies over the messages: the card keeps its height.
+						-->
+						<ul
+							#memberList
+							class="member-list"
+							id="chat-dock-member-list"
+							data-test="chat-dock-member-list"
+							[attr.aria-label]="'CHAT.PROFILE.TEAM_MEMBERS' | translate"
+						>
+							@for (member of teamMembers(); track member.employeeId) {
+								<li class="member">
+									<ngx-chat-person-avatar [person]="member" size="small" [round]="true"></ngx-chat-person-avatar>
+									<span class="member-text">
+										<span class="member-name" [attr.title]="member.name">{{ member.name }}</span>
+										@if (member.position) {
+											<span class="member-position" [attr.title]="member.position">{{ member.position }}</span>
+										}
+									</span>
+								</li>
+							}
+						</ul>
+					}
 				</header>
 
 				@if (failed()) {
 					<p class="note">{{ 'CHAT.ERROR' | translate }}</p>
+				} @else if (newChannelFor(); as team) {
+					<p class="note" data-test="chat-dock-new-channel">{{ 'CHAT.PROFILE.TEAM_CHANNEL_NEW' | translate: { name: team.name } }}</p>
+				} @else if (membersOnly(); as team) {
+					<p class="note" data-test="chat-dock-members-only">{{ 'CHAT.PROFILE.TEAM_CHANNEL_MEMBERS_ONLY' | translate: { name: team.name } }}</p>
 				} @else if (rows().length > 0) {
 					<!--
 						The messages as the conversation shows them (its own message component) with its toolbar: react, create a
@@ -94,8 +171,12 @@ interface DockRow {
 					<ngx-chat-message-composer
 						data-test="chat-dock-composer"
 						[people]="dockPeople()"
-						[placeholder]="'CHAT.PROFILE.MESSAGE_PLACEHOLDER' | translate: { name: who.name }"
-						[disabled]="sending() || !conversation() || readOnly()"
+						[placeholder]="
+							who.memberCount === null
+								? ('CHAT.PROFILE.MESSAGE_PLACEHOLDER' | translate: { name: who.name })
+								: ('CHAT.COMPOSER.PLACEHOLDER' | translate: { name: '#' + (conversation()?.name || who.name) })
+						"
+						[disabled]="sending() || (!conversation() && !newChannelFor()) || readOnly()"
 						[memberIds]="memberIds()"
 						[meEmployeeId]="me()?.employeeId || null"
 						[editing]="editing() !== null"
@@ -170,6 +251,8 @@ interface DockRow {
 				color: var(--gauzy-text-color-1, inherit);
 			}
 			.head {
+				/* The anchor of the member dropdown. */
+				position: relative;
 				display: flex;
 				align-items: center;
 				gap: 0.625rem;
@@ -195,6 +278,126 @@ interface DockRow {
 				line-height: 1.25rem;
 			}
 			.position {
+				color: var(--dock-muted);
+				font-size: 0.75rem;
+				line-height: 1rem;
+			}
+			/* A team's members under its name: a few faces, overlapping, then their count. */
+			.members-line {
+				display: inline-flex;
+				align-items: center;
+				align-self: flex-start;
+				gap: 0.5rem;
+				min-width: 0;
+				margin-top: 0.25rem;
+			}
+			/*
+			 * Round faces, each ringed in the card's colour so the one before it stays readable where they overlap: a
+			 * quarter of a face under the next, its initials clear.
+			 */
+			.faces {
+				display: inline-flex;
+				flex: 0 0 auto;
+				align-items: center;
+				padding-left: 2px;
+			}
+			.faces ngx-chat-person-avatar,
+			.faces-more {
+				border-radius: 50%;
+				box-shadow: 0 0 0 2px var(--gauzy-card-1);
+			}
+			.faces > * + * {
+				margin-left: -0.375rem;
+			}
+			.faces-more {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				min-width: 1.5rem;
+				height: 1.5rem;
+				padding: 0 0.3125rem;
+				box-sizing: border-box;
+				border-radius: 999px;
+				background: var(--gauzy-sidebar-background-3, var(--dock-hover));
+				color: var(--gauzy-text-color-1, inherit);
+				font-size: 0.625rem;
+				font-weight: 600;
+				line-height: 1;
+			}
+			/* The members row is a quiet button: no frame, the muted text, a tint on hover only. */
+			.members-line {
+				max-width: 100%;
+				padding: 0.1875rem 0.5rem 0.1875rem 0.25rem;
+				margin-left: -0.25rem;
+				border: 0;
+				border-radius: calc(var(--border-radius) * 1.25);
+				background: transparent;
+				color: inherit;
+				font: inherit;
+				text-align: left;
+				cursor: pointer;
+				transition: background-color 0.1s ease;
+			}
+			.members-line:hover,
+			.members-line:focus-visible {
+				background: var(--dock-hover);
+			}
+			.members-line:focus-visible {
+				outline: 2px solid var(--dock-accent);
+				outline-offset: -2px;
+			}
+			.chevron {
+				flex: 0 0 auto;
+				font-size: 0.875rem;
+				color: var(--dock-muted);
+			}
+			/*
+			 * The team's member list: a dropdown under the header, over the messages (above their sticky day dividers),
+			 * a floating panel as the card is: its border, radius and shadow. It scrolls past a few members.
+			 */
+			.member-list {
+				position: absolute;
+				top: calc(100% - 0.375rem);
+				left: 3.75rem;
+				right: 0.75rem;
+				z-index: 10;
+				max-height: min(15rem, calc(100vh - 12rem));
+				margin: 0;
+				padding: 0.25rem;
+				overflow-y: auto;
+				list-style: none;
+				border: 1px solid var(--dock-line);
+				border-radius: calc(var(--border-radius) * 1.5);
+				background: var(--gauzy-card-1);
+				box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.25);
+			}
+			.member {
+				display: flex;
+				align-items: center;
+				gap: 0.625rem;
+				min-width: 0;
+				padding: 0.375rem 0.5rem;
+				border-radius: calc(var(--border-radius) * 1.25);
+			}
+			.member:hover {
+				background: var(--dock-hover);
+			}
+			.member-text {
+				display: flex;
+				flex-direction: column;
+				min-width: 0;
+			}
+			.member-name,
+			.member-position {
+				overflow: hidden;
+				white-space: nowrap;
+				text-overflow: ellipsis;
+			}
+			.member-name {
+				font-size: 0.8125rem;
+				line-height: 1.125rem;
+			}
+			.member-position {
 				color: var(--dock-muted);
 				font-size: 0.75rem;
 				line-height: 1rem;
@@ -343,6 +546,33 @@ export class ChatDockComponent {
 	private readonly composer = viewChild(MessageComposerComponent);
 
 	protected readonly person = this.dock.person;
+	protected readonly team = this.dock.team;
+
+	/** What the card is open with; the same person or team again (a fresh object) is no change. */
+	private readonly target = computed<DockTarget | null>(
+		() => {
+			const person = this.person();
+			if (person?.employeeId) return { kind: 'person', key: `person:${person.employeeId}`, employeeId: person.employeeId };
+			const team = this.team();
+			if (team?.id) return { kind: 'team', key: `team:${team.id}`, team };
+			return null;
+		},
+		{ equal: (a, b) => a?.key === b?.key }
+	);
+
+	/** The card's header, for a person or for a team (its picture, or its initials, as an avatar). */
+	protected readonly header = computed<DockHeader | null>(() => {
+		const person = this.person();
+		if (person) return { avatar: person, name: person.name, position: person.position ?? null, memberCount: null };
+		const team = this.team();
+		if (!team) return null;
+		return {
+			avatar: { employeeId: '', userId: null, name: team.name, imageUrl: team.imageUrl },
+			name: team.name,
+			position: null,
+			memberCount: team.memberEmployeeIds.length
+		};
+	});
 
 	/** Me, as my own messages show me: my name and picture. */
 	protected readonly me = toSignal(
@@ -363,6 +593,18 @@ export class ChatDockComponent {
 	);
 
 	protected readonly conversation = signal<IChatConversationWithState | null>(null);
+	/**
+	 * The team the card is open with while it has no channel yet: the box can be written in, and the first message
+	 * sent creates the channel (named as the team, with its members) and goes to it.
+	 */
+	protected readonly newChannelFor = signal<ChatTeamDetails | null>(null);
+	/**
+	 * The private team the card is open with while I am not one of its members and none of my channels is named as it:
+	 * only its members start its channel (see `mayStartChannel`), so the box stays closed.
+	 */
+	protected readonly membersOnly = signal<ChatTeamDetails | null>(null);
+	/** The channel found or created for a first message to a team whose send failed: the next try goes to it. */
+	private pendingChannel: { teamId: string; conversation: IChatConversationWithState } | null = null;
 	private readonly messages = signal<readonly IChatMessageWithRelations[]>([]);
 	protected readonly failed = signal(false);
 	protected readonly sending = signal(false);
@@ -391,9 +633,15 @@ export class ChatDockComponent {
 		const conversation = this.conversation();
 		return !!conversation && canManageConversation(conversation, this.me()?.employeeId || null, this.isAdmin());
 	});
-	/** An archived conversation is read only, as in the chat (the card's direct conversation always has me in it). */
+	/** An archived conversation is read only, as in the chat (the card's conversation has me in it: found, joined or created). */
 	protected readonly readOnly = computed(() => !!this.conversation()?.archivedAt);
-	protected readonly memberIds = computed(() => memberEmployeeIds(this.conversation()));
+	/** The conversation's members; before a team's channel exists, the team's members it will be created with. */
+	protected readonly memberIds = computed<ChatMemberIds | null>(() => {
+		const conversation = this.conversation();
+		if (conversation) return memberEmployeeIds(conversation);
+		const team = this.newChannelFor();
+		return team ? { ids: new Set(team.memberEmployeeIds), complete: true } : null;
+	});
 	/** The conversation's own draft key: what is typed here is the draft the chat finds, and back. */
 	protected readonly draftKey = computed(() => {
 		const conversation = this.conversation();
@@ -420,6 +668,36 @@ export class ChatDockComponent {
 		}
 		return { byEmployee, byUser, list: base.list };
 	});
+
+	/** A few of the team's members, as faces at the top of the card (the people the chat knows). */
+	protected readonly teamFaces = computed<ChatPerson[]>(() => {
+		const team = this.team();
+		return team ? facesOf(team.memberEmployeeIds, this.dockPeople().byEmployee, CHAT_DOCK_TEAM_FACES) : [];
+	});
+
+	/** Whether the team's member list is open under the header. */
+	protected readonly showMembers = signal(false);
+	/** Every member of the team the chat knows, by name, for that list. */
+	protected readonly teamMembers = computed<ChatPerson[]>(() => {
+		const team = this.team();
+		return team ? peopleOf(team.memberEmployeeIds, this.dockPeople().byEmployee) : [];
+	});
+
+	protected toggleMembers(): void {
+		this.showMembers.update((open) => !open);
+	}
+
+	private readonly membersButton = viewChild<ElementRef<HTMLElement>>('membersButton');
+	private readonly memberList = viewChild<ElementRef<HTMLElement>>('memberList');
+
+	/** A click anywhere but on the members row or in the dropdown closes the dropdown. */
+	protected onDocumentClick(event: Event): void {
+		if (!this.showMembers()) return;
+		const target = event.target as Node | null;
+		if (!target) return;
+		if (this.membersButton()?.nativeElement.contains(target) || this.memberList()?.nativeElement.contains(target)) return;
+		this.showMembers.set(false);
+	}
 
 	/** The messages with their day dividers and whether each continues the previous author's group, as in the chat. */
 	protected readonly rows = computed<DockRow[]>(() => {
@@ -481,14 +759,28 @@ export class ChatDockComponent {
 	private polling: Subscription | null = null;
 
 	constructor() {
-		// The card turns to whoever it is opened with.
+		// The card turns to whoever (or whichever team) it is opened with.
 		effect(() => {
-			const employeeId = this.person()?.employeeId ?? null;
-			untracked(() => this.load(employeeId));
+			const target = this.target();
+			untracked(() => this.load(target));
+		});
+		// The same team opened again with fresh details (its visibility, its members): the card keeps waiting for its
+		// first message (the composer and what is typed in it stay), and the channel is created with the details as they
+		// are now, and as I am now (who is not in a private team does not start its channel). A private team I was kept
+		// out of is looked for again when opened again: I may have been added to its channel since.
+		effect(() => {
+			const team = this.team();
+			this.me();
+			untracked(() => {
+				if (!team) return;
+				const blocked = this.membersOnly();
+				if (this.newChannelFor()?.id === team.id) this.awaitChannel(team);
+				else if (blocked?.id === team.id && blocked !== team) this.load({ kind: 'team', key: `team:${team.id}`, team });
+			});
 		});
 		// Once the conversation is found the composer can be written in: it gets the keyboard.
 		effect(() => {
-			if (!this.conversation()) return;
+			if (!this.conversation() && !this.newChannelFor()) return;
 			setTimeout(() => this.composer()?.focus());
 		});
 		// A new newest message is brought in sight; a refresh that changes nothing leaves the reader where they are.
@@ -528,35 +820,290 @@ export class ChatDockComponent {
 		});
 	}
 
-	/** Finds (or creates) our direct conversation and reads its latest messages, then keeps reading the newer ones. */
-	private load(employeeId: string | null): void {
+	/**
+	 * Finds (or creates) our direct conversation, or finds the team's channel, and reads its latest messages, then keeps
+	 * reading the newer ones. A team without its channel yet gets one with the first message sent (`newChannelFor`).
+	 */
+	private load(target: DockTarget | null): void {
 		this.request?.unsubscribe();
 		this.polling?.unsubscribe();
 		this.conversation.set(null);
+		this.newChannelFor.set(null);
+		this.membersOnly.set(null);
+		this.pendingChannel = null;
+		this.showMembers.set(false);
 		this.messages.set([]);
 		this.editing.set(null);
 		this.failed.set(false);
 		this.readThrough = null;
 		this.tasksStale = false;
 		this.known = new Map();
-		if (!employeeId) return;
-		this.request = this.api.direct([employeeId]).subscribe({
-			next: ({ conversation }) => {
-				this.conversation.set(conversation);
-				this.request = this.readNewest(String(conversation.id)).subscribe({
-					next: (page) => {
-						this.accept(page.messages, page.read);
-						this.poll(conversation);
-					},
-					// The card says so, and the poll keeps trying: the first page it reads takes the note away.
-					error: () => {
-						this.failed.set(true);
-						this.poll(conversation);
-					}
-				});
+		if (!target) return;
+		const conversation$ =
+			target.kind === 'person' ? this.api.direct([target.employeeId]).pipe(map(({ conversation }) => conversation)) : this.teamChannel(target.team);
+		this.request = conversation$.subscribe({
+			next: (conversation) => {
+				if (conversation) this.start(conversation);
+				else if (target.kind === 'team') this.awaitChannel(target.team);
 			},
 			error: () => this.failed.set(true)
 		});
+	}
+
+	/** A team without its channel (of mine): the first message creates it, when I may start it (`mayStartChannel`). */
+	private awaitChannel(team: ChatTeamDetails): void {
+		const may = this.mayStartChannel(team);
+		this.newChannelFor.set(may ? team : null);
+		this.membersOnly.set(may ? null : team);
+	}
+
+	/**
+	 * Whether I may start the team's channel: anyone for a public team, only one of its members for a private one. The
+	 * API lists me no private channel I am not in, so for someone outside the team "none found" does not mean there is
+	 * none, and the channel they started would be another one, with them in it. When I am not known as an employee the
+	 * API decides (it starts channels for employees only).
+	 */
+	private mayStartChannel(team: ChatTeamDetails): boolean {
+		const mine = this.me()?.employeeId;
+		return team.public || !mine || team.memberEmployeeIds.includes(mine);
+	}
+
+	/** Shows this conversation: reads its latest messages, then keeps reading the newer ones. */
+	private start(conversation: IChatConversationWithState): void {
+		this.conversation.set(conversation);
+		this.request = this.readNewest(String(conversation.id)).subscribe({
+			next: (page) => {
+				this.accept(page.messages, page.read);
+				this.poll(conversation);
+			},
+			// The card says so, and the poll keeps trying: the first page it reads takes the note away.
+			error: () => {
+				this.failed.set(true);
+				this.poll(conversation);
+			}
+		});
+	}
+
+	/** The selected organization's id: a team's channel is looked for among that organization's channels only. */
+	private organizationId(): string | null {
+		const organization = this.organization();
+		return organization?.id ? String(organization.id) : null;
+	}
+
+	/**
+	 * The team's channel as the API lists it now: of the selected organization and of the team's visibility (a private
+	 * team chats in a private channel only, a public one in a public channel), the oldest open one named as the team
+	 * (`teamChannelOf`), with whether I am in it. Looked for among my conversations, and for a public team among the
+	 * public channels I may join too. A list that cannot be read fails the lookup: no channel is created on a guess.
+	 */
+	private findTeamChannel(team: ChatTeamDetails): Observable<{ found: IChatConversationWithState | null; member: boolean }> {
+		const visibility = this.visibilityOf(team);
+		return forkJoin([
+			this.api.listMine().pipe(map(({ conversations }) => conversations ?? [])),
+			team.public ? this.api.browse() : of([] as IChatConversationWithState[])
+		]).pipe(
+			map(([mine, open]) => {
+				const mineIds = new Set(mine.map((conversation) => String(conversation.id)));
+				const joinable = (open ?? []).filter((conversation) => !mineIds.has(String(conversation.id)) && !conversation.archivedAt);
+				const candidates = [...mine, ...joinable].filter((conversation) => conversation.visibility === visibility);
+				const found = teamChannelOf(candidates, team.name, this.organizationId());
+				return { found, member: !!found && mineIds.has(String(found.id)) };
+			})
+		);
+	}
+
+	/** The team's channel I am in: the found one, joined first when I am not in it yet. */
+	private enter(found: IChatConversationWithState, member: boolean): Observable<IChatConversationWithState> {
+		if (member) return of(found);
+		return this.api.join(found.id).pipe(
+			map(({ conversation }) => conversation),
+			// Joined: the chat's lists and badge learn of it.
+			tap(() => this.api.notifyChanged())
+		);
+	}
+
+	/**
+	 * The team's channel on opening the card: the one whose set-up is unfinished, finished first (see `finishSetup`);
+	 * else the one found, joined when I am not in it; else null — none is created on opening, only with the first
+	 * message sent (`createAndSend`).
+	 */
+	private teamChannel(team: ChatTeamDetails): Observable<IChatConversationWithState | null> {
+		const setup = this.retainedSetup(team);
+		if (setup) return this.finishSetup(team, setup);
+		return this.findTeamChannel(team).pipe(switchMap(({ found, member }) => (found ? this.enter(found, member) : of(null))));
+	}
+
+	/** The visibility of a team's channel: private for a private team, public for a public one. */
+	private visibilityOf(team: ChatTeamDetails): ChatVisibilityEnum {
+		return team.public ? ChatVisibilityEnum.PUBLIC : ChatVisibilityEnum.PRIVATE;
+	}
+
+	/**
+	 * The unfinished set-up of the team's channel, while its channel still has the team's visibility. When the team's
+	 * visibility changed since (a public team made private), that channel is no longer the team's: the set-up is
+	 * dropped — the archive of an empty duplicate tried once more on the way — and the team's channel is looked for
+	 * again, by its visibility now.
+	 */
+	private retainedSetup(team: ChatTeamDetails): ChatTeamChannelSetup | null {
+		const key = this.setupKey(team);
+		const setup = this.dock.teamSetups.get(key);
+		if (!setup) return null;
+		if (setup.channel.visibility === this.visibilityOf(team)) return setup;
+		this.dock.teamSetups.delete(key);
+		for (const id of setup.archiveIds) {
+			this.api
+				.setArchived(id, true)
+				.pipe(takeUntilDestroyed(this.destroyRef))
+				.subscribe({ error: () => undefined });
+		}
+		return null;
+	}
+
+	/** Where the set-up of a team's channel is kept: per user, organization and team. */
+	private setupKey(team: ChatTeamDetails): string {
+		return `${this.me()?.userId ?? ''}|${this.organizationId() ?? ''}|${team.id}`;
+	}
+
+	/**
+	 * Finishes what is left of a team channel's set-up, in order: joins the channel when I must, archives the empty
+	 * duplicates made here, adds the members still to add (each batch within the API's limit). Each step done is struck
+	 * off as it succeeds. A failed archive does not hold the message back: it stays, to be tried again next time. A
+	 * failed join or batch fails the whole (the message waits for every member), and what is left stays for the next
+	 * try. The set-up is forgotten once nothing is left.
+	 */
+	private finishSetup(team: ChatTeamDetails, setup: ChatTeamChannelSetup): Observable<IChatConversationWithState> {
+		const key = this.setupKey(team);
+		const join$ = defer(() =>
+			setup.mustJoin
+				? this.api.join(setup.channel.id).pipe(
+						tap(({ conversation }) => {
+							setup.channel = conversation;
+							setup.mustJoin = false;
+							this.api.notifyChanged();
+						})
+					)
+				: of(null)
+		);
+		const archive$ = defer(() => from([...setup.archiveIds])).pipe(
+			concatMap((id) =>
+				this.api.setArchived(id, true).pipe(
+					tap(() => (setup.archiveIds = setup.archiveIds.filter((pending) => pending !== id))),
+					catchError(() => of(null))
+				)
+			)
+		);
+		const members$ = defer(() => from([...setup.batches])).pipe(
+			concatMap((batch) => this.api.addMembers(setup.channel.id, batch).pipe(tap(() => (setup.batches = setup.batches.filter((pending) => pending !== batch)))))
+		);
+		return concat(join$, archive$, members$).pipe(
+			toArray(),
+			map(() => {
+				if (!setup.mustJoin && !setup.archiveIds.length && !setup.batches.length && this.dock.teamSetups.get(key) === setup) {
+					this.dock.teamSetups.delete(key);
+				}
+				return setup.channel;
+			})
+		);
+	}
+
+	/**
+	 * The channel the card's first message to a team goes to. An unfinished set-up is finished first. Else looked for
+	 * again (a teammate may have created it since the card opened); else created, named as the team — public for a
+	 * public team, private for a private one — with as many of its members as one request may add (see `settle`).
+	 */
+	private teamChannelForFirstMessage(team: ChatTeamDetails): Observable<IChatConversationWithState> {
+		const setup = this.retainedSetup(team);
+		if (setup) return this.finishSetup(team, setup);
+		return this.findTeamChannel(team).pipe(
+			switchMap(({ found, member }) => {
+				if (found) return this.enter(found, member);
+				// Checked again with who I am now, not when the card opened: someone outside a private team starts no channel of it.
+				if (!this.mayStartChannel(team)) return throwError(() => new Error("Only a private team's members start its channel."));
+				const me = this.me()?.employeeId || null;
+				const others = team.memberEmployeeIds.filter((employeeId) => employeeId !== me);
+				const batches: string[][] = [];
+				for (let index = 0; index < others.length; index += CHAT_CHANNEL_MEMBERS_BATCH) {
+					batches.push(others.slice(index, index + CHAT_CHANNEL_MEMBERS_BATCH));
+				}
+				const [first = [], ...rest] = batches;
+				return this.api
+					.createChannel({
+						name: team.name,
+						visibility: team.public ? ChatVisibilityEnum.PUBLIC : ChatVisibilityEnum.PRIVATE,
+						memberEmployeeIds: first
+					})
+					.pipe(
+						map(({ conversation }) => conversation),
+						// Created: the chat's lists and badge learn of it.
+						tap(() => this.api.notifyChanged()),
+						switchMap((created) => this.settle(team, created, rest))
+					);
+			})
+		);
+	}
+
+	/**
+	 * Right after creating a team's channel, its set-up is kept (the members still to add) before anything else can
+	 * fail. The API does not create a channel once per name: when a teammate created one at the same moment, both look
+	 * again and settle on the same one (the oldest, see `teamChannelOf`) — the one made here, still empty, is then to be
+	 * archived, and the members are the other one's to add. The set-up is then finished (`finishSetup`). When the
+	 * channels cannot be listed again, the one created is kept.
+	 */
+	private settle(team: ChatTeamDetails, created: IChatConversationWithState, rest: string[][]): Observable<IChatConversationWithState> {
+		const setup: ChatTeamChannelSetup = { channel: created, mustJoin: false, archiveIds: [], batches: rest };
+		this.dock.teamSetups.set(this.setupKey(team), setup);
+		return this.findTeamChannel(team).pipe(
+			catchError(() => of({ found: null, member: false })),
+			tap(({ found, member }) => {
+				if (!found || String(found.id) === String(created.id)) return;
+				setup.channel = found;
+				setup.mustJoin = !member;
+				setup.archiveIds = [String(created.id)];
+				setup.batches = [];
+			}),
+			switchMap(() => this.finishSetup(team, setup))
+		);
+	}
+
+	/**
+	 * The first message to a team without its channel: goes to the team's channel (found, joined, or created — see
+	 * `teamChannelForFirstMessage`), and only once it is sent does the card turn to the channel. A failed send leaves
+	 * the box as it was, the text in it; the channel already found or created is kept for the next try.
+	 */
+	private createAndSend(team: ChatTeamDetails, submission: ComposerSubmission): void {
+		this.sending.set(true);
+		// An unfinished set-up goes first (`teamChannelForFirstMessage` finishes it, or drops it when the team's visibility
+		// changed); else the channel of a failed send, while it still has the team's visibility (the team opened again
+		// as private does not send to the public channel of the try before).
+		const unfinished = this.dock.teamSetups.has(this.setupKey(team));
+		const kept = this.pendingChannel?.teamId === team.id ? this.pendingChannel.conversation : null;
+		const pending = !unfinished && kept?.visibility === this.visibilityOf(team) ? kept : null;
+		const channel$ = pending
+			? of(pending)
+			: this.teamChannelForFirstMessage(team).pipe(tap((conversation) => (this.pendingChannel = { teamId: team.id, conversation })));
+		channel$
+			.pipe(
+				switchMap((conversation) => this.api.send(conversation.id, this.messageInput(submission)).pipe(map((result) => ({ conversation, result })))),
+				takeUntilDestroyed(this.destroyRef)
+			)
+			.subscribe({
+				next: ({ conversation, result }) => {
+					this.sending.set(false);
+					this.api.notifyChanged();
+					// Only while the card still waits for this team's channel: it shows that channel, with the message.
+					if (this.newChannelFor()?.id !== team.id) return;
+					this.pendingChannel = null;
+					this.newChannelFor.set(null);
+					this.start(conversation);
+					this.showSent(result.message);
+				},
+				error: (error) => {
+					this.sending.set(false);
+					this.fail(error, 'CHAT.COMPOSER.SEND_FAILED');
+					// Not mine to start after all (who I am is known now): the card says why and the box closes.
+					if (this.newChannelFor()?.id === team.id && !this.mayStartChannel(team)) this.awaitChannel(team);
+				}
+			});
 	}
 
 	/**
@@ -649,11 +1196,15 @@ export class ChatDockComponent {
 		this.dock.close();
 	}
 
-	/** Escape leaves edit mode, else closes the card, unless the composer used it to close one of its own lists. */
+	/** Escape leaves edit mode, else closes the member list, else closes the card, unless the composer used it to close one of its own lists. */
 	protected onEscape(event: Event): void {
 		if (event.defaultPrevented) return;
 		if (this.editing()) {
 			this.editing.set(null);
+			return;
+		}
+		if (this.showMembers()) {
+			this.showMembers.set(false);
 			return;
 		}
 		this.close();
@@ -803,9 +1354,35 @@ export class ChatDockComponent {
 		this.toastr.danger(apiErrorMessage(error) ?? this.translate.instant(fallbackKey));
 	}
 
+	/** What the composer submitted, as a message to send. */
+	private messageInput(submission: ComposerSubmission) {
+		return {
+			body: submission.body,
+			nonce: newNonce(),
+			mentionEmployeeIds: submission.mentionEmployeeIds,
+			...(submission.attachmentIds.length ? { attachmentIds: submission.attachmentIds } : {})
+		};
+	}
+
+	/** A message of mine just sent to the conversation shown: in the list, the box cleared, the keyboard back in it. */
+	private showSent(message: IChatMessageWithRelations): void {
+		// Known from the latest read started: that read may not hold it yet, the next one does while it exists.
+		if (!this.known.has(String(message.id))) this.known.set(String(message.id), this.reads);
+		this.messages.set(mergeMessages(this.messages(), [message]));
+		this.resetToken.update((value) => value + 1);
+		// The box was disabled while sending: the keyboard goes back to it.
+		setTimeout(() => this.composer()?.focus());
+	}
+
 	protected send(submission: ComposerSubmission): void {
+		if (this.sending()) return;
 		const conversation = this.conversation();
-		if (!conversation || this.sending()) return;
+		if (!conversation) {
+			// A team without its channel yet: the first message creates it.
+			const team = this.newChannelFor();
+			if (team && !this.editing()) this.createAndSend(team, submission);
+			return;
+		}
 		const editing = this.editing();
 		if (editing) {
 			this.saveEdit(String(conversation.id), editing, submission);
@@ -813,12 +1390,7 @@ export class ChatDockComponent {
 		}
 		this.sending.set(true);
 		this.api
-			.send(conversation.id, {
-				body: submission.body,
-				nonce: newNonce(),
-				mentionEmployeeIds: submission.mentionEmployeeIds,
-				...(submission.attachmentIds.length ? { attachmentIds: submission.attachmentIds } : {})
-			})
+			.send(conversation.id, this.messageInput(submission))
 			.pipe(takeUntilDestroyed(this.destroyRef))
 			.subscribe({
 				next: (result) => {
@@ -830,12 +1402,7 @@ export class ChatDockComponent {
 						clearDraft(`conversation:${conversation.id}`);
 						return;
 					}
-					// Known from the latest read started: that read may not hold it yet, the next one does while it exists.
-					if (!this.known.has(String(result.message.id))) this.known.set(String(result.message.id), this.reads);
-					this.messages.set(mergeMessages(this.messages(), [result.message]));
-					this.resetToken.update((value) => value + 1);
-					// The box was disabled while sending: the keyboard goes back to it.
-					setTimeout(() => this.composer()?.focus());
+					this.showSent(result.message);
 				},
 				error: () => {
 					this.sending.set(false);

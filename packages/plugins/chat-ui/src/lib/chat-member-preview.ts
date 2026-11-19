@@ -1,6 +1,7 @@
 import { signal } from '@angular/core';
 import { Observable, Subscription } from 'rxjs';
 import { ID, IChatConversationWithState, IChatMemberSummary } from '@gauzy/contracts';
+import { ChatPerson, ownPicture } from './chat-ui.helpers';
 
 /** The part of a conversation the member preview looks at. */
 export type ChatMemberPreviewSource = Pick<IChatConversationWithState, 'id' | 'memberCount' | 'members'>;
@@ -91,4 +92,23 @@ export class ChatMemberPreview {
 		this.generation += 1;
 		this.asking = null;
 	}
+}
+
+/**
+ * The faces to show for these employees: the ones the chat knows, each once, those with a picture of their own first
+ * (as a conversation's header picks them), at most `limit`.
+ */
+export function facesOf(employeeIds: readonly string[], byEmployee: ReadonlyMap<string, ChatPerson>, limit: number): ChatPerson[] {
+	const known = [...new Set(employeeIds.map(String))].map((id) => byEmployee.get(id)).filter((person): person is ChatPerson => !!person);
+	const withPicture = known.filter((person) => !!ownPicture(person.imageUrl));
+	const without = known.filter((person) => !ownPicture(person.imageUrl));
+	return [...withPicture, ...without].slice(0, Math.max(0, limit));
+}
+
+/** The people the chat knows among these employees, each once, by name: a team's member list. */
+export function peopleOf(employeeIds: readonly string[], byEmployee: ReadonlyMap<string, ChatPerson>): ChatPerson[] {
+	return [...new Set(employeeIds.map(String))]
+		.map((id) => byEmployee.get(id))
+		.filter((person): person is ChatPerson => !!person)
+		.sort((a, b) => a.name.localeCompare(b.name));
 }
