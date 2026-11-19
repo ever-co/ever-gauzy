@@ -253,7 +253,9 @@ $menu-guide-x: 1.125rem;
   // a section is a lone glyph.
   nb-accordion:not(.closed) nb-accordion-item.expanded:has(nb-accordion-item-body) > nb-accordion-item-header {
     background-color: $menu-row-hover-background;
-    color: nb-theme(text-basic-color);
+    // The CSS variable of the colour the hovered and selected rows use, so an
+    // open header matches them; `gauzy-text-color-1` is a different shade.
+    color: var(--text-basic-color);
     font-weight: $menu-row-active-weight;
 
     > i {

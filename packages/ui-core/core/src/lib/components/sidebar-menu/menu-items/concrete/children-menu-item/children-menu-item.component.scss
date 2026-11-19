@@ -213,7 +213,7 @@ $guide-mark-width: 2px;
     bottom: 0.25rem;
     width: $guide-mark-width;
     border-radius: $guide-mark-width;
-    background-color: nb-theme(color-primary-default);
+    background-color: var(--color-primary-default);
     pointer-events: none;
   }
 }
@@ -262,8 +262,9 @@ $guide-mark-width: 2px;
   font-size: 0.75rem;
   color: var(--text-hint-color);
 
+  // The CSS variable of the colour every other row brightens to.
   &:hover,
   &.selected {
-    color: nb-theme(text-basic-color);
+    color: var(--text-basic-color);
   }
 }
