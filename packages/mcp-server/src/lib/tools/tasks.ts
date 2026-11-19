@@ -50,6 +50,29 @@ const convertDateFields = (data: TaskDateFields) => ({
 		: undefined
 });
 
+/** The task fields the tool schemas name by key, with the values the API stores for those keys. */
+const TASK_FIELD_VALUES: Record<string, Record<string, string>> = {
+	status: TASK_STATUS_VALUES,
+	priority: TASK_PRIORITY_VALUES,
+	size: TASK_SIZE_VALUES,
+	issueType: TASK_TYPE_VALUES
+};
+
+/**
+ * A task to write, with a status, priority, size or type given by its key (`OPEN`, `HIGH`) turned into the value the
+ * API stores (`open`, `high`), as the list filters send it. Any other value, a custom status included, is kept.
+ */
+const withStoredTaskValues = <T extends Record<string, unknown>>(data: T): T => {
+	const stored: Record<string, unknown> = { ...data };
+	for (const [field, values] of Object.entries(TASK_FIELD_VALUES)) {
+		const value = stored[field];
+		if (typeof value === 'string') {
+			stored[field] = toApiValue(values, value);
+		}
+	}
+	return stored as T;
+};
+
 type TaskWithMembers = { title: string; status: string; members?: { id: string }[] };
 
 /**
@@ -455,11 +478,13 @@ export const registerTaskTools = (server: McpServer) => {
 					);
 				}
 
-				const createData = convertDateFields({
-					...task_data,
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
-				});
+				const createData = convertDateFields(
+					withStoredTaskValues({
+						...task_data,
+						organizationId: defaultParams.organizationId,
+						...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
+					})
+				);
 
 				const response = await apiClient.post('/api/tasks', createData);
 
@@ -526,7 +551,7 @@ export const registerTaskTools = (server: McpServer) => {
 		TOOL_HINTS.destructive,
 		async ({ id, task_data }) => {
 			try {
-				const updateData = convertDateFields(task_data);
+				const updateData = convertDateFields(withStoredTaskValues(task_data));
 
 				const response = await apiClient.put(`/api/tasks/${id}`, updateData);
 
@@ -600,11 +625,13 @@ export const registerTaskTools = (server: McpServer) => {
 
 				// Add organization and tenant ID to each task
 				const tasksWithDefaults = tasks.map((task) =>
-					convertDateFields({
-						...task,
-						organizationId: defaultParams.organizationId,
-						...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
-					})
+					convertDateFields(
+						withStoredTaskValues({
+							...task,
+							organizationId: defaultParams.organizationId,
+							...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
+						})
+					)
 				);
 
 				const response = await apiClient.post('/api/tasks/bulk', { items: tasksWithDefaults });
@@ -645,7 +672,7 @@ export const registerTaskTools = (server: McpServer) => {
 				// Process date conversions for each update
 				const processedUpdates = updates.map((update) => ({
 					...update,
-					data: convertDateFields(update.data)
+					data: convertDateFields(withStoredTaskValues(update.data))
 				}));
 
 				const response = await applyInTurn(processedUpdates, async ({ id, data }) =>
