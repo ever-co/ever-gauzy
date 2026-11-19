@@ -222,24 +222,14 @@ export const ENTITY_TITLES: Partial<Record<BaseEntityEnum, (record: IFavoriteRec
 	}
 };
 
-/**
- * Where a record keeps its description, by type, in order of preference: a document's summary, an
- * employee's short bio, a sprint's goal. Every other type reads its `description`. Only text written to
- * describe the record counts — never contact details, amounts or keys.
- */
 const DESCRIPTION_FIELDS: Partial<Record<BaseEntityEnum, string[]>> = {
 	[BaseEntityEnum.Document]: ['summary', 'description'],
 	[BaseEntityEnum.Employee]: ['shortDescription', 'description'],
 	[BaseEntityEnum.OrganizationSprint]: ['goal']
 };
 
-/** Longest description kept; the page clamps it to a line or two anyway. */
 const DESCRIPTION_MAX_LENGTH = 200;
 
-/**
- * The record's description for the Favorites page, as plain text (task and project descriptions are rich
- * text), or undefined when it has none worth showing — nothing, or just its name again.
- */
 export function favoriteDescription(
 	entity: BaseEntityEnum,
 	record: IFavoriteRecord,

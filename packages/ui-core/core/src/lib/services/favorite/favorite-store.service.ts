@@ -25,9 +25,7 @@ export interface IFavoriteEntry {
 	title: string;
 	icon: string;
 	link: string;
-	/** When the favorite was saved, if the API returned it. */
 	addedAt?: Date;
-	/** The record's own description, as plain text, when it has one. */
 	description?: string;
 }
 
@@ -86,7 +84,6 @@ export class FavoriteStoreService {
 			});
 	}
 
-	/** The date, or undefined when it is missing or unparsable (a date pipe throws on an invalid one). */
 	private _validDate(value: Date | string | undefined): Date | undefined {
 		if (!value) {
 			return undefined;
