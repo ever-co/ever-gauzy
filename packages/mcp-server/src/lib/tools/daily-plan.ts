@@ -8,7 +8,48 @@ import { DailyPlanStatusEnum } from '../input-schemas';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
 import { TOOL_HINTS } from './tool-hints';
+import { applyInTurn, getCurrentEmployeeId, notOfferedByApi } from './utils';
 const logger = new Logger('DailyPlanTools');
+
+/** A daily plan to create, as the create route requires it: for one employee, in one team. */
+const dailyPlanToCreateSchema = z
+	.object({
+		date: z.string().describe('The date (required)'),
+		workTimePlanned: z.number().describe('Work time planned (required)'),
+		status: z.string().describe('The status (required)'),
+		organizationTeamId: z.string().uuid().describe('The team the plan belongs to (required by the API)'),
+		employeeId: z
+			.string()
+			.uuid()
+			.optional()
+			.describe("The employee the plan is for (defaults to the signed-in person's own employee)")
+	})
+	.passthrough();
+
+type DailyPlanToCreate = { date: string; employeeId?: string; [field: string]: unknown };
+
+/**
+ * The bodies of the daily plans to create, in the signed-in organization and tenant. A plan that names no employee is
+ * the signed-in person's own: their employee is read once, and only when a plan needs it.
+ */
+const dailyPlansToCreate = async (
+	plans: DailyPlanToCreate[],
+	{ organizationId, tenantId }: { organizationId?: string; tenantId?: string }
+) => {
+	const needsOwnEmployee = plans.some((plan) => !plan.employeeId);
+	let ownEmployeeId: string | undefined;
+	if (needsOwnEmployee) {
+		ownEmployeeId = await getCurrentEmployeeId();
+	}
+
+	return plans.map((plan) => ({
+		...plan,
+		employeeId: plan.employeeId ?? ownEmployeeId,
+		organizationId,
+		...(tenantId && { tenantId }),
+		date: new Date(plan.date)
+	}));
+};
 
 export const registerDailyPlanTools = (server: McpServer) => {
 	// Get all daily plans tool
@@ -326,14 +367,7 @@ export const registerDailyPlanTools = (server: McpServer) => {
 		'create_daily_plan',
 		"Create a new daily plan for the authenticated user's organization",
 		{
-			daily_plan_data: z
-				.object({
-					date: z.string().describe('The date (required)'),
-					workTimePlanned: z.number().describe('Work time planned (required)'),
-					status: z.string().describe('The status (required)')
-				})
-				.passthrough()
-				.describe('The data for creating the daily plan')
+			daily_plan_data: dailyPlanToCreateSchema.describe('The data for creating the daily plan')
 		},
 		async ({ daily_plan_data }) => {
 			try {
@@ -346,12 +380,7 @@ export const registerDailyPlanTools = (server: McpServer) => {
 					);
 				}
 
-				const createData = {
-					...daily_plan_data,
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					date: new Date(daily_plan_data.date)
-				};
+				const [createData] = await dailyPlansToCreate([daily_plan_data], defaultParams);
 
 				const response = await apiClient.post('/api/daily-plan', createData);
 
@@ -638,34 +667,9 @@ export const registerDailyPlanTools = (server: McpServer) => {
 			startDate: z.string().optional().describe('Start date for statistics (ISO format)'),
 			endDate: z.string().optional().describe('End date for statistics (ISO format)')
 		},
-		async ({ employeeId, organizationTeamId, startDate, endDate }) => {
+		async () => {
 			try {
-				const { organizationId, tenantId } = authManager.getDefaultParams();
-
-				if (!organizationId) {
-					throw new Error(
-						'Organization ID not available. Please ensure you are logged in and have an organization.'
-					);
-				}
-				const params = {
-					organizationId,
-					...(tenantId && { tenantId }),
-					...(employeeId && { employeeId }),
-					...(organizationTeamId && { organizationTeamId }),
-					...(startDate && { startDate }),
-					...(endDate && { endDate })
-				};
-
-				const response = await apiClient.get('/api/daily-plan/statistics', { params });
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
+				throw notOfferedByApi('daily plan statistics');
 			} catch (error) {
 				const errorMsg = error instanceof Error ? `${error.message}\n${error.stack}` : JSON.stringify(error);
 				logger.error('Error fetching daily plan statistics:', errorMsg);
@@ -681,33 +685,19 @@ export const registerDailyPlanTools = (server: McpServer) => {
 		'bulk_create_daily_plans',
 		'Create multiple daily plans in bulk',
 		{
-			plans: z
-				.array(
-					z
-						.object({
-							date: z.string().describe('The date (required)'),
-							workTimePlanned: z.number().describe('Work time planned (required)'),
-							status: z.string().describe('The status (required)')
-						})
-						.passthrough()
-				)
-				.describe('Array of daily plans to create')
+			plans: z.array(dailyPlanToCreateSchema).describe('Array of daily plans to create')
 		},
 		async ({ plans }) => {
 			try {
-				const { organizationId, tenantId } = authManager.getDefaultParams();
-				if (!organizationId) {
+				const defaultParams = authManager.getDefaultParams();
+				if (!defaultParams.organizationId) {
 					throw new Error(
 						'Organization ID not available. Please ensure you are logged in and have an organization.'
 					);
 				}
 
-				const plansWithOrg = plans.map((plan) => ({
-					...plan,
-					organizationId,
-					...(tenantId && { tenantId })
-				}));
-				const response = await apiClient.post('/api/daily-plan/bulk', { plans: plansWithOrg });
+				const plansToCreate = await dailyPlansToCreate(plans, defaultParams);
+				const response = await applyInTurn(plansToCreate, (plan) => apiClient.post('/api/daily-plan', plan));
 
 				return {
 					content: [
@@ -753,12 +743,13 @@ export const registerDailyPlanTools = (server: McpServer) => {
 						'Organization ID not available. Please ensure you are logged in and have an organization.'
 					);
 				}
-				const plansWithOrg = plans.map((plan) => ({
-					...plan,
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
-				}));
-				const response = await apiClient.put('/api/daily-plan/bulk', { plans: plansWithOrg });
+				const response = await applyInTurn(plans, ({ id, ...plan }) =>
+					apiClient.put(`/api/daily-plan/${id}`, {
+						...plan,
+						organizationId: defaultParams.organizationId,
+						...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
+					})
+				);
 
 				return {
 					content: [
@@ -795,13 +786,9 @@ export const registerDailyPlanTools = (server: McpServer) => {
 				}
 				const params = {
 					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					ids
+					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
 				};
-				const response = await apiClient.delete('/api/daily-plan/bulk', {
-					data: { ids },
-					params
-				});
+				const response = await applyInTurn(ids, (id) => apiClient.delete(`/api/daily-plan/${id}`, { params }));
 
 				return {
 					content: [
