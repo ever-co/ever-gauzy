@@ -3,7 +3,13 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { pageOf, validateOrganizationContext } from './utils';
+import {
+	getCurrentEmployeeId,
+	notOfferedByApi,
+	pageOf,
+	resolveOrganizationScope,
+	validateOrganizationContext
+} from './utils';
 import { KeyResultInputSchema } from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
@@ -28,6 +34,23 @@ const convertKeyResultDateFields = (keyResultData: KeyResultData): ConvertedKeyR
 		...keyResultData,
 		deadline: keyResultData.deadline ? new Date(keyResultData.deadline) : undefined
 	};
+};
+
+/** The columns of a key result the "my key results" filter reads. */
+interface KeyResultRow {
+	ownerId?: string;
+	organizationId?: string;
+	goalId?: string;
+	status?: string;
+}
+
+/** Whether the key result has the owner and organization wanted, and the goal and status when they are asked. */
+const matchesKeyResult = (keyResult: KeyResultRow, wanted: KeyResultRow): boolean => {
+	const sameOwner = keyResult.ownerId === wanted.ownerId;
+	const sameOrganization = keyResult.organizationId === wanted.organizationId;
+	const inGoal = !wanted.goalId || keyResult.goalId === wanted.goalId;
+	const withStatus = !wanted.status || keyResult.status === wanted.status;
+	return sameOwner && sameOrganization && inGoal && withStatus;
 };
 
 export const registerKeyResultTools = (server: McpServer) => {
@@ -241,12 +264,16 @@ export const registerKeyResultTools = (server: McpServer) => {
 		},
 		async ({ id, progress, update }) => {
 			try {
+				// The body carries the tenant the route's guard reads, and no organization, which the key result DTO
+				// does not declare
+				const { tenantId } = resolveOrganizationScope();
 				const updateData = {
 					progress,
-					...(update !== undefined && { update })
+					...(update !== undefined && { update }),
+					tenantId
 				};
 
-				const response = await apiClient.put(`/api/key-results/${id}/progress`, updateData);
+				const response = await apiClient.put(`/api/key-results/${id}`, updateData);
 
 				return {
 					content: [
@@ -344,7 +371,7 @@ export const registerKeyResultTools = (server: McpServer) => {
 	registerTool(
 		server,
 		'get_my_key_results',
-		'Get key results assigned to the current authenticated user',
+		'Get the key results the current authenticated user owns',
 		{
 			page: z.number().optional().default(1).describe('Page number for pagination'),
 			limit: z.number().optional().default(10).describe('Number of items per page'),
@@ -353,18 +380,17 @@ export const registerKeyResultTools = (server: McpServer) => {
 		},
 		async ({ page = 1, limit = 10, status, goalId }) => {
 			try {
-				const defaultParams = validateOrganizationContext();
+				const scope = resolveOrganizationScope();
+				const ownerId = await getCurrentEmployeeId();
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					page,
-					limit,
-					...(status && { status }),
-					...(goalId && { goalId })
-				};
-
-				const response = await apiClient.get('/api/key-results/me', { params });
+				// The list route reads no filter (its guard reads the tenant) and answers every key result of the tenant:
+				// filter and page them here
+				const { items = [] } = await apiClient.get<{ items?: KeyResultRow[] }>('/api/key-results', {
+					params: scope
+				});
+				const wanted = { ownerId, organizationId: scope.organizationId, goalId, status };
+				const mine = items.filter((keyResult) => matchesKeyResult(keyResult, wanted));
+				const response = pageOf(mine, page, limit);
 
 				return {
 					content: [
@@ -488,29 +514,9 @@ export const registerKeyResultTools = (server: McpServer) => {
 			startDate: z.string().optional().describe('Start date for statistics (ISO format)'),
 			endDate: z.string().optional().describe('End date for statistics (ISO format)')
 		},
-		async ({ goalId, ownerId, startDate, endDate }) => {
+		async () => {
 			try {
-				const defaultParams = validateOrganizationContext();
-
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					...(goalId && { goalId }),
-					...(ownerId && { ownerId }),
-					...(startDate && { startDate }),
-					...(endDate && { endDate })
-				};
-
-				const response = await apiClient.get('/api/key-results/statistics', { params });
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
+				throw notOfferedByApi('key result statistics');
 			} catch (error) {
 				logger.error('Error fetching key result statistics:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch key result statistics: ${sanitizeErrorMessage(error)}`);
