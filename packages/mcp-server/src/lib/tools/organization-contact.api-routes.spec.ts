@@ -18,6 +18,7 @@ const CONTACT = '00000000-0000-4000-8000-000000000050';
 const OTHER_CONTACT = '00000000-0000-4000-8000-000000000051';
 const EMPLOYEE = '00000000-0000-4000-8000-000000000032';
 const SCOPE = { organizationId: ORGANIZATION, tenantId: TENANT };
+const OTHER_ORGANIZATION = '00000000-0000-4000-8000-000000000012';
 
 type ToolCallback = (args: Record<string, unknown>) => Promise<{ content: Array<{ type: string; text: string }> }>;
 type RegisteredTool = { inputSchema: z.ZodType<Record<string, unknown>>; callback: ToolCallback };
@@ -78,17 +79,48 @@ describe('organization contact tools: the routes they call', () => {
 	it.each([
 		['assign_contact_to_employee', { addedEntityIds: [CONTACT] }],
 		['unassign_contact_from_employee', { removedEntityIds: [CONTACT] }]
-	])('%s edits the employees of the contact through the route that does it', async (name, change) => {
+	])('%s reads the contact in its organization, then edits its employees', async (name, change) => {
+		const get = jest.spyOn(apiClient, 'get').mockResolvedValue({ id: CONTACT, ...SCOPE } as never);
 		const put = jest.spyOn(apiClient, 'put').mockResolvedValue(true as never);
 
 		await call(name, { contactId: CONTACT, employeeId: EMPLOYEE });
 
+		expect(get).toHaveBeenCalledWith(`/api/organization-contact/${CONTACT}`, {
+			params: { data: JSON.stringify({ findInput: SCOPE }) }
+		});
 		expect(put).toHaveBeenCalledWith('/api/organization-contact/employee', {
 			...SCOPE,
 			member: { id: EMPLOYEE },
 			...change
 		});
 	});
+
+	it.each(['assign_contact_to_employee', 'unassign_contact_from_employee'])(
+		'%s answers not found, writing nothing, for a contact of another organization',
+		async (name) => {
+			jest.spyOn(apiClient, 'get').mockResolvedValue({
+				id: CONTACT,
+				organizationId: OTHER_ORGANIZATION
+			} as never);
+			const put = jest.spyOn(apiClient, 'put').mockResolvedValue(true as never);
+
+			await expect(call(name, { contactId: CONTACT, employeeId: EMPLOYEE })).rejects.toThrow(
+				`Organization contact ${CONTACT} not found in organization ${ORGANIZATION}.`
+			);
+			expect(put).not.toHaveBeenCalled();
+		}
+	);
+
+	it.each(['assign_contact_to_employee', 'unassign_contact_from_employee'])(
+		'%s answers not found, writing nothing, for a contact the API does not find',
+		async (name) => {
+			jest.spyOn(apiClient, 'get').mockRejectedValue(new Error('Request failed with status code 404'));
+			const put = jest.spyOn(apiClient, 'put').mockResolvedValue(true as never);
+
+			await expect(call(name, { contactId: CONTACT, employeeId: EMPLOYEE })).rejects.toThrow('404');
+			expect(put).not.toHaveBeenCalled();
+		}
+	);
 
 	it("lists a contact's projects from the project list, a page at a time", async () => {
 		const get = jest.spyOn(apiClient, 'get').mockResolvedValue({ items: [], total: 0 } as never);

@@ -19,12 +19,27 @@ const tenantIdParam = z.string().uuid().optional().describe(TENANT_ID_DESCRIPTIO
 /**
  * Adds a contact to an employee's contacts, or removes it, through `PUT /organization-contact/employee`, the route
  * that edits the employees of a contact: it reads them in the organization and writes them back with the change.
+ * That route answers a success for a contact it does not find, so the contact is read first, in the same scope: one
+ * the API does not find, or finds in another organization, is not found, and nothing is written.
  */
-const editContactsOfEmployee = (
+const editContactsOfEmployee = async (
+	contactId: string,
 	employeeId: string,
-	change: { addedEntityIds?: string[]; removedEntityIds?: string[] },
+	change: 'addedEntityIds' | 'removedEntityIds',
 	scope: { organizationId: string; tenantId?: string }
-) => apiClient.put('/api/organization-contact/employee', { ...scope, member: { id: employeeId }, ...change });
+) => {
+	const contact = await apiClient.get<{ organizationId?: string }>(`/api/organization-contact/${contactId}`, {
+		params: { data: JSON.stringify({ findInput: scope }) }
+	});
+	if (contact?.organizationId !== scope.organizationId) {
+		throw new Error(`Organization contact ${contactId} not found in organization ${scope.organizationId}.`);
+	}
+	return apiClient.put('/api/organization-contact/employee', {
+		...scope,
+		member: { id: employeeId },
+		[change]: [contactId]
+	});
+};
 
 export const registerOrganizationContactTools = (server: McpServer) => {
 	// Get organization contacts tool
@@ -547,7 +562,7 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 		async ({ contactId, employeeId, organizationId, tenantId }) => {
 			try {
 				const scope = resolveOrganizationScope(organizationId, tenantId);
-				const response = await editContactsOfEmployee(employeeId, { addedEntityIds: [contactId] }, scope);
+				const response = await editContactsOfEmployee(contactId, employeeId, 'addedEntityIds', scope);
 
 				return {
 					content: [
@@ -579,7 +594,7 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 		async ({ contactId, employeeId, organizationId, tenantId }) => {
 			try {
 				const scope = resolveOrganizationScope(organizationId, tenantId);
-				const response = await editContactsOfEmployee(employeeId, { removedEntityIds: [contactId] }, scope);
+				const response = await editContactsOfEmployee(contactId, employeeId, 'removedEntityIds', scope);
 
 				return {
 					content: [
