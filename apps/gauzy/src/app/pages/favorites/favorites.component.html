@@ -1,6 +1,4 @@
-<!-- Laid out like the Documents page (docs-ui `docs-browse`): header, toolbar, then the list. -->
 <div class="favorites">
-	<!-- Header -->
 	<div class="favorites-header">
 		<div class="favorites-title-group">
 			<h4 class="favorites-title">{{ 'MENU.FAVORITES' | translate }}</h4>
@@ -8,7 +6,6 @@
 		</div>
 	</div>
 
-	<!-- Toolbar: search, then the list / cards switch at the end of the row. -->
 	<div class="favorites-toolbar">
 		<div class="favorites-search">
 			<label class="sr-only-label" for="favorites-search">{{ 'FAVORITES.SEARCH_PLACEHOLDER' | translate }}</label>
@@ -25,7 +22,27 @@
 			/>
 		</div>
 
-		<!-- `<fieldset>` groups the two buttons; the inline rules only undo the user-agent fieldset chrome. -->
+		@if (typeOptions().length) {
+			<nb-select
+				class="favorites-type-filter"
+				size="small"
+				[selected]="activeType() ?? allTypes"
+				[attr.aria-label]="'FAVORITES.TYPE' | translate"
+				(selectedChange)="onTypeSelected($event)"
+			>
+				<nb-option [value]="allTypes">
+					{{ 'FAVORITES.ALL' | translate }}
+					<span class="favorites-option-count">({{ searchedCount() }})</span>
+				</nb-option>
+				@for (option of typeOptions(); track option.entity) {
+					<nb-option [value]="option.entity">
+						{{ option.labelKey | translate }}
+						<span class="favorites-option-count">({{ option.count }})</span>
+					</nb-option>
+				}
+			</nb-select>
+		}
+
 		<fieldset
 			class="favorites-view-toggle"
 			style="border: 0; padding: 0; margin-inline: 0; min-inline-size: 0"
@@ -59,42 +76,6 @@
 		</fieldset>
 	</div>
 
-	<!-- Type tabs: All, then one per kind of record the user has favorites of. -->
-	@if (typeTabs().length) {
-		<div class="favorites-tabs" role="tablist">
-			<button
-				type="button"
-				nbButton
-				ghost
-				size="tiny"
-				role="tab"
-				class="favorites-tab"
-				[class.active]="!activeType()"
-				[attr.aria-selected]="!activeType()"
-				(click)="selectType(null)"
-			>
-				<span class="favorites-tab-label">{{ 'FAVORITES.ALL' | translate }}</span>
-				<span class="favorites-tab-count">({{ searchedCount() }})</span>
-			</button>
-			@for (tab of typeTabs(); track tab.entity) {
-				<button
-					type="button"
-					nbButton
-					ghost
-					size="tiny"
-					role="tab"
-					class="favorites-tab"
-					[class.active]="activeType() === tab.entity"
-					[attr.aria-selected]="activeType() === tab.entity"
-					(click)="selectType(tab.entity)"
-				>
-					<span class="favorites-tab-label">{{ tab.labelKey | translate }}</span>
-					<span class="favorites-tab-count">({{ tab.count }})</span>
-				</button>
-			}
-		</div>
-	}
-
 	@if (loadFailed()) {
 		<div class="load-failed" role="alert">
 			<span>{{ 'FAVORITES.ERROR.LOAD_FAILED' | translate }}</span>
@@ -105,15 +86,12 @@
 		</div>
 	}
 
-	<!-- Content -->
 	@if (loading() && !rows().length) {
 		<div class="favorites-empty-host">
 			<nb-spinner status="primary" size="medium"></nb-spinner>
 		</div>
 	} @else if (visibleRows().length) {
 		@if (cardsView()) {
-			<!-- Cards view. The card is a link and the star a sibling laid over its name row: a link may not
-			contain a button. -->
 			<ul class="favorites-cards-grid">
 				@for (row of visibleRows(); track row.favoriteId) {
 					<li class="favorites-card-wrap">
@@ -124,7 +102,6 @@
 							<span class="favorites-card-head">
 								<span class="favorites-card-name" [title]="row.title">{{ row.title }}</span>
 							</span>
-							<!-- Only what the record has: no space is held for a missing description or note. -->
 							@if (row.description) {
 								<span class="favorites-card-desc" [title]="row.description">{{ row.description }}</span>
 							}
@@ -133,7 +110,6 @@
 									{{ 'FAVORITES.PINNED_FOR_ORGANIZATION' | translate }}
 								</span>
 							}
-							<!-- Date and type, where a Documents card has its date and size. -->
 							<span class="favorites-card-footer">
 								<span>{{ row.addedAt ? (row.addedAt | date: 'mediumDate') : '' }}</span>
 								<span class="favorites-card-type">{{ row.typeKey | translate }}</span>
@@ -144,7 +120,6 @@
 				}
 			</ul>
 		} @else {
-			<!-- Table view -->
 			<div class="favorites-table">
 				<table>
 					<thead>
@@ -209,7 +184,6 @@
 	}
 </div>
 
-<!-- The star of a favorite, the same in both views: removes the user's own favorite. -->
 <ng-template #star let-row>
 	<button
 		type="button"

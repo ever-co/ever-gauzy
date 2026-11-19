@@ -7,6 +7,7 @@ import {
 	NbButtonModule,
 	NbIconModule,
 	NbInputModule,
+	NbSelectModule,
 	NbSpinnerModule,
 	NbTooltipModule
 } from '@nebular/theme';
@@ -18,34 +19,29 @@ import { FavoriteService, FavoriteStoreService, IFavoriteEntry, Store, ToastrSer
 /** A favorite as a row of the page, with its link parsed so query parameters (`?view=full`) survive. */
 interface IFavoriteRow extends IFavoriteEntry {
 	url: UrlTree;
-	/** The singular name of the record's type ("Task", "Project"), as a translation key. */
 	typeKey: string;
 }
 
-/** One tab of the type strip: a kind of record the user has favorites of. */
-interface IFavoriteTypeTab {
+interface IFavoriteTypeOption {
 	entity: BaseEntityEnum;
 	labelKey: string;
 	count: number;
 }
 
-/** `OrganizationProject` → `ORGANIZATION_PROJECT`, the key of a type's names in `FAVORITES`. */
 const typeKeyOf = (entity: BaseEntityEnum): string =>
 	String(entity)
 		.replace(/([a-z0-9])([A-Z])/g, '$1_$2')
 		.toUpperCase();
 
-/** The plural name, for a tab: "Tasks". */
+const ALL_TYPES = 'ALL' as const;
+
 const typeLabelKey = (entity: BaseEntityEnum): string => `FAVORITES.TYPES.${typeKeyOf(entity)}`;
 
-/** The singular name, for one favorite: "Task". */
 const itemTypeKey = (entity: BaseEntityEnum): string => `FAVORITES.ITEM_TYPES.${typeKeyOf(entity)}`;
 
 /**
  * Every favorite of the signed-in user, newest first. The sidebar lists only the newest few and links here
- * for the rest. Laid out like the Documents page: a search box and a list / cards switch on the toolbar, a
- * tab per kind of record, then the favorites as a table or as cards. Each favorite opens its record, and its
- * star takes it off the favorites.
+ * for the rest; each row opens its record or takes it off the favorites.
  */
 @Component({
 	selector: 'ga-favorites',
@@ -57,6 +53,7 @@ const itemTypeKey = (entity: BaseEntityEnum): string => `FAVORITES.ITEM_TYPES.${
 		NbButtonModule,
 		NbIconModule,
 		NbInputModule,
+		NbSelectModule,
 		NbSpinnerModule,
 		NbTooltipModule,
 		TranslatePipe
@@ -75,7 +72,6 @@ export class FavoritesComponent {
 	protected readonly layoutStyles = ComponentLayoutStyleEnum;
 	private readonly _viewComponentName = ComponentEnum.FAVORITES;
 
-	/** Cards or table: the user's choice for this page, else their preferred layout, else the app default. */
 	protected readonly cardsView = toSignal(
 		this._store
 			.componentLayout$(this._viewComponentName)
@@ -97,9 +93,7 @@ export class FavoritesComponent {
 		}))
 	);
 
-	/** The search text, matched against the favorites' names and descriptions. */
 	protected readonly search = signal('');
-	/** The type tab picked; `null` is "All". */
 	private readonly _selectedType = signal<BaseEntityEnum | null>(null);
 
 	private readonly _searched = computed<IFavoriteRow[]>(() => {
@@ -114,14 +108,9 @@ export class FavoritesComponent {
 			: rows;
 	});
 
-	/** The count on the "All" tab. */
 	protected readonly searchedCount = computed(() => this._searched().length);
 
-	/**
-	 * One tab per kind of record the user has favorites of, in the order the newest of each was added. The
-	 * tabs come from every favorite so they stay put while typing; the counts follow the search.
-	 */
-	protected readonly typeTabs = computed<IFavoriteTypeTab[]>(() => {
+	protected readonly typeOptions = computed<IFavoriteTypeOption[]>(() => {
 		const counts = new Map<BaseEntityEnum, number>();
 		for (const row of this.rows()) {
 			counts.set(row.entity, 0);
@@ -132,10 +121,9 @@ export class FavoritesComponent {
 		return Array.from(counts, ([entity, count]) => ({ entity, labelKey: typeLabelKey(entity), count }));
 	});
 
-	/** The tab in force: a picked type nobody has favorites of any more (the last one removed) falls back to All. */
 	protected readonly activeType = computed<BaseEntityEnum | null>(() => {
 		const selected = this._selectedType();
-		return selected && this.typeTabs().some((tab) => tab.entity === selected) ? selected : null;
+		return selected && this.typeOptions().some((option) => option.entity === selected) ? selected : null;
 	});
 
 	protected readonly visibleRows = computed<IFavoriteRow[]>(() => {
@@ -151,8 +139,10 @@ export class FavoritesComponent {
 		this._store.setLayoutForComponent(this._viewComponentName, layout);
 	}
 
-	protected selectType(type: BaseEntityEnum | null): void {
-		this._selectedType.set(type);
+	protected readonly allTypes = ALL_TYPES;
+
+	protected onTypeSelected(value: BaseEntityEnum | typeof ALL_TYPES): void {
+		this._selectedType.set(value === ALL_TYPES ? null : value);
 	}
 
 	protected onSearch(value: string): void {
