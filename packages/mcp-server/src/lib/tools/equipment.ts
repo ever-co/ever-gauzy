@@ -3,7 +3,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { pageOf, validateOrganizationContext } from './utils';
+import { notOfferedByApi, pageOf, validateOrganizationContext } from './utils';
 import { EquipmentTypeEnum, EquipmentStatusEnum } from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
@@ -509,18 +509,9 @@ export const registerEquipmentTools = (server: McpServer) => {
 			id: z.string().uuid().describe('The equipment ID'),
 			status: EquipmentStatusEnum.describe('The new status for the equipment')
 		},
-		async ({ id, status }) => {
+		async () => {
 			try {
-				const response = await apiClient.put(`/api/equipment/${id}/status`, { status });
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
+				throw notOfferedByApi('a status on equipment');
 			} catch (error) {
 				logger.error('Error updating equipment status:', sanitizeForLogging(error));
 				throw new Error(`Failed to update equipment status: ${sanitizeErrorMessage(error)}`);
@@ -538,21 +529,12 @@ export const registerEquipmentTools = (server: McpServer) => {
 			id: z.string().uuid().describe('The equipment ID'),
 			employeeId: z.string().uuid().describe('The employee ID to assign to')
 		},
-		async ({ id, employeeId }) => {
+		async () => {
 			try {
-				const response = await apiClient.put(`/api/equipment/${id}/assign`, {
-					assignedToEmployeeId: employeeId,
-					status: 'ASSIGNED'
-				});
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
+				throw notOfferedByApi(
+					'assigning equipment',
+					'Equipment is shared with an employee for a period: request_equipment_sharing files a sharing.'
+				);
 			} catch (error) {
 				logger.error('Error assigning equipment:', sanitizeForLogging(error));
 				throw new Error(`Failed to assign equipment: ${sanitizeErrorMessage(error)}`);
@@ -569,21 +551,9 @@ export const registerEquipmentTools = (server: McpServer) => {
 		{
 			id: z.string().uuid().describe('The equipment ID')
 		},
-		async ({ id }) => {
+		async () => {
 			try {
-				const response = await apiClient.put(`/api/equipment/${id}/unassign`, {
-					assignedToEmployeeId: null,
-					status: 'AVAILABLE'
-				});
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
+				throw notOfferedByApi('unassigning equipment');
 			} catch (error) {
 				logger.error('Error unassigning equipment:', sanitizeForLogging(error));
 				throw new Error(`Failed to unassign equipment: ${sanitizeErrorMessage(error)}`);
@@ -682,30 +652,12 @@ export const registerEquipmentTools = (server: McpServer) => {
 			status: EquipmentStatusEnum.optional().describe('Filter by equipment status'),
 			relations: z.array(z.string()).optional().describe('Relations to include')
 		},
-		async ({ page = 1, limit = 10, type, status, relations }) => {
+		async () => {
 			try {
-				const defaultParams = validateOrganizationContext();
-
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					page,
-					limit,
-					...(type && { type }),
-					...(status && { status }),
-					...(relations && { relations })
-				};
-
-				const response = await apiClient.get('/api/equipment/me', { params });
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
+				throw notOfferedByApi(
+					'equipment assigned to a person',
+					'Equipment is shared, not assigned: get_equipment_sharing_requests lists them by employee.'
+				);
 			} catch (error) {
 				logger.error('Error fetching my equipment:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch my equipment: ${sanitizeErrorMessage(error)}`);
@@ -769,28 +721,9 @@ export const registerEquipmentTools = (server: McpServer) => {
 			manufacturer: z.string().optional().describe('Filter by manufacturer'),
 			groupBy: z.enum(['type', 'status', 'manufacturer', 'assignee']).optional().describe('Group statistics by')
 		},
-		async ({ type, manufacturer, groupBy }) => {
+		async () => {
 			try {
-				const defaultParams = validateOrganizationContext();
-
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					...(type && { type }),
-					...(manufacturer && { manufacturer }),
-					...(groupBy && { groupBy })
-				};
-
-				const response = await apiClient.get('/api/equipment/statistics', { params });
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
+				throw notOfferedByApi('equipment statistics');
 			} catch (error) {
 				logger.error('Error fetching equipment statistics:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch equipment statistics: ${sanitizeErrorMessage(error)}`);
@@ -908,30 +841,9 @@ export const registerEquipmentTools = (server: McpServer) => {
 			status: EquipmentStatusEnum.optional().describe('Filter by equipment status'),
 			manufacturer: z.string().optional().describe('Filter by manufacturer')
 		},
-		async ({ query, limit = 20, type, status, manufacturer }) => {
+		async () => {
 			try {
-				const defaultParams = validateOrganizationContext();
-
-				const params = {
-					query,
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					limit,
-					...(type && { type }),
-					...(status && { status }),
-					...(manufacturer && { manufacturer })
-				};
-
-				const response = await apiClient.get('/api/equipment/search', { params });
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
+				throw notOfferedByApi('searching equipment');
 			} catch (error) {
 				logger.error('Error searching equipment:', sanitizeForLogging(error));
 				throw new Error(`Failed to search equipment: ${sanitizeErrorMessage(error)}`);
