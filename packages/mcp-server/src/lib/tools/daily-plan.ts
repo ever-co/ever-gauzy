@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { authManager } from '../common/auth-manager';
 import { DAILY_PLAN_STATUS_VALUES, DailyPlanStatusFilter } from '../input-schemas';
+import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
 import { TOOL_HINTS } from './tool-hints';
@@ -173,9 +174,8 @@ export const registerDailyPlanTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				const errorMsg = error instanceof Error ? `${error.message}\n${error.stack}` : JSON.stringify(error);
-				logger.error('Error fetching daily plans:', errorMsg);
-				throw new Error(`Failed to fetch daily plans: ${errorMsg}`);
+				logger.error('Error fetching daily plans:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch daily plans: ${sanitizeErrorMessage(error)}`);
 			}
 		},
 		TOOL_HINTS.readOnly
@@ -221,9 +221,8 @@ export const registerDailyPlanTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				const errorMsg = error instanceof Error ? `${error.message}\n${error.stack}` : JSON.stringify(error);
-				logger.error('Error fetching my daily plans:', errorMsg);
-				throw new Error(`Failed to fetch my daily plans: ${errorMsg}`);
+				logger.error('Error fetching my daily plans:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch my daily plans: ${sanitizeErrorMessage(error)}`);
 			}
 		},
 		TOOL_HINTS.readOnly
@@ -271,9 +270,8 @@ export const registerDailyPlanTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				const errorMsg = error instanceof Error ? `${error.message}\n${error.stack}` : JSON.stringify(error);
-				logger.error('Error fetching team daily plans:', errorMsg);
-				throw new Error(`Failed to fetch team daily plans: ${errorMsg}`);
+				logger.error('Error fetching team daily plans:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch team daily plans: ${sanitizeErrorMessage(error)}`);
 			}
 		},
 		TOOL_HINTS.readOnly
@@ -320,9 +318,8 @@ export const registerDailyPlanTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				const errorMsg = error instanceof Error ? `${error.message}\n${error.stack}` : JSON.stringify(error);
-				logger.error('Error fetching employee daily plans:', errorMsg);
-				throw new Error(`Failed to fetch employee daily plans: ${errorMsg}`);
+				logger.error('Error fetching employee daily plans:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch employee daily plans: ${sanitizeErrorMessage(error)}`);
 			}
 		},
 		TOOL_HINTS.readOnly
@@ -370,9 +367,8 @@ export const registerDailyPlanTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				const errorMsg = error instanceof Error ? `${error.message}\n${error.stack}` : JSON.stringify(error);
-				logger.error('Error fetching daily plans for task:', errorMsg);
-				throw new Error(`Failed to fetch daily plans for task: ${errorMsg}`);
+				logger.error('Error fetching daily plans for task:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch daily plans for task: ${sanitizeErrorMessage(error)}`);
 			}
 		},
 		TOOL_HINTS.readOnly
@@ -415,9 +411,8 @@ export const registerDailyPlanTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				const errorMsg = error instanceof Error ? `${error.message}\n${error.stack}` : JSON.stringify(error);
-				logger.error('Error fetching daily plan:', errorMsg);
-				throw new Error(`Failed to fetch daily plan: ${errorMsg}`);
+				logger.error('Error fetching daily plan:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch daily plan: ${sanitizeErrorMessage(error)}`);
 			}
 		},
 		TOOL_HINTS.readOnly
@@ -455,9 +450,8 @@ export const registerDailyPlanTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				const errorMsg = error instanceof Error ? `${error.message}\n${error.stack}` : JSON.stringify(error);
-				logger.error('Error creating daily plan:', errorMsg);
-				throw new Error(`Failed to create daily plan: ${errorMsg}`);
+				logger.error('Error creating daily plan:', sanitizeForLogging(error));
+				throw new Error(`Failed to create daily plan: ${sanitizeErrorMessage(error)}`);
 			}
 		},
 		TOOL_HINTS.write
@@ -496,9 +490,8 @@ export const registerDailyPlanTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				const errorMsg = error instanceof Error ? `${error.message}\n${error.stack}` : JSON.stringify(error);
-				logger.error('Error updating daily plan:', errorMsg);
-				throw new Error(`Failed to update daily plan: ${errorMsg}`);
+				logger.error('Error updating daily plan:', sanitizeForLogging(error));
+				throw new Error(`Failed to update daily plan: ${sanitizeErrorMessage(error)}`);
 			}
 		},
 		TOOL_HINTS.destructive
@@ -535,9 +528,8 @@ export const registerDailyPlanTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				const errorMsg = error instanceof Error ? `${error.message}\n${error.stack}` : JSON.stringify(error);
-				logger.error('Error deleting daily plan:', errorMsg);
-				throw new Error(`Failed to delete daily plan: ${errorMsg}`);
+				logger.error('Error deleting daily plan:', sanitizeForLogging(error));
+				throw new Error(`Failed to delete daily plan: ${sanitizeErrorMessage(error)}`);
 			}
 		},
 		TOOL_HINTS.idempotentDestructive
@@ -578,9 +570,8 @@ export const registerDailyPlanTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				const errorMsg = error instanceof Error ? `${error.message}\n${error.stack}` : JSON.stringify(error);
-				logger.error('Error adding task to daily plan:', errorMsg);
-				throw new Error(`Failed to add task to daily plan: ${errorMsg}`);
+				logger.error('Error adding task to daily plan:', sanitizeForLogging(error));
+				throw new Error(`Failed to add task to daily plan: ${sanitizeErrorMessage(error)}`);
 			}
 		},
 		TOOL_HINTS.write
@@ -621,9 +612,8 @@ export const registerDailyPlanTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				const errorMsg = error instanceof Error ? `${error.message}\n${error.stack}` : JSON.stringify(error);
-				logger.error('Error removing task from daily plan:', errorMsg);
-				throw new Error(`Failed to remove task from daily plan: ${errorMsg}`);
+				logger.error('Error removing task from daily plan:', sanitizeForLogging(error));
+				throw new Error(`Failed to remove task from daily plan: ${sanitizeErrorMessage(error)}`);
 			}
 		},
 		TOOL_HINTS.idempotentDestructive
@@ -662,9 +652,8 @@ export const registerDailyPlanTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				const errorMsg = error instanceof Error ? `${error.message}\n${error.stack}` : JSON.stringify(error);
-				logger.error('Error removing task from many daily plans:', errorMsg);
-				throw new Error(`Failed to remove task from many daily plans: ${errorMsg}`);
+				logger.error('Error removing task from many daily plans:', sanitizeForLogging(error));
+				throw new Error(`Failed to remove task from many daily plans: ${sanitizeErrorMessage(error)}`);
 			}
 		},
 		TOOL_HINTS.idempotentDestructive
@@ -710,9 +699,8 @@ export const registerDailyPlanTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				const errorMsg = error instanceof Error ? `${error.message}\n${error.stack}` : JSON.stringify(error);
-				logger.error('Error fetching daily plan count:', errorMsg);
-				throw new Error(`Failed to fetch daily plan count: ${errorMsg}`);
+				logger.error('Error fetching daily plan count:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch daily plan count: ${sanitizeErrorMessage(error)}`);
 			}
 		},
 		TOOL_HINTS.readOnly
@@ -733,9 +721,8 @@ export const registerDailyPlanTools = (server: McpServer) => {
 			try {
 				throw notOfferedByApi('daily plan statistics');
 			} catch (error) {
-				const errorMsg = error instanceof Error ? `${error.message}\n${error.stack}` : JSON.stringify(error);
-				logger.error('Error fetching daily plan statistics:', errorMsg);
-				throw new Error(`Failed to fetch daily plan statistics: ${errorMsg}`);
+				logger.error('Error fetching daily plan statistics:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch daily plan statistics: ${sanitizeErrorMessage(error)}`);
 			}
 		},
 		TOOL_HINTS.readOnly
@@ -770,9 +757,8 @@ export const registerDailyPlanTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				const errorMsg = error instanceof Error ? `${error.message}\n${error.stack}` : JSON.stringify(error);
-				logger.error('Error bulk creating daily plans:', errorMsg);
-				throw new Error(`Failed to bulk create daily plans: ${errorMsg}`);
+				logger.error('Error bulk creating daily plans:', sanitizeForLogging(error));
+				throw new Error(`Failed to bulk create daily plans: ${sanitizeErrorMessage(error)}`);
 			}
 		},
 		TOOL_HINTS.write
@@ -822,9 +808,8 @@ export const registerDailyPlanTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				const errorMsg = error instanceof Error ? `${error.message}\n${error.stack}` : JSON.stringify(error);
-				logger.error('Error bulk updating daily plans:', errorMsg);
-				throw new Error(`Failed to bulk update daily plans: ${errorMsg}`);
+				logger.error('Error bulk updating daily plans:', sanitizeForLogging(error));
+				throw new Error(`Failed to bulk update daily plans: ${sanitizeErrorMessage(error)}`);
 			}
 		},
 		TOOL_HINTS.destructive
@@ -861,9 +846,8 @@ export const registerDailyPlanTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				const errorMsg = error instanceof Error ? `${error.message}\n${error.stack}` : JSON.stringify(error);
-				logger.error('Error bulk deleting daily plans:', errorMsg);
-				throw new Error(`Failed to bulk delete daily plans: ${errorMsg}`);
+				logger.error('Error bulk deleting daily plans:', sanitizeForLogging(error));
+				throw new Error(`Failed to bulk delete daily plans: ${sanitizeErrorMessage(error)}`);
 			}
 		},
 		TOOL_HINTS.idempotentDestructive
