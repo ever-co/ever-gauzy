@@ -32,9 +32,10 @@ import { TypeOrmEmbedSiteGrantRepository } from './repository/type-orm-embed-sit
  * - A revocation holds the sign-in's tokens: the renewal's update of the spent token waits for its commit, then finds
  *   the token revoked, and stores no successor.
  *
- * Runs when the entities are mapped for PostgreSQL and an empty, throwaway database is given (it builds the schema):
+ * Runs when the entities are mapped for PostgreSQL and an empty, throwaway database is given (it builds the schema).
+ * The suite builds the TypeORM repositories only, which the service uses when DB_ORM names TypeORM:
  *
- *   DB_TYPE=postgres GAUZY_MIGRATION_TEST_POSTGRES_URL=postgres://user:password@host:port/empty_database \
+ *   DB_TYPE=postgres DB_ORM=typeorm GAUZY_MIGRATION_TEST_POSTGRES_URL=postgres://user:password@host:port/empty_database \
  *     node --experimental-vm-modules node_modules/jest/bin/jest.js -c packages/core/jest.config.ts <this file>
  */
 
