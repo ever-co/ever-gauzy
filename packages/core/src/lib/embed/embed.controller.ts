@@ -31,10 +31,10 @@ import {
 	ExchangeEmbedCredentialDTO
 } from './dto/embed-credential.dto';
 import { EmbedProjectResponseDTO } from './dto/embed-project.dto';
-import { AuthorizeEmbedSiteDTO, EmbedSiteTokensResponseDTO } from './dto/embed-site-grant.dto';
+import { AuthorizeEmbedSiteDTO, EmbedSiteTokensResponseDTO, RenewEmbedSiteDTO } from './dto/embed-site-grant.dto';
 import { EmbedClientService } from './embed-client.service';
 import { EmbedCredentialService } from './embed-credential.service';
-import { EMBED_EXCHANGE_THROTTLE, embedExchangeAddress } from './embed-exchange-throttle';
+import { EMBED_EXCHANGE_THROTTLE, EMBED_SITE_THROTTLE, embedExchangeAddress } from './embed-exchange-throttle';
 import { CreateEmbedAllowedOriginDTO, EmbedAllowedOriginResponseDTO } from './dto/embed-allowed-origin.dto';
 import { EmbedAllowedOriginService } from './embed-allowed-origin.service';
 import { EmbedSiteGrantService } from './embed-site-grant.service';
@@ -256,5 +256,32 @@ export class EmbedSiteGrantController {
 	@UseValidationPipe({ whitelist: true })
 	async authorize(@Body() input: AuthorizeEmbedSiteDTO): Promise<EmbedSiteTokensResponseDTO> {
 		return await this.embedSiteGrantService.authorize(input);
+	}
+
+	/**
+	 * Public, because the renewal token is the proof; no validation pipe, so a malformed body gets the same 401 as a
+	 * revoked token.
+	 */
+	@ApiOperation({ summary: "The next pair for a site's renewal token, from that site only; the token works once" })
+	@ApiBody({ type: RenewEmbedSiteDTO })
+	@ApiResponse({ status: HttpStatus.OK, type: EmbedSiteTokensResponseDTO })
+	@ApiResponse({
+		status: HttpStatus.UNAUTHORIZED,
+		description: 'A renewal token unknown, revoked, expired or already used (EMBED_GRANT_ENDED)'
+	})
+	@ApiResponse({
+		status: HttpStatus.FORBIDDEN,
+		description:
+			'Another site (EMBED_ORIGIN), a site no longer allowed (EMBED_ORIGIN_NOT_ALLOWED) or without sign-in (EMBED_SITE_SIGN_IN_OFF), or a person who may no longer track time (EMBED_MEMBER_NOT_ALLOWED)'
+	})
+	@ApiResponse({ status: HttpStatus.TOO_MANY_REQUESTS, description: 'Too many renewals from this address' })
+	@Public()
+	@Throttle(EMBED_SITE_THROTTLE)
+	@Post('/renew')
+	@HttpCode(HttpStatus.OK)
+	@Header('Cache-Control', 'no-store')
+	@Header('Pragma', 'no-cache')
+	async renew(@Body() input: RenewEmbedSiteDTO, @Req() request: Request): Promise<EmbedSiteTokensResponseDTO> {
+		return await this.embedSiteGrantService.renew(input, request.headers?.origin);
 	}
 }

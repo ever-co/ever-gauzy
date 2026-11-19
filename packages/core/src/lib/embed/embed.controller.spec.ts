@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common/constants';
 import { Request } from 'express';
 import { sign } from 'jsonwebtoken';
+import { THROTTLER_LIMIT, THROTTLER_TRACKER } from '@nestjs/throttler/dist/throttler.constants';
 import { PERMISSIONS_METADATA, PUBLIC_METHOD_METADATA } from '@gauzy/constants';
 import { IEmbedClientReport, PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
@@ -29,6 +30,7 @@ import {
 	reachableByEmbedToken
 } from './embed-session';
 import { EMBED_TOKENS_ENV } from './embed.utils';
+import { EMBED_EXCHANGE_LIMIT_PER_ADDRESS, embedExchangeAddress } from './embed-exchange-throttle';
 
 /**
  * `POST /api/embed/client-report`, as the controller declares it: public (the credential is the proof), behind the
@@ -229,5 +231,38 @@ describe('POST /embed/authorize', () => {
 		await expect(controller.authorize(body)).resolves.toBe(tokens);
 
 		expect(authorize).toHaveBeenCalledWith(body);
+	});
+});
+
+/**
+ * `POST /api/embed/renew`, as the controller declares it: public (the renewal token is the proof), behind the switch,
+ * limited per address, never cached, and handed to the service with the request's Origin header.
+ */
+describe('POST /embed/renew', () => {
+	const renewHandler = EmbedSiteGrantController.prototype.renew;
+
+	it('is a public POST under /embed, limited per address, answered 200 and never cached', () => {
+		expect(Reflect.getMetadata(PATH_METADATA, renewHandler)).toBe('/renew');
+		expect(Reflect.getMetadata(METHOD_METADATA, renewHandler)).toBe(RequestMethod.POST);
+		expect(Reflect.getMetadata(HTTP_CODE_METADATA, renewHandler)).toBe(200);
+		expect(Reflect.getMetadata(PUBLIC_METHOD_METADATA, renewHandler)).toBe(true);
+		expect(Reflect.getMetadata(GUARDS_METADATA, renewHandler)).toBeUndefined();
+		expect(Reflect.getMetadata(`${THROTTLER_LIMIT}default`, renewHandler)).toBe(EMBED_EXCHANGE_LIMIT_PER_ADDRESS);
+		expect(Reflect.getMetadata(`${THROTTLER_TRACKER}default`, renewHandler)).toBe(embedExchangeAddress);
+		expect(Reflect.getMetadata(HEADERS_METADATA, renewHandler)).toEqual(
+			expect.arrayContaining([{ name: 'Cache-Control', value: 'no-store' }])
+		);
+	});
+
+	it("hands the body and the request's Origin header to the service, and answers its tokens", async () => {
+		const tokens = { token: 'a-timer-token', renewalToken: 'gzr_next' };
+		const renew = jest.fn(async () => tokens);
+		const controller = new EmbedSiteGrantController({ renew } as unknown as EmbedSiteGrantService);
+		const body = { renewalToken: 'gzr_a-renewal-token' };
+		const request = { headers: { origin: 'https://team.example.com' }, body } as unknown as Request;
+
+		await expect(controller.renew(body, request)).resolves.toBe(tokens);
+
+		expect(renew).toHaveBeenCalledWith(body, 'https://team.example.com');
 	});
 });

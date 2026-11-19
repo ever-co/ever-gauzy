@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, IsUUID, MaxLength } from 'class-validator';
-import { ID, IEmbedAuthorizeInput, IEmbedSiteTokens } from '@gauzy/contracts';
+import { ID, IEmbedAuthorizeInput, IEmbedRenewalInput, IEmbedSiteTokens } from '@gauzy/contracts';
 import { EmbedTokenExchangeResponseDTO } from './embed-credential.dto';
 
 /**
@@ -23,6 +23,17 @@ export class AuthorizeEmbedSiteDTO implements IEmbedAuthorizeInput {
 	@IsNotEmpty()
 	@MaxLength(255)
 	origin: string;
+}
+
+/**
+ * `POST /api/embed/renew`
+ *
+ * Carries no validators, and the route runs no validation pipe: a malformed renewal token gets the same 401 as a
+ * revoked one (see `EmbedSiteGrantService.renew`).
+ */
+export class RenewEmbedSiteDTO implements IEmbedRenewalInput {
+	@ApiProperty({ type: () => String, description: 'The renewal token the last answer gave the site (gzr_...).' })
+	renewalToken: string;
 }
 
 /** What a site gets when a person allows it, and at each renewal: the only answer that holds the renewal token. */

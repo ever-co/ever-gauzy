@@ -8,7 +8,8 @@ import {
 	ServiceUnavailableException,
 	UnauthorizedException
 } from '@nestjs/common';
-import { ID, IEmbedAuthorizeInput } from '@gauzy/contracts';
+import { IsNull } from 'typeorm';
+import { ID, IEmbedAuthorizeInput, IEmbedRenewalInput } from '@gauzy/contracts';
 import { RequestContext } from '../core/context/request-context';
 import { DATABASE_UNAVAILABLE_MESSAGE, isDatabaseUnavailableError } from '../core/errors/database-unavailable';
 import { getORMType } from '../core/utils';
@@ -25,7 +26,12 @@ import { IEmbedMemberScope } from './embed-member.service';
 import { EmbedMemberTokens } from './embed-member-token';
 import { normalizeOrigin } from './embed-origin';
 import { EmbedSiteGrant } from './embed-site-grant.entity';
-import { generateEmbedRenewalToken } from './embed.utils';
+import {
+	embedCredentialHashesMatch,
+	generateEmbedRenewalToken,
+	hashEmbedCredential,
+	isWellFormedEmbedRenewalToken
+} from './embed.utils';
 import { TypeOrmEmbedSiteGrantRepository } from './repository/type-orm-embed-site-grant.repository';
 
 /** How long a renewal token works: each renewal gives the sign-in this long again. */
@@ -56,6 +62,24 @@ const memberNotAllowed = () =>
 		code: 'EMBED_MEMBER_NOT_ALLOWED',
 		message:
 			'Only an active member of the organization whose time tracking is on can start a timer from a site. Ask an administrator of the organization.'
+	});
+
+/** The code of the refusal of a renewal token that no longer works: unknown, revoked, expired or already used. */
+export const EMBED_GRANT_ENDED = 'EMBED_GRANT_ENDED';
+
+const grantEnded = () =>
+	new UnauthorizedException({
+		statusCode: 401,
+		code: EMBED_GRANT_ENDED,
+		message:
+			"This site's sign-in has ended: it was revoked, it expired or its renewal token was already used. Sign in again from this site."
+	});
+
+const fromAnotherSite = () =>
+	new ForbiddenException({
+		statusCode: 403,
+		code: 'EMBED_ORIGIN',
+		message: 'This renewal token works only from the site it was issued for. Renew it from that site.'
 	});
 
 /** The site grant a timer token and a renewal token are issued for. */
@@ -149,6 +173,82 @@ export class EmbedSiteGrantService {
 		}
 	}
 
+	/**
+	 * The next pair for the site that holds a renewal token, which works once. It works only from its own site (the
+	 * request's `Origin` header, as a browser sends it), until it expires, while the organization still allows the site
+	 * with sign-in on and the person is still an active member who may track time: each of those is refused with its
+	 * own code, and the token keeps working once the refusal is lifted. A token unknown, revoked, expired or already
+	 * used gets one 401 `EMBED_GRANT_ENDED`; a token already used, presented again, also revokes every token of its
+	 * sign-in, since one of the two holders is not the site.
+	 *
+	 * @param input The renewal token, as the body holds it.
+	 * @param requestOrigin The request's `Origin` header.
+	 */
+	async renew(input: IEmbedRenewalInput, requestOrigin: unknown): Promise<EmbedSiteTokensResponseDTO> {
+		try {
+			return await this.judgeAndRenew(input?.renewalToken, requestOrigin);
+		} catch (error) {
+			throw this.failureOf(error, 'renewal');
+		}
+	}
+
+	private async judgeAndRenew(presented: unknown, requestOrigin: unknown): Promise<EmbedSiteTokensResponseDTO> {
+		const spent = await this.findByToken(presented);
+		if (!spent) {
+			this.logger.warn('Embed site renewal refused: unknown renewal token');
+			throw grantEnded();
+		}
+		const subject = `family=${spent.familyId}`;
+		if (normalizeOrigin(requestOrigin) !== spent.origin) {
+			this.logger.warn(`Embed site renewal refused: from another origin ${subject}`);
+			throw fromAnotherSite();
+		}
+		const now = new Date();
+		await this.assertLive(spent, now);
+		const scope = { tenantId: spent.tenantId, organizationId: spent.organizationId };
+		await this.assertSignInAllowed(scope, spent.origin, subject);
+		const employee = await this.memberTokens.findEmployee({
+			...scope,
+			id: spent.employeeId,
+			userId: spent.userId,
+			isActive: true,
+			isArchived: false
+		});
+		await this.assertMayTrack(employee, scope, subject);
+		const grant = { ...scope, userId: spent.userId, origin: spent.origin, familyId: spent.familyId };
+		const { row, answer } = await this.issue(grant, employee, now);
+		const isRotated = await this.rotate(spent, row, now);
+		if (!isRotated) {
+			// Another renewal or a revocation took the token between the read and the write.
+			await this.revokeFamily(spent.familyId, now);
+			this.logger.warn(`Embed site grant revoked: its renewal token was used twice at once ${subject}`);
+			throw grantEnded();
+		}
+		this.logger.log(`Embed site grant renewed: ${subject}`);
+		return answer;
+	}
+
+	/**
+	 * Refuses a renewal token that no longer works: revoked, already used (which revokes its whole sign-in), or
+	 * expired.
+	 */
+	private async assertLive(row: EmbedSiteGrant, now: Date): Promise<void> {
+		const subject = `family=${row.familyId}`;
+		if (row.revokedAt) {
+			this.logger.warn(`Embed site renewal refused: revoked ${subject}`);
+			throw grantEnded();
+		}
+		if (row.usedAt) {
+			await this.revokeFamily(row.familyId, now);
+			this.logger.warn(`Embed site grant revoked: a used renewal token was presented again ${subject}`);
+			throw grantEnded();
+		}
+		if (new Date(row.expiresAt).getTime() <= now.getTime()) {
+			this.logger.warn(`Embed site renewal refused: expired ${subject}`);
+			throw grantEnded();
+		}
+	}
+
 	/** Refuses a member who may not get a timer token (`EmbedMemberTokens.refusalOf`), with the reason in the log. */
 	private async assertMayTrack(employee: Employee | null, scope: IEmbedMemberScope, subject: string): Promise<void> {
 		const refusal = await this.memberTokens.refusalOf(employee, scope);
@@ -202,6 +302,54 @@ export class EmbedSiteGrantService {
 		answer.renewalToken = renewalToken;
 		answer.renewalExpiresAt = renewalExpiresAt.toISOString();
 		return { row, answer };
+	}
+
+	/** The row of a renewal token, by its digest, compared again in constant time; null for anything else. */
+	private async findByToken(presented: unknown): Promise<EmbedSiteGrant | null> {
+		if (!isWellFormedEmbedRenewalToken(presented)) {
+			return null;
+		}
+		const keyHash = hashEmbedCredential(presented);
+		const row = await this.typeOrmEmbedSiteGrantRepository.findOne({ where: { keyHash } });
+		if (!row || !embedCredentialHashesMatch(row.keyHash, keyHash)) {
+			return null;
+		}
+		return row;
+	}
+
+	/**
+	 * Spends the token and stores the next one, together: the token is spent only if no renewal or revocation took it
+	 * first, and the next one is stored only with it. False, with nothing written, when the token was taken.
+	 */
+	private async rotate(spent: EmbedSiteGrant, next: Partial<EmbedSiteGrant>, now: Date): Promise<boolean> {
+		return await this.typeOrmEmbedSiteGrantRepository.manager.transaction(async (manager) => {
+			const grants = manager.getRepository(EmbedSiteGrant);
+			const live = { id: spent.id, usedAt: IsNull(), revokedAt: IsNull() };
+			const { affected } = await grants.update(live, { usedAt: now });
+			if (!affected) {
+				return false;
+			}
+			await grants.insert(next);
+			return true;
+		});
+	}
+
+	/**
+	 * Revokes every token of a sign-in. Twice: a renewal that held the spent token's row while the first pass waited for
+	 * it stores its next token in a transaction the first pass began before, which only the second pass sees.
+	 *
+	 * @returns How many tokens it revoked.
+	 */
+	private async revokeFamily(familyId: ID, now: Date): Promise<number> {
+		let revoked = 0;
+		for (let pass = 0; pass < 2; pass++) {
+			const { affected } = await this.typeOrmEmbedSiteGrantRepository.update(
+				{ familyId, revokedAt: IsNull() },
+				{ revokedAt: now }
+			);
+			revoked += affected ?? 0;
+		}
+		return revoked;
 	}
 
 	/**

@@ -8,9 +8,11 @@ import type { EmbedSiteGrantService } from './embed-site-grant.service';
 
 /**
  * A person's sign-in from a site the organization allows, on one SQLite database with the tables TypeORM creates for
- * every entity: the timer token is minted for the person's own member, bound to the site and the grant, and the renewal
- * token is stored as its SHA-256 only. A person who is not an active member who may track time, a site the
- * organization does not allow, and a site it does not let people sign in from are each refused with their own code.
+ * every entity, its transactions one at a time as the application runs them: the timer token is minted for the
+ * person's own member, bound to the site and the grant, and the renewal token is stored as its SHA-256 only. A person
+ * who is not an active member who may track time, a site the organization does not allow, and a site it does not let
+ * people sign in from are each refused with their own code. A renewal token works once, from its own site only, and a
+ * used one presented again revokes its whole sign-in.
  */
 const TIMEOUT = 10 * 60 * 1000;
 
@@ -185,6 +187,9 @@ describe('EmbedSiteGrantService on SQLite', () => {
 				invalidWhereValuesBehavior: { null: 'sql-null', undefined: 'ignore' }
 			});
 			await dataSource.initialize();
+			const { serializeEmbeddedTransactions } =
+				require('../database/embedded-transaction-queue') as typeof import('../database/embedded-transaction-queue');
+			serializeEmbeddedTransactions(dataSource);
 			await seed(dataSource);
 
 			const allowedOrigins = new EmbedAllowedOriginService(
@@ -362,6 +367,205 @@ describe('EmbedSiteGrantService on SQLite', () => {
 
 			expect(issueEmbedSession).not.toHaveBeenCalled();
 			expect(await grantRows()).toEqual([]);
+		});
+	});
+
+	describe('POST /embed/renew', () => {
+		const renewFrom = (origin: string | undefined, renewalToken: unknown) =>
+			service.renew({ renewalToken } as never, origin);
+
+		const familyOf = async (renewalToken: string) => {
+			const keyHash = createHash('sha256').update(renewalToken).digest('hex');
+			const [row] = await dataSource.query(`SELECT * FROM "embed_site_grant" WHERE "keyHash" = ?`, [keyHash]);
+			return row.familyId as string;
+		};
+
+		const rowsOf = async (familyId: string) =>
+			(await dataSource.query(
+				`SELECT * FROM "embed_site_grant" WHERE "familyId" = ? ORDER BY "createdAt", "usedAt" DESC`,
+				[familyId]
+			)) as Array<Record<string, unknown>>;
+
+		const ended = {
+			status: 401,
+			response: { code: 'EMBED_GRANT_ENDED', message: expect.stringContaining('Sign in again') }
+		};
+
+		it(
+			"gives the next pair from the site's own origin, spends the token, and keeps the sign-in",
+			async () => {
+				const first = await authorizeAs('lina', TEAM_PAGE);
+				const familyId = await familyOf(first.renewalToken);
+				issueEmbedSession.mockClear();
+				const before = Date.now();
+
+				const next = await renewFrom('https://team.northwind.example', first.renewalToken);
+
+				expect(next.token).toBe(`timer-token-${PEOPLE.lina.employeeId}`);
+				expect(next.renewalToken).toMatch(/^gzr_/);
+				expect(next.renewalToken).not.toBe(first.renewalToken);
+				expect(Math.round((Date.parse(next.renewalExpiresAt) - before) / (24 * 60 * 60 * 1000))).toBe(30);
+				expect(issueEmbedSession.mock.calls[0][0]).toMatchObject({
+					employeeId: PEOPLE.lina.employeeId,
+					origin: TEAM_PAGE,
+					credentialId: familyId,
+					grantId: familyId
+				});
+				const rows = await rowsOf(familyId);
+				expect(rows).toHaveLength(2);
+				const spent = rows.find((row) => row.usedAt !== null);
+				const live = rows.find((row) => row.usedAt === null);
+				expect(spent.revokedAt).toBeNull();
+				expect(live).toMatchObject({
+					revokedAt: null,
+					keyHash: createHash('sha256').update(next.renewalToken).digest('hex')
+				});
+
+				await expect(renewFrom(TEAM_PAGE, next.renewalToken)).resolves.toMatchObject({
+					token: expect.any(String)
+				});
+			},
+			TIMEOUT
+		);
+
+		it('refuses another site, or a request that names none, with EMBED_ORIGIN, and the token keeps working from its own', async () => {
+			const { renewalToken } = await authorizeAs('lina', TEAM_PAGE);
+			const familyId = await familyOf(renewalToken);
+			issueEmbedSession.mockClear();
+
+			for (const origin of ['https://evil.example', DOCS, undefined, 'null']) {
+				await expect(renewFrom(origin, renewalToken)).rejects.toMatchObject({
+					status: 403,
+					response: { code: 'EMBED_ORIGIN' }
+				});
+			}
+			expect(issueEmbedSession).not.toHaveBeenCalled();
+			expect(await rowsOf(familyId)).toEqual([expect.objectContaining({ usedAt: null, revokedAt: null })]);
+
+			await expect(renewFrom(TEAM_PAGE, renewalToken)).resolves.toMatchObject({ token: expect.any(String) });
+		});
+
+		it('revokes the whole sign-in when a used renewal token is presented again', async () => {
+			const first = await authorizeAs('lina', TEAM_PAGE);
+			const familyId = await familyOf(first.renewalToken);
+			const second = await renewFrom(TEAM_PAGE, first.renewalToken);
+
+			await expect(renewFrom(TEAM_PAGE, first.renewalToken)).rejects.toMatchObject(ended);
+
+			// The token the last renewal gave is refused too: one of its two holders is not the site.
+			await expect(renewFrom(TEAM_PAGE, second.renewalToken)).rejects.toMatchObject(ended);
+			const rows = await rowsOf(familyId);
+			expect(rows).toHaveLength(2);
+			expect(rows.every((row) => row.revokedAt !== null)).toBe(true);
+		});
+
+		it('gives one of two renewals of the same token at once the pair, and revokes the sign-in for the other', async () => {
+			const { renewalToken } = await authorizeAs('lina', TEAM_PAGE);
+			const familyId = await familyOf(renewalToken);
+
+			const answers = await Promise.allSettled([
+				renewFrom(TEAM_PAGE, renewalToken),
+				renewFrom(TEAM_PAGE, renewalToken)
+			]);
+
+			expect(answers.filter((answer) => answer.status === 'fulfilled')).toHaveLength(1);
+			const refused = answers.find((answer) => answer.status === 'rejected') as PromiseRejectedResult;
+			expect(refused.reason).toMatchObject(ended);
+			const rows = await rowsOf(familyId);
+			expect(rows).toHaveLength(2);
+			expect(rows.every((row) => row.revokedAt !== null)).toBe(true);
+		});
+
+		it('answers one 401 EMBED_GRANT_ENDED to a malformed, unknown, revoked or expired token, and revokes nothing', async () => {
+			const { renewalToken } = await authorizeAs('lina', TEAM_PAGE);
+			const familyId = await familyOf(renewalToken);
+			await dataSource.query(`UPDATE "embed_site_grant" SET "expiresAt" = ? WHERE "familyId" = ?`, [
+				'2026-01-01 00:00:00.000',
+				familyId
+			]);
+			const other = await authorizeAs('lina', TEAM_PAGE);
+			const otherFamily = await familyOf(other.renewalToken);
+			await dataSource.query(`UPDATE "embed_site_grant" SET "revokedAt" = ? WHERE "familyId" = ?`, [
+				'2026-11-19 09:00:00.000',
+				otherFamily
+			]);
+			issueEmbedSession.mockClear();
+
+			const unknown = `gzr_${'A'.repeat(43)}`;
+			for (const presented of [renewalToken, other.renewalToken, unknown, 'gze_x', '', undefined, 42]) {
+				await expect(renewFrom(TEAM_PAGE, presented)).rejects.toMatchObject(ended);
+			}
+
+			expect(issueEmbedSession).not.toHaveBeenCalled();
+			expect(await rowsOf(familyId)).toEqual([expect.objectContaining({ usedAt: null, revokedAt: null })]);
+		});
+
+		it('refuses while the site is no longer allowed or has sign-in off, and renews again once an admin allows it', async () => {
+			const { renewalToken } = await authorizeAs('lina', TEAM_PAGE);
+			const setSignIn = (value: number) =>
+				dataSource.query(`UPDATE "embed_allowed_origin" SET "allowPersonSignIn" = ? WHERE "origin" = ?`, [
+					value,
+					TEAM_PAGE
+				]);
+
+			await setSignIn(0);
+			await expect(renewFrom(TEAM_PAGE, renewalToken)).rejects.toMatchObject({
+				status: 403,
+				response: { code: 'EMBED_SITE_SIGN_IN_OFF' }
+			});
+			await setSignIn(1);
+
+			const [site] = await dataSource.query(`SELECT * FROM "embed_allowed_origin" WHERE "origin" = ?`, [
+				TEAM_PAGE
+			]);
+			await dataSource.query(`DELETE FROM "embed_allowed_origin" WHERE "id" = ?`, [site.id]);
+			await expect(renewFrom(TEAM_PAGE, renewalToken)).rejects.toMatchObject({
+				status: 403,
+				response: { code: 'EMBED_ORIGIN_NOT_ALLOWED' }
+			});
+			await insert(dataSource, 'embed_allowed_origin', { ...site });
+
+			await expect(renewFrom(TEAM_PAGE, renewalToken)).resolves.toMatchObject({ token: expect.any(String) });
+		});
+
+		it('writes no renewal token, nor its digest, in a log line', async () => {
+			const logger = (service as unknown as { logger: Record<string, (...args: unknown[]) => void> }).logger;
+			const lines: string[] = [];
+			for (const level of ['log', 'warn', 'error']) {
+				jest.spyOn(logger, level).mockImplementation((...args: unknown[]) => {
+					lines.push(args.map(String).join(' '));
+				});
+			}
+
+			const first = await authorizeAs('lina', TEAM_PAGE);
+			const second = await renewFrom(TEAM_PAGE, first.renewalToken);
+			await expect(renewFrom('https://evil.example', second.renewalToken)).rejects.toMatchObject({ status: 403 });
+			await expect(renewFrom(TEAM_PAGE, first.renewalToken)).rejects.toMatchObject(ended);
+
+			expect(lines.length).toBeGreaterThanOrEqual(4);
+			const text = lines.join('\n');
+			for (const token of [first.renewalToken, second.renewalToken]) {
+				expect(text).not.toContain(token.slice(4));
+				expect(text).not.toContain(createHash('sha256').update(token).digest('hex'));
+			}
+		});
+
+		it('refuses a person who may no longer track time with EMBED_MEMBER_NOT_ALLOWED, and renews once they may again', async () => {
+			const { renewalToken } = await authorizeAs('lina', TEAM_PAGE);
+			const setTracking = (value: number) =>
+				dataSource.query(`UPDATE "employee" SET "isTrackingEnabled" = ? WHERE "id" = ?`, [
+					value,
+					PEOPLE.lina.employeeId
+				]);
+
+			await setTracking(0);
+			await expect(renewFrom(TEAM_PAGE, renewalToken)).rejects.toMatchObject({
+				status: 403,
+				response: { code: 'EMBED_MEMBER_NOT_ALLOWED' }
+			});
+			await setTracking(1);
+
+			await expect(renewFrom(TEAM_PAGE, renewalToken)).resolves.toMatchObject({ token: expect.any(String) });
 		});
 	});
 });
