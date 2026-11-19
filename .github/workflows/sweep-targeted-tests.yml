@@ -102,15 +102,10 @@ jobs:
         # app. It goes through yarn, not Nx, so `.env.local` is not loaded here either.
         run: yarn config:dev
 
-      - name: Run the suites of #12095 #12096 #12098 #12099 #12101 #12102 on develop 11ae2cba79
+      - name: Run the inbox-ui suites on develop d36941aa33 (#12106)
         env:
           NX_LOAD_DOT_ENV_FILES: 'false'
         run: |
-          status=0
           J='node node_modules/jest/bin/jest.js'
           export NODE_OPTIONS='--experimental-vm-modules --max-old-space-size=24576'
-          $J -c packages/mcp-server/jest.config.ts --runInBand --ci || status=$?
-          $J -c packages/plugins/chat-ui/jest.config.ts --runInBand --ci || status=$?
-          $J -c packages/plugins/inbox-ui/jest.config.ts --runInBand --ci || status=$?
-          $J -c packages/core/jest.config.ts --runInBand --ci src/lib/pipeline/ src/lib/embed/ src/lib/employee-award/ auth.service.embed-session embed-allowed-origin-person-sign-in-migration embed-site-grant-migration || status=$?
-          exit "$status"
+          $J -c packages/plugins/inbox-ui/jest.config.ts --runInBand --ci
