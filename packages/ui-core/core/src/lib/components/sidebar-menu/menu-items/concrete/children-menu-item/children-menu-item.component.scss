@@ -93,10 +93,38 @@ $plus-glyph-size: 0.625rem;
   // colour while the row around it brightens on hover/selection. Inheriting from
   // `.sub-item` tracks the row in every theme and every state.
   color: inherit;
+  transition:
+    background-color 0.15s ease-out,
+    color 0.15s ease-out,
+    transform 0.1s ease-out;
 
+  // It is an action of its own, not part of the row, so hovering it says so:
+  // its square shows as a soft tint (the row's active strength, one step past
+  // the row's own hover tint so it stands out of it) and the plus turns a
+  // quarter turn. Pressing it sinks it a little.
   &:hover {
-    background-color: transparent;
+    background-color: var(--gauzy-active-tint, rgba(126, 126, 143, 0.2));
     color: nb-theme(text-basic-color);
+
+    i.fa-plus {
+      transform: rotate(90deg);
+    }
+  }
+
+  &:active {
+    transform: scale(0.9);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: background-color 0.15s ease-out, color 0.15s ease-out;
+
+    &:hover i.fa-plus {
+      transform: none;
+    }
+
+    &:active {
+      transform: none;
+    }
   }
 
   // Nebular paints focus on an outline-appearance button as
@@ -106,6 +134,10 @@ $plus-glyph-size: 0.625rem;
   // below is a real outline.
   &:focus {
     box-shadow: none;
+  }
+
+  // ...and keep the hover tint while the pointer is still over a clicked button.
+  &:focus:not(:hover) {
     background-color: transparent;
   }
 
@@ -124,6 +156,11 @@ $plus-glyph-size: 0.625rem;
     // on the row, not the primary one.
     font-size: $plus-glyph-size;
     line-height: 1;
+    transition: transform 0.2s ease-out;
+
+    @media (prefers-reduced-motion: reduce) {
+      transition: none;
+    }
   }
 }
 
