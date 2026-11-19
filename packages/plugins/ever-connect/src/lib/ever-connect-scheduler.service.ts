@@ -404,7 +404,9 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 	 * After `410 resync_required` (the cursor is older than what Ever Platform keeps): re-read the
 	 * states and documents, then continue from the position Ever Platform names (`last_id`: kept,
 	 * then acknowledged); without one, read the feed again from its start (handlers re-read state, so
-	 * events read again change nothing).
+	 * events read again change nothing). Ever Platform offers an installation no list of memberships to
+	 * re-read, so with the membership sync on, the membership changes the skipped part of the feed held
+	 * are not applied: this is said in the log, once per resync, for the operator to check the roles.
 	 */
 	async resync(
 		client: { instances: { ackEvents: (lastId: string) => Promise<unknown> } },
@@ -412,6 +414,11 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 	): Promise<void> {
 		await this.states.sync({ force: true });
 		await this.entitlements.refreshAll();
+		if (this.membership && typeof lastId === 'string' && lastId.length > 0) {
+			this.logger.warn(
+				'The event feed was resumed past changes Ever Platform no longer keeps: membership changes among them were not applied; check the roles of linked organizations.'
+			);
+		}
 		if (typeof lastId === 'string' && lastId.length > 0 && lastId.length <= MAX_FEED_CURSOR_LENGTH) {
 			await this.store.updateConnection({ feedCursor: lastId });
 			await client.instances.ackEvents(lastId);

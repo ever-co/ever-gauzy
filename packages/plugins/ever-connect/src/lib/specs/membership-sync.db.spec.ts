@@ -485,6 +485,14 @@ describe.each(TEST_TARGETS)('Ever Platform membership sync ($name)', (target) =>
 			)
 		).toBe('removed');
 		expect(await roleOf(seeded.employeeId)).toBe(roles.manager);
+		// A replayed addition from before the removal (after the last role change) is stale: nothing comes back.
+		expect(
+			await sync.apply(
+				envelope('01JD0000000000000000000299', 'created', { tenant_link_id: LINK_B }, '2026-11-04T09:00:00Z')
+			)
+		).toBe('stale');
+		expect(await memberships(second, seeded.employeeId)).toEqual([false]);
+		expect(await roleOf(seeded.employeeId)).toBe(roles.manager);
 	});
 
 	it('a role changed in Gauzy, seen by one organization, ends the grant for all of them', async () => {

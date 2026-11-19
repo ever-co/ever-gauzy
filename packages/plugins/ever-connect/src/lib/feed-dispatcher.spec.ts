@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { EverConnectScheduler } from './ever-connect-scheduler.service';
 import { EverConnectSignals } from './ever-connect-signals';
 import { CONSTANTS, EventEnvelope, ProblemError } from './sdk';
@@ -189,6 +190,20 @@ describe('Ever Platform feed dispatcher', () => {
 			// Not remembered as handled: the same event is handed over again.
 			membership.apply.mockResolvedValueOnce('role_granted');
 			expect(await instance.dispatchPage(page)).toEqual(['membership']);
+		});
+
+		it('a resync with the membership sync on says that skipped membership changes were not applied', async () => {
+			const warn = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+			try {
+				const client = { instances: { ackEvents: jest.fn().mockResolvedValue(undefined) } };
+				await scheduler().instance.resync(client, '01JD0000000000000000000042');
+				expect(warn).not.toHaveBeenCalled();
+				await scheduler({ apply: jest.fn() }).instance.resync(client, '01JD0000000000000000000042');
+				expect(warn).toHaveBeenCalledTimes(1);
+				expect(String(warn.mock.calls[0][0])).toContain('membership changes');
+			} finally {
+				warn.mockRestore();
+			}
 		});
 
 		it('a failed follow-up: the other one still runs, the first error is thrown, its events are handed over again', async () => {
