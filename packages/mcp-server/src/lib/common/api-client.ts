@@ -153,6 +153,14 @@ export class GauzyApiClient {
 	public async login(email?: string, password?: string): Promise<{ success: boolean; error?: string }> {
 		try {
 			const success = await authManager.login(email, password);
+			if (success || email || password) {
+				return { success };
+			}
+			// Signed in with the configured credentials: when they hold GAUZY_API_TOKEN, say why it gave no session
+			const apiTokenError = authManager.getApiTokenError();
+			if (apiTokenError) {
+				return { success, error: apiTokenError };
+			}
 			return { success };
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : 'Login failed';

@@ -1,6 +1,7 @@
 import { environment } from '../environments/environment';
 import { sanitizeForLogging } from './error-utils';
 import { getAuthKey, mayShareAutoLogin } from './auth-context';
+import { API_TOKEN_EXCHANGE_PATH, describeApiTokenExchangeFailure, IApiTokenExchangeFailure } from './api-token';
 import { Logger } from '@nestjs/common';
 
 const logger = new Logger('AuthManager');
@@ -11,6 +12,11 @@ interface IAuthResponse {
 	refresh_token: string;
 }
 
+/** What `POST /api/auth/api-token/exchange` answers: an access token, without a refresh token */
+interface IApiTokenExchangeResponse {
+	token: string;
+}
+
 interface ITokenData {
 	accessToken: string;
 	refreshToken: string;
@@ -19,10 +25,13 @@ interface ITokenData {
 	organizationId?: string; // Add organization ID
 	tenantId?: string; // Add tenant ID
 	source?: 'auto-login' | 'manual';
+	/** The access token came from exchanging GAUZY_API_TOKEN, so there is no refresh token */
+	fromApiToken?: boolean;
 }
 
-/** The tenant and organization a login acts in */
+/** The user a login belongs to, and the tenant and organization it acts in */
 interface IUserScope {
+	userId?: string;
 	organizationId?: string;
 	tenantId?: string;
 }
@@ -53,6 +62,10 @@ export class AuthManager {
 	private readonly pendingStates = new Map<string, IAuthState>();
 	private apiClient: any;
 	private hasInitialized = false;
+	// Why the last exchange of GAUZY_API_TOKEN gave no access token, until one does
+	private apiTokenError: string | null = null;
+	// The API refused GAUZY_API_TOKEN: it is not sent again before the server restarts with a new one
+	private isApiTokenRefused = false;
 
 	private constructor() {}
 
@@ -169,6 +182,14 @@ export class AuthManager {
 
 		try {
 			const useConfigured = this.mayUseConfiguredLogin();
+			// A login that names no credentials uses the configured ones, and GAUZY_API_TOKEN comes before the email
+			// and password. The `login` tool always names its own.
+			const namesNoCredentials = !email && !password;
+			const hasApiToken = !!environment.auth.apiToken;
+			if (namesNoCredentials && useConfigured && hasApiToken) {
+				return await this.signInWithApiToken(state, authKey);
+			}
+
 			const credentials = {
 				email: email || (useConfigured ? environment.auth.email : undefined),
 				password: password || (useConfigured ? environment.auth.password : undefined)
@@ -234,7 +255,89 @@ export class AuthManager {
 	}
 
 	/**
-	 * Read the tenant and organization of the user a new access token belongs to
+	 * Sign in with GAUZY_API_TOKEN: exchange it for an access token, then read whose it is
+	 */
+	private async signInWithApiToken(state: IAuthState, authKey?: string): Promise<boolean> {
+		if (environment.debug) {
+			logger.log('Signing in with the API token');
+		}
+
+		const accessToken = await this.exchangeApiToken();
+		if (!accessToken) {
+			return false;
+		}
+
+		const { userId, organizationId, tenantId } = await this.readUserScope(accessToken);
+		this.setTokenData(
+			state,
+			{
+				accessToken,
+				refreshToken: '',
+				userId,
+				organizationId,
+				tenantId,
+				expiresAt: this.calculateTokenExpiry(accessToken),
+				// The account of whoever runs the server, shared with callers on this machine only, as an email and
+				// password set for GAUZY_AUTO_LOGIN would be
+				source: 'auto-login',
+				fromApiToken: true
+			},
+			authKey
+		);
+
+		if (environment.debug) {
+			logger.log('Signed in with the API token');
+			logger.log(`   User ID: ${userId || 'Not available'}`);
+			logger.log(`   Tenant ID: ${tenantId || 'Not available'}`);
+			logger.log(`   Organization ID: ${organizationId || 'Not available'}`);
+		}
+
+		return true;
+	}
+
+	/**
+	 * Exchange GAUZY_API_TOKEN for an access token. A token the API refused is not sent again.
+	 *
+	 * @returns The access token, or null; the reason is then kept for {@link getApiTokenError} and written to the log.
+	 */
+	private async exchangeApiToken(): Promise<string | null> {
+		if (this.isApiTokenRefused) {
+			return null;
+		}
+
+		try {
+			const response: IApiTokenExchangeResponse = await this.apiClient.post(API_TOKEN_EXCHANGE_PATH, {
+				token: environment.auth.apiToken
+			});
+			if (!response?.token) {
+				this.recordApiTokenFailure({
+					message: 'The Gauzy API answered the API token exchange without an access token.',
+					isRefusal: false
+				});
+				return null;
+			}
+			this.apiTokenError = null;
+			return response.token;
+		} catch (error) {
+			this.recordApiTokenFailure(describeApiTokenExchangeFailure(error));
+			return null;
+		}
+	}
+
+	/**
+	 * Keep why the API token gave no access token. Written to the log whatever the debug setting: the person who set
+	 * the token reads there that it needs replacing. The message never quotes the token.
+	 */
+	private recordApiTokenFailure(failure: IApiTokenExchangeFailure): void {
+		this.apiTokenError = failure.message;
+		if (failure.isRefusal) {
+			this.isApiTokenRefused = true;
+		}
+		logger.error(failure.message);
+	}
+
+	/**
+	 * Read the user a new access token belongs to, with its tenant and organization
 	 */
 	private async readUserScope(accessToken: string): Promise<IUserScope> {
 		const scope: IUserScope = {};
@@ -250,6 +353,8 @@ export class AuthManager {
 			});
 
 			if (userResponse) {
+				scope.userId = userResponse.id;
+
 				// Extract tenant ID directly from user data
 				scope.tenantId = userResponse.tenantId || userResponse.tenant?.id;
 
@@ -485,6 +590,22 @@ export class AuthManager {
 	 */
 	public isSharedAutoLoginIdentity(): boolean {
 		return this.processState.tokenData?.source === 'auto-login';
+	}
+
+	/**
+	 * Why GAUZY_API_TOKEN gives no access token, for a caller that signs in with it: stdio, or a caller on this machine
+	 * without a login of its own. Null for every other caller, and while the token works.
+	 */
+	public getApiTokenError(): string | null {
+		const tokenData = this.currentTokenData();
+		const hasOwnPasswordLogin = !!tokenData && !tokenData.fromApiToken;
+		if (hasOwnPasswordLogin) {
+			return null;
+		}
+		if (!this.mayUseConfiguredLogin()) {
+			return null;
+		}
+		return this.apiTokenError;
 	}
 
 	/**
