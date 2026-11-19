@@ -1,0 +1,122 @@
+// Same vocabulary as the Settings pages: 12px body, hairline dividers, no shadows. Every custom property
+// carries a fallback: `--gauzy-*` is undefined in material-light / -dark.
+$divider: 1px solid var(--gauzy-border-default-color, var(--border-basic-color-3));
+$text: var(--gauzy-text-color-1, var(--text-basic-color));
+$muted: var(--gauzy-text-color-2, var(--text-hint-color));
+
+:host {
+  // `.card-scroll` pins the card to the page frame; the body is the one scroll area.
+  nb-card.card-scroll > nb-card-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto;
+    overflow: auto;
+  }
+}
+
+.header {
+  .page-title {
+    margin: 0;
+  }
+
+  .subtitle {
+    max-width: 48rem;
+    margin: 0.25rem 0 0;
+    font-size: 0.75rem;
+    font-weight: 400;
+    line-height: 1.125rem;
+    color: $muted;
+  }
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  padding: 3rem 1rem;
+}
+
+.empty {
+  margin: 0;
+  padding: 3rem 1rem;
+  font-size: 0.8125rem;
+  text-align: center;
+  color: $muted;
+}
+
+// A failed read, above whatever did load: plain text and a retry, no banner fill.
+.load-failed {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  max-width: 48rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.8125rem;
+  color: $text;
+
+  button[nbButton] {
+    text-transform: none;
+  }
+}
+
+.list {
+  max-width: 48rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.5rem;
+
+  & + & {
+    border-top: $divider;
+  }
+}
+
+.link {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 0.5rem 0.25rem;
+  font-size: 0.8125rem;
+  color: $text;
+  text-decoration: none;
+
+  &:hover .title {
+    text-decoration: underline;
+  }
+}
+
+.icon {
+  flex: 0 0 1rem;
+  text-align: center;
+  color: $muted;
+}
+
+.title {
+  // Lets a long name shrink and ellipsize before the "pinned" note does.
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+// Plain muted text after the name, no chip. One line while there is room; on a
+// narrow card it shrinks with the name and wraps instead of pushing the row wide.
+.pinned {
+  flex: 0 1 auto;
+  min-width: 0;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  color: $muted;
+}
+
+.remove {
+  flex: 0 0 auto;
+}

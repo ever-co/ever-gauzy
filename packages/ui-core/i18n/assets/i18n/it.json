@@ -8164,5 +8164,15 @@
 		"YOU": "Tu",
 		"OTHERS": "altri {{ count }}",
 		"FAILED": "La reazione non è stata salvata."
+	},
+	"FAVORITES": {
+		"SUBTITLE": "Tutto ciò che hai contrassegnato con una stella, dal più recente.",
+		"EMPTY": "Ancora nessun preferito. Usa la stella su un elemento per aggiungerlo qui.",
+		"VIEW_ALL": "Mostra tutti",
+		"PINNED_FOR_ORGANIZATION": "Fissato per l’organizzazione",
+		"REMOVED_STILL_PINNED": "{{ name }} è stato rimosso dai tuoi preferiti. Resta nell’elenco perché è fissato per l’organizzazione.",
+		"ERROR": {
+			"LOAD_FAILED": "Impossibile caricare i preferiti"
+		}
 	}
 }
