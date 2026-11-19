@@ -355,6 +355,22 @@ describe('AuthManager: signing in with GAUZY_API_TOKEN', () => {
 		});
 	});
 
+	it('signs in, and keeps the token out of the log, when reading whose token it is fails', async () => {
+		const api = fakeApi(() => ({ token: EXCHANGED }));
+		api.get = async (url: string) => {
+			api.requests.push({ method: 'GET', url });
+			throw new Error(`echoed ${API_TOKEN}`);
+		};
+		const { authManager } = startServer(api);
+
+		expect(await authManager.initialize()).toBe(true);
+
+		expect(urls(api)).toEqual(['/api/auth/api-token/exchange', '/api/user/me']);
+		expect(authManager.getAccessToken()).toBe(EXCHANGED);
+		expect(JSON.stringify(mockPrinted)).toContain('Could not fetch user info');
+		expect(JSON.stringify(mockPrinted)).not.toContain(API_TOKEN);
+	});
+
 	it('never puts the token in a log, an error or the auth status', async () => {
 		const answers = [
 			() => ({ token: EXCHANGED }),

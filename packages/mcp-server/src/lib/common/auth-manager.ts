@@ -1,5 +1,5 @@
 import { environment } from '../environments/environment';
-import { sanitizeForLogging } from './error-utils';
+import { sanitizeErrorMessage, sanitizeForLogging } from './error-utils';
 import { getAuthKey, mayShareAutoLogin } from './auth-context';
 import { API_TOKEN_EXCHANGE_PATH, describeApiTokenExchangeFailure, IApiTokenExchangeFailure } from './api-token';
 import { Logger } from '@nestjs/common';
@@ -372,7 +372,7 @@ export class AuthManager {
 			if (environment.debug) {
 				logger.warn(
 					'⚠️  Could not fetch user info for organization/tenant extraction:',
-					error instanceof Error ? error.message : 'Unknown error'
+					sanitizeErrorMessage(error)
 				);
 			}
 			// Don't use environment defaults anymore since we want to rely on actual user data

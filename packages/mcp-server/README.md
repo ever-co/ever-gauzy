@@ -105,8 +105,8 @@ const status = manager.getStatus();
 - **Token Management**: Handles access and refresh tokens automatically
 - **Session Persistence**: Maintains authentication state across sessions
 - **Auto-login**: Configurable automatic login on server start
-- **Personal API token**: Signs in with `GAUZY_API_TOKEN` instead of a password, and exchanges it
-  again when its session ends
+- **Personal API token**: Signs in with `GAUZY_API_TOKEN` instead of a password,
+  and exchanges it again when its session ends
 - **OAuth 2.0 Authorization**: OAuth 2.0 bearer authorization (RFC 6749, RFC 6750)
 - **Protected Resource Metadata**: RFC 9728 /.well-known/oauth-protected-resource
   for clients/AS discovery
@@ -493,7 +493,7 @@ API_BASE_URL=https://api.gauzy.co    # Gauzy API endpoint
 - `MCP_AUTH_REQUIRED_SCOPES`: the scopes every bearer token must hold (default `mcp.read`); while it is unset, a token holding collaboration scopes alone is admitted for the collaboration tools only
 
 ```bash
-GAUZY_API_TOKEN=<your-api-token>     # Personal API token: signs in at start, before any email and password
+GAUZY_API_TOKEN=<your-api-token>     # Personal API token (signs in first)
 GAUZY_AUTH_EMAIL=user@example.com    # Auto-login email
 GAUZY_AUTH_PASSWORD=password         # Auto-login password
 GAUZY_AUTO_LOGIN=true               # Enable auto-login
@@ -503,20 +503,25 @@ NODE_ENV=development                # Environment mode
 
 #### Signing in with a personal API token
 
-A user creates the token in Settings > API Tokens of the Gauzy web app, a page that shows once the API
-runs with `GAUZY_USER_API_TOKENS_ENABLED=true`. With `GAUZY_API_TOKEN` set, the server signs in at
-start by exchanging it through `POST /api/auth/api-token/exchange`, with no `GAUZY_AUTO_LOGIN`, email
-or password. When an email and password are set as well, the token wins. Over HTTP and WebSocket it is
-the auto-login account, shared with callers on the server's own machine only.
+A user creates the token in Settings > API Tokens of the Gauzy web app, a page
+that shows once the API runs with `GAUZY_USER_API_TOKENS_ENABLED=true`. With
+`GAUZY_API_TOKEN` set, the server signs in at start by exchanging it through
+`POST /api/auth/api-token/exchange`, with no `GAUZY_AUTO_LOGIN`, email or
+password. When an email and password are set as well, the token wins. Over HTTP
+and WebSocket it is the auto-login account, shared with callers on the server's
+own machine only.
 
-The session lasts an hour at most and has no refresh token: when it ends, or when the API answers 401,
-the server exchanges the token again, and sends a request refused with 401 once more at most. Revoking
-the token in Settings ends the server's access within that hour. A refused token ends the sign-in, and
-the log says to create a new one; a 404 from the exchange means personal API tokens are off on that API.
-A value without the shape of a token (`gzp_` and 43 base64url characters) stops the server at start,
-before any request. The token appears in no log, tool answer or status.
+The session lasts an hour at most and has no refresh token: when it ends, or
+when the API answers 401, the server exchanges the token again, and sends a
+request refused with 401 once more at most. Revoking the token in Settings ends
+the server's access within that hour. A refused token ends the sign-in, and the
+log says to create a new one; a 404 from the exchange means personal API tokens
+are off on that API. A value without the shape of a token (`gzp_` and 43
+base64url characters) stops the server at start, before any request. The token
+appears in no log, tool answer or status.
 
-Without `GAUZY_API_TOKEN`, the email and password sign-in and the `login` tool work as before.
+Without `GAUZY_API_TOKEN`, the email and password sign-in and the `login` tool
+work as before.
 
 ## Troubleshooting
 
@@ -546,8 +551,8 @@ Without `GAUZY_API_TOKEN`, the email and password sign-in and the `login` tool w
 1. **Authentication failures**
 
    - Verify API_BASE_URL is correct
-   - With `GAUZY_API_TOKEN`, read the server log: it says whether the token was refused or personal API
-     tokens are off on that API
+   - With `GAUZY_API_TOKEN`, read the server log: it says whether the token was
+     refused or personal API tokens are off on that API
    - Check email/password credentials
    - Ensure API server is accessible
 
