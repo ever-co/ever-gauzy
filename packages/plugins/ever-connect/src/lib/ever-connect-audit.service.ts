@@ -24,7 +24,8 @@ export const AUDIT_ACTIONS = Object.freeze([
 	'sign_in_client.change',
 	'person_link.report',
 	'person_request.answer',
-	'provision.accept'
+	'provision.accept',
+	'membership.sync'
 ] as const);
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 
@@ -56,13 +57,22 @@ export const AUDIT_DETAIL_KEYS = Object.freeze([
 	'attempts',
 	'step_seq',
 	'product_tenant_id',
-	'product_org_id'
+	'product_org_id',
+	'user_id',
+	'role',
+	'occurred_at',
+	'held',
+	'restore',
+	'grant',
+	'voids'
 ] as const);
 
 /** Who acted, without personal data. */
 export type ActorLabel = 'user' | 'operator' | 'platform' | 'env:EVER_CONNECT_CODE' | 'system';
 
 export interface AuditEntry {
+	/** When it happened (epoch ms); by default now. */
+	at?: number;
 	action: AuditAction;
 	actorUserId?: string | null;
 	actorLabel: ActorLabel;
@@ -128,11 +138,15 @@ export class EverConnectAuditService {
 		}
 	}
 
-	async record(entry: AuditEntry): Promise<void> {
+	/**
+	 * Adds one row. With `sql` (an `EverConnectSql` of an open transaction, see `EverConnectSql.inTransaction`), the row
+	 * is written in that transaction, so it is kept only with the change it records.
+	 */
+	async record(entry: AuditEntry, sql: EverConnectSql = this.sql): Promise<void> {
 		EverConnectAuditService.check(entry);
-		await this.sql.insert('ever_connect_audit', {
+		await sql.insert('ever_connect_audit', {
 			id: randomUUID(),
-			at: this.now(),
+			at: entry.at ?? this.now(),
 			tenantId: entry.tenantId ?? null,
 			organizationId: entry.organizationId ?? null,
 			actorUserId: entry.actorUserId ?? null,

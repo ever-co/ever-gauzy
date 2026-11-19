@@ -25,11 +25,13 @@ import { EverConnectPlatformService, errorCode, isCredentialRevoked } from './ev
 import { EverConnectSignals } from './ever-connect-signals';
 import { EverConnectStore } from './ever-connect.store';
 import { personRequestKind, PersonRequestsHandler } from './handlers/person-requests.handler';
+import { membershipChangeOf } from './membership/membership-sync.config';
+import { MembershipSyncHandler } from './membership/membership-sync.handler';
 import { EverConnectProvisionCompletion } from './services/ever-connect-provision-completion.service';
 import { EventEnvelope, ProblemError } from './sdk';
 
 /** What the dispatcher did with one event. */
-export type DispatchOutcome = 'states' | 'entitlements' | 'link' | 'connection' | 'person' | 'ignored';
+export type DispatchOutcome = 'states' | 'entitlements' | 'link' | 'connection' | 'person' | 'membership' | 'ignored';
 
 /**
  * The heartbeat and the event feed, run by one API process at a time (a lease on the connection
@@ -43,9 +45,11 @@ export type DispatchOutcome = 'states' | 'entitlements' | 'link' | 'connection' 
  *   `EVER_CONNECT_FEED_MODE=interval`). Each event is dispatched by its catalog type, then the
  *   cursor is kept and acknowledged (in that order); handlers are idempotent (they re-read state),
  *   so an event read twice changes nothing more. A person's deletion or export request is recorded
- *   by its event id and answered once. Types this release has no handler for are acknowledged and
- *   ignored, and so are connection events (and a person's requests) of another installation or of
- *   before this connection (a cursor read again from the start replays them).
+ *   by its event id and answered once. A membership change of a linked Ever organization is applied
+ *   to its Gauzy organization when the membership sync is on (`EVER_CONNECT_MEMBERSHIP_SYNC_ENABLED`),
+ *   and acknowledged and ignored otherwise. Types this release has no handler for are acknowledged and
+ *   ignored, and so are connection events (and a person's requests and membership changes) of another
+ *   installation or of before this connection (a cursor read again from the start replays them).
  */
 /** How far Ever Platform's clock may be ahead of this one when an event's time is compared. */
 const CLOCK_SKEW_MS = 300_000;
@@ -79,7 +83,9 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 		@Optional() @Inject(EVER_CONNECT_CLOCK) clock?: { now: () => number },
 		@Optional() private readonly personRequests?: PersonRequestsHandler,
 		@Optional() lease?: EverConnectLease,
-		@Optional() private readonly provisions?: EverConnectProvisionCompletion
+		@Optional() private readonly provisions?: EverConnectProvisionCompletion,
+		// Registered only with EVER_CONNECT_MEMBERSHIP_SYNC_ENABLED=true (see `membershipSyncProviders`).
+		@Optional() private readonly membership?: MembershipSyncHandler
 	) {
 		this.now = clock?.now ?? (() => Date.now());
 		this.holder = lease?.holder ?? randomUUID();
@@ -266,21 +272,43 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 		connection?: { platformInstanceId: string | null; connectedAt: number | null }
 	): Promise<DispatchOutcome[]> {
 		const outcomes: DispatchOutcome[] = [];
-		let states = false;
-		let entitlements = false;
-		for (const event of events) {
-			if (this.seen.has(event.id)) {
-				outcomes.push('ignored');
-				continue;
+		const handled: Array<{ id: string; outcome: DispatchOutcome }> = [];
+		let failure: unknown = null;
+		try {
+			for (const event of events) {
+				if (this.seen.has(event.id)) {
+					outcomes.push('ignored');
+					continue;
+				}
+				const outcome = await this.dispatch(event, connection);
+				outcomes.push(outcome);
+				handled.push({ id: event.id, outcome });
+				this.remember(event.id);
 			}
-			const outcome = await this.dispatch(event, connection);
-			outcomes.push(outcome);
-			states ||= outcome === 'states';
-			entitlements ||= outcome === 'entitlements';
-			this.remember(event.id);
+		} catch (error) {
+			failure = error;
 		}
-		if (states) await this.states.sync({ force: true });
-		if (entitlements) await this.entitlements.refreshAll();
+		// The follow-ups of the events handled, also when a later event of the page failed; each one runs whatever the
+		// other did. An event whose follow-up failed is no longer remembered as handled, so the page read again (it is
+		// not acknowledged) hands it over again; the first error is the one thrown.
+		const followUps: Array<[DispatchOutcome, () => Promise<unknown>]> = [
+			['states', () => this.states.sync({ force: true })],
+			['entitlements', () => this.entitlements.refreshAll()]
+		];
+		for (const [kind, run] of followUps) {
+			if (!handled.some((event) => event.outcome === kind)) continue;
+			try {
+				await run();
+			} catch (error) {
+				failure ??= error;
+				for (const event of handled) {
+					if (event.outcome === kind) this.seen.delete(event.id);
+				}
+			}
+		}
+		if (failure !== null) {
+			throw failure;
+		}
 		return outcomes;
 	}
 
@@ -292,18 +320,26 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 		const data = (event.data ?? {}) as Record<string, unknown>;
 		const linkId = typeof data['tenant_link_id'] === 'string' ? data['tenant_link_id'] : event.subject?.id;
 		const personRequest = personRequestKind(event.type) !== null;
+		const membershipChange = membershipChangeOf(event.type) !== null;
 		if (
-			(event.type.startsWith('ever.registry.instance.') || personRequest) &&
+			(event.type.startsWith('ever.registry.instance.') || personRequest || membershipChange) &&
 			connection &&
 			!this.forThisConnection(event, connection)
 		) {
-			// A connection event (or a person's request) of another installation, or of before this
-			// connection: ignored.
+			// A connection event (or a person's request, or a membership change) of another installation, or
+			// of before this connection: ignored.
 			return 'ignored';
 		}
 		if (personRequest) {
 			// Deletion and export requests: recorded by event id, answered once (`POST /v1/instances/me/ack`).
 			return this.personRequests && (await this.personRequests.handle(event)) ? 'person' : 'ignored';
+		}
+		if (membershipChange) {
+			// Applied to the linked Gauzy organization only with the membership sync on; its handler is
+			// idempotent (the last change applied per user and organization is kept in the audit).
+			if (!this.membership) return 'ignored';
+			await this.membership.apply(event);
+			return 'membership';
 		}
 		switch (event.type) {
 			case 'ever.consent.consent.granted':
@@ -342,8 +378,7 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 				await this.connection.approved();
 				return 'connection';
 			default:
-				// Memberships, managed operations and every other type: acknowledged and ignored by this
-				// release.
+				// Managed operations and every other type: acknowledged and ignored by this release.
 				return 'ignored';
 		}
 	}
@@ -369,7 +404,9 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 	 * After `410 resync_required` (the cursor is older than what Ever Platform keeps): re-read the
 	 * states and documents, then continue from the position Ever Platform names (`last_id`: kept,
 	 * then acknowledged); without one, read the feed again from its start (handlers re-read state, so
-	 * events read again change nothing).
+	 * events read again change nothing). Ever Platform offers an installation no list of memberships to
+	 * re-read, so with the membership sync on, the membership changes the skipped part of the feed held
+	 * are not applied: this is said in the log, once per resync, for the operator to check the roles.
 	 */
 	async resync(
 		client: { instances: { ackEvents: (lastId: string) => Promise<unknown> } },
@@ -377,6 +414,11 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 	): Promise<void> {
 		await this.states.sync({ force: true });
 		await this.entitlements.refreshAll();
+		if (this.membership) {
+			this.logger.warn(
+				'The event feed was resumed past changes Ever Platform no longer keeps: membership changes among them were not applied; check the roles of linked organizations.'
+			);
+		}
 		if (typeof lastId === 'string' && lastId.length > 0 && lastId.length <= MAX_FEED_CURSOR_LENGTH) {
 			await this.store.updateConnection({ feedCursor: lastId });
 			await client.instances.ackEvents(lastId);

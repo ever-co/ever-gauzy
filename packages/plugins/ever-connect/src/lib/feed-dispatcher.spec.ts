@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { EverConnectScheduler } from './ever-connect-scheduler.service';
 import { EverConnectSignals } from './ever-connect-signals';
 import { CONSTANTS, EventEnvelope, ProblemError } from './sdk';
@@ -10,7 +11,7 @@ import { CONSTANTS, EventEnvelope, ProblemError } from './sdk';
  * kept before it is acknowledged, and one that cannot be kept is never acknowledged.
  */
 describe('Ever Platform feed dispatcher', () => {
-	function scheduler() {
+	function scheduler(membership?: { apply: jest.Mock }) {
 		const states = { sync: jest.fn().mockResolvedValue(undefined) };
 		const entitlements = { refreshAll: jest.fn().mockResolvedValue(undefined) };
 		const links = {
@@ -57,7 +58,12 @@ describe('Ever Platform feed dispatcher', () => {
 			entitlements as never,
 			cleanup as never,
 			signals,
-			{ feedMode: 'interval' } as never
+			{ feedMode: 'interval' } as never,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			membership as never
 		);
 		return { instance, states, entitlements, links, connection, revoked, client, order, cleanup };
 	}
@@ -128,6 +134,117 @@ describe('Ever Platform feed dispatcher', () => {
 		]) {
 			expect(spy).not.toHaveBeenCalled();
 		}
+	});
+
+	describe('membership changes', () => {
+		const TYPES = [
+			'ever.registry.membership.created',
+			'ever.registry.membership.role_changed',
+			'ever.registry.membership.removed'
+		];
+
+		it('without the membership sync (the default): acknowledged and ignored, nothing else runs', async () => {
+			const { instance, states, entitlements, links, connection } = scheduler();
+			for (const type of TYPES) {
+				expect(await instance.dispatch(event(type, undefined, { tenant_link_id: 'L1' }))).toBe('ignored');
+			}
+			for (const spy of [states.sync, entitlements.refreshAll, links.unlinkLocally, connection.stopLocally]) {
+				expect(spy).not.toHaveBeenCalled();
+			}
+		});
+
+		it('with it: each one goes to the membership handler', async () => {
+			const membership = { apply: jest.fn().mockResolvedValue('role_granted') };
+			const { instance } = scheduler(membership);
+			for (const type of TYPES) {
+				expect(await instance.dispatch(event(type))).toBe('membership');
+			}
+			expect(membership.apply).toHaveBeenCalledTimes(3);
+			// Not a membership change: never handed to it.
+			expect(await instance.dispatch(event('ever.registry.membership.listing_changed'))).toBe('ignored');
+			expect(membership.apply).toHaveBeenCalledTimes(3);
+		});
+
+		it('of another installation, or of before this connection: ignored', async () => {
+			const membership = { apply: jest.fn().mockResolvedValue('role_granted') };
+			const { instance } = scheduler(membership);
+			const ours = {
+				platformInstanceId: '01JD00000000000000000INST01',
+				connectedAt: Date.parse('2026-10-03T09:00:00.000Z')
+			};
+			const other = { ...event(TYPES[0]), instance_id: '01JD00000000000000000OTHER1' } as never;
+			const old = { ...event(TYPES[1]), occurred_at: '2026-10-01T09:00:00.000Z' } as never;
+			expect(await instance.dispatch(other, ours)).toBe('ignored');
+			expect(await instance.dispatch(old, ours)).toBe('ignored');
+			expect(membership.apply).not.toHaveBeenCalled();
+			const mine = { ...event(TYPES[2]), instance_id: ours.platformInstanceId } as never;
+			expect(await instance.dispatch(mine, ours)).toBe('membership');
+			expect(membership.apply).toHaveBeenCalledTimes(1);
+		});
+
+		it('a failure of the handler fails the page, so the feed reads it again', async () => {
+			const membership = { apply: jest.fn().mockRejectedValue(new Error('database unavailable')) };
+			const { instance } = scheduler(membership);
+			const page = [event(TYPES[0], '01JD0000000000000000000071')];
+			await expect(instance.dispatchPage(page)).rejects.toThrow('database unavailable');
+			// Not remembered as handled: the same event is handed over again.
+			membership.apply.mockResolvedValueOnce('role_granted');
+			expect(await instance.dispatchPage(page)).toEqual(['membership']);
+		});
+
+		it('a resync with the membership sync on says that skipped membership changes were not applied', async () => {
+			const warn = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+			try {
+				const client = { instances: { ackEvents: jest.fn().mockResolvedValue(undefined) } };
+				await scheduler().instance.resync(client, '01JD0000000000000000000042');
+				expect(warn).not.toHaveBeenCalled();
+				await scheduler({ apply: jest.fn() }).instance.resync(client, '01JD0000000000000000000042');
+				expect(warn).toHaveBeenCalledTimes(1);
+				expect(String(warn.mock.calls[0][0])).toContain('membership changes');
+				// Also when Ever Platform names no position (the feed is read again from its start).
+				await scheduler({ apply: jest.fn() }).instance.resync(client, undefined);
+				expect(warn).toHaveBeenCalledTimes(2);
+			} finally {
+				warn.mockRestore();
+			}
+		});
+
+		it('a failed follow-up: the other one still runs, the first error is thrown, its events are handed over again', async () => {
+			const membership = { apply: jest.fn().mockRejectedValueOnce(new Error('database unavailable')) };
+			const { instance, states, entitlements } = scheduler(membership);
+			states.sync.mockRejectedValueOnce(new Error('states unavailable'));
+			const page = [
+				event('ever.consent.integration.enabled', '01JD0000000000000000000091'),
+				event('ever.entitlements.entitlement.issued', '01JD0000000000000000000092'),
+				event(TYPES[0], '01JD0000000000000000000093')
+			];
+			await expect(instance.dispatchPage(page)).rejects.toThrow('database unavailable');
+			expect(states.sync).toHaveBeenCalledTimes(1);
+			expect(entitlements.refreshAll).toHaveBeenCalledTimes(1);
+			// Read again: the consent event (its follow-up failed) and the membership change are handed over again.
+			membership.apply.mockResolvedValueOnce('role_granted');
+			expect(await instance.dispatchPage(page)).toEqual(['states', 'ignored', 'membership']);
+			expect(states.sync).toHaveBeenCalledTimes(2);
+			expect(entitlements.refreshAll).toHaveBeenCalledTimes(1);
+		});
+
+		it('a failure after other events of the page: their follow-ups still run, once', async () => {
+			const membership = { apply: jest.fn().mockRejectedValueOnce(new Error('database unavailable')) };
+			const { instance, states, entitlements } = scheduler(membership);
+			const page = [
+				event('ever.consent.integration.enabled', '01JD0000000000000000000081'),
+				event('ever.entitlements.entitlement.issued', '01JD0000000000000000000082'),
+				event(TYPES[0], '01JD0000000000000000000083')
+			];
+			await expect(instance.dispatchPage(page)).rejects.toThrow('database unavailable');
+			expect(states.sync).toHaveBeenCalledTimes(1);
+			expect(entitlements.refreshAll).toHaveBeenCalledTimes(1);
+			// Read again: the handled events are skipped, the failed one is applied, nothing runs twice.
+			membership.apply.mockResolvedValueOnce('role_granted');
+			expect(await instance.dispatchPage(page)).toEqual(['ignored', 'ignored', 'membership']);
+			expect(states.sync).toHaveBeenCalledTimes(1);
+			expect(entitlements.refreshAll).toHaveBeenCalledTimes(1);
+		});
 	});
 
 	it('a page: follow-ups once per page, an event read twice handled once', async () => {

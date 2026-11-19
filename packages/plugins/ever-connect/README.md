@@ -16,6 +16,7 @@ The web part is [`@gauzy/plugin-ever-connect-ui`](../ever-connect-ui/README.md):
 | `EVER_CONNECT_ENABLED=true`, not connected           | Loaded and idle: no request, no timer, until the operator connects (or `EVER_CONNECT_CODE` is set).                               |
 | Connected                                            | Only the requests listed below, each on its own trigger.                                                                          |
 | `EVER_APP_LAUNCHER_ENABLED` unset, or anything but `true` | The App Launcher's routes are not registered (404) and none of its reads is ever made, connected or not.                     |
+| `EVER_CONNECT_MEMBERSHIP_SYNC_ENABLED` unset, or anything but `true` | The membership sync's handler is not registered: membership events are acknowledged and nothing changes. It never sends anything. |
 
 ## Anonymous usage statistics
 
@@ -134,6 +135,29 @@ When a person whose Ever ID is linked here asks Ever Platform to delete or expor
 | Deletion | the link reports of those identities are removed, the Ever ID links are removed and the Gauzy sessions opened through them end; then the account-deletion feature | `deleted`, `anonymised` or `retained_legal` (with the legal basis) from that feature; `failed` (`account_deletion_pending`) while none is bound: the links are gone but the accounts still hold the person's data, so the request stays open; `no_account` when nothing is linked |
 | Export   | the export feature prepares an export of the linked accounts                                                                          | `exported` with the https link to that export (Ever Platform stores the link and never fetches it); `failed` (`export_not_available`) while none is bound; `no_account` |
 
+### Roles from Ever (membership sync)
+
+Off unless `EVER_CONNECT_MEMBERSHIP_SYNC_ENABLED=true` (exactly), on an installation with the Ever ID sign-in plugin loaded (`ZITADEL_ENABLED=true`); otherwise its handler is not registered at all, and the feed acknowledges these events and changes nothing.
+
+When a person is added to an Ever organization linked to a Gauzy organization here, their role there changes, or they leave it, Ever Platform sends one event per tenant link on this installation's feed (`ever.registry.membership.created`, `.role_changed`, `.removed`): the link, the person's Ever ID (issuer and subject), the Gauzy user when Ever Platform has a person link for them, and the Ever role. Never an e-mail address, a name or a person id. Nothing is sent back.
+
+- **Who:** the one Gauzy user of the link's tenant whose Ever ID link (made by the Ever ID sign-in plugin only after the person proved both sides) is that issuer and subject; when the event names a Gauzy user, it must be that one. Nobody, or two users: nothing changes. **No user is ever created from an event**, and nothing is kept for a person without a linked Gauzy user: their role is applied by the first event that arrives after they linked their Ever ID.
+- **Which organization:** the one of the live tenant link the event names (status `linked`); a suspended, orphaned or unknown link changes nothing.
+- **Roles.** Gauzy roles are the tenant's, so the user of the link's tenant gets the role:
+
+| Ever role | Gauzy role                                                                                                      |
+| --------- | --------------------------------------------------------------------------------------------------------------- |
+| `owner`   | `ADMIN` (never `SUPER_ADMIN`: that is the tenant owner's, made when the workspace was created)                  |
+| `admin`   | `ADMIN`                                                                                                         |
+| `member`  | no role from Ever: the user keeps their own; an `ADMIN` the sync granted gives back the role they had before it |
+| any other | nothing changes                                                                                                 |
+
+- **Changes.** `created`: the user becomes a member of the organization (an inactive membership is made active again, else one is added) and gets the role. `role_changed`: the role, for an active member only. `removed`: an `ADMIN` the sync granted gives back the role before it, and the user's membership of the organization becomes inactive.
+- **Never:** deleting a user, a membership row or anything a person made; changing a `SUPER_ADMIN`; taking away an `ADMIN` given in Gauzy, or a role changed in Gauzy after the sync granted it (only the sync's own `ADMIN`, while the user still has it, is taken back; a role change the sync sees ends its grant for every organization). When the role the grant replaced was deleted meanwhile, the least-privileged role is given instead (`VIEWER`, else `EMPLOYEE`, else none). While another linked organization of the same tenant still holds the sync's current `ADMIN` grant, the `ADMIN` stays; the role given back is always the one that grant replaced (a grant made after the role was changed in Gauzy voids the earlier one).
+- **Missed changes:** Ever Platform offers an installation no list of memberships to read again, so when the feed has to be resumed past changes it no longer keeps (`410 resync_required`, after a long time offline), membership changes among them are not applied; the log says so, for the operator to check the roles of linked organizations.
+- **Unlinking** an organization changes no role and no membership: what the sync applied stays as it is in Gauzy. From then on that organization's grant no longer keeps an `ADMIN` when another linked organization demotes or removes the person, and its events (a link that is no longer `linked`) change nothing.
+- **Repeats and order:** each applied event is one `membership.sync` audit row of the organization (ids, the Ever role, the roles before and after and the outcome), which is also how the sync remembers what it did: the same event again changes nothing, and an event older than the last one applied for that person and organization (by its time, then its id) is skipped; an event without its time is not applied. The change and its audit row are written in one transaction: a database failure rolls both back and fails the feed page, which is read again.
+
 ### Creating a workspace from Ever
 
 Off unless `EVER_CONNECT_PROVISION_ENABLED=true` (exactly), on a connected installation with the Ever ID sign-in plugin loaded (`ZITADEL_ENABLED=true`); otherwise every route of it answers 404 and nothing of it runs.
@@ -193,6 +217,7 @@ Tables `ever_connect_connection`, `ever_connect_link`, `ever_connect_integration
 | `EVER_CONNECT_INTEGRATIONS_DENY`                       | unset                 | integration keys denied for every organization (comma separated, or `*`)                                                              |
 | `EVER_CONNECT_FEED_MODE`                               | `longpoll`            | `interval`: one read of the event feed every 15 minutes                                                                               |
 | `EVER_CONNECT_PROVISION_ENABLED`                       | unset (off)           | `true` (exactly) lets a person create a workspace from Ever (see "Creating a workspace from Ever"); otherwise its routes answer 404 |
+| `EVER_CONNECT_MEMBERSHIP_SYNC_ENABLED`                 | unset (off)           | `true` (exactly), with `ZITADEL_ENABLED=true`, applies the Ever roles of linked organizations to their Gauzy users (see "Roles from Ever") |
 | `EVER_APP_LAUNCHER_ENABLED`                            | unset (off)           | `true` (exactly), with `ZITADEL_ENABLED=true`, turns on the App Launcher (see "App Launcher"); otherwise its routes answer 404 and nothing of it runs |
 | `EVER_APP_LAUNCHER_ORIGINS`                            | the origin of `CLIENT_BASE_URL` | the browser origins the App Launcher's routes answer (comma separated, at most 50)                                          |
 | `EVER_PLATFORM_PROJECT_ID`                             | unset                 | Ever Platform's audience, which the App Launcher's token is exchanged for (shared with the Ever ID sign-in plugin); unset, "Your apps" is not read |
