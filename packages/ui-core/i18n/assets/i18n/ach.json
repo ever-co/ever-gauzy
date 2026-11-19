@@ -1,5 +1,6 @@
 {
 	"BUTTONS": {
+		"RETRY": "Retry",
 		"PAY": "crwdns11018:0crwdne11018:0",
 		"ADD_EXISTING_USER": "crwdns3148:0crwdne3148:0",
 		"ADD_NEW": "crwdns3150:0crwdne3150:0",
@@ -7160,5 +7161,15 @@
 		"YOU": "You",
 		"OTHERS": "{{ count }} more",
 		"FAILED": "The reaction was not saved."
+	},
+	"FAVORITES": {
+		"SUBTITLE": "Everything you starred, newest first.",
+		"EMPTY": "No favorites yet. Use the star on a record to add it here.",
+		"VIEW_ALL": "View all",
+		"PINNED_FOR_ORGANIZATION": "Pinned for the organization",
+		"REMOVED_STILL_PINNED": "{{ name }} was removed from your favorites. It stays listed because it is pinned for the organization.",
+		"ERROR": {
+			"LOAD_FAILED": "Failed to load favorites"
+		}
 	}
 }

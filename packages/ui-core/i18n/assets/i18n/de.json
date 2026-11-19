@@ -8160,5 +8160,15 @@
 		"YOU": "Sie",
 		"OTHERS": "{{ count }} weitere",
 		"FAILED": "Die Reaktion wurde nicht gespeichert."
+	},
+	"FAVORITES": {
+		"SUBTITLE": "Alles, was Sie markiert haben, neueste zuerst.",
+		"EMPTY": "Noch keine Favoriten. Markieren Sie einen Eintrag mit dem Stern, um ihn hier hinzuzufügen.",
+		"VIEW_ALL": "Alle anzeigen",
+		"PINNED_FOR_ORGANIZATION": "Für die Organisation angeheftet",
+		"REMOVED_STILL_PINNED": "{{ name }} wurde aus Ihren Favoriten entfernt. Der Eintrag bleibt in der Liste, weil er für die Organisation angeheftet ist.",
+		"ERROR": {
+			"LOAD_FAILED": "Favoriten konnten nicht geladen werden"
+		}
 	}
 }

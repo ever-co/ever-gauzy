@@ -9160,6 +9160,11 @@
 		"WORDS": "{{count}} words"
 	},
 	"FAVORITES": {
+		"SUBTITLE": "Everything you starred, newest first.",
+		"EMPTY": "No favorites yet. Use the star on a record to add it here.",
+		"VIEW_ALL": "View all",
+		"PINNED_FOR_ORGANIZATION": "Pinned for the organization",
+		"REMOVED_STILL_PINNED": "{{ name }} was removed from your favorites. It stays listed because it is pinned for the organization.",
 		"ERROR": {
 			"LOAD_FAILED": "Failed to load favorites"
 		}

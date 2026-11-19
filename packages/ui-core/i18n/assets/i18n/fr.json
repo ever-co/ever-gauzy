@@ -8161,5 +8161,15 @@
 		"YOU": "Vous",
 		"OTHERS": "{{ count }} de plus",
 		"FAILED": "La réaction n’a pas été enregistrée."
+	},
+	"FAVORITES": {
+		"SUBTITLE": "Tout ce que vous avez mis en favori, du plus récent au plus ancien.",
+		"EMPTY": "Aucun favori pour le moment. Utilisez l’étoile d’un élément pour l’ajouter ici.",
+		"VIEW_ALL": "Tout afficher",
+		"PINNED_FOR_ORGANIZATION": "Épinglé pour l’organisation",
+		"REMOVED_STILL_PINNED": "{{ name }} a été retiré de vos favoris. Il reste dans la liste car il est épinglé pour l’organisation.",
+		"ERROR": {
+			"LOAD_FAILED": "Impossible de charger les favoris"
+		}
 	}
 }

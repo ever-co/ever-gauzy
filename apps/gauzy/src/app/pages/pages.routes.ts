@@ -28,6 +28,7 @@ export const getPagesRoutes = (_pageRouteRegistryService: PageRouteRegistryServi
 	const children: Route[] = [
 		...getRedirectRoute(),
 		...getDashboardRoute(),
+		...getFavoritesRoute(),
 		...getAccountingRoutes(_pageRouteRegistryService),
 		...getContactsRoute(),
 		...getProjectsRoute(),
@@ -200,6 +201,25 @@ function getSalesRoutes(_pageRouteRegistryService: PageRouteRegistryService): Ro
 				},
 				..._pageRouteRegistryService.getPageLocationRoutes('sales-sections')
 			]
+		}
+	];
+}
+
+/** Every favorite of the signed-in user; the sidebar lists only the newest few. */
+function getFavoritesRoute(): Route[] {
+	return [
+		{
+			path: 'favorites',
+			loadComponent: () => import('./favorites/favorites.component').then((m) => m.FavoritesComponent),
+			data: {
+				selectors: {
+					project: false,
+					team: false,
+					employee: false,
+					date: false,
+					organization: true
+				}
+			}
 		}
 	];
 }

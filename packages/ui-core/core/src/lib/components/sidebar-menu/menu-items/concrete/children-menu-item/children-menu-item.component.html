@@ -22,7 +22,7 @@
 		[nbTooltip]="$safeNavigationMigration(item?.title)"
 		nbTooltipPlacement="right"
 		[nbTooltipDisabled]="tooltipDisabled"
-		[class]="(selected ? 'sub-item selected' : 'sub-item') + (!collapse ? ' custom' : '')"
+		[class]="(selected ? 'sub-item selected' : 'sub-item') + (!collapse ? ' custom' : '') + (item?.class ? ' ' + item.class : '')"
 	>
 		<span (click)="select()" class="info">
 			<i [class]="item?.icon"></i>
@@ -34,6 +34,9 @@
 			</span>
 			}
 		</span>
+		@if (item?.data?.count != null) {
+		<span class="count" (click)="select()">{{ item?.data?.count }}</span>
+		}
 		@if (item?.data?.add) {
 		<button
 			class="plus"
