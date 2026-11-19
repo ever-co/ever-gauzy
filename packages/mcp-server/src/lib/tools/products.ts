@@ -10,6 +10,7 @@ import { ImageAssetRefSchema } from '../schema';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
 import { TOOL_HINTS } from './tool-hints';
+import { buildListQuery, validateOrganizationContext } from './utils';
 const logger = new Logger('ProductTools');
 
 /**
@@ -238,12 +239,10 @@ export const registerProductTools = (server: McpServer) => {
 		},
 		async ({ page = 1, limit = 10, search, relations, where }) => {
 			try {
+				const defaultParams = validateOrganizationContext();
 				const params = {
-					page,
-					limit,
-					...(search !== undefined ? { search } : {}),
-					...(relations !== undefined ? { relations } : {}),
-					...(where !== undefined ? { where } : {})
+					...buildListQuery(defaultParams, { ...where }, { page, limit, relations, skipIsPage: true }),
+					...(search !== undefined && { search })
 				};
 
 				const response = await apiClient.get('/api/products/pagination', { params });
