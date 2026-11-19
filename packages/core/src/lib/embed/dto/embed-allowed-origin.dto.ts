@@ -1,6 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsUUID, MaxLength } from 'class-validator';
-import { ID, IEmbedAllowedOrigin, IEmbedAllowedOriginCreateInput } from '@gauzy/contracts';
+import { IsBoolean, IsNotEmpty, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+import {
+	ID,
+	IEmbedAllowedOrigin,
+	IEmbedAllowedOriginCreateInput,
+	IEmbedAllowedOriginUpdateInput
+} from '@gauzy/contracts';
 import { IsOrganizationBelongsToUser } from '../../shared/validators';
 import { EmbedAllowedOrigin } from '../embed-allowed-origin.entity';
 
@@ -20,15 +25,38 @@ export class CreateEmbedAllowedOriginDTO implements IEmbedAllowedOriginCreateInp
 	@IsUUID()
 	@IsOrganizationBelongsToUser()
 	organizationId: ID;
+
+	@ApiPropertyOptional({
+		type: () => Boolean,
+		default: false,
+		description:
+			"Lets the organization's people sign in from this site themselves and get their timer token without a server (POST /embed/authorize)."
+	})
+	@IsOptional()
+	@IsBoolean()
+	allowPersonSignIn?: boolean;
 }
 
-/** An allowed origin as the list answers it: who added it and when. */
+/** `PATCH /api/embed-allowed-origins/:id`: the one setting of an allowed site that changes. */
+export class UpdateEmbedAllowedOriginDTO implements IEmbedAllowedOriginUpdateInput {
+	@ApiProperty({
+		type: () => Boolean,
+		description: "Whether the organization's people can sign in from this site themselves (POST /embed/authorize)."
+	})
+	@IsBoolean()
+	allowPersonSignIn: boolean;
+}
+
+/** An allowed origin as the list answers it: who added it and when, and whether people can sign in from it. */
 export class EmbedAllowedOriginResponseDTO implements IEmbedAllowedOrigin {
 	@ApiProperty({ type: () => String })
 	id: ID;
 
 	@ApiProperty({ type: () => String })
 	origin: string;
+
+	@ApiProperty({ type: () => Boolean })
+	allowPersonSignIn: boolean;
 
 	@ApiPropertyOptional({ type: () => String })
 	organizationId?: ID;
@@ -43,6 +71,7 @@ export class EmbedAllowedOriginResponseDTO implements IEmbedAllowedOrigin {
 		const answer = new EmbedAllowedOriginResponseDTO();
 		answer.id = row.id;
 		answer.origin = row.origin;
+		answer.allowPersonSignIn = row.allowPersonSignIn === true;
 		answer.organizationId = row.organizationId;
 		answer.createdByUserId = row.createdByUserId;
 		answer.createdAt = row.createdAt;

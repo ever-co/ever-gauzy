@@ -134,6 +134,19 @@ export const applyInTurn = async <T, R>(items: T[], apply: (item: T) => Promise<
 };
 
 /**
+ * The error a tool answers, before any request, when the Gauzy API has no route for its action. The tool stays
+ * listed, so the assistant can tell the person plainly that this server does not offer it; `instead` names a tool
+ * that does a close action, when there is one.
+ */
+export const notOfferedByApi = (action: string, instead?: string): Error => {
+	const message = `This server does not offer ${action}: the Gauzy API has no route for that.`;
+	if (!instead) {
+		return new Error(message);
+	}
+	return new Error(`${message} ${instead}`);
+};
+
+/**
  * Counts the items under each grouping, for the statistics tools the API has no route for.
  * A grouping returns one key per item, or several (an item counted under each).
  */

@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Index } from 'typeorm';
 import { IEmbedAllowedOrigin } from '@gauzy/contracts';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
@@ -19,4 +19,9 @@ export class EmbedAllowedOrigin extends TenantOrganizationBaseEntity implements 
 	@ApiProperty({ type: () => String, maxLength: 255 })
 	@MultiORMColumn({ length: 255 })
 	origin: string;
+
+	/** Whether the organization's people can sign in from this site themselves (`POST /embed/authorize`). */
+	@ApiPropertyOptional({ type: () => Boolean, default: false })
+	@MultiORMColumn({ default: false })
+	allowPersonSignIn?: boolean;
 }

@@ -868,6 +868,7 @@
 		"Pgweb",
 		"PHPROOT",
 		"pickable",
+		"pids",
 		"piecelabel",
 		"pinghost",
 		"pino",

@@ -1,14 +1,29 @@
 import { NotFoundException, RequestMethod } from '@nestjs/common';
-import { GUARDS_METADATA, HTTP_CODE_METADATA, METHOD_METADATA, PATH_METADATA } from '@nestjs/common/constants';
+import {
+	GUARDS_METADATA,
+	HEADERS_METADATA,
+	HTTP_CODE_METADATA,
+	METHOD_METADATA,
+	PATH_METADATA
+} from '@nestjs/common/constants';
 import { Request } from 'express';
 import { sign } from 'jsonwebtoken';
+import { THROTTLER_LIMIT, THROTTLER_TRACKER } from '@nestjs/throttler/dist/throttler.constants';
 import { PERMISSIONS_METADATA, PUBLIC_METHOD_METADATA } from '@gauzy/constants';
 import { IEmbedClientReport, PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { EmbedClientService } from './embed-client.service';
 import { EmbedCredentialService } from './embed-credential.service';
-import { EmbedCredentialController, EmbedProjectController, EmbedTokenController } from './embed.controller';
+import {
+	EmbedAllowedOriginController,
+	EmbedCredentialController,
+	EmbedProjectController,
+	EmbedSiteGrantController,
+	EmbedTokenController
+} from './embed.controller';
+import { EmbedSiteGrantService } from './embed-site-grant.service';
+import { EmbedAllowedOriginService } from './embed-allowed-origin.service';
 import { EmbedEnabledGuard } from './embed.guards';
 import {
 	EMBED_CLIENT_CLAIM,
@@ -17,6 +32,7 @@ import {
 	reachableByEmbedToken
 } from './embed-session';
 import { EMBED_TOKENS_ENV } from './embed.utils';
+import { EMBED_EXCHANGE_LIMIT_PER_ADDRESS, embedExchangeAddress } from './embed-exchange-throttle';
 
 /**
  * `POST /api/embed/client-report`, as the controller declares it: public (the credential is the proof), behind the
@@ -74,13 +90,14 @@ describe('POST /embed/client-report', () => {
 });
 
 describe('GET /embed-credentials/config', () => {
-	it('tells the settings page that a credential can be limited to a client and add members, with embeds on or off', () => {
+	it('tells the settings page what credentials and allowed sites can do here, with embeds on or off', () => {
 		const controller = new EmbedCredentialController({} as EmbedCredentialService);
+		const features = { clientLimits: true, addMembers: true, personSignIn: true };
 
 		process.env[EMBED_TOKENS_ENV] = 'false';
-		expect(controller.config()).toEqual({ enabled: false, clientLimits: true, addMembers: true });
+		expect(controller.config()).toEqual({ enabled: false, ...features });
 		process.env[EMBED_TOKENS_ENV] = 'true';
-		expect(controller.config()).toEqual({ enabled: true, clientLimits: true, addMembers: true });
+		expect(controller.config()).toEqual({ enabled: true, ...features });
 	});
 });
 
@@ -179,5 +196,182 @@ describe('GET /embed/projects', () => {
 		await expect(controller.projects(requestWith(''))).rejects.toMatchObject(refused);
 
 		expect(trackableProjectsOf).not.toHaveBeenCalled();
+	});
+});
+
+/**
+ * A person's sign-in from an allowed site, as the controller declares it: every route behind the switch, the
+ * authorization for a signed-in person only, its answer never cached.
+ */
+describe('POST /embed/authorize', () => {
+	const authorizeHandler = EmbedSiteGrantController.prototype.authorize;
+
+	it('is a POST under /embed, behind the switch, for a signed-in person, answered 200 and never cached', () => {
+		expect(Reflect.getMetadata(PATH_METADATA, EmbedSiteGrantController)).toBe('/embed');
+		expect(Reflect.getMetadata(GUARDS_METADATA, EmbedSiteGrantController)).toEqual([EmbedEnabledGuard]);
+		expect(Reflect.getMetadata(PATH_METADATA, authorizeHandler)).toBe('/authorize');
+		expect(Reflect.getMetadata(METHOD_METADATA, authorizeHandler)).toBe(RequestMethod.POST);
+		expect(Reflect.getMetadata(HTTP_CODE_METADATA, authorizeHandler)).toBe(200);
+		expect(Reflect.getMetadata(GUARDS_METADATA, authorizeHandler)).toEqual([TenantPermissionGuard]);
+		expect(Reflect.getMetadata(PUBLIC_METHOD_METADATA, authorizeHandler)).toBeUndefined();
+		expect(Reflect.getMetadata(PUBLIC_METHOD_METADATA, EmbedSiteGrantController)).toBeUndefined();
+		expect(Reflect.getMetadata(HEADERS_METADATA, authorizeHandler)).toEqual(
+			expect.arrayContaining([{ name: 'Cache-Control', value: 'no-store' }])
+		);
+	});
+
+	it('hands the body to the service and answers its tokens', async () => {
+		const tokens = {
+			token: 'a-timer-token',
+			expiresAt: '2026-11-19T09:15:00.000Z',
+			renewalToken: 'gzr_a-renewal-token',
+			renewalExpiresAt: '2026-12-19T09:00:00.000Z'
+		};
+		const authorize = jest.fn(async () => tokens);
+		const controller = new EmbedSiteGrantController({ authorize } as unknown as EmbedSiteGrantService);
+		const body = { organizationId: '7a000000-0000-4000-8000-0000000000f1', origin: 'https://team.example.com' };
+
+		await expect(controller.authorize(body)).resolves.toBe(tokens);
+
+		expect(authorize).toHaveBeenCalledWith(body);
+	});
+});
+
+/**
+ * `POST /api/embed/renew`, as the controller declares it: public (the renewal token is the proof), behind the switch,
+ * limited per address, never cached, and handed to the service with the request's Origin header.
+ */
+describe('POST /embed/renew', () => {
+	const renewHandler = EmbedSiteGrantController.prototype.renew;
+
+	it('is a public POST under /embed, limited per address, answered 200 and never cached', () => {
+		expect(Reflect.getMetadata(PATH_METADATA, renewHandler)).toBe('/renew');
+		expect(Reflect.getMetadata(METHOD_METADATA, renewHandler)).toBe(RequestMethod.POST);
+		expect(Reflect.getMetadata(HTTP_CODE_METADATA, renewHandler)).toBe(200);
+		expect(Reflect.getMetadata(PUBLIC_METHOD_METADATA, renewHandler)).toBe(true);
+		expect(Reflect.getMetadata(GUARDS_METADATA, renewHandler)).toBeUndefined();
+		expect(Reflect.getMetadata(`${THROTTLER_LIMIT}default`, renewHandler)).toBe(EMBED_EXCHANGE_LIMIT_PER_ADDRESS);
+		expect(Reflect.getMetadata(`${THROTTLER_TRACKER}default`, renewHandler)).toBe(embedExchangeAddress);
+		expect(Reflect.getMetadata(HEADERS_METADATA, renewHandler)).toEqual(
+			expect.arrayContaining([{ name: 'Cache-Control', value: 'no-store' }])
+		);
+	});
+
+	it("hands the body and the request's Origin header to the service, and answers its tokens", async () => {
+		const tokens = { token: 'a-timer-token', renewalToken: 'gzr_next' };
+		const renew = jest.fn(async () => tokens);
+		const controller = new EmbedSiteGrantController({ renew } as unknown as EmbedSiteGrantService);
+		const body = { renewalToken: 'gzr_a-renewal-token' };
+		const request = { headers: { origin: 'https://team.example.com' }, body } as unknown as Request;
+
+		await expect(controller.renew(body, request)).resolves.toBe(tokens);
+
+		expect(renew).toHaveBeenCalledWith(body, 'https://team.example.com');
+	});
+});
+
+/** `POST /api/embed/revoke`, the site's sign-out: public, behind the switch, limited per address, answered 204. */
+describe('POST /embed/revoke', () => {
+	const revokeHandler = EmbedSiteGrantController.prototype.revoke;
+
+	it('is a public POST under /embed, limited per address, answered 204', () => {
+		expect(Reflect.getMetadata(PATH_METADATA, revokeHandler)).toBe('/revoke');
+		expect(Reflect.getMetadata(METHOD_METADATA, revokeHandler)).toBe(RequestMethod.POST);
+		expect(Reflect.getMetadata(HTTP_CODE_METADATA, revokeHandler)).toBe(204);
+		expect(Reflect.getMetadata(PUBLIC_METHOD_METADATA, revokeHandler)).toBe(true);
+		expect(Reflect.getMetadata(`${THROTTLER_LIMIT}default`, revokeHandler)).toBe(EMBED_EXCHANGE_LIMIT_PER_ADDRESS);
+		expect(Reflect.getMetadata(`${THROTTLER_TRACKER}default`, revokeHandler)).toBe(embedExchangeAddress);
+	});
+
+	it('hands the body to the service', async () => {
+		const revoke = jest.fn(async () => undefined);
+		const controller = new EmbedSiteGrantController({ revoke } as unknown as EmbedSiteGrantService);
+		const body = { renewalToken: 'gzr_a-renewal-token' };
+
+		await expect(controller.revoke(body)).resolves.toBeUndefined();
+
+		expect(revoke).toHaveBeenCalledWith(body);
+	});
+});
+
+/** `GET /api/embed/grants`: behind the switch, for a signed-in person, who names an organization to list everyone's. */
+describe('GET /embed/grants', () => {
+	const grantsHandler = EmbedSiteGrantController.prototype.grants;
+
+	it('is a GET under /embed for a signed-in person, never public', () => {
+		expect(Reflect.getMetadata(PATH_METADATA, grantsHandler)).toBe('/grants');
+		expect(Reflect.getMetadata(METHOD_METADATA, grantsHandler)).toBe(RequestMethod.GET);
+		expect(Reflect.getMetadata(GUARDS_METADATA, grantsHandler)).toEqual([TenantPermissionGuard]);
+		expect(Reflect.getMetadata(PUBLIC_METHOD_METADATA, grantsHandler)).toBeUndefined();
+	});
+
+	it("asks the service for the person's own grants, or the organization's it names", async () => {
+		const listGrants = jest.fn(async () => []);
+		const controller = new EmbedSiteGrantController({ listGrants } as unknown as EmbedSiteGrantService);
+		const organizationId = '7a000000-0000-4000-8000-0000000000f1';
+
+		await controller.grants({});
+		await controller.grants({ organizationId });
+
+		expect(listGrants.mock.calls).toEqual([[undefined], [organizationId]]);
+	});
+});
+
+/** `DELETE /api/embed/grants/:id`: behind the switch, for a signed-in person, answered 204. */
+describe('DELETE /embed/grants/:id', () => {
+	const revokeGrantHandler = EmbedSiteGrantController.prototype.revokeGrant;
+
+	it('is a DELETE under /embed for a signed-in person, never public, answered 204', () => {
+		expect(Reflect.getMetadata(PATH_METADATA, revokeGrantHandler)).toBe('/grants/:id');
+		expect(Reflect.getMetadata(METHOD_METADATA, revokeGrantHandler)).toBe(RequestMethod.DELETE);
+		expect(Reflect.getMetadata(HTTP_CODE_METADATA, revokeGrantHandler)).toBe(204);
+		expect(Reflect.getMetadata(GUARDS_METADATA, revokeGrantHandler)).toEqual([TenantPermissionGuard]);
+		expect(Reflect.getMetadata(PUBLIC_METHOD_METADATA, revokeGrantHandler)).toBeUndefined();
+	});
+
+	it('hands the grant to the service', async () => {
+		const revokeGrant = jest.fn(async () => undefined);
+		const controller = new EmbedSiteGrantController({ revokeGrant } as unknown as EmbedSiteGrantService);
+		const id = '7a000000-0000-4000-8000-0000000000c9';
+
+		await expect(controller.revokeGrant(id)).resolves.toBeUndefined();
+
+		expect(revokeGrant).toHaveBeenCalledWith(id);
+	});
+});
+
+/** `PATCH /api/embed-allowed-origins/:id`: the sign-in setting of an allowed site, with the permission of add and remove. */
+describe('PATCH /embed-allowed-origins/:id', () => {
+	const setHandler = EmbedAllowedOriginController.prototype.setPersonSignIn;
+
+	it('is a PATCH of an allowed origin, behind the guards and the permission of add and remove', () => {
+		expect(Reflect.getMetadata(PATH_METADATA, EmbedAllowedOriginController)).toBe('/embed-allowed-origins');
+		expect(Reflect.getMetadata(PATH_METADATA, setHandler)).toBe('/:id');
+		expect(Reflect.getMetadata(METHOD_METADATA, setHandler)).toBe(RequestMethod.PATCH);
+		expect(Reflect.getMetadata(GUARDS_METADATA, EmbedAllowedOriginController)).toEqual([
+			TenantPermissionGuard,
+			PermissionGuard,
+			EmbedEnabledGuard
+		]);
+		expect(Reflect.getMetadata(PERMISSIONS_METADATA, EmbedAllowedOriginController)).toEqual([
+			PermissionsEnum.ALL_ORG_EDIT
+		]);
+		expect(Reflect.getMetadata(PUBLIC_METHOD_METADATA, setHandler)).toBeUndefined();
+	});
+
+	it('hands the origin and the setting to the service, and answers the origin', async () => {
+		const origin = {
+			id: '7a000000-0000-4000-8000-00000000d001',
+			origin: 'https://team.example.com',
+			allowPersonSignIn: true
+		};
+		const setPersonSignIn = jest.fn(async () => origin);
+		const controller = new EmbedAllowedOriginController({
+			setPersonSignIn
+		} as unknown as EmbedAllowedOriginService);
+
+		await expect(controller.setPersonSignIn(origin.id, { allowPersonSignIn: true })).resolves.toBe(origin);
+
+		expect(setPersonSignIn).toHaveBeenCalledWith(origin.id, true);
 	});
 });

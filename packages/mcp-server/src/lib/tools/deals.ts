@@ -3,7 +3,8 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { validateOrganizationContext } from './utils';
+import { authManager } from '../common/auth-manager';
+import { buildListQuery, notOfferedByApi, resolveOrganizationScope, validateOrganizationContext } from './utils';
 import { DealStatusEnum } from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
@@ -69,29 +70,28 @@ export const registerDealTools = (server: McpServer) => {
 		'get_deal_count',
 		"Get deal count in the authenticated user's organization",
 		{
-			stage: DealStatusEnum.optional().describe('Filter by deal stage'),
+			stage: DealStatusEnum.optional().describe('Not offered: a deal is in a stage of its own pipeline'),
 			clientId: z.string().uuid().optional().describe('Filter by client ID'),
 			createdByUserId: z.string().uuid().optional().describe('Filter by creator user ID')
 		},
 		async ({ stage, clientId, createdByUserId }) => {
 			try {
-				const defaultParams = validateOrganizationContext();
+				if (stage) {
+					throw notOfferedByApi('a filter on fixed deal stages');
+				}
+				const scope = resolveOrganizationScope();
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					...(stage && { stage }),
-					...(clientId && { clientId }),
-					...(createdByUserId && { createdByUserId })
-				};
-
-				const response = await apiClient.get('/api/deals/count', { params });
+				// `/deals/count` reaches the deal controller's own `:id` route first: the list route's total counts
+				const query = buildListQuery(scope, { clientId, createdByUserId }, { limit: 1 });
+				const { total = 0 } = await apiClient.get<{ total?: number }>('/api/deals', {
+					params: { ...scope, ...query }
+				});
 
 				return {
 					content: [
 						{
 							type: 'text',
-							text: JSON.stringify({ count: response }, null, 2)
+							text: JSON.stringify({ count: total }, null, 2)
 						}
 					]
 				};
@@ -145,7 +145,9 @@ export const registerDealTools = (server: McpServer) => {
 		'create_deal',
 		"Create a new deal in the authenticated user's organization",
 		{
-			deal_data: z.object({ title: z.string().describe('The title (required)') }).passthrough()
+			deal_data: z
+				.object({ title: z.string().describe('The title (required)') })
+				.passthrough()
 				.describe('The data for creating the deal')
 		},
 		async ({ deal_data }) => {
@@ -214,18 +216,12 @@ export const registerDealTools = (server: McpServer) => {
 			id: z.string().uuid().describe('The deal ID'),
 			stage: DealStatusEnum.describe('The new stage for the deal')
 		},
-		async ({ id, stage }) => {
+		async () => {
 			try {
-				const response = await apiClient.put(`/api/deals/${id}/stage`, { stage });
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
+				throw notOfferedByApi(
+					'fixed deal stages',
+					'A deal moves between the stages of its pipeline: update_deal sets its stageId.'
+				);
 			} catch (error) {
 				logger.error('Error updating deal stage:', sanitizeForLogging(error));
 				throw new Error(`Failed to update deal stage: ${sanitizeErrorMessage(error)}`);
@@ -314,23 +310,23 @@ export const registerDealTools = (server: McpServer) => {
 		{
 			page: z.number().optional().default(1).describe('Page number for pagination'),
 			limit: z.number().optional().default(10).describe('Number of items per page'),
-			stage: DealStatusEnum.optional().describe('Filter by deal stage'),
+			stage: DealStatusEnum.optional().describe('Not offered: a deal is in a stage of its own pipeline'),
 			relations: z.array(z.string()).optional().describe('Relations to include')
 		},
 		async ({ page = 1, limit = 10, stage, relations }) => {
 			try {
-				const defaultParams = validateOrganizationContext();
+				if (stage) {
+					throw notOfferedByApi('a filter on fixed deal stages');
+				}
+				const scope = resolveOrganizationScope();
+				const createdByUserId = authManager.getUserId();
+				if (!createdByUserId) {
+					throw new Error('User ID not available. Please ensure you are logged in.');
+				}
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					page,
-					limit,
-					...(stage && { stage }),
-					...(relations && { relations })
-				};
-
-				const response = await apiClient.get('/api/deals/me', { params });
+				// The guard reads the tenant at the top of the query, the list route its `where`
+				const params = { ...scope, ...buildListQuery(scope, { createdByUserId }, { page, limit, relations }) };
+				const response = await apiClient.get('/api/deals', { params });
 
 				return {
 					content: [
@@ -359,29 +355,9 @@ export const registerDealTools = (server: McpServer) => {
 			startDate: z.string().optional().describe('Start date for statistics (ISO format)'),
 			endDate: z.string().optional().describe('End date for statistics (ISO format)')
 		},
-		async ({ clientId, createdByUserId, startDate, endDate }) => {
+		async () => {
 			try {
-				const defaultParams = validateOrganizationContext();
-
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					...(clientId && { clientId }),
-					...(createdByUserId && { createdByUserId }),
-					...(startDate && { startDate }),
-					...(endDate && { endDate })
-				};
-
-				const response = await apiClient.get('/api/deals/statistics', { params });
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
+				throw notOfferedByApi('deal statistics');
 			} catch (error) {
 				logger.error('Error fetching deal statistics:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch deal statistics: ${sanitizeErrorMessage(error)}`);
@@ -404,18 +380,9 @@ export const registerDealTools = (server: McpServer) => {
 				})
 				.describe('The property to add')
 		},
-		async ({ dealId, property }) => {
+		async () => {
 			try {
-				const response = await apiClient.post(`/api/deals/${dealId}/properties`, property);
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
+				throw notOfferedByApi('custom properties on deals');
 			} catch (error) {
 				logger.error('Error adding deal property:', sanitizeForLogging(error));
 				throw new Error(`Failed to add deal property: ${sanitizeErrorMessage(error)}`);
@@ -434,18 +401,9 @@ export const registerDealTools = (server: McpServer) => {
 			propertyName: z.string().describe('The property name to update'),
 			value: z.string().describe('The new property value')
 		},
-		async ({ dealId, propertyName, value }) => {
+		async () => {
 			try {
-				const response = await apiClient.put(`/api/deals/${dealId}/properties/${propertyName}`, { value });
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
+				throw notOfferedByApi('custom properties on deals');
 			} catch (error) {
 				logger.error('Error updating deal property:', sanitizeForLogging(error));
 				throw new Error(`Failed to update deal property: ${sanitizeErrorMessage(error)}`);
@@ -463,22 +421,9 @@ export const registerDealTools = (server: McpServer) => {
 			dealId: z.string().uuid().describe('The deal ID'),
 			propertyName: z.string().describe('The property name to remove')
 		},
-		async ({ dealId, propertyName }) => {
+		async () => {
 			try {
-				await apiClient.delete(`/api/deals/${dealId}/properties/${propertyName}`);
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(
-								{ success: true, message: 'Deal property removed successfully', dealId, propertyName },
-								null,
-								2
-							)
-						}
-					]
-				};
+				throw notOfferedByApi('custom properties on deals');
 			} catch (error) {
 				logger.error('Error removing deal property:', sanitizeForLogging(error));
 				throw new Error(`Failed to remove deal property: ${sanitizeErrorMessage(error)}`);
@@ -496,27 +441,9 @@ export const registerDealTools = (server: McpServer) => {
 			clientId: z.string().uuid().optional().describe('Filter by client ID'),
 			createdByUserId: z.string().uuid().optional().describe('Filter by creator user ID')
 		},
-		async ({ clientId, createdByUserId }) => {
+		async () => {
 			try {
-				const defaultParams = validateOrganizationContext();
-
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					...(clientId && { clientId }),
-					...(createdByUserId && { createdByUserId })
-				};
-
-				const response = await apiClient.get('/api/deals/pipeline', { params });
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
+				throw notOfferedByApi('deals grouped by pipeline stage across the organization');
 			} catch (error) {
 				logger.error('Error fetching deals pipeline:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch deals pipeline: ${sanitizeErrorMessage(error)}`);
@@ -536,29 +463,9 @@ export const registerDealTools = (server: McpServer) => {
 			stage: DealStatusEnum.optional().describe('Filter by deal stage'),
 			clientId: z.string().uuid().optional().describe('Filter by client ID')
 		},
-		async ({ query, limit = 20, stage, clientId }) => {
+		async () => {
 			try {
-				const defaultParams = validateOrganizationContext();
-
-				const params = {
-					query,
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					limit,
-					...(stage && { stage }),
-					...(clientId && { clientId })
-				};
-
-				const response = await apiClient.get('/api/deals/search', { params });
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
+				throw notOfferedByApi('searching deals');
 			} catch (error) {
 				logger.error('Error searching deals:', sanitizeForLogging(error));
 				throw new Error(`Failed to search deals: ${sanitizeErrorMessage(error)}`);

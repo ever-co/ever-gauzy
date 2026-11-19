@@ -15,10 +15,28 @@ export const EMBED_TOKEN_MAX_TTL_SECONDS = 60 * 60;
 /** What a credential starts with, so a leaked one is recognisable in logs and by secret scanners. */
 export const EMBED_CREDENTIAL_PREFIX = 'gze_';
 
+/**
+ * What the renewal token of a person's sign-in from an allowed site starts with (`POST /embed/authorize`), so a leaked
+ * one is recognisable in logs and by secret scanners, and never taken for a credential.
+ */
+export const EMBED_RENEWAL_TOKEN_PREFIX = 'gzr_';
+
 /** 256 bits from the CSPRNG, in base64url without padding. */
 const SECRET_BYTES = 32;
 const SECRET_LENGTH = 43;
-const CREDENTIAL_SHAPE = new RegExp(`^${EMBED_CREDENTIAL_PREFIX}[A-Za-z0-9_-]{${SECRET_LENGTH}}$`);
+
+/** The whole shape of a secret that starts with `prefix`. */
+function secretShapeOf(prefix: string): RegExp {
+	return new RegExp(`^${prefix}[A-Za-z0-9_-]{${SECRET_LENGTH}}$`);
+}
+
+/** A new secret that starts with `prefix`. */
+function newSecret(prefix: string): string {
+	return `${prefix}${randomBytes(SECRET_BYTES).toString('base64url')}`;
+}
+
+const CREDENTIAL_SHAPE = secretShapeOf(EMBED_CREDENTIAL_PREFIX);
+const RENEWAL_TOKEN_SHAPE = secretShapeOf(EMBED_RENEWAL_TOKEN_PREFIX);
 
 /** How many characters of a credential the list shows: 48 of its 256 bits, which leaves no guess possible. */
 const DISPLAY_PREFIX_LENGTH = EMBED_CREDENTIAL_PREFIX.length + 8;
@@ -48,7 +66,7 @@ export function embedTokenTtlSeconds(value: string | undefined = process.env['GA
 
 /** A new credential: the secret to show once, its digest to store and the prefix to list. */
 export function generateEmbedCredential(): { secret: string; keyHash: string; prefix: string } {
-	const secret = `${EMBED_CREDENTIAL_PREFIX}${randomBytes(SECRET_BYTES).toString('base64url')}`;
+	const secret = newSecret(EMBED_CREDENTIAL_PREFIX);
 	return { secret, keyHash: hashEmbedCredential(secret), prefix: secret.slice(0, DISPLAY_PREFIX_LENGTH) };
 }
 
@@ -57,6 +75,18 @@ export function isWellFormedEmbedCredential(value: unknown): value is string {
 	return typeof value === 'string' && CREDENTIAL_SHAPE.test(value);
 }
 
+/** A new renewal token: the token to show once, and its digest to store (`hashEmbedCredential`). */
+export function generateEmbedRenewalToken(): { token: string; keyHash: string } {
+	const token = newSecret(EMBED_RENEWAL_TOKEN_PREFIX);
+	return { token, keyHash: hashEmbedCredential(token) };
+}
+
+/** Whether a value has the shape of a renewal token, before any lookup. */
+export function isWellFormedEmbedRenewalToken(value: unknown): value is string {
+	return typeof value === 'string' && RENEWAL_TOKEN_SHAPE.test(value);
+}
+
+/** The SHA-256 (hex) of a credential or a renewal token: 256 random bits, so a slow hash would add nothing. */
 export function hashEmbedCredential(secret: string): string {
 	return createHash('sha256').update(secret, 'utf8').digest('hex');
 }

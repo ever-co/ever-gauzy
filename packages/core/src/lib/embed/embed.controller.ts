@@ -8,6 +8,7 @@ import {
 	HttpCode,
 	HttpStatus,
 	Param,
+	Patch,
 	Post,
 	Query,
 	Req,
@@ -31,11 +32,23 @@ import {
 	ExchangeEmbedCredentialDTO
 } from './dto/embed-credential.dto';
 import { EmbedProjectResponseDTO } from './dto/embed-project.dto';
+import {
+	AuthorizeEmbedSiteDTO,
+	EmbedSiteGrantResponseDTO,
+	EmbedSiteGrantsQueryDTO,
+	EmbedSiteTokensResponseDTO,
+	RenewEmbedSiteDTO
+} from './dto/embed-site-grant.dto';
 import { EmbedClientService } from './embed-client.service';
 import { EmbedCredentialService } from './embed-credential.service';
-import { EMBED_EXCHANGE_THROTTLE, embedExchangeAddress } from './embed-exchange-throttle';
-import { CreateEmbedAllowedOriginDTO, EmbedAllowedOriginResponseDTO } from './dto/embed-allowed-origin.dto';
+import { EMBED_EXCHANGE_THROTTLE, EMBED_SITE_THROTTLE, embedExchangeAddress } from './embed-exchange-throttle';
+import {
+	CreateEmbedAllowedOriginDTO,
+	EmbedAllowedOriginResponseDTO,
+	UpdateEmbedAllowedOriginDTO
+} from './dto/embed-allowed-origin.dto';
 import { EmbedAllowedOriginService } from './embed-allowed-origin.service';
+import { EmbedSiteGrantService } from './embed-site-grant.service';
 import { EmbedEnabledGuard } from './embed.guards';
 import { authenticatedEmbedClaims } from './embed-session';
 import { isEmbedEnabled } from './embed.utils';
@@ -55,12 +68,13 @@ export class EmbedCredentialController {
 	 * Whether this server has embeds on: the settings page asks, whatever the switch says. `clientLimits` tells it that
 	 * a credential can be limited to one client: an older server would drop `organizationContactId` and create a
 	 * credential for the whole organization, so the page offers the choice only when this is true. `addMembers` tells it,
-	 * for the same reason, that a credential can add the people its exchanges name (`canAddMembers`).
+	 * for the same reason, that a credential can add the people its exchanges name (`canAddMembers`), and `personSignIn`
+	 * that an allowed site can let the organization's people sign in from it themselves (`allowPersonSignIn`).
 	 */
 	@ApiOperation({ summary: 'Whether this server has embed credentials on, and what they can be limited to or do' })
 	@Get('/config')
-	config(): { enabled: boolean; clientLimits: boolean; addMembers: boolean } {
-		return { enabled: isEmbedEnabled(), clientLimits: true, addMembers: true };
+	config(): { enabled: boolean; clientLimits: boolean; addMembers: boolean; personSignIn: boolean } {
+		return { enabled: isEmbedEnabled(), clientLimits: true, addMembers: true, personSignIn: true };
 	}
 
 	@ApiOperation({ summary: "The organization's working embed credentials, without secrets" })
@@ -112,6 +126,21 @@ export class EmbedAllowedOriginController {
 	@UseValidationPipe({ whitelist: true })
 	async add(@Body() input: CreateEmbedAllowedOriginDTO): Promise<EmbedAllowedOriginResponseDTO> {
 		return await this.embedAllowedOriginService.addForOrganization(input);
+	}
+
+	@ApiOperation({
+		summary:
+			"Turn on or off whether the organization's people can sign in from an allowed site themselves; off, its renewals stop at once"
+	})
+	@ApiResponse({ status: HttpStatus.OK, type: EmbedAllowedOriginResponseDTO })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: "Not an allowed origin of the caller's tenant" })
+	@Patch('/:id')
+	@UseValidationPipe({ whitelist: true })
+	async setPersonSignIn(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Body() input: UpdateEmbedAllowedOriginDTO
+	): Promise<EmbedAllowedOriginResponseDTO> {
+		return await this.embedAllowedOriginService.setPersonSignIn(id, input.allowPersonSignIn);
 	}
 
 	@ApiOperation({
@@ -221,5 +250,109 @@ export class EmbedProjectController {
 			employeeId: claims.employeeId,
 			clientId: claims.clientId
 		});
+	}
+}
+
+/**
+ * A person's sign-in from a site the organization allows (`allowPersonSignIn`), for a site without a server of its own:
+ * the person allows the site from the web app, with their own session, and the site gets a timer token like the
+ * exchange's and a renewal token bound to it. Behind the switch: every route answers 404 while embeds are off.
+ */
+@ApiTags('Embed')
+@UseGuards(EmbedEnabledGuard)
+@Controller('/embed')
+export class EmbedSiteGrantController {
+	constructor(private readonly embedSiteGrantService: EmbedSiteGrantService) {}
+
+	@ApiOperation({
+		summary:
+			"Allow a site to start and stop the signed-in person's timer: a timer token and a renewal token, for that site only"
+	})
+	@ApiResponse({ status: HttpStatus.OK, type: EmbedSiteTokensResponseDTO })
+	@ApiResponse({
+		status: HttpStatus.FORBIDDEN,
+		description:
+			'Not an active member who may track time (EMBED_MEMBER_NOT_ALLOWED), a site the organization does not allow (EMBED_ORIGIN_NOT_ALLOWED), or one it does not let people sign in from (EMBED_SITE_SIGN_IN_OFF)'
+	})
+	@UseGuards(TenantPermissionGuard)
+	@Throttle({ default: { limit: 10, ttl: 60_000 } })
+	@Post('/authorize')
+	@HttpCode(HttpStatus.OK)
+	@Header('Cache-Control', 'no-store')
+	@Header('Pragma', 'no-cache')
+	@UseValidationPipe({ whitelist: true })
+	async authorize(@Body() input: AuthorizeEmbedSiteDTO): Promise<EmbedSiteTokensResponseDTO> {
+		return await this.embedSiteGrantService.authorize(input);
+	}
+
+	/**
+	 * Public, because the renewal token is the proof; no validation pipe, so a malformed body gets the same 401 as a
+	 * revoked token.
+	 */
+	@ApiOperation({ summary: "The next pair for a site's renewal token, from that site only; the token works once" })
+	@ApiBody({ type: RenewEmbedSiteDTO })
+	@ApiResponse({ status: HttpStatus.OK, type: EmbedSiteTokensResponseDTO })
+	@ApiResponse({
+		status: HttpStatus.UNAUTHORIZED,
+		description: 'A renewal token unknown, revoked, expired or already used (EMBED_GRANT_ENDED)'
+	})
+	@ApiResponse({
+		status: HttpStatus.FORBIDDEN,
+		description:
+			'Another site (EMBED_ORIGIN), a site no longer allowed (EMBED_ORIGIN_NOT_ALLOWED) or without sign-in (EMBED_SITE_SIGN_IN_OFF), or a person who may no longer track time (EMBED_MEMBER_NOT_ALLOWED)'
+	})
+	@ApiResponse({ status: HttpStatus.TOO_MANY_REQUESTS, description: 'Too many renewals from this address' })
+	@Public()
+	@Throttle(EMBED_SITE_THROTTLE)
+	@Post('/renew')
+	@HttpCode(HttpStatus.OK)
+	@Header('Cache-Control', 'no-store')
+	@Header('Pragma', 'no-cache')
+	async renew(@Body() input: RenewEmbedSiteDTO, @Req() request: Request): Promise<EmbedSiteTokensResponseDTO> {
+		return await this.embedSiteGrantService.renew(input, request.headers?.origin);
+	}
+
+	/** The site's sign-out. Public, from any origin: whoever holds a renewal token may end its sign-in. */
+	@ApiOperation({
+		summary: "Revoke every token of the sign-in a site's renewal token belongs to (the site's sign-out)"
+	})
+	@ApiBody({ type: RenewEmbedSiteDTO })
+	@ApiResponse({
+		status: HttpStatus.NO_CONTENT,
+		description: 'Revoked, or nothing to revoke: the answer is the same for any token'
+	})
+	@ApiResponse({ status: HttpStatus.TOO_MANY_REQUESTS, description: 'Too many revocations from this address' })
+	@Public()
+	@Throttle(EMBED_SITE_THROTTLE)
+	@Post('/revoke')
+	@HttpCode(HttpStatus.NO_CONTENT)
+	async revoke(@Body() input: RenewEmbedSiteDTO): Promise<void> {
+		await this.embedSiteGrantService.revoke(input);
+	}
+
+	@ApiOperation({
+		summary:
+			"The sites the signed-in person allowed that still work; with organizationId, every member's, for an administrator"
+	})
+	@ApiResponse({ status: HttpStatus.OK, type: EmbedSiteGrantResponseDTO, isArray: true })
+	@ApiResponse({ status: HttpStatus.FORBIDDEN, description: "Another person's grants without ALL_ORG_EDIT" })
+	@UseGuards(TenantPermissionGuard)
+	@Get('/grants')
+	@UseValidationPipe({ whitelist: true })
+	async grants(@Query() query: EmbedSiteGrantsQueryDTO): Promise<EmbedSiteGrantResponseDTO[]> {
+		return await this.embedSiteGrantService.listGrants(query.organizationId);
+	}
+
+	@ApiOperation({
+		summary:
+			"Revoke a site grant, the person's own or, for an administrator, anyone's: the site's next renewal is refused"
+	})
+	@ApiResponse({ status: HttpStatus.NO_CONTENT })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'No such grant, or not one the caller may revoke' })
+	@UseGuards(TenantPermissionGuard)
+	@Delete('/grants/:id')
+	@HttpCode(HttpStatus.NO_CONTENT)
+	async revokeGrant(@Param('id', UUIDValidationPipe) id: ID): Promise<void> {
+		await this.embedSiteGrantService.revokeGrant(id);
 	}
 }

@@ -8,9 +8,11 @@ import {
 	buildListQuery,
 	containsAnyText,
 	ListQueryOptions,
+	notOfferedByApi,
 	pageOfKept,
-	PersonUser,
 	personTexts,
+	PersonUser,
+	resolveOrganizationScope,
 	validateOrganizationContext,
 	withRelation
 } from './utils';
@@ -73,6 +75,12 @@ const convertCandidateDateFields = (candidateData: any) => {
 		valueDate: candidateData.valueDate ? new Date(candidateData.valueDate) : undefined
 	};
 };
+
+/**
+ * The last segment of `PUT /candidate/:id/:status` for each status the API sets: it hires or rejects a candidate,
+ * and answers any other segment with an empty body, changing nothing.
+ */
+const CANDIDATE_STATUS_SEGMENTS: Record<string, string> = { HIRED: 'hired', REJECTED: 'rejected' };
 
 export const registerCandidateTools = (server: McpServer) => {
 	// Get candidates tool
@@ -286,22 +294,35 @@ export const registerCandidateTools = (server: McpServer) => {
 	registerTool(
 		server,
 		'update_candidate_status',
-		'Update the status of a candidate',
+		'Hire or reject a candidate: HIRED makes the candidate an employee, REJECTED emails them a rejection. ' +
+			'The API sets no other status.',
 		{
 			id: z.string().uuid().describe('The candidate ID'),
-			status: CandidateStatusEnum.describe('The new status for the candidate')
+			status: CandidateStatusEnum.describe('The new status for the candidate: HIRED or REJECTED')
 		},
 		async ({ id, status }) => {
 			try {
-				const defaultParams = validateOrganizationContext();
+				const statusSegment = CANDIDATE_STATUS_SEGMENTS[status];
+				if (!statusSegment) {
+					throw notOfferedByApi(`setting a candidate's status to ${status}`);
+				}
+				const scope = resolveOrganizationScope();
 
-				// Verify candidate ownership
-				const existing = await apiClient.get(`/api/candidate/${id}`);
-				if ((existing as { organizationId: string }).organizationId !== defaultParams.organizationId) {
+				// Verify candidate ownership. The guard reads the tenant from the query, and the read route requires a
+				// `where`, which also keeps the read in the organization.
+				const existing = await apiClient.get(`/api/candidate/${id}`, { params: { ...scope, where: scope } });
+				if ((existing as { organizationId: string }).organizationId !== scope.organizationId) {
 					throw new Error('Unauthorized: Cannot update status of candidates from other organizations');
 				}
 
-				const response = await apiClient.put(`/api/candidate/${id}/status`, { status });
+				// The route takes no body: the scope is there for its guard, which reads the tenant from the body
+				const response = await apiClient.put<{ status?: string }>(
+					`/api/candidate/${id}/${statusSegment}`,
+					scope
+				);
+				if (response?.status !== status) {
+					throw new Error(`The API left the candidate's status unchanged instead of setting ${status}.`);
+				}
 
 				return {
 					content: [
@@ -316,7 +337,7 @@ export const registerCandidateTools = (server: McpServer) => {
 				throw new Error('Failed to update candidate status: ' + sanitizeErrorMessage(error));
 			}
 		},
-		TOOL_HINTS.destructive
+		TOOL_HINTS.openWorldDestructive
 	);
 
 	// Rate candidate tool
@@ -328,26 +349,9 @@ export const registerCandidateTools = (server: McpServer) => {
 			id: z.string().uuid().describe('The candidate ID'),
 			rating: z.number().min(0).max(5).describe('The rating (0-5)')
 		},
-		async ({ id, rating }) => {
+		async () => {
 			try {
-				const defaultParams = validateOrganizationContext();
-
-				// Verify candidate ownership
-				const existing = await apiClient.get(`/api/candidate/${id}`);
-				if ((existing as { organizationId: string }).organizationId !== defaultParams.organizationId) {
-					throw new Error('Unauthorized: Cannot rate candidates from other organizations');
-				}
-
-				const response = await apiClient.put(`/api/candidate/${id}/rating`, { rating });
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
+				throw notOfferedByApi('rating a candidate');
 			} catch (error) {
 				logger.error('Error rating candidate:', sanitizeForLogging(error));
 				throw new Error('Failed to rate candidate: ' + sanitizeErrorMessage(error));

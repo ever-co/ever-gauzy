@@ -3,7 +3,15 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { buildListQuery, nameTexts, readSearchedList, validateOrganizationContext } from './utils';
+import {
+	applyInTurn,
+	buildListQuery,
+	nameTexts,
+	notOfferedByApi,
+	readSearchedList,
+	resolveOrganizationScope,
+	validateOrganizationContext
+} from './utils';
 import { EmployeeAwardInputSchema } from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
@@ -27,6 +35,28 @@ const awardOrder = (sortBy?: string, sortOrder?: 'ASC' | 'DESC') => {
 	}
 	const column = AWARD_SORT_COLUMNS[sortBy] ?? sortBy;
 	return { [column]: sortOrder, id: 'ASC' };
+};
+
+/** The fields the award update route requires, besides the organization. */
+const AWARD_REQUIRED_FIELDS = ['name', 'year'];
+
+/**
+ * Updates one award through `PUT /employee-award/:id`, whose DTO requires a name, a year and the organization, and
+ * whose guard reads the tenant from the body. A change that leaves the name or the year out keeps the award's
+ * current one, read first in the same scope.
+ */
+const updateAward = async (
+	id: string,
+	changes: Record<string, unknown>,
+	scope: { organizationId: string; tenantId?: string }
+) => {
+	const leavesOutRequired = AWARD_REQUIRED_FIELDS.some((field) => changes[field] === undefined);
+	let current: Record<string, unknown> = {};
+	if (leavesOutRequired) {
+		const award = await apiClient.get<Record<string, unknown>>(`/api/employee-award/${id}`, { params: scope });
+		current = { name: award.name, year: award.year };
+	}
+	return apiClient.put(`/api/employee-award/${id}`, { ...current, ...changes, ...scope });
 };
 
 export const registerEmployeeAwardTools = (server: McpServer) => {
@@ -159,7 +189,7 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 		},
 		async ({ id, award_data }) => {
 			try {
-				const response = await apiClient.put(`/api/employee-award/${id}`, award_data);
+				const response = await updateAward(id, award_data, resolveOrganizationScope());
 
 				return {
 					content: [
@@ -348,30 +378,9 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 			endDate: z.string().optional().describe('End date for statistics (ISO format)'),
 			groupBy: z.enum(['employee', 'year', 'month']).optional().describe('Group statistics by field')
 		},
-		async ({ employeeId, year, startDate, endDate, groupBy }) => {
+		async () => {
 			try {
-				const defaultParams = validateOrganizationContext();
-
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					...(employeeId && { employeeId }),
-					...(year && { year }),
-					...(startDate && { startDate }),
-					...(endDate && { endDate }),
-					...(groupBy && { groupBy })
-				};
-
-				const response = await apiClient.get('/api/employee-award/statistics', { params });
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
+				throw notOfferedByApi('employee award statistics');
 			} catch (error) {
 				logger.error('Error fetching employee awards statistics:', sanitizeForLogging(error));
 				throw new Error(sanitizeErrorMessage(error));
@@ -410,9 +419,9 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
 				}));
 
-				const response = await apiClient.post('/api/employee-award/bulk', {
-					awards: awardsWithDefaults
-				});
+				const response = await applyInTurn(awardsWithDefaults, (award) =>
+					apiClient.post('/api/employee-award', award)
+				);
 
 				return {
 					content: [
@@ -447,9 +456,8 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 		},
 		async ({ awards }) => {
 			try {
-				const response = await apiClient.put('/api/employee-award/bulk', {
-					awards
-				});
+				const scope = resolveOrganizationScope();
+				const response = await applyInTurn(awards, ({ id, data }) => updateAward(id, data, scope));
 
 				return {
 					content: [
@@ -477,9 +485,8 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 		},
 		async ({ ids }) => {
 			try {
-				await apiClient.delete('/api/employee-award/bulk', {
-					data: { ids }
-				});
+				const params = resolveOrganizationScope();
+				await applyInTurn(ids, (id) => apiClient.delete(`/api/employee-award/${id}`, { params }));
 
 				return {
 					content: [
