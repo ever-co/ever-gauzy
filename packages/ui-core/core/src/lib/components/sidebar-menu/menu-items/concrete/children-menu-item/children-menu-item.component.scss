@@ -140,3 +140,39 @@ $plus-glyph-size: 0.625rem;
 :host .sub-item:has(.plus) .info {
   padding-inline-end: 0;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Trailing count. Plain muted figures in the same 1.5rem box and inset as the
+// add control above, so a number lines up with the chevrons and "+" buttons of
+// the rows around it. No chip, no fill.
+// ─────────────────────────────────────────────────────────────────────────────
+:host .sub-item .count {
+  flex: 0 0 auto;
+  min-width: $plus-size;
+  margin-inline-end: $plus-inset;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  text-align: center;
+  opacity: 0.7;
+}
+
+:host .sub-item:has(.count) .info {
+  padding-inline-end: 0;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// "View all" row at the foot of a list. It leads somewhere else rather than to
+// a record, so it reads as a quiet link: its "…" glyph in the icon column like
+// any row, a step smaller, one step more muted at rest. Hover and the
+// current-page state are the ordinary row's.
+// ─────────────────────────────────────────────────────────────────────────────
+:host .sub-item.view-all:not(.custom) {
+  font-size: 0.8125rem;
+  color: var(--text-hint-color);
+
+  &:hover,
+  &.selected {
+    color: nb-theme(text-basic-color);
+  }
+}
