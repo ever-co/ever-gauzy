@@ -60,7 +60,7 @@ describe('employee award list tools — the query the route validates', () => {
 				take: 5,
 				skip: 2,
 				relations: ['employee'],
-				order: { name: 'DESC' }
+				order: { name: 'DESC', id: 'ASC' }
 			}
 		});
 	});
@@ -69,7 +69,7 @@ describe('employee award list tools — the query the route validates', () => {
 		await call('get_employee_awards_by_employee', { employeeId: EMPLOYEE });
 
 		expect(get).toHaveBeenCalledWith('/api/employee-award/pagination', {
-			params: { where: { ...SCOPE, employeeId: EMPLOYEE }, take: 10, skip: 1, order: { year: 'DESC' } }
+			params: { where: { ...SCOPE, employeeId: EMPLOYEE }, take: 10, skip: 1, order: { year: 'DESC', id: 'ASC' } }
 		});
 	});
 
@@ -81,7 +81,7 @@ describe('employee award list tools — the query the route validates', () => {
 				where: { ...SCOPE, year: '2025', employeeId: EMPLOYEE },
 				take: 10,
 				skip: 1,
-				order: { name: 'ASC' }
+				order: { name: 'ASC', id: 'ASC' }
 			}
 		});
 	});
@@ -90,8 +90,18 @@ describe('employee award list tools — the query the route validates', () => {
 		await call('get_employee_awards_by_year', { year: '2025', sortBy: 'employee', sortOrder: 'DESC' });
 
 		expect(get).toHaveBeenCalledWith('/api/employee-award/pagination', {
-			params: { where: { ...SCOPE, year: '2025' }, take: 10, skip: 1, order: { employeeId: 'DESC' } }
+			params: { where: { ...SCOPE, year: '2025' }, take: 10, skip: 1, order: { employeeId: 'DESC', id: 'ASC' } }
 		});
+	});
+
+	it('orders awards that share the value by their id, after the field named', async () => {
+		await call('get_employee_awards_by_year', { year: '2025', sortBy: 'createdAt', sortOrder: 'DESC' });
+
+		const [, { params }] = get.mock.calls[0];
+		expect(Object.entries(params.order)).toEqual([
+			['createdAt', 'DESC'],
+			['id', 'ASC']
+		]);
 	});
 
 	it('get_employee_awards sends no order when no field is named', async () => {
@@ -123,7 +133,7 @@ describe('get_employee_awards — the search the route does not apply', () => {
 
 		expect(JSON.parse(result.content[0].text)).toEqual({ items: [AWARDS[0], AWARDS[2]], total: 2 });
 		expect(get).toHaveBeenCalledWith('/api/employee-award/pagination', {
-			params: { where: SCOPE, take: 100, skip: 1, order: { year: 'DESC' } }
+			params: { where: SCOPE, take: 100, skip: 1, order: { year: 'DESC', id: 'ASC' } }
 		});
 	});
 });

@@ -17,13 +17,16 @@ const AWARDS_PATH = '/api/employee-award/pagination';
 // Awards sort by employee on the column that names it.
 const AWARD_SORT_COLUMNS: Record<string, string> = { employee: 'employeeId' };
 
-/** The `order` of an award list, or none when no field is named. */
+/**
+ * The `order` of an award list, or none when no field is named. Awards that share the value keep one order by their id,
+ * so a page never repeats or skips one of them.
+ */
 const awardOrder = (sortBy?: string, sortOrder?: 'ASC' | 'DESC') => {
 	if (!sortBy) {
 		return undefined;
 	}
 	const column = AWARD_SORT_COLUMNS[sortBy] ?? sortBy;
-	return { [column]: sortOrder };
+	return { [column]: sortOrder, id: 'ASC' };
 };
 
 export const registerEmployeeAwardTools = (server: McpServer) => {
