@@ -31,11 +31,13 @@ import {
 	ExchangeEmbedCredentialDTO
 } from './dto/embed-credential.dto';
 import { EmbedProjectResponseDTO } from './dto/embed-project.dto';
+import { AuthorizeEmbedSiteDTO, EmbedSiteTokensResponseDTO } from './dto/embed-site-grant.dto';
 import { EmbedClientService } from './embed-client.service';
 import { EmbedCredentialService } from './embed-credential.service';
 import { EMBED_EXCHANGE_THROTTLE, embedExchangeAddress } from './embed-exchange-throttle';
 import { CreateEmbedAllowedOriginDTO, EmbedAllowedOriginResponseDTO } from './dto/embed-allowed-origin.dto';
 import { EmbedAllowedOriginService } from './embed-allowed-origin.service';
+import { EmbedSiteGrantService } from './embed-site-grant.service';
 import { EmbedEnabledGuard } from './embed.guards';
 import { authenticatedEmbedClaims } from './embed-session';
 import { isEmbedEnabled } from './embed.utils';
@@ -221,5 +223,38 @@ export class EmbedProjectController {
 			employeeId: claims.employeeId,
 			clientId: claims.clientId
 		});
+	}
+}
+
+/**
+ * A person's sign-in from a site the organization allows (`allowPersonSignIn`), for a site without a server of its own:
+ * the person allows the site from the web app, with their own session, and the site gets a timer token like the
+ * exchange's and a renewal token bound to it. Behind the switch: every route answers 404 while embeds are off.
+ */
+@ApiTags('Embed')
+@UseGuards(EmbedEnabledGuard)
+@Controller('/embed')
+export class EmbedSiteGrantController {
+	constructor(private readonly embedSiteGrantService: EmbedSiteGrantService) {}
+
+	@ApiOperation({
+		summary:
+			"Allow a site to start and stop the signed-in person's timer: a timer token and a renewal token, for that site only"
+	})
+	@ApiResponse({ status: HttpStatus.OK, type: EmbedSiteTokensResponseDTO })
+	@ApiResponse({
+		status: HttpStatus.FORBIDDEN,
+		description:
+			'Not an active member who may track time (EMBED_MEMBER_NOT_ALLOWED), a site the organization does not allow (EMBED_ORIGIN_NOT_ALLOWED), or one it does not let people sign in from (EMBED_SITE_SIGN_IN_OFF)'
+	})
+	@UseGuards(TenantPermissionGuard)
+	@Throttle({ default: { limit: 10, ttl: 60_000 } })
+	@Post('/authorize')
+	@HttpCode(HttpStatus.OK)
+	@Header('Cache-Control', 'no-store')
+	@Header('Pragma', 'no-cache')
+	@UseValidationPipe({ whitelist: true })
+	async authorize(@Body() input: AuthorizeEmbedSiteDTO): Promise<EmbedSiteTokensResponseDTO> {
+		return await this.embedSiteGrantService.authorize(input);
 	}
 }

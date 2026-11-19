@@ -1,5 +1,11 @@
 import { NotFoundException, RequestMethod } from '@nestjs/common';
-import { GUARDS_METADATA, HTTP_CODE_METADATA, METHOD_METADATA, PATH_METADATA } from '@nestjs/common/constants';
+import {
+	GUARDS_METADATA,
+	HEADERS_METADATA,
+	HTTP_CODE_METADATA,
+	METHOD_METADATA,
+	PATH_METADATA
+} from '@nestjs/common/constants';
 import { Request } from 'express';
 import { sign } from 'jsonwebtoken';
 import { PERMISSIONS_METADATA, PUBLIC_METHOD_METADATA } from '@gauzy/constants';
@@ -8,7 +14,13 @@ import { RequestContext } from '../core/context';
 import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { EmbedClientService } from './embed-client.service';
 import { EmbedCredentialService } from './embed-credential.service';
-import { EmbedCredentialController, EmbedProjectController, EmbedTokenController } from './embed.controller';
+import {
+	EmbedCredentialController,
+	EmbedProjectController,
+	EmbedSiteGrantController,
+	EmbedTokenController
+} from './embed.controller';
+import { EmbedSiteGrantService } from './embed-site-grant.service';
 import { EmbedEnabledGuard } from './embed.guards';
 import {
 	EMBED_CLIENT_CLAIM,
@@ -179,5 +191,43 @@ describe('GET /embed/projects', () => {
 		await expect(controller.projects(requestWith(''))).rejects.toMatchObject(refused);
 
 		expect(trackableProjectsOf).not.toHaveBeenCalled();
+	});
+});
+
+/**
+ * A person's sign-in from an allowed site, as the controller declares it: every route behind the switch, the
+ * authorization for a signed-in person only, its answer never cached.
+ */
+describe('POST /embed/authorize', () => {
+	const authorizeHandler = EmbedSiteGrantController.prototype.authorize;
+
+	it('is a POST under /embed, behind the switch, for a signed-in person, answered 200 and never cached', () => {
+		expect(Reflect.getMetadata(PATH_METADATA, EmbedSiteGrantController)).toBe('/embed');
+		expect(Reflect.getMetadata(GUARDS_METADATA, EmbedSiteGrantController)).toEqual([EmbedEnabledGuard]);
+		expect(Reflect.getMetadata(PATH_METADATA, authorizeHandler)).toBe('/authorize');
+		expect(Reflect.getMetadata(METHOD_METADATA, authorizeHandler)).toBe(RequestMethod.POST);
+		expect(Reflect.getMetadata(HTTP_CODE_METADATA, authorizeHandler)).toBe(200);
+		expect(Reflect.getMetadata(GUARDS_METADATA, authorizeHandler)).toEqual([TenantPermissionGuard]);
+		expect(Reflect.getMetadata(PUBLIC_METHOD_METADATA, authorizeHandler)).toBeUndefined();
+		expect(Reflect.getMetadata(PUBLIC_METHOD_METADATA, EmbedSiteGrantController)).toBeUndefined();
+		expect(Reflect.getMetadata(HEADERS_METADATA, authorizeHandler)).toEqual(
+			expect.arrayContaining([{ name: 'Cache-Control', value: 'no-store' }])
+		);
+	});
+
+	it('hands the body to the service and answers its tokens', async () => {
+		const tokens = {
+			token: 'a-timer-token',
+			expiresAt: '2026-11-19T09:15:00.000Z',
+			renewalToken: 'gzr_a-renewal-token',
+			renewalExpiresAt: '2026-12-19T09:00:00.000Z'
+		};
+		const authorize = jest.fn(async () => tokens);
+		const controller = new EmbedSiteGrantController({ authorize } as unknown as EmbedSiteGrantService);
+		const body = { organizationId: '7a000000-0000-4000-8000-0000000000f1', origin: 'https://team.example.com' };
+
+		await expect(controller.authorize(body)).resolves.toBe(tokens);
+
+		expect(authorize).toHaveBeenCalledWith(body);
 	});
 });

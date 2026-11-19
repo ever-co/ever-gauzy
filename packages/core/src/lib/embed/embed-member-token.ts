@@ -19,8 +19,10 @@ export interface IEmbedMemberRepositories {
 
 /** What a timer token is bound to besides its member: who it comes from, the site, and a client if any. */
 export interface IEmbedTokenBinding {
-	/** The credential the token was exchanged with. */
+	/** The credential the token was exchanged with, or the site grant of a person's sign-in. */
 	credentialId: ID;
+	/** The site grant of a person's sign-in; none for a credential's token. */
+	grantId?: ID;
 	origin: string;
 	clientId?: ID | null;
 }
@@ -90,6 +92,7 @@ export class EmbedMemberTokens {
 			employeeId: employee.id,
 			origin: binding.origin,
 			clientId: binding.clientId,
+			grantId: binding.grantId,
 			expiresAt
 		});
 		return { token, expiresAt };

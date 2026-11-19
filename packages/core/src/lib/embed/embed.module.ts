@@ -20,25 +20,45 @@ import { MikroOrmEmbedAllowedOriginRepository } from './repository/mikro-orm-emb
 import { TypeOrmEmbedAllowedOriginRepository } from './repository/type-orm-embed-allowed-origin.repository';
 import { EmbedCredentialService } from './embed-credential.service';
 import { EmbedMemberService } from './embed-member.service';
+import { EmbedSiteGrant } from './embed-site-grant.entity';
+import { EmbedSiteGrantService } from './embed-site-grant.service';
 import {
 	EmbedAllowedOriginController,
 	EmbedCredentialController,
 	EmbedProjectController,
+	EmbedSiteGrantController,
 	EmbedTokenController
 } from './embed.controller';
 import { EmbedEnabledGuard, EmbedSessionGuard } from './embed.guards';
 import { MikroOrmEmbedCredentialRepository } from './repository/mikro-orm-embed-credential.repository';
 import { TypeOrmEmbedCredentialRepository } from './repository/type-orm-embed-credential.repository';
+import { MikroOrmEmbedSiteGrantRepository } from './repository/mikro-orm-embed-site-grant.repository';
+import { TypeOrmEmbedSiteGrantRepository } from './repository/type-orm-embed-site-grant.repository';
 
 /**
- * Embedding the timer in other products: credentials a host's backend exchanges for a timer-only token, and the
- * global guard that holds such tokens to the timer. Off by default (`GAUZY_EMBED_TOKENS_ENABLED`). `AuthModule` mints
- * the token; nothing in the sign-in path depends on this module.
+ * Embedding the timer in other products: credentials a host's backend exchanges for a timer-only token, the sites
+ * people allow to get the same token without a server (`EmbedSiteGrantService`), and the global guard that holds such
+ * tokens to the timer. Off by default (`GAUZY_EMBED_TOKENS_ENABLED`). `AuthModule` mints the token; nothing in the
+ * sign-in path depends on this module.
  */
 @Module({
 	imports: [
-		TypeOrmModule.forFeature([EmbedCredential, EmbedAllowedOrigin, Employee, User, UserOrganization]),
-		MikroOrmModule.forFeature([EmbedCredential, EmbedAllowedOrigin, Employee, User, UserOrganization]),
+		TypeOrmModule.forFeature([
+			EmbedCredential,
+			EmbedAllowedOrigin,
+			EmbedSiteGrant,
+			Employee,
+			User,
+			UserOrganization
+		]),
+		MikroOrmModule.forFeature([
+			EmbedCredential,
+			EmbedAllowedOrigin,
+			EmbedSiteGrant,
+			Employee,
+			User,
+			UserOrganization
+		]),
 		RolePermissionModule,
 		AuthModule,
 		CqrsModule
@@ -47,18 +67,22 @@ import { TypeOrmEmbedCredentialRepository } from './repository/type-orm-embed-cr
 		EmbedCredentialController,
 		EmbedAllowedOriginController,
 		EmbedTokenController,
-		EmbedProjectController
+		EmbedProjectController,
+		EmbedSiteGrantController
 	],
 	providers: [
 		EmbedCredentialService,
 		EmbedClientService,
 		EmbedMemberService,
 		EmbedAllowedOriginService,
+		EmbedSiteGrantService,
 		EmbedEnabledGuard,
 		TypeOrmEmbedAllowedOriginRepository,
 		MikroOrmEmbedAllowedOriginRepository,
 		TypeOrmEmbedCredentialRepository,
 		MikroOrmEmbedCredentialRepository,
+		TypeOrmEmbedSiteGrantRepository,
+		MikroOrmEmbedSiteGrantRepository,
 		TypeOrmEmployeeRepository,
 		MikroOrmEmployeeRepository,
 		TypeOrmUserRepository,
