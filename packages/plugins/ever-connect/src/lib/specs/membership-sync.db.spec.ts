@@ -547,6 +547,46 @@ describe.each(TEST_TARGETS)('Ever Platform membership sync ($name)', (target) =>
 		expect(await roleOf(seeded.employeeId)).toBe(roles.employee);
 	});
 
+	// Two connections: SQLite in one process has one connection and one writer, so this holds on Postgres and MySQL.
+	(d === 'better-sqlite3' ? it.skip : it)(
+		'an unlink made in Gauzy while the change runs waits for it to commit (the link rows are locked)',
+		async () => {
+			await linkEverId(seeded.employeeId, 'sub-bob');
+			let entered: () => void = () => undefined;
+			const inside = new Promise<void>((resolve) => (entered = resolve));
+			let release: () => void = () => undefined;
+			const gate = new Promise<void>((resolve) => (release = resolve));
+			// The change holds its transaction open just before it writes its audit row.
+			const pausing = Object.create(audit) as EverConnectAuditService;
+			pausing.record = async (...args: Parameters<EverConnectAuditService['record']>) => {
+				entered();
+				await gate;
+				return audit.record(...args);
+			};
+			const applying = new MembershipSyncHandler(dataSource, store, pausing, ON).apply(
+				envelope('01JD0000000000000000000001', 'created')
+			);
+			await Promise.race([inside, applying]);
+			let unlinked = false;
+			const unlinking = store.updateLink(LINK, { status: 'unlinked' }).then(() => {
+				unlinked = true;
+			});
+			let waited: boolean;
+			try {
+				await new Promise((resolve) => setTimeout(resolve, 500));
+				waited = !unlinked;
+			} finally {
+				// Never leave the change's transaction open, whatever happened above.
+				release();
+			}
+			expect(await applying).toBe('role_granted');
+			await unlinking;
+			expect(waited).toBe(true);
+			expect(unlinked).toBe(true);
+			expect(await roleOf(seeded.employeeId)).toBe(roles.admin);
+		}
+	);
+
 	it('a link unlinked while the change waited is read again under the lock', async () => {
 		await linkEverId(seeded.employeeId, 'sub-bob');
 		// The link is read live before the transaction, and unlinked before the transaction reads it again.
