@@ -106,17 +106,17 @@ describe('organization contact tools — the organization and tenant they act fo
 			]
 		});
 
-		expect(put).toHaveBeenCalledWith('/api/organization-contact/bulk', {
-			contacts: [
-				{
-					id: CONTACT,
-					name: 'Harbor Supplies',
-					organizationId: SIGNED_IN_ORGANIZATION,
-					tenantId: SIGNED_IN_TENANT
-				},
-				{ id: CONTACT, name: 'Blue Ridge Studio', organizationId: OTHER_ORGANIZATION, tenantId: OTHER_TENANT }
+		// Each contact goes through the route of one contact (#12092): the API serves no bulk update.
+		expect(put.mock.calls).toEqual([
+			[
+				`/api/organization-contact/${CONTACT}`,
+				{ name: 'Harbor Supplies', organizationId: SIGNED_IN_ORGANIZATION, tenantId: SIGNED_IN_TENANT }
+			],
+			[
+				`/api/organization-contact/${CONTACT}`,
+				{ name: 'Blue Ridge Studio', organizationId: OTHER_ORGANIZATION, tenantId: OTHER_TENANT }
 			]
-		});
+		]);
 	});
 
 	it('refuses, sending nothing, when no organization is named and none is signed in', async () => {
