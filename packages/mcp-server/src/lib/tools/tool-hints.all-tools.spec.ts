@@ -25,7 +25,8 @@ const DESTRUCTIVE_WORDS = new Set([
 	'process'
 ]);
 const READ_PREFIX = /^(get|list|count|search)_/;
-const SENDS_OUTSIDE = ['invite_organization_contact', 'send_invoice_email'];
+/** `update_candidate_status` rejects through the route that emails the candidate their rejection. */
+const SENDS_OUTSIDE = ['invite_organization_contact', 'send_invoice_email', 'update_candidate_status'];
 /** A start or a stop of the timer ends the run going and cuts the entries that run overlaps. */
 const ENDS_THE_RUN_GOING = ['start_timer', 'stop_timer'];
 /** Tools that read a record and write it back whole: what changed in between is written over. */
