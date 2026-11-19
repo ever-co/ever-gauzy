@@ -130,10 +130,7 @@ export class FavoritesComponent {
 	private _urlSyncTimer: ReturnType<typeof setTimeout> | undefined;
 	private _lastWrittenKey: string | null = null;
 
-	private readonly _language = toSignal(
-		this._translateService.onLangChange.pipe(map((event) => event.lang)),
-		{ initialValue: this._translateService.currentLang }
-	);
+	private readonly _language = this._translateService.currentLang;
 
 	protected readonly layoutStyles = ComponentLayoutStyleEnum;
 	private readonly _viewComponentName = ComponentEnum.FAVORITES;
@@ -323,7 +320,7 @@ export class FavoritesComponent {
 		});
 	}
 
-	private _sorted(rows: IFavoriteRow[], sort: FavoritesSort, language: string | undefined): IFavoriteRow[] {
+	private _sorted(rows: IFavoriteRow[], sort: FavoritesSort, language: string | null): IFavoriteRow[] {
 		const compare = (a: string, b: string) => a.localeCompare(b, language || undefined, { sensitivity: 'base' });
 		switch (sort) {
 			case 'oldest':
