@@ -404,11 +404,19 @@ describe.each(TEST_TARGETS)('Ever Platform membership sync ($name)', (target) =>
 		expect(await roleOf(seeded.employeeId)).toBe(roles.employee);
 	});
 
-	it("the role given back is the one the current ADMIN replaced, not an earlier grant's", async () => {
+	// Run with the suite's clock (each row a second apart), and with every audit row written in the same millisecond
+	// (several times: the rows' random ids then sort in any order, and only the rows' own order may decide).
+	it.each([
+		['rows a second apart', false],
+		...[1, 2, 3, 4, 5, 6].map((n) => [`all rows in one millisecond (#${n})`, true] as [string, boolean])
+	])("the role given back is the one the current ADMIN replaced, not an earlier grant's (%s)", async (_, frozen) => {
 		const second = await addOrganization();
 		await addLink(second, LINK_B);
 		await linkEverId(seeded.employeeId, 'sub-bob');
-		const sync = handler();
+		const sameMillisecond = new EverConnectAuditService(dataSource, {
+			now: () => Date.parse('2026-11-19T12:00:00Z')
+		});
+		const sync = frozen ? new MembershipSyncHandler(dataSource, store, sameMillisecond, ON) : handler();
 		const setRole = (roleId: string) =>
 			dataSource.query(
 				`UPDATE ${q(d, 'user')} SET ${q(d, 'roleId')} = ${d === 'postgres' ? '$1' : '?'} WHERE ${q(d, 'id')} = ${d === 'postgres' ? '$2' : '?'}`,

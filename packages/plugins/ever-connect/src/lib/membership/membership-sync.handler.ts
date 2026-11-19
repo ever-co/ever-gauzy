@@ -72,6 +72,11 @@ interface SyncState extends MembershipPosition {
 	grant: string | null;
 	/** The tenant link the change came through: a hold counts only while that very link is live. */
 	linkId: string | null;
+	/**
+	 * The order in which the sync wrote its rows for the user in the tenant (1, 2, ...): rows written in the same
+	 * millisecond keep their order by it, which `at` and the row's random id cannot give.
+	 */
+	seq: number;
 }
 
 /**
@@ -229,6 +234,8 @@ export class MembershipSyncHandler {
 			if (last && !isAfter(position, last)) {
 				return 'stale' as const;
 			}
+			const recent = await this.recentStates(tx, link.tenantId, person);
+			const seq = recent.reduce((max, state) => Math.max(max, state.seq), 0) + 1;
 			const grant = await this.latestGrant(tx, link.tenantId, person);
 			const other = grant ? await this.heldElsewhere(tx, link.tenantId, others, person, grant) : false;
 			const step = await this.change(tx, change, everRole, link, person, position, last, grant, other);
@@ -241,6 +248,7 @@ export class MembershipSyncHandler {
 					details: {
 						event_id: position.eventId,
 						occurred_at: position.occurredAt,
+						seq,
 						link_id: link.linkId,
 						op: change,
 						role: everRole,
@@ -311,20 +319,39 @@ export class MembershipSyncHandler {
 		return last;
 	}
 
+	/** The sync's newest rows for the user in the tenant (any organization), newest first by time. */
+	private async recentStates(tx: EverConnectSql, tenantId: string, userId: string): Promise<SyncState[]> {
+		const q = (name: string) => tx.q(name);
+		const { rows } = await tx.run(
+			`SELECT ${q('details')} FROM ${q('ever_connect_audit')} WHERE ${q('tenantId')} = ${tx.ph(1)} ` +
+				`AND ${q('action')} = ${tx.ph(2)} AND ${q('details')} LIKE ${tx.ph(3)} ` +
+				`ORDER BY ${q('at')} DESC, ${q('id')} DESC LIMIT ${STATE_ROWS}`,
+			[tenantId, MEMBERSHIP_AUDIT_ACTION, `%"user_id":${JSON.stringify(userId)}%`]
+		);
+		return rows.map((row) => stateOf(row, userId)).filter((state): state is SyncState => state !== null);
+	}
+
 	/**
 	 * The sync's latest grant of `ADMIN` to the user in the tenant (any organization), or `null`. Every row that holds a
-	 * grant names the latest one (a new grant voids the older ones), so the newest holding row tells it.
+	 * grant names the latest one (a new grant voids the older ones), so the last-written holding row tells it: the
+	 * newest by time, and among rows written in the same millisecond the one with the highest `seq`.
 	 */
 	private async latestGrant(tx: EverConnectSql, tenantId: string, userId: string): Promise<Grant | null> {
 		const q = (name: string) => tx.q(name);
 		const { rows } = await tx.run(
 			`SELECT ${q('details')} FROM ${q('ever_connect_audit')} WHERE ${q('tenantId')} = ${tx.ph(1)} ` +
 				`AND ${q('action')} = ${tx.ph(2)} AND ${q('details')} LIKE ${tx.ph(3)} AND ${q('details')} LIKE ${tx.ph(4)} ` +
-				`ORDER BY ${q('at')} DESC, ${q('id')} DESC LIMIT 1`,
+				`ORDER BY ${q('at')} DESC, ${q('id')} DESC LIMIT ${STATE_ROWS}`,
 			[tenantId, MEMBERSHIP_AUDIT_ACTION, `%"user_id":${JSON.stringify(userId)}%`, '%"held":true%']
 		);
-		const state = rows[0] ? stateOf(rows[0], userId) : null;
-		return state?.held && state.grant ? { grant: state.grant, restore: state.restore } : null;
+		let newest: SyncState | null = null;
+		for (const row of rows) {
+			const state = stateOf(row, userId);
+			if (state?.held && state.grant && (!newest || state.seq > newest.seq)) {
+				newest = state;
+			}
+		}
+		return newest?.grant ? { grant: newest.grant, restore: newest.restore } : null;
 	}
 
 	/**
@@ -581,13 +608,15 @@ function stateOf(row: Row, userId: string): SyncState | null {
 	const restore = details['restore'];
 	const grant = details['grant'];
 	const linkId = details['link_id'];
+	const seq = details['seq'];
 	return {
 		eventId: String(details['event_id']).toUpperCase(),
 		occurredAt: typeof occurredAt === 'number' && Number.isFinite(occurredAt) ? occurredAt : null,
 		held: details['held'] === true,
 		restore: typeof restore === 'string' && restore ? restore : null,
 		grant: typeof grant === 'string' && grant ? grant : null,
-		linkId: typeof linkId === 'string' && linkId ? linkId : null
+		linkId: typeof linkId === 'string' && linkId ? linkId : null,
+		seq: typeof seq === 'number' && Number.isFinite(seq) ? seq : 0
 	};
 }
 
