@@ -3,7 +3,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { validateOrganizationContext } from './utils';
+import { buildListQuery, validateOrganizationContext } from './utils';
 import { PaymentStatusEnum, PaymentMethodEnum, CurrenciesEnum } from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
@@ -72,22 +72,13 @@ export const registerPaymentTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
+				// `where` matches a column exactly: the search and the date range stay outside it, as before
+				const where = { status, paymentMethod, invoiceId, organizationContactId, projectId, currency, overdue };
 				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					page,
-					limit,
+					...buildListQuery(defaultParams, where, { page, limit, relations }),
 					...(search && { search }),
-					...(relations && { relations }),
-					...(status && { status }),
-					...(paymentMethod && { paymentMethod }),
-					...(invoiceId && { invoiceId }),
-					...(organizationContactId && { organizationContactId }),
-					...(projectId && { projectId }),
-					...(currency && { currency }),
 					...(startDate && { startDate }),
-					...(endDate && { endDate }),
-					...(overdue !== undefined && { overdue })
+					...(endDate && { endDate })
 				};
 
 				const response = await apiClient.get('/api/payments', { params });
@@ -378,15 +369,7 @@ export const registerPaymentTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					invoiceId,
-					page,
-					limit,
-					...(status && { status }),
-					...(relations && { relations })
-				};
+				const params = buildListQuery(defaultParams, { invoiceId, status }, { page, limit, relations });
 
 				const response = await apiClient.get('/api/payments', { params });
 
@@ -423,16 +406,8 @@ export const registerPaymentTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					organizationContactId,
-					page,
-					limit,
-					...(status && { status }),
-					...(currency && { currency }),
-					...(relations && { relations })
-				};
+				const where = { organizationContactId, status, currency };
+				const params = buildListQuery(defaultParams, where, { page, limit, relations });
 
 				const response = await apiClient.get('/api/payments', { params });
 
