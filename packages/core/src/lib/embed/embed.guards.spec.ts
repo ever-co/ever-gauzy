@@ -19,9 +19,11 @@ import {
 	embedCredentialHashesMatch,
 	embedTokenTtlSeconds,
 	generateEmbedCredential,
+	generateEmbedRenewalToken,
 	hashEmbedCredential,
 	isEmbedEnabled,
-	isWellFormedEmbedCredential
+	isWellFormedEmbedCredential,
+	isWellFormedEmbedRenewalToken
 } from './embed.utils';
 
 const ORG = '7a000000-0000-4000-8000-0000000000f1';
@@ -106,6 +108,22 @@ describe('embed helpers', () => {
 		expect(embedCredentialHashesMatch(keyHash, hashEmbedCredential(secret))).toBe(true);
 		expect(embedCredentialHashesMatch(keyHash, hashEmbedCredential(`${secret}x`))).toBe(false);
 		expect(isWellFormedEmbedCredential('gzp_' + secret.slice(4))).toBe(false);
+	});
+
+	it('makes a renewal token with its own prefix and stores its digest, never taken for a credential', () => {
+		const { token, keyHash } = generateEmbedRenewalToken();
+		const other = generateEmbedRenewalToken();
+
+		expect(token).toMatch(/^gzr_[A-Za-z0-9_-]{43}$/);
+		expect(isWellFormedEmbedRenewalToken(token)).toBe(true);
+		expect(keyHash).toBe(hashEmbedCredential(token));
+		expect(keyHash).not.toContain(token.slice(4));
+		expect(other.token).not.toBe(token);
+		expect(isWellFormedEmbedCredential(token)).toBe(false);
+		expect(isWellFormedEmbedRenewalToken(generateEmbedCredential().secret)).toBe(false);
+		for (const odd of [`${token}x`, token.slice(0, -1), `gzr_${'*'.repeat(43)}`, 42, null, undefined]) {
+			expect(isWellFormedEmbedRenewalToken(odd)).toBe(false);
+		}
 	});
 
 	it('reads the embed claims of a bearer token, and none of an ordinary one', () => {
