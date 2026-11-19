@@ -192,6 +192,27 @@ export class EmbedSiteGrantService {
 		}
 	}
 
+	/**
+	 * Revokes every token of the sign-in a renewal token belongs to: the site's sign-out. Answers the same whatever the
+	 * token, so the answer tells nobody whether one existed. The timer token the site holds lives out its few minutes.
+	 *
+	 * @param input The renewal token, as the body holds it.
+	 */
+	async revoke(input: IEmbedRenewalInput): Promise<void> {
+		try {
+			const row = await this.findByToken(input?.renewalToken);
+			if (!row) {
+				return;
+			}
+			const revoked = await this.revokeFamily(row.familyId, new Date());
+			if (revoked > 0) {
+				this.logger.log(`Embed site grant revoked by its site: family=${row.familyId}`);
+			}
+		} catch (error) {
+			throw this.failureOf(error, 'revocation');
+		}
+	}
+
 	private async judgeAndRenew(presented: unknown, requestOrigin: unknown): Promise<EmbedSiteTokensResponseDTO> {
 		const spent = await this.findByToken(presented);
 		if (!spent) {

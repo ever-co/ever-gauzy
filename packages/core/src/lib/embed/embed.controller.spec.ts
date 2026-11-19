@@ -266,3 +266,27 @@ describe('POST /embed/renew', () => {
 		expect(renew).toHaveBeenCalledWith(body, 'https://team.example.com');
 	});
 });
+
+/** `POST /api/embed/revoke`, the site's sign-out: public, behind the switch, limited per address, answered 204. */
+describe('POST /embed/revoke', () => {
+	const revokeHandler = EmbedSiteGrantController.prototype.revoke;
+
+	it('is a public POST under /embed, limited per address, answered 204', () => {
+		expect(Reflect.getMetadata(PATH_METADATA, revokeHandler)).toBe('/revoke');
+		expect(Reflect.getMetadata(METHOD_METADATA, revokeHandler)).toBe(RequestMethod.POST);
+		expect(Reflect.getMetadata(HTTP_CODE_METADATA, revokeHandler)).toBe(204);
+		expect(Reflect.getMetadata(PUBLIC_METHOD_METADATA, revokeHandler)).toBe(true);
+		expect(Reflect.getMetadata(`${THROTTLER_LIMIT}default`, revokeHandler)).toBe(EMBED_EXCHANGE_LIMIT_PER_ADDRESS);
+		expect(Reflect.getMetadata(`${THROTTLER_TRACKER}default`, revokeHandler)).toBe(embedExchangeAddress);
+	});
+
+	it('hands the body to the service', async () => {
+		const revoke = jest.fn(async () => undefined);
+		const controller = new EmbedSiteGrantController({ revoke } as unknown as EmbedSiteGrantService);
+		const body = { renewalToken: 'gzr_a-renewal-token' };
+
+		await expect(controller.revoke(body)).resolves.toBeUndefined();
+
+		expect(revoke).toHaveBeenCalledWith(body);
+	});
+});

@@ -568,4 +568,50 @@ describe('EmbedSiteGrantService on SQLite', () => {
 			await expect(renewFrom(TEAM_PAGE, renewalToken)).resolves.toMatchObject({ token: expect.any(String) });
 		});
 	});
+
+	describe('POST /embed/revoke', () => {
+		const statesOf = async (familyId: string) =>
+			(await dataSource.query(`SELECT "revokedAt" FROM "embed_site_grant" WHERE "familyId" = ?`, [
+				familyId
+			])) as Array<{
+				revokedAt: string | null;
+			}>;
+
+		it("revokes every token of the site's sign-in, so its next renewal is refused, and no other sign-in", async () => {
+			const first = await authorizeAs('lina', TEAM_PAGE);
+			const second = await service.renew({ renewalToken: first.renewalToken }, TEAM_PAGE);
+			const otherDevice = await authorizeAs('lina', TEAM_PAGE);
+			const [{ familyId }] = await dataSource.query(
+				`SELECT "familyId" FROM "embed_site_grant" WHERE "keyHash" = ?`,
+				[createHash('sha256').update(second.renewalToken).digest('hex')]
+			);
+
+			await expect(service.revoke({ renewalToken: second.renewalToken })).resolves.toBeUndefined();
+
+			const states = await statesOf(familyId);
+			expect(states).toHaveLength(2);
+			expect(states.every((state) => state.revokedAt !== null)).toBe(true);
+			await expect(service.renew({ renewalToken: second.renewalToken }, TEAM_PAGE)).rejects.toMatchObject({
+				status: 401,
+				response: { code: 'EMBED_GRANT_ENDED' }
+			});
+			await expect(service.renew({ renewalToken: otherDevice.renewalToken }, TEAM_PAGE)).resolves.toMatchObject({
+				token: expect.any(String)
+			});
+		});
+
+		it('answers the same for a token it does not know, a malformed one or none, and revokes nothing', async () => {
+			await dataSource.query(`DELETE FROM "embed_site_grant"`);
+			await authorizeAs('lina', TEAM_PAGE);
+
+			for (const renewalToken of [`gzr_${'B'.repeat(43)}`, 'gze_x', '', undefined, 42]) {
+				await expect(service.revoke({ renewalToken } as never)).resolves.toBeUndefined();
+			}
+			await expect(service.revoke(undefined as never)).resolves.toBeUndefined();
+
+			const rows = await grantRows();
+			expect(rows).toHaveLength(1);
+			expect(rows[0].revokedAt).toBeNull();
+		});
+	});
 });

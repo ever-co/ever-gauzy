@@ -284,4 +284,22 @@ export class EmbedSiteGrantController {
 	async renew(@Body() input: RenewEmbedSiteDTO, @Req() request: Request): Promise<EmbedSiteTokensResponseDTO> {
 		return await this.embedSiteGrantService.renew(input, request.headers?.origin);
 	}
+
+	/** The site's sign-out. Public, from any origin: whoever holds a renewal token may end its sign-in. */
+	@ApiOperation({
+		summary: "Revoke every token of the sign-in a site's renewal token belongs to (the site's sign-out)"
+	})
+	@ApiBody({ type: RenewEmbedSiteDTO })
+	@ApiResponse({
+		status: HttpStatus.NO_CONTENT,
+		description: 'Revoked, or nothing to revoke: the answer is the same for any token'
+	})
+	@ApiResponse({ status: HttpStatus.TOO_MANY_REQUESTS, description: 'Too many revocations from this address' })
+	@Public()
+	@Throttle(EMBED_SITE_THROTTLE)
+	@Post('/revoke')
+	@HttpCode(HttpStatus.NO_CONTENT)
+	async revoke(@Body() input: RenewEmbedSiteDTO): Promise<void> {
+		await this.embedSiteGrantService.revoke(input);
+	}
 }
