@@ -129,6 +129,12 @@
 		}
 	},
 	"BADGE_LABEL": "Inbox: {{ count }} unread",
+	"HEADER_MENU": {
+		"SEE_ALL": "See all in Inbox",
+		"EMPTY": "Nothing new. You're all caught up.",
+		"ERROR": "The Inbox could not be loaded.",
+		"LOADING": "Loading…"
+	},
 	"DUE": "Due {{ date }}",
 	"ANSWERED": "Answered {{ date }}",
 	"ROUTED": "Delivered: {{ routed }}",
