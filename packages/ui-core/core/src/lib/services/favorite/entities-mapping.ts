@@ -224,7 +224,7 @@ export const ENTITY_TITLES: Partial<Record<BaseEntityEnum, (record: IFavoriteRec
 
 const DESCRIPTION_FIELDS: Partial<Record<BaseEntityEnum, string[]>> = {
 	[BaseEntityEnum.Document]: ['summary', 'description'],
-	[BaseEntityEnum.Employee]: ['shortDescription', 'description'],
+	[BaseEntityEnum.Employee]: ['short_description', 'description'],
 	[BaseEntityEnum.OrganizationSprint]: ['goal']
 };
 

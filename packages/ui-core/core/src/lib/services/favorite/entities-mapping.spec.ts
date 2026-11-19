@@ -145,7 +145,7 @@ describe('favorite descriptions (the Favorites page)', () => {
 		[BaseEntityEnum.Goal, { description: 'Grow revenue' }, 'Grow revenue'],
 		[BaseEntityEnum.Document, { summary: 'Quarterly plan', description: 'Plan' }, 'Quarterly plan'],
 		[BaseEntityEnum.Document, { description: 'Plan' }, 'Plan'],
-		[BaseEntityEnum.Employee, { shortDescription: 'Frontend lead', description: 'Long bio' }, 'Frontend lead'],
+		[BaseEntityEnum.Employee, { short_description: 'Frontend lead', description: 'Long bio' }, 'Frontend lead'],
 		[BaseEntityEnum.OrganizationSprint, { goal: 'Ship the beta' }, 'Ship the beta']
 	])('reads a %s favorite its own description (%j)', (entity, record, description) => {
 		expect(favoriteDescription(entity, { id: ID, ...record }, 'Some name')).toBe(description);
