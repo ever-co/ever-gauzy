@@ -32,6 +32,8 @@ const VALUE = '${}';
 interface Route {
 	method: string;
 	segments: string[];
+	/** The name of the controller method that serves it: a subclass method of the same name replaces it. */
+	handler?: string;
 }
 
 interface ApiCall {
@@ -224,12 +226,17 @@ function baseOf(node: ts.ClassDeclaration): string | undefined {
 }
 
 function routesOf(member: ts.ClassElement, source: ts.SourceFile): Route[] {
+	const handler = member.name && ts.isIdentifier(member.name) ? member.name.text : undefined;
 	return decoratorsOf(member).flatMap((decorator) => {
 		const method = ROUTE_DECORATORS[decoratorName(decorator) ?? ''];
 		if (!method) {
 			return [];
 		}
-		return routeArguments(decorator, source).map((routePath) => ({ method, segments: segmentsOf(routePath) }));
+		return routeArguments(decorator, source).map((routePath) => ({
+			method,
+			segments: segmentsOf(routePath),
+			handler
+		}));
 	});
 }
 
@@ -243,8 +250,13 @@ function controllerClass(node: ts.ClassDeclaration, source: ts.SourceFile): Cont
 	return { prefixes, routes, base: baseOf(node) };
 }
 
-/** Every route of the controllers of the core and the plugins, the ones a controller inherits included. */
-function servedRoutes(): Route[] {
+/**
+ * The routes of each controller of the core and the plugins, in the order the API matches them: Nest registers a
+ * controller's own methods in their order, then the ones it inherits, and a method it overrides only once. A request
+ * goes to the first route of that order whose shape fits, so `GET /deals/count` reaches the controller's own
+ * `GET /deals/:id` before the `count` route it inherits from `CrudController`.
+ */
+function servedRoutes(): Route[][] {
 	const classes = new Map<string, ControllerClass[]>();
 	const controllers: ControllerClass[] = [];
 	const files = CONTROLLER_ROOTS.flatMap((root) =>
@@ -265,12 +277,15 @@ function servedRoutes(): Route[] {
 	const withInherited = (declared: ControllerClass, seen: Set<ControllerClass>): Route[] => {
 		seen.add(declared);
 		const bases = (classes.get(declared.base ?? '') ?? []).filter((base) => !seen.has(base));
-		return [...declared.routes, ...bases.flatMap((base) => withInherited(base, seen))];
+		const inherited = bases.flatMap((base) => withInherited(base, seen));
+		const overridden = new Set(declared.routes.map((route) => route.handler).filter(Boolean));
+		const kept = inherited.filter((route) => !overridden.has(route.handler));
+		return [...declared.routes, ...kept];
 	};
 	return controllers.flatMap((controller) => {
 		const routes = withInherited(controller, new Set());
-		return controller.prefixes.flatMap((prefix) =>
-			routes.map(({ method, segments }) => ({ method, segments: [...segmentsOf(prefix), ...segments] }))
+		return controller.prefixes.map((prefix) =>
+			routes.map((route) => ({ ...route, segments: [...segmentsOf(prefix), ...route.segments] }))
 		);
 	});
 }
@@ -362,14 +377,14 @@ function fits(route: Route, call: ApiCall): boolean {
 	return route.segments.every((segment, index) => isParam(segment) || call.segments[index] === segment);
 }
 
-/** The calls no route serves, each with why. */
-function unserved(calls: ApiCall[], routes: Route[]): string[] {
+/** The calls no route serves, each with why. A controller answers a call with the first of its routes that fits. */
+function unserved(calls: ApiCall[], controllers: Route[][]): string[] {
 	return calls.flatMap((call) => {
-		const fitting = routes.filter((route) => fits(route, call));
-		if (fitting.some((route) => wordInParamAt(route, call) < 0)) {
+		const answering = controllers.flatMap((routes) => routes.find((route) => fits(route, call)) ?? []);
+		if (answering.some((route) => wordInParamAt(route, call) < 0)) {
 			return [];
 		}
-		const [route] = fitting;
+		const [route] = answering;
 		if (!route) {
 			return [`${call.label}: no route`];
 		}
@@ -384,7 +399,7 @@ describe('the API routes the tools call', () => {
 	const calls = toolCalls();
 
 	it('scans the whole surface, not a handful of files', () => {
-		expect(routes.length).toBeGreaterThan(3000);
+		expect(routes.flat().length).toBeGreaterThan(3000);
 		expect(calls.length).toBeGreaterThan(300);
 	});
 
@@ -392,6 +407,12 @@ describe('the API routes the tools call', () => {
 		const inherited = { method: 'DELETE', segments: ['merchants', VALUE, 'soft'], label: 'DELETE inherited' };
 
 		expect(unserved([inherited], routes)).toEqual([]);
+	});
+
+	it("tells an inherited route the controller's own `:id` route takes first", () => {
+		const count = { method: 'GET', segments: ['deals', 'count'], label: 'GET /api/deals/count' };
+
+		expect(unserved([count], routes)).toEqual(['GET /api/deals/count: `count` fills :id of /deals/:id']);
 	});
 
 	it('tells a fixed word in place of a value, and a path no controller declares', () => {
