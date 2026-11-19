@@ -3,7 +3,13 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { validateOrganizationContext } from './utils';
+import {
+	getCurrentEmployeeId,
+	notOfferedByApi,
+	pageOf,
+	resolveOrganizationScope,
+	validateOrganizationContext
+} from './utils';
 import { GoalLevelEnum } from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
@@ -247,7 +253,11 @@ export const registerGoalTools = (server: McpServer) => {
 		},
 		async ({ id, progress }) => {
 			try {
-				const response = await apiClient.put(`/api/goals/${id}/progress`, { progress });
+				// The update route requires the goal's name: send its own along with the progress. The body carries the
+				// tenant the route's guard reads, and no organization, which the goal DTO does not declare.
+				const scope = resolveOrganizationScope();
+				const { name } = await apiClient.get<{ name: string }>(`/api/goals/${id}`, { params: scope });
+				const response = await apiClient.put(`/api/goals/${id}`, { name, progress, tenantId: scope.tenantId });
 
 				return {
 					content: [
@@ -297,27 +307,33 @@ export const registerGoalTools = (server: McpServer) => {
 	registerTool(
 		server,
 		'get_my_goals',
-		'Get goals assigned to the current authenticated user',
+		'Get the goals the current authenticated user owns',
 		{
 			page: z.number().optional().default(1).describe('Page number for pagination'),
 			limit: z.number().optional().default(10).describe('Number of items per page'),
 			level: GoalLevelEnum.optional().describe('Filter by goal level'),
-			status: z.string().optional().describe('Filter by goal status')
+			status: z.string().optional().describe('Not offered: goals have no status in the API')
 		},
 		async ({ page = 1, limit = 10, level, status }) => {
 			try {
+				if (status) {
+					throw notOfferedByApi('a status filter on goals');
+				}
 				const defaultParams = validateOrganizationContext();
+				const ownerEmployeeId = await getCurrentEmployeeId();
 
-				const params = {
+				const findInput = {
 					organizationId: defaultParams.organizationId,
 					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					page,
-					limit,
-					...(level && { level }),
-					...(status && { status })
+					ownerEmployeeId,
+					...(level && { level })
 				};
 
-				const response = await apiClient.get('/api/goals/me', { params });
+				// The list route answers every goal its find-input matches: page them here
+				const { items = [] } = await apiClient.get<{ items?: unknown[] }>('/api/goals', {
+					params: { data: JSON.stringify({ findInput }) }
+				});
+				const response = pageOf(items, page, limit);
 
 				return {
 					content: [
@@ -389,30 +405,9 @@ export const registerGoalTools = (server: McpServer) => {
 			startDate: z.string().optional().describe('Start date for goal statistics (ISO format)'),
 			endDate: z.string().optional().describe('End date for goal statistics (ISO format)')
 		},
-		async ({ level, ownerEmployeeId, ownerTeamId, startDate, endDate }) => {
+		async () => {
 			try {
-				const defaultParams = validateOrganizationContext();
-
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					...(level && { level }),
-					...(ownerEmployeeId && { ownerEmployeeId }),
-					...(ownerTeamId && { ownerTeamId }),
-					...(startDate && { startDate }),
-					...(endDate && { endDate })
-				};
-
-				const response = await apiClient.get('/api/goals/statistics', { params });
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
+				throw notOfferedByApi('goal statistics');
 			} catch (error) {
 				logger.error('Error fetching goal statistics:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch goal statistics: ${sanitizeErrorMessage(error)}`);
@@ -430,18 +425,9 @@ export const registerGoalTools = (server: McpServer) => {
 			parentGoalId: z.string().uuid().describe('The parent goal ID'),
 			childGoalId: z.string().uuid().describe('The child goal ID to align with parent')
 		},
-		async ({ parentGoalId, childGoalId }) => {
+		async () => {
 			try {
-				const response = await apiClient.post(`/api/goals/${parentGoalId}/align`, { childGoalId });
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
+				throw notOfferedByApi('aligning one goal with another');
 			} catch (error) {
 				logger.error('Error aligning goals:', sanitizeForLogging(error));
 				throw new Error(`Failed to align goals: ${sanitizeErrorMessage(error)}`);

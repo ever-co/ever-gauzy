@@ -8,13 +8,38 @@ import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils'
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
 import { TOOL_HINTS } from './tool-hints';
-import { resolveOrganizationScope } from './utils';
+import { applyInTurn, buildListQuery, notOfferedByApi, resolveOrganizationScope } from './utils';
 const logger = new Logger('OrganizationContactTools');
 
 const ORGANIZATION_ID_DESCRIPTION = "The organization ID (defaults to the signed-in user's organization)";
 const TENANT_ID_DESCRIPTION = "The tenant ID (defaults to the signed-in user's tenant)";
 const organizationIdParam = z.string().uuid().optional().describe(ORGANIZATION_ID_DESCRIPTION);
 const tenantIdParam = z.string().uuid().optional().describe(TENANT_ID_DESCRIPTION);
+
+/**
+ * Adds a contact to an employee's contacts, or removes it, through `PUT /organization-contact/employee`, the route
+ * that edits the employees of a contact: it reads them in the organization and writes them back with the change.
+ * That route answers a success for a contact it does not find, so the contact is read first, in the same scope: one
+ * the API does not find, or finds in another organization, is not found, and nothing is written.
+ */
+const editContactsOfEmployee = async (
+	contactId: string,
+	employeeId: string,
+	change: 'addedEntityIds' | 'removedEntityIds',
+	scope: { organizationId: string; tenantId?: string }
+) => {
+	const contact = await apiClient.get<{ organizationId?: string }>(`/api/organization-contact/${contactId}`, {
+		params: { data: JSON.stringify({ findInput: scope }) }
+	});
+	if (contact?.organizationId !== scope.organizationId) {
+		throw new Error(`Organization contact ${contactId} not found in organization ${scope.organizationId}.`);
+	}
+	return apiClient.put('/api/organization-contact/employee', {
+		...scope,
+		member: { id: employeeId },
+		[change]: [contactId]
+	});
+};
 
 export const registerOrganizationContactTools = (server: McpServer) => {
 	// Get organization contacts tool
@@ -327,23 +352,13 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 			tenantId: tenantIdParam,
 			contact_data: z.record(z.string(), z.any()).describe('The fields to update on the organization contact')
 		},
-		async ({ id, organizationId, tenantId, contact_data }) => {
+		async () => {
 			try {
-				const updateData = {
-					...contact_data,
-					...resolveOrganizationScope(organizationId, tenantId)
-				};
-
-				const response = await apiClient.put(`/api/organization-contact/${id}/employee`, updateData);
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
+				throw notOfferedByApi(
+					'updating the fields of a contact on behalf of an employee',
+					'update_organization_contact changes its fields, ' +
+						'assign_contact_to_employee and unassign_contact_from_employee its employees.'
+				);
 			} catch (error) {
 				logger.error('Error updating organization contact by employee:', sanitizeForLogging(error));
 				throw new Error(`Failed to update organization contact by employee: ${sanitizeErrorMessage(error)}`);
@@ -407,7 +422,9 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 					...contact,
 					...resolveOrganizationScope(contact.organizationId, contact.tenantId)
 				}));
-				const response = await apiClient.post('/api/organization-contact/bulk', { contacts: contactsInScope });
+				const response = await applyInTurn(contactsInScope, (contact) =>
+					apiClient.post('/api/organization-contact', contact)
+				);
 
 				return {
 					content: [
@@ -450,7 +467,9 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 					...contact,
 					...resolveOrganizationScope(contact.organizationId, contact.tenantId)
 				}));
-				const response = await apiClient.put('/api/organization-contact/bulk', { contacts: contactsInScope });
+				const response = await applyInTurn(contactsInScope, ({ id, ...contact }) =>
+					apiClient.put(`/api/organization-contact/${id}`, contact)
+				);
 
 				return {
 					content: [
@@ -478,7 +497,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 		},
 		async ({ ids }) => {
 			try {
-				const response = await apiClient.delete('/api/organization-contact/bulk', { data: { ids } });
+				const params = resolveOrganizationScope();
+				await applyInTurn(ids, (id) => apiClient.delete(`/api/organization-contact/${id}`, { params }));
 
 				return {
 					content: [
@@ -517,26 +537,9 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 			startDate: z.string().optional().describe('Start date for statistics (ISO format)'),
 			endDate: z.string().optional().describe('End date for statistics (ISO format)')
 		},
-		async ({ organizationId, tenantId, contactType, employeeId, startDate, endDate }) => {
+		async () => {
 			try {
-				const params = {
-					...resolveOrganizationScope(organizationId, tenantId),
-					...(contactType && { contactType }),
-					...(employeeId && { employeeId }),
-					...(startDate && { startDate }),
-					...(endDate && { endDate })
-				};
-
-				const response = await apiClient.get('/api/organization-contact/statistics', { params });
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
+				throw notOfferedByApi('organization contact statistics');
 			} catch (error) {
 				logger.error('Error fetching organization contact statistics:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch organization contact statistics: ${sanitizeErrorMessage(error)}`);
@@ -558,10 +561,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 		},
 		async ({ contactId, employeeId, organizationId, tenantId }) => {
 			try {
-				const response = await apiClient.post(`/api/organization-contact/${contactId}/assign`, {
-					employeeId,
-					...resolveOrganizationScope(organizationId, tenantId)
-				});
+				const scope = resolveOrganizationScope(organizationId, tenantId);
+				const response = await editContactsOfEmployee(contactId, employeeId, 'addedEntityIds', scope);
 
 				return {
 					content: [
@@ -592,12 +593,8 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 		},
 		async ({ contactId, employeeId, organizationId, tenantId }) => {
 			try {
-				const response = await apiClient.delete(`/api/organization-contact/${contactId}/assign`, {
-					data: {
-						employeeId,
-						...resolveOrganizationScope(organizationId, tenantId)
-					}
-				});
+				const scope = resolveOrganizationScope(organizationId, tenantId);
+				const response = await editContactsOfEmployee(contactId, employeeId, 'removedEntityIds', scope);
 
 				return {
 					content: [
@@ -629,13 +626,13 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 		},
 		async ({ contactId, organizationId, tenantId, page = 1, limit = 10 }) => {
 			try {
+				const scope = resolveOrganizationScope(organizationId, tenantId);
+				// The guard reads the tenant at the top of the query, the list route its `where`
 				const params = {
-					...resolveOrganizationScope(organizationId, tenantId),
-					page,
-					limit
+					...scope,
+					...buildListQuery(scope, { organizationContactId: contactId }, { page, limit })
 				};
-
-				const response = await apiClient.get(`/api/organization-contact/${contactId}/projects`, { params });
+				const response = await apiClient.get('/api/organization-projects', { params });
 
 				return {
 					content: [
@@ -667,11 +664,17 @@ export const registerOrganizationContactTools = (server: McpServer) => {
 		},
 		async ({ contactId, organizationId, tenantId, inviteType = 'EMAIL', customMessage }) => {
 			try {
-				const response = await apiClient.post(`/api/organization-contact/${contactId}/invite`, {
-					...resolveOrganizationScope(organizationId, tenantId),
-					inviteType,
-					...(customMessage && { customMessage })
-				});
+				if (inviteType === 'SMS') {
+					throw notOfferedByApi('inviting a contact by SMS');
+				}
+				if (customMessage) {
+					throw notOfferedByApi('a custom message on a contact invitation');
+				}
+
+				// The route emails the invitation to the contact's primary email. It takes no body: the scope is there
+				// for its guard, which reads the tenant from the body.
+				const scope = resolveOrganizationScope(organizationId, tenantId);
+				const response = await apiClient.put(`/api/invite/organization-contact/${contactId}`, scope);
 
 				return {
 					content: [

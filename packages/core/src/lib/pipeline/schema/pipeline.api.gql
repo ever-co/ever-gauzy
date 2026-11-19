@@ -90,8 +90,8 @@ extend type Mutation {
 	createPipeline(input: CreatePipelineInput!): Pipeline!
 
 	"""
-	Replaces a pipeline's facts and its whole stage set. A stage the body does not name is removed —
-	see `UpdatePipelineInput`.
+	Changes a pipeline's facts, and replaces its whole stage set when the input states `stages`: a stage
+	the list does not name is removed. See `UpdatePipelineInput`.
 	"""
 	updatePipeline(input: UpdatePipelineInput!): Pipeline!
 

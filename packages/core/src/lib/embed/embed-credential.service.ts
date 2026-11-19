@@ -18,7 +18,7 @@ import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
 import { DATABASE_UNAVAILABLE_MESSAGE, isDatabaseUnavailableError } from '../core/errors/database-unavailable';
 import { MultiORMEnum, parseTypeORMFindToMikroOrm } from '../core/utils';
 import { AuthService } from '../auth/auth.service';
-import { Employee, User, UserOrganization } from '../core/entities/internal';
+import { Employee, User } from '../core/entities/internal';
 import { MikroOrmEmployeeRepository } from '../employee/repository/mikro-orm-employee.repository';
 import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
 import { MikroOrmUserRepository } from '../user/repository/mikro-orm-user.repository';
@@ -43,7 +43,6 @@ import {
 } from './embed-exchange-failures';
 import {
 	embedCredentialHashesMatch,
-	embedTokenTtlSeconds,
 	generateEmbedCredential,
 	hashEmbedCredential,
 	isWellFormedEmbedCredential
@@ -51,6 +50,7 @@ import {
 import { MikroOrmEmbedCredentialRepository } from './repository/mikro-orm-embed-credential.repository';
 import { EmbedAllowedOriginService } from './embed-allowed-origin.service';
 import { EmbedMemberAddition, EmbedMemberService, IEmbedNewMember, newMemberOf } from './embed-member.service';
+import { EmbedMemberTokens } from './embed-member-token';
 import { normalizeOrigin } from './embed-origin';
 import { TypeOrmEmbedCredentialRepository } from './repository/type-orm-embed-credential.repository';
 
@@ -143,6 +143,8 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 	private readonly revoked = new Map<ID, { revoked: boolean; readAt: number }>();
 	/** Shares its memory of accepted credentials with the route's rate limiter (`embed-exchange-throttle.ts`). */
 	private readonly exchangeFailures = new EmbedExchangeFailures(undefined, recentlyAcceptedEmbedCredentials);
+	/** The member checks and the mint a person's sign-in from an allowed site shares. */
+	private readonly memberTokens: EmbedMemberTokens;
 
 	constructor(
 		readonly typeOrmEmbedCredentialRepository: TypeOrmEmbedCredentialRepository,
@@ -159,6 +161,16 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 		private readonly embedMemberService: EmbedMemberService
 	) {
 		super(typeOrmEmbedCredentialRepository, mikroOrmEmbedCredentialRepository);
+		this.memberTokens = new EmbedMemberTokens(
+			{
+				typeOrmEmployeeRepository,
+				mikroOrmEmployeeRepository,
+				typeOrmUserOrganizationRepository,
+				mikroOrmUserOrganizationRepository
+			},
+			authService,
+			() => this.ormType
+		);
 	}
 
 	/** The organization's credentials that still work, newest first, without any secret. */
@@ -476,32 +488,15 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 		}
 
 		const employee = await this.memberOf(row, input);
-		if (!employee) {
-			this.refuseMember('not an active member of the organization', row);
-		}
-		if (!employee.userId || employee.isPlaceholder) {
-			this.refuseMember('a member without an account', row);
-		}
-		if (!employee.isTrackingEnabled) {
-			this.refuseMember('time tracking is off for this member', row);
-		}
-		// The token names the organization, and JwtStrategy refuses it without an active membership there.
-		if (!(await this.isActiveMember(employee.userId, row))) {
-			this.refuseMember('no active membership of the organization', row);
+		const scope = { tenantId: row.tenantId, organizationId: row.organizationId };
+		const refusal = await this.memberTokens.refusalOf(employee, scope);
+		if (refusal) {
+			this.refuseMember(refusal, row);
 		}
 
 		const now = new Date();
-		const expiresAt = new Date(now.getTime() + embedTokenTtlSeconds() * 1000);
-		const token = await this.authService.issueEmbedSession({
-			userId: employee.userId,
-			tenantId: row.tenantId,
-			organizationId: row.organizationId,
-			credentialId: row.id,
-			employeeId: employee.id,
-			origin: pageOrigin,
-			clientId: row.organizationContactId,
-			expiresAt
-		});
+		const binding = { credentialId: row.id, origin: pageOrigin, clientId: row.organizationContactId };
+		const { token, expiresAt } = await this.memberTokens.mint(employee, scope, binding, now);
 		await this.recordUse(row, now);
 		this.logger.log(`Embed token issued: credential=${row.id} employee=${employee.id}`);
 
@@ -635,7 +630,7 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 			if (!isUUID(employeeId)) {
 				return null;
 			}
-			return await this.findOneEmployee({ ...scope, id: employeeId });
+			return await this.memberTokens.findEmployee({ ...scope, id: employeeId });
 		}
 		if (typeof email !== 'string' || !email.trim()) {
 			return null;
@@ -646,46 +641,12 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 		const addresses = typed === typed.toLowerCase() ? [typed] : [typed, typed.toLowerCase()];
 		for (const address of addresses) {
 			const user = await this.findOneUser({ tenantId: row.tenantId, email: address });
-			const employee = user ? await this.findOneEmployee({ ...scope, userId: user.id }) : null;
+			const employee = user ? await this.memberTokens.findEmployee({ ...scope, userId: user.id }) : null;
 			if (employee) {
 				return employee;
 			}
 		}
 		return null;
-	}
-
-	/** Whether the user is an active, unarchived member of the credential's organization. */
-	private async isActiveMember(userId: ID, row: EmbedCredential): Promise<boolean> {
-		const where = {
-			userId,
-			tenantId: row.tenantId,
-			organizationId: row.organizationId,
-			isActive: true,
-			isArchived: false
-		};
-		switch (this.ormType) {
-			case MultiORMEnum.MikroORM: {
-				const parsed = parseTypeORMFindToMikroOrm<UserOrganization>({ where } as any);
-				return !!(await this.mikroOrmUserOrganizationRepository.findOne(parsed.where, parsed.mikroOptions));
-			}
-			case MultiORMEnum.TypeORM:
-				return !!(await this.typeOrmUserOrganizationRepository.findOne({ where }));
-			default:
-				throw new Error(`ORM type not implemented: ${this.ormType}`);
-		}
-	}
-
-	private async findOneEmployee(where: Record<string, unknown>): Promise<Employee | null> {
-		switch (this.ormType) {
-			case MultiORMEnum.MikroORM: {
-				const parsed = parseTypeORMFindToMikroOrm<Employee>({ where } as any);
-				return (await this.mikroOrmEmployeeRepository.findOne(parsed.where, parsed.mikroOptions)) as Employee | null;
-			}
-			case MultiORMEnum.TypeORM:
-				return await this.typeOrmEmployeeRepository.findOne({ where });
-			default:
-				throw new Error(`ORM type not implemented: ${this.ormType}`);
-		}
 	}
 
 	private async findOneUser(where: Record<string, unknown>): Promise<User | null> {

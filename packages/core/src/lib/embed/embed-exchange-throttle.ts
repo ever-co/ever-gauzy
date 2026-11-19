@@ -98,3 +98,16 @@ export const EMBED_EXCHANGE_THROTTLE = {
 		getTracker: embedExchangeTracker
 	}
 };
+
+/**
+ * The `@Throttle` options of the routes a site's page calls with a renewal token (`POST /embed/renew` and
+ * `/embed/revoke`): per client address, with the exchange's limit for an address. A renewal token works once, so it
+ * never gets a bucket of its own.
+ */
+export const EMBED_SITE_THROTTLE = {
+	default: {
+		limit: EMBED_EXCHANGE_LIMIT_PER_ADDRESS,
+		ttl: EMBED_EXCHANGE_THROTTLE_TTL_MS,
+		getTracker: embedExchangeAddress
+	}
+};

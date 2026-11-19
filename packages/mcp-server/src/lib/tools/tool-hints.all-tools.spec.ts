@@ -25,17 +25,21 @@ const DESTRUCTIVE_WORDS = new Set([
 	'process'
 ]);
 const READ_PREFIX = /^(get|list|count|search)_/;
-const SENDS_OUTSIDE = ['invite_organization_contact', 'send_invoice_email'];
+/** `update_candidate_status` rejects through the route that emails the candidate their rejection. */
+const SENDS_OUTSIDE = ['invite_organization_contact', 'send_invoice_email', 'update_candidate_status'];
 /** A start or a stop of the timer ends the run going and cuts the entries that run overlaps. */
 const ENDS_THE_RUN_GOING = ['start_timer', 'stop_timer'];
 /** Tools that read a record and write it back whole: what changed in between is written over. */
 const READ_THEN_REPLACE = [
+	'add_pipeline_stage',
 	'assign_employees_to_time_off_policy',
 	'assign_skill_to_employee',
 	'assign_task_to_employee',
 	'bulk_update_tasks',
+	'remove_pipeline_stage',
 	'remove_skill_from_employee',
 	'unassign_task_from_employee',
+	'update_pipeline_stage',
 	'update_time_off_policy'
 ];
 

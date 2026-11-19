@@ -65,6 +65,7 @@ function requestOf(context: ExecutionContext): any {
  * Holds a token minted by the embed exchange to what a timer widget needs (`EMBED_ROUTES`), for its one member in its
  * one organization; every other request carries on untouched. Registered globally, so no route has to know about
  * embeds. A credential revoked or a switch turned off refuses its tokens at once (401): the widget asks again. A token
+ * of a person's sign-in from a site (`embedGrantId`) lives out its few minutes; a revoked grant gets no next one. A token
  * of a credential limited to a client starts the timer only on that client's projects (403 `EMBED_CLIENT_PROJECT`).
  */
 @Injectable()
@@ -105,7 +106,9 @@ export class EmbedSessionGuard implements CanActivate {
 		if (!isSignedBearerToken(request.headers?.authorization, env.JWT_SECRET)) {
 			throw new UnauthorizedException();
 		}
-		if (await this.embedCredentialService.isRevoked(claims.credentialId)) {
+		// A token of a person's sign-in from a site has no credential: its grant is judged at each renewal.
+		const isCredentialToken = !claims.grantId;
+		if (isCredentialToken && (await this.embedCredentialService.isRevoked(claims.credentialId))) {
 			throw new UnauthorizedException();
 		}
 		const startsForClient = Boolean(route.startsTimer) && Boolean(claims.clientId);

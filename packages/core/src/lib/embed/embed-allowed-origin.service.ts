@@ -46,7 +46,10 @@ export class EmbedAllowedOriginService extends TenantAwareCrudService<EmbedAllow
 		return rows.map((row) => EmbedAllowedOriginResponseDTO.from(row));
 	}
 
-	/** Adds an origin, normalized; adding one that is already there answers the existing row. */
+	/**
+	 * Adds an origin, normalized, with sign-in by the organization's people off unless the input turns it on. Adding one
+	 * that is already there answers the existing row, its setting unchanged.
+	 */
 	async addForOrganization(input: CreateEmbedAllowedOriginDTO): Promise<EmbedAllowedOriginResponseDTO> {
 		const origin = normalizeOrigin(input.origin);
 		if (!origin) {
@@ -70,7 +73,11 @@ export class EmbedAllowedOriginService extends TenantAwareCrudService<EmbedAllow
 			// Who added it, stated: under MikroORM `createdByUserId` is a mirror that is not persisted, and the base
 			// subscriber sets only the mirror; the create states the creator relation from it. TypeORM writes the same
 			// value either way.
-			row = await this.create({ ...scope, createdByUserId: RequestContext.currentUserId() });
+			row = await this.create({
+				...scope,
+				allowPersonSignIn: input.allowPersonSignIn === true,
+				createdByUserId: RequestContext.currentUserId()
+			});
 		} catch (error) {
 			// Two requests adding the same origin at once: the unique index refuses the second insert, and the row
 			// the first one saved is the answer.
@@ -91,6 +98,29 @@ export class EmbedAllowedOriginService extends TenantAwareCrudService<EmbedAllow
 	 * miss answers 404: a lookup that failed is thrown as it is, so the caller knows nothing was removed.
 	 */
 	async remove(id: ID): Promise<void> {
+		const row = await this.findOwn(id);
+		await this.delete(id);
+		this.forgetEveryOrigin();
+		this.logger.log(`Embed origin removed: ${row.origin} organizationId=${row.organizationId}`);
+	}
+
+	/**
+	 * Turns sign-in by the organization's people from an allowed origin of the caller's tenant on or off. Turned off, the
+	 * site's next renewals are refused, and the timer tokens it holds live out their few minutes; turned back on, its
+	 * people's sign-ins that have not expired renew again.
+	 */
+	async setPersonSignIn(id: ID, allowPersonSignIn: boolean): Promise<EmbedAllowedOriginResponseDTO> {
+		const row = await this.findOwn(id);
+		await this.update(id, { allowPersonSignIn });
+		row.allowPersonSignIn = allowPersonSignIn;
+		this.logger.log(
+			`Embed origin sign-in set: ${row.origin} allowPersonSignIn=${allowPersonSignIn} organizationId=${row.organizationId}`
+		);
+		return EmbedAllowedOriginResponseDTO.from(row);
+	}
+
+	/** An origin of the caller's tenant, by id. Only a miss answers 404: a lookup that failed is thrown as it is. */
+	private async findOwn(id: ID): Promise<EmbedAllowedOrigin> {
 		const row = await this.findOneByOptions({ where: { id, tenantId: RequestContext.currentTenantId() } }).catch(
 			(error) => {
 				if (error instanceof NotFoundException) {
@@ -102,9 +132,7 @@ export class EmbedAllowedOriginService extends TenantAwareCrudService<EmbedAllow
 		if (!row) {
 			throw new NotFoundException();
 		}
-		await this.delete(id);
-		this.forgetEveryOrigin();
-		this.logger.log(`Embed origin removed: ${row.origin} organizationId=${row.organizationId}`);
+		return row;
 	}
 
 	/**
@@ -113,11 +141,21 @@ export class EmbedAllowedOriginService extends TenantAwareCrudService<EmbedAllow
 	 * another tenant wrote naming it must not widen the organization's list.
 	 */
 	async isAllowed(tenantId: ID, organizationId: ID, origin: string): Promise<boolean> {
-		if (!isUUID(tenantId) || !isUUID(organizationId)) {
-			return false;
+		return !!(await this.findAllowed(tenantId, organizationId, origin));
+	}
+
+	/**
+	 * The organization's allowed origin, read now, with its settings (whether people can sign in from it), or null:
+	 * scoped to the tenant as {@link isAllowed} is.
+	 */
+	async findAllowed(tenantId: ID, organizationId: ID, origin: string): Promise<EmbedAllowedOrigin | null> {
+		// TypeORM drops a condition whose value is undefined: without an origin, the read would match any of them.
+		const namesOrigin = typeof origin === 'string' && origin.length > 0;
+		if (!isUUID(tenantId) || !isUUID(organizationId) || !namesOrigin) {
+			return null;
 		}
 		const rows = await this.readAll({ tenantId, organizationId, origin });
-		return rows.length > 0;
+		return rows[0] ?? null;
 	}
 
 	/**
