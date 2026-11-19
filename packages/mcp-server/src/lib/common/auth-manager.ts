@@ -21,6 +21,12 @@ interface ITokenData {
 	source?: 'auto-login' | 'manual';
 }
 
+/** The tenant and organization a login acts in */
+interface IUserScope {
+	organizationId?: string;
+	tenantId?: string;
+}
+
 interface IAuthState {
 	tokenData: ITokenData | null;
 	isLoginInProgress: boolean;
@@ -187,42 +193,7 @@ export class AuthManager {
 
 			if (response?.token && response?.refresh_token) {
 				// Get current user's information including tenant and organization
-				let organizationId: string | undefined;
-				let tenantId: string | undefined;
-
-				try {
-					// Get current user data with employee relations to access organization info
-					const userResponse = await this.apiClient.get('/api/user/me', {
-						headers: { Authorization: `Bearer ${response.token}` },
-						params: {
-							relations: ['employee', 'tenant'],
-							includeEmployee: true
-						}
-					});
-
-					if (userResponse) {
-						// Extract tenant ID directly from user data
-						tenantId = userResponse.tenantId || userResponse.tenant?.id;
-
-						// Extract organization ID from employee data if available
-						if (userResponse.employee) {
-							organizationId = userResponse.employee.organizationId;
-						}
-
-						// Fallback: try to get from user's organizations if employee not available
-						if (!organizationId && userResponse.organizations && userResponse.organizations.length > 0) {
-							organizationId = userResponse.organizations[0].id;
-						}
-					}
-				} catch (error) {
-					if (environment.debug) {
-						logger.warn(
-							'⚠️  Could not fetch user info for organization/tenant extraction:',
-							error instanceof Error ? error.message : 'Unknown error'
-						);
-					}
-					// Don't use environment defaults anymore since we want to rely on actual user data
-				}
+				const { organizationId, tenantId } = await this.readUserScope(response.token);
 
 				this.setTokenData(
 					state,
@@ -263,6 +234,49 @@ export class AuthManager {
 				this.pendingStates.delete(authKey);
 			}
 		}
+	}
+
+	/**
+	 * Read the tenant and organization of the user a new access token belongs to
+	 */
+	private async readUserScope(accessToken: string): Promise<IUserScope> {
+		const scope: IUserScope = {};
+
+		try {
+			// Get current user data with employee relations to access organization info
+			const userResponse = await this.apiClient.get('/api/user/me', {
+				headers: { Authorization: `Bearer ${accessToken}` },
+				params: {
+					relations: ['employee', 'tenant'],
+					includeEmployee: true
+				}
+			});
+
+			if (userResponse) {
+				// Extract tenant ID directly from user data
+				scope.tenantId = userResponse.tenantId || userResponse.tenant?.id;
+
+				// Extract organization ID from employee data if available
+				if (userResponse.employee) {
+					scope.organizationId = userResponse.employee.organizationId;
+				}
+
+				// Fallback: try to get from user's organizations if employee not available
+				if (!scope.organizationId && userResponse.organizations && userResponse.organizations.length > 0) {
+					scope.organizationId = userResponse.organizations[0].id;
+				}
+			}
+		} catch (error) {
+			if (environment.debug) {
+				logger.warn(
+					'⚠️  Could not fetch user info for organization/tenant extraction:',
+					error instanceof Error ? error.message : 'Unknown error'
+				);
+			}
+			// Don't use environment defaults anymore since we want to rely on actual user data
+		}
+
+		return scope;
 	}
 
 	/**
