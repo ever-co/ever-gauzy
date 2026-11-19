@@ -62,6 +62,9 @@ export type Env = Readonly<{
 	// Platform logo url
 	PLATFORM_LOGO: string;
 
+	// The app switcher's address of each Ever app: `id=url` pairs separated by commas (empty: the catalog's)
+	EVER_APP_LINKS: string;
+
 	SENTRY_DSN: string;
 	SENTRY_TRACES_SAMPLE_RATE: string;
 
@@ -218,6 +221,7 @@ export const env: Env = cleanEnv(
 		API_BASE_URL: str({ default: 'http://localhost:3000' }),
 
 		PLATFORM_WEBSITE_URL: str({ default: 'https://gauzy.co' }),
+		EVER_APP_LINKS: str({ default: '' }),
 		PLATFORM_WEBSITE_DOWNLOAD_URL: str({
 			default: 'https://gauzy.co/downloads'
 		}),
