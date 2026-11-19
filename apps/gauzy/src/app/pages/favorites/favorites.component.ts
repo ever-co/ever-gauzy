@@ -21,6 +21,7 @@ import { SmartDataViewLayoutModule } from '@gauzy/ui-core/shared';
 interface IFavoriteRow extends IFavoriteEntry {
 	url: UrlTree;
 	typeKey: string;
+	searchText: string;
 }
 
 interface IFavoriteTypeOption {
@@ -91,7 +92,8 @@ export class FavoritesComponent {
 		this._entries().map((entry) => ({
 			...entry,
 			url: this._router.parseUrl(entry.link),
-			typeKey: itemTypeKey(entry.entity)
+			typeKey: itemTypeKey(entry.entity),
+			searchText: `${entry.title}\n${entry.description ?? ''}`.toLocaleLowerCase()
 		}))
 	);
 
@@ -101,13 +103,7 @@ export class FavoritesComponent {
 	private readonly _searched = computed<IFavoriteRow[]>(() => {
 		const term = this.search().trim().toLocaleLowerCase();
 		const rows = this.rows();
-		return term
-			? rows.filter(
-					(row) =>
-						row.title.toLocaleLowerCase().includes(term) ||
-						!!row.description?.toLocaleLowerCase().includes(term)
-			  )
-			: rows;
+		return term ? rows.filter((row) => row.searchText.includes(term)) : rows;
 	});
 
 	protected readonly searchedCount = computed(() => this._searched().length);
