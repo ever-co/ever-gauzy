@@ -9169,6 +9169,15 @@
 		"SEARCH_PLACEHOLDER": "Search favorites...",
 		"NO_MATCH": "No favorites match your search.",
 		"ADDED": "Added",
+		"CLEAR_FILTERS": "Clear filters",
+		"CLEAR_SEARCH": "Clear search",
+		"SORT": {
+			"LABEL": "Sort by",
+			"NEWEST": "Newest first",
+			"OLDEST": "Oldest first",
+			"NAME": "Name (A–Z)",
+			"TYPE": "Type"
+		},
 		"TYPES": {
 			"BROADCAST": "Broadcasts",
 			"CANDIDATE": "Candidates",
