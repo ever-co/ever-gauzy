@@ -132,7 +132,9 @@ describe('chat header badge', () => {
 			scope$.next({ userId: 'u1', organizationId: 'o2' });
 			// The open dropdown reads the new scope's at once; the answer for the scope before is never shown.
 			expect(badge.rows().map((row) => row.id)).toEqual(['c2']);
+			// Completed too: the read joins its sources (forkJoin), so only then could a read not cancelled answer.
 			late.next(list(channel('c1', 'general')));
+			late.complete();
 			expect(badge.rows().map((row) => row.id)).toEqual(['c2']);
 
 			// Closed during a change: nothing of the scope before is left for the next opening.
