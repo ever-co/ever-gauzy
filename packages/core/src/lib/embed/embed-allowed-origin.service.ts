@@ -98,6 +98,14 @@ export class EmbedAllowedOriginService extends TenantAwareCrudService<EmbedAllow
 	 * miss answers 404: a lookup that failed is thrown as it is, so the caller knows nothing was removed.
 	 */
 	async remove(id: ID): Promise<void> {
+		const row = await this.findOwn(id);
+		await this.delete(id);
+		this.forgetEveryOrigin();
+		this.logger.log(`Embed origin removed: ${row.origin} organizationId=${row.organizationId}`);
+	}
+
+	/** An origin of the caller's tenant, by id. Only a miss answers 404: a lookup that failed is thrown as it is. */
+	private async findOwn(id: ID): Promise<EmbedAllowedOrigin> {
 		const row = await this.findOneByOptions({ where: { id, tenantId: RequestContext.currentTenantId() } }).catch(
 			(error) => {
 				if (error instanceof NotFoundException) {
@@ -109,9 +117,7 @@ export class EmbedAllowedOriginService extends TenantAwareCrudService<EmbedAllow
 		if (!row) {
 			throw new NotFoundException();
 		}
-		await this.delete(id);
-		this.forgetEveryOrigin();
-		this.logger.log(`Embed origin removed: ${row.origin} organizationId=${row.organizationId}`);
+		return row;
 	}
 
 	/**
