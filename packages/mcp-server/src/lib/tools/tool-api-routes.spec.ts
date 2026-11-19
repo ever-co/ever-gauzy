@@ -135,13 +135,29 @@ function importedConstant(name: string, source: ts.SourceFile): ts.Expression | 
 	return undefined;
 }
 
-/** The text a template span stands for: the constant it names, else a value. */
-function spanText(expression: ts.Expression, source: ts.SourceFile): string {
-	if (!ts.isIdentifier(expression)) {
-		return VALUE;
+/**
+ * The texts a template span can stand for: each branch of a condition, the constant a name stands for, a literal;
+ * a value where the scan cannot tell the text.
+ */
+function spanTexts(expression: ts.Expression, source: ts.SourceFile): string[] {
+	if (ts.isParenthesizedExpression(expression)) {
+		return spanTexts(expression.expression, source);
 	}
-	const [constant] = pathsOf(expression, source);
-	return constant ?? VALUE;
+	if (ts.isConditionalExpression(expression)) {
+		return [...spanTexts(expression.whenTrue, source), ...spanTexts(expression.whenFalse, source)];
+	}
+	if (ts.isIdentifier(expression)) {
+		const value = constantNamed(expression.text, expression) ?? importedConstant(expression.text, source);
+		if (!value) {
+			return [VALUE];
+		}
+		return spanTexts(value, source);
+	}
+	const spelled = pathsOf(expression, source);
+	if (spelled.length === 0) {
+		return [VALUE];
+	}
+	return spelled;
 }
 
 /**
@@ -166,11 +182,13 @@ function pathsOf(expression: ts.Expression, source: ts.SourceFile): string[] {
 		return pathsOf(value, source);
 	}
 	if (ts.isTemplateExpression(expression)) {
-		const spelled = expression.templateSpans.reduce(
-			(text, span) => `${text}${spanText(span.expression, source)}${span.literal.text}`,
-			expression.head.text
+		return expression.templateSpans.reduce(
+			(texts, span) =>
+				texts.flatMap((text) =>
+					spanTexts(span.expression, source).map((part) => `${text}${part}${span.literal.text}`)
+				),
+			[expression.head.text]
 		);
-		return [spelled];
 	}
 	return [];
 }
@@ -311,20 +329,23 @@ function callsAt(node: ts.CallExpression, source: ts.SourceFile): ApiCall[] {
 	});
 }
 
+/** Every API call of a tool source. */
+function callsIn(source: ts.SourceFile): ApiCall[] {
+	const calls: ApiCall[] = [];
+	const visit = (node: ts.Node) => {
+		if (ts.isCallExpression(node)) {
+			calls.push(...callsAt(node, source));
+		}
+		ts.forEachChild(node, visit);
+	};
+	visit(source);
+	return calls;
+}
+
 /** Every API call of the tool sources. */
 function toolCalls(): ApiCall[] {
-	const calls: ApiCall[] = [];
-	for (const file of filesUnder(__dirname, (name) => name.endsWith('.ts') && !name.endsWith('.spec.ts'))) {
-		const source = parse(file);
-		const visit = (node: ts.Node) => {
-			if (ts.isCallExpression(node)) {
-				calls.push(...callsAt(node, source));
-			}
-			ts.forEachChild(node, visit);
-		};
-		visit(source);
-	}
-	return calls;
+	const files = filesUnder(__dirname, (name) => name.endsWith('.ts') && !name.endsWith('.spec.ts'));
+	return files.flatMap((file) => callsIn(parse(file)));
 }
 
 /** The index of the first `:param` of the route a fixed word of the call fills, or -1. */
@@ -381,6 +402,15 @@ describe('the API routes the tools call', () => {
 			'GET /api/employee/me: `me` fills :id of /employee/:id',
 			'POST restore: no route'
 		]);
+	});
+
+	it('checks each branch of a condition in a path, not only the first', () => {
+		const file = path.join(__dirname, 'conditional-path.ts');
+		const text = "apiClient.get(`/api/employee/working/${counted ? 'count' : 'nowhere'}`);";
+		const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true);
+		const where = 'packages/mcp-server/src/lib/tools/conditional-path.ts:1';
+
+		expect(unserved(callsIn(source), routes)).toEqual([`GET /api/employee/working/nowhere (${where}): no route`]);
 	});
 
 	it('finds a route for every API call of the tools', () => {
