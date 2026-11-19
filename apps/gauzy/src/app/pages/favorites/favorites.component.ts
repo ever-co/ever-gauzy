@@ -15,6 +15,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { BaseEntityEnum, ComponentLayoutStyleEnum } from '@gauzy/contracts';
 import { ComponentEnum } from '@gauzy/ui-core/common';
 import { FavoriteService, FavoriteStoreService, IFavoriteEntry, Store, ToastrService } from '@gauzy/ui-core/core';
+import { SmartDataViewLayoutModule } from '@gauzy/ui-core/shared';
 
 /** A favorite as a row of the page, with its link parsed so query parameters (`?view=full`) survive. */
 interface IFavoriteRow extends IFavoriteEntry {
@@ -56,7 +57,8 @@ const itemTypeKey = (entity: BaseEntityEnum): string => `FAVORITES.ITEM_TYPES.${
 		NbSelectModule,
 		NbSpinnerModule,
 		NbTooltipModule,
-		TranslatePipe
+		TranslatePipe,
+		SmartDataViewLayoutModule
 	],
 	templateUrl: './favorites.component.html',
 	styleUrls: ['./favorites.component.scss'],
@@ -132,6 +134,31 @@ export class FavoritesComponent {
 		return type ? rows.filter((row) => row.entity === type) : rows;
 	});
 
+	protected readonly itemsPerPage = signal(10);
+	private readonly _activePage = signal(1);
+
+	protected readonly activePage = computed(() => {
+		const pages = Math.max(1, Math.ceil(this.visibleRows().length / this.itemsPerPage()));
+		return Math.min(this._activePage(), pages);
+	});
+
+	protected readonly pagedRows = computed<IFavoriteRow[]>(() => {
+		const size = this.itemsPerPage();
+		const start = (this.activePage() - 1) * size;
+		return this.visibleRows().slice(start, start + size);
+	});
+
+	protected onPageChange(page: number): void {
+		this._activePage.set(page);
+	}
+
+	protected onItemsPerPageChange(size: number): void {
+		if (size && size !== this.itemsPerPage()) {
+			this.itemsPerPage.set(size);
+			this._activePage.set(1);
+		}
+	}
+
 	/** The favorite a removal is under way for. Removals run one at a time. */
 	protected readonly removingId = signal<string | null>(null);
 
@@ -143,10 +170,12 @@ export class FavoritesComponent {
 
 	protected onTypeSelected(value: BaseEntityEnum | typeof ALL_TYPES): void {
 		this._selectedType.set(value === ALL_TYPES ? null : value);
+		this._activePage.set(1);
 	}
 
 	protected onSearch(value: string): void {
 		this.search.set(value ?? '');
+		this._activePage.set(1);
 	}
 
 	protected retry(): void {

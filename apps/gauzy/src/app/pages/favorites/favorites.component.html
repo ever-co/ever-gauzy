@@ -93,7 +93,7 @@
 	} @else if (visibleRows().length) {
 		@if (cardsView()) {
 			<ul class="favorites-cards-grid">
-				@for (row of visibleRows(); track row.favoriteId) {
+				@for (row of pagedRows(); track row.favoriteId) {
 					<li class="favorites-card-wrap">
 						<a class="favorites-card" [routerLink]="row.url">
 							<span class="favorites-card-thumb" aria-hidden="true">
@@ -132,7 +132,7 @@
 						</tr>
 					</thead>
 					<tbody>
-						@for (row of visibleRows(); track row.favoriteId) {
+						@for (row of pagedRows(); track row.favoriteId) {
 							<tr>
 								<td class="name-col">
 									<a class="favorites-name" [routerLink]="row.url">
@@ -173,6 +173,16 @@
 				</table>
 			</div>
 		}
+		<div class="pagination-container">
+			<ga-pagination
+				[totalItems]="visibleRows().length"
+				[activePage]="activePage()"
+				[itemsPerPage]="itemsPerPage()"
+				[doEmit]="false"
+				(selectedOption)="onItemsPerPageChange($event)"
+				(selectedPage)="onPageChange($event)"
+			></ga-pagination>
+		</div>
 	} @else if (rows().length) {
 		<div class="favorites-empty-host">
 			<p class="favorites-empty">{{ 'FAVORITES.NO_MATCH' | translate }}</p>
