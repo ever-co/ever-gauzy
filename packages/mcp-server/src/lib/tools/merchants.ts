@@ -3,7 +3,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { validateOrganizationContext } from './utils';
+import { buildListQuery, validateOrganizationContext } from './utils';
 import { MerchantInputSchema } from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
@@ -35,13 +35,8 @@ export const registerMerchantTools = (server: McpServer) => {
 				const defaultParams = validateOrganizationContext();
 
 				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					page,
-					limit,
-					...(search && { search }),
-					...(relations && { relations }),
-					...(where && { where })
+					...buildListQuery(defaultParams, { ...where }, { page, limit, relations }),
+					...(search && { search })
 				};
 
 				const response = await apiClient.get('/api/merchants', { params });
@@ -465,13 +460,8 @@ export const registerMerchantTools = (server: McpServer) => {
 				const defaultParams = validateOrganizationContext();
 
 				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					page,
-					limit,
-					...(search && { search }),
-					...(relations && { relations }),
-					where: { isActive: true, isArchived: false }
+					...buildListQuery(defaultParams, { isActive: true, isArchived: false }, { page, limit, relations }),
+					...(search && { search })
 				};
 
 				const response = await apiClient.get('/api/merchants', { params });
@@ -508,13 +498,8 @@ export const registerMerchantTools = (server: McpServer) => {
 				const defaultParams = validateOrganizationContext();
 
 				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					page,
-					limit,
-					...(search && { search }),
-					...(relations && { relations }),
-					where: { isArchived: true }
+					...buildListQuery(defaultParams, { isArchived: true }, { page, limit, relations }),
+					...(search && { search })
 				};
 
 				const response = await apiClient.get('/api/merchants', { params });
