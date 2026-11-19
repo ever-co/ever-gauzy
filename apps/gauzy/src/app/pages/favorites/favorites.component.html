@@ -26,6 +26,7 @@
 			<nb-select
 				class="favorites-type-filter"
 				size="small"
+				scrollStrategy="reposition"
 				[selected]="activeType() ?? allTypes"
 				[attr.aria-label]="'FAVORITES.TYPE' | translate"
 				(selectedChange)="onTypeSelected($event)"
