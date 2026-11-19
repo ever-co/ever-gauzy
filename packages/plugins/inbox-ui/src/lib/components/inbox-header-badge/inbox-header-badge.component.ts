@@ -5,9 +5,10 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { NbBadgeModule, NbIconModule, NbPopoverDirective, NbPopoverModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
-import { EMPTY, merge, of, Subject, timer } from 'rxjs';
-import { catchError, filter, map, switchMap, takeUntil, tap } from 'rxjs/operators';
-import { IInboxItemCounts, IInboxItemWithState, InboxTabEnum } from '@gauzy/contracts';
+import { combineLatest, EMPTY, merge, Observable, of, Subject, timer } from 'rxjs';
+import { catchError, distinctUntilChanged, filter, map, startWith, switchMap, takeUntil, tap } from 'rxjs/operators';
+import { IInboxItemCounts, IInboxItemWithState, InboxTabEnum, IOrganization, IUser } from '@gauzy/contracts';
+import { Store } from '@gauzy/ui-core/core';
 import { INBOX_BADGE_POLL_MS, INBOX_LINK } from '../../inbox-ui.constants';
 import { kindIconOf, listDateFormat, previewOf } from '../../inbox-ui.helpers';
 import { InboxUiService } from '../../services/inbox-ui.service';
@@ -75,7 +76,7 @@ type MenuState = 'loading' | 'ready' | 'error';
 									[routerLink]="link"
 									[queryParams]="{ item: item.id }"
 									[attr.data-test]="'inbox-menu-' + item.id"
-									(click)="choose(item.id)"
+									(click)="choose($event, item.id)"
 								>
 									<span class="kind" aria-hidden="true"><nb-icon [icon]="kindIcon(item.kind)"></nb-icon></span>
 									<span class="row-main">
@@ -237,6 +238,7 @@ type MenuState = 'loading' | 'ready' | 'error';
 })
 export class InboxHeaderBadgeComponent implements OnInit {
 	private readonly api = inject(InboxUiService);
+	private readonly store = inject(Store);
 	private readonly destroyRef = inject(DestroyRef);
 	private readonly popover = viewChild(NbPopoverDirective);
 	private readonly stop$ = new Subject<void>();
@@ -271,14 +273,35 @@ export class InboxHeaderBadgeComponent implements OnInit {
 			)
 			.subscribe();
 
-		this.loadMenu$
+		this.followMenu();
+	}
+
+	/**
+	 * Reads the dropdown's items at each opening, anew for every signed-in user and selected organization: a change
+	 * clears the rows of the one before and cancels its read still on the way, so they never show under the new one
+	 * (the header keeps this badge across a change of user). An open dropdown reads the new items at once.
+	 */
+	private followMenu(): void {
+		combineLatest([
+			(this.store.user$ as Observable<IUser | null | undefined>).pipe(map((user) => user?.id ?? null)),
+			(this.store.selectedOrganization$ as Observable<IOrganization | null | undefined>).pipe(map((organization) => organization?.id ?? null))
+		])
 			.pipe(
-				switchMap(() =>
-					this.api.list({ tab: InboxTabEnum.ALL, limit: INBOX_HEADER_MENU_SIZE }).pipe(
-						map((page) => page?.items ?? []),
-						catchError(() => of(null))
-					)
-				),
+				distinctUntilChanged(([userA, organizationA], [userB, organizationB]) => userA === userB && organizationA === organizationB),
+				switchMap(([userId]) => {
+					this.items.set([]);
+					this.state.set('loading');
+					if (!userId) return EMPTY;
+					const asks$ = this.open() ? this.loadMenu$.pipe(startWith(undefined)) : this.loadMenu$;
+					return asks$.pipe(
+						switchMap(() =>
+							this.api.list({ tab: InboxTabEnum.ALL, limit: INBOX_HEADER_MENU_SIZE }).pipe(
+								map((page) => page?.items ?? []),
+								catchError(() => of(null))
+							)
+						)
+					);
+				}),
 				takeUntilDestroyed(this.destroyRef)
 			)
 			.subscribe((items) => {
@@ -302,10 +325,11 @@ export class InboxHeaderBadgeComponent implements OnInit {
 
 	/**
 	 * A row chosen: its link (`?item=`) opens the item on a page that starts, and an Inbox page already shown is told
-	 * directly, since the link may already be its URL or its Notifications tab may be chosen.
+	 * directly, since the link may already be its URL or its Notifications tab may be chosen. A click with a modifier
+	 * key opens the link in another tab or window: the page shown here is left as it is.
 	 */
-	protected choose(id: string): void {
-		this.api.requestItem(id);
+	protected choose(event: MouseEvent, id: string): void {
+		if (!(event.ctrlKey || event.metaKey || event.shiftKey || event.altKey)) this.api.requestItem(id);
 		this.close();
 	}
 
