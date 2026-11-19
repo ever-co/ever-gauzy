@@ -8,13 +8,31 @@ import { Store } from '../store/store.service';
 import { NavMenuSectionItem } from '../nav-builder/nav-builder-types';
 import { ENTITY_LINKS, ENTITY_TITLES, favoriteIcon, IFavoriteRecord } from './entities-mapping';
 
+/** One favorited record, as the Favorites page lists it. */
+export interface IFavoriteEntry {
+	/** The favorite's own id, which removing it deletes. */
+	favoriteId: string;
+	entity: BaseEntityEnum;
+	entityId: string;
+	/** The record's full name; the sidebar shortens it. */
+	title: string;
+	icon: string;
+	link: string;
+}
+
 @UntilDestroy()
 @Injectable({
 	providedIn: 'root'
 })
 export class FavoriteStoreService {
+	/** Every favorite of the signed-in user, newest first. */
+	private readonly _favorites$ = new BehaviorSubject<IFavoriteEntry[]>([]);
+	public readonly favorites$ = this._favorites$.asObservable();
+	/** The same favorites as sidebar links. */
 	private readonly _favoriteItems$ = new BehaviorSubject<NavMenuSectionItem[]>([]);
 	public readonly favoriteItems$ = this._favoriteItems$.asObservable();
+	private readonly _loading$ = new BehaviorSubject<boolean>(true);
+	public readonly loading$ = this._loading$.asObservable();
 	private readonly _refresh$ = new Subject<void>();
 	protected _favoriteSubscription?: Subscription;
 
@@ -32,20 +50,38 @@ export class FavoriteStoreService {
 			this._refresh$.pipe(startWith(null))
 		])
 			.pipe(
-				switchMap(() => from(this._loadFavorites())),
-				catchError((error) => {
-					console.error('Error loading favorites in store', error);
-					this._favoriteItems$.next([]);
-					return of([]);
+				switchMap(() => {
+					this._loading$.next(true);
+					return from(this._loadFavorites()).pipe(
+						catchError((error) => {
+							console.error('Error loading favorites in store', error);
+							return of([] as IFavoriteEntry[]);
+						})
+					);
 				}),
 				untilDestroyed(this)
 			)
-			.subscribe((items) => {
-				this._favoriteItems$.next(items);
+			.subscribe((entries) => {
+				this._favorites$.next(entries);
+				this._favoriteItems$.next(entries.map((entry) => this._toMenuItem(entry)));
+				this._loading$.next(false);
 			});
 	}
 
-	private async _loadFavorites(): Promise<NavMenuSectionItem[]> {
+	private _toMenuItem(entry: IFavoriteEntry): NavMenuSectionItem {
+		const title = this._truncateTitle(entry.title);
+		return {
+			id: `favorite-${entry.entity}-${entry.entityId}`,
+			title,
+			icon: entry.icon,
+			link: entry.link,
+			data: {
+				translationKey: title
+			}
+		};
+	}
+
+	private async _loadFavorites(): Promise<IFavoriteEntry[]> {
 		const { id: organizationId, tenantId } = this._store.selectedOrganization || {};
 		if (!organizationId) {
 			return [];
@@ -83,7 +119,16 @@ export class FavoriteStoreService {
 			return acc;
 		}, {} as Record<BaseEntityEnum, IFavorite[]>);
 
-		const favoritePromises = [];
+		// The favorite behind each record, the user's own ahead of an organization-level pin of the same record.
+		const stubByRecord = new Map<string, IFavorite>();
+		for (const fav of favoriteStubs) {
+			const key = `${fav.entity}:${fav.entityId}`;
+			if (!stubByRecord.has(key) || fav.employeeId === employeeId) {
+				stubByRecord.set(key, fav);
+			}
+		}
+
+		const favoritePromises: Promise<IFavoriteEntry[]>[] = [];
 
 		for (const entityType of Object.keys(groupedFavorites)) {
 			// The details endpoint returns every favorited record of this type it can see (for an admin,
@@ -112,34 +157,38 @@ export class FavoriteStoreService {
 					}
 
 					return details
-						.map((item) => {
-							if (!item) {
+						.map((item): IFavoriteEntry | null => {
+							const stub = item && stubByRecord.get(`${entityType}:${item.id}`);
+							if (!stub) {
 								return null;
 							}
 
-							const rawTitle = this._getFavoriteTitle(item, entityType as BaseEntityEnum) || 'Untitled';
-							const title = this._truncateTitle(rawTitle);
 							return {
-								id: `favorite-${entityType}-${item.id}`,
-								title,
+								favoriteId: stub.id,
+								entity: entityType as BaseEntityEnum,
+								entityId: item.id,
+								title: this._getFavoriteTitle(item, entityType as BaseEntityEnum) || 'Untitled',
 								icon: this._getFavoriteIcon(entityType as BaseEntityEnum, item),
-								link: this._getFavoriteLink(entityType as BaseEntityEnum, item.id, item),
-								data: {
-									translationKey: title
-								}
+								link: this._getFavoriteLink(entityType as BaseEntityEnum, item.id, item)
 							};
 						})
-						.filter(Boolean);
+						.filter((entry): entry is IFavoriteEntry => !!entry);
 				})
 				.catch((error) => {
 					console.error(`Error loading favorites for ${entityType}:`, error);
-					return [];
+					return [] as IFavoriteEntry[];
 				});
 			favoritePromises.push(promise);
 		}
 
+		const addedAt = (entry: IFavoriteEntry): number => {
+			const createdAt = stubByRecord.get(`${entry.entity}:${entry.entityId}`)?.createdAt;
+			return createdAt ? new Date(createdAt).getTime() || 0 : 0;
+		};
+
+		// Newest first: the sidebar shows only the first few, so a record just starred is always among them.
 		const allFavoriteItems = await Promise.all(favoritePromises);
-		return allFavoriteItems.flat();
+		return allFavoriteItems.flat().sort((a, b) => addedAt(b) - addedAt(a));
 	}
 
 	/**
