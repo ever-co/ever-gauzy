@@ -148,6 +148,10 @@ export class FavoritesComponent {
 		return this.visibleRows().slice(start, start + size);
 	});
 
+	protected readonly showPagination = computed(
+		() => this.visibleRows().length > Math.min(10, this.itemsPerPage())
+	);
+
 	protected onPageChange(page: number): void {
 		this._activePage.set(page);
 	}

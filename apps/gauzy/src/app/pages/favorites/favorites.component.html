@@ -173,16 +173,18 @@
 				</table>
 			</div>
 		}
-		<div class="pagination-container">
-			<ga-pagination
-				[totalItems]="visibleRows().length"
-				[activePage]="activePage()"
-				[itemsPerPage]="itemsPerPage()"
-				[doEmit]="false"
-				(selectedOption)="onItemsPerPageChange($event)"
-				(selectedPage)="onPageChange($event)"
-			></ga-pagination>
-		</div>
+		@if (showPagination()) {
+			<div class="pagination-container">
+				<ga-pagination
+					[totalItems]="visibleRows().length"
+					[activePage]="activePage()"
+					[itemsPerPage]="itemsPerPage()"
+					[doEmit]="false"
+					(selectedOption)="onItemsPerPageChange($event)"
+					(selectedPage)="onPageChange($event)"
+				></ga-pagination>
+			</div>
+		}
 	} @else if (rows().length) {
 		<div class="favorites-empty-host">
 			<p class="favorites-empty">{{ 'FAVORITES.NO_MATCH' | translate }}</p>
