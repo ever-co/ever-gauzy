@@ -1,46 +1,208 @@
-// Same vocabulary as the Settings pages: 12px body, hairline dividers, no shadows. Every custom property
-// carries a fallback: `--gauzy-*` is undefined in material-light / -dark.
-$divider: 1px solid var(--gauzy-border-default-color, var(--border-basic-color-3));
-$text: var(--gauzy-text-color-1, var(--text-basic-color));
-$muted: var(--gauzy-text-color-2, var(--text-hint-color));
+// The Documents page's look (docs-ui `docs-shell` tokens, `docs-browse`, `docs-cards`, `docs-table`,
+// `preset-chips`), with the same values, so the two pages read as one. Every custom property carries a
+// fallback: `--gauzy-*` is undefined in material-light / -dark.
 
 :host {
-  // `.card-scroll` pins the card to the page frame; the body is the one scroll area.
-  nb-card.card-scroll > nb-card-body {
-    flex: 1 1 auto;
-    min-height: 0;
-    height: auto;
-    overflow: auto;
-  }
+  display: block;
+  min-height: 100%;
 }
 
-.header {
-  .page-title {
-    margin: 0;
-  }
+.favorites {
+  --fav-page-padding: 1.25rem;
+  --fav-section-gap: 1rem;
+  --fav-radius: var(--gauzy-radius-sm, 0.375rem);
+  --fav-radius-lg: var(--border-radius, 0.5rem);
+  --fav-surface: var(--gauzy-card-1, var(--background-basic-color-1));
+  --fav-surface-sunken: var(--background-basic-color-2);
+  --fav-hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+  --fav-hover: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+  --fav-active: var(--gauzy-active-tint, rgba(126, 126, 143, 0.2));
+  --fav-control-height: var(--gauzy-header-control-height, 2rem);
+  --fav-body-size: 0.8125rem;
+  --fav-meta-size: 0.75rem;
+  --fav-text: var(--text-basic-color);
+  --fav-text-muted: var(--gauzy-text-color-2, var(--text-hint-color));
 
-  .subtitle {
-    max-width: 48rem;
-    margin: 0.25rem 0 0;
-    font-size: 0.75rem;
-    font-weight: 400;
-    line-height: 1.125rem;
-    color: $muted;
-  }
-}
-
-.loading {
   display: flex;
-  justify-content: center;
-  padding: 3rem 1rem;
+  flex-direction: column;
+  gap: var(--fav-section-gap);
+  min-height: 100%;
+  padding: var(--fav-page-padding);
+  color: var(--fav-text);
 }
 
-.empty {
+// ─── Header ──────────────────────────────────────────────────────
+
+.favorites-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  flex-wrap: wrap;
+  min-height: 2rem;
+}
+
+.favorites-title-group {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+
+.favorites-title {
   margin: 0;
-  padding: 3rem 1rem;
-  font-size: 0.8125rem;
-  text-align: center;
-  color: $muted;
+  font-size: 1.125rem;
+  font-weight: var(--gauzy-page-title-font-weight, 600);
+  line-height: 1.5rem;
+  letter-spacing: var(--gauzy-page-title-letter-spacing, -0.01em);
+  color: var(--fav-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.favorites-subtitle {
+  margin: 0.125rem 0 0;
+  font-size: var(--fav-meta-size);
+  line-height: 1.125rem;
+  color: var(--fav-text-muted);
+}
+
+// ─── Toolbar: search + list / cards switch ───────────────────────
+
+.favorites-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  min-width: 0;
+}
+
+.favorites-search {
+  position: relative;
+  flex: 1 1 18rem;
+  min-width: 12rem;
+  max-width: 36rem;
+
+  nb-icon {
+    position: absolute;
+    inset-inline-start: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.875rem;
+    color: var(--fav-text-muted);
+    pointer-events: none;
+  }
+
+  input[nbInput] {
+    width: 100%;
+    min-width: 0;
+    height: var(--fav-control-height);
+    min-height: var(--fav-control-height);
+    padding-inline-start: 1.875rem;
+    border-radius: var(--fav-radius);
+    font-size: var(--fav-body-size);
+  }
+}
+
+.sr-only-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+// List / cards: one bordered segmented control; the current view is a quiet fill.
+.favorites-view-toggle {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+  margin-inline-start: auto !important;
+  padding: 0.125rem !important;
+  border: 1px solid var(--fav-hairline) !important;
+  border-radius: var(--fav-radius);
+
+  button[nbButton] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.625rem;
+    height: 1.625rem !important;
+    min-height: 1.625rem !important;
+    padding: 0 !important;
+    border-radius: 0.25rem;
+    color: var(--fav-text-muted);
+
+    nb-icon {
+      margin: 0;
+      font-size: 0.875rem;
+    }
+
+    &.active {
+      background: var(--fav-active);
+      color: var(--fav-text);
+    }
+  }
+}
+
+// ─── Type tabs: the Documents preset group ───────────────────────
+
+.favorites-tabs {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-self: flex-start;
+  gap: 0.125rem;
+  max-width: 100%;
+  padding: 0.125rem;
+  border: 1px solid var(--fav-hairline);
+  border-radius: calc(var(--border-radius, 0.5rem) * 0.75);
+}
+
+.favorites-tabs button.favorites-tab[nbButton] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  height: 1.625rem !important;
+  min-height: 1.625rem !important;
+  max-width: 100%;
+  padding: 0 0.625rem !important;
+  border: 0 !important;
+  border-radius: calc(var(--border-radius, 0.5rem) / 2) !important;
+  background: transparent !important;
+  color: var(--fav-text-muted) !important;
+  font-size: 0.75rem !important;
+  font-weight: 500;
+  line-height: 1;
+  text-transform: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  &:hover {
+    background: var(--fav-hover) !important;
+    color: var(--fav-text) !important;
+  }
+
+  &.active {
+    background: var(--fav-active) !important;
+    color: var(--fav-text) !important;
+  }
+}
+
+.favorites-tab-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.favorites-tab-count {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
 }
 
 // A failed read, above whatever did load: plain text and a retry, no banner fill.
@@ -49,74 +211,322 @@ $muted: var(--gauzy-text-color-2, var(--text-hint-color));
   flex-wrap: wrap;
   align-items: center;
   gap: 0.75rem;
-  max-width: 48rem;
-  margin-bottom: 0.75rem;
-  font-size: 0.8125rem;
-  color: $text;
+  font-size: var(--fav-body-size);
+  color: var(--fav-text);
 
   button[nbButton] {
     text-transform: none;
   }
 }
 
-.list {
-  max-width: 48rem;
+// ─── Empty / loading ─────────────────────────────────────────────
+
+.favorites-empty-host {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 14rem;
+  padding: 2rem 1rem;
+  border-radius: var(--fav-radius-lg);
+  background: var(--fav-surface);
+  box-shadow: inset 0 0 0 1px var(--fav-hairline);
+}
+
+.favorites-empty {
+  margin: 0;
+  font-size: var(--fav-body-size);
+  text-align: center;
+  color: var(--fav-text-muted);
+}
+
+// ─── Cards view (docs `docs-cards`) ──────────────────────────────
+
+.favorites-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(13.5rem, 1fr));
+  gap: 0.75rem;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.row {
+.favorites-card-wrap {
+  position: relative;
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-height: 2.5rem;
-
-  & + & {
-    border-top: $divider;
-  }
+  min-width: 0;
 }
 
-.link {
+.favorites-card {
   display: flex;
   flex: 1 1 auto;
-  align-items: center;
-  gap: 0.75rem;
+  flex-direction: column;
+  gap: 0.5rem;
   min-width: 0;
-  padding: 0.5rem 0.25rem;
-  font-size: 0.8125rem;
-  color: $text;
+  padding: 0.75rem;
+  border-radius: var(--fav-radius-lg);
+  background: var(--fav-surface);
+  box-shadow: inset 0 0 0 1px var(--fav-hairline);
+  color: var(--fav-text);
   text-decoration: none;
+  cursor: pointer;
+  transition:
+    box-shadow 0.15s ease,
+    background-color 0.15s ease;
 
-  &:hover .title {
-    text-decoration: underline;
+  &:hover,
+  &:focus-visible {
+    box-shadow: inset 0 0 0 1px var(--color-primary-default);
+    background: var(--gauzy-card-2, var(--fav-hover));
+    color: var(--fav-text);
+    text-decoration: none;
+    outline: none;
   }
 }
 
-.icon {
-  flex: 0 0 1rem;
-  text-align: center;
-  color: $muted;
+// Fixed height so every card lines up, whatever icon it holds.
+.favorites-card-thumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 6.25rem;
+  overflow: hidden;
+  border-radius: var(--fav-radius);
+  background: var(--fav-surface-sunken);
+  font-size: 1.75rem;
+  color: var(--fav-text-muted);
 }
 
-.title {
-  // Lets a long name shrink and ellipsize before the "pinned" note does.
+.favorites-card-head {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  min-height: 1.5rem;
+  // Keeps a long name clear of the star laid over this row.
+  padding-inline-end: 1.75rem;
+}
+
+.favorites-card-name {
+  flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
-  white-space: nowrap;
   text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fav-body-size);
+  font-weight: 600;
 }
 
-// Plain muted text after the name, no chip. One line while there is room; on a
-// narrow card it shrinks with the name and wraps instead of pushing the row wide.
-.pinned {
+.favorites-card-badges {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  min-height: 1.25rem;
+}
+
+.favorites-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-height: 1rem;
+  margin-top: auto;
+  font-size: var(--fav-meta-size);
+  color: var(--fav-text-muted);
+
+  span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+// Plain muted text, no chip.
+.favorites-pinned {
+  font-size: var(--fav-meta-size);
+  line-height: 1rem;
+  font-weight: 400;
+  color: var(--fav-text-muted);
+}
+
+// ─── Table view (docs `docs-table`) ──────────────────────────────
+
+.favorites-table {
+  position: relative;
+  border-radius: var(--fav-radius-lg);
+  background: var(--fav-surface);
+  box-shadow: inset 0 0 0 1px var(--fav-hairline);
+  overflow-x: auto;
+
+  table {
+    width: 100%;
+    margin: 0;
+    border-collapse: collapse;
+    table-layout: fixed;
+  }
+
+  // Quiet header: small, semi-bold, muted — the data is what should stand out.
+  th {
+    box-sizing: border-box;
+    height: 2.25rem;
+    padding: 0 0.875rem;
+    border-bottom: 1px solid var(--fav-hairline);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-align: left;
+    vertical-align: middle;
+    white-space: nowrap;
+    color: var(--fav-text-muted);
+  }
+
+  td {
+    height: 3rem;
+    padding: 0 0.875rem;
+    font-size: var(--fav-meta-size);
+    font-weight: 400;
+    vertical-align: middle;
+    color: var(--fav-text);
+  }
+
+  tbody tr {
+    background: transparent;
+    border-bottom: 1px solid var(--fav-hairline);
+    transition: background-color 0.15s ease;
+
+    &:last-child {
+      border-bottom: 0;
+    }
+
+    &:hover {
+      background: var(--fav-hover);
+    }
+  }
+
+  .name-col {
+    padding-inline-start: 1.25rem;
+  }
+
+  .added-col {
+    width: 11rem;
+    white-space: nowrap;
+    color: var(--fav-text-muted);
+  }
+
+  .actions-col {
+    width: 6rem;
+    padding-inline-end: 1.25rem;
+    text-align: right;
+    white-space: nowrap;
+  }
+}
+
+.favorites-name {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-width: 0;
+  color: var(--fav-text);
+  text-decoration: none;
+
+  &:hover {
+    color: var(--fav-text);
+    text-decoration: none;
+
+    .favorites-name-text {
+      text-decoration: underline;
+    }
+  }
+}
+
+.favorites-name-lead {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.125rem;
+  height: 1.125rem;
+  font-size: 0.8125rem;
+  color: var(--fav-text-muted);
+}
+
+.favorites-name-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.favorites-name .favorites-pinned {
   flex: 0 1 auto;
   min-width: 0;
-  font-size: 0.75rem;
-  line-height: 1rem;
-  color: $muted;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.remove {
-  flex: 0 0 auto;
+// ─── The star, in both views. Always visible: it shows the record is a favorite. ──
+
+.favorites-star {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  min-height: 1.5rem;
+  padding: 0 !important;
+  border-radius: var(--fav-radius);
+
+  nb-icon {
+    margin: 0;
+    font-size: 0.875rem;
+  }
+}
+
+// On a card it sits at the end of the name row: card padding + thumb + gap.
+.favorites-card-wrap .favorites-star {
+  position: absolute;
+  top: calc(0.75rem + 6.25rem + 0.5rem);
+  right: 0.75rem;
+}
+
+// ─── Narrow screens ──────────────────────────────────────────────
+
+@media (max-width: 767px) {
+  .favorites-search {
+    max-width: none;
+  }
+}
+
+@media (max-width: 575px) {
+  .favorites {
+    --fav-page-padding: 1rem;
+  }
+
+  .favorites-cards-grid {
+    grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
+    gap: 0.625rem;
+  }
+
+  .favorites-card-thumb {
+    height: 5rem;
+  }
+
+  .favorites-card-wrap .favorites-star {
+    top: calc(0.75rem + 5rem + 0.5rem);
+  }
+
+  .favorites-table {
+    table {
+      min-width: 30rem;
+    }
+
+    .added-col {
+      width: 9.5rem;
+    }
+
+    .actions-col {
+      width: 4.5rem;
+    }
+  }
 }
