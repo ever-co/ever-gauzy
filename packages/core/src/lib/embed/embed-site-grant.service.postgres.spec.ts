@@ -70,7 +70,9 @@ const postgresUrl = process.env.GAUZY_MIGRATION_TEST_POSTGRES_URL;
 				url: postgresUrl,
 				entities: coreEntities,
 				synchronize: true,
-				logging: false
+				logging: false,
+				// Every statement of the spec at READ COMMITTED, PostgreSQL's default, whatever the database's own default.
+				extra: { options: '-c default_transaction_isolation=read\\ committed' }
 			});
 			await dataSource.initialize();
 
