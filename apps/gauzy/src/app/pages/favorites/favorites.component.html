@@ -11,6 +11,7 @@
 			<label class="sr-only-label" for="favorites-search">{{ 'FAVORITES.SEARCH_PLACEHOLDER' | translate }}</label>
 			<nb-icon icon="search-outline"></nb-icon>
 			<input
+				#searchInput
 				nbInput
 				fullWidth
 				type="text"
@@ -19,7 +20,22 @@
 				[placeholder]="'FAVORITES.SEARCH_PLACEHOLDER' | translate"
 				[value]="search()"
 				(input)="onSearch($any($event.target).value)"
+				(keydown.escape)="clearSearch()"
 			/>
+			@if (search()) {
+				<button
+					type="button"
+					nbButton
+					ghost
+					size="tiny"
+					class="favorites-search-clear"
+					[nbTooltip]="'FAVORITES.CLEAR_SEARCH' | translate"
+					[attr.aria-label]="'FAVORITES.CLEAR_SEARCH' | translate"
+					(click)="clearSearch(); searchInput.focus()"
+				>
+					<nb-icon icon="close-outline"></nb-icon>
+				</button>
+			}
 		</div>
 
 		@if (typeOptions().length) {
@@ -42,6 +58,26 @@
 					</nb-option>
 				}
 			</nb-select>
+
+			<nb-select
+				class="favorites-sort"
+				size="small"
+				scrollStrategy="reposition"
+				[selected]="sort()"
+				[attr.aria-label]="'FAVORITES.SORT.LABEL' | translate"
+				(selectedChange)="onSortSelected($event)"
+			>
+				@for (option of sortOptions; track option.value) {
+					<nb-option [value]="option.value">{{ option.labelKey | translate }}</nb-option>
+				}
+			</nb-select>
+		}
+
+		@if (hasActiveFilters()) {
+			<button type="button" nbButton ghost size="small" class="favorites-clear-filters" (click)="clearFilters()">
+				<nb-icon icon="close-circle-outline"></nb-icon>
+				{{ 'FAVORITES.CLEAR_FILTERS' | translate }}
+			</button>
 		}
 
 		<fieldset
