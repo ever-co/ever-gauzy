@@ -1,7 +1,7 @@
 import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Params, Router, RouterLink, UrlTree } from '@angular/router';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, ParamMap, Params, Router, RouterLink, UrlTree } from '@angular/router';
 import { map } from 'rxjs/operators';
 import {
 	NbButtonModule,
@@ -62,6 +62,38 @@ const positiveInt = (value: string | null): number | null => {
 	return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
 };
 
+interface IFavoritesQuery {
+	search: string;
+	type: BaseEntityEnum | null;
+	sort: FavoritesSort;
+	page: number;
+	size: number;
+}
+
+const parseQuery = (params: ParamMap): IFavoritesQuery => {
+	const type = params.get('type');
+	return {
+		search: params.get('q') ?? '',
+		type: type && ENTITY_TYPES.has(type) ? (type as BaseEntityEnum) : null,
+		sort: SORT_OPTIONS.find((option) => option.value === params.get('sort'))?.value ?? DEFAULT_SORT,
+		page: positiveInt(params.get('page')) ?? 1,
+		size: PAGE_SIZES.find((size) => size === positiveInt(params.get('size'))) ?? DEFAULT_PAGE_SIZE
+	};
+};
+
+const toQueryParams = (query: IFavoritesQuery): Params => ({
+	q: query.search.trim() || null,
+	type: query.type,
+	sort: query.sort === DEFAULT_SORT ? null : query.sort,
+	page: query.page > 1 ? query.page : null,
+	size: query.size === DEFAULT_PAGE_SIZE ? null : query.size
+});
+
+const queryKey = (query: IFavoritesQuery): string =>
+	Object.values(toQueryParams(query))
+		.map((value) => (value === null ? '' : String(value)))
+		.join('\u0000');
+
 /**
  * Every favorite of the signed-in user, newest first. The sidebar lists only the newest few and links here
  * for the rest; each row opens its record or takes it off the favorites.
@@ -94,7 +126,14 @@ export class FavoritesComponent {
 	private readonly _route = inject(ActivatedRoute);
 	private readonly _store = inject(Store);
 	private readonly _translateService = inject(TranslateService);
-	private readonly _initialParams = this._route.snapshot.queryParamMap;
+	private readonly _initialQuery = parseQuery(this._route.snapshot.queryParamMap);
+	private _urlSyncTimer: ReturnType<typeof setTimeout> | undefined;
+	private _lastWrittenKey: string | null = null;
+
+	private readonly _language = toSignal(
+		this._translateService.onLangChange.pipe(map((event) => event.lang)),
+		{ initialValue: this._translateService.currentLang }
+	);
 
 	protected readonly layoutStyles = ComponentLayoutStyleEnum;
 	private readonly _viewComponentName = ComponentEnum.FAVORITES;
@@ -121,16 +160,10 @@ export class FavoritesComponent {
 		}))
 	);
 
-	protected readonly search = signal(this._initialParams.get('q') ?? '');
-	private readonly _selectedType = signal<BaseEntityEnum | null>(
-		ENTITY_TYPES.has(this._initialParams.get('type') ?? '')
-			? (this._initialParams.get('type') as BaseEntityEnum)
-			: null
-	);
+	protected readonly search = signal(this._initialQuery.search);
+	private readonly _selectedType = signal<BaseEntityEnum | null>(this._initialQuery.type);
 	protected readonly sortOptions = SORT_OPTIONS;
-	protected readonly sort = signal<FavoritesSort>(
-		SORT_OPTIONS.find((option) => option.value === this._initialParams.get('sort'))?.value ?? DEFAULT_SORT
-	);
+	protected readonly sort = signal<FavoritesSort>(this._initialQuery.sort);
 
 	private readonly _searched = computed<IFavoriteRow[]>(() => {
 		const term = this.search().trim().toLocaleLowerCase();
@@ -148,26 +181,33 @@ export class FavoritesComponent {
 		for (const row of this._searched()) {
 			counts.set(row.entity, (counts.get(row.entity) ?? 0) + 1);
 		}
+		const selected = this._selectedType();
+		if (selected && !counts.has(selected)) {
+			counts.set(selected, 0);
+		}
 		return Array.from(counts, ([entity, count]) => ({ entity, labelKey: typeLabelKey(entity), count }));
 	});
 
-	protected readonly activeType = computed<BaseEntityEnum | null>(() => {
-		const selected = this._selectedType();
-		return selected && this.typeOptions().some((option) => option.entity === selected) ? selected : null;
-	});
+	protected readonly activeType = computed<BaseEntityEnum | null>(() => this._selectedType());
 
 	protected readonly visibleRows = computed<IFavoriteRow[]>(() => {
 		const type = this.activeType();
 		const rows = type ? this._searched().filter((row) => row.entity === type) : this._searched();
-		return this._sorted(rows, this.sort());
+		return this._sorted(rows, this.sort(), this._language());
 	});
 
 	protected readonly hasActiveFilters = computed(() => !!this.search().trim() || !!this.activeType());
 
-	protected readonly itemsPerPage = signal(
-		PAGE_SIZES.find((size) => size === positiveInt(this._initialParams.get('size'))) ?? DEFAULT_PAGE_SIZE
-	);
-	private readonly _activePage = signal(positiveInt(this._initialParams.get('page')) ?? 1);
+	protected readonly itemsPerPage = signal(this._initialQuery.size);
+	private readonly _activePage = signal(this._initialQuery.page);
+
+	private readonly _query = computed<IFavoritesQuery>(() => ({
+		search: this.search(),
+		type: this._selectedType(),
+		sort: this.sort(),
+		page: this._activePage(),
+		size: this.itemsPerPage()
+	}));
 
 	protected readonly activePage = computed(() => {
 		const pages = Math.max(1, Math.ceil(this.visibleRows().length / this.itemsPerPage()));
@@ -230,46 +270,71 @@ export class FavoritesComponent {
 	}
 
 	constructor() {
-		let timer: ReturnType<typeof setTimeout> | undefined;
 		effect(() => {
-			const params: Params = {
-				q: this.search().trim() || null,
-				type: this._selectedType(),
-				sort: this.sort() === DEFAULT_SORT ? null : this.sort(),
-				page: this._activePage() > 1 ? this._activePage() : null,
-				size: this.itemsPerPage() === DEFAULT_PAGE_SIZE ? null : this.itemsPerPage()
-			};
-			clearTimeout(timer);
-			timer = setTimeout(() => this._writeParams(params), URL_SYNC_DELAY_MS);
+			const query = this._query();
+			clearTimeout(this._urlSyncTimer);
+			this._urlSyncTimer = setTimeout(() => this._writeQuery(query), URL_SYNC_DELAY_MS);
 		});
-		inject(DestroyRef).onDestroy(() => clearTimeout(timer));
+
+		effect(() => {
+			if (this.loading()) {
+				return;
+			}
+			const effectivePage = this.activePage();
+			if (this._activePage() !== effectivePage) {
+				this._activePage.set(effectivePage);
+			}
+		});
+
+		this._route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => this._readQuery(params));
+
+		inject(DestroyRef).onDestroy(() => clearTimeout(this._urlSyncTimer));
 	}
 
-	private _writeParams(params: Params): void {
-		const current = this._route.snapshot.queryParamMap;
-		const unchanged = Object.entries(params).every(
-			([key, value]) => (current.get(key) ?? null) === (value === null ? null : String(value))
-		);
-		if (unchanged) {
+	private _readQuery(params: ParamMap): void {
+		const incoming = parseQuery(params);
+		const incomingKey = queryKey(incoming);
+		if (incomingKey === this._lastWrittenKey) {
+			this._lastWrittenKey = null;
 			return;
 		}
+		if (incomingKey === queryKey(this._query())) {
+			return;
+		}
+		clearTimeout(this._urlSyncTimer);
+		this.search.set(incoming.search);
+		this._selectedType.set(incoming.type);
+		this.sort.set(incoming.sort);
+		this.itemsPerPage.set(incoming.size);
+		this._activePage.set(incoming.page);
+	}
+
+	private _writeQuery(query: IFavoritesQuery): void {
+		const key = queryKey(query);
+		if (key === queryKey(parseQuery(this._route.snapshot.queryParamMap))) {
+			return;
+		}
+		this._lastWrittenKey = key;
 		this._router.navigate([], {
 			relativeTo: this._route,
-			queryParams: params,
+			queryParams: toQueryParams(query),
 			queryParamsHandling: 'merge',
 			replaceUrl: true
 		});
 	}
 
-	private _sorted(rows: IFavoriteRow[], sort: FavoritesSort): IFavoriteRow[] {
+	private _sorted(rows: IFavoriteRow[], sort: FavoritesSort, language: string | undefined): IFavoriteRow[] {
+		const compare = (a: string, b: string) => a.localeCompare(b, language || undefined, { sensitivity: 'base' });
 		switch (sort) {
 			case 'oldest':
 				return [...rows].reverse();
 			case 'name':
-				return [...rows].sort((a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: 'base' }));
+				return [...rows].sort((a, b) => compare(a.title, b.title));
 			case 'type': {
-				const label = (row: IFavoriteRow) => this._translateService.instant(row.typeKey) as string;
-				return [...rows].sort((a, b) => label(a).localeCompare(label(b), undefined, { sensitivity: 'base' }));
+				const labels = new Map(
+					rows.map((row) => [row.typeKey, this._translateService.instant(row.typeKey) as string])
+				);
+				return [...rows].sort((a, b) => compare(labels.get(a.typeKey) ?? '', labels.get(b.typeKey) ?? ''));
 			}
 			default:
 				return rows;
