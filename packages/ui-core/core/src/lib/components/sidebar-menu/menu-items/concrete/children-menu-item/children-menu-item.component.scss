@@ -59,11 +59,12 @@
 // 0.625rem of plus against 1rem of chevron.
 // ─────────────────────────────────────────────────────────────────────────────
 
-// `$plus-inset` is measured against the RENDERED chevron (see above), not
-// computed from the stylesheets — the two disagree. Re-measure if Nebular's
-// accordion indicator changes size or inset.
+// `$plus-inset` no longer centres the button under the chevron (that took
+// 1.125rem, see above): it sits near the row's trailing edge, leaving its label
+// more room, with a small inset so its hover tint clears the row's radius.
+// The trailing count shares the same box and inset.
 $plus-size: 1.5rem;
-$plus-inset: 1.125rem;
+$plus-inset: 0.25rem;
 $plus-glyph-size: 0.625rem;
 
 [nbButton].plus.appearance-outline.size-tiny {
@@ -180,10 +181,8 @@ $plus-glyph-size: 0.625rem;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Sub-rows in the expanded sidebar hang off the section's guide line (drawn in
-// menu-item.component.scss): the row's tint starts just past the line, and the
-// label starts where the section header's label does. A page link drops its
-// glyph, since the header above already says where it is; a row that stands for
-// a record (a favorite) keeps its type icon, and "View all" its "…".
+// menu-item.component.scss): the row's tint starts just past the line, and its
+// icon starts where the section header's label does. Every row keeps its icon.
 //
 // The icon rail (`.custom`) and the rail flyout are left as they were: there a
 // row is a glyph, or a panel row with no line beside it.
@@ -193,7 +192,7 @@ $plus-glyph-size: 0.625rem;
 $guide-x: 1.125rem;
 // The row's tint starts this far in: the line plus a 0.5rem gap.
 $sub-row-start: 1.625rem;
-// ...and its label this far into the row, which lands it at 2.125rem, the
+// ...and its icon this far into the row, which lands it at 2.125rem, the
 // header label's x (0.625rem padding + 1rem icon column + 0.5rem gap).
 $sub-label-start: 0.5rem;
 // The current page's mark on the guide line.
@@ -204,10 +203,6 @@ $guide-mark-width: 2px;
 
   .info {
     padding-inline-start: $sub-label-start;
-  }
-
-  &:not(.record):not(.view-all) .info > i {
-    display: none;
   }
 
   &.selected::before {
@@ -223,19 +218,13 @@ $guide-mark-width: 2px;
   }
 }
 
-// The flyout is a panel of its own: no guide line, so no indent and no mark,
-// and every row keeps its glyph.
+// The flyout is a panel of its own: no guide line, so no indent and no mark.
 :host(.rail-flyout-row) .sub-item:not(.custom) {
   margin-inline-start: 0;
 
   .info {
     // The row's own inline padding (`$menu-row-inline-padding` in the parent file).
     padding-inline-start: 0.625rem;
-  }
-
-  // Repeats the hiding rule's :not()s so it outranks it.
-  &:not(.record):not(.view-all) .info > i {
-    display: inline-block;
   }
 
   &.selected::before {
