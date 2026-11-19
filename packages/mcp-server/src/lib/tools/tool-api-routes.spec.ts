@@ -377,10 +377,22 @@ function fits(route: Route, call: ApiCall): boolean {
 	return route.segments.every((segment, index) => isParam(segment) || call.segments[index] === segment);
 }
 
+/**
+ * The routes of a controller that answer the call: the first of its routes of the call's method that fits, or of each
+ * method for a call whose method the scan cannot tell (a `PUT /:id` never takes a `GET`).
+ */
+function answeringRoutes(routes: Route[], call: ApiCall): Route[] {
+	let methods = [call.method];
+	if (call.method === ANY_METHOD) {
+		methods = [...new Set(routes.map((route) => route.method))];
+	}
+	return methods.flatMap((method) => routes.find((route) => route.method === method && fits(route, call)) ?? []);
+}
+
 /** The calls no route serves, each with why. A controller answers a call with the first of its routes that fits. */
 function unserved(calls: ApiCall[], controllers: Route[][]): string[] {
 	return calls.flatMap((call) => {
-		const answering = controllers.flatMap((routes) => routes.find((route) => fits(route, call)) ?? []);
+		const answering = controllers.flatMap((routes) => answeringRoutes(routes, call));
 		if (answering.some((route) => wordInParamAt(route, call) < 0)) {
 			return [];
 		}
@@ -413,6 +425,13 @@ describe('the API routes the tools call', () => {
 		const count = { method: 'GET', segments: ['deals', 'count'], label: 'GET /api/deals/count' };
 
 		expect(unserved([count], routes)).toEqual(['GET /api/deals/count: `count` fills :id of /deals/:id']);
+	});
+
+	it('weighs a call of unknown method against the routes of each method on their own', () => {
+		// The award controller declares `PUT /:id` itself, before the `GET pagination` it inherits
+		const read = { method: ANY_METHOD, segments: ['employee-award', 'pagination'], label: '* pagination' };
+
+		expect(unserved([read], routes)).toEqual([]);
 	});
 
 	it('tells a fixed word in place of a value, and a path no controller declares', () => {
