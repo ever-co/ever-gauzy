@@ -4,12 +4,20 @@ import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { CandidateStatusEnum } from '../input-schemas';
-import { validateOrganizationContext } from './utils';
+import { buildListQuery, validateOrganizationContext } from './utils';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
 import { TOOL_HINTS } from './tool-hints';
 const logger = new Logger('CandidateTools');
+
+/**
+ * Query of a candidate's skills, experience or education: their list routes require `where`. The tools have no paging,
+ * so no `take` is sent and every record is answered.
+ */
+const candidateRecordsQuery = (defaultParams: { tenantId?: string; organizationId?: string }, candidateId: string) => ({
+	where: buildListQuery(defaultParams, { candidateId }).where
+});
 
 /**
  * Helper function to convert date fields in candidate data to Date objects
@@ -49,16 +57,11 @@ export const registerCandidateTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
+				// `where` matches a column exactly: the search and the minimum rating stay outside it, as before
+				const where = { status, organizationPositionId, sourceId };
 				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					page,
-					limit,
+					...buildListQuery(defaultParams, where, { page, limit, relations }),
 					...(search && { search }),
-					...(relations && { relations }),
-					...(status && { status }),
-					...(organizationPositionId && { organizationPositionId }),
-					...(sourceId && { sourceId }),
 					...(rating !== undefined && { rating })
 				};
 
@@ -372,15 +375,8 @@ export const registerCandidateTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					organizationPositionId: positionId,
-					page,
-					limit,
-					...(status && { status }),
-					...(relations && { relations })
-				};
+				const where = { organizationPositionId: positionId, status };
+				const params = buildListQuery(defaultParams, where, { page, limit, relations });
 
 				const response = await apiClient.get('/api/candidate', { params });
 
@@ -419,7 +415,7 @@ export const registerCandidateTools = (server: McpServer) => {
 				}
 
 				const response = await apiClient.get(`/api/candidate-skills`, {
-					params: { candidateId }
+					params: candidateRecordsQuery(defaultParams, candidateId)
 				});
 
 				return {
@@ -505,7 +501,7 @@ export const registerCandidateTools = (server: McpServer) => {
 				}
 
 				const response = await apiClient.get(`/api/candidate-experience`, {
-					params: { candidateId }
+					params: candidateRecordsQuery(defaultParams, candidateId)
 				});
 
 				return {
@@ -590,7 +586,7 @@ export const registerCandidateTools = (server: McpServer) => {
 				}
 
 				const response = await apiClient.get(`/api/candidate-educations`, {
-					params: { candidateId }
+					params: candidateRecordsQuery(defaultParams, candidateId)
 				});
 
 				return {
