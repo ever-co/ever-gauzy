@@ -90,13 +90,14 @@ describe('POST /embed/client-report', () => {
 });
 
 describe('GET /embed-credentials/config', () => {
-	it('tells the settings page that a credential can be limited to a client and add members, with embeds on or off', () => {
+	it('tells the settings page what credentials and allowed sites can do here, with embeds on or off', () => {
 		const controller = new EmbedCredentialController({} as EmbedCredentialService);
+		const features = { clientLimits: true, addMembers: true, personSignIn: true };
 
 		process.env[EMBED_TOKENS_ENV] = 'false';
-		expect(controller.config()).toEqual({ enabled: false, clientLimits: true, addMembers: true });
+		expect(controller.config()).toEqual({ enabled: false, ...features });
 		process.env[EMBED_TOKENS_ENV] = 'true';
-		expect(controller.config()).toEqual({ enabled: true, clientLimits: true, addMembers: true });
+		expect(controller.config()).toEqual({ enabled: true, ...features });
 	});
 });
 
