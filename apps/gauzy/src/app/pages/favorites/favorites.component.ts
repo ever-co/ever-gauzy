@@ -65,8 +65,12 @@ export class FavoritesComponent {
 		this._favoriteStoreService.refreshFavorites();
 	}
 
+	/**
+	 * Takes the user's OWN favorite off. A row that is only an organization pin is not removable here: deleting
+	 * it would take the pin away from every admin, which this personal action must never do.
+	 */
 	protected async remove(row: IFavoriteRow): Promise<void> {
-		if (this.removingId()) {
+		if (this.removingId() || !row.own) {
 			return;
 		}
 

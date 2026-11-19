@@ -38,9 +38,15 @@
 									ghost
 									size="small"
 									class="remove"
-									[disabled]="!!removingId()"
-									[nbTooltip]="'BUTTONS.REMOVE_FROM_FAVORITES' | translate"
-									[attr.aria-label]="'BUTTONS.REMOVE_FROM_FAVORITES' | translate"
+									[disabled]="!row.own || !!removingId()"
+									[nbTooltip]="
+										(row.own ? 'BUTTONS.REMOVE_FROM_FAVORITES' : 'FAVORITES.PINNED_FOR_ORGANIZATION')
+											| translate
+									"
+									[attr.aria-label]="
+										(row.own ? 'BUTTONS.REMOVE_FROM_FAVORITES' : 'FAVORITES.PINNED_FOR_ORGANIZATION')
+											| translate
+									"
 									(click)="remove(row)"
 								>
 									<nb-icon icon="star" status="warning"></nb-icon>

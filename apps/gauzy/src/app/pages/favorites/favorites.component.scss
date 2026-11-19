@@ -107,11 +107,13 @@ $muted: var(--gauzy-text-color-2, var(--text-hint-color));
   text-overflow: ellipsis;
 }
 
-// Plain muted text after the name, no chip.
+// Plain muted text after the name, no chip. One line while there is room; on a
+// narrow card it shrinks with the name and wraps instead of pushing the row wide.
 .pinned {
-  flex: 0 0 auto;
+  flex: 0 1 auto;
+  min-width: 0;
   font-size: 0.75rem;
-  white-space: nowrap;
+  line-height: 1rem;
   color: $muted;
 }
 
