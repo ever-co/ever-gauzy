@@ -76,5 +76,12 @@ describe('EVER_APP_LINKS', () => {
 		).toBe('two.example.com');
 		const links = parseEverAppLinks('platform=ftp://x.example.com,works=https://works.example.com');
 		expect([...links.keys()]).toEqual(['works']);
+		// For one id: the last VALID pair wins, whichever side the ignored one is on.
+		expect(
+			parseEverAppLinks('platform=ftp://x.example.com,platform=https://ok.example.com').get('platform')?.host
+		).toBe('ok.example.com');
+		expect(
+			parseEverAppLinks('platform=https://ok.example.com,platform=ftp://x.example.com').get('platform')?.host
+		).toBe('ok.example.com');
 	});
 });
