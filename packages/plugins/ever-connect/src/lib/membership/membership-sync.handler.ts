@@ -88,8 +88,15 @@ interface Account {
 	roles: Map<string, string>;
 }
 
-/** How many audit rows of one user the sync reads back (its own rows only; far more than one person ever has). */
-const STATE_ROWS = 500;
+/**
+ * How many of the sync's audit rows of one user in one organization are read back to find the last change applied.
+ * Rows are written in the order changes are applied, so the last one is among the newest; a few more cover rows
+ * written in the same millisecond.
+ */
+const STATE_ROWS = 20;
+
+/** The advisory lock (Postgres) that runs one change at a time across API processes. */
+const LOCK = 'ever-connect:membership-sync';
 
 /**
  * Applies the membership changes Ever Platform sends on the installation's feed
@@ -116,8 +123,11 @@ const STATE_ROWS = 500;
  *   only), which is also the sync's memory: the same event again does nothing (`duplicate`), and an event older
  *   than the last one applied for the user in that organization (by `occurred_at`, then by its id, a ULID) is
  *   skipped (`stale`).
+ * - **All or nothing.** The memory is read, the user and the membership are changed and the audit row is written in
+ *   one transaction: a change is never kept without its row (which would make a granted `ADMIN` look like one given
+ *   in Gauzy), nor a row without its change.
  *
- * A failure of the database throws, so the feed reads the event again.
+ * A failure of the database throws (the transaction is rolled back), so the feed reads the event again.
  */
 @Injectable()
 export class MembershipSyncHandler {
@@ -154,7 +164,8 @@ export class MembershipSyncHandler {
 		if (!data || !ULID_SHAPE.test(eventId)) {
 			return this.done('malformed');
 		}
-		if (!isEverRole(data.role)) {
+		const everRole = data.role;
+		if (!isEverRole(everRole)) {
 			return this.done('role_unknown');
 		}
 		const link = await this.store.linkById(data.linkId);
@@ -167,37 +178,44 @@ export class MembershipSyncHandler {
 		}
 
 		const position: MembershipPosition = { eventId, occurredAt: occurredAtOf(event) };
-		const states = await this.statesOf(link.tenantId, person);
-		const last = states.get(link.organizationId) ?? null;
-		if (last && last.eventId === position.eventId) {
-			return this.done('duplicate');
-		}
-		if (last && !isAfter(position, last)) {
-			return this.done('stale');
-		}
-		const other = await this.heldElsewhere(link, states);
-
-		const step = await this.change(change, data.role, link, person, last, other);
-		await this.audit.record({
-			action: MEMBERSHIP_AUDIT_ACTION,
-			actorLabel: 'platform',
-			tenantId: link.tenantId,
-			organizationId: link.organizationId,
-			details: {
-				event_id: position.eventId,
-				occurred_at: position.occurredAt,
-				link_id: link.linkId,
-				op: change,
-				role: data.role,
-				user_id: person,
-				result: step.outcome,
-				from: auditable(step.from),
-				to: auditable(step.to),
-				held: step.held,
-				restore: step.restore
+		const others = (await this.store.liveLinks()).filter(
+			(other) => other.tenantId === link.tenantId && other.organizationId !== link.organizationId
+		);
+		const outcome = await this.sql.inTransaction(LOCK, async (tx) => {
+			const last = await this.stateIn(tx, link.tenantId, link.organizationId, person);
+			if (last && last.eventId === position.eventId) {
+				return 'duplicate' as const;
 			}
+			if (last && !isAfter(position, last)) {
+				return 'stale' as const;
+			}
+			const other = await this.heldElsewhere(tx, link.tenantId, others, person);
+			const step = await this.change(tx, change, everRole, link, person, last, other);
+			await this.audit.record(
+				{
+					action: MEMBERSHIP_AUDIT_ACTION,
+					actorLabel: 'platform',
+					tenantId: link.tenantId,
+					organizationId: link.organizationId,
+					details: {
+						event_id: position.eventId,
+						occurred_at: position.occurredAt,
+						link_id: link.linkId,
+						op: change,
+						role: everRole,
+						user_id: person,
+						result: step.outcome,
+						from: auditable(step.from),
+						to: auditable(step.to),
+						held: step.held,
+						restore: step.restore
+					}
+				},
+				tx
+			);
+			return step.outcome;
 		});
-		return this.done(step.outcome);
+		return this.done(outcome);
 	}
 
 	/**
@@ -227,53 +245,52 @@ export class MembershipSyncHandler {
 		return data.userRef !== null && data.userRef !== userId ? 'person_mismatch' : userId;
 	}
 
-	/** The last change applied for the user in each organization of the tenant, from the audit. */
-	private async statesOf(tenantId: string, userId: string): Promise<Map<string, SyncState>> {
-		const q = (name: string) => this.sql.q(name);
-		const { rows } = await this.sql.run(
-			`SELECT ${q('organizationId')}, ${q('details')} FROM ${q('ever_connect_audit')} ` +
-				`WHERE ${q('tenantId')} = ${this.sql.ph(1)} AND ${q('action')} = ${this.sql.ph(2)} AND ${q('details')} LIKE ${this.sql.ph(3)} ` +
+	/** The last change applied for the user in one organization, from the sync's own audit rows; `null`: none. */
+	private async stateIn(
+		tx: EverConnectSql,
+		tenantId: string,
+		organizationId: string,
+		userId: string
+	): Promise<SyncState | null> {
+		const q = (name: string) => tx.q(name);
+		const { rows } = await tx.run(
+			`SELECT ${q('details')} FROM ${q('ever_connect_audit')} WHERE ${q('tenantId')} = ${tx.ph(1)} ` +
+				`AND ${q('organizationId')} = ${tx.ph(2)} AND ${q('action')} = ${tx.ph(3)} AND ${q('details')} LIKE ${tx.ph(4)} ` +
 				`ORDER BY ${q('at')} DESC, ${q('id')} DESC LIMIT ${STATE_ROWS}`,
-			[tenantId, MEMBERSHIP_AUDIT_ACTION, `%"user_id":${JSON.stringify(userId)}%`]
+			[tenantId, organizationId, MEMBERSHIP_AUDIT_ACTION, `%"user_id":${JSON.stringify(userId)}%`]
 		);
-		const states = new Map<string, SyncState>();
+		let last: SyncState | null = null;
 		for (const row of rows) {
-			const organizationId = str(row['organizationId']);
 			const state = stateOf(row, userId);
-			if (!organizationId || !state) continue;
-			const known = states.get(organizationId);
-			if (!known || isAfter(state, known)) {
-				states.set(organizationId, state);
+			if (state && (!last || isAfter(state, last))) {
+				last = state;
 			}
 		}
-		return states;
+		return last;
 	}
 
 	/**
 	 * Another live link of the same tenant whose last change made (or keeps) the user an `ADMIN`: its restore role,
-	 * or `null` when there is none.
+	 * or `null` when there is none. Each organization's own last change is read, however long ago it was made.
 	 */
 	private async heldElsewhere(
-		link: LinkRecord,
-		states: Map<string, SyncState>
+		tx: EverConnectSql,
+		tenantId: string,
+		others: ReadonlyArray<LinkRecord>,
+		userId: string
 	): Promise<{ restore: string | null } | null> {
-		const holding = [...states.entries()].filter(
-			([organizationId, state]) => organizationId !== link.organizationId && state.held
-		);
-		if (!holding.length) {
-			return null;
+		for (const organizationId of new Set(others.map((other) => other.organizationId))) {
+			const state = await this.stateIn(tx, tenantId, organizationId, userId);
+			if (state?.held) {
+				return { restore: state.restore };
+			}
 		}
-		const live = new Set(
-			(await this.store.liveLinks())
-				.filter((other) => other.tenantId === link.tenantId)
-				.map((other) => other.organizationId)
-		);
-		const found = holding.find(([organizationId]) => live.has(organizationId));
-		return found ? { restore: found[1].restore } : null;
+		return null;
 	}
 
 	/** Applies the change to the user and the organization. */
 	private async change(
+		tx: EverConnectSql,
 		change: MembershipChange,
 		everRole: EverRole,
 		link: LinkRecord,
@@ -281,7 +298,7 @@ export class MembershipSyncHandler {
 		last: SyncState | null,
 		other: { restore: string | null } | null
 	): Promise<RoleStep> {
-		const account = await this.accountOf(link.tenantId, userId);
+		const account = await this.accountOf(tx, link.tenantId, userId);
 		if (!account) {
 			return {
 				outcome: 'account_missing',
@@ -296,15 +313,15 @@ export class MembershipSyncHandler {
 			return { outcome: 'super_admin_kept', held: false, restore: null, from: account.role, to: account.role };
 		}
 		const target = EVER_ROLE_TO_GAUZY_ROLE[everRole];
-		const membership = await this.membershipOf(link, userId);
+		const membership = await this.membershipOf(tx, link, userId);
 		switch (change) {
 			case 'created': {
 				let added = false;
 				if (!membership.active) {
-					await this.join(link, userId, membership.inactiveId);
+					await this.join(tx, link, userId, membership.inactiveId);
 					added = true;
 				}
-				const step = await this.role(target, account, last, other);
+				const step = await this.role(tx, target, account, last, other);
 				return added ? { ...step, outcome: 'added' } : step;
 			}
 			case 'role_changed': {
@@ -317,12 +334,12 @@ export class MembershipSyncHandler {
 						to: account.role
 					};
 				}
-				return this.role(target, account, last, other);
+				return this.role(tx, target, account, last, other);
 			}
 			default: {
-				const step = await this.role(null, account, last, other);
+				const step = await this.role(tx, null, account, last, other);
 				if (membership.active) {
-					await this.leave(link, userId);
+					await this.leave(tx, link, userId);
 					return { ...step, outcome: 'removed' };
 				}
 				return step.outcome === 'unchanged' ? { ...step, outcome: 'not_a_member' } : step;
@@ -335,6 +352,7 @@ export class MembershipSyncHandler {
 	 * is a compare-and-set on the role the user has now, so a role changed in Gauzy meanwhile is never overwritten.
 	 */
 	private async role(
+		tx: EverConnectSql,
 		target: typeof GAUZY_ADMIN | null,
 		account: Account,
 		last: SyncState | null,
@@ -353,7 +371,7 @@ export class MembershipSyncHandler {
 			if (!adminId) {
 				return { outcome: 'role_missing', held: false, restore: null, ...same };
 			}
-			if (!(await this.setRole(account, adminId))) {
+			if (!(await this.setRole(tx, account, adminId))) {
 				return { outcome: 'changed_here', held: false, restore: null, ...same };
 			}
 			return {
@@ -379,7 +397,7 @@ export class MembershipSyncHandler {
 			// The role to give back no longer exists: left as it is, and tried again on the next change.
 			return { outcome: 'role_missing', held: true, restore, ...same };
 		}
-		if (!(await this.setRole(account, restore))) {
+		if (!(await this.setRole(tx, account, restore))) {
 			return { outcome: 'changed_here', held: false, restore: null, ...same };
 		}
 		return {
@@ -392,13 +410,13 @@ export class MembershipSyncHandler {
 	}
 
 	/** The user (not deleted) of the tenant with their role, and the tenant's roles; `null` when there is no user. */
-	private async accountOf(tenantId: string, userId: string): Promise<Account | null> {
-		const user = (await this.sql.select('user', { id: userId, tenantId })).find((row) => !row['deletedAt']);
+	private async accountOf(tx: EverConnectSql, tenantId: string, userId: string): Promise<Account | null> {
+		const user = (await tx.select('user', { id: userId, tenantId })).find((row) => !row['deletedAt']);
 		if (!user) {
 			return null;
 		}
 		const roles = new Map<string, string>();
-		for (const row of await this.sql.select('role', { tenantId })) {
+		for (const row of await tx.select('role', { tenantId })) {
 			if (!row['deletedAt'] && row['id'] && row['name']) roles.set(String(row['id']), String(row['name']));
 		}
 		const roleId = str(user['roleId']);
@@ -406,8 +424,8 @@ export class MembershipSyncHandler {
 	}
 
 	/** Sets the user's role, only if it is still the one read; answers whether it was set. */
-	private async setRole(account: Account, roleId: string | null): Promise<boolean> {
-		const changed = await this.sql.update(
+	private async setRole(tx: EverConnectSql, account: Account, roleId: string | null): Promise<boolean> {
+		const changed = await tx.update(
 			'user',
 			{ roleId },
 			{ id: account.userId, tenantId: account.tenantId, roleId: account.roleId }
@@ -417,11 +435,12 @@ export class MembershipSyncHandler {
 
 	/** The user's memberships of the organization that are not deleted: whether one is active, else an inactive one. */
 	private async membershipOf(
+		tx: EverConnectSql,
 		link: LinkRecord,
 		userId: string
 	): Promise<{ active: boolean; inactiveId: string | null }> {
 		const rows = (
-			await this.sql.select('user_organization', {
+			await tx.select('user_organization', {
 				tenantId: link.tenantId,
 				organizationId: link.organizationId,
 				userId
@@ -433,11 +452,11 @@ export class MembershipSyncHandler {
 	}
 
 	/** Makes the user a member of the organization: an inactive membership active again, else a new one. */
-	private async join(link: LinkRecord, userId: string, inactiveId: string | null): Promise<void> {
-		if (inactiveId && (await this.sql.update('user_organization', { isActive: true }, { id: inactiveId })) > 0) {
+	private async join(tx: EverConnectSql, link: LinkRecord, userId: string, inactiveId: string | null): Promise<void> {
+		if (inactiveId && (await tx.update('user_organization', { isActive: true }, { id: inactiveId })) > 0) {
 			return;
 		}
-		await this.sql.insert('user_organization', {
+		await tx.insert('user_organization', {
 			id: randomUUID(),
 			tenantId: link.tenantId,
 			organizationId: link.organizationId,
@@ -448,8 +467,8 @@ export class MembershipSyncHandler {
 	}
 
 	/** Makes the user's memberships of the organization inactive (the rows stay). */
-	private async leave(link: LinkRecord, userId: string): Promise<void> {
-		await this.sql.update(
+	private async leave(tx: EverConnectSql, link: LinkRecord, userId: string): Promise<void> {
+		await tx.update(
 			'user_organization',
 			{ isActive: false },
 			{ tenantId: link.tenantId, organizationId: link.organizationId, userId, deletedAt: null }

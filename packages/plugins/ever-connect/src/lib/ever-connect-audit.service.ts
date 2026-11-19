@@ -134,9 +134,13 @@ export class EverConnectAuditService {
 		}
 	}
 
-	async record(entry: AuditEntry): Promise<void> {
+	/**
+	 * Adds one row. With `sql` (an `EverConnectSql` of an open transaction, see `EverConnectSql.inTransaction`), the row
+	 * is written in that transaction, so it is kept only with the change it records.
+	 */
+	async record(entry: AuditEntry, sql: EverConnectSql = this.sql): Promise<void> {
 		EverConnectAuditService.check(entry);
-		await this.sql.insert('ever_connect_audit', {
+		await sql.insert('ever_connect_audit', {
 			id: randomUUID(),
 			at: this.now(),
 			tenantId: entry.tenantId ?? null,

@@ -154,5 +154,6 @@ export function isAfter(next: MembershipPosition, last: MembershipPosition): boo
 	if (next.occurredAt !== null && last.occurredAt !== null && next.occurredAt !== last.occurredAt) {
 		return next.occurredAt > last.occurredAt;
 	}
+	// ULIDs are Crockford base32, case-insensitive: compared in one case, their order is their time order.
 	return next.eventId.toUpperCase() > last.eventId.toUpperCase();
 }

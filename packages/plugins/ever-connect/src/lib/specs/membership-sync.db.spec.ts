@@ -403,6 +403,51 @@ describe.each(TEST_TARGETS)('Ever Platform membership sync ($name)', (target) =>
 		expect(await roleOf(seeded.employeeId)).toBe(roles.employee);
 	});
 
+	it('all or nothing: when the audit row cannot be written, the change is rolled back and applied on the retry', async () => {
+		await linkEverId(seeded.employeeId, 'sub-bob');
+		const failing = Object.create(audit) as EverConnectAuditService;
+		failing.record = async () => {
+			throw new Error('audit unavailable');
+		};
+		const added = envelope('01JD0000000000000000000001', 'created');
+		await expect(new MembershipSyncHandler(dataSource, store, failing, ON).apply(added)).rejects.toThrow(
+			'audit unavailable'
+		);
+		expect(await roleOf(seeded.employeeId)).toBe(roles.employee);
+		expect(await syncRows()).toEqual([]);
+		// The feed reads it again: granted by the sync, so a later demotion takes it back.
+		expect(await handler().apply(added)).toBe('role_granted');
+		expect(
+			await handler().apply(envelope('01JD0000000000000000000002', 'removed', {}, '2026-11-03T10:00:00Z'))
+		).toBe('removed');
+		expect(await roleOf(seeded.employeeId)).toBe(roles.employee);
+	});
+
+	it("each organization's own last change counts, however many changes the other one had since", async () => {
+		const second = await addOrganization();
+		await addLink(second, LINK_B);
+		await linkEverId(seeded.employeeId, 'sub-bob');
+		const sync = handler();
+		expect(await sync.apply(envelope('01JD0000000000000000000001', 'created'))).toBe('role_granted');
+		expect(
+			await sync.apply(
+				envelope('01JD0000000000000000000002', 'created', { tenant_link_id: LINK_B, role: 'member' })
+			)
+		).toBe('added');
+		for (let n = 0; n < 30; n++) {
+			const id = `01JD00000000000000000001${String(n).padStart(2, '0')}`;
+			const at = new Date(Date.parse('2026-11-03T00:00:00Z') + n * 60_000).toISOString();
+			const role = n % 2 ? 'member' : 'admin';
+			await sync.apply(envelope(id, 'role_changed', { tenant_link_id: LINK_B, role }, at));
+		}
+		expect(await roleOf(seeded.employeeId)).toBe(roles.admin);
+		// The last change of the second organization was "member": the first one's grant is the only one left.
+		expect(await sync.apply(envelope('01JD0000000000000000000300', 'removed', {}, '2026-11-04T10:00:00Z'))).toBe(
+			'removed'
+		);
+		expect(await roleOf(seeded.employeeId)).toBe(roles.employee);
+	});
+
 	it('only a person linked to a Gauzy user of the tenant: no user is created, nobody else changes', async () => {
 		const users = await userCount();
 		const sync = handler();
