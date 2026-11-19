@@ -201,6 +201,9 @@ describe('Ever Platform feed dispatcher', () => {
 				await scheduler({ apply: jest.fn() }).instance.resync(client, '01JD0000000000000000000042');
 				expect(warn).toHaveBeenCalledTimes(1);
 				expect(String(warn.mock.calls[0][0])).toContain('membership changes');
+				// Also when Ever Platform names no position (the feed is read again from its start).
+				await scheduler({ apply: jest.fn() }).instance.resync(client, undefined);
+				expect(warn).toHaveBeenCalledTimes(2);
 			} finally {
 				warn.mockRestore();
 			}

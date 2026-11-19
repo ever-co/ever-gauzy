@@ -35,7 +35,7 @@ export const MEMBERSHIP_AUDIT_ACTION = 'membership.sync';
  * Applied, and audited: `added` (the user joined the linked organization), `removed` (left it), `role_granted`,
  * `role_revoked`, `unchanged`, `kept_for_other_link` (another linked organization of the tenant still makes them an
  * administrator), `changed_here` (the role was changed in Gauzy since the sync granted it: left as it is),
- * `super_admin_kept`, `not_a_member`, `account_missing`, `role_missing` (the role to set does not exist in the
+ * `super_admin_kept`, `not_a_member`, `account_missing`, `role_missing` (the tenant has no ADMIN role to grant; the
  * tenant: nothing changed, tried again on the next change).
  *
  * Not applied, and not audited: `switched_off`, `not_a_membership_event`, `malformed`, `role_unknown`,
@@ -74,6 +74,8 @@ interface SyncState extends MembershipPosition {
 	grant: string | null;
 	/** The tenant link the change came through: a hold counts only while that very link is live. */
 	linkId: string | null;
+	/** The grant the row found void, if any (see {@link RoleStep}). */
+	voids: string | null;
 	/**
 	 * The order in which the sync wrote its rows for the user in the tenant (1, 2, ...): rows written in the same
 	 * millisecond keep their order by it, which `at` and the row's random id cannot give.
@@ -97,6 +99,8 @@ interface RoleStep {
 	held: boolean;
 	restore: string | null;
 	grant: string | null;
+	/** The grant this change found void (the role was changed in Gauzy): recorded whatever the outcome. */
+	voids?: string | null;
 	from: string | null;
 	to: string | null;
 }
@@ -268,7 +272,8 @@ export class MembershipSyncHandler {
 						to: auditable(step.to),
 						held: step.held,
 						restore: step.restore,
-						grant: step.grant
+						grant: step.grant,
+						voids: step.voids ?? null
 					}
 				},
 				tx
@@ -356,8 +361,8 @@ export class MembershipSyncHandler {
 	/**
 	 * The sync's latest grant of `ADMIN` to the user in the tenant (any organization), or `null`. Every row that holds a
 	 * grant names the latest one (a new grant voids the older ones), so the last-written holding row tells it, unless a
-	 * later row voided it: one that found the user no longer `ADMIN` while the grant was held (`changed_here`), i.e.
-	 * the role was changed in Gauzy, which ends the grant for every organization that held it.
+	 * later row voided it (`voids`): one that found the user no longer `ADMIN` while the grant was held, i.e. the role
+	 * was changed in Gauzy, which ends the grant for every organization that held it, whatever that row's outcome.
 	 */
 	private async latestGrant(tx: EverConnectSql, tenantId: string, userId: string): Promise<Grant | null> {
 		const q = (name: string) => tx.q(name);
@@ -366,16 +371,10 @@ export class MembershipSyncHandler {
 				`AND ${q('action')} = ${tx.ph(2)} AND ${q('details')} LIKE ${tx.ph(3)} ` +
 				`AND (${q('details')} LIKE ${tx.ph(4)} OR ${q('details')} LIKE ${tx.ph(5)}) ` +
 				`ORDER BY ${q('at')} DESC, ${q('id')} DESC LIMIT 1`,
-			[
-				tenantId,
-				MEMBERSHIP_AUDIT_ACTION,
-				`%"user_id":${JSON.stringify(userId)}%`,
-				'%"held":true%',
-				`%"result":${JSON.stringify('changed_here')}%`
-			]
+			[tenantId, MEMBERSHIP_AUDIT_ACTION, `%"user_id":${JSON.stringify(userId)}%`, '%"held":true%', '%"voids":"%']
 		);
 		const state = rows[0] ? stateOf(rows[0], userId) : null;
-		return state?.held && state.grant ? { grant: state.grant, restore: state.restore } : null;
+		return state?.held && state.grant && !state.voids ? { grant: state.grant, restore: state.restore } : null;
 	}
 
 	/**
@@ -488,7 +487,7 @@ export class MembershipSyncHandler {
 				return { ...NO_HOLD, outcome: 'role_missing', ...same };
 			}
 			if (!(await this.setRole(tx, account, adminId))) {
-				return { ...NO_HOLD, grant: grant?.grant ?? null, outcome: 'changed_here', ...same };
+				return { ...NO_HOLD, voids: grant?.grant ?? null, outcome: 'changed_here', ...same };
 			}
 			// A new grant: holds on any earlier one are void from now on.
 			return {
@@ -507,23 +506,20 @@ export class MembershipSyncHandler {
 		if (account.role !== GAUZY_ADMIN) {
 			// The role was changed in Gauzy since the grant: left as it is, and this row voids the grant for every
 			// organization that held it (see `latestGrant`), so none takes a later ADMIN given in Gauzy for its own.
-			return { ...NO_HOLD, grant: grant.grant, outcome: 'changed_here', ...same };
+			return { ...NO_HOLD, voids: grant.grant, outcome: 'changed_here', ...same };
 		}
 		if (other) {
 			return { ...NO_HOLD, outcome: 'kept_for_other_link', ...same };
 		}
 		// The role the grant replaced; when it no longer exists, the tenant's least-privileged role (VIEWER, else
-		// EMPLOYEE), never leaving the sync's ADMIN with someone Ever no longer makes an administrator.
+		// EMPLOYEE, else no role at all): the sync's ADMIN never stays with someone Ever no longer makes an
+		// administrator.
 		let restore = grant.restore;
 		if (restore !== null && !account.roles.has(restore)) {
 			restore = roleIdOf(account.roles, GAUZY_VIEWER) ?? roleIdOf(account.roles, GAUZY_EMPLOYEE);
-			if (!restore) {
-				// Nothing to give back: left as it is, and tried again on the next change.
-				return { outcome: 'role_missing', held: true, restore: grant.restore, grant: grant.grant, ...same };
-			}
 		}
 		if (!(await this.setRole(tx, account, restore))) {
-			return { ...NO_HOLD, grant: grant.grant, outcome: 'changed_here', ...same };
+			return { ...NO_HOLD, voids: grant.grant, outcome: 'changed_here', ...same };
 		}
 		return {
 			...NO_HOLD,
@@ -649,6 +645,7 @@ function stateOf(row: Row, userId: string): SyncState | null {
 	const grant = details['grant'];
 	const linkId = details['link_id'];
 	const seq = details['seq'];
+	const voids = details['voids'];
 	return {
 		eventId: String(details['event_id']).toUpperCase(),
 		occurredAt: typeof occurredAt === 'number' && Number.isFinite(occurredAt) ? occurredAt : null,
@@ -656,7 +653,8 @@ function stateOf(row: Row, userId: string): SyncState | null {
 		restore: typeof restore === 'string' && restore ? restore : null,
 		grant: typeof grant === 'string' && grant ? grant : null,
 		linkId: typeof linkId === 'string' && linkId ? linkId : null,
-		seq: typeof seq === 'number' && Number.isFinite(seq) ? seq : 0
+		seq: typeof seq === 'number' && Number.isFinite(seq) ? seq : 0,
+		voids: typeof voids === 'string' && voids ? voids : null
 	};
 }
 

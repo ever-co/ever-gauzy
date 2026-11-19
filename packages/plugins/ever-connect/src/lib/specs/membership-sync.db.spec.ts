@@ -526,6 +526,60 @@ describe.each(TEST_TARGETS)('Ever Platform membership sync ($name)', (target) =>
 		expect(await roleOf(seeded.employeeId)).toBe(roles.admin);
 	});
 
+	it('a role changed in Gauzy, seen by a removal (whose outcome is "removed"), also ends the grant for all', async () => {
+		const second = await addOrganization();
+		await addLink(second, LINK_B);
+		await linkEverId(seeded.employeeId, 'sub-bob');
+		const sync = handler();
+		const setRole = (roleId: string) =>
+			dataSource.query(
+				`UPDATE ${q(d, 'user')} SET ${q(d, 'roleId')} = ${d === 'postgres' ? '$1' : '?'} WHERE ${q(d, 'id')} = ${d === 'postgres' ? '$2' : '?'}`,
+				[roleId, seeded.employeeId]
+			);
+		expect(await sync.apply(envelope('01JD0000000000000000000001', 'created'))).toBe('role_granted');
+		expect(await sync.apply(envelope('01JD0000000000000000000002', 'created', { tenant_link_id: LINK_B }))).toBe(
+			'added'
+		);
+		await setRole(roles.manager);
+		expect(await sync.apply(envelope('01JD0000000000000000000003', 'removed', {}, '2026-11-03T10:00:00Z'))).toBe(
+			'removed'
+		);
+		await setRole(roles.admin);
+		expect(
+			await sync.apply(
+				envelope('01JD0000000000000000000004', 'removed', { tenant_link_id: LINK_B }, '2026-11-04T10:00:00Z')
+			)
+		).toBe('removed');
+		expect(await roleOf(seeded.employeeId)).toBe(roles.admin);
+	});
+
+	it('the role the grant replaced was deleted, and no VIEWER or EMPLOYEE exists: no role at all, never the ADMIN', async () => {
+		const custom = randomUUID();
+		await insert(dataSource, d, 'role', { id: custom, name: 'CUSTOM_ROLE', tenantId: seeded.tenantId });
+		const carol = await addUser(custom, seeded.organizationId);
+		await linkEverId(carol, 'sub-carol');
+		const sync = handler();
+		expect(
+			await sync.apply(envelope('01JD0000000000000000000001', 'created', { identity_subject: 'sub-carol' }))
+		).toBe('role_granted');
+		for (const id of [custom, roles.employee]) {
+			await dataSource.query(
+				`DELETE FROM ${q(d, 'role')} WHERE ${q(d, 'id')} = ${d === 'postgres' ? '$1' : '?'}`,
+				[id]
+			);
+		}
+		const removal = envelope(
+			'01JD0000000000000000000002',
+			'removed',
+			{ identity_subject: 'sub-carol' },
+			'2026-11-03T10:00:00Z'
+		);
+		expect(await sync.apply(removal)).toBe('removed');
+		expect(await roleOf(carol)).toBeNull();
+		expect(await sync.apply(removal)).toBe('duplicate');
+		expect(await roleOf(carol)).toBeNull();
+	});
+
 	it('the role the grant replaced was deleted: the least-privileged role is given, never the ADMIN kept', async () => {
 		const custom = randomUUID();
 		const viewer = randomUUID();

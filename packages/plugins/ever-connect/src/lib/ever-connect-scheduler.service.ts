@@ -414,7 +414,7 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 	): Promise<void> {
 		await this.states.sync({ force: true });
 		await this.entitlements.refreshAll();
-		if (this.membership && typeof lastId === 'string' && lastId.length > 0) {
+		if (this.membership) {
 			this.logger.warn(
 				'The event feed was resumed past changes Ever Platform no longer keeps: membership changes among them were not applied; check the roles of linked organizations.'
 			);
