@@ -31,6 +31,8 @@ import { TypeOrmEmbedSiteGrantRepository } from './repository/type-orm-embed-sit
  *   then misses the successor the rotation stored; the successor's renewal finds the sign-in revoked and ends it.
  * - A revocation holds the sign-in's tokens: the renewal's update of the spent token waits for its commit, then finds
  *   the token revoked, and stores no successor.
+ * - A renewal of the successor a revocation missed, while that revocation is still open, counts as made just before
+ *   it: the token it stores is refused at its first renewal, since a token of its sign-in is revoked.
  *
  * Runs when the entities are mapped for PostgreSQL and an empty, throwaway database is given (it builds the schema).
  * The suite builds the TypeORM repositories only, which the service uses when DB_ORM names TypeORM:
@@ -259,6 +261,44 @@ const postgresUrl = process.env.GAUZY_MIGRATION_TEST_POSTGRES_URL;
 				const rows = await rowsOf(row.familyId);
 				expect(rows).toHaveLength(1);
 				expect(rows[0].revokedAt).not.toBeNull();
+			},
+			TIMEOUT
+		);
+
+		it(
+			'counts a renewal made while a revocation is still open as made before it; the next renewal is refused',
+			async () => {
+				const { row } = await signIn();
+				const successor = generateEmbedRenewalToken();
+				const rotation = dataSource.createQueryRunner();
+				const revocation = dataSource.createQueryRunner();
+				try {
+					await rotation.connect();
+					await revocation.connect();
+					await rotation.startTransaction();
+					await revocation.startTransaction();
+					await rotation.query(SPEND_TOKEN, [row.id]);
+					// Its snapshot is taken now, before the successor is stored; it waits for the rotation.
+					const revoking = revocation.query(REVOKE_SIGN_IN, [row.familyId]);
+					await untilBlockedBy(await backendOf(rotation));
+					await rotation.manager.insert(EmbedSiteGrant, tokenRow(row.familyId, successor.keyHash));
+					await rotation.commitTransaction();
+					await revoking;
+
+					// The revocation revoked the spent token and has not committed: the successor it missed renews, as it
+					// would have a moment before the revocation.
+					const { renewalToken } = await service.renew({ renewalToken: successor.token }, SITE);
+					await revocation.commitTransaction();
+
+					await expect(service.renew({ renewalToken }, SITE)).rejects.toMatchObject(ended);
+				} finally {
+					await close(rotation);
+					await close(revocation);
+				}
+
+				const rows = await rowsOf(row.familyId);
+				expect(rows).toHaveLength(3);
+				expect(rows.every((stored) => stored.revokedAt !== null)).toBe(true);
 			},
 			TIMEOUT
 		);
