@@ -583,6 +583,32 @@ describe.each(TEST_TARGETS)('Ever Platform membership sync ($name)', (target) =>
 		expect(await roleOf(seeded.employeeId)).toBe(roles.admin);
 	});
 
+	it("a grant replaced by a newer one stays ended after the newer one's organization is deleted", async () => {
+		const second = await addOrganization();
+		await addLink(second, LINK_B);
+		await linkEverId(seeded.employeeId, 'sub-bob');
+		const sync = handler();
+		const setRole = (roleId: string) =>
+			dataSource.query(
+				`UPDATE ${q(d, 'user')} SET ${q(d, 'roleId')} = ${d === 'postgres' ? '$1' : '?'} WHERE ${q(d, 'id')} = ${d === 'postgres' ? '$2' : '?'}`,
+				[roleId, seeded.employeeId]
+			);
+		// The first organization grants G over EMPLOYEE; in Gauzy the user is made MANAGER; the second grants H.
+		expect(await sync.apply(envelope('01JD0000000000000000000001', 'created'))).toBe('role_granted');
+		await setRole(roles.manager);
+		expect(await sync.apply(envelope('01JD0000000000000000000002', 'created', { tenant_link_id: LINK_B }))).toBe(
+			'added'
+		);
+		// The second organization is deleted in Gauzy: its link and its audit rows go; its ADMIN stays as Gauzy's own.
+		await store.updateLink(LINK_B, { status: 'unlinked' });
+		await audit.purge({ tenantId: seeded.tenantId, organizationId: second });
+		// The first organization's removal finds G ended (H replaced it), so it gives nothing back.
+		expect(await sync.apply(envelope('01JD0000000000000000000003', 'removed', {}, '2026-11-03T10:00:00Z'))).toBe(
+			'removed'
+		);
+		expect(await roleOf(seeded.employeeId)).toBe(roles.admin);
+	});
+
 	it('the role the grant replaced was deleted, and no VIEWER or EMPLOYEE exists: no role at all, never the ADMIN', async () => {
 		const custom = randomUUID();
 		await insert(dataSource, d, 'role', { id: custom, name: 'CUSTOM_ROLE', tenantId: seeded.tenantId });

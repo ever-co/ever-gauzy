@@ -382,22 +382,31 @@ export class MembershipSyncHandler {
 	}
 
 	/**
-	 * The sync's latest grant of `ADMIN` to the user in the tenant (any organization), or `null`. Every row that holds a
-	 * grant names the latest one (a new grant voids the older ones), so the last-written holding row tells it, unless a
-	 * later row voided it (`voids`): one that found the user no longer `ADMIN` while the grant was held, i.e. the role
-	 * was changed in Gauzy, which ends the grant for every organization that held it, whatever that row's outcome.
+	 * The sync's current grant of `ADMIN` to the user in the tenant (any organization), or `null`. Every row that holds
+	 * a grant names the latest one, so the last-written holding row names the candidate; it is current unless a row
+	 * ended it (`voids` naming it, by id): the user was found no longer `ADMIN` while it was held (a role changed in
+	 * Gauzy), or a newer grant replaced it. Those ends are also kept in rows of the tenant, which deleting an
+	 * organization does not remove, and an end names one grant only, so it never hides a newer one.
 	 */
 	private async latestGrant(tx: EverConnectSql, tenantId: string, userId: string): Promise<Grant | null> {
 		const q = (name: string) => tx.q(name);
+		const user = `%"user_id":${JSON.stringify(userId)}%`;
 		const { rows } = await tx.run(
 			`SELECT ${q('details')} FROM ${q('ever_connect_audit')} WHERE ${q('tenantId')} = ${tx.ph(1)} ` +
-				`AND ${q('action')} = ${tx.ph(2)} AND ${q('details')} LIKE ${tx.ph(3)} ` +
-				`AND (${q('details')} LIKE ${tx.ph(4)} OR ${q('details')} LIKE ${tx.ph(5)}) ` +
+				`AND ${q('action')} = ${tx.ph(2)} AND ${q('details')} LIKE ${tx.ph(3)} AND ${q('details')} LIKE ${tx.ph(4)} ` +
 				`ORDER BY ${q('at')} DESC, ${q('id')} DESC LIMIT 1`,
-			[tenantId, MEMBERSHIP_AUDIT_ACTION, `%"user_id":${JSON.stringify(userId)}%`, '%"held":true%', '%"voids":"%']
+			[tenantId, MEMBERSHIP_AUDIT_ACTION, user, '%"held":true%']
 		);
 		const state = rows[0] ? stateOf(rows[0], userId) : null;
-		return state?.held && state.grant && !state.voids ? { grant: state.grant, restore: state.restore } : null;
+		if (!state?.held || !state.grant) {
+			return null;
+		}
+		const ended = await tx.run(
+			`SELECT ${q('id')} FROM ${q('ever_connect_audit')} WHERE ${q('tenantId')} = ${tx.ph(1)} ` +
+				`AND ${q('action')} = ${tx.ph(2)} AND ${q('details')} LIKE ${tx.ph(3)} AND ${q('details')} LIKE ${tx.ph(4)} LIMIT 1`,
+			[tenantId, MEMBERSHIP_AUDIT_ACTION, user, `%"voids":${JSON.stringify(state.grant)}%`]
+		);
+		return ended.rows.length ? null : { grant: state.grant, restore: state.restore };
 	}
 
 	/**
@@ -512,12 +521,13 @@ export class MembershipSyncHandler {
 			if (!(await this.setRole(tx, account, adminId))) {
 				return { ...NO_HOLD, voids: grant?.grant ?? null, outcome: 'changed_here', ...same };
 			}
-			// A new grant: holds on any earlier one are void from now on.
+			// A new grant: the earlier one (if any) ends here, for every organization that held it.
 			return {
 				outcome: 'role_granted',
 				held: true,
 				restore: account.roleId,
 				grant: position.eventId,
+				voids: grant?.grant ?? null,
 				from: account.role,
 				to: GAUZY_ADMIN
 			};
