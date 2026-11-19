@@ -16,6 +16,8 @@ const EMPLOYEE = '00000000-0000-4000-8000-000000000032';
 const FIRST_AWARD = '00000000-0000-4000-8000-000000000151';
 const SECOND_AWARD = '00000000-0000-4000-8000-000000000152';
 const SCOPE = { organizationId: ORGANIZATION, tenantId: TENANT };
+/** An award as the API reads it. */
+const STORED_AWARD = { id: FIRST_AWARD, name: 'Mentor of the year', year: '2025', employeeId: EMPLOYEE, ...SCOPE };
 
 type ToolCallback = (args: Record<string, unknown>) => Promise<{ content: Array<{ type: string; text: string }> }>;
 type RegisteredTool = { inputSchema: z.ZodType<Record<string, unknown>>; callback: ToolCallback };
@@ -69,6 +71,37 @@ describe('employee award tools: the routes they call', () => {
 			[`/api/employee-award/${FIRST_AWARD}`, { name: 'Mentor of the year', year: '2025', ...SCOPE }],
 			[`/api/employee-award/${SECOND_AWARD}`, { name: 'Customer hero', year: '2026', ...SCOPE }]
 		]);
+	});
+
+	it.each([
+		['update_employee_award', { id: FIRST_AWARD, award_data: { name: 'Mentor of the decade' } }],
+		['bulk_update_employee_awards', { awards: [{ id: FIRST_AWARD, data: { name: 'Mentor of the decade' } }] }]
+	])('%s keeps the current year of an award whose change names only a new name', async (name, args) => {
+		const get = jest.spyOn(apiClient, 'get').mockResolvedValue(STORED_AWARD as never);
+		const put = jest.spyOn(apiClient, 'put').mockResolvedValue({} as never);
+
+		await call(name, args);
+
+		expect(get).toHaveBeenCalledWith(`/api/employee-award/${FIRST_AWARD}`, { params: SCOPE });
+		expect(put).toHaveBeenCalledWith(`/api/employee-award/${FIRST_AWARD}`, {
+			name: 'Mentor of the decade',
+			year: '2025',
+			...SCOPE
+		});
+	});
+
+	it('reads no award whose change names both a name and a year', async () => {
+		const get = jest.spyOn(apiClient, 'get').mockResolvedValue(STORED_AWARD as never);
+		const put = jest.spyOn(apiClient, 'put').mockResolvedValue({} as never);
+
+		await call('update_employee_award', { id: FIRST_AWARD, award_data: { name: 'Customer hero', year: '2026' } });
+
+		expect(get).not.toHaveBeenCalled();
+		expect(put).toHaveBeenCalledWith(`/api/employee-award/${FIRST_AWARD}`, {
+			name: 'Customer hero',
+			year: '2026',
+			...SCOPE
+		});
 	});
 
 	it('says which award failed and how many were deleted before it, instead of a success', async () => {

@@ -11,6 +11,28 @@ import { registerTool, registerNoArgsTool } from './tool-helper';
 import { TOOL_HINTS } from './tool-hints';
 const logger = new Logger('EmployeeAwardTools');
 
+/** The fields the award update route requires, besides the organization. */
+const AWARD_REQUIRED_FIELDS = ['name', 'year'];
+
+/**
+ * Updates one award through `PUT /employee-award/:id`, whose DTO requires a name, a year and the organization, and
+ * whose guard reads the tenant from the body. A change that leaves the name or the year out keeps the award's
+ * current one, read first in the same scope.
+ */
+const updateAward = async (
+	id: string,
+	changes: Record<string, unknown>,
+	scope: { organizationId: string; tenantId?: string }
+) => {
+	const leavesOutRequired = AWARD_REQUIRED_FIELDS.some((field) => changes[field] === undefined);
+	let current: Record<string, unknown> = {};
+	if (leavesOutRequired) {
+		const award = await apiClient.get<Record<string, unknown>>(`/api/employee-award/${id}`, { params: scope });
+		current = { name: award.name, year: award.year };
+	}
+	return apiClient.put(`/api/employee-award/${id}`, { ...current, ...changes, ...scope });
+};
+
 export const registerEmployeeAwardTools = (server: McpServer) => {
 	// Get employee awards tool
 	registerTool(
@@ -149,7 +171,7 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 		},
 		async ({ id, award_data }) => {
 			try {
-				const response = await apiClient.put(`/api/employee-award/${id}`, award_data);
+				const response = await updateAward(id, award_data, resolveOrganizationScope());
 
 				return {
 					content: [
@@ -427,11 +449,8 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 		},
 		async ({ awards }) => {
 			try {
-				// The update DTO requires the organization, and the route reads the tenant from the body
 				const scope = resolveOrganizationScope();
-				const response = await applyInTurn(awards, ({ id, data }) =>
-					apiClient.put(`/api/employee-award/${id}`, { ...data, ...scope })
-				);
+				const response = await applyInTurn(awards, ({ id, data }) => updateAward(id, data, scope));
 
 				return {
 					content: [
