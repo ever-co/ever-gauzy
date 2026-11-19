@@ -17,6 +17,9 @@ import type { EmbedSiteGrantService } from './embed-site-grant.service';
  */
 const TIMEOUT = 10 * 60 * 1000;
 
+/** The setting of the timer token's lifetime, which the default lifetime case runs without. */
+const TTL_ENV = 'GAUZY_EMBED_TOKEN_TTL_SECONDS';
+
 const TENANT = '7e000000-0000-4000-8000-00000000000a';
 const ORGANIZATION = '7e000000-0000-4000-8000-0000000000f1';
 const SISTER_ORGANIZATION = '7e000000-0000-4000-8000-0000000000f2';
@@ -250,14 +253,35 @@ describe('EmbedSiteGrantService on SQLite', () => {
 		return await service.authorize({ organizationId, origin });
 	};
 
+	/**
+	 * Runs `work` as a server without `GAUZY_EMBED_TOKEN_TTL_SECONDS`, which a developer's .env may set, then puts the
+	 * setting back, or its absence.
+	 */
+	const withDefaultTtl = async <T>(work: () => Promise<T>): Promise<T> => {
+		const saved = process.env[TTL_ENV];
+		delete process.env[TTL_ENV];
+		try {
+			return await work();
+		} finally {
+			if (saved === undefined) {
+				delete process.env[TTL_ENV];
+			} else {
+				process.env[TTL_ENV] = saved;
+			}
+		}
+	};
+
 	describe('POST /embed/authorize', () => {
 		it(
 			"answers a timer token for the person's member, bound to the site and the grant, and a renewal token stored as its digest only",
 			async () => {
 				const before = Date.now();
 
-				const answer = await authorizeAs('lina', 'https://Team.Northwind.example/');
+				const setting = process.env[TTL_ENV];
 
+				const answer = await withDefaultTtl(() => authorizeAs('lina', 'https://Team.Northwind.example/'));
+
+				expect(process.env[TTL_ENV]).toBe(setting);
 				expect(answer.token).toBe(`timer-token-${PEOPLE.lina.employeeId}`);
 				expect(answer.renewalToken).toMatch(/^gzr_[A-Za-z0-9_-]{43}$/);
 				const timerLife = Date.parse(answer.expiresAt) - before;
