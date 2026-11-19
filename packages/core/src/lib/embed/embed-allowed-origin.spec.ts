@@ -386,6 +386,28 @@ describe('createEmbedCorsDelegate', () => {
 		expect(logs).toBe(base);
 	});
 
+	it("answers an allowed embed origin on a site's renewal and sign-out, preflight included, POST only", async () => {
+		for (const path of ['/api/embed/renew', '/api/embed/revoke']) {
+			const post = await answer({ method: 'POST', path, headers: { origin: 'https://app.example.com' } });
+			const preflight = await answer({
+				method: 'OPTIONS',
+				path,
+				headers: { origin: 'https://app.example.com', 'access-control-request-method': 'POST' }
+			});
+			const get = await answer({ method: 'GET', path, headers: { origin: 'https://app.example.com' } });
+			const other = await answer({ method: 'POST', path, headers: { origin: 'https://evil.example.com' } });
+
+			expect(post).toEqual({ ...base, origin: true, credentials: false });
+			expect(preflight.origin).toBe(true);
+			expect(get).toBe(base);
+			expect(other).toBe(base);
+		}
+		// The authorization is the person's own, from the web app: never answered to an embed origin.
+		for (const path of ['/api/embed/authorize', '/api/embed/token', '/api/embed/grants']) {
+			expect(await answer({ method: 'POST', path, headers: { origin: 'https://app.example.com' } })).toBe(base);
+		}
+	});
+
 	it('leaves every other request to ALLOWED_ORIGINS: other routes, other origins, the server list itself', async () => {
 		expect(await answer({ method: 'GET', path: '/api/employee', headers: { origin: 'https://app.example.com' } })).toBe(base);
 		expect(
