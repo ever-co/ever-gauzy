@@ -200,8 +200,16 @@ export class MembershipSyncHandler {
 		const position: MembershipPosition = { eventId, occurredAt };
 		const outcome = await this.sql.inTransaction(LOCK, async (tx) => {
 			// Read again under the lock: a link unlinked while this change waited for it changes nothing, and an
-			// organization unlinked meanwhile no longer keeps the ADMIN of its grant.
-			const links = (await tx.select('ever_connect_link', { tenantId: link.tenantId })).map((row) => ({
+			// organization unlinked meanwhile no longer keeps the ADMIN of its grant. On Postgres and MySQL the rows are
+			// also locked until this change commits, so an unlink made in Gauzy meanwhile waits for it (and one that
+			// committed first is read here): the change never runs on a link state that is no longer true.
+			const forUpdate = tx.dialect === 'sqlite' ? '' : ' FOR UPDATE';
+			const { rows: linkRows } = await tx.run(
+				`SELECT ${tx.q('linkId')}, ${tx.q('organizationId')}, ${tx.q('status')} FROM ${tx.q('ever_connect_link')} ` +
+					`WHERE ${tx.q('tenantId')} = ${tx.ph(1)}${forUpdate}`,
+				[link.tenantId]
+			);
+			const links = linkRows.map((row) => ({
 				linkId: String(row['linkId']),
 				organizationId: String(row['organizationId']),
 				status: String(row['status'])
