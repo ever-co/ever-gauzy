@@ -3,7 +3,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { validateOrganizationContext } from './utils';
+import { buildListQuery, validateOrganizationContext } from './utils';
 import { EmployeeInputSchema } from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
@@ -75,13 +75,8 @@ export const registerEmployeeTools = (server: McpServer) => {
 				const defaultParams = validateOrganizationContext();
 
 				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					page,
-					limit,
-					...(search && { search }),
-					...(relations && { relations }),
-					...(where && { where })
+					...buildListQuery(defaultParams, { ...where }, { page, limit, relations }),
+					...(search && { search })
 				};
 
 				const response = await apiClient.get('/api/employee', { params });
@@ -167,13 +162,8 @@ export const registerEmployeeTools = (server: McpServer) => {
 				const defaultParams = validateOrganizationContext();
 
 				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					page,
-					limit,
-					...(search && { search }),
-					...(relations && { relations }),
-					...(where && { where })
+					...buildListQuery(defaultParams, { ...where }, { page, limit, relations, skipIsPage: true }),
+					...(search && { search })
 				};
 
 				const response = await apiClient.get('/api/employee/pagination', { params });
