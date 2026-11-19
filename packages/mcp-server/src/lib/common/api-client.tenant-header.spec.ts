@@ -11,6 +11,7 @@ import { createServer, IncomingMessage, Server, ServerResponse } from 'node:http
 import { AddressInfo } from 'node:net';
 import { apiClient } from './api-client';
 import { runWithAuthKey } from './auth-context';
+import { authManager } from './auth-manager';
 
 /**
  * The API's tenant guard reads the tenant from the `Tenant-Id` header, else on a read from a top-level `tenantId` in
@@ -109,6 +110,25 @@ const readTasks = async (): Promise<Recorded> => {
 	return standIn.last('/api/tasks');
 };
 
+/** The sessions the tests sign in or read as, cleared after each test with the process-wide login. */
+const SESSIONS = ['session-lina', 'session-local', 'session-remote'];
+
+/** Signs the GAUZY_AUTO_LOGIN account in, process-wide, as the server does at startup. */
+const signInAutoLoginAccount = async () => {
+	expect(await apiClient.login()).toEqual({ success: true });
+};
+
+/** Signs Lina in on her own session, and reads the list as that session. */
+const readTasksAsLina = () =>
+	runWithAuthKey(
+		'session-lina',
+		async () => {
+			await apiClient.login('lina@example.com', 'lina-password');
+			return readTasks();
+		},
+		{ sharesAutoLogin: true }
+	);
+
 describe('GauzyApiClient — the tenant of the signed-in session on every request', () => {
 	beforeAll(async () => {
 		apiClient.configure({ baseUrl: await standIn.start() });
@@ -116,6 +136,15 @@ describe('GauzyApiClient — the tenant of the signed-in session on every reques
 
 	afterAll(async () => {
 		await standIn.stop();
+	});
+
+	// Each test signs in what it needs, so it runs alone as it does in the suite.
+	afterEach(async () => {
+		for (const session of SESSIONS) {
+			authManager.clearKey(session);
+		}
+		await apiClient.logout();
+		standIn.requests.length = 0;
 	});
 
 	it('sends no tenant while nobody is signed in', async () => {
@@ -126,7 +155,7 @@ describe('GauzyApiClient — the tenant of the signed-in session on every reques
 	});
 
 	it("sends the signed-in user's tenant with their token, in the header the tenant guard reads", async () => {
-		expect(await apiClient.login()).toEqual({ success: true });
+		await signInAutoLoginAccount();
 
 		const request = await readTasks();
 
@@ -135,6 +164,8 @@ describe('GauzyApiClient — the tenant of the signed-in session on every reques
 	});
 
 	it('keeps a tenant the caller set, in any casing', async () => {
+		await signInAutoLoginAccount();
+
 		await apiClient.get('/api/tasks', { headers: { 'Tenant-Id': NAMED_TENANT } });
 		expect(standIn.last('/api/tasks').tenantHeaders).toEqual([['Tenant-Id', NAMED_TENANT]]);
 
@@ -143,14 +174,9 @@ describe('GauzyApiClient — the tenant of the signed-in session on every reques
 	});
 
 	it("sends a session's own tenant once it signs in, never the auto-login account's", async () => {
-		const request = await runWithAuthKey(
-			'session-lina',
-			async () => {
-				await apiClient.login('lina@example.com', 'lina-password');
-				return readTasks();
-			},
-			{ sharesAutoLogin: true }
-		);
+		await signInAutoLoginAccount();
+
+		const request = await readTasksAsLina();
 
 		expect(request.authorization).toBe(`Bearer ${ACCOUNTS['lina@example.com'].token}`);
 		expect(request.tenantHeaders).toEqual([['Tenant-Id', LINA_TENANT]]);
@@ -159,13 +185,17 @@ describe('GauzyApiClient — the tenant of the signed-in session on every reques
 	});
 
 	it('sends the auto-login account its own tenant for a caller on this machine without a login', async () => {
+		await signInAutoLoginAccount();
+
 		const request = await runWithAuthKey('session-local', readTasks, { sharesAutoLogin: true });
 
 		expect(request.authorization).toBe(`Bearer ${ACCOUNTS['operator@example.com'].token}`);
 		expect(request.tenantHeaders).toEqual([['Tenant-Id', OPERATOR_TENANT]]);
 	});
 
-	it('sends no tenant for a caller from elsewhere without a login', async () => {
+	it('sends no tenant for a caller from elsewhere without a login, though the auto-login account is signed in', async () => {
+		await signInAutoLoginAccount();
+
 		const request = await runWithAuthKey('session-remote', readTasks, { sharesAutoLogin: false });
 
 		expect(request.authorization).toBeUndefined();
@@ -173,6 +203,10 @@ describe('GauzyApiClient — the tenant of the signed-in session on every reques
 	});
 
 	it('sends no tenant once a session signs out, though the auto-login account is still signed in', async () => {
+		await signInAutoLoginAccount();
+		const signedIn = await readTasksAsLina();
+		expect(signedIn.tenantHeaders).toEqual([['Tenant-Id', LINA_TENANT]]);
+
 		const request = await runWithAuthKey(
 			'session-lina',
 			async () => {
