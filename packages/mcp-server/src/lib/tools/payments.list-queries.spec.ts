@@ -67,7 +67,7 @@ describe('payment list tools — the query the route validates', () => {
 			params: {
 				where: {
 					...SCOPE,
-					status: 'COMPLETED',
+					status: 'CAPTURED',
 					paymentMethod: 'BANK_TRANSFER',
 					invoiceId: INVOICE,
 					organizationContactId: CONTACT,
@@ -89,7 +89,7 @@ describe('payment list tools — the query the route validates', () => {
 		await call('get_payments_by_invoice', { invoiceId: INVOICE, status: 'PENDING' });
 
 		expect(get).toHaveBeenCalledWith('/api/payments', {
-			params: { where: { ...SCOPE, invoiceId: INVOICE, status: 'PENDING' }, take: 10, skip: 0 }
+			params: { where: { ...SCOPE, invoiceId: INVOICE, status: 'AUTHORIZED' }, take: 10, skip: 0 }
 		});
 	});
 
@@ -98,6 +98,68 @@ describe('payment list tools — the query the route validates', () => {
 
 		expect(get).toHaveBeenCalledWith('/api/payments', {
 			params: { where: { ...SCOPE, organizationContactId: CONTACT, currency: 'USD' }, take: 10, skip: 0 }
+		});
+	});
+});
+
+describe('payment list tools — the stored status and method a filter is sent as', () => {
+	let get: jest.SpyInstance;
+
+	beforeEach(() => {
+		jest.spyOn(authManager, 'getDefaultParams').mockReturnValue(SCOPE);
+		get = jest.spyOn(apiClient, 'get').mockResolvedValue({ items: [], total: 0 } as never);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it.each([
+		['PENDING', 'AUTHORIZED'],
+		['PROCESSING', 'PARTIALLY_CAPTURED'],
+		['COMPLETED', 'CAPTURED'],
+		['FAILED', 'FAILED'],
+		['CANCELLED', 'CANCELED'],
+		['REFUNDED', 'REFUNDED'],
+		['PARTIALLY_REFUNDED', 'PARTIALLY_REFUNDED']
+	])('sends the status %s as %s', async (status, stored) => {
+		await call('get_payments', { status });
+
+		expect(get).toHaveBeenCalledWith('/api/payments', {
+			params: { where: { ...SCOPE, status: stored }, take: 10, skip: 0 }
+		});
+	});
+
+	it.each([
+		['CREDIT_CARD', 'CREDIT_CARD'],
+		['DEBIT_CARD', 'DEBIT'],
+		['BANK_TRANSFER', 'BANK_TRANSFER'],
+		['PAYPAL', 'ONLINE'],
+		['STRIPE', 'ONLINE'],
+		['CASH', 'CASH'],
+		['CHECK', 'CHEQUE'],
+		['CHEQUE', 'CHEQUE']
+	])('sends the method %s as %s', async (paymentMethod, stored) => {
+		await call('get_payments', { paymentMethod });
+
+		expect(get).toHaveBeenCalledWith('/api/payments', {
+			params: { where: { ...SCOPE, paymentMethod: stored }, take: 10, skip: 0 }
+		});
+	});
+
+	it('get_payments_by_client filters the stored status', async () => {
+		await call('get_payments_by_client', { organizationContactId: CONTACT, status: 'COMPLETED' });
+
+		expect(get).toHaveBeenCalledWith('/api/payments', {
+			params: { where: { ...SCOPE, organizationContactId: CONTACT, status: 'CAPTURED' }, take: 10, skip: 0 }
+		});
+	});
+
+	it('get_payment_count counts the stored status and method', async () => {
+		get.mockResolvedValue(0 as never);
+
+		await call('get_payment_count', { status: 'CANCELLED', paymentMethod: 'CHECK' });
+
+		expect(get).toHaveBeenCalledWith('/api/payments/count', {
+			params: { ...SCOPE, status: 'CANCELED', paymentMethod: 'CHEQUE' }
 		});
 	});
 });

@@ -71,11 +71,34 @@ export const DAILY_PLAN_STATUS_VALUES: Record<string, string> = {
 const filterEnum = (values: Record<string, string>, otherValues: string[] = []) =>
 	z.enum([...new Set([...Object.keys(values), ...Object.values(values), ...otherValues])] as [string, ...string[]]);
 
+// The payment schemas name statuses and methods the API does not store: each is sent as the stored one it means.
+// No payment is stored with the OTHER method.
+export const PAYMENT_STATUS_VALUES: Record<string, string> = {
+	PENDING: 'AUTHORIZED',
+	PROCESSING: 'PARTIALLY_CAPTURED',
+	COMPLETED: 'CAPTURED',
+	FAILED: 'FAILED',
+	CANCELLED: 'CANCELED',
+	REFUNDED: 'REFUNDED'
+};
+export const PAYMENT_METHOD_VALUES: Record<string, string> = {
+	CREDIT_CARD: 'CREDIT_CARD',
+	DEBIT_CARD: 'DEBIT',
+	BANK_TRANSFER: 'BANK_TRANSFER',
+	PAYPAL: 'ONLINE',
+	STRIPE: 'ONLINE',
+	CASH: 'CASH',
+	CHECK: 'CHEQUE',
+	OTHER: 'OTHER'
+};
+
 export const TaskStatusFilter = filterEnum(TASK_STATUS_VALUES, ['backlog', 'done']);
 export const TaskPriorityFilter = filterEnum(TASK_PRIORITY_VALUES);
 export const TaskSizeFilter = filterEnum(TASK_SIZE_VALUES);
 export const TaskTypeFilter = filterEnum(TASK_TYPE_VALUES, ['memo']);
 export const DailyPlanStatusFilter = filterEnum(DAILY_PLAN_STATUS_VALUES);
+export const PaymentStatusFilter = filterEnum(PAYMENT_STATUS_VALUES, ['PARTIALLY_REFUNDED']);
+export const PaymentMethodFilter = filterEnum(PAYMENT_METHOD_VALUES);
 export const ContactTypeEnum = z.enum(['CLIENT', 'CUSTOMER', 'LEAD']);
 export const BonusTypeEnum = z.enum(['PROFIT_BASED_BONUS', 'REVENUE_BASED_BONUS']);
 export const DefaultValueDateTypeEnum = z.enum(['TODAY', 'END_OF_MONTH', 'START_OF_MONTH']);

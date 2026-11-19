@@ -3,8 +3,16 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { buildListQuery, validateOrganizationContext } from './utils';
-import { PaymentStatusEnum, PaymentMethodEnum, CurrenciesEnum } from '../input-schemas';
+import { buildListQuery, toApiValue, validateOrganizationContext } from './utils';
+import {
+	CurrenciesEnum,
+	PAYMENT_METHOD_VALUES,
+	PAYMENT_STATUS_VALUES,
+	PaymentMethodEnum,
+	PaymentMethodFilter,
+	PaymentStatusEnum,
+	PaymentStatusFilter
+} from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
@@ -44,8 +52,8 @@ export const registerPaymentTools = (server: McpServer) => {
 				.array(z.string())
 				.optional()
 				.describe('Relations to include (e.g., ["invoice", "organizationContact", "project", "recordedBy"])'),
-			status: PaymentStatusEnum.optional().describe('Filter by payment status'),
-			paymentMethod: PaymentMethodEnum.optional().describe('Filter by payment method'),
+			status: PaymentStatusFilter.optional().describe('Filter by payment status'),
+			paymentMethod: PaymentMethodFilter.optional().describe('Filter by payment method'),
 			invoiceId: z.string().uuid().optional().describe('Filter by invoice ID'),
 			organizationContactId: z.string().uuid().optional().describe('Filter by organization contact ID'),
 			projectId: z.string().uuid().optional().describe('Filter by project ID'),
@@ -73,7 +81,15 @@ export const registerPaymentTools = (server: McpServer) => {
 				const defaultParams = validateOrganizationContext();
 
 				// `where` matches a column exactly: the search and the date range stay outside it, as before
-				const where = { status, paymentMethod, invoiceId, organizationContactId, projectId, currency, overdue };
+				const where = {
+					status: toApiValue(PAYMENT_STATUS_VALUES, status),
+					paymentMethod: toApiValue(PAYMENT_METHOD_VALUES, paymentMethod),
+					invoiceId,
+					organizationContactId,
+					projectId,
+					currency,
+					overdue
+				};
 				const params = {
 					...buildListQuery(defaultParams, where, { page, limit, relations }),
 					...(search && { search }),
@@ -105,8 +121,8 @@ export const registerPaymentTools = (server: McpServer) => {
 		'get_payment_count',
 		"Get payment count in the authenticated user's organization",
 		{
-			status: PaymentStatusEnum.optional().describe('Filter by payment status'),
-			paymentMethod: PaymentMethodEnum.optional().describe('Filter by payment method'),
+			status: PaymentStatusFilter.optional().describe('Filter by payment status'),
+			paymentMethod: PaymentMethodFilter.optional().describe('Filter by payment method'),
 			currency: CurrenciesEnum.optional().describe('Filter by currency'),
 			overdue: z.boolean().optional().describe('Filter by overdue status'),
 			startDate: z.string().optional().describe('Filter payments from this date (ISO format)'),
@@ -119,8 +135,8 @@ export const registerPaymentTools = (server: McpServer) => {
 				const params = {
 					organizationId: defaultParams.organizationId,
 					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					...(status && { status }),
-					...(paymentMethod && { paymentMethod }),
+					...(status && { status: toApiValue(PAYMENT_STATUS_VALUES, status) }),
+					...(paymentMethod && { paymentMethod: toApiValue(PAYMENT_METHOD_VALUES, paymentMethod) }),
 					...(currency && { currency }),
 					...(overdue !== undefined && { overdue }),
 					...(startDate && { startDate }),
@@ -362,14 +378,15 @@ export const registerPaymentTools = (server: McpServer) => {
 			invoiceId: z.string().uuid().describe('The invoice ID'),
 			page: z.number().optional().default(1).describe('Page number for pagination'),
 			limit: z.number().optional().default(10).describe('Number of items per page'),
-			status: PaymentStatusEnum.optional().describe('Filter by payment status'),
+			status: PaymentStatusFilter.optional().describe('Filter by payment status'),
 			relations: z.array(z.string()).optional().describe('Relations to include')
 		},
 		async ({ invoiceId, page = 1, limit = 10, status, relations }) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = buildListQuery(defaultParams, { invoiceId, status }, { page, limit, relations });
+				const where = { invoiceId, status: toApiValue(PAYMENT_STATUS_VALUES, status) };
+				const params = buildListQuery(defaultParams, where, { page, limit, relations });
 
 				const response = await apiClient.get('/api/payments', { params });
 
@@ -398,7 +415,7 @@ export const registerPaymentTools = (server: McpServer) => {
 			organizationContactId: z.string().uuid().describe('The organization contact ID'),
 			page: z.number().optional().default(1).describe('Page number for pagination'),
 			limit: z.number().optional().default(10).describe('Number of items per page'),
-			status: PaymentStatusEnum.optional().describe('Filter by payment status'),
+			status: PaymentStatusFilter.optional().describe('Filter by payment status'),
 			currency: CurrenciesEnum.optional().describe('Filter by currency'),
 			relations: z.array(z.string()).optional().describe('Relations to include')
 		},
@@ -406,7 +423,7 @@ export const registerPaymentTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const where = { organizationContactId, status, currency };
+				const where = { organizationContactId, status: toApiValue(PAYMENT_STATUS_VALUES, status), currency };
 				const params = buildListQuery(defaultParams, where, { page, limit, relations });
 
 				const response = await apiClient.get('/api/payments', { params });
