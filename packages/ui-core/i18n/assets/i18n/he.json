@@ -8183,6 +8183,15 @@
 		"SEARCH_PLACEHOLDER": "חיפוש במועדפים...",
 		"NO_MATCH": "אין מועדפים שתואמים לחיפוש.",
 		"ADDED": "נוסף",
+		"CLEAR_FILTERS": "נקה מסננים",
+		"CLEAR_SEARCH": "נקה חיפוש",
+		"SORT": {
+			"LABEL": "מיון לפי",
+			"NEWEST": "החדשים קודם",
+			"OLDEST": "הישנים קודם",
+			"NAME": "שם (א–ת)",
+			"TYPE": "סוג"
+		},
 		"TYPES": {
 			"BROADCAST": "שידורים",
 			"CANDIDATE": "מועמדים",

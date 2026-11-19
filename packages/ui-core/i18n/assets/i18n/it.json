@@ -8175,6 +8175,15 @@
 		"SEARCH_PLACEHOLDER": "Cerca nei preferiti...",
 		"NO_MATCH": "Nessun preferito corrisponde alla ricerca.",
 		"ADDED": "Aggiunto",
+		"CLEAR_FILTERS": "Cancella filtri",
+		"CLEAR_SEARCH": "Cancella ricerca",
+		"SORT": {
+			"LABEL": "Ordina per",
+			"NEWEST": "Più recenti prima",
+			"OLDEST": "Meno recenti prima",
+			"NAME": "Nome (A–Z)",
+			"TYPE": "Tipo"
+		},
 		"TYPES": {
 			"BROADCAST": "Comunicazioni",
 			"CANDIDATE": "Candidati",

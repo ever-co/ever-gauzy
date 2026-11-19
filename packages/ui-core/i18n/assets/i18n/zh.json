@@ -9165,6 +9165,15 @@
 		"SEARCH_PLACEHOLDER": "搜索收藏...",
 		"NO_MATCH": "没有与搜索匹配的收藏。",
 		"ADDED": "添加时间",
+		"CLEAR_FILTERS": "清除筛选",
+		"CLEAR_SEARCH": "清除搜索",
+		"SORT": {
+			"LABEL": "排序方式",
+			"NEWEST": "最新优先",
+			"OLDEST": "最早优先",
+			"NAME": "名称 (A–Z)",
+			"TYPE": "类型"
+		},
 		"TYPES": {
 			"BROADCAST": "广播",
 			"CANDIDATE": "候选人",

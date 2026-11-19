@@ -8175,6 +8175,15 @@
 		"SEARCH_PLACEHOLDER": "Favorieten zoeken...",
 		"NO_MATCH": "Geen favorieten komen overeen met je zoekopdracht.",
 		"ADDED": "Toegevoegd",
+		"CLEAR_FILTERS": "Filters wissen",
+		"CLEAR_SEARCH": "Zoekopdracht wissen",
+		"SORT": {
+			"LABEL": "Sorteren op",
+			"NEWEST": "Nieuwste eerst",
+			"OLDEST": "Oudste eerst",
+			"NAME": "Naam (A–Z)",
+			"TYPE": "Type"
+		},
 		"TYPES": {
 			"BROADCAST": "Uitzendingen",
 			"CANDIDATE": "Kandidaten",

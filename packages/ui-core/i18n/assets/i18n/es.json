@@ -8177,6 +8177,15 @@
 		"SEARCH_PLACEHOLDER": "Buscar favoritos...",
 		"NO_MATCH": "Ningún favorito coincide con tu búsqueda.",
 		"ADDED": "Añadido",
+		"CLEAR_FILTERS": "Borrar filtros",
+		"CLEAR_SEARCH": "Borrar búsqueda",
+		"SORT": {
+			"LABEL": "Ordenar por",
+			"NEWEST": "Más recientes primero",
+			"OLDEST": "Más antiguos primero",
+			"NAME": "Nombre (A–Z)",
+			"TYPE": "Tipo"
+		},
 		"TYPES": {
 			"BROADCAST": "Difusiones",
 			"CANDIDATE": "Candidatos",

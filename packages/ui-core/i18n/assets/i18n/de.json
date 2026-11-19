@@ -8171,6 +8171,15 @@
 		"SEARCH_PLACEHOLDER": "Favoriten durchsuchen...",
 		"NO_MATCH": "Keine Favoriten entsprechen Ihrer Suche.",
 		"ADDED": "Hinzugefügt",
+		"CLEAR_FILTERS": "Filter zurücksetzen",
+		"CLEAR_SEARCH": "Suche löschen",
+		"SORT": {
+			"LABEL": "Sortieren nach",
+			"NEWEST": "Neueste zuerst",
+			"OLDEST": "Älteste zuerst",
+			"NAME": "Name (A–Z)",
+			"TYPE": "Typ"
+		},
 		"TYPES": {
 			"BROADCAST": "Rundsendungen",
 			"CANDIDATE": "Kandidaten",
