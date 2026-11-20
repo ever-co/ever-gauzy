@@ -5,6 +5,7 @@ import { EverConnectAuditService } from '../ever-connect-audit.service';
 import { EverConnectSql, num, Row, str } from '../ever-connect-sql';
 import { EVER_CONNECT_CLOCK, EVER_CONNECT_ENV, ULID_SHAPE } from '../ever-connect.constants';
 import { EverConnectStore, LinkRecord } from '../ever-connect.store';
+import { EverPlatformClient, ProblemError } from '../sdk';
 import type { EventEnvelope } from '../sdk';
 import {
 	EVER_ROLE_TO_GAUZY_ROLE,
@@ -23,6 +24,15 @@ import {
 	parseMembershipData,
 	sameIssuer
 } from './membership-sync.config';
+import {
+	CurrentMember,
+	identityKey,
+	ListedMembers,
+	MEMBERSHIP_RESYNC_MAX_PAGES,
+	parseCurrentMember,
+	positionAfter,
+	readLinkMembershipsPage
+} from './membership-resync';
 
 type Env = Record<string, string | undefined>;
 
@@ -64,8 +74,25 @@ export type MembershipSyncOutcome =
 	| 'duplicate'
 	| 'stale';
 
+/** What one membership resync did, a machine code. */
+export type MembershipResyncOutcome = 'switched_off' | 'done' | 'module_disabled' | 'failed' | 'lease_lost';
+
+/** What reading the list of one link did. */
+type LinkResync = 'read' | 'link_unknown' | 'module_disabled' | 'failed' | 'lease_lost';
+
+/**
+ * Where a change takes its place among the changes applied for the user in the organization (`last`, read under the
+ * lock): the change and its position, or an outcome that ends it there with nothing written.
+ */
+type Decide = (
+	last: SyncState | null
+) => { change: MembershipChange; position: MembershipPosition } | MembershipSyncOutcome;
+
 /** The last change applied for a user in one organization, read back from the audit. */
 interface SyncState extends MembershipPosition {
+	/** The change (`created`, `role_changed`, `removed`) and what it did (see {@link MembershipSyncOutcome}). */
+	op: string | null;
+	result: string | null;
 	/** The sync made (or keeps) the user an `ADMIN` for this organization's link. */
 	held: boolean;
 	/** The role id the user had before the sync made them `ADMIN` (`null`: none), given back on a demotion. */
@@ -159,6 +186,9 @@ const LOCK = 'ever-connect:membership-sync';
  *   in Gauzy), nor a row without its change.
  *
  * A failure of the database throws (the transaction is rolled back), so the feed reads the event again.
+ *
+ * **Resync** ({@link resync}): after the feed lost events (`410 resync_required`), and once after each start, the
+ * current members of each linked Ever organization are read and applied with the same rules (see {@link resync}).
  */
 @Injectable()
 export class MembershipSyncHandler {
@@ -166,6 +196,8 @@ export class MembershipSyncHandler {
 	private readonly sql: EverConnectSql;
 	private readonly env: Env;
 	private readonly now: () => number;
+	/** `404 module_disabled` is said once per process. */
+	private disabledLogged = false;
 
 	constructor(
 		dataSource: DataSource,
@@ -209,7 +241,207 @@ export class MembershipSyncHandler {
 			return this.done('link_unknown');
 		}
 		const position: MembershipPosition = { eventId, occurredAt };
-		const outcome = await this.sql.inTransaction(LOCK, async (tx) => {
+		const { outcome } = await this.applyIn(link, data, everRole, false, (last) => {
+			if (last && last.eventId === position.eventId) {
+				return 'duplicate';
+			}
+			if (last && !isAfter(position, last)) {
+				return 'stale';
+			}
+			return { change, position };
+		});
+		return this.done(outcome);
+	}
+
+	/**
+	 * Resync: a person the current membership list of a linked Ever organization names as a member, with an Ever role.
+	 * Applied with the rules of an event, right after the last change applied for the user in the organization:
+	 *
+	 * - someone the sync keeps as a member (its last change for them, an event or a resync, left them one) gets the
+	 *   role only, as `role_changed` does: made inactive in Gauzy since, they are not made a member again;
+	 * - anyone else joins the organization and gets the role, as `created` does.
+	 *
+	 * Answers what it did (not logged: the resync logs its counts) and the Gauzy user the Ever ID is linked to.
+	 */
+	async reconcileMember(
+		link: LinkRecord,
+		member: CurrentMember
+	): Promise<{ outcome: MembershipSyncOutcome; userId: string | null }> {
+		if (!isMembershipSyncEnabled(this.env)) {
+			return { outcome: 'switched_off', userId: null };
+		}
+		const everRole = member.role;
+		if (!isEverRole(everRole)) {
+			return { outcome: 'role_unknown', userId: null };
+		}
+		return this.applyIn(link, { linkId: link.linkId, ...member }, everRole, true, (last) => ({
+			change: isKeptMember(last) ? 'role_changed' : 'created',
+			position: positionAfter(last)
+		}));
+	}
+
+	/**
+	 * Resync, once the whole list of a linked Ever organization was read: an active member of the Gauzy organization the
+	 * list no longer names left the Ever organization, and is removed as `removed` does (an `ADMIN` the sync granted
+	 * given back, the membership made inactive; nothing deleted).
+	 *
+	 * Only someone the sync keeps as a member (its last change for them left them one) is removed: a member who joined
+	 * in Gauzy and was never named by Ever Platform is not. And only when one of their Ever IDs comes from an issuer the
+	 * list names and none of them is on the list: a user with no such Ever ID here is left as they are. An empty list
+	 * removes nobody (an Ever organization always has its owner).
+	 */
+	async reconcileAbsent(link: LinkRecord, listed: ListedMembers): Promise<MembershipSyncOutcome[]> {
+		if (!isMembershipSyncEnabled(this.env) || listed.issuers.size === 0) {
+			return [];
+		}
+		const members = (
+			await this.sql.select('user_organization', { tenantId: link.tenantId, organizationId: link.organizationId })
+		).filter((row) => !row['deletedAt'] && isUsableRow(row));
+		const absent = [...new Set(members.map((row) => String(row['userId'])))].filter(
+			(userId) => !listed.userIds.has(userId)
+		);
+		const outcomes: MembershipSyncOutcome[] = [];
+		for (const userId of absent) {
+			const everIds = (await this.sql.select('zitadel_account', { userId }))
+				.filter((row) => !row['deletedAt'])
+				.map((row) => ({
+					issuer: sameIssuer(String(row['issuer'] ?? '')),
+					subject: String(row['subject'] ?? '')
+				}))
+				.filter((everId) => listed.issuers.has(everId.issuer));
+			if (
+				everIds.length === 0 ||
+				everIds.some((everId) => listed.identities.has(identityKey(everId.issuer, everId.subject)))
+			) {
+				continue;
+			}
+			const [everId] = everIds;
+			const data: MembershipEventData = { linkId: link.linkId, ...everId, userRef: userId, role: 'member' };
+			const { outcome } = await this.applyIn(link, data, 'member', true, (last) =>
+				isKeptMember(last) ? { change: 'removed', position: positionAfter(last) } : 'unchanged'
+			);
+			outcomes.push(outcome);
+		}
+		return outcomes;
+	}
+
+	/**
+	 * The membership resync: reads the current members of each linked Ever organization
+	 * (`GET /v1/instances/me/tenant-links/{link}/memberships`, 100 a page, every page) and applies them
+	 * ({@link reconcileMember}), then, once a link's whole list was read, removes who left ({@link reconcileAbsent}).
+	 * Run by the scheduler on the lease holder after `410 resync_required` and once after each start.
+	 *
+	 * - `404 module_disabled`: Ever Platform sends no membership events, so there is nothing to make up for; said once.
+	 * - A link Ever Platform does not know as live (`404`): skipped.
+	 * - Any other failure (an answer, a page that is not one, the database): the resync stops with a warning, nobody is
+	 *   removed for the link being read, and it runs again at the next `410` or start.
+	 * - `keep` renews the lease between pages; when it answers `false` the resync stops (`lease_lost`).
+	 *
+	 * Logged by counts of outcome codes only, never with an id or a name.
+	 */
+	async resync(
+		client: Pick<EverPlatformClient, 'call'>,
+		keep: () => Promise<boolean> = async () => true
+	): Promise<MembershipResyncOutcome> {
+		if (!isMembershipSyncEnabled(this.env)) {
+			return 'switched_off';
+		}
+		const counts = new Map<string, number>();
+		const count = (code: string) => counts.set(code, (counts.get(code) ?? 0) + 1);
+		try {
+			for (const link of await this.store.liveLinks()) {
+				if (link.status !== 'linked') continue;
+				const outcome = await this.resyncLink(client, link, keep, count);
+				if (outcome === 'read') continue;
+				if (outcome === 'link_unknown') {
+					count('link_unknown');
+					continue;
+				}
+				if (outcome === 'module_disabled') {
+					if (!this.disabledLogged) {
+						this.disabledLogged = true;
+						this.logger.log(
+							'Ever Platform sends no membership changes (module_disabled): nothing to resync.'
+						);
+					}
+					return 'module_disabled';
+				}
+				this.logger.warn(
+					`The membership resync stopped (${outcome}; ${summary(counts)}); it runs again at the next resync or start.`
+				);
+				return outcome;
+			}
+		} catch (error) {
+			this.logger.warn(
+				`The membership resync stopped (${failureCode(error)}; ${summary(counts)}); it runs again at the next resync or start.`
+			);
+			return 'failed';
+		}
+		this.logger.log(`Ever Platform membership resync: ${summary(counts)}.`);
+		return 'done';
+	}
+
+	/** Reads the whole list of one link, applying each page; then removes who left. */
+	private async resyncLink(
+		client: Pick<EverPlatformClient, 'call'>,
+		link: LinkRecord,
+		keep: () => Promise<boolean>,
+		count: (code: string) => void
+	): Promise<LinkResync> {
+		const listed = new ListedMembers();
+		let complete = true;
+		let cursor: string | null = null;
+		for (let page = 0; ; page += 1) {
+			if (page >= MEMBERSHIP_RESYNC_MAX_PAGES) return 'failed';
+			if (!(await keep())) return 'lease_lost';
+			let answer: Awaited<ReturnType<typeof readLinkMembershipsPage>>;
+			try {
+				answer = await readLinkMembershipsPage(client, link.linkId, cursor);
+			} catch (error) {
+				if (error instanceof ProblemError && error.status === 404) {
+					return error.code === 'module_disabled' ? 'module_disabled' : 'link_unknown';
+				}
+				this.logger.warn(`A membership list could not be read (${failureCode(error)}).`);
+				return 'failed';
+			}
+			for (const item of answer.items) {
+				const member = parseCurrentMember(item);
+				if (!member) {
+					// Someone the list names but this cannot read: nobody is removed for this link, so they are not
+					// removed by mistake.
+					complete = false;
+					count('malformed');
+					continue;
+				}
+				const { outcome, userId } = await this.reconcileMember(link, member);
+				listed.add(member, userId);
+				count(outcome);
+			}
+			if (answer.nextCursor === null) break;
+			if (answer.nextCursor === cursor) return 'failed';
+			cursor = answer.nextCursor;
+		}
+		if (complete) {
+			for (const outcome of await this.reconcileAbsent(link, listed)) {
+				count(`absent_${outcome}`);
+			}
+		}
+		return 'read';
+	}
+
+	/**
+	 * Applies one change to the user and the organization, in one transaction under the lock: the person, the last
+	 * change applied for them (from which `decide` places this one), the change and its audit row. A resync
+	 * (`resync`) that changes nothing the memory does not already say writes no row.
+	 */
+	private async applyIn(
+		link: LinkRecord,
+		data: MembershipEventData,
+		everRole: EverRole,
+		resync: boolean,
+		decide: Decide
+	): Promise<{ outcome: MembershipSyncOutcome; userId: string | null }> {
+		return this.sql.inTransaction(LOCK, async (tx) => {
 			// Read again under the lock: a link unlinked while this change waited for it changes nothing, and an
 			// organization unlinked meanwhile no longer keeps the ADMIN of its grant. On Postgres and MySQL the rows are
 			// also locked until this change commits, so an unlink made in Gauzy meanwhile waits for it (and one that
@@ -226,7 +458,7 @@ export class MembershipSyncHandler {
 				status: String(row['status'])
 			}));
 			if (!links.some((row) => row.linkId === link.linkId && row.status === 'linked')) {
-				return 'link_unknown' as const;
+				return { outcome: 'link_unknown' as const, userId: null };
 			}
 			const others = links.filter(
 				(row) => row.status !== 'unlinked' && row.organizationId !== link.organizationId
@@ -235,15 +467,14 @@ export class MembershipSyncHandler {
 			// meanwhile in Gauzy is seen here, or waits for this change.
 			const person = await this.personOf(tx, link.tenantId, data);
 			if (person === 'person_unknown' || person === 'person_mismatch') {
-				return person;
+				return { outcome: person, userId: null };
 			}
 			const last = await this.stateIn(tx, link.tenantId, link.organizationId, person);
-			if (last && last.eventId === position.eventId) {
-				return 'duplicate' as const;
+			const decided = decide(last);
+			if (typeof decided === 'string') {
+				return { outcome: decided, userId: person };
 			}
-			if (last && !isAfter(position, last)) {
-				return 'stale' as const;
-			}
+			const { change, position } = decided;
 			// The sync's rows of the user in the tenant are written in a strictly increasing `at` (never before the last
 			// one, whatever the clock does), so "newest by time" is always "last written".
 			const newest = await this.newestRow(tx, link.tenantId, person);
@@ -252,6 +483,10 @@ export class MembershipSyncHandler {
 			const grant = await this.latestGrant(tx, link.tenantId, person);
 			const other = grant ? await this.heldElsewhere(tx, link.tenantId, others, person, grant) : false;
 			const step = await this.change(tx, change, everRole, link, person, position, last, grant, other);
+			if (resync && unchangedFor(step, last, link)) {
+				// Nothing changed and the memory already says so: a resync at every start adds no row.
+				return { outcome: step.outcome, userId: person };
+			}
 			await this.audit.record(
 				{
 					at,
@@ -273,7 +508,8 @@ export class MembershipSyncHandler {
 						held: step.held,
 						restore: step.restore,
 						grant: step.grant,
-						voids: step.voids ?? null
+						voids: step.voids ?? null,
+						...(resync ? { source: 'resync' } : {})
 					}
 				},
 				tx
@@ -301,9 +537,8 @@ export class MembershipSyncHandler {
 					tx
 				);
 			}
-			return step.outcome;
+			return { outcome: step.outcome, userId: person };
 		});
-		return this.done(outcome);
 	}
 
 	/**
@@ -682,6 +917,8 @@ function stateOf(row: Row, userId: string): SyncState | null {
 	return {
 		eventId: String(details['event_id']).toUpperCase(),
 		occurredAt: typeof occurredAt === 'number' && Number.isFinite(occurredAt) ? occurredAt : null,
+		op: typeof details['op'] === 'string' ? details['op'] : null,
+		result: typeof details['result'] === 'string' ? details['result'] : null,
 		held: details['held'] === true,
 		restore: typeof restore === 'string' && restore ? restore : null,
 		grant: typeof grant === 'string' && grant ? grant : null,
@@ -689,6 +926,49 @@ function stateOf(row: Row, userId: string): SyncState | null {
 		seq: typeof seq === 'number' && Number.isFinite(seq) ? seq : 0,
 		voids: typeof voids === 'string' && voids ? voids : null
 	};
+}
+
+/** The outcomes after which a `created` or `role_changed` leaves the user no member of the organization. */
+const NOT_MADE_A_MEMBER = new Set(['not_a_member', 'account_missing', 'super_admin_kept']);
+
+/**
+ * Whether the sync keeps the user as a member of the organization: its last change for them (an event or a resync)
+ * was `created` or `role_changed` and left them a member.
+ */
+function isKeptMember(last: SyncState | null): boolean {
+	return !!last && (last.op === 'created' || last.op === 'role_changed') && !NOT_MADE_A_MEMBER.has(last.result ?? '');
+}
+
+/**
+ * Whether a resync's step changed nothing that the user's last row in the organization does not already say: no
+ * change of role or membership, the same hold, through the same link.
+ */
+function unchangedFor(step: RoleStep, last: SyncState | null, link: LinkRecord): boolean {
+	return (
+		step.outcome === 'not_a_member' ||
+		(step.outcome === 'unchanged' &&
+			isKeptMember(last) &&
+			!step.voids &&
+			step.held === last!.held &&
+			step.grant === last!.grant &&
+			step.restore === last!.restore &&
+			(!step.held || last!.linkId === link.linkId))
+	);
+}
+
+/** A failure as the log says it: the status and code of Ever Platform's answer, else the error's name. */
+function failureCode(error: unknown): string {
+	if (error instanceof ProblemError) return `${error.status} ${error.code}`;
+	return error instanceof Error ? error.name : 'error';
+}
+
+/** `code=count` pairs, by code. */
+function summary(counts: ReadonlyMap<string, number>): string {
+	if (counts.size === 0) return 'nothing applied';
+	return [...counts.entries()]
+		.sort(([a], [b]) => a.localeCompare(b))
+		.map(([code, n]) => `${code}=${n}`)
+		.join(' ');
 }
 
 /** The id of the tenant's role named `name`, or `null`. */

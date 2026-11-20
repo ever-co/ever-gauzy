@@ -11,7 +11,7 @@ import { CONSTANTS, EventEnvelope, ProblemError } from './sdk';
  * kept before it is acknowledged, and one that cannot be kept is never acknowledged.
  */
 describe('Ever Platform feed dispatcher', () => {
-	function scheduler(membership?: { apply: jest.Mock }) {
+	function scheduler(membership?: { apply: jest.Mock; resync?: jest.Mock }) {
 		const states = { sync: jest.fn().mockResolvedValue(undefined) };
 		const entitlements = { refreshAll: jest.fn().mockResolvedValue(undefined) };
 		const links = {
@@ -65,7 +65,7 @@ describe('Ever Platform feed dispatcher', () => {
 			undefined,
 			membership as never
 		);
-		return { instance, states, entitlements, links, connection, revoked, client, order, cleanup };
+		return { instance, states, entitlements, links, connection, revoked, client, order, cleanup, store };
 	}
 
 	const event = (
@@ -192,18 +192,55 @@ describe('Ever Platform feed dispatcher', () => {
 			expect(await instance.dispatchPage(page)).toEqual(['membership']);
 		});
 
-		it('a resync with the membership sync on says that skipped membership changes were not applied', async () => {
+		it('with the membership sync on, a membership resync runs once after a start and after each 410, before the feed is read', async () => {
+			const membership = { apply: jest.fn(), resync: jest.fn().mockResolvedValue('done') };
+			const { instance, client, store } = scheduler(membership);
+			client.instances.events.mockResolvedValue({ events: [], last_id: '', has_more: false });
+
+			await instance.readFeed();
+			expect(membership.resync).toHaveBeenCalledTimes(1);
+			expect(membership.resync.mock.calls[0][0]).toBe(client);
+			expect(membership.resync.mock.invocationCallOrder[0]).toBeLessThan(
+				client.instances.events.mock.invocationCallOrder[0]
+			);
+			// The lease is renewed through the scheduler's own holder.
+			store.takeLease.mockClear();
+			expect(await membership.resync.mock.calls[0][1]()).toBe(true);
+			expect(store.takeLease).toHaveBeenCalledTimes(1);
+
+			await instance.readFeed();
+			expect(membership.resync).toHaveBeenCalledTimes(1);
+
+			client.instances.events.mockRejectedValueOnce(
+				new ProblemError(410, 'resync_required', undefined, null, undefined, undefined, '01JD0000000000000000000042')
+			);
+			expect(await instance.readFeed()).toBe(true);
+			expect(membership.resync).toHaveBeenCalledTimes(1);
+			await instance.readFeed();
+			expect(membership.resync).toHaveBeenCalledTimes(2);
+		});
+
+		it('a membership resync that lost the lease stays owed; one that failed waits for the next 410 or start', async () => {
+			const membership = { apply: jest.fn(), resync: jest.fn().mockResolvedValueOnce('lease_lost') };
+			const { instance, client } = scheduler(membership);
+			client.instances.events.mockResolvedValue({ events: [], last_id: '', has_more: false });
+
+			expect(await instance.readFeed()).toBe(false);
+			expect(client.instances.events).not.toHaveBeenCalled();
+			membership.resync.mockRejectedValueOnce(new Error('database unavailable'));
+			await instance.readFeed();
+			expect(membership.resync).toHaveBeenCalledTimes(2);
+			expect(client.instances.events).toHaveBeenCalledTimes(1);
+			await instance.readFeed();
+			expect(membership.resync).toHaveBeenCalledTimes(2);
+		});
+
+		it('with the membership sync off, no resync runs and nothing is said', async () => {
 			const warn = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
 			try {
 				const client = { instances: { ackEvents: jest.fn().mockResolvedValue(undefined) } };
 				await scheduler().instance.resync(client, '01JD0000000000000000000042');
 				expect(warn).not.toHaveBeenCalled();
-				await scheduler({ apply: jest.fn() }).instance.resync(client, '01JD0000000000000000000042');
-				expect(warn).toHaveBeenCalledTimes(1);
-				expect(String(warn.mock.calls[0][0])).toContain('membership changes');
-				// Also when Ever Platform names no position (the feed is read again from its start).
-				await scheduler({ apply: jest.fn() }).instance.resync(client, undefined);
-				expect(warn).toHaveBeenCalledTimes(2);
 			} finally {
 				warn.mockRestore();
 			}

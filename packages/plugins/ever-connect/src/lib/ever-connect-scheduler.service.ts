@@ -47,7 +47,9 @@ export type DispatchOutcome = 'states' | 'entitlements' | 'link' | 'connection' 
  *   so an event read twice changes nothing more. A person's deletion or export request is recorded
  *   by its event id and answered once. A membership change of a linked Ever organization is applied
  *   to its Gauzy organization when the membership sync is on (`EVER_CONNECT_MEMBERSHIP_SYNC_ENABLED`),
- *   and acknowledged and ignored otherwise. Types this release has no handler for are acknowledged and
+ *   and acknowledged and ignored otherwise; with it on, the current members of each linked organization are
+ *   read again and applied once after each start and after each `410 resync_required`, before the feed is
+ *   read (`MembershipSyncHandler.resync`). Types this release has no handler for are acknowledged and
  *   ignored, and so are connection events (and a person's requests and membership changes) of another
  *   installation or of before this connection (a cursor read again from the start replays them).
  */
@@ -69,6 +71,11 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 	private readonly subscriptions: Subscription[] = [];
 	/** Events handled by this process (their ids), so a page read twice is handled once. */
 	private readonly seen = new Set<string>();
+	/**
+	 * A membership resync is owed (with the membership sync on): once after each start, and after each
+	 * `410 resync_required`. Run by the lease holder before its next read of the feed.
+	 */
+	private membershipResyncOwed = true;
 
 	constructor(
 		private readonly platform: EverConnectPlatformService,
@@ -228,6 +235,18 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 			return false;
 		}
 		const client = await this.platform.getClient();
+		if (this.membership && this.membershipResyncOwed) {
+			// Not owed again on a failure: it runs at the next 410 or start (the resync says why it stopped).
+			this.membershipResyncOwed = false;
+			const outcome = await this.membership
+				.resync(client, () => this.store.takeLease(this.holder, LEASE_MS))
+				.catch(() => 'failed' as const);
+			if (outcome === 'lease_lost') {
+				// Another process holds the lease now: this one runs the resync when it holds it again.
+				this.membershipResyncOwed = true;
+				return false;
+			}
+		}
 		this.feedAbort = new AbortController();
 		const waitS = this.config.feedMode === 'longpoll' ? FEED_WAIT_S : 0;
 		let page: { events: EventEnvelope[]; last_id: string; has_more: boolean };
@@ -404,9 +423,10 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 	 * After `410 resync_required` (the cursor is older than what Ever Platform keeps): re-read the
 	 * states and documents, then continue from the position Ever Platform names (`last_id`: kept,
 	 * then acknowledged); without one, read the feed again from its start (handlers re-read state, so
-	 * events read again change nothing). Ever Platform offers an installation no list of memberships to
-	 * re-read, so with the membership sync on, the membership changes the skipped part of the feed held
-	 * are not applied: this is said in the log, once per resync, for the operator to check the roles.
+	 * events read again change nothing). With the membership sync on, the membership changes the skipped
+	 * part of the feed held are made up for by a membership resync, owed from here and run before the
+	 * next read of the feed (`GET /v1/instances/me/tenant-links/{link}/memberships` for each linked
+	 * organization).
 	 */
 	async resync(
 		client: { instances: { ackEvents: (lastId: string) => Promise<unknown> } },
@@ -415,9 +435,7 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 		await this.states.sync({ force: true });
 		await this.entitlements.refreshAll();
 		if (this.membership) {
-			this.logger.warn(
-				'The event feed was resumed past changes Ever Platform no longer keeps: membership changes among them were not applied; check the roles of linked organizations.'
-			);
+			this.membershipResyncOwed = true;
 		}
 		if (typeof lastId === 'string' && lastId.length > 0 && lastId.length <= MAX_FEED_CURSOR_LENGTH) {
 			await this.store.updateConnection({ feedCursor: lastId });
