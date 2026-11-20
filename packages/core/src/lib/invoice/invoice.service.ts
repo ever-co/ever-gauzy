@@ -39,6 +39,7 @@ import { Readable } from 'stream';
 import { randomUUID } from 'node:crypto';
 import { PdfmakerService } from './pdfmaker.service';
 import { generateInvoicePdfDefinition, generateInvoicePaymentPdfDefinition } from './index';
+import { buildInvoiceDuplicate } from './invoice-duplicate';
 import { OrganizationService } from './../organization';
 import { TypeOrmInvoiceRepository } from './repository/type-orm-invoice.repository';
 import { MikroOrmInvoiceRepository } from './repository/mikro-orm-invoice.repository';
@@ -495,6 +496,28 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 		} catch {
 			return null;
 		}
+	}
+
+	/**
+	 * Copies an invoice or an estimate as a new draft of the tenant's next number (see `buildInvoiceDuplicate`): the
+	 * same contact, currency, taxes, discount, terms, tags and lines, dated today. The source is read as the caller
+	 * reads it, so one of another tenant, or outside the caller's organization boundary, is not found; and it is never
+	 * written. The copy bills no time and no expense the source billed.
+	 *
+	 * @param id The invoice or estimate to copy.
+	 * @returns The copy, with its lines.
+	 * @throws NotFoundException when the caller cannot read the source.
+	 * @throws BadRequestException when the tenant's number sequence cannot take another number.
+	 */
+	async duplicate(id: ID): Promise<IInvoice> {
+		const source = await this.findOneByIdString(id, { relations: ['invoiceItems', 'tags'] });
+		const answer = (await this.getHighestInvoiceNumber()) as unknown as { max?: unknown } | null;
+		const highest = Number(answer?.max ?? 0);
+		const invoiceNumber = (Number.isFinite(highest) ? Math.max(0, Math.trunc(highest)) : 0) + 1;
+		if (!Number.isSafeInteger(invoiceNumber)) {
+			throw new BadRequestException('INVOICE_NUMBER_SEQUENCE_EXHAUSTED');
+		}
+		return await this.createWithBilledTime(buildInvoiceDuplicate(source, { invoiceNumber, today: new Date() }));
 	}
 
 	private ownRepositories(): ILinesRepositories<Invoice> {
