@@ -234,6 +234,24 @@ export class EverConnectStore {
 		return affected === 1;
 	}
 
+	/**
+	 * Whether `holder` holds the lease now, read with `sql` (an open transaction's, to check it in the transaction
+	 * of a change). On Postgres and MySQL the connection row is locked until that transaction ends, so the lease cannot
+	 * pass to another process before the change commits.
+	 */
+	async holdsLease(holder: string, sql: EverConnectSql = this.sql): Promise<boolean> {
+		const q = (c: string) => sql.q(c);
+		const forUpdate = sql.dialect === 'sqlite' ? '' : ' FOR UPDATE';
+		const { rows } = await sql.run(
+			`SELECT ${q('leasedBy')} AS ${q('leasedBy')}, ${q('leaseUntil')} AS ${q('leaseUntil')} FROM ${q(CONNECTION)} ` +
+				`WHERE ${q('id')} = ${sql.ph(1)}${forUpdate}`,
+			[CONNECTION_ROW_ID]
+		);
+		const row = rows[0];
+		const until = row ? num(row['leaseUntil']) : null;
+		return !!row && row['leasedBy'] === holder && until !== null && until > this.now();
+	}
+
 	async releaseLease(holder: string): Promise<void> {
 		await this.sql.update(
 			CONNECTION,

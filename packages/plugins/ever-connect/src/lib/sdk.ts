@@ -20,6 +20,7 @@ export {
 	normalizeIdentifier,
 	NORMALIZATION_VERSION,
 	NotConnectedError,
+	OPERATIONS,
 	ProblemError,
 	RateLimitedError,
 	RequestRefusedError,
@@ -37,6 +38,7 @@ export type {
 	LookupHash,
 	LookupKind,
 	LookupSalt,
+	OperationSpec,
 	StoredKeySet,
 	VerifiedEntitlement
 } from '@ever-co/connect-sdk';
