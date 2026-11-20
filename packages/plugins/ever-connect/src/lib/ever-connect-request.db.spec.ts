@@ -187,6 +187,7 @@ describe.each(TEST_TARGETS)('Ever Platform routes on $name', (target) => {
 		['get', '/api/ever-connect/policy', undefined],
 		['put', '/api/ever-connect/policy/stats_link', { allowed: false }],
 		['put', '/api/ever-connect/public-url', { url: 'https://gauzy.acme.example' }],
+		['delete', '/api/ever-connect/public-url', undefined],
 		['post', '/api/ever-connect/integrations/stats_link/accept', { accepted: true }],
 		['post', '/api/ever-connect/entitlement/import', { jws: 'a.b.c' }]
 	];
