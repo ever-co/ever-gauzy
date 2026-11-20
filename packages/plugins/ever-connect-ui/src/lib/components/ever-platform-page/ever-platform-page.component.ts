@@ -234,6 +234,7 @@ export type EverPlatformView = 'loading' | 'ready' | 'unavailable' | 'error';
 																fieldSize="small"
 																type="url"
 																data-test="address-input"
+																[attr.aria-label]="'EVER_CONNECT.ADDRESS.TITLE' | translate"
 																[(ngModel)]="publicUrl"
 																[placeholder]="'https://gauzy.example.com'"
 																autocomplete="off"
@@ -827,7 +828,8 @@ export class EverPlatformPageComponent implements OnInit {
 		const url = this.publicUrl.trim();
 		if (!url) return;
 		this.run(this.api.setPublicUrl(url), () => {
-			this.publicUrl = '';
+			// An address typed meanwhile stays, to be reported next.
+			if (this.publicUrl.trim() === url) this.publicUrl = '';
 			this.say('EVER_CONNECT.NOTICES.ADDRESS_REPORTED');
 		});
 	}

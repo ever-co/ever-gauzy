@@ -1,6 +1,6 @@
 // cspell:ignore abcdefghijk
 import { TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { Store } from '@gauzy/ui-core/core';
 import { EverConnectStatus, EverConnectUiService } from '../../services/ever-connect.service';
 import { EverPlatformPageComponent } from './ever-platform-page.component';
@@ -197,10 +197,24 @@ describe('EverPlatformPageComponent', () => {
 		component.reportAddress();
 		expect(api.setPublicUrl).toHaveBeenCalledWith('https://gauzy.acme.example/app');
 		expect(component.publicUrl).toBe('');
+		expect(find('address-input')?.getAttribute('aria-label')).toBe('EVER_CONNECT.ADDRESS.TITLE');
 		expect(component.notice).toBe('EVER_CONNECT.NOTICES.ADDRESS_REPORTED');
 		component.withdrawAddress();
 		expect(api.clearPublicUrl).toHaveBeenCalledTimes(1);
 		expect(component.notice).toBe('EVER_CONNECT.NOTICES.ADDRESS_WITHDRAWN');
+	});
+
+	it('the installation address: an address typed while the report is on its way stays', () => {
+		api.status.mockReturnValue(of(withAddress({ enabled: true, url: null })));
+		const answer = new Subject<{ enabled: boolean; url: string | null }>();
+		api.setPublicUrl.mockReturnValue(answer);
+		const { component } = render();
+		component.publicUrl = 'https://a.acme.example';
+		component.reportAddress();
+		component.publicUrl = 'https://b.acme.example';
+		answer.next({ enabled: true, url: 'https://a.acme.example/' });
+		answer.complete();
+		expect(component.publicUrl).toBe('https://b.acme.example');
 	});
 
 	it('the installation address: a refused address says why', () => {
