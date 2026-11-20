@@ -6,16 +6,17 @@
 :host {
   @include ga-hub.density-tokens();
 
-  --list-hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+  --list-hairline: var(--gauzy-overlay-border-color);
   --list-text: var(--text-basic-color);
   --list-text-muted: var(--gauzy-text-color-2, var(--text-hint-color));
   --list-header-height: 2rem;
   --list-cell-padding-x: var(--gauzy-table-cell-padding-x, 0.4375rem);
-  --list-radius: 0.375rem;
+  // The flat-chrome radius for chips and the drag preview; the panel takes the card radius.
+  --list-radius: var(--gauzy-radius-sm);
 
   display: block;
   overflow-x: auto;
-  border-radius: 0.5rem;
+  border-radius: var(--border-radius);
   background: var(--gauzy-card-1, var(--background-basic-color-1));
   box-shadow: inset 0 0 0 1px var(--list-hairline);
 }
@@ -40,7 +41,7 @@
   cursor: default;
 
   &:not(.head):hover {
-    background: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+    background: var(--gauzy-hover-tint);
   }
 
   // The quiet header: small, semi-bold, muted — the data is what should stand out.
@@ -66,16 +67,18 @@
     }
   }
 
-  // The row the keyboard (J / K) or a click is on: the hover tint, as the Documents table marks its open row.
+  // The row the keyboard (J / K) or a click is on: the hover tint, and a bar at its start edge that stays on a selected
+  // row too (the selected tint below replaces only the background), so the current row is always told apart.
   &.focused {
-    background: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+    background: var(--gauzy-hover-tint);
+    box-shadow: inset 2px 0 0 var(--color-primary-default);
     outline: none;
   }
 
   // A checked row: the Documents table's selected tint, kept under the pointer too.
   &.selected,
   &.selected:hover {
-    background: var(--gauzy-active-tint, rgba(126, 126, 143, 0.2));
+    background: var(--gauzy-active-tint);
   }
 
   &.cdk-drag-preview {
@@ -83,7 +86,7 @@
     background: var(--gauzy-card-1, var(--background-basic-color-1));
     box-shadow:
       inset 0 0 0 1px var(--list-hairline),
-      0 0.5rem 1.5rem rgba(15, 18, 34, 0.16);
+      var(--gauzy-overlay-shadow, 0 4px 12px -2px rgba(0, 0, 0, 0.14), 0 2px 6px -2px rgba(0, 0, 0, 0.08));
   }
 
   &.cdk-drag-placeholder {
@@ -246,7 +249,8 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: var(--text-control-color);
+  // The theme's text on the neutral chip; a coloured label sets its own text colour from its colour (see the template).
+  color: var(--text-basic-color);
   background: var(--chip-color, var(--background-basic-color-3));
 
   &.overflow {
@@ -297,7 +301,7 @@
   font-size: 0.75rem;
   font-weight: 600;
   color: var(--list-text);
-  background: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+  background: var(--gauzy-hover-tint);
   border-bottom: 1px solid var(--list-hairline);
 
   .group-label {

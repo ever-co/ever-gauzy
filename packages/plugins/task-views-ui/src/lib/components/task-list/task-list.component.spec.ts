@@ -1,7 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { runInThisContext } from 'node:vm';
 import { ID, ITask } from '@gauzy/contracts';
-import { initialsOf, isOverdue, RowToggle, TaskListComponent, TaskRowGroup } from './task-list.component';
+import {
+	initialsOf,
+	isOverdue,
+	labelTextColor,
+	RowToggle,
+	TaskListComponent,
+	TaskRowGroup
+} from './task-list.component';
 
 const row = (id: string, extra: Partial<ITask> = {}) =>
 	({ id, title: `Task ${id}`, number: 1, project: { taskKey: 'API' }, ...extra }) as ITask;
@@ -119,5 +126,21 @@ describe('TaskListComponent', () => {
 		expect(isOverdue({ dueDate: undefined })).toBe(false);
 		expect(initialsOf('Ada Lovelace')).toBe('AL');
 		expect(initialsOf('Plato')).toBe('PL');
+	});
+});
+
+describe('labelTextColor', () => {
+	it('reads a light label in black and a dark one in white', () => {
+		expect(labelTextColor('#ffffff')).toBe('#000000');
+		expect(labelTextColor('#fff')).toBe('#000000');
+		expect(labelTextColor('rgba(255, 255, 240, 0.9)')).toBe('#000000');
+		expect(labelTextColor('#1a1a2e')).toBe('#ffffff');
+		expect(labelTextColor('#ff00ffcc')).toBe('#ffffff');
+	});
+
+	it("keeps the theme's text colour between the thresholds and for a colour it cannot read", () => {
+		expect(labelTextColor('#a0a0a0')).toBeNull();
+		expect(labelTextColor('var(--color-primary-default)')).toBeNull();
+		expect(labelTextColor(null)).toBeNull();
 	});
 });

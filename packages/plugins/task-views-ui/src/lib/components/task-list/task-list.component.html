@@ -161,14 +161,20 @@
 						<span class="cell labels" role="gridcell">
 							@for (tag of row.tags ?? []; track tag.id; let index = $index) {
 								@if (index < labelsShown) {
-									<span class="label" [style.--chip-color]="tag.color || null" [title]="tag.name">{{
-										tag.name
-									}}</span>
+									<span
+										class="label"
+										[style.--chip-color]="tag.color || null"
+										[style.color]="labelTextColor(tag.color)"
+										[title]="tag.name"
+										>{{ tag.name }}</span
+									>
 								}
 							}
 							@if ((row.tags?.length ?? 0) > labelsShown) {
+								<!-- The hidden names: in the tooltip for the pointer, and as text a screen reader reads. -->
 								<span class="label overflow" [nbTooltip]="hiddenLabels(row.tags)"
-									>+{{ (row.tags?.length ?? 0) - labelsShown }}</span
+									>+{{ (row.tags?.length ?? 0) - labelsShown
+									}}<span class="sr-only">: {{ hiddenLabels(row.tags) }}</span></span
 								>
 							}
 						</span>

@@ -45,6 +45,32 @@ export function isOverdue(task: Pick<ITask, 'dueDate' | 'status'>, now = Date.no
 	return due !== null && due < now && !['done', 'completed', 'cancelled'].includes(String(task.status ?? ''));
 }
 
+/**
+ * The text colour that reads on a label's own colour, by the weighted brightness and thresholds the app's tag chips
+ * use (`backgroundContrast`): white on a dark colour, black on a light one, and the theme's text colour (null) in
+ * between or for a colour it cannot read (a theme variable, a name).
+ */
+export function labelTextColor(color: string | null | undefined): string | null {
+	const rgb = rgbOf(color);
+	if (!rgb) return null;
+	const brightness = rgb[0] * 0.299 + rgb[1] * 0.587 + rgb[2] * 0.114;
+	if (brightness < 128) return '#ffffff';
+	if (brightness > 186) return '#000000';
+	return null;
+}
+
+/** `#rgb`, `#rrggbb` (an alpha part is ignored) or `rgb()` / `rgba()` as red, green and blue. */
+function rgbOf(color: string | null | undefined): [number, number, number] | null {
+	const value = (color ?? '').trim();
+	const hex = /^#([0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i.exec(value)?.[1];
+	if (hex) {
+		const full = hex.length <= 4 ? [...hex.slice(0, 3)].map((digit) => digit + digit).join('') : hex.slice(0, 6);
+		return [0, 2, 4].map((at) => parseInt(full.slice(at, at + 2), 16)) as [number, number, number];
+	}
+	const rgb = /^rgba?\(\s*(\d+)[\s,]+(\d+)[\s,]+(\d+)/i.exec(value);
+	return rgb ? [Number(rgb[1]), Number(rgb[2]), Number(rgb[3])] : null;
+}
+
 /** Two letters for a person without a picture. */
 export function initialsOf(name: string): string {
 	const words = name.trim().split(/\s+/).filter(Boolean);
@@ -87,6 +113,7 @@ export class TaskListComponent {
 	protected readonly initialsOf = initialsOf;
 	protected readonly isOverdue = isOverdue;
 	protected readonly dueDateShown = dueDateShown;
+	protected readonly labelTextColor = labelTextColor;
 
 	/** How many labels a row shows before the rest fold into a "+N" chip (their names are in its tooltip). */
 	protected readonly labelsShown = 2;
