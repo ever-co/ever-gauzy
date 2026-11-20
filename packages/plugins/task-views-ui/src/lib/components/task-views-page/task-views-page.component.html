@@ -14,8 +14,8 @@
 		<div class="page-head">
 			<div class="view-title">
 				<h4 data-test="view-title">
-					@if (current().kind === 'built-in') {
-						{{ builtInKey($any(current()).key) | translate }}
+					@if (builtInTitleKey(); as key) {
+						{{ key | translate }}
 					} @else {
 						{{ title() }}
 					}
@@ -39,7 +39,7 @@
 				<span class="count">{{ 'TASK_VIEWS.VIEW.COUNT' | translate: { count: total() } }}</span>
 			</div>
 			<div class="switcher-end">
-				@if (views().length > 8) {
+				@if (views().length > 8 || viewSearch()) {
 					<input
 						nbInput
 						fieldSize="small"
@@ -90,16 +90,14 @@
 								}}</nb-option>
 							}
 						</nb-option-group>
-						@for (section of ['personal', 'team', 'project', 'organization']; track section) {
-							@if ($any(groupedViews())[section].length) {
-								<nb-option-group [title]="'TASK_VIEWS.SWITCHER.' + section.toUpperCase() | translate">
-									@for (view of $any(groupedViews())[section]; track view.id) {
-										<nb-option [value]="'saved:' + view.id" [attr.data-view]="view.id">{{
-											view.name
-										}}</nb-option>
-									}
-								</nb-option-group>
-							}
+						@for (section of viewSections(); track section.scope) {
+							<nb-option-group [title]="section.titleKey | translate">
+								@for (view of section.views; track view.id) {
+									<nb-option [value]="'saved:' + view.id" [attr.data-view]="view.id">{{
+										view.name
+									}}</nb-option>
+								}
+							</nb-option-group>
 						}
 						@if (!views().length) {
 							<nb-option-group [title]="'TASK_VIEWS.SWITCHER.EMPTY' | translate"></nb-option-group>
