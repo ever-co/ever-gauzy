@@ -102,7 +102,7 @@ jobs:
         # app. It goes through yarn, not Nx, so `.env.local` is not loaded here either.
         run: yarn config:dev
 
-      - name: Run the specs of sweep 4 (#12111 #12112 #12113 #12114) on develop 01ed1c8d28
+      - name: Run the mcp-server specs after #12120 on develop 6a19657d74
         env:
           NX_LOAD_DOT_ENV_FILES: 'false'
         run: |
@@ -110,6 +110,4 @@ jobs:
           J='node node_modules/jest/bin/jest.js'
           export NODE_OPTIONS='--experimental-vm-modules --max-old-space-size=24576'
           $J -c packages/mcp-server/jest.config.ts --runInBand --ci || status=$?
-          $J -c packages/core/jest.config.ts --runInBand --ci time-tracking/time-log/ time-tracking/timer/ || status=$?
-          $J -c packages/ui-core/jest.config.ts --runInBand --ci services/favorite/ || status=$?
           exit "$status"
