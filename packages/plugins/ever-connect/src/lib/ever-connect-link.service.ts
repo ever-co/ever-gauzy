@@ -91,19 +91,15 @@ export class EverConnectLinkService {
 	 * organization it belongs to.
 	 */
 	async installationLinks(): Promise<InstallationLinks> {
-		const live = await this.store.liveLinks();
-		const items = live
-			.slice()
-			.reverse()
-			.slice(0, INSTALLATION_LINKS_SHOWN)
-			.map((link) => ({
-				link_id: link.linkId,
-				ever_org_id: link.everOrgId,
-				handle: link.everHandle,
-				status: link.status,
-				linked_at: new Date(link.createdAt).toISOString()
-			}));
-		return { total: live.length, items };
+		const { total, links } = await this.store.latestLiveLinks(INSTALLATION_LINKS_SHOWN);
+		const items = links.map((link) => ({
+			link_id: link.linkId,
+			ever_org_id: link.everOrgId,
+			handle: link.everHandle,
+			status: link.status,
+			linked_at: new Date(link.createdAt).toISOString()
+		}));
+		return { total, items };
 	}
 
 	/** Links this organization with a link code (`EVL-…`). */

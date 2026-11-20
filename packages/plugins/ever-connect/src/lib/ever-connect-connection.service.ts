@@ -431,6 +431,13 @@ export class EverConnectConnectionService implements OnModuleInit, OnModuleDestr
 		await this.store.updateConnection({ status: 'connected' });
 		try {
 			await this.completeConnect(connection.platformInstanceId, { tenant: null, userId: null }, null);
+		} catch (error) {
+			this.logger.warn(`The approved connection could not be completed (${errorCode(error)}).`);
+			return;
+		}
+		// The heartbeat and the feed start whatever happens to the audit row below.
+		this.signals.connected$.next();
+		try {
 			await this.audit.record({
 				action: 'instance.connect',
 				actorLabel: actor.actorLabel,
@@ -442,9 +449,8 @@ export class EverConnectConnectionService implements OnModuleInit, OnModuleDestr
 					source: 'approval'
 				}
 			});
-			this.signals.connected$.next();
 		} catch (error) {
-			this.logger.warn(`The approved connection could not be completed (${errorCode(error)}).`);
+			this.logger.warn(`The approval of the connection could not be audited (${errorCode(error)}).`);
 		}
 	}
 

@@ -194,13 +194,15 @@ export type EverPlatformView = 'loading' | 'ready' | 'unavailable' | 'error';
 													<h3>{{ 'EVER_CONNECT.CONNECTION.LINKS' | translate: { count: links.total } }}</h3>
 													@if (links.items.length) {
 														<table class="table" data-test="installation-links">
-															@for (item of links.items; track item.link_id) {
-																<tr>
-																	<td>{{ item.handle ? 'ever.co/' + item.handle : item.ever_org_id }}</td>
-																	<td>{{ 'EVER_CONNECT.CONNECTION.LINK_STATUS.' + item.status | translate }}</td>
-																	<td>{{ item.linked_at | date: 'mediumDate' }}</td>
-																</tr>
-															}
+															<tbody>
+																@for (item of links.items; track item.link_id) {
+																	<tr>
+																		<td>{{ item.handle ? 'ever.co/' + item.handle : item.ever_org_id }}</td>
+																		<td>{{ 'EVER_CONNECT.CONNECTION.LINK_STATUS.' + item.status | translate }}</td>
+																		<td>{{ item.linked_at | date: 'mediumDate' }}</td>
+																	</tr>
+																}
+															</tbody>
 														</table>
 														@if (links.total > links.items.length) {
 															<p class="hint" data-test="installation-links-more">

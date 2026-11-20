@@ -96,7 +96,7 @@ describe('the connection lifecycle of the Connection tab', () => {
 		await dataSource.destroy();
 	});
 
-	function connectionService(instanceStatus: string) {
+	function connectionService(instanceStatus: string, auditService: Pick<EverConnectAuditService, 'record'> = audit) {
 		const self = jest.fn(async () => ({ instance: { status: instanceStatus }, tenant_links: [] }));
 		const platform = { getClient: async () => ({ instances: { self } }), setRegistryInstanceId: jest.fn() };
 		const entitlements = {
@@ -110,7 +110,7 @@ describe('the connection lifecycle of the Connection tab', () => {
 		const service = new EverConnectConnectionService(
 			platform as never,
 			store,
-			audit,
+			auditService as never,
 			entitlements as never,
 			states as never,
 			{} as never,
@@ -150,6 +150,15 @@ describe('the connection lifecycle of the Connection tab', () => {
 				details: { platform_instance_id: INSTANCE_ID, kid: 'kid-1', status: 'connected', source: 'approval' }
 			}
 		]);
+	});
+
+	it('an approval whose audit row cannot be written still starts the connection', async () => {
+		await store.updateConnection({ status: 'pending_approval', platformInstanceId: INSTANCE_ID, kid: 'kid-1' });
+		const failing = { record: jest.fn().mockRejectedValue(new Error('database unavailable')) };
+		const { service, connected } = connectionService('active', failing);
+		expect(await service.checkApproval({ actorLabel: 'operator', userId: OPS })).toBe('connected');
+		expect(failing.record).toHaveBeenCalledTimes(1);
+		expect(connected).toHaveBeenCalledTimes(1);
 	});
 
 	it('Check again while it still waits: nothing changes and nothing is audited', async () => {

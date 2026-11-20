@@ -303,6 +303,35 @@ export class EverConnectStore {
 	}
 
 	/**
+	 * The newest `limit` links that are not `unlinked` (only the Ever side the operator's Connection tab
+	 * lists) and how many there are: filtered, sorted and limited in the database, so the archived
+	 * links and the stored documents are never read.
+	 */
+	async latestLiveLinks(limit: number): Promise<{
+		total: number;
+		links: Array<Pick<LinkRecord, 'linkId' | 'everOrgId' | 'everHandle' | 'status' | 'createdAt'>>;
+	}> {
+		const q = (column: string) => this.sql.q(column);
+		const live = `${q('status')} <> ${this.sql.ph(1)}`;
+		const total = await this.sql.run(`SELECT COUNT(*) AS ${q('n')} FROM ${q(LINK)} WHERE ${live}`, ['unlinked']);
+		const { rows } = await this.sql.run(
+			`SELECT ${['linkId', 'everOrgId', 'everHandle', 'status', 'createdAt'].map(q).join(', ')} FROM ${q(LINK)} ` +
+				`WHERE ${live} ORDER BY ${q('createdAt')} DESC, ${q('id')} DESC LIMIT ${Math.max(0, Math.floor(limit))}`,
+			['unlinked']
+		);
+		return {
+			total: num(total.rows[0]?.['n']) ?? 0,
+			links: rows.map((row) => ({
+				linkId: String(row['linkId']),
+				everOrgId: String(row['everOrgId']),
+				everHandle: str(row['everHandle']),
+				status: String(row['status']) as LinkRecord['status'],
+				createdAt: num(row['createdAt']) ?? 0
+			}))
+		};
+	}
+
+	/**
 	 * Inserts a live link. The unique `liveKey` (`<tenantId>|<organizationId>`) refuses a second live
 	 * link for one Gauzy organization, also when two requests race: {@link LiveLinkExistsError}.
 	 */
