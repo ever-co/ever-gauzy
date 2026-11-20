@@ -32,6 +32,7 @@ describe('readEverConnectConfig', () => {
 			apiUrl: 'https://api.ever.co',
 			installSource: 'self-hosted',
 			cloud: false,
+			cloudOperatorUserIds: [],
 			feedMode: 'longpoll',
 			deny: [],
 			connectCode: null,
@@ -204,6 +205,32 @@ describe('readEverConnectConfig', () => {
 	it('the paired Teams web app: EVER_STATS_SERVES', () => {
 		expect(readEverConnectConfig({ EVER_STATS_SERVES: 'gauzy,teams' }).serves).toEqual(['gauzy', 'teams']);
 		expect(readEverConnectConfig({ EVER_STATS_SERVES: 'teams,other' }).serves).toEqual(['gauzy']);
+	});
+
+	it('the operators of Ever cloud: user ids only, read only with EVER_INSTALL_SOURCE=cloud', () => {
+		const id = '2f0d6a52-6a0f-4a8e-9d3c-4b7d9e1f0a11';
+		const other = '7c1e4a3b-0d2f-4e5a-8b9c-1a2b3c4d5e6f';
+		expect(
+			readEverConnectConfig({
+				EVER_INSTALL_SOURCE: 'cloud',
+				EVER_CONNECT_CLOUD_OPERATOR_USER_IDS: ` ${id.toUpperCase()} ,${other},${id}`
+			}).cloudOperatorUserIds
+		).toEqual([id, other]);
+		const warn = jest.fn();
+		expect(
+			readEverConnectConfig(
+				{ EVER_INSTALL_SOURCE: 'cloud', EVER_CONNECT_CLOUD_OPERATOR_USER_IDS: `${id},ops@acme.test` },
+				warn
+			).cloudOperatorUserIds
+		).toEqual([id]);
+		expect(warn).toHaveBeenCalledTimes(1);
+		expect(warn.mock.calls[0][0]).not.toContain('ops@acme.test');
+		const selfHosted = jest.fn();
+		expect(
+			readEverConnectConfig({ EVER_CONNECT_CLOUD_OPERATOR_USER_IDS: id }, selfHosted).cloudOperatorUserIds
+		).toEqual([]);
+		expect(selfHosted).toHaveBeenCalledTimes(1);
+		expect(readEverConnectConfig({ EVER_INSTALL_SOURCE: 'cloud' }).cloudOperatorUserIds).toEqual([]);
 	});
 
 	it('the connect code is kept as given (checked when it is used)', () => {

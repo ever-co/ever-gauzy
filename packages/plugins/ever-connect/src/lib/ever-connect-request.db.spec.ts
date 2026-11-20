@@ -233,7 +233,15 @@ describe.each(TEST_TARGETS)('Ever Platform routes on $name', (target) => {
 			{ EVER_INSTALL_SOURCE: 'cloud', EVER_OPERATOR_USER_IDS: 'x' },
 			'operator'
 		],
-		['an employee', { EVER_OPERATOR_USER_IDS: 'x' }, 'employee']
+		['an employee', { EVER_OPERATOR_USER_IDS: 'x' }, 'employee'],
+		[
+			'a super admin the operator list of Ever Cloud does not name',
+			{
+				EVER_INSTALL_SOURCE: 'cloud',
+				EVER_CONNECT_CLOUD_OPERATOR_USER_IDS: '00000000-0000-4000-8000-000000000000'
+			},
+			'operator'
+		]
 	])('operator routes answer 404 to %s', async (_name, env: Record<string, string | undefined>, user) => {
 		const listed: Record<string, string | undefined> =
 			env['EVER_OPERATOR_USER_IDS'] === 'x' ? { ...env, EVER_OPERATOR_USER_IDS: acme.superAdminId } : env;
@@ -241,6 +249,23 @@ describe.each(TEST_TARGETS)('Ever Platform routes on $name', (target) => {
 		for (const [method, path, body] of OPERATOR_ROUTES) {
 			expect([method, path, (await call(method, path, user, body)).status]).toEqual([method, path, 404]);
 		}
+		expect(calls).toEqual([]);
+	});
+
+	it('Ever Cloud: a super admin listed in EVER_CONNECT_CLOUD_OPERATOR_USER_IDS operates the connection; nobody else', async () => {
+		app = await start({
+			EVER_INSTALL_SOURCE: 'cloud',
+			EVER_CONNECT_CLOUD_OPERATOR_USER_IDS: acme.superAdminId,
+			JWT_SECRET: 'request-test-secret'
+		});
+		expect((await call('get', '/api/ever-connect/policy', 'operator')).status).toBe(200);
+		const check = await call('post', '/api/ever-connect/connection/check', 'operator', {});
+		expect([check.status, check.body]).toEqual([200, { status: 'disconnected' }]);
+		const status = await call('get', '/api/ever-connect/status', 'operator');
+		expect(status.body).toMatchObject({ managed_by: 'ever_cloud', operator: true });
+		expect(status.body.installation_links).toEqual({ total: 0, items: [] });
+		expect((await call('get', '/api/ever-connect/policy', 'stranger')).status).toBe(404);
+		expect((await call('get', '/api/ever-connect/policy', 'employee')).status).toBe(404);
 		expect(calls).toEqual([]);
 	});
 

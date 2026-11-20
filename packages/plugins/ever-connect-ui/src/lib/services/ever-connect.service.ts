@@ -12,6 +12,7 @@ export interface EverConnectStatus {
 	enabled: true;
 	install_source: string;
 	managed_by: 'ever_cloud' | 'operator';
+	/** The operator of this installation's connection (on Ever's cloud: a super admin the deployment lists by id). */
 	operator: boolean;
 	connected: boolean;
 	connection: {
@@ -31,9 +32,20 @@ export interface EverConnectStatus {
 		connect_key: 'none' | 'ok' | 'unreadable';
 		env_code: 'none' | 'pending' | 'used';
 	} | null;
+	/** The installation's linked organizations, newest first (for the operator only). */
+	installation_links: { total: number; items: EverConnectInstallationLink[] } | null;
 	link: EverConnectLink | null;
 	pending_approvals: EverConnectIntegration[];
 	in_product_consent: boolean;
+}
+
+/** One link of the installation on the operator's Connection tab (the Ever side only). */
+export interface EverConnectInstallationLink {
+	link_id: string;
+	ever_org_id: string;
+	handle: string | null;
+	status: 'linked' | 'suspended' | 'orphaned';
+	linked_at: string;
 }
 
 export interface EverConnectLink {

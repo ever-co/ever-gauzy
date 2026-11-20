@@ -26,9 +26,11 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
  * The installation side of the Ever Platform connection, for the operator of this installation only
- * (`EverConnectOperatorGuard`): connect, disconnect, the instance policy, the installation's public
- * address, and the local accept of installation-wide integrations. Everyone else, every tenant
- * administrator of Ever's cloud included, gets 404. No answer is cached.
+ * (`EverConnectOperatorGuard`): connect, check a connection waiting for approval, replace the key,
+ * disconnect, the instance policy, the installation's public address, and the local accept of
+ * installation-wide integrations. On Ever's cloud that is a super admin listed by id in
+ * `EVER_CONNECT_CLOUD_OPERATOR_USER_IDS`; everyone else, every other tenant administrator of Ever's
+ * cloud included, gets 404. No answer is cached.
  */
 @ApiTags('Ever Platform')
 @ApiBearerAuth()
@@ -76,12 +78,14 @@ export class EverConnectInstanceController {
 		});
 	}
 
-	/** Re-reads a connection waiting for approval in app.ever.co. */
+	/** **Check again**: re-reads a connection waiting for approval in app.ever.co, and finishes it once approved. */
 	@Post('connection/check')
 	@HttpCode(HttpStatus.OK)
 	@Header('Cache-Control', 'no-store')
-	async check(): Promise<{ status: string }> {
-		return { status: await this.connection.checkApproval() };
+	async check(@Req() request: RequestWithUser): Promise<{ status: string }> {
+		return {
+			status: await this.connection.checkApproval({ actorLabel: 'operator', userId: request.user?.id ?? null })
+		};
 	}
 
 	/**

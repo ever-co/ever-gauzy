@@ -1,6 +1,6 @@
 import { CanActivate, ExecutionContext, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
-import { EverOperatorService } from '@gauzy/plugin-ever-instance';
 import { isEverConnectEnabled } from '../ever-connect-enabled';
+import { EverConnectOperatorService } from '../ever-connect-operator.service';
 import { EVER_CONNECT_ENV } from '../ever-connect.constants';
 
 /** The role name of the signed-in user, as the authentication guard attached it. */
@@ -10,13 +10,14 @@ export function roleNameOf(user: { role?: string | { name?: string } } | null | 
 }
 
 /**
- * Lets only the operator of this installation through (`EverOperatorService`, shared with the
- * anonymous statistics): a super admin named in `EVER_OPERATOR_USER_IDS` or `EVER_OPERATOR_EMAILS`,
- * or the first super admin of a single-tenant installation; nobody on Ever's cloud
- * (`EVER_INSTALL_SOURCE=cloud`), and nobody on an installation with several tenants that names no
- * operator. Everyone else gets 404, as if the route did not exist: connecting, disconnecting, the
- * instance policy and the installation-wide integrations are the installation's, not a tenant's.
- * With `EVER_CONNECT_ENABLED` no longer `true` (read again here) everyone gets 404.
+ * Lets only the operator of this installation's connection through (`EverConnectOperatorService`): a
+ * super admin named in `EVER_OPERATOR_USER_IDS` or `EVER_OPERATOR_EMAILS`, or the first super admin of
+ * a single-tenant installation; on Ever's cloud (`EVER_INSTALL_SOURCE=cloud`) only a super admin listed
+ * by id in `EVER_CONNECT_CLOUD_OPERATOR_USER_IDS` (nobody when it is unset); nobody on an installation
+ * with several tenants that names no operator. Everyone else gets 404, as if the route did not exist:
+ * connecting, disconnecting, the instance policy and the installation-wide integrations are the
+ * installation's, not a tenant's. With `EVER_CONNECT_ENABLED` no longer `true` (read again here)
+ * everyone gets 404.
  *
  * It reads the user the authentication guard attached to the request, then the database state of
  * that user (their role right now), never the claims of their token.
@@ -26,7 +27,7 @@ export class EverConnectOperatorGuard implements CanActivate {
 	private readonly env: Record<string, string | undefined>;
 
 	constructor(
-		private readonly operator: EverOperatorService,
+		private readonly operator: EverConnectOperatorService,
 		@Optional() @Inject(EVER_CONNECT_ENV) env?: Record<string, string | undefined>
 	) {
 		this.env = env ?? process.env;
