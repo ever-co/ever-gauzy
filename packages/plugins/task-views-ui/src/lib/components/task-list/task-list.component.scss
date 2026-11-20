@@ -88,6 +88,30 @@
     width: 1rem;
     display: flex;
     align-items: center;
+    justify-content: center;
+    overflow: visible;
+
+    // The same box the tasks dashboard's table draws for its row checkboxes: without it the app's global input
+    // rules gave these a bordered, padded box taller than the checkbox itself.
+    input[type='checkbox'] {
+      display: inline-block;
+      flex: 0 0 auto;
+      width: 0.875rem;
+      height: 0.875rem;
+      margin: 0;
+      padding: 0 !important;
+      vertical-align: middle;
+      accent-color: var(--color-primary-default);
+      cursor: pointer;
+      border: none !important;
+      outline: none !important;
+      box-shadow: none !important;
+
+      &:focus-visible {
+        outline: 2px solid var(--color-primary-default) !important;
+        outline-offset: 2px;
+      }
+    }
   }
   &.handle {
     width: 1rem;
