@@ -33,6 +33,7 @@ import { GoToResult, TaskReferenceNavigatorService } from '../../services/task-r
 				nbInput
 				[fieldSize]="size()"
 				class="go-to-field"
+				[class.compact]="size() === 'tiny'"
 				name="reference"
 				autocomplete="off"
 				spellcheck="false"
@@ -72,6 +73,11 @@ import { GoToResult, TaskReferenceNavigatorService } from '../../services/task-r
 			.go-to-field {
 				min-width: 12rem;
 				flex: 1;
+			}
+			/* The tiny box (a page header's): a narrower field, so it sits as small as the controls beside it. */
+			.go-to-field.compact {
+				min-width: 0;
+				width: 9.5rem;
 			}
 			.go-to-message {
 				margin: 0.25rem 0 0;
