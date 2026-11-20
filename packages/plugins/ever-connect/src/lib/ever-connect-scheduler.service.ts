@@ -27,9 +27,16 @@ import { EverConnectSql } from './ever-connect-sql';
 import { EverConnectStore } from './ever-connect.store';
 import { personRequestKind, PersonRequestsHandler } from './handlers/person-requests.handler';
 import { membershipChangeOf } from './membership/membership-sync.config';
-import { MembershipSyncHandler } from './membership/membership-sync.handler';
+import { MembershipResyncOutcome, MembershipSyncHandler } from './membership/membership-sync.handler';
 import { EverConnectProvisionCompletion } from './services/ever-connect-provision-completion.service';
 import { EventEnvelope, EverPlatformClient, ProblemError } from './sdk';
+
+/** The lease guards of one membership resync (see `EverConnectScheduler.leaseGuards`). */
+interface LeaseGuards {
+	keep: () => Promise<boolean>;
+	check: (tx: EverConnectSql) => Promise<boolean>;
+	lost: () => boolean;
+}
 
 /** What the dispatcher did with one event. */
 export type DispatchOutcome = 'states' | 'entitlements' | 'link' | 'connection' | 'person' | 'membership' | 'ignored';
@@ -242,14 +249,11 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 			return false;
 		}
 		const client = await this.platform.getClient();
-		const keep = this.leaseKeeper();
+		const guards = this.leaseGuards();
 		if (this.membership && this.membershipResyncOwed) {
 			// Not owed again on a failure: it runs at the next 410 or start (the resync says why it stopped).
 			this.membershipResyncOwed = false;
-			const outcome = await this.membership
-				.resync(client, keep, this.leaseCheck())
-				.catch(() => 'failed' as const);
-			if (outcome === 'lease_lost') {
+			if ((await this.membershipResync(client, guards)) === 'lease_lost') {
 				// Stopped, or another process holds the lease now: this one runs it when it holds the lease again.
 				this.membershipResyncOwed = true;
 				return false;
@@ -269,7 +273,7 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 				return false;
 			}
 			if (error instanceof ProblemError && error.status === 410 && error.code === 'resync_required') {
-				return this.resync(client, error.lastId, keep);
+				return this.resync(client, error.lastId, guards);
 			}
 			throw error;
 		} finally {
@@ -438,7 +442,7 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 	async resync(
 		client: Pick<EverPlatformClient, 'call'> & { instances: { ackEvents: (lastId: string) => Promise<unknown> } },
 		lastId: string | undefined,
-		keep: () => Promise<boolean> = this.leaseKeeper()
+		guards: LeaseGuards = this.leaseGuards()
 	): Promise<boolean> {
 		await this.states.sync({ force: true });
 		await this.entitlements.refreshAll();
@@ -446,10 +450,7 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 			// Before the position moves on: a process that stops here (or loses the lease) leaves the old position, so
 			// the next lease holder is answered 410 again and runs it. A resync that failed otherwise does not hold the
 			// feed back: it runs again at the next 410 or start.
-			const outcome = await this.membership
-				.resync(client, keep, this.leaseCheck())
-				.catch(() => 'failed' as const);
-			if (outcome === 'lease_lost') {
+			if ((await this.membershipResync(client, guards)) === 'lease_lost') {
 				return false;
 			}
 		}
@@ -463,24 +464,43 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 	}
 
 	/**
-	 * The lease renewal a membership resync calls before each page and change: `false` once this run of the
-	 * scheduler stopped (or a later run started), or when another process holds the lease.
+	 * One membership resync with this run's lease guards. `lease_lost` whenever a guard answered `false` on the way,
+	 * also when the resync then failed otherwise (a transaction that did not commit after its lease check): what lost
+	 * the lease must never move the feed on.
 	 */
-	/**
-	 * The check a membership resync makes inside the transaction of each change: this run of the scheduler is still
-	 * the current one, and this process holds the lease (the connection row, locked by that transaction on Postgres
-	 * and MySQL until the change commits).
-	 */
-	private leaseCheck(): (tx: EverConnectSql) => Promise<boolean> {
-		const run = this.generation;
-		// A failed read is a lost lease: the resync stays owed (and after a 410 the position does not move).
-		return async (tx) => this.generation === run && this.store.holdsLease(this.holder, tx).catch(() => false);
+	private async membershipResync(
+		client: Pick<EverPlatformClient, 'call'>,
+		guards: LeaseGuards
+	): Promise<MembershipResyncOutcome> {
+		if (!this.membership) {
+			return 'switched_off';
+		}
+		const outcome = await this.membership
+			.resync(client, guards.keep, guards.check)
+			.catch(() => 'failed' as const);
+		return guards.lost() ? 'lease_lost' : outcome;
 	}
 
-	private leaseKeeper(): () => Promise<boolean> {
+	/**
+	 * The lease guards of a membership resync, for this run of the scheduler: `keep` renews the lease before each page
+	 * and change; `check` runs inside the transaction of each change (the connection row, locked by that transaction on
+	 * Postgres and MySQL until the change commits). Both answer `false` once this run is over (stopped, or a later run
+	 * started), when another process holds the lease, or when the database call fails; `lost()` says whether one did.
+	 */
+	private leaseGuards(): LeaseGuards {
 		const run = this.generation;
-		// A failed renewal is a lost lease: the resync stays owed (and after a 410 the position does not move).
-		return async () => this.generation === run && this.store.takeLease(this.holder, LEASE_MS).catch(() => false);
+		let lost = false;
+		const held = (ok: boolean): boolean => {
+			if (!ok) lost = true;
+			return ok;
+		};
+		return {
+			keep: async () =>
+				held(this.generation === run && (await this.store.takeLease(this.holder, LEASE_MS).catch(() => false))),
+			check: async (tx) =>
+				held(this.generation === run && (await this.store.holdsLease(this.holder, tx).catch(() => false))),
+			lost: () => lost
+		};
 	}
 
 	private remember(id: string): void {

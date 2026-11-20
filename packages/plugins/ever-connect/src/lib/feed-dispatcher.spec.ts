@@ -36,6 +36,7 @@ describe('Ever Platform feed dispatcher', () => {
 			}),
 			takeLease: jest.fn().mockResolvedValue(true),
 			releaseLease: jest.fn().mockResolvedValue(undefined),
+			holdsLease: jest.fn().mockResolvedValue(true),
 			updateConnection: jest.fn(async (values: Record<string, unknown>) => {
 				if ('feedCursor' in values) order.push(`keep ${values['feedCursor']}`);
 			})
@@ -248,6 +249,26 @@ describe('Ever Platform feed dispatcher', () => {
 			);
 			expect(await instance.readFeed()).toBe(true);
 			expect(order).toEqual(['keep 01JD0000000000000000000043', 'ack 01JD0000000000000000000043']);
+		});
+
+		it('a lease check that answered false wins over a later failure (a transaction that did not commit)', async () => {
+			const membership = { apply: jest.fn(), resync: jest.fn().mockResolvedValue('done') };
+			const { instance, client, order, store } = scheduler(membership);
+			client.instances.events.mockResolvedValue({ events: [], last_id: '', has_more: false });
+			await instance.readFeed();
+			store.holdsLease.mockResolvedValueOnce(false);
+			membership.resync.mockImplementationOnce(
+				async (_client: unknown, _keep: unknown, check: (tx: unknown) => Promise<boolean>) => {
+					expect(await check({})).toBe(false);
+					throw new Error('commit failed');
+				}
+			);
+			client.instances.events.mockRejectedValueOnce(
+				new ProblemError(410, 'resync_required', undefined, null, undefined, undefined, '01JD0000000000000000000042')
+			);
+
+			expect(await instance.readFeed()).toBe(false);
+			expect(order).toEqual([]);
 		});
 
 		it('a resync that lost the lease leaves the position, so the next lease holder is answered 410 again', async () => {
