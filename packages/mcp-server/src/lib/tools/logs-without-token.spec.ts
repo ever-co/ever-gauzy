@@ -59,6 +59,7 @@ function callbacksOf(register: Register): Map<string, ToolCallback> {
 const FAILING_TOOLS: Array<[string, string, Register, string]> = [
 	['projects', 'get_projects', registerProjectTools as Register, 'Failed to fetch projects'],
 	['tasks', 'get_tasks', registerTaskTools as Register, 'Failed to fetch tasks: '],
+	['timer', 'timer_status', registerTimerTools as Register, `Failed to fetch timer status: ${API_FAILURE}`],
 	['timer', 'start_timer', registerTimerTools as Register, `Failed to start timer: ${API_FAILURE}`],
 	['timer', 'stop_timer', registerTimerTools as Register, `Failed to stop timer: ${API_FAILURE}`]
 ];
