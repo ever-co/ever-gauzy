@@ -11,7 +11,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
 	NbButtonModule,
 	NbCardModule,
@@ -161,7 +161,6 @@ const FILTER_DEBOUNCE_MS = 350;
 	imports: [
 		FormsModule,
 		RouterLink,
-		RouterLinkActive,
 		NbButtonModule,
 		NbCardModule,
 		NbIconModule,
@@ -386,6 +385,23 @@ export class TaskViewsPageComponent implements OnInit {
 		return ref.kind === 'saved'
 			? [TASK_VIEWS_LINK, String(ref.id)]
 			: [TASK_VIEWS_LINK, TASK_VIEWS_BUILT_IN_SEGMENT, ref.key];
+	}
+
+	/** The open view as the views dropdown's value: `built-in:<key>` or `saved:<id>`. */
+	protected readonly currentOption = computed(() => {
+		const ref = this.current();
+		return ref.kind === 'saved' ? `saved:${ref.id}` : `built-in:${ref.key}`;
+	});
+
+	/** Opens the view picked in the views dropdown (its route loads it, as a link to it would). */
+	protected selectView(option: string): void {
+		if (!option || option === this.currentOption()) return;
+		const [kind, value] = [option.slice(0, option.indexOf(':')), option.slice(option.indexOf(':') + 1)];
+		const ref: ViewRef =
+			kind === 'saved'
+				? { kind: 'saved', id: value as ID }
+				: { kind: 'built-in', key: isBuiltInViewKey(value) ? value : TaskBuiltInViewEnum.MINE };
+		void this.router.navigate(this.linkOf(ref));
 	}
 
 	private open(ref: ViewRef): Promise<void> {
