@@ -14,6 +14,43 @@ const SCOPE = {
 	organizationId: '00000000-0000-4000-8000-000000000002',
 	tenantId: '00000000-0000-4000-8000-000000000001'
 };
+const TEAM = '00000000-0000-4000-8000-000000000010';
+const EMPLOYEE = '00000000-0000-4000-8000-000000000020';
+const TASK = '00000000-0000-4000-8000-000000000030';
+const PLAN = '00000000-0000-4000-8000-000000000040';
+const NEW_PLAN = {
+	date: '2026-11-20',
+	workTimePlanned: 4,
+	status: 'open',
+	organizationTeamId: TEAM,
+	employeeId: EMPLOYEE
+};
+
+/** The API client's own failure, whose stack runs through the HTTP library's files. */
+const API_FAILURE = 'Request failed with status code 400';
+
+/** Arguments that take each tool that calls the API as far as its request. */
+const ARGUMENTS_REACHING_THE_API: Record<string, Record<string, unknown>> = {
+	get_daily_plans: {},
+	get_my_daily_plans: {},
+	get_team_daily_plans: { organizationTeamId: TEAM },
+	get_employee_daily_plans: { employeeId: EMPLOYEE },
+	get_daily_plans_for_task: { taskId: TASK },
+	get_daily_plan: { id: PLAN },
+	create_daily_plan: { daily_plan_data: NEW_PLAN },
+	update_daily_plan: { id: PLAN, plan_data: { status: 'completed' } },
+	delete_daily_plan: { id: PLAN },
+	add_task_to_daily_plan: { planId: PLAN, taskId: TASK, employeeId: EMPLOYEE },
+	remove_task_from_daily_plan: { planId: PLAN, taskId: TASK, employeeId: EMPLOYEE },
+	remove_task_from_many_daily_plans: { taskId: TASK, employeeId: EMPLOYEE },
+	get_daily_plan_count: {},
+	bulk_create_daily_plans: { plans: [NEW_PLAN] },
+	bulk_update_daily_plans: { plans: [{ ...NEW_PLAN, id: PLAN }] },
+	bulk_delete_daily_plans: { ids: [PLAN] }
+};
+
+/** The tool the API offers nothing for: it refuses without a request. */
+const NOT_OFFERED_TOOL = 'get_daily_plan_statistics';
 
 type ToolCallback = (args: Record<string, unknown>) => Promise<unknown>;
 
@@ -30,10 +67,12 @@ function dailyPlanCallbacks(): Map<string, ToolCallback> {
 /** A line of a stack trace: `at <function> (<file>:<line>:<column>)`. */
 const STACK_FRAME = /\n\s+at .+:\d+:\d+/;
 
+const API_METHODS = ['get', 'post', 'put', 'patch', 'delete'] as const;
+
 /** What a tool's callback ended with: the error it threw, or none. */
-async function failureOf(callback: ToolCallback): Promise<Error | undefined> {
+async function failureOf(callback: ToolCallback, args: Record<string, unknown>): Promise<Error | undefined> {
 	try {
-		await callback({});
+		await callback(args);
 		return undefined;
 	} catch (error) {
 		return error as Error;
@@ -42,29 +81,48 @@ async function failureOf(callback: ToolCallback): Promise<Error | undefined> {
 
 describe('daily plan tools: what a failure tells the assistant', () => {
 	const callbacks = dailyPlanCallbacks();
+	const requests: jest.SpyInstance[] = [];
 	let logged: jest.SpyInstance;
 
 	beforeEach(() => {
 		jest.spyOn(authManager, 'getDefaultParams').mockReturnValue(SCOPE);
-		for (const method of ['get', 'post', 'put', 'patch', 'delete'] as const) {
-			// The API client's own failure, whose stack runs through the HTTP library's files
-			jest.spyOn(apiClient, method).mockRejectedValue(new Error('Request failed with status code 400'));
+		requests.length = 0;
+		for (const method of API_METHODS) {
+			requests.push(jest.spyOn(apiClient, method).mockRejectedValue(new Error(API_FAILURE)));
 		}
 		logged = jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
 	});
 
 	afterEach(() => jest.restoreAllMocks());
 
+	const loggedText = () => logged.mock.calls.map((args) => args.map(String).join(' ')).join('\n');
+	const requestCount = () => requests.reduce((count, request) => count + request.mock.calls.length, 0);
+
 	it('covers every daily plan tool', () => {
-		expect(callbacks.size).toBe(17);
+		const covered = [...Object.keys(ARGUMENTS_REACHING_THE_API), NOT_OFFERED_TOOL].sort();
+
+		expect(covered).toEqual([...callbacks.keys()].sort());
 	});
 
-	it.each([...callbacks.keys()])('%s answers a failure without its stack, which stays in the log', async (name) => {
-		const failure = await failureOf(callbacks.get(name) as ToolCallback);
+	it.each(Object.entries(ARGUMENTS_REACHING_THE_API))(
+		"%s answers the API's failure without its stack, which stays in the log",
+		async (name, args) => {
+			const failure = await failureOf(callbacks.get(name) as ToolCallback, args);
 
-		expect(failure?.message).toMatch(/^Failed to /);
+			expect(requestCount()).toBeGreaterThan(0);
+			expect(failure?.message).toMatch(/^Failed to /);
+			expect(failure?.message).toContain(API_FAILURE);
+			expect(failure?.message).not.toMatch(STACK_FRAME);
+			expect(loggedText()).toMatch(/at .+:\d+:\d+/);
+		}
+	);
+
+	it(`${NOT_OFFERED_TOOL} says the API offers it nothing, without a stack and without a request`, async () => {
+		const failure = await failureOf(callbacks.get(NOT_OFFERED_TOOL) as ToolCallback, {});
+
+		expect(requestCount()).toBe(0);
+		expect(failure?.message).toMatch(/^Failed to fetch daily plan statistics: /);
 		expect(failure?.message).not.toMatch(STACK_FRAME);
-		const log = logged.mock.calls.map((args) => args.map(String).join(' ')).join('\n');
-		expect(log).toMatch(/at .+:\d+:\d+/);
+		expect(loggedText()).toMatch(/at .+:\d+:\d+/);
 	});
 });
