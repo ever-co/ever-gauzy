@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { defer, Observable, of, throwError, timer } from 'rxjs';
-import { catchError, distinctUntilChanged, map, retry, shareReplay, switchMap } from 'rxjs/operators';
+import { catchError, distinctUntilChanged, map, retry, shareReplay, startWith, switchMap } from 'rxjs/operators';
 import { IUser } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-core/core';
 import { EverConnectUiService } from './ever-connect.service';
@@ -20,7 +20,7 @@ function isFinalRefusal(error: HttpErrorResponse | null | undefined): boolean {
  * (`GET /api/ever-connect/probe`) answered, asked once per user. It answers only where the module is loaded
  * (`EVER_CONNECT_ENABLED=true`) and only the operator of the installation's connection; everywhere else (404, the
  * default) the menu looks exactly as before. A temporary failure (5xx, network) is retried with a growing delay;
- * signing out is `false` at once and drops a request still in flight.
+ * signing out, or another user signing in, is `false` at once and drops a request still in flight.
  */
 @Injectable({ providedIn: 'root' })
 export class EverPlatformMenuService {
@@ -43,9 +43,12 @@ export class EverPlatformMenuService {
 									: timer(EVER_PLATFORM_MENU_RETRY_MS * 2 ** (attempt - 1))
 						}),
 						map((probe) => probe?.loaded === true),
-						catchError(() => of(false))
+						catchError(() => of(false)),
+						// Another user: hidden at once, until the probe answered for them.
+						startWith(false)
 					)
 		),
+		distinctUntilChanged(),
 		shareReplay({ bufferSize: 1, refCount: false })
 	);
 }

@@ -1,5 +1,5 @@
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { BehaviorSubject, of, throwError } from 'rxjs';
+import { BehaviorSubject, of, Subject, throwError } from 'rxjs';
 import { Store } from '@gauzy/ui-core/core';
 import { EverConnectUiService } from './ever-connect.service';
 import { EVER_PLATFORM_MENU_RETRY_MS, EverPlatformMenuService } from './ever-platform-menu.service';
@@ -28,7 +28,7 @@ describe('EverPlatformMenuService', () => {
 		api.probe.mockReturnValue(of(PROBE));
 		const values: boolean[] = [];
 		service().available$.subscribe((value) => values.push(value));
-		expect(values).toEqual([true]);
+		expect(values).toEqual([false, true]);
 	});
 
 	// 404: the module is not loaded, or not the operator; 403 / 401: not for this user, or signed out meanwhile.
@@ -47,9 +47,9 @@ describe('EverPlatformMenuService', () => {
 		api.probe.mockReturnValueOnce(throwError(() => ({ status: 503 }))).mockReturnValue(of(PROBE));
 		const values: boolean[] = [];
 		service().available$.subscribe((value) => values.push(value));
-		expect(values).toEqual([]);
+		expect(values).toEqual([false]);
 		tick(EVER_PLATFORM_MENU_RETRY_MS);
-		expect(values).toEqual([true]);
+		expect(values).toEqual([false, true]);
 	}));
 
 	it('signed out: false without asking; another user asks again', () => {
@@ -57,9 +57,20 @@ describe('EverPlatformMenuService', () => {
 		const values: boolean[] = [];
 		service().available$.subscribe((value) => values.push(value));
 		user$.next(null);
-		expect(values).toEqual([true, false]);
+		expect(values).toEqual([false, true, false]);
 		user$.next({ id: 'u2' });
-		expect(values).toEqual([true, false, true]);
+		expect(values).toEqual([false, true, false, true]);
 		expect(api.probe).toHaveBeenCalledTimes(2);
+	});
+
+	it('another user signs in directly: hidden at once, before their probe answers', () => {
+		const pending = new Subject<typeof PROBE>();
+		api.probe.mockReturnValueOnce(of(PROBE)).mockReturnValueOnce(pending);
+		const values: boolean[] = [];
+		service().available$.subscribe((value) => values.push(value));
+		user$.next({ id: 'u2' });
+		expect(values).toEqual([false, true, false]);
+		pending.error({ status: 404 });
+		expect(values).toEqual([false, true, false]);
 	});
 });
