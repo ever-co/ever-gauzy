@@ -1,5 +1,6 @@
 import { apiClient } from '../common/api-client';
 import { authManager } from '../common/auth-manager';
+import { sanitizeErrorMessage } from '../common/error-utils';
 
 /**
  * Helper function to validate organization context and return default parameters
@@ -123,7 +124,7 @@ export const applyInTurn = async <T, R>(items: T[], apply: (item: T) => Promise<
 		try {
 			results.push(await apply(item));
 		} catch (error) {
-			const reason = error instanceof Error ? error.message : String(error);
+			const reason = sanitizeErrorMessage(error);
 			throw new Error(
 				`Item ${results.length + 1} of ${items.length} failed after ${results.length} applied: ${reason}`
 			);
