@@ -14,6 +14,8 @@ The page asks the API first. Where the API's Ever Platform module is not loaded 
 
 Nothing is enabled from this page: an owner or administrator of the linked Ever organization consents in app.ever.co.
 
+**Settings > Ever Platform** (a link to this page) is added to the menu only once the API's menu probe (`GET /api/ever-connect/probe`) answers: where the Ever Platform module is loaded, for the operator of the installation's connection (on Ever's cloud, a listed operator). Everyone else, and every installation where the module is not loaded (the default), sees the menu exactly as before; the probe is asked once per signed-in user.
+
 ## Check on Ever Platform
 
 On a contact (**Contacts > a contact**, in the header), for everyone with `INTEGRATION_VIEW`, shown only while **Check contacts on Ever Platform** is enabled for the organization in app.ever.co and its entitlement includes the feature. Otherwise nothing is rendered; where the API's Ever Platform module is not loaded, its 404 hides the button too.

@@ -182,6 +182,7 @@ describe.each(TEST_TARGETS)('Ever Platform routes on $name', (target) => {
 	};
 
 	const OPERATOR_ROUTES: Array<[string, string, unknown]> = [
+		['get', '/api/ever-connect/probe', undefined],
 		['post', '/api/ever-connect/connect', { code: 'EVC-AAAA-BBBB-CCCC' }],
 		['post', '/api/ever-connect/disconnect', { confirm: true }],
 		['get', '/api/ever-connect/policy', undefined],
@@ -265,6 +266,11 @@ describe.each(TEST_TARGETS)('Ever Platform routes on $name', (target) => {
 		const status = await call('get', '/api/ever-connect/status', 'operator');
 		expect(status.body).toMatchObject({ managed_by: 'ever_cloud', operator: true });
 		expect(status.body.installation_links).toEqual({ total: 0, items: [] });
+		expect((await call('get', '/api/ever-connect/probe', 'operator')).body).toMatchObject({
+			loaded: true,
+			managed_by: 'ever_cloud'
+		});
+		expect((await call('get', '/api/ever-connect/probe', 'stranger')).status).toBe(404);
 		expect((await call('get', '/api/ever-connect/policy', 'stranger')).status).toBe(404);
 		expect((await call('get', '/api/ever-connect/policy', 'employee')).status).toBe(404);
 		expect(calls).toEqual([]);
@@ -273,6 +279,12 @@ describe.each(TEST_TARGETS)('Ever Platform routes on $name', (target) => {
 	it('the operator reaches the operator routes (connect is refused before any call without a strong secret)', async () => {
 		app = await start({ EVER_OPERATOR_USER_IDS: acme.superAdminId, JWT_SECRET: 'secretKey' });
 		expect((await call('get', '/api/ever-connect/policy', 'operator')).status).toBe(200);
+		// The web app's menu probe: the operator only, no id, nothing sent.
+		const probe = await call('get', '/api/ever-connect/probe', 'operator');
+		expect([probe.status, probe.body]).toEqual([
+			200,
+			{ loaded: true, managed_by: 'operator', status: 'disconnected', connected: false }
+		]);
 		const noSecret = await call('post', '/api/ever-connect/connect', 'operator', { code: 'EVC-AAAA-BBBB-CCCC' });
 		expect(noSecret.status).toBe(422);
 		expect(noSecret.body.code).toBe('key_material_missing');

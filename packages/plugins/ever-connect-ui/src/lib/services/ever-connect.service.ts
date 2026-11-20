@@ -153,6 +153,14 @@ export interface EverConnectAuditRow {
 	scope: 'instance' | 'organization';
 }
 
+/** `GET /api/ever-connect/probe`: answered to the operator of the installation's connection only (404 otherwise). */
+export interface EverConnectProbe {
+	loaded: true;
+	managed_by: 'ever_cloud' | 'operator';
+	status: ConnectionStatus;
+	connected: boolean;
+}
+
 /** The Ever Platform routes of the API. Every route of the organization side takes `organizationId`. */
 @Injectable({ providedIn: 'root' })
 export class EverConnectUiService {
@@ -160,6 +168,11 @@ export class EverConnectUiService {
 
 	private org(organizationId?: string | null): { params: HttpParams } {
 		return { params: organizationId ? new HttpParams().set('organizationId', organizationId) : new HttpParams() };
+	}
+
+	/** The menu probe: 404 where the module is not loaded or for anyone but the operator. */
+	probe(): Observable<EverConnectProbe> {
+		return this.http.get<EverConnectProbe>(`${BASE}/probe`);
 	}
 
 	status(organizationId?: string | null): Observable<EverConnectStatus> {
