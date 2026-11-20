@@ -55,11 +55,12 @@ function callbacksOf(register: Register): Map<string, ToolCallback> {
 	return callbacks;
 }
 
-const FAILING_TOOLS: Array<[string, string, Register]> = [
-	['projects', 'get_projects', registerProjectTools as Register],
-	['tasks', 'get_tasks', registerTaskTools as Register],
-	['timer', 'start_timer', registerTimerTools as Register],
-	['timer', 'stop_timer', registerTimerTools as Register]
+/** Each tool, and the start of what it answers the assistant, which this change leaves as it was. */
+const FAILING_TOOLS: Array<[string, string, Register, string]> = [
+	['projects', 'get_projects', registerProjectTools as Register, 'Failed to fetch projects'],
+	['tasks', 'get_tasks', registerTaskTools as Register, 'Failed to fetch tasks: '],
+	['timer', 'start_timer', registerTimerTools as Register, `Failed to start timer: ${API_FAILURE}`],
+	['timer', 'stop_timer', registerTimerTools as Register, `Failed to stop timer: ${API_FAILURE}`]
 ];
 
 const API_METHODS = ['get', 'post', 'put', 'patch', 'delete'] as const;
@@ -87,14 +88,19 @@ describe("a failed tool's log keeps the person's token out", () => {
 			.map((args) => inspect(args, { depth: 10 }))
 			.join('\n');
 
-	it.each(FAILING_TOOLS)('%s: %s logs the failure without the token', async (_group, name, register) => {
-		const callback = callbacksOf(register).get(name) as ToolCallback;
+	it.each(FAILING_TOOLS)(
+		'%s: %s logs the failure without the token, and answers as before',
+		async (_group, name, register, answer) => {
+			const callback = callbacksOf(register).get(name) as ToolCallback;
 
-		await callback({}).catch(() => undefined);
+			const failure = callback({});
 
-		expect(loggedText()).toContain(API_FAILURE);
-		expect(loggedText()).not.toContain(TOKEN);
-	});
+			await expect(failure).rejects.toThrow(answer);
+			await expect(failure).rejects.not.toThrow(TOKEN);
+			expect(loggedText()).toContain(API_FAILURE);
+			expect(loggedText()).not.toContain(TOKEN);
+		}
+	);
 
 	it('no tool, and not the server where a tool call fails, hands the logger a raw error', () => {
 		const tools = readdirSync(__dirname).filter((file) => file.endsWith('.ts') && !file.endsWith('.spec.ts'));
