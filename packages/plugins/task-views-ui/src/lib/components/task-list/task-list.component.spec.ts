@@ -130,17 +130,32 @@ describe('TaskListComponent', () => {
 });
 
 describe('labelTextColor', () => {
-	it('reads a light label in black and a dark one in white', () => {
+	it('takes black or white, whichever contrasts more with an opaque colour', () => {
 		expect(labelTextColor('#ffffff')).toBe('#000000');
 		expect(labelTextColor('#fff')).toBe('#000000');
-		expect(labelTextColor('rgba(255, 255, 240, 0.9)')).toBe('#000000');
+		expect(labelTextColor('#000000')).toBe('#ffffff');
 		expect(labelTextColor('#1a1a2e')).toBe('#ffffff');
-		expect(labelTextColor('#ff00ffcc')).toBe('#ffffff');
+		expect(labelTextColor('#a0a0a0')).toBe('#000000');
+		expect(labelTextColor('rgb(255, 255, 240)')).toBe('#000000');
+		expect(labelTextColor('#ff00ffff')).toBe('#000000');
 	});
 
-	it("keeps the theme's text colour between the thresholds and for a colour it cannot read", () => {
-		expect(labelTextColor('#a0a0a0')).toBeNull();
+	it('reads a saturated red in black, which contrasts more than white (about 5.25:1 against 4:1)', () => {
+		expect(labelTextColor('#ff0000')).toBe('#000000');
+		expect(labelTextColor('rgb(255, 0, 0)')).toBe('#000000');
+	});
+
+	it("keeps the theme's text colour for a colour that is not fully opaque (the chip shows the panel behind it)", () => {
+		expect(labelTextColor('#00000000')).toBeNull();
+		expect(labelTextColor('#ff00ffcc')).toBeNull();
+		expect(labelTextColor('#0008')).toBeNull();
+		expect(labelTextColor('rgba(255, 255, 240, 0.9)')).toBeNull();
+		expect(labelTextColor('rgb(0 0 0 / 50%)')).toBeNull();
+	});
+
+	it("keeps the theme's text colour for a colour it cannot read", () => {
 		expect(labelTextColor('var(--color-primary-default)')).toBeNull();
+		expect(labelTextColor('red')).toBeNull();
 		expect(labelTextColor(null)).toBeNull();
 	});
 });

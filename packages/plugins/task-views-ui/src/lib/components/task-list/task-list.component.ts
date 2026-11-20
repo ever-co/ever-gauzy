@@ -46,29 +46,37 @@ export function isOverdue(task: Pick<ITask, 'dueDate' | 'status'>, now = Date.no
 }
 
 /**
- * The text colour that reads on a label's own colour, by the weighted brightness and thresholds the app's tag chips
- * use (`backgroundContrast`): white on a dark colour, black on a light one, and the theme's text colour (null) in
- * between or for a colour it cannot read (a theme variable, a name).
+ * The text colour that reads on a label's own colour: black or white, whichever has the higher WCAG contrast with it
+ * (by relative luminance, so a saturated red takes black). Null — the theme's text colour — for a colour that is not
+ * fully opaque, since the chip then shows the panel behind it, which this cannot know, and for one it cannot read (a
+ * theme variable, a name).
  */
 export function labelTextColor(color: string | null | undefined): string | null {
-	const rgb = rgbOf(color);
-	if (!rgb) return null;
-	const brightness = rgb[0] * 0.299 + rgb[1] * 0.587 + rgb[2] * 0.114;
-	if (brightness < 128) return '#ffffff';
-	if (brightness > 186) return '#000000';
-	return null;
+	const rgba = rgbaOf(color);
+	if (!rgba || rgba[3] < 1) return null;
+	const [r, g, b] = rgba.slice(0, 3).map((channel) => {
+		const value = channel / 255;
+		return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+	});
+	const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+	const onWhite = 1.05 / (luminance + 0.05);
+	const onBlack = (luminance + 0.05) / 0.05;
+	return onBlack >= onWhite ? '#000000' : '#ffffff';
 }
 
-/** `#rgb`, `#rrggbb` (an alpha part is ignored) or `rgb()` / `rgba()` as red, green and blue. */
-function rgbOf(color: string | null | undefined): [number, number, number] | null {
+/** `#rgb`, `#rgba`, `#rrggbb`, `#rrggbbaa`, `rgb()` or `rgba()` as red, green, blue (0-255) and alpha (0-1). */
+function rgbaOf(color: string | null | undefined): [number, number, number, number] | null {
 	const value = (color ?? '').trim();
 	const hex = /^#([0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i.exec(value)?.[1];
 	if (hex) {
-		const full = hex.length <= 4 ? [...hex.slice(0, 3)].map((digit) => digit + digit).join('') : hex.slice(0, 6);
-		return [0, 2, 4].map((at) => parseInt(full.slice(at, at + 2), 16)) as [number, number, number];
+		const full = hex.length <= 4 ? [...hex].map((digit) => digit + digit).join('') : hex;
+		const [r, g, b, a = 255] = (full.match(/../g) ?? []).map((pair) => parseInt(pair, 16));
+		return [r, g, b, a / 255];
 	}
-	const rgb = /^rgba?\(\s*(\d+)[\s,]+(\d+)[\s,]+(\d+)/i.exec(value);
-	return rgb ? [Number(rgb[1]), Number(rgb[2]), Number(rgb[3])] : null;
+	const rgb = /^rgba?\(\s*(\d+)[\s,]+(\d+)[\s,]+(\d+)(?:\s*[,/]\s*([\d.]+)(%)?)?\s*\)$/i.exec(value);
+	if (!rgb) return null;
+	const alpha = rgb[4] === undefined ? 1 : Number(rgb[4]) / (rgb[5] ? 100 : 1);
+	return [Number(rgb[1]), Number(rgb[2]), Number(rgb[3]), alpha];
 }
 
 /** Two letters for a person without a picture. */
