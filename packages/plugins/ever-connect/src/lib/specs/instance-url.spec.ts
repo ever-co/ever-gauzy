@@ -89,6 +89,42 @@ describe('the installation address', () => {
 		expect(await wellKnown.statement()).toBeNull();
 	});
 
+	it('switched off or disconnected while Ever Platform answered: nothing is kept, no statement', async () => {
+		await enable();
+		h.platform.on(PUT, async (call) => {
+			// A revocation read meanwhile switches the integration off here.
+			await enable(false);
+			return { status: 200, body: { base_url: String(call.body?.['base_url']) } };
+		});
+		expect(codeOf(await h.states.setPublicUrl('https://gauzy.acme.example/', OPERATOR).catch((e) => e))).toBe(
+			'consent_changed'
+		);
+		expect((await h.store.connection()).publicUrl).toBeNull();
+		expect(await audit()).toEqual([]);
+
+		await enable();
+		h.platform.on(PUT, async (call) => {
+			await h.store.updateConnection({ status: 'disconnected' });
+			return { status: 200, body: { base_url: String(call.body?.['base_url']) } };
+		});
+		expect(codeOf(await h.states.setPublicUrl('https://gauzy.acme.example/', OPERATOR).catch((e) => e))).toBe(
+			'consent_changed'
+		);
+		expect((await h.store.connection()).publicUrl).toBeNull();
+	});
+
+	it('a new consent while Ever Platform answered: the address reported under the old one is not kept', async () => {
+		await enable();
+		h.platform.on(PUT, async (call) => {
+			await h.store.saveIntegration('instance', INSTANCE_URL, { consentId: '01JD0000000000000000000NEW' });
+			return { status: 200, body: { base_url: String(call.body?.['base_url']) } };
+		});
+		expect(codeOf(await h.states.setPublicUrl('https://gauzy.acme.example/', OPERATOR).catch((e) => e))).toBe(
+			'consent_changed'
+		);
+		expect((await h.store.connection()).publicUrl).toBeNull();
+	});
+
 	it("Ever Platform's refusal: 403 is a 409 with its code, and nothing is kept", async () => {
 		await enable();
 		h.platform.on(PUT, problem(403, 'integration_disabled'));

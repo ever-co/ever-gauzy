@@ -981,6 +981,7 @@ export class EverPlatformPageComponent implements OnInit {
 			'not_available',
 			'product_mismatch',
 			'consent_required',
+			'consent_changed',
 			'url_invalid'
 		];
 		this.say(

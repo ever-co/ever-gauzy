@@ -1034,15 +1034,15 @@ export class EverConnectIntegrationStateService {
 	/**
 	 * `PUT /ever-connect/public-url`: reports the public https address the operator typed
 	 * (`PUT /v1/instances/me/public-url`, row 18), never one read from this server's own host or
-	 * settings. Only on a connected installation (409 `not_connected`) once `instance_url` is enabled:
-	 * consented in app.ever.co and accepted by the operator here (409 `consent_required`). Ever
+	 * settings. Only once `instance_url` is enabled: consented in app.ever.co and accepted by the
+	 * operator here (409 `consent_required`), on a connected installation (409 `not_connected`). Ever
 	 * Platform answers the address normalised; that is what is kept, and `/.well-known/ever-connect`
 	 * then answers its signed statement for 10 minutes, for Ever Platform to check it. The audit
 	 * records that an address was reported, never the address.
 	 */
 	async setPublicUrl(url: string, actor: { actorLabel: ActorLabel; userId: string | null }): Promise<PublicUrlView> {
+		const consent = await this.requireInstanceUrl();
 		const connection = await this.requireConnected();
-		await this.requireInstanceUrl();
 		let answer: { base_url?: unknown };
 		try {
 			answer = (await this.guard(async () =>
@@ -1058,10 +1058,25 @@ export class EverConnectIntegrationStateService {
 		// kept: it was normalised the same way before it was sent (lower-case host, no default port).
 		const normalised = typeof answer?.base_url === 'string' ? answer.base_url : null;
 		const stored = normalised && normalised.length <= MAX_PUBLIC_URL ? normalised : url;
-		await this.store.updateConnection({
-			publicUrl: stored,
-			publicUrlCheckUntil: this.now() + URL_CHECK_MAX_S * 1000
-		});
+		// Kept only for the connection it was sent for (compare and set), and only while the consent it was
+		// sent under still holds: a switch-off or a disconnect while Ever Platform answered wins, and the
+		// address is not kept (nor its statement served).
+		const sameConnection = { status: 'connected', platformInstanceId: connection.platformInstanceId };
+		const written = await this.store.updateConnection(
+			{ publicUrl: stored, publicUrlCheckUntil: this.now() + URL_CHECK_MAX_S * 1000 },
+			sameConnection
+		);
+		const after = await this.store.integration('instance', INSTANCE_URL);
+		if (written === 0 || !after?.enabled || after.consentId !== consent.consentId) {
+			if (written !== 0) {
+				await this.store.updateConnection({ publicUrl: null, publicUrlCheckUntil: null }, sameConnection);
+			}
+			throw new ConflictException({
+				statusCode: 409,
+				code: 'consent_changed',
+				message: '"Installation address" or the connection changed meanwhile; nothing is kept here.'
+			});
+		}
 		await this.audit.record({
 			action: 'integration.configure',
 			actorLabel: actor.actorLabel,
@@ -1101,7 +1116,7 @@ export class EverConnectIntegrationStateService {
 	}
 
 	/** 409 `consent_required` until `instance_url` is enabled (consent in app.ever.co, then the operator's accept). */
-	private async requireInstanceUrl(): Promise<void> {
+	private async requireInstanceUrl(): Promise<IntegrationRecord> {
 		const row = await this.store.integration('instance', INSTANCE_URL);
 		if (!row?.enabled) {
 			throw new ConflictException({
@@ -1110,6 +1125,7 @@ export class EverConnectIntegrationStateService {
 				message: 'Enable "Installation address" in app.ever.co and accept it here first.'
 			});
 		}
+		return row;
 	}
 
 	/**

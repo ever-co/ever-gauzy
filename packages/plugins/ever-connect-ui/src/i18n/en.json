@@ -192,6 +192,7 @@
 		"denied_by_policy": "The operator of this installation does not allow this integration.",
 		"not_available": "This integration is not available yet.",
 		"consent_required": "Enable this in app.ever.co first, then accept it here.",
+		"consent_changed": "\"Installation address\" or the connection changed meanwhile. Nothing was kept: check the page and report the address again.",
 		"url_invalid": "Use an https address with a host name (no IP address), without a query or a fragment, of at most 255 characters.",
 		"keys_unverifiable": "Ever Platform's keys could not be verified for this address. Nothing was sent.",
 		"entitlement_unverifiable": "Ever Platform's entitlement document could not be verified. The installation was not connected.",
