@@ -62,6 +62,15 @@ const convertPaymentDateFields = (paymentData: PaymentData): ConvertedPaymentDat
 	};
 };
 
+/** The payment with the method the API stores for one the tools list by another name (`PAYPAL` is `ONLINE`). */
+const withStoredPaymentMethod = (paymentData: PaymentData): PaymentData => {
+	const method = paymentData.paymentMethod;
+	if (typeof method !== 'string') {
+		return paymentData;
+	}
+	return { ...paymentData, paymentMethod: toApiValue(PAYMENT_METHOD_VALUES, method) };
+};
+
 export const registerPaymentTools = (server: McpServer) => {
 	// Get payments tool
 	registerTool(
@@ -244,11 +253,13 @@ export const registerPaymentTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const createData = convertPaymentDateFields({
-					...payment_data,
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
-				});
+				const createData = convertPaymentDateFields(
+					withStoredPaymentMethod({
+						...payment_data,
+						organizationId: defaultParams.organizationId,
+						...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
+					})
+				);
 
 				const response = await apiClient.post('/api/payments', createData);
 
@@ -290,7 +301,7 @@ export const registerPaymentTools = (server: McpServer) => {
 					throw new Error('Access denied: Payment does not belong to your organization');
 				}
 
-				const updateData = convertPaymentDateFields(payment_data);
+				const updateData = convertPaymentDateFields(withStoredPaymentMethod(payment_data));
 
 				const response = await apiClient.put(`/api/payments/${id}`, updateData);
 
