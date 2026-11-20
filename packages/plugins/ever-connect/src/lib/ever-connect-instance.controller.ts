@@ -7,6 +7,7 @@ import {
 	Header,
 	HttpCode,
 	HttpStatus,
+	Inject,
 	Param,
 	Post,
 	Put,
@@ -16,7 +17,9 @@ import {
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { RolesEnum } from '@gauzy/contracts';
 import { RoleGuard, Roles } from '@gauzy/core';
+import type { EverConnectConfig } from './ever-connect-config';
 import { ConnectResult, EverConnectConnectionService } from './ever-connect-connection.service';
+import { ConnectionStatus, EVER_CONNECT_SETTINGS } from './ever-connect.constants';
 import { EntitlementImportResult, EverConnectEntitlementService } from './ever-connect-entitlement.service';
 import {
 	EverConnectIntegrationStateService,
@@ -27,6 +30,15 @@ import type { RequestWithUser } from './ever-connect-request';
 import { EverConnectStore } from './ever-connect.store';
 import { EverConnectOperatorGuard } from './guards/ever-connect-operator.guard';
 import { MAX_PUBLIC_URL, normalisedPublicAddress } from './public-address';
+
+/** `GET /api/ever-connect/probe`: what the web app's menu needs, for the operator only. */
+export interface EverConnectProbe {
+	loaded: true;
+	/** `ever_cloud` when Ever operates this installation (`EVER_INSTALL_SOURCE=cloud`). */
+	managed_by: 'ever_cloud' | 'operator';
+	status: ConnectionStatus;
+	connected: boolean;
+}
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -48,8 +60,27 @@ export class EverConnectInstanceController {
 		private readonly connection: EverConnectConnectionService,
 		private readonly states: EverConnectIntegrationStateService,
 		private readonly store: EverConnectStore,
-		private readonly entitlements: EverConnectEntitlementService
+		private readonly entitlements: EverConnectEntitlementService,
+		@Inject(EVER_CONNECT_SETTINGS) private readonly config: EverConnectConfig
 	) {}
+
+	/**
+	 * The web app's menu probe: whether this module is loaded and the caller operates the connection,
+	 * and the state of the connection in one word. It answers only the operator (everyone else, and
+	 * every caller where the module is not loaded, gets 404, so the menu entry stays hidden), sends
+	 * nothing to Ever Platform and carries no id, name or address.
+	 */
+	@Get('probe')
+	@Header('Cache-Control', 'no-store')
+	async probe(): Promise<EverConnectProbe> {
+		const status = (await this.connection.connection()).status;
+		return {
+			loaded: true,
+			managed_by: this.config.cloud ? 'ever_cloud' : 'operator',
+			status,
+			connected: status === 'connected'
+		};
+	}
 
 	/**
 	 * Connects this installation with a connect code from app.ever.co: `{ "code": "EVC-…",

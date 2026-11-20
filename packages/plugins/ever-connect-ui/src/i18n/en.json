@@ -1,5 +1,6 @@
 {
 	"TITLE": "Ever Platform",
+	"MENU": "Ever Platform",
 	"UNAVAILABLE": "The Ever Platform connection is not switched on for this installation. Its operator can switch it on with EVER_CONNECT_ENABLED=true; until then nothing is sent to Ever Platform.",
 	"ERROR": "Ever Platform settings could not be loaded. Please try again.",
 	"CANCEL": "Cancel",
