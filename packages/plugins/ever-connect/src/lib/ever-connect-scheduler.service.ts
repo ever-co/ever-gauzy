@@ -452,7 +452,9 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 			// Before the position moves on: a process that stops here (or loses the lease) leaves the old position, so
 			// the next lease holder is answered 410 again and runs it. A resync that failed otherwise does not hold the
 			// feed back: it runs again at the next 410 or start.
-			if ((await this.membershipResync(client, guards)) === 'lease_lost') {
+			// Then the position moves on only while this run still holds the lease (a renewal that answers false fences
+			// it), also after a resync that failed for another reason while the lease passed on.
+			if ((await this.membershipResync(client, guards)) === 'lease_lost' || !(await guards.keep())) {
 				return false;
 			}
 		}

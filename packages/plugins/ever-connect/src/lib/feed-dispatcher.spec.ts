@@ -271,6 +271,24 @@ describe('Ever Platform feed dispatcher', () => {
 			expect(order).toEqual([]);
 		});
 
+		it('the 410 position moves on only while the lease is still held: lost during a page that then failed, it stays', async () => {
+			const membership = { apply: jest.fn(), resync: jest.fn().mockResolvedValue('done') };
+			const { instance, client, order, store } = scheduler(membership);
+			client.instances.events.mockResolvedValue({ events: [], last_id: '', has_more: false });
+			await instance.readFeed();
+			membership.resync.mockImplementationOnce(async () => {
+				// Another process takes the lease while a page request is in flight; the request then fails.
+				store.takeLease.mockResolvedValueOnce(false);
+				return 'failed';
+			});
+			client.instances.events.mockRejectedValueOnce(
+				new ProblemError(410, 'resync_required', undefined, null, undefined, undefined, '01JD0000000000000000000042')
+			);
+
+			expect(await instance.readFeed()).toBe(false);
+			expect(order).toEqual([]);
+		});
+
 		it('a resync that lost the lease leaves the position, so the next lease holder is answered 410 again', async () => {
 			const membership = { apply: jest.fn(), resync: jest.fn().mockResolvedValue('done') };
 			const { instance, client, order } = scheduler(membership);
