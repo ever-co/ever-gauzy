@@ -6,7 +6,7 @@ import { BaseEntityEnum, IFavorite, PermissionsEnum } from '@gauzy/contracts';
 import { FavoriteService } from './favorite.service';
 import { Store } from '../store/store.service';
 import { NavMenuSectionItem } from '../nav-builder/nav-builder-types';
-import { ENTITY_LINKS, ENTITY_TITLES, favoriteIcon, IFavoriteRecord } from './entities-mapping';
+import { ENTITY_LINKS, ENTITY_TITLES, favoriteDescription, favoriteIcon, IFavoriteRecord } from './entities-mapping';
 
 /** One favorited record, as the Favorites page lists it. */
 export interface IFavoriteEntry {
@@ -25,6 +25,8 @@ export interface IFavoriteEntry {
 	title: string;
 	icon: string;
 	link: string;
+	addedAt?: Date;
+	description?: string;
 }
 
 @UntilDestroy()
@@ -80,6 +82,14 @@ export class FavoriteStoreService {
 				this._loadFailed$.next(failed);
 				this._loading$.next(false);
 			});
+	}
+
+	private _validDate(value: Date | string | undefined): Date | undefined {
+		if (!value) {
+			return undefined;
+		}
+		const date = new Date(value);
+		return isNaN(date.getTime()) ? undefined : date;
 	}
 
 	private _toMenuItem(entry: IFavoriteEntry): NavMenuSectionItem {
@@ -190,15 +200,22 @@ export class FavoriteStoreService {
 								return null;
 							}
 
+							const title = this._getFavoriteTitle(item, entityType as BaseEntityEnum) || 'Untitled';
 							return {
 								favoriteId: stub.id,
 								own: !!stub.employeeId && stub.employeeId === employeeId,
 								pinnedForOrganization: pinnedRecords.has(key),
 								entity: entityType as BaseEntityEnum,
 								entityId: item.id,
-								title: this._getFavoriteTitle(item, entityType as BaseEntityEnum) || 'Untitled',
+								title,
+								description: favoriteDescription(
+									entityType as BaseEntityEnum,
+									item as unknown as IFavoriteRecord,
+									title
+								),
 								icon: this._getFavoriteIcon(entityType as BaseEntityEnum, item),
-								link: this._getFavoriteLink(entityType as BaseEntityEnum, item.id, item)
+								link: this._getFavoriteLink(entityType as BaseEntityEnum, item.id, item),
+								addedAt: this._validDate(stub.createdAt)
 							};
 						})
 						.filter((entry): entry is IFavoriteEntry => !!entry);
@@ -211,10 +228,7 @@ export class FavoriteStoreService {
 			favoritePromises.push(promise);
 		}
 
-		const addedAt = (entry: IFavoriteEntry): number => {
-			const createdAt = stubByRecord.get(`${entry.entity}:${entry.entityId}`)?.createdAt;
-			return createdAt ? new Date(createdAt).getTime() || 0 : 0;
-		};
+		const addedAt = (entry: IFavoriteEntry): number => entry.addedAt?.getTime() || 0;
 
 		// Newest first: the sidebar shows only the first few, so a record just starred is always among them.
 		const allFavoriteItems = await Promise.all(favoritePromises);
