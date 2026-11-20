@@ -1,51 +1,182 @@
 :host {
   display: block;
-  position: relative;
 }
 
+// The selected tasks' actions, inline in the row beside the views dropdown: a count, ghost actions with muted icons
+// (drawn as the Documents page's selection bar), thin dividers, and a close button. The pickers open below it.
+// Compact enough to share one line with the views dropdown and the go-to box: 1.75rem controls, 0.6875rem regular
+// text. The theme sizes a small button from these variables, so they are restated rather than out-ranked.
 .bulk-toolbar {
+  --bulk-height: var(--gauzy-header-control-height);
+  --button-small-text-font-size: 0.6875rem;
+  --button-small-text-font-weight: 400;
+  --button-small-icon-size: 0.875rem;
+  // One spacing for every item: the same side padding whether a button has an icon at one end or both (the theme
+  // pads a both-ends button with its icon-button padding), no extra icon offset, and one gap between items.
+  --bulk-item-padding: 0.3125rem;
+  --bulk-gap: 0.125rem;
+  --button-small-icon-offset: 0;
+  --button-ghost-small-padding: 0 var(--bulk-item-padding);
+  --icon-button-ghost-small-padding: 0 var(--bulk-item-padding);
+
   position: relative;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.375rem;
-  padding: 0.5rem 0.75rem;
-  border-radius: var(--border-radius);
-  background: var(--color-primary-transparent-100);
-  border: 1px solid var(--border-primary-color-1);
+  gap: var(--bulk-gap);
+  min-width: 0;
+  font-size: 0.6875rem;
+  line-height: 1.4;
+  color: var(--text-basic-color);
+  animation: bulk-enter 0.15s ease-out both;
+}
+
+@keyframes bulk-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bulk-toolbar {
+    animation: none;
+  }
 }
 
 .count {
-  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex: 0 0 auto;
+  padding-inline-end: var(--bulk-item-padding);
+  font-weight: 500;
+  white-space: nowrap;
+
+  nb-icon {
+    font-size: 0.875rem;
+    color: var(--color-primary-default);
+  }
 }
 
 .limit {
-  font-size: 0.8125rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.375rem;
+  border-radius: var(--gauzy-radius-sm);
+  background: var(--color-warning-transparent-100);
+  font-size: 0.6875rem;
   color: var(--text-warning-color);
+
+  nb-icon {
+    font-size: 0.875rem;
+  }
 }
 
-.separator {
+.divider {
+  flex: 0 0 auto;
   width: 1px;
-  align-self: stretch;
-  background: var(--border-basic-color-4);
-  margin: 0 0.25rem;
+  height: 0.875rem;
+  // Pulls in by half a gap each side, so text to text across a divider is the same as between two buttons.
+  margin-inline: calc(var(--bulk-gap) / -2);
+  background: var(--gauzy-overlay-border-color);
 }
 
-.clear {
-  margin-left: auto;
+.bulk-toolbar > button[nbButton] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  height: var(--bulk-height);
+  min-height: var(--bulk-height);
+  padding-block: 0;
+  padding-inline: var(--bulk-item-padding);
+  border-radius: var(--gauzy-radius-sm);
+  font-size: 0.6875rem;
+  font-weight: 400;
+  line-height: 1;
+  white-space: nowrap;
+  text-transform: none;
+
+  nb-icon {
+    margin: 0;
+    font-size: 0.875rem;
+  }
 }
 
+.bulk-toolbar > button.action[nbButton] {
+  color: var(--text-basic-color);
+
+  nb-icon {
+    color: var(--text-hint-color);
+  }
+
+  &:hover:not([disabled]),
+  &.open {
+    background: var(--background-basic-color-2);
+
+    nb-icon {
+      color: var(--text-basic-color);
+    }
+  }
+
+  &.danger,
+  &.danger nb-icon {
+    color: var(--color-danger-default);
+  }
+
+  &.danger:hover:not([disabled]) {
+    background: var(--color-danger-transparent-100);
+
+    nb-icon {
+      color: var(--color-danger-default);
+    }
+  }
+}
+
+.caret {
+  font-size: 0.625rem !important;
+  opacity: 0.6;
+}
+
+.bulk-toolbar > button.close.close[nbButton] {
+  width: var(--bulk-height);
+  padding: 0;
+  color: var(--text-hint-color);
+
+  nb-icon {
+    font-size: 0.875rem;
+  }
+
+  &:hover {
+    color: var(--text-basic-color);
+    background: var(--background-basic-color-2);
+  }
+}
+
+// Opens under the picker that opened it (`left` is set from its trigger); the text at the table's 0.75rem, the search
+// field's included (the theme sizes it from these variables).
 .panel {
+  --input-small-text-font-size: 0.75rem;
+  --input-small-placeholder-text-font-size: 0.75rem;
+
   position: absolute;
-  top: calc(100% + 0.25rem);
-  left: 0.75rem;
-  z-index: 20;
+  top: calc(100% + 0.375rem);
+  left: 0;
+  z-index: 1050;
+  font-size: 0.75rem;
   width: min(20rem, 90vw);
   padding: 0.5rem;
+  // The app's overlay surface: its radius, hairline and shadow tokens (the shadow's fallback is the app's own, as the
+  // global overlay rules write it).
   border-radius: var(--border-radius);
   background: var(--background-basic-color-1);
-  border: 1px solid var(--border-basic-color-4);
-  box-shadow: var(--card-shadow);
+  box-shadow:
+    inset 0 0 0 1px var(--gauzy-overlay-border-color),
+    var(--gauzy-overlay-shadow, 0 4px 12px -2px rgba(0, 0, 0, 0.14), 0 2px 6px -2px rgba(0, 0, 0, 0.08));
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -78,16 +209,19 @@
   width: 100%;
   padding: 0.375rem 0.5rem;
   border: 0;
-  border-radius: var(--border-radius);
+  border-radius: var(--gauzy-radius-sm);
   background: transparent;
   color: inherit;
+  font: inherit;
+  font-size: 0.75rem;
+  line-height: 1rem;
   text-align: left;
   text-transform: capitalize;
   cursor: pointer;
 
   &:hover,
   &:focus-visible {
-    background: var(--background-basic-color-2);
+    background: var(--gauzy-hover-tint);
     outline: none;
   }
 
@@ -106,5 +240,5 @@
 .empty {
   padding: 0.375rem 0.5rem;
   color: var(--text-hint-color);
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
 }
