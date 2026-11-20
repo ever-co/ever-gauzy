@@ -1,5 +1,5 @@
 <div class="task-list" role="grid" [attr.aria-multiselectable]="selectable()" data-test="task-list">
-	<div class="row head" role="row">
+	<div class="list-row head" role="row">
 		@if (selectable()) {
 			<span class="cell check" role="columnheader">
 				<input
@@ -73,7 +73,7 @@
 		>
 			@for (row of group.rows; track trackRow(row)) {
 				<div
-					class="row"
+					class="list-row"
 					role="row"
 					cdkDrag
 					[cdkDragDisabled]="!draggable()"
@@ -111,7 +111,9 @@
 						}}</span>
 					}
 					<span class="cell title" role="gridcell">
-						<a href="" class="title-link" (click)="open($event, row.id)">{{ row.title }}</a>
+						<a href="" class="title-link" [title]="row.title" (click)="open($event, row.id)">{{
+							row.title
+						}}</a>
 					</span>
 					@if (show('status')) {
 						<span class="cell status" role="gridcell">
@@ -134,12 +136,13 @@
 						<span class="cell assignees" role="gridcell">
 							@for (member of row.members ?? []; track member.id; let index = $index) {
 								@if (index < 3) {
-									@if (member.user?.imageUrl) {
+									@if (hasPicture(member.user?.imageUrl)) {
 										<img
 											class="avatar"
 											[src]="member.user?.imageUrl"
 											[alt]="personName($any(member))"
 											[title]="personName($any(member))"
+											(error)="onPictureError(member.user?.imageUrl)"
 										/>
 									} @else {
 										<span class="avatar initials" [title]="personName($any(member))">{{
@@ -155,13 +158,24 @@
 					}
 					@if (show('labels')) {
 						<span class="cell labels" role="gridcell">
-							@for (tag of row.tags ?? []; track tag.id) {
-								<span class="label" [style.--chip-color]="tag.color || null">{{ tag.name }}</span>
+							@for (tag of row.tags ?? []; track tag.id; let index = $index) {
+								@if (index < labelsShown) {
+									<span class="label" [style.--chip-color]="tag.color || null" [title]="tag.name">{{
+										tag.name
+									}}</span>
+								}
+							}
+							@if ((row.tags?.length ?? 0) > labelsShown) {
+								<span class="more" [nbTooltip]="hiddenLabels(row.tags)"
+									>+{{ (row.tags?.length ?? 0) - labelsShown }}</span
+								>
 							}
 						</span>
 					}
 					@if (show('project')) {
-						<span class="cell project" role="gridcell">{{ row.project?.name }}</span>
+						<span class="cell project" role="gridcell" [title]="row.project?.name ?? ''">{{
+							row.project?.name
+						}}</span>
 					}
 					@if (show('dueDate')) {
 						<span class="cell due" role="gridcell" [class.overdue]="isOverdue(row)">
