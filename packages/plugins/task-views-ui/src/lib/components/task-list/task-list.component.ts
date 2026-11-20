@@ -8,7 +8,8 @@ import {
 	ElementRef,
 	inject,
 	input,
-	output
+	output,
+	signal
 } from '@angular/core';
 import { NbIconModule, NbTooltipModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -86,6 +87,30 @@ export class TaskListComponent {
 	protected readonly initialsOf = initialsOf;
 	protected readonly isOverdue = isOverdue;
 	protected readonly dueDateShown = dueDateShown;
+
+	/** How many labels a row shows before the rest fold into a "+N" chip (their names are in its tooltip). */
+	protected readonly labelsShown = 2;
+
+	/** Pictures that failed to load: the person shows their initials instead of a broken image. */
+	private readonly brokenImages = signal<ReadonlySet<string>>(new Set());
+
+	protected hasPicture(url: string | null | undefined): boolean {
+		return !!url && !this.brokenImages().has(url);
+	}
+
+	protected onPictureError(url: string | null | undefined): void {
+		if (!url || this.brokenImages().has(url)) return;
+		this.brokenImages.update((broken) => new Set(broken).add(url));
+	}
+
+	/** The names of the labels folded into the "+N" chip, for its tooltip. */
+	protected hiddenLabels(tags: ReadonlyArray<{ name?: string }> | undefined): string {
+		return (tags ?? [])
+			.slice(this.labelsShown)
+			.map((tag) => tag.name ?? '')
+			.filter(Boolean)
+			.join(', ');
+	}
 
 	/** Every row once, in the order shown: what the page checkbox and the drop indexes read. */
 	protected readonly order = computed(() => {
