@@ -530,6 +530,12 @@ input CreateManualTimeLogInput {
 	reason: String
 	"Whether the interval is billed for."
 	isBillable: Boolean
+	"""
+	When true, an interval with a project (the one named, else its task's) is billable as that project is set, a project with
+	no setting counting as not billable; `isBillable` then applies only without a project. Left out, `isBillable`
+	decides as always.
+	"""
+	billableFromProject: Boolean
 }
 
 """
