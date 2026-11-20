@@ -91,6 +91,10 @@ export class EverConnectWellKnownService implements OnModuleInit {
 		) {
 			return null;
 		}
+		// Only while the installation address is enabled: a switch-off ends the statement at once.
+		if (!(await this.store.integration('instance', 'instance_url'))?.enabled) {
+			return null;
+		}
 		const signer = await this.instance.connectSigner();
 		if (!signer) {
 			return null;

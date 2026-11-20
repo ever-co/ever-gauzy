@@ -2,10 +2,12 @@ import {
 	BadRequestException,
 	Body,
 	Controller,
+	Delete,
 	Get,
 	Header,
 	HttpCode,
 	HttpStatus,
+	Inject,
 	Param,
 	Post,
 	Put,
@@ -15,20 +17,38 @@ import {
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { RolesEnum } from '@gauzy/contracts';
 import { RoleGuard, Roles } from '@gauzy/core';
+import type { EverConnectConfig } from './ever-connect-config';
 import { ConnectResult, EverConnectConnectionService } from './ever-connect-connection.service';
+import { ConnectionStatus, EVER_CONNECT_SETTINGS } from './ever-connect.constants';
 import { EntitlementImportResult, EverConnectEntitlementService } from './ever-connect-entitlement.service';
-import { EverConnectIntegrationStateService, IntegrationView } from './ever-connect-integration-state.service';
+import {
+	EverConnectIntegrationStateService,
+	IntegrationView,
+	PublicUrlView
+} from './ever-connect-integration-state.service';
 import type { RequestWithUser } from './ever-connect-request';
 import { EverConnectStore } from './ever-connect.store';
 import { EverConnectOperatorGuard } from './guards/ever-connect-operator.guard';
+import { MAX_PUBLIC_URL, normalisedPublicAddress } from './public-address';
+
+/** `GET /api/ever-connect/probe`: what the web app's menu needs, for the operator only. */
+export interface EverConnectProbe {
+	loaded: true;
+	/** `ever_cloud` when Ever operates this installation (`EVER_INSTALL_SOURCE=cloud`). */
+	managed_by: 'ever_cloud' | 'operator';
+	status: ConnectionStatus;
+	connected: boolean;
+}
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
  * The installation side of the Ever Platform connection, for the operator of this installation only
- * (`EverConnectOperatorGuard`): connect, disconnect, the instance policy, the installation's public
- * address, and the local accept of installation-wide integrations. Everyone else, every tenant
- * administrator of Ever's cloud included, gets 404. No answer is cached.
+ * (`EverConnectOperatorGuard`): connect, check a connection waiting for approval, replace the key,
+ * disconnect, the instance policy, the installation's public address, and the local accept of
+ * installation-wide integrations. On Ever's cloud that is a super admin listed by id in
+ * `EVER_CONNECT_CLOUD_OPERATOR_USER_IDS`; everyone else, every other tenant administrator of Ever's
+ * cloud included, gets 404. No answer is cached.
  */
 @ApiTags('Ever Platform')
 @ApiBearerAuth()
@@ -40,8 +60,27 @@ export class EverConnectInstanceController {
 		private readonly connection: EverConnectConnectionService,
 		private readonly states: EverConnectIntegrationStateService,
 		private readonly store: EverConnectStore,
-		private readonly entitlements: EverConnectEntitlementService
+		private readonly entitlements: EverConnectEntitlementService,
+		@Inject(EVER_CONNECT_SETTINGS) private readonly config: EverConnectConfig
 	) {}
+
+	/**
+	 * The web app's menu probe: whether this module is loaded and the caller operates the connection,
+	 * and the state of the connection in one word. It answers only the operator (everyone else, and
+	 * every caller where the module is not loaded, gets 404, so the menu entry stays hidden), sends
+	 * nothing to Ever Platform and carries no id, name or address.
+	 */
+	@Get('probe')
+	@Header('Cache-Control', 'no-store')
+	async probe(): Promise<EverConnectProbe> {
+		const status = (await this.connection.connection()).status;
+		return {
+			loaded: true,
+			managed_by: this.config.cloud ? 'ever_cloud' : 'operator',
+			status,
+			connected: status === 'connected'
+		};
+	}
 
 	/**
 	 * Connects this installation with a connect code from app.ever.co: `{ "code": "EVC-…",
@@ -76,12 +115,14 @@ export class EverConnectInstanceController {
 		});
 	}
 
-	/** Re-reads a connection waiting for approval in app.ever.co. */
+	/** **Check again**: re-reads a connection waiting for approval in app.ever.co, and finishes it once approved. */
 	@Post('connection/check')
 	@HttpCode(HttpStatus.OK)
 	@Header('Cache-Control', 'no-store')
-	async check(): Promise<{ status: string }> {
-		return { status: await this.connection.checkApproval() };
+	async check(@Req() request: RequestWithUser): Promise<{ status: string }> {
+		return {
+			status: await this.connection.checkApproval({ actorLabel: 'operator', userId: request.user?.id ?? null })
+		};
 	}
 
 	/**
@@ -164,41 +205,30 @@ export class EverConnectInstanceController {
 		});
 	}
 
-	/** The installation's public address, once "Installation address" is enabled: `{ "url": "https://…" }`. */
+	/**
+	 * Reports the installation's public address the operator typed, once "Installation address"
+	 * (`instance_url`) is enabled (consented in app.ever.co and accepted here): `{ "url": "https://…" }`.
+	 * Never an address read from this server's own host or settings. 409 `not_connected` /
+	 * `consent_required` before; 400 `url_invalid` for an address that cannot be published.
+	 */
 	@Put('public-url')
 	@Header('Cache-Control', 'no-store')
-	async publicUrl(@Body() body: { url?: unknown }) {
-		if (!publicAddress(body?.url)) {
-			throw new BadRequestException(
-				'url must be an https address with a host name, without credentials, query or fragment'
-			);
+	async publicUrl(@Req() request: RequestWithUser, @Body() body: { url?: unknown }): Promise<PublicUrlView> {
+		const url = normalisedPublicAddress(body?.url);
+		if (!url) {
+			throw new BadRequestException({
+				statusCode: 400,
+				code: 'url_invalid',
+				message: `url must be an https address with a host name, without credentials, query or fragment, at most ${MAX_PUBLIC_URL} characters`
+			});
 		}
-		return this.states.setPublicUrl(String(body.url));
+		return this.states.setPublicUrl(url, { actorLabel: 'operator', userId: request.user?.id ?? null });
 	}
-}
 
-/**
- * Whether `value` may be published as the installation's address: https, a host name (no IP
- * address literal, no credentials, no port 0), no query or fragment.
- */
-export function publicAddress(value: unknown): boolean {
-	if (typeof value !== 'string' || !/^https:\/\/[^\s/?#]+(\/[^\s?#]*)?$/.test(value)) {
-		return false;
+	/** Withdraws the reported address from Ever Platform. */
+	@Delete('public-url')
+	@Header('Cache-Control', 'no-store')
+	async clearPublicUrl(@Req() request: RequestWithUser): Promise<PublicUrlView> {
+		return this.states.clearPublicUrl({ actorLabel: 'operator', userId: request.user?.id ?? null });
 	}
-	let url: URL;
-	try {
-		url = new URL(value);
-	} catch {
-		return false;
-	}
-	const host = url.hostname;
-	return (
-		url.protocol === 'https:' &&
-		!url.username &&
-		!url.password &&
-		url.port !== '0' &&
-		!/^[0-9.]+$/.test(host) &&
-		!host.startsWith('[') &&
-		host.includes('.')
-	);
 }

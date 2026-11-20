@@ -4,6 +4,7 @@ import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { authManager } from '../common/auth-manager';
+import { sanitizeForLogging } from '../common/error-utils';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
 import { TOOL_HINTS } from './tool-hints';
@@ -43,8 +44,10 @@ export const registerTimerTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching timer status:', error instanceof Error ? error.stack : undefined);
-				throw new Error(`Failed to fetch timer status: ${error instanceof Error ? error.message : 'Unknown error'}`);
+				logger.error('Error fetching timer status:', sanitizeForLogging(error));
+				throw new Error(
+					`Failed to fetch timer status: ${error instanceof Error ? error.message : 'Unknown error'}`
+				);
 			}
 		},
 		TOOL_HINTS.readOnly
@@ -124,7 +127,7 @@ export const registerTimerTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error starting timer:', error);
+				logger.error('Error starting timer:', sanitizeForLogging(error));
 				throw new Error(`Failed to start timer: ${error instanceof Error ? error.message : 'Unknown error'}`);
 			}
 		},
@@ -182,7 +185,7 @@ export const registerTimerTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error stopping timer:', error);
+				logger.error('Error stopping timer:', sanitizeForLogging(error));
 				throw new Error(`Failed to stop timer: ${error instanceof Error ? error.message : 'Unknown error'}`);
 			}
 		},

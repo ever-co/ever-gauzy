@@ -4,7 +4,7 @@ import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { authManager } from '../common/auth-manager';
-import { sanitizeErrorMessage } from '../common/error-utils';
+import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 import {
 	TASK_PRIORITY_VALUES,
 	TASK_SIZE_VALUES,
@@ -205,7 +205,7 @@ export const registerTaskTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching tasks:', error);
+				logger.error('Error fetching tasks:', sanitizeForLogging(error));
 				const message = sanitizeErrorMessage(error);
 				throw new Error(`Failed to fetch tasks: ${message}`);
 			}
@@ -253,7 +253,7 @@ export const registerTaskTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching task count:', error);
+				logger.error('Error fetching task count:', sanitizeForLogging(error));
 				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to fetch task count: ${errorMsg}`);
 			}
@@ -303,7 +303,7 @@ export const registerTaskTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching tasks pagination:', error);
+				logger.error('Error fetching tasks pagination:', sanitizeForLogging(error));
 				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to fetch tasks pagination: ${errorMsg}`);
 			}
@@ -353,7 +353,7 @@ export const registerTaskTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching tasks by employee:', error);
+				logger.error('Error fetching tasks by employee:', sanitizeForLogging(error));
 				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to fetch tasks by employee: ${errorMsg}`);
 			}
@@ -405,7 +405,7 @@ export const registerTaskTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching my tasks:', error);
+				logger.error('Error fetching my tasks:', sanitizeForLogging(error));
 				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to fetch my tasks: ${errorMsg}`);
 			}
@@ -451,7 +451,7 @@ export const registerTaskTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching team tasks:', error);
+				logger.error('Error fetching team tasks:', sanitizeForLogging(error));
 				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to fetch team tasks: ${errorMsg}`);
 			}
@@ -463,7 +463,9 @@ export const registerTaskTools = (server: McpServer) => {
 		'create_task',
 		"Create a new task in the authenticated user's organization",
 		{
-			task_data: z.object({ title: z.string().describe('The title (required)') }).passthrough()
+			task_data: z
+				.object({ title: z.string().describe('The title (required)') })
+				.passthrough()
 				.describe('The data for creating the task')
 		},
 		TOOL_HINTS.write,
@@ -497,7 +499,7 @@ export const registerTaskTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error creating task:', error);
+				logger.error('Error creating task:', sanitizeForLogging(error));
 				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to create task: ${errorMsg}`);
 			}
@@ -533,7 +535,7 @@ export const registerTaskTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching task:', error);
+				logger.error('Error fetching task:', sanitizeForLogging(error));
 				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to fetch task: ${errorMsg}`);
 			}
@@ -564,7 +566,7 @@ export const registerTaskTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error updating task:', error);
+				logger.error('Error updating task:', sanitizeForLogging(error));
 				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to update task: ${errorMsg}`);
 			}
@@ -592,7 +594,7 @@ export const registerTaskTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error deleting task:', error);
+				logger.error('Error deleting task:', sanitizeForLogging(error));
 				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to delete task: ${errorMsg}`);
 			}
@@ -606,7 +608,9 @@ export const registerTaskTools = (server: McpServer) => {
 		{
 			tasks: z
 				.array(
-					z.object({ title: z.string().describe('The title (required)') }).passthrough()
+					z
+						.object({ title: z.string().describe('The title (required)') })
+						.passthrough()
 						.describe('Task data')
 				)
 				.describe('Array of task data to create')
@@ -645,7 +649,7 @@ export const registerTaskTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error bulk creating tasks:', error);
+				logger.error('Error bulk creating tasks:', sanitizeForLogging(error));
 				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to bulk create tasks: ${errorMsg}`);
 			}
@@ -688,7 +692,7 @@ export const registerTaskTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error bulk updating tasks:', error);
+				logger.error('Error bulk updating tasks:', sanitizeForLogging(error));
 				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to bulk update tasks: ${errorMsg}`);
 			}
@@ -720,7 +724,7 @@ export const registerTaskTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error bulk deleting tasks:', error);
+				logger.error('Error bulk deleting tasks:', sanitizeForLogging(error));
 				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to bulk delete tasks: ${errorMsg}`);
 			}
@@ -775,7 +779,7 @@ export const registerTaskTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error fetching task statistics:', error);
+				logger.error('Error fetching task statistics:', sanitizeForLogging(error));
 				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to fetch task statistics: ${errorMsg}`);
 			}
@@ -815,7 +819,7 @@ export const registerTaskTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error assigning task to employee:', error);
+				logger.error('Error assigning task to employee:', sanitizeForLogging(error));
 				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to assign task to employee: ${errorMsg}`);
 			}
@@ -855,7 +859,7 @@ export const registerTaskTools = (server: McpServer) => {
 					]
 				};
 			} catch (error) {
-				logger.error('Error unassigning task from employee:', error);
+				logger.error('Error unassigning task from employee:', sanitizeForLogging(error));
 				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to unassign task from employee: ${errorMsg}`);
 			}

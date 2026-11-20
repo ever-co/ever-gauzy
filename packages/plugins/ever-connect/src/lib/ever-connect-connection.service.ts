@@ -34,7 +34,7 @@ import {
 	ULID_SHAPE
 } from './ever-connect.constants';
 import { EverConnectEntitlementService } from './ever-connect-entitlement.service';
-import { EverConnectIntegrationStateService } from './ever-connect-integration-state.service';
+import { EverConnectIntegrationStateService, PublicUrlView } from './ever-connect-integration-state.service';
 import { EverConnectLinkService, LinkView } from './ever-connect-link.service';
 import {
 	EverConnectPlatformService,
@@ -100,6 +100,8 @@ export interface ConnectionSummary {
 	/** `unreadable`: ENCRYPTION_KEY or JWT_SECRET changed since the key was stored (disconnect, then connect again). */
 	connect_key: 'none' | 'ok' | 'unreadable';
 	env_code: 'none' | 'pending' | 'used';
+	/** The installation's public address: whether `instance_url` is enabled, and the address reported. */
+	instance_url: PublicUrlView;
 }
 
 /** A secret shorter than this is accepted but flagged on the Connection tab. */
@@ -180,7 +182,8 @@ export class EverConnectConnectionService implements OnModuleInit, OnModuleDestr
 			key_material: connectKeyMaterialProblem(this.env) ?? 'ok',
 			secret_short: (this.env['ENCRYPTION_KEY']?.trim() || this.env['JWT_SECRET']?.trim() || '').length < STRONG_SECRET_LENGTH,
 			connect_key: await this.instance.connectKeyState(),
-			env_code: !code ? 'none' : c.envCodeConsumedHash === sha256(code.trim().toUpperCase()) ? 'used' : 'pending'
+			env_code: !code ? 'none' : c.envCodeConsumedHash === sha256(code.trim().toUpperCase()) ? 'used' : 'pending',
+			instance_url: await this.states.publicUrlView()
 		};
 	}
 
@@ -418,21 +421,50 @@ export class EverConnectConnectionService implements OnModuleInit, OnModuleDestr
 		});
 	}
 
-	/** Ever Platform approved a connection that was pending: finish it. */
-	async approved(): Promise<void> {
+	/**
+	 * Ever Platform approved a connection that was pending: finish it, and record it in the audit
+	 * (`instance.connect`, `source: approval`) with who saw it: Ever Platform's event, or the
+	 * operator's **Check again**.
+	 */
+	async approved(
+		actor: { actorLabel: ActorLabel; userId: string | null } = { actorLabel: 'platform', userId: null }
+	): Promise<void> {
 		const connection = await this.store.connection();
 		if (connection.status !== 'pending_approval' || !connection.platformInstanceId) return;
 		await this.store.updateConnection({ status: 'connected' });
 		try {
 			await this.completeConnect(connection.platformInstanceId, { tenant: null, userId: null }, null);
-			this.signals.connected$.next();
 		} catch (error) {
 			this.logger.warn(`The approved connection could not be completed (${errorCode(error)}).`);
+			return;
+		}
+		// The heartbeat and the feed start whatever happens to the audit row below.
+		this.signals.connected$.next();
+		try {
+			await this.audit.record({
+				action: 'instance.connect',
+				actorLabel: actor.actorLabel,
+				actorUserId: actor.userId,
+				details: {
+					platform_instance_id: connection.platformInstanceId,
+					kid: connection.kid,
+					status: 'connected',
+					source: 'approval'
+				}
+			});
+		} catch (error) {
+			this.logger.warn(`The approval of the connection could not be audited (${errorCode(error)}).`);
 		}
 	}
 
-	/** Re-reads a pending connection's state (`GET /v1/instances/me`), for the Connection tab. */
-	async checkApproval(): Promise<ConnectionStatus> {
+	/**
+	 * **Check again** on a connection waiting for approval in app.ever.co: re-reads its state (`GET
+	 * /v1/instances/me`) and finishes the connection once Ever Platform approved it. Any other state
+	 * answers as it is, without a request.
+	 */
+	async checkApproval(
+		actor: { actorLabel: ActorLabel; userId: string | null } = { actorLabel: 'operator', userId: null }
+	): Promise<ConnectionStatus> {
 		const connection = await this.store.connection();
 		if (connection.status !== 'pending_approval') return connection.status;
 		try {
@@ -440,7 +472,7 @@ export class EverConnectConnectionService implements OnModuleInit, OnModuleDestr
 				instance?: { status?: string };
 			};
 			if (self.instance?.status === 'active') {
-				await this.approved();
+				await this.approved(actor);
 			}
 		} catch (error) {
 			if (isCredentialRevoked(error)) await this.stopLocally('revoked');
