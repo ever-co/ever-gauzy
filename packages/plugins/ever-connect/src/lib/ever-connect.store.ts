@@ -313,10 +313,11 @@ export class EverConnectStore {
 	}> {
 		const q = (column: string) => this.sql.q(column);
 		const live = `${q('status')} <> ${this.sql.ph(1)}`;
+		const columns = ['linkId', 'everOrgId', 'everHandle', 'status', 'createdAt'].map(q).join(', ');
+		const order = `${q('createdAt')} DESC, ${q('id')} DESC`;
 		const total = await this.sql.run(`SELECT COUNT(*) AS ${q('n')} FROM ${q(LINK)} WHERE ${live}`, ['unlinked']);
 		const { rows } = await this.sql.run(
-			`SELECT ${['linkId', 'everOrgId', 'everHandle', 'status', 'createdAt'].map(q).join(', ')} FROM ${q(LINK)} ` +
-				`WHERE ${live} ORDER BY ${q('createdAt')} DESC, ${q('id')} DESC LIMIT ${Math.max(0, Math.floor(limit))}`,
+			`SELECT ${columns} FROM ${q(LINK)} WHERE ${live} ORDER BY ${order} LIMIT ${Math.max(0, Math.floor(limit))}`,
 			['unlinked']
 		);
 		return {

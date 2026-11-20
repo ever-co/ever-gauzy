@@ -21,8 +21,11 @@ function sharedOperator() {
 	return {
 		isOperator: jest.fn(async (user: { id?: string } | null | undefined) => user?.id === TENANT_ADMIN),
 		isListedSuperAdmin: jest.fn(
-			async (user: { id?: string } | null | undefined, role: string | null | undefined, ids: ReadonlyArray<string>) =>
-				role === 'SUPER_ADMIN' && !!user?.id && ids.includes(user.id)
+			async (
+				user: { id?: string } | null | undefined,
+				role: string | null | undefined,
+				ids: ReadonlyArray<string>
+			) => role === 'SUPER_ADMIN' && !!user?.id && ids.includes(user.id)
 		)
 	};
 }
@@ -186,7 +189,14 @@ describe('the connection lifecycle of the Connection tab', () => {
 	});
 
 	it("the installation's links: live ones only, newest first, at most the shown number, without Gauzy ids", async () => {
-		const links = new EverConnectLinkService({} as never, store, audit, {} as never, {} as never, new EverConnectSignals());
+		const links = new EverConnectLinkService(
+			{} as never,
+			store,
+			audit,
+			{} as never,
+			{} as never,
+			new EverConnectSignals()
+		);
 		expect(await links.installationLinks()).toEqual({ total: 0, items: [] });
 		const add = async (n: number, status: 'linked' | 'suspended' | 'unlinked') => {
 			clock.t += 1_000;
@@ -217,7 +227,13 @@ describe('the connection lifecycle of the Connection tab', () => {
 			['org-3', 'suspended'],
 			['org-1', 'linked']
 		]);
-		expect(Object.keys(listed.items[0]).sort()).toEqual(['ever_org_id', 'handle', 'link_id', 'linked_at', 'status']);
+		expect(Object.keys(listed.items[0]).sort()).toEqual([
+			'ever_org_id',
+			'handle',
+			'link_id',
+			'linked_at',
+			'status'
+		]);
 		for (let n = 4; n < 4 + INSTALLATION_LINKS_SHOWN; n++) await add(n, 'linked');
 		const many = await links.installationLinks();
 		expect(many.total).toBe(INSTALLATION_LINKS_SHOWN + 2);
