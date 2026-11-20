@@ -4,6 +4,8 @@ import {
 	Component,
 	computed,
 	DestroyRef,
+	ElementRef,
+	HostListener,
 	inject,
 	OnInit,
 	signal,
@@ -185,6 +187,7 @@ export class TaskViewsPageComponent implements OnInit {
 	private readonly store = inject(Store);
 	private readonly route = inject(ActivatedRoute);
 	private readonly router = inject(Router);
+	private readonly host = inject(ElementRef<HTMLElement>);
 	private readonly dialogs = inject(NbDialogService);
 	private readonly toastr = inject(ToastrService);
 	private readonly registry = inject(ShortcutRegistryService);
@@ -233,6 +236,9 @@ export class TaskViewsPageComponent implements OnInit {
 	protected readonly focusedId = signal<ID | null>(null);
 	protected readonly busy = signal(false);
 	protected readonly undo = signal<PendingUndo | null>(null);
+	/** The horizontal centre of the page content, in px, where the undo bar is centred (not the window's, which the
+	 *  side menu pushes off the content). Null until measured: the bar then centres on the window. */
+	protected readonly contentCenter = signal<number | null>(null);
 	protected readonly filtersOpen = signal(true);
 
 	/** The signed-in user's permissions as the store holds them: the checks below follow it when it loads or changes. */
@@ -1046,6 +1052,18 @@ export class TaskViewsPageComponent implements OnInit {
 		if (this.scope() === scope) await this.reload();
 	}
 
+	/** Keeps the undo bar centred on the content as the window (or the side menu beside it) changes size. */
+	@HostListener('window:resize')
+	protected onResize(): void {
+		if (this.undo()) this.measureContentCenter();
+	}
+
+	private measureContentCenter(): void {
+		const content = (this.host.nativeElement as HTMLElement).querySelector?.('.task-views') as HTMLElement | null;
+		const rect = content?.getBoundingClientRect?.();
+		this.contentCenter.set(rect && rect.width ? rect.left + rect.width / 2 : null);
+	}
+
 	private offerUndo(
 		messageKey: string,
 		params: Record<string, unknown>,
@@ -1053,6 +1071,7 @@ export class TaskViewsPageComponent implements OnInit {
 		lossy: readonly ID[] = []
 	): void {
 		this.clearUndo();
+		this.measureContentCenter();
 		this.undo.set({ messageKey, params, request, lossy });
 		this.undoTimer = setTimeout(() => this.undo.set(null), BULK_UNDO_WINDOW_MS);
 	}
