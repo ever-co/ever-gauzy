@@ -1,51 +1,78 @@
 :host {
   display: block;
-  position: relative;
 }
 
+// A floating bar pinned to the bottom of the screen while tasks are selected, so the actions stay in reach however
+// far down the list the selection goes. Fixed rather than sticky: the view's card body is its own scroll box, which
+// a sticky bar would be held inside.
 .bulk-toolbar {
-  position: relative;
+  --button-tiny-text-font-size: 0.75rem;
+  --button-tiny-icon-size: 0.875rem;
+  --button-ghost-tiny-padding: 0.3125rem 0.5rem;
+  --icon-button-ghost-tiny-padding: 0.3125rem;
+
+  position: fixed;
+  left: 50%;
+  bottom: 1.5rem;
+  z-index: 1000;
+  transform: translateX(-50%);
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.375rem;
-  padding: 0.5rem 0.75rem;
-  border-radius: var(--border-radius);
-  background: var(--color-primary-transparent-100);
-  border: 1px solid var(--border-primary-color-1);
+  gap: 0.25rem;
+  width: max-content;
+  max-width: calc(100vw - 2rem);
+  padding: 0.375rem 0.5rem 0.375rem 1rem;
+  border-radius: var(--border-radius, 0.5rem);
+  background: var(--background-basic-color-1);
+  border: 1px solid var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+  box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.25);
+  font-size: 0.8125rem;
 }
 
 .count {
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .limit {
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   color: var(--text-warning-color);
 }
 
 .separator {
   width: 1px;
-  align-self: stretch;
-  background: var(--border-basic-color-4);
-  margin: 0 0.25rem;
+  height: 1.25rem;
+  background: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+  margin: 0 0.5rem;
+}
+
+// The pickers read as plain menu triggers in the bar, not as a row of filled boxes.
+.bulk-toolbar > button[nbButton] {
+  font-weight: 500;
+
+  &[aria-expanded='true'] {
+    background: var(--gauzy-active-tint, rgba(126, 126, 143, 0.2));
+  }
 }
 
 .clear {
-  margin-left: auto;
+  margin-left: 0.5rem;
+  color: var(--text-hint-color);
 }
 
 .panel {
   position: absolute;
-  top: calc(100% + 0.25rem);
-  left: 0.75rem;
+  // Opens upward: the bar sits at the bottom of the screen.
+  bottom: calc(100% + 0.5rem);
+  left: 0;
   z-index: 20;
   width: min(20rem, 90vw);
   padding: 0.5rem;
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius, 0.5rem);
   background: var(--background-basic-color-1);
-  border: 1px solid var(--border-basic-color-4);
-  box-shadow: var(--card-shadow);
+  border: 1px solid var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+  box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.25);
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -87,7 +114,7 @@
 
   &:hover,
   &:focus-visible {
-    background: var(--background-basic-color-2);
+    background: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
     outline: none;
   }
 
