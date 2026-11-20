@@ -151,7 +151,10 @@ export const PaymentMethodEnum = z.enum([
 	'STRIPE',
 	'CASH',
 	'CHECK',
-	'OTHER'
+	'OTHER',
+	'CHEQUE',
+	'DEBIT',
+	'ONLINE'
 ]);
 export const EquipmentTypeEnum = z.enum([
 	'LAPTOP',
