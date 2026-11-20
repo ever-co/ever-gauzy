@@ -252,13 +252,22 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 			await new Promise((resolve) => setTimeout(resolve, FEED_RETRY_MS).unref?.());
 			return false;
 		}
-		const client = await this.platform.getClient();
-		if (this.membership && !guards.current()) {
+		const stale = async (): Promise<boolean> => {
+			if (!this.membership || guards.current()) return false;
 			// Stopped (or started again) while this read was starting: it goes no further, and gives back a lease
 			// taken after the stop unless a later run holds it.
 			if (!this.running) await this.store.releaseLease(this.holder).catch(() => undefined);
-			return false;
+			return true;
+		};
+		if (await stale()) return false;
+		let client: EverPlatformClient;
+		try {
+			client = await this.platform.getClient();
+		} catch (error) {
+			await stale();
+			throw error;
 		}
+		if (await stale()) return false;
 		if (this.membership && this.membershipResyncOwed) {
 			// Not owed again on a failure: it runs at the next 410 or start (the resync says why it stopped).
 			this.membershipResyncOwed = false;

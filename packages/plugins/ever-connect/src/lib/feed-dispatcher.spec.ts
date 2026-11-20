@@ -326,6 +326,22 @@ describe('Ever Platform feed dispatcher', () => {
 			expect(store.releaseLease).toHaveBeenCalledTimes(2);
 		});
 
+		it('stopped while the client was being made, which then failed: the lease taken is given back', async () => {
+			const membership = { apply: jest.fn(), resync: jest.fn().mockResolvedValue('done') };
+			const { instance, store } = scheduler(membership);
+			const platform = (instance as unknown as { platform: { getClient: jest.Mock } }).platform;
+			platform.getClient.mockImplementationOnce(async () => {
+				instance.stop();
+				throw new Error('platform unavailable');
+			});
+			store.releaseLease.mockClear();
+
+			await expect(instance.readFeed()).rejects.toThrow('platform unavailable');
+			expect(membership.resync).not.toHaveBeenCalled();
+			// Once by stop(), once for the lease this read took.
+			expect(store.releaseLease).toHaveBeenCalledTimes(2);
+		});
+
 		it('a resync that lost the lease leaves the position, so the next lease holder is answered 410 again', async () => {
 			const membership = { apply: jest.fn(), resync: jest.fn().mockResolvedValue('done') };
 			const { instance, client, order } = scheduler(membership);
