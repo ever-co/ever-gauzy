@@ -125,6 +125,20 @@ describe('the installation address', () => {
 		expect((await h.store.connection()).publicUrl).toBeNull();
 	});
 
+	it('a report answered after a new consent never replaces the address another process reported under it', async () => {
+		await enable();
+		h.platform.on(PUT, async (call) => {
+			// Meanwhile, in another API process: a new consent, and a report under it.
+			await h.store.saveIntegration('instance', INSTANCE_URL, { consentId: '01JD0000000000000000000NEW' });
+			await h.store.updateConnection({ publicUrl: 'https://newer.acme.example/' });
+			return { status: 200, body: { base_url: String(call.body?.['base_url']) } };
+		});
+		expect(codeOf(await h.states.setPublicUrl('https://older.acme.example/', OPERATOR).catch((e) => e))).toBe(
+			'consent_changed'
+		);
+		expect((await h.store.connection()).publicUrl).toBe('https://newer.acme.example/');
+	});
+
 	it("Ever Platform's refusal: 403 is a 409 with its code, and nothing is kept", async () => {
 		await enable();
 		h.platform.on(PUT, problem(403, 'integration_disabled'));

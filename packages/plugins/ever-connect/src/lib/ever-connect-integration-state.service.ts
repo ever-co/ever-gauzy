@@ -1067,19 +1067,16 @@ export class EverConnectIntegrationStateService {
 		// kept: it was normalised the same way before it was sent (lower-case host, no default port).
 		const normalised = typeof answer?.base_url === 'string' ? answer.base_url : null;
 		const stored = normalised && normalised.length <= MAX_PUBLIC_URL ? normalised : url;
-		// Kept only for the connection it was sent for (compare and set), and only while the consent it was
-		// sent under still holds: a switch-off or a disconnect while Ever Platform answered wins, and the
-		// address is not kept (nor its statement served).
-		const sameConnection = { status: 'connected', platformInstanceId: connection.platformInstanceId };
-		const written = await this.store.updateConnection(
-			{ publicUrl: stored, publicUrlCheckUntil: this.now() + URL_CHECK_MAX_S * 1000 },
-			sameConnection
-		);
-		const after = await this.store.integration('instance', INSTANCE_URL);
-		if (written === 0 || !after?.enabled || after.consentId !== consent.consentId) {
-			if (written !== 0) {
-				await this.store.updateConnection({ publicUrl: null, publicUrlCheckUntil: null }, sameConnection);
-			}
+		// Kept, in one statement, only for the connection it was sent for and only while the consent it was
+		// sent under still holds: a switch-off, a new consent or a disconnect while Ever Platform answered
+		// wins, and then nothing is written (so no address of another report is replaced or cleared).
+		const kept = await this.store.setPublicUrlIfConsented({
+			publicUrl: stored,
+			publicUrlCheckUntil: this.now() + URL_CHECK_MAX_S * 1000,
+			platformInstanceId: String(connection.platformInstanceId),
+			consentId: consent.consentId
+		});
+		if (!kept) {
 			throw new ConflictException({
 				statusCode: 409,
 				code: 'consent_changed',
