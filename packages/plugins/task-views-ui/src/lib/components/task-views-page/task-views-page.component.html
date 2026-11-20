@@ -11,15 +11,57 @@
 } @else {
 	<div class="task-views" data-test="task-views-page">
 		<!-- The views switcher -->
+		<!-- The views switcher: a dropdown above the view, grouped by section (built-in, then saved views by scope). -->
 		<nav class="switcher" [attr.aria-label]="'TASK_VIEWS.SWITCHER.TITLE' | translate" data-test="views-switcher">
-			<div class="switcher-head">
-				<h5>{{ 'TASK_VIEWS.SWITCHER.TITLE' | translate }}</h5>
+			<label class="switcher-pick">
+				<span class="switcher-title">{{ 'TASK_VIEWS.SWITCHER.TITLE' | translate }}</span>
+				<nb-select
+					size="small"
+					class="switcher-select"
+					data-test="views-select"
+					[selected]="currentOption()"
+					(selectedChange)="selectView($event)"
+				>
+					<nb-option-group [title]="'TASK_VIEWS.SWITCHER.BUILT_IN' | translate">
+						@for (key of builtInViews; track key) {
+							<nb-option [value]="'built-in:' + key" [attr.data-view]="key">{{
+								builtInKey(key) | translate
+							}}</nb-option>
+						}
+					</nb-option-group>
+					@for (section of ['personal', 'team', 'project', 'organization']; track section) {
+						@if ($any(groupedViews())[section].length) {
+							<nb-option-group [title]="'TASK_VIEWS.SWITCHER.' + section.toUpperCase() | translate">
+								@for (view of $any(groupedViews())[section]; track view.id) {
+									<nb-option [value]="'saved:' + view.id" [attr.data-view]="view.id">{{
+										view.name
+									}}</nb-option>
+								}
+							</nb-option-group>
+						}
+					}
+					@if (!views().length) {
+						<nb-option-group [title]="'TASK_VIEWS.SWITCHER.EMPTY' | translate"></nb-option-group>
+					}
+				</nb-select>
+			</label>
+			<div class="switcher-end">
+				@if (views().length > 8) {
+					<input
+						nbInput
+						fieldSize="small"
+						type="search"
+						class="switcher-search"
+						[placeholder]="'TASK_VIEWS.SWITCHER.SEARCH' | translate"
+						[ngModel]="viewSearch()"
+						(ngModelChange)="viewSearch.set($event)"
+					/>
+				}
 				@if (canAdd()) {
 					<button
 						nbButton
-						size="tiny"
+						size="small"
 						status="primary"
-						ghost
 						type="button"
 						data-test="new-view"
 						[disabled]="saving()"
@@ -29,51 +71,6 @@
 					</button>
 				}
 			</div>
-			@if (views().length > 8) {
-				<input
-					nbInput
-					fullWidth
-					fieldSize="tiny"
-					type="search"
-					class="switcher-search"
-					[placeholder]="'TASK_VIEWS.SWITCHER.SEARCH' | translate"
-					[ngModel]="viewSearch()"
-					(ngModelChange)="viewSearch.set($event)"
-				/>
-			}
-			<h6>{{ 'TASK_VIEWS.SWITCHER.BUILT_IN' | translate }}</h6>
-			<ul>
-				@for (key of builtInViews; track key) {
-					<li>
-						<a
-							[routerLink]="linkOf({ kind: 'built-in', key: key })"
-							routerLinkActive="active"
-							[attr.data-view]="key"
-							>{{ builtInKey(key) | translate }}</a
-						>
-					</li>
-				}
-			</ul>
-			@for (section of ['personal', 'team', 'project', 'organization']; track section) {
-				@if ($any(groupedViews())[section].length) {
-					<h6>{{ 'TASK_VIEWS.SWITCHER.' + section.toUpperCase() | translate }}</h6>
-					<ul>
-						@for (view of $any(groupedViews())[section]; track view.id) {
-							<li>
-								<a
-									[routerLink]="linkOf({ kind: 'saved', id: view.id })"
-									routerLinkActive="active"
-									[attr.data-view]="view.id"
-									>{{ view.name }}</a
-								>
-							</li>
-						}
-					</ul>
-				}
-			}
-			@if (!views().length) {
-				<p class="switcher-empty">{{ 'TASK_VIEWS.SWITCHER.EMPTY' | translate }}</p>
-			}
 		</nav>
 
 		<!-- The open view -->
