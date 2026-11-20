@@ -133,6 +133,7 @@ import {
 	projectIdForEntry,
 	teamIdForEntry
 } from './organization-tracking-requirements';
+import { billableOfProject } from './project-billable';
 import {
 	assertBreakOverlapsNothing,
 	assertBreaksAllowedIn,
@@ -2536,6 +2537,14 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 			const entry = await this.withRequiredContext(request, employee, organizationId, tenantId);
 
+			// Billable as the entry's project is set when the client asks for it, read before any overlapped entry is cut
+			// (ever-co/ever-teams#5571)
+			let projectBillable: boolean | undefined;
+			if (request.billableFromProject === true) {
+				const entryEmployee = { employeeId, organizationId, tenantId };
+				projectBillable = await billableOfProject(this.typeOrmRepository.manager, entryEmployee, entry);
+			}
+
 			// The tags the entry is filed under, checked before any overlapped entry is cut (ever-co/ever-gauzy#12029)
 			const tags = await timeLogTagsOf(this.typeOrmRepository.manager, sentTagIds(request.tags) ?? [], {
 				tenantId,
@@ -2596,6 +2605,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			// filter would not find a log written for a member the caller manages. Time added by a person is
 			// recorded in the entry's history; the time a tracker uploads is not, as the time its timer records.
 			const written = { ...entry, organizationId, tags: tagsToLink(tags) };
+			if (projectBillable !== undefined) {
+				written.isBillable = projectBillable;
+			}
 			// A break is never billable
 			if (addsBreak) {
 				written.isBillable = false;

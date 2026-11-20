@@ -104,6 +104,12 @@ input TimerToggleInput {
 	logType: String
 	"Whether the recorded time is billable."
 	isBillable: Boolean
+	"""
+	When true, a run with a project (the one named, else its task's) is billable as that project is set, a project with
+	no setting counting as not billable; `isBillable` then applies only without a project. Left out, `isBillable`
+	decides as always.
+	"""
+	billableFromProject: Boolean
 	"What the log is about, in the caller's own words."
 	description: String
 	"The client version that opened the log, recorded as the log's version column."

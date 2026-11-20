@@ -3,8 +3,8 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { endOfDayBound, readSearchedList, relationsForSearch, validateOrganizationContext } from './utils';
-import { InvoiceStatusEnum, InvoiceTypeEnum } from '../input-schemas';
+import { endOfDayBound, readSearchedList, relationsForSearch, toApiValue, validateOrganizationContext } from './utils';
+import { INVOICE_STATUS_VALUES, InvoiceStatusEnum, InvoiceTypeEnum } from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
@@ -49,6 +49,15 @@ const convertInvoiceDateFields = (invoiceData: InvoiceData): ConvertedInvoiceDat
 	};
 };
 
+/** The invoice data with the status the API stores for one the tools list by another name (`CANCELLED` is `VOID`). */
+const withStoredInvoiceStatus = <T extends { status?: unknown }>(invoiceData: T): T => {
+	const status = invoiceData.status;
+	if (typeof status !== 'string') {
+		return invoiceData;
+	}
+	return { ...invoiceData, status: toApiValue(INVOICE_STATUS_VALUES, status) };
+};
+
 export const registerInvoiceTools = (server: McpServer) => {
 	// Get invoices tool - uses pagination endpoint
 	registerTool(
@@ -75,7 +84,8 @@ export const registerInvoiceTools = (server: McpServer) => {
 
 				// The route reads a date range from `where.invoiceDate`. It has no search: one of the number or the client's
 				// name is kept here, on the whole list.
-				const where = { status, invoiceType, paid, ...invoiceDateRange(startDate, endDate) };
+				const storedStatus = toApiValue(INVOICE_STATUS_VALUES, status);
+				const where = { status: storedStatus, invoiceType, paid, ...invoiceDateRange(startDate, endDate) };
 				const listOptions = {
 					page,
 					limit,
@@ -121,7 +131,7 @@ export const registerInvoiceTools = (server: McpServer) => {
 				const params = {
 					organizationId: defaultParams.organizationId,
 					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					...(status && { status }),
+					...(status && { status: toApiValue(INVOICE_STATUS_VALUES, status) }),
 					...(paid !== undefined && { paid }),
 					...(startDate && { startDate }),
 					...(endDate && { endDate })
@@ -204,11 +214,13 @@ export const registerInvoiceTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const createData = convertInvoiceDateFields({
-					...invoice_data,
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
-				});
+				const createData = convertInvoiceDateFields(
+					withStoredInvoiceStatus({
+						...invoice_data,
+						organizationId: defaultParams.organizationId,
+						...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
+					})
+				);
 
 				const response = await apiClient.post('/api/invoices', createData);
 
@@ -239,7 +251,7 @@ export const registerInvoiceTools = (server: McpServer) => {
 		},
 		async ({ id, invoice_data }) => {
 			try {
-				const updateData = convertInvoiceDateFields(invoice_data);
+				const updateData = convertInvoiceDateFields(withStoredInvoiceStatus(invoice_data));
 
 				const response = await apiClient.put(`/api/invoices/${id}`, updateData);
 
@@ -271,10 +283,10 @@ export const registerInvoiceTools = (server: McpServer) => {
 		},
 		async ({ id, status, isEstimate }) => {
 			try {
-				const updateData = {
+				const updateData = withStoredInvoiceStatus({
 					...(status && { status }),
 					...(isEstimate !== undefined && { isEstimate })
-				};
+				});
 
 				const response = await apiClient.put(`/api/invoices/${id}/action`, updateData);
 
@@ -311,7 +323,9 @@ export const registerInvoiceTools = (server: McpServer) => {
 		},
 		async ({ id, data }) => {
 			try {
-				const response = await apiClient.put(`/api/invoices/${id}/estimate`, data);
+				// The action route reads the status, isEstimate and paid; the estimate route reads only the client's
+				// answer (isAccepted), and refused this tool's data.
+				const response = await apiClient.put(`/api/invoices/${id}/action`, withStoredInvoiceStatus(data));
 
 				return {
 					content: [

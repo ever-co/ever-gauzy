@@ -4,6 +4,7 @@ import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { authManager } from '../common/auth-manager';
+import { sanitizeErrorMessage } from '../common/error-utils';
 import {
 	TASK_PRIORITY_VALUES,
 	TASK_SIZE_VALUES,
@@ -48,6 +49,29 @@ const convertDateFields = (data: TaskDateFields) => ({
 			: new Date(data.startDate)
 		: undefined
 });
+
+/** The task fields the tool schemas name by key, with the values the API stores for those keys. */
+const TASK_FIELD_VALUES: Record<string, Record<string, string>> = {
+	status: TASK_STATUS_VALUES,
+	priority: TASK_PRIORITY_VALUES,
+	size: TASK_SIZE_VALUES,
+	issueType: TASK_TYPE_VALUES
+};
+
+/**
+ * A task to write, with a status, priority, size or type given by its key (`OPEN`, `HIGH`) turned into the value the
+ * API stores (`open`, `high`), as the list filters send it. Any other value, a custom status included, is kept.
+ */
+const withStoredTaskValues = <T extends Record<string, unknown>>(data: T): T => {
+	const stored: Record<string, unknown> = { ...data };
+	for (const [field, values] of Object.entries(TASK_FIELD_VALUES)) {
+		const value = stored[field];
+		if (typeof value === 'string') {
+			stored[field] = toApiValue(values, value);
+		}
+	}
+	return stored as T;
+};
 
 type TaskWithMembers = { title: string; status: string; members?: { id: string }[] };
 
@@ -182,7 +206,7 @@ export const registerTaskTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				logger.error('Error fetching tasks:', error);
-				const message = error instanceof Error ? error.message : 'Unknown error';
+				const message = sanitizeErrorMessage(error);
 				throw new Error(`Failed to fetch tasks: ${message}`);
 			}
 		},
@@ -230,7 +254,7 @@ export const registerTaskTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				logger.error('Error fetching task count:', error);
-				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to fetch task count: ${errorMsg}`);
 			}
 		}
@@ -280,7 +304,7 @@ export const registerTaskTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				logger.error('Error fetching tasks pagination:', error);
-				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to fetch tasks pagination: ${errorMsg}`);
 			}
 		}
@@ -330,7 +354,7 @@ export const registerTaskTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				logger.error('Error fetching tasks by employee:', error);
-				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to fetch tasks by employee: ${errorMsg}`);
 			}
 		}
@@ -382,7 +406,7 @@ export const registerTaskTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				logger.error('Error fetching my tasks:', error);
-				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to fetch my tasks: ${errorMsg}`);
 			}
 		}
@@ -428,7 +452,7 @@ export const registerTaskTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				logger.error('Error fetching team tasks:', error);
-				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to fetch team tasks: ${errorMsg}`);
 			}
 		}
@@ -454,11 +478,13 @@ export const registerTaskTools = (server: McpServer) => {
 					);
 				}
 
-				const createData = convertDateFields({
-					...task_data,
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
-				});
+				const createData = convertDateFields(
+					withStoredTaskValues({
+						...task_data,
+						organizationId: defaultParams.organizationId,
+						...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
+					})
+				);
 
 				const response = await apiClient.post('/api/tasks', createData);
 
@@ -472,7 +498,7 @@ export const registerTaskTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				logger.error('Error creating task:', error);
-				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to create task: ${errorMsg}`);
 			}
 		}
@@ -508,7 +534,7 @@ export const registerTaskTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				logger.error('Error fetching task:', error);
-				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to fetch task: ${errorMsg}`);
 			}
 		}
@@ -525,7 +551,7 @@ export const registerTaskTools = (server: McpServer) => {
 		TOOL_HINTS.destructive,
 		async ({ id, task_data }) => {
 			try {
-				const updateData = convertDateFields(task_data);
+				const updateData = convertDateFields(withStoredTaskValues(task_data));
 
 				const response = await apiClient.put(`/api/tasks/${id}`, updateData);
 
@@ -539,7 +565,7 @@ export const registerTaskTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				logger.error('Error updating task:', error);
-				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to update task: ${errorMsg}`);
 			}
 		}
@@ -567,7 +593,7 @@ export const registerTaskTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				logger.error('Error deleting task:', error);
-				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to delete task: ${errorMsg}`);
 			}
 		}
@@ -599,11 +625,13 @@ export const registerTaskTools = (server: McpServer) => {
 
 				// Add organization and tenant ID to each task
 				const tasksWithDefaults = tasks.map((task) =>
-					convertDateFields({
-						...task,
-						organizationId: defaultParams.organizationId,
-						...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
-					})
+					convertDateFields(
+						withStoredTaskValues({
+							...task,
+							organizationId: defaultParams.organizationId,
+							...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
+						})
+					)
 				);
 
 				const response = await apiClient.post('/api/tasks/bulk', { items: tasksWithDefaults });
@@ -618,7 +646,7 @@ export const registerTaskTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				logger.error('Error bulk creating tasks:', error);
-				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to bulk create tasks: ${errorMsg}`);
 			}
 		}
@@ -644,7 +672,7 @@ export const registerTaskTools = (server: McpServer) => {
 				// Process date conversions for each update
 				const processedUpdates = updates.map((update) => ({
 					...update,
-					data: convertDateFields(update.data)
+					data: convertDateFields(withStoredTaskValues(update.data))
 				}));
 
 				const response = await applyInTurn(processedUpdates, async ({ id, data }) =>
@@ -661,7 +689,7 @@ export const registerTaskTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				logger.error('Error bulk updating tasks:', error);
-				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to bulk update tasks: ${errorMsg}`);
 			}
 		}
@@ -693,7 +721,7 @@ export const registerTaskTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				logger.error('Error bulk deleting tasks:', error);
-				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to bulk delete tasks: ${errorMsg}`);
 			}
 		}
@@ -748,7 +776,7 @@ export const registerTaskTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				logger.error('Error fetching task statistics:', error);
-				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to fetch task statistics: ${errorMsg}`);
 			}
 		}
@@ -788,7 +816,7 @@ export const registerTaskTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				logger.error('Error assigning task to employee:', error);
-				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to assign task to employee: ${errorMsg}`);
 			}
 		}
@@ -828,7 +856,7 @@ export const registerTaskTools = (server: McpServer) => {
 				};
 			} catch (error) {
 				logger.error('Error unassigning task from employee:', error);
-				const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+				const errorMsg = sanitizeErrorMessage(error);
 				throw new Error(`Failed to unassign task from employee: ${errorMsg}`);
 			}
 		}

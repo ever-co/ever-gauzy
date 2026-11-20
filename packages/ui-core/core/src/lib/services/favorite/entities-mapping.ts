@@ -221,3 +221,27 @@ export const ENTITY_TITLES: Partial<Record<BaseEntityEnum, (record: IFavoriteRec
 		return translations?.find((translation) => translation?.name)?.name;
 	}
 };
+
+const DESCRIPTION_FIELDS: Partial<Record<BaseEntityEnum, string[]>> = {
+	[BaseEntityEnum.Document]: ['summary', 'description'],
+	[BaseEntityEnum.Employee]: ['short_description', 'description'],
+	[BaseEntityEnum.OrganizationSprint]: ['goal']
+};
+
+const DESCRIPTION_MAX_LENGTH = 200;
+
+export function favoriteDescription(
+	entity: BaseEntityEnum,
+	record: IFavoriteRecord,
+	title?: string
+): string | undefined {
+	const fields = DESCRIPTION_FIELDS[entity] ?? ['description'];
+	const text = fields
+		.map((field) => textOf(record?.[field]))
+		.find((value) => !!value)
+		?.trim();
+	if (!text || text === title) {
+		return undefined;
+	}
+	return text.length > DESCRIPTION_MAX_LENGTH ? `${text.slice(0, DESCRIPTION_MAX_LENGTH - 1)}…` : text;
+}

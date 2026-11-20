@@ -5,6 +5,12 @@ set -ex
 
 export WAIT_HOSTS=$API_HOST:$API_PORT
 
+# EVER_APP_LINKS (the app switcher's links) reaches the bundles through sed and lands in a JS string: backslashes
+# and quotes are escaped for that string, then for sed (as its own '&' and '|' are), so the app reads the value
+# exactly as it was given; line breaks, which no link holds, are dropped.
+EVER_APP_LINKS_SED=$(printf '%s' "${EVER_APP_LINKS:-}" | tr -d '\r\n' | sed -e 's/\\/\\\\\\\\/g' -e 's/[&|]/\\&/g' -e "s/'/\\\\\\\\'/g" -e 's/"/\\\\"/g')
+export EVER_APP_LINKS_SED
+
 # Use envsubst to create the actual replacements_values.sed file with values from env vars
 envsubst < replacements.sed > replacements_values.sed
 

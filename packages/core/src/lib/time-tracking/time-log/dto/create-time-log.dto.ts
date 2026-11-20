@@ -1,5 +1,5 @@
 
-import { ApiHideProperty, ApiProperty } from "@nestjs/swagger";
+import { ApiHideProperty, ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { Expose, Transform, TransformFnParams } from "class-transformer";
 import { IsBoolean, IsEnum, IsOptional } from "class-validator";
 import { IManualTimeInput, TimeLogSourceEnum, TimeLogType } from "@gauzy/contracts";
@@ -51,4 +51,14 @@ export class CreateManualTimeLogDTO extends ManualTimeLogDTO implements IManualT
     @IsOptional()
     @IsBoolean()
     readonly uploadedByTracker?: boolean;
+
+    /**
+     * When true, an entry with a project (the one named, else its task's) is billable as that project is set, a
+     * project with no setting counting as not billable; `isBillable` then applies only to an entry without a project.
+     * Left out, `isBillable` decides as always (ever-co/ever-teams#5571).
+     */
+    @ApiPropertyOptional({ type: () => Boolean })
+    @IsOptional()
+    @IsBoolean()
+    readonly billableFromProject?: boolean;
 }

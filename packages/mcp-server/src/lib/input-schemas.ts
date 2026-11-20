@@ -91,6 +91,11 @@ export const PAYMENT_METHOD_VALUES: Record<string, string> = {
 	CHECK: 'CHEQUE',
 	OTHER: 'OTHER'
 };
+// The invoice statuses include ones the API does not store: a cancelled invoice is stored as VOID. No invoice is stored
+// as ACTIVE.
+export const INVOICE_STATUS_VALUES: Record<string, string> = {
+	CANCELLED: 'VOID'
+};
 
 export const TaskStatusFilter = filterEnum(TASK_STATUS_VALUES, ['backlog', 'done']);
 export const TaskPriorityFilter = filterEnum(TASK_PRIORITY_VALUES);
@@ -104,7 +109,19 @@ export const BonusTypeEnum = z.enum(['PROFIT_BASED_BONUS', 'REVENUE_BASED_BONUS'
 export const DefaultValueDateTypeEnum = z.enum(['TODAY', 'END_OF_MONTH', 'START_OF_MONTH']);
 export const WeekDaysEnum = z.enum(['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']);
 export const ProductTypeEnum = z.enum(['DIGITAL', 'PHYSICAL', 'SERVICE']);
-export const InvoiceStatusEnum = z.enum(['DRAFT', 'SENT', 'VIEWED', 'ACCEPTED', 'ACTIVE', 'FULLY_PAID', 'CANCELLED']);
+export const InvoiceStatusEnum = z.enum([
+	'DRAFT',
+	'SENT',
+	'VIEWED',
+	'ACCEPTED',
+	'ACTIVE',
+	'FULLY_PAID',
+	'CANCELLED',
+	'PARTIALLY_PAID',
+	'OVERPAID',
+	'VOID',
+	'REJECTED'
+]);
 export const InvoiceTypeEnum = z.enum([
 	'BY_EMPLOYEE_HOURS',
 	'BY_PROJECT_HOURS',
@@ -151,7 +168,10 @@ export const PaymentMethodEnum = z.enum([
 	'STRIPE',
 	'CASH',
 	'CHECK',
-	'OTHER'
+	'OTHER',
+	'CHEQUE',
+	'DEBIT',
+	'ONLINE'
 ]);
 export const EquipmentTypeEnum = z.enum([
 	'LAPTOP',

@@ -89,4 +89,22 @@ describe('StartTimerDTO', () => {
 
 		expect(dto.tags).toBeUndefined();
 	});
+
+	it("keeps a start's ask to be billable as its project is set", async () => {
+		const dto = await validateBody({ ...START_BODY, billableFromProject: true });
+
+		expect(dto.billableFromProject).toBe(true);
+	});
+
+	it('refuses a billableFromProject that is not a boolean with a 400', async () => {
+		const attempt = validateBody({ ...START_BODY, billableFromProject: 'yes' });
+
+		await expect(attempt).rejects.toBeInstanceOf(BadRequestException);
+	});
+
+	it('accepts a start without billableFromProject, as every client on develop sends it', async () => {
+		const dto = await validateBody(START_BODY);
+
+		expect(dto.billableFromProject).toBeUndefined();
+	});
 });
