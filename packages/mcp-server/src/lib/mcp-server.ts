@@ -4,7 +4,7 @@ import type { ToolAnnotations } from '@modelcontextprotocol/sdk/types.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { version } from './common/version';
-import { sanitizeErrorMessage } from './common/error-utils';
+import { sanitizeErrorMessage, sanitizeForLogging } from './common/error-utils';
 import { TransportFactory, TransportResult } from './transports';
 import { sessionManager } from './session/session-manager';
 import { registerAllMcpTools } from './tools/register-all-tools';
@@ -267,7 +267,8 @@ export class ExtendedMcpServer extends McpServer {
 
 			return result;
 		} catch (error) {
-			logger.error('Error invoking tool:', error);
+			// A tool that lets the HTTP client's error through would log its request headers, the person's token included
+			logger.error('Error invoking tool:', sanitizeForLogging(error));
 			throw error;
 		}
 	}
@@ -418,7 +419,7 @@ if (isMainModule()) {
 				await TransportFactory.shutdownTransport(currentTransport);
 				logger.log('Transport shutdown completed successfully');
 			} catch (error) {
-				logger.error('Error during shutdown:', error);
+				logger.error('Error during shutdown:', sanitizeForLogging(error));
 				hasShutdownErrors = true;
 			}
 		}
