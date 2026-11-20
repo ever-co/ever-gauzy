@@ -7,16 +7,148 @@
     </h4>
   </nb-card-header>
   <nb-card-body class="content">
-    @for (reportCategory of reportCategories; track reportCategory) {
-      <section class="report-category">
+    <!--
+      The first visible category's heading and the filters share one line.
+      The filters stay ONE element outside the list, so filtering never
+      re-creates the search box under the user's typing; only the heading
+      beside it changes, and that category's section skips its own.
+    -->
+    <div class="report-toolbar">
+      @if (filteredCategories[0]; as firstCategory) {
         <h5 class="report-category-name">
           <span class="category-icon" aria-hidden="true">
-            <i class="fa {{ reportCategory.iconClass }}"></i>
+            <i class="fa {{ firstCategory.iconClass }}"></i>
           </span>
-          {{ reportCategory.name }}
+          {{ firstCategory.name }}
         </h5>
+      }
+      <div class="report-filters" role="search">
+        <div class="report-search">
+          <label class="sr-only-label" for="report-search">{{ 'REPORT_PAGE.FILTERS.SEARCH_LABEL' | translate }}</label>
+          <nb-icon icon="search-outline"></nb-icon>
+          <input
+            #searchInput
+            nbInput
+            fullWidth
+            type="text"
+            id="report-search"
+            autocomplete="off"
+            [placeholder]="'REPORT_PAGE.FILTERS.SEARCH_PLACEHOLDER' | translate"
+            [ngModel]="search"
+            (ngModelChange)="onSearchChange($event)"
+            (keydown.escape)="onSearchChange('')"
+          />
+          @if (search) {
+            <button
+              type="button"
+              nbButton
+              ghost
+              size="tiny"
+              class="report-search-clear"
+              [nbTooltip]="'REPORT_PAGE.FILTERS.CLEAR_SEARCH' | translate"
+              [attr.aria-label]="'REPORT_PAGE.FILTERS.CLEAR_SEARCH' | translate"
+              (click)="onSearchChange(''); searchInput.focus()"
+            >
+              <nb-icon icon="close-outline"></nb-icon>
+            </button>
+          }
+        </div>
+
+        <nb-select
+          class="report-category-filter"
+          optionsListClass="nb-options gauzy-filters-options"
+          scrollStrategy="reposition"
+          [attr.aria-label]="'REPORT_PAGE.FILTERS.CATEGORY' | translate"
+          [selected]="categoryId || 'all'"
+          (selectedChange)="onCategoryChange($event)"
+        >
+          <!-- The trigger names the choice only; the counts belong to the open list. -->
+          <nb-select-label>{{ selectedCategoryName || ('REPORT_PAGE.FILTERS.ALL_CATEGORIES' | translate) }}</nb-select-label>
+          <nb-option value="all">
+            {{ 'REPORT_PAGE.FILTERS.ALL_CATEGORIES' | translate }}
+            <span class="report-option-count">({{ allCategoriesCount }})</span>
+          </nb-option>
+          @for (category of reportCategories; track category.id) {
+            <nb-option [value]="category.id">
+              {{ category.name }}
+              <span class="report-option-count">({{ categoryCounts[category.id] || 0 }})</span>
+            </nb-option>
+          }
+        </nb-select>
+
+        <nb-select
+          class="report-menu-filter"
+          optionsListClass="nb-options gauzy-filters-options"
+          scrollStrategy="reposition"
+          [attr.aria-label]="'REPORT_PAGE.FILTERS.MENU' | translate"
+          [selected]="menuFilter"
+          (selectedChange)="onMenuFilterChange($event)"
+        >
+          <nb-select-label>
+            @switch (menuFilter) {
+              @case ('shown') {
+                {{ 'REPORT_PAGE.FILTERS.MENU_SHOWN' | translate }}
+              }
+              @case ('hidden') {
+                {{ 'REPORT_PAGE.FILTERS.MENU_HIDDEN' | translate }}
+              }
+              @default {
+                {{ 'REPORT_PAGE.FILTERS.MENU_ALL' | translate }}
+              }
+            }
+          </nb-select-label>
+          <nb-option value="all">
+            {{ 'REPORT_PAGE.FILTERS.MENU_ALL' | translate }}
+            <span class="report-option-count">({{ menuCounts.all }})</span>
+          </nb-option>
+          <nb-option value="shown">
+            {{ 'REPORT_PAGE.FILTERS.MENU_SHOWN' | translate }}
+            <span class="report-option-count">({{ menuCounts.shown }})</span>
+          </nb-option>
+          <nb-option value="hidden">
+            {{ 'REPORT_PAGE.FILTERS.MENU_HIDDEN' | translate }}
+            <span class="report-option-count">({{ menuCounts.hidden }})</span>
+          </nb-option>
+        </nb-select>
+
+        @if (hasActiveFilters) {
+          <button type="button" nbButton ghost size="small" class="report-clear-filters" (click)="resetFilters()">
+            <nb-icon icon="close-outline"></nb-icon>
+            {{ 'REPORT_PAGE.FILTERS.RESET' | translate }}
+          </button>
+        }
+
+        <span class="report-count" aria-live="polite">
+          @if (hasActiveFilters) {
+            {{ 'REPORT_PAGE.FILTERS.SHOWING' | translate: { count: filteredCount, total: totalCount } }}
+          } @else {
+            {{ 'REPORT_PAGE.FILTERS.TOTAL' | translate: { total: totalCount } }}
+          }
+        </span>
+      </div>
+    </div>
+
+    @if (!loading && reportCategories.length && !filteredCategories.length) {
+      <div class="report-empty">
+        <p>{{ 'REPORT_PAGE.FILTERS.NO_MATCH' | translate }}</p>
+        <button type="button" nbButton ghost size="small" status="primary" (click)="resetFilters()">
+          {{ 'REPORT_PAGE.FILTERS.RESET' | translate }}
+        </button>
+      </div>
+    }
+
+    @for (reportCategory of filteredCategories; track reportCategory.id; let first = $first) {
+      <section class="report-category">
+        @if (!first) {
+          <h5 class="report-category-name">
+            <span class="category-icon" aria-hidden="true">
+              <i class="fa {{ reportCategory.iconClass }}"></i>
+            </span>
+            {{ reportCategory.name }}
+          </h5>
+        }
         <div class="card-grid">
-          @for (report of reportCategory.reports; track report) {
+          @for (report of reportCategory.reports; track report.id) {
             <nb-card class="report-card">
               <nb-card-header class="report-card-header">
                 <h6 class="report-name" [title]="$safeNavigationMigration(report?.name)">{{ report?.name }}</h6>
