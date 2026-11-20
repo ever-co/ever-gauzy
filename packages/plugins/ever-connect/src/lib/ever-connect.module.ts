@@ -21,6 +21,7 @@ import { EverConnectIntegrationStateService } from './ever-connect-integration-s
 import { EverConnectLease } from './ever-connect-lease';
 import { EverConnectLinkService } from './ever-connect-link.service';
 import { EverConnectLookupService } from './ever-connect-lookup.service';
+import { EverConnectOperatorService } from './ever-connect-operator.service';
 import { EverConnectPlatformService, errorCode } from './ever-connect-platform.service';
 import { EverConnectProvisionController } from './ever-connect-provision.controller';
 import { EverConnectProvisionExceptionFilter } from './ever-connect-provision.filter';
@@ -181,6 +182,7 @@ export class EverConnectModule {
 				EverConnectProvisionGuard,
 				EverConnectProvisionExceptionFilter,
 				EverConnectScheduler,
+				EverConnectOperatorService,
 				EverConnectOperatorGuard,
 				EverConnectEnabledGuard,
 				EverConnectLifecycle,

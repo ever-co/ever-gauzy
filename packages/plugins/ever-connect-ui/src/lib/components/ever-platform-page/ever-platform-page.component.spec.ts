@@ -27,6 +27,18 @@ const STATUS: EverConnectStatus = {
 		key_material: 'ok',
 		env_code: 'none'
 	},
+	installation_links: {
+		total: 1,
+		items: [
+			{
+				link_id: '01JD4M2N3P4Q5R6S7T8V9V0W2Y',
+				ever_org_id: '01JD4M2N3P4Q5R6S7T8V9V0W3Z',
+				handle: 'acme',
+				status: 'linked',
+				linked_at: '2026-10-03T10:00:00.000Z'
+			}
+		]
+	},
 	link: null,
 	pending_approvals: [],
 	in_product_consent: false
@@ -46,7 +58,8 @@ describe('EverPlatformPageComponent', () => {
 		policy: jest.fn(),
 		consentUrl: jest.fn(),
 		disable: jest.fn(),
-		connect: jest.fn()
+		connect: jest.fn(),
+		checkApproval: jest.fn()
 	};
 
 	function render(canEdit = true) {
@@ -108,6 +121,55 @@ describe('EverPlatformPageComponent', () => {
 		expect(find('tab-connection')).not.toBeNull();
 		expect(find('ever-cloud')).not.toBeNull();
 		expect(find('connect')).toBeNull();
+	});
+
+	it('Ever Cloud, an operator the deployment lists: the whole Connection tab, its links and the policy', () => {
+		api.status.mockReturnValue(
+			of({
+				...STATUS,
+				install_source: 'cloud',
+				managed_by: 'ever_cloud',
+				connection: { ...STATUS.connection!, connect_key: 'ok' }
+			})
+		);
+		const { find } = render();
+		expect(find('ever-cloud')?.textContent).toContain('EVER_CONNECT.CONNECTION.EVER_CLOUD_OPERATOR');
+		expect(find('connection')).not.toBeNull();
+		expect(find('connection-state')).not.toBeNull();
+		expect(find('rotate-key')).not.toBeNull();
+		expect(find('disconnect')).not.toBeNull();
+		expect(find('installation-links')?.textContent).toContain('ever.co/acme');
+		expect(find('installation-links-more')).toBeNull();
+		expect(api.policy).toHaveBeenCalled();
+	});
+
+	it('Ever Cloud, waiting for approval: Check again says whether it is still waiting', () => {
+		const pending = {
+			...STATUS,
+			managed_by: 'ever_cloud' as const,
+			connected: false,
+			connection: { ...STATUS.connection!, status: 'pending_approval' as const },
+			installation_links: { total: 0, items: [] }
+		};
+		api.status.mockReturnValue(of(pending));
+		api.checkApproval.mockReturnValue(of({ status: 'pending_approval' }));
+		const { component, fixture, find } = render();
+		expect(find('rotate-key')).toBeNull();
+		expect(find('no-installation-links')).not.toBeNull();
+		(find('check') as HTMLButtonElement).click();
+		fixture.detectChanges();
+		expect(api.checkApproval).toHaveBeenCalledTimes(1);
+		expect(component.notice).toBe('EVER_CONNECT.NOTICES.STILL_PENDING');
+		api.checkApproval.mockReturnValue(of({ status: 'connected' }));
+		component.checkApproval();
+		expect(component.notice).toBe('EVER_CONNECT.NOTICES.CONNECTED');
+	});
+
+	it('the operator of an installation with more links than are listed: says how many are shown', () => {
+		const items = STATUS.installation_links!.items;
+		api.status.mockReturnValue(of({ ...STATUS, installation_links: { total: 60, items } }));
+		const { find } = render();
+		expect(find('installation-links-more')?.textContent).toContain('EVER_CONNECT.CONNECTION.LINKS_MORE');
 	});
 
 	it('an administrator who may change integrations reads the states from Ever Platform', () => {

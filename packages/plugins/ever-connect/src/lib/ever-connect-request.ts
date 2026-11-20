@@ -1,5 +1,5 @@
 import { BadRequestException, ForbiddenException } from '@nestjs/common';
-import { EverOperatorService } from '@gauzy/plugin-ever-instance';
+import type { OperatorCheck } from './ever-connect-operator.service';
 import { roleNameOf } from './guards/ever-connect-operator.guard';
 import { EverConnectStore } from './ever-connect.store';
 
@@ -33,7 +33,7 @@ export async function organizationScope(
 	request: RequestWithUser,
 	organizationId: string | undefined,
 	store: EverConnectStore,
-	operator: EverOperatorService
+	operator: OperatorCheck
 ): Promise<OrganizationScope> {
 	const user = request?.user;
 	if (!user?.id || !user.tenantId) {

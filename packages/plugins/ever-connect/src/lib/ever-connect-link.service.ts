@@ -43,6 +43,24 @@ export const linkView = (link: LinkRecord): LinkView => ({
 	linked_at: new Date(link.createdAt).toISOString()
 });
 
+/** One link of the installation, as the operator's Connection tab lists it: no Gauzy tenant or organization id. */
+export interface InstallationLinkView {
+	link_id: string;
+	ever_org_id: string;
+	handle: string | null;
+	status: string;
+	linked_at: string;
+}
+
+/** The installation's live links (newest first, at most {@link INSTALLATION_LINKS_SHOWN}) and how many there are. */
+export interface InstallationLinks {
+	total: number;
+	items: InstallationLinkView[];
+}
+
+/** The most links the Connection tab lists (an installation of Ever's cloud may hold many). */
+export const INSTALLATION_LINKS_SHOWN = 50;
+
 /**
  * Tenant links: one Gauzy organization ↔ one Ever organization. An administrator pastes a link code
  * minted in app.ever.co (`POST /v1/instances/me/tenant-links`); the link's entitlement document is
@@ -65,6 +83,27 @@ export class EverConnectLinkService {
 	async current(tenantId: string, organizationId: string): Promise<LinkView | null> {
 		const link = await this.store.linkOf(tenantId, organizationId);
 		return link ? linkView(link) : null;
+	}
+
+	/**
+	 * The live links of the whole installation, for its operator's Connection tab: the Ever side of each
+	 * (link id, Ever organization, handle, state, since when), newest first, never the Gauzy tenant or
+	 * organization it belongs to.
+	 */
+	async installationLinks(): Promise<InstallationLinks> {
+		const live = await this.store.liveLinks();
+		const items = live
+			.slice()
+			.reverse()
+			.slice(0, INSTALLATION_LINKS_SHOWN)
+			.map((link) => ({
+				link_id: link.linkId,
+				ever_org_id: link.everOrgId,
+				handle: link.everHandle,
+				status: link.status,
+				linked_at: new Date(link.createdAt).toISOString()
+			}));
+		return { total: live.length, items };
 	}
 
 	/** Links this organization with a link code (`EVL-…`). */

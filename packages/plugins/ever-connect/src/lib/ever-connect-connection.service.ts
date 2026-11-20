@@ -418,21 +418,44 @@ export class EverConnectConnectionService implements OnModuleInit, OnModuleDestr
 		});
 	}
 
-	/** Ever Platform approved a connection that was pending: finish it. */
-	async approved(): Promise<void> {
+	/**
+	 * Ever Platform approved a connection that was pending: finish it, and record it in the audit
+	 * (`instance.connect`, `source: approval`) with who saw it: Ever Platform's event, or the
+	 * operator's **Check again**.
+	 */
+	async approved(
+		actor: { actorLabel: ActorLabel; userId: string | null } = { actorLabel: 'platform', userId: null }
+	): Promise<void> {
 		const connection = await this.store.connection();
 		if (connection.status !== 'pending_approval' || !connection.platformInstanceId) return;
 		await this.store.updateConnection({ status: 'connected' });
 		try {
 			await this.completeConnect(connection.platformInstanceId, { tenant: null, userId: null }, null);
+			await this.audit.record({
+				action: 'instance.connect',
+				actorLabel: actor.actorLabel,
+				actorUserId: actor.userId,
+				details: {
+					platform_instance_id: connection.platformInstanceId,
+					kid: connection.kid,
+					status: 'connected',
+					source: 'approval'
+				}
+			});
 			this.signals.connected$.next();
 		} catch (error) {
 			this.logger.warn(`The approved connection could not be completed (${errorCode(error)}).`);
 		}
 	}
 
-	/** Re-reads a pending connection's state (`GET /v1/instances/me`), for the Connection tab. */
-	async checkApproval(): Promise<ConnectionStatus> {
+	/**
+	 * **Check again** on a connection waiting for approval in app.ever.co: re-reads its state (`GET
+	 * /v1/instances/me`) and finishes the connection once Ever Platform approved it. Any other state
+	 * answers as it is, without a request.
+	 */
+	async checkApproval(
+		actor: { actorLabel: ActorLabel; userId: string | null } = { actorLabel: 'operator', userId: null }
+	): Promise<ConnectionStatus> {
 		const connection = await this.store.connection();
 		if (connection.status !== 'pending_approval') return connection.status;
 		try {
@@ -440,7 +463,7 @@ export class EverConnectConnectionService implements OnModuleInit, OnModuleDestr
 				instance?: { status?: string };
 			};
 			if (self.instance?.status === 'active') {
-				await this.approved();
+				await this.approved(actor);
 			}
 		} catch (error) {
 			if (isCredentialRevoked(error)) await this.stopLocally('revoked');

@@ -12,6 +12,10 @@
 	},
 	"CONNECTION": {
 		"EVER_CLOUD": "Operated by Ever Cloud. The connection of this installation is managed by Ever.",
+		"EVER_CLOUD_OPERATOR": "Operated by Ever Cloud. You manage the connection of this installation for Ever: what you change here applies to every organization of this installation.",
+		"LINKS": "Linked organizations ({{ count }})",
+		"LINKS_MORE": "The {{ shown }} most recent of {{ count }} are listed.",
+		"NO_LINKS": "No organization of this installation is linked yet.",
 		"KEY_MATERIAL": "Set ENCRYPTION_KEY (or a strong, unique JWT_SECRET) on the API before connecting: the connection key and the documents of the connection are stored encrypted with it.",
 		"NOTICE": "Connecting sends Ever Platform: the product (Ever Gauzy) and its version, how it is installed (EVER_INSTALL_SOURCE), whether this API also serves Ever Teams, the public part of a key this installation makes for the connection, the address of this web app so app.ever.co can send you back here (https only; Ever Platform keeps only a fingerprint of it) and, if you choose, the ids of this organization and its tenant to link it at once. No address of this installation's API, no name and no e-mail address is sent. Paste the connect code you created in app.ever.co.",
 		"SECRET_SHORT": "The secret that protects the keys of this connection (ENCRYPTION_KEY, or JWT_SECRET) is shorter than 32 characters. Use a long, random one.",
@@ -28,7 +32,12 @@
 		"KEY": "Key fingerprint",
 		"LAST_SEEN": "Last heartbeat",
 		"FEED": "Event feed",
-		"LAST_ERROR": "Last error"
+		"LAST_ERROR": "Last error",
+		"LINK_STATUS": {
+			"linked": "Linked",
+			"suspended": "Suspended",
+			"orphaned": "Ended in app.ever.co"
+		}
 	},
 	"APPROVALS": {
 		"TITLE": "Approvals requested",
@@ -146,6 +155,7 @@
 	"NOTICES": {
 		"CONNECTED": "This installation is connected to Ever Platform.",
 		"PENDING": "Connected, waiting for approval in app.ever.co.",
+		"STILL_PENDING": "Still waiting for approval in app.ever.co.",
 		"DISCONNECTED": "This installation is disconnected from Ever Platform.",
 		"ACCEPTED": "Accepted: the integration is enabled.",
 		"DECLINED": "Declined: nothing is sent.",
