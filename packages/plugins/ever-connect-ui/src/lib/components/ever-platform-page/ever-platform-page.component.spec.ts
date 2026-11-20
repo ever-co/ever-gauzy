@@ -59,7 +59,9 @@ describe('EverPlatformPageComponent', () => {
 		consentUrl: jest.fn(),
 		disable: jest.fn(),
 		connect: jest.fn(),
-		checkApproval: jest.fn()
+		checkApproval: jest.fn(),
+		setPublicUrl: jest.fn(),
+		clearPublicUrl: jest.fn()
 	};
 
 	function render(canEdit = true) {
@@ -170,6 +172,46 @@ describe('EverPlatformPageComponent', () => {
 		api.status.mockReturnValue(of({ ...STATUS, installation_links: { total: 60, items } }));
 		const { find } = render();
 		expect(find('installation-links-more')?.textContent).toContain('EVER_CONNECT.CONNECTION.LINKS_MORE');
+	});
+
+	const withAddress = (instance_url: { enabled: boolean; url: string | null }) => ({
+		...STATUS,
+		connection: { ...STATUS.connection!, instance_url }
+	});
+
+	it('the installation address: nothing to type until "Installation address" is enabled', () => {
+		api.status.mockReturnValue(of(withAddress({ enabled: false, url: null })));
+		const { find } = render();
+		expect(find('address-off')).not.toBeNull();
+		expect(find('address-input')).toBeNull();
+	});
+
+	it('the installation address: reported as the operator types it, and withdrawn', () => {
+		api.status.mockReturnValue(of(withAddress({ enabled: true, url: 'https://gauzy.acme.example/' })));
+		api.setPublicUrl.mockReturnValue(of({ enabled: true, url: 'https://gauzy.acme.example/app' }));
+		api.clearPublicUrl.mockReturnValue(of({ enabled: true, url: null }));
+		const { component, find } = render();
+		expect(find('address-off')).toBeNull();
+		expect(find('address-reported')?.textContent).toContain('EVER_CONNECT.ADDRESS.REPORTED');
+		component.publicUrl = '  https://gauzy.acme.example/app  ';
+		component.reportAddress();
+		expect(api.setPublicUrl).toHaveBeenCalledWith('https://gauzy.acme.example/app');
+		expect(component.publicUrl).toBe('');
+		expect(component.notice).toBe('EVER_CONNECT.NOTICES.ADDRESS_REPORTED');
+		component.withdrawAddress();
+		expect(api.clearPublicUrl).toHaveBeenCalledTimes(1);
+		expect(component.notice).toBe('EVER_CONNECT.NOTICES.ADDRESS_WITHDRAWN');
+	});
+
+	it('the installation address: a refused address says why', () => {
+		api.status.mockReturnValue(of(withAddress({ enabled: true, url: null })));
+		api.setPublicUrl.mockReturnValue(throwError(() => ({ status: 400, error: { code: 'url_invalid' } })));
+		const { component, find } = render();
+		expect(find('address-withdraw')).toBeNull();
+		component.publicUrl = 'https://10.0.0.1';
+		component.reportAddress();
+		expect(component.notice).toBe('EVER_CONNECT.ERRORS.url_invalid');
+		expect(component.noticeStatus).toBe('danger');
 	});
 
 	it('an administrator who may change integrations reads the states from Ever Platform', () => {

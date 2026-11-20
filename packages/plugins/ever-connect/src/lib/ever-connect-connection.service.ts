@@ -34,7 +34,7 @@ import {
 	ULID_SHAPE
 } from './ever-connect.constants';
 import { EverConnectEntitlementService } from './ever-connect-entitlement.service';
-import { EverConnectIntegrationStateService } from './ever-connect-integration-state.service';
+import { EverConnectIntegrationStateService, PublicUrlView } from './ever-connect-integration-state.service';
 import { EverConnectLinkService, LinkView } from './ever-connect-link.service';
 import {
 	EverConnectPlatformService,
@@ -100,6 +100,8 @@ export interface ConnectionSummary {
 	/** `unreadable`: ENCRYPTION_KEY or JWT_SECRET changed since the key was stored (disconnect, then connect again). */
 	connect_key: 'none' | 'ok' | 'unreadable';
 	env_code: 'none' | 'pending' | 'used';
+	/** The installation's public address: whether `instance_url` is enabled, and the address reported. */
+	instance_url: PublicUrlView;
 }
 
 /** A secret shorter than this is accepted but flagged on the Connection tab. */
@@ -180,7 +182,8 @@ export class EverConnectConnectionService implements OnModuleInit, OnModuleDestr
 			key_material: connectKeyMaterialProblem(this.env) ?? 'ok',
 			secret_short: (this.env['ENCRYPTION_KEY']?.trim() || this.env['JWT_SECRET']?.trim() || '').length < STRONG_SECRET_LENGTH,
 			connect_key: await this.instance.connectKeyState(),
-			env_code: !code ? 'none' : c.envCodeConsumedHash === sha256(code.trim().toUpperCase()) ? 'used' : 'pending'
+			env_code: !code ? 'none' : c.envCodeConsumedHash === sha256(code.trim().toUpperCase()) ? 'used' : 'pending',
+			instance_url: await this.states.publicUrlView()
 		};
 	}
 

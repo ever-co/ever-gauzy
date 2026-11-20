@@ -31,6 +31,8 @@ export interface EverConnectStatus {
 		secret_short: boolean;
 		connect_key: 'none' | 'ok' | 'unreadable';
 		env_code: 'none' | 'pending' | 'used';
+		/** The installation's address: whether "Installation address" is enabled, and the address reported. */
+		instance_url?: { enabled: boolean; url: string | null };
 	} | null;
 	/** The installation's linked organizations, newest first (for the operator only). */
 	installation_links: { total: number; items: EverConnectInstallationLink[] } | null;
@@ -235,6 +237,16 @@ export class EverConnectUiService {
 	/** Replaces the connect key (the installation stays connected). */
 	rotateKey(): Observable<{ kid: string }> {
 		return this.http.post<{ kid: string }>(`${BASE}/connection/rotate-key`, {});
+	}
+
+	/** Reports the installation's public address the operator typed (once "Installation address" is enabled). */
+	setPublicUrl(url: string): Observable<{ enabled: boolean; url: string | null }> {
+		return this.http.put<{ enabled: boolean; url: string | null }>(`${BASE}/public-url`, { url });
+	}
+
+	/** Withdraws the reported address. */
+	clearPublicUrl(): Observable<{ enabled: boolean; url: string | null }> {
+		return this.http.delete<{ enabled: boolean; url: string | null }>(`${BASE}/public-url`);
 	}
 
 	disconnect(): Observable<{ status: ConnectionStatus }> {
