@@ -857,6 +857,41 @@ suite('Ever Platform connection against the mock platform', () => {
 		expect((await call('get', '/api/ever-connect/status', 'operator')).body.connected).toBe(false);
 	});
 
+	it('Ever Cloud with its operator list: connected by EVER_CONNECT_CODE, then the listed operator replaces the key and disconnects', async () => {
+		app = await start(
+			environment({
+				EVER_INSTALL_SOURCE: 'cloud',
+				EVER_CONNECT_CLOUD_OPERATOR_USER_IDS: acme.superAdminId,
+				EVER_CONNECT_CODE: 'EVC-TEST-0000-0001'
+			})
+		);
+		await new Promise((resolve) => setTimeout(resolve, 1_000));
+		app.get(EverConnectScheduler).stop();
+		const status = await call('get', '/api/ever-connect/status', 'operator');
+		expect(status.body).toMatchObject({ managed_by: 'ever_cloud', operator: true });
+		expect(status.body.connection).toMatchObject({ status: 'connected', env_code: 'used' });
+		expect(status.body.installation_links).toEqual({ total: 0, items: [] });
+		expect((await call('get', '/api/ever-connect/status', 'stranger')).body.operator).toBe(false);
+
+		// Another tenant's super admin: 404, nothing sent.
+		const before = (await calls()).length;
+		expect((await call('post', '/api/ever-connect/connection/rotate-key', 'stranger', {})).status).toBe(404);
+		expect((await call('post', '/api/ever-connect/disconnect', 'stranger', { confirm: true })).status).toBe(404);
+		expect((await calls()).length).toBe(before);
+
+		// The listed operator: Replace key, then Disconnect.
+		const rotated = await call('post', '/api/ever-connect/connection/rotate-key', 'operator', {});
+		expect(rotated.status).toBe(200);
+		expect(rotated.body.kid).not.toBe(status.body.connection.kid);
+		expect((await call('post', '/api/ever-connect/disconnect', 'operator', { confirm: true })).body).toEqual({
+			status: 'disconnected'
+		});
+		const audit = await call('get', `/api/ever-connect/audit?organizationId=${acme.organizationId}`, 'operator');
+		expect(audit.body.items.map((row: { action: string }) => row.action)).toEqual(
+			expect.arrayContaining(['instance.connect', 'instance.rotate_key', 'instance.disconnect'])
+		);
+	});
+
 	it('Ever Cloud: the operator routes answer 404 to everyone, stats_link is not offered', async () => {
 		app = await start(environment({ EVER_INSTALL_SOURCE: 'cloud' }));
 		expect(
