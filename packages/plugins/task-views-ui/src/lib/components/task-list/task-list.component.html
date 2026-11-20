@@ -118,9 +118,10 @@
 					@if (show('status')) {
 						<span class="cell status" role="gridcell">
 							@if (row.taskStatus?.name || row.status) {
-								<span class="chip" [style.--chip-color]="row.taskStatus?.color || null">{{
-									humanize(row.taskStatus?.name || row.status)
-								}}</span>
+								<span class="status-badge" [style.--status-color]="row.taskStatus?.color || null">
+									<span class="status-dot" aria-hidden="true"></span>
+									{{ humanize(row.taskStatus?.name || row.status) }}
+								</span>
 							}
 						</span>
 					}
@@ -166,7 +167,7 @@
 								}
 							}
 							@if ((row.tags?.length ?? 0) > labelsShown) {
-								<span class="more" [nbTooltip]="hiddenLabels(row.tags)"
+								<span class="label overflow" [nbTooltip]="hiddenLabels(row.tags)"
 									>+{{ (row.tags?.length ?? 0) - labelsShown }}</span
 								>
 							}
