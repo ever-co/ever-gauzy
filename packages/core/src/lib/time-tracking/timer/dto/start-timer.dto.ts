@@ -1,5 +1,5 @@
 import { ApiPropertyOptional, IntersectionType, PickType } from '@nestjs/swagger';
-import { IsArray, IsOptional, IsUUID, Matches } from 'class-validator';
+import { IsArray, IsBoolean, IsOptional, IsUUID, Matches } from 'class-validator';
 import { ID, ITimerToggleInput } from '@gauzy/contracts';
 import { TenantOrganizationBaseDTO } from './../../../core/dto';
 import { TimeLog } from '../../time-log/time-log.entity';
@@ -38,4 +38,13 @@ export class StartTimerDTO extends IntersectionType(
 	@IsArray()
 	@IsUUID('all', { each: true })
 	readonly tags?: ID[];
+
+	@ApiPropertyOptional({
+		type: () => Boolean,
+		description:
+			"When true, a run with a project (the one named, else its task's) is billable as that project is set, a project with no setting counting as not billable; isBillable then applies only to a run without a project. Left out, isBillable decides as always."
+	})
+	@IsOptional()
+	@IsBoolean()
+	readonly billableFromProject?: boolean;
 }
