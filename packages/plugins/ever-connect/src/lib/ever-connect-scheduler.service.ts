@@ -124,6 +124,8 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 		if (this.running) return;
 		this.running = true;
 		this.generation += 1;
+		// Once after each start (a process start, or connecting again).
+		this.membershipResyncOwed = true;
 		this.feedFailures = 0;
 		// EVER_ENTITLEMENT_FILE: imported once per process, when the connection first starts.
 		if (!this.entitlementFileImported) {

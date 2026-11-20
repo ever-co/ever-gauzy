@@ -13,7 +13,10 @@ import { CONSTANTS, EventEnvelope, ProblemError } from './sdk';
 describe('Ever Platform feed dispatcher', () => {
 	function scheduler(membership?: { apply: jest.Mock; resync?: jest.Mock }) {
 		const states = { sync: jest.fn().mockResolvedValue(undefined) };
-		const entitlements = { refreshAll: jest.fn().mockResolvedValue(undefined) };
+		const entitlements = {
+			refreshAll: jest.fn().mockResolvedValue(undefined),
+			importFromEnvFile: jest.fn().mockResolvedValue(undefined)
+		};
 		const links = {
 			unlinkLocally: jest.fn().mockResolvedValue(undefined),
 			linkStateChanged: jest.fn().mockResolvedValue(undefined)
@@ -211,6 +214,12 @@ describe('Ever Platform feed dispatcher', () => {
 
 			await instance.readFeed();
 			expect(membership.resync).toHaveBeenCalledTimes(1);
+
+			// Started again (connected again): owed again.
+			instance.start();
+			instance.stop();
+			await instance.readFeed();
+			expect(membership.resync).toHaveBeenCalledTimes(2);
 		});
 
 		it('after a 410, the membership resync runs before the position moves on', async () => {
