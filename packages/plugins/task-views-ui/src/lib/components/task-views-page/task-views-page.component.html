@@ -471,27 +471,34 @@
 	</div>
 
 	@if (undo(); as pending) {
-		<div class="undo-bar" role="status" aria-live="polite" data-test="undo-bar">
-			<span>{{ pending.messageKey | translate: pending.params }}</span>
+		<!-- After a bulk change: what changed, Undo, and close — drawn as the selection bar is. -->
+		<div class="undo-bar" role="status" aria-live="polite" data-test="undo-bar" [style.left.px]="contentCenter()">
+			<nb-icon class="undo-icon" icon="checkmark-circle-2-outline" aria-hidden="true"></nb-icon>
+			<span class="undo-text">{{ pending.messageKey | translate: pending.params }}</span>
 			@if (pending.request) {
+				<span class="undo-divider" aria-hidden="true"></span>
 				<button
 					nbButton
 					size="small"
-					status="control"
+					ghost
 					type="button"
+					class="undo-action"
 					data-test="undo"
 					[disabled]="busy()"
 					(click)="undoLast()"
 				>
+					<nb-icon icon="undo-outline"></nb-icon>
 					{{ 'TASK_VIEWS.BULK.UNDO' | translate }}
 				</button>
 			}
+			<span class="undo-divider" aria-hidden="true"></span>
 			<button
 				nbButton
 				size="small"
 				ghost
-				status="control"
 				type="button"
+				class="undo-close"
+				[nbTooltip]="'TASK_VIEWS.DIALOG.CLOSE' | translate"
 				[attr.aria-label]="'TASK_VIEWS.DIALOG.CLOSE' | translate"
 				(click)="clearUndo()"
 			>
