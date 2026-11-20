@@ -154,6 +154,39 @@ describe('the installation address', () => {
 		expect((await audit()).map((row) => row.details['status'])).toEqual(['reported', 'withdrawn']);
 	});
 
+	it('a withdrawal does not clear an address reported meanwhile by another API process', async () => {
+		await enable();
+		await h.states.setPublicUrl('https://old.acme.example/', OPERATOR);
+		h.platform.on(DELETE, async () => {
+			// Another API process reports a newer address while Ever Platform answers this withdrawal.
+			await h.store.updateConnection({ publicUrl: 'https://new.acme.example/' });
+			return { status: 204 };
+		});
+		expect(await h.states.clearPublicUrl(OPERATOR)).toEqual({ enabled: true, url: 'https://new.acme.example/' });
+		expect((await h.store.connection()).publicUrl).toBe('https://new.acme.example/');
+	});
+
+	it('reports and withdrawals asked at once in one process run in the order they were asked', async () => {
+		await enable();
+		const order: string[] = [];
+		h.platform.on(PUT, async (call) => {
+			order.push(`put ${call.body?.['base_url']}`);
+			await new Promise((resolve) => setTimeout(resolve, 20));
+			return { status: 200, body: { base_url: String(call.body?.['base_url']) } };
+		});
+		h.platform.on(DELETE, async () => {
+			order.push('delete');
+			return { status: 204 };
+		});
+		const [, withdrawn] = await Promise.all([
+			h.states.setPublicUrl('https://gauzy.acme.example/', OPERATOR),
+			h.states.clearPublicUrl(OPERATOR)
+		]);
+		expect(order).toEqual(['put https://gauzy.acme.example/', 'delete']);
+		expect(withdrawn).toEqual({ enabled: true, url: null });
+		expect((await h.store.connection()).publicUrl).toBeNull();
+	});
+
 	it('withdrawn once the integration ended: only the copy kept here is cleared', async () => {
 		await enable();
 		await h.states.setPublicUrl('https://gauzy.acme.example/', OPERATOR);

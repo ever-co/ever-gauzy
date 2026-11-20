@@ -184,6 +184,8 @@ export class EverConnectIntegrationStateService {
 	private syncing: Promise<void> | null = null;
 	/** When the states were last read (for coalescing reads from page views). */
 	private lastSyncAt: number | null = null;
+	/** The report or withdrawal of the address in progress in this process (see `oneAddressChangeAtATime`). */
+	private addressChanges: Promise<unknown> = Promise.resolve();
 
 	constructor(
 		private readonly platform: EverConnectPlatformService,
@@ -1041,6 +1043,13 @@ export class EverConnectIntegrationStateService {
 	 * records that an address was reported, never the address.
 	 */
 	async setPublicUrl(url: string, actor: { actorLabel: ActorLabel; userId: string | null }): Promise<PublicUrlView> {
+		return this.oneAddressChangeAtATime(() => this.reportPublicUrl(url, actor));
+	}
+
+	private async reportPublicUrl(
+		url: string,
+		actor: { actorLabel: ActorLabel; userId: string | null }
+	): Promise<PublicUrlView> {
 		const consent = await this.requireInstanceUrl();
 		const connection = await this.requireConnected();
 		let answer: { base_url?: unknown };
@@ -1093,8 +1102,14 @@ export class EverConnectIntegrationStateService {
 	 * Platform already removed it and only the copy kept here is cleared. Audited without the address.
 	 */
 	async clearPublicUrl(actor: { actorLabel: ActorLabel; userId: string | null }): Promise<PublicUrlView> {
+		return this.oneAddressChangeAtATime(() => this.withdrawPublicUrl(actor));
+	}
+
+	private async withdrawPublicUrl(actor: { actorLabel: ActorLabel; userId: string | null }): Promise<PublicUrlView> {
 		const connection = await this.requireConnected();
 		const row = await this.store.integration('instance', INSTANCE_URL);
+		// The address this withdrawal is about: a newer one reported meanwhile (another API process) is kept.
+		const withdrawn = connection.publicUrl;
 		let remote = false;
 		if (row?.enabled) {
 			try {
@@ -1104,7 +1119,7 @@ export class EverConnectIntegrationStateService {
 				throw this.publicUrlProblem(error);
 			}
 		}
-		await this.store.updateConnection({ publicUrl: null, publicUrlCheckUntil: null });
+		await this.store.updateConnection({ publicUrl: null, publicUrlCheckUntil: null }, { publicUrl: withdrawn });
 		await this.audit.record({
 			action: 'integration.configure',
 			actorLabel: actor.actorLabel,
@@ -1112,7 +1127,18 @@ export class EverConnectIntegrationStateService {
 			integration: INSTANCE_URL,
 			details: { platform_instance_id: connection.platformInstanceId, status: 'withdrawn', remote }
 		});
-		return { enabled: !!row?.enabled, url: null };
+		return this.publicUrlView();
+	}
+
+	/**
+	 * Reports and withdrawals of the address run one at a time in this API process, in the order they
+	 * were asked, so an older one never lands after a newer one here; across processes the withdrawal
+	 * clears only the address it read (compare and set).
+	 */
+	private oneAddressChangeAtATime<T>(work: () => Promise<T>): Promise<T> {
+		const next = this.addressChanges.then(work, work);
+		this.addressChanges = next.catch(() => undefined);
+		return next;
 	}
 
 	/** 409 `consent_required` until `instance_url` is enabled (consent in app.ever.co, then the operator's accept). */
