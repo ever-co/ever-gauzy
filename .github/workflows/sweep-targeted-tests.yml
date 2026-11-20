@@ -102,13 +102,14 @@ jobs:
         # app. It goes through yarn, not Nx, so `.env.local` is not loaded here either.
         run: yarn config:dev
 
-      - name: Run the favorites and route specs of #12105 on develop 7594c680f0
+      - name: Run the specs of sweep 4 (#12111 #12112 #12113 #12114) on develop 01ed1c8d28
         env:
           NX_LOAD_DOT_ENV_FILES: 'false'
         run: |
           status=0
           J='node node_modules/jest/bin/jest.js'
           export NODE_OPTIONS='--experimental-vm-modules --max-old-space-size=24576'
-          $J -c packages/ui-core/jest.config.ts --runInBand --ci services/favorite/ services/page/ components/base-nav-menu/ components/sidebar-menu/ || status=$?
-          $J -c apps/gauzy/jest.config.ts --runInBand --ci src/app/pages/pages.routes || status=$?
+          $J -c packages/mcp-server/jest.config.ts --runInBand --ci || status=$?
+          $J -c packages/core/jest.config.ts --runInBand --ci time-tracking/time-log/ time-tracking/timer/ || status=$?
+          $J -c packages/ui-core/jest.config.ts --runInBand --ci services/favorite/ || status=$?
           exit "$status"
