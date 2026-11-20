@@ -275,7 +275,7 @@ describe.each(TEST_TARGETS)('Ever Platform membership resync ($name)', (target) 
 		expect(await roleOf(seeded.employeeId)).toBe(roles.admin);
 		const rows = await syncRows();
 		expect(rows[1].details).toMatchObject({
-			event_id: '01JD0000000000000000000002',
+			event_id: '01JD0000000000000000000001.000000001',
 			occurred_at: Date.parse('2026-11-02T10:00:00Z'),
 			op: 'role_changed',
 			result: 'role_granted',
@@ -283,6 +283,11 @@ describe.each(TEST_TARGETS)('Ever Platform membership resync ($name)', (target) 
 		});
 		// The lost event, read again later, is older: skipped.
 		expect(await sync.apply(envelope('01JD0000000000000000000001', 'created', { role: 'member' }))).toBe('stale');
+		// The next event, even of the same millisecond with the next id, is applied after the resync.
+		expect(await sync.apply(envelope('01JD0000000000000000000002', 'role_changed', { role: 'member' }))).toBe(
+			'role_revoked'
+		);
+		expect(await roleOf(seeded.employeeId)).toBe(roles.employee);
 	});
 
 	it('a member the sync keeps only gets the role: made inactive in Gauzy, not made a member again', async () => {
@@ -361,8 +366,15 @@ describe.each(TEST_TARGETS)('Ever Platform membership resync ($name)', (target) 
 		expect(await sync.resync(client)).toBe('module_disabled');
 
 		expect(client.call).toHaveBeenCalledTimes(2);
-		expect(log.mock.calls.filter(([message]) => String(message).includes('module_disabled'))).toHaveLength(1);
+		const said = () => log.mock.calls.filter(([message]) => String(message).includes('module_disabled'));
+		expect(said()).toHaveLength(1);
 		expect(await syncRows()).toEqual([]);
+
+		// Switched on, then off again on Ever Platform: said again.
+		client.call.mockResolvedValueOnce(pages([])[0]).mockRejectedValueOnce(new ProblemError(404, 'module_disabled'));
+		expect(await sync.resync(client)).toBe('done');
+		expect(await sync.resync(client)).toBe('module_disabled');
+		expect(said()).toHaveLength(2);
 	});
 
 	it('an error mid-way stops the resync, and nobody is removed', async () => {
@@ -390,5 +402,48 @@ describe.each(TEST_TARGETS)('Ever Platform membership resync ($name)', (target) 
 		const client = platform(...pages([member('sub-bob', 'admin')]));
 		expect(await sync.resync(client, async () => false)).toBe('lease_lost');
 		expect(client.call).not.toHaveBeenCalled();
+	});
+
+	it('the lease is checked before each change: lost in the middle of a page, nothing more is written', async () => {
+		await linkEverId(seeded.employeeId, 'sub-bob');
+		const carol = await addUser(roles.employee, false);
+		await linkEverId(carol, 'sub-carol');
+		let renewals = 0;
+		// The page, then Bob; lost before Carol.
+		const keep = async () => ++renewals <= 2;
+
+		expect(
+			await handler().resync(platform(...pages([member('sub-bob', 'admin'), member('sub-carol')])), keep)
+		).toBe('lease_lost');
+
+		expect(await roleOf(seeded.employeeId)).toBe(roles.admin);
+		expect(await memberships(carol)).toEqual([]);
+	});
+
+	it('a cursor answered before stops the resync (a cycle), and nobody is removed', async () => {
+		await linkEverId(seeded.employeeId, 'sub-bob');
+		const sync = handler();
+		await sync.apply(envelope('01JD0000000000000000000001', 'created', { role: 'member' }));
+		const client = platform(
+			{ items: [], next_cursor: 'A' },
+			{ items: [], next_cursor: 'B' },
+			{ items: [], next_cursor: 'A' }
+		);
+
+		expect(await sync.resync(client)).toBe('failed');
+		expect(client.call).toHaveBeenCalledTimes(3);
+		expect(await memberships(seeded.employeeId)).toEqual([true]);
+	});
+
+	it('a resync that finds the owner again writes no row the second time', async () => {
+		await linkEverId(seeded.superAdminId, 'sub-owner');
+		const sync = handler();
+		await sync.resync(platform(...pages([member('sub-owner', 'owner')])));
+		const rows = await syncRows();
+		expect(rows.map((row) => row.details['result'])).toEqual(['super_admin_kept']);
+
+		await sync.resync(platform(...pages([member('sub-owner', 'owner')])));
+		expect(await syncRows()).toHaveLength(1);
+		expect(await roleOf(seeded.superAdminId)).toBe(roles.superAdmin);
 	});
 });

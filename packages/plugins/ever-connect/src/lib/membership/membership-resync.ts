@@ -149,11 +149,16 @@ export class ListedMembers {
 
 const CROCKFORD = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
 
+/** The id of a resync's change: the id of the change before it, a dot and a counter (never an event's id). */
+const RESYNC_ID = /^([0-9A-HJKMNP-TV-Z]{26})\.(\d{9})$/;
+
 /**
  * The position a change made by a resync takes: right after the last change applied for the user in the organization
- * (the same time, the next id), so the next event of the feed is still applied after it. With no change applied yet,
- * before every event: time 0 and an id of time 0 with a random part (the id may become the id of a grant, which must
- * not be another one's).
+ * and before any later event, even one of the same millisecond whose id is the next one: the same time, and the last
+ * id with a counter after it (`<id>.000000001`, then `.000000002`, ...), which sorts after that id and before every
+ * greater one, and is never the id of an event (so an event is never taken for a duplicate of it). With no change
+ * applied yet, before every event: time 0 and an id of time 0 with a random part (the id may become the id of a grant,
+ * which must not be another one's).
  */
 export function positionAfter(last: MembershipPosition | null): MembershipPosition {
 	if (!last) {
@@ -161,25 +166,11 @@ export function positionAfter(last: MembershipPosition | null): MembershipPositi
 		for (let i = 0; i < 16; i += 1) random += CROCKFORD[randomInt(CROCKFORD.length)];
 		return { eventId: `0000000000${random}`, occurredAt: 0 };
 	}
-	const next = nextId(last.eventId.toUpperCase());
-	return next
-		? { eventId: next, occurredAt: last.occurredAt }
-		: { eventId: '0'.repeat(26), occurredAt: (last.occurredAt ?? 0) + 1 };
-}
-
-/** The ULID right after `id` (Crockford base32, one more), or `null` past the last one. */
-function nextId(id: string): string | null {
-	const digits = id.split('');
-	for (let i = digits.length - 1; i >= 0; i -= 1) {
-		const value = CROCKFORD.indexOf(digits[i]);
-		if (value < 0) return null;
-		if (value < CROCKFORD.length - 1) {
-			digits[i] = CROCKFORD[value + 1];
-			return digits.join('');
-		}
-		digits[i] = '0';
-	}
-	return null;
+	const id = last.eventId.toUpperCase();
+	const resync = RESYNC_ID.exec(id);
+	const base = resync ? resync[1] : id;
+	const counter = resync ? Number(resync[2]) + 1 : 1;
+	return { eventId: `${base}.${String(counter).padStart(9, '0')}`, occurredAt: last.occurredAt };
 }
 
 function isHttpsUrl(value: string): boolean {

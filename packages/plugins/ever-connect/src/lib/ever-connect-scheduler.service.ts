@@ -28,7 +28,7 @@ import { personRequestKind, PersonRequestsHandler } from './handlers/person-requ
 import { membershipChangeOf } from './membership/membership-sync.config';
 import { MembershipSyncHandler } from './membership/membership-sync.handler';
 import { EverConnectProvisionCompletion } from './services/ever-connect-provision-completion.service';
-import { EventEnvelope, ProblemError } from './sdk';
+import { EventEnvelope, EverPlatformClient, ProblemError } from './sdk';
 
 /** What the dispatcher did with one event. */
 export type DispatchOutcome = 'states' | 'entitlements' | 'link' | 'connection' | 'person' | 'membership' | 'ignored';
@@ -72,10 +72,12 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 	/** Events handled by this process (their ids), so a page read twice is handled once. */
 	private readonly seen = new Set<string>();
 	/**
-	 * A membership resync is owed (with the membership sync on): once after each start, and after each
-	 * `410 resync_required`. Run by the lease holder before its next read of the feed.
+	 * A membership resync is owed (with the membership sync on) once after each start: run by the lease holder
+	 * before its first read of the feed. (After `410 resync_required` one runs before the position moves on.)
 	 */
 	private membershipResyncOwed = true;
+	/** The run of the scheduler (one per start and stop): work of an earlier run must not go on in a later one. */
+	private generation = 0;
 
 	constructor(
 		private readonly platform: EverConnectPlatformService,
@@ -121,6 +123,7 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 	start(): void {
 		if (this.running) return;
 		this.running = true;
+		this.generation += 1;
 		this.feedFailures = 0;
 		// EVER_ENTITLEMENT_FILE: imported once per process, when the connection first starts.
 		if (!this.entitlementFileImported) {
@@ -133,6 +136,7 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 
 	stop(): void {
 		this.running = false;
+		this.generation += 1;
 		if (this.heartbeatTimer) clearTimeout(this.heartbeatTimer);
 		if (this.feedTimer) clearTimeout(this.feedTimer);
 		this.heartbeatTimer = null;
@@ -235,14 +239,13 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 			return false;
 		}
 		const client = await this.platform.getClient();
+		const keep = this.leaseKeeper();
 		if (this.membership && this.membershipResyncOwed) {
 			// Not owed again on a failure: it runs at the next 410 or start (the resync says why it stopped).
 			this.membershipResyncOwed = false;
-			const outcome = await this.membership
-				.resync(client, () => this.store.takeLease(this.holder, LEASE_MS))
-				.catch(() => 'failed' as const);
+			const outcome = await this.membership.resync(client, keep).catch(() => 'failed' as const);
 			if (outcome === 'lease_lost') {
-				// Another process holds the lease now: this one runs the resync when it holds it again.
+				// Stopped, or another process holds the lease now: this one runs it when it holds the lease again.
 				this.membershipResyncOwed = true;
 				return false;
 			}
@@ -261,8 +264,7 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 				return false;
 			}
 			if (error instanceof ProblemError && error.status === 410 && error.code === 'resync_required') {
-				await this.resync(client, error.lastId);
-				return true;
+				return this.resync(client, error.lastId, keep);
 			}
 			throw error;
 		} finally {
@@ -424,18 +426,25 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 	 * states and documents, then continue from the position Ever Platform names (`last_id`: kept,
 	 * then acknowledged); without one, read the feed again from its start (handlers re-read state, so
 	 * events read again change nothing). With the membership sync on, the membership changes the skipped
-	 * part of the feed held are made up for by a membership resync, owed from here and run before the
-	 * next read of the feed (`GET /v1/instances/me/tenant-links/{link}/memberships` for each linked
-	 * organization).
+	 * part of the feed held are made up for first by a membership resync
+	 * (`GET /v1/instances/me/tenant-links/{link}/memberships` for each linked organization): the position
+	 * moves on only after it, unless the lease was lost meanwhile (answers `false`: not moved).
 	 */
 	async resync(
-		client: { instances: { ackEvents: (lastId: string) => Promise<unknown> } },
-		lastId: string | undefined
-	): Promise<void> {
+		client: Pick<EverPlatformClient, 'call'> & { instances: { ackEvents: (lastId: string) => Promise<unknown> } },
+		lastId: string | undefined,
+		keep: () => Promise<boolean> = this.leaseKeeper()
+	): Promise<boolean> {
 		await this.states.sync({ force: true });
 		await this.entitlements.refreshAll();
 		if (this.membership) {
-			this.membershipResyncOwed = true;
+			// Before the position moves on: a process that stops here (or loses the lease) leaves the old position, so
+			// the next lease holder is answered 410 again and runs it. A resync that failed otherwise does not hold the
+			// feed back: it runs again at the next 410 or start.
+			const outcome = await this.membership.resync(client, keep).catch(() => 'failed' as const);
+			if (outcome === 'lease_lost') {
+				return false;
+			}
 		}
 		if (typeof lastId === 'string' && lastId.length > 0 && lastId.length <= MAX_FEED_CURSOR_LENGTH) {
 			await this.store.updateConnection({ feedCursor: lastId });
@@ -443,6 +452,16 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 		} else {
 			await this.store.updateConnection({ feedCursor: null });
 		}
+		return true;
+	}
+
+	/**
+	 * The lease renewal a membership resync calls before each page and change: `false` once this run of the
+	 * scheduler stopped (or a later run started), or when another process holds the lease.
+	 */
+	private leaseKeeper(): () => Promise<boolean> {
+		const run = this.generation;
+		return async () => this.generation === run && this.store.takeLease(this.holder, LEASE_MS);
 	}
 
 	private remember(id: string): void {

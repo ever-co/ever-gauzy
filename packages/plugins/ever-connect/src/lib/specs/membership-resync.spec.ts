@@ -8,7 +8,8 @@ import {
 	readLinkMembershipsPage
 } from '../membership/membership-resync';
 import { isAfter } from '../membership/membership-sync.config';
-import { OperationSpec } from '../sdk';
+import { generateInstanceKeyPair, makeNodeSigner } from '@ever-co/connect-sdk';
+import { createEverPlatformClient, OperationSpec } from '../sdk';
 
 /**
  * The membership resync's reading side, without a database (the resync itself: `membership-resync.db.spec.ts`): the
@@ -22,6 +23,41 @@ describe('Ever Platform membership resync: call, shapes, positions', () => {
 		identity_subject: 'sub-bob',
 		role: 'admin',
 		...values
+	});
+
+	it('goes through a real SDK client made before the operation was added: the route, the query, the token', async () => {
+		const answer = (body: unknown) => ({
+			type: 'basic',
+			status: 200,
+			headers: { get: () => null },
+			body: null,
+			arrayBuffer: async () => new TextEncoder().encode(JSON.stringify(body)).buffer
+		});
+		const requests: Array<{ url: string; method?: string; authorization?: string }> = [];
+		const fetch = jest.fn(async (url: string, init: { method?: string; headers?: Record<string, string> }) => {
+			requests.push({ url, method: init.method, authorization: init.headers?.['authorization'] });
+			return url.endsWith('/v1/instances/token')
+				? answer({ access_token: 'evit_test-token', token_type: 'Bearer', expires_in: 3600 })
+				: answer({ tenant_link_id: LINK, items: [member()], next_cursor: 'c-3' });
+		});
+		const client = createEverPlatformClient({
+			baseUrl: 'https://api.platform.example',
+			userAgentProduct: { product: 'gauzy', version: '1.0.0' },
+			signer: makeNodeSigner(generateInstanceKeyPair().privateKeyPkcs8Der),
+			registryInstanceId: () => '01JD00000000000000000000A1',
+			fetch: fetch as never
+		});
+
+		await expect(readLinkMembershipsPage(client, LINK, 'c-2')).resolves.toEqual({
+			items: [member()],
+			nextCursor: 'c-3'
+		});
+		expect(requests[0]).toMatchObject({ url: 'https://api.platform.example/v1/instances/token', method: 'POST' });
+		expect(requests[1]).toEqual({
+			url: `https://api.platform.example/v1/instances/me/tenant-links/${LINK}/memberships?limit=100&cursor=c-2`,
+			method: 'GET',
+			authorization: 'Bearer evit_test-token'
+		});
 	});
 
 	it('adds the operation to the SDK table once, and keeps one the SDK ships', () => {
@@ -95,15 +131,21 @@ describe('Ever Platform membership resync: call, shapes, positions', () => {
 		]);
 	});
 
-	it('a resync takes its place right after the last change, and before the next event', () => {
-		const last = { eventId: '01JD0000000000000000000009', occurredAt: Date.parse('2026-11-02T10:00:00Z') };
+	it('a resync takes its place right after the last change, and before the next event, even of the same instant', () => {
+		const at = Date.parse('2026-11-02T10:00:00Z');
+		const last = { eventId: '01JD0000000000000000000009', occurredAt: at };
 		const next = positionAfter(last);
-		expect(next).toEqual({ eventId: '01JD000000000000000000000A', occurredAt: last.occurredAt });
+		expect(next).toEqual({ eventId: '01JD0000000000000000000009.000000001', occurredAt: at });
 		expect(isAfter(next, last)).toBe(true);
-		expect(isAfter({ eventId: '01JD0000000000000000000010', occurredAt: last.occurredAt + 1 }, next)).toBe(true);
-		expect(positionAfter({ eventId: '01JD00000000000000000000ZZ', occurredAt: 5 }).eventId).toBe(
-			'01JD0000000000000000000100'
-		);
+		// The next event of the same millisecond (the next id), or of a later one, still comes after it.
+		expect(isAfter({ eventId: '01JD000000000000000000000A', occurredAt: at }, next)).toBe(true);
+		expect(isAfter({ eventId: '01JD0000000000000000000010', occurredAt: at }, next)).toBe(true);
+		expect(isAfter({ eventId: '01JD0000000000000000000001', occurredAt: at + 1 }, next)).toBe(true);
+		// A second resync after it.
+		const again = positionAfter(next);
+		expect(again).toEqual({ eventId: '01JD0000000000000000000009.000000002', occurredAt: at });
+		expect(isAfter(again, next)).toBe(true);
+		expect(isAfter({ eventId: '01JD000000000000000000000A', occurredAt: at }, again)).toBe(true);
 
 		const first = positionAfter(null);
 		expect(first.occurredAt).toBe(0);

@@ -290,7 +290,11 @@ export class MembershipSyncHandler {
 	 * list names and none of them is on the list: a user with no such Ever ID here is left as they are. An empty list
 	 * removes nobody (an Ever organization always has its owner).
 	 */
-	async reconcileAbsent(link: LinkRecord, listed: ListedMembers): Promise<MembershipSyncOutcome[]> {
+	async reconcileAbsent(
+		link: LinkRecord,
+		listed: ListedMembers,
+		keep: () => Promise<boolean> = async () => true
+	): Promise<MembershipSyncOutcome[] | 'lease_lost'> {
 		if (!isMembershipSyncEnabled(this.env) || listed.issuers.size === 0) {
 			return [];
 		}
@@ -315,6 +319,10 @@ export class MembershipSyncHandler {
 			) {
 				continue;
 			}
+			// Written only while this process holds the lease: another one may apply newer changes meanwhile.
+			if (!(await keep())) {
+				return 'lease_lost';
+			}
 			const [everId] = everIds;
 			const data: MembershipEventData = { linkId: link.linkId, ...everId, userRef: userId, role: 'member' };
 			const { outcome } = await this.applyIn(link, data, 'member', true, (last) =>
@@ -335,7 +343,8 @@ export class MembershipSyncHandler {
 	 * - A link Ever Platform does not know as live (`404`): skipped.
 	 * - Any other failure (an answer, a page that is not one, the database): the resync stops with a warning, nobody is
 	 *   removed for the link being read, and it runs again at the next `410` or start.
-	 * - `keep` renews the lease between pages; when it answers `false` the resync stops (`lease_lost`).
+	 * - `keep` renews the lease before each page and each change; when it answers `false` the resync stops there
+	 *   (`lease_lost`): nothing more is written by a process that may no longer hold the lease.
 	 *
 	 * Logged by counts of outcome codes only, never with an id or a name.
 	 */
@@ -377,6 +386,8 @@ export class MembershipSyncHandler {
 			);
 			return 'failed';
 		}
+		// Read again: a later `module_disabled` (the role feed switched off again) is said again.
+		this.disabledLogged = false;
 		this.logger.log(`Ever Platform membership resync: ${summary(counts)}.`);
 		return 'done';
 	}
@@ -391,6 +402,7 @@ export class MembershipSyncHandler {
 		const listed = new ListedMembers();
 		let complete = true;
 		let cursor: string | null = null;
+		const cursors = new Set<string>();
 		for (let page = 0; ; page += 1) {
 			if (page >= MEMBERSHIP_RESYNC_MAX_PAGES) return 'failed';
 			if (!(await keep())) return 'lease_lost';
@@ -413,16 +425,22 @@ export class MembershipSyncHandler {
 					count('malformed');
 					continue;
 				}
+				// Written only while this process holds the lease: another one may apply newer changes meanwhile.
+				if (!(await keep())) return 'lease_lost';
 				const { outcome, userId } = await this.reconcileMember(link, member);
 				listed.add(member, userId);
 				count(outcome);
 			}
 			if (answer.nextCursor === null) break;
-			if (answer.nextCursor === cursor) return 'failed';
+			// A cursor answered before (a cycle): the list would never end.
+			if (cursors.has(answer.nextCursor)) return 'failed';
+			cursors.add(answer.nextCursor);
 			cursor = answer.nextCursor;
 		}
 		if (complete) {
-			for (const outcome of await this.reconcileAbsent(link, listed)) {
+			const outcomes = await this.reconcileAbsent(link, listed, keep);
+			if (outcomes === 'lease_lost') return 'lease_lost';
+			for (const outcome of outcomes) {
 				count(`absent_${outcome}`);
 			}
 		}
@@ -483,7 +501,7 @@ export class MembershipSyncHandler {
 			const grant = await this.latestGrant(tx, link.tenantId, person);
 			const other = grant ? await this.heldElsewhere(tx, link.tenantId, others, person, grant) : false;
 			const step = await this.change(tx, change, everRole, link, person, position, last, grant, other);
-			if (resync && unchangedFor(step, last, link)) {
+			if (resync && unchangedFor(step, change, last, link)) {
 				// Nothing changed and the memory already says so: a resync at every start adds no row.
 				return { outcome: step.outcome, userId: person };
 			}
@@ -935,24 +953,30 @@ const NOT_MADE_A_MEMBER = new Set(['not_a_member', 'account_missing', 'super_adm
  * Whether the sync keeps the user as a member of the organization: its last change for them (an event or a resync)
  * was `created` or `role_changed` and left them a member.
  */
-function isKeptMember(last: SyncState | null): boolean {
+function isKeptMember(last: Pick<SyncState, 'op' | 'result'> | null): boolean {
 	return !!last && (last.op === 'created' || last.op === 'role_changed') && !NOT_MADE_A_MEMBER.has(last.result ?? '');
 }
 
+/** Outcomes that change neither the user nor their membership. */
+const NO_CHANGE = new Set(['unchanged', 'super_admin_kept', 'account_missing', 'role_missing', 'kept_for_other_link']);
+
 /**
  * Whether a resync's step changed nothing that the user's last row in the organization does not already say: no
- * change of role or membership, the same hold, through the same link.
+ * change of role or membership, the same answer to "kept as a member", the same hold, through the same link.
  */
-function unchangedFor(step: RoleStep, last: SyncState | null, link: LinkRecord): boolean {
+function unchangedFor(step: RoleStep, change: MembershipChange, last: SyncState | null, link: LinkRecord): boolean {
+	if (step.outcome === 'not_a_member') {
+		return true;
+	}
 	return (
-		step.outcome === 'not_a_member' ||
-		(step.outcome === 'unchanged' &&
-			isKeptMember(last) &&
-			!step.voids &&
-			step.held === last!.held &&
-			step.grant === last!.grant &&
-			step.restore === last!.restore &&
-			(!step.held || last!.linkId === link.linkId))
+		NO_CHANGE.has(step.outcome) &&
+		!!last &&
+		!step.voids &&
+		isKeptMember(last) === isKeptMember({ op: change, result: step.outcome }) &&
+		step.held === last.held &&
+		step.grant === last.grant &&
+		step.restore === last.restore &&
+		(!step.held || last.linkId === link.linkId)
 	);
 }
 
