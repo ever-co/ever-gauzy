@@ -873,11 +873,13 @@ suite('Ever Platform connection against the mock platform', () => {
 		expect(status.body.installation_links).toEqual({ total: 0, items: [] });
 		expect((await call('get', '/api/ever-connect/status', 'stranger')).body.operator).toBe(false);
 
-		// Another tenant's super admin: 404, nothing sent.
-		const before = (await calls()).length;
+		// Another tenant's super admin: 404, and no key rotation or disconnect (row 16) reaches Ever Platform
+		// (counted by row, so a heartbeat or feed read already on its way when the scheduler stopped does not count).
+		const lifecycleCalls = async () => (await calls()).filter((entry) => entry.row === 16).length;
+		const before = await lifecycleCalls();
 		expect((await call('post', '/api/ever-connect/connection/rotate-key', 'stranger', {})).status).toBe(404);
 		expect((await call('post', '/api/ever-connect/disconnect', 'stranger', { confirm: true })).status).toBe(404);
-		expect((await calls()).length).toBe(before);
+		expect(await lifecycleCalls()).toBe(before);
 
 		// The listed operator: Replace key, then Disconnect.
 		const rotated = await call('post', '/api/ever-connect/connection/rotate-key', 'operator', {});
