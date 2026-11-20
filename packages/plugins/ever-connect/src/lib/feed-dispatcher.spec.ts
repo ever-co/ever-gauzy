@@ -39,6 +39,7 @@ describe('Ever Platform feed dispatcher', () => {
 			holdsLease: jest.fn().mockResolvedValue(true),
 			updateConnection: jest.fn(async (values: Record<string, unknown>) => {
 				if ('feedCursor' in values) order.push(`keep ${values['feedCursor']}`);
+				return 1;
 			})
 		};
 		const client = {
@@ -287,6 +288,42 @@ describe('Ever Platform feed dispatcher', () => {
 
 			expect(await instance.readFeed()).toBe(false);
 			expect(order).toEqual([]);
+		});
+
+		it('the 410 position is kept in one compare-and-set on the lease holder: taken over just before, it stays', async () => {
+			const membership = { apply: jest.fn(), resync: jest.fn().mockResolvedValue('done') };
+			const { instance, client, order, store } = scheduler(membership);
+			client.instances.events.mockResolvedValue({ events: [], last_id: '', has_more: false });
+			await instance.readFeed();
+			// The renewal succeeds; another process takes the lease before the position is kept.
+			store.updateConnection.mockImplementationOnce(async (_values: Record<string, unknown>) => 0);
+			client.instances.events.mockRejectedValueOnce(
+				new ProblemError(410, 'resync_required', undefined, null, undefined, undefined, '01JD0000000000000000000042')
+			);
+
+			expect(await instance.readFeed()).toBe(false);
+			expect(store.updateConnection).toHaveBeenLastCalledWith(
+				{ feedCursor: '01JD0000000000000000000042' },
+				{ leasedBy: expect.any(String) }
+			);
+			expect(client.instances.ackEvents).not.toHaveBeenCalled();
+			expect(order).toEqual([]);
+		});
+
+		it('a run stopped while its read was starting goes no further and gives back a lease taken after the stop', async () => {
+			const membership = { apply: jest.fn(), resync: jest.fn().mockResolvedValue('done') };
+			const { instance, client, store } = scheduler(membership);
+			store.takeLease.mockImplementationOnce(async () => {
+				instance.stop();
+				return true;
+			});
+			store.releaseLease.mockClear();
+
+			expect(await instance.readFeed()).toBe(false);
+			expect(membership.resync).not.toHaveBeenCalled();
+			expect(client.instances.events).not.toHaveBeenCalled();
+			// Once by stop(), once for the lease taken after it.
+			expect(store.releaseLease).toHaveBeenCalledTimes(2);
 		});
 
 		it('a resync that lost the lease leaves the position, so the next lease holder is answered 410 again', async () => {

@@ -244,6 +244,8 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 	 * the cursor. Returns whether more events wait.
 	 */
 	async readFeed(): Promise<boolean> {
+		// This run of the scheduler, taken before the first await (see `leaseGuards`).
+		const guards = this.leaseGuards();
 		const connection = await this.store.connection();
 		if (connection.status !== 'connected' || !(await this.store.takeLease(this.holder, LEASE_MS))) {
 			// Another process holds the lease (or the connection stopped): look again later.
@@ -251,7 +253,12 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 			return false;
 		}
 		const client = await this.platform.getClient();
-		const guards = this.leaseGuards();
+		if (this.membership && !guards.current()) {
+			// Stopped (or started again) while this read was starting: it goes no further, and gives back a lease
+			// taken after the stop unless a later run holds it.
+			if (!this.running) await this.store.releaseLease(this.holder).catch(() => undefined);
+			return false;
+		}
 		if (this.membership && this.membershipResyncOwed) {
 			// Not owed again on a failure: it runs at the next 410 or start (the resync says why it stopped).
 			this.membershipResyncOwed = false;
@@ -457,6 +464,20 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 			if ((await this.membershipResync(client, guards)) === 'lease_lost' || !(await guards.keep())) {
 				return false;
 			}
+			// Kept in one compare-and-set on the lease holder, by the current run only: a process that lost the lease
+			// in between cannot move the position the next holder reads.
+			const cursor =
+				typeof lastId === 'string' && lastId.length > 0 && lastId.length <= MAX_FEED_CURSOR_LENGTH ? lastId : null;
+			if (
+				!guards.current() ||
+				(await this.store.updateConnection({ feedCursor: cursor }, { leasedBy: this.holder })) !== 1
+			) {
+				return false;
+			}
+			if (cursor !== null) {
+				await client.instances.ackEvents(cursor);
+			}
+			return true;
 		}
 		if (typeof lastId === 'string' && lastId.length > 0 && lastId.length <= MAX_FEED_CURSOR_LENGTH) {
 			await this.store.updateConnection({ feedCursor: lastId });
