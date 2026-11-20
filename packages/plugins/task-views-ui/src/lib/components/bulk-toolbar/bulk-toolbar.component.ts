@@ -93,6 +93,17 @@ export class BulkToolbarComponent {
 		return filterOptions(this.options()[PICKER_OPTIONS[picker]] ?? [], this.search());
 	});
 
+	/** The icon beside each picker in the bar. */
+	protected readonly pickerIcons: Readonly<Record<BulkPicker, string>> = {
+		status: 'checkmark-circle-2-outline',
+		priority: 'flag-outline',
+		size: 'expand-outline',
+		assignees: 'people-outline',
+		labels: 'pricetags-outline',
+		project: 'briefcase-outline',
+		dueDate: 'calendar-outline'
+	};
+
 	protected pickerKey(picker: BulkPicker): string {
 		return `TASK_VIEWS.BULK.${picker.replace(/[A-Z]/g, (letter) => `_${letter}`).toUpperCase()}`;
 	}
