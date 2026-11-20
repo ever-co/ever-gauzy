@@ -316,6 +316,52 @@ describe('Ever Platform feed dispatcher', () => {
 			expect(client.instances.events).not.toHaveBeenCalled();
 		});
 
+		it('a run stopped while its resync ran (no list left to check) neither reads the feed nor moves the position', async () => {
+			const membership = { apply: jest.fn(), resync: jest.fn() };
+			const { instance, client, order } = scheduler(membership as never);
+			membership.resync.mockImplementationOnce(async () => {
+				instance.stop();
+				return 'done';
+			});
+
+			expect(await instance.readFeed()).toBe(false);
+			expect(client.instances.events).not.toHaveBeenCalled();
+
+			// The same for a 410 of a run stopped while its resync ran.
+			membership.resync.mockResolvedValueOnce('done');
+			client.instances.events.mockResolvedValue({ events: [], last_id: '', has_more: false });
+			await instance.readFeed();
+			membership.resync.mockImplementationOnce(async () => {
+				instance.stop();
+				return 'done';
+			});
+			client.instances.events.mockRejectedValueOnce(
+				new ProblemError(410, 'resync_required', undefined, null, undefined, undefined, '01JD0000000000000000000042')
+			);
+			expect(await instance.readFeed()).toBe(false);
+			expect(order).toEqual([]);
+		});
+
+		it('a renewal in flight when the run stops answers false and gives the lease back', async () => {
+			const membership = {
+				apply: jest.fn(),
+				resync: jest.fn(async (_client: unknown, keep: () => Promise<boolean>) =>
+					(await keep()) ? 'done' : 'lease_lost'
+				)
+			};
+			const { instance, client, store } = scheduler(membership as never);
+			store.takeLease.mockResolvedValueOnce(true).mockImplementationOnce(async () => {
+				instance.stop();
+				return true;
+			});
+			store.releaseLease.mockClear();
+
+			expect(await instance.readFeed()).toBe(false);
+			expect(client.instances.events).not.toHaveBeenCalled();
+			// Once by stop(), once for the renewal that came back after it.
+			expect(store.releaseLease).toHaveBeenCalledTimes(2);
+		});
+
 		it('with the membership sync off, no resync runs and nothing is said', async () => {
 			const warn = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
 			try {

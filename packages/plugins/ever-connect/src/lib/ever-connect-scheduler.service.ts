@@ -36,6 +36,8 @@ interface LeaseGuards {
 	keep: () => Promise<boolean>;
 	check: (tx: EverConnectSql) => Promise<boolean>;
 	lost: () => boolean;
+	/** Whether the run of the scheduler the guards were made for is still the current one. */
+	current: () => boolean;
 }
 
 /** What the dispatcher did with one event. */
@@ -478,7 +480,8 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 		const outcome = await this.membership
 			.resync(client, guards.keep, guards.check)
 			.catch(() => 'failed' as const);
-		return guards.lost() ? 'lease_lost' : outcome;
+		// A run stopped (or replaced) meanwhile goes no further, even when the resync itself had nothing left to check.
+		return guards.lost() || !guards.current() ? 'lease_lost' : outcome;
 	}
 
 	/**
@@ -489,17 +492,27 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 	 */
 	private leaseGuards(): LeaseGuards {
 		const run = this.generation;
+		const current = () => this.generation === run;
 		let lost = false;
 		const held = (ok: boolean): boolean => {
 			if (!ok) lost = true;
 			return ok;
 		};
 		return {
-			keep: async () =>
-				held(this.generation === run && (await this.store.takeLease(this.holder, LEASE_MS).catch(() => false))),
+			keep: async () => {
+				if (!current()) return held(false);
+				const ok = await this.store.takeLease(this.holder, LEASE_MS).catch(() => false);
+				if (!current()) {
+					// Stopped while the renewal was in flight: give back what it took, unless a later run holds it now.
+					if (ok && !this.running) await this.store.releaseLease(this.holder).catch(() => undefined);
+					return held(false);
+				}
+				return held(ok);
+			},
 			check: async (tx) =>
-				held(this.generation === run && (await this.store.holdsLease(this.holder, tx).catch(() => false))),
-			lost: () => lost
+				held(current() && (await this.store.holdsLease(this.holder, tx).catch(() => false)) && current()),
+			lost: () => lost,
+			current
 		};
 	}
 
