@@ -180,6 +180,22 @@ describe('the installation address', () => {
 		expect((await h.store.connection()).publicUrl).toBe('https://new.acme.example/');
 	});
 
+	it('a withdrawal does not clear the same address reported again meanwhile by another API process', async () => {
+		await enable();
+		await h.states.setPublicUrl('https://gauzy.acme.example/', OPERATOR);
+		const reportedAgainUntil = (await h.store.connection()).publicUrlCheckUntil! + 60_000;
+		h.platform.on(DELETE, async () => {
+			await h.store.updateConnection({ publicUrlCheckUntil: reportedAgainUntil });
+			return { status: 204 };
+		});
+		await h.states.clearPublicUrl(OPERATOR);
+		const connection = await h.store.connection();
+		expect([connection.publicUrl, connection.publicUrlCheckUntil]).toEqual([
+			'https://gauzy.acme.example/',
+			reportedAgainUntil
+		]);
+	});
+
 	it('reports and withdrawals asked at once in one process run in the order they were asked', async () => {
 		await enable();
 		const order: string[] = [];

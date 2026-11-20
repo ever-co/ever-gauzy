@@ -1105,8 +1105,9 @@ export class EverConnectIntegrationStateService {
 	private async withdrawPublicUrl(actor: { actorLabel: ActorLabel; userId: string | null }): Promise<PublicUrlView> {
 		const connection = await this.requireConnected();
 		const row = await this.store.integration('instance', INSTANCE_URL);
-		// The address this withdrawal is about: a newer one reported meanwhile (another API process) is kept.
-		const withdrawn = connection.publicUrl;
+		// The report this withdrawal is about (address and deadline): a newer one made meanwhile (another API
+		// process), even of the same address, is kept.
+		const withdrawn = { publicUrl: connection.publicUrl, publicUrlCheckUntil: connection.publicUrlCheckUntil };
 		let remote = false;
 		if (row?.enabled) {
 			try {
@@ -1116,7 +1117,7 @@ export class EverConnectIntegrationStateService {
 				throw this.publicUrlProblem(error);
 			}
 		}
-		await this.store.updateConnection({ publicUrl: null, publicUrlCheckUntil: null }, { publicUrl: withdrawn });
+		await this.store.updateConnection({ publicUrl: null, publicUrlCheckUntil: null }, withdrawn);
 		await this.audit.record({
 			action: 'integration.configure',
 			actorLabel: actor.actorLabel,
