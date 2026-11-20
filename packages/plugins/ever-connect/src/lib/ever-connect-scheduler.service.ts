@@ -262,7 +262,8 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 		if (this.membership && this.membershipResyncOwed) {
 			// Not owed again on a failure: it runs at the next 410 or start (the resync says why it stopped).
 			this.membershipResyncOwed = false;
-			if ((await this.membershipResync(client, guards)) === 'lease_lost') {
+			// Renewed after it too: a page that outlasted the lease and then failed must not let a non-holder read on.
+			if ((await this.membershipResync(client, guards)) === 'lease_lost' || !(await guards.keep())) {
 				// Stopped, or another process holds the lease now: this one runs it when it holds the lease again.
 				this.membershipResyncOwed = true;
 				return false;

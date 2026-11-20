@@ -340,6 +340,23 @@ describe('Ever Platform feed dispatcher', () => {
 			expect(order).toEqual([]);
 		});
 
+		it('after the startup resync the lease is renewed: lost during a page that then failed, the feed is not read', async () => {
+			const membership = { apply: jest.fn(), resync: jest.fn() };
+			const { instance, client, store } = scheduler(membership);
+			membership.resync.mockImplementationOnce(async () => {
+				store.takeLease.mockResolvedValueOnce(false);
+				return 'failed';
+			});
+
+			expect(await instance.readFeed()).toBe(false);
+			expect(client.instances.events).not.toHaveBeenCalled();
+			// Still owed: it runs when this process holds the lease again.
+			membership.resync.mockResolvedValueOnce('done');
+			client.instances.events.mockResolvedValue({ events: [], last_id: '', has_more: false });
+			await instance.readFeed();
+			expect(membership.resync).toHaveBeenCalledTimes(2);
+		});
+
 		it('the startup resync: one that lost the lease stays owed; one that failed waits for the next 410 or start', async () => {
 			const membership = { apply: jest.fn(), resync: jest.fn().mockResolvedValueOnce('lease_lost') };
 			const { instance, client } = scheduler(membership);
