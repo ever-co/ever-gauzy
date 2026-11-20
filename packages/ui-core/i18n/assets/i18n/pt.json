@@ -1102,8 +1102,8 @@
 			"TAG_PROPOSAL": "Tag de proposta",
 			"TAG_TASK": "Tag de tarefa",
 			"TAG_USER": "Tag de usuário",
-			"TASK_EMPLOYEE": "Tag de funcionário",
-			"TASK_TEAM": "Tag de equipe",
+			"TASK_EMPLOYEE": "Tarefa e funcionário",
+			"TASK_TEAM": "Tarefa e equipe",
 			"EQUIPMENT_SHARING": "Compartilhamento de equipamentos",
 			"EQUIPMENT_SHARE_POLICY": "Política de Compartilhamento de Equipamentos",
 			"EXPENSE_CATEGORY": "Categoria de despesa",
@@ -6032,169 +6032,103 @@
 			"GO_TO_DASHBOARD_MANAGE_EMPLOYEE_STATISTICS_TIME_TRACKING_DASHBOARD": "Ir para o painel, Gerenciar Estatísticas dos Funcionários, Painel de Controle de horas"
 		},
 		"ORDERS": {
-			"ORDERS_ORDER_LINES_ORDER_CHANGES_THE_ORDER_TIMELINE_AND_THE_INVOICE_BRIDGE": {
-				"": "Pedidos, itens do pedido, alterações de pedido, a linha do tempo do pedido e a ligação com as faturas."
-			}
+			"ORDERS_ORDER_LINES_ORDER_CHANGES_THE_ORDER_TIMELINE_AND_THE_INVOICE_BRIDGE.": "Pedidos, itens do pedido, alterações de pedido, a linha do tempo do pedido e a ligação com as faturas."
 		},
 		"CART": {
-			"THE_CART_FAMILY_AND_THE_CHECKOUT_SESSION_THAT_TURNS_A_CART_INTO_AN_ORDER": {
-				"": "Os carrinhos e a sessão de checkout que transforma um carrinho em um pedido."
-			}
+			"THE_CART_FAMILY_AND_THE_CHECKOUT_SESSION_THAT_TURNS_A_CART_INTO_AN_ORDER.": "Os carrinhos e a sessão de checkout que transforma um carrinho em um pedido."
 		},
 		"CATALOG": {
-			"PRODUCT_AND_COLLECTION_PUBLICATION_VARIANT_FACETS_RELATIONS_AND_THE_CATALOG_BULK_ENDPOINT": {
-				"": "Publicação de produtos e coleções, facetas de variantes, relações e o endpoint em massa do catálogo."
-			}
+			"PRODUCT_AND_COLLECTION_PUBLICATION_VARIANT_FACETS_RELATIONS_AND_THE_CATALOG_BULK_ENDPOINT.": "Publicação de produtos e coleções, facetas de variantes, relações e o endpoint em massa do catálogo."
 		},
 		"PRICING": {
-			"PRICE_LISTS_PRODUCT_PRICES_PRICE_PREFERENCES_EXCHANGE_RATES_AND_THE_SIMULATE_ENDPOINTS": {
-				"": "Listas de preços, preços de produtos, preferências de preço, taxas de câmbio e os endpoints de simulação."
-			}
+			"PRICE_LISTS_PRODUCT_PRICES_PRICE_PREFERENCES_EXCHANGE_RATES_AND_THE_SIMULATE_ENDPOINTS.": "Listas de preços, preços de produtos, preferências de preço, taxas de câmbio e os endpoints de simulação."
 		},
 		"TAX": {
-			"TAX_CATEGORIES_TAX_RATES_AND_THE_RESOLUTION_A_DOCUMENT_IS_TAXED_THROUGH": {
-				"": "Categorias fiscais, alíquotas de impostos e a resolução pela qual um documento é tributado."
-			}
+			"TAX_CATEGORIES_TAX_RATES_AND_THE_RESOLUTION_A_DOCUMENT_IS_TAXED_THROUGH.": "Categorias fiscais, alíquotas de impostos e a resolução pela qual um documento é tributado."
 		},
 		"PROMOTIONS": {
-			"PROMOTIONS_CAMPAIGNS_COUPONS_AND_THE_DISCOUNT_ENGINE_THAT_EVALUATES_THEM": {
-				"": "Promoções, campanhas, cupons e o mecanismo de descontos que os avalia."
-			}
+			"PROMOTIONS_CAMPAIGNS_COUPONS_AND_THE_DISCOUNT_ENGINE_THAT_EVALUATES_THEM.": "Promoções, campanhas, cupons e o mecanismo de descontos que os avalia."
 		},
 		"INVENTORY_LEDGER_AND_RESERVATIONS": {
-			"MOVEMENTS_RESERVATIONS_TRANSFERS_ALERTS_ADJUSTMENTS_COUNTS_AND_RECONCILIATION": {
-				"": "Movimentações, reservas, transferências, alertas, ajustes, contagens e conciliação."
-			}
+			"MOVEMENTS_RESERVATIONS_TRANSFERS_ALERTS_ADJUSTMENTS_COUNTS_AND_RECONCILIATION.": "Movimentações, reservas, transferências, alertas, ajustes, contagens e conciliação."
 		},
 		"GRAPHQL": {
-			"THE_GRAPHQL_ENDPOINT_AND_ITS_RESOLVERS_UNDER_THE_SAME_GUARDS_AND_PERMISSIONS_AS_REST": {
-				"": "O endpoint GraphQL e seus resolvers, com as mesmas proteções e permissões da REST."
-			}
+			"THE_GRAPHQL_ENDPOINT_AND_ITS_RESOLVERS_UNDER_THE_SAME_GUARDS_AND_PERMISSIONS_AS_REST.": "O endpoint GraphQL e seus resolvers, com as mesmas proteções e permissões da REST."
 		},
 		"WAREHOUSE_MANAGEMENT": {
-			"ZONES_BINS_PICK_WAVES_PICK_LISTS_PACKING_AND_CARRIER_MANIFESTS": {
-				"": "Zonas, posições, ondas de separação, listas de separação, embalagem e manifestos de transportadora."
-			}
+			"ZONES_BINS_PICK_WAVES_PICK_LISTS_PACKING_AND_CARRIER_MANIFESTS.": "Zonas, posições, ondas de separação, listas de separação, embalagem e manifestos de transportadora."
 		},
 		"FULFILLMENT": {
-			"SHIPPING_PROFILES_AND_OPTIONS_FULFILLMENTS_LABELS_AND_THE_PACKING_AND_MANIFEST_FLOW": {
-				"": "Perfis e opções de envio, atendimentos, etiquetas e o fluxo de embalagem e manifesto."
-			}
+			"SHIPPING_PROFILES_AND_OPTIONS_FULFILLMENTS_LABELS_AND_THE_PACKING_AND_MANIFEST_FLOW.": "Perfis e opções de envio, atendimentos, etiquetas e o fluxo de embalagem e manifesto."
 		},
 		"RETURNS_CLAIMS_AND_EXCHANGES": {
-			"THE_POST-PURCHASE_FLOWS_RETURNS_CLAIMS_AND_EXCHANGES_WITH_THEIR_REASONS_AND_STOCK_EFFECTS": {
-				"": "Os fluxos pós-compra: devoluções, reclamações e trocas, com seus motivos e efeitos no estoque."
-			}
+			"THE_POST-PURCHASE_FLOWS_RETURNS_CLAIMS_AND_EXCHANGES_WITH_THEIR_REASONS_AND_STOCK_EFFECTS.": "Os fluxos pós-compra: devoluções, reclamações e trocas, com seus motivos e efeitos no estoque."
 		},
 		"SUBSCRIPTIONS_AND_RECURRING_BILLING": {
-			"PLANS_SUBSCRIPTIONS_AND_THE_BILLING_HISTORY;_RECURRING_CHARGES_ARE_A_SEPARATE_FLAG": {
-				"": "Planos, assinaturas e o histórico de cobrança; as cobranças recorrentes são uma flag separada."
-			}
+			"PLANS_SUBSCRIPTIONS_AND_THE_BILLING_HISTORY;_RECURRING_CHARGES_ARE_A_SEPARATE_FLAG.": "Planos, assinaturas e o histórico de cobrança; as cobranças recorrentes são uma flag separada."
 		},
 		"PURCHASING": {
-			"PURCHASE_ORDERS_VENDOR_TERMS_AND_GOODS_RECEIPTS": {
-				"": "Pedidos de compra, condições de fornecedores e recebimentos de mercadorias."
-			}
+			"PURCHASE_ORDERS_VENDOR_TERMS_AND_GOODS_RECEIPTS.": "Pedidos de compra, condições de fornecedores e recebimentos de mercadorias."
 		},
 		"ENTITLEMENTS_ACTIVATIONS_AND_LICENCE_KEYS": {
-			"ENTITLEMENTS_THEIR_ACTIVATIONS_AND_THE_KEYS_ISSUED_AGAINST_THEM": {
-				"": "Direitos de uso, suas ativações e as chaves emitidas para eles."
-			}
+			"ENTITLEMENTS_THEIR_ACTIVATIONS_AND_THE_KEYS_ISSUED_AGAINST_THEM.": "Direitos de uso, suas ativações e as chaves emitidas para eles."
 		},
 		"MARKETPLACE": {
-			"SELLERS_OFFERINGS_COMMISSION_PAYOUTS_AND_SETTLEMENTS": {
-				"": "Vendedores, ofertas, comissões, repasses e liquidações."
-			}
+			"SELLERS_OFFERINGS_COMMISSION_PAYOUTS_AND_SETTLEMENTS.": "Vendedores, ofertas, comissões, repasses e liquidações."
 		},
 		"GLOBAL_SEARCH": {
-			"THE_SEARCH_SUGGEST_AND_FACET_ENDPOINTS_AND_THE_INDEX_DEFINITIONS_THEY_READ": {
-				"": "Os endpoints de pesquisa, sugestão e facetas e as configurações de índice que eles leem."
-			}
+			"THE_SEARCH_SUGGEST_AND_FACET_ENDPOINTS_AND_THE_INDEX_DEFINITIONS_THEY_READ.": "Os endpoints de pesquisa, sugestão e facetas e as configurações de índice que eles leem."
 		},
 		"MULTI-CURRENCY_PRICING": {
-			"MORE_THAN_ONE_CURRENCY_ON_A_CHANNEL_EXCHANGE-RATE_USE_CURRENCY_OVERRIDES_AND_FX_CONVERSION": {
-				"": "Mais de uma moeda por canal: uso de taxas de câmbio, substituições de moeda e conversão cambial."
-			}
+			"MORE_THAN_ONE_CURRENCY_ON_A_CHANNEL_EXCHANGE-RATE_USE_CURRENCY_OVERRIDES_AND_FX_CONVERSION.": "Mais de uma moeda por canal: uso de taxas de câmbio, substituições de moeda e conversão cambial."
 		},
 		"MULTI-REGION_PRICING": {
-			"MORE_THAN_ONE_REGION_PER_CHANNEL_WITH_REGION-SPECIFIC_TAX_AND_SHIPPING": {
-				"": "Mais de uma região por canal, com impostos e envio específicos de cada região."
-			}
+			"MORE_THAN_ONE_REGION_PER_CHANNEL_WITH_REGION-SPECIFIC_TAX_AND_SHIPPING.": "Mais de uma região por canal, com impostos e envio específicos de cada região."
 		},
 		"MULTI-LOCATION_ALLOCATION": {
-			"ALLOCATION_SPLIT_ACROSS_STOCK_LOCATIONS_PER-LOCATION_AVAILABILITY_AND_TRANSFERS_BETWEEN_THEM": {
-				"": "Alocação dividida entre locais de estoque, disponibilidade por local e transferências entre eles."
-			}
+			"ALLOCATION_SPLIT_ACROSS_STOCK_LOCATIONS_PER-LOCATION_AVAILABILITY_AND_TRANSFERS_BETWEEN_THEM.": "Alocação dividida entre locais de estoque, disponibilidade por local e transferências entre eles."
 		},
 		"B2B_CREDIT": {
-			"CREDIT_LIMITS_SETTLEMENT_TERMS_PERIOD_SPENDING_LIMITS_AND_THE_CREDIT_CHECK_AT_PLACEMENT": {
-				"": "Limites de crédito, condições de liquidação, limites de gastos por período e a verificação de crédito na colocação do pedido."
-			}
+			"CREDIT_LIMITS_SETTLEMENT_TERMS_PERIOD_SPENDING_LIMITS_AND_THE_CREDIT_CHECK_AT_PLACEMENT.": "Limites de crédito, condições de liquidação, limites de gastos por período e a verificação de crédito na colocação do pedido."
 		},
 		"ORDER_APPROVALS": {
-			"ROUTING_AN_ORDER_THROUGH_THE_APPROVAL_MODULE_BEFORE_IT_IS_PLACED": {
-				"": "Encaminhar um pedido pelo módulo de aprovação antes de ele ser feito."
-			}
+			"ROUTING_AN_ORDER_THROUGH_THE_APPROVAL_MODULE_BEFORE_IT_IS_PLACED.": "Encaminhar um pedido pelo módulo de aprovação antes de ele ser feito."
 		},
 		"GIFT_CARDS": {
-			"ISSUING_AND_REDEEMING_GIFT_CARDS_AND_THE_BALANCE_LOOKUP_ENDPOINT": {
-				"": "Emissão e resgate de cartões-presente e o endpoint de consulta de saldo."
-			}
+			"ISSUING_AND_REDEEMING_GIFT_CARDS_AND_THE_BALANCE_LOOKUP_ENDPOINT.": "Emissão e resgate de cartões-presente e o endpoint de consulta de saldo."
 		},
 		"WEBHOOKS": {
-			"OUTBOUND_WEBHOOK_SUBSCRIPTIONS_AND_THEIR_DELIVERIES": {
-				"": "Assinaturas de webhooks de saída e suas entregas."
-			}
+			"OUTBOUND_WEBHOOK_SUBSCRIPTIONS_AND_THEIR_DELIVERIES.": "Assinaturas de webhooks de saída e suas entregas."
 		},
 		"EXTERNAL_SEARCH_ENGINE": {
-			"USING_AN_EXTERNAL_ENGINE_INSTEAD_OF_THE_BUILT-IN_DATABASE_PROVIDER_FOR_GLOBAL_SEARCH": {
-				"": "Usar um mecanismo externo em vez do provedor de banco de dados integrado para a pesquisa global."
-			}
+			"USING_AN_EXTERNAL_ENGINE_INSTEAD_OF_THE_BUILT-IN_DATABASE_PROVIDER_FOR_GLOBAL_SEARCH.": "Usar um mecanismo externo em vez do provedor de banco de dados integrado para a pesquisa global."
 		},
 		"SERVE_READS_FROM_THE_SEARCH_INDEX": {
-			"ROUTING_READS_TO_THE_SEARCH_PROJECTION_RATHER_THAN_TO_THE_SOURCE_TABLES": {
-				"": "Direcionar as leituras para a projeção de pesquisa em vez das tabelas de origem."
-			}
+			"ROUTING_READS_TO_THE_SEARCH_PROJECTION_RATHER_THAN_TO_THE_SOURCE_TABLES.": "Direcionar as leituras para a projeção de pesquisa em vez das tabelas de origem."
 		},
 		"BACKORDERS": {
-			"ALLOWING_AN_ORDER_FOR_MORE_THAN_IS_ON_HAND_AND_THE_BACKORDERABLE_AVAILABILITY_RESPONSE": {
-				"": "Permitir pedidos acima do estoque disponível e a resposta de disponibilidade para itens pendentes."
-			}
+			"ALLOWING_AN_ORDER_FOR_MORE_THAN_IS_ON_HAND_AND_THE_BACKORDERABLE_AVAILABILITY_RESPONSE.": "Permitir pedidos acima do estoque disponível e a resposta de disponibilidade para itens pendentes."
 		},
 		"PRICE_TIERS": {
-			"QUANTITY-BAND_PRICES_AND_PER-CONTACT-GROUP_PRICES": {
-				"": "Preços por faixa de quantidade e preços por grupo de contatos."
-			}
+			"QUANTITY-BAND_PRICES_AND_PER-CONTACT-GROUP_PRICES.": "Preços por faixa de quantidade e preços por grupo de contatos."
 		},
 		"BULK_API": {
-			"THE_BATCH_AUTHORING_ENDPOINTS": {
-				"": "Os endpoints de criação em lote."
-			}
+			"THE_BATCH_AUTHORING_ENDPOINTS.": "Os endpoints de criação em lote."
 		},
 		"DATA_EXPORT": {
-			"STREAMING_EXPORTS_OF_THE_CATALOG_AND_OF_THE_ORDER_DOCUMENTS": {
-				"": "Exportações em streaming do catálogo e dos documentos de pedidos."
-			}
+			"STREAMING_EXPORTS_OF_THE_CATALOG_AND_OF_THE_ORDER_DOCUMENTS.": "Exportações em streaming do catálogo e dos documentos de pedidos."
 		},
 		"TAX_PROVIDER": {
-			"DELEGATING_TAX_CALCULATION_TO_AN_EXTERNAL_ENGINE_THROUGH_CONFIGURED_INTEGRATION_CREDENTIALS": {
-				"": "Delegar o cálculo de impostos a um mecanismo externo por meio das credenciais de integração configuradas."
-			}
+			"DELEGATING_TAX_CALCULATION_TO_AN_EXTERNAL_ENGINE_THROUGH_CONFIGURED_INTEGRATION_CREDENTIALS.": "Delegar o cálculo de impostos a um mecanismo externo por meio das credenciais de integração configuradas."
 		},
 		"SUBSCRIPTION_BILLING_RUN": {
-			"THE_RECURRING_BILLING_RUN_AND_THE_AUTOMATIC_CHARGE_PATH": {
-				"": "A execução da cobrança recorrente e a cobrança automática."
-			}
+			"THE_RECURRING_BILLING_RUN_AND_THE_AUTOMATIC_CHARGE_PATH.": "A execução da cobrança recorrente e a cobrança automática."
 		},
 		"MARKETPLACE_PAYOUTS": {
-			"BUILDING_APPROVING_AND_EXECUTING_A_PAYOUT_THROUGH_A_PAYMENT_PROVIDER": {
-				"": "Montar, aprovar e executar um repasse por meio de um provedor de pagamento."
-			}
+			"BUILDING_APPROVING_AND_EXECUTING_A_PAYOUT_THROUGH_A_PAYMENT_PROVIDER.": "Montar, aprovar e executar um repasse por meio de um provedor de pagamento."
 		},
 		"SCHEDULED_SELLER_PAYOUTS": {
-			"AUTOMATIC_PAYOUT_RUNS_ON_A_SELLER_PAYOUT_SCHEDULE": {
-				"": "Execuções automáticas de repasses conforme o cronograma de repasses do vendedor."
-			}
+			"AUTOMATIC_PAYOUT_RUNS_ON_A_SELLER_PAYOUT_SCHEDULE.": "Execuções automáticas de repasses conforme o cronograma de repasses do vendedor."
 		},
 		"DOCUMENTS": {
 			"CENTRAL_HUB_FOR_COMPANY_DOCUMENTS_UPLOADS_WIKI_PAGES_REVIEW_AND_AI_KNOWLEDGE": "Central de documentos da empresa: uploads, páginas wiki, revisão e conhecimento de IA"
@@ -9231,6 +9165,112 @@
 		"VIEW_ALL": "Ver todos",
 		"PINNED_FOR_ORGANIZATION": "Fixado para a organização",
 		"REMOVED_STILL_PINNED": "{{ name }} foi removido dos seus favoritos. Continua na lista porque está fixado para a organização.",
+		"ALL": "Todos",
+		"SEARCH_PLACEHOLDER": "Pesquisar favoritos...",
+		"NO_MATCH": "Nenhum favorito corresponde à sua pesquisa.",
+		"ADDED": "Adicionado",
+		"CLEAR_FILTERS": "Limpar filtros",
+		"CLEAR_SEARCH": "Limpar pesquisa",
+		"SORT": {
+			"LABEL": "Ordenar por",
+			"NEWEST": "Mais recentes primeiro",
+			"OLDEST": "Mais antigos primeiro",
+			"NAME": "Nome (A–Z)",
+			"TYPE": "Tipo"
+		},
+		"TYPES": {
+			"BROADCAST": "Transmissões",
+			"CANDIDATE": "Candidatos",
+			"CHAT_CONVERSATION": "Conversas",
+			"CHAT_MESSAGE": "Mensagens",
+			"CHAT_WEBHOOK": "Webhooks",
+			"COMMENT": "Comentários",
+			"CONTACT": "Dados de contato",
+			"CURRENCY": "Moedas",
+			"DAILY_PLAN": "Planos diários",
+			"DASHBOARD": "Painéis",
+			"DASHBOARD_WIDGET": "Widgets",
+			"DOCUMENT": "Documentos",
+			"EMPLOYEE": "Funcionários",
+			"EMPLOYEE_APPOINTMENT": "Compromissos",
+			"EQUIPMENT": "Equipamentos",
+			"EXPENSE": "Despesas",
+			"GOAL": "Metas",
+			"INBOX_EMAIL": "E-mails",
+			"INBOX_ITEM": "Itens da caixa de entrada",
+			"INVOICE": "Faturas",
+			"INCOME": "Receitas",
+			"KEY_RESULT": "Resultados-chave",
+			"LANGUAGE": "Idiomas",
+			"ORGANIZATION": "Organizações",
+			"ORGANIZATION_CONTACT": "Contatos",
+			"ORGANIZATION_DEPARTMENT": "Departamentos",
+			"ORGANIZATION_DOCUMENT": "Documentos da organização",
+			"ORGANIZATION_PROJECT": "Projetos",
+			"ORGANIZATION_TEAM": "Equipes",
+			"ORGANIZATION_PROJECT_MODULE": "Módulos",
+			"ORGANIZATION_SPRINT": "Sprints",
+			"ORGANIZATION_VENDOR": "Fornecedores",
+			"PAYMENT": "Pagamentos",
+			"PRODUCT": "Produtos",
+			"PROPOSAL": "Propostas",
+			"RESOURCE_LINK": "Links",
+			"SCREENING_TASK": "Tarefas de triagem",
+			"ORGANIZATION_STRATEGIC_INITIATIVE": "Iniciativas",
+			"TASK": "Tarefas",
+			"TASK_LINKED_ISSUE": "Problemas vinculados",
+			"TASK_VIEW": "Visualizações de tarefas",
+			"TIME_LOG": "Registros de tempo",
+			"USER": "Usuários",
+			"TENANT": "Inquilinos"
+		},
+		"TYPE": "Tipo",
+		"ITEM_TYPES": {
+			"BROADCAST": "Transmissão",
+			"CANDIDATE": "Candidato",
+			"CHAT_CONVERSATION": "Conversa",
+			"CHAT_MESSAGE": "Mensagem",
+			"CHAT_WEBHOOK": "Webhook",
+			"COMMENT": "Comentário",
+			"CONTACT": "Dados de contato",
+			"CURRENCY": "Moeda",
+			"DAILY_PLAN": "Plano diário",
+			"DASHBOARD": "Painel",
+			"DASHBOARD_WIDGET": "Widget",
+			"DOCUMENT": "Documento",
+			"EMPLOYEE": "Funcionário",
+			"EMPLOYEE_APPOINTMENT": "Compromisso",
+			"EQUIPMENT": "Equipamento",
+			"EXPENSE": "Despesa",
+			"GOAL": "Meta",
+			"INBOX_EMAIL": "E-mail",
+			"INBOX_ITEM": "Item da caixa de entrada",
+			"INVOICE": "Fatura",
+			"INCOME": "Receita",
+			"KEY_RESULT": "Resultado-chave",
+			"LANGUAGE": "Idioma",
+			"ORGANIZATION": "Organização",
+			"ORGANIZATION_CONTACT": "Contato",
+			"ORGANIZATION_DEPARTMENT": "Departamento",
+			"ORGANIZATION_DOCUMENT": "Documento da organização",
+			"ORGANIZATION_PROJECT": "Projeto",
+			"ORGANIZATION_TEAM": "Equipe",
+			"ORGANIZATION_PROJECT_MODULE": "Módulo",
+			"ORGANIZATION_SPRINT": "Sprint",
+			"ORGANIZATION_VENDOR": "Fornecedor",
+			"PAYMENT": "Pagamento",
+			"PRODUCT": "Produto",
+			"PROPOSAL": "Proposta",
+			"RESOURCE_LINK": "Link",
+			"SCREENING_TASK": "Tarefa de triagem",
+			"ORGANIZATION_STRATEGIC_INITIATIVE": "Iniciativa",
+			"TASK": "Tarefa",
+			"TASK_LINKED_ISSUE": "Problema vinculado",
+			"TASK_VIEW": "Visualização de tarefas",
+			"TIME_LOG": "Registro de tempo",
+			"USER": "Usuário",
+			"TENANT": "Inquilino"
+		},
 		"ERROR": {
 			"LOAD_FAILED": "Falha ao carregar os favoritos"
 		}
