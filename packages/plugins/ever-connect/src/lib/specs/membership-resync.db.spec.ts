@@ -420,6 +420,30 @@ describe.each(TEST_TARGETS)('Ever Platform membership resync ($name)', (target) 
 		expect(await memberships(carol)).toEqual([]);
 	});
 
+	it('the lease is checked again inside the transaction of each change: a stale holder writes nothing', async () => {
+		await linkEverId(seeded.employeeId, 'sub-bob');
+		const carol = await addUser(roles.employee, false);
+		await linkEverId(carol, 'sub-carol');
+		expect(await store.takeLease('process-a', 60_000)).toBe(true);
+		expect(await store.holdsLease('process-a')).toBe(true);
+		expect(await store.holdsLease('process-b')).toBe(false);
+
+		// Process A checked its lease before the change, then stalled; process B took the lease meanwhile.
+		const sync = handler();
+		const holds = async (tx: Parameters<typeof store.holdsLease>[1]) => {
+			await store.releaseLease('process-a');
+			await store.takeLease('process-b', 60_000);
+			return store.holdsLease('process-a', tx);
+		};
+		expect(
+			await sync.resync(platform(...pages([member('sub-bob', 'admin'), member('sub-carol')])), undefined, holds)
+		).toBe('lease_lost');
+
+		expect(await roleOf(seeded.employeeId)).toBe(roles.employee);
+		expect(await memberships(carol)).toEqual([]);
+		expect(await syncRows()).toEqual([]);
+	});
+
 	it('a cursor answered before stops the resync (a cycle), and nobody is removed', async () => {
 		await linkEverId(seeded.employeeId, 'sub-bob');
 		const sync = handler();

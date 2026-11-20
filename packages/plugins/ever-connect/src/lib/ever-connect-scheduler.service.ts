@@ -23,6 +23,7 @@ import { EverConnectLease } from './ever-connect-lease';
 import { EverConnectLinkService } from './ever-connect-link.service';
 import { EverConnectPlatformService, errorCode, isCredentialRevoked } from './ever-connect-platform.service';
 import { EverConnectSignals } from './ever-connect-signals';
+import { EverConnectSql } from './ever-connect-sql';
 import { EverConnectStore } from './ever-connect.store';
 import { personRequestKind, PersonRequestsHandler } from './handlers/person-requests.handler';
 import { membershipChangeOf } from './membership/membership-sync.config';
@@ -245,7 +246,9 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 		if (this.membership && this.membershipResyncOwed) {
 			// Not owed again on a failure: it runs at the next 410 or start (the resync says why it stopped).
 			this.membershipResyncOwed = false;
-			const outcome = await this.membership.resync(client, keep).catch(() => 'failed' as const);
+			const outcome = await this.membership
+				.resync(client, keep, this.leaseCheck())
+				.catch(() => 'failed' as const);
 			if (outcome === 'lease_lost') {
 				// Stopped, or another process holds the lease now: this one runs it when it holds the lease again.
 				this.membershipResyncOwed = true;
@@ -443,7 +446,9 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 			// Before the position moves on: a process that stops here (or loses the lease) leaves the old position, so
 			// the next lease holder is answered 410 again and runs it. A resync that failed otherwise does not hold the
 			// feed back: it runs again at the next 410 or start.
-			const outcome = await this.membership.resync(client, keep).catch(() => 'failed' as const);
+			const outcome = await this.membership
+				.resync(client, keep, this.leaseCheck())
+				.catch(() => 'failed' as const);
 			if (outcome === 'lease_lost') {
 				return false;
 			}
@@ -461,6 +466,16 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 	 * The lease renewal a membership resync calls before each page and change: `false` once this run of the
 	 * scheduler stopped (or a later run started), or when another process holds the lease.
 	 */
+	/**
+	 * The check a membership resync makes inside the transaction of each change: this run of the scheduler is still
+	 * the current one, and this process holds the lease (the connection row, locked by that transaction on Postgres
+	 * and MySQL until the change commits).
+	 */
+	private leaseCheck(): (tx: EverConnectSql) => Promise<boolean> {
+		const run = this.generation;
+		return async (tx) => this.generation === run && this.store.holdsLease(this.holder, tx);
+	}
+
 	private leaseKeeper(): () => Promise<boolean> {
 		const run = this.generation;
 		return async () => this.generation === run && this.store.takeLease(this.holder, LEASE_MS);

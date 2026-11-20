@@ -74,6 +74,12 @@ export type MembershipSyncOutcome =
 	| 'duplicate'
 	| 'stale';
 
+/**
+ * Whether this process still holds the Ever Connect lease, checked inside the transaction of a resync's change (`tx`,
+ * which locks the lease on Postgres and MySQL until the change commits).
+ */
+export type LeaseCheck = (tx: EverConnectSql) => Promise<boolean>;
+
 /** What one membership resync did, a machine code. */
 export type MembershipResyncOutcome = 'switched_off' | 'done' | 'module_disabled' | 'failed' | 'lease_lost';
 
@@ -250,7 +256,8 @@ export class MembershipSyncHandler {
 			}
 			return { change, position };
 		});
-		return this.done(outcome);
+		// An event is applied without a lease check: never `lease_lost`.
+		return this.done(outcome as MembershipSyncOutcome);
 	}
 
 	/**
@@ -265,8 +272,9 @@ export class MembershipSyncHandler {
 	 */
 	async reconcileMember(
 		link: LinkRecord,
-		member: CurrentMember
-	): Promise<{ outcome: MembershipSyncOutcome; userId: string | null }> {
+		member: CurrentMember,
+		holds?: LeaseCheck
+	): Promise<{ outcome: MembershipSyncOutcome | 'lease_lost'; userId: string | null }> {
 		if (!isMembershipSyncEnabled(this.env)) {
 			return { outcome: 'switched_off', userId: null };
 		}
@@ -274,10 +282,17 @@ export class MembershipSyncHandler {
 		if (!isEverRole(everRole)) {
 			return { outcome: 'role_unknown', userId: null };
 		}
-		return this.applyIn(link, { linkId: link.linkId, ...member }, everRole, true, (last) => ({
-			change: isKeptMember(last) ? 'role_changed' : 'created',
-			position: positionAfter(last)
-		}));
+		return this.applyIn(
+			link,
+			{ linkId: link.linkId, ...member },
+			everRole,
+			true,
+			(last) => ({
+				change: isKeptMember(last) ? 'role_changed' : 'created',
+				position: positionAfter(last)
+			}),
+			holds
+		);
 	}
 
 	/**
@@ -293,7 +308,8 @@ export class MembershipSyncHandler {
 	async reconcileAbsent(
 		link: LinkRecord,
 		listed: ListedMembers,
-		keep: () => Promise<boolean> = async () => true
+		keep: () => Promise<boolean> = async () => true,
+		holds?: LeaseCheck
 	): Promise<MembershipSyncOutcome[] | 'lease_lost'> {
 		if (!isMembershipSyncEnabled(this.env) || listed.issuers.size === 0) {
 			return [];
@@ -325,9 +341,17 @@ export class MembershipSyncHandler {
 			}
 			const [everId] = everIds;
 			const data: MembershipEventData = { linkId: link.linkId, ...everId, userRef: userId, role: 'member' };
-			const { outcome } = await this.applyIn(link, data, 'member', true, (last) =>
-				isKeptMember(last) ? { change: 'removed', position: positionAfter(last) } : 'unchanged'
+			const { outcome } = await this.applyIn(
+				link,
+				data,
+				'member',
+				true,
+				(last) => (isKeptMember(last) ? { change: 'removed', position: positionAfter(last) } : 'unchanged'),
+				holds
 			);
+			if (outcome === 'lease_lost') {
+				return 'lease_lost';
+			}
 			outcomes.push(outcome);
 		}
 		return outcomes;
@@ -350,7 +374,8 @@ export class MembershipSyncHandler {
 	 */
 	async resync(
 		client: Pick<EverPlatformClient, 'call'>,
-		keep: () => Promise<boolean> = async () => true
+		keep: () => Promise<boolean> = async () => true,
+		holds?: LeaseCheck
 	): Promise<MembershipResyncOutcome> {
 		if (!isMembershipSyncEnabled(this.env)) {
 			return 'switched_off';
@@ -360,7 +385,7 @@ export class MembershipSyncHandler {
 		try {
 			for (const link of await this.store.liveLinks()) {
 				if (link.status !== 'linked') continue;
-				const outcome = await this.resyncLink(client, link, keep, count);
+				const outcome = await this.resyncLink(client, link, keep, count, holds);
 				if (outcome === 'read') continue;
 				if (outcome === 'link_unknown') {
 					count('link_unknown');
@@ -397,7 +422,8 @@ export class MembershipSyncHandler {
 		client: Pick<EverPlatformClient, 'call'>,
 		link: LinkRecord,
 		keep: () => Promise<boolean>,
-		count: (code: string) => void
+		count: (code: string) => void,
+		holds?: LeaseCheck
 	): Promise<LinkResync> {
 		const listed = new ListedMembers();
 		let complete = true;
@@ -427,7 +453,8 @@ export class MembershipSyncHandler {
 				}
 				// Written only while this process holds the lease: another one may apply newer changes meanwhile.
 				if (!(await keep())) return 'lease_lost';
-				const { outcome, userId } = await this.reconcileMember(link, member);
+				const { outcome, userId } = await this.reconcileMember(link, member, holds);
+				if (outcome === 'lease_lost') return 'lease_lost';
 				listed.add(member, userId);
 				count(outcome);
 			}
@@ -438,7 +465,7 @@ export class MembershipSyncHandler {
 			cursor = answer.nextCursor;
 		}
 		if (complete) {
-			const outcomes = await this.reconcileAbsent(link, listed, keep);
+			const outcomes = await this.reconcileAbsent(link, listed, keep, holds);
 			if (outcomes === 'lease_lost') return 'lease_lost';
 			for (const outcome of outcomes) {
 				count(`absent_${outcome}`);
@@ -457,9 +484,15 @@ export class MembershipSyncHandler {
 		data: MembershipEventData,
 		everRole: EverRole,
 		resync: boolean,
-		decide: Decide
-	): Promise<{ outcome: MembershipSyncOutcome; userId: string | null }> {
+		decide: Decide,
+		holds?: LeaseCheck
+	): Promise<{ outcome: MembershipSyncOutcome | 'lease_lost'; userId: string | null }> {
 		return this.sql.inTransaction(LOCK, async (tx) => {
+			// A resync writes only while this process holds the lease, checked (and on Postgres and MySQL held) in this
+			// very transaction: a process that stalled after its last check cannot overwrite a newer holder's change.
+			if (holds && !(await holds(tx))) {
+				return { outcome: 'lease_lost' as const, userId: null };
+			}
 			// Read again under the lock: a link unlinked while this change waited for it changes nothing, and an
 			// organization unlinked meanwhile no longer keeps the ADMIN of its grant. On Postgres and MySQL the rows are
 			// also locked until this change commits, so an unlink made in Gauzy meanwhile waits for it (and one that
