@@ -36,8 +36,9 @@ export type EverPlatformView = 'loading' | 'ready' | 'unavailable' | 'error';
  * - Connection (the operator of the installation only; "Operated by Ever Cloud" on Ever's cloud,
  *   where the operators the deployment lists by id get the same tab): what connecting sends, the
  *   connect code, the state of the connection (Check again while it waits for approval, Replace
- *   key), the installation's linked organizations, the approvals the operator owes, the instance
- *   policy, Disconnect.
+ *   key), the installation's address (reported only once "Installation address" is enabled, and
+ *   only as typed), the installation's linked organizations, the approvals the operator owes, the
+ *   instance policy, Disconnect.
  * - Organization link: link this organization with a link code, or remove the link.
  * - Integrations & data: each integration, its state, what it moves (Show scope), the consent link
  *   to app.ever.co ("Enable in app.ever.co…") and Disable. Nothing is enabled from here. For an
@@ -216,6 +217,56 @@ export type EverPlatformView = 'loading' | 'ready' | 'unavailable' | 'error';
 														<p class="hint" data-test="no-installation-links">
 															{{ 'EVER_CONNECT.CONNECTION.NO_LINKS' | translate }}
 														</p>
+													}
+												}
+												@if (status.connection.status === 'connected' && status.connection.instance_url; as address) {
+													<h3>{{ 'EVER_CONNECT.ADDRESS.TITLE' | translate }}</h3>
+													@if (address.enabled) {
+														<p>{{ 'EVER_CONNECT.ADDRESS.DESCRIPTION' | translate }}</p>
+														@if (address.url) {
+															<p data-test="address-reported">
+																{{ 'EVER_CONNECT.ADDRESS.REPORTED' | translate: { url: address.url } }}
+															</p>
+														}
+														<div class="row">
+															<input
+																nbInput
+																fieldSize="small"
+																type="url"
+																data-test="address-input"
+																[attr.aria-label]="'EVER_CONNECT.ADDRESS.TITLE' | translate"
+																[(ngModel)]="publicUrl"
+																[placeholder]="'https://gauzy.example.com'"
+																autocomplete="off"
+															/>
+															<button
+																nbButton
+																status="primary"
+																size="small"
+																type="button"
+																data-test="address-report"
+																[disabled]="busy || !publicUrl.trim()"
+																(click)="reportAddress()"
+															>
+																{{ 'EVER_CONNECT.ADDRESS.REPORT' | translate }}
+															</button>
+															@if (address.url) {
+																<button
+																	nbButton
+																	ghost
+																	status="danger"
+																	size="small"
+																	type="button"
+																	data-test="address-withdraw"
+																	[disabled]="busy"
+																	(click)="withdrawAddress()"
+																>
+																	{{ 'EVER_CONNECT.ADDRESS.WITHDRAW' | translate }}
+																</button>
+															}
+														</div>
+													} @else {
+														<p class="hint" data-test="address-off">{{ 'EVER_CONNECT.ADDRESS.OFF' | translate }}</p>
 													}
 												}
 												<ngx-ever-connect-pending-approvals
@@ -658,6 +709,8 @@ export class EverPlatformPageComponent implements OnInit {
 	scopeShown: Record<string, boolean> = {};
 	connectCode = '';
 	linkCode = '';
+	/** The installation's public address the operator types (never read from this server). */
+	publicUrl = '';
 	linkOrganization = true;
 	confirmingDisconnect = false;
 	busy = false;
@@ -768,6 +821,21 @@ export class EverPlatformPageComponent implements OnInit {
 
 	rotateKey(): void {
 		this.run(this.api.rotateKey(), () => this.say('EVER_CONNECT.NOTICES.KEY_ROTATED'));
+	}
+
+	/** Reports the address the operator typed; the API sends it only while "Installation address" is enabled. */
+	reportAddress(): void {
+		const url = this.publicUrl.trim();
+		if (!url) return;
+		this.run(this.api.setPublicUrl(url), () => {
+			// An address typed meanwhile stays, to be reported next.
+			if (this.publicUrl.trim() === url) this.publicUrl = '';
+			this.say('EVER_CONNECT.NOTICES.ADDRESS_REPORTED');
+		});
+	}
+
+	withdrawAddress(): void {
+		this.run(this.api.clearPublicUrl(), () => this.say('EVER_CONNECT.NOTICES.ADDRESS_WITHDRAWN'));
 	}
 
 	disconnect(): void {
@@ -913,7 +981,10 @@ export class EverPlatformPageComponent implements OnInit {
 			'platform_unreachable',
 			'rate_limited',
 			'not_available',
-			'product_mismatch'
+			'product_mismatch',
+			'consent_required',
+			'consent_changed',
+			'url_invalid'
 		];
 		this.say(
 			code && known.includes(code) ? `EVER_CONNECT.ERRORS.${code}` : 'EVER_CONNECT.ERRORS.generic',

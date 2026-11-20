@@ -2,6 +2,7 @@ import {
 	BadRequestException,
 	Body,
 	Controller,
+	Delete,
 	Get,
 	Header,
 	HttpCode,
@@ -17,10 +18,15 @@ import { RolesEnum } from '@gauzy/contracts';
 import { RoleGuard, Roles } from '@gauzy/core';
 import { ConnectResult, EverConnectConnectionService } from './ever-connect-connection.service';
 import { EntitlementImportResult, EverConnectEntitlementService } from './ever-connect-entitlement.service';
-import { EverConnectIntegrationStateService, IntegrationView } from './ever-connect-integration-state.service';
+import {
+	EverConnectIntegrationStateService,
+	IntegrationView,
+	PublicUrlView
+} from './ever-connect-integration-state.service';
 import type { RequestWithUser } from './ever-connect-request';
 import { EverConnectStore } from './ever-connect.store';
 import { EverConnectOperatorGuard } from './guards/ever-connect-operator.guard';
+import { MAX_PUBLIC_URL, normalisedPublicAddress } from './public-address';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -168,41 +174,30 @@ export class EverConnectInstanceController {
 		});
 	}
 
-	/** The installation's public address, once "Installation address" is enabled: `{ "url": "https://…" }`. */
+	/**
+	 * Reports the installation's public address the operator typed, once "Installation address"
+	 * (`instance_url`) is enabled (consented in app.ever.co and accepted here): `{ "url": "https://…" }`.
+	 * Never an address read from this server's own host or settings. 409 `not_connected` /
+	 * `consent_required` before; 400 `url_invalid` for an address that cannot be published.
+	 */
 	@Put('public-url')
 	@Header('Cache-Control', 'no-store')
-	async publicUrl(@Body() body: { url?: unknown }) {
-		if (!publicAddress(body?.url)) {
-			throw new BadRequestException(
-				'url must be an https address with a host name, without credentials, query or fragment'
-			);
+	async publicUrl(@Req() request: RequestWithUser, @Body() body: { url?: unknown }): Promise<PublicUrlView> {
+		const url = normalisedPublicAddress(body?.url);
+		if (!url) {
+			throw new BadRequestException({
+				statusCode: 400,
+				code: 'url_invalid',
+				message: `url must be an https address with a host name, without credentials, query or fragment, at most ${MAX_PUBLIC_URL} characters`
+			});
 		}
-		return this.states.setPublicUrl(String(body.url));
+		return this.states.setPublicUrl(url, { actorLabel: 'operator', userId: request.user?.id ?? null });
 	}
-}
 
-/**
- * Whether `value` may be published as the installation's address: https, a host name (no IP
- * address literal, no credentials, no port 0), no query or fragment.
- */
-export function publicAddress(value: unknown): boolean {
-	if (typeof value !== 'string' || !/^https:\/\/[^\s/?#]+(\/[^\s?#]*)?$/.test(value)) {
-		return false;
+	/** Withdraws the reported address from Ever Platform. */
+	@Delete('public-url')
+	@Header('Cache-Control', 'no-store')
+	async clearPublicUrl(@Req() request: RequestWithUser): Promise<PublicUrlView> {
+		return this.states.clearPublicUrl({ actorLabel: 'operator', userId: request.user?.id ?? null });
 	}
-	let url: URL;
-	try {
-		url = new URL(value);
-	} catch {
-		return false;
-	}
-	const host = url.hostname;
-	return (
-		url.protocol === 'https:' &&
-		!url.username &&
-		!url.password &&
-		url.port !== '0' &&
-		!/^[0-9.]+$/.test(host) &&
-		!host.startsWith('[') &&
-		host.includes('.')
-	);
 }

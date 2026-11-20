@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import { EverInstanceService } from '@gauzy/plugin-ever-instance';
-import { EverConnectAuditService } from './ever-connect-audit.service';
+import { ActorLabel, EverConnectAuditService } from './ever-connect-audit.service';
 import { deniedByEnv } from './ever-connect-config';
 import { EverConnectEntitlementService } from './ever-connect-entitlement.service';
 import type { EverConnectConfig } from './ever-connect-config';
@@ -18,7 +18,8 @@ import {
 	EVER_CONNECT_CLOCK,
 	EVER_CONNECT_SETTINGS,
 	IntegrationLocalState,
-	RevokeSource
+	RevokeSource,
+	URL_CHECK_MAX_S
 } from './ever-connect.constants';
 import {
 	EverConnectPlatformService,
@@ -38,6 +39,7 @@ import {
 	sharedDefinition
 } from './integrations/integration-definitions';
 import { IntegrationHandlerRegistry } from './integrations/integration-handler.registry';
+import { MAX_PUBLIC_URL } from './public-address';
 import { PersonLinkReporter } from './reporters/person-link.reporter';
 import { CONSTANTS, IntegrationKey, ProblemError, signCompactJws } from './sdk';
 
@@ -99,6 +101,18 @@ export interface IntegrationView {
 }
 
 const sha256 = (text: string) => createHash('sha256').update(text).digest('hex');
+
+/** The installation-wide integration that moves the installation's public address. */
+export const INSTANCE_URL = 'instance_url';
+
+/** The installation's address as the operator's Connection tab shows it. */
+export interface PublicUrlView {
+	/** `instance_url` is enabled: consented in app.ever.co and accepted here. */
+	enabled: boolean;
+	/** The address reported to Ever Platform (as it normalised it), or `null`. */
+	url: string | null;
+}
+
 const isoMs = (ms: number | null) => (ms === null ? null : new Date(ms).toISOString());
 
 /** A page asking to re-read the states reads them at most once in this time (per process). */
@@ -170,6 +184,8 @@ export class EverConnectIntegrationStateService {
 	private syncing: Promise<void> | null = null;
 	/** When the states were last read (for coalescing reads from page views). */
 	private lastSyncAt: number | null = null;
+	/** The report or withdrawal of the address in progress in this process (see `oneAddressChangeAtATime`). */
+	private addressChanges: Promise<unknown> = Promise.resolve();
 
 	constructor(
 		private readonly platform: EverConnectPlatformService,
@@ -1008,29 +1024,147 @@ export class EverConnectIntegrationStateService {
 
 	// ── The installation's public address ─────────────────────────────────────
 
+	/** What the operator's Connection tab shows of the installation's address. */
+	async publicUrlView(): Promise<PublicUrlView> {
+		const [row, connection] = await Promise.all([
+			this.store.integration('instance', INSTANCE_URL),
+			this.store.connection()
+		]);
+		return { enabled: !!row?.enabled, url: row?.enabled ? connection.publicUrl : null };
+	}
+
 	/**
-	 * `PUT /ever-connect/public-url`: only once `instance_url` is enabled (consented in app.ever.co and
-	 * accepted by the operator); 409 before. Ever Platform does not take the address from an
-	 * installation yet, so nothing is sent: 503 until it does.
+	 * `PUT /ever-connect/public-url`: reports the public https address the operator typed
+	 * (`PUT /v1/instances/me/public-url`, row 18), never one read from this server's own host or
+	 * settings. Only once `instance_url` is enabled: consented in app.ever.co and accepted by the
+	 * operator here (409 `consent_required`), on a connected installation (409 `not_connected`). Ever
+	 * Platform answers the address normalised; that is what is kept, and `/.well-known/ever-connect`
+	 * then answers its signed statement for 10 minutes, for Ever Platform to check it. The audit
+	 * records that an address was reported, never the address.
 	 */
-	async setPublicUrl(url: string): Promise<never> {
-		const row = await this.store.integration('instance', 'instance_url');
+	async setPublicUrl(url: string, actor: { actorLabel: ActorLabel; userId: string | null }): Promise<PublicUrlView> {
+		return this.oneAddressChangeAtATime(() => this.reportPublicUrl(url, actor));
+	}
+
+	private async reportPublicUrl(
+		url: string,
+		actor: { actorLabel: ActorLabel; userId: string | null }
+	): Promise<PublicUrlView> {
+		const consent = await this.requireInstanceUrl();
+		const connection = await this.requireConnected();
+		let answer: { base_url?: unknown };
+		try {
+			answer = (await this.guard(async () =>
+				(await this.platform.getClient()).call('instancePutPublicUrl', {
+					body: { base_url: url },
+					idempotencyKey: sha256(`public-url|${connection.platformInstanceId}|${url}`)
+				})
+			)) as { base_url?: unknown };
+		} catch (error) {
+			throw this.publicUrlProblem(error);
+		}
+		// The contract answers the address as Ever Platform keeps it. Without a usable one, the address sent is
+		// kept: it was normalised the same way before it was sent (lower-case host, no default port).
+		const normalised = typeof answer?.base_url === 'string' ? answer.base_url : null;
+		const stored = normalised && normalised.length <= MAX_PUBLIC_URL ? normalised : url;
+		// Kept, in one statement, only for the connection it was sent for and only while the consent it was
+		// sent under still holds: a switch-off, a new consent or a disconnect while Ever Platform answered
+		// wins, and then nothing is written (so no address of another report is replaced or cleared).
+		const kept = await this.store.setPublicUrlIfConsented({
+			publicUrl: stored,
+			publicUrlCheckUntil: this.now() + URL_CHECK_MAX_S * 1000,
+			platformInstanceId: String(connection.platformInstanceId),
+			consentId: consent.consentId
+		});
+		if (!kept) {
+			throw new ConflictException({
+				statusCode: 409,
+				code: 'consent_changed',
+				message: '"Installation address" or the connection changed meanwhile; nothing is kept here.'
+			});
+		}
+		await this.audit.record({
+			action: 'integration.configure',
+			actorLabel: actor.actorLabel,
+			actorUserId: actor.userId,
+			integration: INSTANCE_URL,
+			details: { platform_instance_id: connection.platformInstanceId, status: 'reported' }
+		});
+		return { enabled: true, url: stored };
+	}
+
+	/**
+	 * `DELETE /ever-connect/public-url`: withdraws the reported address (`DELETE
+	 * /v1/instances/me/public-url`, row 18) while `instance_url` is enabled; when it is not, Ever
+	 * Platform already removed it and only the copy kept here is cleared. Audited without the address.
+	 */
+	async clearPublicUrl(actor: { actorLabel: ActorLabel; userId: string | null }): Promise<PublicUrlView> {
+		return this.oneAddressChangeAtATime(() => this.withdrawPublicUrl(actor));
+	}
+
+	private async withdrawPublicUrl(actor: { actorLabel: ActorLabel; userId: string | null }): Promise<PublicUrlView> {
+		const connection = await this.requireConnected();
+		const row = await this.store.integration('instance', INSTANCE_URL);
+		// The report this withdrawal is about (address and deadline): a newer one made meanwhile (another API
+		// process), even of the same address, is kept.
+		const withdrawn = { publicUrl: connection.publicUrl, publicUrlCheckUntil: connection.publicUrlCheckUntil };
+		let remote = false;
+		if (row?.enabled) {
+			try {
+				await this.guard(async () => (await this.platform.getClient()).call('instanceDeletePublicUrl'));
+				remote = true;
+			} catch (error) {
+				throw this.publicUrlProblem(error);
+			}
+		}
+		await this.store.updateConnection({ publicUrl: null, publicUrlCheckUntil: null }, withdrawn);
+		await this.audit.record({
+			action: 'integration.configure',
+			actorLabel: actor.actorLabel,
+			actorUserId: actor.userId,
+			integration: INSTANCE_URL,
+			details: { platform_instance_id: connection.platformInstanceId, status: 'withdrawn', remote }
+		});
+		return this.publicUrlView();
+	}
+
+	/**
+	 * Reports and withdrawals of the address run one at a time in this API process, in the order they
+	 * were asked, so an older one never lands after a newer one here; across processes the withdrawal
+	 * clears only the address it read (compare and set).
+	 */
+	private oneAddressChangeAtATime<T>(work: () => Promise<T>): Promise<T> {
+		const next = this.addressChanges.then(work, work);
+		this.addressChanges = next.catch(() => undefined);
+		return next;
+	}
+
+	/** 409 `consent_required` until `instance_url` is enabled (consent in app.ever.co, then the operator's accept). */
+	private async requireInstanceUrl(): Promise<IntegrationRecord> {
+		const row = await this.store.integration('instance', INSTANCE_URL);
 		if (!row?.enabled) {
 			throw new ConflictException({
 				statusCode: 409,
 				code: 'consent_required',
-				message: 'Enable "Installation address" in app.ever.co first.'
+				message: 'Enable "Installation address" in app.ever.co and accept it here first.'
 			});
 		}
-		void url;
-		throw new HttpException(
-			{
-				statusCode: 503,
-				code: 'not_available',
-				message: 'Ever Platform does not accept an installation address from here yet.'
-			},
-			HttpStatus.SERVICE_UNAVAILABLE
-		);
+		return row;
+	}
+
+	/**
+	 * Ever Platform's refusal of an address, by its code only: `403` (the integration is not enabled
+	 * there, or the installation waits for approval) is a 409; an address it does not take is a 422.
+	 */
+	private publicUrlProblem(error: unknown): unknown {
+		if (error instanceof ProblemError && error.status === 403) {
+			return new ConflictException({
+				statusCode: 409,
+				code: error.code,
+				message: 'Ever Platform does not take an installation address from this installation now.'
+			});
+		}
+		return this.problem(error);
 	}
 
 	// ── Helpers ───────────────────────────────────────────────────────────────

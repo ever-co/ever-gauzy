@@ -219,6 +219,51 @@ export class EverConnectStore {
 	}
 
 	/**
+	 * Keeps the installation's reported address, in one statement, only while the connection is the one
+	 * it was sent for (`connected`, same Registry id) and `instance_url` is still enabled under the
+	 * consent it was sent under. Returns whether it was kept; when it was not, nothing changed.
+	 */
+	async setPublicUrlIfConsented(values: {
+		publicUrl: string;
+		publicUrlCheckUntil: number;
+		platformInstanceId: string;
+		consentId: string | null;
+	}): Promise<boolean> {
+		await this.connection();
+		const q = (c: string) => this.sql.q(c);
+		// Parameters in the order they appear (`?` on SQLite and MySQL, `$n` on Postgres).
+		const params: unknown[] = [];
+		const bind = (value: unknown) => {
+			params.push(value);
+			return this.sql.ph(params.length);
+		};
+		const sets = [
+			`${q('publicUrl')} = ${bind(values.publicUrl)}`,
+			`${q('publicUrlCheckUntil')} = ${bind(values.publicUrlCheckUntil)}`,
+			`${q('updatedAt')} = ${bind(this.now())}`
+		].join(', ');
+		const sameConnection = [
+			`${q('id')} = ${bind(CONNECTION_ROW_ID)}`,
+			`${q('status')} = ${bind('connected')}`,
+			`${q('platformInstanceId')} = ${bind(values.platformInstanceId)}`
+		].join(' AND ');
+		const sameConsent = [
+			`i.${q('scope')} = ${bind('instance')}`,
+			`i.${q('name')} = ${bind('instance_url')}`,
+			`i.${q('enabled')} = ${bind(true)}`,
+			values.consentId === null
+				? `i.${q('consentId')} IS NULL`
+				: `i.${q('consentId')} = ${bind(values.consentId)}`
+		].join(' AND ');
+		const { affected } = await this.sql.run(
+			`UPDATE ${q(CONNECTION)} SET ${sets} WHERE ${sameConnection} ` +
+				`AND EXISTS (SELECT 1 FROM ${q(INTEGRATION)} i WHERE ${sameConsent})`,
+			params
+		);
+		return affected !== 0;
+	}
+
+	/**
 	 * Takes (or renews) the lease that lets one API process run the heartbeat and the event feed:
 	 * compare and set on the connection row. Returns whether this process holds it.
 	 */

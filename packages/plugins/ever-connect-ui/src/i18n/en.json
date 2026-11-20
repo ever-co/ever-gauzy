@@ -39,6 +39,14 @@
 			"orphaned": "Ended in app.ever.co"
 		}
 	},
+	"ADDRESS": {
+		"TITLE": "Installation address",
+		"DESCRIPTION": "Type the public https address of this installation to report it to Ever Platform. Nothing is read from this server: only the address you type is sent.",
+		"REPORTED": "Reported to Ever Platform: {{ url }}",
+		"REPORT": "Report address",
+		"WITHDRAW": "Withdraw",
+		"OFF": "To report this installation's address, enable \"Installation address\" in app.ever.co (Integrations & data), then accept it here."
+	},
 	"APPROVALS": {
 		"TITLE": "Approvals requested",
 		"REQUESTED_BY": "Approval requested by ever.co/{{ handle }}",
@@ -165,6 +173,8 @@
 		"DISABLED": "Disabled.",
 		"DISABLED_OFFLINE": "Disabled here. Ever Platform has not taken it yet; it is told again until it does.",
 		"KEY_ROTATED": "The connection key was replaced.",
+		"ADDRESS_REPORTED": "The address was reported to Ever Platform.",
+		"ADDRESS_WITHDRAWN": "The address was withdrawn from Ever Platform.",
 		"ENTITLEMENT_IMPORTED": "Entitlement document #{{ seq }} imported.",
 		"ENTITLEMENT_UNCHANGED": "This entitlement document (#{{ seq }}) is already the current one."
 	},
@@ -181,6 +191,9 @@
 		"not_connected": "This installation is not connected to Ever Platform.",
 		"denied_by_policy": "The operator of this installation does not allow this integration.",
 		"not_available": "This integration is not available yet.",
+		"consent_required": "Enable this in app.ever.co first, then accept it here.",
+		"consent_changed": "\"Installation address\" or the connection changed meanwhile. Nothing was kept: check the page and report the address again.",
+		"url_invalid": "Use an https address with a host name (no IP address), without a query or a fragment, of at most 255 characters.",
 		"keys_unverifiable": "Ever Platform's keys could not be verified for this address. Nothing was sent.",
 		"entitlement_unverifiable": "Ever Platform's entitlement document could not be verified. The installation was not connected.",
 		"platform_unreachable": "Ever Platform could not be reached. Please try again later.",

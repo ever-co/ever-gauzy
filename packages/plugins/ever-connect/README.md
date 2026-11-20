@@ -57,6 +57,7 @@ A spec checks this table against the outbound-call rows of the SDK's contracts p
 | 11  | `POST /v1/instances/me/stats-link`                                                                                   | once, when `stats_link` is enabled (consent in app.ever.co and the operator's accept); never with `EVER_INSTALL_SOURCE=cloud`              | the anonymous statistics id and public key, signed with the statistics key          |
 | 14  | `POST /v1/instances/me/oidc-client`, `GET /v1/instances/me/oidc-client`                                              | once, when Sign in with Ever ID is enabled; then read until the client is ready (5 s, then less often, at most every 5 min)                | the Ever ID callback and back-channel logout addresses of this API                  |
 | 16  | `POST /v1/instances/me/disconnect`, `POST /v1/instances/me/keys`                                                     | the operator disconnects; the operator replaces the connection key                                                                         | nothing; the new public key and two proofs (signed with the old and the new key)    |
+| 18  | `PUT /v1/instances/me/public-url`, `DELETE /v1/instances/me/public-url`                                              | the operator reports or withdraws the installation's address, only while `instance_url` is enabled (consent in app.ever.co and the operator's accept) | the address the operator typed (`base_url`); never one read from this server's own host or settings |
 | 19  | `POST /v1/instances/me/person-links`, `DELETE /v1/instances/me/person-links/{ref}`                                  | a Gauzy user of a linked tenant links or unlinks an Ever ID while Sign in with Ever ID is enabled; the existing links once, when it starts | the Gauzy user id, the Ever ID issuer and subject, how the link was made, the tenant and organization ids, the tenant link, the tenant's name |
 | 20  | `POST /v1/instances/me/ack`                                                                                          | a person's deletion or export request arrives on the event feed                                                                           | the request's job id, the answer, a reason code or the link to this installation's own export |
 | 22  | `POST /v1/identity/resolve`                                                                                          | an Ever ID sign-in whose token carries none of Ever Platform's claims, while Sign in with Ever ID is enabled                               | the Ever ID issuer and subject                                                      |
@@ -77,7 +78,7 @@ No request is made on sign-in or when a record changes, except the removal of th
 
 | Integration                           | State here                                                                                          |
 | ------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| Installation address (`instance_url`) | consent in app.ever.co, then the operator's accept; sending the address itself is not available yet |
+| Installation address (`instance_url`) | consent in app.ever.co, then the operator's accept; then the operator types the address on the Connection tab (see "The installation's address") |
 | Link usage statistics (`stats_link`)  | consent in app.ever.co, then the operator's accept; not offered with `EVER_INSTALL_SOURCE=cloud`    |
 | Sign in with Ever ID (`ever_id_login`) | consent in app.ever.co, then the operator's accept; "coming soon" while Ever Platform says so    |
 | Check contacts on Ever Platform (`counterparty_lookup`) | consent in app.ever.co, for the organization; needs `features.lookup` in its entitlement |
@@ -193,7 +194,15 @@ The launcher's reads, each to a fixed path, under the same rules as the SDK's cl
 
 ### `/.well-known/ever-connect`
 
-Registered outside `/api` while this module is loaded. It answers only while Ever Platform checks the installation's address (after `instance_url` was consented and accepted, at most 10 minutes): a short-lived statement signed with the connection key, `{iss: <the installation's id>, aud: "urn:ever:instance-url", url, iat, exp}` with `exp` at most 10 minutes after `iat`. At any other time it answers 404, exactly as an address that does not exist. This release does not send the installation's address yet, so it always answers 404.
+Registered outside `/api` while this module is loaded. It answers only while Ever Platform checks the installation's address (for 10 minutes after the operator reported it): a short-lived statement signed with the connection key, `{iss: <the installation's id>, aud: "urn:ever:instance-url", url, iat, exp}` with `exp` at most 10 minutes after `iat`. At any other time it answers 404, exactly as an address that does not exist.
+
+### The installation's address
+
+Off until an owner or administrator of the Ever organization that connected the installation enables **Installation address** (`instance_url`) in app.ever.co and the operator accepts it here (on Ever's cloud, a listed operator). Then the Connection tab asks the operator for the installation's public address, and nothing is sent until they type one: it is never read from this server's own host, `API_BASE_URL` or `CLIENT_BASE_URL`.
+
+- `PUT /api/ever-connect/public-url` with `{ "url": "https://…" }` (the operator): an https address with a host name (no IP address, no credentials, query or fragment, at most 255 characters; another port than 443 is kept, for an installation served on one) is normalised (lower-case host, no default port) and sent (row 18); Ever Platform answers it as it keeps it, which is what the tab then shows. 409 `not_connected` or `consent_required` before; 400 `url_invalid` for an address that cannot be published. `/.well-known/ever-connect` answers its statement for 10 minutes after.
+- `DELETE /api/ever-connect/public-url` (the operator) withdraws it (row 18). Switching **Installation address** off, here or in app.ever.co, or disconnecting forgets it here; Ever Platform removes its copy when the integration ends.
+- The audit records `integration.configure` for `instance_url` with `reported` or `withdrawn`, never the address.
 
 ### Entitlements
 
