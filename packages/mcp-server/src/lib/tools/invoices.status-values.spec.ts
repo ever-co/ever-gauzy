@@ -68,8 +68,23 @@ describe('invoice tools: the statuses the API stores', () => {
 		await call('update_invoice_action', { id: INVOICE, status: 'CANCELLED' });
 		await call('update_estimate_status', { id: INVOICE, data: { status: 'CANCELLED', isEstimate: true } });
 
-		expect(put).toHaveBeenCalledWith(`/api/invoices/${INVOICE}/action`, { status: 'VOID' });
-		expect(put).toHaveBeenCalledWith(`/api/invoices/${INVOICE}/estimate`, { status: 'VOID', isEstimate: true });
+		expect(put).toHaveBeenNthCalledWith(1, `/api/invoices/${INVOICE}/action`, { status: 'VOID' });
+		expect(put).toHaveBeenNthCalledWith(2, `/api/invoices/${INVOICE}/action`, { status: 'VOID', isEstimate: true });
+	});
+
+	it('update_estimate_status sends its data to the action route, which reads the status, isEstimate and paid', async () => {
+		// The estimate route reads only the client's answer (isAccepted) and refused this tool's data.
+		await call('update_estimate_status', {
+			id: INVOICE,
+			data: { status: 'ACCEPTED', isEstimate: true, paid: false }
+		});
+
+		expect(put).toHaveBeenCalledWith(`/api/invoices/${INVOICE}/action`, {
+			status: 'ACCEPTED',
+			isEstimate: true,
+			paid: false
+		});
+		expect(put).not.toHaveBeenCalledWith(`/api/invoices/${INVOICE}/estimate`, expect.anything());
 	});
 
 	it('get_invoices and get_invoice_count filter cancelled invoices on VOID', async () => {

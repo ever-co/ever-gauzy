@@ -323,7 +323,9 @@ export const registerInvoiceTools = (server: McpServer) => {
 		},
 		async ({ id, data }) => {
 			try {
-				const response = await apiClient.put(`/api/invoices/${id}/estimate`, withStoredInvoiceStatus(data));
+				// The action route reads the status, isEstimate and paid; the estimate route reads only the client's
+				// answer (isAccepted), and refused this tool's data.
+				const response = await apiClient.put(`/api/invoices/${id}/action`, withStoredInvoiceStatus(data));
 
 				return {
 					content: [
