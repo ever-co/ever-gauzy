@@ -83,6 +83,7 @@
 	@if (picker(); as kind) {
 		<div
 			class="panel"
+			[style.left.px]="panelLeft()"
 			role="group"
 			[attr.aria-label]="pickerKey(kind) | translate"
 			(keydown)="onPanelKeydown($event)"
