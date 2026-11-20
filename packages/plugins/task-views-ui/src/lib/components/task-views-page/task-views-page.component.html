@@ -125,7 +125,7 @@
 				</div>
 			</nb-card-header>
 
-			<nb-card-body class="view-body">
+			<nb-card-body class="view-body" [class.has-selection]="selection().ids.length > 0">
 				@if (gone()) {
 					<p class="gone" data-test="view-gone">
 						{{ 'TASK_VIEWS.VIEW.GONE' | translate }}
@@ -467,7 +467,13 @@
 	</div>
 
 	@if (undo(); as pending) {
-		<div class="undo-bar" role="status" aria-live="polite" data-test="undo-bar">
+		<div
+			class="undo-bar"
+			role="status"
+			aria-live="polite"
+			data-test="undo-bar"
+			[class.above-toolbar]="selection().ids.length > 0"
+		>
 			<span>{{ pending.messageKey | translate: pending.params }}</span>
 			@if (pending.request) {
 				<button
