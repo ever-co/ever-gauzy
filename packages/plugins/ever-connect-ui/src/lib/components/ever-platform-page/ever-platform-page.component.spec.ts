@@ -212,6 +212,13 @@ describe('EverPlatformPageComponent', () => {
 		component.reportAddress();
 		expect(component.notice).toBe('EVER_CONNECT.ERRORS.url_invalid');
 		expect(component.noticeStatus).toBe('danger');
+		// The typed address stays, to be corrected and sent again.
+		expect(component.publicUrl).toBe('https://10.0.0.1');
+		api.setPublicUrl.mockReturnValue(throwError(() => ({ status: 409, error: { code: 'consent_required' } })));
+		component.publicUrl = 'https://gauzy.acme.example';
+		component.reportAddress();
+		expect(component.notice).toBe('EVER_CONNECT.ERRORS.consent_required');
+		expect(component.busy).toBe(false);
 	});
 
 	it('an administrator who may change integrations reads the states from Ever Platform', () => {

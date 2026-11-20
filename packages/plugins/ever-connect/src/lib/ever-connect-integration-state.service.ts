@@ -1054,6 +1054,8 @@ export class EverConnectIntegrationStateService {
 		} catch (error) {
 			throw this.publicUrlProblem(error);
 		}
+		// The contract answers the address as Ever Platform keeps it. Without a usable one, the address sent is
+		// kept: it was normalised the same way before it was sent (lower-case host, no default port).
 		const normalised = typeof answer?.base_url === 'string' ? answer.base_url : null;
 		const stored = normalised && normalised.length <= MAX_PUBLIC_URL ? normalised : url;
 		await this.store.updateConnection({
