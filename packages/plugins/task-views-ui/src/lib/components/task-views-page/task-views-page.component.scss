@@ -39,9 +39,20 @@
   flex: 0 0 auto;
 
   .switcher-select {
-    min-width: 9rem;
-    max-width: 14rem;
+    min-width: 7rem;
+    max-width: 11rem;
   }
+}
+
+// The trigger itself: the app gives every rectangular select a tall minimum height, and the theme a 1rem side padding;
+// here it is a compact 1.75rem control with 0.75rem text. The doubled class carries this past the global rule.
+:host ::ng-deep .switcher .switcher-select.switcher-select .select-button {
+  min-height: 1.75rem;
+  height: 1.75rem;
+  padding: 0 1.75rem 0 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1rem;
 }
 
 .view {
@@ -52,11 +63,17 @@
 .view-head {
   @include ga-hub.page-header-buttons();
 
+  // One line: the views dropdown, the selection actions and the go-to box. The actions take the room between the
+  // two and wrap inside it only when the screen is too narrow, so the go-to box never drops to a line of its own.
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
+
+  @media (max-width: 64rem) {
+    flex-wrap: wrap;
+  }
 }
 
 .view-title {
@@ -74,7 +91,7 @@
 
 // The bulk actions beside the title, set off by a thin rule; they take the room up to the view's own actions.
 .view-bulk {
-  flex: 1 1 auto;
+  flex: 1 1 0;
   min-width: 0;
   padding-left: 0.75rem;
   border-left: 1px solid var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
@@ -82,6 +99,7 @@
 
 .view-actions {
   display: flex;
+  flex: 0 0 auto;
   align-items: center;
   gap: 0.25rem;
 }
