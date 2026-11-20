@@ -473,12 +473,14 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 	 */
 	private leaseCheck(): (tx: EverConnectSql) => Promise<boolean> {
 		const run = this.generation;
-		return async (tx) => this.generation === run && this.store.holdsLease(this.holder, tx);
+		// A failed read is a lost lease: the resync stays owed (and after a 410 the position does not move).
+		return async (tx) => this.generation === run && this.store.holdsLease(this.holder, tx).catch(() => false);
 	}
 
 	private leaseKeeper(): () => Promise<boolean> {
 		const run = this.generation;
-		return async () => this.generation === run && this.store.takeLease(this.holder, LEASE_MS);
+		// A failed renewal is a lost lease: the resync stays owed (and after a 410 the position does not move).
+		return async () => this.generation === run && this.store.takeLease(this.holder, LEASE_MS).catch(() => false);
 	}
 
 	private remember(id: string): void {

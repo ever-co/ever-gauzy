@@ -211,6 +211,9 @@ describe('Ever Platform feed dispatcher', () => {
 			store.takeLease.mockClear();
 			expect(await membership.resync.mock.calls[0][1]()).toBe(true);
 			expect(store.takeLease).toHaveBeenCalledTimes(1);
+			// A renewal that fails (the database) is a lost lease, never a reason to go on.
+			store.takeLease.mockRejectedValueOnce(new Error('database unavailable'));
+			expect(await membership.resync.mock.calls[0][1]()).toBe(false);
 
 			await instance.readFeed();
 			expect(membership.resync).toHaveBeenCalledTimes(1);
