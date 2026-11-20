@@ -1,7 +1,9 @@
 import {
+	afterNextRender,
 	ChangeDetectionStrategy,
 	Component,
 	computed,
+	DestroyRef,
 	ElementRef,
 	inject,
 	input,
@@ -105,6 +107,22 @@ export class BulkToolbarComponent {
 		project: 'briefcase-outline',
 		dueDate: 'calendar-outline'
 	};
+
+	constructor() {
+		// The bar narrows or widens with the window and the side menu, and its actions may wrap: an open picker's
+		// panel is placed again under its trigger, so it never starts past the bar's edge. The picker stays open.
+		const destroyRef = inject(DestroyRef);
+		afterNextRender(() => {
+			const bar = (this.host.nativeElement as HTMLElement).querySelector?.('.bulk-toolbar');
+			if (!bar || typeof ResizeObserver === 'undefined') return;
+			const observer = new ResizeObserver(() => {
+				const open = this.picker();
+				if (open) this.panelLeft.set(this.anchorOf(open));
+			});
+			observer.observe(bar);
+			destroyRef.onDestroy(() => observer.disconnect());
+		});
+	}
 
 	protected pickerKey(picker: BulkPicker): string {
 		return `TASK_VIEWS.BULK.${picker.replace(/[A-Z]/g, (letter) => `_${letter}`).toUpperCase()}`;
