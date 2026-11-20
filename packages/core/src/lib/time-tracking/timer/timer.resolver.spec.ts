@@ -427,6 +427,7 @@ describe('TimerResolver — the SDL declares the capabilities the REST routes se
 			'source: String',
 			'logType: String',
 			'isBillable: Boolean',
+			'billableFromProject: Boolean',
 			'description: String',
 			'version: String',
 			'organizationTeamId: ID',
@@ -617,6 +618,24 @@ describe('TimerResolver — one concept, two protocols, the same operations', ()
 		const command = commandBus.execute.mock.calls[0][0];
 		expect(command).toBeInstanceOf(StartTimerCommand);
 		expect(command.input).toBe(input);
+	});
+
+	it('hands a start that asks to be billable as its project is set on to the start, as the route does', async () => {
+		const { resolver, commandBus } = surfaces();
+		const input = {
+			organizationId: ORGANIZATION,
+			projectId: TENANT,
+			source: TimeLogSourceEnum.WEB_TIMER,
+			isBillable: false,
+			billableFromProject: true
+		};
+
+		await resolver.startTimer(input);
+
+		const command = commandBus.execute.mock.calls[0][0];
+		expect(command).toBeInstanceOf(StartTimerCommand);
+		expect(command.input.billableFromProject).toBe(true);
+		expect(command.input.isBillable).toBe(false);
 	});
 
 	it('stops the timer through the command the delivered route dispatches, and answers its row', async () => {

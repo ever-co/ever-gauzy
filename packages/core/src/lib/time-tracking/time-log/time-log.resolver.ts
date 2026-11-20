@@ -78,6 +78,8 @@ export interface ICreateManualTimeLogInput {
 	description?: string;
 	reason?: string;
 	isBillable?: boolean;
+	/** Billable as the interval's project is set (ever-co/ever-teams#5571); see `IManualTimeInput.billableFromProject`. */
+	billableFromProject?: boolean;
 }
 
 /**
@@ -85,9 +87,11 @@ export interface ICreateManualTimeLogInput {
  *
  * The same body as the create, with the row's own identifier beside it and without the two members
  * the create's body stamps for itself — the delivered update carries neither a log type nor a source,
- * so a caller cannot restate them here either.
+ * so a caller cannot restate them here either. An edit is not billed from its project either: the update
+ * route does not read `billableFromProject`.
  */
-export interface IUpdateManualTimeLogInput extends Omit<ICreateManualTimeLogInput, 'organizationTeamId'> {
+export interface IUpdateManualTimeLogInput
+	extends Omit<ICreateManualTimeLogInput, 'organizationTeamId' | 'billableFromProject'> {
 	id: Id;
 }
 

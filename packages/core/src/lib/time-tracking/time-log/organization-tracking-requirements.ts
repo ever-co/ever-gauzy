@@ -154,7 +154,7 @@ async function soleActiveTeamIdOf(manager: EntityManager, employee: ITrackedEmpl
 }
 
 /** The project of the entry's task, or null without a task or for a task without a project. */
-async function projectIdOfTask(
+export async function projectIdOfTask(
 	manager: EntityManager,
 	employee: ITrackedEmployee,
 	taskId: ID | null | undefined

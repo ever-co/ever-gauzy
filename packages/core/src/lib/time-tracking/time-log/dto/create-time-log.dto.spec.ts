@@ -44,3 +44,33 @@ describe('CreateManualTimeLogDTO tags', () => {
 		expect(errors).toHaveLength(1);
 	});
 });
+
+describe('CreateManualTimeLogDTO billableFromProject', () => {
+	/** The entry as the route reads it, and the errors on `billableFromProject`. */
+	const read = async (body: Record<string, unknown>) => {
+		const { validate } = await import('class-validator');
+		const dto = plainToInstance(CreateManualTimeLogDTO, body);
+		const errors = await validate(dto, { whitelist: true });
+		return { dto, errors: errors.filter((error) => error.property === 'billableFromProject') };
+	};
+
+	it("keeps an entry's ask to be billable as its project is set", async () => {
+		const { dto, errors } = await read({ billableFromProject: true });
+
+		expect(errors).toEqual([]);
+		expect(dto.billableFromProject).toBe(true);
+	});
+
+	it('refuses a billableFromProject that is not a boolean', async () => {
+		const { errors } = await read({ billableFromProject: 'yes' });
+
+		expect(errors).toHaveLength(1);
+	});
+
+	it('CONTROL: accepts an entry without it, as every client on develop sends it', async () => {
+		const { dto, errors } = await read({});
+
+		expect(errors).toEqual([]);
+		expect(dto.billableFromProject).toBeUndefined();
+	});
+});
