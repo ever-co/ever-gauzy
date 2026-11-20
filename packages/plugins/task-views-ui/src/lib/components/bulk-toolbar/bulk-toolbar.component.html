@@ -4,57 +4,80 @@
 	[attr.aria-label]="'TASK_VIEWS.BULK.TOOLBAR' | translate"
 	data-test="bulk-toolbar"
 >
-	<span class="count" data-test="bulk-count">{{ 'TASK_VIEWS.BULK.SELECTED' | translate: { count: count() } }}</span>
+	<span class="count" data-test="bulk-count">
+		<nb-icon icon="checkmark-square-2-outline"></nb-icon>
+		{{ 'TASK_VIEWS.BULK.SELECTED' | translate: { count: count() } }}
+	</span>
 	@if (count() >= limit()) {
-		<span class="limit" role="status">{{ 'TASK_VIEWS.BULK.LIMIT' | translate: { limit: limit() } }}</span>
+		<span class="limit" role="status">
+			<nb-icon icon="alert-circle-outline"></nb-icon>
+			{{ 'TASK_VIEWS.BULK.LIMIT' | translate: { limit: limit() } }}
+		</span>
 	}
-	<span class="separator" aria-hidden="true"></span>
 	@if (canEdit()) {
+		<span class="divider" aria-hidden="true"></span>
 		@for (kind of pickers; track kind) {
 			<button
 				nbButton
-				size="tiny"
-				status="basic"
+				size="small"
 				ghost
 				type="button"
+				class="action"
+				[class.open]="picker() === kind"
 				[attr.data-picker]="kind"
 				[attr.aria-expanded]="picker() === kind"
 				[disabled]="busy()"
 				(click)="openPicker(kind)"
 			>
+				<nb-icon [icon]="pickerIcons[kind]"></nb-icon>
 				{{ pickerKey(kind) | translate }}
-				<nb-icon icon="chevron-down-outline"></nb-icon>
+				<nb-icon class="caret" icon="chevron-down-outline"></nb-icon>
 			</button>
 		}
 		<button
 			nbButton
-			size="tiny"
-			status="basic"
+			size="small"
 			ghost
 			type="button"
+			class="action"
 			data-test="bulk-archive"
 			[disabled]="busy()"
 			(click)="archive()"
 		>
-			<nb-icon icon="archive-outline"></nb-icon>{{ 'TASK_VIEWS.BULK.ARCHIVE' | translate }}
+			<nb-icon icon="archive-outline"></nb-icon>
+			{{ 'TASK_VIEWS.BULK.ARCHIVE' | translate }}
 		</button>
 	}
 	@if (canDelete()) {
+		<span class="divider" aria-hidden="true"></span>
 		<button
 			nbButton
-			size="tiny"
-			status="danger"
+			size="small"
 			ghost
+			status="danger"
 			type="button"
+			class="action danger"
 			data-test="bulk-delete"
 			[disabled]="busy()"
 			(click)="deleted.emit()"
 		>
-			<nb-icon icon="trash-2-outline"></nb-icon>{{ 'TASK_VIEWS.BULK.DELETE' | translate }}
+			<nb-icon icon="trash-2-outline"></nb-icon>
+			{{ 'TASK_VIEWS.BULK.DELETE' | translate }}
 		</button>
 	}
-	<button nbButton size="tiny" ghost type="button" class="clear" data-test="bulk-clear" (click)="cleared.emit()">
-		<nb-icon icon="close-outline"></nb-icon>{{ 'TASK_VIEWS.BULK.CLEAR' | translate }}
+	<span class="divider" aria-hidden="true"></span>
+	<button
+		nbButton
+		size="small"
+		ghost
+		type="button"
+		class="close"
+		data-test="bulk-clear"
+		[nbTooltip]="'TASK_VIEWS.BULK.CLEAR' | translate"
+		[attr.aria-label]="'TASK_VIEWS.BULK.CLEAR' | translate"
+		(click)="cleared.emit()"
+	>
+		<nb-icon icon="close-outline"></nb-icon>
 	</button>
 
 	@if (picker(); as kind) {
