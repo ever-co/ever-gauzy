@@ -1,0 +1,212 @@
+<!-- A piece of equipment on its own page, laid out as the income page: the record in the wide column, the facts in the side one. -->
+<ngx-record-view-page heading="EQUIPMENT_PAGE.HEADER" [backLink]="backLink" [state]="state" (retry)="load()">
+	@if (equipment) {
+		<!-- The page's actions, on one line with its back button. -->
+		<div recordPageActions class="equipment-page-actions">
+			<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_EQUIPMENT_EDIT]">
+				<button
+					nbButton
+					size="tiny"
+					status="primary"
+					type="button"
+					[disabled]="busy"
+					[attr.aria-label]="'BUTTONS.EDIT' | translate"
+					(click)="edit()"
+				>
+					<nb-icon icon="edit-outline"></nb-icon>
+					<span class="equipment-page-action-label">{{ 'BUTTONS.EDIT' | translate }}</span>
+				</button>
+			</ng-template>
+			<button
+				nbButton
+				ghost
+				size="tiny"
+				status="basic"
+				type="button"
+				[nbTooltip]="'BUTTONS.COPY_LINK' | translate"
+				nbTooltipPlacement="top"
+				[attr.aria-label]="'BUTTONS.COPY_LINK' | translate"
+				(click)="copyLink()"
+			>
+				<nb-icon icon="link-2-outline"></nb-icon>
+			</button>
+			<ngx-favorite-toggle
+				[entityType]="favoriteEntity"
+				[entityId]="equipment.id"
+				[entityName]="equipment.name"
+				size="tiny"
+				status="basic"
+				appearance="ghost"
+				spacing="list"
+			></ngx-favorite-toggle>
+			<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_EQUIPMENT_EDIT]">
+				<button
+					nbButton
+					ghost
+					size="tiny"
+					status="danger"
+					type="button"
+					[disabled]="busy"
+					[nbTooltip]="'BUTTONS.DELETE' | translate"
+					nbTooltipPlacement="top"
+					[attr.aria-label]="'BUTTONS.DELETE' | translate"
+					(click)="delete()"
+				>
+					<nb-icon icon="trash-2-outline"></nb-icon>
+				</button>
+			</ng-template>
+		</div>
+	}
+
+	@if (equipment && headline) {
+		<div class="project-view-top">
+			<!-- What it is, then the four figures a reader looks for first. -->
+			<div class="project-view-headline">
+				<div class="project-view-header">
+					<span class="project-logo equipment-logo" aria-hidden="true">
+						@if (headline.imageUrl) {
+							<img [src]="headline.imageUrl" alt="" />
+						} @else {
+							<nb-icon icon="cube-outline"></nb-icon>
+						}
+					</span>
+					<div class="project-view-title">
+						<h5 class="project-view-name equipment-title" [nbTooltip]="equipment.name" nbTooltipPlacement="top">
+							{{ equipment.name }}
+						</h5>
+						<p class="project-view-meta">
+							@if (equipment.type) {
+								<span class="project-meta-item" [nbTooltip]="'EQUIPMENT_PAGE.EQUIPMENT_TYPE' | translate" nbTooltipPlacement="top">
+									<nb-icon icon="layers-outline" aria-hidden="true"></nb-icon>
+									{{ equipment.type }}
+								</span>
+							}
+							@if (equipment.serialNumber) {
+								<span class="project-meta-item" [nbTooltip]="'EQUIPMENT_PAGE.EQUIPMENT_SN' | translate" nbTooltipPlacement="top">
+									<nb-icon icon="hash-outline" aria-hidden="true"></nb-icon>
+									{{ equipment.serialNumber }}
+								</span>
+							}
+							@if (equipment.tags?.length) {
+								<span class="project-meta-item">
+									<nb-icon icon="pricetags-outline" aria-hidden="true"></nb-icon>
+									{{ 'EQUIPMENT_VIEW.TAG_COUNT' | translate : { count: equipment.tags.length } }}
+								</span>
+							}
+						</p>
+					</div>
+				</div>
+
+				<dl class="project-facts">
+					<div class="project-fact">
+						<dt>{{ 'EQUIPMENT_PAGE.EQUIPMENT_INITIAL_COST' | translate }}</dt>
+						<dd>
+							@if (headline.cost) {
+								<span class="equipment-cost">{{ headline.cost }}</span>
+								<span class="project-fact-hint">{{ 'EQUIPMENT_VIEW.CURRENCY_HINT' | translate : { currency: equipment.currency } }}</span>
+							} @else {
+								<span class="project-fact-muted">—</span>
+							}
+						</dd>
+					</div>
+					<div class="project-fact">
+						<dt>{{ 'EQUIPMENT_PAGE.EQUIPMENT_MANUFACTURED_YEAR' | translate }}</dt>
+						<dd>
+							@if (equipment.manufacturedYear) {
+								{{ equipment.manufacturedYear }}
+								@if (headline.age) {
+									<span class="project-fact-hint">{{ headline.age.key | translate : { count: headline.age.count } }}</span>
+								}
+							} @else {
+								<span class="project-fact-muted">—</span>
+							}
+						</dd>
+					</div>
+					<div class="project-fact">
+						<dt>{{ 'EQUIPMENT_PAGE.EQUIPMENT_MAX_SHARE_PERIOD' | translate }}</dt>
+						<dd>
+							@if (headline.sharePeriod) {
+								{{ headline.sharePeriod.key | translate : { count: headline.sharePeriod.count } }}
+								<span class="project-fact-hint">{{ 'EQUIPMENT_VIEW.SHARE_PERIOD_HINT' | translate }}</span>
+							} @else {
+								<span class="project-fact-muted">—</span>
+							}
+						</dd>
+					</div>
+					<div class="project-fact">
+						<dt>{{ 'EQUIPMENT_PAGE.EQUIPMENT_AUTO_APPROVE' | translate }}</dt>
+						<dd>
+							{{ (equipment.autoApproveShare ? 'BUTTONS.YES' : 'BUTTONS.NO') | translate }}
+							<span class="project-fact-hint">
+								{{ (equipment.autoApproveShare ? 'EQUIPMENT_VIEW.AUTO_APPROVE_ON' : 'EQUIPMENT_VIEW.AUTO_APPROVE_OFF') | translate }}
+							</span>
+						</dd>
+					</div>
+				</dl>
+			</div>
+
+			<!-- The record: who it has been shared with, then its tags. -->
+			<div class="project-view-col project-view-col--main">
+				<section class="panel project-view-panel">
+					<header class="panel-header">
+						<div class="panel-heading">
+							<h5 class="panel-title panel-title--icon">
+								<nb-icon icon="swap-outline" aria-hidden="true"></nb-icon>
+								{{ 'EQUIPMENT_VIEW.SHARING' | translate }}
+							</h5>
+							@if (sharings.length) {
+								<span class="panel-caption">{{ 'EQUIPMENT_VIEW.SHARING_CAPTION' | translate : { count: sharings.length } }}</span>
+							}
+						</div>
+						<a nbButton ghost size="tiny" status="basic" [routerLink]="sharingLink">
+							{{ 'EQUIPMENT_VIEW.OPEN_SHARING' | translate }}
+							<nb-icon icon="arrow-forward-outline" aria-hidden="true"></nb-icon>
+						</a>
+					</header>
+					<div class="panel-body panel-body--flush">
+						@if (sharings.length) {
+							<ul class="equipment-sharing-list">
+								@for (sharing of sharings; track sharing.id) {
+									<li class="equipment-sharing">
+										<span class="equipment-sharing-name" [nbTooltip]="sharing.name" nbTooltipPlacement="top">
+											{{ sharing.name }}
+										</span>
+										<span class="equipment-sharing-dates">
+											@if (sharing.start) {
+												{{ sharing.start | dateFormat }}
+											} @else {
+												—
+											}
+											<span aria-hidden="true">→</span>
+											@if (sharing.end) {
+												{{ sharing.end | dateFormat }}
+											} @else {
+												—
+											}
+										</span>
+										<span class="equipment-sharing-status" [attr.data-tone]="sharing.tone">
+											{{ sharing.status | translate }}
+										</span>
+									</li>
+								}
+							</ul>
+						} @else {
+							<div class="state state--compact">
+								<nb-icon icon="swap-outline" aria-hidden="true"></nb-icon>
+								<p>{{ 'EQUIPMENT_VIEW.NO_SHARING' | translate }}</p>
+							</div>
+						}
+					</div>
+				</section>
+
+				<ngx-record-view [record]="equipment" [sections]="tagSections" [placeholder]="'SM_TABLE.NONE' | translate"></ngx-record-view>
+			</div>
+
+			<!-- The facts: every field of the equipment, then its stamps. -->
+			<div class="project-view-col project-view-col--side">
+				<ngx-record-view [record]="equipment" [sections]="detailsSections" [placeholder]="'SM_TABLE.NONE' | translate"></ngx-record-view>
+				<ngx-record-view [record]="equipment" [sections]="metaSections" [placeholder]="'SM_TABLE.NONE' | translate"></ngx-record-view>
+			</div>
+		</div>
+	}
+</ngx-record-view-page>
