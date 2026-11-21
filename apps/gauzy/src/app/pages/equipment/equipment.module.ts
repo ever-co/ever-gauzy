@@ -5,8 +5,10 @@ import {
 	NbInputModule,
 	NbIconModule,
 	NbDialogModule,
-	NbSpinnerModule
+	NbSpinnerModule,
+	NbTooltipModule
 } from '@nebular/theme';
+import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslatePipe } from '@ngx-translate/core';
 import {
 	SmartDataViewLayoutModule,
@@ -21,6 +23,7 @@ import {
 import { EquipmentRoutingModule } from './equipment-routing.module';
 import { EquipmentComponent } from './equipment.component';
 import { AutoApproveComponent } from './auto-approve/auto-approve.component';
+import { EquipmentViewPageComponent } from './equipment-view/equipment-view-page.component';
 
 @NgModule({
 	imports: [
@@ -39,8 +42,10 @@ import { AutoApproveComponent } from './auto-approve/auto-approve.component';
 		CardGridModule,
 		TranslatePipe,
 		NbSpinnerModule,
+		NbTooltipModule,
+		NgxPermissionsModule.forChild(),
 		SmartDataViewLayoutModule
 	],
-	declarations: [EquipmentComponent, AutoApproveComponent]
+	declarations: [EquipmentComponent, AutoApproveComponent, EquipmentViewPageComponent]
 })
 export class EquipmentModule {}
