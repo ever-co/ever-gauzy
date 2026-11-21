@@ -1,6 +1,5 @@
-@use 'themes' as *;
-
-// One image of the picker: a square tile, a ring and a check when chosen, the delete button on hover.
+// One image of the picker: a square tile, a ring and a check when chosen, the delete button on hover. Colours and
+// radii come from the theme's CSS tokens; the veil and the icon on it are the profile photo's.
 :host {
   display: block;
 }
@@ -23,7 +22,7 @@
   padding: 0;
   overflow: hidden;
   border: 1px solid var(--gauzy-border-default-color);
-  border-radius: nb-theme(border-radius);
+  border-radius: var(--border-radius);
   background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
   cursor: pointer;
   transition: border-color 0.12s ease-in-out, box-shadow 0.12s ease-in-out;
@@ -38,8 +37,8 @@
   }
 
   .selected & {
-    border-color: nb-theme(color-primary-default);
-    box-shadow: 0 0 0 1px nb-theme(color-primary-default);
+    border-color: var(--color-primary-default);
+    box-shadow: 0 0 0 1px var(--color-primary-default);
   }
 }
 
@@ -63,8 +62,8 @@
   width: 1.25rem;
   height: 1.25rem;
   border-radius: 50%;
-  background-color: nb-theme(color-primary-default);
-  color: #fff;
+  background-color: var(--color-primary-default);
+  color: var(--text-control-color);
 
   nb-icon {
     width: 0.875rem;
@@ -85,8 +84,8 @@
   padding: 0;
   border: 0;
   border-radius: 50%;
-  background-color: rgba(0, 0, 0, 0.55);
-  color: #fff;
+  background-color: var(--overlay-backdrop-background-color);
+  color: var(--text-control-color);
   cursor: pointer;
   opacity: 0;
   transition: opacity 0.12s ease-in-out, background-color 0.12s ease-in-out;
@@ -99,12 +98,12 @@
 
   &:hover,
   &:focus-visible {
-    background-color: nb-theme(color-danger-default);
+    background-color: var(--color-danger-default);
   }
 
   &:focus-visible {
     opacity: 1;
-    outline: 2px solid #fff;
+    outline: 2px solid var(--text-control-color);
     outline-offset: -2px;
   }
 }
