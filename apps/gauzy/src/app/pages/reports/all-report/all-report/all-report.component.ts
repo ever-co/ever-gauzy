@@ -162,6 +162,11 @@ export class AllReportComponent implements OnInit {
 	private pendingUrlWrites = 0;
 	/** Increments per report request, so only the latest response is applied. */
 	private reportsRequest = 0;
+	/**
+	 * True once `reportCategories` holds the CURRENT organization's reports.
+	 * Until then a category id cannot be judged, so a deep link is kept as is.
+	 */
+	private categoriesReady = false;
 
 	constructor(
 		private readonly reportService: ReportService,
@@ -255,6 +260,7 @@ export class AllReportComponent implements OnInit {
 			return false;
 		}
 		const request = ++this.reportsRequest;
+		this.categoriesReady = false;
 		try {
 			this.loading = true;
 
@@ -282,15 +288,8 @@ export class AllReportComponent implements OnInit {
 					}))
 					.value()
 			);
-
-			// A category kept from the URL or from another organization that this
-			// one does not have would otherwise leave the page empty for no visible
-			// reason.
-			const categoryId = this.categoryId();
-			if (categoryId && !this.reportCategories().some((category) => category.id === categoryId)) {
-				this.categoryId.set(null);
-				this.writeFiltersToUrl();
-			}
+			this.categoriesReady = true;
+			this.dropUnavailableCategory();
 		} catch (error) {
 			console.log('Error while retrieving report with category', error);
 		} finally {
@@ -313,6 +312,24 @@ export class AllReportComponent implements OnInit {
 		this.categoryId.set(params.get('category') || null);
 		const menu = params.get('menu') as ReportMenuFilter;
 		this.menuFilter.set(MENU_FILTERS.includes(menu) ? menu : 'all');
+		this.dropUnavailableCategory();
+	}
+
+	/**
+	 * Clears a category the current organization does not have — one kept from
+	 * the URL or from another organization — which would otherwise leave the
+	 * page empty while the select reads "All categories". Waits for the current
+	 * organization's reports: `getReports` runs it again once they are in.
+	 */
+	private dropUnavailableCategory(): void {
+		const categoryId = this.categoryId();
+		if (!this.categoriesReady || !categoryId) {
+			return;
+		}
+		if (!this.reportCategories().some((category) => category.id === categoryId)) {
+			this.categoryId.set(null);
+			this.writeFiltersToUrl();
+		}
 	}
 
 	/** Mirrors the filters into the URL without adding a history entry per keystroke. */
