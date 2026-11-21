@@ -300,6 +300,36 @@ $gauzy-action-accents-dark: (
   gauzy-action-info-tint-strong: rgba(96, 165, 250, 0.2)
 );
 
+// ── Toolbar buttons ─────────────────────────────────────────────────────────
+// The selection actions on list pages (View / Edit / Archive …) and the layout
+// switch. Flat, neutral, borderless buttons: a low-alpha grey fill that steps
+// darker on hover and press, one subdued text colour for every action, and a
+// small square-ish radius. The action is named by its icon and label, not by a
+// colour per button. The radius is the design system's small-control radius
+// (`gauzy-radius-sm`). The selected state (an active layout) borrows the theme's
+// primary so it follows all eight themes.
+$gauzy-toolbar-light: (
+  gauzy-toolbar-button-radius: gauzy-radius-sm,
+  gauzy-toolbar-button-background: rgba(9, 30, 66, 0.06),
+  gauzy-toolbar-button-hover-background: rgba(9, 30, 66, 0.14),
+  gauzy-toolbar-button-active-background: rgba(9, 30, 66, 0.31),
+  gauzy-toolbar-button-text: #44546f,
+  gauzy-toolbar-segment-selected-background: #ffffff,
+  gauzy-toolbar-button-selected-background: color-primary-transparent-default,
+  gauzy-toolbar-button-selected-text: text-primary-color
+);
+
+$gauzy-toolbar-dark: (
+  gauzy-toolbar-button-radius: gauzy-radius-sm,
+  gauzy-toolbar-button-background: rgba(161, 189, 217, 0.08),
+  gauzy-toolbar-button-hover-background: rgba(166, 197, 226, 0.16),
+  gauzy-toolbar-button-active-background: rgba(191, 219, 248, 0.28),
+  gauzy-toolbar-button-text: #9fadbc,
+  gauzy-toolbar-segment-selected-background: rgba(191, 219, 248, 0.2),
+  gauzy-toolbar-button-selected-background: color-primary-transparent-default,
+  gauzy-toolbar-button-selected-text: text-primary-color
+);
+
 $gauzy-menu-scrollbar-light: (
   gauzy-menu-scrollbar-track: rgba(126, 126, 143, 0.08),
   gauzy-menu-scrollbar-thumb: rgba(126, 126, 143, 0.55),
@@ -370,17 +400,23 @@ $gauzy-chart-series-dark: (
 // the dark accent set depending on the canvas they paint.
 $gauzy-shared-light: map.merge(
   map.merge(
-    map.merge(map.merge($gauzy-density, $gauzy-action-accents-light), gauzy-action-buttons()),
-    $gauzy-menu-scrollbar-light
+    map.merge(
+      map.merge(map.merge($gauzy-density, $gauzy-action-accents-light), gauzy-action-buttons()),
+      $gauzy-menu-scrollbar-light
+    ),
+    $gauzy-chart-series-light
   ),
-  $gauzy-chart-series-light
+  $gauzy-toolbar-light
 );
 $gauzy-shared-dark: map.merge(
   map.merge(
-    map.merge(map.merge($gauzy-density, $gauzy-action-accents-dark), gauzy-action-buttons()),
-    $gauzy-menu-scrollbar-dark
+    map.merge(
+      map.merge(map.merge($gauzy-density, $gauzy-action-accents-dark), gauzy-action-buttons()),
+      $gauzy-menu-scrollbar-dark
+    ),
+    $gauzy-chart-series-dark
   ),
-  $gauzy-chart-series-dark
+  $gauzy-toolbar-dark
 );
 
 // ── Canvas token sets for themes that do not define their own ───────────────
