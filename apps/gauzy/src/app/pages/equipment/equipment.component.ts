@@ -286,7 +286,9 @@ export class EquipmentComponent extends PaginationFilterBaseComponent implements
 
 		this.smartTableSource = new ServerDataSource(this.http, {
 			endPoint: `${API_PREFIX}/equipment/pagination`,
-			relations: ['equipmentSharings', 'tags', 'image'],
+			// What the grid and the cards show: the picture and the tags. The sharing requests are read on the
+			// equipment's own page, not for every row of the list.
+			relations: ['tags', 'image'],
 			where: {
 				organizationId,
 				tenantId,
