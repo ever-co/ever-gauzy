@@ -1,5 +1,5 @@
-import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Component, OnInit, ChangeDetectionStrategy, computed, signal } from '@angular/core';
+import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { IGetReportCategory, IOrganization, IReport, IReportCategory, PermissionsEnum } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap } from 'rxjs/operators';
@@ -12,6 +12,18 @@ export type ReportMenuFilter = 'all' | 'shown' | 'hidden';
 
 const MENU_FILTERS: ReportMenuFilter[] = ['all', 'shown', 'hidden'];
 
+/** How many reports each option of the two selects would show. */
+export interface ReportOptionCounts {
+	/** Per category id, with the search and menu filters applied. */
+	categories: Record<string, number>;
+	/** The "All categories" option: the sum of the above. */
+	allCategories: number;
+	/** Per menu option, with the search and category filters applied. */
+	menu: Record<ReportMenuFilter, number>;
+	/** Every report the organization has, unfiltered. */
+	total: number;
+}
+
 /**
  * Lower-cases a string and strips its accents, so "rapport" finds "Rapport"
  * and "resume" finds "Résumé".
@@ -22,6 +34,19 @@ function normalize(value: string): string {
 		.replace(/[̀-ͯ]/g, '')
 		.toLowerCase()
 		.trim();
+}
+
+/** Every search word has to appear in the report's name, description or category name, in any order. */
+function matchesSearch(report: IReport, category: IReportCategory, terms: string[]): boolean {
+	if (!terms.length) {
+		return true;
+	}
+	const haystack = `${normalize(report.name)} ${normalize(report.description)} ${normalize(category.name)}`;
+	return terms.every((term) => haystack.includes(term));
+}
+
+function matchesMenu(report: IReport, menuFilter: ReportMenuFilter): boolean {
+	return menuFilter === 'all' || (menuFilter === 'shown' ? !!report.showInMenu : !report.showInMenu);
 }
 
 @UntilDestroy()
@@ -36,26 +61,107 @@ export class AllReportComponent implements OnInit {
 	PermissionsEnum = PermissionsEnum;
 	public organization: IOrganization;
 	public loading: boolean;
-	public reportCategories: IReportCategory[] = [];
 
-	/** The categories and reports left once the filters below are applied. */
-	public filteredCategories: IReportCategory[] = [];
+	/** Every report of the organization, grouped by category. */
+	public readonly reportCategories = signal<IReportCategory[]>([]);
 
-	public readonly menuFilters = MENU_FILTERS;
-
+	// ── Filters (mirrored in the URL as `?q=&category=&menu=`) ──────────────
 	/** Free text matched against each report's name, description and category. */
-	public search = '';
+	public readonly search = signal('');
 	/** A category id, or `null` for every category. */
-	public categoryId: string | null = null;
-	public menuFilter: ReportMenuFilter = 'all';
+	public readonly categoryId = signal<string | null>(null);
+	public readonly menuFilter = signal<ReportMenuFilter>('all');
 
-	public totalCount = 0;
-	public filteredCount = 0;
+	/**
+	 * Bumped whenever a report's "show in menu" switch changes. Only the option
+	 * counts read it: they follow the switch at once, while the list below keeps
+	 * the card that was switched (see `filteredCategories`).
+	 */
+	private readonly menuStateVersion = signal(0);
 
-	/** Reports each option of the two selects would show; see `applyFilters`. */
-	public categoryCounts: Record<string, number> = {};
-	public allCategoriesCount = 0;
-	public menuCounts: Record<ReportMenuFilter, number> = { all: 0, shown: 0, hidden: 0 };
+	private readonly searchTerms = computed(() => normalize(this.search()).split(/\s+/).filter(Boolean));
+
+	/**
+	 * The categories and reports left once the filters are applied; a category
+	 * with no report left is dropped.
+	 *
+	 * Deliberately NOT a dependent of `menuStateVersion`: with "Hidden from menu"
+	 * selected, switching a report on would otherwise pull its card out from
+	 * under the pointer. It drops out on the next filter change instead.
+	 */
+	public readonly filteredCategories = computed<IReportCategory[]>(() => {
+		const terms = this.searchTerms();
+		const categoryId = this.categoryId();
+		const menuFilter = this.menuFilter();
+
+		return this.reportCategories()
+			.filter((category) => !categoryId || category.id === categoryId)
+			.map((category) => ({
+				...category,
+				reports: (category.reports || []).filter(
+					(report) => matchesSearch(report, category, terms) && matchesMenu(report, menuFilter)
+				)
+			}))
+			.filter((category) => category.reports.length > 0);
+	});
+
+	/**
+	 * Each select counts what its options would show with every OTHER filter
+	 * applied, so picking an option never lands on a surprise. These follow the
+	 * menu switches as they change.
+	 */
+	public readonly optionCounts = computed<ReportOptionCounts>(() => {
+		this.menuStateVersion();
+		const terms = this.searchTerms();
+		const categoryId = this.categoryId();
+		const menuFilter = this.menuFilter();
+
+		const counts: ReportOptionCounts = {
+			categories: {},
+			allCategories: 0,
+			menu: { all: 0, shown: 0, hidden: 0 },
+			total: 0
+		};
+		for (const category of this.reportCategories()) {
+			const inCategory = !categoryId || category.id === categoryId;
+			counts.categories[category.id] = 0;
+
+			for (const report of category.reports || []) {
+				counts.total++;
+				if (!matchesSearch(report, category, terms)) {
+					continue;
+				}
+				if (matchesMenu(report, menuFilter)) {
+					counts.categories[category.id]++;
+					counts.allCategories++;
+				}
+				if (inCategory) {
+					counts.menu.all++;
+					counts.menu[report.showInMenu ? 'shown' : 'hidden']++;
+				}
+			}
+		}
+		return counts;
+	});
+
+	public readonly filteredCount = computed(() =>
+		this.filteredCategories().reduce((sum, category) => sum + category.reports.length, 0)
+	);
+
+	/** The picked category's name for the select's trigger, or `null` for all of them. */
+	public readonly selectedCategoryName = computed(
+		() => this.reportCategories().find((category) => category.id === this.categoryId())?.name ?? null
+	);
+
+	/** True while any filter narrows the list. */
+	public readonly hasActiveFilters = computed(
+		() => this.searchTerms().length > 0 || !!this.categoryId() || this.menuFilter() !== 'all'
+	);
+
+	/** URL writes still in flight; the query-param echo of our own writes is ignored. */
+	private pendingUrlWrites = 0;
+	/** Increments per report request, so only the latest response is applied. */
+	private reportsRequest = 0;
 
 	constructor(
 		private readonly reportService: ReportService,
@@ -65,7 +171,15 @@ export class AllReportComponent implements OnInit {
 	) {}
 
 	ngOnInit(): void {
-		this.readFiltersFromUrl();
+		// Not a one-off snapshot: the router reuses this component when only the
+		// query changes (the sidebar's "All Reports" link drops it, for one), and
+		// the controls have to follow the URL then too.
+		this.route.queryParamMap
+			.pipe(
+				tap((params: ParamMap) => this.readFiltersFromUrl(params)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 
 		this.store.selectedOrganization$
 			.pipe(
@@ -77,50 +191,41 @@ export class AllReportComponent implements OnInit {
 			.subscribe();
 	}
 
-	/** The picked category's name for the select's trigger, or `null` for all of them. */
-	get selectedCategoryName(): string | null {
-		return this.reportCategories.find((category) => category.id === this.categoryId)?.name ?? null;
-	}
-
-	/** True while any filter narrows the list. */
-	get hasActiveFilters(): boolean {
-		return !!normalize(this.search) || !!this.categoryId || this.menuFilter !== 'all';
-	}
-
 	onSearchChange(value: string): void {
-		this.search = value ?? '';
-		this.onFiltersChange();
+		this.search.set(value ?? '');
+		this.writeFiltersToUrl();
 	}
 
 	/** `'all'` is the select's own value for "every category". */
 	onCategoryChange(categoryId: string): void {
-		this.categoryId = categoryId && categoryId !== 'all' ? categoryId : null;
-		this.onFiltersChange();
+		this.categoryId.set(categoryId && categoryId !== 'all' ? categoryId : null);
+		this.writeFiltersToUrl();
 	}
 
 	onMenuFilterChange(menuFilter: ReportMenuFilter): void {
-		this.menuFilter = MENU_FILTERS.includes(menuFilter) ? menuFilter : 'all';
-		this.onFiltersChange();
+		this.menuFilter.set(MENU_FILTERS.includes(menuFilter) ? menuFilter : 'all');
+		this.writeFiltersToUrl();
 	}
 
 	resetFilters(): void {
-		this.search = '';
-		this.categoryId = null;
-		this.menuFilter = 'all';
-		this.onFiltersChange();
+		this.search.set('');
+		this.categoryId.set(null);
+		this.menuFilter.set('all');
+		this.writeFiltersToUrl();
 	}
 
 	/**
 	 * Updates the 'show in menu' status of a report.
 	 *
-	 * The filtered list is deliberately not recomputed here: with "Hidden from
-	 * menu" selected, switching a report on would otherwise pull its card out
-	 * from under the pointer. It drops out on the next filter change instead.
+	 * `ngModel` has already flipped `report.showInMenu`; the option counts are
+	 * refreshed from that at once, the list keeps the card (see
+	 * `filteredCategories`).
 	 *
 	 * @param isEnabled Indicates whether the report should be shown in the menu.
 	 * @param report The report to update.
 	 */
 	async updateShowInMenu(isEnabled: boolean, report): Promise<void> {
+		this.menuStateVersion.update((version) => version + 1);
 		try {
 			const { id: organizationId, tenantId } = this.organization;
 
@@ -149,126 +254,82 @@ export class AllReportComponent implements OnInit {
 		if (!this.organization) {
 			return false;
 		}
+		const request = ++this.reportsRequest;
 		try {
 			this.loading = true;
 
 			const { id: organizationId, tenantId } = this.organization;
-			const request: IGetReportCategory = {
+			const params: IGetReportCategory = {
 				organizationId,
 				tenantId,
 				relations: ['category']
 			};
 
-			const { items = [] } = await this.reportService.getReports(request);
+			const { items = [] } = await this.reportService.getReports(params);
+
+			// A slower response for an organization switched away from must not
+			// replace the current one's reports, nor judge its category filter.
+			if (request !== this.reportsRequest) {
+				return;
+			}
 
 			const categories = chain(items).groupBy('categoryId');
-			this.reportCategories = categories
-				.map((reports: IReport[]) => ({
-					...reports[0].category,
-					reports
-				}))
-				.value();
+			this.reportCategories.set(
+				categories
+					.map((reports: IReport[]) => ({
+						...reports[0].category,
+						reports
+					}))
+					.value()
+			);
 
 			// A category kept from the URL or from another organization that this
 			// one does not have would otherwise leave the page empty for no visible
 			// reason.
-			if (this.categoryId && !this.reportCategories.some((category) => category.id === this.categoryId)) {
-				this.categoryId = null;
+			const categoryId = this.categoryId();
+			if (categoryId && !this.reportCategories().some((category) => category.id === categoryId)) {
+				this.categoryId.set(null);
 				this.writeFiltersToUrl();
 			}
-			this.applyFilters();
 		} catch (error) {
 			console.log('Error while retrieving report with category', error);
 		} finally {
-			this.loading = false;
+			if (request === this.reportsRequest) {
+				this.loading = false;
+			}
 		}
-	}
-
-	private onFiltersChange(): void {
-		this.applyFilters();
-		this.writeFiltersToUrl();
 	}
 
 	/**
-	 * Narrows `reportCategories` into `filteredCategories`. Every word of the
-	 * search has to appear somewhere in the report's name, description or
-	 * category name, in any order. A category with no report left is dropped.
+	 * Applies the filters in the URL. Skipped while one of our own writes is in
+	 * flight: that emission only echoes state the controls already hold, and an
+	 * older echo arriving mid-typing would otherwise overwrite newer keystrokes.
 	 */
-	private applyFilters(): void {
-		const terms = normalize(this.search).split(/\s+/).filter(Boolean);
-		const matchesSearch = (report: IReport, categoryName: string): boolean => {
-			if (!terms.length) {
-				return true;
-			}
-			const haystack = `${normalize(report.name)} ${normalize(report.description)} ${categoryName}`;
-			return terms.every((term) => haystack.includes(term));
-		};
-		const matchesMenu = (report: IReport, menuFilter: ReportMenuFilter): boolean =>
-			menuFilter === 'all' || (menuFilter === 'shown' ? !!report.showInMenu : !report.showInMenu);
-
-		const categoryCounts: Record<string, number> = {};
-		const menuCounts: Record<ReportMenuFilter, number> = { all: 0, shown: 0, hidden: 0 };
-		let total = 0;
-
-		const filtered: IReportCategory[] = [];
-		for (const category of this.reportCategories) {
-			const categoryName = normalize(category.name);
-			const inCategory = !this.categoryId || category.id === this.categoryId;
-			const reports: IReport[] = [];
-			categoryCounts[category.id] = 0;
-
-			for (const report of category.reports || []) {
-				total++;
-				if (!matchesSearch(report, categoryName)) {
-					continue;
-				}
-				// Each select counts what its options would show with every OTHER
-				// filter applied, so picking an option never lands on a surprise.
-				if (matchesMenu(report, this.menuFilter)) {
-					categoryCounts[category.id]++;
-				}
-				if (inCategory) {
-					menuCounts.all++;
-					menuCounts[report.showInMenu ? 'shown' : 'hidden']++;
-					if (matchesMenu(report, this.menuFilter)) {
-						reports.push(report);
-					}
-				}
-			}
-			if (reports.length) {
-				filtered.push({ ...category, reports });
-			}
+	private readFiltersFromUrl(params: ParamMap): void {
+		if (this.pendingUrlWrites > 0) {
+			return;
 		}
-
-		this.filteredCategories = filtered;
-		this.categoryCounts = categoryCounts;
-		this.menuCounts = menuCounts;
-		this.allCategoriesCount = Object.values(categoryCounts).reduce((sum, count) => sum + count, 0);
-		this.totalCount = total;
-		this.filteredCount = filtered.reduce((sum, category) => sum + category.reports.length, 0);
-	}
-
-	/** Restores the filters from `?q=&category=&menu=`, so a reload or Back keeps them. */
-	private readFiltersFromUrl(): void {
-		const params = this.route.snapshot.queryParamMap;
-		this.search = params.get('q') || '';
-		this.categoryId = params.get('category') || null;
+		this.search.set(params.get('q') || '');
+		this.categoryId.set(params.get('category') || null);
 		const menu = params.get('menu') as ReportMenuFilter;
-		this.menuFilter = MENU_FILTERS.includes(menu) ? menu : 'all';
+		this.menuFilter.set(MENU_FILTERS.includes(menu) ? menu : 'all');
 	}
 
 	/** Mirrors the filters into the URL without adding a history entry per keystroke. */
 	private writeFiltersToUrl(): void {
-		const q = this.search.trim();
-		this.router.navigate([], {
-			relativeTo: this.route,
-			queryParams: {
-				q: q || null,
-				category: this.categoryId || null,
-				menu: this.menuFilter !== 'all' ? this.menuFilter : null
-			},
-			queryParamsHandling: 'merge',
-			replaceUrl: true
-		});
+		const q = this.search().trim();
+		this.pendingUrlWrites++;
+		this.router
+			.navigate([], {
+				relativeTo: this.route,
+				queryParams: {
+					q: q || null,
+					category: this.categoryId() || null,
+					menu: this.menuFilter() !== 'all' ? this.menuFilter() : null
+				},
+				queryParamsHandling: 'merge',
+				replaceUrl: true
+			})
+			.finally(() => this.pendingUrlWrites--);
 	}
 }

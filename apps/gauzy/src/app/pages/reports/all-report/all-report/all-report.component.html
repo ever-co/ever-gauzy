@@ -14,7 +14,7 @@
       beside it changes, and that category's section skips its own.
     -->
     <div class="report-toolbar">
-      @if (filteredCategories[0]; as firstCategory) {
+      @if (filteredCategories()[0]; as firstCategory) {
         <h5 class="report-category-name">
           <span class="category-icon" aria-hidden="true">
             <i class="fa {{ firstCategory.iconClass }}"></i>
@@ -34,11 +34,11 @@
             id="report-search"
             autocomplete="off"
             [placeholder]="'REPORT_PAGE.FILTERS.SEARCH_PLACEHOLDER' | translate"
-            [ngModel]="search"
+            [ngModel]="search()"
             (ngModelChange)="onSearchChange($event)"
             (keydown.escape)="onSearchChange('')"
           />
-          @if (search) {
+          @if (search()) {
             <button
               type="button"
               nbButton
@@ -59,19 +59,19 @@
           optionsListClass="nb-options gauzy-filters-options"
           scrollStrategy="reposition"
           [attr.aria-label]="'REPORT_PAGE.FILTERS.CATEGORY' | translate"
-          [selected]="categoryId || 'all'"
+          [selected]="categoryId() || 'all'"
           (selectedChange)="onCategoryChange($event)"
         >
           <!-- The trigger names the choice only; the counts belong to the open list. -->
-          <nb-select-label>{{ selectedCategoryName || ('REPORT_PAGE.FILTERS.ALL_CATEGORIES' | translate) }}</nb-select-label>
+          <nb-select-label>{{ selectedCategoryName() || ('REPORT_PAGE.FILTERS.ALL_CATEGORIES' | translate) }}</nb-select-label>
           <nb-option value="all">
             {{ 'REPORT_PAGE.FILTERS.ALL_CATEGORIES' | translate }}
-            <span class="report-option-count">({{ allCategoriesCount }})</span>
+            <span class="report-option-count">({{ optionCounts().allCategories }})</span>
           </nb-option>
-          @for (category of reportCategories; track category.id) {
+          @for (category of reportCategories(); track category.id) {
             <nb-option [value]="category.id">
               {{ category.name }}
-              <span class="report-option-count">({{ categoryCounts[category.id] || 0 }})</span>
+              <span class="report-option-count">({{ optionCounts().categories[category.id] || 0 }})</span>
             </nb-option>
           }
         </nb-select>
@@ -81,11 +81,11 @@
           optionsListClass="nb-options gauzy-filters-options"
           scrollStrategy="reposition"
           [attr.aria-label]="'REPORT_PAGE.FILTERS.MENU' | translate"
-          [selected]="menuFilter"
+          [selected]="menuFilter()"
           (selectedChange)="onMenuFilterChange($event)"
         >
           <nb-select-label>
-            @switch (menuFilter) {
+            @switch (menuFilter()) {
               @case ('shown') {
                 {{ 'REPORT_PAGE.FILTERS.MENU_SHOWN' | translate }}
               }
@@ -99,19 +99,19 @@
           </nb-select-label>
           <nb-option value="all">
             {{ 'REPORT_PAGE.FILTERS.MENU_ALL' | translate }}
-            <span class="report-option-count">({{ menuCounts.all }})</span>
+            <span class="report-option-count">({{ optionCounts().menu.all }})</span>
           </nb-option>
           <nb-option value="shown">
             {{ 'REPORT_PAGE.FILTERS.MENU_SHOWN' | translate }}
-            <span class="report-option-count">({{ menuCounts.shown }})</span>
+            <span class="report-option-count">({{ optionCounts().menu.shown }})</span>
           </nb-option>
           <nb-option value="hidden">
             {{ 'REPORT_PAGE.FILTERS.MENU_HIDDEN' | translate }}
-            <span class="report-option-count">({{ menuCounts.hidden }})</span>
+            <span class="report-option-count">({{ optionCounts().menu.hidden }})</span>
           </nb-option>
         </nb-select>
 
-        @if (hasActiveFilters) {
+        @if (hasActiveFilters()) {
           <button type="button" nbButton ghost size="small" class="report-clear-filters" (click)="resetFilters()">
             <nb-icon icon="close-outline"></nb-icon>
             {{ 'REPORT_PAGE.FILTERS.RESET' | translate }}
@@ -119,16 +119,16 @@
         }
 
         <span class="report-count" aria-live="polite">
-          @if (hasActiveFilters) {
-            {{ 'REPORT_PAGE.FILTERS.SHOWING' | translate: { count: filteredCount, total: totalCount } }}
+          @if (hasActiveFilters()) {
+            {{ 'REPORT_PAGE.FILTERS.SHOWING' | translate: { count: filteredCount(), total: optionCounts().total } }}
           } @else {
-            {{ 'REPORT_PAGE.FILTERS.TOTAL' | translate: { total: totalCount } }}
+            {{ 'REPORT_PAGE.FILTERS.TOTAL' | translate: { total: optionCounts().total } }}
           }
         </span>
       </div>
     </div>
 
-    @if (!loading && reportCategories.length && !filteredCategories.length) {
+    @if (!loading && reportCategories().length && !filteredCategories().length) {
       <div class="report-empty">
         <p>{{ 'REPORT_PAGE.FILTERS.NO_MATCH' | translate }}</p>
         <button type="button" nbButton ghost size="small" status="primary" (click)="resetFilters()">
@@ -137,7 +137,7 @@
       </div>
     }
 
-    @for (reportCategory of filteredCategories; track reportCategory.id; let first = $first) {
+    @for (reportCategory of filteredCategories(); track reportCategory.id; let first = $first) {
       <section class="report-category">
         @if (!first) {
           <h5 class="report-category-name">
