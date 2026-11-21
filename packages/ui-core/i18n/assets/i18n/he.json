@@ -4383,7 +4383,8 @@
 		"BOOKED": "הוזמן",
 		"FREE": "פנוי",
 		"DAYS_SO_FAR": "ימים עד כה",
-		"NO_CHART_DATA": "אין עדיין בקשות שיתוף להצגה"
+		"NO_CHART_DATA": "אין עדיין בקשות שיתוף להצגה",
+		"PAGE_RANGE": "{{ from }}–{{ to }} מתוך {{ total }}"
 	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "Equipment Sharing",

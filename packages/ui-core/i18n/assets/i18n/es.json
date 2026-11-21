@@ -4359,7 +4359,8 @@
 		"BOOKED": "Reservado",
 		"FREE": "Libre",
 		"DAYS_SO_FAR": "Días transcurridos",
-		"NO_CHART_DATA": "Aún no hay solicitudes de préstamo para mostrar"
+		"NO_CHART_DATA": "Aún no hay solicitudes de préstamo para mostrar",
+		"PAGE_RANGE": "{{ from }}–{{ to }} de {{ total }}"
 	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "Compartir de equipos",

@@ -4357,7 +4357,8 @@
 		"BOOKED": "Prenotato",
 		"FREE": "Libero",
 		"DAYS_SO_FAR": "Giorni finora",
-		"NO_CHART_DATA": "Ancora nessuna richiesta di condivisione da mostrare"
+		"NO_CHART_DATA": "Ancora nessuna richiesta di condivisione da mostrare",
+		"PAGE_RANGE": "{{ from }}–{{ to }} di {{ total }}"
 	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "Condivisione di attrezzature",

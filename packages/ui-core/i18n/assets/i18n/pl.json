@@ -4356,7 +4356,8 @@
 		"BOOKED": "Zarezerwowane",
 		"FREE": "Wolne",
 		"DAYS_SO_FAR": "Dni do tej pory",
-		"NO_CHART_DATA": "Brak próśb o udostępnienie do pokazania"
+		"NO_CHART_DATA": "Brak próśb o udostępnienie do pokazania",
+		"PAGE_RANGE": "{{ from }}–{{ to }} z {{ total }}"
 	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "Dzielenie się wyposażeniem",

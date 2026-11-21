@@ -4881,7 +4881,8 @@
 		"BOOKED": "Reservado",
 		"FREE": "Livre",
 		"DAYS_SO_FAR": "Dias até agora",
-		"NO_CHART_DATA": "Ainda não há pedidos de compartilhamento para mostrar"
+		"NO_CHART_DATA": "Ainda não há pedidos de compartilhamento para mostrar",
+		"PAGE_RANGE": "{{ from }}–{{ to }} de {{ total }}"
 	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "Compartilhamento de Equipamentos",

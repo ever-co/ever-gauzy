@@ -4415,7 +4415,8 @@
 		"BOOKED": "Резервирано",
 		"FREE": "Свободно",
 		"DAYS_SO_FAR": "Дни досега",
-		"NO_CHART_DATA": "Все още няма заявки за споделяне за графика"
+		"NO_CHART_DATA": "Все още няма заявки за споделяне за графика",
+		"PAGE_RANGE": "{{ from }}–{{ to }} от {{ total }}"
 	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "Equipment Sharing",

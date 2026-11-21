@@ -4355,7 +4355,8 @@
 		"BOOKED": "محجوز",
 		"FREE": "متاح",
 		"DAYS_SO_FAR": "الأيام حتى الآن",
-		"NO_CHART_DATA": "لا توجد طلبات مشاركة لعرضها بعد"
+		"NO_CHART_DATA": "لا توجد طلبات مشاركة لعرضها بعد",
+		"PAGE_RANGE": "{{ from }}–{{ to }} من {{ total }}"
 	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "مشاركة المعدات",

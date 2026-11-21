@@ -4353,7 +4353,8 @@
 		"BOOKED": "Gebucht",
 		"FREE": "Frei",
 		"DAYS_SO_FAR": "Bisherige Tage",
-		"NO_CHART_DATA": "Noch keine Freigabeanfragen für ein Diagramm"
+		"NO_CHART_DATA": "Noch keine Freigabeanfragen für ein Diagramm",
+		"PAGE_RANGE": "{{ from }}–{{ to }} von {{ total }}"
 	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "Ausrüstungsteilen",
