@@ -4387,6 +4387,24 @@
 		"EQUIPMENT_SAVED": "Equipment '{{ name }}' was saved",
 		"CURRENCY": "Валута"
 	},
+	"EQUIPMENT_VIEW": {
+		"LINK_COPIED": "Връзката е копирана",
+		"DETAILS": "Подробности",
+		"TAG_COUNT": "{{ count }} етикета",
+		"CURRENCY_HINT": "В {{ currency }}",
+		"AGE_NEW": "Произведено тази година",
+		"AGE_ONE_YEAR": "На 1 година",
+		"AGE_YEARS": "На {{ count }} години",
+		"ONE_DAY": "1 ден",
+		"DAYS": "{{ count }} дни",
+		"SHARE_PERIOD_HINT": "Най-дългото време за едно споделяне",
+		"AUTO_APPROVE_ON": "Заявките се одобряват автоматично",
+		"AUTO_APPROVE_OFF": "Заявките чакат одобрение",
+		"SHARING": "История на споделянето",
+		"SHARING_CAPTION": "{{ count }} заявки",
+		"NO_SHARING": "Това оборудване все още не е споделяно.",
+		"OPEN_SHARING": "Споделяне на оборудване"
+	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "Equipment Sharing",
 		"ADD_EQUIPMENT_REQUEST": "Add Equipment Request",

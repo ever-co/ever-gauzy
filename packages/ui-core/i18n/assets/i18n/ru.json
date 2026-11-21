@@ -4362,6 +4362,24 @@
 		"EQUIPMENT_SAVED": "Снаряжение{{ name }}' было сохранено",
 		"CURRENCY": "Валюта"
 	},
+	"EQUIPMENT_VIEW": {
+		"LINK_COPIED": "Ссылка скопирована",
+		"DETAILS": "Подробности",
+		"TAG_COUNT": "Теги: {{ count }}",
+		"CURRENCY_HINT": "В {{ currency }}",
+		"AGE_NEW": "Выпущено в этом году",
+		"AGE_ONE_YEAR": "1 год",
+		"AGE_YEARS": "Лет: {{ count }}",
+		"ONE_DAY": "1 день",
+		"DAYS": "Дней: {{ count }}",
+		"SHARE_PERIOD_HINT": "Наибольший срок одной выдачи",
+		"AUTO_APPROVE_ON": "Запросы одобряются автоматически",
+		"AUTO_APPROVE_OFF": "Запросы ждут одобрения",
+		"SHARING": "История выдачи",
+		"SHARING_CAPTION": "Запросов: {{ count }}",
+		"NO_SHARING": "Это оборудование ещё не выдавалось.",
+		"OPEN_SHARING": "Совместное использование оборудования"
+	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "Совместное использование снаряжения",
 		"ADD_EQUIPMENT_REQUEST": "Добавить запрос на снаряжение",

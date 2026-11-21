@@ -4355,6 +4355,24 @@
 		"EQUIPMENT_SAVED": "Equipment '{{ name }}' was saved",
 		"CURRENCY": "מטבע"
 	},
+	"EQUIPMENT_VIEW": {
+		"LINK_COPIED": "הקישור הועתק",
+		"DETAILS": "פרטים",
+		"TAG_COUNT": "{{ count }} תגיות",
+		"CURRENCY_HINT": "ב-{{ currency }}",
+		"AGE_NEW": "יוצר השנה",
+		"AGE_ONE_YEAR": "בן שנה",
+		"AGE_YEARS": "בן {{ count }} שנים",
+		"ONE_DAY": "יום אחד",
+		"DAYS": "{{ count }} ימים",
+		"SHARE_PERIOD_HINT": "משך השיתוף הארוך ביותר",
+		"AUTO_APPROVE_ON": "בקשות מאושרות אוטומטית",
+		"AUTO_APPROVE_OFF": "בקשות ממתינות לאישור",
+		"SHARING": "היסטוריית שיתוף",
+		"SHARING_CAPTION": "{{ count }} בקשות",
+		"NO_SHARING": "ציוד זה עדיין לא שותף.",
+		"OPEN_SHARING": "שיתוף ציוד"
+	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "Equipment Sharing",
 		"ADD_EQUIPMENT_REQUEST": "Add Equipment Request",

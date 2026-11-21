@@ -4327,6 +4327,24 @@
 		"EQUIPMENT_SAVED": "تم حفظ المعدة '{{ name }}'",
 		"CURRENCY": "العملة"
 	},
+	"EQUIPMENT_VIEW": {
+		"LINK_COPIED": "تم نسخ الرابط",
+		"DETAILS": "التفاصيل",
+		"TAG_COUNT": "{{ count }} وسوم",
+		"CURRENCY_HINT": "بعملة {{ currency }}",
+		"AGE_NEW": "صُنع هذا العام",
+		"AGE_ONE_YEAR": "عمره سنة واحدة",
+		"AGE_YEARS": "عمره {{ count }} سنوات",
+		"ONE_DAY": "يوم واحد",
+		"DAYS": "{{ count }} أيام",
+		"SHARE_PERIOD_HINT": "أطول مدة لمشاركة واحدة",
+		"AUTO_APPROVE_ON": "تتم الموافقة على الطلبات تلقائيًا",
+		"AUTO_APPROVE_OFF": "تنتظر الطلبات الموافقة",
+		"SHARING": "سجل المشاركة",
+		"SHARING_CAPTION": "{{ count }} طلبات",
+		"NO_SHARING": "لم تتم مشاركة هذه المعدات بعد.",
+		"OPEN_SHARING": "مشاركة المعدات"
+	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "مشاركة المعدات",
 		"ADD_EQUIPMENT_REQUEST": "إضافة طلب المعدات",
