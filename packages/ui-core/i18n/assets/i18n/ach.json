@@ -4187,7 +4187,10 @@
 		"FREE": "Free",
 		"DAYS_SO_FAR": "Days so far",
 		"NO_CHART_DATA": "No sharing requests to chart yet",
-		"PAGE_RANGE": "{{ from }}–{{ to }} of {{ total }}"
+		"PAGE_RANGE": "{{ from }}–{{ to }} of {{ total }}",
+		"PICTURE": "Picture",
+		"OPEN_PICTURE": "Open full size",
+		"NO_PICTURE": "No picture added"
 	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "crwdns3124:0crwdne3124:0",
