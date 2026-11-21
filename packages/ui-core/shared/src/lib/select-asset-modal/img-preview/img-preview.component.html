@@ -1,33 +1,40 @@
-<nb-card>
-  <nb-card-body>
-    @if (selectedImage) {
-      <img class="img-asset-preview" [src]="selectedImage.fullUrl" [alt]="selectedImage.name" />
-    }
-    @if (!selectedImage) {
-      <div class="no-img-asset-preview"><i class="fas fa-image"></i></div>
-    }
-  </nb-card-body>
-  <nb-card-footer>
-    @if (!selectedImage) {
-      <div class="img-preview-info">
-        {{ 'INVENTORY_PAGE.NO_IMAGE_SELECTED' | translate }}
-      </div>
-    }
-    @if (selectedImage) {
-      <div class="img-preview-info">
-        <div>
-          <div class="img-desc-text">{{ 'INVENTORY_PAGE.NAME' | translate }}</div>
-          <div class="image-text">{{ selectedImage.name }}</div>
-        </div>
-        <div>
-          <div class="img-desc-text">{{ 'INVENTORY_PAGE.URL' | translate }}</div>
-          <div class="image-text">{{ selectedImage.url }}</div>
-        </div>
-        <div>
-          <div class="img-desc-text">{{ 'INVENTORY_PAGE.DIMENSIONS' | translate }}</div>
-          <div class="image-text dimension">{{ selectedImage.width }}x{{ selectedImage.height }}</div>
-        </div>
-      </div>
-    }
-  </nb-card-footer>
-</nb-card>
+<!-- The chosen image, whole, then what it is: its name, address and size. -->
+<div class="preview">
+	<div class="preview-frame">
+		@if (selectedImage) {
+			<img class="img-asset-preview" [src]="selectedImage.fullUrl" [alt]="selectedImage.name" />
+		} @else {
+			<div class="no-img-asset-preview">
+				<i class="fas fa-image" aria-hidden="true"></i>
+			</div>
+		}
+	</div>
+
+	@if (!selectedImage) {
+		<p class="img-preview-info img-preview-empty">
+			{{ 'INVENTORY_PAGE.NO_IMAGE_SELECTED' | translate }}
+		</p>
+	} @else {
+		<dl class="img-preview-info">
+			<div class="info-row">
+				<dt class="img-desc-text">{{ 'INVENTORY_PAGE.NAME' | translate }}</dt>
+				<dd class="image-text" [title]="selectedImage.name">{{ selectedImage.name }}</dd>
+			</div>
+			<div class="info-row">
+				<dt class="img-desc-text">{{ 'INVENTORY_PAGE.URL' | translate }}</dt>
+				<dd class="image-text image-text--url" [title]="selectedImage.url">{{ selectedImage.url }}</dd>
+			</div>
+			<div class="info-row">
+				<dt class="img-desc-text">{{ 'INVENTORY_PAGE.DIMENSIONS' | translate }}</dt>
+				<!-- An image stored without its size reads 0×0: a dash says so plainly. -->
+				<dd class="image-text dimension">
+					@if (selectedImage.width > 0 && selectedImage.height > 0) {
+						{{ selectedImage.width }}×{{ selectedImage.height }}
+					} @else {
+						<span class="image-text-muted">—</span>
+					}
+				</dd>
+			</div>
+		</dl>
+	}
+</div>

@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { IEquipment, ComponentLayoutStyleEnum, IOrganization } from '@gauzy/contracts';
 import { Cell } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
@@ -51,7 +51,8 @@ export class EquipmentComponent extends PaginationFilterBaseComponent implements
 		private readonly toastrService: ToastrService,
 		private readonly store: Store,
 		private readonly http: HttpClient,
-		private readonly route: ActivatedRoute
+		private readonly route: ActivatedRoute,
+		private readonly router: Router
 	) {
 		super(translateService);
 		this.setView();
@@ -320,6 +321,19 @@ export class EquipmentComponent extends PaginationFilterBaseComponent implements
 		} catch (error) {
 			this.toastrService.danger(error);
 		}
+	}
+
+	/**
+	 * Opens the selected piece of equipment on its own full-width page.
+	 *
+	 * @param selectedItem The row handed in by the card grid; falls back to the table selection.
+	 */
+	view(selectedItem?: IEquipment) {
+		const equipment = selectedItem || this.selectedEquipment;
+		if (!equipment?.id) {
+			return;
+		}
+		this.router.navigate(['/pages/organization/equipment/view', equipment.id]);
 	}
 
 	selectEquipment({ isSelected, data }) {
