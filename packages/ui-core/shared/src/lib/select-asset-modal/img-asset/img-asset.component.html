@@ -1,8 +1,29 @@
-<div class="image-asset-list-item" (click)="onImageClick($event)" [class.selected]="selected">
+<!-- A square tile that chooses the image; its delete button sits over the corner, outside the tile's own button. -->
+<div class="image-asset-list-item" [class.selected]="selected">
+	<button
+		type="button"
+		class="image-tile"
+		[attr.aria-pressed]="!!selected"
+		[attr.aria-label]="imageAsset.name"
+		[title]="imageAsset.name"
+		(click)="onImageClick($event)"
+	>
+		<span class="image-item" [style.backgroundImage]="'url(' + imageAsset.fullUrl + ')'"></span>
+		@if (selected) {
+			<span class="selected-mark" aria-hidden="true">
+				<nb-icon icon="checkmark-outline"></nb-icon>
+			</span>
+		}
+	</button>
 	@if (deleteImageEnabled) {
-	<div class="delete-asset-btn" (click)="onDeleteAsset($event)">
-		<nb-icon icon="trash-outline"></nb-icon>
-	</div>
+		<button
+			type="button"
+			class="delete-asset-btn"
+			[attr.aria-label]="'INVENTORY_PAGE.DELETE_IMAGE' | translate"
+			[title]="'INVENTORY_PAGE.DELETE_IMAGE' | translate"
+			(click)="onDeleteAsset($event)"
+		>
+			<nb-icon icon="trash-2-outline"></nb-icon>
+		</button>
 	}
-	<div class="image-item" [style.backgroundImage]="'url(' + imageAsset.fullUrl + ')'"></div>
 </div>
