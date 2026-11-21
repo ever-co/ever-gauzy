@@ -65,7 +65,7 @@
 				<div class="project-view-header">
 					<span class="project-logo equipment-logo" aria-hidden="true">
 						@if (headline.imageUrl) {
-							<img [src]="headline.imageUrl" alt="" (error)="onImageError()" />
+							<img [src]="headline.imageUrl" alt="" width="40" height="40" decoding="async" (error)="onImageError()" />
 						} @else {
 							<nb-icon icon="cube-outline"></nb-icon>
 						}
@@ -340,7 +340,7 @@
 								rel="noopener noreferrer"
 								[attr.aria-label]="'EQUIPMENT_VIEW.OPEN_PICTURE' | translate"
 							>
-								<img [src]="headline.imageUrl" [alt]="equipment.name" (error)="onImageError()" />
+								<img [src]="headline.imageUrl" [alt]="equipment.name" decoding="async" (error)="onImageError()" />
 							</a>
 						} @else {
 							<div class="state state--compact">

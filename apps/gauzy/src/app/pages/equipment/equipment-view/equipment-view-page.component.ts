@@ -410,11 +410,14 @@ export class EquipmentViewPageComponent extends TranslationBaseComponent impleme
 
 	/** The sharing requests, the latest asked for first. */
 	private sharingRows(sharings: IEquipmentSharing[]): IEquipmentSharingRow[] {
-		const time = (sharing: IEquipmentSharing) =>
-			new Date(sharing.shareRequestDay ?? sharing.shareStartDay ?? sharing.createdAt ?? 0).getTime();
-		return [...sharings]
-			.sort((a, b) => time(b) - time(a))
+		// Each request's time is read once, not in every comparison of the sort.
+		return sharings
 			.map((sharing) => ({
+				sharing,
+				time: new Date(sharing.shareRequestDay ?? sharing.shareStartDay ?? sharing.createdAt ?? 0).getTime()
+			}))
+			.sort((a, b) => b.time - a.time)
+			.map(({ sharing }) => ({
 				id: sharing.id,
 				name: sharing.name,
 				start: sharing.shareStartDay ?? null,
