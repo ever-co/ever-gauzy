@@ -33,6 +33,9 @@ $description-line-height: 1.25rem;
   // Category separation is now the larger step of the two.
   gap: 2rem;
   padding: 1.5rem;
+  // The filter row wraps by this area's width, not the viewport's; see
+  // `.report-toolbar`.
+  container: report-page / inline-size;
 }
 
 nb-card-body {
@@ -55,7 +58,12 @@ nb-card-body {
 // One line on a desktop: the heading, the count, "Clear filters", the search
 // and both selects never wrap. When the line runs short the search box and
 // then the selects give up width; the heading and the count never do. The row
-// only breaks below 992px (see the media queries at the end of this block).
+// breaks only when the REPORT AREA is too narrow — measured by the container
+// queries at the end of this block, not the viewport, so a side panel such as
+// the chat that squeezes the page on a wide screen wraps it too.
+// The small control radius, scaled from the theme radius (0.5rem → 0.375rem).
+$report-control-radius: calc(var(--border-radius) * 0.75);
+
 .report-toolbar {
   display: flex;
   flex-wrap: nowrap;
@@ -75,7 +83,7 @@ nb-card-body {
 
 .report-filters {
   --report-control-height: 2rem;
-  --report-text-muted: #{nb-theme(text-hint-color)};
+  --report-text-muted: var(--text-hint-color);
 
   display: flex;
   flex: 1 1 auto;
@@ -86,7 +94,7 @@ nb-card-body {
   min-width: 0;
 
   ::ng-deep {
-    @include nb-select-overrides(2rem, $default-button-radius, $default-box-shadow);
+    @include nb-select-overrides(2rem, $report-control-radius, $default-box-shadow);
   }
 }
 
@@ -95,15 +103,15 @@ nb-card-body {
   height: var(--report-control-height);
   min-height: var(--report-control-height);
   border: none;
-  border-radius: $default-button-radius;
+  border-radius: $report-control-radius;
   box-shadow: $default-box-shadow;
   // Nebular paints its own outline-select background and text colour from a
   // longer selector (`nb-select.appearance-outline.status-basic …`); the
   // filter bar this copies wins the same way.
-  background-color: nb-theme(gauzy-card-1) !important;
-  color: nb-theme(select-outline-basic-text-color) !important;
-  font-size: nb-theme(gauzy-table-header-font-size);
-  line-height: nb-theme(gauzy-table-header-line-height);
+  background-color: var(--gauzy-card-1) !important;
+  color: var(--select-outline-basic-text-color) !important;
+  font-size: var(--gauzy-table-header-font-size);
+  line-height: var(--gauzy-table-header-line-height);
 }
 
 .report-search {
@@ -131,11 +139,11 @@ nb-card-body {
     padding-inline: 2.125rem 2rem;
 
     &::placeholder {
-      color: nb-theme(select-outline-basic-placeholder-text-color);
+      color: var(--select-outline-basic-placeholder-text-color);
     }
 
     &:focus {
-      box-shadow: inset 0 0 0 1px nb-theme(color-primary-default);
+      box-shadow: inset 0 0 0 1px var(--color-primary-default);
     }
   }
 }
@@ -152,7 +160,7 @@ nb-card-body {
   height: 1.5rem;
   min-height: 1.5rem;
   padding: 0 !important;
-  border-radius: $default-button-radius;
+  border-radius: $report-control-radius;
   color: var(--report-text-muted);
 
   nb-icon {
@@ -161,7 +169,7 @@ nb-card-body {
   }
 
   &:hover {
-    color: nb-theme(text-basic-color);
+    color: var(--text-basic-color);
   }
 }
 
@@ -176,7 +184,7 @@ nb-card-body {
 
     min-width: 0;
     padding: 3px 2rem 3px 1rem !important;
-    font-weight: nb-theme(select-medium-placeholder-text-font-weight);
+    font-weight: var(--select-medium-placeholder-text-font-weight);
     white-space: nowrap;
     text-overflow: ellipsis;
   }
@@ -205,8 +213,8 @@ nb-card-body {
   height: var(--report-control-height) !important;
   min-height: var(--report-control-height) !important;
   padding-inline: 0.5rem !important;
-  border-radius: $default-button-radius;
-  font-size: nb-theme(gauzy-table-header-font-size) !important;
+  border-radius: $report-control-radius;
+  font-size: var(--gauzy-table-header-font-size) !important;
   font-weight: 400;
   text-transform: none;
   white-space: nowrap;
@@ -218,7 +226,7 @@ nb-card-body {
   }
 
   &:hover {
-    color: nb-theme(text-basic-color);
+    color: var(--text-basic-color);
   }
 }
 
@@ -229,7 +237,7 @@ nb-card-body {
   order: -2;
   flex: 0 0 auto;
   margin-inline-end: 0.25rem;
-  font-size: nb-theme(gauzy-table-header-font-size);
+  font-size: var(--gauzy-table-header-font-size);
   font-variant-numeric: tabular-nums;
   color: var(--report-text-muted);
   white-space: nowrap;
@@ -258,11 +266,13 @@ nb-card-body {
   p {
     margin: 0;
     font-size: 0.8125rem;
-    color: nb-theme(text-hint-color);
+    color: var(--text-hint-color);
   }
 }
 
-@media (max-width: 991px) {
+// Everything on one line needs ~52rem: the longest heading, the count and
+// "Clear filters", plus the search and both selects at their minimum widths.
+@container report-page (max-width: 52rem) {
   .report-toolbar,
   .report-filters {
     flex-wrap: wrap;
@@ -274,8 +284,7 @@ nb-card-body {
   }
 }
 
-@media (max-width: 767px) {
-
+@container report-page (max-width: 40rem) {
   .report-search {
     flex: 1 1 100%;
   }
@@ -288,7 +297,7 @@ nb-card-body {
   }
 }
 
-@media (max-width: 575px) {
+@container report-page (max-width: 30rem) {
   .report-count {
     flex: 1 1 100%;
     order: 0;
