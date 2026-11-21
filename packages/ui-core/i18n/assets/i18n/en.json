@@ -4869,7 +4869,19 @@
 		"SHARING": "Sharing history",
 		"SHARING_CAPTION": "{{ count }} requests",
 		"NO_SHARING": "This equipment has not been shared yet.",
-		"OPEN_SHARING": "Equipment sharing"
+		"OPEN_SHARING": "Equipment sharing",
+		"ONE_REQUEST": "1 request",
+		"BOOKED_DAYS": "Days booked",
+		"BOOKED_DAYS_CAPTION": "Days covered by approved sharing · last {{ count }} months",
+		"REQUESTS": "Sharing requests",
+		"REQUESTS_CAPTION": "Requests made · last {{ count }} months",
+		"THIS_MONTH": "This month",
+		"YEAR_USE": "Booked this year",
+		"YEAR_USE_CAPTION": "{{ year }} up to today",
+		"BOOKED": "Booked",
+		"FREE": "Free",
+		"DAYS_SO_FAR": "Days so far",
+		"NO_CHART_DATA": "No sharing requests to chart yet"
 	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "Equipment Sharing",
