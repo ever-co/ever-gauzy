@@ -5070,7 +5070,10 @@
 		"COULD_NOT_CREATE_MERCHANT": "无法创建商家",
 		"COULD_NOT_UPDATE_MERCHANT": "无法更新商家",
 		"COULD_NOT_UPLOAD_IMAGE": "无法上传图片",
-		"ERROR": "出现了一些问题"
+		"ERROR": "出现了一些问题",
+		"UPLOAD_IMAGE": "上传图片",
+		"IMAGES": "图片",
+		"NO_IMAGES": "暂无图片"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "任务",

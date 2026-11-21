@@ -4597,7 +4597,10 @@
 		"MAIN": "Основни",
 		"INVENTORY": "Inventory",
 		"COULD_NOT_UPLOAD_IMAGE": "Изображението не можа да бъде качено",
-		"IMAGE_WAS_DELETED": "Image was deleted"
+		"IMAGE_WAS_DELETED": "Image was deleted",
+		"UPLOAD_IMAGE": "Качете изображение",
+		"IMAGES": "Изображения",
+		"NO_IMAGES": "Все още няма изображения"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Задачи",

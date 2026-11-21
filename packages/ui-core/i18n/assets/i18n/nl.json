@@ -4539,7 +4539,10 @@
 		"MAIN": "Hoofd",
 		"INVENTORY": "Voorraad",
 		"COULD_NOT_UPLOAD_IMAGE": "De afbeelding kon niet worden geüpload",
-		"IMAGE_WAS_DELETED": "De afbeelding is verwijderd"
+		"IMAGE_WAS_DELETED": "De afbeelding is verwijderd",
+		"UPLOAD_IMAGE": "Afbeelding uploaden",
+		"IMAGES": "Afbeeldingen",
+		"NO_IMAGES": "Nog geen afbeeldingen"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Taken",

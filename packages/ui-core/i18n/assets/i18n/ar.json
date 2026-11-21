@@ -4537,7 +4537,10 @@
 		"MAIN": "الرئيسية",
 		"INVENTORY": "المخزون",
 		"COULD_NOT_UPLOAD_IMAGE": "تعذّر رفع الصورة",
-		"IMAGE_WAS_DELETED": "تم حذف الصورة"
+		"IMAGE_WAS_DELETED": "تم حذف الصورة",
+		"UPLOAD_IMAGE": "رفع صورة",
+		"IMAGES": "الصور",
+		"NO_IMAGES": "لا توجد صور بعد"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "مهام",

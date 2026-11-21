@@ -4565,7 +4565,10 @@
 		"MAIN": "עיקרי",
 		"INVENTORY": "Inventory",
 		"COULD_NOT_UPLOAD_IMAGE": "לא ניתן היה להעלות את התמונה",
-		"IMAGE_WAS_DELETED": "Image was deleted"
+		"IMAGE_WAS_DELETED": "Image was deleted",
+		"UPLOAD_IMAGE": "העלאת תמונה",
+		"IMAGES": "תמונות",
+		"NO_IMAGES": "אין עדיין תמונות"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",

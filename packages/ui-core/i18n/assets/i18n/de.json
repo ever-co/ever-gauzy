@@ -4535,7 +4535,10 @@
 		"MAIN": "Haupt-",
 		"INVENTORY": "Inventar",
 		"COULD_NOT_UPLOAD_IMAGE": "Das Bild konnte nicht hochgeladen werden",
-		"IMAGE_WAS_DELETED": "Das Bild wurde gelöscht."
+		"IMAGE_WAS_DELETED": "Das Bild wurde gelöscht.",
+		"UPLOAD_IMAGE": "Bild hochladen",
+		"IMAGES": "Bilder",
+		"NO_IMAGES": "Noch keine Bilder"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Aufgaben",

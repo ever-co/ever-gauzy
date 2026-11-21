@@ -4538,7 +4538,10 @@
 		"MAIN": "Główny",
 		"INVENTORY": "Inwentarz",
 		"COULD_NOT_UPLOAD_IMAGE": "Nie udało się przesłać obrazu",
-		"IMAGE_WAS_DELETED": "Obraz został usunięty"
+		"IMAGE_WAS_DELETED": "Obraz został usunięty",
+		"UPLOAD_IMAGE": "Prześlij obraz",
+		"IMAGES": "Obrazy",
+		"NO_IMAGES": "Brak obrazów"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Zadania",

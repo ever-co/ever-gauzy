@@ -4541,7 +4541,10 @@
 		"MAIN": "Principal",
 		"INVENTORY": "Inventario",
 		"COULD_NOT_UPLOAD_IMAGE": "No se pudo subir la imagen",
-		"IMAGE_WAS_DELETED": "La imagen fue eliminada."
+		"IMAGE_WAS_DELETED": "La imagen fue eliminada.",
+		"UPLOAD_IMAGE": "Subir una imagen",
+		"IMAGES": "Imágenes",
+		"NO_IMAGES": "Aún no hay imágenes"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tareas",

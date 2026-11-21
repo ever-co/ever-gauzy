@@ -4539,7 +4539,10 @@
 		"MAIN": "Principale",
 		"INVENTORY": "Inventario",
 		"COULD_NOT_UPLOAD_IMAGE": "Impossibile caricare l’immagine",
-		"IMAGE_WAS_DELETED": "L'immagine è stata eliminata"
+		"IMAGE_WAS_DELETED": "L'immagine è stata eliminata",
+		"UPLOAD_IMAGE": "Carica un'immagine",
+		"IMAGES": "Immagini",
+		"NO_IMAGES": "Ancora nessuna immagine"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Compiti",

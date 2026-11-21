@@ -4540,7 +4540,10 @@
 		"MAIN": "Principal",
 		"INVENTORY": "Inventaire",
 		"COULD_NOT_UPLOAD_IMAGE": "Impossible de téléverser l’image",
-		"IMAGE_WAS_DELETED": "L'image a été supprimée."
+		"IMAGE_WAS_DELETED": "L'image a été supprimée.",
+		"UPLOAD_IMAGE": "Téléverser une image",
+		"IMAGES": "Images",
+		"NO_IMAGES": "Aucune image pour l'instant"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tâches",

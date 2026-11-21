@@ -5067,7 +5067,10 @@
 		"COULD_NOT_CREATE_MERCHANT": "Não foi possível criar o comerciante",
 		"COULD_NOT_UPDATE_MERCHANT": "Não foi possível atualizar o comerciante",
 		"COULD_NOT_UPLOAD_IMAGE": "Não foi possível enviar a imagem",
-		"ERROR": "Algo deu errado"
+		"ERROR": "Algo deu errado",
+		"UPLOAD_IMAGE": "Enviar uma imagem",
+		"IMAGES": "Imagens",
+		"NO_IMAGES": "Ainda não há imagens"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tarefas",
