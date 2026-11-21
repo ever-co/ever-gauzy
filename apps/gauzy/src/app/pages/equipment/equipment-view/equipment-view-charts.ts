@@ -12,24 +12,61 @@ export type IEquipmentChartSharing = Pick<
 	'status' | 'shareRequestDay' | 'shareStartDay' | 'shareEndDay' | 'createdAt'
 >;
 
-const DAY_KEY = 'YYYY-MM-DD';
-const MONTH_KEY = 'YYYY-MM';
+/** A run of booked days, both ends included, as day numbers (see {@link dayNumber}). */
+export type IDayRange = [start: number, end: number];
+
+const DAY_MS = 86_400_000;
+
+/**
+ * A calendar day as a whole number — days since 1 January 1970 — read in the viewer's time zone, as the dates are
+ * shown. Ranges of days are then plain integer ranges: no date object per day, no string key per day.
+ */
+export function dayNumber(date: Date | string | moment.Moment): number {
+	const day = moment(date);
+	return Math.round(Date.UTC(day.year(), day.month(), day.date()) / DAY_MS);
+}
 
 /**
  * The days the equipment is booked — covered by an approved sharing, start and end days included — between `from`
- * and `to`. A day two sharings overlap on counts once.
+ * and `to`, as runs of days in order. Overlapping or touching sharings make one run, so a day two sharings share
+ * counts once.
  */
-export function bookedDays(sharings: IEquipmentChartSharing[], from: moment.Moment, to: moment.Moment): Set<string> {
-	const days = new Set<string>();
+export function bookedRanges(sharings: IEquipmentChartSharing[], from: number, to: number): IDayRange[] {
+	const ranges: IDayRange[] = [];
 	for (const sharing of sharings ?? []) {
 		if (sharing?.status !== RequestApprovalStatusTypesEnum.APPROVED || !sharing.shareStartDay) {
 			continue;
 		}
-		const start = moment.max(moment(sharing.shareStartDay).startOf('day'), from.clone().startOf('day'));
 		// A sharing without an end day is booked for its start day only.
-		const end = moment.min(moment(sharing.shareEndDay ?? sharing.shareStartDay).startOf('day'), to.clone().startOf('day'));
-		for (const day = start.clone(); !day.isAfter(end); day.add(1, 'day')) {
-			days.add(day.format(DAY_KEY));
+		const start = Math.max(dayNumber(sharing.shareStartDay), from);
+		const end = Math.min(dayNumber(sharing.shareEndDay ?? sharing.shareStartDay), to);
+		if (start <= end) {
+			ranges.push([start, end]);
+		}
+	}
+	ranges.sort((a, b) => a[0] - b[0]);
+	const merged: IDayRange[] = [];
+	for (const range of ranges) {
+		const last = merged[merged.length - 1];
+		if (last && range[0] <= last[1] + 1) {
+			last[1] = Math.max(last[1], range[1]);
+		} else {
+			merged.push([range[0], range[1]]);
+		}
+	}
+	return merged;
+}
+
+/** How many of the days from `from` to `to` (both included) the runs cover. */
+export function daysCovered(ranges: IDayRange[], from: number, to: number): number {
+	let days = 0;
+	for (const [start, end] of ranges) {
+		if (start > to) {
+			break; // the runs are in order: none after this one reaches the span
+		}
+		const overlap = Math.min(end, to) - Math.max(start, from) + 1;
+		if (overlap > 0) {
+			days += overlap;
 		}
 	}
 	return days;
@@ -60,13 +97,10 @@ export function bookedDayBars(
 	today: moment.Moment = moment()
 ): IExpenseChartBar[] {
 	const range = chartMonths(months, today, locale);
-	const days = bookedDays(sharings, range[0].clone().startOf('month'), today.clone().endOf('month'));
-	const perMonth = new Map<string, number>();
-	days.forEach((day) => {
-		const key = day.slice(0, 7);
-		perMonth.set(key, (perMonth.get(key) ?? 0) + 1);
-	});
-	return range.map((month) => barOf(month, perMonth.get(month.format(MONTH_KEY)) ?? 0, today));
+	const ranges = bookedRanges(sharings, dayNumber(range[0]), dayNumber(today.clone().endOf('month')));
+	return range.map((month) =>
+		barOf(month, daysCovered(ranges, dayNumber(month), dayNumber(month.clone().endOf('month'))), today)
+	);
 }
 
 /** The sharing requests made in each of the last `months` months, whatever became of them. */
@@ -76,17 +110,19 @@ export function requestBars(
 	locale = 'en',
 	today: moment.Moment = moment()
 ): IExpenseChartBar[] {
-	const perMonth = new Map<string, number>();
+	// Months as whole numbers (year × 12 + month), read with the Date's own getters: no formatting per request.
+	const perMonth = new Map<number, number>();
 	for (const sharing of sharings ?? []) {
 		const asked = sharing?.shareRequestDay ?? sharing?.createdAt;
 		if (!asked) {
 			continue;
 		}
-		const key = moment(asked).format(MONTH_KEY);
+		const date = new Date(asked);
+		const key = date.getFullYear() * 12 + date.getMonth();
 		perMonth.set(key, (perMonth.get(key) ?? 0) + 1);
 	}
 	return chartMonths(months, today, locale).map((month) =>
-		barOf(month, perMonth.get(month.format(MONTH_KEY)) ?? 0, today)
+		barOf(month, perMonth.get(month.year() * 12 + month.month()) ?? 0, today)
 	);
 }
 
@@ -95,9 +131,10 @@ export function requestBars(
  * ring in the side column draws.
  */
 export function yearUse(sharings: IEquipmentChartSharing[], today: moment.Moment = moment()): IExpenseMonthShare {
-	const start = today.clone().startOf('year');
-	const total = today.clone().startOf('day').diff(start, 'days') + 1;
-	const amount = bookedDays(sharings, start, today).size;
+	const start = dayNumber(today.clone().startOf('year'));
+	const end = dayNumber(today);
+	const total = end - start + 1;
+	const amount = daysCovered(bookedRanges(sharings, start, end), start, end);
 	return {
 		amount,
 		rest: Math.max(total - amount, 0),

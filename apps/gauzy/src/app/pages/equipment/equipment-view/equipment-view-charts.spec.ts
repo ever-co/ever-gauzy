@@ -1,6 +1,14 @@
 import * as moment from 'moment';
 import { RequestApprovalStatusTypesEnum } from '@gauzy/contracts';
-import { bookedDayBars, bookedDays, IEquipmentChartSharing, requestBars, yearUse } from './equipment-view-charts';
+import {
+	bookedDayBars,
+	bookedRanges,
+	dayNumber,
+	daysCovered,
+	IEquipmentChartSharing,
+	requestBars,
+	yearUse
+} from './equipment-view-charts';
 
 const { APPROVED, REFUSED, REQUESTED } = RequestApprovalStatusTypesEnum;
 
@@ -16,26 +24,47 @@ function sharing(status: number, start: string, end: string, asked = start): IEq
 describe('equipment view charts', () => {
 	const today = moment('2026-03-15T10:00:00');
 
-	describe('bookedDays', () => {
-		it('counts approved sharings only, both ends included, and an overlapped day once', () => {
-			const days = bookedDays(
+	const day = (date: string) => dayNumber(`${date}T12:00:00`);
+
+	describe('dayNumber', () => {
+		it('numbers consecutive calendar days one apart, whatever the time of day', () => {
+			expect(dayNumber('2026-03-02T00:30:00') - dayNumber('2026-03-01T23:30:00')).toBe(1);
+			expect(day('2026-03-01') - day('2026-02-28')).toBe(1);
+		});
+	});
+
+	describe('bookedRanges', () => {
+		it('keeps approved sharings only, both ends included, and merges overlapping or touching runs', () => {
+			const ranges = bookedRanges(
 				[
+					sharing(APPROVED, '2026-03-06', '2026-03-07'), // touches the run before it: merged
 					sharing(APPROVED, '2026-03-01', '2026-03-03'),
-					sharing(APPROVED, '2026-03-03', '2026-03-04'),
+					sharing(APPROVED, '2026-03-03', '2026-03-05'), // overlaps on the 3rd: counted once
+					sharing(APPROVED, '2026-03-20', '2026-03-20'),
 					sharing(REFUSED, '2026-03-10', '2026-03-12'),
 					sharing(REQUESTED, '2026-03-10', '2026-03-12')
 				],
-				moment('2026-01-01'),
-				moment('2026-12-31')
+				day('2026-01-01'),
+				day('2026-12-31')
 			);
 
-			expect([...days].sort()).toEqual(['2026-03-01', '2026-03-02', '2026-03-03', '2026-03-04']);
+			expect(ranges).toEqual([
+				[day('2026-03-01'), day('2026-03-07')],
+				[day('2026-03-20'), day('2026-03-20')]
+			]);
+			expect(daysCovered(ranges, day('2026-01-01'), day('2026-12-31'))).toBe(8);
 		});
 
-		it('keeps to the range it is given', () => {
-			const days = bookedDays([sharing(APPROVED, '2026-02-27', '2026-03-02')], moment('2026-03-01'), moment('2026-03-01'));
+		it('keeps to the span it is given', () => {
+			const ranges = bookedRanges([sharing(APPROVED, '2026-02-27', '2026-03-02')], day('2026-03-01'), day('2026-03-01'));
 
-			expect([...days]).toEqual(['2026-03-01']);
+			expect(ranges).toEqual([[day('2026-03-01'), day('2026-03-01')]]);
+		});
+
+		it('works out a sharing years long without walking its days', () => {
+			const ranges = bookedRanges([sharing(APPROVED, '2000-01-01', '2099-12-31')], day('2026-01-01'), day('2026-12-31'));
+
+			expect(daysCovered(ranges, day('2026-01-01'), day('2026-12-31'))).toBe(365);
 		});
 	});
 
