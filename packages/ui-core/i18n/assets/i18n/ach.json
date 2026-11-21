@@ -4186,7 +4186,8 @@
 		"BOOKED": "Booked",
 		"FREE": "Free",
 		"DAYS_SO_FAR": "Days so far",
-		"NO_CHART_DATA": "No sharing requests to chart yet"
+		"NO_CHART_DATA": "No sharing requests to chart yet",
+		"PAGE_RANGE": "{{ from }}–{{ to }} of {{ total }}"
 	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "crwdns3124:0crwdne3124:0",

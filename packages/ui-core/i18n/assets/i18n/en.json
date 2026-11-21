@@ -4881,7 +4881,8 @@
 		"BOOKED": "Booked",
 		"FREE": "Free",
 		"DAYS_SO_FAR": "Days so far",
-		"NO_CHART_DATA": "No sharing requests to chart yet"
+		"NO_CHART_DATA": "No sharing requests to chart yet",
+		"PAGE_RANGE": "{{ from }}–{{ to }} of {{ total }}"
 	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "Equipment Sharing",
