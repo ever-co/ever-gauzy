@@ -4345,7 +4345,19 @@
 		"SHARING": "Cronologia condivisioni",
 		"SHARING_CAPTION": "{{ count }} richieste",
 		"NO_SHARING": "Questa attrezzatura non è ancora stata condivisa.",
-		"OPEN_SHARING": "Condivisione attrezzature"
+		"OPEN_SHARING": "Condivisione attrezzature",
+		"ONE_REQUEST": "1 richiesta",
+		"BOOKED_DAYS": "Giorni prenotati",
+		"BOOKED_DAYS_CAPTION": "Giorni con condivisione approvata · ultimi {{ count }} mesi",
+		"REQUESTS": "Richieste di condivisione",
+		"REQUESTS_CAPTION": "Richieste fatte · ultimi {{ count }} mesi",
+		"THIS_MONTH": "Questo mese",
+		"YEAR_USE": "Prenotato quest'anno",
+		"YEAR_USE_CAPTION": "{{ year }} fino a oggi",
+		"BOOKED": "Prenotato",
+		"FREE": "Libero",
+		"DAYS_SO_FAR": "Giorni finora",
+		"NO_CHART_DATA": "Ancora nessuna richiesta di condivisione da mostrare"
 	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "Condivisione di attrezzature",

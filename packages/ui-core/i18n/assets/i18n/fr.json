@@ -4346,7 +4346,19 @@
 		"SHARING": "Historique de partage",
 		"SHARING_CAPTION": "{{ count }} demandes",
 		"NO_SHARING": "Cet équipement n'a pas encore été partagé.",
-		"OPEN_SHARING": "Partage d'équipement"
+		"OPEN_SHARING": "Partage d'équipement",
+		"ONE_REQUEST": "1 demande",
+		"BOOKED_DAYS": "Jours réservés",
+		"BOOKED_DAYS_CAPTION": "Jours couverts par un partage approuvé · {{ count }} derniers mois",
+		"REQUESTS": "Demandes de partage",
+		"REQUESTS_CAPTION": "Demandes faites · {{ count }} derniers mois",
+		"THIS_MONTH": "Ce mois-ci",
+		"YEAR_USE": "Réservé cette année",
+		"YEAR_USE_CAPTION": "{{ year }} jusqu'à aujourd'hui",
+		"BOOKED": "Réservé",
+		"FREE": "Libre",
+		"DAYS_SO_FAR": "Jours écoulés",
+		"NO_CHART_DATA": "Aucune demande de partage à afficher pour l'instant"
 	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "Partage d'équipement",

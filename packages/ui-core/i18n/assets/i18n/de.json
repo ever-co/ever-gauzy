@@ -4341,7 +4341,19 @@
 		"SHARING": "Freigabeverlauf",
 		"SHARING_CAPTION": "{{ count }} Anfragen",
 		"NO_SHARING": "Dieses Gerät wurde noch nicht geteilt.",
-		"OPEN_SHARING": "Gerätefreigabe"
+		"OPEN_SHARING": "Gerätefreigabe",
+		"ONE_REQUEST": "1 Anfrage",
+		"BOOKED_DAYS": "Gebuchte Tage",
+		"BOOKED_DAYS_CAPTION": "Tage mit genehmigter Freigabe · letzte {{ count }} Monate",
+		"REQUESTS": "Freigabeanfragen",
+		"REQUESTS_CAPTION": "Gestellte Anfragen · letzte {{ count }} Monate",
+		"THIS_MONTH": "Dieser Monat",
+		"YEAR_USE": "In diesem Jahr gebucht",
+		"YEAR_USE_CAPTION": "{{ year }} bis heute",
+		"BOOKED": "Gebucht",
+		"FREE": "Frei",
+		"DAYS_SO_FAR": "Bisherige Tage",
+		"NO_CHART_DATA": "Noch keine Freigabeanfragen für ein Diagramm"
 	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "Ausrüstungsteilen",

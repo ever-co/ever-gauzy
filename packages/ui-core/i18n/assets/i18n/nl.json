@@ -4345,7 +4345,19 @@
 		"SHARING": "Deelgeschiedenis",
 		"SHARING_CAPTION": "{{ count }} aanvragen",
 		"NO_SHARING": "Deze apparatuur is nog niet gedeeld.",
-		"OPEN_SHARING": "Apparatuur delen"
+		"OPEN_SHARING": "Apparatuur delen",
+		"ONE_REQUEST": "1 aanvraag",
+		"BOOKED_DAYS": "Geboekte dagen",
+		"BOOKED_DAYS_CAPTION": "Dagen met goedgekeurd delen · laatste {{ count }} maanden",
+		"REQUESTS": "Deelaanvragen",
+		"REQUESTS_CAPTION": "Gedane aanvragen · laatste {{ count }} maanden",
+		"THIS_MONTH": "Deze maand",
+		"YEAR_USE": "Dit jaar geboekt",
+		"YEAR_USE_CAPTION": "{{ year }} tot vandaag",
+		"BOOKED": "Geboekt",
+		"FREE": "Vrij",
+		"DAYS_SO_FAR": "Dagen tot nu toe",
+		"NO_CHART_DATA": "Nog geen deelaanvragen om te tonen"
 	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "Gedeeld gebruik van apparatuur",

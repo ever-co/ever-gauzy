@@ -4869,7 +4869,19 @@
 		"SHARING": "Histórico de compartilhamento",
 		"SHARING_CAPTION": "{{ count }} pedidos",
 		"NO_SHARING": "Este equipamento ainda não foi compartilhado.",
-		"OPEN_SHARING": "Compartilhamento de equipamentos"
+		"OPEN_SHARING": "Compartilhamento de equipamentos",
+		"ONE_REQUEST": "1 pedido",
+		"BOOKED_DAYS": "Dias reservados",
+		"BOOKED_DAYS_CAPTION": "Dias com compartilhamento aprovado · últimos {{ count }} meses",
+		"REQUESTS": "Pedidos de compartilhamento",
+		"REQUESTS_CAPTION": "Pedidos feitos · últimos {{ count }} meses",
+		"THIS_MONTH": "Este mês",
+		"YEAR_USE": "Reservado este ano",
+		"YEAR_USE_CAPTION": "{{ year }} até hoje",
+		"BOOKED": "Reservado",
+		"FREE": "Livre",
+		"DAYS_SO_FAR": "Dias até agora",
+		"NO_CHART_DATA": "Ainda não há pedidos de compartilhamento para mostrar"
 	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "Compartilhamento de Equipamentos",

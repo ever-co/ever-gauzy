@@ -4344,7 +4344,19 @@
 		"SHARING": "Historia udostępniania",
 		"SHARING_CAPTION": "Prośby: {{ count }}",
 		"NO_SHARING": "Ten sprzęt nie był jeszcze udostępniany.",
-		"OPEN_SHARING": "Udostępnianie sprzętu"
+		"OPEN_SHARING": "Udostępnianie sprzętu",
+		"ONE_REQUEST": "1 prośba",
+		"BOOKED_DAYS": "Zarezerwowane dni",
+		"BOOKED_DAYS_CAPTION": "Dni z zatwierdzonym udostępnieniem · ostatnie miesiące: {{ count }}",
+		"REQUESTS": "Prośby o udostępnienie",
+		"REQUESTS_CAPTION": "Złożone prośby · ostatnie miesiące: {{ count }}",
+		"THIS_MONTH": "Ten miesiąc",
+		"YEAR_USE": "Zarezerwowano w tym roku",
+		"YEAR_USE_CAPTION": "{{ year }} do dziś",
+		"BOOKED": "Zarezerwowane",
+		"FREE": "Wolne",
+		"DAYS_SO_FAR": "Dni do tej pory",
+		"NO_CHART_DATA": "Brak próśb o udostępnienie do pokazania"
 	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "Dzielenie się wyposażeniem",
