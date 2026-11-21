@@ -48,6 +48,8 @@ export class NgxImageAssetComponent extends TranslationBaseComponent implements 
 	}
 
 	async onDeleteAsset($event) {
+		// The button sits over the tile: deleting must not also choose the image.
+		$event?.stopPropagation();
 		const result = await firstValueFrom(this.dialogService.open(DeleteConfirmationComponent).onClose);
 
 		if (result) {
