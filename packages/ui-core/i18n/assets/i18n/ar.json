@@ -4343,7 +4343,19 @@
 		"SHARING": "سجل المشاركة",
 		"SHARING_CAPTION": "{{ count }} طلبات",
 		"NO_SHARING": "لم تتم مشاركة هذه المعدات بعد.",
-		"OPEN_SHARING": "مشاركة المعدات"
+		"OPEN_SHARING": "مشاركة المعدات",
+		"ONE_REQUEST": "طلب واحد",
+		"BOOKED_DAYS": "أيام الحجز",
+		"BOOKED_DAYS_CAPTION": "الأيام المشمولة بمشاركة معتمدة · آخر {{ count }} أشهر",
+		"REQUESTS": "طلبات المشاركة",
+		"REQUESTS_CAPTION": "الطلبات المقدمة · آخر {{ count }} أشهر",
+		"THIS_MONTH": "هذا الشهر",
+		"YEAR_USE": "محجوز هذا العام",
+		"YEAR_USE_CAPTION": "{{ year }} حتى اليوم",
+		"BOOKED": "محجوز",
+		"FREE": "متاح",
+		"DAYS_SO_FAR": "الأيام حتى الآن",
+		"NO_CHART_DATA": "لا توجد طلبات مشاركة لعرضها بعد"
 	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "مشاركة المعدات",

@@ -4872,7 +4872,19 @@
 		"SHARING": "共享记录",
 		"SHARING_CAPTION": "{{ count }} 个请求",
 		"NO_SHARING": "此设备尚未共享。",
-		"OPEN_SHARING": "设备共享"
+		"OPEN_SHARING": "设备共享",
+		"ONE_REQUEST": "1 个请求",
+		"BOOKED_DAYS": "已预订天数",
+		"BOOKED_DAYS_CAPTION": "已批准共享覆盖的天数 · 最近 {{ count }} 个月",
+		"REQUESTS": "共享请求",
+		"REQUESTS_CAPTION": "提出的请求 · 最近 {{ count }} 个月",
+		"THIS_MONTH": "本月",
+		"YEAR_USE": "今年已预订",
+		"YEAR_USE_CAPTION": "{{ year }} 年至今",
+		"BOOKED": "已预订",
+		"FREE": "空闲",
+		"DAYS_SO_FAR": "今年已过天数",
+		"NO_CHART_DATA": "暂无可绘制的共享请求"
 	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "设备共享",

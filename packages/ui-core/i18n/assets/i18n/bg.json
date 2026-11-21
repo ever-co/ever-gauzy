@@ -4403,7 +4403,19 @@
 		"SHARING": "История на споделянето",
 		"SHARING_CAPTION": "{{ count }} заявки",
 		"NO_SHARING": "Това оборудване все още не е споделяно.",
-		"OPEN_SHARING": "Споделяне на оборудване"
+		"OPEN_SHARING": "Споделяне на оборудване",
+		"ONE_REQUEST": "1 заявка",
+		"BOOKED_DAYS": "Резервирани дни",
+		"BOOKED_DAYS_CAPTION": "Дни с одобрено споделяне · последните {{ count }} месеца",
+		"REQUESTS": "Заявки за споделяне",
+		"REQUESTS_CAPTION": "Подадени заявки · последните {{ count }} месеца",
+		"THIS_MONTH": "Този месец",
+		"YEAR_USE": "Резервирано тази година",
+		"YEAR_USE_CAPTION": "{{ year }} до днес",
+		"BOOKED": "Резервирано",
+		"FREE": "Свободно",
+		"DAYS_SO_FAR": "Дни досега",
+		"NO_CHART_DATA": "Все още няма заявки за споделяне за графика"
 	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "Equipment Sharing",
