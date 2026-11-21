@@ -55,6 +55,19 @@ export interface IEquipmentCharts {
 
 const NO_CHARTS: IEquipmentCharts = { bookedBars: [], requestBars: [], yearUse: null };
 
+/** The sharing requests the Sharing history panel lists per page. */
+export const SHARING_PAGE_SIZE = 5;
+
+/** The page numbers the pager shows at most between its previous and next buttons. */
+export const SHARING_PAGER_NUMBERS = 5;
+
+/** The page numbers around `page`, at most `count` of them, kept within 1 and `pages`. */
+export function pagerNumbers(page: number, pages: number, count = SHARING_PAGER_NUMBERS): number[] {
+	const shown = Math.min(count, pages);
+	const first = Math.min(Math.max(page - Math.floor(shown / 2), 1), pages - shown + 1);
+	return Array.from({ length: shown }, (_, index) => first + index);
+}
+
 /** Where the sharing requests are made and approved. */
 export const EQUIPMENT_SHARING_LINK = '/pages/organization/equipment-sharing';
 
@@ -134,6 +147,13 @@ export class EquipmentViewPageComponent extends TranslationBaseComponent impleme
 	headline: IEquipmentHeadline = null;
 	/** The sharing requests made for the equipment, the latest first. */
 	sharings: IEquipmentSharingRow[] = [];
+	/** The page of them the Sharing history panel shows, its number (from 1) and how many pages there are. */
+	pagedSharings: IEquipmentSharingRow[] = [];
+	sharingPage = 1;
+	sharingPages = 1;
+	/** The page numbers between the pager's previous and next buttons. */
+	sharingPageNumbers: number[] = [1];
+	readonly sharingPageSize = SHARING_PAGE_SIZE;
 
 	/** The charts, drawn from the sharing requests: no read of their own. */
 	charts: IEquipmentCharts = NO_CHARTS;
@@ -217,6 +237,9 @@ export class EquipmentViewPageComponent extends TranslationBaseComponent impleme
 		this.equipment = null;
 		this.headline = null;
 		this.sharings = [];
+		this.pagedSharings = [];
+		// Another record (or organization) starts on its first page; a refresh after an edit keeps the page.
+		this.sharingPage = 1;
 		this.charts = NO_CHARTS;
 		this.state = 'loading';
 		this.cdr.markForCheck();
@@ -295,6 +318,14 @@ export class EquipmentViewPageComponent extends TranslationBaseComponent impleme
 		}
 	}
 
+	/** Turns the Sharing history to another page; the requests are already read, so nothing is read. */
+	setSharingPage(page: number): void {
+		this.sharingPage = Math.min(Math.max(page, 1), this.sharingPages);
+		const start = (this.sharingPage - 1) * SHARING_PAGE_SIZE;
+		this.pagedSharings = this.sharings.slice(start, start + SHARING_PAGE_SIZE);
+		this.sharingPageNumbers = pagerNumbers(this.sharingPage, this.sharingPages);
+	}
+
 	/** Sets the monthly charts' span; the requests already read are drawn again, nothing is read. */
 	setChartMonths(months: number): void {
 		this.chartMonths = months;
@@ -358,6 +389,9 @@ export class EquipmentViewPageComponent extends TranslationBaseComponent impleme
 	private show(equipment: IEquipment): void {
 		this.equipment = equipment;
 		this.sharings = this.sharingRows(equipment.equipmentSharings ?? []);
+		this.sharingPages = Math.max(Math.ceil(this.sharings.length / SHARING_PAGE_SIZE), 1);
+		// Kept within the pages there now are: a refresh may have fewer requests than before.
+		this.setSharingPage(this.sharingPage);
 		this.describe();
 	}
 
