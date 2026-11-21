@@ -173,11 +173,11 @@ $hover-tint: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
 		font-size: 1.25rem;
 	}
 
-	// Over a picture the mark only shows on hover, on a dark disc that reads on any picture.
+	// Over a picture the mark only shows on hover, on the theme's veil, as the profile photo's camera does.
 	.has-image & {
 		position: absolute;
-		background-color: rgba(0, 0, 0, 0.55);
-		color: #fff;
+		background-color: var(--overlay-backdrop-background-color);
+		color: var(--text-control-color);
 		opacity: 0;
 		transition: opacity 0.12s ease-in-out;
 	}
