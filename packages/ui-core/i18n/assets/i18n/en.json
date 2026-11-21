@@ -5067,7 +5067,10 @@
 		"COULD_NOT_CREATE_MERCHANT": "Could not create merchant",
 		"COULD_NOT_UPDATE_MERCHANT": "Could not update merchant",
 		"COULD_NOT_UPLOAD_IMAGE": "Could not upload image",
-		"ERROR": "Something went wrong"
+		"ERROR": "Something went wrong",
+		"UPLOAD_IMAGE": "Upload an image",
+		"IMAGES": "Images",
+		"NO_IMAGES": "No images yet"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",

@@ -4367,7 +4367,10 @@
 		"MAIN": "crwdns10398:0crwdne10398:0",
 		"INVENTORY": "crwdns10400:0crwdne10400:0",
 		"COULD_NOT_UPLOAD_IMAGE": "Could not upload image",
-		"IMAGE_WAS_DELETED": "crwdns11239:0crwdne11239:0"
+		"IMAGE_WAS_DELETED": "crwdns11239:0crwdne11239:0",
+		"UPLOAD_IMAGE": "Upload an image",
+		"IMAGES": "Images",
+		"NO_IMAGES": "No images yet"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "crwdns3029:0crwdne3029:0",
