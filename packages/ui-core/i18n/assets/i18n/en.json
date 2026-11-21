@@ -4853,6 +4853,24 @@
 		"EQUIPMENT_SAVED": "Equipment '{{ name }}' was saved",
 		"CURRENCY": "Currency"
 	},
+	"EQUIPMENT_VIEW": {
+		"LINK_COPIED": "Link copied",
+		"DETAILS": "Details",
+		"TAG_COUNT": "{{ count }} tags",
+		"CURRENCY_HINT": "In {{ currency }}",
+		"AGE_NEW": "Made this year",
+		"AGE_ONE_YEAR": "1 year old",
+		"AGE_YEARS": "{{ count }} years old",
+		"ONE_DAY": "1 day",
+		"DAYS": "{{ count }} days",
+		"SHARE_PERIOD_HINT": "Longest a single sharing can last",
+		"AUTO_APPROVE_ON": "Requests are approved automatically",
+		"AUTO_APPROVE_OFF": "Requests wait for approval",
+		"SHARING": "Sharing history",
+		"SHARING_CAPTION": "{{ count }} requests",
+		"NO_SHARING": "This equipment has not been shared yet.",
+		"OPEN_SHARING": "Equipment sharing"
+	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "Equipment Sharing",
 		"ADD_EQUIPMENT_REQUEST": "Add Equipment Request",
