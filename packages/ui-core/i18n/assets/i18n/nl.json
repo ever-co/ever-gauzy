@@ -4329,6 +4329,24 @@
 		"EQUIPMENT_SAVED": "Apparatuur '{{ name }}' is opgeslagen",
 		"CURRENCY": "Valuta"
 	},
+	"EQUIPMENT_VIEW": {
+		"LINK_COPIED": "Link gekopieerd",
+		"DETAILS": "Details",
+		"TAG_COUNT": "{{ count }} tags",
+		"CURRENCY_HINT": "In {{ currency }}",
+		"AGE_NEW": "Dit jaar gemaakt",
+		"AGE_ONE_YEAR": "1 jaar oud",
+		"AGE_YEARS": "{{ count }} jaar oud",
+		"ONE_DAY": "1 dag",
+		"DAYS": "{{ count }} dagen",
+		"SHARE_PERIOD_HINT": "Langste duur van één keer delen",
+		"AUTO_APPROVE_ON": "Aanvragen worden automatisch goedgekeurd",
+		"AUTO_APPROVE_OFF": "Aanvragen wachten op goedkeuring",
+		"SHARING": "Deelgeschiedenis",
+		"SHARING_CAPTION": "{{ count }} aanvragen",
+		"NO_SHARING": "Deze apparatuur is nog niet gedeeld.",
+		"OPEN_SHARING": "Apparatuur delen"
+	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "Gedeeld gebruik van apparatuur",
 		"ADD_EQUIPMENT_REQUEST": "Toevoegen van uitrusting aanvragen",

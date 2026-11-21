@@ -4329,6 +4329,24 @@
 		"EQUIPMENT_SAVED": "L'attrezzatura '{{ name }}' è stata salvata",
 		"CURRENCY": "Valuta"
 	},
+	"EQUIPMENT_VIEW": {
+		"LINK_COPIED": "Link copiato",
+		"DETAILS": "Dettagli",
+		"TAG_COUNT": "{{ count }} tag",
+		"CURRENCY_HINT": "In {{ currency }}",
+		"AGE_NEW": "Prodotto quest'anno",
+		"AGE_ONE_YEAR": "1 anno",
+		"AGE_YEARS": "{{ count }} anni",
+		"ONE_DAY": "1 giorno",
+		"DAYS": "{{ count }} giorni",
+		"SHARE_PERIOD_HINT": "Durata massima di una singola condivisione",
+		"AUTO_APPROVE_ON": "Le richieste vengono approvate automaticamente",
+		"AUTO_APPROVE_OFF": "Le richieste attendono l'approvazione",
+		"SHARING": "Cronologia condivisioni",
+		"SHARING_CAPTION": "{{ count }} richieste",
+		"NO_SHARING": "Questa attrezzatura non è ancora stata condivisa.",
+		"OPEN_SHARING": "Condivisione attrezzature"
+	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "Condivisione di attrezzature",
 		"ADD_EQUIPMENT_REQUEST": "Aggiungi richiesta di attrezzatura",

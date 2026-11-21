@@ -4328,6 +4328,24 @@
 		"EQUIPMENT_SAVED": "Wyposażenie '{{ name }}' zostało zapisane",
 		"CURRENCY": "Waluta"
 	},
+	"EQUIPMENT_VIEW": {
+		"LINK_COPIED": "Link skopiowany",
+		"DETAILS": "Szczegóły",
+		"TAG_COUNT": "Tagi: {{ count }}",
+		"CURRENCY_HINT": "W {{ currency }}",
+		"AGE_NEW": "Wyprodukowano w tym roku",
+		"AGE_ONE_YEAR": "1 rok",
+		"AGE_YEARS": "Lata: {{ count }}",
+		"ONE_DAY": "1 dzień",
+		"DAYS": "Dni: {{ count }}",
+		"SHARE_PERIOD_HINT": "Najdłuższy czas jednego udostępnienia",
+		"AUTO_APPROVE_ON": "Prośby są zatwierdzane automatycznie",
+		"AUTO_APPROVE_OFF": "Prośby czekają na zatwierdzenie",
+		"SHARING": "Historia udostępniania",
+		"SHARING_CAPTION": "Prośby: {{ count }}",
+		"NO_SHARING": "Ten sprzęt nie był jeszcze udostępniany.",
+		"OPEN_SHARING": "Udostępnianie sprzętu"
+	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "Dzielenie się wyposażeniem",
 		"ADD_EQUIPMENT_REQUEST": "Dodaj żądanie dotyczące wyposażenia",

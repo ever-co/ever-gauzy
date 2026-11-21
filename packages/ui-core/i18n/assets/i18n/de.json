@@ -4325,6 +4325,24 @@
 		"EQUIPMENT_SAVED": "Das Gerät '{{ name }}' wurde gespeichert.",
 		"CURRENCY": "Währung"
 	},
+	"EQUIPMENT_VIEW": {
+		"LINK_COPIED": "Link kopiert",
+		"DETAILS": "Details",
+		"TAG_COUNT": "{{ count }} Tags",
+		"CURRENCY_HINT": "In {{ currency }}",
+		"AGE_NEW": "In diesem Jahr hergestellt",
+		"AGE_ONE_YEAR": "1 Jahr alt",
+		"AGE_YEARS": "{{ count }} Jahre alt",
+		"ONE_DAY": "1 Tag",
+		"DAYS": "{{ count }} Tage",
+		"SHARE_PERIOD_HINT": "Höchstdauer einer einzelnen Freigabe",
+		"AUTO_APPROVE_ON": "Anfragen werden automatisch genehmigt",
+		"AUTO_APPROVE_OFF": "Anfragen warten auf Genehmigung",
+		"SHARING": "Freigabeverlauf",
+		"SHARING_CAPTION": "{{ count }} Anfragen",
+		"NO_SHARING": "Dieses Gerät wurde noch nicht geteilt.",
+		"OPEN_SHARING": "Gerätefreigabe"
+	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "Ausrüstungsteilen",
 		"ADD_EQUIPMENT_REQUEST": "Ausrüstungsanfrage hinzufügen",

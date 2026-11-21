@@ -4330,6 +4330,24 @@
 		"EQUIPMENT_SAVED": "L'équipement '{{ name }}' a été enregistré.",
 		"CURRENCY": "Devise"
 	},
+	"EQUIPMENT_VIEW": {
+		"LINK_COPIED": "Lien copié",
+		"DETAILS": "Détails",
+		"TAG_COUNT": "{{ count }} étiquettes",
+		"CURRENCY_HINT": "En {{ currency }}",
+		"AGE_NEW": "Fabriqué cette année",
+		"AGE_ONE_YEAR": "1 an",
+		"AGE_YEARS": "{{ count }} ans",
+		"ONE_DAY": "1 jour",
+		"DAYS": "{{ count }} jours",
+		"SHARE_PERIOD_HINT": "Durée maximale d'un partage",
+		"AUTO_APPROVE_ON": "Les demandes sont approuvées automatiquement",
+		"AUTO_APPROVE_OFF": "Les demandes attendent une approbation",
+		"SHARING": "Historique de partage",
+		"SHARING_CAPTION": "{{ count }} demandes",
+		"NO_SHARING": "Cet équipement n'a pas encore été partagé.",
+		"OPEN_SHARING": "Partage d'équipement"
+	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "Partage d'équipement",
 		"ADD_EQUIPMENT_REQUEST": "Ajouter une demande d'équipement",

@@ -4331,6 +4331,24 @@
 		"EQUIPMENT_SAVED": "El equipo '{{ name }}' fue guardado",
 		"CURRENCY": "Moneda"
 	},
+	"EQUIPMENT_VIEW": {
+		"LINK_COPIED": "Enlace copiado",
+		"DETAILS": "Detalles",
+		"TAG_COUNT": "{{ count }} etiquetas",
+		"CURRENCY_HINT": "En {{ currency }}",
+		"AGE_NEW": "Fabricado este año",
+		"AGE_ONE_YEAR": "1 año de antigüedad",
+		"AGE_YEARS": "{{ count }} años de antigüedad",
+		"ONE_DAY": "1 día",
+		"DAYS": "{{ count }} días",
+		"SHARE_PERIOD_HINT": "Duración máxima de un préstamo",
+		"AUTO_APPROVE_ON": "Las solicitudes se aprueban automáticamente",
+		"AUTO_APPROVE_OFF": "Las solicitudes esperan aprobación",
+		"SHARING": "Historial de préstamos",
+		"SHARING_CAPTION": "{{ count }} solicitudes",
+		"NO_SHARING": "Este equipo aún no se ha compartido.",
+		"OPEN_SHARING": "Compartir equipos"
+	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "Compartir de equipos",
 		"ADD_EQUIPMENT_REQUEST": "Agregar solicitud de equipo",
