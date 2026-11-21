@@ -4356,7 +4356,10 @@
 		"FREE": "متاح",
 		"DAYS_SO_FAR": "الأيام حتى الآن",
 		"NO_CHART_DATA": "لا توجد طلبات مشاركة لعرضها بعد",
-		"PAGE_RANGE": "{{ from }}–{{ to }} من {{ total }}"
+		"PAGE_RANGE": "{{ from }}–{{ to }} من {{ total }}",
+		"PICTURE": "الصورة",
+		"OPEN_PICTURE": "فتح بالحجم الكامل",
+		"NO_PICTURE": "لم تتم إضافة صورة"
 	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "مشاركة المعدات",

@@ -4358,7 +4358,10 @@
 		"FREE": "Vrij",
 		"DAYS_SO_FAR": "Dagen tot nu toe",
 		"NO_CHART_DATA": "Nog geen deelaanvragen om te tonen",
-		"PAGE_RANGE": "{{ from }}–{{ to }} van {{ total }}"
+		"PAGE_RANGE": "{{ from }}–{{ to }} van {{ total }}",
+		"PICTURE": "Afbeelding",
+		"OPEN_PICTURE": "Volledig formaat openen",
+		"NO_PICTURE": "Geen afbeelding toegevoegd"
 	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "Gedeeld gebruik van apparatuur",

@@ -4357,7 +4357,10 @@
 		"FREE": "Wolne",
 		"DAYS_SO_FAR": "Dni do tej pory",
 		"NO_CHART_DATA": "Brak próśb o udostępnienie do pokazania",
-		"PAGE_RANGE": "{{ from }}–{{ to }} z {{ total }}"
+		"PAGE_RANGE": "{{ from }}–{{ to }} z {{ total }}",
+		"PICTURE": "Zdjęcie",
+		"OPEN_PICTURE": "Otwórz w pełnym rozmiarze",
+		"NO_PICTURE": "Nie dodano zdjęcia"
 	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "Dzielenie się wyposażeniem",

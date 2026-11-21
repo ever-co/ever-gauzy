@@ -4360,7 +4360,10 @@
 		"FREE": "Libre",
 		"DAYS_SO_FAR": "Días transcurridos",
 		"NO_CHART_DATA": "Aún no hay solicitudes de préstamo para mostrar",
-		"PAGE_RANGE": "{{ from }}–{{ to }} de {{ total }}"
+		"PAGE_RANGE": "{{ from }}–{{ to }} de {{ total }}",
+		"PICTURE": "Imagen",
+		"OPEN_PICTURE": "Abrir a tamaño completo",
+		"NO_PICTURE": "No se ha añadido ninguna imagen"
 	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "Compartir de equipos",

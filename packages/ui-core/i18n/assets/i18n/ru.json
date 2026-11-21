@@ -4391,7 +4391,10 @@
 		"FREE": "Свободно",
 		"DAYS_SO_FAR": "Дней на сегодня",
 		"NO_CHART_DATA": "Пока нет запросов на выдачу для графика",
-		"PAGE_RANGE": "{{ from }}–{{ to }} из {{ total }}"
+		"PAGE_RANGE": "{{ from }}–{{ to }} из {{ total }}",
+		"PICTURE": "Фото",
+		"OPEN_PICTURE": "Открыть в полном размере",
+		"NO_PICTURE": "Фото не добавлено"
 	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "Совместное использование снаряжения",

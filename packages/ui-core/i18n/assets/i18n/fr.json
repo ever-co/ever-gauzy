@@ -4359,7 +4359,10 @@
 		"FREE": "Libre",
 		"DAYS_SO_FAR": "Jours écoulés",
 		"NO_CHART_DATA": "Aucune demande de partage à afficher pour l'instant",
-		"PAGE_RANGE": "{{ from }}–{{ to }} sur {{ total }}"
+		"PAGE_RANGE": "{{ from }}–{{ to }} sur {{ total }}",
+		"PICTURE": "Photo",
+		"OPEN_PICTURE": "Ouvrir en taille réelle",
+		"NO_PICTURE": "Aucune photo ajoutée"
 	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "Partage d'équipement",

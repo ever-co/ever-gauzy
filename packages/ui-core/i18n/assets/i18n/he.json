@@ -4384,7 +4384,10 @@
 		"FREE": "פנוי",
 		"DAYS_SO_FAR": "ימים עד כה",
 		"NO_CHART_DATA": "אין עדיין בקשות שיתוף להצגה",
-		"PAGE_RANGE": "{{ from }}–{{ to }} מתוך {{ total }}"
+		"PAGE_RANGE": "{{ from }}–{{ to }} מתוך {{ total }}",
+		"PICTURE": "תמונה",
+		"OPEN_PICTURE": "פתיחה בגודל מלא",
+		"NO_PICTURE": "לא נוספה תמונה"
 	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "Equipment Sharing",

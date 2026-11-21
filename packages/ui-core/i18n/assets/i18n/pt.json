@@ -4882,7 +4882,10 @@
 		"FREE": "Livre",
 		"DAYS_SO_FAR": "Dias até agora",
 		"NO_CHART_DATA": "Ainda não há pedidos de compartilhamento para mostrar",
-		"PAGE_RANGE": "{{ from }}–{{ to }} de {{ total }}"
+		"PAGE_RANGE": "{{ from }}–{{ to }} de {{ total }}",
+		"PICTURE": "Imagem",
+		"OPEN_PICTURE": "Abrir em tamanho real",
+		"NO_PICTURE": "Nenhuma imagem adicionada"
 	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "Compartilhamento de Equipamentos",

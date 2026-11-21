@@ -4885,7 +4885,10 @@
 		"FREE": "空闲",
 		"DAYS_SO_FAR": "今年已过天数",
 		"NO_CHART_DATA": "暂无可绘制的共享请求",
-		"PAGE_RANGE": "第 {{ from }}–{{ to }} 条，共 {{ total }} 条"
+		"PAGE_RANGE": "第 {{ from }}–{{ to }} 条，共 {{ total }} 条",
+		"PICTURE": "图片",
+		"OPEN_PICTURE": "查看原图",
+		"NO_PICTURE": "尚未添加图片"
 	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "设备共享",

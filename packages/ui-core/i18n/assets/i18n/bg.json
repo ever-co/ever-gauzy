@@ -4416,7 +4416,10 @@
 		"FREE": "Свободно",
 		"DAYS_SO_FAR": "Дни досега",
 		"NO_CHART_DATA": "Все още няма заявки за споделяне за графика",
-		"PAGE_RANGE": "{{ from }}–{{ to }} от {{ total }}"
+		"PAGE_RANGE": "{{ from }}–{{ to }} от {{ total }}",
+		"PICTURE": "Снимка",
+		"OPEN_PICTURE": "Отвори в пълен размер",
+		"NO_PICTURE": "Няма добавена снимка"
 	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "Equipment Sharing",

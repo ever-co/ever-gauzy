@@ -4354,7 +4354,10 @@
 		"FREE": "Frei",
 		"DAYS_SO_FAR": "Bisherige Tage",
 		"NO_CHART_DATA": "Noch keine Freigabeanfragen für ein Diagramm",
-		"PAGE_RANGE": "{{ from }}–{{ to }} von {{ total }}"
+		"PAGE_RANGE": "{{ from }}–{{ to }} von {{ total }}",
+		"PICTURE": "Bild",
+		"OPEN_PICTURE": "In voller Größe öffnen",
+		"NO_PICTURE": "Kein Bild hinzugefügt"
 	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "Ausrüstungsteilen",
