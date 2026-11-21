@@ -55,6 +55,19 @@ export interface IEquipmentCharts {
 
 const NO_CHARTS: IEquipmentCharts = { bookedBars: [], requestBars: [], yearUse: null };
 
+/**
+ * The address of the equipment's picture, as the list's image cell reads it: the `fullUrl` the server works out from
+ * the stored path, else the stored `url` when it is already a whole address. A bare stored path (`file/…/x.png`) is
+ * not one the browser can load, and the `thumbUrl` is empty when no thumbnail was stored.
+ */
+export function imageUrlOf(equipment: IEquipment): string | null {
+	const image = equipment?.image;
+	if (image?.fullUrl) {
+		return image.fullUrl;
+	}
+	return image?.url && /^(https?:)?\/\/|^data:/.test(image.url) ? image.url : null;
+}
+
 /** The sharing requests the Sharing history panel lists per page. */
 export const SHARING_PAGE_SIZE = 5;
 
@@ -101,8 +114,8 @@ export interface IEquipmentHeadline {
  * Laid out as the income page: the actions — Edit, Copy link, the star and Delete — beside the back button; the
  * headline — the picture, the name, its type, serial number and tags, then the initial cost, its age, the longest
  * sharing and whether requests are approved by themselves as figures; the wide column — the days booked and the
- * requests made per month as charts, the sharing requests themselves, then its tags; and the side column — every
- * field of the equipment, the share of this year it has been booked, then its stamps.
+ * requests made per month as charts, then the sharing requests themselves; and the side column — its picture, every
+ * field of the equipment, its tags, the share of this year it has been booked, then its stamps.
  *
  * The page belongs to the organization selected in the header, like the list: equipment of another organization
  * reads "not found", and switching the organization reloads the page, discarding any load in flight.
@@ -173,7 +186,7 @@ export class EquipmentViewPageComponent extends TranslationBaseComponent impleme
 			count: value
 		});
 
-	/** The tags, in the wide column. */
+	/** The tags, in the side column under the details. */
 	tagSections: IRecordViewSection[] = [];
 	/** Every field of the equipment, at the top of the side column. */
 	detailsSections: IRecordViewSection[] = [];
@@ -434,7 +447,7 @@ export class EquipmentViewPageComponent extends TranslationBaseComponent impleme
 		const age = year ? new Date().getFullYear() - year : null;
 		const period = Number(equipment.maxSharePeriod);
 		this.headline = {
-			imageUrl: equipment.image?.thumbUrl || equipment.image?.url || null,
+			imageUrl: imageUrlOf(equipment),
 			cost: cost !== null && cost !== undefined ? formatExpenseMoney(Number(cost), equipment.currency, locale) : null,
 			age:
 				age === null || age < 0
@@ -507,6 +520,14 @@ export class EquipmentViewPageComponent extends TranslationBaseComponent impleme
 				]
 			}
 		];
+	}
+
+	/** The picture would not load (moved, or its storage unreachable): the headline shows the cube instead. */
+	onImageError(): void {
+		if (this.headline) {
+			this.headline = { ...this.headline, imageUrl: null };
+			this.cdr.markForCheck();
+		}
 	}
 
 	/** Draws the charts from the sharing requests, the month names in the viewer's language. */
