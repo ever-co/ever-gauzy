@@ -4327,7 +4327,10 @@
 		"EQUIPMENT_DELETED": "Apparatuur '{{ name }}' is verwijderd",
 		"EQUIPMENT_ADDED": "Apparatuur toegevoegd",
 		"EQUIPMENT_SAVED": "Apparatuur '{{ name }}' is opgeslagen",
-		"CURRENCY": "Valuta"
+		"CURRENCY": "Valuta",
+		"PURCHASE": "Aankoop",
+		"SHARING": "Delen",
+		"UNIT_DAYS": "dagen"
 	},
 	"EQUIPMENT_VIEW": {
 		"LINK_COPIED": "Link gekopieerd",

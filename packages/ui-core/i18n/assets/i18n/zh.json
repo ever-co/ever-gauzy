@@ -4854,7 +4854,10 @@
 		"EQUIPMENT_DELETED": "设备 '{{ name }}' 已被删除",
 		"EQUIPMENT_ADDED": "设备已添加",
 		"EQUIPMENT_SAVED": "设备 '{{ name }}' 已保存",
-		"CURRENCY": "货币"
+		"CURRENCY": "货币",
+		"PURCHASE": "采购",
+		"SHARING": "共享",
+		"UNIT_DAYS": "天"
 	},
 	"EQUIPMENT_VIEW": {
 		"LINK_COPIED": "链接已复制",

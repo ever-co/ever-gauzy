@@ -4323,7 +4323,10 @@
 		"EQUIPMENT_DELETED": "Ausrüstung '{{ name }}' wurde entfernt.",
 		"EQUIPMENT_ADDED": "Ausrüstung hinzugefügt",
 		"EQUIPMENT_SAVED": "Das Gerät '{{ name }}' wurde gespeichert.",
-		"CURRENCY": "Währung"
+		"CURRENCY": "Währung",
+		"PURCHASE": "Kauf",
+		"SHARING": "Freigabe",
+		"UNIT_DAYS": "Tage"
 	},
 	"EQUIPMENT_VIEW": {
 		"LINK_COPIED": "Link kopiert",

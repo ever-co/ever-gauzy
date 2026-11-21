@@ -4353,7 +4353,10 @@
 		"EQUIPMENT_DELETED": "Equipment '{{ name }}' was removed",
 		"EQUIPMENT_ADDED": "Equipment added",
 		"EQUIPMENT_SAVED": "Equipment '{{ name }}' was saved",
-		"CURRENCY": "מטבע"
+		"CURRENCY": "מטבע",
+		"PURCHASE": "רכישה",
+		"SHARING": "שיתוף",
+		"UNIT_DAYS": "ימים"
 	},
 	"EQUIPMENT_VIEW": {
 		"LINK_COPIED": "הקישור הועתק",

@@ -4329,7 +4329,10 @@
 		"EQUIPMENT_DELETED": "El equipo '{{ name }}' fue removido.",
 		"EQUIPMENT_ADDED": "Equipo añadido",
 		"EQUIPMENT_SAVED": "El equipo '{{ name }}' fue guardado",
-		"CURRENCY": "Moneda"
+		"CURRENCY": "Moneda",
+		"PURCHASE": "Compra",
+		"SHARING": "Préstamo",
+		"UNIT_DAYS": "días"
 	},
 	"EQUIPMENT_VIEW": {
 		"LINK_COPIED": "Enlace copiado",

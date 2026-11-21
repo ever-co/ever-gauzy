@@ -4327,7 +4327,10 @@
 		"EQUIPMENT_DELETED": "L'attrezzatura '{{ name }}' è stata rimossa",
 		"EQUIPMENT_ADDED": "Attrezzatura aggiunta",
 		"EQUIPMENT_SAVED": "L'attrezzatura '{{ name }}' è stata salvata",
-		"CURRENCY": "Valuta"
+		"CURRENCY": "Valuta",
+		"PURCHASE": "Acquisto",
+		"SHARING": "Condivisione",
+		"UNIT_DAYS": "giorni"
 	},
 	"EQUIPMENT_VIEW": {
 		"LINK_COPIED": "Link copiato",

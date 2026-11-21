@@ -4851,7 +4851,10 @@
 		"EQUIPMENT_DELETED": "O equipamento '{{ name }}' foi removido",
 		"EQUIPMENT_ADDED": "Equipamento adicionado",
 		"EQUIPMENT_SAVED": "Equipamento '{{ name }}' foi salvo",
-		"CURRENCY": "Moeda"
+		"CURRENCY": "Moeda",
+		"PURCHASE": "Compra",
+		"SHARING": "Compartilhamento",
+		"UNIT_DAYS": "dias"
 	},
 	"EQUIPMENT_VIEW": {
 		"LINK_COPIED": "Link copiado",

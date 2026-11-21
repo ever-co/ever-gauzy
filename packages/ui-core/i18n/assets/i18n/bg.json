@@ -4385,7 +4385,10 @@
 		"EQUIPMENT_DELETED": "Equipment '{{ name }}' was removed",
 		"EQUIPMENT_ADDED": "Equipment added",
 		"EQUIPMENT_SAVED": "Equipment '{{ name }}' was saved",
-		"CURRENCY": "Валута"
+		"CURRENCY": "Валута",
+		"PURCHASE": "Покупка",
+		"SHARING": "Споделяне",
+		"UNIT_DAYS": "дни"
 	},
 	"EQUIPMENT_VIEW": {
 		"LINK_COPIED": "Връзката е копирана",

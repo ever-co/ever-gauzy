@@ -4325,7 +4325,10 @@
 		"EQUIPMENT_DELETED": "تمت إزالة المعدة '{{ name }}'",
 		"EQUIPMENT_ADDED": "تمت إضافة المعدات",
 		"EQUIPMENT_SAVED": "تم حفظ المعدة '{{ name }}'",
-		"CURRENCY": "العملة"
+		"CURRENCY": "العملة",
+		"PURCHASE": "الشراء",
+		"SHARING": "المشاركة",
+		"UNIT_DAYS": "أيام"
 	},
 	"EQUIPMENT_VIEW": {
 		"LINK_COPIED": "تم نسخ الرابط",

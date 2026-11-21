@@ -4360,7 +4360,10 @@
 		"EQUIPMENT_DELETED": "Снаряжение{{ name }}было снято",
 		"EQUIPMENT_ADDED": "Снаряжение добавлено",
 		"EQUIPMENT_SAVED": "Снаряжение{{ name }}' было сохранено",
-		"CURRENCY": "Валюта"
+		"CURRENCY": "Валюта",
+		"PURCHASE": "Покупка",
+		"SHARING": "Выдача",
+		"UNIT_DAYS": "дн."
 	},
 	"EQUIPMENT_VIEW": {
 		"LINK_COPIED": "Ссылка скопирована",
