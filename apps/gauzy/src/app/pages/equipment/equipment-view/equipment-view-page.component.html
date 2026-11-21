@@ -65,7 +65,7 @@
 				<div class="project-view-header">
 					<span class="project-logo equipment-logo" aria-hidden="true">
 						@if (headline.imageUrl) {
-							<img [src]="headline.imageUrl" alt="" />
+							<img [src]="headline.imageUrl" alt="" (error)="onImageError()" />
 						} @else {
 							<nb-icon icon="cube-outline"></nb-icon>
 						}
@@ -145,7 +145,7 @@
 				</dl>
 			</div>
 
-			<!-- The record: how much it is booked and asked for, who it has been shared with, then its tags. -->
+			<!-- The record: how much it is booked and asked for, then who it has been shared with. -->
 			<div class="project-view-col project-view-col--main">
 				<!-- The days approved sharings cover, month by month, the current month highlighted. -->
 				<section class="panel project-view-panel">
@@ -313,13 +313,47 @@
 						}
 					</div>
 				</section>
-
-				<ngx-record-view [record]="equipment" [sections]="tagSections" [placeholder]="'SM_TABLE.NONE' | translate"></ngx-record-view>
 			</div>
 
-			<!-- The facts: every field of the equipment, how much of the year it has been booked, then its stamps. -->
+			<!-- The facts: its picture, every field of the equipment, its tags, how much of the year it has been booked, then its stamps. -->
 			<div class="project-view-col project-view-col--side">
+				<!-- The equipment's picture at a size that shows what it is; it opens full size in a new tab. -->
+				<section class="panel project-view-panel">
+					<header class="panel-header">
+						<h5 class="panel-title panel-title--icon">
+							<nb-icon icon="image-outline" aria-hidden="true"></nb-icon>
+							{{ 'EQUIPMENT_VIEW.PICTURE' | translate }}
+						</h5>
+						@if (headline.imageUrl) {
+							<a nbButton ghost size="tiny" status="basic" [href]="headline.imageUrl" target="_blank" rel="noopener noreferrer">
+								{{ 'EQUIPMENT_VIEW.OPEN_PICTURE' | translate }}
+								<nb-icon icon="external-link-outline" aria-hidden="true"></nb-icon>
+							</a>
+						}
+					</header>
+					<div class="panel-body panel-body--flush">
+						@if (headline.imageUrl) {
+							<a
+								class="equipment-picture"
+								[href]="headline.imageUrl"
+								target="_blank"
+								rel="noopener noreferrer"
+								[attr.aria-label]="'EQUIPMENT_VIEW.OPEN_PICTURE' | translate"
+							>
+								<img [src]="headline.imageUrl" [alt]="equipment.name" (error)="onImageError()" />
+							</a>
+						} @else {
+							<div class="state state--compact">
+								<nb-icon icon="image-outline" aria-hidden="true"></nb-icon>
+								<p>{{ 'EQUIPMENT_VIEW.NO_PICTURE' | translate }}</p>
+							</div>
+						}
+					</div>
+				</section>
+
 				<ngx-record-view [record]="equipment" [sections]="detailsSections" [placeholder]="'SM_TABLE.NONE' | translate"></ngx-record-view>
+
+				<ngx-record-view [record]="equipment" [sections]="tagSections" [placeholder]="'SM_TABLE.NONE' | translate"></ngx-record-view>
 
 				@if (charts.yearUse) {
 					<section class="panel project-view-panel">

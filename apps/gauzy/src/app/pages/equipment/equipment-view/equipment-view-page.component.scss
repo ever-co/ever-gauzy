@@ -49,6 +49,31 @@
   line-height: 1.5rem;
 }
 
+/* ── Picture ── */
+
+// The whole picture, never cropped, on a neutral backdrop the height of a short panel.
+.equipment-picture {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 14rem;
+  padding: 0.75rem;
+  background-color: var(--gauzy-hover-tint);
+  cursor: zoom-in;
+
+  img {
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 0.25rem;
+    object-fit: contain;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--gauzy-action-info-text);
+    outline-offset: -2px;
+  }
+}
+
 /* ── Charts ── */
 
 // A chart panel's controls on the header's right: the bars / line switch, then the range filter.
@@ -206,7 +231,7 @@
   }
 }
 
-// The panel's link to the sharing page: the arrow after the words.
+// The panel links (to the sharing page, to the full-size picture): the icon after the words.
 .panel-header a[nbButton] nb-icon {
   margin-inline-start: 0.25rem;
 }
