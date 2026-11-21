@@ -4156,7 +4156,10 @@
 		"EQUIPMENT_DELETED": "crwdns8804:0{{ name }}crwdne8804:0",
 		"EQUIPMENT_ADDED": "crwdns3023:0crwdne3023:0",
 		"EQUIPMENT_SAVED": "crwdns8806:0{{ name }}crwdne8806:0",
-		"CURRENCY": "crwdns3792:0crwdne3792:0"
+		"CURRENCY": "crwdns3792:0crwdne3792:0",
+		"PURCHASE": "Purchase",
+		"SHARING": "Sharing",
+		"UNIT_DAYS": "days"
 	},
 	"EQUIPMENT_VIEW": {
 		"LINK_COPIED": "Link copied",
