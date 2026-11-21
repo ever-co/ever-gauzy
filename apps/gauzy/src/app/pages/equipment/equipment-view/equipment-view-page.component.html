@@ -145,8 +145,66 @@
 				</dl>
 			</div>
 
-			<!-- The record: who it has been shared with, then its tags. -->
+			<!-- The record: how much it is booked and asked for, who it has been shared with, then its tags. -->
 			<div class="project-view-col project-view-col--main">
+				<!-- The days approved sharings cover, month by month, the current month highlighted. -->
+				<section class="panel project-view-panel">
+					<header class="panel-header">
+						<div class="panel-heading">
+							<h5 class="panel-title panel-title--icon">
+								<nb-icon icon="calendar-outline" aria-hidden="true"></nb-icon>
+								{{ 'EQUIPMENT_VIEW.BOOKED_DAYS' | translate }}
+							</h5>
+							<span class="panel-caption">{{ 'EQUIPMENT_VIEW.BOOKED_DAYS_CAPTION' | translate : { count: chartMonths } }}</span>
+						</div>
+						@if (sharings.length) {
+							<ng-container *ngTemplateOutlet="chartControls; context: { $implicit: 'booked' }"></ng-container>
+						}
+					</header>
+					<div class="panel-body project-chart-body">
+						@if (sharings.length) {
+							<ga-expense-bar-chart
+								[formatValue]="formatDays"
+								[highlightLabel]="'EQUIPMENT_VIEW.THIS_MONTH' | translate"
+								[otherLabel]="'EXPENSE_VIEW.OTHER_MONTHS' | translate"
+								[kind]="chartKinds.booked"
+								[bars]="charts.bookedBars"
+							></ga-expense-bar-chart>
+						} @else {
+							<ng-container *ngTemplateOutlet="noChartData"></ng-container>
+						}
+					</div>
+				</section>
+
+				<!-- The sharing requests made, month by month, whatever became of them. -->
+				<section class="panel project-view-panel">
+					<header class="panel-header">
+						<div class="panel-heading">
+							<h5 class="panel-title panel-title--icon">
+								<nb-icon icon="inbox-outline" aria-hidden="true"></nb-icon>
+								{{ 'EQUIPMENT_VIEW.REQUESTS' | translate }}
+							</h5>
+							<span class="panel-caption">{{ 'EQUIPMENT_VIEW.REQUESTS_CAPTION' | translate : { count: chartMonths } }}</span>
+						</div>
+						@if (sharings.length) {
+							<ng-container *ngTemplateOutlet="chartControls; context: { $implicit: 'requests' }"></ng-container>
+						}
+					</header>
+					<div class="panel-body project-chart-body">
+						@if (sharings.length) {
+							<ga-expense-bar-chart
+								[formatValue]="formatRequests"
+								[highlightLabel]="'EQUIPMENT_VIEW.THIS_MONTH' | translate"
+								[otherLabel]="'EXPENSE_VIEW.OTHER_MONTHS' | translate"
+								[kind]="chartKinds.requests"
+								[bars]="charts.requestBars"
+							></ga-expense-bar-chart>
+						} @else {
+							<ng-container *ngTemplateOutlet="noChartData"></ng-container>
+						}
+					</div>
+				</section>
+
 				<section class="panel project-view-panel">
 					<header class="panel-header">
 						<div class="panel-heading">
@@ -202,11 +260,76 @@
 				<ngx-record-view [record]="equipment" [sections]="tagSections" [placeholder]="'SM_TABLE.NONE' | translate"></ngx-record-view>
 			</div>
 
-			<!-- The facts: every field of the equipment, then its stamps. -->
+			<!-- The facts: every field of the equipment, how much of the year it has been booked, then its stamps. -->
 			<div class="project-view-col project-view-col--side">
 				<ngx-record-view [record]="equipment" [sections]="detailsSections" [placeholder]="'SM_TABLE.NONE' | translate"></ngx-record-view>
+
+				@if (charts.yearUse) {
+					<section class="panel project-view-panel">
+						<header class="panel-header">
+							<div class="panel-heading">
+								<h5 class="panel-title panel-title--icon">
+									<nb-icon icon="pie-chart-outline" aria-hidden="true"></nb-icon>
+									{{ 'EQUIPMENT_VIEW.YEAR_USE' | translate }}
+								</h5>
+								<span class="panel-caption">{{ 'EQUIPMENT_VIEW.YEAR_USE_CAPTION' | translate : { year: currentYear } }}</span>
+							</div>
+						</header>
+						<div class="panel-body">
+							<ga-expense-share-chart
+								[formatValue]="formatDays"
+								[amountLabel]="'EQUIPMENT_VIEW.BOOKED' | translate"
+								[restLabel]="'EQUIPMENT_VIEW.FREE' | translate"
+								[totalLabel]="'EQUIPMENT_VIEW.DAYS_SO_FAR' | translate"
+								[share]="charts.yearUse"
+							></ga-expense-share-chart>
+						</div>
+					</section>
+				}
+
 				<ngx-record-view [record]="equipment" [sections]="metaSections" [placeholder]="'SM_TABLE.NONE' | translate"></ngx-record-view>
 			</div>
 		</div>
 	}
 </ngx-record-view-page>
+
+<ng-template #noChartData>
+	<div class="state state--compact">
+		<nb-icon icon="bar-chart-outline" aria-hidden="true"></nb-icon>
+		<p>{{ 'EQUIPMENT_VIEW.NO_CHART_DATA' | translate }}</p>
+	</div>
+</ng-template>
+
+<!-- A monthly chart panel's controls: the bars / line switch, then the range, which both monthly charts share. -->
+<ng-template #chartControls let-panel>
+	<div class="equipment-chart-controls">
+		<div class="segmented project-activity-views" role="group" [attr.aria-label]="'INCOME_VIEW.CHART_TYPE' | translate">
+			@for (option of chartKindOptions; track option.kind) {
+				<button
+					type="button"
+					class="segment"
+					[class.is-active]="chartKinds[panel] === option.kind"
+					[attr.aria-pressed]="chartKinds[panel] === option.kind"
+					[nbTooltip]="option.label | translate"
+					nbTooltipPlacement="top"
+					[attr.aria-label]="option.label | translate"
+					(click)="setChartKind(panel, option.kind)"
+				>
+					<nb-icon [icon]="option.icon" aria-hidden="true"></nb-icon>
+				</button>
+			}
+		</div>
+		<nb-select
+			class="equipment-chart-range"
+			size="small"
+			status="basic"
+			[selected]="chartMonths"
+			(selectedChange)="setChartMonths($event)"
+			[attr.aria-label]="'EXPENSE_VIEW.CHART_RANGE' | translate"
+		>
+			@for (months of chartMonthOptions; track months) {
+				<nb-option [value]="months">{{ 'EXPENSE_VIEW.LAST_MONTHS' | translate : { count: months } }}</nb-option>
+			}
+		</nb-select>
+	</div>
+</ng-template>

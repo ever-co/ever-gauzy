@@ -49,6 +49,35 @@
   line-height: 1.5rem;
 }
 
+/* ── Charts ── */
+
+// A chart panel's controls on the header's right: the bars / line switch, then the range filter.
+.equipment-chart-controls {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+// The range filter at the project page's period switcher's size: the global input floor would draw it 46px tall
+// and stretch the panel's header.
+.equipment-chart-range {
+  flex: 0 0 auto;
+  min-width: 9rem;
+
+  // Matched to Nebular's own `nb-select.appearance-outline.size-small` so this rule outranks it.
+  &.appearance-outline.status-basic.size-small ::ng-deep .select-button {
+    min-height: 1.75rem !important;
+    height: 1.75rem;
+    padding: 0 1.75rem 0 0.625rem;
+    font-size: 0.75rem;
+    line-height: 1rem;
+    font-weight: 600;
+  }
+}
+
 /* ── Sharing requests ── */
 
 .equipment-sharing-list {

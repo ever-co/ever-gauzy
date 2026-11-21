@@ -23,7 +23,37 @@ import {
 	recordViewPageStateOf
 } from '@gauzy/ui-core/shared';
 import { formatExpenseMoney } from '../../expenses/expense-record-view';
+import { IExpenseChartBar, IExpenseMonthShare } from '../../expenses/expense-view/expense-view-charts';
+import { ExpenseChartKind } from '../../expenses/expense-view/expense-charts/expense-bar-chart.component';
 import { EQUIPMENT_LIST_LINK, loadEquipment } from '../equipment-record-view';
+import {
+	bookedDayBars,
+	EQUIPMENT_CHART_MONTHS,
+	EQUIPMENT_CHART_MONTH_OPTIONS,
+	requestBars,
+	yearUse
+} from './equipment-view-charts';
+
+/** The chart panels whose drawing can be switched: the days booked, and the requests made. */
+export type EquipmentChartPanel = 'booked' | 'requests';
+
+/** The switch in a chart panel's header: one icon button per way of drawing the figures. */
+export const EQUIPMENT_CHART_KIND_OPTIONS: ReadonlyArray<{ kind: ExpenseChartKind; icon: string; label: string }> = [
+	{ kind: 'bar', icon: 'bar-chart-outline', label: 'INCOME_VIEW.BAR_CHART' },
+	{ kind: 'line', icon: 'activity-outline', label: 'INCOME_VIEW.LINE_CHART' }
+];
+
+/** What the charts draw, worked out from the sharing requests the page read with the equipment. */
+export interface IEquipmentCharts {
+	/** The days booked per month. */
+	bookedBars: IExpenseChartBar[];
+	/** The requests made per month. */
+	requestBars: IExpenseChartBar[];
+	/** The days booked this year against the days it has had. */
+	yearUse: IExpenseMonthShare | null;
+}
+
+const NO_CHARTS: IEquipmentCharts = { bookedBars: [], requestBars: [], yearUse: null };
 
 /** Where the sharing requests are made and approved. */
 export const EQUIPMENT_SHARING_LINK = '/pages/organization/equipment-sharing';
@@ -57,8 +87,9 @@ export interface IEquipmentHeadline {
  *
  * Laid out as the income page: the actions — Edit, Copy link, the star and Delete — beside the back button; the
  * headline — the picture, the name, its type, serial number and tags, then the initial cost, its age, the longest
- * sharing and whether requests are approved by themselves as figures; the wide column — the sharing requests made
- * for it, then its tags; and the side column — every field of the equipment, then its stamps.
+ * sharing and whether requests are approved by themselves as figures; the wide column — the days booked and the
+ * requests made per month as charts, the sharing requests themselves, then its tags; and the side column — every
+ * field of the equipment, the share of this year it has been booked, then its stamps.
  *
  * The page belongs to the organization selected in the header, like the list: equipment of another organization
  * reads "not found", and switching the organization reloads the page, discarding any load in flight.
@@ -103,6 +134,24 @@ export class EquipmentViewPageComponent extends TranslationBaseComponent impleme
 	headline: IEquipmentHeadline = null;
 	/** The sharing requests made for the equipment, the latest first. */
 	sharings: IEquipmentSharingRow[] = [];
+
+	/** The charts, drawn from the sharing requests: no read of their own. */
+	charts: IEquipmentCharts = NO_CHARTS;
+	/** The months the two monthly charts span: their panels' range filter. */
+	chartMonths = EQUIPMENT_CHART_MONTHS;
+	readonly chartMonthOptions = EQUIPMENT_CHART_MONTH_OPTIONS;
+	/** How each chart panel draws its figures: bars or a line, switched in the panel's header. */
+	chartKinds: Record<EquipmentChartPanel, ExpenseChartKind> = { booked: 'bar', requests: 'bar' };
+	readonly chartKindOptions = EQUIPMENT_CHART_KIND_OPTIONS;
+	/** The year the ring is of. */
+	readonly currentYear = new Date().getFullYear();
+	/** The tooltips' and legend's figures: "12 days", "3 requests". */
+	readonly formatDays = (value: number): string =>
+		this.getTranslation(value === 1 ? 'EQUIPMENT_VIEW.ONE_DAY' : 'EQUIPMENT_VIEW.DAYS', { count: value });
+	readonly formatRequests = (value: number): string =>
+		this.getTranslation(value === 1 ? 'EQUIPMENT_VIEW.ONE_REQUEST' : 'EQUIPMENT_VIEW.SHARING_CAPTION', {
+			count: value
+		});
 
 	/** The tags, in the wide column. */
 	tagSections: IRecordViewSection[] = [];
@@ -168,6 +217,7 @@ export class EquipmentViewPageComponent extends TranslationBaseComponent impleme
 		this.equipment = null;
 		this.headline = null;
 		this.sharings = [];
+		this.charts = NO_CHARTS;
 		this.state = 'loading';
 		this.cdr.markForCheck();
 		try {
@@ -243,6 +293,17 @@ export class EquipmentViewPageComponent extends TranslationBaseComponent impleme
 		} catch (error) {
 			this.toastrService.danger(error);
 		}
+	}
+
+	/** Sets the monthly charts' span; the requests already read are drawn again, nothing is read. */
+	setChartMonths(months: number): void {
+		this.chartMonths = months;
+		this.describeCharts();
+	}
+
+	/** Draws a chart panel as bars or as a line; the figures stay as they are. */
+	setChartKind(panel: EquipmentChartPanel, kind: ExpenseChartKind): void {
+		this.chartKinds = { ...this.chartKinds, [panel]: kind };
 	}
 
 	/* ── Reading and describing ── */
@@ -401,6 +462,8 @@ export class EquipmentViewPageComponent extends TranslationBaseComponent impleme
 			}
 		];
 
+		this.describeCharts();
+
 		this.metaSections = [
 			{
 				variant: 'meta',
@@ -410,6 +473,21 @@ export class EquipmentViewPageComponent extends TranslationBaseComponent impleme
 				]
 			}
 		];
+	}
+
+	/** Draws the charts from the sharing requests, the month names in the viewer's language. */
+	private describeCharts(): void {
+		const sharings = this.equipment?.equipmentSharings ?? [];
+		if (!this.equipment) {
+			this.charts = NO_CHARTS;
+			return;
+		}
+		const locale = this.translateService.getCurrentLang() || 'en';
+		this.charts = {
+			bookedBars: bookedDayBars(sharings, this.chartMonths, locale),
+			requestBars: requestBars(sharings, this.chartMonths, locale),
+			yearUse: sharings.length ? yearUse(sharings) : null
+		};
 	}
 
 	/** The organization the page reads in: the one selected in the header. */
