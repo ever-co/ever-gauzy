@@ -1,20 +1,61 @@
+@use 'themes' as *;
+
+// Grid / table switch: one segmented control. A neutral grey track holds two
+// borderless 24px icon buttons; the active layout is the raised segment.
 .layout-switch {
-  display: flex;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 1.75rem;
+  padding: 2px;
+  border-radius: nb-theme(gauzy-toolbar-button-radius);
+  background: nb-theme(gauzy-toolbar-button-background);
 
-  .switch-button {
-    margin: 0px;
+  .switch-button[nbButton] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    min-width: 0;
+    margin: 0 !important;
+    padding: 0;
     border: none;
-    border-width: 0px !important;
+    border-width: 0 !important;
+    // The track's radius minus its 2px inset, so the inner and outer corners
+    // stay concentric.
+    border-radius: calc(#{nb-theme(gauzy-toolbar-button-radius)} - 2px);
+    background: transparent;
+    color: nb-theme(gauzy-toolbar-button-text);
+    box-shadow: none;
+    transition: background-color 0.1s ease-out;
+
+    nb-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.875rem;
+      width: 0.875rem;
+      height: 0.875rem;
+      color: inherit;
+    }
+
+    &:hover {
+      background: nb-theme(gauzy-toolbar-button-hover-background);
+    }
+
+    &:focus {
+      box-shadow: none;
+    }
+
+    &:focus-visible {
+      outline: 2px solid nb-theme(color-primary-default);
+      outline-offset: 1px;
+    }
+
+    &.primary {
+      background: nb-theme(gauzy-toolbar-segment-selected-background);
+      color: nb-theme(text-basic-color);
+    }
   }
-}
-
-[nbButton].primary.size-small.icon-start.icon-end.appearance-filled {
-  box-shadow:  var(--gauzy-shadow) inset;
-  background: rgba(126, 126, 143, 1);
-  color: white;
-}
-
-[nbButton].basic.size-small.icon-start.icon-end.appearance-filled{
-  box-shadow:  var(--gauzy-shadow);
-  background: var(--gauzy-card-2);
 }
