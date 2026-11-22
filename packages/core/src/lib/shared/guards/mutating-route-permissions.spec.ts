@@ -424,6 +424,11 @@ const DELIBERATELY_OPEN: ReadonlyArray<string> = Object.freeze([
 	'FavoriteController.softRecover',
 	'FavoriteController.softRemove',
 	'FavoriteController.update',
+	// InviteController: the caller's own invitations: the service reads the invitation by id AND the caller's own e-mail,
+	// still open and unexpired, before it accepts or refuses anything (invite.service.ts handleInvitationResponse). A role
+	// without ORG_INVITE_EDIT (Manager, Viewer, Candidate) has no other way to accept: an account that already exists
+	// accepts from its own session only (invite-accept.handler.ts requireSessionOfExistingAccount)
+	'InviteController.handleInvitationResponse',
 	// KeyResultUpdateController: user-owned progress updates: the author is stamped from the request; KeyResultUpdateService
 	// refuses to change, withdraw, restore or remove an update somebody else wrote unless the caller is a tenant admin, and
 	// the bulk removal removes the caller's own updates only (keyresult-update.service.ts assertCallerMayChange,

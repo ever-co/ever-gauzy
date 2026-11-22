@@ -791,9 +791,8 @@ describe('InviteResolver — the guard stack and the permissions are the control
 		expect(Reflect.getMetadata('__guards__', InviteResolver)).toEqual([FeatureFlagGuard]);
 	});
 
-	it('states the view permission on the two registers and the edit pair on the writes', () => {
+	it('states the view permission on the register and the edit pair on the writes', () => {
 		expect(permissionOfField('invites')).toEqual([PermissionsEnum.ORG_INVITE_VIEW]);
-		expect(permissionOfField('myInvites')).toEqual([PermissionsEnum.ORG_INVITE_VIEW]);
 		// The send states both, because a send may add people to teams and the second permission is the
 		// one that says so.
 		expect(permissionOfField('sendInvites')).toEqual([
@@ -801,13 +800,20 @@ describe('InviteResolver — the guard stack and the permissions are the control
 			PermissionsEnum.ORG_TEAM_ADD
 		]);
 
-		for (const field of [
-			'resendInvite',
-			'inviteOrganizationContact',
-			'deleteInvite',
-			'handleInvitationResponse'
-		]) {
+		for (const field of ['resendInvite', 'inviteOrganizationContact', 'deleteInvite']) {
 			expect(permissionOfField(field)).toEqual([PermissionsEnum.ORG_INVITE_EDIT]);
+		}
+	});
+
+	it("asks for no permission on a person's own invitations, like their routes", () => {
+		// The service reads only the invitations addressed to the caller's own e-mail, and the roles without the
+		// invite permissions (Manager, Viewer, Candidate) accept from their session too (invite.own-invitations.spec.ts).
+		for (const [field, handler] of [
+			['myInvites', 'getCurrentUserInvites'],
+			['handleInvitationResponse', 'handleInvitationResponse']
+		]) {
+			expect(permissionOfField(field)).toBeUndefined();
+			expect(permissionOfRoute(InviteController, handler)).toBeUndefined();
 		}
 	});
 
