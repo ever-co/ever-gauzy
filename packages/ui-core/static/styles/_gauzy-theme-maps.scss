@@ -312,8 +312,9 @@ $gauzy-action-accents-dark: (
 //   pressed      gauzy-active-tint over the surface
 //   size         gauzy-header-control-height, gauzy-radius-sm
 // Each theme resolves these to its own values. The selected state (an active
-// layout) is a segment filled with `gauzy-active-tint`; an
-// `.action.primary.soft` toggle keeps the primary tint.
+// layout segment, an `.action.primary.soft` toggle) is the primary tint with a
+// primary label, one shade darker on light canvases and lighter on dark ones so
+// it keeps 4.5:1 on the tint.
 //
 // The label colour is the one value split by canvas (below). These labels are
 // 11px text, so they owe 4.5:1 on the surface AND under the hover tint.
@@ -322,9 +323,11 @@ $gauzy-action-accents-dark: (
 //          the hover tint, 4.8:1 on the pressed tint. `gauzy-text-color-2`
 //          (rgb(126, 126, 143) in default / corporate / material-light) is
 //          only ~4:1 on white and ~3.6:1 on hover.
-//   dark   gauzy-text-color-2, the top bar's own text colour; it clears 4.5:1
-//          on the near-black canvases. material-dark's lighter #353535 card
-//          overrides it in `material/_material-dark.scss`.
+//   dark   70 % white: 6.1:1 to 9.4:1 at rest and on hover in every dark
+//          theme. The top bar's `gauzy-text-color-2` (50 % white) is only
+//          ~4:1 to 4.4:1 there (material-dark's #353535 card, cosmic, hover).
+//          It is set here, not in `material/_material-dark.scss`: themes.scss
+//          registers material-dark again with these maps merged on top.
 // Pressed switches to `text-basic-color` in the button rules themselves.
 $gauzy-toolbar: (
   gauzy-toolbar-button-radius: gauzy-radius-sm,
@@ -335,21 +338,22 @@ $gauzy-toolbar: (
   gauzy-toolbar-button-hover-tint: gauzy-hover-tint,
   gauzy-toolbar-button-active-tint: gauzy-active-tint,
   gauzy-toolbar-segment-selected-background: gauzy-active-tint,
-  gauzy-toolbar-button-selected-background: color-primary-transparent-default,
-  gauzy-toolbar-button-selected-text: text-primary-color
+  gauzy-toolbar-button-selected-background: color-primary-transparent-default
 );
 
 $gauzy-toolbar-light: map.merge(
   $gauzy-toolbar,
   (
-    gauzy-toolbar-button-text: rgba(97, 97, 112, 1)
+    gauzy-toolbar-button-text: rgba(97, 97, 112, 1),
+    gauzy-toolbar-button-selected-text: color-primary-600
   )
 );
 
 $gauzy-toolbar-dark: map.merge(
   $gauzy-toolbar,
   (
-    gauzy-toolbar-button-text: gauzy-text-color-2
+    gauzy-toolbar-button-text: rgba(255, 255, 255, 0.7),
+    gauzy-toolbar-button-selected-text: color-primary-300
   )
 );
 

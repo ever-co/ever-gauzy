@@ -2,8 +2,8 @@
 
 // Grid / table switch: one segmented control drawn like the top bar's controls.
 // The track is the card surface with the 1px hairline ring; it holds two
-// borderless 24px icon buttons, and the active layout is the segment filled
-// with the shared active tint.
+// borderless 24px icon buttons, and the active layout is the segment in the
+// primary tint with a primary icon, so it stands apart from the hover tint.
 .layout-switch {
   display: inline-flex;
   align-items: center;
@@ -57,8 +57,8 @@
     }
 
     &.primary {
-      background: var(--gauzy-toolbar-segment-selected-background);
-      color: var(--text-basic-color);
+      background: var(--gauzy-toolbar-button-selected-background);
+      color: var(--gauzy-toolbar-button-selected-text);
     }
   }
 
