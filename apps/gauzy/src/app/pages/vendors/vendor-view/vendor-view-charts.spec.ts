@@ -55,6 +55,34 @@ describe('vendor view charts', () => {
 			expect(bars.map((bar) => bar.value)).toEqual([0, 100.3, 50]);
 		});
 
+		it('keeps negative amounts, so a month matches the summary total', () => {
+			const bars = spendBars(
+				[
+					{ amount: 100, currency: 'USD', valueDate: new Date('2026-11-02T10:00:00') },
+					{ amount: -20, currency: 'USD', valueDate: new Date('2026-11-05T10:00:00') }
+				],
+				'USD',
+				1,
+				'en',
+				today
+			);
+			expect(bars.map((bar) => bar.value)).toEqual([80]);
+		});
+
+		it('counts an amount that is not a number as zero', () => {
+			const bars = spendBars(
+				[
+					{ amount: 'abc' as unknown as number, currency: 'USD', valueDate: new Date('2026-11-02T10:00:00') },
+					{ amount: 30, currency: 'USD', valueDate: new Date('2026-11-05T10:00:00') }
+				],
+				'USD',
+				1,
+				'en',
+				today
+			);
+			expect(bars.map((bar) => bar.value)).toEqual([30]);
+		});
+
 		it('leaves out expenses older than the span', () => {
 			const bars = spendBars(
 				[{ amount: 10, currency: 'USD', valueDate: new Date('2025-01-10T10:00:00') }],

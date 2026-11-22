@@ -9,7 +9,7 @@ export type IVendorChartExpense = Pick<IExpense, 'amount' | 'currency' | 'valueD
 
 function amountOf(expense: IVendorChartExpense): number {
 	const amount = Number(expense?.amount);
-	return Number.isFinite(amount) && amount > 0 ? amount : 0;
+	return Number.isFinite(amount) ? amount : 0;
 }
 
 function round(value: number): number {
