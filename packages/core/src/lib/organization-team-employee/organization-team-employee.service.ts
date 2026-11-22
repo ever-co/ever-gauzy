@@ -6,6 +6,7 @@ import {
 	EntitySubscriptionTypeEnum,
 	ID,
 	IEmployee,
+	IOrganizationTeamEmployee,
 	IOrganizationTeamEmployeeActiveTaskUpdateInput,
 	IOrganizationTeamEmployeeFindInput,
 	IOrganizationTeamEmployeeUpdateInput,
@@ -35,6 +36,12 @@ import {
 	TrackingSwitchRank
 } from '../time-tracking/timer/tracking-switch-rule';
 import { writeUnderTrackingSwitchAsSeen } from '../time-tracking/timer/tracking-switch-as-seen';
+
+/** What names a membership: the employee, the team, its organization and tenant. */
+type ITeamMembershipRef = Pick<
+	IOrganizationTeamEmployee,
+	'employeeId' | 'organizationTeamId' | 'organizationId' | 'tenantId'
+>;
 
 @Injectable()
 export class OrganizationTeamEmployeeService extends TenantAwareCrudService<OrganizationTeamEmployee> {
@@ -545,12 +552,23 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 		const membershipTurnedOff = await this.membershipTrackingTurnsOff(memberId, changes);
 		const result = await this.updateUnderTrackingSwitchAsSeen(memberId, entity, changes);
 		if (membershipTurnedOff) {
-			const { employeeId, organizationId, tenantId, organizationTeamId } = membershipTurnedOff;
+			this.stopRunningTimersInTeam([membershipTurnedOff]);
+		}
+		return result;
+	}
+
+	/**
+	 * Stops the timer each employee still has running for the team of their membership, at this moment, as a stop of
+	 * their own would (see TrackingTurnedOffEvent). A run they have for another team keeps running.
+	 *
+	 * @param memberships The employee, the team, its organization and tenant, of each membership concerned.
+	 */
+	public stopRunningTimersInTeam(memberships: ReadonlyArray<ITeamMembershipRef>): void {
+		for (const { employeeId, organizationId, tenantId, organizationTeamId } of memberships) {
 			this._eventBus.publish(
 				new TrackingTurnedOffEvent({ employeeId, organizationId, tenantId, organizationTeamId })
 			);
 		}
-		return result;
 	}
 
 	/**
