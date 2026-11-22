@@ -85,7 +85,7 @@ export function buildVendorViewSections(
 		{
 			title: 'ORGANIZATIONS_PAGE.VENDOR_VIEW.RECORD',
 			fields: [
-				{ label: 'ORGANIZATIONS_PAGE.VENDOR_VIEW.VENDOR_ID', key: 'id', showWhenEmpty: true },
+				{ label: 'ORGANIZATIONS_PAGE.VENDOR_VIEW.VENDOR_ID', key: 'id', showWhenEmpty: true, copyable: true },
 				{ label: 'SM_TABLE.STATUS', value: vendorStatus(vendor, translate), type: 'status', showWhenEmpty: true },
 				{ label: 'ORGANIZATIONS_PAGE.VENDOR_VIEW.ARCHIVED_AT', key: 'archivedAt', type: 'datetime' }
 			]
