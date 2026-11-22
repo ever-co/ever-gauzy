@@ -2,7 +2,7 @@ import { Component, inject, Input, OnChanges, type SimpleChanges, ChangeDetectio
 import { Router } from '@angular/router';
 import { NbPopoverDirective } from '@nebular/theme';
 import { ISelectedEmployee } from '@gauzy/contracts';
-import { Store } from '@gauzy/ui-core/core';
+import { Store, ToastrService } from '@gauzy/ui-core/core';
 import {
 	IRecordViewField,
 	IRecordViewPerson,
@@ -44,6 +44,7 @@ export class RecordViewComponent implements OnChanges {
 
 	private readonly router = inject(Router);
 	private readonly store = inject(Store);
+	private readonly toastrService = inject(ToastrService);
 	/** The team chip whose member list is open, to close it and give focus back to the chip. */
 	private teamList: { popover: NbPopoverDirective; trigger: HTMLElement } | null = null;
 	/** Numbers each team's member list, so focus goes to the list of the chip that opened it. */
@@ -52,6 +53,15 @@ export class RecordViewComponent implements OnChanges {
 	ngOnChanges(changes: SimpleChanges): void {
 		if (changes['record'] || changes['sections']) {
 			this.resolved = this.build();
+		}
+	}
+
+	async copy(value: unknown): Promise<void> {
+		try {
+			await navigator.clipboard.writeText(String(value));
+			this.toastrService.success('BUTTONS.COPIED');
+		} catch (error) {
+			this.toastrService.danger(error);
 		}
 	}
 
