@@ -8,6 +8,7 @@ import { OrganizationService } from '../../../organization/organization.service'
 import { TypeOrmUserRepository } from '../../../user/repository/type-orm-user.repository';
 import { TypeOrmEmployeeRepository } from '../../../employee/repository/type-orm-employee.repository';
 import { TypeOrmOrganizationTeamEmployeeRepository } from '../../../organization-team-employee/repository/type-orm-organization-team-employee.repository';
+import { UserOrganizationService } from '../../../user-organization/user-organization.services';
 import { createInvitedEmployee } from '../../invited-employee';
 
 /**
@@ -23,7 +24,8 @@ export class InviteAcceptUserHandler implements ICommandHandler<InviteAcceptUser
 		private readonly authService: AuthService,
 		private readonly organizationService: OrganizationService,
 		private readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
-		private readonly typeOrmOrganizationTeamEmployeeRepository: TypeOrmOrganizationTeamEmployeeRepository
+		private readonly typeOrmOrganizationTeamEmployeeRepository: TypeOrmOrganizationTeamEmployeeRepository,
+		private readonly userOrganizationService: UserOrganizationService
 	) {}
 
 	public async execute(command: InviteAcceptUserCommand): Promise<IUser> {
@@ -117,8 +119,24 @@ export class InviteAcceptUserHandler implements ICommandHandler<InviteAcceptUser
 			return;
 		}
 
+		await this.linkToOrganization(invite, user);
 		const employee = await this.findOrCreateEmployee(invite, organization, user);
 		await this.addToTeams(invite, employee, teams);
+	}
+
+	/**
+	 * Links the account to the invitation's organization. A registration made the link already; an existing account of
+	 * another organization of the tenant lacks it, and without it cannot switch to the organization it joins.
+	 *
+	 * @param invite The invitation being accepted.
+	 * @param user The invitee's account.
+	 */
+	private async linkToOrganization(invite: IInvite, user: IUser): Promise<void> {
+		const account = await this.typeOrmUserRepository.findOneOrFail({
+			where: { id: user.id },
+			relations: { role: true }
+		});
+		await this.userOrganizationService.addUserToOrganization(account, invite.organizationId);
 	}
 
 	/**

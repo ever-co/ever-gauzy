@@ -39,13 +39,15 @@ function build(options: {
 	const organizationService = {
 		findOneByIdString: jest.fn(async () => ({ id: ORGANIZATION, tenantId: TENANT, invitesAllowed: true }))
 	};
-	// Any account of the address in the tenant, whatever its role.
+	// By address: any account of the address in the tenant, whatever its role. By id: the account with its role.
 	const userRepository = {
-		findOneOrFail: jest.fn(async () => {
+		findOneOrFail: jest.fn(async ({ where }) => {
+			if (where.id) return { id: where.id, email: invite.email, tenantId: TENANT, role: { name: 'ADMIN' } };
 			if (!options.existingAccount) throw new Error('EntityNotFound');
 			return { id: 'user-ines', email: invite.email, tenantId: TENANT };
 		})
 	};
+	const userOrganizationService = { addUserToOrganization: jest.fn(async () => undefined) };
 	const authService = {
 		register: jest.fn(async () => ({ id: 'user-new', email: invite.email, tenantId: TENANT }))
 	};
@@ -83,13 +85,23 @@ function build(options: {
 		authService as never,
 		organizationService as never,
 		employeeRepository as never,
-		teamEmployeeRepository as never
+		teamEmployeeRepository as never,
+		userOrganizationService as never
 	);
 	const accept = () =>
 		handler.execute(
 			new InviteAcceptUserCommand({ inviteId: invite.id, user: { firstName: 'Ines' } } as never, 'en' as never)
 		);
-	return { accept, inviteService, authService, employeeRepository, teamEmployeeRepository, employees, members };
+	return {
+		accept,
+		inviteService,
+		authService,
+		employeeRepository,
+		teamEmployeeRepository,
+		userOrganizationService,
+		employees,
+		members
+	};
 }
 
 describe('InviteAcceptUserHandler', () => {
@@ -135,7 +147,14 @@ describe('InviteAcceptUserHandler', () => {
 	});
 
 	it('gives an account only for an invitation that names no team, as before', async () => {
-		const { accept, authService, inviteService, employeeRepository, teamEmployeeRepository } = build({ teams: [] });
+		const {
+			accept,
+			authService,
+			inviteService,
+			employeeRepository,
+			teamEmployeeRepository,
+			userOrganizationService
+		} = build({ teams: [] });
 
 		await expect(accept()).resolves.toMatchObject({ id: 'user-new' });
 
@@ -144,6 +163,7 @@ describe('InviteAcceptUserHandler', () => {
 		expect(employeeRepository.findOne).not.toHaveBeenCalled();
 		expect(employeeRepository.save).not.toHaveBeenCalled();
 		expect(teamEmployeeRepository.save).not.toHaveBeenCalled();
+		expect(userOrganizationService.addUserToOrganization).not.toHaveBeenCalled();
 	});
 
 	it('joins the team with the employee an existing account already has in the organization, never a second one', async () => {
@@ -179,6 +199,21 @@ describe('InviteAcceptUserHandler', () => {
 		expect(members).toEqual([
 			expect.objectContaining({ employeeId: 'employee-of-user-ines', organizationTeamId: PLATFORM.id })
 		]);
+	});
+
+	it("links an existing account of another organization to the invitation's, so that it can switch to it", async () => {
+		const { accept, userOrganizationService } = build({
+			teams: [PLATFORM],
+			existingAccount: true,
+			employees: [{ id: 'employee-ines-elsewhere', userId: 'user-ines', organizationId: OTHER_ORGANIZATION }]
+		});
+
+		await accept();
+
+		expect(userOrganizationService.addUserToOrganization).toHaveBeenCalledWith(
+			expect.objectContaining({ id: 'user-ines', role: { name: 'ADMIN' } }),
+			ORGANIZATION
+		);
 	});
 
 	it('never adds a membership the employee already holds', async () => {
