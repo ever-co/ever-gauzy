@@ -38,6 +38,10 @@ const JONAS_ANSWER = '22222222-2222-4222-8222-222222222222';
 const JONAS_WITHDRAWN = '33333333-3333-4333-8333-333333333333';
 const JONAS_ON_FOREIGN_TASK = '44444444-4444-4444-8444-444444444444';
 const JONAS_ON_PROJECT = '55555555-5555-4555-8555-555555555555';
+/** Replies whose parent is named by id, as any comment may name one: on the same task, on another task, on a project. */
+const JONAS_REPLY_ON_TASK = '66666666-6666-4666-8666-666666666666';
+const JONAS_REPLY_TO_FOREIGN_TASK = '77777777-7777-4777-8777-777777777777';
+const LUCIA_PROJECT_REPLY_TO_FOREIGN_TASK = '88888888-8888-4888-8888-888888888888';
 
 const IN_ORGANIZATION = { tenantId: 'tenant-1', organizationId: 'organization-1' };
 
@@ -48,6 +52,7 @@ interface IStoredComment {
 	entity: string;
 	entityId: string;
 	employeeId: string;
+	parentId?: string;
 	deletedAt?: Date;
 }
 
@@ -91,6 +96,7 @@ describe('CommentService — a task’s comments are read by everyone who may re
 	let service: CommentService;
 	let taskService: { findOneByIdString: jest.Mock };
 	let employeeFilterLifted: number;
+	let replies: IStoredComment[];
 	let baseCreate: jest.SpyInstance;
 
 	/** The caller: their own employee, their permissions, and whether they may act for other employees. */
@@ -127,7 +133,7 @@ describe('CommentService — a task’s comments are read by everyone who may re
 	const baseRows = (where: unknown, withDeleted?: unknown): IStoredComment[] => {
 		const alternatives = (Array.isArray(where) ? where : [where ?? {}]) as Record<string, unknown>[];
 		const author = authorScope();
-		return STORED.filter((row) => {
+		return [...STORED, ...replies].filter((row) => {
 			const live = withDeleted === true || !row.deletedAt;
 			const ownedWhenScoped = author === undefined || row.employeeId === author;
 			const meetsCriteria = alternatives.some((alternative) =>
@@ -140,6 +146,15 @@ describe('CommentService — a task’s comments are read by everyone who may re
 	};
 	const idsOf = (rows: Array<{ id?: string }>) => rows.map((row) => row.id);
 
+	/** A row with the relations a read asks for: its `parent`, joined by id whoever wrote it, as a join is. */
+	const withRelations = (row: IStoredComment, relations?: unknown) => {
+		if (!Array.isArray(relations) || !relations.includes('parent')) {
+			return { ...row };
+		}
+		const parent = [...STORED, ...replies].find((stored) => stored.id === row.parentId);
+		return { ...row, parent: parent ? { ...parent } : null };
+	};
+
 	const comment = (overrides: Partial<ICommentCreateInput> = {}): ICommentCreateInput =>
 		({
 			comment: 'The east stairwell exit is missing on the map',
@@ -151,6 +166,7 @@ describe('CommentService — a task’s comments are read by everyone who may re
 
 	beforeEach(() => {
 		employeeFilterLifted = 0;
+		replies = [];
 		taskService = {
 			findOneByIdString: jest.fn(async (id: string) => {
 				if (id !== TASK_ID) {
@@ -185,19 +201,24 @@ describe('CommentService — a task’s comments are read by everyone who may re
 			}),
 			withoutOrganizationBoundary: jest.fn((read: () => Promise<unknown>) => read()),
 			findOneByIdString: jest.fn(
-				async (id: string, options?: { where?: Record<string, unknown>; withDeleted?: boolean }) => {
+				async (
+					id: string,
+					options?: { where?: Record<string, unknown>; withDeleted?: boolean; relations?: string[] }
+				) => {
 					const [row] = baseRows({ ...(options?.where ?? {}), id }, options?.withDeleted);
 					if (!row) {
 						throw new NotFoundException('The requested record was not found');
 					}
-					return { ...row };
+					return withRelations(row, options?.relations);
 				}
 			),
 			findOneByWhereOptions: jest.fn(async (where: Record<string, unknown>) => baseRows(where)[0] ?? null)
 		});
 
 		jest.spyOn(TenantAwareCrudService.prototype, 'findAll').mockImplementation(async (filter) => {
-			const items = baseRows(filter?.where, filter?.withDeleted);
+			const items = baseRows(filter?.where, filter?.withDeleted).map((row) =>
+				withRelations(row, filter?.relations)
+			);
 			return { items, total: items.length } as never;
 		});
 		jest.spyOn(TenantAwareCrudService.prototype, 'paginate').mockImplementation(async (filter) => {
@@ -262,6 +283,72 @@ describe('CommentService — a task’s comments are read by everyone who may re
 			await expect(
 				service.findReadableById(JONAS_WITHDRAWN, { withDeleted: true } as never)
 			).rejects.toBeInstanceOf(NotFoundException);
+		});
+	});
+
+	describe('comments a read loads beside a task’s comments', () => {
+		beforeEach(() => {
+			replies = [
+				{
+					...IN_ORGANIZATION,
+					id: JONAS_REPLY_ON_TASK,
+					entity: TASK,
+					entityId: TASK_ID,
+					employeeId: JONAS,
+					parentId: LUCIA_COMMENT
+				},
+				{
+					...IN_ORGANIZATION,
+					id: JONAS_REPLY_TO_FOREIGN_TASK,
+					entity: TASK,
+					entityId: TASK_ID,
+					employeeId: JONAS,
+					parentId: JONAS_ON_FOREIGN_TASK
+				},
+				{
+					...IN_ORGANIZATION,
+					id: LUCIA_PROJECT_REPLY_TO_FOREIGN_TASK,
+					entity: PROJECT,
+					entityId: PROJECT_ID,
+					employeeId: LUCIA,
+					parentId: JONAS_ON_FOREIGN_TASK
+				}
+			];
+		});
+
+		const parentOf = (items: Array<{ id?: string; parent?: { id?: string } | null }>, id: string) =>
+			items.find((item) => item.id === id)?.parent;
+
+		it('keeps a parent on the task the member reads, and leaves out one on a task she may not read', async () => {
+			asLucia();
+
+			const list = await service.findAll({ where: ofTask(), relations: ['parent'] } as never);
+
+			expect(parentOf(list.items, JONAS_REPLY_ON_TASK)).toEqual(expect.objectContaining({ id: LUCIA_COMMENT }));
+			expect(parentOf(list.items, JONAS_REPLY_TO_FOREIGN_TASK)).toBeNull();
+		});
+
+		it('leaves it out of the answer read by id too', async () => {
+			asLucia();
+
+			const reply = await service.findReadableById(JONAS_REPLY_TO_FOREIGN_TASK, {
+				relations: ['parent']
+			} as never);
+
+			expect(reply.parent).toBeNull();
+		});
+
+		it('keeps the relations of a read that names no task as they were', async () => {
+			asLucia();
+
+			const list = await service.findAll({
+				where: { entity: PROJECT, entityId: PROJECT_ID },
+				relations: ['parent']
+			} as never);
+
+			expect(parentOf(list.items, LUCIA_PROJECT_REPLY_TO_FOREIGN_TASK)).toEqual(
+				expect.objectContaining({ id: JONAS_ON_FOREIGN_TASK })
+			);
 		});
 	});
 

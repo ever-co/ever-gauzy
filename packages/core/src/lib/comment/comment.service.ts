@@ -332,7 +332,7 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 		if (!stored) {
 			const acrossAuthors = await this.isOpenedToCaller(id, options);
 			const comment = await this.readAcrossAuthorsWhen(acrossAuthors, () => this.findOneByIdString(id, pinned));
-			return this.withReadableRelatedComments(comment);
+			return this.withReadableRelatedComments(comment, [], acrossAuthors);
 		}
 
 		await this._parentAccess.assertMay('read', stored.entity, stored.entityId);
@@ -704,7 +704,7 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 		if (!scope.onlyGovernedParents) {
 			const acrossAuthors = await this.readsOnlyRecordsOpenedToCaller(where, options);
 			const result = await this.readAcrossAuthorsWhen(acrossAuthors, () => read(scope.where));
-			return this.withReadableRelatedComments(result, scope.parents);
+			return this.withReadableRelatedComments(result, scope.parents, acrossAuthors);
 		}
 		if (keptToAuthor) {
 			assertReadsCommentsOnly(scope.where, options);
@@ -723,17 +723,25 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 	 * the caller read its comments, and, when it is withdrawn, only for its author or a caller who may write them. A
 	 * related comment loaded without its record type cannot be told apart, so only an id-only stub of one is kept.
 	 *
+	 * A read answered across authors because it names records whose comments are opened to their readers (a task's)
+	 * also keeps a related comment of such a record only for a caller who may read that record: a thread can cross
+	 * records there, and the read must not carry another task's comments to a caller who may not read that task.
+	 *
 	 * @param result - The read's result: a page, a list, a comment, or a count, which is returned as it is.
 	 * @param readable - Governed records the read has already checked.
+	 * @param opened - Whether the read was answered across authors as a read of records opened to the caller.
 	 */
 	private async withReadableRelatedComments<R>(
 		result: R,
-		readable: ReadonlyArray<ICommentParentRef> = []
+		readable: ReadonlyArray<ICommentParentRef> = [],
+		opened = false
 	): Promise<R> {
-		if (!this.mayCarryGovernedComments(result)) {
+		const isRecordResult = result !== null && typeof result === 'object';
+		const mayCarryOpenedComments = opened && isRecordResult;
+		if (!this.mayCarryGovernedComments(result) && !mayCarryOpenedComments) {
 			return result;
 		}
-		return withoutUnreadableRelatedComments(result, this.relatedCommentReadable(readable));
+		return withoutUnreadableRelatedComments(result, this.relatedCommentReadable(readable, opened));
 	}
 
 	/**
@@ -770,8 +778,10 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 	 * row is read.
 	 *
 	 * @param readable - Governed records the read has already checked.
+	 * @param opened - Whether a comment of a record opened to its readers is checked too (see
+	 * {@link withReadableRelatedComments}).
 	 */
-	private relatedCommentReadable(readable: ReadonlyArray<ICommentParentRef> = []): IsCommentReadable {
+	private relatedCommentReadable(readable: ReadonlyArray<ICommentParentRef> = [], opened = false): IsCommentReadable {
 		const rows = new Map<string, Promise<Comment | undefined>>();
 		const storedRow = (id: unknown): Promise<Comment | undefined> => {
 			if (typeof id !== 'string' || !isUUID(id)) {
@@ -803,10 +813,14 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 			}
 			return verdicts.get(key);
 		};
+		const mayReadOpenedComment = this.openedCommentReadable(storedRow);
 
 		return async (comment) => {
 			if (typeof comment.entity !== 'string') {
 				return Object.keys(comment).every((key) => key === 'id');
+			}
+			if (opened && this._parentAccess.openedTypeOf(comment.entity)) {
+				return mayReadOpenedComment(comment.id);
 			}
 			if (!this._parentAccess.governedTypeOf(comment.entity)) {
 				return true;
@@ -830,6 +844,37 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 				this.isCallerAuthorOf(stored) ||
 				(await this.mayReadWithdrawnOf([{ entity: type, entityId: stored.entityId }]))
 			);
+		};
+	}
+
+	/**
+	 * Whether the caller may read a related comment of a record whose comments are opened to its readers: its record,
+	 * read from its stored row, is one the caller may read (each record checked once), and a withdrawn one is the
+	 * caller's own, as withdrawn comments stay their author's.
+	 *
+	 * @param storedRow - The stored comment by its id, as the read's other checks read it.
+	 */
+	private openedCommentReadable(
+		storedRow: (id: unknown) => Promise<Comment | undefined>
+	): (id: unknown) => Promise<boolean> {
+		const verdicts = new Map<string, Promise<boolean>>();
+		const mayReadRecord = (type: string, entityId: ID): Promise<boolean> => {
+			const key = `${type}:${entityId}`;
+			if (!verdicts.has(key)) {
+				verdicts.set(key, this._parentAccess.mayReadEveryAuthorOf([{ entity: type, entityId }]));
+			}
+			return verdicts.get(key);
+		};
+
+		return async (id) => {
+			const stored = await storedRow(id);
+			const type = this._parentAccess.openedTypeOf(stored?.entity);
+			if (!type) {
+				return false;
+			}
+			const readableWhenWithdrawn = !stored.deletedAt || this.isCallerAuthorOf(stored);
+			const mayReadItsRecord = await mayReadRecord(type, stored.entityId);
+			return mayReadItsRecord && readableWhenWithdrawn;
 		};
 	}
 
