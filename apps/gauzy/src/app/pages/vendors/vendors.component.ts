@@ -1,4 +1,13 @@
-import { Component, OnInit, OnDestroy, TemplateRef, ViewChild, ChangeDetectionStrategy } from '@angular/core';
+import {
+	Component,
+	OnInit,
+	OnDestroy,
+	TemplateRef,
+	ViewChild,
+	ChangeDetectionStrategy,
+	Injector,
+	inject
+} from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
@@ -31,9 +40,11 @@ import {
 	EmailComponent,
 	ExternalLinkComponent,
 	IPaginationBase,
+	IRecordViewSection,
 	PaginationFilterBaseComponent,
 	TagsOnlyComponent
 } from '@gauzy/ui-core/shared';
+import { IVendorRecord, buildVendorViewSections, loadVendorExpenseSummary } from './vendor-record-view';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -63,6 +74,10 @@ export class VendorsComponent extends PaginationFilterBaseComponent implements O
 	public loading: boolean = false;
 	private _refresh$: Subject<any> = new Subject();
 	public favoriteVendors: IFavorite[] = [];
+
+	public viewedVendor: IVendorRecord;
+	public viewSections: IRecordViewSection[] = [];
+	private readonly injector = inject(Injector);
 
 	/*
 	 * Vendor Mutation Form
@@ -152,6 +167,7 @@ export class VendorsComponent extends PaginationFilterBaseComponent implements O
 				tap(() => this.refreshPagination()),
 				// Set the vendors array to an empty array
 				tap(() => (this.vendors = [])),
+				tap(() => this.closeView()),
 				// Unsubscribe when the component is destroyed
 				untilDestroyed(this)
 			)
@@ -498,6 +514,30 @@ export class VendorsComponent extends PaginationFilterBaseComponent implements O
 		this.selected.state = res.state;
 		this.selected.vendor = vendor;
 		this.selectedVendor = this.selected.vendor;
+	}
+
+	async openView(vendor: IOrganizationVendor = this.selectedVendor): Promise<void> {
+		if (!vendor) {
+			return;
+		}
+		this.showInView(vendor);
+
+		const expenseSummary = await loadVendorExpenseSummary(this.injector, vendor.id, {
+			organizationId: this.organization?.id,
+			tenantId: this.store.user?.tenantId
+		});
+		if (this.viewedVendor?.id === vendor.id) {
+			this.showInView({ ...vendor, expenseSummary });
+		}
+	}
+
+	private showInView(vendor: IVendorRecord): void {
+		this.viewSections = buildVendorViewSections(vendor, (key) => this.getTranslation(key));
+		this.viewedVendor = vendor;
+	}
+
+	closeView(): void {
+		this.viewedVendor = null;
 	}
 
 	/**
