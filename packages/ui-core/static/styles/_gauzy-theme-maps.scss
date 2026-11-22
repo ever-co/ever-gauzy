@@ -323,7 +323,8 @@ $gauzy-action-accents-dark: (
 //          (rgb(126, 126, 143) in default / corporate / material-light) is
 //          only ~4:1 on white and ~3.6:1 on hover.
 //   dark   gauzy-text-color-2, the top bar's own text colour; it clears 4.5:1
-//          on the dark canvases.
+//          on the near-black canvases. material-dark's lighter #353535 card
+//          overrides it in `material/_material-dark.scss`.
 // Pressed switches to `text-basic-color` in the button rules themselves.
 $gauzy-toolbar: (
   gauzy-toolbar-button-radius: gauzy-radius-sm,

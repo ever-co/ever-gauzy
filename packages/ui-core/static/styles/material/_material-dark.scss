@@ -497,8 +497,15 @@ $theme: (
   option-giant-text-font-weight: material-regular-font-weight
 );
 
+// Toolbar button labels are 11px text. The shared dark value (`gauzy-text-color-2`,
+// 50 % white) is only ~4.4:1 on this theme's lighter #353535 card and ~4:1 under
+// the hover tint; 70 % white is ~6.9:1 at rest and ~6.2:1 on hover.
+$material-dark-overrides: (
+	gauzy-toolbar-button-text: rgba(255, 255, 255, 0.7)
+);
+
 $nb-themes: nb-register-theme(
-	map.merge(map.merge($theme, gz.$gauzy-canvas-dark), gz.$gauzy-shared-dark),
+	map.merge(map.merge(map.merge($theme, gz.$gauzy-canvas-dark), gz.$gauzy-shared-dark), $material-dark-overrides),
 	material-dark,
 	dark
 );
