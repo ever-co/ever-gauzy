@@ -169,14 +169,10 @@ export async function loadVendorExpenses(
 	if (!canViewExpenses) {
 		return null;
 	}
-	try {
-		const { items } = await injector
-			.get(ExpensesService)
-			.getAll(relations, { vendorId, organizationId: scope.organizationId, tenantId: scope.tenantId });
-		return items ?? [];
-	} catch {
-		return null;
-	}
+	const { items } = await injector
+		.get(ExpensesService)
+		.getAll(relations, { vendorId, organizationId: scope.organizationId, tenantId: scope.tenantId });
+	return items ?? [];
 }
 
 export async function loadVendorExpenseSummary(
@@ -184,6 +180,10 @@ export async function loadVendorExpenseSummary(
 	vendorId: string,
 	scope: IRecordViewScope
 ): Promise<IVendorExpenseSummary | null> {
-	const expenses = await loadVendorExpenses(injector, vendorId, scope);
-	return expenses ? summarizeVendorExpenses(expenses) : null;
+	try {
+		const expenses = await loadVendorExpenses(injector, vendorId, scope);
+		return expenses ? summarizeVendorExpenses(expenses) : null;
+	} catch {
+		return null;
+	}
 }
