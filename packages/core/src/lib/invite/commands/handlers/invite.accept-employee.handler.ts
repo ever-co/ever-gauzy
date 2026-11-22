@@ -31,6 +31,7 @@ import { TypeOrmOrganizationProjectRepository } from '../../../organization-proj
 import { TypeOrmOrganizationTeamRepository } from '../../../organization-team/repository/type-orm-organization-team.repository';
 import { TypeOrmUserRepository } from '../../../user/repository/type-orm-user.repository';
 import { EmployeePlaceholderTransferService } from '../../../employee-placeholder/employee-placeholder-transfer.service';
+import { UserOrganizationService } from '../../../user-organization/user-organization.services';
 
 /**
  * Use this command for registering employees.
@@ -54,6 +55,18 @@ async function triedAgain<T>(write: () => Promise<T>, times = 3): Promise<T> {
 	}
 }
 
+/** Whether an account may still sign in: neither deactivated nor archived. */
+function isActiveAccount(account: IUser): boolean {
+	const deactivated = account.isActive === false;
+	const archived = account.isArchived === true;
+	return !deactivated && !archived;
+}
+
+/** Orders accounts from the most recently created. */
+function newestFirst(first: IUser, second: IUser): number {
+	return new Date(second.createdAt).getTime() - new Date(first.createdAt).getTime();
+}
+
 @CommandHandler(InviteAcceptEmployeeCommand)
 export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAcceptEmployeeCommand> {
 	constructor(
@@ -65,7 +78,8 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 		private readonly typeOrmOrganizationContactRepository: TypeOrmOrganizationContactRepository,
 		private readonly typeOrmOrganizationDepartmentRepository: TypeOrmOrganizationDepartmentRepository,
 		private readonly typeOrmOrganizationTeamRepository: TypeOrmOrganizationTeamRepository,
-		private readonly placeholderTransferService: EmployeePlaceholderTransferService
+		private readonly placeholderTransferService: EmployeePlaceholderTransferService,
+		private readonly userOrganizationService: UserOrganizationService
 	) {}
 
 	/**
@@ -120,11 +134,7 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 					// Implementation to find an employee by user ID
 					employee = await this.findEmployee(user.id);
 				} catch (error) {
-					// New user registers before accepting the invitation
-					user = await this.registerNewUser(input, invite, languageCode);
-
-					// Create employee after creating user
-					employee = await this.createEmployee(invite, user);
+					({ user, employee } = await this.joinOrRegister(input, invite, languageCode));
 				}
 			}
 
@@ -213,6 +223,78 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 		return await this.typeOrmUserRepository.find({
 			where: { tenantId, email: Raw((column) => `LOWER(${column}) = :email`, { email }) }
 		});
+	}
+
+	/**
+	 * The account and employee of an ordinary invitation whose address has no Employee account with an employee. The
+	 * address's account in the tenant joins, whatever its role, with its employee in the invitation's organization or a
+	 * new one there: one address keeps one account (ever-co/ever-gauzy#12143), and the account keeps its role. An
+	 * address without an active account registers one, as before.
+	 *
+	 * @param input The user registration input and app integration config.
+	 * @param invite The invitation being accepted.
+	 * @param languageCode The language code for localization.
+	 * @returns The account and its employee in the invitation's organization.
+	 */
+	private async joinOrRegister(
+		input: IUserRegistrationInput & Partial<IAppIntegrationConfig>,
+		invite: IInvite,
+		languageCode: LanguagesEnum
+	): Promise<{ user: IUser; employee: IEmployee }> {
+		const account = await this.findActiveAccount(invite);
+		if (!account) {
+			const user = await this.registerNewUser(input, invite, languageCode);
+			const employee = await this.createEmployee(invite, user);
+			return { user, employee };
+		}
+
+		// An account of another organization of the tenant needs the link to switch to the one it joins.
+		await this.userOrganizationService.addUserToOrganization(account, invite.organizationId);
+		const employee = await this.findOrCreateEmployeeInOrganization(invite, account);
+		return { user: account, employee };
+	}
+
+	/**
+	 * The newest active account of the invited email in the invitation's tenant, whatever its role, with its role.
+	 * A deactivated or archived account is left as it is.
+	 *
+	 * @param invite The invitation being accepted.
+	 * @returns The account, or null when the email has no active account there.
+	 */
+	private async findActiveAccount(invite: IInvite): Promise<IUser | null> {
+		const accounts = await this.accountsOf(invite);
+		const active = accounts.filter(isActiveAccount);
+		if (active.length === 0) {
+			return null;
+		}
+
+		const [newest] = [...active].sort(newestFirst);
+		return await this.typeOrmUserRepository.findOne({
+			where: { id: newest.id },
+			relations: { role: true }
+		});
+	}
+
+	/**
+	 * The account's employee in the invitation's organization, or a new one there.
+	 *
+	 * @param invite The invitation being accepted.
+	 * @param account The invitee's account.
+	 * @returns The employee.
+	 */
+	private async findOrCreateEmployeeInOrganization(invite: IInvite, account: IUser): Promise<IEmployee> {
+		const existing = await this.typeOrmEmployeeRepository.findOne({
+			where: {
+				userId: account.id,
+				organizationId: invite.organizationId,
+				tenantId: invite.tenantId
+			}
+		});
+		if (existing) {
+			return existing;
+		}
+
+		return await this.createEmployee(invite, account);
 	}
 
 	/**
