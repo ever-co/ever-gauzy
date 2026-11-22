@@ -308,24 +308,30 @@ $gauzy-action-accents-dark: (
 // colour per button. The radius is the design system's small-control radius
 // (`gauzy-radius-sm`). The selected state (an active layout) borrows the theme's
 // primary so it follows all eight themes.
+//
+// Every fill is the project's own neutral grey, rgba(126, 126, 143) — the hue
+// behind `gauzy-hover-tint`, `gauzy-active-tint`, the overlay hairline and the
+// scrollbars — at rising alpha; hover is exactly `gauzy-active-tint`. The light
+// text is the grey `gauzy-chart-label` already uses for small text (6.08:1 on
+// white); the dark text is the dark canvas's white at 80 %.
 $gauzy-toolbar-light: (
   gauzy-toolbar-button-radius: gauzy-radius-sm,
-  gauzy-toolbar-button-background: rgba(9, 30, 66, 0.06),
-  gauzy-toolbar-button-hover-background: rgba(9, 30, 66, 0.14),
-  gauzy-toolbar-button-active-background: rgba(9, 30, 66, 0.31),
-  gauzy-toolbar-button-text: #44546f,
-  gauzy-toolbar-segment-selected-background: #ffffff,
+  gauzy-toolbar-button-background: rgba(126, 126, 143, 0.1),
+  gauzy-toolbar-button-hover-background: gauzy-active-tint,
+  gauzy-toolbar-button-active-background: rgba(126, 126, 143, 0.28),
+  gauzy-toolbar-button-text: rgba(97, 97, 112, 1),
+  gauzy-toolbar-segment-selected-background: gauzy-card-1,
   gauzy-toolbar-button-selected-background: color-primary-transparent-default,
   gauzy-toolbar-button-selected-text: text-primary-color
 );
 
 $gauzy-toolbar-dark: (
   gauzy-toolbar-button-radius: gauzy-radius-sm,
-  gauzy-toolbar-button-background: rgba(161, 189, 217, 0.08),
-  gauzy-toolbar-button-hover-background: rgba(166, 197, 226, 0.16),
-  gauzy-toolbar-button-active-background: rgba(191, 219, 248, 0.28),
-  gauzy-toolbar-button-text: #9fadbc,
-  gauzy-toolbar-segment-selected-background: rgba(191, 219, 248, 0.2),
+  gauzy-toolbar-button-background: rgba(126, 126, 143, 0.14),
+  gauzy-toolbar-button-hover-background: rgba(126, 126, 143, 0.24),
+  gauzy-toolbar-button-active-background: rgba(126, 126, 143, 0.32),
+  gauzy-toolbar-button-text: rgba(255, 255, 255, 0.8),
+  gauzy-toolbar-segment-selected-background: rgba(126, 126, 143, 0.4),
   gauzy-toolbar-button-selected-background: color-primary-transparent-default,
   gauzy-toolbar-button-selected-text: text-primary-color
 );
