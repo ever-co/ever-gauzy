@@ -29,7 +29,6 @@ const TASK_ID = '2b3c4d5e-6f70-4812-9a3b-4c5d6e7f8091';
 /** A task the caller does not reach: another organization's, or one that does not exist. */
 const FOREIGN_TASK_ID = '3c4d5e6f-7081-4923-8b4c-5d6e7f809102';
 const PROJECT_ID = '0f1e2d3c-4b5a-4968-8776-655443322110';
-const CONTACT_ID = '6d7c4a3e-1b2f-4c5d-8e9f-0a1b2c3d4e5f';
 
 const LUCIA = 'employee-lucia';
 const JONAS = 'employee-jonas';
