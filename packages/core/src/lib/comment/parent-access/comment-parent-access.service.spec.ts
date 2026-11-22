@@ -353,4 +353,14 @@ describe('CommentParentAccessService rule that opens a record’s comments to it
 		);
 		expect(policy.findAccessibleParent).not.toHaveBeenCalled();
 	});
+
+	it('names the opened record type in any spelling, and no other type', () => {
+		const { service } = registered();
+
+		expect(service.openedTypeOf(BaseEntityEnum.Task)).toBe(BaseEntityEnum.Task);
+		expect(service.openedTypeOf('task')).toBe(BaseEntityEnum.Task);
+		expect(service.openedTypeOf(BaseEntityEnum.OrganizationContact)).toBeUndefined();
+		expect(service.openedTypeOf(BaseEntityEnum.OrganizationProject)).toBeUndefined();
+		expect(service.openedTypeOf(undefined)).toBeUndefined();
+	});
 });

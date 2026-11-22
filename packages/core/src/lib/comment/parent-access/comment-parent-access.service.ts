@@ -81,6 +81,22 @@ export class CommentParentAccessService implements OnModuleInit {
 	}
 
 	/**
+	 * The record type, as its rule spells it, whose comments a rule opens to the record's readers and that `entity`
+	 * names in any spelling (see {@link isSpellingOfRecordType}); `undefined` when it names none.
+	 */
+	openedTypeOf(entity: unknown): BaseEntityEnum | undefined {
+		if (typeof entity !== 'string') {
+			return undefined;
+		}
+		for (const type of this.readersPolicies.keys()) {
+			if (isSpellingOfRecordType(entity, type)) {
+				return type as BaseEntityEnum;
+			}
+		}
+		return undefined;
+	}
+
+	/**
 	 * Whether the caller reads every author's comments of each record `records` names: its record type has a rule
 	 * that opens them to the record's readers (see ICommentParentReadersPolicy), the caller holds one of that rule's
 	 * read permissions, and its read finds the record. `false` when `records` is empty. A read that fails throws.
