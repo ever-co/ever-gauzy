@@ -1,15 +1,18 @@
 @use 'themes' as *;
 
-// Grid / table switch: one segmented control. A neutral grey track holds two
-// borderless 24px icon buttons; the active layout is the raised segment.
+// Grid / table switch: one segmented control drawn like the top bar's controls.
+// The track is the card surface with the 1px hairline ring; it holds two
+// borderless 24px icon buttons, and the active layout is the segment filled
+// with the shared active tint.
 .layout-switch {
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  height: 1.75rem;
+  height: nb-theme(gauzy-toolbar-button-height);
   padding: 2px;
   border-radius: nb-theme(gauzy-toolbar-button-radius);
   background: nb-theme(gauzy-toolbar-button-background);
+  box-shadow: inset 0 0 0 1px nb-theme(gauzy-toolbar-button-border);
 
   .switch-button[nbButton] {
     display: inline-flex;
@@ -28,7 +31,7 @@
     background: transparent;
     color: nb-theme(gauzy-toolbar-button-text);
     box-shadow: none;
-    transition: background-color 0.1s ease-out;
+    transition: background-color 0.15s ease;
 
     nb-icon {
       display: inline-flex;
@@ -41,7 +44,7 @@
     }
 
     &:hover {
-      background: nb-theme(gauzy-toolbar-button-hover-background);
+      background: nb-theme(gauzy-toolbar-button-hover-tint);
     }
 
     &:focus {

@@ -1317,11 +1317,11 @@ nb-card-header.ga-page-header {
         margin-bottom: 0;
       }
 
-      // The label text matches the toolbar buttons beside it: same size, same
-      // medium weight instead of Nebular's bold.
+      // The label text matches the toolbar buttons beside it and the top bar:
+      // same size, regular weight instead of Nebular's bold.
       .text {
-        font-size: 0.6875rem;
-        font-weight: 500;
+        font-size: var(--gauzy-header-text-size, 0.6875rem);
+        font-weight: 400;
         line-height: 1rem;
       }
     }

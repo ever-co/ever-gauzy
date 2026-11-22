@@ -7,12 +7,14 @@
 // An inset ring is a border that costs no layout box, so no button moves.
 $action-hairline: inset 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
 
-// Flat toolbar buttons: a neutral grey fill with no border or ring, one subdued
-// text colour, 28px tall, the design system's small radius. The fill steps darker on hover and
-// press. Every modifier (`.primary`, `.success`, `.warning`, `.info` …) is kept
-// so no template has to change, but they all draw the same neutral button: the
-// icon and the label say which action it is. Colours are the
-// `gauzy-toolbar-button-*` tokens in `_gauzy-theme-maps.scss`.
+// Toolbar buttons drawn like the top bar's controls (date-range picker,
+// selectors): the card surface, a 1px hairline ring, the top bar's text colour
+// and size, 28px tall, the design system's small radius. Hover lays the shared
+// hover tint over the surface and darkens the ring; press lays the active tint.
+// Every modifier (`.primary`, `.success`, `.warning`, `.info` …) is kept so no
+// template has to change, but they all draw the same neutral button: the icon
+// and the label say which action it is. Colours are the `gauzy-toolbar-button-*`
+// tokens in `_gauzy-theme-maps.scss`, all aliases of the top bar's tokens.
 .action {
   box-shadow: none;
   border: none;
@@ -24,19 +26,22 @@ $action-hairline: inset 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 12
     align-items: center;
     justify-content: center;
     gap: 0.375rem;
-    height: 1.75rem;
+    height: nb-theme(gauzy-toolbar-button-height);
     padding: 0 0.625rem;
     border: none;
     border-radius: nb-theme(gauzy-toolbar-button-radius);
     background-color: nb-theme(gauzy-toolbar-button-background);
+    background-image: none;
+    box-shadow: inset 0 0 0 1px nb-theme(gauzy-toolbar-button-border);
     color: nb-theme(gauzy-toolbar-button-text);
-    font-size: 0.6875rem;
-    font-weight: 500;
+    font-size: nb-theme(gauzy-header-text-size);
+    font-weight: 400;
     line-height: 1rem;
     white-space: nowrap;
     text-transform: none;
-    box-shadow: none;
-    transition: background-color 0.1s ease-out;
+    transition:
+      background-color 0.15s ease,
+      box-shadow 0.15s ease;
 
     nb-icon {
       // The icon carries the text colour unless the template gives it a status
@@ -56,17 +61,27 @@ $action-hairline: inset 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 12
       margin: 0 !important;
     }
 
+    // A tint is laid OVER the surface as an image, as the top bar's selectors
+    // do, so the surface colour underneath never changes.
     &:hover {
-      background-color: nb-theme(gauzy-toolbar-button-hover-background);
+      background-color: nb-theme(gauzy-toolbar-button-background);
+      background-image: linear-gradient(
+        nb-theme(gauzy-toolbar-button-hover-tint),
+        nb-theme(gauzy-toolbar-button-hover-tint)
+      );
+      box-shadow: inset 0 0 0 1px nb-theme(gauzy-toolbar-button-hover-border);
       color: nb-theme(gauzy-toolbar-button-text);
     }
 
     &:active {
-      background-color: nb-theme(gauzy-toolbar-button-active-background);
+      background-image: linear-gradient(
+        nb-theme(gauzy-toolbar-button-active-tint),
+        nb-theme(gauzy-toolbar-button-active-tint)
+      );
     }
 
     &:focus {
-      box-shadow: none;
+      box-shadow: inset 0 0 0 1px nb-theme(gauzy-toolbar-button-hover-border);
     }
 
     &:focus-visible {
@@ -77,6 +92,8 @@ $action-hairline: inset 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 12
     &[disabled],
     &.btn-disabled {
       background-color: nb-theme(gauzy-toolbar-button-background);
+      background-image: none;
+      box-shadow: inset 0 0 0 1px nb-theme(gauzy-toolbar-button-border);
       color: nb-theme(gauzy-toolbar-button-text);
       opacity: 0.5;
       cursor: not-allowed;
