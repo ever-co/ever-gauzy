@@ -1,20 +1,76 @@
+@use 'themes' as *;
+
+// Grid / table switch: one segmented control drawn like the top bar's controls.
+// The track is the card surface with the 1px hairline ring; it holds two
+// borderless 24px icon buttons, and the active layout is the segment in the
+// primary tint with a primary icon, so it stands apart from the hover tint.
 .layout-switch {
-  display: flex;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: var(--gauzy-toolbar-button-height);
+  padding: 2px;
+  border-radius: var(--gauzy-toolbar-button-radius);
+  background: var(--gauzy-toolbar-button-background);
+  box-shadow: inset 0 0 0 1px var(--gauzy-toolbar-button-border);
 
-  .switch-button {
-    margin: 0px;
+  .switch-button[nbButton] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    min-width: 0;
+    margin: 0 !important;
+    padding: 0;
     border: none;
-    border-width: 0px !important;
+    border-width: 0 !important;
+    // The track's radius minus its 2px inset, so the inner and outer corners
+    // stay concentric.
+    border-radius: calc(var(--gauzy-toolbar-button-radius) - 2px);
+    background: transparent;
+    color: var(--gauzy-toolbar-button-text);
+    box-shadow: none;
+    transition: background-color 0.15s ease;
+
+    nb-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.875rem;
+      width: 0.875rem;
+      height: 0.875rem;
+      color: inherit;
+    }
+
+    &:hover {
+      background: var(--gauzy-toolbar-button-hover-tint);
+    }
+
+    &:focus {
+      box-shadow: none;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-primary-default);
+      outline-offset: 1px;
+    }
+
+    &.primary {
+      background: var(--gauzy-toolbar-button-selected-background);
+      color: var(--gauzy-toolbar-button-selected-text);
+    }
   }
-}
 
-[nbButton].primary.size-small.icon-start.icon-end.appearance-filled {
-  box-shadow:  var(--gauzy-shadow) inset;
-  background: rgba(126, 126, 143, 1);
-  color: white;
-}
+  // Touch screens: each segment becomes a 44px target and the track grows to
+  // hold it. Mouse and trackpad users keep the compact control above.
+  @media (pointer: coarse) {
+    height: auto;
+    gap: 0.25rem;
 
-[nbButton].basic.size-small.icon-start.icon-end.appearance-filled{
-  box-shadow:  var(--gauzy-shadow);
-  background: var(--gauzy-card-2);
+    .switch-button[nbButton] {
+      width: 2.75rem;
+      height: 2.75rem;
+    }
+  }
 }
