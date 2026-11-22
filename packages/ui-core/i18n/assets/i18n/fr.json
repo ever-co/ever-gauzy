@@ -4441,6 +4441,7 @@
 		"ADD_GALLERY_IMAGE": "Ajouter une image à la galerie",
 		"SET_FEATURED_IMAGE": "Définir l'image mise en avant",
 		"VIEW_GALLERY": "Voir la galerie",
+		"OPEN_GALLERY_IMAGE": "Ouvrir l'image {{ index }} sur {{ total }}",
 		"EDIT_IMAGE": "Modifier l'image de la galerie",
 		"DELETE_IMAGE": "Supprimer l'image",
 		"IMAGE_ASSET_DELETED": "Ressource d'image supprimée",

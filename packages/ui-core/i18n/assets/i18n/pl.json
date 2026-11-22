@@ -4439,6 +4439,7 @@
 		"ADD_GALLERY_IMAGE": "Dodaj obraz do galerii",
 		"SET_FEATURED_IMAGE": "Ustaw zdjęcie wyróżnione",
 		"VIEW_GALLERY": "Zobacz galerię",
+		"OPEN_GALLERY_IMAGE": "Otwórz obraz {{ index }} z {{ total }}",
 		"EDIT_IMAGE": "Edytuj obraz w galerii",
 		"DELETE_IMAGE": "Usuń obrazek",
 		"IMAGE_ASSET_DELETED": "Obraz usunięty",

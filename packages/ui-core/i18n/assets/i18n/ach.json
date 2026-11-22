@@ -4268,6 +4268,7 @@
 		"ADD_GALLERY_IMAGE": "crwdns10070:0crwdne10070:0",
 		"SET_FEATURED_IMAGE": "crwdns10072:0crwdne10072:0",
 		"VIEW_GALLERY": "crwdns10074:0crwdne10074:0",
+		"OPEN_GALLERY_IMAGE": "Open image {{ index }} of {{ total }}",
 		"EDIT_IMAGE": "crwdns10076:0crwdne10076:0",
 		"DELETE_IMAGE": "crwdns10078:0crwdne10078:0",
 		"IMAGE_ASSET_DELETED": "crwdns10086:0crwdne10086:0",

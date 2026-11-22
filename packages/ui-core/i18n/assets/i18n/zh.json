@@ -4967,6 +4967,7 @@
 		"ADD_GALLERY_IMAGE": "添加图库图片",
 		"SET_FEATURED_IMAGE": "设置特色图片",
 		"VIEW_GALLERY": "查看画廊",
+		"OPEN_GALLERY_IMAGE": "打开第 {{ index }} 张图片，共 {{ total }} 张",
 		"EDIT_IMAGE": "编辑图库图片",
 		"DELETE_IMAGE": "删除图片",
 		"IMAGE_ASSET_DELETED": "图像资产已删除",

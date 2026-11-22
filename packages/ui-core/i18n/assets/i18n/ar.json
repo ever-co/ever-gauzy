@@ -4438,6 +4438,7 @@
 		"ADD_GALLERY_IMAGE": "أضف صورة للمعرض",
 		"SET_FEATURED_IMAGE": "تعيين صورة مميزة",
 		"VIEW_GALLERY": "عرض المعرض",
+		"OPEN_GALLERY_IMAGE": "فتح الصورة {{ index }} من {{ total }}",
 		"EDIT_IMAGE": "تعديل صورة البوم الصور",
 		"DELETE_IMAGE": "حذف الصورة",
 		"IMAGE_ASSET_DELETED": "تم حذف ملف الصورة",
