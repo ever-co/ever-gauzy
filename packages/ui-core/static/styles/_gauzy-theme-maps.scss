@@ -310,11 +310,21 @@ $gauzy-action-accents-dark: (
 //   edge         gauzy-overlay-border-color   (their 1px hairline ring)
 //   hover        gauzy-hover-tint over the surface, ring to gauzy-active-tint
 //   pressed      gauzy-active-tint over the surface
-//   text         gauzy-text-color-2           (the top bar's text colour)
 //   size         gauzy-header-control-height, gauzy-radius-sm
-// Each theme resolves these to its own values, so light and dark need no
-// separate set. The selected state (an active layout) is a segment filled with
-// `gauzy-active-tint`; an `.action.primary.soft` toggle keeps the primary tint.
+// Each theme resolves these to its own values. The selected state (an active
+// layout) is a segment filled with `gauzy-active-tint`; an
+// `.action.primary.soft` toggle keeps the primary tint.
+//
+// The label colour is the one value split by canvas (below). These labels are
+// 11px text, so they owe 4.5:1 on the surface AND under the hover tint.
+//   light  rgba(97, 97, 112): the project grey one step darker, the same step
+//          `gauzy-chart-label` uses for small text. 6.1:1 on white, 5.3:1 on
+//          the hover tint, 4.8:1 on the pressed tint. `gauzy-text-color-2`
+//          (rgb(126, 126, 143) in default / corporate / material-light) is
+//          only ~4:1 on white and ~3.6:1 on hover.
+//   dark   gauzy-text-color-2, the top bar's own text colour; it clears 4.5:1
+//          on the dark canvases.
+// Pressed switches to `text-basic-color` in the button rules themselves.
 $gauzy-toolbar: (
   gauzy-toolbar-button-radius: gauzy-radius-sm,
   gauzy-toolbar-button-height: gauzy-header-control-height,
@@ -323,10 +333,23 @@ $gauzy-toolbar: (
   gauzy-toolbar-button-hover-border: gauzy-active-tint,
   gauzy-toolbar-button-hover-tint: gauzy-hover-tint,
   gauzy-toolbar-button-active-tint: gauzy-active-tint,
-  gauzy-toolbar-button-text: gauzy-text-color-2,
   gauzy-toolbar-segment-selected-background: gauzy-active-tint,
   gauzy-toolbar-button-selected-background: color-primary-transparent-default,
   gauzy-toolbar-button-selected-text: text-primary-color
+);
+
+$gauzy-toolbar-light: map.merge(
+  $gauzy-toolbar,
+  (
+    gauzy-toolbar-button-text: rgba(97, 97, 112, 1)
+  )
+);
+
+$gauzy-toolbar-dark: map.merge(
+  $gauzy-toolbar,
+  (
+    gauzy-toolbar-button-text: gauzy-text-color-2
+  )
 );
 
 $gauzy-menu-scrollbar-light: (
@@ -405,7 +428,7 @@ $gauzy-shared-light: map.merge(
     ),
     $gauzy-chart-series-light
   ),
-  $gauzy-toolbar
+  $gauzy-toolbar-light
 );
 $gauzy-shared-dark: map.merge(
   map.merge(
@@ -415,7 +438,7 @@ $gauzy-shared-dark: map.merge(
     ),
     $gauzy-chart-series-dark
   ),
-  $gauzy-toolbar
+  $gauzy-toolbar-dark
 );
 
 // ── Canvas token sets for themes that do not define their own ───────────────

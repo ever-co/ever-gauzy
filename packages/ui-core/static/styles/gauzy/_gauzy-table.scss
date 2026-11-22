@@ -8,8 +8,9 @@
 $action-hairline: inset 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
 
 // Toolbar buttons drawn like the top bar's controls (date-range picker,
-// selectors): the card surface, a 1px hairline ring, the top bar's text colour
-// and size, 28px tall, the design system's small radius. Hover lays the shared
+// selectors): the card surface, a 1px hairline ring, the top bar's text size
+// (in a label colour that keeps 4.5:1), 28px tall, the design system's small
+// radius. Hover lays the shared
 // hover tint over the surface and darkens the ring; press lays the active tint.
 // Every modifier (`.primary`, `.success`, `.warning`, `.info` …) is kept so no
 // template has to change, but they all draw the same neutral button: the icon
