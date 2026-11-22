@@ -564,7 +564,10 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 	 * @param where - The read's criteria, as the caller stated them.
 	 * @param options - The read's options: whether it includes withdrawn comments.
 	 */
-	private async readsOnlyRecordsOpenedToCaller(where: unknown, options?: { withDeleted?: unknown }): Promise<boolean> {
+	private async readsOnlyRecordsOpenedToCaller(
+		where: unknown,
+		options?: { withDeleted?: unknown }
+	): Promise<boolean> {
 		if (parseToBoolean(options?.withDeleted)) {
 			return false;
 		}
