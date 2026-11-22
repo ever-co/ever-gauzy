@@ -33,7 +33,12 @@ import { EmployeeService } from '../employee/employee.service';
 import { MentionService } from '../mention/mention.service';
 import { isCallerTenantAdmin, withoutAuthorChange } from '../shared/ownership';
 import { Comment } from './comment.entity';
-import { CommentParentAccessService, ICommentParentRef, scopeCommentReadToParents } from './parent-access';
+import {
+	CommentParentAccessService,
+	ICommentParentRef,
+	recordsNamedByEveryAlternative,
+	scopeCommentReadToParents
+} from './parent-access';
 import {
 	IsCommentReadable,
 	withoutUnreadableLoadedComments,
@@ -309,9 +314,10 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 	/**
 	 * Reads one comment for a caller (`GET /comment/:id`, the `comment` field).
 	 *
-	 * A comment of a record without a comment-access policy is read exactly as `findOneByIdString` reads it. A
-	 * comment of a governed record is answered to those its policy lets read that record's comments, whoever wrote
-	 * it, as the record's list is.
+	 * A comment of a record without a comment-access policy is read exactly as `findOneByIdString` reads it, except
+	 * that a comment of a record whose comments are opened to its readers (a task's) is answered, whoever wrote it, to
+	 * a caller who may read that record, as the record's list is. A comment of a governed record is answered to those
+	 * its policy lets read that record's comments, whoever wrote it, as the record's list is.
 	 *
 	 * @param id - The comment.
 	 * @param options - Find options, as `findOneByIdString` takes them.
@@ -324,7 +330,9 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 		const pinned = criteriaPinnedTo(id, options);
 		const stored = await this.findGovernedComment(id, !!options?.withDeleted);
 		if (!stored) {
-			return this.withReadableRelatedComments(await this.findOneByIdString(id, pinned));
+			const acrossAuthors = await this.isOpenedToCaller(id, options);
+			const comment = await this.readAcrossAuthorsWhen(acrossAuthors, () => this.findOneByIdString(id, pinned));
+			return this.withReadableRelatedComments(comment);
 		}
 
 		await this._parentAccess.assertMay('read', stored.entity, stored.entityId);
@@ -540,6 +548,50 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 		return RequestContext.runIsolated(() => this.withoutEmployeeFilter(read));
 	}
 
+	/** Runs `read` across authors when `acrossAuthors` holds, and with the base scope otherwise. */
+	private readAcrossAuthorsWhen<R>(acrossAuthors: boolean, read: () => Promise<R>): Promise<R> {
+		if (!acrossAuthors) {
+			return read();
+		}
+		return this.readAcrossAuthors(read);
+	}
+
+	/**
+	 * Whether a list or count read answers every author's comments because each alternative of its criteria names one
+	 * record whose comments are opened to its readers (`{ entity: 'Task', entityId }`), and the caller may read each
+	 * of those records. A read that includes withdrawn comments keeps them, and the rest, to the base scope.
+	 *
+	 * @param where - The read's criteria, as the caller stated them.
+	 * @param options - The read's options: whether it includes withdrawn comments.
+	 */
+	private async readsOnlyRecordsOpenedToCaller(where: unknown, options?: { withDeleted?: unknown }): Promise<boolean> {
+		if (parseToBoolean(options?.withDeleted)) {
+			return false;
+		}
+		const records = recordsNamedByEveryAlternative(where, this._parentAccess.openedEntities());
+		return this._parentAccess.mayReadEveryAuthorOf(records);
+	}
+
+	/**
+	 * Whether comment `id` is answered whoever wrote it, because its record's comments are opened to the record's
+	 * readers and the caller may read that record. The lookup reaches the comment whoever wrote it, because it only
+	 * decides which rule applies: what the caller is answered is still read through that rule. A read that includes
+	 * withdrawn comments keeps the base scope.
+	 *
+	 * @param id - The comment.
+	 * @param options - The read's options: whether it includes withdrawn comments.
+	 */
+	private async isOpenedToCaller(id: ID, options?: { withDeleted?: unknown }): Promise<boolean> {
+		if (parseToBoolean(options?.withDeleted) || this._parentAccess.openedEntities().length === 0) {
+			return false;
+		}
+		const stored = await this.readAcrossAuthors(() => this.findOneByIdString(id)).catch(undefinedWhenNotFound);
+		if (!stored) {
+			return false;
+		}
+		return this._parentAccess.mayReadEveryAuthorOf([{ entity: stored.entity, entityId: stored.entityId }]);
+	}
+
 	/**
 	 * The resolver an edit writes, when the edit states one and the caller is not a tenant administrator.
 	 *
@@ -612,8 +664,9 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 	 * (`{ entity, entityId }`) is read only when the record's policy lets the caller read its comments, and every
 	 * other alternative leaves the comments of governed records out. A read whose every alternative names a governed
 	 * record answers all of that record's comments, whoever wrote them (a contact's notes are the contact's, not
-	 * their authors'), while every other read keeps the base scope, so the comments of other records are listed
-	 * exactly as before.
+	 * their authors'), and so does a read whose every alternative names one record whose comments are opened to its
+	 * readers (a task's), for a caller who may read each of them (see {@link readsOnlyRecordsOpenedToCaller}). Every
+	 * other read keeps the base scope, so the comments of other records are listed exactly as before.
 	 *
 	 * A read that includes withdrawn comments (`withDeleted`) answers the withdrawn comments of a governed record to
 	 * their authors only, unless the caller may write that record's comments (see {@link mayReadWithdrawnOf}). Such a
@@ -646,7 +699,9 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 			);
 		}
 		if (!scope.onlyGovernedParents) {
-			return this.withReadableRelatedComments(await read(scope.where), scope.parents);
+			const acrossAuthors = await this.readsOnlyRecordsOpenedToCaller(where, options);
+			const result = await this.readAcrossAuthorsWhen(acrossAuthors, () => read(scope.where));
+			return this.withReadableRelatedComments(result, scope.parents);
 		}
 		if (keptToAuthor) {
 			assertReadsCommentsOnly(scope.where, options);

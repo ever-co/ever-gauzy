@@ -21,6 +21,7 @@ import { TypeOrmTaskRepository } from './repository/type-orm-task.repository';
 import { MikroOrmTaskRepository } from './repository/mikro-orm-task.repository';
 import { EmployeeNotificationModule } from '../employee-notification/employee-notification.module';
 import { TaskResolver } from './task.resolver';
+import { TaskCommentAccessPolicy } from './task-comment-access.policy';
 
 /**
  * The unit of work.
@@ -64,6 +65,8 @@ import { TaskResolver } from './task.resolver';
 		FieldVisibility,
 		TypeOrmTaskRepository,
 		MikroOrmTaskRepository,
+		// Opens a task's comments to everyone who may read the task (the comment service discovers it).
+		TaskCommentAccessPolicy,
 		...CommandHandlers
 	],
 	exports: [TaskService, CqrsModule, TypeOrmTaskRepository, MikroOrmTaskRepository, BulkExecutor]
