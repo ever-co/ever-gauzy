@@ -4,7 +4,7 @@ import { BaseEntityEnum, PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from '../../core/context/request-context';
 import { CommentParentAccessPolicy } from './comment-parent-access-policy.decorator';
 import { CommentParentAccessService } from './comment-parent-access.service';
-import { ICommentParent, ICommentParentAccessPolicy } from './comment-parent-access.types';
+import { ICommentParent, ICommentParentAccessPolicy, ICommentParentReadersPolicy } from './comment-parent-access.types';
 
 const CONTACT_ID = '6d7c4a3e-1b2f-4c5d-8e9f-0a1b2c3d4e5f';
 
@@ -248,5 +248,109 @@ describe('CommentParentAccessService write rule', () => {
 
 		await expect(service.assertMay('write', BaseEntityEnum.OrganizationContact, CONTACT_ID)).resolves.toEqual({ id: CONTACT_ID, organizationId: 'org-1' });
 		expect(policy.findAccessibleParent).toHaveBeenCalledWith(CONTACT_ID);
+	});
+});
+
+describe('CommentParentAccessService rule that opens a record’s comments to its readers', () => {
+	afterEach(() => jest.restoreAllMocks());
+
+	const TASK_ID = '2b3c4d5e-6f70-4812-9a3b-4c5d6e7f8091';
+	const FOREIGN_TASK_ID = '3c4d5e6f-7081-4923-8b4c-5d6e7f809102';
+
+	@CommentParentAccessPolicy()
+	@Injectable()
+	class TaskReadersPolicy implements ICommentParentReadersPolicy {
+		readonly entity = BaseEntityEnum.Task;
+		readonly opensReadsOnly = true as const;
+		readonly readPermissions = [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW];
+		findAccessibleParent = jest.fn(async (id: string): Promise<ICommentParent | null> =>
+			id === TASK_ID ? { id, organizationId: 'org-1' } : null
+		);
+	}
+
+	const registered = () => {
+		const policy = new TaskReadersPolicy();
+		const service = new CommentParentAccessService();
+		service.register(new ContactPolicy());
+		service.register(policy);
+		return { policy, service };
+	};
+
+	it('is discovered like a policy, and governs nothing: its type is neither governed nor checked on a write', async () => {
+		const policy = new TaskReadersPolicy();
+		const discovery = { getProviders: () => [{ instance: policy, metatype: TaskReadersPolicy }] };
+		const service = new CommentParentAccessService(discovery as any, new Reflector());
+		holding();
+
+		service.onModuleInit();
+
+		expect(service.openedEntities()).toEqual([BaseEntityEnum.Task]);
+		expect(service.governedEntities()).toEqual([]);
+		expect(service.isGoverned(BaseEntityEnum.Task)).toBe(false);
+		expect(() => service.assertCanonical('task')).not.toThrow();
+		await expect(service.assertMay('write', BaseEntityEnum.Task, TASK_ID)).resolves.toBeNull();
+		await expect(service.mayWrite(BaseEntityEnum.Task, TASK_ID)).resolves.toBe(false);
+		await expect(service.readableParentIds(BaseEntityEnum.Task, [TASK_ID])).resolves.toEqual(new Set());
+		expect(policy.findAccessibleParent).not.toHaveBeenCalled();
+	});
+
+	it('refuses a second rule for a record type a policy already governs, and the reverse', () => {
+		const { service } = registered();
+
+		expect(() => service.register(new TaskReadersPolicy())).not.toThrow();
+		expect(() =>
+			service.register({
+				entity: BaseEntityEnum.Task,
+				readPermissions: [],
+				writePermissions: [],
+				findAccessibleParent: async () => null
+			})
+		).toThrow(/already registered/);
+		expect(() =>
+			service.register({
+				entity: BaseEntityEnum.OrganizationContact,
+				opensReadsOnly: true,
+				readPermissions: [],
+				findAccessibleParent: async () => null
+			})
+		).toThrow(/already registered/);
+	});
+
+	it('lets a caller who may read every record named read all of their comments', async () => {
+		const { policy, service } = registered();
+		holding(PermissionsEnum.ORG_TASK_VIEW);
+
+		await expect(service.mayReadEveryAuthorOf([{ entity: BaseEntityEnum.Task, entityId: TASK_ID }])).resolves.toBe(
+			true
+		);
+		expect(policy.findAccessibleParent).toHaveBeenCalledWith(TASK_ID);
+	});
+
+	it('refuses as soon as one record is out of reach, of another type, or names no record', async () => {
+		const { service } = registered();
+		holding(PermissionsEnum.ORG_TASK_VIEW, PermissionsEnum.ORG_CONTACT_VIEW);
+		const task = { entity: BaseEntityEnum.Task, entityId: TASK_ID };
+
+		await expect(service.mayReadEveryAuthorOf([])).resolves.toBe(false);
+		await expect(
+			service.mayReadEveryAuthorOf([task, { entity: BaseEntityEnum.Task, entityId: FOREIGN_TASK_ID }])
+		).resolves.toBe(false);
+		await expect(
+			service.mayReadEveryAuthorOf([task, { entity: BaseEntityEnum.OrganizationContact, entityId: CONTACT_ID }])
+		).resolves.toBe(false);
+		await expect(service.mayReadEveryAuthorOf([{ entity: 'task', entityId: TASK_ID }])).resolves.toBe(false);
+		await expect(
+			service.mayReadEveryAuthorOf([{ entity: BaseEntityEnum.Task, entityId: 'not-a-uuid' as never }])
+		).resolves.toBe(false);
+	});
+
+	it('refuses a caller without one of its read permissions, before reading the record', async () => {
+		const { policy, service } = registered();
+		holding(PermissionsEnum.ORG_TASK_EDIT);
+
+		await expect(service.mayReadEveryAuthorOf([{ entity: BaseEntityEnum.Task, entityId: TASK_ID }])).resolves.toBe(
+			false
+		);
+		expect(policy.findAccessibleParent).not.toHaveBeenCalled();
 	});
 });
