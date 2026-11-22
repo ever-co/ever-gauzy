@@ -4473,6 +4473,7 @@
 		"ADD_GALLERY_IMAGE": "Добавить изображение галереи",
 		"SET_FEATURED_IMAGE": "Установка избранного изображения",
 		"VIEW_GALLERY": "Просмотреть галерею",
+		"OPEN_GALLERY_IMAGE": "Открыть изображение {{ index }} из {{ total }}",
 		"EDIT_IMAGE": "Изменить изображение галереи",
 		"DELETE_IMAGE": "Удалить изображение",
 		"IMAGE_ASSET_DELETED": "Изображение актива удалено",

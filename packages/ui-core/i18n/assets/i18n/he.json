@@ -4466,6 +4466,7 @@
 		"ADD_GALLERY_IMAGE": "Add gallery image",
 		"SET_FEATURED_IMAGE": "Set featured image",
 		"VIEW_GALLERY": "View gallery",
+		"OPEN_GALLERY_IMAGE": "פתח תמונה {{ index }} מתוך {{ total }}",
 		"EDIT_IMAGE": "Edit gallery image",
 		"DELETE_IMAGE": "Delete image",
 		"IMAGE_ASSET_DELETED": "Image asset deleted",

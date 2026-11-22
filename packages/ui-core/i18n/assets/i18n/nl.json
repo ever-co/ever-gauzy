@@ -4440,6 +4440,7 @@
 		"ADD_GALLERY_IMAGE": "Voeg galerijafbeelding toe",
 		"SET_FEATURED_IMAGE": "Stel uitgelichte afbeelding in",
 		"VIEW_GALLERY": "Bekijk galerij",
+		"OPEN_GALLERY_IMAGE": "Afbeelding {{ index }} van {{ total }} openen",
 		"EDIT_IMAGE": "Afbeelding aanpassen",
 		"DELETE_IMAGE": "Afbeelding verwijderen",
 		"IMAGE_ASSET_DELETED": "Afbeeldingsmateriaal verwijderd",

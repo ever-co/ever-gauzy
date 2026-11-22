@@ -4440,6 +4440,7 @@
 		"ADD_GALLERY_IMAGE": "Aggiungi immagine alla galleria",
 		"SET_FEATURED_IMAGE": "Imposta immagine in evidenza",
 		"VIEW_GALLERY": "Vedi galleria",
+		"OPEN_GALLERY_IMAGE": "Apri immagine {{ index }} di {{ total }}",
 		"EDIT_IMAGE": "Modifica immagine della galleria",
 		"DELETE_IMAGE": "Elimina l'immagine",
 		"IMAGE_ASSET_DELETED": "Immagine eliminata",
