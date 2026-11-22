@@ -23,6 +23,7 @@ import { MikroOrmEmployeeRepository } from '../employee/repository/mikro-orm-emp
 import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
 import { MikroOrmUserRepository } from '../user/repository/mikro-orm-user.repository';
 import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
+import { RolePermissionService } from '../role-permission/role-permission.service';
 import { UNRESOLVED_THROTTLER_TRACKER } from '../throttler/tracker';
 import { MikroOrmUserOrganizationRepository } from '../user-organization/repository/mikro-orm-user-organization.repository';
 import { TypeOrmUserOrganizationRepository } from '../user-organization/repository/type-orm-user-organization.repository';
@@ -158,7 +159,8 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 		private readonly authService: AuthService,
 		private readonly embedAllowedOriginService: EmbedAllowedOriginService,
 		private readonly embedClientService: EmbedClientService,
-		private readonly embedMemberService: EmbedMemberService
+		private readonly embedMemberService: EmbedMemberService,
+		rolePermissionService: RolePermissionService
 	) {
 		super(typeOrmEmbedCredentialRepository, mikroOrmEmbedCredentialRepository);
 		this.memberTokens = new EmbedMemberTokens(
@@ -166,10 +168,13 @@ export class EmbedCredentialService extends TenantAwareCrudService<EmbedCredenti
 				typeOrmEmployeeRepository,
 				mikroOrmEmployeeRepository,
 				typeOrmUserOrganizationRepository,
-				mikroOrmUserOrganizationRepository
+				mikroOrmUserOrganizationRepository,
+				typeOrmUserRepository,
+				mikroOrmUserRepository
 			},
 			authService,
-			() => this.ormType
+			() => this.ormType,
+			rolePermissionService
 		);
 	}
 
