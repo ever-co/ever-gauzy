@@ -79,7 +79,7 @@
 
 :host ::ng-deep ngx-record-view .record-panel .record-rows {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(16rem, 100%), 1fr));
   column-gap: 1rem;
   row-gap: 0.125rem;
 }
