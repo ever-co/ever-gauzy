@@ -1054,11 +1054,13 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 				await this.taskService.unassignEmployeeFromTeamTasks(employee.id, organizationTeamId);
 			}
 
-			// Delete the team employee record
-			return await this.organizationTeamEmployeeService.delete({
-				employeeId: employee.id,
-				roleId: IsNull()
-			});
+			// Delete the team employee records, and stop the timer the user still runs for one of these teams
+			return await this.organizationTeamEmployeeService.deleteMemberships(memberships, () =>
+				this.organizationTeamEmployeeService.delete({
+					employeeId: employee.id,
+					roleId: IsNull()
+				})
+			);
 		} catch (error) {
 			throw new ForbiddenException('You are not able to removed account where you are only the manager!');
 		}

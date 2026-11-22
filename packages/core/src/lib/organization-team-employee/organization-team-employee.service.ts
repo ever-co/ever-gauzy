@@ -6,6 +6,7 @@ import {
 	EntitySubscriptionTypeEnum,
 	ID,
 	IEmployee,
+	IOrganizationTeamEmployee,
 	IOrganizationTeamEmployeeActiveTaskUpdateInput,
 	IOrganizationTeamEmployeeFindInput,
 	IOrganizationTeamEmployeeUpdateInput,
@@ -35,6 +36,12 @@ import {
 	TrackingSwitchRank
 } from '../time-tracking/timer/tracking-switch-rule';
 import { writeUnderTrackingSwitchAsSeen } from '../time-tracking/timer/tracking-switch-as-seen';
+
+/** What names a membership: the employee, the team, its organization and tenant. */
+type ITeamMembershipRef = Pick<
+	IOrganizationTeamEmployee,
+	'employeeId' | 'organizationTeamId' | 'organizationId' | 'tenantId'
+>;
 
 @Injectable()
 export class OrganizationTeamEmployeeService extends TenantAwareCrudService<OrganizationTeamEmployee> {
@@ -120,6 +127,9 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 			// Same bypass as the lookup above: with the employee filter on, a team manager without
 			// CHANGE_SELECTED_EMPLOYEE only matched their own row, so other members were never removed
 			await this.withoutEmployeeFilter(() => this.deleteMany(removedMembers.map((member) => member.id)));
+
+			// A member out of the team no longer sees the timer they run for it, and it would keep counting
+			this.stopRunningTimersInTeam(removedMembers);
 
 			// Unsubscribe members who were unassigned from team. Not `delete()`: for a manager without
 			// CHANGE_SELECTED_EMPLOYEE that would target the manager's own subscription, not the member's.
@@ -486,7 +496,7 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 				await this._taskService.unassignEmployeeFromTeamTasks(member.employeeId, organizationTeamId);
 
 				// Remove the team member
-				return await this.delete(member.id);
+				return await this.deleteMemberships([member], () => this.delete(member.id));
 			} else {
 				const employeeId = RequestContext.currentEmployeeId();
 
@@ -508,7 +518,9 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 					await this._taskService.unassignEmployeeFromTeamTasks(member.employeeId, organizationTeamId);
 
 					// Remove the team member (still bypassed: the filter would only match the manager's own row)
-					return await this.withoutEmployeeFilter(() => this.delete(member.id));
+					return await this.deleteMemberships([member], () =>
+						this.withoutEmployeeFilter(() => this.delete(member.id))
+					);
 				}
 
 				// Non-manager can only remove themselves from the team
@@ -519,11 +531,32 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 				await this._taskService.unassignEmployeeFromTeamTasks(member.employeeId, organizationTeamId);
 
 				// Remove the team member
-				return await this.delete(member.id);
+				return await this.deleteMemberships([member], () => this.delete(member.id));
 			}
 		} catch (error) {
 			throw new ForbiddenException('An error occurred while deleting the team member.');
 		}
+	}
+
+	/**
+	 * Deletes memberships with `remove`, then stops the timer each employee still runs for the team they left: out of
+	 * the team, they no longer see it, and it would keep counting (see {@link stopRunningTimersInTeam}). A delete that
+	 * removed no row stops nothing.
+	 *
+	 * @param memberships The memberships `remove` deletes.
+	 * @param remove Deletes them.
+	 * @returns The result of the delete.
+	 */
+	public async deleteMemberships(
+		memberships: ReadonlyArray<ITeamMembershipRef>,
+		remove: () => Promise<DeleteResult>
+	): Promise<DeleteResult> {
+		const result = await remove();
+		const removedNothing = result?.affected === 0;
+		if (!removedNothing) {
+			this.stopRunningTimersInTeam(memberships);
+		}
+		return result;
 	}
 
 	/**
@@ -545,12 +578,23 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 		const membershipTurnedOff = await this.membershipTrackingTurnsOff(memberId, changes);
 		const result = await this.updateUnderTrackingSwitchAsSeen(memberId, entity, changes);
 		if (membershipTurnedOff) {
-			const { employeeId, organizationId, tenantId, organizationTeamId } = membershipTurnedOff;
+			this.stopRunningTimersInTeam([membershipTurnedOff]);
+		}
+		return result;
+	}
+
+	/**
+	 * Stops the timer each employee still has running for the team of their membership, at this moment, as a stop of
+	 * their own would (see TrackingTurnedOffEvent). A run they have for another team keeps running.
+	 *
+	 * @param memberships The employee, the team, its organization and tenant, of each membership concerned.
+	 */
+	public stopRunningTimersInTeam(memberships: ReadonlyArray<ITeamMembershipRef>): void {
+		for (const { employeeId, organizationId, tenantId, organizationTeamId } of memberships) {
 			this._eventBus.publish(
 				new TrackingTurnedOffEvent({ employeeId, organizationId, tenantId, organizationTeamId })
 			);
 		}
-		return result;
 	}
 
 	/**
