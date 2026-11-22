@@ -50,7 +50,9 @@ const durationsOf = (tasks: ITasksStatistics[]) => tasks.map(({ id, duration }) 
  * #12127: the team read (GET /organization-team/:id?withLastWorkedTask=true) fills every member's task time through
  * getTasksByEmployee. It gave each member the scope of a one-employee read, which for a caller who manages nothing is
  * the caller's own employee, so a plain member got her own time under every teammate's name. Each member's entry now
- * holds only that member's own time, and nothing for a member the caller may not read.
+ * holds only that member's own time: every member's for a caller who may read the whole team's task time on the
+ * conditions of getTasks (a member of the team, or a holder of ALL_ORG_VIEW), and nothing for a member the caller may
+ * not read.
  */
 describe('StatisticService.getTasksByEmployee member scope', () => {
 	let teamMemberships: { existsBy: jest.Mock; find: jest.Mock };
@@ -134,8 +136,19 @@ describe('StatisticService.getTasksByEmployee member scope', () => {
 		expect(durationsOf(byEmployee.get(CALLER_ID))).toEqual([{ id: 'caller-task', duration: 98 }]);
 	});
 
-	it('gives a plain member only her own time, and nothing under teammates who tracked their own', async () => {
+	it('gives a plain member of the team each teammate their own time', async () => {
 		actAs({ memberOf: [TEAM_ID] });
+		loggedTimes = [CALLER_TIME, FIRST_TEAMMATE_TIME, SECOND_TEAMMATE_TIME];
+
+		const byEmployee = await readTeam();
+
+		expect(durationsOf(byEmployee.get(CALLER_ID))).toEqual([{ id: 'caller-task', duration: 98 }]);
+		expect(durationsOf(byEmployee.get(FIRST_TEAMMATE_ID))).toEqual([{ id: 'first-task', duration: 1200 }]);
+		expect(durationsOf(byEmployee.get(SECOND_TEAMMATE_ID))).toEqual([{ id: 'second-task', duration: 300 }]);
+	});
+
+	it('gives a caller outside the team only their own time, and nothing under the members', async () => {
+		actAs({});
 		loggedTimes = [CALLER_TIME, FIRST_TEAMMATE_TIME, SECOND_TEAMMATE_TIME];
 
 		const byEmployee = await readTeam();
@@ -144,6 +157,29 @@ describe('StatisticService.getTasksByEmployee member scope', () => {
 		expect(byEmployee.get(FIRST_TEAMMATE_ID)).toEqual([]);
 		expect(byEmployee.get(SECOND_TEAMMATE_ID)).toEqual([]);
 		expect(readEmployeeIds()).toEqual([[CALLER_ID], [CALLER_ID]]);
+	});
+
+	it('gives an ORG_MEMBER_LAST_LOG_VIEW holder outside the team nothing under the members', async () => {
+		actAs({ permissions: [PermissionsEnum.ORG_MEMBER_LAST_LOG_VIEW] });
+		loggedTimes = [CALLER_TIME, FIRST_TEAMMATE_TIME, SECOND_TEAMMATE_TIME];
+
+		const byEmployee = await readTeam();
+
+		expect(byEmployee.get(FIRST_TEAMMATE_ID)).toEqual([]);
+		expect(byEmployee.get(SECOND_TEAMMATE_ID)).toEqual([]);
+		expect(readEmployeeIds()).toEqual([[CALLER_ID], [CALLER_ID]]);
+	});
+
+	it('gives an ALL_ORG_VIEW holder outside the team each member their own time, without a membership lookup', async () => {
+		actAs({ permissions: [PermissionsEnum.ALL_ORG_VIEW] });
+		loggedTimes = [FIRST_TEAMMATE_TIME, SECOND_TEAMMATE_TIME];
+
+		const byEmployee = await readTeam();
+
+		expect(byEmployee.get(CALLER_ID)).toEqual([]);
+		expect(durationsOf(byEmployee.get(FIRST_TEAMMATE_ID))).toEqual([{ id: 'first-task', duration: 1200 }]);
+		expect(durationsOf(byEmployee.get(SECOND_TEAMMATE_ID))).toEqual([{ id: 'second-task', duration: 300 }]);
+		expect(teamMemberships.existsBy).not.toHaveBeenCalled();
 	});
 
 	it("keeps each member's own time for the team's manager, as before", async () => {
