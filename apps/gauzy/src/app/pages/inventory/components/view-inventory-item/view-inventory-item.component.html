@@ -30,8 +30,15 @@
 				</div>
 				@if (inventoryItem.gallery?.length) {
 				<div class="item-gallery">
-					@for (galleryItem of inventoryItem.gallery; track galleryItem.id) {
-					<button type="button" class="item-gallery-thumb" (click)="onGalleryItemClick(galleryItem)">
+					@for (galleryItem of inventoryItem.gallery; track galleryItem.id; let i = $index) {
+					<button
+						type="button"
+						class="item-gallery-thumb"
+						[attr.aria-label]="
+							'INVENTORY_PAGE.OPEN_GALLERY_IMAGE' | translate : { index: i + 1, total: inventoryItem.gallery.length }
+						"
+						(click)="onGalleryItemClick(galleryItem)"
+					>
 						<img [src]="galleryItem.fullUrl" alt="" />
 					</button>
 					}
