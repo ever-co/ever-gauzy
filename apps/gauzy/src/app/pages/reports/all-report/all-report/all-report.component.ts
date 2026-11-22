@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectionStrategy, computed, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, computed, signal } from '@angular/core';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { IGetReportCategory, IOrganization, IReport, IReportCategory, PermissionsEnum } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -11,6 +11,9 @@ import { ReportService } from '../report.service';
 export type ReportMenuFilter = 'all' | 'shown' | 'hidden';
 
 const MENU_FILTERS: ReportMenuFilter[] = ['all', 'shown', 'hidden'];
+
+/** How long the search waits after the last keystroke before it writes the URL. */
+const SEARCH_URL_DELAY_MS = 300;
 
 /** How many reports each option of the two selects would show. */
 export interface ReportOptionCounts {
@@ -57,7 +60,7 @@ function matchesMenu(report: IReport, menuFilter: ReportMenuFilter): boolean {
     changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
-export class AllReportComponent implements OnInit {
+export class AllReportComponent implements OnInit, OnDestroy {
 	PermissionsEnum = PermissionsEnum;
 	public organization: IOrganization;
 	public loading: boolean;
@@ -160,6 +163,8 @@ export class AllReportComponent implements OnInit {
 
 	/** URL writes still in flight; the query-param echo of our own writes is ignored. */
 	private pendingUrlWrites = 0;
+	/** The search's URL write waiting for a pause in typing. */
+	private searchUrlTimer: ReturnType<typeof setTimeout> | null = null;
 	/** Increments per report request, so only the latest response is applied. */
 	private reportsRequest = 0;
 	/**
@@ -196,9 +201,31 @@ export class AllReportComponent implements OnInit {
 			.subscribe();
 	}
 
+	ngOnDestroy(): void {
+		// A write still waiting would navigate after the page is gone.
+		if (this.searchUrlTimer) {
+			clearTimeout(this.searchUrlTimer);
+			this.searchUrlTimer = null;
+		}
+	}
+
+	/**
+	 * The list follows every keystroke; the URL follows once typing pauses, as each write is a navigation (every
+	 * NavigationEnd handler, an analytics page view). The waiting write counts as pending, so an echo arriving
+	 * meanwhile cannot overwrite the box.
+	 */
 	onSearchChange(value: string): void {
 		this.search.set(value ?? '');
-		this.writeFiltersToUrl();
+		if (this.searchUrlTimer) {
+			clearTimeout(this.searchUrlTimer);
+		} else {
+			this.pendingUrlWrites++;
+		}
+		this.searchUrlTimer = setTimeout(() => {
+			this.searchUrlTimer = null;
+			this.pendingUrlWrites--;
+			this.writeFiltersToUrl();
+		}, SEARCH_URL_DELAY_MS);
 	}
 
 	/** `'all'` is the select's own value for "every category". */

@@ -525,3 +525,14 @@ $report-control-radius: calc(var(--border-radius) * 0.75);
     background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 45%, rgba(0, 0, 0, 0.65));
   }
 }
+
+// The two selects' option lists render in the overlay, outside this page, and
+// gauzy-filters' rule for `gauzy-filters-options` only loads while that
+// component is on screen: the same readable width and one line per option.
+::ng-deep .cdk-overlay-pane nb-option-list.gauzy-filters-options {
+  min-width: 12rem;
+
+  nb-option {
+    white-space: nowrap;
+  }
+}
