@@ -8,11 +8,11 @@
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  height: nb-theme(gauzy-toolbar-button-height);
+  height: var(--gauzy-toolbar-button-height);
   padding: 2px;
-  border-radius: nb-theme(gauzy-toolbar-button-radius);
-  background: nb-theme(gauzy-toolbar-button-background);
-  box-shadow: inset 0 0 0 1px nb-theme(gauzy-toolbar-button-border);
+  border-radius: var(--gauzy-toolbar-button-radius);
+  background: var(--gauzy-toolbar-button-background);
+  box-shadow: inset 0 0 0 1px var(--gauzy-toolbar-button-border);
 
   .switch-button[nbButton] {
     display: inline-flex;
@@ -27,9 +27,9 @@
     border-width: 0 !important;
     // The track's radius minus its 2px inset, so the inner and outer corners
     // stay concentric.
-    border-radius: calc(#{nb-theme(gauzy-toolbar-button-radius)} - 2px);
+    border-radius: calc(var(--gauzy-toolbar-button-radius) - 2px);
     background: transparent;
-    color: nb-theme(gauzy-toolbar-button-text);
+    color: var(--gauzy-toolbar-button-text);
     box-shadow: none;
     transition: background-color 0.15s ease;
 
@@ -44,7 +44,7 @@
     }
 
     &:hover {
-      background: nb-theme(gauzy-toolbar-button-hover-tint);
+      background: var(--gauzy-toolbar-button-hover-tint);
     }
 
     &:focus {
@@ -52,13 +52,25 @@
     }
 
     &:focus-visible {
-      outline: 2px solid nb-theme(color-primary-default);
+      outline: 2px solid var(--color-primary-default);
       outline-offset: 1px;
     }
 
     &.primary {
-      background: nb-theme(gauzy-toolbar-segment-selected-background);
-      color: nb-theme(text-basic-color);
+      background: var(--gauzy-toolbar-segment-selected-background);
+      color: var(--text-basic-color);
+    }
+  }
+
+  // Touch screens: each segment becomes a 44px target and the track grows to
+  // hold it. Mouse and trackpad users keep the compact control above.
+  @media (pointer: coarse) {
+    height: auto;
+    gap: 0.25rem;
+
+    .switch-button[nbButton] {
+      width: 2.75rem;
+      height: 2.75rem;
     }
   }
 }

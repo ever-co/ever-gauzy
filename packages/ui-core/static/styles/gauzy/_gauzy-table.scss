@@ -73,11 +73,16 @@ $action-hairline: inset 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 12
       color: nb-theme(gauzy-toolbar-button-text);
     }
 
+    // Pressed: the label steps up to the theme's body text. The resting text
+    // (`gauzy-text-color-2`, shared with the top bar) is ~4:1 on white in the
+    // default / corporate / material-light themes and would fall to ~3.2:1 under
+    // the active tint; the body colour keeps the small label legible.
     &:active {
       background-image: linear-gradient(
-        nb-theme(gauzy-toolbar-button-active-tint),
-        nb-theme(gauzy-toolbar-button-active-tint)
+        var(--gauzy-toolbar-button-active-tint),
+        var(--gauzy-toolbar-button-active-tint)
       );
+      color: var(--text-basic-color);
     }
 
     &:focus {
