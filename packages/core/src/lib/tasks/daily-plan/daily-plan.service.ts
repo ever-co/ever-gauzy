@@ -311,7 +311,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 					const query = this.typeOrmDailyPlanRepository.createQueryBuilder(this.tableName);
 
 					const loadsRelations = isNotEmpty(options) && isNotEmpty(options.relations);
-					const relations = parseFindOptionsRelations<DailyPlan>(options?.relations);
+					const relations = parseFindOptionsRelations<DailyPlan>(options.relations);
 
 					// Join related entities. Not when the relations are loaded with their own queries (see
 					// RELATION_LOAD_STRATEGY): a bare join on `tasks` still answered one plan row per task, and a
