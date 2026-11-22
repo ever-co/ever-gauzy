@@ -77,6 +77,7 @@ export class VendorsComponent extends PaginationFilterBaseComponent implements O
 
 	public viewedVendor: IVendorRecord;
 	public viewSections: IRecordViewSection[] = [];
+	private viewGeneration = 0;
 	private readonly injector = inject(Injector);
 
 	/*
@@ -141,6 +142,7 @@ export class VendorsComponent extends PaginationFilterBaseComponent implements O
 				filter((organization: IOrganization) => !!organization),
 				// Extract the organization and assign it to the component property
 				tap((organization: IOrganization) => (this.organization = organization)),
+				tap(() => this.clearSelection()),
 				// Trigger the _refresh$ observable with a new value
 				tap(() => this._refresh$.next(true)),
 				// Trigger the subject$ observable with a new value
@@ -517,16 +519,17 @@ export class VendorsComponent extends PaginationFilterBaseComponent implements O
 	}
 
 	async openView(vendor: IOrganizationVendor = this.selectedVendor): Promise<void> {
-		if (!vendor) {
+		if (!vendor || !this.organization || (vendor.organizationId && vendor.organizationId !== this.organization.id)) {
 			return;
 		}
+		const generation = ++this.viewGeneration;
 		this.showInView(vendor);
 
 		const expenseSummary = await loadVendorExpenseSummary(this.injector, vendor.id, {
-			organizationId: this.organization?.id,
-			tenantId: this.store.user?.tenantId
+			organizationId: this.organization.id,
+			tenantId: this.organization.tenantId
 		});
-		if (this.viewedVendor?.id === vendor.id) {
+		if (generation === this.viewGeneration && this.viewedVendor?.id === vendor.id) {
 			this.showInView({ ...vendor, expenseSummary });
 		}
 	}
@@ -537,7 +540,14 @@ export class VendorsComponent extends PaginationFilterBaseComponent implements O
 	}
 
 	closeView(): void {
+		this.viewGeneration++;
 		this.viewedVendor = null;
+	}
+
+	private clearSelection(): void {
+		this.selected = { vendor: null, state: false };
+		this.selectedVendor = null;
+		this.disabled = true;
 	}
 
 	/**
