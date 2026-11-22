@@ -4336,6 +4336,7 @@
 		"LINK_COPIED": "Link gekopieerd",
 		"DETAILS": "Details",
 		"TAG_COUNT": "{{ count }} tags",
+		"ONE_TAG": "1 tag",
 		"CURRENCY_HINT": "In {{ currency }}",
 		"AGE_NEW": "Dit jaar gemaakt",
 		"AGE_ONE_YEAR": "1 jaar oud",

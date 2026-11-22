@@ -4394,6 +4394,7 @@
 		"LINK_COPIED": "Връзката е копирана",
 		"DETAILS": "Подробности",
 		"TAG_COUNT": "{{ count }} етикета",
+		"ONE_TAG": "1 етикет",
 		"CURRENCY_HINT": "В {{ currency }}",
 		"AGE_NEW": "Произведено тази година",
 		"AGE_ONE_YEAR": "На 1 година",

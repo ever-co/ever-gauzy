@@ -4863,6 +4863,7 @@
 		"LINK_COPIED": "链接已复制",
 		"DETAILS": "详细信息",
 		"TAG_COUNT": "{{ count }} 个标签",
+		"ONE_TAG": "1 个标签",
 		"CURRENCY_HINT": "以 {{ currency }} 计",
 		"AGE_NEW": "今年生产",
 		"AGE_ONE_YEAR": "1 年",

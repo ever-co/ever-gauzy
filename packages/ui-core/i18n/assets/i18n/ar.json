@@ -4334,6 +4334,7 @@
 		"LINK_COPIED": "تم نسخ الرابط",
 		"DETAILS": "التفاصيل",
 		"TAG_COUNT": "{{ count }} وسوم",
+		"ONE_TAG": "وسم واحد",
 		"CURRENCY_HINT": "بعملة {{ currency }}",
 		"AGE_NEW": "صُنع هذا العام",
 		"AGE_ONE_YEAR": "عمره سنة واحدة",

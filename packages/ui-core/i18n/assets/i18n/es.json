@@ -4338,6 +4338,7 @@
 		"LINK_COPIED": "Enlace copiado",
 		"DETAILS": "Detalles",
 		"TAG_COUNT": "{{ count }} etiquetas",
+		"ONE_TAG": "1 etiqueta",
 		"CURRENCY_HINT": "En {{ currency }}",
 		"AGE_NEW": "Fabricado este año",
 		"AGE_ONE_YEAR": "1 año de antigüedad",

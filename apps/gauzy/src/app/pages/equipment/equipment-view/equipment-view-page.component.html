@@ -90,7 +90,7 @@
 							@if (equipment.tags?.length) {
 								<span class="project-meta-item">
 									<nb-icon icon="pricetags-outline" aria-hidden="true"></nb-icon>
-									{{ 'EQUIPMENT_VIEW.TAG_COUNT' | translate : { count: equipment.tags.length } }}
+									{{ (equipment.tags.length === 1 ? 'EQUIPMENT_VIEW.ONE_TAG' : 'EQUIPMENT_VIEW.TAG_COUNT') | translate : { count: equipment.tags.length } }}
 								</span>
 							}
 						</p>

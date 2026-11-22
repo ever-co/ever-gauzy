@@ -4362,6 +4362,7 @@
 		"LINK_COPIED": "הקישור הועתק",
 		"DETAILS": "פרטים",
 		"TAG_COUNT": "{{ count }} תגיות",
+		"ONE_TAG": "תגית אחת",
 		"CURRENCY_HINT": "ב-{{ currency }}",
 		"AGE_NEW": "יוצר השנה",
 		"AGE_ONE_YEAR": "בן שנה",

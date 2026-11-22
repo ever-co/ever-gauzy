@@ -4860,6 +4860,7 @@
 		"LINK_COPIED": "Link copied",
 		"DETAILS": "Details",
 		"TAG_COUNT": "{{ count }} tags",
+		"ONE_TAG": "1 tag",
 		"CURRENCY_HINT": "In {{ currency }}",
 		"AGE_NEW": "Made this year",
 		"AGE_ONE_YEAR": "1 year old",

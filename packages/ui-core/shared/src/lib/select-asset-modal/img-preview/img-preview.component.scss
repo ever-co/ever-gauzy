@@ -10,7 +10,7 @@ $hairline: 1px solid var(--gauzy-border-default-color);
 .preview {
   overflow: hidden;
   border: $hairline;
-  border-radius: nb-theme(border-radius);
+  border-radius: var(--border-radius);
 }
 
 .preview-frame {

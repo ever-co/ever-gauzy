@@ -4369,6 +4369,7 @@
 		"LINK_COPIED": "Ссылка скопирована",
 		"DETAILS": "Подробности",
 		"TAG_COUNT": "Теги: {{ count }}",
+		"ONE_TAG": "1 тег",
 		"CURRENCY_HINT": "В {{ currency }}",
 		"AGE_NEW": "Выпущено в этом году",
 		"AGE_ONE_YEAR": "1 год",
