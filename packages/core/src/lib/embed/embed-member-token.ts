@@ -1,11 +1,14 @@
-import { ID } from '@gauzy/contracts';
+import { ID, PermissionsEnum } from '@gauzy/contracts';
 import { MultiORM, MultiORMEnum, parseTypeORMFindToMikroOrm } from '../core/utils';
 import { AuthService } from '../auth/auth.service';
-import { Employee, UserOrganization } from '../core/entities/internal';
+import { Employee, User, UserOrganization } from '../core/entities/internal';
 import { MikroOrmEmployeeRepository } from '../employee/repository/mikro-orm-employee.repository';
 import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
 import { MikroOrmUserOrganizationRepository } from '../user-organization/repository/mikro-orm-user-organization.repository';
 import { TypeOrmUserOrganizationRepository } from '../user-organization/repository/type-orm-user-organization.repository';
+import { MikroOrmUserRepository } from '../user/repository/mikro-orm-user.repository';
+import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
+import type { RolePermissionService } from '../role-permission/role-permission.service';
 import { IEmbedMemberScope } from './embed-member.service';
 import { embedTokenTtlSeconds } from './embed.utils';
 
@@ -15,6 +18,8 @@ export interface IEmbedMemberRepositories {
 	mikroOrmEmployeeRepository: MikroOrmEmployeeRepository;
 	typeOrmUserOrganizationRepository: TypeOrmUserOrganizationRepository;
 	mikroOrmUserOrganizationRepository: MikroOrmUserOrganizationRepository;
+	typeOrmUserRepository: TypeOrmUserRepository;
+	mikroOrmUserRepository: MikroOrmUserRepository;
 }
 
 /** What a timer token is bound to besides its member: who it comes from, the site, and a client if any. */
@@ -36,7 +41,8 @@ export interface IEmbedMintedToken {
 /**
  * The member a timer token acts for, and the token: what the credential exchange and a person's sign-in from an allowed
  * site share. A member gets a token only while they are an active, unarchived employee with an account, time tracking
- * on, and an active membership of the organization (the token names it, and `JwtStrategy` refuses it without one). The
+ * on, an active membership of the organization (the token names it, and `JwtStrategy` refuses it without one) and a
+ * role that holds the time tracker permission, which every timer route asks for (ever-co/ever-gauzy#12134). The
  * token is an ordinary access token held to the timer (`AuthService.issueEmbedSession`), living
  * `GAUZY_EMBED_TOKEN_TTL_SECONDS`.
  */
@@ -44,7 +50,8 @@ export class EmbedMemberTokens {
 	constructor(
 		private readonly repositories: IEmbedMemberRepositories,
 		private readonly authService: Pick<AuthService, 'issueEmbedSession'>,
-		private readonly ormTypeOf: () => MultiORM
+		private readonly ormTypeOf: () => MultiORM,
+		private readonly rolePermissions: Pick<RolePermissionService, 'checkRolePermission'>
 	) {}
 
 	/**
@@ -65,6 +72,9 @@ export class EmbedMemberTokens {
 		}
 		if (!(await this.isActiveMember(employee.userId, scope))) {
 			return 'no active membership of the organization';
+		}
+		if (!(await this.roleTracksTime(employee.userId, scope))) {
+			return "the member's role holds no time tracker permission";
 		}
 		return null;
 	}
@@ -111,6 +121,35 @@ export class EmbedMemberTokens {
 			default:
 				throw new Error(`ORM type not implemented: ${this.ormTypeOf()}`);
 		}
+	}
+
+	/** Whether the user's role holds the time tracker permission that every timer route asks for. */
+	private async roleTracksTime(userId: ID, scope: IEmbedMemberScope): Promise<boolean> {
+		const roleId = await this.roleIdOf(userId, scope);
+		if (!roleId) {
+			return false;
+		}
+		return await this.rolePermissions.checkRolePermission(scope.tenantId, roleId, [PermissionsEnum.TIME_TRACKER], true);
+	}
+
+	/** The role of the user, in the token's tenant; null for a user without one. */
+	private async roleIdOf(userId: ID, scope: IEmbedMemberScope): Promise<ID | null> {
+		const where = { id: userId, tenantId: scope.tenantId };
+		const { typeOrmUserRepository, mikroOrmUserRepository } = this.repositories;
+		let user: Pick<User, 'roleId'> | null;
+		switch (this.ormTypeOf()) {
+			case MultiORMEnum.MikroORM: {
+				const parsed = parseTypeORMFindToMikroOrm<User>({ where } as any);
+				user = (await mikroOrmUserRepository.findOne(parsed.where, parsed.mikroOptions)) as User | null;
+				break;
+			}
+			case MultiORMEnum.TypeORM:
+				user = await typeOrmUserRepository.findOne({ where, select: { id: true, roleId: true } });
+				break;
+			default:
+				throw new Error(`ORM type not implemented: ${this.ormTypeOf()}`);
+		}
+		return user?.roleId ?? null;
 	}
 
 	/** Whether the user is an active, unarchived member of the organization. */
