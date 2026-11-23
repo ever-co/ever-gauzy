@@ -1014,9 +1014,13 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 	private statusMapper = (value: string) => {
 		let badgeClass;
 		if (value) {
-			badgeClass = ['sent', 'viewed', 'accepted', 'active', 'fully paid'].includes(value.toLowerCase())
+			// Statuses arrive as enum values (`FULLY_PAID`, `PARTIALLY_PAID`): compare
+			// with the underscore read as a space, or the two paid states never match
+			// and fall through to the danger colour.
+			const normalized = value.toLowerCase().replace(/_/g, ' ');
+			badgeClass = ['sent', 'viewed', 'accepted', 'active', 'fully paid'].includes(normalized)
 				? 'success'
-				: ['void', 'draft', 'partially paid'].includes(value.toLowerCase())
+				: ['void', 'draft', 'partially paid'].includes(normalized)
 				? 'warning'
 				: 'danger';
 		}
