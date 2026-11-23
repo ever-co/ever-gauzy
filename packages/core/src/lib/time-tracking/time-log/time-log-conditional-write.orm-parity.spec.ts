@@ -67,6 +67,8 @@ describe('Time entry edits under a precondition, on TypeORM and on MikroORM (#53
 	let dataSource: any;
 	let orm: any;
 	let invoiceNumber = 0;
+	/** The commands the last split ran on its command bus, in turn (see `split`). */
+	let splitCommands: unknown[] = [];
 
 	/** A row with the columns given, and a placeholder in every other NOT NULL column without a default. */
 	const insert = async (table: string, row: Row): Promise<void> => {
@@ -355,12 +357,14 @@ describe('Time entry edits under a precondition, on TypeORM and on MikroORM (#53
 	/**
 	 * The split route's command (`TimeLogService.splitTimeLog`): the entry as the route read it and checked it, split at
 	 * 09:30, its second part not billable, recorded in the history. `beforeCut` runs another request's write right
-	 * before the cut, once the second part is saved.
+	 * before the cut, once the second part is saved. The split's own commands are kept in `splitCommands`.
 	 */
 	const split = (ormType: Orm, checked: Row, beforeCut?: () => Promise<void>): Promise<boolean> => {
 		const cut = editHandler(ormType);
+		splitCommands = [];
 		const commandBus = {
 			execute: async (command: unknown) => {
+				splitCommands.push(command);
 				if (command instanceof loaded.TimeLogUpdateCommand) {
 					if (beforeCut) await beforeCut();
 					return cut.execute(command);
@@ -401,6 +405,19 @@ describe('Time entry edits under a precondition, on TypeORM and on MikroORM (#53
 	const secondPartIdOf = async (timeLogId: string): Promise<string> => {
 		const [row] = await dataSource.query(`SELECT "id" FROM "time_log" WHERE "splitFromTimeLogId" = ?`, [timeLogId]);
 		return row?.id;
+	};
+
+	/** The totals the last split recalculated after its cut, in turn: a timesheet, or an employee's worked hours. */
+	const recalculatedAfterCut = (): string[] => {
+		const cut = splitCommands.findIndex((command) => command instanceof loaded.TimeLogUpdateCommand);
+		expect(cut).toBeGreaterThanOrEqual(0);
+		return splitCommands.slice(cut + 1).flatMap((command: any) => {
+			if (command instanceof loaded.TimesheetRecalculateCommand) return [`timesheet ${command.id}`];
+			if (command instanceof loaded.UpdateEmployeeTotalWorkedHoursCommand) {
+				return [`worked hours of ${command.employeeId}`];
+			}
+			return [];
+		});
 	};
 
 	/** A timesheet of the employee, pending until a test approves it. */
@@ -459,6 +476,10 @@ describe('Time entry edits under a precondition, on TypeORM and on MikroORM (#53
 					DeleteTimeSpanHandler: require('./commands/handlers/delete-time-span.handler')
 						.DeleteTimeSpanHandler,
 					FindTimeLogRatesCommand: require('./commands/find-time-log-rates.command').FindTimeLogRatesCommand,
+					TimesheetRecalculateCommand: require('../timesheet/commands').TimesheetRecalculateCommand,
+					UpdateEmployeeTotalWorkedHoursCommand:
+						require('./commands/update-employee-total-worked-hours.command')
+							.UpdateEmployeeTotalWorkedHoursCommand,
 					replaceTimeLogTags: require('./time-log-tags').replaceTimeLogTags,
 					InvoiceItemService: require('../../invoice-item/invoice-item.service').InvoiceItemService,
 					TypeOrmInvoiceItemRepository:
@@ -848,6 +869,8 @@ describe('Time entry edits under a precondition, on TypeORM and on MikroORM (#53
 				expect((await updatedAtOf(timeLogId)).getTime()).toBe(billed.getTime());
 				// The entry's own history records no cut
 				expect(await historyCountOf(timeLogId)).toBe(0);
+				// The totals a recalculation made while the second part stood are counted again without it
+				expect(recalculatedAfterCut()).toEqual([`timesheet ${TIMESHEET}`, `worked hours of ${EMPLOYEE}`]);
 			});
 
 			it('keeps a second part an invoice billed before the split was taken back', async () => {
@@ -887,6 +910,8 @@ describe('Time entry edits under a precondition, on TypeORM and on MikroORM (#53
 					{ id: timeLogId, range: '09:00-10:00', invoiceItemId: null }
 				]);
 				expect(await historyCountOf(timeLogId)).toBe(0);
+				// The approved timesheet and the worked hours are counted again without the second part
+				expect(recalculatedAfterCut()).toEqual([`timesheet ${timesheetId}`, `worked hours of ${EMPLOYEE}`]);
 			});
 		});
 	});
