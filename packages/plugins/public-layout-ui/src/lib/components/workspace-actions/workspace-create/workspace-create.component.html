@@ -22,6 +22,10 @@
           (submitForm)="confirmSignInCode()"
           (editEmail)="onEditEmail()"
         ></ga-email-code-form>
+        <p class="switch-flow">
+          {{ 'WORKSPACES.ALREADY_HAVE_WORKSPACE' | translate }}
+          <a routerLink="/share/workspace/signin">{{ 'WORKSPACES.SIGN_IN_LINK' | translate }}</a>
+        </p>
       }
       <!-- Step 2: Workspace Selection -->
       @if (showWorkspaceSelection) {
