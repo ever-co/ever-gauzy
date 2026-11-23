@@ -7023,7 +7023,14 @@
 		"SEARCH_STAGE": "Fase di ricerca",
 		"STATUS": "Stato",
 		"ALL_STATUS": "Tutti gli stati",
-		"RESET": "Ripristina"
+		"RESET": "Ripristina",
+		"DEALS": "Offerte",
+		"DEALS_BY_STAGE": "Offerte per fase",
+		"NO_STAGES": "Ancora nessuna fase",
+		"RECENT_DEALS": "Offerte recenti",
+		"NO_DEALS": "Ancora nessuna offerta",
+		"HIGH_PROBABILITY": "Alta probabilità",
+		"DETAILS": "Dettagli"
 	},
 	"PIPELINE_DEALS_PAGE": {
 		"HEADER": "Offerte sulle vendite",

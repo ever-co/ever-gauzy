@@ -7019,7 +7019,14 @@
 		"SEARCH_STAGE": "Suchstufe",
 		"STATUS": "Status",
 		"ALL_STATUS": "Alle Status",
-		"RESET": "Zurücksetzen"
+		"RESET": "Zurücksetzen",
+		"DEALS": "Angebote",
+		"DEALS_BY_STAGE": "Angebote nach Stufe",
+		"NO_STAGES": "Noch keine Stufen",
+		"RECENT_DEALS": "Neueste Angebote",
+		"NO_DEALS": "Noch keine Angebote",
+		"HIGH_PROBABILITY": "Hohe Wahrscheinlichkeit",
+		"DETAILS": "Details"
 	},
 	"PIPELINE_DEALS_PAGE": {
 		"HEADER": "Pipeline Deals",

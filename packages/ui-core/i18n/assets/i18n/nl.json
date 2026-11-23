@@ -7023,7 +7023,14 @@
 		"SEARCH_STAGE": "Zoekfase",
 		"STATUS": "Status",
 		"ALL_STATUS": "Alle status",
-		"RESET": "Reset"
+		"RESET": "Reset",
+		"DEALS": "Aanbiedingen",
+		"DEALS_BY_STAGE": "Aanbiedingen per stage",
+		"NO_STAGES": "Nog geen stages",
+		"RECENT_DEALS": "Recente aanbiedingen",
+		"NO_DEALS": "Nog geen aanbiedingen",
+		"HIGH_PROBABILITY": "Hoge waarschijnlijkheid",
+		"DETAILS": "Details"
 	},
 	"PIPELINE_DEALS_PAGE": {
 		"HEADER": "Dealstroom",

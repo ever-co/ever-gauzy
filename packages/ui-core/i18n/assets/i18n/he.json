@@ -7033,7 +7033,14 @@
 		"SEARCH_STAGE": "Search Stage",
 		"STATUS": "עבודה",
 		"ALL_STATUS": "All Status",
-		"RESET": "Reset"
+		"RESET": "Reset",
+		"DEALS": "עסקאות",
+		"DEALS_BY_STAGE": "עסקאות לפי שלב",
+		"NO_STAGES": "אין עדיין שלבים",
+		"RECENT_DEALS": "עסקאות אחרונות",
+		"NO_DEALS": "אין עדיין עסקאות",
+		"HIGH_PROBABILITY": "סבירות גבוהה",
+		"DETAILS": "פרטים"
 	},
 	"PIPELINE_DEALS_PAGE": {
 		"HEADER": "Pipeline Deals",

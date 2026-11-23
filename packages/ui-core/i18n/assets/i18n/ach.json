@@ -6398,7 +6398,14 @@
 		"SEARCH_STAGE": "crwdns11112:0crwdne11112:0",
 		"STATUS": "crwdns11114:0crwdne11114:0",
 		"ALL_STATUS": "crwdns11116:0crwdne11116:0",
-		"RESET": "crwdns11118:0crwdne11118:0"
+		"RESET": "crwdns11118:0crwdne11118:0",
+		"DEALS": "Deals",
+		"DEALS_BY_STAGE": "Deals by stage",
+		"NO_STAGES": "No stages yet",
+		"RECENT_DEALS": "Recent deals",
+		"NO_DEALS": "No deals yet",
+		"HIGH_PROBABILITY": "High probability",
+		"DETAILS": "Details"
 	},
 	"PIPELINE_DEALS_PAGE": {
 		"HEADER": "crwdns7198:0crwdne7198:0",

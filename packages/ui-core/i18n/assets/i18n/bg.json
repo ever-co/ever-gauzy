@@ -7068,7 +7068,14 @@
 		"SEARCH_STAGE": "Търсене на етап",
 		"STATUS": "Статус",
 		"ALL_STATUS": "Всички статуси",
-		"RESET": "Нулиране"
+		"RESET": "Нулиране",
+		"DEALS": "Сделки",
+		"DEALS_BY_STAGE": "Сделки по етапи",
+		"NO_STAGES": "Все още няма етапи",
+		"RECENT_DEALS": "Последни сделки",
+		"NO_DEALS": "Все още няма сделки",
+		"HIGH_PROBABILITY": "Висока вероятност",
+		"DETAILS": "Подробности"
 	},
 	"PIPELINE_DEALS_PAGE": {
 		"HEADER": "Сделки по тръбопровод",

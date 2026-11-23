@@ -7022,7 +7022,14 @@
 		"SEARCH_STAGE": "Etap wyszukiwania",
 		"STATUS": "Status",
 		"ALL_STATUS": "Wszystkie statusy",
-		"RESET": "Resetuj"
+		"RESET": "Resetuj",
+		"DEALS": "Oferty",
+		"DEALS_BY_STAGE": "Oferty według etapu",
+		"NO_STAGES": "Brak etapów",
+		"RECENT_DEALS": "Ostatnie oferty",
+		"NO_DEALS": "Brak ofert",
+		"HIGH_PROBABILITY": "Wysokie prawdopodobieństwo",
+		"DETAILS": "Szczegóły"
 	},
 	"PIPELINE_DEALS_PAGE": {
 		"HEADER": "Umowy o ropociągu",

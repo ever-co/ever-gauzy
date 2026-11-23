@@ -7041,7 +7041,14 @@
 		"SEARCH_STAGE": "Стадия поиска",
 		"STATUS": "Статус",
 		"ALL_STATUS": "Весь статус",
-		"RESET": "Reset"
+		"RESET": "Reset",
+		"DEALS": "Сделки",
+		"DEALS_BY_STAGE": "Сделки по этапам",
+		"NO_STAGES": "Этапов пока нет",
+		"RECENT_DEALS": "Последние сделки",
+		"NO_DEALS": "Сделок пока нет",
+		"HIGH_PROBABILITY": "Высокая вероятность",
+		"DETAILS": "Подробности"
 	},
 	"PIPELINE_DEALS_PAGE": {
 		"HEADER": "Сделки Трубопровода",
