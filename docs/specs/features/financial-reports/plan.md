@@ -183,9 +183,11 @@ tracking and employee rates), `REPORT_BUDGET_FIGURES` (budgets module), `REPORT_
 data sets registered with the layout model, such as `tax.register` of `tax-engine`). The layout service answers the
 `TAX_RETURN_LAYOUTS` port of `tax-engine` (list, evaluate, register pack layouts) and answers it only
 for tenants with `FEATURE_FINANCIAL_REPORTS` on, so a tax return needs this feature. A report whose port is unbound is
-listed as unavailable with the reason, except gross profit: with `REPORT_STOCK_COST` unbound it lists the selling
-amounts from `REPORT_REGISTER_DOCUMENTS` and marks cost and margin unavailable (spec FR-64); the stock cost does not
-depend on accounting, so the report is the same with accounting on or off.
+listed as unavailable with the reason, except gross profit, which has two cost ports and stays available without
+either: with `REPORT_STOCK_COST` unbound it lists the selling amounts from `REPORT_REGISTER_DOCUMENTS` and marks cost
+and margin unavailable (spec FR-64), and with `REPORT_TRACKED_TIME_COST` unbound it lists the selling amounts of lines
+billed from tracked time and marks their labor cost and margin unavailable with the reason (spec FR-65, T43); neither
+cost depends on accounting, so the report is the same with accounting on or off.
 
 **Consumer tokens answered** (bound in `apps/api/src/plugin-composition.ts` to the ageing bucket schemes; each consumer plan states the shape it calls and its fallback): `AGEING_BUCKET_SCHEME`.
 

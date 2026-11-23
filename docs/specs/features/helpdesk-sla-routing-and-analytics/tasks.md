@@ -34,7 +34,8 @@
       `helpdesk-sla-policy.entity.ts`, `helpdesk-sla-target.entity.ts`, `helpdesk-ticket-sla.entity.ts`,
       `helpdesk-sla-event.entity.ts`, `helpdesk-escalation-policy.entity.ts` and migration
       `hd/database/migrations/1791000052110-CreateHelpdeskServiceLevelTables.ts` (clock rows and events keyed by
-      `recordType` and `recordId`, `taskId` for tickets only, `transitionSeq`). Test: as T2.
+      `recordType` and `recordId`, `taskId` for tickets only, `transitionSeq`, `…CountedAt` per metric, the calendar's
+      `holidayDates`). Test: as T2.
 - [ ] **T4** (parallel). Entities `hd/analytics/helpdesk-ticket-fact.entity.ts`, `helpdesk-daily-fact.entity.ts`,
       `helpdesk-support-health.entity.ts`, `helpdesk-contract-usage.entity.ts`,
       `hd/routing/helpdesk-rebalance-proposal.entity.ts` and migration
@@ -123,10 +124,15 @@
       add and measure working seconds in a time zone. Test: golden cases (breaks, holidays, exceptions, daylight-saving
       changes, 24×7); property test that measuring an added target returns it.
 - [ ] **T21**. Calendars: validation, `HELPDESK_HOLIDAYS` binding to `TIME_OFF_WORKING_CALENDAR` with the organization's
-      `official_holiday` rows as fallback, exceptions, year view. Files: `hd/service-levels/service-calendar.service.ts`,
+      `official_holiday` rows as fallback, exceptions, year view; holiday dates copied into `holidayDates` on save, by
+      the `time_off.calendar.changed` consumer and by the hourly `helpdesk.holiday-refresh`; every edit or changed
+      refresh stores the elapsed working time of the metrics still counting on the calendar (running, or breached and not yet met) under the replaced content first
+      (plan §2 Calendar changes). Files: `hd/service-levels/service-calendar.service.ts`,
       `hd/service-levels/service-calendar.controller.ts`, `hd/service-levels/holiday-source.ts`,
-      `apps/api/src/plugin-composition.ts`. Test: invalid calendars refused naming the problem; used
-      calendar not deletable; official holidays applied without the time-off plugin.
+      `hd/service-levels/holiday-refresh.job.ts`, `apps/api/src/plugin-composition.ts`. Test: invalid calendars refused
+      naming the problem; used calendar not deletable; official holidays applied without the time-off plugin; a holiday
+      added in the time-off calendar reaches `holidayDates` through the consumer and a new official holiday through the
+      refresh; a refresh with unchanged dates writes nothing; a calendar edited after a metric breached keeps that metric's overdue working time as measured before the edit.
 - [ ] **T22**. Policies and targets: conditions as core `rule` rows (owner `HELPDESK_SLA_POLICY`), validation, order,
       selection (contract, order, default), override with reason, impact count with recompute as a core operation,
       preview, nightly expiry. Files: `hd/service-levels/sla-policy.service.ts`, `hd/service-levels/sla-policy.controller.ts`,
@@ -134,7 +140,8 @@
       `hd/schedule/helpdesk-policy-expiry.scheduler.ts`. Test: each selection path; keep versus recompute.
 - [ ] **T23**. Clock state machine on the lifecycle hooks (also when a task screen changes the ticket's status or
       priority): attach, pause and resume on the waiting category, met on done, reopen, priority and policy change, merge,
-      split, reset (setting and permission), outside-hours mark, working-time measures. Files:
+      split, reset (setting and permission), outside-hours mark, working-time measures with `…CountedAt` stored at every
+      pause and change (plan §2 Clocks). Files:
       `hd/service-levels/clock-state-machine.ts`, `hd/service-levels/ticket-sla.service.ts`,
       `hd/service-levels/ticket-sla.lifecycle.ts`, `hd/service-levels/ticket-sla.controller.ts`. Test: every transition of spec
       §3.7, including a status change through the task API; a 24-hour calendar clock started 09:00, paused 10:00 to
@@ -142,9 +149,12 @@
       one-hour target at 12:00 breaches at the change; a clock started 09:00 and moved at 10:00, without a pause, to a
       three-hour target gets a 12:00 due time; a 24-hour clock started 09:00 with a one-hour target and moved at 11:00
       to a 90-minute target breaches at the change; on a 09:00–17:00 calendar a clock started Monday 16:00 with a
-      two-hour target keeps 30 minutes elapsed when Tuesday becomes a holiday at 16:30 and gets Wednesday 10:00; pause,
-      resume and a second pause in one cycle record three
-      events; a retried transition records one.
+      two-hour target keeps 30 minutes elapsed when Tuesday becomes a holiday at 16:30 and gets Wednesday 10:00; a clock
+      started Friday 16:00 on a weekday 09:00–17:00 calendar whose policy changes on Monday 09:00 to one on a 24×7
+      calendar keeps one hour elapsed, counts on from Monday 09:00 in the 24×7 calendar, and a later pause, resume and
+      priority change still measure one hour before Monday 09:00; a clock running since 16:00 keeps 30 minutes elapsed
+      when, at 16:30, the rest of that day is entered as a closed exception or the day becomes a holiday; pause, resume
+      and a second pause in one cycle record three events; a retried transition records one.
 - [ ] **T24**. Minute check job (`helpdesk.sla-check`): breaches at due time with internal comment and notices, catch-up,
       `nextCheckAt`. Files: `hd/schedule/helpdesk-sla-check.scheduler.ts`, `hd/service-levels/sla-check.worker.ts`,
       `hd/service-levels/sla-breach.service.ts`. Test: SQLite end to end with an hour of simulated downtime; each breach
