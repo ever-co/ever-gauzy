@@ -37,7 +37,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
         '.progress-bar-container {display: flex; align-items: center; gap: 0.5rem;}',
         '.progress-bar {background-color: var(--gauzy-sidebar-background-3, rgba(126, 126, 143, 0.15)); border-radius: 0.125rem; height: 0.25rem; flex: 0 0 3.5rem; overflow: hidden;}',
         '.progress-bar-inner {background-color: var(--color-success-default, rgba(0, 214, 143, 1)); display: block; height: 100%; border-radius: inherit;}',
-        '.paid-percent {color: var(--gauzy-text-color-2, inherit); font-weight: 400; font-variant-numeric: tabular-nums; white-space: nowrap;}'
+        '.paid-percent {color: var(--gauzy-text-color-1, inherit); font-weight: 400; font-variant-numeric: tabular-nums; white-space: nowrap;}'
     ],
     changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
