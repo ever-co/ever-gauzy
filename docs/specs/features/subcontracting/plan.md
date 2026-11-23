@@ -47,8 +47,7 @@ It builds on what exists rather than beside it:
   (`StockCountService.close` takes it as its first statement for every count, an additive change of `inventory`), by
   the `stock_count.closed` consumer and by every material operation of this plugin at the location (the receipt hook
   inside the goods receipt transaction included), each before it reads a count or a line of the location or moves
-  stock there, so every holder takes the location lock before stock level rows and no two of them wait on each other
-  in reverse order; after the lock, the operation reads the location's counts that are not cancelled and not yet
+  stock there, so every holder takes the location lock before stock level rows and no two of them wait on each other in reverse order; a transaction that needs more than one location lock (a goods receipt with subcontract orders at several supplier locations) takes them in ascending `warehouse.id` order; after the lock, the operation reads the location's counts that are not cancelled and not yet
   allocated and then its lines with locking reads, which see every change committed under the lock on each dialect,
   allocates the closed counts in close order, and only then works on the lines. Whenever a count was created, before
   or after the operation's check, its closure

@@ -126,13 +126,13 @@
 - [ ] **T21**. Calendars: validation, `HELPDESK_HOLIDAYS` binding to `TIME_OFF_WORKING_CALENDAR` with the organization's
       `official_holiday` rows as fallback, exceptions, year view; holiday dates copied into `holidayDates` on save, by
       the `time_off.calendar.changed` consumer and by the hourly `helpdesk.holiday-refresh`; every edit or changed
-      refresh stores the elapsed working time of the running metrics on the calendar under the replaced content first
+      refresh stores the elapsed working time of the metrics still counting on the calendar (running, or breached and not yet met) under the replaced content first
       (plan §2 Calendar changes). Files: `hd/service-levels/service-calendar.service.ts`,
       `hd/service-levels/service-calendar.controller.ts`, `hd/service-levels/holiday-source.ts`,
       `hd/service-levels/holiday-refresh.job.ts`, `apps/api/src/plugin-composition.ts`. Test: invalid calendars refused
       naming the problem; used calendar not deletable; official holidays applied without the time-off plugin; a holiday
       added in the time-off calendar reaches `holidayDates` through the consumer and a new official holiday through the
-      refresh; a refresh with unchanged dates writes nothing.
+      refresh; a refresh with unchanged dates writes nothing; a calendar edited after a metric breached keeps that metric's overdue working time as measured before the edit.
 - [ ] **T22**. Policies and targets: conditions as core `rule` rows (owner `HELPDESK_SLA_POLICY`), validation, order,
       selection (contract, order, default), override with reason, impact count with recompute as a core operation,
       preview, nightly expiry. Files: `hd/service-levels/sla-policy.service.ts`, `hd/service-levels/sla-policy.controller.ts`,

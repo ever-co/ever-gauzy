@@ -210,8 +210,7 @@
   order are allocated in close order and leave no outstanding balance; a count closed concurrently with a receipt's
   consumption either is allocated before the receipt reads the lines or closes after the receipt commits (both orders
   of arrival, PostgreSQL and MySQL); a count created and closed after the receipt's check of the location's counts
-  waits for the receipt's commit, then closes and is allocated by the consumer, and the receipt never read lines
-  without a closed count's differences (PostgreSQL and MySQL).
+  waits for the receipt's commit, then closes and is allocated by the consumer, and the receipt never read lines without a closed count's differences (PostgreSQL and MySQL); two receipts spanning the same two supplier locations in opposite line order both complete, their location locks taken in `warehouse.id` order.
 - [ ] **T38**. Contractor links (supplier ↔ employee), order tasks per output or operation, consumer
   `subscriber:subcontracting-time` (hours, labour cost at each log's stored pay rate, progress; logs by task only), bill
   draft proposal from approved time at the service's supplier term price with claimed logs. Files:

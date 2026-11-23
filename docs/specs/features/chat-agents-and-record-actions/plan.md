@@ -157,7 +157,7 @@ DTOs in `dto/chat-agents.dto.ts`; Swagger tags `Chat apps`, `Chat bot API`; idem
 | `ai_run.*` of `ai-agents-and-assistants` (consumed for `origin = chat`) | run state changes | invoker and conversation members (hint) |
 | signal `agent.streaming` | text deltas while a run writes | conversation members, live only |
 | `ai_confirmation.*` of `ai-agents-and-assistants` (consumed) | plan created, decided, expired, undone | plan card update for members of the conversation |
-| `chat_message.updated` (existing) | a carried card's record changed; a bot edited; a plan card changed | members |
+| `chat_message.updated` (existing) | a carried card's record changed; a bot edited; a plan card changed; a record, file or knowledge item listed in an agent answer's `agentSourceRefs` was deleted | members |
 | record change facts of plugins (consumed) | `task.*`, `invoice.*`, `deal.*`, … | card refresh, subscription buffers |
 
 Inbox: plan approvals awaiting a person become decision items; with `FEATURE_CHAT_AGENTS` on, mentions in bot and app messages file mention items attributed to the bot (FR-57; off, webhook mentions count on badges only, as today); decisions from cards close the matching approval items.
@@ -183,7 +183,7 @@ Inbox: plan approvals awaiting a person become decision items; with `FEATURE_CHA
 | `chat.subscription.flush` | every minute | posts one summary per buffered source and conversation whose window ended, clears its buffer rows | buffer rows deleted in the post transaction |
 | `chat.scheduled.sweep` (of `chat-messaging`) | every minute | also posts due one-time and recurring bot posts, next time from the core recurrence module with holidays | its claim and nonce |
 | `chat.webhook.files` | on receive with files | fetches files through the egress guard into the Documents hub, attaches them | job id = message id + position |
-| `chat.cards.refresh` consumer | on record facts | emits `chat_message.updated` for messages carrying the record (task records found through `chat_task_reference` and `chat_record_reference`) | idempotent hints |
+| `chat.cards.refresh` consumer | on record facts | emits `chat_message.updated` for messages carrying the record (task records found through `chat_task_reference` and `chat_record_reference`) and, on the delete fact of a record, file or knowledge item, for every agent answer whose `agentSourceRefs` list it, so open views read the message again and show the note | idempotent hints |
 | `chat.private_reply.purge` | hourly | removes private replies and response addresses past expiry | delete by id batches |
 | `chat.record-reference.catch-up` | when `FEATURE_CHAT_RECORD_CARDS` is switched on for a tenant, then nightly for every tenant with it on | copies task references missing from `chat_record_reference` and deletes its task mention rows whose `chat_task_reference` row is gone (plan §3 Catch-up) | insert-if-absent on (`messageId`, `entity`, `entityId`); an operation per tenant and run |
 

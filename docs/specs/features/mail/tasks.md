@@ -86,8 +86,7 @@
   more than 5,000 messages sharing one time list each message once and finish; a message whose `PROCESSED` write
   commits after a later-stamped message, once the cursor has passed it, is recovered by the next run's 15-minute
   lookback, and the reread rows make no second state row; a message committed 20 minutes behind its `updatedAt`, after
-  the recovery cursor passed it, and whose hand-off listener failed, is filed by the next `mail.reconcile` pass with one
-  state row, and a second pass adds none.
+  the recovery cursor passed it, and whose hand-off listener failed, is filed by the next `mail.reconcile` pass with one state row, and a second pass adds none; an arrival that fails after its folder step leaves no state row and is filed whole by its retry.
 - [ ] **T11**. Lists and conversations `client/*` (keyset pages over state rows, display fields through the reader,
   all inboxes, copies folded by message identity, claimed mailboxes read-only). Test: 1 million state rows page under
   the budget on PostgreSQL; claimed mailbox refuses replies.
