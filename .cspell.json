@@ -2064,7 +2064,12 @@
 		"encash",
 		"tpui",
 		"PROCAPI",
-		"binless"
+		"binless",
+		"rebooking",
+		"rebooked",
+		"rebooks",
+		"unlogged",
+		"preconfirm"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
