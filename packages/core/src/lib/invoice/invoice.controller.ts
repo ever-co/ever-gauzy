@@ -176,6 +176,27 @@ export class InvoiceController extends CrudController<Invoice> {
 	}
 
 	/**
+	 * Duplicate an invoice or an estimate: a new draft of the tenant's next number, dated today, with the same contact,
+	 * currency, taxes, discount, terms, tags and lines. It bills no time and no expense the source billed, and the
+	 * source is not changed.
+	 *
+	 * @param id The invoice or estimate to copy.
+	 * @returns The copy, with its lines.
+	 */
+	@ApiOperation({ summary: 'Duplicate an invoice or an estimate as a new draft' })
+	@ApiResponse({ status: HttpStatus.CREATED, description: 'The draft copy, with its lines.' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found' })
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'The copy could not be created, or the number sequence cannot take another number.'
+	})
+	@HttpCode(HttpStatus.CREATED)
+	@Post(':id/duplicate')
+	async duplicate(@Param('id', UUIDValidationPipe) id: IInvoice['id']): Promise<IInvoice> {
+		return await this.invoiceService.duplicate(id);
+	}
+
+	/**
 	 * Update invoice
 	 *
 	 * With `expectedUpdatedAt` (the `updatedAt` the invoice was read with), the change is written only while the
