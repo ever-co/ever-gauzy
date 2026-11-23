@@ -1,4 +1,5 @@
 import { AsyncLocalStorage } from 'async_hooks';
+import { MikroORM, RequestContext as MikroOrmRequestContext } from '@mikro-orm/core';
 import { GqlModuleOptions, GraphQLTypesLoader } from '@nestjs/graphql';
 import { DocumentNode, ExecutionArgs, GraphQLError, GraphQLSchema, buildSchema, parse } from 'graphql';
 import { ClsService } from 'nestjs-cls';
@@ -6,6 +7,7 @@ import { ConfigService } from '@gauzy/config';
 import { GraphQLApiConfigurationOptions } from '@gauzy/common';
 import { RequestContext } from '../core/context/request-context';
 import { ApiErrorCode } from '../core/errors/api-error-codes';
+import { mikroOrmOutsideRequest } from '../core/testing/mikro-orm-outside-request';
 import { createGraphqlModuleOptions } from './graphql-helper';
 
 /**
@@ -19,19 +21,25 @@ describe('createGraphqlModuleOptions', () => {
 	/** The options the driver is handed, for a deployment configured as stated. */
 	const build = async (
 		graphqlConfigOptions: Record<string, unknown> = {},
-		apiOptions: Partial<GraphQLApiConfigurationOptions> = {}
+		apiOptions: Partial<GraphQLApiConfigurationOptions> = {},
+		orm?: MikroORM
 	): Promise<GqlModuleOptions & Record<string, any>> => {
 		const configService = { plugins: [], graphqlConfigOptions } as unknown as ConfigService;
 		const typesLoader = { mergeTypesByPaths: jest.fn(async () => SDL) } as unknown as GraphQLTypesLoader;
 
-		return (await createGraphqlModuleOptions(configService, typesLoader, {
-			path: 'graphql',
-			typePaths: [],
-			playground: true,
-			debug: false,
-			resolverModule: class HostModule {},
-			...apiOptions
-		} as GraphQLApiConfigurationOptions)) as GqlModuleOptions & Record<string, any>;
+		return (await createGraphqlModuleOptions(
+			configService,
+			typesLoader,
+			{
+				path: 'graphql',
+				typePaths: [],
+				playground: true,
+				debug: false,
+				resolverModule: class HostModule {},
+				...apiOptions
+			} as GraphQLApiConfigurationOptions,
+			orm
+		)) as GqlModuleOptions & Record<string, any>;
 	};
 
 	beforeEach(() => {
@@ -148,8 +156,8 @@ describe('createGraphqlModuleOptions', () => {
 	});
 
 	describe('the subscription socket', () => {
-		const socketOptions = async (apiOptions: Partial<GraphQLApiConfigurationOptions> = {}) => {
-			const options = await build({}, apiOptions);
+		const socketOptions = async (apiOptions: Partial<GraphQLApiConfigurationOptions> = {}, orm?: MikroORM) => {
+			const options = await build({}, apiOptions, orm);
 
 			return options.subscriptions?.['graphql-ws'] as {
 				onConnect: (context: unknown) => boolean;
@@ -202,6 +210,41 @@ describe('createGraphqlModuleOptions', () => {
 				expect(subscribe).toEqual(expect.any(Function));
 			} finally {
 				RequestContext['clsService'] = originalClsService;
+			}
+		});
+
+		it('runs an operation on a MikroORM fork of its own under DB_ORM=mikro-orm, with the instance it is handed', async () => {
+			// The bootstrap opens MikroORM's request context for an HTTP request on the endpoint; a WebSocket message never
+			// passes through it, so MikroORM refused every read an operation on the socket made through it.
+			const originalOrm = process.env.DB_ORM;
+			const mikroOrm = await mikroOrmOutsideRequest();
+			process.env.DB_ORM = 'mikro-orm';
+
+			try {
+				const { execute } = await socketOptions({}, mikroOrm.orm);
+				let em: unknown;
+
+				const result = await execute({
+					schema: buildSchema(SDL),
+					document: parse('{ hello }'),
+					rootValue: {
+						hello: async () => {
+							em = await mikroOrm.write();
+							return 'written';
+						}
+					},
+					contextValue: { req: { headers: {} } }
+				});
+
+				expect(result).toEqual({ data: { hello: 'written' } });
+				expect(em).toBeDefined();
+				expect(em).not.toBe(mikroOrm.orm.em);
+				expect(await mikroOrm.rows()).toBe(1);
+				expect(MikroOrmRequestContext.getEntityManager()).toBeUndefined();
+			} finally {
+				if (originalOrm === undefined) delete process.env.DB_ORM;
+				else process.env.DB_ORM = originalOrm;
+				await mikroOrm.close();
 			}
 		});
 	});
