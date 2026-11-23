@@ -224,7 +224,7 @@ real past cases gate every version before it goes live. Marked `(advanced)`.
   them (best effort: a call whose report is lost when a process stops is not counted, and the usage page says so), and
   the totals are kept in the platform's one usage meter.
 - **FR-51** A user with `AI_BUDGET_MANAGE` can set monthly caps per organization, agent, purpose and user: notice at 80 %,
-  new runs refused with `AI_BUDGET_EXCEEDED` at 100 %; the automation cap on agent steps applies as well. The same
+  new runs refused with `AI_BUDGET_EXCEEDED` once the recorded usage reaches 100 % (usage counts when its entry is recorded, so calls still in flight can take a month slightly over the cap); the automation cap on agent steps applies as well. The same
   budgets hold an agent principal's request, write, bulk, export and confirmation limits, which
   `access-control-and-security` enforces on every call.
 - **FR-52** The system reports usage cost per agent employee, period and project (the context record's project or task)
@@ -375,7 +375,7 @@ real past cases gate every version before it goes live. Marked `(advanced)`.
 - [ ] **AC-2** A plugin template is enabled, its model changed and cloned; the clone is offered its next version (FR-14).
 - [ ] **AC-3** A knowledge base over a folder, a record type and a web page answers with citations; a reader without
       access to a document or record gets no passage from it; an unreviewed page is not used (FR-26, FR-27, FR-30, FR-33).
-- [ ] **AC-4** A run stops at its token budget; a month cap refuses new runs at 100 % after an 80 % notice; usage per
+- [ ] **AC-4** A run stops at its token budget; a month cap refuses new runs once recorded usage reaches 100 %, after an 80 % notice; usage per
       agent, purpose and project matches the ledger (FR-50, FR-51).
 - [ ] **AC-5** An inbox confirmation approves a call; an unanswered one expires; a question is answered and the run goes on (FR-38).
 - [ ] **AC-6** A record trigger and a mailbox hand-off start runs; the mailbox agent files drafts and sends nothing (FR-44–FR-46).

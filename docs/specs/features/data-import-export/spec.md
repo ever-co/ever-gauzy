@@ -252,8 +252,8 @@ recur from a link or a drive folder, and merges can be undone. Marked `(advanced
   refuses today, that a record type added by a new feature declares blocking, or, where the organization turns on
   blocking deletion of referenced records (off by default), on any reference. It lists only the referencing records the
   requester may read (each referencing type's read scope and record rules); references outside that access are neither
-  listed nor counted, and when one of them blocks the deletion the answer says only that records outside the
-  requester's access prevent it.
+  listed nor counted, and a deletion one of them blocks is refused with the generic blocked answer, which names
+  only the references the requester may read and does not say whether others exist.
 - **FR-64** A user with `DATA_ARCHIVE_MANAGE` can define archive rules (records of a saved view older than a period) that
   mark records archived, hide them from default lists, optionally after exporting them to a file.
 - **FR-65** The system purges the import, error and export files of this feature after 30 days by default, a period of
