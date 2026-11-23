@@ -63,6 +63,85 @@
       color: nb-theme(color-danger-default);
     }
   }
+
+  // Help line under the email field.
+  .form-hint,
+  .email-suggestion {
+    margin: 0.375rem 0 0;
+    font-size: 0.75rem;
+    line-height: 1rem;
+    color: var(--gauzy-text-color-2);
+  }
+
+  // "Did you mean …?" — a text button, styled like a link.
+  .link-button {
+    padding: 0;
+    border: none;
+    background: none;
+    font: inherit;
+    font-weight: 500;
+    color: nb-theme(color-primary-default);
+    cursor: pointer;
+    text-align: start;
+    overflow-wrap: anywhere;
+
+    &:hover {
+      text-decoration: underline;
+    }
+
+    &:focus-visible {
+      outline: 2px solid nb-theme(color-primary-default);
+      outline-offset: 2px;
+      border-radius: 2px;
+    }
+  }
+}
+
+// One box per code character, spread across the card's width.
+.code-boxes {
+  display: grid;
+  // Column count comes from the template (`codeLength`).
+  grid-template-columns: repeat(var(--code-length, 8), minmax(0, 1fr));
+  gap: 0.375rem;
+
+  .code-box {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    height: 2.75rem;
+    padding: 0;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+    text-transform: uppercase;
+    color: nb-theme(text-basic-color);
+    caret-color: nb-theme(color-primary-default);
+    background-color: var(--gauzy-input-background) !important;
+    border: 1px solid var(--gauzy-overlay-border-color);
+    border-radius: var(--gauzy-radius-sm);
+    outline: none;
+    transition: border-color 0.15s ease;
+
+    &.filled {
+      border-color: var(--gauzy-text-color-2);
+    }
+
+    &:focus {
+      border-color: nb-theme(color-primary-default);
+      box-shadow: 0 0 0 1px nb-theme(color-primary-default);
+    }
+
+    &[readonly] {
+      cursor: progress;
+      opacity: 0.7;
+    }
+  }
+
+  &.invalid .code-box:not(:focus) {
+    border-color: nb-theme(color-danger-default);
+  }
 }
 
 // "We've sent a verification code to <email>" notice above the code field.
@@ -91,11 +170,38 @@
   }
 }
 
+// "Open your inbox" on the leading edge, "Resend code" on the trailing one.
 .new-code-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem 1rem;
   margin: 0.5rem 0 0;
   font-size: 0.75rem;
   line-height: 1rem;
   text-align: end;
+
+  .open-inbox {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-inline-end: auto;
+    font-weight: 500;
+    color: nb-theme(text-basic-color);
+    text-decoration: none;
+
+    nb-icon {
+      width: 0.875rem;
+      height: 0.875rem;
+      font-size: 0.875rem;
+      color: var(--gauzy-text-color-2);
+    }
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
 
   .resend-code {
     cursor: pointer;
