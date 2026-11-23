@@ -7634,7 +7634,14 @@
 		"SEARCH_STAGE": "Search Stage",
 		"STATUS": "Status",
 		"ALL_STATUS": "All Status",
-		"RESET": "Reset"
+		"RESET": "Reset",
+		"DEALS": "Deals",
+		"DEALS_BY_STAGE": "Deals by stage",
+		"NO_STAGES": "No stages yet",
+		"RECENT_DEALS": "Recent deals",
+		"NO_DEALS": "No deals yet",
+		"HIGH_PROBABILITY": "High probability",
+		"DETAILS": "Details"
 	},
 	"PIPELINE_DEALS_PAGE": {
 		"HEADER": "Pipeline Deals",
