@@ -6,6 +6,7 @@ import {
 	NotFoundException,
 	UnauthorizedException
 } from '@nestjs/common';
+import { TimeLogSourceEnum } from '@gauzy/contracts';
 import { environment as env } from '@gauzy/config';
 import { EmbedClientService } from './embed-client.service';
 import { EmbedCredentialService } from './embed-credential.service';
@@ -95,11 +96,14 @@ export class EmbedSessionGuard implements CanActivate {
 		if (claims.origin && requestOrigin && normalizeOrigin(requestOrigin) !== claims.origin) {
 			throw fromAnotherSite();
 		}
-		// A start or a stop takes the server's time: an embed cannot backdate.
+		// A start or a stop takes the server's time: an embed cannot backdate. And it is an embedded timer's, whatever
+		// client it names: the team's tracking switch and its required plan hold a start by its source, so a token that
+		// named another client (`DESKTOP`) would start a run the team's rules never saw, recorded as that client's.
 		if (request.method === 'POST' && request.body && typeof request.body === 'object') {
 			for (const field of EMBED_FORBIDDEN_TIMER_FIELDS) {
 				delete request.body[field];
 			}
+			request.body.source = TimeLogSourceEnum.EMBED;
 		}
 
 		// This guard runs before the JWT guard: only a token this server signed has its credential looked up.
