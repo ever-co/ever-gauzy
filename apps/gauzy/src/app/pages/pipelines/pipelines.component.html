@@ -135,6 +135,18 @@
     <ng-template #actionButtons let-buttonSize="buttonSize" let-selectedItem="selectedItem">
       <div class="btn-group actions">
         <ng-template ngxPermissionsOnly="VIEW_SALES_PIPELINES">
+          <!-- Opens the selected pipeline's own page. -->
+          <button
+            [disabled]="!selectedItem && disableButton"
+            (click)="viewPipeline(selectedItem)"
+            status="basic"
+            class="action secondary"
+            size="small"
+            nbButton
+            >
+            <nb-icon icon="eye-outline" pack="eva"></nb-icon>
+            <span> {{ 'BUTTONS.VIEW' | translate }} </span>
+          </button>
           <button
             [disabled]="!selectedItem && disableButton"
             (click)="viewDeals(selectedItem)"
