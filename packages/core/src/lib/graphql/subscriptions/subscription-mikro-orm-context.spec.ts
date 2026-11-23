@@ -1,7 +1,6 @@
 import { AsyncLocalStorage } from 'async_hooks';
 import { EntityManager, RequestContext as MikroOrmRequestContext } from '@mikro-orm/core';
 import { UnauthorizedException } from '@nestjs/common';
-import { ApolloDriver } from '@nestjs/apollo';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { ExecutionArgs, ExecutionResult, GraphQLObjectType, buildSchema } from 'graphql';
 import { GRAPHQL_TRANSPORT_WS_PROTOCOL, makeServer } from 'graphql-ws';
@@ -19,6 +18,7 @@ import { SubscriptionCatalogue } from './subscription-catalogue';
 import type { SubscriptionClock } from './subscription-delivery';
 import { GraphqlSubscriptionHub } from './subscription-hub.service';
 import { runInOperationRequestContext } from './subscription-request-context';
+import { MikroOrmAwareApolloDriver } from './subscription-filter-context';
 import { SubscriptionAuthorizer } from './subscription-scope';
 import { createSubscriptionServerOptions, graphqlContextArguments } from './subscription-transport';
 
@@ -117,13 +117,13 @@ describe('the subscription socket under DB_ORM=mikro-orm', () => {
 		};
 
 		const subscription = (schema.getSubscriptionType() as GraphQLObjectType).getFields();
-		// What `@Subscription('widgetChanged', { filter, resolve })` becomes under the Apollo driver, with a filter and a
-		// `resolve` that read through MikroORM.
-		subscription['widgetChanged'].subscribe = ApolloDriver.prototype.subscriptionWithFilter(
+		// What `@Subscription('widgetChanged', { filter, resolve })` becomes under the platform's Apollo driver, with a
+		// filter and a `resolve` that read through MikroORM. The filter rejects an event marked `reject`.
+		subscription['widgetChanged'].subscribe = MikroOrmAwareApolloDriver.prototype.subscriptionWithFilter(
 			undefined,
-			async (payload: { tenantId?: string }) => {
+			async (payload: { tenantId?: string; reject?: boolean }) => {
 				await touch('filter');
-				return payload?.tenantId === RequestContext.currentTenantId();
+				return payload?.tenantId === RequestContext.currentTenantId() && !payload.reject;
 			},
 			() =>
 				guarded(async () => {
@@ -340,17 +340,45 @@ describe('the subscription socket under DB_ORM=mikro-orm', () => {
 		const [opened] = forksOf('subscribe');
 		expect(forksOf('authenticate')).toEqual([opened]);
 
-		// Each event — its filter, its `resolve` and the fields selected under it — on one fresh fork of its own, never
-		// the fork the subscription opened on, which lives as long as the stream.
+		// Each event — its `resolve` and the fields selected under it — on one fresh fork of its own, and its filter on a
+		// fresh one again; never the fork the subscription opened on, which lives as long as the stream.
+		const pulls = forksOf('resolve');
 		const filters = forksOf('filter');
-		expect(filters).toHaveLength(3);
-		expect(forksOf('resolve')).toEqual(filters);
-		expect(forksOf('field')).toEqual(filters);
-		expectDistinctForks([opened, ...filters]);
+		expect(pulls).toHaveLength(3);
+		expect(forksOf('field')).toEqual(pulls);
+		expectDistinctForks([opened, ...pulls, ...filters]);
 		// So no event reads what an earlier one left in an identity map: each fork holds that event's rows alone.
-		for (const fork of filters) {
-			expect(fork?.getUnitOfWork().getIdentityMap().keys()).toHaveLength(3);
+		for (const fork of pulls) {
+			expect(fork?.getUnitOfWork().getIdentityMap().keys()).toHaveLength(2);
 		}
+		for (const fork of filters) {
+			expect(fork?.getUnitOfWork().getIdentityMap().keys()).toHaveLength(1);
+		}
+	});
+
+	it('evaluates the filter on a fresh fork for each event, including those it rejects within one read', async () => {
+		const socket = connect();
+
+		await socket.send({ type: 'connection_init', payload: { Authorization: TOKEN_A } });
+		socket.subscribe('1', 'subscription { widgetChanged { id } }');
+		await until(() => forksOf('subscribe').length === 1);
+
+		// The driver drops a rejected event and awaits the next inside the same read of the stream, on the same pull.
+		await pubSub.publish('widget.changed', TENANT_A, { id: 'w1', tenantId: TENANT_A, reject: true });
+		await until(() => forksOf('filter').length === 1);
+		await pubSub.publish('widget.changed', TENANT_A, { id: 'w2', tenantId: TENANT_A });
+		await until(() => socket.results('1').length === 1);
+		await socket.end();
+
+		expect(socket.results('1')).toEqual([{ data: { widgetChanged: { id: 'w2' } } }]);
+
+		// Both evaluations ran within one pull, whose fork executed the accepted event; each on a fork of its own, so the
+		// second is not decided on what the first loaded.
+		const [opened] = forksOf('subscribe');
+		const [rejected, accepted] = forksOf('filter');
+		const [pull] = forksOf('resolve');
+		expectDistinctForks([opened, pull, rejected, accepted]);
+		expect(accepted?.getUnitOfWork().getIdentityMap().keys()).toHaveLength(1);
 	});
 
 	it('re-reads each event of a plugin stream on a fresh fork, not on the one the stream was opened in', async () => {
@@ -443,7 +471,7 @@ describe('the subscription socket under DB_ORM=mikro-orm', () => {
 
 		const [opened] = forksOf('subscribe');
 		const [atSubscribe, judgement] = forksOf('authenticate');
-		const [delivery] = forksOf('filter');
+		const [delivery] = forksOf('resolve');
 		expect(atSubscribe).toBe(opened);
 		expectDistinctForks([opened, delivery, judgement]);
 	});
@@ -463,6 +491,8 @@ describe('the subscription socket under DB_ORM=mikro-orm', () => {
 			{ contextValue: {} } as ExecutionArgs,
 			async () => {
 				await touch('subscribe');
+				// What the opener set on its fork is kept by every fork of it, as a filter parameter is.
+				MikroOrmRequestContext.getEntityManager()?.setFilterParams('probe', { tenantId: TENANT_A });
 				return stream;
 			},
 			mikroOrm.orm
@@ -475,6 +505,10 @@ describe('the subscription socket under DB_ORM=mikro-orm', () => {
 		const pulls = forksOf('pull');
 		expect(pulls).toHaveLength(2);
 		expectDistinctForks([opened, ...pulls]);
+		// Each pull forks the operation's own fork, not the global EntityManager.
+		for (const fork of pulls) {
+			expect(fork?.getFilterParams('probe')).toEqual({ tenantId: TENANT_A });
+		}
 	});
 
 	it('opens no MikroORM context at all under TypeORM, and delivers exactly as before', async () => {

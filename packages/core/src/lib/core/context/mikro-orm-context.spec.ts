@@ -131,6 +131,19 @@ describe('runInFreshMikroOrmContext', () => {
 		});
 	});
 
+	it('calls the work synchronously: a value or a failure reaches the caller as the work answered it', () => {
+		process.env.DB_ORM = 'mikro-orm';
+
+		MikroOrmRequestContext.create(mikroOrm.orm.em, () => {
+			expect(runInFreshMikroOrmContext(() => 42)).toBe(42);
+			expect(() =>
+				runInFreshMikroOrmContext(() => {
+					throw new Error('the work failed');
+				})
+			).toThrow('the work failed');
+		});
+	});
+
 	it('runs the work as it is without a context in force, or under TypeORM', async () => {
 		const create = jest.spyOn(MikroOrmRequestContext, 'create');
 		const seen: unknown[] = [];

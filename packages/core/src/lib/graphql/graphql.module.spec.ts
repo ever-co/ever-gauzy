@@ -1,16 +1,18 @@
-import { FactoryProvider } from '@nestjs/common';
-import { GraphQLTypesLoader } from '@nestjs/graphql';
+import { ClassProvider, FactoryProvider } from '@nestjs/common';
+import { AbstractGraphQLDriver, GraphQLTypesLoader } from '@nestjs/graphql';
 import { MikroORM } from '@mikro-orm/core';
 import { ConfigService } from '@gauzy/config';
 import { createGraphqlModuleOptions } from './graphql-helper';
 import { GraphqlModule } from './graphql.module';
+import { MikroOrmAwareApolloDriver } from './subscriptions/subscription-filter-context';
 
 jest.mock('./graphql-helper', () => ({ createGraphqlModuleOptions: jest.fn(async () => ({})) }));
 
 /**
  * The GraphQL module hands the subscription socket the MikroORM instance, so that under DB_ORM=mikro-orm each socket
  * operation runs in a MikroORM context of its own: nothing else opens one for a WebSocket message. The instance is
- * injected optionally, so a wiring without it still boots, as it did.
+ * injected optionally, so a wiring without it still boots, as it did. The driver evaluates each subscription filter on
+ * a fork of its own.
  */
 describe('GraphqlModule.registerAsync', () => {
 	/** The provider the options are built by. */
@@ -32,6 +34,15 @@ describe('GraphqlModule.registerAsync', () => {
 			GraphQLTypesLoader,
 			{ token: MikroORM, optional: true }
 		]);
+	});
+
+	it('serves with the driver that evaluates each subscription filter on a fork of its own', () => {
+		const module = GraphqlModule.registerAsync(() => ({ path: 'graphql' }) as never);
+		const driver = (module.providers ?? []).find(
+			(provider) => (provider as ClassProvider).provide === AbstractGraphQLDriver
+		) as ClassProvider;
+
+		expect(driver.useClass).toBe(MikroOrmAwareApolloDriver);
 	});
 
 	it('hands the instance to the options, and none when the wiring has none', async () => {

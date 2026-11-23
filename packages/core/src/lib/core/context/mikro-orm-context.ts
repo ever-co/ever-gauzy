@@ -41,10 +41,13 @@ export function runInMikroOrmContext<T>(orm: MikroORM | null | undefined, work: 
  * Without a context in force there is nothing to fork: `work` runs as it is, exactly as it would have. Under TypeORM no
  * context is ever looked for, and nothing about `work` changes.
  *
+ * `work` is called synchronously either way: what it returns — a value or a promise — is returned as it is, and what
+ * it throws is thrown, so wrapping a callback does not change how its caller sees it answer or fail.
+ *
  * @param work The work to run.
  * @returns What `work` returns.
  */
-export function runInFreshMikroOrmContext<T>(work: () => Promise<T>): Promise<T> {
+export function runInFreshMikroOrmContext<T>(work: () => T): T {
 	const em = getORMType() === MultiORMEnum.MikroORM ? MikroOrmRequestContext.getEntityManager() : undefined;
 	if (em) {
 		return MikroOrmRequestContext.create(em, work);

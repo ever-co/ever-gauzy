@@ -109,7 +109,16 @@ export async function runInOperationRequestContext(
 		return runInMikroOrmContext(orm, async () => {
 			const result = await operation();
 
-			return isAsyncIterable<ExecutionResult>(result) ? forkMikroOrmContextPerPull(result, orm) : result;
+			if (!isAsyncIterable<ExecutionResult>(result)) {
+				return result;
+			}
+
+			// Bound to the operation's fork under DB_ORM=mikro-orm, as a stream with a request is, so each pull forks
+			// that one — with whatever filter parameters or schema it was given — rather than the global EntityManager.
+			// Under TypeORM the stream is handed back as it is, unbound, as it was.
+			const forked = forkMikroOrmContextPerPull(result, orm);
+
+			return forked === result ? result : bindToCurrentContext(forked);
 		});
 	}
 
