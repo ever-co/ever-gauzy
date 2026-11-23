@@ -1,3 +1,4 @@
+import { EndedEmployeeException } from '../../invited-employee';
 import { InviteAcceptUserCommand } from '../invite.accept-user.command';
 import { InviteAcceptUserHandler } from './invite.accept-user.handler';
 
@@ -13,7 +14,7 @@ const OTHER_ORGANIZATION = 'organization-2';
 const PLATFORM = { id: 'team-platform', name: 'Platform' };
 const DESIGN = { id: 'team-design', name: 'Design' };
 
-type EmployeeRow = { id: string; userId: string; organizationId: string };
+type EmployeeRow = { id: string; userId: string; organizationId: string; isActive?: boolean; isArchived?: boolean };
 type MemberRow = { employeeId: string; organizationTeamId: string; organizationId?: string; tenantId?: string };
 
 function build(options: {
@@ -229,6 +230,25 @@ describe('InviteAcceptUserHandler', () => {
 		expect(members.filter((row) => row.organizationTeamId === PLATFORM.id)).toHaveLength(1);
 		expect(members.filter((row) => row.organizationTeamId === DESIGN.id)).toHaveLength(1);
 	});
+
+	it.each([{ isActive: false }, { isArchived: true }])(
+		"refuses an ended employee in the invitation's organization before anything is written (%o)",
+		async (ended) => {
+			const { accept, inviteService, employeeRepository, teamEmployeeRepository, userOrganizationService } = build({
+				teams: [PLATFORM],
+				existingAccount: true,
+				employees: [{ id: 'employee-ines', userId: 'user-ines', organizationId: ORGANIZATION, ...ended }]
+			});
+
+			await expect(accept()).rejects.toBeInstanceOf(EndedEmployeeException);
+
+			expect(userOrganizationService.addUserToOrganization).not.toHaveBeenCalled();
+			expect(employeeRepository.save).not.toHaveBeenCalled();
+			expect(teamEmployeeRepository.save).not.toHaveBeenCalled();
+			expect(inviteService.releaseInvite).toHaveBeenCalledWith('invite-1');
+			expect(inviteService.update).not.toHaveBeenCalled();
+		}
+	);
 
 	it('gives the invitation back when joining the team fails', async () => {
 		const { accept, inviteService, teamEmployeeRepository } = build({ teams: [PLATFORM] });

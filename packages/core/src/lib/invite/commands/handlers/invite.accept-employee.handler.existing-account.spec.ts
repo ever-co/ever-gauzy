@@ -1,3 +1,5 @@
+import { RequestContext } from '../../../core/context';
+import { EndedEmployeeException } from '../../invited-employee';
 import { InviteAcceptEmployeeCommand } from '../invite.accept-employee.command';
 import { InviteAcceptEmployeeHandler } from './invite.accept-employee.handler';
 
@@ -21,7 +23,9 @@ type Account = {
 	isActive?: boolean;
 	isArchived?: boolean;
 };
-type EmployeeRow = { id: string; userId: string; organizationId: string };
+type EmployeeRow = { id: string; userId: string; organizationId: string; isActive?: boolean; isArchived?: boolean };
+type MembershipRow = { employeeId: string; isActive?: boolean };
+type Joinable = { id: string; name: string; members: MembershipRow[] };
 
 const account = (id: string, role: string, overrides: Partial<Account> = {}): Account => ({
 	id,
@@ -32,7 +36,18 @@ const account = (id: string, role: string, overrides: Partial<Account> = {}): Ac
 	...overrides
 });
 
-function build(options: { accounts?: Account[]; employees?: EmployeeRow[] } = {}) {
+function build(
+	options: {
+		accounts?: Account[];
+		employees?: EmployeeRow[];
+		teams?: Joinable[];
+		projects?: Joinable[];
+		sessionUserId?: string;
+	} = {}
+) {
+	// The session the request carries: none unless a test signs in.
+	jest.spyOn(RequestContext, 'currentUserId').mockReturnValue(options.sessionUserId ?? null);
+
 	const invite = {
 		id: 'invite-1',
 		tenantId: TENANT,
@@ -41,10 +56,10 @@ function build(options: { accounts?: Account[]; employees?: EmployeeRow[] } = {}
 		placeholderEmployeeId: null,
 		actionDate: null,
 		organization: { id: ORGANIZATION, tenantId: TENANT, invitesAllowed: true },
-		projects: [],
 		departments: [],
 		organizationContacts: [],
-		teams: [PLATFORM]
+		teams: options.teams ?? [PLATFORM],
+		projects: options.projects ?? []
 	};
 	const inviteService = {
 		findOneByIdString: jest.fn(async () => invite),
@@ -66,9 +81,14 @@ function build(options: { accounts?: Account[]; employees?: EmployeeRow[] } = {}
 		return String(email).toLowerCase();
 	};
 	const userRepository = {
-		// The ordinary acceptance's first lookup: an account with the EMPLOYEE role, same address.
-		findOneOrFail: jest.fn(async ({ where }) => {
-			const found = accounts.find(
+		// The ordinary acceptance's first lookup: an account with the EMPLOYEE role, same address, the newest first
+		// when the query orders by creation.
+		findOneOrFail: jest.fn(async ({ where, order }) => {
+			const newestFirst = order?.createdAt === 'DESC';
+			const ordered = newestFirst
+				? [...accounts].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+				: accounts;
+			const found = ordered.find(
 				(row) =>
 					row.email === where.email && row.role.name === where.role?.name && row.tenantId === where.tenantId
 			);
@@ -106,10 +126,21 @@ function build(options: { accounts?: Account[]; employees?: EmployeeRow[] } = {}
 	const teamRepository = {
 		create: jest.fn((row) => ({ ...row })),
 		save: jest.fn(async (team) => {
+			// Only the rows this acceptance adds carry the employee; the team's earlier members name it by id.
 			for (const member of team.members) {
-				teamMembers.push({ teamId: team.id, employeeId: member.employee.id });
+				if (member.employee) teamMembers.push({ teamId: team.id, employeeId: member.employee.id });
 			}
 			return team;
+		})
+	};
+	const projectMembers: { projectId: string; employeeId: string }[] = [];
+	const projectRepository = {
+		create: jest.fn((row) => ({ ...row })),
+		save: jest.fn(async (project) => {
+			for (const member of project.members) {
+				if (member.employee) projectMembers.push({ projectId: project.id, employeeId: member.employee.id });
+			}
+			return project;
 		})
 	};
 	const userOrganizationService = { addUserToOrganization: jest.fn(async () => undefined) };
@@ -119,7 +150,7 @@ function build(options: { accounts?: Account[]; employees?: EmployeeRow[] } = {}
 		authService as never,
 		userRepository as never,
 		employeeRepository as never,
-		undefined as never,
+		projectRepository as never,
 		undefined as never,
 		undefined as never,
 		teamRepository as never,
@@ -133,6 +164,9 @@ function build(options: { accounts?: Account[]; employees?: EmployeeRow[] } = {}
 		accounts,
 		employees,
 		teamMembers,
+		projectMembers,
+		teamRepository,
+		projectRepository,
 		authService,
 		employeeRepository,
 		inviteService,
@@ -141,6 +175,8 @@ function build(options: { accounts?: Account[]; employees?: EmployeeRow[] } = {}
 }
 
 describe('InviteAcceptEmployeeHandler with an address that already has an account', () => {
+	afterEach(() => jest.restoreAllMocks());
+
 	it.each(['MANAGER', 'ADMIN'])(
 		'joins with the %s account and a new employee, never a second account',
 		async (role) => {
@@ -259,5 +295,104 @@ describe('InviteAcceptEmployeeHandler with an address that already has an accoun
 		});
 
 		await expect(accept()).resolves.toMatchObject({ id: 'user-newer' });
+	});
+
+	it("joins with the session's own account when the address has several, never another one", async () => {
+		const { accept, userOrganizationService } = build({
+			accounts: [
+				account('user-older', 'MANAGER', { createdAt: new Date('2026-11-01T00:00:00.000Z') }),
+				account('user-newer', 'ADMIN', { createdAt: new Date('2026-11-20T00:00:00.000Z') })
+			],
+			sessionUserId: 'user-older'
+		});
+
+		await expect(accept()).resolves.toMatchObject({ id: 'user-older', role: { name: 'MANAGER' } });
+
+		expect(userOrganizationService.addUserToOrganization).toHaveBeenCalledWith(
+			expect.objectContaining({ id: 'user-older' }),
+			ORGANIZATION
+		);
+	});
+
+	it("joins with the session's Employee account even when the address has a newer Employee account", async () => {
+		const { accept, teamMembers } = build({
+			accounts: [
+				account('user-older', 'EMPLOYEE', { createdAt: new Date('2026-11-01T00:00:00.000Z') }),
+				account('user-newer', 'EMPLOYEE', { createdAt: new Date('2026-11-20T00:00:00.000Z') })
+			],
+			employees: [
+				{ id: 'employee-older', userId: 'user-older', organizationId: ORGANIZATION },
+				{ id: 'employee-newer', userId: 'user-newer', organizationId: ORGANIZATION }
+			],
+			sessionUserId: 'user-older'
+		});
+
+		await expect(accept()).resolves.toMatchObject({ id: 'user-older' });
+
+		expect(teamMembers).toEqual([{ teamId: PLATFORM.id, employeeId: 'employee-older' }]);
+	});
+
+	it('ignores a session that is not one of the address\'s accounts', async () => {
+		const { accept } = build({
+			accounts: [account('user-thomas', 'MANAGER')],
+			sessionUserId: 'user-someone-else'
+		});
+
+		await expect(accept()).resolves.toMatchObject({ id: 'user-thomas' });
+	});
+
+	it.each([{ isActive: false }, { isArchived: true }])(
+		"refuses an ended employee in the invitation's organization before anything is written (%o)",
+		async (ended) => {
+			const { accept, employeeRepository, inviteService, teamMembers, userOrganizationService } = build({
+				accounts: [account('user-thomas', 'MANAGER')],
+				employees: [{ id: 'employee-thomas', userId: 'user-thomas', organizationId: ORGANIZATION, ...ended }],
+				sessionUserId: 'user-thomas'
+			});
+
+			await expect(accept()).rejects.toBeInstanceOf(EndedEmployeeException);
+
+			expect(userOrganizationService.addUserToOrganization).not.toHaveBeenCalled();
+			expect(employeeRepository.save).not.toHaveBeenCalled();
+			expect(teamMembers).toEqual([]);
+			expect(inviteService.releaseInvite).toHaveBeenCalledWith('invite-1');
+			expect(inviteService.update).not.toHaveBeenCalled();
+		}
+	);
+
+	it('adds no second membership to a team or project the employee is already an active member of', async () => {
+		const { accept, teamRepository, projectRepository, teamMembers, projectMembers } = build({
+			accounts: [account('user-thomas', 'ADMIN')],
+			employees: [{ id: 'employee-thomas', userId: 'user-thomas', organizationId: ORGANIZATION }],
+			teams: [
+				{ id: 'team-platform', name: 'Platform', members: [{ employeeId: 'employee-thomas' }] },
+				{ id: 'team-design', name: 'Design', members: [] }
+			],
+			projects: [
+				{ id: 'project-gauzy', name: 'Gauzy', members: [{ employeeId: 'employee-thomas' }] },
+				{ id: 'project-teams', name: 'Teams', members: [] }
+			],
+			sessionUserId: 'user-thomas'
+		});
+
+		await accept();
+
+		expect(teamRepository.save).toHaveBeenCalledTimes(1);
+		expect(teamMembers).toEqual([{ teamId: 'team-design', employeeId: 'employee-thomas' }]);
+		expect(projectRepository.save).toHaveBeenCalledTimes(1);
+		expect(projectMembers).toEqual([{ projectId: 'project-teams', employeeId: 'employee-thomas' }]);
+	});
+
+	it('adds the membership again to a team the employee left (an inactive membership)', async () => {
+		const { accept, teamMembers } = build({
+			accounts: [account('user-thomas', 'ADMIN')],
+			employees: [{ id: 'employee-thomas', userId: 'user-thomas', organizationId: ORGANIZATION }],
+			teams: [{ id: 'team-platform', name: 'Platform', members: [{ employeeId: 'employee-thomas', isActive: false }] }],
+			sessionUserId: 'user-thomas'
+		});
+
+		await accept();
+
+		expect(teamMembers).toEqual([{ teamId: 'team-platform', employeeId: 'employee-thomas' }]);
 	});
 });

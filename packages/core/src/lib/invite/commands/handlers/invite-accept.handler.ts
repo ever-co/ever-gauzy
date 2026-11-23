@@ -15,6 +15,7 @@ import { User } from './../../../core/entities/internal';
 import { TypeOrmUserRepository } from './../../../user/repository/type-orm-user.repository';
 import { RequestContext } from './../../../core/context';
 import { ExistingAccountSignInRequiredException } from '../../existing-account-sign-in-required';
+import { EndedEmployeeException } from '../../invited-employee';
 
 /** Whether an account may still sign in: neither deactivated nor archived. */
 function canSignIn(account: IUser): boolean {
@@ -133,6 +134,10 @@ export class InviteAcceptHandler implements ICommandHandler<InviteAcceptCommand>
 			}
 			// The address already has an account: the 409 tells the person to sign in to it, untouched.
 			if (error instanceof ExistingAccountSignInRequiredException) {
+				throw error;
+			}
+			// The invitee's employee in the organization has ended: the 409 says an administrator restores it first.
+			if (error instanceof EndedEmployeeException) {
 				throw error;
 			}
 			throw new BadRequestException(error);

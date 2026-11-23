@@ -9,7 +9,7 @@ import { TypeOrmUserRepository } from '../../../user/repository/type-orm-user.re
 import { TypeOrmEmployeeRepository } from '../../../employee/repository/type-orm-employee.repository';
 import { TypeOrmOrganizationTeamEmployeeRepository } from '../../../organization-team-employee/repository/type-orm-organization-team-employee.repository';
 import { UserOrganizationService } from '../../../user-organization/user-organization.services';
-import { createInvitedEmployee } from '../../invited-employee';
+import { assertEmployeeNotEnded, createInvitedEmployee } from '../../invited-employee';
 
 /**
  * Use this command for registering all non-employee users.
@@ -119,8 +119,13 @@ export class InviteAcceptUserHandler implements ICommandHandler<InviteAcceptUser
 			return;
 		}
 
+		const existing = await this.findEmployeeInOrganization(invite, user);
+		// An ended employee there is refused before anything is written: joining with it would consume the invitation
+		// and still leave the person unable to sign in to the organization.
+		assertEmployeeNotEnded(existing);
 		await this.linkToOrganization(invite, user);
-		const employee = await this.findOrCreateEmployee(invite, organization, user);
+		const employee =
+			existing ?? (await createInvitedEmployee(this.typeOrmEmployeeRepository, invite, organization, user));
 		await this.addToTeams(invite, employee, teams);
 	}
 
@@ -140,26 +145,20 @@ export class InviteAcceptUserHandler implements ICommandHandler<InviteAcceptUser
 	}
 
 	/**
-	 * The invitee's employee in the invitation's organization: the one the account already has there, or a new one.
+	 * The employee the account already has in the invitation's organization, if any.
 	 *
 	 * @param invite The invitation being accepted.
-	 * @param organization The invitation's organization.
 	 * @param user The invitee's account.
-	 * @returns The employee.
+	 * @returns The employee, or null.
 	 */
-	private async findOrCreateEmployee(invite: IInvite, organization: IOrganization, user: IUser): Promise<IEmployee> {
-		const existing = await this.typeOrmEmployeeRepository.findOne({
+	private async findEmployeeInOrganization(invite: IInvite, user: IUser): Promise<IEmployee | null> {
+		return await this.typeOrmEmployeeRepository.findOne({
 			where: {
 				userId: user.id,
 				organizationId: invite.organizationId,
 				tenantId: invite.tenantId
 			}
 		});
-		if (existing) {
-			return existing;
-		}
-
-		return await createInvitedEmployee(this.typeOrmEmployeeRepository, invite, organization, user);
 	}
 
 	/**
