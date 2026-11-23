@@ -1,6 +1,7 @@
 import { ForbiddenException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { sign } from 'jsonwebtoken';
 import { ExtractJwt } from 'passport-jwt';
+import { TimeLogSourceEnum } from '@gauzy/contracts';
 import { environment } from '@gauzy/config';
 import { EmbedEnabledGuard, EmbedSessionGuard } from './embed.guards';
 import {
@@ -255,7 +256,29 @@ describe('EmbedSessionGuard', () => {
 		const request = { method: 'POST', path: '/api/timesheet/timer/start', body, headers: { authorization: `Bearer ${embedToken()}` } };
 
 		await expect(guard.canActivate(contextOf(request))).resolves.toBe(true);
-		expect(body).toEqual({ organizationId: ORG, description: 'x' });
+		expect(body).toEqual({ organizationId: ORG, description: 'x', source: TimeLogSourceEnum.EMBED });
+	});
+
+	it("starts and stops as an embedded timer, whatever client the body names, so the team's rules hold the start", async () => {
+		const { guard } = guardWith();
+		for (const path of ['/api/timesheet/timer/start', '/api/timesheet/timer/stop']) {
+			for (const named of [TimeLogSourceEnum.DESKTOP, TimeLogSourceEnum.WEB_TIMER, undefined]) {
+				const body: Record<string, unknown> = { organizationId: ORG, source: named };
+				const request = { method: 'POST', path, body, headers: { authorization: `Bearer ${embedToken()}` } };
+
+				await expect(guard.canActivate(contextOf(request))).resolves.toBe(true);
+				expect(body.source).toBe(TimeLogSourceEnum.EMBED);
+			}
+		}
+	});
+
+	it("leaves the source of a request that carries no embed token as it is", async () => {
+		const { guard } = guardWith();
+		const body = { organizationId: ORG, source: TimeLogSourceEnum.DESKTOP };
+		const request = { method: 'POST', path: '/api/timesheet/timer/start', body, headers: {} };
+
+		await expect(guard.canActivate(contextOf(request))).resolves.toBe(true);
+		expect(body.source).toBe(TimeLogSourceEnum.DESKTOP);
 	});
 
 	it('refuses the token of a revoked credential, and every embed token once the switch is off', async () => {
