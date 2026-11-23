@@ -37,8 +37,9 @@ Two existing plugins grow, each owning its half:
   `HELPDESK_SATISFACTION`, which its agent workspace and the service-level module already consume.
 - **`@gauzy/plugin-knowledge-base`** (the existing help-centre tables and routes) keeps its tables, routes and
   behaviour; it offers a read port `KNOWLEDGE_BASE_EXPORT` (help centres, categories, articles, versions) that the
-  import reads, a `knowledge_base.article.changed` event on its writes and a write-back port `KNOWLEDGE_BASE_SYNC`
-  (name and content of an imported article), so no plugin imports another and no legacy row is locked.
+  import reads, a `knowledge_base.article.changed` event on its writes (carrying the row's `revision`), a write-back port
+  `KNOWLEDGE_BASE_SYNC` (name and content of an imported article) and one additive column
+  `knowledge_base_article.revision`, so no plugin imports another and no legacy row is locked.
 
 **Public pages.** The organization's public help site is an Ever Works site (or any other front end) built from the
 public read API and feeds of §4: articles as items, categories, tags, search, Markdown twins and `llms.txt` come from
@@ -119,7 +120,7 @@ review, `ownerUserId`), `document_version`, `document_space`, `document_route`, 
 
 | Table | Columns (besides base) | Indexes and uniqueness |
 | --- | --- | --- |
-| `help_node` (help fields of a page or folder of a help space) | `documentId` FK cascade, `isSystem` bool (General), `audienceCap` varchar(12) null (folders), `pinnedOrder` int null, `language` varchar(8) (the page's language; default the organization's preferred language), `publishAt`, `publishedAt` null, `viewCount` bigint, `helpfulCount`, `notHelpfulCount`, `citationCount` int (cached from feedback, views and links), `translationOfId` uuid null, `confirmedRevision` int null, `isStale` bool default false, `releaseFrom`, `releaseTo` varchar(32) null; `legacySyncedAt` timestamp null (imported articles: the legacy row's version the page last matched) | unique `(documentId)`; idx `(organizationId, pinnedOrder)`, `(translationOfId)` |
+| `help_node` (help fields of a page or folder of a help space) | `documentId` FK cascade, `isSystem` bool (General), `audienceCap` varchar(12) null (folders), `pinnedOrder` int null, `language` varchar(8) (the page's language; default the organization's preferred language), `publishAt`, `publishedAt` null, `viewCount` bigint, `helpfulCount`, `notHelpfulCount`, `citationCount` int (cached from feedback, views and links), `translationOfId` uuid null, `confirmedRevision` int null, `isStale` bool default false, `releaseFrom`, `releaseTo` varchar(32) null; `legacySyncedRevision` int null (imported articles: the legacy row's `revision` the page last matched) | unique `(documentId)`; idx `(organizationId, pinnedOrder)`, `(translationOfId)` |
 | `help_search_log` | `spaceId`, `query` varchar(255), `normalised` varchar(255), `language`, `audience`, `source` (`SITE`, `PORTAL`, `TICKET_FORM`, `ASSISTANT`, `AGENT`), `resultCount` int, `topDocumentId`, `topScore` numeric(6,4), `openedDocumentId` null, `taskId` null (ticket raised within an hour), `visitorHash` | idx `(organizationId, createdAt)`, `(organizationId, normalised, createdAt)`; pruned after 180 days |
 | `help_synonym_set` | `language` varchar(8), `kind` (`SYNONYMS`, `IGNORED`), `terms` text | idx `(organizationId, language)` |
 | `help_knowledge_gap` | `topicKey` varchar(64), `title`, `signals` text (counts per kind), `volume7`, `volume30` int, `examples` text, `state` (`OPEN`, `ASSIGNED`, `DRAFTED`, `DISMISSED`, `RESOLVED`), `assigneeEmployeeId`, `draftDocumentId`, `resolvedByDocumentId`, `resolvedAt` | unique `(organizationId, topicKey)` |
@@ -165,15 +166,19 @@ versions and the help centre's language
 (`knowledge_base_article_project`) → `document_link` rows to the projects. The import writes nothing to the legacy
 rows (`isLocked` and every other column stay as they were) and the legacy routes keep reading and writing: the
 knowledge-base plugin publishes `knowledge_base.article.changed` on a legacy write, which the importer applies to the
-page as a new version (idempotent per legacy version), and a save of an imported page writes its name and content
+page as a new version (idempotent per legacy revision), and a save of an imported page writes its name and content
 back to the legacy row through the port `KNOWLEDGE_BASE_SYNC` (provenance on both sides stops the echo), so an article
-stays one article without a lock. Order between the two writers: the legacy row's `updatedAt` is the sync version;
-`help_node.legacySyncedAt` holds the version the page last matched (applied from an event or written back). An event
-whose version is not later than `legacySyncedAt` is stale and dropped, so a delayed event never sets the page back; a
-write-back is a conditional update against the expected version (`updatedAt = legacySyncedAt`) and sets
-`legacySyncedAt` to the new version in the same step; when it finds a newer legacy write, it writes nothing and that
-write's own event, later than `legacySyncedAt`, becomes the page's next version. The later write to the legacy row
-wins, and the other stays in the page's version history.
+stays one article without a lock. Order between the two writers: the sync version is the legacy row's
+`knowledge_base_article.revision` (int, default 0), a version column (`@VersionColumn`) that every write of the row
+increments in its own statement: the legacy routes through the core CRUD update, which increments it under both ORMs,
+and the write-back in its conditional update; so two writes never share a version, whatever their `updatedAt` (which can
+repeat, or come from replica clocks under MikroORM). `help_node.legacySyncedRevision` holds the revision the page last
+matched (applied from an event or written back). An event whose revision is not greater than `legacySyncedRevision` is
+stale and dropped, so a delayed event never sets the page back; a write-back is a conditional update against the
+expected revision (`revision = legacySyncedRevision`, setting `revision = revision + 1`) and sets
+`legacySyncedRevision` to the new revision in the same transaction; when it finds a newer legacy write, it writes
+nothing and that write's own event, with a greater revision, becomes the page's next version. The later write to the
+legacy row wins, and the other stays in the page's version history.
 
 **Contracts** (`packages/contracts/src/lib/help-center.model.ts` additions for the help module and
 `helpdesk-satisfaction.model.ts`): enums (audience, sources, outcomes, states), interfaces, DTOs, events and ports:
@@ -193,14 +198,15 @@ interface IPortalBranding { forOrganization(organizationId: ID, opts?: { draft?:
 interface IKnowledgeBaseExport { centres(orgId: ID): AsyncIterable<IHelpCenterExport> }                           // KNOWLEDGE_BASE_EXPORT
 ```
 
-**Migration timestamps**: `packages/plugins/docs` `1791000052600` to `1791000052649`; `packages/plugins/helpdesk` `1791000052650` to `1791000052699`.
+**Migration timestamps**: `packages/plugins/docs` `1791000052600` to `1791000052639`; `packages/plugins/knowledge-base` `1791000052640` to `1791000052649`; `packages/plugins/helpdesk` `1791000052650` to `1791000052699`.
 
-**Migrations** (docs `database/` and helpdesk `database/`; PostgreSQL, SQLite, MySQL; idempotent; forward-only; both
+**Migrations** (docs `database/`, helpdesk `database/` and knowledge-base `database/`; PostgreSQL, SQLite, MySQL; idempotent; forward-only; both
 ORMs; after the `documents-and-wiki` migrations): `1791000052600-AddHelpColumnsToDocuments` (`document.audience`,
 `document_space.purpose` with its partial unique key, `document_feedback.reason`), `1791000052610-CreateHelpTables` (help node,
 search log, synonym set), `1791000052620-CreateHelpBeyondTables` (gap, assistant answer, community question),
 `1791000052630-SeedHelpReportCatalogue` (the report rows of FR-87 in core `report`, keyed `FEATURE_HELPDESK_PORTAL` in
-the shared catalogue feature filter of `report-builder-and-dashboards`), `1791000052650-CreateHelpdeskSatisfactionTables` (option, request, rating), `1791000052660-SeedHelpdeskRatingTemplates`
+the shared catalogue feature filter of `report-builder-and-dashboards`), `1791000052640-AddRevisionToKnowledgeBaseArticle`
+(knowledge-base plugin `database/`: `knowledge_base_article.revision` int not null default 0), `1791000052650-CreateHelpdeskSatisfactionTables` (option, request, rating), `1791000052660-SeedHelpdeskRatingTemplates`
 (rating request, recovery note email templates). Permissions and grants are contributions (§9), not a migration.
 
 ## 4. API Surface
@@ -381,7 +387,7 @@ assistant cost from the AI ledger; channel of each rating recorded.
 | Risk | Likelihood | Impact | Mitigation |
 | ---- | ---------- | ------ | ---------- |
 | An internal article leaks to guests | Low | High | import to agents-only; one audience filter; contract test on every read path and feed |
-| An article edited in two places after the import | Medium | Medium | legacy writes carried to the page and page saves written back (provenance stops the echo); ordered by the legacy row's version: a stale event is dropped and a write-back is conditional on the expected version, so the later write wins and the other stays a page version; legacy rows never locked; legacy page redirected to the hub |
+| An article edited in two places after the import | Medium | Medium | legacy writes carried to the page and page saves written back (provenance stops the echo); ordered by the legacy row's `revision`, which every write increments: a stale event is dropped and a write-back is conditional on the expected revision, so the later write wins, also for writes with the same `updatedAt`, and the other stays a page version; legacy rows never locked; legacy page redirected to the hub |
 | `documents-and-wiki` columns not yet present | Medium | Medium | build order fixed; the help migration checks for them and refuses to run early |
 | No embeddings provider | Medium | Medium | the docs pipeline's lexical path; index check job when embeddings turn on |
 | Outside source abuse | Low | Medium | allow-list, SSRF-safe agent, timeout, no credentials |

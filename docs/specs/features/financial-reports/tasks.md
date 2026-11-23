@@ -211,10 +211,11 @@
   time entries through `REPORT_TRACKED_TIME_COST`; MCP `finance_drill_down`. Files: `fr/runtime/drill.service.ts`,
   `fr/runtime/financial-reports.controller.ts`, `ui/report-viewer/drill-panel.component.ts`,
   `packages/mcp-server/src/lib/tools/financial-reports.ts`. Test: drill totals equal the cell.
-- [ ] **T43**. Labour cost from tracked time in gross profit; revenue per tracked hour measure; people-margin
+- [ ] **T43**. Labor cost from tracked time in gross profit; revenue per tracked hour measure; people-margin
   cards. Files: `fr/registers/gross-profit.dataset.ts`, `fr/analysis/people-margin.dataset.ts`,
   `packages/ui-core/shared/src/lib/dashboard/widgets/finance/finance.widgets.ts`. Test: data-set spec on seeded time
-  entries.
+  entries; a line whose employee has no cost rate, and the report with `REPORT_TRACKED_TIME_COST` unbound, show the
+  selling amount with labor cost and margin marked unavailable and the reason.
 - [ ] **T44**. Live figures: hint publisher (coalesced), viewer and card refetch of affected cells, highlight,
   freeze, reconnect reload. Files: `fr/live/figures-changed.publisher.ts`, `ui/report-viewer/live-figures.service.ts`,
   `ui/report-viewer/report-viewer.component.ts`. Test: two-session e2e; lag metric spec.

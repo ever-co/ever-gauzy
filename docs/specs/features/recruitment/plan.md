@@ -116,7 +116,7 @@ export class JobApplication extends TenantOrganizationBaseEntity implements IJob
 | `interview_scorecard` | `candidateFeedbackId` fk `candidate_feedback` unique, `roundId` fk, `interviewerEmployeeId`, `recommendation` varchar(16), `submittedAt`, `lockedAt` | unique `(roundId, interviewerEmployeeId)` |
 | `offer` | `applicationId` fk, `candidateId`, `number`, `revision` int, `status` (`DRAFT`/`AWAITING_APPROVAL`/`APPROVED`/`SENT`/`ACCEPTED`/`DECLINED`/`WITHDRAWN`/`EXPIRED`), `organizationPositionId`, `organizationDepartmentId`, `branchId`, `employeeLevelId`, `organizationEmploymentTypeId`, `reportsToEmployeeId`, `startDate`, `validUntil` date, `basePay`, `payCurrency`, `payPeriod`, `variablePay`, `variablePayPeriod`, `payStructureId` null, `targetCostToCompany` null, `timeOffPolicyIds` json, `holidayCalendarId` null, `probationDays`, `noticeDays` int, `workingHours` json, `terms` json, `letterTemplateKey`, `letterOutputId` null, `sentAt`, `decidedAt`, `declineReason`, `approvalRef` uuid null, `signatureRequestId` uuid null (`hr-core-lifecycle`), `acceptance` json null (typed name, consent, fingerprint, client, `ipHash`; kept only when no signature request exists), `previewSnapshot` json, `liveKey` varchar(80) null (`<applicationId>` while live), `version` | unique `(organizationId, number, revision)`, `(tenantId, liveKey)`; idx `(organizationId, status, validUntil)` |
 | `offer_term`, `offer_term_set` | term: `name`, `text`, `isActive`; set: `name`, `termIds` json | idx `(organizationId)` |
-| `referral` | `referrerEmployeeId`, `candidateId` null, `applicationId` null, `openingId` null, `name`, `emailHash` varchar(64), `phone`, `relationship`, `reason` text, `consentConfirmed` bool, `status` (`SUBMITTED`/`IN_PROCESS`/`HIRED`/`NOT_SELECTED`/`WITHDRAWN`), `bonusStatus` (`NONE`/`NOT_ELIGIBLE`/`PENDING`/`DUE`/`PROPOSED`/`PAID`/`CANCELLED`), `bonusAmount`, `bonusCurrency`, `eligibleOn` date, `payrollRef` varchar(120), `version` | idx `(organizationId, emailHash, createdAt)`, `(referrerEmployeeId)`, `(bonusStatus, eligibleOn)` |
+| `referral` | `referrerEmployeeId`, `candidateId` null, `applicationId` null, `openingId` null, `name`, `emailHash` varchar(64) null (null after anonymization), `phone`, `relationship`, `reason` text, `consentConfirmed` bool, `status` (`SUBMITTED`/`IN_PROCESS`/`HIRED`/`NOT_SELECTED`/`WITHDRAWN`), `bonusStatus` (`NONE`/`NOT_ELIGIBLE`/`PENDING`/`DUE`/`PROPOSED`/`PAID`/`CANCELLED`), `bonusAmount`, `bonusCurrency`, `eligibleOn` date, `payrollRef` varchar(120), `version` | idx `(organizationId, emailHash, createdAt)`, `(referrerEmployeeId)`, `(bonusStatus, eligibleOn)` |
 | `screening_summary` | `applicationId` fk, `requestedByUserId`, `aiRunId` uuid null (the run of `ai-agents-and-assistants`; holds provider, model, input hash and usage), `removedAttributes` json, `result` json, `status`, `error` text | idx `(applicationId, createdAt)` |
 
 Intake of a person without sign-in: `CandidateIntakeService` creates the `user` through core `UserService` with role
@@ -134,7 +134,10 @@ education, experience and files, clears application free text (`coverLetter`, `a
 deletes the application's `screening_summary` rows (their `result` can quote the CV) and erases the linked runs'
 inputs and outputs through `AGENT_RUNTIME.purge` of `ai-agents-and-assistants` (`aiRunId`; usage figures stay), clears the
 free text of scorecards and interview feedback, of offers (`acceptance`, `previewSnapshot`, `declineReason`) and of
-referrals naming the candidate (`name`, `phone`, `reason`), and keeps stage history (stages, movers and dates), sources, dates, ratings and counts.
+referrals naming the candidate (`name`, `phone`, `reason`, and `emailHash`, set to null so the candidate's email can no
+longer be matched to the referral), deletes the generated letters of its offers (the files of the offer's `print_output`
+rows, read through `RECRUITMENT_PRINT` and removed from tenant file storage, the rows keeping only fingerprint and
+dates) and clears `offer.letterOutputId`, and keeps stage history (stages, movers and dates), sources, dates, ratings and counts.
 
 Headcount: activating a plan writes each position's planned positions to the position headcount of `hr-core-lifecycle`
 (`RECRUITMENT_HEADCOUNT`, sum of the plan's lines per position for the period), so the org chart's vacancies and the
@@ -143,7 +146,7 @@ alone. The opening check of FR-5 selects the active line whose organization, pos
 opening's (an empty department or branch matching only an empty one, as in the FR-2 identity) and whose plan period
 holds the opening's date; it locks that line's row (`FOR UPDATE` on PostgreSQL and MySQL, the database write lock on
 SQLite) and compares the line's holders + the open positions of the other open openings of the same position,
-department and branch + the positions the opening requests with `plannedPositions`, so two openings saved at once
+department and branch whose date falls in the line's plan period + the positions the opening requests with `plannedPositions`, so two openings saved at once
 cannot both pass; block mode refuses with `RECRUITMENT_PLAN_FULL` naming the line and the counts. When no line
 matches, block and warn modes save the opening with the notice that no plan line covers it.
 

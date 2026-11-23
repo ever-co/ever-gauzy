@@ -182,7 +182,10 @@ plugin; additive fields on the fulfilment, shipping option and return interfaces
 ## 4. API Surface
 
 All routes: `TenantPermissionGuard`, `PermissionGuard`, `@FeatureFlag`, Swagger, DTO validation, cursor pagination,
-`Idempotency-Key` on create, book, ship and proof routes, `If-Match` on versioned writes.
+`Idempotency-Key` on create, book, ship and proof routes, `If-Match` on versioned writes. A delivery or consignment
+cancellation (spec FR-18) calls the carrier first and then saves every local change in one transaction, clearing the
+consignment's `externalId`; a carrier answer that the booking is already cancelled or unknown counts as cancelled, so a
+repeat after a stop between the two steps completes the local changes.
 
 | Method | Endpoint | Permission | Description | Status |
 | --- | --- | --- | --- | --- |

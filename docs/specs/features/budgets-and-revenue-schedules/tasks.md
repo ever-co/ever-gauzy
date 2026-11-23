@@ -132,12 +132,14 @@
 - [ ] **T21**. Release of commitments by billed amount on posted bills (`keys.purchaseOrderLineId`), foreign
       currency at the order's rate, skipping the part already consumed at confirmation (T18, idempotency key
       `bill:<billLineId>`); on `document.<type>.cancelled` of a bill (consumer of T20), the reservation's release and,
-      in the same transaction, a `CONSUME` record of the opposite sign per billed order line (idempotency key
-      `bill-cancel:<billLineId>`); `BUDGET_COMMITMENT_SOURCE` registry. Files:
+      in the same transaction, a `CONSUME` record of the opposite sign per billed order line that is still open
+      (idempotency key `bill-cancel:<billLineId>`; nothing for a closed line or a line of a cancelled order);
+      `BUDGET_COMMITMENT_SOURCE` registry. Files:
       `budget/budget-commitment-release.service.ts`, `budget/budget-commitment-source.registry.ts`. Test:
       `budget-commitment-release.service.spec.ts`: release equals what was reserved whatever the bill rate; a
       registered source's records appear on its line; a confirmed 4,000 bill of a 10,000 order cancelled before and
-      after posting brings the open commitment back to 10,000, and a repeated cancellation event appends nothing.
+      after posting brings the open commitment back to 10,000, and a repeated cancellation event appends nothing; the
+      same bill cancelled after the order line is closed leaves the line's open commitment at zero.
 - [ ] **T22** (parallel). Commitment list, reconciliation to open orders, close check `budget.commitments_agree`,
       year-end lapse or carry on `accounting.fiscal_year.closed` as the operation `ACCOUNTING_BUDGET_YEAR_END`. Files:
       `budget/budget-commitment.controller.ts` (`/budget-commitments`, `/budget-commitments/reconciliation`),

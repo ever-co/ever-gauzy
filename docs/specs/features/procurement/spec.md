@@ -151,7 +151,9 @@ and holds, and a risk view says why a supplier is risky. These requirements are 
   project after actuals and open commitments (approved requisition lines not ordered, order lines not billed) and
   shows within, warning or over with the figures. `(advanced)`
 - **FR-17** The system applies the budget's control on submit (stop refuses, warn records, ignore passes), falls back
-  to the project's cost budget when no budget engine is present, and passes when there is no budget.
+  to the project's cost budget when no budget engine is present, and passes when there is no budget; the control weighs
+  each submit against the lines approved before it, so approvals of lines submitted earlier can still take the budget
+  over, which the remaining budget then shows.
 - **FR-18** The budget area records a commitment per approved line from this feature's events, moves it to the order
   line and releases it when the line closes, is cancelled or billed; without it, open lines count in the project check.
 - **FR-19** The system routes a submitted requisition through the approval workflows (amount, cost centre, category);

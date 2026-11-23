@@ -121,7 +121,9 @@
   control action; no commitment row written by this plugin; with a stop budget of 100 and an 80 requisition approved
   whose event has not reached the commitment records, a 30 submit is refused with 20 remaining, and after the
   projection the 80 is counted once; an order line projected at 80 and amended to 90 makes a 15 submit refused with
-  10 remaining before the amendment reaches the commitment records.
+  10 remaining before the amendment reaches the commitment records; an 80 approval that commits while a 30 submit's
+  check runs leaves that submit passed (100 remaining at its check), the next check counts the 80, and once both are
+  approved the remaining budget shows 10 over.
 - [ ] **T20**. Route proposal and conversion (`requisition-conversion.service.ts`): to orders per supplier, transfer,
   issue, pick list, work order, subcontract order, customer receipt; per-line results (the request-for-quotation and
   quotation targets are added with sourcing in T27). Files: `pur/requisition/requisition-conversion.service.ts`,

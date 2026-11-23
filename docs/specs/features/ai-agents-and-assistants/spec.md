@@ -220,8 +220,9 @@ real past cases gate every version before it goes live. Marked `(advanced)`.
 
 - **FR-50** The system counts tokens, calls and cost of every model call per run, agent, purpose, invoker, organization
   and month, in exact decimals, and checks a run's budget before every step; calls of the Documents knowledge
-  (embeddings, classification, recognition of scans) are counted in the same usage, and the totals are kept in the
-  platform's one usage meter.
+  (embeddings, classification, recognition of scans) are counted in the same usage as the Documents plugin reports
+  them (best effort: a call whose report is lost when a process stops is not counted, and the usage page says so), and
+  the totals are kept in the platform's one usage meter.
 - **FR-51** A user with `AI_BUDGET_MANAGE` can set monthly caps per organization, agent, purpose and user: notice at 80 %,
   new runs refused with `AI_BUDGET_EXCEEDED` at 100 %; the automation cap on agent steps applies as well. The same
   budgets hold an agent principal's request, write, bulk, export and confirmation limits, which

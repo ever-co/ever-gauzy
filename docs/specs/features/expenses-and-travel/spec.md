@@ -309,7 +309,8 @@ All reports are report definitions: filterable, groupable, exportable, schedulab
 
 ## 8. Open Questions
 
-- Claim lines are expense rows from the first draft and existing reads count them only once approved (applied); the
+- Claim lines are expense rows from the first draft and existing expense reads count them only once approved, the tenant
+  export and import copying them whole (applied); the
   alternative of creating expense rows at approval was rejected as a second model.
 - Reimbursement through payroll uses a new additional-pay kind "expense reimbursement" paid outside gross (applied);
   `payroll-processing` adds the value additively.

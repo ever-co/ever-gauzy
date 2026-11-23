@@ -233,7 +233,9 @@ Marked `(advanced)` below.
   off; where stock valuation is not in use, the report shows the selling amounts and marks cost and margin as
   unavailable with the reason.
 - **FR-65** The system takes, for a line billed from tracked time, the cost as tracked hours at each employee's
-  cost rate, and offers revenue per tracked hour as a measure `(advanced)`.
+  cost rate, and offers revenue per tracked hour as a measure; where the tracked time or an employee's cost rate is
+  not available, the report shows the selling amount and marks that line's labor cost and margin as unavailable with
+  the reason, as FR-64 does for valuation cost `(advanced)`.
 - **FR-66** The system provides the commission statement: commission owed per sales partner and sales person for
   the invoices of a period, from the commissions recorded on documents.
 - **FR-67** The system provides items without recent sales: items sold before but not in the last N days, by territory and
@@ -242,7 +244,7 @@ Marked `(advanced)` below.
   received not yet billed, and billed not yet received, per line with quantities and amounts.
 - **FR-69** The system provides receipts per payment method: amounts received per method, day and user, for register
   sales only on request, with each payment as detail.
-- **FR-70** The system serves the reports of this section from documents alone, so they work without accounting; the one exception is the valuation cost of FR-64, which comes from stock valuation and is shown as unavailable where stock valuation is not in use.
+- **FR-70** The system serves the reports of this section from documents alone, so they work without accounting; there are two exceptions, neither of which needs accounting: the valuation cost of FR-64, which comes from stock valuation and is shown as unavailable where stock valuation is not in use, and the labor cost of FR-65, which comes from tracked time and employee cost rates and is shown as unavailable where either is missing.
 
 ### 3.8 Dashboards, printable statements and packs
 
@@ -254,7 +256,7 @@ Marked `(advanced)` below.
 - **FR-73** The system seeds a "Finance" dashboard for organizations with the feature on; every card honours the
   dashboard's filters and opens its report on click.
 - **FR-74** The system offers people-margin cards combining the ledger with tracked time: revenue per tracked
-  hour, labour cost as a share of revenue, margin per team and project `(advanced)`.
+  hour, labor cost as a share of revenue, margin per team and project `(advanced)`.
 - **FR-75** The system provides print templates for the general ledger, trial balance, ageing, balance sheet,
   profit and loss, cash flow, daily journal, registers, party statement, balance confirmation letter and the list
   of pending documents per party, each editable like any print template.
@@ -289,7 +291,7 @@ Marked `(advanced)` below.
 | Statements | FR-24 to FR-33, FR-37 | balances through layouts, budgets | no |
 | Consolidation | FR-43, FR-44, FR-50 | balances of members, elimination entries | no |
 | Receivables and payables | FR-51 to FR-59 | open items and settlements | no |
-| Registers and trends | FR-60 to FR-69 | invoices, bills, payments, document flow, stock cost, tracked time | yes |
+| Registers and trends | FR-60 to FR-69 | invoices, bills, payments, document flow, stock cost, tracked time and cost rates | yes (stock and labor cost shown as unavailable where their sources are missing, FR-64, FR-65) |
 | Cards | FR-71 to FR-74 | the reports above | partly (document-based cards) |
 
 ## 4. Non-Functional Requirements
@@ -357,7 +359,7 @@ Marked `(advanced)` below.
 - [ ] **AC-6** A three-organization group produces consolidated statements with eliminations, translation
       difference, non-controlling interest and one listed mismatch; no member ledger changes (advanced; FR-43, FR-44, FR-46).
 - [ ] **AC-7** Any figure drills to postings, journal and document, a time-billed line to its time entries; gross
-      profit shows labour cost from tracked time (advanced; FR-7).
+      profit shows labor cost from tracked time (advanced; FR-7).
 - [ ] **AC-8** An open statement and a card change within 5 s of a posting and can be frozen (advanced; FR-9).
 - [ ] **AC-9** A pack is produced on period close, approved, delivered, unchanged after later postings, and
       "compare with now" lists them (advanced; FR-77, FR-78).

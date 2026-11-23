@@ -180,8 +180,9 @@ from actuals, always as a preview.
   date. `(advanced)`
 - **FR-26** The system converts a pre-commitment into a commitment when the requisition becomes an order, moves a
   commitment to actual as bills for the order line are posted (by billed amount), gives the billed part back to the
-  commitment when such a bill is cancelled, adjusts it by the difference when the order is amended, and releases the
-  rest when the line is closed or the order cancelled. `(advanced)`
+  commitment when such a bill is cancelled while the order line is still open, adjusts it by the difference when the
+  order is amended, and releases the rest when the line is closed or the order cancelled; a closed line or a line of a
+  cancelled order keeps an open commitment of zero. `(advanced)`
 - **FR-27** The system values a commitment in a foreign currency at the order's rate and releases exactly what it
   reserved, whatever rate the bill carries.
 - **FR-28** The system lets other features register commitment sources (approved expense claims not yet posted, approved

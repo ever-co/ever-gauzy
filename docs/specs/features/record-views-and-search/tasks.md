@@ -218,7 +218,7 @@
   `ui/record-hover-card.directive.ts`, `rvui/components/quick-entry-launcher/quick-entry-launcher.component.ts`. Test: card respects masks; quick entry selects the new record.
 - [ ] **T36**. Search coverage: index definitions in code for comments with notes (private notes indexed with
   `restrictedToUserId` = their author, kept in step with `visibility` changes, filtered by it on every query and by the
-  notes' current `visibility` on each result page), linked emails
+  notes' current `visibility` in the same query filter, totals and facet counts included), linked emails
   and every registered type beside the existing `definitions/*.definition.ts`, active only for tenants with the feature
   on, quoted-reply stripping, admin weights page. Files: `sp/definitions/comment.definition.ts`,
   `sp/definitions/linked-email.definition.ts`, `sp/definitions/registered-record-types.definition.ts`,
@@ -227,7 +227,8 @@
   Test: hit in a comment shows its record; reindex progress; a tenant
   with the feature off gets the same index documents and results as before; the author finds their private note by its
   text and another user who reads the record does not; a note changed to private through `/api/comment` is not
-  returned to that other user while the search consumer is stopped, its document gets `restrictedToUserId` when the
+  returned to that other user while the search consumer is stopped, nor counted in that user's total or in any facet
+  count of the query, its document gets `restrictedToUserId` when the
   update is consumed, and a note changed back to readers is found by both.
 - [ ] **T37**. Unsaved-changes guard and form undo and redo; per-user preferences (`recordViews` UI preferences); phone
   card layout with swipe actions. Files: `ui/unsaved-guard/unsaved-guard.service.ts`,

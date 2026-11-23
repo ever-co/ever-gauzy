@@ -160,7 +160,8 @@
   `C/item-commercial/item-commercial.service.spec.ts` (one form never writes both prices; with `FEATURE_PRICING` on and
   `FEATURE_ITEM_MASTER` off the variant form writes the legacy row exactly as today for a variant never priced on the
   list; a variant priced on the list while both were on, edited after `FEATURE_ITEM_MASTER` is switched off, resolves
-  to the edited price);
+  to the edited price; a variant priced 10 on the list and edited to 20 while `FEATURE_PRICING` is off resolves to 20
+  while it is off and to 10 after it is switched on, and the form shows that note while it is off);
   `C/item-commercial/opening-stock.service.spec.ts` (refused without a location). [2]
 - [ ] **T22**. Availability (`StockAvailabilityService` through `CATALOG_STOCK_AVAILABILITY`) and end-of-life check
   `/items/:id/availability`; connections registry

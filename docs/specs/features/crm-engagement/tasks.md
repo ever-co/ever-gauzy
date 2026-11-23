@@ -87,7 +87,9 @@
   failed after emitting is rerun and raises nothing twice; a task open at its due time and closed during worker downtime
   raises exactly one late event, and a task closed before its due time raises none; a task whose due time passes during
   worker downtime and that is rescheduled before the next run raises exactly one late event for the earlier due time
-  and later one for the new due time if it passes open.
+  and later one for the new due time if it passes open; a reschedule whose update also closes the task raises the
+  earlier due time from `previousValues.status`, a reschedule of a task closed before it raises nothing, and an entry
+  that records no status raises the earlier due time.
 - [ ] **T12** (parallel). Notes page `/crm/notes` over core comments of the note kind on CRM records (first line as
   title, pin author and time from the activity log), mention checks for non-readers. Files:
   `crm/activity/crm-notes.service.ts`, `crm/activity/crm-notes.controller.ts`,

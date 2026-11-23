@@ -99,8 +99,9 @@
       `lesson/lesson-content.sanitizer.ts` (over `packages/core/src/lib/public-share/public-html-sanitizer.ts`),
       `lesson/learning-lesson.controller.ts`, `lesson/lesson-file.controller.ts`, `lesson/lesson-index.source.ts`.
       Test: unsafe HTML removed; instructor content never in a learner payload; file refused without enrolment; a
-      preview lesson opens without enrolment; a published lesson's passages are retrievable, a draft's are not by the
-      tutor.
+      preview lesson opens without enrolment, from the current published version, with its placed quiz, exercise and
+      assignment shown as an invitation to enrol and no assessment definition in the payload; a published lesson's
+      passages are retrievable, a draft's are not by the tutor.
 - [ ] **T12**. Enrolment and progress: self and staff enrolment, roles, payment gate (active entitlement for paid
       items), progress events (video ranges, time spent, completion rules per organization and course, sequential
       locks), current lesson, activity days and streaks, live outline hints. Files:

@@ -107,7 +107,9 @@
   `shop-floor/operation-card/card-sequence.ts`. Test: `shop-floor/operation-card/card-sequence.spec.ts` (40 available,
   45 refused; loss reduces later input: a 100-unit card after an operation that completed 98 and lost 2 completes
   with 98 completed and no loss of its own, and two 50-unit cards of a later operation after it complete with 50
-  and 48, together 98).
+  and 48, together 98; a loss of 2 recorded after the later operation's last card completed 50 leaves that card at 50
+  and gives its first card an input of 48; a loss larger than the open input of the later operation's uncompleted
+  cards is refused naming the completed cards).
 - [ ] **T18**. Materials (`shop-floor/materials/`): reserve (reservations of reference `PRODUCTION_ORDER` per line; the
   reserved figure read from them), issue (allowance), return, per-card issue, backflush and consume-at-source,
   substitutes, stock documents through `MANUFACTURING_STOCK` with the order's `dimensionSetId`, issued, consumed and

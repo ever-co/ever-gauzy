@@ -146,7 +146,10 @@ quiz, drawing questions, submitting an assignment, opening and running an exerci
 assessment's place in a lesson or session) resolves them
 through the snapshot of the enrolment's `courseVersionId`, never through the live rows. An edit of a quiz or a question
 shared by several courses therefore reaches learners of each course only when that course is republished; attempts
-keep their drawn `questionSet` and submissions their assignment as published.
+keep their drawn `questionSet` and submissions their assignment as published. A visitor without an enrolment reads a
+free-preview lesson of the course's current published version (`currentVersionId`), and its placed quizzes, exercises
+and assignments show as a placeholder that invites enrolment: no assessment definition is resolved or served to a
+visitor and nothing can be taken or submitted without an enrolment.
 
 ### 3.1 Settings (`learning.settings.ts`, organization scope, settings store)
 

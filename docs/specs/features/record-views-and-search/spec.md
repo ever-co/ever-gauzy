@@ -226,7 +226,7 @@ web app; every view is a selection other engines (automation, digests, exports, 
 - **FR-52** Full-text search covers search fields and searchable custom fields of every registered type, comments, notes,
   emails linked to records, chat messages, documents and file text for tenants with the feature on (with it off the
   index and the search results cover what they cover today); a hit inside a comment, note or email shows its record and
-  a snippet; quoted earlier replies are left out of email text. A private note is found only by its author.
+  a snippet; quoted earlier replies are left out of email text. A private note is found only by its author, and counts in no other reader's totals or facet counts.
 - **FR-53** Every hit is re-read under the reader's rights; hits on records they may no longer read are dropped.
 - **FR-54** Search finds references and numbers exactly first (task keys, document numbers), then prefix matches, then
   words with one typo for words of five letters or more.

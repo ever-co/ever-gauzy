@@ -283,7 +283,8 @@ a basket close to a rule's threshold receives a nudge ("add 2 more to get 10 % o
   boundary per line; coupon and budget limits safe under concurrency.
 - **Reliability**: the leak sweep and impact jobs resume and record each finding once; price history is append-only.
 - **Security & privacy**: tenant and organization scoped; AI proposals send aggregated prices and margins only to the
-  organization's configured AI provider; overrides audited.
+  organization's configured AI provider, and the proposals page and proposal tool tell the sender that aggregates of overlapping groups
+  sent in several proposals can be combined to derive one item's price and margin; overrides audited.
 - **Observability**: per-call metrics (lines priced, rules evaluated, latency); override and price history.
 - **Accessibility and localization**: keyboard-operable grids and dialogs; translation keys in every locale; amounts
   in the user's locale format.

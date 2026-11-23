@@ -140,7 +140,10 @@
       §3.7, including a status change through the task API; a 24-hour calendar clock started 09:00, paused 10:00 to
       12:00 and moved at 12:00 to a three-hour target gets a 14:00 due time and no breach, while a change to a
       one-hour target at 12:00 breaches at the change; a clock started 09:00 and moved at 10:00, without a pause, to a
-      three-hour target gets a 12:00 due time; pause, resume and a second pause in one cycle record three
+      three-hour target gets a 12:00 due time; a 24-hour clock started 09:00 with a one-hour target and moved at 11:00
+      to a 90-minute target breaches at the change; on a 09:00–17:00 calendar a clock started Monday 16:00 with a
+      two-hour target keeps 30 minutes elapsed when Tuesday becomes a holiday at 16:30 and gets Wednesday 10:00; pause,
+      resume and a second pause in one cycle record three
       events; a retried transition records one.
 - [ ] **T24**. Minute check job (`helpdesk.sla-check`): breaches at due time with internal comment and notices, catch-up,
       `nextCheckAt`. Files: `hd/schedule/helpdesk-sla-check.scheduler.ts`, `hd/service-levels/sla-check.worker.ts`,

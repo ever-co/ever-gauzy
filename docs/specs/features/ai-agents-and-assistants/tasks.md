@@ -112,7 +112,7 @@
   `ai.tokens`, `ai.cost`) in the transaction that writes each usage entry. Test: cost from tokens and prices; unpriced
   flag; an embedding call of the docs plugin counts against the organization cap from the moment its usage entry is
   written; a call that crosses the monthly cap makes the next run refused with `AI_BUDGET_EXCEEDED` before the hourly
-  `usage-close` pass runs.
+  `usage-close` pass runs; the usage page states that Documents calls are counted as the Documents plugin reports them.
 - [ ] **T13**. The assistant as agent "Assistant": `ai-chat` turns also write runs and usage when the plugin is loaded
   and `FEATURE_AI_AGENTS` is on for the tenant (optional hook in `packages/plugins/ai-chat/src/lib/ai-chat.service.ts`,
   answered by `aa/runtime/assistant-run.hook.ts`; absent or off = unchanged); the agent keeps the assistant's 12-step

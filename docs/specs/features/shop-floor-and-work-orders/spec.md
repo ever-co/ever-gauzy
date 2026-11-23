@@ -206,9 +206,11 @@ orders with a preview. These requirements are marked `(advanced)`.
 - **FR-52** Completing needs completed plus lost equal to the card's input: its quantity less its share of the loss
   recorded on the earlier sequences (a 100-unit card after an operation that completed 98 and lost 2 completes with 98,
   and records no loss of its own for those 2). That loss reduces the combined input of each later operation's cards
-  exactly once, taken from its cards from the last batch backwards, each card at most its own quantity (two 50-unit
-  cards after that operation have inputs of 50 and 48); output and loss are entered per operator, and loss reduces the
-  input of later operations and the order.
+  exactly once, taken from its cards not yet completed, from the last batch backwards, each card at most what it still
+  has open (two 50-unit cards after that operation have inputs of 50 and 48; when the last one already completed 50, the
+  first takes the loss and has 48); a loss that a later operation's uncompleted cards cannot absorb is refused, naming
+  the completed cards whose output must be corrected first, so a completed card's input never changes; output and loss
+  are entered per operator, and loss reduces the input of later operations and the order.
 - **FR-53** Sub-operations show as a checklist with minutes and who did them.
 - **FR-54** With issue per card, each card lists its materials; issues above its need are refused unless the card
   over-issue setting allows; requisitions against a card are checked against its need.

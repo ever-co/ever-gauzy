@@ -263,6 +263,8 @@ that resolve live from item, brand and group with an answer to "where does this 
   `FEATURE_PRICING` or `FEATURE_ITEM_MASTER` is off the item forms keep writing the variant's retail price as today,
   except that while `FEATURE_PRICING` is on a variant whose price the form already wrote on the default list keeps it
   there, so an edit made after `FEATURE_ITEM_MASTER` is switched off stays the price in use; one form never writes both.
+  An edit made while `FEATURE_PRICING` is off to a variant whose price is on the default list is the price in use until
+  pricing is switched on again, when the list price applies; the form says so beside that variant's price.
 - **FR-54** A user with `STOCK_EDIT` can enter an opening quantity per stock location when creating a stock item,
   recorded as a receipt movement through the stock ledger; without a location it is refused.
 

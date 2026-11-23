@@ -252,7 +252,9 @@
       5 s; 80 % and 100 % notices once; the `EXPENSE_SPEND` reader answers the same totals; direct expenses recorded
       before switch-on appear after the backfill; a direct expense created, moved to another project and deleted through
       the existing routes moves both projects' figures; a backfill running beside live changes ends with the row sums;
-      a project and month whose last expense is deleted while the feature is off shows zero after the next switch-on.
+      a project and month whose last expense is deleted while the feature is off shows zero after the next switch-on,
+      and one whose last expense is moved to another project or client while the feature is off shows zero while the
+      new project or client shows it.
 - [ ] **T37**. Claims from delivery trips through `EXPENSE_CLAIM_SOURCES` (adapter bound in
       `apps/api/src/plugin-composition.ts`). Test: prefill with trip date, vehicle and distance; hidden without trips.
 - [ ] **T38**. UI for policies and rates, receipts, cards to explain, spend dashboards in `expense-claims-ui` (phone
@@ -345,7 +347,8 @@ Every functional requirement of `spec.md` §3 and the tasks that implement it; e
   to end; spec AC-13 holds.
 - Constitution gates in `spec.md` §9 confirmed.
 - Existing expense, category, split, recurring-expense, statistics, invoice-expense and MCP expense suites pass
-  unchanged with the feature on and off; seeded draft claim rows never reach existing reads.
+  unchanged with the feature on and off; seeded draft claim rows never reach the filtered expense reads (plan §3), while
+  the tenant export and import carries them whole.
 - A seeded month: receipts read into a claim, policy findings explained, approval posted, reimbursement by payment and
   by payroll each once, an advance applied and recovered, a trip pre-approved and closed with its commitment released,
   reports matching the lines.

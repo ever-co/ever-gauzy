@@ -28,17 +28,20 @@ and `updateLine` directly, `merge` through `assertLinesPriceable` and checkout t
 prices no line. That chain is the platform's one way to price a basket. The cart gains a stateless entry
 `CommerceCartService.priceBasket(context, lines)` that runs both steps over an unsaved basket (line pricing first, then
 the steps of `recalculate`; no cart row, nothing written); `recalculate` calls only its second step before it persists
-adjustments, tax lines and the totals snapshot, so cart lines keep the prices their operations set. `PricingQuoteService` in `pricing` serves every other caller (quotations, orders, invoices, purchase orders,
-the register): it builds the context, runs that entry through the port `PRICING_BASKET_CHAIN` (bound in composition to
+adjustments, tax lines and the totals snapshot, so cart lines keep the prices their operations set. `PricingQuoteService` in `pricing` serves every other caller (quotations, orders, invoices, purchase orders): it builds the context, runs that entry through the port `PRICING_BASKET_CHAIN` (bound in composition to
 the cart's entry), and adds the explanation, nudges and guard results. `TotalsCalculator` stays the cart plugin's (the
 order totals already use it). This spec deepens the engines the chain calls (list chain, units, country, rules, bands,
 free items, slabs) and builds no second chain; `promotion` keeps depending on `pricing` and never the reverse. Without
-the cart plugin the port is unbound and `/pricing/quote` answers with a notice.
+the cart plugin the port is unbound and `/pricing/quote` answers with a notice. The register of
+`point-of-sale-and-loyalty` does not call the route: its port `POS_PRICING` is bound in process to the same entry
+`CommerceCartService.priceBasket`, so it prices with `FEATURE_PRICING_RULES` off as orders price today and adds the
+rules with it on, and without the cart plugin it falls back to `ProductPriceService.resolvePrices`.
 
 ```mermaid
 flowchart LR
     CART[cart recalculate] --> CHAIN
-    DOC[Orders · quotations · invoices · purchase orders · register] -->|POST /pricing/quote| Q[PricingQuoteService]
+    DOC[Orders · quotations · invoices · purchase orders] -->|POST /pricing/quote| Q[PricingQuoteService]
+    POS[point-of-sale register] -->|POS_PRICING in process| CHAIN
     UI[pricing-ui · promotion-ui] --> API[pricing + promotion controllers]
     MCP[MCP pricing.ts · promotions.ts] --> API
     API --> Q
@@ -248,7 +251,8 @@ of type `PRICING_IMPACT`, posted to the requester's Inbox.
   `marketing-campaigns` (the same route shows a plain campaign list with budgets and usage while that plugin is off,
   so there is never a second campaign list), `/pages/sales/gift-cards` (issue, ledger, adjust, cancel).
 - Menus hidden unless the module code, `FEATURE_PRICING_RULES` for new pages, and the permission allow; i18n keys in
-  every locale. The register of `point-of-sale-and-loyalty` consumes `/pricing/quote`; reports open in the report
+  every locale. The register of `point-of-sale-and-loyalty` prices through the same basket chain in process (`POS_PRICING`), not
+  through `/pricing/quote`; reports open in the report
   builder.
 
 ## 7. MCP Tools, SDKs and Integrations
@@ -296,7 +300,9 @@ fallback without a queue.
   provider through `PRICING_ASSISTANT`: per price group of the goal (item group or category, or the list as a whole),
   the item count, the minimum, average and maximum price and margin, and the goal, while a group of fewer than three
   items is sent with its count only, without price or margin figures, since its minimum and maximum would disclose
-  its items' values; the provider answers moves per group
+  its items' values; this rule limits what one request shows, not what several show together: figures of overlapping
+  groups sent in different proposals (the list as a whole, then per category) can be subtracted to derive one item's
+  price and margin, so the proposals page tells the sender so before each send, and the proposal tool's MCP description says the same; the provider answers moves per group
   (a percentage and a rounding rule), which the operation applies to each item's price locally in the draft list (FR-47);
   listed in the docs.
 - Overrides and setting changes are append-only records with user and time; price changes are activity-log rows.

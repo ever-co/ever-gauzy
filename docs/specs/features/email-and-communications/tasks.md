@@ -72,8 +72,8 @@
       wrap, attachments (files; print through `COMMUNICATIONS_PRINT`), undo hold, schedule, idempotency, record links;
       the `email_sent` row written with `communicationId` and without `content`; mailbox sends referenced through
       `inboxEmailId` with no copy; one `AUDIT_EVENT_SINK` event per communication; the email history's view and resend
-      read the body through `communicationId`; a separate-messages send creates one communication per recipient under
-      one `sendGroupId`; sensitive templates sent inside the call (plan §2). Test: idempotent send; undo window; a
+      read the body through `communicationId`; a separate-messages send (`separateMessages: true`; default false)
+      creates one communication per recipient under one `sendGroupId`; sensitive templates sent inside the call (plan §2). Test: idempotent send; undo window; a
       sensitive template stores no body at any time, also when its first attempt fails and the call retries, a first
       attempt that times out after the transport accepted it is not repeated on a plain mail server (recipient
       `UNCERTAIN`) and repeated once with the same `messageKey` on a transport declaring `idempotentSend`, and its

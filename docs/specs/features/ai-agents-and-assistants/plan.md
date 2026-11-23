@@ -51,12 +51,15 @@ It is a layer over what exists, never a copy:
   the admission check of the next run reads a total that includes every finished call of the agents and purposes of
   this plugin; the Documents AI usage events (`DocsAiUsageEvent` of
   `packages/plugins/docs/src/lib/knowledge/ai/docs-ai-usage.event.ts`: tokens per embedding, classification and OCR
-  call) are recorded in the same ledger, so caps cover every AI call. A Documents call counts from the moment its
-  listener writes the usage entry, which follows the call on the in-process event bus without holding it (the
-  Documents plugin never lets accounting fail a job): a run admitted in that interval starts before the call counts,
-  so a month's total can pass the cap by the Documents calls still being recorded, as it can by the calls of runs
-  already admitted (FR-51 refuses new runs at 100 %), and every admission check after the entry is written counts
-  it. Budgets, AI cost caps and the request and write
+  call) are recorded in the same ledger, so caps cover the Documents calls as well. A Documents call counts from the
+  moment its listener writes the usage entry, which follows the call on the in-process event bus without holding it
+  (the Documents plugin never lets accounting fail a job): a run admitted in that interval starts before the call
+  counts, so a month's total can pass the cap by the Documents calls still being recorded, as it can by the calls of
+  runs already admitted (FR-51 refuses new runs at 100 %), and every admission check after the entry is written counts
+  it. Documents usage is recorded best effort: a call whose process stops before the listener writes its entry, or
+  whose event publish fails (the Documents plugin logs the failure and goes on), has no usage entry, so the ledger and
+  the caps can fall short of the provider's own bill by such calls; the usage page states that Documents calls are
+  counted as reported by the Documents plugin. Budgets, AI cost caps and the request and write
   budgets of agent principals are `ai_budget` rows (`AGENT_BUDGETS` port for `access-control-and-security`). Connected
   MCP clients are listed and revoked in the one list of `access-control-and-security`.
 

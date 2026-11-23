@@ -189,6 +189,7 @@ interface IMessageSender {                       // COMMUNICATIONS_SENDER, bound
         identityId?: ID; templateKey?: string; templateId?: ID; subject?: string; body?: string; language?: string;
         tokens?: JsonData; records?: IRecordRef[]; attachments?: IAttachmentRef[];  // fileId or { print: IPrintRenderRequest }
         replyToCommunicationId?: ID; notBefore?: Date; idempotencyKey: string; actor?: IActorRef;
+        separateMessages?: boolean;  // true: one communication and rendering per recipient (FR-25); default false: one rendering for the To, Cc and Bcc group
     }): Promise<{ communicationId: ID; communicationIds: ID[]; sendGroupId: ID; status: CommunicationStatus;
                   skipped: ISkippedRecipient[] }>;  // communicationIds: every communication of the send, one per rendering
     cancel(communicationId: ID, actor: IActorRef): Promise<void>;
@@ -220,7 +221,7 @@ Swagger decorators, cursor pagination; `Idempotency-Key` on sending, bulk and re
 | `GET` `POST` `PATCH` `DELETE` | `/api/communications/provider-accounts[/:id]`, `POST …/:id/verify` | `COMMUNICATIONS_ACCOUNT_MANAGE` | text and push accounts as `inbox_provider_account` rows whose `channels` include theirs | New |
 | CRUD | `/api/communications/signatures` | own; organization block: `COMMUNICATIONS_ACCOUNT_MANAGE` | signatures | New |
 | CRUD + `POST` | `/api/communications/templates`, `…/:id/preview`, `GET …/defaults` | view: send; edit: `COMMUNICATIONS_TEMPLATE_MANAGE` | user and document-default templates | New |
-| `POST` | `/api/communications/messages` | `COMMUNICATIONS_MESSAGE_SEND` + view of each linked record | compose, `preview`, send or schedule | New |
+| `POST` | `/api/communications/messages` | `COMMUNICATIONS_MESSAGE_SEND` + view of each linked record | compose, `preview`, send or schedule; `separateMessages` as in `IMessageSender.send` | New |
 | `GET` | `/api/communications/messages` (`recordType`, `recordId`, `channel`, `direction`, `status`), `/:id` | view of a linked record, or sender or recipient | log and detail with recipients and events | New |
 | `PATCH` `POST` | `/api/communications/messages/:id`, `…/:id/{cancel,retry}`, `GET …/scheduled/mine` | author; retry: `COMMUNICATIONS_QUEUE_MANAGE` | scheduled edit, cancel, retry | New |
 | `POST` `DELETE` | `/api/communications/messages/:id/links[/:linkId]`, `POST …/:id/create-record`, `…/:id/assign` | access to the mailbox or record | filing | New |

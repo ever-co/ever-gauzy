@@ -185,7 +185,8 @@
       passes; two openings of one position each saved at once against one free position leave one refused; with lines of
       one position for departments A (full) and B (one free), an opening of B passes and one of A is refused, an
       opening without a department is checked against the line without one, and an opening no line matches is saved
-      with the notice; group plan bound; chart vacancies equal plan vacancies.
+      with the notice; a January opening still open in February does not count against the February line of the same
+      position, department and branch; group plan bound; chart vacancies equal plan vacancies.
 - [ ] **T26**. Hiring requests: lifecycle, duplicate warning, approval through `RECRUITMENT_APPROVALS` (workflows, else
       core request approval `HIRING_REQUEST` with its decision gate and settler), opening from request, fill and time
       to fill. Files: `rc/requests/hiring-request.service.ts`, `rc/requests/hiring-request.controller.ts`. Test: unit; the
@@ -266,8 +267,9 @@
       `rc/retention/recruitment-anonymiser.ts`, `rc/talent-pool/talent-pool.service.ts`,
       `rc/privacy/recruitment-personal-data.handler.ts`. Test: report counts kept after anonymization; with the setting
       off, or for a candidate without applications, nothing is removed; after anonymization no screening summary,
-      linked run input or output, scorecard or feedback text, stage-move reason, offer acceptance or preview, or
-      referral name, phone or reason of the candidate remains while the stage moves keep their stages and dates, and a quotation of the CV in a screening summary is gone.
+      linked run input or output, scorecard or feedback text, stage-move reason, offer acceptance or preview, generated
+      offer letter file or `letterOutputId`, or referral name, phone, reason or `emailHash` of the candidate remains (the
+      referral still counts in the referral reports) while the stage moves keep their stages and dates, and a quotation of the CV in a screening summary is gone.
 - [ ] **T45** (parallel). Source cost and tracked recruiting time in source effectiveness. Files:
       `rc/reports/source-effectiveness.dataset.ts`. Test: cost per hire golden figures.
 - [ ] **T46**. Mutating MCP tools (`recruitment_opening_draft_from_request`, `recruitment_application_move`,

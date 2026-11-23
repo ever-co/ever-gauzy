@@ -194,7 +194,8 @@
       `tp/accrual/{period-roll.service.ts,expiry.service.ts,consumption-order.ts}`. Test:
       `tp/accrual/period-roll.service.spec.ts` golden year ends; invariant spec; an encashable policy without carry
       forward drafts the encashment and expires only the days beyond it, so confirming takes the offered days, and the
-      daily expiry leaves the offered days alone while the draft is open; a balance with 10 remaining days, 4 of them on a pending
+      daily expiry leaves the offered days alone while the draft is open; a backdated request of the ended period is
+      refused for the offered days while the draft is open, and confirming the draft then takes all of them; a balance with 10 remaining days, 4 of them on a pending
       request of the ended period, carries 6 under a cap of 10, approval takes the 4 from the old balance, and a rejection carries them up to the cap's rest.
 - [ ] **T29**. Assignment rules and assignments: criteria as core `rule` rows (`TIME_OFF_ASSIGNMENT_RULE`) evaluated
       with `HR_EMPLOYEE_RULE_CONTEXT`, priorities, daily and event-driven re-evaluation, `time_off_policy_employee` kept

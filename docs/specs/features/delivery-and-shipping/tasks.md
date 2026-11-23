@@ -118,7 +118,9 @@
   adapter; packages voided; a pack slip made through `/pack-slips` stays open; cancelling delivery A of a consignment
   with A and B leaves B in the consignment with its packages and reservations, unbooked and marked for rebooking, and
   rebooks B at once with the automatic choice on; cancelling delivery A of a stop shared with B keeps the stop with B
-  and removes the stop of a delivery alone on it).
+  and removes the stop of a delivery alone on it; a stop after the carrier accepted the cancellation and before the
+  local commit leaves A and B unchanged, and the repeat, with the adapter answering "already cancelled", cancels A and
+  leaves B unbooked, marked for rebooking and without `externalId`).
 - [ ] **T17**. Progress derivation (`F/fulfillment/fulfillment-progress.ts`, pure), the document flow
   (`GET /fulfillments/:id/flow`) and `POST /fulfillments/bulk/invoice` starting a document-engine bulk run through
   `FULFILLMENT_INVOICING` (per-order items). Files: `F/fulfillment/fulfillment-flow.service.ts`,

@@ -29,7 +29,8 @@
 - [ ] **T2**. `dh/` module scaffold: feature and permission contributions with `defaultFor` (plan §9), setting
       contributions `dh/help.settings.ts`; `KNOWLEDGE_BASE_EXPORT` provider in `kb/` (read only), the
       `knowledge_base.article.changed` event and the `KNOWLEDGE_BASE_SYNC` write-back in `kb/` (existing routes and their
-      answers unchanged). Test: catalogue specs; the export lists every help centre, category, article and version once;
+      answers unchanged), the additive version column `knowledge_base_article.revision` (migration
+      `1791000052640-AddRevisionToKnowledgeBaseArticle`) incremented by every write of the row. Test: catalogue specs; the export lists every help centre, category, article and version once;
       existing knowledge-base suites green.
 - [ ] **T3**. Additive columns `document.audience`, `document_space.purpose` (one help space per organization),
       `document_feedback.reason` and
@@ -47,11 +48,13 @@
       each page), pages with versions (`externalSource = 'help-center'`), visibility from `privacy`, audience null (today's readers),
       project links; nothing written to the legacy rows; the two-way carry (`knowledge_base.article.changed` applied to
       the page, page saves written back through `KNOWLEDGE_BASE_SYNC` in `kb/`, provenance stopping the echo), ordered by
-      the legacy version in `help_node.legacySyncedAt` (stale events dropped, conditional write-back; plan §3). Test:
+      the legacy row's `revision` in `help_node.legacySyncedRevision` (stale events dropped, conditional write-back; plan
+      §3). Test:
       re-run imports nothing twice; no imported page readable by a guest; legacy rows unchanged after the import
       (`isLocked` included); a legacy write reaches the page and a page save reaches the legacy row once; a delayed event of
       legacy version A arriving after a page save wrote B to the page and the legacy row is dropped and both keep B; a
-      write-back that meets a newer legacy write writes nothing and that write becomes the page's next version; a three-level
+      write-back that meets a newer legacy write writes nothing and that write becomes the page's next version; a legacy
+      write and a write-back stamped with the same `updatedAt` are ordered by their revisions; a three-level
       category tree arrives with three levels.
 
 ## Phase 2 — Services, endpoints, events

@@ -14,8 +14,8 @@
 ## 1. Architecture Summary
 
 The core `expense` record stays the one model of spending. It gains three nullable columns (`approvalState`, `source`,
-`expenseClaimId`) and one read filter: existing reads count a row when `approvalState` is null (a direct expense, as
-today) or `APPROVED`. Every claim line is an `expense` row from its first draft; claim-only facts live in a one-to-one
+`expenseClaimId`) and one read filter: existing expense reads count a row when `approvalState` is null (a direct expense,
+as today) or `APPROVED` (the tenant export and import copies every row unfiltered, §3). Every claim line is an `expense` row from its first draft; claim-only facts live in a one-to-one
 plugin table keyed by `expenseId`. The new plugin `@gauzy/plugin-expense-claims` (`packages/plugins/expense-claims`,
 `expense-claims-ui`), tenant feature `FEATURE_EXPENSE_CLAIMS`, owns claims, advances, policies, receipt reading, card
 explanations, travel, rates, vehicle log, spend figures, reports and MCP tools. Money moves only through the owners'
@@ -69,7 +69,7 @@ flowchart LR
 | Conditions | policy scopes (branches, departments, groups, levels) as core `rule` rows of owner type `EXPENSE_POLICY`, evaluated with `HR_EMPLOYEE_RULE_CONTEXT` (core employee fields without `hr-core-lifecycle`) | no condition column |
 | Notices | `NOTIFICATION_DISPATCHER.notify({ …, dedupeKey })` (`expenses:advance-reminder:<advance>:<n>`, `expenses:card-reminder:<transaction>:<stage>`, `expenses:deadline:<claim>`, …); else `INBOX_ITEM_WRITER` with the key as `externalId` | no notice log |
 | One expense model | core `expense` + 3 nullable columns; claim facts in plugin `expense_claim_line` keyed by `expenseId` | spec FR-6, FR-7; no parallel record |
-| Read filter | one helper `actualExpenseCondition()` in `packages/core/src/lib/expense/expense-actual.filter.ts` (TypeORM query builder and MikroORM `FilterQuery` forms) applied by every existing read | existing rows have null and read as today |
+| Read filter | one helper `actualExpenseCondition()` in `packages/core/src/lib/expense/expense-actual.filter.ts` (TypeORM query builder and MikroORM `FilterQuery` forms) applied by every existing expense read listed below (the tenant export and import, a full copy, applies none) | existing rows have null and read as today |
 | Flag | tenant feature `FEATURE_EXPENSE_CLAIMS` (`expense-claims.features.ts`, default off); `@FeatureFlag` + `FeatureFlagGuard` on every plugin controller; `FEATURE_EXPENSE` untouched | default off |
 | Documents | `expense_claim`, `expense_advance`, `travel_request` registered with `business-documents` (numbering, lifecycle, totals pipeline with `DOCUMENT_TAX_STAGE`, effects preview); fallback core `SequenceService` | [platform architecture](../../architecture/business-suite.md) §3.1 |
 | Postings | ledger document types `expense_claim` (area `PURCHASES`), `expense_advance` (area `MONEY`) registered with `LedgerDocumentTypeRegistry`; facts on the confirmed event | [platform architecture](../../architecture/business-suite.md) §3.4 |
@@ -353,7 +353,7 @@ core `job_execution` row; the policy re-check over many lines and imports run as
 
 | Risk | Likelihood | Impact | Mitigation |
 | ---- | ---------- | ------ | ---------- |
-| A read path misses the filter and counts drafts | Medium | High | one helper; spec listing every read; a guard spec that seeds draft rows and runs every existing expense suite |
+| A read path misses the filter and counts drafts | Medium | High | one helper; spec listing every filtered expense read; a guard spec that seeds draft rows and runs every existing expense suite |
 | Approved amount written into `expense.amount` surprises integrations | Low | Medium | claimed amount kept on the line; event carries both |
 | Double reimbursement through payment and payroll | Low | High | one channel per claim; open item and additional pay keyed by claim; channel change only while not handed off |
 | Receipt reading wrong | Medium | Medium | never auto-submits; confidences; duplicates and policies still apply |

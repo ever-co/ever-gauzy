@@ -81,7 +81,9 @@
   marks, Junk for suspect verdicts) and `mail.recovery` with `deliveredSince` and `sentSince`; enable-time backfill of
   received and sent messages. Test: duplicate hand-offs make one row; recovery fills a missed message; a mailbox with
   sent mail from before Mail was enabled lists it in Sent after the backfill, once; a backfill and a recovery run over
-  more than 5,000 messages sharing one time list each message once and finish.
+  more than 5,000 messages sharing one time list each message once and finish; a message whose `PROCESSED` write
+  commits after a later-stamped message, once the cursor has passed it, is recovered by the next run's 15-minute
+  lookback, and the reread rows make no second state row.
 - [ ] **T11**. Lists and conversations `client/*` (keyset pages over state rows, display fields through the reader,
   all inboxes, copies folded by message identity, claimed mailboxes read-only). Test: 1 million state rows page under
   the budget on PostgreSQL; claimed mailbox refuses replies.
@@ -134,7 +136,8 @@
   24 h cache. Test: internal
   address refused; signature bound to user and message; the prompt shows that notice before any fetch; a message with
   a spoofed sender address (failed domain authentication) from an always-allowed sender loads no image and asks again,
-  and offers no "always"; the Inbox shows
+  and offers no "always"; the "always" offer on an authenticated message states that the check proves the domain, not
+  the address; the Inbox shows
   proxied images after consent too; with the
   feature off the Inbox viewer offers no consent and renders as before.
 - [ ] **T26**. Contacts from messages and invitation banner through `MAIL_CALENDAR` (receive, read event, availability

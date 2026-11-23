@@ -195,14 +195,19 @@
   `subcontract_count_decision`, corrections by closing the count, debit note request through `SUBCONTRACTING_BILLS` for
   `CHARGE` lines; allocation of each line's difference to the order material lines of the location in the closing
   consumer, and before any material operation of the location that finds a closed count not yet allocated
-  (`countAdjustedQuantity`, `unallocatedQuantity`, a shortage reducing earlier unallocated excess first, plan §1
-  Reconciliation). Files: `sub/collaboration/{subcontract-count.service.ts,subcontract-count.controller.ts,stock-count-closed.consumer.ts}`,
+  (`countAdjustedQuantity`, `unallocatedQuantity`, a shortage reducing earlier unallocated excess first, closed counts
+  of a location allocated in close order, the location's unallocated counts read with a locking read before its lines,
+  plan §1 Reconciliation). Files: `sub/collaboration/{subcontract-count.service.ts,subcontract-count.controller.ts,stock-count-closed.consumer.ts}`,
   `sub/order/material-movement.service.ts`, `sub/receipt/goods-receipt-subcontract.hook.ts`, `sub/jobs/counts-schedule.job.ts`, `sui/components/counts-page/counts-page.component.ts`. Test:
   `sub/collaboration/subcontract-count.service.spec.ts` AC-8 DB scenario; no reconciliation table; the count's variance value is the decision's value;
   a shortage of 5 at a location shared by two orders is taken from the line with the oldest send first, never below
   zero, and an excess with no line holding the item stays unallocated on the decision; with two orders holding 50 each
   and a closed count of 90 not yet allocated by the consumer, a receipt consuming from the oldest order finds it at 40
-  first; an excess of 10 left unallocated and a later count of zero leave an outstanding unallocated balance of zero.
+  first; an excess of 10 left unallocated and a later count of zero leave an outstanding unallocated balance of zero;
+  two closed counts of one location (an excess of 10, then a shortage of 10) whose consumer events arrive in reverse
+  order are allocated in close order and leave no outstanding balance; a count closed concurrently with a receipt's
+  consumption either is allocated before the receipt reads the lines or closes after the receipt commits (both orders
+  of arrival, PostgreSQL and MySQL).
 - [ ] **T38**. Contractor links (supplier ↔ employee), order tasks per output or operation, consumer
   `subscriber:subcontracting-time` (hours, labour cost at each log's stored pay rate, progress; logs by task only), bill
   draft proposal from approved time at the service's supplier term price with claimed logs. Files:

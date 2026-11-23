@@ -38,10 +38,17 @@ It builds on what exists rather than beside it:
   latest send of the item, else to `subcontract_count_decision.unallocatedQuantity`; each line keeps its share in
   `countAdjustedQuantity`, so the material held on a line is sent less consumed and returned plus its count
   adjustment. The allocation is one idempotent step per count line (keyed by the unique `stockCountLineId` of the
-  decision, under the count's row lock): every material operation of this plugin at a supplier location (send, the
-  receipt hook's consumption, return, scrap) first runs it, in its own transaction, for any closed count of that
-  location not yet allocated, so no operation reads the location's lines before a closed count's differences are on
-  them, and the consumer then finds those lines allocated.
+  decision, under the count's row lock), and the closed counts of one location are always allocated in close order
+  (`stock_count.closedAt`, then `id`): the `stock_count.closed` consumer and every material operation of this plugin at
+  a supplier location (send, the receipt hook's consumption, return, scrap) first allocate every earlier closed count
+  of that location not yet allocated, so a shortage always meets the excess of the counts closed before it. The
+  serialization point is the location's count rows: a material operation, in its own transaction and before it reads
+  the location's lines, reads the location's counts that are not cancelled and not yet allocated with a locking read
+  (`FOR SHARE` on PostgreSQL and MySQL, the database write lock on SQLite), allocates the closed ones in close order,
+  and only then reads the lines; the closure's status write on its count row waits for that share lock and the
+  operation's locking read waits for a closure in progress, so a count either closes before the operation's check and
+  is allocated by it first, or closes after the operation commits; no operation reads the location's lines before a
+  closed count's differences are on them, and the consumer then finds those lines allocated.
 - **Suppliers and prices**: the suppliers of a service, their preference and price are the `vendor_product_term` rows
   of the service item.
 - **Contractor labour**: the contractors' time logs on the order's tasks, at the pay rate stored on each log (the

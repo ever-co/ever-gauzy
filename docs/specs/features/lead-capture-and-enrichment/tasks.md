@@ -103,7 +103,8 @@
   `packages/plugins/lead-capture/src/lib/intake/lead-acknowledgement.subscriber.ts`,
   `intake/lead-acknowledgement.service.spec.ts`. Test: one email per address and hour; none to suppressed addresses; a
   worker stopped after the item commits and before the send sends the acknowledgement once when the event is delivered
-  again.
+  again; through `COMMUNICATIONS_SENDER` a redelivery after the send sends nothing more; on the `EmailSendService`
+  fallback a stop after the send and before the delivery record commits sends it a second time, and no more.
 - [ ] **T15**. Test submission `forms/lead-form-test.service.ts` (dry run of the pipeline). Test: writes nothing, sends
   nothing.
 - [ ] **T16**. Submissions list and detail routes (refused submissions with reason and clashing record); timeline source

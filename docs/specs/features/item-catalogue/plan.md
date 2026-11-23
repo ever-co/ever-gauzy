@@ -87,7 +87,11 @@ instead of failing.
   written by that form again for that variant. While `FEATURE_PRICING` is on, a variant with `priceOnList` set keeps
   having its form price written on the default list after `FEATURE_ITEM_MASTER` is switched off, so an edited price is
   the one the resolution reads; with `FEATURE_PRICING` off, and for a variant whose price the form never wrote on the
-  list, the form writes the legacy row as today. One form never writes both.
+  list, the form writes the legacy row as today. One form never writes both. A legacy-row edit of a variant with
+  `priceOnList` set, made while `FEATURE_PRICING` is off, is the price in use while it stays off; once it is switched on
+  again the resolution reads the variant's default list price first (`pricing-and-promotions` plan §3 Legacy variant
+  price), so that list price applies and the edit does not; while `FEATURE_PRICING` is off the form shows this beside
+  the price of such a variant, naming the list price that applies once pricing is on.
 - **Supplier prices, packs and lead times** are the supplier terms of `procurement` (`vendor_product_term`), read
   through `CATALOG_SUPPLIER_TERMS`; the default supplier of an item is its preferred term (`isPreferred`); the default
   selling and buying lists are the list chain of `pricing-and-promotions`. The precedence is written once in the
