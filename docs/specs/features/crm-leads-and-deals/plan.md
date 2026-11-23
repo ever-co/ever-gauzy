@@ -160,7 +160,10 @@ Each has PostgreSQL, MySQL and SQLite branches, is idempotent
   (its T52);
   `ContactBuyerRole` widened; `notes` widened to `text` where it is shorter.
 - core `1791000051110-AllowSeveralDealsPerContact` — replaces the unique key on `deal.clientId` with an index; backfills
-  `deal.pipelineId` from the stage, `deal.outcome = 'OPEN'`, `probabilityPercent = probability × 20`.
+  `deal.pipelineId` from the stage, `deal.outcome = 'OPEN'`, `probabilityPercent = probability × 20`. Its `down` first
+  counts contacts with more than one deal; if there is any, it stops before changing anything and its error lists those
+  contacts and their deal ids, and the operator links all but one deal of each to another contact or clears their
+  optional `clientId` (no deal is deleted) before running it again; with none, it restores the unique key.
 - plugin `1791000051200-CreateCrmTables`, `1791000051210-CreateCrmContractTables`. Permissions and settings are
   contributions (§2), not rows. Lists and default pipelines are seeded per organization by
   `CrmBootstrapService.ensureSeeded` (idempotent on the unique keys), called by the first CRM request of an organization,
@@ -206,7 +209,9 @@ cursor pagination on lists, `Idempotency-Key` on creating and converting routes,
 | `POST`, `PUT`, `DELETE` | `/crm/pipelines` · `/crm/pipelines/:id/stages[/:stageId]` | `EDIT_SALES_PIPELINES` | kind, default, stage rules; removal needs a target | New |
 | `GET`, `POST`, `PUT` | `/crm/lists/:list[/:id]` · `/crm/score-rules[/:id]` · `/crm/settings` | `CRM_SETTINGS_EDIT` (reads: any CRM view key) | lists, rules (conditions written as `rule` rows), settings (read and written through the settings store) | New |
 | `GET` | `/crm/contacts/statistics`; `POST`, `PUT`, `DELETE` `/crm/contacts/bulk` | `ORG_CONTACT_VIEW` / `ORG_CONTACT_*` | for the existing MCP tools; per-row results | New |
-| `GET`, `POST`, `PUT` | `/crm/contracts[/:id]` · `/crm/contract-templates[/:id]` | `CRM_CONTRACTS_VIEW` / `CRM_CONTRACTS_EDIT` | contracts, templates (terms saved as the `accounting_template` row of type `contract`) | New |
+| `GET` | `/crm/contracts[/:id]` | `CRM_CONTRACTS_VIEW` for every contract of the organization; without it, the record scope of FR-86 (`ownerUserId` = caller, or `partyType = EMPLOYEE` with `partyId` = the caller's employee) | contracts; the list is filtered in the query, a contract outside the scope answers `404` | New |
+| `POST`, `PUT` | `/crm/contracts[/:id]` | `CRM_CONTRACTS_EDIT` | contracts | New |
+| `GET`, `POST`, `PUT` | `/crm/contract-templates[/:id]` | `CRM_CONTRACTS_VIEW` / `CRM_CONTRACTS_EDIT` | templates (terms saved as the `accounting_template` row of type `contract`) | New |
 | `POST` | `/crm/contracts/:id/send` · `/amend` · `/terminate` · `/cancel` · `/requirements/:reqId` | `CRM_CONTRACTS_EDIT` | lifecycle; `send` takes `preview` | New |
 | `POST` | `/crm/contracts/:id/countersign` · `/paper-signature` | `CRM_CONTRACTS_SIGN` | organization signature | New |
 | `GET`, `POST` | `/public/contracts/:token` · `/sign` · `/pdf` | public, token | signer page, a built-in transactional page like the public estimate answer (same layout and throttling as `public-share/invoice/public-invoice.controller.ts`) | New |
@@ -308,6 +313,9 @@ queue consumers. Without a queue root the API runs the sweep on an in-process ti
   manager); `CRM_SETTINGS_EDIT`, `CRM_CONTRACTS_SIGN` (super admin, admin). New tenants get them from `defaultFor`;
   existing tenants from the permission reload, which only inserts missing rows. Existing `ORG_CONTACT_*`,
   `VIEW_SALES_PIPELINES`, `EDIT_SALES_PIPELINES` are reused.
+- Contract reads (FR-86): holders of `CRM_CONTRACTS_VIEW` read the organization's contracts; any other member of the
+  organization reads, by a record scope applied in the query, the contracts they own and those naming them as the
+  employee party, and nothing else.
 - Hand-off and quotation routes also check the target's own permission (`SALES_QUOTATIONS_EDIT` or `ESTIMATES_EDIT`,
   `ORDERS_CREATE`, `SUBSCRIPTIONS_CREATE`, project create, `CRM_CONTRACTS_EDIT`).
 - Public signature routes: 32-byte random token, SHA-256 stored, expires (default 30 days) and is revoked by amendment or

@@ -9,8 +9,8 @@
 **Status**: `Draft`
 **Created**: 2026-11-16
 **Last updated**: 2026-11-23
-**Owner**: evereq
-**Feature flag**: `FEATURE_WIKI` (tenant feature, default off; requires `FEATURE_DOCUMENTS`). Publication to public sites also needs the tenant sub-feature `FEATURE_WIKI_PUBLIC` and the deployment switch `GAUZY_DOCS_PUBLIC_SITES_ENABLED` (off unless exactly `true`), which together turn on the public read feed. Co-editing, import and PDF export keep their existing switches (`GAUZY_DOCS_COLLAB_ENABLED`, `GAUZY_DOCS_LIVE_ENABLED`, `GAUZY_DOCS_IMPORT_ENABLED`, `GAUZY_DOCS_PDF_EXPORT_ENABLED`).
+**Owner**: platform maintainers
+**Feature flag**: `FEATURE_WIKI` (tenant feature, default off; requires `FEATURE_DOCUMENTS` and `FEATURE_DRIVE`, whose one tree, inherited access, owners, versions and visit write wiki spaces build on). Publication to public sites also needs the tenant sub-feature `FEATURE_WIKI_PUBLIC` and the deployment switch `GAUZY_DOCS_PUBLIC_SITES_ENABLED` (off unless exactly `true`), which together turn on the public read feed. Co-editing, import and PDF export keep their existing switches (`GAUZY_DOCS_COLLAB_ENABLED`, `GAUZY_DOCS_LIVE_ENABLED`, `GAUZY_DOCS_IMPORT_ENABLED`, `GAUZY_DOCS_PDF_EXPORT_ENABLED`).
 
 ---
 
@@ -18,7 +18,7 @@
 
 Pages already live in the Documents hub next to files and folders: a block editor with headings, lists, task lists, quotes, code, tables, images, attachments, video, embed cards, callouts, toggles, emoji, maths, mentions of people and links to pages; autosave with conflict detection, versions with restore, comments (anchored to text where collaboration is on), follow and mute, organization, team and private spaces, live co-editing that also merges server-side writes, Markdown export and block-preserving Markdown update, import of exported workspaces, PDF export, a review step and AI knowledge with cited retrieval. This feature completes pages as a **document writer** and turns those spaces into a **wiki**, for the Angular app, Ever Teams (same API; its screens are the Ever Teams spec `workspace-collaboration-clients`), the MCP server and the SDKs: richer formatting and blocks (diagrams, tabs, page layout), **suggestions** (tracked changes), version **comparison** and named versions, **templates**, office-format import and export, **wiki properties on the existing spaces** (name, address, icon, home page, roles, review rules), readable addresses, **proposed edits** reviewed and merged block by block, **publication** of a space to a public site built with Ever Works through a public read feed, page feedback and reading figures, and sync of a space from a source repository. Pages, files and folders stay one tree, one sharing model and one versions model with `drive`, and the organization, team and private spaces stay the only spaces: drive owns files and folders, this spec owns pages and the wiki properties of spaces. Help articles for customers are pages of a help space of the same hub.
 
-**Advanced capabilities.** AI writing help and every agent edit arrive as **suggestions or proposals, never direct writes**, marked with the agent and the person it acts for; pages have **owners and review-by dates**, go **stale** visibly and can be **verified**, and search and cited answers prefer verified pages; pages carry **structured properties** and a page can **list its sub-pages as a table, board or calendar**; **decision and meeting-note templates turn action items into tasks** that tick back when done; followers get **change summaries per space** in their Inbox; and reading figures report the **in-app searches that found nothing** so writers know what to document next.
+**Advanced capabilities.** AI writing help and every edit through the new agent tools arrive as **suggestions or proposals**, marked with the agent and the person it acts for (today's direct page tool keeps writing only where that person is an editor and the space requires no review); pages have **owners and review-by dates**, go **stale** visibly and can be **verified**, and search and cited answers prefer verified pages; pages carry **structured properties** and a page can **list its sub-pages as a table, board or calendar**; **decision and meeting-note templates turn action items into tasks** that tick back when done; followers get **change summaries per space** in their Inbox; and reading figures report the **in-app searches that found nothing** so writers know what to document next.
 
 ## 2. User Scenarios
 
@@ -61,7 +61,7 @@ Pages already live in the Documents hub next to files and folders: a block edito
 ### 3.1 Scope, flags and the one tree
 
 - **FR-1** The system keeps every page as a row of the one documents tree shared with `drive`, and every wiki space is one of the existing spaces (the organization's, a team's or a person's private one) with added properties; there is no second page store, kind of space, share model or version history.
-- **FR-2** The system answers `404 WIKI_DISABLED` on every route this spec adds while `FEATURE_WIKI` is off and leaves the Documents hub as today: the editor then offers only today's blocks, controls and menus, so no page gains content that today's editors and clients cannot save.
+- **FR-2** The system answers `404 WIKI_DISABLED` on every route this spec adds while `FEATURE_WIKI` is off, or while `FEATURE_DRIVE` it builds on is off, and leaves the Documents hub as today: the editor then offers only today's blocks, controls and menus, so no page gains content that today's editors and clients cannot save.
 - **FR-3** The system serves the public read feed only when `GAUZY_DOCS_PUBLIC_SITES_ENABLED` is exactly `true` and the tenant has `FEATURE_WIKI_PUBLIC`.
 - **FR-4** The system keeps every existing Docs endpoint, field, permission, route, editor block and the stored page format working unchanged; Ever Teams can build its pages on the same API.
 
@@ -199,7 +199,7 @@ Pages already live in the Documents hub next to files and folders: a block edito
 - **Reliability**: imports, conversions and syncs are resumable and idempotent; a failed merge changes nothing.
 - **Security & privacy**: imported, converted, synced and pasted HTML is sanitised; embeds only from listed hosts, sandboxed; the public read feed serves only published pages and never names beyond what the space allows; feedback stores no personal data beyond an address hash; what leaves the platform: published pages to the sites and readers of the feed, page text to the configured AI provider for writing help, summaries and asking, office files to the conversion service when configured, repository reads through the connected integration.
 - **Auditability**: publish, unpublish, space role changes, merges, suggestion decisions and verifications are in the page or space activity and the audit trail.
-- **Accessibility and localisation**: editor keyboard operable with labelled controls and visible focus; alternative text prompted for images; the feed's content keeps heading order; strings and starter templates in every shipped locale; right-to-left text renders correctly.
+- **Accessibility and localization**: editor keyboard operable with labelled controls and visible focus; alternative text prompted for images; the feed's content keeps heading order; strings and starter templates in every shipped locale; right-to-left text renders correctly.
 - **Compatibility**: PostgreSQL, MySQL and SQLite with both ORMs; cloud and self-hosted; the stored page format stays readable by today's editors (new blocks degrade to text in older clients).
 
 ## 5. Key Entities & Domain Concepts
@@ -253,11 +253,11 @@ Pages already live in the Documents hub next to files and folders: a block edito
 - [ ] **AC-16** Feedback is limited per address, listed in the app and notifies owners on "not helpful" with a comment (FR-66, FR-67).
 - [ ] **AC-17** Reading figures show reads, readers, top pages and in-app searches that found nothing with their trend; no visitor identity or referrer is stored (FR-68, FR-69).
 - [ ] **AC-18** A repository sync creates, updates and trashes pages idempotently and blocks edits in the app (FR-70, FR-71).
-- [ ] **AC-19** AI writing help and an MCP agent edit produce suggestions only, marked with agent and person (FR-72, FR-73).
+- [ ] **AC-19** AI writing help and an MCP agent edit through `docs_suggest_edit` or `docs_propose_change` produce suggestions or proposals only, marked with agent and person; today's `update_page_markdown` writes directly only where the person it acts for is an editor and the space requires no review, and in a space that requires review answers with the hint to use `docs_suggest_edit` (FR-72, FR-73).
 - [ ] **AC-20** A weekly space summary reaches each follower once, in the Inbox and in their e-mail digest when they chose it (FR-77).
 - [ ] **AC-21** A meeting-notes page started from a meeting is pre-filled and linked to it; asking a space answers with citations to readable pages only, verified pages first (FR-31, FR-74).
 - [ ] **AC-22** The reports of FR-82 return figures matching the reading figures and review queue.
-- [ ] **AC-23** With `FEATURE_WIKI` off nothing changes; with the public switch off no public route exists (FR-2, FR-3).
+- [ ] **AC-23** With `FEATURE_WIKI` off nothing changes; with `FEATURE_WIKI` on and `FEATURE_DRIVE` off every route of this spec answers `404 WIKI_DISABLED` and no wiki menu entry shows; with the public switch off no public route exists (FR-2, FR-3).
 - [ ] **AC-24** Works on PostgreSQL, MySQL and SQLite with both ORMs; all functional requirements have a passing test (§4).
 - [ ] **AC-25** With `FEATURE_WIKI` off the editor shows exactly today's blocks and controls, a page saved there opens and saves in today's clients, a video block with any address it accepts today still plays, and today's `update_page_markdown` writes every page it writes today (FR-2, FR-4, FR-9).
 - [ ] **AC-26** With the feature off, and with the feature on and default settings, every existing page, route, field, permission and report behaves as today (FR-2, FR-4).
@@ -274,7 +274,7 @@ Pages already live in the Documents hub next to files and folders: a block edito
 - [x] III Both ORMs, additive migrations — new tables and columns only, three dialects.
 - [x] IV Default-off flag; nothing removed — `FEATURE_WIKI`, `FEATURE_WIKI_PUBLIC` and the deployment switch off; existing switches and spaces keep their meaning.
 - [x] V Contracts and API first — contracts and REST before UI; the stored page format extended, never changed.
-- [x] VI Permissions, privacy, security — new keys; sanitising; sandboxed embeds; feed exposure limited to published pages.
+- [x] VI Permissions, privacy, security — new keys; sanitizing; sandboxed embeds; feed exposure limited to published pages.
 - [x] VII Real-time through the event bus — outbox facts, realtime hints and the existing live sessions.
 - [x] VIII i18n and accessibility — strings and templates in every locale; keyboard operable editor.
 - [x] IX Tests accompany the change.

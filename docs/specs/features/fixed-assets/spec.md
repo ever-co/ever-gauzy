@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-15
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_FIXED_ASSETS` (default off)
 
 ---
@@ -19,7 +19,7 @@
 An organization keeps a register of what it owns and uses for more than a year: each **asset** has a category, a
 cost, a place, a custodian and, per ledger book, a depreciation schedule that the platform posts for it. The asset
 is created by hand, from an existing equipment row, or automatically when a purchase of a fixed-asset item is
-received or billed; it can be built up through work in progress, enlarged by a capitalisation, moved, handed over,
+received or billed; it can be built up through work in progress, enlarged by a capitalization, moved, handed over,
 repaired, maintained, revalued, split, sold and scrapped, and every step writes to its timeline and, when accounting
 is on, to the ledger through the posting rules of `general-ledger`. The existing equipment register and equipment
 lending stay as they are and become the physical and operational side of an asset: every tangible asset is one
@@ -76,7 +76,7 @@ and proposes documents for a person to confirm.
   refused with `409` and the asset is confirmed once.
 - **Given** a run over 5,000 assets where 12 lack an expense account, **when** it finishes, **then** 4,988 lines are
   posted, the 12 are listed with the missing account role, and holders of the posting permission are notified.
-- **Given** a capitalisation that consumes spare parts, **when** stock is insufficient, **then** confirmation is
+- **Given** a capitalization that consumes spare parts, **when** stock is insufficient, **then** confirmation is
   refused naming the item and location, and nothing is posted.
 - **Given** a value adjustment dated before the last posted depreciation line, **when** saved, **then** it is refused
   with the earliest allowed date.
@@ -106,27 +106,27 @@ and proposes documents for a person to confirm.
 | **FR-6** | The system MUST track two independent states: an accounting state (draft, work in progress, in service, fully depreciated, sold, scrapped, consumed, cancelled) and an operational state (available, in custody, on loan, in maintenance, out of order, in transit), and show both on lists and filters. |
 | **FR-7** | The system MUST support standalone assets, composite assets and components of a composite, and roll a composite's cost, accumulated depreciation and net book value up from its components. |
 | **FR-8** | The system MUST number an asset on confirmation from the numbering series of its document type (default pattern year plus running number per organization) and never reuse a number. |
-| **FR-9** | The system MUST refuse to confirm an asset without category, cost and complete account mapping, and without an in-service date unless it starts in work in progress; before confirming it MUST show the effects preview (journals and schedule). |
+| **FR-9** | The system MUST refuse to confirm an asset without category and cost, without complete account mapping while accounting is on (with accounting off no mapping is needed and nothing is posted, FR-96), and without an in-service date unless it starts in work in progress; before confirming it MUST show the effects preview (journals, while accounting is on, and schedule). |
 | **FR-10** | The system MUST refuse to cancel a confirmed asset while a repair or maintenance occurrence is open, after a sale or scrap, or while later documents depend on it; cancelling reverses its postings by reversal. |
 | **FR-11** | A user with `FIXED_ASSETS_EDIT` can register an asset the organization already owns without a purchase document, stating accumulated depreciation and the number of periods already booked at the opening date; the system MUST post nothing for the opening values and MUST refuse a supplier bill as acquisition source of it. |
 | **FR-12** | A user with `FIXED_ASSETS_EDIT` can create an asset from an equipment row (initial cost and currency proposed as its cost; name, serial number, image and tags stay on the equipment row and show on the asset); every tangible asset has exactly one equipment row, created with the asset when none is chosen, and can be relinked to another; equipment without an asset keeps working unchanged. |
 | **FR-13** | The system MUST offer "make lendable" on a tangible asset, opening its equipment row to lending requests, and MUST do it automatically for categories set to lendable by default. |
 | **FR-14** | A user with `FIXED_ASSETS_EDIT` can record on an asset who insures it, under which policy, for which value and for which period, and the system MUST remind the asset manager 30 days before a policy ends. |
-| **FR-15** | The system MUST show on each asset the linked documents: purchase receipt, supplier bill, customer invoice, journals, capitalisations, repairs, movements, adjustments, and the document flow between them. |
+| **FR-15** | The system MUST show on each asset the linked documents: purchase receipt, supplier bill, customer invoice, journals, capitalizations, repairs, movements, adjustments, and the document flow between them. |
 | **FR-16** | The system MUST store cost in the document currency and the organization currency with the rate used, and compute depreciation in the organization currency. |
 
-### 3.3 Acquisition from purchases, work in progress, capitalisation
+### 3.3 Acquisition from purchases, work in progress, capitalization
 
 | ID | Requirement |
 | --- | --- |
 | **FR-17** | A user with `FIXED_ASSET_CATEGORIES_EDIT` can give a fixed-asset item an asset rule: category, one asset per unit or one grouped asset per line, and numbering series. |
 | **FR-18** | The system MUST create draft assets when a goods receipt or a supplier bill (whichever the organization setting names, default the receipt) with such an item is confirmed, each linked to its source line, with cost equal to the net line amount plus non-recoverable tax, divided per unit. |
-| **FR-19** | The system MUST keep the assets of one purchase line equal in total to the line's net amount (currency rounding on the last asset), link a later bill to the assets of its receipt instead of creating new ones, and apply a price difference to the cost (directly before the first posted line, otherwise as a cost adjustment). |
+| **FR-19** | The system MUST keep the assets of one purchase line equal in total to the line's acquisition cost of FR-18, the net amount plus non-recoverable tax (each asset's cost rounded to the currency, the rounding difference on the last asset), link a later bill to the assets of its receipt instead of creating new ones, and apply a price difference to the cost (directly before the first posted line, otherwise as a cost adjustment). |
 | **FR-20** | The system MUST delete draft assets when their source document is cancelled and refuse the cancellation while a confirmed asset depends on it, naming the assets. |
-| **FR-21** | The system MUST post the cost of a work-in-progress asset to the work-in-progress account, compute no depreciation for it, and move the cost to the asset cost account when a user capitalises it or, automatically, when the daily job finds its in-service date reached. |
-| **FR-22** | A user with `FIXED_ASSETS_CONFIRM` can confirm a capitalisation that builds or enlarges a target asset from stock items (issued through the stock ledger at their value, with lot or serial where tracked), other assets (at net book value on that date) and service or expense lines; the total becomes cost of the target. |
-| **FR-23** | The system MUST require a target that is composite, in work in progress or in service (then with a schedule revision), refuse a consumed asset dated before its last posted depreciation line, mark consumed assets as consumed, and flag a capitalisation "cost changed" when a source value changes later, offering a recalculation. |
-| **FR-24** | The system MUST, on cancelling a capitalisation, restore consumed assets and their schedules, return the stock and reverse the journals, and refuse while the target has later posted lines that are not reversed. |
+| **FR-21** | The system MUST post the cost of a work-in-progress asset to the work-in-progress account, compute no depreciation for it, and move the cost to the asset cost account when a user capitalizes it or, automatically, when the daily job finds its in-service date reached. |
+| **FR-22** | A user with `FIXED_ASSETS_CONFIRM` can confirm a capitalization that builds or enlarges a target asset from stock items (issued through the stock ledger at their value, with lot or serial where tracked), other assets (at net book value on that date) and service or expense lines; the total becomes cost of the target. |
+| **FR-23** | The system MUST require a target that is composite, in work in progress or in service (then with a schedule revision), refuse a consumed asset dated before its last posted depreciation line, mark consumed assets as consumed, and flag a capitalization "cost changed" when a source value changes later, offering a recalculation. |
+| **FR-24** | The system MUST, on cancelling a capitalization, restore consumed assets and their schedules, return the stock and reverse the journals, and refuse while the target has later posted lines that are not reversed. |
 
 ### 3.4 Depreciation books, methods and schedules
 
@@ -210,7 +210,7 @@ and proposes documents for a person to confirm.
 | **FR-70** | The system MUST, daily, mark past-due occurrences overdue and create the next occurrence as a task assigned to the assignee (in the plan's project when one is set), so it appears in their tasks and inbox. |
 | **FR-71** | The system MUST show the asset "in maintenance" while an occurrence of an out-of-service task is due, overdue or in progress, and record cost and parts of an occurrence as expense for the cost-of-ownership report. |
 
-### 3.11 Labels, audits and utilisation
+### 3.11 Labels, audits and utilization
 
 | ID | Requirement |
 | --- | --- |
@@ -218,7 +218,7 @@ and proposes documents for a person to confirm.
 | **FR-73** | A user with `FIXED_ASSET_AUDITS_RUN` can open an audit session scoped by location, category or custodian and invite auditors; each scan records asset, time, auditor, condition, optional photo and position. *(advanced)* |
 | **FR-74** | The system MUST accept scans made offline when the phone reconnects, record each asset once per session, and show session progress live to everyone watching it. *(advanced)* |
 | **FR-75** | The system MUST, on closing a session, list missing, misplaced, unknown and damaged items and create draft movements, repairs or scrap proposals for the selected ones; the session report is kept. *(advanced)* |
-| **FR-76** | The system MUST compute utilisation per asset and period as used time over available time, where used time comes from approved lending periods, tracked time that names the asset, and usage readings, and available time from the organization's working calendar. *(advanced)* |
+| **FR-76** | The system MUST compute utilization per asset and period as used time over available time, where used time comes from approved lending periods, tracked time that names the asset, and usage readings, and available time from the organization's working calendar. *(advanced)* |
 | **FR-77** | The system MUST let a task or project be linked to an asset, and add the hours tracked on it to the asset's usage for the period. *(advanced)* |
 | **FR-78** | The system MUST list idle assets: no custodian, lending, usage or movement for the configured number of days (default 90). *(advanced)* |
 | **FR-79** | A user with `FIXED_ASSETS_EDIT` can enter or import usage readings (date, units); readings derived from lending and tracked time are added automatically at period end and never counted twice. *(advanced)* |
@@ -231,7 +231,7 @@ All reports are report definitions: filterable, groupable, exportable, schedulab
 | --- | --- | --- | --- |
 | **FR-80** | Asset register | Which assets exist, with cost, accumulated depreciation and net book value at a date? | organization, states, category, location, custodian, cost centre, ledger book, date or fiscal year; group by category, location or custodian |
 | **FR-81** | Depreciation ledger | Which lines were posted for which asset in a range, with their journals? | organization, dates, asset, category, cost centre, ledger book |
-| **FR-82** | Asset roll-forward | How did cost and accumulated depreciation move from opening to closing: additions, capitalisations, adjustments, impairments, sales, scraps, consumption, depreciation? | organization, dates, ledger book; by category or asset |
+| **FR-82** | Asset roll-forward | How did cost and accumulated depreciation move from opening to closing: additions, capitalizations, adjustments, impairments, sales, scraps, consumption, depreciation? | organization, dates, ledger book; by category or asset |
 | **FR-83** | Asset activity | What happened to assets, by whom? | dates, asset, event kind, actor |
 | **FR-84** | Maintenance plan | Which occurrences are due, overdue or done, and what did they cost? | dates, asset, team, assignee, state |
 | **FR-85** | Asset value analytics | How does asset value develop over time, by category and by location? | organization, ledger book, period |
@@ -240,7 +240,7 @@ All reports are report definitions: filterable, groupable, exportable, schedulab
 | --- | --- |
 | **FR-86** | The system MUST provide a dashboard with cards (number of assets, total cost, net book value, additions this fiscal year, lines due, overdue maintenance) and charts (value by category, by location, over time). |
 | **FR-87** | The system MUST report, per asset and category, the difference between two ledger books (cost, accumulated, net book value, depreciation of the period). *(advanced)* |
-| **FR-88** | The system MUST report utilisation, idle assets, audit discrepancies and cost of ownership (cost, repairs, maintenance, insurance, less proceeds) per asset. *(advanced)* |
+| **FR-88** | The system MUST report utilization, idle assets, audit discrepancies and cost of ownership (cost, repairs, maintenance, insurance, less proceeds) per asset. *(advanced)* |
 | **FR-89** | The system MUST compare, per organization, ledger book and category, the register's cost and accumulated depreciation with the mapped ledger accounts and list every difference with its documents. |
 
 ### 3.13 API, agents, automation and compatibility
@@ -270,7 +270,7 @@ All reports are report definitions: filterable, groupable, exportable, schedulab
   auditor's consent prompt; nothing leaves the platform except emails and labels the user sends or prints.
 - **Observability and audit**: timeline per asset; who, when, before and after on every confirmed document and
   setting; run records with counts and failures; integrity findings.
-- **Accessibility and localisation**: keyboard-operable forms and tables, labelled scan page, all strings in every
+- **Accessibility and localization**: keyboard-operable forms and tables, labelled scan page, all strings in every
   shipped locale, amounts and dates in the user's format.
 - **Compatibility**: PostgreSQL, MySQL and SQLite; both ORMs; multi-tenant cloud and self-hosted single tenant;
   additive OpenAPI and SDK changes only.
@@ -289,7 +289,7 @@ All reports are report definitions: filterable, groupable, exportable, schedulab
 | `AssetUsageReading` | Usage of an asset on a date, entered or derived from lending and tracked time |
 | `AssetLocation` | A place in a tree where assets are kept |
 | `AssetMovement` | A document that relocates, hands over or returns assets |
-| `AssetCapitalisation` | A document that turns stock, other assets and expenses into cost of a target asset |
+| `AssetCapitalization` | A document that turns stock, other assets and expenses into cost of a target asset |
 | `AssetRepair` | A repair with parts, linked bill lines and cost, expensed or added to the asset |
 | `AssetValueAdjustment` | A revaluation, impairment, impairment reversal or cost adjustment |
 | `AssetDisposal` | A sale or scrap, and its restoration |
@@ -319,7 +319,7 @@ All reports are report definitions: filterable, groupable, exportable, schedulab
 
 - [ ] **AC-1** A receipt of a fixed-asset item creates draft assets; confirming one posts the acquisition and
       generates a schedule that totals the depreciable amount for each method of FR-26.
-- [ ] **AC-2** A work-in-progress asset is capitalised by the daily job on its in-service date; a capitalisation
+- [ ] **AC-2** A work-in-progress asset is capitalised by the daily job on its in-service date; a capitalization
       with stock, an asset and an expense line builds the target and its cancellation restores everything (FR-21, FR-24).
 - [ ] **AC-3** The daily run posts due lines once, skips a locked period with a report, continues past failures and
       notifies; reversing the latest line makes it unposted again (FR-40, FR-41).
@@ -351,7 +351,7 @@ All reports are report definitions: filterable, groupable, exportable, schedulab
 
 - Asset locations are their own tree whose places are stock locations or address-book addresses (applied). One
   shared location master with the branches of `hr-core-lifecycle` is possible later.
-- Default for assets from purchases is "at goods receipt"; organizations that capitalise at the bill switch the
+- Default for assets from purchases is "at goods receipt"; organizations that capitalize at the bill switch the
   setting (applied).
 - Default depreciation journals are grouped per run, book, category and cost centre (applied); per-line journals
   are a setting.

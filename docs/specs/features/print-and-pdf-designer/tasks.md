@@ -73,6 +73,7 @@
 - [ ] **T21**. Outbox events and realtime hints (plan §5) and `PrintOutputTimelineSource`. Files: `events/print.events.ts`, `events/print-output-timeline.source.ts`. Test: event payloads; hint channels.
 - [ ] **T22**. Archive consumer `subscriber:print-templates-archive` and reprint choice (original or copy). Files: `events/print-archive.consumer.ts`. Test: one archival output per document and version under redelivery.
 - [ ] **T55**. Append a record's PDF attachments after its pages on request (option `appendAttachments` of `/render` and of jobs), merged with `pdf-lib`. Files: `engine/pdf/append-attachments.ts`, `services/print.service.ts`. Test: `append-attachments.spec.ts`: a record with two PDF attachments yields its pages followed by both attachments; non-PDF attachments are skipped with a warning.
+- [ ] **T56**. Access to stored files (spec FR-55, FR-66): `print_output.maskedFields` written at render; `GET /outputs/:id/file` and `GET /jobs/:id/file` served only when the requester holds the route's permission, can read every source record at the time of the request (`RECORD_ACCESS_FILTER.can` when bound, else the type's read permission and scopes) and every field masked or hidden for them is in each output's `maskedFields`, else `403 PRINT_OUTPUT_RESTRICTED` with a fresh render offered; job items and CSV filtered to readable records. Files: `services/print-output-access.ts`, `services/print-output.service.ts`, `controllers/print-outputs.controller.ts`, `jobs/print-job.controller.ts`. Test: `services/print-output-access.spec.ts`: a holder of `PRINT_HISTORY_VIEW` without read access to the invoice is refused its PDF; a reader for whom a field is masked that the creator saw is refused and can render a fresh copy; a merged job file with one unreadable record is refused to another user and to its requester after losing access; the item log lists only readable records.
 
 ## Phase 3 — UI surfaces
 
@@ -94,8 +95,9 @@
 - [ ] **T32**. Bulk jobs: `/jobs` routes, core operation `print-templates.job` (slices as steps, lease and resume from
       the operation, no sweep job), merged PDF streaming with `pdf-lib`, archive output, caps, pinned versions, retries,
       CSV log, inbox notice. Files: `jobs/print-job.service.ts`, `jobs/print-job.operation.ts`,
-      `jobs/print-job.controller.ts`, `jobs/merged-pdf.writer.ts`. Test: 1,200 records with a restart at 600 print each
-      once; caps refuse with the limit; unreadable records and drafts without `PRINT_DRAFTS` (setting on) skipped with
+      `jobs/print-job.controller.ts`, `jobs/merged-pdf.writer.ts`. Test: with the organization's limit set to 2,000, 1,200 records
+      with a restart at 600 print each once; with the default limit of 1,000 the same job is refused naming it; caps
+      refuse with the limit; unreadable records and drafts without `PRINT_DRAFTS` (setting on) skipped with
       the reason.
 - [ ] **T33**. Bulk action for saved-view lists through `registerBulkActions` and `RECORD_VIEWS_SELECTION`; bind
       `RECORD_VIEWS_PRINT`. Files: `jobs/print-bulk-action.ts`, `ui/print-dialog/print-bulk-action.component.ts`,
@@ -182,14 +184,15 @@ Every functional requirement of `spec.md` §3 and the tasks that implement it; e
 | FR-52 | §3.8 Rendering and outputs | T9, T11 |
 | FR-53 | §3.8 Rendering and outputs | T18 |
 | FR-54 | §3.8 Rendering and outputs | T55 |
-| FR-55 | §3.8 Rendering and outputs | T18, T29 |
+| FR-55 | §3.8 Rendering and outputs | T18, T29, T56 |
 | FR-56 | §3.8 Rendering and outputs | T22 |
 | FR-57–FR-58 | §3.8 Rendering and outputs | T44 |
 | FR-59 | §3.8 Rendering and outputs | T11 |
 | FR-60 | §3.9 Bulk printing and the print queue | T32, T33 |
 | FR-61 | §3.9 Bulk printing and the print queue | T32 |
 | FR-62 | §3.9 Bulk printing and the print queue | T32 |
-| FR-63–FR-66 | §3.9 Bulk printing and the print queue | T32 |
+| FR-63–FR-65 | §3.9 Bulk printing and the print queue | T32 |
+| FR-66 | §3.9 Bulk printing and the print queue | T32, T56 |
 | FR-67–FR-69 | §3.10 Labels | T34 |
 | FR-70 | §3.11 Reports | T35 |
 | FR-71 | §3.11 Reports | T35 |

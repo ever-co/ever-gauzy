@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-16
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_WORKFLOWS` (tenant feature, default off) · the plugin loads only when `GAUZY_WORKFLOWS_ENABLED`
 is exactly `true` · the existing `FEATURE_EMPLOYEE_APPROVAL` and `FEATURE_EMPLOYEE_APPROVAL_POLICY` keep gating their pages
 
@@ -154,7 +154,8 @@ outgrows is **invalidated and re-routed**. Marked `(advanced)`.
   reporting line (direct manager, N levels, or up until an approval limit covers the amount); the requester's HR approver
   for a kind; a person or team field of the record; amount bands (up to an amount → a source); approval rules; an agent.
 - **FR-19** The system resolves approvers when the step starts and keeps each with the source that chose it; never the
-  requester, the people the record is for, or someone whose work ended; one person counts once across sources.
+  requester (except on a step that allows the requester under FR-25), the people the record is for, or someone whose
+  work ended; one person counts once across sources.
 - **FR-20** The system sends a step with no resolvable approver to the definition's fallback approvers, else to the
   organization's administrators, and flags the instance; it never approves automatically for lack of approvers.
 - **FR-21** The system approves a step when its rule is met, rejects it on a rejection or when the rule can no longer be
@@ -176,8 +177,9 @@ outgrows is **invalidated and re-routed**. Marked `(advanced)`.
 - **FR-27** The system records with every decision who, when, decision, comment, channel, the record version and the
   facts shown; decisions are immutable; a decision on a record changed since the approver opened it is refused with the
   changes shown.
-- **FR-28** The system serialises decisions on one step; a later decision answers "already decided" and its inbox items
-  close.
+- **FR-28** The system serializes decisions on one step; while the step is open each assignee's decision counts toward
+  its rule (the second approver of an "all" step decides as usual); a decision on a step already resolved, or on a task
+  already decided, answers "already decided" and its inbox items close.
 - **FR-29** The system lets the requester withdraw a running approval before its final decision, resolving its tasks.
 - **FR-30** The system lets participants comment on an instance; comments reach the timeline and the other participants.
 
@@ -325,7 +327,7 @@ outgrows is **invalidated and re-routed**. Marked `(advanced)`.
   facts the definition exposes unless they may view the record; emails, push and chat cards carry title, amount and
   link; agent decisions are marked.
 - **Auditability**: who, when, before and after for every definition, rule, delegation and decision.
-- **Accessibility and localisation**: the designer has a keyboard list editor; decision controls are labelled; states,
+- **Accessibility and localization**: the designer has a keyboard list editor; decision controls are labelled; states,
   transitions and emails per language; due times in the approver's time zone.
 - **Compatibility**: PostgreSQL, MySQL, SQLite; both ORMs; cloud and self-hosted alike; OpenAPI additive; SDKs regenerated.
 

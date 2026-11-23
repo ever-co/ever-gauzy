@@ -253,7 +253,7 @@ regenerated. Report definitions of spec FR-82 on datasets `payment_sessions`, `p
 
 | Trigger | When | What it does | Idempotency |
 | ------- | ---- | ------------ | ----------- |
-| queue `payment-gateway-callbacks` | callback stored | verify, parse, apply outcomes in provider-event order per session | `(providerId, eventId)` unique; `lastProviderEventAt` guard |
+| queue `payment-gateway-callbacks` | callback stored | verify, parse, apply outcomes in provider-event order per session; money movements are applied by their own identity: a capture or refund callback finds or creates the `payment_capture` or refund row by the provider's capture or refund id (`externalId`, looked up under the session row lock; the event id when the provider sends none) and hands it to collections once, whatever `lastProviderEventAt` says | `(providerId, eventId)` unique; one row per provider capture or refund id; `lastProviderEventAt` guards only the session state |
 | queue `payment-gateway-charges` | off-session charge asked | routing, adapter call, failover once on provider fault | idempotency key; failover key linked |
 | `payment-gateways.status-query` | every 5 minutes | sessions pending over 15 minutes (then hourly to 24 h) → `queryStatus` | outcome guard |
 | `payment-gateways.authorization-expiry` | hourly | void uncaptured authorisations near the window end | session status compare-and-set |

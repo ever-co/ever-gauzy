@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-16
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_PAYROLL` (default off; shared with `payroll-setup`); earned pay on demand behind `FEATURE_PAYROLL_EARNED_PAY` (default off)
 
 ---
@@ -283,7 +283,7 @@ reader's payroll permissions; bank details are masked without the bank account n
 | **FR-98** | The system MUST publish events (run calculated, submitted, approved, paid, cancelled; payslip confirmed, delivered, paid, failed; pay period closed; arrears proposed; review finding raised; settlement and encashment paid) on the event outbox for ledger, payments, time off, HR, project costing, automations, webhooks and real-time updates. |
 | **FR-99** | The system MUST offer MCP tools to read runs, payslips and findings, create and calculate runs, run what-ifs, record additional pay and withholdings, propose arrears and explain a payslip; tools that confirm, approve, pay or cancel return a preview first, act with the caller's permissions and are marked as agent actions. |
 | **FR-100** | The system MUST grant `PAYROLL_SELF_SERVICE` (own payslips, earned-pay requests) to the employee role and the processing keys to administrators, effective only while the feature is on. |
-| **FR-101** | The system MUST show payslip amounts only to payroll permission holders and to the employee; managers see none by default; every read of another person's payslip is logged in the platform's access log of `access-control-and-security` when it is loaded. |
+| **FR-101** | The system MUST show payslip amounts to the holders of `ORG_PAYROLL_VIEW`, who read the existing payroll runs and their items today, and to the employee; a manager without that permission sees none, as with the existing payroll runs; every read of another person's payslip is logged in the platform's access log of `access-control-and-security` when it is loaded. |
 | **FR-102** | A user with `ORG_PAYROLL_EDIT` can import historical payslips (totals and lines per element) as confirmed payslips without postings or payments, so year to date and projections start right. |
 | **FR-103** | The system MUST, with the feature off, load no route, menu entry or job of the feature, keep its data, and leave the register's routes, GraphQL, totals and statistics behaving as today. |
 | **FR-104** | The system MUST record who, when, before and after for every change to runs, payslips (state), additional pay, withholdings, arrears, corrections, payouts and earned-pay requests. |
@@ -302,7 +302,7 @@ reader's payroll permissions; bank details are masked without the bank account n
   emails and PDFs, bank files and payouts (name, account, amount, reference), and — only when enabled — assistant
   questions with the asking employee's own trace sent to the organization's AI provider.
 - **Observability and audit**: run timeline, per-employee results, findings, delivery states, audit of FR-104.
-- **Accessibility and localisation**: keyboard-operable run and payslip pages, labelled tables, payslips and amounts
+- **Accessibility and localization**: keyboard-operable run and payslip pages, labelled tables, payslips and amounts
   in words in every shipped locale, dates and numbers in the reader's format, right-to-left payslip layouts.
 - **Compatibility**: PostgreSQL, MySQL and SQLite; both ORMs; cloud and self-hosted; existing register routes,
   GraphQL fields, totals and statistics unchanged for typed-in runs; additive OpenAPI and SDK changes only.
@@ -390,7 +390,7 @@ reader's payroll permissions; bank details are masked without the bank account n
 - [x] V Contracts and API first; backwards compatible — optional fields on register contracts; new routes additive.
 - [x] VI Permissions, privacy, security — five new keys, separation of preparer and approver, masked pay, logged reads.
 - [x] VII Real-time through the event bus — outbox events; run progress and states pushed.
-- [x] VIII i18n and accessibility — every string a key in all locales; payslips localised with amounts in words.
+- [x] VIII i18n and accessibility — every string a key in all locales; payslips localized with amounts in words.
 - [x] IX Tests accompany the change — golden payslips, idempotent jobs, register equality, posting balance.
 - [x] X Behaviour-first (this document).
 - [x] XI Documentation describes our platform only.

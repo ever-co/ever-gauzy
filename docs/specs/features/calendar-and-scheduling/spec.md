@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-16
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_CALENDAR` (new tenant feature, default off); the plugin loads only when `GAUZY_CALENDAR_ENABLED` is exactly `true`. `FEATURE_EMPLOYEE_APPOINTMENT` (on) and `GAUZY_MEETING_REMINDERS_ENABLED` (off) keep their meaning.
 
 ---
@@ -59,14 +59,14 @@ before confirmation**; **focus time and meeting-load analytics** per person and 
 - **Given** the series, **when** Ana moves "this and following" to 10:00 from March, **then** the earlier part ends in February, a new series starts in March, earlier answers stay, and participants receive one update.
 - **Given** an outside guest invited by address, **when** they click "Accept" in the email, **then** their answer is recorded without an account, and an answer sent from their own calendar program updates the same participant.
 - **Given** Ana needs a 45-minute meeting with five colleagues in three time zones next week and a room for six, **when** she asks for proposals, **then** she gets up to five options, each saying who is free, whose local time is early or late, which focus block it overlaps and which room is free (advanced).
-- **Given** a manager who shares her calendar with her assistant at "respond on behalf", **when** the assistant accepts an invitation, **then** the organiser sees "accepted by the assistant on behalf of the manager"; her private events show only as "Private" to the assistant.
+- **Given** a manager who shares her calendar with her assistant at "respond on behalf", **when** the assistant accepts an invitation, **then** the organizer sees "accepted by the assistant on behalf of the manager"; her private events show only as "Private" to the assistant.
 - **Given** a team calendar "Support rota" and the time-off layer switched on, **when** a lead opens the week, **then** she sees the team's events, approved time off and public holidays together, each layer only as far as she may see it.
 - **Given** a booking page "Product demo" for the sales team with round-robin, a 15-minute buffer and payment off, **when** a visitor in New York books Thursday 11:00 their time, **then** the slot was checked again, the deal owner of the visitor's open deal was chosen because he was free, the event lands on his calendar with a meeting room, the visitor confirms by email and the event is linked to the lead created for them.
 - **Given** a collective page with two hosts, **when** a visitor opens it, **then** only slots where both are free in their working hours, outside time off and outside synced busy times are offered.
 - **Given** Ana's connected outside calendar in two-way mode, **when** she moves an event there, **then** it moves here within 5 minutes; **when** she adds an event here, **then** it appears there, without a second invitation to its participants.
 - **Given** a deal page, **when** Ana schedules a meeting from it, **then** the deal's people are proposed as participants, the event is linked to the deal and appears on its events panel and timeline.
 - **Given** a field visit assigned to a technician, **when** dispatch moves it, **then** the visit's event on the technician's calendar moves too and cannot be edited there except its reminders.
-- **Given** a weekly focus goal of 8 hours in blocks of 2 hours, **when** the week starts, **then** focus blocks are placed in her free time and an organiser who invites over one is told (advanced).
+- **Given** a weekly focus goal of 8 hours in blocks of 2 hours, **when** the week starts, **then** focus blocks are placed in her free time and an organizer who invites over one is told (advanced).
 - **Given** an attended 50-minute event linked to a project task, **when** it ends, **then** Ana is offered to log 50 minutes of tracked time on the task (advanced).
 
 ### 2.2 Edge cases & failures
@@ -75,16 +75,16 @@ before confirmation**; **focus time and meeting-load analytics** per person and 
 - **Given** a user without a share on a colleague's calendar, **then** free/busy shows blocks without titles; private events show "Private" to everyone except the owner.
 - **Given** two users editing the same event, **then** the second save is refused with the current version and the changes made since.
 - **Given** two visitors booking the last seat of a slot at once, **then** one gets it and the other is told "just taken" with fresh slots.
-- **Given** a room that disallows overlaps and is already booked for one occurrence of a new series, **then** that occurrence is listed as a conflict, the others are confirmed, and the organiser may pick another room for it.
+- **Given** a room that disallows overlaps and is already booked for one occurrence of a new series, **then** that occurrence is listed as a conflict, the others are confirmed, and the organizer may pick another room for it.
 - **Given** a daylight-saving change between two occurrences, **then** the meeting stays at 09:00 local in the event's zone, and a participant in another zone sees the shifted local time.
 - **Given** a rule "monthly on the 31st", **then** months without a 31st are skipped and the description says so.
 - **Given** an outside calendar that is unreachable five times in a row, **then** the connection pauses, the owner is told with the last error, and reconnecting resumes without duplicates.
 - **Given** the same event changed here and outside before a sync, **then** each field takes the later change, the other values stay in the history, and the event is marked "changed in both" when time, title or participants differ.
-- **Given** an imported outside invitation, **then** no invitation is sent again by the platform; answering it sends a standard reply to the outside organiser.
+- **Given** an imported outside invitation, **then** no invitation is sent again by the platform; answering it sends a standard reply to the outside organizer.
 - **Given** a scheduling message with an older sequence than the stored event, **then** it is ignored and logged.
 - **Given** a booking unconfirmed after 60 minutes, **then** it expires, the slot frees and the guest is told.
 - **Given** a payment that fails or is not made within 15 minutes, **then** the booking is cancelled and the slot frees (advanced).
-- **Given** a team of 240 people added as participants, **then** the organiser is told only the first 100 can be expanded (setting) and asked to use a smaller group or the team calendar.
+- **Given** a team of 240 people added as participants, **then** the organizer is told only the first 100 can be expanded (setting) and asked to use a smaller group or the team calendar.
 - **Given** a source feature that deletes its record, **then** its event is cancelled with notices; a person cannot delete a source-owned event from the calendar.
 - **Given** an employee of kind agent, **then** it is shown as always available, gets no email invitation and no reminders.
 - **Given** a subscribed address that resolves to an internal network address, **then** the fetch is refused and the subscription shows the reason.
@@ -104,7 +104,7 @@ before confirmation**; **focus time and meeting-load analytics** per person and 
 - **FR-6** The system MUST give every user a personal default calendar in their time zone on first use, holding the appointments they host as an employee.
 - **FR-7** A user with `CALENDAR_EDIT` can create further personal calendars with name, colour, description, time zone, default reminders and whether its events make them busy (on by default); on team, organization and subscribed calendars only the events a person takes part in make them busy.
 - **FR-8** A user with `CALENDAR_SHARED_MANAGE` can create team calendars (members of the team see them) and organization calendars (every member of the organization sees them) and name their managers.
-- **FR-9** A user can show, hide, recolour and reorder any calendar they can see and choose the default calendar for new events; these choices are personal.
+- **FR-9** A user can show, hide, recolor and reorder any calendar they can see and choose the default calendar for new events; these choices are personal.
 - **FR-10** A calendar manager can delete a calendar except a user's last personal one, after a confirmation stating the number of future events and participants affected; its future events are cancelled with notices, and the deletion can be undone for 30 days.
 - **FR-11** A user who may write to several calendars can show one event on more of them (for example their own and a team calendar) without copying it.
 
@@ -136,7 +136,7 @@ before confirmation**; **focus time and meeting-load analytics** per person and 
 - **FR-22** A user can add a meeting room from `meetings` to an event (new or existing room); its join link appears on the event, in invitations and in reminders; without `meetings`, a typed link shows with a join action.
 - **FR-23** A user can move and resize events by drag and drop, copy and duplicate them; attachments are files of `drive` (or the documents hub when `drive` is absent) readable to participants.
 - **FR-24** The system MUST keep a history per event (who, when, before, after) and raise its sequence on every change participants must hear about (time, place, title, description, meeting room, participants, cancellation).
-- **FR-25** The system MUST warn, never block, when a new or moved event overlaps busy time of the organiser or a required participant, naming the overlaps the viewer may see.
+- **FR-25** The system MUST warn, never block, when a new or moved event overlaps busy time of the organizer or a required participant, naming the overlaps the viewer may see.
 
 ### 3.5 Recurrence
 
@@ -149,24 +149,24 @@ before confirmation**; **focus time and meeting-load analytics** per person and 
 
 ### 3.6 Participants, invitations and answers
 
-- **FR-32** An organiser can add colleagues, whole teams (expanded to members up to 100, setting), people offered by other features' participant sources (a deal's people, an organisation's members, a saved view of people, a cohort, an interview panel), outside addresses and resources, mark each person required or optional, and name co-organisers; outside addresses an appointment already has are its outside guests, and the appointment's address list stays in step with them.
+- **FR-32** An organizer can add colleagues, whole teams (expanded to members up to 100, setting), people offered by other features' participant sources (a deal's people, an organisation's members, a saved view of people, a cohort, an interview panel), outside addresses and resources, mark each person required or optional, and name co-organizers; outside addresses an appointment already has are its outside guests, and the appointment's address list stays in step with them.
 - **FR-33** The system MUST link the event to the record a participant came from when the participant source asks for it.
-- **FR-34** An organiser can choose whether participants see the participant list, may invite others and may propose new times (defaults yes, no, yes).
-- **FR-35** The system MUST send nothing until the organiser sends the event, and then send each participant an invitation once.
-- **FR-36** The system MUST deliver invitations to colleagues as an in-app meeting notice and, per their preferences, email and push; and to outside guests as an email with times in the guest's zone when known, the join link, answer buttons and an iCalendar attachment with the standard scheduling method, from the organiser's sending identity in `email-and-communications` or the platform's sender.
-- **FR-37** The system MUST send an update when the sequence rises, a cancellation to removed participants and on cancellation, and nothing for changes that concern only the organiser (colour, own reminders, calendar placement).
+- **FR-34** An organizer can choose whether participants see the participant list, may invite others and may propose new times (defaults yes, no, yes).
+- **FR-35** The system MUST send nothing until the organizer sends the event, and then send each participant an invitation once.
+- **FR-36** The system MUST deliver invitations to colleagues as an in-app meeting notice and, per their preferences, email and push; and to outside guests as an email with times in the guest's zone when known, the join link, answer buttons and an iCalendar attachment with the standard scheduling method, from the organizer's sending identity in `email-and-communications` or the platform's sender.
+- **FR-37** The system MUST send an update when the sequence rises, a cancellation to removed participants and on cancellation, and nothing for changes that concern only the organizer (colour, own reminders, calendar placement).
 - **FR-38** A participant can accept, accept tentatively or decline, with a comment, for one occurrence or the series, from the calendar, the notice, the invitation email (signed buttons, no account needed) or another calendar program (a standard reply).
-- **FR-39** A participant can propose another time with their answer; the organiser can accept a proposal, which updates the event, or dismiss it.
-- **FR-40** The system MUST tell the organiser of answers and proposals per their preferences and show counts (accepted, tentative, declined, no answer) on the event.
+- **FR-39** A participant can propose another time with their answer; the organizer can accept a proposal, which updates the event, or dismiss it.
+- **FR-40** The system MUST tell the organizer of answers and proposals per their preferences and show counts (accepted, tentative, declined, no answer) on the event.
 - **FR-41** The system MUST show accepted and tentative events on the participant's calendar and in their busy time, hide declined ones unless "show declined" is on, and list invitations awaiting an answer for answering one by one or in bulk.
 - **FR-42** The system MUST process standard scheduling messages received for a user's identity (FR-98) and handed over by mail: an outside invitation becomes an event on the receiver's default calendar marked as organised outside; a reply updates that participant's answer; a cancellation cancels the event; a message with an older sequence is ignored and logged.
-- **FR-43** An organiser, or a participant when allowed, can forward an invitation to someone, who is added as optional.
+- **FR-43** An organizer, or a participant when allowed, can forward an invitation to someone, who is added as optional.
 
 ### 3.7 Working hours, availability and free/busy
 
 - **FR-44** The system MUST take a person's working hours from their published shifts when `attendance-and-shifts` is on, else from their availability slots, else from the organization's standard working week, in the person's time zone.
 - **FR-45** A user can override their working hours for a date range and set a work location per day (office, remote, other), shown to colleagues; the overrides are their availability for those dates, edited here or on the existing schedules page, so booking pages and free/busy read the same hours. The schedules page shows the override and work-location fields only while the feature is on; with it off the page is as today.
-- **FR-46** The system MUST compute a person's busy time from events they organise or accepted (tentative ones marked tentative) on calendars that count towards availability, approved time off and holidays of their holiday calendar (`time-off-management`), busy times of synced outside calendars, and busy blocks other features register; free, draft and declined events never count.
+- **FR-46** The system MUST compute a person's busy time from events they organize or accepted (tentative ones marked tentative) on calendars that count towards availability, approved time off and holidays of their holiday calendar (`time-off-management`), busy times of synced outside calendars, and busy blocks other features register; free, draft and declined events never count.
 - **FR-47** A user can query free/busy for people and resources over up to 62 days and see busy, tentative, away, outside working hours, time off and holiday blocks, with titles only where their level allows.
 - **FR-48** The system MUST treat employees of kind agent as always available and never send them email invitations or reminders.
 - **FR-49** The system MUST answer free/busy and open-slot questions for booking pages, interview scheduling, visit dispatch, the scheduling assistant and other features from one rule set, so all of them agree.
@@ -185,7 +185,7 @@ before confirmation**; **focus time and meeting-load analytics** per person and 
 
 - **FR-57** A person can set up to five reminders per event before its start (minutes, hours or days; for all-day events at a time on an earlier day) by in-app notice, email or push, with defaults from the calendar; without their own reminders, colleagues keep their meeting reminder lead time.
 - **FR-58** The system MUST send each reminder once per person, occurrence and offset, include place and join link, skip declined, cancelled and past occurrences, and re-arm reminders of moved events.
-- **FR-59** An organiser can add email reminders for outside guests (default none; booking pages set their own).
+- **FR-59** An organizer can add email reminders for outside guests (default none; booking pages set their own).
 - **FR-60** The platform's meeting reminders MUST also send the reminders of repeating events and the reminders set in the calendar (offsets, channels, outside guests), and leave the existing meeting reminders of other appointments unchanged.
 
 ### 3.10 Resources
@@ -193,10 +193,10 @@ before confirmation**; **focus time and meeting-load analytics** per person and 
 - **FR-61** A user with `CALENDAR_RESOURCES_MANAGE` can maintain bookable resources: kind (room, equipment, vehicle, other), name, building, floor, place, capacity, features, time zone, opening hours, who may book (everyone, teams, roles), approval with approvers, maximum duration, booking horizon (default 365 days), buffers, whether overlaps are allowed, check-in required, and an optional link to an equipment record.
 - **FR-62** The system MUST list resources with filters (kind, building, capacity at least, features, free between two times) and give each resource a calendar.
 - **FR-63** A user with `CALENDAR_RESOURCES_BOOK` can add resources to an event; a booking is confirmed at once when the resource is free, open, within horizon and duration and the user may book it without approval; otherwise it is requested from the approvers or refused with the reason.
-- **FR-64** The system MUST never confirm overlapping bookings of a resource that disallows overlaps, also under concurrent requests, for every occurrence within the horizon; occurrences beyond it are booked when they come into range and conflicts found then are reported to the organiser.
-- **FR-65** An approver can approve or decline a requested booking with a reason; the organiser is told; a request still open at the start expires.
+- **FR-64** The system MUST never confirm overlapping bookings of a resource that disallows overlaps, also under concurrent requests, for every occurrence within the horizon; occurrences beyond it are booked when they come into range and conflicts found then are reported to the organizer.
+- **FR-65** An approver can approve or decline a requested booking with a reason; the organizer is told; a request still open at the start expires.
 - **FR-66** The system MUST warn when participants exceed a room's capacity.
-- **FR-67** (advanced) The system MUST release a check-in room when nobody checks in within 10 minutes (setting) of the start, telling the organiser, and offer check-in from the event, a reminder and a room display page.
+- **FR-67** (advanced) The system MUST release a check-in room when nobody checks in within 10 minutes (setting) of the start, telling the organizer, and offer check-in from the event, a reminder and a room display page.
 - **FR-68** The system MUST keep equipment lending unchanged and show a linked equipment item's lending periods as busy on its resource calendar; booking a resource linked to an equipment item makes a lending request of that item for the occurrence, approved under the item's lending policy, so lending stays the one record of who has the item; rooms, vehicles and other resources are booked by the calendar.
 
 ### 3.11 Appointment types and booking pages
@@ -219,7 +219,7 @@ before confirmation**; **focus time and meeting-load analytics** per person and 
 ### 3.12 Events on records and other features' events
 
 - **FR-83** A user can link an event to records they may read (contact, lead, deal, organisation, person, project, task, ticket, candidate or any registered record type) and schedule an event from a record with its people proposed and the record linked.
-- **FR-84** The system MUST show events linked to a record on its events panel (upcoming and past) and timeline only to viewers who may read the record and the event, private events as "Private".
+- **FR-84** The system MUST show events linked to a record on its events panel (upcoming and past) and timeline only to viewers who may read the record and the event; a private event is listed there only for its owner (FR-14).
 - **FR-85** The system MUST let other features own events of their records (field visits, interview rounds, live classes, one-to-ones): created, changed and cancelled by the source, the source's fields read-only in the calendar with a link back, and cancelled when the source record is deleted.
 - **FR-86** The system MUST tell the source feature of participants' answers to its events, so it can react.
 - **FR-87** The system MUST keep links when records are merged and remove a link, not the event, when a linked record is deleted.
@@ -230,7 +230,7 @@ before confirmation**; **focus time and meeting-load analytics** per person and 
 - **FR-89** For each chosen outside calendar, a user picks the direction (two-way, into the platform, out of the platform, busy times only) and the platform calendar it maps to (an existing one or a new subscribed calendar).
 - **FR-90** The system MUST sync changes both ways within 5 minutes, and within 1 minute where the adapter pushes notices, incrementally where the adapter allows, matching events by their iCalendar identity, including recurrence, exceptions, participants, answers, reminders where the outside side keeps them, and the meeting link.
 - **FR-91** The system MUST resolve concurrent changes field by field to the later change, keep the other values in the history, and mark the event "changed in both" for review when time, title or participants differ.
-- **FR-92** The system MUST never re-send invitations for events that came from outside, and send invitations for exported events only from the side that organises them.
+- **FR-92** The system MUST never re-send invitations for events that came from outside, and send invitations for exported events only from the side that organizes them.
 - **FR-93** A user can subscribe to an outside iCalendar address as a read-only calendar refreshed hourly (setting, minimum 15 minutes) through the platform's internal-address guard.
 - **FR-94** A user can create private feed addresses for one or all of their calendars, with details or free/busy only, and revoke them; feeds never carry private details.
 - **FR-95** A user can import an iCalendar file of up to 10,000 events into a calendar after a preview (new, updated by identity, skipped, errors), run in the background with a result file, and export a calendar or a date range as an iCalendar file; both are runs of the platform's data import and export, listed with the organization's other runs.
@@ -250,11 +250,11 @@ before confirmation**; **focus time and meeting-load analytics** per person and 
 
 ### 3.16 Focus time, meeting load and the discussion check `(advanced)`
 
-- **FR-103** (advanced) A user can set a weekly focus goal (hours, minimum block, preferred times); the system proposes focus blocks in free time each week and, when the user allows, places them as busy events marked focus, moves them when needed, never below the goal, and flags invitations over them to the organiser.
+- **FR-103** (advanced) A user can set a weekly focus goal (hours, minimum block, preferred times); the system proposes focus blocks in free time each week and, when the user allows, places them as busy events marked focus, moves them when needed, never below the goal, and flags invitations over them to the organizer.
 - **FR-104** (advanced) The system MUST compute per person and week meeting hours, focus hours, short gaps (free gaps under 30 minutes), after-hours meeting time, repeating-meeting hours and decline rate; each person sees their own; managers see team figures only for groups of three or more and per person only where the organization allows it (default off).
 - **FR-105** (advanced) The system MUST show a team meeting-load dashboard with trends and the repeating series costing the most person-hours, suggesting series with an average acceptance under 50 % for review.
-- **FR-106** (advanced) Before sending an event with four or more participants (setting) and neither agenda nor linked record, the system MUST ask whether it could be a discussion and offer to start one in `discussions` or a chat thread with the same people; the organiser can always continue, and the question comes once per series.
-- **FR-107** (advanced) A user with `CALENDAR_SETTINGS_MANAGE` can set organization meeting-free times; organisers are warned when scheduling in them and the assistant avoids them.
+- **FR-106** (advanced) Before sending an event with four or more participants (setting) and neither agenda nor linked record, the system MUST ask whether it could be a discussion and offer to start one in `discussions` or a chat thread with the same people; the organizer can always continue, and the question comes once per series.
+- **FR-107** (advanced) A user with `CALENDAR_SETTINGS_MANAGE` can set organization meeting-free times; organizers are warned when scheduling in them and the assistant avoids them.
 
 ### 3.17 Tracked time and agents `(advanced)`
 
@@ -274,7 +274,7 @@ before confirmation**; **focus time and meeting-load analytics** per person and 
   | Bookings | bookings, confirmations, cancellations, no-shows and paid amounts per type, host and week |
   | Host load | bookings and booked hours per host against their working hours |
   | Resource use | booked and checked-in hours, releases and refusals per resource and building |
-  | Answers | answer rates and time to answer per organiser and team |
+  | Answers | answer rates and time to answer per organizer and team |
   | Meeting load (advanced) | meeting, focus and after-hours time per team and week (FR-104 privacy) |
   | Sync health | connections, failures, paused connections and lag per adapter |
 
@@ -285,7 +285,7 @@ before confirmation**; **focus time and meeting-load analytics** per person and 
 - **Reliability**: invitations, updates and reminders queued and retried for 24 hours; sync and feed jobs catch up after downtime; busy times rebuilt from events after a failure.
 - **Security & privacy**: sharing levels enforced on every reader (FR-15); private events never leave the owner's view; signed answer and booking links are single-purpose and expire with the event; feed and protocol keys stored hashed and revocable; outside fetches guarded against internal addresses; public pages throttled. Leaving the platform: invitation and booking emails (titles, times, places, participants, join links) to participants' addresses; events to outside calendars a user connected; feeds to whoever holds the address; payment data to the payment provider.
 - **Auditability**: per FR-113, plus booking state changes and approvals of resource bookings.
-- **Accessibility and localisation**: calendar grid and scheduling view operable by keyboard with announced dates, times and events; colours never the only signal; rule descriptions, dates and week start in the user's locale; every string in all shipped locales; booking pages in the guest's language when shipped.
+- **Accessibility and localization**: calendar grid and scheduling view operable by keyboard with announced dates, times and events; colours never the only signal; rule descriptions, dates and week start in the user's locale; every string in all shipped locales; booking pages in the guest's language when shipped.
 - **Compatibility**: PostgreSQL, MySQL, SQLite; both ORMs; cloud and self-hosted (adapter push notices need a public address, otherwise polling); works without CRM, meetings, payments, shifts, time off and lead capture, whose parts are then absent; OpenAPI and SDKs regenerated.
 
 ## 5. Key Entities & Domain Concepts
@@ -320,14 +320,14 @@ before confirmation**; **focus time and meeting-load analytics** per person and 
 
 - [ ] **AC-1** With `FEATURE_CALENDAR` off every new route answers `404`, and appointments, availability, event types, booking pages, notices and reminders pass their existing tests unchanged (FR-1, FR-2).
 - [ ] **AC-2** On enabling, an employee's appointments show on their personal calendar; a repeating event shows once, marked, on the appointment pages (FR-2, FR-4, FR-6).
-- [ ] **AC-3** Sharing at each level of FR-12 shows and allows exactly the matrix; private events show "Private" to everyone but the owner in pages, API, search, feeds and MCP tools.
+- [ ] **AC-3** Sharing at each level of FR-12 shows and allows exactly the matrix; private events show "Private" with their time to everyone but the owner in calendar pages, free/busy and API reads, and never appear in search, feeds, exports, record panels or MCP tools of other users (FR-14).
 - [ ] **AC-4** A weekly 09:00 series in one zone stays at 09:00 local across a daylight-saving change; "monthly on the 31st" skips short months; the plain-words rule matches in two locales (FR-19, FR-27).
 - [ ] **AC-5** "This and following" splits a series with answers kept on both parts and one update sent; a whole-series change keeps changed occurrences unless reset (FR-28, FR-29).
 - [ ] **AC-6** Invitations reach colleagues as notices and guests as email with an iCalendar attachment; a guest answers by signed link and by a standard reply; an older-sequence message is ignored (FR-36–FR-38).
 - [ ] **AC-7** An outside invitation handed over by mail becomes an event on the receiver's calendar; answering it sends a standard reply (FR-42).
 - [ ] **AC-8** Free/busy for 50 people over 14 days returns in under 500 ms on the demo data and includes time off, holidays and synced busy times without titles where not shared (FR-47).
 - [ ] **AC-9** Two concurrent bookings of a no-overlap room for the same occurrence confirm exactly one on all three databases; a series reports its conflicting occurrence (FR-29, FR-64).
-- [ ] **AC-10** An approval-required room is requested, approved and the organiser told; a check-in room without check-in is released after 10 minutes (advanced: release; FR-65, FR-67).
+- [ ] **AC-10** An approval-required room is requested, approved and the organizer told; a check-in room without check-in is released after 10 minutes (advanced: release; FR-65, FR-67).
 - [ ] **AC-11** Existing booking pages behave as before; an extended type enforces notice, horizon, buffers, daily limit, holidays and time off in its slots (FR-69, FR-73).
 - [ ] **AC-12** Round-robin picks the deal owner when free, else the least-booked host; collective offers only common free slots; group stops at its seats; two concurrent guests get one slot and one "just taken" (advanced: booking types; FR-71, FR-72, FR-74).
 - [ ] **AC-13** A booking creates the event, a lead or link to the existing contact, a confirmation email with expiry, and expiry frees the slot; a paid type cancels unpaid bookings after 15 minutes and refunds before the cut-off (advanced: payment; FR-75, FR-76, FR-78).
@@ -336,7 +336,7 @@ before confirmation**; **focus time and meeting-load analytics** per person and 
 - [ ] **AC-16** Two-way sync with the simulated adapter and with a standard-protocol test server moves changes both ways within the stated lag, without duplicate invitations; a concurrent change is merged and marked; five failures pause the connection (FR-88, FR-90, FR-91, FR-96).
 - [ ] **AC-17** Feeds, subscriptions, import with preview and export round-trip a repeating event with exceptions; an internal subscription address is refused (FR-93, FR-95).
 - [ ] **AC-18** The scheduling assistant returns ranked options with one-sentence trade-offs for five people across three zones and a room (advanced: assistant; FR-101).
-- [ ] **AC-19** Focus blocks are placed to the goal and flagged to organisers; load figures appear for a team of three and are withheld for a team of two; the discussion check asks once per series (advanced: focus and load; FR-103, FR-105–FR-107).
+- [ ] **AC-19** Focus blocks are placed to the goal and flagged to organizers; load figures appear for a team of three and are withheld for a team of two; the discussion check asks once per series (advanced: focus and load; FR-103, FR-105–FR-107).
 - [ ] **AC-20** An attended linked event logs tracked time on confirmation (advanced: tracked time; FR-108).
 - [ ] **AC-21** Every MCP tool of FR-109 answers within the caller's rights; previews write nothing; an agent's invitation waits for confirmation.
 - [ ] **AC-22** The six report definitions of FR-114 return the expected figures on the demo data set.

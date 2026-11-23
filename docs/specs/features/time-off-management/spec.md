@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-16
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_TIME_OFF_POLICIES` (default off); the existing `FEATURE_EMPLOYEE_TIMEOFF` keeps governing today's pages
 
 ---
@@ -190,7 +190,7 @@ time off flows into expected hours, presence and private calendar feeds.
 | **FR-50** | A user with `TIME_OFF_HOLIDAYS_EDIT` can maintain holiday calendars (name, country and subdivision, weekly rest days, colour, organization default) and their holidays per year (date or range, name, kind public, company or optional, half day with its half, recurring yearly or by rule such as "first Monday of May" or "Easter plus one day"); existing official holidays are shown and edited here. The time-off page's existing "Add holiday" dialog stays and keeps filing its holiday entries as today; it gains a link to this page. |
 | **FR-51** | The system MUST show rest days in the calendar view and add "every <weekday> between two dates" as company holidays in one step. |
 | **FR-52** | The system MUST refuse a second holiday on the same date in one calendar, a range ending before it starts, and a half day on a rest day. |
-| **FR-53** | A user with `TIME_OFF_HOLIDAYS_EDIT` can import holidays for chosen years from a holiday source (country packs of `regional-compliance-packs`, an iCalendar file or address, a spreadsheet file), after a preview that skips duplicates. |
+| **FR-53** | A user with `TIME_OFF_HOLIDAYS_EDIT` can import holidays for chosen years from a holiday source (country packs of `regional-compliance-packs`, an iCalendar file or address, a spreadsheet file), after a preview that skips duplicates; imported holidays are the platform's existing official holidays, linked to the chosen calendar. |
 | **FR-54** | A user with `TIME_OFF_HOLIDAYS_EDIT` can assign a calendar to the organization, a branch or an employee from a start date; the calendar of an employee on a date is the most specific assignment in force (employee, branch, organization), ranges crossing a change use each calendar for its days, and without assignment today's rule applies (every official holiday of the organization, Saturday and Sunday off). |
 | **FR-55** | The system MUST answer whether a date is a working day, rest day, holiday or half holiday for an employee, branch or organization and count working days between dates, for attendance, payroll, projects and automations. |
 | **FR-56** | The system MUST send employees a weekly or monthly digest of upcoming holidays of their calendar, per organization setting. |
@@ -256,7 +256,7 @@ All reports are report definitions: filterable, groupable, exportable, schedulab
   HR only; colleagues see "off"; leaves the platform: notification emails, calendar feeds (names and dates), files a
   user exports; cover proposals use skills and workload already visible to the manager.
 - **Observability and audit**: ledger per balance, run records with outcomes and failures, audit entries of FR-80.
-- **Accessibility and localisation**: keyboard-operable calendar and forms, labelled day cells, every string in every
+- **Accessibility and localization**: keyboard-operable calendar and forms, labelled day cells, every string in every
   shipped locale, dates in the user's format and week start.
 - **Compatibility**: PostgreSQL, MySQL and SQLite; both ORMs; cloud and self-hosted; existing time-off routes, pages,
   MCP tools and balances unchanged; additive OpenAPI and SDK changes only.

@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-15
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_TAX` (existing; wired to the tax routes and menu by this spec) · new behaviour behind
 `FEATURE_TAX_DOCUMENTS` and `FEATURE_WITHHOLDING` (both default off)
 
@@ -118,7 +118,7 @@ parties; an agent reviews tax anomalies and proposes fixes a person approves. Ma
 
 - **FR-18** The system selects one regime per document, in order: chosen on the document; assigned to the party;
   the highest-priority matching determination rule; a regime's destination trigger; else the general rate set.
-- **FR-19** A user with `TAX_REGIMES_EDIT` can attach prioritised rules to a regime, conditioned on party, group,
+- **FR-19** A user with `TAX_REGIMES_EDIT` can attach prioritized rules to a regime, conditioned on party, group,
   party tax category, registration, item, item category, addresses, channel, document type, amount and dates.
 - **FR-20** The system refuses to save a rule that can match the same document as another active rule of equal
   priority, and shows the overlapping conditions.
@@ -151,8 +151,12 @@ parties; an agent reviews tax anomalies and proposes fixes a person approves. Ma
   per-unit or cost-only rate as "included in the price".
 - **FR-34** A user with `TAX_SETTINGS_EDIT` can choose rounding per line (default) or per document and rate: line
   taxes are summed unrounded, rounded once, and the difference allocated to lines by largest remainder.
-- **FR-35** The system corrects drift under prices that include tax: when rounded nets and taxes miss the entered
-  prices, the last taxable line's tax absorbs the difference, visibly in the breakdown.
+- **FR-35** The system keeps the entered prices under prices that include tax, so no drift arises: a line's net is
+  its entered price less its rounded tax. With rounding per line, each line's tax is rounded on its own; with rounding
+  per document, the tax of each rate is computed once from the sum of the entered prices of its lines, rounded, and
+  distributed to those lines by largest remainder of their unrounded taxes. Nets plus taxes then equal the entered
+  prices on every line and in total, and no line's tax is negative or larger than its price (50 lines of 0.01 at
+  19 % per document: tax 0.08 on eight lines of 0.01, nets 0.42, total 0.50).
 - **FR-36** A user editing a draft can switch "round the total" (default from the organization) to round the
   payable total to the currency's cash increment; the difference is one rounding row, never tax.
 - **FR-37** The system computes with exact decimals, rounds at the currency's scale, stores amounts in document and
@@ -312,7 +316,7 @@ parties; an agent reviews tax anomalies and proposes fixes a person approves. Ma
   permissions; a verifier receives number and country only; provider and verifier credentials are encrypted.
 - **Observability**: audit (who, when, before, after) of every change to rates, regimes, rules, overrides,
   accounts, settings, periods and manual overrides; metrics for calculation time, refusals, provider fallbacks.
-- **Accessibility and localisation**: keyboard-operable forms and breakdown tables with screen-reader labels;
+- **Accessibility and localization**: keyboard-operable forms and breakdown tables with screen-reader labels;
   explanations, legal mentions, kinds and reasons in every shipped locale; amounts formatted per locale.
 - **Compatibility**: PostgreSQL, SQLite, MySQL; both ORMs; multi-tenant cloud and self-hosted; additive OpenAPI.
 
@@ -322,7 +326,7 @@ parties; an agent reviews tax anomalies and proposes fixes a person approves. Ma
 | ---------------- | ----------- |
 | Tax category, tax rate, rate part, tax regime | Existing: class of an item or party, a rate with window and scope, its parts, a named rate set |
 | Calculation basis | What a rate is applied to: net, running total, earlier taxes, per unit, lump sum |
-| Determination rule | Prioritised conditions that select a regime for a document |
+| Determination rule | Prioritized conditions that select a regime for a document |
 | Item tax override | Another category, a specific rate or "not taxable" for an item, variant or item category |
 | Tax line, determination trace | Existing ledger row: one rate part's amount on a line or charge; the stored reasons behind it |
 | Tax account mapping | Which ledger account each kind of tax amount of a rate part goes to (the only such map) |
@@ -378,7 +382,7 @@ parties; an agent reviews tax anomalies and proposes fixes a person approves. Ma
 - [ ] **AC-15** A tenant that holds tax rates and had `FEATURE_TAX` off keeps its tax routes and menu after the
       guard lands; editing the percentage of a rate used by an order is accepted by default and leaves the order's tax
       lines unchanged, and is refused only where the organization protects rates in use (FR-6, FR-14).
-- [ ] **AC-16** With the feature off, and with the feature on and default settings, every existing page, route, field, permission and report behaves as today, apart from the existing feature codes that now guard their routes, which the release switches on for every tenant holding their data (FR-6, FR-7).
+- [ ] **AC-16** With the feature off, and with the feature on and default settings, every existing page, route, field, permission and report behaves as today, apart from the feature codes that guard their routes, which are switched on for every tenant that holds their data (FR-6, FR-7).
 
 ## 8. Open Questions
 

@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-16
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_INTEGRATION_HUB` (tenant feature, default off) · the plugin loads only when
 `GAUZY_INTEGRATION_HUB_ENABLED` is exactly `true` · `FEATURE_APP_INTEGRATION` keeps gating the integrations gallery and
 each integration's own pages · webhook subscriptions keep the `WEBHOOKS_*` permissions
@@ -25,7 +25,7 @@ policy, but only through the API, and many domains publish no events. Built-in i
 trackers, freelance platforms, automation platforms) are cards in a gallery on the Integrations menu, each with its own
 connect page, sign-in flow and sync code; the four issue-tracker integrations already keep sync runs, conflicts and
 project mappings, each in its own records, and receive their own webhooks. File storage providers are chosen per tenant
-on the File storage settings page. This feature generalises what those integrations and the webhook engine already do
+on the File storage settings page. This feature generalizes what those integrations and the webhook engine already do
 and gives integrations **one place** on the existing Integrations menu: an **API catalogue** with documentation, SDKs
 and usage limits, an **event catalogue** that covers every domain, **webhooks with screens, logs and replay**,
 **inbound endpoints**, **connected accounts** that any feature can use to call an outside service on a user's or
@@ -117,8 +117,12 @@ plain-language request into a **draft subscription or sync job** for a person to
   clients together and per client kind (user sessions, tenant keys, personal tokens, applications, agents), within the
   deployment's maximum; no tenant limit applies until one is set, so only the deployment's throttling holds, as today.
 - **FR-10** The system answers `429` past a tenant limit an administrator set with the limit, the remaining count and the
-  reset time in headers, counts per client so one client's burst does not block another, and exempts provider callbacks
-  and inbound endpoints; the deployment's existing throttling keeps counting as it does today.
+  reset time in headers, and exempts provider callbacks and inbound endpoints; the deployment's existing throttling
+  keeps counting as it does today. It counts per client, and each client's limit (the limit of its kind, or its key's own
+  rate) applies to that client alone, so one client's burst never uses another client's allowance; the limit for all
+  clients together is a shared ceiling that takes precedence once reached and then answers `429` to every client until
+  it resets. An administrator who needs every client kind to keep capacity sets per-kind limits whose sum stays below
+  the shared ceiling, or leaves the shared ceiling unset.
 - **FR-11** The system shows usage per client, route group and status code per hour for 90 days and per day for 13 months.
 - **FR-12** The system warns the tenant administrators at 80 % and 100 % of a daily limit, once per day each.
 
@@ -196,8 +200,10 @@ plain-language request into a **draft subscription or sync job** for a person to
 - **FR-36** The system lists the existing integrations' connections as connected accounts of the organization with
   their status, without moving their data; their connect flows keep their pages and use the same single-use sign-in
   state as connected accounts.
-- **FR-37** The system stops an account's use at once when its owner is deactivated, and moves organization accounts to
-  another administrator on request.
+- **FR-37** The system stops an account's use at once when its owner is deactivated, where the tenant setting for it is
+  on (on by default for tenants created from the release of this feature; existing tenants keep their setting, off, so
+  a connection keeps working after the person who made it is deactivated, as today, until an administrator turns it
+  on), and moves organization accounts to another administrator on request.
 
 ### 3.9 Connector catalogue
 
@@ -329,7 +335,7 @@ plain-language request into a **draft subscription or sync job** for a person to
   private networks; signatures on every delivery; redaction in logs. Leaves the platform: event payloads to subscribed
   addresses, records to connected services as configured, files to storage targets.
 - **Observability**: lag, attempt and failure rates, dead counts, refresh failures, limit hits, run durations.
-- **Accessibility and localisation**: keyboard operable lists and editors; labels per language.
+- **Accessibility and localization**: keyboard operable lists and editors; labels per language.
 - **Compatibility**: PostgreSQL, MySQL, SQLite; both ORMs; cloud and self-hosted, with or without a queue; OpenAPI
   additive; SDKs regenerated.
 

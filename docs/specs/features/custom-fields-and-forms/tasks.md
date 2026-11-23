@@ -67,15 +67,30 @@
   `cf/custom-fields.plugin.ts` and `cf/custom-fields.module.ts` registering entities, migrations, permissions, features;
   `apps/api/src/plugins.ts` entry behind the flag; `CustomFieldsSchedulePlugin` (`cf/schedule/custom-fields-schedule.plugin.ts`)
   in `apps/worker/src/plugins.ts`. Test: plugin list specs of API and worker (absent when the flag is off).
-- [ ] **T62**. Dynamic-field hook in core `packages/core/src/lib/api/` (`registerDynamicQueryFields(prefix, resolver)` in
-  `filter-parser.ts`, `sort-parser.ts`, `query-translator.ts`), no dependency on this plugin or its flag. Test: unit
-  spec of the hook (unbound = `cf.` refused as unknown); existing query protocol specs unchanged.
-- [ ] **T63**. Question sets (FR-92): contracts `question-set.model.ts`, `packages/utils/src/lib/question-set/`
-  (definition checks, `validateAnswers` on the isomorphic evaluator of T3) and
-  `packages/ui-core/shared/src/lib/question-set/` (`ngx-question-set-editor`, `ngx-question-set-form`), independent of
-  this plugin and its flag; used by recruitment, performance, HR exit interviews and lead capture. Test: the same
-  answers get the same verdict in the browser and on the server; a hidden required question is not required; answers
-  to an earlier version validate against that version; component specs with and without custom fields loaded.
+- [ ] **T62**. Dynamic-field hook in core `packages/core/src/lib/api/` (`registerDynamicQueryFields(prefix, resolver)` read
+  by the filter parser, the sort parser and the query translator), no dependency on this plugin or its flag. Files:
+  `packages/core/src/lib/api/dynamic-query-fields.ts`, `packages/core/src/lib/api/filter-parser.ts`,
+  `packages/core/src/lib/api/sort-parser.ts`, `packages/core/src/lib/api/query-translator.ts`,
+  `packages/core/src/lib/api/index.ts`. Test: `packages/core/src/lib/api/dynamic-query-fields.spec.ts`: unbound, `cf.`
+  is refused as unknown; existing query protocol specs unchanged.
+- [ ] **T63**. Question sets (FR-92), core library: contracts and the shared checks (definition checks,
+  `validateAnswers` on the isomorphic evaluator of T3), independent of this plugin and its flag; the components are T70
+  and the consumers T71. Files: `packages/contracts/src/lib/question-set.model.ts`,
+  `packages/utils/src/lib/question-set/question-set-definition.ts`, `packages/utils/src/lib/question-set/validate-answers.ts`,
+  `packages/utils/src/lib/question-set/index.ts`. Test: `packages/utils/src/lib/question-set/validate-answers.spec.ts`:
+  the same answers get the same verdict in the browser and on the server; a hidden required question is not required;
+  answers to an earlier version validate against that version.
+- [ ] **T70**. Question set components (FR-92): `ngx-question-set-editor` and `ngx-question-set-form` over the library
+  of T63, independent of this plugin and its flag. Files:
+  `packages/ui-core/shared/src/lib/question-set/question-set-editor.component.ts`,
+  `packages/ui-core/shared/src/lib/question-set/question-set-form.component.ts`,
+  `packages/ui-core/shared/src/lib/question-set/index.ts`. Test: `question-set-form.component.spec.ts` and
+  `question-set-editor.component.spec.ts`, with and without custom fields loaded.
+- [ ] **T71**. Question set consumers (FR-92): one sample set in the format each consumer stores (recruitment application
+  questions, performance review templates, HR exit questionnaires, lead capture forms) checked by the library of T63,
+  so those features build on it unchanged. Files: `packages/utils/src/lib/question-set/testing/consumer-question-sets.ts`.
+  Test: `packages/utils/src/lib/question-set/testing/consumer-question-sets.spec.ts`: each consumer's sample passes the
+  definition checks and gets the same verdict on server and browser.
 
 ## Phase 2 — Services, endpoints, events
 
@@ -99,7 +114,7 @@
   `cf/graphql/custom-field-values.resolver.ts`. Test: e2e and resolver
   specs; masked field absent everywhere.
 - [ ] **T16**. History service and routes over core `activity_log` (`cf.` fields: per field, cross-record search,
-  restore) and customisation audit as `activity_log` rows of the definition entity types. Files:
+  restore) and customization audit as `activity_log` rows of the definition entity types. Files:
   `cf/history/custom-field-history.service.ts`, `cf/history/custom-field-history.controller.ts`,
   `cf/history/customization-audit.subscriber.ts`. Test: spec (sources recorded
   in `data.source`, masks applied, restore validated).
@@ -192,7 +207,7 @@
   `packages/ui-core/shared/src/lib/equipment/equipment-mutation.component.ts`,
   `packages/ui-core/shared/src/lib/time-off/time-off-request-mutation/time-off-request-mutation.component.ts`. Test: page
   specs (nothing rendered when the feature is off).
-- [ ] **T33**. `packages/plugins/custom-fields-ui`: Settings → Customisation, record types, fields, standard fields,
+- [ ] **T33**. `packages/plugins/custom-fields-ui`: Settings → Customization, record types, fields, standard fields,
   settings pages; menu and route guard. Files: `cfui/custom-fields-ui.plugin.ts`, `cfui/custom-fields-ui.routes.ts`,
   `cfui/services/custom-fields-api.service.ts`, `cfui/components/record-types-page/record-types-page.component.ts`,
   `cfui/components/fields-page/fields-page.component.ts`,
@@ -214,11 +229,12 @@
   creates and selects; lines all or nothing; actions bar shows results and refusal reasons).
 - [ ] **T37**. Custom record type builder; detail and create forms registered for `/pages/records/:typeKey` (the list is
   the generic record list of `record-views-and-search`, its T17 and T18) with menu entries, shown only while that
-  route answers; without it a type's records open by direct link to their detail form. Files:
+  route answers (record views are the prerequisite of the list part of FR-58); without it a type's records open by
+  direct link to their detail form and are listed through the REST, GraphQL and MCP lists. Files:
   `cfui/components/record-type-builder/record-type-builder.component.ts`,
   `cfui/components/custom-record-form/custom-record-form.component.ts`, `cfui/custom-fields-ui.routes.ts`,
   `cfui/custom-records-menu.ts`. Test: component specs; e2e create a type
-  and a record.
+  and a record; with `FEATURE_RECORD_VIEWS` off the menu entry is hidden and the record opens by its link.
 - [ ] **T38** (parallel). Phone rendering of `ngx-dynamic-record-form` and `ngx-custom-fields-section` in the
   installable Gauzy web app (touch sizes, offline draft kept and re-validated on sync); no separate React package.
   Files: `ui/dynamic-record-form/dynamic-record-form.component.scss`,
@@ -244,7 +260,7 @@
   seeded data; the reports appear in the Reports menu with the feature on and are absent from the Reports page and menu
   with it off.
 - [ ] **T41** (parallel). OpenAPI regenerated; SDK regeneration noted for the release; schema route documented. Files: `packages/core/src/lib/bootstrap/swagger.ts`. Test: OpenAPI diff is additive; docs build.
-- [ ] **T42**. User docs (customisation guide, formula function list) and `docs/specs/README.md` index row. Test: docs build.
+- [ ] **T42**. User docs (customization guide, formula function list) and `docs/specs/README.md` index row. Test: docs build.
 - [ ] **T69**. Searchable custom fields (FR-70): values of fields with the `search` behaviour join their record's search
   document when the search plugin is loaded (read through `CUSTOM_FIELD_VALUE_READER`, masks applied) and reference
   pickers match them. Files: `cf/search/custom-fields-search.contributor.ts`,
@@ -298,7 +314,7 @@
 - [ ] **T55** (parallel). Phone layouts resolved for the installable Gauzy web app (device `PHONE`), with T38's
   rendering. Files: `cf/layouts/form-layout.resolver.ts`, `ui/custom-fields-metadata.service.ts`. Test: a phone layout
   is picked on a phone-width client and the desktop layout elsewhere.
-- [ ] **T68**. Packages shipped by plugins and marketplace apps (FR-83): a plugin registers its customisation package,
+- [ ] **T68**. Packages shipped by plugins and marketplace apps (FR-83): a plugin registers its customization package,
   applied at load with `source` `PLUGIN` or `PACKAGE` and its `sourceRef`; such items change only through overrides
   (edits of the definitions refused) and are hidden, not deleted, while the plugin is disabled. Files:
   `cf/packages/plugin-package.registry.ts`, `cf/definitions/custom-field-definition.service.ts`. Test: a test plugin's
@@ -328,7 +344,7 @@
   `cf/scripts/custom-field-scripts.controller.ts`, `cf/definitions/custom-field-definition.service.ts`,
   `cf/packages/customization-package.service.ts`. Test: e2e on
   SQLite with the marker set and unset.
-- [ ] **T59**. Question sets: built by T63 (Phase 1, `packages/utils/src/lib/question-set/`); its tests are T63's.
+- [ ] **T59**. Question sets: built by T63, T70 and T71 (Phase 1, `packages/utils/src/lib/question-set/`); its tests are theirs.
 - [ ] **T60**. Catalogue rows by feature (FR-93): the category of the FR-87 reports keyed `FEATURE_CUSTOM_FIELDS` in the
   shared catalogue feature filter of `report-builder-and-dashboards` (its T51: core migration
   `1791000037900-AddReportCategoryFeatureKey` and the filter in `packages/core/src/lib/reports/report.service.ts`,
@@ -429,7 +445,7 @@ Every functional requirement of `spec.md` §3 and the tasks that implement it; e
 | FR-89 | §3.15 Scripts on self-hosted installations | T57 |
 | FR-90 | §3.15 Scripts on self-hosted installations | T56 |
 | FR-91 | §3.15 Scripts on self-hosted installations | T56, T57 |
-| FR-92 | §3.7 Form layouts | T63 |
+| FR-92 | §3.7 Form layouts | T63, T70, T71 |
 | FR-93 | §3.14 Reports | T40, T60 |
 
 ## Definition of Done

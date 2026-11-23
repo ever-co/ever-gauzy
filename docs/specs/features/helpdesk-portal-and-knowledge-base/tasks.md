@@ -44,7 +44,7 @@
       one rating per ticket and cycle.
 - [ ] **T7**. `dh/import/help-center.importer.ts`: a docs import run over `KNOWLEDGE_BASE_EXPORT` into the organization's
       one help space (a folder per help centre, folders per category at every legacy depth, the help centre's language on
-      each page), pages with versions (`externalSource = 'help-center'`), visibility from `privacy`, audience agents only,
+      each page), pages with versions (`externalSource = 'help-center'`), visibility from `privacy`, audience null (today's readers),
       project links; nothing written to the legacy rows; the two-way carry (`knowledge_base.article.changed` applied to
       the page, page saves written back through `KNOWLEDGE_BASE_SYNC` in `kb/`, provenance stopping the echo). Test:
       re-run imports nothing twice; no imported page readable by a guest; legacy rows unchanged after the import

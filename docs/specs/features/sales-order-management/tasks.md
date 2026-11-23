@@ -16,6 +16,7 @@
 - Each task names its files so an implementer can pick it up cold.
 - Tick the checkbox as the PR lands; add new tasks at the bottom, never renumber.
 - Everything stays behind the feature flag: the feature is off by default; after the trial period it may be switched on by default for new tenants only; existing tenants keep their setting until an administrator changes it.
+- Each task that adds a controller, resolver, route, scheduler, consumer or event append carries its gate in the same PR (`@FeatureFlag(FEATURE_SALES)` and the sub-feature of T2 where one applies, or the flag check of the job or consumer) with a test that the addition answers `404` or does nothing while the flag is off; T62 then checks the whole spec end to end.
 - Paths below are relative to `packages/plugins/order/src/lib/` unless they start with `packages/`, `apps/` or `docs/`.
 
 ## Phase 1 — Contracts, entities, migrations
@@ -108,7 +109,8 @@
   the cart's chain), pure `entry-guards.ts`, sales units, customer item code, bundle explosion
   (`order-line/bundle-expansion.ts`), stock per line (on hand, reserved, available, incoming, projected) through
   `SALES_STOCK` at `GET /orders/:id/availability`, unit cost and margin for `SALES_MARGIN_VIEW` holders. Test: guard
-  matrix spec; bundle spec; availability and margin are hidden without the permission.
+  matrix spec; bundle spec; unit cost and margin are hidden without `SALES_MARGIN_VIEW`, while stock availability is
+  shown to every reader of the order (FR-48, FR-49).
 - [ ] **T22**. Hold and resume as the document engine's `hold` / `release` through `SALES_DOCUMENTS` (the order keeps
   `holdReasonCode` and `holdUntil`; the reason code alone while the engine is off), `order.hold-release` job, close,
   line close and reopen (`order/order-hold.service.ts`), releasing reservations through `SALES_STOCK`. Test: state
@@ -180,8 +182,9 @@
   `registerReportDefinitions`, Sales dashboard cards and charts. Test: one spec per definition on a fixture data set.
 - [ ] **T39** (parallel). GraphQL reads for quotations, profiles and masters (`graphql/`), field binding check entry.
   Test: resolver specs.
-- [ ] **T62**. `FEATURE_SALES` gate: `@FeatureFlag(FEATURE_SALES)` (and `FEATURE_BLANKET_ORDERS`,
-  `FEATURE_SALES_COMMISSIONS` where they apply) on every controller and resolver this spec adds; the schedulers,
+- [ ] **T62**. `FEATURE_SALES` gate check: `@FeatureFlag(FEATURE_SALES)` (and `FEATURE_BLANKET_ORDERS`,
+  `FEATURE_SALES_COMMISSIONS` where they apply) present on every controller and resolver this spec adds, each set by the
+  task that added it; the schedulers,
   consumers and event appends of this spec do nothing for a tenant with the flag off. Files:
   `quotation/order-quotation.controller.ts`, `sales-customer/sales-customer.controller.ts`,
   `sales-team/sales-team.controller.ts`, `sales-settings/sales-settings.controller.ts`,

@@ -41,7 +41,7 @@
       ORM parity spec.
 - [ ] **T5**. Migration `database/migrations/1791000073100-CreateLedgerJournalTables.ts` with append-only triggers on
       journal, line and link for the three dialects (the journal trigger admits only `supersededById` going from null
-      to a value). Test: `database/ledger-append-only.db.spec.ts` (update and delete refused on SQLite, any other
+      to a value, with `ledger.allowPostedJournalEdit` on or off: an edit writes a superseding revision, T70). Test: `database/ledger-append-only.db.spec.ts` (update and delete refused on SQLite, any other
       journal column change refused; PostgreSQL and MySQL variants run in CI). Migration timestamps: `1791000073100` to `1791000073199` (`packages/plugins/accounting`).
 - [ ] **T6** (parallel). Entities under `rules/` (`ledger-posting-rule.entity.ts`, `ledger-posting-rule-line.entity.ts`,
       `ledger-account-rule.entity.ts`, `ledger-party-account.entity.ts`, `ledger-intercompany-pair.entity.ts`;
@@ -141,9 +141,12 @@
       `openItemId`, or one opened through `OPEN_ITEM_REGISTER` for manual and opening lines), party and side checked
       against it; advances and earmarks read from the register; `GET /open-items/control-check`. Files:
       `open-item/ledger-control-line.validator.ts`, `open-item/ledger-open-item.controller.ts`. Test: control
-      account equals the register's open items after random postings.
+      account equals the register's open items after random postings; an invoice dated in a closed period whose
+      journal posts on the first open date (setting off) is listed as a timing difference as of its document date and
+      matches from its posting date; a posting exception is listed as a timing difference until it posts; an altered
+      line is a mismatch.
 - [ ] **T30**. Allocation postings: consumer of `payments.allocation.created` / `.released` (type
-      `payment_allocation`) posting realised exchange difference, settlement discount, advance reclassification and
+      `payment_allocation`) posting realized exchange difference, settlement discount, advance reclassification and
       the netting transfer for linked parties, reversed on release; idempotent per allocation. Files:
       `events/accounting-allocation.consumer.ts`, `ledger/allocation-posting.service.ts`. Test: `.db.spec.ts`
       where a release reverses exactly the journals of its allocation.
@@ -233,8 +236,8 @@
       against recorded responses.
 - [ ] **T50**. Reporting currency on lines and balances. Files: `ledger/pipeline/convert.step.ts`,
       `ledger/ledger-balance.service.ts`. Test: reporting amounts equal amount times rate of the day.
-- [ ] **T51**. Realised exchange difference on settlement and its reversal on release. Files:
-      `currency/realised-difference.calculator.ts`, `ledger/allocation-posting.service.ts`. Test: cross-rate fixtures.
+- [ ] **T51**. Realized exchange difference on settlement and its reversal on release. Files:
+      `currency/realized-difference.calculator.ts`, `ledger/allocation-posting.service.ts`. Test: cross-rate fixtures.
 - [ ] **T52**. Revaluation run (compute, preview, post, self-reversal or cumulative, residue clearing, schedule).
       Files: `currency/revaluation.service.ts`, `currency/revaluation.controller.ts`,
       `operations/ledger-revaluation.operation.ts`, `schedule/revaluation.scheduler.ts`. Test: rerun for the same date
@@ -310,7 +313,9 @@
       `activity_log` entry (before, after, reason) and `accounting.journal.edited`. Test: `.db.spec.ts` on the three
       engines: setting off refuses; edit keeps the number, balances equal lines and the chain verifies afterwards;
       document journals, settled or opening control lines and closed dates are refused; concurrent edits of one
-      revision yield one.
+      revision yield one; with the setting on, an in-place update of a journal or line is still refused by the trigger;
+      a reversed manual journal and a reversal journal are refused with `LEDGER_JOURNAL_REVERSED`, and a reversal and an
+      edit of one journal started together leave exactly one of them.
 - [ ] **T71** (parallel). Edit dialog with revision history and differences in `journals`, the tenant setting on the
       settings page, `ledger_journal_edit` MCP tool, inbox notice to accounting administrators. Files:
       `ui/components/journal-edit-dialog/journal-edit-dialog.component.ts`,

@@ -66,7 +66,8 @@
 - [ ] **T7**. Plugin settings `packages/plugins/catalog/src/lib/catalog.settings.ts` (code series, separator,
   inherited fields (none by default), duplicate threshold, required fields, stock-quantity override per family,
   default kinds, the organization-level item defaults of plan §3, and the stricter rules `uniqueCodes`,
-  `protectReferencedItems`, `lockMovedItems`, `templatesOffDocuments`, `lockTradedCodes`, all default off). Test:
+  `protectReferencedItems`, `lockMovedItems`, `templatesOffDocuments`, `lockTradedCodes`, `nameFromCode`,
+  `cleanDescriptions`, all default off). Test:
   `C/catalog.settings.spec.ts` (defaults); with the defaults, existing `packages/core/src/lib/product/product.controller.spec.ts`
   and `product.resolver.spec.ts` pass unchanged. [2]
 
@@ -103,7 +104,8 @@
   conversions, whole-number checks, disabled units, stock-quantity override. Files:
   `packages/core/src/lib/measurement/unit.service.ts`, `packages/core/src/lib/measurement/unit.controller.ts`,
   `packages/core/src/lib/measurement/unit-conversion.service.ts`, `packages/core/src/lib/measurement/unit-conversion.controller.ts`.
-  Test: `packages/core/src/lib/measurement/unit-conversion.service.spec.ts` (FR-20..FR-25). [2]
+  Test: `packages/core/src/lib/measurement/unit-conversion.service.spec.ts` (FR-20..FR-25; a second organization-wide,
+  item-level or variant-level conversion of the same unit refused through `scopeKey` on each dialect). [2]
 - [ ] **T14**. Barcodes: service with check-digit validators per type, the only writer of `product_variant.barcode`
   (the primary's copy) while `FEATURE_ITEM_MASTER` is on, variant DTO `barcode` writes routed to it as type
   `INTERNAL` and never refused (a taken value joins the drift list), nightly drift list, `/item-barcodes`. Files:
@@ -113,7 +115,8 @@
   routing of variant DTO writes; drift list). [2]
 - [ ] **T15**. Lookup `/item-lookup` (barcode, reference, code, part, supplier code through the port, customer
   code, alias) with match order. Files: `C/item-lookup/item-lookup.service.ts`, `C/item-lookup/item-lookup.controller.ts`.
-  Test: `C/item-lookup/item-lookup.service.spec.ts` (match order); `C/item-lookup/item-lookup.db.spec.ts` (latency on
+  Test: `C/item-lookup/item-lookup.service.spec.ts` (match order; two items sharing a code or an old code both returned
+  as candidates; a customer code and a group code each unique for their owner); `C/item-lookup/item-lookup.db.spec.ts` (latency on
   100k rows, SQLite and PostgreSQL). [2]
 - [ ] **T16**. Attributes and values (`/item-attributes`), variant values of range and text attributes (list values
   are the variant's options through `product_option.attributeValueId`), option-group linking (FR-38). Files:
@@ -177,7 +180,8 @@
   `catalog.item.merged`), on `data-import-export` T1, T2, T30 and T32. Files: `C/item-code/item-code.service.ts`,
   `C/item-code/item-code.controller.ts`, `C/item-code/item-delete.guard.ts`, `C/data-exchange/item-record-type.parts.ts`,
   `C/data-exchange/item-merge.participants.ts`. Test: `C/data-exchange/item-merge.participants.spec.ts` (each guard and
-  participant); `C/item-code/item-code.service.spec.ts` (old code stays searchable). [2]
+  participant); `C/item-code/item-code.service.spec.ts` (old code stays searchable; renaming two items that shared code `X`
+  keeps an old code `X` for each). [2]
 - [ ] **T25**. Outbox events `catalog.item.*`, `catalog.bundle.changed`, `catalog.barcode.changed`;
   `declareStreamedEvents`; activity-log history with before and after values. Files: `C/events/catalog.events.ts`,
   `C/events/catalog-streamed-events.ts`, `C/events/item-history.service.ts`. Test: `C/events/catalog-streamed-events.spec.ts`
@@ -200,10 +204,10 @@
   that setting is on, a blank name from the code while `nameFromCode` is on, rich descriptions sanitised while
   `cleanDescriptions` is on (both default off: names and descriptions stored as sent, as today), and always the
   plain-text summary and the normalised name. Files: `C/item-master/item-master-write.hook.ts`,
-  `C/item-master/item-code.rules.ts`, `C/catalog.settings.ts`. Test: `C/item-master/item-code.rules.spec.ts` (codes
+  `C/item-master/item-code.rules.ts`. Test: `C/item-master/item-code.rules.spec.ts` (codes
   repeat with the setting off; with the settings off a blank name and a script are stored as sent; with
   `cleanDescriptions` on a script is removed and the summary kept). [2]
-- [ ] **T52**. Item list rules (split from T50): the default lists of the new routes `/items/search` and
+- [ ] **T52**. Item list rules: the default lists of the new routes `/items/search` and
   `/item-lookup` leave out items past end of life, archived or disabled unless `includeInactive=true` ("include
   inactive" in the pickers built on them); the existing `/products` lists answer as today. Files:
   `C/item-search/item-search.service.ts`, `C/item-search/item-search.controller.ts`,
@@ -331,7 +335,7 @@ Every functional requirement of `spec.md` §3 and the tasks that implement it; e
 | FR-5 | §3.2 Item master | T3, T32 |
 | FR-6 | §3.2 Item master | T7, T50 |
 | FR-7 | §3.2 Item master | T50 |
-| FR-8 | §3.2 Item master | T22, T50 |
+| FR-8 | §3.2 Item master | T22, T52 |
 | FR-9 | §3.2 Item master | T7, T24 |
 | FR-10 | §3.2 Item master | T24, T25, T34 |
 | FR-11–FR-14 | §3.3 Item kinds | T10 |

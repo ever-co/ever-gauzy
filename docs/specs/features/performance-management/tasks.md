@@ -146,7 +146,7 @@
       `reviews/review.service.ts`, `reviews/review.controller.ts`, `reviews/review-response.service.ts`,
       `reviews/nomination.service.ts`. Test: unit and e2e.
 - [ ] **T25**. Scoring engine (`src/lib/scoring/`): focus area completion, manual ratings, weighted scores, kind
-      weights renormalised, competency ratings converted from the 1–5 proficiency scale to the review scale, formula
+      weights renormalized, competency ratings converted from the 1–5 proficiency scale to the review scale, formula
       compile and evaluate with the platform formula language, bands, freeze on manager submit. Files:
       `scoring/scoring-engine.ts`, `scoring/competency-conversion.ts`, `scoring/score-formula.ts`,
       `scoring/score-recompute.service.ts`. Test: golden tables for automatic, manual and custom formula; competency

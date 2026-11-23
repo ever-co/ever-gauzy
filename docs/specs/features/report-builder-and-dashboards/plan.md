@@ -115,10 +115,15 @@ time (`dashboard`, `user`, `role`).
 | `report_snapshot_row` | `snapshotId` FK cascade, `periodKey` varchar(16), `dimensionHash` varchar(64), `dimensions` text, `scopeKey` varchar(64) (the dataset's scope value: employee, owner or team id, or `*`), `measures` text (additive partials: sums, counts, min, max) | unique `(snapshotId, periodKey, dimensionHash, scopeKey)`; idx `(snapshotId, periodKey)` |
 | `report_schedule` | `name`, `ownerUserId`, `items` text (definition keys, prompts, formats), `recurrence` text (the shared recurrence rule format), `timeZone` varchar(64), `nextRunAt` (computed by the shared rules), `lastRunAt`, `recipients` text (users, teams, roles, outside addresses), `deliveryMode` (`PER_RECIPIENT`, `OWNER`), `skipWhenEmpty` bool, `rowLimit` int, `introduction` text, `commentary` (`OFF`, `ON`, `REVIEW`), `status` (`ACTIVE`, `PAUSED`), `consecutiveFailures` int, `pausedReason` varchar(64); the condition of a conditional schedule is core `rule` rows of owner type `REPORT_SCHEDULE` | idx `(status, nextRunAt)`, `(tenantId, ownerUserId)` |
 | `report_schedule_run` | `scheduleId` FK cascade, `periodKey` varchar(32), `status` (`RUNNING`, `AWAITING_REVIEW`, `SENT`, `PARTIAL`, `SKIPPED`, `FAILED`), `conditionValue` text, `commentary` text, `approvedByUserId`, `fileIds` text, `operationId` null, `finishedAt` (claimed once per period by the shared period-claim rule, as `invoice_schedule_run` is) | unique `(scheduleId, periodKey)` |
-| `report_delivery` | `scheduleRunId` FK cascade, `recipientKind` (`USER`, `EMAIL`), `recipientKey` varchar(320), `channel` (`EMAIL`, `INBOX`), `status` (`SENT`, `SKIPPED`, `FAILED`), `reason` text, `inboxItemId` null, `emailSentId` null (the `email_sent` row), `sentAt`; retries and preferences belong to `inbox_delivery` and the email transport | unique `(scheduleRunId, recipientKind, recipientKey)` |
+| `report_delivery` | `scheduleRunId` FK cascade, `recipientKind` (`USER`, `EMAIL`), `recipientKey` varchar(320), `channel` (`EMAIL`, `INBOX`), `status` (`SENT`, `SKIPPED`, `FAILED`), `reason` text, `inboxItemId` null, `emailSentId` null (the `email_sent` row), `sentAt`; retries and preferences belong to `inbox_delivery` and the email transport | unique `(scheduleRunId, recipientKind, recipientKey, channel)`, so a recipient's email and inbox notice of one run are kept and deduplicated each on its own |
 | `report_dashboard_setting` | `dashboardId` FK `dashboard` cascade, `filterBar` text, `crossFilter` bool, `refreshSeconds` int null, `templateKey` null, `templateVersion` int null, `wallDisplay` bool | unique `(dashboardId)` |
 | `report_dashboard_user_layout` | `dashboardId` FK cascade, `userId`, `hiddenWidgetIds` text, `positions` text (a table for the same 16 KB reason as `report_user_setting`) | unique `(dashboardId, userId)` |
 | `report_home` | `roleId`, `dashboardId` FK cascade (role defaults only: a user's own default is `dashboard.isDefault` and wins over the role's; where a user lands after sign-in is the navigation layout of `platform-administration`) | unique `(tenantId, organizationId, roleId)` |
+
+Background runs and schedule executions are core operations (status, progress, partitions, retries) and the schedule
+tick is a scheduled job recorded in `job_execution`; the plugin keeps `report_run` only as the access log of FR-55 and `report_schedule_run`
+only as the once-per-period claim of the shared recurrence rules with the review state, files and deliveries of that
+period, which no operation row holds.
 
 **Core and shared changes (additive, no core schema change):**
 
@@ -186,9 +191,11 @@ registerDashboardTemplates([{ key: 'sales.overview', version: 1, cards, filterBa
 forward-only, both ORMs):
 
 1. `1791000037100-CreateReportDefinitionTables` — definition, version, measure, user setting.
-2. `1791000037110-CreateReportRunTables` — run log.
+2. `1791000037110-CreateReportRunTables` — `report_run`, the access log of FR-55 (the run itself is a core operation).
 3. `1791000037120-CreateReportSnapshotTables` — snapshot, snapshot row.
-4. `1791000037130-CreateReportScheduleTables` — schedule, schedule run, delivery.
+4. `1791000037130-CreateReportScheduleTables` — `report_schedule` (its rule in the shared recurrence format of
+   `packages/core/src/lib/recurrence/`), `report_schedule_run` (the period claim, review state and files of a period;
+   execution is a core operation), `report_delivery`.
 5. `1791000037140-CreateReportDashboardTables` — dashboard setting, user layout, role home.
 6. `1791000037160-SeedPlatformReportCatalogue` — category "Platform" and the rows of spec FR-87 in core `report`,
    the category keyed `FEATURE_REPORT_BUILDER` in the shared catalogue feature filter, so they are listed only for
@@ -343,7 +350,13 @@ employee visibility as the time and HR modules apply it, the record-type read sc
 record rules from `REPORT_ACCESS_RULES` when bound) and an `accessHash` used by cache and run rows. Field masks come
 from `CUSTOM_FIELD_METADATA` (`CustomFieldVisibility`), `@VisibleWith` metadata (`packages/core/src/lib/api/
 visibility-metadata.ts`), dataset `sensitive` declarations and field rules when bound; a masked column is removed before
-execution, never blanked after. Snapshot rows are filtered by `scopeKey` against the reader's scope values. Group-size
+execution, never blanked after. Snapshot rows are filtered by `scopeKey` against the reader's scope values. The
+covered-query check decides whether a snapshot may answer a run: the snapshot holds the run's dimensions, grain,
+measures and filters as additive partials, and the reader's access reduces to `scopeKey` values alone, meaning the
+reader's read scope, employee visibility and organizations select whole scope values and no record rule of
+`REPORT_ACCESS_RULES` applies to the reader for the dataset's record types (rules narrow inside a scope value, so a
+partial can mix records the reader may and may not read). When any of these fails the run goes to the scoped live
+query for that reader; a snapshot never answers a reader whom record rules restrict. Group-size
 rules suppress after aggregation and before totals are shown. Schedules compute per recipient; outside addresses get the
 owner's access and a signed download link expiring after 72 hours. Formulas run in the `@gauzy/utils` evaluator (no I/O,
 step budget). The assistant receives the dataset catalogue for drafting and computed figures for commentary; never

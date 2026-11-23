@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-15
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_RECEIVABLES_PAYABLES` (new tenant feature, default off) on top of the existing `FEATURE_INVOICE`; deployment switch `GAUZY_RECEIVABLES_PAYABLES_ENABLED` (only the exact value `true` loads the plugin)
 
 ---
@@ -61,8 +61,9 @@ live**. (6) Every action is an MCP tool with a **preview** of its effects.
   routes answer `404`, the menu entries are hidden and existing invoices behave as before.
 - **Given** two clerks confirming the same draft at once, **then** one succeeds and the other gets a conflict; no number
   is used twice and no open item is duplicated.
-- **Given** a document dated in a locked period, **then** confirming is refused naming the period and the first open
-  date; **given** a bulk build for 40 customers where 3 fail, **then** 37 drafts exist and the log lists the 3 failures.
+- **Given** a document dated in a locked period and the ledger setting "Refuse documents the ledger cannot post" on,
+  **then** confirming is refused naming the period and the first open date; with the setting off, **then** it confirms
+  with that warning and its journal posts on the first open date; **given** a bulk build for 40 customers where 3 fail, **then** 37 drafts exist and the log lists the 3 failures.
 - **Given** a client that went offline while editing a draft, **when** it reconnects, **then** its save is
   accepted if the draft is unchanged, otherwise it is shown the newer version to merge.
 - **Given** accounting switched off, **then** everything here works without postings; **given** it is on and a posting
@@ -123,8 +124,11 @@ live**. (6) Every action is an MCP tool with a **preview** of its effects.
   supplier's invoice date), stores it, refreshes it while draft and accepts a recorded positive override; such documents
   need the multi-currency feature, which stays on for every tenant that already holds them.
 - **FR-21** The system refuses to confirm a document dated in a period locked or closed in `general-ledger` or, where
-  the ledger keeps fiscal years, outside every one of them (offering the first open date); it warns on a due date
-  before the document date (refused where the organization chooses) and on credit days above the party's.
+  the ledger keeps fiscal years, outside every one of them (offering the first open date) while the organization's
+  ledger setting "Refuse documents the ledger cannot post" (`ledger.refuseUnpostableDocuments`) is on; with it off (the
+  default) the document confirms as today with a warning naming the period and the first open date, and its journal
+  posts on that date (`general-ledger` FR-98). It warns on a due date before the document date (refused where the
+  organization chooses) and on credit days above the party's.
 - **FR-22** The system defaults the payment term from the source order, then the party, then the organization's default;
   an organization can choose to skip the source order's term.
 
@@ -312,7 +316,7 @@ live**. (6) Every action is an MCP tool with a **preview** of its effects.
   resolution, credit decision and setting; agent actions marked.
 - **Security & privacy**: tenant and organization scoped; counterpart documents are written only by a system actor of
   the other organization; captured files go only to the AI provider the organization configured, when capture is on.
-- **Accessibility, localisation, compatibility**: keyboard operable, labelled screens; every shipped locale; PDFs in the
+- **Accessibility, localization, compatibility**: keyboard operable, labelled screens; every shipped locale; PDFs in the
   recipient's language; PostgreSQL, MySQL and SQLite, both ORMs; cloud and self-hosted; in-process jobs without a queue.
 
 ## 5. Key Entities & Domain Concepts
@@ -373,8 +377,10 @@ live**. (6) Every action is an MCP tool with a **preview** of its effects.
       of" a past date returns that day's figures (FR-75, FR-76).
 - [ ] **AC-10** An inter-company invoice creates one linked bill in the other organization and unequal prices are
       refused; with accruals on, a receipt without bill shows in the accrual register and its bill clears it (FR-63, FR-67, FR-68).
-- [ ] **AC-11** A document dated in a locked period or with a blocked party is refused with the rule named, and so is
-      one with a foreign address or a negative total once the party check and the negative-amount refusal are on; with direct stock allowed, confirm moves stock and cancel moves it back (FR-17, FR-21).
+- [ ] **AC-11** A document with a blocked party is refused with the rule named, and so is one dated in a locked period
+      while the ledger's refusal setting is on (with it off it confirms with a warning and posts on the first open
+      date), and one with a foreign address or a negative total once the party check and the negative-amount refusal
+      are on; with direct stock allowed, confirm moves stock and cancel moves it back (FR-17, FR-21).
 - [ ] **AC-12** Each MCP tool with `preview: true` returns the effects and changes nothing; agent actions are marked in
       the history (FR-81); each document kind's event carries the fields listed in the plan.
 - [ ] **AC-13** The reports below exist as report definitions and return correct figures on seeded data (FR-79).
@@ -386,7 +392,7 @@ live**. (6) Every action is an MCP tool with a **preview** of its effects.
       confirms with a warning, every invoice received through `sentTo` stays listed on the received invoices page,
       today's PDF is produced, and existing invoices stay editable during the open-item run (FR-5, FR-15, FR-17,
       FR-21, FR-50, FR-67, FR-80, FR-83, FR-84).
-- [ ] **AC-16** With the feature off, and with the feature on and default settings, every existing page, route, field, permission and report behaves as today, apart from the existing feature codes that now guard their routes, which the release switches on for every tenant holding their data (FR-83).
+- [ ] **AC-16** With the feature off, and with the feature on and default settings, every existing page, route, field, permission and report behaves as today, apart from the feature codes that guard their routes, which are switched on for every tenant that holds their data (FR-83).
 
 | Report | Shows |
 | ------ | ----- |

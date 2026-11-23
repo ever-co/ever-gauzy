@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-16
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_CRM` (new, default off) for everything this spec adds; `FEATURE_PIPELINE`, `FEATURE_PIPELINE_DEAL` and `FEATURE_CONTACT` (existing, default on) keep gating what they gate today and are also read by the CRM routes for pipelines and deals, while the existing pipeline and deal routes answer as today
 
 ---
@@ -223,7 +223,7 @@ follow-ups, update fields from a conversation and prepare a meeting brief, alway
 - **Reliability**: events through the event outbox (at least once, deduplicated per consumer); daily jobs (stale, contract status, renewals, scores, health) are idempotent and catch up after downtime.
 - **Security & privacy**: tenant and organization scoped; leads and people are personal data, included in the contact's export and erasure (signatures and network addresses too); "do not contact" is honoured by automation; signature links carry random tokens stored hashed and expire. Leaving the platform: contract signature emails, follow-up drafts sent by a user, and AI provider calls when an organization configured one (only the deal facts the request needs).
 - **Auditability**: who, when, before and after for lead, deal and contract fields, stage moves, conversions, merges and settings; agent changes carry the agent marker.
-- **Accessibility and localisation**: keyboard operable boards (move a card with the keyboard), labelled controls, a typed alternative to drawn signatures; every string in all shipped locales; amounts and dates in the user's formats.
+- **Accessibility and localization**: keyboard operable boards (move a card with the keyboard), labelled controls, a typed alternative to drawn signatures; every string in all shipped locales; amounts and dates in the user's formats.
 - **Compatibility**: PostgreSQL, MySQL, SQLite; both ORMs; cloud and self-hosted; OpenAPI and SDKs regenerated.
 
 ## 5. Key Entities & Domain Concepts
@@ -254,7 +254,7 @@ follow-ups, update fields from a conversation and prepare a meeting brief, alway
 - Deal rates and organization-currency amounts, weighted pipeline, forecast, CRM dashboard and all CRM reports → `crm-forecasting-and-analytics`.
 - Quotations, orders, territories, sales people, industry and segment tag types, customer master and sales profile → `sales-order-management`; requests for quotation → `procurement`; subscriptions → `subscription-billing`.
 - Saved views, boards, filters and bulk framework → `record-views-and-search`; custom fields and layouts → `custom-fields-and-forms`; automation engine → `automation-and-notifications`; numbering and document lifecycle → `business-document-engine`; print templates → `print-and-pdf-designer`; generic record merge → `data-import-export`.
-- Rate feeds → `general-ledger`; address formats and state lists → `regional-compliance-packs`; menu customisation → `platform-administration`; service contracts for maintenance → `maintenance-and-field-service`.
+- Rate feeds → `general-ledger`; address formats and state lists → `regional-compliance-packs`; menu customization → `platform-administration`; service contracts for maintenance → `maintenance-and-field-service`.
 - Consent records and suppression → `email-and-communications`; job-board proposals stay as they are and can be linked to a deal.
 
 ## 7. Acceptance Criteria

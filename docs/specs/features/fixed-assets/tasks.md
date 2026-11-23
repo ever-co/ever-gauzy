@@ -43,10 +43,10 @@
       `fa/asset-intensity-factor/asset-intensity-factor.entity.ts`,
       `fa/asset-balance-snapshot/asset-balance-snapshot.entity.ts`, with their `repository/` files, listed in
       `fa/entities/index.ts`. Test: both ORMs map each entity (repository smoke specs).
-- [ ] **T5**. Migration `fa/database/migrations/1791000080110-CreateFixedAssetDocumentTables.ts` + entities (locations, movement, capitalisation, repair,
+- [ ] **T5**. Migration `fa/database/migrations/1791000080110-CreateFixedAssetDocumentTables.ts` + entities (locations, movement, capitalization, repair,
       value adjustment, disposal). Files: `fa/asset-location/asset-location.entity.ts`,
       `fa/asset-movement/{asset-movement,asset-movement-line}.entity.ts`,
-      `fa/asset-capitalisation/{asset-capitalisation,asset-capitalisation-line}.entity.ts`,
+      `fa/asset-capitalization/{asset-capitalization,asset-capitalization-line}.entity.ts`,
       `fa/asset-repair/{asset-repair,asset-repair-part,asset-repair-bill-line}.entity.ts`,
       `fa/asset-value-adjustment/asset-value-adjustment.entity.ts`, `fa/asset-disposal/asset-disposal.entity.ts`.
       Test: migration spec on SQLite.
@@ -78,7 +78,7 @@
       equipment row through `EquipmentService` of `packages/core/src/lib/equipment/equipment.service.ts`), dimension
       sets, states, composite and component roll-up, optimistic version, cursor list with filters joined to equipment.
       Test: unit; `409` on concurrent confirm; nothing of the equipment row is stored on the asset.
-- [ ] **T11**. Document type registration with the business document engine (asset, movement, capitalisation,
+- [ ] **T11**. Document type registration with the business document engine (asset, movement, capitalization,
       repair, value adjustment, disposal, depreciation run, lease period): series, lifecycle, links. Files:
       `fa/documents/fixed-assets-document-types.ts`, `fa/asset/asset-links.service.ts`. Test: number
       assigned once; confirm and cancel transitions.
@@ -109,15 +109,18 @@
 - [ ] **T18**. Books service and schedule routes (read, preview, revise). Files: `fa/asset-book/asset-book.service.ts`,
       `fa/asset-book/asset-book.controller.ts`, `fa/asset-book/dto/`. Test: preview saves nothing.
 - [ ] **T19**. Asset confirm, cancel and effects preview through `FIXED_ASSETS_LEDGER`; existing assets with opening
-      values post nothing; work in progress and `POST /assets/:id/capitalise`. Files:
+      values post nothing; work in progress and `POST /assets/:id/capitalize`. Files:
       `fa/asset/asset-confirmation.service.ts`, `fa/asset/asset.controller.ts`. Test: preview equals posted effects
-      (contract test with a fake ledger port).
+      (contract test with a fake ledger port); with the ledger port unbound an asset of a category without account
+      mapping confirms with its schedule and no posting, and with it bound the same asset is refused until mapped.
 - [ ] **T20**. Depreciation run as core operation `ASSET_DEPRECIATION_RUN`: preview, steps of 500 lines per book,
       grouped or per-line journals, locked-period handling, failures stamped on lines, single line post and reverse,
       outbox consumer for posting results, failure notification. Files: `fa/depreciation/depreciation-run.operation.ts`,
       `fa/depreciation/depreciation-run.controller.ts`, `fa/depreciation/depreciation-posting.service.ts`,
       `fa/events/accounting-result.consumer.ts`. Test: each line posted once across repeated runs;
-      partial failure continues; a second live operation for the same organization and book is refused.
+      partial failure continues; a second live operation for the same organization and book is refused; a line posted,
+      reversed and posted again gets a second journal under posting key `(lineId, 1)`, while a retry of either
+      generation replays its own journal.
 - [ ] **T21**. Posting rule templates contributed to `accounting` for every document of plan §7. Files:
       `fa/posting/fixed-assets-posting-templates.ts`. Test: balanced
       journals for each template with the ledger's test harness.
@@ -125,11 +128,12 @@
       per-unit and grouped creation, later bill linking, price difference, cancellation guard. Files:
       `fa/asset-item-rule/asset-item-rule.service.ts`, `fa/asset-item-rule/asset-item-rule.controller.ts`,
       `fa/purchases/purchase-events.consumer.ts`, `fa/purchases/asset-from-purchase.service.ts`. Test: SQLite
-      end-to-end with fake purchase events; delivered twice creates assets once.
-- [ ] **T23**. Capitalisation service and controller: stock, asset and service lines, stock port issue and return,
+      end-to-end with fake purchase events; delivered twice creates assets once; a line of three units with net
+      amount 100 and non-recoverable tax 10 yields assets of 36.67, 36.67 and 36.66, together 110.
+- [ ] **T23**. Capitalization service and controller: stock, asset and service lines, stock port issue and return,
       consumed assets, "cost changed" flag, cancel restore. Files:
-      `fa/asset-capitalisation/asset-capitalisation.service.ts`, `fa/asset-capitalisation/asset-capitalisation.controller.ts`,
-      `fa/asset-capitalisation/dto/`. Test: unit; insufficient stock refuses without postings.
+      `fa/asset-capitalization/asset-capitalization.service.ts`, `fa/asset-capitalization/asset-capitalization.controller.ts`,
+      `fa/asset-capitalization/dto/`. Test: unit; insufficient stock refuses without postings.
 - [ ] **T24**. Repair service and controller: open, complete, confirm, add to value, bill-line ceiling, cancel.
       Files: `fa/asset-repair/asset-repair.service.ts`, `fa/asset-repair/asset-repair.controller.ts`,
       `fa/asset-repair/dto/`. Test: unit and e2e.
@@ -183,8 +187,8 @@
 - [ ] **T36**. Depreciation page: run with preview, history and failures read from core operations. Files:
       `faui/pages/depreciation/depreciation-page.component.ts`. Test: rendering
       specs.
-- [ ] **T37** (parallel). Capitalisation, repair, adjustment and disposal forms with effects preview panels.
-      Files: `faui/pages/capitalisations/asset-capitalisation-form.component.ts`,
+- [ ] **T37** (parallel). Capitalization, repair, adjustment and disposal forms with effects preview panels.
+      Files: `faui/pages/capitalizations/asset-capitalization-form.component.ts`,
       `faui/pages/repairs/asset-repair-form.component.ts`, `faui/pages/adjustments/asset-adjustment-form.component.ts`,
       `faui/pages/disposals/asset-disposal-form.component.ts`, `faui/components/effects-preview/effects-preview.component.ts`.
       Test: rendering specs.
@@ -220,10 +224,10 @@
       `faui/pages/audit-scan/audit-scan-page.component.ts`, `faui/services/audit-scan-queue.service.ts`. Test: queue
       survives reload (component spec with a fake store).
 - [ ] **T47**. Usage: readings CRUD and bulk, task and project links, lending and tracked-time roll-up sweep,
-      readings of field-service visits recorded once with source `VISIT`, utilisation and idle reads. Files:
+      readings of field-service visits recorded once with source `VISIT`, utilization and idle reads. Files:
       `fa/asset-usage-reading/asset-usage-reading.service.ts`, `fa/asset-usage-reading/asset-usage-reading.controller.ts`,
-      `fa/asset/asset-work-link.service.ts`, `fa/utilisation/asset-utilisation.service.ts`, `fa/schedule/fixed-assets.worker.ts`.
-      Test: no reading counted twice; utilisation golden cases.
+      `fa/asset/asset-work-link.service.ts`, `fa/utilization/asset-utilization.service.ts`, `fa/schedule/fixed-assets.worker.ts`.
+      Test: no reading counted twice; utilization golden cases.
 - [ ] **T48**. Units-of-usage method in the schedule engine with estimated lines and true-up. Files:
       `fa/engine/methods/units-of-usage.ts`, `fa/engine/schedule-engine.ts`. Test: property tests.
 - [ ] **T49**. Component depreciation and component replacement. Files: `fa/engine/component-depreciation.ts`,
@@ -234,7 +238,7 @@
 - [ ] **T51**. Leases: present value, liability schedule, period postings, remeasurement, exempt leases. Files:
       `fa/asset-lease/asset-lease.service.ts`, `fa/asset-lease/asset-lease.controller.ts`, `fa/engine/lease-schedule.ts`.
       Test: golden schedules; balanced journals.
-- [ ] **T52**. Forecast and simulation endpoints and page; book comparison, utilisation, idle, audit and cost of
+- [ ] **T52**. Forecast and simulation endpoints and page; book comparison, utilization, idle, audit and cost of
       ownership report definitions. Files: `fa/forecast/asset-forecast.service.ts`, `fa/forecast/asset-forecast.controller.ts`,
       `fa/reports/fixed-assets-advanced-reports.ts`, `faui/pages/forecast/asset-forecast-page.component.ts`. Test:
       forecast equals sum of schedules; simulation writes nothing.
@@ -278,10 +282,10 @@ Every functional requirement of `spec.md` §3 and the tasks that implement it; e
 | FR-14 | §3.2 Asset register | T28 |
 | FR-15 | §3.2 Asset register | T11, T34 |
 | FR-16 | §3.2 Asset register | T10 |
-| FR-17 | §3.3 Acquisition from purchases, work in progress, capitalisation | T22, T33 |
-| FR-18–FR-20 | §3.3 Acquisition from purchases, work in progress, capitalisation | T22 |
-| FR-21 | §3.3 Acquisition from purchases, work in progress, capitalisation | T19, T29 |
-| FR-22–FR-24 | §3.3 Acquisition from purchases, work in progress, capitalisation | T23 |
+| FR-17 | §3.3 Acquisition from purchases, work in progress, capitalization | T22, T33 |
+| FR-18–FR-20 | §3.3 Acquisition from purchases, work in progress, capitalization | T22 |
+| FR-21 | §3.3 Acquisition from purchases, work in progress, capitalization | T19, T29 |
+| FR-22–FR-24 | §3.3 Acquisition from purchases, work in progress, capitalization | T23 |
 | FR-25 | §3.4 Depreciation books, methods and schedules | T16, T18 |
 | FR-26–FR-29 | §3.4 Depreciation books, methods and schedules | T16 |
 | FR-30 | §3.4 Depreciation books, methods and schedules | T17, T25 |
@@ -313,12 +317,12 @@ Every functional requirement of `spec.md` §3 and the tasks that implement it; e
 | FR-60–FR-66 | §3.9 Sale, scrap, restore and split | T26 |
 | FR-67–FR-70 | §3.10 Maintenance | T27 |
 | FR-71 | §3.10 Maintenance | T6, T27 |
-| FR-72 | §3.11 Labels, audits and utilisation | T39, T44 |
-| FR-73 | §3.11 Labels, audits and utilisation | T45, T46 |
-| FR-74–FR-75 | §3.11 Labels, audits and utilisation | T45, T46 |
-| FR-76–FR-77 | §3.11 Labels, audits and utilisation | T47 |
-| FR-78 | §3.11 Labels, audits and utilisation | T47 |
-| FR-79 | §3.11 Labels, audits and utilisation | T47 |
+| FR-72 | §3.11 Labels, audits and utilization | T39, T44 |
+| FR-73 | §3.11 Labels, audits and utilization | T45, T46 |
+| FR-74–FR-75 | §3.11 Labels, audits and utilization | T45, T46 |
+| FR-76–FR-77 | §3.11 Labels, audits and utilization | T47 |
+| FR-78 | §3.11 Labels, audits and utilization | T47 |
+| FR-79 | §3.11 Labels, audits and utilization | T47 |
 | FR-80–FR-82 | §3.12 Reports and dashboards | T31 |
 | FR-83 | §3.12 Reports and dashboards | T15, T31 |
 | FR-84 | §3.12 Reports and dashboards | T27, T31 |

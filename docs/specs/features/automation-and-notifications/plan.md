@@ -73,8 +73,7 @@ flowchart LR
 | Locks | advisory lock (PostgreSQL), `GET_LOCK` (MySQL), in-process (SQLite), as `task-automation-task-lock.ts` | one writer per record |
 | Rate counters | Redis when configured, else `automation_rate_counter` rows | works without a queue |
 | Outbound | call-webhook steps through core `WebhookTransport`, `webhook-endpoint-policy.ts`, `signWebhookPayload`; outbound notification destinations are core `webhook_subscription` rows whose `events` name the categories (`notification.<category>`), delivered, retried and auto-disabled by the core webhook module (`webhook_delivery`, retry worker, `AUTO_DISABLE_FAILURE_COUNT`); `integration-hub` port when bound | one outbound policy, one subscription store |
-| Inbound hooks | token hash and sealed signing secret through core helpers lifted from the chat plugin (`webhookTokenHash` in `chat-webhook.service.ts`, `ChatWebhookSecretBox` in `chat-webhook-secret-box.ts`) into `packages/core/src/lib/core/util/hashed-token.ts` (shared with workflow action links, lead intake and shared
-links) and `secret-box.ts`; the chat plugin re-exports them; signature check with core `verifyWebhookSignature` | one inbound-hook pattern |
+| Inbound hooks | token hash and sealed signing secret through core helpers lifted from the chat plugin (`webhookTokenHash` in `chat-webhook.service.ts`, `ChatWebhookSecretBox` in `chat-webhook-secret-box.ts`) into `packages/core/src/lib/core/util/hashed-token.ts` (shared with workflow action links, lead intake and shared links) and `secret-box.ts`; the chat plugin re-exports them; signature check with core `verifyWebhookSignature` | one inbound-hook pattern |
 | Notification categories | the existing `EmployeeNotificationTypeEnum` values are the platform's category keys; `registerNotificationCategories` adds plugin keys and `notification_category` holds labels and flags of declared and user-defined ones; channel choices per category are the existing `emailByType` / `pushByType` maps plus additive `inAppByType`, `chatByType`, `smsByType` in `IEmployeeNotificationPreferences`, resolved member → team (`team-notification-defaults.rules.ts`, `withTeamNotificationDefaults`) → organization (`notifications.defaults` setting, same shape as the team defaults) → platform | one per-kind preference map, one layering |
 | Reminders | `reminder` is the one generic reminder table of the platform: people's reminders, flow reminders and reminders other features schedule through the `REMINDERS` port (`schedule({ recipient, record?, remindAt, title, category, sourceKey })`, `cancel(sourceKeyPrefix)`); the send markers of task due, timer, meeting and invoice reminders stay with their features and show as categories | one reminder table |
 | Email | core `EmailSendService` + `EmailTemplateRenderService`; `email-and-communications` port when bound | templates per language |
@@ -322,7 +321,7 @@ in-process timers under the plugin's sweep lock.
 switch is off. Tenant feature `FEATURE_AUTOMATIONS` (`defaultEnabled: false`) in
 `task-automations.features.ts`.
 
-Run-as: `AutomationRunContext` (generalised `task-automation-context.ts`) runs steps inside `RequestContext` of a
+Run-as: `AutomationRunContext` (generalized `task-automation-context.ts`) runs steps inside `RequestContext` of a
 synthetic user of the flow's tenant and organization whose permissions are the intersection of the owner's current
 permissions and the action's needs, recomputed per run; activity rows get `actorType = System` and "by automation
 `<name>`", agent steps `Agent`. Secrets (flow signing secret, hook secret) are sealed with the core `secret-box.ts`;
@@ -343,7 +342,7 @@ skips by reason, storms, waits open, delivery outcomes by channel; agent usage i
 ## 11. Phased Rollout
 
 1. **Phase 1 — Engine and surface what exists** (flag off): contracts, the core token and secret helpers, the core
-   notification contract with its fallback, the reminder service, routes, port and sweep, generalised runtime with
+   notification contract with its fallback, the reminder service, routes, port and sweep, generalized runtime with
    task rules on it (parity suite green), flow tables, record triggers and field changes, update, assign, tags, comment and notify actions, trial
    run, run history, the Automations hub with designer, categories and the extended Settings → Notifications for the
    existing reminders and types, MCP read tools.

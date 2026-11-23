@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-15
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_ACCOUNTING` (default off)
 
 ---
@@ -49,7 +49,7 @@ a preview; unusual postings are flagged as they happen.
 - **Given** a confirmed bill with the wrong cost centre, **when** an accountant changes it in the accounting fields,
   **then** the system posts the reversal of the first journal and a corrected one, linked, originals still readable.
 - **Given** a euro payment allocated to a euro invoice of a dollar organization at another rate, **when** the allocation
-  is recorded, **then** the open items are settled and a journal books the realised exchange difference.
+  is recorded, **then** the open items are settled and a journal books the realized exchange difference.
 - **Given** a controller on the close page of October, **when** every blocking check passes or is waived with a reason,
   **then** they close the period and any posting dated in October is refused for everyone.
 - **Given** a restricted lock on purchases up to 31 October and the organization's setting "Refuse documents the ledger
@@ -163,7 +163,8 @@ a preview; unusual postings are flagged as they happen.
 
 - **FR-24** The system never updates or deletes a posted journal or line, for any role, route or job, and enforces this
   in the database on every supported engine; the only relaxation is the tenant setting of FR-96, which deletes nothing
-  and keeps every earlier state. `(advanced)`
+  and keeps every earlier state: an edit adds a new revision and marks the previous one as superseded, the only change
+  the database admits on a posted journal whether the setting is on or off. `(advanced)`
 - **FR-25** A user with `ACCOUNTING_JOURNAL_REVERSE` can reverse a posted journal once, at once or as a draft to adjust
   first: a new journal with the sides swapped, linked to the original; both remain visible.
 - **FR-26** The system dates a reversal on the original posting date when that date is open to the actor, otherwise on
@@ -237,7 +238,12 @@ a preview; unusual postings are flagged as they happen.
 - **FR-48** Settling and releasing items, with its preview and the rule that the date is not earlier than either item,
   is the allocation of `payments-and-collections`; the ledger shows each allocation's journals beside it.
 - **FR-49** The system answers every outstanding amount (per document, party, account, as of any date) from the
-  register, and keeps each control account's balance equal to the sum of its open items on any date.
+  register, and keeps each control account's balance equal to the sum of its open items on any date, apart from timing
+  differences it names: an item whose journal posts on a later open date (FR-98), waits as a posting exception (FR-17)
+  or gets none because it predates the go-live date (FR-18) counts in the control account from its journal's date. The
+  control check of a date compares the control account with the open items whose journal is dated on or before it,
+  lists the timing differences (item, document date, posting date or exception), and reports any other difference as
+  a mismatch.
 - **FR-50** The system books money received or paid before a document exists against the advance item the register
   holds for it, optionally earmarked for an order, and answers "advance paid" for an order from these items.
 - **FR-51** The system can book advances on separate advance accounts per organization and party role, and then
@@ -341,10 +347,10 @@ a preview; unusual postings are flagged as they happen.
   stored rate is then needed for the pair.
 - **FR-79** The system keeps, for an organization that names a reporting currency, a reporting amount on every line and
   balance at the rate of the posting date.
-- **FR-80** The system posts the realised exchange difference of an allocation whose items carry different rates, to
+- **FR-80** The system posts the realized exchange difference of an allocation whose items carry different rates, to
   the designated gain and loss accounts, dated on the allocation date (the earliest open date when that is locked), and
   reverses it when the allocation is released.
-- **FR-81** A user with `ACCOUNTING_REVALUATION_RUN` can compute, as of a date, the unrealised difference of
+- **FR-81** A user with `ACCOUNTING_REVALUATION_RUN` can compute, as of a date, the unrealized difference of
   foreign-currency open items (per party and item), money accounts and other accounts marked for revaluation, per
   account, party and currency; a user with `ACCOUNTING_REVALUATION_POST` can post it.
 - **FR-82** The system posts a revaluation as one journal that reverses itself the next day (or accumulates, per
@@ -399,7 +405,9 @@ a preview; unusual postings are flagged as they happen.
   the edit passes every check of FR-14, keeps the journal's number, becomes a new revision chained by hash while the
   previous one stays readable, moves balances by the difference and records the full before and after in the change
   history. Journals of documents and of system procedures, lines that opened or settled an open item and journals on
-  closed dates change only by reversal or correction.
+  closed dates change only by reversal or correction. A journal that has been reversed, and a reversal itself, are
+  refused for editing, so a reversal always offsets the amounts it was made for; to change a reversed journal, the
+  user posts a new journal.
 
 ### 3.13 Documents that exist without the ledger
 
@@ -427,7 +435,7 @@ a preview; unusual postings are flagged as they happen.
   dates; nothing else leaves the platform.
 - **Auditability**: journals carry actor, origin, source, rule explanation and hash; locks, closes, reopenings, waivers,
   rule changes, settlements and remedies record who, when, before, after and why; agent actions are marked.
-- **Accessibility and localisation**: journal grid, close checklist and lock timeline are keyboard operable and
+- **Accessibility and localization**: journal grid, close checklist and lock timeline are keyboard operable and
   labelled; all strings in every shipped locale; amounts and dates in the user's format.
 - **Compatibility**: PostgreSQL, MySQL and SQLite; both ORMs; multi-tenant cloud and self-hosted single tenant; additive
   OpenAPI changes.
@@ -448,7 +456,7 @@ a preview; unusual postings are flagged as they happen.
 | Close checklist, check, run | The state of a period's close, its automated checks, and a long-running execution |
 | Ledger balance, closing balance | Maintained total per account, period, book, dimension set and currency; its value at a close |
 | Reposting run | A selection of documents whose journals are derived again and corrected |
-| Rate source, currency peg, revaluation run | Where rates come from; a fixed currency relation; unrealised difference as of a date |
+| Rate source, currency peg, revaluation run | Where rates come from; a fixed currency relation; unrealized difference as of a date |
 | Health finding, anomaly | A broken invariant; an unusual posting awaiting review |
 
 ## 6. Out of Scope
@@ -510,13 +518,13 @@ a preview; unusual postings are flagged as they happen.
       posted, is dated beyond the allowed future, falls on a locked or closed date or precedes go-live is saved,
       confirmed, amended and cancelled as today; its posting waits as an exception, lands on the earliest open date or
       is skipped, and no document is refused because of the ledger.
-- [ ] **AC-20** With the feature off, and with the feature on and default settings, every existing page, route, field, permission and report behaves as today, apart from the existing feature codes that now guard their routes, which the release switches on for every tenant holding their data (FR-1, FR-98).
+- [ ] **AC-20** With the feature off, and with the feature on and default settings, every existing page, route, field, permission and report behaves as today, apart from the feature codes that guard their routes, which are switched on for every tenant that holds their data (FR-1, FR-98).
 
 ## 8. Open Questions
 
 - Posting follows confirmation at once through the event outbox, after a synchronous check: a document confirms once
   the check passes; "confirmed but posting failed" is a visible, close-blocking exception.
-- Date of realised exchange differences. Applied default: the settlement date, with no setting.
+- Date of realized exchange differences. Applied default: the settlement date, with no setting.
 - Revaluation and rate feeds behind the existing `FEATURE_MULTI_CURRENCY` code. Applied default: their pages and routes
   need it, and the code is switched on for every tenant that already holds exchange rates or foreign-currency
   documents, so no one loses access; postings in foreign currency always work.

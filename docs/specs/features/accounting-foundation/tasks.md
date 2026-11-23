@@ -54,7 +54,8 @@
 - [ ] **T7**. Migration `CreateAccountingProfileAndChartTables` (three dialects, idempotent). Files:
       `database/migrations/1791000072100-CreateAccountingProfileAndChartTables.ts`, `database/accounting-migrations.ts`.
       Test: `database/accounting-migrations.spec.ts` on SQLite up and down; unique (live) code and sibling name
-      enforced.
+      enforced, root accounts included (`parentKey` `*`): two concurrent renames of root accounts to one name on
+      PostgreSQL, MySQL and SQLite leave one success and one refusal.
 - [ ] **T8** (parallel). Entities `calendar/fiscal-year.entity.ts`, `calendar/fiscal-period.entity.ts`,
       `book/ledger-book.entity.ts` and migration `CreateFiscalCalendarAndLedgerBookTables`. Files:
       `database/migrations/1791000072110-CreateFiscalCalendarAndLedgerBookTables.ts`. Test:

@@ -161,7 +161,7 @@ at the same depth as in the legacy tree (`help_center.parentId`, every level kep
 versions and the help centre's language
 (`knowledge_base.language`) as the page language (`externalSource = 'help-center'`, `externalId` = article id, idempotent through
 `UQ_document_external_provenance`), `draft` → unpublished, `privacy` → the page's Documents visibility (private →
-`PRIVATE`, else `ORGANIZATION`), every page `audience = null` (agents only), project pivots
+`PRIVATE`, else `ORGANIZATION`), every page `audience = null` (readers of the space, as today; never public), project pivots
 (`knowledge_base_article_project`) → `document_link` rows to the projects. The import writes nothing to the legacy
 rows (`isLocked` and every other column stay as they were) and the legacy routes keep reading and writing: the
 knowledge-base plugin publishes `knowledge_base.article.changed` on a legacy write, which the importer applies to the

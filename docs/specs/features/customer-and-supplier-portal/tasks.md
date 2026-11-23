@@ -105,11 +105,18 @@
       the deployment, portal and public routes resolve the organization from the request host. Files:
       `cp/settings/portal-domain.resolver.ts`, `cp/settings/portal-settings.service.ts`. Test: a request on the verified
       domain serves that organization's portal; an unverified domain answers 404; the address key keeps working.
-- [ ] **T46**. Account security (spec FR-13, FR-14): password reset by an emailed link valid 60 minutes that ends the
-      person's other sessions; enrolment of an authenticator app and passkeys with recovery codes; the person lists and
-      ends their own sessions from the profile (the page is part of T21). Files: `cp/auth/portal-password-reset.service.ts`,
-      `cp/auth/portal-security.controller.ts`. Test: a link older
-      than 60 minutes is refused; using a link ends the other sessions; a recovery code works once; ending a session signs
+- [ ] **T46**. Account security, password reset (spec FR-13): password reset by an emailed link valid 60 minutes that
+      ends the person's other sessions. Files: `cp/auth/portal-password-reset.service.ts`,
+      `cp/auth/portal-security.controller.ts`. Test: `cp/auth/portal-password-reset.service.spec.ts`: a link older than
+      60 minutes is refused; using a link ends the other sessions.
+- [ ] **T51**. Account security, enrolment and passkeys (spec FR-14): enrolment of an authenticator app and passkeys on
+      the person's contact login, with recovery codes, through the one-time code and passkey services of access
+      control. Files: `cp/auth/portal-second-factor.service.ts`, `cp/auth/portal-security.controller.ts`. Test:
+      `cp/auth/portal-second-factor.service.spec.ts`: an enrolled authenticator is asked for at the next sign-in; a
+      passkey signs in; a recovery code works once.
+- [ ] **T52**. Account security, sessions (spec FR-14): the person lists and ends their own sessions from the profile
+      (the page is part of T21). Files: `cp/auth/portal-sessions.service.ts`, `cp/auth/portal-security.controller.ts`.
+      Test: `cp/auth/portal-sessions.service.spec.ts`: only the person's own sessions are listed; ending a session signs
       it out.
 
 ## Phase 3 — UI surfaces
@@ -243,7 +250,7 @@ Every functional requirement of `spec.md` §3 and the tasks that implement it; e
 | FR-9 | §3.3 Portal accounts and sign-in | T10 |
 | FR-10–FR-11 | §3.3 Portal accounts and sign-in | T10, T11 |
 | FR-12 | §3.3 Portal accounts and sign-in | T11 |
-| FR-13–FR-14 | §3.3 Portal accounts and sign-in | T46 |
+| FR-13–FR-14 | §3.3 Portal accounts and sign-in | T46, T51, T52 |
 | FR-15 | §3.3 Portal accounts and sign-in | T10, T11 |
 | FR-16 | §3.3 Portal accounts and sign-in | T2, T12 |
 | FR-17 | §3.3 Portal accounts and sign-in | T12, T13 |

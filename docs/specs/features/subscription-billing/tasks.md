@@ -76,10 +76,13 @@
       end-to-end with a fake invoicing port; a period bills once under two concurrent attempts; a refund of an invoiced
       cycle raises one credit note.
 - [ ] **T11**. Automatic settlement keeps the order path and, where `subscription.invoiceAutomaticCycles` is on,
-      invoices the order through the order-invoice bridge; gated by `FEATURE_SUBSCRIPTION_BILLING`; refused with
-      `SUBSCRIPTION_NO_PAYMENT_PROVIDER` when no provider is bound, as today. Files: `sub/settlement/automatic-settler.ts`,
+      invoices the order through the order-invoice bridge; the scheduled run that calls it is gated by
+      `FEATURE_SUBSCRIPTION_BILLING`, while a manual bill of a cycle or run keeps this path whatever the flag, as today;
+      refused with `SUBSCRIPTION_NO_PAYMENT_PROVIDER` when no provider is bound, as today. Files: `sub/settlement/automatic-settler.ts`,
       `sub/subscription-billing/subscription-billing.service.ts`. Test: existing order-path specs unchanged;
-      invoice linked on the cycle with the setting on; no invoice with it off.
+      invoice linked on the cycle with the setting on; no invoice with it off; with `FEATURE_SUBSCRIPTION_BILLING` off a
+      manual `POST /subscriptions/:id/bill` of an automatically collected subscription raises the order and charge as
+      today, and the scheduled sweep bills nothing.
 - [ ] **T12**. Trial handling (`trialEndsAt`, extend, end, one trial per customer and plan where the organization
       setting is on), future start, restart endpoint. Files: `sub/subscription/subscription-trial.service.ts`,
       `sub/subscription/subscription.service.ts`, `sub/subscription/subscription.controller.ts` (`/restart`, `/trial`).
@@ -100,7 +103,9 @@
       extended (`202` with the operation); history through core `/operations`. Files:
       `sub/billing-run/subscription-billing-run.operation.ts`, `sub/billing-run/subscription-billing-run.service.ts`,
       `sub/subscription/subscription.controller.ts`. Test: partial failure continues;
-      preview writes nothing; future date refused; a second live run of an organization refused.
+      preview writes nothing; future date refused; a second live run of an organization refused; a cycle of the period
+      starting December 1 billed five days in advance is billed by a run on November 26, while a subscription starting
+      in the future and a cycle whose billing date is still ahead are refused.
 - [ ] **T16**. Schedules and workers in `sub/schedule/` (`subscription.scheduler.ts`, `subscription.worker.ts`,
       `subscription-schedule.plugin.ts`: billing sweep starting operations, changes and notices
       sweeps, each recorded in `job_execution`); `SubscriptionSchedulePlugin` in `apps/worker/src/plugins.ts`;
@@ -115,7 +120,8 @@
       the dashboard's recurring cost counts the subscription once.
 - [ ] **T18**. Notices: templates per language, notice markers, preference-aware delivery. Files:
       `sub/notices/subscription-notices.service.ts`, `sub/notices/subscription-notice-templates.ts`. Test: each notice sent
-      once per subscription and kind.
+      once per subscription, kind and announced date (marker `<subscriptionId>:<kind>:<date>`); two successive renewals
+      of a yearly subscription each get one renewal notice, and a repeated sweep sends neither again.
 - [ ] **T19**. New events appended to the outbox and added to `SUBSCRIPTION_STREAMED_EVENTS`
       (`sub/subscription-streamed-events.ts`); timeline read
       (`/subscriptions/:id/timeline`), heat map read (`sub/subscription/subscription-timeline.service.ts`). Test: `subscription-streamed-events.spec.ts` extended.

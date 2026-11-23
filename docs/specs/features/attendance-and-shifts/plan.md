@@ -70,7 +70,7 @@ flowchart LR
     WF[approval-workflows gateway / core request_approval] <--> API
     HR[hr-lifecycle: active check, approver, directory, external ids] --> API
     JOBS[Worker schedules: process, sweep, escalate, remind, purge, patterns, forecast] --> Q[Queues] --> ENG
-    ROS[Roster planner + proposal optimiser] --> ASG[(shift_assignment drafts)]
+    ROS[Roster planner + proposal optimizer] --> ASG[(shift_assignment drafts)]
 ```
 
 ## 2. Tech Choices
@@ -78,7 +78,7 @@ flowchart LR
 | Concern | Choice | Rationale |
 | ------- | ------ | --------- |
 | Packages | new `packages/plugins/attendance`, `attendance-ui`, `shifts`, `shifts-ui`; Ever Teams uses the API | Principle I; [platform architecture](../../architecture/business-suite.md) §2.5 names both plugins |
-| Flags | tenant features `FEATURE_ATTENDANCE` (`attendance.features.ts`), `FEATURE_SHIFTS` (`shifts.features.ts`), `defaultEnabled: false`; `@FeatureFlag` + `FeatureFlagGuard` on every controller and resolver; menus read the same codes | default off, pattern of `subscription.features.ts` |
+| Flags | tenant features `FEATURE_ATTENDANCE` (`attendance.features.ts`), `FEATURE_SHIFTS` (`shifts.features.ts`), `defaultEnabled: false`; `FEATURE_TEAMS_PEOPLE_SELF_SERVICE` (`attendance.features.ts`, `defaultEnabled: false`) is the tenant switch the Ever Teams time, attendance and leave screens read from `GET /user/me` and gates no route of these plugins; `@FeatureFlag` + `FeatureFlagGuard` on every controller and resolver; menus read the same codes | default off, pattern of `subscription.features.ts` |
 | Permissions | contributions `attendance.permissions.ts`, `shifts.permissions.ts` with `defaultFor` | pattern of `subscription.permissions.ts`; no seed migration |
 | Settings | `attendance.settings.ts`, `shifts.settings.ts` setting contributions in `tenant_setting` at `ORGANIZATION` scope (the organization level of `organization-setup`); branch overrides are one `attendance.branchOverrides` value (branch id → overridden keys) | no settings table |
 | Runs | scheduled passes are core `job_execution` rows; on-demand processing, roster proposals and demand forecasts are core operations (`ATTENDANCE_PROCESS`, `SHIFTS_ROSTER_PROPOSAL`, `SHIFTS_DEMAND_FORECAST`) with progress; the plugins keep only their results keyed by `operationId` | one run ledger |
@@ -90,8 +90,8 @@ flowchart LR
 | Background work | `@ScheduledJob` + `@QueueWorker` (`@gauzy/scheduler`); schedule-only plugins in the worker; in-process timers without a queue root; advisory lock per organization and job (Postgres advisory, MySQL `GET_LOCK`, in-process on SQLite) | pattern of `task-automations` |
 | Push | realtime plugin channels | Principle VII |
 | Device and kiosk secrets | 32 random bytes, stored as SHA-256 hash + last 4; PINs with the platform password hasher | Principle VI |
-| Location | distance computed on receipt (haversine) against the location's `address` row coordinates, coordinates dropped unless kept by setting; raw fields `@VisibleWith(ATTENDANCE_LOCATION_VIEW)`, each raw read one `AUDIT_EVENT_SINK` event; purge job | spec FR-49 |
-| Optimiser | deterministic greedy fill + bounded local search (swap moves) with a fixed seed per request; explanations built from the constraint ledger of each placement | reproducible, testable, explainable |
+| Location | distance computed on receipt (haversine) against the location's `address` row coordinates, coordinates dropped unless kept by setting; raw fields `@VisibleWith(ATTENDANCE_LOCATION_VIEW)`, each raw read one `AUDIT_EVENT_SINK` event, and no raw read at all while no audit sink is bound (§7, ports); purge job | spec FR-49 |
+| Optimizer | deterministic greedy fill + bounded local search (swap moves) with a fixed seed per request; explanations built from the constraint ledger of each placement | reproducible, testable, explainable |
 | Reports | report definitions registered with `report-builder-and-dashboards` over `attendance_day`, `overtime_statement_line`, `shift_assignment`, `coverage_target` | no hand-built report pages |
 
 ## 3. Data Model
@@ -107,9 +107,9 @@ amounts `numeric(20,6)`, rates `numeric(8,4)`, coordinates `numeric(10,7)`.
 | `work_location` | `name`, `branchId` uuid null, `radiusMeters` int, `networks` text, `timeZone` varchar(64), `isActive`; postal address and coordinates in a core `address` row (owner type `WORK_LOCATION`) | idx `(organizationId, branchId)` |
 | `employee_attendance_profile` | `employeeId` fk unique, `defaultLocationId`, `pinHash` varchar(255), `pinFailures` int, `pinLockedUntil`, `phoneCodeSecret` text (encrypted), `channels` text null (badges are `hr-core-lifecycle` external ids of system `BADGE`) | — |
 | `attendance_device` | `name`, `kind` varchar(12) (`KIOSK`/`TERMINAL`/`INTEGRATION`), `locationId`, `secretHash` varchar(64), `secretLast4`, `lastSeenAt`, `completeThrough` timestamp, `clockOffsetMs` int, `revokedAt` | unique `(secretHash)`; idx `(organizationId, locationId)` |
-| `attendance_check_in` | `employeeId` fk, `occurredAt` timestamp (UTC), `clientTime`, `receivedAt`, `localDate` date, `direction` varchar(12) (`IN`/`OUT`/`BREAK_START`/`BREAK_END`/`UNSPECIFIED`), `resolvedDirection`, `channel` varchar(12) (`WEB`/`PHONE`/`KIOSK`/`DEVICE`/`TIMER`/`IMPORT`/`CORRECTION`/`CALENDAR`), `deviceId`, `timeLogId`, `locationId`, `distanceMeters` int, `inside` bool, `latitude`/`longitude`/`accuracyMeters` null, `networkMatch` bool, `shiftAssignmentId`, `offShift` bool, `excluded` bool, `notes` text (JSON reasons), `attendanceDayId`, `state` varchar(8) (`ACTIVE`/`VOID`), `clockSkewMs` int, `dedupeKey` varchar(120), `clientKey` varchar(160) null, `sourceKey` varchar(120) null | unique `(tenantId, dedupeKey)` (`<employee>:<epochSecond>:<direction>` while active); unique `(tenantId, clientKey)`; unique `(tenantId, sourceKey)` (`timer:<timeLogId>:<IN|OUT>`); idx `(organizationId, employeeId, occurredAt)`, `(organizationId, localDate)`, `(attendanceDayId)` |
+| `attendance_check_in` | `employeeId` fk, `occurredAt` timestamp (UTC), `clientTime`, `receivedAt`, `localDate` date, `direction` varchar(12) (`IN`/`OUT`/`BREAK_START`/`BREAK_END`/`UNSPECIFIED`), `resolvedDirection`, `channel` varchar(12) (`WEB`/`PHONE`/`KIOSK`/`DEVICE`/`TIMER`/`IMPORT`/`CORRECTION`/`CALENDAR`), `deviceId`, `timeLogId`, `locationId`, `distanceMeters` int, `inside` bool, `latitude`/`longitude`/`accuracyMeters` null, `networkMatch` bool, `shiftAssignmentId`, `offShift` bool, `excluded` bool, `notes` text (JSON reasons), `attendanceDayId`, `state` varchar(8) (`ACTIVE`/`VOID`), `clockSkewMs` int, `dedupeKey` varchar(120), `clientKey` varchar(160) null, `sourceKey` varchar(120) null | unique `(tenantId, dedupeKey)` (`<employee>:<epochSecond>:<direction>` while active); unique `(tenantId, clientKey)`; unique `(tenantId, sourceKey)` (`timer:<timeLogId>:<IN\|OUT>`); idx `(organizationId, employeeId, occurredAt)`, `(organizationId, localDate)`, `(attendanceDayId)` |
 | `attendance_day` | `employeeId` fk, `date` date, `shiftAssignmentId` null, `shiftTemplateVersionId` null, `dayKey` varchar(120) (`<employee>:<date>:<assignment or ->`), `locationId`, `dayKind` varchar(12), `firstHalf`, `secondHalf` varchar(12) (`PRESENT`/`ABSENT`/`TIME_OFF`/`HOLIDAY`/`REST_DAY`/`PENDING`), `workMode` varchar(8) (`ON_SITE`/`REMOTE`/`OFF_SITE`), `firstIn`, `lastOut`, `workedMinutes`, `breakMinutes`, `expectedMinutes`, `lateMinutes`, `earlyMinutes`, `overtimeMinutes`, `nightMinutes` int, `holidayWork` bool, `sources` text, `origin` varchar(8) (`AUTO`/`MANUAL`/`REQUEST`), `overridden` bool, `state` varchar(8) (`PENDING`/`FINAL`/`LOCKED`/`VOID`), `timeOffRequestIds` text, `attendanceRequestId`, `lockRef` varchar(80), `computedAt`, `version` int | unique `(tenantId, dayKey)` while not void; idx `(organizationId, date, state)`, `(employeeId, date)` |
-| `attendance_exception` | `employeeId`, `dayId`, `kind` varchar(32), `facts`, `proposal` text, `state` varchar(12) (`OPEN`/`RESOLVED`/`DISMISSED`/`AUTO_ACCEPTED`/`AUTO_CLOSED`), `stage` varchar(10) (`EMPLOYEE`/`APPROVER`), `escalateAt`, `resolvedById`, `resolution` varchar(24), `inboxRef`, `exceptionKey` varchar(160) | unique `(tenantId, exceptionKey)`; idx `(organizationId, state, kind)`, `(employeeId, state)` |
+| `attendance_exception` | `employeeId`, `dayId`, `kind` varchar(32), `facts`, `proposal` text, `state` varchar(16) (`OPEN`/`RESOLVED`/`DISMISSED`/`AUTO_ACCEPTED`/`AUTO_CLOSED`), `stage` varchar(10) (`EMPLOYEE`/`APPROVER`), `escalateAt`, `resolvedById`, `resolution` varchar(24), `inboxRef`, `exceptionKey` varchar(160) | unique `(tenantId, exceptionKey)`; idx `(organizationId, state, kind)`, `(employeeId, state)` |
 | `attendance_request` | `number`, `employeeId`, `kind` varchar(12) (`REMOTE`/`OFF_SITE`/`CORRECTION`), `fromDate`, `toDate`, `halfDate`, `halfPortion` varchar(12), `shiftTemplateId`, `includeHolidays` bool, `reason`, `corrections` text, `fileIds` text, `state` varchar(12) (`DRAFT`/`PENDING`/`APPROVED`/`REJECTED`/`CANCELLED`), `approverEmployeeId`, `approvalRef` (workflow instance or core `request_approval`), `decidedById`, `decidedAt`, `filedById`, `version` | unique `(organizationId, number)`; idx `(employeeId, fromDate, toDate)` |
 | `overtime_type` | `name`, `code`, `multiplierWorkday`, `multiplierRestDay`, `multiplierHoliday`, `multiplierNight`, `dailyMaxMinutes`, `weeklyMaxMinutes`, `rateBasis` varchar(16) (`PAY_ELEMENT`/`EMPLOYEE_RATE`/`FIXED`), `payElementId`, `fixedRate`, `currency` char(3), `requiresPreApproval`, `allowsTimeOff`, `isDefault` | unique `(organizationId, code)` |
 | `overtime_request` | `employeeId`, `date`, `minutes`, `reason`, `projectId`, `taskId`, `state`, `approvalRef`, `approvedMinutes`, `usedMinutes`, `version` | idx `(employeeId, date)` |
@@ -289,7 +289,7 @@ Ports (tokens in contracts; all optional, bound in `apps/api/src/plugin-composit
 | `ATTENDANCE_APPROVALS`, `SHIFTS_APPROVALS` | consumed | `WorkflowApprovalGateway` (default definitions shipped) | a core `request_approval` (types `ATTENDANCE_REQUEST`, `OVERTIME_REQUEST`, `OVERTIME_STATEMENT`, `SHIFT_REQUEST`, `SHIFT_TRADE`) naming the resolved approver, gate registered in `linked-document-decision.gate.ts`, decided on the existing Approvals page; outcome through its settler on the core settler registry of `approval-workflows` (`registerRequestApprovalSettler`) |
 | `ATTENDANCE_CALENDAR_SIGNALS` | consumed | `calendar-and-scheduling` events | core `employee-appointment` rows flagged off-site |
 | `registerCalendarLayers`, `CALENDAR_SHIFTS` → `SHIFTS_SCHEDULE` | provided to `calendar-and-scheduling` | the shift layer (personal feed, calendar views) | no shift feed |
-| `FIELD_ACCESS_POLICY`, `AUDIT_EVENT_SINK` | consumed (core slots) | `access-control-and-security` | `@VisibleWith` alone; no read log |
+| `FIELD_ACCESS_POLICY`, `AUDIT_EVENT_SINK` | consumed (core slots) | `access-control-and-security` | field access by `@VisibleWith` alone; raw coordinates are never read without an audit sink: the raw read endpoint answers `403` (`ATTENDANCE_LOCATION_AUDIT_UNAVAILABLE`), raw fields are left out of every response, and the "keep raw coordinates" setting cannot be turned on (coordinates are dropped at receipt, the default); coordinates kept earlier stay unread and are purged at their retention |
 | `SHIFTS_LABOUR_COST` | consumed | `payroll-setup` cost rate | employee pay rate over organization standard hours |
 | `SHIFTS_DEMAND_SOURCE` (multi) | consumed | adapters for deliveries due, helpdesk queues, work-order operations, appointments | built-in sources: targets, appointments, tracked-time history |
 
@@ -300,7 +300,7 @@ OpenAPI grows additively; Kiota SDKs regenerated after merge. Device integration
 
 | Trigger | When | What it does | Idempotency |
 | ------- | ---- | ------------ | ----------- |
-| `attendance.timer-capture` | CQRS timer events (API) | writes `TIMER` check-ins | `sourceKey` `timer:<timeLogId>:<IN|OUT>` |
+| `attendance.timer-capture` | CQRS timer events (API) | writes `TIMER` check-ins | `sourceKey` `timer:<timeLogId>:<IN\|OUT>` |
 | `attendance.time-log-sweep` | every 5 min per organization | reads `time_log` changed after the watermark (with soft-deleted rows), upserts or voids timer check-ins, queues days | watermark = start of the last succeeded `job_execution` of the sweep for the organization; `sourceKey` |
 | `attendance.process` | every 15 min + on late arrivals; on demand as core operation `ATTENDANCE_PROCESS` | builds pending and reopened days, absences, exceptions; failures written on the check-ins and days (FR-8) | advisory lock per organization; `dayKey`; `exceptionKey` |
 | `attendance.exception-escalation` | hourly | moves exceptions to the approver stage | `stage` transition once |
@@ -311,7 +311,7 @@ OpenAPI grows additively; Kiota SDKs regenerated after merge. Device integration
 | `shifts.assignment-expiry` | daily | sets ended assignments inactive | status transition |
 | `shifts.open-shift-close` | every 15 min | closes open shifts past `closesAt`, expires trades | state transition |
 | `shifts.forecast` | nightly + on demand: core operation `SHIFTS_DEMAND_FORECAST` | demand forecast per location | one live operation per location (aggregate = the location) |
-| `shifts.proposal` | core operation `SHIFTS_ROSTER_PROPOSAL` | optimiser run with progress | one live operation per requester and period |
+| `shifts.proposal` | core operation `SHIFTS_ROSTER_PROPOSAL` | optimizer run with progress | one live operation per requester and period |
 
 The worker loads `AttendanceSchedulePlugin` and `ShiftsSchedulePlugin` (schedules only); the API loads the full plugins
 and the queue workers. Without a queue root the API runs the schedules on in-process timers under the same locks. Every
@@ -370,7 +370,7 @@ Batches of 500 employees per transaction; one writer per day row (`SELECT … FO
   hashed secrets.
 - VII Real-time through the event bus: outbox events; presence and roster channels.
 - VIII i18n and accessibility: `ATTENDANCE.*`, `SHIFTS.*` keys; keyboard roster and kiosk.
-- IX Tests: engine golden cases, resolution across midnight, idempotency, rules, optimiser determinism, ORM parity.
+- IX Tests: engine golden cases, resolution across midnight, idempotency, rules, optimizer determinism, ORM parity.
 - X Behaviour-first spec: implementation details live here.
 - XI Documentation describes our platform only.
 
@@ -382,8 +382,8 @@ Batches of 500 employees per transaction; one writer per day row (`SELECT … FO
 | Timer capture misses edits | Medium | Medium | sweep by `updatedAt` with soft-deleted rows; nightly reconciliation of days with time logs |
 | Check-in volume | Medium | Medium | narrow rows, indexes on `(organizationId, localDate)`, reports from day rows only |
 | Shift resolution errors around midnight and time-zone changes | Medium | High | per-location time zone, golden cases for crossing midnight, back-to-back and daylight-saving days |
-| Optimiser slow or unfair | Medium | Medium | bounded search and time budget; fairness metric visible; nothing applied without acceptance |
-| Location data misuse | Low | High | minimised by default, purge, read log, separate permission |
+| Optimizer slow or unfair | Medium | Medium | bounded search and time budget; fairness metric visible; nothing applied without acceptance |
+| Location data misuse | Low | High | minimized by default, purge, read log, separate permission |
 | Contracts of other plugins (payroll, time off, HR) change | Medium | Medium | optional ports with fallbacks; tolerant consumers |
 
 ## 14. References

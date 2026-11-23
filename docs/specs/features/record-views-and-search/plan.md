@@ -28,13 +28,13 @@ loaded by `apps/api/src/plugins.ts` only when `GAUZY_RECORD_VIEWS_ENABLED` is ex
   additive `recordType` (default `Task`), `layout`, `definition`, `icon`, `isSystem`, `systemKey`, `sourceText`,
   `position` and `offlineAllowed` columns, task columns and `/api/task-views` routes stay as they are, and a task view
   is simply a view whose record type is `Task`. Personal sidebar pins are `favorite` rows (`entity = TaskView`, already
-  favouritable); recents are `employee_recent_visit`; notes are `comment` rows; the record timeline reads
+  favoritable); recents are `employee_recent_visit`; notes are `comment` rows; the record timeline reads
   `activity_log`, `comment` and contributed sources; public share links are `shared_entity`; per-type settings and
   audience defaults are the `views` section of the `recordType.<key>` setting (`custom-fields-and-forms` owns the
   `form` section).
-- **Bulk work** runs as core operations (`RECORD_BULK`) with per-record results through `bulk-executor.service.ts` and a
-  `record_bulk_result` table keyed by `operationId` for undo, the same shape `business-document-engine` uses for its
-  bulk item log.
+- **Bulk work** runs as core operations (`RECORD_BULK`) with per-record results through `bulk-executor.service.ts`:
+  each step of 100 records keeps the outcome of each record in the step's `output` and the values before the change in
+  its `compensationData`, which the undo child operation reads, so no result table is added.
 - **Search** stays the `search` plugin: this plan adds index definitions in code beside the existing ones (comments with
   notes, linked emails, every registered type), hybrid ranking with meaning-based hits, and the Angular search page at the
   link its feature contribution already names (`/pages/search`). Embeddings use the docs plugin's knowledge pipeline
@@ -44,7 +44,7 @@ loaded by `apps/api/src/plugins.ts` only when `GAUZY_RECORD_VIEWS_ENABLED` is ex
 - **UI**: the generic pieces of `task-views-ui` (filter tree, row groups, selection, bulk undo, timeline, shortcut
   registry) move to `packages/ui-core` with re-exports left in `task-views-ui`; the new layouts and the palette are
   embeddables every page can host; the palette is an additional launcher: the Quick Actions dialog keeps its shortcut,
-  customisation and behaviour, and its actions also appear in the palette as commands. There is no React package: these
+  customization and behaviour, and its actions also appear in the palette as commands. There is no React package: these
   screens are the Gauzy web app.
 
 ```mermaid
@@ -56,7 +56,7 @@ flowchart LR
     QS --> QP[[query protocol + translator, both ORMs]]
     QS --> CFQ[[cf. dynamic fields, IWorkflowStateReader]]
     API --> TVS[(core task_view: every saved view)] & FAV[(core favorite, employee_recent_visit, comment, shared_entity, dashboard_widget)]
-    API --> VDB[(record_view_share, record_view_pin, record_view_order, record_tag, record_bulk_result)]
+    API --> VDB[(record_view_share, record_view_pin, record_view_order, record_tag)]
     API --> BULK[core operation RECORD_BULK + BulkExecutor: writers, per-record results, undo] --> REG
     API --> TL[Timeline merger] --> SRC[[RECORD_TIMELINE_SOURCES: comments and notes, activity log, runs, emails, calls]]
     SEARCH[search plugin: definitions, hybrid ranking] --> IDX[(search_document + embedding column)]
@@ -71,9 +71,9 @@ flowchart LR
 | ------- | ------ | --------- |
 | Package | new `packages/plugins/record-views`, `-ui`; extends `search`, `task-views-ui`, core `task_view` and `comment` | Principle I; build on what exists |
 | Query | core query protocol and translator; per-type query schemas beside their controllers | one grammar for REST, GraphQL and views |
-| Saved views | core `task_view` generalised with additive columns; `ViewService` serves every record type; task view routes and their filters on `recordType = 'Task'` unchanged | one view model |
+| Saved views | core `task_view` generalized with additive columns; `ViewService` serves every record type; task view routes and their filters on `recordType = 'Task'` unchanged | one view model |
 | Writes | record writers of the registry (task writer = `TaskUpdateCommand`) | each owner keeps its rules |
-| Bulk | core operation `RECORD_BULK` (inline under 500 records, `202` with `@AcceptedOperation` above), `bulk-executor.service.ts` per-record results, `record_bulk_result` keyed by `operationId` for undo | one bulk shape |
+| Bulk | core operation `RECORD_BULK` (inline under 500 records, `202` with `@AcceptedOperation` above), `bulk-executor.service.ts` per-record results kept in the operation steps (`output`; previous values in `compensationData` for undo) | one bulk shape, no result table |
 | Manual order | task views keep `task_view.manualOrder` (and the existing order route keeps working); views of other types use fractional rank strings in `record_view_order` | one store per view kind |
 | Pins and favourites | personal sidebar pins are core `favorite` rows with `entity = TaskView`; `record_view_pin` holds only audience pins (team, role, organization); a pin to a dashboard creates a core `dashboard_widget` (`options.kind = 'record-view'`, `options.viewId`) on the existing custom dashboards | existing favourites and dashboards |
 | Recents | core `employee_recent_visit` with additive `visits` counter and `userId` (people without an employee record), upserted per person and record (as its service already does), served by the existing `/api/employee-recent-visit` route; the palette reads the newest 200 per person and no row is ever pruned | existing recents store, no data removed |
@@ -103,7 +103,6 @@ dialect; `viewId` always points at a `task_view` row.
 | `record_view_pin` | audience pins only: `viewId`, `audienceType` (`TEAM`, `ROLE`, `ORGANIZATION`), `audienceId`, `position` int, `showCount`, `offline` bool | idx `(tenantId, audienceType, audienceId)` |
 | `record_view_order` | views of record types other than `Task`: `viewId`, `recordId`, `rank` varchar(32) | unique `(viewId, recordId)`; idx `(viewId, rank)` |
 | `record_tag` | `recordType`, `recordId`, `tagId` FK `tag` cascade | unique `(recordType, recordId, tagId)`; idx `(tenantId, tagId)`; only for types without their own tags |
-| `record_bulk_result` | `operationId` (core `operation` of type `RECORD_BULK`), `recordType`, `recordId`, `outcome` (`DONE`, `REFUSED`, `FAILED`, `UNDONE`), `reason` text, `previous` text, `versionAfter` varchar(64) | idx `(operationId, outcome)` |
 | existing `comment` + columns | `kind` varchar(8) default `COMMENT` (`NOTE`), `visibility` varchar(8) default `READERS` (`PRIVATE`), `isPinned` bool default false | + idx `(tenantId, entity, entityId, kind)` |
 | existing `employee_recent_visit` + columns | `visits` int default 1, `userId` uuid null | + unique `(tenantId, employeeId, entity, entityId)` for upserts (and `(tenantId, userId, entity, entityId)` where `employeeId` is null), created only where existing rows hold no duplicate (no row is deleted to make room; elsewhere the service's existing find-then-update path stays) |
 | existing `resource_link` + columns (the record link) | `targetEntity` varchar(50) (a `BaseEntityEnum` value or a registered record type key), `targetEntityId` uuid, `role` varchar(32) (`PRIMARY`, `RELATED` or a feature's role), `linkedBy` varchar(16) (`PERSON`, `SYSTEM`, `MATCH`, `INTAKE`); `url` becomes nullable (a row has a URL or a record target) | + unique (`entity`,`entityId`,`targetEntity`,`targetEntityId`) where `targetEntityId` is not null; idx (`tenantId`,`targetEntity`,`targetEntityId`) |
@@ -111,7 +110,7 @@ dialect; `viewId` always points at a `task_view` row.
 
 Not tables of this plugin, by design: views (`task_view`), personal pins (`favorite`), recents
 (`employee_recent_visit`), notes (`comment`), dashboard pins (`dashboard_widget`), per-type settings and audience
-defaults (`tenant_setting`), bulk run state (`operation`), public links (`shared_entity`), vectors (`search_document`
+defaults (`tenant_setting`), bulk run state and per-record results (`operation`, `operation_step`), public links (`shared_entity`), vectors (`search_document`
 through the core embedding seam), record links (`resource_link`).
 
 **Record links.** The one store of links between two records is the core `resource_link`
@@ -150,12 +149,14 @@ orders.
 **Migrations** (shared core migration helpers of `@gauzy/core`; PostgreSQL, SQLite and MySQL branches; idempotent,
 forward-only, both ORMs):
 
-1. `1791000036100-CreateRecordViewTables` — share, pin, order.
-2. `1791000036110-CreateRecordTagTable` — tag.
-3. `1791000036120-CreateRecordBulkResultTable` — bulk result.
-4. Core: `1791000036300-ExtendTaskViewCommentRecentVisit` — the additive columns and indexes on `task_view`, `comment`
+1. `1791000036100-CreateRecordViewTables` — `record_view_share` (audience shares of a view to users, teams, roles or
+   the organization; public links stay core `shared_entity` rows), `record_view_pin` (audience pins only; personal pins
+   are core `favorite` rows), `record_view_order` (manual order of views of types other than `Task`).
+2. `1791000036110-CreateRecordTagTable` — `record_tag` only, the link from a record of a type without its own tags to an
+   existing core `tag` row; no tag table is created.
+3. Core: `1791000036300-ExtendTaskViewCommentRecentVisit` — the additive columns and indexes on `task_view`, `comment`
    and `employee_recent_visit`.
-5. Core: `1791000036310-AddResourceLinkRecordTarget` — the record target columns and keys of `resource_link`, guarded by
+4. Core: `1791000036310-AddResourceLinkRecordTarget` — the record target columns and keys of `resource_link`, guarded by
    `hasColumn` so that it is safe from any feature that uses it (this one, `email-and-communications`,
    `crm-leads-and-deals`, `telephony`).
 6. Search plugin: `1791000036200-AddSearchDocumentEmbedding` (vector column and index only where the extension exists).
@@ -233,7 +234,7 @@ Mentions in notes notify through the existing comment mention notifications (and
 - **Embeddables `packages/ui-core/shared/src/lib/record-views/`**: `ngx-record-list` (view host: menu, quick filters,
   filter builder, column chooser, group sidebar, bulk toolbar, layout switcher), layouts `ngx-record-table` (virtual
   scroll, inline edit, cell paste, aggregates), `ngx-record-board`, `ngx-record-calendar`, `ngx-record-timeline-layout`
-  (generalised `task-views-ui` timeline), `ngx-record-tree`, `ngx-record-map` (lazy), `ngx-record-gallery`,
+  (generalized `task-views-ui` timeline), `ngx-record-tree`, `ngx-record-map` (lazy), `ngx-record-gallery`,
   `ngx-record-dashboard`; record shell `ngx-record-timeline`, `ngx-record-sidebar`, `ngx-record-pager`; directive
   `ngxRecordHoverCard`; `ngx-unsaved-guard`. Hidden when the routes answer `404`.
 - **Core services `packages/ui-core/core/src/lib/services/`**: `shortcuts/` (registry, recorder, help; moved from
@@ -276,7 +277,7 @@ already used by the docs extractor), both through `spreadsheet-safe`.
 
 | Trigger | When | What it does | Idempotency |
 | ------- | ---- | ------------ | ----------- |
-| core operation `RECORD_BULK` | bulk work (inline under 500, background above) | steps of 100 records through writers via `BulkExecutor`; lease, retry and cancel from the runtime; undo as a child operation within 10 minutes (`undoUntil` in the operation result) | per operation and record result row |
+| core operation `RECORD_BULK` | bulk work (inline under 500, background above) | steps of 100 records through writers via `BulkExecutor`; lease, retry and cancel from the runtime; undo as a child operation within 10 minutes (`undoUntil` in the operation result) | per operation, step and record |
 | search consumer (existing, extended) | record and comment events | for tenants with the feature on, indexes registered types, comments with notes (private notes excluded), linked emails; other tenants are indexed as today | document key per entity and id |
 | core `knowledge-embedding` queue (lifted from the docs pipeline) | indexed text changed, `FEATURE_SEMANTIC_SEARCH` on | embeds changed `search_document` rows through the tenant's provider, rate-limited per tenant; backfill on enable | `embeddingHash` per document and model |
 
@@ -309,7 +310,7 @@ and provider spend.
 
 1. **Phase 1 — Surface what exists** (flag off): contracts and registry parts, query schemas for the first types, the
    core record timeline contract, record links in core and the knowledge-embedding seam moved into core,
-   the generalised `task_view`, generic list with list, table and board layouts, saved views with filters, sort, grouping and
+   the generalized `task_view`, generic list with list, table and board layouts, saved views with filters, sort, grouping and
    columns, the search page over the existing search plugin, the command palette (pages, quick actions, records,
    recents), shortcut registry in `ui-core`, MCP view and search tools.
 2. **Phase 2 — Depth**: calendar, timeline, tree, map, gallery and dashboard layouts; group sidebar and aggregates; bulk
@@ -341,7 +342,7 @@ and provider spend.
 | ---- | ---------- | ------ | ---------- |
 | Generic queries slower than hand-tuned ones | Medium | High | query schemas whitelist indexed fields; estimated counts; benchmarks at one million rows per type |
 | A list source forgets its read scope | Low | High | registry refuses a list source without a scope; e2e per type with a restricted reader |
-| Generalising `task_view` changes the task views page | Medium | Medium | additive nullable columns with defaults; task view routes filter on `recordType = 'Task'`; round-trip specs between both UIs; existing task view suites unchanged |
+| Generalizing `task_view` changes the task views page | Medium | Medium | additive nullable columns with defaults; task view routes filter on `recordType = 'Task'`; round-trip specs between both UIs; existing task view suites unchanged |
 | Live updates flood large lists | Medium | Medium | hints carry ids only; the client re-reads visible ids, debounced per second |
 | Embedding cost and privacy | Medium | Medium | separate feature, tenant's own provider, rate limit, hash to skip unchanged documents; one pipeline shared with documents |
 | Offline data on lost devices | Low | High | opt-in per view, encrypted store, cleared on sign-out, sensitive types excluded |

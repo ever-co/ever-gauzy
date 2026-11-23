@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-16
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_CRM` (shared with `crm-leads-and-deals`, default off); service levels, the sales hierarchy, its visibility, activity capture and coaching are further organization settings, each off by default
 
 ---
@@ -217,7 +217,7 @@ routing** by territory, language, skills and capacity; and everything live on op
 
 ### 3.17 Summaries `(advanced)`
 
-- **FR-97** (advanced) A user can ask on a CRM record "What changed?": the system lists the entries added since the user's last opening, grouped by kind, and adds a short written summary with links to the entries when an AI provider is configured.
+- **FR-97** (advanced) A user can ask on a CRM record "What changed?": the system lists the entries added since the user's previous opening (the one before the current visit), grouped by kind, and adds a short written summary with links to the entries when an AI provider is configured.
 - **FR-98** (advanced) A user can ask for a summary of a linked call or meeting transcript or email thread; the summary is proposed with its sources and written to the timeline as a note only after the user approves it, possibly edited, marked "generated, approved by" the user.
 - **FR-99** The system MUST send record content to the organization's AI provider only when the organization enabled assistants for CRM, and only entries the requesting user may read.
 
@@ -248,7 +248,7 @@ routing** by territory, language, skills and capacity; and everything live on op
 - **Reliability**: events through the event outbox (at least once, deduplicated per consumer); counts and facts rebuildable from their sources; nightly jobs idempotent and catching up after downtime; a missed overdue or warning is raised late, never twice.
 - **Security & privacy**: tenant and organization scoped; every surface applies the record rules; captured content follows the user's mode and the organization's ceiling; private entries visible to their author only; leaving the platform: emails and messages through `email-and-communications`, AI provider calls only when enabled and with readable entries only.
 - **Auditability**: who, when, before and after for owner, assignee, status, policy, rule, hierarchy, capture and settings changes; agent changes carry the agent marker.
-- **Accessibility and localisation**: tabs, avatar popovers, the hierarchy editor and boards are keyboard operable with labelled controls; states carry text, not colour alone; durations and times in the viewer's language and time zone; every string in all shipped locales.
+- **Accessibility and localization**: tabs, avatar popovers, the hierarchy editor and boards are keyboard operable with labelled controls; states carry text, not colour alone; durations and times in the viewer's language and time zone; every string in all shipped locales.
 - **Compatibility**: PostgreSQL, MySQL, SQLite; both ORMs; cloud and self-hosted; each sibling plugin optional with the stated fallback; OpenAPI and SDKs regenerated.
 
 ## 5. Key Entities & Domain Concepts
@@ -296,7 +296,7 @@ routing** by territory, language, skills and capacity; and everything live on op
 - [ ] **AC-15** Capture in "metadata only" links subject, time and participants of a thread with a customer to the person and the open deal; an excluded domain and a private thread never appear; the weekly digest unlinks in one click (advanced: capture; FR-87, FR-88).
 - [ ] **AC-16** Relationship strength shows per colleague with signals; a deal whose decision maker did not answer for 14 days is "going quiet" (advanced: relationships; FR-91, FR-92).
 - [ ] **AC-17** Coaching shows the user's median against the team; a hot lead waiting beyond the owner's median produces exactly one nudge (advanced: coaching; FR-94, FR-95).
-- [ ] **AC-18** "What changed?" lists exactly the entries since the last visit; a proposed call summary writes nothing until approved and is then marked as generated (advanced: summaries; FR-97, FR-98).
+- [ ] **AC-18** "What changed?" lists exactly the entries since the previous visit, also after the current opening cleared the unread mark; a proposed call summary writes nothing until approved and is then marked as generated (advanced: summaries; FR-97, FR-98).
 - [ ] **AC-19** Tracked time on a deal's tasks shows as selling effort; cost appears only to holders of `CRM_SELLING_COST_VIEW` (advanced: effort; FR-26).
 - [ ] **AC-20** The seven report definitions of FR-105 return the expected figures on the demo data set and the system views "Awaiting our reply", "Response due" and "Unassigned" list the right records.
 - [ ] **AC-21** Every MCP tool of FR-101 answers under the caller's rights and its preview writes nothing.

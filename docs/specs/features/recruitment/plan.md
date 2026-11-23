@@ -128,7 +128,7 @@ master at intake, and on a master rename only where it still equals the master's
 existing candidate page never changes the application's source, which reports read, and a rename never undoes a
 person's edit. The candidate's own `rating` and `status` stay editable on the existing pages: `rating` is never written
 by the plugin (the application rating shows on the Applications tab), and `status` is written only when one of the
-candidate's applications changes status. Anonymisation (only with `recruitment.retentionEnabled` on, only for candidates
+candidate's applications changes status. Anonymization (only with `recruitment.retentionEnabled` on, only for candidates
 with at least one application) replaces the user's names and email with placeholders, deletes candidate documents,
 education, experience and files, clears application free text and keeps stage history, sources and dates.
 

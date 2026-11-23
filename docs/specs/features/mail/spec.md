@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-16
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_MAIL` (new tenant feature, default off); the plugin loads only when `GAUZY_MAIL_ENABLED` is exactly `true` and needs the Inbox switches (`GAUZY_INBOX_ENABLED`, `GAUZY_INBOX_EMAIL_ENABLED`); triage with AI is an organization switch, off by default.
 
 ---
@@ -17,7 +17,7 @@
 ## 1. Overview
 
 Behind the Inbox switches the platform already receives mail into personal, team and organization mailboxes on the
-platform domain, on an organization's verified domain or by forwarding, with sanitising, threading, sender checks, a
+platform domain, on an organization's verified domain or by forwarding, with sanitizing, threading, sender checks, a
 quarantine and an attention inbox entry per message; replies and forwards exist in the API only. `email-and-communications`
 adds sending identities, connected outside mailboxes, signatures, templates, a composer on records, a queue with undo
 and scheduled sending, delivery states and the communication log. This feature adds a **mail client** on the same
@@ -48,7 +48,7 @@ conditions**, run on demand over existing mail with a preview; **deliverability 
 - **Given** an auto-reply from 1 to 14 August for contacts only, **when** a contact writes twice, **then** they get one auto-reply in that period; a newsletter gets none.
 - **Given** sender review on, **when** an unknown sender writes, **then** the message waits in "Sender review" until the owner allows the sender (future mail goes to the inbox) or declines them (future mail goes to "Declined senders"); a sender the owner wrote to is allowed automatically.
 - **Given** a message with remote images, **when** it opens, **then** images are blocked with "show images" once or always for this sender, loaded through the platform so the sender learns nothing about the reader.
-- **Given** an invitation from an outside organiser, **when** the message opens, **then** a banner shows the event with the reader's calendar around it and accept, tentative and decline; the answer goes back to the organiser.
+- **Given** an invitation from an outside organizer, **when** the message opens, **then** a banner shows the event with the reader's calendar around it and accept, tentative and decline; the answer goes back to the organizer.
 - **Given** the shared mailbox "support@" not bound to the helpdesk, **when** Ben assigns a thread to himself, **then** colleagues see "Ben" on it; **when** Ana opens it while Ben is replying, **then** she sees "Ben is replying" and, before she sends, that a reply went out meanwhile (advanced: collisions).
 - **Given** triage on, **when** a morning's mail arrives, **then** "Important" lists the three messages from people waiting on an answer first, newsletters are grouped apart, and a long thread shows a three-line summary with a suggested reply ready as a draft (advanced).
 - **Given** a sent proposal with "remind me if no reply in 3 days", **when** nobody answers, **then** the thread comes back to the top of the inbox on day 3 with "no reply yet" (advanced).
@@ -115,7 +115,7 @@ conditions**, run on demand over existing mail with a preview; **deliverability 
 
 ### 3.5 Compose, drafts and sending
 
-- **FR-30** A user can write a new message, reply or forward in a composer that can be docked, minimised and opened full size, with recipient chips for to, cc and bcc, a subject, a rich-text body, emoji, and an identity picker.
+- **FR-30** A user can write a new message, reply or forward in a composer that can be docked, minimized and opened full size, with recipient chips for to, cc and bcc, a subject, a rich-text body, emoji, and an identity picker.
 - **FR-31** The system MUST suggest recipients as the user types from colleagues, contacts and people of the platform the user may read and their own recent correspondents, and turn a mention of a colleague in the body into a recipient when the user confirms.
 - **FR-32** A user can attach uploads, files of `drive` and record documents (a record's PDF in a print template) and inline images; above the identity's size limit the system offers protected links instead.
 - **FR-33** The system MUST save drafts automatically every 5 seconds of typing and on close, list them in Drafts, keep them private to their author unless shared with the mailbox's members, and resume them on any device; a draft is a communication of `email-and-communications` in draft state.
@@ -166,7 +166,7 @@ conditions**, run on demand over existing mail with a preview; **deliverability 
 
 - **FR-64** A reader can save a sender or recipient as a contact or a person of an existing organisation, with name and address from the message.
 - **FR-65** The system MUST offer contacts to connected address books through the address-book sync of `integration-hub`, and contact files through `data-import-export`.
-- **FR-66** The system MUST show calendar invitations, updates and cancellations in a message as a banner with the event, the reader's busy times around it and answers, applied through `calendar-and-scheduling`; replies from other organisers update the event the same way.
+- **FR-66** The system MUST show calendar invitations, updates and cancellations in a message as a banner with the event, the reader's busy times around it and answers, applied through `calendar-and-scheduling`; replies from other organizers update the event the same way.
 - **FR-67** A reader can add an outside event file attached to a message to one of their calendars.
 
 ### 3.11 Shared mailboxes
@@ -233,7 +233,7 @@ conditions**, run on demand over existing mail with a preview; **deliverability 
 - **Reliability**: rules, sender review and auto-replies run once per message and survive restarts; imports and exports resume; server-side changes on connected mailboxes retried and undone on refusal.
 - **Security & privacy**: mailbox access checked on every read, search, export and MCP call; bodies shown only sanitised in an isolated frame; message sources only downloaded; remote content blocked by default and proxied; sender review and rule decisions logged; personal keys scoped and revocable. Leaving the platform: sent messages, forwards and auto-replies to their recipients through the mailbox's sending path; message content to the AI provider only per FR-93; remote content requests from the platform's fetcher.
 - **Auditability**: per FR-97.
-- **Accessibility and localisation**: the three panes and composer operable by keyboard, labelled and announced; colour never the only signal; every string in all shipped locales; dates in the reader's locale and time zone.
+- **Accessibility and localization**: the three panes and composer operable by keyboard, labelled and announced; colour never the only signal; every string in all shipped locales; dates in the reader's locale and time zone.
 - **Compatibility**: PostgreSQL, MySQL, SQLite; both ORMs; cloud and self-hosted (receiving through the deployment's mail paths); works without communications (FR-39), calendar, drive, CRM, helpdesk and AI providers, whose parts are then absent; OpenAPI and SDKs regenerated.
 
 ## 5. Key Entities & Domain Concepts

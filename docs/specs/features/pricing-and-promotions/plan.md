@@ -19,14 +19,16 @@ Two existing plugins carry the feature: `pricing` (`price_list`, `product_price`
 `PromotionService.evaluate` and `simulate`). Conditions stay `rule` rows evaluated by the core rule engine; money moved
 by a discount stays an `adjustment` row.
 
-**One basket pricing path: the cart's chain.** The cart already prices a basket: `CommerceCartService.recalculate`
-calls `resolveLinePrice` (`CART_PRICE_RESOLUTION` = `ProductPriceService`), `syncPromotionAdjustments`
-(`CART_PROMOTION_EVALUATION` = `PromotionService`), `syncTaxLines` (`CART_TAX_CALCULATION` = `TaxRateService`) and
-`TotalsCalculator` (`packages/plugins/cart/src/lib/totals/totals-calculator.ts`; bindings in
-`apps/api/src/plugin-composition.ts`). That chain is the platform's one way to price a basket. The cart gains a
-stateless entry `CommerceCartService.priceBasket(context, lines)` that runs the same steps over an unsaved basket (no
-cart row, nothing written), and `recalculate` calls it before it persists lines, adjustments, tax lines and the totals
-snapshot. `PricingQuoteService` in `pricing` serves every other caller (quotations, orders, invoices, purchase orders,
+**One basket pricing path: the cart's chain.** The cart already prices a basket in two steps. Line prices come from
+`resolveLinePrice` (`CART_PRICE_RESOLUTION` = `ProductPriceService`), called by the operations that set lines: `addLine`
+and `updateLine` directly, `merge` through `assertLinesPriceable` and checkout through `priceForCheckout`. Then
+`CommerceCartService.recalculate` runs `syncPromotionAdjustments` (`CART_PROMOTION_EVALUATION` = `PromotionService`),
+`syncTaxLines` (`CART_TAX_CALCULATION` = `TaxRateService`) and `TotalsCalculator`
+(`packages/plugins/cart/src/lib/totals/totals-calculator.ts`; bindings in `apps/api/src/plugin-composition.ts`); it
+prices no line. That chain is the platform's one way to price a basket. The cart gains a stateless entry
+`CommerceCartService.priceBasket(context, lines)` that runs both steps over an unsaved basket (line pricing first, then
+the steps of `recalculate`; no cart row, nothing written); `recalculate` calls only its second step before it persists
+adjustments, tax lines and the totals snapshot, so cart lines keep the prices their operations set. `PricingQuoteService` in `pricing` serves every other caller (quotations, orders, invoices, purchase orders,
 the register): it builds the context, runs that entry through the port `PRICING_BASKET_CHAIN` (bound in composition to
 the cart's entry), and adds the explanation, nudges and guard results. `TotalsCalculator` stays the cart plugin's (the
 order totals already use it). This spec deepens the engines the chain calls (list chain, units, country, rules, bands,
@@ -101,7 +103,7 @@ All extend `TenantOrganizationBaseEntity` (soft delete where noted).
 
 | Table | Columns | Keys |
 |---|---|---|
-| `price_guard_override` | `documentType` varchar(48), `documentId` uuid, `lineId` uuid, `guard` varchar(24) (`MAX_DISCOUNT`, `MIN_MARGIN`, `COST_FLOOR`, `RULE_LOCK`, `RATE_LOCK`), `expected`, `actual` numeric(20,6), `currency`, `userId`, `reason` text | index `(organizationId, createdAt)`; unique `(documentId, lineId, guard)` |
+| `price_guard_override` | `documentType` varchar(48), `documentId` uuid, `lineId` uuid, `guard` varchar(24) (`MAX_DISCOUNT`, `MIN_MARGIN`, `COST_FLOOR`, `RULE_LOCK`, `RATE_LOCK`), `expected`, `actual` numeric(20,6), `currency`, `userId`, `reason` text, `valuesHash` char(64) (SHA-256 of `expected`, `actual` and `currency`) | index `(organizationId, createdAt)`, `(documentId, lineId, guard)`; unique `(documentId, lineId, guard, valuesHash)`: each decision is its own append-only row bound to the values it approved, a line changed to other values needs a new override, and the guard honors only an override whose values match the line |
 | `price_proposal` | `goal` text (JSON), `draftPriceListId` uuid FK set null, `impactOperationId` uuid null (the `PRICING_IMPACT` operation), `operationId` uuid null (the `PRICING_PROPOSAL` operation that built it), `status` varchar(12) (`PROPOSED`, `ACTIVATED`, `DISCARDED`), `requestedById` uuid, `viaAgent` boolean, `summary` text | index `(organizationId, status)` |
 | `margin_leak_finding` | `documentType` varchar(48), `documentId`, `lineId`, `variantId` uuid, `kind` varchar(24) (`BELOW_COST`, `BELOW_MIN_MARGIN`, `ABOVE_MAX_DISCOUNT`, `STACKED_BEYOND_CAP`), `expected`, `actual` numeric(20,6), `currency`, `promotionIds` text (JSON), `status` varchar(16) (`OPEN`, `ACKNOWLEDGED`, `RESOLVED`), `note` text, `detectedAt` | unique `(organizationId, documentType, lineId, kind)` |
 
@@ -198,7 +200,7 @@ price services (`FEATURE_PRICE_TIERS`, `FEATURE_MULTI_CURRENCY`, `400` with the 
 | POST | `/pricing/explain` | `PRODUCT_PRICES_VIEW` | one line + context → `IPriceExplanation` | New |
 | POST | `/pricing/compare` | `PRICE_LISTS_SIMULATE` | basket + draft list or rule → per-line live vs draft | New |
 | POST | `/pricing/check-lines` | `PRODUCT_PRICES_VIEW` | `IPriceGuardCheck` → `IPriceGuardResult[]` | New |
-| POST | `/pricing/overrides` | `PRICING_GUARD_OVERRIDE` | `IPriceGuardOverride` (idempotent per line and guard) | New |
+| POST | `/pricing/overrides` | `PRICING_GUARD_OVERRIDE` | `IPriceGuardOverride` (idempotent per line, guard and approved values) | New |
 | POST | `/price-lists/:id/copy` | `PRICE_LISTS_CREATE` | `{ withPrices, percent?, roundTo? }` | New |
 | POST | `/price-lists/:id/impact`, `/promotions/:id/impact` | `PRICING_INSIGHTS_VIEW` | `{ fromDate, toDate }` → result inline, or `202` with the `PRICING_IMPACT` operation (read at `/api/operations/:id`) | New |
 | GET | `/product-prices/history?variantId=&priceListId=` | `PRODUCT_PRICES_VIEW` | `IPriceChange[]` (cursor) over the activity log | New |
@@ -262,6 +264,11 @@ of type `PRICING_IMPACT`, posted to the requester's Inbox.
 | `list_promotions`, `create_promotion` (`promotions.ts`) | filters / promotion with `preview` | promotions / preview |
 | `generate_coupon_batch` | promotion id, count, format, `preview` | batch summary |
 | `validate_coupon`, `get_gift_card_balance` | code, context / code, pin | validity / balance |
+
+Rollout phase 1 tools call existing routes only: `simulate_price_list` over `POST /price-lists/:id/simulate`,
+`list_promotions`, `validate_coupon` and `get_gift_card_balance` over the promotion and gift-card routes. `price_basket`
+(over `/pricing/quote`) arrives with rollout phase 2 and `explain_price` (over `/pricing/explain`) with phase 3, each
+gated by `FEATURE_PRICING_RULES` like its route.
 
 OpenAPI regenerated; SDK regeneration noted. Price uploads through the existing bulk endpoint; mapped imports are
 `data-import-export`'s.

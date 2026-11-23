@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-15
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_REGIONAL_PACKS` (default off) for country packs; `FEATURE_E_INVOICING` (default off) for structured electronic invoices and code lists
 
 ---
@@ -291,7 +291,7 @@ cloned.
   leaving the platform is the structured invoice (party names, addresses, tax numbers, lines) to the chosen
   network or recipient, listed per transport.
 - **Observability and audit**: run history, content ledger, transmission events, inbound logs, self-test results.
-- **Accessibility and localisation**: all screens keyboard-operable; rule messages, box labels and pack names in
+- **Accessibility and localization**: all screens keyboard-operable; rule messages, box labels and pack names in
   the user's language with the legal term of the country beside it.
 - **Compatibility**: PostgreSQL, MySQL and SQLite; both ORMs; cloud and self-hosted; additive API and SDK changes.
 

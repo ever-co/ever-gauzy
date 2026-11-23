@@ -45,7 +45,9 @@
       `database/migrations/1791000029150-CreateAdminOpsTables.ts`,
       `packages/core/src/lib/database/migrations/1791000029900-CreateUsageCounter.ts`,
       `packages/core/src/lib/stats/usage-counter.entity.ts`, `packages/core/src/lib/stats/usage-meter.service.ts`. Test:
-      migration specs; repository smoke specs; meter adds and reads per subject, metric and window.
+      migration specs; repository smoke specs; meter adds and reads per subject, metric and window; concurrent increments
+      of a tenant-wide counter (no organization, no subject) end in one row holding their sum on PostgreSQL, MySQL and
+      SQLite.
 - [ ] **T6**. Default health thresholds seed; default grants through `defaultFor` on the permission contributions (no
       permission seed). Files: `packages/plugins/admin-console/src/lib/database/migrations/1791000029160-SeedAdminDefaultThresholds.ts`,
       `admin-console.permissions.ts`. Test: grants for the default roles on a new tenant and after the permission
@@ -164,11 +166,19 @@
       the console is switched on.
 - [ ] **T31**. Tenant backups as core operation `admin.backup`: backup-mode archive on `repositories.service.ts`
       registry, streaming, manifest, encryption, target port, rotation, pin, download link; policy from the
-      `admin.backup.*` settings. Test: round trip on SQLite; manifest mismatch refused; resumed after a worker restart.
+      `admin.backup.*` settings; with `admin.backup.includeFiles` on, the file step that reads every file the tenant's
+      rows reference through its core `FileStorage` provider into `files/<provider>/<key>` with one manifest entry per
+      file (plan §2 Backups). Files: `packages/plugins/admin-console/src/lib/backups/admin-backup.operation.ts`,
+      `backups/backup-file-step.ts`, `backups/backup-manifest.ts`. Test: round trip on SQLite; manifest mismatch refused;
+      resumed after a worker restart; a backup with files lists each file with size and checksum, and a file removed
+      from storage before the backup fails verification.
 - [ ] **T32**. Restore as core operation `admin.restore`: new tenant, same tenant with safety backup, read-only window
-      and roll-back, release checks, forward migration. Files:
+      and roll-back, release checks, forward migration; the files of a backup with files written back through the target
+      tenant's storage provider (organization mode: the files its records reference) and verified by checksum. Files:
       `packages/plugins/admin-console/src/lib/backups/admin-restore.operation.ts`, `backups/admin-restores.controller.ts`,
-      `backups/release-compatibility.ts`. Test: PostgreSQL backup restored on SQLite; forced failure rolls back.
+      `backups/release-compatibility.ts`, `backups/restore-file-step.ts`. Test: PostgreSQL backup restored on SQLite;
+      forced failure rolls back; a restore into a new tenant with another storage provider serves every file of the
+      backup with its checksum, and an altered file in the archive fails verification.
 - [ ] **T33** (parallel). Installation backups: SQLite consistent copy, dump command behind
       `GAUZY_ADMIN_DB_DUMP_ENABLED`, signed status endpoint. Files:
       `packages/plugins/admin-console/src/lib/backups/installation-backup.service.ts`,
@@ -206,11 +216,24 @@
       telemetry, translations) with its count of open problems and a link, and the age of the last good backup. Files:
       `packages/plugins/admin-console/src/lib/overview/admin-overview.service.ts`, `overview/admin-overview.controller.ts`.
       Test: counts per card on seeded problems; an installation card is absent for a non-operator.
-- [ ] **T59**. Console request rules: every console change written to the platform audit (who, when, before, after,
-      scope), `version` on updates answering `409` when stale, `Idempotency-Key` on creating and running routes, cursor
-      pagination on lists. Files: `packages/plugins/admin-console/src/lib/common/admin-audit.interceptor.ts`,
-      `common/admin-version.guard.ts`, `common/admin-pagination.ts`. Test: a change records before and after; a stale
-      version gets `409`; a repeated key returns the first result.
+- [ ] **T59**. Console request rules, audit: every console change written to the platform audit (who, when, before,
+      after, scope). Files: `packages/plugins/admin-console/src/lib/common/admin-audit.interceptor.ts`. Test:
+      `common/admin-audit.interceptor.spec.ts`: a change records who, when, scope, before and after; a read records
+      nothing.
+- [ ] **T60**. Console request rules, version: `version` on updates of the `/api/admin` routes answering `409` when
+      stale, through the core `VersionGuard` (`packages/core/src/lib/concurrency/version.guard.ts`); on routes that exist
+      today `version` is optional and checked only when sent. Files:
+      `packages/plugins/admin-console/src/lib/common/admin-version.guard.ts`. Test: `common/admin-version.guard.spec.ts`:
+      a stale version gets `409`; on the existing routes a request without `version` behaves as today.
+- [ ] **T61**. Console request rules, idempotency: `Idempotency-Key` on the creating and running routes of `/api/admin`
+      through the core `@Idempotent` decorator (`packages/core/src/lib/idempotency/idempotent.decorator.ts`); on the
+      existing `/invite/emails` route the key is optional and used only when sent. Files:
+      `packages/plugins/admin-console/src/lib/common/admin-idempotency.ts`. Test: `common/admin-idempotency.spec.ts`: a
+      repeated key returns the first result; a request to an existing route without the key behaves as today.
+- [ ] **T62**. Console request rules, pagination: cursor pagination on the lists of `/api/admin`; the existing user list
+      routes keep their current paging and read a cursor only when one is sent. Files:
+      `packages/plugins/admin-console/src/lib/common/admin-pagination.ts`. Test: `common/admin-pagination.spec.ts`: pages
+      follow the cursor without gaps or repeats; an existing user list request without a cursor answers as today.
 
 ## Phase 3 — UI surfaces
 
@@ -317,7 +340,7 @@ Every functional requirement of `spec.md` §3 and the tasks that implement it; e
 | --- | --- | --- |
 | FR-1 | §3.1 Console and scope | T2, T7, T39 |
 | FR-2 | §3.1 Console and scope | T40, T58 |
-| FR-3 | §3.1 Console and scope | T59 |
+| FR-3 | §3.1 Console and scope | T59, T60 |
 | FR-4 | §3.1 Console and scope | T38 |
 | FR-5 | §3.1 Console and scope | T2, T43 |
 | FR-6–FR-7 | §3.2 Setup wizard | T17, T42 |
@@ -405,7 +428,7 @@ Every functional requirement of `spec.md` §3 and the tasks that implement it; e
 | FR-109–FR-111 | §3.14 Configuration snapshots, assistant, API and compatibility | T54 |
 | FR-112 | §3.14 Configuration snapshots, assistant, API and compatibility | T53 |
 | FR-113 | §3.14 Configuration snapshots, assistant, API and compatibility | T53 |
-| FR-114 | §3.14 Configuration snapshots, assistant, API and compatibility | T18, T36, T51, T54, T59 |
+| FR-114 | §3.14 Configuration snapshots, assistant, API and compatibility | T18, T36, T51, T54, T59, T61, T62 |
 | FR-115 | §3.14 Configuration snapshots, assistant, API and compatibility | T48 |
 | FR-116 | §3.14 Configuration snapshots, assistant, API and compatibility | T38 |
 | FR-117 | §3.14 Configuration snapshots, assistant, API and compatibility | T3–T5, T31 |

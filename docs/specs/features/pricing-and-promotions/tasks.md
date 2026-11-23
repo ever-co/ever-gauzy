@@ -102,8 +102,9 @@
   `pm/promotion/cumulative-conditions.spec.ts` incl. the 150 ms budget. [2]
 - [ ] **T15**. Slabs: `kind = SLAB` validation (overlap refusal unless stacking), party conditions. Files:
   `pm/promotion/{slab.validator.ts,promotion.service.ts}`. Test: `pm/promotion/slab.validator.spec.ts`: overlapping bands refused with `BAND_OVERLAP` unless stacking. [2]
-- [ ] **T16**. The cart's stateless entry `CommerceCartService.priceBasket(context, lines)` (the steps of
-  `recalculate` over an unsaved basket; `recalculate` delegates to it) and `PricingQuoteService` + `/pricing/quote`
+- [ ] **T16**. The cart's stateless entry `CommerceCartService.priceBasket(context, lines)` (line pricing through
+  `resolveLinePrice`, then the steps of `recalculate`, over an unsaved basket; `recalculate` delegates only its own steps
+  to it, so saved lines keep their prices) and `PricingQuoteService` + `/pricing/quote`
   over it through `PRICING_BASKET_CHAIN` (free lines, ignore flag refusing coupons, notices, explanation hooks);
   GraphQL `pricingQuote`. Files: `packages/plugins/cart/src/lib/commerce-cart/commerce-cart.service.ts`,
   `pr/quote/{pricing-quote.service.ts,pricing-quote.controller.ts,dto/}`, `pr/graphql/resolvers/pricing-quote.resolver.ts`.
@@ -120,7 +121,8 @@
   default. Files: `pr/guards/{price-guard.service.ts,price-guard.controller.ts,rate-stickiness.ts,dto/}`,
   `pr/price-guard-override/price-guard-override.service.ts`. Test: `pr/guards/price-guard.service.spec.ts` per guard
   and action, and a spec that a document saves and confirms as before with the defaults; an override records user,
-  guard, line and values. [2]
+  guard, line and values; a second override of the same line and guard at another price records a second row and the
+  first stays; the same override sent twice records one. [2]
 - [ ] **T19**. Document price writes (create missing, update by policy) behind the setting, with the price history
   source `DOCUMENT`. Files: `pr/product-price/document-price-writes.service.ts`. Test:
   `pr/product-price/document-price-writes.service.spec.ts`: off by default; each policy (always, higher, lower) writes and names the document. [2]
@@ -161,12 +163,15 @@
 
 ## Phase 4 — MCP, SDKs, integrations, docs
 
-- [ ] **T28**. MCP `packages/mcp-server/src/lib/tools/pricing.ts` (`price_basket`, `explain_price`,
-  `simulate_price_list`) and `promotions.ts` (`list_promotions`, `validate_coupon`, `get_gift_card_balance`);
+- [ ] **T28**. MCP `packages/mcp-server/src/lib/tools/pricing.ts` (`simulate_price_list` over the existing
+  `POST /price-lists/:id/simulate`) and `promotions.ts` (`list_promotions`, `validate_coupon`, `get_gift_card_balance`);
   registered. Files: `packages/mcp-server/src/lib/tools/{pricing.ts,promotions.ts,register-all-tools.ts}`. Test:
   `packages/mcp-server/src/lib/tools/pricing.spec.ts` and `promotions.spec.ts` schema tests. [1]
 - [ ] **T29**. OpenAPI regenerated; SDK regeneration noted. Files: `packages/core/src/lib/bootstrap/swagger.ts`. Test: OpenAPI diff is additive. [2]
 - [ ] **T30**. User docs (price lists, rules, slabs, coupons, guards) and the `docs/specs/README.md` row. Files: `docs/specs/README.md`. Test: docs build. [2]
+- [ ] **T42**. MCP `price_basket` over `/pricing/quote` of T16, gated by `FEATURE_PRICING_RULES` like its route.
+  Files: `packages/mcp-server/src/lib/tools/pricing.ts`. Test: `packages/mcp-server/src/lib/tools/pricing.spec.ts`:
+  schema test; with `FEATURE_PRICING_RULES` off the tool is not offered. [2]
 
 ## Phase 5 — Advanced capabilities (rollout phase 3)
 
@@ -200,7 +205,8 @@
 - [ ] **T38**. Real-time hints for `pricing.*` and `promotion.promotion.changed` (registers, carts, open documents).
   Files: `pr/events/pricing-realtime.publisher.ts`, `pm/events/promotion-realtime.publisher.ts`. Test:
   `apps/gauzy-e2e` test of the 2-second update.
-- [ ] **T39**. MCP writing and insight tools `replay_price_impact`, `propose_price_changes`, `list_margin_leaks`,
+- [ ] **T39**. MCP writing and insight tools `explain_price` (over `/pricing/explain` of T31, gated by
+  `FEATURE_PRICING_RULES`), `replay_price_impact`, `propose_price_changes`, `list_margin_leaks`,
   `create_promotion`, `generate_coupon_batch` with `preview`. Files: `packages/mcp-server/src/lib/tools/{pricing.ts,promotions.ts}`.
   Test: `packages/mcp-server/src/lib/tools/pricing.spec.ts`: a preview writes nothing.
 - [ ] **T40**. Spec status `Implemented`; checklist rows updated. Files: `docs/specs/features/pricing-and-promotions/spec.md`. Test: every acceptance criterion of `spec.md` §7 demonstrated before the status changes.
@@ -250,7 +256,7 @@ Every functional requirement of `spec.md` §3 and the tasks that implement it; e
 | FR-48–FR-49 | §3.10 Agents, insights and real time | T37 |
 | FR-50 | §3.10 Agents, insights and real time | T38 |
 | FR-51 | §3.10 Agents, insights and real time | T21 |
-| FR-52 | §3.10 Agents, insights and real time | T28, T39 |
+| FR-52 | §3.10 Agents, insights and real time | T28, T39, T42 |
 | FR-53 | §3.11 Reports | T20, T37 |
 
 ## Definition of Done

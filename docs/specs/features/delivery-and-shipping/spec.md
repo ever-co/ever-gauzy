@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-15
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_FULFILLMENT` and `FEATURE_RETURNS` (existing, default off; now read by every REST route too) and `FEATURE_DELIVERY_TRIPS` (new, default off)
 
 ---
@@ -114,13 +114,13 @@ Advanced capabilities: **carrier adapters as plugins** with rate shopping across
 - **FR-45** A driver MUST be an employee or a person of a transport vendor, with licence number, categories and validity dates (valid-to after valid-from); an inactive driver, or one without a licence valid on the trip date, cannot drive a trip that is made ready.
 - **FR-46** A vehicle MUST be an equipment item marked as a vehicle with registration, payload weight and volume, insurance and inspection validity and odometer readings; a trip over payload or volume is warned; expired insurance or inspection refuses making the trip ready.
 - **FR-47** A trip MUST move draft → ready (driver, vehicle and stops confirmed) → on route → completed, or be cancelled before it leaves; leaving needs a driver and a vehicle; completing needs every stop delivered, failed or skipped.
-- **FR-48** (advanced) Route planning MUST order unlocked stops to minimise the round trip from the warehouse, keep locked stops in place, respect customer time windows, and give each stop its distance, arrival and departure (average speed and service minutes per stop), with the same route planner as field-service dispatch (`maintenance-and-field-service`); a road-distance provider MAY supply road distances; stops without a position keep their manual order and are flagged.
+- **FR-48** (advanced) Route planning MUST order unlocked stops to minimize the round trip from the warehouse, keep locked stops in place, respect customer time windows, and give each stop its distance, arrival and departure (average speed and service minutes per stop), with the same route planner as field-service dispatch (`maintenance-and-field-service`); a road-distance provider MAY supply road distances; stops without a position keep their manual order and are flagged.
 - **FR-49** A user can reorder, lock and re-plan stops and mark a stop visited; planned and actual distance and duration are both kept.
 - **FR-50** (advanced) While a trip is on route the driver's client MUST send positions (only then); arrival times are recomputed from the position and the remaining stops plus the organization's stop delay minutes, and customers receive "on the way" and "arriving soon" notices with the live tracking link.
 
 ### 3.7 Dispatch notices and the tracking page
 
-- **FR-51** Starting a trip or shipping a consignment MUST send each customer a dispatch notice (email, and a text message when communications are configured) from the organization's template, optionally with the delivery document attached; starting is refused while the template is missing, naming it.
+- **FR-51** Where the organization sends shipment notices (FR-22), starting a trip or shipping a consignment MUST send each customer who has not opted out a dispatch notice (email, and a text message when communications are configured) from the organization's template, optionally with the delivery document attached; with that setting on, starting is refused while the template is missing, naming it. With the setting off, trips and consignments send nothing to the customer, like any other shipping.
 - **FR-52** A public tracking page (token link in notices) MUST show status, timeline, expected arrival, packages and, once delivered, the recipient name and time; links are revocable and expire 90 days after delivery.
 - **FR-53** Each customer's notification preference (none, email, text) per event (dispatched, out for delivery, delivered, exception) MUST be honoured.
 
@@ -182,7 +182,7 @@ Advanced capabilities: **carrier adapters as plugins** with rate shopping across
 - **Reliability**: tracking pushes are acknowledged after storage, idempotent per carrier event; polling catches up after downtime; proofs and positions use client keys; events through the outbox.
 - **Security & privacy**: carrier credentials encrypted, never returned; pushes verified per adapter; public tracking and return links carry random tokens stored hashed; driver positions are kept only during trips and deleted after 30 days; signatures and photos are personal data, exported and erased with the contact (the delivery record stays). Leaving the platform: addresses, package data and contact phone or email sent to the chosen carrier; addresses to the configured geocoding and road-distance providers; notices to customers.
 - **Offline**: proof capture, stop status and positions queue on the device and sync in order with capture times.
-- **Accessibility and localisation**: keyboard operable lists and packing station, screen-reader labels, signature with typed alternative; every string in all locales; notices and documents in the customer's language; weights and dimensions in the organization's units.
+- **Accessibility and localization**: keyboard operable lists and packing station, screen-reader labels, signature with typed alternative; every string in all locales; notices and documents in the customer's language; weights and dimensions in the organization's units.
 - **Compatibility**: PostgreSQL, MySQL, SQLite; both ORMs; cloud and self-hosted; OpenAPI and SDKs regenerated.
 
 ## 5. Key Entities & Domain Concepts
@@ -232,7 +232,7 @@ Advanced capabilities: **carrier adapters as plugins** with rate shopping across
 - [ ] **AC-14** Works on PostgreSQL, MySQL and SQLite with both ORMs; with the flags off nothing changes (FR-3; §4).
 - [ ] **AC-15** All functional requirements have a passing test (§3).
 - [ ] **AC-16** For a tenant whose feature the release switched on, the existing create, ship, cancel, receive and refund calls behave as before: no customer notice, no packing requirement, no voiding of pack slips not made by packing, and the caller's restock location, restock choice and refund kept, until an organization setting says otherwise (FR-2).
-- [ ] **AC-17** With the feature off, and with the feature on and default settings, every existing page, route, field, permission and report behaves as today, apart from the existing feature codes that now guard their routes, which the release switches on for every tenant holding their data (FR-1, FR-2).
+- [ ] **AC-17** With the feature off, and with the feature on and default settings, every existing page, route, field, permission and report behaves as today, apart from the feature codes that guard their routes, which are switched on for every tenant that holds their data (FR-1, FR-2).
 
 ## 8. Open Questions
 

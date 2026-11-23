@@ -125,7 +125,8 @@
 - [ ] **T21**. Costing `shop-floor/costing/work-order-cost.ts` (pure: actual, absorbed, variances by kind) and close facts
   for `document.work_order.closed`; `LEDGER_POSTING_SOURCE` and `LEDGER_ACCOUNT_RESOLVER` answers. Files:
   `shop-floor/costing/work-order-close-facts.ts`, `shop-floor/costing/costing.controller.ts`. Test:
-  `shop-floor/costing/work-order-cost.spec.ts` (worked examples; facts balance).
+  `shop-floor/costing/work-order-cost.spec.ts` (worked examples; facts balance; two outputs of 50 of an order of 100
+  with 100 of cost and no new cost are valued at 50 each, and output values never sum above the order's cost).
 - [ ] **T22**. Card actions controller (start, pause, resume, complete, entries, steps) with roster check, parallel
   capacity, inspection gate through `MANUFACTURING_QUALITY`, corrective cards and assignment; every shop floor
   controller carries the feature guard of `manufacturing-bom-and-routing` T2. Files:
@@ -249,8 +250,9 @@
   `automation-and-notifications` T58, `verifyWebhookSignature`,
   dedupe, rate limit, async apply in machine-time order. Files: `shop-floor/signals/signal-source.service.ts`,
   `shop-floor/signals/signal-source.controller.ts`, `shop-floor/signals/signal-receiver.controller.ts`,
-  `shop-floor/signals/signal-apply.worker.ts`. Test: `shop-floor/signals/signal-receiver.e2e-spec.ts` (401, 404,
-  duplicate no-op, accepted batch).
+  `shop-floor/signals/signal-apply.worker.ts`. Test: `shop-floor/signals/signal-receiver.e2e-spec.ts` (401 for a
+  missing, wrong or stale signature on a source with a signature secret; a source whose secret was removed accepted by
+  its address; 404, duplicate no-op, accepted batch).
 - [ ] **T48**. Signal-driven downtime and counts: stop code mapping, to-confirm state, running closes, count proposals on
   the card. Files: `shop-floor/signals/signal-downtime.service.ts`, `shop-floor/signals/signal-counts.service.ts`. Test:
   `shop-floor/signals/signal-downtime.service.spec.ts` (the scenario of spec 2.1).

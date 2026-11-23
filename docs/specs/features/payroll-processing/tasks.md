@@ -55,7 +55,7 @@
       `pay-withholding-period.entity.ts`, `pay-arrear.entity.ts`, `pay-arrear-line.entity.ts`,
       `end-of-service-payout.entity.ts`, `earned-pay-request.entity.ts`, `pay-run-finding.entity.ts`,
       `pay-run-review.entity.ts`, `payroll-what-if.entity.ts`, `payroll-what-if-result.entity.ts`,
-      `agent-usage-cost.entity.ts`, `pay-run-payment.entity.ts` (all in `pp/entities/`). Test: migration specs.
+      `pay-run-payment.entity.ts` (all in `pp/entities/`). Test: migration specs.
 - [ ] **T6**. `FEATURE_PAYROLL_EARNED_PAY` in `payroll.features.ts`; five keys in `payroll.permissions.ts` with
       `defaultFor` (plan §9); `payroll.processing.*` and `payroll.runApprovers` keys in `payroll.settings.ts`; tables
       registered with export, import and factory reset. Files: `packages/plugins/payroll/src/lib/payroll.features.ts`,
@@ -152,10 +152,11 @@
       earned-pay requests, for saved views, custom fields, approval definitions and automation triggers. Files:
       `pp/payroll-processing.record-types.ts`. Test: `payroll-processing.record-types.spec.ts`: each type is listed with
       its list source and an automation trigger fires on payslip confirmation.
-- [ ] **T56**. Payslip privacy: `@VisibleWith` on payslip and line amounts (payroll permission holders and the employee
-      only; managers none by default), an `AUDIT_EVENT_SINK` event for every read of another person's payslip. Files:
+- [ ] **T56**. Payslip privacy: `@VisibleWith` on payslip and line amounts (holders of `ORG_PAYROLL_VIEW`, who read
+      the existing payroll runs today, and the employee only; a manager without that permission sees no amounts, as today), an `AUDIT_EVENT_SINK` event for every read of another person's payslip. Files:
       `pp/entities/payslip.entity.ts`, `pp/entities/payslip-line.entity.ts`, `pp/payslip/payslip-access.logger.ts`.
-      Test: `payslip-access.spec.ts`: a manager reads no amounts; an officer's read of a colleague's payslip logs one
+      Test: `payslip-access.spec.ts`: a manager without `ORG_PAYROLL_VIEW` reads no amounts; a role given
+      `ORG_PAYROLL_VIEW` reads the amounts of the existing payroll run routes as today; an officer's read of a colleague's payslip logs one
       event; the employee's own read logs none.
 - [ ] **T57**. Change history: who, when, before and after for every change to runs, payslip states, additional pay,
       withholdings, arrears, corrections, payouts and earned-pay requests, written to the core activity log from the
@@ -266,8 +267,11 @@
       `pp/earned-pay/earned-pay.controller.ts`. Test: draws above the cap refused; recovery equals draws.
 - [ ] **T48** (parallel). Consolidated overview across organizations and currencies. Files:
       `pp/overview/payroll-overview.service.ts`. Test: only the reader's organizations; conversion at the period rate.
-- [ ] **T49** (parallel). Agent usage cost and agent employees section. Files: `pp/agents/agent-usage-cost.service.ts`,
-      `ui/runs/agent-employees.component.ts`. Test: agents never in payslips, register lines or bank files.
+- [ ] **T49** (parallel). Agent usage cost and agent employees section: the cost per agent employee and project for the
+      run's period is read through `PAYROLL_AGENT_USAGE` from the usage record of `ai-agents-and-assistants`; no table of
+      its own. Files: `pp/agents/agent-usage-cost.service.ts`, `ui/runs/agent-employees.component.ts`. Test: agents never
+      in payslips, register lines or bank files; the section shows the usage record's cost for the period; with the
+      port unbound the section lists the agents without cost.
 - [ ] **T50** (parallel). Amounts-owed report paid column: core report service reads the optional
       `AMOUNTS_OWED_PAID_SOURCE` and the core report page (`apps/gauzy/src/app/pages/reports/amounts-owed-report`)
       shows the column when the response carries it; payroll provides the source. Files also:

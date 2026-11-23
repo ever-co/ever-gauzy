@@ -125,7 +125,6 @@ request and the preparer rule of FR-9 hold together.
 | `pay_run_finding` | `payrollRunId`, `payslipId`, `employeeId`, `kind` varchar(32), `severity` (`INFO`/`WARN`/`BLOCK`), `message`, `facts` text, `groupKey`, `acknowledgedById`, `acknowledgedAt`, `note` | idx `(payrollRunId, severity)` |
 | `pay_run_review` | `payrollRunId`, `summary` text, `groups` text, `proposals` text (JSON previews), `createdById`, `actorType`, `aiRunId` uuid null (the run of `ai-agents-and-assistants`, which holds provider, model and usage) | idx `(payrollRunId)` |
 | `payroll_what_if`, `payroll_what_if_result` | what-if: `name`, `payGroupId`, `payPeriodId`, `changes` text, `baseRunId`, `operationId` uuid null (its latest `PAYROLL_WHAT_IF` operation), `pinned` bool, `expiresAt`; result: `whatIfId` fk cascade, `employeeId`, `payslip` text (JSON), `difference` text | idx `(organizationId, expiresAt)`; unique `(whatIfId, employeeId)` |
-| `agent_usage_cost` | `payrollRunId`, `employeeId`, `amount`, `currency`, `allocation` text (usage cost read from `ai-agents-and-assistants` for the run's period, kept with the run) | unique `(payrollRunId, employeeId)` |
 | `pay_run_payment` | `payslipId`, `kind` (`NET`/`RELEASE`/`END_OF_SERVICE`/`EARNED_PAY`), `amount`, `currency`, `payableRef`, `orderRef`, `orderLineRef`, `state` (`HANDED_OFF`/`HELD`/`PAID`/`FAILED`/`WITHDRAWN`), `holdReason`, `failure`, `handOffKey` varchar(120) | unique `(tenantId, handOffKey)`; idx `(payslipId)`, `(orderRef)` |
 | `earned_pay_request` | `employeeId`, `payPeriodId`, `amount`, `earnedNet`, `state` (`REQUESTED`/`APPROVED`/`PAID`/`REJECTED`/`RECOVERED`/`CANCELLED`), `decidedById`, `paymentRef`, `recoveredByPayslipId`, `requestKey` varchar(80) | unique `(tenantId, requestKey)`; idx `(employeeId, payPeriodId)` |
 
@@ -144,7 +143,8 @@ with the bonus. Loan repayments are additional pay of kind `LOAN_REPAYMENT` on a
   columns and indexes above, three dialects, no backfill (null `mode` = typed-in run).
 - Plugin (`packages/plugins/payroll/src/lib/database/migrations/`): `1791000099100-CreatePayslipTables` (payslip, lines, trace, time sources, year-to-date totals, cost allocation),
   `1791000099110-CreatePayAdjustmentTables` (additional pay and uses, withholdings, arrears, end-of-service payouts, earned
-  pay), `1791000099120-CreatePayRunReviewTables` (findings, reviews, what-ifs, agent usage, payments). Helpers of
+  pay), `1791000099120-CreatePayRunReviewTables` (findings, reviews, what-ifs, payments; the usage
+  cost of agent employees is read from the usage record of `ai-agents-and-assistants`, so no table holds it here). Helpers of
   `payroll-setup`; partial uniqueness through nullable key columns on MySQL and SQLite.
 - New tables registered with the tenant export and import and factory reset.
 
@@ -351,7 +351,7 @@ FR-104 with actor type `Agent` for MCP.
 - VI Permissions, privacy, security: five keys, preparer cannot approve, field visibility, logged reads, masked bank
   details, no stored PDF passwords.
 - VII Real-time through the event bus: outbox events, operation events, real-time hints for progress and states.
-- VIII i18n and accessibility: `PAYROLL.*` keys, localised payslips and amounts in words, accessible tables.
+- VIII i18n and accessibility: `PAYROLL.*` keys, localized payslips and amounts in words, accessible tables.
 - IX Tests: golden payslips, register equality, posting balance, idempotency of every operation and job, e2e of the lifecycle.
 - X Behaviour-first spec: `spec.md` holds behaviour; this plan holds structure.
 - XI Documentation describes our platform only.

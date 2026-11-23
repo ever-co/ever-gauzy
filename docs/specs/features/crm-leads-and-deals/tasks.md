@@ -48,7 +48,8 @@
   `1791000051110-AllowSeveralDealsPerContact` in `packages/core/src/lib/database/migrations/` (three dialects, `hasColumn`
   guards, `notes` widened to text, SQLite rebuild with a row-count check,
   backfills of `pipelineId`, `outcome`, `probabilityPercent`). Test: migration spec on SQLite; PostgreSQL and MySQL in
-  the migration suite; two deals for one contact saved after it; existing resource links read back unchanged; record links come from `record-views-and-search` T52. Migration timestamps: `1791000051100` to `1791000051199` (`packages/core`); `1791000051200` to `1791000051299` (`packages/plugins/crm`).
+  the migration suite; two deals for one contact saved after it; with two deals for one contact the `down` stops
+  before any change and lists the contact, and after the operator relinks one deal it restores the unique key; existing resource links read back unchanged; record links come from `record-views-and-search` T52. Migration timestamps: `1791000051100` to `1791000051199` (`packages/core`); `1791000051200` to `1791000051299` (`packages/plugins/crm`).
 - [ ] **T4** (parallel). `BaseEntityEnum.Deal` and `CrmContract` in `packages/contracts/src/lib/base-entity.model.ts`;
   `packages/core/src/lib/deal/deal-comment-access.policy.ts` beside the contact policy. Test: policy spec (member may comment, outsider refused).
 - [ ] **T5**. Plugin scaffold `packages/plugins/crm` (`package.json`, `project.json`, `tsconfig.json`, `tsconfig.lib.json`,
@@ -143,7 +144,10 @@
   and with the estimate fallback; an estimate accepted by link wins the deal.
 - [ ] **T24**. Contracts: `contract/crm-contract.service.ts`, templates (terms as an `accounting_template` row of type
   `contract`, requirements in `crm_contract_template`), requirements, status machine, amendments, numbering through
-  `business-documents` (fallback `SequenceService`); `contract/crm-contract.controller.ts`. Test: status transitions, immutability.
+  `business-documents` (fallback `SequenceService`); `contract/crm-contract.controller.ts` (reads with `CRM_CONTRACTS_VIEW`, or
+  the record scope of owner and employee party without it). Test: status transitions, immutability; a user without
+  `CRM_CONTRACTS_VIEW` lists only contracts they own or that name them as the employee party, and another contract
+  answers `404`.
 - [ ] **T25**. Signatures: `contract/crm-contract-signature.service.ts` (each signature recorded through
   `TermsAcceptanceService.record` with the SHA-256 of the terms; the signer row keeps the invitation, token and evidence
   id), public controller `/public/contracts/:token` (`contract/crm-public-contract.controller.ts`) with the throttling of the public estimate route, emails

@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-15
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_CATALOG` (existing tenant feature, default on; from now on read by a guard on every
 catalogue route and by the menu) and `FEATURE_ITEM_MASTER` (new tenant feature, default off: every behaviour this
 spec adds)
@@ -190,7 +190,9 @@ that resolve live from item, brand and group with an answer to "where does this 
   routes is accepted as today: it is stored with type internal (no check digit), and one already taken stays on the
   variant and is listed for review instead of being refused.
 - **FR-28** The system MUST resolve a scanned or typed code to a variant, a unit and a quantity, matching in order
-  barcode, internal reference, item code, manufacturer part, supplier code, the document customer's item code.
+  barcode, internal reference, item code (and old codes), manufacturer part, supplier code, the document customer's
+  item code; where several items match at the first step that finds any (codes and old codes need not be unique while
+  the organization's unique-codes setting is off), it returns them all for the user to choose and picks none itself.
 - **FR-29** A user with `PRODUCTS_VIEW` can print barcode labels for chosen items and quantities with a print template
   of the item label type.
 
@@ -338,7 +340,7 @@ that resolve live from item, brand and group with an answer to "where does this 
 - **Security & privacy**: tenant and organization scoped; descriptions sanitised; uploads checked for type and size;
   AI drafts send only the chosen texts to the organization's configured AI provider, and nothing without one.
 - **Observability**: item history (FR-10); job results kept 30 days; lookup and scan latency metrics.
-- **Accessibility and localisation**: keyboard operable, screen-reader labelled; keys in every shipped locale.
+- **Accessibility and localization**: keyboard operable, screen-reader labelled; keys in every shipped locale.
 - **Compatibility**: PostgreSQL, MySQL, SQLite; both ORMs; additive migrations; cloud and self-hosted; OpenAPI
   additive, SDKs regenerated.
 

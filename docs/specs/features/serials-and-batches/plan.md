@@ -16,7 +16,7 @@
 A new plugin, `@gauzy/plugin-lot-serial-tracking` (`packages/plugins/lot-serial-tracking`), owns tracking policies,
 lots, serial units, bundles, trace links and recalls. It stores no quantity: the level row of the inventory plugin
 stays the only stored quantity per item and location, and a lot's balance per location and bin is derived from the
-confirmed bundle entries of the movements, exactly as `StockLedgerService.readBinBalance` derives bin balances from
+posted bundle entries of the movements (a canceled original keeps its entries and its reversing bundle offsets them), exactly as `StockLedgerService.readBinBalance` derives bin balances from
 `stock_movement` rows ("nothing is stored on a bin"). A lot's reserved quantity is derived from the active
 `stock_reservation` rows naming it (`lotId`, `serialUnitId`, added by `warehouse-and-stock-movements`).
 
@@ -41,7 +41,7 @@ flowchart LR
     OWN[purchasing, warehouse, returns, fulfillment lines] -->|STOCK_BUNDLE_SERVICE| MIR[Bundle from text / text mirror / return check]
     VALU[inventory-valuation hook] -->|reads bundle entries| KEYS[lot / serial valuation keys]
     JOBS[Expiry, warranty, expiry-risk jobs] --> DB
-    QUAL[quality.inspection.decided] --> ST[Lot status change]
+    QUAL[quality decision: QUALITY_LOTS setStatus] --> ST[Lot status change]
     RCL[Recall service] -->|trace forward| DB
     RCL -->|transfers to quarantine| INV[inventory transfer API]
     DB --> OUT[Event outbox] --> RT[Push channel] & AUTO[Automation] & INBOX[Inbox notices]
@@ -56,7 +56,7 @@ flowchart LR
 | ------- | ------ | --------- |
 | Package | new `packages/plugins/lot-serial-tracking`, `lot-serial-tracking-ui` (Angular, including the capture module of the floor app `floor-ui`) | Principle I; one floor app |
 | Coupling | ports of the inventory plugin and of the line owners, bound in `apps/api/src/plugin-composition.ts`; no import of other plugins | |
-| Balances | derived per (lot, location, bin) from `lot_serial_bundle_entry` rows of confirmed bundles with their `movementId`, signed by direction; read and checked under the movement's level lock; no balance table, no reserved counter | one stored quantity per item and location |
+| Balances | derived per (lot, location, bin) from the `signedQuantity` of every posted `lot_serial_bundle_entry` row (one with a `movementId`), whatever its bundle's status became: a receipt of 10 that is canceled keeps its +10 entries under the `CANCELLED` original and the reversing bundle adds −10, so the balance is zero; draft entries carry no `movementId` and count nothing; read and checked under the movement's level lock; no balance table, no reserved counter | one stored quantity per item and location |
 | Traces | an edge table (`trace_link`) walked breadth-first with a depth limit | five levels < 2 s |
 | Numbering | lot and serial series through the business document engine's numbering series | [platform architecture](../../architecture/business-suite.md) §3.1 |
 | Item defaults | shelf life and warranty period are the item's (`product.shelfLifeDays`, `product.warrantyDays` of `item-catalogue`); the policy stores overrides only; tracking `LOT`/`SERIAL` requires `product_variant_setting.trackInventory` (refused otherwise) and `NONE` leaves it unchanged | one default per item |
@@ -150,7 +150,7 @@ DTO field); responses add `bundleId`.
 | `lot.expiring` / `lot.expired` | daily job | inbox notice and email to stock managers, automation, expiry-risk agent |
 | `lot.recall.opened` / `.contained` / `.closed` | recall lifecycle | inbox to stock and quality managers, push, automation |
 | `serial_unit.delivered` / `.warranty_expiring` | delivery confirmed; the one warranty job | field service installed base (reads the dates), automation |
-| consumed: `quality.inspection.decided` | inspection accepted or rejected | lot to available or quarantined with the inspection as source |
+| called: `QUALITY_LOTS.setStatus` (bound here for `quality-management`) | inside the transaction of an accepted or rejected inspection decision | lot to available or quarantined with the inspection as source, then `lot.status.changed` |
 
 ## 6. UI Surface
 

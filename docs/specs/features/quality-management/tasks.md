@@ -38,12 +38,14 @@
       `quality-template.entity.ts`, `quality-template-version.entity.ts`, `quality-template-line.entity.ts`,
       `quality-sampling-plan.entity.ts`, `quality-sampling-level.entity.ts`, `quality-item-profile.entity.ts`,
       `quality-enforcement-rule.entity.ts`; no location-setting table). Test: migration spec on SQLite; both ORMs map
-      each entity. Migration timestamps: `1791000088100` to `1791000088199` (`packages/plugins/quality`); `1791000088900` to `1791000088999` (`packages/core`).
+      each entity; a second profile of one variant, product or category, a second sampling level of one plan, item and
+      vendor (or none) and a second enforcement rule of one point and scope are refused through their key columns on
+      each dialect. Migration timestamps: `1791000088100` to `1791000088199` (`packages/plugins/quality`); `1791000088900` to `1791000088999` (`packages/core`).
 - [ ] **T4** (parallel). Migration `q/database/migrations/1791000088110-CreateQualityInspectionTables.ts` (inspections,
       reading sets, readings, hints, retained samples) + entities in `q/inspection/entities/`
       (`quality-inspection.entity.ts`, `quality-reading-set.entity.ts`, `quality-reading.entity.ts`,
-      `quality-inspection-hint.entity.ts`, `quality-retained-sample.entity.ts`). Test: migration specs; repository smoke
-      specs.
+      `quality-inspection-hint.entity.ts`, `quality-retained-sample.entity.ts`; `quality_inspection.lotId` and
+      `sourceKey`). Test: migration specs; repository smoke specs; a second live inspection with one `sourceKey` is refused.
 - [ ] **T5** (parallel). Migration `q/database/migrations/1791000088130-CreateQualityAnalyticsTables.ts` + entities in
       `q/analytics/entities/` (`quality-control-chart.entity.ts`, `quality-control-limit.entity.ts`,
       `quality-control-point.entity.ts`, `quality-control-alert.entity.ts`, `quality-supplier-measure.entity.ts`,
@@ -55,15 +57,19 @@
       `QUALITY_APPROVALS`, `QUALITY_COMMUNICATIONS`; consumer of `REMINDERS`) with no-op defaults; bindings in
       `apps/api/src/plugin-composition.ts` (`QUALITY_AI` to the `ai-agents-and-assistants` runtime). Test: services run
       with ports unbound.
-- [ ] **T49**. Migration `q/database/migrations/1791000088120-CreateQualityImprovementTables.ts` (goal bindings,
-      key-result measures, non-conformances, improvement actions, quality circle marks, customer and supplier feedback)
-      + entities in `q/improvement/entities/` (`quality-goal-binding.entity.ts`, `quality-key-result-measure.entity.ts`,
-      `quality-nonconformance.entity.ts`, `improvement-action.entity.ts`, `improvement-action-step.entity.ts`,
-      `quality-circle.entity.ts`, `quality-feedback-template.entity.ts`, `quality-feedback.entity.ts`,
-      `quality-feedback-score.entity.ts`); core migration
-      `packages/core/src/lib/database/migrations/1791000088900-AddKeyResultUpdatePeriod.ts` (`periodStart`, `periodEnd`
-      on `key_result_update`, `packages/core/src/lib/keyresult-update/keyresult-update.entity.ts`). Test: migration
-      specs; repository smoke specs; core entity spec for both ORMs.
+- [ ] **T49**. Core part of the improvement data: core migration
+      `packages/core/src/lib/database/migrations/1791000088900-AddKeyResultUpdatePeriod.ts` (nullable `periodStart`,
+      `periodEnd` on `key_result_update`) and the two columns on the core entity, with no dependency on the quality
+      plugin. Files: `packages/core/src/lib/database/migrations/1791000088900-AddKeyResultUpdatePeriod.ts`,
+      `packages/core/src/lib/keyresult-update/keyresult-update.entity.ts`. Test: migration spec on SQLite; core entity
+      spec for both ORMs; existing key result updates read as before with the new columns null.
+- [ ] **T50**. Plugin part of the improvement data: migration
+      `q/database/migrations/1791000088120-CreateQualityImprovementTables.ts` (goal bindings, key-result measures,
+      non-conformances, improvement actions, quality circle marks, customer and supplier feedback) and entities in
+      `q/improvement/entities/` with their repositories. Files:
+      `q/database/migrations/1791000088120-CreateQualityImprovementTables.ts`,
+      `q/improvement/entities/{quality-goal-binding,quality-key-result-measure,quality-nonconformance,improvement-action,improvement-action-step,quality-circle,quality-feedback-template,quality-feedback,quality-feedback-score}.entity.ts`.
+      Test: migration spec on SQLite; repository smoke specs.
 
 ## Phase 2 — Services, endpoints, events
 
@@ -94,9 +100,10 @@
       `q/inspection/quality-offline-reading-set.handler.ts`. Test: unit; offline set after decision kept apart; replayed
       set applied once.
 - [ ] **T15**. Decision service: preview of stock effects, decide, partial decision, verification, cancel with
-      reversal; stock movements through `QUALITY_STOCK`; outbox append in the same transaction. Files:
-      `q/inspection/quality-decision.service.ts`. Test: SQLite end-to-end with a stub warehouse port; `409` on concurrent
-      decision.
+      reversal; stock movements through `QUALITY_STOCK` and lot statuses through `QUALITY_LOTS.setStatus`; outbox append
+      in the same transaction. Files: `q/inspection/quality-decision.service.ts`. Test: SQLite end-to-end with a stub
+      warehouse port; `409` on concurrent decision; a failing lot status update rolls back the decision and its stock
+      movements.
 - [ ] **T16**. `QualityGateService` implementing the gate contract for each point (missing, undecided, rejected ×
       refuse, warn, hold or move), bound to `PURCHASING_QUALITY`, `SUBCONTRACTING_QUALITY`, `MANUFACTURING_QUALITY`
       and the fulfilment and stock-document gates; answers the owner's damaged-on-arrival figure beside the decision.
@@ -110,7 +117,8 @@
 - [ ] **T19**. Consumer `subscriber:quality-sources`: draft inspections per flagged line and lot from receipt, stock
       document, delivery, subcontract receipt, return and card events; `POST /quality/inspections/from-document`.
       Files: `q/events/quality-sources.consumer.ts`, `q/inspection/quality-inspection.controller.ts`. Test: event
-      delivered twice creates one inspection.
+      delivered twice creates one inspection per source line and lot (`sourceKey`); after a cancellation a new draft
+      can be made.
 - [ ] **T20**. Return inspections with restock location choice, covering restocked units only. Files:
       `q/inspection/quality-return-inspection.service.ts`. Test: decision restocks to the allowed location; damaged
       return units not inspected.

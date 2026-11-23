@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-16
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_MEETINGS` (new tenant feature, default off); the plugin loads only when `GAUZY_MEETINGS_ENABLED` is exactly `true`; recording, transcripts and summaries are further organization switches, off by default.
 
 ---
@@ -33,7 +33,7 @@ state, last meeting's open actions); **summaries with decisions and action items
 sources and written to the linked records and tasks only after approval; **live captions translated** into each
 participant's language; a **recording library with search inside transcripts and shareable clips** with expiry; a
 **recording queue** instead of a refusal when recorders are busy; **attendance that becomes tracked time** on the linked
-task and a live **person-hours meter** for the organiser; and **agent tools** that read transcripts and propose
+task and a live **person-hours meter** for the organizer; and **agent tools** that read transcripts and propose
 follow-ups under the caller's rights.
 
 ## 2. User Scenarios
@@ -49,7 +49,7 @@ follow-ups under the caller's rights.
 - **Given** the session ends, **when** the recording is processed, **then** the host gets "recording available" with duration and size, the file sits in the room's folder of `drive`, and readers of the linked deal see it on the deal's timeline.
 - **Given** transcripts on for the organization, **when** the recording is available, **then** a transcript with speakers and times follows, and the host is offered a summary with decisions and action items, each showing the sentences it came from (advanced).
 - **Given** the host approves the summary after editing one action item, **then** two tasks are created with assignees and due dates on the linked project, the summary is written as a note on the linked deal, and both are marked as generated and approved by the host (advanced).
-- **Given** a meeting linked to a deal and a ticket, **when** the organiser opens the meeting a day before, **then** a proposed agenda lists the deal's stage and next step, the ticket's state and the open action items of the last meeting on the same deal (advanced).
+- **Given** a meeting linked to a deal and a ticket, **when** the organizer opens the meeting a day before, **then** a proposed agenda lists the deal's stage and next step, the ticket's state and the open action items of the last meeting on the same deal (advanced).
 - **Given** captions on and a participant who reads Spanish, **when** others speak English, **then** that participant reads captions in Spanish while others read English (advanced).
 - **Given** the recording library, **when** a manager searches "pricing tier", **then** sessions whose transcripts contain it are listed with the moments it was said; they share a two-minute clip with a link that expires in 7 days (advanced).
 - **Given** a live class of a cohort held in a room, **when** it ends, **then** learning reads each learner's join, leave and attended minutes.
@@ -68,7 +68,7 @@ follow-ups under the caller's rights.
 - **Given** a recorder that fails mid-session and recovers, **then** the recording continues, the gap is recorded and the result is marked incomplete with the gap list; if it never recovers, the parts recorded are kept and the host is told.
 - **Given** an end-to-end encrypted room, **then** recording, server captions and transcripts are unavailable, and encryption cannot be switched on while a recording runs.
 - **Given** no AI provider with speech-to-text, **then** captions, transcripts and summaries are not offered; recording still works.
-- **Given** a recording past its retention without a legal hold, **then** it and its transcript are deleted and the session keeps its attendance and a "recording deleted" mark.
+- **Given** an organization that set a retention period and a recording past it without a legal hold, **then** it and its transcript are deleted and the session keeps its attendance and a "recording deleted" mark.
 - **Given** two hosts editing the agenda at once, **then** both edits appear; conflicting edits of one item keep the later and show who changed it.
 
 ## 3. Functional Requirements
@@ -84,7 +84,7 @@ follow-ups under the caller's rights.
 
 - **FR-5** The system MUST reach media servers only through adapters that declare their capabilities (join tokens, participant events, server-side mute and removal, lobby, recording, per-speaker audio, live audio stream, end-to-end encryption), and offer only what the room's adapter supports.
 - **FR-6** The system MUST ship adapters for the two open media servers Ever Teams already uses, configured per deployment from its settings and optionally per organization by a user with `MEETINGS_SETTINGS_MANAGE` (address, credentials stored encrypted and never returned, default flag, test connection).
-- **FR-7** The system MUST issue join tokens only for one room, one identity and a role, valid for at most one hour (the session continues after expiry; reconnection asks for a new one), and never sign tokens in a client.
+- **FR-7** The system MUST issue join tokens only for one room, one identity and a role, valid for at most one hour (the session continues after expiry; reconnection asks for a new one), and never sign tokens in a client; the existing Ever Teams token routes keep their own lifetime and behaviour (FR-2).
 - **FR-8** The system MUST verify every adapter notice (participant joined or left, room started or finished, recording states) with the adapter's signature and apply each once.
 
 ### 3.3 Rooms
@@ -158,8 +158,8 @@ follow-ups under the caller's rights.
 
 ### 3.10 Agenda, notes and summaries
 
-- **FR-57** An organiser can keep an agenda of items with owner and minutes on the meeting; participants see it before and during the session and tick items off; a scheduled meeting's existing agenda text becomes its first items and its later edits update them; the text is kept as people wrote it (items added in the meeting are appended to it, nothing written there is removed or reformatted), so every client that shows the appointment's agenda keeps showing it.
-- **FR-58** (advanced) The system MUST propose an agenda from the linked records (deal stage and next step, ticket state and last reply, open tasks of a linked project, open action items of the last session with the same record or series), which the organiser edits before it is shown.
+- **FR-57** An organizer can keep an agenda of items with owner and minutes on the meeting; participants see it before and during the session and tick items off; a scheduled meeting's existing agenda text becomes its first items and its later edits update them; the text is kept as people wrote it (items added in the meeting are appended to it, nothing written there is removed or reformatted), so every client that shows the appointment's agenda keeps showing it.
+- **FR-58** (advanced) The system MUST propose an agenda from the linked records (deal stage and next step, ticket state and last reply, open tasks of a linked project, open action items of the last session with the same record or series), which the organizer edits before it is shown.
 - **FR-59** A participant can open shared notes for the session as a document of the documents hub linked to the meeting, edited together during the call.
 - **FR-60** (advanced) The system MUST propose after a transcript a summary, decisions and action items (title, assignee, due date) each with its source sentences, and write nothing until a host approves, edits or discards it.
 - **FR-61** (advanced) On approval, the system MUST write the summary and decisions as a note on each linked record, create the action items as tasks on the linked project or the assignee's list, mark them "generated, approved by" the approver, and carry unfinished action items to the next agenda of the series.
@@ -177,8 +177,8 @@ follow-ups under the caller's rights.
 
 ### 3.13 Privacy and retention
 
-- **FR-67** A user with `MEETINGS_SETTINGS_MANAGE` can set the organization's switches (guests, recording, automatic recording allowed, captions, transcripts, summaries, keeping captions), limits (participants, duration, recording length), retention of recordings and transcripts (default 365 days; the platform's retention policies for meeting recordings and transcripts, listed with the other retention policies where `access-control-and-security` is loaded), consent notice text, and whether participants must acknowledge the recording notice before media is sent.
-- **FR-68** The system MUST delete recordings, clips and transcripts at retention unless a legal hold is set by a holder of `MEETINGS_SETTINGS_MANAGE` (an entry of the platform's hold register, offered where that register is loaded), keeping attendance and a deletion mark, and record every listen, download and clip share in the audit trail.
+- **FR-67** A user with `MEETINGS_SETTINGS_MANAGE` can set the organization's switches (guests, recording, automatic recording allowed, captions, transcripts, summaries, keeping captions), limits (participants, duration, recording length), retention of recordings and transcripts (default: kept until the organization sets a period; the platform's retention policies for meeting recordings and transcripts, listed with the other retention policies where `access-control-and-security` is loaded), consent notice text, and whether participants must acknowledge the recording notice before media is sent.
+- **FR-68** Where the organization has set a retention period (default: none, everything is kept), the system MUST delete recordings, clips and transcripts at the end of that period unless a legal hold is set by a holder of `MEETINGS_SETTINGS_MANAGE` (an entry of the platform's hold register, offered where that register is loaded), keeping attendance and a deletion mark, and record every listen, download and clip share in the audit trail.
 - **FR-69** The system MUST never send media, captions or transcripts outside the media server and the organization's chosen AI provider, and name both on the settings page.
 
 ### 3.14 API, agents, events and reports
@@ -203,7 +203,7 @@ follow-ups under the caller's rights.
 - **Reliability**: notices stored before processing; attendance rebuilt from notices after downtime; recording parts checked and resumable; queued recordings survive a restart.
 - **Security & privacy**: tenant-scoped room names; short-lived single-room tokens; guest proof never logged; recorder grants single-use; recordings readable per FR-49; listens audited; retention per FR-68. Leaving the platform: audio and video to the media server; audio and text to the organization's AI provider only with captions, transcripts or summaries on; invitation emails through the calendar.
 - **Auditability**: who and when for room, role, ban, setting and adapter changes, recording starts and stops, listens, downloads, clips, corrections and summary approvals.
-- **Accessibility and localisation**: every control keyboard operable with labels and shortcuts (mute, camera, hand, leave), captions for people who do not hear, visual equivalents of sounds, announcements of joins and hands for screen readers; every string in all shipped locales; captions and summaries in the session language.
+- **Accessibility and localization**: every control keyboard operable with labels and shortcuts (mute, camera, hand, leave), captions for people who do not hear, visual equivalents of sounds, announcements of joins and hands for screen readers; every string in all shipped locales; captions and summaries in the session language.
 - **Compatibility**: PostgreSQL, MySQL, SQLite; both ORMs; cloud and self-hosted (media server and recorders run by the deployment; notices need an address the media server reaches); works without calendar, chat, drive, CRM and AI providers, whose parts are then absent; OpenAPI and SDKs regenerated.
 
 ## 5. Key Entities & Domain Concepts
@@ -232,7 +232,7 @@ follow-ups under the caller's rights.
 
 - [ ] **AC-1** With `FEATURE_MEETINGS` off every new route answers `404` and Ever Teams meetings, its token routes and appointment-based scheduling pass their tests unchanged (FR-1, FR-2).
 - [ ] **AC-2** A link created by Ever Teams and the same room opened in the Angular app meet in one media room with each shipped adapter; a user of another tenant is refused a token (FR-3).
-- [ ] **AC-3** A token is single-room, single-identity, at most one hour; adapter notices with a bad signature are refused; duplicates apply once (FR-7, FR-8).
+- [ ] **AC-3** A token issued by the platform's join routes is single-room, single-identity, at most one hour, while the existing Ever Teams token routes keep today's lifetime (AC-1); adapter notices with a bad signature are refused; duplicates apply once (FR-2, FR-7, FR-8).
 - [ ] **AC-4** Each of the three entry rules of FR-12 admits and holds the right people; a guest with the public link waits and is admitted; a banned guest address is refused.
 - [ ] **AC-5** Joining from a second device moves the call on confirmation; a reconnection does not add an attendance entry; the participant limit refuses the next joiner (FR-20).
 - [ ] **AC-6** Host controls (mute all, lower hands, remove, lock, end) are enforced server-side with an adapter that supports them and asked of clients otherwise (FR-26).
@@ -257,7 +257,7 @@ follow-ups under the caller's rights.
 
 - Breakout rooms, webinars with an audience mode and a shared whiteboard are not in this spec. Applied default: left out.
 - Which media adapter is the default for new deployments. Applied default: the one the deployment's settings name; Ever Teams' current default is kept for its own client.
-- Recording maximum of 6 hours, release of room joins 15 minutes before events, retention of 365 days. Applied defaults, all settings.
+- Recording maximum of 6 hours, release of room joins 15 minutes before events, recordings and transcripts kept until the organization sets a retention period. Applied defaults, all settings.
 - Guests always wait in the lobby unless invited personally (FR-18). Applied default.
 - Keeping captions as a transcript is off by default and announced (FR-55). Applied default.
 - In-meeting chat is kept only when chat is loaded (FR-27). Applied default.

@@ -108,11 +108,14 @@
   tolerance and override, secondary outputs and process loss as one `SUBCONTRACT_RECEIPT` document, additional costs
   through `allocateCharges`, the unit cost handed back for valuation, subcontract receipt lines; preview route. Files:
   `sub/receipt/{goods-receipt-subcontract.hook.ts,subcontract-receipt-preview.service.ts,subcontract-receipt.controller.ts}`. Test:
-  `sub/receipt/goods-receipt-subcontract.hook.spec.ts` golden receipt specs (AC-2, AC-3); `purchase_order_line.receivedQuantity` written once, by the goods receipt; a line with neither accepted nor rejected quantity refused.
+  `sub/receipt/goods-receipt-subcontract.hook.spec.ts` golden receipt specs (AC-2, AC-3); a finished unit needing two service units at 10 each carries 20 of service cost; `purchase_order_line.receivedQuantity` written once, by the goods receipt; a line with neither accepted nor rejected quantity refused.
 - [ ] **T18**. Returns of finished goods as procurement purchase returns (from rejected too): consumer of
-  `purchasing.purchase_return.confirmed` updating returned quantities; receipt reversal reverses consumption. Files:
-  `sub/receipt/{purchase-return.consumer.ts,receipt-reversal.consumer.ts}`. Test:
-  `sub/receipt/purchase-return.consumer.spec.ts` unit and DB specs (proportional cost reversal by valuation).
+  `purchasing.purchase_return.confirmed` updating returned quantities; the hook's `reverse` step reversing consumption,
+  secondary outputs and counters inside the receipt reversal's transaction. Files:
+  `sub/receipt/{purchase-return.consumer.ts,goods-receipt-subcontract.hook.ts}`. Test:
+  `sub/receipt/purchase-return.consumer.spec.ts` unit and DB specs (proportional cost reversal by valuation);
+  `sub/receipt/goods-receipt-subcontract.hook.spec.ts`: a reversed receipt and its consumption reversal commit together,
+  and a failing consumption reversal leaves the receipt posted.
 - [ ] **T19** (parallel). Inspection hold through `SUBCONTRACTING_QUALITY`; landed cost targets on the goods receipt
   lines. Files: `sub/receipt/{inspection-hold.service.ts,landed-cost-targets.ts}`. Test: `sub/receipt/inspection-hold.service.spec.ts` port contract specs.
 - [ ] **T20**. Sources: from requisition lines and production plan lines; work order operation proposals and
@@ -201,9 +204,10 @@
   `sub/time/subcontracting-time.consumer.spec.ts` AC-9 scenario; `sub/time/bill-proposal.service.spec.ts`
   no-double-billing spec.
 - [ ] **T39**. Cost explanation and "where is material" services behind the MCP tools; integrity check job comparing
-  supplier location balances with open material lines. Files: `sub/explain/{cost-explanation.service.ts,material-position.service.ts}`,
+  supplier location balances with the material still held on every order, open or closed. Files: `sub/explain/{cost-explanation.service.ts,material-position.service.ts}`,
   `sub/jobs/integrity-check.job.ts`, `packages/mcp-server/src/lib/tools/subcontracting.ts`. Test:
-  `sub/explain/cost-explanation.service.spec.ts` and `sub/jobs/integrity-check.job.spec.ts` unit specs.
+  `sub/explain/cost-explanation.service.spec.ts` and `sub/jobs/integrity-check.job.spec.ts` unit specs (an order closed with
+  material still at the supplier reports no drift).
 - [ ] **T40**. Worker `SubcontractingSchedulePlugin` in `apps/worker/src/plugins.ts`, in-process fallback timers.
   Files: `sub/schedule/subcontracting-schedule.plugin.ts`, `apps/worker/src/plugins.ts`.
   Test: `sub/schedule/subcontracting-schedule.plugin.spec.ts` worker plugin list spec.
@@ -262,6 +266,7 @@ Every functional requirement of `spec.md` §3 and the tasks that implement it; e
 - Migrations verified on PostgreSQL, MySQL and SQLite with both ORMs.
 - Flag default stays off; enabling it in dev shows the feature end to end.
 - Constitution gates in `spec.md` §9 confirmed.
-- Stock at every supplier location equals the open material lines (integrity check green) after the AC scenarios.
+- Stock at every supplier location equals the material still held there on open and closed orders (integrity check
+  green) after the AC scenarios.
 - Customer-owned stock never appears in own available or valued stock.
 - Every acceptance criterion AC-1 to AC-12 demonstrated on a fresh tenant with the flags on.

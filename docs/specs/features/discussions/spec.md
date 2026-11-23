@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-16
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_DISCUSSIONS` (tenant feature, default off) · the plugin loads only when
 `GAUZY_DISCUSSIONS_ENABLED` is exactly `true` · notifications appear in the Inbox when `GAUZY_INBOX_ENABLED` is on, and
 by email or push when the Inbox delivery switches are on
@@ -296,7 +296,7 @@ project's or client's space shows on the record, and a discussion can start from
   AI provider, the text of one discussion the member may read.
 - **Observability**: activity feed and platform activity log entries; metrics for posts, replies, fan-out time, digest
   sends, email replies accepted and refused.
-- **Accessibility and localisation**: keyboard navigation through lists and replies, labelled reactions and poll
+- **Accessibility and localization**: keyboard navigation through lists and replies, labelled reactions and poll
   controls, readable unread markers; labels in every shipped locale; dates in the reader's time zone.
 - **Compatibility**: PostgreSQL, MySQL, SQLite; both ORMs; cloud and self-hosted; OpenAPI additive; SDKs regenerated.
 

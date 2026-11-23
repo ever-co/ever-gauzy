@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-16
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_PROJECT_COSTING` (new, default off); the existing `FEATURE_ORGANIZATION_PROJECT`, `FEATURE_EMPLOYEE_TIMESHEETS`, `FEATURE_TIME_TRACKING` and `FEATURE_INVOICE` keep governing today's pages
 
 ---
@@ -25,7 +25,7 @@ hours, each log billed once. What is missing is money and planning around that w
 progress methods, task weights and dependencies that act, activity types and dated rate cards that cost every log,
 timesheet approval routed to project managers with a lock on approved time, versioned project budgets, a maintained
 cost and revenue roll-up from time, expenses, purchases, materials and payroll, billing plans with milestones and
-retainers handed to invoicing, project updates, capacity and utilisation, and the project reports. Clients: the Angular
+retainers handed to invoicing, project updates, capacity and utilization, and the project reports. Clients: the Angular
 app, the REST API and SDKs (on which Ever Teams builds its project, task and timesheet screens), and the MCP server.
 Time capture stays exactly as it is.
 
@@ -34,7 +34,7 @@ seconds, with the forecast built from remaining estimates priced at each assigne
 before the budget runs out, with the expected breach date and an assistant-prepared re-plan shown as a preview.
 Approved time becomes an invoice draft on the project's billing cycle with a client-ready evidence pack. An earned-value
 view with a saved baseline and critical path shows schedule and cost performance together. Capacity comes from the
-working calendar, shifts, time off and tracked time, so allocation and utilisation are computed, not typed. Retainers
+working calendar, shifts, time off and tracked time, so allocation and utilization are computed, not typed. Retainers
 draw down from approved time. An assistant drafts project updates and new templates from comparable finished
 projects. Every rate on every log can be explained.
 
@@ -148,7 +148,7 @@ projects. Every rate on every log can be explained.
 
 | ID | Requirement |
 | --- | --- |
-| **FR-32** | A user with `PROJECT_ACTIVITY_TYPES_EDIT` can maintain activity types: name, billable by default, productive for utilisation, default cost rate and bill rate per hour with currency, active; one default type is created when the feature is first enabled. |
+| **FR-32** | A user with `PROJECT_ACTIVITY_TYPES_EDIT` can maintain activity types: name, billable by default, productive for utilization, default cost rate and bill rate per hour with currency, active; one default type is created when the feature is first enabled. |
 | **FR-33** | The system MUST give every time log an activity type: the one chosen in a client that offers it, else from the task's issue type mapping, the project default, the employee default, then the organization default; it can be changed until its timesheet is approved. |
 | **FR-34** | A user with `PROJECT_RATES_EDIT` can maintain dated rate cards (cost, bill and pay rate per hour with currency and effective date) for an employee, an employee level, an activity type, a project, a client, or combinations; the existing employee, project and project-member rates stay, and `payroll-setup` reads a card's pay rate for time on that project. |
 | **FR-35** | The system MUST resolve a log's cost rate in the organization's order (default: employee and activity card, employee card, level and activity card, activity default, payroll cost per hour when `payroll-setup` offers it, the pay rate stored on the log when it was tracked) and convert it at the rate of the log's date. |
@@ -212,14 +212,14 @@ projects. Every rate on every log can be explained.
 | **FR-73** | The system MUST let a project have its own billing schedule (the existing client billing schedules, every week, two weeks or month, gaining a project scope and an "approved time only" switch) and, on each run, prepare an invoice draft from newly approved billable time, reached and due billing-plan entries and re-billable expenses, kept as a draft unless the schedule is set to send, with an evidence pack of hours by day, task and person with descriptions and, when the organization allows, activity level; screenshots are never included unless both the organization and the employee allow it. *(advanced)* |
 | **FR-74** | The system MUST offer project progress and milestone completion to `budgets-and-revenue-schedules` as recognition progress. |
 
-### 3.10 Capacity, allocation and utilisation
+### 3.10 Capacity, allocation and utilization
 
 | ID | Requirement |
 | --- | --- |
 | **FR-75** | The system MUST compute each person's capacity per day and week from the working calendar of `time-off-management`, assigned shifts of `attendance-and-shifts`, the existing weekly limit as a cap, less approved time off and less days marked unavailable (partial days in part) in the existing employee availability and availability slots; agent employees have no capacity. |
 | **FR-76** | A user with `PROJECT_ALLOCATIONS_EDIT` can allocate a person or an unfilled role to a project by week as hours or a percentage of capacity, tentative or confirmed; the person is notified of confirmed allocations. *(advanced)* |
 | **FR-77** | A user with `PROJECT_ALLOCATIONS_VIEW` can open a workload board of people and weeks with capacity, allocated, planned (daily plans, estimates of tasks due) and tracked hours, over-allocation highlighted, and change allocations by dragging. *(advanced)* |
-| **FR-78** | The system MUST compute utilisation per person, team, department and period: billable hours and productive hours (activity types marked productive) over capacity, against targets set per person or level as a share of capacity, with the person's existing time goals (hours per period) shown beside them; neither is derived from the other. |
+| **FR-78** | The system MUST compute utilization per person, team, department and period: billable hours and productive hours (activity types marked productive) over capacity, against targets set per person or level as a share of capacity, with the person's existing time goals (hours per period) shown beside them; neither is derived from the other. |
 | **FR-79** | The system MUST forecast demand from remaining estimates of open tasks by due date and allocations against capacity per team and skill of `hr-core-lifecycle`, flag short weeks and propose reallocations as a preview. *(advanced)* |
 
 ### 3.11 Project updates
@@ -244,7 +244,7 @@ All reports are report definitions: filterable, groupable, exportable, schedulab
 | **FR-87** | Late tasks | Which tasks are past due, by how many days, and which predecessor holds them | project, dates, priority, status, assignee |
 | **FR-88** | Project materials and purchases | Purchased, issued and delivered items per project with value | project, dates, item group, supplier |
 | **FR-89** | Projects dashboard | How the portfolio is doing: projects by state, open work, hours this period, margin and forecast overruns | organization, manager |
-| **FR-90** | Utilisation | How much of each person's capacity went to billable and to productive work, and how much stayed untracked | dates, department, team, project, level |
+| **FR-90** | Utilization | How much of each person's capacity went to billable and to productive work, and how much stayed untracked | dates, department, team, project, level |
 | **FR-91** | Project margin | Revenue against cost of time, expenses, purchases and materials, and the margin left | dates, client, project, employee, type, manager |
 | **FR-92** | Hours by department (chart) | Tracked hours per department | dates, organization |
 | **FR-93** | Hours by activity type (chart) | Tracked hours per activity type | dates, project, team |
@@ -259,7 +259,7 @@ All reports are report definitions: filterable, groupable, exportable, schedulab
 | --- | --- |
 | **FR-98** | The system MUST expose every action through the REST API and register project types, templates, budgets, billing plan entries, updates and allocations as record types for saved views, custom fields, approval definitions and automation triggers. |
 | **FR-99** | The system MUST publish events (time costed; timesheet portion submitted and decided; timesheet approved and reopened; budget approved, revised and threshold crossed; burn alert; milestone reached and withdrawn; figures changed; update published; allocation changed; over-allocation) on the event outbox for invoicing, budgets, automations, webhooks and real-time updates. |
-| **FR-100** | The system MUST keep the existing project, task, timer and report MCP tools and add tools for costs and forecast, rate explanation, budgets and revisions, templates and creation from a template, dependencies and rescheduling, timesheet submission and decision, billing plans, allocations and utilisation, and update drafting; writing tools return a preview first and act with the caller's permissions. |
+| **FR-100** | The system MUST keep the existing project, task, timer and report MCP tools and add tools for costs and forecast, rate explanation, budgets and revisions, templates and creation from a template, dependencies and rescheduling, timesheet submission and decision, billing plans, allocations and utilization, and update drafting; writing tools return a preview first and act with the caller's permissions. |
 | **FR-101** | The system MUST import activity types, rate cards, budgets, templates and allocations through the mapped import with errors per row. |
 | **FR-102** | The system MUST grant the project's flagged managers the budget, billing plan, update and approval rights for their projects, cost and rate keys to administrators, and nothing new to employees beyond their own time and allocations, effective only while the feature is on. |
 | **FR-103** | The system MUST record who, when, before and after for every rate card, activity type, budget version, billing plan entry, repricing, lock and reopen, allocation and setting change. |
@@ -285,7 +285,7 @@ All reports are report definitions: filterable, groupable, exportable, schedulab
   features when enabled.
 - **Observability and audit**: history per budget, plan and timesheet; metrics for costing lag, unpriced hours,
   reconciliation corrections and alerts; audit of FR-103.
-- **Accessibility and localisation**: timeline and board keyboard operable with list alternatives; charts with data
+- **Accessibility and localization**: timeline and board keyboard operable with list alternatives; charts with data
   tables; every string in every locale; amounts in the user's number format and currency.
 - **Compatibility**: PostgreSQL, MySQL and SQLite; both ORMs; cloud and self-hosted; existing routes, contracts and MCP
   tools unchanged; additive OpenAPI and SDK changes only.
@@ -310,7 +310,7 @@ All reports are report definitions: filterable, groupable, exportable, schedulab
 | `ProjectFigure` | Maintained cost and revenue per project, task, module, month and source |
 | `ProjectBaseline` | A saved copy of dates, estimates and budget for comparison |
 | `BillingPlanEntry`, `Retainer` | A milestone or dated billing event; a prepaid allowance drawn by approved time |
-| `ResourceAllocation`, `CapacityTarget` | Planned hours of a person or role on a project per week; utilisation targets |
+| `ResourceAllocation`, `CapacityTarget` | Planned hours of a person or role on a project per week; utilization targets |
 | `ProjectUpdate`, `UpdateCollection` | A published status round with answers; the schedule that collects it |
 
 ## 6. Out of Scope
@@ -352,7 +352,7 @@ All reports are report definitions: filterable, groupable, exportable, schedulab
 - [ ] **AC-10** A monthly project billing schedule prepares an unconfirmed invoice draft with an evidence pack without
       screenshots; a retainer draws down from approved time (advanced: billing automation; FR-73).
 - [ ] **AC-11** Baseline, critical path and earned-value indices match a worked example (advanced: schedule control; FR-27, FR-63).
-- [ ] **AC-12** Capacity subtracts holidays and approved time off; an over-allocation is flagged; utilisation matches a
+- [ ] **AC-12** Capacity subtracts holidays and approved time off; an over-allocation is flagged; utilization matches a
       seeded month (advanced: capacity planning; FR-76–FR-79).
 - [ ] **AC-13** An update collection prompts members, stores answers and publishes a digest; the drafted update cites
       its facts (advanced: assistant updates and templates; FR-80–FR-83).

@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-16
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_EXPENSE_CLAIMS` (new, default off); the existing `FEATURE_EXPENSE` keeps governing today's expense pages
 
 ---
@@ -69,7 +69,7 @@ with a preview.
   it under "to explain" with the matching receipt proposed; one tap makes it a claim line paid by company card that is
   never reimbursed, and the card statement line is reconciled against it.
 - **Given** a delivery van, **when** the driver logs 42 litres and an odometer of 81,240 km paid with their own money,
-  **then** "create claim" makes a claim of the fuel, and the vehicle expenses report shows cost per kilometre.
+  **then** "create claim" makes a claim of the fuel, and the vehicle expenses report shows cost per kilometer.
 - **Given** a billable approved line for client Acme on project Website, **when** the next invoice for Acme is
   prepared, **then** the line is offered once, at cost or with the project's markup, and the project spend dashboard
   updates within seconds of the approval.
@@ -112,7 +112,7 @@ with a preview.
 | --- | --- |
 | **FR-5** | An employee with `EXPENSE_CLAIMS_OWN` can create a claim (purpose, period, currency, project, client, optional travel request, reimbursement channel), add, edit and remove lines while it is a draft, submit it and withdraw it before a decision. |
 | **FR-6** | The system MUST store each line as an expense of the organization (the existing expense record, its vendor set when the merchant matches an existing vendor and its receipt showing the line's first receipt) with date, category, description, vendor (existing vendor or a free name), amount and currency, rate to the claim currency, tax, project, task, client, billable flag, several receipts, payment source (personal, company card, company account) and the working of computed lines (per diem, mileage). |
-| **FR-7** | The system MUST keep claim lines out of the existing expense lists, report, statistics, split and invoicing until approved, and keep rejected or cancelled lines out for good. |
+| **FR-7** | The system MUST keep claim lines out of the existing expense lists, report, statistics, split and invoicing until approved, and keep rejected or cancelled lines out for good; the existing expense edit and delete routes refuse a claim line, which only the claim workflow changes, and keep working as today for every other expense. |
 | **FR-8** | A user with `EXPENSE_CLAIMS_EDIT` can file claims for other employees; others are refused; claims for an employee not active on the line dates (active check of `hr-core-lifecycle`, else start and end of work), of another organization or of kind agent are refused. |
 | **FR-9** | The system MUST show claimed, approved, tax, advances applied and payable totals, in the claim currency and the organization currency. |
 | **FR-10** | The system MUST, when any currency is allowed, convert each line at the rate of its date from the platform's exchange rates, accept a rate from the receipt or card statement with a reason, and force the organization currency otherwise. |
@@ -180,20 +180,20 @@ with a preview.
 
 | ID | Requirement |
 | --- | --- |
-| **FR-45** | An employee can request travel for a purpose, a project and a client: the journey as legs (origin and destination with their countries, means of transport, departure and arrival times), stays (city, nights, accommodation needs), the traveller's dietary and accessibility notes, who pays (the organization, a named third party, or shared with that party's percentage), the host contact at the destination, and an estimate per expense category with the part a third party pays; the trip is domestic or international from the countries of its legs. |
-| **FR-46** | The system MUST NOT copy identity documents into the request; when `hr-core-lifecycle` holds a passport or identity document of the traveller, the request shows whether it is valid through the return date and warns otherwise. |
+| **FR-45** | An employee can request travel for a purpose, a project and a client: the journey as legs (origin and destination with their countries, means of transport, departure and arrival times), stays (city, nights, accommodation needs), the traveler's dietary and accessibility notes, who pays (the organization, a named third party, or shared with that party's percentage), the host contact at the destination, and an estimate per expense category with the part a third party pays; the trip is domestic or international from the countries of its legs. |
+| **FR-46** | The system MUST NOT copy identity documents into the request; when `hr-core-lifecycle` holds a passport or identity document of the traveler, the request shows whether it is valid through the return date and warns otherwise. |
 | **FR-47** | The system MUST route travel requests to `approval-workflows` when on (record type travel request), otherwise through the existing request approval of type business trip linked to the request, whose decision moves it; existing business-trip requests keep working and can be turned into travel requests. Only a business-trip request linked to a travel request asks its decider for the travel approval right or to be named on it; every other business-trip request is decided by the same people as today. |
 | **FR-48** | The system MUST show, before submission and to the approver, the estimate against the project's cost budget left and, with budgets on, the availability of the budget line; on approval record the estimate as a commitment, released by approved claims of the trip and when the trip closes. *(advanced)* |
 | **FR-49** | The system MUST add the per diem computed from the legs and rates (FR-52) to the estimate. *(advanced)* |
-| **FR-50** | A traveller can, from an approved request, request an advance prefilled from it and later build a claim prefilled with per-diem lines, mileage legs and the trip's receipts; the request shows estimate against actual and closes when its claims are decided. |
-| **FR-51** | A traveller can attach booking documents to legs; booking itself is not done by the platform. |
+| **FR-50** | A traveler can, from an approved request, request an advance prefilled from it and later build a claim prefilled with per-diem lines, mileage legs and the trip's receipts; the request shows estimate against actual and closes when its claims are decided. |
+| **FR-51** | A traveler can attach booking documents to legs; booking itself is not done by the platform. |
 
 ### 3.9 Per diem, mileage and vehicle log
 
 | ID | Requirement |
 | --- | --- |
 | **FR-52** | A user with `EXPENSE_POLICIES_EDIT` can maintain dated per-diem rates per country and optional region or city: daily amount, lodging cap, deductions for provided meals, partial-day rules by hours away, first and last day rules; country content can be loaded from regional packs when present. *(advanced)* |
-| **FR-53** | The system MUST compute per-diem lines per travel day from leg times, destination and declared provided meals, show the working, and let the traveller lower but not raise them. *(advanced)* |
+| **FR-53** | The system MUST compute per-diem lines per travel day from leg times, destination and declared provided meals, show the working, and let the traveler lower but not raise them. *(advanced)* |
 | **FR-54** | A user with `EXPENSE_POLICIES_EDIT` can maintain dated mileage rates per country and vehicle kind (car, electric car, motorcycle, bicycle) with yearly distance bands and a passenger supplement; a mileage line (date, from, to, purpose, vehicle, distance entered or proposed by a configured distance provider, return trip) is priced at the band reached by the employee's distance this year, with its working. *(advanced)* |
 | **FR-55** | A user with `EXPENSE_VEHICLES_MANAGE` can use as company vehicles the equipment items marked as vehicles (shared with delivery trips), and an employee can register private vehicles (registration, kind) for mileage. |
 | **FR-56** | A driver or holder of `EXPENSE_VEHICLES_MANAGE` can log a vehicle's refuelling (odometer, litres or kilowatt-hours, price, station, receipt, who paid: company card, employee or company account) and its service work (work items from a seeded, editable list, cost); for a company vehicle held as an asset of `fixed-assets`, the odometer reading is recorded on the asset and the next due service and its reminder come from the asset's maintenance plan. |
@@ -209,14 +209,14 @@ All reports are report definitions: filterable, groupable, exportable, schedulab
 | --- | --- | --- | --- |
 | **FR-60** | Claims to reimburse | What the organization still owes each employee and since when, by channel | period, team, department; grouped by any organization axis |
 | **FR-61** | Advances | Money out with employees: paid, used on claims, paid back and still open, with age | period, team, department, state |
-| **FR-62** | Vehicle costs | Energy and service cost per vehicle, distance driven and cost per kilometre | period, vehicle |
+| **FR-62** | Vehicle costs | Energy and service cost per vehicle, distance driven and cost per kilometer | period, vehicle |
 | **FR-63** | Claims by category (chart) | Approved spend per category | dates, organization, department |
 | **FR-64** | Claims by department (chart) | Approved spend per department | dates, organization |
 | **FR-65** | Advances by state (chart) | Advance count and amount per state | dates, organization |
 | **FR-66** | Claims over time (chart) | Claimed and approved totals per month | dates, organization, department |
 | **FR-67** | This month (cards) | Approved, rejected and submitted claims | organization, department |
 | **FR-68** | Policy findings and duplicates | Findings per rule, justified, capped and blocked amounts, duplicates *(advanced)* | dates, policy, department |
-| **FR-69** | Travel estimate and actual | Estimated against claimed per trip, project and category *(advanced)* | dates, project, traveller |
+| **FR-69** | Travel estimate and actual | Estimated against claimed per trip, project and category *(advanced)* | dates, project, traveler |
 | **FR-70** | Existing expense report | Gains a source filter (direct, claim, card, vehicle log); approved claim lines included | as today plus source |
 
 ### 3.11 API, agents and compatibility
@@ -247,7 +247,7 @@ All reports are report definitions: filterable, groupable, exportable, schedulab
   through payments, exports.
 - **Observability and audit**: history per record, extraction accuracy (fields accepted unchanged), policy findings
   by rule, time to approve and to reimburse, audit of FR-76.
-- **Accessibility and localisation**: forms and dashboards keyboard operable and labelled; amounts in the user's
+- **Accessibility and localization**: forms and dashboards keyboard operable and labelled; amounts in the user's
   number format and currency; every string in every locale.
 - **Compatibility**: PostgreSQL, MySQL and SQLite; both ORMs; cloud and self-hosted; existing expense routes and MCP
   tools unchanged; additive OpenAPI and SDK changes only.

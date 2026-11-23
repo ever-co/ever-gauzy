@@ -94,7 +94,7 @@ unique index the dialect lacks (MySQL) is enforced by a row lock in the service.
 | `pos_shift` | `registerId` FK restrict, `cashierUserId`, `employeeId` null, `deviceId` null, `status` varchar(12) (`OPEN`, `CLOSING`, `CLOSED`), `clientId` uuid, `openedAt`, `closingStartedAt`, `closedAt`, `timeLogId` uuid null, `missingSalesCount` int default 0, `approvedById`, `approvalReason` text, `totals` text (JSON snapshot), `closingNumber` varchar(32), `correctsShiftId` uuid null | unique `(registerId)` where `status` in open or closing; unique `(organizationId, clientId)` |
 | `pos_cash_movement` | `shiftId` FK cascade, `kind` varchar(16) (`OPENING`, `PAY_IN`, `PAY_OUT`, `SAFE_DROP`, `EXPENSE`), `method` varchar(24), `amount` numeric(20,6), `currency`, `reason` text, `expenseId` uuid null (core `expense` of an `EXPENSE` movement), `userId`, `clientId` uuid, `occurredAt` | unique `(shiftId, clientId)` |
 | `pos_shift_count` | `shiftId` FK cascade, `method`, `expected`, `counted`, `difference` numeric(20,6), `denominations` text (JSON) | unique `(shiftId, method)` |
-| `pos_sale` | `orderId` FK `order` restrict, `registerId`, `shiftId`, `closingShiftId` null, `deviceId` null, `cashierUserId`, `clientSaleId` uuid, `receiptNumber` varchar(32), `kind` varchar(8) (`SALE`, `RETURN`), `originalSaleId` null, `returnId` uuid null, `soldAt`, `receivedAt`, `wasOffline` boolean, `drawerOpenings` int, `voidedLines` int, `notices` text (JSON) | unique `(organizationId, clientSaleId)`; unique `(registerId, receiptNumber)`; unique `(orderId)`; index `(shiftId)`, `(registerId, soldAt)` |
+| `pos_sale` | `orderId` FK `order` restrict (a sale's order; for a return, the order the return is recorded against), `saleOrderId` uuid null (the `orderId` on `SALE` rows, null on `RETURN` rows; written with it), `registerId`, `shiftId`, `closingShiftId` null, `deviceId` null, `cashierUserId`, `clientSaleId` uuid, `receiptNumber` varchar(32), `kind` varchar(8) (`SALE`, `RETURN`), `originalSaleId` null, `returnId` uuid null, `soldAt`, `receivedAt`, `wasOffline` boolean, `drawerOpenings` int, `voidedLines` int, `notices` text (JSON) | unique `(organizationId, clientSaleId)`; unique `(registerId, receiptNumber)`; unique `(saleOrderId)` (one sale row per order on every dialect, since the null of return rows is distinct; any number of returns per order); index `(orderId)`, `(shiftId)`, `(registerId, soldAt)` |
 | `pos_sync_batch` | `deviceId`, `fromSequence`, `toSequence` bigint, `recorded`, `duplicates`, `refused` int, `receivedAt` | index `(deviceId, receivedAt)` |
 | `pos_anomaly_finding` | `merchantId`, `cashierUserId`, `weekStart` date, `metric` varchar(32), `value`, `median` numeric(20,6), `shiftIds` text (JSON) | unique `(organizationId, merchantId, cashierUserId, weekStart, metric)` |
 
@@ -124,7 +124,8 @@ service only while `FEATURE_LOYALTY` is on; a contact whose cached value is not 
 `ADJUST` entry (reason "opening balance", key `opening:<contactId>`) in its first programme before anything else, so
 the cache never drops a balance held before the feature. Tier groups: `loyalty_member.tierGroupMembershipId` uuid
 null records the core contact-group membership the tier job created; the job removes only that membership, never one
-a user added. Idempotency keys: `earn:<sourceType>:<sourceId>`, `reverse:<returnId>:<memberId>`, `expire:<date>`.
+a user added. Idempotency keys: `earn:<sourceType>:<sourceId>`, `reverse:<returnId>:<memberId>`, `expire:<earnEntryId>` (one expiry
+entry per earned entry, so several entries of a member expiring on the same date each expire).
 
 ### Migrations
 
@@ -244,7 +245,7 @@ regenerated.
 | `pos.unsent.watch` (scheduled) | every 10 min | devices with unsent sales older than 1 h on closing shifts → event | one event per device and hour |
 | `pos.closing.correction` (queue) | a sale arrives for a closed shift | creates a correction closing and its event | key `(shiftId, saleId)` |
 | `pos.anomalies.weekly` (scheduled) | Monday 04:00 per organization | medians per store and metric, findings, Inbox | unique finding key |
-| `loyalty.expiry.daily` (scheduled) | daily 01:00 | expires remaining earned points by policy | key `expire:<date>` per entry |
+| `loyalty.expiry.daily` (scheduled) | daily 01:00 | expires remaining earned points by policy, one `EXPIRE` entry per due earned entry | key `expire:<earnEntryId>` |
 | `loyalty.reminders.daily` | daily 09:00 | `loyalty.points.expiring` per member and expiry date | per member and date |
 | `loyalty.tiers.daily` | daily 02:00 + after each earning | evaluates tiers, adds and removes the contact-group memberships it created (`tierGroupMembershipId`), never one a user added | change rows only on change |
 | `loyalty.reconcile.nightly` | 03:00 | ledger sums vs balances and contact cache; reports differences | read-only |

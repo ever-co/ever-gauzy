@@ -45,7 +45,8 @@
   and migration. Files: `planning/scheduler/entities/capacity-slot.entity.ts`,
   `planning/scenarios/entities/planning-scenario.entity.ts`, `planning/scenarios/entities/planning-scenario-change.entity.ts`,
   `database/migrations/1791000091130-CreateCapacitySchedulingTables.ts`. Test: SQLite migration spec; a real card cannot
-  get a slot row.
+  get a slot row; a second live slot for one planned operation and a second live load for one centre and day are
+  refused (`scenarioKey` `*`) on each dialect.
 - [ ] **T7**. Default role grants as `defaultFor` of the planning permission contributions; core operation types
   `MANUFACTURING_REQUIREMENTS_RUN` (aggregate = organization) and `MANUFACTURING_SCENARIO_COMPUTE` (aggregate = scenario)
   registered with `OperationRegistry`. Files: `manufacturing.permissions.ts`, `planning/planning-operations.ts`. Test:
@@ -87,8 +88,11 @@
   `planning/forecast/demand-forecast.controller.ts`): business document engine type, create, validate (stock items,
   periods), one schedule per forecast, schedule from forecast. Test: refusal specs.
 - [ ] **T17**. Requirement netting `planning/requirements/netting.ts` (pure: gross demand, receipts, projected stock, lot
-  sizing, time fence, planned orders, exceptions) and pegging `pegging.ts`. Test: property-based tests (supply covers
-  demand, no negative projected stock after planned receipts, pegged sum equals planned quantity).
+  sizing, time fence, planned orders, exceptions) and pegging `pegging.ts`. Test: property-based tests (outside the time fence
+  supply covers demand and no projected stock is negative after planned receipts; inside it a shortage stays negative
+  and raises an exception instead of a planned order; a planned order's pegged demand never exceeds its quantity, and
+  the rest is the lot-sizing surplus, e.g. demand 3 with a minimum of 10 gives an order of 10 with 3 pegged and 7
+  surplus left in projected stock).
 - [ ] **T18**. Requirement service: gather demand and supply through ports and shop floor, low-level codes from the
   explosion, lead time from the override, supplier term, supplier, item, then organization default ("no lead time" only
   when all are empty), persist periods, planned orders, pegging and exceptions; nightly full run as core operation
@@ -240,10 +244,10 @@ Every functional requirement of `spec.md` §3 and the tasks that implement it; e
 | FR-45 | §3.8 What-if scenarios (advanced) | T43 |
 | FR-46 | §3.8 What-if scenarios (advanced) | T43 |
 | FR-47 | §3.8 What-if scenarios (advanced) | T23, T43 |
-| FR-48 | §3.9 Visualiser and other areas | T14, T25 |
-| FR-49 | §3.9 Visualiser and other areas | T21 |
-| FR-50 | §3.9 Visualiser and other areas | T44 |
-| FR-51 | §3.9 Visualiser and other areas | T11 |
+| FR-48 | §3.9 Visualizer and other areas | T14, T25 |
+| FR-49 | §3.9 Visualizer and other areas | T21 |
+| FR-50 | §3.9 Visualizer and other areas | T44 |
+| FR-51 | §3.9 Visualizer and other areas | T11 |
 | FR-52 | §3.10 Reports, settings, agents and events | T22, T28 |
 | FR-53 | §3.10 Reports, settings, agents and events | T1, T23 |
 | FR-54 | §3.10 Reports, settings, agents and events | T29, T35, T38, T43 |

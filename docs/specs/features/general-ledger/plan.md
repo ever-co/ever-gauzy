@@ -61,8 +61,8 @@ flowchart LR
 | Concern | Choice | Rationale |
 | ------- | ------ | --------- |
 | Package | existing plugin `packages/plugins/accounting` (+ `accounting-ui`), same `FEATURE_ACCOUNTING` gate and `isAccountingEnabled` | one ledger, one plugin |
-| Immutability | no update or delete path in services; triggers refusing `UPDATE` and `DELETE` on `ledger_journal`, `ledger_line` and `ledger_journal_link` on the three dialects (the `stock_movement` idiom of `packages/plugins/inventory`); the journal trigger admits one change only, `supersededById` from null to a value, which the edit path below writes; generic CRUD routes answer a coded refusal (the `orderLedgerAppendOnly` idiom) | spec FR-24 |
-| Editable journals | tenant setting `ledger.allowPostedJournalEdit` (scope `TENANT`, default false) in the platform settings store; when on, `LedgerJournalEditService.edit` writes the edited journal as a new **revision**: a new `ledger_journal` row with the same number, `revision` + 1, new lines, a new place in the hash chain and a `REVISION` link to the previous revision, whose `supersededById` is set; balances move by the difference; the before and after of journal and lines go to `activity_log` with the reason; reads show the current revision and list earlier ones | spec FR-96, FR-97; storage stays append-only and the chain verifiable |
+| Immutability | no update or delete path in services; triggers refusing `UPDATE` and `DELETE` on `ledger_journal`, `ledger_line` and `ledger_journal_link` on the three dialects (the `stock_movement` idiom of `packages/plugins/inventory`); the journal trigger admits one change only, `supersededById` from null to a value, which the edit path below writes; the trigger is the same with `ledger.allowPostedJournalEdit` on or off, because an edit never changes a journal in place but writes a superseding copy (a new revision) and marks the previous one; generic CRUD routes answer a coded refusal (the `orderLedgerAppendOnly` idiom) | spec FR-24 |
+| Editable journals | tenant setting `ledger.allowPostedJournalEdit` (scope `TENANT`, default false) in the platform settings store; when on, `LedgerJournalEditService.edit` writes the edited journal as a new **revision**: a new `ledger_journal` row with the same number, `revision` + 1, new lines, a new place in the hash chain and a `REVISION` link to the previous revision, whose `supersededById` is set; balances move by the difference; the before and after of journal and lines go to `activity_log` with the reason; reads show the current revision and list earlier ones; a journal with a reversal (any revision named by a `reversalOfId`) and a reversal journal are refused with `LEDGER_JOURNAL_REVERSED`, checked under the head row lock so a reversal and an edit of one journal never both succeed | spec FR-96, FR-97; storage stays append-only and the chain verifiable |
 | Transaction | one transaction per journal: head row lock, numbering, journal, lines, open items the journal opens in the register (`OPEN_ITEM_REGISTER.open(manager, …)` for manual and opening lines), balance upserts, outbox append; `post(manager, request)` joins a caller's transaction on either ORM (the signature style of `EventOutboxService.append`) | spec FR-20 |
 | Order and chain | `ledger_head` row per organization locked `FOR UPDATE` (PostgreSQL, MySQL; SQLite has one writer) gives sequence and previous hash; SHA-256 over a canonical serialisation of journal and lines | gap-free numbers, hash chain |
 | Numbering | gap-free series of `business-document-engine` (`business_document_number`, allocated inside the posting transaction), key `LEDGER_JOURNAL` per organization and fiscal year; core `SequenceService.allocate` runs in its own transaction and has no gap-free mode, so journals never use it directly | no second sequence |
@@ -112,7 +112,7 @@ export; `ledger_rate_source` keeps its secret in `IntegrationSetting`, so no col
 | `ledger_close_checklist` | `fiscalPeriodId`, `state` varchar(8) (`OPEN`, `CLOSED`), `closeTaskId` uuid null (the core task whose subtasks are the period's manual close tasks), `closedAt`, `closedByUserId`, `chainHead` char(64) null, `totals` text (JSON) null | unique `(organizationId, fiscalPeriodId)` |
 | `ledger_close_item` (automated checks only) | `checklistId` fk cascade, `checkKey` varchar(64), `title` varchar(255), `status` varchar(8) (`PENDING`, `PASSED`, `FAILED`, `WAIVED`), `blocking` bool, `waivable` bool, `count` int null, `evidence` text (JSON) null, `evaluatedAt`, `waivedByUserId` null, `waiveReason` null | unique `(checklistId, checkKey)`; idx `(organizationId, status)` |
 | `ledger_close_template_item` | `title`, `position`, `defaultAssigneeEmployeeId` null, `dueOffsetDays` int (the template the period's core tasks are created from) | idx `(organizationId, position)` |
-| `ledger_run_item` | `operationId` uuid (the core operation of the run), `subjectType`, `subjectId`, `status`, `difference` text (JSON), `error`, `journalIds` text (JSON) | unique `(operationId, subjectType, subjectId)`; idx `(operationId, status)` |
+| `ledger_run_item` (kept because a reposting or catch-up run shows each document's difference for review and resumes by the journals of finished documents, while operation steps hold slices, not documents; the run's state, progress and retries are the core operation's) | `operationId` uuid (the core operation of the run), `subjectType`, `subjectId`, `status`, `difference` text (JSON), `error`, `journalIds` text (JSON) | unique `(operationId, subjectType, subjectId)`; idx `(operationId, status)` |
 | `ledger_integrity_finding` | `source` varchar(32) (`LEDGER`, `BANKING`, `TAX`, `RECEIVABLES`, `PAYMENTS`, `FIXED_ASSETS`, registered sources), `kind` varchar(10) (`INTEGRITY`, `ANOMALY`), `checkKey` varchar(64), `severity` varchar(8), `score` numeric(5,2) null, `state` varchar(10) (`OPEN`, `RESOLVED`, `DISMISSED`), `subjectType`, `subjectId`, `details` text (JSON), `detectedAt`, `resolvedAt` null, `dismissedByUserId` null, `dismissReason` null | unique `(organizationId, source, checkKey, subjectType, subjectId)` while `OPEN`; idx `(organizationId, source, kind, state)` |
 | `ledger_rate_source` | `providerKey` varchar(64), `kind` varchar(10) (`REFERENCE`, `CUSTOM`), `config` text (JSON: address template, parameters, response mapping), `secretSettingId` uuid null (an `IntegrationSetting` row), `pairs` text (JSON), `schedule` varchar(32), `isEnabled` bool, `lastRunAt`, `lastStatus` | unique (live) `(organizationId, providerKey)` |
 
@@ -131,9 +131,12 @@ worklist or to the earliest open date).
 
 In `packages/plugins/accounting/src/lib/database/migrations/`, additive, idempotent, three dialects, both ORMs:
 `1791000073100-CreateLedgerJournalTables` (head, journal, line, link, balance, closing balance, triggers; the journal trigger
-admits only the one-time `supersededById` write), `1791000073110-CreateLedgerRuleTables` (posting rule and lines, account rule,
+admits only the one-time `supersededById` write, with `ledger.allowPostedJournalEdit` on or off, since an edit is a
+superseding copy), `1791000073110-CreateLedgerRuleTables` (posting rule and lines, account rule,
 party account, pair), `1791000073120-CreateManualJournalTables`, `1791000073130-CreateLedgerLockAndCloseTables`,
-`1791000073140-CreateLedgerRunItemAndHealthTables` (run item, exception, finding), `1791000073150-CreateLedgerRateSourceTable`. No
+`1791000073140-CreateLedgerRunItemAndHealthTables` (`ledger_run_item`, each document's
+difference and journals in a run whose state is a core operation; `ledger_posting_exception`, the queue of documents that
+failed to post; `ledger_integrity_finding`, health findings with their own state), `1791000073150-CreateLedgerRateSourceTable`. No
 backfill: no column is added to an existing table. Default grants are `defaultFor` on the permission contributions
 (§9), not a seed. Shipped rule sets are code (contributions, conditions as rule-row templates), copied into
 `ledger_posting_rule` and `rule` only when overridden.
@@ -275,7 +278,7 @@ writes that post or start a run; every writing route below accepts `preview` whe
 | `GET` `POST` `PUT` | `/posting-rules` (+ `/:id/simulate`, `/:id/activate`), `/document-types` | `ACCOUNTING_POSTING_RULE_VIEW` / `_EDIT` | rule sets, simulation, registered types with components, roles and areas | New |
 | CRUD | `/account-rules` (conditions as rule rows), `/party-accounts`, `/inter-organization-pairs` | `ACCOUNTING_POSTING_RULE_EDIT`, `ACCOUNTING_PARTY_ACCOUNT_EDIT` | determination data | New |
 | `GET` | `/party-roles` | `ACCOUNTING_LEDGER_VIEW` | registered party roles: record type, receivable or payable side | New |
-| `GET` | `/open-items/control-check` | `ACCOUNTING_LEDGER_VIEW` | control account balances against the register's open items per party, as of a date; items and allocations themselves are the routes of the register and of `payments-and-collections` | New |
+| `GET` | `/open-items/control-check` | `ACCOUNTING_LEDGER_VIEW` | control account balances against the register's open items per party, as of a date: the items are compared from their journal's date, items whose journal is deferred to a later open date, waits as a posting exception or predates the go-live date are listed as `timingDifferences` (item, document date, posting date or exception id) and only the remainder is reported as `mismatches` (spec FR-49); items and allocations themselves are the routes of the register and of `payments-and-collections` | New |
 | `GET` `POST` | `/posting-exceptions`, `/posting-exceptions/:id/retry`, `/resolve` | `ACCOUNTING_POSTING_EXCEPTION_RESOLVE` | worklist | New |
 | `POST` | `/documents/:type/:id/reclassify` | `ACCOUNTING_DOCUMENT_RECLASSIFY` | accounting-field change set | New |
 | `GET` `POST` `DELETE` | `/locks`, `/locks/:id`, `/locks/check`, `/locks/unlock-requests` | `ACCOUNTING_LEDGER_VIEW` / `ACCOUNTING_PERIOD_LOCK` | timeline, set, lift, check, request | New |
@@ -305,7 +308,7 @@ infrastructure failure throws (the outbox retries with backoff); a functional re
 | `document.<type>.cancelled` | `{ document }` | reverse every unreversed journal of the document (its allocations are released first by `payments-and-collections`, whose release events reverse their own journals) |
 | `document.<type>.amended` | `{ document, previousVersion, accountingFieldsChanged?, posting? }` | correction pair when the derived journal differs |
 | `document.<type>.closed` | `{ document }` | acknowledged; no ledger effect |
-| `payments.allocation.created` / `.released` | `payments-and-collections` (type `payment_allocation` registered with its facts) | realised exchange difference, settlement discount, advance reclassification and netting transfer journals; their reversal on release |
+| `payments.allocation.created` / `.released` | `payments-and-collections` (type `payment_allocation` registered with its facts) | realized exchange difference, settlement discount, advance reclassification and netting transfer journals; their reversal on release |
 | core `income` and `expense` entity events | core | post, correct or reverse the registered types `income` and `expense` |
 | `accounting.account.merged` / `.merge_undone`, `accounting.profile.went_live` | foundation | rebuild `ledger_balance` for the two accounts; create the go-live lock |
 
@@ -411,7 +414,7 @@ read access to the document through `LEDGER_POSTING_SOURCE` first. Text taken fr
    preview, exceptions, control-account lines against the register, allocation journals, party accounts,
    cancellation and amendment corrections, core income and expense as posting types.
 3. **Phase 3 — Close and currencies.** Checklist, period and year-end close, reopen, closing balances, rate feeds,
-   pegs, reporting currency, realised differences, revaluation, inter-organization journals, reposting, catch-up,
+   pegs, reporting currency, realized differences, revaluation, inter-organization journals, reposting, catch-up,
    health monitor, divergence finder.
 4. **Phase 4 — Advanced capabilities.** Continuous checks, agent preparation, unlock requests, rule simulation, explain a
    balance, propose a journal, anomaly scan, live balances.

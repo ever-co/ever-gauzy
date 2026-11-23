@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-16
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: the existing chat flags (`GAUZY_CHAT_ENABLED`, tenant `FEATURE_CHAT`) keep task cards, send to chat and create from message as today; the new tenant feature `FEATURE_CHAT_RECORD_CARDS` (default off, needs `FEATURE_CHAT`) for cards of other record types, send to chat and "Discussed in" on record pages, card field settings and message actions; the new tenant feature `FEATURE_CHAT_AGENTS` (default off) for bots, agents, commands, recurring posts and conversation event subscriptions; AI agents also need `GAUZY_CHAT_AI_ENABLED` (exactly `true`) and a configured AI provider; webhook changes stay behind `GAUZY_CHAT_WEBHOOKS_ENABLED`; record notifications need the automation feature of `automation-and-notifications`.
 
 ---
@@ -166,7 +166,7 @@ Chat already turns tasks into **cards** that can be edited in the message (statu
 - **Reliability**: notification posts and outgoing deliveries are retried from the outbox and never lost on a restart; agent runs survive a process restart as failed with a reason, never as a silent stop.
 - **Security & privacy**: bot tokens hashed, scoped and rotated; agents bound by FR-18; plans show exactly what will change; what leaves the platform: message text, files' extracted text and tool results to the tenant's AI provider for agent runs; signed callbacks and command calls with the person's id and name to bot addresses; event deliveries to integration-hub subscribers as FR-60 allows; files fetched from webhook-given addresses through the egress guard.
 - **Auditability**: bot, token, agent, action, command and subscription changes in the activity log; every agent run, plan, approval, change and undo in the audit trail; decisions from cards in the record's history.
-- **Accessibility and localisation**: cards, plan cards, forms and command lists keyboard operable and labelled; field formats in the viewer's locale; built-in action names in every shipped locale.
+- **Accessibility and localization**: cards, plan cards, forms and command lists keyboard operable and labelled; field formats in the viewer's locale; built-in action names in every shipped locale.
 - **Compatibility**: PostgreSQL, MySQL and SQLite with both ORMs; multi-tenant cloud and self-hosted with self-hosted model servers; works without the automation, approval, helpdesk, expense or AI plugins, whose parts are then absent.
 
 ## 5. Key Entities & Domain Concepts

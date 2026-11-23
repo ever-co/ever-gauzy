@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-16
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_CUSTOMER_PORTAL` (tenant feature, default off) · the plugin loads only when
 `GAUZY_CUSTOMER_PORTAL_ENABLED` is exactly `true` · it needs `FEATURE_ADVANCED_ACCESS` on · the portal assistant also
 needs `FEATURE_PORTAL_ASSISTANT` and supplier onboarding `FEATURE_SUPPLIER_ONBOARDING` (both default off)
@@ -276,7 +276,7 @@ staff see who is reading a document right now. These requirements are marked `(a
   to members; checkout data to the tenant's payment provider; assistant prompts to the tenant's AI provider.
 - **Observability**: sign-ins, refusals, invitations, actions and assistant runs audited; metrics for sign-in outcomes,
   active members, notices sent and cross-party refusals.
-- **Accessibility and localisation**: portal pages keyboard operable and screen-reader labelled; every string and
+- **Accessibility and localization**: portal pages keyboard operable and screen-reader labelled; every string and
   email in the portal's languages; the member's language and time zone used for dates and amounts.
 - **Compatibility**: PostgreSQL, MySQL and SQLite with both ORMs; cloud and self-hosted; without payment providers,
   print templates, helpdesk or manufacturing only their part is missing; OpenAPI additive; SDKs regenerated.

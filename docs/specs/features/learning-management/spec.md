@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-16
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_LEARNING` (default off)
 
 ---
@@ -282,7 +282,7 @@ All reports are report definitions: filterable, groupable, exportable, schedulab
   configured runner.
 - **Observability and audit**: grade and certificate history, enrolment sources, job runs (launch notices, reminders,
   expiry, waiting list offers, attendance import).
-- **Accessibility and localisation**: lessons, players and quizzes keyboard operable, captions shown when the video
+- **Accessibility and localization**: lessons, players and quizzes keyboard operable, captions shown when the video
   has them, screen-reader labels on question controls, every string in every shipped locale, right-to-left layouts,
   course content translatable per language.
 - **Compatibility**: PostgreSQL, MySQL and SQLite; both ORMs; multi-tenant cloud and self-hosted single tenant;

@@ -70,8 +70,9 @@
   `crm/engagement/crm-engagement.controller.ts`. Test: counts after add, remove and merge events; replayed event
   counted once; last activity moved by a person's entry and not by an automation that sends nothing; bump only with the
   switch on.
-- [ ] **T9**. Unread marks from core `employee_recent_visit` (`crm/engagement/crm-unread.ts`) for owners and assignees.
-  Test: mark set by another user's entry, cleared on opening.
+- [ ] **T9**. Unread marks from core `employee_recent_visit` (`crm/engagement/crm-unread.ts`) for owners and assignees;
+  an opening keeps the row's earlier `visitedAt` in its `data` as `previousVisitedAt` before the upsert.
+  Test: mark set by another user's entry, cleared on opening; `previousVisitedAt` holds the opening before.
 - [ ] **T10**. Task links `crm/activity/crm-task.service.ts` (create through `TaskCreateCommand`, no project, link as a
   `resource_link` row with `targetEntity = Task`, reassign closes previous to-do), `/crm/:type/:id/tasks` in
   `crm/activity/crm-task.controller.ts`, the link filter of the "CRM tasks" system view in the task list query
@@ -227,15 +228,16 @@
   thread never linked; ceiling caps a user's choice.
 - [ ] **T45**. Relationships `crm/relationships/crm-relationship.job.ts` (strength, bands, going quiet, introductions) and
   their tab (`crmui/components/crm-relationships-tab/crm-relationships-tab.component.ts`). Test: unit specs on fixed
-  interaction sets; band change event.
+  interaction sets; band change event; a repeated nightly run keeps one overall row (`userKey` `*`) per party.
 - [ ] **T46**. Coaching (`crm/coaching/crm-coaching.service.ts`, `crm/coaching/crm-coaching.job.ts`,
   `crm/coaching/crm-reply-nudge.job.ts`: facts, medians, team view scope, nudge job with draft action honouring the
   user's `crm.nudge` notification preference) and page (`crmui/components/crm-coaching-page/crm-coaching-page.component.ts`).
   Test: one nudge per message; none when the user switched nudges off; team ranking hidden unless opted in.
 - [ ] **T47**. "What changed?" and summaries (`crm/summaries/crm-what-changed.service.ts`,
-  `crm/summaries/crm-summaries.service.ts`, `crm/summaries/crm-summaries.controller.ts`: last visit from
-  `employee_recent_visit`, grouping, `CRM_TEXT_GENERATION` over the agent runtime, `CRM_TRANSCRIPTS`, approval writes the
-  note as a comment of the note kind with sources). Test: without provider; proposal writes nothing.
+  `crm/summaries/crm-summaries.service.ts`, `crm/summaries/crm-summaries.controller.ts`: previous visit
+  (`data.previousVisitedAt`) from `employee_recent_visit`, grouping, `CRM_TEXT_GENERATION` over the agent runtime, `CRM_TRANSCRIPTS`, approval writes the
+  note as a comment of the note kind with sources). Test: without provider; proposal writes nothing; entries added between
+  the previous and the current opening are listed after the opening cleared the unread mark.
 - [ ] **T48**. Selling effort `crm/effort/crm-effort.service.ts` (time logs on linked tasks and calls, rates, cost
   permission) and the deal tab (`crmui/components/crm-effort-tab/crm-effort-tab.component.ts`); cost of sale into
   `CRM_ENGAGEMENT_FACTS`. Test: figures on the demo data set; cost hidden without the key.

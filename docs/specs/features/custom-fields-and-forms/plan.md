@@ -33,7 +33,7 @@ interceptors and the subscriber act only for tenants with `FEATURE_CUSTOM_FIELDS
 responses of record routes pass through exactly as today. Lists
 filter and sort on custom fields through the platform's one query protocol: `filter[cf.<key>][<op>]` and `sort=cf.<key>`
 are dynamic fields that `filter-parser.ts`, `sort-parser.ts` and `query-translator.ts` hand to a resolver this plugin
-binds, on REST and GraphQL alike. Value changes and customisation changes are core `activity_log` rows; conditions are
+binds, on REST and GraphQL alike. Value changes and customization changes are core `activity_log` rows; conditions are
 core `rule` rows; per-type settings and user defaults live in the settings store and `user.uiPreferences`.
 
 ```mermaid
@@ -68,7 +68,7 @@ flowchart LR
 | Formulas | `@gauzy/utils` `formula/`: tokenizer, parser, type checker, evaluator, exact decimals on `BigInt` | same verdict in browser and server; conformance suite against core `rule.evaluator` |
 | Write path | interceptor + entity subscriber with the transaction's manager | values commit with their record on every route |
 | List filters and sort | the core query protocol: `cf.<key>` dynamic fields of `filter[...]` and `sort=` resolved through a resolver hook added to `filter-parser.ts` / `query-translator.ts` (both ORMs) and bound by this plugin; no `cf[...]` dialect and no list hook in `CrudService` | one filter grammar for REST, GraphQL and saved views |
-| History and audit | value changes are core `activity_log` rows (`entity` = the record type, `entityId` = the record, `updatedFields` `cf.<key>`, `previousValues` / `updatedValues`, `actorType`, `data.source` = form, API, import, automation, workflow, agent, computed, restore, package); customisation changes are `activity_log` rows with `entity` `CustomFieldDefinition`, `CustomFieldOverride`, `CustomFieldRule`, `FormLayout`, `FormAction`, `CustomRecordType` | one timeline per record for record views |
+| History and audit | value changes are core `activity_log` rows (`entity` = the record type, `entityId` = the record, `updatedFields` `cf.<key>`, `previousValues` / `updatedValues`, `actorType`, `data.source` = form, API, import, automation, workflow, agent, computed, restore, package); customization changes are `activity_log` rows with `entity` `CustomFieldDefinition`, `CustomFieldOverride`, `CustomFieldRule`, `FormLayout`, `FormAction`, `CustomRecordType` | one timeline per record for record views |
 | Per-type settings | core settings store: one `tenant_setting` row per record type, `recordType.<key>` (JSON, `ORGANIZATION` scope, `TENANT` for tenant-wide), declared once by the core registry; this plugin owns its `form` section (title, image, search fields where the type has no search definition, sort, quick entry, history, copy, attachments limit, print and email templates, picker title, after-create message and next steps, and `layoutRendering`, default `false`: the standard type keeps its existing form with the custom field section until an administrator switches it on); `record-views-and-search` owns the `views` section, including the default view | one per-type settings store; default view in one place |
 | User defaults | `user.uiPreferences.customFields` (`IUserUiPreferences`, `PUT /user/ui-preferences`): per record type, field path → value | existing per-user preference store |
 | Masks | a provider of the core `FieldVisibility` (`api/field-visibility.service.ts`, `@VisibleWith`) for `cf.<key>` fields, used by the response interceptor, GraphQL, the ports, exports, print and MCP | one visibility service |
@@ -143,7 +143,7 @@ s.position = 0 AND s.tenantId = :t`. A page of 50 records reads its values with 
 | `record_template` | `recordType`, `name`, `values` text, `visibility` (`PRIVATE`, `SHARED`), `ownerUserId`, `isDisabled` | index `(tenantId, recordType, visibility)` |
 | `customization_package_import` | `packageName`, `packageHash` varchar(64), `diff` text, `choices` text, `createdItems` text, `state` (`PREVIEWED`, `APPLIED`, `UNDONE`, `FAILED`), `appliedAt`, `undoneAt` | index `(tenantId, state)` |
 
-Not tables of this plugin, by design: value and customisation history (`activity_log`), conditions (`rule`), per-type
+Not tables of this plugin, by design: value and customization history (`activity_log`), conditions (`rule`), per-type
 settings (`tenant_setting`), user defaults (`user.uiPreferences`). Core gains one append-only table for the self-hosted
 script runtime, `tenant_script_run` (`scriptKind` `FIELD_FORMULA` / `FLOW_STEP`, `scriptRef`, `scriptVersion`,
 `recordType`, `recordId`, `actorUserId`, `actorType`, `startedAt`, `durationMs`, `peakMemoryKb`, `outcome` `OK` /
@@ -278,7 +278,7 @@ Outbox partition `custom-fields:<recordType>:<recordId>` keeps one record's reco
 ## 6. UI Surface
 
 - **Angular `packages/plugins/custom-fields-ui`** (lazy, `@gauzy/plugin-ui`, hidden when the metadata route answers
-  404): Settings → Customisation `/pages/settings/customisation` (record types list); per type `…/:recordType/{fields,
+  404): Settings → Customization `/pages/settings/customization` (record types list); per type `…/:recordType/{fields,
   standard-fields,rules,layouts,layouts/:id/designer,actions,templates,settings,history}`; custom record type builder
   `…/record-types/:id`; packages `…/packages`; menu entries per published type to `/pages/records/:typeKey`, whose list
   is the generic record list of `record-views-and-search` (menu entries shown only while that route answers), while
@@ -350,13 +350,13 @@ Formulas run in the `@gauzy/utils` evaluator only (no `eval`, no I/O, a step bud
 32). Scripts exist only on self-hosted installations with the switch on and run only in the core tenant script
 runtime (separate process, no network, files or credentials, time and memory limits, every run in
 `tenant_script_run`, every script change in `activity_log`); on the cloud deployment the switch is refused at start-up
-and a test spec proves script fields and routes answer `403`. Formatted text is sanitised with the platform's sanitiser on write and render; web-address actions accept https
+and a test spec proves script fields and routes answer `403`. Formatted text is sanitised with the platform's sanitizer on write and render; web-address actions accept https
 only and encode values; package files are size-limited (5 MB) and schema-validated. Agents act in the caller's request
 context and their changes are marked `Agent` in history and audit.
 
 ## 10. Observability
 
-`activity_log` entries for values and customisations; `tenant_script_run` where scripts are on; metrics for refusals,
+`activity_log` entries for values and customizations; `tenant_script_run` where scripts are on; metrics for refusals,
 formula and script errors, script time and memory, recompute lag, cache hits.
 
 ## 11. Phased Rollout

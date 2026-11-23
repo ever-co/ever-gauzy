@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-15
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_ORDER` (existing, now read by every order route) and `FEATURE_SALES` (new, default off) for everything this spec adds; sub-features `FEATURE_ORDER_APPROVALS`, `FEATURE_B2B_CREDIT` (existing, default off, now read), `FEATURE_BLANKET_ORDERS`, `FEATURE_SALES_COMMISSIONS` (new, default off)
 
 ---
@@ -232,7 +232,7 @@ Advanced capabilities: one **document flow** from deal to payment with live stat
 - **Reliability**: events through the event outbox (at least once, deduplicated per consumer); jobs (expiry, unblock, promise refresh, commission earning) are idempotent and catch up after downtime.
 - **Security & privacy**: tenant and organization scoped; public links carry a random token stored hashed; signatures and network addresses are personal data, exported and erased with the contact; leaving the platform: quotation, confirmation, proforma and statement emails to the addresses users choose.
 - **Auditability**: who, when, before and after for every change to a sent quotation, a confirmed order, a credit decision, a profile, a plan and a statement.
-- **Accessibility and localisation**: keyboard operable, screen-reader labels, a typed alternative to the drawn signature; every string in all shipped locales; documents in the customer's language and currency.
+- **Accessibility and localization**: keyboard operable, screen-reader labels, a typed alternative to the drawn signature; every string in all shipped locales; documents in the customer's language and currency.
 - **Compatibility**: PostgreSQL, MySQL, SQLite; both ORMs; cloud and self-hosted; OpenAPI and SDKs regenerated.
 
 ## 5. Key Entities & Domain Concepts
@@ -274,7 +274,7 @@ Advanced capabilities: one **document flow** from deal to payment with live stat
 
 - [ ] **AC-1** On a fresh tenant with `FEATURE_SALES` on, a user creates a quotation for a lead, sends it, accepts it online with an option and an alternative chosen and a signature, and sees an order with exactly those lines, the lead turned customer and the acceptance certificate in the PDF (advanced: online acceptance; FR-13, FR-21, FR-22).
 - [ ] **AC-2** Revision 2 supersedes revision 1; revision 1's link refuses acceptance; the revision diff lists changes (FR-14–FR-16, FR-28).
-- [ ] **AC-3** An estimate answered through the old estimate link places the order and creates no invoice (FR-29, FR-30).
+- [ ] **AC-3** An estimate issued as a quotation's copy and answered through the existing estimate link places the order; the estimate itself is not converted, so with the organization's "convert accepted estimates" setting off no invoice is created and with it on the order is invoiced once; a standalone estimate answered through its link is converted as today (FR-29, FR-30).
 - [ ] **AC-4** Order quote routes and estimate routes answer with unchanged contracts (contract tests green) (FR-29, FR-32).
 - [ ] **AC-5** A lost quotation with two reasons appears in "Lost quotations by reason" grouped by reason (FR-18, FR-19).
 - [ ] **AC-6** An order over the credit limit is held, an approval request carries the exposure, a one-time release confirms the order, and both appear in the timeline (advanced: credit control; FR-66, FR-67).

@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-16
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_BUSINESS_DOCUMENTS` (default off; with it off every document-owning feature keeps its own
 numbering and status as today)
 
@@ -241,7 +241,7 @@ with live progress, automatic retries and a downloadable result log. These requi
 - **Reliability**: at-least-once event delivery with one event per action; bulk runs and recurrences resume after a restart; first-enable indexing resumable.
 - **Auditability**: who, when, before and after for every change to a confirmed document; every number accounted for; tolerance overrides and agent actions marked.
 - **Security & privacy**: permissions of the owner type on every read and action; flow hides documents the user may not read; nothing leaves the platform except what owners already send (recurrence "confirm and send" uses the owner's existing email).
-- **Accessibility and localisation**: graph with a list alternative, keyboard-operable panels, every string in every shipped locale, amounts in words per organization language.
+- **Accessibility and localization**: graph with a list alternative, keyboard-operable panels, every string in every shipped locale, amounts in words per organization language.
 - **Compatibility**: PostgreSQL, MySQL, SQLite; both ORMs; additive migrations; cloud and self-hosted; queue or in-process scheduling; OpenAPI additive.
 
 ## 5. Key Entities & Domain Concepts

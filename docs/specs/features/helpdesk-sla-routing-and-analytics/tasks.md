@@ -33,11 +33,12 @@
 - [ ] **T3** (parallel). Entities `hd/service-levels/helpdesk-service-calendar.entity.ts`,
       `helpdesk-sla-policy.entity.ts`, `helpdesk-sla-target.entity.ts`, `helpdesk-ticket-sla.entity.ts`,
       `helpdesk-sla-event.entity.ts`, `helpdesk-escalation-policy.entity.ts` and migration
-      `hd/database/migrations/1791000052110-CreateHelpdeskServiceLevelTables.ts`. Test: as T2.
+      `hd/database/migrations/1791000052110-CreateHelpdeskServiceLevelTables.ts` (clock rows and events keyed by
+      `recordType` and `recordId`, `taskId` for tickets only, `transitionSeq`). Test: as T2.
 - [ ] **T4** (parallel). Entities `hd/analytics/helpdesk-ticket-fact.entity.ts`, `helpdesk-daily-fact.entity.ts`,
       `helpdesk-support-health.entity.ts`, `helpdesk-contract-usage.entity.ts`,
       `hd/routing/helpdesk-rebalance-proposal.entity.ts` and migration
-      `hd/database/migrations/1791000052120-CreateHelpdeskAnalyticsTables.ts`. Test: as T2.
+      `hd/database/migrations/1791000052120-CreateHelpdeskAnalyticsTables.ts` (`helpdesk_daily_fact.employeeKey`). Test: as T2.
 - [ ] **T5**. Permission contributions with `defaultFor` (plan §9) in `hd/helpdesk.plugin.ts` and the service setting
       contributions in `hd/helpdesk.settings.ts`; per-organization defaults on first use
       (`hd/service-levels/service-defaults.service.ts`: default calendar from the
@@ -136,7 +137,8 @@
       split, reset (setting and permission), outside-hours mark, working-time measures. Files:
       `hd/service-levels/clock-state-machine.ts`, `hd/service-levels/ticket-sla.service.ts`,
       `hd/service-levels/ticket-sla.lifecycle.ts`, `hd/service-levels/ticket-sla.controller.ts`. Test: every transition of spec
-      §3.7, including a status change through the task API.
+      §3.7, including a status change through the task API; pause, resume and a second pause in one cycle record three
+      events; a retried transition records one.
 - [ ] **T24**. Minute check job (`helpdesk.sla-check`): breaches at due time with internal comment and notices, catch-up,
       `nextCheckAt`. Files: `hd/schedule/helpdesk-sla-check.scheduler.ts`, `hd/service-levels/sla-check.worker.ts`,
       `hd/service-levels/sla-breach.service.ts`. Test: SQLite end to end with an hour of simulated downtime; each breach
@@ -148,7 +150,7 @@
 - [ ] **T26**. Facts: `subscriber:helpdesk-analytics`, `helpdesk.time-facts` (time logs of ticket tasks),
       `helpdesk.daily-facts`. Files: `hd/analytics/helpdesk-analytics.consumer.ts`, `hd/analytics/time-facts.job.ts`,
       `hd/analytics/daily-facts.job.ts`, `hd/schedule/helpdesk-facts.scheduler.ts`. Test: facts equal a recomputation from
-      raw rows on seeded data.
+      raw rows on seeded data; a repeated daily run writes one team total (`employeeKey` `*`) per team and day.
 - [ ] **T27**. Analytics sources: agent home, manager dashboard with period deltas, agent comparison, stats per customer,
       contact and agent, per-ticket analytics, drill-down, access scoping. Files: `hd/analytics/analytics.service.ts`,
       `hd/analytics/analytics.controller.ts`, `hd/analytics/analytics-scope.ts`. Test: figures on seeded data; an agent
@@ -172,7 +174,7 @@
       and cancel; acceptance once.
 - [ ] **T31**. `SERVICE_LEVEL_ENGINE` for other record types with a test record type. Files:
       `hd/service-levels/service-level-engine.ts`, `hd/service-levels/testing/test-record-type.ts`. Test: clocks, breach
-      and escalation on the test type.
+      and escalation on the test type, stored and announced with its `recordType` and `recordId` and no task.
 - [ ] **T32** (parallel). `HELPDESK_CUSTOMER_STATS` for the portal and the CRM organisation view; ratings through
       `HELPDESK_SATISFACTION` with "not available" fallback. Files: `hd/analytics/customer-stats.provider.ts`,
       `hd/analytics/satisfaction.reader.ts`. Test: another customer's tickets never counted.

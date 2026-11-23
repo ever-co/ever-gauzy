@@ -104,8 +104,8 @@ export class Review extends TenantOrganizationBaseEntity implements IReview { /*
 | `review_rating` | `responseId` fk cascade, `criterionId`, `rating` numeric(5,2), `comment` text | unique `(responseId, criterionId)` |
 | `development_area` | `reviewId` null, `employeeId`, `title`, `actions` json, `dueDate`, `learningRef` varchar(120) null, `status` | idx `(employeeId, status)` |
 | `calibration_session`, `calibration_change` | session: `cycleId`, `name`, `facilitatorEmployeeId`, `scope` json, `status`, `heldAt`; change: `sessionId`, `reviewId`, `oldPoint`, `newPoint`, `reason`, `changedByUserId`, `at` | idx `(cycleId)`; change append-only, idx `(reviewId, at)` |
-| `feedback_note`, `feedback_request` | note: `giverEmployeeId`, `receiverEmployeeId`, `kind` (`SUGGESTION`/`NOTE`), `visibility` (`RECEIVER_AND_MANAGER`/`MANAGER_ONLY`), `text`, `recordType`, `recordId`, `requestId`; request: `requesterEmployeeId`, `aboutEmployeeId`, `topic`, `recipients` json, `dueDate`, `status` | idx `(receiverEmployeeId, createdAt)`, `(giverEmployeeId, createdAt)` |
-| `one_on_one_note` | `eventId` uuid (the series' calendar event), `occurrenceStartAt` timestamp, `authorEmployeeId`, `text` text, `version`; read only by its author | unique `(eventId, occurrenceStartAt, authorEmployeeId)` |
+| `feedback_note`, `feedback_request` (feedback from one employee to another, with a kind, a manager-only visibility and the request it answers, which a core `comment` on a record does not carry) | note: `giverEmployeeId`, `receiverEmployeeId`, `kind` (`SUGGESTION`/`NOTE`), `visibility` (`RECEIVER_AND_MANAGER`/`MANAGER_ONLY`), `text`, `recordType`, `recordId`, `requestId`; request: `requesterEmployeeId`, `aboutEmployeeId`, `topic`, `recipients` json, `dueDate`, `status` | idx `(receiverEmployeeId, createdAt)`, `(giverEmployeeId, createdAt)` |
+| `one_on_one_note` (a table because it belongs to one occurrence of a recurring series, an event and a start time that is not a record a `comment` can point at, and only its author reads it) | `eventId` uuid (the series' calendar event), `occurrenceStartAt` timestamp, `authorEmployeeId`, `text` text, `version`; read only by its author | unique `(eventId, occurrenceStartAt, authorEmployeeId)` |
 | `bonus_proposal` | `reviewId` unique, `employeeId`, `basis` json, `amount`, `currency`, `status` (`PROPOSED`/`AWAITING_APPROVAL`/`APPROVED`/`REJECTED`/`SENT`/`CANCELLED`), `approvalRef` uuid null (workflow instance or core request approval), `payrollRef` | idx `(organizationId, status)` |
 | `review_assistant_draft` | `reviewId`, `requestedByUserId`, `aiRunId` uuid null (the run of `ai-agents-and-assistants`, holding provider, model and usage), `evidenceHash`, `statements` json (text, source refs), `flags` json | idx `(reviewId, createdAt)` |
 
@@ -137,7 +137,8 @@ and teams deciding bonus proposals when `approval-workflows` is off).
 - Plugin (`packages/plugins/performance-reviews/src/lib/database/migrations/`): `1791000027100-CreatePerformanceSetupTables` (focus areas, criteria, scales, templates, template positions),
   `1791000027110-CreateGoalPerformanceTables` (goal side table, roll-up, metrics), `1791000027120-CreateReviewCycleTables` (cycles,
   participants, reviews, focus area scores, responses, ratings, development areas), `1791000027130-CreateCalibrationAndBonusTables`,
-  `1791000027140-CreateFeedbackAndOneOnOneTables` (feedback notes and requests, one-to-one notes),
+  `1791000027140-CreateFeedbackAndOneOnOneTables` (`feedback_note`, `feedback_request`, `one_on_one_note`; free-text
+  notes on a record are core `comment` rows),
   `1791000027150-CreatePerformanceAssistantTables` (drafts).
 - Additive and idempotent per dialect; nullable `liveKey` columns with plain unique indexes replace partial indexes on
   MySQL and SQLite. No core table changes; foreign keys to `goal`, `key_result` and `goal_kpi` with `ON DELETE CASCADE`.

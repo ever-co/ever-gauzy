@@ -17,8 +17,9 @@ A new plugin `@gauzy/plugin-quality` (`packages/plugins/quality`) owns setup (pa
 item profiles, enforcement rules), inspections, retained samples, non-conformances, improvement actions, customer and
 supplier feedback and the analytics; `quality-ui` holds the Angular pages and the inspector module of the floor app.
 It never writes stock quantities or lot statuses itself: stock moves through the warehouse stock-document API
-(`QUALITY_STOCK` port), lot statuses are set by the lot plugin's consumer of `quality.inspection.decided` (in
-`serials-and-batches`), and inspections are a document type of the business document engine (numbering, lifecycle,
+(`QUALITY_STOCK` port), lot statuses are set by the lot plugin (`serials-and-batches`) through `QUALITY_LOTS.setStatus`, called
+inside the decision's transaction like the stock movements, so a decision, its stock and lot effects and the outbox
+append commit together (spec §4 Reliability), and inspections are a document type of the business document engine (numbering, lifecycle,
 history).
 
 The improvement loop is built on what the platform already has, and quality keeps only the bindings:
@@ -73,7 +74,7 @@ flowchart LR
     GATE --> SVC
     SVC -- QUALITY_STOCK --> STK[warehouse stock documents and non-sellable locations: hold, release, reject, sample]
     SVC --> OUT[Event outbox]
-    OUT -- quality.inspection.decided --> LOT[lot-serial-tracking: lot status]
+    SVC -- QUALITY_LOTS setStatus in the decision transaction --> LOT[lot-serial-tracking: lot status]
     OUT -- quality.supplier_measure.updated --> PUR[purchasing scorecards]
     OUT --> RT[Real-time, inbox, automations, webhooks]
     IN[[receipt, stock document, delivery, card, subcontract receipt, return, claim, lot, ticket, time-log events]] --> CON[subscriber:quality-*] --> SVC
@@ -94,7 +95,7 @@ flowchart LR
 | Procedures | docs plugin through `QUALITY_PROCEDURES` (category, tree, versions, lock, review, `document_link`) | one versioned document model |
 | Circles | core `EmployeeAppointmentService`; meetings through `QUALITY_MEETINGS` when loaded | one meeting model |
 | Recurrence and reminders | core recurrence rule columns on the goal binding; reminders through `REMINDERS` | one recurrence, one reminder table |
-| Cross-plugin calls | ports bound in `plugin-composition.ts`: consumed `QUALITY_STOCK`, `QUALITY_DOCUMENTS`, `QUALITY_SOURCE_LINES` (read lines of receipts, stock documents, deliveries, cards, subcontract receipts, returns and claims through their owners), `QUALITY_LOTS` (read lot attributes), `QUALITY_TASKS` (create tasks for corrective steps), `QUALITY_AI`, `QUALITY_CALENDAR`, `QUALITY_MEETINGS`, `QUALITY_PROCEDURES`, `QUALITY_APPROVALS`, `QUALITY_COMMUNICATIONS`, `REMINDERS`; provided `QualityGateService`, `QualityTemplateLookup`, `QualityMeasureProvider` | no import of other plugins |
+| Cross-plugin calls | ports bound in `plugin-composition.ts`: consumed `QUALITY_STOCK`, `QUALITY_DOCUMENTS`, `QUALITY_SOURCE_LINES` (read lines of receipts, stock documents, deliveries, cards, subcontract receipts, returns and claims through their owners), `QUALITY_LOTS` (read lot attributes; `setStatus` inside the decision's transaction), `QUALITY_TASKS` (create tasks for corrective steps), `QUALITY_AI`, `QUALITY_CALENDAR`, `QUALITY_MEETINGS`, `QUALITY_PROCEDURES`, `QUALITY_APPROVALS`, `QUALITY_COMMUNICATIONS`, `REMINDERS`; provided `QualityGateService`, `QualityTemplateLookup`, `QualityMeasureProvider` | no import of other plugins |
 | Offline | reading sets of kind `quality.reading-set` (owner type `QUALITY_INSPECTION`) through the core offline-sync module and core idempotency; the inspector is a `floor-ui` module | one offline idiom, one floor app |
 | Events | `EventOutboxService.append` in the decision transaction; consumers `subscriber:quality-*` in `EventConsumerRegistry` | at-least-once, deduplicated |
 | Background work | `@ScheduledJob` + `@QueueWorker`; `QualitySchedulePlugin` in the worker; every pass a `job_execution` row | API and worker split |
@@ -124,10 +125,10 @@ export class QualityInspection extends TenantOrganizationBaseEntity implements I
 | `quality_template_version` | `templateId` fk, `version` int, `status` (`DRAFT`/`ACTIVE`/`SUPERSEDED`) | unique `(templateId, version)` |
 | `quality_template_line` | `versionId` fk, `sequence`, `parameterId` fk, `readings` int (1–50), `ruleKind` (`RANGE`/`TARGET`/`EQUALS`/`FORMULA`/`MANUAL`), `min`, `max`, `target`, `tolerance` numeric(20,6) null, `expected` varchar(255) null, `formula` text null, `severity` (`CRITICAL`/`MAJOR`/`MINOR`), `instructions` text, `imageIds` json | unique `(versionId, sequence)` |
 | `quality_sampling_plan` | `code`, `name`, `kind` (`FIXED`/`PERCENT`/`FULL`/`TABLE`), `fixedSize`, `percent`, `minSize`, `maxSize`, `table` json (lot-size bands × level: sample, accept, reject), `switching` json (tighten after N rejects in M, reduce after N accepts) | unique `(tenantId, code)` |
-| `quality_sampling_level` | `planId`, `variantId`, `vendorId` null, `level` (`NORMAL`/`TIGHTENED`/`REDUCED`), `history` json (last results), `changedAt`, `reason` | unique `(organizationId, planId, variantId, vendorId)` |
-| `quality_item_profile` | `variantId` uuid null, `productId` uuid null, `productCategoryId` uuid null, `points` json (point → required, templateId, samplingPlanId), `retainSample` bool, `sampleQuantity` numeric(20,6), `keepMonths` int, `ownerEmployeeId` null | unique `(organizationId, variantId, productId, productCategoryId)` |
-| `quality_enforcement_rule` | `point` varchar(24), `itemGroupId`, `vendorId`, `contactId` null, `whenMissing` (`REFUSE`/`WARN`/`HOLD`), `whenRejected` (`REFUSE`/`WARN`/`MOVE`), `allowAdHoc` bool, `draftNonConformance` bool | unique `(organizationId, point, itemGroupId, vendorId, contactId)` |
-| `quality_inspection` | `number` varchar(64) null, `kind` (`INCOMING`/`IN_PROCESS`/`OUTGOING`/`RETURN`/`AD_HOC`), `point`, `sourceType` varchar(48), `sourceId`, `sourceLineId` uuid, `variantId`, `vendorId` null, `contactId` null, `quantity` (the line's good quantity), `sampleSize` numeric(20,6), `lotIds` json, `serialUnitIds` json, `templateVersionId` fk, `samplingPlanId` null, `samplingLevel` null, `inspectorId`, `verifierId` null, `state` (`DRAFT`/`IN_PROGRESS`/`AWAITING_VERIFICATION`/`DECIDED`/`CANCELLED`), `decision` (`ACCEPTED`/`REJECTED`/`PARTIAL`) null, `acceptedQuantity`, `rejectedQuantity`, `decidedById`, `decidedAt`, `holdMovementId`, `releaseMovementId`, `rejectMovementId` uuid null, `remarks` text, `certificateFileId` null, `version` int | unique `(organizationId, number)` where number not null; idx `(sourceType, sourceLineId)`, `(organizationId, state, createdAt)`, `(vendorId, decidedAt)`, `(variantId, decidedAt)` |
+| `quality_sampling_level` | `planId`, `variantId`, `vendorId` null, `vendorKey` varchar(36) not null (the `vendorId`, or `*`), `level` (`NORMAL`/`TIGHTENED`/`REDUCED`), `history` json (last results), `changedAt`, `reason` | unique `(organizationId, planId, variantId, vendorKey)` |
+| `quality_item_profile` | `variantId` uuid null, `productId` uuid null, `productCategoryId` uuid null, `points` json (point → required, templateId, samplingPlanId), `retainSample` bool, `sampleQuantity` numeric(20,6), `keepMonths` int, `ownerEmployeeId` null, `scopeKey` varchar(48) not null (`variant:<variantId>`, `product:<productId>` or `category:<productCategoryId>`, written with them) | check exactly one of `variantId`, `productId`, `productCategoryId`; unique `(organizationId, scopeKey)` |
+| `quality_enforcement_rule` | `point` varchar(24), `itemGroupId`, `vendorId`, `contactId` null, `whenMissing` (`REFUSE`/`WARN`/`HOLD`), `whenRejected` (`REFUSE`/`WARN`/`MOVE`), `allowAdHoc` bool, `draftNonConformance` bool, `scopeKey` varchar(112) not null (`<itemGroupId or *>:<vendorId or *>:<contactId or *>`, written with them) | unique `(organizationId, point, scopeKey)` |
+| `quality_inspection` | `number` varchar(64) null, `kind` (`INCOMING`/`IN_PROCESS`/`OUTGOING`/`RETURN`/`AD_HOC`), `point`, `sourceType` varchar(48), `sourceId`, `sourceLineId` uuid, `lotId` uuid null (the lot of an inspection drafted per source line and lot; also listed in `lotIds`), `sourceKey` varchar(128) null (`<sourceType>:<sourceLineId>:<lotId or *>`, written by the source consumer for the draft it creates and cleared when the inspection is canceled), `variantId`, `vendorId` null, `contactId` null, `quantity` (the line's good quantity), `sampleSize` numeric(20,6), `lotIds` json, `serialUnitIds` json, `templateVersionId` fk, `samplingPlanId` null, `samplingLevel` null, `inspectorId`, `verifierId` null, `state` (`DRAFT`/`IN_PROGRESS`/`AWAITING_VERIFICATION`/`DECIDED`/`CANCELLED`), `decision` (`ACCEPTED`/`REJECTED`/`PARTIAL`) null, `acceptedQuantity`, `rejectedQuantity`, `decidedById`, `decidedAt`, `holdMovementId`, `releaseMovementId`, `rejectMovementId` uuid null, `remarks` text, `certificateFileId` null, `version` int | unique `(organizationId, number)` where number not null; unique `(organizationId, sourceKey)` (null keys of ad-hoc and canceled inspections are distinct on every dialect); idx `(sourceType, sourceLineId)`, `(organizationId, state, createdAt)`, `(vendorId, decidedAt)`, `(variantId, decidedAt)` |
 | `quality_reading_set` | `inspectionId` fk, `authorId`, `enteredAt`, `offlineOperationId` uuid null (core `offline_operation` when captured offline), `isCurrent` bool | unique `(offlineOperationId)` where not null |
 | `quality_reading` | `readingSetId` fk, `templateLineId` fk, `values` json (numbers or text), `mean`, `minValue`, `maxValue`, `stdDev` numeric(20,6) null, `result` (`PASSED`/`FAILED`/`CANNOT_EVALUATE`/`PENDING`), `overrideResult` null, `overrideReason`, `overrideById`, `photoIds` json, `defectCount` int | unique `(readingSetId, templateLineId)` |
 | `quality_inspection_hint` | `readingId` fk, `photoId`, `label` varchar(128), `confidence` numeric(5,4), `area` json, `aiRunId` uuid (the run of `ai-agents-and-assistants`, which records the model and usage), `outcome` (`ACCEPTED`/`OVERRIDDEN`/`PENDING`) | idx `(readingId)` |
@@ -216,7 +217,7 @@ warehouse).
 | Event | Emitted when | Consumers |
 | ----- | ------------ | --------- |
 | `document.quality_inspection.confirmed` / `.cancelled` | decided / cancelled (document engine) | history, reports |
-| `quality.inspection.created`, `.decided` (+ `.completed`, same payload), `.cancelled` | as named; payload: inspection, source line, decision, quantities, lots, vendor | purchasing (hold release, scorecard), lot-serial-tracking (lot status), manufacturing (card state), subcontracting, fulfilment, SPC, sampling levels, supplier measures |
+| `quality.inspection.created`, `.decided` (+ `.completed`, same payload), `.cancelled` | as named; payload: inspection, source line, decision, quantities, lots, vendor | purchasing (hold release, scorecard), lot-serial-tracking (lot status, already set through `QUALITY_LOTS` in the decision's transaction), manufacturing (card state), subcontracting, fulfilment, SPC, sampling levels, supplier measures |
 | `quality.nonconformance.opened`, `.closed`; `quality.action.overdue`, `.closed`; `quality.review.due`, `.decided` | as named | inbox, automations, webhooks |
 | `quality.chart.out_of_control` | a run rule breaks | inbox (quality owner), operator console warning, draft non-conformance |
 | `quality.supplier_measure.updated` | measures recomputed | purchasing scorecards |
@@ -279,7 +280,7 @@ the home page.
 | Trigger | When | What it does | Idempotency |
 | ------- | ---- | ------------ | ----------- |
 | `quality.reviews.sweep` | daily 01:00 (organization time zone) | for due goal bindings (core recurrence): one key-result update per key result for the period, measured values filled (and the KPI's current value), `nextDueOn` advanced | unique (`keyResultId`, `periodEnd`) |
-| consumer `subscriber:quality-sources` | source document events | draft inspections, sample retention movements | `(sourceLineId, lotId)` unique per inspection; delivery record |
+| consumer `subscriber:quality-sources` | source document events | draft inspections, sample retention movements | `quality_inspection.sourceKey` unique (source line and lot): a redelivered event finds the draft it made; delivery record |
 | consumer `subscriber:quality-decisions` | `quality.inspection.decided` | sampling level switching, SPC points and run rules, supplier measure update | `(chartId, inspectionId)`, event dedup |
 | `quality.supplier-measures.rebuild` | nightly | recomputes the current and previous month per supplier | upsert on `(vendorId, periodStart)` |
 | `quality.cost.snapshot` | daily + month end | cost of poor quality snapshot | replace rows of the period |
@@ -343,7 +344,7 @@ the home page.
 | ---- | ---------- | ------ | ---------- |
 | Gate slows document confirmation | Medium | Medium | requirement cache per organization and item, one query per document, budget 30 ms per line |
 | Owners' gate contracts drift as plugins change | Medium | Medium | one shared contract in `quality.model.ts`, contract tests with each owner's stub |
-| Lot status lags the decision | Low | Medium | hold location keeps stock unavailable meanwhile; lot consumer idempotent; status shown as pending |
+| Lot status out of step with the decision | Low | Medium | `QUALITY_LOTS.setStatus` runs in the decision's transaction, so a failure rolls the decision and its stock movements back; without the lot plugin no lot status exists |
 | Formula evaluator abuse | Low | High | own parser, no host evaluation, length and depth limits, fuzz tests |
 | False out-of-control alerts | Medium | Low | baseline period choice, rule set per chart, alert grouping per chart and day |
 | AI hints trusted blindly | Medium | Medium | hints never decide, agreement reported, model recorded on the agent run |

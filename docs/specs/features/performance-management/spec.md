@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-16
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_PERFORMANCE_REVIEWS` (default off); the existing goal features `FEATURE_GOAL`,
 `FEATURE_GOAL_SETTING` and `FEATURE_GOAL_REPORT` keep working unchanged
 
@@ -157,7 +157,7 @@ bonuses to payroll behind an approval.
 | --- | --- |
 | **FR-34** | The system MUST compute each focus area's goal completion as the capped average progress of the employee's goals in that focus area and cycle, converted to the scale; with manual scoring the manager's focus area rating is used instead and may not exceed the scale's top point. |
 | **FR-35** | The system MUST compute the goal score as the weighted sum of focus area scores, the self score as the weighted sum of self ratings, and each response's score as the weighted sum of its ratings. |
-| **FR-36** | The system MUST compute the feedback score as the average of submitted manager, peer and upward response scores, weighted per kind by the cycle (default: manager 50 %, peers 30 %, upward 20 %, renormalised over the kinds present). |
+| **FR-36** | The system MUST compute the feedback score as the average of submitted manager, peer and upward response scores, weighted per kind by the cycle (default: manager 50 %, peers 30 %, upward 20 %, renormalized over the kinds present). |
 | **FR-37** | The system MUST compute the final score from the cycle's formula in the platform's formula language over the goal, self, feedback, manager, peer, upward and competency scores and the employee's and cycle's fields (custom fields included); the default formula is the average of goal, self and feedback scores; the formula runs without tenant code and is validated on save. |
 | **FR-38** | The system MUST turn the final score into a proposed scale point through the scale's bands, keep the manager's proposed point beside it, and keep recomputing scores live from goals and responses until the manager review is submitted, then freeze the goal score. |
 
@@ -245,7 +245,7 @@ reviews are shown as "fewer than 5" outside HR.
   never expose the reviewer to the employee; leaves the platform: reminder and release emails, calendar invitations,
   evidence sent to the tenant's configured AI provider when the assistant is used.
 - **Observability and audit**: score history per review, calibration log, launch and release runs, metric refresh log.
-- **Accessibility and localisation**: rating controls keyboard operable with labelled scale points, grid and charts with
+- **Accessibility and localization**: rating controls keyboard operable with labelled scale points, grid and charts with
   table alternatives, every string in every shipped locale, right-to-left layouts.
 - **Compatibility**: PostgreSQL, MySQL and SQLite; both ORMs; multi-tenant cloud and self-hosted single tenant;
   additive OpenAPI and SDK changes only.

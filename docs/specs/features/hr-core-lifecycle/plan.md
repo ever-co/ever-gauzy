@@ -175,7 +175,7 @@ Kept elsewhere, not in plugin tables:
 - Core (`packages/core/src/lib/database/migrations/`): `1791000095900-AddEmployeeHrStructureColumns` (the four tables
   above and `employee_phone.hrGroup`), `1791000095910-BackfillEmployeeLevelReference` (idempotent label match); enum
   values need none. The task-template tables come from `project-costing-and-billing`'s core migration
-  `1791000094900-CreateTaskTemplateTables`.
+  `1791000094000-CreateTaskTemplateTables`.
 - Plugin (`packages/plugins/hr-lifecycle/src/lib/database/migrations/`): `1791000095100-CreateHrRecordTables` (branch, profile, personal, contacts, education, employment, external ids,
   groups, approvers, skills), `1791000095110-CreateHrEventTables`, `1791000095120-CreateHrLifecycleTables` (template activity details,
   processes, activities, separation, questionnaire versions, exit interview, questions),
@@ -230,7 +230,7 @@ audit event each.
 | `GET/PUT` | `/hr/employees/:id/skill-ratings`; `GET /hr/skill-gaps` | `HR_RECORDS_VIEW` / `HR_RECORDS_EDIT` | ratings, gaps | New |
 | `GET` | `/hr/org-chart?rootId=&depth=`, `/hr/org-chart/search`, `/hr/org-chart/export` | `HR_ORG_CHART_VIEW` or setting | lazy subtree with spans, vacancies, badges | New |
 | `GET/POST/PUT` | `/hr/reorg-scenarios`, `/:id`; `POST …/compare`, `…/apply` (`effectiveDate`, `preview`) | `HR_REORG_PLAN` | deltas; batch of events | New |
-| `GET` | `/hr/analytics/{workforce,exits,attrition,absence,spans,digital-workforce}` | `HR_REPORTS_VIEW` | report data sources | New |
+| `GET` | `/hr/analytics/{workforce,exits,attrition,absence,spans,agent-employees}` | `HR_REPORTS_VIEW` | report data sources | New |
 | `*` | `/employee/*`, `/organization-department/*`, `/organization-position/*`, `/employee-level/*`, `/employee/rate-change-request` | as today | unchanged contracts; with the feature on, a rate-change request is also a `PAY_CHANGE` HR event, a deleted department's sub-departments move up, and manager scopes include reports only while `hr.reportingLineInManagerScope` is on | Unchanged contract |
 
 Errors: `400` with stable codes (`HR_REPORTING_CYCLE`, `HR_ACTIVE_REPORTS`, `HR_LATER_EVENT_CHANGED`,
@@ -378,7 +378,7 @@ kept on the events by `batchId`).
 2. **Phase 2 — Lifecycle depth**: onboarding and separation templates and processes with tasks, exit interviews and
    questionnaires, grievances, final settlement, contracts, letters, reminders, overview, reports and dashboard.
 3. **Phase 3 — Advanced capabilities**: automated provisioning and revocation, newcomer assistant, probation review, spans,
-   vacancies and scenarios, signatures, HR analytics and digital workforce, mutating MCP tools.
+   vacancies and scenarios, signatures, HR analytics with agent employees, mutating MCP tools.
 4. **Phase 4 — General availability**: the feature is off by default; after the trial period it may be switched on by default for new tenants only; existing tenants keep their setting until an administrator changes it.
 
 ## 12. Constitution Reconciliation

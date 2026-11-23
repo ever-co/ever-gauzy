@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-16
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_DATA_EXCHANGE` (tenant feature, default off) · the plugin loads only when
 `GAUZY_DATA_EXCHANGE_ENABLED` is exactly `true` · the tenant export and import page keeps `FEATURE_IMPORT_EXPORT`
 
@@ -198,7 +198,7 @@ recur from a link or a drive folder, and merges can be undone. Marked `(advanced
   without edits as all "unchanged".
 - **FR-44** The system runs exports above 50,000 rows in the background and delivers a link in the inbox, up to 5,000,000.
 - **FR-45** The system applies the reader's record access and field masks, redacts secrets as the tenant export does, and
-  neutralises cells a spreadsheet would read as formulas.
+  neutralizes cells a spreadsheet would read as formulas.
 - **FR-46** The system logs every export (who, when, target, filter, columns, row count, format).
 - **FR-47** A user with `DATA_EXPORT` can save the columns and format of an export as an export template.
 
@@ -247,7 +247,10 @@ recur from a link or a drive folder, and merges can be undone. Marked `(advanced
 - **FR-63** The system lists, before a deletion, the records that reference it (recursively, up to 1,000) and offers to
   detach or delete dependents where the type allows; it refuses the deletion only on references that the record's type
   refuses today, that a record type added by a new feature declares blocking, or, where the organization turns on
-  blocking deletion of referenced records (off by default), on any reference.
+  blocking deletion of referenced records (off by default), on any reference. It lists only the referencing records the
+  requester may read (each referencing type's read scope and record rules); references outside that access are neither
+  listed nor counted, and when one of them blocks the deletion the answer says only that records outside the
+  requester's access prevent it.
 - **FR-64** A user with `DATA_ARCHIVE_MANAGE` can define archive rules (records of a saved view older than a period) that
   mark records archived, hide them from default lists, optionally after exporting them to a file.
 - **FR-65** The system purges the import, error and export files of this feature after 30 days by default, a period of
@@ -321,7 +324,7 @@ recur from a link or a drive folder, and merges can be undone. Marked `(advanced
   AI provider, the header row and at most 20 sample rows when the user asks for help with a file.
 - **Observability**: run and row logs, export log, merge journal; metrics for rows per second, failure rate per target,
   queue depth and undo counts.
-- **Accessibility and localisation**: the wizard is keyboard operable and announced; labels and choices match in every
+- **Accessibility and localization**: the wizard is keyboard operable and announced; labels and choices match in every
   language; dates and numbers read in the formats chosen per column.
 - **Compatibility**: PostgreSQL, MySQL, SQLite (single batch writer); both ORMs; cloud and self-hosted; OpenAPI additive.
 

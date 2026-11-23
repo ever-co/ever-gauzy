@@ -81,15 +81,21 @@
   `inventory.settings.ts` and `warehouse.settings.ts`. Files: `INV/inventory.permissions.ts`, `WH/warehouse.permissions.ts`,
   `INV/inventory.settings.ts`, `WH/warehouse.settings.ts`. Test: `INV/inventory.permissions.spec.ts` and
   `WH/warehouse.permissions.spec.ts` (default roles; existing keys keep their meaning).
-- [ ] **T59**. Core offline-sync module `packages/core/src/lib/offline-sync/` (migration
-  `packages/core/src/lib/database/migrations/1791000085920-AddOfflineSyncTables.ts`; files `offline-sync.service.ts`,
-  `offline-sync.controller.ts`, `offline-operation.entity.ts`, `offline-exception.entity.ts`,
-  `offline-operation-kinds.registry.ts`, `offline-sync.module.ts`):
-  `OfflineSyncService` applying each operation in sequence through `IdempotencyService.claim`, kind registry
-  (`OFFLINE_OPERATION_KINDS` contributions), per-operation results, exceptions instead of loss,
-  `/offline-sync/batches` and `/offline-sync/exceptions`, on the contract of T1; no dependency on this plugin or its
-  flag. Test: `packages/core/src/lib/offline-sync/offline-sync.service.sqlite.spec.ts` (replayed batch, conflicting
-  operation kept as an exception, per-kind permission refusal) with a fake kind.
+- [ ] **T59**. Core offline-sync module `packages/core/src/lib/offline-sync/`, entities and migration: the
+  `offline_operation` log and `offline_exception` queue with their repositories, the core migration
+  `AddOfflineSyncTables` and the kind registry (`OFFLINE_OPERATION_KINDS` contributions), on the contract of T1; no
+  dependency on this plugin or its flag. Files: `packages/core/src/lib/database/migrations/1791000085920-AddOfflineSyncTables.ts`,
+  `packages/core/src/lib/offline-sync/offline-operation.entity.ts`, `packages/core/src/lib/offline-sync/offline-exception.entity.ts`,
+  `packages/core/src/lib/offline-sync/offline-operation-kinds.registry.ts`, `packages/core/src/lib/offline-sync/offline-sync.module.ts`.
+  Test: `packages/core/src/lib/offline-sync/offline-sync.migration.spec.ts` (SQLite: tables and the unique client
+  operation id; up twice is a no-op).
+- [ ] **T61**. Core offline-sync service and routes: `OfflineSyncService` applying each operation of a batch in sequence
+  through `IdempotencyService.claim`, per-operation results, exceptions instead of loss, `/offline-sync/batches` and
+  `/offline-sync/exceptions`, over the tables and kind registry of T59; no dependency on this plugin or its flag.
+  Files: `packages/core/src/lib/offline-sync/offline-sync.service.ts`, `packages/core/src/lib/offline-sync/offline-sync.controller.ts`,
+  `packages/core/src/lib/offline-sync/offline-sync.module.ts`. Test:
+  `packages/core/src/lib/offline-sync/offline-sync.service.sqlite.spec.ts` (replayed batch, conflicting operation kept
+  as an exception, per-kind permission refusal) with a fake kind.
 
 ## Phase 2 — Services, endpoints, events
 
@@ -301,7 +307,7 @@
   Test: `PG/edit-inventory-item-variant/variant-form.component.spec.ts` (hint on and off; an edit writes one "set"
   adjustment).
 - [ ] **T38** (parallel). Offline-kind registration documented for the shop floor, quality and lot capture modules
-  (kinds, permissions, exception choices) in `packages/core/src/lib/offline-sync/README.md` (the module of T59; the
+  (kinds, permissions, exception choices) in `packages/core/src/lib/offline-sync/README.md` (the module of T59 and T61; the
   floor-app module registration is documented with the app in T44). Test: docs build.
 
 ## Phase 4 — MCP, SDKs, integrations, docs
@@ -326,7 +332,7 @@
   `WH/warehouse-task/warehouse-task.controller.ts`, `WH/warehouse-task/warehouse-task-creation.consumer.ts`,
   `WH/warehouse-maintenance.module.ts` (lease expiry). Test: `WH/warehouse-task/warehouse-task.service.spec.ts` (lease
   refusal, reassignment, no copied progress).
-- [ ] **T43**. Warehouse kinds on the core offline-sync module of T59 (`packages/plugins/warehouse/src/lib/`): receive,
+- [ ] **T43**. Warehouse kinds on the core offline-sync module of T59 and T61 (`packages/plugins/warehouse/src/lib/`): receive,
   put away, pick, transfer, count through `POST /stock-counts/:id/count`, relocate; and the offline pack. Files:
   `WH/offline/warehouse-offline-kinds.ts`, `WH/warehouse-task/warehouse-task-offline-pack.service.ts`. Test:
   `WH/offline/warehouse-offline-kinds.sqlite.spec.ts` (replayed batch, conflicting scan, per-kind permission refusal).
@@ -424,10 +430,10 @@ Every functional requirement of `spec.md` §3 and the tasks that implement it; e
 | FR-73 | §3.13 Stock policy settings | T8, T28 |
 | FR-74–FR-75 | §3.13 Stock policy settings | T28 |
 | FR-76–FR-84 | §3.14 Reports | T30 |
-| FR-85 | §3.15 Floor app (advanced) | T43, T44, T59 |
+| FR-85 | §3.15 Floor app (advanced) | T43, T44, T59, T61 |
 | FR-86 | §3.15 Floor app (advanced) | T44, T47 |
-| FR-87 | §3.15 Floor app (advanced) | T43, T44, T59 |
-| FR-88 | §3.15 Floor app (advanced) | T43, T45, T59 |
+| FR-87 | §3.15 Floor app (advanced) | T43, T44, T59, T61 |
+| FR-88 | §3.15 Floor app (advanced) | T43, T45, T59, T61 |
 | FR-89 | §3.15 Floor app (advanced) | T42, T45 |
 | FR-90 | §3.16 Live stock, slotting, forecast, labour and agents (advanced) | T45, T46 |
 | FR-91 | §3.16 Live stock, slotting, forecast, labour and agents (advanced) | T46 |

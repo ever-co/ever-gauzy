@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-16
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_QUALITY` (default off)
 
 ---
@@ -242,7 +242,7 @@ All reports are report definitions: filterable, groupable, exportable, schedulab
   supplier messages are listed before sending.
 - **Observability and audit**: who, when, before and after for every reading, override, decision, cancellation and
   setup change; hint records with model and outcome.
-- **Accessibility and localisation**: keyboard entry of readings in a grid, labelled charts with table alternatives,
+- **Accessibility and localization**: keyboard entry of readings in a grid, labelled charts with table alternatives,
   large targets in the floor app's inspector module; all strings in every shipped locale; numbers and units in the
   user's format.
 - **Compatibility**: PostgreSQL, MySQL and SQLite; both ORMs; additive OpenAPI and SDK changes.

@@ -83,7 +83,9 @@
   (`wf/engine/step-rules.ts`: all, any, N of M, share), parallel groups, return and resubmit. Test: unit specs per rule
   and refusal beside each file (FR-5 to FR-10, FR-17, FR-21, FR-22).
 - [ ] **T11**. `wf/engine/decision-policy.ts`: assignee and delegate checks, administrator override, self-approval,
-  one person counts once. Test: matrix spec `wf/engine/decision-policy.spec.ts` on plain objects (FR-19, FR-24, FR-25).
+  one person counts once. Test: matrix spec `wf/engine/decision-policy.spec.ts` on plain objects (FR-19, FR-24, FR-25):
+  the requester is never an approver by default, and is kept when a step allows the requester and is not resolved from
+  amount bands or approval rules.
 - [ ] **T12**. Definition service and controller (drafts, versions immutable, validate, publish, activate with overlap
   check, retire, templates). Files: `wf/workflow-definition/workflow-definition.service.ts`,
   `wf/workflow-definition/workflow-definition.controller.ts`,
@@ -106,12 +108,15 @@
   `wf/approvers/approver-resolver.service.spec.ts`: resolution per source with the source recorded; unresolved goes to
   fallback (FR-18 to FR-20).
 - [ ] **T15**. Task service and controller: queue with filters and counts, decide with record version and comment rules,
-  serialised decisions, reassign, comments; the `request_approval_employee` / `request_approval_team` projection of the
+  serialized decisions (each assignee's decision counts while the step is open; "already decided" only once the step is
+  resolved or the task decided), reassign, comments; the `request_approval_employee` / `request_approval_team` projection of the
   current step's tasks and `min_count` written in the task's transaction. Files:
   `wf/workflow-task/workflow-task.service.ts`, `wf/workflow-task/workflow-task.controller.ts`,
   `wf/workflow-task/dto/decide-workflow-task.dto.ts`, `wf/workflow-task/dto/reassign-workflow-task.dto.ts`,
   `wf/workflow-task/dto/workflow-task-query.dto.ts`, `wf/workflow-task/request-approval-projection.ts`. Test:
-  concurrency spec (two deciders) in `wf/workflow-task/workflow-task.service.spec.ts`, e2e decide (FR-27, FR-28, FR-30,
+  concurrency spec (two deciders) in `wf/workflow-task/workflow-task.service.spec.ts`: on an "any one" step the second
+  is told "already decided"; on an "all" step with two approvers the second approval is accepted and completes the
+  step; e2e decide (FR-27, FR-28, FR-30,
   FR-36, FR-45).
 - [ ] **T16**. Router implementation: governs requests by type, policy and activation time; records decisions of the
   classic routes on tasks; completes via `settleByWorkflow`; "decided outside" path; a free-form request without a
@@ -161,10 +166,12 @@
   T58 (`packages/core/src/lib/core/util/hashed-token.ts`), email templates (`workflow-task`, `workflow-reminder`,
   `workflow-outcome`: `html.mjml` and `subject.hbs` per language in
   `packages/core/src/lib/core/seeds/data/default-email-templates/<name>/<lang>/`) in every language, public controller
-  with the rate limit and expiry handling of estimate answers. Files:
+  with the rate limit and expiry handling of estimate answers, marked `@Public()` without `TenantPermissionGuard` (tenant,
+  task and assignee taken from the validated token, `FEATURE_WORKFLOWS` checked for that tenant). Files:
   `wf/workflow-action-token/workflow-action-token.service.ts`, `wf/public/workflow-public-action.controller.ts`. Test:
   `wf/workflow-action-token/workflow-action-token.service.spec.ts`: used, expired, stale and reassigned links decide
-  nothing (FR-37).
+  nothing (FR-37); `wf/public/workflow-public-action.controller.spec.ts`: a valid link decides without a session, an
+  invalid token or a tenant with the feature off answers `404`.
 - [ ] **T26**. Bulk decisions as core operation `WORKFLOW_BULK_DECIDE` above 50 (`BulkExecutor`, `@AcceptedOperation`).
   Files: `wf/bulk/workflow-bulk-decide.operation.ts`, route `POST /api/workflows/tasks/decide-bulk` in
   `wf/workflow-task/workflow-task.controller.ts`, `wf/workflow-task/dto/decide-workflow-tasks-bulk.dto.ts`. Test:

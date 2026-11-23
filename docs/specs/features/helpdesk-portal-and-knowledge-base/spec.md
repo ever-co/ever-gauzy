@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-16
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_DOCUMENTS` (existing: help articles are pages of the Documents hub) and
 `FEATURE_HELPDESK_PORTAL` (tenant feature, default off: audiences, public read API and feeds, customer ticket pages,
 ratings) · customer ticket pages also need `FEATURE_HELPDESK` and `FEATURE_CUSTOMER_PORTAL` · the answer assistant needs
@@ -93,7 +93,7 @@ article. A **low rating starts a recovery** with the team lead. These requiremen
 ### 3.1 Scope, flags and compatibility
 
 - **FR-1** The system gates the help audiences, the public read API and feeds, customer ticket pages, ratings and their MCP tools with `FEATURE_HELPDESK_PORTAL`, customer ticket pages also with `FEATURE_HELPDESK` and `FEATURE_CUSTOMER_PORTAL`; off, they answer `404`.
-- **FR-2** The system keeps the existing help-centre routes, tables, permissions, versions, duplicates and seeded content working as today and its page leading to the Documents hub when the hub is on; there the existing articles are carried once into help spaces as pages with their versions, every category level kept. The former rows are left as they are and stay readable and writable through the existing routes: a change written through them is carried to the article's page as a new version, and a change on the page is written back to the row's title and content, so each article stays one article and nothing is locked; existing articles stay visible to agents only until a person changes their audience.
+- **FR-2** The system keeps the existing help-centre routes, tables, permissions, versions, duplicates and seeded content working as today and its page leading to the Documents hub when the hub is on; there the existing articles are carried once into help spaces as pages with their versions, every category level kept. The former rows are left as they are and stay readable and writable through the existing routes: a change written through them is carried to the article's page as a new version, and a change on the page is written back to the row's title and content, so each article stays one article and nothing is locked; existing articles keep the visibility they have today (the internal readers who see them today, private ones staying private; none public) until a person changes their audience.
 - **FR-3** The system uses the ticket service of `helpdesk-tickets` for every customer read and write of a ticket and shows only what its customer view returns.
 - **FR-4** The system only adds routes, fields and enum values; nothing existing is renamed, repurposed or removed.
 
@@ -254,7 +254,7 @@ article. A **low rating starts a recovery** with the team lead. These requiremen
   queries to allowed outside sources, published everyone articles read by help sites.
 - **Observability**: article lifecycle changes and setting changes audited; metrics for search latency, zero-result
   share, deflections, rating response rate, assistant cost.
-- **Accessibility and localisation**: signed-in help, ticket, rating and follow-up pages keyboard operable, headings
+- **Accessibility and localization**: signed-in help, ticket, rating and follow-up pages keyboard operable, headings
   navigable, new messages announced; strings, emails and synonyms per language.
 - **Compatibility**: PostgreSQL, MySQL and SQLite with both ORMs; cloud and self-hosted; without an embeddings provider,
   search falls back to the Documents word matching; without a help site the read API and feed still answer; OpenAPI
@@ -290,7 +290,8 @@ article. A **low rating starts a recovery** with the team lead. These requiremen
 
 - [ ] **AC-1** The read API and feed give a help site pinned and popular articles, categories and search; agents-only and
       customers-only articles never reach guests or an integration token in any list, search, suggestion, feed, Markdown
-      twin or address; the existing articles arrive once in the organization's help space, agents-only (FR-8, FR-9, FR-18).
+      twin or address; the existing articles arrive once in the organization's help space with the visibility they have
+      today (none public), and the existing help-centre routes and page keep working (FR-2, FR-8, FR-9, FR-18).
 - [ ] **AC-2** Publish, schedule, unpublish, archive and restore follow FR-20 and FR-21; a renamed slug keeps answering
       with the new address; a cited article asks before deletion; bulk actions report per article.
 - [ ] **AC-3** Category merge, move and delete with summary to General behave as FR-15 to FR-17.
@@ -323,7 +324,7 @@ article. A **low rating starts a recovery** with the team lead. These requiremen
 
 ## 8. Open Questions
 
-- Existing articles stay agents-only after they are carried into the Documents hub; nothing becomes public until a
+- Existing articles keep today's visibility after they are carried into the Documents hub; nothing becomes public until a
   person chooses it. Default applied.
 - Without a help site, the public help centre is the read API and feed only; no fallback pages are rendered. Default
   applied.

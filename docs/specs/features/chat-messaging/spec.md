@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-16
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: the existing chat flags, `GAUZY_CHAT_ENABLED` (deployment, exactly `true`) and the tenant feature `FEATURE_CHAT` (both default off). The AI-assisted parts (§3.12) also need `GAUZY_CHAT_AI_ENABLED` (exactly `true`, default off), an AI provider configured for the tenant and the organization's chat AI setting.
 
 ---
@@ -88,7 +88,7 @@ The platform already has team chat ([`chat`](../chat/spec.md)): public and priva
 - **FR-17** The system lets an organization limit who may create public and private channels (setting of `chat-administration-and-clients`) and shows the create action in every client only to people the server would allow.
 - **FR-18** The system applies these membership rules: any member of a public channel may add employees of the organization; in a private channel managers add, or every member when the channel allows it; anyone joins a public channel by themselves, never a private one; managers remove others; anyone removes themselves except from everyone channels; members are never added to or removed from a direct conversation.
 - **FR-19** A channel can have several managers; a manager can promote and demote members; a user with `CHAT_MANAGE` can do the same without being a member, which is recorded. An organization can switch on manager succession (setting, default off: a channel left without a manager stays so and is managed by holders of `CHAT_MANAGE`, as today); then, when the last manager leaves, is removed or is deactivated, the longest-standing member becomes manager and a system event names them.
-- **FR-20** An archived channel stays in the person's list marked archived, as today, and a person can hide archived conversations with the list filters of FR-10; Browse shows archived channels only when the person asks to include them; an archived channel reads as before, refuses posts, reactions and votes (as today it refuses writes), now with the code `CHAT_CONVERSATION_ARCHIVED`, and comes back unchanged when unarchived; a private channel whose last member leaves is archived automatically.
+- **FR-20** An archived channel stays in the person's list marked archived, as today, and a person can hide archived conversations with the list filters of FR-10; Browse lists open channels as today and adds archived channels only when the person asks to include them; an archived channel reads as before, refuses posts, reactions and votes (as today it refuses writes) with the code `CHAT_CONVERSATION_ARCHIVED`, and comes back unchanged when unarchived; where the organization's setting asks for it (default off: the channel stays as it is, as today), a private channel whose last member leaves is archived automatically.
 - **FR-21** A channel manager or a user with `CHAT_MANAGE` can delete a channel (never an everyone channel) after typing its name: it disappears for everyone at once, a user with `CHAT_MANAGE` can restore it for 30 days, and then the system purges it with its messages, threads, reactions, pins, polls, reminders, scheduled messages and file links (the files follow `drive` trash rules); a legal hold (the platform's holds of `access-control-and-security`, placed from the chat administration pages of `chat-administration-and-clients`) blocks the purge.
 - **FR-22** The channel panel shows name, topic, a description up to 2,000 characters in the message format, visibility, creator, creation date, member count and linked record, editable by managers, and tabs Members, Files, Links, Pins and Threads (threads started in the channel, each opening the thread).
 - **FR-23** Joining and leaving work from the list, Browse, a link, the composer gate and the channel panel with the same confirmation everywhere, and write "joined" and "left" system events (not for everyone channels).
@@ -108,7 +108,7 @@ The platform already has team chat ([`chat`](../chat/spec.md)): public and priva
 - **FR-34** A person mentioned in a thread reply, or who replies, follows that thread.
 - **FR-35** The emoji picker offers search, categories, skin tones, the person's recently used emoji (kept on the server) and the organization's custom emoji, which also work inline through `:name:`; plain-text copies of a message carry custom emoji as `:name:`.
 - **FR-36** An animated image sent as a file plays in the stream; a deployment can register a GIF search source through `integration-hub`, fetched through the platform's egress guard; with none, no picker is shown; a message holding only media reads "sent a picture", "sent a file" or "sent a GIF" in lists, notifications and search.
-- **FR-37** A person can send up to 20 files with one caption in one action, all or nothing; the files show as one group above the caption, and a retry of the send with the same key answers the same message.
+- **FR-37** A person can send up to 20 files with one caption in one action (a file group), all or nothing; the files show as one group above the caption, and a retry of the send with the same key answers the same message; a send with attachments as today keeps today's limit and behaviour.
 - **FR-38** The Angular composer shows a sent message at once as "sending", reconciles it with the server's answer, offers retry or discard on failure, keeps unsent messages across a reload and sends them in order on reconnect with their original key; a send waits for its files still uploading.
 - **FR-39** The system keeps each earlier body of an edited message with its time and shows "edited" with the history to members; an organization can set an edit window (default none) and hide the history (default shown); clearing all text of a message without files asks to delete it instead.
 - **FR-40** An author can delete their own messages one by one or as a selection of up to 50; a channel manager can delete app and agent messages in their channel; a user with `CHAT_MANAGE` can delete any message, as today; whether deleted bodies are kept follows the retention and legal holds of `chat-administration-and-clients`.
@@ -118,7 +118,7 @@ The platform already has team chat ([`chat`](../chat/spec.md)): public and priva
 - **FR-44** The hover toolbar, the context menu and a long press offer reply, reply in thread, forward, react, copy text, copy link, pin, save, remind, mark unread, edit, delete, create task and the record actions of `chat-agents-and-record-actions` (with `FEATURE_CHAT_RECORD_CARDS` on), each only when the person may use it.
 - **FR-45** The message list shows day separators, a "new" line at the person's read position, consecutive messages of one author within 5 minutes grouped, file groups kept together, and times in the person's 12- or 24-hour choice.
 - **FR-46** A person can jump to a permalink, a search hit, a pin, a date or the latest message; the window loaded around the target never splits a message's file group.
-- **FR-47** The system keeps a person's unsent text per conversation and thread on the server (the newest 50, for 30 days), shows it in every client and device with a draft marker, and removes it when sent or cleared; a client that keeps drafts on the device today keeps doing so, so no draft it holds is lost through the server's limits.
+- **FR-47** The system keeps a person's unsent text per conversation and thread on the server (the newest 50, kept until sent or cleared, or until the organization's draft retention period ends where one is set), shows it in every client and device with a draft marker, and removes it when sent or cleared; a client that keeps drafts on the device today keeps doing so, so no draft it holds is lost through the server's limits.
 - **FR-48** The typing signal keeps working in conversations and threads in every client.
 - **FR-49** A person can send a message silently (no push or email to anyone; unread counts still move) and choose whether, outside the recipients' working hours, the composer suggests a silent send, sends silently by default or does nothing (default: suggests).
 - **FR-50** The system shows a time-off badge on people with approved time off today in lists, mentions, profiles and direct messages, updated live, unless the organization turns it off.
@@ -164,7 +164,7 @@ The platform already has team chat ([`chat`](../chat/spec.md)): public and priva
 - **FR-84** At send time the system checks the author's membership and the conversation's state; a scheduled message that cannot go is marked failed with the reason, the author is told once and can reschedule it; a scheduled message is sent exactly once.
 - **FR-85** A conversation with scheduled messages of the person shows a banner with their count, and the Scheduled page lists all of them with their state.
 - **FR-86** The Saved page combines saved messages and reminders on messages (due, upcoming) with counts; its badge counts fired reminders whose notification is still unread.
-- **FR-87** The system purges sent scheduled messages 30 days after they were sent (fired reminders follow the retention of the platform's reminders), and deletes a person's pending reminders on messages, scheduled messages and drafts when they lose access to chat.
+- **FR-87** The system keeps sent scheduled messages, drafts and read bundled reaction entries until the organization sets a retention period for them (default: kept), and then purges the rows older than that period (fired reminders follow the retention of the platform's reminders); it cancels a person's pending reminders on messages and deletes their pending scheduled messages and drafts when they lose access to chat.
 
 ### 3.7 Files and media
 
@@ -198,7 +198,7 @@ The platform already has team chat ([`chat`](../chat/spec.md)): public and priva
 - **FR-109** The system sends no push while the person is active in a client (as today), no push or email during the do-not-disturb hours of their notification preferences (as today) or while their status is do not disturb (and, for a person who chose the unread wait of FR-107, no email while they are active), except a message its sender marks urgent when the person allows urgent messages from that sender.
 - **FR-110** A person can turn notification sounds on or off and choose one; the sound plays for direct messages and mentions while a chat tab is open but not focused.
 - **FR-111** Opening a push, an email link or an Activity entry opens the conversation, thread or message it concerns.
-- **FR-112** The system clears read bundled reaction entries of Activity after 90 days; every other Activity entry is one of the person's platform notifications and is kept as the platform keeps notifications today.
+- **FR-112** Read bundled reaction entries of Activity are kept until the organization sets a retention period for them (FR-87); every other Activity entry is one of the person's platform notifications and is kept as the platform keeps notifications today.
 
 ### 3.10 Presence and status
 
@@ -230,7 +230,7 @@ The platform already has team chat ([`chat`](../chat/spec.md)): public and priva
 
 ### 3.14 Defaults
 
-- **FR-129** With no organization setting or person's choice of this spec changed, existing chat behaves as today: channel names may repeat, a channel left without a manager stays so, direct conversations with deactivated people stay writable, pins are not capped, every member pins and uses `@channel` and `@here`, archived conversations stay in the list, and chat emails follow each person's existing email choice.
+- **FR-129** With no organization setting or person's choice of this spec changed, existing chat behaves as today: channel names may repeat, a channel left without a manager stays so, direct conversations with deactivated people stay writable, pins are not capped, every member pins and uses `@channel` and `@here`, archived conversations stay in the list, a private channel left by its last member is not archived, sent scheduled messages, drafts and reaction entries are kept, and chat emails follow each person's existing email choice.
 
 ## 4. Non-Functional Requirements
 
@@ -240,7 +240,7 @@ The platform already has team chat ([`chat`](../chat/spec.md)): public and priva
 - **Reliability**: reminders, scheduled messages and poll closing run on per-item claims that survive restarts and run late rather than never; unsent client messages are retried with their original key; no message is sent twice.
 - **Security & privacy**: membership checked on every new read and write; anonymous ballots stored without a readable link to the voter; read receipts respect the two-way privacy choice; what leaves the platform: push payloads (author, conversation, snippet) to the push services, emails to the mail provider, message text to the tenant's AI provider only for §3.12 when switched on, voice clips to the speech provider for FR-126, GIF search words to the registered GIF source, link fetches as today.
 - **Auditability**: channel deletion, restore, manager changes by `CHAT_MANAGE`, custom emoji changes and visibility changes in the activity log; edit history kept with the message.
-- **Accessibility and localisation**: keyboard operable lists, composer, polls, menus and dialogs; labelled controls and live regions for new messages; system events, dates and plurals in every shipped locale; right-to-left text shown correctly.
+- **Accessibility and localization**: keyboard operable lists, composer, polls, menus and dialogs; labelled controls and live regions for new messages; system events, dates and plurals in every shipped locale; right-to-left text shown correctly.
 - **Compatibility**: PostgreSQL, MySQL and SQLite with both ORMs; multi-tenant cloud and self-hosted; additive OpenAPI and GraphQL changes; works without the realtime plugin (polling; no presence or status), without the Inbox (notices stay in the platform's notification list), without the platform reminders (no Remind action) and without `drive` (today's uploads).
 
 ## 5. Key Entities & Domain Concepts
@@ -299,7 +299,7 @@ The platform already has team chat ([`chat`](../chat/spec.md)): public and priva
 - [ ] **AC-21** The new MCP tools answer like the REST routes for the same user and preview before scheduling (FR-127).
 - [ ] **AC-22** The report definitions of FR-128 return counts matching the chat's own records.
 - [ ] **AC-23** Works on PostgreSQL, MySQL and SQLite with both ORMs; all functional requirements have a passing test (§4).
-- [ ] **AC-24** With the chat flags on and no setting of this spec changed, a second channel named like an existing one is created, the last manager leaving names no successor, a direct conversation with a deactivated person accepts a message, a 101st pin is accepted, an archived channel stays in the list, and a mention is emailed as the person's existing preference says (FR-129).
+- [ ] **AC-24** With the chat flags on and no setting of this spec changed, a second channel named like an existing one is created, the last manager leaving names no successor, a direct conversation with a deactivated person accepts a message, a 101st pin is accepted, an archived channel stays in the list, a private channel left by its last member is not archived, and a mention is emailed as the person's existing preference says (FR-129).
 - [ ] **AC-25** With the feature off, and with the feature on and default settings, every existing page, route, field, permission and report behaves as today (FR-1, FR-2).
 
 ## 8. Open Questions

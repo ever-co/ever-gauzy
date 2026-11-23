@@ -71,13 +71,18 @@
   reference resolution by declared keys, format detection per column, transforms. Test: matching in two languages;
   each transform; unresolved reference reported.
 - [ ] **T9**. Validator and dry run `dx/validate/` (`row-validator.ts`, `dry-run.service.ts`, `in-file-duplicates.ts`): form-equivalent validation through creators, writers and
-  `CUSTOM_FIELD_VALUE_WRITER` in check mode, in-file duplicates by match keys, outcomes per row with before and after.
-  Test: dry run writes nothing (row counts unchanged); masked field cannot be mapped.
+  `CUSTOM_FIELD_VALUE_WRITER` in check mode, in-file duplicates by match keys, outcomes per row with before and after,
+  and the validated values of each `CREATE` and `UPDATE` row stored in `data_import_row.values` with the matched
+  record's version in `matchedVersion`.
+  Test: dry run writes nothing (row counts unchanged); masked field cannot be mapped; every `CREATE` and `UPDATE` row
+  keeps its values.
 - [ ] **T10**. Import operation `data-exchange.import`: batches of 200 committed on their own, resume from the last batch
   (operation lease), cancel, time limit, totals, record origin on events, notifications muted, error, skipped and log
   files; external ids written to core `integration_map` under the `integration_tenant` of the files' origin. Files:
   `dx/import/data-import.operation.ts`, `dx/import/data-import-runner.service.ts`, `dx/import/import-result-files.ts`. Test: crash in batch 3 resumes
-  without duplicates; partial run lists failed rows only; a second file resolves "customer 123" by its source id.
+  without duplicates; partial run lists failed rows only; a second file resolves "customer 123" by its source id; a run
+  started from a dry run with the source file deleted creates the dry run's records from the stored values, and a
+  row whose matched record changed since the dry run is `CHANGED_SINCE_PREVIEW`.
 - [ ] **T11**. Import controllers and DTOs (`imports`, `preview`, `rows`, `dry-run`, `run`, `cancel`, `retry`, files,
   `imports/history` merging `import_history` rows), own runs versus `DATA_IMPORT_MANAGE`: `dx/import/data-import.controller.ts`,
   `dx/import/data-import-history.controller.ts`, `dx/import/dto/`, `dx/targets/data-target.controller.ts`. Test: e2e (permissions per
@@ -85,7 +90,7 @@
 - [ ] **T12**. Exports `dx/export/` (`data-export.service.ts`, `data-export.controller.ts`, `data-export.operation.ts`,
   `writers/`): record types and views through `RECORD_VIEWS_QUERY` and `RECORD_VIEWS_SELECTION`,
   scopes (all, selected, sample, template, for update), CSV (`csv-writer`), XLSX and JSON, masks, redaction, formula
-  neutralising, export log with one `AUDIT_EVENT_SINK` event per row, background above 50,000 rows. Test: exported rows
+  neutralizing, export log with one `AUDIT_EVENT_SINK` event per row, background above 50,000 rows. Test: exported rows
   equal the view; masked column absent; log row written once and referenced by the sink event.
 - [ ] **T13**. Recycle bin: `RECORD_DELETION_LISTENERS` binding, entries with deletion groups, list, restore through the
   `trash` part (existing recover behaviour; tasks through `PUT /tasks/:id/recover` and `DELETE /tasks/:id/trashed` with
@@ -173,7 +178,8 @@
   `data.blockReferencedDeletion`, off by default), detach or delete dependents, `ngx-where-used-dialog`. Files:
   `dx/merge/where-used.service.ts`, `dx/merge/where-used.controller.ts`, `ui/where-used-dialog.component.ts`. Test: vendor
   with purchase orders refused with the list, as today; a contact referenced by deals is deleted as today with the setting off and
-  refused with it on.
+  refused with it on; a requester who may read the vendor but not two of its purchase orders sees only the readable
+  orders, no count of the others, and `hiddenBlocking: true` when one of the hidden orders blocks the deletion.
 - [ ] **T34**. Retention kinds `recycle-bin:<recordType>` (declared with the default `KEEP`: no purge unless a period is set for the
   organization; 120 days suggested) and
   `data-exchange.files` (30 days, this plugin's files only) declared through `RETENTION_SOURCES` and purged by the runner

@@ -43,9 +43,10 @@
   `banking/bank-transaction/bank-transaction.entity.ts`, `banking/bank-match/bank-match.entity.ts`,
   `banking/bank-balance/bank-balance.entity.ts` with their repositories,
   `banking/database/migrations/1791000077110-CreateBankStatementTables.ts`. Test: migration and mapping-parity specs.
-- [ ] **T6** (parallel). Entities for `bank_rule` (outcome, priority, no condition columns), `bank_rule_run`,
-  `bank_match_memory`, `bank_match_proposal`; migration `CreateBankRuleTables`. Files:
-  `banking/bank-rule/bank-rule.entity.ts`, `banking/bank-rule-run/bank-rule-run.entity.ts`,
+- [ ] **T6** (parallel). Entities for `bank_rule_action` (outcome, priority, no condition columns: conditions are core
+  `rule` rows), `bank_rule_application`, `bank_match_memory`, `bank_match_proposal`; migration `CreateBankRuleTables`.
+  Files: `banking/bank-rule/bank-rule-action.entity.ts`,
+  `banking/bank-rule-application/bank-rule-application.entity.ts`,
   `banking/bank-match-memory/bank-match-memory.entity.ts`, `banking/bank-match-proposal/bank-match-proposal.entity.ts`
   with their repositories, `banking/database/migrations/1791000077120-CreateBankRuleTables.ts`. Test: migration spec.
 - [ ] **T7** (parallel). Entities for `bank_reconciliation_checkpoint`, `bank_guarantee`; migration
@@ -126,12 +127,13 @@
   Test: partial-failure spec (196 of 200).
 - [ ] **T22**. Rules: conditions as core `rule` rows (`BANK_RULE`, context mapping of the bank line registered with
   the rule validator), evaluation by `evaluateRuleSet` with pattern safety, outcomes, modes, preview on 12 months,
-  run log, undo, counters, `/bank-rules` routes. Files: `banking/bank-rule/bank-rule.service.ts`,
+  application log, undo, counters, a run over past lines as core operation `BANKING_RULE_RUN`, `/bank-rules` routes. Files: `banking/bank-rule/bank-rule.service.ts`,
   `banking/bank-rule/bank-rule.controller.ts`, `banking/bank-rule/bank-rule.context.ts`,
   `banking/bank-rule/bank-rule-outcome.service.ts`, `banking/bank-rule/bank-rule-preview.service.ts`,
-  `banking/bank-rule-run/bank-rule-run.service.ts`, `banking/bank-rule/dto/create-bank-rule.dto.ts`. Test: outcome
+  `banking/bank-rule-application/bank-rule-application.service.ts`, `banking/bank-rule/dto/create-bank-rule.dto.ts`. Test: outcome
   specs; last-line-remainder balance property; unsafe pattern refused; preview on a seeded year lists the lines a
-  higher rule takes first; undo cancels what an application created.
+  higher rule takes first; undo cancels what an application created; a run over past lines is
+  one core operation whose progress is read at `/api/operations/:id`.
 - [ ] **T23**. Matching worker `banking.match`: automation levels, exact auto-match, rules, origin marking; hourly
   sweep recorded in `job_execution`. Files: `banking/matching/banking-match.worker.ts`,
   `banking/matching/banking-match.scheduler.ts`, `banking/bank-account/bank-account.controller.ts`
@@ -147,34 +149,46 @@
   `banking/bank-balance/banking-balances-daily.scheduler.ts`. Test: job idempotency spec.
 - [ ] **T26** (parallel). Guarantees: document type registration (numbering, lifecycle), service, controller,
   postings through the journal gateway, expiry reminders as `reminder` rows of `automation-and-notifications`,
-  expiry job, facility utilisation. Files: `banking/bank-guarantee/bank-guarantee.service.ts`,
+  expiry job, facility utilization. Files: `banking/bank-guarantee/bank-guarantee.service.ts`,
   `banking/bank-guarantee/bank-guarantee.controller.ts`, `banking/bank-guarantee/bank-guarantee.document-type.ts`,
   `banking/bank-guarantee/dto/create-bank-guarantee.dto.ts`, `banking/bank-guarantee/banking-guarantees-daily.scheduler.ts`.
   Test: lifecycle spec; reminder moves when the end date changes.
 - [ ] **T27**. PDF text import with review step and password handling. Files: `banking/import/readers/pdf-text.reader.ts`,
   `banking/import/pdf-review.service.ts`, `banking/import/readers/fixtures/`. Test: fixture PDFs; password never
   persisted by default.
-- [ ] **T28**. Events on the outbox, realtime channel `banking:account:<id>` (line versions), inbox items. Files:
+- [ ] **T28**. Events on the outbox, realtime channel `banking:account:<id>` (line versions and the account-wide
+  `changeSeq` of plan §5, stamped on every line write under the account row lock), catch-up read
+  `GET /bank-transactions?changedAfter=`, inbox items. Files:
   `banking/realtime/banking-outbox-append.ts`, `banking/realtime/banking-realtime.ts`,
-  `banking/notifications/banking-inbox-items.ts`. Test: payload specs; reconnect catch-up spec.
+  `banking/bank-transaction/bank-transaction-change-seq.ts`,
+  `banking/notifications/banking-inbox-items.ts`. Test: payload specs; reconnect catch-up spec: a client that saw
+  sequence 10 from a line at `version` 10 receives a new line at `version` 1 written later; two concurrent line writes
+  commit in sequence order.
 - [ ] **T29**. Report definitions `banking/reports/banking-report.definitions.ts` (ten reports of spec §3.9) and
   the printable reconciliation statement template. Test: dataset spec per report.
 - [ ] **T61**. Learned party bank accounts (spec FR-10): when a line from an account unknown for its party is matched
   to that party, the match answers a proposal to add a `party_bank_account` (`source = LEARNED`, `verificationStatus
-  = PENDING`); the row is written only when the user accepts. Files:
+  = PENDING`); the line's candidate row of plan §3.1 (the number, kept in the single store) gets its party and is
+  enabled only when the user accepts; the daily sweep removes a rejected or expired candidate. Files:
   `banking/party-bank-account/party-bank-account-proposal.service.ts`,
-  `banking/party-bank-account/party-bank-account.controller.ts`, `banking/reconciliation/reconciliation.service.ts`.
-  Test: proposal spec; nothing is stored until accepted; an already known number proposes nothing.
+  `banking/party-bank-account/party-bank-account.controller.ts`, `banking/reconciliation/reconciliation.service.ts`,
+  `banking/bank-transaction/bank-transaction.entity.ts`.
+  Test: proposal spec; nothing is stored in `party_bank_account` until accepted; an already known number proposes
+  nothing; a feed line that delivered an unknown number once yields, on acceptance, an account whose revealed number
+  equals the line's; after the decision the line keeps no cipher; the cipher never appears in a route answer or an
+  export.
 - [ ] **T62**. Unmatch of a created counterpart (spec FR-59): unmatching a line whose `bank_match.createdCounterpart`
   is set answers a question first; on confirmation the counterpart is cancelled through its owner's cancellation
   (`BANKING_PAYMENT_GATEWAY` cancel, `BANKING_JOURNAL_GATEWAY` reverse). Files:
   `banking/reconciliation/reconciliation.service.ts`, `banking/reconciliation/dto/unmatch.dto.ts`. Test: unmatch
   without confirmation keeps the payment; with confirmation the fake gateway receives one cancel; a matched entry not
   created from the line is never cancelled.
-- [ ] **T63**. Point-of-sale shift deposits as a counterpart source (spec FR-66): adapter
-  `banking/adapters/shift-deposit-counterpart.adapter.ts` bound in `apps/api/src/plugin-composition.ts` when
+- [ ] **T63**. Point-of-sale shift deposits as a counterpart source (spec FR-66): an adapter bound when
   `point-of-sale-and-loyalty` is installed; filter `includeShiftDeposits` on the clearing list and the reconciliation
-  statement. Test: deposits listed among entries to clear; filter hides them; plugin boots without point of sale.
+  statement. Files: `banking/adapters/shift-deposit-counterpart.adapter.ts`, `apps/api/src/plugin-composition.ts`,
+  `banking/reconciliation/clearing.service.ts`,
+  `banking/bank-reconciliation-checkpoint/bank-reconciliation-checkpoint.service.ts`. Test:
+  `banking/adapters/shift-deposit-counterpart.adapter.spec.ts`: deposits listed among entries to clear; filter hides them; plugin boots without point of sale.
 - [ ] **T64**. Working without accounting (spec FR-85): with `BANKING_LEDGER_ACCOUNTS` and `BANKING_JOURNAL_GATEWAY`
   unbound, the book balance is the sum of payments on the account, the summary answers `journalActions: false`, and
   the journal routes answer "unavailable". Files: `banking/bank-balance/book-balance.service.ts`,
@@ -202,7 +216,7 @@
   `banking-ui/components/create-from-line-drawer/create-from-line-drawer.component.ts`,
   `banking-ui/components/effects-preview/effects-preview.component.ts`,
   `banking-ui/components/reconcile-workspace/reconcile-keyboard-map.ts`. Test: keyboard specs, axe checks.
-- [ ] **T34**. Rules pages (list, order, editor on rule rows, history preview, run log). Files:
+- [ ] **T34**. Rules pages (list, order, editor on rule rows, history preview, application log). Files:
   `banking-ui/components/bank-rules-page/bank-rules-page.component.ts`,
   `banking-ui/components/bank-rule-editor/bank-rule-editor.component.ts`. Test: rendering specs.
 - [ ] **T35**. Checkpoints pages and printable statement; clearing mode. Files:
@@ -321,7 +335,9 @@
   until a second person verifies it; the approval workflow definition ships as a default. Files:
   `banking/party-bank-account/party-bank-account-change-control.ts`,
   `banking/workflows/bank-detail-verification.workflow.ts`, `banking/party-bank-account/party-bank-account.service.ts`.
-  Test: verification required spec; the person who changed the number cannot verify it.
+  Test: verification required spec; the person who changed the number cannot verify it; a bank-line match of an
+  account changed within the window stamps `matchConfirmedAt` but leaves it `PENDING` and still blocked until a
+  second person verifies it.
 
 ## Requirement Coverage
 

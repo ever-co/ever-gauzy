@@ -268,7 +268,7 @@ PDF, PNG, SVG for single slides. No new outside integration; webhooks receive `s
 | Trigger | When | What it does | Idempotency |
 | ------- | ---- | ------------ | ----------- |
 | queue `slides.thumbnails` | 10 s after a persist that changed slides | render changed slides through the SVG renderer, store images, cover | per slide and revision |
-| queue `slides.media` | media upload | optimise images, poster frames for video | per file hash |
+| queue `slides.media` | media upload | optimize images, poster frames for video | per file hash |
 | operation `slides.import` / `slides.export` | import; PDF, PPTX, ODP or images | parse or render, report, notify | per operation |
 | outbox consumer `slides.linked-sync` | a source deck persisted | update `SYNC` copies; orphan on delete | per source revision |
 | operation `slides.generate` | generation request | outline (assistant or headings), layout, notes, bound charts, draft deck | the operation's idempotency key |

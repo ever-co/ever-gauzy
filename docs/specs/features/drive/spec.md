@@ -9,14 +9,14 @@
 **Status**: `Draft`
 **Created**: 2026-11-16
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_DRIVE` (tenant feature, default off; requires `FEATURE_DOCUMENTS`). Public links and network-drive access additionally need the deployment switches `GAUZY_DRIVE_PUBLIC_LINKS_ENABLED` and `GAUZY_DRIVE_WEBDAV_ENABLED` (each off unless exactly `true`).
 
 ---
 
 ## 1. Overview
 
-The Documents hub already keeps an organization's files, folders and pages in **one tree**: files are uploaded by drag and drop with progress and a content-type check, moved, renamed, replaced, previewed (PDF, images, video, audio, text, office formats as extracted text), shared with people and teams at view, comment or edit, linked to business records, searched by name and content, favourited, archived and recovered, and fed to the AI knowledge pipeline with OCR and a human review step. This feature completes the hub as the platform's **drive**, for the Angular app, Ever Teams (same API, its screens in the Ever Teams spec `workspace-collaboration-clients`), the MCP server and the SDKs: resumable and folder uploads, link items, inherited folder sharing with upload and manage levels, guests and **public links** (password, expiry, download limits, file requests), **file versions**, a **trash** that lists what was archived (archive stays the way into the trash, and deleting stays possible only from it) with delete forever and purge, server-side recents and a home view, quotas per person and per team space with reservations, files panels on every record, zip downloads, a network-drive endpoint, and a port through which editor apps (sheets, slides) register their file kinds. Files, folders and pages remain rows of the same documents tree with one sharing model, one versions model and one trash: `documents-and-wiki` owns what pages do, this spec owns what files and folders do.
+The Documents hub already keeps an organization's files, folders and pages in **one tree**: files are uploaded by drag and drop with progress and a content-type check, moved, renamed, replaced, previewed (PDF, images, video, audio, text, office formats as extracted text), shared with people and teams at view, comment or edit, linked to business records, searched by name and content, favorited, archived and recovered, and fed to the AI knowledge pipeline with OCR and a human review step. This feature completes the hub as the platform's **drive**, for the Angular app, Ever Teams (same API, its screens in the Ever Teams spec `workspace-collaboration-clients`), the MCP server and the SDKs: resumable and folder uploads, link items, inherited folder sharing with upload and manage levels, guests and **public links** (password, expiry, download limits, file requests), **file versions**, a **trash** that lists what was archived (archive stays the way into the trash, and deleting stays possible only from it) with delete forever and purge, server-side recents and a home view, quotas per person and per team space with reservations, files panels on every record, zip downloads, a network-drive endpoint, and a port through which editor apps (sheets, slides) register their file kinds. Files, folders and pages remain rows of the same documents tree with one sharing model, one versions model and one trash: `documents-and-wiki` owns what pages do, this spec owns what files and folders do.
 
 **Advanced capabilities.** People can **ask their files** a question and get an answer with citations built only from what they may read at that moment; classification **suggests where to file** a document and which **retention label** applies; **exact and near duplicates** are found and merged without breaking the records that point at them; public links can require the recipient's **acknowledgement**, stamp a **watermark** and keep a signed **download proof**; a **legal hold** freezes a folder against every destructive path; and every drive action is an MCP tool with a preview, so an agent can tidy a folder under the same permissions as its user.
 
@@ -67,7 +67,7 @@ The Documents hub already keeps an organization's files, folders and pages in **
 - **FR-3** The system registers public link routes only when `GAUZY_DRIVE_PUBLIC_LINKS_ENABLED` is exactly `true` and the network-drive endpoint only when `GAUZY_DRIVE_WEBDAV_ENABLED` is exactly `true`.
 - **FR-4** The system keeps every existing Documents endpoint, field, permission, route and limit working unchanged.
 
-### 3.2 Upload and organise
+### 3.2 Upload and organize
 
 - **FR-5** A user with `DOCS_CREATE` can upload a file resumably in parts: the upload names its size, sends parts in any order, can ask which bytes the server holds and continue after a lost connection; an unfinished upload expires after 24 hours and its parts are removed.
 - **FR-6** The system checks a completed resumable upload exactly as a single upload today (type by content, size, quota, digest) and allows files up to the drive limit (default 5 GiB) instead of the single-request limit.
@@ -132,7 +132,7 @@ The Documents hub already keeps an organization's files, folders and pages in **
 
 ### 3.8 Home, recents and favourites
 
-- **FR-50** The system records per person the items they open or change (at most once a minute per item), keeps their latest 200 drive items (recent visits of tasks, projects and other records are left as they are), lists them in Recent in every client, and lets them remove one or clear the list.
+- **FR-50** The system records per person the items they open or change (at most once a minute per item), lists their latest 200 drive items in Recent in every client without deleting any earlier visit (recent visits of tasks, projects and other records are left as they are), and lets them remove one or clear the list.
 - **FR-51** The system offers a Home view with Recent, Favourites, Shared with me and, per space the person belongs to, the latest changes; favourites stay the platform's existing favourites.
 - **FR-52** The system remembers per person the list or grid view, sort and kind filter of each view on the server.
 
@@ -208,7 +208,7 @@ The Documents hub already keeps an organization's files, folders and pages in **
 - **Reliability**: no stored bytes without a row and no row without bytes after any crash (sweeps reconcile); purge, pruning and retention jobs are idempotent and resumable.
 - **Security & privacy**: link tokens are 32 random bytes and stored hashed; passwords hashed with a slow hash; link pages send no referrer, are not indexed by search engines and are rate limited per address; guest uploads go through the same type, size and content checks; what leaves the platform: link pages and downloads to their holders, share emails and codes to recipients, file text to the configured AI provider for asking and classification, files to the configured conversion service for previews.
 - **Auditability**: every share, link, access, hold and permanent deletion is in the audit trail with actor and before and after.
-- **Accessibility and localisation**: keyboard operable tree, lists and dialogs, labelled controls, strings in every shipped locale, sizes and dates in the person's locale.
+- **Accessibility and localization**: keyboard operable tree, lists and dialogs, labelled controls, strings in every shipped locale, sizes and dates in the person's locale.
 - **Compatibility**: PostgreSQL, MySQL and SQLite with both ORMs; multi-tenant cloud and self-hosted single tenant; local disk and object storage providers; additive OpenAPI changes.
 
 ## 5. Key Entities & Domain Concepts

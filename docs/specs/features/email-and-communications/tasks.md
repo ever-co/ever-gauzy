@@ -122,10 +122,10 @@
       `inboxui/services/inbox-communications.service.ts`. Test: rendering tests.
 - [ ] **T23**. MCP tools `packages/mcp-server/src/lib/tools/communications.ts` (send with preview, schedule, cancel, list,
       delivery, templates). Test: preview writes nothing; permissions of the caller.
-- [ ] **T47**. Send limits (spec FR-44): messages counted per organization and channel per day and month
-      (`com/send/send-limits.ts`, counters read in `com/send/communication-send.service.ts`), the limits of the plan or the
-      deployment settings enforced at queueing, refusal with `COMMUNICATIONS_LIMIT_REACHED` naming the limit. Test:
-      `send-limits.spec.ts`: the message past the daily limit is refused naming it; the next day it is accepted; with no
+- [ ] **T47**. Send limits (spec FR-44): messages counted per organization and channel per day and month, counters
+      read by the send service, the limits of the plan or the deployment settings enforced at queueing, refusal with
+      `COMMUNICATIONS_LIMIT_REACHED` naming the limit. Files: `com/send/send-limits.ts`,
+      `com/send/communication-send.service.ts`. Test: `com/send/send-limits.spec.ts`: the message past the daily limit is refused naming it; the next day it is accepted; with no
       limit set nothing is refused.
 
 ## Phase 3 — Depth

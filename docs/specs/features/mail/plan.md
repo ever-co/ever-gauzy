@@ -109,14 +109,22 @@ other plugins carry no foreign key. **The Inbox tables are unchanged.**
 | `mail_domain` | `domain` varchar(253) (a domain of the organization's mailboxes; its proof and state are the Inbox's); `records` text (sending records to publish and their last check); `reportsMailboxId` uuid; `lastCheckedAt` timestamp | unique (`tenantId`,`organizationId`,`domain`) |
 | `mail_domain_report` · `mail_domain_report_row` | report: `domainId` FK; `kind` varchar(10) (`AUTH`, `TRANSPORT`); `reporter` varchar(255); `reportId` varchar(255); `periodStart`, `periodEnd` timestamp; `policy`, `totals` text; `emailId` uuid · row: `reportId` FK cascade; `source` varchar(64); `count` int; `result` text | report unique (`domainId`,`kind`,`reporter`,`reportId`), (`domainId`,`periodStart`); row (`reportId`) |
 | `mail_mailbox_usage` | `mailboxId` uuid; `bytes` bigint; `messages` int; `quotaBytes` bigint; `warnedAt80`, `warnedAt95` timestamp | unique (`mailboxId`) |
-| `mail_correspondent` · `mail_saved_search` | correspondent: `userId` uuid; `address` varchar(320); `name` varchar(200); `count` int; `lastUsedAt` timestamp · saved search: `userId` uuid; `name` varchar(120); `query` text; `position` int | unique (`userId`,`address`); unique (`userId`,`name`) |
+| `mail_correspondent` | `userId` uuid; `address` varchar(320); `name` varchar(200); `count` int; `lastUsedAt` timestamp | unique (`userId`,`address`) |
 | `mail_triage` · `mail_sender_bias` | triage: `emailId` uuid; `priority` varchar(10) (`ANSWER`, `IMPORTANT`, `NORMAL`, `LOW`); `kind` varchar(12) (`PERSON`, `NOTIFICATION`, `NEWSLETTER`, `RECEIPT`); `reasons`, `suggestedDraftIds` text; `model` varchar(64); `aiRunId` uuid null (the run of `ai-agents-and-assistants` where loaded); `correctedByUserId` uuid · bias: `userId` uuid; `sender` varchar(320); `bias` smallint | triage unique (`emailId`); bias unique (`userId`,`sender`) |
 
 Not mail tables: domain proofs (`inbox_mailbox`), read and snooze state of messages with an Inbox entry
 (`inbox_item_recipient`), the allow list (`inbox_mailbox.senderAllowlist`), sender decisions
 (`communication_sender_rule`), draft content and scheduled sends (`communication`), rule conditions (core `rule`), labels
 (core `tag`), reminders (`reminder`), transfers (data-exchange runs), rule and bulk runs (core operations),
-preferences (`User.uiPreferences.mail`), settings (platform settings store).
+saved searches (saved views of `record-views-and-search`: core `task_view` rows of the record type `MailMessage`
+through `RECORD_VIEWS_SAVED_VIEWS`; without that feature, a list in `User.uiPreferences.mail`), preferences
+(`User.uiPreferences.mail`), settings (platform settings store).
+
+Mail keeps its own automation tables only for what those stores cannot hold: `mail_rule` holds a rule's order, match
+mode, actions, stop flag, outside-forward confirmation and hit counters, while its conditions are core `rule` rows;
+`mail_auto_reply` and `mail_auto_reply_sent` hold the dated answer and the once-per-sender log that its interval
+needs; `mail_remote_content_allow` is a person's list of senders whose remote content is shown, which is neither a
+mailbox allow list nor a sender rule.
 
 ### Migrations
 
@@ -125,7 +133,7 @@ preferences (`User.uiPreferences.mail`), settings (platform settings store).
 Plugin migrations with the shared core migration helpers of `@gauzy/core`; PostgreSQL, MySQL and SQLite;
 idempotent, forward-only, registered for both ORMs, listed only with `GAUZY_MAIL_ENABLED`:
 `1791000065100-CreateMailClientTables` (folder, message state, read mark, counter, label scope, message label, thread
-state, draft, correspondent, saved search), `1791000065110-CreateMailAutomationTables` (rule, auto reply, auto reply
+state, draft, correspondent), `1791000065110-CreateMailAutomationTables` (rule order and actions, auto reply, auto reply
 sent, remote content allow), `1791000065120-CreateMailAddressTables` (alias, list, list member, domain, domain report,
 report row, usage), `1791000065130-CreateMailTriageTables` (triage, sender bias). Permissions and `FEATURE_MAIL` are
 plugin contributions (§9), not seeds. Existing messages get state rows from the enable handler per tenant in batches of
@@ -161,7 +169,7 @@ pagination, `Idempotency-Key` on creating routes; mailbox access through `INBOX_
 | `GET` `POST` `PATCH` `DELETE` | `/mail/mailboxes/:id/aliases[/:aliasId]` · `/mail/lists[/:id]` (+ members) | `INBOX_MAILBOX_MANAGE` · `MAIL_LISTS_MANAGE` | aliases; distribution addresses | New |
 | `GET` `POST` `PATCH` `DELETE` | `/mail/mailboxes/:id/rules[/:ruleId]`, `POST …/:ruleId/{preview,apply}` | owner or mailbox manager | rules (conditions saved as core rule rows); preview and apply as core operations | New |
 | `GET` `PUT` | `/mail/mailboxes/:id/auto-reply/me` · `/mail/mailboxes/:id/sender-review` (+ decisions) | owner | auto-reply; sender review queue; decisions written as sender rules of the mailbox, listed with the Inbox allow list | New |
-| `GET` | `/mail/search?q=&…` · `GET POST DELETE /mail/saved-searches` | `MAIL_USE` | search; saved searches | New |
+| `GET` | `/mail/search?q=&…` · `GET POST DELETE /mail/saved-searches` | `MAIL_USE` | search; saved searches (over saved views of the record type `MailMessage`, else `uiPreferences.mail`) | New |
 | `GET` | `/mail/messages/:emailId/{source,archive}` · `/mail/remote-content?u=&sig=` | access | message file, attachments archive; proxied remote content | New |
 | `POST` | `/mail/messages/:emailId/attachments/:aid/save` · `/mail/messages/:emailId/contact` | access + target rights | save to `drive` or record (writes the attachment's existing `savedDocumentId`); save sender as contact | New |
 | `GET` `POST` | `/mail/messages/:emailId/invitation` · `…/invitation/answer` | access | invitation banner data; answer through the calendar | New |
@@ -224,7 +232,7 @@ reminders are the platform's reminder notifications. Consumed: Inbox hand-off `d
 - **Additive Inbox seams** (in `packages/plugins/inbox`, optional, nothing changes without them): offered by the Inbox:
   `INBOX_EMAIL_READER` (`getMany`, `thread`, `attachments`, `rawStream` with access checks), `INBOX_MAILBOX_DIRECTORY`
   (`mine`, `access`, `members`, `claim` from `settings.handoff`), `INBOX_ITEM_STATE` (read, archive, snooze per person),
-  `INBOX_EMAIL_IMPORTER` (store a raw message into a mailbox with sanitising and threading, no hand-off),
+  `INBOX_EMAIL_IMPORTER` (store a raw message into a mailbox with sanitizing and threading, no hand-off),
   `INBOX_EMAIL_DELETION` (raw, attachments and rows of chosen messages), `INBOX_DOMAINS` (the organization's mailbox
   domains with their proof state; start and check a proof once per organization and domain, marking every mailbox of
   that domain; refuse a domain another tenant verified); consumed by the Inbox and offered by this plugin:
@@ -239,7 +247,8 @@ reminders are the platform's reminder notifications. Consumed: Inbox hand-off `d
   summaries and reply drafts through the communications assistant routes when loaded; `MAIL_ATTACHMENT_TEXT` → the
   documents hub extraction (absent: bodies only); `MAIL_DELETION_GUARDS` (communications record links, helpdesk ticket
   messages); sender rules, drafts and scheduled sends of `email-and-communications`; `RECORD_REMINDERS` of
-  `automation-and-notifications`; core `rule` and `tag`; the data-exchange engine; `drive` files; `CONNECTED_ACCOUNTS` only
+  `automation-and-notifications`; `RECORD_VIEWS_SAVED_VIEWS` of `record-views-and-search` (absent: saved searches in
+  `uiPreferences.mail`); core `rule` and `tag`; the data-exchange engine; `drive` files; `CONNECTED_ACCOUNTS` only
   through communications; contact sync through the address-book connector of `integration-hub`; key scopes `mail:read`
   and `mail:send` registered with `access-control-and-security`.
 - **Offered**: `MAIL_THREAD_STATE` (assignee and state of a mailbox conversation) for the communications mailbox view's

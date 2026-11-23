@@ -156,6 +156,11 @@ Core offline sync (core migration `AddOfflineSyncTables`, `packages/core/src/lib
 | `offline_operation` | `clientOperationId` varchar(64), `kind` varchar(48), `ownerType` varchar(32), `ownerId` uuid, `deviceId` varchar(64), `sequence` int, `payload` json, `capturedAt`, `receivedAt` timestamp, `outcome` varchar(16) (`APPLIED`, `DUPLICATE`, `EXCEPTION`, `REFUSED`), `result` json, `error` text, `idempotencyKeyId` uuid null | unique (`tenantId`, `clientOperationId`); (`ownerType`, `ownerId`, `sequence`) |
 | `offline_exception` | `operationId` FK, `ownerType`, `ownerId`, `reason` varchar(32), `detail` json, `choices` json, `status` varchar(16), `resolution` varchar(32), `resolvedByUserId`, `resolvedAt` | (`organizationId`, `ownerType`, `status`) |
 
+The exception queue is not an operation result of the core runtime because a runtime operation is one server-started
+run with progress and one final result, while an offline exception is a single action captured on a device that waits,
+often for days, for a supervisor to pick one of its `choices` against the record it touched, and is listed and resolved
+per owner record across many uploads.
+
 Warehouse plugin, changed: `warehouse_bin.walkSequence` (int null; an explicit override that the existing pick-path
 sort reads before zone priority and coordinates); `pick_list`: `purpose` varchar(16) default `DELIVERY`,
 `sourceDocumentType`, `sourceDocumentId`, `allowNonSellable`, `allowManualPick` boolean, `overPickPercent`

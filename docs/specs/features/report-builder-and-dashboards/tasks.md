@@ -18,9 +18,23 @@
 - Everything stays behind `GAUZY_REPORT_BUILDER_ENABLED` and `FEATURE_REPORT_BUILDER`: the feature is off by default; after the trial period it may be switched on by default for new tenants only; existing tenants keep their setting until an administrator changes it. `rb/` means
   `packages/plugins/report-builder/src/lib/`, `ui/` means `packages/ui-core/shared/src/lib/report-builder/`, `rbui/` means
   `packages/plugins/report-builder-ui/src/lib/`.
-- Phases 1 to 4 deliver plan phase 1; Phase 5 delivers plan phase 2 (depth); Phase 6 plan phase 3 (advanced).
+- Phases 0 to 4 deliver plan phase 1; Phase 5 delivers plan phase 2 (depth); Phase 6 plan phase 3 (advanced). T51 is
+  listed first (Phase 0) because the seed of T5 keys its catalogue rows with the filter T51 adds.
 - Needs: the core record type registry (`custom-fields-and-forms` T2) and `RECORD_VIEWS_QUERY` (`record-views-and-search`
   T8, T22) for record-type datasets (Phase 5). Phases 1 to 4 need neither.
+
+## Phase 0 — Shared catalogue feature filter (before T5)
+
+- [ ] **T51**. Shared catalogue feature filter, one for every feature that adds rows to the core report catalogue
+  (safe from any feature): core migration
+  `packages/core/src/lib/database/migrations/1791000037900-AddReportCategoryFeatureKey.ts` (nullable `featureKey`
+  varchar(64) on `report_category` and on `report`, null for every existing row) and the filter in
+  `packages/core/src/lib/reports/report.service.ts` (`findAllReports`, `getMenuItems`), `report-category.service.ts`
+  and `report-organization.service.ts` (`bulkCreateOrganizationReport`), which leave out categories and rows whose
+  feature is off for the tenant (spec FR-90); no dependency on this plugin or its flag. Test: with every keyed feature
+  off the Reports page, menu and a new organization's report switches equal today's; a row keyed apart from its
+  category follows its own key; rows without a key are listed as today.
+  Migration timestamps: `1791000037900` to `1791000037999` (`packages/core`).
 
 ## Phase 1 — Contracts, entities, migrations
 
@@ -50,16 +64,6 @@
   the shared catalogue feature filter (T51); default grants through `defaultFor` (no permission seed). Test: idempotent seed; grants present on a new tenant
   and after the permission reload; `REPORT_SCHEDULE_EXTERNAL` granted to no role; with the feature off the Reports page,
   menu and a new organization's report switches equal today's.
-- [ ] **T51**. Shared catalogue feature filter, one for every feature that adds rows to the core report catalogue
-  (safe from any feature): core migration
-  `packages/core/src/lib/database/migrations/1791000037900-AddReportCategoryFeatureKey.ts` (nullable `featureKey`
-  varchar(64) on `report_category` and on `report`, null for every existing row) and the filter in
-  `packages/core/src/lib/reports/report.service.ts` (`findAllReports`, `getMenuItems`), `report-category.service.ts`
-  and `report-organization.service.ts` (`bulkCreateOrganizationReport`), which leave out categories and rows whose
-  feature is off for the tenant (spec FR-90); no dependency on this plugin or its flag. Test: with every keyed feature
-  off the Reports page, menu and a new organization's report switches equal today's; a row keyed apart from its
-  category follows its own key; rows without a key are listed as today.
-  Migration timestamps: `1791000037900` to `1791000037999` (`packages/core`).
 
 ## Phase 2 — Services, endpoints, events
 
@@ -188,8 +192,10 @@
 - [ ] **T32**. Deliveries: `report-builder.deliver`, email through `REPORT_EMAIL` or core email (row in `email_sent`),
   internal recipients through an inbox item and the Inbox plugin's `inbox_delivery` (its retries and preferences) when
   loaded, else `NOTIFICATION_DISPATCHER`; `report_delivery` keeps the outcome with `inboxItemId` or `emailSentId`;
-  deduplication per recipient, failures, pause after three failed runs, owner leaving. Files:
+  deduplication per recipient and channel (`report_delivery` unique on run, recipient and channel), failures, pause
+  after three failed runs, owner leaving. Files:
   `rb/schedules/report-delivery.service.ts`, `rb/schedules/report-builder-deliver.worker.ts`. Test: retried run sends once;
+  a recipient with email and inbox gets one of each, both outcomes kept, and a retry sends neither again;
   paused schedule notifies the owner.
 - [ ] **T33**. Minimum group size and sensitive columns in viewer, export, card and schedule. Files:
   `rb/access/min-group-size.ts`, `rb/engine/post-processor.ts`. Test: "fewer than 5" shown
@@ -231,10 +237,14 @@
 - [ ] **T42**. Live figures: `subscriber:report-builder-live`, cache drop, coalesced hints `report-dataset:<key>`, client
   refetch of affected cards, highlight and freeze. Files: `rb/live/report-builder-live.consumer.ts`,
   `ui/report-card/report-card-live.service.ts`. Test: two-client spec within 3 seconds.
-- [ ] **T43**. Aggregate snapshots: `report_snapshot*`, covered-query check, additive partials by `scopeKey`, refresh
-  jobs and dirty periods from events, "as of" in the viewer. Files: `rb/snapshots/report-snapshot.service.ts`,
-  `rb/snapshots/report-snapshot.controller.ts`, `rb/snapshots/snapshot-refresh.job.ts`. Test: covered run equals the live result; uncovered goes
-  live; reader filtered by scope.
+- [ ] **T43**. Aggregate snapshots: `report_snapshot*`, covered-query check (plan §9: the run's dimensions, grain,
+  measures and filters held by the snapshot, the reader's access reducible to `scopeKey` values, and no record rule of
+  `REPORT_ACCESS_RULES` applying to the reader for the dataset's types; otherwise the scoped live query), additive
+  partials by `scopeKey`, refresh jobs and dirty periods from events, "as of" in the viewer. Files: `rb/snapshots/report-snapshot.service.ts`,
+  `rb/snapshots/report-snapshot.controller.ts`, `rb/snapshots/snapshot-refresh.job.ts`, `rb/snapshots/covered-query.check.ts`.
+  Test: covered run equals the live result; uncovered goes live; reader filtered by scope; a reader whose record rule
+  allows one record and denies another within one `scopeKey` gets the live result without the denied record, never
+  the snapshot partial.
 - [ ] **T44**. Plain-language drafting: `interpret` route through `REPORT_ASSISTANT`, catalogue-only prompt, draft shown
   in the builder with explanations, MCP `reports_draft_from_text`. Files: `rb/assistant/report-interpreter.service.ts`,
   `packages/mcp-server/src/lib/tools/report-builder.ts`. Test: the provider payload holds no record data.

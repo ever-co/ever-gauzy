@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-16
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_FIELD_SERVICE` (default off)
 
 ---
@@ -168,7 +168,7 @@ return visit. **Tracked time** on a visit is its labour cost and billable labour
 
 | ID | Requirement |
 | --- | --- |
-| **FR-59** | A user with `FIELD_SERVICE_DISPATCH` can request a proposal for a day and service area: an assignment and order of visits per technician that respects windows, skills, working hours, time off, parts availability and priorities, and minimises travel time, computed by the platform's one route planner that delivery trips also use. *(advanced)* |
+| **FR-59** | A user with `FIELD_SERVICE_DISPATCH` can request a proposal for a day and service area: an assignment and order of visits per technician that respects windows, skills, working hours, time off, parts availability and priorities, and minimizes travel time, computed by the platform's one route planner that delivery trips also use. *(advanced)* |
 | **FR-60** | The system MUST show a proposal with travel time, idle time and the visits it could not place with the reason, apply it only on acceptance, and keep visits a person fixed by hand where they are. *(advanced)* |
 | **FR-61** | The system MUST re-propose the rest of a technician's day when a visit runs over or a breakdown with a response target arrives, for the dispatcher to accept. *(advanced)* |
 
@@ -232,7 +232,7 @@ All reports are report definitions: filterable, groupable, exportable, schedulab
   (customer emails and texts, visit reports) is listed in settings.
 - **Observability and audit**: who, when, before and after on contracts, plans, assignments, state changes,
   completions and coverage edits; timeline per unit.
-- **Accessibility and localisation**: keyboard-operable board with a list alternative to drag and drop; labelled map
+- **Accessibility and localization**: keyboard-operable board with a list alternative to drag and drop; labelled map
   with a table alternative; strings in every locale; dates, times and units in the user's format and time zone.
 - **Compatibility**: PostgreSQL, MySQL and SQLite; both ORMs; additive OpenAPI and SDK changes.
 

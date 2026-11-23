@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-16
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_LEAD_CAPTURE` (new, default off; needs `FEATURE_CRM`); the plugin loads only when `GAUZY_LEAD_CAPTURE_ENABLED` is exactly `true`
 
 ---
@@ -49,7 +49,7 @@ per field and speed to lead.
 - **Given** a failed intake item, **when** the error was temporary, **then** it is retried automatically with back-off; after 5 failures the source owner gets one notice; a user retries it by hand from the log after fixing the mapping.
 - **Given** a lead with website `parkfoods.example`, **when** a user chooses "Enrich", **then** the progress shows each step live (pages found, pages read, company details, contacts, industry), and the lead gains company description, logo, industry "Food production" with confidence 0.82, two social links and a phone, each marked with its source page; **when** the user undoes the run the next day, **then** the fields return to their earlier values except the phone the user had edited since, which is kept and reported.
 - **Given** a returning visitor recognised by the form's signed token, **when** they open another form with progressive profiling, **then** they are asked job title and budget instead of name and email again; nothing stored is shown to them.
-- **Given** a marketer opening form analytics, **when** they look at "Request a demo", **then** they see views, starts, submissions, completion rate, drop-off per field, spam blocked and the median time from submission to first response.
+- **Given** a marketer opening form analytics, **when** they look at "Request a demo", **then** they see form loads, starts, submissions, completion rate, drop-off per field, spam blocked and the median time from submission to first response, and, for a form on a linked Ever Works site, the views of the page that holds it.
 
 ### 2.2 Edge cases & failures
 
@@ -110,7 +110,7 @@ per field and speed to lead.
 ### 3.5 Conversational forms and progressive profiling `(advanced)`
 
 - **FR-27** (advanced) A user with `LEAD_FORMS_MANAGE` can show a form in conversational mode, one question at a time with progress and keyboard navigation, under the same rules and validation.
-- **FR-28** (advanced) The system MUST, with progressive profiling on, recognise a returning visitor by the signed token of an earlier submission or a personalised link, hide the questions whose answers are already known and ask the next ones from the form's "ask next" list; stored values are never shown to the visitor.
+- **FR-28** (advanced) The system MUST, with progressive profiling on, recognise a returning visitor by the signed token of an earlier submission or a personalized link, hide the questions whose answers are already known and ask the next ones from the form's "ask next" list; stored values are never shown to the visitor.
 - **FR-29** (advanced) The system MAY keep partial answers once a visitor has entered a valid email and ticked consent, when the form owner switches it on (default off), as a partial submission listed for follow-up and deleted after 30 days.
 
 ### 3.6 Intake channels
@@ -157,7 +157,7 @@ per field and speed to lead.
 
 ### 3.10 Form analytics `(advanced)`
 
-- **FR-60** (advanced) The system MUST count per form and version the views, starts (first field touched), submissions, spam, completion rate, median time to complete and the drop-off per field, without storing a visitor's identity for this.
+- **FR-60** (advanced) The system MUST count per form and version what reaches its own endpoints: views (form loads through the hosted page or the embed), starts (first field touched, sent by the form script), submissions, spam, completion rate, median time to complete and the drop-off per field (the last field reached, sent by the form script), without storing a visitor's identity for this. Public pages are rendered by Ever Works, so the views of a site page that holds the form are taken from Ever Works where the site is linked through the Ever Works integration and shown beside these counts.
 - **FR-61** (advanced) The system MUST show per form the time from submission to the lead's first response by a person (from `crm-engagement` when loaded) and the share of submissions that became deals and wins.
 
 ### 3.11 API, MCP, events and reports
@@ -184,7 +184,7 @@ per field and speed to lead.
 - **Reliability**: every submission and intake item is stored before the CRM is called, processed at least once and created once (submission id and external id); connector watermarks advance only after a page is committed; jobs catch up after downtime.
 - **Security & privacy**: public routes rate limited and size limited (64 KB per submission without files); answers sanitised; embedding by allowed origins only; network addresses stored hashed except in the spam log (30 days); fetches guarded against internal addresses; credentials encrypted; consent texts kept as shown. Leaving the platform: acknowledgement emails, fetches of public websites with the agent text, calls to ad platforms the organization connected, AI provider calls when enabled (page text only).
 - **Auditability**: who and when for form publishes, source and mapping changes, releases from spam, manual retries, enrichment runs and undos, with before and after values.
-- **Accessibility and localisation**: hosted and embedded forms meet keyboard, focus, label and error-announcement checks and work right to left; every builder string in all shipped locales; dates and numbers in the visitor's locale.
+- **Accessibility and localization**: hosted and embedded forms meet keyboard, focus, label and error-announcement checks and work right to left; every builder string in all shipped locales; dates and numbers in the visitor's locale.
 - **Compatibility**: PostgreSQL, MySQL, SQLite; both ORMs; cloud and self-hosted; works without `integration-hub`, `email-and-communications`, `telephony`, the Ever Works integration or `crm-engagement` (their channels are then absent and origins are typed by hand); OpenAPI and SDKs regenerated, the public form and intake routes published as their own group for sites.
 
 ## 5. Key Entities & Domain Concepts
@@ -228,7 +228,7 @@ per field and speed to lead.
 - [ ] **AC-14** A website resolving to a private address, or redirecting to one, is refused at that step; crawl rules of the site are honoured (FR-52, FR-53).
 - [ ] **AC-15** An enriched organisation fills only the empty fields of its linked deals; enriched fields show their mark until edited (FR-54, FR-55).
 - [ ] **AC-16** AI extraction proposals carry their sentence and confidence, and below the minimum are shown, not written; single-field undo restores one field (advanced: enrichment; FR-57).
-- [ ] **AC-17** Form analytics show views, starts, completion and drop-off per field for a form with known traffic; speed to lead uses first responses (advanced: analytics; FR-60, FR-61).
+- [ ] **AC-17** Form analytics show form loads, starts, completion and drop-off per field counted at the form's own endpoints for a form with known traffic, and the page views taken from Ever Works for a form on a linked site; speed to lead uses first responses (advanced: analytics; FR-60, FR-61).
 - [ ] **AC-18** The five report definitions of FR-67 return the expected figures on the demo data set.
 - [ ] **AC-19** Every MCP tool of FR-63 answers under the caller's rights; previews write nothing.
 - [ ] **AC-20** Hosted and embedded forms pass keyboard and screen-reader checks and right-to-left rendering; works on PostgreSQL, MySQL and SQLite with both ORMs; every functional requirement has a passing test (FR-14; §4).

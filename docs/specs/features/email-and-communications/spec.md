@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-16
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_COMMUNICATIONS` (tenant feature, default off) · the plugin loads only when
 `GAUZY_COMMUNICATIONS_ENABLED` is exactly `true` · receiving keeps the Inbox switches (`GAUZY_INBOX_ENABLED`,
 `GAUZY_INBOX_EMAIL_ENABLED`) · connected mailboxes add `EMAIL_PROVIDER_IMAP_ENABLED` · each text message or push
@@ -117,7 +117,7 @@ incoming mail is **matched to records with a stated reason and confidence**; and
 - **FR-13** The system pulls a connected mailbox every 2 minutes (setting 1 to 60), for the folders chosen, all or only
   unread messages, with an initial window (default the last 30 days, at most 5,000 messages) and an attachment size limit
   above which the attachment is skipped and named in the message.
-- **FR-14** The system passes pulled messages through the existing receiving pipeline (sanitising, threading, sender
+- **FR-14** The system passes pulled messages through the existing receiving pipeline (sanitizing, threading, sender
   checks, spam verdicts, quarantine) so a connected mailbox behaves as any other mailbox.
 - **FR-15** The system marks a message read on the server when it is read in the platform and the mailbox owner chose
   two-way read state, and appends messages sent from a connected mailbox to its sent folder when the server allows.
@@ -318,7 +318,7 @@ incoming mail is **matched to records with a stated reason and confidence**; and
   to recipients and their providers, push payloads to push adapters, thread content to the AI provider when enabled.
 - **Observability**: queue depth, latency, failures per transport, bounce and complaint rates, pull lag; audit of
   identity, template, suppression and queue actions.
-- **Accessibility and localisation**: keyboard operable composer and log; templates per language; viewer's time zone.
+- **Accessibility and localization**: keyboard operable composer and log; templates per language; viewer's time zone.
 - **Compatibility**: PostgreSQL, MySQL, SQLite; both ORMs; cloud and self-hosted, with or without a queue; OpenAPI
   additive; SDKs regenerated.
 

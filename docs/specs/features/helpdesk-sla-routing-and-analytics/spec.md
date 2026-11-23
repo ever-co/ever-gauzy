@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-16
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_HELPDESK` (tenant feature, default off; the helpdesk plugin loads only when
 `GAUZY_HELPDESK_ENABLED` is exactly `true`) · service level tracking is an organization setting, default off
 
@@ -253,7 +253,7 @@ ticket trends, shown beside the CRM's own signals; capacity from **tracked time*
   | Arrival pattern | tickets by hour of day and weekday |
   | Service level compliance | met, met late and breached by policy, metric, priority and team; breaches by reason; escalations by level |
   | Backlog and ageing | open tickets by age band, status category and team, day by day |
-  | Agent performance | per agent: assigned, done, reopened, first response, resolution, ratings, tracked time, utilisation |
+  | Agent performance | per agent: assigned, done, reopened, first response, resolution, ratings, tracked time, utilization |
   | Satisfaction | ratings over time by agent, team, template and customer |
   | Tags | top tags and tag trend |
   | Channels and deflection | tickets per channel; tickets whose subject strongly matches a help article, with the article and score |
@@ -305,7 +305,7 @@ ticket trends, shown beside the CRM's own signals; capacity from **tracked time*
   push or chat destinations, subscribed webhooks.
 - **Observability**: activity entries for policy, calendar, rule and agent changes, resets and policy overrides; clock
   events per ticket; metrics for check lag, breaches per hour, skipped assignments, forecast accuracy.
-- **Accessibility and localisation**: charts with tables and text alternatives; badges with text, not colour alone;
+- **Accessibility and localization**: charts with tables and text alternatives; badges with text, not colour alone;
   durations and dates in the viewer's language and time zone.
 - **Compatibility**: PostgreSQL, MySQL, SQLite; both ORMs; cloud and self-hosted; without the time-off, HR, report builder,
   automation or portal plugins only their part is missing; OpenAPI additive; SDKs regenerated.

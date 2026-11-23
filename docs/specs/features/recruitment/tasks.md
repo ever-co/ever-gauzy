@@ -256,11 +256,11 @@
 - [ ] **T43**. Applicant portal `/pages/my-applications` (public stage labels, interviews, offers, documents,
       withdraw) with `RECRUITMENT_CANDIDATE_SELF`. Files: `rc/portal/applicant-portal.controller.ts`,
       `rcui/components/my-applications/my-applications.component.ts`. Test: candidate sees only own applications.
-- [ ] **T44**. Retention and talent pool: notice to admins, anonymisation job (only with `recruitment.retentionEnabled`
+- [ ] **T44**. Retention and talent pool: notice to admins, anonymization job (only with `recruitment.retentionEnabled`
       on, only candidates with at least one application), talent-pool search and invitation, personal-data handler
       registration with `access-control-and-security`. Files: `rc/retention/recruitment-retention.scheduler.ts`,
       `rc/retention/recruitment-anonymiser.ts`, `rc/talent-pool/talent-pool.service.ts`,
-      `rc/privacy/recruitment-personal-data.handler.ts`. Test: report counts kept after anonymisation; with the setting
+      `rc/privacy/recruitment-personal-data.handler.ts`. Test: report counts kept after anonymization; with the setting
       off, or for a candidate without applications, nothing is removed.
 - [ ] **T45** (parallel). Source cost and tracked recruiting time in source effectiveness. Files:
       `rc/reports/source-effectiveness.dataset.ts`. Test: cost per hire golden figures.

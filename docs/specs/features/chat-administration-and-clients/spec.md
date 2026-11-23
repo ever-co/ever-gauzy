@@ -9,8 +9,8 @@
 **Status**: `Draft`
 **Created**: 2026-11-16
 **Last updated**: 2026-11-23
-**Owner**: evereq
-**Feature flag**: the existing chat flags, `GAUZY_CHAT_ENABLED` (deployment, exactly `true`) and tenant `FEATURE_CHAT` (both default off). Guests also need the portal user type of `access-control-and-security` (`FEATURE_ADVANCED_ACCESS`); channels shared between tenants need the deployment switch `GAUZY_CHAT_SHARED_CHANNELS_ENABLED` (exactly `true`, default off); calls need the `meetings` feature.
+**Owner**: platform maintainers
+**Feature flag**: the existing chat flags, `GAUZY_CHAT_ENABLED` (deployment, exactly `true`) and tenant `FEATURE_CHAT` (both default off), plus the new tenant feature `FEATURE_CHAT_ADMINISTRATION` (default off, needs `FEATURE_CHAT`) for everything this spec adds, so a tenant that uses chat today sees no change until an administrator switches it on. Guests also need the portal user type of `access-control-and-security` (`FEATURE_ADVANCED_ACCESS`); channels shared between tenants need the deployment switch `GAUZY_CHAT_SHARED_CHANNELS_ENABLED` (exactly `true`, default off); calls need the `meetings` feature.
 
 ---
 
@@ -59,8 +59,8 @@ Chat today ([`chat`](../chat/spec.md)) is administered through three permissions
 
 ### 3.1 Scope and what stays
 
-- **FR-1** The system keeps the existing chat permissions, default grants, conversation roles, categories, activity-log entries, sanitising, egress guard and clients unchanged; the rule that chat is for employees of the organization (chat FR-24) stays, with guests (§3.4) as the only exception where an organization enables them.
-- **FR-2** The system serves the routes of this spec only under the chat flags; guests also need the portal user type of `access-control-and-security`, shared channels the deployment switch `GAUZY_CHAT_SHARED_CHANNELS_ENABLED`, calls the `meetings` feature, and holds and privacy requests use that access feature's registries where loaded.
+- **FR-1** The system keeps the existing chat permissions, default grants, conversation roles, categories, activity-log entries, sanitizing, egress guard and clients unchanged; the rule that chat is for employees of the organization (chat FR-24) stays, with guests (§3.4) as the only exception where an organization enables them.
+- **FR-2** The system serves the routes, pages, jobs and settings of this spec only under the chat flags and with `FEATURE_CHAT_ADMINISTRATION` on, and answers `404` on those routes otherwise; guests also need the portal user type of `access-control-and-security`, shared channels the deployment switch `GAUZY_CHAT_SHARED_CHANNELS_ENABLED`, calls the `meetings` feature, and holds and privacy requests use that access feature's registries where loaded.
 
 ### 3.2 Organization settings and administration
 
@@ -113,7 +113,7 @@ Chat today ([`chat`](../chat/spec.md)) is administered through three permissions
 ### 3.6 Sign-in and content safety
 
 - **FR-27** Chat uses the platform's sign-in (passwords, second factor, directory and social sign-in, one-time codes by policy); mobile and desktop clients can also sign in through the platform's applications for native clients with a proof key, beside the sign-in they use today, refresh their tokens before expiry, and lose access at once when a session is revoked.
-- **FR-28** The system keeps sanitising message text and card content, drops links with unsafe schemes from messages and cards, makes every outbound fetch through the egress guard and checks uploads by their content.
+- **FR-28** The system keeps sanitizing message text and card content, drops links with unsafe schemes from messages and cards, makes every outbound fetch through the egress guard and checks uploads by their content.
 
 ### 3.7 Calls and quick calls
 
@@ -139,7 +139,7 @@ Chat today ([`chat`](../chat/spec.md)) is administered through three permissions
 - **FR-45** The platform's help panel offers, on chat pages, chat's help items: the keyboard shortcuts, a link to the user guide and the platform version.
 - **FR-46** Chat screens ship in every locale of the platform with right-to-left layout for right-to-left languages, system events in the reader's language and dates in the person's locale and 12- or 24-hour choice.
 - **FR-47** Chat sends no usage data outside the platform; any product analytics follow the platform's telemetry controls, and administrator analytics (§3.10) stay inside the tenant.
-- **FR-48** The Angular chat renders long conversations in a virtualised list, loads history in windows and redraws only the messages that change.
+- **FR-48** The Angular chat renders long conversations in a virtualized list, loads history in windows and redraws only the messages that change.
 
 ### 3.9 Import
 
@@ -167,7 +167,7 @@ Chat today ([`chat`](../chat/spec.md)) is administered through three permissions
 - **Reliability**: retention, import, export and shared-channel copying resume after a restart without duplicates; a failed import item never stops the run.
 - **Security & privacy**: guests limited by the portal user type's ceiling; exports and holds behind their own permissions and audited; deletion reports hold counts, never text; analytics hold counts only; what leaves the platform: push payloads to push services, export archives to their requester, imported files fetched from the addresses in the archive, copies of shared-channel messages to the partner tenant of the same deployment.
 - **Auditability**: every administrative act of FR-24 with actor, time and before and after.
-- **Accessibility and localisation**: settings, browser, wizard and dialogs keyboard operable and labelled; every string in every shipped locale; right-to-left layout.
+- **Accessibility and localization**: settings, browser, wizard and dialogs keyboard operable and labelled; every string in every shipped locale; right-to-left layout.
 - **Compatibility**: PostgreSQL, MySQL and SQLite with both ORMs; cloud and self-hosted (shared channels only within one deployment); works without the access, privacy, meetings and communications features, whose parts are then absent.
 
 ## 5. Key Entities & Domain Concepts
@@ -198,7 +198,7 @@ Chat today ([`chat`](../chat/spec.md)) is administered through three permissions
 
 ## 7. Acceptance Criteria
 
-- [ ] **AC-1** With the chat flags off nothing changes; non-employees stay out of chat unless invited as guests (FR-1, FR-2).
+- [ ] **AC-1** With the chat flags off, or with `FEATURE_CHAT` on and `FEATURE_CHAT_ADMINISTRATION` off, nothing changes and the routes of this spec answer `404`; non-employees stay out of chat unless invited as guests (FR-1, FR-2).
 - [ ] **AC-2** Settings changes take effect on server and clients and are recorded with before and after; a blocked domain is never fetched (FR-3, FR-4).
 - [ ] **AC-3** The set-up checklist appears once per organization and can be skipped (FR-5).
 - [ ] **AC-4** Removing `CHAT_VIEW` stops a person's live events at once; where chat follows deactivation, deactivating an employee does the same and takes them off member lists, and with the setting off a deactivation changes nothing in chat; bulk access changes apply after review (FR-6, FR-7).
@@ -206,7 +206,7 @@ Chat today ([`chat`](../chat/spec.md)) is administered through three permissions
 - [ ] **AC-6** A channel moves between organizations with history; a name clash is refused (FR-12).
 - [ ] **AC-7** The rights call matches the server's decision for every row of the rule matrix in a generated test (FR-14, FR-15).
 - [ ] **AC-8** A guest sees only invited channels, cannot browse or open other direct conversations, and loses access at expiry (FR-16–FR-18).
-- [ ] **AC-9** A shared channel copies a post, an edit and a deletion both ways; disconnecting stops copying; each side's retention applies to its copy (FR-19).
+- [ ] **AC-9** A shared channel copies a post, an edit and a deletion both ways, and a copied post is never copied back; disconnecting stops copying; each side's retention applies to its copy (FR-19).
 - [ ] **AC-10** Retention removes old messages, keeps held ones, produces a deletion report; a channel's own period works within bounds (FR-20–FR-22).
 - [ ] **AC-11** A compliance export with a held deletion and an edit includes both versions; the export is audited; the second approver is required when set (FR-23, FR-24).
 - [ ] **AC-12** A privacy copy and an erasure behave as the organization setting says (FR-25).
@@ -236,7 +236,7 @@ Chat today ([`chat`](../chat/spec.md)) is administered through three permissions
 - [x] I Plugin-first — extends `packages/plugins/chat`, `chat-ui` and the realtime plugin; access, privacy, meetings and push through their ports.
 - [x] II Tenant/organization scoping — every row scoped; shared channels copy between tenants instead of reading across them.
 - [x] III Both ORMs, additive migrations — new tables and columns only, three dialects.
-- [x] IV Default-off flag; nothing removed — chat flags and the shared-channel switch off; existing permissions kept.
+- [x] IV Default-off flag; nothing removed — chat flags, `FEATURE_CHAT_ADMINISTRATION` and the shared-channel switch off; existing permissions kept.
 - [x] V Contracts and API first — rights, sync, status, share and admin routes with contracts before UI.
 - [x] VI Permissions, privacy, security — new keys, guest ceilings, audited exports and holds, data-loss rules, listed outbound data.
 - [x] VII Real-time through the event bus — outbox facts, realtime for clients, push through the platform's delivery.

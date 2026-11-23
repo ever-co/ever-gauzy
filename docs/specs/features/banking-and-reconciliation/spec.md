@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-15
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_BANKING` (default off)
 
 ---
@@ -162,7 +162,7 @@ learned payment behaviour; changed supplier bank details and unusual payments ra
   7 days before consent expires, and after re-consent keeps links and history even under new provider identifiers.
 - **FR-36** The system logs every synchronisation (time, lines added, updated, voided, error), retries a failed one
   with back-off and raises an inbox item after three failures in a row.
-- **FR-37** A user with `BANK_FEEDS_MANAGE` can disconnect a bank; the system stops synchronising, deletes the
+- **FR-37** A user with `BANK_FEEDS_MANAGE` can disconnect a bank; the system stops synchronizing, deletes the
   provider credentials and keeps the transactions.
 - **FR-38** The system treats bank providers as installable plugins that declare their countries and capabilities
   (transactions, balances, payment initiation); several can be installed at once `(advanced)`.
@@ -260,7 +260,7 @@ learned payment behaviour; changed supplier bank details and unusual payments ra
 | Open bank lines by age | unmatched lines by age band and amount | account, age, direction |
 | Balance history | daily bank and book balances and their difference | account, dates |
 | Automation and rules | share of lines matched by person, exact match, rule and agent; hits per rule | account, period, rule |
-| Imports and synchronisations | every import and sync with counts, gaps and errors | account, dates, status |
+| Imports and synchronizations | every import and sync with counts, gaps and errors | account, dates, status |
 | Bank charges | fees and charges by account and month | account, period |
 | Guarantees | guarantees by state, bank, party and expiry | direction, state, bank, expiry window |
 | Cash position and forecast | balances today and projected | account, currency, horizon |
@@ -308,7 +308,7 @@ learned payment behaviour; changed supplier bank details and unusual payments ra
   and payment-order data to the chosen provider, page images to the AI provider for scanned statements only.
 - **Observability**: audit of every match, unmatch, exclusion, rule change, checkpoint and reveal (who, when,
   before, after, origin: person, rule, agent); metrics for import duration, automatic match rate, sync failures.
-- **Accessibility and localisation**: a fully keyboard-operable workspace with screen-reader labels and live
+- **Accessibility and localization**: a fully keyboard-operable workspace with screen-reader labels and live
   announcements; all strings in every shipped locale; dates and amounts per locale.
 - **Compatibility**: PostgreSQL, SQLite, MySQL; both ORMs; cloud and self-hosted (feeds need outbound network
   access; file import does not); additive OpenAPI.

@@ -74,7 +74,7 @@
       fields, CRM fields, `MARKETING_AUDIENCE_SOURCES` context mappings), preview count and sample, snapshot as a
       `STATIC` group written at freeze, audience union and exclusion with de-duplication. Test: each operator on three
       dialects; SQL and the core evaluator agree on a sample; count under budget on a seeded million.
-- [ ] **T13**. `mk/messages/`: editor model, renderer (tokens, Markdown, blocks, sanitising), tests outside tracking,
+- [ ] **T13**. `mk/messages/`: editor model, renderer (tokens, Markdown, blocks, sanitizing), tests outside tracking,
       link and image checks, previews, web versions and the newsletter feed (`feed.json`, `feed.xml`), approval through
       `MARKETING_APPROVALS`, start from a marketing template and save as a template through `MARKETING_TEMPLATES`. Test:
       unknown token refused; broken image named; change after approval needs approval again; an unpublished message is

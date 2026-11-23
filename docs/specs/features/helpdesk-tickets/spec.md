@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-16
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_HELPDESK` (tenant feature, default off) · the plugin loads only when `GAUZY_HELPDESK_ENABLED`
 is exactly `true` · assistants and AI responders also need `FEATURE_HELPDESK_ASSISTANT` (default off)
 
@@ -294,7 +294,7 @@ deliveries, serial units and projects** and starts their actions; **collisions**
 - **FR-72** A user with `HELPDESK_SETTINGS_MANAGE` edits all settings on one page set with an unsaved-change guard; each
   agent sets signatures per channel, composer default, conversation order and send-later default (language, time zone
   and theme stay platform preferences).
-- **FR-73** A setup assistant creates defaults, connects a mailbox and adds a sample ticket; dismissable notices show what
+- **FR-73** A setup assistant creates defaults, connects a mailbox and adds a sample ticket; dismissible notices show what
   stops tickets flowing (no active channel, failing mailbox, no agent or team, service levels without a policy).
 - **FR-74** Workspace, ticket page and composer work on phones in the installable web app (cards with swipe actions,
   drawer, full-screen composer); task screens open tickets as tasks linking to the conversation.
@@ -328,7 +328,7 @@ deliveries, serial units and projects** and starts their actions; **collisions**
   platform: email to requesters and copies, messaging, widget messages, prompts to the tenant's AI provider, webhooks.
 - **Observability**: activity for field changes, merges, splits, undo, purges, responder actions; a channel event log
   (refused, ignored, bounced, failed); metrics for intake lag, send failures, collisions, assistant cost.
-- **Accessibility and localisation**: keyboard lists, board, conversation and composer; new messages announced to screen
+- **Accessibility and localization**: keyboard lists, board, conversation and composer; new messages announced to screen
   readers; labels in every locale; customer emails in the requester's language.
 - **Compatibility**: PostgreSQL, MySQL, SQLite; both ORMs; cloud and self-hosted; without a queue, Inbox email, record
   views or an AI provider only that capability is missing; OpenAPI additive; SDKs regenerated.

@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-16
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_ATTENDANCE` and `FEATURE_SHIFTS` (default off; each enables its own part and each part works without the other)
 
 ---
@@ -33,7 +33,7 @@ their own and only exceptions reach a person, each with a proposed fix. An agent
 availability, skills, time off, working-time rules and labour cost, and explains every assignment. A shift
 marketplace lets people offer, swap and pick up shifts under approval rules that approve safe trades on their own.
 Labour demand is forecast from orders, tickets, work orders, appointments and tracked-time history. Kiosks and phones
-check in offline. Location is captured only at the moment of a check-in, minimised and purged by default. Overtime
+check in offline. Location is captured only at the moment of a check-in, minimized and purged by default. Overtime
 can be approved before it is worked. A live board shows who is in, per location.
 
 ## 2. User Scenarios
@@ -182,7 +182,7 @@ can be approved before it is worked. A live board shows who is in, per location.
 | **FR-46** | A user with `ATTENDANCE_SETTINGS_EDIT` can maintain work locations: name, branch, address, coordinates chosen on a map or captured from the current device, radius in metres, optional office networks, time zone and active flag. |
 | **FR-47** | The system MUST take an employee's location for a day from the shift assignment, else their default location, else their branch's location. |
 | **FR-48** | The system MUST, when location proof is on, require from web and phone check-ins coordinates within the location's radius or an office network; radius 0 or no location means no check; outside is refused or flagged per FR-2; remote days ask nothing. |
-| **FR-49** | The system MUST capture location only at the moment of a check-in, never in the background or from the desktop timer, store by default only the distance and inside or outside, keep raw coordinates only when the organization opts in and purge them after the retention (default 30 days, at most 180), show employees what was stored about them, and log every read of raw coordinates in the platform's access audit, allowed only with `ATTENDANCE_LOCATION_VIEW`. *(advanced)* |
+| **FR-49** | The system MUST capture location only at the moment of a check-in, never in the background or from the desktop timer, store by default only the distance and inside or outside, keep raw coordinates only when the organization opts in and purge them after the retention (default 30 days, at most 180), show employees what was stored about them, and log every read of raw coordinates in the platform's access audit, allowed only with `ATTENDANCE_LOCATION_VIEW`; where no access audit is available, raw coordinates are neither kept nor read. *(advanced)* |
 | **FR-50** | An organization can turn location capture off; rules that need it are then shown as inactive. |
 | **FR-51** | A kiosk device opens a full-screen check-in page where employees identify by badge code, a code shown in their phone app that changes every 30 seconds, or employee number and personal PIN; it shows name, direction and time only; three wrong PINs lock that PIN at the kiosk for 5 minutes. *(advanced)* |
 | **FR-52** | Kiosks and the phone app MUST queue check-ins while offline with device time, sequence and client event id; the server accepts them with their original time up to 7 days old (setting), corrects a device clock offset above 2 minutes and flags it, ignores duplicates, and rebuilds the days. *(advanced)* |
@@ -289,12 +289,12 @@ All reports are report definitions: filterable, groupable, exportable, schedulab
   organization at a time; one writer per employee day (row lock); optimistic versions on assignments and statements.
 - **Reliability**: offline queues and device batches are idempotent by client event id; every job keyed so a repeat
   changes nothing; a silent source never produces absences on its own.
-- **Security & privacy**: tenant and organization scoped; location data minimised, purged and read-logged (FR-49);
+- **Security & privacy**: tenant and organization scoped; location data minimized, purged and read-logged (FR-49);
   device credentials hashed; PINs hashed and rate-limited; pay-based cost visible only with pay permission; leaves the
   platform: reminder and roster notices (email, push), calendar feeds (names, dates, times), exports.
 - **Observability and audit**: run records, exception metrics (raised, auto-accepted, time to resolve), device
   last-contact alerts, audit entries of FR-110.
-- **Accessibility and localisation**: roster and kiosk keyboard operable and screen-reader labelled; colours never the
+- **Accessibility and localization**: roster and kiosk keyboard operable and screen-reader labelled; colours never the
   only signal; every string in every locale; times in the location's time zone and the user's format.
 - **Compatibility**: PostgreSQL, MySQL and SQLite; both ORMs; cloud and self-hosted; offline-capable clients; additive
   OpenAPI and SDK changes.
@@ -374,7 +374,7 @@ All reports are report definitions: filterable, groupable, exportable, schedulab
 - Raw coordinates are not stored unless the organization opts in (applied); photo capture at kiosks is not offered.
 - Kiosk identification by rotating phone code, badge or number and PIN (applied); biometric readers report through
   the device API only.
-- Proposals come from a deterministic optimiser that explains the constraints it checked (applied); an assistant may
+- Proposals come from a deterministic optimizer that explains the constraints it checked (applied); an assistant may
   rephrase them. Exceptions escalate after one working day (applied).
 
 ## 9. Constitution Gates
@@ -385,7 +385,7 @@ All reports are report definitions: filterable, groupable, exportable, schedulab
 - [x] III Both ORMs, additive migrations — new tables only, three dialects.
 - [x] IV Default-off flag; nothing removed — two tenant features; timer, availability and reports unchanged.
 - [x] V Contracts and API first; backwards compatible — new routes and contracts only.
-- [x] VI Permissions, privacy, security — new keys; location minimised; device and PIN secrets hashed.
+- [x] VI Permissions, privacy, security — new keys; location minimized; device and PIN secrets hashed.
 - [x] VII Real-time through the event bus — outbox events; presence and roster updates through the push channel.
 - [x] VIII i18n and accessibility — keys in every locale; keyboard roster and kiosk.
 - [x] IX Tests accompany the change — pairing, resolution, rules, idempotency, ORM parity.

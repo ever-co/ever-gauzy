@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-16
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_ORGANIZATION_STRUCTURE` (default off; with it off every organization behaves as today)
 
 ---
@@ -222,7 +222,7 @@ lets people train on their own data. These requirements are marked `(advanced)`.
 - **Reliability**: data runs resume after a restart from their last completed slice; archives are complete before the first deletion; sandbox copies never write to the source.
 - **Auditability**: before and after for every tree, default, share and register change; deletion records kept with their dry run; agent actions marked.
 - **Security & privacy**: deletion needs typed confirmation and a fresh second factor when enabled; archives readable only by the requester and administrators and removed after 30 days; sandboxes replace personal data and send nothing outside; nothing leaves the platform except the existing invitations and emails.
-- **Accessibility and localisation**: keyboard-operable tree with list alternative, labelled forms, strings in every shipped locale, industry templates and department names translated.
+- **Accessibility and localization**: keyboard-operable tree with list alternative, labelled forms, strings in every shipped locale, industry templates and department names translated.
 - **Compatibility**: PostgreSQL, MySQL, SQLite; both ORMs; additive migrations; cloud and self-hosted; queue or in-process jobs; OpenAPI additive.
 
 ## 5. Key Entities & Domain Concepts

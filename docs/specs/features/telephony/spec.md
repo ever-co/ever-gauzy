@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-16
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_TELEPHONY` (new, default off); the plugin loads only when `GAUZY_TELEPHONY_ENABLED` is exactly `true`
 
 ---
@@ -183,7 +183,7 @@ analytics**.
 - **Reliability**: callbacks stored before processing; state machine forward-only; recording fetch retried with back-off for 24 hours; jobs catch up after downtime; the call card reconnects after a lost connection.
 - **Security & privacy**: credentials encrypted; callbacks verified; recordings and transcripts readable only per FR-40 and deleted at retention; listens audited; fetches guarded against internal addresses. Leaving the platform: call audio and numbers to the account's provider; recordings and transcripts to the organization's AI provider only when summaries or live assistance are enabled.
 - **Auditability**: who and when for account, number, plan, outcome and profile changes, manual logs, outcome and summary edits, recording listens and deletions, with before and after.
-- **Accessibility and localisation**: the call card is keyboard operable (answer, decline, mute, hang up have shortcuts and labels), states are announced to screen readers, sounds have a visual equivalent; numbers shown in the viewer's national or international format; every string in all shipped locales.
+- **Accessibility and localization**: the call card is keyboard operable (answer, decline, mute, hang up have shortcuts and labels), states are announced to screen readers, sounds have a visual equivalent; numbers shown in the viewer's national or international format; every string in all shipped locales.
 - **Compatibility**: PostgreSQL, MySQL, SQLite; both ORMs; cloud and self-hosted (callbacks need a public address; the plan says how a self-hosted server exposes them); works without the CRM, helpdesk, lead capture or communications plugins (their parts are then absent); OpenAPI and SDKs regenerated.
 
 ## 5. Key Entities & Domain Concepts

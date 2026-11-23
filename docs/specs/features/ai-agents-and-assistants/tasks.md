@@ -61,19 +61,24 @@
   `FEATURE_AI_AGENTS` in the shared catalogue feature filter); default grants through `defaultFor` in
   `aa/ai-agents.permissions.ts` (no permission seed). Test: idempotent seed; grants per role on a new tenant and after
   the permission reload; with the feature off the Reports page and menu are unchanged.
-- [ ] **T49**. `mcp/tools/tool-metadata.ts` for every existing group (group, writes, permissions, feature, route) and
-  `mcp/tools/tool-conventions.ts` (`registerWriteTool`: `preview`, idempotency key, preview token, assisted mark, generic
-  request preview for legacy writing tools used when `preview: true` is passed or `ai.mcp.previewByDefault` is on).
-  Test: every new writing tool answers a preview by default; an existing writing tool called without `preview` commits
+- [ ] **T49**. Tool metadata for every existing group (group, writes, permissions, feature, route, `derivedEffects` for
+  routes that derive further records on the server) and the write
+  conventions (`registerWriteTool`: `preview`, idempotency key, preview token, assisted mark, generic request preview for
+  legacy writing tools used when `preview: true` is passed or `ai.mcp.previewByDefault` is on). Files:
+  `mcp/tools/tool-metadata.ts`, `mcp/tools/tool-conventions.ts`. Test: `mcp/tools/tool-conventions.spec.ts`: every new writing tool answers a preview by default; an existing writing tool called without `preview` commits
   as today with the setting off and with the feature off; the assisted mark appears on existing tools only with the
   feature on.
-- [ ] **T50**. Route check `tools/scripts/mcp-tool-route-check.mjs` against the OpenAPI document; a new tool failing it
-  fails the build, an existing one is reported and marked unavailable to agents in `TOOLS_REGISTRY`
-  (`mcp/config/tools-registry.ts`); CI step. Test: `tools/scripts/mcp-tool-route-check.test.mjs`: a seeded dangling new
-  tool fails the check; an existing failing tool is still listed to an MCP client.
-- [ ] **T51**. Group switches generalised from `mcp/tools/collaboration/scopes.ts` to every group in
-  `mcp/tools/tool-groups.ts` (`GAUZY_MCP_TOOLS_<GROUP>`, existing groups on as today), scopes `<group>:read|write`,
-  applied in `mcp/tools/register-all-tools.ts`. Test: existing sessions keep every tool; collaboration groups still
+- [ ] **T50**. Route check against the OpenAPI document; a new tool failing it fails the build, an existing one is
+  reported only; the availability it writes to `TOOLS_REGISTRY` hides an existing failing tool from agents only where the
+  tenant setting `ai.mcp.hideFailingTools` is on (off by default); CI step. Files:
+  `tools/scripts/mcp-tool-route-check.mjs`, `mcp/config/tools-registry.ts`, `.github/workflows/static-checks.yml`. Test:
+  `tools/scripts/mcp-tool-route-check.test.mjs`: a seeded dangling new tool fails the check; an existing failing tool is
+  reported, still listed to an MCP client and, with the setting off, still offered to agents; with the setting on it is
+  not offered to agents.
+- [ ] **T51**. Group switches generalized from `mcp/tools/collaboration/scopes.ts` to every group
+  (`GAUZY_MCP_TOOLS_<GROUP>`, existing groups on as today), scopes `<group>:read|write`, applied at tool registration.
+  Files: `mcp/tools/tool-groups.ts`, `mcp/tools/collaboration/scopes.ts`, `mcp/tools/register-all-tools.ts`. Test:
+  `mcp/tools/tool-groups.spec.ts`: existing sessions keep every tool; collaboration groups still
   default off.
 
 ## Phase 2 — Services, endpoints, events
@@ -119,27 +124,42 @@
   categories. Files: `aa/events/ai-agents.events.ts`, `aa/events/ai-agents-realtime.ts` (outbox to
   `RealtimeHintsService.appendHint`), `aa/notifications/ai-agents-notification-categories.ts`. Test: events carry ids
   only; hint per run.
-- [ ] **T52**. Built-in tools (spec FR-19 except knowledge, memory, skill and delegation tools, which T29, T38 and T36
-  add): `aa/tools/built-ins/describe-record-types.tool.ts`, `search-records.tool.ts`, `read-record.tool.ts`,
-  `read-file.tool.ts`, `run-report.tool.ts` (over `REPORT_RUNS`; not offered when unbound), `ask-person.tool.ts` (an inbox
-  question of T11), `hand-over.tool.ts` (to a person or team with note, draft and sources, assigning the context record
-  where possible; spec FR-38), `web-search.tool.ts` and `web-fetch.tool.ts` through core
-  `packages/core/src/lib/webhook/webhook-endpoint-policy.ts`, hidden when `ai.webToolsEnabled` is off; registered in the
-  catalogue of T7. Test: `aa/tools/built-ins/built-ins.spec.ts`: hand-over assigns the task to the named person; web
-  tools are not offered with the switch off; a private address is refused by the outbound policy.
+- [ ] **T52**. Built-in tools, record group (spec FR-19 except knowledge, memory, skill and delegation tools, which T29,
+  T38 and T36 add; the report, people and web groups are T56, T57 and T58): describe record types, search records, read
+  a record, read a file, each within the invoker's access, registered in the catalogue of T7. Files:
+  `aa/tools/built-ins/describe-record-types.tool.ts`, `aa/tools/built-ins/search-records.tool.ts`,
+  `aa/tools/built-ins/read-record.tool.ts`, `aa/tools/built-ins/read-file.tool.ts`. Test:
+  `aa/tools/built-ins/built-ins.spec.ts`: search and read return only records, fields and files the invoker may read;
+  describe lists the registered record types.
 - [ ] **T53**. Model settings and data disclosure (spec FR-5, FR-8): default, fallback and embedding model per tenant or
-  organization as setting contributions `ai.defaultModel`, `ai.fallbackModel`, `ai.embeddingModel` in
-  `aa/ai-agents.settings.ts` (unset = the provider credential's `defaultModel`, as today), used by
-  `aa/runtime/agent-runtime.service.ts`; `aa/settings/provider-disclosure.service.ts` lists per provider what leaves the
-  platform (instructions, messages, tool results, passages, embedding texts) and whether it is local, returned by
-  `GET /api/ai-agents/settings` (`aa/settings/ai-settings.controller.ts`). Test: an organization model overrides the
+  organization as setting contributions `ai.defaultModel`, `ai.fallbackModel`, `ai.embeddingModel` (unset = the
+  provider credential's `defaultModel`, as today), used by the agent runtime; a disclosure service lists per provider
+  what leaves the platform (instructions, messages, tool results, passages, embedding texts) and whether it is local,
+  returned by `GET /api/ai-agents/settings`. Files: `aa/ai-agents.settings.ts`, `aa/runtime/agent-runtime.service.ts`,
+  `aa/settings/provider-disclosure.service.ts`, `aa/settings/ai-settings.controller.ts`. Test:
+  `aa/settings/provider-disclosure.service.spec.ts`: an organization model overrides the
   tenant's; a local provider is listed as local; with the settings unset the assistant picks its model as today.
 - [ ] **T54**. Agent attribution (spec FR-40, FR-71): every platform call of a run carries the run's agent employee and
-  invoker (`aa/runtime/agent-attribution.ts`, applied by `aa/runtime/mcp-host.ts` and the assistant tool client), read
-  into `packages/core/src/lib/core/context/request-context.ts`, so
-  `packages/core/src/lib/activity-log/activity-log.service.ts` records actor type `Agent` with the agent employee and the
-  invoker acted for, and record histories show the agent with the assisted mark of T49. Test: a write through an allowed
+  invoker, applied by the MCP host and the assistant tool client and read into the request context, so the activity log
+  records actor type `Agent` with the agent employee and the invoker acted for, and record histories show the agent with
+  the assisted mark of T49. Files: `aa/runtime/agent-attribution.ts`, `aa/runtime/mcp-host.ts`,
+  `packages/core/src/lib/core/context/request-context.ts`, `packages/core/src/lib/activity-log/activity-log.service.ts`.
+  Test: `aa/runtime/agent-attribution.spec.ts`: a write through an allowed
   tool is logged as the agent's for the invoker; a request without a run is logged as today.
+- [ ] **T56**. Built-in tools, report group (spec FR-19): run a report definition over `REPORT_RUNS`, not offered when
+  the port is unbound; registered in the catalogue of T7. Files: `aa/tools/built-ins/run-report.tool.ts`. Test:
+  `aa/tools/built-ins/run-report.tool.spec.ts`: a report runs with the invoker's access; the tool is not offered when
+  `REPORT_RUNS` is unbound.
+- [ ] **T57**. Built-in tools, people group (spec FR-19, FR-38): ask a person (an inbox question of T11) and hand over
+  (to a person or team with note, draft and sources, assigning the context record where possible); registered in the
+  catalogue of T7. Files: `aa/tools/built-ins/ask-person.tool.ts`, `aa/tools/built-ins/hand-over.tool.ts`. Test:
+  `aa/tools/built-ins/people-tools.spec.ts`: hand-over assigns the task to the named person; a question reaches the
+  person's inbox and its answer resumes the run.
+- [ ] **T58**. Built-in tools, web group (spec FR-8, FR-19): web search and fetch through the core outbound policy
+  (`packages/core/src/lib/webhook/webhook-endpoint-policy.ts`), hidden when `ai.webToolsEnabled` is off; registered in
+  the catalogue of T7. Files: `aa/tools/built-ins/web-search.tool.ts`, `aa/tools/built-ins/web-fetch.tool.ts`. Test:
+  `aa/tools/built-ins/web-tools.spec.ts`: web tools are not offered with the switch off; a private address is refused by
+  the outbound policy.
 
 ## Phase 3 — UI surfaces
 
@@ -204,11 +224,16 @@
 - [ ] **T30**. Purposes: settings per purpose (`aa/purposes/purpose.controller.ts`, `aa/purposes/purpose.service.ts`),
   `AGENT_RUNTIME.complete` (`aa/runtime/agent-runtime.port.ts`), adapters for the domain tokens of plan §3.1 in
   `apps/api/src/plugin-composition.ts`. Test: purpose off → domain fallback; purpose model used; masking applied.
-- [ ] **T31**. Budgets and caps per organization, agent, purpose and user read against the core usage meter; checks
+- [ ] **T31**. Budgets and caps per organization, agent, purpose and user, each window checked against its own counter:
+  `DAY` and `MONTH` against the core usage meter, `MINUTE` through the core throttler storage keyed by principal and
+  metric, `ACTION` against the size of the current action (records of the bulk action, rows of the export); checks
   before every step; 80 % and 100 % notices and events `ai_budget.warning` and `.reached`; `AI_BUDGET_EXCEEDED`; agent
-  principal limits (requests, writes, bulk records, exported rows, confirmations) offered as `AGENT_BUDGETS`. Files:
+  principal limits (requests, writes, bulk records, exported rows, confirmations) offered as `AGENT_BUDGETS` with their
+  windows, so `access-control-and-security` checks each against the same counter. Files:
   `aa/usage/ai-budget.controller.ts`, `aa/usage/ai-budget.service.ts`, `aa/runtime/budget-check.ts`,
   `aa/usage/usage-close.scheduler.ts`, `apps/api/src/plugin-composition.ts`. Test: cap refuses new runs; warning once per month;
+  a `MINUTE` request cap refuses the next request within the minute and allows it in the next; an `ACTION` cap of 100
+  refuses a bulk action over 101 records and allows one over 100;
   `access-control-and-security` reads an agent's write limit through the port.
 - [ ] **T32**. Triggers: automation rules with an agent step through `AUTOMATION_RULES`, bound `AUTOMATION_AGENTS`; urgent
   flag. Files: `aa/triggers/agent-trigger.controller.ts`, `aa/triggers/agent-trigger.service.ts`,
@@ -256,10 +281,14 @@
 - [ ] **T41**. Ceiling: `AGENT_RUN_CREDENTIALS` consumption, run credential lifetime, fallback gate; sub-agents, flow and
   request tools under the same set; refusal explanations to the model. Files: `aa/runtime/run-credentials.ts`,
   `aa/runtime/tool-gate.ts`, `aa/runtime/sub-agent-runner.ts`. Test: an agent for a manager closes only the
-  manager's team tasks (spec AC-8).
+  manager's team tasks (spec AC-8); a run that waited for a confirmation, and a run resumed after an API restart, get a
+  new credential before their next call; an invoker deactivated or stripped of a tool's permission while the run waited
+  ends it with `AI_ACCESS_CHANGED` and no call is made.
 - [ ] **T42**. Dry runs: writing tools forced to `preview: true`, plan rows, plan execution with preview tokens, stop and
   re-plan on a changed record. Files: `aa/dry-runs/dry-run.service.ts`, `aa/dry-runs/plan-executor.service.ts`,
-  `aa/runs/run.controller.ts` (`execute-plan`). Test: plan executes exactly; changed record stops.
+  `aa/runs/run.controller.ts` (`execute-plan`). Test: plan executes exactly; changed record stops; a call to a
+  `derivedEffects` tool with only a generic preview (posting a worksheet) is listed with its derived effects marked not
+  previewed, is not executed from the plan, and execution stops before it with a confirmation request.
 - [ ] **T43**. Evidence per step (instructions version, record versions, passages) and replay against another version or
   model with recorded outputs and divergence marks. Files: `aa/replay/run-evidence.recorder.ts`,
   `aa/replay/run-replay.service.ts`, `ui/pages/run-trace/run-trace-page.component.ts`. Test: replay writes nothing;
@@ -297,7 +326,7 @@ Every functional requirement of `spec.md` §3 and the tasks that implement it; e
 | FR-5 | §3.2 Model providers and AI settings | T53 |
 | FR-6 | §3.2 Model providers and AI settings | T12 |
 | FR-7 | §3.2 Model providers and AI settings | T3, T10, T17 |
-| FR-8 | §3.2 Model providers and AI settings | T52, T53, T17 |
+| FR-8 | §3.2 Model providers and AI settings | T58, T53, T17 |
 | FR-9 | §3.3 Agent definitions | T6, T16 |
 | FR-10 | §3.3 Agent definitions | T6, T9, T16 |
 | FR-11 | §3.3 Agent definitions | T6, T16, T36 |
@@ -308,7 +337,7 @@ Every functional requirement of `spec.md` §3 and the tasks that implement it; e
 | FR-16 | §3.3 Agent definitions | T37 |
 | FR-17 | §3.4 Tools and their permissions | T7 |
 | FR-18 | §3.4 Tools and their permissions | T10, T11, T49 |
-| FR-19 | §3.4 Tools and their permissions | T7, T52, T29, T36, T38 |
+| FR-19 | §3.4 Tools and their permissions | T7, T52, T56, T57, T58, T29, T36, T38 |
 | FR-20 | §3.4 Tools and their permissions | T55 |
 | FR-21 | §3.4 Tools and their permissions | T7, T10 |
 | FR-22 | §3.4 Tools and their permissions | T10, T41 |
@@ -326,7 +355,7 @@ Every functional requirement of `spec.md` §3 and the tasks that implement it; e
 | FR-35 | §3.6 Runs, conversations, confirmations and audit | T9 |
 | FR-36 | §3.6 Runs, conversations, confirmations and audit | T13, T14, T18, T38 |
 | FR-37 | §3.6 Runs, conversations, confirmations and audit | T11, T18 |
-| FR-38 | §3.6 Runs, conversations, confirmations and audit | T11, T52 |
+| FR-38 | §3.6 Runs, conversations, confirmations and audit | T11, T57 |
 | FR-39 | §3.6 Runs, conversations, confirmations and audit | T9, T14 |
 | FR-40 | §3.6 Runs, conversations, confirmations and audit | T54 |
 | FR-41 | §3.6 Runs, conversations, confirmations and audit | T38 |

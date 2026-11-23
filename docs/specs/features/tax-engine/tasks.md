@@ -84,9 +84,12 @@
   ordering and cycle check, distribution with remainder. Files: `tax/calculator/calculation-bases.ts`,
   `tax/calculator/rate-ordering.ts`, `tax/calculator/distribution.ts`. Test: unit specs and property tests (parts sum
   to the whole).
-- [ ] **T15**. Calculator: prices including tax, rounding modes, drift correction, rounded total, organization-currency
-  twins. Files: `tax/calculator/prices-including-tax.ts`, `tax/calculator/rounding.ts`,
-  `tax/calculator/currency-twins.ts`. Test: property tests (gross equals entered prices; line taxes sum to document tax) in three currencies' scales.
+- [ ] **T15**. Calculator: prices including tax (net = entered price less rounded tax; per document, each rate's tax
+  from the sum of its lines' entered prices, distributed by largest remainder, spec FR-35), rounding modes, rounded
+  total, organization-currency twins. Files: `tax/calculator/prices-including-tax.ts`, `tax/calculator/rounding.ts`,
+  `tax/calculator/currency-twins.ts`. Test: property tests (gross equals entered prices on every line and in total;
+  line taxes sum to document tax; no line tax below zero or above its price) in three currencies' scales; 50 lines of
+  0.01 at 19 % per document give tax 0.08 and total 0.50.
 - [ ] **T16**. Manual-mode adapter `tax/tax-document/manual-tax.adapter.ts` (typed percentages → tax lines). Test:
   golden-invoice spec replaying stored invoices against today's totals.
 - [ ] **T17**. Determination `tax/determination/`: regime order (document, party, rules, destination, general),
@@ -183,22 +186,22 @@
 - [ ] **T63**. Supplier bills on the tax stage: stated tax and tolerance on the bill form, determined
   tax through `TAX_CALCULATOR`, after `invoicing-receivables-payables` T9 and T18. Files: `tax/tax-document/sources/supplier-bill.tax-source.ts`,
   `packages/plugins/receivables-payables/src/lib/totals/invoice-totals.pipeline.ts`. Test: e2e per bill: breakdown by
-  rate; stated tax within tolerance lands on the largest line.
+  rate; stated tax within tolerance lands on the largest line; with the feature off, totals are identical to today.
 - [ ] **T64**. Sales orders on the tax stage. Files: `tax/tax-document/sources/sales-order.tax-source.ts`,
   `packages/plugins/order/src/lib/order-totals/order-totals.service.ts`. Test: e2e order with a lump-sum rate; flag off
   unchanged.
 - [ ] **T65**. Purchase orders on the tax stage. Files:
   `tax/tax-document/sources/purchase-order.tax-source.ts`,
   `packages/plugins/purchasing/src/lib/purchase-order/purchase-order.service.ts`. Test: e2e purchase order with a
-  cost-only rate going to item cost, not to the total.
+  cost-only rate going to item cost, not to the total; with the feature off, totals are identical to today.
 - [ ] **T66**. Point-of-sale sales on the tax stage, wired in the register sale service of
   `point-of-sale-and-loyalty` T12. Files: `tax/tax-document/sources/pos-sale.tax-source.ts`,
   `packages/plugins/point-of-sale/src/lib/sale/pos-sale.service.ts`. Test: e2e register sale with prices including tax
-  totals the entered prices.
+  totals the entered prices; with the feature off, totals are identical to today.
 - [ ] **T67**. Expense claims on the tax stage, answering the tax service of `expenses-and-travel` T13.
   Files: `tax/tax-document/sources/expense-claim.tax-source.ts`,
   `packages/plugins/expense-claims/src/lib/tax/expense-claim-tax.service.ts`. Test: e2e claim line with a
-  non-recoverable share.
+  non-recoverable share; with the feature off, totals are identical to today.
 
 ## Phase 4 — MCP, SDKs, integrations, docs
 
@@ -230,8 +233,11 @@
   `tax/withholding/calculation/thresholds.ts`. Test: table-driven and property specs.
 - [ ] **T47**. `WithholdingService`: preview, consumers for bills, payments (`payments.allocation.created`),
   journals and document tax lines of negative rate parts (one entry each), entry states, reversal, force or waive,
-  adjusting entries. Files: `tax/withholding/withholding.service.ts`, `tax/withholding/withholding.consumer.ts`. Test:
-  consumer idempotency and state specs; a negative-part withholding has exactly one entry.
+  adjusting entries; each entry stamped with the `documentVersion` of its event and `adjustsKey` (plan §3). Files:
+  `tax/withholding/withholding.service.ts`, `tax/withholding/withholding.consumer.ts`. Test:
+  consumer idempotency and state specs; a negative-part withholding has exactly one entry; a bill confirmed and then
+  amended writes one entry per version, a redelivered event of either version adds nothing, and two non-adjusting
+  entries of one version and category are refused on PostgreSQL, MySQL and SQLite.
 - [ ] **T48**. Controllers for masters, preview, entries, decisions. Files:
   `tax/withholding/withholding-masters.controller.ts`, `tax/withholding/withholding-entries.controller.ts`. Test: e2e
   permissions.

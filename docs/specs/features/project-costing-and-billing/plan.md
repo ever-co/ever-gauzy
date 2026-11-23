@@ -36,7 +36,7 @@ approved-time-only switch and an evidence pack. The bill side of a log is the ra
 `invoiceItemId`; the pay rate of a log is `time_log.payRateValue`; bill repricing stays `time-log-repricing.ts`. The lock
 on approved time is the existing `timesheet.lockedAt`, which the project change requests already refuse to move. Task
 dependencies are `task_linked_issues` rows. Capacity reads `employee_availability` and `availability_slots`;
-utilisation targets are shown beside the core time goals (`time_goal`). Stakeholders are `organization_contact` rows
+utilization targets are shown beside the core time goals (`time_goal`). Stakeholders are `organization_contact` rows
 (their company through `contact_buyer`). Settings are in the platform settings store; permissions are plugin
 contributions; approvals fall back to core `request_approval` on the existing Approvals page; notices de-duplicate
 through the notification dispatcher; runs and the reconciliation watermark are core `job_execution` / `operation` rows;
@@ -75,7 +75,7 @@ flowchart LR
 | Settings and permissions | `project-costing.settings.ts` setting contributions stored in `tenant_setting` at `ORGANIZATION` scope (the organization level of `organization-setup`); `project-costing.permissions.ts` contributions with `defaultFor` | no settings table, no seed migration |
 | Rates | pure cost resolver over rate cards, work activity defaults, `PROJECT_COST_RATE_SOURCE`, then the pay rate stored on the log (`time_log.payRateValue`); the bill side is read from the log's stored rates through `time-log-pricing.ts`, a card bill rate only filling a gap | existing invoice amounts unchanged |
 | Money | core `money` decimal helpers; `numeric(20,6)` amounts, `numeric(20,10)` rates; costs stored in organization currency with rate | [platform architecture](../../architecture/business-suite.md) §6 |
-| Figures | append-only `project_figure_source` contributions keyed by source, summed into `project_figure` | idempotent replays, drill-down |
+| Figures | append-only `project_figure_source` contributions keyed by source, line key and revision, summed into `project_figure`; a change of a source appends its difference as the next revision, a removed source the negative of its sum | idempotent replays, corrections without updates, drill-down |
 | Templates | core task-template module (`packages/core/src/lib/task-template/`) built here and shared with `hr-core-lifecycle`; the plugin adds project details one-to-one | one template engine, no plugin depends on another |
 | Billing cycles | core `invoice_schedule` / `invoice_schedule_run` with a project scope; milestone, date and retainer lines join a run through `INVOICE_SCHEDULE_LINE_SOURCES` | one billing schedule model |
 | Scheduling | pure working-day calendar over `HR_WORKING_CALENDAR`; critical path by forward and backward pass; recurrence by the core recurrence rules (`packages/core/src/lib/recurrence/`) | testable, one recurrence |
@@ -97,7 +97,7 @@ flowchart LR
 | `time-log.service.ts`, `timer.service.ts` | call optional `TIME_LOG_WRITE_GUARD.beforeStart / beforeCreate / beforeUpdate / beforeDelete` |
 | `tasks/task.service.ts`, `linked-issue/task-linked-issue.service.ts` | call optional `TASK_WRITE_GUARD.beforeStatusChange / beforeParentChange / beforeLink` |
 | `time-tracking/timesheet/` | `timesheet.lockedAt` (exists, set by nothing today) is set when a timesheet is approved with locking on and cleared on reopen; `TIME_LOG_WRITE_GUARD` reads it, and `timesheet-project-change-request.service.ts` already refuses locked sheets |
-| `invoice-schedule/` | `invoice_schedule` + `organizationProjectId` uuid null (fk set null), `approvedOnly` bool default false, `scopeKey` varchar(40) not null default `'client'` (the project id when scoped); the unique key `IDX_invoice_schedule_organization_contact` becomes `(organizationContactId, scopeKey)`, so a client keeps one client-wide schedule and may add one per project (a client-wide run leaves out projects with their own schedule); `invoice_schedule_run` + `evidenceFileId` uuid null; `invoice-schedule-run.service.ts` filters by the project and, with `approvedOnly`, by approved timesheets, and asks the optional `INVOICE_SCHEDULE_LINE_SOURCES` hook for extra lines of the period (reached billing-plan entries, date entries, retainer top-ups), marked billed with the run's invoice |
+| `invoice-schedule/` | `invoice_schedule` + `organizationProjectId` uuid null (fk set null), `approvedOnly` bool default false, `scopeKey` varchar(40) not null default `'client'` (the project id when scoped); the unique key `IDX_invoice_schedule_organization_contact` becomes `(organizationContactId, scopeKey)`, so a client keeps one client-wide schedule and may add one per project (a client-wide run leaves out projects with their own schedule); `invoice_schedule_run` + `evidenceFileId` uuid null; `invoice-schedule-run.service.ts` filters by the project and, with `approvedOnly`, by approved timesheets and to time-and-materials projects (time of a project whose `billing` is `FLAT_FEE` or `MILESTONES` stays out of hourly lines), and asks the optional `INVOICE_SCHEDULE_LINE_SOURCES` hook for extra lines of the period (reached billing-plan entries, date entries, retainer top-ups, approved re-billable expenses), claimed in the run's transaction and marked billed with the run's invoice; client-wide schedules without `approvedOnly` run as today |
 | `task-template/` (new core module) | `task_template` (`kind` varchar(24): `PROJECT`, `HR_ONBOARDING`, `HR_SEPARATION`; `name`, `description`, `isActive`, `version`), `task_template_task` (`templateId` fk cascade, `key` varchar(40), `parentKey`, `moduleKey`, `title`, `description` text, `issueTypeId`, `offsetDays`, `durationDays` int, `estimate` numeric(12,2), `weight` numeric(9,4), `isMilestone`, `assigneeRoleId`, `sortOrder`; unique `(templateId, key)`), `task_template_dependency` (`templateId` fk cascade, `fromKey`, `toKey`, `kind` (`FS`/`SS`/`FF`), `lagDays`; unique `(templateId, fromKey, toKey)`); `TaskTemplateService.instantiate(template, projectId, anchorDate, { preview, calendar, createTask? })` dates tasks on working days from the anchor (negative offsets count back from it) through an optional working-calendar port (fallback core official holidays plus Saturday and Sunday), creates core tasks for the template tasks `createTask` accepts (all by default) and remaps parents and blocking links; `hr-core-lifecycle` uses the same module for onboarding and separation |
 | `request-approval/` | `ApprovalPolicyTypesStringEnum.TIMESHEET_PORTION`, `PROJECT_BUDGET` (varchar, no migration); a decision gate for each in `linked-document-decision.gate.ts` (the type's approve permission or being named on the request); a settler for each registered with the core settler registry specified by `approval-workflows` (`registerRequestApprovalSettler(type, settle)`, called on the answer's transaction) |
 
@@ -121,7 +121,7 @@ flowchart LR
 | `project_budget` | `organizationProjectId` unique live, `currentVersionId`, `approvedVersionId` | — |
 | `project_budget_version` | `budgetId` fk, `version` int, `state` (`DRAFT`/`SUBMITTED`/`APPROVED`/`REJECTED`/`SUPERSEDED`), `reason`, `approvalRef`, `submittedAt`, `approvedAt`, `approvedById`, `totalCost`, `totalRevenue` numeric(20,6), `totalHours` numeric(12,2), `currency` | unique `(budgetId, version)` |
 | `project_budget_line` | `versionId` fk cascade, `lineKey` char(64) (stable across versions), `kind` (`LABOUR`/`EXPENSE`/`PURCHASE`/`MATERIAL`/`OTHER`/`REVENUE`), `workActivityTypeId`, `employeeLevelId`, `moduleId`, `expenseCategoryId`, `description`, `hours`, `amount`, `spread` text (month → hours, amount), `notifiedThresholds` text | unique `(versionId, lineKey)` |
-| `project_figure_source` (append-only) | `figureKey` varchar(160), `sourceType` varchar(40), `sourceId` uuid, `sourceLineId` uuid null, `amount`, `hours` numeric(14,4), `asOf` date | unique `(tenantId, sourceType, sourceId, sourceLineId, figureKey)`; idx `(figureKey)` |
+| `project_figure_source` (append-only) | `figureKey` varchar(160), `sourceType` varchar(40), `sourceId` uuid, `sourceLineId` uuid null, `sourceLineKey` varchar(36) not null (the `sourceLineId`, or `*` for a source without lines), `revision` int (the source's version that produced the row: 1 for the first contribution), `amount`, `hours` numeric(14,4) (for a revision after the first, the difference to the sum of the earlier rows of the same source, line and figure, so a cost going from 10 to 15 appends +5 and a deleted source appends the negative of its sum), `asOf` date | unique `(tenantId, sourceType, sourceId, sourceLineKey, figureKey, revision)`, so a replay of one revision adds nothing and a correction appends one row; idx `(figureKey)`, `(tenantId, sourceType, sourceId)` |
 | `project_figure` | `organizationProjectId`, `taskId` null, `moduleId` null, `month` char(7), `source` varchar(24) (`LABOUR_ESTIMATED`, `LABOUR_ACTUAL`, `EXPENSE`, `PURCHASE_BILLED`, `PURCHASE_COMMITTED`, `MATERIAL`, `LEDGER_OTHER`, `REVENUE_BILLED`, `BILLABLE_TIME`, `BILLABLE_EXPENSE`, `BILLABLE_ENTRY`, `REVENUE_RECOGNISED`), `amount`, `hours`, `figureKey` | unique `(tenantId, figureKey)`; idx `(organizationProjectId, month)` |
 | `project_forecast` | `organizationProjectId` unique, `asOf`, `actualCost`, `remainingCost`, `forecastCost`, `forecastRevenue`, `forecastMargin`, `budgetCost`, `breachOn` date, `plannedValue`, `earnedValue`, `cpi`, `spi` numeric(9,4), `drivers` text | — |
 | `billing_plan_entry` | `organizationProjectId`, `sequence`, `description`, `trigger` (`TASK`/`MODULE`/`DATE`), `taskId`, `moduleId`, `dueOn`, `amount`, `percent` numeric(7,4), `currency`, `needsAcceptance`, `state` (`PLANNED`/`REACHED`/`ACCEPTED`/`OFFERED`/`INVOICED`/`WITHDRAWN`), `reachedAt`, `acceptedAt`, `acceptedByUserId`, `acceptedByContactId` (`organization_contact`), `billingClaimRef`, `invoiceId`, `version` | unique `(organizationProjectId, sequence)`; idx `(organizationId, state)` |
@@ -149,7 +149,7 @@ Rules that keep one figure per fact:
   `organization_project.budget` / `budgetType` is on by default, so the `project-budgets` and `client-budgets` reports read
   the governing total.
 - **Targets**: `capacity_target` is a share of capacity per person or level; the core time goals (`time_goal`, hours per
-  period, Ever Teams) are shown beside it on the utilisation screen and neither is derived from the other.
+  period, Ever Teams) are shown beside it on the utilization screen and neither is derived from the other.
 - **Levels**: `employeeLevelId` on cards, budget lines and targets matches through `hr-core-lifecycle`'s
   `employee.employeeLevelId`; without that feature, by the employee's level label (`employee.employeeLevel`) against
   `employee_level.level`.
@@ -162,10 +162,10 @@ Rules that keep one figure per fact:
 
 ### Migrations
 
-**Migration timestamps**: `packages/plugins/project-costing` `1791000094100` to `1791000094199`; `packages/core` `1791000094900` to `1791000094999`.
+**Migration timestamps**: `packages/plugins/project-costing` `1791000094100` to `1791000094199`; `packages/core` `1791000094000` to `1791000094099` (before the plugin range: migrations run in timestamp order across packages, and the plugin's tables reference the core `task_template` tables).
 
-- Core (`packages/core/src/lib/database/migrations/`): `1791000094900-CreateTaskTemplateTables`,
-  `1791000094910-AddProjectScopeToInvoiceSchedule` (`invoice_schedule` columns and unique key,
+- Core (`packages/core/src/lib/database/migrations/`): `1791000094000-CreateTaskTemplateTables`,
+  `1791000094010-AddProjectScopeToInvoiceSchedule` (`invoice_schedule` columns and unique key,
   `invoice_schedule_run.evidenceFileId`); enum values need none; outbox, guard and lock calls are code.
 - Plugin (`packages/plugins/project-costing/src/lib/database/migrations/`): `1791000094100-CreateProjectCostingSetupTables`
   (types, profiles, sales-order links, stakeholders), `1791000094110-CreateProjectTemplateDetailTable`,
@@ -209,7 +209,7 @@ routes marked *(mgr)*. Errors `400`/`422` with codes (`PROJECT_TEMPLATE_INACTIVE
 | `GET/POST` | `/projects/:id/schedule`, `/projects/:id/schedule/reschedule` (`preview`), `/projects/:id/baselines` | `ORG_PROJECT_VIEW` / `ORG_PROJECT_EDIT` *(mgr)* | tasks, links, critical path, baseline variance | New |
 | `GET/PUT/DELETE` | `/tasks/:id/recurrence` | `ORG_TASK_ADD` | rule | New |
 | CRUD, `POST` | `/work-activity-types`, `/rate-cards` (+ `/import`), `POST /rates/explain` | `PROJECT_ACTIVITY_TYPES_EDIT`; `PROJECT_RATES_VIEW` / `PROJECT_RATES_EDIT` | types; dated cards; `IRateExplanation` | New |
-| `GET/PUT` | `/time-logs/:id/cost`, `/time-logs/:id/activity`, `/time-logs/:id/billing-hours` | own or `PROJECT_RATES_VIEW`; own before approval; `PROJECT_BILLING_HOURS_EDIT` *(mgr)* | cost row with the log's stored bill rates; activity change; billing hours with reason | New |
+| `GET/PUT` | `/time-logs/:id/cost`, `/time-logs/:id/activity`, `/time-logs/:id/billing-hours` | own or `PROJECT_RATES_VIEW`; own before approval; `PROJECT_BILLING_HOURS_EDIT` *(mgr)* | cost row with the log's stored bill rates; activity change; billing hours with reason; the cost rate and cost amount are returned only with `PROJECT_COSTS_VIEW` or `PROJECT_RATES_VIEW`, so an employee reading their own log without either gets its activity type, billing hours and the bill-side fields the existing time-log routes already show them | New |
 | `POST`, `GET` | `/time-logs/reprice` (`preview`, reason), `/unpriced` | `PROJECT_RATES_EDIT`; `PROJECT_RATES_VIEW` | recosting of the plugin's cost (a core operation above 1,000 logs, reason in `activity_log`); bill rates change only through the existing rate paths and `time-log-repricing.ts`; hours at zero rates | New |
 | `GET/POST` | `/timesheets/:id/portions`, `/timesheet-portions/:id/decision`, `/timesheets/:id/reopen`, `/timesheets/missing-days` | approver or `CAN_APPROVE_TIMESHEET`; `PROJECT_TIMESHEETS_REOPEN`; own | portions; decision (`APPROVE`, `DENY`, per-log comments); reopen clears `timesheet.lockedAt`, reason in `activity_log` | New |
 | CRUD, `POST` | `/projects/:id/budgets`, `/budget-versions/:id/lines` (bulk), `/budget-versions/:id/{submit,approve,reject,revise,fill}`, `GET /budget-versions/:id/diff` | `PROJECT_BUDGETS_VIEW` / `PROJECT_BUDGETS_EDIT` *(mgr)* / `PROJECT_BUDGETS_APPROVE` | versions and lines; fill from template, estimates or project | New |
@@ -217,7 +217,7 @@ routes marked *(mgr)*. Errors `400`/`422` with codes (`PROJECT_TEMPLATE_INACTIVE
 | `GET/POST` | `/projects/:id/{figures,costing,forecast,earned-value,ledger-agreement}`, `/projects/:id/overview/:card`, `POST /projects/:id/figures/recompute`, `GET /portfolio` | `ORG_PROJECT_VIEW` (hours) / `PROJECT_COSTS_VIEW` (amounts) | maintained figures; cards one by one | New |
 | CRUD, `POST` | `/projects/:id/billing-plan`, `/billing-plan-entries/:id/{accept,withdraw}`, `/projects/:id/retainer` | `PROJECT_BILLING_PLAN_EDIT` *(mgr)* | entries and states; retainer and periods | New |
 | `GET/PUT/POST` | `/projects/:id/invoice-schedule` (the project-scoped core `invoice_schedule`; `POST …/run` with `preview`), `/projects/:id/evidence?from&to` | `PROJECT_BILLING_PLAN_EDIT` *(mgr)*; `INVOICES_EDIT` to run | schedule and its `invoice_schedule_run` rows with evidence files; evidence pack file | New |
-| `GET`, CRUD | `/capacity`, `/capacity/forecast`, `/utilisation`, `/allocations` (+ bulk), `/capacity-targets` | `PROJECT_ALLOCATIONS_VIEW` / `PROJECT_ALLOCATIONS_EDIT`; own | people × weeks; shortfalls; utilisation; allocations | New |
+| `GET`, CRUD | `/capacity`, `/capacity/forecast`, `/utilization`, `/allocations` (+ bulk), `/capacity-targets` | `PROJECT_ALLOCATIONS_VIEW` / `PROJECT_ALLOCATIONS_EDIT`; own | people × weeks; shortfalls; utilization; allocations | New |
 | `GET/PUT/POST` | `/projects/:id/update-collection`, `/projects/:id/updates`, `/updates/:id/answers` (me), `/updates/:id/{draft,publish}` | `PROJECT_UPDATES_MANAGE` *(mgr)*; answer: asked member | collection; rounds; answers; assistant draft; publish | New |
 | `*` | `/organization-projects/*`, `/tasks/*`, `/task-linked-issue/*`, `/timer/*`, `/timesheet/*`, `/timesheet-project-change-request/*`, `/invoices/*` | as today | guards and router consulted only when bound and the feature is on | Unchanged contract |
 | `*` | `/invoice-schedules/*`, `/request-approval/*` | as today | optional `organizationProjectId` and `approvedOnly` on schedules; portions and budget versions appear as request approvals when `approval-workflows` is off | Changed (additive) |
@@ -268,7 +268,7 @@ with core email templates as fallback (`timesheet-portion-waiting`, `timesheet-r
   project notes and files stay on the existing Comments and Documents tabs. Project form fields (type, priority,
   department, contract, progress method) through `PROJECT_FORM_FIELDS`; task plan fields, dependency kind and lag and the
   recurrence editor through `TASK_VIEW_SECTIONS`. Menu under Projects: Templates, Types, Portfolio, Workload,
-  Utilisation; under Settings: Work activity types, Rate cards, Project costing. The existing timesheet Approvals tab
+  Utilization; under Settings: Work activity types, Rate cards, Project costing. The existing timesheet Approvals tab
   shows a timesheet's portions and the decision through `TIMESHEET_APPROVAL_DETAIL`, and the change-request screen is a
   tab of the `timesheet-page` tabset (route location `timesheet-sections`). Portion and budget decisions also appear on
   the existing Approvals page as request approvals when `approval-workflows` is off. Hidden without the feature or
@@ -291,7 +291,7 @@ stay. New `project-costing.ts`:
 | `project_budget_get`, `project_budget_revise` | project; lines, reason, `preview` | versions; diff then draft revision |
 | `timesheet_submit`, `timesheet_portion_decide` | timesheet; portion, decision, `preview` | result |
 | `billing_plan_get`, `billing_entry_accept` | project; entry, `preview` | entries; state |
-| `capacity_get`, `allocation_set`, `utilisation_get` | people, weeks; allocation, `preview`; period | figures; allocation; utilisation |
+| `capacity_get`, `allocation_set`, `utilization_get` | people, weeks; allocation, `preview`; period | figures; allocation; utilization |
 | `project_update_draft` | project, period | drafted update with citations (never published) |
 
 Ports (tokens in contracts; optional; bound in `apps/api/src/plugin-composition.ts`):
@@ -299,14 +299,14 @@ Ports (tokens in contracts; optional; bound in `apps/api/src/plugin-composition.
 | Port | Direction | Bound to | Fallback when unbound |
 | --- | --- | --- | --- |
 | `TIME_LOG_WRITE_GUARD`, `TASK_WRITE_GUARD`, `TIMESHEET_APPROVAL_ROUTER` | provided to core | plugin guards and router | core as today |
-| `INVOICE_SCHEDULE_LINE_SOURCES` | provided to core | `ProjectScheduleLineSource` (reached and date billing-plan entries, retainer top-ups of the run's project and period) | schedules bill time only, as today |
+| `INVOICE_SCHEDULE_LINE_SOURCES` | provided to core | `ProjectScheduleLineSource` (reached and date billing-plan entries, retainer top-ups, and approved re-billable expenses of the run's project and period: claim lines read through `EXPENSE_SPEND` and direct billable expenses with `projectId`, `status` `UNINVOICED`, each billed once through `invoice_item.expenseId` and `expense.status` as the existing invoicing of expenses does) | schedules bill time only, as today |
 | `PROJECT_APPROVALS` | consumed | `WorkflowApprovalGateway` (default definitions for portions and budget versions) | a core `request_approval` of type `TIMESHEET_PORTION` or `PROJECT_BUDGET` with the resolved approvers named (`request_approval_employee`, minimum count 1, nobody approves their own), decided on the existing Approvals page; the outcome arrives through its settler (`registerRequestApprovalSettler`) |
 | `HR_REPORTING_LINE`, `HR_APPROVER_RESOLVER` (kind timesheets), `HR_WORKING_CALENDAR`, `TIME_OFF_AVAILABILITY` | consumed | hr-lifecycle, time-off-policies | team managers; core official holidays plus weekend; core approved time-off requests |
 | `SHIFTS_SCHEDULE`, `PROJECT_OVERTIME_FACTS` | consumed | shifts; attendance facts provider | calendar hours; no multiplier |
 | core `EmployeeAvailabilityService`, `AvailabilitySlotsService` | read directly | days marked unavailable or partial and dated availability ranges reduce capacity (FR-75) | — |
 | `PROJECT_COST_RATE_SOURCE` | consumed | payroll-setup cost to company per hour | the pay rate stored on the log (`time_log.payRateValue`) |
 | `PROJECT_RATE_CARDS` | provided (bound also as `PAYROLL_PROJECT_RATES` of `payroll-setup`) | `RateCardReader` (`payRateOf(employeeId, projectId, date)` from the cards' pay kind, cost and bill rates with their card) | — |
-| `BILLABLE_SOURCE_REGISTRY` (registers `MILESTONE`, `RETAINER_TOPUP` readers), `INVOICE_DOCUMENT_WRITER` | consumed | receivables-payables | entries billed through the project's core invoice schedule (`INVOICE_SCHEDULE_LINE_SOURCES`); an entry carries `invoiceId` once billed, so it is billed once whichever path takes it |
+| `BILLABLE_SOURCE_REGISTRY` (registers `MILESTONE`, `RETAINER_TOPUP` readers), `INVOICE_DOCUMENT_WRITER` | consumed | receivables-payables | entries billed through the project's core invoice schedule (`INVOICE_SCHEDULE_LINE_SOURCES`); both paths (the receivables worklist and schedule runs) claim every entry in the transaction that writes the draft's lines, before the lines are written: time logs through the core lines transaction (`saveBillingTime` locks them and refuses a log billed elsewhere), billing-plan entries and retainer top-ups by a conditional write after a row lock (`invoiceId` and `billingClaimRef` set only where both are null), expenses by `status` `UNINVOICED` → `INVOICED`; an entry the write does not claim is left out of a schedule draft and refused with `409` on the worklist, so two drafts never bill one entry; a failed draft rolls its claims back with its transaction, and deleting a draft or voiding it with release clears them (the existing release rule) |
 | `PROJECT_SALES_ORDERS` | consumed | order plugin `OrderStateReader` adapter | contract value typed |
 | `PROJECT_PURCHASES`, `PROJECT_STOCK_ISSUES`, `PROJECT_LEDGER_ACTUALS`, `PROJECT_ACCOUNTING_BUDGETS` | consumed | purchasing commitments, inventory and valuation, accounting ledger and `BudgetAvailabilityService` | figure kind hidden |
 | `EXPENSE_SPEND` | consumed | expense-claims spend figures (the only maintained expense figure) | core expenses with `projectId` as figure sources |
@@ -315,7 +315,7 @@ Ports (tokens in contracts; optional; bound in `apps/api/src/plugin-composition.
 | `PROJECT_BUDGET_AVAILABILITY` | provided | `ProjectBudgetAvailabilityService` (bound also as the project fallback of `PURCHASING_BUDGET_CHECK` and `EXPENSE_BUDGET_AVAILABILITY`) | those plugins read the existing single budget |
 
 Report definitions for spec §3.12 on datasets `project_costing.projects`, `.time_costs`, `.figures`, `.tasks`,
-`.budgets`, `.forecasts`, `.capacity`, `.utilisation`, `.purchases_materials`, plus a dashboard template
+`.budgets`, `.forecasts`, `.capacity`, `.utilization`, `.purchases_materials`, plus a dashboard template
 `project_costing.overview`; the existing `project-budgets` and `client-budgets` catalogue rows link to the budget
 definition. Import templates: activity types, rate cards, budgets, templates, allocations. Checklist contribution
 `projects.getting-started` to `platform-administration`. OpenAPI grows additively; Kiota SDKs regenerated after merge.
@@ -324,13 +324,13 @@ definition. Import templates: activity types, rate cards, budgets, templates, al
 
 | Trigger | When | What it does | Idempotency |
 | ------- | ---- | ------------ | ----------- |
-| `project-costing.time-cost` (outbox consumer) | `time_tracking.time_log.changed` | activity type, cost, cost row, figure sources, retainer drawdown | `time_log_cost` per log with `version`; sources keyed by log |
+| `project-costing.time-cost` (outbox consumer) | `time_tracking.time_log.changed` | activity type, cost, cost row, figure sources, retainer drawdown | `time_log_cost` per log with `version`; sources keyed by log, line key and the cost row's `version` as `revision` |
 | `project-costing.figures` (outbox consumers) | bills, orders, invoices, payroll, stock, ledger events | figure sources and sums, entry invoiced states | unique source key |
 | `project-costing.forecast` (queue, debounced 5 s per project) | figure, task or estimate change | forecast, earned value, health, burn alerts | upsert per project; dispatcher `dedupeKey` per alert |
-| `project-costing.reconcile` | nightly and on demand | costs logs changed since the watermark (desktop uploads, imports, integrations), rebuilds sums, reports corrections | watermark = start of the organization's last succeeded `job_execution` of this job (5-minute overlap); source keys |
+| `project-costing.reconcile` | nightly and on demand | costs logs changed since the watermark (desktop uploads, imports, integrations); compares the time-log source identities whose sum is not zero with the current logs and, for a log deleted or soft-deleted meanwhile (the feature off included), appends the reversing revision that brings its sources to zero; rebuilds sums; reports corrections | watermark = start of the organization's last succeeded `job_execution` of this job (5-minute overlap); source keys |
 | `project-costing.timesheet-reminders` | daily | submission and approval reminders, missing days | dispatcher `dedupeKey` |
 | `project-costing.recurrence` | hourly | creates due occurrences from the core recurrence rules | occurrence claimed before the task is created (the core recurrence run idiom); `lastTaskId` + `nextOn` advance in one transaction |
-| core `invoice-schedule.scheduler.ts` | daily (existing) | runs project schedules too: approved billable time of the project, plus `INVOICE_SCHEDULE_LINE_SOURCES` lines, evidence pack attached to the run | existing claim of `(invoiceScheduleId, periodStart)` |
+| core `invoice-schedule.scheduler.ts` | daily (existing) | runs project schedules too: approved billable time of the project, leaving out, with `approvedOnly` on, the time of a project billed fixed fee or milestones (`organization_project.billing` `FLAT_FEE`, `MILESTONES`; its hours shown as overrun in the evidence pack, FR-70), plus `INVOICE_SCHEDULE_LINE_SOURCES` lines (billing-plan entries, retainer top-ups, re-billable expenses), each entry claimed as in §7 (`BILLABLE_SOURCE_REGISTRY`), evidence pack attached to the run | existing claim of `(invoiceScheduleId, periodStart)` |
 | `project-costing.billing-entries` | daily | date entries due, retainer periods and top-up proposals | entry state transitions; unique `(retainerId, periodStart)` |
 | `project-costing.capacity` | nightly and on time-off, shift, availability and allocation events | capacity figures per person and week | unique `(employeeId, weekStart)` |
 | `project-costing.update-collection` | every 15 minutes | prompts, reminders, digests | round per `roundAt`; dispatcher `dedupeKey` |
@@ -374,7 +374,7 @@ queue root the API runs schedules on in-process timers under an advisory lock pe
 2. **Phase 2 — Depth**: templates and duplication, progress methods and cascade, weights, dependencies with guards and
    rescheduling, rate cards and billing hours, timesheet portions, approval and lock, versioned budgets with
    availability and the accounting budget list, figures from claims, purchases, stock, invoices, payroll and ledger,
-   billing plans and milestones to the worklist, stakeholders, update collections, capacity and utilisation, reports
+   billing plans and milestones to the worklist, stakeholders, update collections, capacity and utilization, reports
    FR-85, FR-87 to FR-91, FR-94, FR-97, onboarding checklist, import templates.
 3. **Phase 3 — Advanced capabilities**: live forecast at completion and burn alerts with re-plan, baselines, critical path,
    schedule view and earned value, project invoice schedules with evidence, retainers, allocations, workload board and

@@ -54,12 +54,15 @@
   `valuation/dto/update-deal-valuation.dto.ts`: `/crm/deals/:id/valuation`, `/crm/rates` (currencies of open deals with
   latest rate, date and source; deals without a rate). Test: e2e including won deal freeze and a deal without a rate.
 - [ ] **T7**. Reporting currency and scope rule: `analytics/reporting-currency.ts`, `analytics/scope.ts` (owner and managed
-  teams, refused owner filters). Test: unit specs; e2e refusal.
+  teams, refused owner filters, the CRM record rules through `RECORD_ACCESS_FILTER` where loaded, and the scope key of
+  the figure cache). Test: unit specs; e2e refusal of an unrelated owner; a team manager without
+  `CRM_ANALYTICS_VIEW_ALL` receives the managed team's figures; a deal hidden by a record rule is left out of figures.
 - [ ] **T8**. Pipeline summary `analytics/pipeline-summary.service.ts` and `/crm/pipeline/summary` in
   `analytics/crm-analytics.controller.ts` (group by stage, owner, team, source, type, territory, campaign, period;
-  one-time and recurring measures; currency mode; deals without a rate counted but out of money totals; deals with an
+  one-time and recurring measures; currency mode; deals without a rate counted, out of the converted money totals
+  (organization and reporting currency) and in their own currency's totals in the deal-currency mode; deals with an
   expected close date in the past flagged "overdue to close"). Test: figures on the demo data set, including a deal
-  without a rate and an overdue deal.
+  without a rate (in the CHF total of the deal-currency mode, out of converted totals) and an overdue deal.
 - [ ] **T9**. Periods: `forecast/periods.ts` (fiscal calendar from `CRM_FISCAL_PERIODS` or `fiscalStartDate`, period keys).
   Test: unit specs incl. a changed fiscal start.
 - [ ] **T10**. Categories: `forecast/category.ts` (stage category, probability bands, manual override until stage change),
@@ -76,9 +79,10 @@
   registry (`analytics/crm-report-definitions.registry.ts`), keyed by the `slug` of their core `report` row, which also
   takes definitions other plugins tag for CRM (a contribution with a built-in key is ignored and logged); read-only
   viewer endpoints `/cards/:key`, `/reports/:key`, `/drill/:key` in `analytics/crm-analytics.controller.ts` (the
-  catalogue is the core report list); drill-down re-reads each record under the reader's rights, counting records the
-  reader cannot open without listing them. Test: each definition returns the expected figures on the demo data set; a
-  contributed duplicate key is logged and ignored; a drill-down omits a record the reader cannot open.
+  catalogue is the core report list); drill-down re-reads each record under the reader's rights and record rules, listing
+  exactly the records the figure counts. Test: each definition returns the expected figures on the demo data set; a
+  contributed duplicate key is logged and ignored; a record the reader cannot open is in neither the figure nor the
+  drill-down.
 - [ ] **T13**. Stage reach and conversion between stages from `crm_stage_history` (`analytics/stage-reach.ts`: distinct reach, re-entry once,
   lost option). Test: unit specs with re-entry and lost deals.
 - [ ] **T14** (parallel). Time to close, won and lost deals, results per source, campaign and owner calculations
@@ -90,7 +94,8 @@
   `analytics/definitions/first-response-time.ts`, `analytics/definitions/active-leads-without-deal.ts`,
   `analytics/definitions/lead-to-customer-path.ts`. Test: bound and unbound.
 - [ ] **T16**. Figure cache and invalidation consumer `analytics/crm-analytics-cache.ts`, debounced
-  `crm.analytics.changed` hint. Test: invalidation on deal change; 60 s maximum age; a report over a 500 k-deal data
+  `crm.analytics.changed` hint. Test: invalidation on deal change; 60 s maximum age; two callers with the same definition and filters but different
+  permitted owners get separate entries; a report over a 500 k-deal data
   set answers P95 under 2 s.
 - [ ] **T17**. Daily re-rate job `schedule/crm-revalue.{scheduler,worker}.ts` with the inline fallback. Test: idempotent
   rerun.
@@ -197,7 +202,7 @@ Every functional requirement of `spec.md` §3 and the tasks that implement it; e
 | --- | --- | --- |
 | FR-1 | §3.1 Presence and access | T4, T35 |
 | FR-2 | §3.1 Presence and access | T7, T18 |
-| FR-3 | §3.1 Presence and access | T12 |
+| FR-3 | §3.1 Presence and access | T7, T12 |
 | FR-4 | §3.2 Deal currency and rates | T2, T6 |
 | FR-5 | §3.2 Deal currency and rates | T5 |
 | FR-6 | §3.2 Deal currency and rates | T6, T17 |
@@ -251,6 +256,6 @@ Every functional requirement of `spec.md` §3 and the tasks that implement it; e
   Reports page, custom dashboards and pipeline and deal pages behave exactly as before (spec AC-18).
 - Constitution gates in `spec.md` §9 confirmed.
 - Every definition of spec §3.7 returns the expected figures on the demo data set and exports.
-- Scope rule verified: a user without `CRM_ANALYTICS_VIEW_ALL` never receives another owner's figures through REST, MCP
-  or drill-down.
+- Scope rule verified: a user without `CRM_ANALYTICS_VIEW_ALL` receives only figures of records they own and of the
+  teams they manage, never those of an unrelated owner, through REST, MCP, drill-down or the figure cache.
 - Performance budgets of spec §4 measured on a 500 k-deal data set.

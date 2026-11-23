@@ -19,7 +19,7 @@
   controller its `dto/` folder. Angular files of `calendar-ui` are under `packages/plugins/calendar-ui/src/lib/`.
 - Tick the checkbox as the PR lands; add new tasks at the bottom, never renumber.
 - Everything stays behind `GAUZY_CALENDAR_ENABLED` and `FEATURE_CALENDAR`: the feature is off by default; after the trial period it may be switched on by default for new tenants only; existing tenants keep their setting until an administrator changes it.
-- Plan phase 1 = T1–T20, T36, T38, T41, T65–T68; phase 2 = T21–T30, T46, T47, T59–T61 and the answer page of T39; phase 3 =
+- Plan phase 1 = T1–T20, T36, T38, T41, T65–T69; phase 2 = T21–T30, T46, T47, T59–T61 and the answer page of T39; phase 3 =
   T31–T35, T37, T40 and the booking pages of T39; phase 4 = T42–T45, T62, T63; phase 5 = T48–T58, T64.
 - Depends on, each behind a port with the fallback of plan §7: meeting rooms (`meetings`), sender
   (`email-and-communications`), notifications (`automation-and-notifications`), connected accounts and the connector kit
@@ -45,7 +45,8 @@
   `GAUZY_CALENDAR_ENABLED` is exactly `true`; `calendar-enabled.spec.ts`.
 - [ ] **T3**. Core migration `packages/core/src/lib/database/migrations/1791000061900-ExtendAppointmentsForCalendar.ts`
   and the new optional columns on `EmployeeAppointment`, `AppointmentEmployee`, `EventType`, `EmployeeAppointmentReminder`
-  (offset, channel, guest key, widened claim key), `EmployeeAvailability` (`workLocation`) and `IntegrationMap`
+  (offset, channel, guest key, the non-null `claimKey` with its unique index replacing
+  `IDX_employee_appointment_reminder_key`, backfilled for existing claims), `EmployeeAvailability` (`workLocation`) and `IntegrationMap`
   (`remoteVersion`, `syncState`) (MultiORM, both repositories). Files:
   `packages/core/src/lib/employee-appointment/employee-appointment.entity.ts`,
   `packages/core/src/lib/appointment-employees/appointment-employees.entity.ts`,
@@ -53,7 +54,8 @@
   `packages/core/src/lib/employee-appointment/meeting-notifications/employee-appointment-reminder.entity.ts`,
   `packages/core/src/lib/employee-availability/employee-availability.entity.ts`,
   `packages/core/src/lib/integration-map/integration-map.entity.ts`. Test:
-  `packages/core/src/lib/database/extend-appointments-for-calendar-migration.spec.ts` on SQLite (up twice is a no-op);
+  `packages/core/src/lib/database/extend-appointments-for-calendar-migration.spec.ts` on SQLite (up twice is a no-op;
+  existing claims get their `claimKey`; every declared `answer` and `syncState` value is stored unchanged);
   existing `employee-appointment.resolver.spec.ts`, `appointment-employees.resolver.spec.ts`,
   `employee-availability.resolver.spec.ts`, `event-type.resolver.spec.ts` and
   `packages/core/src/lib/database/employee-appointment-reminder-migration.spec.ts` unchanged and green.
@@ -142,12 +144,13 @@
   `packages/core/src/lib/employee-appointment/meeting-notifications/meeting-reminder-enabled.ts`. Test:
   `reminders/calendar-reminder.service.spec.ts` and
   `packages/core/src/lib/employee-appointment/meeting-notifications/meeting-reminder.service.sqlite.spec.ts` (one reminder
-  per person, occurrence, offset and channel; moved event re-armed; declined skipped; plain appointment reminders
+  per person, occurrence, offset and channel; two sweeps racing on a colleague claim and on a guest claim with null
+  offset and channel file one notification each; moved event re-armed; declined skipped; plain appointment reminders
   unchanged with `GAUZY_MEETING_REMINDERS_ENABLED`).
 - [ ] **T19**. Links and record events `links/calendar-link.service.ts` (record read through `RECORD_ACCESS_FILTER`,
   merge and delete handling), record events route, `RECORD_TIMELINE_SOURCES` entry. Files:
   `links/calendar-link.controller.ts`, `links/calendar-record-events.controller.ts`, `links/calendar-timeline.source.ts`.
-  Test: `links/calendar-link.service.spec.ts` (reader of record but not event sees nothing; private shows "Private"; a
+  Test: `links/calendar-link.service.spec.ts` (reader of record but not event sees nothing; a private event is listed only for its owner; a
   merge keeps the link; a deleted record removes the link, not the event).
 - [ ] **T20**. Outbox events, realtime hints and notification categories (plan §5); status route. Files:
   `calendar-streamed-events.ts`, `events/calendar-realtime-hints.ts`, `events/calendar-notification-categories.ts`,
@@ -156,7 +159,7 @@
   for the parts that are loaded).
 - [ ] **T21**. Participants `participants/participant.service.ts` (colleagues on `appointment_employee` with answer columns,
   guests created from the appointment's `emails` on first read and written back on change, team expansion with limit,
-  roles, co-organisers, options, forwarding an invitation as optional) and `registerCalendarParticipantSources`. Files:
+  roles, co-organizers, options, forwarding an invitation as optional) and `registerCalendarParticipantSources`. Files:
   `participants/participant.controller.ts` (`…/forward`), `participants/calendar-participant-sources.registry.ts`,
   `participants/guest-sync.service.ts`. Test: `participants/participant.service.spec.ts` (expansion limit; source links
   created; an outside address added through the appointment form shows as a guest and the reverse; a forwarded person is
@@ -166,10 +169,10 @@
   `NOTIFICATION_DISPATCHER`, guest email through `CALENDAR_MAILER`, tokens, updates and cancellations by sequence).
   Files: `ical/ical-writer.ts`, `ical/ical-reader.ts`, `ical/ical-scheduling.ts`, `participants/invitation-dispatch.worker.ts`,
   `participants/calendar-mailer.port.ts`. Test: `ical/ical.spec.ts` (round trip of a series with exceptions);
-  `participants/invitation.dispatcher.spec.ts` (one update per change; nothing before the organiser sends; an appointment
+  `participants/invitation.dispatcher.spec.ts` (one update per change; nothing before the organizer sends; an appointment
   written through the existing routes keeps the short appointment email; no invitation for an event organised outside;
   agents get no email).
-- [ ] **T23**. Answers and proposals (per series and per occurrence, delegates, bulk answers, organiser notices) and
+- [ ] **T23**. Answers and proposals (per series and per occurrence, delegates, bulk answers, organizer notices) and
   public answer route with signed tokens. Files: `participants/answer.service.ts`, `participants/answer.controller.ts`
   (`…/answer`, `…/proposals/:pid/{accept,dismiss}`, `/calendar/invitations`), `public/public-answer.controller.ts`,
   `participants/guest-token.service.ts`. Test: `participants/answer.service.spec.ts` (guest answer without account;
@@ -255,8 +258,8 @@
 
 - [ ] **T36**. `packages/plugins/calendar-ui`: package, menu entry and guards, and the calendar page (day, work week,
   week, month and agenda views, month-picker with busy days, date jump, upcoming-events panel, calendar list to show,
-  hide, recolour and reorder calendars and pick the default one, layers, live refresh of open views); the second time
-  zone, shortcuts and phone layout are T65, the event drawer and form T66 and T67, the invitations page T68. Files:
+  hide, recolor and reorder calendars and pick the default one, layers, live refresh of open views); the second time
+  zone, shortcuts and phone layout are T65, the event drawer and form T66 and T67, the recurrence editor and drag T69, the invitations page T68. Files:
   `packages/plugins/calendar-ui/` (`package.json`, `project.json`, `src/index.ts`), `calendar-ui.plugin.ts`,
   `calendar-ui.routes.ts`, `calendar-ui.guard.ts`, `components/calendar-page/calendar-page.component.ts`,
   `components/calendar-list/calendar-list.component.ts`, `services/calendar-api.service.ts` (all under
@@ -302,13 +305,10 @@
   `components/calendar-page/calendar-view-options.component.spec.ts` (declined events hidden until shown; second zone
   column; phone-width rendering).
 - [ ] **T66**. Event drawer and event form, part 1: create by selecting a time range, quick add by title, full form
-  (title, start and end with time zones, all-day, location, description, show as, private, calendar), recurrence
-  editor, reminders, links; move and resize by drag and drop, copy and duplicate. Files (under
-  `packages/plugins/calendar-ui/src/lib/`): `components/event-drawer/event-drawer.component.ts`,
-  `components/event-form/event-form.component.ts`, `components/recurrence-editor/recurrence-editor.component.ts`,
-  `components/calendar-page/event-drag.directive.ts`. Test: `components/event-form/event-form.component.spec.ts`,
-  `components/recurrence-editor/recurrence-editor.component.spec.ts`, `components/calendar-page/event-drag.directive.spec.ts`
-  (a move asks for the occurrence or the series of a repeating event).
+  (title, start and end with time zones, all-day, location, description, show as, private, calendar), reminders,
+  links. Files (under `packages/plugins/calendar-ui/src/lib/`): `components/event-drawer/event-drawer.component.ts`,
+  `components/event-form/event-form.component.ts`. Test: `components/event-form/event-form.component.spec.ts` (a
+  selected range opens the form with its times; an end before the start is shown on the field the server names).
 - [ ] **T67** (parallel). Event form, part 2: participants (colleagues, teams, participant sources, outside guests,
   optional), participant options, the free/busy strip, resources with the capacity warning, meeting room or typed join
   link. Files (under `packages/plugins/calendar-ui/src/lib/`): `components/event-form/event-participants.component.ts`,
@@ -320,6 +320,12 @@
   `packages/plugins/calendar-ui/src/lib/`): `components/invitations-page/invitations-page.component.ts`,
   `components/answer-dialog/answer-dialog.component.ts`. Test:
   `components/invitations-page/invitations-page.component.spec.ts` (bulk answer; a declined event leaves the page).
+- [ ] **T69**. Recurrence editor and drag: the recurrence editor of the event form; move and resize by drag and drop,
+  copy and duplicate on the calendar page. Files (under `packages/plugins/calendar-ui/src/lib/`):
+  `components/recurrence-editor/recurrence-editor.component.ts`, `components/calendar-page/event-drag.directive.ts`.
+  Test: `components/recurrence-editor/recurrence-editor.component.spec.ts` (each repeat rule of spec FR-26 round-trips),
+  `components/calendar-page/event-drag.directive.spec.ts` (a move asks for the occurrence or the series of a repeating
+  event).
 
 ## Phase 4 — MCP, SDKs, integrations, docs
 
@@ -333,7 +339,7 @@
   server in the e2e suite.
 - [ ] **T44**. Sync runner `sync/sync-runner.service.ts` (directions, identity matching through `integration_map` rows
   with `remoteVersion` and `syncState`, per-field merge with the three-way merge lifted from the Ever Works sync engine to
-  `packages/core/src/lib/integration-map/merge/`, conflicts, invitations only from the organising side, failure limit and
+  `packages/core/src/lib/integration-map/merge/`, conflicts, invitations only from the organizing side, failure limit and
   pause, notices route, watch renewal, disconnect keep or remove). Files:
   `packages/core/src/lib/integration-map/merge/three-way-merge.ts` (re-exported from
   `packages/plugins/integration-ever-works/src/lib/sync/merge/three-way-merge.ts`), `sync/sync-conflicts.controller.ts`,
@@ -346,7 +352,8 @@
 - [ ] **T46**. MCP tools `packages/mcp-server/src/lib/tools/calendar.ts` (plan §7, except `calendar_propose_times` and
   `calendar_load_summary` of T64) with previews; registration with `AiChatToolRegistry`. Files:
   `packages/mcp-server/src/lib/tools/calendar.ts`, `assistant/calendar-assistant.tools.ts`. Test:
-  `packages/mcp-server/src/lib/tools/calendar.spec.ts` (previews write nothing; rights and sharing respected; an agent's
+  `packages/mcp-server/src/lib/tools/calendar.spec.ts` (previews write nothing; rights and sharing respected; other users'
+  private events never returned; an agent's
   invitation waits for confirmation).
 - [ ] **T47**. Report definitions of spec FR-114 with the read-only fallback viewer; personal data handlers; OpenAPI
   regenerated; SDK regeneration noted; adapter author guide in the plugin README. Files:
@@ -380,8 +387,8 @@
   `schedule/calendar-room-release.scheduler.ts`, `public/public-room.controller.ts`,
   `packages/plugins/public-layout-ui/src/lib/components/calendar-room-display/calendar-room-display.component.ts` and its
   route in `public-layout.routes.ts`. Test: `resources/room-check-in.service.spec.ts` (release after 10 minutes;
-  organiser told).
-- [ ] **T52**. Focus time `insights/focus.service.ts` (goal, weekly placement, moves, flags to organisers). Files:
+  organizer told).
+- [ ] **T52**. Focus time `insights/focus.service.ts` (goal, weekly placement, moves, flags to organizers). Files:
   `schedule/calendar-focus.scheduler.ts`. Test: `insights/focus.service.spec.ts` (goal kept after a conflicting
   invitation).
 - [ ] **T53**. Load figures `insights/load.service.ts` and team dashboard with privacy thresholds; series review
@@ -405,8 +412,9 @@
 - [ ] **T58**. User docs (calendars, sharing, invitations, resources, booking pages, sync, feeds, self-hosted notices) and
   `docs/specs/README.md` row; spec status `Implemented` when phase 5 lands. Files: docs site `website/docs/calendar/`,
   `docs/specs/README.md`, `docs/specs/features/calendar-and-scheduling/spec.md`. Test: docs build.
-- [ ] **T64**. MCP tools `calendar_propose_times` (over T48) and `calendar_load_summary` (over T53) in
-  `packages/mcp-server/src/lib/tools/calendar.ts`. Test: `packages/mcp-server/src/lib/tools/calendar.spec.ts` (proposals
+- [ ] **T64**. MCP tools `calendar_propose_times` (over T48) and `calendar_load_summary` (over T53) in the calendar tools
+  of T46. Files: `packages/mcp-server/src/lib/tools/calendar.ts`, `packages/mcp-server/src/lib/tools/register-all-tools.ts`.
+  Test: `packages/mcp-server/src/lib/tools/calendar.spec.ts` (proposals
   within the caller's rights; team figures withheld under the threshold).
 
 ## Requirement Coverage
@@ -433,9 +441,9 @@ Every functional requirement of `spec.md` §3 and the tasks that implement it; e
 | FR-19 | §3.4 Events | T11, T13 |
 | FR-20–FR-21 | §3.4 Events | T13 |
 | FR-22 | §3.4 Events | T59, T67 |
-| FR-23 | §3.4 Events | T59, T66 |
+| FR-23 | §3.4 Events | T59, T69 |
 | FR-24–FR-25 | §3.4 Events | T13 |
-| FR-26–FR-27 | §3.5 Recurrence | T11 |
+| FR-26–FR-27 | §3.5 Recurrence | T11, T69 |
 | FR-28 | §3.5 Recurrence | T25 |
 | FR-29 | §3.5 Recurrence | T23, T25 |
 | FR-30 | §3.5 Recurrence | T25 |

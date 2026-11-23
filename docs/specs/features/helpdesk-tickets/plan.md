@@ -100,7 +100,7 @@ flowchart LR
 | Persistence | MultiORM entities, the shared core migration helpers of `@gauzy/core`, three dialects | Principle III |
 | Inbound | hand-off listener → queue `helpdesk-intake` (in-process fallback), dedupe on `(tenantId, inboxEmailId)` | listener must not fail delivery |
 | Outbound | `HELPDESK_MAIL` port; outbox row per send, queue `helpdesk-outbound` with back-off | durable, retried |
-| HTML | `sanitize-html` (already a dependency of the Inbox) with the Inbox's allowlist, applied on write and render | one sanitising rule, no cross-plugin import |
+| HTML | `sanitize-html` (already a dependency of the Inbox) with the Inbox's allowlist, applied on write and render | one sanitizing rule, no cross-plugin import |
 | Real time | outbox events declared with `declareStreamedEvents`; audience through `SubscriptionCatalogue.restrictAudience`; presence and typing via the record signal of record views | Principle VII |
 | Widget live path | public long-poll (25 s) endpoint as the documented fallback; switches to the realtime channel when it offers guest audiences | no push exists for anonymous visitors |
 | Public forms | submissions from `lead-capture-and-enrichment` hosted and embedded forms, sites and the portal; abuse defence through its `PUBLIC_FORM_DEFENCE` | one form renderer and one defence |

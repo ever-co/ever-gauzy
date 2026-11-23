@@ -55,12 +55,19 @@
 - [ ] **T42**. Core polls `packages/core/src/lib/poll/` (`poll.entity.ts`, `poll-option.entity.ts`, `poll-vote.entity.ts`,
   `poll.service.ts`, `/api/polls` in `poll.controller.ts`, `@PollHostAccessPolicy()` in `poll-host-access.policy.ts`),
   migration `core/database/migrations/1791000064390-CreatePollTables.ts`, no dependency on this plugin or its flag
-  (FR-25, FR-26). Test: one vote per voter, change and withdraw, anonymous results hide voters, closed poll refuses
-  votes.
+  (FR-25, FR-26). Files: `core/poll/poll.entity.ts`, `core/poll/poll-option.entity.ts`, `core/poll/poll-vote.entity.ts`,
+  `core/poll/poll.service.ts`, `core/poll/poll.controller.ts`, `core/poll/poll-host-access.policy.ts`,
+  `core/poll/poll.module.ts`, `core/database/migrations/1791000064390-CreatePollTables.ts`. Test:
+  `core/poll/poll.service.spec.ts`: one vote per voter, change and withdraw, anonymous results hide voters, closed poll
+  refuses votes.
 - [ ] **T43**. Core custom emoji `packages/core/src/lib/reaction/custom-emoji/` (`custom-emoji.entity.ts`,
   `custom-emoji.service.ts`, routes `/api/custom-emoji` in `custom-emoji.controller.ts`), migration
   `core/database/migrations/1791000064391-CreateCustomEmojiTable.ts`, no dependency on this plugin or its flag (FR-23).
-  Test: shortcode unique per organization; an archived emoji stays on old reactions.
+  Files: `core/reaction/custom-emoji/custom-emoji.entity.ts`, `core/reaction/custom-emoji/custom-emoji.service.ts`,
+  `core/reaction/custom-emoji/custom-emoji.controller.ts`, `core/reaction/reaction.module.ts`,
+  `core/database/migrations/1791000064391-CreateCustomEmojiTable.ts`. Test:
+  `core/reaction/custom-emoji/custom-emoji.service.spec.ts`: shortcode unique per organization; an archived emoji stays
+  on old reactions.
 - [ ] **T45**. Decision, receipt, summary and search feedback entities (`ds/entities/discussion-decision.entity.ts`,
   `discussion-receipt.entity.ts`, `discussion-summary.entity.ts`, `discussion-search-feedback.entity.ts`, with their
   repositories in `ds/entities/discussions.repositories.ts`) and migrations
@@ -82,7 +89,7 @@
   `ds/space/space-membership-sync.service.ts`. Test: e2e (permissions, `404` for private spaces, `404` with the feature
   off); merge keeps old links; a muted space sends nothing until `mutedUntil`.
 - [ ] **T7**. Discussion service and controller: publish, list per space and across spaces, read with replies, edit with
-  `If-Match` and revisions, delete, close, reopen, move, pin scopes; sanitiser against the editor schema; readable slugs.
+  `If-Match` and revisions, delete, close, reopen, move, pin scopes; sanitizer against the editor schema; readable slugs.
   Files: `ds/discussion/discussion.service.ts`, `ds/discussion/discussion.controller.ts`,
   `ds/discussion/discussion-body.sanitizer.ts`, `ds/discussion/dto/create-discussion.dto.ts`. Test: e2e; stale edit
   `409`; script stripped from a body.

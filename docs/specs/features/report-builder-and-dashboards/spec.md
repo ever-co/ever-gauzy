@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-16
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_REPORT_BUILDER` (tenant feature, default off) · the plugin loads only when
 `GAUZY_REPORT_BUILDER_ENABLED` is exactly `true` · existing reports and dashboards keep `FEATURE_REPORT` and
 `FEATURE_DASHBOARD` and behave as today while the feature is off
@@ -249,7 +249,7 @@ Heavy datasets are answered from **aggregate snapshots** that need no code. Mark
 - **FR-69** A user with `REPORT_EXPORT` can export a result as CSV, XLSX (styled header, totals row, number and date
   formats, frozen header, a sheet per first-level group on request), PDF or JSON, or copy it to the clipboard.
 - **FR-70** The system keeps in exports the viewer's columns, order, formats, totals and language, applies masking, and
-  neutralises cells a spreadsheet would read as formulas.
+  neutralizes cells a spreadsheet would read as formulas.
 - **FR-71** The system runs exports above 50,000 rows in the background and delivers a link in the inbox, up to 1,000,000.
 - **FR-72** The system prints a definition with its print template and letterhead when print templates are loaded, else
   as a plain table with header, page numbers, prompts and computation time.
@@ -322,7 +322,7 @@ Heavy datasets are answered from **aggregate snapshots** that need no code. Mark
   Leaving the platform: emails and files to recipients (outside addresses only with `REPORT_SCHEDULE_EXTERNAL`); to the
   tenant's AI provider, the dataset catalogue for drafting (no record data) and computed figures for commentary.
 - **Observability**: the run log; metrics for run time, cache hits, snapshot freshness, queue depth, deliveries, fan-out.
-- **Accessibility and localisation**: chart alternatives, keyboard-operable builder and canvas, colour-blind-safe
+- **Accessibility and localization**: chart alternatives, keyboard-operable builder and canvas, colour-blind-safe
   palette; labels per language; the reader's number, date and money formats; files in the recipient's language.
 - **Compatibility**: PostgreSQL, MySQL, SQLite; both ORMs; cloud and self-hosted; OpenAPI additive; SDKs regenerated.
 

@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-16
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_ADMIN_CONSOLE` (default off)
 
 ---
@@ -219,7 +219,7 @@ installation.
 
 | ID | Requirement |
 | --- | --- |
-| **FR-87** | A user with `ADMIN_BACKUPS_MANAGE` can define the tenant's backup policy: schedule (default daily at 02:00 in the tenant's time zone), copies kept (default 7), target (a storage or backup target from `integration-hub`, default the tenant's file storage), encryption with a tenant key (default on), and what is included (data, files). |
+| **FR-87** | A user with `ADMIN_BACKUPS_MANAGE` can define the tenant's backup policy: schedule (default daily at 02:00 in the tenant's time zone), copies kept (default 7), target (a storage or backup target from `integration-hub`, default the tenant's file storage), encryption with a tenant key (default on), and what is included (data, files; default both). |
 | **FR-88** | The system MUST take a tenant backup as a logical, dialect-independent archive of every record of the tenant and, when chosen, its files, with a manifest of counts and checksums per record type, and refuse to count a backup whose manifest does not verify. |
 | **FR-89** | The system MUST keep the newest copies up to the policy, delete older ones from the target, and keep a backup protected by a person (pinned) until it is unpinned. |
 | **FR-90** | A user with `ADMIN_BACKUPS_MANAGE` can start a backup now, see running and past backups with size, duration and result, and download one (a link valid 24 h, emailed for large archives). |
@@ -293,7 +293,7 @@ All reports are report definitions: filterable, groupable, exportable, schedulab
   data, exportable and erasable.
 - **Observability and audit**: every console change audited with before and after; operations, backups, restores,
   drills and profiler sessions kept as runs with results.
-- **Accessibility and localisation**: keyboard-operable console, labelled charts with table alternatives, tour steps
+- **Accessibility and localization**: keyboard-operable console, labelled charts with table alternatives, tour steps
   readable by screen readers and dismissible with Escape; all strings in every shipped locale; times in the viewer's
   time zone.
 - **Compatibility**: PostgreSQL, MySQL and SQLite; both ORMs; additive API and SDK changes.

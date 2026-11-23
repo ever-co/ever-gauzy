@@ -88,7 +88,7 @@ flowchart LR
 | Permissions, feature, settings | `PluginContributions` on `@GauzyCorePlugin`: the eight permissions with `defaultFor`, `FEATURE_COMMUNICATIONS` (registered disabled by the feature registry), settings | no seed migration |
 | Outbound email | core `EmailSendService.sendMessage` and `getEmailInstance` with `providerAccountId`; identities resolve the account | one transport order (spec FR-3) |
 | Templates | core `email_template` gains nullable columns for user templates; render with core `EmailTemplateRenderService` (MJML + Handlebars) | no second template store |
-| Inbound | Inbox receiving pipeline unchanged; `communications` registers a hand-off listener; sender rules through a new optional Inbox port `INBOX_EMAIL_SENDER_POLICY` | the pipeline keeps sanitising, threading, quarantine |
+| Inbound | Inbox receiving pipeline unchanged; `communications` registers a hand-off listener; sender rules through a new optional Inbox port `INBOX_EMAIL_SENDER_POLICY` | the pipeline keeps sanitizing, threading, quarantine |
 | Connected mailboxes | `email-provider-imap` registers with `INBOX_EMAIL_PROVIDER_REGISTRY` (`inbound` by pull, `createTransport` over SMTP, `connectedMailbox: true`); sign-in tokens from `CONNECTED_ACCOUNTS` of `integration-hub` | uses the declared `CONNECTED` kind |
 | Text and push | adapter registries `TEXT_MESSAGE_ADAPTERS`, `PUSH_ADAPTERS` (`registerTextAdapters`, `registerPushAdapters`); generic HTTP gateway and a test adapter in the plugin; web push stays in `inbox` | vendor code stays in optional plugins |
 | Credentials | text and push accounts are `inbox_provider_account` rows: non-secret config in `config`, secrets in `configEncrypted` sealed by the Inbox secret box | one account store and one secret mechanism with email providers and connected mailboxes |
@@ -97,7 +97,7 @@ flowchart LR
 | Queue | `@QueueWorker` `communications-send` in the API; `@ScheduledJob` ticks in the worker (`CommunicationsSchedulePlugin`); in-process timer without a queue root | house split |
 | Locks | lease per message (`leaseUntil`), recipient `acceptedAt` as the no-resend guard | spec FR-38 |
 | Assistant | `COMMUNICATIONS_ASSISTANT` port (`ai-agents-and-assistants`), fallback `ai-chat` `AiProviderRegistry` with the organization's credentials | no new provider code |
-| HTML | `sanitize-html` with the Inbox allowlist on write and render | one sanitising rule |
+| HTML | `sanitize-html` with the Inbox allowlist on write and render | one sanitizing rule |
 | Feature gate | `communications-enabled.ts` (exact `true`); `FEATURE_COMMUNICATIONS` contribution in `communications.features.ts`; `FeatureFlagGuard` + `@FeatureFlag` on every controller | [platform architecture](../../architecture/business-suite.md) §6 |
 
 ## 3. Data Model
@@ -387,7 +387,7 @@ parts and cost, assistant calls. Breadcrumbs carry communication ids, never addr
 - IV Default-off flag; nothing removed: deploy switch and tenant feature; system templates, history, mail server
   settings, Inbox routes and the SMS gateway page stay.
 - V Contracts and API first: contracts and ports in Phase 1, REST and GraphQL before UI, idempotency keys.
-- VI Permissions, privacy, security: eight keys, encrypted secrets, signed provider events, hashed tokens, sanitising.
+- VI Permissions, privacy, security: eight keys, encrypted secrets, signed provider events, hashed tokens, sanitizing.
 - VII Real-time through the event bus: outbox events; queue and timeline updates on the real-time channel.
 - VIII i18n and accessibility: keys in every locale, templates per language, keyboard composer.
 - IX Tests: transport and adapter fakes, queue crash-recovery specs, matcher fixtures, both ORMs, e2e for send and intake.

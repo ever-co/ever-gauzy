@@ -88,7 +88,7 @@
       `course/learning-course-version.service.ts`, `outline/learning-outline.service.ts`,
       `outline/learning-outline.controller.ts`. Test: progress survives a publish; concurrent outline edits answer
       `409`.
-- [ ] **T11**. Lesson content in the Docs page content format: learning node types, validation, sanitising, embed
+- [ ] **T11**. Lesson content in the Docs page content format: learning node types, validation, sanitizing, embed
       allow-list, instructor-only stripping, files through `LEARNING_FILES` with signed short-lived links, lessons
       registered as a source of the Docs retrieval pipeline through `LEARNING_CONTENT_INDEX`; free-preview lessons
       served to visitors as the course visibility allows. Files: `lesson/lesson-content.validator.ts`,

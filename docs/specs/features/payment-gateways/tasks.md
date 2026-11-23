@@ -88,7 +88,9 @@
       verify, queue), processor `gw/callbacks/outcome-applier.ts` (ordering by provider event time, outcome mapping,
       reprocess). Files: `gw/callbacks/{callback.controller.ts,callback.worker.ts,outcome-applier.ts}`,
       `pay/payment-webhook-event/payment-webhook-event.service.ts`. Test: `gw/callbacks/outcome-applier.spec.ts`:
-      duplicate once; out-of-order older outcome ignored; bad signature changes nothing;
+      duplicate once; out-of-order older outcome ignored for the session state; two partial captures whose callbacks
+      arrive later one first both create their capture and reach collections once each, and a second callback for the
+      same provider capture id adds nothing; bad signature changes nothing;
       `gw/callbacks/callback.controller.spec.ts`: route answers with the tenant feature off.
 - [ ] **T12**. Capture hand-off: outbox events of plan §5; invoice fallback through `InvoicePaymentService` when
       `payments-and-collections` is off. Files: `gw/events/{payment-gateways.events.ts,capture-handoff.ts,index.ts}`. Test:

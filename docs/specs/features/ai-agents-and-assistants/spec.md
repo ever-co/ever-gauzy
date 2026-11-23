@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-16
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_AI_AGENTS` (tenant feature, default off) · the plugin loads only when
 `GAUZY_AI_AGENTS_ENABLED` is exactly `true` · the in-app assistant (`GAUZY_AI_CHAT_ENABLED`), provider settings, the
 MCP server, its tool groups and Documents knowledge keep their switches and behave as today while the feature is off
@@ -143,7 +143,9 @@ real past cases gate every version before it goes live. Marked `(advanced)`.
   calls, expressions of the platform's formula language and automation flows.
 - **FR-22** The system gives every run a right set equal to the intersection of the agent's tool settings, its agent
   principal's grants when it has one, and the invoker's permissions, record rules and field rules; tools outside it are
-  hidden from the model and refused on the server. `(advanced)`
+  hidden from the model and refused on the server. A run that resumes after waiting or after a restart has this set
+  computed again from current access before its next call, and ends without further calls when the invoker or agent
+  may no longer act. `(advanced)`
 - **FR-23** The system applies the same intersection to sub-agents, flow tools and request tools, and answers a refused
   call to the model with the reason so the run tells the user what it could not do and who could. `(advanced)`
 - **FR-24** The system marks tool results carrying user-written or outside content as untrusted and requires confirmation
@@ -244,7 +246,10 @@ real past cases gate every version before it goes live. Marked `(advanced)`.
 - **FR-58** A user with `AI_AGENT_USE` can start a run in dry-run mode: every writing tool is called with `preview: true`,
   nothing changes, and the run ends with its plan (ordered calls with inputs, effects and warnings). `(advanced)`
 - **FR-59** A user can execute a dry run's plan: the system performs exactly those calls with their preview tokens and
-  stops at the first whose effects changed, offering to re-plan from there. `(advanced)`
+  stops at the first whose effects changed, offering to re-plan from there. A call to an existing tool whose route
+  derives further records on the server (postings, generated lines, sends) and that offers only a generic preview is
+  shown in the plan with its derived effects marked as not previewed and is not executed from the plan: execution stops
+  before it and asks a person to confirm it. `(advanced)`
 - **FR-60** The system keeps per step the evidence used: instructions version, messages, each call's inputs and outputs,
   record versions read and passages cited. `(advanced)`
 - **FR-61** A user with `AI_AGENT_MANAGE` can replay a run against another version or model with the recorded tool outputs
@@ -329,7 +334,7 @@ real past cases gate every version before it goes live. Marked `(advanced)`.
   tools through the outbound policy.
 - **Observability**: traces, usage ledger, audit of publishes, overrides, budgets, confirmations; metrics for duration,
   steps, refusals, provider errors, fallbacks, cost and queue depth.
-- **Accessibility and localisation**: keyboard-operable designer, traces and cards; labelled streamed answers; labels per
+- **Accessibility and localization**: keyboard-operable designer, traces and cards; labelled streamed answers; labels per
   language; reader's formats. **Compatibility**: PostgreSQL, MySQL, SQLite; both ORMs; cloud and self-hosted with local
   model servers; OpenAPI additive; SDKs regenerated.
 
@@ -381,8 +386,9 @@ real past cases gate every version before it goes live. Marked `(advanced)`.
       cost shows as an agent employee on the project (advanced: accountable workers; FR-53, FR-55, FR-57).
 - [ ] **AC-13** A purpose call uses the purpose's model and cap; off, the domain's behaviour without AI applies (FR-67, FR-68).
 - [ ] **AC-14** Every new MCP writing tool of loaded plugins answers a preview without `preview: false`, and an existing
-      one does once the tenant turned previews on by default; a stale token is refused; no tool failing the route check
-      is offered to agents, and MCP clients keep every tool they had (FR-70).
+      one does once the tenant turned previews on by default; a stale token is refused; a new tool failing the route check
+      fails the build, an existing one is reported and is withheld from agents only where the tenant turned that on (off
+      by default), and MCP clients keep every tool they had (FR-70).
 - [ ] **AC-15** The reports and cards of FR-80 return correct figures on seeded runs.
 - [ ] **AC-16** Feature off: `404` on new routes and tools; assistant, MCP server and Documents knowledge as before (FR-1, FR-2).
 - [ ] **AC-17** Feature on with its settings at their defaults: an existing MCP writing tool called without `preview`

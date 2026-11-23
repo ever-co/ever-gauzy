@@ -21,21 +21,26 @@
   and `repository/mikro-orm-<name>.repository.ts` beside it, every controller its `dto/` folder; plugin migrations
   live in `PC/database/migrations/` and are listed in `PC/database/project-costing-migrations.ts`; Angular components
   sit in `PCU/components/<name>/<name>.component.ts` with their `*.component.spec.ts`.
-- T60 is listed first (Phase 0) because the tables of T3 and T4 reference its core `task_template`; T58 sits before
-  Phase 3 because T37, T40 and T41 use its extension points.
+- T60 and T64 are listed first (Phase 0) because the tables of T3 and T4 reference the core `task_template` and T16
+  instantiates it; T58 sits before Phase 3 because T37, T40 and T41 use its extension points.
 
 ## Phase 0 — Core task templates (before T3 and T4)
 
-- [ ] **T60**. Core task-template module `packages/core/src/lib/task-template/` (entities `task_template`,
-  `task_template_task`, `task_template_dependency`, core migration `CreateTaskTemplateTables` in three dialects,
-  `TaskTemplateService.instantiate` with preview, working-day dating through an optional working-calendar port
-  (fallback core official holidays plus weekend), parent and blocking-link remap), shared with `hr-core-lifecycle`; no
-  dependency on this plugin or its flag. Files: `packages/contracts/src/lib/task-template.model.ts`,
-  `packages/core/src/lib/task-template/task-template.entity.ts`, `task-template-task.entity.ts`,
-  `task-template-dependency.entity.ts`, `task-template.service.ts`, `task-template.module.ts` (all in
-  `packages/core/src/lib/task-template/`), `packages/core/src/lib/database/migrations/1791000094900-CreateTaskTemplateTables.ts`.
-  Test: `packages/core/src/lib/task-template/task-template.service.spec.ts` (holiday skip, remap, inactive refused, 500
-  tasks under 3 s; the core module works with no plugin loaded).
+- [ ] **T60**. Core task-template module `packages/core/src/lib/task-template/`, entities and migration (entities
+  `task_template`, `task_template_task`, `task_template_dependency`, core migration `CreateTaskTemplateTables` in three
+  dialects), shared with `hr-core-lifecycle`; no dependency on this plugin or its flag; `instantiate` is T64. Files:
+  `packages/contracts/src/lib/task-template.model.ts`, `packages/core/src/lib/task-template/task-template.entity.ts`,
+  `task-template-task.entity.ts`, `task-template-dependency.entity.ts`, `task-template.module.ts` (all in
+  `packages/core/src/lib/task-template/`), `packages/core/src/lib/database/migrations/1791000094000-CreateTaskTemplateTables.ts`.
+  Test: `packages/core/src/lib/task-template/task-template.migration.spec.ts` (up twice on the three dialects; mapping
+  under both ORMs; the core module loads with no plugin loaded; on a fresh database with every migration pending, the
+  core task-template tables exist before `1791000094100` and `1791000094110` create their foreign keys to them).
+- [ ] **T64**. `TaskTemplateService.instantiate` on the module of T60: preview, working-day dating through an optional
+  working-calendar port (fallback core official holidays plus weekend), parent and blocking-link remap; no dependency on
+  this plugin or its flag. Files: `packages/core/src/lib/task-template/task-template.service.ts`,
+  `packages/core/src/lib/task-template/task-template.module.ts`. Test:
+  `packages/core/src/lib/task-template/task-template.service.spec.ts` (holiday skip, remap, inactive refused, 500 tasks
+  under 3 s; the core service works with no plugin loaded).
 
 ## Phase 1 — Contracts, entities, migrations
 
@@ -64,7 +69,7 @@
       `PC/project-types/project-type.entity.ts`, `PC/profiles/project-profile.entity.ts`,
       `PC/profiles/project-sales-order-link.entity.ts`, `PC/stakeholders/project-stakeholder.entity.ts`. Test:
       `PC/database/project-costing-migrations.spec.ts` (up twice on PostgreSQL, MySQL, SQLite);
-      `PC/project-costing-orm-parity.spec.ts`. Migration timestamps: `1791000094100` to `1791000094199` (`packages/plugins/project-costing`); `1791000094900` to `1791000094999` (`packages/core`).
+      `PC/project-costing-orm-parity.spec.ts`. Migration timestamps: `1791000094100` to `1791000094199` (`packages/plugins/project-costing`); `1791000094000` to `1791000094099` (`packages/core`).
 - [ ] **T4** (parallel). `1791000094110-CreateProjectTemplateDetailTable` and `1791000094120-CreateTaskPlanningTables` with entities
       (project template detail on core `task_template`, task plan, issue-type default, task dependency, recurrence on the
       core recurrence rule columns, baselines). Files:
@@ -147,11 +152,16 @@
       Spec files: `PC/rate-cards/rate-card.service.spec.ts`, `PC/rate-cards/recost.service.spec.ts`.
 - [ ] **T14**. Figure engine `figures/` (append source, rebuild sum, drill), labour estimated from time, expense figures
       read from `EXPENSE_SPEND` when bound (direct expenses as sources otherwise), reconcile job whose watermark is the
-      organization's last succeeded `job_execution` of the job. Files: `PC/figures/figure-engine.service.ts`,
+      organization's last succeeded `job_execution` of the job; sources keyed by `sourceLineKey` (`*` without a line)
+      and `revision`, a correction appending the difference to the earlier rows as the next revision, and the reconcile
+      pass appending the reversing revision for a source log deleted or soft-deleted meanwhile (plan §3, §8). Files:
+      `PC/figures/figure-engine.service.ts`,
       `PC/figures/figure.controller.ts`, `PC/figures/figure-reconcile.scheduler.ts`. Test:
-      `PC/figures/figure-engine.service.spec.ts` (replays never double count; roll-up per task, module and parent; no
-      expense source written while `EXPENSE_SPEND` is bound); `PC/figures/figure-reconcile.spec.ts` (reconcile corrects
-      a log written without an event).
+      `PC/figures/figure-engine.service.spec.ts` (replays never double count, a log-level source without a line
+      included; a cost changed from 10 to 15 sums to 15 with two rows, and a replay of either revision adds nothing;
+      roll-up per task, module and parent; no expense source written while `EXPENSE_SPEND` is bound);
+      `PC/figures/figure-reconcile.spec.ts` (reconcile corrects a log written without an event; a costed log deleted
+      while the feature was off is brought to zero once, and a second pass adds nothing).
 - [ ] **T15**. Progress methods and completion cascade (`progress/`; `MANUAL` for existing projects and projects without
       a type; the complete action may leave open tasks; the existing project form untouched), paused status handling,
       duplication of projects. Files: `PC/progress/progress-methods.ts`, `PC/progress/completion-cascade.service.ts`,
@@ -241,10 +251,10 @@
       `PC/stakeholders/project-stakeholder.service.spec.ts` (welcome once; revoke; the company shown from the buyer
       membership).
 - [ ] **T29**. Capacity figures (`capacity/`) from `HR_WORKING_CALENDAR`, `TIME_OFF_AVAILABILITY`, `SHIFTS_SCHEDULE`, the
-      weekly limit, and core `employee_availability` and `availability_slots`; utilisation and targets (levels through
+      weekly limit, and core `employee_availability` and `availability_slots`; utilization and targets (levels through
       `employee.employeeLevelId` of `hr-core-lifecycle`, else by level label), time goals shown beside. Test: holiday,
       time-off and unavailable-day subtraction; agents excluded; level target found by label without hr-core. Files:
-      `PC/capacity/capacity.service.ts`, `PC/capacity/utilisation.service.ts`, `PC/capacity/capacity.controller.ts`.
+      `PC/capacity/capacity.service.ts`, `PC/capacity/utilization.service.ts`, `PC/capacity/capacity.controller.ts`.
       Spec file: `PC/capacity/capacity.service.spec.ts`.
 - [ ] **T30**. Update collections and rounds (`updates/`): schedule on the core recurrence rules, prompts through the
       dispatcher and email, answers in app and by email reply when communications are bound, publish with snapshot and
@@ -277,6 +287,13 @@
       `PC/timesheets/timesheet-portion.controller.ts`. Test: `PC/timesheets/timesheet-figures.service.spec.ts` (paid
       hours and payslip shown after an allocation event; billed percentage from invoice links; nothing shown without
       payroll).
+- [ ] **T65**. Time-log cost routes `/time-logs/:id/cost`, `/time-logs/:id/activity`, `/time-logs/:id/billing-hours`
+      (plan §4): own or `PROJECT_RATES_VIEW` for the row, the cost rate and cost amount only with `PROJECT_COSTS_VIEW` or
+      `PROJECT_RATES_VIEW` (spec FR-102 and the security requirement), activity change by the owner before approval,
+      billing hours with `PROJECT_BILLING_HOURS_EDIT` and a reason. Files: `PC/costing/time-log-cost.controller.ts`,
+      `PC/costing/time-log-cost.service.ts`, `PC/costing/dto/`. Test: `PC/costing/time-log-cost.controller.spec.ts`: an
+      employee without either key reads their own log's activity type and billing hours and no cost rate or amount; a
+      holder of `PROJECT_COSTS_VIEW` reads both; another employee's log answers `403`.
 
 ## Phase 2b — Core UI extension points (before T37, T40 and T41)
 
@@ -328,8 +345,8 @@
       tab: collection settings, rounds, answers, publish. Stakeholders tab. Files: `PCU/components/project-billing-tab/`,
       `PCU/components/project-updates-tab/`, `PCU/components/project-stakeholders-tab/`. Test: their component specs
       (rendering).
-- [ ] **T44**. Portfolio and Utilisation pages from report definitions. Files: `PCU/components/portfolio/`,
-      `PCU/components/utilisation/`. Test: their component specs (filters keep state in the URL).
+- [ ] **T44**. Portfolio and Utilization pages from report definitions. Files: `PCU/components/portfolio/`,
+      `PCU/components/utilization/`. Test: their component specs (filters keep state in the URL).
 - [ ] **T45** (parallel). Ever Teams contract: OpenAPI examples and contract tests for the routes its screens use
       (costing and forecast cards, portion decisions, update answers, work activity types for the timer); no React
       package. Files: the DTOs of `PC/views/`, `PC/timesheets/`, `PC/updates/` and `PC/work-activity-types/` (examples),
@@ -366,15 +383,19 @@
 - [ ] **T52**. Project billing schedules on core: `invoice_schedule` gains `organizationProjectId`, `approvedOnly`,
       `scopeKey` (unique key widened) and `invoice_schedule_run.evidenceFileId` (core migration
       `AddProjectScopeToInvoiceSchedule`); `invoice-schedule-run.service.ts` filters by project and approved timesheets and
-      calls the optional `INVOICE_SCHEDULE_LINE_SOURCES` hook, bound here to reached and date entries and retainer
-      top-ups; the plugin writes the evidence pack file on the run; screenshot exclusion rules. Files:
-      `packages/core/src/lib/database/migrations/1791000094910-AddProjectScopeToInvoiceSchedule.ts`,
+      calls the optional `INVOICE_SCHEDULE_LINE_SOURCES` hook, bound here to reached and date entries, retainer
+      top-ups and approved re-billable expenses of the project and period; with `approvedOnly` on, time of a project
+      billed fixed fee or milestones stays out of hourly lines and shows as overrun in the evidence pack (spec FR-70);
+      the plugin writes the evidence pack file on the run; screenshot exclusion rules. Files:
+      `packages/core/src/lib/database/migrations/1791000094010-AddProjectScopeToInvoiceSchedule.ts`,
       `packages/core/src/lib/invoice-schedule/invoice-schedule.entity.ts`, `packages/core/src/lib/invoice-schedule/invoice-schedule-run.entity.ts`,
       `packages/core/src/lib/invoice-schedule/invoice-schedule-run.service.ts`, `PC/billing/project-schedule-line.source.ts`,
       `PC/billing/evidence-pack.service.ts`. Test: `packages/core/src/lib/invoice-schedule/invoice-schedule-run.service.sqlite.spec.ts`
       and `PC/billing/evidence-pack.service.spec.ts`: existing invoice
       schedule suites green; a client-wide run leaves out a project with its own schedule; a period billed once; draft
-      unless the schedule sends; no screenshots unless both switches allow.
+      unless the schedule sends; no screenshots unless both switches allow; an approved re-billable expense of the
+      period appears in the draft once and is `INVOICED` after it; a milestone project with approved billable time and a
+      reached entry gets the milestone line and no hourly time line.
 - [ ] **T53**. Retainers: periods, drawdown from approved time, top-up proposal (`RETAINER_TOPUP` reader and the
       schedule line source), overage rule; `project-costing.billing-entries` daily job. Files: `PC/billing/retainer.service.ts`,
       `PC/billing/retainer-topup.reader.ts`, `PC/billing/billing-entries.scheduler.ts`. Test:
@@ -402,6 +423,16 @@
 
 - [ ] **T59**. Provide the ports other features bind to (plan, **Consumer tokens answered**): `MARKETING_TIME_COST`, `PORTAL_PROJECTS`. Files: `apps/api/src/plugin-composition.ts`. Test:
       `PC/project-costing-consumer-tokens.contract.spec.ts`, one contract test per token over the shape its consumer plan states; with this feature off each consumer keeps its stated fallback.
+- [ ] **T66**. Shared claim of billable entries across the worklist and project schedule runs (plan §7,
+      `BILLABLE_SOURCE_REGISTRY`): time logs through the core lines transaction, billing-plan entries and retainer
+      top-ups by a conditional write of `invoiceId` and `billingClaimRef` after a row lock, expenses by `status`
+      `UNINVOICED` → `INVOICED`, all in the transaction that writes the draft's lines; unclaimed entries left out of a
+      schedule draft and refused with `409` on the worklist; claims rolled back with a failed draft and cleared when a
+      draft is deleted or voided with release. Files: `PC/billing/billing-entry-claim.ts`,
+      `PC/billing/milestone-billable.reader.ts`, `PC/billing/retainer-topup.reader.ts`,
+      `PC/billing/project-schedule-line.source.ts`. Test: `PC/billing/billing-entry-claim.spec.ts`: a worklist draft and
+      a schedule run started together over one reached entry, one approved log and one expense bill each exactly once;
+      a draft that fails after claiming leaves every entry billable; deleting the draft releases its entries.
 
 ## Requirement Coverage
 
@@ -420,8 +451,8 @@ Every functional requirement of `spec.md` §3 and the tasks that implement it; e
 | FR-12 | §3.2 Projects, types and progress | T15 |
 | FR-13 | §3.2 Projects, types and progress | T28 |
 | FR-14 | §3.2 Projects, types and progress | T24, T28 |
-| FR-15 | §3.3 Templates | T16, T60 |
-| FR-16 | §3.3 Templates | T16, T60 |
+| FR-15 | §3.3 Templates | T16, T60, T64 |
+| FR-16 | §3.3 Templates | T16, T60, T64 |
 | FR-17 | §3.3 Templates | T16 |
 | FR-18 | §3.3 Templates | T56 |
 | FR-19 | §3.4 Tasks, dependencies, schedule and recurrence | T17, T40 |
@@ -470,15 +501,15 @@ Every functional requirement of `spec.md` §3 and the tasks that implement it; e
 | FR-66 | §3.9 Billing | T1, T10 |
 | FR-67 | §3.9 Billing | T26 |
 | FR-68–FR-69 | §3.9 Billing | T26 |
-| FR-70 | §3.9 Billing | T27 |
+| FR-70 | §3.9 Billing | T27, T52 |
 | FR-71 | §3.9 Billing | T53 |
-| FR-72 | §3.9 Billing | T24, T27 |
-| FR-73 | §3.9 Billing | T52 |
+| FR-72 | §3.9 Billing | T24, T27, T52 |
+| FR-73 | §3.9 Billing | T52, T66 |
 | FR-74 | §3.9 Billing | T31 |
-| FR-75 | §3.10 Capacity, allocation and utilisation | T29 |
-| FR-76–FR-77 | §3.10 Capacity, allocation and utilisation | T54 |
-| FR-78 | §3.10 Capacity, allocation and utilisation | T29 |
-| FR-79 | §3.10 Capacity, allocation and utilisation | T54 |
+| FR-75 | §3.10 Capacity, allocation and utilization | T29 |
+| FR-76–FR-77 | §3.10 Capacity, allocation and utilization | T54 |
+| FR-78 | §3.10 Capacity, allocation and utilization | T29 |
+| FR-79 | §3.10 Capacity, allocation and utilization | T54 |
 | FR-80–FR-82 | §3.11 Project updates | T30 |
 | FR-83 | §3.11 Project updates | T56 |
 | FR-84–FR-94 | §3.12 Reports | T32 |
@@ -488,7 +519,7 @@ Every functional requirement of `spec.md` §3 and the tasks that implement it; e
 | FR-99 | §3.13 API, agents and compatibility | T31 |
 | FR-100 | §3.13 API, agents and compatibility | T46, T57 |
 | FR-101 | §3.13 API, agents and compatibility | T33 |
-| FR-102 | §3.13 API, agents and compatibility | T7 |
+| FR-102 | §3.13 API, agents and compatibility | T7, T65 |
 | FR-103 | §3.13 API, agents and compatibility | T35 |
 | FR-104 | §3.13 API, agents and compatibility | T11, T12 |
 | FR-105 | §3.13 API, agents and compatibility | T34 |

@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-16
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_RECORD_VIEWS` (tenant feature, default off) · the plugin loads only when
 `GAUZY_RECORD_VIEWS_ENABLED` is exactly `true` · search keeps `FEATURE_SEARCH`; meaning-based search also needs
 `FEATURE_SEMANTIC_SEARCH` (default off)
@@ -215,7 +215,7 @@ web app; every view is a selection other engines (automation, digests, exports, 
 - **FR-48** The palette opens from anywhere with a shortcut (default mod+K): go to pages and settings, find records,
   create records, run commands on the current record (assign, assign to me, follow, comment, remind, run a form action,
   start a flow, copy link or id, go to a tab), switch organization, and evaluate a calculation. The existing Quick
-  Actions dialog keeps its shortcut, customisation and behaviour; a key a person already bound to a quick action keeps
+  Actions dialog keeps its shortcut, customization and behaviour; a key a person already bound to a quick action keeps
   that action, and the palette then takes another shortcut the person can rebind.
 - **FR-49** An empty palette shows recent records (last 20, shared across devices), pinned views and what is coming up in
   7 days (assignments, reminders, tasks due; overdue ones first, up to three days back).
@@ -295,7 +295,7 @@ web app; every view is a selection other engines (automation, digests, exports, 
   indexed text to the tenant's own provider only when enabled; offline caches are per user, cleared on sign-out.
 - **Observability**: activity entries for view sharing and bulk work; metrics for query time, cache hits, index lag and
   search without results.
-- **Accessibility and localisation**: every layout operable by keyboard (moving cards and events included), announced
+- **Accessibility and localization**: every layout operable by keyboard (moving cards and events included), announced
   by screen readers; labels per language; dates, numbers and money in the user's formats.
 - **Compatibility**: PostgreSQL, MySQL, SQLite (meaning-based search needs a vector store, else keyword only); both ORMs;
   cloud and self-hosted; OpenAPI additive; SDKs regenerated.

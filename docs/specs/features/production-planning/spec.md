@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-16
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_PRODUCTION_PLANNING` (new, default off; needs `FEATURE_MANUFACTURING`; buying proposals need
 `FEATURE_PURCHASING`, sales demand `FEATURE_ORDER`)
 
@@ -22,7 +22,7 @@ feature adds the planning part of the `manufacturing` plugin: **production plans
 make requisitions, plan finished items, sub-assemblies and raw materials and create work orders, subcontract orders,
 requisitions and purchase orders from them; a **master production schedule** over time buckets fed by orders and
 **demand forecasts**; **material requirements** per item, location and date with planned orders, pegging and
-exceptions; **scheduling** of plans and of every operation on work centres; a plan visualiser and planning reports.
+exceptions; **scheduling** of plans and of every operation on work centres; a plan visualizer and planning reports.
 Clients: the Angular app, the planning board, the MCP server and agents, the API and SDKs.
 
 **Advanced capabilities.** Material requirements are kept current continuously from sales, stock, purchase and
@@ -226,7 +226,7 @@ promise dates come from the real schedule. These requirements are marked `(advan
   orders in one change; it is refused when an object it touched changed after computing; scenarios expire after 14 days
   (setting) and never affect real planning before they are applied.
 
-### 3.9 Visualiser and other areas
+### 3.9 Visualizer and other areas
 
 - **FR-48** A user with `PRODUCTION_PLANS_VIEW` can open a plan's visual overview: finished items, sub-assemblies,
   requisitions, material readiness, work orders, schedule and materials with stock per location, updated live.
@@ -275,7 +275,7 @@ promise dates come from the real schedule. These requirements are marked `(advan
 - **Security & privacy**: costs only with `MANUFACTURING_COSTS_VIEW`; operator availability shows names and free time,
   never the reason of absence; nothing leaves the platform except documents a user sends from their own areas.
 - **Auditability**: who, when, before and after for firming, dismissing, board moves, scenario applications and drafts.
-- **Accessibility and localisation**: the board is keyboard operable (move by arrows, pin, open) with a list alternative;
+- **Accessibility and localization**: the board is keyboard operable (move by arrows, pin, open) with a list alternative;
   states by text and colour; strings in every locale.
 - **Compatibility**: PostgreSQL, MySQL, SQLite; both ORMs; additive migrations; cloud and self-hosted.
 

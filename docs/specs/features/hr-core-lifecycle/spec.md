@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-16
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_HR_LIFECYCLE` (default off)
 
 ---
@@ -34,7 +34,7 @@ size ceiling and lets HR rehearse a reorganisation as a scenario before applying
 reviews bring tracked time and onboarding progress to the manager. Documents are signed in the app with recorded
 evidence and remind before they expire. Sensitive fields are protected by design: permission per field group, masked
 by default, encrypted where they identify a person or an account, and every read by someone else is logged. HR
-analytics (headcount, attrition, absence, tenure, spans, digital workforce) are report definitions.
+analytics (headcount, attrition, absence, tenure, spans, agent employees) are report definitions.
 
 ## 2. User Scenarios
 
@@ -178,7 +178,7 @@ analytics (headcount, attrition, absence, tenure, spans, digital workforce) are 
 | **FR-53** | The system MUST record on the separation: notice date, end-of-work date, reason, whether time off was encashed, exit interview date, next employer and feedback. |
 | **FR-54** | The system MUST give a person in onboarding an assistant that answers from documents the organization marks as onboarding knowledge and from the person's own process, cites its sources, never reveals other people's personal data, and sends unanswered questions to the process owner as inbox items. *(advanced)* |
 | **FR-55** | The system MUST, a configurable number of days before probation ends (default 14), give the manager a review with onboarding completion, goals and tracked hours against expected hours, and one-step confirm, extend or end, each recorded as an HR event or separation. *(advanced)* |
-| **FR-56** | The system MUST exclude employees of kind agent from personal data, documents, reminders, onboarding, separation, grievances and settlements, and list them in HR views only under "agent employees" with their owner and usage cost from `ai-agents-and-assistants`. *(advanced)* |
+| **FR-56** | The system MUST exclude employees of kind agent from personal data, documents, reminders, onboarding, separation, grievances and settlements, and list them under "agent employees" with their owner and usage cost from `ai-agents-and-assistants`; with the feature on, the HR lists offer a filter that leaves agents out, off by default, so every list shows by default whom it shows today. *(advanced)* |
 
 ### 3.7 Exit interviews
 
@@ -261,7 +261,7 @@ follow FR-83; groups under five people are shown as "fewer than 5".
 | --- | --- |
 | **FR-91** | The system MUST provide an HR dashboard with charts: headcount by department, position, age band, branch, level and employment type; gender ratio; grievances by type; joiners against leavers per month; promotions and transfers per year. |
 | **FR-92** | The system MUST provide cards: active employees, exits this year, joining this quarter, leaving this quarter, hires this year, onboardings this month, promotions, separations and transfers this month, and holidays this month (from `time-off-management`). |
-| **FR-93** | The system MUST report attrition (voluntary and not), average tenure, absence rate (time off over working days), span distribution, days to complete onboarding, internal moves and the digital workforce (agents and their usage cost), per month with drill-down. *(advanced)* |
+| **FR-93** | The system MUST report attrition (voluntary and not), average tenure, absence rate (time off over working days), span distribution, days to complete onboarding, internal moves and the agent employees (agents and their usage cost), per month with drill-down. *(advanced)* |
 | **FR-94** | The existing human resources dashboard (income, expenses and bonus per employee) MUST stay unchanged. |
 
 ### 3.15 API, agents, setup and compatibility
@@ -291,7 +291,7 @@ follow FR-83; groups under five people are shown as "fewer than 5".
   emails of reminders, questionnaires and signature requests, calendar invitations, exports a user runs; the newcomer
   assistant sends document passages to the AI provider the tenant configured, never personal groups.
 - **Observability and audit**: HR history, sensitive access log, process and job runs with failures, setting audits.
-- **Accessibility and localisation**: keyboard-operable chart and forms, screen-reader labels on chart nodes, every
+- **Accessibility and localization**: keyboard-operable chart and forms, screen-reader labels on chart nodes, every
   string in every shipped locale, dates and amounts in the user's format, right-to-left layouts.
 - **Compatibility**: PostgreSQL, MySQL and SQLite; both ORMs; multi-tenant cloud and self-hosted single tenant;
   additive OpenAPI and SDK changes only; existing employee, department, position and level routes unchanged.

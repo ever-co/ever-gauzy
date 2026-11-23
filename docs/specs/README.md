@@ -105,7 +105,7 @@ docs/specs/
 | Mail | [`features/mail/`](features/mail/spec.md) | Draft | `FEATURE_MAIL` |
 | Chat messaging | [`features/chat-messaging/`](features/chat-messaging/spec.md) | Draft | `GAUZY_CHAT_ENABLED`, `FEATURE_CHAT` |
 | Chat agents, bots and record actions | [`features/chat-agents-and-record-actions/`](features/chat-agents-and-record-actions/spec.md) | Draft | `FEATURE_CHAT_RECORD_CARDS`, `FEATURE_CHAT_AGENTS` |
-| Chat administration and client capabilities | [`features/chat-administration-and-clients/`](features/chat-administration-and-clients/spec.md) | Draft | `GAUZY_CHAT_ENABLED`, `FEATURE_CHAT` |
+| Chat administration and client capabilities | [`features/chat-administration-and-clients/`](features/chat-administration-and-clients/spec.md) | Draft | `GAUZY_CHAT_ENABLED`, `FEATURE_CHAT`, `FEATURE_CHAT_ADMINISTRATION` |
 | Discussions | [`features/discussions/`](features/discussions/spec.md) | Draft | `FEATURE_DISCUSSIONS` |
 | AI agents and assistants | [`features/ai-agents-and-assistants/`](features/ai-agents-and-assistants/spec.md) | Draft | `FEATURE_AI_AGENTS` |
 

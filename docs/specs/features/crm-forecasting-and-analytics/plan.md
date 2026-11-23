@@ -58,7 +58,7 @@ flowchart LR
 | Reports | definitions registered with the report builder and listed as core `report` rows of the "Sales" category (`packages/core/src/lib/reports/`, page `apps/gauzy/src/app/pages/reports`), enabled per organization through `report_organization`; the same definitions rendered read-only by `/crm/analytics/reports/:key` when the builder is absent | spec FR-37, FR-38; one report catalogue |
 | Targets | `CRM_SALES_TARGETS` bound to the targets of `sales-order-management` when on, else to `CrmGoalTargetsAdapter` over core goal KPIs (`goal_kpi` of type `Currency` for sales, owner = its lead employee; team and organization targets through goals owned by the team or organization with a KPI key result) and goal time frames (`goal_time_frame`) as periods | one target model; targets exist without the Sales app |
 | Dashboards | core `dashboard` rows (`identifier` `crm`, `crm-team:<teamId>`, personal by `employeeId`) edited through the builder's dashboard engine; widget registry entries in `packages/ui-core/shared/src/lib/dashboard/widgets/crm/` | build on what exists |
-| Figures | aggregate queries on indexed deal columns and `crm_stage_history`; per-organization cache keyed by definition and filters, invalidated by deal and lead events, 60 s maximum age | FR-46, FR-28, FR-34 |
+| Figures | aggregate queries on indexed deal columns and `crm_stage_history`; per-organization cache keyed by definition, filters and the caller's effective scope (`ALL` with `CRM_ANALYTICS_VIEW_ALL`, else a hash of the permitted owner ids, plus the version of the CRM record rules where loaded), resolved on every request so a changed permission, team management or rule yields a new key; invalidated by deal and lead events, 60 s maximum age | FR-46, FR-28, FR-34 |
 | Snapshots | append-only tables for the frozen figures; each run is an operation of the core runtime (`packages/core/src/lib/operation/`, aggregate = organization and snapshot date, so one live run each), resumed after a stop and observable through `GET /api/operations/:id` | FR-20, FR-21; one runtime for long work |
 | Settings | organization-scoped keys added to `crm.settings.ts` (`crm.analytics.reportingCurrency`, `snapshotWeekday`, `snapshotRetentionYears`, `committedThreshold`, `probableThreshold`, `rollupSource`, `defaultDeliveryTeamId`, `activeLeadMinInteractions`, `activeLeadMinAgeDays`) in the platform settings store | no settings table |
 | Permissions | contributions in `crm.permissions.ts` with `defaultFor` (§9) | no seed migration |
@@ -200,7 +200,10 @@ runs them on the in-process timer under the advisory lock (PostgreSQL), `GET_LOC
   are reused.
 - Scope rule (FR-2): without `CRM_ANALYTICS_VIEW_ALL` a query is limited to `ownerUserId = caller` plus owners in the
   organization teams the caller manages (team manager role of the existing team membership); the filter is applied in
-  the query builder, never on the client; drill-down re-reads each record under the caller's rights (FR-3).
+  the query builder, never on the client. The record rules of CRM types (`RECORD_ACCESS_FILTER` of
+  `access-control-and-security`, where loaded) are applied in the same query builder to every live aggregate and
+  drill-down, so a figure counts exactly the records its drill-down lists (FR-3); stored snapshot and forecast roll-ups
+  are totals of a scope shown under the FR-2 rule.
 - An override is refused for a team the caller does not manage, unless they hold `CRM_ANALYTICS_VIEW_ALL`.
 - Snapshots carry owner ids and amounts only; exports and email schedules follow the builder's rules; explanations send
   only movement facts to the AI provider.

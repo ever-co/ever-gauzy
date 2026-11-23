@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-15
 **Last updated**: 2026-11-23
-**Owner**: `evereq`
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_INVENTORY_VALUATION` (new tenant feature, default off; requires `FEATURE_INVENTORY`;
 postings also require `FEATURE_ACCOUNTING`)
 
@@ -313,7 +313,7 @@ cards update live. These requirements are marked `(advanced)`.
   resumable from their last key and time.
 - **Security & privacy**: tenant and organization scoped; cost and value behind `STOCK_VALUATION_VIEW`; nothing leaves
   the platform. **Audit**: who and when on every method, standard cost, closing, reset, landed cost and correction.
-- **Accessibility, localisation, deployment**: accessible screens, every locale, money in the organization currency
+- **Accessibility, localization, deployment**: accessible screens, every locale, money in the organization currency
   with locale formatting; multi-tenant and self-hosted; PostgreSQL, MySQL, SQLite; both ORMs.
 
 ## 5. Key Entities & Domain Concepts
@@ -360,7 +360,7 @@ cards update live. These requirements are marked `(advanced)`.
 - [ ] **AC-11** (advanced) A backdated preview lists the later cost changes and writes nothing (FR-75, FR-83).
 - [ ] **AC-12** (advanced) A seeded disagreement becomes a finding; its previewed correction resolves it (FR-77, FR-83).
 - [ ] **AC-13** (advanced) A cycle count plan generates blind count tasks by value class (FR-79).
-- [ ] **AC-14** (advanced) Monthly labour capitalisation adds a landed cost from tracked time (FR-81).
+- [ ] **AC-14** (advanced) Monthly labour capitalization adds a landed cost from tracked time (FR-81).
 - [ ] **AC-15** Works on PostgreSQL, MySQL and SQLite with both ORMs; nothing changes while the flag is off (FR-87; §4).
 - [ ] **AC-16** All functional requirements have a passing test (§3).
 - [ ] **AC-17** With the valuation plugin loaded and the feature off for a tenant, the existing inventory suites pass

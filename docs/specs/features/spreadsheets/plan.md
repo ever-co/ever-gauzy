@@ -109,8 +109,14 @@ value, formula and style id. Rows and columns have **stable ids** ordered by fra
 delete touches no cell; formulas are stored with references to row and column ids and shown in A1 form, so concurrent
 inserts never break a reference. `contentJson` holds the **manifest** (sheets with keys, names, sizes, cell counts;
 table and live range keys), rewritten on every persist. The kind's `extractText` gives the cells as Markdown tables (at
-most 2 MB) to search and the knowledge pipeline; its `render` writes the XLSX copy to the blob after a persist
-(debounced 60 s) and on download. Versions are drive's `document_version` rows (`source = APP`, `label`, `isPinned`).
+most 2 MB) to search and the knowledge pipeline; its `render` writes the shared XLSX copy to the blob
+from the shared state only (cells, formulas and styles every reader of the workbook sees; live ranges keep their anchor
+and their frozen or snapshot values, never any reader's live rows), 60 s after a persist (debounced). A persist marks
+the copy stale (the manifest's `blobRevision` behind the document's `contentRevision`) until that render; while the
+plugin is loaded, a download that finds the copy stale renders it from the saved state first, whatever the tenant
+feature, and the plugin renders every stale copy at API shutdown, so the copy served with the feature or the plugin off
+holds every saved edit. A download or export with the feature on is rendered per request with the requester's own live
+rows (FR-55) and streamed, never written to the blob. Versions are drive's `document_version` rows (`source = APP`, `label`, `isPinned`).
 
 ### New tables (plugin; all `TenantOrganizationBaseEntity`, soft delete; JSON as `text`; keys `varchar(32)`)
 
@@ -120,7 +126,7 @@ most 2 MB) to search and the knowledge pipeline; its `render` writes the XLSX co
 | `sheet_cell_change` | `documentId`, `sheetKey`, `rowKey`, `colKey`, `address` varchar(16), `kind` (`VALUE`, `FORMULA`, `FORMAT`, `CLEAR`), `before` text, `after` text, `actorUserId`, `actorType` (`USER`, `AGENT`, `SYSTEM`), `source` (`EDITOR`, `API`, `MCP`, `IMPORT`, `RESTORE`, `WRITE_BACK`, `ASSISTANT`), `versionId` null, `changedAt` | idx `(documentId, sheetKey, rowKey, colKey, changedAt)`, `(documentId, changedAt)`, `(tenantId, actorUserId, changedAt)` |
 | `sheet_cell_change_daily` | `documentId`, `day` date, `actorUserId`, `changes` int | unique `(documentId, day, actorUserId)` |
 | `sheet_live_range` | `documentId`, `rangeKey`, `sheetKey`, `anchorRowKey`, `anchorColKey`, `sourceKind` (`REPORT`, `VIEW`), `sourceKey` varchar(160), `parameters` text (prompts, filter, columns), `refreshMode` (`ON_OPEN`, `MANUAL`, `SCHEDULE`, `LIVE`), `recurrence` text null, `timeZone`, `nextRefreshAt` null, `recordBacked` bool, `recordType` varchar(64) null, `ownerUserId`, `status` (`ACTIVE`, `PAUSED`, `UNAVAILABLE`), `consecutiveFailures` int, `lastRefreshAt` | unique `(documentId, rangeKey)`; idx `(status, nextRefreshAt)` |
-| `sheet_live_range_result` | `liveRangeId` FK cascade, `accessHash` varchar(64), `columns` text, `rows` text or `fileId` null (over 1 MB), `rowCount` int, `sourceRef` varchar(64) null, `fetchedAt`, `expiresAt` | unique `(liveRangeId, accessHash)`; idx `(expiresAt)` |
+| `sheet_live_range_result` | `liveRangeId` FK cascade, `accessHash` varchar(64), `readerUserId` uuid (the reader whose read last produced this hash), `columns` text, `rows` text or `fileId` null (over 1 MB), `rowCount` int, `sourceRef` varchar(64) null, `fetchedAt`, `expiresAt` | unique `(liveRangeId, accessHash)`; idx `(expiresAt)` |
 | `sheet_live_range_refresh` | `liveRangeId` FK cascade, `mode`, `requestedByUserId` null, `status` (`DONE`, `FAILED`, `FORBIDDEN`, `UNAVAILABLE`), `rowCount`, `durationMs`, `error` text | idx `(liveRangeId, createdAt)` |
 | `sheet_pending_change` | `liveRangeId` FK cascade, `userId`, `recordId`, `field` varchar(128), `before` text, `after` text, `recordVersion` varchar(64), `status` (`PENDING`, `APPLYING`, `REFUSED`), `reason` text | unique `(liveRangeId, userId, recordId, field)` |
 | `sheet_write_back_result` (the per-row outcome of a `sheets.write-back` operation; run state and progress are the operation's and the bulk change run's) | `operationId` (core `operation`, cascade), `documentId`, `liveRangeId`, `recordId`, `outcome` (`DONE`, `UNCHANGED`, `REFUSED`, `FAILED`), `reason` text, `fields` text | idx `(operationId, outcome)`, `(liveRangeId, createdAt)` |
@@ -293,7 +299,7 @@ OpenAPI additive; Kiota SDKs regenerated after merge. Formats: XLSX (Office Open
 | ------- | ---- | ------------ | ----------- |
 | operation `sheets.import` (queue `sheets`) | file import over 10,000 rows | parse, map styles, write the state through `DOCS_FILE_STORE`, report | per operation and file hash |
 | operation `sheets.export` | export over 100,000 cells or PDF | compute with the requester's live results, write the file, notify | per operation |
-| `sheets.live-refresh-tick` | every minute | due `SCHEDULE` ranges: recompute results for the access hashes read in the last 7 days (at most 50 per range) | per range and due time |
+| `sheets.live-refresh-tick` | every minute | due `SCHEDULE` ranges: recompute results for the access hashes read in the last 7 days (at most 50 per range), each in the request context of its `readerUserId`, re-authorized first: when that reader's current access no longer gives the same hash, the row is dropped instead of refreshed | per range and due time |
 | outbox consumer `subscriber:sheets-live-ranges` | dataset or record events | expire results, hint `LIVE` workbooks | delivery record per event |
 | operation `sheets.write-back` | apply confirmed | submit the change set to `SHEETS_BULK_CHANGE`, follow its run (counts and status from it), write per-row results, refresh | the operation's idempotency key |
 | `sheets.snapshot-tick` | every 15 minutes | due schedules (next run from the core recurrence module): flush, snapshot version, diff with the previous, notice, prune past `keep` | unique `(scheduleId, periodKey)` |
@@ -302,7 +308,9 @@ OpenAPI additive; Kiota SDKs regenerated after merge. Formats: XLSX (Office Open
 
 Queue jobs run in the API; schedules in the worker (`SheetsSchedulePlugin` in `apps/worker/src/plugins.ts`); without
 a queue root the API runs them on in-process timers under a database lock (the task automations layout). Scheduled
-refreshes run as the range's owner only to read the source; results are stored per access hash, never shared.
+refreshes never read as the range's owner: each result is recomputed with the access of the reader it is keyed by
+(`readerUserId`, re-authorized), so a stored result never holds rows outside its hash's access (FR-60); results are
+stored per access hash, never shared.
 
 ## 9. Security & Permissions
 

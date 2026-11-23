@@ -164,8 +164,8 @@ Per plugin set, PostgreSQL, MySQL and SQLite branches written with the shared co
   (proofs, installations, preferences), `1791000021150-EnableFulfillmentForActiveTenants`
   (data: enable the `FEATURE_FULFILLMENT` toggle for tenants holding fulfilment, option or profile rows), email
   templates `delivery-shipped`, `delivery-dispatched`, `delivery-arriving`, `delivery-delivered`, `delivery-exception`,
-  `return-authorised` (seed, every locale). Permissions and default grants are contributions, so `1791000021140` is
-  not used.
+  `return-authorised` (seed, every locale). Permissions and default grants are plugin contributions; no migration is
+  needed for them.
 - warehouse: `1791000021200-CreatePackSlipPackageTable`.
 - returns: `1791000021300-AddReturnDeliveryColumns`.
 
@@ -279,7 +279,7 @@ awaiting approval, installation assigned (technician).
 | `delivery.late-detector` | hourly and on `order.promise.changed` | deliveries whose order lines' promise passed, not delivered → `fulfillment.late`, Inbox | once per delivery and promise date |
 | `delivery.position-purge` | daily | delete trip positions older than the retention (30 days) | delete by date |
 | `delivery.eta-refresh` (queue) | on position batches, debounced 60 s per trip | recompute stop arrival times, send "arriving soon" once per stop | per stop flag |
-| `delivery.notice-sender` (outbox consumer) | on lifecycle events | customer notices per preference, only where `fulfillment.shipmentNotices` is on (default off) or the notice belongs to a trip or consignment | per event and contact |
+| `delivery.notice-sender` (outbox consumer) | on lifecycle events | customer notices per preference (no notice to a contact who opted out), only where `fulfillment.shipmentNotices` is on (default off), dispatch notices of trips and consignments included (spec FR-22, FR-51) | per event and contact |
 | carrier push handlers (hub inbound handlers, one per adapter) | on an inbound delivery | verify through the adapter, store, advance status | unique event key |
 
 The worker registers schedules; queue consumers run in the API (they need email, files and core services). Without a

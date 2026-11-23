@@ -112,7 +112,7 @@
   `mt/events/meetings-signals.ts`, `mt/events/meetings-notification-categories.ts`. Test: signals reach targeted users
   only.
 - [ ] **T24**. Recordings `recordings/*` (preflight, grants, starts and stops, notices to participants and lobby,
-  maximum length, parts with checksums, resume, gaps, finalise into `drive` through `MEETINGS_FILES`, readers). Files:
+  maximum length, parts with checksums, resume, gaps, finalize into `drive` through `MEETINGS_FILES`, readers). Files:
   `mt/recordings/meeting-recording.service.ts`, `mt/recordings/meeting-recording.controller.ts`,
   `mt/recordings/recorder-upload.controller.ts`, `mt/recordings/meetings-recordings.worker.ts`,
   `mt/recordings/recording-monitor.scheduler.ts`. Test: interruption under 2 minutes yields an incomplete recording;
@@ -133,11 +133,12 @@
   under the same access checks. Files: `mt/graphql/meetings.resolver.ts`, `mt/graphql/schema-extensions.ts`. Test:
   resolver spec mirrors REST; a non-reader of a recording gets nothing.
 - [ ] **T49**. Retention, holds and listen audit (spec FR-68): holds as hold register rows through
-  `MEETINGS_LEGAL_HOLDS`; the retention handler of the declared kinds deletes recordings, clips and transcripts past
-  retention unless held, keeping attendance and a deletion mark, with a `job_execution` row per run; every listen,
-  download and clip share in the audit trail. Files: `mt/retention/meetings-retention.handler.ts`,
-  `mt/retention/meetings-retention.scheduler.ts`, `mt/recordings/recording-hold.service.ts`. Test: a held recording
-  survives its retention; a deleted one keeps attendance and its mark; a stream request writes one audit entry.
+  `MEETINGS_LEGAL_HOLDS`; the retention handler of the declared kinds (default keep) deletes recordings, clips and
+  transcripts past the organization's retention period, only where one is set, unless held, keeping attendance and a
+  deletion mark, with a `job_execution` row per run; every listen, download and clip share in the audit trail. Files:
+  `mt/retention/meetings-retention.handler.ts`, `mt/retention/meetings-retention.scheduler.ts`,
+  `mt/recordings/recording-hold.service.ts`. Test: with no period set nothing is deleted; a held recording survives
+  its retention; a deleted one keeps attendance and its mark; a stream request writes one audit entry.
 
 ## Phase 3 — UI surfaces
 

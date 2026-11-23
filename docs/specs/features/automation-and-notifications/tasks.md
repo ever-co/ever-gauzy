@@ -20,8 +20,10 @@
   `packages/plugins/task-automations-ui/src/lib/`, `ibui/` means `packages/plugins/inbox-ui/src/lib/`, `mcp/` means
   `packages/mcp-server/src/lib/`. Plugin migrations live in `ta/database/migrations/` and `ib/database/migrations/`,
   listed in `ta/database/task-automation-migrations.ts` and `ib/database/inbox-migrations.ts`.
-- Phases 1 to 4 deliver plan phase 1; Phase 5 delivers plan phase 2 (depth); Phases 6 and 7 plan phase 3 (advanced;
-  Phase 7 only for self-hosted installations with the script switch on).
+- Phases 1 to 4 deliver plan phase 1; Phases 4b and 5 deliver plan phase 2 (depth; Phase 4b first, because the follow
+  and summary digests of T39 and T40 use its registry); Phases 6 and 7 plan phase 3 (advanced; Phase 7 only for
+  self-hosted installations with the script switch on). Every phase but Phase 7 applies to cloud and self-hosted
+  installations alike.
 - Depends on: the core record type registry (`custom-fields-and-forms` T2), the formula module (its T3) and the
   record writer contract (`record-views-and-search` T2).
 
@@ -73,18 +75,32 @@
   plugin (`packages/plugins/chat/src/lib/webhooks/chat-webhook-token.ts`, `chat-webhook-secret-box.ts`, which re-export them), with
   `saved-report/saved-report-token.ts` and the Inbox `ib/email/secrets/inbox-secret-box.ts` re-exporting them too, and
   `verifyWebhookSignature` (`webhook/webhook-signature.ts`) exported beside them; no dependency on this plugin or its
-  flag. Test: helper specs; the chat webhook, saved-report and Inbox suites pass unchanged on the re-exports.
+  flag. Files: `packages/core/src/lib/core/util/hashed-token.ts`, `packages/core/src/lib/core/util/secret-box.ts`,
+  `packages/core/src/lib/webhook/webhook-signature.ts`, `packages/plugins/chat/src/lib/webhooks/chat-webhook-token.ts`,
+  `packages/plugins/chat/src/lib/webhooks/chat-webhook-secret-box.ts`,
+  `packages/core/src/lib/saved-report/saved-report-token.ts`,
+  `packages/plugins/inbox/src/lib/email/secrets/inbox-secret-box.ts`. Test: `packages/core/src/lib/core/util/hashed-token.spec.ts`
+  and `secret-box.spec.ts`; the chat webhook, saved-report and Inbox suites pass unchanged on the re-exports.
 - [ ] **T59**. Core notification contract: `NOTIFICATION_DISPATCHER` token and `registerNotificationCategories` in
   `packages/core/src/lib/employee-notification/` (`notification-dispatcher.ts`, `notification-category.registry.ts`)
   with the core fallback to `EmployeeNotificationService`, and the
-  category column written on employee notifications; no dependency on this plugin or its flag. Test: unbound, a
-  dispatch writes one employee notification as today; a declared category is listed without this plugin.
+  category column written on employee notifications; no dependency on this plugin or its flag. Files:
+  `packages/core/src/lib/employee-notification/notification-dispatcher.ts`,
+  `packages/core/src/lib/employee-notification/notification-category.registry.ts`,
+  `packages/core/src/lib/employee-notification/employee-notification.entity.ts`. Test:
+  `packages/core/src/lib/employee-notification/notification-dispatcher.spec.ts`: unbound, a dispatch writes one
+  employee notification as today; a declared category is listed without this plugin.
 - [ ] **T60**. Generic reminders core: reminder service and routes `/api/reminders` (`ta/reminders/reminder.service.ts`,
   `ta/reminders/reminder.controller.ts`), the `REMINDERS` port (`schedule`,
   `cancel` by source key prefix) bound in `apps/api/src/plugin-composition.ts` (also as `WORKFLOW_REMINDERS`) and the
-  `automations.reminders` job (`ta/reminders/reminders.scheduler.ts`) over the `reminder` table of T5, usable by other features whatever this feature's flag
-  (FR-53, FR-56). Test: delivered within a minute; cancelled with the record; a feature's reminder scheduled twice
-  with one source key exists once.
+  `automations.reminders` job (`ta/reminders/reminders.scheduler.ts`) over the `reminder` table of T5; the port and the
+  job serve other features whatever this feature's flag, while the `/api/reminders` routes carry
+  `@FeatureFlag(FEATURE_AUTOMATIONS)` like every new route and answer `404` with the feature off (FR-1, FR-53, FR-56,
+  AC-14). Files: `ta/reminders/reminder.service.ts`, `ta/reminders/reminder.controller.ts`,
+  `ta/reminders/reminders.scheduler.ts`, `apps/api/src/plugin-composition.ts`. Test: `ta/reminders/reminder.service.spec.ts`:
+  delivered within a minute; cancelled with the record; a feature's reminder scheduled twice
+  with one source key exists once; with the feature off another feature's reminder is still scheduled and delivered
+  through the port and `GET /api/reminders` answers `404`.
 
 ## Phase 2 — Services, endpoints, events
 
@@ -185,6 +201,14 @@
 - [ ] **T26**. OpenAPI regenerated; SDK regeneration noted; docs site pages; `docs/specs/README.md` row. Test: OpenAPI diff
   is additive only.
 
+## Phase 4b — Digest section registry (plan phase 2; before T39 and T40)
+
+- [ ] **T56**. Digest section registry in the Inbox digest mailer (`registerDigestSections`), the notification
+  preferences' `digestFrequency` and `digestDay` beside `digestHour`, follow digests as a section. Files:
+  `ib/delivery/inbox-delivery-mailer.ts`, `ib/delivery/digest-section.registry.ts`. Test: two registered
+  sections arrive in one email at the person's hour; an empty section is left out; a person with daily digests off
+  gets none.
+
 ## Phase 5 — Depth (plan phase 2)
 
 - [ ] **T27**. Schedule triggers and `automations.schedule-tick` (cron, time zones, iterate a saved view through
@@ -251,6 +275,7 @@
   `taui/components/assignment-rules/assignment-rules-page.component.ts`, `ibui/settings/inbox-destinations-page.component.ts`,
   `ibui/settings/inbox-digests-page.component.ts`, `packages/ui-core/shared/src/lib/automations/reminder-button.component.ts`,
   `packages/ui-core/shared/src/lib/automations/assign-button.component.ts`. Test: rendering specs; i18n keys in every locale.
+- [ ] **T57**. Provide the ports other features bind to (plan, **Consumer tokens answered**): `AUTOMATION_RULES`, `COMMUNICATIONS_PREFERENCES`, `INBOX_DIGEST_SECTIONS`, `LEARNING_RECOGNITIONS`, `PERFORMANCE_RECOGNITIONS`, `RECORD_REMINDERS`. Files: `apps/api/src/plugin-composition.ts`. Test: one contract test per token over the shape its consumer plan states; with this feature off each consumer keeps its stated fallback.
 
 ## Phase 6 — Advanced capabilities (plan phase 3)
 
@@ -292,12 +317,6 @@
   does not offer the step, publishing a version with a script step and the script routes answer `403` (AC-15). Files:
   `ta/flows/script-deployment.guard.ts`, `ta/flows/steps/script.step.ts`. Test:
   e2e on SQLite with the marker set and unset.
-- [ ] **T56**. Digest section registry in the Inbox digest mailer (`registerDigestSections`), the notification
-  preferences' `digestFrequency` and `digestDay` beside `digestHour`, follow digests as a section. Files:
-  `ib/delivery/inbox-delivery-mailer.ts`, `ib/delivery/digest-section.registry.ts`. Test: two registered
-  sections arrive in one email at the person's hour; an empty section is left out; a person with daily digests off
-  gets none.
-- [ ] **T57**. Provide the ports other features bind to (plan, **Consumer tokens answered**): `AUTOMATION_RULES`, `COMMUNICATIONS_PREFERENCES`, `INBOX_DIGEST_SECTIONS`, `LEARNING_RECOGNITIONS`, `PERFORMANCE_RECOGNITIONS`, `RECORD_REMINDERS`. Files: `apps/api/src/plugin-composition.ts`. Test: one contract test per token over the shape its consumer plan states; with this feature off each consumer keeps its stated fallback.
 
 ## Requirement Coverage
 
@@ -362,7 +381,7 @@ Every functional requirement of `spec.md` §3 and the tasks that implement it; e
 | FR-61 | §3.10 Notifications, preferences and digests | T6, T16, T21 |
 | FR-62 | §3.10 Notifications, preferences and digests | T16 |
 | FR-63–FR-64 | §3.10 Notifications, preferences and digests | T51 |
-| FR-65 | §3.10 Notifications, preferences and digests | T39 |
+| FR-65 | §3.10 Notifications, preferences and digests | T39, T56 |
 | FR-66 | §3.10 Notifications, preferences and digests | T41 |
 | FR-67 | §3.10 Notifications, preferences and digests | T7, T62 |
 | FR-68–FR-69 | §3.10 Notifications, preferences and digests | T40 |

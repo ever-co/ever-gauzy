@@ -57,7 +57,14 @@
   and port `PUBLIC_FORM_DEFENCE` (trap field, render token fill time, throttles per address and form, proof-of-work
   challenge answered by the caller's own route, block lists from the caller's policy; no table, no route), provided
   independently of this plugin and `GAUZY_LEAD_CAPTURE_ENABLED`; per-form organization settings
-  `publicFormDefence.<form>` (default off) for the existing public routes (FR-17). Test: each signal blocks; a stub
+  `publicFormDefence.<form>` (default off) for the existing public routes (FR-17). Files:
+  `packages/contracts/src/lib/public-form-defence.model.ts`, `packages/core/src/lib/public-form-defence/public-form-defence.module.ts`,
+  `packages/core/src/lib/public-form-defence/public-form-defence.service.ts`,
+  `packages/core/src/lib/public-form-defence/public-form-defence.settings.ts`, `packages/core/src/lib/public-form-defence/index.ts`,
+  `packages/core/src/lib/employee-appointment/employee-appointment.controller.ts`,
+  `packages/core/src/lib/organization-team-join-request/organization-team-join-request.controller.ts`,
+  `packages/core/src/lib/auth/auth.controller.ts`, `packages/core/src/lib/public-share/invoice/public-invoice.controller.ts`.
+  Test: `packages/core/src/lib/public-form-defence/public-form-defence.service.spec.ts`: each signal blocks; a stub
   caller gets the same verdicts with this plugin not loaded; the existing booking, team join, sign-up and
   `public-share` routes answer exactly as before while their setting is off (spec AC-21).
 
@@ -81,7 +88,7 @@
   evaluator, languages, right to left, errors announced, attribution and first touch, render token). Test: rendering
   and rule specs; accessibility checks.
 - [ ] **T12**. Public submission route `public/lead-form-submit.controller.ts` (size limit, throttle, server validation,
-  sanitising, receipt, `202` with reference) and queue `lead-capture-intake`. Test: invalid answers named; 2 s answer.
+  sanitizing, receipt, `202` with reference) and queue `lead-capture-intake`. Test: invalid answers named; 2 s answer.
 - [ ] **T13**. Intake pipeline `intake/lead-intake.pipeline.ts` (mapping, attribution as source code and campaign
   reference on the lead with the raw tags on the submission and the touch handed to marketing when loaded, duplicate
   policy, CRM call with the lead service's assignment rules, deal target conversion, timeline link, outcome) and the
@@ -213,7 +220,7 @@
   `packages/plugins/lead-capture-ui/src/lib/components/form-builder/lead-form-duplicate-policy.component.ts`,
   `components/enrichment/lead-merge-suggestion-card.component.ts`. Test: AC-6.
 - [ ] **T42**. Conversational mode in the visitor bundle; progressive profiling with signed visitor tokens and
-  personalised links; partial answers with consent and 30-day purge. Files:
+  personalized links; partial answers with consent and 30-day purge. Files:
   `packages/plugins/lead-capture-form/src/lib/conversational.ts`, `packages/plugins/lead-capture-form/src/lib/progressive.ts`,
   `packages/plugins/lead-capture/src/lib/public/lead-form-partial.controller.ts`,
   `public/visitor-token.ts`, `schedule/lead-capture-retention.scheduler.ts`. Test: AC-8; nothing stored shown.
@@ -225,12 +232,13 @@
   `enrichment/signature-enrichment.ts`, `enrichment/lead-enrichment-run.controller.ts`
   (`/changes/:changeId/undo`). Test: without provider; proposals below minimum not written; single-field undo restores
   one field.
-- [ ] **T45**. Form analytics (view and start counters, daily roll-up, drop-off per field, speed to lead from
-  `CRM_ENGAGEMENT_FACTS`) and the analytics page. Files:
+- [ ] **T45**. Form analytics (counters at the form's own endpoints: form loads, starts and the last field reached sent
+  by the form script; daily roll-up, drop-off per field, speed to lead from `CRM_ENGAGEMENT_FACTS`; page views of a
+  linked Ever Works site's page read through `INTEGRATION_EVER_WORKS_LINKS`) and the analytics page. Files:
   `packages/plugins/lead-capture/src/lib/analytics/lead-form-analytics.service.ts`,
   `schedule/lead-capture-stats.scheduler.ts`, `public/lead-form-page.controller.ts` (`/view`, `/start`),
   `packages/plugins/lead-capture-ui/src/lib/components/analytics/lead-form-analytics-page.component.ts`. Test: counts
-  for scripted traffic.
+  for scripted traffic; page views shown only for a form on a linked site.
 - [ ] **T46**. Demo data: a published demo form, a webhook source, enrichment rules and a fixture site in the demo seed.
   Files: `packages/plugins/lead-capture/src/lib/seeds/lead-capture-demo.seed.ts`, run from `onPluginRandomSeed` in
   `lead-capture.plugin.ts`. Test: demo seed on SQLite.

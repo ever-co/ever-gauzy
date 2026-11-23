@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-15
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_SUBCONTRACTING` (new, default off; outward work also needs `FEATURE_PURCHASING`, inward
 work `FEATURE_ORDER`, bills of materials and work orders `FEATURE_MANUFACTURING`)
 
@@ -120,8 +120,8 @@ variances. These requirements are marked `(advanced)`.
   automatically when the order is approved (organization setting), refusing an order that is cancelled, closed, held
   or fully received, or whose supplier or organization differs.
 - **FR-10** The system gives each output line the finished item, bill of materials, quantity, receiving location,
-  service cost per unit (the supplier term's price), additional cost per unit and material cost per unit, and computes
-  the unit cost as their sum.
+  service cost per finished unit (the supplier term's price per service unit times the service quantity per finished
+  unit), additional cost per unit and material cost per unit, and computes the unit cost as their sum.
 - **FR-11** The system computes the service quantity as finished quantity times the service's conversion and keeps it
   equal to the purchase order's service line quantity.
 - **FR-12** The system derives material lines from the bill of materials for each output, one level or exploded to
@@ -266,7 +266,7 @@ variances. These requirements are marked `(advanced)`.
 - **Security & privacy**: suppliers and customers see only their own orders and material; costs hidden from portal
   users; leaving the platform: reconciliation requests and progress notices by email to the party's contacts.
 - **Auditability**: who, when, before and after for every confirmed document, consumption override and adjustment.
-- **Accessibility and localisation**: keyboard-operable, labelled screens; strings in every locale.
+- **Accessibility and localization**: keyboard-operable, labelled screens; strings in every locale.
 - **Compatibility**: PostgreSQL, MySQL, SQLite; both ORMs; additive migrations; cloud and self-hosted.
 
 ## 5. Key Entities & Domain Concepts

@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-16
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_COMMERCE_CONNECTORS` (tenant feature, default off) · the plugin loads only when `GAUZY_COMMERCE_CONNECTORS_ENABLED` is exactly `true` and `integration-hub` is loaded
 
 ---
@@ -216,7 +216,7 @@ Today the platform has a generic integration framework (integrations, their tena
 - **Reliability**: at-least-once processing deduplicated per connection, object and outside id with version; runs resume from cursors; nothing is lost while a channel is unreachable (outside notifications kept by the hub, pushes queued).
 - **Security & privacy**: credentials and tokens encrypted and never returned; signatures verified on every notification; payloads stored with secrets and card data removed; channel keys scoped to one connection. Leaves the platform: items, prices, stock, fulfilments, returns, refunds and the customers allowed to be shared, to the connected channels.
 - **Auditability**: who changed mappings, conflict rules, safety stock and settings, who retried, skipped or resolved, with before and after values.
-- **Accessibility and localisation**: screens keyboard operable; strings in every shipped locale; item texts pushed per language.
+- **Accessibility and localization**: screens keyboard operable; strings in every shipped locale; item texts pushed per language.
 - **Compatibility**: PostgreSQL, MySQL, SQLite; both ORMs; cloud and self-hosted (outside notifications need a public address); with or without a queue; OpenAPI additive; SDKs regenerated.
 
 ## 5. Key Entities & Domain Concepts

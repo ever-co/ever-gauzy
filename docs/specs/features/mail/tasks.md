@@ -38,8 +38,8 @@
   every route answers `404` with the feature off.
 - [ ] **T3**. Entities `mail/entities/` (`mail-folder.entity.ts`, `mail-message-state.entity.ts`,
   `mail-read-mark.entity.ts`, `mail-folder-counter.entity.ts`, `mail-label-scope.entity.ts`,
-  `mail-message-label.entity.ts`, `mail-thread-state.entity.ts`, `mail-draft.entity.ts`, `mail-correspondent.entity.ts`,
-  `mail-saved-search.entity.ts`) and migration `mail/database/migrations/1791000065100-CreateMailClientTables.ts`;
+  `mail-message-label.entity.ts`, `mail-thread-state.entity.ts`, `mail-draft.entity.ts`, `mail-correspondent.entity.ts`)
+  and migration `mail/database/migrations/1791000065100-CreateMailClientTables.ts`;
   migrations on the shared core migration helpers of `procurement` T4 (`@gauzy/core`), listed in
   `mail/database/mail-migrations.ts`.
   Test: migration spec on SQLite; PostgreSQL and MySQL in the suite. Migration timestamps: `1791000065100` to `1791000065199` (`packages/plugins/mail`).
@@ -149,11 +149,13 @@
   template) and inline images on a draft; above the identity's size limit protected links instead. Files:
   `mail/drafts/draft-attachments.service.ts`, `mail/drafts/drafts.controller.ts`. Test: a `drive` file and a record PDF
   attach to the draft; an attachment over the limit becomes a protected link.
-- [ ] **T52**. Saved searches and suggestions (FR-46, FR-47): saved searches as folder-like views
-  (`mail_saved_search`), suggestions of people, labels and recent searches while typing, ranking by relevance or date
-  with matched words marked. Files: `mail/search/saved-search.service.ts`, `mail/search/saved-search.controller.ts`,
-  `mail/search/search-suggestions.service.ts`. Test: a saved search reopens with its filters; suggestions list only
-  people and labels the user may see; matched words are marked in results.
+- [ ] **T52**. Saved searches and suggestions (FR-46, FR-47): saved searches as folder-like views, stored as saved views
+  of `record-views-and-search` for the record type `MailMessage` through `RECORD_VIEWS_SAVED_VIEWS` (without it, as a
+  list in `uiPreferences.mail`), suggestions of people, labels and recent searches while typing, ranking by relevance
+  or date with matched words marked. Files: `mail/search/saved-search.service.ts`, `mail/search/saved-search.controller.ts`,
+  `mail/search/search-suggestions.service.ts`, `apps/api/src/plugin-composition.ts`. Test: a saved search reopens with its
+  filters, with and without `record-views-and-search`; suggestions list only people and labels the user may see;
+  matched words are marked in results.
 - [ ] **T53**. Content scanning adapters (FR-57): a multi-provider `MAIL_CONTENT_SCANNERS` that plugins answer with spam
   and malware verdicts, consulted in the arrival pipeline and honoured like provider verdicts. Files:
   `mail/junk/content-scanners.registry.ts`, `state/arrival.service.ts`. Test: a fake scanner's spam verdict files the

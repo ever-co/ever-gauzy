@@ -62,7 +62,7 @@ flowchart LR
 | Package | new `packages/plugins/inventory-valuation`, `inventory-valuation-ui` | Principle I; optional value layer |
 | Coupling | ports declared by inventory, bound in `apps/api/src/plugin-composition.ts` | no plugin imports another's internals |
 | Layer write | synchronous in the movement transaction | stock value can never disagree with quantities |
-| Quantity | the level row (`warehouse_product_variant`) and the movement's `quantityAfter` are the only quantity; layers keep FIFO remaining quantities as the open-layer queue, and the integrity check compares their sum with on hand | one stored quantity per item and location |
+| Quantity | the level row (`warehouse_product_variant`) and the movement's `quantityAfter` are the only quantity; the open-layer queue is the mutable projection `stock_layer_remaining` (remaining quantity and value per incoming layer, written in the movement transaction from the consumptions, so layers stay immutable), and the integrity check compares its sum with on hand and recomputes it from layers and consumptions | one stored quantity per item and location |
 | Recalculation | append-only correction layers from a core operation per key (type `STOCK_VALUATION_RECALCULATE`, aggregate = the key hash, so the runtime's one live operation per aggregate is the per-key lock; attempts, error and result on the operation) | history never rewritten (spec FR-14); one run ledger |
 | Money | exact decimals (`decimal(20,6)` unit cost, values rounded to currency minor unit with a rounding layer) | money kernel |
 | Postings | outbox event per valued document version → `accounting` rules | commerce plugins hold no ledger tables |
@@ -78,14 +78,16 @@ flowchart LR
 ### New or changed entities
 
 All new tables extend `TenantOrganizationBaseEntity`; layers and consumptions are append-only (service refuses update
-and delete; a trigger refuses them as on `stock_movement`).
+and delete; a trigger refuses them as on `stock_movement`); `stock_layer_remaining` is the one mutable projection beside
+them, always equal to each layer's quantity and value less its consumptions.
 
 | Table | Columns (beyond base) | Keys and indexes |
 | --- | --- | --- |
 | `stock_valuation_policy` | `scope` varchar(16) (`ORGANIZATION`, `ITEM_GROUP`, `ITEM`, `LOCATION`), `variantId`, `itemGroupId`, `warehouseId` uuid null, `method` varchar(16) null, `keyScope` varchar(16) null, `allowNegative` boolean null, `allowNegativeLots` boolean null | unique (`organizationId`, `scope`, `subjectKey`) |
 | `stock_standard_cost` | `variantId`, `unitCost` decimal(20,6), `currency` varchar(3), `effectiveFrom` timestamp, `appliedAt` timestamp null; the dated schedule of standards, which the variant's single cost price cannot hold; the daily apply job writes the effective one to `product_variant_price.unitCost` | unique (`organizationId`, `variantId`, `effectiveFrom`) |
-| `stock_valuation_layer` | `movementId` uuid null, `kind` varchar(16) (`MOVEMENT`, `CORRECTION`, `LANDED_COST`, `REVALUATION`, `PRICE_VARIANCE`, `ROUNDING`, `OPENING`), `keyHash` varchar(64), `variantId`, `warehouseId`, `lotId`, `serialUnitId` uuid null, `dimensionSetId` uuid null, `occurredAt` timestamp, `sequence` bigint, `quantity`, `unitCost`, `value` decimal(20,6), `currency` varchar(3), `remainingQuantity`, `remainingValue` decimal(20,6), `keyValueAfter`, `keyUnitCostAfter` decimal(20,6), `documentType` varchar(64), `documentId`, `documentLineId` uuid, `correctsLayerId`, `operationId`, `landedCostId` uuid null, `carriedForward` boolean, `postingState` varchar(16), `explanation` json | unique (`movementId`) where kind = `MOVEMENT`; (`keyHash`, `occurredAt`, `sequence`); (`documentType`, `documentId`); (`organizationId`, `occurredAt`) |
+| `stock_valuation_layer` | `movementId` uuid null, `kind` varchar(16) (`MOVEMENT`, `CORRECTION`, `LANDED_COST`, `REVALUATION`, `PRICE_VARIANCE`, `ROUNDING`, `OPENING`), `keyHash` varchar(64), `variantId`, `warehouseId`, `lotId`, `serialUnitId` uuid null, `dimensionSetId` uuid null, `occurredAt` timestamp, `sequence` bigint, `quantity`, `unitCost`, `value` decimal(20,6), `currency` varchar(3), `keyValueAfter`, `keyUnitCostAfter` decimal(20,6), `documentType` varchar(64), `documentId`, `documentLineId` uuid, `correctsLayerId`, `operationId`, `landedCostId` uuid null, `carriedForward` boolean, `postingState` varchar(16), `explanation` json, `movementKey` varchar(104) null (`<movementId>:<keyHash>` on `MOVEMENT` layers, null on the other kinds) | unique (`movementKey`): one `MOVEMENT` layer per movement and valuation key, so a movement over lots A and B (or several serial units) writes one layer per lot or serial key and a replayed hook writes none twice, on every dialect; (`movementId`); (`keyHash`, `occurredAt`, `sequence`); (`documentType`, `documentId`); (`organizationId`, `occurredAt`) |
 | `stock_layer_consumption` | `outLayerId` FK, `inLayerId` FK, `quantity`, `unitCost`, `value` decimal(20,6) | (`outLayerId`); (`inLayerId`) |
+| `stock_layer_remaining` (mutable projection, derivable from layers and consumptions) | `inLayerId` FK, `keyHash` varchar(64), `occurredAt` timestamp, `sequence` bigint (copied from the layer for the queue order), `remainingQuantity`, `remainingValue` decimal(20,6), `version` int; written with its incoming layer and updated by every consumption in the same transaction | unique (`inLayerId`); (`keyHash`, `occurredAt`, `sequence`) |
 | `stock_valuation_key` | `keyHash` varchar(64), `variantId`, `warehouseId`, `lotId`, `serialUnitId`, `dimensionSetId`, `value`, `unitCost` decimal(20,6), `lastOccurredAt`, `lastSequence`, `recalculateFrom` timestamp null (earliest pending replay; a second request lowers it instead of starting another operation), `version` int; no quantity column | unique (`organizationId`, `keyHash`) |
 | `landed_cost_document` | `number`, `status` varchar(16), `occurredAt`, `currency`, `totalAmount` decimal(20,6), `sourceDocumentType` varchar(64) null, `sourceDocumentId` uuid null (the stock document whose additional costs it carries), `confirmedAt`, `confirmedByUserId`, `note` | unique (`organizationId`, `number`); (`sourceDocumentType`, `sourceDocumentId`) |
 | `landed_cost_target` | `landedCostId` FK CASCADE, `targetType` varchar(32), `targetLineId` uuid, `variantId`, `quantity`, `value`, `weight`, `volume`, `manualShare` decimal | (`landedCostId`); (`targetType`, `targetLineId`) |
@@ -176,7 +178,7 @@ their rules test.
 | `valuation.integrity.finding_raised` | new open finding | inbox, push (`stock-integrity:<organizationId>`), automation |
 | `valuation.negative.settled` | covering inflow settled a negative layer | automation |
 | `valuation.value.changed` | coalesced per organization per 5 s | push to value cards |
-| consumed: `inventory.stock_document.*`, `document.goods_receipt.*`, `document.supplier_bill.confirmed`, `warehouse.task.completed` | from inventory, procurement, invoicing, warehouse | posting facts, landed cost from document additional costs, bill price differences, labour capitalisation |
+| consumed: `inventory.stock_document.*`, `document.goods_receipt.*`, `document.supplier_bill.confirmed`, `warehouse.task.completed` | from inventory, procurement, invoicing, warehouse | posting facts, landed cost from document additional costs, bill price differences, labour capitalization |
 
 Posting rules contributed to `accounting` (registry of `general-ledger`): `stock.receipt`, `stock.issue`, `stock.sale`,
 `stock.transfer`, `stock.adjustment`, `stock.landed_cost`, `stock.price_variance`, `stock.revaluation`,
@@ -213,7 +215,7 @@ Posting rules contributed to `accounting` (registry of `general-ledger`): `stock
 | `valuation.closing` | on request, core operation `STOCK_CLOSING` | snapshot, ledger agreement | one closing per period end |
 | `valuation.standard-cost-apply` | daily 00:30 | revalue at effective dates; write `product_variant_price.unitCost` | `appliedAt` |
 | `valuation.abc-classify` / `valuation.cycle-count-plan` | monthly 1st / nightly 04:00 | classes; generate counts and floor-app tasks | per plan and due date |
-| `valuation.labour-capitalise` | monthly 1st 05:00 (setting on) | landed cost from completed task labour | one per organization and month |
+| `valuation.labour-capitalize` | monthly 1st 05:00 (setting on) | landed cost from completed task labour | one per organization and month |
 | outbox consumers | on events | posting facts, landed costs of document additional costs, bill price differences | delivery record per event |
 
 Worker loads the schedulers; the API hosts the queue workers; without a queue root the API runs them on in-process
@@ -242,7 +244,7 @@ recalculation backlog older than one hour.
 2. **Phase 2 — Depth**: layers and methods, recalculation, negative policy, opening, value reset, closing and freeze,
    perpetual postings, landed cost, valuation taxes, dimensions, value reports.
 3. **Phase 3 — Advanced capabilities**: "why this cost" everywhere, backdated preview, monitor and agent, closing agreement,
-   cycle count plans, labour capitalisation, live value, automation triggers.
+   cycle count plans, labour capitalization, live value, automation triggers.
 4. **Phase 4 — General availability**: the feature is off by default; after the trial period it may be switched on by default for new tenants only; existing tenants keep their setting until an administrator changes it.
    Switching it on writes opening layers (spec FR-86).
 

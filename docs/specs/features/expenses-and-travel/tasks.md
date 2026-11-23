@@ -56,6 +56,17 @@
       `packages/plugins/expense-claims/src/lib/expense-claims.permissions.ts`, `expense-claims.features.ts`,
       `expense-claims.settings.ts`, `expense-claims.plugin.ts` (export, import and reset registrations). Test: grants per
       role from the contributions; export lists the tables.
+- [ ] **T46**. Core write guard on claim-owned rows (spec FR-7): `ExpenseUpdateHandler` and `ExpenseDeleteHandler`
+      (and the inherited soft-delete route `DELETE /expense/:id/soft` of `expense.controller.ts`) refuse with
+      `409 EXPENSE_CLAIM_OWNED` a row whose
+      `expenseClaimId` or `approvalState` is set; rows without them (every row that exists today) are updated and deleted
+      as today; the claim services of the plugin are the only writers of claim-owned rows. Files:
+      `packages/core/src/lib/expense/commands/handlers/expense.update.handler.ts`,
+      `packages/core/src/lib/expense/commands/handlers/expense.delete.handler.ts`,
+      `packages/core/src/lib/expense/expense-claim-owned.guard.ts`, `packages/core/src/lib/expense/expense.controller.ts`.
+      Test: `packages/core/src/lib/expense/commands/handlers/expense.update.handler.spec.ts` and
+      `expense.delete.handler.spec.ts`: `PUT /expense/:id` and `DELETE /expense/:id` on an approved claim line answer
+      `409` and leave the amount, the claim and its posting unchanged; a direct expense is updated and deleted as today.
 
 ## Phase 2 — Services, endpoints, events
 
@@ -263,7 +274,7 @@ Every functional requirement of `spec.md` §3 and the tasks that implement it; e
 | FR-3 | §3.1 Enabling, settings and categories | T8, T41 |
 | FR-4 | §3.1 Enabling, settings and categories | T14 |
 | FR-5–FR-6 | §3.2 Claims and lines | T9 |
-| FR-7 | §3.2 Claims and lines | T3 |
+| FR-7 | §3.2 Claims and lines | T3, T46 |
 | FR-8 | §3.2 Claims and lines | T9 |
 | FR-9 | §3.2 Claims and lines | T9, T13 |
 | FR-10 | §3.2 Claims and lines | T9 |

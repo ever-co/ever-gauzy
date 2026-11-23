@@ -51,7 +51,7 @@ which shared engines a feature must use instead of building its own, and which w
 | Print and PDF | ★ core `accounting-template`; ＋ `print-templates` | print templates for every document type, visual designer, letterheads, PDF rendering | `print-and-pdf-designer` |
 | Access and security | ★ core roles, permissions, auth | role bundles, field-level and record-level rules, sharing, sign-in policies, audit | `access-control-and-security` |
 | Communications | ★ core email templates and history, ★ `inbox` (provider accounts for email, text, push and voice); ＋ `communications` | sending identities, send and receive on any record, text messages, push, consent and suppression, communication timeline | `email-and-communications` |
-| Integrations | ★ the Integrations page, the integration plugins and their sync jobs, core webhooks; ＋ `integration-hub` | generalises what exists: connected accounts, shared sync records (mappings, value maps, issues) for every integration, webhooks with logs and replay, connector catalogue as a tab of the Integrations page, storage targets | `integration-hub` |
+| Integrations | ★ the Integrations page, the integration plugins and their sync jobs, core webhooks; ＋ `integration-hub` | generalizes what exists: connected accounts, shared sync records (mappings, value maps, issues) for every integration, webhooks with logs and replay, connector catalogue as a tab of the Integrations page, storage targets | `integration-hub` |
 | Administration | ★ core (incl. the `stats` module with the one usage meter) | setup, users, backups, logs, job monitor, system health, usage meter | `platform-administration` |
 
 ### 2.2 Finance
@@ -220,7 +220,7 @@ hand-built report pages; users can clone and change them, pivot, schedule and ex
 dashboards are report definitions too. The existing report pages, saved reports and dashboards stay as they are and
 are also registered as definitions.
 
-### 3.9 Automation and notifications (`task-automations` generalised, `inbox`)
+### 3.9 Automation and notifications (`task-automations` generalized, `inbox`)
 
 Trigger (record event, schedule, incoming message, webhook) → conditions → actions (update, create, assign,
 notify, request approval, call webhook, run an agent), with waits, branches, trial runs and run history. The

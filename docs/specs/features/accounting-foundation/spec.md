@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-15
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_ACCOUNTING` (default off)
 
 ---
@@ -133,8 +133,8 @@ with previews, and live updates in every open client.
 - **FR-18** The system refuses a type change that adds or removes the control or system-posted trait, or changes the
   party role, on an account with ledger lines, and a type not allowed for the account's class.
 - **FR-19** A user with `ACCOUNTING_CHART_EDIT` can designate, per organization, the one account for each default role
-  (default receivable and payable, rounding, opening rounding, opening offset, retained earnings, realised and
-  unrealised exchange difference, dimension clearing, inter-organization balances, roles of other features).
+  (default receivable and payable, rounding, opening rounding, opening offset, retained earnings, realized and
+  unrealized exchange difference, dimension clearing, inter-organization balances, roles of other features).
 - **FR-20** The system refuses to archive, delete or regroup an account that holds a designation or is named by an
   account rule, posting rule, party account, tax mapping or item default, and lists those references.
 - **FR-21** A user with `ACCOUNTING_CHART_EDIT` can fix an account to one currency; only lines in that currency are then
@@ -354,7 +354,7 @@ with previews, and live updates in every open client.
 - **Security & privacy**: tenant and organization scoped; visible only with the view permissions; uploaded files stay
   inside the platform; nothing is sent to third parties.
 - **Auditability**: who, when, before and after for every change; agent-made changes are marked.
-- **Accessibility and localisation**: tree, grid and importer are keyboard operable and labelled; all strings in every
+- **Accessibility and localization**: tree, grid and importer are keyboard operable and labelled; all strings in every
   shipped locale; account, category and dimension names are translatable.
 - **Compatibility**: PostgreSQL, MySQL and SQLite; both ORMs; multi-tenant cloud and self-hosted single tenant; additive
   OpenAPI changes only.

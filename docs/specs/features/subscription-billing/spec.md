@@ -9,8 +9,8 @@
 **Status**: `Draft`
 **Created**: 2026-11-15
 **Last updated**: 2026-11-23
-**Owner**: evereq
-**Feature flag**: `FEATURE_SUBSCRIPTION` (existing, default off) for plans, subscriptions and billing history; `FEATURE_SUBSCRIPTION_BILLING` (existing, default off) for the scheduled billing run and automatic charges
+**Owner**: platform maintainers
+**Feature flag**: `FEATURE_SUBSCRIPTION` (existing, default off) for plans, subscriptions and billing history; `FEATURE_SUBSCRIPTION_BILLING` (existing, default off) for the scheduled billing run and the automatic charges it makes (a cycle billed by hand charges as today)
 
 ---
 
@@ -185,7 +185,7 @@ daily; a billing forecast; and agents that prepare a run, explain an invoice and
 | **FR-56** | The system MUST, for tenants with `FEATURE_SUBSCRIPTION_BILLING` on and organizations that switched the scheduled run on (setting, off by default, so billing stays on demand as today), bill every hour all cycles whose billing time has passed in the organization's time zone, one run at a time per organization. |
 | **FR-57** | A user with `SUBSCRIPTIONS_BILL` can start a run for an organization with an as-of date not after today and optional filters (plan, customer, subscription); the run is recorded with who started it, counts and a result per subscription (billed, failed with reason, skipped, held). |
 | **FR-58** | A user with `SUBSCRIPTIONS_BILL` can preview a run: the cycles it would bill with amounts, and those it would hold or fail with reasons; a preview writes nothing. |
-| **FR-59** | The system MUST refuse to process a cycle or subscription dated in the future. |
+| **FR-59** | The system MUST refuse to process a cycle whose billing date is in the future and a subscription whose start date is in the future; a cycle billed in advance (FR-26) is due on its billing date, before its service period starts, and is processed from that date. |
 | **FR-60** | The system MUST continue a run past a failing subscription, retry failed cycles in the next run, and notify holders of `SUBSCRIPTIONS_BILL` once per run with failures. |
 | **FR-61** | The system MUST, after downtime, bill missed periods in order, counting each period from its own start so that late billing never shifts the calendar. |
 | **FR-62** | The system MUST, when the invoice date lies in a locked accounting period, either date the invoice on the first open day and flag it, or hold the cycle, per organization setting (default first open day). |
@@ -250,7 +250,7 @@ and charts that update when a subscription changes.
   customer's retention rules; emails and provider calls are the only data leaving the platform.
 - **Observability and audit**: run records, attempt history per cycle, change history, timeline, metrics for run
   duration, failures, intake lag.
-- **Accessibility and localisation**: keyboard-operable screens, labelled charts with table alternatives, all
+- **Accessibility and localization**: keyboard-operable screens, labelled charts with table alternatives, all
   strings in every shipped locale, notices in the recipient's language, amounts in the document currency.
 - **Compatibility**: PostgreSQL, MySQL and SQLite; both ORMs; cloud and self-hosted; additive API and SDK changes.
 
@@ -318,7 +318,7 @@ and charts that update when a subscription changes.
       its order, charges, retries and fails exactly as before: no scheduled run, no invoice for its order, no
       suspension, no pause or trial limit, cancellation reasons in free text accepted, and a plan edited through the
       existing route takes effect as before (FR-56).
-- [ ] **AC-15** With the feature off, and with the feature on and default settings, every existing page, route, field, permission and report behaves as today, apart from the existing feature codes that now guard their routes, which the release switches on for every tenant holding their data (FR-82, FR-84).
+- [ ] **AC-15** With the feature off, and with the feature on and default settings, every existing page, route, field, permission and report behaves as today, apart from the feature codes that guard their routes, which are switched on for every tenant that holds their data (FR-82, FR-84).
 - [ ] Works on PostgreSQL, MySQL and SQLite with both ORMs.
 - [ ] Behind `FEATURE_SUBSCRIPTION` and `FEATURE_SUBSCRIPTION_BILLING`; nothing changes while they are off, and
       existing subscription and invoice-schedule suites pass unchanged.
@@ -351,7 +351,7 @@ and charts that update when a subscription changes.
 - [x] VI Permissions, privacy, security — billing, usage and settings are separate keys; no instrument data stored.
 - [x] VII Real-time through the event bus — outbox events for every move; live usage and analytics through the
       platform channel.
-- [x] VIII i18n and accessibility — all strings as keys; notices localised; charts with table alternatives.
+- [x] VIII i18n and accessibility — all strings as keys; notices localized; charts with table alternatives.
 - [x] IX Tests accompany the change — cycle and proration mathematics, idempotency, run behaviour, usage pricing.
 - [x] X Behaviour-first (this document).
 - [x] XI Documentation describes our platform only.

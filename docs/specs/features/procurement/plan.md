@@ -89,7 +89,7 @@ document engine series, unique `(organizationId, number)`.
 | `purchase_order` | `isOnHold` bool default false, `holdReason` text, `heldAt` (written only while `PURCHASING_DOCUMENTS` is unbound; with the engine the hold is `business_document.isOnHold`); `revision` int default 0; `orderingContactId`, `shipToAddressId`, `billToAddressId`, `dispatchAddressId` uuid; `deliveryTerms` varchar(64); `termsText` text; `documentDiscountPercent`, `documentDiscountBasis` varchar(8); `dropShipCustomerId`, `dropShipAddressId` uuid; `confirmationDueAt`, `supplierConfirmedAt`, `supplierConfirmationRef` varchar(128); `advanceRequiredAmount`; `sourceType` varchar(32), `sourceId` uuid | index `(organizationId, isOnHold, status)`, `(organizationId, confirmationDueAt)` |
 | `purchase_order_line` | `lineKind` varchar(16) default `ITEM` (`ITEM`, `SERVICE`, `EXPENSE`, `SUBCONTRACT`); `description` text; `variantId` nullable for non-item lines; `isFreeItem` bool; `marginPercent`, `marginAmount`; `taxCategoryId`, `expenseAccountId`, `costCenterId`, `projectId` uuid; `isAsset` bool; `manufacturer` varchar(128), `manufacturerPartNumber` varchar(128); `deliveredBySupplier` bool, `deliveredQuantity`; `rejectedQuantity`, `returnedQuantity` default 0; `isClosed` bool, `closedAt`; `requisitionLineId`, `quotationLineId`, `agreementLineId`, `subcontractServiceId` uuid; `pricingSource` varchar(16); `confirmedQuantity`, `confirmedAt` | schedule lines are the existing per-date lines (unique `(order, variant, expectedAt)` already) |
 | `goods_receipt` | `vendorId` uuid (standalone receipts); `shippingNoticeId` uuid; `deliveryNoteRef`, `carrierName`, `transportRef` varchar(128); `receivedFromOrganizationId` uuid | index `(organizationId, vendorId, receivedAt)` |
-| `goods_receipt_line` | `purchaseOrderLineId` nullable (standalone); `rejectedQuantity` default 0; `rejectedWarehouseId` uuid; `rejectedMovementId` uuid; `inspectionState` varchar(16); `inspectionId` uuid; `returnedQuantity` default 0; `shippingNoticeLineId` uuid | check `quantity + rejectedQuantity + damagedQuantity > 0` replaces nothing: added beside the existing positive check |
+| `goods_receipt_line` | `purchaseOrderLineId` nullable (standalone); `rejectedQuantity` default 0; `rejectedWarehouseId` uuid; `rejectedMovementId` uuid; `inspectionState` varchar(16); `inspectionId` uuid; `returnedQuantity` default 0; `shippingNoticeLineId` uuid | check `CHK_goods_receipt_line_received` (`quantity + rejectedQuantity + damagedQuantity > 0`) replaces `CHK_goods_receipt_line_positive` (`quantity + damagedQuantity > 0`): the migration drops the old check before it adds the new one, which accepts every line the old one accepts and also a line whose units are all rejected (spec FR-76) |
 | `vendor_product_term` | `minimumOrderQuantity`; `isPreferred` bool default false (the item's default supplier) | partial unique: one preferred live term per `(organizationId, variantId)`; an agreement's term is found from `purchase_agreement_line.vendorProductTermId` (one link direction) |
 | `product_variant_setting` (core, no column change) | the existing `isPurchaseAutomatically` checkbox is the "buy automatically" mark of spec FR-32: plan lines of such a variant are accepted, converted and sent without a person within the organization's limit | the reorder levels and the reorder job stay `warehouse-and-stock-movements`' (`restockThreshold`, `stock_alert`) |
 | `order_return_reason` (`returns` plugin, additive) | `appliesTo` varchar(8) default `BOTH` (`SALES`, `PURCHASE`, `BOTH`) | one governed list of return reasons for customer and supplier returns; read through `PURCHASING_RETURN_REASONS` |
@@ -140,7 +140,9 @@ SQLite and MySQL branches written with the shared core helpers (`@gauzy/core`, `
 core from the task automations copy; idempotent and forward-only.
 
 1. `1791000084100-AddProcurementColumns` — the changed columns above; SQLite rebuilds for the two nullability changes,
-   replaying the recorded indexes (the pattern of `CreateVendorProductTermTable1791000000345`).
+   replaying the recorded indexes (the pattern of `CreateVendorProductTermTable1791000000345`); on `goods_receipt_line`
+   it drops `CHK_goods_receipt_line_positive` and then adds `CHK_goods_receipt_line_received` (on SQLite inside the
+   table rebuild); its `down` restores the old check only when no line has all of its units rejected.
 2. `1791000084110-CreateSupplierTables` — profile, group, contact role, document.
 3. `1791000084120-CreateRequisitionTables` — requisition, line, plan line.
 4. `1791000084130-CreateSourcingTables` — request, line, supplier, quotation, quotation line, award.
@@ -232,7 +234,9 @@ received quantity written on the caller's transaction), bound by `subcontracting
 and declares the hook `GOODS_RECEIPT_SUBCONTRACT` (bound by `subcontracting`): `GoodsReceiptService` calls it in the
 receipt transaction for lines on `SUBCONTRACT` purchase lines, which answers the service quantity per line (finished ×
 conversion), the unit cost and any refusal; the receipt rolls that service quantity into the subcontract line's
-`purchase_order_line.receivedQuantity`, the one writer of that figure. Unbound, receipts on `SUBCONTRACT` lines are
+`purchase_order_line.receivedQuantity`, the one writer of that figure. `GoodsReceiptService.reverse` calls the hook's
+`reverse` step for those lines inside the reversal's one transaction, so the subcontract consumption is reversed with
+the receipt or not at all. Unbound, receipts on `SUBCONTRACT` lines are
 refused with the reason.
 
 **Consumer tokens answered** (bound in `apps/api/src/plugin-composition.ts` to the purchasing services (purchase lines, requisitions, goods receipts, supplier records); each consumer plan states the shape it calls and its fallback): `MANUFACTURING_PURCHASE_PRICES`, `MANUFACTURING_PURCHASING`, `PORTAL_SUPPLIER_ONBOARDING`, `PROJECT_PURCHASES`.

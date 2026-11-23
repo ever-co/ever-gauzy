@@ -64,7 +64,7 @@ flowchart LR
 | Packs | a pack is a `report_schedule` of the report builder with several items; this module adds an event trigger (period close) and frozen figures with a content fingerprint to the builder's schedule tables | one schedule and delivery model |
 | Background runs | `report_run` of the report builder (mode `BACKGROUND`, result file) | one run model |
 | Notes | a note anchor (report cell key, period, figure fingerprint, origin) with its text, replies and mentions as core `comment` rows | notes on a record use `comment` |
-| Consolidation | pure engine over member trial balances; results stored per run; never writes member ledgers | spec FR-49, FR-84 |
+| Consolidation | pure engine over member trial balances plus, for equity and investment accounts, the members' dated movements (sums per account, currency and posting date read from the `general-ledger` journal lines), each translated at the rate of its posting date and summed into a historically translated balance; a run starts from the historically translated balances of the previous final run and adds the period's dated movements, so two members with equal equity balances but different posting dates translate differently; results stored per run; never writes member ledgers | spec §3.5 rate table, FR-49, FR-84 |
 | Money and rates | `Money` and exact decimals of core; exchange rates from the rate tables used by `general-ledger` | one arithmetic |
 | Background work | `@ScheduledJob` + `@QueueWorker` (`@gauzy/scheduler`); in-process fallback; scheduled passes recorded in `job_execution` | house idiom |
 | Live figures | outbox consumer publishes hints `(organization, book, accounts touched, period)` on the realtime channel; clients refetch affected cells | Principle VII |
@@ -91,7 +91,7 @@ plugin: foreign keys where the table exists at migration time).
 | `consolidation_member` | `groupId` FK, `memberOrganizationId`, `ownershipPercent` numeric(9,6), `method` (`FULL`, `PROPORTIONAL`), `effectiveFrom`, `effectiveTo` | unique `(groupId, memberOrganizationId, effectiveFrom)` |
 | `consolidation_account_map` | `groupId` FK, `memberOrganizationId`, `ledgerAccountId`, `groupLineCode` | unique `(groupId, memberOrganizationId, ledgerAccountId)`; default mapping by account category when no row |
 | `elimination_rule` | `groupId` FK, `kind` (`BALANCES`, `REVENUE_EXPENSE`, `DIVIDENDS`, `INVESTMENT_EQUITY`, `STOCK_MARGIN`), `selectors` text, `tolerance`, `marginPercent`, `differenceLineCode`, `isEnabled` | index `(groupId, kind)` |
-| `consolidation_run` | `groupId` FK, `periodStart`, `periodEnd`, `ledgerBookId`, `version` int, `status` (`DRAFT`, `FINAL`), `isProvisional`, `result` text, `resultHash` varchar(64), `warnings` text, `finalisedAt`, `finalisedById`, `operationId` null (the core operation that computed it) | unique `(groupId, periodStart, periodEnd, ledgerBookId, version)` |
+| `consolidation_run` | `groupId` FK, `periodStart`, `periodEnd`, `ledgerBookId`, `version` int, `status` (`DRAFT`, `FINAL`), `isProvisional`, `result` text, `resultHash` varchar(64), `warnings` text, `finalizedAt`, `finalizedById`, `operationId` null (the core operation that computed it) | unique `(groupId, periodStart, periodEnd, ledgerBookId, version)` |
 | `consolidation_entry` | `runId` FK, `kind` (`ELIMINATION`, `TRANSLATION`, `NON_CONTROLLING`, `ADJUSTMENT`), `ruleId`, `groupLineCode`, `memberOrganizationId`, `counterpartOrganizationId`, `debit`, `credit`, `currency`, `description`, `sources` text | index `(runId, kind)` |
 | `intercompany_mismatch` | `runId` FK, `organizationAId`, `organizationBId`, `kind`, `amountA`, `amountB`, `difference`, `currency`, `documents` text, `status` (`OPEN`, `CARRIED`, `RESOLVED`) | index `(runId, status)` |
 | `statement_note` | the anchor of a note on a statement cell: `reportKey`, `layoutRowCode`, `ledgerAccountId`, `periodStart`, `periodEnd`, `scope` text (book, dimension), `kind` (`NOTE`, `EXPLANATION`, `HINT`), `origin` (`USER`, `ASSISTANT`), `figureHash`; text, author, edits, replies, mentions and resolution are core `comment` rows (`entity = StatementNote`) | index `(organizationId, reportKey, periodStart, periodEnd)` |
@@ -160,7 +160,7 @@ take `Idempotency-Key`.
 | `GET` `POST` `PUT` `DELETE` | `/statement-layouts` (+ `/:id/clone`, `/:id/versions`, `/versions/:vid/publish`, `/versions/:vid/completeness`, `/versions/:vid/preview`, `/:id/export`, `/import`, `PUT /:id/default`) | `ACCOUNTING_REPORTS_VIEW` / `ACCOUNTING_STATEMENT_LAYOUTS_EDIT` (kind `TAX_RETURN`: `TAX_REPORTS_VIEW` / `TAX_REPORTS_EDIT`) | layouts, versions, rows of every kind | New |
 | `GET` `POST` `PUT` `DELETE` | `/ageing-bucket-schemes` | `ACCOUNTING_REPORTS_VIEW` / `ACCOUNTING_STATEMENT_LAYOUTS_EDIT` | bucket schemes | New |
 | `GET` `POST` `PUT` `DELETE` | `/consolidation-groups` (+ `/:id/members`, `/:id/account-map`, `/:id/elimination-rules`) | `ACCOUNTING_CONSOLIDATION_VIEW` / `_MANAGE` | group setup | New |
-| `POST` `GET` | `/consolidation-runs` (+ `GET /:id`, `/:id/entries`, `POST /:id/adjustments`, `/:id/finalise`, `GET /:id/mismatches`, `PUT /mismatches/:mid`) | `ACCOUNTING_CONSOLIDATION_VIEW` / `_MANAGE` | run (an operation), entries, adjustments, finalise | New |
+| `POST` `GET` | `/consolidation-runs` (+ `GET /:id`, `/:id/entries`, `POST /:id/adjustments`, `/:id/finalize`, `GET /:id/mismatches`, `PUT /mismatches/:mid`) | `ACCOUNTING_CONSOLIDATION_VIEW` / `_MANAGE` | run (an operation), entries, adjustments, finalize | New |
 | `GET` | `/financial-reports/pack-runs/:runId/compare` | `ACCOUNTING_REPORTS_VIEW` | a frozen report-builder schedule run against current figures, with the postings made since | New |
 | `POST` `GET` `PUT` `DELETE` | `/statement-notes` | `ACCOUNTING_REPORTS_VIEW` / `ACCOUNTING_ANNOTATIONS_EDIT` | note anchors with their first comment; replies, edits and mentions through core `/comments` | New |
 | `POST` | `/financial-reports/explain` | `ACCOUNTING_REPORTS_VIEW` | figure or variance reference → note (async; `202`) | New |
@@ -183,7 +183,9 @@ tracking and employee rates), `REPORT_BUDGET_FIGURES` (budgets module), `REPORT_
 data sets registered with the layout model, such as `tax.register` of `tax-engine`). The layout service answers the
 `TAX_RETURN_LAYOUTS` port of `tax-engine` (list, evaluate, register pack layouts) and answers it only
 for tenants with `FEATURE_FINANCIAL_REPORTS` on, so a tax return needs this feature. A report whose port is unbound is
-listed as unavailable with the reason.
+listed as unavailable with the reason, except gross profit: with `REPORT_STOCK_COST` unbound it lists the selling
+amounts from `REPORT_REGISTER_DOCUMENTS` and marks cost and margin unavailable (spec FR-64); the stock cost does not
+depend on accounting, so the report is the same with accounting on or off.
 
 **Consumer tokens answered** (bound in `apps/api/src/plugin-composition.ts` to the ageing bucket schemes; each consumer plan states the shape it calls and its fallback): `AGEING_BUCKET_SCHEME`.
 
@@ -196,7 +198,7 @@ listed as unavailable with the reason.
 | `accounting.account.created` (in) | `accounting-foundation` | completeness notice to owners of published layouts |
 | `accounting.report.figures_changed` (realtime only) | a posting touched accounts of an organization and book | open statements, ledger reports and cards refetch affected cells |
 | `accounting.statement_layout.published` | a layout version is published | activity log, automation rules |
-| `accounting.consolidation_run.finalised` | a run becomes final | inbox item to the group's owners, automation rules |
+| `accounting.consolidation_run.finalized` | a run becomes final | inbox item to the group's owners, automation rules |
 | `report_schedule.delivered`, `report_run.completed` (report builder) | a pack is delivered; a background report finished | inbox and email to recipients; inbox item to the requester |
 
 Inbox items through `INBOX_ITEM_WRITER`; pack emails through the report builder's delivery with the files attached;
@@ -250,8 +252,9 @@ Exports (PDF, XLSX, CSV) and scheduled emails come from the report builder.
 | ------- | ---- | ------------ | ----------- |
 | Outbox consumer `subscriber:financial-report-rollup` | journal posted or reversed | updates `report_daily_movement`; publishes live hints (coalesced per second) | delivery record per event |
 | `financial-reports.rollup.verify` | nightly | recount of open periods against the ledger; drift to the job monitor and auto-rebuild | per organization and day |
+| operation `financial-reports.rollup.backfill` | feature first switched on, on demand | builds `report_daily_movement` from the posted journal lines of every period, closed ones included, in slices per organization, book and month; until a range is built, intra-period reports of it read the ledger | upsert on the row key |
 | report-builder background run | a run exceeds the time budget | the builder computes and stores the result file through this module's data-set provider | builder run id |
-| operation `FINANCIAL_CONSOLIDATION` | run requested | member trial balances, mapping, translation, eliminations, interest, mismatches | group, period, book, version |
+| operation `FINANCIAL_CONSOLIDATION` | run requested | member trial balances and dated equity and investment movements, mapping, translation (historical rates per posting date for equity and investments), eliminations, interest, mismatches | group, period, book, version |
 | Outbox consumer `subscriber:financial-report-packs` | period closed | starts every schedule whose `triggerEvent` is `accounting.period.closed`, frozen | schedule and period key |
 | `financial-reports.explain` worker | explanation requested | driver analysis, wording, note anchor and comment | figure hash |
 

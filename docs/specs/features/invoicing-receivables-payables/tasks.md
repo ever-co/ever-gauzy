@@ -75,9 +75,11 @@
       due, credits; ageing buckets computed when read from due dates with the scheme of `AGEING_BUCKET_SCHEME` or the
       default; as-of from entries). Test: balance equals sum of open items after random operations; buckets equal a
       recomputation for two schemes.
-- [ ] **T14**. Confirm: `rp/documents/confirm-invoice-document.handler.ts` (period guard, number, instalments from
+- [ ] **T14**. Confirm: `rp/documents/confirm-invoice-document.handler.ts` (period guard: a refusal while
+      `ledger.refuseUnpostableDocuments` is on, a warning with the first open date while it is off; number, instalments from
       `PaymentTermService.schedule`, open items, roll-ups, snapshot, event) with `Idempotency-Key`. Test: all-or-nothing on
-      injected failure; two parallel confirms give one number.
+      injected failure; two parallel confirms give one number; an invoice dated in a locked period confirms with the
+      warning with the setting off (the default) and is refused naming the first open date with it on.
 - [ ] **T15**. Status mirror `rp/documents/invoice-status.mapper.ts` (lifecycle, sent or viewed, settlement → legacy
       `status`, `paid`, `alreadyPaid`, `amountDue`, `dueDate`). Test: mapping table spec; existing invoice specs still pass.
 - [ ] **T16**. Cancel, amend, change set (`rp/documents/cancel-*.handler.ts`, `amend-*.handler.ts`), and the in-place

@@ -55,8 +55,13 @@
   `organization-deletion.ts` (soft delete, delete for good); unbound → unchanged. Core settings store: the organization
   level in `packages/core/src/lib/tenant/tenant-setting/tenant-setting.service.ts` (`resolve(names, { tenantId,
   organizationId?, channelId? })` channel → organization → inherited → tenant → global → declared default;
-  `saveOrganizationSettings`; optional `SETTING_INHERITANCE` token; `getResolvedSettings` unchanged). Test: core specs
-  unchanged; guard refusal surfaces as `422`; resolution-order table spec on three dialects; a plugin setting declared
+  `saveOrganizationSettings`; optional `SETTING_INHERITANCE` token; `getResolvedSettings` unchanged). Files:
+  `packages/core/src/lib/organization/organization-change-guards.ts`,
+  `packages/core/src/lib/organization/organization.service.ts`, `packages/core/src/lib/organization/organization-deletion.ts`,
+  `packages/core/src/lib/tenant/tenant-setting/tenant-setting.service.ts`,
+  `packages/core/src/lib/tenant/tenant-setting/setting-inheritance.ts`. Test:
+  `packages/core/src/lib/tenant/tenant-setting/tenant-setting.resolve.spec.ts` and
+  `packages/core/src/lib/organization/organization-change-guards.spec.ts`: core specs unchanged; guard refusal surfaces as `422`; resolution-order table spec on three dialects; a plugin setting declared
   with scope `ORGANIZATION` resolves per organization.
 
 ## Phase 2 — Services, endpoints, events
@@ -236,7 +241,7 @@
   relationships read tool in `packages/mcp-server/src/lib/tools/organization-structure.ts`. Test: SQLite spec with two
   organizations and the counterpart consumer of `business-documents` stubbed.
 - [ ] **T48**. Sandbox copies on the export / import pipeline: export of the organization, the handlers'
-  anonymisation rules applied to the rows, import into the new organization with `import_record` id mapping,
+  anonymization rules applied to the rows, import into the new organization with `import_record` id mapping,
   non-deliverable emails, integrations, webhooks and payment connections switched off, refusal of outside sends, invited-only access,
   reset and expiry with reminders (FR-91 to FR-96). Files: `os/sandbox/sandbox-copy.operation.ts`,
   `os/sandbox/sandbox-anonymiser.ts`, `os/sandbox/sandbox-outbound.guard.ts`, `os/sandbox/sandbox-expiry.scheduler.ts`,

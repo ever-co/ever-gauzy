@@ -83,7 +83,9 @@ flowchart LR
 
 Ports consumed (interfaces in `@gauzy/contracts`, injected `@Optional()` where the owner may be switched off):
 `BUSINESS_DOCUMENT_ENGINE` (required), `TAX_CALCULATOR` (tax engine; absent → legacy percentages), `LEDGER_PERIOD_GUARD`
-and `LEDGER_EFFECTS_PREVIEW` (`accounting`; absent → no period check, empty preview), `LEDGER_FINDINGS` (`accounting`;
+and `LEDGER_EFFECTS_PREVIEW` (`accounting`; absent → no period check, empty preview; bound, a locked or closed date
+refuses confirmation only while `ledger.refuseUnpostableDocuments` is on and otherwise returns a warning with the first
+open date, where the journal then posts, spec FR-21), `LEDGER_FINDINGS` (`accounting`;
 absent → integrity differences only logged and exposed), `STOCK_MOVEMENT_WRITER` (stock ledger; absent → direct stock
 setting unavailable), `OPEN_ITEM_ALLOCATOR` (`payment` plugin; absent → no advances or "settled now"),
 `SALES_PARTY_GUARD` (`sales-order-management`; absent → credit policy "warn" only), the order plugin's

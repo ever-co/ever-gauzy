@@ -92,13 +92,13 @@ shared by all organizations of the tenant. References into other plugins (`ledge
 | Table | Columns (besides base) | Indexes and uniqueness |
 | --- | --- | --- |
 | `bank` | `name`, `bic` varchar(11), `countryCode`, `address` text, `website`, `defaultMappingTemplateId` (a `data_mapping_template` of `data-exchange`), `facilityLimit`, `facilityCurrency` | unique `(tenantId, bic)` live where `bic` set |
-| `bank_account` | `name`, `bankId` FK, `branch`, `kind` varchar(16), `currency`, `numberType` (`IBAN`, `LOCAL`), `numberCipher` text, `numberMask` varchar(8), `numberHash` varchar(64), `bic`, `ledgerAccountId`, `isDefault`, `isEnabled`, `openingBalance`, `openingDate`, `automationLevel` (`SUGGEST`, `AUTO_EXACT`, `AUTO_RULES`), `autoMatchConfidence` int, `mappingTemplateId`, `statementSecretRef`, `feedCursor` text, `lowBalanceThreshold`, `bankBalance`, `bankBalanceAt`, `lastStatementDate` | unique `(organizationId, numberHash)` live; unique partial `(organizationId, currency)` where `isDefault`; unique `(organizationId, ledgerAccountId)` live |
-| `party_bank_account` | `partyType` (`CONTACT`, `VENDOR`, `EMPLOYEE`), `partyId`, `holderName`, number triple as above, `bic`, `bankId`, `bankName`, `countryCode`, `currency`, `isDefault`, `isEnabled`, `source` (`MANUAL`, `LEARNED`), `verificationStatus` (core `PaymentAccountVerificationStatus`), `verifiedBy` (`MATCH`, `USER`), `verifiedById`, `verifiedAt`, `paymentMethodTokenId` null (the provider instrument, when the same account is also saved at a payment provider), `numberChangedAt`, `numberChangedById` | index `(tenantId, numberHash)`; `(partyType, partyId)` |
+| `bank_account` | `name`, `bankId` FK, `branch`, `kind` varchar(16), `currency`, `numberType` (`IBAN`, `LOCAL`), `numberCipher` text, `numberMask` varchar(8), `numberHash` varchar(64), `bic`, `ledgerAccountId`, `isDefault`, `isEnabled`, `openingBalance`, `openingDate`, `automationLevel` (`SUGGEST`, `AUTO_EXACT`, `AUTO_RULES`), `autoMatchConfidence` int, `mappingTemplateId`, `statementSecretRef`, `feedCursor` text, `lowBalanceThreshold`, `bankBalance`, `bankBalanceAt`, `lastStatementDate`, `changeSeq` bigint default 0 (the account-wide change sequence of its lines, §5) | unique `(organizationId, numberHash)` live; unique partial `(organizationId, currency)` where `isDefault`; unique `(organizationId, ledgerAccountId)` live |
+| `party_bank_account` | `partyType` (`CONTACT`, `VENDOR`, `EMPLOYEE`) and `partyId` (both null only while the row is a candidate, §3.1), `candidateExpiresAt` timestamptz null, `holderName`, number triple as above, `bic`, `bankId`, `bankName`, `countryCode`, `currency`, `isDefault`, `isEnabled`, `source` (`MANUAL`, `LEARNED`), `verificationStatus` (core `PaymentAccountVerificationStatus`), `verifiedBy` (`MATCH`, `USER`), `verifiedById`, `verifiedAt`, `matchConfirmedAt` null (a bank line from this number matched the party: evidence for the verifier, §3.1), `paymentMethodTokenId` null (the provider instrument, when the same account is also saved at a payment provider), `numberChangedAt`, `numberChangedById` | index `(tenantId, numberHash)`; `(partyType, partyId)` |
 | `bank_statement` | `bankAccountId` FK, `source` (`FILE`, `LINK`, `FEED`, `MANUAL`), `dataImportRunId` null (the `data-exchange` run: counts, rejected-row file, mapping used, undo), `fileId`, `fileName`, `fileHash` varchar(64), `format`, `statementNumber`, `periodStart`, `periodEnd`, `openingBalance`, `closingBalance`, `totalIn`, `totalOut`, `status`, `balanceGap` | unique `(bankAccountId, fileHash)` live; index `(bankAccountId, periodEnd)` |
-| `bank_transaction` | `bankAccountId` FK, `statementId`, `source`, `externalId`, `fingerprint` varchar(64), `bookingDate`, `valueDate`, `amount` (signed), `currency`, `feeAmount`, `description` text, `reference`, `endToEndReference`, `counterpartyName`, `counterpartyNumberHash`, `counterpartyNumberMask`, `counterpartyBankCode`, `transactionCode`, `runningBalance`, `state`, `matchedAmount`, `partyType`, `partyId`, `partyRecognition` varchar(16), `excludedReason`, `isManual`, `parentTransactionId`, `checkpointId`, `claimedById`, `claimedUntil`, `version` int | unique `(bankAccountId, fingerprint)` live; indexes `(organizationId, bankAccountId, state, bookingDate)`, `(bankAccountId, externalId)`, `(tenantId, counterpartyNumberHash)`, `(endToEndReference)` |
+| `bank_transaction` | `bankAccountId` FK, `statementId`, `source`, `externalId`, `fingerprint` varchar(64), `bookingDate`, `valueDate`, `amount` (signed), `currency`, `feeAmount`, `description` text, `reference`, `endToEndReference`, `counterpartyName`, `counterpartyNumberHash`, `counterpartyNumberMask`, `candidatePartyBankAccountId` uuid null (§3.1: the candidate row of a number that matches no known account), `counterpartyBankCode`, `transactionCode`, `runningBalance`, `state`, `matchedAmount`, `partyType`, `partyId`, `partyRecognition` varchar(16), `excludedReason`, `isManual`, `parentTransactionId`, `checkpointId`, `claimedById`, `claimedUntil`, `version` int, `changeSeq` bigint (stamped from `bank_account.changeSeq` on every write, §5) | unique `(bankAccountId, fingerprint)` live; indexes `(organizationId, bankAccountId, state, bookingDate)`, `(bankAccountId, changeSeq)`, `(bankAccountId, externalId)`, `(tenantId, counterpartyNumberHash)`, `(endToEndReference)` |
 | `bank_match` | `bankTransactionId` FK, `counterpartType` (`PAYMENT`, `JOURNAL_LINE`, `BANK_TRANSACTION`, `SHIFT_DEPOSIT`, `PROVIDER_PAYOUT`, `FEE`, `EXCHANGE_DIFFERENCE`), `counterpartId`, `amount`, `counterpartAmount`, `counterpartCurrency`, `exchangeRate`, `origin` (`USER`, `AUTO_EXACT`, `RULE`, `AGENT`), `ruleId`, `confidence`, `reasons` text, `createdCounterpart` boolean, `clearedDate`, `matchedById`, `matchedAt`, `reversedAt`, `reversedById` | unique `(bankTransactionId, counterpartType, counterpartId)` where not reversed; index `(counterpartType, counterpartId)` |
-| `bank_rule` | `name`, `priority`, `isEnabled`, `mode` (`PROPOSE`, `AUTO`), `outcome` (`JOURNAL`, `PAYMENT`, `TRANSFER`, `ANNOTATE`, `EXCLUDE`), `outcomeConfig` text, `source` (`USER`, `PROPOSED`), `hitCount`, `acceptedCount`, `lastHitAt`; conditions are core `rule` rows (`ownerType = BANK_RULE`, `ownerId` = this row) | unique `(organizationId, priority)` live; at most 500 rules per organization |
-| `bank_rule_run` | `ruleId` FK, `bankTransactionId`, `outcome` (`PROPOSED`, `APPLIED`, `SKIPPED`, `FAILED`, `UNDONE`), `details` text | unique `(ruleId, bankTransactionId)` |
+| `bank_rule_action` (the part of a bank rule that is not a condition: name, order, mode, action and counters) | `name`, `priority`, `isEnabled`, `mode` (`PROPOSE`, `AUTO`), `outcome` (`JOURNAL`, `PAYMENT`, `TRANSFER`, `ANNOTATE`, `EXCLUDE`), `outcomeConfig` text, `source` (`USER`, `PROPOSED`), `hitCount`, `acceptedCount`, `lastHitAt`; conditions are core `rule` rows (`ownerType = BANK_RULE`, `ownerId` = this row) | unique `(organizationId, priority)` live; at most 500 rules per organization |
+| `bank_rule_application` (one application of a rule to a bank line, read by undo and the counters; a pass over many lines is the `banking.match` worker or a core operation) | `ruleId` FK (`bank_rule_action`), `bankTransactionId`, `outcome` (`PROPOSED`, `APPLIED`, `SKIPPED`, `FAILED`, `UNDONE`), `details` text | unique `(ruleId, bankTransactionId)` |
 | `bank_match_memory` | `keyType` (`ACCOUNT`, `NAME`, `REFERENCE_SHAPE`, `WORDS`), `keyHash`, `partyType`, `partyId`, `ledgerAccountId`, `counterpartKind`, `confirmations`, `rejections`, `lastSeenAt` | unique `(organizationId, keyType, keyHash, partyType, partyId, ledgerAccountId, counterpartKind)` |
 | `bank_match_proposal` | `batchId`, `bankTransactionId`, `kind` (`MATCH`, `RULE`), `payload` text, `confidence`, `reasons` text, `origin` (`ENGINE`, `AGENT`), `status` (`OPEN`, `ACCEPTED`, `REJECTED`, `EXPIRED`), `dismissedUntil` | index `(organizationId, status, batchId)` |
 | `bank_reconciliation_checkpoint` | `bankAccountId` FK, `statementDate`, `statementBalance`, `bookBalance`, `clearedBalance`, `difference`, `differenceReason`, `status` (`CLOSED`, `REOPENED`), `closedById`, `closedAt`, `reopenedById`, `reopenedAt`, `reopenReason`, `reportFileId` | unique `(bankAccountId, statementDate)` live |
@@ -123,7 +123,8 @@ shared by all organizations of the tenant. References into other plugins (`ledge
 ### 3.1 Party bank details: the single store
 
 The bank details of customers, suppliers and employees are stored once, here, in `party_bank_account`. Nothing else
-in the platform keeps an account number: payments (payee details, direct-debit sources), payroll (salary bank
+in the platform keeps an account number (the number of an unknown account on a bank line is a candidate row of
+this same table, below): payments (payee details, direct-debit sources), payroll (salary bank
 files) and HR (employee pay accounts) read and change them only through the port `PARTY_BANK_ACCOUNTS`.
 
 - **Encryption at rest**: `numberCipher` is written and read only through the core `EncryptionService`; the keyed
@@ -142,7 +143,18 @@ files) and HR (employee pay accounts) read and change them only through the port
   `BANK_ACCOUNT_NUMBERS_EXPORT` keeps the cipher text (re-encrypted on import), any other export blanks it.
 - **Change control**: a new or changed number sets `verificationStatus = PENDING`, stamps `numberChangedAt`, notifies
   the party's owner and needs a second person's verification (`VERIFIED`) before a payment order uses it (spec
-  FR-11); a match from a bank line can verify with `verifiedBy = MATCH`.
+  FR-11). A match from a bank line never replaces that verification: it stamps `matchConfirmedAt`, shown to the
+  verifier as evidence, and sets `VERIFIED` with `verifiedBy = MATCH` only for an account whose number did not change
+  within the change-control window; within the window only a person other than the one who changed the number sets
+  `VERIFIED` (`verifiedBy = USER`).
+- **Numbers of unknown accounts**: a bank line whose counterparty number matches no party bank account and no bank
+  account writes the number once, into the single store, as a candidate row of `party_bank_account` (`partyType` and
+  `partyId` null, `isEnabled = false`, `source = LEARNED`, `candidateExpiresAt` set from the proposal period, default
+  90 days) and keeps only `candidatePartyBankAccountId` on the line. A candidate is never offered for a payment, never
+  listed among a party's accounts and never returned by a route. Accepting the FR-10 proposal fills its party and
+  enables it, even when a feed delivered the number only once; a rejected or expired candidate is removed by the daily
+  sweep, and a candidate whose `numberHash` appears on a party bank account is merged into that account. No account
+  number is kept outside `party_bank_account` and `bank_account`.
 - **Code rule**: the comments that say "never a bank account number, an IBAN" on
   `packages/contracts/src/lib/payment-account-holder.model.ts` (line 94),
   `packages/core/src/lib/payment-account-holder/payment-account-holder.entity.ts` (line 142) and
@@ -157,7 +169,8 @@ In `packages/plugins/banking/src/lib/database/migrations/`, with the shared core
 
 1. `1791000077100-CreateBankingMasterTables` — `bank`, `bank_account`, `party_bank_account`.
 2. `1791000077110-CreateBankStatementTables` — `bank_statement`, `bank_transaction`, `bank_match`, `bank_balance`.
-3. `1791000077120-CreateBankRuleTables` — `bank_rule`, `bank_rule_run`, `bank_match_memory`, `bank_match_proposal`.
+3. `1791000077120-CreateBankRuleTables` — `bank_rule_action`, `bank_rule_application`, `bank_match_memory`,
+   `bank_match_proposal`; rule conditions are core `rule` rows, so no condition table is created.
 4. `1791000077130-CreateBankCheckpointAndGuaranteeTables` — `bank_reconciliation_checkpoint`, `bank_guarantee`.
 5. `1791000077140-CreateBankConnectionTables` — `bank_connection`, `bank_payment_initiation`.
 
@@ -168,7 +181,7 @@ enum values are added to `RuleOwnerType`, `IntegrationEntity` and `BaseEntityEnu
 
 `packages/contracts/src/lib/banking.model.ts`: enums for kinds, states, origins, outcomes, automation levels and
 connection states; `IBank`, `IBankAccount`, `IPartyBankAccount`, `IBankStatement`, `IBankTransaction`, `IBankMatch`,
-`IBankSuggestion`, `IBankRule`, `IBankRuleRun`, `IBankMatchProposal`, `IBankReconciliationCheckpoint`,
+`IBankSuggestion`, `IBankRule`, `IBankRuleApplication`, `IBankMatchProposal`, `IBankReconciliationCheckpoint`,
 `IBankBalance`, `IBankConnection`, `IBankPaymentInitiation`, `IBankGuarantee`, `ICashForecast`; port shapes
 `IBankProvider`, `IBankCounterpartSource`, `IBankPaymentGateway`, `IBankJournalGateway`, `IBankOpenItemSearch`,
 `IPartyBankAccounts` (list masked, get default per party and currency, read full number with purpose, create,
@@ -197,7 +210,7 @@ routes on a transaction take its `version` and answer `409 BANK_LINE_CHANGED` wh
 | `POST` | `/bank-reconciliation/clear` | `BANK_RECONCILE` | mark entries cleared with a date (no statement) | New |
 | `GET` | `/bank-reconciliation/:bankAccountId/summary` | `BANK_TRANSACTIONS_VIEW` | bank, book, cleared balances, counts | New |
 | `GET` `POST` | `/bank-checkpoints` (+ `/:id/reopen`, `GET /:id/statement`) | `BANK_TRANSACTIONS_VIEW` / `BANK_RECONCILE_CLOSE` | checkpoints, printable statement | New |
-| `GET` `POST` `PUT` `DELETE` | `/bank-rules` (+ `PUT /order`, `POST /preview`, `POST /:id/run`, `GET /:id/runs`, `POST /runs/:runId/undo`) | `BANK_RULES_VIEW` / `_EDIT` | rules with their `rule` rows, preview on history, log | New |
+| `GET` `POST` `PUT` `DELETE` | `/bank-rules` (+ `PUT /order`, `POST /preview`, `POST /:id/run` (`202` with the core operation `BANKING_RULE_RUN` over past lines), `GET /:id/applications`, `POST /applications/:applicationId/undo`) | `BANK_RULES_VIEW` / `_EDIT` | rules with their `rule` rows, preview on history, application log | New |
 | `GET` `POST` | `/bank-proposals` (+ `POST /accept`, `/reject`), `DELETE /bank-match-memory` | `BANK_RECONCILE` / `BANK_RULES_EDIT` | proposals; reset of what was learned | New |
 | `GET` | `/bank-providers` | `BANK_FEEDS_MANAGE` | installed providers with countries and capabilities (also listed in the Integrations catalogue) | New |
 | `GET` `POST` `DELETE` | `/bank-connections` (+ `POST /:id/consent`, `/:id/accounts/link`, `/:id/sync`, `GET /:id/runs`) | `BANK_FEEDS_MANAGE` | connect, link (`integration_map`), sync, log (`job_execution` rows of the connection) | New |
@@ -245,8 +258,12 @@ With a port unbound the matching capability reports itself unavailable (for exam
 | `banking.party_bank_account.changed` / `.verified` | a party number is added, changed or verified | inbox item to the party's owner and to verifiers, payments (order guard) |
 | `payments.*`, `accounting.journal.posted` (in) | counterpart created or cancelled elsewhere | candidate cache invalidation; unmatch on cancellation |
 
-Realtime: channel `banking:account:<id>` carries presence, claims and line versions; after a reconnect the client
-asks for lines changed since its last version. Inbox items through `INBOX_ITEM_WRITER`.
+Realtime: channel `banking:account:<id>` carries presence, claims, line versions and the account's change sequence;
+after a reconnect the client asks `GET /bank-transactions?bankAccountId=&changedAfter=<changeSeq>` for the lines of the
+account written after the last sequence it saw. `bank_account.changeSeq` is one monotonic counter per account: every
+write to a line of the account increments it under the account row lock in the line's transaction and stamps the line's
+`changeSeq`, so commits follow the sequence and no line written while the client was away is missed, whatever its own
+`version`. Inbox items through `INBOX_ITEM_WRITER`.
 
 ## 6. UI Surface
 
@@ -294,7 +311,8 @@ masters and rules through `data-import-export`. File formats in: CSV, XLSX, MT94
 | `data-exchange` import run, profile `banking.transactions` | import started | read in chunks of 1,000 (engine for delimited and spreadsheet, banking readers for structured formats), validate, dedupe by fingerprint, statement facts, continuity check | file hash and line fingerprint |
 | `banking.sync.sweep` (schedule, every 5 min) | due connections | enqueues one sync per connection | `job_execution` live run per `banking.sync.<connectionId>` |
 | `banking.sync` worker | sweep, manual, notice | provider read from `bank_account.feedCursor`, upsert by `externalId`, balances, `job_execution` row with counters | cursor and `externalId` |
-| `banking.match` worker | after import or sync; hourly sweep | exact auto-matches, rules, proposals | `bank_rule_run` unique key; match unique key |
+| `banking.match` worker | after import or sync; hourly sweep | exact auto-matches, rules, proposals | `bank_rule_application` unique key; match unique key |
+| core operation `BANKING_RULE_RUN` | `POST /bank-rules/:id/run` | applies one rule to past lines in steps of 500, one `bank_rule_application` per line | operation idempotency key; `bank_rule_application` unique key |
 | `banking.balances.daily` | daily 01:00 organization time | writes `bank_balance` rows, flags gaps | `(account, date)` |
 | `banking.guarantees.daily` | daily | marks guarantees expired on their end date (reminders are `reminder` rows) | per guarantee and day |
 | `banking.connections.daily` | daily | moves expired consents to "expired" (reminders are `reminder` rows) | per connection and day |

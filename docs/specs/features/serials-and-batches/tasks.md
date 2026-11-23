@@ -65,12 +65,13 @@
   and template), outward suggestion, validation (FR-19). Files: `lst/lot-serial-bundle/lot-serial-bundle.service.ts`,
   `lst/lot-serial-bundle/bundle-validation.ts`, `lst/lot-serial-bundle/bundle-import.ts`. Test: validation spec with
   every refusal reason.
-- [ ] **T10**. Movement hook bound to `STOCK_MOVEMENT_HOOKS`: validate before (lot balance derived from confirmed
-  entries and checked under the level lock), then serial statuses, entry `movementId` and `signedQuantity`, and trace
+- [ ] **T10**. Movement hook bound to `STOCK_MOVEMENT_HOOKS`: validate before (lot balance derived from posted
+  entries, those of canceled originals and their reversals included, and checked under the level lock), then serial statuses, entry `movementId` and `signedQuantity`, and trace
   links after, in the movement transaction; cancellation reversal by a reversing bundle. Files:
   `lst/hooks/lot-serial-movement.hook.ts`, `lst/lot-serial-bundle-entry/lot-balance.reader.ts`,
   `lst/trace-link/trace-link.writer.ts`. Test: SQLite spec through `applyMovement` (receipt, issue, transfer, return,
-  repack split, production output, cancel; derived balance equals the expected per bin).
+  repack split, production output, cancel; derived balance equals the expected per bin; a canceled receipt of 10 gives
+  a balance of zero, not −10).
 - [ ] **T11**. Picker bound to `STOCK_LOT_PICKER`: first expiry, first in or last in first out on derived lot
   balances less the active reservations naming the lot; exclusions; used by pick lists, deliveries, transfers, issues
   and consumption. Files: `lst/picking/lot-picker.ts`. Test: selection spec on fixtures.
@@ -97,8 +98,10 @@
 - [ ] **T18**. Integrity checks contributed to the valuation monitor (item quantity equals the sum of derived lot
   balances, serial counts, orphans, negative lots, bundles versus movements, serial-valued costs). Files:
   `lst/checks/lot-serial-integrity.checks.ts`. Test: one spec per check with a seeded issue.
-- [ ] **T19**. Quality consumer: `quality.inspection.decided` sets the lot status with the inspection as source.
-  Files: `lst/quality/inspection-decided.consumer.ts`. Test: consumer spec (duplicate delivery once).
+- [ ] **T19**. Quality binding: `QUALITY_LOTS.setStatus` bound in `apps/api/src/plugin-composition.ts` to the lot status
+  service, which sets the lot status with the inspection as source inside the decision's transaction.
+  Files: `lst/quality/quality-lot-status.binding.ts`, `apps/api/src/plugin-composition.ts`. Test: binding spec (one
+  history entry when an inspection's status is set twice; a rolled-back decision leaves the status unchanged).
 - [ ] **T20**. Controllers and DTOs for all routes of plan §4; additive `bundle` field on inventory, purchasing,
   warehouse, returns and fulfillment line DTOs. Files: `lst/item-tracking-policy/item-tracking-policy.controller.ts`,
   `lst/stock-lot/stock-lot.controller.ts`, `lst/serial-unit/serial-unit.controller.ts`,

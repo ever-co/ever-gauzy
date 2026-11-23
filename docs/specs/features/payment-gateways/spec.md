@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-16
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_PAYMENT_GATEWAY` (existing code, default off, depends on `FEATURE_PAYMENT`) · the
 gateway modules load only when `GAUZY_PAYMENT_GATEWAYS_ENABLED` is exactly `true` · each provider adapter plugin has
 its own `PAYMENT_PROVIDER_<KEY>_ENABLED` · provider callback routes are never hidden by the tenant feature
@@ -166,7 +166,9 @@ insights** explain failure spikes by provider, method and reason to people and a
 - **FR-32** The system processes each callback once by the provider's event id, in the background, and answers the
   provider at once.
 - **FR-33** The system applies outcomes to sessions, captures, refunds, disputes, instruments, mandates and payouts in
-  order of the provider's event time, ignoring an older state after a newer one.
+  order of the provider's event time, ignoring an older state after a newer one. A money movement (a capture, refund,
+  dispute amount or payout line) is applied once by its provider identity whatever its event time, so a partial
+  capture reported after a later one still reaches collections; the event-time order decides only the state shown.
 - **FR-34** A user with `PAYMENT_CALLBACKS_REPROCESS` can reprocess a failed or ignored callback from the screen; a
   processed one needs the existing force option.
 - **FR-35** The system alerts payment administrators when callbacks of an account fail five times in a row or stop for
@@ -321,7 +323,7 @@ insights** explain failure spikes by provider, method and reason to people and a
   returned; signatures verified; result pages expose only the payer's own checkout. Leaves the platform: amounts,
   currency, payer name, email and billing address to the chosen provider; evidence packs when a person submits them.
 - **Auditability**: who, when, before and after for accounts, routing rules, refunds, captures, dispute answers and payouts.
-- **Accessibility and localisation**: result pages and embedded forms in the payer's language, keyboard operable.
+- **Accessibility and localization**: result pages and embedded forms in the payer's language, keyboard operable.
 - **Compatibility**: PostgreSQL, MySQL, SQLite; both ORMs; cloud and self-hosted, with or without a queue; OpenAPI
   additive; SDKs regenerated.
 
@@ -358,7 +360,7 @@ insights** explain failure spikes by provider, method and reason to people and a
       `payments-and-collections`; a late bank-redirect callback alone records it (FR-22, FR-23).
 - [ ] **AC-3** The signed connector works as an adapter exactly as today's invoice connector (FR-15).
 - [ ] **AC-4** Currency, minimum and maximum checks refuse before the payer leaves; a phone prompt splits above its limit (FR-10, FR-26).
-- [ ] **AC-5** Duplicate and out-of-order callbacks change state once and in event order; a bad signature changes nothing (FR-32, FR-33).
+- [ ] **AC-5** Duplicate and out-of-order callbacks change state once and in event order, and every distinct capture or refund counts once even when reported out of order; a bad signature changes nothing (FR-32, FR-33).
 - [ ] **AC-6** Authorise then capture in parts works; uncaptured authorisations are voided at the window's end (FR-37, FR-38).
 - [ ] **AC-7** A saved card and a direct debit mandate are set up, charged off-session for a subscription cycle, and an
       expired instrument is refused before the provider is called (FR-41, FR-47).

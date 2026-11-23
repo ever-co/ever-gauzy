@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-15
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_PRICING`, `FEATURE_PROMOTION` (existing tenant features, default on; from now on read by
 a guard on every pricing and promotion route and by the menu), `FEATURE_PRICE_TIERS`, `FEATURE_MULTI_CURRENCY`,
 `FEATURE_GIFT_CARDS` (existing, default off, now read) and `FEATURE_PRICING_RULES` (new, default off: every
@@ -285,7 +285,7 @@ a basket close to a rule's threshold receives a nudge ("add 2 more to get 10 % o
 - **Security & privacy**: tenant and organization scoped; AI proposals send aggregated prices and margins only to the
   organization's configured AI provider; overrides audited.
 - **Observability**: per-call metrics (lines priced, rules evaluated, latency); override and price history.
-- **Accessibility and localisation**: keyboard-operable grids and dialogs; translation keys in every locale; amounts
+- **Accessibility and localization**: keyboard-operable grids and dialogs; translation keys in every locale; amounts
   in the user's locale format.
 - **Compatibility**: PostgreSQL, MySQL, SQLite; both ORMs; additive migrations; cloud and self-hosted.
 

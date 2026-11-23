@@ -314,7 +314,7 @@
       `hrui/pages/sign/sign-page.component.ts`. Test: fingerprint mismatch refused; evidence page content; an outside
       signer signs once with an expired token refused.
 - [ ] **T51** (parallel). HR analytics data sources and snapshot (attrition, tenure, absence from time off, spans,
-      onboarding days, internal moves, digital workforce with usage cost). Files: `hr/analytics/hr-analytics.service.ts`,
+      onboarding days, internal moves, agent employees with usage cost). Files: `hr/analytics/hr-analytics.service.ts`,
       `hr/analytics/headcount-snapshot.job.ts`. Test: golden monthly series.
 - [ ] **T52**. Mutating MCP tools (`hr_event_record`, `hr_onboarding_start`, `hr_separation_start`,
       `hr_process_status`, `hr_settlement_preview`, `hr_settlement_confirm`, `hr_reorg_simulate`, `hr_analytics`)
@@ -340,10 +340,13 @@
       extension; a test extension appears in each slot.
 - [ ] **T57**. Provide the ports other features bind to (plan, **Consumer tokens answered**): `LEARNING_SKILL_RATINGS`, `PAYROLL_ACTIVE_EMPLOYEE`, `PAYROLL_HR_DIRECTORY`, `PERFORMANCE_SKILL_RATINGS`, `RECRUITMENT_ONBOARDING`, `WORKFLOW_HR_APPROVERS`, `WORKFLOW_REPORTING_LINE`. Files: `apps/api/src/plugin-composition.ts`. Test: one contract test per token over the shape its consumer plan states; with this feature off each consumer keeps its stated fallback.
 - [ ] **T60**. Agent employees in HR (FR-56): employees of kind agent are refused (`HR_AGENT_NOT_ALLOWED`) for personal
-      data, documents, reminders, onboarding, separation, grievances and settlements, and are listed in HR views only
-      under "agent employees" with their owner and usage cost from `ai-agents-and-assistants`. Files:
-      `hr/privacy/agent-exclusion.guard.ts`, `hr/analytics/agent-employees.query.ts`. Test: each refused path for an agent
-      employee; the agent employees list shows owner and cost, and agents are absent from other HR lists.
+      data, documents, reminders, onboarding, separation, grievances and settlements, and are listed under "agent
+      employees" with their owner and usage cost from `ai-agents-and-assistants`; with the feature on, the HR lists gain a
+      filter that leaves agents out, built on the existing employee `kind` filter of `core/employee/employee.service.ts`
+      and off by default. Files: `hr/privacy/agent-exclusion.guard.ts`, `hr/analytics/agent-employees.query.ts`,
+      `hrui/shared/agent-list-filter.component.ts`. Test: each refused path for an agent employee; the agent employees list
+      shows owner and cost; with the filter on, agents are absent from the other HR lists; with it off (the default) and
+      with the feature off, every list shows whom it shows today.
 
 ## Requirement Coverage
 

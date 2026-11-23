@@ -72,7 +72,8 @@
       flows' permissions (`connection/`). Files: `connection/commerce-connection.service.ts`,
       `connection/commerce-connection.controller.ts`, `connection/commerce-connection-settings.ts`,
       `connection/dto/create-commerce-connection.dto.ts`. Test: reconnect restores links; foreign organization refused;
-      a second connection for the same outside account and region refused.
+      a second connection for the same outside account and region refused, also without a region (`regionKey` `*`)
+      and when two creates race.
 - [ ] **T9**. Flows on hub sync jobs: one `integration_entity_setting` per flow (entity `commerce.<flowKey>`, hub columns,
       per-field rules in `fieldMap`), flow catalogue per manifest, triggers and intervals (kept in the connection
       settings), `INTEGRATION_SYNC` operations with cursors, one run at a time, pause after 10 failed runs with notice

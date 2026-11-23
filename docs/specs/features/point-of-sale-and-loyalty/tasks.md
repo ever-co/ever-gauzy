@@ -91,7 +91,9 @@
   `pos/receipt/receipt.service.ts`, `pos/receipt/receipt.controller.ts`, `pos/receipt/public-receipt.controller.ts`. [1]
 - [ ] **T15**. Returns: `/pos/sales/:id/returns` and `/pos/returns` through the returns port (one step), refund
   method rules, promotion reversal, loyalty reversal; specs. Files: `pos/return/pos-return.service.ts`,
-  `pos/return/pos-return.controller.ts`, `pos/return/refund-method.rules.ts`. [1]
+  `pos/return/pos-return.controller.ts`, `pos/return/refund-method.rules.ts`. Test: a return and a second partial return
+  of one order are recorded beside its sale row (`saleOrderId` null on returns); a second sale row for the order is
+  refused. [1]
 - [ ] **T16**. Closing document: summary computation, number, `document.pos_shift_closing.confirmed` on the outbox,
   covered sales, correction closing job for late sales; specs proving no sale is covered twice. Files:
   `pos/closing/shift-closing.service.ts`, `pos/closing/closing-summary.ts`, `pos/closing/correction-closing.processor.ts`. [1]
@@ -119,7 +121,8 @@
 - [ ] **T23**. Custom checkout fields and search fields per register; specs. Files: `pos/register/register-fields.service.ts`,
   `posui/register/checkout-fields.component.ts`. [2]
 - [ ] **T24**. Expiry policies, daily expiry and reminder jobs, `loyalty.points.expiring` event; specs. Files:
-  `loy/ledger/points-expiry.job.ts`, `loy/ledger/expiry-reminder.job.ts`, `loy/ledger/expiry-policy.ts`. [2]
+  `loy/ledger/points-expiry.job.ts`, `loy/ledger/expiry-reminder.job.ts`, `loy/ledger/expiry-policy.ts`. Test: two earned
+  entries of one member due on the same date both expire (`expire:<earnEntryId>`); a rerun of the day writes nothing. [2]
 - [ ] **T25**. Reservations for carts with expiry and cart-event release; earning on fully paid invoices (`document.payment.confirmed`); bonus rules
   with campaign windows; reports item sales by register and members by tier; specs. Files:
   `loy/ledger/loyalty-reservation.service.ts`, `loy/events/invoice-paid.consumer.ts`, `loy/programme/bonus-rules.ts`,

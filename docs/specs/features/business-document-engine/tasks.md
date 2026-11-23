@@ -20,8 +20,9 @@
   `packages/plugins/business-documents-ui/src/lib/`.
 - Gate: every route, GraphQL field, menu entry, job, consumer and MCP tool of these tasks is gated by
   `FEATURE_BUSINESS_DOCUMENTS` (`@FeatureFlag` + `FeatureFlagGuard`); the core tasks T61 and T62 carry no gate and keep
-  today's behaviour; the numbering page lists plain core sequences under `SEQUENCES_VIEW` and adds document series only
-  with the feature on.
+  today's behaviour; the core `/api/sequences` routes stay available under `SEQUENCES_VIEW` / `SEQUENCES_EDIT` whatever
+  the flag; the numbering page (new, behind the flag like every menu entry here) lists plain core sequences under
+  `SEQUENCES_VIEW` beside the document series.
 - Plan phase 1 is T1 to T17 with T41 (numbering screen over every core sequence), T61 and T62; phase 2 is T18 to T33 with T42; phase 3
   is T34 to T40 with T43 to T47; phase 4 (advanced) is T48 to T55; T56 to T59 belong to phase 2.
 - Owners register their types in their own specs' tasks; T17 gives them the contract-test kit first.
@@ -269,9 +270,11 @@
 - [ ] **T55**. Real-time state hints for document lists and the progress event (FR-110). Files: `bd/events/document-state-realtime.publisher.ts`. Test:
   `bd/events/document-state-realtime.publisher.spec.ts` hint spec.
 - [ ] **T56**. Chain cancellation: `cancel` with `withDependents` and `preview`, dependency order leaves first,
-  permission on every member, limit of 100, all or nothing (FR-13). Files: `bd/lifecycle/chain-cancel.service.ts`. Test:
+  permission on every member, limit of 100, all or nothing in one transaction whose manager every `adapter.perform`
+  joins (FR-13). Files: `bd/lifecycle/chain-cancel.service.ts`. Test:
   `bd/lifecycle/chain-cancel.service.db.spec.ts`, a SQLite spec of order, delivery and invoice
-  cancelled together; one missing permission refuses the whole chain.
+  cancelled together; one missing permission refuses the whole chain; an owner refusing the last member's
+  cancellation rolls back the cancellations of the members before it.
 - [ ] **T57**. Amendment of cancelled documents (FR-70). Files: `bd/change-sets/amendment.service.ts`. Test:
   `bd/change-sets/amendment-of-cancelled.db.spec.ts`: copy linked to the cancelled original, which stays
   cancelled; suffix naming.

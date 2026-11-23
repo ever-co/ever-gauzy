@@ -70,8 +70,8 @@
   theme switch spec on fixtures.
 - [ ] **T12**. Media: uploads as hub files in the deck media folder (`folderFor`, `DOCS_RECORD_FILES.attach`), served by
   the deck's media route, `slides.media` queue (optimised images, poster frames), SVG
-  sanitising, limits. Files: `sl/media/deck-media.service.ts`, `sl/media/deck-media.controller.ts`,
-  `sl/media/slides-media.worker.ts`, `sl/media/svg-sanitiser.ts`. Test: oversize refused; SVG script removed; a non-reader gets `404` on media.
+  sanitizing, limits. Files: `sl/media/deck-media.service.ts`, `sl/media/deck-media.controller.ts`,
+  `sl/media/slides-media.worker.ts`, `sl/media/svg-sanitizer.ts`. Test: oversize refused; SVG script removed; a non-reader gets `404` on media.
 - [ ] **T13**. Thumbnails: `slides.thumbnails` queue through the renderer, `slide_thumbnail`, cover through the kind's `thumbnail`, route.
   Files: `sl/thumbnails/slide-thumbnail.service.ts`, `sl/thumbnails/slides-thumbnails.worker.ts`,
   `sl/thumbnails/slide-thumbnail.controller.ts`. Test: a changed slide re-renders once per revision; the cover follows slide 1.

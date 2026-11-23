@@ -94,7 +94,9 @@
   Files: `sh/workbook/{sheet-file-kind.ts,workbook.service.ts,workbook.controller.ts,workbook-limits.ts,dto/}`,
   `sh/graphql/{schema-extensions.ts,resolvers/workbook.resolver.ts}`. Test: `sh/workbook/workbook.controller.spec.ts`
   e2e (permissions through the hub, `404` with the feature off, limit refusals, the last visible sheet cannot be hidden
-  or deleted); `sh/workbook/sheet-file-kind.spec.ts`: `extractText` gives the cells to search; every existing hub
+  or deleted; an edit saved seconds before the feature is switched off is in the XLSX copy then downloaded; a stale copy
+  is rendered at shutdown); `sh/workbook/sheet-file-kind.spec.ts`: `extractText` gives the cells to search; the shared
+  copy holds no reader's live rows; every existing hub
   route keeps working for an uploaded spreadsheet that is not opened.
 - [ ] **T13**. Range service and controller: read (values, formulas, text), write with `expectedRevision` and `preview`,
   merged into open sessions through `DOCS_LIVE_SESSIONS`. Files: `sh/ranges/{range.service.ts,range.controller.ts,dto/}`.
@@ -107,7 +109,8 @@
   `sheets.import`, `sheets.export`; automatic version before an import; CSV through `spreadsheet-safe-row.ts`. Files:
   `sh/import-export/{workbook-import.service.ts,workbook-export.service.ts,import-export.controller.ts,sheets-import.operation.ts,sheets-export.operation.ts}`,
   `packages/core/src/lib/export-import/spreadsheet-safe-row.ts` (used unchanged). Test: `sh/import-export/import-export.controller.spec.ts` e2e
-  for each format; a 100,000-row CSV runs in the background; injection cells neutralised; import as new sheets leaves existing sheets unchanged.
+  for each format; an export with live ranges carries the requester's rows and leaves the shared blob unchanged; a
+  100,000-row CSV runs in the background; injection cells neutralised; import as new sheets leaves existing sheets unchanged.
 - [ ] **T16**. Events `sh/events/` (`sheets.*` through the outbox), realtime hints `sheet:<documentId>`, notification
   categories; `DOCS_LIVE_SESSIONS.onAccessChanged` handling (trash pauses, restore resumes). Files:
   `sh/events/{sheets.events.ts,sheets-realtime.publisher.ts,sheets-access.listener.ts,index.ts}`,
@@ -227,7 +230,9 @@
   `LIVE`; owner notice after three failures; `sheets.result-expiry`. Files: `sh/jobs/{live-refresh-tick.job.ts,result-expiry.job.ts}`,
   `sh/live-ranges/sheets-live-ranges.subscriber.ts`, `sh/schedule/sheets-schedule.plugin.ts`. Test:
   `sh/live-ranges/sheets-live-ranges.subscriber.spec.ts`: a dataset event refreshes an open `LIVE`
-  range; `sh/jobs/live-refresh-tick.job.spec.ts`: three failures notify once; results reused for 5 minutes on open.
+  range; `sh/jobs/live-refresh-tick.job.spec.ts`: three failures notify once; results reused for 5 minutes on open; a scheduled
+  refresh of a reader's hash uses that reader's access, never the owner's, and a hash whose reader's access changed is
+  dropped.
 - [ ] **T40**. Lineage route and panel; freeze with `confirmAudience` and the tenant switch. Files:
   `sh/live-ranges/{lineage.service.ts,lineage.controller.ts,live-range-freeze.service.ts}`, `react/panels/lineage-panel.tsx`.
   Test: `sh/live-ranges/lineage.service.spec.ts`: lineage drill link opens

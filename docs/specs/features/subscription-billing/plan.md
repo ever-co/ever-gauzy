@@ -59,11 +59,11 @@ flowchart LR
 | Concern | Choice | Rationale |
 | ------- | ------ | --------- |
 | Package | `packages/plugins/subscription` (existing), `subscription-ui` (new, Angular), `subscription-react-ui` (new, portal blocks of `customer-and-supplier-portal`) | Principle I; build on what exists |
-| Flags | `FEATURE_SUBSCRIPTION` on every controller (already there); `FEATURE_SUBSCRIPTION_BILLING` (declared in `commerce-feature-catalogue.ts`, read by nothing today) read by the schedule consumer and by the automatic-charge branch; the schedule also needs the organization setting `subscription.scheduledRun` (off by default) | wire the existing code instead of adding one; no tenant is billed on a schedule it did not choose |
+| Flags | `FEATURE_SUBSCRIPTION` on every controller (already there); `FEATURE_SUBSCRIPTION_BILLING` (declared in `commerce-feature-catalogue.ts`, read by nothing today) read by the schedule consumer, which alone it gates: with the flag off nothing is billed on a schedule, while a person's bill of a cycle (`POST /subscriptions/:id/bill`) or run (`POST /subscriptions/billing-run`) keeps the automatic settler's order-and-charge path for an automatically collected subscription, as today; the schedule also needs the organization setting `subscription.scheduledRun` (off by default) | wire the existing code instead of adding one; no tenant is billed on a schedule it did not choose |
 | Settlement | strategy per cycle: `AUTOMATIC` → existing `ISubscriptionOrderGatewayPort.raiseSubscriptionOrder`, then, where `subscription.invoiceAutomaticCycles` is on (off by default), the order-invoice bridge; `INVOICE` → new `ISubscriptionInvoicingPort.raiseCycleInvoice` | one cycle code, two settlers; the existing path unchanged by default |
 | Idempotency | existing unique `(subscriptionId, periodStart)` and platform idempotency store; usage unique `(tenantId, meterId, idempotencyKey)` | spec FR-23, FR-43 |
 | Change preview | pure calculator shared by preview and apply; `previewToken` = signature over subscription id, `version`, input and result (secret from `@gauzy/config`), valid 15 minutes | spec FR-38 without a table |
-| Proration | existing proration code generalised to day-based units in `engine/proration.ts` | property-tested |
+| Proration | existing proration code generalized to day-based units in `engine/proration.ts` | property-tested |
 | Usage | append-only `usage_event`, incremental `usage_period_total` maintained by a queue worker; pricing in `engine/usage-pricing.ts` | intake stays fast |
 | Analytics | `subscription_metric_daily` built nightly and incrementally from `subscription_change` and cycles; reports as report definitions | no raw scans |
 | Background work | `@ScheduledJob` + `@QueueWorker`; `SubscriptionSchedulePlugin` in the worker, consumers in the API; in-process fallback | same split as invoice schedules |
@@ -238,7 +238,7 @@ are `reminder` rows of `automation-and-notifications` for the owner, moved when 
 | operation `SUBSCRIPTION_BILLING_RUN` | sweep or `POST /subscriptions/billing-run` | bills due cycles in steps of 100 subscriptions; resumes after interruption; counts and failures in the result | operation idempotency key; cycle key |
 | Outbox consumer `subscriber:subscription` | invoice overdue, paid, cancelled, credited | past due and back to current; holds and releases cycles (suspension and cancellation come from the dunning policy) | state transition guarded by version |
 | `subscription.changes.sweep` | hourly | applies scheduled changes and plan migrations that are due | change status `SCHEDULED` → `APPLIED` once |
-| `subscription.notices.sweep` | daily | customer notices (trial ending, renewal, price change) and old drafts | notice marker per subscription and kind |
+| `subscription.notices.sweep` | daily | customer notices (trial ending, renewal, price change) and old drafts | notice marker per subscription, kind and the date the notice announces (`<subscriptionId>:<kind>:<date>`: the renewal's period start, the trial end, the change's effective date), so each renewal of a yearly subscription gets its own notice and a repeated sweep none |
 | queue `subscription-usage` | on intake | updates `usage_period_total`, checks thresholds, interim invoices | event status; total recomputable from events |
 | `subscription.usage.sources` | every 15 min / daily | samples seats; pulls tracked-time totals for running periods | upsert by source key |
 | `subscription.metrics.daily` | nightly + on change | builds `subscription_metric_daily` | upsert on unique key |
@@ -291,7 +291,7 @@ the sweeps on in-process timers (the pattern of `invoice-schedule-inline.ts`).
 - V Contracts and API first: additive types, endpoints and GraphQL fields.
 - VI Permissions, privacy, security: four new keys; signed tokens; no instrument data.
 - VII Real-time through the event bus: outbox events; streamed events catalogue extended.
-- VIII i18n and accessibility: `SUBSCRIPTIONS.*` keys; localised notices.
+- VIII i18n and accessibility: `SUBSCRIPTIONS.*` keys; localized notices.
 - IX Tests: property tests for periods, proration and usage pricing; SQLite end-to-end for runs; existing suites kept.
 - X Behaviour-first spec: implementation lives here.
 - XI Documentation describes our platform only.

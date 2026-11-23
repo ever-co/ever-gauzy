@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-15
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_FINANCIAL_REPORTS` (default off)
 
 ---
@@ -66,7 +66,7 @@ Marked `(advanced)` below.
   refused listing the accounts, unless each is confirmed as deliberately left out.
 - **Given** a report over ten million postings that cannot answer in time, **when** it is run, **then** it runs in
   the background and the user is notified; nothing times out.
-- **Given** a consolidation where a member's period is open, **when** the run is finalised, **then** it is refused
+- **Given** a consolidation where a member's period is open, **when** the run is finalized, **then** it is refused
   naming the member; a draft run is allowed and marked provisional.
 - **Given** a missing exchange rate for a presentation currency, **when** a report needs it, **then** the report
   names the missing rate and shows no partial totals for that currency.
@@ -185,7 +185,7 @@ Marked `(advanced)` below.
 - **FR-47** The system lists inter-company mismatches (members whose mutual balances or turnover differ) with their
   documents, marks a run that has any, and can carry a difference to a consolidation-only line `(advanced)`.
 - **FR-48** The system computes non-controlling interest in result and equity from ownership `(advanced)`.
-- **FR-49** A user with `ACCOUNTING_CONSOLIDATION_MANAGE` can add consolidation-only adjustments, finalise a run
+- **FR-49** A user with `ACCOUNTING_CONSOLIDATION_MANAGE` can add consolidation-only adjustments, finalize a run
   (refused while a member's period is open) and rerun it as a new version; a final run is frozen and audited.
 - **FR-50** The system provides consolidated receivable and payable ageing and summaries over chosen organizations,
   grouped by organization or by party, with items between members left out on request.
@@ -228,7 +228,10 @@ Marked `(advanced)` below.
   item, item group, territory or project.
 - **FR-64** The system provides gross profit per invoice line (selling amount, valuation cost of the stock
   delivered, margin), grouped by invoice, item, item group, brand, stock location, customer, group, territory,
-  sales person, project, dimension, month or payment terms, with returns included or left out.
+  sales person, project, dimension, month or payment terms, with returns included or left out. The valuation cost
+  comes from the stock valuation of `stock-ledger-and-valuation`, which keeps its value layers with accounting on or
+  off; where stock valuation is not in use, the report shows the selling amounts and marks cost and margin as
+  unavailable with the reason.
 - **FR-65** The system takes, for a line billed from tracked time, the cost as tracked hours at each employee's
   cost rate, and offers revenue per tracked hour as a measure `(advanced)`.
 - **FR-66** The system provides the commission statement: commission owed per sales partner and sales person for
@@ -302,7 +305,7 @@ Marked `(advanced)` below.
   for "Explain", aggregated figures and document references (no bank or tax numbers) to the configured AI provider.
 - **Observability**: audit of layout publication, consolidation runs, adjustments, pack production, approval and
   delivery; metrics for report duration, background runs, live-update lag, verification drift.
-- **Accessibility and localisation**: statement grids are keyboard navigable (expand, collapse, drill) with
+- **Accessibility and localization**: statement grids are keyboard navigable (expand, collapse, drill) with
   screen-reader headers; layout labels, report names and assistant notes in the user's language; numbers per locale.
 - **Compatibility**: PostgreSQL, SQLite, MySQL; both ORMs; multi-tenant cloud and self-hosted; additive OpenAPI.
 
@@ -347,7 +350,8 @@ Marked `(advanced)` below.
 - [ ] **AC-3** Receivable and payable ageing "as on" a past date equal the control accounts on that date; outstanding amounts,
       balance movements and days to payment agree with them (FR-51, FR-52, FR-56).
 - [ ] **AC-4** Each document list, trend, margin and open billing report (FR-60 to FR-69) returns the expected rows with
-      accounting on and off.
+      accounting on and off; gross profit (FR-64) shows cost and margin wherever stock valuation is in use, and marks
+      them unavailable where it is not.
 - [ ] **AC-5** A cloned layout edited in the designer previews live figures; publishing with an unmapped account is
       refused until acknowledged; a past period uses the version in force (advanced; FR-37, FR-39–FR-41).
 - [ ] **AC-6** A three-organization group produces consolidated statements with eliminations, translation

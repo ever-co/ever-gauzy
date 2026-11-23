@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-16
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_CRM` (new, default off, shared with `crm-leads-and-deals`); the existing `FEATURE_MULTI_CURRENCY` (default off) governs deals in other currencies
 
 ---
@@ -69,7 +69,7 @@ moved** between two snapshots, naming the deals that moved it.
 
 - **FR-1** The system MUST answer every route this spec adds with `404` when `FEATURE_CRM` is off; no report definition, card, dashboard, snapshot job or MCP tool of this spec is then observable.
 - **FR-2** The system MUST show a user with `CRM_ANALYTICS_VIEW_ALL` every owner's figures, and any other user with `CRM_REPORTS_VIEW` only figures of records they own and of the organization teams they manage; a filter naming other owners is refused for them.
-- **FR-3** The system MUST apply the reader's record permissions to drill-down lists: a figure may count records the reader cannot open, which are counted and not listed.
+- **FR-3** The system MUST apply the reader's record permissions, including the record-level rules CRM registers ([`crm-engagement`](../crm-engagement/spec.md) FR-76) where they are loaded, to every live figure and to its drill-down list alike: a figure counts only records the reader may read, and its drill-down lists exactly those records. Snapshot and forecast roll-ups are stored totals of a scope, shown under FR-2.
 
 ### 3.2 Deal currency and rates
 
@@ -186,7 +186,7 @@ moved** between two snapshots, naming the deals that moved it.
 - **Reliability**: snapshot, re-rating and accuracy jobs are idempotent per organization and date and catch up after downtime; facts are rebuilt from deals and history on demand.
 - **Security & privacy**: tenant and organization scoped; figures respect the reader's rights; snapshots hold owner ids and amounts, no contact details; nothing leaves the platform except scheduled report emails chosen by users and AI provider calls for explanations when an organization configured one.
 - **Auditability**: every submission, override (with reason), rate typed on a deal and setting change is kept with who and when.
-- **Accessibility and localisation**: every chart has a table view and labelled series; colours are not the only signal; numbers, currencies and dates follow the user's locale; strings in all shipped locales.
+- **Accessibility and localization**: every chart has a table view and labelled series; colours are not the only signal; numbers, currencies and dates follow the user's locale; strings in all shipped locales.
 - **Compatibility**: PostgreSQL, MySQL, SQLite; both ORMs; cloud and self-hosted; OpenAPI and SDKs regenerated.
 
 ## 5. Key Entities & Domain Concepts
@@ -217,9 +217,9 @@ moved** between two snapshots, naming the deals that moved it.
 
 - [ ] **AC-1** With `FEATURE_CRM` off, every route of this spec answers `404` and no snapshot job runs (FR-1).
 - [ ] **AC-2** A foreign-currency deal is valued with the stored rate of its rate date, shows rate, date and source, keeps its closed-date rate after a win and is re-rated when reopened (FR-4–FR-6).
-- [ ] **AC-3** A deal without a rate is in counts, out of money totals and in "Deals without a rate"; entering a rate brings it into the totals (FR-7, FR-10).
+- [ ] **AC-3** A deal without a rate is in counts, out of money totals in organization and reporting currency, in its own currency's total when a report is shown in deal currencies, and in "Deals without a rate"; entering a rate brings it into the converted totals (FR-7, FR-10).
 - [ ] **AC-4** Pipeline and weighted values per stage and owner match the demo data set in the reporting currency (FR-11).
-- [ ] **AC-5** A salesperson sees only their figures; a manager with `CRM_ANALYTICS_VIEW_ALL` sees all; a filter on another owner is refused for the salesperson (FR-2, FR-3).
+- [ ] **AC-5** A salesperson sees only their figures; a manager with `CRM_ANALYTICS_VIEW_ALL` sees all; a filter on another owner is refused for the salesperson; a team manager without `CRM_ANALYTICS_VIEW_ALL` sees the figures of the teams they manage; a deal a record rule hides from the reader is in neither a figure nor its drill-down (FR-2, FR-3).
 - [ ] **AC-6** A submission and a team override appear side by side with the calculated figure; the next level rolls up the override (advanced: forecast; FR-18, FR-19).
 - [ ] **AC-7** Two weekly snapshots exist; their comparison lists new, pushed-out and won deals correctly; a snapshot is unchanged after deals change (advanced: snapshots; FR-21, FR-22).
 - [ ] **AC-8** After a period ends, accuracy shows error and bias per person and team for each snapshot (advanced: accuracy; FR-23).

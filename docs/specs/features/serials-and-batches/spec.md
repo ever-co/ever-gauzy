@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-15
 **Last updated**: 2026-11-23
-**Owner**: `evereq`
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_LOT_SERIAL_TRACKING` (new tenant feature, default off; requires `FEATURE_INVENTORY`)
 
 ---
@@ -109,8 +109,9 @@ changes update open screens **live** and drive automation rules. These requireme
 - **FR-6** A user with `LOT_SERIAL_STATUS_EDIT` can change a lot's status with a reason; every change is kept with who,
   when, why and its source (inspection, recall, expiry, person).
 - **FR-7** A lot MAY be disabled for new inflows; its remaining stock stays visible and movable.
-- **FR-8** Lot balances per location and bin MUST be read from the confirmed bundles of the movements (never stored
-  apart), so they change with the movement's transaction, and a lot's reserved quantity from the active reservations
+- **FR-8** Lot balances per location and bin MUST be read from the bundles of the posted movements (never stored
+  apart), a canceled movement counting with its reversal so that together they add up to zero, so they change with
+  the movement's transaction, and a lot's reserved quantity from the active reservations
   naming it; a negative lot balance is refused unless the item allows negative lots.
 - **FR-9** A production output lot MUST accumulate produced quantity against its planned quantity and link to its work
   order.
@@ -236,7 +237,7 @@ changes update open screens **live** and drive automation rules. These requireme
 - **Security & privacy**: tenant and organization scoped; customer names in traces need contact view permission;
   customer notices leave the platform only when a person sends them. **Audit**: every status change, override,
   recall action and tracking start.
-- **Accessibility, localisation, deployment**: accessible screens and graph (keyboard navigation, text alternative);
+- **Accessibility, localization, deployment**: accessible screens and graph (keyboard navigation, text alternative);
   every locale; dates in the user's locale; PostgreSQL, MySQL, SQLite; both ORMs; multi-tenant and self-hosted.
 
 ## 5. Key Entities & Domain Concepts

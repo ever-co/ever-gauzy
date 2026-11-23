@@ -19,8 +19,8 @@
 - Paths are relative to the repository root; `pr/` means `packages/plugins/payroll/src/lib/` and `prui/` means
   `packages/plugins/payroll-ui/src/lib/`. Each new service, controller, pure module or component ships with a `.spec.ts`
   beside it.
-- `payroll-processing` builds on T1–T20 of this list (same plugin); its tasks reference them. T59 and T60 (the tax,
-  declaration, benefit and end-of-service tables, Phase 1) land with T1–T7 and count as part of that base.
+- `payroll-processing` builds on T1–T20 of this list (same plugin); its tasks reference them. T59 to T62 (the tax,
+  declaration, proof, benefit and end-of-service tables, Phase 1) land with T1–T7 and count as part of that base.
 - Prerequisite: the formula language of `custom-fields-and-forms` (`packages/utils/src/lib/formula/`, its T3) lands
   before T8.
 
@@ -47,9 +47,8 @@
       is a no-op); repository smoke specs for both ORMs. Migration timestamps: `1791000098100` to `1791000098199` (`packages/plugins/payroll`).
 - [ ] **T4** (parallel). Migration `pr/database/migrations/1791000098110-CreatePayrollCalendarAndAssignmentTables.ts`
       with its entities in `pr/setup/entities/` (`pay-group.entity.ts`, `payroll-year.entity.ts`, `pay-period.entity.ts`,
-      `pay-assignment.entity.ts`, `pay-assignment-share.entity.ts`, `pay-assignment-bulk-result.entity.ts`,
-      `level-pay-default.entity.ts`). Test: migration spec; `activeKey` and `(operationId, employeeId)` uniqueness on the
-      three dialects.
+      `pay-assignment.entity.ts`, `pay-assignment-share.entity.ts`, `level-pay-default.entity.ts`). Test: migration spec;
+      `activeKey` uniqueness on the three dialects.
 - [ ] **T5**. Settings contributions `pr/payroll.settings.ts` (keys of plan §3.1, organization scope) read through the
       platform settings store; `/payroll/settings` reads and writes them (`pr/setup/settings/payroll-settings.controller.ts`).
       Test: declared defaults resolve; an organization value wins over the tenant value; no settings table exists.
@@ -59,17 +58,26 @@
       (`packages/core/src/lib/export-import/repositories/repositories.service.ts`) and factory reset
       (`packages/core/src/lib/user/factory-reset/factory-reset.service.ts`). Test: extend
       `repositories.service.payroll.spec.ts` and `factory-reset.service.payroll.spec.ts`.
-- [ ] **T59**. Migration `pr/database/migrations/1791000098120-CreatePayrollTaxAndDeclarationTables.ts` with its
-      entities in `pr/setup/entities/` (`tax-table.entity.ts`, `tax-table-band.entity.ts`, `tax-table-surcharge.entity.ts`,
-      `pay-group-tax-table.entity.ts`, `employee-tax-choice.entity.ts`, `exemption-category.entity.ts`,
-      `tax-declaration.entity.ts`, `tax-declaration-line.entity.ts`, `tax-proof.entity.ts`, `tax-proof-line.entity.ts`,
-      `other-income.entity.ts`). Test: migration spec on SQLite (up twice); uniqueness of `(employeeId, payrollYearId)`
-      declarations on the three dialects.
+- [ ] **T59**. Migration `pr/database/migrations/1791000098120-CreatePayrollTaxAndDeclarationTables.ts` (every table of
+      the tax, declaration and proof group) with the tax table entities in `pr/setup/entities/`; the declaration
+      entities are T61 and the proof entities T62. Files:
+      `pr/database/migrations/1791000098120-CreatePayrollTaxAndDeclarationTables.ts`, `pr/setup/entities/tax-table.entity.ts`,
+      `pr/setup/entities/tax-table-band.entity.ts`, `pr/setup/entities/tax-table-surcharge.entity.ts`,
+      `pr/setup/entities/pay-group-tax-table.entity.ts`, `pr/setup/entities/employee-tax-choice.entity.ts`. Test: migration
+      spec on SQLite (up twice); repository smoke specs of the tax table entities for both ORMs.
 - [ ] **T60** (parallel). Migration `pr/database/migrations/1791000098130-CreatePayrollBenefitAndEndOfServiceTables.ts`
       with its entities in `pr/setup/entities/` (`benefit-choice.entity.ts`, `benefit-choice-line.entity.ts`,
       `benefit-ledger-entry.entity.ts`, `end-of-service-rule.entity.ts`, `end-of-service-band.entity.ts`,
       `payroll-opening-balance.entity.ts`). Test: migration spec on SQLite (up twice); `entryKey` uniqueness on the
       three dialects.
+- [ ] **T61** (parallel). Declaration entities over the tables of T59: exemption categories, declarations with their
+      lines, other income. Files: `pr/setup/entities/exemption-category.entity.ts`,
+      `pr/setup/entities/tax-declaration.entity.ts`, `pr/setup/entities/tax-declaration-line.entity.ts`,
+      `pr/setup/entities/other-income.entity.ts`. Test: uniqueness of `(employeeId, payrollYearId)` declarations on the
+      three dialects; repository smoke specs for both ORMs.
+- [ ] **T62** (parallel). Proof entities over the tables of T59: proofs with their lines. Files:
+      `pr/setup/entities/tax-proof.entity.ts`, `pr/setup/entities/tax-proof-line.entity.ts`. Test: repository smoke specs
+      for both ORMs; deleting a proof removes its lines.
 
 ## Phase 2 — Services, endpoints, events
 
@@ -198,8 +206,8 @@
 - [ ] **T35**. Fixed cost allocation shares on dimension sets through `PAYROLL_DIMENSION_SETS` (department and project
       without accounting). Files: `pr/setup/assignments/assignment-shares.service.ts`. Test: shares not 100 refused;
       inactive cost centre refused.
-- [ ] **T36**. Bulk assignment as core operation `PAYROLL_BULK_ASSIGN` (a step per batch, results keyed by
-      `operationId`, progress through the operation view). Files: `pr/setup/assignments/bulk-assign.operation.ts`,
+- [ ] **T36**. Bulk assignment as core operation `PAYROLL_BULK_ASSIGN` (a step per batch, the outcome of each
+      employee in the step's `output`, progress through the operation view; no result table). Files: `pr/setup/assignments/bulk-assign.operation.ts`,
       `pr/setup/structures/pay-structure.controller.ts`. Test: resumable after a stopped step; one result per employee;
       agents skipped; a second request for the same structure version and date joins the live operation.
 - [ ] **T37**. Consumer of `hr.event.applied` and `hr.employee.hired` creating proposed assignments. Files:

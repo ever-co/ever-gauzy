@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-16
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_SPREADSHEETS` (tenant feature, default off) · the plugin loads only when `GAUZY_SHEETS_ENABLED`
 is exactly `true` · needs the documents hub (`FEATURE_DOCUMENTS`) with the file kinds of `drive`; co-editing needs
 `GAUZY_DOCS_LIVE_ENABLED`, without it a workbook keeps single-writer autosave with the revision check
@@ -21,7 +21,7 @@ is exactly `true` · needs the documents hub (`FEATURE_DOCUMENTS`) with the file
 Today an uploaded spreadsheet file is stored in the documents hub with its cell text extracted for search and AI
 knowledge; nobody can see it as a grid, edit it or create one. This feature adds the **workbook**: a file kind of the
 hub, so a workbook has the tree, shares, trash, favourites, search and versions of every file and downloads as an XLSX
-copy (one storage model, owned by `drive`). A workbook holds **sheets** with a virtualised grid, formulas,
+copy (one storage model, owned by `drive`). A workbook holds **sheets** with a virtualized grid, formulas,
 formats, conditional formats, validation, sort and filter, slicers, pivots, charts, sparklines, named ranges,
 server-enforced protection, cell comments, co-editing on the hub's live co-editing server (the same session, presence
 and permission model as pages), history down to one cell, and XLSX, ODS, CSV and PDF import and export. Clients: the
@@ -109,7 +109,7 @@ Marked `(advanced)`.
 
 ### 3.2 Grid, navigation and input
 
-- **FR-9** The system renders any allowed sheet as a virtualised grid with smooth scrolling, zoom from 50% to 200% and
+- **FR-9** The system renders any allowed sheet as a virtualized grid with smooth scrolling, zoom from 50% to 200% and
   keyboard navigation of the whole sheet.
 - **FR-10** A user with Edit access can freeze leading rows and columns and resize, hide, insert and delete rows and
   columns; every reference, format, rule and range spanning them adjusts.
@@ -219,7 +219,7 @@ Marked `(advanced)`.
   in the background with progress.
 - **FR-54** A reader can export a workbook as XLSX or ODS, a sheet as CSV, and a sheet, range or workbook as PDF with page
   setup (orientation, paper, fit to width, margins, gridlines, header rows, page numbers); a download is the XLSX copy.
-- **FR-55** The system neutralises cells starting with formula characters in CSV exports, and every export uses the
+- **FR-55** The system neutralizes cells starting with formula characters in CSV exports, and every export uses the
   exporter's own live range rows (FR-60).
 - **FR-56** The system keeps a workbook's cell text available to the hub's search and, when marked as knowledge, to the AI
   knowledge pipeline.
@@ -310,7 +310,7 @@ Marked `(advanced)`.
   provider, headers, types and the configured sample rows of a selection.
 - **Observability**: activity entries for create, share, import, export, restore, protection, freeze and write-back;
   metrics for recalculation, sessions, refreshes, imports and exports.
-- **Accessibility and localisation**: keyboard grid announcing address, value and formula; high-contrast selection;
+- **Accessibility and localization**: keyboard grid announcing address, value and formula; high-contrast selection;
   chart tables; labels in every locale; locale formats; English function names with the locale's separator.
 - **Compatibility**: PostgreSQL, MySQL, SQLite; both ORMs; cloud and self-hosted; one API process needs no shared bus;
   OpenAPI additive; SDKs regenerated.
@@ -355,7 +355,7 @@ Marked `(advanced)`.
 - [ ] **AC-6** A comparison lists changed cells; one cell's history lists its changes; restore creates a version; undo
       leaves another person's edits (FR-46–FR-48).
 - [ ] **AC-7** An XLSX file with formats, merges, validation and conditional formats round-trips; macros are listed as
-      dropped; 100,000 CSV rows import in the background; CSV export neutralises formulas; PDF honours page setup (FR-51, FR-52).
+      dropped; 100,000 CSV rows import in the background; CSV export neutralizes formulas; PDF honours page setup (FR-51, FR-52).
 - [ ] **AC-8** A live range shows different rows to two readers, its lineage opens the records behind a figure, a
       forbidden reader sees no values, and a freeze needs confirmation (advanced: live data; FR-60, FR-62).
 - [ ] **AC-9** Pending changes preview, write through the bulk change, refuse a stale row and report per row (advanced:

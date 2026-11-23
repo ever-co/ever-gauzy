@@ -140,10 +140,14 @@
       `apps/worker/src/plugins.ts`. Test: `tp/schedule/accrual.job.spec.ts` and one sweep spec per job; plugin list specs.
 - [ ] **T50**. Holiday import (FR-53): `/time-off/holiday-calendars/:id/import` with preview over the
       `TIME_OFF_HOLIDAY_SOURCE` providers (country packs of `regional-compliance-packs`, iCalendar file or address,
-      spreadsheet file) and `/time-off/holiday-sources`; duplicates skipped. Files:
+      spreadsheet file) and `/time-off/holiday-sources`; each imported holiday is a core `official_holiday` row written
+      through `packages/core/src/lib/official-holiday/official-holiday.service.ts` (one that exists with the same
+      country, date and name is reused) and linked to the calendar by a `holiday_calendar_day` row; duplicates skipped.
+      Files:
       `tp/holiday-calendars/{holiday-import.service.ts,holiday-import.controller.ts,sources/ical.source.ts,sources/spreadsheet.source.ts}`.
       Test: `tp/holiday-calendars/holiday-import.service.spec.ts`: preview lists new and duplicate holidays and writes
-      nothing; import adds only the new ones for the chosen years.
+      nothing; import adds only the new ones for the chosen years, as `official_holiday` rows linked by
+      `holiday_calendar_day`, and writes no other holiday row.
 
 ## Phase 3 — UI surfaces
 

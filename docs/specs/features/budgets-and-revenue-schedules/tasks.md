@@ -166,7 +166,8 @@
 - [ ] **T31**. Foreign currency at the source rate; dimension set, party and book on recognition lines; period
       totals maintained. Files: `recognition/recognition-run.service.ts`,
       `recognition/recognition-period-total.service.ts`. Test: `recognition-period-total.service.spec.ts`: the
-      deferral account clears without exchange difference.
+      deferral account clears without exchange difference; two concurrent upserts of the total of a line without a
+      book (`bookKey` `*`) leave one row on PostgreSQL, MySQL and SQLite.
 - [ ] **T32**. Integrity service (`/recognition/integrity`), close checks `recognition.due_posted` and
       `recognition.deferral_agrees` through `LEDGER_CLOSE_CHECK`. Files: `recognition/recognition-integrity.service.ts`,
       `recognition/recognition-integrity.controller.ts`, `recognition/recognition-close-checks.ts`. Test:

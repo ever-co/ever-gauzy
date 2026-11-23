@@ -49,7 +49,7 @@ flowchart LR
     PUR[procurement / invoicing document events] --> CON
     CON --> SVC
     SVC --> STK[Stock ledger port: issue, return]
-    JOB[Worker schedules and core operations: depreciation, capitalise-due, maintenance, usage, integrity] --> SVC
+    JOB[Worker schedules and core operations: depreciation, capitalize-due, maintenance, usage, integrity] --> SVC
     OUT --> RT[Real-time channel, inbox, automations, webhooks]
 ```
 
@@ -103,12 +103,12 @@ export class Asset extends TenantOrganizationBaseEntity implements IAsset { /* c
 | `asset` | `number` varchar(64) null, `name` null (intangible and right-of-use assets only; a tangible asset shows its equipment's name), `description` text, `categoryId` fk, `kind` varchar(16), `parentAssetId` fk null, `variantId` uuid null, `equipmentId` uuid null (fk core `equipment`, set null; required when `kind` is tangible), `accountingState` varchar(24), `operationalState` varchar(24), `locationId` fk null, `custodianEmployeeId` uuid null, `custodianTeamId` uuid null, `awaitingAcknowledgement` bool, `departmentId` uuid null, `dimensionSetId` uuid null, `acquisitionDate` date, `inServiceDate` date null, `plannedInServiceDate` date null, `cost` numeric(20,6), `currency` char(3), `organizationCurrency` char(3), `exchangeRate` numeric(20,10), `costInOrganizationCurrency` numeric(20,6), `quantity` numeric(20,6) default 1, `isExisting` bool, `ownership` varchar(16), `ownerPartyType` varchar(16) null, `ownerPartyId` uuid null, `labelCode` varchar(40), `maintenanceRequired` bool, `sourceType` varchar(32) null, `sourceDocumentId` uuid null, `sourceLineId` uuid null, `splitFromAssetId` fk null, `disposalId` uuid null, `version` int | unique `(tenantId, labelCode)`; unique `(organizationId, number)` where number not null; unique `(equipmentId)` where not null; idx `(organizationId, accountingState, categoryId)`, `(organizationId, locationId)`, `(custodianEmployeeId)`, `(sourceLineId)` |
 | `asset_book` | `assetId` fk, `ledgerBookId` uuid null, `method`, `periods` int, `periodMonths` int, `startDate` date, `salvageValue` numeric(20,6), `rate`, `factor`, `dailyProration` bool, `openingAccumulated` numeric(20,6), `openingPeriodsBooked` int, `expectedUsageUnits` numeric(20,6) null, `costBasis`, `accumulatedPosted`, `netBookValue` (numeric(20,6), maintained), `activeRevisionId` uuid null, `lastPostedPeriodEnd` date null | unique `(assetId, ledgerBookId)` |
 | `asset_schedule_revision` | `assetBookId` fk, `revisionNo` int, `reason` varchar(32), `sourceType`, `sourceId`, `note` text, `status` varchar(16) (`DRAFT`/`ACTIVE`/`SUPERSEDED`), `activatedAt`, `authorId` | unique `(assetBookId, revisionNo)` |
-| `asset_depreciation_line` | `assetBookId` fk, `revisionId` fk, `sequence` int, `periodStart` date, `periodEnd` date, `amount`, `accumulatedAfter`, `netBookValueAfter` numeric(20,6), `intensityFactorId` fk null, `usageUnits` numeric(20,6) null, `isEstimated` bool, `status` varchar(16) (`PLANNED`/`POSTED`/`REVERSED`/`SUPERSEDED`), `postedOn` date null, `journalId` uuid null, `operationId` uuid null (the core operation that posted it), `failureReason` varchar(255) null | unique `(revisionId, sequence)`; idx `(organizationId, status, periodEnd)`, `(assetBookId, status)`, `(operationId)` |
+| `asset_depreciation_line` | `assetBookId` fk, `revisionId` fk, `sequence` int, `periodStart` date, `periodEnd` date, `amount`, `accumulatedAfter`, `netBookValueAfter` numeric(20,6), `intensityFactorId` fk null, `usageUnits` numeric(20,6) null, `isEstimated` bool, `status` varchar(16) (`PLANNED`/`POSTED`/`REVERSED`/`SUPERSEDED`), `postedOn` date null, `journalId` uuid null, `operationId` uuid null (the core operation that posted it), `postingGeneration` int default 0 (incremented when a reversal makes the line unposted again, FR-42; the posting key is `(lineId, postingGeneration)`, so a retry of one generation replays its journal and a post after a reversal creates a new one), `failureReason` varchar(255) null | unique `(revisionId, sequence)`; idx `(organizationId, status, periodEnd)`, `(assetBookId, status)`, `(operationId)` |
 | `asset_intensity_factor` | `name`, `multiplier` numeric(9,6), `isDefault` bool | unique `(tenantId, organizationId, name)` |
 | `asset_usage_reading` | `assetId` fk, `readingDate` date, `units` numeric(20,6), `source` varchar(16) (`MANUAL`/`IMPORT`/`LENDING`/`TRACKED_TIME`/`VISIT`/`VEHICLE_LOG`), `sourceRef` varchar(160) | unique `(assetId, source, sourceRef)` |
 | `asset_location` | `code`, `name`, `parentId` fk null, `path` varchar(1024), `holdsOnlySubLocations` bool, `area` numeric(20,6) null, `areaUnitId` uuid null, `warehouseId` uuid null (a location that is a stock location: name and address from core `warehouse`), `addressId` uuid null (any other place: core `address`, coordinates included) | unique `(organizationId, code)`; idx `(path)`; at most one of `warehouseId`, `addressId`; a sub-location without either inherits its parent's place |
 | `asset_movement`, `asset_movement_line` | header: `number`, `movedOn` timestamp, `status`, `note`; line: `assetId`, `fromLocationId`, `toLocationId`, `fromCustodianEmployeeId`/`TeamId`, `toCustodianEmployeeId`/`TeamId`, `acknowledgedAt`, `acknowledgedById`, `conditionNote`, `conditionImageId` | idx `(assetId, createdAt)` |
-| `asset_capitalisation`, `asset_capitalisation_line` | header: `number`, `targetAssetId`, `capitalisedOn` date, `status`, `total`, `costChanged` bool; line: `lineType` (`STOCK`/`ASSET`/`SERVICE`), `variantId`, `stockLocationId`, `quantity`, `lotOrSerialRef`, `consumedAssetId`, `expenseAccountId`, `billLineId`, `amount` | idx `(targetAssetId)`, `(consumedAssetId)` |
+| `asset_capitalization`, `asset_capitalization_line` | header: `number`, `targetAssetId`, `capitalisedOn` date, `status`, `total`, `costChanged` bool; line: `lineType` (`STOCK`/`ASSET`/`SERVICE`), `variantId`, `stockLocationId`, `quantity`, `lotOrSerialRef`, `consumedAssetId`, `expenseAccountId`, `billLineId`, `amount` | idx `(targetAssetId)`, `(consumedAssetId)` |
 | `asset_repair`, `asset_repair_part`, `asset_repair_bill_line` | header: `number`, `assetId`, `failedOn`, `completedOn`, `downtimeHours`, `description`, `actionsTaken`, `status` (`OPEN`/`COMPLETED`/`CONFIRMED`/`CANCELLED`), `addToAssetValue` bool, `extraPeriods` int, `totalCost`; part: `variantId`, `stockLocationId`, `quantity`, `value`; bill line: `billLineId`, `amount` | idx `(assetId, status)`, `(billLineId)` |
 | `asset_value_adjustment` | `number`, `assetId`, `assetBookId`, `kind` (`REVALUATION`/`IMPAIRMENT`/`IMPAIRMENT_REVERSAL`/`COST_ADJUSTMENT`), `effectiveOn` date, `valueBefore`, `valueAfter`, `difference`, `recoverableAmount` null, `reversalCap` null, `evidence` json, `approvalRequestId` null, `status` | idx `(assetId, effectiveOn)` |
 | `asset_disposal` | `number`, `assetId`, `kind` (`SALE`/`SCRAP`), `reason` varchar(24), `disposedOn` date, `quantity`, `invoiceId` null, `invoiceItemId` null, `proceeds`, `netBookValue`, `result`, `status`, `restoredOn` date null | unique `(invoiceItemId)` where not null; idx `(assetId)` |
@@ -142,7 +142,7 @@ Record links: an asset's task and project links are record links of `record-view
 **Migration timestamps**: `packages/plugins/fixed-assets` `1791000080100` to `1791000080199`.
 
 - In `packages/plugins/fixed-assets/src/lib/database/migrations/`: `1791000080100-CreateFixedAssetRegisterTables` (categories, rules, asset, books, revisions, lines, factors, snapshots),
-  `1791000080110-CreateFixedAssetDocumentTables` (locations, movement, capitalisation, repair, adjustment, disposal),
+  `1791000080110-CreateFixedAssetDocumentTables` (locations, movement, capitalization, repair, adjustment, disposal),
   `1791000080120-CreateFixedAssetMaintenanceTables` (plans, tasks, occurrence links, insurance),
   `1791000080130-CreateFixedAssetAuditAndUsageTables` (audit, usage readings), `1791000080140-CreateFixedAssetLeaseTables`.
   Default role grants are permission contributions (`defaultFor`), not a migration.
@@ -173,7 +173,7 @@ cursor pagination; creating and posting routes accept an `Idempotency-Key`; upda
 | `GET/POST/PUT/DELETE` | `/assets`, `/assets/:id` | `FIXED_ASSETS_VIEW` / `FIXED_ASSETS_EDIT` | `CreateAssetDTO` (equipment fields for a tangible asset are written to its equipment row), `UpdateAssetDTO` → `IAsset` with its equipment | New |
 | `POST` | `/assets/from-equipment` | `FIXED_ASSETS_EDIT` | `{ equipmentId, categoryId }` → `IAsset` (draft) | New |
 | `POST` | `/assets/:id/equipment` · `DELETE` same | `FIXED_ASSETS_EDIT` | relink to another equipment row; "make lendable" opens the equipment row to lending requests | New |
-| `POST` | `/assets/:id/confirm`, `/cancel`, `/capitalise` | `FIXED_ASSETS_CONFIRM` | `{ preview? }` → `IAssetEffectsPreview` or `IAsset` | New |
+| `POST` | `/assets/:id/confirm`, `/cancel`, `/capitalize` | `FIXED_ASSETS_CONFIRM` | `{ preview? }` → `IAssetEffectsPreview` or `IAsset` | New |
 | `POST` | `/assets/:id/split` | `FIXED_ASSETS_CONFIRM` | `{ quantity }` → both assets | New |
 | `GET/PUT` | `/assets/:id/books`, `/assets/:id/books/:bookId` | `FIXED_ASSETS_VIEW` / `FIXED_ASSETS_EDIT` | `AssetBookDTO` | New |
 | `GET` | `/assets/:id/books/:bookId/schedule?revision=` | `FIXED_ASSETS_VIEW` | lines and revisions | New |
@@ -183,7 +183,7 @@ cursor pagination; creating and posting routes accept an `Idempotency-Key`; upda
 | `POST` | `/asset-depreciation-runs` | `FIXED_ASSET_DEPRECIATION_POST` | `DepreciationRunDTO` (`preview`) → preview, or `202` with an operation (type `ASSET_DEPRECIATION_RUN`); history, progress and failures through core `/operations` | New |
 | `GET` | `/asset-forecast`, `POST /asset-forecast/simulate` | `FIXED_ASSET_REPORTS_VIEW` | months × category × book | New |
 | `GET/POST/PUT/DELETE` | `/asset-locations` (+ `/tree`) | `FIXED_ASSETS_VIEW` / `FIXED_ASSET_MOVEMENTS_EDIT` | `AssetLocationDTO` | New |
-| `GET/POST/PUT` + `/:id/confirm`, `/:id/cancel` | `/asset-movements`, `/asset-capitalisations`, `/asset-repairs` (+ `/:id/complete`), `/asset-value-adjustments`, `/asset-disposals` (+ `/:id/restore`), `/asset-leases` | view: `FIXED_ASSETS_VIEW`; edit: `FIXED_ASSET_MOVEMENTS_EDIT` or `FIXED_ASSETS_EDIT`; confirm: `FIXED_ASSETS_CONFIRM`, `FIXED_ASSET_REVALUATIONS_POST`, `FIXED_ASSET_DISPOSALS_POST` | one DTO pair per document; every confirm accepts `preview` | New |
+| `GET/POST/PUT` + `/:id/confirm`, `/:id/cancel` | `/asset-movements`, `/asset-capitalizations`, `/asset-repairs` (+ `/:id/complete`), `/asset-value-adjustments`, `/asset-disposals` (+ `/:id/restore`), `/asset-leases` | view: `FIXED_ASSETS_VIEW`; edit: `FIXED_ASSET_MOVEMENTS_EDIT` or `FIXED_ASSETS_EDIT`; confirm: `FIXED_ASSETS_CONFIRM`, `FIXED_ASSET_REVALUATIONS_POST`, `FIXED_ASSET_DISPOSALS_POST` | one DTO pair per document; every confirm accepts `preview` | New |
 | `POST` | `/asset-movements/lines/:lineId/acknowledge` | custodian of the line | `{ conditionNote?, imageId? }` | New |
 | `GET/POST/PUT` | `/asset-maintenance-plans`, `GET /asset-maintenance-occurrences` | `FIXED_ASSET_MAINTENANCE_EDIT` | plans and tasks; occurrences list their core tasks or visits (closing happens on the task, with the certificate check) | New |
 | `GET/POST/PUT/DELETE` | `/assets/:id/insurance-policies` | `FIXED_ASSETS_EDIT` | `AssetInsurancePolicyDTO` | New |
@@ -191,7 +191,7 @@ cursor pagination; creating and posting routes accept an `Idempotency-Key`; upda
 | `GET` | `/assets/by-label/:code` | `FIXED_ASSETS_VIEW` or custodian | phone page read | New |
 | `POST` | `/assets/labels` | `FIXED_ASSETS_VIEW` | `{ assetIds, templateId }` → PDF through the print service | New |
 | `GET/POST` | `/asset-audits`, `/asset-audits/:id`, `POST /:id/scans/bulk`, `POST /:id/close`, `POST /:id/proposals` | `FIXED_ASSET_AUDITS_RUN` (scans: invited auditor) | scans → per-row result (`RECORDED`/`ALREADY_RECORDED`/`UNKNOWN_CODE`) | New |
-| `GET` | `/assets/:id/timeline`, `/assets/:id/links`, `/asset-utilisation`, `/asset-integrity` | `FIXED_ASSETS_VIEW` / `FIXED_ASSET_REPORTS_VIEW` | activity log and document history, document flow, utilisation, register vs ledger (findings of the shared store) | New |
+| `GET` | `/assets/:id/timeline`, `/assets/:id/links`, `/asset-utilization`, `/asset-integrity` | `FIXED_ASSETS_VIEW` / `FIXED_ASSET_REPORTS_VIEW` | activity log and document history, document flow, utilization, register vs ledger (findings of the shared store) | New |
 | `GET` | `/asset-assistant/findings` | `FIXED_ASSETS_VIEW` | findings with proposed drafts | New |
 
 The existing equipment routes stay as they are; the asset pages edit an asset's equipment fields through
@@ -207,7 +207,7 @@ forbids deferral). Swagger decorators on every route.
 | Event | Emitted when | Consumers |
 | ----- | ------------ | --------- |
 | `document.asset.confirmed` / `.cancelled` | asset confirmed (acquisition or work in progress) / cancelled | posting rules, activity log, real-time |
-| `document.asset_capitalisation.confirmed` / `.cancelled`, `document.asset_repair.*`, `document.asset_value_adjustment.*`, `document.asset_disposal.*`, `document.asset_lease_period.*` | the document changes state | posting rules, stock port, activity log |
+| `document.asset_capitalization.confirmed` / `.cancelled`, `document.asset_repair.*`, `document.asset_value_adjustment.*`, `document.asset_disposal.*`, `document.asset_lease_period.*` | the document changes state | posting rules, stock port, activity log |
 | `document.asset_depreciation.confirmed` | a posting step of a depreciation operation (or a single line) is committed | posting rules; result stamps lines |
 | `document.asset_movement.confirmed` / `.cancelled` | movement confirmed / cancelled | activity log, inbox (acknowledgement), real-time |
 | `fixed_assets.asset.custody_acknowledged`, `.maintenance_due`, `.insurance_expiring`, `.fully_depreciated`, `.schedule_revised` | as named | automation rules, inbox, webhooks |
@@ -230,8 +230,8 @@ to usage readings.
   through the `accounting-sections` page location (menu group "Assets" under Accounting), hidden without the feature
   or `FIXED_ASSETS_VIEW`. Routes: `/pages/accounting/assets/register` (saved-view list, bulk actions, label
   printing), `/register/:id` (overview with the equipment's name, serial, image and tags, books and schedule with
-  revision compare, timeline from the activity log, documents, maintenance with its tasks, insurance, utilisation),
-  `/categories`, `/locations`, `/movements`, `/capitalisations`, `/repairs`, `/adjustments`, `/disposals`,
+  revision compare, timeline from the activity log, documents, maintenance with its tasks, insurance, utilization),
+  `/categories`, `/locations`, `/movements`, `/capitalizations`, `/repairs`, `/adjustments`, `/disposals`,
   `/leases`, `/maintenance`, `/depreciation` (run with preview, history from operations, forecast and simulation),
   `/audits`, `/audits/:id/scan` (phone layout, camera scanner, offline queue in IndexedDB; installable), `/reports`,
   `/settings`; the phone asset page `/pages/a/:labelCode` through the `page-sections` location.
@@ -263,10 +263,10 @@ to usage readings.
   `/statistics`, `/search`). Status, custody and "my equipment" are asset facts here, so those tools are re-pointed to
   the asset routes (operational state, hand-over movements, assets in the caller's custody, register report) and
   search to the equipment list filter; one set of tools then describes equipment and assets.
-- Posting rule templates contributed to `accounting` (role based): acquisition, work in progress, capitalisation
+- Posting rule templates contributed to `accounting` (role based): acquisition, work in progress, capitalization
   transfer, depreciation, repair expense, repair added to value, revaluation up and down, impairment and reversal,
   sale, scrap, restore, lease interest and repayment, reclassification.
-- Report definitions registered: the six reports of spec §3.12, book comparison, utilisation, idle assets, audit
+- Report definitions registered: the six reports of spec §3.12, book comparison, utilization, idle assets, audit
   discrepancies, cost of ownership; dashboard cards and charts.
 - OpenAPI grows additively; Kiota SDKs regenerated after merge. Import template "asset register" registered with
   the data exchange plugin. Print templates: asset label sheet, asset card, movement hand-over slip.
@@ -275,9 +275,9 @@ to usage readings.
 
 | Trigger | When | What it does | Idempotency |
 | ------- | ---- | ------------ | ----------- |
-| `fixed-assets.depreciation.sweep` | hourly | per organization with automatic posting whose local day changed: starts a depreciation operation for lines due | line status and `(lineId)` posting key; one live operation per organization and book (operation aggregate rule) |
+| `fixed-assets.depreciation.sweep` | hourly | per organization with automatic posting whose local day changed: starts a depreciation operation for lines due | line status and `(lineId, postingGeneration)` posting key; one live operation per organization and book (operation aggregate rule) |
 | operation `ASSET_DEPRECIATION_RUN` | on run | posts lines in steps of 500 per book; resumes from the last posted line; failures stamped on the lines | operation idempotency key and line status |
-| `fixed-assets.capitalise-due.sweep` | hourly | capitalises work-in-progress assets whose in-service date is reached | asset state check and version |
+| `fixed-assets.capitalize-due.sweep` | hourly | capitalizes work-in-progress assets whose in-service date is reached | asset state check and version |
 | `fixed-assets.maintenance.sweep` | hourly | computes the next due dates with the shared recurrence rules, creates the next occurrence as a core task (or a field-service visit for external tasks) | unique `(maintenanceTaskId, dueOn)` |
 | `fixed-assets.lending-usage.sweep` | hourly | activity-log entries for lending start and end; usage readings from lending and tracked time at period end | unique `(assetId, source, sourceRef)` |
 | `fixed-assets.reminders.sweep` | daily | unacknowledged custody escalation, estimated usage lines (insurance reminders are `reminder` rows) | escalation marker |
@@ -316,10 +316,10 @@ sweeps on in-process timers under the same lock.
    equipment, link to lending, locations, movements with acknowledgement, timeline, labels, list and asset pages.
    Usable without accounting.
 2. **Phase 2 — Depreciation and postings**: books, methods, schedules and revisions, runs, posting rule
-   templates, work in progress, assets from purchases, capitalisation, reports and dashboard.
+   templates, work in progress, assets from purchases, capitalization, reports and dashboard.
 3. **Phase 3 — Lifecycle documents**: repair, revaluation, sale, scrap, restore, split, maintenance, insurance,
    import template.
-4. **Phase 4 — Advanced capabilities**: audits with offline scans, utilisation and units of usage, components,
+4. **Phase 4 — Advanced capabilities**: audits with offline scans, utilization and units of usage, components,
    impairment, leases, forecast and simulation, book comparison, asset assistant, MCP tools.
 5. **Phase 5 — General availability**: the feature is off by default; after the trial period it may be switched on by default for new tenants only; existing tenants keep their setting until an administrator changes it.
 

@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-15
 **Last updated**: 2026-11-23
-**Owner**: `evereq`
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_WAREHOUSE` (existing, default off) for every new screen and behaviour, with the existing
 `FEATURE_MULTI_WAREHOUSE` for the location tree and two-step transfers; `FEATURE_INVENTORY` (existing, default on)
 also guards the existing stock routes, which answer as today, and is switched on for every tenant that holds
@@ -275,7 +275,7 @@ with a preview. These requirements are marked `(advanced)`.
 
 - **FR-76** Shortage: item-locations with negative projected quantity and each of its components.
 - **FR-77** Items to request: projected below demand and not covered by an open requisition.
-- **FR-78** Suggested reorder level: average daily outgoing over a period, lead time and safety stock, appliable.
+- **FR-78** Suggested reorder level: average daily outgoing over a period, lead time and safety stock, applicable.
 - **FR-79** Requisitions awaiting a supplier quotation.
 - **FR-80** Requested transfers not yet made.
 - **FR-81** Reserved stock: holds by document, quantity or lot and serial, and state.
@@ -341,7 +341,7 @@ with a preview. These requirements are marked `(advanced)`.
 - **Reliability**: outbox events at least once, deduplicated per consumer; jobs in the worker, in-process without queue.
 - **Security & privacy**: tenant and organization scoped; labour cost behind its own permission; only reorder and
   dispatch notices leave the platform (email). **Audit**: who and when on every document state, adjustment and scan.
-- **Accessibility, localisation, deployment**: keyboard and screen-reader operable, large touch targets; every locale;
+- **Accessibility, localization, deployment**: keyboard and screen-reader operable, large touch targets; every locale;
   multi-tenant and self-hosted; PostgreSQL, MySQL, SQLite; both ORMs; OpenAPI and SDKs additive.
 
 ## 5. Key Entities & Domain Concepts

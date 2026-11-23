@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-16
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_PRINT_TEMPLATES` (tenant feature, default off) · the plugin loads only when
 `GAUZY_PRINT_TEMPLATES_ENABLED` is exactly `true` · printers and print agents also behind `FEATURE_PRINT_AGENTS`
 (default off). With the flags off every PDF the platform produces today is produced exactly as today.
@@ -32,7 +32,7 @@ This feature gives **every printable record type a print template**: each docume
 - **Given** an administrator with `PRINT_TEMPLATES_MANAGE`, **when** they copy the shipped delivery note, place the address in the envelope window on the canvas, add a QR code of the number, hide prices and preview `DN-2026-0142`, **then** the preview shows that delivery and refreshes within a second of each change; **when** a user with
   `PRINT_TEMPLATES_PUBLISH` publishes it as default, **then** later prints use version 1.
 - **Given** a customer whose language is French, **when** their invoice is printed, emailed or opened from the public link, **then** one template renders all three in French, with the organization's formats and the amount in words.
-- **Given** 1,200 invoices selected in a saved view, **when** a user with `PRINT_JOBS_RUN` prints one merged PDF, **then** a background job shows live progress, each invoice starts on a new page in its customer's language, 3 drafts are skipped with the reason, and an inbox item links to the file.
+- **Given** 1,200 invoices selected in a saved view and the organization's job limit set to 2,000 (FR-64), **when** a user with `PRINT_JOBS_RUN` prints one merged PDF, **then** a background job shows live progress, each invoice starts on a new page in its customer's language, 3 drafts are skipped with the reason, and an inbox item links to the file.
 - **Given** a receipt of 40 units of a lot-tracked item, **when** the clerk prints labels with the quantity from the received quantity from position 7 of a used sheet, **then** 40 labels with code, lot and barcode fill it from there.
 - **Given** a register paired with a receipt printer through the desktop print agent, **when** a sale completes, **then** the receipt prints within two seconds on the 80 mm printer and the cash drawer opens.
 - **Given** a scanned supplier delivery note, **when** a designer asks the assistant for "this layout for our deliveries", **then** a draft appears mapped to delivery fields with a list of what it could not map; nothing is published.
@@ -50,7 +50,7 @@ This feature gives **every printable record type a print template**: each docume
 - **Given** a render longer than 30 seconds, **then** it stops, the user learns the record and block, and no partial PDF is returned.
 - **Given** an organization that switched on "drafts need permission" (FR-95), a draft invoice and a user without `PRINT_DRAFTS`, **then** printing is refused; with it, the PDF carries a draft watermark no template can remove. With the setting off (the default), anyone who may print the type prints the draft, and the watermark follows the template's own conditions.
 - **Given** an offline print agent, **then** dispatches wait up to 24 hours shown as "printer offline", are delivered in order on reconnect, and expire with a notice after that.
-- **Given** a job interrupted after 600 of 1,200 records, **then** it resumes at 601 and no record appears twice.
+- **Given** a job interrupted after 600 of 1,200 records (job limit set to 2,000), **then** it resumes at 601 and no record appears twice.
 - **Given** a template whose owning feature is off, **then** it is listed as unavailable; its outputs stay readable.
 - **Given** the feature off, **then** every print route answers `404` and invoice PDFs come from today's layout.
 
@@ -133,7 +133,7 @@ This feature gives **every printable record type a print template**: each docume
 - **FR-52** The system renders PDFs on the server with one built-in engine in every deployment, identically, without a browser or network access; images come only from the tenant's file storage and the record.
 - **FR-53** The system renders several records into one PDF in order, each from a new page with its own numbering, and for two-sided printing inserts blank pages so each record starts on a front side.
 - **FR-54** The system can append a record's PDF attachments after its pages on request.
-- **FR-55** The system records each PDF made for a record (download, email, archive, portal, job, printer) with template and version, language, heading, copy number, user or agent, time, pages and content fingerprint, shown on the record to users with `PRINT_HISTORY_VIEW`; for invoices and estimates the entry is written once, by the server, into their existing history.
+- **FR-55** The system records each PDF made for a record (download, email, archive, portal, job, printer) with template and version, language, heading, copy number, user or agent, time, pages and content fingerprint, shown on the record to users with `PRINT_HISTORY_VIEW`; for invoices and estimates the entry is written once, by the server, into their existing history. A stored file is served only to a reader who can read its record at the time of the request and who sees at least every field the file shows; anyone else is refused and may render a fresh copy under their own access.
 - **FR-56** The system stores an archival copy when a document of a type set to "archive on confirm" is confirmed; a reprint offers the archived original or a new rendering marked as a copy.
 - **FR-57** The system produces PDFs in an archival profile on request, with embedded files (structured invoice data) when an owning feature supplies them. `(advanced)`
 - **FR-58** The system produces accessibility-tagged PDFs: language, title, reading order from the template's structure, table headers, alternative text for images (required on publish unless decorative). `(advanced)`
@@ -148,7 +148,7 @@ This feature gives **every printable record type a print template**: each docume
 - **FR-63** The system retries a failed record twice, carries on, lists failures, and lets the requester retry failed records only or cancel a running job.
 - **FR-64** The system caps a job at the organization's limit (default 1,000, at most 5,000 records) and a user's concurrent jobs (default 3), refusing more with the limit named.
 - **FR-65** The system resumes an interrupted job without printing a record twice, with the template versions current when it started.
-- **FR-66** A user can list their jobs (with `PRINT_HISTORY_VIEW` everyone's), read each result log and download it as CSV.
+- **FR-66** A user can list their jobs (with `PRINT_HISTORY_VIEW` everyone's), read each result log and download it as CSV. A merged job file is served only to a reader who can read every record in it at the time of the request and sees at least every field it shows (FR-55); the result log lists to each reader only the records they can read.
 
 ### 3.10 Labels
 
@@ -215,7 +215,7 @@ This feature gives **every printable record type a print template**: each docume
 - **Reliability**: jobs resume and never print a record twice; renders run apart from request handling; dispatches survive restarts.
 - **Security & privacy**: records print only for readers, masks apply on every output, the template language cannot reach outside the print data, fonts, images and samples are type- and size-checked, agent credentials are hashed and revocable. Leaving the platform: PDFs emailed through the communications feature, dispatches to the tenant's own printers, drafting samples to the tenant's AI provider.
 - **Observability**: every output, publish, job and dispatch recorded; render time, failures and queue lag measured.
-- **Accessibility and localisation**: keyboard designer with outline editor, screen-reader labels, tagged PDFs; texts per language, shipped templates in every shipped language, right-to-left layouts.
+- **Accessibility and localization**: keyboard designer with outline editor, screen-reader labels, tagged PDFs; texts per language, shipped templates in every shipped language, right-to-left layouts.
 - **Compatibility**: PostgreSQL, MySQL and SQLite with both ORMs; cloud and self-hosted alike; OpenAPI additive.
 
 ## 5. Key Entities & Domain Concepts
@@ -250,7 +250,7 @@ This feature gives **every printable record type a print template**: each docume
 - [ ] **AC-3** A designed template (canvas address window, grouped table with subtotals, QR code, condition, French texts) prints correctly for a chosen record; publishing creates version 1 (FR-16, FR-18, FR-29).
 - [ ] **AC-4** Letterheads, headings, terms texts and watermarks print as set; a draft printed from a shipped template other than today's invoice, estimate and receipt layouts carries the draft mark, and with the FR-95 setting on every draft carries it.
 - [ ] **AC-5** A masked field is absent in preview, PDF, email and page for a reader without its permission (FR-21).
-- [ ] **AC-6** A 1,200-record job resumes after a restart, skips with reasons, and finishes on its starting versions (FR-62, FR-65).
+- [ ] **AC-6** With the organization's job limit set to 2,000, a 1,200-record job resumes after a restart, skips with reasons, and finishes on its starting versions; with the default limit of 1,000 the same job is refused naming the limit (FR-62, FR-64, FR-65).
 - [ ] **AC-7** Labels print from position 7 with quantities from the received quantity; the test page aligns (FR-67–FR-69).
 - [ ] **AC-8** A report definition prints with letterhead, prompts, subtotals and "page N of M" (FR-70).
 - [ ] **AC-9** A paired agent prints a receipt with a drawer pulse; offline dispatches wait and expire; a revoked agent receives nothing (FR-74, FR-76–FR-78).
@@ -263,7 +263,7 @@ This feature gives **every printable record type a print template**: each docume
 - [ ] **AC-16** The four reports of FR-94 show the expected rows for a seeded tenant.
 - [ ] **AC-17** Works on PostgreSQL, MySQL and SQLite with both ORMs; behind `FEATURE_PRINT_TEMPLATES`; nothing changes while the flag is off; every functional requirement has a passing test (FR-1, FR-5; §4).
 - [ ] **AC-18** With "drafts need permission" off (the default) a user holding only the invoice view permission downloads a draft invoice as today, with and without an assigned template; with it on, the same request is refused and a permitted user's PDF carries the draft mark. Enabling the feature assigns no template to invoices, estimates or receipts, and the invoice pages show no print action or outputs tab while the flag is off (FR-50, FR-95).
-- [ ] **AC-19** With the feature off, and with the feature on and default settings, every existing page, route, field, permission and report behaves as today (FR-1).
+- [ ] **AC-19** With the feature off, and with the feature on and default settings, every existing page, route, field, permission and report behaves as today (FR-1), apart from the print action and outputs tab that the feature on adds beside the existing download on invoice, estimate and receipt pages; their existing controls keep working as today.
 
 ## 8. Open Questions
 

@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-16
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_RECRUITMENT` (default off); the existing candidate features `FEATURE_EMPLOYEE_CANDIDATE` and
 `FEATURE_MANAGE_INTERVIEW` keep working unchanged
 
@@ -279,7 +279,7 @@ All reports are report definitions: filterable, groupable, exportable, schedulab
   configured AI provider (with the attributes of FR-62 removed).
 - **Observability and audit**: application history, offer versions and acceptance evidence, assistant runs with inputs
   and model, job runs (expiry, reminders, retention, referral eligibility).
-- **Accessibility and localisation**: keyboard moves between board columns, screen-reader labels on cards and slots,
+- **Accessibility and localization**: keyboard moves between board columns, screen-reader labels on cards and slots,
   the apply page accessible, openings translatable per opening, every string in every shipped locale, right-to-left
   layouts.
 - **Compatibility**: PostgreSQL, MySQL and SQLite; both ORMs; multi-tenant cloud and self-hosted single tenant;

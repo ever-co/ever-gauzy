@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-16
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_PAYROLL` (default off); shared with `payroll-processing`
 
 ---
@@ -272,13 +272,13 @@ the pay rates and recurring costs that already exist.
   rows per tenant; cost-to-company solve under 2 s.
 - **Data volume and concurrency**: 100,000 employees, 1 million assignments and 10,000 element versions per tenant;
   optimistic versions on elements, structures, assignments and declarations (`409` on conflict).
-- **Reliability**: bulk jobs resumable, one result row per employee, repeated runs change nothing twice.
+- **Reliability**: bulk jobs resumable, one result per employee, repeated runs change nothing twice.
 - **Security & privacy**: tenant and organization scoped; pay data is sensitive (FR-76); formulas are parsed and
   never executed as code; proofs readable by the employee and reviewers only; leaves the platform: reminder emails,
   attachments sent to the document reader and descriptions sent to the assistant's AI provider only when the
   organization enables them (never another person's pay).
 - **Observability and audit**: audit entries of FR-83, bulk job results, test-case results per version, hook errors.
-- **Accessibility and localisation**: keyboard-operable formula editor with screen-reader error messages, every string
+- **Accessibility and localization**: keyboard-operable formula editor with screen-reader error messages, every string
   in every shipped locale, decimal separators and dates in the user's format, formula function names identical in
   every locale.
 - **Compatibility**: PostgreSQL, MySQL and SQLite; both ORMs; multi-tenant cloud and self-hosted; existing employee,
@@ -345,7 +345,9 @@ the pay rates and recurring costs that already exist.
       country without hooks uses the generic rules (FR-73, FR-74).
 - [ ] **AC-13** The assistant drafts an element with tests that a person saves; an agent employee is refused every
       setup record and appears under agent employees (advanced, agents) (FR-23, FR-75).
-- [ ] **AC-14** Denial answers `403`; concurrent saves `409`; pay amounts are hidden from managers by default (FR-76).
+- [ ] **AC-14** Denial answers `403`; concurrent saves `409`; the pay amounts this feature adds are shown only to payroll
+      permission holders and to the employee for themself, and the employee's existing pay rate, bill rate and recurring
+      costs read as today for every role that reads them today (FR-76).
 - [ ] Works on PostgreSQL, MySQL and SQLite with both ORMs.
 - [ ] Behind `FEATURE_PAYROLL`; with it off, existing employee, recurring-cost and register suites pass unchanged.
 - [ ] **AC-15** With the feature on and its settings at their defaults, the employee statistics and dashboards show the

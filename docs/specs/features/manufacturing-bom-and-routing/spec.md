@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-16
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_MANUFACTURING` (new, default off; needs `FEATURE_CATALOG`; costs from stock values also need
 `FEATURE_INVENTORY_VALUATION`)
 
@@ -316,7 +316,7 @@ explains cost drivers. Editors see each other live. These requirements are marke
   leaves the platform except published views and exports a user starts.
 - **Auditability**: who, when, before and after for every release, retirement, default change, effectivity, replacement
   and change-request decision.
-- **Accessibility and localisation**: keyboard-operable, labelled tree and editors; differences marked by text as well as
+- **Accessibility and localization**: keyboard-operable, labelled tree and editors; differences marked by text as well as
   colour; strings in every locale.
 - **Compatibility**: PostgreSQL, MySQL, SQLite; both ORMs; additive migrations; cloud and self-hosted.
 

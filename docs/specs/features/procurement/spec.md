@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-15
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_PURCHASING` (existing, default off; wired to every route and menu entry by this spec) · new
 behaviour also behind `FEATURE_PURCHASE_REQUISITIONS`, `FEATURE_PURCHASE_SOURCING`, `FEATURE_SUPPLIER_PERFORMANCE`
 (all default off)
@@ -386,7 +386,7 @@ and holds, and a risk view says why a supplier is risky. These requirements are 
   emailed to supplier contacts.
 - **Auditability**: who, when, before and after for every change to a confirmed document, hold, award, band and
   price override; agent actions are marked as such.
-- **Accessibility and localisation**: keyboard-operable, labelled screens; strings in every locale; documents in the
+- **Accessibility and localization**: keyboard-operable, labelled screens; strings in every locale; documents in the
   supplier's language and currency.
 - **Compatibility**: PostgreSQL, MySQL, SQLite; both ORMs; additive migrations; cloud and self-hosted; OpenAPI additive.
 

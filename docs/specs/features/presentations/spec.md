@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-16
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_PRESENTATIONS` (tenant feature, default off) · the plugin loads only when
 `GAUZY_SLIDES_ENABLED` is exactly `true` · needs the documents hub (`FEATURE_DOCUMENTS`) with the file kinds of `drive`; co-editing
 needs `GAUZY_DOCS_LIVE_ENABLED`, without it a deck keeps single-writer autosave with the revision check
@@ -173,7 +173,7 @@ Marked `(advanced)`.
 ### 3.7 Transitions and builds
 
 - **FR-30** A user with Edit access can set a transition per slide (none, fade, push, wipe, zoom) with a duration, or a
-  element-tracking transition that moves, resizes and recolours elements present on both slides and fades the rest.
+  element-tracking transition that moves, resizes and recolors elements present on both slides and fades the rest.
 - **FR-31** The system matches elements between consecutive slides by their link (an element duplicated from the
   previous slide) or else by identical text or media, and lets an editor match or unmatch two elements by hand.
 - **FR-32** A user with Edit access can set build steps so elements appear, disappear or highlight on click in order.
@@ -285,7 +285,7 @@ Marked `(advanced)`.
   the tenant's AI provider, source text and computed figures for generation.
 - **Observability**: activity entries for create, share, import, export, restore, generation, sessions; metrics for
   render time, thumbnail queue, session attendance, import and export durations.
-- **Accessibility and localisation**: keyboard-operable canvas with a structured outline mode, alternative text,
+- **Accessibility and localization**: keyboard-operable canvas with a structured outline mode, alternative text,
   reading order per slide, chart tables, captions on uploaded video when provided; labels in every shipped locale.
 - **Compatibility**: PostgreSQL, MySQL, SQLite; both ORMs; cloud and self-hosted; one API process needs no shared bus;
   OpenAPI additive; SDKs regenerated.

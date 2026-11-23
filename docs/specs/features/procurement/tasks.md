@@ -48,7 +48,9 @@
   `pur/database/migrations/1791000084100-AddProcurementColumns.ts`,
   `packages/plugins/returns/src/lib/database/migrations/1791000084200-AddReturnReasonAppliesTo.ts`,
   `packages/plugins/returns/src/lib/order-return-reason/order-return-reason.entity.ts`. Test: migration spec on SQLite
-  (up twice, existing rows intact) and entity mapping spec for both ORMs; existing order and receipt specs green.
+  (up twice, existing rows intact; `CHK_goods_receipt_line_positive` replaced by `CHK_goods_receipt_line_received`, so a
+  line with `quantity = 0`, `damagedQuantity = 0` and `rejectedQuantity = 2` is stored and a line with no units is
+  refused, on each dialect) and entity mapping spec for both ORMs; existing order and receipt specs green.
   Migration timestamps: `1791000084100` to `1791000084199` (`packages/plugins/purchasing`); `1791000084200` to `1791000084299` (`packages/plugins/returns`); `1791000084900` to `1791000084999` (`packages/core`).
 - [ ] **T7**. Entities `pur/supplier/` (profile, group, contact role, document) + MikroORM and TypeORM repositories;
   migration `CreateSupplierTables`; core `party-hold/` entity, repositories and migration `CreatePartyHoldTable`. Files:
@@ -272,12 +274,13 @@
   Test: job specs with a frozen clock.
 - [ ] **T59**. Realtime hints and inbox items for approvals, awards, exceptions, documents, score changes. Files:
   `pur/events/purchasing-realtime.handler.ts`, `pur/events/purchasing-inbox.handler.ts`. Test: consumer spec.
-- [ ] **T60**. User docs (docs site) and `docs/specs/README.md` index row; spec status `Implemented`. Test: docs build.
+- [ ] **T60**. User docs (docs site) and `docs/specs/README.md` index row (the spec status changes in T72). Test: docs build.
 - [ ] **T61**. Subcontract receipts: hook `GOODS_RECEIPT_SUBCONTRACT` declared in `purchasing.types.ts` and called by
   `GoodsReceiptService` in the receipt transaction for `SUBCONTRACT` lines; the answered service quantity rolled into
   `purchase_order_line.receivedQuantity` and the unit cost carried on the receipt line. Files:
   `pur/purchasing.types.ts`, `pur/goods-receipt/goods-receipt.service.ts`. Test: a receipt of finished
-  goods raises the service line's received quantity once; a refusal from the hook rolls the receipt back; unbound, a
+  goods raises the service line's received quantity once; a refusal from the hook rolls the receipt back; reversing
+  that receipt calls the hook's `reverse` step in the reversal's transaction, and its failure leaves the receipt posted; unbound, a
   `SUBCONTRACT` line is refused with the reason.
 - [ ] **T62**. Provide the ports other features bind to (plan, **Consumer tokens answered**): `MANUFACTURING_PURCHASE_PRICES`, `MANUFACTURING_PURCHASING`, `PORTAL_SUPPLIER_ONBOARDING`, `PROJECT_PURCHASES`. Files: `apps/api/src/plugin-composition.ts`. Test: one contract test per token over the shape its consumer plan states; with this feature off each consumer keeps its stated fallback.
 - [ ] **T63**. Supplier documents service and controller `/purchasing/supplier-documents`: file a document (type,
@@ -295,11 +298,24 @@
 - [ ] **T67**. Pages: shipping notices and the exceptions queue with resolution actions. Files:
   `ui/shipping-notices/shipping-notices.component.ts`, `ui/exceptions/exceptions-queue.component.ts`. Test: component
   specs; resolving an exception by closing the line short records the reason.
-- [ ] **T68**. Supplier portal routes and blocks for order confirmation, shipping notice, documents and score
-  (`/portal/procurement/confirmations`, `/notices`, `/documents`, `/score`). Files:
-  `pur/portal/portal-procurement.controller.ts`, `ui/portal/portal-confirmation.component.ts`,
-  `ui/portal/portal-shipping-notice.component.ts`, `ui/portal/portal-documents.component.ts`,
-  `ui/portal/portal-score.component.ts`. Test: rendering specs with a portal session; cross-party isolation e2e.
+- [ ] **T68**. Supplier portal route and block for order confirmation (`/portal/procurement/confirmations`): confirm
+  an order or propose other quantities, dates or prices per line. Files: `pur/portal/portal-procurement.controller.ts`,
+  `ui/portal/portal-confirmation.component.ts`. Test: `ui/portal/portal-confirmation.component.spec.ts` with a portal
+  session; cross-party isolation e2e (another supplier's order answers `404`).
+- [ ] **T69**. Supplier portal route and block for shipping notices (`/portal/procurement/notices`): a notice against one
+  or several orders with lines, lots or serials, packages, carrier, tracking reference and arrival date. Files:
+  `pur/portal/portal-procurement.controller.ts`, `ui/portal/portal-shipping-notice.component.ts`. Test:
+  `ui/portal/portal-shipping-notice.component.spec.ts` with a portal session; a sent notice shows the order in transit.
+- [ ] **T70**. Supplier portal route and block for supplier documents (`/portal/procurement/documents`): the supplier's
+  filed documents with their expiry and the upload of a requested one. Files: `pur/portal/portal-procurement.controller.ts`,
+  `ui/portal/portal-documents.component.ts`. Test: `ui/portal/portal-documents.component.spec.ts` with a portal session;
+  another supplier's documents are never listed.
+- [ ] **T71**. Supplier portal route and block for the scorecard (`/portal/procurement/score`): the supplier's own score
+  and band with their criteria. Files: `pur/portal/portal-procurement.controller.ts`, `ui/portal/portal-score.component.ts`.
+  Test: `ui/portal/portal-score.component.spec.ts` with a portal session; another supplier's score answers `404`.
+- [ ] **T72**. Spec status `Implemented` and its `docs/specs/README.md` row, once T1–T71 have landed. Files:
+  `docs/specs/features/procurement/spec.md`, `docs/specs/README.md`. Test: every acceptance criterion of `spec.md` §7
+  demonstrated before the status changes.
 
 ## Requirement Coverage
 
@@ -371,10 +387,10 @@ Every functional requirement of `spec.md` §3 and the tasks that implement it; e
 | FR-67 | §3.7 Purchase orders | T23 |
 | FR-68 | §3.7 Purchase orders | T23, T61 |
 | FR-69 | §3.7 Purchase orders | T21, T62 |
-| FR-70 | §3.8 Supplier self-service (advanced) | T42, T44, T68 |
+| FR-70 | §3.8 Supplier self-service (advanced) | T42, T44, T68, T69, T70, T71 |
 | FR-71 | §3.8 Supplier self-service (advanced) | T53, T68 |
 | FR-72 | §3.8 Supplier self-service (advanced) | T53 |
-| FR-73 | §3.8 Supplier self-service (advanced) | T54, T68 |
+| FR-73 | §3.8 Supplier self-service (advanced) | T54, T69 |
 | FR-74 | §3.8 Supplier self-service (advanced) | T42, T44 |
 | FR-75 | §3.9 Receipts and returns | T29 |
 | FR-76 | §3.9 Receipts and returns | T29 |

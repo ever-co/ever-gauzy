@@ -166,14 +166,15 @@
   `F/trip/trip-sheet.ts`. Test: `F/trip/delivery-trip.service.spec.ts` (states; one active trip per delivery under
   concurrency; an invalid licence or insurance refuses ready).
 - [ ] **T27**. Notices: email templates seed (every locale), contact preferences, notice sender consumer (shipment
-  notices only while `fulfillment.shipmentNotices` is on), tracking link as
+  and dispatch notices only while `fulfillment.shipmentNotices` is on, never to a contact who opted out), tracking link as
   a `shared_entity` row of the delivery (expiry 90 days after delivery) and `GET /public/tracking/:token`. Files:
   `F/notification/delivery-notice.consumer.ts`, `F/notification/delivery-contact-preference.service.ts`,
   `F/notification/delivery-contact-preference.controller.ts`, `F/notification/tracking-link.service.ts`,
   `F/public/public-tracking.controller.ts`, `F/notification/email-templates/` (`delivery-shipped`,
   `delivery-dispatched`, `delivery-arriving`, `delivery-delivered`, `delivery-exception`, `return-authorised`; every
-  locale). Test: `F/notification/delivery-notice.consumer.spec.ts` (notices per preference; start refused while the
-  template is missing); `F/notification/tracking-link.service.spec.ts` (link revocation and expiry).
+  locale). Test: `F/notification/delivery-notice.consumer.spec.ts` (notices per preference; with the setting on, start refused
+  while the template is missing; with it off, a trip start and a shipped consignment send nothing; an opted-out
+  contact gets no dispatch notice); `F/notification/tracking-link.service.spec.ts` (link revocation and expiry).
 - [ ] **T28**. Returns depth (`R/order-return/`): optional delivery-bound lines (lines naming only an order line keep
   working), lot and serial ownership check, restock rule proposing the location (the caller's `warehouseId` and per-line
   restock choice still win), `POST /order-returns/:id/credit-note` via `RETURNS_CREDIT_NOTE` beside the existing refund,

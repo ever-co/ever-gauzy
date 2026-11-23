@@ -30,7 +30,7 @@
       values `ATTENDANCE_REQUEST`, `OVERTIME_REQUEST`, `OVERTIME_STATEMENT`, `SHIFT_REQUEST`, `SHIFT_TRADE`; export from
       `index.ts`. Test: type spec over sample payloads.
 - [ ] **T2**. Scaffold `packages/plugins/attendance` (package, project, tsconfig, jest, eslint, path mapping),
-      `attendance.plugin.ts`, `attendance.features.ts` (`FEATURE_ATTENDANCE`, default off), `attendance.permissions.ts`
+      `attendance.plugin.ts`, `attendance.features.ts` (`FEATURE_ATTENDANCE` and `FEATURE_TEAMS_PEOPLE_SELF_SERVICE`, the tenant switch of the Ever Teams screens, both default off), `attendance.permissions.ts`
       (nine keys), `attendance.settings.ts`; registered in `apps/api/src/plugins.ts`. Test: plugin list spec; every route
       `404` with the feature off.
 - [ ] **T3** (parallel). Same scaffold for `packages/plugins/shifts` (`FEATURE_SHIFTS`, seven keys, `shifts.settings.ts`).
@@ -46,7 +46,8 @@
       Files: `attendance/src/lib/database/migrations/1791000096110-CreateAttendanceExceptionAndRequestTables.ts`,
       `attendance/src/lib/database/migrations/1791000096120-CreateOvertimeTables.ts`,
       `attendance/src/lib/entities/{attendance-exception,attendance-request,overtime-type,overtime-request,overtime-statement,overtime-statement-line}.entity.ts`.
-      Test: migration spec; `liveKey` and `factKey` uniqueness on three dialects.
+      Test: migration spec; `liveKey` and `factKey` uniqueness on three dialects; every declared
+      `attendance_exception.state` (`AUTO_ACCEPTED` included) persists on PostgreSQL, MySQL in strict mode and SQLite.
 - [ ] **T6** (parallel). Shifts helpers, migrations `CreateShiftTemplateTables`, `CreateShiftMarketplaceTables`,
       `CreateShiftPlanningTables` and entities. Files:
       `shifts/src/lib/database/migrations/1791000096200-CreateShiftTemplateTables.ts`,
@@ -83,8 +84,11 @@
       returns the existing row.
 - [ ] **T12**. Geofence and location privacy (`location/geofence.ts`, distance against the location's address
       coordinates, office networks, minimisation, raw fields behind `@VisibleWith(ATTENDANCE_LOCATION_VIEW)`, raw read
-      endpoint writing one `AUDIT_EVENT_SINK` event). Test: inside, outside flag and refuse; coordinates dropped unless
-      kept; every raw read in the access audit; field absent without the key.
+      endpoint writing one `AUDIT_EVENT_SINK` event; with no audit sink bound, raw reads refused with
+      `ATTENDANCE_LOCATION_AUDIT_UNAVAILABLE`, raw fields omitted and keeping raw coordinates unavailable). Test: inside,
+      outside flag and refuse; coordinates dropped unless kept; every raw read in the access audit; field absent without
+      the key; without `access-control-and-security` no raw coordinate is returned to a holder of
+      `ATTENDANCE_LOCATION_VIEW` and the keep setting is refused.
 - [ ] **T13**. Timer capture handler (`TimerStartedEvent`, `TimerStoppedEvent`) and `attendance.time-log-sweep` whose
       watermark is the organization's last succeeded `job_execution` of the sweep. Files:
       `attendance/src/lib/capture/timer-capture.handler.ts`, `attendance/src/lib/capture/time-log-sweep.scheduler.ts`,
@@ -275,10 +279,10 @@
 - [ ] **T47**. Labour cost through `SHIFTS_LABOUR_COST` (fallback pay rate) in roster rows; stripped without pay
       permission. Files: `shifts/src/lib/cost/labour-cost.service.ts`, `shifts/src/lib/roster/roster.service.ts`. Test:
       multipliers; stripping.
-- [ ] **T48**. Roster proposal optimiser (`proposal/`): constraints (availability from core `employee_availability` and
+- [ ] **T48**. Roster proposal optimizer (`proposal/`): constraints (availability from core `employee_availability` and
       `availability_slots`; preferences as likes only), fairness, cost, deterministic seed, explanations, partial
       acceptance into drafts; core operation `SHIFTS_ROSTER_PROPOSAL` and page. Files:
-      `shifts/src/lib/proposal/roster-optimiser.ts`, `shifts/src/lib/proposal/roster-proposal.operation.ts`,
+      `shifts/src/lib/proposal/roster-optimizer.ts`, `shifts/src/lib/proposal/roster-proposal.operation.ts`,
       `shifts/src/lib/proposal/roster-proposal.controller.ts`,
       `shifts-ui/src/lib/pages/roster-proposal/roster-proposal-page.component.ts`. Test: seeded store reaches target
       coverage with no blocking violation; same seed same result; nothing written before acceptance.
@@ -295,8 +299,10 @@
       `apps/api/src/plugin-composition.ts`. Test: a badge and PIN identify the operator at a station; the third wrong
       PIN locks the profile as at the kiosk; a revoked terminal is refused.
 - [ ] **T52**. Default for existing tenants (spec FR-112): the feature is off by default; after the trial period it may be switched on by default for new tenants only; existing tenants keep their setting until an administrator changes it.
-      Files: `attendance/src/lib/attendance.features.ts`, `shifts/src/lib/shifts.features.ts`. Test: a tenant created
-      before the change gets no day, reminder or exception; a new tenant gets the features on.
+      Files: `attendance/src/lib/attendance.features.ts`, `shifts/src/lib/shifts.features.ts`. Test: with the shipped
+      default, an existing tenant and a new tenant both have both features off and get no day, reminder or exception;
+      with the default for new tenants switched on, a tenant created afterwards gets the features on while a tenant
+      created before keeps them off.
 - [ ] **T53**. Provide the ports other features bind to (plan, **Consumer tokens answered**): `PROJECT_OVERTIME_FACTS`. Files: `apps/api/src/plugin-composition.ts`. Test: one contract test per token over the shape its consumer plan states; with this feature off each consumer keeps its stated fallback.
 - [ ] **T58**. Marketplace pages over the routes of T45: open shifts to volunteer for or pick up, offers to the pool or named
       colleagues, swap proposals with accept and decline, the shift's trade history. Files:

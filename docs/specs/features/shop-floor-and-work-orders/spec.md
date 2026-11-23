@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-16
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_MANUFACTURING` (shared with structures, default off); machine signals also need the
 deployment flag `GAUZY_MANUFACTURING_SIGNALS_ENABLED` (only `true` enables); stock moves need `FEATURE_INVENTORY` and
 `FEATURE_WAREHOUSE`
@@ -183,8 +183,11 @@ orders with a preview. These requirements are marked `(advanced)`.
 
 - **FR-44** The system computes actual cost: consumed material value, labour (FR-64), machine and overhead (run time × the
   centre's non-labour rate), additional and corrective cost; planned cost is fixed at release.
-- **FR-45** Output is valued at actual cost to date less secondary outputs' value and handed to valuation on the output
-  document; cost arriving later becomes variance at close.
+- **FR-45** Each output is valued at its share of the order's cost not yet absorbed: the actual cost to date less what
+  earlier outputs of the order took, times the output's quantity divided by the quantity still to make (never less than
+  the output's quantity, so an output that completes the order takes all of it), less its secondary outputs' value, and
+  is handed to valuation on the output document; cost arriving later, and cost no output absorbed when the order
+  closes, becomes variance at close.
 - **FR-46** Corrective cost is added to output value or charged as variance, per organization setting.
 - **FR-47** On close the system computes material usage and price, labour efficiency and rate, machine and process-loss
   variances and publishes them as document facts for the ledger.
@@ -236,10 +239,12 @@ orders with a preview. These requirements are marked `(advanced)`.
   of a centre with a linked asset names the asset's repair, whose downtime hours are taken from it.
 - **FR-68** A pause whose reason has a downtime category opens a downtime on the centre when no other card runs there,
   and resuming closes it. `(advanced)`
-- **FR-69** A user with `MANUFACTURING_SIGNALS_MANAGE` registers a signal source per centre (secret address, optional
-  signature secret, stop codes mapped to reasons) accepting running, stopped (with code), count (good and reject) and
+- **FR-69** A user with `MANUFACTURING_SIGNALS_MANAGE` registers a signal source per centre (secret address, a
+  signature secret that is set by default and can be removed only for a device that cannot sign, stop codes mapped to
+  reasons) accepting running, stopped (with code), count (good and reject) and
   alarm signals with machine time and id. `(advanced)`
-- **FR-70** The system refuses an unknown address (404) or a missing, wrong or stale signature (401), ignores a repeated id,
+- **FR-70** The system refuses an unknown address (404) or, for a source with a signature secret, a missing, wrong or
+  stale signature (401); a source whose secret was removed is identified by its secret address alone. It ignores a repeated id,
   orders signals by machine time and limits the rate per source. `(advanced)`
 - **FR-71** A stopped signal opens a downtime with the mapped reason marked "to confirm"; running closes it; the operator
   confirms or changes the reason; counts feed effectiveness and propose card output to confirm. `(advanced)`
@@ -330,7 +335,7 @@ orders with a preview. These requirements are marked `(advanced)`.
 - **Security & privacy**: pay rates never leave the server; costs only with `MANUFACTURING_COSTS_VIEW`; signal secrets and
   badge PINs stored hashed or encrypted; nothing leaves the platform except notices a user chose to receive by email.
 - **Auditability**: who, when, before and after for releases, holds, closes, cancels, station actions, downtime
-  confirmations and console exceptions. **Accessibility and localisation**: console and board keyboard and screen-reader
+  confirmations and console exceptions. **Accessibility and localization**: console and board keyboard and screen-reader
   operable, status by text and colour; strings in every locale.
 - **Compatibility**: PostgreSQL, MySQL, SQLite; both ORMs; additive migrations; cloud and self-hosted; current browsers.
 

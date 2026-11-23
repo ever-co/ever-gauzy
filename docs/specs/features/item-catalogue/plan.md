@@ -133,8 +133,9 @@ instead of failing.
 
 New core table `unit_conversion` (core `measurement`, same migration): `TenantOrganizationBaseEntity` + `productId`
 uuid null, `variantId` uuid null, `unitId` uuid not null, `factor` numeric(24,12) not null (stock units per one
-`unitId`), `isWholeNumber` boolean null (overrides the unit's decimals). Unique `(organizationId, productId,
-variantId, unitId)` where `deletedAt IS NULL`; check `factor > 0`.
+`unitId`), `isWholeNumber` boolean null (overrides the unit's decimals), `scopeKey` varchar(48) not null (`variant:<variantId>`,
+else `product:<productId>`, else `*` for an organization-wide conversion; written with the two ids, so the key holds
+on every dialect). Unique `(organizationId, scopeKey, unitId)` where `deletedAt IS NULL`; check `factor > 0`.
 
 ### New catalog plugin tables (migration `1791000022110-CreateItemMasterTables`)
 
@@ -149,8 +150,8 @@ Every table extends `TenantOrganizationBaseEntity` (tenant, organization, timest
 | `item_attribute` (+ `item_attribute_translation`) | `code` varchar(64), `name` varchar(255), `kind` varchar(16) (`LIST`, `RANGE`, `TEXT`), `rangeMin`, `rangeMax`, `rangeStep` numeric(20,6), `position` int | unique `(organizationId, code)` live |
 | `item_attribute_value` (+ translation) | `attributeId` FK cascade, `value` varchar(255), `abbreviation` varchar(32), `position` int | unique `(attributeId, value)`, `(attributeId, abbreviation)` live |
 | `item_variant_attribute` (range and text attributes only; list values are the variant's options) | `variantId` FK cascade, `attributeId` FK restrict, `numericValue` numeric(20,6) null, `textValue` varchar(255) null | unique `(variantId, attributeId)`; check exactly one value |
-| `item_customer_code` | `productId` FK cascade, `variantId` null, `contactId` uuid null, `contactGroupId` uuid null, `code` varchar(128), `description` varchar(512) | check exactly one of contact or group; unique `(organizationId, contactId, contactGroupId, code)` live; index `(organizationId, code)` |
-| `item_code_alias` | `productId` FK cascade, `code` varchar(128), `retiredAt` timestamp | unique `(organizationId, code)` |
+| `item_customer_code` | `productId` FK cascade, `variantId` null, `contactId` uuid null, `contactGroupId` uuid null, `ownerKey` varchar(48) not null (`contact:<contactId>` or `group:<contactGroupId>`, written with them), `code` varchar(128), `description` varchar(512) | check exactly one of contact or group; unique `(organizationId, ownerKey, code)` live, so one customer and one group each hold a code once; index `(organizationId, code)` |
+| `item_code_alias` | `productId` FK cascade, `code` varchar(128), `retiredAt` timestamp | unique `(organizationId, productId, code)` (items that shared a code while `catalog.uniqueCodes` is off each keep it as an old code); index `(organizationId, code)` |
 | `item_bundle` | `productId` FK cascade, `kind` varchar(8) (`BUNDLE`, `KIT`), `name` varchar(120), `isActive` boolean, `version` int | unique `(productId, kind)` where `isActive` and live |
 | `item_bundle_component` | `bundleId` FK cascade, `variantId` FK restrict, `quantity` numeric(20,6), `unitId` uuid, `priceShare` numeric(9,6) null, `description` varchar(255), `position` int | index `(variantId)` (where-used) |
 | `item_default` (brand and group levels only) | `ownerType` varchar(16) (`BRAND`, `GROUP`), `ownerId` uuid not null, `field` varchar(64), `value` varchar(255) | unique `(organizationId, ownerType, ownerId, field)` live |
@@ -197,7 +198,7 @@ The core kernel migration of the changed core tables and the catalog plugin migr
 
 `packages/contracts/src/lib/item-catalogue.model.ts`: `ItemKind`, `ItemBarcodeType`, `ItemAttributeKind`,
 `ItemBundleKind`, `ItemDefaultOwnerType`, `ItemDefaultField`, `IItemResolvedDefault { field, value, source,
-sourceId, sourceName }`, `IItemLookupResult { variantId, unitId, quantity, matchedBy }`, `IItemAvailability`,
+sourceId, sourceName }`, `IItemLookupResult { variantId, unitId, quantity, matchedBy, candidates? }` (`candidates` when several items match at the same step), `IItemAvailability`,
 `IVariantGenerationPreview`, `IItemDuplicateEvidence` (the scorer's answer), `IItemCompleteness`, plus the new entity
 interfaces; additive fields on `IProduct`, `IProductVariantSetting`, `IUnit`. Bulk change, duplicate candidate and
 merge shapes are those of `data-exchange.model.ts`.
@@ -222,7 +223,7 @@ idempotency keys (`@Idempotent`).
 | POST | `/units/convert` | `UNITS_VIEW` | adds `productId`, `variantId`, `stockQuantity`, `documentFamily` | Changed, additive |
 | GET/PUT | `/item-defaults?ownerType=&ownerId=` (brand or group) | `PRODUCTS_VIEW` / `CATALOG_SETTINGS_EDIT` | `IItemDefault[]` | New |
 | POST | `/item-defaults/resolve` | `PRODUCTS_VIEW` | `{ productIds, fields }` → `IItemResolvedDefault[]` | New |
-| GET | `/item-lookup?code=&contactId=&includeInactive=` | `PRODUCTS_VIEW` | `IItemLookupResult`; items past end of life, archived or disabled only with `includeInactive=true` | New |
+| GET | `/item-lookup?code=&contactId=&includeInactive=` | `PRODUCTS_VIEW` | `IItemLookupResult`; items past end of life, archived or disabled only with `includeInactive=true`; when several items match at the first step that finds any (codes and old codes need not be unique while `catalog.uniqueCodes` is off), all of them in `candidates` and none chosen | New |
 | GET | `/items/search?q=&limit=&includeInactive=` | `PRODUCTS_VIEW` | ranked items; facade over the `search` plugin, database provider when it is off; items past end of life, archived or disabled only with `includeInactive=true` | New |
 | POST | `/items/duplicate-check` | `PRODUCTS_VIEW` | item fields → candidates with `IItemDuplicateEvidence` (the scorer the duplicate rules also call) | New |
 | GET | `/items/:id/availability`, `/items/:id/connections`, `/items/:id/completeness` | `PRODUCTS_VIEW` | | New |
@@ -284,7 +285,7 @@ their sources. New file `catalog.ts` holds only the actions `products.ts` lacks:
 | Tool | Input | Output |
 |---|---|---|
 | `search_items` | `query`, `limit`, filters | ranked items with code, name, unit, status |
-| `lookup_item_code` | `code`, `contactId?` | variant, unit, quantity, matched by |
+| `lookup_item_code` | `code`, `contactId?` | variant, unit, quantity, matched by; the candidates when several items match |
 | `generate_item_variants` | `itemId`, attribute values, `preview` | variant codes, created or refused rows |
 | `bulk_edit_items` | filter or ids, field values, `preview` | a `data-import-export` bulk change of target `Product`: per-row before and after, run id |
 | `list_item_duplicates` | `status?` | `data-import-export` duplicate candidates of type `Product` with score and evidence |
@@ -315,7 +316,7 @@ operation handlers; without a queue root the operation runtime runs them in proc
   `FEATURE_ITEM_MASTER` added to `CATALOG_FEATURES` (`defaultEnabled: false`, `dependsOn: ['FEATURE_CATALOG']`).
 - A bulk edit needs the bulk-change permission of `data-import-export` and `PRODUCTS_EDIT`; a merge needs its merge
   permission, and the item merge guard also requires `PRODUCTS_MERGE`.
-- Rich descriptions are cleaned with the platform sanitiser (`core/html-sanitizer`) on save while
+- Rich descriptions are cleaned with the platform sanitizer (`core/html-sanitizer`) on save while
   `catalog.cleanDescriptions` is on (default off: stored as sent, as today); the plain-text summary is always derived
   from the cleaned text; uploads limited by type and size; barcode and code inputs trimmed and length-checked.
 - AI drafts: only the selected texts leave the platform, to the organization's configured provider through

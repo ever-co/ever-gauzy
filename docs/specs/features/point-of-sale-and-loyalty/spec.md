@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-15
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_POINT_OF_SALE` and `FEATURE_LOYALTY` (new tenant features, default off); the plugins load
 only when `GAUZY_POINT_OF_SALE_ENABLED` / `GAUZY_LOYALTY_ENABLED` is exactly `true`
 
@@ -325,7 +325,7 @@ discount anomalies per cashier.
   beyond the walk-in customer and recent loyalty members of the store when the register allows it; tenant and
   organization scoped; receipts sent only to addresses the customer gives.
 - **Observability**: shift, sync and device logs; metrics for sync lag, offline duration and closing differences.
-- **Accessibility and localisation**: keyboard-only selling, large touch targets, screen-reader labels, receipt
+- **Accessibility and localization**: keyboard-only selling, large touch targets, screen-reader labels, receipt
   languages and number formats per register.
 - **Compatibility**: PostgreSQL, MySQL, SQLite; both ORMs; additive migrations; cloud and self-hosted; the register
   runs in current desktop and tablet browsers.

@@ -77,7 +77,8 @@
       Files: `rp/installation/regional-pack-installer.service.ts`, `rp/installation/regional-pack-apply.operation.ts`,
       `rp/installation/regional-pack-preview.service.ts`, `rp/installation/content-ledger.service.ts`. Test: SQLite
       end-to-end; an operation killed midway resumes and creates nothing twice; second concurrent run answers `409`; a
-      second primary pack is refused.
+      second primary pack is refused; a run with undated content (`validFromKey` `-`) killed and resumed writes one
+      ledger record per content key on PostgreSQL, MySQL and SQLite.
 - [ ] **T9**. Section handlers: tax content (categories, rates with parts, regimes with windows) and statutory
       fields (format, check-digit and required-when checks as warnings unless `regional.fieldChecksBlocking` is on).
       Files: `rp/sections/tax-content.section.ts`, `rp/sections/statutory-fields.section.ts`,

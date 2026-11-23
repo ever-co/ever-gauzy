@@ -73,7 +73,7 @@ flowchart LR
 | Working calendar | `WORKFLOW_WORKING_CALENDAR` when bound; else the organization's `defaultStartTime`, `defaultEndTime`, `standardWorkHoursPerDay` and `startWeekOn` with the core `official_holiday` rows of its country (`OfficialHolidayService`) | the organization's own hours |
 | Thresholds of sales orders | `approval_rule` reads, for `sales_order`, the buyer's `contact_buyer.approvalThreshold` (with its group, channel and organization fallbacks), `spendingLimit` and `periodSpendingLimit` (bases `BUYER_THRESHOLD`, `BUYER_SPENDING_LIMIT`, `BUYER_PERIOD_LIMIT`) and the order setting `order.requireApprovalAboveAmount` (`order.features.ts`) as the organization-level `TOTAL` rule, only when the organization setting `workflows.approvalRules.useOrderThresholds` (default `false`) is on; the spending limits keep their existing `BUYER_LIMIT_EXCEEDED` refusal either way; saved rules add to them, never copy them | one threshold model per B2B order; enabling the feature refuses nothing accepted today |
 | Status models of tasks, deals and orders | lifecycle definitions are refused for `Task` (`task_status` per project or team), deals (`pipeline_stage`) and orders (`order-state-machine.ts`); their workflow state field shows the owner's status read-only; approval definitions still govern them | no second status model |
-| Audit | definition, rule, limit and delegation changes are `activity_log` rows; `workflow_event` keeps the engine's per-instance step, task and decision events | record timeline from the activity log |
+| Audit | definition, rule, limit and delegation changes are `activity_log` rows; `workflow_event` keeps the engine's per-instance step, task and decision events, a table of its own because each event carries a per-step structure (states, transition, step run, task, channel) that the instance history and its export read in instance order, while `activity_log` records field changes of a record | record timeline from the activity log |
 | Agent approvers | an agent approver is an agent employee profile acting through `ai-agents-and-assistants` (`WORKFLOW_AGENTS`), recorded with `ActorTypeEnum.Agent`; no agent, run or budget table here | one agent identity |
 | Delivery | event outbox and consumer registry; `INBOX_ITEM_WRITER`; inbox source handler | Principle VII; Decisions tab reused |
 | Links | random 32-byte tokens, SHA-256 at rest, single use, generated, hashed and compared by the core helper `packages/core/src/lib/core/util/hashed-token.ts` of `automation-and-notifications` (its T58; `saved-report-token.ts` re-exports it); the public page follows the estimate answer page (`public-share/invoice`, `invoice/estimate-answer/`, `public-layout-ui`): same layout, rate limit and expiry handling | one token helper, one public decision pattern |
@@ -164,8 +164,10 @@ creation.
 | `GET` | `/api/workflows/reports/{cycle-time,pending,service-levels,decisions,load,rejections,authority}` | `WORKFLOW_REPORTS_VIEW` | FR-67 datasets, registered in the core reports catalogue in a category keyed `FEATURE_WORKFLOWS` (shared catalogue feature filter of `report-builder-and-dashboards`) | New |
 | `*` | `/api/request-approval/*`, `/api/approval-policy/*` | unchanged | routed through the engine when governed | Unchanged contract |
 
-Every new route carries `@FeatureFlag(FEATURE_WORKFLOWS)`, `TenantPermissionGuard`, class-validator DTOs and Swagger
-decorators. Errors: `WORKFLOW_APPROVAL_REQUIRED` (422 finding), `WORKFLOW_NOT_ASSIGNEE` (403), `WORKFLOW_SELF_APPROVAL`
+Every new route carries `@FeatureFlag(FEATURE_WORKFLOWS)`, class-validator DTOs and Swagger decorators, and every new
+route except `/api/workflows/actions/:token` carries `TenantPermissionGuard`. The action route is marked `@Public()`
+(a recipient follows the emailed link without a session): it validates its token first, takes the tenant, task and
+assignee from the token row, checks `FEATURE_WORKFLOWS` for that tenant, and decides as that assignee. Errors: `WORKFLOW_APPROVAL_REQUIRED` (422 finding), `WORKFLOW_NOT_ASSIGNEE` (403), `WORKFLOW_SELF_APPROVAL`
 (403), `WORKFLOW_RECORD_LOCKED` (403), `WORKFLOW_TRANSITIONS_ONLY` (409), `WORKFLOW_ALREADY_DECIDED` (409),
 `WORKFLOW_RECORD_CHANGED` (409), `WORKFLOW_VERSION_PUBLISHED`, `WORKFLOW_DEFINITION_OVERLAP`, `WORKFLOW_INVALID`
 (with problems), `APPROVAL_RULE_DUPLICATE`, `WORKFLOW_LINK_INVALID`. GraphQL: `workflowDefinitions`, `workflowInstance`
@@ -332,7 +334,7 @@ decision latency, overdue tasks, escalations, failed after-commit actions, sweep
 - V Contracts and API first: gateway, events and routes in contracts before the UI; OpenAPI and SDKs.
 - VI Permissions, privacy, security: seven permissions, assignment-based decisions, segregation, signed links, audit.
 - VII Real-time through the event bus: outbox events, realtime channel, Inbox items; no private channel.
-- VIII i18n and accessibility: labels per language, keyboard designer, labelled decision controls, localised emails.
+- VIII i18n and accessibility: labels per language, keyboard designer, labelled decision controls, localized emails.
 - IX Tests: engine units, contract suite for existing approvals, dialect, e2e and UI specs.
 - X Behaviour-first spec: implementation stays in this plan.
 - XI Documentation describes our platform only.

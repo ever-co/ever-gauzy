@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-15
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_COLLECTIONS` (new tenant feature, default off) on top of the existing `FEATURE_PAYMENT`; deployment switch `GAUZY_COLLECTIONS_ENABLED` (only the exact value `true` loads the new modules)
 
 ---
@@ -299,7 +299,7 @@ payee bank detail is held until verified.
   read, the single exception to the rule that no bank account number is stored; this feature stores none. Pay
   links are unguessable, expire and expose only the party's own items; data leaving the platform: emails and text
   messages to the party, bank files downloaded by the user, reminder facts to the organization's AI provider when on.
-- **Accessibility, localisation, compatibility**: keyboard operable workspace and lists; every shipped locale; letters
+- **Accessibility, localization, compatibility**: keyboard operable workspace and lists; every shipped locale; letters
   and statements in the party's language; PostgreSQL, MySQL and SQLite, both ORMs; cloud and self-hosted.
 
 ## 5. Key Entities & Domain Concepts

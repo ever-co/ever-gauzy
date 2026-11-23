@@ -86,7 +86,7 @@ flowchart LR
 
 | Table | New columns (type) | Notes |
 | --- | --- | --- |
-| `expense` | `approvalState` varchar(16) (`DRAFT`/`SUBMITTED`/`APPROVED`/`REJECTED`/`CANCELLED`), `source` varchar(16) (`DIRECT`/`CLAIM`/`CARD`/`VEHICLE_LOG`; null reads `DIRECT`), `expenseClaimId` uuid (no FK, plugin-owned) | idx `(organizationId, approvalState)`, `(expenseClaimId)`; core DTO whitelists unchanged, so existing routes neither set nor read them |
+| `expense` | `approvalState` varchar(16) (`DRAFT`/`SUBMITTED`/`APPROVED`/`REJECTED`/`CANCELLED`), `source` varchar(16) (`DIRECT`/`CLAIM`/`CARD`/`VEHICLE_LOG`; null reads `DIRECT`), `expenseClaimId` uuid (no FK, plugin-owned) | idx `(organizationId, approvalState)`, `(expenseClaimId)`; core DTO whitelists unchanged, so existing routes neither set nor read them; the existing update and delete paths refuse rows where either is set (§4) |
 
 On approval the plugin writes the approved amount into `expense.amount` (the claimed amount stays in
 `expense_claim_line.claimedAmount`), sets `typeOfExpense = BILLABLE_TO_CONTACT` and `status = UNINVOICED` for billable
@@ -122,7 +122,7 @@ and the invoice expense picker.
 | `receipt_capture` (employee receipts; supplier invoices are `bill_capture` rows of `invoicing-receivables-payables`) | `fileId`, `fileName`, `mimeType`, `checksum` varchar(64), `source` (`UPLOAD`/`EMAIL`/`PHONE`/`API`), `employeeId`, `inboundAddressId` (Docs inbound address, for `EMAIL`), `state` (`RECEIVED`/`EXTRACTING`/`PROPOSED`/`USED`/`DISCARDED`/`FAILED`), `proposal` text, `error`, `extractedAt`, `lineId` | idx `(organizationId, checksum)`, `(employeeId, state)` |
 | `card_holder` | `bankAccountRef` uuid (banking card account), `employeeId`, `last4` varchar(4), `isActive` | unique `(bankAccountRef, employeeId, last4)` |
 | `card_transaction_explanation` | `bankTransactionRef` uuid, `employeeId`, `amount`, `currency`, `bookedOn`, `merchant`, `state` (`TO_EXPLAIN`/`EXPLAINED`/`PERSONAL`/`DISMISSED`), `lineId`, `personalAdvanceId`, `remindedAt`, `escalatedAt`, `proposal` text | unique `(tenantId, bankTransactionRef)`; idx `(employeeId, state)` |
-| `travel_request` | `number`, `employeeId`, `purpose`, `projectId`, `organizationContactId`, `isInternational` bool (derived from leg countries), `payer` (`ORGANIZATION`/`THIRD_PARTY`/`SHARED`), `thirdPartyName`, `thirdPartyShare` numeric(7,4), `hostContact` text, `travellerNotes` text, `startDate`, `endDate`, `currency`, `estimatedTotal`, `actualTotal`, `state` (`DRAFT`/`SUBMITTED`/`APPROVED`/`REJECTED`/`CANCELLED`/`CLOSED`), `approvalRef`, `requestApprovalId` (core `request_approval`), `budgetCheck` text, `commitmentRef`, `identityCheck` text, `version` | unique `(organizationId, number)`; idx `(employeeId, state)`, `(projectId)` |
+| `travel_request` | `number`, `employeeId`, `purpose`, `projectId`, `organizationContactId`, `isInternational` bool (derived from leg countries), `payer` (`ORGANIZATION`/`THIRD_PARTY`/`SHARED`), `thirdPartyName`, `thirdPartyShare` numeric(7,4), `hostContact` text, `travelerNotes` text, `startDate`, `endDate`, `currency`, `estimatedTotal`, `actualTotal`, `state` (`DRAFT`/`SUBMITTED`/`APPROVED`/`REJECTED`/`CANCELLED`/`CLOSED`), `approvalRef`, `requestApprovalId` (core `request_approval`), `budgetCheck` text, `commitmentRef`, `identityCheck` text, `version` | unique `(organizationId, number)`; idx `(employeeId, state)`, `(projectId)` |
 | `travel_leg`, `travel_stay` | leg: `requestId` fk cascade, `sequence`, `origin`, `originCountry`, `destination`, `destinationCountry`, `transport` varchar(12), `departAt`, `arriveAt`, `bookingFileIds` text; stay: `requestId` fk cascade, `city`, `countryCode`, `checkIn`, `checkOut` date, `needs` text, `providedMeals` text | unique `(requestId, sequence)`; idx `(requestId)` |
 | `travel_cost_estimate` | `requestId` fk cascade, `categoryId`, `amount`, `thirdPartyAmount`, `comment`, `source` (`MANUAL`/`PER_DIEM`) | idx `(requestId)` |
 | `per_diem_rate` | `countryCode` char(2), `region` varchar(64) null, `effectiveFrom` date, `dailyAmount`, `currency`, `lodgingCap`, `mealDeductions` text, `partialDayRules` text, `travelDayShare` numeric(5,4), `source` (`MANUAL`/`PACK`), `packRef` | unique `(organizationId, countryCode, region, effectiveFrom)` |
@@ -191,6 +191,7 @@ updates. Errors `400` with codes (`EXPENSE_NO_LINES`, `EXPENSE_POLICY_BLOCKED`, 
 | CRUD | `/vehicles` (private), `/vehicle-log`, `/vehicle-service-items` | own; `EXPENSE_VEHICLES_MANAGE` | vehicle log | New |
 | `GET` | `/spend/projects/:id`, `/spend/clients/:id`, `/reports/*` | `EXPENSE_REPORTS_VIEW` or project manager | figures; report sources | New |
 | `GET` | `/expense`, `/expense/report`, `/expense/statistics`, … | as today | approved claim lines included (vendor and receipt filled as for direct expenses); `source` filter accepted | Changed (additive) |
+| `PUT` `DELETE` | `/expense/:id`, `/expense/:id/soft` | as today | a row with `expenseClaimId` or `approvalState` set (a claim line) is refused with `409 EXPENSE_CLAIM_OWNED`, so the claim and its posting keep the approved amount; the claim routes above are the only writers of claim lines; every other expense is updated and deleted as today | Changed (additive) |
 | `*` | `/request-approval/*` | as today | claims and advances appear as request approvals when `approval-workflows` is off, beside the existing business trips | Changed (additive) |
 
 ## 5. Events, Real-Time and Notifications
@@ -335,7 +336,7 @@ core `job_execution` row; the policy re-check over many lines and imports run as
 - III Both ORMs, additive migrations: add-column and create-table migrations; filter in both ORM forms.
 - IV Default-off flag; nothing removed: `FEATURE_EXPENSE_CLAIMS`; direct expenses and their routes unchanged.
 - V Contracts and API first: optional fields on `IExpense`; new routes; existing routes keep their contracts.
-- VI Permissions, privacy, security: ten keys; receipt and card data minimised; AI use opt-in.
+- VI Permissions, privacy, security: ten keys; receipt and card data minimized; AI use opt-in.
 - VII Real-time through the event bus: outbox events; spend and claim channels.
 - VIII i18n and accessibility: `EXPENSE_CLAIMS.*` keys; accessible forms and dashboards.
 - IX Tests: filter parity on existing suites, policy golden cases, limits of applications, idempotent hand-offs.

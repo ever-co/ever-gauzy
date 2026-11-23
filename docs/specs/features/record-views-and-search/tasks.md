@@ -45,9 +45,8 @@
   and contribution specs; plugin list specs.
 - [ ] **T6**. Migrations on the shared core migration helpers (`@gauzy/core`, `procurement` T4); entities
   `rv/entities/record-view-share.entity.ts`, `record-view-pin.entity.ts` (audience pin), `record-view-order.entity.ts`,
-  `record-tag.entity.ts` and `record-bulk-result.entity.ts` (keyed by `operationId`) and migrations
-  `rv/database/migrations/1791000036100-CreateRecordViewTables.ts`, `1791000036110-CreateRecordTagTable.ts`,
-  `1791000036120-CreateRecordBulkResultTable.ts`; core migration
+  and `record-tag.entity.ts` (links to core `tag`) and migrations
+  `rv/database/migrations/1791000036100-CreateRecordViewTables.ts`, `1791000036110-CreateRecordTagTable.ts`; core migration
   `packages/core/src/lib/database/migrations/1791000036300-ExtendTaskViewCommentRecentVisit.ts` (additive `task_view`
   view columns in `packages/core/src/lib/tasks/views/view.entity.ts`, `comment` note
   columns, `employee_recent_visit` counter and user key, their indexes). Test: migration specs on SQLite (up twice);
@@ -56,20 +55,27 @@
   `SEARCH_VIEW` contribution unchanged; no migration. Files: `rv/record-views.permissions.ts`, `sp/search.permissions.ts` (unchanged).
   Test: grants present on a new tenant and after the permission
   reload; the holders of `SEARCH_VIEW` are the same before and after the reload.
-- [ ] **T50**. Core record timeline contract: the multi slot `RECORD_TIMELINE_SOURCES` in
-  `packages/core/src/lib/record-type/record-timeline-sources.ts` (`list(ref, { after, limit, kinds, viewer })` returning the timeline entry of
-  `record-view.model.ts`, T1), no dependency on this plugin or its flag. Test: contract spec; two fake sources
-  contribute without this plugin loaded.
-- [ ] **T51**. Knowledge-embedding seam in core: the docs knowledge pipeline
-  (`packages/plugins/docs/src/lib/knowledge/chunking/markdown-chunker.ts`, `chunking/token-counter.ts`,
-  `embedding/embedding.service.ts`, `vector-store/vector-store.registry.ts` with the PostgreSQL vector and lexical providers, its queue) moved
-  into `packages/core/src/lib/knowledge-embedding/` with re-exports in the docs plugin, no behaviour change. Test: the
-  docs plugin's knowledge specs pass unchanged against the re-exports.
-- [ ] **T52**. Record links in core (FR-72): core migration
-  `packages/core/src/lib/database/migrations/1791000036310-AddResourceLinkRecordTarget.ts` (record target
-  columns and keys of `resource_link`, `hasColumn` guards, `url` nullable) and `ResourceLinkService.link` / `unlink` /
-  `linksOf` in `packages/core/src/lib/resource-link/resource-link.service.ts` in both directions with the viewer's read scope, safe from any feature that writes record links; the
-  existing resource link routes and panels keep answering only rows with a `url`. Test: migration twice is a no-op on
+- [ ] **T50**. Core record timeline contract: the multi slot `RECORD_TIMELINE_SOURCES` (`list(ref, { after, limit,
+  kinds, viewer })` returning the timeline entry of `record-view.model.ts`, T1), no dependency on this plugin or its
+  flag. Files: `packages/core/src/lib/record-type/record-timeline-sources.ts`, `packages/core/src/lib/record-type/index.ts`.
+  Test: `packages/core/src/lib/record-type/record-timeline-sources.spec.ts`: contract spec; two fake sources contribute
+  without this plugin loaded.
+- [ ] **T51**. Knowledge-embedding seam in core: the docs knowledge pipeline (chunker, token counter, embedding service,
+  vector-store registry with the PostgreSQL vector and lexical providers, its queue) moved into core with re-exports in
+  the docs plugin, no behaviour change. Files: `packages/core/src/lib/knowledge-embedding/{markdown-chunker.ts,token-counter.ts,embedding.service.ts,vector-store.registry.ts,index.ts}`,
+  `packages/plugins/docs/src/lib/knowledge/chunking/markdown-chunker.ts`,
+  `packages/plugins/docs/src/lib/knowledge/chunking/token-counter.ts`,
+  `packages/plugins/docs/src/lib/knowledge/embedding/embedding.service.ts`,
+  `packages/plugins/docs/src/lib/knowledge/vector-store/vector-store.registry.ts`. Test: the docs plugin's knowledge
+  specs pass unchanged against the re-exports.
+- [ ] **T52**. Record links in core (FR-72): a core migration (record target columns and keys of `resource_link`,
+  `hasColumn` guards, `url` nullable) and `ResourceLinkService.link` / `unlink` / `linksOf` in both directions with the
+  viewer's read scope, safe from any feature that writes record links; the existing resource link routes and panels keep
+  answering only rows with a `url`. Files:
+  `packages/core/src/lib/database/migrations/1791000036310-AddResourceLinkRecordTarget.ts`,
+  `packages/core/src/lib/resource-link/resource-link.entity.ts`,
+  `packages/core/src/lib/resource-link/resource-link.service.ts`. Test:
+  `packages/core/src/lib/resource-link/resource-link.record-target.spec.ts`: migration twice is a no-op on
   the three dialects; a link to a record the viewer cannot read is hidden; existing URL links unchanged.
 
 ## Phase 2 — Services, endpoints, events
@@ -81,7 +87,7 @@
 - [ ] **T9**. Group and aggregate service (two levels, counts, sums per currency, totals). Files:
   `rv/query/group-aggregate.service.ts`. Test: figures on seeded data;
   masked field refused as group or aggregate.
-- [ ] **T10**. View service over the generalised core `task_view` (every record type): CRUD, `If-Match` versions,
+- [ ] **T10**. View service over the generalized core `task_view` (every record type): CRUD, `If-Match` versions,
   duplicate, audience defaults in the `views` section of the `recordType.<key>` setting and personal defaults in
   `IUserUiPreferences.recordViews`, system views, invalid-condition marking. Files: `rv/views/record-view.service.ts`,
   `rv/views/view-defaults.service.ts`, `rv/views/system-views.registry.ts`,
@@ -137,7 +143,7 @@
   `packages/ui-core/core/src/lib/services/command-palette/command-palette.registry.ts`,
   `rvui/pages/search-page/search-page.component.ts`, `rvui/pages/records-page/records-page.component.ts`,
   `rvui/settings/views-settings/views-settings.component.ts`, `packages/ui-core/i18n/assets/i18n/*.json`. Test: rendering specs; palette
-  keyboard navigation spec; the Quick Actions dialog, its customisation and a quick action bound to ctrl+K behave as
+  keyboard navigation spec; the Quick Actions dialog, its customization and a quick action bound to ctrl+K behave as
   before with the feature on.
 - [ ] **T19**. Adoption on contacts, deals, projects and tasks pages: the existing table, board and actions stay the
   default; the shared list is a second layout, opened first only by the type's `listMode` or the person's choice. Files:
@@ -146,7 +152,7 @@
   `apps/gauzy/src/app/pages/projects/components/project-list/list.component.ts`,
   `packages/plugins/task-views-ui/src/lib/task-views-ui.plugin.ts`. Test:
   page specs for feature off, feature on with defaults (existing table), `listMode = VIEWS`, and a person's choice.
-- [ ] **T20** (parallel). API compatibility of the task view routes after the generalisation (`/api/task-views/**`,
+- [ ] **T20** (parallel). API compatibility of the task view routes after the generalization (`/api/task-views/**`,
   including the order route): they list and write only `recordType = 'Task'` rows and answer as before; no React package.
   Files: `packages/core/src/lib/tasks/views/view.controller.ts`, `packages/core/src/lib/tasks/views/view.service.ts`.
   Test: contract snapshot of the task view routes before and after.
@@ -180,11 +186,12 @@
   `ui/group-sidebar/group-sidebar.component.ts`, `ui/record-table/record-table.component.ts`. Test: counts match the list.
 - [ ] **T29**. Bulk work as core operation `RECORD_BULK` registered with `OperationRegistry`: actions (edit field,
   assign, tags, follow, delete, restore, form action, start flow, workflow transition, assignment rule, plugin actions
-  via `registerBulkActions`), per-record results through `BulkExecutor` into `record_bulk_result`, inline under 500 and
+  via `registerBulkActions`), per-record results through `BulkExecutor` into the operation steps (`output`, and the previous values in
+  `compensationData` for undo), inline under 500 and
   `202` above, undo within 10 minutes as a child operation. Files: `rv/bulk/record-bulk.operation.ts`,
   `rv/bulk/bulk-actions.registry.ts`, `rv/bulk/record-bulk.controller.ts`, `rv/bulk/record-bulk-undo.service.ts`,
   `ui/bulk-toolbar/bulk-toolbar.component.ts`. Test: 700-record run with refusals and undo; per-record
-  atomicity; a restart resumes the operation.
+  atomicity; a restart resumes the operation; results and undo read only the operation's rows.
 - [ ] **T30**. Inline edit and cell paste in the table and on cards. Files: `rv/records/records.controller.ts`
   (`PATCH …/records/:id`), `ui/record-table/inline-edit.directive.ts`, `ui/record-table/cell-paste.service.ts`. Test: stale version shows the current value; 500-cell
   paste reports per cell.

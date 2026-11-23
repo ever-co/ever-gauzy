@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-16
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_CAMPAIGNS` (tenant feature, default off) · the plugin loads only when `GAUZY_CAMPAIGNS_ENABLED`
 is exactly `true` · email and text sends need `FEATURE_COMMUNICATIONS` · the campaign assistant also needs
 `FEATURE_CAMPAIGNS_ASSISTANT` (default off)
@@ -253,7 +253,7 @@ always as drafts. These requirements are marked `(advanced)`.
   prompts to the tenant's AI provider.
 - **Observability**: campaign, message and list changes audited; metrics for planning time, hand-over rate, skips per
   reason, bounce and complaint rates per message.
-- **Accessibility and localisation**: editors keyboard operable; messages, lists and pages per language; recipients'
+- **Accessibility and localization**: editors keyboard operable; messages, lists and pages per language; recipients'
   language and time zone used for tokens, dates and schedules.
 - **Compatibility**: PostgreSQL, MySQL and SQLite with both ORMs; cloud and self-hosted; without communications only
   planning and results of past sends remain; OpenAPI additive; SDKs regenerated.

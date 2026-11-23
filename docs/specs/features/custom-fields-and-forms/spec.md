@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-16
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_CUSTOM_FIELDS` (tenant feature, default off) · custom record types also behind
 `FEATURE_CUSTOM_RECORD_TYPES` (default off) · the plugin loads only when `GAUZY_CUSTOM_FIELDS_ENABLED` is exactly `true`
 
@@ -30,9 +30,9 @@ Angular app (installable on phones), the API and SDKs, the MCP server.
 automation actions and pricing, and evaluated identically in browser and server. Fields **roll up** related records,
 tracked time and its cost included. Every value change keeps **field-level history** with its source and can be
 restored. Layouts differ **per role and per device**. Fields can apply to some organizations of a tenant only.
-Customisations go **draft, publish, deprecate** with an impact analysis and travel as **packages** with a diff and an
+Customizations go **draft, publish, deprecate** with an impact analysis and travel as **packages** with a diff and an
 undo. A custom record type has permissions, views, reports, API, events and MCP tools **from publication**. An assistant
-drafts customisations from a sentence; agents fill records under the same rules as people. Marked `(advanced)`.
+drafts customizations from a sentence; agents fill records under the same rules as people. Marked `(advanced)`.
 ## 2. User Scenarios
 
 ### 2.1 Primary scenarios
@@ -73,7 +73,7 @@ drafts customisations from a sentence; agents fill records under the same rules 
   `404`, forms show no custom section, values stay untouched and code-declared fields keep working.
 - **Given** the installed web app on a phone syncing an offline save after a rule changed, **then** the server re-validates, answers
   the fields to fix and the device keeps the draft; a bulk update of 200 records with 7 invalid saves 193 and lists 7.
-- **Given** a plugin switched off, **then** its record types leave Customisation and their definitions and values are
+- **Given** a plugin switched off, **then** its record types leave Customization and their definitions and values are
   kept; a custom record type with records cannot be deleted; a 301st field on a type is refused naming the limit.
 
 ## 3. Functional Requirements
@@ -95,7 +95,7 @@ drafts customisations from a sentence; agents fill records under the same rules 
   payments, expenses, incomes, vendors, items, equipment, time-off requests, goals, and each loaded plugin's own types.
 - **FR-6** A user with `CUSTOM_FIELDS_MANAGE` can list record types with counts of fields, rules, layouts and actions; a
   type of a plugin that is not loaded is not listed, and its definitions and values are kept.
-- **FR-7** A user with `CUSTOM_FIELDS_MANAGE` can set per record type, on one page linking all its customisation: title,
+- **FR-7** A user with `CUSTOM_FIELDS_MANAGE` can set per record type, on one page linking all its customization: title,
   image and search fields, sort, quick entry, history, copy, attachments limit, default print and email templates.
 
 ### 3.3 Field definitions and types
@@ -242,7 +242,10 @@ drafts customisations from a sentence; agents fill records under the same rules 
 - **FR-57** A user with `CUSTOM_RECORD_TYPES_MANAGE` can grant per role view, create, edit, delete, export and import,
   scoped to own, team, organization or all, checked on every surface; super admins and admins hold all.
 - **FR-58** The system gives a published custom record type list and detail pages, saved views, reports, REST and
-  GraphQL, MCP tools, events, import, export and print with no further setup. `(advanced)`
+  GraphQL, MCP tools, events, import, export and print with no further setup. The list page and saved views are the
+  generic record list of `record-views-and-search`, a prerequisite of that part: while that feature is off for the
+  tenant, the type's menu entry stays hidden and its records open by link to their detail form and through the REST,
+  GraphQL and MCP lists. `(advanced)`
 - **FR-59** A user with the type's permissions can create, edit (stale versions `409`), delete to the bin, restore,
   duplicate, reassign, and bulk create, update or delete records with per-row results.
 - **FR-60** The system refuses deleting a type that has records; it can be deprecated (no new records) or archived.
@@ -283,7 +286,7 @@ drafts customisations from a sentence; agents fill records under the same rules 
 
 ### 3.13 Lifecycle, packages, agents and real time
 
-- **FR-78** The system keeps customisations draft (preview only, not enforced), published, deprecated (out of new forms,
+- **FR-78** The system keeps customizations draft (preview only, not enforced), published, deprecated (out of new forms,
   readable, not required) or archived; nothing holding values is deleted. `(advanced)`
 - **FR-79** The system lists, before a field is published, deprecated, archived or changed, its uses (layouts, rules,
   formulas, roll-ups, actions, workflows, automations, views, reports, print and import templates, API reads of 30 days)
@@ -291,7 +294,7 @@ drafts customisations from a sentence; agents fill records under the same rules 
 - **FR-80** The system refuses changing a published field's type in place; a conversion creates a new field from its
   values with a preview of converted and failed values, then deprecates the old field with its values kept.
 - **FR-81** A user with `CUSTOM_FIELDS_MANAGE` can add, relabel, reorder and archive options; archived options keep showing.
-- **FR-82** A user with `CUSTOMIZATION_PACKAGES_MANAGE` can export record types' whole customisation as a package and
+- **FR-82** A user with `CUSTOMIZATION_PACKAGES_MANAGE` can export record types' whole customization as a package and
   import it into another organization or tenant with a diff, a choice per conflict (skip, rename, replace), as drafts or
   published, and undo it while nothing it created holds values. `(advanced)`
 - **FR-83** The system lets plugins and marketplace apps ship fields, layouts and record types as packages; items show
@@ -313,7 +316,7 @@ drafts customisations from a sentence; agents fill records under the same rules 
   | Field change log | changes by field, user, source and period, old and new values |
   | Records by type | per custom record type: counts by owner, organization, state, period |
   | Computed field health | formula and roll-up fields: errors, records waiting, last run |
-  | Customisation inventory | per type: fields, rules, layouts, actions by status and source |
+  | Customization inventory | per type: fields, rules, layouts, actions by status and source |
 
 - **FR-93** The system lists the reports of FR-87 on the Reports page and in the Reports menu only for tenants with
   `FEATURE_CUSTOM_FIELDS` on; with it off, that page and menu show exactly today's reports.
@@ -344,7 +347,7 @@ drafts customisations from a sentence; agents fill records under the same rules 
   platform only through the record's existing surfaces under the same masks; https-only actions; sanitised input;
   scripts never on the cloud deployment, isolated, bounded and audited where a self-hosted operator allows them.
 - **Observability**: audit of definition changes, history of values, metrics for refusals, formula errors and lag.
-- **Accessibility and localisation**: keyboard equivalents for the designer and condition builder; announced labels and
+- **Accessibility and localization**: keyboard equivalents for the designer and condition builder; announced labels and
   errors; labels, options and messages per language; values in the user's locale.
 - **Compatibility**: PostgreSQL, MySQL, SQLite; both ORMs; cloud and self-hosted alike; OpenAPI additive; SDKs regenerated.
 
@@ -361,7 +364,7 @@ drafts customisations from a sentence; agents fill records under the same rules 
 | Custom record type, custom record | A record type created without code; one record of it |
 | Custom field value, field change | The value of one field on one record; one recorded change of it with its source |
 | Record template, user default | Saved values to start records from; a user's own field default |
-| Customisation package | A portable set of definitions, with its import runs |
+| Customization package | A portable set of definitions, with its import runs |
 
 ## 6. Out of Scope
 
@@ -381,8 +384,8 @@ drafts customisations from a sentence; agents fill records under the same rules 
 - [ ] **AC-4** Formulas are stored and filterable; a time-log roll-up updates within a minute (advanced: computed; FR-27–FR-29).
 - [ ] **AC-5** Layouts resolve per role and device; a phone layout renders in the web app on a phone (advanced: layouts; FR-35, FR-37).
 - [ ] **AC-6** Quick entry creates and selects a record; lines save with their parent all or nothing (FR-43, FR-45).
-- [ ] **AC-7** A published custom type has list, views, reports, API, events, import and MCP at once; other roles are
-      refused (advanced: day-one record types; FR-58).
+- [ ] **AC-7** A published custom type has reports, API, events, import and MCP at once, and its list and views at once
+      where `record-views-and-search` is on; other roles are refused (advanced: day-one record types; FR-58).
 - [ ] **AC-8** Each action kind runs with the user's permissions; bulk reports per record; no tenant code runs on the cloud (FR-51, FR-52).
 - [ ] **AC-9** Field history shows sources and restores; the change log lists it (advanced: history; FR-74–FR-77).
 - [ ] **AC-10** Lifecycle, conversion and impact analysis behave as stated (advanced: safe rollout; FR-78–FR-80).

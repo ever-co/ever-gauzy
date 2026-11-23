@@ -35,13 +35,13 @@
   `iv/inventory-valuation.module.ts`, `iv/inventory-valuation.features.ts` (`FEATURE_INVENTORY_VALUATION`, default off,
   depends on `FEATURE_INVENTORY`), path mapping in `tsconfig.base.json`, registration in `apps/api/src/plugins.ts` and
   the worker's plugin list `apps/worker/src/plugins.ts`. Test: plugin metadata spec.
-- [ ] **T3**. Entities and MikroORM repositories for layers, consumption, key (value, unit cost and `recalculateFrom`;
-  no quantity), policy, standard cost: `iv/stock-valuation-layer/stock-valuation-layer.entity.ts`,
-  `iv/stock-layer-consumption/stock-layer-consumption.entity.ts`, `iv/stock-valuation-key/stock-valuation-key.entity.ts`,
+- [ ] **T3**. Entities and MikroORM repositories for layers (`movementKey`), consumption, the remaining projection, key
+  (value, unit cost and `recalculateFrom`; no quantity), policy, standard cost: `iv/stock-valuation-layer/stock-valuation-layer.entity.ts`,
+  `iv/stock-layer-consumption/stock-layer-consumption.entity.ts`, `iv/stock-layer-remaining/stock-layer-remaining.entity.ts`, `iv/stock-valuation-key/stock-valuation-key.entity.ts`,
   `iv/stock-valuation-policy/stock-valuation-policy.entity.ts`, `iv/stock-standard-cost/stock-standard-cost.entity.ts`
   with their `repository/` files; migration `iv/database/migrations/1791000086100-CreateValuationLayerTables.ts` with
   append-only triggers per dialect, registered in `iv/database/migrations/index.ts`. Test: SQLite migration spec;
-  trigger spec (update refused). Migration timestamps: `1791000086100` to `1791000086199` (`packages/plugins/inventory-valuation`).
+  trigger spec (update refused on layers and consumptions; the remaining projection updates). Migration timestamps: `1791000086100` to `1791000086199` (`packages/plugins/inventory-valuation`).
 - [ ] **T4** (parallel). Migrations and entities `iv/database/migrations/1791000086110-CreateLandedCostTables.ts`
   (`iv/landed-cost/landed-cost-document.entity.ts`, `landed-cost-target.entity.ts`, `landed-cost-charge.entity.ts`,
   `landed-cost-allocation.entity.ts`), `iv/database/migrations/1791000086120-CreateStockClosingTables.ts`
@@ -64,14 +64,17 @@
 ## Phase 2 — Services, endpoints, events
 
 - [ ] **T7**. Pure costing engine `iv/engine/` (`fifo.ts`, `moving-average.ts`, `standard-cost.ts`, `lifo.ts`,
-  `rounding.ts`, `cost-source.ts`). Test: property-based specs (sum of consumed = outflow; key value = sum of layers).
+  `rounding.ts`, `cost-source.ts`). Test: property-based specs (sum of consumed = outflow; key value = sum of layers;
+  each remaining row = its layer's quantity and value less its consumptions, e.g. a receipt of 10 then an issue of 5
+  leaves 5 remaining while the receipt layer is unchanged).
 - [ ] **T8**. `ValuationMovementHook` bound to `STOCK_MOVEMENT_HOOKS`: layer, consumption and key value update in the
   movement transaction, the key quantity read from the movement's `quantityAfter` (item and location keys), the
   organization's level rows (organization keys) or the lot and serial bundle entries; `eventOnly` movements skipped;
   cost sources per movement kind; backdated detection sets `recalculateFrom`; answers as unbound for tenants with the
   feature off. Files: `iv/hooks/valuation-movement.hook.ts`, `iv/stock-valuation-key/stock-valuation-key.service.ts`,
   binding in `apps/api/src/plugin-composition.ts`. Test: SQLite spec through `applyMovement` for receipt, issue,
-  transfer, return, sale, count, event-only damage; a flag-off tenant gets no layer.
+  transfer, return, sale, count, event-only damage; a movement over lots A and B writes one `MOVEMENT` layer per lot key
+  and a replayed hook adds none; a flag-off tenant gets no layer.
 - [ ] **T9**. Policies and settings service: effective method and key scope (item → group → organization), negative
   rule resolution, `STOCK_NEGATIVE_POLICY` binding (answering as unbound for tenants with the feature off; unlimited
   and backorder levels exempt as today), backdated negative accepted unless `refuseBackdatedNegative` is on, negative
@@ -192,8 +195,8 @@
   warehouse task port; recount by another person. Files: `iv/cycle-count/abc-classifier.ts`,
   `iv/cycle-count/cycle-count-plan.service.ts`, `iv/cycle-count/cycle-count-plan.controller.ts`,
   `iv/schedule/cycle-count-plan.scheduler.ts`. Test: plan spec (spread over working days).
-- [ ] **T38**. Labour capitalisation job from completed warehouse task labour into a monthly landed cost. Files:
-  `iv/landed-cost/labour-capitalise.job.ts`. Test: job spec (idempotent per month).
+- [ ] **T38**. Labour capitalization job from completed warehouse task labour into a monthly landed cost. Files:
+  `iv/landed-cost/labour-capitalize.job.ts`. Test: job spec (idempotent per month).
 - [ ] **T39**. Live value cards (coalesced push) and automation triggers of FR-84. Files:
   `iv/events/valuation-value-changed.publisher.ts`, `iv/events/valuation-automation-triggers.ts`. Test: push spec;
   trigger catalogue.

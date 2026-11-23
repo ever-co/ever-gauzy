@@ -62,17 +62,27 @@
       specs pass; both ORMs.
 - [ ] **T7** (parallel). Contributions instead of a seed: `FEATURE_INTEGRATION_HUB` (default off) in
       `integration-hub.features.ts`, the nine keys with `defaultFor` in `integration-hub.permissions.ts`, retention, dead
-      letters, API limits, `galleryOpensCatalogue`, `pauseFailingSyncs` and geocoding in `integration-hub.settings.ts`.
-      Test: permission reload inserts missing grants only; feature starts disabled; settings read through the settings
-      store; delivery retention and tenant API limits are empty and the two switches off by default.
-- [ ] **T48**. Core record-change events `packages/core/src/lib/event-outbox/record-change.subscriber.ts` (TypeORM and
-      MikroORM) with `RECORD_CHANGE_EVENTS_POLICY`: `<record_type>.created` / `.updated` / `.deleted` for registered
-      types without events of their own (`employee.created` / `.updated` and `organization_team_employee.created` /
-      `.deleted` and `organization_project_employee.created` / `.deleted` among them), appended when the hub policy is bound for the tenant or an outbox consumer is registered
-      for the type; time logs and timesheets keep their own `time_tracking.*` events (`project-costing-and-billing`
-      T61); no dependency on this plugin (FR-14). Test: employee, team membership, time-off, expense and candidate
-      changes append one event each; no event when the policy is unbound and no consumer is registered; a time log
-      change appends no record-change event.
+      letters, API limits, `galleryOpensCatalogue`, `pauseFailingSyncs`, `stopOnOwnerDeactivation` and geocoding in
+      `integration-hub.settings.ts`. Test: permission reload inserts missing grants only; feature starts disabled;
+      settings read through the settings store; delivery retention and tenant API limits are empty and the two switches
+      off by default; `stopOnOwnerDeactivation` is on for a new tenant and off for an existing one.
+- [ ] **T48**. Core record-change events, TypeORM (the MikroORM side is T57), with `RECORD_CHANGE_EVENTS_POLICY`:
+      `<record_type>.created` / `.updated` / `.deleted` for registered types without events of their own
+      (`employee.created` / `.updated` and `organization_team_employee.created` / `.deleted` and
+      `organization_project_employee.created` / `.deleted` among them), appended when the hub policy is bound for the
+      tenant or an outbox consumer is registered for the type; time logs and timesheets keep their own `time_tracking.*`
+      events (`project-costing-and-billing` T61); no dependency on this plugin (FR-14). Files:
+      `packages/core/src/lib/event-outbox/record-change.subscriber.ts`,
+      `packages/core/src/lib/event-outbox/record-change-events.policy.ts`, `packages/core/src/lib/event-outbox/index.ts`.
+      Test: `packages/core/src/lib/event-outbox/record-change.subscriber.spec.ts`: employee, team membership, time-off,
+      expense and candidate changes append one event each; no event when the policy is unbound and no consumer is
+      registered; a time log change appends no record-change event.
+- [ ] **T57**. Core record-change events, MikroORM: the same events and policy as T48 from a MikroORM subscriber
+      registered beside it, so both ORMs append the same events (FR-14). Files:
+      `packages/core/src/lib/event-outbox/record-change.mikro-orm.subscriber.ts`,
+      `packages/core/src/lib/event-outbox/event-outbox.module.ts`. Test:
+      `packages/core/src/lib/event-outbox/record-change.orm-parity.spec.ts`: the changes of T48's test append the same
+      events under MikroORM as under TypeORM; no event when the policy is unbound and no consumer is registered.
 
 ## Phase 2 — Surface what exists
 
@@ -142,8 +152,8 @@
 
 ## Phase 3 — Depth
 
-- [ ] **T19**. Core record-change events: built by T48 (Phase 1, `packages/core/src/lib/event-outbox/`); its tests
-      are T48's.
+- [ ] **T19**. Core record-change events: built by T48 and T57 (Phase 1, `packages/core/src/lib/event-outbox/`); its
+      tests are theirs.
 - [ ] **T20**. Payload versions (`apiVersion` pin; a subscription without one is pinned to version 1, today's payloads;
       every version kept while a subscription is pinned to it; catalogue marks superseded versions). Files:
       `hub/webhooks/payload-versions.ts`, `hub/webhooks/delivery-policy.service.ts`,
@@ -188,9 +198,11 @@
 - [ ] **T28**. Tenant limits `API_LIMIT_POLICY` seam in `core/throttler/throttler-behind-proxy.guard.ts`, hub policy
       `hub/limits/api-limit.policy.ts` and limits routes `hub/limits/limits.controller.ts`, headers,
       notices at 80 % and 100 % (`hub/limits/usage-flush.job.ts`), provider callbacks and inbound exempt; no tenant limit
-      until one is set. Test: one
-      client's burst does not block another; env ceiling still applies unbound; a tenant without limits set is throttled
-      exactly as today; one notice per threshold and day.
+      until one is set; per-client limits counted per client, the all-clients limit as a shared ceiling that wins once
+      reached (spec FR-10). Test: one
+      client's burst past its own kind limit does not block another; with an all-clients limit of 100 per day used up by
+      client A, client B also gets `429` until the reset; env ceiling still applies unbound; a tenant without limits set
+      is throttled exactly as today; one notice per threshold and day.
 - [ ] **T29**. Storage targets write path `hub/storage/` (`storage-targets.port.ts`, `storage-target.controller.ts`,
       `storage-verify.job.ts`: `STORAGE_TARGETS` port, verify, retention, failure notices) bound
       for exports, backups, scheduled reports and `ACCESS_AUDIT_STREAM`. Test: failed write recorded and notified.
@@ -216,11 +228,14 @@
       `hubui/components/connected-accounts/connected-accounts.component.ts`. Test: rendering tests.
 - [ ] **T35**. Report definitions (spec FR-70) and datasets. Files: `hub/reports/integration-hub-report-datasets.ts`,
       `hub/reports/integration-hub-report-definitions.ts`. Test: seeded figures.
-- [ ] **T51**. Account owners (FR-37): a connected account stops being used at once when its owner is deactivated
-      (consumers get no token), and an organization account moves to another administrator on request. Files:
+- [ ] **T51**. Account owners (FR-37): with the tenant setting `integration-hub.stopOnOwnerDeactivation` on (on by
+      default for new tenants only; existing tenants keep their setting, off), a connected account stops being used at
+      once when its owner is deactivated (consumers get no token); with it off, the account keeps working after its
+      owner is deactivated, as today; an organization account moves to another administrator on request. Files:
       `hub/connected/connected-account-owner.subscriber.ts`, `hub/connected/connected-account.service.ts`,
-      `hub/connected/connected-account.controller.ts` (`POST /:id/transfer`). Test: after deactivating the owner
-      `accessToken` refuses; a transfer keeps the account and its consents with the new owner.
+      `hub/connected/connected-account.controller.ts` (`POST /:id/transfer`), `hub/integration-hub.settings.ts`. Test:
+      with the setting on, after deactivating the owner `accessToken` refuses; with it off, the account keeps working and syncing
+      after its owner is deactivated; a transfer keeps the account and its consents with the new owner.
 - [ ] **T52**. Connecting a connector (FR-39, FR-41): its settings form rendered from the manifest's settings schema;
       connect, configure, pause and disconnect per organization; disconnecting keeps mapped records and history. Files:
       `hub/connectors/connector-connection.service.ts`, `hub/connectors/connector.controller.ts`,
@@ -319,7 +334,7 @@ Every functional requirement of `spec.md` §3 and the tasks that implement it; e
 | FR-11 | §3.3 API limits and usage | T16 |
 | FR-12 | §3.3 API limits and usage | T28 |
 | FR-13 | §3.4 Event catalogue | T8 |
-| FR-14 | §3.4 Event catalogue | T48 |
+| FR-14 | §3.4 Event catalogue | T48, T57 |
 | FR-15 | §3.4 Event catalogue | T20 |
 | FR-16 | §3.4 Event catalogue | T8 |
 | FR-17 | §3.5 Outbound webhooks | T9, T17 |

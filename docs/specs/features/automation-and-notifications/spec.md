@@ -9,8 +9,8 @@
 **Status**: `Draft`
 **Created**: 2026-11-16
 **Last updated**: 2026-11-23
-**Owner**: evereq
-**Feature flag**: `FEATURE_AUTOMATIONS` (tenant feature, default off) · the generalised engine loads only when
+**Owner**: platform maintainers
+**Feature flag**: `FEATURE_AUTOMATIONS` (tenant feature, default off) · the generalized engine loads only when
 `GAUZY_AUTOMATIONS_ENABLED` is exactly `true` · task rules keep `GAUZY_TASK_AUTOMATIONS_ENABLED`; email and push
 delivery keep the Inbox switches
 
@@ -85,7 +85,7 @@ every run has a **step timeline with replay from the failed step**; notification
 
 ### 3.1 Scope, flags and compatibility
 
-- **FR-1** The system loads the generalised engine only when `GAUZY_AUTOMATIONS_ENABLED` is exactly `true` and gates every
+- **FR-1** The system loads the generalized engine only when `GAUZY_AUTOMATIONS_ENABLED` is exactly `true` and gates every
   new route, GraphQL field, menu entry and MCP tool with `FEATURE_AUTOMATIONS`; off, they answer `404` and nothing runs.
 - **FR-2** The system keeps task rules (routes, tables, templates, history, permission, switch) working unchanged, runs
   them on the same engine, lists them under Automations (their page keeps its address and opens as today), and lets a
@@ -330,7 +330,7 @@ every run has a **step timeline with replay from the failed step**; notification
   email, text, push, webhook calls, destination posts, agent prompts to the organization's AI provider (listed per flow).
 - **Observability**: run and step history, audit of flow changes and kill-switch use, metrics for lag, failures, skips,
   storms and agent spend.
-- **Accessibility and localisation**: keyboard list editor equivalent to the canvas; labels per language; user time zone.
+- **Accessibility and localization**: keyboard list editor equivalent to the canvas; labels per language; user time zone.
 - **Compatibility**: PostgreSQL, MySQL, SQLite; both ORMs; cloud and self-hosted, with or without a queue; OpenAPI
   additive; SDKs regenerated.
 

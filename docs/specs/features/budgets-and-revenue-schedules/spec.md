@@ -9,7 +9,7 @@
 **Status**: `Draft`
 **Created**: 2026-11-15
 **Last updated**: 2026-11-23
-**Owner**: evereq
+**Owner**: platform maintainers
 **Feature flag**: `FEATURE_BUDGETS`, `FEATURE_REVENUE_SCHEDULES` (default off)
 
 ---
@@ -327,7 +327,7 @@ from actuals, always as a preview.
   and amounts per line, not per person, unless the viewer may see the employees' time; nothing leaves the platform.
 - **Auditability**: versions, approvals, transfers, overrides, control decisions, schedule changes and every posting
   record who, when, before, after and why; agent actions are marked.
-- **Accessibility and localisation**: the budget grid, monitor and schedule views are keyboard operable and labelled;
+- **Accessibility and localization**: the budget grid, monitor and schedule views are keyboard operable and labelled;
   all strings in every shipped locale; amounts and dates in the user's format.
 - **Compatibility**: PostgreSQL, MySQL and SQLite; both ORMs; multi-tenant cloud and self-hosted single tenant; additive
   OpenAPI changes.

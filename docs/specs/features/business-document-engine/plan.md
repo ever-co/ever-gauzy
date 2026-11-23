@@ -145,7 +145,7 @@ interface IBusinessDocumentAdapter {             // implemented by the owner; ev
     snapshot(m: Manager, ref: IDocumentRef): Promise<IBusinessDocumentSnapshot>;   // header, lines, party, dates, totals inputs
     apply(m: Manager, ref: IDocumentRef, t: { state: BusinessDocumentState; version: number; number?: string;
           totals?: ITotalsSnapshot; progress?: IDocumentProgress }): Promise<void>;  // owner writes its own columns and status
-    perform(action: DocumentAction, ref: IDocumentRef, input: object): Promise<IDocumentActionResult>; // owner's full path
+    perform(m: Manager, action: DocumentAction, ref: IDocumentRef, input: object): Promise<IDocumentActionResult>; // owner's full path, joins the manager's transaction
     check?(m: Manager, ref: IDocumentRef, action: DocumentAction): Promise<IDocumentFinding[]>;
     createFrom?(m: Manager, req: ICreateFromRequest): Promise<IDocumentRef>;         // bulk, counterpart, "create from"
     copy?(m: Manager, ref: IDocumentRef, o: ICopyOptions): Promise<IDocumentRef>;    // recurrence, amendment
@@ -215,7 +215,7 @@ All under `/api/business-documents`, `@FeatureFlag(FEATURE_BUSINESS_DOCUMENTS)`,
 | `POST` | `/documents/:type/:id/dependents/resolve` | type create | `{ items: [{ ref, action: UNLINK \| DELETE }] }`, result per draft | New |
 | `POST` | `/documents/:type/:id/preview` | type view | `{ action, payload? }` → `IDocumentEffects` + `previewToken` | New |
 | `POST` | `/documents/:type/:id/confirm`, `/cancel`, `/close`, `/reopen`, `/hold`, `/release`, `/amend` | type permission | delegate to `adapter.perform` (identical to the owner's route); a background type answers `202` with the core operation handle (`@AcceptedOperation`); the outcome is read at `GET /api/operations/:id`, and a document's background actions at `GET /api/operations?aggregateType=<type>&aggregateId=<id>` | New |
-| `POST` | `/documents/:type/:id/cancel` with `{ withDependents, preview }` | type cancel permission on every member of the chain | chain preview and all-or-nothing cancel (up to 100), run as operation `BUSINESS_DOCUMENT_CANCEL_CHAIN` when above the background threshold | New |
+| `POST` | `/documents/:type/:id/cancel` with `{ withDependents, preview }` | type cancel permission on every member of the chain | chain preview and all-or-nothing cancel (up to 100): the engine opens one transaction for the chain and passes its manager to every member's `adapter.perform`, so a refusal of any member rolls back the cancellations before it; run as operation `BUSINESS_DOCUMENT_CANCEL_CHAIN` when above the background threshold | New |
 | `POST` | `/documents/:type/:id/lines/close`, `/lines/reopen` | `BUSINESS_DOCUMENTS_LINE_CLOSE` | `{ lineIds, reason }` | New |
 | `GET` | `/documents/:type/:id/lines/:lineId/remaining` | type view | remaining per roll-up and allowed maximum | New |
 | `GET` `POST` | `/documents/:type/:id/change-sets`, `/change-sets/:id` | type view / type amend or `_CHANGE_REQUEST` | list (for `sales_order`, its order changes); propose (diff returned) | New |
@@ -298,7 +298,7 @@ These sit beside the existing invoice tools of `packages/mcp-server/src/lib/tool
 | `business-documents.index.first-enable` (queue) | feature enabled for a tenant | `adapter.enumerate` per type and organization, cursor kept per type | unique index keys; resumable cursor |
 | `business-documents.number.audit` | nightly 02:30 | gap and chronology check of gap-free series, raises events | one finding per gap |
 | `business-documents.change-set.expire` | daily 01:00 | expires open engine change sets past `expiresAt` (order changes expire through the order plugin's staleness scheduler) | state transition |
-| core operations `BUSINESS_DOCUMENT_CONFIRM`, `_CANCEL`, `_CANCEL_CHAIN` | background confirm, cancel or chain cancel requested | one step running the owner's action through `adapter.perform` in one transaction; chain cancel walks dependents leaves first; a functional refusal fails the operation without retry (`maxAttempts` 1) | `UQ_operation_aggregate_live` (one live operation per document) |
+| core operations `BUSINESS_DOCUMENT_CONFIRM`, `_CANCEL`, `_CANCEL_CHAIN` | background confirm, cancel or chain cancel requested | one step running the owner's action through `adapter.perform` in one transaction; chain cancel walks dependents leaves first inside one transaction whose manager every `adapter.perform` call of the chain joins; a functional refusal fails the operation without retry (`maxAttempts` 1) | `UQ_operation_aggregate_live` (one live operation per document) |
 | `business-documents.totals.refresh` (consumer) | `tax.configuration.changed`, price list events | marks affected drafts out of date, recalculates in slices | version check per draft |
 
 The worker loads `BusinessDocumentsSchedulePlugin` (schedules only); the API loads `BusinessDocumentsPlugin` (queue workers, consumers, operation type registrations). Without a queue root the API runs the ticks on in-process timers under a per-tenant lock. Jobs and operation steps run inside `RequestContext.runWithRequest` with the recurrence owner or requester as actor, or a system actor of the organization for audits and the counterpart consumer.

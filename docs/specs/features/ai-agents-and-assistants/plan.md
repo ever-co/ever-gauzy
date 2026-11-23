@@ -81,11 +81,11 @@ flowchart LR
 | Concern | Choice | Rationale |
 | ------- | ------ | --------- |
 | Package | new `packages/plugins/ai-agents`, `-ui`, `-react-ui` (assistant sidebar only); declarations as a `PluginContributions` member | Principle I; domains register without a dependency |
-| Permissions and settings | `PluginContributions`: permissions with `defaultFor`, `FEATURE_AI_AGENTS`, and the scalar settings (`ai.maskedFields`, `ai.webToolsEnabled`, `ai.confirmationExpiryHours`, `ai.mcp.enabled`, `ai.mcp.serverName`, `ai.mcp.instructions`, `ai.mcp.groups`, `ai.mcp.previewByDefault` (false)) at tenant and organization scope in `tenant_setting`; an unset MCP setting means today's behaviour | no seed migration, no settings table |
+| Permissions and settings | `PluginContributions`: permissions with `defaultFor`, `FEATURE_AI_AGENTS`, and the scalar settings (`ai.maskedFields`, `ai.webToolsEnabled`, `ai.confirmationExpiryHours`, `ai.mcp.enabled`, `ai.mcp.serverName`, `ai.mcp.instructions`, `ai.mcp.groups`, `ai.mcp.previewByDefault` (false), `ai.mcp.hideFailingTools` (false)) at tenant and organization scope in `tenant_setting`; an unset MCP setting means today's behaviour | no seed migration, no settings table |
 | Model loop | the `generateText` / `streamText` loop of the `ai` library already used by `ai-chat`, with a step hook for budget and ceiling | one provider surface; streaming to the sidebar |
 | MCP tools in process | `McpServer` + linked in-memory transport per run, `registerAllMcpTools`, `runWithAuthKey` | every MCP tool available to agents without a network hop |
 | Ceiling | run credential from `AGENT_RUN_CREDENTIALS` (subject = invoker, actor = agent principal, scopes = tool permissions); fallback: invoker's bearer plus the runtime gate | rights checked by the platform's own guards on every call |
-| Previews | tools declare `preview`; legacy writing tools get a generic preview (route, body, current record, version hash), used when the caller passes `preview: true` or the tenant set `ai.mcp.previewByDefault`; called without it they commit as today | spec FR-70 for 324 existing tools without rewriting them or changing their answer |
+| Previews | tools declare `preview`; legacy writing tools get a generic preview (route, body, current record, version hash), used when the caller passes `preview: true` or the tenant set `ai.mcp.previewByDefault`; called without it they commit as today. The tool metadata marks a legacy tool whose route derives further records on the server (postings, generated lines, open items, sends) `derivedEffects: true`; its generic preview says the derived effects are not shown, and a dry-run plan never executes such a call from its token: plan execution stops before it and asks a person to confirm it live, until the owning domain gives the tool a domain preview that lists those effects | spec FR-70 for 324 existing tools without rewriting them or changing their answer |
 | Preview token | HMAC-SHA256 over tool, normalised inputs, effects hash, record versions and expiry, keyed by the platform secret | stale commits refused without storing previews |
 | Knowledge | Documents pipeline for files, text, web; record sources from the `search` plugin's index (`search_document`, word search on every dialect), their texts embedded into the Documents vector store (`pgvector` where available) | no second extraction stack, no second record index |
 | Untrusted content | helper extracted from `packages/plugins/docs/src/lib/knowledge/security/untrusted-content.ts` into `@gauzy/utils` (`ai/untrusted-content.ts`), re-exported by docs | one marking rule |
@@ -121,7 +121,7 @@ keys `varchar(96)`; money `numeric(28,9)` with `currency varchar(3)`; ids into o
 | `ai_dry_run_plan` | `runId`, `calls` text (tool, inputs, preview token, effects hash), `status` (`OPEN`, `EXECUTED`, `STALE`, `EXPIRED`), `executionRunId`, `expiresAt` | unique `(runId)` |
 | `ai_purpose_setting` | `purposeKey`, `enabled` bool, `providerId`, `model`, `extraInstructions` text, `knowledgeBaseIds` text | unique `(tenantId, organizationId, purposeKey)` |
 | `ai_model_price` | `providerId`, `modelId`, `inputPerMillion`, `outputPerMillion`, `cachedPerMillion`, `currency`, `validFrom` date | unique `(tenantId, providerId, modelId, validFrom)` |
-| `ai_budget` | `scopeKind` (`ORGANIZATION`, `AGENT`, `PURPOSE`, `USER`), `scopeKey` varchar(96), `metric` varchar(16) (`COST`, `TOKENS`; for agent principals also `REQUESTS`, `WRITES`, `BULK_RECORDS`, `EXPORT_ROWS`, `CONFIRMATIONS`), `window` varchar(6) (`MINUTE`, `DAY`, `MONTH`, `ACTION`), `cap` numeric(28,9), `currency` null, `warnedPeriod` varchar(10), `reachedPeriod` varchar(10) | unique `(tenantId, organizationId, scopeKind, scopeKey, metric, window)` |
+| `ai_budget` | `scopeKind` (`ORGANIZATION`, `AGENT`, `PURPOSE`, `USER`), `scopeKey` varchar(96), `metric` varchar(16) (`COST`, `TOKENS`; for agent principals also `REQUESTS`, `WRITES`, `BULK_RECORDS`, `EXPORT_ROWS`, `CONFIRMATIONS`), `window` varchar(6) (`MINUTE`, `DAY`, `MONTH`, `ACTION`; each window is checked against its own counter: `MINUTE` by the core throttler storage keyed by principal and metric, `ACTION` against the size of the current action (records in the bulk action, rows in the export), `DAY` and `MONTH` against the core usage meter), `cap` numeric(28,9), `currency` null, `warnedPeriod` varchar(10), `reachedPeriod` varchar(10) | unique `(tenantId, organizationId, scopeKind, scopeKey, metric, window)` |
 | `ai_usage_entry` (append-only) | `runId` null (null for Documents AI calls), `stepIndex`, `source` varchar(16) (`AGENT_RUN`, `DOCS_AI`), `providerId`, `model`, `inputTokens`, `outputTokens`, `cachedTokens`, `cost`, `currency`, `priced` bool, `agentId`, `purposeKey`, `userId`, `agentEmployeeId`, `projectId`, `period` varchar(7) | idx `(tenantId, period, agentId)`, `(tenantId, period, purposeKey)`, `(tenantId, period, agentEmployeeId, projectId)` |
 | `ai_evaluation_suite` / `ai_evaluation_case` | suite: `agentId`, `name`, `gate`; case: `suiteId` FK cascade, `sourceRunId`, `input` text, `recordedTools` text, `criteria` text, `status` (`PROPOSED`, `ACTIVE`, `RETIRED`) | case idx `(suiteId, status)` |
 | `ai_evaluation_run` | `suiteId`, `agentVersion` int, `model`, `mode` (`REPLAY`, `LIVE_READ`), `status`, `passRate` numeric(5,2), `results` text, `regressions` int, `startedByUserId` | idx `(suiteId, createdAt)` |
@@ -139,10 +139,10 @@ keys `varchar(96)`; money `numeric(28,9)` with `currency varchar(3)`; ids into o
 - `ai-chat` `ssrf/outbound-url-guard.ts` stays as it is; this plugin's request tools and web fetch use core
   `webhook-endpoint-policy.ts`.
 - `EmployeeAgentSourceEnum` gains `GAUZY = 'gauzy'` (the column is already a string).
-- `packages/mcp-server/src/lib/tools/tool-metadata.ts`: per tool `{ group, writes, permissions, feature, route, preview }`
-  declared next to each registration; `tool-conventions.ts` (`registerWriteTool` with `preview`, idempotency key, preview
+- `packages/mcp-server/src/lib/tools/tool-metadata.ts`: per tool `{ group, writes, permissions, feature, route, preview,
+  derivedEffects }` declared next to each registration; `tool-conventions.ts` (`registerWriteTool` with `preview`, idempotency key, preview
   token, assisted mark; for existing tools the preview default and the assisted mark apply only for tenants with
-  `FEATURE_AI_AGENTS` on, the preview default only with `ai.mcp.previewByDefault`); group switches generalised from
+  `FEATURE_AI_AGENTS` on, the preview default only with `ai.mcp.previewByDefault`); group switches generalized from
   `collaboration/scopes.ts` (`GAUZY_MCP_TOOLS_<GROUP>`, existing groups on and collaboration groups off by default, as
   today; a session whose token names no group scope keeps every tool of the existing groups).
 
@@ -282,7 +282,8 @@ New `packages/mcp-server/src/lib/tools/ai-agents.ts`: `agents_list`, `agents_run
 `ai_usage_get`. Shared conventions (FR-69 to FR-75) land in `tool-metadata.ts` and `tool-conventions.ts`; the build check
 `tools/scripts/mcp-tool-route-check.mjs` reads the OpenAPI document and every tool's declared route and permissions,
 fails on a new tool with a missing route and reports existing tools that fail; `TOOLS_REGISTRY` gains availability, read
-by the agent tool catalogue only, so MCP clients keep every tool they are offered today. The MCP server reads tenant
+by the agent tool catalogue only and only where the tenant setting `ai.mcp.hideFailingTools` is on (false by default), so
+an existing tool is reported but stays offered to agents by default, and MCP clients keep every tool they are offered today. The MCP server reads tenant
 settings at session start (cached 60 s; a `404` or an unset value means today's behaviour) and reports session start and
 end to the connected clients list of `access-control-and-security`; a revoked client is refused on its next call. OpenAPI additive; Kiota
 SDKs regenerated. Agent packages: JSON with a schema version, signed by the exporting tenant's key for integrity.
@@ -291,7 +292,7 @@ SDKs regenerated. Agent packages: JSON with a schema version, signed by the expo
 
 | Trigger | When | What it does | Idempotency |
 | ------- | ---- | ------------ | ----------- |
-| queue `ai-agents` job `run` | background, triggered, bulk and delegated runs | runtime loop; resumes from the last finished step | run id + step index |
+| queue `ai-agents` job `run` | background, triggered, bulk and delegated runs | runtime loop; resumes from the last finished step with a newly issued run credential after rechecking current access (§9) | run id + step index |
 | `ai-agents.confirmation-expiry` | every 5 minutes | expires confirmations and runs past `expiresAt` | status check |
 | `ai-agents.working-window` | every minute | releases queued runs whose `notBefore` has come | status check |
 | `ai-agents.knowledge-refresh` | per source schedule | web crawl through the core outbound policy into the knowledge folder; record sources ask the `search` plugin to reindex their type when stale | per source and content hash |
@@ -322,8 +323,13 @@ ceiling, budget, untrusted-content rule, preview handling; refusals are tool cal
 results, passages and context before the model call of agents and purposes; record ids stay, values go. The agent
 "Assistant" masks only what a user set for it, so the existing assistant's turns send what they send today. No tool executes code; request tools go
 through `INTEGRATION_HTTP` and the core endpoint policy (`webhook-endpoint-policy.ts`: no private networks, timeouts,
-logs). Run credentials live in memory only, with
-the run's lifetime. Preview tokens are HMACs, never stored secrets. Mailbox runs see only messages of handed mailboxes.
+logs). Run credentials live in memory only, for one execution of the run (never stored); a run that resumes (after
+waiting for a confirmation, a question or its working window, or after an API restart) gets a new credential before
+its next tool call: the runtime first rechecks current access (the invoker or run-as user still active and holding the
+permissions of the enabled tools, the agent published and not paused, an agent principal not suspended), then calls
+`AGENT_RUN_CREDENTIALS.issue` again with the same subject, actor and scopes, or, without `access-control-and-security`,
+mints a new short-lived token of the invoker or run-as user; when the recheck fails, the run ends with `statusReason`
+`AI_ACCESS_CHANGED` and makes no further call. Preview tokens are HMACs, never stored secrets. Mailbox runs see only messages of handed mailboxes.
 Agents never decide confirmations or approvals of their own runs.
 
 ## 10. Observability
