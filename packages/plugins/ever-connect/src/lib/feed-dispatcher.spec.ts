@@ -11,7 +11,7 @@ import { CONSTANTS, EventEnvelope, ProblemError } from './sdk';
  * kept before it is acknowledged, and one that cannot be kept is never acknowledged.
  */
 describe('Ever Platform feed dispatcher', () => {
-	function scheduler(membership?: { apply: jest.Mock; resync?: jest.Mock }) {
+	function scheduler(membership?: { apply: jest.Mock; resync?: jest.Mock }, clock?: { now: () => number }) {
 		const states = { sync: jest.fn().mockResolvedValue(undefined) };
 		const entitlements = {
 			refreshAll: jest.fn().mockResolvedValue(undefined),
@@ -65,7 +65,7 @@ describe('Ever Platform feed dispatcher', () => {
 			cleanup as never,
 			signals,
 			{ feedMode: 'interval' } as never,
-			undefined,
+			clock,
 			undefined,
 			undefined,
 			undefined,
@@ -373,7 +373,7 @@ describe('Ever Platform feed dispatcher', () => {
 			expect(membership.resync).toHaveBeenCalledTimes(2);
 		});
 
-		it('the startup resync: one that lost the lease stays owed; one that failed waits for the next 410 or start', async () => {
+		it('the startup resync: one that lost the lease stays owed; one that failed waits before it runs again', async () => {
 			const membership = { apply: jest.fn(), resync: jest.fn().mockResolvedValueOnce('lease_lost') };
 			const { instance, client } = scheduler(membership);
 			client.instances.events.mockResolvedValue({ events: [], last_id: '', has_more: false });
@@ -384,6 +384,115 @@ describe('Ever Platform feed dispatcher', () => {
 			await instance.readFeed();
 			expect(membership.resync).toHaveBeenCalledTimes(2);
 			expect(client.instances.events).toHaveBeenCalledTimes(1);
+			await instance.readFeed();
+			expect(membership.resync).toHaveBeenCalledTimes(2);
+		});
+
+		it('a startup resync that failed is owed again: the feed is read on, and a read after the wait runs it again', async () => {
+			let now = Date.parse('2026-11-23T10:00:00.000Z');
+			const membership = {
+				apply: jest.fn(),
+				resync: jest.fn().mockResolvedValueOnce('failed').mockResolvedValue('done')
+			};
+			const { instance, client } = scheduler(membership, { now: () => now });
+			client.instances.events.mockResolvedValue({ events: [], last_id: '', has_more: false });
+
+			await instance.readFeed();
+			expect(membership.resync).toHaveBeenCalledTimes(1);
+			expect(client.instances.events).toHaveBeenCalledTimes(1);
+
+			// Within the wait: the feed is read, the resync waits.
+			now += 29_000;
+			await instance.readFeed();
+			expect(membership.resync).toHaveBeenCalledTimes(1);
+			expect(client.instances.events).toHaveBeenCalledTimes(2);
+
+			// After it: run again, before the feed; it worked, so it is not owed any more.
+			now += 1_000;
+			await instance.readFeed();
+			expect(membership.resync).toHaveBeenCalledTimes(2);
+			expect(membership.resync.mock.invocationCallOrder[1]).toBeLessThan(
+				client.instances.events.mock.invocationCallOrder[2]
+			);
+			now += 60 * 60 * 1000;
+			await instance.readFeed();
+			expect(membership.resync).toHaveBeenCalledTimes(2);
+		});
+
+		it('the wait doubles with each resync that failed in a row, at most the feed interval, and a start clears it', async () => {
+			let now = Date.parse('2026-11-23T10:00:00.000Z');
+			const membership = { apply: jest.fn(), resync: jest.fn().mockResolvedValue('failed') };
+			const { instance, client } = scheduler(membership, { now: () => now });
+			client.instances.events.mockResolvedValue({ events: [], last_id: '', has_more: false });
+
+			await instance.readFeed(); // failure 1: waits 30 s
+			now += 30_000;
+			await instance.readFeed(); // failure 2: waits 60 s
+			expect(membership.resync).toHaveBeenCalledTimes(2);
+			now += 59_000;
+			await instance.readFeed();
+			expect(membership.resync).toHaveBeenCalledTimes(2);
+			now += 1_000;
+			await instance.readFeed(); // failure 3: waits 120 s
+			expect(membership.resync).toHaveBeenCalledTimes(3);
+
+			// Never longer than the feed's own interval.
+			for (let i = 0; i < 10; i++) {
+				now += 15 * 60 * 1000;
+				await instance.readFeed();
+			}
+			expect(membership.resync).toHaveBeenCalledTimes(13);
+
+			// A start owes one at once.
+			instance.start();
+			instance.stop();
+			await instance.readFeed();
+			expect(membership.resync).toHaveBeenCalledTimes(14);
+		});
+
+		it('after a 410, a membership resync that failed moves the position on and is owed again, for a later read', async () => {
+			let now = Date.parse('2026-11-23T10:00:00.000Z');
+			const membership = { apply: jest.fn(), resync: jest.fn().mockResolvedValue('done') };
+			const { instance, client, order } = scheduler(membership, { now: () => now });
+			client.instances.events.mockResolvedValue({ events: [], last_id: '', has_more: false });
+			await instance.readFeed();
+			expect(membership.resync).toHaveBeenCalledTimes(1);
+
+			membership.resync.mockResolvedValueOnce('failed');
+			client.instances.events.mockRejectedValueOnce(
+				new ProblemError(410, 'resync_required', undefined, null, undefined, undefined, '01JD0000000000000000000044')
+			);
+			order.length = 0;
+			expect(await instance.readFeed()).toBe(true);
+			expect(membership.resync).toHaveBeenCalledTimes(2);
+			expect(order).toEqual(['keep 01JD0000000000000000000044', 'ack 01JD0000000000000000000044']);
+
+			now += 30_000;
+			await instance.readFeed();
+			expect(membership.resync).toHaveBeenCalledTimes(3);
+		});
+
+		it('a 410 resync that worked while a failed one waited clears the debt: it does not run again', async () => {
+			let now = Date.parse('2026-11-23T10:00:00.000Z');
+			const membership = {
+				apply: jest.fn(),
+				resync: jest.fn().mockResolvedValueOnce('failed').mockResolvedValue('done')
+			};
+			const { instance, client } = scheduler(membership, { now: () => now });
+			client.instances.events.mockResolvedValue({ events: [], last_id: '', has_more: false });
+
+			await instance.readFeed(); // the startup resync fails: owed again in 30 s
+			expect(membership.resync).toHaveBeenCalledTimes(1);
+
+			// Within the wait a 410 runs it, and it works.
+			now += 10_000;
+			client.instances.events.mockRejectedValueOnce(
+				new ProblemError(410, 'resync_required', undefined, null, undefined, undefined, '01JD0000000000000000000045')
+			);
+			expect(await instance.readFeed()).toBe(true);
+			expect(membership.resync).toHaveBeenCalledTimes(2);
+
+			now += 60_000;
 			await instance.readFeed();
 			expect(membership.resync).toHaveBeenCalledTimes(2);
 		});

@@ -59,7 +59,7 @@ export type DispatchOutcome = 'states' | 'entitlements' | 'link' | 'connection' 
  *   to its Gauzy organization when the membership sync is on (`EVER_CONNECT_MEMBERSHIP_SYNC_ENABLED`),
  *   and acknowledged and ignored otherwise; with it on, the current members of each linked organization are
  *   read again and applied once after each start and after each `410 resync_required`, before the feed is
- *   read (`MembershipSyncHandler.resync`). Types this release has no handler for are acknowledged and
+ *   read (`MembershipSyncHandler.resync`), and again on a later read after one that failed. Types this release has no handler for are acknowledged and
  *   ignored, and so are connection events (and a person's requests and membership changes) of another
  *   installation or of before this connection (a cursor read again from the start replays them).
  */
@@ -86,6 +86,15 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 	 * before its first read of the feed. (After `410 resync_required` one runs before the position moves on.)
 	 */
 	private membershipResyncOwed = true;
+	/**
+	 * A membership resync that failed (for a reason other than a lost lease) is owed again, not before this time: the
+	 * feed goes on meanwhile, and a later read runs it again, after a wait that doubles from `FEED_RETRY_MS` up to
+	 * `FEED_INTERVAL_MS`. A removal or a demotion the skipped part of the feed held is then made up for without waiting
+	 * for the next start or `410`.
+	 */
+	private membershipResyncNotBefore = 0;
+	/** The membership resyncs that failed in a row (the wait before the next one doubles with each). */
+	private membershipResyncFailures = 0;
 	/** The run of the scheduler (one per start and stop): work of an earlier run must not go on in a later one. */
 	private generation = 0;
 
@@ -136,6 +145,8 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 		this.generation += 1;
 		// Once after each start (a process start, or connecting again).
 		this.membershipResyncOwed = true;
+		this.membershipResyncNotBefore = 0;
+		this.membershipResyncFailures = 0;
 		this.feedFailures = 0;
 		// EVER_ENTITLEMENT_FILE: imported once per process, when the connection first starts.
 		if (!this.entitlementFileImported) {
@@ -268,15 +279,19 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 			throw error;
 		}
 		if (await stale()) return false;
-		if (this.membership && this.membershipResyncOwed) {
-			// Not owed again on a failure: it runs at the next 410 or start (the resync says why it stopped).
+		if (this.membership && this.membershipResyncOwed && this.now() >= this.membershipResyncNotBefore) {
+			// Owed again on a failure, after a wait (see `afterMembershipResync`); the feed is read on meanwhile.
 			this.membershipResyncOwed = false;
+			const outcome = await this.membershipResync(client, guards);
 			// Renewed after it too: a page that outlasted the lease and then failed must not let a non-holder read on.
-			if ((await this.membershipResync(client, guards)) === 'lease_lost' || !(await guards.keep())) {
+			if (outcome === 'lease_lost' || !(await guards.keep())) {
 				// Stopped, or another process holds the lease now: this one runs it when it holds the lease again.
 				this.membershipResyncOwed = true;
 				return false;
 			}
+			// A run stopped (and maybe started again) while `keep()` resolved records nothing into the new run's state.
+			if (!guards.current()) return false;
+			this.afterMembershipResync(outcome);
 		}
 		this.feedAbort = new AbortController();
 		const waitS = this.config.feedMode === 'longpoll' ? FEED_WAIT_S : 0;
@@ -456,7 +471,8 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 	 * events read again change nothing). With the membership sync on, the membership changes the skipped
 	 * part of the feed held are made up for first by a membership resync
 	 * (`GET /v1/instances/me/tenant-links/{link}/memberships` for each linked organization): the position
-	 * moves on only after it, unless the lease was lost meanwhile (answers `false`: not moved).
+	 * moves on only after it, unless the lease was lost meanwhile (answers `false`: not moved). One that failed
+	 * otherwise does not hold the feed back, and is owed again (`afterMembershipResync`).
 	 */
 	async resync(
 		client: Pick<EverPlatformClient, 'call'> & { instances: { ackEvents: (lastId: string) => Promise<unknown> } },
@@ -468,12 +484,16 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 		if (this.membership) {
 			// Before the position moves on: a process that stops here (or loses the lease) leaves the old position, so
 			// the next lease holder is answered 410 again and runs it. A resync that failed otherwise does not hold the
-			// feed back: it runs again at the next 410 or start.
+			// feed back: it is owed again, and a later read of the feed runs it (after a wait), as the next 410 or
+			// start would.
 			// Then the position moves on only while this run still holds the lease (a renewal that answers false fences
 			// it), also after a resync that failed for another reason while the lease passed on.
-			if ((await this.membershipResync(client, guards)) === 'lease_lost' || !(await guards.keep())) {
+			const outcome = await this.membershipResync(client, guards);
+			// A run stopped (and maybe started again) meanwhile records nothing into the new run's state.
+			if (outcome === 'lease_lost' || !(await guards.keep()) || !guards.current()) {
 				return false;
 			}
+			this.afterMembershipResync(outcome);
 			// Kept in one compare-and-set on the lease holder, by the current run only: a process that lost the lease
 			// in between cannot move the position the next holder reads.
 			const cursor =
@@ -496,6 +516,26 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 			await this.store.updateConnection({ feedCursor: null });
 		}
 		return true;
+	}
+
+	/**
+	 * After a membership resync that kept the lease: one that failed is owed again, not before a wait that doubles with
+	 * each failure in a row (from `FEED_RETRY_MS`, at most `FEED_INTERVAL_MS`), so a membership read that keeps failing
+	 * never holds up the feed nor runs at every read; any other outcome is no longer owed and clears the wait. The debt
+	 * is this process's: a lease taken over by another process meanwhile runs it at that process's next start or `410`.
+	 */
+	private afterMembershipResync(outcome: MembershipResyncOutcome): void {
+		if (outcome !== 'failed') {
+			// Done (or nothing to do): no longer owed, also when an earlier failure had it owed and a 410 ran it first.
+			this.membershipResyncOwed = false;
+			this.membershipResyncFailures = 0;
+			this.membershipResyncNotBefore = 0;
+			return;
+		}
+		this.membershipResyncOwed = true;
+		this.membershipResyncFailures += 1;
+		const wait = Math.min(FEED_RETRY_MS * 2 ** (this.membershipResyncFailures - 1), FEED_INTERVAL_MS);
+		this.membershipResyncNotBefore = this.now() + wait;
 	}
 
 	/**
