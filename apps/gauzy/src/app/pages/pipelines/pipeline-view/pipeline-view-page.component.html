@@ -7,12 +7,25 @@
 >
 	@if (pipeline) {
 		<div recordPageActions class="pv-actions">
-			<a nbButton outline size="small" status="basic" [routerLink]="[backLink, pipeline.id, 'deals']">
-				<nb-icon icon="eye-outline"></nb-icon>
+			<a
+				nbButton
+				size="small"
+				status="basic"
+				class="pv-action pv-action-secondary"
+				[routerLink]="[backLink, pipeline.id, 'deals']"
+			>
+				<nb-icon icon="briefcase-outline"></nb-icon>
 				<span>{{ 'PIPELINES_PAGE.VIEW_DEALS' | translate }}</span>
 			</a>
 			<ng-template ngxPermissionsOnly="EDIT_SALES_PIPELINES">
-				<button nbButton outline size="small" status="basic" type="button" (click)="edit()">
+				<button
+					nbButton
+					size="small"
+					status="primary"
+					class="pv-action pv-action-primary"
+					type="button"
+					(click)="edit()"
+				>
 					<nb-icon icon="edit-outline"></nb-icon>
 					<span>{{ 'BUTTONS.EDIT' | translate }}</span>
 				</button>
