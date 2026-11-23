@@ -120,7 +120,9 @@
 			<button
 				type="submit"
 				nbButton
-				size="tiny"
+				size="medium"
+				status="primary"
+				fullWidth
 				class="submit-btn"
 				[disabled]="form.invalid || isLoading"
 				[attr.aria-busy]="isLoading ? true : null"
@@ -137,7 +139,9 @@
 			<button
 				type="button"
 				nbButton
-				size="tiny"
+				size="medium"
+				status="primary"
+				fullWidth
 				class="submit-btn"
 				[disabled]="email.invalid || isLoading"
 				(click)="onSendCode()"
