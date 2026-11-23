@@ -7026,7 +7026,8 @@
 		"RECENT_DEALS": "Neueste Angebote",
 		"NO_DEALS": "Noch keine Angebote",
 		"HIGH_PROBABILITY": "Hohe Wahrscheinlichkeit",
-		"DETAILS": "Details"
+		"DETAILS": "Details",
+		"DEALS_LOAD_FAILED": "Die Angebote konnten nicht geladen werden."
 	},
 	"PIPELINE_DEALS_PAGE": {
 		"HEADER": "Pipeline Deals",

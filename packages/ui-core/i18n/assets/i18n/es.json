@@ -7032,7 +7032,8 @@
 		"RECENT_DEALS": "Ofertas recientes",
 		"NO_DEALS": "Aún no hay ofertas",
 		"HIGH_PROBABILITY": "Alta probabilidad",
-		"DETAILS": "Detalles"
+		"DETAILS": "Detalles",
+		"DEALS_LOAD_FAILED": "No se pudieron cargar las ofertas."
 	},
 	"PIPELINE_DEALS_PAGE": {
 		"HEADER": "Pipeline Deals",

@@ -6405,7 +6405,8 @@
 		"RECENT_DEALS": "Recent deals",
 		"NO_DEALS": "No deals yet",
 		"HIGH_PROBABILITY": "High probability",
-		"DETAILS": "Details"
+		"DETAILS": "Details",
+		"DEALS_LOAD_FAILED": "The deals could not be loaded."
 	},
 	"PIPELINE_DEALS_PAGE": {
 		"HEADER": "crwdns7198:0crwdne7198:0",
@@ -6415,6 +6416,7 @@
 		"LOW": "crwdns9834:0crwdne9834:0",
 		"MEDIUM": "crwdns9836:0crwdne9836:0",
 		"HIGH": "crwdns9838:0crwdne9838:0",
+		"UNKNOWN": "Unknown",
 		"DEAL_DELETED": "crwdns9180:0{{ name }}crwdne9180:0",
 		"DEAL_EDITED": "crwdns9182:0{{ name }}crwdne9182:0",
 		"DEAL_ADDED": "crwdns9184:0{{ name }}crwdne9184:0",

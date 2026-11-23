@@ -7028,7 +7028,8 @@
 		"RECENT_DEALS": "أحدث الصفقات",
 		"NO_DEALS": "لا توجد صفقات بعد",
 		"HIGH_PROBABILITY": "احتمالية عالية",
-		"DETAILS": "التفاصيل"
+		"DETAILS": "التفاصيل",
+		"DEALS_LOAD_FAILED": "تعذّر تحميل الصفقات."
 	},
 	"PIPELINE_DEALS_PAGE": {
 		"HEADER": "صفقات الأنابيب",

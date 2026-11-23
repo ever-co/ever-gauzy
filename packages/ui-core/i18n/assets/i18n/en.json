@@ -7641,7 +7641,8 @@
 		"RECENT_DEALS": "Recent deals",
 		"NO_DEALS": "No deals yet",
 		"HIGH_PROBABILITY": "High probability",
-		"DETAILS": "Details"
+		"DETAILS": "Details",
+		"DEALS_LOAD_FAILED": "The deals could not be loaded."
 	},
 	"PIPELINE_DEALS_PAGE": {
 		"HEADER": "Pipeline Deals",

@@ -38,7 +38,7 @@ export function loadPipeline(pipelinesService: PipelinesService, id: ID, scope: 
 
 /**
  * Loads a pipeline's deals, to count them per stage. Resolves `null` when they cannot be read, so the
- * pipeline itself still shows (without its counts).
+ * pipeline itself still shows (without its counts) and the page offers to read them again.
  *
  * @param pipelinesService The pipelines API.
  * @param pipeline The pipeline whose deals to read.

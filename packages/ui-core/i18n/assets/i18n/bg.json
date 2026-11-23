@@ -7075,7 +7075,8 @@
 		"RECENT_DEALS": "Последни сделки",
 		"NO_DEALS": "Все още няма сделки",
 		"HIGH_PROBABILITY": "Висока вероятност",
-		"DETAILS": "Подробности"
+		"DETAILS": "Подробности",
+		"DEALS_LOAD_FAILED": "Сделките не можаха да бъдат заредени."
 	},
 	"PIPELINE_DEALS_PAGE": {
 		"HEADER": "Сделки по тръбопровод",

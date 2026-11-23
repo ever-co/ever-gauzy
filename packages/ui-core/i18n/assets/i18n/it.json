@@ -7030,7 +7030,8 @@
 		"RECENT_DEALS": "Offerte recenti",
 		"NO_DEALS": "Ancora nessuna offerta",
 		"HIGH_PROBABILITY": "Alta probabilità",
-		"DETAILS": "Dettagli"
+		"DETAILS": "Dettagli",
+		"DEALS_LOAD_FAILED": "Impossibile caricare le offerte."
 	},
 	"PIPELINE_DEALS_PAGE": {
 		"HEADER": "Offerte sulle vendite",

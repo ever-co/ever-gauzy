@@ -7030,7 +7030,8 @@
 		"RECENT_DEALS": "Recente aanbiedingen",
 		"NO_DEALS": "Nog geen aanbiedingen",
 		"HIGH_PROBABILITY": "Hoge waarschijnlijkheid",
-		"DETAILS": "Details"
+		"DETAILS": "Details",
+		"DEALS_LOAD_FAILED": "De aanbiedingen konden niet worden geladen."
 	},
 	"PIPELINE_DEALS_PAGE": {
 		"HEADER": "Dealstroom",

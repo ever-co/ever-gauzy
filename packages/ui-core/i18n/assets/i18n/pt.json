@@ -7641,7 +7641,8 @@
 		"RECENT_DEALS": "Negócios recentes",
 		"NO_DEALS": "Ainda não há negócios",
 		"HIGH_PROBABILITY": "Alta probabilidade",
-		"DETAILS": "Detalhes"
+		"DETAILS": "Detalhes",
+		"DEALS_LOAD_FAILED": "Não foi possível carregar os negócios."
 	},
 	"PIPELINE_DEALS_PAGE": {
 		"HEADER": "Negócios do funil",

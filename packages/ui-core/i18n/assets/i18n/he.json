@@ -7040,7 +7040,8 @@
 		"RECENT_DEALS": "עסקאות אחרונות",
 		"NO_DEALS": "אין עדיין עסקאות",
 		"HIGH_PROBABILITY": "סבירות גבוהה",
-		"DETAILS": "פרטים"
+		"DETAILS": "פרטים",
+		"DEALS_LOAD_FAILED": "לא ניתן היה לטעון את העסקאות."
 	},
 	"PIPELINE_DEALS_PAGE": {
 		"HEADER": "Pipeline Deals",

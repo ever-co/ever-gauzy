@@ -7029,7 +7029,8 @@
 		"RECENT_DEALS": "Ostatnie oferty",
 		"NO_DEALS": "Brak ofert",
 		"HIGH_PROBABILITY": "Wysokie prawdopodobieństwo",
-		"DETAILS": "Szczegóły"
+		"DETAILS": "Szczegóły",
+		"DEALS_LOAD_FAILED": "Nie udało się wczytać ofert."
 	},
 	"PIPELINE_DEALS_PAGE": {
 		"HEADER": "Umowy o ropociągu",

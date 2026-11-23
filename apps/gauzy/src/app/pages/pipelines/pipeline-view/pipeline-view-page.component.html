@@ -69,6 +69,24 @@
 				</div>
 			</dl>
 
+			<!-- The deals could not be read: say so, and offer to read them again. -->
+			@if (!deals) {
+				<div class="pv-notice" role="alert">
+					<nb-icon icon="alert-triangle-outline" aria-hidden="true"></nb-icon>
+					<span class="pv-notice-text">{{ 'PIPELINES_PAGE.DEALS_LOAD_FAILED' | translate }}</span>
+					<button
+						nbButton
+						size="small"
+						status="basic"
+						type="button"
+						[disabled]="dealsLoading"
+						(click)="reloadDeals()"
+					>
+						{{ 'BUTTONS.RETRY' | translate }}
+					</button>
+				</div>
+			}
+
 			<div class="pv-columns">
 				<!-- The work: stages, then the newest deals. -->
 				<div class="pv-col pv-col--main">
@@ -129,18 +147,27 @@
 								}
 							</header>
 							@if (recentDeals.length) {
-								<!-- One grid for the header and every row, so each column fits its widest cell. -->
-								<div class="pv-deal-table">
-									<div class="pv-deal-head" aria-hidden="true">
-										<span>{{ 'SM_TABLE.TITLE' | translate }}</span>
-										<span>{{ 'PIPELINES_PAGE.STAGE' | translate }}</span>
-										<span>{{ 'PIPELINE_DEAL_CREATE_PAGE.PROBABILITY' | translate }}</span>
-										<span class="pv-deal-date">{{ 'SM_TABLE.CREATED' | translate }}</span>
+								<!-- One grid for the header and every row, so each column fits its widest cell.
+									 Table roles give screen readers the columns the grid only draws. -->
+								<div
+									class="pv-deal-table"
+									role="table"
+									[attr.aria-label]="'PIPELINES_PAGE.RECENT_DEALS' | translate"
+								>
+									<div class="pv-deal-head" role="row">
+										<span role="columnheader">{{ 'SM_TABLE.TITLE' | translate }}</span>
+										<span role="columnheader">{{ 'PIPELINES_PAGE.STAGE' | translate }}</span>
+										<span role="columnheader">{{
+											'PIPELINE_DEAL_CREATE_PAGE.PROBABILITY' | translate
+										}}</span>
+										<span class="pv-deal-date" role="columnheader">{{
+											'SM_TABLE.CREATED' | translate
+										}}</span>
 									</div>
-									<ul class="pv-deals">
+									<ul class="pv-deals" role="rowgroup">
 										@for (deal of recentDeals; track deal.id) {
-											<li class="pv-deal">
-												<span class="pv-deal-text">
+											<li class="pv-deal" role="row">
+												<span class="pv-deal-text" role="cell">
 													@if (canEditDeals) {
 														<a class="pv-deal-title" [routerLink]="[backLink, pipeline.id, 'deals', deal.id, 'edit']">
 															{{ deal.title }}
@@ -152,12 +179,12 @@
 														<span class="pv-subtext">{{ deal.client }}</span>
 													}
 												</span>
-												<span class="pv-deal-stage">{{ deal.stage ?? '—' }}</span>
-												<span class="pv-level">
+												<span class="pv-deal-stage" role="cell">{{ deal.stage ?? '—' }}</span>
+												<span class="pv-level" role="cell">
 													<span class="pv-dot" aria-hidden="true"></span>
 													{{ deal.levelKey | translate }}
 												</span>
-												<span class="pv-deal-date">
+												<span class="pv-deal-date" role="cell">
 													@if (deal.createdAt) {
 														{{ deal.createdAt | dateFormat }}
 													} @else {

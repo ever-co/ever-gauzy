@@ -61,6 +61,8 @@ export class PipelineViewPageComponent implements OnInit, OnDestroy {
 	/** The creator's initials, shown when they have no photo. */
 	creatorInitials = '';
 	state: RecordViewPageState = 'loading';
+	/** The deals are being read again, after a read that failed (see `reloadDeals`). */
+	dealsLoading = false;
 
 	/** A deal's title opens its edit page only for a user who may edit pipelines (as the deals page's Edit). */
 	get canEditDeals(): boolean {
@@ -110,6 +112,7 @@ export class PipelineViewPageComponent implements OnInit, OnDestroy {
 		this.stageRows = [];
 		this.recentDeals = [];
 		this.probabilityRows = [];
+		this.dealsLoading = false;
 		this.state = 'loading';
 		this.cdr.markForCheck();
 		try {
@@ -136,6 +139,28 @@ export class PipelineViewPageComponent implements OnInit, OnDestroy {
 		} finally {
 			this.cdr.markForCheck();
 		}
+	}
+
+	/**
+	 * Reads the pipeline's deals again after they could not be read, keeping the pipeline on the page.
+	 * An answer that comes after the page started another load is dropped.
+	 */
+	async reloadDeals(): Promise<void> {
+		const pipeline = this.pipeline;
+		if (!pipeline || this.dealsLoading) {
+			return;
+		}
+		const sequence = this.loadSequence;
+		this.dealsLoading = true;
+		this.cdr.markForCheck();
+		const deals = await loadPipelineDeals(this.pipelinesService, pipeline);
+		if (sequence !== this.loadSequence) {
+			return;
+		}
+		this.deals = deals;
+		this.describe();
+		this.dealsLoading = false;
+		this.cdr.markForCheck();
 	}
 
 	/**
