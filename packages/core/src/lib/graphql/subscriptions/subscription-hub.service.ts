@@ -1,4 +1,5 @@
 import { Injectable, OnModuleDestroy, Optional } from '@nestjs/common';
+import { runInFreshMikroOrmContext } from '../../core/context/mikro-orm-context';
 import { GraphqlPubSub } from './graphql-pubsub.service';
 import { SubscriptionCatalogue } from './subscription-catalogue';
 import {
@@ -279,7 +280,12 @@ export class GraphqlSubscriptionHub implements OnModuleDestroy {
 					continue;
 				}
 
-				await delivery.offer(event, () => this.authorizer.mayDeliver(authorized, event));
+				// The loop runs in the context the subscription was opened in, for as long as it is open: under
+				// DB_ORM=mikro-orm that holds the operation's own MikroORM fork, so the decision — whose permission
+				// check reads the role's grants as they are now — runs on a fresh fork of it, event by event.
+				await delivery.offer(event, () =>
+					runInFreshMikroOrmContext(() => this.authorizer.mayDeliver(authorized, event))
+				);
 			}
 		} catch {
 			// A stream that ended because the connection went away is not an error worth escalating:
