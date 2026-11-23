@@ -289,6 +289,8 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 				this.membershipResyncOwed = true;
 				return false;
 			}
+			// A run stopped (and maybe started again) while `keep()` resolved records nothing into the new run's state.
+			if (!guards.current()) return false;
 			this.afterMembershipResync(outcome);
 		}
 		this.feedAbort = new AbortController();
@@ -487,7 +489,8 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 			// Then the position moves on only while this run still holds the lease (a renewal that answers false fences
 			// it), also after a resync that failed for another reason while the lease passed on.
 			const outcome = await this.membershipResync(client, guards);
-			if (outcome === 'lease_lost' || !(await guards.keep())) {
+			// A run stopped (and maybe started again) meanwhile records nothing into the new run's state.
+			if (outcome === 'lease_lost' || !(await guards.keep()) || !guards.current()) {
 				return false;
 			}
 			this.afterMembershipResync(outcome);
