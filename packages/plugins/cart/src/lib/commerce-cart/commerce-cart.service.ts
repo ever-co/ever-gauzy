@@ -1399,6 +1399,13 @@ export class CommerceCartService extends CartCrudService<CommerceCart> {
 				break;
 			}
 
+			// A cart a checkout holds is being turned into an order right now (R3-10), as in the expiry sweep. The
+			// claim moved its version but not its last activity, so a scan after the claim would abandon it, and the
+			// checkout would then complete a cart marked abandoned.
+			if (this.holdsLiveCheckoutClaim(cart)) {
+				continue;
+			}
+
 			const written = await this.sweepCart(
 				cart,
 				{ status: CommerceCartStatus.ACTIVE, lastActivityAt: LessThanOrEqual(cutoff) },

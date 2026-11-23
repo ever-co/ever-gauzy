@@ -1974,6 +1974,24 @@ describe('CommerceCartService — checkout', () => {
 			);
 		});
 
+		it('leaves a cart a checkout holds out of the abandonment sweep, as the expiry sweep does', async () => {
+			const fixture = cartFixture();
+			const { service } = fixture;
+			const held = await service.create({ channelId: 'channel-1', currency: 'USD' });
+			const other = await service.create({ channelId: 'channel-1', currency: 'USD' });
+
+			for (const row of fixture.tables.commerce_cart) {
+				row.lastActivityAt = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+			}
+
+			// A checkout has claimed the idle cart; its recalculation has not touched `lastActivityAt` yet.
+			Object.assign(rowOf(fixture, held.id), { checkoutClaimId: 'a-checkout', checkoutClaimedAt: new Date() });
+
+			expect(await service.abandonDueCarts()).toEqual([other.id]);
+			expect(rowOf(fixture, held.id).status).toBe(CommerceCartStatus.ACTIVE);
+			expect(rowOf(fixture, held.id).abandonedAt ?? null).toBeNull();
+		});
+
 		it('skips a cart whose version alone moved after the scan, and expires the rest of the batch', async () => {
 			const fixture = cartFixture();
 			const { service } = fixture;
