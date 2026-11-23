@@ -1,257 +1,103 @@
 @use 'themes' as *;
 @use '@shared/reusable' as *;
 
+// The page frame shared by the workspace sign-in / find / create flows: one
+// centred card on the canvas. The card is drawn with the same surface tokens
+// as the rest of the app (card fill, hairline border, card radius, soft
+// shadow) so these screens read as part of it rather than as a separate theme.
+//
+// Child components (header, email/code form, workspace selection) are view-
+// encapsulated, so their own sheets style their insides; this one only owns
+// the frame and the account-creation form that is written inline in the
+// create page's template.
+
 .login-container {
-  // Centred at its 765px design width, but never wider than the column it is
-  // rendered in — a fixed width overflowed the canvas wherever that is narrower
-  // (the layout column next to the expanded AI chat, a small viewport).
-  width: min(765px, 100%);
-  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 2rem 1rem;
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 100vh;
-  margin: 0 auto;
 
   .login-wrapper {
-    background: nb-theme(gauzy-card-2);
-    border-radius: nb-theme(border-radius);
     box-sizing: border-box;
-    padding: 30px;
-    width: 476px;
-    height: 100%;
-
-    & > * {
-      padding-left: 15px;
-      padding-right: 15px;
-    }
-
-    & .svg-wrapper {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 57px;
-    }
-
-    & .headings {
-      display: flex;
-      justify-content: space-between;
-      position: relative;
-
-      & .headings-inner {
-        & .title {
-          font-family: Inter;
-          font-size: 24px;
-          font-style: normal;
-          font-weight: 700;
-          line-height: 30px;
-          letter-spacing: 0em;
-          margin-bottom: 18px;
-          text-align: start;
-        }
-
-        & .sub-title {
-          font-family: Inter;
-          font-size: 14px;
-          font-style: normal;
-          font-weight: 400;
-          line-height: 1.4;
-          letter-spacing: 0em;
-          margin-bottom: 26px;
-          text-align: start;
-        }
-      }
-    }
-
-    & .hr-div-strong {
-      @include hr-div-strong;
-    }
-
-    & .hr-div-soft {
-      @include hr-div-soft;
-    }
-  }
-
-  & form {
-    margin-top: 29px;
-    margin-bottom: 42px;
-
-    & .form-control-group {
-      margin-bottom: 16px;
-    }
-
-    & .submit-btn-wrapper {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-
-      & .forgot-email {
-        text-decoration-line: underline;
-        margin-bottom: 0;
-        font-family: Inter;
-        font-size: 14px;
-        font-style: normal;
-        font-weight: 500;
-        line-height: 17px;
-        letter-spacing: -0.01em;
-        text-align: left;
-
-        &:hover {
-          color: $button-color;
-        }
-      }
-
-      & .submit-inner-wrapper {
-        display: inline-flex;
-        flex-direction: column;
-        align-items: center;
-      }
-
-      & .submit-btn {
-        @include submit-btn;
-        padding: 13px 65px;
-      }
-    }
-  }
-
-  & .another-action {
-    margin-top: 10px;
-    @include another-action;
-  }
-}
-
-@include tablet-screen {
-  .login-container {
-    flex-direction: column;
-    align-items: center;
-
-    & .another-action {
-      margin-top: 0;
-    }
+    width: min(420px, 100%);
+    // Natural height: `height: 100%` stretched the card to the bottom of the
+    // viewport whenever its parent had a definite height (the create page).
+    height: auto;
+    padding: 2rem;
+    background: var(--gauzy-card-1);
+    border: 1px solid var(--gauzy-border-default-color);
+    border-radius: nb-theme(border-radius);
+    box-shadow: var(--gauzy-shadow);
   }
 }
 
 @include mobile-screen {
   .login-container {
-    width: 100%;
+    padding: 1rem;
 
-    & .login-wrapper {
-      width: 100%;
-      padding: 20px 12px;
-
-      & .headings {
-        & .headings-inner {
-          width: 100%;
-
-          & .title,
-          & .sub-title {
-            width: 100%;
-            text-align: center;
-          }
-        }
-      }
-    }
-
-    & form {
-      margin-bottom: 35px;
-
-      & .submit-btn-wrapper {
-        justify-content: center;
-
-        & .submit-inner-wrapper {
-          justify-content: center;
-        }
-
-        & .submit-btn {
-          margin-bottom: 0;
-        }
-      }
-
-      & .form-control-group {
-        margin-bottom: 13px;
-      }
+    .login-wrapper {
+      padding: 1.5rem 1.25rem;
     }
   }
 }
 
-@include input-fields-color;
-
+// Account-creation step of the create flow (full name / password / confirm).
 .creation-content {
+  width: 100%;
+
   .form-group {
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
 
     label {
       display: block;
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.375rem;
+      font-size: nb-theme(text-label-font-size);
       font-weight: 600;
-      color: nb-theme(text-basic-color);
+      line-height: 1rem;
+      color: var(--gauzy-text-color-2);
     }
 
-    input {
+    nb-form-field {
       width: 100%;
     }
 
+    input[nbInput] {
+      box-sizing: border-box;
+      width: 100%;
+      max-width: none;
+      height: 2.5rem;
+      font-size: 0.875rem;
+      background-color: var(--gauzy-input-background) !important;
+      border: 1px solid var(--gauzy-overlay-border-color);
+      border-radius: var(--gauzy-radius-sm);
+      box-shadow: none;
+
+      &:focus {
+        border-color: nb-theme(color-primary-default);
+      }
+
+      &.status-danger {
+        border-color: nb-theme(color-danger-default);
+      }
+    }
+
     .error-message {
-      margin-top: 0.25rem;
+      margin-top: 0.375rem;
       font-size: 0.75rem;
-      color: nb-theme(status-danger);
+      line-height: 1rem;
+      color: nb-theme(color-danger-default);
     }
   }
 
   .submit-btn-wrapper {
-    margin-top: 2rem;
-    display: flex;
-    justify-content: center;
+    margin-top: 1.5rem;
 
     .submit-btn {
-      min-width: 200px;
-      padding: 0.75rem 1.5rem;
-
-      &.btn-pulse {
-        animation: pulse 1.5s infinite;
-      }
-    }
-  }
-}
-
-@keyframes pulse {
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
-@media (max-width: 768px) {
-  .login-container {
-    padding: 1rem;
-
-    .login-wrapper {
-      padding: 20px;
-      max-width: 100%;
-
-      & > * {
-        padding-left: 10px;
-        padding-right: 10px;
-      }
-    }
-  }
-}
-
-@media (max-width: 480px) {
-  .login-container {
-    padding: 0.5rem;
-
-    .login-wrapper {
-      padding: 15px;
-
-      & > * {
-        padding-left: 5px;
-        padding-right: 5px;
-      }
+      width: 100%;
     }
   }
 }
