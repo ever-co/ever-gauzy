@@ -21,9 +21,10 @@ timesheet portions, budgets, figures, forecasts, billing plans, retainers, alloc
 only when `GAUZY_PROJECT_COSTING_ENABLED` is exactly `true`; every controller and resolver is guarded by
 `FEATURE_PROJECT_COSTING`. Ever Teams shows projects, tasks, time and timesheets in its own screens over this API.
 
-Core gains small, optional things: two outbox events (`time_tracking.time_log.changed`,
-`time_tracking.timesheet.status_changed`) appended by the existing command handlers when a consumer is registered for
-them; two optional guard ports that core calls before writing (`TIME_LOG_WRITE_GUARD` for locks and the closed-task
+Core gains small, optional things: time-log changes are read from the outbox facts core appends today
+(`time_log.started`, `.stopped`, `.created`, `.updated`, `.deleted` of `TimeLogFactsService`), and one outbox event,
+`time_tracking.timesheet.status_changed`, is appended by the existing timesheet handlers when a consumer is registered
+for it; two optional guard ports that core calls before writing (`TIME_LOG_WRITE_GUARD` for locks and the closed-task
 rule, `TASK_WRITE_GUARD` for dependency, parent and cycle rules); one optional router (`TIMESHEET_APPROVAL_ROUTER`)
 that the timesheet status handler consults; two additive enum values (`ProjectStatusEnum.PAUSED`,
 `ProjectBillingEnum.RETAINER`); a project scope on the client billing schedules; and the task-template module shared
@@ -49,7 +50,7 @@ flowchart LR
     NG[Angular project-costing-ui + project view tabs] --> API[project-costing controllers /api/project-costing/*]
     TEAMS[Ever Teams screens over the API] --> API
     MCP[MCP tools project_* timesheet_* capacity_*] --> API
-    CORE[(core project, task, linked issue, time_log, timesheet)] -- outbox time_tracking.* --> CONS[Outbox consumers]
+    CORE[(core project, task, linked issue, time_log, timesheet)] -- outbox time_log.* and time_tracking.timesheet.* --> CONS[Outbox consumers]
     CORE -- TIME_LOG_WRITE_GUARD / TASK_WRITE_GUARD / TIMESHEET_APPROVAL_ROUTER --> GUARD[Plugin guards and router]
     CONS --> COST[Time costing: activity type, cost rate resolution]
     COST --> FIG[(project_figure_source -> project_figure)]
@@ -92,7 +93,7 @@ flowchart LR
 | --- | --- |
 | `packages/contracts/src/lib/organization-projects.model.ts` | `ProjectStatusEnum.PAUSED = 'paused'` (varchar column, no migration) |
 | `packages/contracts/src/lib/organization.model.ts` | `ProjectBillingEnum.RETAINER = 'RETAINER'` (varchar column, no migration) |
-| `time-tracking/time-log/commands/handlers/*` (create, update, delete, schedule entries), timer stop | append `time_tracking.time_log.changed` `{ timeLogIds, employeeId, projectIds, change }` through `EventOutboxService.append` in the writing transaction, only when a consumer is registered |
+| `time-tracking/time-log/commands/handlers/*` (create, update, delete, delete span, schedule entries), timer start and stop | no change: they append `time_log.started`, `.stopped`, `.created`, `.updated`, `.deleted` through `TimeLogFactsService` today (one fact per entry: `timeLogId`, `employeeId`, `projectId`, `taskId`, `organizationContactId`, times, `isBillable`, `source`, `logType`), which this plugin's consumers subscribe to |
 | `time-tracking/timesheet/commands/handlers/timesheet-submit*`, `timesheet-update-status*` | append `time_tracking.timesheet.status_changed`; consult optional `TIMESHEET_APPROVAL_ROUTER.onStatusChange(...)` |
 | `time-log.service.ts`, `timer.service.ts` | call optional `TIME_LOG_WRITE_GUARD.beforeStart / beforeCreate / beforeUpdate / beforeDelete` |
 | `tasks/task.service.ts`, `linked-issue/task-linked-issue.service.ts` | call optional `TASK_WRITE_GUARD.beforeStatusChange / beforeParentChange / beforeLink` |
@@ -236,8 +237,8 @@ routes marked *(mgr)*. Errors `400`/`422` with codes (`PROJECT_TEMPLATE_INACTIVE
 | `project_costing.invoice_draft.prepared` | a project's invoice schedule run made a draft | project managers (dispatcher) |
 | `project_costing.project.progress_changed` / `.completed` | progress or completion | `budgets-and-revenue-schedules` recognition progress, automations |
 | `project_costing.figures.changed` (hint), `project_costing.allocation.changed` / `.over_capacity`, `project_costing.update.requested` / `.published` | figures, allocations, updates | real-time, inbox, email digests |
-| `time_tracking.time_log.changed`, `time_tracking.timesheet.status_changed` | core time log and timesheet writes (core outbox events added by this plan) | this plugin's costing, portions and locks; automations |
-| consumed `time_tracking.time_log.changed`, `time_tracking.timesheet.status_changed` | capture | costing, portions, locks |
+| `time_tracking.timesheet.status_changed` | core timesheet submit and status writes (core outbox event added by this plan) | this plugin's portions and locks; automations |
+| consumed `time_log.started`, `.stopped`, `.created`, `.updated`, `.deleted` (core facts of today), `time_tracking.timesheet.status_changed` | capture | costing, portions, locks |
 | consumed core `TaskEvent` (event bus) and activity-log events for `Task`, `TaskLinkedIssue`, `Expense` | task status and dates; links; direct expenses | rescheduling, progress, milestones, figures |
 | consumed `workflows.approval.decided` (record types `time_tracking.timesheet_portion`, `project_costing.budget_version`), settlers of core request approvals (types `TIMESHEET_PORTION`, `PROJECT_BUDGET`) | approvals | decisions |
 | consumed `payroll.cost_allocated` | payroll approval | actual labour and variance |
@@ -324,7 +325,7 @@ definition. Import templates: activity types, rate cards, budgets, templates, al
 
 | Trigger | When | What it does | Idempotency |
 | ------- | ---- | ------------ | ----------- |
-| `project-costing.time-cost` (outbox consumer) | `time_tracking.time_log.changed` | activity type, cost, cost row, figure sources, retainer drawdown | `time_log_cost` per log with `version`; sources keyed by log, line key and the cost row's `version` as `revision` |
+| `project-costing.time-cost` (outbox consumer) | `time_log.created`, `.stopped`, `.updated`, `.deleted` (core facts) | activity type, cost, cost row, figure sources, retainer drawdown | `time_log_cost` per log with `version`; sources keyed by log, line key and the cost row's `version` as `revision` |
 | `project-costing.figures` (outbox consumers) | bills, orders, invoices, payroll, stock, ledger events | figure sources and sums, entry invoiced states | unique source key |
 | `project-costing.forecast` (queue, debounced 5 s per project) | figure, task or estimate change | forecast, earned value, health, burn alerts | upsert per project; dispatcher `dedupeKey` per alert |
 | `project-costing.reconcile` | nightly and on demand | costs logs changed since the watermark (desktop uploads, imports, integrations); compares the time-log source identities whose sum is not zero with the current logs and, for a log deleted or soft-deleted meanwhile (the feature off included), appends the reversing revision that brings its sources to zero; rebuilds sums; reports corrections | watermark = start of the organization's last succeeded `job_execution` of this job (5-minute overlap); source keys |

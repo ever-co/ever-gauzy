@@ -239,7 +239,8 @@
       `HR_ONBOARDING` / `HR_SEPARATION`, built by `project-costing-and-billing` T60) with the HR activity details and
       applicability as `rule` rows (`LIFECYCLE_TEMPLATE`). Files: `hr/templates/lifecycle-template.service.ts`,
       `hr/templates/lifecycle-template.controller.ts`. Test: most specific template wins.
-- [ ] **T33**. Processes: start from candidate, placeholder or employee; `TaskTemplateService.instantiate` into the
+- [ ] **T33**. Processes: start from candidate, placeholder or employee; `TaskTemplateService.instantiate` (core, built by
+      `project-costing-and-billing` T64) into the
       onboarding project (anchor start or last day, tasks only for task activities); dates past rest days and holidays
       through `HR_WORKING_CALENDAR`; role assignment; progress; complete and cancel closing tasks; live-process
       uniqueness. Files: `hr/processes/lifecycle-process.service.ts`, `hr/processes/lifecycle-process.controller.ts`,

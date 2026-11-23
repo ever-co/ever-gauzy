@@ -38,7 +38,9 @@
 - [ ] **T4**. Shared migration helpers in core `packages/core/src/lib/database/migration-helpers.ts` beside
   `check-constraint.helper.ts` (dialect, quoting, `hasColumn`, `hasIndex`, Postgres advisory lock, lifted from the task
   automations copy `packages/plugins/task-automations/src/lib/database/migration-helpers.ts`), exported from
-  `@gauzy/core`; no copy in the plugin. Test: helper spec on SQLite.
+  `@gauzy/core` through `packages/core/src/lib/database/index.ts`; no copy in the plugin. Test: helper spec
+  `packages/core/src/lib/database/migration-helpers.spec.ts` on SQLite (dialect, quoting, `hasColumn`, `hasIndex`; the
+  advisory lock is a no-op off PostgreSQL).
 - [ ] **T5** (parallel). Menu entry and route guard for `FEATURE_PURCHASING` in the Angular shell registration; the
   existing controllers already carry `@FeatureFlag`. Files: `apps/gauzy/src/app/pages/pages.routes.ts`,
   `apps/gauzy/src/app/pages/purchasing-feature.guard.ts`. Test: guard spec (flag off → hidden and refused).

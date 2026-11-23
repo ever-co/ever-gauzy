@@ -51,10 +51,15 @@
   `ta/assignments/entities/{assignment-rule,assignment-decision,record-assignment}.entity.ts`), the generic `reminder`
   table (`ta/reminders/reminder.entity.ts`) and recognition entities (`ta/recognition/recognition-entry.entity.ts`);
   migrations `ta/database/migrations/1791000032120-CreateAssignmentTables.ts`,
-  `ta/database/migrations/1791000032130-CreateReminderAndRecognitionTables.ts`. Test: as T3; unique `openKey` refuses a second open assignment;
-  unique `sourceKey` makes a feature's reminder idempotent.
-- [ ] **T6**. Default role grants through the permission contributions' `defaultFor` (no migration); core
-  `packages/core/src/lib/database/migrations/1791000032300-AddCategoryToEmployeeNotification.ts`; `EmployeeNotificationTypeEnum` values 13 to 15
+  `ta/database/migrations/1791000032130-CreateReminderAndRecognitionTables.ts`. The reminder part (migration `032130`
+  with `reminder.entity.ts` and `recognition-entry.entity.ts`, and its spec) is a shared core piece and can be built and merged
+  first, on its own; the assignment part follows with this phase. Test:
+  `ta/reminders/reminder-and-recognition-migration.spec.ts` and `ta/assignments/assignment-migration.spec.ts`, each as
+  T3 (on SQLite, up twice; mapping under both ORMs); unique `openKey` refuses a second open assignment; unique
+  `sourceKey` makes a feature's reminder idempotent.
+- [ ] **T6**. Default role grants through the permission contributions' `defaultFor` (no migration); on the core
+  `employee_notification.category` column of T59 (migration
+  `packages/core/src/lib/database/migrations/1791000032300-AddCategoryToEmployeeNotification.ts`, built by T59); `EmployeeNotificationTypeEnum` values 13 to 15
   (`packages/contracts/src/lib/employee-notification.model.ts`) and their transform
   (`packages/core/src/lib/employee-notification/employee-notification-type-transform.ts`);
   additive `IEmployeeNotificationPreferences` and `ITeamNotificationDefaults` keys (`inAppByType`, `chatByType`,
@@ -84,12 +89,18 @@
 - [ ] **T59**. Core notification contract: `NOTIFICATION_DISPATCHER` token and `registerNotificationCategories` in
   `packages/core/src/lib/employee-notification/` (`notification-dispatcher.ts`, `notification-category.registry.ts`)
   with the core fallback to `EmployeeNotificationService`, and the
-  category column written on employee notifications; no dependency on this plugin or its flag. Files:
+  category column written on employee notifications: core migration `1791000032300-AddCategoryToEmployeeNotification`
+  (`employee_notification.category` varchar(64) null and the index `(tenantId, receiverEmployeeId, category, isRead)`,
+  guarded by `hasColumn` and `hasIndex` of the shared core helpers of `procurement` T4; no backfill); no dependency on
+  this plugin or its flag. Files:
   `packages/core/src/lib/employee-notification/notification-dispatcher.ts`,
   `packages/core/src/lib/employee-notification/notification-category.registry.ts`,
-  `packages/core/src/lib/employee-notification/employee-notification.entity.ts`. Test:
+  `packages/core/src/lib/employee-notification/employee-notification.entity.ts`,
+  `packages/core/src/lib/database/migrations/1791000032300-AddCategoryToEmployeeNotification.ts`. Test:
   `packages/core/src/lib/employee-notification/notification-dispatcher.spec.ts`: unbound, a dispatch writes one
-  employee notification as today; a declared category is listed without this plugin.
+  employee notification as today; a declared category is listed without this plugin;
+  `packages/core/src/lib/database/employee-notification-category-migration.spec.ts` on SQLite: up twice, existing rows
+  keep a null category and read unchanged.
 - [ ] **T60**. Generic reminders core: reminder service and routes `/api/reminders` (`ta/reminders/reminder.service.ts`,
   `ta/reminders/reminder.controller.ts`), the `REMINDERS` port (`schedule`,
   `cancel` by source key prefix) bound in `apps/api/src/plugin-composition.ts` (also as `WORKFLOW_REMINDERS`) and the

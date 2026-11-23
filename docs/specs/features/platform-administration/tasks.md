@@ -44,10 +44,17 @@
       `database/migrations/1791000029140-CreateAdminTranslationTables.ts`,
       `database/migrations/1791000029150-CreateAdminOpsTables.ts`,
       `packages/core/src/lib/database/migrations/1791000029900-CreateUsageCounter.ts`,
-      `packages/core/src/lib/stats/usage-counter.entity.ts`, `packages/core/src/lib/stats/usage-meter.service.ts`. Test:
-      migration specs; repository smoke specs; meter adds and reads per subject, metric and window; concurrent increments
-      of a tenant-wide counter (no organization, no subject) end in one row holding their sum on PostgreSQL, MySQL and
-      SQLite.
+      `packages/core/src/lib/stats/usage-counter.entity.ts`, `packages/core/src/lib/stats/usage-meter.service.ts`,
+      `packages/core/src/lib/stats/stats.module.ts`, `packages/contracts/src/lib/usage-meter.model.ts` (`IUsageMeter`,
+      the `USAGE_METER` token, metric and unit types), `packages/contracts/src/index.ts`. Shared core part, built first: the core
+      files (`1791000029900-CreateUsageCounter.ts` on the shared core helpers of `procurement` T4, `usage-counter.entity.ts`,
+      `usage-meter.service.ts`, `stats.module.ts`, `usage-meter.model.ts`) and their specs need nothing of the
+      `admin-console` plugin and can be built and merged first, on its own; the three plugin migrations follow T2 and T3.
+      Test: plugin migration specs; repository smoke specs;
+      `packages/core/src/lib/database/usage-counter-migration.spec.ts` (SQLite, up twice);
+      `packages/core/src/lib/stats/usage-meter.service.spec.ts`: meter adds and reads per subject, metric and window;
+      concurrent increments of a tenant-wide counter (no organization, no subject) end in one row holding their sum on
+      PostgreSQL, MySQL and SQLite.
 - [ ] **T6**. Default health thresholds seed; default grants through `defaultFor` on the permission contributions (no
       permission seed). Files: `packages/plugins/admin-console/src/lib/database/migrations/1791000029160-SeedAdminDefaultThresholds.ts`,
       `admin-console.permissions.ts`. Test: grants for the default roles on a new tenant and after the permission

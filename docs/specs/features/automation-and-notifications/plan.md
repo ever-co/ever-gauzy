@@ -170,7 +170,9 @@ engine loads):
 5. (no migration: role grants come from the permission contributions' `defaultFor`).
 6. Inbox: `1791000032200-CreateNotificationCategoryAndDestinationTables`, `1791000032210-CreateNotificationDigestTables`,
    `1791000032220-AddBundlingColumnsToInboxDelivery`.
-7. Core: `1791000032300-AddCategoryToEmployeeNotification` (nullable column, index; no backfill). The tenant script
+7. Core: `1791000032300-AddCategoryToEmployeeNotification` (nullable `category` column, index; no backfill), with
+   `hasColumn` and `hasIndex` guards of the shared core migration helpers (`procurement` T4); built by T59 with the
+   notification contract, built first, independent of this plugin. The tenant script
    runtime's `tenant_script_run` comes with `custom-fields-and-forms`.
 
 ### 3.5 Contracts

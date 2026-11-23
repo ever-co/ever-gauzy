@@ -30,10 +30,16 @@
 - [ ] **T2**. `PluginContributions.dataExchange` (`importProfiles`, `migrationToolkits`, `mergeParticipants`) in
   `packages/plugin/src/lib/plugin-contributions.ts` with its registry in `packages/core/src/lib/plugin-contributions/`
   (`plugin-data-exchange.registry.ts`)
-  and the helpers `registerImportProfiles`, `registerMigrationToolkits`, `registerMergeParticipants`; `core-record-import.ts`
-  next to the record type registry (creators and match keys for contacts, vendors, employees, candidates, projects,
-  tasks, items, expenses, incomes, tags, equipment over their bulk-create services and the core bulk contract where they
-  exist). Test: registry spec; creator spec per type (permission refused).
+  and the helpers `registerImportProfiles`, `registerMigrationToolkits`, `registerMergeParticipants` in
+  `packages/plugin/src/lib/data-exchange-contributions.ts`; `packages/core/src/lib/plugin-contributions/core-record-import.ts`
+  beside that registry, keyed by `BaseEntityEnum` (creators and match keys for contacts, vendors, employees, candidates,
+  projects, tasks, items, expenses, incomes, tags, equipment over their bulk-create services and the core bulk contract
+  where they exist); the record type registry of `custom-fields-and-forms` T2 reads these entries as the `import` part
+  of each core type once it exists. Built first, before `packages/core/src/lib/record-type/` exists: T2 uses only the
+  `data-exchange.model.ts` types of T1, and the `record-type.model.ts` parts of T1 follow `custom-fields-and-forms` T1.
+  Test: `packages/core/src/lib/plugin-contributions/plugin-data-exchange.registry.spec.ts` (duplicates refused, union
+  of two plugins, inert with no contribution); `packages/core/src/lib/plugin-contributions/core-record-import.spec.ts`
+  (creator per type, permission refused, match keys).
 - [ ] **T3** (parallel). `RECORD_DELETION_LISTENERS` hook in `packages/core/src/lib/core/entities/subscribers/`
   (`record-deletion-listeners.subscriber.ts`) after a
   registered type's soft removal. Test: unbound port changes nothing; bound listener receives type, ids and actor.

@@ -60,14 +60,29 @@
   flag. Files: `packages/core/src/lib/record-type/record-timeline-sources.ts`, `packages/core/src/lib/record-type/index.ts`.
   Test: `packages/core/src/lib/record-type/record-timeline-sources.spec.ts`: contract spec; two fake sources contribute
   without this plugin loaded.
-- [ ] **T51**. Knowledge-embedding seam in core: the docs knowledge pipeline (chunker, token counter, embedding service,
-  vector-store registry with the PostgreSQL vector and lexical providers, its queue) moved into core with re-exports in
-  the docs plugin, no behaviour change. Files: `packages/core/src/lib/knowledge-embedding/{markdown-chunker.ts,token-counter.ts,embedding.service.ts,vector-store.registry.ts,index.ts}`,
+- [ ] **T51**. Knowledge-embedding seam in core: the provider-independent parts of the docs knowledge pipeline (chunker,
+  token counter, embedding service, vector-store contract and registry) moved into core with re-exports in the docs
+  plugin, no behavior change. Core reads nothing of the docs plugin: the registry's pinned store and the embedding
+  batch size are options the docs plugin passes at boot (from `GAUZY_DOCS_VECTOR_STORE` and
+  `GAUZY_DOCS_EMBED_BATCH_SIZE`), and `EmbeddingService` takes model resolution, SDK loading and usage reports from an
+  `IEmbeddingModelSource` (`resolveEmbeddingModel`, `loadAiSdk`, `emitUsage`, as `DocsAiService` has them today), which
+  the docs plugin binds to `DocsAiService`; `DocsTransientError` and `DocsPermanentError` move with it and keep their
+  names. The PostgreSQL vector and lexical providers stay in the docs plugin (they query its `document_chunk` table)
+  and register with the core registry as today. The docs queue does not move: `knowledge/queue/` (`constants.ts`,
+  `docs-job.types.ts`, `docs-pipeline.service.ts`, `docs-pipeline.types.ts`, `docs-processing.worker.ts`,
+  `docs-queue.service.ts`, `docs-recovery.predicate.ts`, `docs-recovery.service.ts`) runs the document stages and stays
+  as it is. Files: `packages/core/src/lib/knowledge-embedding/{markdown-chunker.ts,token-counter.ts,embedding.service.ts,embedding-model-source.ts,vector-store.interface.ts,vector-store.registry.ts,errors.ts,index.ts}`,
+  `packages/core/src/index.ts`,
   `packages/plugins/docs/src/lib/knowledge/chunking/markdown-chunker.ts`,
   `packages/plugins/docs/src/lib/knowledge/chunking/token-counter.ts`,
   `packages/plugins/docs/src/lib/knowledge/embedding/embedding.service.ts`,
-  `packages/plugins/docs/src/lib/knowledge/vector-store/vector-store.registry.ts`. Test: the docs plugin's knowledge
-  specs pass unchanged against the re-exports.
+  `packages/plugins/docs/src/lib/knowledge/vector-store/vector-store.interface.ts`,
+  `packages/plugins/docs/src/lib/knowledge/vector-store/vector-store.registry.ts`,
+  `packages/plugins/docs/src/lib/knowledge/errors.ts`, `packages/plugins/docs/src/lib/knowledge/ai/docs-ai.service.ts`.
+  Test: `packages/core/src/lib/knowledge-embedding/knowledge-embedding.re-export.spec.ts`: each docs path exports the
+  identical core symbol, the core seam loads with no docs plugin, and the registry resolves a pinned and an unpinned
+  store; the docs plugin's knowledge specs (`markdown-chunker.spec.ts`, `vector-store.registry.spec.ts`, the queue and
+  retrieval specs) pass unchanged against the re-exports.
 - [ ] **T52**. Record links in core (FR-72): a core migration (record target columns and keys of `resource_link`,
   `hasColumn` guards, `url` nullable) and `ResourceLinkService.link` / `unlink` / `linksOf` in both directions with the
   viewer's read scope, safe from any feature that writes record links; the existing resource link routes and panels keep
@@ -267,7 +282,9 @@
   someone else). Files: `ui/live/record-presence.service.ts`, `ui/record-sidebar/record-sidebar.component.ts`. Test: audience limited to readers; nothing stored.
 - [ ] **T43**. Meaning-based search on the core knowledge-embedding seam of T51: migration
   `sp/database/migrations/1791000036200-AddSearchDocumentEmbedding.ts`; ranking in `sp/services/hybrid-ranking.ts`;
-  records embedded through the same seam and queue; hybrid ranking with
+  records embedded through the same seam, on a record-embedding job of the search plugin (the docs queue stays in the
+  docs plugin); the migration adds nullable columns to the existing core `search_document` table and creates no table;
+  hybrid ranking with
   document hits from `DOCS_KNOWLEDGE_SEARCH_SERVICE`, `FEATURE_SEMANTIC_SEARCH`. Test: a query sharing no word finds the document;
   unreadable hits dropped; off without a provider.
 - [ ] **T44**. Sharing with roles and the organization, audience pins, pins to the existing custom dashboards as core

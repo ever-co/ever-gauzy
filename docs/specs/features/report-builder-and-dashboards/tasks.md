@@ -31,9 +31,14 @@
   varchar(64) on `report_category` and on `report`, null for every existing row) and the filter in
   `packages/core/src/lib/reports/report.service.ts` (`findAllReports`, `getMenuItems`), `report-category.service.ts`
   and `report-organization.service.ts` (`bulkCreateOrganizationReport`), which leave out categories and rows whose
-  feature is off for the tenant (spec FR-90); no dependency on this plugin or its flag. Test: with every keyed feature
-  off the Reports page, menu and a new organization's report switches equal today's; a row keyed apart from its
-  category follows its own key; rows without a key are listed as today.
+  feature is off for the tenant (spec FR-90); no dependency on this plugin or its flag. The column is mapped on
+  `packages/core/src/lib/reports/report-category.entity.ts` and `report.entity.ts`, with `hasColumn` guards of the
+  shared core helpers (`procurement` T4); `report.resolver.ts` reads through the same service methods. Test:
+  `packages/core/src/lib/reports/report.service.feature-filter.spec.ts`: with every keyed feature off the Reports page,
+  menu (REST and GraphQL) and a new organization's report switches equal today's; a row keyed apart from its category
+  follows its own key; rows without a key are listed as today;
+  `packages/core/src/lib/database/report-category-feature-key-migration.spec.ts` on SQLite: up twice, existing rows keep
+  a null key.
   Migration timestamps: `1791000037900` to `1791000037989` (`packages/core`; `1791000037990` to `1791000037999` hold
   the plugin's seed of T5).
 
@@ -268,7 +273,7 @@
   `packages/contracts/src/lib/rule.model.ts` (`REPORT_SCHEDULE`). Test: below-threshold run skipped.
 - [ ] **T48**. Benchmarks: grouped runs over one million rows on PostgreSQL and MySQL, 12-card dashboard, 1,000,000-row
   export. Files: `rb/benchmarks/report-builder.bench.ts`. Test: report attached to the PR.
-- [ ] **T49**. Shared catalogue feature filter: built by T51 (Phase 1, `packages/core/src/lib/reports/`); its tests
+- [ ] **T49**. Shared catalogue feature filter: built by T51 (Phase 0, `packages/core/src/lib/reports/`); its tests
   are T51's.
 - [ ] **T50**. Provide the ports other features bind to (plan, **Consumer tokens answered**): `DOCUMENT_REPORTS`, `PRINT_REPORTS`, `REPORT_SCHEDULES`, `TAX_PACK_SCHEDULES`. Files: `apps/api/src/plugin-composition.ts`. Test: one contract test per token over the shape its consumer plan states; with this feature off each consumer keeps its stated fallback.
 

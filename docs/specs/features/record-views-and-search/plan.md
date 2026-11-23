@@ -38,9 +38,11 @@ loaded by `apps/api/src/plugins.ts` only when `GAUZY_RECORD_VIEWS_ENABLED` is ex
 - **Search** stays the `search` plugin: this plan adds index definitions in code beside the existing ones (comments with
   notes, linked emails, every registered type), hybrid ranking with meaning-based hits, and the Angular search page at the
   link its feature contribution already names (`/pages/search`). Embeddings use the docs plugin's knowledge pipeline
-  (markdown chunker, token counter, embedding service, vector-store registry with its PostgreSQL vector and lexical
-  providers), lifted into one core seam `packages/core/src/lib/knowledge-embedding/` that the docs plugin re-exports
-  and keeps using for `document_chunk`; records get one vector per `search_document` through the same seam and queue.
+  (markdown chunker, token counter, embedding service, vector-store contract and registry), lifted into one core seam
+  `packages/core/src/lib/knowledge-embedding/` that the docs plugin re-exports and keeps using for `document_chunk`;
+  its PostgreSQL vector and lexical providers stay in the docs plugin and register with the core registry, and its
+  `docs-processing` queue stays there too. Records get one vector per `search_document` through the same seam, on a
+  record-embedding job of the search plugin.
 - **UI**: the generic pieces of `task-views-ui` (filter tree, row groups, selection, bulk undo, timeline, shortcut
   registry) move to `packages/ui-core` with re-exports left in `task-views-ui`; the new layouts and the palette are
   embeddables every page can host; the palette is an additional launcher: the Quick Actions dialog keeps its shortcut,
@@ -82,7 +84,7 @@ flowchart LR
 | Share link | the sidebar's share link is the core `shared_entity` public link of the record | existing public links |
 | Export | CSV through the core export writer with `packages/utils/src/lib/spreadsheet-safe.ts` (cell injection guard); XLSX with `exceljs` and the same guard | one export path |
 | Search ranking | existing database provider; reciprocal rank fusion with the meaning-based hits | works with nothing configured |
-| Embeddings | the docs knowledge pipeline lifted into core `knowledge-embedding/` (vector-store registry with `pgvector.provider.ts` and `lexical.provider.ts`, `embedding.service.ts`, `markdown-chunker.ts`, `token-counter.ts`, its queue); the docs plugin re-exports it; records store one vector per `search_document` (additive `embedding` column, `vector(1536)` on PostgreSQL with the extension, else unused and keyword only) | one embedding pipeline and vector store |
+| Embeddings | the docs knowledge pipeline lifted into core `knowledge-embedding/` (`vector-store.interface.ts`, `vector-store.registry.ts`, `embedding.service.ts`, `markdown-chunker.ts`, `token-counter.ts`); the docs plugin re-exports it and keeps `pgvector.provider.ts`, `lexical.provider.ts` (over its `document_chunk`) and its `docs-processing` queue; records store one vector per `search_document` (additive `embedding` column on the existing core table, `vector(1536)` on PostgreSQL with the extension, else unused and keyword only) | one embedding pipeline and vector store |
 | Calendar | `@fullcalendar/*`, already a dependency of `ui-core` | no new calendar library |
 | Map | Leaflet, lazy-loaded; tiles from `GAUZY_MAP_TILE_URL` only | nothing external by default |
 | Board, tree, table | `@angular/cdk` drag and drop, tree and virtual scroll | existing dependency |
@@ -106,7 +108,7 @@ dialect; `viewId` always points at a `task_view` row.
 | existing `comment` + columns | `kind` varchar(8) default `COMMENT` (`NOTE`), `visibility` varchar(8) default `READERS` (`PRIVATE`), `isPinned` bool default false | + idx `(tenantId, entity, entityId, kind)` |
 | existing `employee_recent_visit` + columns | `visits` int default 1, `userId` uuid null | + unique `(tenantId, employeeId, entity, entityId)` for upserts (and `(tenantId, userId, entity, entityId)` where `employeeId` is null), created only where existing rows hold no duplicate (no row is deleted to make room; elsewhere the service's existing find-then-update path stays) |
 | existing `resource_link` + columns (the record link) | `targetEntity` varchar(50) (a `BaseEntityEnum` value or a registered record type key), `targetEntityId` uuid, `role` varchar(32) (`PRIMARY`, `RELATED` or a feature's role), `linkedBy` varchar(16) (`PERSON`, `SYSTEM`, `MATCH`, `INTAKE`); `url` becomes nullable (a row has a URL or a record target) | + unique (`entity`,`entityId`,`targetEntity`,`targetEntityId`) where `targetEntityId` is not null; idx (`tenantId`,`targetEntity`,`targetEntityId`) |
-| existing `search_document` + columns (search plugin) | `embedding` (vector(1536) with the PostgreSQL extension, else text null), `embeddingModel` varchar(64) null, `embeddingHash` varchar(64) null, `restrictedToUserId` uuid null (set only on a private note's document: its author, written on creation and set or cleared by the consumer on every comment update that changes `visibility`; every query adds `restrictedToUserId IS NULL OR restrictedToUserId = :caller` beside the record access, and, since that update follows the write, the same filter also excludes every comment document whose note is currently private to another author, through one `NOT EXISTS` sub-select on `comment` (`visibility = 'PRIVATE'` and `createdByUserId` not the caller), so the result page, the total and every facet count are computed without it, only the author finds it, and no changed total or facet bucket reveals it, also while the consumer lags) | vector index on PostgreSQL; idx `(tenantId, restrictedToUserId)` |
+| existing core `search_document` (`packages/core/src/lib/search/search-document.entity.ts`, created by core `1791000000080-CreateSearchTables`) + columns (migrations of the search plugin) | `embedding` (vector(1536) with the PostgreSQL extension, else text null), `embeddingModel` varchar(64) null, `embeddingHash` varchar(64) null, `restrictedToUserId` uuid null (set only on a private note's document: its author, written on creation and set or cleared by the consumer on every comment update that changes `visibility`; every query adds `restrictedToUserId IS NULL OR restrictedToUserId = :caller` beside the record access, and, since that update follows the write, the same filter also excludes every comment document whose note is currently private to another author, through one `NOT EXISTS` sub-select on `comment` (`visibility = 'PRIVATE'` and `createdByUserId` not the caller), so the result page, the total and every facet count are computed without it, only the author finds it, and no changed total or facet bucket reveals it, also while the consumer lags) | vector index on PostgreSQL; idx `(tenantId, restrictedToUserId)` |
 
 Not tables of this plugin, by design: views (`task_view`), personal pins (`favorite`), recents
 (`employee_recent_visit`), notes (`comment`), dashboard pins (`dashboard_widget`), per-type settings and audience
@@ -162,6 +164,11 @@ forward-only, both ORMs):
 6. Search plugin: `1791000036200-AddSearchDocumentEmbedding` (vector column and index only where the extension exists).
 7. Search plugin: `1791000036210-AddSearchDocumentRestrictedToUser` (nullable `restrictedToUserId` and its index; no
    backfill, existing documents stay unrestricted).
+
+Migrations 6 and 7 alter the existing core table `search_document` (created by core
+`1791000000080-CreateSearchTables`; the search plugin, which every installation loads, writes and reads it): they add
+nullable columns and indexes under `hasColumn` and `hasIndex` guards, change no existing column and create no table;
+`search_index_definition` is not changed. The knowledge-embedding lift (T51) has no migration.
 
 Index definitions for comments with notes, linked emails and registered types are code beside the existing
 `definitions/*.definition.ts`, indexed and searched only for tenants with `FEATURE_RECORD_VIEWS` on (other tenants'
@@ -281,7 +288,7 @@ already used by the docs extractor), both through `spreadsheet-safe`.
 | ------- | ---- | ------------ | ----------- |
 | core operation `RECORD_BULK` | bulk work (inline under 500, background above) | steps of 100 records through writers via `BulkExecutor`; lease, retry and cancel from the runtime; undo as a child operation within 10 minutes (`undoUntil` in the operation result) | per operation, step and record |
 | search consumer (existing, extended) | record and comment events | for tenants with the feature on, indexes registered types, comments with notes (private notes with `restrictedToUserId` = their author, set or cleared when a note's `visibility` changes), linked emails; other tenants are indexed as today | document key per entity and id |
-| core `knowledge-embedding` queue (lifted from the docs pipeline) | indexed text changed, `FEATURE_SEMANTIC_SEARCH` on | embeds changed `search_document` rows through the tenant's provider, rate-limited per tenant; backfill on enable | `embeddingHash` per document and model |
+| search plugin record-embedding job (on the core `knowledge-embedding` seam) | indexed text changed, `FEATURE_SEMANTIC_SEARCH` on | embeds changed `search_document` rows through the tenant's provider, rate-limited per tenant; backfill on enable | `embeddingHash` per document and model |
 
 Queues run in the API; schedules in the worker (`RecordViewsSchedulePlugin`); without a queue root the API runs them on
 in-process timers under a database lock (task automations layout).
