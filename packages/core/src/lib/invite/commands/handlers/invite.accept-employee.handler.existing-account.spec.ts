@@ -1,5 +1,6 @@
 import { RequestContext } from '../../../core/context';
 import { EndedEmployeeException } from '../../invited-employee';
+import { ExistingAccountSignInRequiredException } from '../../existing-account-sign-in-required';
 import { InviteAcceptEmployeeCommand } from '../invite.accept-employee.command';
 import { InviteAcceptEmployeeHandler } from './invite.accept-employee.handler';
 
@@ -181,7 +182,8 @@ describe('InviteAcceptEmployeeHandler with an address that already has an accoun
 		'joins with the %s account and a new employee, never a second account',
 		async (role) => {
 			const { accept, accounts, employees, teamMembers, authService, inviteService } = build({
-				accounts: [account('user-thomas', role)]
+				accounts: [account('user-thomas', role)],
+				sessionUserId: 'user-thomas'
 			});
 
 			await expect(accept()).resolves.toMatchObject({ id: 'user-thomas', role: { name: role } });
@@ -199,7 +201,8 @@ describe('InviteAcceptEmployeeHandler with an address that already has an accoun
 	it("reuses the employee the account already has in the invitation's organization", async () => {
 		const { accept, employeeRepository, teamMembers } = build({
 			accounts: [account('user-thomas', 'ADMIN')],
-			employees: [{ id: 'employee-thomas', userId: 'user-thomas', organizationId: ORGANIZATION }]
+			employees: [{ id: 'employee-thomas', userId: 'user-thomas', organizationId: ORGANIZATION }],
+			sessionUserId: 'user-thomas'
 		});
 
 		await accept();
@@ -211,7 +214,8 @@ describe('InviteAcceptEmployeeHandler with an address that already has an accoun
 	it("links an account employed only in another organization to the invitation's, with a new employee there", async () => {
 		const { accept, employees, userOrganizationService } = build({
 			accounts: [account('user-thomas', 'MANAGER')],
-			employees: [{ id: 'employee-elsewhere', userId: 'user-thomas', organizationId: OTHER_ORGANIZATION }]
+			employees: [{ id: 'employee-elsewhere', userId: 'user-thomas', organizationId: OTHER_ORGANIZATION }],
+			sessionUserId: 'user-thomas'
 		});
 
 		await accept();
@@ -229,7 +233,8 @@ describe('InviteAcceptEmployeeHandler with an address that already has an accoun
 
 	it('matches the address without regard to case', async () => {
 		const { accept, authService } = build({
-			accounts: [account('user-thomas', 'MANAGER', { email: 'Thomas.Walker@Example.com' })]
+			accounts: [account('user-thomas', 'MANAGER', { email: 'Thomas.Walker@Example.com' })],
+			sessionUserId: 'user-thomas'
 		});
 
 		await expect(accept()).resolves.toMatchObject({ id: 'user-thomas' });
@@ -239,7 +244,8 @@ describe('InviteAcceptEmployeeHandler with an address that already has an accoun
 
 	it('gives an Employee account without an employee one, never a second account', async () => {
 		const { accept, accounts, authService, teamMembers } = build({
-			accounts: [account('user-thomas', 'EMPLOYEE')]
+			accounts: [account('user-thomas', 'EMPLOYEE')],
+			sessionUserId: 'user-thomas'
 		});
 
 		await expect(accept()).resolves.toMatchObject({ id: 'user-thomas' });
@@ -249,19 +255,37 @@ describe('InviteAcceptEmployeeHandler with an address that already has an accoun
 		expect(teamMembers).toEqual([{ teamId: PLATFORM.id, employeeId: 'employee-of-user-thomas' }]);
 	});
 
-	it('accepts an Employee account that has an employee as before', async () => {
-		const { accept, authService, employeeRepository, userOrganizationService, teamMembers } = build({
+	it('accepts an Employee account that has an employee from its session, with that employee', async () => {
+		const { accept, authService, employeeRepository, teamMembers } = build({
 			accounts: [account('user-thomas', 'EMPLOYEE')],
-			employees: [{ id: 'employee-thomas', userId: 'user-thomas', organizationId: ORGANIZATION }]
+			employees: [{ id: 'employee-thomas', userId: 'user-thomas', organizationId: ORGANIZATION }],
+			sessionUserId: 'user-thomas'
 		});
 
 		await expect(accept()).resolves.toMatchObject({ id: 'user-thomas' });
 
 		expect(authService.register).not.toHaveBeenCalled();
 		expect(employeeRepository.save).not.toHaveBeenCalled();
-		expect(userOrganizationService.addUserToOrganization).not.toHaveBeenCalled();
 		expect(teamMembers).toEqual([{ teamId: PLATFORM.id, employeeId: 'employee-thomas' }]);
 	});
+
+	it.each(['EMPLOYEE', 'MANAGER', 'ADMIN'])(
+		'refuses, without its session, an address whose %s account can sign in, before anything is written',
+		async (role) => {
+			// The InviteAcceptHandler refuses this first; an account created after its check is refused here.
+			const { accept, authService, employeeRepository, inviteService, teamMembers, userOrganizationService } =
+				build({ accounts: [account('user-thomas', role)] });
+
+			await expect(accept()).rejects.toBeInstanceOf(ExistingAccountSignInRequiredException);
+
+			expect(authService.register).not.toHaveBeenCalled();
+			expect(employeeRepository.save).not.toHaveBeenCalled();
+			expect(userOrganizationService.addUserToOrganization).not.toHaveBeenCalled();
+			expect(teamMembers).toEqual([]);
+			expect(inviteService.releaseInvite).toHaveBeenCalledWith('invite-1');
+			expect(inviteService.update).not.toHaveBeenCalled();
+		}
+	);
 
 	it('registers an account and its employee for a new address, as before', async () => {
 		const { accept, authService, employees, userOrganizationService } = build();
@@ -284,17 +308,6 @@ describe('InviteAcceptEmployeeHandler with an address that already has an accoun
 		await expect(accept()).resolves.toMatchObject({ id: 'user-new' });
 
 		expect(authService.register).toHaveBeenCalledTimes(1);
-	});
-
-	it('joins with the newest of several accounts of the address', async () => {
-		const { accept } = build({
-			accounts: [
-				account('user-older', 'ADMIN', { createdAt: new Date('2026-11-01T00:00:00.000Z') }),
-				account('user-newer', 'MANAGER', { createdAt: new Date('2026-11-20T00:00:00.000Z') })
-			]
-		});
-
-		await expect(accept()).resolves.toMatchObject({ id: 'user-newer' });
 	});
 
 	it("joins with the session's own account when the address has several, never another one", async () => {
@@ -332,13 +345,14 @@ describe('InviteAcceptEmployeeHandler with an address that already has an accoun
 		expect(teamMembers).toEqual([{ teamId: PLATFORM.id, employeeId: 'employee-older' }]);
 	});
 
-	it('ignores a session that is not one of the address\'s accounts', async () => {
-		const { accept } = build({
+	it("refuses the session of another account than the address's", async () => {
+		const { accept, userOrganizationService } = build({
 			accounts: [account('user-thomas', 'MANAGER')],
 			sessionUserId: 'user-someone-else'
 		});
 
-		await expect(accept()).resolves.toMatchObject({ id: 'user-thomas' });
+		await expect(accept()).rejects.toBeInstanceOf(ExistingAccountSignInRequiredException);
+		expect(userOrganizationService.addUserToOrganization).not.toHaveBeenCalled();
 	});
 
 	it.each([{ isActive: false }, { isArchived: true }])(
@@ -387,7 +401,9 @@ describe('InviteAcceptEmployeeHandler with an address that already has an accoun
 		const { accept, teamMembers } = build({
 			accounts: [account('user-thomas', 'ADMIN')],
 			employees: [{ id: 'employee-thomas', userId: 'user-thomas', organizationId: ORGANIZATION }],
-			teams: [{ id: 'team-platform', name: 'Platform', members: [{ employeeId: 'employee-thomas', isActive: false }] }],
+			teams: [
+				{ id: 'team-platform', name: 'Platform', members: [{ employeeId: 'employee-thomas', isActive: false }] }
+			],
 			sessionUserId: 'user-thomas'
 		});
 

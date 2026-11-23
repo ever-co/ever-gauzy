@@ -234,11 +234,12 @@ describe('InviteAcceptUserHandler', () => {
 	it.each([{ isActive: false }, { isArchived: true }])(
 		"refuses an ended employee in the invitation's organization before anything is written (%o)",
 		async (ended) => {
-			const { accept, inviteService, employeeRepository, teamEmployeeRepository, userOrganizationService } = build({
-				teams: [PLATFORM],
-				existingAccount: true,
-				employees: [{ id: 'employee-ines', userId: 'user-ines', organizationId: ORGANIZATION, ...ended }]
-			});
+			const { accept, inviteService, employeeRepository, teamEmployeeRepository, userOrganizationService } =
+				build({
+					teams: [PLATFORM],
+					existingAccount: true,
+					employees: [{ id: 'employee-ines', userId: 'user-ines', organizationId: ORGANIZATION, ...ended }]
+				});
 
 			await expect(accept()).rejects.toBeInstanceOf(EndedEmployeeException);
 

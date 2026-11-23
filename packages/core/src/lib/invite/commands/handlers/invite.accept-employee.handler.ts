@@ -33,6 +33,7 @@ import { TypeOrmUserRepository } from '../../../user/repository/type-orm-user.re
 import { EmployeePlaceholderTransferService } from '../../../employee-placeholder/employee-placeholder-transfer.service';
 import { UserOrganizationService } from '../../../user-organization/user-organization.services';
 import { assertEmployeeNotEnded, createInvitedEmployee } from '../../invited-employee';
+import { ExistingAccountSignInRequiredException } from '../../existing-account-sign-in-required';
 import { RequestContext } from './../../../core/context';
 
 /**
@@ -142,6 +143,12 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 				if (sessionAccount) {
 					({ user, employee } = await this.joinWithAccount(invite, sessionAccount));
 				} else {
+					// Without that session, an account of the address that can sign in is never opened: the
+					// InviteAcceptHandler refuses such an acceptance first, and one created since is refused here, before
+					// anything is written.
+					if (await this.findActiveAccount(invite)) {
+						throw new ExistingAccountSignInRequiredException();
+					}
 					// Inner try/catch is find-or-register control flow, not error handling: a missing
 					// employee user is the signal to create one.
 					try {
@@ -151,7 +158,7 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 						// Implementation to find an employee by user ID
 						employee = await this.findEmployee(user.id);
 					} catch (error) {
-						({ user, employee } = await this.joinOrRegister(input, invite, languageCode));
+						({ user, employee } = await this.registerWithEmployee(input, invite, languageCode));
 					}
 				}
 			}
@@ -244,29 +251,23 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 	}
 
 	/**
-	 * The account and employee of an ordinary invitation whose address has no Employee account with an employee. The
-	 * address's account in the tenant joins, whatever its role, with its employee in the invitation's organization or a
-	 * new one there: one address keeps one account (ever-co/ever-gauzy#12143), and the account keeps its role. An
-	 * address without an active account registers one, as before.
+	 * The account and employee of an ordinary invitation whose address has no account that can sign in: a new account
+	 * and its employee, as before. An address that has one joins from that account's session instead (see
+	 * {@link joinWithAccount}): one address keeps one account (ever-co/ever-gauzy#12143).
 	 *
 	 * @param input The user registration input and app integration config.
 	 * @param invite The invitation being accepted.
 	 * @param languageCode The language code for localization.
-	 * @returns The account and its employee in the invitation's organization.
+	 * @returns The new account and its employee in the invitation's organization.
 	 */
-	private async joinOrRegister(
+	private async registerWithEmployee(
 		input: IUserRegistrationInput & Partial<IAppIntegrationConfig>,
 		invite: IInvite,
 		languageCode: LanguagesEnum
 	): Promise<{ user: IUser; employee: IEmployee }> {
-		const account = await this.findActiveAccount(invite);
-		if (!account) {
-			const user = await this.registerNewUser(input, invite, languageCode);
-			const employee = await this.createEmployee(invite, user);
-			return { user, employee };
-		}
-
-		return await this.joinWithAccount(invite, account);
+		const user = await this.registerNewUser(input, invite, languageCode);
+		const employee = await this.createEmployee(invite, user);
+		return { user, employee };
 	}
 
 	/**
