@@ -1,6 +1,11 @@
 import { BadRequestException } from '@nestjs/common';
 import { IInvoice } from '@gauzy/contracts';
-import { buildInvoiceDuplicate, MAX_DUPLICATE_PAYMENT_WINDOW_DAYS, paymentWindowDaysOf } from './invoice-duplicate';
+import {
+	buildInvoiceDuplicate,
+	MAX_DUPLICATE_PAYMENT_WINDOW_DAYS,
+	paymentWindowDaysOf,
+	withLineRelationKeys
+} from './invoice-duplicate';
 import { InvoiceService } from './invoice.service';
 
 const TENANT = 't-1';
@@ -105,14 +110,12 @@ describe('buildInvoiceDuplicate', () => {
 				applyTax: true,
 				applyDiscount: false,
 				employeeId: 'emp-1',
-				employee: { id: 'emp-1' },
-				projectId: 'proj-1',
-				project: { id: 'proj-1' }
+				projectId: 'proj-1'
 			}
 		]);
 	});
 
-	it("states each line's links as relations too, read from the mirror or from the relation", () => {
+	it("reads each line's links from the mirror or from the relation, and states the mirror", () => {
 		const copy = buildInvoiceDuplicate(
 			source({
 				invoiceItems: [
@@ -131,12 +134,29 @@ describe('buildInvoiceDuplicate', () => {
 			{ invoiceNumber: 42, today: TODAY }
 		);
 
-		expect(copy.invoiceItems[0]).toMatchObject({
-			taskId: 'task-1',
-			task: { id: 'task-1' },
-			productId: 'prod-1',
-			product: { id: 'prod-1' }
+		expect(copy.invoiceItems[0]).toMatchObject({ taskId: 'task-1', productId: 'prod-1' });
+		for (const relation of ['task', 'product', 'employee', 'project']) {
+			expect(copy.invoiceItems[0]).not.toHaveProperty(relation);
+		}
+	});
+
+	it("states each line's links and scope by their relation keys too, for MikroORM, leaving the copy it is given as it is", () => {
+		const copy = buildInvoiceDuplicate(source(), { invoiceNumber: 42, today: TODAY });
+
+		const stated = withLineRelationKeys(copy);
+
+		expect(stated.invoiceItems[0]).toMatchObject({
+			tenantId: TENANT,
+			tenant: TENANT,
+			organizationId: ORG,
+			organization: ORG,
+			employeeId: 'emp-1',
+			employee: 'emp-1',
+			projectId: 'proj-1',
+			project: 'proj-1'
 		});
+		expect(stated.invoiceItems[0]).not.toHaveProperty('task');
+		expect(stated.invoiceItems[0]).not.toHaveProperty('product');
 		expect(copy.invoiceItems[0]).not.toHaveProperty('employee');
 	});
 

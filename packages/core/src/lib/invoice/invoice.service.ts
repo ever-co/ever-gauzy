@@ -39,7 +39,7 @@ import { Readable } from 'stream';
 import { randomUUID } from 'node:crypto';
 import { PdfmakerService } from './pdfmaker.service';
 import { generateInvoicePdfDefinition, generateInvoicePaymentPdfDefinition } from './index';
-import { buildInvoiceDuplicate } from './invoice-duplicate';
+import { buildInvoiceDuplicate, withLineRelationKeys } from './invoice-duplicate';
 import { OrganizationService } from './../organization';
 import { TypeOrmInvoiceRepository } from './repository/type-orm-invoice.repository';
 import { MikroOrmInvoiceRepository } from './repository/mikro-orm-invoice.repository';
@@ -518,9 +518,11 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 		const source = await this.findOneByIdString(id, { relations: ['invoiceItems', 'tags'] });
 		for (let attempt = 1; ; attempt++) {
 			const invoiceNumber = await this.nextInvoiceNumber();
+			const copy = buildInvoiceDuplicate(source, { invoiceNumber, today: new Date() });
 			try {
+				// On MikroORM a nested line's links are written by their relations (see `INVOICE_LINE_LINKS`).
 				return await this.createWithBilledTime(
-					buildInvoiceDuplicate(source, { invoiceNumber, today: new Date() })
+					this.ormType === MultiORMEnum.MikroORM ? withLineRelationKeys(copy) : copy
 				);
 			} catch (error) {
 				// `create` answers a unique violation as any other failure, so the number is checked instead: another

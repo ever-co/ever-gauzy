@@ -373,8 +373,9 @@ describe('InvoiceItemResolver — the SDL declares the capabilities the REST rou
 		// The count route binds its query string to the store's own `where`, which is a shape no schema
 		// can state, so the field states no narrowing of its own.
 		expect(fieldArgs('Query', 'invoiceItemCount')).toEqual([]);
-		// The bulk write names the document once and carries the lines as its one input list.
-		expect(fieldArgs('Mutation', 'createInvoiceItemsInBulk')).toEqual(['invoiceId', 'input']);
+		// The bulk write names the document once, carries the lines as its one input list, and may carry the
+		// precondition the REST route takes in its query string (`expectedUpdatedAt`).
+		expect(fieldArgs('Mutation', 'createInvoiceItemsInBulk')).toEqual(['invoiceId', 'input', 'expectedUpdatedAt']);
 	});
 
 	it('declares the arguments each write route carries, so a field states what its resolver reads', () => {
@@ -386,7 +387,7 @@ describe('InvoiceItemResolver — the SDL declares the capabilities the REST rou
 			['deleteInvoiceItem', ['id']],
 			['softDeleteInvoiceItem', ['id']],
 			['recoverInvoiceItem', ['id']],
-			['createInvoiceItemsInBulk', ['invoiceId', 'input']]
+			['createInvoiceItemsInBulk', ['invoiceId', 'input', 'expectedUpdatedAt']]
 		];
 
 		for (const [field, args] of WRITE_ARGS) {
