@@ -1421,8 +1421,8 @@ export class CommerceCartService extends CartCrudService<CommerceCart> {
 	 * when it ran (`ANY_VERSION` read it afresh) and on nothing else, so a cart checked out after the scan was
 	 * expired or abandoned anyway, and a cart a recalculation had just given a new expiry was expired with it.
 	 * The statement is now `UPDATE … WHERE id AND version = <the version the scan read> AND <the sweep's own
-	 * predicate>`, on both ORMs: every cart write moves the version, and the status and due-time conditions
-	 * hold even for a writer that did not.
+	 * predicate> AND deletedAt IS NULL`, on both ORMs: every cart write moves the version, the status and
+	 * due-time conditions hold even for a writer that did not, and a cart archived since the scan is left alone.
 	 *
 	 * A cart the statement no longer matches is skipped, not failed: the version conflict (and the miss, for a
 	 * cart deleted since the scan) is answered here, so one moved cart does not abort the batch. Any other
@@ -1448,7 +1448,9 @@ export class CommerceCartService extends CartCrudService<CommerceCart> {
 					// The wildcard resolves to the version the scan read, not to the one the row holds by the time
 					// the statement runs — the same precondition the checkout claim takes (`claimForCheckout`).
 					readVersion: async () => parseEntityVersion(cart.version),
-					where: { ...this.writeScope, ...where },
+					// An UPDATE does not hide a soft-deleted row the way a read does, and archiving a cart does
+					// not move its version: without this, a cart archived after the scan would still be swept.
+					where: { ...this.writeScope, ...where, deletedAt: IsNull() },
 					patch
 				})
 			);

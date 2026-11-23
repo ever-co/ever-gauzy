@@ -1883,7 +1883,8 @@ describe('CommerceCartService — checkout', () => {
 					await checkout;
 				});
 				sweep = service.expireDueCarts();
-				await scan;
+				// A scan that fails never signals: its rejection surfaces here instead of leaving the test waiting.
+				await Promise.race([scan, sweep.then(() => undefined)]);
 
 				return verdict;
 			});
@@ -1955,6 +1956,43 @@ describe('CommerceCartService — checkout', () => {
 			afterScan(service, () => service.softDelete(gone.id));
 
 			expect(await service.expireDueCarts()).toEqual([other.id]);
+		});
+
+		it('predicates its write on the cart not being archived, since an UPDATE does not hide a soft-deleted row', async () => {
+			const fixture = cartFixture();
+			const { service } = fixture;
+			const cart = await service.create({ channelId: 'channel-1', currency: 'USD' });
+			rowOf(fixture, cart.id).expiresAt = justPast();
+			const update = jest.spyOn(service, 'update');
+
+			// This double's update skips soft-deleted rows the way a read does; a real UPDATE does not, and
+			// archiving a cart leaves its version as it was. So the statement itself must say `deletedAt IS NULL`.
+			expect(await service.expireDueCarts()).toEqual([cart.id]);
+			expect(update).toHaveBeenCalledWith(
+				expect.objectContaining({ id: cart.id, deletedAt: expect.objectContaining({ type: 'isNull' }) }),
+				expect.objectContaining({ status: CommerceCartStatus.EXPIRED })
+			);
+		});
+
+		it('skips a cart whose version alone moved after the scan, and expires the rest of the batch', async () => {
+			const fixture = cartFixture();
+			const { service } = fixture;
+			const moved = await service.create({ channelId: 'channel-1', currency: 'USD' });
+			const other = await service.create({ channelId: 'channel-1', currency: 'USD' });
+
+			for (const row of fixture.tables.commerce_cart) {
+				row.expiresAt = justPast();
+			}
+
+			// Still active and still due, so only the version the scan read can refuse the write.
+			afterScan(service, async () => {
+				const row = rowOf(fixture, moved.id);
+				row.version = Number(row.version) + 1;
+			});
+
+			expect(await service.expireDueCarts()).toEqual([other.id]);
+			expect(rowOf(fixture, moved.id).status).toBe(CommerceCartStatus.ACTIVE);
+			expect(rowOf(fixture, other.id).status).toBe(CommerceCartStatus.EXPIRED);
 		});
 
 		it('raises a failure that is not the cart moving on, for the queue to retry, and writes nothing', async () => {
