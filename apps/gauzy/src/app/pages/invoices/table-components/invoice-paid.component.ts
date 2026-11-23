@@ -18,12 +18,14 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
     //   * a 32px bar in a grid whose cells are 13px/20px on 6px padding made this
     //     one column set the row height for the whole table.
     //
-    // The caption now sits beside the meter, so it is plain body text on the card,
-    // and the bar is a 0.5rem meter on the shared small radius.
+    // The caption sits beside the meter as plain body text. The meter is a thin
+    // fixed-width track, so every row's bar starts and ends at the same place
+    // and the figures line up; its fill stops at 100 % while the caption keeps
+    // the real figure (an overpaid invoice reads e.g. "317.6% Paid").
     template: `
 		<div class="progress-bar-container">
 			<div class="progress-bar">
-				<span class="progress-bar-inner" [style.width]="paidAmountPercentage + '%'"></span>
+				<span class="progress-bar-inner" [style.width]="barWidth + '%'"></span>
 			</div>
 			<span class="paid-percent">
 				{{ paidAmountPercentage }}%
@@ -33,9 +35,9 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 	`,
     styles: [
         '.progress-bar-container {display: flex; align-items: center; gap: 0.5rem;}',
-        '.progress-bar {background-color: var(--gauzy-sidebar-background-3, rgba(126, 126, 143, 0.1)); border-radius: var(--gauzy-radius-sm, 0.375rem); position: relative; height: 0.5rem; flex: 1 1 auto; min-width: 3rem; overflow: hidden;}',
+        '.progress-bar {background-color: var(--gauzy-sidebar-background-3, rgba(126, 126, 143, 0.15)); border-radius: 0.125rem; height: 0.25rem; flex: 0 0 3.5rem; overflow: hidden;}',
         '.progress-bar-inner {background-color: var(--color-success-default, rgba(0, 214, 143, 1)); display: block; height: 100%; border-radius: inherit;}',
-        '.paid-percent {color: var(--gauzy-text-color-1); font-weight: 600; white-space: nowrap;}'
+        '.paid-percent {color: var(--gauzy-text-color-2, inherit); font-weight: 400; font-variant-numeric: tabular-nums; white-space: nowrap;}'
     ],
     changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
@@ -43,6 +45,11 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 export class InvoicePaidComponent extends TranslationBaseComponent implements OnInit {
 	public paidAmountPercentage: number;
 	public totalPaid = 0;
+
+	/** The meter's fill, capped at a full bar. */
+	get barWidth(): number {
+		return Math.min(Math.max(this.paidAmountPercentage || 0, 0), 100);
+	}
 
 	@Input() rowData: any;
 
