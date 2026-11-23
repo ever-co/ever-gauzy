@@ -143,9 +143,10 @@ import runs with another source or mode, so per-record results and undo have one
 - `packages/plugin/src/lib/plugin-contributions.ts`: `PluginContributions.dataExchange` (`importProfiles`,
   `migrationToolkits`, `mergeParticipants`), unioned by a registry in `packages/core/src/lib/plugin-contributions/`
   (inert without the plugin); helpers `registerImportProfiles`, `registerMigrationToolkits`,
-  `registerMergeParticipants`; `core-record-import.ts` next to the record type registry with creators and match keys for
-  contacts, vendors, employees, candidates, projects, tasks, items, expenses, incomes, tags and equipment (bulk-create
-  services and the core bulk contract where they exist).
+  `registerMergeParticipants`; `packages/core/src/lib/plugin-contributions/core-record-import.ts` beside that registry,
+  keyed by `BaseEntityEnum`, with creators and match keys for contacts, vendors, employees, candidates, projects,
+  tasks, items, expenses, incomes, tags and equipment (bulk-create services and the core bulk contract where they
+  exist); the record type registry reads them as the `import` part of each core type.
 - `packages/core/src/lib/export-import/import/`: the Docs import's tenant storage and limit helpers moved here.
 - `packages/core/src/lib/core/entities/subscribers/`: the soft-delete subscriber hook calls an optional
   `RECORD_DELETION_LISTENERS` port (bound to the recycle bin) after a registered type's soft removal; unbound, nothing

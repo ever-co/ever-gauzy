@@ -70,8 +70,12 @@
 - [ ] **T53**. Core settler registry `ra/request-approval-settler.registry.ts` (`registerRequestApprovalSettler(type,
   settle)`, one settler per type), called by `RequestApprovalStatusHandler.settleLinkedDocument`
   (`ra/commands/handlers/request-approval.status.handler.ts`) on the answer's transaction for types other than time off
-  and equipment sharing, and by `settleByWorkflow` (`ra/request-approval.service.ts`). Lands in core ahead of the first
-  plugin that files its own request type, with no dependency on this plugin or its flag (FR-68). Test: existing
+  and equipment sharing, and by `settleByWorkflow` (`ra/request-approval.service.ts`). Built after T2, which creates
+  `settleByWorkflow`. T53 leaves `ra/linked-document-decision.gate.ts` as it is: the gates of time off and equipment
+  sharing stay, and each consumer that files a new request type adds that type's gate there in its own task. Lands in core ahead of
+  the first plugin that files its own request type, with no dependency on this plugin or its flag (FR-68). Files:
+  `ra/request-approval-settler.registry.ts`, `ra/commands/handlers/request-approval.status.handler.ts`,
+  `ra/request-approval.service.ts`, `packages/core/src/index.ts` (exports `registerRequestApprovalSettler`). Test: existing
   request-approval suites green; `ra/request-approval-settler.registry.spec.ts`: a registered test type is settled once
   whether decided on the Approvals page, by a classic route or by a completed instance; a refused decision rolls back
   with its settler; a duplicate registration fails at boot.

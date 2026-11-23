@@ -70,10 +70,17 @@
       `<record_type>.created` / `.updated` / `.deleted` for registered types without events of their own
       (`employee.created` / `.updated` and `organization_team_employee.created` / `.deleted` and
       `organization_project_employee.created` / `.deleted` among them), appended when the hub policy is bound for the
-      tenant or an outbox consumer is registered for the type; time logs and timesheets keep their own `time_tracking.*`
-      events (`project-costing-and-billing` T61); no dependency on this plugin (FR-14). Files:
+      tenant or an outbox consumer is registered for the type; time logs keep the `time_log.*` facts core appends today
+      (`TimeLogFactsService`) and timesheets their `time_tracking.timesheet.status_changed` (`project-costing-and-billing`
+      T61), so the subscriber leaves both out; no dependency on this plugin (FR-14). Built first, before the
+      record type registry exists: the subscriber covers its own list of core entities in `record-change-types.ts`
+      (`Employee` as `employee`, `OrganizationTeamEmployee` as `organization_team_employee`, `OrganizationProjectEmployee`
+      as `organization_project_employee`, and the time-off request, expense and candidate entities under their table
+      names), and once `custom-fields-and-forms` T2 has built `RecordTypeRegistry`, the registered types that declare no
+      events of their own join that list. Files:
       `packages/core/src/lib/event-outbox/record-change.subscriber.ts`,
-      `packages/core/src/lib/event-outbox/record-change-events.policy.ts`, `packages/core/src/lib/event-outbox/index.ts`.
+      `packages/core/src/lib/event-outbox/record-change-events.policy.ts`,
+      `packages/core/src/lib/event-outbox/record-change-types.ts`, `packages/core/src/lib/event-outbox/index.ts`.
       Test: `packages/core/src/lib/event-outbox/record-change.subscriber.spec.ts`: employee, team membership, time-off,
       expense and candidate changes append one event each; no event when the policy is unbound and no consumer is
       registered; a time log change appends no record-change event.

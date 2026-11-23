@@ -101,14 +101,21 @@
       factory reset; no seed migration. Files: `PC/project-costing.permissions.ts`, `PC/project-costing.features.ts`,
       `PC/project-costing.plugin.ts`. Test: `PC/project-costing.permissions.spec.ts` (grants per role from the
       contributions, only while the feature is on; export lists the tables).
-- [ ] **T61**. Core outbox events: append `time_tracking.time_log.changed` in
-      `packages/core/src/lib/time-tracking/time-log/commands/handlers/*` and the timer stop path, and
-      `time_tracking.timesheet.status_changed` in the timesheet submit and status handlers, only when a consumer is
-      registered. Files: `TT/time-log/commands/handlers/`, `TT/timer/timer.service.ts`,
-      `TT/timesheet/commands/handlers/timesheet-submit.handler.ts`,
-      `TT/timesheet/commands/handlers/timesheet-update-status.handler.ts`, `TT/time-tracking-events.ts`. Test:
-      `TT/time-tracking-events.dual-orm.spec.ts` (one case per write path; no outbox row without a consumer); existing
-      time-log suites green.
+- [ ] **T61**. Core outbox events of time tracking, on the facts core appends today: every time-log write appends
+      `time_log.started`, `.stopped`, `.created`, `.updated` or `.deleted` through `TimeLogFactsService`
+      (`TT/time-log/time-log-facts.service.ts`, called by the create, update, delete, delete-span and schedule-entries
+      handlers in `TT/time-log/commands/handlers/`, which the timer start and stop path of `TT/timer/timer.service.ts`
+      goes through), one fact per entry with its ids, employee, project, task, client, times and billable flag (in the
+      writing transaction; under MikroORM and on SQLite right after it). Consumers of time-log changes subscribe to
+      those facts, and T61 adds no second time-log event. It adds only what is missing:
+      `time_tracking.timesheet.status_changed` in the timesheet submit and status handlers, appended only when a
+      consumer is registered. Files: `TT/timesheet/commands/handlers/timesheet-submit.handler.ts`,
+      `TT/timesheet/commands/handlers/timesheet-update-status.handler.ts`, `TT/time-tracking-events.ts` (the timesheet
+      event name; the `time_log.*` names stay in `time-log-facts.service.ts`). Test:
+      `TT/time-tracking-events.dual-orm.spec.ts` (a submit and each status change append one
+      `time_tracking.timesheet.status_changed` under both ORMs, none without a consumer; a registered consumer receives
+      the existing `time_log.*` facts of a create, a timer stop, an edit and a delete, one per entry); existing time-log
+      suites and `TT/time-log/time-log-facts.service.spec.ts` green.
 - [ ] **T62**. Core optional ports `TIME_LOG_WRITE_GUARD`, `TASK_WRITE_GUARD`, `TIMESHEET_APPROVAL_ROUTER` called from
       `time-log.service.ts`, `timer.service.ts`, `task.service.ts`, `task-linked-issue.service.ts` and the timesheet
       status handler. Files: `TT/time-log/time-log.service.ts`, `TT/timer/timer.service.ts`,
@@ -119,7 +126,7 @@
 
 ## Phase 2 — Services, endpoints, events
 
-- [ ] **T8**. Core outbox events of time tracking: built by T61 (Phase 1, `packages/core/src/lib/time-tracking/`); its tests are T61's.
+- [ ] **T8**. Core outbox events of time tracking: built by T61 (Phase 1, `packages/core/src/lib/time-tracking/`: the existing `time_log.*` facts and `time_tracking.timesheet.status_changed`); its tests are T61's.
 - [ ] **T9**. Core optional ports of time tracking and tasks: built by T62 (Phase 1, `packages/core/src/lib/time-tracking/`); its tests are T62's.
 - [ ] **T10**. Settings over the settings store (`projectCosting.*` keys, organization level), project types and
       profiles services and controllers (`settings/`, `project-types/`, `profiles/`), project code from the series

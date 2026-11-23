@@ -172,8 +172,8 @@
 
 - [ ] **T31**. `packages/plugins/lead-capture-ui` scaffold, routes under `/pages/crm/capture`, menu entries, `LEAD_CAPTURE.*`
   keys in every locale. Test: rendering tests; menu hidden on `404`.
-- [ ] **T32**. Form builder on `ngx-question-set-editor` of `custom-fields-and-forms` (its T63; questions in the
-  question-set format) with the form's additions (sections and columns, field mapping, rules, hidden values, consent boxes,
+- [ ] **T32**. Form builder on `ngx-question-set-editor` of `custom-fields-and-forms` (its T70, over the library of its
+  T63; questions in the question-set format) with the form's additions (sections and columns, field mapping, rules, hidden values, consent boxes,
   languages, end step, preview at phone and desktop widths, publish dialog with blockers, share and embed, versions).
   Files: `packages/plugins/lead-capture-ui/src/lib/components/form-builder/lead-form-builder.component.ts`,
   `components/form-builder/lead-form-field-panel.component.ts`,

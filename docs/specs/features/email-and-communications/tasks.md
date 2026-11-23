@@ -46,10 +46,22 @@
       Test: SQLite run, rerun no-op, uniqueness assertions (`idempotencyKey`, `trackingToken`, suppression key, event key).
 - [ ] **T5** (parallel). Core migration `core/database/migrations/1791000033200-AddCommunicationColumnsToEmailTemplateAndHistory.ts`
       and entity columns on `core/email-template/email-template.entity.ts` and
-      `core/email-history/email-history.entity.ts`; Inbox migration
-      `inbox/database/migrations/1791000033400-AddChannelsAndMobileDevicesToInbox.ts` (`inbox_provider_account.channels` with a `hasColumn` guard, mobile
-      device columns on `inbox_push_subscription`). Test: system templates read unchanged; existing template and Inbox
-      specs pass.
+      `core/email-history/email-history.entity.ts`; Inbox migrations, each with `hasColumn` of the Inbox's own
+      `inbox/database/migration-helpers.ts`, in the list that creates their table:
+      `inbox/email/database/migrations/1791000033400-AddChannelsToInboxProviderAccount.ts` (`inbox_provider_account.channels`
+      varchar(64) default `EMAIL`, listed in `inbox/email/database/inbox-email-migrations.ts` beside
+      `CreateInboxProviderAccountTable`, so the column is added whenever the Inbox email switch creates the table) with
+      the column on `inbox/email/entities/inbox-provider-account.entity.ts`, and
+      `inbox/database/migrations/1791000033410-AddMobileDevicesToInboxPushSubscription.ts` (mobile device columns, listed
+      in `inbox/database/inbox-migrations.ts`) with the columns on `inbox/delivery/push/inbox-push-subscription.entity.ts`.
+      Shared core part, built first: `1791000033400-AddChannelsToInboxProviderAccount.ts` with its entity column and its spec needs
+      nothing else of this task and can be built and merged first, on its own; the core migration `1791000033200` and
+      the push columns follow with this phase. Test: system templates read unchanged; existing template and Inbox
+      specs pass; `inbox/email/database/inbox-provider-account-channels.migration.spec.ts` on SQLite: up twice is a
+      no-op, the `hasColumn` guard skips a column already there, existing accounts read `EMAIL`, and on a fresh database
+      with the Inbox email migrations pending the column follows `CreateInboxProviderAccountTable`;
+      `inbox/database/inbox-push-subscription-mobile-devices.migration.spec.ts`: existing web subscriptions read
+      `WEB`.
 - [ ] **T6** (parallel). Default grants through `defaultFor` on the permission contributions; no seed migration and no
       feature row insert. Files: `com/communications.permissions.ts`. Test: default-role snapshot on a new tenant and after the permission reload.
 

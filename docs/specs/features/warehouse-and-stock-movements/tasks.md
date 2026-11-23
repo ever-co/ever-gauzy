@@ -31,7 +31,8 @@
   `stock-reorder.model.ts`, `stock-scan.model.ts`, `warehouse-task.model.ts`, `offline-sync.model.ts`; optional tree,
   purpose and owner fields on `IWarehouse` (`packages/contracts/src/lib/product.model.ts`); exports in
   `packages/contracts/src/index.ts`. Test: contracts build and the type-only spec
-  `packages/contracts/src/lib/stock-document.model.spec.ts`.
+  `packages/contracts/src/lib/stock-document.model.spec.ts`. Shared core part, built first: `offline-sync.model.ts` with its export
+  needs none of the other contracts and can be built and merged first, on its own, before T59 and T61.
 - [ ] **T2**. Feature wiring: `FeatureFlagGuard` + `@FeatureFlag(FEATURE_INVENTORY)` on every controller under
   `packages/plugins/inventory/src/lib/**/**.controller.ts` and resolvers; menu entries read the code; data step
   `EnableInventoryForActiveTenants` switching the code on for tenants holding inventory rows. Files: the controllers

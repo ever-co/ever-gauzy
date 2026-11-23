@@ -197,7 +197,7 @@ Errors: `MARKETING_ALREADY_SENT` (409), `MARKETING_NOT_APPROVED`, `MARKETING_SCH
 | `marketing.engagement.opened` / `.clicked` / `.unsubscribed` / `.converted` (correlation `contact:<id>:message:<id>`) | re-published from the communications tracking events with the campaign and message, and conversions | automation waits and triggers, party stats, attribution, timeline |
 | `marketing.enrolment.started` / `.ended` | sequences | automation trigger, timeline |
 | `marketing.experiment.decided` | experiment | message dispatch of the winner, author notice |
-| In: `communications.message.delivered` / `.bounced` / `.failed` / `.complained` and its open, click and unsubscribe tracking events, `communications.suppression.added`, `communications.consent.*`, `crm.lead.created`, `crm.deal.won`, `order.quotation.accepted`, `order.confirmed`, `payments.allocation.created` (an invoice paid), `time_tracking.time_log.changed` | as named | send states, list cleaning, conversions, attribution, time cost |
+| In: `communications.message.delivered` / `.bounced` / `.failed` / `.complained` and its open, click and unsubscribe tracking events, `communications.suppression.added`, `communications.consent.*`, `crm.lead.created`, `crm.deal.won`, `order.quotation.accepted`, `order.confirmed`, `payments.allocation.created` (an invoice paid), the core time-entry facts `time_log.created` / `.stopped` / `.updated` / `.deleted` | as named | send states, list cleaning, conversions, attribution, time cost |
 
 Realtime through `RealtimeHintsService.appendHint` on `marketing:message:<id>` and `marketing:campaign:<id>` with
 counters every 2 s while sending; the person's timeline through a `RECORD_TIMELINE_SOURCES` entry; author notices

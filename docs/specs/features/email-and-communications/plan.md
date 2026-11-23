@@ -170,8 +170,11 @@ branches; idempotent and forward-only; registered for both ORMs; listed only whe
 4. `1791000033130-CreateCommunicationHealthTables` — identity health, thread summary.
 5. Core `1791000033200-AddCommunicationColumnsToEmailTemplateAndHistory` — nullable columns and indexes; no backfill.
 6. `email-provider-imap`: `1791000033300-CreateImapFolderState`.
-7. Inbox `1791000033400-AddChannelsAndMobileDevicesToInbox` — the `inbox_provider_account` and `inbox_push_subscription`
-   columns of §3.2; listed with the Inbox's own migrations.
+7. Inbox, each listed with the Inbox migrations that create its table and guarded by `hasColumn` of the Inbox's own
+   helpers: `1791000033400-AddChannelsToInboxProviderAccount` — `inbox_provider_account.channels` of §3.2, in the
+   Inbox email list (`inbox-email-migrations.ts`, which creates that table under the Inbox email switch); a shared core
+   piece, built and merged first, on its own; `1791000033410-AddMobileDevicesToInboxPushSubscription` — the
+   `inbox_push_subscription` columns of §3.2, in the Inbox list (`inbox-migrations.ts`).
 
 The feature, the permissions and their default grants are plugin contributions; no migration is needed for them.
 

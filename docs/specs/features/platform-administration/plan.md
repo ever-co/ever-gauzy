@@ -150,9 +150,10 @@ export class AdminErrorGroup extends TenantOrganizationBaseEntity implements IAd
   `1791000029150-CreateAdminOpsTables` (profiler, snapshots, findings, demo capture),
   `1791000029160-SeedAdminDefaultThresholds`.
 - Core (`packages/core/src/lib/database/migrations/`): `1791000029900-CreateUsageCounter` (the `usage_counter` table
-  of the usage meter in `packages/core/src/lib/stats/`). Permissions, their default grants, retention defaults and
-  settings are contributions, not seeds.
-- Additive, idempotent, per dialect with the plugin helpers; partial unique indexes become full unique indexes over a
+  of the usage meter in `packages/core/src/lib/stats/`; a shared core piece, built and merged before the plugin migrations,
+  with `usage-meter.model.ts`). Permissions, their default grants, retention defaults and settings are contributions,
+  not seeds.
+- Additive, idempotent, per dialect with the shared core migration helpers (`procurement` T4); partial unique indexes become full unique indexes over a
   generated "live" column on MySQL; SQLite tables created whole. No backfill; `admin_job_summary` is built by the first
   sweep from the existing ledger.
 
