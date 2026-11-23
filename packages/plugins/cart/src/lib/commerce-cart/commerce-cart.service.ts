@@ -24,6 +24,8 @@ import {
 } from '@gauzy/contracts';
 import {
 	AdjustmentService,
+	ApiErrorCode,
+	ApiException,
 	IVersionExpectation,
 	Money,
 	RequestContext,
@@ -108,9 +110,11 @@ const CART_PROMOTION_ADJUSTMENT_KEY = 'cartPromotionId';
  *
  * A write that arrives from a route is predicated on the version its caller stated, so a change based
  * on a cart that has moved on is refused rather than applied. A write that arrives from anywhere else
- * — the checkout handler's own follow-up, the merge of a second cart, the expiry pass — has no caller
- * to condition it, and is predicated on the version the row holds when the statement runs. Either way
- * the comparison and the increment are one statement, so no write here is a last-writer-wins write.
+ * — the checkout handler's own follow-up, the merge of a second cart — has no caller to condition it,
+ * and is predicated on the version the row holds when the statement runs. Either way the comparison and
+ * the increment are one statement, so no write here is a last-writer-wins write. The expiry and
+ * abandonment sweeps are the exception: they decide from a scan, so their writes are predicated on the
+ * version the scan read (`sweepCart`).
  */
 const ANY_VERSION: IVersionExpectation = { wildcard: true, versions: [] };
 
@@ -1307,16 +1311,21 @@ export class CommerceCartService extends CartCrudService<CommerceCart> {
 	 *
 	 * The pass runs on a schedule, outside any request. Under DB_ORM=mikro-orm the carts are read and written
 	 * through MikroORM, which refuses its global EntityManager there: the scan, and each cart's write, then
-	 * run in a MikroORM request context of their own, so each write reads its cart afresh, as under TypeORM.
+	 * run in a MikroORM request context of their own.
+	 *
+	 * Each write is predicated on what the scan read (`sweepCart`): the cart's version, a status the sweep
+	 * expires and an expiry instant that has passed. A cart a checkout completed, or a buyer touched, after
+	 * the scan is skipped rather than expired underneath them, and the pass goes on to the next cart.
 	 *
 	 * @param limit The maximum number of carts to process in one run.
-	 * @returns The ids of the carts that were expired.
+	 * @returns The ids of the carts that were expired. A skipped cart is not among them.
 	 */
 	public async expireDueCarts(limit = 500): Promise<ID[]> {
+		const statuses = [CommerceCartStatus.ACTIVE, CommerceCartStatus.ABANDONED];
 		const due = (await runInMikroOrmContext(this.orm, () =>
 			this.findAll({
 				where: {
-					status: In([CommerceCartStatus.ACTIVE, CommerceCartStatus.ABANDONED]),
+					status: In(statuses),
 					expiresAt: LessThanOrEqual(new Date())
 				},
 				order: { expiresAt: 'ASC' },
@@ -1338,18 +1347,15 @@ export class CommerceCartService extends CartCrudService<CommerceCart> {
 			}
 
 			if (cart.expiresAt && new Date(cart.expiresAt).getTime() <= now) {
-				// The pass runs on a schedule and has no caller to condition its write, so the write is
-				// predicated on the version the row holds; a cart a buyer touched since the scan began is
-				// therefore refused rather than expired underneath them.
-				await runInMikroOrmContext(this.orm, () =>
-					commitVersionedUpdate<CommerceCart>(this, {
-						id: cart.id,
-						expectation: ANY_VERSION,
-						where: this.writeScope,
-						patch: { status: CommerceCartStatus.EXPIRED }
-					})
+				const written = await this.sweepCart(
+					cart,
+					{ status: In(statuses), expiresAt: LessThanOrEqual(new Date(now)) },
+					{ status: CommerceCartStatus.EXPIRED }
 				);
-				expired.push(cart.id);
+
+				if (written) {
+					expired.push(cart.id);
+				}
 			}
 		}
 
@@ -1367,11 +1373,12 @@ export class CommerceCartService extends CartCrudService<CommerceCart> {
 	 * runs out.
 	 *
 	 * Like {@link expireDueCarts}, the scan and each cart's write run in a MikroORM request context of their own
-	 * under DB_ORM=mikro-orm.
+	 * under DB_ORM=mikro-orm, and each write is predicated on what the scan read: the cart's version, `ACTIVE`
+	 * and a last activity before the cutoff. A cart checked out or touched after the scan is skipped.
 	 *
 	 * @param hours How long a cart may sit untouched; the setting's documented default when omitted.
 	 * @param limit The maximum number of carts to process in one run.
-	 * @returns The ids of the carts that were abandoned.
+	 * @returns The ids of the carts that were abandoned. A skipped cart is not among them.
 	 */
 	public async abandonDueCarts(hours = DEFAULT_ABANDON_AFTER_HOURS, limit = 500): Promise<ID[]> {
 		const cutoff = new Date(Date.now() - Math.max(1, hours) * 60 * 60 * 1000);
@@ -1392,18 +1399,80 @@ export class CommerceCartService extends CartCrudService<CommerceCart> {
 				break;
 			}
 
+			// A cart a checkout holds is being turned into an order right now (R3-10), as in the expiry sweep. The
+			// claim moved its version but not its last activity, so a scan after the claim would abandon it, and the
+			// checkout would then complete a cart marked abandoned.
+			if (this.holdsLiveCheckoutClaim(cart)) {
+				continue;
+			}
+
+			const written = await this.sweepCart(
+				cart,
+				{ status: CommerceCartStatus.ACTIVE, lastActivityAt: LessThanOrEqual(cutoff) },
+				{ status: CommerceCartStatus.ABANDONED, abandonedAt: new Date() }
+			);
+
+			if (written) {
+				abandoned.push(cart.id);
+			}
+		}
+
+		return abandoned;
+	}
+
+	/**
+	 * Writes one cart a sweep scanned, unless the cart moved on since the scan.
+	 *
+	 * The sweeps decide from a scan and write each cart in a statement of its own, so a checkout can complete,
+	 * or a buyer can touch the cart, in between. The write used to be predicated on the version the row held
+	 * when it ran (`ANY_VERSION` read it afresh) and on nothing else, so a cart checked out after the scan was
+	 * expired or abandoned anyway, and a cart a recalculation had just given a new expiry was expired with it.
+	 * The statement is now `UPDATE … WHERE id AND version = <the version the scan read> AND <the sweep's own
+	 * predicate> AND deletedAt IS NULL`, on both ORMs: every cart write moves the version, the status and
+	 * due-time conditions hold even for a writer that did not, and a cart archived since the scan is left alone.
+	 *
+	 * A cart the statement no longer matches is skipped, not failed: the version conflict (and the miss, for a
+	 * cart deleted since the scan) is answered here, so one moved cart does not abort the batch. Any other
+	 * error is raised, as before, for the queue's retry to see.
+	 *
+	 * The write runs in a MikroORM request context of its own under DB_ORM=mikro-orm, as the scan does.
+	 *
+	 * @param cart The cart as the scan read it.
+	 * @param where The sweep's own predicate, which the cart must still satisfy when the statement runs.
+	 * @param patch The columns the sweep writes.
+	 * @returns True when the cart was written; false when it moved on since the scan and was skipped.
+	 */
+	private async sweepCart(
+		cart: CommerceCart,
+		where: Record<string, unknown>,
+		patch: Record<string, unknown>
+	): Promise<boolean> {
+		try {
 			await runInMikroOrmContext(this.orm, () =>
 				commitVersionedUpdate<CommerceCart>(this, {
 					id: cart.id,
 					expectation: ANY_VERSION,
-					where: this.writeScope,
-					patch: { status: CommerceCartStatus.ABANDONED, abandonedAt: new Date() }
+					// The wildcard resolves to the version the scan read, not to the one the row holds by the time
+					// the statement runs — the same precondition the checkout claim takes (`claimForCheckout`).
+					readVersion: async () => parseEntityVersion(cart.version),
+					// An UPDATE does not hide a soft-deleted row the way a read does, and archiving a cart does
+					// not move its version: without this, a cart archived after the scan would still be swept.
+					where: { ...this.writeScope, ...where, deletedAt: IsNull() },
+					patch
 				})
 			);
-			abandoned.push(cart.id);
-		}
 
-		return abandoned;
+			return true;
+		} catch (error) {
+			if (
+				error instanceof ApiException &&
+				(error.code === ApiErrorCode.ENTITY_VERSION_CONFLICT || error.code === ApiErrorCode.RESOURCE_NOT_FOUND)
+			) {
+				return false;
+			}
+
+			throw error;
+		}
 	}
 
 	/**

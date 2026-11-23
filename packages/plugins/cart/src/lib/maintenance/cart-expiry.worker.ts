@@ -26,9 +26,9 @@ export interface ICartSweepJob {
  *
  * **Neither sweep is scoped to a tenant, and that is deliberate.** A scheduled job has no caller and
  * therefore no tenant in context; a sweep that scoped itself to an absent tenant would sweep nothing
- * at all. Every write it makes is still a conditional one, predicated on the version the row holds, so
- * a cart a buyer touched between the scan and the write is refused rather than expired underneath
- * them.
+ * at all. Every write it makes is still a conditional one, predicated on the version the scan read and
+ * on the cart still being due, so a cart a buyer touched or a checkout completed between the scan and
+ * the write is skipped rather than expired or abandoned underneath them.
  *
  * A failed sweep is raised rather than swallowed, so the queue's own retry and dead-letter handling
  * sees it. A sweep that could not run is not a sweep that ran and found nothing.
