@@ -129,42 +129,45 @@
 								}
 							</header>
 							@if (recentDeals.length) {
-								<div class="pv-deal-head" aria-hidden="true">
-									<span>{{ 'SM_TABLE.TITLE' | translate }}</span>
-									<span>{{ 'PIPELINES_PAGE.STAGE' | translate }}</span>
-									<span>{{ 'PIPELINE_DEAL_CREATE_PAGE.PROBABILITY' | translate }}</span>
-									<span class="pv-deal-date">{{ 'SM_TABLE.CREATED' | translate }}</span>
+								<!-- One grid for the header and every row, so each column fits its widest cell. -->
+								<div class="pv-deal-table">
+									<div class="pv-deal-head" aria-hidden="true">
+										<span>{{ 'SM_TABLE.TITLE' | translate }}</span>
+										<span>{{ 'PIPELINES_PAGE.STAGE' | translate }}</span>
+										<span>{{ 'PIPELINE_DEAL_CREATE_PAGE.PROBABILITY' | translate }}</span>
+										<span class="pv-deal-date">{{ 'SM_TABLE.CREATED' | translate }}</span>
+									</div>
+									<ul class="pv-deals">
+										@for (deal of recentDeals; track deal.id) {
+											<li class="pv-deal">
+												<span class="pv-deal-text">
+													@if (canEditDeals) {
+														<a class="pv-deal-title" [routerLink]="[backLink, pipeline.id, 'deals', deal.id, 'edit']">
+															{{ deal.title }}
+														</a>
+													} @else {
+														<span class="pv-deal-title">{{ deal.title }}</span>
+													}
+													@if (deal.client) {
+														<span class="pv-subtext">{{ deal.client }}</span>
+													}
+												</span>
+												<span class="pv-deal-stage">{{ deal.stage ?? '—' }}</span>
+												<span class="pv-level">
+													<span class="pv-dot" aria-hidden="true"></span>
+													{{ deal.levelKey | translate }}
+												</span>
+												<span class="pv-deal-date">
+													@if (deal.createdAt) {
+														{{ deal.createdAt | dateFormat }}
+													} @else {
+														—
+													}
+												</span>
+											</li>
+										}
+									</ul>
 								</div>
-								<ul class="pv-deals">
-									@for (deal of recentDeals; track deal.id) {
-										<li class="pv-deal">
-											<span class="pv-deal-text">
-												@if (canEditDeals) {
-													<a class="pv-deal-title" [routerLink]="[backLink, pipeline.id, 'deals', deal.id, 'edit']">
-														{{ deal.title }}
-													</a>
-												} @else {
-													<span class="pv-deal-title">{{ deal.title }}</span>
-												}
-												@if (deal.client) {
-													<span class="pv-subtext">{{ deal.client }}</span>
-												}
-											</span>
-											<span class="pv-deal-stage">{{ deal.stage ?? '—' }}</span>
-											<span [class]="'pv-level is-' + deal.level">
-												<span class="pv-dot" aria-hidden="true"></span>
-												{{ deal.levelKey | translate }}
-											</span>
-											<span class="pv-deal-date">
-												@if (deal.createdAt) {
-													{{ deal.createdAt | dateFormat }}
-												} @else {
-													—
-												}
-											</span>
-										</li>
-									}
-								</ul>
 							} @else {
 								<div class="pv-empty">
 									<nb-icon icon="briefcase-outline" aria-hidden="true"></nb-icon>
@@ -189,7 +192,7 @@
 								<ul class="pv-levels">
 									@for (row of probabilityRows; track row.level) {
 										<li class="pv-level-row">
-											<span [class]="'pv-level is-' + row.level">
+											<span class="pv-level">
 												<span class="pv-dot" aria-hidden="true"></span>
 												{{ row.levelKey | translate }}
 											</span>
@@ -198,7 +201,7 @@
 												<span class="pv-subtext">{{ row.share }}%</span>
 											</span>
 											<span class="pv-track pv-level-track" aria-hidden="true">
-												<span [class]="'is-' + row.level" [style.width.%]="row.share"></span>
+												<span [style.width.%]="row.share"></span>
 											</span>
 										</li>
 									}
