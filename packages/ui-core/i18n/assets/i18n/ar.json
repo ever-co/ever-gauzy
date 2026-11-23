@@ -7021,7 +7021,15 @@
 		"SEARCH_STAGE": "مرحلة البحث",
 		"STATUS": "الحالة",
 		"ALL_STATUS": "جميع الحالات",
-		"RESET": "إعادة ضبط"
+		"RESET": "إعادة ضبط",
+		"DEALS": "الصفقات",
+		"DEALS_BY_STAGE": "الصفقات حسب المرحلة",
+		"NO_STAGES": "لا توجد مراحل بعد",
+		"RECENT_DEALS": "أحدث الصفقات",
+		"NO_DEALS": "لا توجد صفقات بعد",
+		"HIGH_PROBABILITY": "احتمالية عالية",
+		"DETAILS": "التفاصيل",
+		"DEALS_LOAD_FAILED": "تعذّر تحميل الصفقات."
 	},
 	"PIPELINE_DEALS_PAGE": {
 		"HEADER": "صفقات الأنابيب",

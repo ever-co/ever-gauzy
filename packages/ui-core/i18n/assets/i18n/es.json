@@ -7025,7 +7025,15 @@
 		"SEARCH_STAGE": "Etapa de búsqueda",
 		"STATUS": "Estado.",
 		"ALL_STATUS": "Todos los estados",
-		"RESET": "Restablecer"
+		"RESET": "Restablecer",
+		"DEALS": "Ofertas",
+		"DEALS_BY_STAGE": "Ofertas por etapa",
+		"NO_STAGES": "Aún no hay etapas",
+		"RECENT_DEALS": "Ofertas recientes",
+		"NO_DEALS": "Aún no hay ofertas",
+		"HIGH_PROBABILITY": "Alta probabilidad",
+		"DETAILS": "Detalles",
+		"DEALS_LOAD_FAILED": "No se pudieron cargar las ofertas."
 	},
 	"PIPELINE_DEALS_PAGE": {
 		"HEADER": "Pipeline Deals",

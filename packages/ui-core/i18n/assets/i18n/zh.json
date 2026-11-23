@@ -7637,7 +7637,15 @@
 		"SEARCH_STAGE": "搜索阶段",
 		"STATUS": "状态",
 		"ALL_STATUS": "所有状况",
-		"RESET": "重置"
+		"RESET": "重置",
+		"DEALS": "交易",
+		"DEALS_BY_STAGE": "按阶段的交易",
+		"NO_STAGES": "暂无阶段",
+		"RECENT_DEALS": "最近的交易",
+		"NO_DEALS": "暂无交易",
+		"HIGH_PROBABILITY": "高可能性",
+		"DETAILS": "详情",
+		"DEALS_LOAD_FAILED": "无法加载交易。"
 	},
 	"PIPELINE_DEALS_PAGE": {
 		"HEADER": "管道交易",

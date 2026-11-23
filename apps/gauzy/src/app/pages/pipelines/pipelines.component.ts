@@ -524,6 +524,28 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 	}
 
 	/**
+	 * Opens the selected pipeline's own page, `/pages/sales/pipelines/view/:id`.
+	 * The header toolbar renders the action buttons without a `selectedItem`, so
+	 * this falls back to the row picked in the table.
+	 *
+	 * @param selectedItem - The pipeline to view.
+	 */
+	viewPipeline(selectedItem?: IPipeline): void {
+		if (selectedItem) {
+			this.selectPipeline({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
+
+		if (!this.pipeline?.id) {
+			return;
+		}
+
+		this.router.navigate(['/pages/sales/pipelines/view', this.pipeline.id]);
+	}
+
+	/**
 	 * Navigates to the "Deals" page for the selected pipeline.
 	 * @param selectedItem - The selected pipeline.
 	 */

@@ -7634,7 +7634,15 @@
 		"SEARCH_STAGE": "Pesquisar etapa",
 		"STATUS": "Status",
 		"ALL_STATUS": "Todos os status",
-		"RESET": "Redefinir"
+		"RESET": "Redefinir",
+		"DEALS": "Negócios",
+		"DEALS_BY_STAGE": "Negócios por etapa",
+		"NO_STAGES": "Ainda não há etapas",
+		"RECENT_DEALS": "Negócios recentes",
+		"NO_DEALS": "Ainda não há negócios",
+		"HIGH_PROBABILITY": "Alta probabilidade",
+		"DETAILS": "Detalhes",
+		"DEALS_LOAD_FAILED": "Não foi possível carregar os negócios."
 	},
 	"PIPELINE_DEALS_PAGE": {
 		"HEADER": "Negócios do funil",

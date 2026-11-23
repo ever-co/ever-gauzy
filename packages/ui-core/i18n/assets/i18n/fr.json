@@ -7021,7 +7021,15 @@
 		"SEARCH_STAGE": "Étape de recherche",
 		"STATUS": "Statut",
 		"ALL_STATUS": "Tous les statuts",
-		"RESET": "Réinitialiser"
+		"RESET": "Réinitialiser",
+		"DEALS": "Offres",
+		"DEALS_BY_STAGE": "Offres par étape",
+		"NO_STAGES": "Aucune étape pour le moment",
+		"RECENT_DEALS": "Offres récentes",
+		"NO_DEALS": "Aucune offre pour le moment",
+		"HIGH_PROBABILITY": "Probabilité élevée",
+		"DETAILS": "Détails",
+		"DEALS_LOAD_FAILED": "Les offres n'ont pas pu être chargées."
 	},
 	"PIPELINE_DEALS_PAGE": {
 		"HEADER": "Pipeline Deals is a cloud-based CRM and sales management platform designed to help businesses manage their sales processes and customer relationships. The platform offers a wide range of features, including contact management, deal tracking, task management, reporting, and analytics. With Pipeline Deals, businesses can easily track and organize leads, automate sales processes, and generate insights to help improve their sales performance. The platform is user-friendly and customizable, making it suitable for businesses of all sizes and industries.",
