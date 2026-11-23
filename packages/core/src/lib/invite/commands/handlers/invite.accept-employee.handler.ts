@@ -163,6 +163,10 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 				}
 			}
 
+			// Whichever path found it, an ended employee is refused before its memberships change (outside the
+			// find-or-register catch, so the refusal is not taken for a missing employee).
+			assertEmployeeNotEnded(employee);
+
 			// Implementation for updating employee memberships based on the invite details
 			await this.updateEmployeeMemberships(invite, employee);
 

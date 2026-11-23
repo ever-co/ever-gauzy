@@ -374,6 +374,19 @@ describe('InviteAcceptEmployeeHandler with an address that already has an accoun
 		}
 	);
 
+	it("refuses the ended employee of a deactivated Employee account's old lookup too, before anything is written", async () => {
+		const { accept, inviteService, teamMembers } = build({
+			accounts: [account('user-thomas', 'EMPLOYEE', { isActive: false })],
+			employees: [{ id: 'employee-thomas', userId: 'user-thomas', organizationId: ORGANIZATION, isActive: false }]
+		});
+
+		await expect(accept()).rejects.toBeInstanceOf(EndedEmployeeException);
+
+		expect(teamMembers).toEqual([]);
+		expect(inviteService.releaseInvite).toHaveBeenCalledWith('invite-1');
+		expect(inviteService.update).not.toHaveBeenCalled();
+	});
+
 	it('adds no second membership to a team or project the employee is already an active member of', async () => {
 		const { accept, teamRepository, projectRepository, teamMembers, projectMembers } = build({
 			accounts: [account('user-thomas', 'ADMIN')],
