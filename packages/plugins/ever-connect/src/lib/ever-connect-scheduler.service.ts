@@ -518,10 +518,13 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 	/**
 	 * After a membership resync that kept the lease: one that failed is owed again, not before a wait that doubles with
 	 * each failure in a row (from `FEED_RETRY_MS`, at most `FEED_INTERVAL_MS`), so a membership read that keeps failing
-	 * never holds up the feed nor runs at every read; any other outcome clears the wait.
+	 * never holds up the feed nor runs at every read; any other outcome is no longer owed and clears the wait. The debt
+	 * is this process's: a lease taken over by another process meanwhile runs it at that process's next start or `410`.
 	 */
 	private afterMembershipResync(outcome: MembershipResyncOutcome): void {
 		if (outcome !== 'failed') {
+			// Done (or nothing to do): no longer owed, also when an earlier failure had it owed and a 410 ran it first.
+			this.membershipResyncOwed = false;
 			this.membershipResyncFailures = 0;
 			this.membershipResyncNotBefore = 0;
 			return;

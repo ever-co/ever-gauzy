@@ -472,6 +472,31 @@ describe('Ever Platform feed dispatcher', () => {
 			expect(membership.resync).toHaveBeenCalledTimes(3);
 		});
 
+		it('a 410 resync that worked while a failed one waited clears the debt: it does not run again', async () => {
+			let now = Date.parse('2026-11-23T10:00:00.000Z');
+			const membership = {
+				apply: jest.fn(),
+				resync: jest.fn().mockResolvedValueOnce('failed').mockResolvedValue('done')
+			};
+			const { instance, client } = scheduler(membership, { now: () => now });
+			client.instances.events.mockResolvedValue({ events: [], last_id: '', has_more: false });
+
+			await instance.readFeed(); // the startup resync fails: owed again in 30 s
+			expect(membership.resync).toHaveBeenCalledTimes(1);
+
+			// Within the wait a 410 runs it, and it works.
+			now += 10_000;
+			client.instances.events.mockRejectedValueOnce(
+				new ProblemError(410, 'resync_required', undefined, null, undefined, undefined, '01JD0000000000000000000045')
+			);
+			expect(await instance.readFeed()).toBe(true);
+			expect(membership.resync).toHaveBeenCalledTimes(2);
+
+			now += 60_000;
+			await instance.readFeed();
+			expect(membership.resync).toHaveBeenCalledTimes(2);
+		});
+
 		it('a resync of a run that was stopped meanwhile writes nothing more: its lease renewal answers false', async () => {
 			const membership = {
 				apply: jest.fn(),
