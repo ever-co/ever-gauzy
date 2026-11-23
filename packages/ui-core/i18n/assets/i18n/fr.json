@@ -7599,6 +7599,13 @@
 		"DOWNLOAD_BROWSER_EXTENSION": "Télécharger l'extension de navigateur"
 	},
 	"WORKSPACES": {
+		"EMAIL_SUGGESTION": "Vouliez-vous dire {{ email }} ?",
+		"CODE_CHARACTER": "Caractère {{ index }} sur {{ total }}",
+		"OPEN_INBOX": "Ouvrir votre boîte de réception",
+		"NEED_NEW_WORKSPACE": "Besoin d'un nouvel espace de travail ?",
+		"CREATE_ONE": "Créez-en un",
+		"ALREADY_HAVE_WORKSPACE": "Vous avez déjà un espace de travail ?",
+		"SIGN_IN_LINK": "Se connecter",
 		"MENUS": {
 			"SING_ANOTHER_WORKSPACE": "Connectez-vous à un autre espace de travail.",
 			"CREATE_NEW_WORKSPACE": "Créez un nouvel espace de travail.",

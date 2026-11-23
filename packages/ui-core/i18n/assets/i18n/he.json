@@ -7609,6 +7609,13 @@
 		"DOWNLOAD_BROWSER_EXTENSION": "הורדת תוסף הדפדפן"
 	},
 	"WORKSPACES": {
+		"EMAIL_SUGGESTION": "האם התכוונת ל-{{ email }}?",
+		"CODE_CHARACTER": "תו {{ index }} מתוך {{ total }}",
+		"OPEN_INBOX": "פתח את תיבת הדואר הנכנס",
+		"NEED_NEW_WORKSPACE": "צריך סביבת עבודה חדשה?",
+		"CREATE_ONE": "צור אחת",
+		"ALREADY_HAVE_WORKSPACE": "כבר יש לך סביבת עבודה?",
+		"SIGN_IN_LINK": "התחבר",
 		"MENUS": {
 			"SING_ANOTHER_WORKSPACE": "Sign in another workspace",
 			"CREATE_NEW_WORKSPACE": "Create a new workspace",

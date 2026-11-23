@@ -7601,6 +7601,13 @@
 		"DOWNLOAD_BROWSER_EXTENSION": "Browserextensie downloaden"
 	},
 	"WORKSPACES": {
+		"EMAIL_SUGGESTION": "Bedoelde je {{ email }}?",
+		"CODE_CHARACTER": "Teken {{ index }} van {{ total }}",
+		"OPEN_INBOX": "Open je inbox",
+		"NEED_NEW_WORKSPACE": "Een nieuwe werkruimte nodig?",
+		"CREATE_ONE": "Maak er een",
+		"ALREADY_HAVE_WORKSPACE": "Heb je al een werkruimte?",
+		"SIGN_IN_LINK": "Inloggen",
 		"MENUS": {
 			"SING_ANOTHER_WORKSPACE": "Meld je aan bij een andere werkruimte",
 			"CREATE_NEW_WORKSPACE": "Maak een nieuwe werkruimte",

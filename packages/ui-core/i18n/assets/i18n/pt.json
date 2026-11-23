@@ -8287,6 +8287,13 @@
 		"DOWNLOAD_BROWSER_EXTENSION": "Baixar a extensão do navegador"
 	},
 	"WORKSPACES": {
+		"EMAIL_SUGGESTION": "Você quis dizer {{ email }}?",
+		"CODE_CHARACTER": "Caractere {{ index }} de {{ total }}",
+		"OPEN_INBOX": "Abrir sua caixa de entrada",
+		"NEED_NEW_WORKSPACE": "Precisa de um novo espaço de trabalho?",
+		"CREATE_ONE": "Criar um",
+		"ALREADY_HAVE_WORKSPACE": "Já tem um espaço de trabalho?",
+		"SIGN_IN_LINK": "Entrar",
 		"MENUS": {
 			"SING_ANOTHER_WORKSPACE": "Entrar em outro espaço de trabalho",
 			"CREATE_NEW_WORKSPACE": "Criar um novo espaço de trabalho",

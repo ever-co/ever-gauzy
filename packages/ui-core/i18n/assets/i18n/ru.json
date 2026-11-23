@@ -7617,6 +7617,13 @@
 		"DOWNLOAD_BROWSER_EXTENSION": "Скачать расширение для браузера"
 	},
 	"WORKSPACES": {
+		"EMAIL_SUGGESTION": "Вы имели в виду {{ email }}?",
+		"CODE_CHARACTER": "Символ {{ index }} из {{ total }}",
+		"OPEN_INBOX": "Открыть почту",
+		"NEED_NEW_WORKSPACE": "Нужна новая рабочая область?",
+		"CREATE_ONE": "Создать",
+		"ALREADY_HAVE_WORKSPACE": "Уже есть рабочая область?",
+		"SIGN_IN_LINK": "Войти",
 		"MENUS": {
 			"SING_ANOTHER_WORKSPACE": "Войти в другую рабочую область",
 			"CREATE_NEW_WORKSPACE": "Создать новую рабочую область",

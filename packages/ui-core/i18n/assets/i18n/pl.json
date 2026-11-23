@@ -7600,6 +7600,13 @@
 		"DOWNLOAD_BROWSER_EXTENSION": "Pobierz rozszerzenie przeglądarki"
 	},
 	"WORKSPACES": {
+		"EMAIL_SUGGESTION": "Czy chodziło o {{ email }}?",
+		"CODE_CHARACTER": "Znak {{ index }} z {{ total }}",
+		"OPEN_INBOX": "Otwórz skrzynkę odbiorczą",
+		"NEED_NEW_WORKSPACE": "Potrzebujesz nowego obszaru roboczego?",
+		"CREATE_ONE": "Utwórz go",
+		"ALREADY_HAVE_WORKSPACE": "Masz już obszar roboczy?",
+		"SIGN_IN_LINK": "Zaloguj się",
 		"MENUS": {
 			"SING_ANOTHER_WORKSPACE": "Zaloguj się do innego miejsca pracy",
 			"CREATE_NEW_WORKSPACE": "Utwórz nową przestrzeń roboczą",

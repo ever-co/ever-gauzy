@@ -8287,6 +8287,13 @@
 		"DOWNLOAD_BROWSER_EXTENSION": "Download the browser extension"
 	},
 	"WORKSPACES": {
+		"EMAIL_SUGGESTION": "Did you mean {{ email }}?",
+		"CODE_CHARACTER": "Character {{ index }} of {{ total }}",
+		"OPEN_INBOX": "Open your inbox",
+		"NEED_NEW_WORKSPACE": "Need a new workspace?",
+		"CREATE_ONE": "Create one",
+		"ALREADY_HAVE_WORKSPACE": "Already have a workspace?",
+		"SIGN_IN_LINK": "Sign in",
 		"MENUS": {
 			"SING_ANOTHER_WORKSPACE": "Sign in another workspace",
 			"CREATE_NEW_WORKSPACE": "Create a new workspace",
