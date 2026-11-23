@@ -1832,6 +1832,145 @@ describe('CommerceCartService — checkout', () => {
 		});
 	});
 
+	/**
+	 * The expiry and abandonment sweeps decide from a scan and write each cart in a statement of its own. That
+	 * write was predicated on whatever version the row held when it ran, and on nothing else, so a checkout that
+	 * completed between the two had its completed cart expired or abandoned. Each case runs the real checkout
+	 * (or the buyer's real change) between the sweep's scan and its write.
+	 */
+	describe('a sweep that scanned a cart a checkout or a buyer then changed', () => {
+		/** Runs `work` once the sweep's scan has read the carts, and before the sweep writes any of them. */
+		const afterScan = (service: CommerceCartService, work: () => Promise<unknown>) => {
+			const findAll = service.findAll.bind(service);
+
+			jest.spyOn(service, 'findAll').mockImplementationOnce(async (...args: Parameters<typeof findAll>) => {
+				const page = await findAll(...args);
+
+				await work();
+
+				return page;
+			});
+		};
+		/** A cart's stored row. */
+		const rowOf = (fixture: ReturnType<typeof cartFixture>, id: string) =>
+			fixture.tables.commerce_cart.find((candidate) => candidate.id === id);
+		/** An instant a second ago. */
+		const justPast = () => new Date(Date.now() - 1000);
+
+		it('leaves a cart checked out after the expiry scan completed, and expires the rest of the batch', async () => {
+			const fixture = cartFixture();
+			const { service } = fixture;
+			const cart = await completableCart(fixture);
+			const other = await service.create({ channelId: 'channel-1', currency: 'USD' });
+			registerCheckoutHandler();
+			rowOf(fixture, other.id).expiresAt = justPast();
+
+			const validate = service.validate.bind(service);
+			let sweep: Promise<string[]> | undefined;
+			let checkedOut!: () => void;
+			const checkout = new Promise<void>((resolve) => (checkedOut = resolve));
+
+			// The checkout validates the cart while it is live. Its expiry instant passes, and the sweep scans it
+			// then, before the checkout claims it; the sweep writes only once the checkout has recorded its order.
+			jest.spyOn(service, 'validate').mockImplementationOnce(async (...args: Parameters<typeof validate>) => {
+				const verdict = await validate(...args);
+				let scanned!: () => void;
+				const scan = new Promise<void>((resolve) => (scanned = resolve));
+
+				rowOf(fixture, cart.id).expiresAt = justPast();
+				afterScan(service, async () => {
+					scanned();
+					await checkout;
+				});
+				sweep = service.expireDueCarts();
+				await scan;
+
+				return verdict;
+			});
+
+			try {
+				expect((await service.complete(cart.id, { idempotencyKey: 'key-1' })).orderId).toBe('order-1');
+			} finally {
+				checkedOut();
+			}
+
+			// Skipped, not failed: the sweep answers, and the other due cart of the batch is expired.
+			expect(await sweep).toEqual([other.id]);
+			expect(rowOf(fixture, cart.id)).toMatchObject({ status: CommerceCartStatus.COMPLETED, orderId: 'order-1' });
+			expect(rowOf(fixture, other.id).status).toBe(CommerceCartStatus.EXPIRED);
+		});
+
+		it('leaves a cart checked out after the abandonment scan completed, and abandons the rest of the batch', async () => {
+			const fixture = cartFixture();
+			const { service } = fixture;
+			const cart = await completableCart(fixture);
+			const other = await service.create({ channelId: 'channel-1', currency: 'USD' });
+			registerCheckoutHandler();
+
+			for (const row of fixture.tables.commerce_cart) {
+				row.lastActivityAt = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+			}
+
+			// The buyer comes back and checks out after the sweep read the idle cart, and before it writes it.
+			afterScan(service, () => service.complete(cart.id, { idempotencyKey: 'key-1' }));
+
+			expect(await service.abandonDueCarts()).toEqual([other.id]);
+			expect(rowOf(fixture, cart.id)).toMatchObject({ status: CommerceCartStatus.COMPLETED, orderId: 'order-1' });
+			expect(rowOf(fixture, cart.id).abandonedAt ?? null).toBeNull();
+			expect(rowOf(fixture, other.id).status).toBe(CommerceCartStatus.ABANDONED);
+		});
+
+		it('leaves a cart the buyer changed after the expiry scan active, with the expiry its recalculation gave it', async () => {
+			const fixture = cartFixture();
+			const { service } = fixture;
+			const cart = await completableCart(fixture);
+			const row = rowOf(fixture, cart.id);
+			row.expiresAt = justPast();
+
+			afterScan(service, () =>
+				service.addLine(cart.id, {
+					variantId: 'variant-2',
+					title: 'Another download',
+					quantity: 1,
+					unitPrice: 5,
+					requiresShipping: false
+				})
+			);
+
+			expect(await service.expireDueCarts()).toEqual([]);
+			expect(row.status).toBe(CommerceCartStatus.ACTIVE);
+			expect(new Date(row.expiresAt).getTime()).toBeGreaterThan(Date.now());
+		});
+
+		it('skips a cart deleted after the scan, and expires the rest of the batch', async () => {
+			const fixture = cartFixture();
+			const { service } = fixture;
+			const gone = await service.create({ channelId: 'channel-1', currency: 'USD' });
+			const other = await service.create({ channelId: 'channel-1', currency: 'USD' });
+
+			for (const row of fixture.tables.commerce_cart) {
+				row.expiresAt = justPast();
+			}
+
+			afterScan(service, () => service.softDelete(gone.id));
+
+			expect(await service.expireDueCarts()).toEqual([other.id]);
+		});
+
+		it('raises a failure that is not the cart moving on, for the queue to retry, and writes nothing', async () => {
+			const fixture = cartFixture();
+			const { service } = fixture;
+			const cart = await service.create({ channelId: 'channel-1', currency: 'USD' });
+			const row = rowOf(fixture, cart.id);
+			row.expiresAt = justPast();
+
+			jest.spyOn(service, 'update').mockRejectedValueOnce(new Error('connection lost'));
+
+			await expect(service.expireDueCarts()).rejects.toThrow('connection lost');
+			expect(row.status).toBe(CommerceCartStatus.ACTIVE);
+		});
+	});
+
 	it('marks an uncompleted cart abandoned and refuses to abandon a completed one', async () => {
 		const fixture = cartFixture();
 		const cart = await completableCart(fixture);
@@ -3308,5 +3447,93 @@ describe('CommerceCartService sweeps under DB_ORM=mikro-orm', () => {
 		expect((await service.abandonDueCarts()).sort()).toEqual(['cart-1', 'cart-2']);
 		expect(rows().map((row) => row.status)).toEqual([CommerceCartStatus.ABANDONED, CommerceCartStatus.ABANDONED]);
 		expect(new Set(contexts.map(({ em }) => (em as { fork: number }).fork)).size).toBe(3);
+	});
+
+	/**
+	 * A checkout completes `cart-1` after the sweep's scan read it and before the sweep writes it: the rows then
+	 * hold what the checkout's three writes left (its claim, its recalculation and its last write, each moving
+	 * the version by one). The fresh context each write runs in reads the cart afresh, which is no protection on
+	 * its own: the write must be predicated on what the scan read.
+	 */
+	function completeAfterScan(service: CommerceCartService, row: Record<string, unknown>) {
+		const findAll = service.findAll.bind(service);
+
+		jest.spyOn(service, 'findAll').mockImplementationOnce(async (...args: Parameters<typeof findAll>) => {
+			const page = await findAll(...args);
+			const completedAt = new Date();
+
+			Object.assign(row, {
+				status: CommerceCartStatus.COMPLETED,
+				orderId: 'order-1',
+				completedAt,
+				lastActivityAt: completedAt,
+				expiresAt: new Date(completedAt.getTime() + 60 * 60 * 1000),
+				version: Number(row.version) + 3
+			});
+
+			return page;
+		});
+	}
+
+	it('skips a cart checked out between the expiry scan and its write, and expires the rest', async () => {
+		process.env.DB_ORM = 'mikro-orm';
+		const past = new Date(Date.now() - 60_000);
+		const { service, contexts, rows } = sweepFixture([
+			{ id: 'cart-1', status: CommerceCartStatus.ACTIVE, expiresAt: past, version: 1 },
+			{ id: 'cart-2', status: CommerceCartStatus.ABANDONED, expiresAt: past, version: 3 }
+		]);
+		completeAfterScan(service, rows()[0]);
+
+		expect(await service.expireDueCarts()).toEqual(['cart-2']);
+		expect(rows().map((row) => row.status)).toEqual([CommerceCartStatus.COMPLETED, CommerceCartStatus.EXPIRED]);
+		expect(rows()[0]).toMatchObject({ orderId: 'order-1', version: 4 });
+		// The skipped cart's write still ran in a context of its own: the scan, then one per cart.
+		expect(new Set(contexts.map(({ em }) => (em as { fork: number }).fork)).size).toBe(3);
+		expect(MikroOrmRequestContext.getEntityManager()).toBeUndefined();
+	});
+
+	it('skips a cart checked out between the abandonment scan and its write, and abandons the rest', async () => {
+		process.env.DB_ORM = 'mikro-orm';
+		const idle = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+		const { service, contexts, rows } = sweepFixture([
+			{ id: 'cart-1', status: CommerceCartStatus.ACTIVE, lastActivityAt: idle, version: 1 },
+			{ id: 'cart-2', status: CommerceCartStatus.ACTIVE, lastActivityAt: idle, version: 2 }
+		]);
+		completeAfterScan(service, rows()[0]);
+
+		expect(await service.abandonDueCarts()).toEqual(['cart-2']);
+		expect(rows().map((row) => row.status)).toEqual([CommerceCartStatus.COMPLETED, CommerceCartStatus.ABANDONED]);
+		expect(rows()[0]).toMatchObject({ orderId: 'order-1', version: 4 });
+		expect(rows()[0].abandonedAt).toBeUndefined();
+		expect(new Set(contexts.map(({ em }) => (em as { fork: number }).fork)).size).toBe(3);
+	});
+
+	it('refuses the write on the status and the due time too, for a change that did not move the version', async () => {
+		// Every cart write moves the version, which is what refuses the cases above. The sweep's own predicate is
+		// in the statement as well, so a row that is no longer sweepable is not written even at the scanned version.
+		process.env.DB_ORM = 'mikro-orm';
+		const past = new Date(Date.now() - 60_000);
+		const { service, rows } = sweepFixture([
+			{ id: 'cart-1', status: CommerceCartStatus.ACTIVE, expiresAt: past, version: 1 },
+			{ id: 'cart-2', status: CommerceCartStatus.ACTIVE, expiresAt: past, version: 1 },
+			{ id: 'cart-3', status: CommerceCartStatus.ACTIVE, expiresAt: past, version: 1 }
+		]);
+		const findAll = service.findAll.bind(service);
+
+		jest.spyOn(service, 'findAll').mockImplementationOnce(async (...args: Parameters<typeof findAll>) => {
+			const page = await findAll(...args);
+
+			rows()[0].status = CommerceCartStatus.COMPLETED;
+			rows()[1].expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
+			return page;
+		});
+
+		expect(await service.expireDueCarts()).toEqual(['cart-3']);
+		expect(rows().map((row) => row.status)).toEqual([
+			CommerceCartStatus.COMPLETED,
+			CommerceCartStatus.ACTIVE,
+			CommerceCartStatus.EXPIRED
+		]);
 	});
 });
