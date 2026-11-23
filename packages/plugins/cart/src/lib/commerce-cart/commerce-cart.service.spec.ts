@@ -3566,7 +3566,7 @@ describe('CommerceCartService sweeps under DB_ORM=mikro-orm', () => {
 
 	it('refuses the write on the status and the due time too, for a change that did not move the version', async () => {
 		// Every cart write moves the version, which is what refuses the cases above. The sweep's own predicate is
-		// in the statement as well, so a row that is no longer sweepable is not written even at the scanned version.
+		// in the statement as well, so a row the sweep no longer applies to is not written even at the scanned version.
 		process.env.DB_ORM = 'mikro-orm';
 		const past = new Date(Date.now() - 60_000);
 		const { service, rows } = sweepFixture([
