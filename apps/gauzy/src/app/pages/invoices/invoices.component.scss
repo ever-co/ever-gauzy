@@ -221,6 +221,14 @@
   align-items: center;
   @include nb-rtl(left, 1rem);
   @include nb-ltr(right, 1rem);
+
+  // The space between the action strip and the grid/list switch, as on the
+  // shared toolbar. Set here rather than as a margin on the strip: the strip
+  // sits inside the clipped slide container, which swallowed that margin.
+  ga-layout-selector {
+    @include nb-ltr(margin-left, 1rem);
+    @include nb-rtl(margin-right, 1rem);
+  }
 }
 
 .history-list-select {
@@ -255,8 +263,7 @@ button {
   gap: 0.375rem;
   background: transparent;
   padding: 0;
-  @include nb-ltr(margin-right, 1rem);
-  @include nb-rtl(margin-left, 1rem);
+  margin: 0;
 }
 
 .transition-container {
@@ -270,8 +277,9 @@ button {
     align-items: center;
     background: transparent;
     padding: 0;
-    @include nb-ltr(margin-right, 0.375rem);
-    @include nb-rtl(margin-left, 0.375rem);
+    // Same separation as between the strip and the grid/list switch.
+    @include nb-ltr(margin-right, 1rem);
+    @include nb-rtl(margin-left, 1rem);
   }
 
   // "+ Add" is the one solid button in the row, in the theme's primary colour,
