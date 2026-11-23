@@ -35,6 +35,28 @@
   }
 }
 
+// "Already have a workspace? Sign in" / "Need a new workspace? Create one":
+// a quiet footer line under a hairline, linking the workspace pages together.
+.switch-flow {
+  margin: 1.5rem 0 0;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--gauzy-border-default-color);
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+  text-align: center;
+  color: var(--gauzy-text-color-2);
+
+  a {
+    font-weight: 500;
+    color: nb-theme(color-primary-default);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
 @include mobile-screen {
   .login-container {
     padding: 1rem;
