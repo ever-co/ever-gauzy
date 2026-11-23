@@ -73,21 +73,36 @@ async function sqlite(): Promise<Database> {
 	const file = path.join(os.tmpdir(), `gauzy-time-log-tags-filter-${process.pid}-${Date.now()}.sqlite3`);
 	const dataSource = new DataSource({ type: 'better-sqlite3', database: file });
 	await dataSource.initialize();
-	const orm = await MikroORM.init<BetterSqliteDriver>({
-		driver: BetterSqliteDriver,
-		dbName: file,
-		entities: [TimeLogRowSchema],
-		allowGlobalContext: true
-	});
+	let orm: MikroORM;
+	try {
+		orm = await MikroORM.init<BetterSqliteDriver>({
+			driver: BetterSqliteDriver,
+			dbName: file,
+			entities: [TimeLogRowSchema],
+			allowGlobalContext: true
+		});
+	} catch (error) {
+		// `afterAll` has no database to close yet: let the file go here, so Jest can exit.
+		await dataSource.destroy().catch(() => undefined);
+		fs.rmSync(file, { force: true });
+		throw error;
+	}
 	return {
 		dataSource,
 		orm,
 		uuidType: 'varchar',
 		dateType: 'datetime',
+		// Each step runs even when the one before it fails, so the file always goes.
 		close: async () => {
-			await orm.close(true);
-			await dataSource.destroy();
-			fs.rmSync(file, { force: true });
+			try {
+				await orm.close(true);
+			} finally {
+				try {
+					await dataSource.destroy();
+				} finally {
+					fs.rmSync(file, { force: true });
+				}
+			}
 		}
 	};
 }
@@ -98,23 +113,38 @@ async function postgres(url: string): Promise<Database> {
 	const searchPath = `-c search_path=${schema}`;
 	const dataSource = new DataSource({ type: 'postgres', url, extra: { options: searchPath } });
 	await dataSource.initialize();
-	await dataSource.query(`CREATE SCHEMA "${schema}"`);
-	const orm = await MikroORM.init<PostgreSqlDriver>({
-		driver: PostgreSqlDriver,
-		clientUrl: url,
-		entities: [TimeLogRowSchema],
-		allowGlobalContext: true,
-		driverOptions: { connection: { options: searchPath } }
-	});
+	let orm: MikroORM;
+	try {
+		await dataSource.query(`CREATE SCHEMA "${schema}"`);
+		orm = await MikroORM.init<PostgreSqlDriver>({
+			driver: PostgreSqlDriver,
+			clientUrl: url,
+			entities: [TimeLogRowSchema],
+			allowGlobalContext: true,
+			driverOptions: { connection: { options: searchPath } }
+		});
+	} catch (error) {
+		// `afterAll` has no database to close yet: drop the schema and the connection here, so Jest can exit.
+		await dataSource.query(`DROP SCHEMA IF EXISTS "${schema}" CASCADE`).catch(() => undefined);
+		await dataSource.destroy().catch(() => undefined);
+		throw error;
+	}
 	return {
 		dataSource,
 		orm,
 		uuidType: 'uuid',
 		dateType: 'timestamp',
+		// Each step runs even when the one before it fails, so the connection is always let go.
 		close: async () => {
-			await orm.close(true);
-			await dataSource.query(`DROP SCHEMA "${schema}" CASCADE`);
-			await dataSource.destroy();
+			try {
+				await orm.close(true);
+			} finally {
+				try {
+					await dataSource.query(`DROP SCHEMA "${schema}" CASCADE`);
+				} finally {
+					await dataSource.destroy();
+				}
+			}
 		}
 	};
 }
