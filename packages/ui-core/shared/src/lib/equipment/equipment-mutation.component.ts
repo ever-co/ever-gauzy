@@ -25,7 +25,6 @@ export class EquipmentMutationComponent extends TranslationBaseComponent impleme
 	image: IImageAsset;
 	selectedCurrency: string;
 	organization: IOrganization;
-	hoverState = false;
 	/** True while the save request is in flight: the Save button is disabled so a second click cannot create the equipment twice. */
 	loading = false;
 
