@@ -164,6 +164,11 @@ export class EmailCodeFormComponent implements OnInit, OnChanges {
 	/** A character typed (or a whole code autofilled) into box `index`. */
 	onCodeInput(index: number, event: Event): void {
 		const input = event.target as HTMLInputElement;
+		if (this.isLoading) {
+			// The boxes are read-only while a code is checked; undo anything that got through.
+			input.value = this.codeChars[index] ?? '';
+			return;
+		}
 		const typed = this._sanitize(input.value);
 
 		if (typed.length > 1) {
@@ -184,6 +189,11 @@ export class EmailCodeFormComponent implements OnInit, OnChanges {
 	onCodeKeydown(index: number, event: KeyboardEvent): void {
 		switch (event.key) {
 			case 'Backspace':
+				// No edits while a code is being checked (arrows still move focus).
+				if (this.isLoading) {
+					event.preventDefault();
+					break;
+				}
 				if (!this.codeChars[index] && index > 0) {
 					event.preventDefault();
 					this.codeChars[index - 1] = '';
@@ -205,6 +215,12 @@ export class EmailCodeFormComponent implements OnInit, OnChanges {
 
 	/** A pasted code fills the boxes, wherever it is pasted. */
 	onCodePaste(index: number, event: ClipboardEvent): void {
+		// Paste still fires on read-only inputs: while a code is being checked,
+		// changing the boxes would show one code while the server checks another.
+		if (this.isLoading) {
+			event.preventDefault();
+			return;
+		}
 		const text = this._sanitize(event.clipboardData?.getData('text') || '');
 		if (!text) {
 			return;
