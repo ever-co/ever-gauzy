@@ -1,0 +1,241 @@
+<ngx-record-view-page
+	heading="PIPELINES_PAGE.HEADER"
+	[subtitle]="pipeline?.name"
+	[backLink]="backLink"
+	[state]="state"
+	(retry)="load()"
+>
+	@if (pipeline) {
+		<div recordPageActions class="pv-actions">
+			<a nbButton outline size="small" status="basic" [routerLink]="[backLink, pipeline.id, 'deals']">
+				<nb-icon icon="eye-outline"></nb-icon>
+				<span>{{ 'PIPELINES_PAGE.VIEW_DEALS' | translate }}</span>
+			</a>
+			<ng-template ngxPermissionsOnly="EDIT_SALES_PIPELINES">
+				<button nbButton outline size="small" status="basic" type="button" (click)="edit()">
+					<nb-icon icon="edit-outline"></nb-icon>
+					<span>{{ 'BUTTONS.EDIT' | translate }}</span>
+				</button>
+			</ng-template>
+		</div>
+	}
+
+	@if (pipeline) {
+		<div class="pv">
+			<!-- Who it is: name and status, then what it is for. -->
+			<header class="pv-headline">
+				<div class="pv-title-row">
+					<h5 class="pv-name">{{ pipeline.name }}</h5>
+					<span class="pv-status" [class.is-active]="pipeline.isActive">
+						<span class="pv-dot" aria-hidden="true"></span>
+						{{ (pipeline.isActive ? 'PIPELINES_PAGE.ACTIVE' : 'PIPELINES_PAGE.INACTIVE') | translate }}
+					</span>
+				</div>
+				@if (pipeline.description?.trim()) {
+					<p class="pv-description">{{ pipeline.description }}</p>
+				}
+			</header>
+
+			<!-- Key figures in one strip. -->
+			<dl class="pv-facts">
+				<div class="pv-fact">
+					<dt>{{ 'PIPELINES_PAGE.DEALS' | translate }}</dt>
+					<dd>{{ deals ? deals.length : '—' }}</dd>
+				</div>
+				<div class="pv-fact">
+					<dt>{{ 'PIPELINES_PAGE.HEADER_STAGES' | translate }}</dt>
+					<dd>{{ stageRows.length }}</dd>
+				</div>
+				<div class="pv-fact">
+					<dt>{{ 'SM_TABLE.CLIENTS' | translate }}</dt>
+					<dd>{{ deals ? clientCount : '—' }}</dd>
+				</div>
+				<div class="pv-fact">
+					<dt>{{ 'PIPELINES_PAGE.HIGH_PROBABILITY' | translate }}</dt>
+					<dd>{{ deals ? highProbabilityCount : '—' }}</dd>
+				</div>
+			</dl>
+
+			<div class="pv-columns">
+				<!-- The work: stages, then the newest deals. -->
+				<div class="pv-col pv-col--main">
+					<section class="pv-panel">
+						<header class="pv-panel-header">
+							<h6 class="pv-panel-title">
+								<nb-icon icon="layers-outline" aria-hidden="true"></nb-icon>
+								{{ (deals ? 'PIPELINES_PAGE.DEALS_BY_STAGE' : 'PIPELINES_PAGE.HEADER_STAGES') | translate }}
+							</h6>
+						</header>
+						@if (stageRows.length) {
+							<div class="pv-stage-head" aria-hidden="true">
+								<span class="pv-stage-head-name">{{ 'PIPELINES_PAGE.STAGE' | translate }}</span>
+								<span class="pv-stage-head-count">{{ 'PIPELINES_PAGE.DEALS' | translate }}</span>
+							</div>
+							<ol class="pv-stages">
+								@for (stage of stageRows; track stage.id) {
+									<li class="pv-stage">
+										<span class="pv-stage-position">{{ stage.position }}</span>
+										<span class="pv-stage-text">
+											<span class="pv-stage-name">{{ stage.name }}</span>
+											@if (stage.description) {
+												<span class="pv-subtext">{{ stage.description }}</span>
+											}
+										</span>
+										@if (stage.count !== null) {
+											<span class="pv-track pv-stage-track" aria-hidden="true">
+												<span [style.width.%]="stage.share"></span>
+											</span>
+										}
+										<span class="pv-stage-count">{{ stage.count ?? '—' }}</span>
+									</li>
+								}
+							</ol>
+						} @else {
+							<div class="pv-empty">
+								<nb-icon icon="layers-outline" aria-hidden="true"></nb-icon>
+								<span>{{ 'PIPELINES_PAGE.NO_STAGES' | translate }}</span>
+							</div>
+						}
+					</section>
+
+					@if (deals) {
+						<section class="pv-panel">
+							<header class="pv-panel-header">
+								<h6 class="pv-panel-title">
+									<nb-icon icon="briefcase-outline" aria-hidden="true"></nb-icon>
+									{{ 'PIPELINES_PAGE.RECENT_DEALS' | translate }}
+									@if (deals.length > recentDeals.length) {
+										<span class="pv-panel-caption">{{ recentDeals.length }} / {{ deals.length }}</span>
+									}
+								</h6>
+								@if (deals.length) {
+									<a class="pv-panel-link" [routerLink]="[backLink, pipeline.id, 'deals']">
+										{{ 'PIPELINES_PAGE.VIEW_DEALS' | translate }}
+										<nb-icon icon="arrow-forward-outline" aria-hidden="true"></nb-icon>
+									</a>
+								}
+							</header>
+							@if (recentDeals.length) {
+								<div class="pv-deal-head" aria-hidden="true">
+									<span>{{ 'SM_TABLE.TITLE' | translate }}</span>
+									<span>{{ 'PIPELINES_PAGE.STAGE' | translate }}</span>
+									<span>{{ 'PIPELINE_DEAL_CREATE_PAGE.PROBABILITY' | translate }}</span>
+									<span class="pv-deal-date">{{ 'SM_TABLE.CREATED' | translate }}</span>
+								</div>
+								<ul class="pv-deals">
+									@for (deal of recentDeals; track deal.id) {
+										<li class="pv-deal">
+											<span class="pv-deal-text">
+												@if (canEditDeals) {
+													<a class="pv-deal-title" [routerLink]="[backLink, pipeline.id, 'deals', deal.id, 'edit']">
+														{{ deal.title }}
+													</a>
+												} @else {
+													<span class="pv-deal-title">{{ deal.title }}</span>
+												}
+												@if (deal.client) {
+													<span class="pv-subtext">{{ deal.client }}</span>
+												}
+											</span>
+											<span class="pv-deal-stage">{{ deal.stage ?? '—' }}</span>
+											<span [class]="'pv-level is-' + deal.level">
+												<span class="pv-dot" aria-hidden="true"></span>
+												{{ deal.levelKey | translate }}
+											</span>
+											<span class="pv-deal-date">
+												@if (deal.createdAt) {
+													{{ deal.createdAt | dateFormat }}
+												} @else {
+													—
+												}
+											</span>
+										</li>
+									}
+								</ul>
+							} @else {
+								<div class="pv-empty">
+									<nb-icon icon="briefcase-outline" aria-hidden="true"></nb-icon>
+									<span>{{ 'PIPELINES_PAGE.NO_DEALS' | translate }}</span>
+								</div>
+							}
+						</section>
+					}
+				</div>
+
+				<!-- Where it stands: how likely its deals are, and its record. -->
+				<div class="pv-col pv-col--side">
+					@if (deals) {
+						<section class="pv-panel">
+							<header class="pv-panel-header">
+								<h6 class="pv-panel-title">
+									<nb-icon icon="trending-up-outline" aria-hidden="true"></nb-icon>
+									{{ 'PIPELINE_DEAL_CREATE_PAGE.PROBABILITY' | translate }}
+								</h6>
+							</header>
+							@if (deals.length) {
+								<ul class="pv-levels">
+									@for (row of probabilityRows; track row.level) {
+										<li class="pv-level-row">
+											<span [class]="'pv-level is-' + row.level">
+												<span class="pv-dot" aria-hidden="true"></span>
+												{{ row.levelKey | translate }}
+											</span>
+											<span class="pv-level-count">
+												{{ row.count }}
+												<span class="pv-subtext">{{ row.share }}%</span>
+											</span>
+											<span class="pv-track pv-level-track" aria-hidden="true">
+												<span [class]="'is-' + row.level" [style.width.%]="row.share"></span>
+											</span>
+										</li>
+									}
+								</ul>
+							} @else {
+								<div class="pv-empty">
+									<nb-icon icon="trending-up-outline" aria-hidden="true"></nb-icon>
+									<span>{{ 'PIPELINES_PAGE.NO_DEALS' | translate }}</span>
+								</div>
+							}
+						</section>
+					}
+
+					<section class="pv-panel">
+						<header class="pv-panel-header">
+							<h6 class="pv-panel-title">
+								<nb-icon icon="info-outline" aria-hidden="true"></nb-icon>
+								{{ 'PIPELINES_PAGE.DETAILS' | translate }}
+							</h6>
+						</header>
+						<dl class="pv-details">
+							<div class="pv-detail">
+								<dt>{{ 'SM_TABLE.CREATED_BY' | translate }}</dt>
+								<dd>
+									@if (pipeline.createdByUser; as creator) {
+										<span class="pv-person">
+											@if (creator.imageUrl) {
+												<img class="pv-avatar" [src]="creator.imageUrl" [alt]="creator.name" />
+											} @else {
+												<span class="pv-avatar pv-avatar-initials" aria-hidden="true">{{ creatorInitials }}</span>
+											}
+											<span class="pv-person-name">{{ creator.name }}</span>
+										</span>
+									} @else {
+										<span class="pv-muted">—</span>
+									}
+								</dd>
+							</div>
+							<div class="pv-detail">
+								<dt>{{ 'SM_TABLE.CREATED_AT' | translate }}</dt>
+								<dd>{{ pipeline.createdAt | dateTimeFormat }}</dd>
+							</div>
+							<div class="pv-detail">
+								<dt>{{ 'SM_TABLE.LAST_UPDATED' | translate }}</dt>
+								<dd>{{ pipeline.updatedAt | dateTimeFormat }}</dd>
+							</div>
+						</dl>
+					</section>
+				</div>
+			</div>
+		</div>
+	}
+</ngx-record-view-page>
