@@ -79,6 +79,19 @@ nb-accordion-item-header ::ng-deep nb-icon {
 
 :host ::ng-deep ga-status-badge {
   @include ga-hub.status-badge-tints();
+
+  // Same pill as the Invoices status: it hugs its label at the start of the
+  // cell instead of stretching across the column, and stays on one line.
+  .badge {
+    display: inline-flex;
+    width: auto;
+    padding-inline: 0.5rem;
+    white-space: nowrap;
+    // Lighter than the shared pill (0.75rem / 600), so the status reads as a
+    // label rather than the loudest thing in the row.
+    font-size: 0.6875rem;
+    font-weight: 500;
+  }
 }
 
 :host .pagination-container {
