@@ -10,6 +10,9 @@ import * as path from 'path';
  * Marie's Tuesday: 2 h of "meeting", 3 h filed under "support" and "design", 3 h without a tag, whose only link is to a
  * deleted tag. The entities are imported under `DB_ORM=mikro-orm` in a registry kept open while both ORMs build their
  * metadata and read (see `time-log.service.mikro-orm-joins.spec.ts`); everything is measured in `beforeAll`.
+ *
+ * The tag ids are stored in lowercase, as Gauzy generates every key. A client may send one in capitals (a uuid type
+ * that prints them so): SQLite keeps a uuid as text compared by case, so the filter also binds the stored form.
  */
 
 const TIMEOUT = 15 * 60 * 1000;
@@ -29,6 +32,9 @@ const SUPPORT_LOG = '77777777-7777-4777-8777-777777777772';
 const UNTAGGED_LOG = '77777777-7777-4777-8777-777777777773';
 const TUESDAY = '2026-11-10';
 
+/** The meeting tag's id as a client that prints uuids in capitals sends it. */
+const MEETING_IN_CAPITALS = MEETING.toUpperCase();
+
 /** What each read answered through one ORM, or how it failed. */
 type Reads = Record<
 	| 'list'
@@ -36,11 +42,17 @@ type Reads = Record<
 	| 'bySupport'
 	| 'untagged'
 	| 'meetingOrUntagged'
+	| 'byMeetingInCapitals'
+	| 'byMeetingInCapitalsAndSupport'
+	| 'meetingInCapitalsOrUntagged'
 	| 'daily'
 	| 'dailyByMeeting'
+	| 'dailyByMeetingInCapitals'
 	| 'chartByMeeting'
+	| 'chartByMeetingInCapitals'
 	| 'weekly'
 	| 'weeklyByMeeting'
+	| 'weeklyByMeetingInCapitals'
 	| 'changed'
 	| 'refused'
 	| 'afterRefusal',
@@ -206,11 +218,23 @@ async function measure(): Promise<{ mikroOrm: Reads; typeOrm: Reads }> {
 					bySupport: await listed({ tagIds: [SUPPORT] }),
 					untagged: await listed({ untagged: true }),
 					meetingOrUntagged: await listed({ tagIds: [MEETING], untagged: true }),
+					byMeetingInCapitals: await listed({ tagIds: [MEETING_IN_CAPITALS] }),
+					byMeetingInCapitalsAndSupport: await listed({ tagIds: [MEETING_IN_CAPITALS, SUPPORT] }),
+					meetingInCapitalsOrUntagged: await listed({ tagIds: [MEETING_IN_CAPITALS], untagged: true }),
 					daily: await read(() => target().getDailyReport(request)),
 					dailyByMeeting: await read(() => target().getDailyReport({ ...request, tagIds: [MEETING] })),
+					dailyByMeetingInCapitals: await read(() =>
+						target().getDailyReport({ ...request, tagIds: [MEETING_IN_CAPITALS] })
+					),
 					chartByMeeting: await read(() => target().getDailyReportCharts({ ...request, tagIds: [MEETING] })),
+					chartByMeetingInCapitals: await read(() =>
+						target().getDailyReportCharts({ ...request, tagIds: [MEETING_IN_CAPITALS] })
+					),
 					weekly: await read(() => target().getWeeklyReport(request)),
 					weeklyByMeeting: await read(() => target().getWeeklyReport({ ...request, tagIds: [MEETING] })),
+					weeklyByMeetingInCapitals: await read(() =>
+						target().getWeeklyReport({ ...request, tagIds: [MEETING_IN_CAPITALS] })
+					),
 					changed: await read(() =>
 						target().updateTimeLogTags(MEETING_LOG, { organizationId: ORGANIZATION, tags: [SUPPORT] })
 					),
@@ -312,6 +336,14 @@ describe('TimeLogService tags, on one database through both ORMs', () => {
 			expect(logIds(measured[orm].meetingOrUntagged)).toEqual([MEETING_LOG, UNTAGGED_LOG]);
 		});
 
+		it('keeps the logs of a tag whose id is sent in capitals, alone, beside another tag or beside no tag', () => {
+			const { byMeetingInCapitals, byMeetingInCapitalsAndSupport, meetingInCapitalsOrUntagged } = measured[orm];
+			expect(byMeetingInCapitals.error).toBeUndefined();
+			expect(logIds(byMeetingInCapitals)).toEqual([MEETING_LOG]);
+			expect(logIds(byMeetingInCapitalsAndSupport)).toEqual([MEETING_LOG, SUPPORT_LOG]);
+			expect(logIds(meetingInCapitalsOrUntagged)).toEqual([MEETING_LOG, UNTAGGED_LOG]);
+		});
+
 		it("answers Tuesday's 8 h without the filter, each row with its tags", () => {
 			const { daily } = measured[orm];
 			expect(daily.error).toBeUndefined();
@@ -327,6 +359,13 @@ describe('TimeLogService tags, on one database through both ORMs', () => {
 			const { dailyByMeeting, chartByMeeting } = measured[orm];
 			expect(dailyByMeeting.map((day: any) => [day.date, day.sum])).toEqual([[TUESDAY, 2 * 3600]]);
 			expect(chartByMeeting.find(({ date }: any) => date === TUESDAY).value.MANUAL).toBe(2);
+		});
+
+		it('answers the same 2 h of meeting when the report is asked for the tag in capitals', () => {
+			const { dailyByMeetingInCapitals, chartByMeetingInCapitals, weeklyByMeetingInCapitals } = measured[orm];
+			expect(dailyByMeetingInCapitals.map((day) => [day.date, day.sum])).toEqual([[TUESDAY, 2 * 3600]]);
+			expect(chartByMeetingInCapitals.find(({ date }) => date === TUESDAY).value.MANUAL).toBe(2);
+			expect(weeklyByMeetingInCapitals[0].dates[TUESDAY].sum).toBe(2 * 3600);
 		});
 
 		it('counts in the week the logs of the tag asked for', () => {
