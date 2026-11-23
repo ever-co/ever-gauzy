@@ -186,6 +186,10 @@ export class InvoiceController extends CrudController<Invoice> {
 	@ApiOperation({ summary: 'Duplicate an invoice or an estimate as a new draft' })
 	@ApiResponse({ status: HttpStatus.CREATED, description: 'The draft copy, with its lines.' })
 	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found' })
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'The copy could not be created, or the number sequence cannot take another number.'
+	})
 	@HttpCode(HttpStatus.CREATED)
 	@Post(':id/duplicate')
 	async duplicate(@Param('id', UUIDValidationPipe) id: IInvoice['id']): Promise<IInvoice> {

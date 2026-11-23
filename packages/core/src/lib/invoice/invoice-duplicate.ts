@@ -17,6 +17,8 @@ export interface IInvoiceDuplicateOptions {
 export type InvoiceDuplicateInput = IInvoiceCreateInput & {
 	fromOrganizationId?: string;
 	toContactId?: string;
+	paymentTermId?: string;
+	vendorId?: string;
 	alreadyPaid?: number;
 	amountDue?: number;
 	internalNote?: string;
@@ -57,18 +59,27 @@ function duplicateLineOf(line: IInvoiceItem): IInvoiceItemCreateInput {
 	if (line.applyDiscount !== undefined && line.applyDiscount !== null) {
 		copy.applyDiscount = line.applyDiscount;
 	}
-	for (const key of ['taskId', 'employeeId', 'projectId', 'productId'] as const) {
-		const value = line[key];
+	// On MikroORM a line's `employeeId` (and the others) is the unpersisted mirror of its relation, and the mirrors are
+	// turned into relations on the invoice only, not on its nested lines: the relation is what writes the foreign key
+	// there. So each link is stated both ways, as the order invoicing states a line's product. It is read from either
+	// member: a MikroORM read may answer the relation without the mirror.
+	const links = { taskId: 'task', employeeId: 'employee', projectId: 'project', productId: 'product' } as const;
+	for (const [key, relation] of Object.entries(links) as Array<
+		[keyof typeof links, (typeof links)[keyof typeof links]]
+	>) {
+		const stated = (line as unknown as Record<string, unknown>)[relation];
+		const value = line[key] ?? (typeof stated === 'string' ? stated : (stated as { id?: string } | undefined)?.id);
 		if (value) {
 			copy[key] = value;
+			(copy as unknown as Record<string, unknown>)[relation] = { id: value };
 		}
 	}
 	return copy;
 }
 
 /**
- * Builds the draft that copies an invoice or an estimate: the same contact, currency, taxes, discount, terms, tags and
- * lines, as a new document of the tenant's next number, dated today, due after the same payment window, and owing its
+ * Builds the draft that copies an invoice or an estimate: the same contact, currency, taxes, discount, terms, payment
+ * term, vendor, tags and lines, as a new document of the tenant's next number, dated today, due after the same payment window, and owing its
  * whole total.
  *
  * What makes the source *that* document is left behind: its number, status, payments, answer (accepted or not), e-mail
@@ -110,7 +121,14 @@ export function buildInvoiceDuplicate(source: IInvoice, options: IInvoiceDuplica
 		invoiceItems: (source.invoiceItems ?? []).map(duplicateLineOf)
 	} as InvoiceDuplicateInput;
 
-	const keys = source as unknown as { fromOrganizationId?: string; toContactId?: string };
+	// Columns of the entity that `IInvoice` does not declare. `fromOrganizationId` and `toContactId` are the path
+	// TypeORM takes here, as the relations are not loaded.
+	const keys = source as unknown as {
+		fromOrganizationId?: string;
+		toContactId?: string;
+		paymentTermId?: string;
+		vendorId?: string;
+	};
 	const fromOrganizationId = source.fromOrganization?.id ?? keys.fromOrganizationId;
 	if (fromOrganizationId) {
 		copy.fromOrganizationId = fromOrganizationId;
@@ -118,10 +136,22 @@ export function buildInvoiceDuplicate(source: IInvoice, options: IInvoiceDuplica
 	const toContactId = source.toContact?.id ?? keys.toContactId;
 	if (toContactId) {
 		copy.toContactId = toContactId;
-		copy.organizationContactId = source.organizationContactId ?? toContactId;
+	}
+	// A plain column beside the relation (which is `ON DELETE SET NULL`): kept even when the relation is gone.
+	const organizationContactId = source.organizationContactId ?? toContactId;
+	if (organizationContactId) {
+		copy.organizationContactId = organizationContactId;
 	}
 	if (source.internalNote) {
 		copy.internalNote = source.internalNote;
+	}
+	// The schedule the document is settled against (an order invoice states it here and leaves `terms` empty), and the
+	// supplier of a vendor bill: without them the copy would be another kind of document.
+	if (keys.paymentTermId) {
+		copy.paymentTermId = keys.paymentTermId;
+	}
+	if (keys.vendorId) {
+		copy.vendorId = keys.vendorId;
 	}
 	if (source.tags?.length) {
 		copy.tags = source.tags.map((tag) => ({ id: tag.id }) as ITag);

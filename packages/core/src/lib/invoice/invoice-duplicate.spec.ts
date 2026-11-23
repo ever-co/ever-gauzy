@@ -1,7 +1,7 @@
+import { BadRequestException } from '@nestjs/common';
 import { IInvoice } from '@gauzy/contracts';
 import { buildInvoiceDuplicate, MAX_DUPLICATE_PAYMENT_WINDOW_DAYS, paymentWindowDaysOf } from './invoice-duplicate';
 import { InvoiceService } from './invoice.service';
-import * as billedTime from '../invoice-item/invoice-item-billed-time';
 
 const TENANT = 't-1';
 const ORG = 'o-1';
@@ -37,6 +37,8 @@ const source = (overrides: Record<string, unknown> = {}): IInvoice =>
 		fromOrganization: { id: ORG },
 		toContact: { id: 'contact-1' },
 		organizationContactId: 'contact-1',
+		paymentTermId: 'term-1',
+		vendorId: 'vendor-1',
 		tags: [{ id: 'tag-1', name: 'retainer' }],
 		payments: [{ id: 'pay-1' }],
 		historyRecords: [{ id: 'h-1' }],
@@ -70,7 +72,7 @@ describe('buildInvoiceDuplicate', () => {
 		expect(copy.dueDate).toEqual(new Date('2026-12-20T10:00:00.000Z'));
 	});
 
-	it('keeps what describes the bill: contact, currency, taxes, discount, terms, tags, lines', () => {
+	it('keeps what describes the bill: contact, currency, taxes, discount, terms, payment term, vendor, tags, lines', () => {
 		const copy = buildInvoiceDuplicate(source(), { invoiceNumber: 42, today: TODAY });
 
 		expect(copy).toMatchObject({
@@ -88,6 +90,8 @@ describe('buildInvoiceDuplicate', () => {
 			totalValue: 540,
 			invoiceType: 'DETAILED_ITEMS',
 			internalNote: 'repeat customer',
+			paymentTermId: 'term-1',
+			vendorId: 'vendor-1',
 			tags: [{ id: 'tag-1' }]
 		});
 		expect(copy.invoiceItems).toEqual([
@@ -101,9 +105,49 @@ describe('buildInvoiceDuplicate', () => {
 				applyTax: true,
 				applyDiscount: false,
 				employeeId: 'emp-1',
-				projectId: 'proj-1'
+				employee: { id: 'emp-1' },
+				projectId: 'proj-1',
+				project: { id: 'proj-1' }
 			}
 		]);
+	});
+
+	it("states each line's links as relations too, read from the mirror or from the relation", () => {
+		const copy = buildInvoiceDuplicate(
+			source({
+				invoiceItems: [
+					{
+						tenantId: TENANT,
+						organizationId: ORG,
+						description: 'Kit',
+						price: 1,
+						quantity: 1,
+						totalValue: 1,
+						task: { id: 'task-1' },
+						product: { id: 'prod-1' }
+					}
+				]
+			}),
+			{ invoiceNumber: 42, today: TODAY }
+		);
+
+		expect(copy.invoiceItems[0]).toMatchObject({
+			taskId: 'task-1',
+			task: { id: 'task-1' },
+			productId: 'prod-1',
+			product: { id: 'prod-1' }
+		});
+		expect(copy.invoiceItems[0]).not.toHaveProperty('employee');
+	});
+
+	it('keeps the contact identifier of a source whose contact relation is gone', () => {
+		const copy = buildInvoiceDuplicate(source({ toContact: undefined, organizationContactId: 'contact-9' }), {
+			invoiceNumber: 2,
+			today: TODAY
+		});
+
+		expect(copy.organizationContactId).toBe('contact-9');
+		expect(copy).not.toHaveProperty('toContactId');
 	});
 
 	it('leaves behind payments, answer, recipient, link, history and what its lines billed', () => {
@@ -126,14 +170,22 @@ describe('buildInvoiceDuplicate', () => {
 		expect(buildInvoiceDuplicate(source({ isEstimate: true }), { invoiceNumber: 2, today: TODAY }).isEstimate).toBe(
 			true
 		);
-		expect(buildInvoiceDuplicate(source({ isEstimate: undefined }), { invoiceNumber: 2, today: TODAY }).isEstimate).toBe(
-			false
-		);
+		expect(
+			buildInvoiceDuplicate(source({ isEstimate: undefined }), { invoiceNumber: 2, today: TODAY }).isEstimate
+		).toBe(false);
 	});
 
 	it('copies a source without lines, tags, contact or total', () => {
 		const copy = buildInvoiceDuplicate(
-			source({ invoiceItems: undefined, tags: undefined, toContact: undefined, organizationContactId: undefined, totalValue: undefined }),
+			source({
+				invoiceItems: undefined,
+				tags: undefined,
+				toContact: undefined,
+				organizationContactId: undefined,
+				paymentTermId: undefined,
+				vendorId: undefined,
+				totalValue: undefined
+			}),
 			{ invoiceNumber: 2, today: TODAY }
 		);
 
@@ -141,6 +193,9 @@ describe('buildInvoiceDuplicate', () => {
 		expect(copy.amountDue).toBe(0);
 		expect(copy).not.toHaveProperty('tags');
 		expect(copy).not.toHaveProperty('toContactId');
+		expect(copy).not.toHaveProperty('organizationContactId');
+		expect(copy).not.toHaveProperty('paymentTermId');
+		expect(copy).not.toHaveProperty('vendorId');
 	});
 
 	it('does not move the date it is given', () => {
@@ -178,15 +233,23 @@ describe('InvoiceService.duplicate', () => {
 	let created: jest.SpyInstance;
 
 	beforeEach(() => {
-		service = new InvoiceService({} as never, {} as never, {} as never, {} as never, {} as never, {} as never, {} as never);
+		service = new InvoiceService(
+			{} as never,
+			{} as never,
+			{} as never,
+			{} as never,
+			{} as never,
+			{} as never,
+			{} as never
+		);
 		jest.spyOn(service, 'findOneByIdString').mockResolvedValue(source() as never);
 		created = jest.spyOn(service, 'createWithBilledTime').mockResolvedValue({ id: 'copy' } as never);
-		jest.spyOn(billedTime, 'saveBillingTime').mockRejectedValue(new Error('a copy bills no time'));
 	});
 
 	afterEach(() => jest.restoreAllMocks());
 
-	const highest = (max: unknown) => jest.spyOn(service, 'getHighestInvoiceNumber').mockResolvedValue({ max } as never);
+	const highest = (max: unknown) =>
+		jest.spyOn(service, 'getHighestInvoiceNumber').mockResolvedValue({ max } as never);
 
 	it('creates the copy with the number after the highest of the tenant', async () => {
 		highest(41);
@@ -208,6 +271,43 @@ describe('InvoiceService.duplicate', () => {
 		highest(Number.MAX_SAFE_INTEGER);
 		await expect(service.duplicate('source-id')).rejects.toThrow('INVOICE_NUMBER_SEQUENCE_EXHAUSTED');
 		expect(created).not.toHaveBeenCalled();
+	});
+
+	it('hands the create no line that bills time or an expense', async () => {
+		highest(41);
+		await service.duplicate('source-id');
+		const [input] = created.mock.calls[0];
+		expect(input.invoiceItems.length).toBeGreaterThan(0);
+		expect(input.invoiceItems.every((line) => !('timeLogIds' in line) && !('expenseId' in line))).toBe(true);
+	});
+
+	it('takes the next number when another write took the one it read', async () => {
+		jest.spyOn(service, 'getHighestInvoiceNumber')
+			.mockResolvedValueOnce({ max: 41 } as never) // the first attempt reads 41 and takes 42
+			.mockResolvedValue({ max: 42 } as never); // 42 was taken meanwhile: the next attempt takes 43
+		created
+			.mockRejectedValueOnce(new BadRequestException('duplicate key'))
+			.mockResolvedValue({ id: 'copy' } as never);
+
+		await expect(service.duplicate('source-id')).resolves.toEqual({ id: 'copy' });
+		expect(created.mock.calls.map(([input]) => input.invoiceNumber)).toEqual([42, 43]);
+	});
+
+	it('answers any other failure as it is, trying once', async () => {
+		highest(41);
+		created.mockRejectedValue(new Error('boom'));
+
+		await expect(service.duplicate('source-id')).rejects.toThrow('boom');
+		expect(created).toHaveBeenCalledTimes(1);
+	});
+
+	it('gives up after three numbers taken by other writes', async () => {
+		let max = 41;
+		jest.spyOn(service, 'getHighestInvoiceNumber').mockImplementation(async () => ({ max: max++ }) as never);
+		created.mockRejectedValue(new BadRequestException('duplicate key'));
+
+		await expect(service.duplicate('source-id')).rejects.toThrow('duplicate key');
+		expect(created).toHaveBeenCalledTimes(3);
 	});
 
 	it('writes nothing when the source cannot be read', async () => {

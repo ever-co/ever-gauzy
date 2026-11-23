@@ -85,6 +85,9 @@ export interface IInvoiceEmailOutcome {
 	reason?: 'EMAIL_NOT_PREPARED' | 'DOCUMENT_NOT_GENERATED' | 'EMAIL_NOT_SENT';
 }
 
+/** How many numbers a duplicate tries before it gives up to other writes taking each one first. */
+const DUPLICATE_NUMBER_ATTEMPTS = 3;
+
 /** One total of invoice values in one currency: how many documents, and their exact sum. */
 export interface IInvoiceCurrencyTotal {
 	currency: string;
@@ -500,7 +503,9 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 
 	/**
 	 * Copies an invoice or an estimate as a new draft of the tenant's next number (see `buildInvoiceDuplicate`): the
-	 * same contact, currency, taxes, discount, terms, tags and lines, dated today. The source is read as the caller
+	 * same contact, currency, taxes, discount, terms, payment term, vendor, tags and lines, dated today. When another
+	 * write takes the number between the read and the create, the copy takes the next one, up to
+	 * `DUPLICATE_NUMBER_ATTEMPTS` numbers in all. The source is read as the caller
 	 * reads it, so one of another tenant, or outside the caller's organization boundary, is not found; and it is never
 	 * written. The copy bills no time and no expense the source billed.
 	 *
@@ -511,13 +516,39 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 	 */
 	async duplicate(id: ID): Promise<IInvoice> {
 		const source = await this.findOneByIdString(id, { relations: ['invoiceItems', 'tags'] });
+		for (let attempt = 1; ; attempt++) {
+			const invoiceNumber = await this.nextInvoiceNumber();
+			try {
+				return await this.createWithBilledTime(
+					buildInvoiceDuplicate(source, { invoiceNumber, today: new Date() })
+				);
+			} catch (error) {
+				// `create` answers a unique violation as any other failure, so the number is checked instead: another
+				// write took it when the sequence has since reached it. The failed create wrote nothing (one save, or
+				// one flush that is cleared on failure). Any other failure is answered as it is.
+				const numberTaken =
+					attempt < DUPLICATE_NUMBER_ATTEMPTS &&
+					(await this.nextInvoiceNumber().catch(() => 0)) > invoiceNumber;
+				if (!numberTaken) {
+					throw error;
+				}
+			}
+		}
+	}
+
+	/**
+	 * The number after the highest of the caller's tenant.
+	 *
+	 * @throws BadRequestException (`INVOICE_NUMBER_SEQUENCE_EXHAUSTED`) when the sequence cannot take another number.
+	 */
+	private async nextInvoiceNumber(): Promise<number> {
 		const answer = (await this.getHighestInvoiceNumber()) as unknown as { max?: unknown } | null;
 		const highest = Number(answer?.max ?? 0);
-		const invoiceNumber = (Number.isFinite(highest) ? Math.max(0, Math.trunc(highest)) : 0) + 1;
-		if (!Number.isSafeInteger(invoiceNumber)) {
+		const next = (Number.isFinite(highest) ? Math.max(0, Math.trunc(highest)) : 0) + 1;
+		if (!Number.isSafeInteger(next)) {
 			throw new BadRequestException('INVOICE_NUMBER_SEQUENCE_EXHAUSTED');
 		}
-		return await this.createWithBilledTime(buildInvoiceDuplicate(source, { invoiceNumber, today: new Date() }));
+		return next;
 	}
 
 	private ownRepositories(): ILinesRepositories<Invoice> {
