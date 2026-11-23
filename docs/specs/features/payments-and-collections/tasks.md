@@ -66,12 +66,13 @@
       carries its party, items and amounts.
 - [ ] **T10**. Allocation `col/settlement/allocation.service.ts` (`OPEN_ITEM_ALLOCATOR`): sets applied all or nothing through
       `OPEN_ITEM_REGISTER`, sense and limit rules, currency conversion and exchange difference, dating. Test: conservation
-      property (payment = allocations + deductions + unallocated); stale version → conflict; both ORMs.
+      property (amount + deductions + tax withheld = allocations + unallocated); a 60 receipt with a 40 bank-charge
+      deduction settles a 100 invoice in full; stale version → conflict; both ORMs.
 - [ ] **T11**. Early-settlement discount and deductions `col/settlement/deduction.service.ts`: core `adjustment` rows
       (owners `PAYMENT`, `PAYMENT_ALLOCATION`, type `SETTLEMENT_DEDUCTION`, governed `reasonCode`, `dimensionSetId`),
       system lines marked, tax parts from the tax engine, withholding at payment recorded by the tax engine through
       `TAX_WITHHOLDING` (no withholding kind here). Test: discount inside and outside the window; undone on release by a
-      reversing adjustment row; payment = allocations + adjustments + unallocated.
+      reversing adjustment row; amount + adjustments + tax withheld = allocations + unallocated.
 - [ ] **T12**. Confirm and cancel `col/payment-document/confirm-payment.handler.ts`, `cancel-payment.handler.ts` (period
       guard, number, credit open item, allocations, advance marking, idempotency key); edit of a confirmed payment
       (reversal, new confirmation, allocations re-applied) unless `collections.lockConfirmedPayments` is on (default off).

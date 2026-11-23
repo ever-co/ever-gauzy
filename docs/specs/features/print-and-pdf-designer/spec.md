@@ -132,7 +132,10 @@ This feature gives **every printable record type a print template**: each docume
 
 - **FR-52** The system renders PDFs on the server with one built-in engine in every deployment, identically, without a browser or network access; images come only from the tenant's file storage and the record.
 - **FR-53** The system renders several records into one PDF in order, each from a new page with its own numbering, and for two-sided printing inserts blank pages so each record starts on a front side.
-- **FR-54** The system can append a record's PDF attachments after its pages on request.
+- **FR-54** The system can append a record's PDF attachments after its pages on request, only those the reader may open
+  through the record's own attachment access at that time; an attachment the reader may not open is left out with a
+  warning, and a stored file with appended attachments is served only to a reader who may open each of them at the time
+  of the request.
 - **FR-55** The system records each PDF made for a record (download, email, archive, portal, job, printer) with template and version, language, heading, copy number, user or agent, time, pages and content fingerprint, shown on the record to users with `PRINT_HISTORY_VIEW`; for invoices and estimates the entry is written once, by the server, into their existing history. A stored file is served only to a reader who can read its record at the time of the request and who sees at least every field the file shows; anyone else is refused and may render a fresh copy under their own access.
 - **FR-56** The system stores an archival copy when a document of a type set to "archive on confirm" is confirmed; a reprint offers the archived original or a new rendering marked as a copy.
 - **FR-57** The system produces PDFs in an archival profile on request, with embedded files (structured invoice data) when an owning feature supplies them. `(advanced)`

@@ -155,7 +155,9 @@
       time-off settlement of lines credited through `TIME_OFF_COMPENSATORY_INTAKE` keyed by employee and work day. Files:
       `attendance/src/lib/overtime/overtime-type.service.ts`, `attendance/src/lib/overtime/overtime-statement.service.ts`,
       `attendance/src/lib/overtime/overtime-statement.controller.ts`, `attendance/src/lib/overtime/overtime-time-off.settlement.ts`.
-      Test: caps and excess; one statement per period; a date once; correction after payment; a work day credited once;
+      Test: caps and excess; one statement per period; one line per date, type, day kind and project (two shifts of one
+      date with different types or projects give two lines, a rebuild adds none); correction after payment; a work day
+      credited once;
       an existing compensatory policy keeps accruing as today with attendance on.
 - [ ] **T26**. Ports provided: `PAYROLL_ATTENDANCE` (`AttendancePayrollFactsProvider`, fact keys), `TIME_OFF_ATTENDANCE`
       (`AttendanceTimeOffProvider`), `SHIFTS_ATTENDANCE_ACTUALS`, `SHIFTS_LOCATIONS`, `SHIFTS_COVERAGE`, the shift layer

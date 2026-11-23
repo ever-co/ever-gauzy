@@ -115,9 +115,12 @@
   `pur/requisition/purchase-requisition.service.ts`, `pur/requisition/purchase-requisition.controller.ts`,
   `pur/requisition/dto/create-purchase-requisition.dto.ts`. Test: lifecycle spec.
 - [ ] **T19**. Budget check (`pur/requisition/budget-check.service.ts`): `PURCHASING_BUDGET_CHECK` bound to
-  `BudgetAvailabilityService.availability` (commitments are the budget records fed by the document events of T33),
-  project-budget fallback summing open requisition and order lines on read, controls. Test: unit spec per control
-  action; no commitment row written by this plugin.
+  `BudgetAvailabilityService.availability` (commitments are the budget records fed by the document events of T33)
+  with the scope's approved requisition lines not ordered and open order lines passed as `pendingLines` (plan §2
+  Commitments), project-budget fallback summing open requisition and order lines on read, controls. Test: unit spec per
+  control action; no commitment row written by this plugin; with a stop budget of 100 and an 80 requisition approved
+  whose event has not reached the commitment records, a 30 submit is refused with 20 remaining, and after the
+  projection the 80 is counted once.
 - [ ] **T20**. Route proposal and conversion (`requisition-conversion.service.ts`): to orders per supplier, transfer,
   issue, pick list, work order, subcontract order, customer receipt; per-line results (the request-for-quotation and
   quotation targets are added with sourcing in T27). Files: `pur/requisition/requisition-conversion.service.ts`,

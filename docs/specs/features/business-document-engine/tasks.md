@@ -251,11 +251,14 @@
   `bd/flow/flow-realtime.publisher.spec.ts`: hint emitted per change; component spec.
 - [ ] **T50**. Readable diff with effects difference and the approval inbox items (FR-65, FR-66). Files: `bd/change-sets/{change-set.diff.ts,change-set-inbox.consumer.ts}`. Test:
   `bd/change-sets/change-set.diff.spec.ts`, a diff snapshot spec for header, lines, totals and effects.
-- [ ] **T51**. Preview tokens (HMAC, actor-bound, 10 minutes) required for agent confirmations, and MCP write tools
+- [ ] **T51**. Preview tokens (HMAC, bound to actor, action and canonical payload fingerprint, 10 minutes) required for
+  agent confirmations, and MCP write tools
   (preview, confirm, cancel, close lines, change-set propose and submit, recurrence create, pause and resume, bulk start
   and retry) (FR-81, FR-82, FR-108, FR-109). Files: `bd/preview/preview-token.ts`,
   `packages/mcp-server/src/lib/tools/business-documents.ts`. Test: `bd/preview/preview-token.spec.ts`: stale and
-  foreign tokens refused; agent marked in history.
+  foreign tokens refused; a token from a cancellation preview refused for a confirmation of the unchanged document, and
+  a token for one payload refused with another (`PREVIEW_TOKEN_STALE`); key order in the payload does not change the
+  fingerprint; agent marked in history.
 - [ ] **T52**. Recurrence skip dates, holiday policy through the core recurrence module and `OfficialHolidayService`,
   skip conditions, pause and resume, catch-up policies (FR-86 to FR-88, FR-90). Files: `bd/recurrence/{recurrence-skip.ts,recurrence-catch-up.ts}`,
   `packages/core/src/lib/recurrence/recurrence.rules.ts`. Test: `bd/recurrence/recurrence-catch-up.spec.ts`: three-day downtime under each policy.

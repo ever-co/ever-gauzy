@@ -94,8 +94,9 @@ payee bank detail is held until verified.
   both amounts and the rate between them.
 - **FR-7** The system lets a payment settle items in another currency: it converts at the payment's rate (positive,
   editable while draft), and reports the difference from each item's own rate as an exchange difference.
-- **FR-8** A user with `PAYMENTS_CONFIRM` can confirm a payment whose amount equals its allocations plus its deductions
-  plus its unallocated rest; confirming is refused in a locked period, and `PAYMENTS_OUT_EDIT` is needed for money out.
+- **FR-8** A user with `PAYMENTS_CONFIRM` can confirm a payment whose gross amount equals its allocations plus its
+  unallocated rest, the gross amount being its amount (the money that moved) plus its deductions and the tax withheld at
+  payment (a 60 receipt with a 40 bank-charge deduction settles a 100 invoice in full: 60 + 40 = 100 + 0); confirming is refused in a locked period, and `PAYMENTS_OUT_EDIT` is needed for money out.
   Money in recorded through today's payment routes and dialog by a holder of `ORG_PAYMENT_ADD_EDIT` is confirmed at once,
   as today, and every role that holds `ORG_PAYMENT_ADD_EDIT` also receives `PAYMENTS_CONFIRM` and `PAYMENTS_CANCEL` by
   default, so nobody who records payments today needs another person to complete one.

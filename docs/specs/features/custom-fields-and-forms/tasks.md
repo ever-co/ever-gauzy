@@ -18,8 +18,9 @@
 - Everything stays behind `GAUZY_CUSTOM_FIELDS_ENABLED` and `FEATURE_CUSTOM_FIELDS`: the feature is off by default; after the trial period it may be switched on by default for new tenants only; existing tenants keep their setting until an administrator changes it. Paths are
   relative to the repository root; `cf/` means `packages/plugins/custom-fields/src/lib/`, `ui/` means
   `packages/ui-core/shared/src/lib/custom-fields/`, `cfui/` means `packages/plugins/custom-fields-ui/src/lib/`.
-- Phases 1 to 4 deliver plan phases 1 and 2; Phases 5 and 6 deliver plan phase 3 (advanced; Phase 6 only for
-  self-hosted installations with the script switch on).
+- Phases 1 to 4 deliver plan phases 1 and 2; Phases 5 to 7 deliver plan phase 3 (advanced; Phase 6 only for
+  self-hosted installations with the script switch on; Phases 1 to 5 (2b included) and 7 apply to cloud and self-hosted
+  installations alike).
 
 ## Phase 1 — Contracts, entities, migrations
 
@@ -184,6 +185,14 @@
   `cf/values/custom-field-value.subscriber.ts`. Test: two organizations number independently; a later save keeps the
   number; concurrent creates get distinct numbers.
 
+## Phase 2b — Flag-off pass-through (every installation, released with T14 and T15)
+
+- [ ] **T61**. Flag-off pass-through (FR-62), on cloud and self-hosted installations alike and released together with
+  T14 and T15: the values interceptor, the response interceptor and the value subscriber do nothing for tenants with
+  `FEATURE_CUSTOM_FIELDS` off. Files: `cf/values/custom-field-values.interceptor.ts`,
+  `cf/values/custom-field-values.response.interceptor.ts`, `cf/values/custom-field-value.subscriber.ts`. Test: e2e on
+  contacts and projects with the feature off; the request and response bodies equal today's snapshots.
+
 ## Phase 3 — UI surfaces
 
 - [ ] **T30**. Embeddables `ui/` — metadata service (cache, 404 hidden), `ngx-custom-fields-section`, field renderers per
@@ -344,6 +353,9 @@
   `cf/scripts/custom-field-scripts.controller.ts`, `cf/definitions/custom-field-definition.service.ts`,
   `cf/packages/customization-package.service.ts`. Test: e2e on
   SQLite with the marker set and unset.
+
+## Phase 7 — Closing tasks for every installation
+
 - [ ] **T59**. Question sets: built by T63, T70 and T71 (Phase 1, `packages/utils/src/lib/question-set/`); its tests are theirs.
 - [ ] **T60**. Catalogue rows by feature (FR-93): the category of the FR-87 reports keyed `FEATURE_CUSTOM_FIELDS` in the
   shared catalogue feature filter of `report-builder-and-dashboards` (its T51: core migration
@@ -351,10 +363,6 @@
   `report-category.service.ts` and `report-organization.service.ts`, which skip categories and rows whose feature is
   off for the tenant); nothing of that filter is built here. Test: with the feature off the Reports page, menu and a new organization's report switches equal today's;
   with it on the rows appear.
-- [ ] **T61**. Flag-off pass-through (FR-62): the values interceptor, the response interceptor and the value subscriber
-  do nothing for tenants with `FEATURE_CUSTOM_FIELDS` off. Files: `cf/values/custom-field-values.interceptor.ts`,
-  `cf/values/custom-field-values.response.interceptor.ts`, `cf/values/custom-field-value.subscriber.ts`. Test: e2e on
-  contacts and projects with the feature off; the request and response bodies equal today's snapshots.
 
 ## Requirement Coverage
 

@@ -83,7 +83,10 @@
       default `access_field_rule` contributions (`hr-field-access.contributions.ts`), one `AUDIT_EVENT_SINK` event per
       employee and group read by someone else (REST, GraphQL, export, MCP surfaces; `sensitive-read-audit.interceptor.ts`),
       `EncryptionService` wrapper with `last4` for identity numbers (`identity-number.crypto.ts`). Test: unit per group
-      and surface (field absent without the key); one audit event per read; numbers never appear in logs.
+      and surface (field absent without the key); one audit event per read; numbers never appear in logs; with no
+      audit sink bound, an HR administrator's read of another employee's identity group is absent from REST, GraphQL,
+      export and MCP answers and the group read answers `403 HR_SENSITIVE_AUDIT_UNAVAILABLE`, while the employee still
+      reads their own values.
 - [ ] **T10**. Settings over the settings store (`/hr/settings`, `hr.*` keys), numbering modes on core `sequence`.
       Files: `hr/settings/hr-settings.controller.ts`, `hr/settings/hr-settings.service.ts`,
       `hr/employees/employee-numbering.service.ts`. Test: series numbers unique and never reused; mode change does not
@@ -91,8 +94,11 @@
 - [ ] **T11**. Employee record service and controller: list and read with HR columns, placement and profile writes
       (as `CORRECTION` events), validation of FR-3, level label sync, retirement suggestion, legal name defaulting from
       `user`. Files: `hr/employees/hr-employee.service.ts`, `hr/employees/hr-employee.controller.ts`,
-      `hr/employees/dto/hr-placement.dto.ts`, `hr/employees/dto/hr-profile.dto.ts`, `hr/employees/employee-level-sync.ts`.
-      Test: unit and e2e; editing the user name leaves the legal name.
+      `hr/employees/dto/hr-placement.dto.ts`, `hr/employees/dto/hr-profile.dto.ts`, `hr/employees/employee-level-sync.ts`,
+      `packages/core/src/lib/employee/employee.subscriber.ts` (the label-to-level step of plan §3).
+      Test: unit and e2e; editing the user name leaves the legal name; a label-only update through the core employment
+      route and through GraphQL `updateEmployee` sets `employeeLevelId` to the matching level, and to null for a label
+      no level has, while the label is saved as today.
 - [ ] **T12**. Reporting line: cycle and self guards, cross-organization setting, `hrPath` maintenance, chain and
       reports reads, `HR_REPORTING_LINE` provider, `MANAGED_EMPLOYEE_SOURCES` binding (HR reads always; employee lists
       and time screens only while `hr.reportingLineInManagerScope` is on). Files:
@@ -167,6 +173,16 @@
 - [ ] **T63**. Change history (FR-103): every write of an HR record, event, process, document, grievance and settlement
       is a core `activity_log` row with who, when, before and after. Files: `hr/audit/hr-change-log.subscriber.ts`. Test:
       one row per change with before and after values; sensitive values follow the group masks when the history is read.
+
+## Phase 2b — Core page slots (before T24)
+
+- [ ] **T56** (before T24). Core UI: named slots `DEPARTMENTS_PAGE_PANELS`, `POSITIONS_PAGE_PANELS`,
+      `EMPLOYEE_LEVELS_PAGE_PANELS` added to `PAGE_EXTENSION_SLOTS`
+      (`packages/plugin-ui/src/lib/plugin-extension/page-extension-slot.types.ts`) and placed on
+      `apps/gauzy/src/app/pages/departments/departments.component.ts`,
+      `apps/gauzy/src/app/pages/positions/positions.component.ts` and
+      `apps/gauzy/src/app/pages/employee-levels/employee-level.component.ts`. Test: the pages render as today with no
+      extension; a test extension appears in each slot.
 
 ## Phase 3 — UI surfaces
 
@@ -328,16 +344,6 @@
       `hr/privacy/hr-retention.job.ts`, `hr/privacy/hr-erasure.registration.ts`. Test: anonymised
       groups, events kept under a pseudonym; with no retention set nothing is anonymised; phone rows that existed before
       the feature are never touched.
-- [ ] **T55**. Trial period on a tenant with the flag on; spec status `Implemented`. Files:
-      `docs/specs/features/hr-core-lifecycle/spec.md`. Test: every acceptance criterion of `spec.md` §7 demonstrated on
-      the trial tenant.
-- [ ] **T56** (before T24). Core UI: named slots `DEPARTMENTS_PAGE_PANELS`, `POSITIONS_PAGE_PANELS`,
-      `EMPLOYEE_LEVELS_PAGE_PANELS` added to `PAGE_EXTENSION_SLOTS`
-      (`packages/plugin-ui/src/lib/plugin-extension/page-extension-slot.types.ts`) and placed on
-      `apps/gauzy/src/app/pages/departments/departments.component.ts`,
-      `apps/gauzy/src/app/pages/positions/positions.component.ts` and
-      `apps/gauzy/src/app/pages/employee-levels/employee-level.component.ts`. Test: the pages render as today with no
-      extension; a test extension appears in each slot.
 - [ ] **T57**. Provide the ports other features bind to (plan, **Consumer tokens answered**): `LEARNING_SKILL_RATINGS`, `PAYROLL_ACTIVE_EMPLOYEE`, `PAYROLL_HR_DIRECTORY`, `PERFORMANCE_SKILL_RATINGS`, `RECRUITMENT_ONBOARDING`, `WORKFLOW_HR_APPROVERS`, `WORKFLOW_REPORTING_LINE`. Files: `apps/api/src/plugin-composition.ts`. Test: one contract test per token over the shape its consumer plan states; with this feature off each consumer keeps its stated fallback.
 - [ ] **T60**. Agent employees in HR (FR-56): employees of kind agent are refused (`HR_AGENT_NOT_ALLOWED`) for personal
       data, documents, reminders, onboarding, separation, grievances and settlements, and are listed under "agent
@@ -347,6 +353,12 @@
       `hrui/shared/agent-list-filter.component.ts`. Test: each refused path for an agent employee; the agent employees list
       shows owner and cost; with the filter on, agents are absent from the other HR lists; with it off (the default) and
       with the feature off, every list shows whom it shows today.
+
+## Phase 7 — Trial period
+
+- [ ] **T55**. Trial period on a tenant with the flag on, after every other task of this list (T56, T57 and T60
+      included); spec status `Implemented`. Files: `docs/specs/features/hr-core-lifecycle/spec.md`. Test: every
+      acceptance criterion of `spec.md` §7 demonstrated on the trial tenant.
 
 ## Requirement Coverage
 

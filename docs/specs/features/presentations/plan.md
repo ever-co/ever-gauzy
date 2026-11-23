@@ -17,7 +17,8 @@ A new plugin triple, `@gauzy/plugin-slides` (`packages/plugins/slides`), `slides
 menus and settings inside the documents hub) and `slides-react-ui` (the one editor, viewer, presenter view and audience
 view, written once in React and mounted in the Angular app and in `public-layout-ui` through the existing React bridge
 `@gauzy/ui-react`, the way `dashboard-time-track-react-ui` and `ai-chat-react-ui` are), loaded by
-`apps/api/src/plugins.ts` only when `GAUZY_SLIDES_ENABLED` is exactly `true` and gated per tenant by
+`apps/api/src/plugins.ts` only when `GAUZY_SLIDES_ENABLED` is exactly `true` (its render-only module of §3 loads
+whenever the package is installed) and gated per tenant by
 `FEATURE_PRESENTATIONS`. An isomorphic library, `@gauzy/slides-model` (`packages/slides-model`), holds what the browser,
 the API and the worker must do alike: the deck model over a shared CRDT document, the theme and layout engine, the
 **SVG renderer** (one rendering for editor, thumbnails, presenting, PDF and images) and the PPTX and ODP codecs. It
@@ -35,7 +36,7 @@ builds on what exists:
   merges character by character as on pages.
 - **Platform pieces**: bound charts read through `REPORT_CARDS` (report-builder, whose results are cached per access
   hash) and the workbook range reader of `spreadsheets` (whose live values are cached per reader there), so decks keep
-  no chart result cache of their own; audience questions are core comments with core reactions as votes; polls are the
+  no chart result cache of their own; audience questions are core comments with core reactions as members' votes (guests' votes in `slide_guest_vote`, §3); polls are the
   core poll records of `discussions`; public viewing rides `drive`'s public links (core `shared_entity` rows); PDF
   through `print-and-pdf-designer`, else the docs plugin's `pdf/pdf-render.ts`.
 - **Hub and app pieces, not copies**: templates are the hub's template fields and gallery and comment anchors the hub's
@@ -105,7 +106,14 @@ background, transition, advance time, hidden, notes as a rich-text fragment, ele
 geometry, style, z-order position key, link id for element tracking, build steps; text elements hold a rich-text fragment).
 `contentJson` holds the manifest (slides with keys, titles, layout, hidden, media and chart keys). The kind's
 `extractText` gives slide titles, text and notes as Markdown to search and knowledge, `thumbnail` the cover (slide 1),
-`render` the PPTX copy after a persist (debounced 60 s) and on download. Versions are drive's `document_version` rows.
+`render` the PPTX copy after a persist (debounced 60 s) and on download. A persist marks the copy stale in its own
+transaction (the manifest's `blobRevision` behind the document's `contentRevision`) until that render. The PPTX codec
+lives in `@gauzy/slides-model`, and the render-only `SlidesRenditionModule` (`packages/plugins/slides/src/lib/rendition/`,
+no route, table, job or page) is loaded by `apps/api/src/plugins.ts` whenever the package is installed, also with
+`GAUZY_SLIDES_ENABLED` off; it registers only the `deck` kind's `render` with drive's file-kind registry, so a download
+that finds the copy stale renders it from the saved state first, and after a start it renders every stale copy in
+batches; the plugin also renders stale copies at shutdown. With the feature or the plugin off, even after an unclean
+stop, a download is the last saved state (spec §2.2). Versions are drive's `document_version` rows.
 
 ### New tables (plugin; all `TenantOrganizationBaseEntity`, soft delete; JSON as `text`; keys `varchar(32)`)
 
@@ -120,6 +128,7 @@ geometry, style, z-order position key, link id for element tracking, build steps
 | `slide_session` | `documentId`, `presenterUserId`, `status` (`LIVE`, `PAUSED`, `ENDED`), `joinCodeHash` varchar(64), `currentSlideKey`, `buildStep` int, `allowGuests` bool, `anonymousQuestions` bool, `publicLinkRef` varchar(64) null, `startedAt`, `endedAt`, `peakAudience` int | idx `(documentId, startedAt)`; idx `(status, updatedAt)` |
 | `slide_session_attendee` | `sessionId` FK cascade, `userId` null, `guestKeyHash` varchar(64) null, `joinedAt`, `leftAt` null | idx `(sessionId)`; unique `(sessionId, userId)` and `(sessionId, guestKeyHash)` where set |
 | `slide_session_slide` | `sessionId` FK cascade, `slideKey`, `shownAt`, `seconds` int | idx `(sessionId, shownAt)` |
+| `slide_guest_vote` (votes of guests, who have no employee for a core reaction) | `sessionId` FK cascade, `commentId` (the question's core `comment`), `guestKeyHash` varchar(64), `emoji` varchar(32) | unique `(commentId, guestKeyHash, emoji)`; idx `(sessionId)` |
 | `slide_rehearsal` | `documentId`, `userId`, `timings` text (slide key → seconds), `totalSeconds` int | idx `(documentId, userId)` |
 
 Not tables of this plugin: chart results (read per reader from `REPORT_CARDS`, cached by access hash in the report
@@ -129,8 +138,11 @@ builder, and from the spreadsheets range reader; only frozen values live on the 
 assistant was used in its result), template flags (the hub's template fields).
 
 Audience questions are core `comment` rows on entity `SlideSession` (answered = resolved, hidden = withdrawn by the
-presenter); votes are core `reaction` rows on the question's `Comment`; anonymous questions and guest votes are written
-by the system actor with a guest key hash in the comment's metadata. Polls are core `poll` rows of `discussions` with host
+presenter); a member's vote is a core `reaction` row on the question's `Comment`, written with that member's own
+employee as today's reactions are; a guest's vote is a `slide_guest_vote` row keyed by the guest's key hash, so two
+guests voting the same emoji each count and one guest's vote never removes or replaces another's (a second vote of the
+same guest withdraws only that guest's own); a question's count is its reactions plus its guest votes. Anonymous
+questions are written by the system actor with a guest key hash in the comment's metadata. Polls are core `poll` rows of `discussions` with host
 `SlideSession` or a poll element key.
 
 ### Changes outside the plugin (additive)
@@ -160,7 +172,7 @@ idempotent, forward-only, both ORMs:
 
 1. `1791000064200-CreateSlideDeckTables` — deck, thumbnail, theme, brand rules, linked slide.
 2. `1791000064210-CreateSlideChartTables` — chart binding.
-3. `1791000064220-CreateSlideSessionTables` — session, attendee, session slide, rehearsal.
+3. `1791000064220-CreateSlideSessionTables` — session, attendee, session slide, guest vote, rehearsal.
 4. `1791000064230-SeedSlidesSystemThemes` — system themes and layouts; `down` no-op.
 
 The `FEATURE_PRESENTATIONS` feature (off for every tenant), the permissions with their default grants and the settings

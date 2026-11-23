@@ -299,7 +299,7 @@ Pages already live in the Documents hub next to files and folders: a block edito
 | FR-42, FR-43 | page mentions with backlinks (document links) |
 | FR-49 | the document review request, approve and reject |
 | FR-53, FR-74 | the knowledge pipeline's cited retrieval and its access filter, and the assistant chat's documents tools |
-| FR-68 | the recent visits drive records for each employee |
+| FR-68 | the existing page read route of the documents plugin, beside the recent visits drive records for each employee |
 | FR-70 | the repository integration the platform already runs |
 | FR-73, FR-75 | the docs tools and scopes of [`../mcp-collaboration-tools/spec.md`](../mcp-collaboration-tools/spec.md) FR-3 |
 | FR-77 | page follow and the Inbox's delivery settings with their digest hour |

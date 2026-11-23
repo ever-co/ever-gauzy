@@ -82,7 +82,10 @@ maintenance occurrences and delivery installations; the requester is told of sch
 
 ### New or changed entities
 
-No existing table changes; core gains one enum value, the address role `SERVICE_SITE` (`AddressRoleEnum`). Serial units
+No existing table changes; core gains one enum value in code, the address role `SERVICE_SITE`, in `AddressRoleEnum`
+(`packages/core/src/lib/address-role/address-role.enums.ts`, checked by `@IsEnum` on `AddressRole.role` and the DTOs) and
+in the GraphQL `AddressRoleEnum` (`address-role/schema/address-role.type.gql`, regenerated into `schema.graphql`).
+`address_role.role` is `varchar(16)` without a check constraint, so the value needs no migration. Serial units
 keep warranty dates and status and read a unit's contract end from this plugin's contracts (`serials-and-batches`);
 deliveries already record installations.
 
@@ -146,6 +149,7 @@ parts kits (catalogue `SPARE_PART` relations), and the item flags `product_varia
   Permissions, default grants and the two role bundle templates are plugin contributions, not a migration.
 - Additive, idempotent, per dialect with the plugin helpers; partial unique indexes over a generated "live" column on
   MySQL; SQLite tables created whole. No backfill.
+- No core migration for the address role `SERVICE_SITE`: it is an enum value in code only (see above).
 
 ### Contracts
 
@@ -269,7 +273,7 @@ calendar layer, visit page and unit page; visits are a layer of the calendar fea
 | `field-service.forecast` | after each reading + nightly | meter forecasts, proposed visits, anomaly flags | `(lineId, sequence)` of forecast visit |
 | `field-service.first-fix` | daily | sets `firstTimeFix` on visits completed N days ago | null-only update |
 | `field-service.profitability` | daily + month end | profitability snapshot | replace rows of the period |
-| `field-service.notices` | consumer | customer messages per settings | `(visitId, event)` dedup |
+| `field-service.notices` | consumer | customer messages per settings | dedup on the outbox event id of each occurrence (unchanged across redeliveries and retries), so a visit moved twice sends both move notices and a retried delivery sends one |
 | core operation `FIELD_SERVICE_DISPATCH_PROPOSE` | on request; re-proposal on overrun or urgent breakdown | `@gauzy/route-planner` run with field-service constraints and a 20 s budget; result stored on the proposal | aggregate = the proposal; one live per team and day |
 | consumer `subscriber:field-service-sources` | installation, delivery and warranty events | units and coverage | unique serial unit |
 

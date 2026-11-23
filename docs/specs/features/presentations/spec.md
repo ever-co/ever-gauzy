@@ -95,7 +95,8 @@ Marked `(advanced)`.
 ### 3.1 Scope, decks and templates
 
 - **FR-1** The system loads only when `GAUZY_SLIDES_ENABLED` is exactly `true` and gates every new route, GraphQL field,
-  menu entry and MCP tool with `FEATURE_PRESENTATIONS`; off, they answer `404`.
+  menu entry and MCP tool with `FEATURE_PRESENTATIONS`; off, they answer `404`. Only the bringing up to date of a deck's
+  downloadable copy keeps running with the flag off, so a download always holds the last save.
 - **FR-2** The system stores a deck as a hub file of the presentation kind, so tree, move, duplicate, rename, delete, favourites,
   recents, sharing, visibility, team spaces, trash, quotas and search apply without a second model, and every existing
   hub route, preview and extraction keeps working; an uploaded presentation stays a file until opened as a deck.

@@ -44,8 +44,9 @@
   Migration timestamps: `1791000051300` to `1791000051399` (`packages/plugins/crm`).
 - [ ] **T3**. Entities and MikroORM repositories `crm/engagement/entities/crm-engagement-state.entity.ts`,
   `crm/engagement/entities/crm-response-fact.entity.ts`, `crm/email/entities/crm-user-preference.entity.ts` (capture
-  choices and identity only); migration `crm/database/migrations/1791000051310-CreateCrmEngagementTables.ts`. Test:
-  migration spec, entity metadata spec for both ORMs.
+  choices and identity only), `crm/engagement/entities/crm-task-overdue-mark.entity.ts`; migration
+  `crm/database/migrations/1791000051310-CreateCrmEngagementTables.ts`. Test: migration spec, entity metadata spec for
+  both ORMs.
 - [ ] **T4** (parallel). Entities `crm/hierarchy/entities/crm-hierarchy-node.entity.ts` (exceptions only),
   `crm/capture/entities/crm-capture-entry.entity.ts`, `crm/relationships/entities/crm-relationship.entity.ts`,
   `crm/coaching/entities/crm-coaching-fact.entity.ts`; migration
@@ -79,8 +80,11 @@
   (`packages/core/src/lib/tasks/views/view-filters.ts`, `view-tasks.service.ts`), conversion carry-over (link rows moved
   to the deal). Test: e2e on SQLite; task in assignee's list and in the view; conversion moves open tasks only.
 - [ ] **T11**. Overdue job `crm/schedule/crm-task-overdue.{scheduler,worker,service}.ts` with the inline fallback; due
-  times taken from the window after the last completed `job_execution` of the job. Test: one event per task and due
-  time; catch-up after a missed run.
+  times taken from the window after the last completed `job_execution` of the job; each event appended with its
+  `crm_task_overdue_mark` row in one transaction (entity of T3), and the close path in `subscriber:crm-engagement` raising a task closed after its due
+  time that no run has raised (plan §8). Test: one event per task and due time; catch-up after a missed run; a run that
+  failed after emitting is rerun and raises nothing twice; a task open at its due time and closed during worker downtime
+  raises exactly one late event, and a task closed before its due time raises none.
 - [ ] **T12** (parallel). Notes page `/crm/notes` over core comments of the note kind on CRM records (first line as
   title, pin author and time from the activity log), mention checks for non-readers. Files:
   `crm/activity/crm-notes.service.ts`, `crm/activity/crm-notes.controller.ts`,

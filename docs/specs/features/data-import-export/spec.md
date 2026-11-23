@@ -114,7 +114,8 @@ recur from a link or a drive folder, and merges can be undone. Marked `(advanced
 - **FR-7** A user with `DATA_IMPORT_RUN` can import into a target only with its create permission (create mode) or edit
   permission (update mode); custom record types follow their import access per role.
 - **FR-8** The system offers a template file per target with the chosen fields as headers, required ones marked, a
-  help row on request, sample rows, child columns, and, for updates, the existing records with their match key.
+  help row on request, sample rows, child columns, and, for updates, the existing records with their match key, limited
+  to the records and fields the caller may read, as in an export (FR-45).
 - **FR-9** The system starts an import from a list's empty state, a list's menu and Settings → Data, with a short guide
   for a first import.
 
@@ -155,7 +156,8 @@ recur from a link or a drive folder, and merges can be undone. Marked `(advanced
 - **FR-25** The system lets the user download the failed rows, the skipped rows and the full row log as CSV or XLSX, with
   the original columns and a reason column.
 - **FR-26** The system distinguishes errors (the row is not written) from warnings (written, reported).
-- **FR-27** The system keeps a dry run's result for 7 days so the run can start from it without reading the file again.
+- **FR-27** The system keeps a dry run's result for 7 days so the run can start from it without reading the file again,
+  whatever the user decides for a duplicate row (FR-70).
 
 ### 3.6 Modes and structures
 
@@ -228,8 +230,9 @@ recur from a link or a drive folder, and merges can be undone. Marked `(advanced
   kept record.
 - **FR-57** The system refuses a merge the record type's own rules forbid (a person with tracked time into another
   organization, a confirmed document) with the reason.
-- **FR-58** The system undoes a merge within 7 days: references still on the kept record move back and the merged
-  records return, unless they changed since. `(advanced)`
+- **FR-58** The system undoes a merge within 7 days: references still on the kept record move back, duplicate links the
+  merge removed (a tag both records carried, for example) are restored, and the merged records return, unless they
+  changed since. `(advanced)`
 
 ### 3.11 Recycle bin, safeguards and archiving
 

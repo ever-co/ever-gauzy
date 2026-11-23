@@ -193,9 +193,12 @@
 - [ ] **T37**. Reconciliations as stock counts: schedule job opening a `stock_count` (mode `SPOT`) of each supplier
   location, portal count form writing through the count route, comparison from the count lines, decisions per line in
   `subcontract_count_decision`, corrections by closing the count, debit note request through `SUBCONTRACTING_BILLS` for
-  `CHARGE` lines. Files: `sub/collaboration/{subcontract-count.service.ts,subcontract-count.controller.ts,stock-count-closed.consumer.ts}`,
+  `CHARGE` lines; allocation of each line's difference to the order material lines of the location in the closing
+  consumer (`countAdjustedQuantity`, `unallocatedQuantity`, plan §1 Reconciliation). Files: `sub/collaboration/{subcontract-count.service.ts,subcontract-count.controller.ts,stock-count-closed.consumer.ts}`,
   `sub/jobs/counts-schedule.job.ts`, `sui/components/counts-page/counts-page.component.ts`. Test:
-  `sub/collaboration/subcontract-count.service.spec.ts` AC-8 DB scenario; no reconciliation table; the count's variance value is the decision's value.
+  `sub/collaboration/subcontract-count.service.spec.ts` AC-8 DB scenario; no reconciliation table; the count's variance value is the decision's value;
+  a shortage of 5 at a location shared by two orders is taken from the line with the oldest send first, never below
+  zero, and an excess with no line holding the item stays unallocated on the decision.
 - [ ] **T38**. Contractor links (supplier ↔ employee), order tasks per output or operation, consumer
   `subscriber:subcontracting-time` (hours, labour cost at each log's stored pay rate, progress; logs by task only), bill
   draft proposal from approved time at the service's supplier term price with claimed logs. Files:
@@ -207,7 +210,7 @@
   supplier location balances with the material still held on every order, open or closed. Files: `sub/explain/{cost-explanation.service.ts,material-position.service.ts}`,
   `sub/jobs/integrity-check.job.ts`, `packages/mcp-server/src/lib/tools/subcontracting.ts`. Test:
   `sub/explain/cost-explanation.service.spec.ts` and `sub/jobs/integrity-check.job.spec.ts` unit specs (an order closed with
-  material still at the supplier reports no drift).
+  material still at the supplier reports no drift; 100 sent and a closed count of 97 reports no drift).
 - [ ] **T40**. Worker `SubcontractingSchedulePlugin` in `apps/worker/src/plugins.ts`, in-process fallback timers.
   Files: `sub/schedule/subcontracting-schedule.plugin.ts`, `apps/worker/src/plugins.ts`.
   Test: `sub/schedule/subcontracting-schedule.plugin.spec.ts` worker plugin list spec.

@@ -57,7 +57,7 @@ flowchart LR
 | Package | new `packages/plugins/lot-serial-tracking`, `lot-serial-tracking-ui` (Angular, including the capture module of the floor app `floor-ui`) | Principle I; one floor app |
 | Coupling | ports of the inventory plugin and of the line owners, bound in `apps/api/src/plugin-composition.ts`; no import of other plugins | |
 | Balances | derived per (lot, location, bin) from the `signedQuantity` of every posted `lot_serial_bundle_entry` row (one with a `movementId`), whatever its bundle's status became: a receipt of 10 that is canceled keeps its +10 entries under the `CANCELLED` original and the reversing bundle adds −10, so the balance is zero; draft entries carry no `movementId` and count nothing; read and checked under the movement's level lock; no balance table, no reserved counter | one stored quantity per item and location |
-| Traces | an edge table (`trace_link`) walked breadth-first with a depth limit | five levels < 2 s |
+| Traces | an edge table (`trace_link`) walked breadth-first with cycle detection (a visited set of nodes) through any number of levels: `depth` (default 5) bounds only what one answer expands, and an answer with unexpanded nodes returns them as a continuation cursor (`next`) that the next call expands, until none is left; a recall's impact walks the forward trace to the end as steps of a core operation, never truncated | five levels < 2 s; no level left out |
 | Numbering | lot and serial series through the business document engine's numbering series | [platform architecture](../../architecture/business-suite.md) §3.1 |
 | Item defaults | shelf life and warranty period are the item's (`product.shelfLifeDays`, `product.warrantyDays` of `item-catalogue`); the policy stores overrides only; tracking `LOT`/`SERIAL` requires `product_variant_setting.trackInventory` (refused otherwise) and `NONE` leaves it unchanged | one default per item |
 | Warranty | the serial unit holds the warranty dates and status of serial-tracked items; field service's installed units read them (event `serial_unit.warranty_expiring` and a read through its port) and keep dates only for untracked units; service contract end is read from field service's contracts | one owner, one job |
@@ -129,7 +129,7 @@ creating and confirming routes take `Idempotency-Key`; lists cursor paged.
 | `GET/PUT` | `/api/lot-serial-bundles` (`documentType`, `lineId`) | `LOT_SERIAL_VIEW` / `LOT_SERIAL_EDIT` | draft bundle of a draft line | New |
 | `POST` | `/api/lot-serial-bundles/suggest` | `LOT_SERIAL_VIEW` | outward suggestion by policy and shelf life | New |
 | `POST` | `/api/lot-serial-bundles/import`; `GET /template` | `LOT_SERIAL_EDIT` | file in, template out | New |
-| `GET` | `/api/stock-trace` | `LOT_SERIAL_VIEW` (+ contact view for customers) | `{ kind, id, direction, depth }` | New |
+| `GET` | `/api/stock-trace` | `LOT_SERIAL_VIEW` (+ contact view for customers) | `{ kind, id, direction, depth, cursor }` → nodes, edges and `next` while unexpanded nodes remain | New |
 | `GET/POST` | `/api/lot-recalls[/:id]` | `LOT_RECALL_MANAGE` | | New |
 | `POST` | `/api/lot-recalls/:id/impact`, `/contain`, `/notices`, `/close` | `LOT_RECALL_MANAGE` | `contain` takes `preview` | New |
 | `GET/POST/PUT/DELETE` | `/api/shelf-life-rules[/:id]` | `LOT_SERIAL_POLICY_EDIT` | | New |
@@ -228,7 +228,7 @@ selection latency (derived balances), trace depth and duration, expired lots on 
 | Serial-heavy lines slow confirmation | Medium | Medium | set-based validation; 1,000 units budget measured |
 | Derived lot balances slow selection | Medium | Medium | index (`lotId`, `warehouseId`, `binId`) on entries; one grouped sum per item and location; 200 ms budget measured with 5,000 lots |
 | Two models (text and bundle) diverge | Medium | High | text written only from the bundle while the item's tracking is on; untracked items keep their text as typed; consistency check |
-| Trace explosion on high-volume lots | Medium | Medium | depth limit, paged expansion, indexed edges |
+| Trace explosion on high-volume lots | Medium | Medium | per-answer depth with continuation, paged expansion, cycle detection, indexed edges; the recall walk runs as an operation |
 | Adoption lot hides real lot mix | High | Low | adoption lot flagged; count-driven split suggested |
 | Offline duplicate serials | Low | Medium | uniqueness at sync; exceptions instead of loss |
 

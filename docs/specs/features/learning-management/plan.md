@@ -113,6 +113,7 @@ export class Enrolment extends TenantOrganizationBaseEntity implements ILearning
 | `learning_assignment`, `learning_submission` | assignment: `courseId`, `title`, `prompt`, `answerKind`, `modelAnswer`, `opensAt`, `closesAt`, `isGraded`, `rubric` json, `isInstructorOnly`; submission: `assignmentId`, `learnerId`, `answer` json, `submittedAt`, `outcome` (`PENDING`/`PASS`/`FAIL`/`NOT_GRADED`/`NOT_APPLICABLE`), `rubricScores` json, `comment`, `gradedByUserId`, `gradedAt`, `version` | unique `(assignmentId, learnerId)`; idx `(outcome)` |
 | `learning_exercise`, `learning_exercise_run` | exercise: `courseId`, `title`, `prompt`, `language`, `starterCode`, `tests` json; run: `exerciseId`, `learnerId`, `code` text, `results` json, `status`, `runnerRef` | idx `(exerciseId, learnerId)` |
 | `learning_placement` | `assessmentKind`, `assessmentId`, `lessonKey` null, `cohortSessionId` null | unique `(assessmentKind, assessmentId, lessonKey, cohortSessionId)` |
+| `learning_version_assessment` (written once at publish, never updated) | `versionId` fk cascade (`learning_course_version`), `kind` varchar(16) (`QUIZ`/`QUESTION`/`ASSIGNMENT`/`PLACEMENT`), `sourceId` uuid (the `learning_quiz`, `learning_question`, `learning_assignment` or `learning_placement` row), `definition` json (that row's learner-facing columns at publish: a quiz with its items and draws, each question it can draw, an assignment's prompt, answer kind and rubric, a placement's lesson or session) | unique `(versionId, kind, sourceId)` |
 | `learning_path`, `learning_path_course` | path: `name`, `description`, `enforceOrder`, `isPublished`; course: `pathId`, `courseId`, `position` | unique `(pathId, courseId)` |
 | `learning_assignment_rule` | `name`, `targetKind`, `targetId`, `trigger` (`ONBOARDING`/`DEVELOPMENT_AREA`/`POSITION`/`GROUP`/`SKILL_GAP`/`CERTIFICATE_EXPIRY`), `dueInDays`, `isActive`; criteria are core `rule` rows (`ownerType = LEARNING_ASSIGNMENT_RULE`, `ownerId` = the rule) | idx `(organizationId, trigger, isActive)` |
 | `learning_enrolment` | `learnerId`, `targetKind` (`COURSE`/`COHORT`/`PATH`), `courseId`, `cohortId`, `pathId` null, `courseVersionId`, `role` (`LEARNER`/`MENTOR`), `status` (`PENDING_APPROVAL`/`PENDING_PAYMENT`/`ACTIVE`/`COMPLETED`/`WITHDRAWN`/`REVOKED`), `source` varchar(16) (`SELF`/`STAFF`/`RULE`/`PURCHASE`/`BULK`/`IMPORT`), `sourceRef`, `entitlementId` uuid null (the `entitlement` granted by the order line of a paid item), `orderId` uuid null, `progress` numeric(5,2), `currentLessonKey`, `startedAt`, `completedAt`, `dueDate`, `liveKey` varchar(120), `version` | unique `(tenantId, liveKey)`; idx `(learnerId, status)`, `(courseId, status)`, `(dueDate)`, `(entitlementId)` |
@@ -139,6 +140,13 @@ recorded payment outside the gateway is an order transaction entered by a user w
 followed by the order's own `POST /orders/:id/complete`, which puts the right in force. Cohort announcements are core
 `broadcast` rows; lesson and course discussions are core `comment` rows; evaluators' hours are core availability slots.
 
+Quizzes, questions, assignments and placements are edited in place as the draft's definitions; publishing a version
+writes their learner-facing definitions into `learning_version_assessment`, and every learner path (taking a quiz,
+drawing questions, submitting an assignment, finding an assessment's place in a lesson or session) resolves them
+through the snapshot of the enrolment's `courseVersionId`, never through the live rows. An edit of a quiz or a question
+shared by several courses therefore reaches learners of each course only when that course is republished; attempts
+keep their drawn `questionSet` and submissions their assignment as published.
+
 ### 3.1 Settings (`learning.settings.ts`, organization scope, settings store)
 
 `learning.areaName`, `learning.guestBrowsing` (false), `learning.selfSignUp` (false), `learning.learnerRoleId`,
@@ -152,7 +160,7 @@ public site's branding, menus and search-engine metadata belong to the Ever Work
 
 - Plugin (`packages/plugins/learning/src/lib/database/migrations/`): `1791000028100-CreateLearningSetupTables` (learners, categories), `1791000028110-CreateLearningContentTables` (courses,
   versions, staff, chapters, lessons, packages, interest), `1791000028120-CreateLearningAssessmentTables` (questions, quizzes,
-  attempts, assignments, submissions, exercises, runs, placements), `1791000028130-CreateLearningProgressTables` (paths, rules,
+  attempts, assignments, submissions, exercises, runs, placements, version assessments), `1791000028130-CreateLearningProgressTables` (paths, rules,
   enrolments, progress, activity, highlights in `learning_note`), `1791000028140-CreateLearningCohortTables` (cohorts, staff, sessions, templates,
   waiting list, live classes, attendance, feedback), `1791000028150-CreateLearningCertificateTables` (certificates, evaluations,
   badges, reviews, mentors), `1791000028160-CreateTrainingTables`, `1791000028170-CreateLearningCommerceTables` (item links, course

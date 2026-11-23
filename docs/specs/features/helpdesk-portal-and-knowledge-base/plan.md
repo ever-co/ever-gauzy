@@ -119,7 +119,7 @@ review, `ownerUserId`), `document_version`, `document_space`, `document_route`, 
 
 | Table | Columns (besides base) | Indexes and uniqueness |
 | --- | --- | --- |
-| `help_node` (help fields of a page or folder of a help space) | `documentId` FK cascade, `isSystem` bool (General), `audienceCap` varchar(12) null (folders), `pinnedOrder` int null, `language` varchar(8) (the page's language; default the organization's preferred language), `publishAt`, `publishedAt` null, `viewCount` bigint, `helpfulCount`, `notHelpfulCount`, `citationCount` int (cached from feedback, views and links), `translationOfId` uuid null, `confirmedRevision` int null, `isStale` bool default false, `releaseFrom`, `releaseTo` varchar(32) null | unique `(documentId)`; idx `(organizationId, pinnedOrder)`, `(translationOfId)` |
+| `help_node` (help fields of a page or folder of a help space) | `documentId` FK cascade, `isSystem` bool (General), `audienceCap` varchar(12) null (folders), `pinnedOrder` int null, `language` varchar(8) (the page's language; default the organization's preferred language), `publishAt`, `publishedAt` null, `viewCount` bigint, `helpfulCount`, `notHelpfulCount`, `citationCount` int (cached from feedback, views and links), `translationOfId` uuid null, `confirmedRevision` int null, `isStale` bool default false, `releaseFrom`, `releaseTo` varchar(32) null; `legacySyncedAt` timestamp null (imported articles: the legacy row's version the page last matched) | unique `(documentId)`; idx `(organizationId, pinnedOrder)`, `(translationOfId)` |
 | `help_search_log` | `spaceId`, `query` varchar(255), `normalised` varchar(255), `language`, `audience`, `source` (`SITE`, `PORTAL`, `TICKET_FORM`, `ASSISTANT`, `AGENT`), `resultCount` int, `topDocumentId`, `topScore` numeric(6,4), `openedDocumentId` null, `taskId` null (ticket raised within an hour), `visitorHash` | idx `(organizationId, createdAt)`, `(organizationId, normalised, createdAt)`; pruned after 180 days |
 | `help_synonym_set` | `language` varchar(8), `kind` (`SYNONYMS`, `IGNORED`), `terms` text | idx `(organizationId, language)` |
 | `help_knowledge_gap` | `topicKey` varchar(64), `title`, `signals` text (counts per kind), `volume7`, `volume30` int, `examples` text, `state` (`OPEN`, `ASSIGNED`, `DRAFTED`, `DISMISSED`, `RESOLVED`), `assigneeEmployeeId`, `draftDocumentId`, `resolvedByDocumentId`, `resolvedAt` | unique `(organizationId, topicKey)` |
@@ -167,7 +167,13 @@ rows (`isLocked` and every other column stay as they were) and the legacy routes
 knowledge-base plugin publishes `knowledge_base.article.changed` on a legacy write, which the importer applies to the
 page as a new version (idempotent per legacy version), and a save of an imported page writes its name and content
 back to the legacy row through the port `KNOWLEDGE_BASE_SYNC` (provenance on both sides stops the echo), so an article
-stays one article without a lock.
+stays one article without a lock. Order between the two writers: the legacy row's `updatedAt` is the sync version;
+`help_node.legacySyncedAt` holds the version the page last matched (applied from an event or written back). An event
+whose version is not later than `legacySyncedAt` is stale and dropped, so a delayed event never sets the page back; a
+write-back is a conditional update against the expected version (`updatedAt = legacySyncedAt`) and sets
+`legacySyncedAt` to the new version in the same step; when it finds a newer legacy write, it writes nothing and that
+write's own event, later than `legacySyncedAt`, becomes the page's next version. The later write to the legacy row
+wins, and the other stays in the page's version history.
 
 **Contracts** (`packages/contracts/src/lib/help-center.model.ts` additions for the help module and
 `helpdesk-satisfaction.model.ts`): enums (audience, sources, outcomes, states), interfaces, DTOs, events and ports:
@@ -203,7 +209,11 @@ Staff routes: `TenantPermissionGuard`, `PermissionGuard`, class-validator DTOs, 
 help fields and settings, `Idempotency-Key` on creating routes. Article content is written through the existing docs
 routes (`expectedRevision`), which the help module checks for help spaces. Public routes `@Public()`, throttled,
 cacheable 60 s with validators; with the Ever Works integration enabled, the linked Work also calls them with its
-integration token (higher rate limits, same audience rules: everyone articles only).
+integration token (higher rate limits, same audience rules: everyone articles only). Shared caching applies only to
+answers whose audience is fixed to `EVERYONE`: a guest request and an integration-token request answer
+`Cache-Control: public, max-age=60` with validators and `Vary: Authorization, Cookie`, while any request carrying a
+portal session answers `Cache-Control: private, no-store`, whatever audience it resolves to, so a shared cache never
+returns a customer-audience answer to a guest (spec FR-27).
 
 | Method | Endpoint | Permission | Description | Status |
 | ------ | -------- | ---------- | ----------- | ------ |
@@ -224,7 +234,7 @@ integration token (higher rate limits, same audience rules: everyone articles on
 | `GET` `POST` | `/portal/helpdesk/tickets` (`scope=mine\|organisation`), `/tickets/form?templateId=`, `POST /tickets`, `GET /tickets/:reference`, `POST /tickets/:reference/{messages,solved,rating}` | portal rights `tickets.*` | customer tickets | New |
 | `GET` | `/portal/helpdesk/organisation/figures?period=`, `/portal/help/articles[/:slug]` | `tickets.view_organization` / `help.customer_articles` | customer figures; signed-in help | New |
 | `GET` `POST` | `/public/helpdesk/follow-up/:token`, `…/messages` | `shared_entity` link (follow-up) | built-in guest follow-up page and its reply | New |
-| `GET` `POST` | `/public/helpdesk/ratings/:token`, `…/score/:n` | `shared_entity` link (rating) | built-in rating page, one-click score | New |
+| `GET` `POST` | `GET /public/helpdesk/ratings/:token?score=n` (the email's star links: the rating page with that score selected, recording nothing), `POST …/score` (records the score from the page's Send) | `shared_entity` link (rating) | built-in rating page; a link opened by a mail scanner records nothing | New |
 | CRUD | `/helpdesk/rating-options`, `GET PUT /helpdesk/settings/ratings` | `HELPDESK_RATINGS_MANAGE` | rating options and setting contributions | New |
 | `GET` | `/helpdesk/ratings`, `/helpdesk/ratings/export.csv`, `/helpdesk/tickets/:taskId/rating` | `HELPDESK_RATINGS_VIEW` | ratings | New |
 | `POST` | `/helpdesk/customers/organisation-access` (`customerIds` or all) | `HELP_CENTER_SETTINGS_MANAGE` | bulk company requests right (core operation) | New |
@@ -367,7 +377,7 @@ assistant cost from the AI ledger; channel of each rating recorded.
 | Risk | Likelihood | Impact | Mitigation |
 | ---- | ---------- | ------ | ---------- |
 | An internal article leaks to guests | Low | High | import to agents-only; one audience filter; contract test on every read path and feed |
-| An article edited in two places after the import | Medium | Medium | legacy writes carried to the page and page saves written back (provenance stops the echo); legacy rows never locked; legacy page redirected to the hub |
+| An article edited in two places after the import | Medium | Medium | legacy writes carried to the page and page saves written back (provenance stops the echo); ordered by the legacy row's version: a stale event is dropped and a write-back is conditional on the expected version, so the later write wins and the other stays a page version; legacy rows never locked; legacy page redirected to the hub |
 | `documents-and-wiki` columns not yet present | Medium | Medium | build order fixed; the help migration checks for them and refuses to run early |
 | No embeddings provider | Medium | Medium | the docs pipeline's lexical path; index check job when embeddings turn on |
 | Outside source abuse | Low | Medium | allow-list, SSRF-safe agent, timeout, no credentials |

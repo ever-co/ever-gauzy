@@ -226,7 +226,7 @@ web app; every view is a selection other engines (automation, digests, exports, 
 - **FR-52** Full-text search covers search fields and searchable custom fields of every registered type, comments, notes,
   emails linked to records, chat messages, documents and file text for tenants with the feature on (with it off the
   index and the search results cover what they cover today); a hit inside a comment, note or email shows its record and
-  a snippet; quoted earlier replies are left out of email text.
+  a snippet; quoted earlier replies are left out of email text. A private note is found only by its author.
 - **FR-53** Every hit is re-read under the reader's rights; hits on records they may no longer read are dropped.
 - **FR-54** Search finds references and numbers exactly first (task keys, document numbers), then prefix matches, then
   words with one typo for words of five letters or more.
@@ -251,7 +251,9 @@ web app; every view is a selection other engines (automation, digests, exports, 
   user's own references (me, my teams), returns a filter shown as editable chips with an explanation; nothing is applied
   until accepted, and it can be saved as a view. `(advanced)`
 - **FR-62** Records of an open list, board or calendar that others create, change or delete update in place within 2 s,
-  highlighted; a row the user is editing is not overwritten (a notice offers the new value). `(advanced)`
+  highlighted: a record that comes to match the list's filter appears at its place (or is counted in a "new records"
+  notice when its place is beyond the loaded rows), one that stops matching leaves, and counts follow; a row the user
+  is editing is not overwritten (a notice offers the new value). `(advanced)`
 - **FR-63** A record shows who is viewing or editing it now, and warns before saving a field someone else changed in
   the meantime; presence is not stored. `(advanced)`
 - **FR-64** Meaning-based search finds records, documents, messages, comments, notes and emails by meaning as well as

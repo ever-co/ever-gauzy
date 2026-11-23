@@ -18,7 +18,8 @@
 - Everything stays behind `GAUZY_POINT_OF_SALE_ENABLED` / `GAUZY_LOYALTY_ENABLED` and the tenant features: the feature is off by default; after the trial period it may be switched on by default for new tenants only; existing tenants keep their setting until an administrator changes it.
   `[n]` at the end of a task is the rollout phase of the plan (§11) it belongs to.
 - Gating: register tasks check `FEATURE_POINT_OF_SALE`, loyalty tasks (T17 to T20, T24, T25, T31, T47, T48, T51,
-  T53) `FEATURE_LOYALTY`.
+  T53) `FEATURE_LOYALTY`, except the register report of T25 (`pos/reports/item-sales-by-register.dataset.ts`), which
+  checks `FEATURE_POINT_OF_SALE` only, so a tenant with the register on and loyalty off keeps it (FR-67).
 - Path prefixes: `pos/` = `packages/plugins/point-of-sale/src/lib/`, `loy/` = `packages/plugins/loyalty/src/lib/`,
   `posui/` = `packages/plugins/point-of-sale-ui/src/lib/`, `loyui/` = `packages/plugins/loyalty-ui/src/lib/`. Each
   entity has its MikroORM and TypeORM repositories beside it in `repository/` (as in
@@ -61,7 +62,11 @@
 ## Phase 2 — Services, endpoints, events
 
 - [ ] **T8**. Ports `POS_ORDER_GATEWAY`, `POS_PAYMENT_GATEWAY`, `POS_PRICING`, `POS_PROMOTION`, `POS_STOCK_LEDGER`,
-  `POS_RETURNS`, `POS_LOYALTY`, `POS_ATTENDANCE`; bindings in `apps/api/src/plugin-composition.ts`. Files: `pos/ports/pos.ports.ts`. Test: services run with every port unbound. [1]
+  `POS_RETURNS`, `POS_LOYALTY`, `POS_ATTENDANCE`; bindings in `apps/api/src/plugin-composition.ts` (`POS_PRICING` to
+  `CommerceCartService.priceBasket` in process, with the `ProductPriceService.resolvePrices` fallback without the cart
+  plugin; plan §1). Files: `pos/ports/pos.ports.ts`. Test: services run with every port unbound; with
+  `FEATURE_POINT_OF_SALE` on and `FEATURE_PRICING_RULES` off a register sale is priced at today's list and variant
+  prices while `/pricing/quote` answers `404`. [1]
 - [ ] **T9**. One-step register order adapter in `packages/plugins/order/src/lib/order-platform-adapters.module.ts`
   (create with price snapshots, place, complete, invoice on request), with specs; no change to existing order
   behaviour. Files also: `packages/plugins/order/src/lib/pos/register-order.adapter.ts`. [1]
@@ -107,8 +112,10 @@
   Files: `loy/ledger/points-ledger.service.ts`, `loy/member/loyalty-member.service.ts`,
   `loy/member/loyalty-member.controller.ts`, `loy/member/contact-points-cache.ts`. [1]
 - [ ] **T19**. Loyalty outbox consumer `subscriber:loyalty` for `pos.sale.recorded`, `order.completed`,
-  `order.canceled`, `return.refunded`; channel filters and exclusions; specs. Files: `loy/events/loyalty.consumer.ts`,
-  `loy/ledger/earn-calculator.ts`. [1]
+  `order.canceled`, `return.refunded`; channel filters and exclusions, the order channel skipping orders with
+  `source = POINT_OF_SALE`, earning keys by purchase (`earn:ORDER:<orderId>`, plan §3); specs. Files:
+  `loy/events/loyalty.consumer.ts`, `loy/ledger/earn-calculator.ts`. Test: a register sale with the register and order
+  channels both on earns once; a redelivered event earns nothing more. [1]
 - [ ] **T20**. `/loyalty/quote`, `/loyalty/redemptions` (LOYALTY adjustment on the document), limits; register and
   checkout use; specs. Files: `loy/redemption/loyalty-quote.service.ts`, `loy/redemption/loyalty-redemption.service.ts`,
   `loy/redemption/loyalty-redemption.controller.ts`. [1]
@@ -124,7 +131,9 @@
   `loy/ledger/points-expiry.job.ts`, `loy/ledger/expiry-reminder.job.ts`, `loy/ledger/expiry-policy.ts`. Test: two earned
   entries of one member due on the same date both expire (`expire:<earnEntryId>`); a rerun of the day writes nothing. [2]
 - [ ] **T25**. Reservations for carts with expiry and cart-event release; earning on fully paid invoices (`document.payment.confirmed`); bonus rules
-  with campaign windows; reports item sales by register and members by tier; specs. Files:
+  with campaign windows (an invoice raised from an order earns under that order's key, so an order or register sale
+  that earned already earns nothing more when its invoice is paid); reports item sales by register (gated by
+  `FEATURE_POINT_OF_SALE` alone) and members by tier; specs. Files:
   `loy/ledger/loyalty-reservation.service.ts`, `loy/events/invoice-paid.consumer.ts`, `loy/programme/bonus-rules.ts`,
   `pos/reports/item-sales-by-register.dataset.ts`, `loy/reports/members-by-tier.dataset.ts`. [2]
 - [ ] **T26**. Outbox events of plan §5 with `declareStreamedEvents`; Inbox items for overdue unsent sales; specs. Files:

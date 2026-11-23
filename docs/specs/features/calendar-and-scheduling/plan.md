@@ -82,8 +82,8 @@ flowchart LR
 | Outside guests | `calendar_guest` rows created from `employee_appointment.emails` on first read and written back to it on change | existing outside invitees stay visible everywhere |
 | Settings | `calendar.settings.ts` (scope `ORGANIZATION`): free/busy to members, team expansion limit, discussion check and its threshold, meeting-free times, per-person load figures, tracked-time mode, sync and subscriptions allowed, guest invitations, refresh minutes, failure limit | platform settings store |
 | Time zones | the runtime's time zone database (already used by core through its time zone dependency); instants stored in UTC plus the zone name | wall time kept across offset changes |
-| Busy time | materialised `calendar_busy_block` rows (18 months ahead, 3 months back) rebuilt per event on change and rolled nightly | free/busy and slots without expanding series on every read |
-| Concurrency | resource and booking checks inside a transaction under a named lock per resource or host (PostgreSQL advisory lock, MySQL `GET_LOCK`, in-process mutex on SQLite) | no double booking on three databases |
+| Busy time | materialised `calendar_busy_block` rows (18 months ahead, 3 months back) rebuilt per event on change and rolled nightly; free/busy reads and slot lists use them and may trail an event change by the rebuild delay | free/busy and slots without expanding series on every read |
+| Concurrency | resource and booking checks inside a transaction under a named lock per resource or host (PostgreSQL advisory lock, MySQL `GET_LOCK`, in-process mutex on SQLite); the check of the chosen slot (FR-63, FR-74) never relies on busy blocks for event-derived time: under the lock it reads the host's and the resource's events overlapping that one slot from the event tables (series expanded over the slot only), their resource bookings and the busy sources (time off, holidays, shifts, registered sources) for the slot, and takes from `calendar_busy_block` only the rows nothing else holds (synced outside calendars, `syncLinkId` set), so a rebuild still pending cannot let an occupied slot through | no double booking on three databases |
 | Sync | `ICalendarSyncAdapter` on `@gauzy/connector-kit` (`ConnectorBase`, logged HTTP, connected account), runs reported through `INTEGRATION_SYNC_RUNS`; standard-protocol client in the plugin; items mapped through core `integration_map` (`entity` calendar event, `sourceId` remote key, `gauzyId` event id, the connection's `integrationTenantId`) with two additive nullable columns `remoteVersion` and `syncState`; field merge by the three-way merge of `packages/plugins/integration-ever-works/src/lib/sync/merge/three-way-merge.ts`, lifted to `packages/core/src/lib/integration-map/merge/` and used by both; conflicts listed from `syncState = CONFLICT` and reported as `integration_sync_issue` rows where `integration-hub` is loaded | providers stay optional plugins; one mapping and merge |
 | Outside fetches | `createSsrfSafeHttpsAgent()` of core for subscriptions and the protocol adapter | internal-address guard |
 | Real time | outbox events → realtime hints to calendar audiences (`RealtimeHintsService` pattern) | Principle VII |
@@ -332,8 +332,11 @@ plain appointments keep needing `GAUZY_MEETING_REMINDERS_ENABLED` (FR-60).
 - `CalendarAccessService` resolves the caller's level per calendar (owner, shares by user, team, role, organization,
   organization free/busy default) and filters events, fields and private details in list queries, detail, search,
   feeds, exports, layers, MCP and port answers; record links additionally pass `RECORD_ACCESS_FILTER`. For everyone
-  but the owner a private event is a "Private" block with its time in calendar views, free/busy and API reads, and is
-  left out of search, feeds, exports, record panels and timelines, capture and MCP answers (spec FR-14).
+  but the owner and the event's participants a private event is a "Private" block with its time in calendar views,
+  free/busy and API reads, and is left out of search, feeds, exports, record panels and timelines, capture and MCP
+  answers (spec FR-14); invitations (FR-36) carry its details to the participants the owner invited, and a participant's
+  own copy shows them to that participant only, while readers of the participant's calendar through a share get the
+  "Private" block.
 - Public routes: published types only; tokens random, stored as SHA-256 hashes, single purpose, expiring at the event's
   end plus 30 days; throttling per address and network; guest content sanitised; booking pages never reveal other
   bookings beyond free slots.

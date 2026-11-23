@@ -192,7 +192,8 @@
 - [ ] **T28**. Period roll and expiry: next-period balances, carry with cap and expiry, expiry of the rest, expiry of
       carried parts, consumption order, manual expiry; existing carry-forward route idempotent with the job. Files:
       `tp/accrual/{period-roll.service.ts,expiry.service.ts,consumption-order.ts}`. Test:
-      `tp/accrual/period-roll.service.spec.ts` golden year ends; invariant spec.
+      `tp/accrual/period-roll.service.spec.ts` golden year ends; invariant spec; an encashable policy without carry
+      forward drafts the encashment and expires only the days beyond it, so confirming takes the offered days.
 - [ ] **T29**. Assignment rules and assignments: criteria as core `rule` rows (`TIME_OFF_ASSIGNMENT_RULE`) evaluated
       with `HR_EMPLOYEE_RULE_CONTEXT`, priorities, daily and event-driven re-evaluation, `time_off_policy_employee` kept
       in step (and pivot edits through the existing form turned into assignments), starting grants (pro-rated, elapsed
@@ -209,7 +210,9 @@
       Test: `tp/compensatory/compensatory-claim.service.spec.ts`: a work day credited from attendance cannot be claimed again.
 - [ ] **T32**. Encashment: encashable computation, documents, confirm with preview, payout hand-off, paid status,
       cancel, automatic drafts at period end. Files: `tp/encashment/{encashment.service.ts,encashment.controller.ts,encashable.ts}`.
-      Test: `tp/encashment/encashment.service.spec.ts`: cancel returns days only before payment; changes recorded with before and after.
+      Test: `tp/encashment/encashment.service.spec.ts`: cancel returns days only before payment; changes recorded with before and after;
+      the automatic draft of a period end is confirmed with its days still on the old balance, and cancelling it
+      expires those days with key `expire:<balance>:encashment:<encashmentId>`.
 - [ ] **T33** (parallel). Payroll feed (unpaid and partial-pay days per pay period), payslip link, closed-period guard
       through `TIME_OFF_PAY_PERIOD_LOCK` (refuses only where `payroll.lockTimeOffInClosedPeriods` is on), settlement
       source for `hr-core-lifecycle`. Files: `tp/payroll/{payroll-feed.service.ts,payroll-feed.controller.ts,pay-period-guard.ts,settlement-source.provider.ts}`.

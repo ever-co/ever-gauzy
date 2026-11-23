@@ -32,7 +32,9 @@
       `subscription_item`, `subscription_billing`) for PostgreSQL, MySQL and SQLite; entity columns in
       `sub/subscription-plan/subscription-plan.entity.ts`, `sub/subscription/subscription.entity.ts`,
       `sub/subscription-item/subscription-item.entity.ts`, `sub/subscription-billing/subscription-billing.entity.ts`. Test: migration
-      spec on SQLite with seeded rows; existing rows read with defaults; up twice is a no-op. Migration timestamps: `1791000082100` to `1791000082199` (`packages/plugins/subscription`); `1791000082900` to `1791000082999` (`packages/core`).
+      spec on SQLite with seeded rows; existing rows read with defaults (`billingKey` `CYCLE`); a second regular cycle of
+      one period is still refused, while two interim rows (`INTERIM:1`, `INTERIM:2`) of that period are accepted; up
+      twice is a no-op. Migration timestamps: `1791000082100` to `1791000082199` (`packages/plugins/subscription`); `1791000082900` to `1791000082999` (`packages/core`).
 - [ ] **T3** (parallel). Migrations `CreateSubscriptionPlanComponentTables`, `CreateSubscriptionChangeTables`,
       `CreateSupplierSubscriptionTables` (supplier subscription with `recurringExpenseId` and `dimensionSetId`) +
       entities and both repositories. Files: `sub/database/migrations/1791000082110-CreateSubscriptionPlanComponentTables.ts`,
@@ -100,9 +102,11 @@
 - [ ] **T15**. Billing run as core operation `SUBSCRIPTION_BILLING_RUN`: definition and steps registered with the
       operation registry, filters, as-of validation, preview mode, per-subscription outcomes on the cycles
       (`operationId`), counts and failures in the operation result, failure digest; `POST /subscriptions/billing-run`
-      extended (`202` with the operation); history through core `/operations`. Files:
+      extended: with `async: true` it answers `202` with the operation, and a caller that omits `async` keeps the
+      existing synchronous answer (plan §4); history through core `/operations`. Files:
       `sub/billing-run/subscription-billing-run.operation.ts`, `sub/billing-run/subscription-billing-run.service.ts`,
-      `sub/subscription/subscription.controller.ts`. Test: partial failure continues;
+      `sub/subscription/subscription.controller.ts`. Test: a call without `async` answers synchronously with today's
+      body, one with `async: true` answers `202`; partial failure continues;
       preview writes nothing; future date refused; a second live run of an organization refused; a cycle of the period
       starting December 1 billed five days in advance is billed by a run on November 26, while a subscription starting
       in the future and a cycle whose billing date is still ahead are refused.
@@ -215,7 +219,9 @@
       `sub/usage/usage-totals.worker.ts`, `sub/usage/usage-aggregation.ts`. Test:
       totals equal a recomputation from events (property test).
 - [ ] **T39**. Usage pricing (`sub/engine/usage-pricing.ts`): per unit, allowance, graduated, volume, package, minimum
-      and maximum; usage lines and statement on the cycle invoice; interim invoices. Test: golden cases per model.
+      and maximum; usage lines and statement on the cycle invoice; interim invoices (`kind` `INTERIM`, `billingKey`
+      `INTERIM:<n>`). Test: golden cases per model; two threshold crossings in one period give two interim invoices
+      beside the regular cycle, and a repeated crossing event gives none more.
 - [ ] **T40**. Tracked-time meter through `SUBSCRIPTION_TIME_USAGE`, claiming time-log ids on the invoice line;
       currency conversion of time priced in another currency. Files: `sub/usage/sources/tracked-time.meter.ts`,
       `apps/api/src/plugin-composition.ts`. Test: a time log billed by a subscription invoice is

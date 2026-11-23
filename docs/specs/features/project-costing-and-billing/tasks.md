@@ -536,4 +536,6 @@ Every functional requirement of `spec.md` §3 and the tasks that implement it; e
   suites pass unchanged; bill amounts of existing invoices from time are identical.
 - Figures replayed from the outbox twice equal figures built once; the nightly reconciliation reports zero corrections
   on the seeded tenant.
-- Cost amounts never appear in any response, export or MCP output to a caller without `PROJECT_COSTS_VIEW`.
+- Cost rates and cost amounts never appear in any response, export or MCP output to a caller without
+  `PROJECT_COSTS_VIEW` or `PROJECT_RATES_VIEW`, as spec §4 (security) and T65 state; project cost totals, margins and
+  report amounts need `PROJECT_COSTS_VIEW` (FR-61, spec §3.12).

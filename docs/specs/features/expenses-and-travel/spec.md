@@ -171,7 +171,7 @@ with a preview.
 
 | ID | Requirement |
 | --- | --- |
-| **FR-41** | The system MUST add approved lines to the expense totals of their project and task, count them in project cost budgets and offer its maintained spend figures to `project-costing-and-billing`, which keeps no expense figures of its own. |
+| **FR-41** | The system MUST add approved lines to the expense totals of their project and task, count them in project cost budgets and offer its maintained spend figures to `project-costing-and-billing`, which keeps no expense figures of its own; those figures include direct expenses, those recorded before the feature was switched on and every later change to them. |
 | **FR-42** | The system MUST offer approved billable lines to invoices of their client once, at cost or with the markup of the project or organization, through the existing invoicing of expenses, and mark them invoiced. |
 | **FR-43** | The system MUST show a spend dashboard per project and per client — approved, pending, re-billable not invoiced, invoiced, cost budget used, top categories and people — updated within 5 seconds of a decision. *(advanced)* |
 | **FR-44** | The system MUST notify the project manager when approved plus pending spend crosses 80 % and 100 % of the project's cost budget. *(advanced)* |
@@ -238,7 +238,8 @@ All reports are report definitions: filterable, groupable, exportable, schedulab
   at the 95th percentile; claim and expense lists under 300 ms at one million expenses per tenant; approval under
   500 ms excluding asynchronous postings; spend dashboards read maintained figures, never raw scans.
 - **Data volume and concurrency**: 10 million claim lines per tenant; one decision per claim (row lock and version);
-  advance applications serialised per advance so they never exceed its unsettled amount.
+  advance applications serialized per claim and per advance so they never exceed the advance's unsettled amount or the
+  claim's approved total.
 - **Reliability**: receipt reading, payroll hand-off, open items and postings are idempotent by source key; a failed
   posting leaves the claim approved with the posting state shown and retried.
 - **Security & privacy**: tenant and organization scoped; receipts visible to the claimant, approvers and finance;

@@ -165,7 +165,7 @@ cursor pagination; `If-Match` on writes; `Idempotency-Key` on create, release, c
 | `GET` `POST` `PUT` | `/operations[/:id]` · `/routings[/:id]` (+ `/activate`, `/deactivate`) | `_VIEW` / `_EDIT` | masters | New |
 | `GET` `POST` `PUT` | `/change-requests[/:id]` (+ `/submit`, `/cancel`, `/simulate`) | `_EDIT` | `IStructureChangeRequest`; submit files the `STRUCTURE_CHANGE` approval request, decided on the existing `/request-approval` routes and Approvals page | New |
 | `POST` | `/replacements` | `_RELEASE` | `{ fromId, toId, preview }` → parents, or `202` with the core operation handle | New |
-| `GET` `POST` `PUT` | `/designs[/:id]` (+ `/file`, `/confirm`, `/revise`, `/build`) | `MANUFACTURING_DESIGNS_EDIT` (read `_VIEW`) | designs; build answers `202` with the core operation handle | New |
+| `GET` `POST` `PUT` | `/designs[/:id]` (+ `/file`, `/confirm`, `/revise`, `/build`) | `MANUFACTURING_DESIGNS_EDIT` (read `_VIEW`); `buildAsReleased` also `MANUFACTURING_STRUCTURES_RELEASE` | designs; build answers `202` with the core operation handle; with change control on, `buildAsReleased` builds drafts and files one `structure_change_request` for them (spec FR-36, FR-52) | New |
 | `GET` | `/reports/:key` | `_VIEW` (+ `MANUFACTURING_COSTS_VIEW` for cost columns) | report rows, cursor paged | New |
 | `GET` `PUT` | `/settings/structures` | `_VIEW` / `MANUFACTURING_SETTINGS_EDIT` | the plugin's setting keys in the platform settings store | New |
 | `GET` | `/public/:organizationId/structures/:variantId` | `@Public()`; only published views | public read feed for sites built with Ever Works: read-only view without costs | New |

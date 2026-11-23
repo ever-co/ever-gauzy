@@ -116,6 +116,7 @@ Organization switches are keys added to `crm.settings.ts` (settings store, no ta
 | `crm_hierarchy_node` | exceptions to the reporting line only: `userId`, `parentUserId` uuid null (null = top of the sales tree); `position` int | unique (`organizationId`,`userId`); (`organizationId`,`parentUserId`) |
 | `crm_relationship` | `partyType` varchar(12) (`PERSON`, `ORGANISATION`); `partyId`, `userId` uuid (null = overall); `userKey` varchar(36) not null (the `userId`, or `*` for the overall row; written with it, so the unique key holds on every dialect); `strength` int; `band`, `previousBand` varchar(8) (`STRONG`, `STEADY`, `WEAK`, `NONE`); `signals` text; `lastInteractionAt` timestamp; `interactions90` int; `medianReplySeconds` int; `computedOn` date | unique (`partyType`,`partyId`,`userKey`); (`organizationId`,`band`) |
 | `crm_coaching_fact` | `userId`; `periodEnd` date; `replies`, `medianSeconds`, `p90Seconds`, `teamMedianSeconds` int; `slowHours` text | unique (`organizationId`,`userId`,`periodEnd`) |
+| `crm_task_overdue_mark` | one row per overdue event raised: `taskId` uuid; `dueAt` timestamp; `raisedAt` timestamp; `raisedBy` varchar(8) (`SCHEDULE`, `CLOSE`) | unique (`tenantId`,`taskId`,`dueAt`) |
 
 The engine keeps the clock rows of CRM records; the CRM mirrors policy, state, metric and due time into
 `crm_engagement_state` from engine events so lists sort and filter without cross-plugin joins.
@@ -128,7 +129,7 @@ Plugin migrations with the shared core migration helpers of `@gauzy/core`; Postg
 (`hasColumn` / `hasTable` guards), forward-only, `down` reverses its own statements, registered for both ORMs:
 
 - `1791000051300-AddCrmEngagementSettingsColumns` — the `crm_list_item` column above (settings are contributions).
-- `1791000051310-CreateCrmEngagementTables` — engagement state, response fact, user preference.
+- `1791000051310-CreateCrmEngagementTables` — engagement state, response fact, user preference, task overdue mark.
 - `1791000051320-CreateCrmHierarchyCaptureRelationshipTables` — hierarchy exceptions, capture entry, relationship,
   coaching fact.
 
@@ -262,7 +263,7 @@ unread) and availability changes on the platform channel. Notification categorie
 | Trigger | When | What it does | Idempotency |
 | --- | --- | --- | --- |
 | `subscriber:crm-engagement` (outbox consumer) | events of §5 | counts, last activity, status, response facts, unread hints, capture links | delivery record per event; counts recomputed from sources on conflict |
-| `crm.task-overdue` (scheduler → queue `crm-engagement`) | every 5 minutes | linked open tasks whose due time falls after the end of the last completed run's window → `crm.task.overdue` | window taken from the job's last completed `job_execution`, so each due time is passed once and a missed run catches up |
+| `crm.task-overdue` (scheduler → queue `crm-engagement`) | every 5 minutes | linked open tasks whose due time falls after the end of the last completed run's window → `crm.task.overdue`; a linked task closed after its due time but before a run saw it is raised by `subscriber:crm-engagement` on its `task.updated` close fact (due time earlier than the fact's time), so a task open at its due time is never missed by downtime | window taken from the job's last completed `job_execution`, so a missed run catches up; each event is appended in one transaction with its `crm_task_overdue_mark` row, unique (`tenantId`,`taskId`,`dueAt`), so a rerun of a failed window and the close path skip a task and due time already raised |
 | `crm.reply-nudge` | every 5 minutes | unanswered response facts past the nudge time → one Inbox nudge with draft action | `crm_response_fact.nudgedAt` |
 | `crm.relationships` | nightly 03:00 per organization | strength per party and colleague, going-quiet marks, band events | unique (`partyType`,`partyId`,`userKey`) upsert by `computedOn` |
 | `crm.coaching` | nightly 03:30 | daily coaching facts per user | unique (`userId`,`periodEnd`) |

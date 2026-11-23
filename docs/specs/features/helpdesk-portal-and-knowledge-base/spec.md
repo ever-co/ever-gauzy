@@ -168,7 +168,7 @@ article. A **low rating starts a recovery** with the team lead. These requiremen
 
 - **FR-51** A user with `HELPDESK_RATINGS_MANAGE` sets when a rating is requested (entering done by default, or chosen statuses, never at creation), the rating options shown per score band per language, and the link validity (default 14 days).
 - **FR-52** The system emails the requester a rating request in their language when a ticket reaches the chosen status, once per resolution, never for merged, spam or agent-raised tickets without a requester address.
-- **FR-53** A requester rates 1 to 5 stars from the email (one click records the score), from the small built-in rating page of the rating link or from the ticket page, then may add options and a comment; a rating is final for that resolution, and a reopened and resolved ticket can be rated again.
+- **FR-53** A requester rates 1 to 5 stars from the email (a click on a star opens the rating page with that score selected, and pressing Send records it; opening the link alone, as a mail scanner does, records nothing), from the small built-in rating page of the rating link or from the ticket page, then may add options and a comment; a rating is final for that resolution, and a reopened and resolved ticket can be rated again.
 - **FR-54** The system can hold auto-close of a done ticket until it is rated or N days pass (default off).
 - **FR-55** Ratings show on the ticket, in the requester panel, on the contact's and customer's pages and in agents' and teams' figures, and serve the dashboards and reports of `helpdesk-sla-routing-and-analytics`.
 - **FR-56** A user with `HELPDESK_RATINGS_VIEW` lists ratings with filters (period, score, agent, team, kind of request, customer, with comment) and exports them.
@@ -300,7 +300,7 @@ article. A **low rating starts a recovery** with the team lead. These requiremen
       rebuilds its index with progress (FR-34–FR-36).
 - [ ] **AC-6** A customer raises a ticket with suggestions and template fields, deflects one, answers and reopens one,
       closes one as solved; an administrator sees company requests and figures; another customer's ticket answers `404` (FR-42, FR-46).
-- [ ] **AC-7** A rating request goes once per resolution; a one-click score records; the rating is final and reaches the
+- [ ] **AC-7** A rating request goes once per resolution; a score chosen in the email records once the requester sends it from the rating page, and a link only opened records nothing; the rating is final and reaches the
       ticket, contact, agent figures and helpdesk dashboards (FR-52, FR-53).
 - [ ] **AC-8** Organisation suggestions exclude public email domains; the bulk "company requests" action reports progress (FR-58, FR-63).
 - [ ] **AC-9** An agent inserts an article and the citation appears on the article; an article drafted from a ticket links back (FR-64, FR-65).

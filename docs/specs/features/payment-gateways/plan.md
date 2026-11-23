@@ -139,6 +139,10 @@ interface IPaymentProviderAdapter {               // registerPaymentAdapters([..
 ```
 
 `ctx` carries the provider registration, its decrypted settings, `INTEGRATION_HTTP` and the call log correlation.
+`IGatewayOutcome` carries, for a capture or refund, its stable `operationRef` (the provider's id, or the idempotency key
+of the platform's own request echoed by the provider; §8), and, for a failed charge, `notCharged: true` only when the
+provider's answer proves that no charge was made (a refusal before processing); a timeout or an unclear answer never
+sets it.
 
 ## 4. API Surface
 
@@ -153,7 +157,7 @@ existing `RejectCardDataPipe` on every body.
 | `PUT` `POST` `GET` | `/api/payment-providers/:id/credentials`, `/:id/verify-credentials`, `/:id/balance` | `PAYMENT_PROVIDERS_EDIT`; balance: view | write settings, verify, balance | New |
 | `POST` | `/api/payment-gateways/checkouts/methods`, `/api/payment-gateways/checkouts` | `PAYMENT_SESSIONS_AUTHORIZE` (in-process callers use the port) | methods for a source; start | New |
 | `GET` `POST` | `/api/public/payment-gateways/checkouts/:token`, `/:token/start` | public token, throttled | result page data; payer chooses a method | New |
-| `POST` | `/api/public/payment-gateways/callbacks/:providerId` | provider signature (never feature-gated) | provider callbacks | New |
+| `POST` | `/api/public/payment-gateways/callbacks/:providerId` | provider signature; for an adapter declaring `signedCallbacks: false`, the prompt's single-use secret instead (never feature-gated) | provider callbacks; an unsigned callback names its prompt and carries the secret, compared in constant time with `promptSecretHash` and consumed on first use, and its outcome is confirmed through `queryStatus` before it is applied when the adapter declares `statusQuery`; a missing, wrong or used secret answers `401` and is stored as rejected | New |
 | `POST` | `/api/payment-gateways/sessions/:id/query-status` | `PAYMENT_SESSIONS_VIEW` | ask the provider now | New |
 | `POST` | `/api/payment-gateways/charges` | `PAYMENT_METHOD_TOKENS_CHARGE` | off-session charge `{ instrument, amount, source, consentRef }` | New |
 | `POST` `GET` | `/api/payment-gateways/instruments/setup`, `/api/public/payment-gateways/setup/:token` | `PAYMENT_METHOD_TOKENS_EDIT`; public token | set-up session for cards and mandates | New |
@@ -253,8 +257,8 @@ regenerated. Report definitions of spec FR-82 on datasets `payment_sessions`, `p
 
 | Trigger | When | What it does | Idempotency |
 | ------- | ---- | ------------ | ----------- |
-| queue `payment-gateway-callbacks` | callback stored | verify, parse, apply outcomes in provider-event order per session; money movements are applied by their own identity: a capture or refund callback finds or creates the `payment_capture` or refund row by the provider's capture or refund id (`externalId`, looked up under the session row lock; the event id when the provider sends none) and hands it to collections once, whatever `lastProviderEventAt` says | `(providerId, eventId)` unique; one row per provider capture or refund id; `lastProviderEventAt` guards only the session state |
-| queue `payment-gateway-charges` | off-session charge asked | routing, adapter call, failover once on provider fault | idempotency key; failover key linked |
+| queue `payment-gateway-callbacks` | callback stored | verify, parse, apply outcomes in provider-event order per session; money movements are applied by their own identity: a capture or refund callback finds or creates the `payment_capture` or refund row by its `operationRef` (looked up under the session row lock) and hands it to collections once, whatever `lastProviderEventAt` says. `operationRef` is the provider's capture or refund id, or, for a capture or refund the platform requested, the request's idempotency key that the provider echoes; it is the same in callbacks and status queries. A movement reported with neither is applied only when the session can hold just one (an automatic full capture: `<sessionId>:auto-capture`); otherwise it is stored as an unmatched outcome, the session gets a status query, and collections receive nothing until the status query or a person on the callbacks page matches it. The event id is never a money identity | `(providerId, eventId)` unique; one row per `operationRef`; `lastProviderEventAt` guards only the session state |
+| queue `payment-gateway-charges` | off-session charge asked | routing, adapter call, failover once only on a provider fault that proves the charge was not made (the adapter's outcome `notCharged: true`, or a `queryStatus` answer that the provider holds no such charge); a timeout or an unclear answer leaves the session `PENDING` with a status query (the `status-query` job), and without `statusQuery` it waits for the callback or a person, never for another account | idempotency key; failover key linked |
 | `payment-gateways.status-query` | every 5 minutes | sessions pending over 15 minutes (then hourly to 24 h) → `queryStatus` | outcome guard |
 | `payment-gateways.authorization-expiry` | hourly | void uncaptured authorisations near the window end | session status compare-and-set |
 | `payment-gateways.checkout-expiry` | hourly | expire unpaid checkouts, release reservations | status compare-and-set |
@@ -324,7 +328,7 @@ queries settling sessions, declines by class, failovers, refunds pending, disput
 | Risk | Likelihood | Impact | Mitigation |
 | ---- | ---------- | ------ | ---------- |
 | Payment recorded twice | Medium | High | one capture per provider reference, `payments-and-collections` once-only rule, outcome guard by event time |
-| Failover charges twice | Low | High | only provider faults, never final or payer declines, linked idempotency keys, status query before failover |
+| Failover charges twice | Low | High | only provider faults that prove no charge was made, never final or payer declines, timeouts or unclear answers; linked idempotency keys, status query before failover |
 | Card data reaches the platform | Low | High | refusal pipe, provider-hosted fields only, CSP per adapter, redaction tests |
 | Callbacks lost or late | Medium | Medium | stored first, status queries for 24 h, alerts on silence |
 | Adapter maintenance burden | High | Medium | adapters as separate plugins with the sandbox contract suite; only enabled ones loaded |

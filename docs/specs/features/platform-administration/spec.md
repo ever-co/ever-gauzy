@@ -365,7 +365,8 @@ All reports are report definitions: filterable, groupable, exportable, schedulab
 - Installation database backups for PostgreSQL and MySQL rely on a configured dump command behind a deployment
   switch (applied); managed clusters keep their own backups and report status through the signed endpoint.
 - The read-only query page is off and self-hosted only (applied).
-- Tenant usage sharing defaults to on, analytics events and persona sharing to off (applied).
+- Tenant usage sharing defaults to on, persona sharing to off, and analytics events keep the default of the tenant's
+  existing analytics setting, so a tenant that sends events today keeps sending them (FR-57) (applied).
 - Restore into the same tenant replaces all its records; per-organization restore is the finer tool (applied).
 - Update checks ask the Ever Platform release feed weekly (applied); air-gapped installations switch it off.
 - Shop floor and other domain roles are seeded through the reference-record contributions of FR-13 (applied); each

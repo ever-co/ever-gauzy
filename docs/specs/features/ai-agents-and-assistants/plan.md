@@ -47,7 +47,8 @@ It is a layer over what exists, never a copy:
   `registerAgentTemplates` and `registerAgentSkills` are typed helpers that build those entries.
 - **Usage, budgets and outside clients**: usage per model call is this plugin's `ai_usage_entry`; totals per agent,
   purpose, user and organization and month are metrics (`ai.tokens`, `ai.cost`) of the platform's one usage meter
-  (core `stats` module, `platform-administration`); the Documents AI usage events (`DocsAiUsageEvent` of
+  (core `stats` module, `platform-administration`), incremented in the transaction that writes each usage entry, so
+  the admission check of the next run reads a total that includes every finished call; the Documents AI usage events (`DocsAiUsageEvent` of
   `packages/plugins/docs/src/lib/knowledge/ai/docs-ai-usage.event.ts`: tokens per embedding, classification and OCR
   call) are recorded in the same ledger, so caps cover every AI call. Budgets, AI cost caps and the request and write
   budgets of agent principals are `ai_budget` rows (`AGENT_BUDGETS` port for `access-control-and-security`). Connected
@@ -113,7 +114,7 @@ keys `varchar(96)`; money `numeric(28,9)` with `currency varchar(3)`; ids into o
 | `ai_knowledge_base` | `name`, `description` text, `audience` text, `chunkSize` int, `chunkOverlap` int, `reviewNewContent` bool, `documentFolderId` | idx `(tenantId, organizationId)` |
 | `ai_knowledge_source` | `knowledgeBaseId` FK cascade, `kind` (`DOCS_SCOPE`, `HELP_CENTRE`, `RECORD_TYPE`, `TEXT`, `FILE`, `WEB`), `config` text (a record source names its search definition, saved-view filter and fields), `refresh` (`ON_CHANGE`, `HOURLY`, `DAILY`, `WEEKLY`, `MANUAL`), `publishedToAudience` bool, `status` (`PENDING`, `PROCESSING`, `READY`, `FAILED`, `PAUSED`), `passageCount` int, `lastRefreshAt`, `nextRefreshAt`, `lastError` text, `errorLog` text | idx `(status, nextRefreshAt)` |
 | `ai_knowledge_gap` | `knowledgeBaseId`, `questionHash` varchar(64), `question` text, `count` int, `lastAskedAt` | unique `(knowledgeBaseId, questionHash)` |
-| `ai_run` | `agentId`, `agentVersion` int, `purposeKey` varchar(96), `conversationId`, `parentRunId`, `batchId`, `origin` varchar(16), `mode` (`NORMAL`, `DRY_RUN`, `PLAN_EXECUTION`, `REPLAY`, `EVALUATION`), `invokerUserId`, `actorUserId`, `agentEmployeeId`, `contextRecordType`, `contextRecordId`, `projectId`, `status` varchar(24), `statusReason` varchar(255), `steps` int, `toolCalls` int, `inputTokens`, `outputTokens`, `cachedTokens` bigint, `cost`, `currency`, `providerId` varchar(64), `model` varchar(128), `fallbackUsed` bool, `notBefore`, `startedAt`, `finishedAt`, `idempotencyKey` varchar(128) | unique `(tenantId, idempotencyKey)`; idx `(tenantId, agentId, createdAt)`, `(tenantId, invokerUserId, createdAt)`, `(status, notBefore)`, `(tenantId, purposeKey, createdAt)`, `(contextRecordType, contextRecordId)` |
+| `ai_run` | `agentId`, `agentVersion` int, `purposeKey` varchar(96), `conversationId`, `parentRunId`, `batchId`, `origin` varchar(16), `mode` (`NORMAL`, `DRY_RUN`, `PLAN_EXECUTION`, `REPLAY`, `EVALUATION`), `invokerUserId`, `actorUserId`, `agentEmployeeId`, `contextRecordType`, `contextRecordId`, `projectId`, `status` varchar(24), `statusReason` varchar(255), `steps` int, `toolCalls` int, `inputTokens`, `outputTokens`, `cachedTokens` bigint, `cost`, `currency`, `providerId` varchar(64), `model` varchar(128), `fallbackUsed` bool, `untrustedSinceStep` int null (first step whose context held untrusted content, FR-24; set once, never cleared during the run), `notBefore`, `startedAt`, `finishedAt`, `idempotencyKey` varchar(128) | unique `(tenantId, idempotencyKey)`; idx `(tenantId, agentId, createdAt)`, `(tenantId, invokerUserId, createdAt)`, `(status, notBefore)`, `(tenantId, purposeKey, createdAt)`, `(contextRecordType, contextRecordId)` |
 | `ai_run_step` | `runId` FK cascade, `index` int, `kind` (`MODEL`, `TOOL`, `DELEGATE`, `QUESTION`, `CONFIRMATION`), `input` text (masked, ≤ 256 KB), `output` text, `evidence` text (record versions, passage ids), `usage` text, `startedAt`, `finishedAt`, `error` text | unique `(runId, index)` |
 | `ai_tool_call` | `runId` FK cascade, `stepIndex` int, `toolName` varchar(128), `toolGroup` varchar(48), `mode` varchar(16), `writes` bool, `preview` bool, `previewToken` varchar(160), `inputs` text, `outputDigest` varchar(64), `recordedOutput` text, `outcome` (`DONE`, `PREVIEWED`, `AWAITING`, `REFUSED`, `FAILED`), `refusalReason` varchar(48), `recordType`, `recordId`, `durationMs` int | idx `(runId)`, `(tenantId, toolName, createdAt)`, `(tenantId, outcome, createdAt)` |
 | `ai_confirmation` | `runId` FK cascade, `toolCallId`, `kind` (`CONFIRMATION`, `QUESTION`, `HAND_OVER`), `route` text, `inboxItemId`, `status` (`PENDING`, `APPROVED`, `REJECTED`, `ANSWERED`, `EXPIRED`), `decidedByUserId`, `decidedAt`, `note` text, `answer` text, `expiresAt` | idx `(status, expiresAt)`, `(tenantId, decidedByUserId)` |
@@ -223,6 +224,7 @@ interface IAgentRuntime {                                  // AGENT_RUNTIME
         dryRun?: boolean; wait?: boolean; budget?: IRunBudget }): Promise<IAgentRunRef | IAgentResult>;
     status(runId: ID): Promise<IAgentRunRef>;
     cancel(runId: ID, reason: string): Promise<void>;
+    purge(runIds: ID[], reason: string): Promise<void>;  // erases inputs, outputs and tool payloads; keeps the run row and usage
 }
 ```
 
@@ -296,7 +298,7 @@ SDKs regenerated. Agent packages: JSON with a schema version, signed by the expo
 | `ai-agents.confirmation-expiry` | every 5 minutes | expires confirmations and runs past `expiresAt` | status check |
 | `ai-agents.working-window` | every minute | releases queued runs whose `notBefore` has come | status check |
 | `ai-agents.knowledge-refresh` | per source schedule | web crawl through the core outbound policy into the knowledge folder; record sources ask the `search` plugin to reindex their type when stale | per source and content hash |
-| `ai-agents.usage-close` | hourly | adds usage entries to the core usage meter, checks caps, sends 80 % and 100 % notices | `warnedPeriod`, `reachedPeriod` |
+| `ai-agents.usage-close` | hourly | checks caps against the core usage meter (each usage entry increments the meter in the transaction that writes it, so admission never waits for this pass), sends 80 % and 100 % notices | `warnedPeriod`, `reachedPeriod` |
 | `ai-agents.scorecard` | daily (partial) and Monday 02:00 | computes weekly measures, checks manager rules | unique `(agentId, weekStart)` |
 | queue `ai-agents` job `evaluate` | publish, on demand | replays cases with recorded outputs, judges, writes the report | evaluation run id |
 | retention kinds `ai.runs`, `ai.knowledge-gaps` | daily, by the platform retention runner of `access-control-and-security` (this plugin's own cleanup only while that plugin is not loaded) | prunes runs, steps and tool calls past retention, knowledge gaps after 90 days | date checks |
@@ -317,7 +319,10 @@ invoker, actor: principal, scopes: permissions of the enabled tools, ttl })`, so
 invoker's permissions to the scopes and the principal's grants, and record and field rules apply as for the invoker.
 Without it, the run uses the invoker's bearer (as the assistant does today) or a short-lived token of the run-as user, and
 the tool gate checks the agent's modes and the invoker's permissions before each call. Every call passes the gate: mode,
-ceiling, budget, untrusted-content rule, preview handling; refusals are tool calls with `outcome = REFUSED`.
+ceiling, budget, untrusted-content rule, preview handling; refusals are tool calls with `outcome = REFUSED`. The
+untrusted-content rule reads `ai_run.untrustedSinceStep`: once set, every later write of the run, in that step or any
+later one and after a resume, needs confirmation; a run of the same conversation whose context carries an untrusted
+result of an earlier run starts with the column set at step 0.
 
 **Data to providers.** Masking from the `ai.maskedFields` setting, field rules and purpose masks is applied to tool
 results, passages and context before the model call of agents and purposes; record ids stay, values go. The agent

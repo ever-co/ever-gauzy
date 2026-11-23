@@ -239,7 +239,7 @@ balances, requests history, holidays. OpenAPI grows additively; Kiota SDKs regen
 | Trigger | When | What it does | Idempotency |
 | ------- | ---- | ------------ | ----------- |
 | `time-off.accrual` | hourly sweep; per organization once its local day changed | grants due accrual lines; the pass is a `job_execution` row, outcomes stay on the lines | unique `(balanceId, periodFrom)` + ledger `idempotencyKey`; advisory lock per organization |
-| `time-off.period-roll` | same sweep, on a period's first day | creates next-period balances, carries forward, expires the rest, drafts encashments | ledger keys `carry:<balance>`, `expire:<balance>:<date>`; automatic encashment unique per balance |
+| `time-off.period-roll` | same sweep, on a period's first day | creates next-period balances, carries forward up to the cap, then, for a policy with `encashAtPeriodEnd`, drafts the automatic encashment of the encashable days (up to `maxEncashable`, less `encashReserve`), which stay unexpired on the old balance while the draft is open, and expires only the rest; confirming the encashment takes its days, cancelling it expires them then | ledger keys `carry:<balance>`, `expire:<balance>:<date>`, `expire:<balance>:encashment:<encashmentId>`; automatic encashment unique per balance |
 | `time-off.expiry` | daily | expires carried parts past their date | ledger key per part and date |
 | `time-off.assignment-rules` | nightly + on HR events | starts and ends rule assignments, grants starting entitlement | `liveKey`; ledger keys |
 | `time-off.approval-reminders` | hourly | reminds undecided approvers | dispatcher `dedupeKey` |

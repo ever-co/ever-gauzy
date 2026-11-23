@@ -109,7 +109,7 @@ recruiting team's tracked time. Every action is available to agents through MCP 
 | **FR-2** | The system MUST refuse a second active plan line for the same organization, position, department and branch whose period overlaps, naming the existing plan. |
 | **FR-3** | The system MUST let a plan of an organization with children in the organization tree be marked as a group plan, and warn or refuse (organization setting) a child organization's plan whose positions or cost exceed what the group plan leaves for it. |
 | **FR-4** | A user with `RECRUITMENT_PLAN_EDIT` can pull approved hiring requests of the period into a plan as lines in one action. |
-| **FR-5** | The system MUST check a new or reopened opening against the active plan line for its organization, position and period: with enforcement "block" refuse it when holders plus open positions already reach the plan, with "warn" save it with a warning, with "off" (default) skip the check; closing an opening with unfilled positions warns. |
+| **FR-5** | The system MUST check a new or reopened opening against the active plan line for its organization, position and period: with enforcement "block" refuse it when holders plus the open positions of other openings plus the positions this opening requests would exceed the plan, with "warn" save it with a warning in that case, with "off" (default) skip the check; closing an opening with unfilled positions warns. |
 
 ### 3.2 Hiring requests
 
@@ -226,7 +226,7 @@ recruiting team's tracked time. Every action is available to agents through MCP 
 | --- | --- |
 | **FR-65** | A candidate signed in with the existing candidate role and `RECRUITMENT_CANDIDATE_SELF` sees their applications with stage names the organization marks as public, upcoming interviews with self-scheduling, offers to accept or decline, documents to upload, and can withdraw an application. *(advanced)* |
 | **FR-66** | The system MUST record the consent statement and version accepted at application, offer talent-pool consent, and let a candidate withdraw consent from the portal or a link in every email. |
-| **FR-67** | The system MUST, once the organization switches retention on (off by default, so no candidate data is removed until it does), anonymise candidates who have at least one application and whose applications are all closed without hire once the retention period (default 12 months after the last closure) ends, unless they consented to the talent pool (default 24 months); candidates without applications and hired candidates are never anonymised by it (hired ones follow `hr-core-lifecycle`). *(advanced)* |
+| **FR-67** | The system MUST, once the organization switches retention on (off by default, so no candidate data is removed until it does), anonymise candidates who have at least one application and whose applications are all closed without hire once the retention period (default 12 months after the last closure) ends, unless they consented to the talent pool (default 24 months); candidates without applications and hired candidates are never anonymised by it (hired ones follow `hr-core-lifecycle`); anonymization covers every personal text linked to the applicant, screening summaries and their assistant runs, interview feedback, offers and referrals included, and keeps counts and dates for reports. *(advanced)* |
 | **FR-68** | A user with `RECRUITMENT_APPLICATION_VIEW` can search the talent pool by skills, past openings, ratings and tags and invite a candidate to apply to an opening. |
 
 ### 3.13 Reports and dashboards

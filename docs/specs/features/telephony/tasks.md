@@ -82,7 +82,8 @@
   `tel/accounts/{telephony-account.service.ts,telephony-account.controller.ts,dto/}`, `tel/status/{telephony-status.controller.ts,telephony-status.service.ts}`.
   Test: `tel/accounts/telephony-account.service.spec.ts`: secrets
   never in responses; one account serves email and voice of one vendor; verification on save lists remote numbers;
-  `tel/status/telephony-status.service.spec.ts`: status for users with and without profile.
+  `tel/status/telephony-status.service.spec.ts`: status for users with and without profile (a user without one and with
+  an account to dial out with gets calling available, and the first call creates the profile with defaults).
 - [ ] **T9**. Numbers, agents and outcomes services and controllers (own profile route; the number that rings from
   `employee_phone`; do not disturb in the notification preferences; muted sounds in UI preferences; outcome
   deactivation). Files: `tel/numbers/{telephony-number.service.ts,telephony-number.controller.ts,dto/}`,
@@ -211,7 +212,8 @@
   consent records through `TELEPHONY_CONTACT_POLICY`, local presence), dialler panel and page. Files:
   `tel/dialler/{telephony-dialler.service.ts,telephony-dialler.controller.ts,dialler-tick.job.ts,local-presence.ts}`,
   `tui/pages/dialler-page.component.ts`, `tui/components/dialler-panel/dialler-panel.component.ts`. Test:
-  `tel/dialler/telephony-dialler.service.spec.ts`: each skip reason; next call only after the outcome;
+  `tel/dialler/telephony-dialler.service.spec.ts`: each skip reason; next call only after the outcome; with
+  `TELEPHONY_CONTACT_POLICY` unbound a session is refused with `TELEPHONY_CONTACT_POLICY_UNAVAILABLE` and no call is placed;
   `tel/dialler/local-presence.spec.ts`: local number chosen.
 - [ ] **T39**. Call time as tracked time `time/telephony-call-time.service.ts` (offer, always, never; one entry marked from a
   call). Files: `tel/time/telephony-call-time.service.ts`. Test: `tel/time/telephony-call-time.service.spec.ts`: entry appears in the timesheet once.

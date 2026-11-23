@@ -173,7 +173,9 @@
   `banking/party-bank-account/party-bank-account-proposal.service.ts`,
   `banking/party-bank-account/party-bank-account.controller.ts`, `banking/reconciliation/reconciliation.service.ts`,
   `banking/bank-transaction/bank-transaction.entity.ts`.
-  Test: proposal spec; nothing is stored in `party_bank_account` until accepted; an already known number proposes
+  Test: proposal spec; until acceptance the number exists only as the line's candidate row of `party_bank_account`
+  (no party, `isEnabled = false`, never returned by a party, payment or payroll route and never offered for a payment),
+  and no enabled party account exists for it; an already known number proposes
   nothing; a feed line that delivered an unknown number once yields, on acceptance, an account whose revealed number
   equals the line's; after the decision the line keeps no cipher; the cipher never appears in a route answer or an
   export.

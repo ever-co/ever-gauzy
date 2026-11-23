@@ -313,7 +313,8 @@ All reports are report definitions: filterable, groupable, exportable, schedulab
 - Country-specific depreciation rules and tax-book content: `regional-compliance-packs` (through FR-95).
 - Transfers of assets between organizations of a tenant as one document: `general-ledger` (inter-company journals);
   until then a sale in one organization and an acquisition in the other.
-- Audits run on an installable phone web page that works offline.
+- A separate native phone app for audits: audits, offline scans included, run on the installable phone page of the
+  `fixed-assets-ui` plugin (FR-73 to FR-75).
 
 ## 7. Acceptance Criteria
 

@@ -98,7 +98,7 @@ flowchart LR
 
 ## 3. Data Model
 
-**Migration timestamps**: `packages/plugins/report-builder` `1791000037100` to `1791000037199`; `packages/core` `1791000037900` to `1791000037999`.
+**Migration timestamps**: `packages/plugins/report-builder` `1791000037100` to `1791000037199`; `packages/plugins/report-builder` `1791000037990` to `1791000037999` (its seed, which must run after the core migration whose column it writes); `packages/core` `1791000037900` to `1791000037989`.
 
 All tables extend `TenantOrganizationBaseEntity` (soft delete, `isActive`, `isArchived`); JSON is `text` on every
 dialect; keys are `varchar(96)`; ids into core tables carry a foreign key only where the core table exists at migration
@@ -176,8 +176,13 @@ registerDashboardTemplates([{ key: 'sales.overview', version: 1, cards, filterBa
    these declarations.
 3. A provider implements `IReportDatasetProvider`: `describe(ctx)`, `run(query, ctx)` (pages or an async row stream),
    optional `aggregate(query, ctx)` (server-side grouping), `drill(cell, ctx)`, `partitions(query, ctx)`,
-   `estimate(query, ctx)`. It must filter by `ctx.access.organizationIds` and `ctx.access.scopeValues`; the engine
-   re-applies masks, sensitive columns and group-size rules afterwards and never trusts a provider for them.
+   `estimate(query, ctx)`. It must filter by `ctx.access.organizationIds`, `ctx.access.scopeValues` and, before any
+   grouping, `ctx.access.recordRules` (the reader's record rules of `REPORT_ACCESS_RULES` for the dataset's record types,
+   as conditions the provider adds to its query); a provider declares `appliesRecordRules: true` once it does. For a
+   reader whom record rules restrict, the engine runs a provider without that declaration only through `run` with each
+   row's record id, drops denied rows and aggregates itself, and refuses with `REPORT_ACCESS_UNSUPPORTED` when its rows
+   carry no record id. The engine re-applies masks, sensitive columns and group-size rules afterwards and never trusts
+   a provider for them.
 4. Statutory definitions set `locked: true`. Comparison columns, presentation currency and "as on" options of a
    provider are its parameters; the engine adds generic period comparisons only for declared date dimensions.
 5. Background runs go through `REPORT_RUNS`; a plugin adds no background-run table of its own (`financial-reports`
@@ -197,7 +202,8 @@ forward-only, both ORMs):
    `packages/core/src/lib/recurrence/`), `report_schedule_run` (the period claim, review state and files of a period;
    execution is a core operation), `report_delivery`.
 5. `1791000037140-CreateReportDashboardTables` — dashboard setting, user layout, role home.
-6. `1791000037160-SeedPlatformReportCatalogue` — category "Platform" and the rows of spec FR-87 in core `report`,
+6. `1791000037990-SeedPlatformReportCatalogue` (plugin; its timestamp follows migration 7, so a database with both
+   pending adds `featureKey` before the seed writes it) — category "Platform" and the rows of spec FR-87 in core `report`,
    the category keyed `FEATURE_REPORT_BUILDER` in the shared catalogue feature filter, so they are listed only for
    tenants with the feature on (spec FR-89).
 7. Core: `1791000037900-AddReportCategoryFeatureKey` — nullable `featureKey` on `report_category` and `report`, the
@@ -248,7 +254,8 @@ address book (`address`, `address_role`); open work items over tasks. The dashbo
 Controllers carry `@FeatureFlag(FEATURE_REPORT_BUILDER)`, `TenantPermissionGuard`, `@Permissions()`, class-validator DTOs,
 Swagger, idempotency keys on creating routes and cursor pagination. Errors: `REPORT_FIELD_UNKNOWN`,
 `REPORT_FIELD_MASKED` (403 for filters on hidden fields), `REPORT_DEFINITION_LOCKED`, `REPORT_DEFINITION_STALE` (409),
-`REPORT_SOURCE_UNAVAILABLE`, `REPORT_ROW_LIMIT`, `REPORT_RATE_MISSING`, `REPORT_MEASURE_IN_USE`. GraphQL reads
+`REPORT_SOURCE_UNAVAILABLE`, `REPORT_ROW_LIMIT`, `REPORT_RATE_MISSING`, `REPORT_MEASURE_IN_USE`,
+`REPORT_ACCESS_UNSUPPORTED`. GraphQL reads
 (`reportDatasets`, `reportDefinitions`, `reportDefinition`, `reportRun`, `reportSchedules`) in `graphql/schema-extensions.ts`.
 
 **Ports offered** (contracts tokens, provided when loaded, injected `@Optional()`, bound in

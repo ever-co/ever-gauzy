@@ -185,9 +185,13 @@
 - [ ] **T33**. `hd/moves/`: merge and split as task operations in one transaction with the move log: sources closed,
       linked as duplicates (`task_linked_issues`) with `mergedIntoTaskId`; split creates a task through `TaskCreateCommand`
       linked as related with `splitFromTaskId`; messages, comments, document and record links moved, tags and followers
-      united; merged chain in intake. Files: `hd/moves/{merge.service.ts,split.service.ts,moves.controller.ts}`. Test:
+      united; merged chain in intake; across customers the moved messages keep `originCustomerContactId` and the
+      customer-facing reads of `hd/tickets/helpdesk-tickets.port.ts` (T30) and of replies filter by it (spec FR-44). Files:
+      `hd/moves/{merge.service.ts,split.service.ts,moves.controller.ts}`, `hd/tickets/helpdesk-tickets.port.ts`. Test:
       `hd/moves/merge.service.spec.ts`: times kept; cycle and merged target refused; mail to a merged ticket reaches
-      the final target; `split.service.spec.ts`.
+      the final target; a confirmed merge of customer A's ticket into customer B's sets `originCustomerContactId` on A's
+      messages, B's portal view, replies and quoted history show none of them, A's portal view of the merged source shows
+      them, agents see both, and no requester of A is copied on B's ticket; `split.service.spec.ts`.
 - [ ] **T34** (parallel). Tasks from tickets through `TaskCreateCommand`, linked as blocking the ticket; done-task notice
       and optional status move. Files: `hd/tickets/ticket-tasks.service.ts`. Test: `hd/tickets/ticket-tasks.service.spec.ts`: link both ways; notice on done.
 - [ ] **T35**. Reactions (setting), automatic followers as task subscribers, timeline contribution through
@@ -333,7 +337,7 @@ Every functional requirement of `spec.md` §3 and the tasks that implement it; e
 | FR-76 | §3.14 API, MCP, events and extension | T16, T19 |
 | FR-77 | §3.14 API, MCP, events and extension | T26, T41 |
 | FR-78 | §3.14 API, MCP, events and extension | T25, T41 |
-| FR-79 | §3.14 API, MCP, events and extension | T30 |
+| FR-79 | §3.14 API, MCP, events and extension | T30, T33 |
 
 ## Definition of Done
 

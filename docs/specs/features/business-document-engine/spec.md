@@ -182,7 +182,7 @@ with live progress, automatic retries and a downloadable result log. These requi
 - **FR-79** The system writes nothing during a preview: no number, no roll-up, no event, no history entry.
 - **FR-80** The system answers a preview within 300 ms (P95) for 200 lines and shows an area that did not answer in time as "not available" without blocking.
 - **FR-81** The system offers the preview as a panel on every document form, through the API and through MCP tools, to anyone who may read the document. `(advanced)`
-- **FR-82** The system confirms an agent's request only with a preview token for the document's current content taken within the last 10 minutes; any change in between invalidates the token. `(advanced)`
+- **FR-82** The system confirms an agent's request only with a preview token for the document's current content taken within the last 10 minutes for the same action and payload; any change in between invalidates the token, and a token taken for another action (a cancellation preview, for example) or another payload is refused. `(advanced)`
 
 ### 3.10 Recurrence
 

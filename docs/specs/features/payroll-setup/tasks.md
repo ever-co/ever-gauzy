@@ -114,10 +114,13 @@
       `pr/setup/calendar/pay-group.controller.ts`, `pr/setup/calendar/payroll-year.service.ts`,
       `pr/setup/calendar/pay-period-generator.ts`. Test: golden calendars; overlap refused.
 - [ ] **T17**. Assignments: validation of spec FR-34/FR-35, `effectiveTo` maintenance, history, level defaults (level
-      matched through `employee.employeeLevelId`, else the level label), cost to company, solver (bracket then
-      bisection). Files: `pr/setup/assignments/pay-assignment.service.ts`, `pr/setup/assignments/pay-assignment.controller.ts`,
-      `pr/setup/assignments/level-pay-default.service.ts`, `pr/engine/cost-to-company-solver.ts`. Test: solver within
-      0.01; every refusal named; a level default matches by label without the HR column.
+      matched through `employee.employeeLevelId`, else the level label), cost to company, solver (piecewise over the
+      formulas' breakpoints, linear solve per piece, plan §1). Files: `pr/setup/assignments/pay-assignment.service.ts`, `pr/setup/assignments/pay-assignment.controller.ts`,
+      `pr/setup/assignments/level-pay-default.service.ts`, `pr/engine/cost-to-company-solver.ts`,
+      `pr/engine/solver-breakpoints.ts`. Test: solver within 0.01; `if(base < 100, 100 - base, base)` with a target of 50 gives base 50 although the costs at 0 and 200 are
+      above 50; a target below the function's minimum answers "no base reaches it"; a formula with `base * base`
+      answers `PAYROLL_SOLVER_UNSUPPORTED` naming the element; every refusal named; a level default matches by label
+      without the HR column.
 - [ ] **T18**. Starter elements on first enable, setup checklist, employees without assignment. Files:
       `pr/setup/starter/starter-elements.service.ts`, `pr/setup/checklist/setup-checklist.service.ts`,
       `pr/setup/checklist/setup-checklist.controller.ts`. Test: starter set only for organizations without elements.
@@ -200,9 +203,10 @@
       minimum), preview. Files: `pr/setup/end-of-service/end-of-service-rule.service.ts`,
       `pr/setup/end-of-service/end-of-service-rule.controller.ts`, `pr/engine/end-of-service.ts`. Test: golden amounts;
       the rule matching a pay group and separation kind is chosen.
-- [ ] **T34** (parallel). Opening balances and the missing-balance warning. Files:
+- [ ] **T34** (parallel). Opening balances and the missing-balance warning; every create, change and removal appends
+      `payroll.opening_balance.changed` in its transaction (plan §5). Files:
       `pr/setup/opening-balances/opening-balance.service.ts`, `pr/setup/opening-balances/opening-balance.controller.ts`.
-      Test: unit.
+      Test: unit; a change of a year whose periods are closed emits the event once with before and after amounts.
 - [ ] **T35**. Fixed cost allocation shares on dimension sets through `PAYROLL_DIMENSION_SETS` (department and project
       without accounting). Files: `pr/setup/assignments/assignment-shares.service.ts`. Test: shares not 100 refused;
       inactive cost centre refused.
@@ -248,8 +252,9 @@
       golden split.
 - [ ] **T46**. Assistant drafting through `PAYROLL_ASSISTANT` (agent runtime, purpose `payroll.element_draft`) and MCP
       `payroll_element_draft`. Files: `pr/setup/assistant/payroll-assistant.service.ts`,
-      `packages/mcp-server/src/lib/tools/payroll-setup.ts`. Test: draft never saved; request payload holds no data of
-      other employees.
+      `packages/mcp-server/src/lib/tools/payroll-setup.ts`. Test: draft never saved; with another employee picked for
+      the sample, the provider request holds only synthetic sample facts (no `assignment.base` or other value of any
+      employee) while the sandbox result shown to the payroll administrator uses that employee's facts.
 - [ ] **T47** (parallel). Proof reading through `PAYROLL_DOCUMENT_READER` (`payroll.proof-reader`). Files:
       `pr/setup/declarations/proof-reader.worker.ts`. Test: pre-fill only; reviewer confirms.
 - [ ] **T48**. Starter proposals as core operation `PAYROLL_STARTER_PROPOSALS` writing `PROPOSED` assignments

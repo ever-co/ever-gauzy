@@ -115,9 +115,12 @@
   a result per parent and skipped step-output parents. Test: DB spec over 14 parents.
 - [ ] **T27**. Designs (`design/product-design.service.ts`, `design/product-design.controller.ts`,
   `jobs/design-build.operation.ts`): CRUD, design operations with step outputs, confirm lock, build as core operation
-  `MANUFACTURING_DESIGN_BUILD` creating items through the catalogue port and structures, outcome per node; revisions with
-  change list. Test: build spec (three
-  levels, missing items, report per node); revision spec.
+  `MANUFACTURING_DESIGN_BUILD` creating items through the catalogue port and structures, outcome per node; released
+  builds only with `MANUFACTURING_STRUCTURES_RELEASE`, and through one change request while change control is on (spec
+  FR-52); revisions with change list. Test: build spec (three
+  levels, missing items, report per node; a design editor without the release permission is refused a released build
+  and builds drafts; with change control on a released build leaves drafts and one submitted change request, released
+  on approval); revision spec.
 - [ ] **T28** (parallel). Design file import `design/import/` (`parts-list.parser.ts`, `step-structure.parser.ts`,
   `gltf-tree.parser.ts`, `design-import.merge.ts`): delimited and spreadsheet parts lists, STEP part-structure
   parser, glTF node tree; re-import merge rules. Test: parser specs with fixtures, size and depth limits; merge spec.

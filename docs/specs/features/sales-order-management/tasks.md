@@ -63,8 +63,12 @@
 - [ ] **T11**. `@FeatureFlag(FEATURE_ORDER)` on the 11 order controllers and GraphQL resolvers (`request-approval` and
   `approve` included, under `FEATURE_ORDER` only); `FEATURE_ORDER_APPROVALS` read by the threshold routing in the place
   path; migration `1791000020180-EnableOrderFeatureForTenantsWithOrders` (enabled toggle for every tenant with an
-  order). Test: e2e — `404` with the feature off, unchanged answers with it on; `approve` confirms a placed order with
-  `FEATURE_ORDER_APPROVALS` off; a tenant with orders and the toggle off is enabled by the migration.
+  order) and `1791000020185-AddMissingOrderFeatureToggles` (enabled toggle for every tenant without a `FEATURE_ORDER`
+  toggle row; stored toggles untouched). Files: `database/migrations/1791000020180-EnableOrderFeatureForTenantsWithOrders.ts`,
+  `database/migrations/1791000020185-AddMissingOrderFeatureToggles.ts`. Test: e2e — `404` with the feature off,
+  unchanged answers with it on; `approve` confirms a placed order with `FEATURE_ORDER_APPROVALS` off; a tenant with
+  orders and the toggle off is enabled by the migration; a tenant with no order and no toggle row creates its first
+  order after the migrations; a tenant without orders whose toggle is stored off stays off.
 - [ ] **T12**. Estimate answer routing: `quotation/estimate-answer.router.ts` implementing `ESTIMATE_ANSWER_ROUTER`;
   consulted by `packages/core/src/lib/public-share/invoice/commands/handlers/public-invoice-update.handler.ts` and the
   estimate status route before conversion. Test: handler spec — a quotation-owned estimate places the order and is never
@@ -143,12 +147,14 @@
   Test: spec — link both ways, cancellation flags.
 - [ ] **T30**. Credit control: pure `credit-limit.ts` (`organization_contact.creditLimit` → `contact_group` tree from the
   contact's `defaultGroupId` → `sales.*` setting), `credit-exposure.ts` (the contact's `creditUsed` reconciliation plus
-  open receivables when invoicing reports them), overdue check, hold on placement or at delivery (`SALES_PARTY_GUARD`
+  open receivables when invoicing reports them, with the order being checked excluded from the confirmed-orders part
+  and added once), overdue check, hold on placement or at delivery (`SALES_PARTY_GUARD`
   port for the delivery plugin), decisions as `sales_credit_decision` rows shared with the invoice credit reviews of
   `invoicing-receivables-payables` (written through `SALES_PARTY_GUARD`), buyer spending limits under
   `FEATURE_B2B_CREDIT`; checks run only where the organization's credit check stage is set (default `NONE`). Test: unit
   matrix; e2e hold and resume re-check; an order decision and an invoice review share the record; with the stage at its
-  default a contact with a stored limit is never held.
+  default a contact with a stored limit is never held; at the delivery stage a confirmed uninvoiced 60 order with no
+  other exposure passes a 100 limit (counted once).
 - [ ] **T31**. Blocking as core `party_hold` rows (`CONTACT`, scopes ordering, receiving, billing, paying) through
   `PartyHoldService`, release by the core sweep; party guard used by quotation, order, delivery and order-to-invoice
   paths; held orders re-checked on `party_hold.*`. Files: `sales-customer/sales-customer-block.service.ts`,

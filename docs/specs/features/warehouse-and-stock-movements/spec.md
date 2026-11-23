@@ -106,7 +106,9 @@ with a preview. These requirements are marked `(advanced)`.
   ones refused elsewhere, and existing zones always stay where they are until moved.
 - **FR-6** A location MAY name a default in-transit location and transit days, and MAY be owned by a customer (not own
   or valued stock) or held by a supplier (own, valued stock); carts, reservations and sales channels MUST see only
-  active, sellable, own stock-holding locations: never group, in-transit, non-sellable, customer or supplier stock.
+  active, sellable, own stock-holding locations: never group, in-transit, non-sellable, customer or supplier stock;
+  internal production for a customer (an inward subcontract order of that customer and the work orders that take it
+  over) MAY reserve that customer's material at its location, without it ever reaching carts or sales channels.
 - **FR-7** Location tags MUST act as user-defined categories that reports, putaway, reorder and transfers can target.
 - **FR-8** A stock document MUST refuse an item or party whose organization allow-list excludes its organization.
 
@@ -116,7 +118,9 @@ with a preview. These requirements are marked `(advanced)`.
   incoming (approved purchase orders and inbound transfers not yet received; in transit is its part), requested,
   planned, safety stock, available (as today) and projected (on hand + incoming + requested + planned − reserved).
 - **FR-10** On hand, reserved and in transit MUST change in the transaction of the movement or reservation; incoming,
-  requested and planned within 5 s of the purchase, requisition, transfer or production event.
+  requested and planned within 5 s of the purchase, requisition, transfer or production event; when the feature is
+  switched on for a tenant, they start from the open purchase orders, transfers, requisitions and production documents
+  that exist then, each counted once.
 - **FR-11** A group location MUST show the sum of its descendants for every figure, in views, reports and reorder.
 - **FR-12** A user with `STOCK_RECONCILE` can recalculate every figure for one item, one location or all, and sees each
   corrected figure before and after.

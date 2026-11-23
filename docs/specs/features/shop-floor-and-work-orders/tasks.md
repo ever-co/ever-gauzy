@@ -105,7 +105,8 @@
 - [ ] **T17**. Card creation and sequencing (`shop-floor/operation-card/`): batches, states, sequence rule, completion
   rule, loss propagation, operation-step steps, cancel rule. Files: `shop-floor/operation-card/operation-card.service.ts`,
   `shop-floor/operation-card/card-sequence.ts`. Test: `shop-floor/operation-card/card-sequence.spec.ts` (40 available,
-  45 refused; loss reduces later input).
+  45 refused; loss reduces later input: a 100-unit card after an operation that completed 98 and lost 2 completes
+  with 98 completed and no loss of its own).
 - [ ] **T18**. Materials (`shop-floor/materials/`): reserve (reservations of reference `PRODUCTION_ORDER` per line; the
   reserved figure read from them), issue (allowance), return, per-card issue, backflush and consume-at-source,
   substitutes, stock documents through `MANUFACTURING_STOCK` with the order's `dimensionSetId`, issued, consumed and
@@ -118,7 +119,8 @@
   dimension set), overproduction rules (order and sales line), lots and serial units through `MANUFACTURING_LOTS`;
   output held until its inspection is accepted, rejected quantity to a non-sellable location. Files:
   `shop-floor/output/output.controller.ts`. Test: `shop-floor/output/output.db.spec.ts` (secondary outputs; held output);
-  `shop-floor/output/output.service.spec.ts` (allowances).
+  `shop-floor/output/output.service.spec.ts` (allowances; a 100-unit sales line covered by its 100-unit work order
+  accepts that order's first output, and another order's open 40 on the same line lowers the room by 40).
 - [ ] **T20**. Conversion, disassembly and make-structure. Files: `shop-floor/output/conversion.service.ts`,
   `shop-floor/output/disassembly.service.ts`, `shop-floor/output/make-structure.service.ts`. Test:
   `shop-floor/output/disassembly.service.spec.ts` (limit; lots returned); `shop-floor/output/conversion.service.spec.ts`.
@@ -213,8 +215,9 @@
 - [ ] **T40**. Card time capture of core `TimerStartedEvent` / `TimerStoppedEvent` onto the outbox and the labour roll-up
   job (`shop-floor/time/labour-rollup.service.ts`) under the labour attribution rule of plan §2: logs by the card's task
   only; productive, idle, break seconds; cost from stored pay rate; nightly recompute. Test: roll-up spec with mixed log
-  types; recompute after a log edit; a log overlapping another record's interval is not counted here; pay never
-  serialised. Files: `shop-floor/time/card-time.capture.ts`, `shop-floor/time/labour-rollup.scheduler.ts`. Spec file:
+  types; recompute after a log edit; a log carrying the card's task is counted on the card even where its interval
+  overlaps another work record's, and a log carrying the other record's task is not counted here, whatever its
+  interval; pay never serialised. Files: `shop-floor/time/card-time.capture.ts`, `shop-floor/time/labour-rollup.scheduler.ts`. Spec file:
   `shop-floor/time/labour-rollup.service.spec.ts`.
 - [ ] **T41**. Labour source setting (rate split vs actual), estimated labour for untracked operators, efficiency figures.
   Files: `shop-floor/time/labour-source.ts`, `shop-floor/time/efficiency.ts`, `shop-floor/costing/work-order-cost.ts`.

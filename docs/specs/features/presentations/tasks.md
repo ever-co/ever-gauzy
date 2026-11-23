@@ -43,7 +43,8 @@
 - [ ] **T6**. On the shared core migration helpers of `procurement` T4 (`@gauzy/core`), entities `sl/entities/`
   (`slide-deck.entity.ts`, `slide-thumbnail.entity.ts`, `slide-theme.entity.ts`, `slide-brand-rules.entity.ts`,
   `slide-linked-slide.entity.ts`, `slide-chart-binding.entity.ts`, `slide-session.entity.ts`,
-  `slide-session-attendee.entity.ts`, `slide-session-slide.entity.ts`, `slide-rehearsal.entity.ts`) and migrations
+  `slide-session-attendee.entity.ts`, `slide-session-slide.entity.ts`, `slide-guest-vote.entity.ts`,
+  `slide-rehearsal.entity.ts`) and migrations
   `sl/database/migrations/1791000064200-CreateSlideDeckTables.ts`, `1791000064210-CreateSlideChartTables.ts`,
   `1791000064220-CreateSlideSessionTables.ts`. Test: migration specs on SQLite (up twice); mapping under both ORMs. Migration timestamps: `1791000064200` to `1791000064299` (`packages/plugins/slides`).
 - [ ] **T7**. Seed `sl/database/migrations/1791000064230-SeedSlidesSystemThemes.ts` (system themes and layouts); contributions of the plugin
@@ -55,7 +56,11 @@
 
 - [ ] **T8**. `deck` file kind registration (`createBlank`, `render` to PPTX, `extractText`, `thumbnail`, `openRoute`) and
   codec `sl/live/deck-live.codec.ts`: seed, `assertAcceptable` (schema, limits), `toStored` (manifest, counts),
-  `applyServerUpdate`, `onPersist` for thumbnails and linked slides. Test: codec spec; two sessions edit one slide through the docs live service and persist one state.
+  `applyServerUpdate`, `onPersist` for thumbnails and linked slides; the stale mark written by the persist and the
+  render-only `SlidesRenditionModule` (`sl/rendition/slides-rendition.module.ts`, loaded by `apps/api/src/plugins.ts` with
+  the flag off too; plan §3 Deck state). Test: codec spec; two sessions edit one slide through the docs live service and
+  persist one state; a save followed within 60 s by an unclean stop and a restart with `GAUZY_SLIDES_ENABLED` off, and a
+  save followed by switching `FEATURE_PRESENTATIONS` off, both download a PPTX holding that save.
 - [ ] **T9**. Deck service and controller: create (blank, theme, from a template of the hub's gallery through the kind's
   `createBlank`), manifest, settings; template marking through the hub's `/documents/:id/template`; GraphQL reads.
   Files: `sl/decks/deck.service.ts`, `sl/decks/deck.controller.ts`, `sl/decks/dto/create-deck.dto.ts`,
@@ -86,7 +91,10 @@
   `deck/:id/presenter` and `deck/:id/version/:versionId` as host pages mounting the React components with
   `LazyReactHostDirective` of `@gauzy/ui-react` (host context: docs live client, translation, theme, navigation), entry
   points over drive's New and Open with menus (the hub's template gallery, icon, opener), Settings → Presentations;
-  i18n `SLIDES.*` in every locale. Test: host pages render the components; hidden on `404`; no canvas code in the
+  i18n `SLIDES.*` in every locale; the scaffold of `packages/plugins/slides-react-ui` (package, project and the entry
+  components `DeckEditor`, `DeckViewer` and `PresentMode` exported as placeholders, which T20 and T19 fill). Files:
+  `packages/plugins/slides-react-ui/package.json`, `packages/plugins/slides-react-ui/project.json`,
+  `rui/index.ts`. Test: host pages render the entry components of the scaffold; hidden on `404`; no canvas code in the
   Angular package.
 - [ ] **T17**. Editor live binding in `packages/plugins/slides-react-ui/src/lib/live/deck-live.binding.ts` over the docs
   live client passed by the host (sync, updates, awareness, read-only modes, single-writer fallback), presence avatars
@@ -173,9 +181,11 @@
   `sl/sessions/slide-session.controller.ts`, `sl/sessions/session-sweep.job.ts`, `rui/audience/AudienceView.tsx`. Test: 50 simulated attendees
   follow within a second; a guest token opens only its session.
 - [ ] **T37**. Questions and votes over core comments and reactions on `SlideSession` (policy, anonymous mode, answer,
-  hide, show on screen, turn into a task or discussion post). Files: `sl/sessions/session-questions.service.ts`,
+  hide, show on screen, turn into a task or discussion post); guest votes in `slide_guest_vote`, counted with the
+  reactions (plan §3). Files: `sl/sessions/session-questions.service.ts`,
   `sl/comments/slide-session-comment-access.policy.ts`, `rui/audience/QuestionsPanel.tsx`. Test: votes order questions; hidden questions leave
-  attendee views.
+  attendee views; two guests voting the same emoji on one question count two votes, a guest's repeated vote withdraws
+  only their own, and a member's vote is a core reaction of that member.
 - [ ] **T38**. Polls through `CORE_POLLS` (the core polls of [`discussions`](../discussions/spec.md) T42): poll element, ad-hoc polls, open and close, one vote per attendee, live results
   on the slide. Files: `sl/sessions/session-polls.service.ts`, `rui/editor/elements/PollElement.tsx`. Test: duplicate vote refused; results update live.
 - [ ] **T39**. Reports FR-64 and FR-65 (`/sessions/:id/summary`, `/decks/:id/activity`), CSV and PDF; MCP tools

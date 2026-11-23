@@ -85,11 +85,13 @@
   `tax/calculator/rate-ordering.ts`, `tax/calculator/distribution.ts`. Test: unit specs and property tests (parts sum
   to the whole).
 - [ ] **T15**. Calculator: prices including tax (net = entered price less rounded tax; per document, each rate's tax
-  from the sum of its lines' entered prices, distributed by largest remainder, spec FR-35), rounding modes, rounded
+  the rounded sum of its lines' unrounded taxes from each line's full chain, distributed by largest remainder, spec
+  FR-35), rounding modes, rounded
   total, organization-currency twins. Files: `tax/calculator/prices-including-tax.ts`, `tax/calculator/rounding.ts`,
   `tax/calculator/currency-twins.ts`. Test: property tests (gross equals entered prices on every line and in total;
   line taxes sum to document tax; no line tax below zero or above its price) in three currencies' scales; 50 lines of
-  0.01 at 19 % per document give tax 0.08 and total 0.50.
+  0.01 at 19 % per document give tax 0.08 and total 0.50; a line of 110 at 10 % and one of 130 at 10 % and 20 % on net
+  give 20 of 10 % tax and 20 of 20 % tax.
 - [ ] **T16**. Manual-mode adapter `tax/tax-document/manual-tax.adapter.ts` (typed percentages → tax lines). Test:
   golden-invoice spec replaying stored invoices against today's totals.
 - [ ] **T17**. Determination `tax/determination/`: regime order (document, party, rules, destination, general),
@@ -233,11 +235,13 @@
   `tax/withholding/calculation/thresholds.ts`. Test: table-driven and property specs.
 - [ ] **T47**. `WithholdingService`: preview, consumers for bills, payments (`payments.allocation.created`),
   journals and document tax lines of negative rate parts (one entry each), entry states, reversal, force or waive,
-  adjusting entries; each entry stamped with the `documentVersion` of its event and `adjustsKey` (plan §3). Files:
+  adjusting entries; each entry stamped with the `documentVersion` of its event, `taxLineKey` and `adjustsKey` (plan
+  §3). Files:
   `tax/withholding/withholding.service.ts`, `tax/withholding/withholding.consumer.ts`. Test:
   consumer idempotency and state specs; a negative-part withholding has exactly one entry; a bill confirmed and then
   amended writes one entry per version, a redelivered event of either version adds nothing, and two non-adjusting
-  entries of one version and category are refused on PostgreSQL, MySQL and SQLite.
+  entries of one version, category and tax line are refused on PostgreSQL, MySQL and SQLite, while two invoice lines
+  with the same negative rate part keep one entry each.
 - [ ] **T48**. Controllers for masters, preview, entries, decisions. Files:
   `tax/withholding/withholding-masters.controller.ts`, `tax/withholding/withholding-entries.controller.ts`. Test: e2e
   permissions.

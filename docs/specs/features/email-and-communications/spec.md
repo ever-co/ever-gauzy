@@ -152,7 +152,10 @@ incoming mail is **matched to records with a stated reason and confidence**; and
   among the record's parties and fields or type addresses, choose an identity and a template, and attach the record's
   PDF in a print template of their choice, the record's files or uploads.
 - **FR-25** The system fills template tokens from the record, its related records, custom fields, the sender and the
-  recipient, in the recipient's language when the template has it, else the organization's.
+  recipient, in the recipient's language when the template has it, else the organization's. Recipients who receive one
+  email together (To, Cc and Bcc of one message) get one rendering, made for the first To recipient; when the sender
+  chooses separate messages, and in bulk sends, each recipient gets their own rendering, kept as its own communication
+  of the same send, so history and resend show what each person received.
 - **FR-26** The system holds a sent message for an undo window (default 15 s, setting 0 to 30) before it is queued.
 - **FR-27** A user can schedule a message for a later time in their time zone, edit or cancel it until it is queued, and
   see scheduled messages on the record and in "My scheduled messages".
@@ -182,7 +185,10 @@ incoming mail is **matched to records with a stated reason and confidence**; and
 - **FR-37** The system retries a temporary failure with back-off up to 5 times (setting 0 to 10), records each attempt,
   and marks the recipient failed with the answer after the last one.
 - **FR-38** The system picks up messages stuck sending for 10 minutes and never sends again to a recipient whose send
-  the transport accepted.
+  the transport accepted. A recipient whose outcome is unknown after a crash (the transport was called, no answer was
+  recorded) is sent again only when the transport can deduplicate a repeated send under the same message key or reports
+  that it did not accept the message; otherwise it is marked uncertain and waits for a user with
+  `COMMUNICATIONS_QUEUE_MANAGE` to resend or close it.
 - **FR-39** A user with `COMMUNICATIONS_QUEUE_MANAGE` can suspend and resume the queue per organization or identity, retry
   failed messages and cancel queued ones; while suspended, messages are kept and the queue shows the backlog.
 - **FR-40** The system stops a bulk send when more than 10 % of its first 200 recipients fail and asks the sender to
@@ -192,7 +198,9 @@ incoming mail is **matched to records with a stated reason and confidence**; and
 - **FR-42** The system tracks opens and clicks only when the identity turns tracking on (default off), never for messages
   to employees, and states that opens of messages with several recipients are approximate.
 - **FR-43** The system stores no body for messages a template marks sensitive (sign-in links, codes, password resets),
-  keeping only metadata and the delivery state.
+  keeping only metadata and the delivery state: such a message is rendered and handed to the transport by the sending
+  call itself and never scheduled, held, queued or retried from a stored body; a temporary failure is retried within
+  that call, and after the last attempt the recipient is marked failed and the person asks for a new message.
 - **FR-44** The system counts messages per organization and channel per day and month and enforces the plan or
   deployment limits set for them, refusing with the limit named.
 
@@ -311,7 +319,8 @@ incoming mail is **matched to records with a stated reason and confidence**; and
 - **Performance**: composer opens under 500 ms P95; a queued message reaches its transport within 60 s P95; 50 messages
   per second per worker; a record timeline of 10,000 communications under 300 ms P95; connected mail within 2 minutes.
 - **Volume**: 50 million communications and 200 million recipient rows per tenant; 500 connected mailboxes per tenant.
-- **Reliability**: at-least-once queue, no duplicate send after a crash, provider events deduplicated, pulling resumes
+- **Reliability**: at-least-once queue, no duplicate send after a crash (an outcome the transport can neither deduplicate
+  nor report waits for a person, FR-38), provider events deduplicated, pulling resumes
   from the last position after downtime.
 - **Security & privacy**: credentials encrypted with the platform key, never returned; bodies sanitised before storage
   and render; sensitive templates keep no body; tracking off by default. Leaves the platform: email and text messages

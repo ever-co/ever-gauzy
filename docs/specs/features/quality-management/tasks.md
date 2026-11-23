@@ -118,7 +118,8 @@
       document, delivery, subcontract receipt, return and card events; `POST /quality/inspections/from-document`.
       Files: `q/events/quality-sources.consumer.ts`, `q/inspection/quality-inspection.controller.ts`. Test: event
       delivered twice creates one inspection per source line and lot (`sourceKey`); after a cancellation a new draft
-      can be made.
+      can be made; a 500-unit line with lots of 300 and 200 drafts inspections of 300 and 200, whose decisions move
+      500 units in all.
 - [ ] **T20**. Return inspections with restock location choice, covering restocked units only. Files:
       `q/inspection/quality-return-inspection.service.ts`. Test: decision restocks to the allowed location; damaged
       return units not inspected.
@@ -152,7 +153,8 @@
       customer and supplier feedback (templates, scores 1–5, action threshold). Files:
       `q/improvement/quality-circle.service.ts`, `q/improvement/quality-circle.controller.ts`,
       `q/feedback/quality-feedback.service.ts`, `q/feedback/quality-feedback.controller.ts`. Test: score range refused;
-      employee subject refused; circle listed from its appointment.
+      employee subject refused; circle listed from its appointment; a user with `QUALITY_VIEW` and without
+      `QUALITY_FEEDBACK_EDIT` is refused every feedback read.
 - [ ] **T28**. Events of plan §5 and real-time hints; `.completed` alias of `.decided`. Files: `q/events/quality.events.ts`.
       Test: each event once per action; alias carries the same payload.
 - [ ] **T29**. Schedules and consumers in `q/schedule/` (`quality-schedule.plugin.ts` as `QualitySchedulePlugin` in
@@ -224,11 +226,13 @@
 - [ ] **T43**. Acceptance sampling switching rules per item and supplier with reasons on inspections. Files:
       `q/engine/sampling-switching.ts`, `q/setup/quality-sampling-level.service.ts`. Test: tighten after the configured
       rejects, return to normal after the configured accepts.
-- [ ] **T44**. Supplier measures: consumer, nightly rebuild (damaged on arrival and rejected both counted),
+- [ ] **T44**. Supplier measures: consumer of decisions and of non-conformance and action changes (plan §8), nightly
+      rebuild (damaged on arrival and rejected both counted),
       `quality.supplier_measure.updated`, measures exposed to procurement scorecards; send a non-conformance to the
       supplier through `QUALITY_COMMUNICATIONS` and record the answer. Files: `q/analytics/supplier-measure.service.ts`,
       `q/events/quality-decisions.consumer.ts`, `q/improvement/supplier-answer.service.ts`. Test: scorecard receives
-      measures within 60 s in an e2e with the purchasing stub.
+      measures within 60 s in an e2e with the purchasing stub after a decision, after a non-conformance is closed and
+      after an action linked to the supplier's non-conformance is closed.
 - [ ] **T45**. Photo hints through `QUALITY_AI` as runs of an agent of `ai-agents-and-assistants` (model and usage on
       the run), hint records with `aiRunId` and agreement report. Files: `q/ai/photo-hints.service.ts`. Test: hints never
       set results.

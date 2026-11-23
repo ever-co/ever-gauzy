@@ -101,7 +101,7 @@ follow-ups under the caller's rights.
 
 - **FR-16** The system MUST show a device check before joining: camera preview, microphone level, speaker test, device choice, starting muted or with camera off, and who is already in the room for members.
 - **FR-17** The system MUST admit directly the people FR-12 lets in, put others in the lobby, and notify hosts of every lobby request with admit and reject; a rejected person sees why and cannot ask again for 5 minutes.
-- **FR-18** A guest can join by link with a name (and an optional address) without an account, when guests are allowed; guests always wait in the lobby unless they hold a personal link from an invitation, are shown as guests to everyone, and their tokens last at most two hours.
+- **FR-18** A guest can join by link with a name (and an optional address) without an account, when guests are allowed; guests always wait in the lobby unless they hold a personal link from an invitation, are shown as guests to everyone, and their tokens last at most one hour like every join token (FR-7); a guest who stays longer keeps the session, and a reconnection asks for a new token through the guest's pass.
 - **FR-19** A host can ban a participant from the room; banned members and banned guest addresses are refused at the token request.
 - **FR-20** The system MUST ask a person already connected who joins from another device whether to move the call there, close the first connection on yes, and replace a stale connection on reconnection without a second attendance entry.
 - **FR-21** The system MUST refuse joins above the room's participant limit with "room full" and end a session at the duration limit after a warning 5 minutes before.

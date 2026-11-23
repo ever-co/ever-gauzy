@@ -196,8 +196,10 @@
 - [ ] **T36**. Proposals: `/pricing/proposals`, operation `PRICING_PROPOSAL` through `PRICING_ASSISTANT` (purpose
   `pricing.price-proposal`), draft list + impact, discard; proposals page. Files:
   `pr/price-proposal/{price-proposal.service.ts,price-proposal.controller.ts,price-proposal.operation.ts}`,
-  `prui/pages/proposals-page.component.ts`. Test: `pr/price-proposal/price-proposal.operation.spec.ts` proving the
-  operation cannot activate a list.
+  `prui/pages/proposals-page.component.ts`, `pr/price-proposal/proposal-aggregates.ts` (the group aggregates sent and
+  the local application of the answered moves, plan §9). Test: `pr/price-proposal/price-proposal.operation.spec.ts` proving the
+  operation cannot activate a list; the payload captured at the provider holds group aggregates and the goal only, no
+  item id, item price or item margin; the moves answered per group give the expected item prices in the draft.
 - [ ] **T37**. Margin-leak sweep: scheduled job, `/pricing/margin-leaks` routes, Inbox item per run, margin leaks page
   and report. Files: `pr/margin-leak/{margin-leak.sweep.ts,margin-leak.service.ts,margin-leak.controller.ts}`,
   `pr/schedule/pricing-schedule.plugin.ts`, `prui/pages/margin-leaks-page.component.ts`. Test:
@@ -209,7 +211,7 @@
   `FEATURE_PRICING_RULES`), `replay_price_impact`, `propose_price_changes`, `list_margin_leaks`,
   `create_promotion`, `generate_coupon_batch` with `preview`. Files: `packages/mcp-server/src/lib/tools/{pricing.ts,promotions.ts}`.
   Test: `packages/mcp-server/src/lib/tools/pricing.spec.ts`: a preview writes nothing.
-- [ ] **T40**. Spec status `Implemented`; checklist rows updated. Files: `docs/specs/features/pricing-and-promotions/spec.md`. Test: every acceptance criterion of `spec.md` §7 demonstrated before the status changes.
+- [ ] **T40**. Spec status `Implemented`; checklist rows updated; the last task to land: it runs after T41 (the consumer ports) and every other task of this list, whatever their position. Files: `docs/specs/features/pricing-and-promotions/spec.md`. Test: every acceptance criterion of `spec.md` §7 demonstrated before the status changes.
 - [ ] **T41**. Provide the ports other features bind to (plan, **Consumer tokens answered**): `DOCUMENT_PRICING_STAGE`, `LEDGER_EXCHANGE_RATES`, `MANUFACTURING_PRICE_LISTS`, `PAYROLL_EXCHANGE_RATES`, `PRICING_COUPONS`, `PURCHASING_PRICING`. Files: `apps/api/src/plugin-composition.ts`, `pr/ports/pricing.consumer-tokens.ts`. Test: `pr/ports/pricing.consumer-tokens.spec.ts`, one contract test per token over the shape its consumer plan states; with this feature off each consumer keeps its stated fallback.
 
 ## Requirement Coverage

@@ -90,7 +90,9 @@
       `pay/payment-webhook-event/payment-webhook-event.service.ts`. Test: `gw/callbacks/outcome-applier.spec.ts`:
       duplicate once; out-of-order older outcome ignored for the session state; two partial captures whose callbacks
       arrive later one first both create their capture and reach collections once each, and a second callback for the
-      same provider capture id adds nothing; bad signature changes nothing;
+      same provider capture id adds nothing; the same capture reported in two events without a capture id (an
+      automatic full capture) is recorded once, and a partial capture without any id is held as unmatched and reaches
+      collections only after its match; bad signature changes nothing;
       `gw/callbacks/callback.controller.spec.ts`: route answers with the tenant feature off.
 - [ ] **T12**. Capture hand-off: outbox events of plan §5; invoice fallback through `InvoicePaymentService` when
       `payments-and-collections` is off. Files: `gw/events/{payment-gateways.events.ts,capture-handoff.ts,index.ts}`. Test:
@@ -129,9 +131,13 @@
 - [ ] **T18**. Redirect, wallet and bank redirect kinds; status query sweep `payment-gateways.status-query`. Files:
       `gw/checkout/redirect-kinds.ts`, `gw/jobs/status-query.job.ts`. Test: `gw/jobs/status-query.job.spec.ts`: closed
       browser settled by callback; silent provider settled by query after 15 minutes, then hourly.
-- [ ] **T19** (parallel). Phone prompts with per-request split and single-use secrets for unsigned callbacks. Files:
-      `gw/checkout/phone-prompt.service.ts`. Test: `gw/checkout/phone-prompt.service.spec.ts`: 1,000
-      with a 300 limit makes four prompts; replayed callback after settlement changes nothing.
+- [ ] **T19** (parallel). Phone prompts with per-request split and single-use secrets for unsigned callbacks: the
+      callback route's secret path for adapters with `signedCallbacks: false` (plan §4). Files:
+      `gw/checkout/phone-prompt.service.ts`, `gw/callbacks/callback.controller.ts`, `gw/callbacks/prompt-secret.verifier.ts`.
+      Test: `gw/checkout/phone-prompt.service.spec.ts`: 1,000
+      with a 300 limit makes four prompts; replayed callback after settlement changes nothing; an unsigned callback with
+      the prompt's secret completes the payment, and one with a missing, wrong or already used secret answers `401`
+      and changes nothing.
 - [ ] **T20** (parallel). Terminals `gw/terminals/` (pair, start, cancel, progress over real time). Files:
       `gw/terminals/{terminal.service.ts,terminal.controller.ts}`. Test: `gw/terminals/terminal.service.spec.ts`: sandbox terminal
       paid and cancelled paths.
@@ -180,7 +186,9 @@
       cost-aware choice from fee tables, simulation route, health window and pause, failover once on provider faults with
       linked keys; daily account health reported through `INTEGRATION_HEALTH`). Files:
       `gw/routing/{routing.service.ts,routing-rules.controller.ts,provider-health.service.ts}`, `gw/jobs/health.job.ts`. Test:
-      `gw/routing/routing.service.spec.ts`: final decline never fails over;
+      `gw/routing/routing.service.spec.ts`: final decline never fails over; a timeout at the first account never fails
+      over: with `statusQuery` the charge is resolved there first (charged: no second charge; not charged: one failover),
+      without it the charge stays pending;
       paused account skipped; the rule evaluator's trace explains the choice.
 - [ ] **T32**. Network tokens and updater notices (`payment_instrument_change`, charges with tokens, saved-charge report).
       Files: `gw/instruments/{updater-notice.service.ts,network-tokens.ts}`. Test:

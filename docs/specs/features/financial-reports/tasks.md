@@ -120,12 +120,14 @@
   incomplete layout refused; an exported layout imports unchanged.
 - [ ] **T25**. Consolidation setup API and engine (pure) `fr/consolidation/engine/`: member trial balances,
   group mapping, translation by the rate rule (equity and investments from dated movements at each posting date's
-  rate, carried from the previous final run), proportional method. Files:
+  rate, carried from the previous final run; a first run opens from every earlier dated movement), proportional method.
+  Files:
   `fr/consolidation/consolidation-group.controller.ts`, `fr/consolidation/consolidation-group.service.ts`,
   `fr/consolidation/engine/consolidation-engine.ts`, `fr/consolidation/engine/translation.ts`,
   `fr/consolidation/engine/historical-equity.ts`. Test: fixture group of
   three organizations; the cumulative translation difference lands on its equity line; two members with the same
-  equity balance posted on different dates translate to different amounts.
+  equity balance posted on different dates translate to different amounts; a first run for 2026 of a member with
+  equity posted in 2025 translates that equity at its 2025 posting dates' rates.
 - [ ] **T26**. Consolidated trial balance and statements, consolidated ageing, runs with versions, adjustments,
   finalize guard. Files: `fr/consolidation/consolidation-run.controller.ts`,
   `fr/consolidation/consolidation-run.service.ts`, `fr/consolidation/consolidation.operation.ts`,
@@ -136,8 +138,8 @@
   Files: `fr/registers/gross-profit.dataset.ts`.
   Test: data-set spec with a fake port, with accounting on and off; with the port unbound, selling amounts and the
   unavailable cost and margin columns.
-- [ ] **T28**. Daily roll-up consumer `subscriber:financial-report-rollup`, nightly verification and rebuild, purge
-  job. Files: `fr/runtime/daily-rollup.consumer.ts`, `fr/runtime/rollup-verify.job.ts`. Test: double-delivery spec;
+- [ ] **T28**. Daily roll-up consumer `subscriber:financial-report-rollup` (recompute of each touched day under the day
+  lock), nightly verification and rebuild, purge job. Files: `fr/runtime/daily-rollup.consumer.ts`, `fr/runtime/rollup-verify.job.ts`. Test: double-delivery spec;
   drift detection spec.
 - [ ] **T29**. Print templates for the reports of spec FR-75 and the two party statement forms (FR-76). Files:
   `fr/print/financial-report.print-templates.ts`, `fr/print/party-statement.print-templates.ts`. Test:
@@ -145,11 +147,13 @@
 - [ ] **T56**. Historical backfill of `report_daily_movement` (plan §3, migration 4): core operation
   `financial-reports.rollup.backfill`, started when the feature is first switched on for a tenant and on demand,
   builds the rows from the posted journal lines of every fiscal period, closed periods included, in slices per
-  organization, ledger book and month (idempotent upsert on the row key, so deliveries of the T28 consumer during the
-  backfill count once); until a range is backfilled, an intra-period report of it reads the ledger directly. Files:
+  organization, ledger book and month, each day recomputed from its journal lines while holding the day lock the
+  T28 consumer also takes (both writers recompute from the lines, so a delivery during the backfill is counted once
+  whichever writes first); until a range is backfilled, an intra-period report of it reads the ledger directly. Files:
   `fr/runtime/rollup-backfill.operation.ts`, `fr/runtime/daily-rollup.consumer.ts`. Test:
   `fr/runtime/rollup-backfill.operation.spec.ts`: after enablement, an intra-period report of a closed period that
-  predates it equals the ledger; a second run changes nothing; a posting delivered during the backfill is counted once.
+  predates it equals the ledger; a second run changes nothing; a posting delivered during the backfill is counted once,
+  also when the backfill read the day before the posting and the consumer wrote before the backfill.
 
 ## Phase 3 — UI surfaces
 

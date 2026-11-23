@@ -100,7 +100,8 @@
 - [ ] **T10**. `aa/runtime/tool-gate.ts`: modes (off, allowed, confirm, preview only), invoker permission check, untrusted
   marks with the helper moved from `packages/plugins/docs/src/lib/knowledge/security/untrusted-content.ts` to
   `packages/utils/src/lib/ai/untrusted-content.ts` (re-exported by docs), result cap and masking. Test: hidden tool not
-  offered; refused call recorded; write after untrusted content needs confirmation.
+  offered; refused call recorded; write after untrusted content needs confirmation, in the same step and in a later
+  step, after a resume, and in the next run of the same conversation while its context still holds that content.
 - [ ] **T11**. `aa/confirmations/`: confirmation cards in the stream (`aa/confirmations/confirmation.service.ts`), inbox
   approval and question items through `INBOX_ITEM_WRITER`, source handler `AI_AGENTS`
   (`aa/confirmations/ai-agents-inbox-source.handler.ts`), expiry job (`aa/confirmations/confirmation-expiry.scheduler.ts`).
@@ -108,8 +109,9 @@
 - [ ] **T12**. `aa/usage/`: price table (`aa/usage/ai-model-price.service.ts`), usage entries per model call in exact
   decimals (`aa/usage/ai-usage-entry.service.ts`), a consumer of `DocsAiUsageEvent` writing Documents AI calls into the
   same ledger (`aa/usage/docs-ai-usage.listener.ts`), totals added to the core usage meter (`USAGE_METER`, metrics
-  `ai.tokens`, `ai.cost`). Test: cost from tokens and prices; unpriced flag; an embedding call of the docs plugin counts
-  against the organization cap.
+  `ai.tokens`, `ai.cost`) in the transaction that writes each usage entry. Test: cost from tokens and prices; unpriced
+  flag; an embedding call of the docs plugin counts against the organization cap; a call that crosses the monthly cap
+  makes the next run refused with `AI_BUDGET_EXCEEDED` before the hourly `usage-close` pass runs.
 - [ ] **T13**. The assistant as agent "Assistant": `ai-chat` turns also write runs and usage when the plugin is loaded
   and `FEATURE_AI_AGENTS` is on for the tenant (optional hook in `packages/plugins/ai-chat/src/lib/ai-chat.service.ts`,
   answered by `aa/runtime/assistant-run.hook.ts`; absent or off = unchanged); the agent keeps the assistant's 12-step
@@ -222,8 +224,10 @@
   `aa/tools/built-ins/search-knowledge.tool.ts`, `mcp/tools/ai-agents.ts`, `apps/api/src/plugin-composition.ts`. Test:
   ranking spec; citation links.
 - [ ] **T30**. Purposes: settings per purpose (`aa/purposes/purpose.controller.ts`, `aa/purposes/purpose.service.ts`),
-  `AGENT_RUNTIME.complete` (`aa/runtime/agent-runtime.port.ts`), adapters for the domain tokens of plan §3.1 in
-  `apps/api/src/plugin-composition.ts`. Test: purpose off → domain fallback; purpose model used; masking applied.
+  `AGENT_RUNTIME.complete` and `AGENT_RUNTIME.purge` (a domain's anonymization erases its runs' step inputs, outputs
+  and tool payloads, keeping the run row and usage) (`aa/runtime/agent-runtime.port.ts`), adapters for the domain
+  tokens of plan §3.1 in `apps/api/src/plugin-composition.ts`. Test: purpose off → domain fallback; purpose model
+  used; masking applied; after `purge` a run keeps its usage and holds no input, output or tool payload.
 - [ ] **T31**. Budgets and caps per organization, agent, purpose and user, each window checked against its own counter:
   `DAY` and `MONTH` against the core usage meter, `MINUTE` through the core throttler storage keyed by principal and
   metric, `ACTION` against the size of the current action (records of the bulk action, rows of the export); checks

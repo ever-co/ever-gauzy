@@ -180,7 +180,9 @@
 - [ ] **T25**. Headcount plans: lines, overlap refusal, group plans, pull requests, held and open recount job, the
       opening check of FR-5 with enforcement modes, position headcount written on activation through
       `RECRUITMENT_HEADCOUNT`. Files: `rc/headcount/headcount-plan.service.ts`, `rc/headcount/headcount-plan.controller.ts`,
-      `rc/headcount/opening-plan.check.ts`, `rc/headcount/headcount-recount.scheduler.ts`. Test: block, warn, off; group
+      `rc/headcount/opening-plan.check.ts`, `rc/headcount/headcount-recount.scheduler.ts`. Test: block, warn, off; with a
+      plan of three and two held, an opening for two positions is refused in block mode and one for one position
+      passes; two openings of one position each saved at once against one free position leave one refused; group
       plan bound; chart vacancies equal plan vacancies.
 - [ ] **T26**. Hiring requests: lifecycle, duplicate warning, approval through `RECRUITMENT_APPROVALS` (workflows, else
       core request approval `HIRING_REQUEST` with its decision gate and settler), opening from request, fill and time
@@ -261,7 +263,9 @@
       registration with `access-control-and-security`. Files: `rc/retention/recruitment-retention.scheduler.ts`,
       `rc/retention/recruitment-anonymiser.ts`, `rc/talent-pool/talent-pool.service.ts`,
       `rc/privacy/recruitment-personal-data.handler.ts`. Test: report counts kept after anonymization; with the setting
-      off, or for a candidate without applications, nothing is removed.
+      off, or for a candidate without applications, nothing is removed; after anonymization no screening summary,
+      linked run input or output, scorecard or feedback text, offer acceptance or preview, or referral name, phone or
+      reason of the candidate remains, and a quotation of the CV in a screening summary is gone.
 - [ ] **T45** (parallel). Source cost and tracked recruiting time in source effectiveness. Files:
       `rc/reports/source-effectiveness.dataset.ts`. Test: cost per hire golden figures.
 - [ ] **T46**. Mutating MCP tools (`recruitment_opening_draft_from_request`, `recruitment_application_move`,

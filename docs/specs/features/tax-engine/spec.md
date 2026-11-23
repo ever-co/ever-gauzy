@@ -153,8 +153,10 @@ parties; an agent reviews tax anomalies and proposes fixes a person approves. Ma
   taxes are summed unrounded, rounded once, and the difference allocated to lines by largest remainder.
 - **FR-35** The system keeps the entered prices under prices that include tax, so no drift arises: a line's net is
   its entered price less its rounded tax. With rounding per line, each line's tax is rounded on its own; with rounding
-  per document, the tax of each rate is computed once from the sum of the entered prices of its lines, rounded, and
-  distributed to those lines by largest remainder of their unrounded taxes. Nets plus taxes then equal the entered
+  per document, each line's unrounded taxes come from its own full tax chain applied to its entered price, the
+  document's tax of each rate is the sum of that rate's unrounded taxes over its lines, rounded once, and it is
+  distributed to those lines by largest remainder of their unrounded taxes (a line of 110 with 10 % and one of 130
+  with 10 % and 20 % on net give 20 of 10 % tax, never a tax from the combined 240). Nets plus taxes then equal the entered
   prices on every line and in total, and no line's tax is negative or larger than its price (50 lines of 0.01 at
   19 % per document: tax 0.08 on eight lines of 0.01, nets 0.42, total 0.50).
 - **FR-36** A user editing a draft can switch "round the total" (default from the organization) to round the

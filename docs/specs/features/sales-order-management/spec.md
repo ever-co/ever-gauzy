@@ -138,7 +138,7 @@ Advanced capabilities: one **document flow** from deal to payment with live stat
 ### 3.8 Credit control and blocking
 
 - **FR-63** The credit limit MUST resolve to the contact's limit when set, else the nearest customer group's up the tree, else the organization default; with none set, credit control does not apply; zero means every on-account order needs approval. Credit control runs only where the organization has set a credit check stage (order or delivery; default none), so limits already stored on contacts hold no order until the organization chooses to check them.
-- **FR-64** Exposure MUST be open receivables (when invoicing is on) plus confirmed orders not yet invoiced plus this order, in organization currency; an order paid in full at checkout is not checked.
+- **FR-64** Exposure MUST be open receivables (when invoicing is on) plus confirmed orders not yet invoiced other than this order, plus this order's uninvoiced amount once, in organization currency; at a delivery check, when this order is already confirmed and uninvoiced, it is counted once (a 60 order against a 100 limit with no other exposure is 60); an order paid in full at checkout is not checked.
 - **FR-65** A second check MUST compare overdue receivables with the party's overdue threshold (contact, group, organization default).
 - **FR-66** (advanced) An order failing a check MUST be placed and held for credit, never refused silently: an approval request goes to holders of `SALES_CREDIT_RELEASE` with the exposure, overdue items, payment history and the order; the salesperson sees the hold, the reason and who decides.
 - **FR-67** (advanced) The approver can release the order once, raise the party's limit (`CONTACT_CREDITS_EDIT`), ask for an advance (the order is released when it is paid) or reject (the order stays held until cancelled); every decision is in the order timeline and the party's credit history, one history with the invoice credit reviews of `invoicing-receivables-payables`.
@@ -297,7 +297,7 @@ Advanced capabilities: one **document flow** from deal to payment with live stat
 ## 8. Open Questions
 
 - Quotation owner: the `order` plugin's quotation, with the core estimate as issued copy (applied).
-- `FEATURE_ORDER` is now read by the routes (default: wire it, as for all commerce codes; a migration switches it on for every tenant that already has order data, so no tenant using orders loses a route; release note names it).
+- `FEATURE_ORDER` is now read by the routes (default: wire it, as for all commerce codes; a migration switches it on for every tenant that already has order data, and every tenant without a stored toggle for it gets it on, so no tenant loses a route, also one that has not created its first order yet; release note names it).
 - The contact's `creditLimit` comment says null means "no credit facility"; nothing reads it today. Default applied: null inherits from group and organization, and no limit anywhere means no credit check.
 - Direct edits of an issued copy through the estimate API stay allowed and do not change the offer (default); issued copies may be locked later.
 - Commission payout default: a party payout through the payment provider; payroll hand-off only when payroll is on.

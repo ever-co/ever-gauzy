@@ -17,7 +17,8 @@ A new plugin triple, `@gauzy/plugin-sheets` (`packages/plugins/sheets`), `sheets
 menus and settings inside the documents hub) and `sheets-react-ui` (the one workbook editor and the read-only range
 view, written once in React and mounted in the Angular app through the existing React bridge `@gauzy/ui-react`,
 `ReactHostDirective` / `LazyReactHostDirective`, the way `dashboard-time-track-react-ui` and `ai-chat-react-ui` are),
-loaded by `apps/api/src/plugins.ts` only when `GAUZY_SHEETS_ENABLED` is exactly `true` and gated per tenant by
+loaded by `apps/api/src/plugins.ts` only when `GAUZY_SHEETS_ENABLED` is exactly `true` (its render-only module of §3
+loads whenever the package is installed) and gated per tenant by
 `FEATURE_SPREADSHEETS`. An isomorphic library, `@gauzy/sheets-model` (`packages/sheets-model`), holds what the browser,
 the API and the worker must compute alike: the workbook model over a shared CRDT document, the formula engine adapter,
 the file codecs and the version diff. It builds on what exists:
@@ -115,7 +116,13 @@ and their frozen or snapshot values, never any reader's live rows), 60 s after a
 the copy stale (the manifest's `blobRevision` behind the document's `contentRevision`) until that render; while the
 plugin is loaded, a download that finds the copy stale renders it from the saved state first, whatever the tenant
 feature, and the plugin renders every stale copy at API shutdown, so the copy served with the feature or the plugin off
-holds every saved edit. A download or export with the feature on is rendered per request with the requester's own live
+holds every saved edit. This does not depend on a clean shutdown: the stale mark is written in the persist transaction,
+the XLSX codec lives in `@gauzy/sheets-model`, and the render-only `SheetsRenditionModule`
+(`packages/plugins/sheets/src/lib/rendition/`, no route, table, job or page) is loaded by `apps/api/src/plugins.ts`
+whenever the package is installed, also with `GAUZY_SHEETS_ENABLED` off; it registers only the `sheet` kind's `render`
+with drive's file-kind registry, so a download through the hub that finds the copy stale renders it from the saved state
+first, and after a start it renders every stale copy in batches. After an unclean stop and a restart with the plugin
+off, the copy served is therefore the saved revision. A download or export with the feature on is rendered per request with the requester's own live
 rows (FR-55) and streamed, never written to the blob. Versions are drive's `document_version` rows (`source = APP`, `label`, `isPinned`).
 
 ### New tables (plugin; all `TenantOrganizationBaseEntity`, soft delete; JSON as `text`; keys `varchar(32)`)
@@ -324,6 +331,12 @@ and `ADMIN`; all but `SETTINGS_MANAGE` to `MANAGER`; `LIVE_RANGE_MANAGE`, `SNAPS
 - **Protection** is enforced in the `sheet` codec's `assertAcceptable(doc, update, session)`: the update is applied to a
   copy and refused (`SHEETS_PROTECTED`, nothing applied) when it touches a protected cell the session's user may not
   edit; `applyServerUpdate` runs the same check for API, MCP, import and restore writes.
+- **Cell history** is captured per accepted update, never from the merged state at persist: the same check that applies
+  an update to a copy yields that update's cell changes (before and after per cell), recorded with the identity of the
+  session that sent it (`assertAcceptable`) or the `actor` and `source` of `applyServerUpdate`, in the document's
+  pending change list; `onPersist` writes each pending change as its own `sheet_cell_change` row in the persist's
+  transaction, so two people editing one cell before one save give two rows with their own person, time and values
+  (spec FR-48).
 - **Per-reader live data**: results are keyed by the access hash of `REPORT_RUNS` (report-builder `ReportAccessService`)
   or of the compiled record view read scope; a reader never receives another hash's rows; the client feeds them to the
   formula engine as an outside source, so computed cells over them are per reader and never enter the shared state.

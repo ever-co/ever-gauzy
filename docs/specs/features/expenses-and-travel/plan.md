@@ -76,7 +76,7 @@ flowchart LR
 | Money | exact decimals of the core money kernel, `numeric(20,6)`, document and organization currency with the rate | [platform architecture](../../architecture/business-suite.md) §6 |
 | Receipt reading | queue `expense-receipt-extract` calling `EXPENSE_RECEIPT_READER`, bound to `AGENT_RUNTIME.complete` of `ai-agents-and-assistants` (purpose `expenses.receipt-read`; runs, usage and budgets recorded there), else the AI provider registry of `ai-chat` with the organization's credentials, as bill capture does | no agent, run or usage table here |
 | Policy engine | pure functions over line, claim, trip and month aggregates; results stored as findings | testable, explainable |
-| Spend figures | `expense_spend_figure` maintained by an outbox consumer: the platform's one maintained expense figure per project, client and month (`EXPENSE_SPEND` for project costing) | dashboards without scans; no second figure |
+| Spend figures | `expense_spend_figure` maintained by an outbox consumer: the platform's one maintained expense figure per project, client and month (`EXPENSE_SPEND` for project costing), covering approved claim lines and direct expenses alike; each event recomputes the figure keys it touches (before and after project, client and month) from the `expense` rows under the figure row's lock, so replays and the switch-on backfill give the same totals | dashboards without scans; no second figure |
 | Persistence | MultiORM entities, the shared core migration helpers of `@gauzy/core`, three dialects; JSON as `text` | Principle III |
 | Background work | `@ScheduledJob` + `@QueueWorker`, schedule-only plugin in the worker, in-process fallback | house idiom |
 
@@ -106,7 +106,11 @@ Other additive changes outside this plugin:
 The filter is applied in `expense.service.ts` (list, pagination, count, report, daily chart, statistics, `me`),
 `queries/handlers/expense.find-split-expense.handler.ts`, `expense.resolver.ts`,
 `employee-statistics/employee-statistics.service.ts`, `employee-statistics/queries/handlers/aggregate-employee-statistic.handler.ts`
-and the invoice expense picker.
+and the invoice expense picker. The tenant export and import of `export-import` (`repositories.service.ts`, which lists
+the `expense` repository in its export set) is a full copy of the tenant and applies no filter: draft, submitted and
+rejected claim lines go out and come back with `approvalState`, `source` and `expenseClaimId`, beside the plugin's
+claim tables registered with that export (T7), so a restore returns every claim whole and the filtered reads above
+keep counting only direct and approved rows after it.
 
 ### New plugin entities (`TenantOrganizationBaseEntity`)
 
@@ -117,7 +121,7 @@ and the invoice expense picker.
 | `expense_claim_line` | `expenseId` fk unique (core `expense`, cascade), `claimId` fk cascade, `lineNumber`, `kind` (`STANDARD`/`PER_DIEM`/`MILEAGE`/`VEHICLE`/`CARD`), `claimedAmount`, `approvedAmount`, `currency`, `rateToClaim` numeric(20,10), `rateSource`, `rateReason`, `claimAmount`, `taxInclusive` bool, `taskId`, `dimensionSetId` (`analytic_dimension_set` of `accounting-foundation`, resolved through `AnalyticDimensionSetService.resolve` from the project, the cost centre and the other dimension values; null without accounting), `billable` bool, `markupPercent`, `paymentSource` (`PERSONAL`/`COMPANY_CARD`/`COMPANY_ACCOUNT`), `cardExplanationId`, `vendorName` (only when no `organization_vendor` matches), `receiptFileIds` text (the first also in `expense.receipt`), `captureId`, `vehicleLogEntryId`, `working` text, `findings` text, `justification`, `duplicateOf` text, `attendees` text, `decisionComment` | idx `(claimId, lineNumber)` |
 | `expense_claim_tax_line` | `lineId` fk cascade, `taxRateRef`, `rate`, `base`, `amount`, `recoverableAmount`, `projectId`, `dimensionSetId` | idx `(lineId)` |
 | `expense_advance` | `number`, `employeeId`, `purpose`, `amount`, `currency`, `neededBy`, `travelRequestId`, `paymentMethodPref`, `state` (`REQUESTED`/`APPROVED`/`PAID`/`PARTLY_SETTLED`/`SETTLED`/`RETURNED`/`RECOVERED`/`CLOSED`/`CANCELLED`), `approvedAmount`, `paidAmount`, `appliedAmount`, `returnedAmount`, `recoveredAmount`, `unsettledAmount`, `payoutRef`, `creditItemRef`, `recoveryRef`, `approvalRef`, `version` | unique `(organizationId, number)`; idx `(employeeId, state)` |
-| `advance_application` | `claimId`, `advanceId`, `amount`, `advanceAmount`, `rate`, `allocationRef`, `state` (`ACTIVE`/`RELEASED`), `liveKey` varchar(120) null | unique `(tenantId, liveKey)` (`<claim>:<advance>` while active); idx `(advanceId, state)` |
+| `advance_application` | `claimId`, `advanceId`, `amount`, `advanceAmount`, `rate`, `allocationRef`, `state` (`ACTIVE`/`RELEASED`), `liveKey` varchar(120) null | unique `(tenantId, liveKey)` (`<claim>:<advance>` while active); idx `(advanceId, state)`, `(claimId, state)`; an application locks the claim row, then the advance rows in id order (`FOR UPDATE` on PostgreSQL and MySQL, the database write lock on SQLite), recomputes the claim's remaining payable and each advance's unsettled amount from the active applications under those locks, and refuses a new one above either |
 | `expense_policy`, `expense_policy_rule` | policy: `name`, `priority` int, `isActive`, scope as core `rule` rows (owner type `EXPENSE_POLICY`: branches, departments, groups, levels); rule: `policyId` fk cascade, `kind` varchar(24) (`ITEM_LIMIT`/`DAY_LIMIT`/`TRIP_LIMIT`/`MONTH_LIMIT`/`RECEIPT_THRESHOLD`/`ALLOWED_CATEGORIES`/`REQUIRED_FIELD`/`DEADLINE`/`WEEKEND_HOLIDAY`/`TRACKED_TIME`), `categoryIds` text, `countryCode`, `cityClass`, `amount`, `currency`, `action` (`WARN`/`JUSTIFY`/`CAP`/`BLOCK`), `message` | idx `(organizationId, priority)`; idx `(policyId)` |
 | `receipt_capture` (employee receipts; supplier invoices are `bill_capture` rows of `invoicing-receivables-payables`) | `fileId`, `fileName`, `mimeType`, `checksum` varchar(64), `source` (`UPLOAD`/`EMAIL`/`PHONE`/`API`), `employeeId`, `inboundAddressId` (Docs inbound address, for `EMAIL`), `state` (`RECEIVED`/`EXTRACTING`/`PROPOSED`/`USED`/`DISCARDED`/`FAILED`), `proposal` text, `error`, `extractedAt`, `lineId` | idx `(organizationId, checksum)`, `(employeeId, state)` |
 | `card_holder` | `bankAccountRef` uuid (banking card account), `employeeId`, `last4` varchar(4), `isActive` | unique `(bankAccountRef, employeeId, last4)` |
@@ -201,6 +205,7 @@ updates. Errors `400` with codes (`EXPENSE_NO_LINES`, `EXPENSE_POLICY_BLOCKED`, 
 | `document.expense_claim.confirmed` / `.cancelled` / `.amended` (`posting`: `ILedgerPostingFacts`, components `EXPENSE`, `RECOVERABLE_TAX`, `EMPLOYEE_PAYABLE`, `CARD_LIABILITY`, `ADVANCE_SETTLEMENT`, keys `expenseCategoryId`, `projectId`, `taskId`, `recogniseOverPeriod`) | approval, cancellation, reclassification | `general-ledger`; `budgets-and-revenue-schedules` deferrals |
 | `document.expense_advance.confirmed` / `.cancelled` | advance approved or cancelled | `general-ledger`, payout hand-off |
 | `expenses.claim.submitted` / `.decided` / `.cancelled` / `.reimbursed` | claim lifecycle | inbox, push, automations, webhooks, spend figures, real-time |
+| `expenses.direct_expense.changed` `{ expenseId, before, after }` (project, client, month, amount, currency) | a direct expense (`approvalState` null) is created, changed, soft deleted or deleted through the existing routes; appended in the same transaction by the plugin's subscriber on core `expense` while the feature is on | spend figures |
 | `expenses.advance.decided` / `.paid` / `.settled` | advance lifecycle | inbox, reminders |
 | `expenses.travel_request.decided` / `.closed` | travel lifecycle | budget commitments, inbox |
 | `expenses.receipt.proposed`, `expenses.card_transaction.to_explain` | reading done; card line arrived | inbox item to the employee, real-time |
@@ -285,7 +290,8 @@ regenerated after merge.
 | `expenses.reminders` | daily | unsettled advances, unexplained card lines, card escalations, submission deadlines (next service of company vehicles is reminded by their `fixed-assets` maintenance plan) | dispatcher `dedupeKey` |
 | `expenses.travel-close` | daily | closes trips whose claims are decided, releases commitments | state transition; commitment key |
 | `expenses.policy-recheck` | on policy change | re-evaluates draft and submitted lines | findings replaced per line |
-| `expenses.spend-figures` (outbox consumer) | claim events, invoice events | upserts spend figures, pushes hints | `figureKey` upsert per event |
+| `expenses.spend-figures` (outbox consumer) | claim events, invoice events, `expenses.direct_expense.changed` | recomputes the touched figure keys from the `expense` rows, pushes hints | recompute per `figureKey` under its row lock |
+| core operation `EXPENSE_SPEND_BACKFILL` | the feature switched on for a tenant (the first time and after any period off) | builds the figures of every month that holds direct expenses or approved claim lines, in steps of one project or client and month | the same recompute per `figureKey` |
 | `expenses.reimbursement-sync` (outbox consumer) | open item, payment and payslip events | reimbursement and advance states | state derived from amounts |
 
 The worker loads `ExpenseClaimsSchedulePlugin`; the API loads `ExpenseClaimsPlugin` and the queue workers; without a

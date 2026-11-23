@@ -31,7 +31,8 @@ through ports bound in `apps/api/src/plugin-composition.ts`, never by importing 
   the platform settings store. There is no sales profile table.
 - **Credit**: the limit resolves contact → group tree → organization setting; exposure extends the contact's
   `creditUsed` (re-derived nightly from the order and refund ledgers) with open receivables from
-  `invoicing-receivables-payables`; every credit decision, for an order or for an invoice review of
+  `invoicing-receivables-payables`, and counts the order being checked once: its uninvoiced amount is taken out of the
+  confirmed-orders part when it is already in it (a delivery check) and added as this order (spec FR-64); every credit decision, for an order or for an invoice review of
   `invoicing-receivables-payables`, is one `sales_credit_decision` row, written through `SALES_PARTY_GUARD`.
 - **Holds and blocks**: an order hold is the document engine's `hold` / `release` action on the order's document
   (`business-document-engine`); the order keeps only a reason code and a release date, which the engine lacks.
@@ -112,7 +113,7 @@ flowchart LR
 | Events | `EventOutboxService.append` + `EventConsumerRegistry` consumers | Principle VII |
 | Jobs | `@ScheduledJob` + `@QueueWorker` (`@gauzy/scheduler`, ticks in `job_execution`); statement generation as core operation `SALES_COMMISSION_STATEMENTS`; in-process fallback timer without a queue | one run ledger |
 | Approvals | core `RequestApprovalService` through `ORDER_APPROVAL` (types `SALES_ORDER`, `SALES_ORDER_CREDIT`, `SALES_QUOTATION`) | becomes workflow definitions in `approval-workflows` |
-| Flags | `@FeatureFlag(FEATURE_ORDER)` on every order controller, the existing `request-approval` and `approve` routes included; `FEATURE_ORDER_APPROVALS` read only by the new threshold routing in the place path; `@FeatureFlag(FEATURE_SALES)` (+ sub-feature) on new ones; migration `1791000020180-EnableOrderFeatureForTenantsWithOrders` writes an enabled `FEATURE_ORDER` toggle for every tenant that has an `order` row (idempotent) | wire declared codes; no tenant using orders loses a route |
+| Flags | `@FeatureFlag(FEATURE_ORDER)` on every order controller, the existing `request-approval` and `approve` routes included; `FEATURE_ORDER_APPROVALS` read only by the new threshold routing in the place path; `@FeatureFlag(FEATURE_SALES)` (+ sub-feature) on new ones; migration `1791000020180-EnableOrderFeatureForTenantsWithOrders` writes an enabled `FEATURE_ORDER` toggle for every tenant that has an `order` row (idempotent), and `1791000020185-AddMissingOrderFeatureToggles` writes an enabled tenant-level `FEATURE_ORDER` toggle (the catalogue default, `defaultEnabled: true`) for every tenant that has no `FEATURE_ORDER` toggle row at all, orders or not, because a tenant-scoped check without a row falls back to the configured state (`FeatureService.configuredFeatureState`, off for this code) rather than the catalogue default; a stored toggle is never changed by it | wire declared codes; no tenant loses a route, including one that has not created its first order yet |
 | Settings and permissions | `sales.*` setting contributions and permission contributions with `defaultFor` (`packages/plugin/src/lib/plugin-contributions.ts`) | no settings table, no seed migration |
 | New ports (declared in `order.types.ts`, bound in `plugin-composition.ts`) | `SALES_PRICING` (`PricingQuoteService` of `pricing-and-promotions`, which runs the cart's basket chain; unbound → the existing price resolution port), `SALES_DOCUMENTS` (document registry, series, links, holds, bulk runs), `SALES_STOCK` (availability, reservations, pick lists), `SALES_PURCHASING` (purchase orders, requisitions, supplier terms and lead times), `SALES_PRODUCTION` (unbound until manufacturing exists), `SALES_PROJECTS` (core project and task services), `SALES_GOALS` (core goal KPI service), `SALES_PAYOUTS` (`payment-gateways` payout sources; unbound → statements marked paid by hand); provided to other plugins: `SALES_PARTY_GUARD` (party holds, credit and document-chain checks the delivery and invoice paths call, and the credit-review writer of invoicing), `SALES_ITEM_RESTRICTIONS`; core `ESTIMATE_ANSWER_ROUTER` (optional; consulted by the estimate answer paths before conversion) | the plugin's existing port idiom; each unbound port has a documented fallback |
 
@@ -174,7 +175,8 @@ Permissions and default grants are plugin contributions; no migration is needed 
 nullable or defaulted: no backfill. A data step creates `order_quotation` rows for existing draft or pending orders
 with a `quoteInvoiceId` (revision 1 = that estimate), so old quotes join the new model; these rows get no `validUntil`
 (the expiry job skips them) and the order and its estimate are left as they are, so the old estimate link keeps
-answering. `1791000020180-EnableOrderFeatureForTenantsWithOrders` (see Flags).
+answering. `1791000020180-EnableOrderFeatureForTenantsWithOrders` and `1791000020185-AddMissingOrderFeatureToggles`
+(see Flags).
 `1791000020190-SeedOrderConfirmationEmailTemplate` (the order confirmation email template, every locale).
 
 ### Contracts
@@ -368,7 +370,7 @@ platform logger with order and organization ids.
 | Promise refresh load on big catalogues | Medium | Medium | debounced per line, event-scoped, nightly pass in the worker |
 | Promise moves flood the order history | Medium | Low | one order change per refresh pass and order, only when a date moves |
 | Order plugin grows large | High | Low | sub-modules with their own Nest modules and sub-features; can split later |
-| Wiring `FEATURE_ORDER` cuts off a tenant that turned it off | Low | Medium | migration enables it for every tenant with orders; release note; toggle rows already enabled by default |
+| Wiring `FEATURE_ORDER` cuts off a tenant that turned it off | Low | Medium | migration enables it for every tenant with orders, and a second one writes an enabled toggle for every tenant without a toggle row, so a tenant with no orders yet can create its first; release note; toggle rows already enabled by default |
 | Sales rules refuse or hold orders of existing paths (checkout, API) | Medium | High | every refusing, holding or requiring `sales.*` setting defaults to today's behaviour (credit check stage `NONE`, requested date not required, buyer reference accepted, price edit open to `ORDERS_EDIT`); contract tests on checkout and order routes with the feature on |
 
 ## 14. References

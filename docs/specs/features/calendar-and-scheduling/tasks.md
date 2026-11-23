@@ -102,7 +102,8 @@
   organization free/busy default, private filtering), controllers with default personal calendar creation and soft
   delete with undo. Files: `calendars/calendar.controller.ts`, `calendars/calendar-user-setting.service.ts` (personal
   show, colour and order), `sharing/calendar-share.service.ts`, `sharing/calendar-share.controller.ts`. Test:
-  `sharing/calendar-access.service.spec.ts` (FR-12 matrix per level; private events across readers);
+  `sharing/calendar-access.service.spec.ts` (FR-12 matrix per level; private events across readers: the owner and an
+  invited participant see the details, a reader of either calendar through a share sees "Private");
   `calendars/calendar.service.spec.ts` (a default personal calendar on first use holds the user's hosted appointments;
   the last personal calendar cannot be deleted; undo within 30 days).
 - [ ] **T13**. Events `events/calendar-event.service.ts` over the core appointment entities (validation, versions,
@@ -222,12 +223,15 @@
   `packages/core/src/lib/event-types/schema/event-types.type.gql`, `booking/booking-type.defaults.ts`. Test:
   `packages/core/src/lib/event-types/event-type.resolver.spec.ts` (existing booking flow unchanged);
   `booking/booking-type.defaults.spec.ts` (defaults proposed only for types created with the feature on).
-- [ ] **T33**. Booking engine `booking/booking.service.ts` (slots from FR-73, re-check under lock, event creation,
+- [ ] **T33**. Booking engine `booking/booking.service.ts` (slots from FR-73, re-check under lock from the event tables,
+  resource bookings and busy sources for the slot with busy blocks only for synced outside calendars (plan §2
+  Concurrency), event creation,
   confirmation and expiry, reschedule and cancel by the appointment's signed token with purpose and expiry, link version
   raised on change, no-shows) and public controllers with throttling. Files: `booking/booking.controller.ts` (host's
   bookings, filters, no-show, cancel), `booking/booking-lock.ts`, `booking/booking-token.service.ts`,
   `public/public-booking.controller.ts`, `schedule/calendar-booking-expiry.scheduler.ts`. Test:
-  `booking/booking.db.spec.ts` (two concurrent guests); `booking/booking.service.spec.ts` (expiry frees the slot; a link
+  `booking/booking.db.spec.ts` (two concurrent guests; an event added to the host's calendar whose busy-block rebuild
+  has not run yet refuses that slot); `booking/booking.service.spec.ts` (expiry frees the slot; a link
   from today's booking email still opens its booking; unpublished type refused; throttled after the limit).
 - [ ] **T34**. Party matching and lead intake (`CALENDAR_LEAD_INTAKE` with the booking as reference, contact fallback,
   deal link). Files: `booking/party-matching.service.ts`, `booking/calendar-lead-intake.port.ts`. Test:

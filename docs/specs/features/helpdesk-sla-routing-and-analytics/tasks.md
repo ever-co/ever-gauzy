@@ -137,7 +137,9 @@
       split, reset (setting and permission), outside-hours mark, working-time measures. Files:
       `hd/service-levels/clock-state-machine.ts`, `hd/service-levels/ticket-sla.service.ts`,
       `hd/service-levels/ticket-sla.lifecycle.ts`, `hd/service-levels/ticket-sla.controller.ts`. Test: every transition of spec
-      §3.7, including a status change through the task API; pause, resume and a second pause in one cycle record three
+      §3.7, including a status change through the task API; a 24-hour calendar clock started 09:00, paused 10:00 to
+      12:00 and moved at 12:00 to a three-hour target gets a 14:00 due time and no breach, while a change to a
+      one-hour target at 12:00 breaches at the change; pause, resume and a second pause in one cycle record three
       events; a retried transition records one.
 - [ ] **T24**. Minute check job (`helpdesk.sla-check`): breaches at due time with internal comment and notices, catch-up,
       `nextCheckAt`. Files: `hd/schedule/helpdesk-sla-check.scheduler.ts`, `hd/service-levels/sla-check.worker.ts`,
@@ -173,8 +175,9 @@
       `hd/agents/agent-invitation.service.ts`, `hd/agents/helpdesk-agent.controller.ts` (`POST /agents/invite`). Test: resend
       and cancel; acceptance once.
 - [ ] **T31**. `SERVICE_LEVEL_ENGINE` for other record types with a test record type. Files:
-      `hd/service-levels/service-level-engine.ts`, `hd/service-levels/testing/test-record-type.ts`. Test: clocks, breach
-      and escalation on the test type, stored and announced with its `recordType` and `recordId` and no task.
+      `hd/service-levels/service-level-engine.ts`, `hd/service-levels/testing/test-record-type.ts`. Test: clocks and
+      breach on the test type, stored and announced with its `recordType` and `recordId` and no task (warning and
+      escalation on the test type are tested with the warning service and the runner in T35).
 - [ ] **T32** (parallel). `HELPDESK_CUSTOMER_STATS` for the portal and the CRM organisation view; ratings through
       `HELPDESK_SATISFACTION` with "not available" fallback. Files: `hd/analytics/customer-stats.provider.ts`,
       `hd/analytics/satisfaction.reader.ts`. Test: another customer's tickets never counted.
@@ -191,7 +194,8 @@
       raise priority, tags, start a flow. Files: `hd/service-levels/sla-warning.service.ts`,
       `hd/service-levels/escalation-policy.service.ts`, `hd/service-levels/escalation-policy.controller.ts`,
       `hd/service-levels/escalation.runner.ts`. Test: each level once; stops when met; manager falls back to the lead
-      without HR.
+      without HR; a warning and an escalation level on the test record type of T31 are stored and announced with its
+      `recordType` and `recordId` and no task.
 - [ ] **T36**. Customer time zone calendars; `HELPDESK_CONTRACTS` with policy, calendar and support hours drawn down by
       tracked time, warnings at 80 % and 100 %. Files: `hd/service-levels/customer-time-zone.ts`,
       `hd/analytics/contract-usage.service.ts`, `hd/analytics/contract-usage.controller.ts`. Test: due times in the
@@ -272,7 +276,7 @@ Every functional requirement of `spec.md` §3 and the tasks that implement it; e
 | FR-45 | §3.8 States, warnings, breaches and escalation | T35 |
 | FR-46 | §3.8 States, warnings, breaches and escalation | T24 |
 | FR-47 | §3.8 States, warnings, breaches and escalation | T25 |
-| FR-48 | §3.9 Other record types | T31 |
+| FR-48 | §3.9 Other record types | T31, T35 |
 | FR-49 | §3.10 Dashboards | T15, T28 |
 | FR-50 | §3.10 Dashboards | T27, T28 |
 | FR-51 | §3.10 Dashboards | T15, T27 |

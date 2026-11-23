@@ -97,9 +97,11 @@
 - [ ] **T14**. `budget/budget-match.service.ts`: document line to budget line (account, nearest group, category;
       dimension set on axes; most specific wins) with a cached map per budget version. Test: precedence table.
 - [ ] **T15**. `budget/budget-figure.service.ts`: maintained figures, availability for period, year to date and
-      year (`budget/budget-availability.service.ts`), `GET /budgets/availability`, monitor query
-      (`GET /budgets/:id/monitor` in `budget/budget-monitor.controller.ts`). Test: figures equal recomputation after
-      random postings; availability answers under 100 ms on the 5,000-line fixture.
+      year (`budget/budget-availability.service.ts`, with the optional `pendingLines` of the query, plan §4), `GET
+      /budgets/availability`, monitor query (`GET /budgets/:id/monitor` in `budget/budget-monitor.controller.ts`). Test:
+      figures equal recomputation after random postings; availability answers under 100 ms on the 5,000-line fixture; a
+      pending line without a commitment record lowers availability, and the same line counts once after its record
+      is appended.
 - [ ] **T16**. Consumer `subscriber:accounting-budget-actuals` on `accounting.journal.posted` / `.reversed`
       (exempt kinds of spec FR-23). Files: `budget/consumers/budget-actuals.consumer.ts`. Test:
       `budget-actuals.consumer.spec.ts`: reversal gives budget back; duplicate delivery counts once; a depreciation
@@ -110,8 +112,13 @@
       `budget-control-rule.service.spec.ts`: one rule per budget, line and control point; consumed counts actuals,
       commitments and pre-commitments as the rule says, within the tolerance.
 - [ ] **T18**. `budget/budget-control.participant.ts`: `onCheck` (impact, findings `BUDGET_EXCEEDED`,
-      `BUDGET_WARNING`, `BUDGET_APPROVAL_REQUIRED`) and `onConfirming` (figure lock in key order, `RESERVATION`).
-      Test: `.db.spec.ts` where two concurrent confirmations cannot both pass.
+      `BUDGET_WARNING`, `BUDGET_APPROVAL_REQUIRED`, a preview) and `onConfirming` (figure lock in key order, then
+      availability recalculated from the locked rows and the line's action applied to that result, then
+      `RESERVATION`; a bill line with `purchaseOrderLineId` counts only its part above the order line's open
+      commitment and appends that commitment's `CONSUME` record in the same transaction).
+      Test: `.db.spec.ts` where two concurrent confirmations of 60 against a budget of 100 cannot both pass, for
+      "block" and for "require approval"; a 10,000 bill of a fully committed 10,000 order passes and leaves consumed at
+      10,000.
 - [ ] **T19**. Overrides: grant, consume once, approval-originated overrides; controller. Files:
       `budget/budget-override.service.ts`, `budget/budget-override.controller.ts` (`/budget-overrides`),
       `budget/dto/create-budget-override.dto.ts`. Test: `budget-override.service.spec.ts`: an override is valid for
@@ -122,7 +129,8 @@
       `budget/budget-commitment.service.ts`. Test: `budget-commitments.consumer.spec.ts`: amendment from 6,000 to
       4,500 releases 1,500.
 - [ ] **T21**. Release of commitments by billed amount on posted bills (`keys.purchaseOrderLineId`), foreign
-      currency at the order's rate; `BUDGET_COMMITMENT_SOURCE` registry. Files:
+      currency at the order's rate, skipping the part already consumed at confirmation (T18, idempotency key
+      `bill:<billLineId>`); `BUDGET_COMMITMENT_SOURCE` registry. Files:
       `budget/budget-commitment-release.service.ts`, `budget/budget-commitment-source.registry.ts`. Test:
       `budget-commitment-release.service.spec.ts`: release equals what was reserved whatever the bill rate; a
       registered source's records appear on its line.

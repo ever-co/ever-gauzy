@@ -216,12 +216,16 @@
 - [ ] **T35**. Hover cards (`card` route, type settings, people cards) and quick entry from palette, list and pickers
   (custom-fields quick-entry dialog when loaded). Files: `rv/cards/record-card.service.ts`,
   `ui/record-hover-card.directive.ts`, `rvui/components/quick-entry-launcher/quick-entry-launcher.component.ts`. Test: card respects masks; quick entry selects the new record.
-- [ ] **T36**. Search coverage: index definitions in code for comments with notes (private notes excluded), linked emails
+- [ ] **T36**. Search coverage: index definitions in code for comments with notes (private notes indexed with
+  `restrictedToUserId` = their author and filtered by it on every query), linked emails
   and every registered type beside the existing `definitions/*.definition.ts`, active only for tenants with the feature
   on, quoted-reply stripping, admin weights page. Files: `sp/definitions/comment.definition.ts`,
   `sp/definitions/linked-email.definition.ts`, `sp/definitions/registered-record-types.definition.ts`,
-  `sp/definitions/index.ts`, `rvui/settings/search-weights/search-weights.component.ts`. Test: hit in a comment shows its record; reindex progress; a tenant
-  with the feature off gets the same index documents and results as before.
+  `sp/definitions/index.ts`, `rvui/settings/search-weights/search-weights.component.ts`,
+  `sp/database/migrations/1791000036210-AddSearchDocumentRestrictedToUser.ts`, `sp/services/search-query.filter.ts`.
+  Test: hit in a comment shows its record; reindex progress; a tenant
+  with the feature off gets the same index documents and results as before; the author finds their private note by its
+  text and another user who reads the record does not.
 - [ ] **T37**. Unsaved-changes guard and form undo and redo; per-user preferences (`recordViews` UI preferences); phone
   card layout with swipe actions. Files: `ui/unsaved-guard/unsaved-guard.service.ts`,
   `ui/record-list/record-list-preferences.service.ts`, `ui/record-cards-phone/record-cards-phone.component.ts`. Test: guard on navigation; preference round trip.
@@ -247,9 +251,14 @@
   `ai-agents-and-assistants` (unbound → not offered), catalogue-only prompt, chips UI, MCP `views_create_from_text`.
   Files: `rv/assistant/filter-interpreter.service.ts`, `rv/records/records.controller.ts` (`…/interpret`),
   `ui/filter-chips/filter-chips.component.ts`, `packages/mcp-server/src/lib/tools/record-views.ts`. Test: the prompt holds no record data; unknown fields dropped with a notice.
-- [ ] **T41**. Live lists, boards and calendars: subscribe to the list source's events, re-read changed visible ids,
-  highlight, keep rows under edit. Files: `ui/live/record-live-updates.service.ts`,
-  `ui/record-list/record-list.component.ts`. Test: two-client spec within 2 s.
+- [ ] **T41**. Live lists, boards and calendars: subscribe to the list source's events, re-evaluate every changed id
+  (visible or not) against the list's filter and sort through the records route's `ids` parameter, insert new matches
+  at their position within the loaded pages or count them in a "new records" notice, drop records that stop matching,
+  update counts, highlight, keep rows under edit. Files: `ui/live/record-live-updates.service.ts`,
+  `ui/record-list/record-list.component.ts`, `rv/records/records.controller.ts`, `rv/records/record-match.service.ts`.
+  Test: two-client spec within 2 s; a record another user creates that matches the open list appears at its sort
+  position, one changed to match appears, one changed to no longer match leaves, and one whose place is past the
+  loaded pages raises the notice.
 - [ ] **T42**. Presence on records (`record.viewing` signals, avatars, warning before overwriting a field changed by
   someone else). Files: `ui/live/record-presence.service.ts`, `ui/record-sidebar/record-sidebar.component.ts`. Test: audience limited to readers; nothing stored.
 - [ ] **T43**. Meaning-based search on the core knowledge-embedding seam of T51: migration

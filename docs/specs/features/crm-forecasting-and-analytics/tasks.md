@@ -159,8 +159,12 @@
 - [ ] **T27**. Snapshots: `forecast/crm-forecast-snapshot.service.ts` with the run registered as an operation type of the
   core runtime (batches as steps, resumed by the runtime), scheduler `schedule/crm-forecast-snapshot.scheduler.ts` and
   manual request (`/crm/forecast/snapshots`), retention job `schedule/crm-snapshot-retention.scheduler.ts`;
-  `crm.forecast.snapshot_taken` event. Test: interrupted run completes without duplicates; snapshot immutable; a second
-  run for the same date is refused while one is live; one event per completed snapshot.
+  `crm.forecast.snapshot_taken` event; snapshot reads through `forecast/snapshot-reader.ts`, which serves a stored
+  roll-up only where the reader's record rules hide no deal of its scope and otherwise sums the snapshot deal rows the
+  reader may read (plan §9), used by T28 and T29 as well. Test: interrupted run completes without duplicates; snapshot
+  immutable; a second run for the same date is refused while one is live; one event per completed snapshot; a manager
+  with `CRM_ANALYTICS_VIEW_ALL` from whom a record rule hides one deal gets roll-up, trend and accuracy figures without
+  that deal, while a reader the rules hide nothing from gets the stored totals.
 - [ ] **T28**. Movement and trend: `forecast/movement.ts` (new, increased, decreased, pulled in, pushed out, won, lost),
   `/crm/forecast/movement`, `/trend`, the "Changes between two snapshots" definition, pages
   (`packages/plugins/crm-ui/src/lib/components/crm-forecast-movement/crm-forecast-movement.component.ts`,
@@ -202,7 +206,7 @@ Every functional requirement of `spec.md` §3 and the tasks that implement it; e
 | --- | --- | --- |
 | FR-1 | §3.1 Presence and access | T4, T35 |
 | FR-2 | §3.1 Presence and access | T7, T18 |
-| FR-3 | §3.1 Presence and access | T7, T12 |
+| FR-3 | §3.1 Presence and access | T7, T12, T27 |
 | FR-4 | §3.2 Deal currency and rates | T2, T6 |
 | FR-5 | §3.2 Deal currency and rates | T5 |
 | FR-6 | §3.2 Deal currency and rates | T6, T17 |

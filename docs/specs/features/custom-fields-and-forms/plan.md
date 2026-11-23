@@ -237,8 +237,12 @@ Role grants come from the permission contributions' `defaultFor`. No existing ta
 | `PUT` | existing `/api/user/ui-preferences` | the caller | own field defaults under `customFields` | Existing |
 | `GET` `POST` | `/api/custom-fields/scripts/test`, `/api/custom-fields/scripts/runs` | `CUSTOM_FIELD_SCRIPTS_MANAGE`; self-hosted with the switch on, else `403` | test a script on a record (writes nothing); run audit | New |
 
-Every route carries `@FeatureFlag(FEATURE_CUSTOM_FIELDS)` (custom records also `FEATURE_CUSTOM_RECORD_TYPES`),
-`TenantPermissionGuard`, class-validator DTOs and Swagger decorators; creating routes take an idempotency key.
+Every route marked New carries `@FeatureFlag(FEATURE_CUSTOM_FIELDS)` (custom records also
+`FEATURE_CUSTOM_RECORD_TYPES`), `TenantPermissionGuard`, class-validator DTOs and Swagger decorators; creating routes
+take an idempotency key. The rows marked Changed and Existing (the registered record routes and
+`/api/user/ui-preferences`) carry no new flag and stay available to every tenant as today: with the feature off the
+interceptors pass requests and answers through unchanged (FR-62), and `customFields` in the user preferences is only
+read while the feature is on.
 Errors: `CUSTOM_FIELD_REQUIRED`, `CUSTOM_FIELD_INVALID`, `CUSTOM_FIELD_DUPLICATE` (409), `CUSTOM_FIELD_MASKED` (403),
 `CUSTOM_FIELD_STALE` (409), `CUSTOM_FIELD_CYCLE`, `CUSTOM_FIELD_LIMIT`, `CUSTOM_FIELD_IN_USE`, `LAYOUT_HIDES_REQUIRED`,
 `RECORD_TYPE_HAS_RECORDS`. GraphQL (`graphql/schema-extensions.ts`): `customFieldValues: JSON` on every registered type,

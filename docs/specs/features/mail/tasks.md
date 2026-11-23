@@ -20,7 +20,9 @@
 - Paths: `mail/` = `packages/plugins/mail/src/lib/`, `mailui/` = `packages/plugins/mail-ui/src/lib/`,
   `inbox/` = `packages/plugins/inbox/src/lib/`; a module path without a prefix (`state/…`, `folders/…`) is under `mail/`.
 - Plan phase 1 = T1–T13, T33, T34, T40, T55; phase 2 = T14–T30, T35, T36, T49–T54, T56; phase 3 = T31, T32, T37–T39,
-  T41; phase 4 = T42–T48.
+  T41; phase 4 = T42–T48. The sections below group tasks by layer, while the order of work follows the plan phase: take
+  the tasks of one plan phase in number order before the next phase (phase 1: T1–T13, then T33, T34, T40, T55), since a
+  task depends only on tasks of its own or an earlier plan phase; "sequential" applies within that order.
 - Depends on, each behind a port with the fallback of plan §7: sending contract and assistant routes
   (`email-and-communications`), scheduling messages and availability (`calendar-and-scheduling`), mail intake record types
   (`helpdesk-tickets`, `crm-leads-and-deals`, `expenses-and-travel`, `invoicing-receivables-payables`), key scopes
@@ -62,19 +64,22 @@
 - [ ] **T8**. Inbox seams in `packages/plugins/inbox/src/lib/email/`: `INBOX_EMAIL_READER`, `INBOX_MAILBOX_DIRECTORY` (with
   claims from `settings.handoff`), `INBOX_ITEM_STATE` (read, archive, snooze per person), `INBOX_DOMAINS` (domains of the
   organization's mailboxes with their proof state; one proof per organization and domain marking all its mailboxes;
-  another tenant's verified domain refused), `sent` hand-off notices (`inbox/email/handoff/inbox-email-handoffs.ts`);
+  another tenant's verified domain refused), `sent` hand-off notices and `sentSince` beside `deliveredSince`
+  (`inbox/email/handoff/inbox-email-handoffs.ts`);
   members on employee mailboxes. Files: `inbox/email/ports/inbox-email-reader.ts`,
   `inbox/email/ports/inbox-mailbox-directory.ts`, `inbox/email/ports/inbox-item-state.ts`,
   `inbox/email/ports/inbox-domains.ts`. Test: existing Inbox
-  specs green; access answers match `GET /mailboxes/mine`; a domain verified before stays verified.
+  specs green; access answers match `GET /mailboxes/mine`; a domain verified before stays verified; `sentSince` lists
+  outbound `SENT` messages oldest first and `deliveredSince` answers as before.
 - [ ] **T9** (parallel). Inbox seams consumed: `INBOX_ADDRESS_RESOLVER` in the inbound recipient filter and
   `INBOX_EMAIL_ITEM_POLICY` before item creation, both no-ops when unbound. Files:
   `inbox/email/inbound/inbox-inbound.service.ts`, `mail/aliases/address-resolver.provider.ts`,
   `mail/state/item-policy.provider.ts`. Test: unbound behaviour identical; alias resolves; a mailbox set not to create
   attention entries gets none.
 - [ ] **T10**. Arrival pipeline `state/arrival.service.ts` and queue (state rows, system folders, counters, usage, alias
-  marks, Junk for suspect verdicts) and `mail.recovery` with `deliveredSince`; enable-time backfill. Test: duplicate
-  hand-offs make one row; recovery fills a missed message.
+  marks, Junk for suspect verdicts) and `mail.recovery` with `deliveredSince` and `sentSince`; enable-time backfill of
+  received and sent messages. Test: duplicate hand-offs make one row; recovery fills a missed message; a mailbox with
+  sent mail from before Mail was enabled lists it in Sent after the backfill, once.
 - [ ] **T11**. Lists and conversations `client/*` (keyset pages over state rows, display fields through the reader,
   all inboxes, copies folded by message identity, claimed mailboxes read-only). Test: 1 million state rows page under
   the budget on PostgreSQL; claimed mailbox refuses replies.
@@ -123,8 +128,9 @@
 - [ ] **T25**. Remote content proxy `remote-content/*` (signed addresses, guarded fetch, tracking parameters stripped,
   cache, allow list per sender) and its use by the Inbox's `inbox-email-viewer`
   (`packages/plugins/inbox-ui/src/lib/components/inbox-email-viewer/inbox-email-viewer.component.ts`) while the feature
-  is on. Test: internal
-  address refused; signature bound to user and message; the Inbox shows proxied images after consent too; with the
+  is on; the allow prompt states that allowing can tell the sender the message was opened. Test: internal
+  address refused; signature bound to user and message; the prompt shows that notice before any fetch; the Inbox shows
+  proxied images after consent too; with the
   feature off the Inbox viewer offers no consent and renders as before.
 - [ ] **T26**. Contacts from messages and invitation banner through `MAIL_CALENDAR` (receive, read event, availability
   strip, answer). Files: `mail/contacts/message-contact.service.ts`, `mail/calendar/invitation.service.ts`,

@@ -34,7 +34,8 @@
   feature is off for the tenant (spec FR-90); no dependency on this plugin or its flag. Test: with every keyed feature
   off the Reports page, menu and a new organization's report switches equal today's; a row keyed apart from its
   category follows its own key; rows without a key are listed as today.
-  Migration timestamps: `1791000037900` to `1791000037999` (`packages/core`).
+  Migration timestamps: `1791000037900` to `1791000037989` (`packages/core`; `1791000037990` to `1791000037999` hold
+  the plugin's seed of T5).
 
 ## Phase 1 — Contracts, entities, migrations
 
@@ -60,8 +61,10 @@
   `1791000037110-CreateReportRunTables.ts`, `1791000037120-CreateReportSnapshotTables.ts`,
   `1791000037130-CreateReportScheduleTables.ts`, `1791000037140-CreateReportDashboardTables.ts` on the shared core
   migration helpers (`@gauzy/core`, `procurement` T4), no copy in the plugin. Test: migration specs on SQLite (up twice); mapping under both ORMs. Migration timestamps: `1791000037100` to `1791000037199` (`packages/plugins/report-builder`).
-- [ ] **T5**. Seed `rb/database/migrations/1791000037160-SeedPlatformReportCatalogue.ts` with its "Platform" category keyed `FEATURE_REPORT_BUILDER` in
-  the shared catalogue feature filter (T51); default grants through `defaultFor` (no permission seed). Test: idempotent seed; grants present on a new tenant
+- [ ] **T5**. Seed `rb/database/migrations/1791000037990-SeedPlatformReportCatalogue.ts` (timestamp after T51's
+  `1791000037900`, plan §3 Migrations) with its "Platform" category keyed `FEATURE_REPORT_BUILDER` in
+  the shared catalogue feature filter (T51); default grants through `defaultFor` (no permission seed). Test: idempotent
+  seed; on a fresh database with every migration pending the seed runs after `1791000037900`; grants present on a new tenant
   and after the permission reload; `REPORT_SCHEDULE_EXTERNAL` granted to no role; with the feature off the Reports page,
   menu and a new organization's report switches equal today's.
 
@@ -71,9 +74,13 @@
   `accessHash`, field masks from `CUSTOM_FIELD_METADATA`, `@VisibleWith` metadata and dataset `sensitive`. Test: a masked
   column is removed before execution; a filter on it is refused with `REPORT_FIELD_MASKED`.
 - [ ] **T7**. `rb/engine/` (`query-planner.ts`, `provider-runner.ts`, `post-processor.ts`): query planner, provider
-  runner, post-processor (formula columns through `@gauzy/utils`,
+  runner (passes `ctx.access.recordRules`; for a provider without `appliesRecordRules` and a reader with a record rule,
+  row-level run with record ids, denied rows dropped before the engine aggregates, else `REPORT_ACCESS_UNSUPPORTED`),
+  post-processor (formula columns through `@gauzy/utils`,
   grouping with subtotals, totals per currency, sorting, paging up to 200,000 rows). Test: post-processor specs on fixed
-  rows; formula error leaves the cell empty and is listed.
+  rows; formula error leaves the cell empty and is listed; a reader with access to a scope value but a record rule
+  denying one record inside it gets totals without that record from a provider that applies the rules and from one
+  that does not.
 - [ ] **T8**. Existing-report providers `rb/existing/` (one `<report>.provider.ts` per report, `existing-definitions.ts`)
   for the eleven reports over the services and query handlers their routes call
   (time and activity, weekly, apps and URLs, manual time edits, expense, amounts owed, payments, weekly and daily limits,
@@ -83,7 +90,7 @@
   `rb/existing/saved-report-variant.store.ts`, `packages/core/src/lib/saved-report/saved-report.service.ts` (read). Test:
   round trip with the saved-report routes; public link still answers.
 - [ ] **T10**. Definition service and controller: CRUD, versions, `If-Match`, clone, apply base, catalogue with
-  favourites and recents from T18 and shared definitions from `RECORD_SHARES`; GraphQL reads. Files:
+  shared definitions from `RECORD_SHARES` (T18 adds favorites and recents to this catalogue); GraphQL reads. Files:
   `rb/definitions/report-definition.service.ts`, `rb/definitions/report-definition.controller.ts`,
   `rb/definitions/dto/report-definition.dto.ts`, `rb/definitions/report-catalogue.service.ts`,
   `rb/graphql/schema-extensions.ts`, `rb/graphql/report-builder.resolver.ts`. Test: e2e (permissions,
@@ -105,9 +112,12 @@
   Test: a definition labelled in two languages shows each reader their own; a missing translation falls back to the
   default language.
 - [ ] **T54**. Run cache (FR-61): identical runs are answered from a cache keyed by definition, prompts and the
-  reader's `accessHash` for 60 seconds, dropped when an invalidating event of the dataset arrives. Files:
+  reader's `accessHash` for 60 seconds, dropped when an invalidating event of the dataset arrives. The cache stores the
+  complete result before paging (after the post-processor's grouping, totals and sorting); paging of T7 runs after
+  each cache read, so the page selection is not part of the key. Files:
   `rb/engine/run-cache.ts`, `rb/runs/report-run.service.ts`. Test: a second identical run within 60 s does not reach
-  the provider; a reader with another access hash is not served the cached page; an invalidating event drops the entry.
+  the provider; a second run for another page within 60 s is served from the cache with the requested page; a reader
+  with another access hash is not served the cached result; an invalidating event drops the entry.
 
 ## Phase 3 — UI surfaces
 

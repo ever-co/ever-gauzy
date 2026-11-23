@@ -158,11 +158,16 @@
       `ei/profiles/de/`, `packages/plugins/regional-de/src/lib/pack/sections/e-invoicing.json`. Test: generated
       files validate; missing buyer reference gives a blocking finding; a received file drafts a bill.
 - [ ] **T26**. E-invoice service and register: generate on confirm or on demand (consumer of invoice events),
-      progressive numbering through a gap-free series, versions on amendment, cancellation handling, attach to the
-      document, endpoints; blocking findings stop transmission and, when the organization chose so, confirmation.
+      progressive numbering through one gap-free series per organization shared by every profile, versions on
+      amendment, cancellation handling, attach to the document, endpoints; blocking findings stop transmission and,
+      when the profile's `blockConfirmOnFindings` is on, confirmation through a synchronous pre-confirm check bound to
+      `REGIONAL_DOCUMENT_CHECKS` (the consumer only generates after a successful confirmation).
       Files: `ei/register/e-invoice.service.ts`, `ei/register/e-invoice.controller.ts`,
-      `ei/register/e-invoice-invoice-events.consumer.ts`, `ei/register/transmission-numbering.ts`. Test: no gap or
-      reuse under concurrent confirms; amendment supersedes; a blocking finding stops the send.
+      `ei/register/e-invoice-invoice-events.consumer.ts`, `ei/register/transmission-numbering.ts`,
+      `ei/register/e-invoice-preconfirm.check.ts`. Test: no gap or reuse under concurrent confirms, two profiles of one
+      organization never allocate the same number or file name; amendment supersedes; a blocking finding stops the
+      send; with `blockConfirmOnFindings` on an invalid invoice is refused at confirmation and stays a draft, with it
+      off it confirms and its e-invoice is `INVALID` with the findings and is not sent.
 - [ ] **T27**. Transports `download`, `email` and `simulator`; queue `e-invoice-transmit` with backoff, status
       events, inbox items on rejected and failed; batch export. Files: `ei/transports/download.transport.ts`,
       `ei/transports/email.transport.ts`, `ei/transports/simulator.transport.ts`, `ei/transports/transmit.processor.ts`,

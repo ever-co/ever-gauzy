@@ -30,7 +30,11 @@ unless the organization setting `inventory-valuation.refuseBackdatedNegative` (d
 Valuation keeps value and cost only. The quantity of a key is the stock level's: the hook reads the movement's
 `quantityAfter` (item and location keys) or the organization's level rows (organization keys) in the movement
 transaction, and the bundle entries of `serials-and-batches` for lot and serial keys; no key or layer stores a running
-quantity. Stock dimensions are the analytic dimension sets of `accounting-foundation`, resolved through the inventory
+quantity. A key with a dimension set (`dimensionSetId` set) is a part of its level, which holds every dimension
+together, so its quantity is its own: the quantity of its latest `stock_closing_balance` plus the signed quantities of
+its quantity-moving layers (`MOVEMENT`, `OPENING`) after that closing, read in the movement transaction under the level
+lock through the index (`keyHash`, `occurredAt`, `sequence`); with project A at 5 and project B at 5, a receipt of 5
+for A values A's moving average on 10, while the level shows 15. Stock dimensions are the analytic dimension sets of `accounting-foundation`, resolved through the inventory
 port `STOCK_DIMENSION_SETS` (bound to `AnalyticDimensionSetService`). Recalculations, closings and on-demand integrity
 runs are core operations (`packages/core/src/lib/operation/`); scheduled passes are `job_execution` rows. Charges are
 spread over lines by the one allocation function of the inventory plugin (`allocateCharges`).

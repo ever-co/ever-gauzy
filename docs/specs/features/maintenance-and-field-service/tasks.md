@@ -23,8 +23,11 @@
 - [ ] **T1**. Contracts in `packages/contracts/src/lib/field-service.model.ts` (interfaces, enums, visit request,
       offline operation kind payloads, proposal and booking filter shapes, event payloads; export from `index.ts`);
       `SERVICE_SITE` added to `AddressRoleEnum`. Files: `packages/contracts/src/lib/field-service.model.ts`,
-      `packages/contracts/src/index.ts`, `packages/core/src/lib/address-role/address-role.enums.ts`. Test:
-      `packages/contracts/src/lib/field-service.model.spec.ts`, a type-level spec of the shapes and enums.
+      `packages/contracts/src/index.ts`, `packages/core/src/lib/address-role/address-role.enums.ts`,
+      `packages/core/src/lib/address-role/schema/address-role.type.gql` (GraphQL `AddressRoleEnum`; `schema.graphql`
+      regenerated); no migration (`address_role.role` is `varchar(16)` without a check). Test:
+      `packages/contracts/src/lib/field-service.model.spec.ts`, a type-level spec of the shapes and enums; an address
+      saved with role `SERVICE_SITE` passes the DTO validation through REST and GraphQL.
 - [ ] **T2**. Plugin scaffold `packages/plugins/field-service` (package, project, tsconfig, jest, eslint, path
       mapping), `field-service.plugin.ts`, `field-service.features.ts` (`FEATURE_FIELD_SERVICE`, default off),
       `field-service.permissions.ts` (ten keys as contributions with `defaultFor`), `field-service.settings.ts`
@@ -69,7 +72,8 @@
 - [ ] **T8**. Coverage engine `engine/coverage.ts` (warranty, contract, both, none on a date; a serial-tracked unit's
       warranty read from its serial unit through `FIELD_SERVICE_SERIALS`, own dates only without one). Files:
       `packages/plugins/field-service/src/lib/engine/coverage.ts`, `packages/plugins/field-service/src/lib/installed-unit/unit-coverage.controller.ts`. Test: `engine/coverage.spec.ts` property
-      and golden tests; no warranty date is written for a serial-tracked unit.
+      and golden tests (a date before the warranty start is not in warranty, the start and end days are); no warranty
+      date is written for a serial-tracked unit.
 - [ ] **T9**. Sites (address through the core address book with role `SERVICE_SITE`, service team) and installed units
       services and controllers (CRUD, components, replacement, `activity_log` entries, timeline source for
       `RECORD_TIMELINE_SOURCES`, notes as core comments, not delivered warning, warranty sources). Files:
@@ -150,7 +154,9 @@
       `packages/plugins/field-service/src/lib/calendar/{visit-calendar.service.ts,visits-calendar.layer.ts}`,
       `packages/plugins/field-service/src/lib/notices/customer-notices.service.ts`. Test:
       `calendar/visit-calendar.service.spec.ts`: event follows reschedule and cancel; fallback creates an appointment;
-      `notices/customer-notices.service.spec.ts`: one notice per visit and event per the settings.
+      `notices/customer-notices.service.spec.ts`: one notice per event occurrence per the settings (dedup on the outbox
+      event id): a visit moved twice sends two move notices with the latest schedule last, a redelivered event sends none
+      twice.
 - [ ] **T23**. Mobile endpoints `/field-service/me/*` (reads, offline pack) and the `field_service.*` operation kinds
       contributed through `OFFLINE_OPERATION_KINDS` to the core offline-sync module (`warehouse-and-stock-movements`
       T59), with assignment checks and conflict rules (dispatcher wins the assignment, the work record is kept). Files:
@@ -337,7 +343,8 @@ Every functional requirement of `spec.md` §3 and the tasks that implement it; e
 - Migrations verified on PostgreSQL, MySQL and SQLite with both ORMs.
 - Flag default stays off; enabling it in dev shows the feature end to end.
 - Constitution gates in `spec.md` §9 confirmed.
-- Equipment, equipment sharing, appointments, deliveries and serial units behave identically with the feature on and
-  off (their suites untouched).
+- The existing workflows of equipment, equipment sharing, appointments, deliveries and serial units behave identically
+  with the feature on and off (their suites untouched); what the feature adds to their pages with it on, such as the
+  active contract end on serial units (FR-13), is shown only while it is on.
 - Coverage on a unit, a claim and a visit always agrees for the same date (shared engine, contract test).
 - Every acceptance criterion of `spec.md` §7 has a named test.

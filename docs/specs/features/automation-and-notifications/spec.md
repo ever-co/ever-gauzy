@@ -227,7 +227,8 @@ every run has a **step timeline with replay from the failed step**; notification
 
 - **FR-53** A person can set a reminder (for others with edit on the record) at a date-time, optionally on a record; it
   arrives within a minute through preferences, can be snoozed, edited or dismissed, and goes with its record; flows and
-  other features schedule their reminders in the same list, shown in the Inbox's "Reminders" tab.
+  other features schedule their reminders in the same list, shown in the Inbox's "Reminders" tab. Reminders that other
+  features schedule are stored and delivered on every installation, whether or not the automation engine is loaded.
 - **FR-54** The system creates reminder defaults per record type as date-relative flows (FR-13), with separate all-day
   offsets and recipients from fields, sent once per record, offset and recipient.
 - **FR-55** The system shows the task due, timer and meeting reminders as categories of the preference page, where their

@@ -87,24 +87,31 @@
   Files: `model/formula/{formula-engine.ts,locale-input.ts,errors.ts}`, `sh/services/workbook-compute.service.ts`.
   Test: `model/formula/conformance.spec.ts` in Node and jsdom with identical results; `model/formula/locale-input.spec.ts`:
   input parsed by the workbook's locale, leading zeros kept in text cells.
-- [ ] **T12**. `sheet` file kind registration (`createBlank`, also from a template's state, `render` to XLSX, ODS, CSV
-  and PDF, `extractText`, `thumbnail`, `openRoute`); workbook service and controller over `DOCS_FILE_STORE`: create
+- [ ] **T12**. `sheet` file kind registration (`createBlank`, also from a template's state, `extractText`,
+  `thumbnail`, `openRoute`, and the `render` hook with the stale mark of plan §3, wired to the file codecs in T14);
+  workbook service and controller over `DOCS_FILE_STORE`: create
   (blank, from a template of the hub's gallery), manifest, settings, sheets operations, limits of FR-7; template
-  marking through the hub's `/documents/:id/template`; GraphQL reads. A download without the plugin is the XLSX copy.
+  marking through the hub's `/documents/:id/template`; GraphQL reads.
   Files: `sh/workbook/{sheet-file-kind.ts,workbook.service.ts,workbook.controller.ts,workbook-limits.ts,dto/}`,
   `sh/graphql/{schema-extensions.ts,resolvers/workbook.resolver.ts}`. Test: `sh/workbook/workbook.controller.spec.ts`
   e2e (permissions through the hub, `404` with the feature off, limit refusals, the last visible sheet cannot be hidden
-  or deleted; an edit saved seconds before the feature is switched off is in the XLSX copy then downloaded; a stale copy
-  is rendered at shutdown); `sh/workbook/sheet-file-kind.spec.ts`: `extractText` gives the cells to search; the shared
-  copy holds no reader's live rows; every existing hub
-  route keeps working for an uploaded spreadsheet that is not opened.
+  or deleted; a persist marks the copy stale); `sh/workbook/sheet-file-kind.spec.ts`: `extractText` gives the cells to
+  search; every existing hub route keeps working for an uploaded spreadsheet that is not opened.
 - [ ] **T13**. Range service and controller: read (values, formulas, text), write with `expectedRevision` and `preview`,
   merged into open sessions through `DOCS_LIVE_SESSIONS`. Files: `sh/ranges/{range.service.ts,range.controller.ts,dto/}`.
   Test: `sh/ranges/range.controller.spec.ts` e2e; a write reaches an open session; stale revision is `409`.
 - [ ] **T14**. File codecs `model/files/`: XLSX through the library of plan §2, ODS through our ODF code, CSV and TSV with encoding,
-  delimiter and header detection; import report. Files: `model/files/{xlsx.codec.ts,ods.codec.ts,csv.codec.ts,import-report.ts}`.
+  delimiter and header detection; import report; the `sheet` kind's `render` of T12 to XLSX, ODS, CSV and PDF through
+  them, the shared XLSX copy, and the render-only `SheetsRenditionModule` of plan §3 (loaded by `apps/api/src/plugins.ts`
+  with `GAUZY_SHEETS_ENABLED` off too). A download without the plugin is the XLSX copy, brought up to date by that module
+  when it is stale. Files: `model/files/{xlsx.codec.ts,ods.codec.ts,csv.codec.ts,import-report.ts}`,
+  `sh/workbook/sheet-file-kind.ts`, `sh/rendition/sheets-rendition.module.ts`, `apps/api/src/plugins.ts`.
   Test: `model/files/xlsx.codec.spec.ts`, `model/files/ods.codec.spec.ts`, `model/files/csv.codec.spec.ts` round-trip fixtures (formats, merges, widths, frozen panes,
-  validation, conditional formats, names); macros listed as dropped; 20-row CSV preview.
+  validation, conditional formats, names); macros listed as dropped; 20-row CSV preview;
+  `sh/workbook/workbook-download.spec.ts` e2e: the shared copy holds no reader's live rows; an edit saved seconds before
+  the feature is switched off is in the XLSX copy then downloaded; a stale copy is rendered at shutdown; after an
+  unclean stop right after a save and a restart with `GAUZY_SHEETS_ENABLED` off, the render-only module renders the
+  stale copy and the download holds the saved edit.
 - [ ] **T15**. Import and export services: `POST /workbooks/from-file`, `…/import`, `…/export`; operations
   `sheets.import`, `sheets.export`; automatic version before an import; CSV through `spreadsheet-safe-row.ts`. Files:
   `sh/import-export/{workbook-import.service.ts,workbook-export.service.ts,import-export.controller.ts,sheets-import.operation.ts,sheets-export.operation.ts}`,
@@ -128,10 +135,13 @@
 - [ ] **T18**. Angular `packages/plugins/sheets-ui`: plugin registration, routes `sheet/:id` and
   `sheet/:id/version/:versionId` at `documents-sections` as host pages mounting the React `WorkbookEditor` with
   `LazyReactHostDirective` of `@gauzy/ui-react` (host context: docs live client, translation, theme, navigation),
-  Settings → Spreadsheets page; i18n `SHEETS.*` in every locale. Files:
+  Settings → Spreadsheets page; i18n `SHEETS.*` in every locale; the scaffold of `packages/plugins/sheets-react-ui`
+  (package, project and the entry components `WorkbookEditor` and `RangeView` exported as placeholders, which T21
+  fills). Files: `packages/plugins/sheets-react-ui/{package.json,project.json,src/index.ts}`,
   `packages/plugins/sheets-ui/{package.json,project.json,ng-package.json,src/index.ts}`,
   `ui/{sheets-ui.plugin.ts,sheets-ui.routes.ts,pages/workbook-host-page.component.ts,pages/workbook-version-host-page.component.ts,settings/sheets-settings-page.component.ts}`,
-  `packages/ui-core/i18n/assets/i18n/*.json`. Test: `ui/pages/workbook-host-page.component.spec.ts`: host page renders the editor; hidden on `404`;
+  `packages/ui-core/i18n/assets/i18n/*.json`. Test: `ui/pages/workbook-host-page.component.spec.ts`: host page renders the
+  `WorkbookEditor` entry component of the scaffold; hidden on `404`;
   no grid code in the Angular package.
 - [ ] **T19**. Editor live binding in `react/live/workbook-live.binding.ts` over the
   docs live client passed by the host (sync, updates, awareness, read-only modes, single-writer fallback with the
@@ -142,7 +152,7 @@
   shortcut help dialog; import dialog with CSV preview, export dialog. Files: `react/clipboard/{clipboard.ts,html-table.ts}`,
   `react/shortcuts/{shortcuts.ts,shortcut-help-dialog.tsx}`, `react/dialogs/{import-dialog.tsx,export-dialog.tsx}`.
   Test: `react/clipboard/clipboard.spec.ts` clipboard round trip (values, formulas, formats, tab-separated text and HTML table); dialog specs.
-- [ ] **T21**. React `packages/plugins/sheets-react-ui` (the one editor): `WorkbookEditor` (grid host, formula bar with
+- [ ] **T21**. React `packages/plugins/sheets-react-ui` (the one editor, filling the scaffold of T18): `WorkbookEditor` (grid host, formula bar with
   suggestions and help, sheet tabs, toolbar for formats, status bar aggregates, zoom, freeze, resize, insert and delete,
   side panels), `RangeView` (read-only, for embeds in pages and decks), `useWorkbookLive`. Files:
   `packages/plugins/sheets-react-ui/{package.json,project.json,src/index.ts}`,
@@ -192,10 +202,15 @@
   panel, anchors follow moved cells through the stable row and column ids, `ORPHANED` state when the row or column is
   deleted. Files: `sh/comments/cell-comment-anchors.service.ts`, `react/panels/comments-panel.tsx`,
   `react/components/comment-markers.tsx`. Test: `sh/comments/cell-comment-anchors.service.spec.ts`: comment with mention notifies; anchor survives a row insert; a page's text anchors are untouched.
-- [ ] **T32**. Cell history: change capture in the codec's persist (`sheet_cell_change`), cell history route and popover,
+- [ ] **T32**. Cell history: change capture per accepted update in the codec (`assertAcceptable` for session updates with
+  the session's user, `applyServerUpdate` with its actor and source), each update's cell changes held as the
+  document's pending list and written by the persist as one `sheet_cell_change` row per change (plan §9 Cell history),
+  cell history route and popover,
   version diff route and comparison view, named and pinned versions, restore. Files:
-  `sh/history/{cell-history.service.ts,cell-history.controller.ts,version-diff.service.ts}`, `model/diff/workbook-diff.ts`,
-  `react/panels/{cell-history-popover.tsx,versions-panel.tsx}`. Test: `sh/history/cell-history.service.spec.ts`: two edits by two people listed;
+  `sh/live/sheet-live.codec.ts`, `sh/history/{cell-history.service.ts,cell-history.controller.ts,version-diff.service.ts}`,
+  `model/diff/workbook-diff.ts`,
+  `react/panels/{cell-history-popover.tsx,versions-panel.tsx}`. Test: `sh/history/cell-history.service.spec.ts`: two edits by two people listed; two people editing the same cell
+  before one persist give two rows, each with its own person, time and before and after values;
   `model/diff/workbook-diff.spec.ts`: diff of two versions; restore creates a version; automatic versions at most every 10 minutes.
 - [ ] **T33** (parallel). Personal undo and redo over the user's own origins, including sort, paste, replace and import.
   Files: `react/history/personal-undo.ts`. Test: `react/history/personal-undo.spec.ts`: undo leaves another session's edits.
@@ -273,8 +288,8 @@ Every functional requirement of `spec.md` §3 and the tasks that implement it; e
 
 | Requirements | Spec section | Tasks |
 | --- | --- | --- |
-| FR-1 | §3.1 Scope, workbooks and sheets | T7, T9, T12 |
-| FR-2 | §3.1 Scope, workbooks and sheets | T4, T12, T17 |
+| FR-1 | §3.1 Scope, workbooks and sheets | T7, T9, T12, T14 |
+| FR-2 | §3.1 Scope, workbooks and sheets | T4, T12, T14, T17 |
 | FR-3 | §3.1 Scope, workbooks and sheets | T12, T22, T23 |
 | FR-4 | §3.1 Scope, workbooks and sheets | T12 |
 | FR-5 | §3.1 Scope, workbooks and sheets | T12, T21 |

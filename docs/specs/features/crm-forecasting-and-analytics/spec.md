@@ -69,7 +69,7 @@ moved** between two snapshots, naming the deals that moved it.
 
 - **FR-1** The system MUST answer every route this spec adds with `404` when `FEATURE_CRM` is off; no report definition, card, dashboard, snapshot job or MCP tool of this spec is then observable.
 - **FR-2** The system MUST show a user with `CRM_ANALYTICS_VIEW_ALL` every owner's figures, and any other user with `CRM_REPORTS_VIEW` only figures of records they own and of the organization teams they manage; a filter naming other owners is refused for them.
-- **FR-3** The system MUST apply the reader's record permissions, including the record-level rules CRM registers ([`crm-engagement`](../crm-engagement/spec.md) FR-76) where they are loaded, to every live figure and to its drill-down list alike: a figure counts only records the reader may read, and its drill-down lists exactly those records. Snapshot and forecast roll-ups are stored totals of a scope, shown under FR-2.
+- **FR-3** The system MUST apply the reader's record permissions, including the record-level rules CRM registers ([`crm-engagement`](../crm-engagement/spec.md) FR-76) where they are loaded, to every live figure and to its drill-down list alike: a figure counts only records the reader may read, and its drill-down lists exactly those records. Snapshot and forecast roll-ups are stored totals of a scope, shown under FR-2 as stored only to a reader whose record rules hide no deal of that scope; for any other reader the same figures (and the trend, comparison and accuracy built on them) are summed from the snapshot's deal rows that reader may read. Submitted and override amounts are people's entries for a scope, shown under FR-2.
 
 ### 3.2 Deal currency and rates
 

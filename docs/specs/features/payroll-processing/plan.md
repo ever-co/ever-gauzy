@@ -112,7 +112,7 @@ request and the preparer rule of FR-9 hold together.
 
 | Table | Columns (type) | Indexes and uniqueness |
 | --- | --- | --- |
-| `payslip` | `payrollRunId` uuid (fk `payroll_run`), `employeeId` fk, `assignmentId`, `payGroupId`, `payPeriodId`, `kind`, `number` varchar(64), `state` (`DRAFT`/`CONFIRMED`/`WITHHELD`/`PAID`/`PAYMENT_FAILED`/`CANCELLED`), `outcome` (`CALCULATED`/`FAILED`/`SKIPPED`), `failure` text, `periodStart`, `periodEnd` date, `workingDays`, `payableDays`, `unpaidDays`, `absentDays`, `payableDaysOverride` numeric(9,4), `overrideReason`, `hours` numeric(12,4), `currency`, `organizationCurrency` char(3), `exchangeRate` numeric(20,10), `gross`, `deductions`, `net`, `roundedNet`, `employerCost`, `taxable`, `tax` numeric(20,6), `taxWorking` text, `daysExplanation` text, `paymentMethod` varchar(16), `bankAccountId` uuid null (the employee's `party_bank_account` row; only its mask is shown), `paidAt`, `paymentFailure` text, `deliveryState` varchar(10) (`PENDING`/`SENT`/`NO_EMAIL`/`FAILED`), `deliveredAt`, `deliveryRef` varchar(120), `liveKey` varchar(80), `factsFingerprint` char(64), `version` | unique `(payrollRunId, employeeId)`; unique `(tenantId, liveKey)` (`<employee>:<payPeriod>` for regular non-cancelled); idx `(organizationId, employeeId, periodEnd)`, `(organizationId, state)`, `(payrollRunId, deliveryState)` |
+| `payslip` | `payrollRunId` uuid (fk `payroll_run`), `employeeId` fk, `assignmentId`, `payGroupId`, `payPeriodId`, `kind`, `number` varchar(64), `state` (`DRAFT`/`CONFIRMED`/`WITHHELD`/`PAID`/`PAYMENT_FAILED`/`CANCELLED`), `outcome` (`CALCULATED`/`FAILED`/`SKIPPED`), `failure` text, `periodStart`, `periodEnd` date, `workingDays`, `payableDays`, `unpaidDays`, `absentDays`, `payableDaysOverride` numeric(9,4), `overrideReason`, `hours` numeric(12,4), `currency`, `organizationCurrency` char(3), `exchangeRate` numeric(20,10), `gross`, `deductions`, `net`, `roundedNet`, `employerCost`, `taxable`, `tax` numeric(20,6), `taxWorking` text, `daysExplanation` text, `paymentMethod` varchar(16), `bankAccountId` uuid null (the employee's `party_bank_account` row; only its mask is shown), `paidAt`, `paymentFailure` text, `deliveryState` varchar(10) (`PENDING`/`SENT`/`NO_EMAIL`/`FAILED`), `deliveredAt`, `deliveryRef` varchar(120), `liveKey` varchar(80), `factsFingerprint` char(64), `version` | unique `(payrollRunId, employeeId)`; unique `(tenantId, liveKey)` (`<employee>:<payPeriod>` for regular non-cancelled); writing a regular payslip takes the employee's payroll lock (PostgreSQL `pg_advisory_xact_lock` on `payroll:<employeeId>`, MySQL `GET_LOCK`, the single writer on SQLite) and, under it, rechecks that no other non-cancelled regular payslip of the employee overlaps `[periodStart, periodEnd]` in any run, whatever its period id, refusing the employee with `PAYROLL_PERIOD_OVERLAP` naming that payslip; idx `(organizationId, employeeId, periodEnd)`, `(organizationId, state)`, `(payrollRunId, deliveryState)` |
 | `payslip_line` | `payslipId` fk cascade, `payElementId`, `elementCode`, `kind` (`EMPLOYER_CONTRIBUTION`/`ACCRUAL`/`INFORMATIONAL`), `quantity`, `rate`, `amount`, `yearToDate` numeric(20,6), `position` | idx `(payslipId)` |
 | `payslip_trace` | `payslipId` unique, `engineVersion` varchar(16), `trace` text (JSON) | — |
 | `payslip_time_source` | `payslipId`, `timesheetId` null, `timeLogId`, `projectId`, `hours`, `rate`, `amount`, `paidKey` varchar(80) null (`<timeLogId>` while the payslip is not cancelled) | unique `(tenantId, paidKey)`; idx `(payslipId)` |
@@ -188,7 +188,7 @@ operation reference, read at `/api/operations/:id` (core).
 Errors: `400` with codes (`PAYROLL_RUN_NOT_DRAFT`, `PAYROLL_RUN_FAILED_EMPLOYEES`, `PAYROLL_NEGATIVE_NET`,
 `PAYROLL_FACTS_CHANGED`, `PAYROLL_BLOCKING_FINDING`, `PAYROLL_SELF_APPROVAL`, `PAYROLL_ACCOUNT_MISSING`,
 `PAYROLL_PERIOD_LOCKED`, `PAYROLL_PAYMENT_EXPORTED`, `PAYROLL_RATE_MISSING`, `PAYROLL_OVERRIDE_OVERLAP`,
-`PAYROLL_WITHHOLDING_OVERLAP`, `PAYROLL_EARNED_PAY_LIMIT`, `PAYROLL_AGENT_NOT_ALLOWED`), `403`, `404`, `409`
+`PAYROLL_WITHHOLDING_OVERLAP`, `PAYROLL_EARNED_PAY_LIMIT`, `PAYROLL_AGENT_NOT_ALLOWED`, `PAYROLL_PERIOD_OVERLAP`), `403`, `404`, `409`
 (calculation running, version). GraphQL reads `payslips`, `payrollRunFindings` behind `FEATURE_GRAPHQL`.
 
 ## 5. Events, Real-Time and Notifications
@@ -206,13 +206,16 @@ Errors: `400` with codes (`PAYROLL_RUN_NOT_DRAFT`, `PAYROLL_RUN_FAILED_EMPLOYEES
 | operation events of the `PAYROLL_*` operations (core operation publisher) | progress and completion | run page progress, notices |
 
 Consumed by `subscriber:payroll`: `payroll.assignment.changed`, `payroll.element.version_activated`,
-`payroll.structure.version_activated`, `payroll.pay_table.changed` (setup);
+`payroll.structure.version_activated`, `payroll.pay_table.changed`, and the tax inputs `payroll.declaration.submitted`,
+`payroll.proof.reviewed`, `payroll.other_income.changed` and `payroll.opening_balance.changed` (setup);
 `time_off.request.approved` / `.withdrawn` / `.shortened`, `document.time_off_encashment.confirmed` / `.cancelled`;
 `document.final_settlement.confirmed` / `.cancelled`; attendance events of `attendance-and-shifts` (tolerant of extra
 fields); `payments.payment_order.approved` / `.exported` / `.executed` and payment-line rejection;
 `accounting.journal.posted` / `.failed` / `.reversed`; `workflows.approval.decided` (record type `payroll.pay_run`).
 A consumed change dated in a closed period goes to arrears detection; in an open period it marks affected draft
-payslips stale. Approved benefit claim lines and other sources arrive through `PAYROLL_ADDITIONAL_PAY` (§7).
+payslips stale. For a tax input the date is the first pay date it affects (an opening-balance change affects every
+closed period of its payroll year): the shadow recalculation reruns the year's closed payslips of the employee with the
+new declarations, proofs and opening balances and proposes the tax difference as arrears. Approved benefit claim lines and other sources arrive through `PAYROLL_ADDITIONAL_PAY` (§7).
 
 Real-time hints: `payroll_run:<id>` (progress, states), `payroll_payslip:<employeeId>` (own payslip states). Inbox
 items through `INBOX_ITEM_WRITER`: submissions to approvers, failures and blocking findings to preparers, proposals,
@@ -288,11 +291,11 @@ payslips. OpenAPI grows additively; Kiota SDKs regenerated after merge.
 
 | Trigger | When | What it does | Idempotency |
 | ------- | ---- | ------------ | ----------- |
-| operation `PAYROLL_CALCULATE` | calculate requested | steps of 200 employees: gather facts in batches, engine, write payslip, lines, trace and register lines in one transaction per employee; final step runs the review checks of spec FR-50 and, when enabled, the assistant review; progress on the operation and run hints | one live operation per run; `(payrollRunId, employeeId)` replace-on-recalculate; findings replaced per calculation; resumes from the last step |
+| operation `PAYROLL_CALCULATE` | calculate requested | steps of 200 employees: gather facts in batches, engine, write payslip, lines, trace and register lines in one transaction per employee under the employee's payroll lock with the cross-run overlap recheck of §3 (an overlapping employee ends `FAILED` with `PAYROLL_PERIOD_OVERLAP`); final step runs the review checks of spec FR-50 and, when enabled, the assistant review; progress on the operation and run hints | one live operation per run; `(payrollRunId, employeeId)` replace-on-recalculate; findings replaced per calculation; resumes from the last step |
 | operation `PAYROLL_APPROVE_EFFECTS` | approval | numbers, confirmed states, year-to-date, benefit ledger, time sources, document events, payment hand-off, cost allocation event, delivery when automatic | per-payslip keys; resumable |
 | operation `PAYROLL_CANCEL` | cancel accepted | reverse in the opposite order (compensating steps) | per-payslip keys |
 | operation `PAYROLL_DELIVER` | delivery requested | render, hand to the dispatcher and the message sender, record each payslip's state | dispatcher key per payslip, channel and send |
-| `payroll.retro-detect` (consumer + daily sweep) | change dated in a closed period | shadow recalculation, proposals | `proposalKey` per employee, trigger and period |
+| `payroll.retro-detect` (consumer + daily sweep) | change dated in a closed period, tax inputs (declarations, proofs, other income, opening balances) included | shadow recalculation, proposals | `proposalKey` per employee, trigger and period |
 | `payroll.retention` | daily (worker) | lapses retention bonuses whose employee's work ended; reminders are `reminder` rows scheduled at grant | state check |
 | operation `PAYROLL_WHAT_IF`, `payroll.what-if-expiry` (daily) | what-if calculate; expiry | simulate; delete unpinned expired results | one live operation per what-if |
 | `payroll.earned-pay` (queue) | request approved | payout hand-off | `requestKey` |

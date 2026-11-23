@@ -106,7 +106,7 @@ dialect; `viewId` always points at a `task_view` row.
 | existing `comment` + columns | `kind` varchar(8) default `COMMENT` (`NOTE`), `visibility` varchar(8) default `READERS` (`PRIVATE`), `isPinned` bool default false | + idx `(tenantId, entity, entityId, kind)` |
 | existing `employee_recent_visit` + columns | `visits` int default 1, `userId` uuid null | + unique `(tenantId, employeeId, entity, entityId)` for upserts (and `(tenantId, userId, entity, entityId)` where `employeeId` is null), created only where existing rows hold no duplicate (no row is deleted to make room; elsewhere the service's existing find-then-update path stays) |
 | existing `resource_link` + columns (the record link) | `targetEntity` varchar(50) (a `BaseEntityEnum` value or a registered record type key), `targetEntityId` uuid, `role` varchar(32) (`PRIMARY`, `RELATED` or a feature's role), `linkedBy` varchar(16) (`PERSON`, `SYSTEM`, `MATCH`, `INTAKE`); `url` becomes nullable (a row has a URL or a record target) | + unique (`entity`,`entityId`,`targetEntity`,`targetEntityId`) where `targetEntityId` is not null; idx (`tenantId`,`targetEntity`,`targetEntityId`) |
-| existing `search_document` + columns (search plugin) | `embedding` (vector(1536) with the PostgreSQL extension, else text null), `embeddingModel` varchar(64) null, `embeddingHash` varchar(64) null | vector index on PostgreSQL |
+| existing `search_document` + columns (search plugin) | `embedding` (vector(1536) with the PostgreSQL extension, else text null), `embeddingModel` varchar(64) null, `embeddingHash` varchar(64) null, `restrictedToUserId` uuid null (set only on a private note's document: its author; every query adds `restrictedToUserId IS NULL OR restrictedToUserId = :caller` beside the record access, so only the author finds it) | vector index on PostgreSQL; idx `(tenantId, restrictedToUserId)` |
 
 Not tables of this plugin, by design: views (`task_view`), personal pins (`favorite`), recents
 (`employee_recent_visit`), notes (`comment`), dashboard pins (`dashboard_widget`), per-type settings and audience
@@ -160,6 +160,8 @@ forward-only, both ORMs):
    `hasColumn` so that it is safe from any feature that uses it (this one, `email-and-communications`,
    `crm-leads-and-deals`, `telephony`).
 6. Search plugin: `1791000036200-AddSearchDocumentEmbedding` (vector column and index only where the extension exists).
+7. Search plugin: `1791000036210-AddSearchDocumentRestrictedToUser` (nullable `restrictedToUserId` and its index; no
+   backfill, existing documents stay unrestricted).
 
 Index definitions for comments with notes, linked emails and registered types are code beside the existing
 `definitions/*.definition.ts`, indexed and searched only for tenants with `FEATURE_RECORD_VIEWS` on (other tenants'
@@ -180,7 +182,7 @@ pages, commands and recents in the palette; no seeding migration.
 | `PUT` | `/api/record-views/views/:id/shares` | `RECORD_VIEW_SHARE` (roles and organization: `RECORD_VIEW_MANAGE`) | audiences and audience pins | New |
 | `PUT` | `/api/record-views/views/:id/order` | editor | `{ recordId, before?, after? }`; task views write `manualOrder` | New |
 | `GET` `PUT` | `/api/record-views/type-settings/:recordType` | reader / `RECORD_VIEW_MANAGE` | the `views` section of the `recordType.<key>` setting: quick filters, card and hover fields, layouts, audience default views; a person's own default through `PUT /api/user/ui-preferences` | New |
-| `GET` | `/api/record-views/:recordType/records` | view of the type | `viewId` or `filter`, `sort`, `fields`, `page[after]`, `count`; query protocol | New |
+| `GET` | `/api/record-views/:recordType/records` | view of the type | `viewId` or `filter`, `sort`, `fields`, `page[after]`, `count`; query protocol; with `ids` (the changed ids of live events, at most 200) it re-evaluates those ids against the filter and sort under the reader's access and answers each as `MATCH` (its row and the cursor of the row before it) or `NO_MATCH` | New |
 | `GET` | `/api/record-views/:recordType/groups` | view of the type | group counts and aggregates per group, totals | New |
 | `PATCH` | `/api/record-views/:recordType/records/:id` | edit of the record (writer) | inline edit; `If-Match` | New |
 | `POST` | `/api/record-views/:recordType/bulk` | per action and record | `{ action, params, ids \| viewId + filter, preview }` → results, or `202` with the core operation handle above 500 records | New |
@@ -224,7 +226,7 @@ hands its definition to the report builder.
 | `record_view.created` / `.updated` / `.shared` / `.deleted` | view changes | realtime hint to the view's audience (menus refresh), activity log for shares |
 | existing comment events (notes carry `kind = NOTE`; private notes are not indexed or published to others) | note changes | search indexing, timeline realtime, automations, mention notices |
 | core `operation.completed` of `RECORD_BULK` | a bulk run ends | the plugin's consumer posts the inbox notice to the requester; progress from the operation step events |
-| In: event names each list source declares (`task.*`, `custom_record.*`, plugin `<domain>.<entity>.<verb>`) | records change | live lists (client re-reads changed ids), search index consumer |
+| In: event names each list source declares (`task.*`, `custom_record.*`, plugin `<domain>.<entity>.<verb>`) | records change | live lists (client sends every changed id of the event, visible or not, to the records route with `ids`; a new match is inserted at its sort position when that falls inside the loaded pages, else counted in a "new records" notice that reloads the page; a no-longer match leaves; counts follow), search index consumer |
 | Signal `record.viewing` (ephemeral) | a client opens, edits or leaves a record | presence on the record for its readers (`RealtimeSignalsService`, audience check by read rule) |
 
 Mentions in notes notify through the existing comment mention notifications (and the automation dispatcher when loaded).
@@ -278,7 +280,7 @@ already used by the docs extractor), both through `spreadsheet-safe`.
 | Trigger | When | What it does | Idempotency |
 | ------- | ---- | ------------ | ----------- |
 | core operation `RECORD_BULK` | bulk work (inline under 500, background above) | steps of 100 records through writers via `BulkExecutor`; lease, retry and cancel from the runtime; undo as a child operation within 10 minutes (`undoUntil` in the operation result) | per operation, step and record |
-| search consumer (existing, extended) | record and comment events | for tenants with the feature on, indexes registered types, comments with notes (private notes excluded), linked emails; other tenants are indexed as today | document key per entity and id |
+| search consumer (existing, extended) | record and comment events | for tenants with the feature on, indexes registered types, comments with notes (private notes with `restrictedToUserId` = their author), linked emails; other tenants are indexed as today | document key per entity and id |
 | core `knowledge-embedding` queue (lifted from the docs pipeline) | indexed text changed, `FEATURE_SEMANTIC_SEARCH` on | embeds changed `search_document` rows through the tenant's provider, rate-limited per tenant; backfill on enable | `embeddingHash` per document and model |
 
 Queues run in the API; schedules in the worker (`RecordViewsSchedulePlugin`); without a queue root the API runs them on

@@ -30,7 +30,12 @@ It builds on what exists rather than beside it:
   the `GOODS_RECEIPT_SUBCONTRACT` hook this plugin binds inside the receipt transaction; returns to the supplier are
   procurement's `purchase_return`; `purchase_order_line.receivedQuantity` has one writer, the goods receipt.
 - **Reconciliation**: a count of the supplier's location is an inventory `stock_count` (mode `SPOT`) that the supplier
-  answers in the portal; closing it writes the corrections.
+  answers in the portal; closing it writes the corrections, and the `stock_count.closed` consumer allocates each line's
+  difference to the order material lines holding that item (and lot) at the location, in the same transaction as its
+  decision: a shortage to the lines in order of their oldest unconsumed send, each at most down to zero held; an excess
+  to the line with the latest send of the item, else to `subcontract_count_decision.unallocatedQuantity`; each line keeps
+  its share in `countAdjustedQuantity`, so the material held on a line is sent less consumed and returned plus its count
+  adjustment.
 - **Suppliers and prices**: the suppliers of a service, their preference and price are the `vendor_product_term` rows
   of the service item.
 - **Contractor labour**: the contractors' time logs on the order's tasks, at the pay rate stored on each log (the
@@ -97,11 +102,11 @@ All tables extend `TenantOrganizationBaseEntity` (soft delete, `isActive`, `isAr
 | `subcontract_service` | `finishedVariantId`, `bomId`, `serviceVariantId`, `serviceQuantityPerUnit`, `consumptionBasis` (`BOM`, `AS_SENT`), `requiredBasis` (`BOM`, `FOLLOW_SENT`), `overSendAllowancePercent`, `consumptionTolerancePercent`, `routingOperationId`, `pricingMode` (`FIXED`, `TIME`); suppliers, preference and price are the service item's `vendor_product_term` rows | unique `(organizationId, finishedVariantId, serviceVariantId)` among active rows; index `(organizationId, serviceVariantId)` |
 | `subcontract_order` | `number`, `direction`, `partyType`, `partyId`, `sourceType` (`PURCHASE_ORDER`, `SALES_ORDER`, `REQUISITION`, `PRODUCTION_PLAN`, `WORK_ORDER`), `sourceId`, `status` (`DRAFT`, `CONFIRMED`, `COMPLETED`, `CLOSED`, `CANCELLED`), `partyLocationId`, `consumptionBasis`, `requiredBasis`, `consumptionTolerancePercent`, `overSendAllowancePercent`, `reserveMaterials` bool, `neededBy`, `predictedCompletionAt`, `predictionFacts` text, `isLate` bool, `projectId`, `currency`, `plannedCost`, `actualCost`, `labourHours`, `labourCost`, `materialProgress`, `outputProgress` numeric(5,2), `closedAt` | index `(organizationId, direction, status)`, `(partyType, partyId, status)`, `(sourceType, sourceId)` |
 | `subcontract_order_output` | `orderId`, `variantId`, `bomId`, `quantity`, `unitId`, `warehouseId` (receiving or delivery), `purchaseOrderLineId`, `salesOrderLineId`, `serviceQuantity`, `serviceUnitCost` (service cost per finished unit: the supplier term's `unitCost` per service unit × the service's `serviceQuantityPerUnit`), `additionalUnitCost`, `materialUnitCost`, `unitCost`, `receivedQuantity`, `rejectedQuantity`, `returnedQuantity` (written only by the receipt hook and the purchase-return consumer), `processLossQuantity`, `producedQuantity`, `deliveredQuantity`, `taskId`, `routingOperationId`, `workOrderId`, `plannedHours` | index `(orderId)`, `(purchaseOrderLineId)`, `(salesOrderLineId)` |
-| `subcontract_order_material` | `orderId`, `outputId`, `variantId`, `requiredQuantity`, `reserveWarehouseId`, `alternativeOfId`, `ownership` (`OWN`, `CUSTOMER`), `isExtra`, `movedInQuantity` (sent or received from customer), `consumedQuantity`, `returnedQuantity`, `scrappedQuantity`, `billedQuantity`; the reserved figure is the sum of the line's active `stock_reservation` rows | index `(orderId, variantId)` |
+| `subcontract_order_material` | `orderId`, `outputId`, `variantId`, `requiredQuantity`, `reserveWarehouseId`, `alternativeOfId`, `ownership` (`OWN`, `CUSTOMER`), `isExtra`, `movedInQuantity` (sent or received from customer), `consumedQuantity`, `returnedQuantity`, `scrappedQuantity`, `billedQuantity`, `countAdjustedQuantity` (signed, default 0: the share of closed supplier count differences allocated to this line); the reserved figure is the sum of the line's active `stock_reservation` rows | index `(orderId, variantId)` |
 | `subcontract_receipt_line` | `goodsReceiptId` uuid (purchasing `goods_receipt`), `goodsReceiptLineId` uuid null (the output's receipt line; null on consumption and secondary rows), `orderId`, `outputId`, `materialId`, `role` (`OUTPUT`, `SECONDARY`, `CONSUMPTION`), `variantId`, `quantity` (secondary received or material consumed), `warehouseId` (secondary target), `processLossQuantity`, `secondaryKind` (`CO_PRODUCT`, `BY_PRODUCT`, `SCRAP`, `EXTRA`), `valuationBasis` (`ITEM_RATE`, `COMPONENT_SHARE`, `STATED`), `valuationValue`, `materialCost`, `serviceCost`, `additionalCost`, `labourCost`, `unitCost`, `lots` text, `overrideReason`, `stockDocumentId` (the consumption and secondary-output document). Accepted and rejected quantities, locations, lots of the output and inspection state stay on the goods receipt line | index `(goodsReceiptId)`, `(goodsReceiptLineId)`, `(orderId, outputId)` |
 | `subcontract_production_report` | `orderId`, `number`, `reportedAt`, `lines` text (role, variant, quantity, process loss), `stockDocumentId`, `status` | index `(orderId)` |
 | `subcontract_progress_report` | `orderId`, `outputId`, `via` (`PORTAL`, `STAFF`, `TIME`), `reportedByRef`, `startedAt`, `quantityDone`, `expectedCompletionAt`, `note`, `fileIds` text | index `(orderId, createdAt)` |
-| `subcontract_count_decision` | `stockCountId` uuid, `stockCountLineId` uuid (inventory `stock_count_line`), `decision` (`CHARGE`, `WRITE_OFF`, `ACCEPT`), `debitNoteRequestRef` uuid null; book, counted, difference and value are the count line's and the count's `varianceValue` | unique `(stockCountLineId)`; index `(stockCountId)` |
+| `subcontract_count_decision` | `stockCountId` uuid, `stockCountLineId` uuid (inventory `stock_count_line`), `decision` (`CHARGE`, `WRITE_OFF`, `ACCEPT`), `debitNoteRequestRef` uuid null, `unallocatedQuantity` (signed, default 0: an excess no order line could take); book, counted, difference and value are the count line's and the count's `varianceValue` | unique `(stockCountLineId)`; index `(stockCountId)` |
 | `subcontract_contractor_link` | `vendorId`, `employeeId` | unique `(organizationId, vendorId, employeeId)` |
 
 Changes in other plugins (additive): the purchasing line kind `SUBCONTRACT` and `subcontractServiceId`
@@ -279,8 +284,9 @@ notes and file names are sanitised.
 Activity-log entries for confirmations, overrides and count decisions; metrics
 `subcontracting_receipt_post_ms`, `subcontracting_material_value_at_suppliers`, `subcontracting_late_orders`,
 `subcontracting_time_rollup_lag_seconds`; a daily integrity check compares each supplier location's stock balance with
-the material still held there on every order, open or closed (sent less consumed and returned; spec FR-19 lets an
-order close with material outstanding), and reports drift to the job monitor.
+the material still held there on every order, open or closed (sent less consumed and returned plus each line's count
+adjustment, and the location's unallocated count excess; spec FR-19 lets an order close with material outstanding),
+and reports drift to the job monitor; a valid reconciliation (100 sent, 97 counted) therefore reports none.
 
 ## 11. Phased Rollout
 

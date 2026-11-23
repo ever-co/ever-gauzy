@@ -30,7 +30,11 @@ through one dispatcher: the Inbox's when loaded (categories, preferences, outsid
 digests), else core `EmployeeNotificationService`. Categories are the existing notification types plus declared ones,
 and their channel choices extend the existing per-type preference maps and team defaults with an organization level
 held in the settings store. Outbound destinations are core webhook subscriptions. This feature owns the platform's
-**one generic reminder table** (`reminder`), which other features schedule through the `REMINDERS` port. Agent steps
+**one generic reminder table** (`reminder`), which other features schedule through the `REMINDERS` port. The table,
+its service, the `REMINDERS` port and the `automations.reminders` job form a second plugin class of the same package,
+`RemindersPlugin` (`ta/reminders/reminders.plugin.ts`), which `apps/api/src/plugins.ts` and `apps/worker/src/plugins.ts`
+list whatever the two switches, so other features' reminders are scheduled and delivered on every installation; the
+`/api/reminders` routes, buttons and flow steps load with the engine and carry `@FeatureFlag(FEATURE_AUTOMATIONS)`. Agent steps
 run only through `ai-agents-and-assistants`. Bounded background work (simulations, bulk starts, bulk rule application)
 runs as core operations; flow runs keep their own run, step and wait tables for the reasons given in §3.1. On
 self-hosted installations only, a script step runs in the core tenant script runtime behind a deployment switch the
@@ -104,7 +108,7 @@ dialect; ids into other plugins carry no foreign key; `organizationId` is null o
 | `assignment_rule` | `recordType`, `name`, `position` (assign, unassign and close conditions are core `rule` rows owned by the rule), `distribution` varchar(16) (`IN_TURN`, `FEWEST_OPEN`, `FROM_FIELD`, `WEIGHTED`, `CAPACITY`), `pool` text (people, teams, roles, weights, caps), `fieldPath` null, `requiredSkillIds` text, `respectTimeOff`, `respectWorkingHours` bool, `maxOpenPerPerson` int null, `weekdays` varchar(16), `activeFrom`, `activeTo` varchar(5), `dueFieldPath`, `dueOffsetMinutes`, `descriptionTemplate` text, `turnCursor` int, `ownerUserId` | idx `(organizationId, recordType, isActive, position)` |
 | `assignment_decision` | `ruleId`, `recordType`, `recordId`, `chosenUserId` null, `skipped` text (person, reason), `outcome` varchar(24) | idx `(ruleId, createdAt)`, `(recordType, recordId)` |
 | `record_assignment` | `recordType`, `recordId`, `assigneeUserId`, `assigneeEmployeeId` null, `assignedByUserId` null, `ruleId` null, `source` (`MANUAL`, `RULE`, `FLOW`, `AGENT`), `status` (`OPEN`, `DONE`, `CANCELLED`), `priority` varchar(16), `dueAt` null, `note` text, `openKey` varchar(200) null, `closedAt`, `closedByUserId` | unique `(tenantId, openKey)` (one open per person and record; null when closed); idx `(tenantId, assigneeUserId, status, dueAt)`, `(tenantId, recordType, recordId, status)` |
-| `reminder` | the platform's one generic reminder table: `ownerUserId` null (null = a feature), `recipientUserId`, `recipientEmployeeId` null, `recordType`, `recordId` null, `remindAt`, `title` varchar(255), `note` text, `category` varchar(64), `status` (`PENDING`, `SENT`, `DISMISSED`, `CANCELLED`), `sentAt`, `source` (`USER`, `FLOW`, `FEATURE`), `sourceKey` varchar(160) null (e.g. `workflow-task:<id>:50`), `runId` null | unique `(tenantId, sourceKey)` (nulls allowed); idx `(status, remindAt)`, `(tenantId, recipientUserId, status)`, `(tenantId, recordType, recordId)` |
+| `reminder` | the platform's one generic reminder table, registered by `RemindersPlugin` and created whatever the deployment switches: `ownerUserId` null (null = a feature), `recipientUserId`, `recipientEmployeeId` null, `recordType`, `recordId` null, `remindAt`, `title` varchar(255), `note` text, `category` varchar(64), `status` (`PENDING`, `SENT`, `DISMISSED`, `CANCELLED`), `sentAt`, `source` (`USER`, `FLOW`, `FEATURE`), `sourceKey` varchar(160) null (e.g. `workflow-task:<id>:50`), `runId` null | unique `(tenantId, sourceKey)` (nulls allowed); idx `(status, remindAt)`, `(tenantId, recipientUserId, status)`, `(tenantId, recordType, recordId)` |
 | `recognition_entry` | shown beside the existing `employee_award` rows on the employee profile; `giverEmployeeId` null (flows), `receiverEmployeeId`, `message` text, `points` int, `recordType`, `recordId` null, `isPrivate` bool, `source` (`PERSON`, `FLOW`), `flowId` null, `period` varchar(7) | idx `(tenantId, receiverEmployeeId, createdAt)`, `(giverEmployeeId, period)`, `(organizationId, period)` |
 
 ### 3.2 Notification tables (`inbox`, loaded with `GAUZY_INBOX_ENABLED`)
@@ -155,7 +159,9 @@ feature is a core operation. Task rules keep `task_automation_run` unchanged.
 **Migration timestamps**: `packages/plugins/task-automations` `1791000032100` to `1791000032199`; `packages/plugins/inbox` `1791000032200` to `1791000032299`; `packages/core` `1791000032300` to `1791000032399`.
 
 Plugin migrations with the plugin's existing `database/migration-helpers.ts`; PostgreSQL, SQLite and MySQL branches;
-idempotent, forward-only, registered for both ORMs; flow migrations are listed only when `GAUZY_AUTOMATIONS_ENABLED`:
+idempotent, forward-only, registered for both ORMs; flow migrations are listed only when `GAUZY_AUTOMATIONS_ENABLED`,
+except migration 4, which `RemindersPlugin` lists on every installation (its recognition table stays empty until the
+engine loads):
 
 1. `1791000032100-CreateAutomationFlowTables` — flow, version, trigger index, usage.
 2. `1791000032110-CreateAutomationRunTables` — run, run step, wait, held event, rate counter, inbound hook.
@@ -301,7 +307,7 @@ OpenAPI additive; Kiota SDKs regenerated after merge. Webhooks: `automation.*`, 
 | `automations.runs` (queue) | per enqueued run | executes steps under the record lock, retries with back-off | step attempt rows; lease 5 minutes |
 | core operation `AUTOMATION_SIMULATION` | on request | evaluates past events in steps of 1,000 with progress; counts and samples in the result | step checkpoint |
 | core operations `AUTOMATION_BULK_START`, `ASSIGNMENT_RULE_APPLY` | on request above one record | starts or applies per record through `BulkExecutor` | per record run key |
-| `automations.reminders` | every minute | sends due rows of `reminder` (every source) and the daily agenda | reminder status `PENDING → SENT` |
+| `automations.reminders` (`RemindersPlugin`, every installation) | every minute | sends due rows of `reminder` (every source) through the notification dispatcher, and the daily agenda while the engine is loaded | reminder status `PENDING → SENT` |
 | `automations.retention` | daily 02:30 | prunes runs past retention into monthly counts; prunes rate counters | per day watermark |
 | `inbox-delivery-sweep` (existing, extended) | every minute | bundles, quiet hours, chat, text and destination channels | `inbox_delivery` unique per entry, person, channel |
 | `inbox.digests` | every 15 minutes | summary digests and hourly or weekly follow digests due | `notification_digest_send` unique |

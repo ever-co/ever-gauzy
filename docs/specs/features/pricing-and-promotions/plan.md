@@ -292,8 +292,11 @@ fallback without a queue.
   default off, depends on `FEATURE_PRICING` and `FEATURE_PROMOTION`.
 - The quote route reads prices for the caller's organization only; customer-specific lists are visible to holders of
   `PRODUCT_PRICES_VIEW` only.
-- AI proposals send item margins and prices, never customer data, to the organization's provider through
-  `PRICING_ASSISTANT`; listed in the docs.
+- AI proposals send aggregates only, never item-level prices or margins and never customer data, to the organization's
+  provider through `PRICING_ASSISTANT`: per price group of the goal (item group or category, or the list as a whole),
+  the item count, the minimum, average and maximum price and margin, and the goal; the provider answers moves per group
+  (a percentage and a rounding rule), which the operation applies to each item's price locally in the draft list (FR-47);
+  listed in the docs.
 - Overrides and setting changes are append-only records with user and time; price changes are activity-log rows.
 
 ## 10. Observability

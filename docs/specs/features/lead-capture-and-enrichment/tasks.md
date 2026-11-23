@@ -71,8 +71,11 @@
 ## Phase 2 — Services, endpoints, events
 
 - [ ] **T7**. CRM port: `CrmLeadIntakeAdapter` in `packages/plugins/crm/src/lib/lead/` (create with duplicate policy,
-  convert to deal, fill empty fields, timeline link) bound to `LEAD_CAPTURE_CRM` in `plugin-composition.ts`. Test: each
-  duplicate policy; refusal returns the clashing record.
+  convert to deal, fill empty fields, timeline link) bound to `LEAD_CAPTURE_CRM` in `plugin-composition.ts`; contract: every
+  call runs in the caller's transaction (the intake pipeline completes its item in the same one, plan §2 Leads) and
+  records the submission's `reference` in the lead's `intake`. Test: each duplicate policy; refusal returns the clashing
+  record; a worker stopped after the CRM call and before commit leaves no lead and no completed item, and the rerun
+  creates exactly one lead; a committed item is not run again.
 - [ ] **T8**. Form service `forms/lead-form.service.ts` (lead or deal target with pipeline and stage, draft with
   `If-Match`, field catalogue of the target and public custom fields, the field types of spec FR-7 with record choices
   only from lists the owner grants, rule validation with the condition evaluator, publish blockers, versions, share
@@ -133,8 +136,10 @@
   list values), the run as a `LEAD_ENRICHMENT` operation (record as aggregate, steps per stage) with change records,
   live progress signals. Test: each policy; concurrent requests serialised by the one-live-operation rule.
 - [ ] **T27**. Retry (operation retry) and undo `enrichment/undo.ts` (child operation; latest run only, keeps edited
-  fields and reports them), warning
-  before overwriting edited fields, propagation from organisations, auto-enrich on creation. Test: AC-13 and AC-15.
+  fields and reports them), the edit mark of plan §3 set by `enrichment/enriched-field-edit.subscriber.ts` on any later
+  write of an enriched field, warning
+  before overwriting edited fields, propagation from organisations, auto-enrich on creation. Test: AC-13 and AC-15; a
+  field enriched to A, edited to B and back to A is kept by undo and reported as edited.
 - [ ] **T28**. Enriched-field marks route and timeline source for runs. Files:
   `packages/plugins/lead-capture/src/lib/enrichment/lead-enrichment-marks.controller.ts`,
   `enrichment/lead-enrichment-marks.service.ts`, `enrichment/lead-enrichment-timeline.source.ts`. Test: mark dropped on

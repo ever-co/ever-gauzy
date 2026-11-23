@@ -72,10 +72,10 @@
   each transform; unresolved reference reported.
 - [ ] **T9**. Validator and dry run `dx/validate/` (`row-validator.ts`, `dry-run.service.ts`, `in-file-duplicates.ts`): form-equivalent validation through creators, writers and
   `CUSTOM_FIELD_VALUE_WRITER` in check mode, in-file duplicates by match keys, outcomes per row with before and after,
-  and the validated values of each `CREATE` and `UPDATE` row stored in `data_import_row.values` with the matched
-  record's version in `matchedVersion`.
-  Test: dry run writes nothing (row counts unchanged); masked field cannot be mapped; every `CREATE` and `UPDATE` row
-  keeps its values.
+  and the validated values of each `CREATE`, `UPDATE` and `DUPLICATE` row stored in `data_import_row.values` with the
+  matched record's version in `matchedVersion`.
+  Test: dry run writes nothing (row counts unchanged); masked field cannot be mapped; every `CREATE`, `UPDATE` and
+  `DUPLICATE` row keeps its values.
 - [ ] **T10**. Import operation `data-exchange.import`: batches of 200 committed on their own, resume from the last batch
   (operation lease), cancel, time limit, totals, record origin on events, notifications muted, error, skipped and log
   files; external ids written to core `integration_map` under the `integration_tenant` of the files' origin. Files:
@@ -142,7 +142,8 @@
 
 - [ ] **T22**. Every registered target: custom fields and custom record types (import access per role), templates with
   help row and existing records. Files: `dx/targets/data-target.service.ts`, `dx/targets/target-template.builder.ts`.
-  Test: custom record type importable at publish; template round trip.
+  Test: custom record type importable at publish; template round trip; a `withRecords` template passes the read scope,
+  record rules and field masks of an export, and a caller who may create but not read the target gets no record.
 - [ ] **T23**. Update and create-or-update modes: match keys, changed fields only, "empty cells clear", changed since
   preview, export for update round trip. Files: `dx/import/update-mode.ts`, `dx/export/export-for-update.ts`. Test: re-import unchanged reports all rows unchanged.
 - [ ] **T24**. Child rows (continuation rows, repeated parent columns, second sheet by key) and the party profiles
@@ -170,7 +171,7 @@
   `BasePerEntityType` tables, custom-field reference values, record-views tables, participants). Test: ORM parity spec
   listing the same references for contacts on both ORMs.
 - [ ] **T32**. Merge: preview with counts and field choices, `mergeGuard`, repoint per table with duplicate-row
-  strategies, journal, merged records to the recycle bin "merged into", timeline entry, background above 10,000
+  strategies, journal with the before-image of every deleted duplicate row, merged records to the recycle bin "merged into", timeline entry, background above 10,000
   references, `ngx-merge-dialog`. Files: `dx/merge/merge.service.ts`, `dx/merge/merge.controller.ts`,
   `dx/merge/merge.operation.ts`, `ui/merge-dialog.component.ts`. Test: post-merge check finds no reference to merged ids; cross-organization refused.
 - [ ] **T33**. Where-used: `where-used` route, `DATA_WHERE_USED`, recursive listing up to 1,000, blocking flags (today's
@@ -211,11 +212,12 @@
   file of the same shape maps itself; a different shape is not touched.
 - [ ] **T40**. Duplicates before writing against existing records (blocking keys, similarity), decisions per row or for
   all, merge decision through the merge engine. Files: `dx/validate/existing-duplicates.ts`,
-  `dx/import/data-import.controller.ts` (`decisions`). Test: 12 seeded duplicates found; each decision applied.
+  `dx/import/data-import.controller.ts` (`decisions`). Test: 12 seeded duplicates found; each decision applied, and with
+  the source file deleted after the dry run a `CREATE` and an `UPDATE_EXISTING` decision write the stored values.
 - [ ] **T41**. Batch undo of imports (created to the recycle bin, updated fields restored, changed records kept and
   listed); MCP `data_import_undo` with preview. Files: `dx/import/import-undo.service.ts`, `mcp/tools/data-exchange.ts`.
   Test: undo after edits keeps the edited records.
-- [ ] **T42**. Merge undo from the journal within 7 days. Files: `dx/merge/merge-undo.service.ts`. Test: references moved back; changed rows left and listed.
+- [ ] **T42**. Merge undo from the journal within 7 days. Files: `dx/merge/merge-undo.service.ts`. Test: references moved back; changed rows left and listed; two contacts carrying the same tag, merged and undone, both carry the tag again.
 - [ ] **T43**. Assisted cleaning: `assist` route through `DATA_EXCHANGE_ASSISTANT`, headers and 20 rows only, proposed
   transforms validated against the grammar, before-and-after preview, saved as an `ASSISTANT` template. Files:
   `dx/assist/import-assistant.service.ts`, `dxui/pages/import-wizard/assistant-pane.component.ts`. Test: payload

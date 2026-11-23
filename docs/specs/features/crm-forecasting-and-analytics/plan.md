@@ -203,7 +203,12 @@ runs them on the in-process timer under the advisory lock (PostgreSQL), `GET_LOC
   the query builder, never on the client. The record rules of CRM types (`RECORD_ACCESS_FILTER` of
   `access-control-and-security`, where loaded) are applied in the same query builder to every live aggregate and
   drill-down, so a figure counts exactly the records its drill-down lists (FR-3); stored snapshot and forecast roll-ups
-  are totals of a scope shown under the FR-2 rule.
+  are totals of a scope shown under the FR-2 rule. A stored roll-up is served as stored only when the record rules
+  hide no deal of its scope from the reader (the count of that scope's `crm_forecast_snapshot_deal` rows the reader may
+  read, with `RECORD_ACCESS_FILTER` applied through `dealId`, equals the scope's count); otherwise the roll-up, the
+  trend, the snapshot comparison and the accuracy figures are summed from the snapshot deal rows the reader may read,
+  so no stored total carries a deal the reader's rules hide. Submitted and override amounts are entries for a scope,
+  not deal data, and keep the FR-2 rule.
 - An override is refused for a team the caller does not manage, unless they hold `CRM_ANALYTICS_VIEW_ALL`.
 - Snapshots carry owner ids and amounts only; exports and email schedules follow the builder's rules; explanations send
   only movement facts to the AI provider.

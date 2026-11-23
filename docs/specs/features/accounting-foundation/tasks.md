@@ -32,12 +32,14 @@
 - [ ] **T2**. Plugin scaffold `packages/plugins/accounting` (package, project, tsconfig, jest, eslint, path mapping),
       `accounting.plugin.ts`, `accounting.module.ts`, `accounting.features.ts` (`FEATURE_ACCOUNTING`, default off),
       `accounting.settings.ts` (the settings of plan §3, including the chart and fiscal-year options),
-      `accounting-enabled.ts` (`isAccountingEnabled`, exact `true`), `.env.sample` line. Files:
+      `accounting-enabled.ts` (`isAccountingEnabled`, exact `true`), the worker plugin scaffold
+      `accounting-schedule.plugin.ts` (`AccountingSchedulePlugin`, no queue or schedule yet; T37 fills it),
+      `.env.sample` line. Files:
       `packages/plugins/accounting/` (`package.json`, `project.json`, `tsconfig.json`, `tsconfig.lib.json`,
       `jest.config.ts`, `.eslintrc.json`, `src/index.ts`), `accounting.plugin.ts`, `accounting.module.ts`,
-      `accounting.features.ts`, `accounting.settings.ts`, `accounting-enabled.ts`, `tsconfig.base.json` (path mapping),
-      `.env.sample`. Test: `accounting-enabled.spec.ts`; `accounting.plugin.spec.ts` (features, settings, no entity
-      yet).
+      `accounting-schedule.plugin.ts`, `accounting.features.ts`, `accounting.settings.ts`, `accounting-enabled.ts`,
+      `tsconfig.base.json` (path mapping), `.env.sample`. Test: `accounting-enabled.spec.ts`;
+      `accounting.plugin.spec.ts` (features, settings, no entity yet; both plugin classes load).
 - [ ] **T3**. Registration in `apps/api/src/plugins.ts` (`AccountingPlugin`) and `apps/worker/src/plugins.ts`
       (`AccountingSchedulePlugin`) behind `isAccountingEnabled`. Test: `apps/api/src/plugins.matrix.spec.ts` and
       `apps/worker/src/plugins.spec.ts`, flag on and off.
@@ -188,7 +190,7 @@
       `LedgerAccountService`; `ACCOUNTING_DATA_EXCHANGE`; `OPEN_ITEM_REGISTER`). Files: `accounting.ports.ts`,
       `apps/api/src/plugin-composition.ts`. Test: `accounting.ports.spec.ts` (plugin boots with ports unbound; the tax
       plugin's posting key and existing hand-off identifiers unchanged with the plugin loaded).
-- [ ] **T37**. Worker side `AccountingSchedulePlugin`: queue `accounting-maintenance`, schedule
+- [ ] **T37**. Worker side `AccountingSchedulePlugin` (the T2 scaffold): queue `accounting-maintenance`, schedule
       `accounting.fiscal-year.rollover` recorded in `job_execution`; API queue workers and the registered operation
       types; in-process timer without a queue. Files: `accounting-schedule.plugin.ts`,
       `calendar/fiscal-year-rollover.scheduler.ts`, `calendar/fiscal-year-rollover.worker.ts`, `accounting.operations.ts`.

@@ -133,7 +133,12 @@ interface IAudienceSource {                    // MARKETING_AUDIENCE_SOURCES: co
 }
 interface IVideoMetricsAdapter { key: string; matches(url: string): string | null;    // returns the external id
     fetch(ids: string[], account: IAdapterAccount): Promise<Record<string, IVideoMetrics>> }
-interface IMarketingLists { subscribe(i: { listId: ID; contactId: ID; consentId?: ID; source: string }): Promise<void> }
+interface IMarketingLists {
+    subscribe(i: { listId: ID; contactId: ID; consentId?: ID; source: string }): Promise<void>;
+    // the preference page of email-and-communications: `link` is what it resolved from its verified public token
+    listsOf(link: { contactId: ID; tokenId: ID }): Promise<{ listId: ID; name: string; description?: string; state: string }[]>;
+    leave(link: { contactId: ID; tokenId: ID }, i: { listIds: ID[]; source: string }): Promise<void>;   // consent withdrawal per list
+}
 ```
 
 **Migration timestamps**: `packages/plugins/campaigns` `1791000052700` to `1791000052799`.
@@ -241,7 +246,9 @@ business-documents links (fallback order and invoice ids on events); `MARKETING_
 `registerAutomationActions` (`marketing.send_message`, `marketing.sequence_step`, `marketing.enrol`,
 `marketing.end_enrolment`, `marketing.list_add`, `marketing.list_remove`); `registerPortalAreas` (newsletters);
 `registerRoleBundleTemplates` ("Marketer"); `CUSTOM_FIELD_METADATA`, `CUSTOM_FIELD_VALUE_READER`. **Offered**:
-`MARKETING_LISTS` (lead-capture forms; the communications preference page lists a person's lists through it),
+`MARKETING_LISTS` (lead-capture forms through `subscribe`; the communications preference page lists a person's lists with
+`listsOf` and leaves chosen lists with `leave`, both authorized only by the contact and token that page resolved from its verified
+public token; leaving all marketing stays communications' unsubscribe),
 `registerVideoMetricsAdapters` (video-site connectors of `integration-hub` register here, credentials in
 `IntegrationSetting`); report definitions of spec FR-83 listed as core `report` rows of a "Marketing" category whose
 `featureKey` is `FEATURE_CAMPAIGNS` (the shared catalogue feature filter of `report-builder-and-dashboards`,

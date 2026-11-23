@@ -71,10 +71,11 @@
   close and reopen, team rooms, by-key lookup creating rooms for existing links). Files:
   `mt/rooms/meeting-room.service.ts`, `mt/rooms/meeting-room.controller.ts`, `mt/access/meeting-access.service.ts`.
   Test: access matrix; tenant isolation.
-- [ ] **T13**. Join and lobby `access/join.service.ts`, `lobby/*` (tokens ≤ 1 h, guests ≤ 2 h, limits, rejections with
+- [ ] **T13**. Join and lobby `access/join.service.ts`, `lobby/*` (tokens ≤ 1 h for members and guests alike, limits, rejections with
   retry delay, guest passes, guest lobby subscription with polling fallback) and public guest routes with throttling.
   Files: `mt/access/join.service.ts`, `mt/lobby/meeting-lobby.service.ts`, `mt/lobby/meeting-lobby.controller.ts`,
-  `mt/lobby/public-guest.controller.ts`. Test: AC-4 and AC-5 cases.
+  `mt/lobby/public-guest.controller.ts`. Test: AC-4 and AC-5 cases; a guest token expires within one hour, and a guest
+  reconnecting after an hour gets a new one through its pass.
 - [ ] **T14**. Notices intake `sessions/notice.controller.ts` and queue (signature, store, sessions, attendance segments,
   peak, second device, reconnection without duplicates). Files: `mt/sessions/notice.controller.ts`,
   `mt/sessions/meetings-notices.worker.ts`, `mt/sessions/meeting-session.service.ts`. Test: out-of-order and duplicate

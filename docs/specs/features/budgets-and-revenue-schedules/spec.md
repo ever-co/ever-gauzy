@@ -157,7 +157,8 @@ from actuals, always as a preview.
 
 - **FR-18** The system counts as consumed, per control point, the actual ledger amounts of the line's accounts and
   dimensions in the budget's book, plus open commitments, plus open pre-commitments, and allows a tolerance per budget
-  as a percentage, an amount, or both.
+  as a percentage, an amount, or both. A bill for an order line is checked against that line's open commitment first,
+  so only the part above it adds to consumed and a bill of a fully committed order is never counted twice.
 - **FR-19** The system evaluates control when a document is confirmed, as part of the ledger's posting check, and shows
   the same figures in the document's effects preview: budget, consumed, this document, remaining.
 - **FR-20** The system refuses a blocked confirmation naming budget, line, basis and amounts; for "warn" it lets the

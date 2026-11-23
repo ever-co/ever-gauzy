@@ -105,7 +105,9 @@
   `packages/core/src/lib/measurement/unit.service.ts`, `packages/core/src/lib/measurement/unit.controller.ts`,
   `packages/core/src/lib/measurement/unit-conversion.service.ts`, `packages/core/src/lib/measurement/unit-conversion.controller.ts`.
   Test: `packages/core/src/lib/measurement/unit-conversion.service.spec.ts` (FR-20..FR-25; a second organization-wide,
-  item-level or variant-level conversion of the same unit refused through `scopeKey` on each dialect). [2]
+  item-level or variant-level conversion of the same unit refused through `scopeKey` on each dialect; a user with
+  `PRODUCTS_EDIT` and without `UNITS_EDIT` defines a case conversion for an item and is refused an organization-wide
+  one). [2]
 - [ ] **T14**. Barcodes: service with check-digit validators per type, the only writer of `product_variant.barcode`
   (the primary's copy) while `FEATURE_ITEM_MASTER` is on, variant DTO `barcode` writes routed to it as type
   `INTERNAL` and never refused (a taken value joins the drift list), nightly drift list, `/item-barcodes`. Files:
@@ -150,11 +152,12 @@
   `C/item-bundle/bundle-expansion.service.ts`. Test: `C/item-bundle/item-bundle.service.spec.ts` (FR-44..FR-49). [2]
 - [ ] **T21**. Commercial and buying attributes on the product DTOs; last purchase price through the port;
   standard selling price written through the price port on create, the Inventory variant price fields writing
-  `product_price` while `FEATURE_PRICING` is on and the legacy row while it is off (FR-53); opening quantity receipt
+  `product_price` while `FEATURE_ITEM_MASTER` and `FEATURE_PRICING` are both on and the legacy row while either is off (FR-53); opening quantity receipt
   through the ledger port (FR-54). Files: `packages/core/src/lib/product/dto/` (new optional fields),
   `C/item-commercial/item-commercial.service.ts`, `C/item-commercial/opening-stock.service.ts`,
   `INV/edit-inventory-item-variant/variant-form.component.ts`. Test:
-  `C/item-commercial/item-commercial.service.spec.ts` (one form never writes both prices);
+  `C/item-commercial/item-commercial.service.spec.ts` (one form never writes both prices; with `FEATURE_PRICING` on and
+  `FEATURE_ITEM_MASTER` off the variant form writes the legacy row exactly as today);
   `C/item-commercial/opening-stock.service.spec.ts` (refused without a location). [2]
 - [ ] **T22**. Availability (`StockAvailabilityService` through `CATALOG_STOCK_AVAILABILITY`) and end-of-life check
   `/items/:id/availability`; connections registry

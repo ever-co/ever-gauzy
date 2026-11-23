@@ -55,7 +55,9 @@
       import and factory reset; no seed migration. Files:
       `packages/plugins/expense-claims/src/lib/expense-claims.permissions.ts`, `expense-claims.features.ts`,
       `expense-claims.settings.ts`, `expense-claims.plugin.ts` (export, import and reset registrations). Test: grants per
-      role from the contributions; export lists the tables.
+      role from the contributions; export lists the tables; a tenant export with a draft claim contains its `expense`
+      rows with `approvalState`, `source` and `expenseClaimId`, and after import the claim is whole while the expense
+      list and report still leave the draft lines out.
 - [ ] **T46**. Core write guard on claim-owned rows (spec FR-7): `ExpenseUpdateHandler` and `ExpenseDeleteHandler`
       (and the inherited soft-delete route `DELETE /expense/:id/soft` of `expense.controller.ts`) refuse with
       `409 EXPENSE_CLAIM_OWNED` a row whose
@@ -122,8 +124,9 @@
       `ADVANCE_RECOVERY`), cancellation rules, derived state. Files:
       `packages/plugins/expense-claims/src/lib/advance/expense-advance.service.ts`, `advance/expense-advance.controller.ts`,
       `advance/advance-application.service.ts`, `advance/advance-settlement.service.ts`, `advance/advance-state.ts`. Test:
-      application above unsettled or approved total refused; concurrent applications serialised per advance; recovery
-      never above unsettled.
+      application above unsettled or approved total refused; concurrent applications serialized per claim (claim row
+      lock first, then advances in id order) and per advance: two requests applying different 100 advances to one
+      100 claim at once leave one applied and one refused; recovery never above unsettled.
 - [ ] **T18**. Travel requests: legs, stays, estimates, identity validity through `HR_DIRECTORY`, approval through the gateway
       or core request approval `BUSINESS_TRIP` with a decision gate in `request-approval/linked-document-decision.gate.ts`
       applied only to requests linked to a travel request, conversion of existing business-trip requests, advance and
@@ -241,9 +244,14 @@
       explained line never reimbursed; personal charge settled as an advance; counterpart offered to reconciliation once.
 - [ ] **T36**. Spend figures consumer (the one maintained expense figure, offered as `EXPENSE_SPEND`), dashboards
       (`/spend/projects/:id`, `/spend/clients/:id`), realtime channels, budget threshold notices through the dispatcher.
+      Direct expenses: the subscriber on core `expense` appending `expenses.direct_expense.changed` in the writing
+      transaction, the recompute per figure key, and the backfill operation `EXPENSE_SPEND_BACKFILL` at each switch-on.
       Files: `packages/plugins/expense-claims/src/lib/spend/spend-figures.consumer.ts`, `spend/spend.controller.ts`,
-      `spend/expense-spend.reader.ts`, `spend/budget-threshold.notifier.ts`. Test: figures equal line sums; hint within
-      5 s; 80 % and 100 % notices once; the `EXPENSE_SPEND` reader answers the same totals.
+      `spend/expense-spend.reader.ts`, `spend/budget-threshold.notifier.ts`, `spend/direct-expense.subscriber.ts`,
+      `spend/spend-backfill.operation.ts`. Test: figures equal line sums; hint within
+      5 s; 80 % and 100 % notices once; the `EXPENSE_SPEND` reader answers the same totals; direct expenses recorded
+      before switch-on appear after the backfill; a direct expense created, moved to another project and deleted through
+      the existing routes moves both projects' figures; a backfill running beside live changes ends with the row sums.
 - [ ] **T37**. Claims from delivery trips through `EXPENSE_CLAIM_SOURCES` (adapter bound in
       `apps/api/src/plugin-composition.ts`). Test: prefill with trip date, vehicle and distance; hidden without trips.
 - [ ] **T38**. UI for policies and rates, receipts, cards to explain, spend dashboards in `expense-claims-ui` (phone

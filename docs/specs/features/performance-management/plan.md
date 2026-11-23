@@ -211,8 +211,9 @@ feedback requests.
   `/pages/goals/calibration/:id`, `/pages/goals/feedback`, `/pages/goals/one-on-ones` (hidden without
   `calendar-and-scheduling` and `meetings`), `/pages/goals/performance-settings`. My review, responses, feedback,
   one-to-ones and check-ins are laid out for phone width.
-- The goal reports child route of `pages.routes.ts` loads the plugin's report page when it is registered and
-  `FEATURE_PERFORMANCE_REVIEWS` and `FEATURE_GOAL_REPORT` are on; otherwise the existing goal reports page
+- The goal reports child route of `pages.routes.ts` loads the plugin's report page when it is registered,
+  `FEATURE_PERFORMANCE_REVIEWS` and `FEATURE_GOAL_REPORT` are on and the report builder is available (its plugin
+  loaded and `FEATURE_REPORT_BUILDER` on for the tenant); otherwise the existing goal reports page
   (`WorkInProgressModule`) as today, so a tenant that never switched the feature on sees no change.
 - The existing goal dialogs (`apps/gauzy/src/app/pages/goals/edit-objective`, `edit-keyresults`) have no extension
   slot: a core UI task adds the slot ids `GOAL_FORM_FIELDS` and `KEY_RESULT_FORM_FIELDS` to

@@ -90,7 +90,9 @@
   their owners; values in `tenant_setting` through T51; group values and enforce switch in `organization_group_default`
   bound to `SETTING_INHERITANCE`; validation, tenant-wide values, fixed once used, cache with event eviction,
   readiness) and `ORGANIZATION_DEFAULTS` (FR-21 to FR-29). Test: resolution-order table spec; `409` on a stale
-  `If-Match`; an organization field default is written to the organization row, not copied.
+  `If-Match`; an organization field default is written to the organization row, not copied; with the root enforcing
+  30 days, an intermediate group's enforced 60 days is refused with `ORG_DEFAULT_ENFORCED` and a descendant
+  resolves 30; a value an intermediate group enforced before the root did shows as overridden.
 - [ ] **T15**. Controllers and DTOs for profile, tree, defaults, readiness; `@FeatureFlag`, Swagger; membership checks
   (organizations the caller belongs to, or all of the tenant with `ALL_ORG_EDIT`; another tenant's organization
   answers `404`). Files: `os/profile/organization-profile.controller.ts`, `os/tree/organization-tree.controller.ts`,
@@ -104,8 +106,13 @@
   `ORGANIZATION_SHAREABLE_TYPES`) (FR-30 to FR-36, FR-38). Test: filter spec on three dialects; unshare refused with open
   documents; with no share configured every list returns the same rows as without the filter, tenant-wide rows
   included.
-- [ ] **T18**. Share re-expansion consumer on tree changes (FR-36). Files: `os/sharing/share-reexpansion.consumer.ts`.
-  Test: joining and leaving a group.
+- [ ] **T18**. Share changes of a tree move (FR-15, FR-35, FR-36): the move transaction of T12 deletes and inserts the
+  group-origin member rows of the moved subtree set-based, after the in-use check on the removed rows, and publishes
+  `organization_structure.tree.changed` after commit; the consumer on tree changes only reconciles. Files:
+  `os/sharing/share-tree-move.ts`, `os/tree/organization-tree.service.ts`, `os/sharing/share-reexpansion.consumer.ts`.
+  Test: joining and leaving a group; right after a move commits (consumer stopped) the departed organization reads
+  none of the group's records and the joining one reads them; leaving a group while an open order uses a group-shared
+  customer is refused with `ORG_SHARE_IN_USE` listing the order, and nothing moves.
 - [ ] **T19**. Document check participant `os/sharing/organization-document.check.ts` bound to `DOCUMENT_CHECKS`
   (shared party and items, organization lock) and `DOCUMENT_ORGANIZATION_PROFILE` (short code, internal party,
   pair policy) (FR-34, FR-64, FR-88). Test: unit with a stub document.
@@ -138,10 +145,12 @@
   changed), archive writer to tenant storage, lock, recalculation hooks, deletion record, counter reset option (FR-58
   to FR-68). Files: `os/data-runs/transaction-deletion.service.ts`, `os/data-runs/deletion-dry-run.ts`,
   `os/data-runs/deletion-archive.writer.ts`, `os/data-runs/organization-data-runs.controller.ts`. Test: SQLite end-to-end
-  with three handlers; protected type refused; archive complete before the first delete.
+  with three handlers; protected type refused; archive complete before the first delete; a time log and an expense
+  created after the confirmation and before their slice runs are kept, archived nowhere and listed in the outcome.
 - [ ] **T28**. Core data handlers derived from `FactoryResetService`'s dependency-ordered repository list, filtered to
   one organization and classified (comments, activity entries, attachment links, notifications, time logs, expenses,
-  invoices and payments as transactions; contacts, items, employees as masters). Files:
+  invoices and payments as transactions; contacts, items, employees as masters), each selecting only records created
+  at or before the run's `confirmedAt`. Files:
   `os/data-runs/handlers/core-data-handlers.ts`, `packages/core/src/lib/user/factory-reset/factory-reset.service.ts`
   (the ordered list exported). Test: handler contract kit green for each; the handler order equals the factory-reset
   order.

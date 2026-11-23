@@ -143,7 +143,7 @@ time off flows into expected hours, presence and private calendar feeds.
 | **FR-23** | The system MUST keep per balance its accrual schedule: date, amount, planned, granted, failed, skipped or released, source (schedule, rule, manual) and failure reason. |
 | **FR-24** | A user with `TIME_OFF_ALLOCATE` can release planned accrual lines early with a comment, never beyond the entitlement. |
 | **FR-25** | The system MUST stop accrual while the employee is suspended and after their end of work, and pro-rate it for unpaid time off when the policy says so. |
-| **FR-26** | The system MUST, on the first day of a new period, carry unused remaining days up to the policy cap into the new balance as a separate carried part with its expiry date, and expire the rest (or offer it for encashment when the policy says so); the existing carry-forward route stays and does nothing twice. |
+| **FR-26** | The system MUST, on the first day of a new period, carry unused remaining days up to the policy cap into the new balance as a separate carried part with its expiry date, and expire the rest (or offer it for encashment when the policy says so: the days offered stay available on the old balance until the encashment is confirmed, which takes them, or cancelled, which expires them; only the days neither carried nor offered expire on the first day); the existing carry-forward route stays and does nothing twice. |
 | **FR-27** | The system MUST expire, daily, carried parts past their expiry and grants of ended periods that were not carried, each as a ledger entry; a user with `TIME_OFF_ALLOCATE` can expire carried days early. |
 | **FR-28** | The system MUST take days from the part that expires first, then from current grants. |
 

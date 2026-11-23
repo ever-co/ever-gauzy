@@ -16,7 +16,11 @@
 Two new plugins. `point-of-sale` owns registers, devices, shifts, cash and the register facts of a sale; every
 commercial fact goes to the back end that already owns it through ports bound in `apps/api/src/plugin-composition.ts`:
 the sale is an `order` (created, placed and completed in one step, `source = POINT_OF_SALE`), its tenders are
-`payment` rows through the payment plugin, prices come from `POST /pricing/quote`, coupons and gift cards from the
+`payment` rows through the payment plugin, prices come from the pricing quote (`POS_PRICING`, bound in process to the
+cart's basket chain `CommerceCartService.priceBasket` behind `/pricing/quote`, never to the route itself: with
+`FEATURE_PRICING_RULES` off it prices as orders price today, list and variant prices of `ProductPriceService` and today's
+promotions, and with it on it adds the rules and nudges; without the cart plugin it takes `ProductPriceService.resolvePrices`
+line by line), coupons and gift cards from the
 promotion plugin, stock movements from the inventory stock ledger, returns from the returns plugin. A store is the
 existing core `merchant` (its page `manage-merchants` and its MCP tools `merchants.ts` stay the store master); the items
 a register offers are those its sales channel publishes (`product_channel`, `collection_channel` of the `catalog`
@@ -124,8 +128,13 @@ service only while `FEATURE_LOYALTY` is on; a contact whose cached value is not 
 `ADJUST` entry (reason "opening balance", key `opening:<contactId>`) in its first programme before anything else, so
 the cache never drops a balance held before the feature. Tier groups: `loyalty_member.tierGroupMembershipId` uuid
 null records the core contact-group membership the tier job created; the job removes only that membership, never one
-a user added. Idempotency keys: `earn:<sourceType>:<sourceId>`, `reverse:<returnId>:<memberId>`, `expire:<earnEntryId>` (one expiry
-entry per earned entry, so several entries of a member expiring on the same date each expire).
+a user added. Idempotency keys: `earn:<purchaseKey>`, `reverse:<returnId>:<memberId>`, `expire:<earnEntryId>` (one expiry
+entry per earned entry, so several entries of a member expiring on the same date each expire). One earning identity per
+purchase: the purchase key is `ORDER:<orderId>` for a register sale (its order, `pos_sale.saleOrderId`), for an order,
+and for an invoice raised from an order (found through `order.invoiceId`), and `INVOICE:<invoiceId>` only for an
+invoice without an order; the first qualifying channel earns and a later one finds the key taken. The order channel
+skips `order.completed` of an order with `source = POINT_OF_SALE`, which the register channel earns through
+`pos.sale.recorded`.
 
 ### Migrations
 
@@ -200,7 +209,8 @@ Sync result codes: `RECORDED`, `DUPLICATE`, `RECORDED_WITH_NOTICES`, `REFUSED` (
 
 Loyalty consumes `order.completed`, `order.canceled`, `return.refunded`, `pos.sale.recorded` and
 `document.payment.confirmed` (from `payments-and-collections`; it earns when the payment leaves the allocated
-invoice fully paid) as outbox consumer `subscriber:loyalty`, earning once per idempotency key. Stock changes come
+invoice fully paid) as outbox consumer `subscriber:loyalty`, earning once per idempotency key, so a register sale, its
+order and an invoice raised from that order earn once together (§3 purchase key). Stock changes come
 from the inventory plugin's CQRS `InventoryLevelChangedEvent`, `InventoryLevelLowEvent` and
 `InventoryLevelOutOfStockEvent` (they carry the derived availability per variant and location), consumed by an event
 handler of `point-of-sale` that coalesces them per register; when `warehouse-and-stock-movements` bridges them to the

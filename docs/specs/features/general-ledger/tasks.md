@@ -136,15 +136,19 @@
 - [ ] **T28**. Posting exceptions: creation on functional refusal, `accounting.journal.failed`, retry job, remedy,
       worklist controller. Files: `ledger/ledger-posting-exception.service.ts`,
       `ledger/ledger-posting-exception.controller.ts`, `schedule/posting-exception-retry.scheduler.ts`. Test: exception
-      resolves by itself after the missing rule is added.
+      resolves by itself after the missing rule is added; a document cancelled before the nightly retry has its open
+      exception `SUPERSEDED` with the reason, and the retry writes no journal for it, also when the cancellation event
+      and the retry run at the same time.
 - [ ] **T29**. Control-account lines: every line on a control account names a register item (the owner's
       `openItemId`, or one opened through `OPEN_ITEM_REGISTER` for manual and opening lines), party and side checked
       against it; advances and earmarks read from the register; `GET /open-items/control-check`. Files:
       `open-item/ledger-control-line.validator.ts`, `open-item/ledger-open-item.controller.ts`. Test: control
-      account equals the register's open items after random postings; an invoice dated in a closed period whose
+      account equals the register's open items after random postings; with postings of 100 on October 1 and 200 on
+      October 20, the control balance as of October 10 is 100 and as of October 31 is 300; an invoice dated in a closed period whose
       journal posts on the first open date (setting off) is listed as a timing difference as of its document date and
-      matches from its posting date; a posting exception is listed as a timing difference until it posts; an altered
-      line is a mismatch.
+      matches from its posting date; a posting exception is listed as a timing difference until it posts; a 100
+      invoice settled by a 90 payment and a 10 discount whose discount journal has not posted yet lists the 10 as a
+      timing difference of the allocation, not a mismatch; an altered line is a mismatch.
 - [ ] **T30**. Allocation postings: consumer of `payments.allocation.created` / `.released` (type
       `payment_allocation`) posting realized exchange difference, settlement discount, advance reclassification and
       the netting transfer for linked parties, reversed on release; idempotent per allocation. Files:
@@ -256,10 +260,13 @@
       reopen. Files: `close/ledger-year-end.service.ts`, `operations/ledger-year-end-close.operation.ts`. Test: income
       and expense balances are zero after close; reopen restores them.
 - [ ] **T56**. Long procedures as core operations: the operation types of plan §8 registered with the runtime
-      (aggregate per organization and kind, steps in slices), `ledger_run_item` results keyed by `operationId`, `/runs`
+      (close, year-end, reopen, reposting, catch-up and revaluation on the shared aggregate
+      `ledger:<organizationId>:procedure`, the other kinds on one aggregate per organization and kind; steps in
+      slices), `ledger_run_item` results keyed by `operationId`, `/runs`
       routes. Files: `operations/ledger-operation-types.ts`, `run/ledger-run-item.service.ts`,
       `run/ledger-runs.controller.ts`. Test: resume after a crash completes without duplicates; a second run of the
-      same kind is refused while one is live.
+      same kind is refused while one is live, and a reposting run is refused while a period close of the same
+      organization is live (and the reverse), while a reposting run of another organization starts beside it.
 - [ ] **T57**. Reposting and catch-up runs with per-document difference and result. Files:
       `run/ledger-reposting.service.ts`, `operations/ledger-repost.operation.ts`, `operations/ledger-catch-up.operation.ts`.
       Test: unchanged documents get no journal; locked dates follow the run option.

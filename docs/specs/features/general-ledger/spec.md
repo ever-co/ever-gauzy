@@ -141,7 +141,8 @@ a preview; unusual postings are flagged as they happen.
   state (pending, posted, failed, reversed) with journal numbers, updated live.
 - **FR-17** The system records a posting that fails after confirmation as an exception (document, reason, attempts),
   retries it when its cause changes and nightly, and lets a user with `ACCOUNTING_POSTING_EXCEPTION_RESOLVE` retry it or
-  post it with a stated remedy; no failure is dropped silently.
+  post it with a stated remedy; no failure is dropped silently. Cancelling the document closes its open exceptions as
+  superseded, with the reason recorded, so a cancelled document never receives a journal later.
 - **FR-18** The system posts only documents dated on or after the go-live date; a user with `ACCOUNTING_REPOST_RUN` can
   run a catch-up that posts documents confirmed before accounting was switched on.
 - **FR-19** The system numbers journals from a gap-free numbering series per organization and fiscal year, assigned at
@@ -240,7 +241,9 @@ a preview; unusual postings are flagged as they happen.
 - **FR-49** The system answers every outstanding amount (per document, party, account, as of any date) from the
   register, and keeps each control account's balance equal to the sum of its open items on any date, apart from timing
   differences it names: an item whose journal posts on a later open date (FR-98), waits as a posting exception (FR-17)
-  or gets none because it predates the go-live date (FR-18) counts in the control account from its journal's date. The
+  or gets none because it predates the go-live date (FR-18) counts in the control account from its journal's date, and
+  so does an allocation whose own journal (settlement discount, exchange difference, advance reclassification, netting)
+  has not posted yet or waits as a posting exception. The
   control check of a date compares the control account with the open items whose journal is dated on or before it,
   lists the timing differences (item, document date, posting date or exception), and reports any other difference as
   a mismatch.

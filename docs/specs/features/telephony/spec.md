@@ -71,7 +71,7 @@ analytics**.
 ### 3.1 Presence
 
 - **FR-1** The system MUST load only when `GAUZY_TELEPHONY_ENABLED` is exactly `true` and answer every route with `404` while `FEATURE_TELEPHONY` is off; provider callbacks are then rejected without storing anything.
-- **FR-2** The system MUST tell any client whether calling is available to the current user (feature on, an active account or the manual medium, an agent profile, `TELEPHONY_CALL_MAKE`), and clients show call buttons only then.
+- **FR-2** The system MUST tell any client whether calling is available to the current user (feature on, an active account or the manual medium, `TELEPHONY_CALL_MAKE`, and an agent profile or, for a user without one, an account they may dial out with, whose first call creates the profile of FR-9), and clients show call buttons only then.
 - **FR-3** The system MUST leave the existing text message gateway settings and the existing provider accounts unchanged, and let one provider account carry every channel of its vendor (email, text, voice), so a vendor's voice channel can be set up on an account where its other channels are; an organization keeps as many accounts per vendor as it may today.
 
 ### 3.2 Provider accounts and adapters
@@ -150,7 +150,7 @@ analytics**.
 ### 3.12 Power dialler `(advanced)`
 
 - **FR-47** (advanced) A user with `TELEPHONY_DIALLER_RUN` can start a dialler session over a saved view or a selection of leads, people or contacts (up to 2,000), with a calling window in the party's local time (default weekdays 09:00–20:00), maximum attempts per party (default 3), minimum hours between attempts (default 24), and whether call consent is required.
-- **FR-48** (advanced) The system MUST place the next call of a session only after the previous call's outcome is set, and skip, with the reason, parties marked "do not contact", without call consent where required, outside their window, called within the minimum interval or without a valid number.
+- **FR-48** (advanced) The system MUST place the next call of a session only after the previous call's outcome is set, and skip, with the reason, parties marked "do not contact", without call consent where required, outside their window, called within the minimum interval or without a valid number; where the contact and consent records cannot be read, no session starts and the reason is shown.
 - **FR-49** (advanced) The system MUST choose as caller number the organization's number in the party's country and area when the account has one (local presence), else the user's default, and never show a number the organization does not own.
 - **FR-50** (advanced) The system MUST show a session's progress (called, connected, skipped by reason, outcomes) live and let its owner pause, resume and end it.
 

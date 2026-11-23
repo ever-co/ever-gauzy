@@ -258,7 +258,7 @@ root the API runs them on in-process timers under the plugin lock; captions then
 - New keys in `meetings.permissions.ts` as plugin contributions with `defaultFor`: `MEETINGS_VIEW` (every default role),
   `MEETINGS_HOST`, `MEETINGS_RECORD` (super admin, admin, manager, employee), `MEETINGS_ROOMS_MANAGE` (super admin, admin,
   manager), `MEETINGS_RECORDINGS_VIEW_ALL`, `MEETINGS_SETTINGS_MANAGE` (super admin, admin).
-- Tokens: issued server-side per room, identity and role, ≤ 1 hour (guests ≤ 2 hours), never for banned subjects, a
+- Tokens: issued server-side per room, identity and role, ≤ 1 hour (guests too; a guest reconnecting gets a new token through its guest pass), never for banned subjects, a
   locked room or a full room; media room names include the tenant; tokens and guest proofs never logged.
 - Notices: per-account token hashed, adapter signature over the raw body, stored before processing. Recorder grants:
   random, hashed, single recording, deadline, size cap, parts checked; nothing else is accepted on the upload route.

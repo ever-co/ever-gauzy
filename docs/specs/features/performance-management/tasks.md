@@ -111,10 +111,12 @@
       `ui/goals/goal-tree.component.ts`, `ui/goals/goal-form-fields.component.ts`,
       `ui/goals/key-result-form-fields.component.ts`. Test: rendering specs; existing dialogs unchanged without the
       plugin and with the feature off.
-- [ ] **T17**. Goal reports child route in `apps/gauzy/src/app/pages/pages.routes.ts`: plugin page when registered and
-      `FEATURE_PERFORMANCE_REVIEWS` and `FEATURE_GOAL_REPORT` are on, `WorkInProgressModule` otherwise. Files also:
+- [ ] **T17**. Goal reports child route in `apps/gauzy/src/app/pages/pages.routes.ts`: plugin page when registered,
+      `FEATURE_PERFORMANCE_REVIEWS` and `FEATURE_GOAL_REPORT` are on and the report builder is available (plugin loaded,
+      `FEATURE_REPORT_BUILDER` on), `WorkInProgressModule` otherwise. Files also:
       `ui/reports/goal-reports.component.ts`. Test: route spec for both cases; with `FEATURE_GOAL_REPORT` on and the
-      performance feature off the existing goal reports page stays.
+      performance feature off the existing goal reports page stays; with both flags on and the report builder off
+      the existing goal reports page stays.
 - [ ] **T18** (parallel). Settings pages (focus areas, criteria, scales and bands). Files:
       `ui/settings/focus-areas.component.ts`, `ui/settings/criteria.component.ts`, `ui/settings/scales.component.ts`,
       `ui/services/performance-api.service.ts`. Test: rendering specs.

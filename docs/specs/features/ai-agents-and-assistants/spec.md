@@ -149,7 +149,9 @@ real past cases gate every version before it goes live. Marked `(advanced)`.
 - **FR-23** The system applies the same intersection to sub-agents, flow tools and request tools, and answers a refused
   call to the model with the reason so the run tells the user what it could not do and who could. `(advanced)`
 - **FR-24** The system marks tool results carrying user-written or outside content as untrusted and requires confirmation
-  for a write that follows untrusted content in the same step.
+  for every write that follows untrusted content in the run, in the same step or any later one. The mark stays on the
+  run until it ends, across waits and restarts; a later run of the same conversation starts marked while the
+  conversation context it receives still holds that content.
 - **FR-25** The system caps a tool result sent to the model (default 20,000 characters), pages longer results and drops
   masked fields before sending.
 

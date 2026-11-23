@@ -64,7 +64,8 @@ deliveries, serial units and projects** and starts their actions; **collisions**
 - **Given** a delivery report, bounce, automatic or list mail, **then** nothing is created; an out-of-office reply stays as
   a notice without reopening; a bounced reply is marked; a looping sender gets at most 5 acknowledgements an hour.
 - **Given** a customer message on a closed ticket, **then** a linked follow-up ticket opens; a merge into a merged ticket
-  or making a cycle is refused; different customers need a confirmation.
+  or making a cycle is refused; different customers need a confirmation, and after it neither customer sees the other's
+  messages.
 - **Given** two agents changing one ticket at once, **then** the second gets a conflict with the current value; a client
   losing its connection mid-reply gets its server draft back, checked again before sending.
 - **Given** the mail provider failing, **then** the reply stays as failed with the error, is retried three times and its
@@ -216,7 +217,11 @@ deliveries, serial units and projects** and starts their actions; **collisions**
 - **FR-44** A user with `HELPDESK_TICKET_MERGE` who may edit all tickets involved merges tickets into a target: messages,
   comments, attachments, related records, tags and followers move with their times; sources close as merged, linked as
   duplicates of the target, their time counted with it; requesters told and copied (optional); a merged target or a
-  cycle is refused; different customers need confirmation.
+  cycle is refused; different customers need confirmation. When the customers differ, each moved customer message,
+  reply and notice keeps the customer it came from: agents see the whole history on the target, while the target's
+  customer, its requesters and copies, its replies and the portal service (FR-79) see only the messages of the target's
+  own customer, the source's customer keeps seeing its own messages under the source's reference, and no requester is
+  copied on another customer's ticket.
 - **FR-45** A user with `HELPDESK_TICKET_MERGE` splits a ticket at a customer message: it and later messages (comments on
   choice) move to a new ticket of the same support project copying requester, customer, copies, template, priority,
   team and tags, linked as related and marked "split from", with a comment left.
@@ -369,7 +374,8 @@ deliveries, serial units and projects** and starts their actions; **collisions**
 - [ ] **AC-3** Each FR-14 row holds; auto-close writes its reason; saved replies fill placeholders and apply actions on
       send; a bulk reply to 500 tickets reports per ticket; comments never reach a reply or the portal service.
 - [ ] **AC-4** Merge and split move every item with its time and carry the customer side; mail to a merged ticket reaches
-      the target; cycles are refused; undo restores within 24 hours (advanced: undo; FR-44–FR-46).
+      the target; cycles are refused; after a confirmed merge of two customers' tickets the portal and replies of each
+      customer show only that customer's messages; undo restores within 24 hours (advanced: undo; FR-44–FR-46).
 - [ ] **AC-5** Tickets appear in task lists, boards and the timer as tasks, and a status changed from a task screen
       applies FR-14; ticket views, search and bulk work show only readable tickets; an approval template waits for its
       decision; a parent closes its children with one reply (advanced: board, approval, parents).
@@ -378,7 +384,8 @@ deliveries, serial units and projects** and starts their actions; **collisions**
       for cost viewers only (advanced: time and cost; FR-63, FR-64).
 - [ ] **AC-8** A draft cites sources, masks other customers, is never sent by the assistant; proposals keep outcomes; a
       responder answers within limits and hands over on each FR-70 condition (advanced: assistant, responder).
-- [ ] **AC-9** Email, widget and messaging form one conversation per requester (advanced: one conversation; FR-27).
+- [ ] **AC-9** Email, widget and messaging of one ticket form one conversation per ticket across channels, and a requester's
+      second ticket keeps its own conversation (advanced: one conversation; FR-27).
 - [ ] **AC-10** A linked order shows live state and starts a prefilled return; the approved summary of an assist becomes a
       comment (advanced: related records, assist; FR-38, FR-50, FR-51).
 - [ ] **AC-11** Ticket facts (bookkeeping, channel, arrival, assistant outcomes, saved reply use, time) feed the report

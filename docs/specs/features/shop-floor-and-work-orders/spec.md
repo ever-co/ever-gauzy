@@ -168,7 +168,9 @@ orders with a preview. These requirements are marked `(advanced)`.
 - **FR-37** A user with `MANUFACTURING_OUTPUT_RECORD` can record output: one document consumes components (by structure
   for the produced quantity or as issued), receives output, secondary outputs and scrap, and records process loss.
 - **FR-38** Output beyond the order quantity plus its allowance, or beyond the sales line plus the sales allowance
-  (counting quantity already produced or ordered for it), is refused naming the allowed quantity.
+  (counting quantity already produced for the line by any order and the quantity still open on its other orders; the
+  quantity of this order counts only as it is produced, so this order's own allocation is never counted twice), is
+  refused naming the allowed quantity.
 - **FR-39** Output lots and serial units are generated per setting or entered, in batches of the stated size; an amended
   order keeps its serial units.
 - **FR-40** With the setting on, a user with `MANUFACTURING_OUTPUT_RECORD` can convert part of the output (above zero)
@@ -201,8 +203,10 @@ orders with a preview. These requirements are marked `(advanced)`.
   lists mark state by colour and text and a calendar shows cards by planned dates.
 - **FR-51** A card cannot complete more than the earlier sequence produced less loss (the refusal names the operation and
   quantity); same-sequence cards run in parallel; step outputs count produced quantity per step.
-- **FR-52** Completing needs completed plus lost equal to the card quantity; output and loss are entered per operator, and
-  loss reduces the input of later operations and the order.
+- **FR-52** Completing needs completed plus lost equal to the card's input: its quantity less the loss recorded on the
+  earlier sequences for it (a 100-unit card after an operation that completed 98 and lost 2 completes with 98, and
+  records no loss of its own for those 2); output and loss are entered per operator, and loss reduces the input of
+  later operations and the order.
 - **FR-53** Sub-operations show as a checklist with minutes and who did them.
 - **FR-54** With issue per card, each card lists its materials; issues above its need are refused unless the card
   over-issue setting allows; requisitions against a card are checked against its need.

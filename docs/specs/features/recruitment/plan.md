@@ -130,12 +130,19 @@ person's edit. The candidate's own `rating` and `status` stay editable on the ex
 by the plugin (the application rating shows on the Applications tab), and `status` is written only when one of the
 candidate's applications changes status. Anonymization (only with `recruitment.retentionEnabled` on, only for candidates
 with at least one application) replaces the user's names and email with placeholders, deletes candidate documents,
-education, experience and files, clears application free text and keeps stage history, sources and dates.
+education, experience and files, clears application free text (`coverLetter`, `answers`, `rejectionNote`, expected pay),
+deletes the application's `screening_summary` rows (their `result` can quote the CV) and erases the linked runs'
+inputs and outputs through `AGENT_RUNTIME.purge` of `ai-agents-and-assistants` (`aiRunId`; usage figures stay), clears the
+free text of scorecards and interview feedback, of offers (`acceptance`, `previewSnapshot`, `declineReason`) and of
+referrals naming the candidate (`name`, `phone`, `reason`), and keeps stage history, sources, dates, ratings and counts.
 
 Headcount: activating a plan writes each position's planned positions to the position headcount of `hr-core-lifecycle`
 (`RECRUITMENT_HEADCOUNT`, sum of the plan's lines per position for the period), so the org chart's vacancies and the
 plan's open counts read one figure; holders come from the same port. Without `hr-core-lifecycle` the plan lines stand
-alone.
+alone. The opening check of FR-5 locks the matching plan line's row (`FOR UPDATE` on PostgreSQL and MySQL, the
+database write lock on SQLite) and compares holders + open positions of the other open openings + the positions the
+opening requests with `plannedPositions`, so two openings saved at once cannot both pass; block mode refuses with
+`RECRUITMENT_PLAN_FULL` naming the line and the counts.
 
 ### 3.1 Settings (`recruitment.settings.ts`, organization scope, settings store)
 

@@ -32,6 +32,16 @@ rounding, trace), the tax-table computation, the end-of-service computation and 
 sandbox, the impact preview, the cost-to-company panel and every pay run of `payroll-processing` call the same engine,
 so a preview and a payslip cannot disagree. Build order: the shared formula module lands before the engine tasks.
 
+The cost-to-company solver treats the yearly cost as a function of the base and solves it piece by piece, so a
+non-monotonic formula is handled exactly: it walks the formulas' syntax trees for the points where that function can
+change slope or jump (comparisons of a base-dependent value with a constant, the kinks of `min`, `max` and `abs`,
+pay-table band edges, rounding steps), splits the base range at them, and within each piece, where the function is
+linear in the base, evaluates both ends and solves the linear equation; it returns the smallest base whose full
+evaluation reaches the target within 0.01, or "no base reaches it" when no piece contains one. A formula in which the
+base enters other than linearly within a piece (a product or quotient of two base-dependent terms, a power) is not
+solved: the route answers `PAYROLL_SOLVER_UNSUPPORTED` naming the element, and every other use of the structure is
+unaffected.
+
 **Built on what exists (no second store).** Settings are keys of `payroll.settings.ts` in the platform settings
 store; permissions and their default roles are plugin contributions. End-of-service applicability is core `rule` rows.
 Bulk assignment, impact previews and starter proposals are operations of the core operation runtime. Person-level
@@ -205,7 +215,7 @@ Errors: `400` with stable codes (`PAYROLL_FORMULA_SYNTAX`, `PAYROLL_FORMULA_UNKN
 `PAYROLL_FORMULA_TYPE`, `PAYROLL_TEST_FAILED`, `PAYROLL_ELEMENT_IN_USE`, `PAYROLL_ASSIGNMENT_DATE`,
 `PAYROLL_ASSIGNMENT_DUPLICATE`, `PAYROLL_SHARES_NOT_100`, `PAYROLL_YEAR_OVERLAP`, `PAYROLL_BANDS_INVALID`,
 `PAYROLL_CLAIM_ABOVE_ELIGIBLE` (returned to `expenses-and-travel` through the eligibility port),
-`PAYROLL_AGENT_NOT_ALLOWED`, `PAYROLL_PERIOD_CLOSED`), `403`, `404` (other organization or feature off), `409`. Swagger
+`PAYROLL_AGENT_NOT_ALLOWED`, `PAYROLL_PERIOD_CLOSED`, `PAYROLL_SOLVER_UNSUPPORTED`), `403`, `404` (other organization or feature off), `409`. Swagger
 decorators and class-validator DTOs throughout; GraphQL reads of elements, structures and assignments behind
 `FEATURE_GRAPHQL`. Bulk, impact and starter progress are read at `/api/operations/:id` (core).
 
@@ -217,7 +227,8 @@ decorators and class-validator DTOs throughout; GraphQL reads of elements, struc
 | ----- | ------------ | --------- |
 | `payroll.element.version_activated`, `payroll.structure.version_activated`, `payroll.pay_table.changed` | a version or table row becomes active (payload: ids, effective date, previous version) | `payroll-processing` arrears detection, structure override list, real-time |
 | `payroll.assignment.changed` | assignment created, activated, changed or cancelled (payload: employee, effective date, before and after) | arrears detection, `time-off-management` daily rate cache, real-time |
-| `payroll.declaration.submitted`, `payroll.proof.reviewed`, `payroll.other_income.changed` | as named | projection refresh of draft payslips, notices to reviewers or employee |
+| `payroll.declaration.submitted`, `payroll.proof.reviewed`, `payroll.other_income.changed` (payload: employee, payroll year, the first pay date the change affects) | as named | projection refresh of draft payslips, notices to reviewers or employee, `payroll-processing` arrears detection when the affected date lies in a closed period (FR-32) |
+| `payroll.opening_balance.changed` (payload: employee, payroll year, kind, element key, before and after amounts) | an opening balance created, changed or removed | `payroll-processing` arrears detection for the year's closed periods (FR-32), year-to-date figures, real-time |
 | `payroll.tax_table.activated` | as named | notice to the requester, real-time |
 | operation events of `PAYROLL_BULK_ASSIGN`, `PAYROLL_IMPACT`, `PAYROLL_STARTER_PROPOSALS` (core operation publisher) | progress and completion | operation view, notice to the requester |
 | consumed: `hr.event.applied` (pay-rate change), `hr.employee.hired` | | proposed assignments (`source = HR_EVENT`) |
@@ -251,7 +262,7 @@ MCP tools in `packages/mcp-server/src/lib/tools/payroll-setup.ts`, registered in
 | --- | --- | --- |
 | `payroll_elements_list`, `payroll_element_get` | filters; id | elements with active version |
 | `payroll_formula_check` | formula, element context | findings |
-| `payroll_element_draft` | description, employee for the sample | draft (never saved) |
+| `payroll_element_draft` | description, employee for the sample (used only by the platform's sandbox, never sent to the AI provider) | draft (never saved) |
 | `payroll_sandbox_run` | employee or facts, period, draft versions | trace |
 | `payroll_impact_preview` | draft version | operation reference, then result |
 | `payroll_structures_list`, `payroll_assignment_get`, `payroll_cost_to_company` | ids | structures; assignment (fields by permission); breakdown |
@@ -319,8 +330,11 @@ kind at a time (advisory lock).
 - Formulas: parsed by the shared language to an AST, evaluated by its tree walker over whitelisted names and functions
   with a step budget and a 2,000-character cap; no `eval`, dynamic import or prototype access (names resolved with
   own-property checks as the core rule evaluator does).
-- Assistant: drafts carry only element names, codes, fact names and the description; no employee data is sent unless
-  the user picked an employee for the sample, and then only that sample's facts.
+- Assistant: requests to the AI provider carry only element names, codes, fact names, the description and synthetic
+  sample facts (values generated per fact type, or values the user typed for the sample); no employee's data is ever
+  sent, the user's own included. When the user picks an employee for the sample, that employee's facts are read only
+  by the platform's sandbox (T19), which computes the draft's sandbox result in the platform and shows it to a user who
+  may read that pay; neither the facts nor the result go to the provider.
 - Input validation by class-validator; attachments through core file storage with type and size limits.
 
 ## 10. Observability

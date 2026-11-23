@@ -69,12 +69,14 @@
   leaves 5 remaining while the receipt layer is unchanged).
 - [ ] **T8**. `ValuationMovementHook` bound to `STOCK_MOVEMENT_HOOKS`: layer, consumption and key value update in the
   movement transaction, the key quantity read from the movement's `quantityAfter` (item and location keys), the
-  organization's level rows (organization keys) or the lot and serial bundle entries; `eventOnly` movements skipped;
+  organization's level rows (organization keys), the lot and serial bundle entries, or, for a key with a dimension set,
+  its last closing quantity plus its later quantity-moving layers (plan §1); `eventOnly` movements skipped;
   cost sources per movement kind; backdated detection sets `recalculateFrom`; answers as unbound for tenants with the
   feature off. Files: `iv/hooks/valuation-movement.hook.ts`, `iv/stock-valuation-key/stock-valuation-key.service.ts`,
   binding in `apps/api/src/plugin-composition.ts`. Test: SQLite spec through `applyMovement` for receipt, issue,
   transfer, return, sale, count, event-only damage; a movement over lots A and B writes one `MOVEMENT` layer per lot key
-  and a replayed hook adds none; a flag-off tenant gets no layer.
+  and a replayed hook adds none; a flag-off tenant gets no layer; with projects A and B at 5 each, a receipt of 5 at a
+  new cost for A gives A a moving average over 10 units and leaves B's unchanged.
 - [ ] **T9**. Policies and settings service: effective method and key scope (item → group → organization), negative
   rule resolution, `STOCK_NEGATIVE_POLICY` binding (answering as unbound for tenants with the feature off; unlimited
   and backorder levels exempt as today), backdated negative accepted unless `refuseBackdatedNegative` is on, negative
@@ -106,9 +108,9 @@
   reserved check (backorder and unlimited levels exempt, as today), tolerance (none by default) and recount, import,
   sheet. Test: count service specs (header equals the sum of lines, bound and unbound; a count without tolerance
   closes as today).
-- [ ] **T15**. Value resets from the valuation comparison; later-dated refusal. Files:
-  `iv/stock-value-reset/stock-value-reset.service.ts`, `iv/stock-value-reset/stock-value-reset.controller.ts`. Test:
-  service spec.
+- [ ] **T15**. Value resets from the valuation comparison; refusal of documents for the key dated before the reset
+  (FR-32). Files: `iv/stock-value-reset/stock-value-reset.service.ts`, `iv/stock-value-reset/stock-value-reset.controller.ts`.
+  Test: service spec; after a reset dated May 10 a movement dated May 9 is refused and one dated May 11 is accepted.
 - [ ] **T16**. Posting facts: outbox events `valuation.document.valued` / `.reversed` / `valuation.key.corrected`
   per document version; contributed posting rules and account roles registered with `accounting`; repost route.
   Files: `iv/postings/valuation-posting.events.ts`, `iv/postings/valuation-posting-rules.ts`,

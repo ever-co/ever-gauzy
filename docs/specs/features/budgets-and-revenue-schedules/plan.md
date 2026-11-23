@@ -62,8 +62,9 @@ flowchart LR
 | Package | existing `packages/plugins/accounting` (+ `accounting-ui`, routes on the page location `accounting-sections`) | [platform architecture](../../architecture/business-suite.md) §2.2: budgets and revenue schedules belong to `accounting` |
 | Feature codes | `AccountingFeatures.BUDGETS = 'FEATURE_BUDGETS'`, `AccountingFeatures.REVENUE_SCHEDULES = 'FEATURE_REVENUE_SCHEDULES'` added to `accounting.features.ts` (`defaultEnabled: false`); `@FeatureFlag` per controller; participants and consumers return at once when the code is off for the tenant or the profile is not live | two sub-features of one plugin |
 | Budget lines | a line is identified across versions by `lineKey` = hash of target and axis values; amounts per fiscal period | stable identity for differences, transfers and figures |
-| Figures | `accounting_budget_figure` maintained per line and period; a check locks the figure rows it touches (`FOR UPDATE` on PostgreSQL and MySQL) inside the confirming transaction | spec FR-24, FR-32 |
+| Figures | `accounting_budget_figure` maintained per line and period; `onConfirming` locks the figure rows it touches in key order (`FOR UPDATE` on PostgreSQL and MySQL, the database write lock on SQLite) inside the confirming transaction, then recalculates availability from the locked rows and applies the line's action (block, warn, require approval) to that result before it writes anything; the `onCheck` result is the preview only | spec FR-24, FR-32 |
 | Reservation | at confirmation the control participant appends a `RESERVATION` commitment for the document; it becomes actual when the journal posts and is released if the document is cancelled | closes the gap between check and asynchronous posting |
+| Billed order lines | a bill line with `purchaseOrderLineId` consumes the open commitment of that order line first: under the same figure lock the check counts only the part of the line above that commitment's open amount (at the order's rate, FR-27), and the same transaction appends the commitment's `CONSUME` record for the billed part (idempotency key `bill:<billLineId>`) beside the bill's `RESERVATION`; the release on posting (T21) finds that record and appends nothing more | spec FR-18, FR-26: a fully committed order's bill is not counted twice |
 | Commitments | append-only table (triggers as on `stock_movement`), one idempotency key per source event and line | spec FR-31 |
 | Account of a commitment | `LedgerPostingService.preview` of the bill the order would become, through the order type's registered facts | same determination as the real posting |
 | Recognition postings | `LedgerPostingService.post` with kind `RECOGNITION`, idempotency key `recognition:<entryId>` | single writer of the ledger |
@@ -161,7 +162,10 @@ Report query (`/recognition/report`): `direction`, `from`, `to` (periods or fisc
 
 Internal participants of the posting pipeline (same plugin, no port): `BudgetControlParticipant`
 (`onCheck(facts, lines)` → `IBudgetImpact[]` and findings `BUDGET_EXCEEDED`, `BUDGET_APPROVAL_REQUIRED`,
-`BUDGET_WARNING`; `onConfirming(manager, facts, lines)` → reservation under the figure lock) and
+`BUDGET_WARNING`, a preview; `onConfirming(manager, facts, lines)` → takes the figure locks in key order, recalculates
+availability from the locked rows with the billed part of order lines netted against their open commitments, applies
+the line's action to that result (refuses, records the warning or raises the approval request), and only then writes
+the reservation and the billed commitments' `CONSUME` records) and
 `RecognitionParticipant` (`beforeDetermination(facts)` → swaps the role of a deferred amount to the template's
 deferral role; `afterWrite(manager, journal, lines)` → creates or adjusts schedules).
 
@@ -169,7 +173,9 @@ Ports declared (optional, bound in `apps/api/src/plugin-composition.ts`): `BUDGE
 core approval requests), `BUDGET_COMMITMENT_SOURCE` (multi: `{ sourceType, describe(event) }` for sources beyond
 purchasing), `BUDGET_LABOUR_COST` (`costOf({ employeeId, projectId, date, hours })`, answered by
 `project-costing-and-billing`), `RECOGNITION_PROGRESS_SOURCE` (multi: `{ key, progress(ref, asOf) }` →
-`{ done, total, records[] }`). Offered to other plugins: `BudgetAvailabilityService.availability(query)` and
+`{ done, total, records[] }`). Offered to other plugins: `BudgetAvailabilityService.availability(query)` (the query may carry `pendingLines`,
+`{ sourceType, sourceLineId, amount }` lines a consumer has approved: each one without a commitment record for its
+`sourceLineId` counts as an open commitment, so a line counts before its event is projected and once after) and
 `RecognitionPlanService.plan(template, amount, serviceStart, serviceEnd)` (for a preview on a document line).
 
 **Consumer tokens answered** (bound in `apps/api/src/plugin-composition.ts` to `BudgetAvailabilityService`; each consumer plan states the shape it calls and its fallback): `PROJECT_ACCOUNTING_BUDGETS`, `PURCHASING_BUDGET_CHECK`.

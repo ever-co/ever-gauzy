@@ -131,7 +131,7 @@ class-validator DTOs, cursor pagination, `Idempotency-Key` on creating routes.
 
 | Method | Endpoint | Permission | Description | Status |
 | --- | --- | --- | --- | --- |
-| `GET` | `/telephony/status` | member | calling available to me, default account, capabilities | New |
+| `GET` | `/telephony/status` | member | calling available to me (with an agent profile, or without one when an active account of the organization or the manual medium lets the user dial out; the first call then creates the profile with defaults, spec FR-9), default account, capabilities | New |
 | `GET` | `/telephony/adapters` | `TELEPHONY_SETTINGS_MANAGE` | loaded adapters with schemas and capabilities | New |
 | `GET`, `POST`, `PATCH` | `/telephony/accounts[/:id]`, `POST …/:id/verify`, `GET …/:id/remote-numbers` | `TELEPHONY_SETTINGS_MANAGE` | voice accounts: a provider account with the `VOICE` channel (an existing account of the same vendor gains the channel) plus its voice settings; secrets write-only; verification; provider numbers | New |
 | `GET`, `POST`, `PATCH` | `/telephony/numbers[/:id]` · `/telephony/routing-plans[/:id]` | `TELEPHONY_SETTINGS_MANAGE` | numbers, plans with slot validation | New |
@@ -154,7 +154,7 @@ class-validator DTOs, cursor pagination, `Idempotency-Key` on creating routes.
 
 Errors: `TELEPHONY_NOT_AVAILABLE`, `TELEPHONY_ADAPTER_UNSUPPORTED` (capability named), `TELEPHONY_SLOT_INVALID`,
 `TELEPHONY_CALL_TAKEN`, `TELEPHONY_NUMBER_INVALID`, `TELEPHONY_OUTCOME_INACTIVE`, `TELEPHONY_DIALLER_SKIPPED` (reason),
-`TELEPHONY_CALLBACK_REFUSED`. GraphQL reads `telephonyCalls`, `telephonyCall`, `telephonyAccounts`.
+`TELEPHONY_CONTACT_POLICY_UNAVAILABLE` (a dialler session without the contact checks), `TELEPHONY_CALLBACK_REFUSED`. GraphQL reads `telephonyCalls`, `telephonyCall`, `telephonyAccounts`.
 
 ## 5. Events, Real-Time and Notifications
 
@@ -197,8 +197,9 @@ Ephemeral signals through `RealtimeSignalsService` to targeted users: `telephony
   `TELEPHONY_LEAD_INTAKE` → `LEAD_INTAKE` of `lead-capture-and-enrichment` (absent: create a contact of type lead),
   `TELEPHONY_SPEECH` and `TELEPHONY_TEXT_GENERATION` → agent runtime of `ai-agents-and-assistants`, else `ai-chat`
   (absent: no transcripts or proposals), `TELEPHONY_CONTACT_POLICY` → the consent records of `email-and-communications`
-  ("do not contact" set from the CRM, and call consent) (absent: dialler skips only by window and interval), core task
-  and time log services.
+  ("do not contact" set from the CRM, and call consent) (absent: no dialler session starts, answered
+  `TELEPHONY_CONTACT_POLICY_UNAVAILABLE`, because the "do not contact" and consent checks of spec FR-48 cannot be made;
+  single calls from a record stay available), core task and time log services.
 - Offered: `TELEPHONY_CALLS` (calls by record, connected outgoing calls as responses, durations by deal, transcripts) for
   `crm-engagement` (`CRM_TRANSCRIPTS` binds to it); a `RECORD_TIMELINE_SOURCES` entry; a
   `COMMUNICATION_CONVERSATION_SOURCES` entry; `registerTelephonyAdapters`; report definitions of spec FR-57, listed as

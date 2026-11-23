@@ -116,7 +116,8 @@
       reset. Files: `packages/plugins/admin-console/src/lib/checklists/admin-checklists.service.ts`,
       `checklists/admin-checklists.controller.ts`, `checklists/checklist-autotick.consumer.ts`,
       `checklists/checklist.registry.ts`. Test: event ticks a step once; completion per step, role and organization
-      read back.
+      read back; a shared step's completion processed twice at once leaves one progress row (`userKey` `*`) on
+      PostgreSQL, MySQL and SQLite.
 - [ ] **T22**. Tours and help items: CRUD, progress, page lookup, search, keep-or-discard record option. Files:
       `packages/plugins/admin-console/src/lib/tours/admin-tours.service.ts`, `tours/admin-tours.controller.ts`,
       `help/admin-help.service.ts`, `help/admin-help.controller.ts`. Test: unit; a tour is offered once per user and

@@ -73,9 +73,13 @@
 ## Phase 2 — Services, endpoints, events
 
 - [ ] **T8**. Run service and controller (`/payroll/runs`): create from pay group and period, employee selection and
-      filters, add and remove, overlap exclusion, agents refused. Files: `pp/run/pay-run.service.ts`,
-      `pp/run/pay-run.controller.ts`, `pp/run/employee-selection.ts`, `pp/run/dto/create-pay-run.dto.ts`. Test: unit and
-      e2e; an agent employee is never selected.
+      filters, add and remove, overlap exclusion, agents refused; the per-employee payroll lock and the overlap recheck
+      at payslip write (plan §3). Files: `pp/run/pay-run.service.ts`,
+      `pp/run/pay-run.controller.ts`, `pp/run/employee-selection.ts`, `pp/run/dto/create-pay-run.dto.ts`,
+      `pp/run/payslip-overlap.guard.ts`. Test: unit and
+      e2e; an agent employee is never selected; two regular runs of different periods with overlapping dates
+      calculated at the same time give the employee one payslip, the other run's employee failing with
+      `PAYROLL_PERIOD_OVERLAP`.
 - [ ] **T9**. Day facts: working calendar through `PAYROLL_WORKING_CALENDAR`, payable-day bases, joining and end of
       work, unpaid and partly paid days through `PAYROLL_TIME_OFF_FEED`, override with reason, days explanation. Files:
       `pp/facts/day-facts.gatherer.ts`, `pp/facts/days-explanation.ts`, `pp/payslip/payable-days.controller.ts`. Test:
@@ -242,7 +246,9 @@
 - [ ] **T40**. Retroactive detection (consumer and daily sweep), shadow recalculation, explained arrear lines,
       recovery cap and carry. Files: `pp/arrears/retro-detection.consumer.ts`, `pp/arrears/retro-sweep.job.ts`,
       `pp/arrears/shadow-recalculation.ts`, `pp/arrears/arrear-explanation.ts`. Test: golden explanations; recoveries
-      never applied without acceptance.
+      never applied without acceptance; a proof reviewed after its period closed, a declaration changed for a closed
+      period and an opening balance changed for a year with closed periods each produce one arrears proposal with the
+      tax difference.
 - [ ] **T41**. Review checks of spec FR-50 as the final step of `PAYROLL_CALCULATE`, blocking kinds, acknowledgements.
       Files: `pp/review/review-checks.ts`, `pp/review/pay-run-finding.service.ts`, `pp/review/findings.controller.ts`.
       Test: planted anomalies found on a seeded run; blocking finding stops submission.

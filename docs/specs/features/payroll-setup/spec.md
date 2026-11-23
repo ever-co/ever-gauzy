@@ -172,7 +172,7 @@ the pay rates and recurring costs that already exist.
 | **FR-36** | The system MUST propose on a new assignment the structure and base pay the employee's level defines, when it defines them. |
 | **FR-37** | The system MUST turn a promotion or pay-rate change applied by `hr-core-lifecycle` into a proposed assignment from its effective date that a user with `PAYROLL_ASSIGNMENTS_EDIT` confirms or rejects. |
 | **FR-38** | The system MUST show on an assignment the yearly gross pay and the yearly cost to company — earnings, employer contributions, accruals and benefits over a full year at its values, with the pack's cost-to-company components — element by element. |
-| **FR-39** | A user with `PAYROLL_ASSIGNMENTS_EDIT` can enter a target yearly cost to company and get the base pay that reaches it within 0.01 of the currency with the breakdown, or a message that no base reaches it. |
+| **FR-39** | A user with `PAYROLL_ASSIGNMENTS_EDIT` can enter a target yearly cost to company and get the base pay that reaches it within 0.01 of the currency with the breakdown (the smallest such base when several do), or a message that no base reaches it, which holds for formulas that rise and fall with the base too; for a formula the solver cannot analyze, the message names the element instead. |
 | **FR-40** | The system MUST give `time-off-management` the daily amount for encashment: the assignment's amount, else the structure's daily-amount formula, else base pay per period divided by the period's working days. |
 | **FR-41** | The system MUST keep each employee's assignment history (who, when, before, after) and, when the organization allows it, show the employee their own structure, base pay and yearly cost to company. |
 

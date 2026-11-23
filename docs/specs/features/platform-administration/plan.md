@@ -124,7 +124,7 @@ export class AdminErrorGroup extends TenantOrganizationBaseEntity implements IAd
 | `admin_restore_drill` | `backupId`, `restoreId`, `operationId`, `durationMs`, `differences` json, `recordsRestored` bigint (the drill report the health page and FR-122 read) | idx `(tenantId, createdAt)` |
 | `admin_setup_state` | `wizardStatus` (`OPEN`/`COMPLETED`/`DISMISSED`), `steps` json (key, status, appliedAt, error), `persona` json, `proposal` json, `version` | unique `(tenantId)` |
 | `admin_checklist` | `key` varchar(96), `ownerPlugin`, `title`, `steps` json (key, kind, target, shared, order, hidden), `roleIds` json, `isCustom` bool, `enabled` | unique `(tenantId, key)` |
-| `admin_checklist_progress` | `checklistId` fk, `userId` null (null = shared), `stepKey`, `doneAt`, `source` (`EVENT`/`MANUAL`) | unique `(checklistId, userId, stepKey)` |
+| `admin_checklist_progress` | `checklistId` fk, `userId` null (null = shared), `userKey` varchar(36) not null (the `userId`, or `*` for a shared step; written with it), `stepKey`, `doneAt`, `source` (`EVENT`/`MANUAL`) | unique `(checklistId, userKey, stepKey)` |
 | `admin_tour` | `name`, `pageKey` varchar(128), `steps` json (anchor, title, text, position, nextOnClick, condition), `nextTourId` null, `audience` json, `published` bool, `keepRecord` bool, `version` | idx `(tenantId, pageKey, published)` |
 | `admin_tour_progress` | `tourId` fk, `userId`, `stepIndex` int, `status` (`STARTED`/`FINISHED`/`DISMISSED`) | unique `(tourId, userId)` |
 | `admin_help_item` | `pageKey`, `kind` (`LINK`/`ARTICLE`/`TOUR`/`VIDEO`), `title`, `url` null, `articleId` null, `order` | idx `(tenantId, pageKey)` |

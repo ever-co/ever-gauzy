@@ -234,7 +234,9 @@ explains cost drivers. Editors see each other live. These requirements are marke
 - **FR-52** A user with `MANUFACTURING_DESIGNS_EDIT` can build a design: a tree of assemblies and parts with quantity,
   unit, existing item or item to create, rate, operation and work instruction; confirming it creates the multi-level
   structures, draft or released as chosen, in a background job that creates missing items with the organization's item
-  defaults and reports each node as created, linked or failed.
+  defaults and reports each node as created, linked or failed. Choosing released needs `MANUFACTURING_STRUCTURES_RELEASE`
+  (a design editor without it builds drafts); with the organization's change control on, the structures are built as
+  drafts and filed together in one change request (FR-36), released only when it is approved.
 - **FR-53** A confirmed design is locked; building again is refused while its structures exist; the design shows whether
   structures are being built, built or failed, and whether a newer revision replaced it.
 - **FR-54** A user with `MANUFACTURING_DESIGNS_EDIT` can attach a design file (a parts list in spreadsheet or delimited

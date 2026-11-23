@@ -93,7 +93,12 @@ flowchart LR
 | `employee_level` | `rank` int, `description` text | idx `(organizationId, rank)` |
 
 `employee.employeeLevel` (label) and `employeeLevelId` are kept in sync by the plugin's service and by a backfill
-migration matching labels per organization. Core entity classes gain the properties with `MultiORMColumn` /
+migration matching labels per organization. Every other label write goes through the existing core
+`EmployeeSubscriber` (`packages/core/src/lib/employee/employee.subscriber.ts`), whose `beforeEntityCreate` and
+`beforeEntityUpdate` gain one step: when a write changes `employeeLevel` and not `employeeLevelId` (the core REST
+employment route, GraphQL `updateEmployee`, imports), the label is resolved to the organization's `employee_level` row
+of that `level` (case-insensitive) and `employeeLevelId` set to it, or to null when no level has that label (the label
+is saved as today, never refused); when a write changes `employeeLevelId`, the label is set from the level. Core entity classes gain the properties with `MultiORMColumn` /
 `MultiORMManyToOne`; core DTO whitelists do not, so core routes ignore them.
 
 Other additive core changes (no new table):
@@ -315,7 +320,7 @@ Ports (tokens in contracts; optional; bound in `apps/api/src/plugin-composition.
 | `LEARNING_COMPLETIONS` | consumed | `learning-management` completions and certificates, read in place by the skills view and the compliance list (learning reminds of its own certificate expiries; no HR reminder for them) | no trainings listed |
 | `MANAGED_EMPLOYEE_SOURCES` (core), `EMPLOYEE_RATE_CHANGE_HANDLER` (core) | provided | reports of the reporting line; `PAY_CHANGE` events | core as today |
 | `PARTY_BANK_ACCOUNTS` | consumed | `banking-and-reconciliation` | pay accounts not offered (payment method only) |
-| `FIELD_ACCESS_POLICY`, `AUDIT_EVENT_SINK` | consumed (core slots) | `access-control-and-security` (default field rules contributed) | `@VisibleWith` alone; no access log |
+| `FIELD_ACCESS_POLICY`, `AUDIT_EVENT_SINK` | consumed (core slots) | `access-control-and-security` (default field rules contributed) | field access by `@VisibleWith` alone; while no audit sink is bound, sensitive groups are never read by anyone other than the employee: their fields are left out of every response, list, export and MCP answer to other readers, a read that names a sensitive group answers `403` (`HR_SENSITIVE_AUDIT_UNAVAILABLE`), and writes of those groups stay possible; system processes read through their ports as when the sink is bound |
 | `HR_APPROVALS` | consumed | `WorkflowApprovalGateway` | a core `request_approval` of type `HR_EVENT` to the resolved approver (FR-25) for the kinds in `hr.eventKindsRequiringApproval`, decided on the existing Approvals page |
 | `REMINDERS`, `NOTIFICATION_DISPATCHER` | consumed | `automation-and-notifications` | `INBOX_ITEM_WRITER` with the de-duplication key |
 | `HR_ASSISTANT` | consumed | `AGENT_RUNTIME.complete` of `ai-agents-and-assistants` (purpose `hr.onboarding-answer`, document passages only; runs and usage recorded there) | AI provider registry of `ai-chat`; without either, the assistant is hidden |

@@ -91,7 +91,8 @@ Marked `(advanced)`.
 ### 3.1 Scope, workbooks and sheets
 
 - **FR-1** The system loads only when `GAUZY_SHEETS_ENABLED` is exactly `true` and gates every new route, GraphQL field,
-  menu entry and MCP tool with `FEATURE_SPREADSHEETS`; off, they answer `404`.
+  menu entry and MCP tool with `FEATURE_SPREADSHEETS`; off, they answer `404`. Only the bringing up to date of a
+  workbook's downloadable copy keeps running with the flag off, so a download always holds the last save.
 - **FR-2** The system stores a workbook as a hub file of the spreadsheet kind, so tree, move, duplicate, favourites,
   recents, sharing, visibility, team spaces, trash, quotas and search apply without a second model, every existing hub
   route, field, permission, preview and extraction keeps working, and an uploaded spreadsheet stays a file until opened.

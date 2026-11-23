@@ -46,9 +46,12 @@
       one help space (a folder per help centre, folders per category at every legacy depth, the help centre's language on
       each page), pages with versions (`externalSource = 'help-center'`), visibility from `privacy`, audience null (today's readers),
       project links; nothing written to the legacy rows; the two-way carry (`knowledge_base.article.changed` applied to
-      the page, page saves written back through `KNOWLEDGE_BASE_SYNC` in `kb/`, provenance stopping the echo). Test:
+      the page, page saves written back through `KNOWLEDGE_BASE_SYNC` in `kb/`, provenance stopping the echo), ordered by
+      the legacy version in `help_node.legacySyncedAt` (stale events dropped, conditional write-back; plan §3). Test:
       re-run imports nothing twice; no imported page readable by a guest; legacy rows unchanged after the import
-      (`isLocked` included); a legacy write reaches the page and a page save reaches the legacy row once; a three-level
+      (`isLocked` included); a legacy write reaches the page and a page save reaches the legacy row once; a delayed event of
+      legacy version A arriving after a page save wrote B to the page and the legacy row is dropped and both keep B; a
+      write-back that meets a newer legacy write writes nothing and that write becomes the page's next version; a three-level
       category tree arrives with three levels.
 
 ## Phase 2 — Services, endpoints, events
@@ -71,7 +74,10 @@
       former slug resolution), caching headers with validators, throttles, portal key resolution, integration tokens of
       the Ever Works integration; content sanitised on render, embedded files served only through the platform's file
       routes; every route answers `404` while `FEATURE_HELPDESK_PORTAL` is off and keeps answering guests while portal
-      sign-in is off. Test: e2e as guest and with an integration token; 404 outside the audience; 404 with the flag off.
+      sign-in is off; shared caching only for `EVERYONE` answers (plan §4). Test: e2e as guest and with an integration token;
+      404 outside the audience; 404 with the flag off; a guest answer carries `Cache-Control: public, max-age=60` and
+      `Vary: Authorization, Cookie`, an answer to a portal session `private, no-store`, so a customer-only article never
+      reaches a guest through a shared cache.
 - [ ] **T13**. `dh/search/`: `HelpSearchService` over `DOCS_KNOWLEDGE_SEARCH_SERVICE` filtered to help spaces, audience,
       language and published state, synonyms and ignored words expanded before the call, field weights on the merged
       result, search log, index check through the docs knowledge queue with progress. Test: title match first; synonym
@@ -97,12 +103,12 @@
       `hd/portal/guest-follow-up.controller.ts`, `hd/portal/portal-organisation-figures.service.ts`. Test: cross-customer
       404; closed field 400; reply reopens; 404 with each flag off.
 - [ ] **T19**. `hd/satisfaction/`: options, requests on entering the chosen status with a `shared_entity` rating link,
-      one-click score, rating page data, finality per cycle, auto-close hold, `HELPDESK_SATISFACTION` provider, ratings
+      score from the email's star link selected on the rating page and recorded by its `POST` (never by the `GET`), rating page data, finality per cycle, auto-close hold, `HELPDESK_SATISFACTION` provider, ratings
       list with filters and CSV export (`/helpdesk/ratings`, `/export.csv`). Files:
       `hd/satisfaction/rating-request.service.ts`, `hd/satisfaction/rating.service.ts`,
       `hd/satisfaction/public-rating.controller.ts`, `hd/satisfaction/ratings.controller.ts`,
       `hd/satisfaction/rating-options.controller.ts`. Test: one request per resolution; second use shows the recorded
-      rating; held auto-close released after N days; the export lists the filtered ratings.
+      rating; opening a star link records nothing until the page's Send; held auto-close released after N days; the export lists the filtered ratings.
 - [ ] **T20**. Customer organisation tools: public email domain setting, suggestion filter, bulk organisation access as a
       core operation, delete with tickets option on customer and person pages. Files:
       `hd/customers/organisation-access.operation.ts`, `hd/customers/member-suggestions.ts`,

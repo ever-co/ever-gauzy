@@ -98,7 +98,8 @@ that resolve live from item, brand and group with an answer to "where does this 
 - **FR-3** A user with `PRODUCTS_VIEW` can read every catalogue record; `PRODUCTS_EDIT` changes them,
   `PRODUCTS_DELETE` deletes, `PRODUCTS_MERGE` changes the code of an item with transactions and is needed, beside the
   platform's merge permission, to merge items; a bulk edit needs the platform's bulk-change permission and
-  `PRODUCTS_EDIT`; `UNITS_EDIT` changes units and conversions, `CATALOG_SETTINGS_EDIT` changes item settings and
+  `PRODUCTS_EDIT`; `UNITS_EDIT` changes units and organization-wide conversions (item-specific conversions also with
+  `PRODUCTS_EDIT`, FR-22), `CATALOG_SETTINGS_EDIT` changes item settings and
   defaults; any other caller receives `403`. The existing `/products`, `/product-variants` and Inventory routes keep
   their current permissions and the holders they have today.
 - **FR-4** A user with `PRODUCTS_VIEW` can open screens for what the back end already does: publication of items and
@@ -259,8 +260,8 @@ that resolve live from item, brand and group with an answer to "where does this 
   the rates of a category belong to `tax-engine`.
 - **FR-53** The system MUST write a selling price typed on the new-item form as each new variant's default price
   through `pricing-and-promotions`, converted into the default list's currency at the current rate; while
-  `FEATURE_PRICING` is off the item forms keep writing the variant's retail price as today, and one form never writes
-  both.
+  `FEATURE_PRICING` or `FEATURE_ITEM_MASTER` is off the item forms keep writing the variant's retail price as today, and
+  one form never writes both.
 - **FR-54** A user with `STOCK_EDIT` can enter an opening quantity per stock location when creating a stock item,
   recorded as a receipt movement through the stock ledger; without a location it is refused.
 

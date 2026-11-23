@@ -185,8 +185,10 @@ ticket trends, shown beside the CRM's own signals; capacity from **tracked time*
   `(advanced)`
 - **FR-36** Resolution starts at creation, pauses per FR-28, is met on entering a fulfil status, and on reopening resumes
   from its elapsed working time with a new due time; the earlier fulfilment counts as reopened.
-- **FR-37** A priority change recomputes due times from each metric's start; a due time already passed breaches at the
-  change with that reason.
+- **FR-37** A priority change recomputes the due time of each running or paused metric from its elapsed working time,
+  paused time excluded: the new target less the working time already elapsed, counted on from the change in the
+  calendar's working time (a paused metric gets its due time on resume); when the elapsed working time already reaches
+  the new target, the metric breaches at the change with that reason.
 - **FR-38** A ticket records whether it arrived outside working hours or in a break, for routing, acknowledgements, reports.
 - **FR-39** A user with `HELPDESK_SLA_RESET` restarts a ticket's clocks with a reason when the organization allows resets
   (default off); history is kept.

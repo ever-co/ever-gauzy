@@ -93,14 +93,19 @@
 - [ ] **T60**. Generic reminders core: reminder service and routes `/api/reminders` (`ta/reminders/reminder.service.ts`,
   `ta/reminders/reminder.controller.ts`), the `REMINDERS` port (`schedule`,
   `cancel` by source key prefix) bound in `apps/api/src/plugin-composition.ts` (also as `WORKFLOW_REMINDERS`) and the
-  `automations.reminders` job (`ta/reminders/reminders.scheduler.ts`) over the `reminder` table of T5; the port and the
-  job serve other features whatever this feature's flag, while the `/api/reminders` routes carry
-  `@FeatureFlag(FEATURE_AUTOMATIONS)` like every new route and answer `404` with the feature off (FR-1, FR-53, FR-56,
-  AC-14). Files: `ta/reminders/reminder.service.ts`, `ta/reminders/reminder.controller.ts`,
-  `ta/reminders/reminders.scheduler.ts`, `apps/api/src/plugin-composition.ts`. Test: `ta/reminders/reminder.service.spec.ts`:
+  `automations.reminders` job (`ta/reminders/reminders.scheduler.ts`) over the `reminder` table of T5; the table,
+  service, port and job are registered by `RemindersPlugin` (`ta/reminders/reminders.plugin.ts`, listing migration
+  `1791000032130`), which `apps/api/src/plugins.ts` and `apps/worker/src/plugins.ts` list whatever the two deployment
+  switches, so the port and the job serve other features whatever
+  the switches and this feature's flag, while the `/api/reminders` controller is registered by the engine, carries
+  `@FeatureFlag(FEATURE_AUTOMATIONS)` like every new route and answers `404` with the feature off (FR-1, FR-53, FR-56,
+  AC-14). Files: `ta/reminders/reminders.plugin.ts`, `ta/reminders/reminder.service.ts`, `ta/reminders/reminder.controller.ts`,
+  `ta/reminders/reminders.scheduler.ts`, `apps/api/src/plugin-composition.ts`, `apps/api/src/plugins.ts`,
+  `apps/worker/src/plugins.ts`. Test: `ta/reminders/reminder.service.spec.ts`:
   delivered within a minute; cancelled with the record; a feature's reminder scheduled twice
   with one source key exists once; with the feature off another feature's reminder is still scheduled and delivered
-  through the port and `GET /api/reminders` answers `404`.
+  through the port and `GET /api/reminders` answers `404`; with both deployment switches off the `reminder` table is
+  created, another feature's reminder is scheduled and delivered, and `/api/reminders` answers `404`.
 
 ## Phase 2 — Services, endpoints, events
 

@@ -80,10 +80,10 @@ instead of failing.
   manufacturing structure of `manufacturing-bom-and-routing`, never both: the kit check reads `MANUFACTURING_USAGE`
   and refuses a kit on an item with a released structure, and that plugin refuses a structure on an item with an
   active kit and counts kit components in where-used. Sales bundles (kind `BUNDLE`) are this spec's alone.
-- **Legacy variant price**: with `FEATURE_PRICING` on, the price fields of the Inventory variant form
+- **Legacy variant price**: with `FEATURE_ITEM_MASTER` and `FEATURE_PRICING` both on, the price fields of the Inventory variant form
   (`edit-inventory-item-variant`) write the variant's price on the default selling list through
   `CATALOG_PRICE_WRITER`; the existing `product_variant_price` row is kept and stays the resolution's last fallback
-  (`product-price.service.ts`), never written by that form again. With `FEATURE_PRICING` off the form writes the legacy
+  (`product-price.service.ts`), never written by that form again. With either feature off the form writes the legacy
   row as today. One form never writes both.
 - **Supplier prices, packs and lead times** are the supplier terms of `procurement` (`vendor_product_term`), read
   through `CATALOG_SUPPLIER_TERMS`; the default supplier of an item is its preferred term (`isPreferred`); the default
@@ -219,7 +219,7 @@ idempotency keys (`@Idempotent`).
 | CRUD | `/item-barcodes`, `/item-manufacturer-parts`, `/item-customer-codes` | same | entity DTOs | New |
 | CRUD | `/item-bundles` (components nested) | same | `IItemBundle` | New |
 | GET | `/item-bundles/:id/availability?warehouseId=` | `PRODUCTS_VIEW` | `IItemAvailability[]` | New |
-| CRUD | `/unit-conversions` | `UNITS_EDIT` (read `UNITS_VIEW`) | `IUnitConversion` | New (core) |
+| CRUD | `/unit-conversions` | by the row's scope: organization-wide (`scopeKey = *`) `UNITS_EDIT`; item or variant (`product:` or `variant:` scope) `PRODUCTS_EDIT` or `UNITS_EDIT` (read `UNITS_VIEW` or `PRODUCTS_VIEW`) | `IUnitConversion` | New (core) |
 | POST | `/units/convert` | `UNITS_VIEW` | adds `productId`, `variantId`, `stockQuantity`, `documentFamily` | Changed, additive |
 | GET/PUT | `/item-defaults?ownerType=&ownerId=` (brand or group) | `PRODUCTS_VIEW` / `CATALOG_SETTINGS_EDIT` | `IItemDefault[]` | New |
 | POST | `/item-defaults/resolve` | `PRODUCTS_VIEW` | `{ productIds, fields }` → `IItemResolvedDefault[]` | New |

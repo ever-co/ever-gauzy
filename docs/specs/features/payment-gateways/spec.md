@@ -259,7 +259,10 @@ insights** explain failure spikes by provider, method and reason to people and a
 - **FR-67** The system picks, among the accounts a rule allows, the one with the lowest expected fee when the rule asks for
   cost-aware choice, and shows the choice and its reason on the session.
 - **FR-68** The system retries an off-session charge declined as retryable by a provider fault (not by the payer's bank)
-  once at the next account of the rule, with a new idempotency key linked to the first, never for final declines.
+  once at the next account of the rule, with a new idempotency key linked to the first, never for final declines, and
+  only when the first account's answer shows the charge was not made; a timeout or an unclear answer is first resolved
+  by asking that provider for the charge's status, and while it stays unresolved the charge is pending and no other
+  account is tried.
 - **FR-69** The system takes an account out of routing for 10 minutes after 5 provider faults in 2 minutes and tells the
   administrators.
 

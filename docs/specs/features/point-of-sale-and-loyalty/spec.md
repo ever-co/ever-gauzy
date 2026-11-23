@@ -264,7 +264,9 @@ discount anomalies per cashier.
 - **FR-57** The system MUST keep per member an append-only ledger of earned, redeemed, expired, adjusted, reversed,
   reserved and released points, each with its source document and the balance after it.
 - **FR-58** The system MUST earn points when a sale completes, an order completes or an invoice is fully paid, on the
-  net amount after discounts and points redemption, once per document.
+  net amount after discounts and points redemption, once per purchase: a register sale, the order it creates and an
+  invoice raised from that order are one purchase and earn once, through whichever enabled channel qualifies first (a
+  register sale through the register channel, never also as an order).
 - **FR-59** The system MUST consume redeemed points from the earliest-expiring earned entries and record which.
 - **FR-60** The system MUST expire points by the programme's rule daily, and send a reminder through the member's
   notification preferences a configurable number of days before (default 14).

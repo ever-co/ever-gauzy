@@ -89,9 +89,10 @@
 - [ ] **T15**. Valuation keys: expose bundle entries in the movement context for `inventory-valuation`; lot and serial
   keys when `valuationBy` is set. Files: `lst/valuation/lot-serial-valuation-keys.ts`,
   `lst/hooks/lot-serial-movement.hook.ts`. Test: SQLite spec with the valuation plugin (lot-valued issue cost).
-- [ ] **T16**. Trace service: breadth-first walk with depth limit, both directions, customer nodes permission-checked.
+- [ ] **T16**. Trace service: breadth-first walk through any number of levels with cycle detection, the per-answer
+  depth and the continuation cursor of plan §2 Traces, both directions, customer nodes permission-checked.
   Files: `lst/trace-link/stock-trace.service.ts`, `lst/trace-link/stock-trace.controller.ts`. Test: five-level trace
-  spec.
+  spec; a twelve-level chain is fully reached by following `next`; a cycle in the edges ends the walk without repeats.
 - [ ] **T17**. Expiry job and the one warranty job with notices (inbox and email) and events; service contract expiry
   read from field service when bound; in-process fallback. Files: `lst/jobs/lot-expiry.scheduler.ts`,
   `lst/jobs/serial-warranty.scheduler.ts`, `lst/jobs/lot-serial-tracking.worker.ts`. Test: job idempotency specs.
@@ -143,10 +144,12 @@
 
 - [ ] **T29**. Shelf-life rules (customer, channel, item) applied by the picker with a shortfall report before
   picking. Files: `lst/shelf-life-rule/shelf-life-rule.service.ts`, `lst/picking/lot-picker.ts`. Test: picker spec.
-- [ ] **T30**. Recall service: open, block at once, impact from the forward trace, containment with preview
+- [ ] **T30**. Recall service: open, block at once, impact from the whole forward trace (walked to the end as steps of
+  a core operation, plan §2 Traces), containment with preview
   (transfers to quarantine, holds and picks released), notice drafts through communications, returns linked,
   progress, close. Files: `lst/lot-recall/lot-recall.service.ts`, `lst/lot-recall/recall-impact.service.ts`,
-  `lst/lot-recall/recall-containment.service.ts`. Test: SQLite end-to-end recall spec.
+  `lst/lot-recall/recall-containment.service.ts`. Test: SQLite end-to-end recall spec; a lot eight levels downstream
+  of the recalled lot is in the impact.
 - [ ] **T31**. Recall pages (impact, containment preview, notices, progress). Files:
   `lst-ui/pages/recalls/recalls-page.component.ts`, `lst-ui/pages/recalls/recall-detail.component.ts`. Test: rendering
   specs.

@@ -169,11 +169,16 @@
   (FR-44 to FR-51); `INV/stock-reservation/stock-reservation.oversell.sqlite.spec.ts`.
 - [ ] **T21**. Projection: consumer `subscriber:stock-projection` for procurement, production and planning events,
   delta updates of incoming, in transit, requested and planned, reserved by kind, recalculation in `reconcile`;
-  `/stock-levels/projection` and `/availability`. Files: `INV/stock-projection/stock-projection.consumer.ts`,
+  `/stock-levels/projection` and `/availability`; the enable-time operation `stock-projection.initialize` of plan §8
+  (figures from the open source documents and delivery records for the events in its snapshot, in one transaction).
+  Files: `INV/stock-projection/stock-projection-initialize.operation.ts`, `INV/stock-projection/stock-projection.consumer.ts`,
   `INV/stock-projection/stock-projection.service.ts`, `INV/stock-level/stock-level.controller.ts`,
   `INV/stock-level/stock-level.service.ts` (`reconcile`). Test: `INV/stock-projection/stock-projection.consumer.spec.ts`
   (duplicate delivery applies once; group roll-up); `INV/stock-level/stock-level.service.spec.ts` (reconcile before and
-  after).
+  after); `INV/stock-projection/stock-projection-initialize.operation.spec.ts` (a purchase order approved before
+  `FEATURE_WAREHOUSE` is switched on shows as incoming right after the operation, its approval event delivered later
+  adds nothing, a purchase order approved during the operation is counted once, and reorder raises no duplicate
+  requisition).
 - [ ] **T22**. Reorder: rules CRUD reading and writing `restockThreshold` (variant level row, or `warehouse_product`
   for item rules; `groupReorderLevel` for groups), leaving the thresholds of `stock_alert` rows as they are; run
   service (scheduled pass in `job_execution`, on-demand run as a core operation `STOCK_REORDER_RUN`), items reported
@@ -232,13 +237,16 @@
   one variant has its own rule and two inherit the item's).
 - [ ] **T54**. Sellable stock only: `StockAvailabilityService` (cart availability), `StockReservationService.assertAvailable`
   and `ChannelWarehouseService` skip or refuse group, `TRANSIT`, non-sellable, customer-owned, supplier-held and
-  inactive locations; new quarantine and damage zones only in non-sellable locations while
+  inactive locations (reservations of a customer's own inward subcontract or work order on its location excepted, plan §2
+  Availability); new quarantine and damage zones only in non-sellable locations while
   `warehouse.quarantineZonesNonSellable` is on, with the one-action move of existing ones under a non-sellable child
   offered (never forced). Files: `INV/stock-availability/stock-availability.service.ts`,
   `INV/stock-reservation/stock-reservation.service.ts`, `INV/channel-warehouse/channel-warehouse.service.ts`,
   `WH/warehouse-zone/warehouse-zone.service.ts`, `WH/warehouse-zone/zone-move.service.ts`. Test:
   `INV/stock-availability/stock-availability.service.spec.ts` (per location kind);
-  `INV/stock-reservation/stock-reservation.service.spec.ts` (refusal); `INV/channel-warehouse/channel-warehouse.service.spec.ts`
+  `INV/stock-reservation/stock-reservation.service.spec.ts` (refusal; a `SUBCONTRACT_ORDER` reservation of an inward
+  order on its customer's location is accepted, a sales reservation there and one by another customer's order are
+  refused, and cart availability still skips that location); `INV/channel-warehouse/channel-warehouse.service.spec.ts`
   (mapping refusal); `WH/warehouse-zone/zone-move.sqlite.spec.ts` (move; with the setting off a quarantine zone is
   created in a sellable location as today).
 - [ ] **T55**. Level events from every stock write (FR-104): one `StockLevelWriter` in the inventory plugin through

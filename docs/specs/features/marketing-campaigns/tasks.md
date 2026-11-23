@@ -62,9 +62,12 @@
 - [ ] **T10**. `mk/lists/`: lists as `STATIC` contact groups with their satellite, subscription states, import with
       consent source, counts; public subscribe guarded by `PUBLIC_FORM_DEFENCE` and the sign-up box script;
       confirmation (built-in page), person matching or lead creation, group membership written, welcome, redirect;
-      `MARKETING_LISTS` port (`mk/lists/marketing-list.service.ts`, `mk/lists/marketing-list.controller.ts`,
-      `mk/lists/public-subscribe.controller.ts`). Test: forged token changes nothing; 11th request in an hour answers 429; a confirmed
-      subscriber is in the contact's groups and leaves on withdrawal.
+      `MARKETING_LISTS` port with `subscribe`, `listsOf` and `leave` (plan §3; the last two authorized by the contact and token the
+      communications preference page resolved from its verified public token) (`mk/lists/marketing-list.service.ts`, `mk/lists/marketing-list.controller.ts`,
+      `mk/lists/public-subscribe.controller.ts`, `mk/lists/marketing-lists.port.ts`). Test: forged token changes nothing; 11th request in an hour answers 429; a confirmed
+      subscriber is in the contact's groups and leaves on withdrawal; `listsOf` with a verified link returns that
+      person's lists only and `leave` withdraws one list and keeps the others; a call without a resolved token is
+      refused.
 - [ ] **T11**. `mk/consent/`: consent writes through `MARKETING_CONSENT` with `terms_acceptance` evidence for every
       grant, withdrawal handling, lists registered with the communications preference page, all-marketing suppression by
       communications' unsubscribe, staff-recorded consent, consent history. Test: leaving one list keeps others; leaving

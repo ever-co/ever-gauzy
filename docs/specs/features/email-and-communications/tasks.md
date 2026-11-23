@@ -72,20 +72,28 @@
       wrap, attachments (files; print through `COMMUNICATIONS_PRINT`), undo hold, schedule, idempotency, record links;
       the `email_sent` row written with `communicationId` and without `content`; mailbox sends referenced through
       `inboxEmailId` with no copy; one `AUDIT_EVENT_SINK` event per communication; the email history's view and resend
-      read the body through `communicationId`. Test: idempotent send; undo window; sensitive template stores no body;
-      one body stored per email; invoice emails and reminders logged, not resent; the history resends such a row with
-      its body.
+      read the body through `communicationId`; a separate-messages send creates one communication per recipient under
+      one `sendGroupId`; sensitive templates sent inside the call (plan §2). Test: idempotent send; undo window; a
+      sensitive template stores no body at any time, also when its first attempt fails and the call retries, and its
+      schedule or undo hold is refused with `COMMUNICATION_SENSITIVE_IMMEDIATE`; one body stored per email; one email to
+      a To and a Cc recipient keeps one communication and one rendering, a separate send to Alice and Bob in two
+      languages keeps two communications of one group, each with the body that person received, and the call answers
+      both ids; invoice emails and reminders logged, not resent; the history resends such a row with its body.
 - [ ] **T11**. Queue worker `com/send/communication-send.worker.ts` and `communications.queue.tick`
       (`com/schedule/communications-queue-tick.scheduler.ts`):
       priority order, leases, retry with back-off, per-recipient `acceptedAt`, stuck recovery, suspend and resume. Test:
-      crash after accept never resends; retry ladder; in-process fallback on SQLite.
+      crash after accept never resends; a crash after the transport accepted and before `acceptedAt` was saved sends
+      once more with the same `messageKey` on a transport declaring `idempotentSend` (one delivery), and marks the
+      recipient `UNCERTAIN` without a resend on a plain mail server; retry ladder; in-process fallback on SQLite.
 - [ ] **T12**. Messages controller `com/messages/` (`communication-message.controller.ts`, `dto/`: compose, `preview`, list by record, detail, scheduled mine, cancel,
       retry) with GraphQL reads (`com/graphql/communications.resolver.ts`). Test: e2e send from a record; `403` without view of the record; `404` with the feature off.
 - [ ] **T13**. Record links and read rule `com/links/` (`communication-links.service.ts`, `communication-read.policy.ts`): links on send and filing as core `resource_link` rows
       (`entity = Communication`, record target, `role` `PRIMARY` / `RELATED`, `linkedBy` `PERSON` / `MATCH` / `SYSTEM` /
       `INTAKE`) through `ResourceLinkService` of `record-views-and-search`, the answer state per link in
       `communication_link_state`, read through linked records.
-      Test: a person without access to any linked record cannot read the message.
+      Test: a person who is neither author nor recipient and has no access to any linked record cannot read the
+      message; its author and each of its recipients (by user or employee) can read it without access to a linked
+      record (FR-49).
 - [ ] **T14**. Hand-off listener `com/inbound/communications-handoff.listener.ts` and matcher `com/inbound/matcher.ts`
       (reference token, thread, address to contact, people and vendors, record numbers; reason and confidence). Test:
       matcher fixtures; ambiguous match goes to "to file".
@@ -181,10 +189,10 @@
 ## Phase 4 — Advanced capabilities, MCP, SDKs, docs
 
 - [ ] **T38**. Identity health `communications.health.daily`, score with causes, complaint pause, warm-up check at send
-      and bulk spreading; retention kinds `communications.sensitive-bodies` and `communications.events` declared through
+      and bulk spreading; retention kind `communications.events` declared through
       `RETENTION_SOURCES`. Files: `com/health/identity-health.service.ts`, `com/health/identity-health.scheduler.ts`,
-      `com/health/warm-up.check.ts`, `com/communications-retention-sources.ts`. Test: seeded bounce spike lowers the score; volume jump warns; bodies dropped by the retention
-      runner.
+      `com/health/warm-up.check.ts`, `com/communications-retention-sources.ts`. Test: seeded bounce spike lowers the score; volume jump warns; events past 400 days dropped by the
+      retention runner with their counts kept.
 - [ ] **T39** (parallel). Domain checks added to the Inbox domain verifier (`inbox/email/mailboxes/inbox-mailbox.service.ts`:
       published authentication and reporting records next to the TXT verification, guidance); identities read its
       status. Test: resolver fakes for missing and wrong records; existing domain verification specs unchanged.
