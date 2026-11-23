@@ -20,6 +20,13 @@
         (resendCode)="onResendCode()"
         (submitForm)="confirmSignInCode()"
       ></ga-email-code-form>
+      <!-- Only offered while the server accepts new sign-ups -->
+      @if (registrationEnabled$ | async) {
+        <p class="switch-flow">
+          {{ 'WORKSPACES.NEED_NEW_WORKSPACE' | translate }}
+          <a routerLink="/share/workspace/create">{{ 'WORKSPACES.CREATE_ONE' | translate }}</a>
+        </p>
+      }
     }
 
     <!-- Step 2: Workspace Selection (without create button) -->

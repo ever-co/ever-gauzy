@@ -1,9 +1,9 @@
-import { ChangeDetectorRef, Component, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectorRef, Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { UntypedFormBuilder } from '@angular/forms';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { IUserSigninWorkspaceResponse } from '@gauzy/contracts';
-import { ErrorHandlingService, Store, WorkspaceAuthService } from '@gauzy/ui-core/core';
+import { ErrorHandlingService, RegistrationConfigService, Store, WorkspaceAuthService } from '@gauzy/ui-core/core';
 import { BaseWorkspaceAuthComponent, CountdownTimerService } from '../shared';
 
 @UntilDestroy({ checkProperties: true })
@@ -15,6 +15,9 @@ import { BaseWorkspaceAuthComponent, CountdownTimerService } from '../shared';
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WorkspaceFindComponent extends BaseWorkspaceAuthComponent {
+	/** Whether to offer the "create a workspace" link (the create route is closed otherwise). */
+	readonly registrationEnabled$ = inject(RegistrationConfigService).registrationEnabled$;
+
 	constructor(
 		public readonly translateService: TranslateService,
 		protected readonly _fb: UntypedFormBuilder,
