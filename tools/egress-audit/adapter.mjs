@@ -407,6 +407,40 @@ export default {
 			120
 		);
 
+		// Row 18: "Installation address" (instance_url) is consented for the installation in app.ever.co
+		// and waits for the operator, who accepts (row 31); the operator reports the address they type,
+		// then withdraws it. The address is the audit's own made-up one: nothing fetches it.
+		await mock(session, 'consent', {
+			instance_id: session.instanceId,
+			integration: 'instance_url',
+			operator_accept: 'pending'
+		});
+		await until('the installation address consent waiting for the operator', async () => {
+			const status = await api(session, 'GET', `/api/ever-connect/status?organizationId=${org}`);
+			return (status.body?.pending_approvals ?? []).some((p) => p.key === 'instance_url') || null;
+		});
+		expect(
+			'operator accept (installation address)',
+			await api(session, 'POST', '/api/ever-connect/integrations/instance_url/accept', { accepted: true }),
+			[200]
+		);
+		expect(
+			'installation address reported',
+			await api(session, 'PUT', '/api/ever-connect/public-url', { url: 'https://gauzy.egress-audit.example' }),
+			[200]
+		);
+		expect('installation address withdrawn', await api(session, 'DELETE', '/api/ever-connect/public-url'), [200]);
+		await until(
+			'the installation address reported and withdrawn (row 18, PUT and DELETE)',
+			async () => {
+				const methods = new Set(
+					(await mock(session, 'requests')).filter((entry) => entry.row === 18).map((entry) => entry.method)
+				);
+				return (methods.has('PUT') && methods.has('DELETE')) || null;
+			},
+			120
+		);
+
 		// Row 20: a person's deletion request arrives on the event feed (row 7) and the installation
 		// answers it. No call depends on Sign in with Ever ID for this one.
 		await mock(session, 'person-request', { instance_id: session.instanceId, kind: 'deletion' });
