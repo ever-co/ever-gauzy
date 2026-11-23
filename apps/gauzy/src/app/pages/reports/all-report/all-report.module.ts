@@ -5,7 +5,9 @@ import {
 	NbCardModule,
 	NbSelectModule,
 	NbToggleModule,
-	NbButtonModule
+	NbButtonModule,
+	NbInputModule,
+	NbTooltipModule
 } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import { SharedModule } from '@gauzy/ui-core/shared';
@@ -23,7 +25,9 @@ import { AllReportComponent } from './all-report/all-report.component';
 		NbCardModule,
 		NbSelectModule,
 		NbToggleModule,
-		NbButtonModule
+		NbButtonModule,
+		NbInputModule,
+		NbTooltipModule
 	]
 })
 export class AllReportModule {}

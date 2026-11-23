@@ -100,6 +100,7 @@ export interface IRecordViewField {
 	 * tags read as in the grid row.
 	 */
 	tagStyle?: 'tinted';
+	copyable?: boolean;
 }
 
 /**

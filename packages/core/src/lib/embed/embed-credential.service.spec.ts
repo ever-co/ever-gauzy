@@ -23,6 +23,8 @@ const OTHER_TENANT = '7a000000-0000-4000-8000-00000000000b';
 const ORG = '7a000000-0000-4000-8000-0000000000f1';
 const EMPLOYEE = '7a000000-0000-4000-8000-0000000000e1';
 const USER = '7a000000-0000-4000-8000-000000000001';
+// The member's role, which holds the time tracker permission unless a test takes it away (ever-co/ever-gauzy#12134).
+const ROLE = '7a000000-0000-4000-8000-0000000000c1';
 const CONTACT = '7a000000-0000-4000-8000-0000000000d1';
 const OTHER_ORG_CONTACT = '7a000000-0000-4000-8000-0000000000d2';
 const UNKNOWN_CONTACT = '7a000000-0000-4000-8000-0000000000d9';
@@ -40,7 +42,13 @@ function build() {
 	const employees: any[] = [
 		{ id: EMPLOYEE, userId: USER, tenantId: TENANT, organizationId: ORG, isActive: true, isArchived: false, isTrackingEnabled: true }
 	];
-	const users: any[] = [{ id: USER, tenantId: TENANT, email: 'lina@northwind.example' }];
+	const users: any[] = [{ id: USER, tenantId: TENANT, email: 'lina@northwind.example', roleId: ROLE }];
+	// The roles whose time tracker permission is on, as RolePermissionService.checkRolePermission reads them.
+	const trackingRoles = new Set<string>([ROLE]);
+	const checkRolePermission = jest.fn(
+		async (_tenantId: string, roleId: string, permissions: string[]) =>
+			trackingRoles.has(roleId) && permissions.includes('TIME_TRACKER')
+	);
 	const memberships: any[] = [{ userId: USER, tenantId: TENANT, organizationId: ORG, isActive: true, isArchived: false }];
 	const issueEmbedSession = jest.fn(async (_input: any) => 'an-embed-token');
 	const contacts = [{ id: CONTACT, name: 'Northwind', tenantId: TENANT, organizationId: ORG }];
@@ -73,7 +81,7 @@ function build() {
 		const employeeId = `7a000000-0000-4000-8000-0000000002${count}`;
 		// Another exchange may run while this one is on its way to the database.
 		await new Promise((resolve) => setImmediate(resolve));
-		users.push({ id: userId, tenantId: scope.tenantId, email: person.email.toLowerCase() });
+		users.push({ id: userId, tenantId: scope.tenantId, email: person.email.toLowerCase(), roleId: ROLE });
 		const membership = { userId, ...scope, isActive: true, isArchived: false };
 		employees.push({ ...membership, id: employeeId, isTrackingEnabled: true });
 		memberships.push(membership);
@@ -104,7 +112,8 @@ function build() {
 			)
 		} as any,
 		{ findClient, reportOf } as any,
-		memberService
+		memberService,
+		{ checkRolePermission } as any
 	);
 	jest.spyOn(service, 'ormType', 'get').mockReturnValue('typeorm' as any);
 	jest.spyOn(service, 'create').mockImplementation(async (input: any) => {
@@ -134,7 +143,9 @@ function build() {
 		contacts,
 		findClient,
 		reportOf,
-		addMember
+		addMember,
+		trackingRoles,
+		checkRolePermission
 	};
 }
 
@@ -309,6 +320,35 @@ describe('EmbedCredentialService', () => {
 		employees[0].isTrackingEnabled = true;
 		employees[0].userId = null;
 		await expect(service.exchange({ credential: secret, employeeId: EMPLOYEE, origin: SITE })).rejects.toThrow(ForbiddenException);
+	});
+
+	it('answers 403 with a code for a member whose role holds no time tracker permission, and a token once it does', async () => {
+		const { service, trackingRoles, checkRolePermission, issueEmbedSession } = build();
+		signIn(TENANT);
+		const { secret } = await service.createForOrganization({ name: 'Northwind product', organizationId: ORG });
+
+		trackingRoles.delete(ROLE);
+		await expect(service.exchange({ credential: secret, employeeId: EMPLOYEE, origin: SITE })).rejects.toMatchObject({
+			response: { code: 'EMBED_MEMBER_NOT_ALLOWED' }
+		});
+		expect(checkRolePermission).toHaveBeenCalledWith(TENANT, ROLE, ['TIME_TRACKER'], true);
+		expect(issueEmbedSession).not.toHaveBeenCalled();
+
+		trackingRoles.add(ROLE);
+		await expect(service.exchange({ credential: secret, employeeId: EMPLOYEE, origin: SITE })).resolves.toMatchObject({
+			token: 'an-embed-token'
+		});
+	});
+
+	it('answers 403 with a code for a member whose user has no role', async () => {
+		const { service, users } = build();
+		signIn(TENANT);
+		const { secret } = await service.createForOrganization({ name: 'Northwind product', organizationId: ORG });
+		users[0].roleId = null;
+
+		await expect(service.exchange({ credential: secret, employeeId: EMPLOYEE, origin: SITE })).rejects.toMatchObject({
+			response: { code: 'EMBED_MEMBER_NOT_ALLOWED' }
+		});
 	});
 
 	it('finds a member whose address is stored in another case than lowercase, as it was typed', async () => {

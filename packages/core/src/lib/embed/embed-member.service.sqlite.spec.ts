@@ -309,7 +309,9 @@ describe('EmbedMemberService on SQLite, through the platform commands', () => {
 				{ issueEmbedSession } as never,
 				{ isAllowed: async () => true } as never,
 				{} as never,
-				service
+				service,
+				// The employee role holds the time tracker permission, as the defaults give it (ever-co/ever-gauzy#12134).
+				{ checkRolePermission: async (_tenantId: string, roleId: string) => roleId === EMPLOYEE_ROLE } as never
 			);
 			for (const [secret, canAddMembers] of [
 				[ADDING_SECRET, 1],

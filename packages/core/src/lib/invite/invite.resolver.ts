@@ -254,7 +254,6 @@ export class InviteResolver {
 	 */
 	@Query('myInvites')
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_INVITE_VIEW)
 	async myInvites(
 		@Args('filter') filter?: ConnectionFilter,
 		@Args('sort') sort?: ConnectionSortKey[],
@@ -472,7 +471,6 @@ export class InviteResolver {
 	 */
 	@Mutation('handleInvitationResponse')
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
 	async handleInvitationResponse(
 		@Args('id', { type: () => ID }) id: Id,
 		@Args('action', { type: () => String }) action: string

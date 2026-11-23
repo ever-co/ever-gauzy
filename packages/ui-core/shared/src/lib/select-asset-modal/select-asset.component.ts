@@ -111,11 +111,17 @@ export class SelectAssetComponent extends TranslationBaseComponent implements On
 
 	onImageUploaded(image: IImageAsset) {
 		this.gallery.push(image); // Add the uploaded image to the gallery immediately
-		this.activeImage = image; // Set the uploaded image as the active one
+		// Chosen as well as previewed: what is uploaded here is what is meant, and Select waits for a choice.
+		this.onSelectImage(image);
 	}
 
 	onImageAssetDeleted(imageDeleted: IImageAsset) {
 		this.gallery = this.gallery.filter((image) => image.id != imageDeleted.id);
+		// A deleted image can be neither chosen nor previewed.
+		this.selectedImages = this.selectedImages.filter((image) => image?.id !== imageDeleted.id);
+		if (this.activeImage?.id === imageDeleted.id) {
+			this.activeImage = null;
+		}
 	}
 
 	setImageStoredEvent() {

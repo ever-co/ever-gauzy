@@ -12,8 +12,14 @@ import { isUUID } from 'class-validator';
 import { BaseEntityEnum, ID } from '@gauzy/contracts';
 import { RequestContext } from '../../core/context';
 import { COMMENT_PARENT_ACCESS_POLICY } from './comment-parent-access-policy.decorator';
-import { CommentParentAccess, ICommentParent, ICommentParentAccessPolicy } from './comment-parent-access.types';
+import {
+	CommentParentAccess,
+	ICommentParent,
+	ICommentParentAccessPolicy,
+	ICommentParentReadersPolicy
+} from './comment-parent-access.types';
 import { isSpellingOfRecordType } from './record-type-spelling';
+import { ICommentParentRef } from './scope-comment-read';
 
 /** The most records one batch read of a policy names (`readableParentIds`), far from any bound-parameter limit. */
 export const COMMENT_PARENT_BATCH = 500;
@@ -29,6 +35,8 @@ export const COMMENT_PARENT_READ_CONCURRENCY = 8;
 @Injectable()
 export class CommentParentAccessService implements OnModuleInit {
 	private readonly policies = new Map<string, ICommentParentAccessPolicy>();
+	/** The rules that only open a record's comments to its readers, and govern nothing else. */
+	private readonly readersPolicies = new Map<string, ICommentParentReadersPolicy>();
 
 	constructor(
 		@Optional() private readonly discoveryService?: DiscoveryService,
@@ -41,7 +49,7 @@ export class CommentParentAccessService implements OnModuleInit {
 		}
 		for (const { instance, metatype } of this.discoveryService.getProviders()) {
 			if (instance && metatype && this.reflector.get(COMMENT_PARENT_ACCESS_POLICY, metatype)) {
-				this.register(instance as ICommentParentAccessPolicy);
+				this.register(instance as ICommentParentAccessPolicy | ICommentParentReadersPolicy);
 			}
 		}
 	}
@@ -49,17 +57,60 @@ export class CommentParentAccessService implements OnModuleInit {
 	/**
 	 * Adds a policy. One record type has one policy: a second policy class for it is a wiring mistake and fails
 	 * boot rather than silently replacing the first. Another instance of the same class (a provider listed by two
-	 * modules) is the same rule, and the first one is kept.
+	 * modules) is the same rule, and the first one is kept. A rule that only opens a record's comments to its readers
+	 * is kept apart from the policies that govern a type's comments, so that it governs nothing else.
 	 */
-	register(policy: ICommentParentAccessPolicy): void {
-		const existing = this.policies.get(policy.entity);
+	register(policy: ICommentParentAccessPolicy | ICommentParentReadersPolicy): void {
+		const existing = this.policies.get(policy.entity) ?? this.readersPolicies.get(policy.entity);
 		if (existing) {
 			if (existing.constructor !== policy.constructor) {
 				throw new Error(`A comment access policy for "${policy.entity}" is already registered.`);
 			}
 			return;
 		}
+		if (isReadersPolicy(policy)) {
+			this.readersPolicies.set(policy.entity, policy);
+			return;
+		}
 		this.policies.set(policy.entity, policy);
+	}
+
+	/** The record types whose comments a rule opens to the record's readers, each as its rule spells it. */
+	openedEntities(): BaseEntityEnum[] {
+		return [...this.readersPolicies.keys()] as BaseEntityEnum[];
+	}
+
+	/**
+	 * The record type, as its rule spells it, whose comments a rule opens to the record's readers and that `entity`
+	 * names in any spelling (see {@link isSpellingOfRecordType}); `undefined` when it names none.
+	 */
+	openedTypeOf(entity: unknown): BaseEntityEnum | undefined {
+		if (typeof entity !== 'string') {
+			return undefined;
+		}
+		for (const type of this.readersPolicies.keys()) {
+			if (isSpellingOfRecordType(entity, type)) {
+				return type as BaseEntityEnum;
+			}
+		}
+		return undefined;
+	}
+
+	/**
+	 * Whether the caller reads every author's comments of each record `records` names: its record type has a rule
+	 * that opens them to the record's readers (see ICommentParentReadersPolicy), the caller holds one of that rule's
+	 * read permissions, and its read finds the record. `false` when `records` is empty. A read that fails throws.
+	 */
+	async mayReadEveryAuthorOf(records: ReadonlyArray<ICommentParentRef>): Promise<boolean> {
+		if (records.length === 0) {
+			return false;
+		}
+		for (const { entity, entityId } of records) {
+			if (!(await this.readsOpenedRecord(entity, entityId))) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/** The record types whose comments a policy governs, each as its policy spells it. */
@@ -201,6 +252,22 @@ export class CommentParentAccessService implements OnModuleInit {
 		return RequestContext.hasAnyPermission([...permissions]);
 	}
 
+	/**
+	 * Whether the caller reads every author's comments of one record by the rule that opens its type's comments to the
+	 * record's readers. The type is matched as its rule spells it.
+	 */
+	private async readsOpenedRecord(entity: string, entityId: unknown): Promise<boolean> {
+		const policy = this.readersPolicies.get(entity);
+		if (!policy || !RequestContext.hasAnyPermission([...policy.readPermissions])) {
+			return false;
+		}
+		if (typeof entityId !== 'string' || !isUUID(entityId)) {
+			return false;
+		}
+		const record = await policy.findAccessibleParent(entityId as ID);
+		return record !== null;
+	}
+
 	/** The policy of the governed type `entity` names, in its own spelling or any other. */
 	private policyFor(entity: unknown): ICommentParentAccessPolicy | undefined {
 		if (typeof entity !== 'string') {
@@ -217,4 +284,11 @@ export class CommentParentAccessService implements OnModuleInit {
 		}
 		return undefined;
 	}
+}
+
+/** Whether `policy` only opens a record's comments to its readers (see ICommentParentReadersPolicy). */
+function isReadersPolicy(
+	policy: ICommentParentAccessPolicy | ICommentParentReadersPolicy
+): policy is ICommentParentReadersPolicy {
+	return (policy as ICommentParentReadersPolicy).opensReadsOnly === true;
 }

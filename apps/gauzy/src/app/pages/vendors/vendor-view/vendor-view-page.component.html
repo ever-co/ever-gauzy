@@ -1,0 +1,313 @@
+<ngx-record-view-page heading="ORGANIZATIONS_PAGE.VENDORS" [backLink]="backLink" [state]="state" (retry)="load()">
+	@if (vendor) {
+		<div recordPageActions class="vendor-page-actions">
+			<button
+				nbButton
+				ghost
+				size="tiny"
+				status="basic"
+				type="button"
+				[nbTooltip]="'BUTTONS.COPY_LINK' | translate"
+				nbTooltipPlacement="top"
+				[attr.aria-label]="'BUTTONS.COPY_LINK' | translate"
+				(click)="copyLink()"
+			>
+				<nb-icon icon="link-2-outline"></nb-icon>
+			</button>
+			<ngx-favorite-toggle
+				[entityType]="favoriteEntity"
+				[entityId]="vendor.id"
+				[entityName]="vendor.name"
+				size="tiny"
+				status="basic"
+				appearance="ghost"
+				spacing="list"
+			></ngx-favorite-toggle>
+		</div>
+	}
+
+	@if (vendor) {
+		<div class="project-view-top">
+			<div class="project-view-headline">
+				<div class="project-view-header">
+					<span class="project-logo vendor-logo" aria-hidden="true">
+						<ga-company-logo [rowData]="vendor"></ga-company-logo>
+					</span>
+					<div class="project-view-title">
+						<h5 class="project-view-name vendor-title" [nbTooltip]="vendor.name" nbTooltipPlacement="top">
+							{{ vendor.name }}
+						</h5>
+						<p class="project-view-meta">
+							@if (vendor.email) {
+								<a class="project-meta-item vendor-meta-link" [href]="'mailto:' + vendor.email">
+									<nb-icon icon="email-outline" aria-hidden="true"></nb-icon>
+									{{ vendor.email }}
+								</a>
+							}
+							@if (vendor.website) {
+								<a class="project-meta-item vendor-meta-link" [href]="vendor.website" target="_blank" rel="noopener noreferrer">
+									<nb-icon icon="globe-outline" aria-hidden="true"></nb-icon>
+									{{ vendor.website }}
+								</a>
+							}
+							@if (vendor.code) {
+								<span class="project-meta-item" [nbTooltip]="'ORGANIZATIONS_PAGE.VENDOR_VIEW.CODE' | translate" nbTooltipPlacement="top">
+									<nb-icon icon="hash-outline" aria-hidden="true"></nb-icon>
+									{{ vendor.code }}
+								</span>
+							}
+							@if (vendor.tags?.length) {
+								<span class="project-meta-item">
+									<nb-icon icon="pricetags-outline" aria-hidden="true"></nb-icon>
+									{{ 'ORGANIZATIONS_PAGE.VENDOR_VIEW.TAG_COUNT' | translate : { count: vendor.tags.length } }}
+								</span>
+							}
+						</p>
+					</div>
+				</div>
+
+				@if (summary) {
+					<dl class="project-facts">
+						<div class="project-fact">
+							<dt>{{ 'ORGANIZATIONS_PAGE.VENDOR_VIEW.TOTAL_SPENT' | translate }}</dt>
+							<dd>
+								@if (summary.totals) {
+									<span class="vendor-lead-figure">{{ summary.totals }}</span>
+									@if (currencies.length > 1) {
+										<span class="project-fact-hint">
+											{{ 'ORGANIZATIONS_PAGE.VENDOR_VIEW.ACROSS_CURRENCIES' | translate : { count: currencies.length } }}
+										</span>
+									} @else if (currencies.length === 1) {
+										<span class="project-fact-hint">{{ 'EXPENSE_VIEW.CURRENCY_HINT' | translate : { currency: currencies[0] } }}</span>
+									}
+								} @else {
+									<span class="project-fact-muted">—</span>
+								}
+							</dd>
+						</div>
+						<div class="project-fact">
+							<dt>{{ 'ORGANIZATIONS_PAGE.VENDOR_VIEW.EXPENSE_COUNT' | translate }}</dt>
+							<dd>
+								{{ summary.count }}
+								@if (summary.firstExpenseDate) {
+									<span class="project-fact-hint">
+										{{ 'ORGANIZATIONS_PAGE.VENDOR_VIEW.SINCE' | translate : { date: (summary.firstExpenseDate | dateFormat) } }}
+									</span>
+								}
+							</dd>
+						</div>
+						<div class="project-fact">
+							<dt>{{ 'ORGANIZATIONS_PAGE.VENDOR_VIEW.AVERAGE_EXPENSE' | translate }}</dt>
+							<dd>
+								@if (summary.average) {
+									{{ summary.average }}
+									<span class="project-fact-hint">{{ 'ORGANIZATIONS_PAGE.VENDOR_VIEW.PER_EXPENSE' | translate }}</span>
+								} @else {
+									<span class="project-fact-muted">—</span>
+								}
+							</dd>
+						</div>
+						<div class="project-fact">
+							<dt>{{ 'ORGANIZATIONS_PAGE.VENDOR_VIEW.LAST_EXPENSE' | translate }}</dt>
+							<dd>
+								@if (summary.lastExpenseDate) {
+									{{ summary.lastExpenseDate | dateFormat }}
+									@if (daysSinceLast !== null) {
+										<span class="project-fact-hint">
+											@if (daysSinceLast === 0) {
+												{{ 'ORGANIZATIONS_PAGE.VENDOR_VIEW.TODAY' | translate }}
+											} @else if (daysSinceLast === 1) {
+												{{ 'ORGANIZATIONS_PAGE.VENDOR_VIEW.ONE_DAY_AGO' | translate }}
+											} @else {
+												{{ 'ORGANIZATIONS_PAGE.VENDOR_VIEW.DAYS_AGO' | translate : { count: daysSinceLast } }}
+											}
+										</span>
+									}
+								} @else {
+									<span class="project-fact-muted">—</span>
+								}
+							</dd>
+						</div>
+					</dl>
+				} @else {
+					<dl class="project-facts">
+						<div class="project-fact">
+							<dt>{{ 'ORGANIZATIONS_PAGE.VENDOR_VIEW.PAYMENT_TERMS' | translate }}</dt>
+							<dd>
+								@if (vendor.paymentTermsDays !== null && vendor.paymentTermsDays !== undefined) {
+									{{ vendor.paymentTermsDays }}
+								} @else {
+									<span class="project-fact-muted">—</span>
+								}
+							</dd>
+						</div>
+						<div class="project-fact">
+							<dt>{{ 'ORGANIZATIONS_PAGE.VENDOR_VIEW.LEAD_TIME' | translate }}</dt>
+							<dd>
+								@if (vendor.leadTimeDays !== null && vendor.leadTimeDays !== undefined) {
+									{{ vendor.leadTimeDays }}
+								} @else {
+									<span class="project-fact-muted">—</span>
+								}
+							</dd>
+						</div>
+						<div class="project-fact">
+							<dt>{{ 'ORGANIZATIONS_PAGE.VENDOR_VIEW.MINIMUM_ORDER' | translate }}</dt>
+							<dd>
+								@if (minimumOrder) {
+									{{ minimumOrder }}
+								} @else {
+									<span class="project-fact-muted">—</span>
+								}
+							</dd>
+						</div>
+						<div class="project-fact">
+							<dt>{{ 'ORGANIZATIONS_PAGE.VENDOR_VIEW.CURRENCY' | translate }}</dt>
+							<dd>
+								@if (vendor.currency) {
+									{{ vendor.currency }}
+								} @else {
+									<span class="project-fact-muted">—</span>
+								}
+							</dd>
+						</div>
+					</dl>
+				}
+			</div>
+
+			<div class="project-view-col project-view-col--main">
+				@if (expenses) {
+					<section class="panel project-view-panel">
+						<header class="panel-header">
+							<div class="panel-heading">
+								<h5 class="panel-title panel-title--icon">
+									<nb-icon icon="bar-chart-outline" aria-hidden="true"></nb-icon>
+									{{ 'ORGANIZATIONS_PAGE.VENDOR_VIEW.SPEND' | translate }}
+								</h5>
+								@if (chart.currency) {
+									<span class="panel-caption">
+										{{ 'ORGANIZATIONS_PAGE.VENDOR_VIEW.SPEND_CAPTION' | translate : { currency: chart.currency, count: chartMonths } }}
+									</span>
+								}
+							</div>
+							@if (chart.bars.length) {
+								<div class="vendor-chart-controls">
+									<div class="segmented project-activity-views" role="group" [attr.aria-label]="'INCOME_VIEW.CHART_TYPE' | translate">
+										@for (option of chartKindOptions; track option.kind) {
+											<button
+												type="button"
+												class="segment"
+												[class.is-active]="chartKind === option.kind"
+												[attr.aria-pressed]="chartKind === option.kind"
+												[nbTooltip]="option.label | translate"
+												nbTooltipPlacement="top"
+												[attr.aria-label]="option.label | translate"
+												(click)="setChartKind(option.kind)"
+											>
+												<nb-icon [icon]="option.icon" aria-hidden="true"></nb-icon>
+											</button>
+										}
+									</div>
+									<nb-select
+										class="vendor-chart-range"
+										size="small"
+										status="basic"
+										[selected]="chartMonths"
+										(selectedChange)="setChartMonths($event)"
+										[attr.aria-label]="'EXPENSE_VIEW.CHART_RANGE' | translate"
+									>
+										@for (months of chartMonthOptions; track months) {
+											<nb-option [value]="months">{{ 'EXPENSE_VIEW.LAST_MONTHS' | translate : { count: months } }}</nb-option>
+										}
+									</nb-select>
+								</div>
+							}
+						</header>
+						<div class="panel-body project-chart-body">
+							@if (chart.bars.length) {
+								<ga-expense-bar-chart
+									[formatValue]="formatSpend"
+									[highlightLabel]="'ORGANIZATIONS_PAGE.VENDOR_VIEW.THIS_MONTH' | translate"
+									[otherLabel]="'EXPENSE_VIEW.OTHER_MONTHS' | translate"
+									[kind]="chartKind"
+									[bars]="chart.bars"
+								></ga-expense-bar-chart>
+								@if (chart.otherCurrencies.length) {
+									<p class="vendor-chart-note">
+										{{ 'ORGANIZATIONS_PAGE.VENDOR_VIEW.OTHER_CURRENCIES' | translate : { currencies: chart.otherCurrencies.join(', ') } }}
+									</p>
+								}
+							} @else {
+								<div class="state state--compact">
+									<nb-icon icon="bar-chart-outline" aria-hidden="true"></nb-icon>
+									<p>{{ 'ORGANIZATIONS_PAGE.VENDOR_VIEW.NO_EXPENSES' | translate }}</p>
+								</div>
+							}
+						</div>
+					</section>
+
+					<section class="panel project-view-panel">
+						<header class="panel-header">
+							<div class="panel-heading">
+								<h5 class="panel-title panel-title--icon">
+									<nb-icon icon="file-text-outline" aria-hidden="true"></nb-icon>
+									{{ 'ORGANIZATIONS_PAGE.VENDOR_VIEW.RECENT_EXPENSES' | translate }}
+								</h5>
+								@if (expenses.length) {
+									<span class="panel-caption">
+										{{ 'ORGANIZATIONS_PAGE.VENDOR_VIEW.RECENT_CAPTION' | translate : { shown: recentExpenses.length, total: expenses.length } }}
+									</span>
+								}
+							</div>
+							<a nbButton ghost size="tiny" status="basic" [routerLink]="expensesLink">
+								{{ 'ORGANIZATIONS_PAGE.VENDOR_VIEW.OPEN_EXPENSES' | translate }}
+								<nb-icon icon="arrow-forward-outline" aria-hidden="true"></nb-icon>
+							</a>
+						</header>
+						<div class="panel-body panel-body--flush">
+							@if (recentExpenses.length) {
+								<ul class="vendor-expense-list">
+									@for (expense of recentExpenses; track expense.id) {
+										<li class="vendor-expense">
+											<a class="vendor-expense-name" [routerLink]="[expensesLink, 'view', expense.id]">
+												@if (expense.name) {
+													{{ expense.name }}
+												} @else {
+													{{ 'EXPENSE_VIEW.EXPENSE' | translate }}
+												}
+											</a>
+											<span class="vendor-expense-date">
+												@if (expense.date) {
+													{{ expense.date | dateFormat }}
+												} @else {
+													—
+												}
+											</span>
+											<span class="vendor-expense-amount">{{ expense.amount }}</span>
+										</li>
+									}
+								</ul>
+							} @else {
+								<div class="state state--compact">
+									<nb-icon icon="file-text-outline" aria-hidden="true"></nb-icon>
+									<p>{{ 'ORGANIZATIONS_PAGE.VENDOR_VIEW.NO_EXPENSES' | translate }}</p>
+								</div>
+							}
+						</div>
+					</section>
+				} @else {
+					<section class="panel project-view-panel">
+						<div class="state state--compact">
+							<nb-icon icon="lock-outline" aria-hidden="true"></nb-icon>
+							<p>{{ 'ORGANIZATIONS_PAGE.VENDOR_VIEW.EXPENSES_HIDDEN' | translate }}</p>
+						</div>
+					</section>
+				}
+			</div>
+
+			<div class="project-view-col project-view-col--side">
+				<ngx-record-view [record]="vendor" [sections]="sideSections" [placeholder]="'SM_TABLE.NONE' | translate"></ngx-record-view>
+			</div>
+		</div>
+	}
+</ngx-record-view-page>

@@ -11,11 +11,68 @@
 }
 
 :host .visible-slot {
-  background: var(--gauzy-card-2);
-  border-radius: var(--border-radius);
-  padding: 2px 4px;
-  @include nb-ltr(margin-right, 10px);
-  @include nb-rtl(margin-left, 10px);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  @include nb-ltr(margin-right, 0.375rem);
+  @include nb-rtl(margin-left, 0.375rem);
+
+  // The page's create button ("+ Add" …) is the one solid button in the row,
+  // in the theme's primary colour; the same 28px height and small radius as the
+  // neutral actions beside it. Each page writes it with status="success", so it
+  // is restyled here once instead of in every template.
+  ::ng-deep [nbButton] {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    height: var(--gauzy-toolbar-button-height);
+    margin: 0;
+    padding: 0 0.625rem;
+    border-radius: var(--gauzy-toolbar-button-radius);
+    font-size: var(--gauzy-header-text-size);
+    font-weight: 500;
+    line-height: 1rem;
+    white-space: nowrap;
+    text-transform: none;
+    box-shadow: none;
+
+    nb-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 0.875rem;
+      width: 0.875rem;
+      height: 0.875rem;
+      margin: 0 !important;
+    }
+  }
+
+  ::ng-deep [nbButton].status-success,
+  ::ng-deep [nbButton].status-primary {
+    border: none;
+    background-color: var(--color-primary-default);
+    color: var(--text-control-color);
+
+    nb-icon {
+      color: inherit;
+    }
+
+    &:hover,
+    &:focus {
+      background-color: var(--color-primary-hover);
+      color: var(--text-control-color);
+    }
+
+    &:active {
+      background-color: var(--color-primary-active);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-primary-default);
+      outline-offset: 1px;
+    }
+  }
 
   // `buttonTemplateVisible` is optional: without it the slot would still paint
   // a blank control-shaped pill. Angular's comment anchors do not defeat
@@ -67,6 +124,91 @@
 }
 
 :host ga-layout-selector {
-  @include nb-ltr(margin-left, 20px);
-  @include nb-rtl(margin-right, 20px);
+  display: inline-flex;
+  align-items: center;
+  @include nb-ltr(margin-left, 1rem);
+  @include nb-rtl(margin-right, 1rem);
+}
+
+// Every block on the toolbar line (create button, action strip, layout switch)
+// centres on one axis.
+//
+// The slide clips its content (`overflow: hidden`), and a button's keyboard
+// focus outline reaches 3px outside the button (2px + 1px offset). Padding the
+// slide by that much, and pulling it back with an equal negative margin, gives
+// the outline room inside the clip without moving anything on the page. The
+// block padding is always on: while collapsed the slide is 0 wide, so its
+// padding box is too and nothing shows through. The inline padding only comes
+// on when open, so a collapsed strip never leaks a 3px sliver of its buttons.
+$focus-clearance: 3px;
+
+:host .actions-slide {
+  display: flex;
+  align-items: center;
+  padding-block: $focus-clearance;
+  margin-block: -$focus-clearance;
+
+  &.open {
+    padding-inline: $focus-clearance;
+    margin-inline: -$focus-clearance;
+  }
+}
+
+// The star and the action group are siblings in the strip: same gap as between
+// the actions themselves. The strip is a flex item of the collapsed (0-wide)
+// slide, so it must not shrink: shrunk, its wrapping `.actions` stacks every
+// button on its own line and the hidden column stretches the page header.
+:host .actions-slide-inner {
+  gap: 0.375rem;
+  flex-shrink: 0;
+}
+
+// The favourite star in the action strip is a 28px square drawn like the
+// actions beside it (and the top bar's controls): surface, hairline ring, tints
+// laid over the surface on hover and press.
+:host .actions-slide-inner ::ng-deep ngx-favorite-toggle [nbButton].status-basic {
+  width: var(--gauzy-toolbar-button-height);
+  height: var(--gauzy-toolbar-button-height);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: var(--gauzy-toolbar-button-radius);
+  background-color: var(--gauzy-toolbar-button-background);
+  background-image: none;
+  box-shadow: inset 0 0 0 1px var(--gauzy-toolbar-button-border);
+  color: var(--gauzy-toolbar-button-text);
+  transition:
+    background-color 0.15s ease,
+    box-shadow 0.15s ease;
+
+  nb-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.875rem;
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  &:hover {
+    background-color: var(--gauzy-toolbar-button-background);
+    background-image: linear-gradient(
+      var(--gauzy-toolbar-button-hover-tint),
+      var(--gauzy-toolbar-button-hover-tint)
+    );
+    box-shadow: inset 0 0 0 1px var(--gauzy-toolbar-button-hover-border);
+    transform: none;
+  }
+
+  &:active {
+    background-image: linear-gradient(
+      var(--gauzy-toolbar-button-active-tint),
+      var(--gauzy-toolbar-button-active-tint)
+    );
+    // Same as the actions: body text while pressed, for contrast on the tint.
+    color: var(--text-basic-color);
+  }
 }

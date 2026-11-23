@@ -2344,10 +2344,9 @@ export class StatisticService {
 	/**
 	 * GET Tasks Statistics of several employees in one pass
 	 *
-	 * The entry of each employee holds what {@link getTasks} returns for `employeeIds: [employeeId]` with the
-	 * same organization, team and date range, employee scope included, read with a fixed number of queries.
-	 * A member the caller may read through the team, as its manager, gets their own tasks: scoped without the
-	 * team, a caller without CHANGE_SELECTED_EMPLOYEE got their own tasks under every member.
+	 * The entry of each employee holds that employee's own tasks with the same organization, team and date range,
+	 * read with a fixed number of queries, when the caller may read them (see {@link findReadableTeamMembers}),
+	 * and nothing otherwise. Another employee's time never fills it.
 	 *
 	 * @param request - The employees, their organization and team, and an optional date range
 	 * @returns The task statistics of each requested employee, keyed by employee id
@@ -2367,40 +2366,15 @@ export class StatisticService {
 			return new Map();
 		}
 
-		// The members the caller may read through the team, resolved once for all of them.
-		const readableInTeam = new Set(
-			organizationTeamId
-				? await this._managedEmployeeService.filterAccessibleEmployeeIds(employeeIds, [organizationTeamId])
-				: []
-		);
-
-		// The scope getTasks gives a request for one employee, resolved for each of them. A member already
-		// readable through the team needs no query.
-		const scopes = await Promise.all(
-			employeeIds.map(async (employeeId) =>
-				readableInTeam.has(employeeId)
-					? [employeeId]
-					: this._managedEmployeeService.filterAccessibleEmployeeIds([employeeId])
-			)
-		);
-
-		// A row counts for every requested employee whose scope holds the employee who logged it.
-		const requestedBy = new Map<ID, ID[]>();
-		employeeIds.forEach((employeeId, index) => {
-			for (const scopedEmployeeId of scopes[index]) {
-				requestedBy.set(scopedEmployeeId, [...(requestedBy.get(scopedEmployeeId) ?? []), employeeId]);
-			}
-		});
-		// No employee left in any scope: an empty employee filter would read the whole team for nothing.
-		if (!requestedBy.size) {
+		const readableEmployeeIds = await this.findReadableTeamMembers(employeeIds, organizationTeamId);
+		// No member left to read: an empty employee filter would read the whole team for nothing.
+		if (!isNotEmpty(readableEmployeeIds)) {
 			return new Map(employeeIds.map((employeeId) => [employeeId, []]));
 		}
-		const splitByRequestedEmployee = <T extends { employeeId?: ID }>(rows: T[]): Map<ID, T[]> => {
+		const splitByEmployee = <T extends { employeeId?: ID }>(rows: T[]): Map<ID, T[]> => {
 			const split = new Map<ID, T[]>(employeeIds.map((employeeId) => [employeeId, []]));
 			for (const row of rows) {
-				for (const employeeId of requestedBy.get(row.employeeId) ?? []) {
-					split.get(employeeId).push(row);
-				}
+				split.get(row.employeeId)?.push(row);
 			}
 			return split;
 		};
@@ -2416,7 +2390,7 @@ export class StatisticService {
 			tenantId,
 			organizationId,
 			organizationTeamId,
-			employeeIds: [...requestedBy.keys()],
+			employeeIds: readableEmployeeIds,
 			byEmployee: true
 		};
 
@@ -2426,8 +2400,8 @@ export class StatisticService {
 			this.getTaskDurationRows({ ...filters, start, end }, 'duration')
 		]);
 
-		const todayStatisticsByEmployee = splitByRequestedEmployee(todayStatistics);
-		const statisticsByEmployee = splitByRequestedEmployee(statistics);
+		const todayStatisticsByEmployee = splitByEmployee(todayStatistics);
+		const statisticsByEmployee = splitByEmployee(statistics);
 
 		return new Map(
 			employeeIds.map((employeeId) => [
@@ -2438,6 +2412,67 @@ export class StatisticService {
 				)
 			])
 		);
+	}
+
+	/**
+	 * The requested members whose own task time the caller may read in a team read: every one of them for a caller
+	 * who may read the whole team (see {@link mayReadWholeTeam}); otherwise those the caller may read through the
+	 * team as its manager, and those a one-employee {@link getTasks} request would read. That request falls back to
+	 * the caller's own employee for a member the caller may not pick, which gives that member nothing: the caller's
+	 * time is never another member's.
+	 *
+	 * @param employeeIds - The requested members, without duplicates
+	 * @param organizationTeamId - The team read
+	 * @returns The members whose own rows the read keeps
+	 */
+	private async findReadableTeamMembers(employeeIds: ID[], organizationTeamId?: ID): Promise<ID[]> {
+		const mayReadWholeTeam = await this.mayReadWholeTeam(organizationTeamId);
+		if (mayReadWholeTeam) {
+			return employeeIds;
+		}
+
+		// The members the caller may read through the team, resolved once for all of them.
+		const readableInTeam = new Set<ID>();
+		if (organizationTeamId) {
+			const teamScope = await this._managedEmployeeService.filterAccessibleEmployeeIds(employeeIds, [
+				organizationTeamId
+			]);
+			teamScope.forEach((employeeId) => readableInTeam.add(employeeId));
+		}
+
+		// A one-employee scope needs no query.
+		const isReadable = await Promise.all(
+			employeeIds.map(async (employeeId) => {
+				if (readableInTeam.has(employeeId)) {
+					return true;
+				}
+				const scope = await this._managedEmployeeService.filterAccessibleEmployeeIds([employeeId]);
+				return scope.includes(employeeId);
+			})
+		);
+
+		return employeeIds.filter((_, index) => isReadable[index]);
+	}
+
+	/**
+	 * Whether the caller may read each member's own task time in a team read: on the conditions under which
+	 * {@link getTasks} lets an employee read a whole team's task time ({@link canReadAllTeamMembers}), a member of
+	 * the team or a holder of ALL_ORG_VIEW. As there, a CHANGE_SELECTED_EMPLOYEE holder and a caller without an
+	 * employee are left to the usual employee filter.
+	 *
+	 * @param organizationTeamId - The team read
+	 * @returns true when every member's own rows may be read
+	 */
+	private async mayReadWholeTeam(organizationTeamId?: ID): Promise<boolean> {
+		const callerEmployeeId = RequestContext.currentUser()?.employeeId;
+		const hasEmployeeIdentity = Boolean(callerEmployeeId);
+		const canChangeSelectedEmployee = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+		const readsAsTeamEmployee = hasEmployeeIdentity && !canChangeSelectedEmployee;
+		if (!readsAsTeamEmployee) {
+			return false;
+		}
+
+		return await this.canReadAllTeamMembers(callerEmployeeId, organizationTeamId, []);
 	}
 
 	/**

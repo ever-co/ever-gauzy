@@ -10,7 +10,7 @@ import { getContrastColor } from '@gauzy/ui-core/common';
 import { ProductService, TranslatableService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { Store } from '@gauzy/ui-core/core';
-import { GalleryComponent, GalleryService } from '@gauzy/ui-core/shared';
+import { GalleryComponent, GalleryService, IRecordViewSection } from '@gauzy/ui-core/shared';
 import { EnabledStatusComponent, ImageRowComponent } from '../inventory-table-components';
 
 @UntilDestroy()
@@ -25,6 +25,7 @@ export class InventoryItemViewComponent extends TranslationBaseComponent impleme
 	inventoryItem: IProductTranslatable;
 	loading: boolean = true;
 	options: IProductOptionTranslatable[] = [];
+	detailsSections: IRecordViewSection[] = [];
 
 	@ViewChild('variantTable') variantTable;
 
@@ -90,6 +91,7 @@ export class InventoryItemViewComponent extends TranslationBaseComponent impleme
 					}
 				});
 
+				this.buildDetailsSections();
 				this.loading = false;
 				this.loadSmartTable();
 				this.smartTableSource.load(variants);
@@ -135,6 +137,69 @@ export class InventoryItemViewComponent extends TranslationBaseComponent impleme
 			return null;
 		}
 		return this.translatableService.getTranslatedProperty(item, prop);
+	}
+
+	private buildDetailsSections(): void {
+		const item = this.inventoryItem;
+		if (!item) {
+			this.detailsSections = [];
+			return;
+		}
+		this.detailsSections = [
+			{
+				title: 'POP_UPS.DETAILS',
+				icon: 'info-outline',
+				collapsible: true,
+				fields: [
+					{
+						label: 'INVENTORY_PAGE.NAME',
+						value: this.getTranslatedProp(item, 'name'),
+						icon: 'cube-outline',
+						showWhenEmpty: true
+					},
+					{
+						label: 'INVENTORY_PAGE.TYPE',
+						value: item.productType ? this.getTranslatedProp(item.productType, 'name') : null,
+						icon: 'layers-outline',
+						showWhenEmpty: true
+					},
+					{
+						label: 'INVENTORY_PAGE.CATEGORY',
+						value: item.productCategory ? this.getTranslatedProp(item.productCategory, 'name') : null,
+						icon: 'folder-outline',
+						showWhenEmpty: true
+					},
+					{
+						label: 'INVENTORY_PAGE.ENABLED',
+						value: !!item.enabled,
+						type: 'boolean',
+						icon: 'checkmark-circle-outline',
+						showWhenEmpty: true
+					},
+					{
+						label: 'INVENTORY_PAGE.OPTIONS',
+						value: this.options.map((option) => option.name).join(', '),
+						icon: 'options-2-outline',
+						showWhenEmpty: true
+					},
+					{
+						label: 'INVENTORY_PAGE.TAGS',
+						key: 'tags',
+						type: 'tags',
+						icon: 'pricetags-outline',
+						showWhenEmpty: true
+					},
+					{
+						label: 'INVENTORY_PAGE.DESCRIPTION',
+						value: this.getTranslatedProp(item, 'description'),
+						type: 'multiline',
+						icon: 'file-text-outline',
+						wide: true,
+						showWhenEmpty: true
+					}
+				]
+			}
+		];
 	}
 
 	async loadSmartTable() {

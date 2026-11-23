@@ -174,8 +174,19 @@
 		(favoriteToggled)="onVendorFavoriteToggled($event)"
 	></ngx-favorite-toggle>
 	}
-	<ng-container *ngxPermissionsOnly="['ALL_ORG_EDIT']">
-		<div class="actions">
+	<div class="actions">
+		<button
+			(click)="openView(selectedItem ?? selected.vendor)"
+			nbButton
+			status="basic"
+			class="action secondary"
+			[disabled]="disabled"
+			size="small"
+		>
+			<nb-icon icon="eye-outline"></nb-icon>
+			{{ 'BUTTONS.VIEW' | translate }}
+		</button>
+		<ng-container *ngxPermissionsOnly="['ALL_ORG_EDIT']">
 			<button
 				(click)="openDialog(addEditTemplate, true)"
 				nbButton
@@ -204,9 +215,20 @@
 			>
 				<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
 			</button>
-		</div>
-	</ng-container>
+		</ng-container>
+	</div>
 </ng-template>
+<ngx-record-view-drawer
+	[open]="!!viewedVendor"
+	[fullViewLink]="viewedVendor ? '/pages/organization/vendors/view/' + viewedVendor.id : null"
+	heading="ORGANIZATIONS_PAGE.VENDORS"
+	[subtitle]="viewedVendor?.name"
+	(closed)="closeView()"
+>
+	@if (viewedVendor) {
+	<ngx-record-view [record]="viewedVendor" [sections]="viewSections"></ngx-record-view>
+	}
+</ngx-record-view-drawer>
 <ng-template #visibleButton>
 	<ng-container *ngxPermissionsOnly="['ALL_ORG_EDIT']">
 		<button nbButton class="action" status="success" size="small" (click)="openDialog(addEditTemplate, false)">

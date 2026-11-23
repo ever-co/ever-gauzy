@@ -24,6 +24,7 @@ import { JOBS_PAGE_ROUTE } from '../../../../../packages/plugins/jobs-ui/src/lib
 import { JOB_PROPOSAL_TEMPLATE_PAGE_ROUTE } from '../../../../../packages/plugins/job-proposal-ui/src/lib/proposal-template/job-proposal-template.routes';
 import { ExpenseViewPageComponent } from './expenses/expense-view/expense-view-page.component';
 import { IncomeViewPageComponent } from './income/income-view/income-view-page.component';
+import { VendorViewPageComponent } from './vendors/vendor-view/vendor-view-page.component';
 import { getPagesRoutes } from './pages.routes';
 import { resolvePagesLink } from './testing/route-matcher';
 
@@ -46,6 +47,7 @@ const DRAWER_LINKS: Array<[string, string, boolean]> = [
 	['goal KPIs', `/pages/goals/settings/kpi/${ID}`, true],
 	['goal time frames', `/pages/goals/settings/time-frame/${ID}`, true],
 	['inventory merchants', `/pages/organization/inventory/merchants/view/${ID}`, true],
+	['vendors', `/pages/organization/vendors/view/${ID}`, false],
 	['proposal templates', `/pages/jobs/proposal-template/view/${ID}`, true],
 	['users', `/pages/users/edit/${ID}`, false],
 	['organizations', `/pages/organizations/edit/${ID}`, false],
@@ -81,6 +83,17 @@ describe('drawer "expand to full width" links resolve to real pages', () => {
 			const chain = await resolvePagesLink(routes, `/pages/accounting/expenses/view/${ID}`, registry);
 			const page = chain[chain.length - 1];
 			expect(page.component).toBe(ExpenseViewPageComponent);
+			expect(page.data?.['recordView']).toBeUndefined();
+		},
+		120_000
+	);
+
+	it(
+		'vendors open their own page, not the generic record page',
+		async () => {
+			const chain = await resolvePagesLink(routes, `/pages/organization/vendors/view/${ID}`, registry);
+			const page = chain[chain.length - 1];
+			expect(page.component).toBe(VendorViewPageComponent);
 			expect(page.data?.['recordView']).toBeUndefined();
 		},
 		120_000

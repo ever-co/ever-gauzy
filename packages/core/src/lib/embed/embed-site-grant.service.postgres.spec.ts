@@ -10,6 +10,7 @@ import {
 	EmbedSiteGrant,
 	Employee,
 	Organization,
+	Role,
 	Tenant,
 	User,
 	UserOrganization
@@ -17,6 +18,7 @@ import {
 import { insertRow } from '../database/testing/insert-row';
 import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
 import { TypeOrmUserOrganizationRepository } from '../user-organization/repository/type-orm-user-organization.repository';
+import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
 import { EmbedAllowedOriginService } from './embed-allowed-origin.service';
 import { EmbedSiteGrantService } from './embed-site-grant.service';
 import { generateEmbedRenewalToken } from './embed.utils';
@@ -49,6 +51,8 @@ const WAIT_STEP = 50;
 const TENANT = randomUUID();
 const ORGANIZATION = randomUUID();
 const USER = randomUUID();
+// The member's role, which holds the time tracker permission (ever-co/ever-gauzy#12134).
+const ROLE = randomUUID();
 const EMPLOYEE = randomUUID();
 const SITE = 'https://team.northwind.example';
 const DAY = 24 * 60 * 60 * 1000;
@@ -103,7 +107,8 @@ const postgresUrl = process.env.GAUZY_MIGRATION_TEST_POSTGRES_URL;
 				name: 'Northwind',
 				currency: 'EUR'
 			});
-			await insertRow(dataSource, User, { id: USER, tenantId: TENANT, email: 'lina@northwind.example' });
+			await insertRow(dataSource, Role, { id: ROLE, tenantId: TENANT, name: 'EMPLOYEE' });
+			await insertRow(dataSource, User, { id: USER, tenantId: TENANT, email: 'lina@northwind.example', roleId: ROLE });
 			await insertRow(dataSource, Employee, {
 				id: EMPLOYEE,
 				...scope,
@@ -130,7 +135,10 @@ const postgresUrl = process.env.GAUZY_MIGRATION_TEST_POSTGRES_URL;
 				new EmbedAllowedOriginService(
 					new TypeOrmEmbedAllowedOriginRepository(dataSource.getRepository(EmbedAllowedOrigin)),
 					{} as never
-				)
+				),
+				new TypeOrmUserRepository(dataSource.getRepository(User)),
+				{} as never,
+				{ checkRolePermission: async (_tenantId: string, roleId: string) => roleId === ROLE } as never
 			);
 		}, TIMEOUT);
 

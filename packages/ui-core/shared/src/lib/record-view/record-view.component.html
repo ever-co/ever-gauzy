@@ -111,6 +111,22 @@
 		}
 		<dd class="record-value" [class]="row.field.tone ? 'tone-text-' + row.field.tone : ''">
 			<ng-container *ngTemplateOutlet="recordValue; context: { $implicit: row }"></ng-container>
+			@if (row.field.copyable && !row.isEmpty) {
+				<button
+					nbButton
+					ghost
+					size="tiny"
+					status="basic"
+					type="button"
+					class="record-copy"
+					[nbTooltip]="'BUTTONS.COPY' | translate"
+					nbTooltipPlacement="top"
+					[attr.aria-label]="'BUTTONS.COPY' | translate"
+					(click)="copy(row.value)"
+				>
+					<nb-icon icon="copy-outline"></nb-icon>
+				</button>
+			}
 		</dd>
 	</div>
 </ng-template>

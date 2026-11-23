@@ -31,6 +31,7 @@ import { TypeOrmOrganizationProjectRepository } from '../../../organization-proj
 import { TypeOrmOrganizationTeamRepository } from '../../../organization-team/repository/type-orm-organization-team.repository';
 import { TypeOrmUserRepository } from '../../../user/repository/type-orm-user.repository';
 import { EmployeePlaceholderTransferService } from '../../../employee-placeholder/employee-placeholder-transfer.service';
+import { createInvitedEmployee } from '../../invited-employee';
 
 /**
  * Use this command for registering employees.
@@ -286,19 +287,7 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 	 * @returns The created employee.
 	 */
 	private async createEmployee(invite: IInvite, user: IUser): Promise<IEmployee> {
-		const { organization, tenantId, actionDate } = invite;
-
-		// Create employee after creating user
-		const employee = this.typeOrmEmployeeRepository.create({
-			user,
-			organization,
-			tenantId,
-			startedWorkOn: actionDate || null,
-			isActive: true,
-			isArchived: false
-		});
-
-		return await this.typeOrmEmployeeRepository.save(employee);
+		return await createInvitedEmployee(this.typeOrmEmployeeRepository, invite, invite.organization, user);
 	}
 
 	/**
