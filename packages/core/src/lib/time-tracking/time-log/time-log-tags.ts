@@ -37,8 +37,8 @@ export interface ITimeLogTagCondition {
 
 /**
  * The tags a write or a filter sends, each spelling once: `undefined` when it sends none, so the log keeps the tags it
- * has. An id sent in two cases keeps both: a filter binds each one, as SQLite compares ids by case, and a write takes
- * each tag once in `timeLogTagsOf`.
+ * has. An id sent in two cases keeps both: a filter binds each one, and its stored form too (`filterTagIds`), as SQLite
+ * compares ids by case, and a write takes each tag once in `timeLogTagsOf`.
  *
  * @param tags The `tags` of a body.
  * @returns The tag ids, or `undefined`.
@@ -126,6 +126,22 @@ export function tagsToLink(tags: ITag[]): ITag[] | undefined {
 /** A uuid as the database answers it, whatever case it was sent in. */
 function canonicalIdOf(id: ID): string {
 	return String(id).toLowerCase();
+}
+
+/**
+ * The ids a tag filter binds: each id as it was sent, then as it is stored, each spelling once. Every key Gauzy
+ * generates is a lowercase uuid (`randomUUID()`, which both ORMs use where the database has no uuid default, and
+ * `gen_random_uuid()` on PostgreSQL), and SQLite keeps it as text compared by case, so an id sent in capitals matched
+ * no log there. The spelling sent is still bound, so a row written with an id of its own keeps matching as before.
+ * PostgreSQL compares `uuid` values whatever their case, so the stored form finds there the same logs as the sent one;
+ * the column is compared bare, which keeps its index in use.
+ *
+ * @param tags The `tagIds` of a read.
+ * @returns The ids to bind, empty when the read asks for no tag.
+ */
+function filterTagIds(tags: unknown): ID[] {
+	const sent = sentTagIds(tags) ?? [];
+	return [...new Set(sent.flatMap((id) => [id, canonicalIdOf(id)]))];
 }
 
 /** Whether a tag belongs to the organization: its own, or one of the whole tenant. */
@@ -254,7 +270,7 @@ export function timeLogTagsCondition(
 	timeLogIdColumn: string,
 	filter: Pick<ITimeLogFilters, 'tagIds' | 'untagged'>
 ): ITimeLogTagCondition | null {
-	const tagIds = sentTagIds(filter?.tagIds) ?? [];
+	const tagIds = filterTagIds(filter?.tagIds);
 	const filtersByTag = tagIds.length > 0;
 	const keepsUntagged = filter?.untagged === true;
 	if (!filtersByTag && !keepsUntagged) {
