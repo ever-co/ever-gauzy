@@ -417,6 +417,12 @@ export class Document extends TenantOrganizationBaseEntity implements IDocument 
 	fileUrl?: string;
 
 	/**
+	 * Virtual. Set by the single-document read: whether the caller may change this document. Never stored.
+	 */
+	@VirtualMultiOrmColumn()
+	canWrite?: boolean;
+
+	/**
 	 * Virtual. Resolved by subscriber from `storageProvider` + `thumbKey`.
 	 */
 	@VirtualMultiOrmColumn()
