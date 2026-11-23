@@ -178,11 +178,11 @@ async function openInRequestContext(
  * the map does not grow for as long as the stream is open. `return` and `throw` only end the stream and read nothing,
  * so they are passed on as they are.
  *
- * Two things the fork does not cover. The GraphQL context's relation loaders (`RelationLoaderRegistry`) are built once
- * per stream and cache what they load, so a relation an earlier event loaded can be answered from that cache: the
- * fork resets the identity map, not those loaders. And Apollo may evaluate the `filter` of several candidate events
- * within one pull, which then share that pull's fork; that is safe while no `@Subscription` filter reads through the
- * ORM, and none does (each compares the payload with the request context).
+ * What the fork does not cover: the GraphQL context's relation loaders (`RelationLoaderRegistry`) are built once per
+ * stream and cache what they load, so a relation an earlier event loaded can be answered from that cache: the fork
+ * resets the identity map, not those loaders. Apollo may also evaluate the `filter` of several candidate events within
+ * one pull; each evaluation forks the pull's fork afresh (`MikroOrmAwareApolloDriver`, the driver `GraphqlModule`
+ * serves with), so a rejected candidate leaves nothing in an identity map for the next.
  *
  * Under TypeORM, or without the instance, the stream is handed back as it is.
  *
