@@ -136,6 +136,40 @@ describe('any other role', () => {
 	});
 });
 
+describe('createPermission by any other role', () => {
+	it('is refused, instead of answering nothing and writing nothing', async () => {
+		// The failure scenario: a custom role holding CHANGE_ROLES_PERMISSIONS got a 201 with an empty body.
+		const { service, create } = actingAs(ROLES.employee, true, [PermissionsEnum.ORG_TEAM_EDIT]);
+
+		const error = await service
+			.createPermission({ roleId: ROLES.employee.id, permission: PermissionsEnum.ORG_TEAM_EDIT, enabled: true })
+			.catch((e) => e);
+
+		expect(error).toBeInstanceOf(BadRequestException);
+		expect(error.message).toContain('You can not add the permissions of');
+		expect(create).not.toHaveBeenCalled();
+	});
+
+	it('still creates for an ADMIN and a SUPER_ADMIN', async () => {
+		const admin = actingAs(ROLES.admin, true, [PermissionsEnum.ORG_TEAM_EDIT]);
+		await admin.service.createPermission({
+			roleId: ROLES.employee.id,
+			permission: PermissionsEnum.ORG_TEAM_EDIT,
+			enabled: true
+		});
+		expect(admin.create).toHaveBeenCalledTimes(1);
+		jest.restoreAllMocks();
+
+		const superAdmin = actingAs(ROLES.super);
+		await superAdmin.service.createPermission({
+			roleId: ROLES.employee.id,
+			permission: PermissionsEnum.ORG_TEAM_EDIT,
+			enabled: true
+		});
+		expect(superAdmin.create).toHaveBeenCalledTimes(1);
+	});
+});
+
 /**
  * `deletePermission` shares the rule. It answered nothing at all to a caller that is neither SUPER_ADMIN nor ADMIN,
  * read `.role.name` of a row whose role could not be read, and put the error object in its 400 body instead of the

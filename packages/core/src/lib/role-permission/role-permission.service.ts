@@ -213,6 +213,12 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 				this.assertMayGrant(role, partialEntity.permission, partialEntity.enabled);
 				return await this.create(partialEntity);
 			}
+			// Any other role (for example a custom role that was given CHANGE_ROLES_PERMISSIONS) used to fall through
+			// with no answer: a 201 with an empty body and nothing written. Refuse it, as `updatePermission`,
+			// `deletePermission`, `softRemove` and `softRecover` do.
+			throw new ForbiddenException(
+				`You can not add the permissions of ${wantToCreatePermissionForRole?.name ?? 'this role'}; please ask your SUPER_ADMIN.`
+			);
 		} catch (error) {
 			throw new BadRequestException(error.message);
 		}
