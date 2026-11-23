@@ -81,7 +81,7 @@ flowchart LR
 | Sending | `COMMUNICATIONS_SENDER` with the mailbox identity (undo, schedule, queue, delivery states, links); fallback `INBOX_EMAIL_OUTBOUND` | spec FR-34, FR-39 |
 | Search | a `search` plugin definition `inbox-email.definition.ts` (subject, parties, body text, attachment names) with a mailbox-access predicate, indexed and searched only for tenants with `FEATURE_MAIL` on (other tenants' index and results stay as today); state filters intersected in the plugin; the database provider as fallback | existing search registry |
 | Rules | conditions as core `rule` rows and the core evaluator; actions evaluated by `rules/actions.ts` over a message view; applied in the arrival queue after sender and intake rules | testable, rules with any number of conditions, no second engine |
-| Remote content | signed proxy route fetching through `createSsrfSafeHttpsAgent()` with size and time caps, tracking parameters stripped, 24 h cache; the first fetch of an image still reaches its sender, so an identifier inside the image address itself can tell the sender the message was opened: the allow prompt says so before anything is fetched (spec FR-61) | safe egress; hides the reader's address, device and later views, never promised to hide that a message was opened once its images are allowed |
+| Remote content | signed proxy route fetching through `createSsrfSafeHttpsAgent()` with size and time caps, tracking parameters stripped, 24 h cache; the first fetch of an image still reaches its sender, and so does a view after its 24 h in the cache, so an identifier inside the image address itself can tell the sender the message was opened and opened again a day later: the allow prompt says so before anything is fetched (spec FR-61); an allow "always for a sender" (`mail_remote_content_allow`) applies only to a message whose sender the Inbox authenticated (its `dmarc` verdict `pass`), and is offered only on such a message, so a message from an always-allowed address that fails or lacks that check shows the prompt again | safe egress; hides the reader's address and device, and views within the cache's 24 h; never promised to hide that a message was opened once its images are allowed |
 | Reports | parsers for aggregate authentication reports (DMARC, RFC 7489) and secure-transport reports (TLS-RPT, RFC 8460) in compressed attachments | standard formats |
 | Archives | streaming readers and writers of message files (RFC 5322) and mailbox archives (RFC 4155) | import and export |
 | Presence | `RealtimePresenceStore` keys `mail-thread:<threadId>` with viewing or replying | collision marks without tables |
@@ -136,11 +136,13 @@ idempotent, forward-only, registered for both ORMs, listed only with `GAUZY_MAIL
 state, draft, correspondent), `1791000065110-CreateMailAutomationTables` (rule order and actions, auto reply, auto reply
 sent, remote content allow), `1791000065120-CreateMailAddressTables` (alias, list, list member, domain, domain report,
 report row, usage), `1791000065130-CreateMailTriageTables` (triage, sender bias). Permissions and `FEATURE_MAIL` are
-plugin contributions (§9), not seeds. Existing messages get state rows from the enable handler per tenant in batches of
-5,000 through `deliveredSince` for received messages and the new Inbox seam `sentSince` (beside it in
-`inbox/email/handoff/inbox-email-handoffs.ts`: outbound messages with status `SENT`, oldest first) for sent ones, both
-read with `INBOX_EMAIL_READER` (idempotent on (`mailboxId`,`emailId`)), so the sent mail of an existing mailbox is
-listed once Mail is enabled; system folders are
+plugin contributions (§9), not seeds. Existing messages get state rows from the enable handler per tenant in batches
+(each call answers at most 1,000 rows, the seam's cap) through `deliveredSince` for received messages and the new Inbox
+seam `sentSince` (beside it in `inbox/email/handoff/inbox-email-handoffs.ts`: outbound messages with status `SENT`,
+oldest first) for sent ones, both read with `INBOX_EMAIL_READER` (idempotent on (`mailboxId`,`emailId`)); each call
+continues after the last row's (`updatedAt`, `id`) through the optional `afterId` both seams accept, so messages
+sharing one time are neither skipped nor read twice, and the sent mail of an existing mailbox is listed once Mail is
+enabled; system folders are
 created per mailbox on first use; the tag type `Mail` is created per organization on first use.
 
 ### Contracts
@@ -151,7 +153,7 @@ core rule rows with `RuleOwnerType.MAIL_RULE`), auto-reply, alias, list, sender 
 mail data), domain report, triage, `IMailUiPreferences` (added to `IUserUiPreferences`); ports `MAIL_SENDER`,
 `MAIL_CALENDAR`, `MAIL_RECORD_INTAKE`, `MAIL_TEXT_GENERATION`, `MAIL_ATTACHMENT_TEXT`, `MAIL_DELETION_GUARDS` (multi),
 offered `MAIL_THREAD_STATE`. `inbox-email.model.ts` gains the additive Inbox ports of §7, optional `sent` on
-`IInboxEmailHandoffListener` and `sentSince` (outbound messages with status `SENT` since a time) beside `deliveredSince`; `BaseEntityEnum` gains `InboxEmailThread` for internal comments and reminders.
+`IInboxEmailHandoffListener` and `sentSince` (outbound messages with status `SENT` since a time) beside `deliveredSince`, both taking an optional `afterId` (rows after (`since`, `afterId`) in (`updatedAt`, `id`) order; without it `deliveredSince` answers as today); `BaseEntityEnum` gains `InboxEmailThread` for internal comments and reminders.
 
 ## 4. API Surface
 
@@ -265,7 +267,7 @@ reminders are the platform's reminder notifications. Consumed: Inbox hand-off `d
 | Trigger | When | What it does | Idempotency |
 | --- | --- | --- | --- |
 | queue `mail-arrivals` | each hand-off (`delivered`, `sent`) | state row, folder, alias mark, list fan-out, then in order sender rules, intake rules and mail rules, auto-reply, counters, usage, reports parsing, triage request, push | unique (`mailboxId`,`emailId`); rule hits once per state row |
-| `mail.recovery` | every 5 minutes | read `deliveredSince` and `sentSince` per tenant from the last cursor of each | state row unique key |
+| `mail.recovery` | every 5 minutes | read `deliveredSince` and `sentSince` per tenant from the last cursor of each, a (`updatedAt`, `emailId`) pair passed as `since` and `afterId` | state row unique key |
 | core operations (bulk executor) | bulk actions, rule apply runs | apply in batches of 500 with progress and cancel | per state row version |
 | reminder sweep of `automation-and-notifications` (not a mail job) | every minute | fires no-reply and needs-answer reminders on conversations | its claim and status |
 | `mail.needs-answer` | hourly | creates a platform reminder for unanswered messages after the working days set, cancels it on reply | one reminder per conversation and person |

@@ -139,7 +139,8 @@
       `hd/service-levels/ticket-sla.lifecycle.ts`, `hd/service-levels/ticket-sla.controller.ts`. Test: every transition of spec
       §3.7, including a status change through the task API; a 24-hour calendar clock started 09:00, paused 10:00 to
       12:00 and moved at 12:00 to a three-hour target gets a 14:00 due time and no breach, while a change to a
-      one-hour target at 12:00 breaches at the change; pause, resume and a second pause in one cycle record three
+      one-hour target at 12:00 breaches at the change; a clock started 09:00 and moved at 10:00, without a pause, to a
+      three-hour target gets a 12:00 due time; pause, resume and a second pause in one cycle record three
       events; a retried transition records one.
 - [ ] **T24**. Minute check job (`helpdesk.sla-check`): breaches at due time with internal comment and notices, catch-up,
       `nextCheckAt`. Files: `hd/schedule/helpdesk-sla-check.scheduler.ts`, `hd/service-levels/sla-check.worker.ts`,

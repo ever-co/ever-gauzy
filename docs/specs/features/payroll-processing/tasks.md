@@ -79,7 +79,8 @@
       `pp/run/payslip-overlap.guard.ts`. Test: unit and
       e2e; an agent employee is never selected; two regular runs of different periods with overlapping dates
       calculated at the same time give the employee one payslip, the other run's employee failing with
-      `PAYROLL_PERIOD_OVERLAP`.
+      `PAYROLL_PERIOD_OVERLAP`; on MySQL the lock is free again after a commit, a rollback and an error in the write,
+      so a later calculation of the employee on another pooled connection does not wait.
 - [ ] **T9**. Day facts: working calendar through `PAYROLL_WORKING_CALENDAR`, payable-day bases, joining and end of
       work, unpaid and partly paid days through `PAYROLL_TIME_OFF_FEED`, override with reason, days explanation. Files:
       `pp/facts/day-facts.gatherer.ts`, `pp/facts/days-explanation.ts`, `pp/payslip/payable-days.controller.ts`. Test:

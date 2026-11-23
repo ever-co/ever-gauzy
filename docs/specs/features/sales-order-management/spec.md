@@ -55,7 +55,7 @@ Advanced capabilities: one **document flow** from deal to payment with live stat
 ### 3.1 Presence and the Sales app
 
 - **FR-1** The system MUST answer every order route with `404` when `FEATURE_ORDER` is off for the tenant, and every route this spec adds with `404` when `FEATURE_SALES` or the route's sub-feature is off; menus hide what is off.
-- **FR-2** With `FEATURE_SALES` off nothing this spec adds MUST be observable: no menu, screen, MCP tool, job effect or event, and the order, cart, estimate and invoice APIs answer exactly as before.
+- **FR-2** With `FEATURE_SALES` off nothing this spec adds MUST be observable: no menu, screen, MCP tool, job effect or event, and the order, cart, estimate and invoice APIs answer exactly as before, apart from the `FEATURE_ORDER` gate of FR-1, which refuses only a tenant that holds no order and whose administrator stored that toggle off.
 - **FR-3** A user with `ORDERS_VIEW` can open Sales → Orders: saved-view lists (list, board by status, calendar by promise date) filtered by status, customer, sales person, territory, dates and delivery, invoice and payment progress.
 - **FR-4** The order page MUST show header, addresses, lines with reserved, picked, delivered, invoiced and returned quantities, totals and their versions, timeline, payments, credit lines, the open change, approvals and the flow.
 - **FR-5** A user with `ORDERS_CREATE` can create an order for a customer in the app: a draft priced by price resolution and taxed by the tax engine, placed with "Place".
@@ -297,7 +297,7 @@ Advanced capabilities: one **document flow** from deal to payment with live stat
 ## 8. Open Questions
 
 - Quotation owner: the `order` plugin's quotation, with the core estimate as issued copy (applied).
-- `FEATURE_ORDER` is now read by the routes (default: wire it, as for all commerce codes; a migration switches it on for every tenant that already has order data, and every tenant without a stored toggle for it gets it on, so no tenant loses a route, also one that has not created its first order yet; release note names it).
+- `FEATURE_ORDER` is now read by the routes (default: wire it, as for all commerce codes; a migration switches it on for every tenant that already has order data, and every tenant without a stored toggle for it gets it on, so no tenant that holds order data or has no stored toggle loses a route, also one that has not created its first order yet, while a tenant without orders whose administrator stored the toggle off gets the answer that setting asks for and can switch it on; release note names it).
 - The contact's `creditLimit` comment says null means "no credit facility"; nothing reads it today. Default applied: null inherits from group and organization, and no limit anywhere means no credit check.
 - Direct edits of an issued copy through the estimate API stay allowed and do not change the offer (default); issued copies may be locked later.
 - Commission payout default: a party payout through the payment provider; payroll hand-off only when payroll is on.

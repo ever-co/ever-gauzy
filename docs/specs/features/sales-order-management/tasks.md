@@ -146,15 +146,16 @@
   organization). Files: `inter-company/inter-company-order.service.ts`, `inter-company/inter-company-order.listener.ts`.
   Test: spec — link both ways, cancellation flags.
 - [ ] **T30**. Credit control: pure `credit-limit.ts` (`organization_contact.creditLimit` → `contact_group` tree from the
-  contact's `defaultGroupId` → `sales.*` setting), `credit-exposure.ts` (the contact's `creditUsed` reconciliation plus
-  open receivables when invoicing reports them, with the order being checked excluded from the confirmed-orders part
-  and added once), overdue check, hold on placement or at delivery (`SALES_PARTY_GUARD`
-  port for the delivery plugin), decisions as `sales_credit_decision` rows shared with the invoice credit reviews of
+  contact's `defaultGroupId` → `sales.*` setting), `credit-exposure.ts` (the uninvoiced amounts of the contact's
+  confirmed orders read at check time plus open receivables when invoicing reports them, with the order being checked
+  excluded from the confirmed-orders part and added once; the nightly `creditUsed` reconciliation kept for display),
+  overdue check, hold on placement or at delivery (`SALES_PARTY_GUARD` port for the delivery plugin), decisions as `sales_credit_decision` rows shared with the invoice credit reviews of
   `invoicing-receivables-payables` (written through `SALES_PARTY_GUARD`), buyer spending limits under
   `FEATURE_B2B_CREDIT`; checks run only where the organization's credit check stage is set (default `NONE`). Test: unit
   matrix; e2e hold and resume re-check; an order decision and an invoice review share the record; with the stage at its
   default a contact with a stored limit is never held; at the delivery stage a confirmed uninvoiced 60 order with no
-  other exposure passes a 100 limit (counted once).
+  other exposure passes a 100 limit (counted once); an order of 50 invoiced since the last reconciliation counts 50
+  once, as an open receivable, so a new 50 order passes a 100 limit.
 - [ ] **T31**. Blocking as core `party_hold` rows (`CONTACT`, scopes ordering, receiving, billing, paying) through
   `PartyHoldService`, release by the core sweep; party guard used by quotation, order, delivery and order-to-invoice
   paths; held orders re-checked on `party_hold.*`. Files: `sales-customer/sales-customer-block.service.ts`,

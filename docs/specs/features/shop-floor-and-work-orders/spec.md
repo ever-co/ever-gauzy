@@ -203,10 +203,12 @@ orders with a preview. These requirements are marked `(advanced)`.
   lists mark state by colour and text and a calendar shows cards by planned dates.
 - **FR-51** A card cannot complete more than the earlier sequence produced less loss (the refusal names the operation and
   quantity); same-sequence cards run in parallel; step outputs count produced quantity per step.
-- **FR-52** Completing needs completed plus lost equal to the card's input: its quantity less the loss recorded on the
-  earlier sequences for it (a 100-unit card after an operation that completed 98 and lost 2 completes with 98, and
-  records no loss of its own for those 2); output and loss are entered per operator, and loss reduces the input of
-  later operations and the order.
+- **FR-52** Completing needs completed plus lost equal to the card's input: its quantity less its share of the loss
+  recorded on the earlier sequences (a 100-unit card after an operation that completed 98 and lost 2 completes with 98,
+  and records no loss of its own for those 2). That loss reduces the combined input of each later operation's cards
+  exactly once, taken from its cards from the last batch backwards, each card at most its own quantity (two 50-unit
+  cards after that operation have inputs of 50 and 48); output and loss are entered per operator, and loss reduces the
+  input of later operations and the order.
 - **FR-53** Sub-operations show as a checklist with minutes and who did them.
 - **FR-54** With issue per card, each card lists its materials; issues above its need are refused unless the card
   over-issue setting allows; requisitions against a card are checked against its need.

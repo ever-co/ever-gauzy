@@ -110,8 +110,9 @@
   decimals (`aa/usage/ai-usage-entry.service.ts`), a consumer of `DocsAiUsageEvent` writing Documents AI calls into the
   same ledger (`aa/usage/docs-ai-usage.listener.ts`), totals added to the core usage meter (`USAGE_METER`, metrics
   `ai.tokens`, `ai.cost`) in the transaction that writes each usage entry. Test: cost from tokens and prices; unpriced
-  flag; an embedding call of the docs plugin counts against the organization cap; a call that crosses the monthly cap
-  makes the next run refused with `AI_BUDGET_EXCEEDED` before the hourly `usage-close` pass runs.
+  flag; an embedding call of the docs plugin counts against the organization cap from the moment its usage entry is
+  written; a call that crosses the monthly cap makes the next run refused with `AI_BUDGET_EXCEEDED` before the hourly
+  `usage-close` pass runs.
 - [ ] **T13**. The assistant as agent "Assistant": `ai-chat` turns also write runs and usage when the plugin is loaded
   and `FEATURE_AI_AGENTS` is on for the tenant (optional hook in `packages/plugins/ai-chat/src/lib/ai-chat.service.ts`,
   answered by `aa/runtime/assistant-run.hook.ts`; absent or off = unchanged); the agent keeps the assistant's 12-step
@@ -256,7 +257,9 @@
 - [ ] **T36**. Skills and sub-agents (budget share, depth 2, cycle refusal); request and flow tools are T55. Files:
   `aa/skills/ai-skill.controller.ts`, `aa/skills/ai-skill.service.ts`, `aa/tools/built-ins/load-skill.tool.ts`,
   `aa/tools/built-ins/delegate.tool.ts`, `aa/runtime/sub-agent-runner.ts`. Test: delegation depth; a cycle is refused;
-  a sub-run gets a share of the remaining budget.
+  a sub-run gets a share of the remaining budget; a sub-run delegated after its parent read untrusted content starts
+  marked and its write needs confirmation (FR-24); a marked sub-run's summary marks the parent, whose next write needs
+  confirmation.
 - [ ] **T37**. Agent templates from plugins (enable, tune, clone, next version offered), export and import packages with
   preview. Files: `aa/templates/agent-template.service.ts`, `aa/agents/agent-package.service.ts`,
   `aa/agents/agent.controller.ts`. Test: round trip between two tenants without keys or content.
@@ -346,7 +349,7 @@ Every functional requirement of `spec.md` §3 and the tasks that implement it; e
 | FR-21 | §3.4 Tools and their permissions | T7, T10 |
 | FR-22 | §3.4 Tools and their permissions | T10, T41 |
 | FR-23 | §3.4 Tools and their permissions | T36, T41, T55 |
-| FR-24 | §3.4 Tools and their permissions | T10 |
+| FR-24 | §3.4 Tools and their permissions | T10, T36 |
 | FR-25 | §3.4 Tools and their permissions | T9, T10 |
 | FR-26–FR-27 | §3.5 Knowledge bases | T26 |
 | FR-28 | §3.5 Knowledge bases | T26, T27, T29 |

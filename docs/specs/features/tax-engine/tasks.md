@@ -85,13 +85,14 @@
   `tax/calculator/rate-ordering.ts`, `tax/calculator/distribution.ts`. Test: unit specs and property tests (parts sum
   to the whole).
 - [ ] **T15**. Calculator: prices including tax (net = entered price less rounded tax; per document, each rate's tax
-  the rounded sum of its lines' unrounded taxes from each line's full chain, distributed by largest remainder, spec
-  FR-35), rounding modes, rounded
+  the rounded sum of its lines' unrounded taxes from each line's full chain, distributed by largest remainder with the
+  rates of a document distributed together so no line's taxes exceed its price, spec FR-35), rounding modes, rounded
   total, organization-currency twins. Files: `tax/calculator/prices-including-tax.ts`, `tax/calculator/rounding.ts`,
   `tax/calculator/currency-twins.ts`. Test: property tests (gross equals entered prices on every line and in total;
   line taxes sum to document tax; no line tax below zero or above its price) in three currencies' scales; 50 lines of
   0.01 at 19 % per document give tax 0.08 and total 0.50; a line of 110 at 10 % and one of 130 at 10 % and 20 % on net
-  give 20 of 10 % tax and 20 of 20 % tax.
+  give 20 of 10 % tax and 20 of 20 % tax; two lines of 0.01, the first with two 100 % rates on net and the second with
+  those two and a third, get line taxes of at most 0.01 each and no negative net.
 - [ ] **T16**. Manual-mode adapter `tax/tax-document/manual-tax.adapter.ts` (typed percentages → tax lines). Test:
   golden-invoice spec replaying stored invoices against today's totals.
 - [ ] **T17**. Determination `tax/determination/`: regime order (document, party, rules, destination, general),

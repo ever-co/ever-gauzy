@@ -71,7 +71,7 @@ flowchart LR
 | Conditions | rows of the core `rule` table with new `RuleOwnerType` values `AUTOMATION_TRIGGER`, `AUTOMATION_STEP`, `ASSIGNMENT_RULE_ASSIGN`, `ASSIGNMENT_RULE_UNASSIGN`, `ASSIGNMENT_RULE_CLOSE` (`ownerId` = the trigger or step uuid of the version document, or the assignment rule), evaluated by `rule.evaluator.ts`; expressions through `@gauzy/utils` formula; no condition column on plugin tables | one condition store with custom fields, pricing, workflows |
 | Records | core record type registry, `IRecordWriter` per type, `CUSTOM_FIELD_VALUE_*` ports | each owner keeps its write path |
 | Triggers in | event outbox consumer registry; scheduler jobs; inbound hook route | durable, ordered per partition |
-| Schedules | `@ScheduledJob` in the worker (`TaskAutomationsSchedulePlugin`), `@QueueWorker` in the API, in-process timers without a queue root | existing split of the plugin |
+| Schedules | `@ScheduledJob` in the worker (`TaskAutomationsSchedulePlugin` for the engine, `RemindersPlugin` for `automations.reminders`), `@QueueWorker` in the API, in-process timers without a queue root | existing split of the plugin |
 | Bounded background work | core operations `AUTOMATION_SIMULATION`, `AUTOMATION_BULK_START` (manual start of up to 500 records), `ASSIGNMENT_RULE_APPLY` (up to 500 records) registered with `OperationRegistry`, per-record results through `BulkExecutor`, `@AcceptedOperation` `202`; simulation counts and samples in the operation `result` | one runtime for bulk work |
 | Settings | setting contributions in `task-automations.settings.ts` stored in `tenant_setting` (`TENANT` and `ORGANIZATION` scopes through the organization level of `organization-setup`): `automations.killSwitch`, `automations.maxDepth` (default 3), `automations.defaultLimits` (JSON), `automations.retentionDays` (90), `automations.failureRetentionDays` (180), `recognition.monthlyAllowance` (100), `recognition.totalsEnabled` (true); kill-switch changes are `activity_log` rows | platform settings store |
 | Locks | advisory lock (PostgreSQL), `GET_LOCK` (MySQL), in-process (SQLite), as `task-automation-task-lock.ts` | one writer per record |
@@ -312,9 +312,11 @@ OpenAPI additive; Kiota SDKs regenerated after merge. Webhooks: `automation.*`, 
 | `inbox-delivery-sweep` (existing, extended) | every minute | bundles, quiet hours, chat, text and destination channels | `inbox_delivery` unique per entry, person, channel |
 | `inbox.digests` | every 15 minutes | summary digests and hourly or weekly follow digests due | `notification_digest_send` unique |
 
-The worker's `TaskAutomationsSchedulePlugin` registers the schedules (under either switch, each job only for its part);
-queue jobs run in the API, which hosts the record services; without a queue root the API runs the same jobs on
-in-process timers under the plugin's sweep lock.
+The worker's `TaskAutomationsSchedulePlugin` registers the engine's schedules (under either switch, each job only for
+its part); `RemindersPlugin` registers the `automations.reminders` schedule itself, on every installation whatever the
+two switches, so other features' reminders are delivered with both switches off; queue jobs run in the API, which hosts
+the record services; without a queue root the API runs the same jobs on in-process timers under the owning plugin's
+sweep lock.
 
 ## 9. Security & Permissions
 

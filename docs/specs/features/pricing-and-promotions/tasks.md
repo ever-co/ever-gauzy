@@ -199,7 +199,8 @@
   `prui/pages/proposals-page.component.ts`, `pr/price-proposal/proposal-aggregates.ts` (the group aggregates sent and
   the local application of the answered moves, plan §9). Test: `pr/price-proposal/price-proposal.operation.spec.ts` proving the
   operation cannot activate a list; the payload captured at the provider holds group aggregates and the goal only, no
-  item id, item price or item margin; the moves answered per group give the expected item prices in the draft.
+  item id, item price or item margin; a group of one item and a group of two are sent with their counts only; the moves
+  answered per group give the expected item prices in the draft.
 - [ ] **T37**. Margin-leak sweep: scheduled job, `/pricing/margin-leaks` routes, Inbox item per run, margin leaks page
   and report. Files: `pr/margin-leak/{margin-leak.sweep.ts,margin-leak.service.ts,margin-leak.controller.ts}`,
   `pr/schedule/pricing-schedule.plugin.ts`, `prui/pages/margin-leaks-page.component.ts`. Test:

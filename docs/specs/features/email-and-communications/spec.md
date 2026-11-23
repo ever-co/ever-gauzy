@@ -200,7 +200,9 @@ incoming mail is **matched to records with a stated reason and confidence**; and
 - **FR-43** The system stores no body for messages a template marks sensitive (sign-in links, codes, password resets),
   keeping only metadata and the delivery state: such a message is rendered and handed to the transport by the sending
   call itself and never scheduled, held, queued or retried from a stored body; a temporary failure is retried within
-  that call, and after the last attempt the recipient is marked failed and the person asks for a new message.
+  that call, an attempt whose outcome is unknown only under the conditions of FR-38 (else the recipient is marked
+  uncertain and nothing is sent again), and after the last attempt the recipient is marked failed and the person asks
+  for a new message.
 - **FR-44** The system counts messages per organization and channel per day and month and enforces the plan or
   deployment limits set for them, refusing with the limit named.
 

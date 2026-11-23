@@ -82,9 +82,12 @@ instead of failing.
   active kit and counts kit components in where-used. Sales bundles (kind `BUNDLE`) are this spec's alone.
 - **Legacy variant price**: with `FEATURE_ITEM_MASTER` and `FEATURE_PRICING` both on, the price fields of the Inventory variant form
   (`edit-inventory-item-variant`) write the variant's price on the default selling list through
-  `CATALOG_PRICE_WRITER`; the existing `product_variant_price` row is kept and stays the resolution's last fallback
-  (`product-price.service.ts`), never written by that form again. With either feature off the form writes the legacy
-  row as today. One form never writes both.
+  `CATALOG_PRICE_WRITER` and set the variant's `product_variant_setting.priceOnList`; the existing
+  `product_variant_price` row is kept and stays the resolution's last fallback (`product-price.service.ts`), never
+  written by that form again for that variant. While `FEATURE_PRICING` is on, a variant with `priceOnList` set keeps
+  having its form price written on the default list after `FEATURE_ITEM_MASTER` is switched off, so an edited price is
+  the one the resolution reads; with `FEATURE_PRICING` off, and for a variant whose price the form never wrote on the
+  list, the form writes the legacy row as today. One form never writes both.
 - **Supplier prices, packs and lead times** are the supplier terms of `procurement` (`vendor_product_term`), read
   through `CATALOG_SUPPLIER_TERMS`; the default supplier of an item is its preferred term (`isPreferred`); the default
   selling and buying lists are the list chain of `pricing-and-promotions`. The precedence is written once in the
@@ -126,7 +129,7 @@ instead of failing.
 | Table | New columns (all nullable or defaulted) |
 |---|---|
 | `product` | `brandId` uuid; `endOfLifeAt` timestamp; `warrantyDays` int; `shelfLifeDays` int; `minOrderQuantity`, `orderMultiple` numeric(20,6); `leadTimeDays`, `leadTimeBufferDays` int; `maxDiscountPercent`, `overDeliveryAllowancePercent`, `overBillingAllowancePercent` numeric(9,6); `deferredRevenueMonths`, `deferredExpenseMonths` int; `withholdingCategoryId` uuid; `variantBasis` varchar(16) (`ATTRIBUTE`, `MANUFACTURER`); `hasVariants` boolean default false; `normalizedName` varchar(255); `plainSummary` text. Index `(organizationId, normalizedName)` where `deletedAt IS NULL`; index `(organizationId, brandId)` |
-| `product_variant_setting` | booleans default false: `isService`, `isFixedAsset`, `isCustomerProvided`, `isSubcontracted`, `usedInManufacturing`, `isDropShip`, `allowsAlternatives`, `isCommissionEligible`, `isBundle`, `isKit` |
+| `product_variant_setting` | booleans default false: `isService`, `isFixedAsset`, `isCustomerProvided`, `isSubcontracted`, `usedInManufacturing`, `isDropShip`, `allowsAlternatives`, `isCommissionEligible`, `isBundle`, `isKit`, `priceOnList` (set when the variant form writes the variant's price on the default selling list) |
 | `product_variant` | `localFields` text (JSON list of fields that no longer inherit); existing `barcode` becomes the copy of the primary `item_barcode` |
 | `product_option_group` | `attributeId` uuid; `product_option`: `attributeValueId` uuid (the option is the list value of a variant) |
 | `unit` | `isActive` boolean default true; `commonCode` varchar(8) |

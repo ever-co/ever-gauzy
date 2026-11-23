@@ -294,7 +294,9 @@ fallback without a queue.
   `PRODUCT_PRICES_VIEW` only.
 - AI proposals send aggregates only, never item-level prices or margins and never customer data, to the organization's
   provider through `PRICING_ASSISTANT`: per price group of the goal (item group or category, or the list as a whole),
-  the item count, the minimum, average and maximum price and margin, and the goal; the provider answers moves per group
+  the item count, the minimum, average and maximum price and margin, and the goal, while a group of fewer than three
+  items is sent with its count only, without price or margin figures, since its minimum and maximum would disclose
+  its items' values; the provider answers moves per group
   (a percentage and a rounding rule), which the operation applies to each item's price locally in the draft list (FR-47);
   listed in the docs.
 - Overrides and setting changes are append-only records with user and time; price changes are activity-log rows.

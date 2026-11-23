@@ -151,7 +151,8 @@ real past cases gate every version before it goes live. Marked `(advanced)`.
 - **FR-24** The system marks tool results carrying user-written or outside content as untrusted and requires confirmation
   for every write that follows untrusted content in the run, in the same step or any later one. The mark stays on the
   run until it ends, across waits and restarts; a later run of the same conversation starts marked while the
-  conversation context it receives still holds that content.
+  conversation context it receives still holds that content. A sub-run delegated by a marked run (FR-15) starts
+  marked, and a sub-run's summary returned from a marked sub-run marks the run that receives it.
 - **FR-25** The system caps a tool result sent to the model (default 20,000 characters), pages longer results and drops
   masked fields before sending.
 

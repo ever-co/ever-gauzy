@@ -118,7 +118,10 @@
       formulas' breakpoints, linear solve per piece, plan §1). Files: `pr/setup/assignments/pay-assignment.service.ts`, `pr/setup/assignments/pay-assignment.controller.ts`,
       `pr/setup/assignments/level-pay-default.service.ts`, `pr/engine/cost-to-company-solver.ts`,
       `pr/engine/solver-breakpoints.ts`. Test: solver within 0.01; `if(base < 100, 100 - base, base)` with a target of 50 gives base 50 although the costs at 0 and 200 are
-      above 50; a target below the function's minimum answers "no base reaches it"; a formula with `base * base`
+      above 50; cost equal to base with a target of 50.00 gives 50.00 and with a target of 50.004 gives 50.00, the base at
+      the currency's precision nearest the solution;
+      `if(base < 200 - base, base, 200 - base)` over 0 to 200 with a target of 50 gives 50 (breakpoint at 100);
+      `if(base < 100, base, 1000)` over 0 to 200 with a target of 50 gives 50 despite the jump at 100; a target below the function's minimum answers "no base reaches it"; a formula with `base * base`
       answers `PAYROLL_SOLVER_UNSUPPORTED` naming the element; every refusal named; a level default matches by label
       without the HR column.
 - [ ] **T18**. Starter elements on first enable, setup checklist, employees without assignment. Files:
@@ -254,7 +257,8 @@
       `payroll_element_draft`. Files: `pr/setup/assistant/payroll-assistant.service.ts`,
       `packages/mcp-server/src/lib/tools/payroll-setup.ts`. Test: draft never saved; with another employee picked for
       the sample, the provider request holds only synthetic sample facts (no `assignment.base` or other value of any
-      employee) while the sandbox result shown to the payroll administrator uses that employee's facts.
+      employee) while the sandbox result shown to the payroll administrator uses that employee's facts; a value typed
+      as a sample fact appears in the sandbox result and in no provider request.
 - [ ] **T47** (parallel). Proof reading through `PAYROLL_DOCUMENT_READER` (`payroll.proof-reader`). Files:
       `pr/setup/declarations/proof-reader.worker.ts`. Test: pre-fill only; reviewer confirms.
 - [ ] **T48**. Starter proposals as core operation `PAYROLL_STARTER_PROPOSALS` writing `PROPOSED` assignments

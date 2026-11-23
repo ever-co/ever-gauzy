@@ -217,7 +217,8 @@
   (custom-fields quick-entry dialog when loaded). Files: `rv/cards/record-card.service.ts`,
   `ui/record-hover-card.directive.ts`, `rvui/components/quick-entry-launcher/quick-entry-launcher.component.ts`. Test: card respects masks; quick entry selects the new record.
 - [ ] **T36**. Search coverage: index definitions in code for comments with notes (private notes indexed with
-  `restrictedToUserId` = their author and filtered by it on every query), linked emails
+  `restrictedToUserId` = their author, kept in step with `visibility` changes, filtered by it on every query and by the
+  notes' current `visibility` on each result page), linked emails
   and every registered type beside the existing `definitions/*.definition.ts`, active only for tenants with the feature
   on, quoted-reply stripping, admin weights page. Files: `sp/definitions/comment.definition.ts`,
   `sp/definitions/linked-email.definition.ts`, `sp/definitions/registered-record-types.definition.ts`,
@@ -225,7 +226,9 @@
   `sp/database/migrations/1791000036210-AddSearchDocumentRestrictedToUser.ts`, `sp/services/search-query.filter.ts`.
   Test: hit in a comment shows its record; reindex progress; a tenant
   with the feature off gets the same index documents and results as before; the author finds their private note by its
-  text and another user who reads the record does not.
+  text and another user who reads the record does not; a note changed to private through `/api/comment` is not
+  returned to that other user while the search consumer is stopped, its document gets `restrictedToUserId` when the
+  update is consumed, and a note changed back to readers is found by both.
 - [ ] **T37**. Unsaved-changes guard and form undo and redo; per-user preferences (`recordViews` UI preferences); phone
   card layout with swipe actions. Files: `ui/unsaved-guard/unsaved-guard.service.ts`,
   `ui/record-list/record-list-preferences.service.ts`, `ui/record-cards-phone/record-cards-phone.component.ts`. Test: guard on navigation; preference round trip.

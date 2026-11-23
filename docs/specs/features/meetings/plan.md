@@ -98,7 +98,7 @@ All tables extend `TenantOrganizationBaseEntity`; JSON is `text`; ids into other
 | `meeting_transcript` | `sessionId`, `recordingId` uuid; `source` varchar(10) (`RECORDING`, `CAPTIONS`); `language` varchar(10); `state` varchar(8) (`QUEUED`, `RUNNING`, `READY`, `FAILED`); `providerKey` varchar(64); `retentionUntil` timestamp | unique (`sessionId`,`source`,`recordingId`); (`retentionUntil`) |
 | `meeting_transcript_segment` | `transcriptId` FK cascade; `seq` int; `startMs`, `endMs` int; `participantId` uuid; `speakerLabel` varchar(120); `text`, `correctedText` text; `correctedByUserId` uuid; `correctedAt` timestamp | unique (`transcriptId`,`seq`); (`transcriptId`,`startMs`) |
 | `meeting_summary` | `sessionId`, `transcriptId`, `approvedByUserId` uuid; `state` varchar(10) (`PROPOSED`, `APPROVED`, `DISCARDED`); `summary`, `decisions`, `actionItems`, `writtenTo` text; `approvedAt` timestamp; `version` int | (`sessionId`) |
-| `meeting_agenda_item` | `roomId` FK; `calendarEventId`, `ownerUserId` uuid; `occurrenceStartAt` timestamp; `title` varchar(300); `minutes` smallint; `position` int; `isDone` bool; `source` varchar(8) (`PERSON`, `PROPOSED`, `CARRIED`, `AGENDA_TEXT`); `sourceRef` text; `version` int | (`roomId`,`occurrenceStartAt`,`position`) |
+| `meeting_agenda_item` | `roomId` FK; `calendarEventId`, `ownerUserId` uuid; `occurrenceStartAt` timestamp; `title` varchar(300); `minutes` smallint; `position` int; `isDone` bool; `source` varchar(12) (`PERSON`, `PROPOSED`, `CARRIED`, `AGENDA_TEXT`); `sourceRef` text; `version` int | (`roomId`,`occurrenceStartAt`,`position`) |
 | `meeting_clip` | `recordingId` FK cascade; `startMs`, `endMs` int; `title` varchar(200); `createdByUserId` uuid; `audience` varchar(12) (`ROOM`, `ORGANIZATION`, `LINK`); `sharedEntityId` uuid null (the link's core `shared_entity` row); `requiresSignIn` bool | (`recordingId`); (`sharedEntityId`) |
 | `meeting_diagnostic` · `meeting_notice` | diagnostic: `sessionId`, `participantId`, `createdByUserId` uuid; `figures`, `note` text; `client` varchar(255) · notice: `adapterKey` varchar(32); `mediaAccountId` uuid; `noticeId` varchar(255); `kind` varchar(32); `payload` text; `processedAt` timestamp | notice unique (`adapterKey`,`noticeId`); diagnostic (`organizationId`,`createdAt`) |
 
@@ -259,7 +259,9 @@ root the API runs them on in-process timers under the plugin lock; captions then
   `MEETINGS_HOST`, `MEETINGS_RECORD` (super admin, admin, manager, employee), `MEETINGS_ROOMS_MANAGE` (super admin, admin,
   manager), `MEETINGS_RECORDINGS_VIEW_ALL`, `MEETINGS_SETTINGS_MANAGE` (super admin, admin).
 - Tokens: issued server-side per room, identity and role, ≤ 1 hour (guests too; a guest reconnecting gets a new token through its guest pass), never for banned subjects, a
-  locked room or a full room; media room names include the tenant; tokens and guest proofs never logged.
+  locked room or a full room, except that in a full room a participant already counted in the session (the same user,
+  or the same guest pass) gets a token that replaces their stale connection without raising the count (FR-20, FR-21);
+  media room names include the tenant; tokens and guest proofs never logged.
 - Notices: per-account token hashed, adapter signature over the raw body, stored before processing. Recorder grants:
   random, hashed, single recording, deadline, size cap, parts checked; nothing else is accepted on the upload route.
 - Recording readers per spec FR-49 through `MeetingAccessService` (+ `RECORD_ACCESS_FILTER` for linked records); stream

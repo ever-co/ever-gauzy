@@ -84,12 +84,13 @@
       `course/dto/create-learning-course.dto.ts`. Test: unit and e2e; unpublished course refuses enrolment; duplicate
       instructors refused; interested people emailed once on publish.
 - [ ] **T10**. Versions and outline: draft version, publish copies with stable lesson keys and writes the
-      `learning_version_assessment` snapshot of quizzes, questions, assignments and placements (plan §3), outline editor
+      `learning_version_assessment` snapshot of quizzes, questions, assignments, exercises and placements (plan §3), outline editor
       endpoints with `version` autosave, reorder and move, delete with reference clean-up. Files:
       `course/learning-course-version.service.ts`, `course/learning-version-assessment.service.ts`,
       `outline/learning-outline.service.ts`, `outline/learning-outline.controller.ts`. Test: progress survives a
-      publish; concurrent outline edits answer `409`; an edit of a published quiz's question, of an assignment's prompt
-      or of a placement is invisible to enrolled learners until republish, and a question shared by two courses changes
+      publish; concurrent outline edits answer `409`; an edit of a published quiz's question, of an assignment's prompt,
+      of an exercise's prompt, starter code or tests, or of a placement is invisible to enrolled learners (and to their
+      exercise runs) until republish, and a question shared by two courses changes
       for the republished one only.
 - [ ] **T11**. Lesson content in the Docs page content format: learning node types, validation, sanitizing, embed
       allow-list, instructor-only stripping, files through `LEARNING_FILES` with signed short-lived links, lessons

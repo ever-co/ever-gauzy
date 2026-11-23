@@ -158,7 +158,7 @@ conditions**, run on demand over existing mail with a preview; **deliverability 
 
 - **FR-59** A user can preview attachments that are images, PDF, text and documents the documents hub can preview, download one or all as an archive, and save any to `drive` or to a linked record's files.
 - **FR-60** A reader can download a message as a standard message file and view its source, which only downloads and never renders.
-- **FR-61** The system MUST block remote images and fonts by default and load them, when the reader allows once or always for a sender, through the platform's guarded fetcher with tracking parameters removed and the reader's address hidden; the allow prompt tells the reader that an image can still let the sender know the message was opened, because an identifier in the image's own address cannot be removed.
+- **FR-61** The system MUST block remote images and fonts by default and load them, when the reader allows once or always for a sender, through the platform's guarded fetcher with tracking parameters removed and the reader's address hidden; the allow prompt tells the reader that an image can still let the sender know the message was opened, and opened again when it is viewed more than a day later, because an identifier in the image's own address cannot be removed. Allowing always for a sender is offered for, and applies to, only messages whose sender address passes the platform's domain authentication check; a message from that address that does not pass it asks again.
 - **FR-62** The system MUST show sender pictures only from the platform's own contacts and colleagues.
 - **FR-63** The system MUST warn before opening a link whose shown text names another address than its target.
 

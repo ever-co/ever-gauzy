@@ -109,14 +109,16 @@
   `F/fulfillment/dto/scan-fulfillment.dto.ts`. Test: `F/fulfillment/fulfillment-scan.service.spec.ts` (case barcode adds
   its quantity; beyond the line quantity warns) and `F/fulfillment/fulfillment-inspection-gate.spec.ts`.
 - [ ] **T16**. Cancellation cascade: pack slips made by the delivery's packing voided through `FULFILLMENT_PACKING`
-  (other pack slips untouched), trip stop removed, consignment cancelled with the carrier; a consignment that also
+  (other pack slips untouched), the delivery's `tripStopId` cleared and the stop removed only when no other delivery
+  remains on it, consignment cancelled with the carrier; a consignment that also
   carries other deliveries keeps them unbooked with their packages, labels voided and marked "needs rebooking" (spec
   FR-18), rebooked at once where the organization's automatic rate choice is on. Files:
   `F/fulfillment/fulfillment-cancel-cascade.ts`, `F/fulfillment/fulfillment.service.ts`, `W/pack-slip/pack-slip.service.ts`,
   `F/carrier/delivery-consignment.service.ts`. Test: `F/fulfillment/fulfillment-cancel-cascade.spec.ts` (stubbed
   adapter; packages voided; a pack slip made through `/pack-slips` stays open; cancelling delivery A of a consignment
   with A and B leaves B in the consignment with its packages and reservations, unbooked and marked for rebooking, and
-  rebooks B at once with the automatic choice on).
+  rebooks B at once with the automatic choice on; cancelling delivery A of a stop shared with B keeps the stop with B
+  and removes the stop of a delivery alone on it).
 - [ ] **T17**. Progress derivation (`F/fulfillment/fulfillment-progress.ts`, pure), the document flow
   (`GET /fulfillments/:id/flow`) and `POST /fulfillments/bulk/invoice` starting a document-engine bulk run through
   `FULFILLMENT_INVOICING` (per-order items). Files: `F/fulfillment/fulfillment-flow.service.ts`,

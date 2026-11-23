@@ -246,7 +246,8 @@
   `INV/stock-availability/stock-availability.service.spec.ts` (per location kind);
   `INV/stock-reservation/stock-reservation.service.spec.ts` (refusal; a `SUBCONTRACT_ORDER` reservation of an inward
   order on its customer's location is accepted, a sales reservation there and one by another customer's order are
-  refused, and cart availability still skips that location); `INV/channel-warehouse/channel-warehouse.service.spec.ts`
+  refused, the same reservation on that customer's inactive or non-sellable location is refused, and cart
+  availability still skips that location); `INV/channel-warehouse/channel-warehouse.service.spec.ts`
   (mapping refusal); `WH/warehouse-zone/zone-move.sqlite.spec.ts` (move; with the setting off a quarantine zone is
   created in a sellable location as today).
 - [ ] **T55**. Level events from every stock write (FR-104): one `StockLevelWriter` in the inventory plugin through

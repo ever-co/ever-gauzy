@@ -166,7 +166,7 @@ Errors: `LEAD_FORM_REQUIRED_FIELDS_MISSING` (fields named), `LEAD_FORM_ORIGIN_IN
 | Event (outbox, partition `LEAD_CAPTURE:<formId or sourceId>`) | Emitted when | Consumers |
 | --- | --- | --- |
 | `lead_capture.form.published` · `unpublished` | form lifecycle | audit, automations |
-| `lead_capture.submission.accepted` · `refused` · `blocked` | submission outcome | automations, webhooks, Inbox (refused to form owner), analytics |
+| `lead_capture.submission.accepted` · `refused` · `blocked` | submission outcome (appended in the transaction that completes the item) | automations, webhooks, Inbox (refused to form owner), analytics, `subscriber:lead-capture-acknowledgement` (accepted, when the form asks for an acknowledgement) |
 | `lead_capture.item.failed` · `lead_capture.source.attention` | failure; 5 failures or reconnect | Inbox to the source owner (once per spell), automations |
 | `lead_capture.enrichment.done` · `failed` · `undone` | run end | real-time (record page), timeline entry, automations, webhooks |
 
@@ -226,7 +226,7 @@ and enrichment runs on CRM records. Notification category `lead_capture.alert`.
 
 | Trigger | When | What it does | Idempotency |
 | --- | --- | --- | --- |
-| queue `lead-capture-intake` | each received submission or item | pipeline: map, consent, attribution, duplicate policy, CRM call, acknowledgement | `lead_submission.reference`, (`sourceId`,`externalId`); the CRM call and the item's completion commit in one transaction (plan §2 Leads), and the acknowledgement runs after commit, marked on the item; state compare-and-set |
+| queue `lead-capture-intake` | each received submission or item | pipeline: map, consent, attribution, duplicate policy, CRM call, acknowledgement | `lead_submission.reference`, (`sourceId`,`externalId`); the CRM call and the item's completion commit in one transaction (plan §2 Leads) with the `lead_capture.submission.accepted` outbox event, and the acknowledgement owed by the form is sent by `subscriber:lead-capture-acknowledgement` on that event through `COMMUNICATIONS_SENDER` with the idempotency key `lead-ack:<reference>` (the `EmailSendService` fallback guarded by the consumer's delivery record), so a stop between the commit and the send is retried by the outbox delivery; state compare-and-set |
 | `lead-capture.connector-sync` (scheduler → queue) | every minute: sources with `nextRunAt ≤ now`; "sync now" | fetch since `watermark − overlap`, page by page; advance watermark after each committed page | external id uniqueness; watermark only forward |
 | `lead-capture.retry` | every minute | items with `outcome = FAILED` and `nextAttemptAt ≤ now` (back-off 1, 5, 15, 60, 240 minutes) | attempts counter; outcome compare-and-set |
 | enrichment operation (core runtime, type `LEAD_ENRICHMENT`) | run requested | crawl, extract, score, map, write per policy, record changes; one run per record at a time | one live operation per aggregate (the record); idempotency key per request; steps resumed by the runtime |

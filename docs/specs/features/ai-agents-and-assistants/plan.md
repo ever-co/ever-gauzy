@@ -48,9 +48,15 @@ It is a layer over what exists, never a copy:
 - **Usage, budgets and outside clients**: usage per model call is this plugin's `ai_usage_entry`; totals per agent,
   purpose, user and organization and month are metrics (`ai.tokens`, `ai.cost`) of the platform's one usage meter
   (core `stats` module, `platform-administration`), incremented in the transaction that writes each usage entry, so
-  the admission check of the next run reads a total that includes every finished call; the Documents AI usage events (`DocsAiUsageEvent` of
+  the admission check of the next run reads a total that includes every finished call of the agents and purposes of
+  this plugin; the Documents AI usage events (`DocsAiUsageEvent` of
   `packages/plugins/docs/src/lib/knowledge/ai/docs-ai-usage.event.ts`: tokens per embedding, classification and OCR
-  call) are recorded in the same ledger, so caps cover every AI call. Budgets, AI cost caps and the request and write
+  call) are recorded in the same ledger, so caps cover every AI call. A Documents call counts from the moment its
+  listener writes the usage entry, which follows the call on the in-process event bus without holding it (the
+  Documents plugin never lets accounting fail a job): a run admitted in that interval starts before the call counts,
+  so a month's total can pass the cap by the Documents calls still being recorded, as it can by the calls of runs
+  already admitted (FR-51 refuses new runs at 100 %), and every admission check after the entry is written counts
+  it. Budgets, AI cost caps and the request and write
   budgets of agent principals are `ai_budget` rows (`AGENT_BUDGETS` port for `access-control-and-security`). Connected
   MCP clients are listed and revoked in the one list of `access-control-and-security`.
 
@@ -322,7 +328,9 @@ the tool gate checks the agent's modes and the invoker's permissions before each
 ceiling, budget, untrusted-content rule, preview handling; refusals are tool calls with `outcome = REFUSED`. The
 untrusted-content rule reads `ai_run.untrustedSinceStep`: once set, every later write of the run, in that step or any
 later one and after a resume, needs confirmation; a run of the same conversation whose context carries an untrusted
-result of an earlier run starts with the column set at step 0.
+result of an earlier run starts with the column set at step 0. A sub-run (`parentRunId` set) started while its parent's
+column is set starts with its own set at step 0, and a delegate step that returns the summary of a sub-run whose column
+is set sets the parent's column at that step, if not already set.
 
 **Data to providers.** Masking from the `ai.maskedFields` setting, field rules and purpose masks is applied to tool
 results, passages and context before the model call of agents and purposes; record ids stay, values go. The agent

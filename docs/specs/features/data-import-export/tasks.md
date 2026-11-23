@@ -180,7 +180,7 @@
   `dx/merge/where-used.service.ts`, `dx/merge/where-used.controller.ts`, `ui/where-used-dialog.component.ts`. Test: vendor
   with purchase orders refused with the list, as today; a contact referenced by deals is deleted as today with the setting off and
   refused with it on; a requester who may read the vendor but not two of its purchase orders sees only the readable
-  orders, no count of the others, and `hiddenBlocking: true` when one of the hidden orders blocks the deletion.
+  orders and nothing about the others (no flag, no count); the deletion a hidden order blocks is refused with the generic `DELETE_BLOCKED` answer.
 - [ ] **T34**. Retention kinds `recycle-bin:<recordType>` (declared with the default `KEEP`: no purge unless a period is set for the
   organization; 120 days suggested) and
   `data-exchange.files` (30 days, this plugin's files only) declared through `RETENTION_SOURCES` and purged by the runner

@@ -104,7 +104,7 @@ follow-ups under the caller's rights.
 - **FR-18** A guest can join by link with a name (and an optional address) without an account, when guests are allowed; guests always wait in the lobby unless they hold a personal link from an invitation, are shown as guests to everyone, and their tokens last at most one hour like every join token (FR-7); a guest who stays longer keeps the session, and a reconnection asks for a new token through the guest's pass.
 - **FR-19** A host can ban a participant from the room; banned members and banned guest addresses are refused at the token request.
 - **FR-20** The system MUST ask a person already connected who joins from another device whether to move the call there, close the first connection on yes, and replace a stale connection on reconnection without a second attendance entry.
-- **FR-21** The system MUST refuse joins above the room's participant limit with "room full" and end a session at the duration limit after a warning 5 minutes before.
+- **FR-21** The system MUST refuse joins above the room's participant limit with "room full", while a participant already counted in the session who reconnects or moves to another device (FR-20) replaces their connection without counting twice, and end a session at the duration limit after a warning 5 minutes before.
 - **FR-22** The system MUST list on the meetings page the user's upcoming meetings from the calendar (or their appointments when calendars are off), live rooms they may join, their persistent rooms and recent sessions.
 
 ### 3.5 In the room

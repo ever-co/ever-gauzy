@@ -251,7 +251,8 @@
       `spend/spend-backfill.operation.ts`. Test: figures equal line sums; hint within
       5 s; 80 % and 100 % notices once; the `EXPENSE_SPEND` reader answers the same totals; direct expenses recorded
       before switch-on appear after the backfill; a direct expense created, moved to another project and deleted through
-      the existing routes moves both projects' figures; a backfill running beside live changes ends with the row sums.
+      the existing routes moves both projects' figures; a backfill running beside live changes ends with the row sums;
+      a project and month whose last expense is deleted while the feature is off shows zero after the next switch-on.
 - [ ] **T37**. Claims from delivery trips through `EXPENSE_CLAIM_SOURCES` (adapter bound in
       `apps/api/src/plugin-composition.ts`). Test: prefill with trip date, vehicle and distance; hidden without trips.
 - [ ] **T38**. UI for policies and rates, receipts, cards to explain, spend dashboards in `expense-claims-ui` (phone

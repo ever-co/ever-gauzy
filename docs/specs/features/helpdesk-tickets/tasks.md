@@ -191,7 +191,10 @@
       `hd/moves/merge.service.spec.ts`: times kept; cycle and merged target refused; mail to a merged ticket reaches
       the final target; a confirmed merge of customer A's ticket into customer B's sets `originCustomerContactId` on A's
       messages, B's portal view, replies and quoted history show none of them, A's portal view of the merged source shows
-      them, agents see both, and no requester of A is copied on B's ticket; `split.service.spec.ts`.
+      them, agents see both, and no requester of A is copied on B's ticket; after B's ticket is merged into customer C's,
+      A's messages keep A's value and B's messages get B's, so B's merged-source view shows none of A's; mail sent
+      to A's reference after the merge gets A's value and stays out of B's portal view and quoted replies;
+      `split.service.spec.ts`.
 - [ ] **T34** (parallel). Tasks from tickets through `TaskCreateCommand`, linked as blocking the ticket; done-task notice
       and optional status move. Files: `hd/tickets/ticket-tasks.service.ts`. Test: `hd/tickets/ticket-tasks.service.spec.ts`: link both ways; notice on done.
 - [ ] **T35**. Reactions (setting), automatic followers as task subscribers, timeline contribution through

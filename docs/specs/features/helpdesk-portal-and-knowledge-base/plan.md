@@ -213,7 +213,11 @@ integration token (higher rate limits, same audience rules: everyone articles on
 answers whose audience is fixed to `EVERYONE`: a guest request and an integration-token request answer
 `Cache-Control: public, max-age=60` with validators and `Vary: Authorization, Cookie`, while any request carrying a
 portal session answers `Cache-Control: private, no-store`, whatever audience it resolves to, so a shared cache never
-returns a customer-audience answer to a guest (spec FR-27).
+returns a customer-audience answer to a guest (spec FR-27). When an article stops being public (unpublished, archived,
+or narrowed to `CUSTOMERS` or agents), the platform answers without it from that moment, and a shared cache may serve
+the answer it already holds, which was public when it was given, for at most the remaining 60 s of its `max-age`: this
+window is accepted, since the platform does not control outside caches, and it never applies to an article that was
+not public.
 
 | Method | Endpoint | Permission | Description | Status |
 | ------ | -------- | ---------- | ----------- | ------ |

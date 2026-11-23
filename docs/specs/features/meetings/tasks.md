@@ -87,8 +87,9 @@
   `@PollHostAccessPolicy()` for `MeetingSession`) and chat link through `MEETINGS_CHAT` with the data-channel fallback.
   Test: one vote per participant; results kept; a guest who left cannot vote.
 - [ ] **T17**. Limits and sweeps (participant and duration limits, warnings, empty-room end). Files:
-  `mt/sessions/meeting-limits.service.ts`, `mt/sessions/sessions-sweep.scheduler.ts`. Test: room full; warning 5 minutes
-  before the limit.
+  `mt/sessions/meeting-limits.service.ts`, `mt/sessions/sessions-sweep.scheduler.ts`. Test: room full; a guest and a
+  colleague counted in a full room reconnect with a new token that replaces their stale connection, the count
+  unchanged, while a new person is still refused; warning 5 minutes before the limit.
 - [ ] **T18**. Scheduling `schedule/*` through `MEETINGS_CALENDAR` with the appointment fallback (`inviteeEmployeeIds`),
   join opening before the start, event changes followed. Files: `mt/schedule/meeting-schedule.service.ts`,
   `mt/schedule/meeting-schedule.controller.ts`, `mt/schedule/calendar-event.consumer.ts`. Test: AC-8 both ways.

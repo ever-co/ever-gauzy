@@ -242,7 +242,7 @@ Marked `(advanced)` below.
   received not yet billed, and billed not yet received, per line with quantities and amounts.
 - **FR-69** The system provides receipts per payment method: amounts received per method, day and user, for register
   sales only on request, with each payment as detail.
-- **FR-70** The system serves the reports of this section from documents alone, so they work without accounting.
+- **FR-70** The system serves the reports of this section from documents alone, so they work without accounting; the one exception is the valuation cost of FR-64, which comes from stock valuation and is shown as unavailable where stock valuation is not in use.
 
 ### 3.8 Dashboards, printable statements and packs
 

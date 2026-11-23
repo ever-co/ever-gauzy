@@ -350,4 +350,7 @@ Use these words in specs, code, UI and docs.
 - **Performance budgets** (unless a spec sets stricter ones): list page under 300 ms at the 95th percentile for one
   million rows per tenant; document confirmation under 500 ms excluding asynchronous postings; reports over ten
   million ledger or stock lines served from maintained balances or snapshots, not from raw scans.
+- **Named locks:** where a plan takes a named database lock, PostgreSQL uses a transaction-scoped advisory lock, which
+  ends with the transaction; on MySQL a lock taken with `GET_LOCK` is released with `RELEASE_LOCK` on the same
+  connection on every exit path, failures included; SQLite has a single writer and needs none.
 - **Audit:** who, when, before and after for every change to a confirmed document, a posting or a setting.

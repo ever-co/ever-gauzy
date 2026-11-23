@@ -109,7 +109,7 @@ recruiting team's tracked time. Every action is available to agents through MCP 
 | **FR-2** | The system MUST refuse a second active plan line for the same organization, position, department and branch whose period overlaps, naming the existing plan. |
 | **FR-3** | The system MUST let a plan of an organization with children in the organization tree be marked as a group plan, and warn or refuse (organization setting) a child organization's plan whose positions or cost exceed what the group plan leaves for it. |
 | **FR-4** | A user with `RECRUITMENT_PLAN_EDIT` can pull approved hiring requests of the period into a plan as lines in one action. |
-| **FR-5** | The system MUST check a new or reopened opening against the active plan line for its organization, position and period: with enforcement "block" refuse it when holders plus the open positions of other openings plus the positions this opening requests would exceed the plan, with "warn" save it with a warning in that case, with "off" (default) skip the check; closing an opening with unfilled positions warns. |
+| **FR-5** | The system MUST check a new or reopened opening against the active plan line for its organization, position, department, branch and period (an opening without department or branch against the line without them; holders and open positions counted for that line only; where no line matches, "block" and "warn" save it with a notice that no plan covers it): with enforcement "block" refuse it when holders plus the open positions of other openings plus the positions this opening requests would exceed the plan, with "warn" save it with a warning in that case, with "off" (default) skip the check; closing an opening with unfilled positions warns. |
 
 ### 3.2 Hiring requests
 

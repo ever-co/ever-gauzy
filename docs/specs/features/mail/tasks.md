@@ -64,13 +64,14 @@
 - [ ] **T8**. Inbox seams in `packages/plugins/inbox/src/lib/email/`: `INBOX_EMAIL_READER`, `INBOX_MAILBOX_DIRECTORY` (with
   claims from `settings.handoff`), `INBOX_ITEM_STATE` (read, archive, snooze per person), `INBOX_DOMAINS` (domains of the
   organization's mailboxes with their proof state; one proof per organization and domain marking all its mailboxes;
-  another tenant's verified domain refused), `sent` hand-off notices and `sentSince` beside `deliveredSince`
-  (`inbox/email/handoff/inbox-email-handoffs.ts`);
+  another tenant's verified domain refused), `sent` hand-off notices and `sentSince` beside `deliveredSince`, both with
+  the optional `afterId` keyset cursor (`inbox/email/handoff/inbox-email-handoffs.ts`);
   members on employee mailboxes. Files: `inbox/email/ports/inbox-email-reader.ts`,
   `inbox/email/ports/inbox-mailbox-directory.ts`, `inbox/email/ports/inbox-item-state.ts`,
   `inbox/email/ports/inbox-domains.ts`. Test: existing Inbox
   specs green; access answers match `GET /mailboxes/mine`; a domain verified before stays verified; `sentSince` lists
-  outbound `SENT` messages oldest first and `deliveredSince` answers as before.
+  outbound `SENT` messages oldest first and `deliveredSince` answers as before without `afterId`; with `afterId` both
+  page through 1,200 messages of one `updatedAt` returning each once.
 - [ ] **T9** (parallel). Inbox seams consumed: `INBOX_ADDRESS_RESOLVER` in the inbound recipient filter and
   `INBOX_EMAIL_ITEM_POLICY` before item creation, both no-ops when unbound. Files:
   `inbox/email/inbound/inbox-inbound.service.ts`, `mail/aliases/address-resolver.provider.ts`,
@@ -79,7 +80,8 @@
 - [ ] **T10**. Arrival pipeline `state/arrival.service.ts` and queue (state rows, system folders, counters, usage, alias
   marks, Junk for suspect verdicts) and `mail.recovery` with `deliveredSince` and `sentSince`; enable-time backfill of
   received and sent messages. Test: duplicate hand-offs make one row; recovery fills a missed message; a mailbox with
-  sent mail from before Mail was enabled lists it in Sent after the backfill, once.
+  sent mail from before Mail was enabled lists it in Sent after the backfill, once; a backfill and a recovery run over
+  more than 5,000 messages sharing one time list each message once and finish.
 - [ ] **T11**. Lists and conversations `client/*` (keyset pages over state rows, display fields through the reader,
   all inboxes, copies folded by message identity, claimed mailboxes read-only). Test: 1 million state rows page under
   the budget on PostgreSQL; claimed mailbox refuses replies.
@@ -128,8 +130,11 @@
 - [ ] **T25**. Remote content proxy `remote-content/*` (signed addresses, guarded fetch, tracking parameters stripped,
   cache, allow list per sender) and its use by the Inbox's `inbox-email-viewer`
   (`packages/plugins/inbox-ui/src/lib/components/inbox-email-viewer/inbox-email-viewer.component.ts`) while the feature
-  is on; the allow prompt states that allowing can tell the sender the message was opened. Test: internal
-  address refused; signature bound to user and message; the prompt shows that notice before any fetch; the Inbox shows
+  is on; the allow prompt states that allowing can tell the sender the message was opened, and opened again after the
+  24 h cache. Test: internal
+  address refused; signature bound to user and message; the prompt shows that notice before any fetch; a message with
+  a spoofed sender address (failed domain authentication) from an always-allowed sender loads no image and asks again,
+  and offers no "always"; the Inbox shows
   proxied images after consent too; with the
   feature off the Inbox viewer offers no consent and renders as before.
 - [ ] **T26**. Contacts from messages and invitation banner through `MAIL_CALENDAR` (receive, read event, availability

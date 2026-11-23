@@ -116,11 +116,10 @@
 - [ ] **T27**. Designs (`design/product-design.service.ts`, `design/product-design.controller.ts`,
   `jobs/design-build.operation.ts`): CRUD, design operations with step outputs, confirm lock, build as core operation
   `MANUFACTURING_DESIGN_BUILD` creating items through the catalogue port and structures, outcome per node; released
-  builds only with `MANUFACTURING_STRUCTURES_RELEASE`, and through one change request while change control is on (spec
-  FR-52); revisions with change list. Test: build spec (three
+  builds only with `MANUFACTURING_STRUCTURES_RELEASE` (spec FR-52; the change-control path, drafts filed in one change
+  request, is added by T44 once its change-request service exists); revisions with change list. Test: build spec (three
   levels, missing items, report per node; a design editor without the release permission is refused a released build
-  and builds drafts; with change control on a released build leaves drafts and one submitted change request, released
-  on approval); revision spec.
+  and builds drafts); revision spec.
 - [ ] **T28** (parallel). Design file import `design/import/` (`parts-list.parser.ts`, `step-structure.parser.ts`,
   `gltf-tree.parser.ts`, `design-import.merge.ts`): delimited and spreadsheet parts lists, STEP part-structure
   parser, glTF node tree; re-import merge rules. Test: parser specs with fixtures, size and depth limits; merge spec.
@@ -187,8 +186,11 @@
   `STRUCTURE_CHANGE` through `RequestApprovalService`, the purchase-order approval idiom), cancel, settle on the request's
   decision through the plugin's settler (`registerRequestApprovalSettler`, `approval-workflows` T53): release in one
   transaction, or back to draft with the reason; document type
-  `manufacturing.structure_change`. Test: DB spec (approval releases, refusal returns to draft); the request shows on
-  the Approvals page; routed through `REQUEST_APPROVAL_ROUTER` when workflows are bound.
+  `manufacturing.structure_change`; the design build of T27 (`jobs/design-build.operation.ts`) files its structures as
+  drafts in one change request while change control is on (spec FR-52). Test: DB spec (approval releases, refusal
+  returns to draft); the request shows on the Approvals page; routed through `REQUEST_APPROVAL_ROUTER` when workflows
+  are bound; with change control on a released design build leaves drafts and one submitted change request, released
+  on approval.
 - [ ] **T45**. Comparison `change-request/comparison.ts` (pure: match by item and operation, field changes) and route.
   Test: pure spec with added, removed and changed rows.
 - [ ] **T46**. Cost simulation and impact (`change-request/simulation.service.ts`): new unit costs up to the top, open work
@@ -255,7 +257,7 @@ Every functional requirement of `spec.md` §3 and the tasks that implement it; e
 | FR-49 | §3.7 Costing | T24 |
 | FR-50 | §3.7 Costing | T3, T9, T24 |
 | FR-51 | §3.7 Costing | T17, T22 |
-| FR-52–FR-53 | §3.8 Designs to structures | T27 |
+| FR-52–FR-53 | §3.8 Designs to structures | T27, T44 |
 | FR-54 | §3.8 Designs to structures | T28, T36 |
 | FR-55–FR-56 | §3.8 Designs to structures | T27 |
 | FR-57 | §3.9 Update tools | T26 |

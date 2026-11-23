@@ -74,7 +74,9 @@
       `inboxEmailId` with no copy; one `AUDIT_EVENT_SINK` event per communication; the email history's view and resend
       read the body through `communicationId`; a separate-messages send creates one communication per recipient under
       one `sendGroupId`; sensitive templates sent inside the call (plan §2). Test: idempotent send; undo window; a
-      sensitive template stores no body at any time, also when its first attempt fails and the call retries, and its
+      sensitive template stores no body at any time, also when its first attempt fails and the call retries, a first
+      attempt that times out after the transport accepted it is not repeated on a plain mail server (recipient
+      `UNCERTAIN`) and repeated once with the same `messageKey` on a transport declaring `idempotentSend`, and its
       schedule or undo hold is refused with `COMMUNICATION_SENSITIVE_IMMEDIATE`; one body stored per email; one email to
       a To and a Cc recipient keeps one communication and one rendering, a separate send to Alice and Bob in two
       languages keeps two communications of one group, each with the body that person received, and the call answers

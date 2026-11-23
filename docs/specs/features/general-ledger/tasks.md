@@ -138,7 +138,8 @@
       `ledger/ledger-posting-exception.controller.ts`, `schedule/posting-exception-retry.scheduler.ts`. Test: exception
       resolves by itself after the missing rule is added; a document cancelled before the nightly retry has its open
       exception `SUPERSEDED` with the reason, and the retry writes no journal for it, also when the cancellation event
-      and the retry run at the same time.
+      and the retry run at the same time; a retry that locked the exception and read the document as active before the
+      cancellation posts its journal, and the cancellation, waiting on that exception lock, reverses the journal.
 - [ ] **T29**. Control-account lines: every line on a control account names a register item (the owner's
       `openItemId`, or one opened through `OPEN_ITEM_REGISTER` for manual and opening lines), party and side checked
       against it; advances and earmarks read from the register; `GET /open-items/control-check`. Files:

@@ -98,8 +98,12 @@
   `LEAD_INTAKE` port. Test: e2e on SQLite for lead and deal targets; the new lead has an owner within 5 s; no free-text
   campaign on the lead.
 - [ ] **T14**. Acknowledgement through `COMMUNICATIONS_SENDER` with the core `EmailSendService` fallback and per-hour
-  limit. Files: `packages/plugins/lead-capture/src/lib/intake/lead-acknowledgement.service.ts`,
-  `intake/lead-acknowledgement.service.spec.ts`. Test: one email per address and hour; none to suppressed addresses.
+  limit, sent by `subscriber:lead-capture-acknowledgement` on `lead_capture.submission.accepted` with the idempotency
+  key `lead-ack:<reference>` (plan §8). Files: `packages/plugins/lead-capture/src/lib/intake/lead-acknowledgement.service.ts`,
+  `packages/plugins/lead-capture/src/lib/intake/lead-acknowledgement.subscriber.ts`,
+  `intake/lead-acknowledgement.service.spec.ts`. Test: one email per address and hour; none to suppressed addresses; a
+  worker stopped after the item commits and before the send sends the acknowledgement once when the event is delivered
+  again.
 - [ ] **T15**. Test submission `forms/lead-form-test.service.ts` (dry run of the pipeline). Test: writes nothing, sends
   nothing.
 - [ ] **T16**. Submissions list and detail routes (refused submissions with reason and clashing record); timeline source

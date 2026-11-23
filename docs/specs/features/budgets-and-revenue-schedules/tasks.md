@@ -101,7 +101,8 @@
       /budgets/availability`, monitor query (`GET /budgets/:id/monitor` in `budget/budget-monitor.controller.ts`). Test:
       figures equal recomputation after random postings; availability answers under 100 ms on the 5,000-line fixture; a
       pending line without a commitment record lowers availability, and the same line counts once after its record
-      is appended.
+      is appended; an order line recorded at 40 and amended to 80 counts 80 before its amendment is projected and 80
+      after.
 - [ ] **T16**. Consumer `subscriber:accounting-budget-actuals` on `accounting.journal.posted` / `.reversed`
       (exempt kinds of spec FR-23). Files: `budget/consumers/budget-actuals.consumer.ts`. Test:
       `budget-actuals.consumer.spec.ts`: reversal gives budget back; duplicate delivery counts once; a depreciation
@@ -130,10 +131,13 @@
       4,500 releases 1,500.
 - [ ] **T21**. Release of commitments by billed amount on posted bills (`keys.purchaseOrderLineId`), foreign
       currency at the order's rate, skipping the part already consumed at confirmation (T18, idempotency key
-      `bill:<billLineId>`); `BUDGET_COMMITMENT_SOURCE` registry. Files:
+      `bill:<billLineId>`); on `document.<type>.cancelled` of a bill (consumer of T20), the reservation's release and,
+      in the same transaction, a `CONSUME` record of the opposite sign per billed order line (idempotency key
+      `bill-cancel:<billLineId>`); `BUDGET_COMMITMENT_SOURCE` registry. Files:
       `budget/budget-commitment-release.service.ts`, `budget/budget-commitment-source.registry.ts`. Test:
       `budget-commitment-release.service.spec.ts`: release equals what was reserved whatever the bill rate; a
-      registered source's records appear on its line.
+      registered source's records appear on its line; a confirmed 4,000 bill of a 10,000 order cancelled before and
+      after posting brings the open commitment back to 10,000, and a repeated cancellation event appends nothing.
 - [ ] **T22** (parallel). Commitment list, reconciliation to open orders, close check `budget.commitments_agree`,
       year-end lapse or carry on `accounting.fiscal_year.closed` as the operation `ACCOUNTING_BUDGET_YEAR_END`. Files:
       `budget/budget-commitment.controller.ts` (`/budget-commitments`, `/budget-commitments/reconciliation`),

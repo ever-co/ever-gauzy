@@ -95,8 +95,9 @@
   `cancel` by source key prefix) bound in `apps/api/src/plugin-composition.ts` (also as `WORKFLOW_REMINDERS`) and the
   `automations.reminders` job (`ta/reminders/reminders.scheduler.ts`) over the `reminder` table of T5; the table,
   service, port and job are registered by `RemindersPlugin` (`ta/reminders/reminders.plugin.ts`, listing migration
-  `1791000032130`), which `apps/api/src/plugins.ts` and `apps/worker/src/plugins.ts` list whatever the two deployment
-  switches, so the port and the job serve other features whatever
+  `1791000032130` and registering the `automations.reminders` schedule itself), which `apps/api/src/plugins.ts` and
+  `apps/worker/src/plugins.ts` list whatever the two deployment switches, so the port and the job serve other features
+  whatever
   the switches and this feature's flag, while the `/api/reminders` controller is registered by the engine, carries
   `@FeatureFlag(FEATURE_AUTOMATIONS)` like every new route and answers `404` with the feature off (FR-1, FR-53, FR-56,
   AC-14). Files: `ta/reminders/reminders.plugin.ts`, `ta/reminders/reminder.service.ts`, `ta/reminders/reminder.controller.ts`,

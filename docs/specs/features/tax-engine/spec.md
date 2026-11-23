@@ -156,7 +156,10 @@ parties; an agent reviews tax anomalies and proposes fixes a person approves. Ma
   per document, each line's unrounded taxes come from its own full tax chain applied to its entered price, the
   document's tax of each rate is the sum of that rate's unrounded taxes over its lines, rounded once, and it is
   distributed to those lines by largest remainder of their unrounded taxes (a line of 110 with 10 % and one of 130
-  with 10 % and 20 % on net give 20 of 10 % tax, never a tax from the combined 240). Nets plus taxes then equal the entered
+  with 10 % and 20 % on net give 20 of 10 % tax, never a tax from the combined 240). The rates of a document are
+  distributed together, one after another in chain order, each cent going only to a line whose taxes so far are below
+  its entered price, so a line's combined tax never exceeds its price; a cent no line of its rate has room for lowers
+  that rate's document tax by one cent. Nets plus taxes then equal the entered
   prices on every line and in total, and no line's tax is negative or larger than its price (50 lines of 0.01 at
   19 % per document: tax 0.08 on eight lines of 0.01, nets 0.42, total 0.50).
 - **FR-36** A user editing a draft can switch "round the total" (default from the organization) to round the

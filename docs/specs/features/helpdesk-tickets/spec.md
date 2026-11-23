@@ -221,7 +221,9 @@ deliveries, serial units and projects** and starts their actions; **collisions**
   reply and notice keeps the customer it came from: agents see the whole history on the target, while the target's
   customer, its requesters and copies, its replies and the portal service (FR-79) see only the messages of the target's
   own customer, the source's customer keeps seeing its own messages under the source's reference, and no requester is
-  copied on another customer's ticket.
+  copied on another customer's ticket. A message keeps the customer it came from through later merges, and a message
+  that reaches the target later through the source's reference (mail, a portal reply) belongs to the source's
+  customer in the same way.
 - **FR-45** A user with `HELPDESK_TICKET_MERGE` splits a ticket at a customer message: it and later messages (comments on
   choice) move to a new ticket of the same support project copying requester, customer, copies, template, priority,
   team and tags, linked as related and marked "split from", with a comment left.

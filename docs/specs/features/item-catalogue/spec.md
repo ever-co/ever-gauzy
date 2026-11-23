@@ -260,8 +260,9 @@ that resolve live from item, brand and group with an answer to "where does this 
   the rates of a category belong to `tax-engine`.
 - **FR-53** The system MUST write a selling price typed on the new-item form as each new variant's default price
   through `pricing-and-promotions`, converted into the default list's currency at the current rate; while
-  `FEATURE_PRICING` or `FEATURE_ITEM_MASTER` is off the item forms keep writing the variant's retail price as today, and
-  one form never writes both.
+  `FEATURE_PRICING` or `FEATURE_ITEM_MASTER` is off the item forms keep writing the variant's retail price as today,
+  except that while `FEATURE_PRICING` is on a variant whose price the form already wrote on the default list keeps it
+  there, so an edit made after `FEATURE_ITEM_MASTER` is switched off stays the price in use; one form never writes both.
 - **FR-54** A user with `STOCK_EDIT` can enter an opening quantity per stock location when creating a stock item,
   recorded as a receipt movement through the stock ledger; without a location it is refused.
 

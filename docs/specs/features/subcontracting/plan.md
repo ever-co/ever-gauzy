@@ -32,10 +32,16 @@ It builds on what exists rather than beside it:
 - **Reconciliation**: a count of the supplier's location is an inventory `stock_count` (mode `SPOT`) that the supplier
   answers in the portal; closing it writes the corrections, and the `stock_count.closed` consumer allocates each line's
   difference to the order material lines holding that item (and lot) at the location, in the same transaction as its
-  decision: a shortage to the lines in order of their oldest unconsumed send, each at most down to zero held; an excess
-  to the line with the latest send of the item, else to `subcontract_count_decision.unallocatedQuantity`; each line keeps
-  its share in `countAdjustedQuantity`, so the material held on a line is sent less consumed and returned plus its count
-  adjustment.
+  decision: a shortage first reduces the location's outstanding unallocated excess of that item (and lot), the sum of
+  earlier decisions' `unallocatedQuantity`, by a negative `unallocatedQuantity` on its own decision, and the rest goes to
+  the lines in order of their oldest unconsumed send, each at most down to zero held; an excess to the line with the
+  latest send of the item, else to `subcontract_count_decision.unallocatedQuantity`; each line keeps its share in
+  `countAdjustedQuantity`, so the material held on a line is sent less consumed and returned plus its count
+  adjustment. The allocation is one idempotent step per count line (keyed by the unique `stockCountLineId` of the
+  decision, under the count's row lock): every material operation of this plugin at a supplier location (send, the
+  receipt hook's consumption, return, scrap) first runs it, in its own transaction, for any closed count of that
+  location not yet allocated, so no operation reads the location's lines before a closed count's differences are on
+  them, and the consumer then finds those lines allocated.
 - **Suppliers and prices**: the suppliers of a service, their preference and price are the `vendor_product_term` rows
   of the service item.
 - **Contractor labour**: the contractors' time logs on the order's tasks, at the pay rate stored on each log (the

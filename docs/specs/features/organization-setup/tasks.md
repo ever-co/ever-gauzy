@@ -107,12 +107,14 @@
   documents; with no share configured every list returns the same rows as without the filter, tenant-wide rows
   included.
 - [ ] **T18**. Share changes of a tree move (FR-15, FR-35, FR-36): the move transaction of T12 deletes and inserts the
-  group-origin member rows of the moved subtree set-based, after the in-use check on the removed rows, and publishes
+  group-origin member rows of the moved subtree set-based, after the in-use check on the removed rows that leave the
+  organization no other member row for their record, and publishes
   `organization_structure.tree.changed` after commit; the consumer on tree changes only reconciles. Files:
   `os/sharing/share-tree-move.ts`, `os/tree/organization-tree.service.ts`, `os/sharing/share-reexpansion.consumer.ts`.
   Test: joining and leaving a group; right after a move commits (consumer stopped) the departed organization reads
   none of the group's records and the joining one reads them; leaving a group while an open order uses a group-shared
-  customer is refused with `ORG_SHARE_IN_USE` listing the order, and nothing moves.
+  customer is refused with `ORG_SHARE_IN_USE` listing the order, and nothing moves; with the same customer also shared
+  directly with that organization, the departure goes through and the order keeps its customer.
 - [ ] **T19**. Document check participant `os/sharing/organization-document.check.ts` bound to `DOCUMENT_CHECKS`
   (shared party and items, organization lock) and `DOCUMENT_ORGANIZATION_PROFILE` (short code, internal party,
   pair policy) (FR-34, FR-64, FR-88). Test: unit with a stub document.

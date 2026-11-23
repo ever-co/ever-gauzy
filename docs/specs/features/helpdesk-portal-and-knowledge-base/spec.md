@@ -130,7 +130,7 @@ article. A **low rating starts a recovery** with the team lead. These requiremen
 ### 3.5 Access
 
 - **FR-26** Each article has an audience: everyone (published publicly, guests included), customers (signed-in portal members of the organization's customers) or agents (internal readers of the help space).
-- **FR-27** Every list, count, search result, suggestion, feed, read API answer, Markdown twin, list of related articles and assistant answer contains only articles the reader's audience allows; an article outside it answers `404`.
+- **FR-27** Every list, count, search result, suggestion, feed, read API answer, Markdown twin, list of related articles and assistant answer contains only articles the reader's audience allows; an article outside it answers `404`. A public answer that an outside shared cache already holds may still be served for up to 60 seconds after its article stops being public.
 - **FR-28** A user with `HELP_CENTER_SETTINGS_MANAGE` lets guests vote on articles (default on) and raise tickets through the web form channel's submission endpoint (default off) and hides "New request" everywhere when asked.
 
 ### 3.6 Article page and feedback

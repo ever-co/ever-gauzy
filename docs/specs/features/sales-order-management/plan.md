@@ -29,10 +29,14 @@ through ports bound in `apps/api/src/plugin-composition.ts`, never by importing 
   (the group tree) and their defaults; a contact's `defaultGroupId` names, among its group memberships, the group that
   gives it defaults (as `defaultBillingAddressId` names one of its addresses). Organization values are `sales.*` keys of
   the platform settings store. There is no sales profile table.
-- **Credit**: the limit resolves contact → group tree → organization setting; exposure extends the contact's
-  `creditUsed` (re-derived nightly from the order and refund ledgers) with open receivables from
-  `invoicing-receivables-payables`, and counts the order being checked once: its uninvoiced amount is taken out of the
-  confirmed-orders part when it is already in it (a delivery check) and added as this order (spec FR-64); every credit decision, for an order or for an invoice review of
+- **Credit**: the limit resolves contact → group tree → organization setting; exposure is the confirmed-orders part
+  plus open receivables from `invoicing-receivables-payables`, and counts the order being checked once: its
+  uninvoiced amount is taken out of the confirmed-orders part when it is already in it (a delivery check) and added as
+  this order (spec FR-64). The confirmed-orders part is read at check time as the sum of the uninvoiced amounts of the
+  contact's confirmed orders, the same amount the check takes for this order, so an order invoiced since the nightly
+  reconciliation counts only as its open receivable for the invoiced part and an order confirmed since then counts at
+  once; the contact's `creditUsed`, re-derived nightly from the order and refund ledgers, stays the figure shown beside
+  the limit; every credit decision, for an order or for an invoice review of
   `invoicing-receivables-payables`, is one `sales_credit_decision` row, written through `SALES_PARTY_GUARD`.
 - **Holds and blocks**: an order hold is the document engine's `hold` / `release` action on the order's document
   (`business-document-engine`); the order keeps only a reason code and a release date, which the engine lacks.
@@ -370,7 +374,7 @@ platform logger with order and organization ids.
 | Promise refresh load on big catalogues | Medium | Medium | debounced per line, event-scoped, nightly pass in the worker |
 | Promise moves flood the order history | Medium | Low | one order change per refresh pass and order, only when a date moves |
 | Order plugin grows large | High | Low | sub-modules with their own Nest modules and sub-features; can split later |
-| Wiring `FEATURE_ORDER` cuts off a tenant that turned it off | Low | Medium | migration enables it for every tenant with orders, and a second one writes an enabled toggle for every tenant without a toggle row, so a tenant with no orders yet can create its first; release note; toggle rows already enabled by default |
+| Wiring `FEATURE_ORDER` cuts off a tenant that turned it off | Low | Medium | migration enables it for every tenant with orders, and a second one writes an enabled toggle for every tenant without a toggle row, so a tenant with no orders yet can create its first; a tenant without orders whose administrator stored the toggle off keeps that setting and can switch it on; release note; toggle rows already enabled by default |
 | Sales rules refuse or hold orders of existing paths (checkout, API) | Medium | High | every refusing, holding or requiring `sales.*` setting defaults to today's behaviour (credit check stage `NONE`, requested date not required, buyer reference accepted, price edit open to `ORDERS_EDIT`); contract tests on checkout and order routes with the feature on |
 
 ## 14. References

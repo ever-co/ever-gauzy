@@ -34,12 +34,17 @@ so a preview and a payslip cannot disagree. Build order: the shared formula modu
 
 The cost-to-company solver treats the yearly cost as a function of the base and solves it piece by piece, so a
 non-monotonic formula is handled exactly: it walks the formulas' syntax trees for the points where that function can
-change slope or jump (comparisons of a base-dependent value with a constant, the kinks of `min`, `max` and `abs`,
-pay-table band edges, rounding steps), splits the base range at them, and within each piece, where the function is
-linear in the base, evaluates both ends and solves the linear equation; it returns the smallest base whose full
-evaluation reaches the target within 0.01, or "no base reaches it" when no piece contains one. A formula in which the
-base enters other than linearly within a piece (a product or quotient of two base-dependent terms, a power) is not
-solved: the route answers `PAYROLL_SOLVER_UNSUPPORTED` naming the element, and every other use of the structure is
+change slope or jump (where the two sides of a comparison, or two arguments of `min` or `max`, are equal and where the
+argument of `abs` is zero, each side being affine in the base, so a comparison of two base-dependent values breaks
+where they meet; pay-table band edges; rounding steps), splits the base range at them, and within each piece, where
+the function is linear in the base, takes the piece's own line from two points inside the piece (so a jump at an end
+does not distort it) and solves the linear equation for the target. The piece's candidate is the base at the base's
+precision (the currency's decimals) nearest that solution and inside the piece (its smallest base where the line is
+flat at the target), kept only when the full evaluation puts its cost within 0.01 of the target; the solver returns
+the smallest candidate of all pieces, or "no base reaches it" when there is none. A formula in
+which the base enters other than linearly within a piece (a product or quotient of two base-dependent terms, a power,
+a comparison whose sides are not affine in the base) is not solved: the route answers `PAYROLL_SOLVER_UNSUPPORTED`
+naming the element, and every other use of the structure is
 unaffected.
 
 **Built on what exists (no second store).** Settings are keys of `payroll.settings.ts` in the platform settings
@@ -331,7 +336,8 @@ kind at a time (advisory lock).
   with a step budget and a 2,000-character cap; no `eval`, dynamic import or prototype access (names resolved with
   own-property checks as the core rule evaluator does).
 - Assistant: requests to the AI provider carry only element names, codes, fact names, the description and synthetic
-  sample facts (values generated per fact type, or values the user typed for the sample); no employee's data is ever
+  sample facts generated per fact type; values the user types for the sample, which may be an employee's real pay,
+  stay in the platform's sandbox like a picked employee's facts and are never sent, so no employee's data is ever
   sent, the user's own included. When the user picks an employee for the sample, that employee's facts are read only
   by the platform's sandbox (T19), which computes the draft's sandbox result in the platform and shows it to a user who
   may read that pay; neither the facts nor the result go to the provider.

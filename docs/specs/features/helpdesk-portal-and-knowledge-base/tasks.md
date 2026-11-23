@@ -77,7 +77,9 @@
       sign-in is off; shared caching only for `EVERYONE` answers (plan §4). Test: e2e as guest and with an integration token;
       404 outside the audience; 404 with the flag off; a guest answer carries `Cache-Control: public, max-age=60` and
       `Vary: Authorization, Cookie`, an answer to a portal session `private, no-store`, so a customer-only article never
-      reaches a guest through a shared cache.
+      reaches a guest through a shared cache; after an article is unpublished, archived or narrowed to customers, the
+      next guest answer from the platform leaves it out (`404` for the article) and an answer given before carried at
+      most `max-age=60`.
 - [ ] **T13**. `dh/search/`: `HelpSearchService` over `DOCS_KNOWLEDGE_SEARCH_SERVICE` filtered to help spaces, audience,
       language and published state, synonyms and ignored words expanded before the call, field weights on the merged
       result, search log, index check through the docs knowledge queue with progress. Test: title match first; synonym

@@ -172,7 +172,8 @@
   `participants/calendar-mailer.port.ts`. Test: `ical/ical.spec.ts` (round trip of a series with exceptions);
   `participants/invitation.dispatcher.spec.ts` (one update per change; nothing before the organizer sends; an appointment
   written through the existing routes keeps the short appointment email; no invitation for an event organised outside;
-  agents get no email).
+  agents get no email; with the participant list hidden (FR-34) a guest's email and iCalendar attachment name only the
+  organizer and that guest).
 - [ ] **T23**. Answers and proposals (per series and per occurrence, delegates, bulk answers, organizer notices) and
   public answer route with signed tokens. Files: `participants/answer.service.ts`, `participants/answer.controller.ts`
   (`…/answer`, `…/proposals/:pid/{accept,dismiss}`, `/calendar/invitations`), `public/public-answer.controller.ts`,

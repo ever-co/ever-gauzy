@@ -152,12 +152,15 @@
   `C/item-bundle/bundle-expansion.service.ts`. Test: `C/item-bundle/item-bundle.service.spec.ts` (FR-44..FR-49). [2]
 - [ ] **T21**. Commercial and buying attributes on the product DTOs; last purchase price through the port;
   standard selling price written through the price port on create, the Inventory variant price fields writing
-  `product_price` while `FEATURE_ITEM_MASTER` and `FEATURE_PRICING` are both on and the legacy row while either is off (FR-53); opening quantity receipt
+  `product_price` while `FEATURE_ITEM_MASTER` and `FEATURE_PRICING` are both on (setting `priceOnList`), and the legacy
+  row while either is off unless pricing is on and the variant's `priceOnList` is set (FR-53); opening quantity receipt
   through the ledger port (FR-54). Files: `packages/core/src/lib/product/dto/` (new optional fields),
   `C/item-commercial/item-commercial.service.ts`, `C/item-commercial/opening-stock.service.ts`,
   `INV/edit-inventory-item-variant/variant-form.component.ts`. Test:
   `C/item-commercial/item-commercial.service.spec.ts` (one form never writes both prices; with `FEATURE_PRICING` on and
-  `FEATURE_ITEM_MASTER` off the variant form writes the legacy row exactly as today);
+  `FEATURE_ITEM_MASTER` off the variant form writes the legacy row exactly as today for a variant never priced on the
+  list; a variant priced on the list while both were on, edited after `FEATURE_ITEM_MASTER` is switched off, resolves
+  to the edited price);
   `C/item-commercial/opening-stock.service.spec.ts` (refused without a location). [2]
 - [ ] **T22**. Availability (`StockAvailabilityService` through `CATALOG_STOCK_AVAILABILITY`) and end-of-life check
   `/items/:id/availability`; connections registry

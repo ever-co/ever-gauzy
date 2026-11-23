@@ -291,7 +291,7 @@ regenerated after merge.
 | `expenses.travel-close` | daily | closes trips whose claims are decided, releases commitments | state transition; commitment key |
 | `expenses.policy-recheck` | on policy change | re-evaluates draft and submitted lines | findings replaced per line |
 | `expenses.spend-figures` (outbox consumer) | claim events, invoice events, `expenses.direct_expense.changed` | recomputes the touched figure keys from the `expense` rows, pushes hints | recompute per `figureKey` under its row lock |
-| core operation `EXPENSE_SPEND_BACKFILL` | the feature switched on for a tenant (the first time and after any period off) | builds the figures of every month that holds direct expenses or approved claim lines, in steps of one project or client and month | the same recompute per `figureKey` |
+| core operation `EXPENSE_SPEND_BACKFILL` | the feature switched on for a tenant (the first time and after any period off) | builds the figures of every figure key that holds direct expenses or approved claim lines, and recomputes every existing `expense_spend_figure` key, so a key whose last expense went while the feature was off becomes zero, in steps of one project or client and month | the same recompute per `figureKey` |
 | `expenses.reimbursement-sync` (outbox consumer) | open item, payment and payslip events | reimbursement and advance states | state derived from amounts |
 
 The worker loads `ExpenseClaimsSchedulePlugin`; the API loads `ExpenseClaimsPlugin` and the queue workers; without a
