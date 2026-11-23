@@ -277,9 +277,7 @@ button {
     align-items: center;
     background: transparent;
     padding: 0;
-    // Same separation as between the strip and the grid/list switch.
-    @include nb-ltr(margin-right, 1rem);
-    @include nb-rtl(margin-left, 1rem);
+    margin: 0;
   }
 
   // "+ Add" is the one solid button in the row, in the theme's primary colour,
@@ -386,6 +384,11 @@ button {
 
 :host .transition {
   display: flex;
+  align-items: center;
+  // "+ Add" and the action strip: the same separation as between the strip and
+  // the grid/list switch. A gap rather than a margin on the Add wrapper, which
+  // is direction-agnostic and cannot be out-ranked by a button margin rule.
+  gap: 1rem;
 
   &.hide {
     @include nb-rtl(transform, translateX(-100%));
@@ -606,8 +609,15 @@ ga-pagination {
     // The ring belongs on the inner <button>, which is the box that is painted.
     box-shadow: none;
     margin: 0;
+    // Nebular floors the select ELEMENT at `select-min-width` (6rem), which
+    // left the trigger wider than its label with the chevron adrift.
+    min-width: 0;
+    max-width: none;
+    width: auto;
 
-    ::ng-deep .select-button {
+    // The class is doubled to out-rank Nebular's theme-scoped select rules
+    // (`.nb-theme-* nb-select.appearance-filled.status-basic .select-button`).
+    ::ng-deep .select-button.select-button {
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -615,6 +625,9 @@ ga-pagination {
       min-width: 0;
       width: auto;
       height: var(--gauzy-toolbar-button-height);
+      // The app-wide select override sets a 36px `min-height` floor on every
+      // trigger, which out-grew the 28px height above.
+      min-height: 0;
       padding: 0 0.625rem;
       // Nebular adds `select-icon-offset` to the inline-end side from a
       // `[dir]`-qualified rule; restated the same way to out-rank it.
@@ -662,6 +675,14 @@ ga-pagination {
         cursor: not-allowed;
       }
 
+      // The label keeps its own width beside the chevron rather than
+      // stretching to push it to the far edge.
+      > span {
+        flex: 0 1 auto;
+        min-width: 0;
+        line-height: 1rem;
+      }
+
       nb-icon {
         // Back into the flow instead of Nebular's absolutely positioned gutter.
         position: static;
@@ -677,7 +698,7 @@ ga-pagination {
 
     // The open-state flip, which Nebular writes as a SECOND transform including
     // the centring translate it no longer needs.
-    &.open ::ng-deep .select-button nb-icon {
+    &.open ::ng-deep .select-button.select-button nb-icon {
       transform: rotate(180deg);
     }
   }
