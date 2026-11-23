@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { DataSource } from 'typeorm';
-import { EntitySchema, MikroORM } from '@mikro-orm/core';
+import { EntitySchema, FilterQuery, MikroORM } from '@mikro-orm/core';
 import { BetterSqliteDriver } from '@mikro-orm/better-sqlite';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { ITimeLogFilters } from '@gauzy/contracts';
@@ -134,8 +134,8 @@ async function typeOrmRead(dataSource: DataSource, filter: Filter): Promise<stri
 
 /** The ids of the logs a MikroORM read keeps, in order. */
 async function mikroOrmRead(orm: MikroORM, filter: Filter): Promise<string[]> {
-	const where = { [mikroOrmTimeLogTagsKey(filter)]: [] };
-	const rows = await orm.em.fork().find(TimeLogRowSchema, where as any, { orderBy: { id: 'asc' } });
+	const where: FilterQuery<TimeLogRow> = { [mikroOrmTimeLogTagsKey(filter)]: [] };
+	const rows = await orm.em.fork().find(TimeLogRowSchema, where, { orderBy: { id: 'asc' } });
 	return rows.map((row) => String(row.id));
 }
 

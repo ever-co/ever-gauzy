@@ -363,8 +363,8 @@ describe('TimeLogService tags, on one database through both ORMs', () => {
 
 		it('answers the same 2 h of meeting when the report is asked for the tag in capitals', () => {
 			const { dailyByMeetingInCapitals, chartByMeetingInCapitals, weeklyByMeetingInCapitals } = measured[orm];
-			expect(dailyByMeetingInCapitals.map((day: any) => [day.date, day.sum])).toEqual([[TUESDAY, 2 * 3600]]);
-			expect(chartByMeetingInCapitals.find(({ date }: any) => date === TUESDAY).value.MANUAL).toBe(2);
+			expect(dailyByMeetingInCapitals.map((day) => [day.date, day.sum])).toEqual([[TUESDAY, 2 * 3600]]);
+			expect(chartByMeetingInCapitals.find(({ date }) => date === TUESDAY).value.MANUAL).toBe(2);
 			expect(weeklyByMeetingInCapitals[0].dates[TUESDAY].sum).toBe(2 * 3600);
 		});
 
