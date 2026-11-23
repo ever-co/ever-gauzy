@@ -30,9 +30,21 @@ const DOCS = 'https://docs.northwind.example';
 const SISTER_PAGE = 'https://sister.northwind.example';
 
 /** The people, each with what the organization left them. */
+// The role of every person, which holds the time tracker permission, and a role without it (ever-co/ever-gauzy#12134).
+const ROLE = '7e000000-0000-4000-8000-0000000000c1';
+const VIEWER_ROLE = '7e000000-0000-4000-8000-0000000000c2';
+// The roles whose time tracker permission is on, as RolePermissionService.checkRolePermission reads them.
+const trackingRoles = new Set<string>([ROLE]);
+
 const PEOPLE: Record<
 	string,
-	{ userId: string; employeeId: string; employee?: Record<string, unknown>; membership?: Record<string, unknown> }
+	{
+		userId: string;
+		employeeId: string;
+		user?: Record<string, unknown>;
+		employee?: Record<string, unknown>;
+		membership?: Record<string, unknown>;
+	}
 > = {
 	lina: { userId: '7e000000-0000-4000-8000-000000000001', employeeId: '7e000000-0000-4000-8000-0000000000e1' },
 	mara: { userId: '7e000000-0000-4000-8000-000000000006', employeeId: '7e000000-0000-4000-8000-0000000000e6' },
@@ -56,6 +68,11 @@ const PEOPLE: Record<
 		employeeId: '7e000000-0000-4000-8000-0000000000e5',
 		employee: { organizationId: SISTER_ORGANIZATION },
 		membership: { organizationId: SISTER_ORGANIZATION }
+	},
+	vera: {
+		userId: '7e000000-0000-4000-8000-000000000007',
+		employeeId: '7e000000-0000-4000-8000-0000000000e7',
+		user: { roleId: VIEWER_ROLE }
 	}
 };
 
@@ -114,7 +131,9 @@ async function seed(dataSource: DataSource): Promise<void> {
 			tenantId: TENANT,
 			email: `${name}@northwind.example`,
 			isActive: 1,
-			isArchived: 0
+			isArchived: 0,
+			roleId: ROLE,
+			...person.user
 		});
 		await insert(dataSource, 'employee', {
 			id: person.employeeId,
@@ -175,6 +194,8 @@ describe('EmbedSiteGrantService on SQLite', () => {
 				require('../employee/repository/type-orm-employee.repository') as typeof import('../employee/repository/type-orm-employee.repository');
 			const { TypeOrmUserOrganizationRepository } =
 				require('../user-organization/repository/type-orm-user-organization.repository') as typeof import('../user-organization/repository/type-orm-user-organization.repository');
+			const { TypeOrmUserRepository } =
+				require('../user/repository/type-orm-user.repository') as typeof import('../user/repository/type-orm-user.repository');
 			const { TypeOrmEmbedAllowedOriginRepository } =
 				require('./repository/type-orm-embed-allowed-origin.repository') as typeof import('./repository/type-orm-embed-allowed-origin.repository');
 			const { TypeOrmEmbedSiteGrantRepository } =
@@ -208,7 +229,13 @@ describe('EmbedSiteGrantService on SQLite', () => {
 				new TypeOrmUserOrganizationRepository(dataSource.getRepository(entities.UserOrganization)),
 				{} as never,
 				{ issueEmbedSession } as never,
-				allowedOrigins
+				allowedOrigins,
+				new TypeOrmUserRepository(dataSource.getRepository(entities.User)),
+				{} as never,
+				{
+					checkRolePermission: async (_tenantId: string, roleId: string, permissions: string[]) =>
+						trackingRoles.has(roleId) && permissions.includes(PermissionsEnum.TIME_TRACKER)
+				} as never
 			);
 		});
 	}, TIMEOUT);
@@ -369,8 +396,9 @@ describe('EmbedSiteGrantService on SQLite', () => {
 		it('refuses with EMBED_MEMBER_NOT_ALLOWED anyone but an active member who may track time, whatever the site', async () => {
 			await dataSource.query(`DELETE FROM "embed_site_grant"`);
 
-			// Tracking off, an archived employee, an ended membership, a member of the sister organization only.
-			for (const name of ['omar', 'ines', 'yuki', 'sam'] as const) {
+			// Tracking off, an archived employee, an ended membership, a member of the sister organization only, and a
+			// role without the time tracker permission.
+			for (const name of ['omar', 'ines', 'yuki', 'sam', 'vera'] as const) {
 				for (const origin of [TEAM_PAGE, 'https://evil.example']) {
 					await expect(authorizeAs(name, origin)).rejects.toMatchObject({
 						status: 403,
@@ -599,6 +627,22 @@ describe('EmbedSiteGrantService on SQLite', () => {
 				response: { code: 'EMBED_MEMBER_NOT_ALLOWED' }
 			});
 			await setTracking(1);
+
+			await expect(renewFrom(TEAM_PAGE, renewalToken)).resolves.toMatchObject({ token: expect.any(String) });
+		});
+
+		it("refuses a person whose role lost the time tracker permission, and renews once it holds it again", async () => {
+			const { renewalToken } = await authorizeAs('lina', TEAM_PAGE);
+
+			trackingRoles.delete(ROLE);
+			try {
+				await expect(renewFrom(TEAM_PAGE, renewalToken)).rejects.toMatchObject({
+					status: 403,
+					response: { code: 'EMBED_MEMBER_NOT_ALLOWED' }
+				});
+			} finally {
+				trackingRoles.add(ROLE);
+			}
 
 			await expect(renewFrom(TEAM_PAGE, renewalToken)).resolves.toMatchObject({ token: expect.any(String) });
 		});

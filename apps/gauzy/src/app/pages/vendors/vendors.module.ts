@@ -8,6 +8,7 @@ import {
 	NbActionsModule,
 	NbBadgeModule,
 	NbDialogModule,
+	NbSelectModule,
 	NbSpinnerModule
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
@@ -24,6 +25,8 @@ import {
 } from '@gauzy/ui-core/shared';
 import { VendorsComponent } from './vendors.component';
 import { VendorsRoutingModule } from './vendors-routing.module';
+import { VendorViewPageComponent } from './vendor-view/vendor-view-page.component';
+import { ExpenseBarChartComponent } from '../expenses/expense-view/expense-charts/expense-bar-chart.component';
 
 // Nebular Modules
 const NB_MODULES = [
@@ -35,7 +38,8 @@ const NB_MODULES = [
 	NbActionsModule,
 	NbBadgeModule,
 	NbDialogModule.forChild(),
-	NbSpinnerModule
+	NbSpinnerModule,
+	NbSelectModule
 ];
 
 // Standalone Modules
@@ -58,8 +62,9 @@ const THIRD_PARTY_MODULES = [TranslatePipe, NgxPermissionsModule.forChild()];
 		VendorsRoutingModule,
 		SmartDataViewLayoutModule,
 		FavoriteToggleModule,
-		CardGridModule
+		CardGridModule,
+		ExpenseBarChartComponent
 	],
-	declarations: [VendorsComponent]
+	declarations: [VendorsComponent, VendorViewPageComponent]
 })
 export class VendorsModule {}

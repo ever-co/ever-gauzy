@@ -225,7 +225,11 @@ describe('POST /invite/accept cannot carry privileged fields into the sink (GHSA
 			};
 			const registeredUser = { id: 'new-user', email: INVITED_EMAIL, isActive: true };
 			const commandBus = { execute: jest.fn().mockResolvedValue(registeredUser) };
-			const typeOrmUserRepository = { findOneOrFail: jest.fn().mockResolvedValue(registeredUser) };
+			const typeOrmUserRepository = {
+				// The invited address has no account yet
+				find: jest.fn().mockResolvedValue([]),
+				findOneOrFail: jest.fn().mockResolvedValue(registeredUser)
+			};
 			const authService = {
 				getJwtAccessToken: jest.fn().mockResolvedValue('access'),
 				getJwtRefreshToken: jest.fn().mockResolvedValue('refresh'),

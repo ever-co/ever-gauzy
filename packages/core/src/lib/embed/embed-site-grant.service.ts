@@ -21,6 +21,9 @@ import { MikroOrmEmployeeRepository } from '../employee/repository/mikro-orm-emp
 import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
 import { MikroOrmUserOrganizationRepository } from '../user-organization/repository/mikro-orm-user-organization.repository';
 import { TypeOrmUserOrganizationRepository } from '../user-organization/repository/type-orm-user-organization.repository';
+import { MikroOrmUserRepository } from '../user/repository/mikro-orm-user.repository';
+import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
+import { RolePermissionService } from '../role-permission/role-permission.service';
 import { EmbedSiteGrantResponseDTO, EmbedSiteTokensResponseDTO } from './dto/embed-site-grant.dto';
 import { EmbedAllowedOriginService } from './embed-allowed-origin.service';
 import { IEmbedMemberScope } from './embed-member.service';
@@ -129,17 +132,23 @@ export class EmbedSiteGrantService {
 		typeOrmUserOrganizationRepository: TypeOrmUserOrganizationRepository,
 		mikroOrmUserOrganizationRepository: MikroOrmUserOrganizationRepository,
 		authService: AuthService,
-		private readonly embedAllowedOriginService: EmbedAllowedOriginService
+		private readonly embedAllowedOriginService: EmbedAllowedOriginService,
+		typeOrmUserRepository: TypeOrmUserRepository,
+		mikroOrmUserRepository: MikroOrmUserRepository,
+		rolePermissionService: RolePermissionService
 	) {
 		this.memberTokens = new EmbedMemberTokens(
 			{
 				typeOrmEmployeeRepository,
 				mikroOrmEmployeeRepository,
 				typeOrmUserOrganizationRepository,
-				mikroOrmUserOrganizationRepository
+				mikroOrmUserOrganizationRepository,
+				typeOrmUserRepository,
+				mikroOrmUserRepository
 			},
 			authService,
-			() => getORMType()
+			() => getORMType(),
+			rolePermissionService
 		);
 	}
 

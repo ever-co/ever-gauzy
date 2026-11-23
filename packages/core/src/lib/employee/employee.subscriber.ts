@@ -16,6 +16,7 @@ import {
 	screenshotCaptureFromOrganization
 } from './employee-screenshot-capture-default';
 import { keepsTrackingAtWrite } from './tracking-kept-at-write';
+import { setEmployeeFullName } from './employee-full-name';
 
 @EventSubscriber()
 export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
@@ -490,9 +491,7 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 	 * @returns {Promise<void>} - Returns a promise indicating the completion of the operation.
 	 */
 	private async setFullName(entity: Employee): Promise<void> {
-		if (entity?.user?.name) {
-			entity.fullName = entity.user.name;
-		}
+		setEmployeeFullName(entity);
 	}
 
 	/**

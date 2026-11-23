@@ -47,3 +47,19 @@ export interface ICommentParentAccessPolicy {
 	 */
 	findAccessibleParents?(entityIds: ID[]): Promise<ICommentParent[]>;
 }
+
+/**
+ * A rule that opens the comments of one kind of record to the record's readers, and governs nothing else.
+ *
+ * The comment API keeps a caller who may not act for other employees to the comments they wrote. A record whose
+ * comments are written for everyone who works on it (a task's) declares this rule, with the same
+ * `@CommentParentAccessPolicy()` decorator: a read that names one such record (`{ entity, entityId }`) answers all of
+ * its comments, whoever wrote them, to a caller who holds one of `readPermissions` and whom `findAccessibleParent`
+ * lets reach the record. Every other read of those comments, and every write, keeps the comment API's own rules.
+ */
+export interface ICommentParentReadersPolicy {
+	readonly entity: BaseEntityEnum;
+	readonly opensReadsOnly: true;
+	readonly readPermissions: ReadonlyArray<PermissionsEnum>;
+	findAccessibleParent(entityId: ID): Promise<ICommentParent | null>;
+}

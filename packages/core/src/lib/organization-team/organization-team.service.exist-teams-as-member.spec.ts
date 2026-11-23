@@ -4,6 +4,7 @@ import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { IsNull } from 'typeorm';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
+import { OrganizationTeamEmployeeService } from '../organization-team-employee/organization-team-employee.service';
 import { OrganizationTeamService } from './organization-team.service';
 
 /**
@@ -16,7 +17,13 @@ describe('OrganizationTeamService.existTeamsAsMember', () => {
 	const EMPLOYEE = 'employee-1';
 
 	let memberships: { organizationTeamId: string }[];
-	let organizationTeamEmployeeService: { find: jest.Mock; findOneByOptions: jest.Mock; delete: jest.Mock };
+	let organizationTeamEmployeeService: {
+		find: jest.Mock;
+		findOneByOptions: jest.Mock;
+		delete: jest.Mock;
+		deleteMemberships: OrganizationTeamEmployeeService['deleteMemberships'];
+		stopRunningTimersInTeam: jest.Mock;
+	};
 	let taskService: { unassignEmployeeFromTeamTasks: jest.Mock };
 	let service: OrganizationTeamService;
 
@@ -29,7 +36,10 @@ describe('OrganizationTeamService.existTeamsAsMember', () => {
 				if (!memberships.length) throw new NotFoundException('The requested record was not found');
 				return memberships[0];
 			}),
-			delete: jest.fn(async () => ({ affected: memberships.length, raw: [] }))
+			delete: jest.fn(async () => ({ affected: memberships.length, raw: [] })),
+			// The membership service's own delete-then-stop, around the stand-in delete above (ever-co/ever-gauzy#12142).
+			deleteMemberships: OrganizationTeamEmployeeService.prototype.deleteMemberships,
+			stopRunningTimersInTeam: jest.fn()
 		};
 		taskService = { unassignEmployeeFromTeamTasks: jest.fn(async () => undefined) };
 
@@ -75,6 +85,14 @@ describe('OrganizationTeamService.existTeamsAsMember', () => {
 		expect(organizationTeamEmployeeService.delete).toHaveBeenCalledWith({ employeeId: EMPLOYEE, roleId: IsNull() });
 	});
 
+	it('stops the timer the user still runs for a team they leave (ever-co/ever-gauzy#12142)', async () => {
+		memberships = [{ organizationTeamId: 'team-a' }, { organizationTeamId: 'team-b' }];
+
+		await service.existTeamsAsMember(USER);
+
+		expect(organizationTeamEmployeeService.stopRunningTimersInTeam).toHaveBeenCalledWith(memberships);
+	});
+
 	it('answers 403 and unassigns nothing when the user is not a plain member of any team', async () => {
 		await expect(service.existTeamsAsMember(USER)).rejects.toThrow(ForbiddenException);
 
@@ -88,6 +106,7 @@ describe('OrganizationTeamService.existTeamsAsMember', () => {
 		await expect(service.existTeamsAsMember('another-user')).rejects.toThrow(ForbiddenException);
 
 		expect(taskService.unassignEmployeeFromTeamTasks).not.toHaveBeenCalled();
+		expect(organizationTeamEmployeeService.stopRunningTimersInTeam).not.toHaveBeenCalled();
 	});
 
 	it('lets a CHANGE_SELECTED_EMPLOYEE holder remove another user, scoped the same way', async () => {
