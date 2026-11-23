@@ -12247,6 +12247,42 @@
 			"attribute": "href",
 			"url": "https://gauzy.co/",
 			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the sidebar favorites page (7594c680f0, #12105) added it to the route list"
+		},
+		{
+			"route": "/pages/sales/pipelines/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the pipeline view page (0603829afd, #12161) added it to the route list"
+		},
+		{
+			"route": "/pages/sales/pipelines/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the pipeline view page (0603829afd, #12161) added it to the route list"
+		},
+		{
+			"route": "/pages/sales/pipelines/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the pipeline view page (0603829afd, #12161) added it to the route list"
+		},
+		{
+			"route": "/pages/sales/pipelines/view/:id",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the pipeline view page (0603829afd, #12161) added it to the route list"
+		},
+		{
+			"route": "/pages/sales/pipelines/view/:id",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the pipeline view page (0603829afd, #12161) added it to the route list"
+		},
+		{
+			"route": "/pages/sales/pipelines/view/:id",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since the pipeline view page (0603829afd, #12161) added it to the route list"
 		}
 	]
 }

@@ -1247,7 +1247,7 @@
     },
     {
       "path": "/pages/organization/equipment",
-      "file": "apps/gauzy/src/app/pages/equipment/equipment-routing.module.ts:10",
+      "file": "apps/gauzy/src/app/pages/equipment/equipment-routing.module.ts:9",
       "guards": [
         "PermissionsGuard"
       ],
@@ -1271,7 +1271,7 @@
     },
     {
       "path": "/pages/organization/equipment/view/:id",
-      "file": "apps/gauzy/src/app/pages/equipment/equipment-routing.module.ts:21",
+      "file": "apps/gauzy/src/app/pages/equipment/equipment-routing.module.ts:20",
       "guards": [
         "PermissionsGuard"
       ],
@@ -1395,7 +1395,7 @@
     },
     {
       "path": "/pages/organization/vendors",
-      "file": "apps/gauzy/src/app/pages/vendors/vendors-routing.module.ts:10",
+      "file": "apps/gauzy/src/app/pages/vendors/vendors-routing.module.ts:9",
       "guards": [
         "PermissionsGuard"
       ],
@@ -1403,7 +1403,7 @@
     },
     {
       "path": "/pages/organization/vendors/view/:id",
-      "file": "apps/gauzy/src/app/pages/vendors/vendors-routing.module.ts:21",
+      "file": "apps/gauzy/src/app/pages/vendors/vendors-routing.module.ts:20",
       "guards": [
         "PermissionsGuard"
       ],
@@ -1627,7 +1627,7 @@
     },
     {
       "path": "/pages/sales/pipelines",
-      "file": "apps/gauzy/src/app/pages/pipelines/pipelines.routing.ts:12",
+      "file": "apps/gauzy/src/app/pages/pipelines/pipelines.routing.ts:13",
       "guards": [
         "PermissionsGuard"
       ],
@@ -1635,7 +1635,7 @@
     },
     {
       "path": "/pages/sales/pipelines/:pipelineId/deals",
-      "file": "apps/gauzy/src/app/pages/pipelines/pipelines.routing.ts:23",
+      "file": "apps/gauzy/src/app/pages/pipelines/pipelines.routing.ts:36",
       "guards": [
         "PermissionsGuard"
       ],
@@ -1643,7 +1643,7 @@
     },
     {
       "path": "/pages/sales/pipelines/:pipelineId/deals/:dealId/edit",
-      "file": "apps/gauzy/src/app/pages/pipelines/pipelines.routing.ts:47",
+      "file": "apps/gauzy/src/app/pages/pipelines/pipelines.routing.ts:60",
       "guards": [
         "PermissionsGuard"
       ],
@@ -1651,7 +1651,15 @@
     },
     {
       "path": "/pages/sales/pipelines/:pipelineId/deals/create",
-      "file": "apps/gauzy/src/app/pages/pipelines/pipelines.routing.ts:35",
+      "file": "apps/gauzy/src/app/pages/pipelines/pipelines.routing.ts:48",
+      "guards": [
+        "PermissionsGuard"
+      ],
+      "source": "router"
+    },
+    {
+      "path": "/pages/sales/pipelines/view/:id",
+      "file": "apps/gauzy/src/app/pages/pipelines/pipelines.routing.ts:24",
       "guards": [
         "PermissionsGuard"
       ],
