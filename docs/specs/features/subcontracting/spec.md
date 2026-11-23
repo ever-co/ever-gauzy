@@ -260,7 +260,8 @@ variances. These requirements are marked `(advanced)`.
   material lines posts in under 2 s; the live board for 500 open orders loads under 1 s; progress and time roll-ups
   within 10 s of the fact.
 - **Concurrency**: optimistic versions on orders; receipts and sends lock the order's counters in one transaction;
-  retry keys on sends, receipts and returns.
+  material movements and count closures at one supplier location run one at a time; retry keys on sends, receipts
+  and returns.
 - **Reliability**: one transaction per document across stock movements and counters; events through the outbox with
   idempotent consumers.
 - **Security & privacy**: suppliers and customers see only their own orders and material; costs hidden from portal

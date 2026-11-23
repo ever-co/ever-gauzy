@@ -42,13 +42,19 @@ It builds on what exists rather than beside it:
   (`stock_count.closedAt`, then `id`): the `stock_count.closed` consumer and every material operation of this plugin at
   a supplier location (send, the receipt hook's consumption, return, scrap) first allocate every earlier closed count
   of that location not yet allocated, so a shortage always meets the excess of the counts closed before it. The
-  serialization point is the location's count rows: a material operation, in its own transaction and before it reads
-  the location's lines, reads the location's counts that are not cancelled and not yet allocated with a locking read
-  (`FOR SHARE` on PostgreSQL and MySQL, the database write lock on SQLite), allocates the closed ones in close order,
-  and only then reads the lines; the closure's status write on its count row waits for that share lock and the
-  operation's locking read waits for a closure in progress, so a count either closes before the operation's check and
-  is allocated by it first, or closes after the operation commits; no operation reads the location's lines before a
-  closed count's differences are on them, and the consumer then finds those lines allocated.
+  serialization point is one location lock: the location's core `warehouse` row, locked exclusively (`FOR UPDATE` on
+  PostgreSQL and MySQL, the database write lock on SQLite) by every transaction that closes a count of the location
+  (`StockCountService.close` takes it as its first statement for every count, an additive change of `inventory`), by
+  the `stock_count.closed` consumer and by every material operation of this plugin at the location (the receipt hook
+  inside the goods receipt transaction included), each before it reads a count or a line of the location or moves
+  stock there, so every holder takes the location lock before stock level rows and no two of them wait on each other
+  in reverse order; after the lock, the operation reads the location's counts that are not cancelled and not yet
+  allocated and then its lines with locking reads, which see every change committed under the lock on each dialect,
+  allocates the closed counts in close order, and only then works on the lines. Whenever a count was created, before
+  or after the operation's check, its closure
+  either commits before the operation takes the lock, and the count is allocated by the operation first, or waits for
+  the lock and closes after the operation commits; no operation reads the location's lines before a closed count's
+  differences are on them, and the consumer then finds those lines allocated.
 - **Suppliers and prices**: the suppliers of a service, their preference and price are the `vendor_product_term` rows
   of the service item.
 - **Contractor labour**: the contractors' time logs on the order's tasks, at the pay rate stored on each log (the
@@ -129,7 +135,9 @@ receipt columns (`vendorId`, `deliveryNoteRef`, `carrierName`, `rejectedQuantity
 `inspectionState`) and `purchase_return`; reservation reference `SUBCONTRACT_ORDER`, location owners `ownerContactId`
 and `ownerVendorId` and the purposes registry (warehouse plan); `allocateCharges` and landed cost targets on goods
 receipt lines (`stock-ledger-and-valuation`); a stock count of a supplier location whose lines the supplier's portal
-user enters through the existing count route.
+user enters through the existing count route; `StockCountService.close` of `inventory` locks the count's `warehouse`
+row as the first statement of its transaction (the location lock of §1 Reconciliation; two closures of one location
+then run one after the other, nothing else changes).
 
 **Reused, not created:** party locations (core `warehouse` owner columns), receipts and supplier returns (`goods_receipt`,
 `purchase_return`), counts (`stock_count`, `stock_count_line`), supplier preference and price (`vendor_product_term`),
@@ -330,7 +338,7 @@ and reports drift to the job monitor; a valid reconciliation (100 sent, 97 count
 
 | Risk | Likelihood | Impact | Mitigation |
 | ---- | ---------- | ------ | ---------- |
-| Material balance at a supplier drifts from the order's counters | Medium | High | counters and movements in one transaction; daily integrity check; supplier counts |
+| Material balance at a supplier drifts from the order's counters | Medium | High | counters and movements in one transaction; one location lock for count closures and material operations; daily integrity check; supplier counts |
 | Cost of finished goods computed twice (order, receipt, valuation) | Medium | Medium | one cost function in the receipt hook; the order shows planned cost only; valuation gets the goods receipt line's figure |
 | Two receipt paths for one purchase order | Low | High | finished goods arrive only on goods receipts; the hook refuses subcontract lines outside a subcontract order |
 | Dependent plugins absent (manufacturing, valuation) | High | Medium | every such port optional with a stated fallback; phase 1 needs only purchasing and inventory |

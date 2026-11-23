@@ -168,7 +168,7 @@ ticket trends, shown beside the CRM's own signals; capacity from **tracked time*
   reopened tickets.
 - **FR-29** The policy is the one named by the customer's active contract, else the first active, valid policy in order
   whose conditions match and that covers the priority, else the default, else none; it is chosen again when fields its
-  conditions read change, keeping elapsed working time.
+  conditions read change, keeping elapsed working time as counted in the calendar in force until the change (FR-33).
 - **FR-30** A user with `HELPDESK_SLA_MANAGE` can apply another matching policy to a ticket with a reason.
 - **FR-31** An edit that drops a priority, changes conditions or deactivates a policy shows how many open tickets it touches
   and keeps their due times unless the user recomputes them.
@@ -179,6 +179,9 @@ ticket trends, shown beside the CRM's own signals; capacity from **tracked time*
 
 - **FR-33** A due time is the start plus the target in the calendar's working time (intervals minus holidays and
   exceptions), stored once and recomputed only on resume, priority, policy or calendar change and reset, never by ticking.
+  Working time is counted in the calendar in force while it passes: a change of calendar, whether another policy selects
+  another calendar or the calendar's hours, exceptions or holidays are edited, applies from the change on, and working
+  time counted before it keeps its measure.
 - **FR-34** First response starts at creation and is met by the first public reply of a person, an AI responder's only when
   the policy counts it (default off); a recorded reply counts; acknowledgements and comments do not.
 - **FR-35** Next reply starts at each customer message after an agent reply and is met by the next public agent reply.

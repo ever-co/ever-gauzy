@@ -25,7 +25,8 @@ without an Inbox entry, label links, conversation state, draft fields, rules, al
 reports, triage) keyed by their ids, without foreign keys into the Inbox. It reads and writes messages only through
 additive Inbox ports, sends through `COMMUNICATIONS_SENDER` of `email-and-communications` (which uses the Inbox's
 `INBOX_EMAIL_OUTBOUND` for mailbox identities), and learns of new mail through the existing hand-off seam
-`INBOX_EMAIL_HANDOFFS` with its `deliveredSince` recovery, which gains `sentSince` for sent messages.
+`INBOX_EMAIL_HANDOFFS` with its `deliveredSince` recovery, which gains `sentSince` for sent messages, and a daily
+comparison of every Inbox message id with its state rows (`mail.reconcile`, §8).
 
 What the Inbox and the platform already hold is read there, not copied: domain proofs are the Inbox's (`inbox_mailbox`
 `domain`, `domainStatus`, `domainVerificationToken`, TXT record at `_gauzy-inbox.<domain>`); read and snooze state of a
@@ -54,7 +55,7 @@ flowchart LR
     API --> SRCH[[search plugin: inbox-email definition]]
     INB -- inbox_item.state_changed --> SYNC[read-state sync] --> DB
     DB --> OUT[event outbox mail.*] --> RT[realtime hints, presence] & AUT[automations, webhooks]
-    JOB[worker: recovery, purge, domains, quotas, triage] --> ARR
+    JOB[worker: recovery, reconcile, purge, domains, quotas, triage] --> ARR
 ```
 
 ## 2. Tech Choices
@@ -235,7 +236,9 @@ reminders are the platform's reminder notifications. Consumed: Inbox hand-off `d
   `mail_reply_draft` (saves a draft only), `mail_record_propose` (preview), `mail_rules_list`; also registered with
   `AiChatToolRegistry`.
 - **Additive Inbox seams** (in `packages/plugins/inbox`, optional, nothing changes without them): offered by the Inbox:
-  `INBOX_EMAIL_READER` (`getMany`, `thread`, `attachments`, `rawStream` with access checks), `INBOX_MAILBOX_DIRECTORY`
+  `INBOX_EMAIL_READER` (`getMany`, `thread`, `attachments`, `rawStream` with access checks; `messageIds`: the ids and
+  mailbox of a tenant's received `PROCESSED` and sent `SENT` messages in id order after a given id, at most 1,000, with
+  no time filter, for `mail.reconcile`), `INBOX_MAILBOX_DIRECTORY`
   (`mine`, `access`, `members`, `claim` from `settings.handoff`), `INBOX_ITEM_STATE` (read, archive, snooze per person),
   `INBOX_EMAIL_IMPORTER` (store a raw message into a mailbox with sanitizing and threading, no hand-off),
   `INBOX_EMAIL_DELETION` (raw, attachments and rows of chosen messages), `INBOX_DOMAINS` (the organization's mailbox
@@ -267,7 +270,8 @@ reminders are the platform's reminder notifications. Consumed: Inbox hand-off `d
 | Trigger | When | What it does | Idempotency |
 | --- | --- | --- | --- |
 | queue `mail-arrivals` | each hand-off (`delivered`, `sent`) | state row, folder, alias mark, list fan-out, then in order sender rules, intake rules and mail rules, auto-reply, counters, usage, reports parsing, triage request, push | unique (`mailboxId`,`emailId`); rule hits once per state row |
-| `mail.recovery` | every 5 minutes | read `deliveredSince` and `sentSince` per tenant from the last cursor of each, a (`updatedAt`, `emailId`) pair passed as `since` and `afterId`; each run starts 15 minutes before its stored cursor (lookback), so a message whose processing transaction commits after a later-stamped message, or whose `updatedAt` comes from a replica clock behind by less than that, is read by the next run; rows read twice are dropped by the state row's unique key (`mailboxId`, `emailId`); a message committed more than 15 minutes behind its stamp is left to its hand-off | state row unique key |
+| `mail.recovery` | every 5 minutes | read `deliveredSince` and `sentSince` per tenant from the last cursor of each, a (`updatedAt`, `emailId`) pair passed as `since` and `afterId`; each run starts 15 minutes before its stored cursor (lookback), so a message whose processing transaction commits after a later-stamped message, or whose `updatedAt` comes from a replica clock behind by less than that, is read by the next run; rows read twice are dropped by the state row's unique key (`mailboxId`, `emailId`); a message committed more than 15 minutes behind its stamp is left to its hand-off and, where that fails too, to `mail.reconcile` | state row unique key |
+| `mail.reconcile` | daily 02:40 | per tenant with Mail on, pages through the ids of every received `PROCESSED` and sent `SENT` message of the tenant's mailboxes in id order through `INBOX_EMAIL_READER.messageIds` (no time filter; at most 1,000 ids per call, after the last id of the page before), reads the state rows of each page by (`mailboxId`, `emailId`) and hands every message without one to `mail-arrivals`; a message committed before a pass starts is filed by that pass whatever its `updatedAt` and whether or not its hand-off or a recovery run saw it; a stopped pass starts again from the first id the next day | state row unique key |
 | core operations (bulk executor) | bulk actions, rule apply runs | apply in batches of 500 with progress and cancel | per state row version |
 | reminder sweep of `automation-and-notifications` (not a mail job) | every minute | fires no-reply and needs-answer reminders on conversations | its claim and status |
 | `mail.needs-answer` | hourly | creates a platform reminder for unanswered messages after the working days set, cancels it on reply | one reminder per conversation and person |
@@ -335,7 +339,7 @@ correction rate, domain report volume and failure shares. Errors with tenant, ma
 
 | Risk | Likelihood | Impact | Mitigation |
 | --- | --- | --- | --- |
-| State rows drift from Inbox messages | Medium | Medium | hand-off plus `deliveredSince` recovery, nightly counter rebuild, backfill idempotent |
+| State rows drift from Inbox messages | Medium | Medium | hand-off plus `deliveredSince` and `sentSince` recovery, the daily `mail.reconcile` pass over every message id without a time window, nightly counter rebuild, backfill idempotent |
 | Two assignment models with communications | Medium | Medium | `MAIL_THREAD_STATE` is the one assignee store; the communications mailbox view consumes it and keeps none of its own |
 | Three rule kinds on one arrival | Medium | Medium | one arrival queue in a fixed order (sender, intake, mail rules) with one condition evaluator |
 | Sending contract lacks mailbox threading | Medium | High | additive request fields on `COMMUNICATIONS_SENDER` (mailbox, replied message), coordinated in T1; fallback path |

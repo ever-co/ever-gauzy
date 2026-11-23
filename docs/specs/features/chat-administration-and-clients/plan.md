@@ -123,7 +123,7 @@ Under `/api/chat` behind the chat gates; `ADMIN` = `CHAT_ADMIN_SETTINGS`.
 | `POST` | `/conversations/:id/calls`, `/calls/:sessionId/{join,leave,end}` · `GET /conversations/:id/calls/live` | member, by call policy | calls and quick calls over the conversation's `CHAT` meeting room and its live session | New |
 | `POST` | `/share-in` | `CHAT_SEND` | text and files from another app into one conversation | New |
 | `GET` | `/messages/:id/share-out` | `CHAT_VIEW` | text, permalink, file links valid 1 hour | New |
-| `GET` | `/sync?cursor=&window=` | `CHAT_VIEW` | delta for clients with tombstones; `resync` when too old | New |
+| `GET` | `/sync?cursor=&window=` | `CHAT_VIEW` | delta for clients with tombstones of the changes stamped since the cursor up to the settle horizon (`now − 120 s`); `resync` when too old or of another sync epoch; every change within the limits of §2 Sync (4); a change whose commit ends more than 90 seconds after its pre-commit check, or one hidden by a backward clock step of more than 90 seconds that ends before the clock is read again, can be missing from later deltas and reaches the client's offline copy at its next resync | New |
 | `GET` | `/client-status?client=&version=` | signed in | versions, capabilities, maintenance | New |
 | `GET` | `/files/:documentId/url` | member of a conversation carrying it | short-lived signed address | New |
 | `GET` `PUT` `POST` | `/imports`, `/imports/:id`, `/imports/:id/mapping`, `/imports/:id/{dry-run,run,undo}`, `/imports/:id/report` | `CHAT_IMPORT` | the chat archive profile's runs of the data-import engine (chat's mapping step in front of it) | New |
