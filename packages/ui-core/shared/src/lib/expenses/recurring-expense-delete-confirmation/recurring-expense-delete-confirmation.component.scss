@@ -8,3 +8,20 @@
         background-color: var(--gauzy-card-1, var(--card-background-color));
     }
 }
+
+// The name to type before Ok is enabled: a muted label, then the input, under the choices.
+.confirm-name {
+    margin-top: 1rem;
+}
+
+.confirm-name-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.8125rem;
+    color: var(--text-hint-color);
+
+    strong {
+        color: var(--text-basic-color);
+        font-weight: 600;
+    }
+}
