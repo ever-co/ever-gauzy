@@ -21,6 +21,7 @@ import {
 import { ExpenseRecurringRoutingModule } from './expense-recurring-routing.module';
 import { ExpenseRecurringComponent } from './expense-recurring.component';
 import { RecurringExpenseViewPageComponent } from './recurring-expense-view/recurring-expense-view-page.component';
+import { RecurringExpenseQuickLookComponent } from './recurring-expense-quick-look/recurring-expense-quick-look.component';
 import { ExpenseBarChartComponent } from '../expenses/expense-view/expense-charts/expense-bar-chart.component';
 import { ExpenseShareChartComponent } from '../expenses/expense-view/expense-charts/expense-share-chart.component';
 
@@ -47,6 +48,6 @@ import { ExpenseShareChartComponent } from '../expenses/expense-view/expense-cha
 		ExpenseBarChartComponent,
 		ExpenseShareChartComponent
 	],
-	declarations: [ExpenseRecurringComponent, RecurringExpenseViewPageComponent]
+	declarations: [ExpenseRecurringComponent, RecurringExpenseViewPageComponent, RecurringExpenseQuickLookComponent]
 })
 export class ExpenseRecurringModule {}
