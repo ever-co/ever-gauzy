@@ -1,10 +1,15 @@
-import { Injector } from '@angular/core';
-import { TranslateService } from '@ngx-translate/core';
-import { BaseEntityEnum, IPayment } from '@gauzy/contracts';
+import { IPayment } from '@gauzy/contracts';
 import { PaymentService } from '@gauzy/ui-core/core';
-import { IRecordViewRouteData, IRecordViewScope, IRecordViewSection } from '@gauzy/ui-core/shared';
+import { IRecordViewScope, IRecordViewSection } from '@gauzy/ui-core/shared';
+import { IChartAmountRecord } from '../expenses/expense-view/expense-view-charts';
 
-/** Relations a payment's View reads — the same the payments grid loads. */
+/** The payments list: the page's back link, and where it goes once its payment is deleted. */
+export const PAYMENTS_LIST_LINK = '/pages/accounting/payments';
+
+/** An invoice's own page, linked from a payment's invoice. */
+export const INVOICE_VIEW_LINK = '/pages/accounting/invoices/view';
+
+/** Relations a payment's page reads — the same the payments grid loads. */
 export const PAYMENT_VIEW_RELATIONS = [
 	'invoice',
 	'invoice.toContact',
@@ -14,37 +19,90 @@ export const PAYMENT_VIEW_RELATIONS = [
 	'tags'
 ];
 
+/** Relations the payments of one invoice are read with, for the page's table of them. */
+export const INVOICE_PAYMENTS_RELATIONS = ['createdByUser'];
+
 /**
- * A payment, described for `ngx-record-view` — the payments grid's columns read vertically, with the
- * grid's own status badge (on time / overdue) and translated payment method.
+ * Reads one payment of the organization. The payments read requires the organization and tenant in its filter (400
+ * without them), and may answer more than the id asks for: the payment is picked out of what it answers.
  */
-export function buildPaymentViewSections(payment: IPayment, translate: (key: string) => string): IRecordViewSection[] {
-	const contact = payment.organizationContact || payment.invoice?.toContact;
-	const invoiceNumber = payment.invoice?.invoiceNumber;
+export async function loadPayment(service: PaymentService, id: string, scope: IRecordViewScope): Promise<IPayment | null> {
+	const { items } = await service.getAll(PAYMENT_VIEW_RELATIONS, {
+		id,
+		organizationId: scope.organizationId,
+		tenantId: scope.tenantId
+	} as any);
+	return items?.find((item) => item.id === id) ?? null;
+}
+
+/** Reads every payment recorded against one invoice, oldest first. */
+export async function loadInvoicePayments(
+	service: PaymentService,
+	invoiceId: string,
+	scope: IRecordViewScope
+): Promise<IPayment[]> {
+	const { items = [] } = await service.getAll(INVOICE_PAYMENTS_RELATIONS, {
+		invoiceId,
+		organizationId: scope.organizationId,
+		tenantId: scope.tenantId
+	});
+	return items
+		.filter((item) => (item.invoiceId ?? item.invoice?.id) === invoiceId)
+		.sort((a, b) => new Date(a.paymentDate).getTime() - new Date(b.paymentDate).getTime());
+}
+
+/** The monthly payments chart's spans, in months, and the one it opens on: as the recurring expense page's. */
+export const PAYMENT_CHART_MONTH_OPTIONS = [6, 12, 24];
+export const PAYMENT_CHART_MONTHS = 12;
+
+/** Relations the organization's payments are read with for the charts: the invoice names the contact it was sent to. */
+export const PAYMENT_CHART_RELATIONS = ['invoice'];
+
+/** Reads every payment of the organization, for the page's charts. */
+export async function loadOrganizationPayments(service: PaymentService, scope: IRecordViewScope): Promise<IPayment[]> {
+	const { items = [] } = await service.getAll(PAYMENT_CHART_RELATIONS, {
+		organizationId: scope.organizationId,
+		tenantId: scope.tenantId
+	});
+	return items;
+}
+
+/** The id of the contact the payment came from: its own contact, or the one its invoice was sent to. */
+export function paymentContactId(payment: IPayment): string | null {
+	// The invoice's row carries the id of the contact it was sent to; the shared invoice model does not name it.
+	const invoice = payment.invoice as (IPayment['invoice'] & { toContactId?: string }) | undefined;
+	return (
+		payment.organizationContactId ??
+		payment.organizationContact?.id ??
+		invoice?.toContactId ??
+		invoice?.toContact?.id ??
+		invoice?.organizationContactId ??
+		null
+	);
+}
+
+/** A payment as the expense page's charts add amounts up: its amount and currency, dated by its payment date. */
+export function paymentChartRecord(payment: IPayment): IChartAmountRecord {
+	return { id: payment.id, amount: payment.amount, currency: payment.currency, valueDate: payment.paymentDate };
+}
+
+/** Who the payment came from: its own contact, or the contact its invoice was sent to. */
+export function paymentContactName(payment: IPayment): string | null {
+	return (payment.organizationContact || payment.invoice?.toContact)?.name ?? null;
+}
+
+/**
+ * The payment's fields the headline does not show as figures: the contact and the project, then the note and the
+ * tags. The amount, the date, the invoice and who recorded it are the headline's figures.
+ */
+export function buildPaymentDetailsSections(payment: IPayment): IRecordViewSection[] {
 	return [
 		{
+			title: 'EXPENSE_VIEW.DETAILS',
+			icon: 'info-outline',
 			fields: [
-				{ label: 'INVOICES_PAGE.INVOICE_NUMBER', value: invoiceNumber ? `#${invoiceNumber}` : null },
-				{ label: 'PAYMENTS_PAGE.PAYMENT_DATE', key: 'paymentDate', type: 'date' },
-				{ label: 'PAYMENTS_PAGE.AMOUNT', key: 'amount', type: 'money' },
-				{
-					label: 'PAYMENTS_PAGE.PAYMENT_METHOD',
-					value: payment.paymentMethod ? translate(`INVOICES_PAGE.PAYMENTS.${payment.paymentMethod}`) : null
-				},
-				{
-					label: 'PAYMENTS_PAGE.STATUS',
-					type: 'badge',
-					value: payment.overdue
-						? { text: translate('INVOICES_PAGE.PAYMENTS.OVERDUE'), class: 'danger' }
-						: { text: translate('INVOICES_PAGE.PAYMENTS.ON_TIME'), class: 'success' }
-				},
-				{ label: 'PAYMENTS_PAGE.RECORDED_BY', value: payment.createdByUser?.name },
-				{ label: 'PAYMENTS_PAGE.CONTACT', value: contact?.name },
-				{ label: 'PAYMENTS_PAGE.PROJECT', key: 'project.name' }
-			]
-		},
-		{
-			fields: [
+				{ label: 'PAYMENTS_PAGE.CONTACT', value: paymentContactName(payment) },
+				{ label: 'PAYMENTS_PAGE.PROJECT', key: 'project.name' },
 				{ label: 'PAYMENTS_PAGE.NOTE', key: 'note', type: 'multiline', wide: true },
 				{ label: 'PAYMENTS_PAGE.TAGS', key: 'tags', type: 'tags', wide: true }
 			]
@@ -52,23 +110,13 @@ export function buildPaymentViewSections(payment: IPayment, translate: (key: str
 	];
 }
 
-/** `/pages/accounting/payments/view/:id` — one payment, full width (what a payment favorite opens). */
-export const PAYMENT_RECORD_VIEW: IRecordViewRouteData<IPayment> = {
-	heading: 'PAYMENTS_PAGE.HEADER',
-	backLink: '/pages/accounting/payments',
-	// The payments read requires the organization and tenant in its filter (400 without them).
-	load: async (id: string, injector: Injector, scope: IRecordViewScope) => {
-		const { items } = await injector.get(PaymentService).getAll(PAYMENT_VIEW_RELATIONS, {
-			id,
-			organizationId: scope.organizationId,
-			tenantId: scope.tenantId
-		} as any);
-		return items?.find((item) => item.id === id) ?? null;
-	},
-	sections: (payment, injector) => {
-		const translateService = injector.get(TranslateService);
-		return buildPaymentViewSections(payment, (key) => translateService.instant(key));
-	},
-	subtitle: (payment) => (payment.invoice?.invoiceNumber ? `#${payment.invoice.invoiceNumber}` : null),
-	favorite: { entity: BaseEntityEnum.Payment, name: (payment) => payment.note }
-};
+/** The created / updated stamps. */
+export const PAYMENT_META_SECTIONS: IRecordViewSection[] = [
+	{
+		variant: 'meta',
+		fields: [
+			{ label: 'SM_TABLE.CREATED_AT', key: 'createdAt', type: 'datetime', icon: 'plus-circle-outline' },
+			{ label: 'SM_TABLE.LAST_UPDATED', key: 'updatedAt', type: 'datetime', icon: 'refresh-outline' }
+		]
+	}
+];
