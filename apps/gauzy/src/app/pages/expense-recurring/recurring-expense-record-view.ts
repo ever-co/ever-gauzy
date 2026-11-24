@@ -127,21 +127,47 @@ export function recurringExpenseStateOf(
 	return 'active';
 }
 
+/** The fields a recurring expense's months are read from. */
+type RecurringExpenseMonths = Pick<
+	IOrganizationRecurringExpense,
+	'startDate' | 'endDate' | 'startYear' | 'startMonth' | 'endYear' | 'endMonth'
+>;
+
+const isSet = (value: unknown): boolean => value !== null && value !== undefined && value !== '';
+
+/**
+ * The expense's first month, from the month and year it is stored with: the ones the list shows and the API edits
+ * and deletes by. `startDate` is an instant, which reads as the month before west of the time zone it was saved in
+ * (a period the API starts on the 1st at 00:00 UTC is the 31st of the month before in New York).
+ */
+export function recurringExpenseStartMonth(expense: RecurringExpenseMonths): moment.Moment | null {
+	if (isSet(expense.startYear) && isSet(expense.startMonth)) {
+		return moment([Number(expense.startYear), Number(expense.startMonth), 1]);
+	}
+	return expense.startDate ? moment(expense.startDate).startOf('month') : null;
+}
+
+/** The expense's last month, read as its first month is; `null` when it has no end. */
+export function recurringExpenseEndMonth(expense: RecurringExpenseMonths): moment.Moment | null {
+	if (isSet(expense.endYear) && isSet(expense.endMonth)) {
+		return moment([Number(expense.endYear), Number(expense.endMonth), 1]);
+	}
+	return expense.endDate ? moment(expense.endDate).startOf('month') : null;
+}
+
 /**
  * How many months the expense has been charged for up to `today`: its start month through the current month, or
  * through its end month once it has ended. None before its start day, as its state reads it upcoming.
  */
-export function recurringExpenseMonthsCharged(
-	expense: Pick<IOrganizationRecurringExpense, 'startDate' | 'endDate'>,
-	today: Date = new Date()
-): number {
+export function recurringExpenseMonthsCharged(expense: RecurringExpenseMonths, today: Date = new Date()): number {
+	const start = recurringExpenseStartMonth(expense);
 	// Nothing is charged before the expense starts — even within its first month, before its first day.
-	if (!expense.startDate || moment(today).isBefore(expense.startDate, 'day')) {
+	if (!start || (expense.startDate && moment(today).isBefore(expense.startDate, 'day'))) {
 		return 0;
 	}
-	const start = moment(expense.startDate).startOf('month');
 	const now = moment(today).startOf('month');
-	const last = expense.endDate ? moment.min(moment(expense.endDate).startOf('month'), now) : now;
+	const end = recurringExpenseEndMonth(expense);
+	const last = end ? moment.min(end, now) : now;
 	const months = last.diff(start, 'months') + 1;
 	return months > 0 ? months : 0;
 }
@@ -150,22 +176,15 @@ export function recurringExpenseMonthsCharged(
  * The month the page is about: today's month, kept within the expense's own months — its first month before it
  * starts, its last once it has ended. The month the charts end on, and the "this month" of the delete dialog.
  */
-export function recurringExpenseFocusMonth(
-	expense: Pick<IOrganizationRecurringExpense, 'startDate' | 'endDate'>,
-	today: Date = new Date()
-): moment.Moment {
+export function recurringExpenseFocusMonth(expense: RecurringExpenseMonths, today: Date = new Date()): moment.Moment {
 	const month = moment(today).startOf('month');
-	if (expense.startDate) {
-		const start = moment(expense.startDate).startOf('month');
-		if (month.isBefore(start)) {
-			return start;
-		}
+	const start = recurringExpenseStartMonth(expense);
+	if (start && month.isBefore(start)) {
+		return start;
 	}
-	if (expense.endDate) {
-		const end = moment(expense.endDate).startOf('month');
-		if (month.isAfter(end)) {
-			return end;
-		}
+	const end = recurringExpenseEndMonth(expense);
+	if (end && month.isAfter(end)) {
+		return end;
 	}
 	return month;
 }
@@ -187,10 +206,11 @@ export function recurringExpenseMonthBars(
 	today: Date = new Date()
 ): IExpenseChartBar[] {
 	const last = recurringExpenseFocusMonth(current, today);
-	const covers = (period: IOrganizationRecurringExpense, month: moment.Moment) =>
-		!!period.startDate &&
-		!moment(period.startDate).startOf('month').isAfter(month) &&
-		(!period.endDate || !moment(period.endDate).startOf('month').isBefore(month));
+	const covers = (period: IOrganizationRecurringExpense, month: moment.Moment) => {
+		const start = recurringExpenseStartMonth(period);
+		const end = recurringExpenseEndMonth(period);
+		return !!start && !start.isAfter(month) && (!end || !end.isBefore(month));
+	};
 	const bars: IExpenseChartBar[] = [];
 	for (let i = months - 1; i >= 0; i--) {
 		const month = last.clone().subtract(i, 'months').locale(locale);

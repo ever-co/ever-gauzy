@@ -1,12 +1,12 @@
 export const OrganizationRecurringExpensesPage = {
-	// Scope the Add button to the card header toolbar; the mutation dialog footer also
-	// renders a button[status="success"] (Save/Edit), so the bare selector is ambiguous.
+	// Scope the Add button to the card header toolbar, away from any dialog footer.
 	addButtonCss: '.gauzy-button-container button[status="success"]',
 	// The category picker is an ng-select (opens on mousedown, panel appended to body).
 	expenseDropdownCss: 'ga-recurring-expense-mutation #categoryInput',
 	dropdownOptionCss: 'div.ng-option',
 	valueInputCss: 'ga-recurring-expense-mutation #valueInput',
-	saveButtonCss: 'nb-card-footer > button[status="success"]',
+	// The mutation dialog's Save/Edit: its only submit button (Cancel is type="button").
+	saveButtonCss: 'ga-recurring-expense-mutation nb-card-footer > button[type="submit"]',
 	settingsButtonCss: 'nb-icon[icon="settings-2-outline"]',
 	// The edit/delete actions live on the `.single-setting` divs (that's where the
 	// (click) handlers are). Target the div, not the inner nb-icon, so a non-bubbling

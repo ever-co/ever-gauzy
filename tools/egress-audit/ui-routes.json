@@ -211,12 +211,15 @@
     },
     {
       "path": "/pages/accounting/expense-recurring",
-      "file": "apps/gauzy/src/app/pages/expense-recurring/expense-recurring-routing.module.ts:9",
+      "file": "apps/gauzy/src/app/pages/expense-recurring/expense-recurring-routing.module.ts:11",
       "source": "router"
     },
     {
       "path": "/pages/accounting/expense-recurring/view/:id",
-      "file": "apps/gauzy/src/app/pages/expense-recurring/expense-recurring-routing.module.ts:23",
+      "file": "apps/gauzy/src/app/pages/expense-recurring/expense-recurring-routing.module.ts:25",
+      "guards": [
+        "PermissionsGuard"
+      ],
       "source": "router"
     },
     {
@@ -1279,12 +1282,15 @@
     },
     {
       "path": "/pages/organization/expense-recurring",
-      "file": "apps/gauzy/src/app/pages/expense-recurring/expense-recurring-routing.module.ts:9",
+      "file": "apps/gauzy/src/app/pages/expense-recurring/expense-recurring-routing.module.ts:11",
       "source": "router"
     },
     {
       "path": "/pages/organization/expense-recurring/view/:id",
-      "file": "apps/gauzy/src/app/pages/expense-recurring/expense-recurring-routing.module.ts:23",
+      "file": "apps/gauzy/src/app/pages/expense-recurring/expense-recurring-routing.module.ts:25",
+      "guards": [
+        "PermissionsGuard"
+      ],
       "source": "router"
     },
     {
