@@ -129,13 +129,14 @@ export function recurringExpenseStateOf(
 
 /**
  * How many months the expense has been charged for up to `today`: its start month through the current month, or
- * through its end month once it has ended. None before it starts.
+ * through its end month once it has ended. None before its start day, as its state reads it upcoming.
  */
 export function recurringExpenseMonthsCharged(
 	expense: Pick<IOrganizationRecurringExpense, 'startDate' | 'endDate'>,
 	today: Date = new Date()
 ): number {
-	if (!expense.startDate) {
+	// Nothing is charged before the expense starts — even within its first month, before its first day.
+	if (!expense.startDate || moment(today).isBefore(expense.startDate, 'day')) {
 		return 0;
 	}
 	const start = moment(expense.startDate).startOf('month');
