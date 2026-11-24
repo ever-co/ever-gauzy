@@ -29,6 +29,16 @@ import {
 	recurringExpenseFocusMonth
 } from '../recurring-expense-record-view';
 
+/** Where an edit or a delete started, so its answer can tell whether the page is still the one it changed. */
+interface ActionOrigin {
+	expenseId: string;
+	organizationId: string;
+	organizationName: string;
+	scope: IRecordViewScope;
+	/** The page's load when the action started. */
+	generation: number;
+}
+
 /**
  * An organization recurring expense on its own full-width page, `/pages/accounting/expense-recurring/view/:id`:
  * where the recurring expenses drawer's "expand to full width" icon leads.
@@ -228,10 +238,9 @@ export class RecurringExpenseViewPageComponent extends TranslationBaseComponent 
 				result === RecurringExpenseDeletionEnum.ALL
 					? null
 					: await loadOrganizationRecurringExpense(this.organizationRecurringExpenseService, expense.id, origin.scope);
+			// No newer load started while it read: what is left of the expense is still this page's.
 			if (!this.isStillOn(origin)) return;
 			if (left) {
-				// Taken as a load of its own: a load still in flight for this page is older than this answer.
-				this.loadSequence++;
 				this.expense = left;
 				this.cdr.markForCheck();
 			} else {
@@ -264,22 +273,30 @@ export class RecurringExpenseViewPageComponent extends TranslationBaseComponent 
 	/* ── Reading ── */
 
 	/**
-	 * Where an action started: the expense the URL named and the organization selected. An edit or a delete
-	 * answers after its dialogs and its save; by then the viewer may have followed a history link or switched the
-	 * organization, and the page they moved to must not be replaced or redirected by the older action.
+	 * Where an action started: the expense the URL named, the organization selected and the page's load. An edit or
+	 * a delete answers after its dialogs and its save; by then the viewer may have followed a history link or
+	 * switched the organization, and the page they moved to must not be replaced or redirected by the older action.
 	 */
-	private actionOrigin(): { expenseId: string; organizationId: string; organizationName: string; scope: IRecordViewScope } {
+	private actionOrigin(): ActionOrigin {
 		return {
 			expenseId: this.expenseId,
 			organizationId: this.organization?.id,
 			organizationName: this.organization?.name,
-			scope: this.viewScope
+			scope: this.viewScope,
+			generation: this.loadSequence
 		};
 	}
 
-	/** The page still shows the expense and the organization the action started on. */
-	private isStillOn(origin: { expenseId: string; organizationId: string }): boolean {
-		return this.expenseId === origin.expenseId && this.organization?.id === origin.organizationId;
+	/**
+	 * The page still shows the expense and the organization the action started on, from the same load. Going to
+	 * another expense and back starts a new load: its answer, not the older action's, then owns the page.
+	 */
+	private isStillOn(origin: ActionOrigin): boolean {
+		return (
+			this.expenseId === origin.expenseId &&
+			this.organization?.id === origin.organizationId &&
+			this.loadSequence === origin.generation
+		);
 	}
 
 	private setBusy(busy: boolean): void {
@@ -296,6 +313,7 @@ export class RecurringExpenseViewPageComponent extends TranslationBaseComponent 
 			if (sequence !== this.loadSequence || this.expenseId !== id) return;
 			if (expense) {
 				this.expense = expense;
+				this.state = 'ready';
 			} else {
 				this.state = 'not-found';
 			}
