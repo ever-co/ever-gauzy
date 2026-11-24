@@ -1,0 +1,654 @@
+// A pipeline's page: headline and figures across the top, then two columns — the work
+// (stages, newest deals) in the wide one, where it stands (probability, record) in the
+// narrow one. Same hairline, corner and type scale as the shared record panels, so it sits
+// with the other View pages; colour only where it carries meaning (dots and share bars).
+$hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+
+:host {
+  display: block;
+}
+
+// ── Header actions: a quiet way to the deals, then Edit as the one filled button ──
+.pv-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+
+  .pv-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    height: 1.625rem;
+    padding: 0 0.625rem;
+    border-radius: 0.375rem;
+    font-size: 0.75rem;
+    line-height: 1rem;
+    font-weight: 500;
+    text-transform: none;
+    box-shadow: none;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+
+    nb-icon {
+      width: 0.875rem;
+      height: 0.875rem;
+      font-size: 0.875rem;
+      margin: 0;
+    }
+  }
+
+  // The way out to the deals: quiet, a hairline frame on the page's own background.
+  .pv-action-secondary {
+    background-color: transparent;
+    border: 1px solid $hairline;
+    color: var(--text-basic-color);
+
+    nb-icon {
+      color: var(--text-hint-color);
+    }
+
+    &:hover,
+    &:focus-visible {
+      background-color: var(--background-basic-color-2);
+      border-color: var(--border-basic-color-4);
+      color: var(--text-basic-color);
+    }
+  }
+
+  // The page's one action: filled in the primary colour.
+  .pv-action-primary {
+    border: 1px solid transparent;
+
+    nb-icon {
+      color: inherit;
+    }
+  }
+}
+
+.pv {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+  color: var(--text-basic-color);
+}
+
+.pv-subtext {
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1rem;
+  color: var(--text-hint-color);
+  overflow-wrap: anywhere;
+}
+
+.pv-muted {
+  font-weight: 400;
+  color: var(--text-hint-color);
+}
+
+// A small dot carrying a meaning's colour; the text next to it stays neutral.
+.pv-dot {
+  flex: 0 0 auto;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background-color: var(--text-hint-color);
+}
+
+// ── Headline ─────────────────────────────────────────────────────────────────
+.pv-headline {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.pv-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.75rem;
+  min-width: 0;
+}
+
+.pv-name {
+  margin: 0;
+  min-width: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.5rem;
+  overflow-wrap: anywhere;
+}
+
+.pv-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  color: var(--text-hint-color);
+
+  .pv-dot {
+    background-color: var(--color-warning-500);
+  }
+
+  &.is-active .pv-dot {
+    background-color: var(--color-success-500);
+  }
+}
+
+.pv-description {
+  margin: 0;
+  max-width: 48rem;
+  color: var(--text-hint-color);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+// ── Figures ──────────────────────────────────────────────────────────────────
+.pv-facts {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0;
+  border: 1px solid $hairline;
+  border-radius: 0.375rem;
+}
+
+.pv-fact {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+  padding: 0.75rem 1rem;
+
+  & + & {
+    border-inline-start: 1px solid $hairline;
+  }
+
+  dt {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.75rem;
+    font-weight: 400;
+    line-height: 1rem;
+    color: var(--text-hint-color);
+  }
+
+  dd {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+    line-height: 1.5rem;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+// The deals could not be read: the pipeline still shows, with this line and a way to read them again.
+.pv-notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  padding: 0.5rem 0.75rem 0.5rem 1rem;
+  border: 1px solid $hairline;
+  border-inline-start: 3px solid var(--color-warning-500);
+  border-radius: 0.375rem;
+
+  nb-icon {
+    flex: 0 0 auto;
+    width: 1rem;
+    height: 1rem;
+    font-size: 1rem;
+    color: var(--color-warning-500);
+  }
+
+  .pv-notice-text {
+    flex: 1 1 12rem;
+    min-width: 0;
+  }
+}
+
+// ── Columns ──────────────────────────────────────────────────────────────────
+.pv-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 1rem 1.25rem;
+}
+
+.pv-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+}
+
+// ── Panels ───────────────────────────────────────────────────────────────────
+.pv-panel {
+  border: 1px solid $hairline;
+  border-radius: 0.375rem;
+  min-width: 0;
+}
+
+.pv-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.625rem 1rem;
+  border-bottom: 1px solid $hairline;
+}
+
+.pv-panel-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.25rem;
+
+  nb-icon {
+    width: 1rem;
+    height: 1rem;
+    font-size: 1rem;
+    color: var(--text-hint-color);
+  }
+}
+
+.pv-panel-caption {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--text-hint-color);
+  font-variant-numeric: tabular-nums;
+}
+
+.pv-panel-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1rem;
+  white-space: nowrap;
+  color: var(--text-hint-color);
+  text-decoration: none;
+
+  nb-icon {
+    width: 0.875rem;
+    height: 0.875rem;
+    font-size: 0.875rem;
+  }
+
+  &:hover {
+    color: var(--text-basic-color);
+  }
+}
+
+.pv-empty {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  color: var(--text-hint-color);
+
+  nb-icon {
+    width: 1rem;
+    height: 1rem;
+    font-size: 1rem;
+  }
+}
+
+// A column header row inside a panel.
+%pv-list-head {
+  display: grid;
+  gap: 1rem;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid $hairline;
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  color: var(--text-hint-color);
+}
+
+// No rules between items: spacing alone separates them.
+%pv-list {
+  margin: 0;
+  padding: 0.25rem 0;
+  list-style: none;
+}
+
+// The items of the three lists (stages, recent deals, probability): small text,
+// with their second line a step smaller still.
+.pv-stage,
+.pv-deal,
+.pv-level-row {
+  font-size: 0.75rem;
+  line-height: 1.125rem;
+
+  .pv-subtext {
+    font-size: 0.6875rem;
+    line-height: 1rem;
+  }
+}
+
+// A share bar: a light track and its filled part.
+.pv-track {
+  display: block;
+  height: 0.25rem;
+  border-radius: 999px;
+  background-color: color-mix(in srgb, var(--text-hint-color) 14%, transparent);
+  overflow: hidden;
+
+  > span {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background-color: var(--color-primary-500);
+  }
+}
+
+// ── Stages ───────────────────────────────────────────────────────────────────
+$stage-columns: 1.5rem minmax(0, 1fr) 7rem 3rem;
+
+.pv-stage-head {
+  @extend %pv-list-head;
+  grid-template-columns: $stage-columns;
+
+  .pv-stage-head-name {
+    grid-column: 1 / 3;
+  }
+
+  .pv-stage-head-count {
+    grid-column: 4;
+    text-align: end;
+  }
+}
+
+.pv-stages {
+  @extend %pv-list;
+}
+
+.pv-stage {
+  display: grid;
+  grid-template-columns: $stage-columns;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem 1rem;
+}
+
+.pv-stage-position {
+  font-size: 0.6875rem;
+  color: var(--text-hint-color);
+  font-variant-numeric: tabular-nums;
+}
+
+.pv-stage-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.pv-stage-name {
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.pv-stage-track {
+  grid-column: 3;
+}
+
+.pv-stage-count {
+  grid-column: 4;
+  text-align: end;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+// ── Probability levels: the level's name after a neutral dot — one colour for every level,
+// the words say which it is ──
+.pv-level {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+// ── Recent deals ─────────────────────────────────────────────────────────────
+// One grid for the header and every row (each row a subgrid of it), so the probability
+// and date columns take their widest cell — a long date format no longer spills out of
+// the panel — while title and stage share what is left and still line up row to row.
+.pv-deal-table {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) max-content max-content;
+  column-gap: 1rem;
+}
+
+.pv-deal-head,
+.pv-deal {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  align-items: center;
+  padding-inline: 1rem;
+}
+
+.pv-deal-head {
+  padding-block: 0.5rem;
+  border-bottom: 1px solid $hairline;
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  color: var(--text-hint-color);
+}
+
+// The rows carry table roles for assistive tech (see the template); they sit in the table's grid.
+.pv-deals {
+  display: contents;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+// No rules between rows; the first and last keep a little room from the panel's edges.
+.pv-deal {
+  padding-block: 0.5rem;
+
+  &:first-child {
+    padding-top: 0.75rem;
+  }
+
+  &:last-child {
+    padding-bottom: 0.75rem;
+  }
+}
+
+// Without subgrid, each row keeps its own columns, with room for a long date.
+@supports not (grid-template-columns: subgrid) {
+  .pv-deal-head,
+  .pv-deal {
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) 6.5rem 12rem;
+    column-gap: 1rem;
+  }
+}
+
+.pv-deal-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.pv-deal-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+  color: var(--text-basic-color);
+  text-decoration: none;
+}
+
+a.pv-deal-title:hover {
+  text-decoration: underline;
+}
+
+.pv-deal-stage {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pv-deal-date {
+  text-align: end;
+  white-space: nowrap;
+  font-size: 0.6875rem;
+  color: var(--text-hint-color);
+  font-variant-numeric: tabular-nums;
+}
+
+// ── Probability breakdown ────────────────────────────────────────────────────
+.pv-levels {
+  @extend %pv-list;
+}
+
+.pv-level-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.375rem 1rem;
+  padding: 0.5rem 1rem;
+}
+
+.pv-level-count {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.375rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+// Every level's bar in the one bar colour the stages use.
+.pv-level-track {
+  grid-column: 1 / -1;
+}
+
+// ── Details ──────────────────────────────────────────────────────────────────
+.pv-details {
+  margin: 0;
+  padding: 0.25rem 0;
+}
+
+.pv-detail {
+  display: grid;
+  grid-template-columns: 7rem minmax(0, 1fr);
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem 1rem;
+
+  dt {
+    font-size: 0.75rem;
+    font-weight: 400;
+    line-height: 1rem;
+    color: var(--text-hint-color);
+  }
+
+  dd {
+    margin: 0;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
+.pv-person {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 100%;
+}
+
+.pv-person-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pv-avatar {
+  flex: 0 0 auto;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.pv-avatar-initials {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.625rem;
+  font-weight: 600;
+  background-color: color-mix(in srgb, var(--text-hint-color) 18%, transparent);
+}
+
+// ── Narrower screens ─────────────────────────────────────────────────────────
+@media screen and (max-width: 75rem) {
+  .pv-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media screen and (max-width: 48rem) {
+  .pv-facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  // Two rows of two: the second row gets its line on top, the right column on its left.
+  .pv-fact + .pv-fact {
+    border-inline-start: 0;
+  }
+
+  .pv-fact:nth-child(even) {
+    border-inline-start: 1px solid $hairline;
+  }
+
+  .pv-fact:nth-child(n + 3) {
+    border-top: 1px solid $hairline;
+  }
+
+  // Deals: title (with its client) and probability; the stage and date columns drop.
+  .pv-deal-table {
+    grid-template-columns: minmax(0, 1fr) max-content;
+  }
+
+  // Without subgrid the rows keep their own columns, so they drop to the same two.
+  @supports not (grid-template-columns: subgrid) {
+    .pv-deal-head,
+    .pv-deal {
+      grid-template-columns: minmax(0, 1fr) 6.5rem;
+    }
+  }
+
+  .pv-deal-head > span:nth-child(2),
+  .pv-deal-head > span:nth-child(4),
+  .pv-deal-stage,
+  .pv-deal-date {
+    display: none;
+  }
+}
+
+@media screen and (max-width: 40rem) {
+  .pv-stage-head,
+  .pv-stage {
+    grid-template-columns: 1.5rem minmax(0, 1fr) 3rem;
+  }
+
+  .pv-stage-head .pv-stage-head-count,
+  .pv-stage-count {
+    grid-column: 3;
+  }
+
+  // The bar drops; the count says it.
+  .pv-stage-track {
+    display: none;
+  }
+}

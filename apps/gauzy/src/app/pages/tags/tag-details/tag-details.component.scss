@@ -1,0 +1,203 @@
+// A compact record view in one column, sized to its content.
+//
+// Type scale 12 / 13 / 14 (labels / body / title), spacing on an 8px rhythm, hierarchy from size, weight and
+// space rather than colour. The tag is the Tags table's own chip; the usage list is drawn as that table's
+// rows. Nebular's card and buttons, as in the employee photo dialogs.
+.details {
+	width: min(34rem, calc(100vw - 2rem));
+	margin: 0;
+	font-size: 0.8125rem;
+	line-height: 1.5;
+}
+
+// ── Header ──────────────────────────────────────────────────────────────────
+.details__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+}
+
+// The table chip reads its size from these tokens; one step up makes it the dialog's title.
+.details__title {
+	--gauzy-table-badge-height: 1.5rem;
+	--gauzy-table-font-size: 0.875rem;
+	--gauzy-table-chip-padding-x: 0.5rem;
+	min-width: 0;
+	min-height: 1.5rem;
+	margin: 0;
+	font-size: 0.875rem;
+	font-weight: 600;
+}
+
+.details__close {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	width: 2rem;
+	height: 2rem;
+	margin-right: -0.5rem;
+	padding: 0;
+	border: 0;
+	border-radius: calc(var(--border-radius) * 0.75);
+	background: transparent;
+	color: var(--gauzy-text-color-2);
+	cursor: pointer;
+	transition: background-color 150ms ease-out, color 150ms ease-out;
+
+	&:hover {
+		background-color: var(--color-basic-transparent-hover);
+		color: var(--gauzy-text-color-1);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--color-primary-default);
+		outline-offset: 2px;
+	}
+
+	nb-icon {
+		font-size: 1.125rem;
+	}
+}
+
+// ── Body ────────────────────────────────────────────────────────────────────
+.details__body {
+	max-height: 70vh;
+	overflow-y: auto;
+}
+
+.details__section + .details__section {
+	margin-top: 1.5rem;
+}
+
+.details__heading {
+	margin: 0 0 0.5rem;
+	font-size: 0.8125rem;
+	font-weight: 600;
+	line-height: 1.5;
+	color: var(--gauzy-text-color-1);
+}
+
+.details__heading--split {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 1rem;
+}
+
+.details__total {
+	font-size: 0.625rem;
+	font-weight: normal;
+	font-variant-numeric: tabular-nums;
+	color: var(--gauzy-text-color-2);
+}
+
+.details__text {
+	margin: 0;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+}
+
+.details__text--empty,
+.details__empty {
+	color: var(--gauzy-text-color-2);
+}
+
+.details__text--small {
+	font-size: 0.6875rem;
+}
+
+// Details: label above value, three columns, two on a phone.
+.details__grid {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 1rem 1.5rem;
+	margin: 0;
+}
+
+@media (max-width: 480px) {
+	.details__grid {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+.details__field {
+	min-width: 0;
+
+	dt {
+		margin-bottom: 0.25rem;
+		font-size: 0.75rem;
+		font-weight: normal;
+		color: var(--gauzy-text-color-2);
+	}
+
+	dd {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		margin: 0;
+		min-width: 0;
+		overflow-wrap: anywhere;
+	}
+}
+
+.details__swatch {
+	width: 0.75rem;
+	height: 0.75rem;
+	border-radius: calc(var(--border-radius) * 0.375);
+	flex-shrink: 0;
+}
+
+.details__hex {
+	font-variant-numeric: tabular-nums;
+	text-transform: uppercase;
+}
+
+// Used in: the Tags table's rows — hairlines, the label in the body colour, the count muted and right-aligned.
+.details__rows {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	border-top: 1px solid var(--gauzy-border-default-color);
+}
+
+.details__row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	min-height: 1.75rem;
+	padding: 0.1875rem 0.75rem;
+	font-size: 0.6875rem;
+	border-bottom: 1px solid var(--gauzy-border-default-color);
+	transition: background-color 150ms ease-out;
+
+	&:hover {
+		background-color: var(--color-basic-transparent-hover);
+	}
+}
+
+.details__row-label {
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+.details__row-count {
+	font-variant-numeric: tabular-nums;
+	color: var(--gauzy-text-color-2);
+}
+
+// ── Footer ──────────────────────────────────────────────────────────────────
+.details__footer {
+	display: flex;
+	justify-content: flex-end;
+	gap: 0.75rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.details__close,
+	.details__row {
+		transition: none;
+	}
+}

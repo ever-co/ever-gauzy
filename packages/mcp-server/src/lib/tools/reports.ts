@@ -8,6 +8,7 @@ import { ReportCategoryEnum } from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
+import { TOOL_HINTS } from './tool-hints';
 const logger = new Logger('ReportTools');
 
 export const registerReportTools = (server: McpServer) => {
@@ -55,29 +56,35 @@ export const registerReportTools = (server: McpServer) => {
 				logger.error('Error fetching reports:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch reports: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get report categories tool
 	registerTool(
 		server,
-		'get_report_categories', 'Get available report categories', {}, async () => {
-		try {
-			const response = await apiClient.get('/api/report/category');
+		'get_report_categories',
+		'Get available report categories',
+		{},
+		async () => {
+			try {
+				const response = await apiClient.get('/api/report/category');
 
-			return {
-				content: [
-					{
-						type: 'text',
-						text: JSON.stringify(response, null, 2)
-					}
-				]
-			};
-		} catch (error) {
-			logger.error('Error fetching report categories:', sanitizeForLogging(error));
-			throw new Error(`Failed to fetch report categories: ${sanitizeErrorMessage(error)}`);
-		}
-	});
+				return {
+					content: [
+						{
+							type: 'text',
+							text: JSON.stringify(response, null, 2)
+						}
+					]
+				};
+			} catch (error) {
+				logger.error('Error fetching report categories:', sanitizeForLogging(error));
+				throw new Error(`Failed to fetch report categories: ${sanitizeErrorMessage(error)}`);
+			}
+		},
+		TOOL_HINTS.readOnly
+	);
 
 	// Get report menu items tool
 	registerTool(
@@ -115,7 +122,8 @@ export const registerReportTools = (server: McpServer) => {
 				logger.error('Error fetching report menu items:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch report menu items: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Update report menu tool
@@ -152,6 +160,7 @@ export const registerReportTools = (server: McpServer) => {
 				logger.error('Error updating report menu:', sanitizeForLogging(error));
 				throw new Error(`Failed to update report menu: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 };

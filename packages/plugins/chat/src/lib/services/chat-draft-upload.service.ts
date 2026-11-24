@@ -1,7 +1,16 @@
-import { BadRequestException, Injectable, Logger, NotFoundException, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import {
+	BadRequestException,
+	Injectable,
+	Logger,
+	NotFoundException,
+	OnModuleDestroy,
+	OnModuleInit,
+	Optional
+} from '@nestjs/common';
+import { MikroORM } from '@mikro-orm/core';
 import { DataSource, EntityManager, EntitySubscriberInterface, In, InsertEvent, LessThan, ObjectLiteral } from 'typeorm';
 import { FileStorageProviderEnum, ID, IChatDraftDiscardResult } from '@gauzy/contracts';
-import { FileStorage, runWithTenantStorageSettings, TenantSettingService } from '@gauzy/core';
+import { FileStorage, runInMikroOrmContext, runWithTenantStorageSettings, TenantSettingService } from '@gauzy/core';
 import {
 	CHAT_DRAFT_SWEEP_BATCH,
 	CHAT_DRAFT_SWEEP_INTERVAL_MS,
@@ -89,7 +98,9 @@ export class ChatDraftUploadService implements OnModuleInit, OnModuleDestroy {
 
 	constructor(
 		private readonly dataSource: DataSource,
-		private readonly tenantSettings: TenantSettingService
+		private readonly tenantSettings: TenantSettingService,
+		/** Opens the MikroORM request context the sweep takes each draft in under DB_ORM=mikro-orm. */
+		@Optional() private readonly orm?: MikroORM
 	) {}
 
 	onModuleInit(): void {
@@ -163,6 +174,10 @@ export class ChatDraftUploadService implements OnModuleInit, OnModuleDestroy {
 	 * One pass of the sweep: the drafts older than the TTL, oldest first, a batch at a time. Never throws; a draft
 	 * that failed is logged and stays a draft (its transaction rolled back), so the next pass tries it again.
 	 *
+	 * The pass runs on a timer, outside any request. Under DB_ORM=mikro-orm the tenant's storage settings are read
+	 * through MikroORM, which refuses its global EntityManager there: each draft is then taken in a MikroORM request
+	 * context of its own.
+	 *
 	 * @returns What became of each draft taken.
 	 */
 	async sweep(now: Date = new Date()): Promise<Record<ChatDraftOutcome, number>> {
@@ -178,7 +193,7 @@ export class ChatDraftUploadService implements OnModuleInit, OnModuleDestroy {
 			});
 			for (const draft of expired) {
 				try {
-					counts[await this.take(draft)] += 1;
+					counts[await runInMikroOrmContext(this.orm, () => this.take(draft))] += 1;
 				} catch (error) {
 					this.logger.warn(`A draft upload was not swept: ${(error as Error)?.message}`);
 				}

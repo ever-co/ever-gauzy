@@ -20,7 +20,6 @@ import {
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
-import { EverOperatorService } from '@gauzy/plugin-ever-instance';
 import { AuditRow, EverConnectAuditService } from './ever-connect-audit.service';
 import { EverConnectCleanupService } from './ever-connect-cleanup.service';
 import type { EverConnectConfig } from './ever-connect-config';
@@ -28,8 +27,9 @@ import { ConnectionSummary, EverConnectConnectionService } from './ever-connect-
 import { EVER_CONNECT_SETTINGS } from './ever-connect.constants';
 import { EntitlementSummary, EverConnectEntitlementService } from './ever-connect-entitlement.service';
 import { EverConnectIntegrationStateService, IntegrationView } from './ever-connect-integration-state.service';
-import { EverConnectLinkService, LinkView } from './ever-connect-link.service';
+import { EverConnectLinkService, InstallationLinks, LinkView } from './ever-connect-link.service';
 import { COUNTERPARTY_LOOKUP, EverConnectLookupService, LookupRateLimitedError } from './ever-connect-lookup.service';
+import { EverConnectOperatorService } from './ever-connect-operator.service';
 import { organizationScope } from './ever-connect-request';
 import type { RequestWithUser } from './ever-connect-request';
 import { EverConnectStore } from './ever-connect.store';
@@ -43,11 +43,16 @@ export interface EverConnectStatus {
 	install_source: string;
 	/** `ever_cloud` when Ever operates this installation (`EVER_INSTALL_SOURCE=cloud`). */
 	managed_by: 'ever_cloud' | 'operator';
-	/** Whether the caller is the operator of this installation (sees the Connection tab). */
+	/**
+	 * Whether the caller is the operator of this installation's connection (sees the Connection tab):
+	 * on Ever's cloud, a super admin listed in `EVER_CONNECT_CLOUD_OPERATOR_USER_IDS`.
+	 */
 	operator: boolean;
 	connected: boolean;
 	/** The connection details: for the operator only. */
 	connection: ConnectionSummary | null;
+	/** The organizations of this installation linked to Ever organizations: for the operator only. */
+	installation_links: InstallationLinks | null;
 	/** This organization's link. */
 	link: LinkView | null;
 	/** Installation-wide integrations waiting for the operator's accept: for the operator only. */
@@ -74,7 +79,7 @@ export class EverConnectController {
 		private readonly entitlements: EverConnectEntitlementService,
 		private readonly audit: EverConnectAuditService,
 		private readonly store: EverConnectStore,
-		private readonly operator: EverOperatorService,
+		private readonly operator: EverConnectOperatorService,
 		private readonly cleanup: EverConnectCleanupService,
 		@Inject(EVER_CONNECT_SETTINGS) private readonly config: EverConnectConfig,
 		private readonly lookup: EverConnectLookupService
@@ -99,6 +104,7 @@ export class EverConnectController {
 			operator: isOperator,
 			connected: summary.status === 'connected',
 			connection: isOperator ? summary : null,
+			installation_links: isOperator ? await this.links.installationLinks() : null,
 			link: scope ? await this.links.current(scope.tenantId, scope.organizationId) : null,
 			pending_approvals: isOperator ? await this.states.pendingApprovals() : [],
 			in_product_consent: false

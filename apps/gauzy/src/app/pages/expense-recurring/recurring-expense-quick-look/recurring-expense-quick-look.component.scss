@@ -1,0 +1,166 @@
+// The recurring expense's own pieces; the layout, panels, figures and record sections are the project quick look's,
+// in the drawer and on the page alike.
+
+$hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+
+:host {
+  display: block;
+}
+
+/* ── Headline ── */
+
+.recurring-logo {
+  color: var(--gauzy-text-color-2);
+
+  nb-icon {
+    width: 1rem;
+    height: 1rem;
+    font-size: 1rem;
+  }
+}
+
+// On the page the logo and the title are a step larger, as the expense page's. Scoped as the project header's own
+// `.project-logo` rule is, which would otherwise keep it at the drawer's 2rem.
+:host(.is-page) .project-view-header .recurring-logo {
+  width: 2.5rem;
+  height: 2.5rem;
+
+  nb-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    font-size: 1.25rem;
+  }
+}
+
+:host(.is-page) .recurring-title {
+  font-size: 1.125rem;
+  line-height: 1.5rem;
+}
+
+// In the drawer the four figures sit two by two: three to a row would leave the fourth alone on its line.
+:host(:not(.is-page)) .project-facts {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+// The monthly amount is the figure the expense is about: it leads, a step larger than the others.
+.recurring-fact-amount dd {
+  gap: 0.125rem;
+}
+
+.recurring-amount {
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.375rem;
+  color: var(--gauzy-text-color-1);
+
+  ::ng-deep nb-icon {
+    width: 1rem;
+    height: 1rem;
+    margin-inline-start: 0.25rem;
+    font-size: 1rem;
+    vertical-align: -0.125rem;
+    color: var(--gauzy-text-color-2);
+  }
+}
+
+:host(.is-page) .recurring-amount {
+  font-size: 1.125rem;
+  line-height: 1.5rem;
+}
+
+/* ── Monthly cost chart ── */
+
+// The chart's range filter, at the expense page's size: the global input floor would draw it 46px tall and
+// stretch the panel's header.
+.recurring-chart-range {
+  flex: 0 0 auto;
+  min-width: 9rem;
+
+  // Matched to Nebular's own `nb-select.appearance-outline.size-small` so this rule outranks it.
+  &.appearance-outline.status-basic.size-small ::ng-deep .select-button {
+    min-height: 1.75rem !important;
+    height: 1.75rem;
+    padding: 0 1.75rem 0 0.625rem;
+    font-size: 0.75rem;
+    line-height: 1rem;
+    font-weight: 600;
+  }
+}
+
+/* ── History: a plain table, hairlines between the periods ── */
+
+.recurring-periods {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+
+  th,
+  td {
+    padding: 0.625rem 0.75rem;
+    border-bottom: 1px solid $hairline;
+    text-align: start;
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+
+  th {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--gauzy-text-color-2);
+  }
+
+  td {
+    color: var(--gauzy-text-color-1);
+  }
+
+  tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
+  .is-amount {
+    text-align: end;
+  }
+
+  // This expense's period: a quiet wash, no colour of its own.
+  tr.is-current td {
+    background-color: var(--gauzy-hover-tint);
+    font-weight: 600;
+  }
+}
+
+// The drawer is narrow: the table keeps to it.
+:host(:not(.is-page)) .recurring-periods {
+  th,
+  td {
+    padding-inline: 0.5rem;
+  }
+}
+
+.recurring-period-note {
+  margin-inline-start: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--gauzy-text-color-2);
+}
+
+.recurring-period-link {
+  color: var(--gauzy-action-info-text);
+  text-decoration: none;
+
+  &:hover,
+  &:focus-visible {
+    text-decoration: underline;
+  }
+}
+
+/* ── Narrow pages ── */
+
+@media screen and (max-width: 40rem) {
+  .recurring-periods {
+    th,
+    td {
+      padding-inline: 0.5rem;
+    }
+  }
+}

@@ -12,6 +12,7 @@ import {
 	oauthAppScopesAllowWrites,
 	oauthAppScopesOf
 } from '../../auth/oauth-app-scope';
+import { reachableByEmbedToken } from '../../embed/embed-session';
 import { TenantBaseGuard } from './tenant-base.guard';
 import { isMutatingOperation } from './mutating-operation';
 import { RolePermissionService } from '../../role-permission/role-permission.service';
@@ -96,6 +97,20 @@ export class TenantPermissionGuard extends TenantBaseGuard implements CanActivat
 				return false;
 			}
 			permissions = reachable;
+		}
+
+		// An embed token reaches only EMBED_TOKEN_PERMISSIONS: the role query below is asked about those alone.
+		if (isNotEmpty(permissions)) {
+			const reachableByEmbed = reachableByEmbedToken(RequestContext.currentUser(), permissions);
+			if (isEmpty(reachableByEmbed)) {
+				console.log(
+					`Unauthorized access blocked: an embed token reaches none of the permissions. Tenant ID: ${tenantId}, Role ID: ${roleId}, Permissions Checked: ${permissions.join(
+						', '
+					)}`
+				);
+				return false;
+			}
+			permissions = reachableByEmbed;
 		}
 
 		// Check if permissions are not empty

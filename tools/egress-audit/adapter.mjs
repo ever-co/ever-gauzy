@@ -144,6 +144,19 @@ async function api(ctx, method, path, body) {
 	return { status: response.status, body: parsed, location: response.headers.get('location') };
 }
 
+/**
+ * positive_lookup: the body of the operator's save of the organization's tax id, as the organization
+ * form sends it. PUT /api/organization/:id validates the whole organization (UpdateOrganizationDTO:
+ * the name and the currency are required) and writes only what the body carries, so the stored name
+ * and currency go with the new tax id. An organization read without them is a fault of the run.
+ */
+export function taxIdSave(organization, taxId) {
+	const { name, currency } = organization ?? {};
+	if (!name || !currency)
+		throw new Error(`the organization was read without its name and currency: ${JSON.stringify(organization)}`);
+	return { name, currency, taxId };
+}
+
 /** A control of the mock platform (`/__mock/<path>`): what app.ever.co or Ever would do. */
 async function mock(ctx, path, body) {
 	const response = await ctx.fetch(`${MOCK}/__mock/${path}`, {
@@ -407,6 +420,40 @@ export default {
 			120
 		);
 
+		// Row 18: "Installation address" (instance_url) is consented for the installation in app.ever.co
+		// and waits for the operator, who accepts (row 31); the operator reports the address they type,
+		// then withdraws it. The address is the audit's own made-up one: nothing fetches it.
+		await mock(session, 'consent', {
+			instance_id: session.instanceId,
+			integration: 'instance_url',
+			operator_accept: 'pending'
+		});
+		await until('the installation address consent waiting for the operator', async () => {
+			const status = await api(session, 'GET', `/api/ever-connect/status?organizationId=${org}`);
+			return (status.body?.pending_approvals ?? []).some((p) => p.key === 'instance_url') || null;
+		});
+		expect(
+			'operator accept (installation address)',
+			await api(session, 'POST', '/api/ever-connect/integrations/instance_url/accept', { accepted: true }),
+			[200]
+		);
+		expect(
+			'installation address reported',
+			await api(session, 'PUT', '/api/ever-connect/public-url', { url: 'https://gauzy.egress-audit.example' }),
+			[200]
+		);
+		expect('installation address withdrawn', await api(session, 'DELETE', '/api/ever-connect/public-url'), [200]);
+		await until(
+			'the installation address reported and withdrawn (row 18, PUT and DELETE)',
+			async () => {
+				const methods = new Set(
+					(await mock(session, 'requests')).filter((entry) => entry.row === 18).map((entry) => entry.method)
+				);
+				return (methods.has('PUT') && methods.has('DELETE')) || null;
+			},
+			120
+		);
+
 		// Row 20: a person's deletion request arrives on the event feed (row 7) and the installation
 		// answers it. No call depends on Sign in with Ever ID for this one.
 		await mock(session, 'person-request', { instance_id: session.instanceId, kind: 'deletion' });
@@ -633,9 +680,10 @@ export default {
 			throw new Error('the check did not query Ever Platform exactly once');
 
 		// Row 12: the organization's tax id is saved after the opt-in: its salted hash is uploaded.
+		const stored = expect('read the organization', await api(session, 'GET', `/api/organization/${org}`), [200]);
 		expect(
 			'save the tax id',
-			await api(session, 'PUT', `/api/organization/${org}`, { taxId: 'DE 123 456 789' }),
+			await api(session, 'PUT', `/api/organization/${org}`, taxIdSave(stored, 'DE 123 456 789')),
 			[200]
 		);
 		await until(

@@ -1,108 +1,130 @@
-<nb-card class="main">
-  <nb-card-header class="d-flex flex-column">
-    <span class="cancel">
-      <i class="fas fa-times" (click)="closeDialog()"></i>
-    </span>
-    <h5 class="title">
-      {{ (tag ? 'TAGS_PAGE.EDIT_TAGS' : 'TAGS_PAGE.ADD_TAGS') | translate }}
-    </h5>
-  </nb-card-header>
-  <nb-card-body class="body">
-    <form [formGroup]="form">
-      <div class="row">
-        <div class="col-sm-6">
-          <div class="form-group">
-            <label for="inputName" class="label">
-              {{ 'TAGS_PAGE.TAGS_SELECT_NAME' | translate }}
-            </label>
-            <input
-              formControlName="name"
-              class="select-name"
-              type="text"
-              nbInput
-              [placeholder]="'TAGS_PAGE.TAGS_SELECT_NAME' | translate"
-              id="inputName"
-              fullWidth
-              />
-            </div>
-          </div>
-          <div class="col-sm-6">
-            <div class="form-group">
-              <label for="inputColor" class="label">
-                {{ 'TAGS_PAGE.TAGS_SELECT_COLOR' | translate }}
-              </label>
-              <input
-                class="select-color"
-                nbInput
-                [placeholder]="'TAGS_PAGE.TAGS_SELECT_COLOR' | translate"
-                formControlName="color"
-                [colorPicker]="color"
-                [value]="color"
-                [style.background]="color + ' !important'"
-                [style.color]="backgroundContrast(color)"
-                (colorPickerChange)="onChangeColor($event)"
-                id="inputColor"
-                fullWidth
-                />
-              </div>
-            </div>
-          </div>
-          <div class="row">
-            <div class="col">
-              <div class="form-group">
-                <nb-checkbox formControlName="isTenantLevel">
-                  {{ 'TAGS_PAGE.TENANT_LEVEL' | translate }}
-                </nb-checkbox>
-              </div>
-            </div>
-          </div>
-          <div class="row">
-            <div class="col-sm-12">
-              <div class="form-group">
-                <label for="inputDescription" class="label">
-                  {{ 'TAGS_PAGE.TAGS_SELECT_DESCRIPTION' | translate }}
-                </label>
-                <textarea
-                  formControlName="description"
-                  nbInput
-                  fullWidth
-                  class="description"
-                  [placeholder]="'TAGS_PAGE.TAGS_SELECT_DESCRIPTION' | translate"
-                  id="inputDescription"
-                  fullWidth
-                ></textarea>
-              </div>
-            </div>
-          </div>
-          <div class="row">
-            <div class="col-sm-12">
-              <div class="form-group">
-                <label for="tagTypeId" class="label">
-                  {{ 'TAGS_PAGE.TAGS_SELECT_TYPE' | translate }}
-                </label>
-                <nb-select
-                  formControlName="tagTypeId"
-                  fullWidth
-                  id="tagTypeId"
-                  [placeholder]="'TAGS_PAGE.TAGS_SELECT_TYPE' | translate"
-                  >
-                  @for (tagType of tagTypes; track tagType) {
-                    <nb-option [value]="tagType.id">
-                      {{ tagType.type }}
-                    </nb-option>
-                  }
-                </nb-select>
-              </div>
-            </div>
-          </div>
-        </form>
-      </nb-card-body>
-      <nb-card-footer class="text-left">
-        <button (click)="closeDialog()" status="basic" class="mr-3" outline nbButton>
-          {{ 'BUTTONS.CANCEL' | translate }}
-        </button>
-        <button [disabled]="form.invalid" (click)="tag ? editTag() : addTag()" status="success" nbButton>
-          {{ 'BUTTONS.SAVE' | translate }}
-        </button>
-      </nb-card-footer>
-    </nb-card>
+<nb-card class="mutation">
+	<nb-card-header class="mutation__header">
+		<h2 class="mutation__title">
+			{{ (tag ? 'TAGS_PAGE.EDIT_TAGS' : 'TAGS_PAGE.ADD_TAGS') | translate }}
+		</h2>
+		<button
+			type="button"
+			class="mutation__close"
+			[attr.aria-label]="'BUTTONS.CLOSE' | translate"
+			(click)="closeDialog()"
+		>
+			<nb-icon icon="close-outline"></nb-icon>
+		</button>
+	</nb-card-header>
+
+	<nb-card-body class="mutation__body">
+		<form [formGroup]="form" class="mutation__form">
+			<div class="mutation__row">
+				<div class="mutation__field">
+					<label for="inputName" class="label">{{ 'TAGS_PAGE.TAGS_SELECT_NAME' | translate }}</label>
+					<input
+						formControlName="name"
+						type="text"
+						nbInput
+						fullWidth
+						id="inputName"
+						[placeholder]="'TAGS_PAGE.TAGS_SELECT_NAME' | translate"
+					/>
+				</div>
+				<div class="mutation__field">
+					<label for="inputColor" class="label">{{ 'TAGS_PAGE.TAGS_SELECT_COLOR' | translate }}</label>
+					<!-- The colour shows as a swatch inside the field, the way the Tags table shows it, rather than
+					     as the whole field's background. -->
+					<div class="mutation__color ga-color-picker-field">
+						<!-- background-color, not the shorthand: the field is free text, and the shorthand would also
+						     accept an image such as url(...). -->
+						<span class="mutation__swatch" [style.background-color]="color || null" aria-hidden="true"></span>
+						<!-- `auto` lets the picker open above or below the field so it stays in the viewport;
+						     `bottom-left` placed it to the LEFT of the field, off-screen on a narrow one. -->
+						<input
+							class="mutation__color-input"
+							nbInput
+							fullWidth
+							formControlName="color"
+							id="inputColor"
+							[placeholder]="'TAGS_PAGE.TAGS_SELECT_COLOR' | translate"
+							[colorPicker]="color"
+							[value]="color"
+							cpOutputFormat="hex"
+							cpAlphaChannel="disabled"
+							cpPosition="auto"
+							cpWidth="248px"
+							[cpExtraTemplate]="presetTemplate"
+							(colorPickerChange)="onChangeColor($event)"
+							(input)="rememberTypedColor($any($event.target).value)"
+							(blur)="restoreColorIfInvalid()"
+						/>
+					</div>
+
+					<!-- The presets, rendered by the picker at the foot of its popup. Real buttons, named by their
+					     colour, so they can be reached with Tab and chosen with Enter or Space; each goes through
+					     the same `onChangeColor()` as a colour picked with the mouse. -->
+					<ng-template #presetTemplate>
+						<div class="mutation__presets" role="group" [attr.aria-label]="'TAGS_PAGE.TAGS_SELECT_COLOR' | translate">
+							@for (preset of presetColors; track preset) {
+								<button
+									type="button"
+									class="mutation__preset"
+									[style.background-color]="preset"
+									[attr.aria-label]="preset"
+									[attr.title]="preset"
+									[attr.aria-pressed]="isCurrentColor(preset)"
+									(click)="onChangeColor(preset)"
+								></button>
+							}
+						</div>
+					</ng-template>
+				</div>
+			</div>
+
+			<div class="mutation__field">
+				<label for="inputDescription" class="label">
+					{{ 'TAGS_PAGE.TAGS_SELECT_DESCRIPTION' | translate }}
+				</label>
+				<textarea
+					formControlName="description"
+					nbInput
+					fullWidth
+					class="mutation__description"
+					id="inputDescription"
+					[placeholder]="'TAGS_PAGE.TAGS_SELECT_DESCRIPTION' | translate"
+				></textarea>
+			</div>
+
+			<div class="mutation__field">
+				<label for="tagTypeId" class="label">{{ 'TAGS_PAGE.TAGS_SELECT_TYPE' | translate }}</label>
+				<nb-select
+					formControlName="tagTypeId"
+					fullWidth
+					id="tagTypeId"
+					[placeholder]="'TAGS_PAGE.TAGS_SELECT_TYPE' | translate"
+				>
+					@for (tagType of tagTypes; track tagType) {
+						<nb-option [value]="tagType.id">{{ tagType.type }}</nb-option>
+					}
+				</nb-select>
+			</div>
+
+			<nb-checkbox formControlName="isTenantLevel" class="mutation__checkbox">
+				{{ 'TAGS_PAGE.TENANT_LEVEL' | translate }}
+			</nb-checkbox>
+		</form>
+	</nb-card-body>
+
+	<nb-card-footer class="mutation__footer">
+		<button type="button" nbButton outline status="basic" size="small" (click)="closeDialog()">
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button
+			type="button"
+			nbButton
+			status="primary"
+			size="small"
+			[disabled]="form.invalid"
+			(click)="tag ? editTag() : addTag()"
+		>
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

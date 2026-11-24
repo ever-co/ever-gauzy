@@ -1,0 +1,25 @@
+// The recurring expense page's own pieces: the actions beside the back button. The expense itself is the shared
+// quick look's, laid out for a page.
+
+/* ── Header: the actions beside the back button ── */
+
+.recurring-page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+
+  [nbButton] {
+    height: 1.75rem;
+  }
+}
+
+/* ── Narrow pages ── */
+
+// The actions share a line with the back button and the page's name: Edit keeps its icon.
+@media screen and (max-width: 40rem) {
+  .recurring-page-action-label {
+    display: none;
+  }
+}

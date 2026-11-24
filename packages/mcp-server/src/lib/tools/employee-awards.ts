@@ -3,12 +3,61 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { validateOrganizationContext } from './utils';
+import {
+	applyInTurn,
+	buildListQuery,
+	nameTexts,
+	notOfferedByApi,
+	readSearchedList,
+	resolveOrganizationScope,
+	validateOrganizationContext
+} from './utils';
 import { EmployeeAwardInputSchema } from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
+import { TOOL_HINTS } from './tool-hints';
 const logger = new Logger('EmployeeAwardTools');
+
+/** The award list route drops paging, relations and order: the pagination route reads them, `skip` as a page number. */
+const AWARDS_PATH = '/api/employee-award/pagination';
+
+// Awards sort by employee on the column that names it.
+const AWARD_SORT_COLUMNS: Record<string, string> = { employee: 'employeeId' };
+
+/**
+ * The `order` of an award list, or none when no field is named. Awards that share the value keep one order by their id,
+ * so a page never repeats or skips one of them.
+ */
+const awardOrder = (sortBy?: string, sortOrder?: 'ASC' | 'DESC') => {
+	if (!sortBy) {
+		return undefined;
+	}
+	const column = AWARD_SORT_COLUMNS[sortBy] ?? sortBy;
+	return { [column]: sortOrder, id: 'ASC' };
+};
+
+/** The fields the award update route requires, besides the organization. */
+const AWARD_REQUIRED_FIELDS = ['name', 'year'];
+
+/**
+ * Updates one award through `PUT /employee-award/:id`, whose DTO requires a name, a year and the organization, and
+ * whose guard reads the tenant from the body. A change that leaves the name or the year out keeps the award's
+ * current one, read first in the same scope.
+ */
+const updateAward = async (
+	id: string,
+	changes: Record<string, unknown>,
+	scope: { organizationId: string; tenantId?: string }
+) => {
+	const leavesOutRequired = AWARD_REQUIRED_FIELDS.some((field) => changes[field] === undefined);
+	let current: Record<string, unknown> = {};
+	if (leavesOutRequired) {
+		const award = await apiClient.get<Record<string, unknown>>(`/api/employee-award/${id}`, { params: scope });
+		current = { name: award.name, year: award.year };
+	}
+	return apiClient.put(`/api/employee-award/${id}`, { ...current, ...changes, ...scope });
+};
 
 export const registerEmployeeAwardTools = (server: McpServer) => {
 	// Get employee awards tool
@@ -30,20 +79,12 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					page,
-					limit,
-					...(search && { search }),
-					...(relations && { relations }),
-					...(employeeId && { employeeId }),
-					...(year && { year }),
-					...(sortBy && { sortBy }),
-					sortOrder
-				};
-
-				const response = await apiClient.get('/api/employee-award', { params });
+				// The route has no search: one of the award name is kept here, on the whole list
+				const listOptions = { page, limit, relations, order: awardOrder(sortBy, sortOrder), skipIsPage: true };
+				const response = await readSearchedList(AWARDS_PATH, defaultParams, { employeeId, year }, listOptions, {
+					search,
+					textsOf: nameTexts
+				});
 
 				return {
 					content: [
@@ -57,7 +98,8 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 				logger.error('Error fetching employee awards:', sanitizeForLogging(error));
 				throw new Error(sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get employee award by ID tool
@@ -89,7 +131,8 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 				logger.error('Error fetching employee award:', sanitizeForLogging(error));
 				throw new Error(sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Create employee award tool
@@ -131,7 +174,8 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 				logger.error('Error creating employee award:', sanitizeForLogging(error));
 				throw new Error(sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Update employee award tool
@@ -145,7 +189,7 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 		},
 		async ({ id, award_data }) => {
 			try {
-				const response = await apiClient.put(`/api/employee-award/${id}`, award_data);
+				const response = await updateAward(id, award_data, resolveOrganizationScope());
 
 				return {
 					content: [
@@ -159,7 +203,8 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 				logger.error('Error updating employee award:', sanitizeForLogging(error));
 				throw new Error(sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Delete employee award tool
@@ -190,7 +235,8 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 				logger.error('Error deleting employee award:', sanitizeForLogging(error));
 				throw new Error(sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.idempotentDestructive
 	);
 
 	// Get employee awards by employee tool
@@ -210,18 +256,13 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					employeeId,
-					page,
-					limit,
-					...(year && { year }),
-					sortBy,
-					sortOrder
-				};
+				const params = buildListQuery(
+					defaultParams,
+					{ employeeId, year },
+					{ page, limit, order: awardOrder(sortBy, sortOrder), skipIsPage: true }
+				);
 
-				const response = await apiClient.get('/api/employee-award', { params });
+				const response = await apiClient.get(AWARDS_PATH, { params });
 
 				return {
 					content: [
@@ -235,7 +276,8 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 				logger.error('Error fetching employee awards by employee:', sanitizeForLogging(error));
 				throw new Error(sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get awards by year tool
@@ -260,19 +302,13 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					year,
-					page,
-					limit,
-					...(employeeId && { employeeId }),
-					...(relations && { relations }),
-					sortBy,
-					sortOrder
-				};
+				const params = buildListQuery(
+					defaultParams,
+					{ year, employeeId },
+					{ page, limit, relations, order: awardOrder(sortBy, sortOrder), skipIsPage: true }
+				);
 
-				const response = await apiClient.get('/api/employee-award', { params });
+				const response = await apiClient.get(AWARDS_PATH, { params });
 
 				return {
 					content: [
@@ -286,7 +322,8 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 				logger.error('Error fetching employee awards by year:', sanitizeForLogging(error));
 				throw new Error(sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get employee awards count tool
@@ -325,7 +362,8 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 				logger.error('Error fetching employee awards count:', sanitizeForLogging(error));
 				throw new Error(sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get employee awards statistics tool
@@ -340,35 +378,15 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 			endDate: z.string().optional().describe('End date for statistics (ISO format)'),
 			groupBy: z.enum(['employee', 'year', 'month']).optional().describe('Group statistics by field')
 		},
-		async ({ employeeId, year, startDate, endDate, groupBy }) => {
+		async () => {
 			try {
-				const defaultParams = validateOrganizationContext();
-
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					...(employeeId && { employeeId }),
-					...(year && { year }),
-					...(startDate && { startDate }),
-					...(endDate && { endDate }),
-					...(groupBy && { groupBy })
-				};
-
-				const response = await apiClient.get('/api/employee-award/statistics', { params });
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
+				throw notOfferedByApi('employee award statistics');
 			} catch (error) {
 				logger.error('Error fetching employee awards statistics:', sanitizeForLogging(error));
 				throw new Error(sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Bulk create employee awards tool
@@ -401,9 +419,9 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
 				}));
 
-				const response = await apiClient.post('/api/employee-award/bulk', {
-					awards: awardsWithDefaults
-				});
+				const response = await applyInTurn(awardsWithDefaults, (award) =>
+					apiClient.post('/api/employee-award', award)
+				);
 
 				return {
 					content: [
@@ -417,7 +435,8 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 				logger.error('Error bulk creating employee awards:', sanitizeForLogging(error));
 				throw new Error(sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Bulk update employee awards tool
@@ -437,9 +456,8 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 		},
 		async ({ awards }) => {
 			try {
-				const response = await apiClient.put('/api/employee-award/bulk', {
-					awards
-				});
+				const scope = resolveOrganizationScope();
+				const response = await applyInTurn(awards, ({ id, data }) => updateAward(id, data, scope));
 
 				return {
 					content: [
@@ -453,7 +471,8 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 				logger.error('Error bulk updating employee awards:', sanitizeForLogging(error));
 				throw new Error(sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Bulk delete employee awards tool
@@ -466,9 +485,8 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 		},
 		async ({ ids }) => {
 			try {
-				await apiClient.delete('/api/employee-award/bulk', {
-					data: { ids }
-				});
+				const params = resolveOrganizationScope();
+				await applyInTurn(ids, (id) => apiClient.delete(`/api/employee-award/${id}`, { params }));
 
 				return {
 					content: [
@@ -490,6 +508,7 @@ export const registerEmployeeAwardTools = (server: McpServer) => {
 				logger.error('Error bulk deleting employee awards:', sanitizeForLogging(error));
 				throw new Error(sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.idempotentDestructive
 	);
 };

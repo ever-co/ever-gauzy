@@ -27,7 +27,8 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import {
 	IRecordViewSection,
 	RecurringExpenseMutationComponent,
-	RecurringExpenseDeleteConfirmationComponent
+	RecurringExpenseDeleteConfirmationComponent,
+	RecurringExpenseHistoryDialogComponent
 } from '@gauzy/ui-core/shared';
 import { buildEmployeeRecurringExpenseViewSections } from '../expense-recurring/recurring-expense-record-view';
 
@@ -44,7 +45,6 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 	selectedDateRange: IDateRangePicker;
 	recurringExpenses: IEmployeeRecurringExpense[] = [];
 	employeeName = this.getTranslation('EMPLOYEES_PAGE.EMPLOYEE_NAME');
-	fetchedHistories: any = {};
 	organization: IOrganization;
 	selectedEmployeeId: string;
 
@@ -63,8 +63,6 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 	 */
 	viewedRecurringExpense: IEmployeeRecurringExpense;
 	viewSections: IRecordViewSection[] = [];
-
-	showHistory: boolean = false;
 
 	constructor(
 		private readonly route: ActivatedRoute,
@@ -317,7 +315,6 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 		this.loading = true;
 
 		try {
-			this.fetchedHistories = {};
 			if (this.selectedEmployeeId) {
 				this.recurringExpenses = (
 					await this.employeeRecurringExpenseService.getAllByRange(['employee', 'employee.user'], {
@@ -348,32 +345,49 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 		}
 	}
 
-	public async fetchHistory() {
-		if (!this.organization) {
+	/**
+	 * Opens the history of a recurring expense's amount in a dialog: every period of it, oldest first. The expense
+	 * is the one the block's menu was opened on, else the selected one.
+	 */
+	public async fetchHistory(recurringExpense?: IEmployeeRecurringExpense) {
+		const expense: IEmployeeRecurringExpense = recurringExpense ?? this.selectedRecurringExpense.data;
+		if (!expense || !this.organization) {
 			return;
 		}
 
 		const { id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;
 
-		this.showHistory = !this.showHistory;
-		this.fetchedHistories[this.selectedRecurringExpense.index] = (
-			await this.employeeRecurringExpenseService.getAll(
-				[],
-				{
-					parentRecurringExpenseId: this.selectedRecurringExpense.data.parentRecurringExpenseId,
-					organizationId,
-					tenantId
-				},
-				{ startDate: 'ASC' }
-			)
-		).items;
+		try {
+			// Without a parent the expense was never split into periods: it is its own history. Reading by an
+			// empty parent would list every recurring expense of the organization.
+			const records = expense.parentRecurringExpenseId
+				? (
+						await this.employeeRecurringExpenseService.getAll(
+							[],
+							{
+								parentRecurringExpenseId: expense.parentRecurringExpenseId,
+								organizationId,
+								tenantId
+							},
+							{ startDate: 'ASC' }
+						)
+				  ).items
+				: [expense];
+			this.dialogService.open(RecurringExpenseHistoryDialogComponent, {
+				context: {
+					records: records?.length ? records : [expense],
+					name: this.getCategoryName(expense.categoryName)
+				}
+			});
+		} catch (error) {
+			this.toastrService.danger(error);
+		}
 	}
 
 	selectRecurringExpense(recurringExpense: IEmployeeRecurringExpense, i: number) {
 		// Whatever the drawer is showing no longer matches the selection.
 		this.closeView();
-		this.showHistory = false;
 		this.selectedRecurringExpense =
 			this.selectedRecurringExpense.data && recurringExpense.id === this.selectedRecurringExpense.data.id
 				? {

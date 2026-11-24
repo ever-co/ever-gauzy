@@ -21,6 +21,7 @@ import { EverConnectIntegrationStateService } from './ever-connect-integration-s
 import { EverConnectLease } from './ever-connect-lease';
 import { EverConnectLinkService } from './ever-connect-link.service';
 import { EverConnectLookupService } from './ever-connect-lookup.service';
+import { EverConnectOperatorService } from './ever-connect-operator.service';
 import { EverConnectPlatformService, errorCode } from './ever-connect-platform.service';
 import { EverConnectProvisionController } from './ever-connect-provision.controller';
 import { EverConnectProvisionExceptionFilter } from './ever-connect-provision.filter';
@@ -49,6 +50,7 @@ import { LauncherFirstPartyGuard } from './launcher/launcher-first-party.guard';
 import { LauncherOriginGuard } from './launcher/launcher-origin.guard';
 import { LauncherReads } from './launcher/launcher-reads';
 import { LauncherTokenVault } from './launcher/launcher-token-vault';
+import { membershipSyncProviders } from './membership/membership-sync.handler';
 
 /**
  * Lists "Ever Platform" among the integrations, pins the operator of a single-tenant installation,
@@ -95,7 +97,9 @@ export class EverConnectLifecycle implements OnApplicationBootstrap {
  * for a paired Ever Teams web app is mounted only when `EVER_STATS_SERVES` names `teams`, and the App
  * Launcher's routes and services exist only with `EVER_APP_LAUNCHER_ENABLED=true` (with Ever ID sign-in
  * and the Ever Platform connection loaded): otherwise they are not registered at all, so their routes
- * answer 404 and no token encryption is exported.
+ * answer 404 and no token encryption is exported. The membership sync's handler is registered only with
+ * `EVER_CONNECT_MEMBERSHIP_SYNC_ENABLED=true` (and Ever ID sign-in): otherwise the feed acknowledges membership
+ * changes and nothing reads or writes for them.
  *
  * Global so that the Ever ID sign-in plugin finds `EVER_CONNECT_CONFIG` (Sign in with Ever ID's
  * client) and, with the App Launcher on, `EVER_ID_TOKEN_VAULT`, which it asks optionally; the module's
@@ -112,6 +116,8 @@ export class EverConnectModule {
 		const launcher = readLauncherConfig(env, (message) =>
 			isEverConnectEnabled(env, () => undefined) ? logger.warn(message) : undefined
 		);
+		// The membership sync's handler, only with EVER_CONNECT_MEMBERSHIP_SYNC_ENABLED=true (and Ever ID sign-in).
+		const membershipProviders = membershipSyncProviders(env, (message) => logger.warn(message));
 		const launcherProviders = launcher.enabled
 			? [
 					{ provide: EVER_CONNECT_LAUNCHER_SETTINGS, useValue: launcher },
@@ -176,9 +182,11 @@ export class EverConnectModule {
 				EverConnectProvisionGuard,
 				EverConnectProvisionExceptionFilter,
 				EverConnectScheduler,
+				EverConnectOperatorService,
 				EverConnectOperatorGuard,
 				EverConnectEnabledGuard,
 				EverConnectLifecycle,
+				...membershipProviders,
 				...launcherProviders
 			],
 			exports: [

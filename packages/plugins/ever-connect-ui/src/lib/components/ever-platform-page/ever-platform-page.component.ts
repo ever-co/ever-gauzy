@@ -33,9 +33,12 @@ export type EverPlatformView = 'loading' | 'ready' | 'unavailable' | 'error';
 /**
  * Integrations > Ever Platform.
  *
- * - Connection (the operator of the installation only; "Operated by Ever Cloud" on Ever's cloud):
- *   what connecting sends, the connect code, the state of the connection, the approvals the
- *   operator owes, the instance policy, Disconnect.
+ * - Connection (the operator of the installation only; "Operated by Ever Cloud" on Ever's cloud,
+ *   where the operators the deployment lists by id get the same tab): what connecting sends, the
+ *   connect code, the state of the connection (Check again while it waits for approval, Replace
+ *   key), the installation's address (reported only once "Installation address" is enabled, and
+ *   only as typed), the installation's linked organizations, the approvals the operator owes, the
+ *   instance policy, Disconnect.
  * - Organization link: link this organization with a link code, or remove the link.
  * - Integrations & data: each integration, its state, what it moves (Show scope), the consent link
  *   to app.ever.co ("Enable in app.ever.co…") and Disable. Nothing is enabled from here. For an
@@ -90,9 +93,15 @@ export type EverPlatformView = 'loading' | 'ready' | 'unavailable' | 'error';
 								>
 									@if (status?.managed_by === 'ever_cloud') {
 										<p data-test="ever-cloud">
-											{{ 'EVER_CONNECT.CONNECTION.EVER_CLOUD' | translate }}
+											{{
+												(status?.operator
+													? 'EVER_CONNECT.CONNECTION.EVER_CLOUD_OPERATOR'
+													: 'EVER_CONNECT.CONNECTION.EVER_CLOUD'
+												) | translate
+											}}
 										</p>
-									} @else {
+									}
+									@if (status?.operator) {
 										<section data-test="connection">
 											@if (status?.connection?.key_material !== 'ok') {
 												<nb-alert status="warning" data-test="key-material">{{
@@ -182,6 +191,84 @@ export type EverPlatformView = 'loading' | 'ready' | 'unavailable' | 'error';
 														</dd>
 													}
 												</dl>
+												@if (status.installation_links; as links) {
+													<h3>{{ 'EVER_CONNECT.CONNECTION.LINKS' | translate: { count: links.total } }}</h3>
+													@if (links.items.length) {
+														<table class="table" data-test="installation-links">
+															<tbody>
+																@for (item of links.items; track item.link_id) {
+																	<tr>
+																		<td>{{ item.handle ? 'ever.co/' + item.handle : item.ever_org_id }}</td>
+																		<td>{{ 'EVER_CONNECT.CONNECTION.LINK_STATUS.' + item.status | translate }}</td>
+																		<td>{{ item.linked_at | date: 'mediumDate' }}</td>
+																	</tr>
+																}
+															</tbody>
+														</table>
+														@if (links.total > links.items.length) {
+															<p class="hint" data-test="installation-links-more">
+																{{
+																	'EVER_CONNECT.CONNECTION.LINKS_MORE'
+																		| translate: { shown: links.items.length, count: links.total }
+																}}
+															</p>
+														}
+													} @else {
+														<p class="hint" data-test="no-installation-links">
+															{{ 'EVER_CONNECT.CONNECTION.NO_LINKS' | translate }}
+														</p>
+													}
+												}
+												@if (status.connection.status === 'connected' && status.connection.instance_url; as address) {
+													<h3>{{ 'EVER_CONNECT.ADDRESS.TITLE' | translate }}</h3>
+													@if (address.enabled) {
+														<p>{{ 'EVER_CONNECT.ADDRESS.DESCRIPTION' | translate }}</p>
+														@if (address.url) {
+															<p data-test="address-reported">
+																{{ 'EVER_CONNECT.ADDRESS.REPORTED' | translate: { url: address.url } }}
+															</p>
+														}
+														<div class="row">
+															<input
+																nbInput
+																fieldSize="small"
+																type="url"
+																data-test="address-input"
+																[attr.aria-label]="'EVER_CONNECT.ADDRESS.TITLE' | translate"
+																[(ngModel)]="publicUrl"
+																[placeholder]="'https://gauzy.example.com'"
+																autocomplete="off"
+															/>
+															<button
+																nbButton
+																status="primary"
+																size="small"
+																type="button"
+																data-test="address-report"
+																[disabled]="busy || !publicUrl.trim()"
+																(click)="reportAddress()"
+															>
+																{{ 'EVER_CONNECT.ADDRESS.REPORT' | translate }}
+															</button>
+															@if (address.url) {
+																<button
+																	nbButton
+																	ghost
+																	status="danger"
+																	size="small"
+																	type="button"
+																	data-test="address-withdraw"
+																	[disabled]="busy"
+																	(click)="withdrawAddress()"
+																>
+																	{{ 'EVER_CONNECT.ADDRESS.WITHDRAW' | translate }}
+																</button>
+															}
+														</div>
+													} @else {
+														<p class="hint" data-test="address-off">{{ 'EVER_CONNECT.ADDRESS.OFF' | translate }}</p>
+													}
+												}
 												<ngx-ever-connect-pending-approvals
 													[items]="status.pending_approvals"
 													[handle]="status.connection.owner_handle"
@@ -622,6 +709,8 @@ export class EverPlatformPageComponent implements OnInit {
 	scopeShown: Record<string, boolean> = {};
 	connectCode = '';
 	linkCode = '';
+	/** The installation's public address the operator types (never read from this server). */
+	publicUrl = '';
 	linkOrganization = true;
 	confirmingDisconnect = false;
 	busy = false;
@@ -674,10 +763,9 @@ export class EverPlatformPageComponent implements OnInit {
 							audit: this.api
 								.audit(organizationId, 1)
 								.pipe(catchError(() => of({ items: [], total: 0 }))),
-							policy:
-								status.operator && status.managed_by !== 'ever_cloud'
-									? this.api.policy().pipe(catchError(() => of([] as EverConnectPolicyRow[])))
-									: of([] as EverConnectPolicyRow[])
+							policy: status.operator
+								? this.api.policy().pipe(catchError(() => of([] as EverConnectPolicyRow[])))
+								: of([] as EverConnectPolicyRow[])
 						}).subscribe(({ integrations, entitlement, audit, policy }) => {
 							this.integrations = integrations;
 							this.entitlement = entitlement;
@@ -722,11 +810,32 @@ export class EverPlatformPageComponent implements OnInit {
 	}
 
 	checkApproval(): void {
-		this.run(this.api.checkApproval(), () => undefined);
+		this.run(this.api.checkApproval(), (result) =>
+			result.status === 'connected'
+				? this.say('EVER_CONNECT.NOTICES.CONNECTED')
+				: result.status === 'pending_approval'
+					? this.say('EVER_CONNECT.NOTICES.STILL_PENDING', {}, 'info')
+					: undefined
+		);
 	}
 
 	rotateKey(): void {
 		this.run(this.api.rotateKey(), () => this.say('EVER_CONNECT.NOTICES.KEY_ROTATED'));
+	}
+
+	/** Reports the address the operator typed; the API sends it only while "Installation address" is enabled. */
+	reportAddress(): void {
+		const url = this.publicUrl.trim();
+		if (!url) return;
+		this.run(this.api.setPublicUrl(url), () => {
+			// An address typed meanwhile stays, to be reported next.
+			if (this.publicUrl.trim() === url) this.publicUrl = '';
+			this.say('EVER_CONNECT.NOTICES.ADDRESS_REPORTED');
+		});
+	}
+
+	withdrawAddress(): void {
+		this.run(this.api.clearPublicUrl(), () => this.say('EVER_CONNECT.NOTICES.ADDRESS_WITHDRAWN'));
 	}
 
 	disconnect(): void {
@@ -872,7 +981,10 @@ export class EverPlatformPageComponent implements OnInit {
 			'platform_unreachable',
 			'rate_limited',
 			'not_available',
-			'product_mismatch'
+			'product_mismatch',
+			'consent_required',
+			'consent_changed',
+			'url_invalid'
 		];
 		this.say(
 			code && known.includes(code) ? `EVER_CONNECT.ERRORS.${code}` : 'EVER_CONNECT.ERRORS.generic',

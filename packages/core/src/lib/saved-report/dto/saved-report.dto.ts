@@ -99,6 +99,29 @@ export class SavedReportFiltersDTO implements ISavedReportFilters {
 	@IsOptional()
 	@IsBoolean()
 	billableOnly?: boolean;
+
+	@ApiPropertyOptional({
+		type: () => String,
+		isArray: true,
+		description:
+			"Labels, by tag id: keep the time logs that carry one of these tags (the log's own tags, not its task's), " +
+			'as tagIds of the daily report.'
+	})
+	@IsOptional()
+	@IsArray()
+	@ArrayMaxSize(MAX_FILTER_IDS)
+	@IsUUID('all', { each: true })
+	tagIds?: ID[];
+
+	@ApiPropertyOptional({
+		type: () => Boolean,
+		description:
+			'Keep the time logs that carry no tag: alone, only those; with tagIds, those as well as the logs carrying ' +
+			'one of the tags, as untagged of the daily report.'
+	})
+	@IsOptional()
+	@IsBoolean()
+	untagged?: boolean;
 }
 
 /**

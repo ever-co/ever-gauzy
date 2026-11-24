@@ -36,7 +36,7 @@ const EMPLOYEE_ID = 'employee-1';
 const STARTED_AT = new Date('2026-10-24T09:00:00.000Z');
 const STOPPED_AT = new Date('2026-10-24T09:30:00.000Z');
 
-function createHandler(dataSource?: unknown) {
+function createHandler(dataSource?: unknown, facts?: unknown) {
 	const saved: TimeLog[] = [];
 	const typeOrmTimeLogRepository = {
 		save: jest.fn(async (timeLog: TimeLog) => {
@@ -63,7 +63,8 @@ function createHandler(dataSource?: unknown) {
 		commandBus as any,
 		timeSlotService as any,
 		timeLogService as any,
-		dataSource as never
+		dataSource as never,
+		facts as never
 	);
 	return { handler, saved, timeSlotService };
 }
@@ -466,5 +467,75 @@ describe("TimeLogCreateHandler: a timer start's run is the only run going, on SQ
 		repository.save.mockRejectedValueOnce(duplicate);
 
 		expect(await refusalCodeOf(handler.execute(startRun()))).toBe('TIMER_STILL_RUNNING');
+	});
+});
+
+/**
+ * ever-co/ever-gauzy#12071: a new entry's fact, for the webhooks, commits with it where the outbox can share its
+ * transaction, and is written right after it otherwise.
+ */
+describe('TimeLogCreateHandler: the fact of a new entry', () => {
+	beforeEach(() => {
+		jest.spyOn(console, 'log').mockImplementation(() => undefined);
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT_ID);
+	});
+	afterEach(() => jest.restoreAllMocks());
+
+	function createHandlerWithFacts(appendsWithinWrites: boolean) {
+		// The transaction's save gives the entry its id, as the database does
+		const transactionRepository = {
+			save: jest.fn(async (timeLog: TimeLog) => {
+				timeLog.id = timeLog.id ?? 'log-in-transaction';
+				return timeLog;
+			})
+		};
+		const transactionManager = { getRepository: jest.fn(() => transactionRepository) };
+		const dataSource = {
+			transaction: jest.fn(async (work: (manager: unknown) => Promise<void>) => work(transactionManager))
+		};
+		// The id each fact was written with, read when it was written: a fact written before the save has none
+		const idsWhenWritten: unknown[] = [];
+		const facts = {
+			appendsWithinWrites: () => appendsWithinWrites,
+			record: jest.fn(async (_name: string, timeLog: TimeLog) => {
+				idsWhenWritten.push(timeLog.id);
+			}),
+			recordWithin: jest.fn(async (_manager: unknown, _name: string, timeLog: TimeLog) => {
+				idsWhenWritten.push(timeLog.id);
+			})
+		};
+		const { handler } = createHandler(dataSource, facts);
+		return { handler, dataSource, transactionManager, facts, idsWhenWritten };
+	}
+
+	it('writes time_log.created in the transaction of the entry, once it is saved', async () => {
+		const { handler, dataSource, transactionManager, facts, idsWhenWritten } = createHandlerWithFacts(true);
+
+		await handler.execute(new TimeLogCreateCommand(input({ stoppedAt: STOPPED_AT })));
+
+		expect(dataSource.transaction).toHaveBeenCalledTimes(1);
+		expect(facts.recordWithin).toHaveBeenCalledTimes(1);
+		expect(facts.recordWithin).toHaveBeenCalledWith(
+			transactionManager,
+			'time_log.created',
+			expect.objectContaining({ id: 'log-in-transaction', employeeId: EMPLOYEE_ID })
+		);
+		expect(idsWhenWritten).toEqual(['log-in-transaction']);
+		expect(facts.record).not.toHaveBeenCalled();
+	});
+
+	it('writes it right after the entry, opening no transaction, where the outbox cannot share one', async () => {
+		const { handler, dataSource, facts, idsWhenWritten } = createHandlerWithFacts(false);
+
+		await handler.execute(new TimeLogCreateCommand(input({ stoppedAt: STOPPED_AT })));
+
+		expect(dataSource.transaction).not.toHaveBeenCalled();
+		expect(facts.record).toHaveBeenCalledTimes(1);
+		expect(facts.record).toHaveBeenCalledWith(
+			'time_log.created',
+			expect.objectContaining({ id: 'log-1', employeeId: EMPLOYEE_ID })
+		);
+		expect(idsWhenWritten).toEqual(['log-1']);
+		expect(facts.recordWithin).not.toHaveBeenCalled();
 	});
 });

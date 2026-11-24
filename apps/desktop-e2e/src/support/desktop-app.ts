@@ -95,6 +95,11 @@ export async function launchDesktopApp(target: AppTarget): Promise<DesktopApp> {
 		delete env[name.toLowerCase()];
 	}
 	Object.assign(env, { NODE_USE_ENV_PROXY: '1', HTTP_PROXY: proxy.url, HTTPS_PROXY: proxy.url, NO_PROXY: 'localhost,127.0.0.1,::1' });
+	// The server, server-api and server-mcp apps ask for administrator rights (`requireAdministrator`), so Windows refuses
+	// to start them from an unelevated test run at all (ERROR_ELEVATION_REQUIRED, EACCES in Node). RunAsInvoker starts
+	// them with the test run's own rights instead; the suite never elevates anything. For the other apps (`asInvoker`)
+	// it changes nothing. Only this child's environment carries it: the packaged apps themselves are unchanged.
+	if (process.platform === 'win32') env['__COMPAT_LAYER'] = 'RunAsInvoker';
 	const args = [
 		...target.args,
 		`--user-data-dir=${userDataDir}`,

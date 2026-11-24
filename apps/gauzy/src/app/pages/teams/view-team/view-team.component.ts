@@ -39,6 +39,7 @@ import {
 	TimesheetStatisticsService
 } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { PAGE_EXTENSION_SLOTS } from '@gauzy/plugin-ui';
 import { HashNumberPipe, IRecordViewSection, IRecordViewStatus, TimeZoneService } from '@gauzy/ui-core/shared';
 import { IEmployeeHoursDay } from '../../employees/view-employee/employee-hours-chart/employee-hours-chart.component';
 import { AssigneePopoverKeyboard } from '../../employees/view-employee/assignee-popover-keyboard';
@@ -287,6 +288,8 @@ type TaskSummary = { open: number; todo: number; progress: number; blocked: numb
 export class ViewTeamComponent extends TranslationBaseComponent implements OnInit {
 	public readonly PermissionsEnum = PermissionsEnum;
 	public readonly BaseEntityEnum = BaseEntityEnum;
+	/** The header's actions slot: what plugins add beside the favorite toggle (the chat's "Team chat"). */
+	public readonly teamActionsSlot = PAGE_EXTENSION_SLOTS.TEAM_VIEW_ACTIONS;
 	public readonly periods: TeamViewPeriod[] = Object.values(TeamViewPeriod);
 
 	public state: PageState = 'loading';

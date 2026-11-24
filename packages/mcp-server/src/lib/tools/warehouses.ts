@@ -3,11 +3,12 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { validateOrganizationContext } from './utils';
+import { nameCodeEmailTexts, readSearchedList, validateOrganizationContext } from './utils';
 import { WarehouseInputSchema } from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
+import { TOOL_HINTS } from './tool-hints';
 const logger = new Logger('WarehouseTools');
 
 export const registerWarehouseTools = (server: McpServer) => {
@@ -27,17 +28,12 @@ export const registerWarehouseTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					page,
-					limit,
-					...(search && { search }),
-					...(relations && { relations }),
-					...(active !== undefined && { active })
-				};
-
-				const response = await apiClient.get('/api/warehouses', { params });
+				// The route has no search: one of the name, code or email is kept here, on the whole list
+				const listOptions = { page, limit, relations };
+				const response = await readSearchedList('/api/warehouses', defaultParams, { active }, listOptions, {
+					search,
+					textsOf: nameCodeEmailTexts
+				});
 
 				return {
 					content: [
@@ -51,7 +47,8 @@ export const registerWarehouseTools = (server: McpServer) => {
 				logger.error('Error fetching warehouses:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch warehouses: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get warehouse by ID tool
@@ -91,7 +88,8 @@ export const registerWarehouseTools = (server: McpServer) => {
 				logger.error('Error fetching warehouse:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch warehouse: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Create warehouse tool
@@ -132,7 +130,8 @@ export const registerWarehouseTools = (server: McpServer) => {
 				logger.error('Error creating warehouse:', sanitizeForLogging(error));
 				throw new Error(`Failed to create warehouse: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Update warehouse tool
@@ -168,7 +167,8 @@ export const registerWarehouseTools = (server: McpServer) => {
 				logger.error('Error updating warehouse:', sanitizeForLogging(error));
 				throw new Error(`Failed to update warehouse: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Delete warehouse tool
@@ -207,6 +207,7 @@ export const registerWarehouseTools = (server: McpServer) => {
 				logger.error('Error deleting warehouse:', sanitizeForLogging(error));
 				throw new Error(`Failed to delete warehouse: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.idempotentDestructive
 	);
 };

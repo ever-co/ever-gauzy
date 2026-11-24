@@ -3,12 +3,34 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { validateOrganizationContext } from './utils';
+import {
+	applyInTurn,
+	buildListQuery,
+	ListQueryOptions,
+	nameCodeEmailTexts,
+	notOfferedByApi,
+	readSearchedList,
+	resolveOrganizationScope,
+	validateOrganizationContext
+} from './utils';
 import { MerchantInputSchema } from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
+import { TOOL_HINTS } from './tool-hints';
 const logger = new Logger('MerchantTools');
+
+/** A page of merchants. The route has no search: one of the name, code or email is kept here, on the whole list. */
+const readMerchants = (
+	defaultParams: { tenantId?: string; organizationId?: string },
+	where: Record<string, unknown>,
+	search: string | undefined,
+	listOptions: ListQueryOptions
+) =>
+	readSearchedList('/api/merchants', defaultParams, where, listOptions, {
+		search,
+		textsOf: nameCodeEmailTexts
+	});
 
 export const registerMerchantTools = (server: McpServer) => {
 	// Get merchants tool
@@ -33,17 +55,7 @@ export const registerMerchantTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					page,
-					limit,
-					...(search && { search }),
-					...(relations && { relations }),
-					...(where && { where })
-				};
-
-				const response = await apiClient.get('/api/merchants', { params });
+				const response = await readMerchants(defaultParams, { ...where }, search, { page, limit, relations });
 
 				return {
 					content: [
@@ -57,7 +69,8 @@ export const registerMerchantTools = (server: McpServer) => {
 				logger.error('Error fetching merchants:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch merchants: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get merchant count tool
@@ -98,7 +111,8 @@ export const registerMerchantTools = (server: McpServer) => {
 				logger.error('Error fetching merchant count:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch merchant count: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get merchant by ID tool
@@ -130,7 +144,8 @@ export const registerMerchantTools = (server: McpServer) => {
 				logger.error('Error fetching merchant:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch merchant: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Create merchant tool
@@ -166,7 +181,8 @@ export const registerMerchantTools = (server: McpServer) => {
 				logger.error('Error creating merchant:', sanitizeForLogging(error));
 				throw new Error(`Failed to create merchant: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Update merchant tool
@@ -194,7 +210,8 @@ export const registerMerchantTools = (server: McpServer) => {
 				logger.error('Error updating merchant:', sanitizeForLogging(error));
 				throw new Error(`Failed to update merchant: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Delete merchant tool
@@ -225,7 +242,8 @@ export const registerMerchantTools = (server: McpServer) => {
 				logger.error('Error deleting merchant:', sanitizeForLogging(error));
 				throw new Error(`Failed to delete merchant: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.idempotentDestructive
 	);
 
 	// Archive merchant tool
@@ -236,23 +254,15 @@ export const registerMerchantTools = (server: McpServer) => {
 		{
 			id: z.string().uuid().describe('The merchant ID')
 		},
-		async ({ id }) => {
+		async () => {
 			try {
-				const response = await apiClient.put(`/api/merchants/${id}/archive`, { isArchived: true });
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
+				throw notOfferedByApi('archiving a merchant', 'delete_merchant removes a merchant.');
 			} catch (error) {
 				logger.error('Error archiving merchant:', sanitizeForLogging(error));
 				throw new Error(`Failed to archive merchant: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.idempotentDestructive
 	);
 
 	// Restore merchant tool
@@ -263,23 +273,15 @@ export const registerMerchantTools = (server: McpServer) => {
 		{
 			id: z.string().uuid().describe('The merchant ID')
 		},
-		async ({ id }) => {
+		async () => {
 			try {
-				const response = await apiClient.put(`/api/merchants/${id}/restore`, { isArchived: false });
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
+				throw notOfferedByApi('restoring an archived merchant');
 			} catch (error) {
 				logger.error('Error restoring merchant:', sanitizeForLogging(error));
 				throw new Error(`Failed to restore merchant: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.idempotentWrite
 	);
 
 	// Get merchant by code tool
@@ -293,16 +295,15 @@ export const registerMerchantTools = (server: McpServer) => {
 		},
 		async ({ code, relations }) => {
 			try {
-				const defaultParams = validateOrganizationContext();
+				const scope = resolveOrganizationScope();
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					code,
-					...(relations && { relations })
-				};
-
-				const response = await apiClient.get('/api/merchants/by-code', { params });
+				// The guard reads the tenant at the top of the query, the list route its `where`
+				const params = { ...scope, ...buildListQuery(scope, { code }, { limit: 1, relations }) };
+				const { items = [] } = await apiClient.get<{ items?: unknown[] }>('/api/merchants', { params });
+				const [response] = items;
+				if (!response) {
+					throw new Error(`No merchant has the code ${code}.`);
+				}
 
 				return {
 					content: [
@@ -316,7 +317,8 @@ export const registerMerchantTools = (server: McpServer) => {
 				logger.error('Error fetching merchant by code:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch merchant by code: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Search merchants tool
@@ -329,33 +331,15 @@ export const registerMerchantTools = (server: McpServer) => {
 			limit: z.number().optional().default(20).describe('Maximum number of results'),
 			includeArchived: z.boolean().optional().default(false).describe('Include archived merchants in search')
 		},
-		async ({ query, limit = 20, includeArchived = false }) => {
+		async () => {
 			try {
-				const defaultParams = validateOrganizationContext();
-
-				const params = {
-					query,
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					limit,
-					includeArchived
-				};
-
-				const response = await apiClient.get('/api/merchants/search', { params });
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
+				throw notOfferedByApi('searching merchants');
 			} catch (error) {
 				logger.error('Error searching merchants:', sanitizeForLogging(error));
 				throw new Error(`Failed to search merchants: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get merchant statistics tool
@@ -367,32 +351,15 @@ export const registerMerchantTools = (server: McpServer) => {
 			startDate: z.string().optional().describe('Start date for statistics (ISO format)'),
 			endDate: z.string().optional().describe('End date for statistics (ISO format)')
 		},
-		async ({ startDate, endDate }) => {
+		async () => {
 			try {
-				const defaultParams = validateOrganizationContext();
-
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					...(startDate && { startDate }),
-					...(endDate && { endDate })
-				};
-
-				const response = await apiClient.get('/api/merchants/statistics', { params });
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
+				throw notOfferedByApi('merchant statistics');
 			} catch (error) {
 				logger.error('Error fetching merchant statistics:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch merchant statistics: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Bulk create merchants tool
@@ -403,8 +370,15 @@ export const registerMerchantTools = (server: McpServer) => {
 		{
 			merchants: z
 				.array(
-					z.object({ name: z.string().describe('The name (required)') }).passthrough()
-						.describe('Merchant data')
+					z
+						.object({
+							name: z.string().min(1).describe('The name (required)'),
+							code: z.string().min(1).describe('The merchant code (required)'),
+							email: z.string().email().describe('The email address (required)'),
+							currency: z.string().describe('The currency code, such as USD (required)')
+						})
+						.passthrough()
+						.describe('Merchant data: the fields the create route requires')
 				)
 				.describe('Array of merchant data to create')
 		},
@@ -419,7 +393,9 @@ export const registerMerchantTools = (server: McpServer) => {
 					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
 				}));
 
-				const response = await apiClient.post('/api/merchants/bulk', { merchants: merchantsWithDefaults });
+				const response = await applyInTurn(merchantsWithDefaults, (merchant) =>
+					apiClient.post('/api/merchants', merchant)
+				);
 
 				return {
 					content: [
@@ -433,7 +409,8 @@ export const registerMerchantTools = (server: McpServer) => {
 				logger.error('Error bulk creating merchants:', sanitizeForLogging(error));
 				throw new Error(`Failed to bulk create merchants: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Get active merchants tool
@@ -451,17 +428,9 @@ export const registerMerchantTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					page,
-					limit,
-					...(search && { search }),
-					...(relations && { relations }),
-					where: { isActive: true, isArchived: false }
-				};
-
-				const response = await apiClient.get('/api/merchants', { params });
+				const listOptions = { page, limit, relations };
+				const activeWhere = { isActive: true, isArchived: false };
+				const response = await readMerchants(defaultParams, activeWhere, search, listOptions);
 
 				return {
 					content: [
@@ -475,7 +444,8 @@ export const registerMerchantTools = (server: McpServer) => {
 				logger.error('Error fetching active merchants:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch active merchants: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get archived merchants tool
@@ -493,17 +463,8 @@ export const registerMerchantTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					page,
-					limit,
-					...(search && { search }),
-					...(relations && { relations }),
-					where: { isArchived: true }
-				};
-
-				const response = await apiClient.get('/api/merchants', { params });
+				const listOptions = { page, limit, relations };
+				const response = await readMerchants(defaultParams, { isArchived: true }, search, listOptions);
 
 				return {
 					content: [
@@ -517,6 +478,7 @@ export const registerMerchantTools = (server: McpServer) => {
 				logger.error('Error fetching archived merchants:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch archived merchants: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 };

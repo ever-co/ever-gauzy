@@ -3,12 +3,45 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { validateOrganizationContext } from './utils';
-import { PaymentStatusEnum, PaymentMethodEnum, CurrenciesEnum } from '../input-schemas';
+import {
+	buildListQuery,
+	containsText,
+	endOfDayBound,
+	isWithinDates,
+	notOfferedByApi,
+	readListPage,
+	resolveOrganizationScope,
+	toApiValue,
+	validateOrganizationContext
+} from './utils';
+import {
+	CurrenciesEnum,
+	PAYMENT_METHOD_VALUES,
+	PAYMENT_STATUS_VALUES,
+	PaymentMethodEnum,
+	PaymentMethodFilter,
+	PaymentStatusEnum,
+	PaymentStatusFilter
+} from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
+import { TOOL_HINTS } from './tool-hints';
 const logger = new Logger('PaymentTools');
+
+/** The payments a search of the note and a range of the payment date keep; none without either. */
+const keptPayments = (search?: string, startDate?: string, endDate?: string) => {
+	const hasDates = Boolean(startDate || endDate);
+	const keepsHere = Boolean(search) || hasDates;
+	if (!keepsHere) {
+		return undefined;
+	}
+	return ({ note, paymentDate }: { note?: string; paymentDate?: string }) => {
+		const matchesSearch = containsText(note, search);
+		const inRange = isWithinDates(paymentDate, startDate, endOfDayBound(endDate));
+		return matchesSearch && inRange;
+	};
+};
 
 /**
  * Helper function to convert date fields in payment data to Date objects
@@ -29,6 +62,15 @@ const convertPaymentDateFields = (paymentData: PaymentData): ConvertedPaymentDat
 	};
 };
 
+/** The payment with the method the API stores for one the tools list by another name (`PAYPAL` is `ONLINE`). */
+const withStoredPaymentMethod = (paymentData: PaymentData): PaymentData => {
+	const method = paymentData.paymentMethod;
+	if (typeof method !== 'string') {
+		return paymentData;
+	}
+	return { ...paymentData, paymentMethod: toApiValue(PAYMENT_METHOD_VALUES, method) };
+};
+
 export const registerPaymentTools = (server: McpServer) => {
 	// Get payments tool
 	registerTool(
@@ -43,8 +85,8 @@ export const registerPaymentTools = (server: McpServer) => {
 				.array(z.string())
 				.optional()
 				.describe('Relations to include (e.g., ["invoice", "organizationContact", "project", "recordedBy"])'),
-			status: PaymentStatusEnum.optional().describe('Filter by payment status'),
-			paymentMethod: PaymentMethodEnum.optional().describe('Filter by payment method'),
+			status: PaymentStatusFilter.optional().describe('Filter by payment status'),
+			paymentMethod: PaymentMethodFilter.optional().describe('Filter by payment method'),
 			invoiceId: z.string().uuid().optional().describe('Filter by invoice ID'),
 			organizationContactId: z.string().uuid().optional().describe('Filter by organization contact ID'),
 			projectId: z.string().uuid().optional().describe('Filter by project ID'),
@@ -71,25 +113,21 @@ export const registerPaymentTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					page,
-					limit,
-					...(search && { search }),
-					...(relations && { relations }),
-					...(status && { status }),
-					...(paymentMethod && { paymentMethod }),
-					...(invoiceId && { invoiceId }),
-					...(organizationContactId && { organizationContactId }),
-					...(projectId && { projectId }),
-					...(currency && { currency }),
-					...(startDate && { startDate }),
-					...(endDate && { endDate }),
-					...(overdue !== undefined && { overdue })
+				const where = {
+					status: toApiValue(PAYMENT_STATUS_VALUES, status),
+					paymentMethod: toApiValue(PAYMENT_METHOD_VALUES, paymentMethod),
+					invoiceId,
+					organizationContactId,
+					projectId,
+					currency,
+					overdue
 				};
+				// The route applies neither a search of the note nor a date range: they are kept here, on the whole list
+				const query = (pageNumber: number, take: number) =>
+					buildListQuery(defaultParams, where, { page: pageNumber, limit: take, relations });
+				const keep = keptPayments(search, startDate, endDate);
 
-				const response = await apiClient.get('/api/payments', { params });
+				const response = await readListPage('/api/payments', query, { page, limit, keep });
 
 				return {
 					content: [
@@ -103,7 +141,8 @@ export const registerPaymentTools = (server: McpServer) => {
 				logger.error('Error fetching payments:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch payments: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get payment count tool
@@ -112,8 +151,8 @@ export const registerPaymentTools = (server: McpServer) => {
 		'get_payment_count',
 		"Get payment count in the authenticated user's organization",
 		{
-			status: PaymentStatusEnum.optional().describe('Filter by payment status'),
-			paymentMethod: PaymentMethodEnum.optional().describe('Filter by payment method'),
+			status: PaymentStatusFilter.optional().describe('Filter by payment status'),
+			paymentMethod: PaymentMethodFilter.optional().describe('Filter by payment method'),
 			currency: CurrenciesEnum.optional().describe('Filter by currency'),
 			overdue: z.boolean().optional().describe('Filter by overdue status'),
 			startDate: z.string().optional().describe('Filter payments from this date (ISO format)'),
@@ -126,8 +165,8 @@ export const registerPaymentTools = (server: McpServer) => {
 				const params = {
 					organizationId: defaultParams.organizationId,
 					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					...(status && { status }),
-					...(paymentMethod && { paymentMethod }),
+					...(status && { status: toApiValue(PAYMENT_STATUS_VALUES, status) }),
+					...(paymentMethod && { paymentMethod: toApiValue(PAYMENT_METHOD_VALUES, paymentMethod) }),
 					...(currency && { currency }),
 					...(overdue !== undefined && { overdue }),
 					...(startDate && { startDate }),
@@ -148,7 +187,8 @@ export const registerPaymentTools = (server: McpServer) => {
 				logger.error('Error fetching payment count:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch payment count: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get payment by ID tool
@@ -191,7 +231,8 @@ export const registerPaymentTools = (server: McpServer) => {
 				logger.error('Error fetching payment:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch payment: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Create payment tool
@@ -212,11 +253,13 @@ export const registerPaymentTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const createData = convertPaymentDateFields({
-					...payment_data,
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
-				});
+				const createData = convertPaymentDateFields(
+					withStoredPaymentMethod({
+						...payment_data,
+						organizationId: defaultParams.organizationId,
+						...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
+					})
+				);
 
 				const response = await apiClient.post('/api/payments', createData);
 
@@ -232,7 +275,8 @@ export const registerPaymentTools = (server: McpServer) => {
 				logger.error('Error creating payment:', sanitizeForLogging(error));
 				throw new Error(`Failed to create payment: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Update payment tool
@@ -257,7 +301,7 @@ export const registerPaymentTools = (server: McpServer) => {
 					throw new Error('Access denied: Payment does not belong to your organization');
 				}
 
-				const updateData = convertPaymentDateFields(payment_data);
+				const updateData = convertPaymentDateFields(withStoredPaymentMethod(payment_data));
 
 				const response = await apiClient.put(`/api/payments/${id}`, updateData);
 
@@ -273,7 +317,8 @@ export const registerPaymentTools = (server: McpServer) => {
 				logger.error('Error updating payment:', sanitizeForLogging(error));
 				throw new Error(`Failed to update payment: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Update payment status tool
@@ -285,34 +330,15 @@ export const registerPaymentTools = (server: McpServer) => {
 			id: z.string().uuid().describe('The payment ID'),
 			status: PaymentStatusEnum.describe('The new status for the payment')
 		},
-		async ({ id, status }) => {
+		async () => {
 			try {
-				// Validate organization context and get authenticated user's organization ID
-				const defaultParams = validateOrganizationContext();
-
-				// First, fetch the payment to verify ownership
-				const existingPayment = await apiClient.get(`/api/payments/${id}`);
-
-				// Verify that the payment belongs to the authenticated user's organization
-				if ((existingPayment as { organizationId: string }).organizationId !== defaultParams.organizationId) {
-					throw new Error('Access denied: Payment does not belong to your organization');
-				}
-
-				const response = await apiClient.put(`/api/payments/${id}/status`, { status });
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
+				throw notOfferedByApi("setting a payment's status");
 			} catch (error) {
 				logger.error('Error updating payment status:', sanitizeForLogging(error));
 				throw new Error(`Failed to update payment status: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Delete payment tool
@@ -351,7 +377,8 @@ export const registerPaymentTools = (server: McpServer) => {
 				logger.error('Error deleting payment:', sanitizeForLogging(error));
 				throw new Error(`Failed to delete payment: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.idempotentDestructive
 	);
 
 	// Get payments by invoice tool
@@ -363,22 +390,15 @@ export const registerPaymentTools = (server: McpServer) => {
 			invoiceId: z.string().uuid().describe('The invoice ID'),
 			page: z.number().optional().default(1).describe('Page number for pagination'),
 			limit: z.number().optional().default(10).describe('Number of items per page'),
-			status: PaymentStatusEnum.optional().describe('Filter by payment status'),
+			status: PaymentStatusFilter.optional().describe('Filter by payment status'),
 			relations: z.array(z.string()).optional().describe('Relations to include')
 		},
 		async ({ invoiceId, page = 1, limit = 10, status, relations }) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					invoiceId,
-					page,
-					limit,
-					...(status && { status }),
-					...(relations && { relations })
-				};
+				const where = { invoiceId, status: toApiValue(PAYMENT_STATUS_VALUES, status) };
+				const params = buildListQuery(defaultParams, where, { page, limit, relations });
 
 				const response = await apiClient.get('/api/payments', { params });
 
@@ -394,7 +414,8 @@ export const registerPaymentTools = (server: McpServer) => {
 				logger.error('Error fetching payments by invoice:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch payments by invoice: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get payments by client tool
@@ -406,7 +427,7 @@ export const registerPaymentTools = (server: McpServer) => {
 			organizationContactId: z.string().uuid().describe('The organization contact ID'),
 			page: z.number().optional().default(1).describe('Page number for pagination'),
 			limit: z.number().optional().default(10).describe('Number of items per page'),
-			status: PaymentStatusEnum.optional().describe('Filter by payment status'),
+			status: PaymentStatusFilter.optional().describe('Filter by payment status'),
 			currency: CurrenciesEnum.optional().describe('Filter by currency'),
 			relations: z.array(z.string()).optional().describe('Relations to include')
 		},
@@ -414,16 +435,8 @@ export const registerPaymentTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					organizationContactId,
-					page,
-					limit,
-					...(status && { status }),
-					...(currency && { currency }),
-					...(relations && { relations })
-				};
+				const where = { organizationContactId, status: toApiValue(PAYMENT_STATUS_VALUES, status), currency };
+				const params = buildListQuery(defaultParams, where, { page, limit, relations });
 
 				const response = await apiClient.get('/api/payments', { params });
 
@@ -439,7 +452,8 @@ export const registerPaymentTools = (server: McpServer) => {
 				logger.error('Error fetching payments by client:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch payments by client: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get payment statistics tool
@@ -454,35 +468,15 @@ export const registerPaymentTools = (server: McpServer) => {
 			projectId: z.string().uuid().optional().describe('Filter by specific project ID'),
 			currency: CurrenciesEnum.optional().describe('Filter by currency')
 		},
-		async ({ startDate, endDate, organizationContactId, projectId, currency }) => {
+		async () => {
 			try {
-				const defaultParams = validateOrganizationContext();
-
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					...(startDate && { startDate }),
-					...(endDate && { endDate }),
-					...(organizationContactId && { organizationContactId }),
-					...(projectId && { projectId }),
-					...(currency && { currency })
-				};
-
-				const response = await apiClient.get('/api/payments/statistics', { params });
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
+				throw notOfferedByApi('payment statistics');
 			} catch (error) {
 				logger.error('Error fetching payment statistics:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch payment statistics: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Process payment tool
@@ -494,36 +488,15 @@ export const registerPaymentTools = (server: McpServer) => {
 			id: z.string().uuid().describe('The payment ID'),
 			paymentDate: z.string().optional().describe('The payment date (ISO format)')
 		},
-		async ({ id, paymentDate }) => {
+		async () => {
 			try {
-				const defaultParams = validateOrganizationContext();
-
-				// Verify payment ownership
-				const existing = await apiClient.get(`/api/payments/${id}`);
-				if ((existing as { organizationId: string }).organizationId !== defaultParams.organizationId) {
-					throw new Error('Unauthorized: Cannot process payments from other organizations');
-				}
-
-				const processData = {
-					status: 'COMPLETED',
-					...(paymentDate && { paymentDate: new Date(paymentDate) })
-				};
-
-				const response = await apiClient.put(`/api/payments/${id}/process`, processData);
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
+				throw notOfferedByApi('processing a payment');
 			} catch (error) {
 				logger.error('Error processing payment:', sanitizeForLogging(error));
 				throw new Error(`Failed to process payment: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Refund payment tool
@@ -536,37 +509,15 @@ export const registerPaymentTools = (server: McpServer) => {
 			refundAmount: z.number().optional().describe('The refund amount (if partial refund)'),
 			reason: z.string().optional().describe('Reason for refund')
 		},
-		async ({ id, refundAmount, reason }) => {
+		async () => {
 			try {
-				const defaultParams = validateOrganizationContext();
-
-				// Verify payment ownership
-				const existing = await apiClient.get(`/api/payments/${id}`);
-				if ((existing as { organizationId: string }).organizationId !== defaultParams.organizationId) {
-					throw new Error('Unauthorized: Cannot refund payments from other organizations');
-				}
-
-				const refundData = {
-					status: 'REFUNDED',
-					...(refundAmount && { refundAmount }),
-					...(reason && { refundReason: reason })
-				};
-
-				const response = await apiClient.put(`/api/payments/${id}/refund`, refundData);
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
+				throw notOfferedByApi('refunding a payment');
 			} catch (error) {
 				logger.error('Error refunding payment:', sanitizeForLogging(error));
 				throw new Error(`Failed to refund payment: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Get overdue payments tool
@@ -582,19 +533,14 @@ export const registerPaymentTools = (server: McpServer) => {
 		},
 		async ({ page = 1, limit = 10, relations, currency }) => {
 			try {
-				const defaultParams = validateOrganizationContext();
+				const scope = resolveOrganizationScope();
 
+				// The guard reads the tenant at the top of the query, the list route its `where`
 				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					page,
-					limit,
-					overdue: true,
-					...(relations && { relations }),
-					...(currency && { currency })
+					...scope,
+					...buildListQuery(scope, { overdue: true, currency }, { page, limit, relations, skipIsPage: true })
 				};
-
-				const response = await apiClient.get('/api/payments/overdue', { params });
+				const response = await apiClient.get('/api/payments/pagination', { params });
 
 				return {
 					content: [
@@ -608,7 +554,8 @@ export const registerPaymentTools = (server: McpServer) => {
 				logger.error('Error fetching overdue payments:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch overdue payments: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Search payments tool
@@ -623,34 +570,14 @@ export const registerPaymentTools = (server: McpServer) => {
 			paymentMethod: PaymentMethodEnum.optional().describe('Filter by payment method'),
 			currency: CurrenciesEnum.optional().describe('Filter by currency')
 		},
-		async ({ query, limit = 20, status, paymentMethod, currency }) => {
+		async () => {
 			try {
-				const defaultParams = validateOrganizationContext();
-
-				const params = {
-					query,
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					limit,
-					...(status && { status }),
-					...(paymentMethod && { paymentMethod }),
-					...(currency && { currency })
-				};
-
-				const response = await apiClient.get('/api/payments/search', { params });
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
+				throw notOfferedByApi('searching payments');
 			} catch (error) {
 				logger.error('Error searching payments:', sanitizeForLogging(error));
 				throw new Error(`Failed to search payments: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 };

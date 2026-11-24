@@ -53,11 +53,11 @@ $menu-row-color: var(--gauzy-text-color-2, var(--text-hint-color));
 $menu-row-weight: 400;
 $menu-row-active-weight: 500;
 
-// 14px for every label in the nav — deliberately NOT `menu-text-font-size`
-// (0.8125rem / 13px), which is the app's shared CONTROL text size and is also
-// what overlay menus, ng-select rows and the settings menu resolve. The sidebar
-// runs on its own step; the shared token stays where it is.
-$menu-row-font-size: 0.875rem;
+// 13px for every label in the nav. The same value as `menu-text-font-size`,
+// but a literal on purpose: that token is the app's shared CONTROL text size
+// (overlay menus, ng-select rows, the settings menu), and the sidebar keeps its
+// own step so a change to one never moves the other.
+$menu-row-font-size: 0.8125rem;
 
 // Row padding, one step tighter than the shared `menu-item-padding`
 // (0.5rem 0.75rem). The bigger label would otherwise push a row from 36px to
@@ -82,6 +82,11 @@ $menu-row-inline-padding: 0.625rem;
 // Child rows sit one step in from the parent row's icon column:
 // 0.625rem (row padding) + 0.625rem (step).
 $menu-child-indent: 1.25rem;
+
+// Where the open sub-list's guide line runs: the centre of a header's icon
+// column, 0.625rem (row padding) + 0.5rem (half the 1rem column).
+// KEEP IN SYNC with `$guide-x` in children-menu-item.component.scss.
+$menu-guide-x: 1.125rem;
 
 :host {
   position: relative;
@@ -237,6 +242,43 @@ $menu-child-indent: 1.25rem;
 
     &:hover {
       background-color: $menu-row-hover-background;
+    }
+  }
+
+  // ── Open section ──────────────────────────────────────────────────────────
+  // An expanded section's header carries the hover tint and the label's full
+  // colour, so the header and its sub-list read as one group. The current page
+  // inside it still has the stronger active tint (see .sub-item.selected), and
+  // this rule outranks the transparent one above. Not in the icon rail, where
+  // a section is a lone glyph.
+  nb-accordion:not(.closed) nb-accordion-item.expanded:has(nb-accordion-item-body) > nb-accordion-item-header {
+    background-color: $menu-row-hover-background;
+    // The CSS variable of the colour the hovered and selected rows use, so an
+    // open header matches them; `gauzy-text-color-1` is a different shade.
+    color: var(--text-basic-color);
+    font-weight: $menu-row-active-weight;
+
+    > i {
+      opacity: 1;
+    }
+  }
+
+  // ── Guide line ────────────────────────────────────────────────────────────
+  // A hairline down the open sub-list, under the centre of the header's icon,
+  // that the sub-rows hang off. The current page marks its stretch of it (see
+  // children-menu-item.component.scss).
+  nb-accordion-item-body:not(.item-collapsed) ::ng-deep .item-body {
+    position: relative;
+
+    &::before {
+      content: '';
+      position: absolute;
+      inset-inline-start: calc(#{$menu-guide-x} - 0.5px);
+      top: 0.125rem;
+      bottom: 0.25rem;
+      width: 1px;
+      background-color: var(--gauzy-border-default-color, var(--border-basic-color-3));
+      pointer-events: none;
     }
   }
 

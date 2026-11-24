@@ -88,6 +88,7 @@ import {
 	projectIdForEntry,
 	teamIdForEntry
 } from '../time-log/organization-tracking-requirements';
+import { billableOfProject } from '../time-log/project-billable';
 import { isTrackerSource, postsHeartbeatSlots } from '../time-log/tracker-source';
 import { loadTimeLogTags, sentTagIds, timeLogTagsOf } from '../time-log/time-log-tags';
 import { assertBreakOverlapsNothing, assertBreaksAllowedIn, breakEnd, isBreak } from '../time-log/break-rules';
@@ -135,16 +136,25 @@ import {
 const ormType: MultiORM = getORMType();
 
 /**
- * The Ever Teams clients, web and mobile. Their timer starts name a task and, in installed versions, no project, so
- * the log's project is taken from the task; the other clients keep writing what they send.
+ * The Ever Teams clients: web, mobile and the timers embedded in other products (the kit). Their timer starts name a
+ * task and, in installed versions, no project, so the log's project is taken from the task; the other clients keep
+ * writing what they send.
  */
-const PROJECT_FROM_TASK_SOURCES: ReadonlyArray<string> = [TimeLogSourceEnum.TEAMS, TimeLogSourceEnum.MOBILE];
+const PROJECT_FROM_TASK_SOURCES: ReadonlyArray<string> = [
+	TimeLogSourceEnum.TEAMS,
+	TimeLogSourceEnum.MOBILE,
+	TimeLogSourceEnum.EMBED
+];
 
 /**
- * The Ever Teams clients, web and mobile. They are the ones that turn tracking off per team, so only their starts
- * are held to that switch; the other clients of this API never set it and keep their behavior.
+ * The Ever Teams clients: web, mobile and the embedded timers. They are the ones that turn tracking off per team, so
+ * only their starts are held to that switch; the other clients of this API never set it and keep their behavior.
  */
-const TEAM_TRACKING_SWITCH_SOURCES: ReadonlyArray<string> = [TimeLogSourceEnum.TEAMS, TimeLogSourceEnum.MOBILE];
+const TEAM_TRACKING_SWITCH_SOURCES: ReadonlyArray<string> = [
+	TimeLogSourceEnum.TEAMS,
+	TimeLogSourceEnum.MOBILE,
+	TimeLogSourceEnum.EMBED
+];
 
 /**
  * How long a start or a stop of an employee's timer keeps their turn, in this process, before the next one may go on
@@ -577,6 +587,14 @@ export class TimerService {
 		// tenant refuses the start (ever-co/ever-gauzy#12029)
 		const tagsToLog = await timeLogTagsOf(manager, sentTagIds(request.tags) ?? [], { tenantId, organizationId });
 
+		// Billable as the run's project is set when the client asks for it; as the request says otherwise, and for a run
+		// without a project (ever-co/ever-teams#5571)
+		let projectBillable: boolean | undefined;
+		if (request.billableFromProject === true) {
+			projectBillable = await billableOfProject(manager, trackedEmployee, { projectId: projectIdToLog, taskId });
+		}
+		const billable = projectBillable ?? Boolean(isBillable);
+
 		// In this process, no other start or stop of the employee comes between closing the runs going and creating
 		// this one (inEmployeeTurn)
 		return await this.inEmployeeTurn(employeeId, async (turn) => {
@@ -613,7 +631,7 @@ export class TimerService {
 						organizationTeamId: teamIdToLog || null,
 						description: description || null,
 						// A break is never billable
-						isBillable: Boolean(isBillable) && !startsBreak,
+						isBillable: billable && !startsBreak,
 						version: version || null,
 						isRunning: true,
 						tags: tagsToLog

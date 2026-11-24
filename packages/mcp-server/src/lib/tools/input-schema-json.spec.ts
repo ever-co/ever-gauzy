@@ -71,6 +71,7 @@ function createCapturingServer(): { server: McpServer; tools: CapturedTool[] } {
 		 * Supported:
 		 * - tool(name, description, callback) — no input schema
 		 * - tool(name, description, paramsShape, callback) — Zod shape object
+		 * - tool(name, description, paramsShape, annotations, callback) — the same, with the tool's hints
 		 * Anything else throws so schemas cannot be dropped silently.
 		 */
 		tool: (...args: unknown[]) => {
@@ -78,6 +79,7 @@ function createCapturingServer(): { server: McpServer; tools: CapturedTool[] } {
 			const description = args[1];
 			const third = args[2];
 			const fourth = args[3];
+			const fifth = args[4];
 
 			if (typeof description !== 'string') {
 				throw new Error(`Unrecognized server.tool() signature for "${name}": expected description string`);
@@ -89,6 +91,12 @@ function createCapturingServer(): { server: McpServer; tools: CapturedTool[] } {
 			}
 
 			if (isZodShape(third) && typeof fourth === 'function') {
+				capture(name, z.object(third));
+				return;
+			}
+
+			const hintsThenCallback = typeof fourth === 'object' && typeof fifth === 'function';
+			if (isZodShape(third) && hintsThenCallback) {
 				capture(name, z.object(third));
 				return;
 			}

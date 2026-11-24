@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { EverConnectScheduler } from './ever-connect-scheduler.service';
 import { EverConnectSignals } from './ever-connect-signals';
 import { CONSTANTS, EventEnvelope, ProblemError } from './sdk';
@@ -10,9 +11,12 @@ import { CONSTANTS, EventEnvelope, ProblemError } from './sdk';
  * kept before it is acknowledged, and one that cannot be kept is never acknowledged.
  */
 describe('Ever Platform feed dispatcher', () => {
-	function scheduler() {
+	function scheduler(membership?: { apply: jest.Mock; resync?: jest.Mock }, clock?: { now: () => number }) {
 		const states = { sync: jest.fn().mockResolvedValue(undefined) };
-		const entitlements = { refreshAll: jest.fn().mockResolvedValue(undefined) };
+		const entitlements = {
+			refreshAll: jest.fn().mockResolvedValue(undefined),
+			importFromEnvFile: jest.fn().mockResolvedValue(undefined)
+		};
 		const links = {
 			unlinkLocally: jest.fn().mockResolvedValue(undefined),
 			linkStateChanged: jest.fn().mockResolvedValue(undefined)
@@ -31,8 +35,11 @@ describe('Ever Platform feed dispatcher', () => {
 				feedCursor: null
 			}),
 			takeLease: jest.fn().mockResolvedValue(true),
+			releaseLease: jest.fn().mockResolvedValue(undefined),
+			holdsLease: jest.fn().mockResolvedValue(true),
 			updateConnection: jest.fn(async (values: Record<string, unknown>) => {
 				if ('feedCursor' in values) order.push(`keep ${values['feedCursor']}`);
+				return 1;
 			})
 		};
 		const client = {
@@ -57,9 +64,14 @@ describe('Ever Platform feed dispatcher', () => {
 			entitlements as never,
 			cleanup as never,
 			signals,
-			{ feedMode: 'interval' } as never
+			{ feedMode: 'interval' } as never,
+			clock,
+			undefined,
+			undefined,
+			undefined,
+			membership as never
 		);
-		return { instance, states, entitlements, links, connection, revoked, client, order, cleanup };
+		return { instance, states, entitlements, links, connection, revoked, client, order, cleanup, store };
 	}
 
 	const event = (
@@ -128,6 +140,473 @@ describe('Ever Platform feed dispatcher', () => {
 		]) {
 			expect(spy).not.toHaveBeenCalled();
 		}
+	});
+
+	describe('membership changes', () => {
+		const TYPES = [
+			'ever.registry.membership.created',
+			'ever.registry.membership.role_changed',
+			'ever.registry.membership.removed'
+		];
+
+		it('without the membership sync (the default): acknowledged and ignored, nothing else runs', async () => {
+			const { instance, states, entitlements, links, connection } = scheduler();
+			for (const type of TYPES) {
+				expect(await instance.dispatch(event(type, undefined, { tenant_link_id: 'L1' }))).toBe('ignored');
+			}
+			for (const spy of [states.sync, entitlements.refreshAll, links.unlinkLocally, connection.stopLocally]) {
+				expect(spy).not.toHaveBeenCalled();
+			}
+		});
+
+		it('with it: each one goes to the membership handler', async () => {
+			const membership = { apply: jest.fn().mockResolvedValue('role_granted') };
+			const { instance } = scheduler(membership);
+			for (const type of TYPES) {
+				expect(await instance.dispatch(event(type))).toBe('membership');
+			}
+			expect(membership.apply).toHaveBeenCalledTimes(3);
+			// Not a membership change: never handed to it.
+			expect(await instance.dispatch(event('ever.registry.membership.listing_changed'))).toBe('ignored');
+			expect(membership.apply).toHaveBeenCalledTimes(3);
+		});
+
+		it('of another installation, or of before this connection: ignored', async () => {
+			const membership = { apply: jest.fn().mockResolvedValue('role_granted') };
+			const { instance } = scheduler(membership);
+			const ours = {
+				platformInstanceId: '01JD00000000000000000INST01',
+				connectedAt: Date.parse('2026-10-03T09:00:00.000Z')
+			};
+			const other = { ...event(TYPES[0]), instance_id: '01JD00000000000000000OTHER1' } as never;
+			const old = { ...event(TYPES[1]), occurred_at: '2026-10-01T09:00:00.000Z' } as never;
+			expect(await instance.dispatch(other, ours)).toBe('ignored');
+			expect(await instance.dispatch(old, ours)).toBe('ignored');
+			expect(membership.apply).not.toHaveBeenCalled();
+			const mine = { ...event(TYPES[2]), instance_id: ours.platformInstanceId } as never;
+			expect(await instance.dispatch(mine, ours)).toBe('membership');
+			expect(membership.apply).toHaveBeenCalledTimes(1);
+		});
+
+		it('a failure of the handler fails the page, so the feed reads it again', async () => {
+			const membership = { apply: jest.fn().mockRejectedValue(new Error('database unavailable')) };
+			const { instance } = scheduler(membership);
+			const page = [event(TYPES[0], '01JD0000000000000000000071')];
+			await expect(instance.dispatchPage(page)).rejects.toThrow('database unavailable');
+			// Not remembered as handled: the same event is handed over again.
+			membership.apply.mockResolvedValueOnce('role_granted');
+			expect(await instance.dispatchPage(page)).toEqual(['membership']);
+		});
+
+		it('with the membership sync on, a membership resync runs once after a start, before the feed is read', async () => {
+			const membership = { apply: jest.fn(), resync: jest.fn().mockResolvedValue('done') };
+			const { instance, client, store } = scheduler(membership);
+			client.instances.events.mockResolvedValue({ events: [], last_id: '', has_more: false });
+
+			await instance.readFeed();
+			expect(membership.resync).toHaveBeenCalledTimes(1);
+			expect(membership.resync.mock.calls[0][0]).toBe(client);
+			expect(membership.resync.mock.invocationCallOrder[0]).toBeLessThan(
+				client.instances.events.mock.invocationCallOrder[0]
+			);
+			// The lease is renewed through the scheduler's own holder.
+			store.takeLease.mockClear();
+			expect(await membership.resync.mock.calls[0][1]()).toBe(true);
+			expect(store.takeLease).toHaveBeenCalledTimes(1);
+			// A renewal that fails (the database) is a lost lease, never a reason to go on.
+			store.takeLease.mockRejectedValueOnce(new Error('database unavailable'));
+			expect(await membership.resync.mock.calls[0][1]()).toBe(false);
+
+			await instance.readFeed();
+			expect(membership.resync).toHaveBeenCalledTimes(1);
+
+			// Started again (connected again): owed again.
+			instance.start();
+			instance.stop();
+			await instance.readFeed();
+			expect(membership.resync).toHaveBeenCalledTimes(2);
+		});
+
+		it('after a 410, the membership resync runs before the position moves on', async () => {
+			const membership = { apply: jest.fn(), resync: jest.fn().mockResolvedValue('done') };
+			const { instance, client, order } = scheduler(membership);
+			client.instances.events.mockResolvedValue({ events: [], last_id: '', has_more: false });
+			await instance.readFeed();
+			membership.resync.mockImplementationOnce(async () => {
+				order.push('resync');
+				return 'done';
+			});
+			client.instances.events.mockRejectedValueOnce(
+				new ProblemError(410, 'resync_required', undefined, null, undefined, undefined, '01JD0000000000000000000042')
+			);
+
+			expect(await instance.readFeed()).toBe(true);
+			expect(order).toEqual(['resync', 'keep 01JD0000000000000000000042', 'ack 01JD0000000000000000000042']);
+			// A failed resync does not hold the feed back.
+			order.length = 0;
+			membership.resync.mockResolvedValueOnce('failed');
+			client.instances.events.mockRejectedValueOnce(
+				new ProblemError(410, 'resync_required', undefined, null, undefined, undefined, '01JD0000000000000000000043')
+			);
+			expect(await instance.readFeed()).toBe(true);
+			expect(order).toEqual(['keep 01JD0000000000000000000043', 'ack 01JD0000000000000000000043']);
+		});
+
+		it('a lease check that answered false wins over a later failure (a transaction that did not commit)', async () => {
+			const membership = { apply: jest.fn(), resync: jest.fn().mockResolvedValue('done') };
+			const { instance, client, order, store } = scheduler(membership);
+			client.instances.events.mockResolvedValue({ events: [], last_id: '', has_more: false });
+			await instance.readFeed();
+			store.holdsLease.mockResolvedValueOnce(false);
+			membership.resync.mockImplementationOnce(
+				async (_client: unknown, _keep: unknown, check: (tx: unknown) => Promise<boolean>) => {
+					expect(await check({})).toBe(false);
+					throw new Error('commit failed');
+				}
+			);
+			client.instances.events.mockRejectedValueOnce(
+				new ProblemError(410, 'resync_required', undefined, null, undefined, undefined, '01JD0000000000000000000042')
+			);
+
+			expect(await instance.readFeed()).toBe(false);
+			expect(order).toEqual([]);
+		});
+
+		it('the 410 position moves on only while the lease is still held: lost during a page that then failed, it stays', async () => {
+			const membership = { apply: jest.fn(), resync: jest.fn().mockResolvedValue('done') };
+			const { instance, client, order, store } = scheduler(membership);
+			client.instances.events.mockResolvedValue({ events: [], last_id: '', has_more: false });
+			await instance.readFeed();
+			membership.resync.mockImplementationOnce(async () => {
+				// Another process takes the lease while a page request is in flight; the request then fails.
+				store.takeLease.mockResolvedValueOnce(false);
+				return 'failed';
+			});
+			client.instances.events.mockRejectedValueOnce(
+				new ProblemError(410, 'resync_required', undefined, null, undefined, undefined, '01JD0000000000000000000042')
+			);
+
+			expect(await instance.readFeed()).toBe(false);
+			expect(order).toEqual([]);
+		});
+
+		it('the 410 position is kept in one compare-and-set on the lease holder: taken over just before, it stays', async () => {
+			const membership = { apply: jest.fn(), resync: jest.fn().mockResolvedValue('done') };
+			const { instance, client, order, store } = scheduler(membership);
+			client.instances.events.mockResolvedValue({ events: [], last_id: '', has_more: false });
+			await instance.readFeed();
+			// The renewal succeeds; another process takes the lease before the position is kept.
+			store.updateConnection.mockImplementationOnce(async (_values: Record<string, unknown>) => 0);
+			client.instances.events.mockRejectedValueOnce(
+				new ProblemError(410, 'resync_required', undefined, null, undefined, undefined, '01JD0000000000000000000042')
+			);
+
+			expect(await instance.readFeed()).toBe(false);
+			expect(store.updateConnection).toHaveBeenLastCalledWith(
+				{ feedCursor: '01JD0000000000000000000042' },
+				{ leasedBy: expect.any(String) }
+			);
+			expect(client.instances.ackEvents).not.toHaveBeenCalled();
+			expect(order).toEqual([]);
+		});
+
+		it('a run stopped while its read was starting goes no further and gives back a lease taken after the stop', async () => {
+			const membership = { apply: jest.fn(), resync: jest.fn().mockResolvedValue('done') };
+			const { instance, client, store } = scheduler(membership);
+			store.takeLease.mockImplementationOnce(async () => {
+				instance.stop();
+				return true;
+			});
+			store.releaseLease.mockClear();
+
+			expect(await instance.readFeed()).toBe(false);
+			expect(membership.resync).not.toHaveBeenCalled();
+			expect(client.instances.events).not.toHaveBeenCalled();
+			// Once by stop(), once for the lease taken after it.
+			expect(store.releaseLease).toHaveBeenCalledTimes(2);
+		});
+
+		it('stopped while the client was being made, which then failed: the lease taken is given back', async () => {
+			const membership = { apply: jest.fn(), resync: jest.fn().mockResolvedValue('done') };
+			const { instance, store } = scheduler(membership);
+			const platform = (instance as unknown as { platform: { getClient: jest.Mock } }).platform;
+			platform.getClient.mockImplementationOnce(async () => {
+				instance.stop();
+				throw new Error('platform unavailable');
+			});
+			store.releaseLease.mockClear();
+
+			await expect(instance.readFeed()).rejects.toThrow('platform unavailable');
+			expect(membership.resync).not.toHaveBeenCalled();
+			// Once by stop(), once for the lease this read took.
+			expect(store.releaseLease).toHaveBeenCalledTimes(2);
+		});
+
+		it('a resync that lost the lease leaves the position, so the next lease holder is answered 410 again', async () => {
+			const membership = { apply: jest.fn(), resync: jest.fn().mockResolvedValue('done') };
+			const { instance, client, order } = scheduler(membership);
+			client.instances.events.mockResolvedValue({ events: [], last_id: '', has_more: false });
+			await instance.readFeed();
+			membership.resync.mockResolvedValueOnce('lease_lost');
+			client.instances.events.mockRejectedValueOnce(
+				new ProblemError(410, 'resync_required', undefined, null, undefined, undefined, '01JD0000000000000000000042')
+			);
+
+			expect(await instance.readFeed()).toBe(false);
+			expect(order).toEqual([]);
+		});
+
+		it('after the startup resync the lease is renewed: lost during a page that then failed, the feed is not read', async () => {
+			const membership = { apply: jest.fn(), resync: jest.fn() };
+			const { instance, client, store } = scheduler(membership);
+			membership.resync.mockImplementationOnce(async () => {
+				store.takeLease.mockResolvedValueOnce(false);
+				return 'failed';
+			});
+
+			expect(await instance.readFeed()).toBe(false);
+			expect(client.instances.events).not.toHaveBeenCalled();
+			// Still owed: it runs when this process holds the lease again.
+			membership.resync.mockResolvedValueOnce('done');
+			client.instances.events.mockResolvedValue({ events: [], last_id: '', has_more: false });
+			await instance.readFeed();
+			expect(membership.resync).toHaveBeenCalledTimes(2);
+		});
+
+		it('the startup resync: one that lost the lease stays owed; one that failed waits before it runs again', async () => {
+			const membership = { apply: jest.fn(), resync: jest.fn().mockResolvedValueOnce('lease_lost') };
+			const { instance, client } = scheduler(membership);
+			client.instances.events.mockResolvedValue({ events: [], last_id: '', has_more: false });
+
+			expect(await instance.readFeed()).toBe(false);
+			expect(client.instances.events).not.toHaveBeenCalled();
+			membership.resync.mockRejectedValueOnce(new Error('database unavailable'));
+			await instance.readFeed();
+			expect(membership.resync).toHaveBeenCalledTimes(2);
+			expect(client.instances.events).toHaveBeenCalledTimes(1);
+			await instance.readFeed();
+			expect(membership.resync).toHaveBeenCalledTimes(2);
+		});
+
+		it('a startup resync that failed is owed again: the feed is read on, and a read after the wait runs it again', async () => {
+			let now = Date.parse('2026-11-23T10:00:00.000Z');
+			const membership = {
+				apply: jest.fn(),
+				resync: jest.fn().mockResolvedValueOnce('failed').mockResolvedValue('done')
+			};
+			const { instance, client } = scheduler(membership, { now: () => now });
+			client.instances.events.mockResolvedValue({ events: [], last_id: '', has_more: false });
+
+			await instance.readFeed();
+			expect(membership.resync).toHaveBeenCalledTimes(1);
+			expect(client.instances.events).toHaveBeenCalledTimes(1);
+
+			// Within the wait: the feed is read, the resync waits.
+			now += 29_000;
+			await instance.readFeed();
+			expect(membership.resync).toHaveBeenCalledTimes(1);
+			expect(client.instances.events).toHaveBeenCalledTimes(2);
+
+			// After it: run again, before the feed; it worked, so it is not owed any more.
+			now += 1_000;
+			await instance.readFeed();
+			expect(membership.resync).toHaveBeenCalledTimes(2);
+			expect(membership.resync.mock.invocationCallOrder[1]).toBeLessThan(
+				client.instances.events.mock.invocationCallOrder[2]
+			);
+			now += 60 * 60 * 1000;
+			await instance.readFeed();
+			expect(membership.resync).toHaveBeenCalledTimes(2);
+		});
+
+		it('the wait doubles with each resync that failed in a row, at most the feed interval, and a start clears it', async () => {
+			let now = Date.parse('2026-11-23T10:00:00.000Z');
+			const membership = { apply: jest.fn(), resync: jest.fn().mockResolvedValue('failed') };
+			const { instance, client } = scheduler(membership, { now: () => now });
+			client.instances.events.mockResolvedValue({ events: [], last_id: '', has_more: false });
+
+			await instance.readFeed(); // failure 1: waits 30 s
+			now += 30_000;
+			await instance.readFeed(); // failure 2: waits 60 s
+			expect(membership.resync).toHaveBeenCalledTimes(2);
+			now += 59_000;
+			await instance.readFeed();
+			expect(membership.resync).toHaveBeenCalledTimes(2);
+			now += 1_000;
+			await instance.readFeed(); // failure 3: waits 120 s
+			expect(membership.resync).toHaveBeenCalledTimes(3);
+
+			// Never longer than the feed's own interval.
+			for (let i = 0; i < 10; i++) {
+				now += 15 * 60 * 1000;
+				await instance.readFeed();
+			}
+			expect(membership.resync).toHaveBeenCalledTimes(13);
+
+			// A start owes one at once.
+			instance.start();
+			instance.stop();
+			await instance.readFeed();
+			expect(membership.resync).toHaveBeenCalledTimes(14);
+		});
+
+		it('after a 410, a membership resync that failed moves the position on and is owed again, for a later read', async () => {
+			let now = Date.parse('2026-11-23T10:00:00.000Z');
+			const membership = { apply: jest.fn(), resync: jest.fn().mockResolvedValue('done') };
+			const { instance, client, order } = scheduler(membership, { now: () => now });
+			client.instances.events.mockResolvedValue({ events: [], last_id: '', has_more: false });
+			await instance.readFeed();
+			expect(membership.resync).toHaveBeenCalledTimes(1);
+
+			membership.resync.mockResolvedValueOnce('failed');
+			client.instances.events.mockRejectedValueOnce(
+				new ProblemError(410, 'resync_required', undefined, null, undefined, undefined, '01JD0000000000000000000044')
+			);
+			order.length = 0;
+			expect(await instance.readFeed()).toBe(true);
+			expect(membership.resync).toHaveBeenCalledTimes(2);
+			expect(order).toEqual(['keep 01JD0000000000000000000044', 'ack 01JD0000000000000000000044']);
+
+			now += 30_000;
+			await instance.readFeed();
+			expect(membership.resync).toHaveBeenCalledTimes(3);
+		});
+
+		it('a 410 resync that worked while a failed one waited clears the debt: it does not run again', async () => {
+			let now = Date.parse('2026-11-23T10:00:00.000Z');
+			const membership = {
+				apply: jest.fn(),
+				resync: jest.fn().mockResolvedValueOnce('failed').mockResolvedValue('done')
+			};
+			const { instance, client } = scheduler(membership, { now: () => now });
+			client.instances.events.mockResolvedValue({ events: [], last_id: '', has_more: false });
+
+			await instance.readFeed(); // the startup resync fails: owed again in 30 s
+			expect(membership.resync).toHaveBeenCalledTimes(1);
+
+			// Within the wait a 410 runs it, and it works.
+			now += 10_000;
+			client.instances.events.mockRejectedValueOnce(
+				new ProblemError(410, 'resync_required', undefined, null, undefined, undefined, '01JD0000000000000000000045')
+			);
+			expect(await instance.readFeed()).toBe(true);
+			expect(membership.resync).toHaveBeenCalledTimes(2);
+
+			now += 60_000;
+			await instance.readFeed();
+			expect(membership.resync).toHaveBeenCalledTimes(2);
+		});
+
+		it('a resync of a run that was stopped meanwhile writes nothing more: its lease renewal answers false', async () => {
+			const membership = {
+				apply: jest.fn(),
+				resync: jest.fn(async (_client: unknown, keep: () => Promise<boolean>) => {
+					instance.stop();
+					return (await keep()) ? 'done' : 'lease_lost';
+				})
+			};
+			const { instance, client, store } = scheduler(membership as never);
+			store.takeLease.mockClear();
+
+			expect(await instance.readFeed()).toBe(false);
+			expect(store.takeLease).toHaveBeenCalledTimes(1);
+			expect(client.instances.events).not.toHaveBeenCalled();
+		});
+
+		it('a run stopped while its resync ran (no list left to check) neither reads the feed nor moves the position', async () => {
+			const membership = { apply: jest.fn(), resync: jest.fn() };
+			const { instance, client, order } = scheduler(membership as never);
+			membership.resync.mockImplementationOnce(async () => {
+				instance.stop();
+				return 'done';
+			});
+
+			expect(await instance.readFeed()).toBe(false);
+			expect(client.instances.events).not.toHaveBeenCalled();
+
+			// The same for a 410 of a run stopped while its resync ran.
+			membership.resync.mockResolvedValueOnce('done');
+			client.instances.events.mockResolvedValue({ events: [], last_id: '', has_more: false });
+			await instance.readFeed();
+			membership.resync.mockImplementationOnce(async () => {
+				instance.stop();
+				return 'done';
+			});
+			client.instances.events.mockRejectedValueOnce(
+				new ProblemError(410, 'resync_required', undefined, null, undefined, undefined, '01JD0000000000000000000042')
+			);
+			expect(await instance.readFeed()).toBe(false);
+			expect(order).toEqual([]);
+		});
+
+		it('a renewal in flight when the run stops answers false and gives the lease back', async () => {
+			const membership = {
+				apply: jest.fn(),
+				resync: jest.fn(async (_client: unknown, keep: () => Promise<boolean>) =>
+					(await keep()) ? 'done' : 'lease_lost'
+				)
+			};
+			const { instance, client, store } = scheduler(membership as never);
+			store.takeLease.mockResolvedValueOnce(true).mockImplementationOnce(async () => {
+				instance.stop();
+				return true;
+			});
+			store.releaseLease.mockClear();
+
+			expect(await instance.readFeed()).toBe(false);
+			expect(client.instances.events).not.toHaveBeenCalled();
+			// Once by stop(), once for the renewal that came back after it.
+			expect(store.releaseLease).toHaveBeenCalledTimes(2);
+		});
+
+		it('with the membership sync off, no resync runs and nothing is said', async () => {
+			const warn = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+			try {
+				const client = { call: jest.fn(), instances: { ackEvents: jest.fn().mockResolvedValue(undefined) } };
+				expect(await scheduler().instance.resync(client, '01JD0000000000000000000042')).toBe(true);
+				expect(warn).not.toHaveBeenCalled();
+				expect(client.call).not.toHaveBeenCalled();
+			} finally {
+				warn.mockRestore();
+			}
+		});
+
+		it('a failed follow-up: the other one still runs, the first error is thrown, its events are handed over again', async () => {
+			const membership = { apply: jest.fn().mockRejectedValueOnce(new Error('database unavailable')) };
+			const { instance, states, entitlements } = scheduler(membership);
+			states.sync.mockRejectedValueOnce(new Error('states unavailable'));
+			const page = [
+				event('ever.consent.integration.enabled', '01JD0000000000000000000091'),
+				event('ever.entitlements.entitlement.issued', '01JD0000000000000000000092'),
+				event(TYPES[0], '01JD0000000000000000000093')
+			];
+			await expect(instance.dispatchPage(page)).rejects.toThrow('database unavailable');
+			expect(states.sync).toHaveBeenCalledTimes(1);
+			expect(entitlements.refreshAll).toHaveBeenCalledTimes(1);
+			// Read again: the consent event (its follow-up failed) and the membership change are handed over again.
+			membership.apply.mockResolvedValueOnce('role_granted');
+			expect(await instance.dispatchPage(page)).toEqual(['states', 'ignored', 'membership']);
+			expect(states.sync).toHaveBeenCalledTimes(2);
+			expect(entitlements.refreshAll).toHaveBeenCalledTimes(1);
+		});
+
+		it('a failure after other events of the page: their follow-ups still run, once', async () => {
+			const membership = { apply: jest.fn().mockRejectedValueOnce(new Error('database unavailable')) };
+			const { instance, states, entitlements } = scheduler(membership);
+			const page = [
+				event('ever.consent.integration.enabled', '01JD0000000000000000000081'),
+				event('ever.entitlements.entitlement.issued', '01JD0000000000000000000082'),
+				event(TYPES[0], '01JD0000000000000000000083')
+			];
+			await expect(instance.dispatchPage(page)).rejects.toThrow('database unavailable');
+			expect(states.sync).toHaveBeenCalledTimes(1);
+			expect(entitlements.refreshAll).toHaveBeenCalledTimes(1);
+			// Read again: the handled events are skipped, the failed one is applied, nothing runs twice.
+			membership.apply.mockResolvedValueOnce('role_granted');
+			expect(await instance.dispatchPage(page)).toEqual(['ignored', 'ignored', 'membership']);
+			expect(states.sync).toHaveBeenCalledTimes(1);
+			expect(entitlements.refreshAll).toHaveBeenCalledTimes(1);
+		});
 	});
 
 	it('a page: follow-ups once per page, an event read twice handled once', async () => {

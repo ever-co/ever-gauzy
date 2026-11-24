@@ -1,6 +1,7 @@
 import { AsyncResource } from 'async_hooks';
 import { UnauthorizedException } from '@nestjs/common';
 import { Observable, Subscription as RxSubscription } from 'rxjs';
+import { runInFreshMikroOrmContext } from '../../core/context/mikro-orm-context';
 import { RequestContext } from '../../core/context/request-context';
 // Types only: a package's spec that loads this helper must not pull the outbox runtime in behind it.
 import type { GraphqlPubSub } from './graphql-pubsub.service';
@@ -517,7 +518,12 @@ function screened<E, R>(
 					continue;
 				}
 
-				const value = await context.runInAsyncScope(() => settle(result.value, scope, options));
+				// On a fresh MikroORM fork (under DB_ORM=mikro-orm): the subscriber's context restored here holds the fork
+				// the operation opened on, which lives as long as the stream, and a re-read on it would be answered from
+				// the identity map an earlier event filled rather than from the row as it is now.
+				const value = await context.runInAsyncScope(() =>
+					runInFreshMikroOrmContext(() => settle(result.value, scope, options))
+				);
 
 				if (value !== DROPPED && !closed) {
 					return { value, done: false };

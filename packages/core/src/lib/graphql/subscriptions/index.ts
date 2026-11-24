@@ -6,6 +6,7 @@ export * from './subscription-bus-bridge';
 export * from './subscription-catalogue';
 export * from './subscription-consumer';
 export * from './subscription-delivery';
+export * from './subscription-filter-context';
 export * from './subscription-hub.service';
 export * from './subscription-limits';
 export * from './subscription-request-context';

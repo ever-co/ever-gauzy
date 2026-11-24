@@ -127,7 +127,8 @@ function build(options: {
 		undefined as never,
 		undefined as never,
 		undefined as never,
-		placeholderTransferService as never
+		placeholderTransferService as never,
+		userOrganizationService as never
 	);
 	const accept = () =>
 		handler.execute(new InviteAcceptEmployeeCommand({ inviteId: invite.id, user: {} } as never, 'en' as never));

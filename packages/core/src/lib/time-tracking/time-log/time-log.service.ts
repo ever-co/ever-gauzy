@@ -65,7 +65,8 @@ import {
 	TimeLogCreateCommand,
 	TimeLogDeleteCommand,
 	TimeLogSplitPartChanges,
-	TimeLogUpdateCommand
+	TimeLogUpdateCommand,
+	TimeLogUpdateOptions
 } from './commands';
 import { ITimeSlotDurationRecalculateInput, TimeSlotDurationRecalculateCommand } from '../time-slot/commands';
 import { timeSlotIdsReachedBy } from '../time-slot/utils';
@@ -132,6 +133,7 @@ import {
 	projectIdForEntry,
 	teamIdForEntry
 } from './organization-tracking-requirements';
+import { billableOfProject } from './project-billable';
 import {
 	assertBreakOverlapsNothing,
 	assertBreaksAllowedIn,
@@ -2535,6 +2537,14 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 			const entry = await this.withRequiredContext(request, employee, organizationId, tenantId);
 
+			// Billable as the entry's project is set when the client asks for it, read before any overlapped entry is cut
+			// (ever-co/ever-teams#5571)
+			let projectBillable: boolean | undefined;
+			if (request.billableFromProject === true) {
+				const entryEmployee = { employeeId, organizationId, tenantId };
+				projectBillable = await billableOfProject(this.typeOrmRepository.manager, entryEmployee, entry);
+			}
+
 			// The tags the entry is filed under, checked before any overlapped entry is cut (ever-co/ever-gauzy#12029)
 			const tags = await timeLogTagsOf(this.typeOrmRepository.manager, sentTagIds(request.tags) ?? [], {
 				tenantId,
@@ -2595,6 +2605,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			// filter would not find a log written for a member the caller manages. Time added by a person is
 			// recorded in the entry's history; the time a tracker uploads is not, as the time its timer records.
 			const written = { ...entry, organizationId, tags: tagsToLink(tags) };
+			if (projectBillable !== undefined) {
+				written.isBillable = projectBillable;
+			}
 			// A break is never billable
 			if (addsBreak) {
 				written.isBillable = false;
@@ -2753,24 +2766,26 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			// Update the last edited date for the manual time log
 			request.editedAt = new Date();
 
-			// Execute the command to update the time log, recorded in the entry's history. The tags are no column: they
-			// are written apart, below
+			// Execute the command to update the time log, recorded in the entry's history. The tags are no column: the
+			// write files the entry under them in the transaction that checks the entry and writes its columns, so an
+			// edit refused there writes none, and none written after it replaces a change of them saved meanwhile
 			const history = { reason: request.reason ?? null };
 			const changes: Omit<IManualTimeInput, 'tags'> = { ...request };
 			delete (changes as IManualTimeInput).tags;
-			await this.commandBus.execute(new TimeLogUpdateCommand(changes, timeLog, undefined, false, history));
+			let options: TimeLogUpdateOptions = {};
 			if (changesTags) {
-				await replaceTimeLogTags(
-					this.typeOrmRepository.manager,
-					id,
-					checkedTags.map((tag) => tag.id)
-				);
+				options = { tagIds: checkedTags.map((tag) => tag.id) };
 			}
+			await this.commandBus.execute(
+				new TimeLogUpdateCommand(changes, timeLog, undefined, false, history, false, options)
+			);
 
 			// Retrieve the updated time log entry (a member's log, for a manager: same scope as the read above)
 			const updated = await this.withoutEmployeeFilter(() => this.findOneByIdString(id));
+			// Its tags as stored, read after the entry, so never older than the `updatedAt` it is answered with: an edit
+			// made on this answer cannot put back the tags a change saved since this edit replaced
 			if (updated && changesTags) {
-				updated.tags = checkedTags;
+				await loadTimeLogTags(this.typeOrmRepository.manager, [updated]);
 			}
 			return updated;
 		} catch (error) {
@@ -2861,8 +2876,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			})
 		);
 
-		// The log no longer held the moment once the requests before this one settled: another split, an edit or a
-		// delete came first, and nothing was written
+		// The log is no longer as checked above once the requests before this one settled: another split, an edit or a
+		// delete came first, or an invoice billed it or its timesheet was approved since (compared again under the
+		// locks those writes take, see `DeleteTimeSpanHandler.splitAtMoment`), and nothing was written
 		if (!split) {
 			throw new ConflictException({
 				code: TIME_LOG_SPLIT_CHANGED,

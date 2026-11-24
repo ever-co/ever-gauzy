@@ -41,6 +41,11 @@ export class HubstaffAuthorizationController {
 			/** Redirect to the URL */
 			return response.redirect(url);
 		} catch (error) {
+			// A client error (e.g. the 400 for missing query parameters) keeps its own status
+			if (error instanceof HttpException) {
+				throw error;
+			}
+
 			// Handle errors and return an appropriate error response
 			throw new HttpException(
 				`Failed to add ${IntegrationEnum.HUBSTAFF} integration: ${error.message}`,

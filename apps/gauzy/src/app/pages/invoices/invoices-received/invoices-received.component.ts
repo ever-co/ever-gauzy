@@ -536,7 +536,9 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 		let badgeClass: 'success' | 'warning' | 'danger' | undefined;
 
 		if (value) {
-			const lowercaseValue = value.toLowerCase();
+			// Statuses arrive as enum values (`FULLY_PAID`, `PARTIALLY_PAID`): read the
+			// underscore as a space, or the two paid states fall through to danger.
+			const lowercaseValue = value.toLowerCase().replace(/_/g, ' ');
 
 			if (['sent', 'viewed', 'accepted', 'active', 'fully paid'].includes(lowercaseValue)) {
 				badgeClass = 'success';

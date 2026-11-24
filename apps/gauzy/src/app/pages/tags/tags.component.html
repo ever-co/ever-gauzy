@@ -90,8 +90,20 @@
       </nb-card-body>
     </nb-card>
     <ng-template #actionButtons let-buttonSize="buttonSize" let-selectedItem="selectedItem">
-      <ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_TAGS_EDIT', 'ORG_TAGS_DELETE']">
-        <div class="actions">
+      <div class="actions">
+        <!-- Viewing needs no grant beyond seeing the page; edit and delete keep theirs. -->
+        <button
+          nbButton
+          status="basic"
+          (click)="view(selectedItem)"
+          class="action"
+          [disabled]="!selectedItem && disableButton"
+          size="small"
+          >
+          <nb-icon icon="eye-outline"></nb-icon>
+          {{ 'BUTTONS.VIEW' | translate }}
+        </button>
+        <ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_TAGS_EDIT', 'ORG_TAGS_DELETE']">
           <ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_TAGS_EDIT']">
             <button
               nbButton
@@ -118,8 +130,8 @@
               <nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
             </button>
           </ng-template>
-        </div>
-      </ng-template>
+        </ng-template>
+      </div>
     </ng-template>
   </div>
 </div>

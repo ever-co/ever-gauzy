@@ -1,9 +1,11 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
+import { PermissionsEnum } from '@gauzy/contracts';
+import { PermissionsGuard } from '@gauzy/ui-core/core';
 import { DateRangePickerResolver } from '@gauzy/ui-core/shared';
 import { ExpenseRecurringComponent } from './expense-recurring.component';
-import { RecordViewRoutePageComponent } from '@gauzy/ui-core/shared';
-import { ORGANIZATION_RECURRING_EXPENSE_RECORD_VIEW } from './recurring-expense-record-view';
+import { ORGANIZATION_RECURRING_EXPENSES_LIST_LINK } from './recurring-expense-record-view';
+import { RecurringExpenseViewPageComponent } from './recurring-expense-view/recurring-expense-view-page.component';
 
 const routes: Routes = [
 	{
@@ -23,10 +25,11 @@ const routes: Routes = [
 	{
 		// One record, full width, at a URL of its own: where the drawer's "expand to full width" icon leads.
 		path: 'view/:id',
-		component: RecordViewRoutePageComponent,
+		component: RecurringExpenseViewPageComponent,
+		canActivate: [PermissionsGuard],
 		data: {
-			selectors: { project: false, team: false, employee: false, date: false },
-			recordView: ORGANIZATION_RECURRING_EXPENSE_RECORD_VIEW
+			permissions: { only: [PermissionsEnum.ORG_EXPENSES_VIEW], redirectTo: ORGANIZATION_RECURRING_EXPENSES_LIST_LINK },
+			selectors: { project: false, team: false, employee: false, date: false }
 		}
 	}
 ];

@@ -56,6 +56,37 @@ describe('time log tags', () => {
 			});
 		});
 
+		it('binds an id sent in capitals as sent and as stored, lowercase, so SQLite finds the log it tags', () => {
+			const { condition, parameters } = timeLogTagsCondition('"time_log"."id"', {
+				tagIds: ['A0EEBC99-9C0B-4EF8-BB6D-6BB9BD380A11', 'b1ffcd00-0d1c-4ef8-bb6d-6bb9bd380a22']
+			});
+
+			expect(parameters).toEqual({
+				timeLogTag0: 'A0EEBC99-9C0B-4EF8-BB6D-6BB9BD380A11',
+				timeLogTag1: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+				timeLogTag2: 'b1ffcd00-0d1c-4ef8-bb6d-6bb9bd380a22'
+			});
+			expect(condition).toContain('"filter_link"."tagId" IN (:timeLogTag0, :timeLogTag1, :timeLogTag2)');
+		});
+
+		it('binds an id sent as stored exactly as before, once', () => {
+			const { parameters } = timeLogTagsCondition('"time_log"."id"', {
+				tagIds: ['a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11']
+			});
+
+			expect(parameters).toEqual({ timeLogTag0: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11' });
+		});
+
+		it('compares the column as stored, without a function on it, so PostgreSQL keeps using its index', () => {
+			const { condition } = timeLogTagsCondition('"time_log"."id"', {
+				tagIds: ['A0EEBC99-9C0B-4EF8-BB6D-6BB9BD380A11'],
+				untagged: true
+			});
+
+			expect(condition).not.toMatch(/lower\s*\(|upper\s*\(/i);
+			expect(condition).toContain('"filter_link"."tagId" IN (:timeLogTag0, :timeLogTag1)');
+		});
+
 		it('counts live tags only', () => {
 			const { condition } = timeLogTagsCondition('"time_log"."id"', { tagIds: ['meeting'] });
 

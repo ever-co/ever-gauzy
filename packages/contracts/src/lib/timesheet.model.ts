@@ -299,7 +299,9 @@ export enum TimeLogSourceEnum {
 	HUBSTAFF = 'HUBSTAFF',
 	UPWORK = 'UPWORK',
 	TEAMS = 'TEAMS',
-	CLOC = 'CLOC'
+	CLOC = 'CLOC',
+	/** A timer embedded in another product through the Ever Teams kit (widget, script tag or iframe). */
+	EMBED = 'EMBED'
 }
 
 export interface ITimeLogFilters extends IBasePerTenantAndOrganizationEntityModel {
@@ -469,6 +471,12 @@ export interface ITimerToggleInput
 	source?: TimeLogSourceEnum;
 	tags?: string[];
 	isBillable?: boolean;
+	/**
+	 * When true, time with a project (the one named, else its task's) is billable as that project is set, a project with
+	 * no setting counting as not billable; `isBillable` then applies only to time without a project. Left out, `isBillable`
+	 * decides as always (ever-co/ever-teams#5571).
+	 */
+	billableFromProject?: boolean;
 	manualTimeSlot?: boolean;
 	version?: string;
 	startedAt?: Date;
@@ -519,6 +527,12 @@ export interface IManualTimeInput extends IBasePerTenantAndOrganizationEntityMod
 	expectedUpdatedAt?: Date | string | null;
 	tags?: string[];
 	isBillable?: boolean;
+	/**
+	 * When true, time with a project (the one named, else its task's) is billable as that project is set, a project with
+	 * no setting counting as not billable; `isBillable` then applies only to time without a project. Left out, `isBillable`
+	 * decides as always (ever-co/ever-teams#5571).
+	 */
+	billableFromProject?: boolean;
 }
 
 /** The tags a time log is filed under from now on, by id: an empty list takes them all off. */

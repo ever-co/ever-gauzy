@@ -4,11 +4,64 @@ import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { CandidateStatusEnum } from '../input-schemas';
-import { validateOrganizationContext } from './utils';
+import {
+	buildListQuery,
+	containsAnyText,
+	ListQueryOptions,
+	notOfferedByApi,
+	pageOfKept,
+	personTexts,
+	PersonUser,
+	resolveOrganizationScope,
+	validateOrganizationContext,
+	withRelation
+} from './utils';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
+import { TOOL_HINTS } from './tool-hints';
 const logger = new Logger('CandidateTools');
+
+/**
+ * Query of a candidate's skills, experience or education: their list routes require `where`. The tools have no paging,
+ * so no `take` is sent and every record is answered.
+ */
+const candidateRecordsQuery = (defaultParams: { tenantId?: string; organizationId?: string }, candidateId: string) => ({
+	where: buildListQuery(defaultParams, { candidateId }).where
+});
+
+/** The filters of a candidate list the route does not apply. */
+interface CandidateSearch {
+	search?: string;
+	rating?: number;
+}
+
+/**
+ * A page of candidates. The route has no search and matches a rating only exactly: a search of the name or email, and a
+ * minimum rating, are kept here, on the whole list.
+ */
+const readCandidates = (
+	defaultParams: { tenantId?: string; organizationId?: string },
+	where: Record<string, unknown>,
+	{ search, rating }: CandidateSearch,
+	{ page, limit, relations }: Pick<ListQueryOptions, 'page' | 'limit' | 'relations'>
+) => {
+	const keepsHere = Boolean(search) || rating !== undefined;
+	if (!keepsHere) {
+		return apiClient.get('/api/candidate', {
+			params: buildListQuery(defaultParams, where, { page, limit, relations })
+		});
+	}
+
+	const isKept = (candidate: { rating?: number; user?: PersonUser }) => {
+		const ratedEnough = rating === undefined || (candidate.rating ?? 0) >= rating;
+		return ratedEnough && containsAnyText(search, ...personTexts(candidate));
+	};
+	const readRelations = withRelation(relations, 'user');
+	const pageQuery = (pageNumber: number, take: number) =>
+		buildListQuery(defaultParams, where, { page: pageNumber, limit: take, relations: readRelations });
+	return pageOfKept('/api/candidate', pageQuery, isKept, page, limit);
+};
 
 /**
  * Helper function to convert date fields in candidate data to Date objects
@@ -22,6 +75,12 @@ const convertCandidateDateFields = (candidateData: any) => {
 		valueDate: candidateData.valueDate ? new Date(candidateData.valueDate) : undefined
 	};
 };
+
+/**
+ * The last segment of `PUT /candidate/:id/:status` for each status the API sets: it hires or rejects a candidate,
+ * and answers any other segment with an empty body, changing nothing.
+ */
+const CANDIDATE_STATUS_SEGMENTS: Record<string, string> = { HIRED: 'hired', REJECTED: 'rejected' };
 
 export const registerCandidateTools = (server: McpServer) => {
 	// Get candidates tool
@@ -48,20 +107,10 @@ export const registerCandidateTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					page,
-					limit,
-					...(search && { search }),
-					...(relations && { relations }),
-					...(status && { status }),
-					...(organizationPositionId && { organizationPositionId }),
-					...(sourceId && { sourceId }),
-					...(rating !== undefined && { rating })
-				};
+				const where = { status, organizationPositionId, sourceId };
+				const kept = { search, rating };
 
-				const response = await apiClient.get('/api/candidate', { params });
+				const response = await readCandidates(defaultParams, where, kept, { page, limit, relations });
 
 				return {
 					content: [
@@ -75,7 +124,8 @@ export const registerCandidateTools = (server: McpServer) => {
 				logger.error('Error fetching candidates:', sanitizeForLogging(error));
 				throw new Error('Failed to fetch candidates: ' + sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get candidate count tool
@@ -114,7 +164,8 @@ export const registerCandidateTools = (server: McpServer) => {
 				logger.error('Error fetching candidate count:', sanitizeForLogging(error));
 				throw new Error('Failed to fetch candidate count: ' + sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get candidate by ID tool
@@ -159,7 +210,8 @@ export const registerCandidateTools = (server: McpServer) => {
 				logger.error('Error fetching candidate:', sanitizeForLogging(error));
 				throw new Error('Failed to fetch candidate by ID: ' + sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Create candidate tool
@@ -195,7 +247,8 @@ export const registerCandidateTools = (server: McpServer) => {
 				logger.error('Error creating candidate:', sanitizeForLogging(error));
 				throw new Error('Failed to create candidate: ' + sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Update candidate tool
@@ -233,29 +286,43 @@ export const registerCandidateTools = (server: McpServer) => {
 				logger.error('Error updating candidate:', sanitizeForLogging(error));
 				throw new Error('Failed to update candidate: ' + sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Update candidate status tool
 	registerTool(
 		server,
 		'update_candidate_status',
-		'Update the status of a candidate',
+		'Hire or reject a candidate: HIRED makes the candidate an employee, REJECTED emails them a rejection. ' +
+			'The API sets no other status.',
 		{
 			id: z.string().uuid().describe('The candidate ID'),
-			status: CandidateStatusEnum.describe('The new status for the candidate')
+			status: CandidateStatusEnum.describe('The new status for the candidate: HIRED or REJECTED')
 		},
 		async ({ id, status }) => {
 			try {
-				const defaultParams = validateOrganizationContext();
+				const statusSegment = CANDIDATE_STATUS_SEGMENTS[status];
+				if (!statusSegment) {
+					throw notOfferedByApi(`setting a candidate's status to ${status}`);
+				}
+				const scope = resolveOrganizationScope();
 
-				// Verify candidate ownership
-				const existing = await apiClient.get(`/api/candidate/${id}`);
-				if ((existing as { organizationId: string }).organizationId !== defaultParams.organizationId) {
+				// Verify candidate ownership. The guard reads the tenant from the query, and the read route requires a
+				// `where`, which also keeps the read in the organization.
+				const existing = await apiClient.get(`/api/candidate/${id}`, { params: { ...scope, where: scope } });
+				if ((existing as { organizationId: string }).organizationId !== scope.organizationId) {
 					throw new Error('Unauthorized: Cannot update status of candidates from other organizations');
 				}
 
-				const response = await apiClient.put(`/api/candidate/${id}/status`, { status });
+				// The route takes no body: the scope is there for its guard, which reads the tenant from the body
+				const response = await apiClient.put<{ status?: string }>(
+					`/api/candidate/${id}/${statusSegment}`,
+					scope
+				);
+				if (response?.status !== status) {
+					throw new Error(`The API left the candidate's status unchanged instead of setting ${status}.`);
+				}
 
 				return {
 					content: [
@@ -269,7 +336,8 @@ export const registerCandidateTools = (server: McpServer) => {
 				logger.error('Error updating candidate status:', sanitizeForLogging(error));
 				throw new Error('Failed to update candidate status: ' + sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.openWorldDestructive
 	);
 
 	// Rate candidate tool
@@ -281,31 +349,15 @@ export const registerCandidateTools = (server: McpServer) => {
 			id: z.string().uuid().describe('The candidate ID'),
 			rating: z.number().min(0).max(5).describe('The rating (0-5)')
 		},
-		async ({ id, rating }) => {
+		async () => {
 			try {
-				const defaultParams = validateOrganizationContext();
-
-				// Verify candidate ownership
-				const existing = await apiClient.get(`/api/candidate/${id}`);
-				if ((existing as { organizationId: string }).organizationId !== defaultParams.organizationId) {
-					throw new Error('Unauthorized: Cannot rate candidates from other organizations');
-				}
-
-				const response = await apiClient.put(`/api/candidate/${id}/rating`, { rating });
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
+				throw notOfferedByApi('rating a candidate');
 			} catch (error) {
 				logger.error('Error rating candidate:', sanitizeForLogging(error));
 				throw new Error('Failed to rate candidate: ' + sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Delete candidate tool
@@ -344,7 +396,8 @@ export const registerCandidateTools = (server: McpServer) => {
 				logger.error('Error deleting candidate:', sanitizeForLogging(error));
 				throw new Error('Failed to delete candidate: ' + sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.idempotentDestructive
 	);
 
 	// Get candidates by position tool
@@ -363,15 +416,8 @@ export const registerCandidateTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					organizationPositionId: positionId,
-					page,
-					limit,
-					...(status && { status }),
-					...(relations && { relations })
-				};
+				const where = { organizationPositionId: positionId, status };
+				const params = buildListQuery(defaultParams, where, { page, limit, relations });
 
 				const response = await apiClient.get('/api/candidate', { params });
 
@@ -387,7 +433,8 @@ export const registerCandidateTools = (server: McpServer) => {
 				logger.error('Error fetching candidates by position:', sanitizeForLogging(error));
 				throw new Error('Failed to fetch candidates by position: ' + sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get candidate skills tool
@@ -409,7 +456,7 @@ export const registerCandidateTools = (server: McpServer) => {
 				}
 
 				const response = await apiClient.get(`/api/candidate-skills`, {
-					params: { candidateId }
+					params: candidateRecordsQuery(defaultParams, candidateId)
 				});
 
 				return {
@@ -424,7 +471,8 @@ export const registerCandidateTools = (server: McpServer) => {
 				logger.error('Error fetching candidate skills:', sanitizeForLogging(error));
 				throw new Error('Failed to fetch candidate skills: ' + sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Add candidate skill tool
@@ -454,9 +502,12 @@ export const registerCandidateTools = (server: McpServer) => {
 					throw new Error('Unauthorized: Cannot add skills to candidates from other organizations');
 				}
 
+				// The skill list reads the organization: a skill created without one would not be listed
 				const response = await apiClient.post('/api/candidate-skills', {
 					candidateId,
-					...skill
+					...skill,
+					organizationId: defaultParams.organizationId,
+					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
 				});
 
 				return {
@@ -471,7 +522,8 @@ export const registerCandidateTools = (server: McpServer) => {
 				logger.error('Error adding candidate skill:', sanitizeForLogging(error));
 				throw new Error('Failed to add candidate skill: ' + sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Get candidate experience tool
@@ -493,7 +545,7 @@ export const registerCandidateTools = (server: McpServer) => {
 				}
 
 				const response = await apiClient.get(`/api/candidate-experience`, {
-					params: { candidateId }
+					params: candidateRecordsQuery(defaultParams, candidateId)
 				});
 
 				return {
@@ -508,7 +560,8 @@ export const registerCandidateTools = (server: McpServer) => {
 				logger.error('Error fetching candidate experience:', sanitizeForLogging(error));
 				throw new Error('Failed to fetch candidate experience: ' + sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Add candidate experience tool
@@ -537,9 +590,12 @@ export const registerCandidateTools = (server: McpServer) => {
 					throw new Error('Unauthorized: Cannot add experience to candidates from other organizations');
 				}
 
+				// The experience list reads the organization: a row created without one would not be listed
 				const response = await apiClient.post('/api/candidate-experience', {
 					candidateId,
-					...experience
+					...experience,
+					organizationId: defaultParams.organizationId,
+					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
 				});
 
 				return {
@@ -554,7 +610,8 @@ export const registerCandidateTools = (server: McpServer) => {
 				logger.error('Error adding candidate experience:', sanitizeForLogging(error));
 				throw new Error('Failed to add candidate experience: ' + sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Get candidate education tool
@@ -576,7 +633,7 @@ export const registerCandidateTools = (server: McpServer) => {
 				}
 
 				const response = await apiClient.get(`/api/candidate-educations`, {
-					params: { candidateId }
+					params: candidateRecordsQuery(defaultParams, candidateId)
 				});
 
 				return {
@@ -591,7 +648,8 @@ export const registerCandidateTools = (server: McpServer) => {
 				logger.error('Error fetching candidate education:', sanitizeForLogging(error));
 				throw new Error('Failed to fetch candidate education: ' + sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Add candidate education tool
@@ -621,10 +679,13 @@ export const registerCandidateTools = (server: McpServer) => {
 					throw new Error('Unauthorized: Cannot add education to candidates from other organizations');
 				}
 
+				// The education list reads the organization: a row created without one would not be listed
 				const educationData = {
 					...education,
 					candidateId,
-					...(education.completionDate && { completionDate: new Date(education.completionDate) })
+					...(education.completionDate && { completionDate: new Date(education.completionDate) }),
+					organizationId: defaultParams.organizationId,
+					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
 				};
 
 				const response = await apiClient.post('/api/candidate-educations', educationData);
@@ -641,6 +702,7 @@ export const registerCandidateTools = (server: McpServer) => {
 				logger.error('Error adding candidate education:', sanitizeForLogging(error));
 				throw new Error('Failed to add candidate education: ' + sanitizeErrorMessage(error));
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 };

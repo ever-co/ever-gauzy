@@ -1,45 +1,92 @@
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
+
+// Drawn to the Documents page's table: the same density tokens, a borderless panel with a hairline inset, a quiet
+// 2.25rem header, 0.75rem cells (the title in the text colour, the rest muted), a 2.5rem checkbox column, statuses as
+// text with a coloured dot and labels as solid chips.
 :host {
+  @include ga-hub.density-tokens();
+
+  --list-hairline: var(--gauzy-overlay-border-color);
+  --list-text: var(--text-basic-color);
+  --list-text-muted: var(--gauzy-text-color-2, var(--text-hint-color));
+  --list-header-height: 2rem;
+  --list-cell-padding-x: var(--gauzy-table-cell-padding-x, 0.4375rem);
+  // The flat-chrome radius for chips and the drag preview; the panel takes the card radius.
+  --list-radius: var(--gauzy-radius-sm);
+
   display: block;
   overflow-x: auto;
+  border-radius: var(--border-radius);
+  background: var(--gauzy-card-1, var(--background-basic-color-1));
+  box-shadow: inset 0 0 0 1px var(--list-hairline);
 }
 
 .task-list {
-  min-width: 48rem;
-  font-size: 0.875rem;
+  min-width: 56rem;
+  font-size: 0.75rem;
+  line-height: var(--gauzy-table-line-height, 1rem);
 }
 
-.row {
+// Not `.row`: the app loads Bootstrap, whose global `.row` wraps its children and pulls them out by -15px a side,
+// which put Project and Due date on a second line and clipped the first column.
+.list-row {
   display: flex;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.375rem 0.5rem;
-  border-bottom: 1px solid var(--border-basic-color-3);
-  background: var(--background-basic-color-1);
+  min-height: 2rem;
+  padding-block: 0.25rem;
+  border-bottom: 1px solid var(--list-hairline);
+  background: transparent;
+  color: var(--list-text-muted);
   cursor: default;
 
+  &:not(.head):hover {
+    background: var(--gauzy-hover-tint);
+  }
+
+  // The quiet header: small, semi-bold, muted — the data is what should stand out.
   &.head {
     position: sticky;
     top: 0;
     z-index: 1;
-    font-size: 0.75rem;
+    box-sizing: border-box;
+    height: var(--list-header-height);
+    min-height: var(--list-header-height);
+    padding-block: 0;
+    font-size: 0.6875rem;
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    color: var(--text-hint-color);
-    background: var(--background-basic-color-2);
+    white-space: nowrap;
+    color: var(--list-text-muted);
+    background: var(--gauzy-card-1, var(--background-basic-color-1));
+
+    .cell {
+      color: inherit;
+      font-weight: inherit;
+      font-family: inherit;
+      text-transform: none;
+    }
   }
 
-  &.selected {
-    background: var(--color-primary-transparent-100);
-  }
-
+  // The row the keyboard (J / K) or a click is on: the hover tint, and a bar at its start edge that stays on a selected
+  // row too (the selected tint below replaces only the background), so the current row is always told apart.
   &.focused {
-    box-shadow: inset 3px 0 0 var(--color-primary-default);
+    background: var(--gauzy-hover-tint);
+    box-shadow: inset 2px 0 0 var(--color-primary-default);
     outline: none;
   }
 
+  // A checked row: the Documents table's selected tint, kept under the pointer too.
+  &.selected,
+  &.selected:hover {
+    background: var(--gauzy-active-tint);
+  }
+
   &.cdk-drag-preview {
-    box-shadow: var(--card-shadow);
+    border-radius: var(--list-radius);
+    background: var(--gauzy-card-1, var(--background-basic-color-1));
+    box-shadow:
+      inset 0 0 0 1px var(--list-hairline),
+      var(--gauzy-overlay-shadow, 0 4px 12px -2px rgba(0, 0, 0, 0.14), 0 2px 6px -2px rgba(0, 0, 0, 0.08));
   }
 
   &.cdk-drag-placeholder {
@@ -47,36 +94,83 @@
   }
 }
 
-.rows.cdk-drop-list-dragging .row:not(.cdk-drag-placeholder) {
+.rows:last-child .list-row:last-child {
+  border-bottom: 0;
+}
+
+.rows.cdk-drop-list-dragging .list-row:not(.cdk-drag-placeholder) {
   transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
 }
 
+// Each cell carries the table's cell padding, as a `td` does; the widths include it.
 .cell {
   flex: 0 0 auto;
+  box-sizing: border-box;
+  min-width: 0;
+  padding-inline: var(--list-cell-padding-x);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 
+  // Without a checkbox column (a viewer who may not edit) the first cell keeps the same inset from the panel's edge.
+  .list-row > &:first-child:not(.check) {
+    padding-inline-start: 1rem;
+  }
+
   &.check {
-    width: 1.5rem;
+    width: 2.5rem;
+    padding-inline: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: visible;
+
+    // The Documents table's checkbox: without it the app's global input rules gave these a bordered, padded box
+    // taller than the checkbox itself.
+    input[type='checkbox'] {
+      display: inline-block;
+      flex: 0 0 auto;
+      width: 0.875rem;
+      height: 0.875rem;
+      margin: 0;
+      padding: 0 !important;
+      vertical-align: middle;
+      accent-color: var(--color-primary-default);
+      cursor: pointer;
+      border: none !important;
+      outline: none !important;
+      box-shadow: none !important;
+
+      &:focus-visible {
+        outline: 2px solid var(--color-primary-default) !important;
+        outline-offset: 2px;
+      }
+    }
   }
   &.handle {
-    width: 1.25rem;
+    width: 1.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: grab;
-    color: var(--text-hint-color);
+    color: var(--list-text-muted);
+
+    nb-icon {
+      font-size: 0.875rem;
+    }
   }
   &.reference {
-    width: 6.5rem;
-    font-family: var(--font-family-monospace, monospace);
-    font-size: 0.8125rem;
-    color: var(--text-hint-color);
+    width: 5.5rem;
+    font-variant-numeric: tabular-nums;
   }
   &.title {
-    flex: 1 1 14rem;
-    min-width: 10rem;
+    flex: 1 1 16rem;
+    min-width: 11rem;
+    color: var(--list-text);
+    font-weight: 500;
   }
   &.status {
-    width: 8rem;
+    width: 7.5rem;
   }
   &.priority,
   &.size {
@@ -84,25 +178,26 @@
     text-transform: capitalize;
   }
   &.assignees {
-    width: 6rem;
+    width: 6.5rem;
     display: flex;
     align-items: center;
-    gap: 0.125rem;
   }
   &.labels {
-    width: 10rem;
+    width: 13rem;
     display: flex;
-    gap: 0.25rem;
+    align-items: center;
+    gap: var(--gauzy-table-chip-gap, 0.25rem);
   }
   &.project {
-    width: 8rem;
+    width: 9rem;
   }
   &.due {
-    width: 6.5rem;
+    width: 7rem;
+    font-variant-numeric: tabular-nums;
 
     &.overdue {
       color: var(--color-danger-default);
-      font-weight: 600;
+      font-weight: 500;
     }
   }
 }
@@ -113,75 +208,122 @@
 
   &:hover,
   &:focus-visible {
-    text-decoration: underline;
+    color: var(--color-primary-default);
   }
 }
 
-.chip,
-.label {
-  display: inline-block;
+// Status: plain text with a dot that carries the status colour — no tinted chip.
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
   max-width: 100%;
-  padding: 0 0.5rem;
-  border-radius: 1rem;
-  font-size: 0.75rem;
-  line-height: 1.25rem;
+  min-width: 0;
+  height: 1.25rem;
+  line-height: 1;
+  white-space: nowrap;
   text-transform: capitalize;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  background: color-mix(in srgb, var(--chip-color) 18%, transparent);
-  color: var(--text-basic-color);
+  color: var(--list-text);
+
+  .status-dot {
+    flex: 0 0 auto;
+    width: 0.375rem;
+    height: 0.375rem;
+    border-radius: 50%;
+    background: var(--status-color, var(--list-text-muted));
+  }
 }
 
+// Labels: solid chips in the label's colour; the "+N" overflow is outlined and muted.
 .label {
-  text-transform: none;
+  display: inline-flex;
+  align-items: center;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 6rem;
+  height: var(--gauzy-table-badge-height, 1.25rem);
+  padding: 0 var(--gauzy-table-chip-padding-x, 0.375rem);
+  border-radius: var(--list-radius);
+  font-size: var(--gauzy-table-chip-font-size, 0.6875rem);
+  line-height: var(--gauzy-table-chip-line-height, 0.875rem);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  // The theme's text on the neutral chip; a coloured label sets its own text colour from its colour (see the template).
+  color: var(--text-basic-color);
+  background: var(--chip-color, var(--background-basic-color-3));
+
+  &.overflow {
+    flex: 0 0 auto;
+    background: transparent;
+    color: var(--list-text-muted);
+    box-shadow: inset 0 0 0 1px var(--list-hairline);
+  }
 }
 
 .avatar {
-  width: 1.375rem;
-  height: 1.375rem;
+  flex: 0 0 auto;
+  width: var(--gauzy-people-avatar-size, 1.25rem);
+  height: var(--gauzy-people-avatar-size, 1.25rem);
   border-radius: 50%;
   object-fit: cover;
+  // Overlapping, as stacked people are drawn elsewhere in the app; the ring keeps each face apart.
+  box-shadow: 0 0 0 2px var(--gauzy-card-1, var(--background-basic-color-1));
+
+  & + & {
+    margin-left: -0.3125rem;
+  }
 
   &.initials {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.625rem;
-    font-weight: 700;
+    font-size: 0.5625rem;
+    font-weight: 600;
+    color: var(--list-text);
     background: var(--background-basic-color-3);
   }
 }
 
 .more {
-  font-size: 0.75rem;
-  color: var(--text-hint-color);
+  flex: 0 0 auto;
+  margin-left: 0.25rem;
+  font-size: 0.6875rem;
+  color: var(--list-text-muted);
 }
 
 .group-head {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem;
+  height: var(--list-header-height);
+  padding: 0 0.875rem;
+  font-size: 0.75rem;
   font-weight: 600;
-  background: var(--background-basic-color-2);
-  border-bottom: 1px solid var(--border-basic-color-3);
+  color: var(--list-text);
+  background: var(--gauzy-hover-tint);
+  border-bottom: 1px solid var(--list-hairline);
 
   .group-label {
     text-transform: capitalize;
   }
 
   .group-count {
-    min-width: 1.5rem;
-    padding: 0 0.375rem;
-    border-radius: 1rem;
-    font-size: 0.75rem;
-    text-align: center;
-    background: var(--background-basic-color-4);
+    display: inline-flex;
+    align-items: center;
+    height: 1.125rem;
+    padding: 0 0.3125rem;
+    border-radius: var(--list-radius);
+    font-size: 0.625rem;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    color: var(--list-text-muted);
+    box-shadow: inset 0 0 0 1px var(--list-hairline);
   }
 
   .group-more {
     font-weight: normal;
-    font-size: 0.75rem;
-    color: var(--text-hint-color);
+    font-size: 0.6875rem;
+    color: var(--list-text-muted);
   }
 }

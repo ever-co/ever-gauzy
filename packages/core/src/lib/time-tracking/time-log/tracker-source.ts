@@ -18,6 +18,21 @@ export function isTrackerSource(source: string | null | undefined): boolean {
 }
 
 /**
+ * The clients that post no time slot while a run goes: the Gauzy web timer and the timers embedded in other products
+ * (the Ever Teams kit). A stop gives their runs the time slots of their range, so the day's worked time counts them.
+ */
+const RANGE_SLOT_SOURCES: ReadonlyArray<string> = [TimeLogSourceEnum.WEB_TIMER, TimeLogSourceEnum.EMBED];
+
+/**
+ * Whether a stop always gives a run of this source the time slots of its range (web timer, embedded timer).
+ *
+ * @param source The run's source.
+ */
+export function takesRangeSlotsOnStop(source: string | null | undefined): boolean {
+	return RANGE_SLOT_SOURCES.includes(source);
+}
+
+/**
  * The clients that post a time slot on each heartbeat of a run: Ever Teams (every minute) and its mobile app. The time
  * slots of their runs say how long they went, and a run of theirs without one died before its first heartbeat.
  */

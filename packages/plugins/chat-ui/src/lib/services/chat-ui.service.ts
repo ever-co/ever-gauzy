@@ -38,7 +38,8 @@ import {
 	IChatTaskUpdateResult,
 	IChatTypingInput,
 	IChatTypingResult,
-	ID
+	ID,
+	IOrganizationTeam
 } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
 import { Store } from '@gauzy/ui-core/core';
@@ -48,6 +49,16 @@ import { CHAT_PAGE_SIZE } from '../chat-ui.constants';
 
 const CHAT = `${API_PREFIX}/chat`;
 const path = (id: ID) => encodeURIComponent(String(id));
+
+/** A team as the team chat reads it: what its channel is named and created with. */
+export interface ChatTeamDetails {
+	id: string;
+	name: string;
+	/** A public team chats in a public channel, a private one in a private channel. */
+	public: boolean;
+	imageUrl: string | null;
+	memberEmployeeIds: string[];
+}
 
 /** What a write answers besides its record: the events it caused. */
 export type ChatEvents = { events: IChatEvent[] };
@@ -176,6 +187,31 @@ export class ChatUiService {
 				map((page) =>
 					(page?.items ?? []).filter((team) => !!team?.id && !!team?.name?.trim()).map((team) => ({ id: String(team.id), name: String(team.name).trim() }))
 				)
+			);
+	}
+
+	/**
+	 * One team of the organization with its members' employee ids (`GET /organization-team`, which needs
+	 * `ORG_TEAM_VIEW`), for the team chat: its channel is created with them. Null when the team is not found.
+	 */
+	team(id: ID, organizationId: ID, tenantId: ID): Observable<ChatTeamDetails | null> {
+		return this.http
+			.get<{ items?: IOrganizationTeam[] }>(`${API_PREFIX}/organization-team`, {
+				params: toParams({ where: { id, organizationId, tenantId }, relations: ['members'] })
+			})
+			.pipe(
+				map((page) => {
+					const team = (page?.items ?? []).find((item) => String(item?.id) === String(id));
+					if (!team?.id || !team.name?.trim()) return null;
+					const memberEmployeeIds = [...new Set((team.members ?? []).map((member) => member?.employeeId).filter((employeeId): employeeId is ID => !!employeeId).map(String))];
+					return {
+						id: String(team.id),
+						name: team.name.trim(),
+						public: !!team.public,
+						imageUrl: team.image?.fullUrl || team.image?.url || team.logo || null,
+						memberEmployeeIds
+					};
+				})
 			);
 	}
 

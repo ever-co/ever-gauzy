@@ -20,8 +20,18 @@ export interface EverConnectConfig {
 	apiUrl: string | null;
 	/** Declared by `EVER_INSTALL_SOURCE`, never inferred. */
 	installSource: InstallSource;
-	/** `EVER_INSTALL_SOURCE=cloud`: Ever operates this installation; nobody here is its operator. */
+	/**
+	 * `EVER_INSTALL_SOURCE=cloud`: Ever operates this installation; no tenant's super admin is its
+	 * operator, only the users of `cloudOperatorUserIds`.
+	 */
 	cloud: boolean;
+	/**
+	 * `EVER_CONNECT_CLOUD_OPERATOR_USER_IDS`: on Ever's cloud only, the user ids (lower-cased) of the
+	 * super admins who manage the connection of the installation (its state, check again, replace key,
+	 * disconnect, connect again, the installation address). Empty by default and everywhere else: then
+	 * nobody on the cloud does, as before.
+	 */
+	cloudOperatorUserIds: string[];
 	/** `EVER_CONNECT_FEED_MODE`. */
 	feedMode: FeedMode;
 	/** `EVER_CONNECT_INTEGRATIONS_DENY`: integration keys denied for every organization (`*`: all). */
@@ -141,6 +151,35 @@ function parseDeny(raw: string | undefined, warn: Warn): string[] {
 		warn('EVER_CONNECT_INTEGRATIONS_DENY holds a value that is not an integration key; it is ignored.');
 	}
 	return [...new Set(keys)];
+}
+
+const USER_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
+/**
+ * `EVER_CONNECT_CLOUD_OPERATOR_USER_IDS`: user ids (UUIDs, comma separated), read only on Ever's cloud.
+ * Never an e-mail address: anyone can register an account with any address on the cloud. A value
+ * that is not a user id is ignored with one warning (which never repeats it); set on another
+ * installation, the list is ignored with one warning (its operator is `EVER_OPERATOR_USER_IDS`).
+ */
+function parseCloudOperators(raw: string | undefined, cloud: boolean, warn: Warn): string[] {
+	if (raw === undefined || raw.trim() === '') {
+		return [];
+	}
+	if (!cloud) {
+		warn(
+			'EVER_CONNECT_CLOUD_OPERATOR_USER_IDS is read only with EVER_INSTALL_SOURCE=cloud; it is ignored (the operator of this installation is set with EVER_OPERATOR_USER_IDS or EVER_OPERATOR_EMAILS).'
+		);
+		return [];
+	}
+	const parts = raw
+		.split(',')
+		.map((part) => part.trim().toLowerCase())
+		.filter((part) => part.length > 0);
+	const ids = parts.filter((part) => USER_ID.test(part));
+	if (ids.length !== parts.length) {
+		warn('EVER_CONNECT_CLOUD_OPERATOR_USER_IDS holds a value that is not a user id; it is ignored.');
+	}
+	return [...new Set(ids)];
 }
 
 function parseCode(raw: string | undefined): string | null {
@@ -295,6 +334,11 @@ export function readEverConnectConfig(env: Env = process.env, warn: Warn = () =>
 		apiUrl,
 		installSource,
 		cloud: installSource === 'cloud',
+		cloudOperatorUserIds: parseCloudOperators(
+			env['EVER_CONNECT_CLOUD_OPERATOR_USER_IDS'],
+			installSource === 'cloud',
+			warn
+		),
 		feedMode: parseFeedMode(env['EVER_CONNECT_FEED_MODE'], warn),
 		deny: parseDeny(env['EVER_CONNECT_INTEGRATIONS_DENY'], warn),
 		connectCode: parseCode(env['EVER_CONNECT_CODE']),

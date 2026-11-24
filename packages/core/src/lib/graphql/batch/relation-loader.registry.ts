@@ -15,6 +15,12 @@ import {
  * Two resolvers that ask for the same relation in one operation get the *same* loader, so the second
  * selection is answered from the first one's cache. Two resolvers that ask for different relations
  * get different loaders, so neither can delay or fail the other's batch.
+ *
+ * A subscription is the one operation that outlives a single execution: graphql-js executes every
+ * event of its stream with the context the stream was opened with. Each event is resolved with a
+ * registry of its own ({@link RelationLoaderRegistry.successor}, handed over by
+ * `renewRelationLoaders`), so the cache spans one event's resolution — batched as one operation's —
+ * and never answers a later event with what an earlier one loaded.
  */
 
 /**
@@ -116,6 +122,22 @@ export class RelationLoaderRegistry {
 	 */
 	get<K, V>(key: string): RelationLoader<K, V> | undefined {
 		return this.loaders.get(key) as RelationLoader<K, V> | undefined;
+	}
+
+	/**
+	 * The registry the next unit of work of the same caller resolves its relations with: empty, opened with this
+	 * registry's defaults.
+	 *
+	 * A subscription is one operation that delivers many events, and each event must read its relations as they are
+	 * when it is delivered rather than from what an earlier event cached (`renewRelationLoaders` in
+	 * `graphql-context.ts`). This registry is left as it is, neither cleared nor released: a batch an earlier event
+	 * still has in flight settles into the cache of the registry it was issued on, where the next event never looks,
+	 * and nothing still waiting on it is failed.
+	 *
+	 * @returns A new, empty registry.
+	 */
+	successor(): RelationLoaderRegistry {
+		return new RelationLoaderRegistry(this.options);
 	}
 
 	/**

@@ -92,6 +92,48 @@ export function scopeCommentReadToParents<W extends object>(
 	};
 }
 
+/**
+ * The records a comment read names, when each alternative of its criteria names one record of one of `types`:
+ * `{ entity: <type>, entityId: <uuid> }`, the type spelled exactly as its rule spells it. Empty when an alternative
+ * names anything else, and when the read states no criteria (an absent or empty `where` reads every comment).
+ *
+ * @param where - The read's criteria: an object, a list of objects, or none.
+ * @param types - The record types whose records count.
+ */
+export function recordsNamedByEveryAlternative(where: unknown, types: ReadonlyArray<string>): ICommentParentRef[] {
+	if (where == null) {
+		return [];
+	}
+	const records = alternativesOf(where).map((alternative) => recordNamedBy(alternative, types));
+	const everyAlternativeNamesOne = records.every((record) => record !== undefined);
+	if (!everyAlternativeNamesOne) {
+		return [];
+	}
+	return records as ICommentParentRef[];
+}
+
+/** The alternatives of a read's criteria: each object of a list, or the one object. */
+function alternativesOf(where: unknown): unknown[] {
+	if (Array.isArray(where)) {
+		return where;
+	}
+	return [where];
+}
+
+/** The record one alternative of a comment read names, when it names one record of one of `types`. */
+function recordNamedBy(alternative: unknown, types: ReadonlyArray<string>): ICommentParentRef | undefined {
+	if (alternative === null || typeof alternative !== 'object') {
+		return undefined;
+	}
+	const { entity, entityId } = alternative as Record<string, unknown>;
+	const namesType = typeof entity === 'string' && types.includes(entity);
+	const namesRecord = typeof entityId === 'string' && isUUID(entityId);
+	if (!namesType || !namesRecord) {
+		return undefined;
+	}
+	return { entity: entity as string, entityId: entityId as ID };
+}
+
 /** `entity` as the caller stated it, and not one of the governed types. */
 function outsideGoverned(stated: unknown, governed: ReadonlyArray<string>): FindOperator<string> {
 	const outside = Not(In([...governed]));

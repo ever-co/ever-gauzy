@@ -1,178 +1,196 @@
-<nb-card class="main">
-	<nb-card-header class="d-flex flex-column">
-		<span class="cancel"><i class="fas fa-times" (click)="closeDialog()"></i></span>
+<nb-card class="main equipment-dialog">
+	<nb-card-header class="equipment-header">
 		<h5 class="title">
 			{{ (equipment ? 'EQUIPMENT_PAGE.EDIT_EQUIPMENT' : 'EQUIPMENT_PAGE.ADD_EQUIPMENT') | translate }}
 		</h5>
+		<button type="button" class="close-button" [attr.aria-label]="'BUTTONS.CLOSE' | translate" (click)="closeDialog()">
+			<i class="fas fa-times" aria-hidden="true"></i>
+		</button>
 	</nb-card-header>
-	<nb-card-body class="body">
+	<nb-card-body class="equipment-body">
 		@if (form) {
-		<form [formGroup]="form">
-			<div class="row mt-3">
-				<div class="col-sm-3 mb-5">
-					<div class="equipment-img" (click)="onAddImageClick()">
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							xmlns:xlink="http://www.w3.org/1999/xlink"
-							width="68"
-							height="68"
-							viewBox="0 0 68 68"
-							[style.opacity]="hoverState ? '1' : '0.3'"
-						>
-							<defs>
-								<path
-									id="a"
-									d="M28.667 31.333a2 2 0 1 0-.002-4.001 2 2 0 0 0 .002 4.001m13.333 12H26.748l9.34-7.793c.328-.279.923-.277 1.244-.001l6.001 5.12V42c0 .736-.597 1.333-1.333 1.333M26 24.667h16c.736 0 1.333.597 1.333 1.333v11.152l-4.27-3.643c-1.32-1.122-3.386-1.122-4.694-.008l-9.702 8.096V26c0-.736.597-1.333 1.333-1.333M42 22H26c-2.205 0-4 1.795-4 4v16c0 2.205 1.795 4 4 4h16c2.205 0 4-1.795 4-4V26c0-2.205-1.795-4-4-4"
-								/>
-							</defs>
-							<g fill="none" fill-rule="evenodd">
-								<circle cx="34" cy="34" r="34" fill="#0091FF" opacity=".3" />
-								<circle cx="34" cy="34" r="26" fill="#0091FF" opacity=".9" />
-								<use fill="#FFF" fill-rule="nonzero" xlink:href="#a" />
-							</g>
-						</svg>
-						<div class="image-overlay" [style.opacity]="hoverState ? '0.2' : '0'"></div>
-						@if (image && image?.fullUrl) {
-						<img class="featured-image" [src]="$safeNavigationMigration(image?.fullUrl)" alt="Feature image" style="width: 150px" />
-						} @if (!image) {
-						<div class="featured-image no-image" style="width: 150px"></div>
+			<form class="equipment-form" [formGroup]="form">
+				<!-- What it is: the picture beside its name, type and serial number. -->
+				<div class="identity">
+					<button
+						type="button"
+						class="picture"
+						[class.has-image]="!!image?.fullUrl"
+						[attr.aria-label]="'INVENTORY_PAGE.SELECT_IMAGE' | translate"
+						[title]="'INVENTORY_PAGE.SELECT_IMAGE' | translate"
+						(click)="onAddImageClick()"
+					>
+						@if (image?.fullUrl) {
+							<img class="picture-image" [src]="image.fullUrl" alt="" />
 						}
+						<!-- The picker's mark: alone on an empty tile, over the picture on hover. -->
+						<span class="picture-mark" aria-hidden="true">
+							<nb-icon icon="camera-outline"></nb-icon>
+						</span>
+					</button>
+
+					<div class="identity-fields">
+						<div class="form-group">
+							<label for="equipmentName" class="label">
+								{{ 'EQUIPMENT_PAGE.EQUIPMENT_NAME' | translate }}
+								<span class="required-mark" aria-hidden="true">*</span>
+							</label>
+							<input
+								id="equipmentName"
+								nbInput
+								type="text"
+								formControlName="name"
+								fullWidth
+								aria-required="true"
+								placeholder="{{ 'EQUIPMENT_PAGE.EQUIPMENT_NAME' | translate }}"
+								[class.status-danger]="form.controls['name'].invalid && form.controls['name'].dirty"
+								[class.status-success]="form.controls['name'].valid && form.controls['name'].dirty"
+							/>
+						</div>
+						<div class="field-row">
+							<div class="form-group">
+								<label for="equipmentType" class="label">
+									{{ 'EQUIPMENT_PAGE.EQUIPMENT_TYPE' | translate }}
+								</label>
+								<input
+									id="equipmentType"
+									nbInput
+									type="text"
+									formControlName="type"
+									fullWidth
+									placeholder="{{ 'EQUIPMENT_PAGE.EQUIPMENT_TYPE' | translate }}"
+									[class.status-danger]="form.controls['type'].invalid && form.controls['type'].dirty"
+									[class.status-success]="form.controls['type'].valid && form.controls['type'].dirty"
+								/>
+							</div>
+							<div class="form-group">
+								<label for="equipmentSerialNumber" class="label">
+									{{ 'EQUIPMENT_PAGE.EQUIPMENT_SN' | translate }}
+								</label>
+								<input
+									id="equipmentSerialNumber"
+									nbInput
+									type="text"
+									formControlName="serialNumber"
+									fullWidth
+									placeholder="{{ 'EQUIPMENT_PAGE.EQUIPMENT_SN' | translate }}"
+								/>
+							</div>
+						</div>
 					</div>
 				</div>
-				<div class="col-sm-9 pl-4 mb-5">
-					<div class="form-group mb-3">
-						<label for="name" class="label">
-							{{ 'EQUIPMENT_PAGE.EQUIPMENT_NAME' | translate }}
-						</label>
-						<input
-							nbInput
-							type="text"
-							formControlName="name"
-							fullWidth
-							placeholder="{{ 'EQUIPMENT_PAGE.EQUIPMENT_NAME' | translate }}"
-							[class.status-danger]="form.controls['name'].invalid && form.controls['name'].dirty"
-							[class.status-success]="form.controls['name'].valid && form.controls['name'].dirty"
-						/>
+
+				<!-- What it cost and when it was made. -->
+				<section class="group">
+					<h6 class="group-title">{{ 'EQUIPMENT_PAGE.PURCHASE' | translate }}</h6>
+					<div class="field-row field-row--three">
+						<div class="form-group">
+							<label for="equipmentInitialCost" class="label">
+								{{ 'EQUIPMENT_PAGE.EQUIPMENT_INITIAL_COST' | translate }}
+							</label>
+							<input
+								id="equipmentInitialCost"
+								class="figure-input"
+								nbInput
+								type="number"
+								[min]="0"
+								formControlName="initialCost"
+								fullWidth
+								placeholder="{{ 'EQUIPMENT_PAGE.EQUIPMENT_INITIAL_COST' | translate }}"
+								[class.status-danger]="form.controls['initialCost'].invalid && form.controls['initialCost'].dirty"
+								[class.status-success]="form.controls['initialCost'].valid && form.controls['initialCost'].dirty"
+							/>
+						</div>
+						<div class="form-group">
+							<label class="label">
+								{{ 'EQUIPMENT_PAGE.EQUIPMENT_CURRENCY' | translate }}
+								<span class="required-mark" aria-hidden="true">*</span>
+							</label>
+							<ga-currency
+								[label]="false"
+								[accessibleLabel]="'EQUIPMENT_PAGE.EQUIPMENT_CURRENCY' | translate"
+								formControlName="currency"
+							></ga-currency>
+						</div>
+						<div class="form-group">
+							<label for="equipmentManufacturedYear" class="label">
+								{{ 'EQUIPMENT_PAGE.EQUIPMENT_MANUFACTURED_YEAR' | translate }}
+							</label>
+							<input
+								id="equipmentManufacturedYear"
+								class="figure-input"
+								nbInput
+								type="number"
+								formControlName="manufacturedYear"
+								fullWidth
+								placeholder="{{ 'EQUIPMENT_PAGE.EQUIPMENT_MANUFACTURED_YEAR' | translate }}"
+								[class.status-danger]="form.controls['manufacturedYear'].invalid && form.controls['manufacturedYear'].dirty"
+								[class.status-success]="form.controls['manufacturedYear'].valid && form.controls['manufacturedYear'].dirty"
+							/>
+						</div>
 					</div>
-				</div>
-			</div>
-			<div class="row">
-				<div class="col-sm-6 mb-3">
-					<label for="type" class="label">
-						{{ 'EQUIPMENT_PAGE.EQUIPMENT_TYPE' | translate }}
-					</label>
-					<input
-						nbInput
-						type="text"
-						formControlName="type"
-						fullWidth
-						placeholder="{{ 'EQUIPMENT_PAGE.EQUIPMENT_TYPE' | translate }}"
-						[class.status-danger]="form.controls['type'].invalid && form.controls['type'].dirty"
-						[class.status-success]="form.controls['type'].valid && form.controls['type'].dirty"
-					/>
-				</div>
-				<div class="col-sm-6 mb-3">
-					<label for="manufacturedYear" class="label">
-						{{ 'EQUIPMENT_PAGE.EQUIPMENT_MANUFACTURED_YEAR' | translate }}
-					</label>
-					<input
-						nbInput
-						type="number"
-						formControlName="manufacturedYear"
-						fullWidth
-						placeholder="{{ 'EQUIPMENT_PAGE.EQUIPMENT_MANUFACTURED_YEAR' | translate }}"
-						[class.status-danger]="
-							form.controls['manufacturedYear'].invalid && form.controls['manufacturedYear'].dirty
-						"
-						[class.status-success]="
-							form.controls['manufacturedYear'].valid && form.controls['manufacturedYear'].dirty
-						"
-					/>
-				</div>
-			</div>
-			<div class="row">
-				<div class="col-sm-6 mb-3">
-					<label for="serialNumber" class="label">
-						{{ 'EQUIPMENT_PAGE.EQUIPMENT_SN' | translate }}
-					</label>
-					<input
-						nbInput
-						type="text"
-						formControlName="serialNumber"
-						fullWidth
-						placeholder="{{ 'EQUIPMENT_PAGE.EQUIPMENT_SN' | translate }}"
-					/>
-				</div>
-				<div class="col-sm-6 mb-3">
-					<label for="name" class="label">
-						{{ 'EQUIPMENT_PAGE.EQUIPMENT_MAX_SHARE_PERIOD' | translate }}
-					</label>
-					<input
-						nbInput
-						type="number"
-						formControlName="maxSharePeriod"
-						fullWidth
-						placeholder="{{ 'EQUIPMENT_PAGE.EQUIPMENT_MAX_SHARE_PERIOD' | translate }}"
-						[class.status-danger]="
-							form.controls['maxSharePeriod'].invalid && form.controls['maxSharePeriod'].dirty
-						"
-						[class.status-success]="
-							form.controls['maxSharePeriod'].valid && form.controls['maxSharePeriod'].dirty
-						"
-					/>
-				</div>
-			</div>
-			<div class="row">
-				<div class="col-sm-6 mb-3">
-					<label for="initialCost" class="label">
-						{{ 'EQUIPMENT_PAGE.EQUIPMENT_INITIAL_COST' | translate }}
-					</label>
-					<input
-						nbInput
-						type="number"
-						formControlName="initialCost"
-						fullWidth
-						placeholder="{{ 'EQUIPMENT_PAGE.EQUIPMENT_INITIAL_COST' | translate }}"
-						[class.status-danger]="
-							form.controls['initialCost'].invalid && form.controls['initialCost'].dirty
-						"
-						[class.status-success]="
-							form.controls['initialCost'].valid && form.controls['initialCost'].dirty
-						"
-					/>
-				</div>
-				<div class="col-sm-6 mb-3">
-					<ga-currency formControlName="currency"></ga-currency>
-				</div>
-			</div>
-			<div class="row">
-				<div class="col-sm-12">
+				</section>
+
+				<!-- How it is lent out. -->
+				<section class="group">
+					<h6 class="group-title">{{ 'EQUIPMENT_PAGE.SHARING' | translate }}</h6>
+					<div class="field-row">
+						<div class="form-group">
+							<label for="equipmentMaxSharePeriod" class="label">
+								{{ 'EQUIPMENT_PAGE.EQUIPMENT_MAX_SHARE_PERIOD' | translate }}
+							</label>
+							<div class="input-with-unit">
+								<input
+									id="equipmentMaxSharePeriod"
+									class="figure-input"
+									nbInput
+									type="number"
+									[min]="0"
+									formControlName="maxSharePeriod"
+									fullWidth
+									placeholder="{{ 'EQUIPMENT_PAGE.EQUIPMENT_MAX_SHARE_PERIOD' | translate }}"
+									aria-describedby="equipmentMaxSharePeriodHint"
+									[class.status-danger]="form.controls['maxSharePeriod'].invalid && form.controls['maxSharePeriod'].dirty"
+									[class.status-success]="form.controls['maxSharePeriod'].valid && form.controls['maxSharePeriod'].dirty"
+								/>
+								<span class="input-unit" aria-hidden="true">{{ 'EQUIPMENT_PAGE.UNIT_DAYS' | translate }}</span>
+							</div>
+							<p id="equipmentMaxSharePeriodHint" class="field-hint">
+								{{ 'EQUIPMENT_VIEW.SHARE_PERIOD_HINT' | translate }}
+							</p>
+						</div>
+						<div class="form-group auto-approve">
+							<nb-checkbox formControlName="autoApproveShare" aria-describedby="equipmentAutoApproveHint">
+								<span>{{ 'EQUIPMENT_PAGE.EQUIPMENT_AUTO_APPROVE' | translate }}</span>
+							</nb-checkbox>
+							<p id="equipmentAutoApproveHint" class="field-hint field-hint--checkbox">
+								{{ 'EQUIPMENT_VIEW.AUTO_APPROVE_ON' | translate }}
+							</p>
+						</div>
+					</div>
+				</section>
+
+				<div class="form-group form-group--last">
+					<label class="label">{{ 'SM_TABLE.TAGS' | translate }}</label>
 					<ga-tags-color-input
-						[selectedTags]="$safeNavigationMigration(form.get('tags')?.value)"
+						[label]="false"
+						[accessibleLabel]="'SM_TABLE.TAGS' | translate"
+						[selectedTags]="form.get('tags')?.value"
 						(selectedTagsEvent)="selectedTagsEvent($event)"
 						[isOrgLevel]="true"
 					></ga-tags-color-input>
 				</div>
-			</div>
-			<div class="row mt-3">
-				<div class="col-sm-9 mb-3">
-					<div class="form-group mb-3">
-						<nb-checkbox formControlName="autoApproveShare">
-							<span>{{ 'EQUIPMENT_PAGE.EQUIPMENT_AUTO_APPROVE' | translate }}</span>
-						</nb-checkbox>
-					</div>
-				</div>
-			</div>
-			<input type="hidden" formControlName="id" />
-		</form>
+				<input type="hidden" formControlName="id" />
+			</form>
 		}
 	</nb-card-body>
 
-	<nb-card-footer class="text-left">
-		<button (click)="dialogRef.close()" status="basic" class="mr-2" outline nbButton>
+	<nb-card-footer class="equipment-footer">
+		<button nbButton outline status="basic" size="small" type="button" (click)="dialogRef.close()">
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
-		<button [disabled]="form.invalid || loading" (click)="saveEquipment()" status="success" nbButton>
+		<button nbButton status="primary" size="small" type="button" [disabled]="!form || form.invalid || loading" (click)="saveEquipment()">
+			<nb-icon [icon]="equipment ? 'save-outline' : 'plus-outline'"></nb-icon>
 			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
 	</nb-card-footer>

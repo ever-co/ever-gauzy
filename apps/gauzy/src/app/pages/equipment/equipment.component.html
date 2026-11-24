@@ -68,6 +68,17 @@
       ></ngx-favorite-toggle>
     }
     <button
+      (click)="view(selectedItem)"
+      nbButton
+      status="basic"
+      class="action secondary"
+      [disabled]="!selectedItem && disableButton"
+      size="small"
+      >
+      <nb-icon class="mr-1" icon="eye-outline"></nb-icon>
+      {{ 'BUTTONS.VIEW' | translate }}
+    </button>
+    <button
       (click)="save(this.selectedEquipment)"
       nbButton
       status="basic"

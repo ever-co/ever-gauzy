@@ -1,7 +1,9 @@
 import {
+	afterNextRender,
 	ChangeDetectionStrategy,
 	Component,
 	computed,
+	DestroyRef,
 	ElementRef,
 	inject,
 	input,
@@ -76,6 +78,8 @@ export class BulkToolbarComponent {
 	protected readonly search = signal('');
 	protected readonly listMode = signal<'add' | 'remove'>('add');
 	protected readonly due = signal('');
+	/** Where the open picker's panel starts, in px from the bar's left edge: under the picker that opened it. */
+	protected readonly panelLeft = signal(0);
 
 	protected readonly pickers: readonly BulkPicker[] = [
 		'status',
@@ -93,6 +97,33 @@ export class BulkToolbarComponent {
 		return filterOptions(this.options()[PICKER_OPTIONS[picker]] ?? [], this.search());
 	});
 
+	/** The icon beside each picker in the bar. */
+	protected readonly pickerIcons: Readonly<Record<BulkPicker, string>> = {
+		status: 'checkmark-circle-2-outline',
+		priority: 'flag-outline',
+		size: 'expand-outline',
+		assignees: 'people-outline',
+		labels: 'pricetags-outline',
+		project: 'briefcase-outline',
+		dueDate: 'calendar-outline'
+	};
+
+	constructor() {
+		// The bar narrows or widens with the window and the side menu, and its actions may wrap: an open picker's
+		// panel is placed again under its trigger, so it never starts past the bar's edge. The picker stays open.
+		const destroyRef = inject(DestroyRef);
+		afterNextRender(() => {
+			const bar = (this.host.nativeElement as HTMLElement).querySelector?.('.bulk-toolbar');
+			if (!bar || typeof ResizeObserver === 'undefined') return;
+			const observer = new ResizeObserver(() => {
+				const open = this.picker();
+				if (open) this.panelLeft.set(this.anchorOf(open));
+			});
+			observer.observe(bar);
+			destroyRef.onDestroy(() => observer.disconnect());
+		});
+	}
+
 	protected pickerKey(picker: BulkPicker): string {
 		return `TASK_VIEWS.BULK.${picker.replace(/[A-Z]/g, (letter) => `_${letter}`).toUpperCase()}`;
 	}
@@ -108,11 +139,22 @@ export class BulkToolbarComponent {
 		const active = (this.host.nativeElement as HTMLElement).ownerDocument?.activeElement as HTMLElement | null;
 		this.opener = active && active !== document.body ? active : null;
 		this.lastPicker = picker;
+		this.panelLeft.set(this.anchorOf(picker));
 		this.picker.set(picker);
 		this.search.set('');
 		this.listMode.set('add');
 		this.due.set('');
 		setTimeout(() => (picker === 'dueDate' ? this.dueField : this.searchField)?.nativeElement.focus());
+	}
+
+	/** The left edge of a picker's trigger in the bar, held so the panel (20rem at most) stays inside the bar. */
+	private anchorOf(picker: BulkPicker): number {
+		const bar = (this.host.nativeElement as HTMLElement).querySelector?.('.bulk-toolbar') as HTMLElement | null;
+		const trigger = bar?.querySelector(`[data-picker="${picker}"]`) as HTMLElement | null;
+		if (!bar || !trigger) return 0;
+		const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+		const room = bar.clientWidth - Math.min(20 * rem, window.innerWidth * 0.9);
+		return Math.max(0, Math.min(trigger.offsetLeft, room));
 	}
 
 	/** Closes the picker; `restoreFocus` gives the focus back to what opened it (else the picker's own trigger). */

@@ -87,22 +87,21 @@
 												<div class="entry-title">
 													<nb-icon class="entry-icon" [icon]="entry.icon"></nb-icon>
 													<span>{{ entry.title }}</span>
-													@if (entry.learnMoreUrl) {
-														<a
-															class="entry-link"
-															[href]="entry.learnMoreUrl"
-															target="_blank"
-															rel="noopener noreferrer"
-															[nbTooltip]="entry.learnMoreUrl"
-															[attr.aria-label]="
-																i18n + '.FIELDS.LEARN_MORE_URL' | translate
-															"
-														>
-															<nb-icon icon="external-link-outline"></nb-icon>
-														</a>
-													}
 												</div>
 												<div class="entry-content">{{ entry.content }}</div>
+												@if (entry.learnMoreUrl) {
+													<!-- Shown as text to read and copy, not as a link. The entries are installation
+													     data (the seeded ones point at the product's documentation), and the egress
+													     audit allows no new link to an Ever host on this page. The What's New panel
+													     and the sign-up page still link them. -->
+													<div class="entry-link">
+														<nb-icon icon="link-2-outline" aria-hidden="true"></nb-icon>
+														<span class="entry-link-label"
+															>{{ i18n + '.FIELDS.LEARN_MORE_URL' | translate }}:</span
+														>
+														<span class="entry-link-url">{{ entry.learnMoreUrl }}</span>
+													</div>
+												}
 											</td>
 											<td class="actions-col">
 												<button

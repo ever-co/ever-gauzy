@@ -1,11 +1,15 @@
 import { ConflictException } from '@nestjs/common';
-import { IUser } from '@gauzy/contracts';
+import { IEmployee, IInvite, IOrganization, IOrganizationTeam, IUser } from '@gauzy/contracts';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { AuthService } from '../../../auth/auth.service';
 import { InviteService } from '../../invite.service';
 import { InviteAcceptUserCommand } from '../invite.accept-user.command';
 import { OrganizationService } from '../../../organization/organization.service';
 import { TypeOrmUserRepository } from '../../../user/repository/type-orm-user.repository';
+import { TypeOrmEmployeeRepository } from '../../../employee/repository/type-orm-employee.repository';
+import { TypeOrmOrganizationTeamEmployeeRepository } from '../../../organization-team-employee/repository/type-orm-organization-team-employee.repository';
+import { UserOrganizationService } from '../../../user-organization/user-organization.services';
+import { assertEmployeeNotEnded, createInvitedEmployee } from '../../invited-employee';
 
 /**
  * Use this command for registering all non-employee users.
@@ -18,14 +22,17 @@ export class InviteAcceptUserHandler implements ICommandHandler<InviteAcceptUser
 		private readonly typeOrmUserRepository: TypeOrmUserRepository,
 		private readonly inviteService: InviteService,
 		private readonly authService: AuthService,
-		private readonly organizationService: OrganizationService
+		private readonly organizationService: OrganizationService,
+		private readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
+		private readonly typeOrmOrganizationTeamEmployeeRepository: TypeOrmOrganizationTeamEmployeeRepository,
+		private readonly userOrganizationService: UserOrganizationService
 	) {}
 
 	public async execute(command: InviteAcceptUserCommand): Promise<IUser> {
 		const { input, languageCode } = command;
 		const { inviteId } = input;
 
-		const invite = await this.inviteService.findOneByIdString(inviteId);
+		const invite = await this.inviteService.findOneByIdString(inviteId, { relations: { teams: true } });
 		if (!invite) {
 			throw Error('Invite does not exist');
 		}
@@ -79,9 +86,11 @@ export class InviteAcceptUserHandler implements ICommandHandler<InviteAcceptUser
 					languageCode
 				);
 			}
+
+			await this.joinInvitedTeams(invite, organization, user);
 		} catch (error) {
-			// Registration failed, so nothing consumed the invite after all — hand it back rather
-			// than stranding it as ACCEPTED with no user attached.
+			// Registration or joining the invitation's teams failed, so nothing consumed the invite
+			// after all — hand it back rather than stranding it as ACCEPTED with no user attached.
 			await this.inviteService.releaseInvite(inviteId);
 			throw error;
 		}
@@ -92,5 +101,88 @@ export class InviteAcceptUserHandler implements ICommandHandler<InviteAcceptUser
 		});
 
 		return user;
+	}
+
+	/**
+	 * Makes the invitee a member of the teams the invitation names, whatever role it grants: a team's members are
+	 * employees of its organization, so an Admin or Manager invited to a team gets an employee there, as an Employee
+	 * invitee does (ever-co/ever-gauzy#12128). An invitation that names no team, as the user invitations of Gauzy's
+	 * own Users page, gives an account only.
+	 *
+	 * @param invite The invitation being accepted, with its teams.
+	 * @param organization The invitation's organization.
+	 * @param user The invitee's account.
+	 */
+	private async joinInvitedTeams(invite: IInvite, organization: IOrganization, user: IUser): Promise<void> {
+		const teams = invite.teams ?? [];
+		if (teams.length === 0) {
+			return;
+		}
+
+		const existing = await this.findEmployeeInOrganization(invite, user);
+		// An ended employee there is refused before anything is written: joining with it would consume the invitation
+		// and still leave the person unable to sign in to the organization.
+		assertEmployeeNotEnded(existing);
+		await this.linkToOrganization(invite, user);
+		const employee =
+			existing ?? (await createInvitedEmployee(this.typeOrmEmployeeRepository, invite, organization, user));
+		await this.addToTeams(invite, employee, teams);
+	}
+
+	/**
+	 * Links the account to the invitation's organization. A registration made the link already; an existing account of
+	 * another organization of the tenant lacks it, and without it cannot switch to the organization it joins.
+	 *
+	 * @param invite The invitation being accepted.
+	 * @param user The invitee's account.
+	 */
+	private async linkToOrganization(invite: IInvite, user: IUser): Promise<void> {
+		const account = await this.typeOrmUserRepository.findOneOrFail({
+			where: { id: user.id },
+			relations: { role: true }
+		});
+		await this.userOrganizationService.addUserToOrganization(account, invite.organizationId);
+	}
+
+	/**
+	 * The employee the account already has in the invitation's organization, if any.
+	 *
+	 * @param invite The invitation being accepted.
+	 * @param user The invitee's account.
+	 * @returns The employee, or null.
+	 */
+	private async findEmployeeInOrganization(invite: IInvite, user: IUser): Promise<IEmployee | null> {
+		return await this.typeOrmEmployeeRepository.findOne({
+			where: {
+				userId: user.id,
+				organizationId: invite.organizationId,
+				tenantId: invite.tenantId
+			}
+		});
+	}
+
+	/**
+	 * Adds the employee to each team of the invitation it is not a member of yet.
+	 *
+	 * @param invite The invitation being accepted.
+	 * @param employee The invitee's employee in the invitation's organization.
+	 * @param teams The teams the invitation names.
+	 */
+	private async addToTeams(invite: IInvite, employee: IEmployee, teams: IOrganizationTeam[]): Promise<void> {
+		const memberships = await this.typeOrmOrganizationTeamEmployeeRepository.find({
+			where: { employeeId: employee.id }
+		});
+		const joinedTeamIds = new Set(memberships.map(({ organizationTeamId }) => organizationTeamId));
+		const teamsToJoin = teams.filter(({ id }) => !joinedTeamIds.has(id));
+
+		const newMemberships = teamsToJoin.map(({ id: organizationTeamId }) =>
+			this.typeOrmOrganizationTeamEmployeeRepository.create({
+				employeeId: employee.id,
+				organizationTeamId,
+				organizationId: invite.organizationId,
+				tenantId: invite.tenantId
+			})
+		);
+		await this.typeOrmOrganizationTeamEmployeeRepository.save(newMemberships);
 	}
 }

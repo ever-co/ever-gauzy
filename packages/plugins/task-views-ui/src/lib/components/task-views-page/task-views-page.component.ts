@@ -4,6 +4,7 @@ import {
 	Component,
 	computed,
 	DestroyRef,
+	ElementRef,
 	inject,
 	OnInit,
 	signal,
@@ -11,7 +12,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
 	NbButtonModule,
 	NbCardModule,
@@ -19,11 +20,12 @@ import {
 	NbIconModule,
 	NbInputModule,
 	NbSelectModule,
+	NbSidebarService,
 	NbSpinnerModule,
 	NbTooltipModule
 } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
-import { combineLatest, firstValueFrom, Observable, of } from 'rxjs';
+import { combineLatest, firstValueFrom, merge, Observable, of } from 'rxjs';
 import { distinctUntilChanged, filter, map, switchMap } from 'rxjs/operators';
 import {
 	ID,
@@ -98,7 +100,8 @@ import {
 	TASK_VIEW_ORDER_FIELDS,
 	TaskViewDefinition,
 	TaskViewLayout,
-	TaskViewPlacement
+	TaskViewPlacement,
+	TaskViewScope
 } from '../../models/view-definition';
 import { ShortcutRegistryService } from '../../keyboard/shortcut-registry.service';
 import { browserTimeZone, TaskViewsApiService, TaskViewsScope } from '../../services/task-views-api.service';
@@ -148,6 +151,12 @@ interface PendingUndo {
 /** How long an edit of the filter waits before the tasks are read again. */
 const FILTER_DEBOUNCE_MS = 350;
 
+/** The order the views dropdown lists the saved views' sections in, after the built-in views. */
+const VIEW_SECTIONS: readonly TaskViewScope[] = ['personal', 'team', 'project', 'organization'];
+
+/** How long the undo bar follows the content after the side menu opens or closes (its slide, with room to spare). */
+const SIDEBAR_SETTLE_MS = 600;
+
 /**
  * The task views page (`/pages/task-views`): the views switcher (the built-in views, then mine, the team's, the
  * projects' and the organization's saved views), the open view's tasks with its filter tree, grouping (with the
@@ -161,7 +170,6 @@ const FILTER_DEBOUNCE_MS = 350;
 	imports: [
 		FormsModule,
 		RouterLink,
-		RouterLinkActive,
 		NbButtonModule,
 		NbCardModule,
 		NbIconModule,
@@ -177,7 +185,11 @@ const FILTER_DEBOUNCE_MS = 350;
 		TimelineComponent
 	],
 	templateUrl: './task-views-page.component.html',
-	styleUrl: './task-views-page.component.scss'
+	styleUrl: './task-views-page.component.scss',
+	host: {
+		// Keeps the undo bar centred on the content as the window changes size.
+		'(window:resize)': 'onResize()'
+	}
 })
 export class TaskViewsPageComponent implements OnInit {
 	private readonly api = inject(TaskViewsApiService);
@@ -186,10 +198,13 @@ export class TaskViewsPageComponent implements OnInit {
 	private readonly store = inject(Store);
 	private readonly route = inject(ActivatedRoute);
 	private readonly router = inject(Router);
+	private readonly host = inject(ElementRef<HTMLElement>);
 	private readonly dialogs = inject(NbDialogService);
 	private readonly toastr = inject(ToastrService);
 	private readonly registry = inject(ShortcutRegistryService);
 	private readonly destroyRef = inject(DestroyRef);
+	/** The app's side menu: opening or closing it moves the content the undo bar is centred on. */
+	private readonly sidebar = inject(NbSidebarService, { optional: true });
 
 	@ViewChild(BulkToolbarComponent) private toolbar?: BulkToolbarComponent;
 
@@ -234,6 +249,9 @@ export class TaskViewsPageComponent implements OnInit {
 	protected readonly focusedId = signal<ID | null>(null);
 	protected readonly busy = signal(false);
 	protected readonly undo = signal<PendingUndo | null>(null);
+	/** The horizontal centre of the page content, in px, where the undo bar is centred (not the window's, which the
+	 *  side menu pushes off the content). Null until measured: the bar then centres on the window. */
+	protected readonly contentCenter = signal<number | null>(null);
 	protected readonly filtersOpen = signal(true);
 
 	/** The signed-in user's permissions as the store holds them: the checks below follow it when it loads or changes. */
@@ -310,6 +328,26 @@ export class TaskViewsPageComponent implements OnInit {
 		const view = this.savedView();
 		return view ? scopeOfView(view) : null;
 	});
+	/** The open view as the views dropdown's value: `built-in:<key>` or `saved:<id>`. */
+	protected readonly currentOption = computed(() => {
+		const ref = this.current();
+		return ref.kind === 'saved' ? `saved:${ref.id}` : `built-in:${ref.key}`;
+	});
+
+	/** The open built-in view's name key, or null for a saved view (whose own name is the title). */
+	protected readonly builtInTitleKey = computed(() => {
+		const ref = this.current();
+		return ref.kind === 'built-in' ? builtInKey(ref.key) : null;
+	});
+	/** The saved views' sections the dropdown lists, in order, each with its views (empty sections left out). */
+	protected readonly viewSections = computed(() => {
+		const grouped = this.groupedViews();
+		return VIEW_SECTIONS.map((scope) => ({
+			scope,
+			titleKey: `TASK_VIEWS.SWITCHER.${scope.toUpperCase()}`,
+			views: grouped[scope]
+		})).filter((section) => section.views.length > 0);
+	});
 
 	private generation = 0;
 	/** Bumped each time a view is opened: a write answers for the opening it was sent from, not a later one. */
@@ -321,6 +359,8 @@ export class TaskViewsPageComponent implements OnInit {
 	private lastSent: ApplicableTree | null = null;
 	private filterTimer: ReturnType<typeof setTimeout> | null = null;
 	private undoTimer: ReturnType<typeof setTimeout> | null = null;
+	/** The frame the undo bar's centre is next measured in while the side menu slides. */
+	private centerFrame: number | null = null;
 
 	ngOnInit(): void {
 		// The route first: the view to open is known before the scope opens it.
@@ -368,10 +408,18 @@ export class TaskViewsPageComponent implements OnInit {
 			if (kind === 'views') void this.loadViews();
 		});
 
+		// The side menu moves the content without resizing the window: the undo bar follows it while it slides.
+		if (this.sidebar) {
+			merge(this.sidebar.onToggle(), this.sidebar.onExpand(), this.sidebar.onCollapse(), this.sidebar.onCompact())
+				.pipe(takeUntilDestroyed(this.destroyRef))
+				.subscribe(() => this.followContentCenter());
+		}
+
 		this.registerShortcuts();
 		this.destroyRef.onDestroy(() => {
 			if (this.filterTimer) clearTimeout(this.filterTimer);
 			if (this.undoTimer) clearTimeout(this.undoTimer);
+			if (this.centerFrame !== null) cancelAnimationFrame(this.centerFrame);
 		});
 	}
 
@@ -386,6 +434,17 @@ export class TaskViewsPageComponent implements OnInit {
 		return ref.kind === 'saved'
 			? [TASK_VIEWS_LINK, String(ref.id)]
 			: [TASK_VIEWS_LINK, TASK_VIEWS_BUILT_IN_SEGMENT, ref.key];
+	}
+
+	/** Opens the view picked in the views dropdown (its route loads it, as a link to it would). */
+	protected selectView(option: string): void {
+		if (!option || option === this.currentOption()) return;
+		const [kind, value] = [option.slice(0, option.indexOf(':')), option.slice(option.indexOf(':') + 1)];
+		const ref: ViewRef =
+			kind === 'saved'
+				? { kind: 'saved', id: value as ID }
+				: { kind: 'built-in', key: isBuiltInViewKey(value) ? value : TaskBuiltInViewEnum.MINE };
+		void this.router.navigate(this.linkOf(ref));
 	}
 
 	private open(ref: ViewRef): Promise<void> {
@@ -1030,6 +1089,29 @@ export class TaskViewsPageComponent implements OnInit {
 		if (this.scope() === scope) await this.reload();
 	}
 
+	/** Keeps the undo bar centred on the content as the window changes size (bound in the host metadata). */
+	protected onResize(): void {
+		if (this.undo()) this.measureContentCenter();
+	}
+
+	/** Measures the content's centre on every frame while the side menu slides, so the undo bar moves with it. */
+	private followContentCenter(): void {
+		if (!this.undo() || typeof requestAnimationFrame !== 'function') return;
+		if (this.centerFrame !== null) cancelAnimationFrame(this.centerFrame);
+		const until = performance.now() + SIDEBAR_SETTLE_MS;
+		const step = () => {
+			this.measureContentCenter();
+			this.centerFrame = this.undo() && performance.now() < until ? requestAnimationFrame(step) : null;
+		};
+		this.centerFrame = requestAnimationFrame(step);
+	}
+
+	private measureContentCenter(): void {
+		const content = (this.host.nativeElement as HTMLElement).querySelector?.('.task-views') as HTMLElement | null;
+		const rect = content?.getBoundingClientRect?.();
+		this.contentCenter.set(rect && rect.width ? rect.left + rect.width / 2 : null);
+	}
+
 	private offerUndo(
 		messageKey: string,
 		params: Record<string, unknown>,
@@ -1037,6 +1119,7 @@ export class TaskViewsPageComponent implements OnInit {
 		lossy: readonly ID[] = []
 	): void {
 		this.clearUndo();
+		this.measureContentCenter();
 		this.undo.set({ messageKey, params, request, lossy });
 		this.undoTimer = setTimeout(() => this.undo.set(null), BULK_UNDO_WINDOW_MS);
 	}

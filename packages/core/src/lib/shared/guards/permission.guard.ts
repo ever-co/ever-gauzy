@@ -11,6 +11,7 @@ import {
 	oauthAppScopesAllowWrites,
 	oauthAppScopesOf
 } from '../../auth/oauth-app-scope';
+import { reachableByEmbedToken } from '../../embed/embed-session';
 import { debugInDevelopment } from '../../logger';
 import { BaseGuard } from './base.guard';
 import { attachedRolePermissionVerdict } from './attached-role-permissions';
@@ -59,6 +60,17 @@ export class PermissionGuard extends BaseGuard implements CanActivate {
 			return false;
 		}
 		permissions = reachable;
+
+		// An embed token reaches only EMBED_TOKEN_PERMISSIONS: JwtStrategy narrowed the role's permissions on the request
+		// to them, and narrowing what the route asks for as well keeps the role query below from granting another one.
+		const reachableByEmbed = reachableByEmbedToken(RequestContext.currentUser(), permissions);
+		if (isEmpty(reachableByEmbed)) {
+			logger.warn(
+				`Unauthorized access blocked: an embed token reaches none of the permissions. User ID: ${id}, Role: ${role}, Permissions Checked: ${permissions.join(', ')}`
+			);
+			return false;
+		}
+		permissions = reachableByEmbed;
 
 		// Retrieve current role ID and tenant ID from RequestContext
 		const tenantId = RequestContext.currentTenantId();

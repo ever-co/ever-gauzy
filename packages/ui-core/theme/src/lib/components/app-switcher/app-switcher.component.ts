@@ -10,7 +10,7 @@ import {
 	ViewChild
 } from '@angular/core';
 import { NbPopoverDirective, NbPosition } from '@nebular/theme';
-import { EVER_APPS, IEverApp, isCurrentEverApp } from '@gauzy/ui-core/common';
+import { CURRENT_EVER_APP_ID, EVER_APPS, IEverApp, isCurrentEverApp, withEverAppLinks } from '@gauzy/ui-core/common';
 import { ElectronService } from '@gauzy/ui-core/core';
 import { GAUZY_ENV } from '@gauzy/ui-config';
 
@@ -98,10 +98,14 @@ export class AppSwitcherComponent implements OnDestroy {
 	@ViewChild('trigger') readonly triggerRef?: ElementRef<HTMLButtonElement>;
 	@ViewChild('appsPopover') readonly appsPopover?: NbPopoverDirective;
 
-	/** The catalog the deployment provides (`EVER_APPS`), each row as this deployment serves it. */
-	readonly apps: ReadonlyArray<IEverApp> = inject(EVER_APPS).map((app) =>
-		withDeploymentAddress(app, this._environment?.CLIENT_BASE_URL)
-	);
+	/**
+	 * The catalog the deployment provides (`EVER_APPS`), each row as this deployment serves it: the addresses its
+	 * `EVER_APP_LINKS` gives (the catalog's otherwise), and its own address for the current app, which that setting
+	 * never changes.
+	 */
+	readonly apps: ReadonlyArray<IEverApp> = withEverAppLinks(inject(EVER_APPS), this._environment?.EVER_APP_LINKS, [
+		CURRENT_EVER_APP_ID
+	]).map((app) => withDeploymentAddress(app, this._environment?.CLIENT_BASE_URL));
 
 	readonly markPath = EVER_MARK_PATH;
 	readonly panelId: string;

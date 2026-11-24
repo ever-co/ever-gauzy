@@ -36,6 +36,7 @@ export const PAGE_SECTIONS_LOCATION: PageRouteLocationId = 'page-sections';
  */
 export const RESERVED_PAGE_SECTION_PATHS = new Set<string>([
 	'dashboard',
+	'favorites',
 	'accounting',
 	'contacts',
 	'projects',

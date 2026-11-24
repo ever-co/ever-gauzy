@@ -23,13 +23,25 @@ import { EverConnectLease } from './ever-connect-lease';
 import { EverConnectLinkService } from './ever-connect-link.service';
 import { EverConnectPlatformService, errorCode, isCredentialRevoked } from './ever-connect-platform.service';
 import { EverConnectSignals } from './ever-connect-signals';
+import { EverConnectSql } from './ever-connect-sql';
 import { EverConnectStore } from './ever-connect.store';
 import { personRequestKind, PersonRequestsHandler } from './handlers/person-requests.handler';
+import { membershipChangeOf } from './membership/membership-sync.config';
+import { MembershipResyncOutcome, MembershipSyncHandler } from './membership/membership-sync.handler';
 import { EverConnectProvisionCompletion } from './services/ever-connect-provision-completion.service';
-import { EventEnvelope, ProblemError } from './sdk';
+import { EventEnvelope, EverPlatformClient, ProblemError } from './sdk';
+
+/** The lease guards of one membership resync (see `EverConnectScheduler.leaseGuards`). */
+interface LeaseGuards {
+	keep: () => Promise<boolean>;
+	check: (tx: EverConnectSql) => Promise<boolean>;
+	lost: () => boolean;
+	/** Whether the run of the scheduler the guards were made for is still the current one. */
+	current: () => boolean;
+}
 
 /** What the dispatcher did with one event. */
-export type DispatchOutcome = 'states' | 'entitlements' | 'link' | 'connection' | 'person' | 'ignored';
+export type DispatchOutcome = 'states' | 'entitlements' | 'link' | 'connection' | 'person' | 'membership' | 'ignored';
 
 /**
  * The heartbeat and the event feed, run by one API process at a time (a lease on the connection
@@ -43,9 +55,13 @@ export type DispatchOutcome = 'states' | 'entitlements' | 'link' | 'connection' 
  *   `EVER_CONNECT_FEED_MODE=interval`). Each event is dispatched by its catalog type, then the
  *   cursor is kept and acknowledged (in that order); handlers are idempotent (they re-read state),
  *   so an event read twice changes nothing more. A person's deletion or export request is recorded
- *   by its event id and answered once. Types this release has no handler for are acknowledged and
- *   ignored, and so are connection events (and a person's requests) of another installation or of
- *   before this connection (a cursor read again from the start replays them).
+ *   by its event id and answered once. A membership change of a linked Ever organization is applied
+ *   to its Gauzy organization when the membership sync is on (`EVER_CONNECT_MEMBERSHIP_SYNC_ENABLED`),
+ *   and acknowledged and ignored otherwise; with it on, the current members of each linked organization are
+ *   read again and applied once after each start and after each `410 resync_required`, before the feed is
+ *   read (`MembershipSyncHandler.resync`), and again on a later read after one that failed. Types this release has no handler for are acknowledged and
+ *   ignored, and so are connection events (and a person's requests and membership changes) of another
+ *   installation or of before this connection (a cursor read again from the start replays them).
  */
 /** How far Ever Platform's clock may be ahead of this one when an event's time is compared. */
 const CLOCK_SKEW_MS = 300_000;
@@ -65,6 +81,22 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 	private readonly subscriptions: Subscription[] = [];
 	/** Events handled by this process (their ids), so a page read twice is handled once. */
 	private readonly seen = new Set<string>();
+	/**
+	 * A membership resync is owed (with the membership sync on) once after each start: run by the lease holder
+	 * before its first read of the feed. (After `410 resync_required` one runs before the position moves on.)
+	 */
+	private membershipResyncOwed = true;
+	/**
+	 * A membership resync that failed (for a reason other than a lost lease) is owed again, not before this time: the
+	 * feed goes on meanwhile, and a later read runs it again, after a wait that doubles from `FEED_RETRY_MS` up to
+	 * `FEED_INTERVAL_MS`. A removal or a demotion the skipped part of the feed held is then made up for without waiting
+	 * for the next start or `410`.
+	 */
+	private membershipResyncNotBefore = 0;
+	/** The membership resyncs that failed in a row (the wait before the next one doubles with each). */
+	private membershipResyncFailures = 0;
+	/** The run of the scheduler (one per start and stop): work of an earlier run must not go on in a later one. */
+	private generation = 0;
 
 	constructor(
 		private readonly platform: EverConnectPlatformService,
@@ -79,7 +111,9 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 		@Optional() @Inject(EVER_CONNECT_CLOCK) clock?: { now: () => number },
 		@Optional() private readonly personRequests?: PersonRequestsHandler,
 		@Optional() lease?: EverConnectLease,
-		@Optional() private readonly provisions?: EverConnectProvisionCompletion
+		@Optional() private readonly provisions?: EverConnectProvisionCompletion,
+		// Registered only with EVER_CONNECT_MEMBERSHIP_SYNC_ENABLED=true (see `membershipSyncProviders`).
+		@Optional() private readonly membership?: MembershipSyncHandler
 	) {
 		this.now = clock?.now ?? (() => Date.now());
 		this.holder = lease?.holder ?? randomUUID();
@@ -108,6 +142,11 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 	start(): void {
 		if (this.running) return;
 		this.running = true;
+		this.generation += 1;
+		// Once after each start (a process start, or connecting again).
+		this.membershipResyncOwed = true;
+		this.membershipResyncNotBefore = 0;
+		this.membershipResyncFailures = 0;
 		this.feedFailures = 0;
 		// EVER_ENTITLEMENT_FILE: imported once per process, when the connection first starts.
 		if (!this.entitlementFileImported) {
@@ -120,6 +159,7 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 
 	stop(): void {
 		this.running = false;
+		this.generation += 1;
 		if (this.heartbeatTimer) clearTimeout(this.heartbeatTimer);
 		if (this.feedTimer) clearTimeout(this.feedTimer);
 		this.heartbeatTimer = null;
@@ -215,13 +255,44 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 	 * the cursor. Returns whether more events wait.
 	 */
 	async readFeed(): Promise<boolean> {
+		// This run of the scheduler, taken before the first await (see `leaseGuards`).
+		const guards = this.leaseGuards();
 		const connection = await this.store.connection();
 		if (connection.status !== 'connected' || !(await this.store.takeLease(this.holder, LEASE_MS))) {
 			// Another process holds the lease (or the connection stopped): look again later.
 			await new Promise((resolve) => setTimeout(resolve, FEED_RETRY_MS).unref?.());
 			return false;
 		}
-		const client = await this.platform.getClient();
+		const stale = async (): Promise<boolean> => {
+			if (!this.membership || guards.current()) return false;
+			// Stopped (or started again) while this read was starting: it goes no further, and gives back a lease
+			// taken after the stop unless a later run holds it.
+			if (!this.running) await this.store.releaseLease(this.holder).catch(() => undefined);
+			return true;
+		};
+		if (await stale()) return false;
+		let client: EverPlatformClient;
+		try {
+			client = await this.platform.getClient();
+		} catch (error) {
+			await stale();
+			throw error;
+		}
+		if (await stale()) return false;
+		if (this.membership && this.membershipResyncOwed && this.now() >= this.membershipResyncNotBefore) {
+			// Owed again on a failure, after a wait (see `afterMembershipResync`); the feed is read on meanwhile.
+			this.membershipResyncOwed = false;
+			const outcome = await this.membershipResync(client, guards);
+			// Renewed after it too: a page that outlasted the lease and then failed must not let a non-holder read on.
+			if (outcome === 'lease_lost' || !(await guards.keep())) {
+				// Stopped, or another process holds the lease now: this one runs it when it holds the lease again.
+				this.membershipResyncOwed = true;
+				return false;
+			}
+			// A run stopped (and maybe started again) while `keep()` resolved records nothing into the new run's state.
+			if (!guards.current()) return false;
+			this.afterMembershipResync(outcome);
+		}
 		this.feedAbort = new AbortController();
 		const waitS = this.config.feedMode === 'longpoll' ? FEED_WAIT_S : 0;
 		let page: { events: EventEnvelope[]; last_id: string; has_more: boolean };
@@ -236,8 +307,7 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 				return false;
 			}
 			if (error instanceof ProblemError && error.status === 410 && error.code === 'resync_required') {
-				await this.resync(client, error.lastId);
-				return true;
+				return this.resync(client, error.lastId, guards);
 			}
 			throw error;
 		} finally {
@@ -266,21 +336,43 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 		connection?: { platformInstanceId: string | null; connectedAt: number | null }
 	): Promise<DispatchOutcome[]> {
 		const outcomes: DispatchOutcome[] = [];
-		let states = false;
-		let entitlements = false;
-		for (const event of events) {
-			if (this.seen.has(event.id)) {
-				outcomes.push('ignored');
-				continue;
+		const handled: Array<{ id: string; outcome: DispatchOutcome }> = [];
+		let failure: unknown = null;
+		try {
+			for (const event of events) {
+				if (this.seen.has(event.id)) {
+					outcomes.push('ignored');
+					continue;
+				}
+				const outcome = await this.dispatch(event, connection);
+				outcomes.push(outcome);
+				handled.push({ id: event.id, outcome });
+				this.remember(event.id);
 			}
-			const outcome = await this.dispatch(event, connection);
-			outcomes.push(outcome);
-			states ||= outcome === 'states';
-			entitlements ||= outcome === 'entitlements';
-			this.remember(event.id);
+		} catch (error) {
+			failure = error;
 		}
-		if (states) await this.states.sync({ force: true });
-		if (entitlements) await this.entitlements.refreshAll();
+		// The follow-ups of the events handled, also when a later event of the page failed; each one runs whatever the
+		// other did. An event whose follow-up failed is no longer remembered as handled, so the page read again (it is
+		// not acknowledged) hands it over again; the first error is the one thrown.
+		const followUps: Array<[DispatchOutcome, () => Promise<unknown>]> = [
+			['states', () => this.states.sync({ force: true })],
+			['entitlements', () => this.entitlements.refreshAll()]
+		];
+		for (const [kind, run] of followUps) {
+			if (!handled.some((event) => event.outcome === kind)) continue;
+			try {
+				await run();
+			} catch (error) {
+				failure ??= error;
+				for (const event of handled) {
+					if (event.outcome === kind) this.seen.delete(event.id);
+				}
+			}
+		}
+		if (failure !== null) {
+			throw failure;
+		}
 		return outcomes;
 	}
 
@@ -292,18 +384,26 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 		const data = (event.data ?? {}) as Record<string, unknown>;
 		const linkId = typeof data['tenant_link_id'] === 'string' ? data['tenant_link_id'] : event.subject?.id;
 		const personRequest = personRequestKind(event.type) !== null;
+		const membershipChange = membershipChangeOf(event.type) !== null;
 		if (
-			(event.type.startsWith('ever.registry.instance.') || personRequest) &&
+			(event.type.startsWith('ever.registry.instance.') || personRequest || membershipChange) &&
 			connection &&
 			!this.forThisConnection(event, connection)
 		) {
-			// A connection event (or a person's request) of another installation, or of before this
-			// connection: ignored.
+			// A connection event (or a person's request, or a membership change) of another installation, or
+			// of before this connection: ignored.
 			return 'ignored';
 		}
 		if (personRequest) {
 			// Deletion and export requests: recorded by event id, answered once (`POST /v1/instances/me/ack`).
 			return this.personRequests && (await this.personRequests.handle(event)) ? 'person' : 'ignored';
+		}
+		if (membershipChange) {
+			// Applied to the linked Gauzy organization only with the membership sync on; its handler is
+			// idempotent (the last change applied per user and organization is kept in the audit).
+			if (!this.membership) return 'ignored';
+			await this.membership.apply(event);
+			return 'membership';
 		}
 		switch (event.type) {
 			case 'ever.consent.consent.granted':
@@ -342,8 +442,7 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 				await this.connection.approved();
 				return 'connection';
 			default:
-				// Memberships, managed operations and every other type: acknowledged and ignored by this
-				// release.
+				// Managed operations and every other type: acknowledged and ignored by this release.
 				return 'ignored';
 		}
 	}
@@ -369,20 +468,125 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 	 * After `410 resync_required` (the cursor is older than what Ever Platform keeps): re-read the
 	 * states and documents, then continue from the position Ever Platform names (`last_id`: kept,
 	 * then acknowledged); without one, read the feed again from its start (handlers re-read state, so
-	 * events read again change nothing).
+	 * events read again change nothing). With the membership sync on, the membership changes the skipped
+	 * part of the feed held are made up for first by a membership resync
+	 * (`GET /v1/instances/me/tenant-links/{link}/memberships` for each linked organization): the position
+	 * moves on only after it, unless the lease was lost meanwhile (answers `false`: not moved). One that failed
+	 * otherwise does not hold the feed back, and is owed again (`afterMembershipResync`).
 	 */
 	async resync(
-		client: { instances: { ackEvents: (lastId: string) => Promise<unknown> } },
-		lastId: string | undefined
-	): Promise<void> {
+		client: Pick<EverPlatformClient, 'call'> & { instances: { ackEvents: (lastId: string) => Promise<unknown> } },
+		lastId: string | undefined,
+		guards: LeaseGuards = this.leaseGuards()
+	): Promise<boolean> {
 		await this.states.sync({ force: true });
 		await this.entitlements.refreshAll();
+		if (this.membership) {
+			// Before the position moves on: a process that stops here (or loses the lease) leaves the old position, so
+			// the next lease holder is answered 410 again and runs it. A resync that failed otherwise does not hold the
+			// feed back: it is owed again, and a later read of the feed runs it (after a wait), as the next 410 or
+			// start would.
+			// Then the position moves on only while this run still holds the lease (a renewal that answers false fences
+			// it), also after a resync that failed for another reason while the lease passed on.
+			const outcome = await this.membershipResync(client, guards);
+			// A run stopped (and maybe started again) meanwhile records nothing into the new run's state.
+			if (outcome === 'lease_lost' || !(await guards.keep()) || !guards.current()) {
+				return false;
+			}
+			this.afterMembershipResync(outcome);
+			// Kept in one compare-and-set on the lease holder, by the current run only: a process that lost the lease
+			// in between cannot move the position the next holder reads.
+			const cursor =
+				typeof lastId === 'string' && lastId.length > 0 && lastId.length <= MAX_FEED_CURSOR_LENGTH ? lastId : null;
+			if (
+				!guards.current() ||
+				(await this.store.updateConnection({ feedCursor: cursor }, { leasedBy: this.holder })) !== 1
+			) {
+				return false;
+			}
+			if (cursor !== null) {
+				await client.instances.ackEvents(cursor);
+			}
+			return true;
+		}
 		if (typeof lastId === 'string' && lastId.length > 0 && lastId.length <= MAX_FEED_CURSOR_LENGTH) {
 			await this.store.updateConnection({ feedCursor: lastId });
 			await client.instances.ackEvents(lastId);
 		} else {
 			await this.store.updateConnection({ feedCursor: null });
 		}
+		return true;
+	}
+
+	/**
+	 * After a membership resync that kept the lease: one that failed is owed again, not before a wait that doubles with
+	 * each failure in a row (from `FEED_RETRY_MS`, at most `FEED_INTERVAL_MS`), so a membership read that keeps failing
+	 * never holds up the feed nor runs at every read; any other outcome is no longer owed and clears the wait. The debt
+	 * is this process's: a lease taken over by another process meanwhile runs it at that process's next start or `410`.
+	 */
+	private afterMembershipResync(outcome: MembershipResyncOutcome): void {
+		if (outcome !== 'failed') {
+			// Done (or nothing to do): no longer owed, also when an earlier failure had it owed and a 410 ran it first.
+			this.membershipResyncOwed = false;
+			this.membershipResyncFailures = 0;
+			this.membershipResyncNotBefore = 0;
+			return;
+		}
+		this.membershipResyncOwed = true;
+		this.membershipResyncFailures += 1;
+		const wait = Math.min(FEED_RETRY_MS * 2 ** (this.membershipResyncFailures - 1), FEED_INTERVAL_MS);
+		this.membershipResyncNotBefore = this.now() + wait;
+	}
+
+	/**
+	 * One membership resync with this run's lease guards. `lease_lost` whenever a guard answered `false` on the way,
+	 * also when the resync then failed otherwise (a transaction that did not commit after its lease check): what lost
+	 * the lease must never move the feed on.
+	 */
+	private async membershipResync(
+		client: Pick<EverPlatformClient, 'call'>,
+		guards: LeaseGuards
+	): Promise<MembershipResyncOutcome> {
+		if (!this.membership) {
+			return 'switched_off';
+		}
+		const outcome = await this.membership
+			.resync(client, guards.keep, guards.check)
+			.catch(() => 'failed' as const);
+		// A run stopped (or replaced) meanwhile goes no further, even when the resync itself had nothing left to check.
+		return guards.lost() || !guards.current() ? 'lease_lost' : outcome;
+	}
+
+	/**
+	 * The lease guards of a membership resync, for this run of the scheduler: `keep` renews the lease before each page
+	 * and change; `check` runs inside the transaction of each change (the connection row, locked by that transaction on
+	 * Postgres and MySQL until the change commits). Both answer `false` once this run is over (stopped, or a later run
+	 * started), when another process holds the lease, or when the database call fails; `lost()` says whether one did.
+	 */
+	private leaseGuards(): LeaseGuards {
+		const run = this.generation;
+		const current = () => this.generation === run;
+		let lost = false;
+		const held = (ok: boolean): boolean => {
+			if (!ok) lost = true;
+			return ok;
+		};
+		return {
+			keep: async () => {
+				if (!current()) return held(false);
+				const ok = await this.store.takeLease(this.holder, LEASE_MS).catch(() => false);
+				if (!current()) {
+					// Stopped while the renewal was in flight: give back what it took, unless a later run holds it now.
+					if (ok && !this.running) await this.store.releaseLease(this.holder).catch(() => undefined);
+					return held(false);
+				}
+				return held(ok);
+			},
+			check: async (tx) =>
+				held(current() && (await this.store.holdsLease(this.holder, tx).catch(() => false)) && current()),
+			lost: () => lost,
+			current
+		};
 	}
 
 	private remember(id: string): void {

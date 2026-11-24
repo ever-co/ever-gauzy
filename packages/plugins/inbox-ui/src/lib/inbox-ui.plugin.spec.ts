@@ -14,6 +14,7 @@ import {
 import {
 	INBOX_CHILD_ROUTES,
 	INBOX_MAILBOXES_SETTINGS_ROUTE,
+	INBOX_NOTIFICATION_SETTINGS_ROUTE,
 	INBOX_PAGE_ROUTE,
 	INBOX_PROVIDERS_SETTINGS_ROUTE,
 	InboxUiPlugin,
@@ -46,6 +47,7 @@ describe('InboxUiPlugin', () => {
 		expect(InboxUiPlugin.id).toBe('inbox');
 		expect(InboxUiPlugin.routes).toEqual([
 			INBOX_PAGE_ROUTE,
+			INBOX_NOTIFICATION_SETTINGS_ROUTE,
 			INBOX_PROVIDERS_SETTINGS_ROUTE,
 			INBOX_MAILBOXES_SETTINGS_ROUTE
 		]);
@@ -56,6 +58,9 @@ describe('InboxUiPlugin', () => {
 			path: 'inbox',
 			data: { permissions: { only: [PermissionsEnum.INBOX_VIEW] } }
 		});
+		// Settings → Notifications is served to every signed-in user, so it has no permission guard.
+		expect(INBOX_NOTIFICATION_SETTINGS_ROUTE).toMatchObject({ location: 'settings-sections', path: 'notifications' });
+		expect(INBOX_NOTIFICATION_SETTINGS_ROUTE.canActivate).toBeUndefined();
 		expect(InboxUiPlugin.translationNamespace).toBe('INBOX');
 		expect(InboxUiPlugin.translations?.['en']).toHaveProperty('MENU', 'Inbox');
 		expect(typeof InboxUiPlugin.bootstrap).toBe('function');

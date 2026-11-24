@@ -1,6 +1,7 @@
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { BadRequestException, UnauthorizedException } from '@nestjs/common';
-import { IInvite, IUser, RolesEnum } from '@gauzy/contracts';
+import { Raw } from 'typeorm';
+import { ID, IInvite, IUser, RolesEnum } from '@gauzy/contracts';
 import { AuthService } from './../../../auth/auth.service';
 import { TwoFactorRequiredException, twoFactorRequiredFor } from './../../../auth/two-factor/two-factor-challenge';
 import { UserService } from './../../../user/user.service';
@@ -12,6 +13,16 @@ import { InviteAcceptUserCommand } from '../invite.accept-user.command';
 import { InviteAcceptCommand } from '../invite-accept.command';
 import { User } from './../../../core/entities/internal';
 import { TypeOrmUserRepository } from './../../../user/repository/type-orm-user.repository';
+import { RequestContext } from './../../../core/context';
+import { ExistingAccountSignInRequiredException } from '../../existing-account-sign-in-required';
+import { EndedEmployeeException } from '../../invited-employee';
+
+/** Whether an account may still sign in: neither deactivated nor archived. */
+function canSignIn(account: IUser): boolean {
+	const deactivated = account.isActive === false;
+	const archived = account.isArchived === true;
+	return !deactivated && !archived;
+}
 
 @CommandHandler(InviteAcceptCommand)
 export class InviteAcceptHandler implements ICommandHandler<InviteAcceptCommand> {
@@ -101,6 +112,8 @@ export class InviteAcceptHandler implements ICommandHandler<InviteAcceptCommand>
 			}
 			input['inviteId'] = inviteId;
 
+			await this.requireSessionOfExistingAccount(invite.email, tenantId);
+
 			// Invite accept for employee, candidate & user
 			let user: IUser;
 			switch (role.name) {
@@ -119,7 +132,41 @@ export class InviteAcceptHandler implements ICommandHandler<InviteAcceptCommand>
 			if (error instanceof TwoFactorRequiredException) {
 				throw error;
 			}
+			// The address already has an account: the 409 tells the person to sign in to it, untouched.
+			if (error instanceof ExistingAccountSignInRequiredException) {
+				throw error;
+			}
+			// The invitee's employee in the organization has ended: the 409 says an administrator restores it first.
+			if (error instanceof EndedEmployeeException) {
+				throw error;
+			}
 			throw new BadRequestException(error);
+		}
+	}
+
+	/**
+	 * Refuses the acceptance when the invited address already has an account that can sign in and the request is not
+	 * that account's own session. The token and the code of an invitation are known to whoever sent it, so alone they
+	 * never open an existing account: its owner signs in and accepts from there (`PUT /invite/:id/ACCEPTED`). A new
+	 * address registers as before. Nothing is written and the invitation stays open.
+	 *
+	 * @param email The invited address.
+	 * @param tenantId The invitation's tenant.
+	 */
+	private async requireSessionOfExistingAccount(email: string, tenantId: ID): Promise<void> {
+		const invitedEmail = email.toLowerCase();
+		const accounts = await this.typeOrmUserRepository.find({
+			where: { tenantId, email: Raw((column) => `LOWER(${column}) = :email`, { email: invitedEmail }) }
+		});
+		const signInAccounts = accounts.filter(canSignIn);
+		if (signInAccounts.length === 0) {
+			return;
+		}
+
+		const sessionUserId = RequestContext.currentUserId();
+		const isOwnSession = signInAccounts.some((account) => account.id === sessionUserId);
+		if (!isOwnSession) {
+			throw new ExistingAccountSignInRequiredException();
 		}
 	}
 

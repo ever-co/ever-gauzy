@@ -215,6 +215,27 @@ describe.each(TEST_TARGETS)('EverOperatorService on $name', (target) => {
 		}
 	});
 
+	it('isListedSuperAdmin: a listed id while it is an active super admin, never by address, an OAuth app or an empty list', async () => {
+		const tenantId = await tenant();
+		const listed = await user(tenantId, 'SUPER_ADMIN', 'ops@acme.test', '2026-01-01 00:00:00');
+		const unlisted = await user(await tenant(), 'SUPER_ADMIN', 'ops@acme.test', '2025-01-01 00:00:00');
+		const { operator } = services({ EVER_INSTALL_SOURCE: 'cloud' });
+		const ids = [` ${listed.id.toUpperCase()} `, randomUUID()];
+		expect(await operator.isListedSuperAdmin(listed, 'SUPER_ADMIN', ids)).toBe(true);
+		// The cloud's own operator check still names nobody: the list is the module's own.
+		expect(await operator.isOperator(listed, 'SUPER_ADMIN')).toBe(false);
+		expect(await operator.isListedSuperAdmin(unlisted, 'SUPER_ADMIN', ids)).toBe(false);
+		expect(await operator.isListedSuperAdmin(listed, 'ADMIN', ids)).toBe(false);
+		expect(await operator.isListedSuperAdmin({ ...listed, oauthApp: { id: 'app' } }, 'SUPER_ADMIN', ids)).toBe(false);
+		expect(await operator.isListedSuperAdmin(listed, 'SUPER_ADMIN', [])).toBe(false);
+		expect(await operator.isListedSuperAdmin(null, 'SUPER_ADMIN', ids)).toBe(false);
+		await set(listed.id, 'isActive', bool(false));
+		expect(await operator.isListedSuperAdmin(listed, 'SUPER_ADMIN', ids)).toBe(false);
+		await set(listed.id, 'isActive', bool(true));
+		await set(listed.id, 'roleId', `'${await role(tenantId, 'ADMIN')}'`);
+		expect(await operator.isListedSuperAdmin(listed, 'SUPER_ADMIN', ids)).toBe(false);
+	});
+
 	it('with no user, no role or an unknown user: nobody', async () => {
 		await tenant();
 		const { operator } = services();

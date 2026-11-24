@@ -25,6 +25,7 @@ import {
 } from '../../time-log-history.writer';
 import { MikroOrmTimeLogRepository } from '../../repository/mikro-orm-time-log.repository';
 import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.repository';
+import { factOfCreatedLog, TimeLogFactsService } from '../../time-log-facts.service';
 
 /**
  * Whether the time log being created is stored as running: as the input says, or, when it says nothing, a log
@@ -105,7 +106,9 @@ export class TimeLogCreateHandler implements ICommandHandler<TimeLogCreateComman
 		private readonly _timeSlotService: TimeSlotService,
 		private readonly _timeLogService: TimeLogService,
 		// Records the history of a change a person makes; a handler built without it writes as before.
-		@Optional() private readonly dataSource?: DataSource
+		@Optional() private readonly dataSource?: DataSource,
+		// Writes the entry's fact for the webhooks; a handler built without it writes as before.
+		@Optional() private readonly facts?: TimeLogFactsService
 	) {}
 
 	/**
@@ -204,12 +207,17 @@ export class TimeLogCreateHandler implements ICommandHandler<TimeLogCreateComman
 		// beside another nests into it, and the refusal's rollback would take the other request's writes with it: there
 		// the check and the insert run without one, and the running-log key refuses a run written between them.
 		const checksInTransaction = isOnlyRun && locksRowsForChange();
+		// The entry's fact (for the webhooks) commits with it, where the outbox can share its transaction
+		const appendsFactWithin = Boolean(this.dataSource) && (this.facts?.appendsWithinWrites() ?? false);
+		const fact = factOfCreatedLog(timeLog);
+		const writesInTransaction = recordsHistory || checksInTransaction || appendsFactWithin;
 		try {
-			if (!recordsHistory && !checksInTransaction) {
+			if (!writesInTransaction) {
 				if (isOnlyRun) {
 					await assertNoRunGoing(this.typeOrmTimeLogRepository.manager, timeLog);
 				}
 				await this.typeOrmTimeLogRepository.save(timeLog);
+				await this.facts?.record(fact, timeLog);
 				return;
 			}
 			// Added by a person: the entry and its history row are written together, or neither is. A timer start's
@@ -224,7 +232,13 @@ export class TimeLogCreateHandler implements ICommandHandler<TimeLogCreateComman
 						{ subject: historySubject(timeLog), change: createdChange(timeLog), reason: history.reason }
 					]);
 				}
+				if (appendsFactWithin) {
+					await this.facts.recordWithin(manager, fact, timeLog);
+				}
 			});
+			if (!appendsFactWithin) {
+				await this.facts?.record(fact, timeLog);
+			}
 		} catch (error) {
 			// The running-log key refused a second run written past the check (ever-co/ever-gauzy#11826)
 			const isSecondRun = isOnlyRun && (isUniqueViolation(error) || isUniqueViolation(error?.driverError));

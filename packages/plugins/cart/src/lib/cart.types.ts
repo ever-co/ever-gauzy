@@ -213,6 +213,8 @@ export interface ICartPromotionQuery {
 	readonly lines: ICartPromotionLineQuery[];
 	readonly shipping?: ICartPromotionShippingQuery[];
 	readonly at?: Date;
+	/** The cart being evaluated, so a reservation it already holds is not counted against its own buyer's limit. */
+	readonly cartId?: ID;
 }
 
 /** One promotion the capability granted, with the amount it gives away. */

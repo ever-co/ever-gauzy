@@ -341,6 +341,9 @@ describe('A person\'s requests and /.well-known/ever-connect', () => {
 			const { service } = wellKnown();
 			expect(await service.statement()).toBeNull();
 			await service.beginCheck('https://gauzy.example.com');
+			// Only while "Installation address" is enabled.
+			expect(await service.statement()).toBeNull();
+			await h.store.saveIntegration('instance', 'instance_url', { state: 'enabled', enabled: true });
 			const jws = (await service.statement()) as string;
 			const [header, payload, signature] = jws.split('.');
 			expect(JSON.parse(Buffer.from(header, 'base64url').toString())).toEqual({ alg: 'EdDSA', typ: 'JWT', kid: h.signer.kid });
@@ -351,6 +354,9 @@ describe('A person\'s requests and /.well-known/ever-connect', () => {
 				edVerify(null, Buffer.from(`${header}.${payload}`), h.signer.publicKey, Buffer.from(signature, 'base64url'))
 			).toBe(true);
 
+			await h.store.saveIntegration('instance', 'instance_url', { state: 'disabled', enabled: false });
+			expect(await service.statement()).toBeNull();
+			await h.store.saveIntegration('instance', 'instance_url', { state: 'enabled', enabled: true });
 			h.clock.t += URL_CHECK_MAX_S * 1000;
 			expect(await service.statement()).toBeNull();
 			await service.beginCheck('https://gauzy.example.com');

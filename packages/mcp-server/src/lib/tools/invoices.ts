@@ -3,12 +3,29 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { validateOrganizationContext } from './utils';
-import { InvoiceStatusEnum, InvoiceTypeEnum } from '../input-schemas';
+import { endOfDayBound, readSearchedList, relationsForSearch, toApiValue, validateOrganizationContext } from './utils';
+import { INVOICE_STATUS_VALUES, InvoiceStatusEnum, InvoiceTypeEnum } from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
+import { TOOL_HINTS } from './tool-hints';
 const logger = new Logger('InvoiceTools');
+
+/** An invoice row, as far as a search reads it. */
+type InvoiceRow = { invoiceNumber?: number; toContact?: { name?: string } };
+
+// The ends of an open date range: the route reads a range only with both, and falls back to the current month.
+const EARLIEST = '1970-01-01T00:00:00.000Z';
+const LATEST = '9999-12-31T23:59:59.999Z';
+
+/** The invoice date range as the pagination route reads it, an open end sent as the earliest or latest date. */
+const invoiceDateRange = (startDate?: string, endDate?: string) => {
+	const hasRange = Boolean(startDate || endDate);
+	if (!hasRange) {
+		return {};
+	}
+	return { invoiceDate: { startDate: startDate ?? EARLIEST, endDate: endOfDayBound(endDate) ?? LATEST } };
+};
 
 /**
  * Helper function to convert date fields in invoice data to Date objects
@@ -30,6 +47,15 @@ const convertInvoiceDateFields = (invoiceData: InvoiceData): ConvertedInvoiceDat
 		invoiceDate: invoiceData.invoiceDate ? new Date(invoiceData.invoiceDate) : undefined,
 		dueDate: invoiceData.dueDate ? new Date(invoiceData.dueDate) : undefined
 	};
+};
+
+/** The invoice data with the status the API stores for one the tools list by another name (`CANCELLED` is `VOID`). */
+const withStoredInvoiceStatus = <T extends { status?: unknown }>(invoiceData: T): T => {
+	const status = invoiceData.status;
+	if (typeof status !== 'string') {
+		return invoiceData;
+	}
+	return { ...invoiceData, status: toApiValue(INVOICE_STATUS_VALUES, status) };
 };
 
 export const registerInvoiceTools = (server: McpServer) => {
@@ -56,21 +82,20 @@ export const registerInvoiceTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
+				// The route reads a date range from `where.invoiceDate`. It has no search: one of the number or the client's
+				// name is kept here, on the whole list.
+				const storedStatus = toApiValue(INVOICE_STATUS_VALUES, status);
+				const where = { status: storedStatus, invoiceType, paid, ...invoiceDateRange(startDate, endDate) };
+				const listOptions = {
 					page,
 					limit,
-					...(search && { search }),
-					...(relations && { relations }),
-					...(status && { status }),
-					...(invoiceType && { invoiceType }),
-					...(paid !== undefined && { paid }),
-					...(startDate && { startDate }),
-					...(endDate && { endDate })
+					relations: relationsForSearch(search, relations, 'toContact'),
+					skipIsPage: true
 				};
-
-				const response = await apiClient.get('/api/invoices/pagination', { params });
+				const response = await readSearchedList('/api/invoices/pagination', defaultParams, where, listOptions, {
+					search,
+					textsOf: ({ invoiceNumber, toContact }: InvoiceRow) => [invoiceNumber, toContact?.name]
+				});
 
 				return {
 					content: [
@@ -84,7 +109,8 @@ export const registerInvoiceTools = (server: McpServer) => {
 				logger.error('Error fetching invoices:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch invoices: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get invoice count tool
@@ -105,7 +131,7 @@ export const registerInvoiceTools = (server: McpServer) => {
 				const params = {
 					organizationId: defaultParams.organizationId,
 					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					...(status && { status }),
+					...(status && { status: toApiValue(INVOICE_STATUS_VALUES, status) }),
 					...(paid !== undefined && { paid }),
 					...(startDate && { startDate }),
 					...(endDate && { endDate })
@@ -125,7 +151,8 @@ export const registerInvoiceTools = (server: McpServer) => {
 				logger.error('Error fetching invoice count:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch invoice count: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get invoice by ID tool
@@ -163,7 +190,8 @@ export const registerInvoiceTools = (server: McpServer) => {
 				logger.error('Error fetching invoice:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch invoice: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Create invoice tool
@@ -186,11 +214,13 @@ export const registerInvoiceTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const createData = convertInvoiceDateFields({
-					...invoice_data,
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
-				});
+				const createData = convertInvoiceDateFields(
+					withStoredInvoiceStatus({
+						...invoice_data,
+						organizationId: defaultParams.organizationId,
+						...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
+					})
+				);
 
 				const response = await apiClient.post('/api/invoices', createData);
 
@@ -206,7 +236,8 @@ export const registerInvoiceTools = (server: McpServer) => {
 				logger.error('Error creating invoice:', sanitizeForLogging(error));
 				throw new Error(`Failed to create invoice: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Update invoice tool
@@ -220,7 +251,7 @@ export const registerInvoiceTools = (server: McpServer) => {
 		},
 		async ({ id, invoice_data }) => {
 			try {
-				const updateData = convertInvoiceDateFields(invoice_data);
+				const updateData = convertInvoiceDateFields(withStoredInvoiceStatus(invoice_data));
 
 				const response = await apiClient.put(`/api/invoices/${id}`, updateData);
 
@@ -236,7 +267,8 @@ export const registerInvoiceTools = (server: McpServer) => {
 				logger.error('Error updating invoice:', sanitizeForLogging(error));
 				throw new Error(`Failed to update invoice: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Update invoice action (status/estimate) tool
@@ -251,10 +283,10 @@ export const registerInvoiceTools = (server: McpServer) => {
 		},
 		async ({ id, status, isEstimate }) => {
 			try {
-				const updateData = {
+				const updateData = withStoredInvoiceStatus({
 					...(status && { status }),
 					...(isEstimate !== undefined && { isEstimate })
-				};
+				});
 
 				const response = await apiClient.put(`/api/invoices/${id}/action`, updateData);
 
@@ -270,7 +302,8 @@ export const registerInvoiceTools = (server: McpServer) => {
 				logger.error('Error updating invoice action:', sanitizeForLogging(error));
 				throw new Error(`Failed to update invoice action: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Update estimate status tool
@@ -290,7 +323,9 @@ export const registerInvoiceTools = (server: McpServer) => {
 		},
 		async ({ id, data }) => {
 			try {
-				const response = await apiClient.put(`/api/invoices/${id}/estimate`, data);
+				// The action route reads the status, isEstimate and paid; the estimate route reads only the client's
+				// answer (isAccepted), and refused this tool's data.
+				const response = await apiClient.put(`/api/invoices/${id}/action`, withStoredInvoiceStatus(data));
 
 				return {
 					content: [
@@ -304,7 +339,8 @@ export const registerInvoiceTools = (server: McpServer) => {
 				logger.error('Error updating estimate status:', sanitizeForLogging(error));
 				throw new Error(`Failed to update estimate status: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Delete invoice tool
@@ -335,7 +371,8 @@ export const registerInvoiceTools = (server: McpServer) => {
 				logger.error('Error deleting invoice:', sanitizeForLogging(error));
 				throw new Error(`Failed to delete invoice: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.idempotentDestructive
 	);
 
 	// Get invoice items tool
@@ -373,7 +410,8 @@ export const registerInvoiceTools = (server: McpServer) => {
 				logger.error('Error fetching invoice items:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch invoice items: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Send invoice via email tool
@@ -417,7 +455,8 @@ export const registerInvoiceTools = (server: McpServer) => {
 				logger.error('Error sending invoice email:', sanitizeForLogging(error));
 				throw new Error(`Failed to send invoice email: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.openWorldDestructive
 	);
 
 	// Generate invoice PDF tool
@@ -460,7 +499,8 @@ export const registerInvoiceTools = (server: McpServer) => {
 				logger.error('Error downloading invoice PDF:', sanitizeForLogging(error));
 				throw new Error(`Failed to download invoice PDF: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get highest invoice number tool
@@ -485,7 +525,8 @@ export const registerInvoiceTools = (server: McpServer) => {
 				logger.error('Error fetching highest invoice number:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch highest invoice number: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Generate public link for invoice tool
@@ -512,7 +553,8 @@ export const registerInvoiceTools = (server: McpServer) => {
 				logger.error('Error generating invoice link:', sanitizeForLogging(error));
 				throw new Error(`Failed to generate invoice link: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Download invoice payment PDF tool
@@ -557,6 +599,7 @@ export const registerInvoiceTools = (server: McpServer) => {
 				logger.error('Error downloading invoice payment PDF:', sanitizeForLogging(error));
 				throw new Error(`Failed to download invoice payment PDF: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 };

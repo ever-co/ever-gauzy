@@ -8,7 +8,8 @@ import {
 	ElementRef,
 	inject,
 	input,
-	output
+	output,
+	signal
 } from '@angular/core';
 import { NbIconModule, NbTooltipModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -42,6 +43,40 @@ export interface RowDrop {
 export function isOverdue(task: Pick<ITask, 'dueDate' | 'status'>, now = Date.now()): boolean {
 	const due = dueDeadline(task.dueDate);
 	return due !== null && due < now && !['done', 'completed', 'cancelled'].includes(String(task.status ?? ''));
+}
+
+/**
+ * The text colour that reads on a label's own colour: black or white, whichever has the higher WCAG contrast with it
+ * (by relative luminance, so a saturated red takes black). Null — the theme's text colour — for a colour that is not
+ * fully opaque, since the chip then shows the panel behind it, which this cannot know, and for one it cannot read (a
+ * theme variable, a name).
+ */
+export function labelTextColor(color: string | null | undefined): string | null {
+	const rgba = rgbaOf(color);
+	if (!rgba || rgba[3] < 1) return null;
+	const [r, g, b] = rgba.slice(0, 3).map((channel) => {
+		const value = channel / 255;
+		return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+	});
+	const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+	const onWhite = 1.05 / (luminance + 0.05);
+	const onBlack = (luminance + 0.05) / 0.05;
+	return onBlack >= onWhite ? '#000000' : '#ffffff';
+}
+
+/** `#rgb`, `#rgba`, `#rrggbb`, `#rrggbbaa`, `rgb()` or `rgba()` as red, green, blue (0-255) and alpha (0-1). */
+function rgbaOf(color: string | null | undefined): [number, number, number, number] | null {
+	const value = (color ?? '').trim();
+	const hex = /^#([0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i.exec(value)?.[1];
+	if (hex) {
+		const full = hex.length <= 4 ? [...hex].map((digit) => digit + digit).join('') : hex;
+		const [r, g, b, a = 255] = (full.match(/../g) ?? []).map((pair) => parseInt(pair, 16));
+		return [r, g, b, a / 255];
+	}
+	const rgb = /^rgba?\(\s*(\d+)[\s,]+(\d+)[\s,]+(\d+)(?:\s*[,/]\s*([\d.]+)(%)?)?\s*\)$/i.exec(value);
+	if (!rgb) return null;
+	const alpha = rgb[4] === undefined ? 1 : Number(rgb[4]) / (rgb[5] ? 100 : 1);
+	return [Number(rgb[1]), Number(rgb[2]), Number(rgb[3]), alpha];
 }
 
 /** Two letters for a person without a picture. */
@@ -86,6 +121,31 @@ export class TaskListComponent {
 	protected readonly initialsOf = initialsOf;
 	protected readonly isOverdue = isOverdue;
 	protected readonly dueDateShown = dueDateShown;
+	protected readonly labelTextColor = labelTextColor;
+
+	/** How many labels a row shows before the rest fold into a "+N" chip (their names are in its tooltip). */
+	protected readonly labelsShown = 2;
+
+	/** Pictures that failed to load: the person shows their initials instead of a broken image. */
+	private readonly brokenImages = signal<ReadonlySet<string>>(new Set());
+
+	protected hasPicture(url: string | null | undefined): boolean {
+		return !!url && !this.brokenImages().has(url);
+	}
+
+	protected onPictureError(url: string | null | undefined): void {
+		if (!url || this.brokenImages().has(url)) return;
+		this.brokenImages.update((broken) => new Set(broken).add(url));
+	}
+
+	/** The names of the labels folded into the "+N" chip, for its tooltip. */
+	protected hiddenLabels(tags: ReadonlyArray<{ name?: string }> | undefined): string {
+		return (tags ?? [])
+			.slice(this.labelsShown)
+			.map((tag) => tag.name ?? '')
+			.filter(Boolean)
+			.join(', ');
+	}
 
 	/** Every row once, in the order shown: what the page checkbox and the drop indexes read. */
 	protected readonly order = computed(() => {

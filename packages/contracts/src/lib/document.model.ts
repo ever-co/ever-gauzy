@@ -169,6 +169,12 @@ export interface IDocument extends IBasePerTenantAndOrganizationEntityModel {
 	thumbKey?: string; // FILE only. Provider key of the generated thumbnail
 	readonly fileUrl?: string; // Virtual. Resolved from `storageProvider` + `storageKey`
 	readonly thumbUrl?: string; // Virtual. Resolved from `storageProvider` + `thumbKey`
+	/**
+	 * Virtual. Answered by a single-document read only: whether the caller may change this document (its own, a
+	 * team's page for a member, an `EDIT` share, or `DOCS_MANAGE`, with `DOCS_UPDATE` held). The lock is not part
+	 * of it: `isLocked` tells it. Absent from lists and from an API that predates the field.
+	 */
+	readonly canWrite?: boolean;
 	mimeType?: string; // FILE only. Sniffed (magic-byte) canonical MIME
 	fileSize?: number; // FILE only. Bytes
 	sha256?: string; // FILE only. Hex digest of the blob; dedup key

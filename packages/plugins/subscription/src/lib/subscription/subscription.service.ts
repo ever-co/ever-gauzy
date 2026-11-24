@@ -321,6 +321,12 @@ const APPLIED_CHANGES_KEPT = 20;
 const SETTLEMENT_REVERSALS = 'settlementReversals';
 
 /**
+ * The metadata key the plan-change charges waived as below the proration threshold are recorded under: the audit
+ * record of money the customer was not charged.
+ */
+const WAIVED_PRORATIONS = 'waivedProrations';
+
+/**
  * How long a recorded change holds the subscription against another change. Inside it, another change is refused
  * (`SUBSCRIPTION_CHANGE_IN_FLIGHT`) because the first may still be settling; past it, the request that recorded it is
  * taken to be gone, and the next change replaces the record (`reserveChange`). It is well past the window a proration
@@ -446,8 +452,9 @@ type ISettlementState = 'SETTLED' | 'UNKNOWN' | 'UNSETTLED';
  * credit carried into the next cycle, the plans whose setup fee was charged, the end of the trial, the proration
  * threshold below which a plan change's charge is waived, the cancellation at the end of the period, the cycle
  * whose payment expired the subscription, the change scheduled for the next period, a mid-cycle change being settled
- * with the settlements recorded for reversal, the cycles whose consumed credit was taken off, and the cycle whose
- * bookkeeping was last applied. A caller's metadata can neither set nor erase them —
+ * with the settlements recorded for reversal, the cycles whose consumed credit was taken off, the cycle whose
+ * bookkeeping was last applied, and the record of the plan-change charges waived as below the threshold (a caller
+ * could otherwise forge or erase that audit trail). A caller's metadata can neither set nor erase them —
  * `metadata: { discountPercentage: "1" }` billed every later cycle at 0, `{ pendingCredit: { amount: "100000" } }`
  * credited the next one, `{ minimumProrationCharge: "1000000" }` waived every upgrade's charge, and
  * `{ cancelAtPeriodEnd: true }` cancelled the subscription with no cancellation (CodeRabbit);
@@ -468,7 +475,8 @@ export const RESERVED_SUBSCRIPTION_METADATA_KEYS: readonly string[] = [
 	CHANGE_INTENT,
 	APPLIED_CHANGES,
 	SETTLEMENT_REVERSALS,
-	CONSUMED_CREDIT_CYCLES
+	CONSUMED_CREDIT_CYCLES,
+	WAIVED_PRORATIONS
 ];
 
 /**
@@ -4272,8 +4280,8 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		const net = Money.of(intent.net, intent.currency);
 
 		if (intent.settlement === 'WAIVED' && net.isPositive()) {
-			metadata['waivedProrations'] = [
-				...((metadata['waivedProrations'] as unknown[]) ?? []),
+			metadata[WAIVED_PRORATIONS] = [
+				...((metadata[WAIVED_PRORATIONS] as unknown[]) ?? []),
 				{ amount: intent.net, currency: intent.currency, at: intent.at, description: intent.description }
 			];
 		} else if (intent.settlement === 'DEFERRED') {

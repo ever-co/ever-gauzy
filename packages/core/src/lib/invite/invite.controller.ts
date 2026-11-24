@@ -337,8 +337,9 @@ export class InviteController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'No invites found for the current user'
 	})
+	// No permission on purpose: the service reads only invitations addressed to the caller's own e-mail, so every
+	// signed-in role can see and answer its own (an account that already exists accepts from its session only).
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_INVITE_VIEW)
 	@Get('/me')
 	async getCurrentUserInvites(): Promise<IPagination<IInvite>> {
 		return await this.inviteService.getCurrentUserInvites();
@@ -405,8 +406,9 @@ export class InviteController {
 		status: HttpStatus.OK,
 		description: 'Invite Accepted'
 	})
+	// No permission on purpose: the service reads only invitations addressed to the caller's own e-mail, so every
+	// signed-in role can see and answer its own (an account that already exists accepts from its session only).
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
 	@Put('/:id/:action')
 	async handleInvitationResponse(
 		@Param('id', UUIDValidationPipe) id: ID,

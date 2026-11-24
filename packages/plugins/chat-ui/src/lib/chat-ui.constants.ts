@@ -44,6 +44,12 @@ export const CHAT_LIVE_LIST_AUDIT_MS = 1_000;
 
 /** The newest page a conversation opens with (the API's default is 50, its maximum 200). */
 export const CHAT_PAGE_SIZE = 50;
+/** The newest page the docked card reads: the latest of a conversation; the rest is a click away in the chat. */
+export const CHAT_DOCK_PAGE_SIZE = 20;
+/** The most employees one request may add to a channel (the API's limit, on creation and on adding members). */
+export const CHAT_CHANNEL_MEMBERS_BATCH = 500;
+/** How many of a team's members the docked card shows as faces at its top (the rest as "+N"), before their count. */
+export const CHAT_DOCK_TEAM_FACES = 4;
 
 /** Where a task card leads. */
 export const CHAT_TASK_LINK = '/pages/tasks/view';
@@ -57,6 +63,11 @@ export const CHAT_SEND_TASK_EXTENSION_ID = 'chat-send-task';
 export const CHAT_EMPLOYEE_ACTIONS_SLOT = 'employee-view-actions';
 /** Id of that extension. */
 export const CHAT_MESSAGE_EMPLOYEE_EXTENSION_ID = 'chat-message-employee';
+
+/** The extension slot of a team's page the "Team chat" button goes in (`PAGE_EXTENSION_SLOTS.TEAM_VIEW_ACTIONS`). */
+export const CHAT_TEAM_ACTIONS_SLOT = 'team-view-actions';
+/** Id of that extension. */
+export const CHAT_TEAM_CHAT_EXTENSION_ID = 'chat-team-chat';
 
 /** The most people the `@` suggestions show. */
 export const CHAT_MENTION_SUGGESTIONS = 8;

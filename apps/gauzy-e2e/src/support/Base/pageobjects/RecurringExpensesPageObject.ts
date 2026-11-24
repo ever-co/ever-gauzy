@@ -1,13 +1,13 @@
 export const RecurringExpensesPage = {
 	// The Add button lives in the header's gauzy-button-action (#visible template) and carries
-	// status="success"; scope to the header container so we don't match the dialog's own
-	// status="success" Save button.
+	// status="success"; scoped to the header container, away from any dialog footer.
 	addNewExpenseButtonCss: '.gauzy-button-container button[status="success"]',
 	employeeDropdownCss: 'ga-recurring-expense-mutation ga-employee-selector ng-select',
 	dropdownOptionCss: 'div.ng-option',
 	expenseDropdownCss: 'ga-recurring-expense-mutation #categoryInput',
 	valueInputCss: 'ga-recurring-expense-mutation #valueInput',
-	saveExpenseButtonCss: 'nb-card-footer > button[status="success"]',
+	// The mutation dialog's Save/Edit: its only submit button (Cancel is type="button").
+	saveExpenseButtonCss: 'ga-recurring-expense-mutation nb-card-footer > button[type="submit"]',
 	// Per-row gear; presence confirms a block rendered. Hidden (display:none) by the stylesheet.
 	settingsButtonCss: 'nb-icon[icon="settings-2-outline"]',
 	// The edit/delete actions live on the `.single-setting` divs inside the per-block menu (that's

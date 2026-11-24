@@ -114,6 +114,29 @@ export class EverOperatorService {
 	}
 
 	/**
+	 * Whether `user`, holding the role `roleName` right now, is a super admin (now, in the database: not
+	 * deleted, active, not archived) whose user id is one of `userIds`. Never by e-mail address, never the
+	 * first super admin by default, never through a third-party app's token, and nobody when `userIds` is
+	 * empty. A building block for a module that names its operators by id on an installation where
+	 * {@link isOperator} names nobody (Ever's own cloud); it does not read `EVER_INSTALL_SOURCE` itself.
+	 */
+	async isListedSuperAdmin(
+		user: EverOperatorCandidate | null | undefined,
+		roleName: string | null | undefined,
+		userIds: ReadonlyArray<string>
+	): Promise<boolean> {
+		if (!user?.id || roleName !== RolesEnum.SUPER_ADMIN || user.oauthApp) {
+			return false;
+		}
+		const ids = userIds.map((id) => id.trim().toLowerCase()).filter((id) => id.length > 0);
+		if (!ids.includes(String(user.id).toLowerCase())) {
+			return false;
+		}
+		const stored = await this.readUser(String(user.id));
+		return !!stored && stored.usable && stored.superAdmin && ids.includes(stored.id.toLowerCase());
+	}
+
+	/**
 	 * A listed address names the account of the installation's first tenant that holds it: only when
 	 * the caller is in that tenant, is the only account of it holding the address, and has confirmed an
 	 * address. Nobody else can become the first tenant (it is the oldest one, deleted included), so no

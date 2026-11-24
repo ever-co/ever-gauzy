@@ -584,6 +584,12 @@ describe('TimeLogResolver — the SDL declares the capabilities the REST routes 
 		expect(inputBody('UpdateManualTimeLogInput')).not.toMatch(/organizationTeamId/);
 	});
 
+	it('lets a hand-recorded interval ask to be billable as its project is set, as the create route does', () => {
+		expect(inputBody('CreateManualTimeLogInput')).toMatch(/^\s*billableFromProject: Boolean$/m);
+		// The edit route does not read it, so the edit input does not offer it.
+		expect(inputBody('UpdateManualTimeLogInput')).not.toMatch(/billableFromProject/);
+	});
+
 	it('declares the three write bodies, and never the members the delivered body stamps for itself', () => {
 		expect(printed).toMatch(/input CreateManualTimeLogInput \{/);
 		expect(printed).toMatch(/input UpdateManualTimeLogInput \{/);
@@ -1464,6 +1470,26 @@ describe('TimeLogResolver — one concept, two protocols, the same operations', 
 			logType: TimeLogType.MANUAL,
 			source: TimeLogSourceEnum.WEB_TIMER
 		});
+	});
+
+	it('hands an ask to be billable as the project is set on to the service, as the create route does', async () => {
+		const { resolver, timeLogService } = surfaces();
+		caller(true);
+		const startedAt = new Date('2026-03-01T09:00:00.000Z');
+		const stoppedAt = new Date('2026-03-01T10:00:00.000Z');
+
+		await resolver.addManualTime({
+			organizationId: ORGANIZATION,
+			employeeId: EMPLOYEE,
+			startedAt,
+			stoppedAt,
+			isBillable: false,
+			billableFromProject: true
+		});
+
+		expect(timeLogService.addManualTime).toHaveBeenCalledWith(
+			expect.objectContaining({ isBillable: false, billableFromProject: true })
+		);
 	});
 
 	it('keeps the employee a caller names and fills only a missing one with its own, which is the delivered pipe', async () => {

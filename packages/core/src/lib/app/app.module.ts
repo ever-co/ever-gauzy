@@ -211,6 +211,7 @@ import { TaskViewModule } from '../tasks/views/view.module';
 import { TaxLineModule } from '../tax-line/tax-line.module';
 import { OAuthClientModule } from '../auth/oauth-client/oauth-client.module';
 import { UserApiTokenModule } from '../auth/user-api-token/user-api-token.module';
+import { EmbedModule } from '../embed/embed.module';
 import { SavedReportModule } from '../saved-report/saved-report.module';
 import { InvoiceScheduleModule } from '../invoice-schedule/invoice-schedule.module';
 import { TenantApiKeyModule } from '../tenant-api-key/tenant-api-key.module';
@@ -652,6 +653,7 @@ if (environment.EVER_TEAMS_CLIENT_IP_SECRET?.trim() && !clientIpSecretOf(environ
 		TenantApiKeyModule,
 		OAuthClientModule,
 		UserApiTokenModule,
+		EmbedModule,
 		SavedReportModule,
 		InvoiceScheduleModule,
 		EmployeeRecentVisitModule,

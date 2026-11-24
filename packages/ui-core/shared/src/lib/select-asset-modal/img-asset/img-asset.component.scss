@@ -1,47 +1,109 @@
-@use 'themes' as *;
+// One image of the picker: a square tile, a ring and a check when chosen, the delete button on hover. Colours and
+// radii come from the theme's CSS tokens; the veil and the icon on it are the profile photo's.
+:host {
+  display: block;
+}
 
+.image-asset-list-item {
+  position: relative;
+
+  &:hover,
+  &:focus-within {
+    .delete-asset-btn {
+      opacity: 1;
+    }
+  }
+}
+
+.image-tile {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--gauzy-border-default-color);
+  border-radius: var(--border-radius);
+  background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+  cursor: pointer;
+  transition: border-color 0.12s ease-in-out, box-shadow 0.12s ease-in-out;
+
+  &:hover {
+    border-color: var(--gauzy-text-color-2);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--gauzy-action-info-text, currentColor);
+    outline-offset: 2px;
+  }
+
+  .selected & {
+    border-color: var(--color-primary-default);
+    box-shadow: 0 0 0 1px var(--color-primary-default);
+  }
+}
+
+// Square, whatever the image's own shape.
 .image-item {
-  height: 100px;
+  display: block;
   width: 100%;
   padding-bottom: 100%;
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
-  border-radius: nb-theme(border-radius);
 }
 
-.image-asset-list-item {
-  border-radius: nb-theme(border-radius);
-  transition: 0.1s all ease-in-out;
-  cursor: pointer;
-  position: relative;
+.selected-mark {
+  position: absolute;
+  top: 0.375rem;
+  left: 0.375rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  background-color: var(--color-primary-default);
+  color: var(--text-control-color);
 
-  &:hover {
-    box-shadow: var(--gauzy-shadow);
-
-    .delete-asset-btn {
-      opacity: 1;
-    }
-  }
-
-  &.selected {
-    box-shadow: var(--gauzy-shadow);
+  nb-icon {
+    width: 0.875rem;
+    height: 0.875rem;
+    font-size: 0.875rem;
   }
 }
 
 .delete-asset-btn {
   position: absolute;
-  width: 32px;
-  height: 32px;
-  top: 4px;
-  left: 4px;
-  background: #fff;
-  border-radius: 50%;
-  display: flex;
-  justify-content: center;
+  top: 0.375rem;
+  right: 0.375rem;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background-color: var(--overlay-backdrop-background-color);
+  color: var(--text-control-color);
   cursor: pointer;
   opacity: 0;
-  box-shadow: var(--gauzy-shadow);
-  color: nb-theme(text-danger-color);
+  transition: opacity 0.12s ease-in-out, background-color 0.12s ease-in-out;
+
+  nb-icon {
+    width: 1rem;
+    height: 1rem;
+    font-size: 1rem;
+  }
+
+  &:hover,
+  &:focus-visible {
+    background-color: var(--color-danger-default);
+  }
+
+  &:focus-visible {
+    opacity: 1;
+    outline: 2px solid var(--text-control-color);
+    outline-offset: -2px;
+  }
 }

@@ -1,9 +1,12 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { EntityManager, In } from 'typeorm';
 import { raw } from '@mikro-orm/core';
 import { ID, ITag, ITimeLog, ITimeLogFilters, ITimeLogTag } from '@gauzy/contracts';
 import { prepareSQLQuery as p } from '../../database/database.helper';
 import { Tag } from '../../tags/tag.entity';
+import { TimeLog } from '../../core/entities/internal';
+import { lockedForChange } from './time-log-history.writer';
+import { moveUpdatedAtPast } from './time-log-precondition';
 
 /**
  * The tags of a time log (ever-co/ever-gauzy#12029): the kind of work the time is filed under, whatever its task. They
@@ -34,8 +37,8 @@ export interface ITimeLogTagCondition {
 
 /**
  * The tags a write or a filter sends, each spelling once: `undefined` when it sends none, so the log keeps the tags it
- * has. An id sent in two cases keeps both: a filter binds each one, as SQLite compares ids by case, and a write takes
- * each tag once in `timeLogTagsOf`.
+ * has. An id sent in two cases keeps both: a filter binds each one, and its stored form too (`filterTagIds`), as SQLite
+ * compares ids by case, and a write takes each tag once in `timeLogTagsOf`.
  *
  * @param tags The `tags` of a body.
  * @returns The tag ids, or `undefined`.
@@ -125,6 +128,22 @@ function canonicalIdOf(id: ID): string {
 	return String(id).toLowerCase();
 }
 
+/**
+ * The ids a tag filter binds: each id as it was sent, then as it is stored, each spelling once. Every key Gauzy
+ * generates is a lowercase uuid (`randomUUID()`, which both ORMs use where the database has no uuid default, and
+ * `gen_random_uuid()` on PostgreSQL), and SQLite keeps it as text compared by case, so an id sent in capitals matched
+ * no log there. The spelling sent is still bound, so a row written with an id of its own keeps matching as before.
+ * PostgreSQL compares `uuid` values whatever their case, so the stored form finds there the same logs as the sent one;
+ * the column is compared bare, which keeps its index in use.
+ *
+ * @param tags The `tagIds` of a read.
+ * @returns The ids to bind, empty when the read asks for no tag.
+ */
+function filterTagIds(tags: unknown): ID[] {
+	const sent = sentTagIds(tags) ?? [];
+	return [...new Set(sent.flatMap((id) => [id, canonicalIdOf(id)]))];
+}
+
 /** Whether a tag belongs to the organization: its own, or one of the whole tenant. */
 function isTagOfOrganization(tagOrganizationId: ID | null | undefined, organizationId: ID): boolean {
 	const isOfWholeTenant = tagOrganizationId === null || tagOrganizationId === undefined;
@@ -169,54 +188,73 @@ export async function loadTimeLogTags(manager: EntityManager, logs: ITimeLog[]):
 }
 
 /**
- * Locks the log's row for the rest of the transaction, so that two changes of its tags run one after the other: without
- * it, both could take off the tags before either puts its own on, and the log would end under both lists. SQLite runs
- * one write at a time and has no row lock.
+ * Reads the log's id, tenant and `updatedAt`, and locks its row for the rest of the transaction where the database
+ * locks rows, so that two changes of its tags, or a change of them and an edit, run one after the other: without it,
+ * both could take off the tags before either puts its own on, and the log would end under both lists. SQLite runs one
+ * write at a time and has no row lock.
  *
  * @param transaction The transaction the change runs in.
  * @param timeLogId The log.
+ * @returns The log as stored, removed or not; null when there is none.
  */
-async function lockTimeLog(transaction: EntityManager, timeLogId: ID): Promise<void> {
-	const type = transaction.connection.options.type;
-	const locksRows = type === 'postgres' || type === 'mysql';
-	if (!locksRows) {
+async function lockTimeLog(
+	transaction: EntityManager,
+	timeLogId: ID
+): Promise<Pick<ITimeLog, 'id' | 'tenantId' | 'updatedAt'> | null> {
+	return await transaction.findOne(TimeLog, {
+		where: { id: timeLogId },
+		select: { id: true, tenantId: true, updatedAt: true },
+		withDeleted: true,
+		...lockedForChange()
+	});
+}
+
+/**
+ * Files a log under exactly these tags, in a transaction that already holds the log's row lock (an edit's, see
+ * `TimeLogUpdateHandler`, or {@link replaceTimeLogTags}): the tags it no longer carries are taken off, the new ones put
+ * on. The caller moves the log's `updatedAt` in the same transaction.
+ *
+ * @param transaction The transaction the change runs in.
+ * @param timeLogId The log.
+ * @param tagIds The tags it carries from now on, already checked (`timeLogTagsOf`).
+ */
+export async function writeTimeLogTags(transaction: EntityManager, timeLogId: ID, tagIds: ID[]): Promise<void> {
+	await transaction
+		.createQueryBuilder()
+		.delete()
+		.from(p('tag_time_log'))
+		.where(p(`"timeLogId" = :timeLogId`), { timeLogId })
+		.execute();
+	if (tagIds.length === 0) {
 		return;
 	}
 	await transaction
 		.createQueryBuilder()
-		.select(p('"log"."id"'), 'id')
-		.from(p('time_log'), p('log'))
-		.where(p('"log"."id" = :timeLogId'), { timeLogId })
-		.setLock('pessimistic_write')
-		.getRawOne();
+		.insert()
+		.into(p('tag_time_log'), ['timeLogId', 'tagId'])
+		.values(tagIds.map((tagId) => ({ timeLogId, tagId })))
+		.execute();
 }
 
 /**
  * Files a log under exactly these tags, in one transaction: the tags it no longer carries are taken off, the new ones
- * put on. Nothing else of the log changes, which is how a running log's tags change while it runs.
+ * put on. No other column of the log changes, which is how a running log's tags change while it runs; its `updatedAt`
+ * moves a millisecond past what it held (ever-co/ever-teams#5382), so an edit made on a read from before the change is
+ * refused (`expectedUpdatedAt`) rather than putting back the tags it read.
  *
  * @param manager The manager the change is written with.
  * @param timeLogId The log.
  * @param tagIds The tags it carries from now on, already checked (`timeLogTagsOf`).
+ * @throws NotFoundException when the log was deleted for good since it was read; nothing is written.
  */
 export async function replaceTimeLogTags(manager: EntityManager, timeLogId: ID, tagIds: ID[]): Promise<void> {
 	await manager.transaction(async (transaction) => {
-		await lockTimeLog(transaction, timeLogId);
-		await transaction
-			.createQueryBuilder()
-			.delete()
-			.from(p('tag_time_log'))
-			.where(p(`"timeLogId" = :timeLogId`), { timeLogId })
-			.execute();
-		if (tagIds.length === 0) {
-			return;
+		const current = await lockTimeLog(transaction, timeLogId);
+		if (!current) {
+			throw new NotFoundException('The time log was deleted.');
 		}
-		await transaction
-			.createQueryBuilder()
-			.insert()
-			.into(p('tag_time_log'), ['timeLogId', 'tagId'])
-			.values(tagIds.map((tagId) => ({ timeLogId, tagId })))
-			.execute();
+		await writeTimeLogTags(transaction, timeLogId, tagIds);
+		await moveUpdatedAtPast(transaction, current, null);
 	});
 }
 
@@ -232,7 +270,7 @@ export function timeLogTagsCondition(
 	timeLogIdColumn: string,
 	filter: Pick<ITimeLogFilters, 'tagIds' | 'untagged'>
 ): ITimeLogTagCondition | null {
-	const tagIds = sentTagIds(filter?.tagIds) ?? [];
+	const tagIds = filterTagIds(filter?.tagIds);
 	const filtersByTag = tagIds.length > 0;
 	const keepsUntagged = filter?.untagged === true;
 	if (!filtersByTag && !keepsUntagged) {

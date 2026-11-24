@@ -37,4 +37,29 @@ export interface IAccessTokenMetadata extends JwtPayload {
 	 * `auth/user-api-token/user-api-token-session.ts`).
 	 */
 	apiTokenId?: string;
+	/**
+	 * Set only on a token the embed exchange minted: the credential behind it and the one member it acts for (see
+	 * `embed/embed-session.ts`).
+	 */
+	embedCredentialId?: string;
+	embedEmployeeId?: string;
+	/**
+	 * The page origin an embed token was exchanged for. `EmbedSessionGuard` refuses a request whose `Origin` header names
+	 * another one; a request without the header is not checked. A browser names the page's origin on every cross-site
+	 * call that carries the token, so the claim keeps another site's page from using it. It does not authenticate where
+	 * a request comes from: any other client writes the header it likes, or none.
+	 */
+	embedOrigin?: string;
+	/**
+	 * Set only on a token exchanged with a credential limited to a client: that client (an organization contact), as
+	 * `embed/embed-session.ts` reads it. A token of a credential of the whole organization does not carry it.
+	 * `EmbedSessionGuard` lets such a token start the timer only on a project of that client.
+	 */
+	embedClientId?: string;
+	/**
+	 * Set only on a token a person's sign-in from an allowed site minted (`POST /embed/authorize`, `POST /embed/renew`):
+	 * the site grant behind it, which `embedCredentialId` names too. `EmbedSessionGuard` looks no credential up for
+	 * such a token; its grant is judged at each renewal.
+	 */
+	embedGrantId?: string;
 }

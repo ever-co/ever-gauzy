@@ -8,6 +8,7 @@ import { ExpenseCategoriesEnum, CurrenciesEnum } from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
+import { TOOL_HINTS } from './tool-hints';
 const logger = new Logger('ExpenseTools');
 
 /**
@@ -88,7 +89,8 @@ export const registerExpenseTools = (server: McpServer) => {
 				logger.error('Error fetching expenses:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch expenses: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get expense count tool
@@ -131,7 +133,8 @@ export const registerExpenseTools = (server: McpServer) => {
 				logger.error('Error fetching expense count:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch expense count: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get expense by ID tool
@@ -166,7 +169,8 @@ export const registerExpenseTools = (server: McpServer) => {
 				logger.error('Error fetching expense:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch expense: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Create expense tool
@@ -207,7 +211,8 @@ export const registerExpenseTools = (server: McpServer) => {
 				logger.error('Error creating expense:', sanitizeForLogging(error));
 				throw new Error(`Failed to create expense: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.write
 	);
 
 	// Update expense tool
@@ -237,7 +242,8 @@ export const registerExpenseTools = (server: McpServer) => {
 				logger.error('Error updating expense:', sanitizeForLogging(error));
 				throw new Error(`Failed to update expense: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.destructive
 	);
 
 	// Delete expense tool
@@ -268,7 +274,8 @@ export const registerExpenseTools = (server: McpServer) => {
 				logger.error('Error deleting expense:', sanitizeForLogging(error));
 				throw new Error(`Failed to delete expense: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.idempotentDestructive
 	);
 
 	// Get expense categories tool
@@ -307,7 +314,8 @@ export const registerExpenseTools = (server: McpServer) => {
 				logger.error('Error fetching expense categories:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch expense categories: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get expenses by employee tool
@@ -352,7 +360,8 @@ export const registerExpenseTools = (server: McpServer) => {
 				logger.error('Error fetching expenses by employee:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch expenses by employee: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 
 	// Get my expenses tool
@@ -397,6 +406,7 @@ export const registerExpenseTools = (server: McpServer) => {
 				logger.error('Error fetching my expenses:', sanitizeForLogging(error));
 				throw new Error(`Failed to fetch my expenses: ${sanitizeErrorMessage(error)}`);
 			}
-		}
+		},
+		TOOL_HINTS.readOnly
 	);
 };

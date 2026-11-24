@@ -28,6 +28,7 @@ import {
 	TagsColorInputModule,
 	RecordViewModule
 } from '@gauzy/ui-core/shared';
+import { PageExtensionSlotComponent } from '@gauzy/plugin-ui';
 import { TeamsRoutingModule } from './teams-routing.module';
 import { TeamsComponent } from './teams.component';
 import { TeamsMutationComponent } from './teams-mutation/teams-mutation.component';
@@ -63,7 +64,9 @@ import { EmployeeHoursChartComponent } from '../employees/view-employee/employee
 		ImageUploaderModule,
 		RecordViewModule,
 		EmployeeHoursChartComponent,
-		TaskViewHeaderComponent
+		TaskViewHeaderComponent,
+		// The view page's actions slot: what plugins add beside the favorite toggle (the chat's "Team chat").
+		PageExtensionSlotComponent
 	],
 	declarations: [TeamsComponent, TeamsMutationComponent, ViewTeamComponent],
 	providers: [OrganizationTeamsService]
