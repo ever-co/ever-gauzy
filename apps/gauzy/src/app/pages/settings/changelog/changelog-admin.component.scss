@@ -162,12 +162,29 @@ $muted: var(--text-hint-color);
 }
 
 .entry-link {
-  display: inline-flex;
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+  max-width: 48rem;
   color: $muted;
+  font-size: 0.8125rem;
 
   nb-icon {
+    flex: none;
+    align-self: center;
     font-size: 0.875rem;
   }
+}
+
+.entry-link-label {
+  flex: none;
+}
+
+.entry-link-url {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  user-select: all;
 }
 
 .entry-content {
